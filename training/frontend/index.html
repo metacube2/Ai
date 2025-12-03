@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail Fine-Tuning App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <h1>Mail Fine-Tuning</h1>
+            <ul class="nav-menu">
+                <li><a href="#" data-view="import" class="nav-link active">📥 Mail Import</a></li>
+                <li><a href="#" data-view="labeling" class="nav-link">🏷️ Labeling</a></li>
+                <li><a href="#" data-view="export" class="nav-link">📊 Export & Stats</a></li>
+                <li><a href="#" data-view="models" class="nav-link">🤖 Modelle</a></li>
+                <li><a href="#" data-view="training" class="nav-link">🎯 Training</a></li>
+                <li><a href="#" data-view="evaluation" class="nav-link">🧪 Evaluation</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Import View -->
+            <div id="import-view" class="view active">
+                <h2>Mail Import</h2>
+
+                <div class="upload-section">
+                    <div class="dropzone" id="dropzone">
+                        <p>📂 Dateien hier ablegen oder klicken</p>
+                        <p class="hint">Unterstützt: .eml, .mbox, .txt</p>
+                        <input type="file" id="file-input" multiple accept=".eml,.mbox,.txt" hidden>
+                    </div>
+                </div>
+
+                <div class="mail-list-section">
+                    <div class="section-header">
+                        <h3>Importierte Mails (<span id="mail-count">0</span>)</h3>
+                        <button id="refresh-mails" class="btn btn-secondary">🔄 Aktualisieren</button>
+                    </div>
+                    <div id="mail-list" class="mail-list">
+                        <!-- Mails werden hier eingefügt -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Labeling View -->
+            <div id="labeling-view" class="view">
+                <div class="section-header">
+                    <h2>Mail Labeling</h2>
+                    <div class="filter-controls">
+                        <select id="status-filter">
+                            <option value="">Alle anzeigen</option>
+                            <option value="unlabeled" selected>Nur Unlabeled</option>
+                            <option value="labeled">Nur Labeled</option>
+                            <option value="skip">Übersprungen</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="labeling-progress"></div>
+                    <span class="progress-text" id="progress-text">0 / 0 gelabelt</span>
+                </div>
+
+                <div class="keyboard-hints">
+                    Shortcuts: <kbd>N</kbd> Nächste | <kbd>S</kbd> Speichern | <kbd>K</kbd> Skip
+                </div>
+
+                <div id="labeling-container">
+                    <!-- Labeling Interface wird hier geladen -->
+                </div>
+            </div>
+
+            <!-- Export View -->
+            <div id="export-view" class="view">
+                <h2>Daten Export & Statistiken</h2>
+
+                <div class="stats-grid" id="stats-grid">
+                    <!-- Stats werden hier eingefügt -->
+                </div>
+
+                <div class="export-section">
+                    <h3>Training-Daten exportieren</h3>
+                    <div class="export-controls">
+                        <label>
+                            Train/Val Split:
+                            <input type="number" id="train-split" value="90" min="50" max="95" step="5">%
+                        </label>
+                        <button id="export-jsonl" class="btn btn-primary">📦 JSONL generieren</button>
+                    </div>
+                    <div id="export-result"></div>
+                </div>
+            </div>
+
+            <!-- Models View -->
+            <div id="models-view" class="view">
+                <h2>Modell-Verwaltung</h2>
+
+                <div class="model-section">
+                    <h3>Verfügbare Modelle</h3>
+                    <div id="models-list" class="models-list">
+                        <!-- Modelle werden hier geladen -->
+                    </div>
+
+                    <div class="model-download">
+                        <h3>Modell herunterladen</h3>
+                        <p class="info-text">
+                            Modelle müssen manuell heruntergeladen werden. Empfohlen:
+                        </p>
+                        <ul>
+                            <li>mlx-community/Mistral-7B-Instruct-v0.3-4bit</li>
+                            <li>mlx-community/Meta-Llama-3-8B-Instruct-4bit</li>
+                        </ul>
+                        <p class="code-example">
+                            huggingface-cli download [model-name] --local-dir models/[model-name]
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training View -->
+            <div id="training-view" class="view">
+                <h2>Training</h2>
+
+                <div class="training-config">
+                    <h3>Konfiguration</h3>
+                    <form id="training-form">
+                        <div class="form-group">
+                            <label>Modell:</label>
+                            <select id="training-model" required>
+                                <option value="">-- Modell wählen --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Learning Rate: <span id="lr-value">1e-5</span>
+                            </label>
+                            <input type="range" id="learning-rate"
+                                   min="-6" max="-4" step="0.1" value="-5">
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Epochs: <span id="epochs-value">3</span>
+                            </label>
+                            <input type="range" id="epochs"
+                                   min="1" max="10" value="3">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Batch Size:</label>
+                            <select id="batch-size">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="4" selected>4</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>LoRA Rank:</label>
+                            <select id="lora-rank">
+                                <option value="4">4</option>
+                                <option value="8" selected>8</option>
+                                <option value="16">16</option>
+                                <option value="32">32</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="start-training">
+                                ▶️ Training starten
+                            </button>
+                            <button type="button" class="btn btn-danger" id="stop-training" disabled>
+                                ⏹️ Training stoppen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="training-status" id="training-status">
+                    <!-- Training Status wird hier angezeigt -->
+                </div>
+
+                <div class="training-charts">
+                    <div class="chart-container">
+                        <h4>Training Loss</h4>
+                        <canvas id="train-loss-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Validation Loss</h4>
+                        <canvas id="val-loss-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation View -->
+            <div id="evaluation-view" class="view">
+                <h2>Modell Evaluation</h2>
+
+                <div class="eval-controls">
+                    <h3>Chat Interface</h3>
+                    <div class="form-group">
+                        <label>Task Type:</label>
+                        <select id="eval-task-type">
+                            <option value="Zusammenfassen">Zusammenfassen</option>
+                            <option value="Antwort schreiben">Antwort schreiben</option>
+                            <option value="Kategorisieren">Kategorisieren</option>
+                            <option value="Action Items">Action Items</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mail-Text:</label>
+                        <textarea id="eval-mail-text" rows="6" placeholder="Mail-Text hier eingeben..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button id="load-test-prompt" class="btn btn-secondary">📝 Test-Beispiel laden</button>
+                        <button id="run-comparison" class="btn btn-primary">🔍 Vergleich starten</button>
+                    </div>
+                </div>
+
+                <div class="comparison-results">
+                    <div class="result-box">
+                        <h4>Base Model</h4>
+                        <div id="base-result" class="result-content">
+                            Noch kein Ergebnis
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <h4>Fine-tuned Model</h4>
+                        <div id="finetuned-result" class="result-content">
+                            Noch kein Ergebnis
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

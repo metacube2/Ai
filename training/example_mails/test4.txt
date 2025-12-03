@@ -1,0 +1,24 @@
+Subject: Automatische Antwort: Out of Office
+From: thomas.weber@company.com
+To: request@company.com
+Date: 2024-03-18
+
+Guten Tag,
+
+vielen Dank für Ihre E-Mail.
+
+Ich bin vom 18.03. bis 25.03.2024 nicht im Büro und habe keinen Zugriff auf meine E-Mails.
+
+In dringenden Fällen wenden Sie sich bitte an:
+- Vertrieb: sarah.koch@company.com
+- Support: support@company.com
+- Allgemeine Anfragen: info@company.com
+
+Ich werde Ihre E-Mail nach meiner Rückkehr bearbeiten.
+
+Mit freundlichen Grüßen
+Thomas Weber
+
+--
+Diese E-Mail wurde automatisch generiert.
+Bitte antworten Sie nicht direkt auf diese Nachricht.

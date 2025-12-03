@@ -1,0 +1,19 @@
+Subject: Q4 Projektupdate
+From: alex@example.com
+To: team@example.com
+Date: 2024-03-15
+
+Hallo Team,
+
+ich wollte euch ein kurzes Update zum aktuellen Projektstand geben.
+
+Wir haben letzte Woche die neue API-Integration abgeschlossen und erfolgreich getestet.
+Die Performance-Tests zeigen eine Verbesserung von 40% gegenüber der alten Implementierung.
+
+Nächste Woche starten wir mit der Frontend-Anpassung. Maria und Tom werden das Design
+überarbeiten, während ich mich um die Backend-Anbindung kümmere.
+
+Der Go-Live ist weiterhin für Ende des Monats geplant.
+
+Beste Grüße
+Alex
