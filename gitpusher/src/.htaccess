@@ -1,0 +1,8 @@
+# Deny all access to source directory
+Require all denied
+
+# Alternative for older Apache versions
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
