@@ -1,0 +1,14 @@
+# Deny access to data directory from web
+<FilesMatch "^(data|src)">
+    Require all denied
+</FilesMatch>
+
+# Deny access to sensitive files
+<FilesMatch "\.(json|log|ini|conf)$">
+    Require all denied
+</FilesMatch>
+
+# Protect .git directory if exists
+<DirectoryMatch "\.git">
+    Require all denied
+</DirectoryMatch>
