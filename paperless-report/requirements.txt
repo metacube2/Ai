@@ -1,0 +1,31 @@
+# Paperless Finance Report Tool - Dependencies
+
+# HTTP Client
+requests>=2.31.0
+
+# CLI Framework
+click>=8.1.7
+
+# Configuration
+pyyaml>=6.0.1
+
+# HTML Templating
+jinja2>=3.1.2
+
+# PDF Generation
+weasyprint>=60.1
+
+# Data Processing
+python-dateutil>=2.8.2
+
+# Caching
+diskcache>=5.6.3
+
+# Logging (colorized output)
+colorlog>=6.8.0
+
+# Progress bars
+tqdm>=4.66.1
+
+# Table formatting for CLI
+tabulate>=0.9.0

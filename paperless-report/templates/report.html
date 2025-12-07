@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2E86AB;
+            --secondary-color: #A23B72;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #fff;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        h1 {
+            font-size: 2rem;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-info {
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .card-value.highlight {
+            color: var(--secondary-color);
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .chart-wrapper {
+            background: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: var(--light-bg);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .amount {
+            font-family: 'SF Mono', Consolas, monospace;
+            white-space: nowrap;
+        }
+
+        .amount-positive {
+            color: var(--danger-color);
+        }
+
+        .percentage {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.1rem;
+        }
+
+        .document-link {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .document-link:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            margin: 2rem 0;
+        }
+
+        .comparison-table {
+            margin-top: 1rem;
+        }
+
+        .comparison-table .change-positive {
+            color: var(--danger-color);
+        }
+
+        .comparison-table .change-negative {
+            color: var(--success-color);
+        }
+
+        .comparison-table .new-item {
+            background-color: #fff3cd;
+        }
+
+        .comparison-table .removed-item {
+            background-color: #f8d7da;
+        }
+
+        .export-buttons {
+            margin: 2rem 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-muted);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .export-buttons {
+                display: none;
+            }
+
+            .chart-wrapper {
+                page-break-inside: avoid;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="header-info">
+            {% if year %}
+            <div><strong>Zeitraum:</strong>
+                {% if month %}
+                    {{ '%02d'|format(month) }}/{{ year }}
+                {% else %}
+                    {{ year }}
+                {% endif %}
+            </div>
+            {% endif %}
+            <div><strong>Generiert:</strong> {{ generated_at|format_date('%d.%m.%Y %H:%M') }}</div>
+        </div>
+    </div>
+
+    <!-- Zusammenfassung -->
+    <div class="summary-cards">
+        <div class="card">
+            <div class="card-title">Gesamtsumme</div>
+            <div class="card-value highlight">{{ result.total_amount|format_amount }}</div>
+            <div class="card-subtitle">{{ result.documents_with_amount }} Dokumente mit Betrag</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Dokumente</div>
+            <div class="card-value">{{ result.document_count }}</div>
+            <div class="card-subtitle">{{ result.documents_without_amount }} ohne Betrag</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Durchschnitt</div>
+            <div class="card-value">{{ result.average_amount|format_amount }}</div>
+            <div class="card-subtitle">pro Dokument</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Median</div>
+            <div class="card-value">{{ result.median_amount|format_amount }}</div>
+            <div class="card-subtitle">Min: {{ result.min_amount|format_amount }}</div>
+        </div>
+    </div>
+
+    <!-- Diagramme -->
+    <div class="charts-container">
+        {% if result.by_tag %}
+        <div class="chart-wrapper">
+            <h3>Verteilung nach Tag</h3>
+            <div class="chart-container">
+                <canvas id="tagChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.by_category %}
+        <div class="chart-wrapper">
+            <h3>Verteilung nach Kategorie</h3>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.by_month %}
+        <div class="chart-wrapper">
+            <h3>Monatsverlauf</h3>
+            <div class="chart-container">
+                <canvas id="monthChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.by_correspondent %}
+        <div class="chart-wrapper">
+            <h3>Top 10 Korrespondenten</h3>
+            <div class="chart-container">
+                <canvas id="correspondentChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Nach Tag -->
+    {% if result.by_tag %}
+    <div class="section">
+        <h2>Nach Tag</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tag</th>
+                    <th class="text-right">Betrag</th>
+                    <th class="text-right">Anteil</th>
+                    <th class="text-right">Anzahl</th>
+                    <th style="width: 200px;">Verteilung</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, stats in result.by_tag.items() %}
+                <tr>
+                    <td><span class="tag">{{ name }}</span></td>
+                    <td class="text-right amount">{{ stats.amount|format_amount }}</td>
+                    <td class="text-right percentage">{{ stats.percentage|format_percent }}</td>
+                    <td class="text-right">{{ stats.count }}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: {{ stats.percentage }}%"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Nach Kategorie -->
+    {% if result.by_category %}
+    <div class="section">
+        <h2>Nach Kategorie</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kategorie</th>
+                    <th class="text-right">Betrag</th>
+                    <th class="text-right">Anteil</th>
+                    <th class="text-right">Anzahl</th>
+                    <th style="width: 200px;">Verteilung</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, stats in result.by_category.items() %}
+                <tr>
+                    <td>{{ name }}</td>
+                    <td class="text-right amount">{{ stats.amount|format_amount }}</td>
+                    <td class="text-right percentage">{{ stats.percentage|format_percent }}</td>
+                    <td class="text-right">{{ stats.count }}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: {{ stats.percentage }}%"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Nach Monat -->
+    {% if result.by_month %}
+    <div class="section">
+        <h2>Nach Monat</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Monat</th>
+                    <th class="text-right">Betrag</th>
+                    <th class="text-right">Anzahl</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month, stats in result.by_month.items() %}
+                <tr>
+                    <td>{{ month }}</td>
+                    <td class="text-right amount">{{ stats.amount|format_amount }}</td>
+                    <td class="text-right">{{ stats.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Nach Korrespondent -->
+    {% if result.by_correspondent %}
+    <div class="section">
+        <h2>Nach Korrespondent</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Korrespondent</th>
+                    <th class="text-right">Betrag</th>
+                    <th class="text-right">Anteil</th>
+                    <th class="text-right">Anzahl</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, stats in result.by_correspondent.items() %}
+                <tr>
+                    <td>{{ name }}</td>
+                    <td class="text-right amount">{{ stats.amount|format_amount }}</td>
+                    <td class="text-right percentage">{{ stats.percentage|format_percent }}</td>
+                    <td class="text-right">{{ stats.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Top Einzelposten -->
+    {% if result.top_items %}
+    <div class="section">
+        <h2>Top 10 Einzelposten</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Titel</th>
+                    <th>Datum</th>
+                    <th>Korrespondent</th>
+                    <th class="text-right">Betrag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in result.top_items[:10] %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        {% if doc.web_url %}
+                        <a href="{{ doc.web_url }}" class="document-link" target="_blank">{{ doc.title }}</a>
+                        {% else %}
+                        {{ doc.title }}
+                        {% endif %}
+                    </td>
+                    <td>{{ doc.effective_date|format_date }}</td>
+                    <td>{{ doc.correspondent or '-' }}</td>
+                    <td class="text-right amount amount-positive">{{ doc.betrag|format_amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Vergleich -->
+    {% if comparison %}
+    <div class="section">
+        <h2>Periodenvergleich: {{ comparison.period1.name }} vs {{ comparison.period2.name }}</h2>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-title">{{ comparison.period1.name }}</div>
+                <div class="card-value">{{ comparison.period1.total|format_amount }}</div>
+                <div class="card-subtitle">{{ comparison.period1.count }} Dokumente</div>
+            </div>
+            <div class="card">
+                <div class="card-title">{{ comparison.period2.name }}</div>
+                <div class="card-value">{{ comparison.period2.total|format_amount }}</div>
+                <div class="card-subtitle">{{ comparison.period2.count }} Dokumente</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Veränderung</div>
+                <div class="card-value {% if comparison.diff_percent > 0 %}change-positive{% else %}change-negative{% endif %}">
+                    {{ '%+.1f'|format(comparison.diff_percent) }}%
+                </div>
+                <div class="card-subtitle">{{ comparison.diff_absolute|format_amount }}</div>
+            </div>
+        </div>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Kategorie</th>
+                    <th class="text-right">{{ comparison.period1.name }}</th>
+                    <th class="text-right">{{ comparison.period2.name }}</th>
+                    <th class="text-right">Differenz</th>
+                    <th class="text-right">Veränderung</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat, data in comparison.category_comparison.items() %}
+                <tr class="{% if data.status == 'new' %}new-item{% elif data.status == 'removed' %}removed-item{% endif %}">
+                    <td>{{ cat }}</td>
+                    <td class="text-right amount">{{ data.period1|format_amount }}</td>
+                    <td class="text-right amount">{{ data.period2|format_amount }}</td>
+                    <td class="text-right amount">{{ data.diff_absolute|format_amount }}</td>
+                    <td class="text-right {% if data.diff_percent > 0 %}change-positive{% else %}change-negative{% endif %}">
+                        {{ '%+.1f'|format(data.diff_percent) }}%
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Alle Dokumente -->
+    <div class="section">
+        <h2>Alle Dokumente ({{ result.document_count }})</h2>
+        <table id="documentsTable">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Titel</th>
+                    <th>Korrespondent</th>
+                    <th>Tags</th>
+                    <th class="text-right">Betrag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in result.documents %}
+                <tr>
+                    <td>{{ doc.effective_date|format_date }}</td>
+                    <td>
+                        {% if doc.web_url %}
+                        <a href="{{ doc.web_url }}" class="document-link" target="_blank">{{ doc.title }}</a>
+                        {% else %}
+                        {{ doc.title }}
+                        {% endif %}
+                    </td>
+                    <td>{{ doc.correspondent or '-' }}</td>
+                    <td>
+                        {% for tag in doc.tags %}
+                        <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                    </td>
+                    <td class="text-right amount">{{ doc.betrag|format_amount if doc.betrag else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Export-Buttons -->
+    <div class="export-buttons">
+        <button class="btn" onclick="window.print()">Drucken / PDF</button>
+        <button class="btn btn-secondary" onclick="exportTableToCSV()">CSV exportieren</button>
+    </div>
+
+    <div class="footer">
+        <p>Paperless Finance Report &bull; Generiert am {{ generated_at|format_date('%d.%m.%Y um %H:%M') }}</p>
+    </div>
+
+    <script>
+        // Chart-Daten von Jinja
+        const tagChartData = {{ tag_chart_data|safe }};
+        const categoryChartData = {{ category_chart_data|safe }};
+        const monthChartData = {{ month_chart_data|safe }};
+        const correspondentChartData = {{ correspondent_chart_data|safe }};
+
+        const currency = "{{ currency }}";
+
+        // Formatierung für Tooltips
+        function formatAmount(value) {
+            return currency + " " + value.toLocaleString('de-CH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Tag-Chart (Doughnut)
+        if (tagChartData.labels && tagChartData.labels.length > 0) {
+            const tagCtx = document.getElementById('tagChart');
+            if (tagCtx) {
+                new Chart(tagCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tagChartData.labels,
+                        datasets: [{
+                            data: tagChartData.values,
+                            backgroundColor: tagChartData.colors,
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + formatAmount(context.raw);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Kategorie-Chart (Bar)
+        if (categoryChartData.labels && categoryChartData.labels.length > 0) {
+            const catCtx = document.getElementById('categoryChart');
+            if (catCtx) {
+                new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: categoryChartData.labels,
+                        datasets: [{
+                            data: categoryChartData.values,
+                            backgroundColor: categoryChartData.colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatAmount(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatAmount(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Monats-Chart (Line)
+        if (monthChartData.labels && monthChartData.labels.length > 0) {
+            const monthCtx = document.getElementById('monthChart');
+            if (monthCtx) {
+                new Chart(monthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: monthChartData.labels,
+                        datasets: [{
+                            data: monthChartData.values,
+                            borderColor: '#2E86AB',
+                            backgroundColor: 'rgba(46, 134, 171, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatAmount(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatAmount(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Korrespondent-Chart (Bar horizontal)
+        if (correspondentChartData.labels && correspondentChartData.labels.length > 0) {
+            const corrCtx = document.getElementById('correspondentChart');
+            if (corrCtx) {
+                new Chart(corrCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: correspondentChartData.labels,
+                        datasets: [{
+                            data: correspondentChartData.values,
+                            backgroundColor: '#A23B72',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatAmount(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatAmount(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // CSV Export
+        function exportTableToCSV() {
+            const table = document.getElementById('documentsTable');
+            const rows = table.querySelectorAll('tr');
+            let csv = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('th, td');
+                const rowData = [];
+                cells.forEach(cell => {
+                    let text = cell.innerText.replace(/"/g, '""');
+                    if (text.includes(';') || text.includes('"') || text.includes('\n')) {
+                        text = '"' + text + '"';
+                    }
+                    rowData.push(text);
+                });
+                csv.push(rowData.join(';'));
+            });
+
+            const csvContent = '\ufeff' + csv.join('\n'); // BOM for Excel
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'finanzbericht_export.csv';
+            link.click();
+        }
+    </script>
+</body>
+</html>

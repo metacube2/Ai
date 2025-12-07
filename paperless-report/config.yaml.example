@@ -1,0 +1,78 @@
+# Paperless Finance Report - Konfiguration
+# Kopiere diese Datei nach config.yaml und passe die Werte an
+
+paperless:
+  # URL deiner Paperless-ngx Installation
+  url: "http://localhost:8000"
+  # API-Token (erstellen unter: Einstellungen → Authentifizierungs-Tokens)
+  token: "YOUR_API_TOKEN_HERE"
+  # Timeout für API-Anfragen in Sekunden
+  timeout: 30
+
+# Mapping der Custom Field Namen in Paperless
+# Die Namen müssen exakt mit den in Paperless angelegten Feldern übereinstimmen
+custom_fields:
+  betrag: "betrag"
+  rechnungsdatum: "rechnungsdatum"
+  kategorie: "kategorie"
+  zahlungsart: "zahlungsart"
+  periode: "periode"
+  notiz: "notiz"
+
+# Standardeinstellungen
+defaults:
+  # Währung für Beträge
+  currency: "CHF"
+  # Welches Datumsfeld für Zeitraumfilter verwendet werden soll
+  # Optionen: "archive_date", "created", "added", oder ein Custom Field Name
+  date_field: "archive_date"
+  # Standard-Tag für Rechnungen (Name, nicht ID)
+  invoice_tag: "rechnung"
+
+# Tag-Namen die automatisch erkannt werden sollen
+# Die IDs werden beim ersten Start automatisch ermittelt
+tags:
+  - rechnung
+  - miete
+  - krankenkasse
+  - steuern
+  - versicherung
+  - nebenkosten
+
+# Kategorien für Gruppierung (müssen in Paperless als Auswahl-Optionen existieren)
+categories:
+  - Wohnen
+  - Gesundheit
+  - Mobilität
+  - Versicherungen
+  - Steuern
+  - Lebensmittel
+  - Freizeit
+  - Diverses
+
+# Ausgabe-Einstellungen
+output:
+  # Standard-Format: html, pdf, json, cli
+  format: "html"
+  # Verzeichnis für generierte Berichte
+  path: "./output"
+  # Dateiname-Muster (Platzhalter: {year}, {month}, {date}, {timestamp})
+  filename_pattern: "finanzbericht_{year}"
+
+# Cache-Einstellungen
+cache:
+  # Cache aktivieren
+  enabled: true
+  # Cache-Verzeichnis
+  path: "./.cache"
+  # Cache-Gültigkeit in Sekunden (Standard: 1 Stunde)
+  ttl: 3600
+
+# Logging-Einstellungen
+logging:
+  # Log-Level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  # Log-Datei (leer = nur Konsole)
+  file: ""
+  # Farbige Ausgabe
+  colorize: true
