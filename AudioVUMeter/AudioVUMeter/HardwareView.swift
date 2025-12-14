@@ -3,6 +3,7 @@
 //  AudioVUMeter
 //
 //  Hardware configuration and monitoring view for physical VU meters
+//  Includes auto-probe functionality to detect connected hardware
 //
 
 import SwiftUI
@@ -24,40 +25,73 @@ struct HardwarePanelView: View {
                 // Connection status
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(serialManager.isConnected ? Color.green : Color.red)
+                        .fill(statusColor)
                         .frame(width: 8, height: 8)
 
-                    Text(serialManager.isConnected ? "CONNECTED" : "DISCONNECTED")
+                    Text(statusText)
                         .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundColor(serialManager.isConnected ? .green : .red)
+                        .foregroundColor(statusColor)
                 }
             }
 
-            // 4 Physical Dial Indicators
-            HStack(spacing: 15) {
-                ForEach(0..<4) { index in
-                    DialIndicatorView(
-                        dialNumber: index + 1,
-                        value: serialManager.dialValues[index],
-                        channelName: shortChannelName(serialManager.dialConfigs[index].dialChannel),
-                        isConnected: serialManager.isConnected
-                    )
+            // Probing progress
+            if serialManager.isProbing {
+                VStack(spacing: 8) {
+                    ProgressView(value: serialManager.probeProgress)
+                        .progressViewStyle(.linear)
+
+                    Text(serialManager.probeStatus)
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.orange)
+                }
+            } else {
+                // 4 Physical Dial Indicators
+                HStack(spacing: 15) {
+                    ForEach(0..<4) { index in
+                        DialIndicatorView(
+                            dialNumber: index + 1,
+                            value: serialManager.dialValues[index],
+                            channelName: shortChannelName(serialManager.dialConfigs[index].dialChannel),
+                            isConnected: serialManager.isConnected
+                        )
+                    }
                 }
             }
 
-            // Quick connect button
-            Button(action: {
-                serialManager.toggleConnection()
-            }) {
-                HStack {
-                    Image(systemName: serialManager.isConnected ? "antenna.radiowaves.left.and.right.slash" : "antenna.radiowaves.left.and.right")
-                    Text(serialManager.isConnected ? "Disconnect" : "Connect")
+            // Buttons
+            HStack(spacing: 10) {
+                // Auto-probe button
+                Button(action: {
+                    if serialManager.isProbing {
+                        serialManager.stopAutoProbe()
+                    } else {
+                        serialManager.startAutoProbe()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: serialManager.isProbing ? "stop.fill" : "magnifyingglass")
+                        Text(serialManager.isProbing ? "Stop" : "Auto-Find")
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(HardwareButtonStyle(isConnected: serialManager.isConnected))
+                .buttonStyle(ProbeButtonStyle(isProbing: serialManager.isProbing))
+                .disabled(serialManager.isConnected)
 
-            // Stats
+                // Connect button
+                Button(action: {
+                    serialManager.toggleConnection()
+                }) {
+                    HStack {
+                        Image(systemName: serialManager.isConnected ? "antenna.radiowaves.left.and.right.slash" : "antenna.radiowaves.left.and.right")
+                        Text(serialManager.isConnected ? "Disconnect" : "Connect")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(HardwareButtonStyle(isConnected: serialManager.isConnected))
+                .disabled(serialManager.isProbing)
+            }
+
+            // Stats / Device info
             if serialManager.isConnected {
                 HStack {
                     Text("TX: \(formatBytes(serialManager.bytesSent))")
@@ -70,6 +104,24 @@ struct HardwarePanelView: View {
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundColor(.gray)
                 }
+            } else if let detected = serialManager.detectedDevice {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.system(size: 10))
+
+                    Text("Found: \(detected.name)")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(.green)
+
+                    Spacer()
+
+                    if let vid = detected.vendorID, let pid = detected.productID {
+                        Text(String(format: "%04X:%04X", vid, pid))
+                            .font(.system(size: 8, design: .monospaced))
+                            .foregroundColor(.gray)
+                    }
+                }
             }
         }
         .padding()
@@ -78,10 +130,28 @@ struct HardwarePanelView: View {
                 .fill(Color.black.opacity(0.3))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(serialManager.isConnected ? Color.green.opacity(0.3) : Color.clear, lineWidth: 1)
+                        .stroke(borderColor, lineWidth: 1)
                 )
         )
         .padding(.horizontal)
+    }
+
+    private var statusColor: Color {
+        if serialManager.isProbing { return .orange }
+        if serialManager.isConnected { return .green }
+        return .red
+    }
+
+    private var statusText: String {
+        if serialManager.isProbing { return "PROBING" }
+        if serialManager.isConnected { return "CONNECTED" }
+        return "DISCONNECTED"
+    }
+
+    private var borderColor: Color {
+        if serialManager.isProbing { return .orange.opacity(0.3) }
+        if serialManager.isConnected { return .green.opacity(0.3) }
+        return .clear
     }
 
     private func shortChannelName(_ channel: DialChannel) -> String {
@@ -178,21 +248,90 @@ struct HardwareSettingsView: View {
 
     var body: some View {
         Form {
-            // Connection Section
-            Section("Serial Connection") {
-                // Port selection
+            // Auto-Probe Section
+            Section("Auto-Detect Hardware") {
                 HStack {
-                    Picker("Port", selection: $serialManager.selectedPortPath) {
-                        Text("Select Port...").tag("")
-                        ForEach(serialManager.availablePorts) { port in
-                            Text(port.name).tag(port.path)
+                    Button(action: {
+                        if serialManager.isProbing {
+                            serialManager.stopAutoProbe()
+                        } else {
+                            serialManager.startAutoProbe()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: serialManager.isProbing ? "stop.fill" : "magnifyingglass.circle.fill")
+                            Text(serialManager.isProbing ? "Stop Probing" : "Auto-Detect VU Meter")
                         }
                     }
+                    .disabled(serialManager.isConnected)
 
+                    Spacer()
+
+                    Button("Quick Connect") {
+                        serialManager.autoConnect()
+                    }
+                    .disabled(serialManager.isConnected || serialManager.isProbing)
+                }
+
+                if serialManager.isProbing {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ProgressView(value: serialManager.probeProgress) {
+                            Text(serialManager.probeStatus)
+                                .font(.caption)
+                        }
+                    }
+                }
+
+                if let detected = serialManager.detectedDevice {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        VStack(alignment: .leading) {
+                            Text("Detected: \(detected.name)")
+                                .font(.headline)
+                            if let vid = detected.vendorID, let pid = detected.productID {
+                                Text(String(format: "USB ID: %04X:%04X", vid, pid))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Connection Section
+            Section("Serial Connection") {
+                // Port selection with USB info
+                Picker("Port", selection: $serialManager.selectedPortPath) {
+                    Text("Select Port...").tag("")
+                    ForEach(serialManager.availablePorts) { port in
+                        HStack {
+                            if port.isVUMeter {
+                                Image(systemName: "star.fill")
+                                    .foregroundColor(.yellow)
+                            }
+                            Text(port.name)
+                            if let vid = port.vendorID, let pid = port.productID {
+                                Text(String(format: "(%04X:%04X)", vid, pid))
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                            }
+                        }
+                        .tag(port.path)
+                    }
+                }
+
+                HStack {
                     Button(action: { serialManager.refreshPorts() }) {
-                        Image(systemName: "arrow.clockwise")
+                        Label("Refresh", systemImage: "arrow.clockwise")
                     }
                     .buttonStyle(.borderless)
+
+                    Spacer()
+
+                    Text("\(serialManager.availablePorts.count) ports found")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
 
                 // Baud rate
@@ -217,6 +356,7 @@ struct HardwareSettingsView: View {
                     }
                 }
                 .foregroundColor(serialManager.isConnected ? .red : .green)
+                .disabled(serialManager.isProbing)
             }
 
             // Dial Configuration Section
@@ -257,6 +397,36 @@ struct HardwareSettingsView: View {
                             Text("\(Int(serialManager.dialConfigs[index].smoothing * 100))%")
                                 .frame(width: 40)
                         }
+                    }
+                }
+            }
+
+            // Probe Results (for debugging)
+            if !serialManager.probeResults.isEmpty {
+                Section("Probe Results") {
+                    ForEach(serialManager.probeResults.indices, id: \.self) { index in
+                        let result = serialManager.probeResults[index]
+                        HStack {
+                            Image(systemName: result.success ? "checkmark.circle" : "xmark.circle")
+                                .foregroundColor(result.success ? .green : .red)
+                            VStack(alignment: .leading) {
+                                Text(result.port.name)
+                                    .font(.caption)
+                                Text("\(result.baudRate) baud - \(result.protocol_.rawValue)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if let response = result.response {
+                                Text(response.prefix(20) + "...")
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                    }
+
+                    Button("Clear Results") {
+                        serialManager.probeResults.removeAll()
                     }
                 }
             }
@@ -313,7 +483,7 @@ struct DialConfigRow: View {
     }
 }
 
-// MARK: - Hardware Button Style
+// MARK: - Button Styles
 struct HardwareButtonStyle: ButtonStyle {
     let isConnected: Bool
 
@@ -330,9 +500,25 @@ struct HardwareButtonStyle: ButtonStyle {
     }
 }
 
+struct ProbeButtonStyle: ButtonStyle {
+    let isProbing: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isProbing ? Color.orange.opacity(0.7) : Color.blue.opacity(0.7))
+                    .opacity(configuration.isPressed ? 0.6 : 1.0)
+            )
+    }
+}
+
 // MARK: - Preview
 #Preview {
     HardwareSettingsView()
         .environmentObject(SerialManager())
-        .frame(width: 450, height: 600)
+        .frame(width: 500, height: 700)
 }
