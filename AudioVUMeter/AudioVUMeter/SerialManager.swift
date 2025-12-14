@@ -424,13 +424,17 @@ class SerialManager: ObservableObject {
                 self.selectedProtocol = best.protocol_
                 self.baudRate = best.baudRate
                 self.probeStatus = "Found: \(best.port.name)"
+                // Auto-connect after successful probe
+                self.connect()
             } else if let firstWorking = workingPorts.first {
                 // No response but port works - use it anyway
                 self.detectedDevice = firstWorking.port
                 self.selectedPortPath = firstWorking.port.path
                 self.selectedProtocol = .vuServer
                 self.baudRate = firstWorking.baudRate
-                self.probeStatus = "Using: \(firstWorking.port.name) (no response)"
+                self.probeStatus = "Using: \(firstWorking.port.name)"
+                // Auto-connect
+                self.connect()
             } else {
                 self.probeStatus = "No serial devices found"
             }

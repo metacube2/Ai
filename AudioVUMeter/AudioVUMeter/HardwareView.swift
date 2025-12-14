@@ -91,7 +91,7 @@ struct HardwarePanelView: View {
                 .disabled(serialManager.isProbing)
             }
 
-            // Stats / Device info
+            // Stats / Device info / Errors
             if serialManager.isConnected {
                 HStack {
                     Text("TX: \(formatBytes(serialManager.bytesSent))")
@@ -102,7 +102,20 @@ struct HardwarePanelView: View {
 
                     Text(serialManager.selectedPortPath.components(separatedBy: "/").last ?? "")
                         .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.green)
+                }
+            } else if let error = serialManager.lastError {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                        .font(.system(size: 10))
+
+                    Text(error)
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(.red)
+                        .lineLimit(2)
+
+                    Spacer()
                 }
             } else if let detected = serialManager.detectedDevice {
                 HStack {
@@ -121,6 +134,18 @@ struct HardwarePanelView: View {
                             .font(.system(size: 8, design: .monospaced))
                             .foregroundColor(.gray)
                     }
+                }
+            } else if serialManager.availablePorts.isEmpty {
+                HStack {
+                    Image(systemName: "usb")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 10))
+
+                    Text("No USB serial devices detected")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(.orange)
+
+                    Spacer()
                 }
             }
         }
@@ -183,29 +208,35 @@ struct DialIndicatorView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            // Dial number
-            Text("D\(dialNumber)")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
+            // Dial number with connection indicator
+            HStack(spacing: 2) {
+                Circle()
+                    .fill(isConnected ? Color.green : Color.red)
+                    .frame(width: 5, height: 5)
+                Text("D\(dialNumber)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.7))
+            }
 
             // Value arc
             ZStack {
                 // Background arc
                 Circle()
                     .trim(from: 0.25, to: 0.75)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 4)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 4)
                     .frame(width: 50, height: 50)
                     .rotationEffect(.degrees(180))
 
-                // Value arc
+                // Value arc - always show with minimum visibility
                 Circle()
-                    .trim(from: 0.25, to: 0.25 + (Double(value) / 255.0) * 0.5)
+                    .trim(from: 0.25, to: 0.25 + max(0.02, (Double(value) / 255.0) * 0.5))
                     .stroke(
-                        isConnected ? dialColor(for: value) : Color.gray,
+                        dialColor(for: value, connected: isConnected),
                         style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
                     .frame(width: 50, height: 50)
                     .rotationEffect(.degrees(180))
+                    .animation(.easeOut(duration: 0.1), value: value)
 
                 // Value text
                 VStack(spacing: 0) {
@@ -222,7 +253,10 @@ struct DialIndicatorView: View {
         }
     }
 
-    private func dialColor(for value: Int) -> Color {
+    private func dialColor(for value: Int, connected: Bool) -> Color {
+        if !connected {
+            return Color.gray.opacity(0.5)
+        }
         let ratio = Double(value) / 255.0
         if ratio > 0.9 { return .red }
         if ratio > 0.75 { return .orange }
