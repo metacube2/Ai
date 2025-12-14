@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  AudioVUMeter
 //
-//  Main view containing all VU meters
+//  Main view containing all VU meters and hardware output
 //
 
 import SwiftUI
@@ -10,8 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var audioEngine: AudioEngine
     @EnvironmentObject var systemMonitor: SystemMonitor
+    @EnvironmentObject var serialManager: SerialManager
 
     @State private var showSettings = false
+    @State private var showHardwareSettings = false
 
     var body: some View {
         ZStack {
@@ -26,185 +28,207 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                // Header
-                HStack {
-                    Text("Audio VU Meter")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Header
+                    HStack {
+                        Text("Audio VU Meter")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
 
-                    Spacer()
+                        Spacer()
 
-                    // Settings button
-                    Button(action: { showSettings.toggle() }) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 18))
+                        // Hardware settings button
+                        Button(action: { showHardwareSettings.toggle() }) {
+                            Image(systemName: "cable.connector")
+                                .font(.system(size: 16))
+                                .foregroundColor(serialManager.isConnected ? .green : .gray)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Hardware Settings")
+
+                        // Settings button
+                        Button(action: { showSettings.toggle() }) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 18))
+                                .foregroundColor(.gray)
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showSettings) {
+                            QuickSettingsView()
+                                .environmentObject(audioEngine)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+
+                    // Audio device info
+                    HStack {
+                        Circle()
+                            .fill(audioEngine.isRunning ? Color.green : Color.red)
+                            .frame(width: 8, height: 8)
+
+                        Text(audioEngine.selectedDeviceName)
+                            .font(.system(size: 12, design: .monospaced))
                             .foregroundColor(.gray)
+
+                        Spacer()
+
+                        Text(audioEngine.isRunning ? "ACTIVE" : "STOPPED")
+                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                            .foregroundColor(audioEngine.isRunning ? .green : .red)
                     }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $showSettings) {
-                        QuickSettingsView()
-                            .environmentObject(audioEngine)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 10)
+                    .padding(.horizontal)
 
-                // Audio device info
-                HStack {
-                    Circle()
-                        .fill(audioEngine.isRunning ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
+                    Divider()
+                        .background(Color.gray.opacity(0.3))
 
-                    Text(audioEngine.selectedDeviceName)
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(.gray)
+                    // Audio VU Meters
+                    VStack(spacing: 15) {
+                        Text("AUDIO LEVELS")
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.gray)
 
-                    Spacer()
+                        HStack(spacing: 30) {
+                            // Left Channel
+                            VUMeterView(
+                                level: audioEngine.leftLevel,
+                                peakLevel: audioEngine.leftPeak,
+                                label: "L",
+                                colorScheme: .audio
+                            )
 
-                    Text(audioEngine.isRunning ? "ACTIVE" : "STOPPED")
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .foregroundColor(audioEngine.isRunning ? .green : .red)
-                }
-                .padding(.horizontal)
-
-                Divider()
-                    .background(Color.gray.opacity(0.3))
-
-                // Audio VU Meters
-                VStack(spacing: 15) {
-                    Text("AUDIO LEVELS")
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.gray)
-
-                    HStack(spacing: 30) {
-                        // Left Channel
-                        VUMeterView(
-                            level: audioEngine.leftLevel,
-                            peakLevel: audioEngine.leftPeak,
-                            label: "L",
-                            colorScheme: .audio
-                        )
-
-                        // Right Channel
-                        VUMeterView(
-                            level: audioEngine.rightLevel,
-                            peakLevel: audioEngine.rightPeak,
-                            label: "R",
-                            colorScheme: .audio
-                        )
-                    }
-
-                    // dB Display
-                    HStack(spacing: 40) {
-                        VStack {
-                            Text(String(format: "%.1f dB", audioEngine.leftLevelDB))
-                                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                .foregroundColor(dbColor(for: audioEngine.leftLevelDB))
-                            Text("LEFT")
-                                .font(.system(size: 9, design: .monospaced))
-                                .foregroundColor(.gray)
+                            // Right Channel
+                            VUMeterView(
+                                level: audioEngine.rightLevel,
+                                peakLevel: audioEngine.rightPeak,
+                                label: "R",
+                                colorScheme: .audio
+                            )
                         }
 
-                        VStack {
-                            Text(String(format: "%.1f dB", audioEngine.rightLevelDB))
-                                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                .foregroundColor(dbColor(for: audioEngine.rightLevelDB))
-                            Text("RIGHT")
-                                .font(.system(size: 9, design: .monospaced))
-                                .foregroundColor(.gray)
+                        // dB Display
+                        HStack(spacing: 40) {
+                            VStack {
+                                Text(String(format: "%.1f dB", audioEngine.leftLevelDB))
+                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .foregroundColor(dbColor(for: audioEngine.leftLevelDB))
+                                Text("LEFT")
+                                    .font(.system(size: 9, design: .monospaced))
+                                    .foregroundColor(.gray)
+                            }
+
+                            VStack {
+                                Text(String(format: "%.1f dB", audioEngine.rightLevelDB))
+                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .foregroundColor(dbColor(for: audioEngine.rightLevelDB))
+                                Text("RIGHT")
+                                    .font(.system(size: 9, design: .monospaced))
+                                    .foregroundColor(.gray)
+                            }
                         }
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.3))
+                    )
+                    .padding(.horizontal)
+
+                    Divider()
+                        .background(Color.gray.opacity(0.3))
+
+                    // System Monitors
+                    VStack(spacing: 15) {
+                        Text("SYSTEM MONITOR")
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.gray)
+
+                        HStack(spacing: 25) {
+                            // CPU Meter
+                            SystemMeterView(
+                                value: systemMonitor.cpuUsage,
+                                label: "CPU",
+                                unit: "%",
+                                colorScheme: .cpu
+                            )
+
+                            // RAM Meter
+                            SystemMeterView(
+                                value: systemMonitor.memoryUsage,
+                                label: "RAM",
+                                unit: "%",
+                                colorScheme: .ram
+                            )
+
+                            // Disk I/O Meter
+                            SystemMeterView(
+                                value: systemMonitor.diskActivity,
+                                label: "DISK",
+                                unit: "%",
+                                colorScheme: .disk
+                            )
+
+                            // Network Meter
+                            SystemMeterView(
+                                value: systemMonitor.networkActivity,
+                                label: "NET",
+                                unit: "%",
+                                colorScheme: .network
+                            )
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.3))
+                    )
+                    .padding(.horizontal)
+
+                    Divider()
+                        .background(Color.gray.opacity(0.3))
+
+                    // Hardware Output Panel
+                    HardwarePanelView()
+                        .environmentObject(serialManager)
+
+                    // Control buttons
+                    HStack(spacing: 15) {
+                        Button(action: {
+                            if audioEngine.isRunning {
+                                audioEngine.stop()
+                            } else {
+                                audioEngine.start()
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: audioEngine.isRunning ? "stop.fill" : "play.fill")
+                                Text(audioEngine.isRunning ? "Stop" : "Start")
+                            }
+                            .frame(width: 80)
+                        }
+                        .buttonStyle(ControlButtonStyle(color: audioEngine.isRunning ? .red : .green))
+
+                        Button(action: {
+                            audioEngine.resetPeaks()
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.counterclockwise")
+                                Text("Reset")
+                            }
+                            .frame(width: 80)
+                        }
+                        .buttonStyle(ControlButtonStyle(color: .orange))
+                    }
+                    .padding(.bottom, 15)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.3))
-                )
-                .padding(.horizontal)
-
-                Divider()
-                    .background(Color.gray.opacity(0.3))
-
-                // System Monitors
-                VStack(spacing: 15) {
-                    Text("SYSTEM MONITOR")
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.gray)
-
-                    HStack(spacing: 25) {
-                        // CPU Meter
-                        SystemMeterView(
-                            value: systemMonitor.cpuUsage,
-                            label: "CPU",
-                            unit: "%",
-                            colorScheme: .cpu
-                        )
-
-                        // RAM Meter
-                        SystemMeterView(
-                            value: systemMonitor.memoryUsage,
-                            label: "RAM",
-                            unit: "%",
-                            colorScheme: .ram
-                        )
-
-                        // Disk I/O Meter
-                        SystemMeterView(
-                            value: systemMonitor.diskActivity,
-                            label: "DISK",
-                            unit: "%",
-                            colorScheme: .disk
-                        )
-
-                        // Network Meter
-                        SystemMeterView(
-                            value: systemMonitor.networkActivity,
-                            label: "NET",
-                            unit: "%",
-                            colorScheme: .network
-                        )
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.3))
-                )
-                .padding(.horizontal)
-
-                // Control buttons
-                HStack(spacing: 15) {
-                    Button(action: {
-                        if audioEngine.isRunning {
-                            audioEngine.stop()
-                        } else {
-                            audioEngine.start()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: audioEngine.isRunning ? "stop.fill" : "play.fill")
-                            Text(audioEngine.isRunning ? "Stop" : "Start")
-                        }
-                        .frame(width: 80)
-                    }
-                    .buttonStyle(ControlButtonStyle(color: audioEngine.isRunning ? .red : .green))
-
-                    Button(action: {
-                        audioEngine.resetPeaks()
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.counterclockwise")
-                            Text("Reset")
-                        }
-                        .frame(width: 80)
-                    }
-                    .buttonStyle(ControlButtonStyle(color: .orange))
-                }
-                .padding(.bottom, 15)
             }
         }
-        .frame(width: 400, height: 580)
+        .frame(width: 400, height: 750)
+        .sheet(isPresented: $showHardwareSettings) {
+            HardwareSettingsSheet()
+                .environmentObject(serialManager)
+        }
         .onAppear {
             audioEngine.start()
             systemMonitor.startMonitoring()
@@ -212,6 +236,7 @@ struct ContentView: View {
         .onDisappear {
             audioEngine.stop()
             systemMonitor.stopMonitoring()
+            serialManager.disconnect()
         }
     }
 
@@ -220,6 +245,33 @@ struct ContentView: View {
         if db > -10 { return .orange }
         if db > -20 { return .yellow }
         return .green
+    }
+}
+
+// MARK: - Hardware Settings Sheet
+struct HardwareSettingsSheet: View {
+    @EnvironmentObject var serialManager: SerialManager
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Hardware Configuration")
+                    .font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }
+            }
+            .padding()
+            .background(Color(nsColor: .windowBackgroundColor))
+
+            Divider()
+
+            // Settings content
+            HardwareSettingsView()
+                .environmentObject(serialManager)
+        }
+        .frame(width: 500, height: 600)
     }
 }
 
@@ -287,4 +339,5 @@ struct ControlButtonStyle: ButtonStyle {
     ContentView()
         .environmentObject(AudioEngine())
         .environmentObject(SystemMonitor())
+        .environmentObject(SerialManager())
 }
