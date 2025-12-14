@@ -16,6 +16,8 @@
 		A100000D229E3D0000000007 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A100000E229E3D0000000007 /* Assets.xcassets */; };
 		A1000020229E3D0000000019 /* SerialManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021229E3D000000001A /* SerialManager.swift */; };
 		A1000022229E3D000000001B /* HardwareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000023229E3D000000001C /* HardwareView.swift */; };
+		A1000024229E3D000000001D /* VUServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000025229E3D000000001E /* VUServer.swift */; };
+		A1000026229E3D000000001F /* ServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027229E3D0000000020 /* ServerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,8 @@
 		A1000011229E3D000000000A /* AudioVUMeter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioVUMeter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000021229E3D000000001A /* SerialManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SerialManager.swift; sourceTree = "<group>"; };
 		A1000023229E3D000000001C /* HardwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareView.swift; sourceTree = "<group>"; };
+		A1000025229E3D000000001E /* VUServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VUServer.swift; sourceTree = "<group>"; };
+		A1000027229E3D0000000020 /* ServerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +67,8 @@
 				A100000C229E3D0000000006 /* SettingsView.swift */,
 				A1000021229E3D000000001A /* SerialManager.swift */,
 				A1000023229E3D000000001C /* HardwareView.swift */,
+				A1000025229E3D000000001E /* VUServer.swift */,
+				A1000027229E3D0000000020 /* ServerView.swift */,
 				A100000E229E3D0000000007 /* Assets.xcassets */,
 				A100000F229E3D0000000008 /* AudioVUMeter.entitlements */,
 				A1000010229E3D0000000009 /* Info.plist */,
@@ -155,6 +161,8 @@
 				A100000B229E3D0000000006 /* SettingsView.swift in Sources */,
 				A1000020229E3D0000000019 /* SerialManager.swift in Sources */,
 				A1000022229E3D000000001B /* HardwareView.swift in Sources */,
+				A1000024229E3D000000001D /* VUServer.swift in Sources */,
+				A1000026229E3D000000001F /* ServerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,7 +306,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.audiotools.AudioVUMeter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -327,7 +335,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.audiotools.AudioVUMeter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

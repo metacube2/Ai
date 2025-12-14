@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var audioEngine: AudioEngine
     @EnvironmentObject var serialManager: SerialManager
+    @EnvironmentObject var vuServer: VUServer
 
     @AppStorage("showPeakIndicator") private var showPeakIndicator = true
     @AppStorage("meterStyle") private var meterStyle = "classic"
@@ -70,6 +71,13 @@ struct SettingsView: View {
                     Label("Hardware", systemImage: "cable.connector")
                 }
 
+            // Server Settings
+            ServerSettingsView()
+                .environmentObject(vuServer)
+                .tabItem {
+                    Label("Server", systemImage: "server.rack")
+                }
+
             // Display Settings
             Form {
                 Section("Meter Display") {
@@ -106,7 +114,7 @@ struct SettingsView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text("Version 1.1.0")
+                Text("Version 1.2.0")
                     .foregroundColor(.secondary)
 
                 Divider()
@@ -123,8 +131,9 @@ struct SettingsView: View {
                 Spacer()
 
                 VStack(spacing: 4) {
-                    Text("Supports BlackHole virtual audio device")
-                    Text("and USB/Serial VU meter hardware")
+                    Text("Supports BlackHole virtual audio device,")
+                    Text("USB/Serial VU meter hardware,")
+                    Text("and TCP server for external apps")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -134,7 +143,7 @@ struct SettingsView: View {
                 Label("About", systemImage: "info.circle")
             }
         }
-        .frame(width: 500, height: 400)
+        .frame(width: 500, height: 500)
     }
 }
 
@@ -142,4 +151,5 @@ struct SettingsView: View {
     SettingsView()
         .environmentObject(AudioEngine())
         .environmentObject(SerialManager())
+        .environmentObject(VUServer())
 }

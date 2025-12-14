@@ -11,9 +11,11 @@ struct ContentView: View {
     @EnvironmentObject var audioEngine: AudioEngine
     @EnvironmentObject var systemMonitor: SystemMonitor
     @EnvironmentObject var serialManager: SerialManager
+    @EnvironmentObject var vuServer: VUServer
 
     @State private var showSettings = false
     @State private var showHardwareSettings = false
+    @State private var showServerSettings = false
 
     var body: some View {
         ZStack {
@@ -37,6 +39,15 @@ struct ContentView: View {
                             .foregroundColor(.white)
 
                         Spacer()
+
+                        // Server settings button
+                        Button(action: { showServerSettings.toggle() }) {
+                            Image(systemName: "server.rack")
+                                .font(.system(size: 14))
+                                .foregroundColor(vuServer.isRunning ? .cyan : .gray)
+                        }
+                        .buttonStyle(.plain)
+                        .help("VU Server Settings")
 
                         // Hardware settings button
                         Button(action: { showHardwareSettings.toggle() }) {
@@ -192,6 +203,10 @@ struct ContentView: View {
                     HardwarePanelView()
                         .environmentObject(serialManager)
 
+                    // VU Server Panel
+                    ServerPanelView()
+                        .environmentObject(vuServer)
+
                     // Control buttons
                     HStack(spacing: 15) {
                         Button(action: {
@@ -224,10 +239,14 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(width: 400, height: 750)
+        .frame(width: 400, height: 880)
         .sheet(isPresented: $showHardwareSettings) {
             HardwareSettingsSheet()
                 .environmentObject(serialManager)
+        }
+        .sheet(isPresented: $showServerSettings) {
+            ServerSettingsSheet()
+                .environmentObject(vuServer)
         }
         .onAppear {
             audioEngine.start()
@@ -340,4 +359,5 @@ struct ControlButtonStyle: ButtonStyle {
         .environmentObject(AudioEngine())
         .environmentObject(SystemMonitor())
         .environmentObject(SerialManager())
+        .environmentObject(VUServer())
 }

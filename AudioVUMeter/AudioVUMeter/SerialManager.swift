@@ -316,19 +316,60 @@ class SerialManager: ObservableObject {
     /// Perform the actual auto-probe
     private func performAutoProbe() {
         let ports = availablePorts
-        let baudRates = [115200, 9600, 57600, 38400, 19200]  // Most common first
-        let protocols = SerialProtocol.allCases
 
-        let totalSteps = Double(ports.count * baudRates.count * protocols.count)
+        // First pass: quick check which ports can be opened
+        let baudRates = [115200, 9600]  // Most common baud rates only
+        let protocols: [SerialProtocol] = [.vuServer, .rawBytes]  // Most likely protocols
+
+        let totalSteps = Double(ports.count * baudRates.count * protocols.count + ports.count)
         var currentStep = 0
 
-        var bestResult: ProbeResult?
+        var workingPorts: [(port: SerialPort, baudRate: Int)] = []
+
+        // Phase 1: Find all ports that can be opened
+        DispatchQueue.main.async {
+            self.probeStatus = "Scanning USB ports..."
+        }
 
         for port in ports {
             guard isProbing else { break }
 
+            currentStep += 1
             DispatchQueue.main.async {
-                self.probeStatus = "Probing: \(port.name)"
+                self.probeProgress = Double(currentStep) / totalSteps
+                self.probeStatus = "Checking: \(port.name)"
+            }
+
+            // Quick check if port can be opened
+            let fd = open(port.path, O_RDWR | O_NOCTTY | O_NONBLOCK)
+            if fd != -1 {
+                close(fd)
+                // Port can be opened - it's a candidate
+                // Default to 115200 baud for serial USB devices
+                workingPorts.append((port: port, baudRate: 115200))
+
+                DispatchQueue.main.async {
+                    let result = ProbeResult(
+                        port: port,
+                        protocol_: .vuServer,
+                        baudRate: 115200,
+                        success: true,
+                        response: "Port accessible",
+                        responseTime: 0.01
+                    )
+                    self.probeResults.append(result)
+                }
+            }
+        }
+
+        // Phase 2: If we have working ports, try to communicate
+        var bestResult: ProbeResult?
+
+        for (port, defaultBaud) in workingPorts {
+            guard isProbing else { break }
+
+            DispatchQueue.main.async {
+                self.probeStatus = "Testing: \(port.name)"
             }
 
             for baud in baudRates {
@@ -355,7 +396,7 @@ class SerialManager: ObservableObject {
                             }
 
                             // If we got a response, this is very likely the device
-                            if result.response != nil {
+                            if result.response != nil && !result.response!.isEmpty {
                                 DispatchQueue.main.async {
                                     self.detectedDevice = port
                                     self.selectedPortPath = port.path
@@ -382,9 +423,16 @@ class SerialManager: ObservableObject {
                 self.selectedPortPath = best.port.path
                 self.selectedProtocol = best.protocol_
                 self.baudRate = best.baudRate
-                self.probeStatus = "Found: \(best.port.name) (\(best.protocol_.rawValue))"
+                self.probeStatus = "Found: \(best.port.name)"
+            } else if let firstWorking = workingPorts.first {
+                // No response but port works - use it anyway
+                self.detectedDevice = firstWorking.port
+                self.selectedPortPath = firstWorking.port.path
+                self.selectedProtocol = .vuServer
+                self.baudRate = firstWorking.baudRate
+                self.probeStatus = "Using: \(firstWorking.port.name) (no response)"
             } else {
-                self.probeStatus = "No VU meter found"
+                self.probeStatus = "No serial devices found"
             }
         }
     }
@@ -409,9 +457,11 @@ class SerialManager: ObservableObject {
         options.c_lflag &= ~UInt(ICANON | ECHO | ECHOE | ISIG)
         options.c_oflag &= ~UInt(OPOST)
 
-        // Set read timeout
-        options.c_cc.16 = 0  // VMIN
-        options.c_cc.17 = 5  // VTIME (0.5 seconds)
+        // Set read timeout using withUnsafeMutableBytes for c_cc tuple
+        withUnsafeMutableBytes(of: &options.c_cc) { ptr in
+            ptr[Int(VMIN)] = 0   // VMIN
+            ptr[Int(VTIME)] = 5  // VTIME (0.5 seconds)
+        }
 
         tcsetattr(fd, TCSANOW, &options)
         tcflush(fd, TCIOFLUSH)
