@@ -17,7 +17,7 @@ enum SerialProtocol: String, CaseIterable, Identifiable {
     case rawBytes = "Raw Bytes (0-255)"
     case textCommand = "Text Commands"
     case json = "JSON Format"
-    case vuServer = "VU-Server Compatible"
+    case vuServer = "VU-Server Binary"
 
     var id: String { rawValue }
 
@@ -32,8 +32,145 @@ enum SerialProtocol: String, CaseIterable, Identifiable {
         case .json:
             return "{\"cmd\":\"ping\"}\n".data(using: .utf8)!
         case .vuServer:
-            return "?\n".data(using: .utf8)!  // Query command
+            // Binary probe: get firmware version command
+            return VUServerProtocol.buildCommand(.getFirmwareVersion, payload: [])
         }
+    }
+}
+
+// MARK: - VU-Server Binary Protocol
+
+/// VU-Server hardware binary protocol implementation
+/// Based on https://github.com/SasaKaranovic/VU-Server
+struct VUServerProtocol {
+
+    // Protocol constants
+    static let startByte: UInt8 = 0x3E  // '>'
+    static let responseStartByte: UInt8 = 0x3C  // '<'
+    static let headerSize = 9
+    static let maxPayloadSize = 1000
+
+    // Command codes (from Comms_Hub_Gauge.py)
+    enum Command: UInt8 {
+        // Dial control commands
+        case setDialRawSingle = 0x01      // Set single dial raw value (0-65535)
+        case setDialRawAll = 0x02         // Set all dials raw
+        case setDialPercentSingle = 0x03  // Set single dial percentage (0-100)
+        case setDialPercentAll = 0x04     // Set all dials percentage
+        case setDialDAC = 0x05            // Set DAC directly
+
+        // Backlight commands
+        case setBacklightRGB = 0x12       // Set RGB backlight
+        case setBacklightRGBW = 0x13      // Set RGBW backlight
+
+        // Calibration
+        case calibrateMin = 0x20          // Calibrate minimum
+        case calibrateMax = 0x21          // Calibrate maximum
+        case calibrateMid = 0x22          // Calibrate midpoint
+
+        // Info commands
+        case getUID = 0x30                // Get device UID
+        case getFirmwareVersion = 0x31    // Get firmware version
+        case getHardwareVersion = 0x32    // Get hardware version
+        case getProtocolVersion = 0x33    // Get protocol version
+
+        // Easing commands
+        case setEasingDialStep = 0x40
+        case setEasingDialPeriod = 0x41
+        case setEasingBacklightStep = 0x42
+        case setEasingBacklightPeriod = 0x43
+        case getEasingConfig = 0x44
+
+        // Display commands
+        case clearDisplay = 0x50
+        case updateDisplay = 0x51
+
+        // Power
+        case setPower = 0x60
+    }
+
+    // Data type identifiers
+    enum DataType: UInt8 {
+        case none = 0x00
+        case uint8 = 0x01
+        case uint16 = 0x02
+        case uint32 = 0x03
+        case string = 0x04
+        case binary = 0x05
+    }
+
+    /// Build a command frame for VU-Server hardware
+    /// Frame format: [START] [CMD] [RESERVED] [DATA_TYPE] [RESERVED] [LEN_H] [LEN_L] [RESERVED] [LEN_L] [PAYLOAD...]
+    static func buildCommand(_ command: Command, payload: [UInt8], dataType: DataType = .uint8) -> Data {
+        var frame = [UInt8]()
+
+        // Header (9 bytes)
+        frame.append(startByte)           // Byte 0: Start '>'
+        frame.append(command.rawValue)    // Byte 1: Command
+        frame.append(0x00)                // Byte 2: Reserved
+        frame.append(dataType.rawValue)   // Byte 3: Data type
+        frame.append(0x00)                // Byte 4: Reserved
+
+        let payloadLen = UInt16(payload.count)
+        frame.append(UInt8(payloadLen >> 8))   // Byte 5: Length high
+        frame.append(UInt8(payloadLen & 0xFF)) // Byte 6: Length low
+        frame.append(0x00)                     // Byte 7: Reserved
+        frame.append(UInt8(payloadLen & 0xFF)) // Byte 8: Length low (repeated)
+
+        // Payload
+        frame.append(contentsOf: payload)
+
+        return Data(frame)
+    }
+
+    /// Build command to set a single dial to a percentage value
+    static func setDialPercent(dialIndex: UInt8, percent: UInt8) -> Data {
+        let clampedPercent = min(percent, 100)
+        return buildCommand(.setDialPercentSingle, payload: [dialIndex, clampedPercent])
+    }
+
+    /// Build command to set all dials at once (percentage values)
+    static func setAllDialsPercent(values: [UInt8]) -> Data {
+        let payload = values.map { min($0, 100) }
+        return buildCommand(.setDialPercentAll, payload: payload)
+    }
+
+    /// Build command to set a single dial to a raw 16-bit value
+    static func setDialRaw(dialIndex: UInt8, value: UInt16) -> Data {
+        return buildCommand(.setDialRawSingle, payload: [
+            dialIndex,
+            UInt8(value >> 8),    // High byte
+            UInt8(value & 0xFF)   // Low byte
+        ], dataType: .uint16)
+    }
+
+    /// Build command to set backlight RGB color
+    static func setBacklightRGB(dialIndex: UInt8, red: UInt8, green: UInt8, blue: UInt8) -> Data {
+        return buildCommand(.setBacklightRGB, payload: [dialIndex, red, green, blue])
+    }
+
+    /// Build command to set backlight RGBW color
+    static func setBacklightRGBW(dialIndex: UInt8, red: UInt8, green: UInt8, blue: UInt8, white: UInt8) -> Data {
+        return buildCommand(.setBacklightRGBW, payload: [dialIndex, red, green, blue, white])
+    }
+
+    /// Parse response from hardware
+    static func parseResponse(_ data: Data) -> (success: Bool, command: UInt8, payload: Data)? {
+        guard data.count >= headerSize else { return nil }
+
+        let bytes = [UInt8](data)
+
+        // Check start byte
+        guard bytes[0] == responseStartByte else { return nil }
+
+        let command = bytes[1]
+        let payloadLength = Int(bytes[5]) << 8 | Int(bytes[6])
+
+        guard data.count >= headerSize + payloadLength else { return nil }
+
+        let payload = Data(bytes[headerSize..<(headerSize + payloadLength)])
+
+        return (success: true, command: command, payload: payload)
     }
 }
 
@@ -111,6 +248,12 @@ class SerialManager: ObservableObject {
     @Published var dialConfigs: [DialConfig] = []
     @Published var lastError: String?
     @Published var bytesSent: UInt64 = 0
+    @Published var bytesReceived: UInt64 = 0
+
+    // Hardware info (VU-Server)
+    @Published var firmwareVersion: String?
+    @Published var hardwareVersion: String?
+    @Published var deviceUID: String?
 
     // Auto-probe state
     @Published var isProbing = false
@@ -586,6 +729,39 @@ class SerialManager: ObservableObject {
 
         // Start update timer
         startUpdateTimer()
+
+        // For VU-Server: start response reader and query device info
+        if selectedProtocol == .vuServer {
+            startResponseReader()
+
+            // Query device info after short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.requestDeviceInfo()
+            }
+        }
+    }
+
+    /// Request device information from VU-Server hardware
+    func requestDeviceInfo() {
+        guard isConnected, fileDescriptor != -1, selectedProtocol == .vuServer else { return }
+
+        writeQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            // Query firmware version
+            let fwCmd = VUServerProtocol.buildCommand(.getFirmwareVersion, payload: [])
+            self.writeData(fwCmd)
+            usleep(50_000)  // 50ms delay between commands
+
+            // Query hardware version
+            let hwCmd = VUServerProtocol.buildCommand(.getHardwareVersion, payload: [])
+            self.writeData(hwCmd)
+            usleep(50_000)
+
+            // Query UID
+            let uidCmd = VUServerProtocol.buildCommand(.getUID, payload: [])
+            self.writeData(uidCmd)
+        }
     }
 
     /// Auto-connect: probe and connect to first found device
@@ -734,16 +910,122 @@ class SerialManager: ObservableObject {
         return Data()
     }
 
-    /// Format for VU-Server compatible hardware
-    /// Protocol: #<dial_id>:<value>\n
+    /// Format for VU-Server hardware using binary protocol
+    /// Sends percentage values (0-100) for each dial
     private func formatVUServer() -> Data {
-        var message = ""
-        for (index, value) in dialValues.enumerated() {
-            // VU-Server uses percentage values 0-100
-            let percentage = (value * 100) / 255
-            message += "#\(index):\(percentage)\n"
+        // Convert 0-255 values to 0-100 percentage
+        let percentValues = dialValues.map { UInt8((($0) * 100) / 255) }
+
+        // Use the optimized "set all dials" command
+        return VUServerProtocol.setAllDialsPercent(values: percentValues)
+    }
+
+    /// Send individual dial value using VU-Server binary protocol
+    func sendDialValue(dialIndex: Int, value: Int) {
+        guard isConnected, fileDescriptor != -1, selectedProtocol == .vuServer else { return }
+
+        writeQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            let percent = UInt8((value * 100) / 255)
+            let data = VUServerProtocol.setDialPercent(dialIndex: UInt8(dialIndex), percent: percent)
+            self.writeData(data)
         }
-        return message.data(using: .utf8) ?? Data()
+    }
+
+    /// Set backlight color for a dial (VU-Server only)
+    func setBacklightColor(dialIndex: Int, red: UInt8, green: UInt8, blue: UInt8) {
+        guard isConnected, fileDescriptor != -1, selectedProtocol == .vuServer else { return }
+
+        writeQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            let data = VUServerProtocol.setBacklightRGB(
+                dialIndex: UInt8(dialIndex),
+                red: red,
+                green: green,
+                blue: blue
+            )
+            self.writeData(data)
+        }
+    }
+
+    /// Request firmware version from hardware
+    func requestFirmwareVersion() {
+        guard isConnected, fileDescriptor != -1, selectedProtocol == .vuServer else { return }
+
+        writeQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            let data = VUServerProtocol.buildCommand(.getFirmwareVersion, payload: [])
+            self.writeData(data)
+
+            // Read response
+            self.readResponse()
+        }
+    }
+
+    // MARK: - Response Handling
+
+    /// Read and parse response from hardware
+    private func readResponse() {
+        var buffer = [UInt8](repeating: 0, count: 256)
+        let bytesRead = read(fileDescriptor, &buffer, buffer.count)
+
+        if bytesRead > 0 {
+            DispatchQueue.main.async {
+                self.bytesReceived += UInt64(bytesRead)
+            }
+
+            let responseData = Data(buffer.prefix(bytesRead))
+
+            // Parse VU-Server response
+            if let response = VUServerProtocol.parseResponse(responseData) {
+                handleVUServerResponse(command: response.command, payload: response.payload)
+            }
+        }
+    }
+
+    /// Handle parsed VU-Server response
+    private func handleVUServerResponse(command: UInt8, payload: Data) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            switch command {
+            case VUServerProtocol.Command.getFirmwareVersion.rawValue:
+                if let version = String(data: payload, encoding: .utf8) {
+                    self.firmwareVersion = version.trimmingCharacters(in: .controlCharacters)
+                    print("VU-Server Firmware: \(self.firmwareVersion ?? "unknown")")
+                }
+
+            case VUServerProtocol.Command.getHardwareVersion.rawValue:
+                if let version = String(data: payload, encoding: .utf8) {
+                    self.hardwareVersion = version.trimmingCharacters(in: .controlCharacters)
+                    print("VU-Server Hardware: \(self.hardwareVersion ?? "unknown")")
+                }
+
+            case VUServerProtocol.Command.getUID.rawValue:
+                if let uid = String(data: payload, encoding: .utf8) {
+                    self.deviceUID = uid.trimmingCharacters(in: .controlCharacters)
+                    print("VU-Server UID: \(self.deviceUID ?? "unknown")")
+                }
+
+            default:
+                print("VU-Server response: cmd=0x\(String(command, radix: 16)), payload=\(payload.count) bytes")
+            }
+        }
+    }
+
+    /// Start background response reader
+    private func startResponseReader() {
+        guard selectedProtocol == .vuServer else { return }
+
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            while let self = self, self.isConnected, self.fileDescriptor != -1 {
+                self.readResponse()
+                usleep(10_000)  // 10ms
+            }
+        }
     }
 
     // MARK: - Low-level I/O

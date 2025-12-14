@@ -93,16 +93,39 @@ struct HardwarePanelView: View {
 
             // Stats / Device info / Errors
             if serialManager.isConnected {
-                HStack {
-                    Text("TX: \(formatBytes(serialManager.bytesSent))")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.gray)
+                VStack(spacing: 4) {
+                    HStack {
+                        Text("TX: \(formatBytes(serialManager.bytesSent))")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(.gray)
 
-                    Spacer()
+                        Text("RX: \(formatBytes(serialManager.bytesReceived))")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(.gray)
 
-                    Text(serialManager.selectedPortPath.components(separatedBy: "/").last ?? "")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.green)
+                        Spacer()
+
+                        Text(serialManager.selectedPortPath.components(separatedBy: "/").last ?? "")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(.green)
+                    }
+
+                    // VU-Server hardware info
+                    if serialManager.selectedProtocol == .vuServer {
+                        HStack {
+                            if let fw = serialManager.firmwareVersion {
+                                Text("FW: \(fw)")
+                                    .font(.system(size: 8, design: .monospaced))
+                                    .foregroundColor(.cyan)
+                            }
+                            if let hw = serialManager.hardwareVersion {
+                                Text("HW: \(hw)")
+                                    .font(.system(size: 8, design: .monospaced))
+                                    .foregroundColor(.cyan)
+                            }
+                            Spacer()
+                        }
+                    }
                 }
             } else if let error = serialManager.lastError {
                 HStack {
@@ -490,7 +513,8 @@ struct HardwareSettingsView: View {
             Text("Format: {\"dials\":[d1,d2,d3,d4]}\\n")
             Text("Values: 0-255 array")
         case .vuServer:
-            Text("Format: #0:val\\n#1:val\\n#2:val\\n#3:val\\n")
+            Text("Binary Protocol: '>' + 9-byte header + payload")
+            Text("Commands: 0x03 (single %), 0x04 (all %)")
             Text("Values: 0-100 percentage per dial")
         }
     }
