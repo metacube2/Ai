@@ -679,7 +679,13 @@ class SerialManager: ObservableObject {
 
     /// Connect to selected serial port
     func connect() {
+        print("[DEBUG] connect() called")
+        print("[DEBUG] selectedPortPath: \(selectedPortPath)")
+        print("[DEBUG] selectedProtocol: \(selectedProtocol)")
+        print("[DEBUG] baudRate: \(baudRate)")
+
         guard !selectedPortPath.isEmpty else {
+            print("[DEBUG] ERROR: No port selected")
             DispatchQueue.main.async {
                 self.lastError = "No port selected"
             }
@@ -688,20 +694,25 @@ class SerialManager: ObservableObject {
 
         // Ensure we disconnect first if already connected
         if fileDescriptor != -1 {
+            print("[DEBUG] Already connected, disconnecting first...")
             disconnect()
         }
 
         // Open serial port
+        print("[DEBUG] Opening port: \(selectedPortPath)")
         let fd = open(selectedPortPath, O_RDWR | O_NOCTTY | O_NONBLOCK)
 
         guard fd != -1 else {
+            let errorMsg = String(cString: strerror(errno))
+            print("[DEBUG] ERROR: Failed to open port: \(errorMsg)")
             DispatchQueue.main.async {
-                self.lastError = "Failed to open port: \(String(cString: strerror(errno)))"
+                self.lastError = "Failed to open port: \(errorMsg)"
                 self.isConnected = false
             }
             return
         }
 
+        print("[DEBUG] Port opened successfully, fd=\(fd)")
         fileDescriptor = fd
 
         // Configure serial port
@@ -734,25 +745,32 @@ class SerialManager: ObservableObject {
         // Clear any pending data
         tcflush(fileDescriptor, TCIOFLUSH)
 
+        print("[DEBUG] Serial port configured, setting isConnected=true")
+
         // Update UI on main thread
         DispatchQueue.main.async {
+            print("[DEBUG] Main thread: setting isConnected=true")
             self.isConnected = true
             self.lastError = nil
+            print("[DEBUG] Main thread: isConnected is now \(self.isConnected)")
         }
 
-        print("Connected to \(selectedPortPath) at \(baudRate) baud")
+        print("[DEBUG] Connected to \(selectedPortPath) at \(baudRate) baud")
 
         // Start update timer (must be on main thread)
         DispatchQueue.main.async {
+            print("[DEBUG] Starting update timer")
             self.startUpdateTimer()
         }
 
         // For VU-Server: start response reader and query device info
         if selectedProtocol == .vuServer {
+            print("[DEBUG] VU-Server protocol: starting response reader")
             startResponseReader()
 
             // Query device info after short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                print("[DEBUG] Requesting device info")
                 self?.requestDeviceInfo()
             }
         }
@@ -809,21 +827,26 @@ class SerialManager: ObservableObject {
 
     /// Disconnect from serial port
     func disconnect() {
+        print("[DEBUG] disconnect() called, fd=\(fileDescriptor)")
+
         // Stop timer on main thread
         DispatchQueue.main.async {
+            print("[DEBUG] Stopping update timer")
             self.stopUpdateTimer()
         }
 
         if fileDescriptor != -1 {
+            print("[DEBUG] Closing file descriptor \(fileDescriptor)")
             close(fileDescriptor)
             fileDescriptor = -1
         }
 
         // Update UI on main thread
         DispatchQueue.main.async {
+            print("[DEBUG] Main thread: setting isConnected=false")
             self.isConnected = false
         }
-        print("Disconnected from serial port")
+        print("[DEBUG] Disconnected from serial port")
     }
 
     /// Toggle connection state
@@ -883,7 +906,10 @@ class SerialManager: ObservableObject {
 
     /// Send current values to hardware
     func sendValues() {
-        guard isConnected, fileDescriptor != -1 else { return }
+        guard isConnected, fileDescriptor != -1 else {
+            // Only print occasionally to avoid spam
+            return
+        }
 
         writeQueue.async { [weak self] in
             guard let self = self else { return }
@@ -933,6 +959,9 @@ class SerialManager: ObservableObject {
         return Data()
     }
 
+    // Debug counter to limit output spam
+    private static var debugCounter = 0
+
     /// Format for VU-Server hardware using binary protocol
     /// Sends percentage values (0-100) for each dial
     private func formatVUServer() -> Data {
@@ -940,7 +969,17 @@ class SerialManager: ObservableObject {
         let percentValues = dialValues.map { UInt8((($0) * 100) / 255) }
 
         // Use the optimized "set all dials" command
-        return VUServerProtocol.setAllDialsPercent(values: percentValues)
+        let data = VUServerProtocol.setAllDialsPercent(values: percentValues)
+
+        // Debug: print hex bytes (only every 30 frames = ~1 second)
+        SerialManager.debugCounter += 1
+        if SerialManager.debugCounter % 30 == 0 {
+            let hexString = data.map { String(format: "%02X", $0) }.joined(separator: " ")
+            print("[DEBUG] formatVUServer: dialValues=\(dialValues) -> percent=\(percentValues)")
+            print("[DEBUG] formatVUServer: sending \(data.count) bytes: \(hexString)")
+        }
+
+        return data
     }
 
     /// Send individual dial value using VU-Server binary protocol
@@ -1055,21 +1094,40 @@ class SerialManager: ObservableObject {
 
     /// Write data to serial port
     private func writeData(_ data: Data) {
-        guard !data.isEmpty else { return }
+        guard !data.isEmpty else {
+            print("[DEBUG] writeData: empty data, skipping")
+            return
+        }
+
+        // Only print every 30th write to reduce spam
+        let shouldDebug = SerialManager.debugCounter % 30 == 0
+
+        if shouldDebug {
+            print("[DEBUG] writeData: writing \(data.count) bytes to fd=\(fileDescriptor)")
+        }
 
         data.withUnsafeBytes { buffer in
-            guard let baseAddress = buffer.baseAddress else { return }
+            guard let baseAddress = buffer.baseAddress else {
+                print("[DEBUG] writeData: ERROR - no base address")
+                return
+            }
             let written = write(fileDescriptor, baseAddress, data.count)
 
             if written > 0 {
+                if shouldDebug {
+                    print("[DEBUG] writeData: wrote \(written) bytes successfully")
+                }
                 DispatchQueue.main.async {
                     self.bytesSent += UInt64(written)
                 }
             } else if written < 0 {
                 let error = String(cString: strerror(errno))
+                print("[DEBUG] writeData: ERROR - \(error)")
                 DispatchQueue.main.async {
                     self.lastError = "Write error: \(error)"
                 }
+            } else {
+                print("[DEBUG] writeData: wrote 0 bytes")
             }
         }
     }
@@ -1077,13 +1135,16 @@ class SerialManager: ObservableObject {
     // MARK: - Timer Management
 
     private func startUpdateTimer() {
+        print("[DEBUG] startUpdateTimer called, interval=\(updateInterval)")
         stopUpdateTimer()
         updateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
             self?.sendValues()
         }
+        print("[DEBUG] Update timer started")
     }
 
     private func stopUpdateTimer() {
+        print("[DEBUG] stopUpdateTimer called")
         updateTimer?.invalidate()
         updateTimer = nil
     }
