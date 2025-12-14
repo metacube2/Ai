@@ -2,13 +2,14 @@
 //  SettingsView.swift
 //  AudioVUMeter
 //
-//  Settings window for configuring audio device and preferences
+//  Settings window for configuring audio device, hardware output, and preferences
 //
 
 import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var serialManager: SerialManager
 
     @AppStorage("showPeakIndicator") private var showPeakIndicator = true
     @AppStorage("meterStyle") private var meterStyle = "classic"
@@ -62,6 +63,13 @@ struct SettingsView: View {
                 Label("Audio", systemImage: "waveform")
             }
 
+            // Hardware Settings
+            HardwareSettingsView()
+                .environmentObject(serialManager)
+                .tabItem {
+                    Label("Hardware", systemImage: "cable.connector")
+                }
+
             // Display Settings
             Form {
                 Section("Meter Display") {
@@ -98,33 +106,40 @@ struct SettingsView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text("Version 1.0.0")
+                Text("Version 1.1.0")
                     .foregroundColor(.secondary)
 
                 Divider()
                     .frame(width: 200)
 
-                Text("A macOS audio level meter with system monitoring capabilities.")
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .frame(width: 300)
+                VStack(spacing: 8) {
+                    Text("A macOS audio level meter with system monitoring")
+                    Text("and physical VU meter hardware support.")
+                }
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                .frame(width: 300)
 
                 Spacer()
 
-                Text("For use with BlackHole virtual audio device")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(spacing: 4) {
+                    Text("Supports BlackHole virtual audio device")
+                    Text("and USB/Serial VU meter hardware")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
             .padding()
             .tabItem {
                 Label("About", systemImage: "info.circle")
             }
         }
-        .frame(width: 450, height: 300)
+        .frame(width: 500, height: 400)
     }
 }
 
 #Preview {
     SettingsView()
         .environmentObject(AudioEngine())
+        .environmentObject(SerialManager())
 }
