@@ -680,17 +680,29 @@ class SerialManager: ObservableObject {
     /// Connect to selected serial port
     func connect() {
         guard !selectedPortPath.isEmpty else {
-            lastError = "No port selected"
+            DispatchQueue.main.async {
+                self.lastError = "No port selected"
+            }
             return
+        }
+
+        // Ensure we disconnect first if already connected
+        if fileDescriptor != -1 {
+            disconnect()
         }
 
         // Open serial port
-        fileDescriptor = open(selectedPortPath, O_RDWR | O_NOCTTY | O_NONBLOCK)
+        let fd = open(selectedPortPath, O_RDWR | O_NOCTTY | O_NONBLOCK)
 
-        guard fileDescriptor != -1 else {
-            lastError = "Failed to open port: \(String(cString: strerror(errno)))"
+        guard fd != -1 else {
+            DispatchQueue.main.async {
+                self.lastError = "Failed to open port: \(String(cString: strerror(errno)))"
+                self.isConnected = false
+            }
             return
         }
+
+        fileDescriptor = fd
 
         // Configure serial port
         var options = termios()
@@ -722,13 +734,18 @@ class SerialManager: ObservableObject {
         // Clear any pending data
         tcflush(fileDescriptor, TCIOFLUSH)
 
-        isConnected = true
-        lastError = nil
+        // Update UI on main thread
+        DispatchQueue.main.async {
+            self.isConnected = true
+            self.lastError = nil
+        }
 
         print("Connected to \(selectedPortPath) at \(baudRate) baud")
 
-        // Start update timer
-        startUpdateTimer()
+        // Start update timer (must be on main thread)
+        DispatchQueue.main.async {
+            self.startUpdateTimer()
+        }
 
         // For VU-Server: start response reader and query device info
         if selectedProtocol == .vuServer {
@@ -792,14 +809,20 @@ class SerialManager: ObservableObject {
 
     /// Disconnect from serial port
     func disconnect() {
-        stopUpdateTimer()
+        // Stop timer on main thread
+        DispatchQueue.main.async {
+            self.stopUpdateTimer()
+        }
 
         if fileDescriptor != -1 {
             close(fileDescriptor)
             fileDescriptor = -1
         }
 
-        isConnected = false
+        // Update UI on main thread
+        DispatchQueue.main.async {
+            self.isConnected = false
+        }
         print("Disconnected from serial port")
     }
 
