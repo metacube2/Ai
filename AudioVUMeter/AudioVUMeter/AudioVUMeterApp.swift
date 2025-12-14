@@ -20,21 +20,36 @@ struct AudioVUMeterApp: App {
     // Timer for updating hardware values
     @State private var updateTimer: Timer?
 
+    // Splash screen state
+    @State private var showSplash = true
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(audioEngine)
-                .environmentObject(systemMonitor)
-                .environmentObject(serialManager)
-                .environmentObject(vuServer)
-                .onAppear {
-                    setupServer()
-                    startHardwareUpdateTimer()
+            ZStack {
+                ContentView()
+                    .environmentObject(audioEngine)
+                    .environmentObject(systemMonitor)
+                    .environmentObject(serialManager)
+                    .environmentObject(vuServer)
+                    .onAppear {
+                        setupServer()
+                        startHardwareUpdateTimer()
+                    }
+                    .onDisappear {
+                        stopHardwareUpdateTimer()
+                        vuServer.stop()
+                    }
+
+                // Splash screen overlay
+                if showSplash {
+                    SplashView {
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            showSplash = false
+                        }
+                    }
+                    .transition(.opacity)
                 }
-                .onDisappear {
-                    stopHardwareUpdateTimer()
-                    vuServer.stop()
-                }
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
