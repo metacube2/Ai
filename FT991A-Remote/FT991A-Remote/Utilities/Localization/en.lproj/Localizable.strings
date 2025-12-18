@@ -1,0 +1,126 @@
+/* English Localization for FT991A-Remote */
+
+/* Connection */
+"Connected" = "Connected";
+"Disconnected" = "Disconnected";
+"Connecting" = "Connecting...";
+"Connect" = "Connect";
+"Disconnect" = "Disconnect";
+"Select Port" = "Select Port...";
+"Refresh Ports" = "Refresh Ports";
+"No Port Selected" = "No Port Selected";
+"Connection Error" = "Connection Error";
+"Auto Reconnect" = "Auto Reconnect";
+
+/* Frequency */
+"Frequency" = "Frequency";
+"Step" = "Step";
+"VFO-A" = "VFO-A";
+"VFO-B" = "VFO-B";
+"Swap VFO" = "Swap VFO";
+"Band" = "Band";
+
+/* Modes */
+"Mode" = "Mode";
+"Filter Width" = "Filter Width";
+"Filter Shift" = "Filter Shift";
+
+/* Levels */
+"Levels" = "Levels";
+"AF Gain" = "AF Gain";
+"RF Gain" = "RF Gain";
+"Squelch" = "Squelch";
+"MIC Gain" = "MIC Gain";
+"Power" = "Power";
+
+/* Functions */
+"Functions" = "Functions";
+"Noise Blanker" = "Noise Blanker";
+"Noise Reduction" = "Noise Reduction";
+"ATU Tune" = "ATU Tune";
+"Split" = "Split";
+
+/* Metering */
+"Metering" = "Metering";
+"S-Meter" = "S-Meter";
+"Power Meter" = "Power Meter";
+"SWR Meter" = "SWR Meter";
+
+/* PTT */
+"PTT" = "PTT";
+"Transmit" = "Transmit";
+"Receive" = "Receive";
+"TX" = "TX";
+"RX" = "RX";
+"Hold Shift for PTT" = "Hold Shift key for PTT";
+
+/* Log */
+"QSO Log" = "QSO Log";
+"Add QSO" = "Add QSO";
+"Edit QSO" = "Edit QSO";
+"Delete QSO" = "Delete QSO";
+"Callsign" = "Callsign";
+"Date" = "Date";
+"Time" = "Time";
+"RST Sent" = "RST Sent";
+"RST Received" = "RST Received";
+"Name" = "Name";
+"QTH" = "QTH";
+"Locator" = "Locator";
+"Notes" = "Notes";
+"Search" = "Search...";
+"Export" = "Export";
+"Import" = "Import";
+
+/* Debug */
+"CAT Console" = "CAT Console";
+"Send Command" = "Send Command";
+"Clear History" = "Clear History";
+"Auto Scroll" = "Auto Scroll";
+"Bytes Sent" = "Bytes Sent";
+"Bytes Received" = "Bytes Received";
+"Commands" = "Commands";
+
+/* Settings */
+"Settings" = "Settings";
+"Connection" = "Connection";
+"Interface" = "Interface";
+"Audio" = "Audio";
+"Keyboard" = "Keyboard";
+"Logging" = "Logging";
+"UI Style" = "UI Style";
+"Modern" = "Modern";
+"Front Panel" = "Front Panel";
+"Language" = "Language";
+"German" = "German";
+"English" = "English";
+"Frequency Step" = "Frequency Step";
+"Log Directory" = "Log Directory";
+"Auto Save" = "Auto Save";
+"Reset to Defaults" = "Reset to Defaults";
+
+/* Audio */
+"Audio Routing" = "Audio Routing";
+"Input Device" = "Input Device";
+"Output Device" = "Output Device";
+"BlackHole Status" = "BlackHole Status";
+"Installed" = "Installed";
+"Not Found" = "Not Found";
+"Configure for Digital Modes" = "Configure for Digital Modes";
+"Use BlackHole" = "Use BlackHole";
+
+/* Menu */
+"Radio" = "Radio";
+"View" = "View";
+"Show Debug Panel" = "Show Debug Panel";
+"Show Log Panel" = "Show Log Panel";
+"Open Main Window" = "Open Main Window";
+"Quit" = "Quit";
+
+/* Errors */
+"Error" = "Error";
+"Failed to connect" = "Failed to connect";
+"Failed to open port" = "Failed to open port";
+"No serial ports found" = "No serial ports found";
+"Save failed" = "Save failed";
+"Export failed" = "Export failed";
