@@ -1,0 +1,524 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000001 /* FT991A_RemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001; };
+		A10000002 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000002; };
+		A10000003 /* ModernRadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000003; };
+		A10000004 /* SkeuomorphRadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000004; };
+		A10000005 /* DebugPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000005; };
+		A10000006 /* LogPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000006; };
+		A10000007 /* AudioPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000007; };
+		A10000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000008; };
+		A10000009 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000009; };
+		A10000010 /* RadioState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010; };
+		A10000011 /* CATCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000011; };
+		A10000012 /* QSOEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000012; };
+		A10000013 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000013; };
+		A10000014 /* SerialPortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000014; };
+		A10000015 /* CATProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000015; };
+		A10000016 /* CSVManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000016; };
+		A10000017 /* AudioRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000017; };
+		A10000018 /* RadioViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000018; };
+		A10000019 /* LogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000019; };
+		A10000020 /* SettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020; };
+		A10000021 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000021; };
+		A10000022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000022; };
+		A10000023 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A20000023; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000001 /* FT991A_RemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FT991A_RemoteApp.swift; sourceTree = "<group>"; };
+		A20000002 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		A20000003 /* ModernRadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernRadioView.swift; sourceTree = "<group>"; };
+		A20000004 /* SkeuomorphRadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeuomorphRadioView.swift; sourceTree = "<group>"; };
+		A20000005 /* DebugPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugPanel.swift; sourceTree = "<group>"; };
+		A20000006 /* LogPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogPanel.swift; sourceTree = "<group>"; };
+		A20000007 /* AudioPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPanel.swift; sourceTree = "<group>"; };
+		A20000008 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A20000009 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		A20000010 /* RadioState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioState.swift; sourceTree = "<group>"; };
+		A20000011 /* CATCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CATCommand.swift; sourceTree = "<group>"; };
+		A20000012 /* QSOEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QSOEntry.swift; sourceTree = "<group>"; };
+		A20000013 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		A20000014 /* SerialPortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SerialPortManager.swift; sourceTree = "<group>"; };
+		A20000015 /* CATProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CATProtocol.swift; sourceTree = "<group>"; };
+		A20000016 /* CSVManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVManager.swift; sourceTree = "<group>"; };
+		A20000017 /* AudioRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouter.swift; sourceTree = "<group>"; };
+		A20000018 /* RadioViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioViewModel.swift; sourceTree = "<group>"; };
+		A20000019 /* LogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewModel.swift; sourceTree = "<group>"; };
+		A20000020 /* SettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsController.swift; sourceTree = "<group>"; };
+		A20000021 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		A20000022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A20000023 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A20000024 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A20000025 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000026 /* FT991A_Remote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FT991A_Remote.entitlements; sourceTree = "<group>"; };
+		A30000001 /* FT991A-Remote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "FT991A-Remote.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A40000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A50000001 = {
+			isa = PBXGroup;
+			children = (
+				A50000002 /* FT991A-Remote */,
+				A50000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A50000002 /* FT991A-Remote */ = {
+			isa = PBXGroup;
+			children = (
+				A20000001 /* FT991A_RemoteApp.swift */,
+				A50000004 /* Models */,
+				A50000005 /* Services */,
+				A50000006 /* ViewModels */,
+				A50000007 /* Views */,
+				A50000008 /* Utilities */,
+				A20000022 /* Assets.xcassets */,
+				A20000025 /* Info.plist */,
+				A20000026 /* FT991A_Remote.entitlements */,
+			);
+			path = "FT991A-Remote";
+			sourceTree = "<group>";
+		};
+		A50000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A30000001 /* FT991A-Remote.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A50000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010 /* RadioState.swift */,
+				A20000011 /* CATCommand.swift */,
+				A20000012 /* QSOEntry.swift */,
+				A20000013 /* Settings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A50000005 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20000014 /* SerialPortManager.swift */,
+				A20000015 /* CATProtocol.swift */,
+				A20000016 /* CSVManager.swift */,
+				A20000017 /* AudioRouter.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A50000006 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A20000018 /* RadioViewModel.swift */,
+				A20000019 /* LogViewModel.swift */,
+				A20000020 /* SettingsController.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A50000007 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000002 /* MainView.swift */,
+				A50000009 /* ModernView */,
+				A50000010 /* SkeuomorphView */,
+				A50000011 /* Panels */,
+				A50000012 /* Settings */,
+				A50000013 /* MenuBar */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A50000008 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A20000021 /* Logger.swift */,
+				A50000014 /* Localization */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A50000009 /* ModernView */ = {
+			isa = PBXGroup;
+			children = (
+				A20000003 /* ModernRadioView.swift */,
+			);
+			path = ModernView;
+			sourceTree = "<group>";
+		};
+		A50000010 /* SkeuomorphView */ = {
+			isa = PBXGroup;
+			children = (
+				A20000004 /* SkeuomorphRadioView.swift */,
+			);
+			path = SkeuomorphView;
+			sourceTree = "<group>";
+		};
+		A50000011 /* Panels */ = {
+			isa = PBXGroup;
+			children = (
+				A20000005 /* DebugPanel.swift */,
+				A20000006 /* LogPanel.swift */,
+				A20000007 /* AudioPanel.swift */,
+			);
+			path = Panels;
+			sourceTree = "<group>";
+		};
+		A50000012 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A20000008 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A50000013 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				A20000009 /* MenuBarView.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		A50000014 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				A20000023 /* Localizable.strings */,
+			);
+			path = Localization;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A60000001 /* FT991A-Remote */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000001;
+			buildPhases = (
+				A80000001 /* Sources */,
+				A40000001 /* Frameworks */,
+				A90000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "FT991A-Remote";
+			productName = "FT991A-Remote";
+			productReference = A30000001 /* FT991A-Remote.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AB0000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A60000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AC0000001;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = de;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				de,
+				en,
+				Base,
+			);
+			mainGroup = A50000001;
+			productRefGroup = A50000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A60000001 /* FT991A-Remote */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A90000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000022 /* Assets.xcassets in Resources */,
+				A10000023 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A80000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000001 /* FT991A_RemoteApp.swift in Sources */,
+				A10000002 /* MainView.swift in Sources */,
+				A10000003 /* ModernRadioView.swift in Sources */,
+				A10000004 /* SkeuomorphRadioView.swift in Sources */,
+				A10000005 /* DebugPanel.swift in Sources */,
+				A10000006 /* LogPanel.swift in Sources */,
+				A10000007 /* AudioPanel.swift in Sources */,
+				A10000008 /* SettingsView.swift in Sources */,
+				A10000009 /* MenuBarView.swift in Sources */,
+				A10000010 /* RadioState.swift in Sources */,
+				A10000011 /* CATCommand.swift in Sources */,
+				A10000012 /* QSOEntry.swift in Sources */,
+				A10000013 /* Settings.swift in Sources */,
+				A10000014 /* SerialPortManager.swift in Sources */,
+				A10000015 /* CATProtocol.swift in Sources */,
+				A10000016 /* CSVManager.swift in Sources */,
+				A10000017 /* AudioRouter.swift in Sources */,
+				A10000018 /* RadioViewModel.swift in Sources */,
+				A10000019 /* LogViewModel.swift in Sources */,
+				A10000020 /* SettingsController.swift in Sources */,
+				A10000021 /* Logger.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A20000023 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A20000024 /* de */,
+				A20000025 /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		AD0000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AD0000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		AE0000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "FT991A-Remote/FT991A_Remote.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FT991A-Remote/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "FT-991A Remote";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2024";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FT-991A Remote needs microphone access for audio monitoring and digital modes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hamradio.FT991A-Remote";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AE0000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "FT991A-Remote/FT991A_Remote.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FT991A-Remote/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "FT-991A Remote";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2024";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FT-991A Remote needs microphone access for audio monitoring and digital modes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hamradio.FT991A-Remote";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A70000001 /* Build configuration list for PBXNativeTarget "FT991A-Remote" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE0000001 /* Debug */,
+				AE0000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC0000001 /* Build configuration list for PBXProject "FT991A-Remote" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD0000001 /* Debug */,
+				AD0000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AB0000001 /* Project object */;
+}
