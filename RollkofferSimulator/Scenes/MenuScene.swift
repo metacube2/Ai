@@ -245,6 +245,25 @@ class MenuScene: SKScene {
         }
     }
 
+    // MARK: - Keyboard Handling (macOS)
+    #if targetEnvironment(macCatalyst)
+    override var canBecomeFirstResponder: Bool { true }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard let key = presses.first?.key else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
+
+        switch key.keyCode {
+        case .keyboardSpacebar, .keyboardReturnOrEnter:
+            startGame()
+        default:
+            super.pressesBegan(presses, with: event)
+        }
+    }
+    #endif
+
     private func startGame() {
         // Button press effect
         let pressDown = SKAction.scale(to: 0.9, duration: 0.1)
