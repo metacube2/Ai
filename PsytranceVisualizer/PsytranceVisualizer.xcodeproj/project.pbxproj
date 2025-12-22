@@ -1,0 +1,465 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1100000000000001 /* PsytranceVisualizerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000001 /* PsytranceVisualizerApp.swift */; };
+		1100000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000002 /* AppDelegate.swift */; };
+		1100000000000003 /* AudioInputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000003 /* AudioInputManager.swift */; };
+		1100000000000004 /* DSPEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000004 /* DSPEngine.swift */; };
+		1100000000000005 /* AudioAnalysisData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000005 /* AudioAnalysisData.swift */; };
+		1100000000000006 /* VisualizationMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000006 /* VisualizationMode.swift */; };
+		1100000000000007 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000007 /* AppSettings.swift */; };
+		1100000000000008 /* MetalRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000008 /* MetalRenderer.swift */; };
+		1100000000000009 /* Common.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000009 /* Common.metal */; };
+		1100000000000010 /* FFTClassicShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000010 /* FFTClassicShader.metal */; };
+		1100000000000011 /* MelSpectrogramShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000011 /* MelSpectrogramShader.metal */; };
+		1100000000000012 /* SubBassShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000012 /* SubBassShader.metal */; };
+		1100000000000013 /* SidechainPumpShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000013 /* SidechainPumpShader.metal */; };
+		1100000000000014 /* HNRShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000014 /* HNRShader.metal */; };
+		1100000000000015 /* MandelbrotShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000015 /* MandelbrotShader.metal */; };
+		1100000000000016 /* TunnelWarpShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000016 /* TunnelWarpShader.metal */; };
+		1100000000000017 /* DMTGeometryShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000017 /* DMTGeometryShader.metal */; };
+		1100000000000018 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000018 /* MainWindow.swift */; };
+		1100000000000019 /* ControlPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000019 /* ControlPanel.swift */; };
+		1100000000000020 /* VisualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000020 /* VisualizerView.swift */; };
+		1100000000000021 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000021 /* SettingsManager.swift */; };
+		1100000000000022 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2100000000000022 /* ColorPalette.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2000000000000001 /* PsytranceVisualizer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PsytranceVisualizer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2100000000000001 /* PsytranceVisualizerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PsytranceVisualizerApp.swift; sourceTree = "<group>"; };
+		2100000000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2100000000000003 /* AudioInputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInputManager.swift; sourceTree = "<group>"; };
+		2100000000000004 /* DSPEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSPEngine.swift; sourceTree = "<group>"; };
+		2100000000000005 /* AudioAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalysisData.swift; sourceTree = "<group>"; };
+		2100000000000006 /* VisualizationMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualizationMode.swift; sourceTree = "<group>"; };
+		2100000000000007 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		2100000000000008 /* MetalRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalRenderer.swift; sourceTree = "<group>"; };
+		2100000000000009 /* Common.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Common.metal; sourceTree = "<group>"; };
+		2100000000000010 /* FFTClassicShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FFTClassicShader.metal; sourceTree = "<group>"; };
+		2100000000000011 /* MelSpectrogramShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = MelSpectrogramShader.metal; sourceTree = "<group>"; };
+		2100000000000012 /* SubBassShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SubBassShader.metal; sourceTree = "<group>"; };
+		2100000000000013 /* SidechainPumpShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SidechainPumpShader.metal; sourceTree = "<group>"; };
+		2100000000000014 /* HNRShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = HNRShader.metal; sourceTree = "<group>"; };
+		2100000000000015 /* MandelbrotShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = MandelbrotShader.metal; sourceTree = "<group>"; };
+		2100000000000016 /* TunnelWarpShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TunnelWarpShader.metal; sourceTree = "<group>"; };
+		2100000000000017 /* DMTGeometryShader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DMTGeometryShader.metal; sourceTree = "<group>"; };
+		2100000000000018 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
+		2100000000000019 /* ControlPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanel.swift; sourceTree = "<group>"; };
+		2100000000000020 /* VisualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualizerView.swift; sourceTree = "<group>"; };
+		2100000000000021 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		2100000000000022 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
+		2100000000000023 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2100000000000024 /* PsytranceVisualizer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PsytranceVisualizer.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				4000000000000002 /* App */,
+				4000000000000003 /* Audio */,
+				4000000000000004 /* Models */,
+				4000000000000005 /* Rendering */,
+				4000000000000007 /* UI */,
+				4000000000000008 /* Utilities */,
+				4000000000000009 /* Resources */,
+				4000000000000010 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000001 /* PsytranceVisualizerApp.swift */,
+				2100000000000002 /* AppDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		4000000000000003 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000003 /* AudioInputManager.swift */,
+				2100000000000004 /* DSPEngine.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		4000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000005 /* AudioAnalysisData.swift */,
+				2100000000000006 /* VisualizationMode.swift */,
+				2100000000000007 /* AppSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		4000000000000005 /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000008 /* MetalRenderer.swift */,
+				4000000000000006 /* Shaders */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		4000000000000006 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000009 /* Common.metal */,
+				2100000000000010 /* FFTClassicShader.metal */,
+				2100000000000011 /* MelSpectrogramShader.metal */,
+				2100000000000012 /* SubBassShader.metal */,
+				2100000000000013 /* SidechainPumpShader.metal */,
+				2100000000000014 /* HNRShader.metal */,
+				2100000000000015 /* MandelbrotShader.metal */,
+				2100000000000016 /* TunnelWarpShader.metal */,
+				2100000000000017 /* DMTGeometryShader.metal */,
+			);
+			path = Shaders;
+			sourceTree = "<group>";
+		};
+		4000000000000007 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000018 /* MainWindow.swift */,
+				2100000000000019 /* ControlPanel.swift */,
+				2100000000000020 /* VisualizerView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		4000000000000008 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000021 /* SettingsManager.swift */,
+				2100000000000022 /* ColorPalette.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		4000000000000009 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2100000000000023 /* Info.plist */,
+				2100000000000024 /* PsytranceVisualizer.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		4000000000000010 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000001 /* PsytranceVisualizer.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5000000000000001 /* PsytranceVisualizer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6000000000000003 /* Build configuration list for PBXNativeTarget "PsytranceVisualizer" */;
+			buildPhases = (
+				5000000000000002 /* Sources */,
+				3000000000000001 /* Frameworks */,
+				5000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PsytranceVisualizer;
+			productName = PsytranceVisualizer;
+			productReference = 2000000000000001 /* PsytranceVisualizer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					5000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 6000000000000001 /* Build configuration list for PBXProject "PsytranceVisualizer" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4000000000000001;
+			productRefGroup = 4000000000000010 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5000000000000001 /* PsytranceVisualizer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1100000000000001 /* PsytranceVisualizerApp.swift in Sources */,
+				1100000000000002 /* AppDelegate.swift in Sources */,
+				1100000000000003 /* AudioInputManager.swift in Sources */,
+				1100000000000004 /* DSPEngine.swift in Sources */,
+				1100000000000005 /* AudioAnalysisData.swift in Sources */,
+				1100000000000006 /* VisualizationMode.swift in Sources */,
+				1100000000000007 /* AppSettings.swift in Sources */,
+				1100000000000008 /* MetalRenderer.swift in Sources */,
+				1100000000000009 /* Common.metal in Sources */,
+				1100000000000010 /* FFTClassicShader.metal in Sources */,
+				1100000000000011 /* MelSpectrogramShader.metal in Sources */,
+				1100000000000012 /* SubBassShader.metal in Sources */,
+				1100000000000013 /* SidechainPumpShader.metal in Sources */,
+				1100000000000014 /* HNRShader.metal in Sources */,
+				1100000000000015 /* MandelbrotShader.metal in Sources */,
+				1100000000000016 /* TunnelWarpShader.metal in Sources */,
+				1100000000000017 /* DMTGeometryShader.metal in Sources */,
+				1100000000000018 /* MainWindow.swift in Sources */,
+				1100000000000019 /* ControlPanel.swift in Sources */,
+				1100000000000020 /* VisualizerView.swift in Sources */,
+				1100000000000021 /* SettingsManager.swift in Sources */,
+				1100000000000022 /* ColorPalette.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6100000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		6100000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		6100000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Resources/PsytranceVisualizer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Psytrance Visualizer needs access to your audio input to visualize music in real-time.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.psytrance.visualizer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6100000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Resources/PsytranceVisualizer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Psytrance Visualizer needs access to your audio input to visualize music in real-time.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.psytrance.visualizer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6000000000000001 /* Build configuration list for PBXProject "PsytranceVisualizer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6100000000000001 /* Debug */,
+				6100000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6000000000000003 /* Build configuration list for PBXNativeTarget "PsytranceVisualizer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6100000000000003 /* Debug */,
+				6100000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0000000000000001 /* Project object */;
+}
