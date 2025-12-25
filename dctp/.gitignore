@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.pyo
+.dctp_backups/
+.dctp_settings.json
