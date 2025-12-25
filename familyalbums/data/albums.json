@@ -1,0 +1,14 @@
+{
+    "albums": [
+        {
+            "id": "demo-001",
+            "title": "Weihnachten 2024",
+            "url": "https://nextcloud.example.com/apps/photos/public/demo",
+            "date": "2024-12-25",
+            "tags": ["weihnachten", "familie", "2024"],
+            "description": "Bescherung und Festessen bei der Familie",
+            "thumbnail": "",
+            "created_at": "2024-12-26T10:00:00+01:00"
+        }
+    ]
+}
