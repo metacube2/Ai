@@ -1,0 +1,16 @@
+{
+    "viewer_display": {
+        "enabled": true,
+        "min_viewers": 1
+    },
+    "video_mode": {
+        "play_in_player": true,
+        "allow_download": true
+    },
+    "timelapse": {
+        "default_speed": 1,
+        "available_speeds": [1, 10, 100]
+    },
+    "last_updated": null,
+    "updated_by": null
+}
