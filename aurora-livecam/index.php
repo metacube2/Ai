@@ -349,8 +349,9 @@ nav a:hover{background:#4CAF50;color:#fff}
 #tlv,#dvp{display:none;background:#000}
 #dvp video{width:100%;height:100%}
 
-.zoom-btns{position:absolute;bottom:10px;right:10px;display:flex;gap:5px;z-index:20}
-.zoom-btns button{width:36px;height:36px;border:none;border-radius:50%;background:rgba(255,255,255,.9);font-size:18px;cursor:pointer}
+.zoom-btns{position:absolute;bottom:15px;right:15px;display:flex;gap:8px;z-index:100}
+.zoom-btns button{width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.95);font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:.2s}
+.zoom-btns button:hover{transform:scale(1.1);background:#fff}
 
 .info-bar{display:flex;justify-content:center;gap:15px;margin:15px 0;flex-wrap:wrap}
 .badge{background:#fff;padding:8px 18px;border-radius:25px;font-weight:bold;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
@@ -557,9 +558,33 @@ nav ul{justify-content:center}
 
 let zoomLvl=1;
 function zoom(d){
-const els=document.querySelectorAll('#vw video,#vw img');
-if(d===0)zoomLvl=1;else zoomLvl=Math.max(1,Math.min(3,zoomLvl+d*.5));
-els.forEach(e=>{e.style.transform='scale('+zoomLvl+')';e.style.transformOrigin='center'});
+if(d===0) zoomLvl=1;
+else zoomLvl=Math.max(1,Math.min(4,zoomLvl+d*0.5));
+// Alle Video-Elemente in allen Modi
+const targets=['#webcam-player','#tl-img','#dv'];
+targets.forEach(sel=>{
+const el=document.querySelector(sel);
+if(el){
+el.style.transform='scale('+zoomLvl+')';
+el.style.transformOrigin='center center';
+el.style.transition='transform 0.2s ease';
+}
+});
+// Zoom-Level Anzeige
+showZoomLevel();
+}
+function showZoomLevel(){
+let ind=document.getElementById('zoom-ind');
+if(!ind){
+ind=document.createElement('div');
+ind.id='zoom-ind';
+ind.style.cssText='position:absolute;top:15px;left:15px;background:rgba(0,0,0,0.7);color:#fff;padding:8px 14px;border-radius:20px;font-weight:bold;z-index:100;transition:opacity 0.3s';
+document.getElementById('vw').appendChild(ind);
+}
+ind.textContent='🔍 '+Math.round(zoomLvl*100)+'%';
+ind.style.opacity='1';
+clearTimeout(ind.hideTimer);
+ind.hideTimer=setTimeout(()=>{ind.style.opacity='0';},1500);
 }
 
 const TL={
@@ -635,18 +660,52 @@ fetch(location.href,{method:'POST',body:new URLSearchParams({action:'viewer_hear
 }
 
 <?php if($adminManager->isAdmin()): ?>
-function save(k,v){
-fetch(location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'settings_action=update&key='+encodeURIComponent(k)+'&value='+encodeURIComponent(v)})
-.then(r=>r.json()).then(d=>{
-const n=document.createElement('div');n.textContent=d.success?'✓ Gespeichert':'✗ Fehler';
-n.style.cssText='position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:6px;background:'+(d.success?'#4CAF50':'#f44')+';color:#fff;font-weight:bold;z-index:9999';
-document.body.appendChild(n);setTimeout(()=>n.remove(),2000);
+function saveSetting(key, value) {
+const formData = new FormData();
+formData.append('settings_action', 'update');
+formData.append('key', key);
+formData.append('value', value);
+
+fetch(window.location.pathname, {
+method: 'POST',
+body: formData
+})
+.then(r => r.json())
+.then(data => {
+const toast = document.createElement('div');
+toast.innerHTML = data.success ? '✓ Gespeichert' : '✗ Fehler: ' + (data.message || '');
+toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;border-radius:8px;background:' +
+(data.success ? '#4CAF50' : '#f44336') + ';color:#fff;font-weight:bold;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+document.body.appendChild(toast);
+setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 1500);
+setTimeout(() => toast.remove(), 2000);
+})
+.catch(err => {
+console.error('Settings save error:', err);
+alert('Fehler beim Speichern: ' + err.message);
 });
 }
-document.getElementById('s-viewer')?.addEventListener('change',e=>save('viewer_display.enabled',e.target.checked));
-document.getElementById('s-min')?.addEventListener('change',e=>save('viewer_display.min_viewers',e.target.value));
-document.getElementById('s-play')?.addEventListener('change',e=>save('video_mode.play_in_player',e.target.checked));
-document.getElementById('s-dl')?.addEventListener('change',e=>save('video_mode.allow_download',e.target.checked));
+
+// Settings Event-Handler nach DOM-Load binden
+document.addEventListener('DOMContentLoaded', function() {
+const sViewer = document.getElementById('s-viewer');
+const sMin = document.getElementById('s-min');
+const sPlay = document.getElementById('s-play');
+const sDl = document.getElementById('s-dl');
+
+if (sViewer) sViewer.addEventListener('change', function() {
+saveSetting('viewer_display.enabled', this.checked ? 'true' : 'false');
+});
+if (sMin) sMin.addEventListener('change', function() {
+saveSetting('viewer_display.min_viewers', this.value);
+});
+if (sPlay) sPlay.addEventListener('change', function() {
+saveSetting('video_mode.play_in_player', this.checked ? 'true' : 'false');
+});
+if (sDl) sDl.addEventListener('change', function() {
+saveSetting('video_mode.allow_download', this.checked ? 'true' : 'false');
+});
+});
 <?php endif; ?>
 
 document.addEventListener('DOMContentLoaded',()=>{
