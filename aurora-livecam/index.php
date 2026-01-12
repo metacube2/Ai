@@ -1394,13 +1394,79 @@ header {
     top: 0;
     z-index: 100;
 }
+header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
 
 .logo img { height: 50px; }
+.logo-wrapper { display: flex; align-items: center; gap: 15px; }
+.swiss-cross {
+    width: 28px;
+    height: 28px;
+    background: #d52b1e;
+    border-radius: 6px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(213, 43, 30, 0.4);
+}
+.swiss-cross::before,
+.swiss-cross::after {
+    content: "";
+    position: absolute;
+    background: #fff;
+}
+.swiss-cross::before {
+    width: 16px;
+    height: 4px;
+    top: 12px;
+    left: 6px;
+    border-radius: 2px;
+}
+.swiss-cross::after {
+    width: 4px;
+    height: 16px;
+    top: 6px;
+    left: 12px;
+    border-radius: 2px;
+}
 
 nav ul { list-style: none; padding: 0; display: flex; justify-content: space-around; flex-wrap: wrap; margin: 0; }
 nav ul li { margin: 5px 10px; }
 nav ul li a { text-decoration: none; color: #333; font-weight: bold; padding: 5px 10px; transition: color 0.3s; }
 nav ul li a:hover { color: #4CAF50; }
+.theme-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 6px 10px;
+    border-radius: 999px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+.theme-switcher span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 0.4px;
+}
+.theme-button {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s ease;
+}
+.theme-button.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    box-shadow: 0 6px 15px rgba(102, 126, 234, 0.35);
+}
 
 .button {
     display: inline-block;
@@ -1464,6 +1530,32 @@ nav ul li a:hover { color: #4CAF50; }
     border: 1px solid #e0e0e0;
     height: 40px;
     white-space: nowrap;
+}
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin: 15px 0 5px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.zoom-controls label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+}
+.zoom-slider {
+    width: 220px;
+}
+.zoom-value {
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+    color: #333;
 }
 
 .tech-stat { justify-self: start; font-family: monospace; color: #555; }
@@ -1656,6 +1748,8 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
     .container { padding: 0 15px; }
     .section { padding: 40px 0; }
     nav ul { flex-direction: column; align-items: center; }
+    header .container { justify-content: center; }
+    .theme-switcher { width: 100%; justify-content: center; }
     .flag-title-container { flex-direction: column; }
     .title-section h1 { font-size: 1.8em; }
     .video-info-bar { display: flex; flex-direction: column-reverse; gap: 10px; }
@@ -1713,6 +1807,79 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
 .ad-item img:hover {
     transform: scale(1.1);
 }
+
+/* ========== DESIGN SWITCH THEMES ========== */
+.sun-overlay {
+    position: fixed;
+    inset: -20% auto auto -10%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle at center, rgba(255, 214, 98, 0.95), rgba(255, 185, 64, 0.65) 45%, rgba(255, 185, 64, 0) 70%);
+    filter: blur(2px);
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    animation: sunFloat 12s ease-in-out infinite;
+}
+@keyframes sunFloat {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+    50% { transform: translate(40px, 10px) scale(1.08); opacity: 1; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+}
+
+body.theme-legacy .sun-overlay { display: none; }
+
+body.theme-alpine {
+    background-image: linear-gradient(135deg, rgba(221, 234, 255, 0.8), rgba(196, 223, 255, 0.9)), url('main.jpg');
+    color: #102a43;
+}
+body.theme-alpine header {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+}
+body.theme-alpine .section {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(180, 205, 230, 0.6);
+}
+body.theme-alpine .button {
+    background: linear-gradient(135deg, #2f80ed, #56ccf2);
+}
+body.theme-alpine nav ul li a:hover { color: #2f80ed; }
+body.theme-alpine .info-badge { border-color: #d2e3f9; }
+body.theme-alpine .zoom-controls { background: rgba(255, 255, 255, 0.92); }
+
+body.theme-neo {
+    background-image: radial-gradient(circle at top, rgba(40, 90, 140, 0.7), rgba(7, 16, 34, 0.95) 55%), url('main.jpg');
+    color: #e6f1ff;
+}
+body.theme-neo header {
+    background: rgba(7, 16, 34, 0.9);
+    border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+}
+body.theme-neo nav ul li a { color: #e6f1ff; }
+body.theme-neo nav ul li a:hover { color: #60a5fa; }
+body.theme-neo .section {
+    background: rgba(7, 16, 34, 0.75);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+body.theme-neo .button {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+}
+body.theme-neo .info-badge {
+    background: rgba(15, 30, 60, 0.9);
+    color: #e6f1ff;
+    border-color: rgba(96, 165, 250, 0.4);
+}
+body.theme-neo .zoom-controls {
+    background: rgba(7, 16, 34, 0.85);
+}
+body.theme-neo .zoom-controls label,
+body.theme-neo .zoom-value {
+    color: #e6f1ff;
+}
+body.theme-neo footer {
+    background: rgba(7, 16, 34, 0.95);
+}
 /* WERBEBANNER STYLES */
 .recommendation-banner {
     text-align: center;
@@ -1762,7 +1929,9 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
-<body>
+<body class="theme-legacy">
+
+<div class="sun-overlay" aria-hidden="true"></div>
 
 <div id="language-switch">
     <button id="lang-de" class="lang-button" aria-label="Deutsch">
@@ -1784,8 +1953,11 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
 
 <header>
     <div class="container">
-        <div class="logo">
-            <img src="logo.png" alt="Aurora Wetter Livecam">
+        <div class="logo-wrapper">
+            <div class="logo">
+                <img src="logo.png" alt="Aurora Wetter Livecam">
+            </div>
+            <div class="swiss-cross" aria-hidden="true"></div>
         </div>
         <nav>
             <ul>
@@ -1799,6 +1971,12 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
                 <?php endif; ?>
             </ul>
         </nav>
+        <div class="theme-switcher" aria-label="Design wechseln">
+            <span>Design</span>
+            <button class="theme-button active" data-theme="theme-legacy" type="button">Klassisch</button>
+            <button class="theme-button" data-theme="theme-alpine" type="button">Alpin</button>
+            <button class="theme-button" data-theme="theme-neo" type="button">Modern</button>
+        </div>
     </div>
 </header>
 
@@ -1857,6 +2035,13 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
 
         <!-- TIMELAPSE CONTROLS (NEU!) -->
         <div id="timelapse-controls"></div>
+
+        <!-- ZOOM CONTROLS -->
+        <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
+            <label for="zoom-range">Zoom</label>
+            <input type="range" id="zoom-range" class="zoom-slider" min="1" max="100" value="1" step="1">
+            <span id="zoom-value" class="zoom-value">1x</span>
+        </div>
 
         <!-- VIDEO PLAYER CONTROLS (für Tagesvideos) -->
         <div id="daily-video-controls" style="display: none; text-align: center; margin-top: 15px;">
@@ -2080,8 +2265,10 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
 
 <script>
     window.zoomConfig = {
-        enabled: false,
-        maxZoom: 4
+        enabled: true,
+        minZoom: 1,
+        maxZoom: 100,
+        defaultZoom: 1
     };
 </script>
 <script src="js/video-zoom.js"></script>
@@ -2429,6 +2616,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setTimeout(updateViewerCount, 2000);
     setInterval(updateViewerCount, 10000);
+});
+</script>
+
+<!-- DESIGN SWITCHER -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.theme-button');
+    const body = document.body;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    const themeColors = {
+        'theme-legacy': '#667eea',
+        'theme-alpine': '#2f80ed',
+        'theme-neo': '#0b1220'
+    };
+
+    const applyTheme = (theme) => {
+        body.classList.remove('theme-legacy', 'theme-alpine', 'theme-neo');
+        body.classList.add(theme);
+        buttons.forEach((button) => {
+            button.classList.toggle('active', button.dataset.theme === theme);
+        });
+        if (themeMeta) {
+            themeMeta.setAttribute('content', themeColors[theme] || '#667eea');
+        }
+        localStorage.setItem('aurora-theme', theme);
+    };
+
+    const savedTheme = localStorage.getItem('aurora-theme');
+    if (savedTheme && ['theme-legacy', 'theme-alpine', 'theme-neo'].includes(savedTheme)) {
+        applyTheme(savedTheme);
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+            applyTheme(button.dataset.theme);
+        });
+    });
 });
 </script>
 
