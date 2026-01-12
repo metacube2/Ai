@@ -1669,6 +1669,95 @@ footer { background-color: rgba(51, 51, 51, 0.9); color: #fff; padding: 40px 0; 
     .section h2 { font-size: 28px; }
     .button { width: 100%; margin: 5px 0; }
 }
+
+/* WERBEBANNER STYLES */
+.recommendation-banner {
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.recommendation-banner h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.sponsor-logos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ad-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.ad-item {
+    margin: 0 10px 10px;
+    text-align: center;
+}
+
+.ad-item img {
+    max-height: 40px;  /* <-- DAS IST DIE WICHTIGE ZEILE */
+    width: auto;
+    transition: transform 0.3s;
+}
+
+.ad-item img:hover {
+    transform: scale(1.1);
+}
+/* WERBEBANNER STYLES */
+.recommendation-banner {
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.recommendation-banner h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.sponsor-logos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ad-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.ad-item {
+    margin: 0 10px 10px;
+    text-align: center;
+}
+
+.ad-item img {
+    max-height: 40px;  /* <-- DAS IST DIE WICHTIGE ZEILE */
+    width: auto;
+    transition: transform 0.3s;
+}
+
+.ad-item img:hover {
+    transform: scale(1.1);
+}
+
+
 </style>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
@@ -1988,6 +2077,14 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
     });
 });
 </script>
+
+<script>
+    window.zoomConfig = {
+        enabled: false,
+        maxZoom: 4
+    };
+</script>
+<script src="js/video-zoom.js"></script>
 
 <!-- TIMELAPSE CONTROLLER -->
 <script>
@@ -2480,6 +2577,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+ 
 
 </body>
 </html>
