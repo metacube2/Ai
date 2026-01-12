@@ -1846,7 +1846,6 @@ body.theme-alpine .button {
 }
 body.theme-alpine nav ul li a:hover { color: #2f80ed; }
 body.theme-alpine .info-badge { border-color: #d2e3f9; }
-body.theme-alpine .zoom-controls { background: rgba(255, 255, 255, 0.92); }
 
 body.theme-neo {
     background-image: radial-gradient(circle at top, rgba(40, 90, 140, 0.7), rgba(7, 16, 34, 0.95) 55%), url('main.jpg');
@@ -1869,13 +1868,6 @@ body.theme-neo .info-badge {
     background: rgba(15, 30, 60, 0.9);
     color: #e6f1ff;
     border-color: rgba(96, 165, 250, 0.4);
-}
-body.theme-neo .zoom-controls {
-    background: rgba(7, 16, 34, 0.85);
-}
-body.theme-neo .zoom-controls label,
-body.theme-neo .zoom-value {
-    color: #e6f1ff;
 }
 body.theme-neo footer {
     background: rgba(7, 16, 34, 0.95);
@@ -2036,7 +2028,8 @@ body.theme-neo footer {
         <!-- TIMELAPSE CONTROLS (NEU!) -->
         <div id="timelapse-controls"></div>
 
-        <!-- ZOOM CONTROLS -->
+        <!-- 
+ CONTROLS -->
         <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
             <label for="zoom-range">Zoom</label>
             <input type="range" id="zoom-range" class="zoom-slider" min="1" max="100" value="1" step="1">
