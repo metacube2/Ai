@@ -4,11 +4,11 @@
  * Speichert in settings.json, lädt ohne Reload
  */
 class SettingsManager {
-    private $settingsFile = 'settings.json';
+    private $settingsFile;
     private $settings = [];
 
     public function __construct($file = null) {
-        if ($file) $this->settingsFile = $file;
+        $this->settingsFile = $file ?: (__DIR__ . '/settings.json');
         $this->load();
     }
 
@@ -68,10 +68,12 @@ class SettingsManager {
     }
 
     private function save() {
-        return file_put_contents(
-            $this->settingsFile,
-            json_encode($this->settings, JSON_PRETTY_PRINT)
-        ) !== false;
+        $payload = json_encode($this->settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if ($payload === false) {
+            return false;
+        }
+
+        return file_put_contents($this->settingsFile, $payload, LOCK_EX) !== false;
     }
 
     // Für AJAX-Anfragen
@@ -98,7 +100,10 @@ class SettingsManager {
                 if ($key && $this->set($key, $value)) {
                     echo json_encode(['success' => true, 'message' => 'Einstellung gespeichert']);
                 } else {
-                    echo json_encode(['success' => false, 'message' => 'Fehler beim Speichern']);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Fehler beim Speichern. Bitte Dateirechte prüfen.'
+                    ]);
                 }
                 exit;
         }
