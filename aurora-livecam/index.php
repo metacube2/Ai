@@ -1531,6 +1531,32 @@ nav ul li a:hover { color: #4CAF50; }
     height: 40px;
     white-space: nowrap;
 }
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin: 15px 0 5px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.zoom-controls label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+}
+.zoom-slider {
+    width: 220px;
+}
+.zoom-value {
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+    color: #333;
+}
 
 .tech-stat { justify-self: start; font-family: monospace; color: #555; }
 .bitrate-icon { color: #4CAF50; }
@@ -2002,6 +2028,14 @@ body.theme-neo footer {
         <!-- TIMELAPSE CONTROLS (NEU!) -->
         <div id="timelapse-controls"></div>
 
+        <!-- 
+ CONTROLS -->
+        <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
+            <label for="zoom-range">Zoom</label>
+            <input type="range" id="zoom-range" class="zoom-slider" min="1" max="100" value="1" step="1">
+            <span id="zoom-value" class="zoom-value">1x</span>
+        </div>
+
         <!-- VIDEO PLAYER CONTROLS (für Tagesvideos) -->
         <div id="daily-video-controls" style="display: none; text-align: center; margin-top: 15px;">
             <button id="dvp-back-live" class="button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -2224,8 +2258,10 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
 
 <script>
     window.zoomConfig = {
-        enabled: false,
-        maxZoom: 4
+        enabled: true,
+        minZoom: 1,
+        maxZoom: 100,
+        defaultZoom: 1
     };
 </script>
 <script src="js/video-zoom.js"></script>
