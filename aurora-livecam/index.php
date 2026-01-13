@@ -1527,13 +1527,25 @@ nav ul li a:hover { color: #4CAF50; }
     z-index: 30;
 }
 
-#webcam-player, #timelapse-viewer, #daily-video-player {
+#webcam-player {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     border-radius: 8px;
+    z-index: 10;
+}
+
+#timelapse-viewer, #daily-video-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    z-index: 5;
+    display: none;
 }
 
 .video-info-bar {
@@ -2308,13 +2320,14 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
 
 <script>
     window.zoomConfig = {
-        enabled: true,
+        enabled: false,
         minZoom: 1,
         maxZoom: 4,
         defaultZoom: 1
     };
 </script>
-<script src="js/video-zoom.js"></script>
+<!-- Zoom temporär deaktiviert zum Testen -->
+<!-- <script src="js/video-zoom.js"></script> -->
 
 <!-- TIMELAPSE CONTROLLER -->
 <script>
