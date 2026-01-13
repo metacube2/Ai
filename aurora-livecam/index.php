@@ -160,7 +160,7 @@ class WebcamManager {
             x-webkit-airplay="allow"
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
-            style="width: 100%; height: 100%; object-fit: contain;">
+            style="width: 100%; height: 100%; object-fit: contain; display: block; background: #000;">
         </video>';
     }
 
@@ -230,22 +230,43 @@ class WebcamManager {
             var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+            console.log('Webcam Player Init - videoSrc:', videoSrc);
+
             if(video) {
                 video.controls = false;
-                if (isIOS) {
+
+                // Native HLS Unterstützung prüfen (Safari, iOS)
+                var canPlayHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
+
+                if (isIOS || canPlayHls) {
+                    // Native HLS (Safari, iOS)
+                    console.log('Using native HLS');
                     video.src = videoSrc;
                     video.setAttribute('playsinline', '');
                     video.setAttribute('webkit-playsinline', '');
                     video.muted = true;
                     if(bitrateBadge) bitrateBadge.style.display = 'none';
-                    video.addEventListener('loadedmetadata', function() { video.play().catch(console.log); });
-                } else if (Hls.isSupported()) {
-                    var hls = new Hls({ enableWorker: !isMobile, lowLatencyMode: false });
+                    video.addEventListener('loadedmetadata', function() {
+                        console.log('Video metadata loaded');
+                        video.play().catch(function(e) { console.log('Play error:', e); });
+                    });
+                    video.addEventListener('error', function(e) {
+                        console.error('Video error:', e);
+                    });
+                } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                    // HLS.js für andere Browser
+                    console.log('Using HLS.js');
+                    var hls = new Hls({
+                        enableWorker: !isMobile,
+                        lowLatencyMode: false,
+                        debug: false
+                    });
                     hls.loadSource(videoSrc);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                        console.log('HLS manifest parsed');
                         if (isMobile) video.muted = true;
-                        video.play().catch(console.log);
+                        video.play().catch(function(e) { console.log('Play error:', e); });
                         if(bitrateBadge) bitrateBadge.style.display = 'inline-flex';
                     });
                     hls.on(Hls.Events.FRAG_LOADED, function(event, data) {
@@ -255,7 +276,18 @@ class WebcamManager {
                             if (mbs > 0) bitrateValue.textContent = mbs.toFixed(2);
                         }
                     });
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('HLS error:', data.type, data.details);
+                    });
+                } else {
+                    // Fallback: Versuche direkt zu laden
+                    console.log('No HLS support, trying direct load');
+                    video.src = videoSrc;
+                    video.muted = true;
+                    video.play().catch(function(e) { console.log('Play error:', e); });
                 }
+            } else {
+                console.error('Video element not found!');
             }
         });
         ";
