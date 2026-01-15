@@ -160,7 +160,7 @@ class WebcamManager {
             x-webkit-airplay="allow"
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
-            style="width: 100%; height: 100%; object-fit: contain; display: block; background: #000;">
+            style="width: 100%; height: 100%; object-fit: contain;">
         </video>';
     }
 
@@ -230,43 +230,22 @@ class WebcamManager {
             var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-            console.log('Webcam Player Init - videoSrc:', videoSrc);
-
             if(video) {
                 video.controls = false;
-
-                // Native HLS Unterstützung prüfen (Safari, iOS)
-                var canPlayHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
-
-                if (isIOS || canPlayHls) {
-                    // Native HLS (Safari, iOS)
-                    console.log('Using native HLS');
+                if (isIOS) {
                     video.src = videoSrc;
                     video.setAttribute('playsinline', '');
                     video.setAttribute('webkit-playsinline', '');
                     video.muted = true;
                     if(bitrateBadge) bitrateBadge.style.display = 'none';
-                    video.addEventListener('loadedmetadata', function() {
-                        console.log('Video metadata loaded');
-                        video.play().catch(function(e) { console.log('Play error:', e); });
-                    });
-                    video.addEventListener('error', function(e) {
-                        console.error('Video error:', e);
-                    });
-                } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    // HLS.js für andere Browser
-                    console.log('Using HLS.js');
-                    var hls = new Hls({
-                        enableWorker: !isMobile,
-                        lowLatencyMode: false,
-                        debug: false
-                    });
+                    video.addEventListener('loadedmetadata', function() { video.play().catch(console.log); });
+                } else if (Hls.isSupported()) {
+                    var hls = new Hls({ enableWorker: !isMobile, lowLatencyMode: false });
                     hls.loadSource(videoSrc);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                        console.log('HLS manifest parsed');
                         if (isMobile) video.muted = true;
-                        video.play().catch(function(e) { console.log('Play error:', e); });
+                        video.play().catch(console.log);
                         if(bitrateBadge) bitrateBadge.style.display = 'inline-flex';
                     });
                     hls.on(Hls.Events.FRAG_LOADED, function(event, data) {
@@ -276,18 +255,7 @@ class WebcamManager {
                             if (mbs > 0) bitrateValue.textContent = mbs.toFixed(2);
                         }
                     });
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        console.error('HLS error:', data.type, data.details);
-                    });
-                } else {
-                    // Fallback: Versuche direkt zu laden
-                    console.log('No HLS support, trying direct load');
-                    video.src = videoSrc;
-                    video.muted = true;
-                    video.play().catch(function(e) { console.log('Play error:', e); });
                 }
-            } else {
-                console.error('Video element not found!');
             }
         });
         ";
@@ -1527,25 +1495,13 @@ nav ul li a:hover { color: #4CAF50; }
     z-index: 30;
 }
 
-#webcam-player {
+#webcam-player, #timelapse-viewer, #daily-video-player {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     border-radius: 8px;
-    z-index: 10;
-}
-
-#timelapse-viewer, #daily-video-player {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    z-index: 5;
-    display: none;
 }
 
 .video-info-bar {
@@ -1593,11 +1549,11 @@ nav ul li a:hover { color: #4CAF50; }
     margin: 0;
 }
 .zoom-slider {
-    width: 150px;
+    width: 220px;
 }
 .zoom-value {
     font-weight: 700;
-    min-width: 40px;
+    min-width: 50px;
     text-align: center;
     color: #333;
 }
@@ -1609,12 +1565,28 @@ nav ul li a:hover { color: #4CAF50; }
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .zoom-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+.zoom-btn:active {
+    transform: scale(0.95);
+}
+.video-container {
+    cursor: default;
+}
+.video-container.zoomed {
+    cursor: grab;
+}
+.video-container.zoomed:active {
+    cursor: grabbing;
 }
 
 .tech-stat { justify-self: start; font-family: monospace; color: #555; }
@@ -2090,12 +2062,11 @@ body.theme-neo footer {
         <!-- 
  CONTROLS -->
         <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
-            <button onclick="adjustZoom(-0.5)" class="zoom-btn">−</button>
-            <label for="zoom-range">Zoom</label>
+            <button type="button" onclick="adjustZoom(-0.5)" class="zoom-btn" title="Zoom out">−</button>
             <input type="range" id="zoom-range" class="zoom-slider" min="1" max="4" value="1" step="0.5">
-            <span id="zoom-value" class="zoom-value">1x</span>
-            <button onclick="adjustZoom(0.5)" class="zoom-btn">+</button>
-            <button onclick="resetZoom()" class="zoom-btn">⟲</button>
+            <span id="zoom-value" class="zoom-value">1.0x</span>
+            <button type="button" onclick="adjustZoom(0.5)" class="zoom-btn" title="Zoom in">+</button>
+            <button type="button" onclick="resetZoom()" class="zoom-btn" title="Reset">⟲</button>
         </div>
 
         <!-- VIDEO PLAYER CONTROLS (für Tagesvideos) -->
@@ -2320,14 +2291,13 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
 
 <script>
     window.zoomConfig = {
-        enabled: false,
+        enabled: true,
         minZoom: 1,
         maxZoom: 4,
         defaultZoom: 1
     };
 </script>
-<!-- Zoom temporär deaktiviert zum Testen -->
-<!-- <script src="js/video-zoom.js"></script> -->
+<script src="js/video-zoom.js"></script>
 
 <!-- TIMELAPSE CONTROLLER -->
 <script>
