@@ -1553,9 +1553,40 @@ nav ul li a:hover { color: #4CAF50; }
 }
 .zoom-value {
     font-weight: 700;
-    min-width: 60px;
-    text-align: right;
+    min-width: 50px;
+    text-align: center;
     color: #333;
+}
+.zoom-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.zoom-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+.zoom-btn:active {
+    transform: scale(0.95);
+}
+.video-container {
+    cursor: default;
+}
+.video-container.zoomed {
+    cursor: grab;
+}
+.video-container.zoomed:active {
+    cursor: grabbing;
 }
 
 .tech-stat { justify-self: start; font-family: monospace; color: #555; }
@@ -2031,9 +2062,11 @@ body.theme-neo footer {
         <!-- 
  CONTROLS -->
         <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
-            <label for="zoom-range">Zoom</label>
-            <input type="range" id="zoom-range" class="zoom-slider" min="1" max="100" value="1" step="1">
-            <span id="zoom-value" class="zoom-value">1x</span>
+            <button type="button" onclick="adjustZoom(-0.5)" class="zoom-btn" title="Zoom out">−</button>
+            <input type="range" id="zoom-range" class="zoom-slider" min="1" max="4" value="1" step="0.5">
+            <span id="zoom-value" class="zoom-value">1.0x</span>
+            <button type="button" onclick="adjustZoom(0.5)" class="zoom-btn" title="Zoom in">+</button>
+            <button type="button" onclick="resetZoom()" class="zoom-btn" title="Reset">⟲</button>
         </div>
 
         <!-- VIDEO PLAYER CONTROLS (für Tagesvideos) -->
@@ -2260,7 +2293,7 @@ document.getElementById('qrcode')?.addEventListener('click', function() {
     window.zoomConfig = {
         enabled: true,
         minZoom: 1,
-        maxZoom: 100,
+        maxZoom: 4,
         defaultZoom: 1
     };
 </script>
