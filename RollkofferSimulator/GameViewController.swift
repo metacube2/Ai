@@ -36,6 +36,10 @@ class GameViewController: UIViewController {
 
         // Setup notification observers
         setupNotificationObservers()
+
+        #if targetEnvironment(macCatalyst)
+        setupMacCatalyst()
+        #endif
     }
 
     private func setupNotificationObservers() {
@@ -43,6 +47,13 @@ class GameViewController: UIViewController {
             self,
             selector: #selector(handlePauseNotification),
             name: .pauseGame,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRestartNotification),
+            name: .restartGame,
             object: nil
         )
     }
@@ -57,12 +68,46 @@ class GameViewController: UIViewController {
         // This is just a notification that the app is going to background
     }
 
+    @objc private func handleRestartNotification() {
+        guard let skView = self.view as? SKView else { return }
+
+        let menuScene = MenuScene(size: skView.bounds.size)
+        menuScene.scaleMode = .aspectFill
+
+        let transition = SKTransition.fade(withDuration: 0.5)
+        skView.presentScene(menuScene, transition: transition)
+    }
+
+    #if targetEnvironment(macCatalyst)
+    private func setupMacCatalyst() {
+        // Configure window appearance for macOS
+        if let windowScene = view.window?.windowScene {
+            windowScene.title = "Rollkoffer Simulator"
+
+            // Set window style
+            if let titlebar = windowScene.titlebar {
+                titlebar.titleVisibility = .visible
+                titlebar.toolbarStyle = .unified
+            }
+        }
+    }
+
+    // Enable keyboard input
+    override var canBecomeFirstResponder: Bool {
+        return true
+    }
+    #endif
+
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        #if targetEnvironment(macCatalyst)
+        return .all
+        #else
         if UIDevice.current.userInterfaceIdiom == .phone {
             return .portrait
         } else {
             return .all
         }
+        #endif
     }
 
     override var prefersStatusBarHidden: Bool {

@@ -318,6 +318,29 @@ class GameScene: SKScene {
         isDragging = false
     }
 
+    // MARK: - Keyboard Handling (macOS)
+    #if targetEnvironment(macCatalyst)
+    override var canBecomeFirstResponder: Bool { true }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard let key = presses.first?.key else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
+
+        switch key.keyCode {
+        case .keyboardEscape:
+            togglePause()
+        case .keyboardSpacebar:
+            if gameState.currentState == .paused {
+                resumeGame()
+            }
+        default:
+            super.pressesBegan(presses, with: event)
+        }
+    }
+    #endif
+
     // MARK: - Pause Handling
     private func togglePause() {
         if gameState.currentState == .playing {

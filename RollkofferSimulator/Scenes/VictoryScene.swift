@@ -280,6 +280,27 @@ class VictoryScene: SKScene {
         }
     }
 
+    // MARK: - Keyboard Handling (macOS)
+    #if targetEnvironment(macCatalyst)
+    override var canBecomeFirstResponder: Bool { true }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard let key = presses.first?.key else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
+
+        switch key.keyCode {
+        case .keyboardSpacebar, .keyboardReturnOrEnter:
+            playAgain()
+        case .keyboardEscape:
+            returnToMenu()
+        default:
+            super.pressesBegan(presses, with: event)
+        }
+    }
+    #endif
+
     private func playAgain() {
         let pressDown = SKAction.scale(to: 0.9, duration: 0.1)
         let pressUp = SKAction.scale(to: 1.0, duration: 0.1)
