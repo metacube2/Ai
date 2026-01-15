@@ -152,16 +152,18 @@ class WebcamManager {
     // Zeigt NUR das Video ohne Schnickschnack
     public function displayWebcam() {
         return '
-        <video id="webcam-player"
-            autoplay
-            muted
-            playsinline
-            webkit-playsinline
-            x-webkit-airplay="allow"
-            x5-video-player-type="h5"
-            x5-video-player-fullscreen="true"
-            style="width: 100%; height: 100%; object-fit: contain;">
-        </video>';
+        <div id="live-video-wrapper" class="video-zoom-wrapper">
+            <video id="webcam-player"
+                autoplay
+                muted
+                playsinline
+                webkit-playsinline
+                x-webkit-airplay="allow"
+                x5-video-player-type="h5"
+                x5-video-player-fullscreen="true"
+                style="width: 100%; height: 100%; object-fit: contain;">
+            </video>
+        </div>';
     }
 
     // Das ist die neue Anzeige für unten links
@@ -1495,13 +1497,30 @@ nav ul li a:hover { color: #4CAF50; }
     z-index: 30;
 }
 
-#webcam-player, #timelapse-viewer, #daily-video-player {
+#live-video-wrapper, #timelapse-viewer, #daily-video-player {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     border-radius: 8px;
+    overflow: hidden;
+}
+
+.video-zoom-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    transform-origin: center center;
+}
+
+#webcam-player, #timelapse-image, #daily-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .video-info-bar {
@@ -2044,15 +2063,19 @@ body.theme-neo footer {
 
             <!-- Timelapse Overlay -->
             <div id="timelapse-viewer" style="display: none;">
-                <img id="timelapse-image" src="" alt="Timelapse Image" style="width: 100%; height: 100%; object-fit: cover;">
+                <div id="timelapse-wrapper" class="video-zoom-wrapper">
+                    <img id="timelapse-image" src="" alt="Timelapse Image" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
                 <div id="timelapse-time-overlay"></div>
             </div>
 
             <!-- Daily Video Player (für Tagesvideos) -->
             <div id="daily-video-player" style="display: none;">
-                <video id="daily-video" controls playsinline style="width: 100%; height: 100%; object-fit: contain;">
-                    <source src="" type="video/mp4">
-                </video>
+                <div id="daily-video-wrapper" class="video-zoom-wrapper">
+                    <video id="daily-video" controls playsinline style="width: 100%; height: 100%; object-fit: contain;">
+                        <source src="" type="video/mp4">
+                    </video>
+                </div>
             </div>
         </div>
 
