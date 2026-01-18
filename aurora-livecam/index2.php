@@ -78,7 +78,48 @@ if (in_array($_SERVER['HTTP_HOST'], $oldDomains)) {
     exit();
 }
 
+// Site-Konfiguration basierend auf Domain
+$isSeecam = ($_SERVER['HTTP_HOST'] === 'www.seecam.ch' || $_SERVER['HTTP_HOST'] === 'seecam.ch');
 
+if ($isSeecam) {
+    $siteConfig = [
+        'domain' => 'www.seecam.ch',
+        'domainUrl' => 'https://www.seecam.ch',
+        'logo' => 'seecam.jpg',
+        'siteName' => 'Seecam',
+        'siteNameFull' => 'Seecam Wetter Livecam',
+        'siteNameFullEn' => 'Seecam Weather Livecam',
+        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Seecam 24/7',
+        'author' => 'Seecam Wetter Livecam',
+        'alternateName' => 'Seecam Webcam Schweiz',
+        'welcomeDe' => 'Willkommen bei Seecam Wetter Livecam',
+        'welcomeEn' => 'Welcome to Seecam Weather Livecam',
+        'aboutDe' => 'Seecam Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
+        'aboutEn' => 'Seecam Weather Livecam is a passion project...',
+        'blogTitle' => 'Seecam Wetter Blog',
+        'footerName' => 'Seecam Wetter Livecam',
+        'copyright' => '© 2024 Seecam Wetter Livecam - Webcam Zürich Oberland'
+    ];
+} else {
+    $siteConfig = [
+        'domain' => 'www.aurora-weather-livecam.com',
+        'domainUrl' => 'https://www.aurora-weather-livecam.com',
+        'logo' => 'logo.png',
+        'siteName' => 'Aurora',
+        'siteNameFull' => 'Aurora Wetter Livecam',
+        'siteNameFullEn' => 'Aurora Weather Livecam',
+        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Aurora Livecam 24/7',
+        'author' => 'Aurora Wetter Livecam',
+        'alternateName' => 'Aurora Webcam Schweiz',
+        'welcomeDe' => 'Willkommen bei Aurora Wetter Livecam',
+        'welcomeEn' => 'Welcome to Aurora Weather Livecam',
+        'aboutDe' => 'Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
+        'aboutEn' => 'Aurora Weather Livecam is a passion project...',
+        'blogTitle' => 'Aurora Wetter Blog',
+        'footerName' => 'Aurora Wetter Livecam',
+        'copyright' => '© 2024 Aurora Wetter Lifecam - Webcam Zürich Oberland'
+    ];
+}
 
 
 
@@ -1339,14 +1380,14 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO-optimierter Title -->
-    <title>Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Aurora Livecam 24/7</title>
+    <title><?php echo $siteConfig['siteTitle']; ?></title>
 
     <!-- SEO Meta-Tags -->
     <meta name="description" content="Live Webcam Zürich Oberland mit Blick auf Zürichsee. 24/7 Livestream, Tagesvideos, AI-Wettererkennung. Patrouille Suisse Trainingsflüge jeden Montag live verfolgen. Webcam Dürnten auf 616m.">
-    <meta name="keywords" content="Webcam Zürich, Zürichsee Webcam, Zürich Oberland Webcam, Live Webcam Schweiz, Patrouille Suisse Livestream, Wetter Zürich live, Webcam Dürnten, Rapperswil Webcam, Schweizer Alpen Webcam, Wetter Zürich Oberland, Aurora Webcam, Timelapse Zürich">
-    <meta name="author" content="Aurora Wetter Livecam">
+    <meta name="keywords" content="Webcam Zürich, Zürichsee Webcam, Zürich Oberland Webcam, Live Webcam Schweiz, Patrouille Suisse Livestream, Wetter Zürich live, Webcam Dürnten, Rapperswil Webcam, Schweizer Alpen Webcam, Wetter Zürich Oberland, <?php echo $siteConfig['siteName']; ?> Webcam, Timelapse Zürich">
+    <meta name="author" content="<?php echo $siteConfig['author']; ?>">
     <meta name="robots" content="index, follow, max-image-preview:large">
-    <link rel="canonical" href="https://www.aurora-weather-livecam.com/">
+    <link rel="canonical" href="<?php echo $siteConfig['domainUrl']; ?>/">
 
     <!-- Lokales SEO -->
     <meta name="geo.region" content="CH-ZH">
@@ -1358,18 +1399,18 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     <meta property="og:type" content="website">
     <meta property="og:title" content="Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse">
     <meta property="og:description" content="24/7 Live-Webcam aus dem Zürcher Oberland auf 616m Höhe. Patrouille Suisse Trainings jeden Montag. AI-Wettererkennung für Sonnenaufgänge, Regenbögen und mehr.">
-    <meta property="og:image" content="https://www.aurora-weather-livecam.com/og-image.jpg">
+    <meta property="og:image" content="<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://www.aurora-weather-livecam.com/">
-    <meta property="og:site_name" content="Aurora Wetter Livecam Zürich">
+    <meta property="og:url" content="<?php echo $siteConfig['domainUrl']; ?>/">
+    <meta property="og:site_name" content="<?php echo $siteConfig['siteNameFull']; ?> Zürich">
     <meta property="og:locale" content="de_CH">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Zürich Oberland Webcam Live | Patrouille Suisse & Zürichsee">
     <meta name="twitter:description" content="24/7 Live-Webcam mit AI-Wettererkennung. Jeden Montag Patrouille Suisse Trainingsflüge live!">
-    <meta name="twitter:image" content="https://www.aurora-weather-livecam.com/og-image.jpg">
+    <meta name="twitter:image" content="<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg">
 
     <meta name="google-site-verification" content="gzs2HE9hbMKbHYKSf2hZjXvDd7iDUeA4Jb2zngzNIZM" />
 
@@ -1378,9 +1419,9 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "Aurora Wetter Livecam Zürich Oberland",
-        "alternateName": "Aurora Webcam Schweiz",
-        "url": "https://www.aurora-weather-livecam.com",
+        "name": "<?php echo $siteConfig['siteNameFull']; ?> Zürich Oberland",
+        "alternateName": "<?php echo $siteConfig['alternateName']; ?>",
+        "url": "<?php echo $siteConfig['domainUrl']; ?>",
         "description": "24/7 Live Webcam aus dem Zürcher Oberland mit Blick auf den Zürichsee. AI-gestützte Wettererkennung und Patrouille Suisse Trainingsflüge.",
         "inLanguage": "de-CH"
     }
@@ -1391,9 +1432,9 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "Aurora Wetter Livecam",
+        "name": "<?php echo $siteConfig['siteNameFull']; ?>",
         "description": "Live Webcam Service aus dem Zürcher Oberland mit 24/7 Livestream, Tagesvideos und AI-Wettererkennung",
-        "url": "https://www.aurora-weather-livecam.com",
+        "url": "<?php echo $siteConfig['domainUrl']; ?>",
         "address": {
             "@type": "PostalAddress",
             "addressLocality": "Dürnten",
@@ -1425,10 +1466,10 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
         "@type": "VideoObject",
         "name": "Zürich Oberland Live Webcam Stream",
         "description": "24/7 Live-Webcam aus dem Zürcher Oberland mit Blick auf Zürichsee und Schweizer Alpen",
-        "thumbnailUrl": "https://www.aurora-weather-livecam.com/og-image.jpg",
+        "thumbnailUrl": "<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg",
         "uploadDate": "2024-01-01",
-        "contentUrl": "https://www.aurora-weather-livecam.com/test_video.m3u8",
-        "embedUrl": "https://www.aurora-weather-livecam.com/",
+        "contentUrl": "<?php echo $siteConfig['domainUrl']; ?>/test_video.m3u8",
+        "embedUrl": "<?php echo $siteConfig['domainUrl']; ?>/",
         "publication": {
             "@type": "BroadcastEvent",
             "isLiveBroadcast": true,
@@ -2086,7 +2127,7 @@ body.theme-neo footer {
     <div class="container">
         <div class="logo-wrapper">
             <div class="logo">
-                <img src="logo.png" alt="Aurora Wetter Livecam - 24/7 Zürich Oberland Webcam Logo">
+                <img src="<?php echo $siteConfig['logo']; ?>" alt="<?php echo $siteConfig['siteNameFull']; ?> - 24/7 Zürich Oberland Webcam Logo">
             </div>
             <div class="swiss-cross" aria-hidden="true"></div>
         </div>
@@ -2116,8 +2157,8 @@ body.theme-neo footer {
         <div class="container">
             <div class="flag-title-container">
                 <img src="images/swiss.jpg" alt="Schweizer Flagge" class="flag-image">
-                <h1 data-en="Welcome to Aurora Weather Livecam" data-de="Willkommen bei Aurora Wetter Livecam">
-                    Willkommen bei Aurora Wetter Livecam
+                <h1 data-en="<?php echo $siteConfig['welcomeEn']; ?>" data-de="<?php echo $siteConfig['welcomeDe']; ?>">
+                    <?php echo $siteConfig['welcomeDe']; ?>
                 </h1>
                 <img src="local-flag.jpg" alt="Ortsflagge" class="flag-image">
             </div>
@@ -2261,7 +2302,7 @@ body.theme-neo footer {
                 Folge uns und kopiere den Code und sende es deinen Freunden
             </p>
         </h1>
-        <div id="qrcode" data-url="https://www.aurora-weather-livecam.com/"></div>
+        <div id="qrcode" data-url="<?php echo $siteConfig['domainUrl']; ?>/"></div>
         <p data-en="Click QR code to copy URL" data-de="Klicke auf den QR-Code um die URL zu kopieren">
             Klicke auf den QR-Code, um die URL zu kopieren
         </p>
@@ -2309,9 +2350,9 @@ body.theme-neo footer {
         <h2 data-en="About Our Project" data-de="Über unser Projekt">Über unser Projekt</h2>
         <div class="about-grid">
             <div class="about-item">
-                <p data-en="Aurora Weather Livecam is a passion project..."
-                   data-de="Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten...">
-                    Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.
+                <p data-en="<?php echo $siteConfig['aboutEn']; ?>"
+                   data-de="<?php echo $siteConfig['aboutDe']; ?>">
+                    <?php echo $siteConfig['aboutDe']; ?>
                 </p>
                 <p>Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.</p>
             </div>
@@ -2385,7 +2426,7 @@ body.theme-neo footer {
 <!-- BLOG SEKTION -->
 <section id="blog" class="section" style="background: #f8f9fa;">
     <div class="container">
-        <h2 style="text-align: center; margin-bottom: 10px;">Aurora Wetter Blog</h2>
+        <h2 style="text-align: center; margin-bottom: 10px;"><?php echo $siteConfig['blogTitle']; ?></h2>
         <p style="text-align: center; color: #666; margin-bottom: 40px;">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
@@ -2453,7 +2494,7 @@ body.theme-neo footer {
 <section id="impressum" class="section">
     <div class="container">
         <h2 data-en="Imprint" data-de="Impressum">Impressum</h2>
-        <p>Aurora Wetter Livecam</p>
+        <p><?php echo $siteConfig['footerName']; ?></p>
         <p>M. Kessler</p>
         <p>Dürnten, Schweiz</p>
         <p data-en="Inquiries via contact form" data-de="Anfragen per Kontaktformular">Anfragen per Kontaktformular</p>
@@ -2493,7 +2534,7 @@ body.theme-neo footer {
             <a href="#impressum">Impressum</a>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 Aurora Wetter Lifecam - Webcam Zürich Oberland</p>
+            <p><?php echo $siteConfig['copyright']; ?></p>
             <p style="font-size: 12px; color: #999; margin-top: 5px;">Live Webcam Schweiz | Zürichsee Blick | Patrouille Suisse Trainings</p>
         </div>
     </div>
