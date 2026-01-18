@@ -2354,7 +2354,10 @@ body.theme-neo footer {
                    data-de="<?php echo $siteConfig['aboutDe']; ?>">
                     <?php echo $siteConfig['aboutDe']; ?>
                 </p>
-                <p>Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.</p>
+                <p data-en="We have been operating high-resolution webcams around the clock since 2010. We are particularly proud of unique insights, such as the Patrouille Suisse training flights every Monday morning."
+                   data-de="Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.">
+                    Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.
+                </p>
             </div>
         </div>
     </div>
@@ -2364,14 +2367,14 @@ body.theme-neo footer {
 <?php if ($adminManager->isAdmin()): ?>
 <section id="admin" class="section">
     <div class="container">
-        <h2>Admin-Bereich</h2>
+        <h2 data-en="Admin Area" data-de="Admin-Bereich">Admin-Bereich</h2>
         <?php echo $adminManager->displayAdminContent(); ?>
     </div>
 </section>
 <?php else: ?>
 <section id="admin-login" class="section">
     <div class="container">
-        <h2>Admin Login</h2>
+        <h2 data-en="Admin Login" data-de="Admin Login">Admin Login</h2>
         <?php echo $adminManager->displayLoginForm(); ?>
     </div>
 </section>
@@ -2380,42 +2383,42 @@ body.theme-neo footer {
 <!-- PATROUILLE SUISSE SEKTION -->
 <section id="patrouille-suisse" class="section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
     <div class="container">
-        <h2 style="color: #fff; text-align: center;">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
+        <h2 style="color: #fff; text-align: center;" data-en="Patrouille Suisse Live - Watch Training Flights" data-de="Patrouille Suisse Live - Trainingsflüge Beobachten">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px;">
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #ff6b6b; margin-bottom: 15px;">Jeden Montag Live!</h3>
-                <p style="color: #ddd; line-height: 1.8;">
+                <h3 style="color: #ff6b6b; margin-bottom: 15px;" data-en="Every Monday Live!" data-de="Jeden Montag Live!">Jeden Montag Live!</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="The Patrouille Suisse, the official aerobatic team of the Swiss Air Force, trains every Monday morning in the Zurich Oberland region. Our webcam offers a unique view of the spectacular flight maneuvers of the six F-5E Tiger II jets." data-de="Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden Montagmorgen in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets.">
                     Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden <strong style="color: #fff;">Montagmorgen</strong> in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets.
                 </p>
                 <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
-                    <li>Trainingszeit: ca. 09:00 - 11:00 Uhr</li>
-                    <li>Bei gutem Wetter sichtbar</li>
-                    <li>Einzigartige Perspektive aus dem Zürcher Oberland</li>
+                    <li data-en="Training time: approx. 09:00 - 11:00" data-de="Trainingszeit: ca. 09:00 - 11:00 Uhr">Trainingszeit: ca. 09:00 - 11:00 Uhr</li>
+                    <li data-en="Visible in good weather" data-de="Bei gutem Wetter sichtbar">Bei gutem Wetter sichtbar</li>
+                    <li data-en="Unique perspective from Zurich Oberland" data-de="Einzigartige Perspektive aus dem Zürcher Oberland">Einzigartige Perspektive aus dem Zürcher Oberland</li>
                 </ul>
             </div>
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #4ecdc4; margin-bottom: 15px;">Geschichte der Patrouille Suisse</h3>
-                <p style="color: #ddd; line-height: 1.8;">
+                <h3 style="color: #4ecdc4; margin-bottom: 15px;" data-en="History of Patrouille Suisse" data-de="Geschichte der Patrouille Suisse">Geschichte der Patrouille Suisse</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="Founded in 1964, the Patrouille Suisse is one of Europe's most renowned aerobatic teams. The team has been flying the Northrop F-5E Tiger II since 1995 and delights audiences at shows throughout Switzerland and internationally." data-de="Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international.">
                     Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international.
                 </p>
-                <p style="color: #ddd; margin-top: 15px;">
-                    <strong style="color: #fff;">Heimatbasis:</strong> Payerne (VD)<br>
-                    <strong style="color: #fff;">Flugzeuge:</strong> 6x F-5E Tiger II<br>
-                    <strong style="color: #fff;">Teamgrösse:</strong> 6 Piloten + Crew
+                <p style="color: #ddd; margin-top: 15px;" data-en="Home base: Payerne (VD) | Aircraft: 6x F-5E Tiger II | Team size: 6 pilots + crew" data-de="Heimatbasis: Payerne (VD) | Flugzeuge: 6x F-5E Tiger II | Teamgrösse: 6 Piloten + Crew">
+                    <strong style="color: #fff;" data-en="Home base:" data-de="Heimatbasis:">Heimatbasis:</strong> Payerne (VD)<br>
+                    <strong style="color: #fff;" data-en="Aircraft:" data-de="Flugzeuge:">Flugzeuge:</strong> 6x F-5E Tiger II<br>
+                    <strong style="color: #fff;" data-en="Team size:" data-de="Teamgrösse:">Teamgrösse:</strong> 6 <span data-en="pilots + crew" data-de="Piloten + Crew">Piloten + Crew</span>
                 </p>
             </div>
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
-                <h3 style="color: #ffd93d; margin-bottom: 15px;">Beste Beobachtungstipps</h3>
-                <p style="color: #ddd; line-height: 1.8;">
+                <h3 style="color: #ffd93d; margin-bottom: 15px;" data-en="Best Viewing Tips" data-de="Beste Beobachtungstipps">Beste Beobachtungstipps</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="For the best view of the training flights, we recommend:" data-de="Für die beste Sicht auf die Trainingsflüge empfehlen wir:">
                     Für die beste Sicht auf die Trainingsflüge empfehlen wir:
                 </p>
                 <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
-                    <li>Nutzen Sie die Zoom-Funktion unserer Webcam</li>
-                    <li>Timelapse-Modus für beschleunigte Ansicht</li>
-                    <li>Tagesvideos zum Nachschauen</li>
-                    <li>AI-Erkennung markiert Flugzeug-Sichtungen</li>
+                    <li data-en="Use the zoom function of our webcam" data-de="Nutzen Sie die Zoom-Funktion unserer Webcam">Nutzen Sie die Zoom-Funktion unserer Webcam</li>
+                    <li data-en="Timelapse mode for accelerated view" data-de="Timelapse-Modus für beschleunigte Ansicht">Timelapse-Modus für beschleunigte Ansicht</li>
+                    <li data-en="Daily videos to watch later" data-de="Tagesvideos zum Nachschauen">Tagesvideos zum Nachschauen</li>
+                    <li data-en="AI detection marks aircraft sightings" data-de="AI-Erkennung markiert Flugzeug-Sichtungen">AI-Erkennung markiert Flugzeug-Sichtungen</li>
                 </ul>
-                <p style="color: #aaa; margin-top: 15px; font-size: 14px;">
+                <p style="color: #aaa; margin-top: 15px; font-size: 14px;" data-en="Note: Trainings may be cancelled in bad weather." data-de="Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden.">
                     <em>Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden.</em>
                 </p>
             </div>
@@ -2427,7 +2430,7 @@ body.theme-neo footer {
 <section id="blog" class="section" style="background: #f8f9fa;">
     <div class="container">
         <h2 style="text-align: center; margin-bottom: 10px;"><?php echo $siteConfig['blogTitle']; ?></h2>
-        <p style="text-align: center; color: #666; margin-bottom: 40px;">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
+        <p style="text-align: center; color: #666; margin-bottom: 40px;" data-en="Latest weather news, webcam updates and nature observations from Zurich Oberland" data-de="Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
             <!-- Blog Artikel 1 -->
@@ -2436,12 +2439,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">🌅</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;">Sonnenaufgänge über dem Zürichsee</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Januar 2024</p>
-                    <p style="color: #555; line-height: 1.7;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Sunrises over Lake Zurich" data-de="Sonnenaufgänge über dem Zürichsee">Sonnenaufgänge über dem Zürichsee</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="January 2024" data-de="Januar 2024">Januar 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The winter months offer spectacular sunrises over Lake Zurich. Our AI detection automatically identifies the most beautiful moments and saves them in the gallery." data-de="Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie.">
                         Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Especially with high fog, impressive lighting moods are created when the sun breaks through the cloud cover." data-de="Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht.">
                         Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht.
                     </p>
                 </div>
@@ -2453,12 +2456,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">🏔️</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;">Alpenpanorama im Winter</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Dezember 2023</p>
-                    <p style="color: #555; line-height: 1.7;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Alpine Panorama in Winter" data-de="Alpenpanorama im Winter">Alpenpanorama im Winter</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="December 2023" data-de="Dezember 2023">Dezember 2023</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="On clear winter days, the view from our webcam at 616m altitude extends to the snow-covered peaks of the Glarus Alps. Säntis, Glärnisch and other mountain peaks are visible." data-de="An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar.">
                         An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Use the zoom function for detailed views of the mountain landscape." data-de="Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft.">
                         Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft.
                     </p>
                 </div>
@@ -2470,12 +2473,12 @@ body.theme-neo footer {
                     <span style="font-size: 60px;">✈️</span>
                 </div>
                 <div style="padding: 25px;">
-                    <h3 style="margin-bottom: 10px; color: #333;">Patrouille Suisse Saison 2024</h3>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">März 2024</p>
-                    <p style="color: #555; line-height: 1.7;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Patrouille Suisse Season 2024" data-de="Patrouille Suisse Saison 2024">Patrouille Suisse Saison 2024</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="March 2024" data-de="März 2024">März 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The new flight season of Patrouille Suisse has begun! Every Monday the aerobatic team trains over Zurich Oberland - our webcam captures the flight maneuvers live." data-de="Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein.">
                         Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein.
                     </p>
-                    <p style="color: #555; line-height: 1.7; margin-top: 10px;">
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="AI detection automatically marks aircraft sightings in our gallery." data-de="Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie.">
                         Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie.
                     </p>
                 </div>
@@ -2483,7 +2486,7 @@ body.theme-neo footer {
         </div>
 
         <div style="text-align: center; margin-top: 40px;">
-            <p style="color: #888; font-size: 14px;">
+            <p style="color: #888; font-size: 14px;" data-en="More weather updates and observations can be found on our social media channels." data-de="Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen.">
                 Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen.
             </p>
         </div>
