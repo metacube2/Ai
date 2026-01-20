@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Power BI Schulungshandbuch für HR</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #1f6feb;
+      --accent-soft: #e0f2fe;
+      --text: #0f172a;
+      --muted: #475569;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --warning: #f97316;
+      --success: #16a34a;
+      --code: #0b1020;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(120deg, #e0f2fe 0%, #eef2ff 100%);
+      padding: 40px 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0 0 8px 0;
+      font-size: 2.2rem;
+    }
+    header p {
+      margin: 6px 0;
+      color: var(--muted);
+    }
+    main {
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    }
+    h2 {
+      margin-top: 0;
+      color: #111827;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 6px;
+    }
+    h3 {
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+    h4 {
+      margin: 14px 0 6px;
+      color: #1f2937;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      background: var(--accent-soft);
+      color: #0369a1;
+      margin-left: 8px;
+    }
+    ul, ol {
+      margin: 8px 0 16px 24px;
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eef2ff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+      color: #1e293b;
+    }
+    .warning {
+      border-left-color: var(--warning);
+      background: #fff7ed;
+    }
+    .success {
+      border-left-color: var(--success);
+      background: #ecfdf3;
+    }
+    pre {
+      background: var(--code);
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    code {
+      font-family: "Consolas", "Courier New", monospace;
+    }
+    figure {
+      margin: 0;
+      padding: 0;
+    }
+    figcaption {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .grid-three {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+    .kpi-list li {
+      margin-bottom: 4px;
+    }
+    .checklist li {
+      margin-bottom: 6px;
+    }
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    .flow-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Power BI Schulungshandbuch für HR</h1>
+    <p>Für 3–4 HR-Mitarbeiterinnen (Schweiz) mit wenig IT-Kenntnissen und Excel-Basis.</p>
+    <p class="small">Hinweis: Eine Word-Version ist nicht im Repo enthalten (Binary-Dateien werden beim PR-Erstellen nicht unterstützt).</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Überblick</h2>
+      <div class="grid-two">
+        <div>
+          <h3>Zielgruppe</h3>
+          <ul>
+            <li>3–4 HR-Mitarbeiterinnen (Schweiz)</li>
+            <li>Excel: Basis + SVERWEIS</li>
+            <li>Technikaffinität: 5–6/10</li>
+            <li>Keine Power BI Vorkenntnisse</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Zielgruppen der Reports</h3>
+          <ul>
+            <li>Geschäftsleitung</li>
+            <li>Verwaltungsrat</li>
+            <li>Finanzbuchhaltung</li>
+            <li>Abteilungsleiter</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Datenquellen</h3>
+      <ul>
+        <li>SAP HCM/HRM (Infotypen PA0001, PA0002, PA0008, PA2001)</li>
+        <li>Rexx HR-System (Stellenplan, Pulsumfrage, MA-Zufriedenheit)</li>
+        <li>Excel/CSV (Kununu-Score, Refline/Time-to-hire)</li>
+      </ul>
+
+      <h3>KPIs (mit Periodizität)</h3>
+      <ul class="kpi-list">
+        <li>Headcount/FTE (monatlich)</li>
+        <li>Fluktuation (monatlich)</li>
+        <li>Krankenquote gesamt + ohne Langzeitkrankheiten &gt;30 Tage (Quartal)</li>
+        <li>Überstunden (Quartal)</li>
+        <li>Produktivstunden (wöchentlich)</li>
+        <li>Ferientage/GLZ-Saldi (jährlich)</li>
+        <li>Stellenplan Soll vs Ist (monatlich, Rexx)</li>
+        <li>Lohnkosten (monatlich)</li>
+        <li>Time to hire (Quartal)</li>
+        <li>Kununu Score (monatlich)</li>
+        <li>Pulsumfrage (Quartal, Rexx)</li>
+        <li>MA-Zufriedenheitsumfrage (jährlich, Rexx)</li>
+      </ul>
+
+      <figure>
+        <svg width="100%" height="260" viewBox="0 0 980 260" role="img" aria-label="Datenfluss von Quellen zu Power BI und Reports">
+          <defs>
+            <linearGradient id="box" x1="0" x2="1">
+              <stop offset="0%" stop-color="#e0f2fe"/>
+              <stop offset="100%" stop-color="#eef2ff"/>
+            </linearGradient>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#64748b" />
+            </marker>
+          </defs>
+          <rect x="20" y="30" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="65" text-anchor="middle" font-size="14" fill="#0f172a">SAP HCM/HRM</text>
+
+          <rect x="20" y="120" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="155" text-anchor="middle" font-size="14" fill="#0f172a">Rexx HR-System</text>
+
+          <rect x="20" y="210" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="245" text-anchor="middle" font-size="14" fill="#0f172a">Excel/CSV</text>
+
+          <rect x="350" y="100" width="260" height="80" rx="14" fill="#1f6feb" opacity="0.12" stroke="#1f6feb" />
+          <text x="480" y="145" text-anchor="middle" font-size="16" fill="#1f6feb">Power BI Desktop</text>
+
+          <rect x="700" y="70" width="260" height="120" rx="14" fill="#ecfeff" stroke="#0ea5e9" />
+          <text x="830" y="120" text-anchor="middle" font-size="14" fill="#0f172a">Berichte &amp; Dashboards</text>
+          <text x="830" y="145" text-anchor="middle" font-size="12" fill="#475569">GL · VR · Finanzen · Abteilungen</text>
+
+          <line x1="260" y1="60" x2="350" y2="120" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <line x1="260" y1="150" x2="350" y2="140" stroke="#64748b" stroke-width="2" />
+          <line x1="260" y1="240" x2="350" y2="160" stroke="#64748b" stroke-width="2" />
+          <line x1="610" y1="140" x2="700" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+        </svg>
+        <figcaption>Grafik: Datenfluss von HR-Quellen in Power BI bis zu den Zielgruppen-Reports.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Vorbereitung: Arbeitsordner &amp; Dateien <span class="badge">Start</span></h2>
+      <ol>
+        <li>Lege einen Ordner <strong>HR-Power-BI</strong> an.</li>
+        <li>Erstelle Unterordner: <code>01_Rohdaten</code>, <code>02_Transformiert</code>, <code>03_Berichte</code>.</li>
+        <li>Speichere Exporte aus SAP/Rexx/Excel immer in <code>01_Rohdaten</code>.</li>
+        <li>Benutze klare Dateinamen mit Datum, z. B. <code>SAP_PA0001_2025-01.csv</code>.</li>
+      </ol>
+      <div class="callout success">Ziel: Alle Teammitglieder finden Dateien sofort wieder und arbeiten mit den gleichen Daten.</div>
+    </section>
+
+    <section>
+      <h2>1. Grundlagen &amp; Datenimport <span class="badge">Modul 1</span></h2>
+      <h3>1.1 Installation &amp; erster Start</h3>
+      <ol>
+        <li>Gehe auf <strong>https://powerbi.microsoft.com/de-de/desktop/</strong> und lade Power BI Desktop herunter.</li>
+        <li>Installiere mit Standardoptionen (Weiter → Installieren → Fertigstellen).</li>
+        <li>Starte Power BI Desktop und wähle <strong>Leerer Bericht</strong>.</li>
+        <li>Speichere die Datei als <code>HR-Reporting.pbix</code> in <code>03_Berichte</code>.</li>
+      </ol>
+      <div class="callout">Tipp: Speichere früh und oft – Power BI Desktop hat keine Auto-Speicherung.</div>
+
+      <h3>1.2 Oberfläche kennenlernen</h3>
+      <ol>
+        <li>Links: Berichtsansicht (Diagramme), Datenansicht (Tabellen), Modellansicht (Beziehungen).</li>
+        <li>Rechts: Visualisierungen (Diagramm-Typ), Felder (Spalten), Filter.</li>
+        <li>Oben: Menüband mit allen Funktionen.</li>
+      </ol>
+      <div class="callout">Merksatz: <strong>Felder</strong> sind die Daten, <strong>Visualisierungen</strong> sind die Diagramme.</div>
+
+      <h3>1.3 Excel importieren (Kununu, Refline)</h3>
+      <ol>
+        <li><strong>Start → Daten abrufen → Excel</strong>.</li>
+        <li>Datei auswählen → <strong>Öffnen</strong>.</li>
+        <li>Im Navigator das richtige Blatt wählen (z. B. <code>Kununu_Score</code>).</li>
+        <li>Klicke <strong>Laden</strong>.</li>
+      </ol>
+      <div class="callout warning">Warnung: Excel-Tabellen ohne Überschrift führen zu „Spalte1/Spalte2“. Nutze in Power Query „Erste Zeile als Überschrift“.</div>
+
+      <h3>1.4 CSV importieren (Time-to-hire)</h3>
+      <ol>
+        <li><strong>Start → Daten abrufen → Text/CSV</strong>.</li>
+        <li>Datei auswählen → <strong>Öffnen</strong>.</li>
+        <li>Prüfe <strong>Trennzeichen</strong> (meist Semikolon).</li>
+        <li>Setze <strong>Dateiursprung</strong> auf UTF-8.</li>
+      </ol>
+      <div class="callout">Tipp: Umlaute (ä, ö, ü) sind das beste Zeichen, ob die Kodierung stimmt.</div>
+
+      <h3>1.5 SAP-Exporte importieren</h3>
+      <ol>
+        <li>SAP-Export lokal speichern (z. B. PA0001, PA0002, PA0008, PA2001).</li>
+        <li>Jeden Infotyp als eigene Tabelle laden.</li>
+        <li>Tabellen sofort umbenennen: <code>Mitarbeiter_Org</code>, <code>Mitarbeiter_Personal</code>, <code>Mitarbeiter_Lohn</code>, <code>Absenzen</code>.</li>
+      </ol>
+      <div class="callout warning">Warnung: SAP-Daten enthalten oft führende Nullen bei Personalnummern (PERNR). Nicht löschen!</div>
+    </section>
+
+    <section>
+      <h2>2. Power Query Editor <span class="badge">Modul 2</span></h2>
+      <h3>2.1 Power Query öffnen</h3>
+      <ol>
+        <li><strong>Start → Daten transformieren</strong>.</li>
+        <li>Du siehst eine Vorschau-Tabelle pro Datenquelle.</li>
+      </ol>
+
+      <h3>2.2 Erste Zeile als Überschrift</h3>
+      <ol>
+        <li><strong>Transformieren → Erste Zeile als Überschriften</strong>.</li>
+        <li>Kontrolliere, ob Spaltennamen sinnvoll sind.</li>
+      </ol>
+
+      <h3>2.3 Datentypen richtig setzen</h3>
+      <ol>
+        <li>Datumsspalten: <strong>Datum</strong> auswählen.</li>
+        <li>Zahlen: <strong>Ganze Zahl</strong> oder <strong>Dezimalzahl</strong>.</li>
+        <li>Text: <strong>Text</strong>.</li>
+      </ol>
+      <div class="callout warning">Warnung: Schweizer Datumsformat (TT.MM.JJJJ) braucht oft „Datentyp mit Gebietsschema (Deutsch – Schweiz)“.</div>
+
+      <h3>2.4 Spalten entfernen / behalten</h3>
+      <ol>
+        <li>Unnötige Spalten markieren → <strong>Spalten entfernen</strong>.</li>
+        <li>Wenn nur 6–8 Spalten relevant sind: <strong>Andere Spalten entfernen</strong>.</li>
+      </ol>
+
+      <h3>2.5 Zeilen filtern</h3>
+      <ol>
+        <li>Filterpfeil in der Spalte <strong>Status</strong>.</li>
+        <li>Nur aktive Mitarbeitende wählen.</li>
+        <li>Zeitraum (z. B. letztes Jahr) filtern.</li>
+      </ol>
+
+      <h3>2.6 Werte ersetzen</h3>
+      <ol>
+        <li><strong>Transformieren → Werte ersetzen</strong>.</li>
+        <li><code>null</code> durch <code>0</code> ersetzen.</li>
+        <li>Codes wie <code>A</code> in Klartext (<code>Aktiv</code>) umwandeln.</li>
+      </ol>
+
+      <h3>2.7 Spalten teilen / zusammenführen</h3>
+      <ol>
+        <li>Spalte auswählen → <strong>Spalte teilen</strong> (z. B. Vorname/Nachname).</li>
+        <li>Mehrere Spalten zusammenführen (z. B. Vorname + Nachname).</li>
+      </ol>
+
+      <h3>2.8 Berechnete Spalte</h3>
+      <ol>
+        <li><strong>Spalte hinzufügen → Benutzerdefinierte Spalte</strong>.</li>
+        <li>Beispiel: FTE = Beschäftigungsgrad / 100.</li>
+      </ol>
+
+      <h3>2.9 Schliessen &amp; Laden</h3>
+      <ol>
+        <li><strong>Start → Schliessen &amp; Laden</strong>.</li>
+        <li>„Laden in“ nutzen, wenn du nur eine Verbindung brauchst.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>3. Datenmodell <span class="badge">Modul 3</span></h2>
+      <h3>3.1 Beziehungen verstehen</h3>
+      <div class="grid-three">
+        <div class="flow-box">
+          <strong>1:n Beziehung</strong>
+          <p class="small">Eine Personalnummer in der Mitarbeitertabelle kann viele Abwesenheitszeilen haben.</p>
+        </div>
+        <div class="flow-box">
+          <strong>1:1 Beziehung</strong>
+          <p class="small">Eine Personalnummer hat genau eine Detailzeile (z. B. Stammdaten).</p>
+        </div>
+        <div class="flow-box">
+          <strong>Filterfluss</strong>
+          <p class="small">Filter sollen meistens nur in eine Richtung laufen (Einweg).</p>
+        </div>
+      </div>
+
+      <h3>3.2 Beziehung erstellen</h3>
+      <ol>
+        <li>Modellansicht öffnen (Beziehungs-Icon links).</li>
+        <li>Spalte <strong>PERNR</strong> von Tabelle A auf Tabelle B ziehen.</li>
+        <li>Kardinalität prüfen (1:n) und Kreuzfilterrichtung auf Einweg setzen.</li>
+      </ol>
+
+      <h3>3.3 Datumstabelle erstellen</h3>
+      <ol>
+        <li><strong>Modellierung → Neue Tabelle</strong>.</li>
+        <li>DAX-Formel eingeben:</li>
+      </ol>
+      <pre><code>Datum = ADDCOLUMNS(
+    CALENDAR(DATE(2020,1,1), TODAY()),
+    "Jahr", YEAR([Date]),
+    "Monat", MONTH([Date]),
+    "MonatName", FORMAT([Date],"MMMM"),
+    "Quartal", "Q" &amp; QUARTER([Date]),
+    "KW", WEEKNUM([Date])
+)</code></pre>
+      <ol start="3">
+        <li><strong>Tabellen-Tools → Als Datumstabelle markieren → Datum[Date]</strong>.</li>
+      </ol>
+
+      <h3>3.4 PERNR als Schlüssel</h3>
+      <ol>
+        <li>PERNR in allen SAP-Tabellen verwenden.</li>
+        <li>In Rexx/Excel dieselbe Spalte sicherstellen.</li>
+        <li>Bei führenden Nullen: Datentyp Text setzen (nicht Zahl).</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>4. DAX Measures <span class="badge">Modul 4</span></h2>
+      <h3>4.1 Measure vs. berechnete Spalte</h3>
+      <ul>
+        <li><strong>Measure:</strong> wird im Bericht berechnet, schneller und flexibler.</li>
+        <li><strong>Berechnete Spalte:</strong> wird in jeder Zeile gespeichert (macht Modell grösser).</li>
+      </ul>
+
+      <h3>4.2 Neues Measure erstellen</h3>
+      <ol>
+        <li><strong>Modellierung → Neues Measure</strong>.</li>
+        <li>Formel eingeben und Enter drücken.</li>
+        <li>Measure klar benennen (z. B. <code>Headcount</code>, <code>Fluktuation</code>).</li>
+      </ol>
+
+      <h3>4.3 Basis-Measures für HR</h3>
+      <pre><code>Headcount = COUNTROWS(Mitarbeiter)
+FTE = SUMX(Mitarbeiter, Mitarbeiter[Beschäftigungsgrad]/100)
+Krankheitstage = SUM(Abwesenheiten[Kalendertage])
+Sollarbeitstage = [Headcount] * 21
+Krankenquote = DIVIDE([Krankheitstage], [Sollarbeitstage], 0)
+Krankenquote_ohne_LZ =
+VAR KrankheitstageKurz = CALCULATE([Krankheitstage], FILTER(Abwesenheiten, Abwesenheiten[Kalendertage] <= 30))
+RETURN DIVIDE(KrankheitstageKurz, [Sollarbeitstage], 0)
+Austritte = CALCULATE(COUNTROWS(Mitarbeiter), Mitarbeiter[Austritt] <> BLANK())
+Avg_Headcount = AVERAGEX(VALUES(Datum[Monat]), [Headcount])
+Fluktuation = DIVIDE([Austritte], [Avg_Headcount], 0) * 100</code></pre>
+
+      <h3>4.4 Zeitintelligenz</h3>
+      <pre><code>Headcount_VJ = CALCULATE([Headcount], SAMEPERIODLASTYEAR(Datum[Date]))
+Headcount_VM = CALCULATE([Headcount], PREVIOUSMONTH(Datum[Date]))
+Headcount_YTD = TOTALYTD([Headcount], Datum[Date])
+Delta_VJ = [Headcount] - [Headcount_VJ]
+Delta_VJ_Proz = DIVIDE([Delta_VJ], [Headcount_VJ], 0)</code></pre>
+
+      <h3>4.5 Measures formatieren</h3>
+      <ol>
+        <li>Measure auswählen.</li>
+        <li><strong>Measure-Tools → Format</strong> (Prozent, Währung, Dezimalstellen).</li>
+      </ol>
+      <div class="callout">Tipp: Für Krankenquote Prozentformat mit 1 Dezimalstelle verwenden.</div>
+    </section>
+
+    <section>
+      <h2>5. Visualisierungen <span class="badge">Modul 5</span></h2>
+      <h3>5.1 Welche Visualisierung wofür?</h3>
+      <ul>
+        <li><strong>Karte/Card:</strong> Einzelne KPI-Zahl (Headcount, Fluktuation).</li>
+        <li><strong>Balken:</strong> Vergleich von Abteilungen/Monaten.</li>
+        <li><strong>Linie:</strong> Trendverlauf (Headcount über 12 Monate).</li>
+        <li><strong>Ring:</strong> Anteil Absenzen nach Typ.</li>
+        <li><strong>Tachometer:</strong> Ziel vs Ist (Stellenplan).</li>
+        <li><strong>Matrix:</strong> Detailansicht mit Drill-down.</li>
+      </ul>
+
+      <h3>5.2 Erste Visualisierung erstellen</h3>
+      <ol>
+        <li>Visualisierung auswählen (z. B. Karte).</li>
+        <li>Feld <code>Headcount</code> in Werte ziehen.</li>
+        <li>Visual rechts auf der Seite platzieren.</li>
+      </ol>
+
+      <h3>5.3 Visualisierung formatieren</h3>
+      <ol>
+        <li>Visual auswählen → <strong>Format</strong> (Pinsel).</li>
+        <li>Titel hinzufügen: „Headcount aktuell“.</li>
+        <li>Farben gemäss Firmen-CI setzen.</li>
+      </ol>
+
+      <h3>5.4 Filter &amp; Slicer</h3>
+      <ol>
+        <li>Filterbereich öffnen.</li>
+        <li>Feld <code>Abteilung</code> als Seitenfilter setzen.</li>
+        <li>Slicer für Zeitraum hinzufügen.</li>
+      </ol>
+
+      <div class="callout warning">Warnung: Zu viele Filter verwirren. Maximal 2–3 Slicer pro Seite.</div>
+    </section>
+
+    <section>
+      <h2>6. Dashboard bauen <span class="badge">Modul 6</span></h2>
+      <h3>6.1 Layout planen</h3>
+      <ol>
+        <li>Wichtigste KPIs oben links platzieren (F-Muster).</li>
+        <li>Maximal 6–8 Visuals pro Seite.</li>
+        <li>Genug Weissraum für bessere Lesbarkeit.</li>
+      </ol>
+
+      <h3>6.2 Management-Übersicht (Seite 1)</h3>
+      <ol>
+        <li>KPI-Karten: Headcount, Krankenquote, Fluktuation, Stellenplan.</li>
+        <li>Trendlinie Headcount (12 Monate).</li>
+        <li>Absenzquote nach Typ als Ringdiagramm.</li>
+      </ol>
+
+      <h3>6.3 Detailanalyse (Seite 2)</h3>
+      <ol>
+        <li>Matrix mit Drill-down nach Abteilung.</li>
+        <li>Slicer: Zeitraum und Kostenstelle.</li>
+      </ol>
+
+      <h3>6.4 Interaktionen</h3>
+      <ol>
+        <li><strong>Format → Interaktionen bearbeiten</strong>.</li>
+        <li>Prüfen, ob Klick auf Balken andere Visuals filtert.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>7. Veröffentlichen &amp; Teilen <span class="badge">Modul 7</span></h2>
+      <ol>
+        <li><strong>Datei → Veröffentlichen → Arbeitsbereich wählen</strong>.</li>
+        <li>Im Service Visuals anheften → Dashboard erstellen.</li>
+        <li>Teilen-Link an Geschäftsleitung/Finanzen senden.</li>
+        <li>Geplante Aktualisierung einrichten (Gateway für lokale Daten).</li>
+      </ol>
+      <div class="callout">Tipp: Teste RLS im Service immer mit „Als Rolle anzeigen“.</div>
+    </section>
+
+    <section>
+      <h2>8. Troubleshooting <span class="badge">Modul 8</span></h2>
+      <h3>8.1 Häufige Import-Fehler</h3>
+      <ul>
+        <li>Umlaute falsch → Encoding auf UTF-8 stellen.</li>
+        <li>Datum als Text → Datentyp mit Gebietsschema Schweiz.</li>
+        <li>Dezimaltrennzeichen falsch → Gebietsschema prüfen.</li>
+      </ul>
+
+      <h3>8.2 DAX-Fehler</h3>
+      <ul>
+        <li>Zirkelbezug → berechnete Spalten vermeiden.</li>
+        <li>Division durch Null → <code>DIVIDE()</code> verwenden.</li>
+        <li>Filterkontext falsch → <code>CALCULATE()</code> prüfen.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>9. Anhang: Cheat Sheet &amp; Checkliste <span class="badge">Modul 9</span></h2>
+      <h3>9.1 DAX Cheat Sheet</h3>
+      <pre><code>Headcount = COUNTROWS(Mitarbeiter)
+FTE = SUMX(Mitarbeiter, Mitarbeiter[Beschäftigungsgrad]/100)
+Krankenquote = DIVIDE([Krankheitstage], [Sollarbeitstage], 0)
+Fluktuation = DIVIDE([Austritte], [Avg_Headcount], 0) * 100</code></pre>
+
+      <h3>9.2 Checkliste: Neuer Report</h3>
+      <ul class="checklist">
+        <li>Datenquellen klären (SAP, Rexx, Excel/CSV).</li>
+        <li>Daten importieren und bereinigen (Power Query).</li>
+        <li>Beziehungen und Datumstabelle erstellen.</li>
+        <li>Measures bauen und formatieren.</li>
+        <li>Dashboard layouten, testen, veröffentlichen.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
