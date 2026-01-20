@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Power BI Konsumenten-Schulung für HR</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #1f6feb;
+      --accent-soft: #e0f2fe;
+      --text: #0f172a;
+      --muted: #475569;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --warning: #f97316;
+      --success: #16a34a;
+      --code: #0b1020;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(120deg, #e0f2fe 0%, #eef2ff 100%);
+      padding: 40px 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0 0 8px 0;
+      font-size: 2.2rem;
+    }
+    header p {
+      margin: 6px 0;
+      color: var(--muted);
+    }
+    main {
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    }
+    h2 {
+      margin-top: 0;
+      color: #111827;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 6px;
+    }
+    h3 {
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+    h4 {
+      margin: 14px 0 6px;
+      color: #1f2937;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      background: var(--accent-soft);
+      color: #0369a1;
+      margin-left: 8px;
+    }
+    ul, ol {
+      margin: 8px 0 16px 24px;
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eef2ff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+      color: #1e293b;
+    }
+    .warning {
+      border-left-color: var(--warning);
+      background: #fff7ed;
+    }
+    .success {
+      border-left-color: var(--success);
+      background: #ecfdf3;
+    }
+    figure {
+      margin: 0;
+      padding: 0;
+    }
+    figcaption {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .kpi-list li {
+      margin-bottom: 4px;
+    }
+    .checklist li {
+      margin-bottom: 6px;
+    }
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+    }
+    .option-box {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Power BI Konsumenten-Schulung für HR</h1>
+    <p>Für HR-Mitarbeiterinnen mit wenig IT-Kenntnissen: Fokus auf <strong>Konsumieren</strong>, nicht auf Erstellen.</p>
+    <p class="small">Hinweis: Eine Word-Version ist nicht im Repo enthalten (Binary-Dateien werden beim PR-Erstellen nicht unterstützt).</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Überblick</h2>
+      <div class="grid-two">
+        <div>
+          <h3>Zielgruppe</h3>
+          <ul>
+            <li>3–4 HR-Mitarbeiterinnen (Schweiz)</li>
+            <li>Excel: Basis + SVERWEIS</li>
+            <li>Technikaffinität: 5–6/10</li>
+            <li>Keine Power BI Vorkenntnisse</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Zielgruppen der Reports</h3>
+          <ul>
+            <li>Geschäftsleitung</li>
+            <li>Verwaltungsrat</li>
+            <li>Finanzbuchhaltung</li>
+            <li>Abteilungsleiter</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>KPIs, die ihr im Dashboard seht</h3>
+      <ul class="kpi-list">
+        <li>Headcount/FTE (monatlich)</li>
+        <li>Fluktuation (monatlich)</li>
+        <li>Krankenquote gesamt + ohne Langzeitkrankheiten &gt;30 Tage (Quartal)</li>
+        <li>Überstunden (Quartal)</li>
+        <li>Produktivstunden (wöchentlich)</li>
+        <li>Ferientage/GLZ-Saldi (jährlich)</li>
+        <li>Stellenplan Soll vs Ist (monatlich, Rexx)</li>
+        <li>Lohnkosten (monatlich)</li>
+        <li>Time to hire (Quartal)</li>
+        <li>Kununu Score (monatlich)</li>
+        <li>Pulsumfrage (Quartal, Rexx)</li>
+        <li>MA-Zufriedenheitsumfrage (jährlich, Rexx)</li>
+      </ul>
+
+      <figure>
+        <svg width="100%" height="260" viewBox="0 0 980 260" role="img" aria-label="Datenfluss von Quellen zu Power BI und Reports">
+          <defs>
+            <linearGradient id="box" x1="0" x2="1">
+              <stop offset="0%" stop-color="#e0f2fe"/>
+              <stop offset="100%" stop-color="#eef2ff"/>
+            </linearGradient>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#64748b" />
+            </marker>
+          </defs>
+          <rect x="20" y="30" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="65" text-anchor="middle" font-size="14" fill="#0f172a">SAP HCM/HRM</text>
+
+          <rect x="20" y="120" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="155" text-anchor="middle" font-size="14" fill="#0f172a">Rexx HR-System</text>
+
+          <rect x="20" y="210" width="240" height="60" rx="12" fill="url(#box)" stroke="#94a3b8" />
+          <text x="140" y="245" text-anchor="middle" font-size="14" fill="#0f172a">Excel/CSV</text>
+
+          <rect x="350" y="100" width="260" height="80" rx="14" fill="#1f6feb" opacity="0.12" stroke="#1f6feb" />
+          <text x="480" y="145" text-anchor="middle" font-size="16" fill="#1f6feb">Power BI Desktop (IT/BI)</text>
+
+          <rect x="700" y="70" width="260" height="120" rx="14" fill="#ecfeff" stroke="#0ea5e9" />
+          <text x="830" y="120" text-anchor="middle" font-size="14" fill="#0f172a">Power BI Service</text>
+          <text x="830" y="145" text-anchor="middle" font-size="12" fill="#475569">HR konsumiert &amp; filtert</text>
+
+          <line x1="260" y1="60" x2="350" y2="120" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <line x1="260" y1="150" x2="350" y2="140" stroke="#64748b" stroke-width="2" />
+          <line x1="260" y1="240" x2="350" y2="160" stroke="#64748b" stroke-width="2" />
+          <line x1="610" y1="140" x2="700" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+        </svg>
+        <figcaption>Grafik: IT/BI erstellt die Dashboards, HR nutzt sie im Power BI Service.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Best Practice: Wer macht was?</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Aufgabe</th>
+            <th>HR</th>
+            <th>IT/BI-Team</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>KPIs definieren</td>
+            <td>✓</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Daten interpretieren</td>
+            <td>✓</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Reports anfordern</td>
+            <td>✓</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Dashboards bauen</td>
+            <td></td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>DAX/Measures schreiben</td>
+            <td></td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Datenmodell pflegen</td>
+            <td></td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Fertige Dashboards nutzen</td>
+            <td>✓</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Filter setzen, Drill-down</td>
+            <td>✓</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Optionen für euch (entschieden)</h2>
+      <div class="grid-two">
+        <div class="option-box">
+          <h3>Option A</h3>
+          <p>Du baust das Dashboard einmalig → HR nutzt es nur noch (Filter, Export).</p>
+        </div>
+        <div class="option-box">
+          <h3>Option B</h3>
+          <p>HR lernt nur Power BI Service → Fertige Reports anschauen, filtern, teilen.</p>
+        </div>
+        <div class="option-box">
+          <h3>Option C</h3>
+          <p>HR bleibt bei Excel → Du lieferst bessere SAP-Exporte/Views.</p>
+        </div>
+      </div>
+      <div class="callout success">Entscheid: <strong>HR konsumiert nur</strong>. Fokus dieser Schulung: Power BI Service bedienen.</div>
+    </section>
+
+    <section>
+      <h2>Modul 1: Power BI Service öffnen &amp; zurechtfinden</h2>
+      <h3>1.1 Anmeldung</h3>
+      <ol>
+        <li>Öffne <strong>https://app.powerbi.com</strong>.</li>
+        <li>Melde dich mit deinem Firmenkonto an.</li>
+        <li>Wähle links den richtigen <strong>Arbeitsbereich</strong> (z. B. „HR-Reporting“).</li>
+      </ol>
+
+      <h3>1.2 Navigation im Service</h3>
+      <ol>
+        <li>Links: Navigationsleiste (Start, Arbeitsbereiche, Berichte).</li>
+        <li>In der Mitte: Berichtseite mit mehreren Visualisierungen.</li>
+        <li>Oben rechts: Teilen, Exportieren, Abonnieren.</li>
+      </ol>
+
+      <div class="callout">Merksatz: <strong>Bericht</strong> = mehrere Seiten, <strong>Dashboard</strong> = eine Seite mit Kacheln.</div>
+    </section>
+
+    <section>
+      <h2>Modul 2: Filtern &amp; Slicer benutzen</h2>
+      <h3>2.1 Slicer (Zeit, Abteilung, Standort)</h3>
+      <ol>
+        <li>Klicke auf den Slicer (z. B. „Jahr“).</li>
+        <li>Wähle einen Wert aus (z. B. 2025).</li>
+        <li>Mehrfachauswahl: <strong>Strg</strong> gedrückt halten.</li>
+      </ol>
+      <div class="callout warning">Warnung: Wenn Zahlen „verschwinden“, liegt meist ein Filter aktiv. Filter über den Radiergummi zurücksetzen.</div>
+
+      <h3>2.2 Filterbereich rechts</h3>
+      <ol>
+        <li>Öffne den Filterbereich.</li>
+        <li>Prüfe Visual-, Seiten- und Berichtsebene.</li>
+        <li>Setze Filter zurück (Radiergummi-Symbol).</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Modul 3: Drill-down &amp; Drill-up</h2>
+      <ol>
+        <li>Klicke auf ein Diagramm (z. B. Abteilung).</li>
+        <li>Nutze die Drill-Buttons oben links im Visual.</li>
+        <li>Mit „Drill-up“ kommst du eine Ebene zurück.</li>
+      </ol>
+      <div class="callout">Beispiel: Gesamtes Unternehmen → Abteilung → Team.</div>
+    </section>
+
+    <section>
+      <h2>Modul 4: Exportieren (Excel &amp; PDF)</h2>
+      <h3>4.1 Daten nach Excel exportieren</h3>
+      <ol>
+        <li>Im Visual auf die drei Punkte <strong>⋯</strong> klicken.</li>
+        <li><strong>Daten exportieren</strong> wählen.</li>
+        <li>Format wählen: Zusammengefasst oder Detailliert.</li>
+      </ol>
+
+      <h3>4.2 Bericht als PDF speichern</h3>
+      <ol>
+        <li>Oben rechts: <strong>Datei → Exportieren → PDF</strong>.</li>
+        <li>PDF lokal speichern und an Empfänger senden.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Modul 5: Teilen &amp; Abonnements</h2>
+      <h3>5.1 Bericht teilen</h3>
+      <ol>
+        <li>Klicke auf <strong>Teilen</strong>.</li>
+        <li>Empfänger auswählen (E-Mail-Adresse).</li>
+        <li>Kurze Nachricht hinzufügen und senden.</li>
+      </ol>
+
+      <h3>5.2 Abonnement einrichten</h3>
+      <ol>
+        <li>Klicke oben auf <strong>Abonnieren</strong>.</li>
+        <li>Wähle: täglich, wöchentlich oder monatlich.</li>
+        <li>Empfänger prüfen und speichern.</li>
+      </ol>
+      <div class="callout success">Tipp: Für Geschäftsleitung wöchentliches PDF per E-Mail einstellen.</div>
+    </section>
+
+    <section>
+      <h2>Modul 6: Häufige Stolpersteine &amp; Hilfe</h2>
+      <ul>
+        <li>„Ich sehe keine Daten“ → Filter prüfen, Zeitraum anpassen.</li>
+        <li>„Zahlen stimmen nicht“ → Filter/Slicer zurücksetzen.</li>
+        <li>„Export klappt nicht“ → IT/BI-Team kontaktieren.</li>
+      </ul>
+      <div class="callout">Merke: HR nutzt die Dashboards, IT/BI pflegt Daten &amp; Logik.</div>
+    </section>
+
+    <section>
+      <h2>Checkliste: HR als Konsumentin</h2>
+      <ul class="checklist">
+        <li>Ich kann Power BI Service öffnen und den Bericht finden.</li>
+        <li>Ich kann Zeitraum/Abteilung filtern.</li>
+        <li>Ich kann Drill-down und Drill-up nutzen.</li>
+        <li>Ich kann Daten nach Excel exportieren.</li>
+        <li>Ich kann einen Bericht als PDF speichern.</li>
+        <li>Ich kann ein Abonnement einrichten.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
