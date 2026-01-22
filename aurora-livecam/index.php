@@ -1532,9 +1532,10 @@ header {
 header .container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
+    padding-right: 120px; /* Platz für Sprachauswahl */
 }
 
 .logo img { height: 50px; }
@@ -1568,7 +1569,7 @@ header .container {
     border-radius: 2px;
 }
 
-nav ul { list-style: none; padding: 0; display: flex; justify-content: space-around; flex-wrap: wrap; margin: 0; }
+nav ul { list-style: none; padding: 0; display: flex; justify-content: center; flex-wrap: wrap; margin: 0; }
 nav ul li { margin: 5px 10px; }
 nav ul li a { text-decoration: none; color: #333; font-weight: bold; padding: 5px 10px; transition: color 0.3s; }
 nav ul li a:hover { color: #4CAF50; }
