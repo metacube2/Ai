@@ -559,7 +559,7 @@ class VisualCalendarManager {
             }
 
             // === AI-EREIGNISSE ===
-            if (!empty($aiEvents)) {
+            if (!empty($aiEvents) && (!$this->settingsManager || $this->settingsManager->isAIEventsEnabled())) {
                 $output .= '<div class="ai-events-section">';
                 $output .= '<h5>🤖 AI-erkannte Ereignisse</h5>';
                 $output .= '<div class="ai-events-grid">';
@@ -1073,6 +1073,197 @@ class AdminManager {
         $output .= '</div>';
         $output .= '</div>'; // settings-group
 
+        // UI Display Settings (Punkt 2)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>🖼️ UI Anzeige</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Empfehlungs-Banner anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-banner" ' . ($settingsManager->get('ui_display.show_recommendation_banner') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">QR-Code Section anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-qr" ' . ($settingsManager->get('ui_display.show_qr_code') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Social Media Links anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-social" ' . ($settingsManager->get('ui_display.show_social_media') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Patrouille Suisse Section anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-patrouille" ' . ($settingsManager->get('ui_display.show_patrouille_suisse') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
+        // Zoom & Timelapse Settings (Punkt 3)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>🔍 Zoom & Timelapse</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Zoom-Controls anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-zoom" ' . ($settingsManager->get('zoom_timelapse.show_zoom_controls') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Max Zoom-Level</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="number" id="setting-max-zoom" class="number-input" min="1.5" max="4.0" step="0.5" value="' . $settingsManager->get('zoom_timelapse.max_zoom_level') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Timelapse Rückwärts-Modus</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-timelapse-reverse" ' . ($settingsManager->get('zoom_timelapse.timelapse_reverse_enabled') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
+        // Content Management Settings (Punkt 5)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>📝 Content Management</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Gästebuch aktivieren</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-guestbook-enabled" ' . ($settingsManager->get('content.guestbook_enabled') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Galerie aktivieren</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-gallery-enabled" ' . ($settingsManager->get('content.gallery_enabled') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">KI-Events anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-ai-events-enabled" ' . ($settingsManager->get('content.ai_events_enabled') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Max Gästebuch-Einträge</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="number" id="setting-max-guestbook" class="number-input" min="10" max="200" step="10" value="' . $settingsManager->get('content.max_guestbook_entries') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
+        // Technical Settings (Punkt 6)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>⚙️ Technische Einstellungen</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Viewer Update-Intervall (Sekunden)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="number" id="setting-viewer-interval" class="number-input" min="1" max="60" value="' . $settingsManager->get('technical.viewer_update_interval') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Session Timeout (Sekunden)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="number" id="setting-session-timeout" class="number-input" min="10" max="300" value="' . $settingsManager->get('technical.session_timeout') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
+        // Theme Settings (Punkt 7)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>🎨 Theme & Design</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Standard-Theme</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<select id="setting-default-theme" class="select-input">';
+        $currentTheme = $settingsManager->get('theme.default_theme');
+        $output .= '<option value="theme-legacy" ' . ($currentTheme === 'theme-legacy' ? 'selected' : '') . '>Klassisch</option>';
+        $output .= '<option value="theme-alpine" ' . ($currentTheme === 'theme-alpine' ? 'selected' : '') . '>Alpin</option>';
+        $output .= '<option value="theme-neo" ' . ($currentTheme === 'theme-neo' ? 'selected' : '') . '>Modern</option>';
+        $output .= '</select>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Theme-Switcher anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-show-theme-switcher" ' . ($settingsManager->get('theme.show_theme_switcher') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
+        // SEO Settings (Punkt 8)
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>🔍 SEO & Meta</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Custom Title (leer = Standard)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-custom-title" class="text-input" placeholder="' . $siteConfig['siteTitle'] . '" value="' . htmlspecialchars($settingsManager->get('seo.custom_title')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Meta Description</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<textarea id="setting-meta-description" class="textarea-input" rows="2" placeholder="SEO Beschreibung für Google...">' . htmlspecialchars($settingsManager->get('seo.meta_description')) . '</textarea>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Meta Keywords</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-meta-keywords" class="text-input" placeholder="webcam, zürich, wetter..." value="' . htmlspecialchars($settingsManager->get('seo.meta_keywords')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
         $output .= '</div>'; // admin-settings-panel
 
         // Bestehender Admin-Content
@@ -1383,11 +1574,11 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO-optimierter Title -->
-    <title><?php echo $siteConfig['siteTitle']; ?></title>
+    <title><?php echo $settingsManager->getCustomTitle() ?: $siteConfig['siteTitle']; ?></title>
 
     <!-- SEO Meta-Tags -->
-    <meta name="description" content="Live Webcam Zürich Oberland mit Blick auf Zürichsee. 24/7 Livestream, Tagesvideos, AI-Wettererkennung. Patrouille Suisse Trainingsflüge jeden Montag live verfolgen. Webcam Dürnten auf 616m.">
-    <meta name="keywords" content="Webcam Zürich, Zürichsee Webcam, Zürich Oberland Webcam, Live Webcam Schweiz, Patrouille Suisse Livestream, Wetter Zürich live, Webcam Dürnten, Rapperswil Webcam, Schweizer Alpen Webcam, Wetter Zürich Oberland, <?php echo $siteConfig['siteName']; ?> Webcam, Timelapse Zürich">
+    <meta name="description" content="<?php echo !empty($settingsManager->getMetaDescription()) ? htmlspecialchars($settingsManager->getMetaDescription()) : 'Live Webcam Zürich Oberland mit Blick auf Zürichsee. 24/7 Livestream, Tagesvideos, AI-Wettererkennung. Patrouille Suisse Trainingsflüge jeden Montag live verfolgen. Webcam Dürnten auf 616m.'; ?>">
+    <meta name="keywords" content="<?php echo !empty($settingsManager->getMetaKeywords()) ? htmlspecialchars($settingsManager->getMetaKeywords()) : 'Webcam Zürich, Zürichsee Webcam, Zürich Oberland Webcam, Live Webcam Schweiz, Patrouille Suisse Livestream, Wetter Zürich live, Webcam Dürnten, Rapperswil Webcam, Schweizer Alpen Webcam, Wetter Zürich Oberland, ' . $siteConfig['siteName'] . ' Webcam, Timelapse Zürich'; ?>">
     <meta name="author" content="<?php echo $siteConfig['author']; ?>">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <link rel="canonical" href="<?php echo $siteConfig['domainUrl']; ?>/">
@@ -1896,6 +2087,119 @@ button[type="submit"]:hover { background-color: #45a049; }
 .modal-next { right: 0; }
 .modal-prev { left: 0; }
 
+/* Admin Settings Panel */
+#admin-settings-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+#admin-settings-panel h3 {
+    color: white;
+    margin: 0 0 25px 0;
+    font-size: 24px;
+    text-align: center;
+}
+.settings-group {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.settings-group h4 {
+    margin: 0 0 15px 0;
+    color: #667eea;
+    font-size: 18px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 8px;
+}
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.setting-row:last-child {
+    border-bottom: none;
+}
+.setting-label {
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+}
+.setting-input {
+    display: flex;
+    align-items: center;
+    min-width: 200px;
+}
+.number-input, .text-input, .select-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+.number-input:focus, .text-input:focus, .select-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.textarea-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    resize: vertical;
+    transition: border-color 0.3s;
+}
+.textarea-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
 /* Language Switch */
 #language-switch { position: fixed; top: 10px; right: 10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); border-radius: 5px; padding: 5px; }
 .lang-button { background: none; border: none; cursor: pointer; padding: 5px; opacity: 0.7; transition: opacity 0.3s; margin: 0 2px; }
@@ -2105,7 +2409,7 @@ body.theme-neo footer {
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
-<body class="theme-legacy">
+<body class="<?php echo $settingsManager->getDefaultTheme(); ?>">
 
 <div class="sun-overlay" aria-hidden="true"></div>
 
@@ -2147,12 +2451,12 @@ body.theme-neo footer {
                 <?php endif; ?>
             </ul>
         </nav>
-        <!-- <div class="theme-switcher" aria-label="Design wechseln">
+        <div class="theme-switcher" aria-label="Design wechseln" style="display: <?php echo $settingsManager->shouldShowThemeSwitcher() ? 'flex' : 'none'; ?>;">
             <span data-en="Design" data-de="Design" data-it="Design" data-fr="Design" data-zh="设计">Design</span>
             <button class="theme-button active" data-theme="theme-legacy" type="button" data-en="Classic" data-de="Klassisch" data-it="Classico" data-fr="Classique" data-zh="经典">Klassisch</button>
             <button class="theme-button" data-theme="theme-alpine" type="button" data-en="Alpine" data-de="Alpin" data-it="Alpino" data-fr="Alpin" data-zh="高山">Alpin</button>
             <button class="theme-button" data-theme="theme-neo" type="button" data-en="Modern" data-de="Modern" data-it="Moderno" data-fr="Moderne" data-zh="现代">Modern</button>
-        </div> -->
+        </div>
     </div>
 </header>
 
@@ -2176,7 +2480,7 @@ body.theme-neo footer {
         </div>
     </section>
 
-    <div class="banner-container">
+    <div class="banner-container" style="display: <?php echo $settingsManager->shouldShowRecommendationBanner() ? 'block' : 'none'; ?>;">
         <div class="recommendation-banner">
             <h2>Unsere Empfehlungen</h2>
             <div class="sponsor-logos">
@@ -2221,7 +2525,7 @@ body.theme-neo footer {
 
         <!-- 
  CONTROLS -->
-        <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung">
+        <div id="zoom-controls" class="zoom-controls" aria-label="Zoom Steuerung" style="display: <?php echo $settingsManager->shouldShowZoomControls() ? 'flex' : 'none'; ?>;">
             <button type="button" onclick="adjustZoom(-0.5)" class="zoom-btn" title="Zoom out">−</button>
             <input type="range" id="zoom-range" class="zoom-slider" min="1" max="4" value="1" step="0.5">
             <span id="zoom-value" class="zoom-value">1.0x</span>
@@ -2302,7 +2606,7 @@ body.theme-neo footer {
 </section>
 
 <!-- QR CODE -->
-<section id="qr-code" class="section">
+<section id="qr-code" class="section" style="display: <?php echo $settingsManager->shouldShowQRCode() ? 'block' : 'none'; ?>;">
     <div class="container" style="text-align: center;">
         <h1>
             <p data-en="Follow us and share with friends" data-de="Folge uns und teile mit Freunden" data-it="Seguici e condividi con gli amici" data-fr="Suivez-nous et partagez avec vos amis" data-zh="关注我们并分享给朋友">
@@ -2317,7 +2621,7 @@ body.theme-neo footer {
 </section>
 
 <!-- GUESTBOOK -->
-<section id="guestbook" class="section">
+<section id="guestbook" class="section" style="display: <?php echo $settingsManager->isGuestbookEnabled() ? 'block' : 'none'; ?>;">
     <div class="container">
         <h2 data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-zh="留言簿">Gästebuch</h2>
         <?php
@@ -2343,7 +2647,7 @@ body.theme-neo footer {
 </section>
 
 <!-- GALLERY -->
-<section id="gallery" class="section">
+<section id="gallery" class="section" style="display: <?php echo $settingsManager->isGalleryEnabled() ? 'block' : 'none'; ?>;">
     <div class="container">
         <h2 data-en="Image Gallery" data-de="Bildergalerie" data-it="Galleria immagini" data-fr="Galerie d'images" data-zh="图片库">Bildergalerie</h2>
         <div class="gallery-wrapper">
@@ -2397,7 +2701,7 @@ body.theme-neo footer {
 <?php endif; ?>
 
 <!-- PATROUILLE SUISSE SEKTION -->
-<section id="patrouille-suisse" class="section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+<section id="patrouille-suisse" class="section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: <?php echo $settingsManager->shouldShowPatrouillesuisse() ? 'block' : 'none'; ?>;">
     <div class="container">
         <h2 style="color: #fff; text-align: center;" data-en="Patrouille Suisse Live - Watch Training Flights" data-de="Patrouille Suisse Live - Trainingsflüge Beobachten" data-it="Patrouille Suisse Live - Guarda i voli di addestramento" data-fr="Patrouille Suisse en direct - Regardez les vols d'entraînement" data-zh="瑞士巡逻兵直播 - 观看训练飞行">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px;">
@@ -2525,20 +2829,20 @@ body.theme-neo footer {
 <footer>
     <div class="container">
         <!-- Social Media Icons -->
-        <div class="footer-social" style="text-align: center; margin-bottom: 20px;">
-            <a href="https://www.instagram.com/auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf Instagram" style="display: inline-block; margin: 0 10px; color: #E1306C; font-size: 24px;">
+        <div class="footer-social social-media-container" style="text-align: center; margin-bottom: 20px; display: <?php echo $settingsManager->shouldShowSocialMedia() ? 'block' : 'none'; ?>;">
+            <a href="https://www.instagram.com/auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf Instagram" style="display: inline-block; margin: 0 10px; color: #E1306C; font-size: 24px;">
                 <i class="fab fa-instagram" aria-hidden="true"></i>
                 <span class="sr-only">Instagram</span>
             </a>
-            <a href="https://www.facebook.com/auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf Facebook" style="display: inline-block; margin: 0 10px; color: #1877F2; font-size: 24px;">
+            <a href="https://www.facebook.com/auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf Facebook" style="display: inline-block; margin: 0 10px; color: #1877F2; font-size: 24px;">
                 <i class="fab fa-facebook" aria-hidden="true"></i>
                 <span class="sr-only">Facebook</span>
             </a>
-            <a href="https://www.youtube.com/@auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Abonniere unseren YouTube Kanal" style="display: inline-block; margin: 0 10px; color: #FF0000; font-size: 24px;">
+            <a href="https://www.youtube.com/@auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Abonniere unseren YouTube Kanal" style="display: inline-block; margin: 0 10px; color: #FF0000; font-size: 24px;">
                 <i class="fab fa-youtube" aria-hidden="true"></i>
                 <span class="sr-only">YouTube</span>
             </a>
-            <a href="https://www.tiktok.com/@auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf TikTok" style="display: inline-block; margin: 0 10px; color: #000000; font-size: 24px;">
+            <a href="https://www.tiktok.com/@auroraweatherlivecam" target="_blank" class="social-link" rel="noopener noreferrer" title="Folge uns auf TikTok" style="display: inline-block; margin: 0 10px; color: #000000; font-size: 24px;">
                 <i class="fab fa-tiktok" aria-hidden="true"></i>
                 <span class="sr-only">TikTok</span>
             </a>
@@ -2617,6 +2921,7 @@ const TimelapseController = {
     availableSpeeds: [1, 10, 100],
     intervalId: null,
     baseInterval: 200,
+    reverseEnabled: <?php echo $settingsManager->isTimelapseReverseEnabled() ? 'true' : 'false'; ?>,
 
     init: function() {
         this.setupControls();
@@ -2632,7 +2937,7 @@ const TimelapseController = {
                 <button id="tl-play-pause" class="tl-btn" title="Play/Pause">
                     <i class="fas fa-play"></i>
                 </button>
-                <button id="tl-reverse" class="tl-btn" title="Rückwärts">
+                <button id="tl-reverse" class="tl-btn" title="Rückwärts" style="display: ${this.reverseEnabled ? 'inline-block' : 'none'};">
                     <i class="fas fa-backward"></i>
                 </button>
                 <div class="tl-slider-container">
@@ -2867,15 +3172,95 @@ const AdminSettings = {
     },
 
     applySettingImmediately: function(key, value) {
+        const boolValue = (value === true || value === 'true');
+
         switch(key) {
             case 'viewer_display.enabled':
                 const viewerEl = document.getElementById('viewer-stat-container');
                 if (viewerEl) {
-                    viewerEl.style.display = (value === true || value === 'true') ? 'inline-flex' : 'none';
+                    viewerEl.style.display = boolValue ? 'inline-flex' : 'none';
                 }
                 break;
             case 'viewer_display.min_viewers':
                 window.minViewersToShow = parseInt(value);
+                break;
+
+            // UI Display (Punkt 2)
+            case 'ui_display.show_recommendation_banner':
+                const bannerEl = document.querySelector('.banner-container');
+                if (bannerEl) bannerEl.style.display = boolValue ? 'block' : 'none';
+                break;
+            case 'ui_display.show_qr_code':
+                const qrSection = document.getElementById('qr-code');
+                if (qrSection) qrSection.style.display = boolValue ? 'block' : 'none';
+                break;
+            case 'ui_display.show_social_media':
+                const socialEls = document.querySelectorAll('.social-link, .social-media-container');
+                socialEls.forEach(el => el.style.display = boolValue ? '' : 'none');
+                break;
+            case 'ui_display.show_patrouille_suisse':
+                const patrouilleSection = document.getElementById('patrouille-suisse');
+                if (patrouilleSection) patrouilleSection.style.display = boolValue ? 'block' : 'none';
+                break;
+
+            // Zoom & Timelapse (Punkt 3)
+            case 'zoom_timelapse.show_zoom_controls':
+                const zoomControls = document.getElementById('zoom-controls');
+                if (zoomControls) zoomControls.style.display = boolValue ? 'flex' : 'none';
+                break;
+            case 'zoom_timelapse.max_zoom_level':
+                window.maxZoomLevel = parseFloat(value);
+                this.showNotification('Max Zoom: ' + value + 'x (Reload empfohlen)', 'success');
+                break;
+            case 'zoom_timelapse.timelapse_reverse_enabled':
+                const reverseBtn = document.getElementById('tl-reverse');
+                if (reverseBtn) reverseBtn.style.display = boolValue ? 'inline-block' : 'none';
+                break;
+
+            // Content Management (Punkt 5)
+            case 'content.guestbook_enabled':
+                const guestbookSection = document.getElementById('guestbook');
+                if (guestbookSection) guestbookSection.style.display = boolValue ? 'block' : 'none';
+                break;
+            case 'content.gallery_enabled':
+                const gallerySection = document.getElementById('gallery');
+                if (gallerySection) gallerySection.style.display = boolValue ? 'block' : 'none';
+                break;
+            case 'content.ai_events_enabled':
+                const aiSections = document.querySelectorAll('.ai-events-section');
+                aiSections.forEach(section => section.style.display = boolValue ? 'block' : 'none');
+                this.showNotification('AI-Events ' + (boolValue ? 'aktiviert' : 'deaktiviert') + ' (Reload empfohlen)', 'success');
+                break;
+            case 'content.max_guestbook_entries':
+                this.showNotification('Max Einträge: ' + value + ' (Reload empfohlen)', 'success');
+                break;
+
+            // Technical (Punkt 6)
+            case 'technical.viewer_update_interval':
+                this.showNotification('Update-Intervall: ' + value + 's (Reload empfohlen)', 'success');
+                break;
+            case 'technical.session_timeout':
+                this.showNotification('Session Timeout: ' + value + 's (Reload empfohlen)', 'success');
+                break;
+
+            // Theme (Punkt 7)
+            case 'theme.default_theme':
+                document.body.className = value;
+                this.showNotification('Theme geändert: ' + value, 'success');
+                break;
+            case 'theme.show_theme_switcher':
+                const themeSwitcher = document.querySelector('.theme-switcher');
+                if (themeSwitcher) themeSwitcher.style.display = boolValue ? 'flex' : 'none';
+                break;
+
+            // SEO (Punkt 8)
+            case 'seo.custom_title':
+                document.title = value || document.title;
+                this.showNotification('Title aktualisiert (Meta bei Reload)', 'success');
+                break;
+            case 'seo.meta_description':
+            case 'seo.meta_keywords':
+                this.showNotification('SEO Meta gespeichert (wirksam bei Reload)', 'success');
                 break;
         }
     },
@@ -2895,6 +3280,84 @@ const AdminSettings = {
 
         document.getElementById('setting-allow-download')?.addEventListener('change', (e) => {
             this.updateSetting('video_mode.allow_download', e.target.checked);
+        });
+
+        // UI Display Settings (Punkt 2)
+        document.getElementById('setting-show-banner')?.addEventListener('change', (e) => {
+            this.updateSetting('ui_display.show_recommendation_banner', e.target.checked);
+        });
+
+        document.getElementById('setting-show-qr')?.addEventListener('change', (e) => {
+            this.updateSetting('ui_display.show_qr_code', e.target.checked);
+        });
+
+        document.getElementById('setting-show-social')?.addEventListener('change', (e) => {
+            this.updateSetting('ui_display.show_social_media', e.target.checked);
+        });
+
+        document.getElementById('setting-show-patrouille')?.addEventListener('change', (e) => {
+            this.updateSetting('ui_display.show_patrouille_suisse', e.target.checked);
+        });
+
+        // Zoom & Timelapse Settings (Punkt 3)
+        document.getElementById('setting-show-zoom')?.addEventListener('change', (e) => {
+            this.updateSetting('zoom_timelapse.show_zoom_controls', e.target.checked);
+        });
+
+        document.getElementById('setting-max-zoom')?.addEventListener('change', (e) => {
+            this.updateSetting('zoom_timelapse.max_zoom_level', parseFloat(e.target.value));
+        });
+
+        document.getElementById('setting-timelapse-reverse')?.addEventListener('change', (e) => {
+            this.updateSetting('zoom_timelapse.timelapse_reverse_enabled', e.target.checked);
+        });
+
+        // Content Management Settings (Punkt 5)
+        document.getElementById('setting-guestbook-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.guestbook_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-gallery-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.gallery_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-ai-events-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('content.ai_events_enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-max-guestbook')?.addEventListener('change', (e) => {
+            this.updateSetting('content.max_guestbook_entries', parseInt(e.target.value));
+        });
+
+        // Technical Settings (Punkt 6)
+        document.getElementById('setting-viewer-interval')?.addEventListener('change', (e) => {
+            this.updateSetting('technical.viewer_update_interval', parseInt(e.target.value));
+        });
+
+        document.getElementById('setting-session-timeout')?.addEventListener('change', (e) => {
+            this.updateSetting('technical.session_timeout', parseInt(e.target.value));
+        });
+
+        // Theme Settings (Punkt 7)
+        document.getElementById('setting-default-theme')?.addEventListener('change', (e) => {
+            this.updateSetting('theme.default_theme', e.target.value);
+        });
+
+        document.getElementById('setting-show-theme-switcher')?.addEventListener('change', (e) => {
+            this.updateSetting('theme.show_theme_switcher', e.target.checked);
+        });
+
+        // SEO Settings (Punkt 8)
+        document.getElementById('setting-custom-title')?.addEventListener('change', (e) => {
+            this.updateSetting('seo.custom_title', e.target.value);
+        });
+
+        document.getElementById('setting-meta-description')?.addEventListener('change', (e) => {
+            this.updateSetting('seo.meta_description', e.target.value);
+        });
+
+        document.getElementById('setting-meta-keywords')?.addEventListener('change', (e) => {
+            this.updateSetting('seo.meta_keywords', e.target.value);
         });
     },
 
