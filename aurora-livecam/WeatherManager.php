@@ -160,6 +160,12 @@ class WeatherManager {
             return null;
         }
 
+        // Fehler nicht aus Cache zurückgeben (z.B. alter "API Key fehlt" Error)
+        if (isset($data['error'])) {
+            @unlink($this->cacheFile); // Cache mit Fehler löschen
+            return null;
+        }
+
         // Update-Intervall aus Settings holen (in Minuten)
         $updateInterval = $this->settingsManager->getWeatherUpdateInterval() * 60; // Minuten -> Sekunden
 
@@ -172,9 +178,13 @@ class WeatherManager {
     }
 
     /**
-     * Speichert Daten im Cache
+     * Speichert Daten im Cache (nur wenn kein Fehler)
      */
     private function saveCache($data) {
+        // Fehler nicht cachen
+        if (isset($data['error'])) {
+            return;
+        }
         $json = json_encode($data, JSON_PRETTY_PRINT);
         file_put_contents($this->cacheFile, $json, LOCK_EX);
     }
