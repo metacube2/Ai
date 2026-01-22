@@ -1271,7 +1271,7 @@ class AdminManager {
 
         // Weather Settings
         $output .= '<div class="settings-group">';
-        $output .= '<h4>🌤️ Wetter-Widget</h4>';
+        $output .= '<h4>🌤️ Wetter-Widget <span style="font-size:12px; color:#4CAF50;">(Open-Meteo - 100% kostenlos!)</span></h4>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Wetter-Widget anzeigen</span>';
@@ -1280,13 +1280,6 @@ class AdminManager {
         $output .= '<input type="checkbox" id="setting-weather-enabled" ' . ($settingsManager->get('weather.enabled') ? 'checked' : '') . '>';
         $output .= '<span class="toggle-slider"></span>';
         $output .= '</label>';
-        $output .= '</div>';
-        $output .= '</div>';
-
-        $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">OpenWeatherMap API Key <a href="https://openweathermap.org/api" target="_blank" style="font-size:11px;">(kostenlos registrieren)</a></span>';
-        $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-api-key" class="text-input" placeholder="Dein API Key hier einfügen..." value="' . htmlspecialchars($settingsManager->get('weather.api_key')) . '">';
         $output .= '</div>';
         $output .= '</div>';
 
@@ -3579,10 +3572,6 @@ const AdminSettings = {
         // Weather Settings
         document.getElementById('setting-weather-enabled')?.addEventListener('change', (e) => {
             this.updateSetting('weather.enabled', e.target.checked);
-        });
-
-        document.getElementById('setting-weather-api-key')?.addEventListener('change', (e) => {
-            this.updateSetting('weather.api_key', e.target.value);
         });
 
         document.getElementById('setting-weather-location')?.addEventListener('change', (e) => {
