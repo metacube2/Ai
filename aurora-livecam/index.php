@@ -2644,7 +2644,11 @@ body.theme-neo footer {
         <!-- WEATHER WIDGET -->
         <?php if ($settingsManager->isWeatherEnabled()): ?>
         <?php
-            $weather = $weatherManager->getCurrentWeather();
+            try {
+                $weather = $weatherManager->getCurrentWeather();
+            } catch (Exception $e) {
+                $weather = ['error' => 'Fehler: ' . $e->getMessage()];
+            }
             if ($weather && !isset($weather['error'])):
         ?>
         <div id="weather-widget" class="weather-widget">
