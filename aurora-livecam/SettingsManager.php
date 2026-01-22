@@ -26,7 +26,8 @@ class SettingsManager {
         return [
             'viewer_display' => [
                 'enabled' => true,
-                'min_viewers' => 1
+                'min_viewers' => 1,
+                'update_interval' => 5 // Sekunden
             ],
             'video_mode' => [
                 'play_in_player' => true,
@@ -35,6 +36,52 @@ class SettingsManager {
             'timelapse' => [
                 'default_speed' => 1,
                 'available_speeds' => [1, 10, 100]
+            ],
+            // Punkt 2: UI-Anzeige Features
+            'ui_display' => [
+                'show_recommendation_banner' => true,
+                'show_qr_code' => true,
+                'show_social_media' => true,
+                'show_patrouille_suisse' => true
+            ],
+            // Punkt 3: Zoom & Timelapse
+            'zoom_timelapse' => [
+                'show_zoom_controls' => true,
+                'max_zoom_level' => 4.0,
+                'timelapse_reverse_enabled' => true
+            ],
+            // Punkt 5: Content Management
+            'content' => [
+                'guestbook_enabled' => true,
+                'gallery_enabled' => true,
+                'ai_events_enabled' => true,
+                'max_guestbook_entries' => 50
+            ],
+            // Punkt 6: Technische Settings
+            'technical' => [
+                'viewer_update_interval' => 5, // Sekunden
+                'session_timeout' => 30 // Sekunden
+            ],
+            // Punkt 7: Theme & Design
+            'theme' => [
+                'default_theme' => 'theme-legacy',
+                'show_theme_switcher' => false
+            ],
+            // Punkt 8: SEO & Meta
+            'seo' => [
+                'custom_title' => '',
+                'meta_description' => '',
+                'meta_keywords' => ''
+            ],
+            // Weather Widget
+            'weather' => [
+                'enabled' => true,
+                'api_key' => '',
+                'location' => 'Oberdürnten,CH',
+                'lat' => '47.2833',
+                'lon' => '8.7167',
+                'update_interval' => 5, // Minuten
+                'units' => 'metric' // metric (Celsius) oder imperial (Fahrenheit)
             ],
             'last_updated' => null,
             'updated_by' => null
@@ -122,5 +169,112 @@ class SettingsManager {
 
     public function shouldAllowDownload() {
         return $this->get('video_mode.allow_download') === true;
+    }
+
+    // UI Display Helper
+    public function shouldShowRecommendationBanner() {
+        return $this->get('ui_display.show_recommendation_banner') === true;
+    }
+
+    public function shouldShowQRCode() {
+        return $this->get('ui_display.show_qr_code') === true;
+    }
+
+    public function shouldShowSocialMedia() {
+        return $this->get('ui_display.show_social_media') === true;
+    }
+
+    public function shouldShowPatrouillesuisse() {
+        return $this->get('ui_display.show_patrouille_suisse') === true;
+    }
+
+    // Content Management Helper
+    public function isGuestbookEnabled() {
+        return $this->get('content.guestbook_enabled') === true;
+    }
+
+    public function isGalleryEnabled() {
+        return $this->get('content.gallery_enabled') === true;
+    }
+
+    public function isAIEventsEnabled() {
+        return $this->get('content.ai_events_enabled') === true;
+    }
+
+    public function getMaxGuestbookEntries() {
+        return $this->get('content.max_guestbook_entries') ?? 50;
+    }
+
+    // Theme Helper
+    public function getDefaultTheme() {
+        return $this->get('theme.default_theme') ?? 'theme-legacy';
+    }
+
+    public function shouldShowThemeSwitcher() {
+        return $this->get('theme.show_theme_switcher') === true;
+    }
+
+    // Technical Helper
+    public function getViewerUpdateInterval() {
+        return $this->get('technical.viewer_update_interval') ?? 5;
+    }
+
+    public function getSessionTimeout() {
+        return $this->get('technical.session_timeout') ?? 30;
+    }
+
+    // Zoom & Timelapse Helper
+    public function shouldShowZoomControls() {
+        return $this->get('zoom_timelapse.show_zoom_controls') === true;
+    }
+
+    public function getMaxZoomLevel() {
+        return $this->get('zoom_timelapse.max_zoom_level') ?? 4.0;
+    }
+
+    public function isTimelapseReverseEnabled() {
+        return $this->get('zoom_timelapse.timelapse_reverse_enabled') === true;
+    }
+
+    // SEO Helper
+    public function getCustomTitle() {
+        $title = $this->get('seo.custom_title');
+        return !empty($title) ? $title : null;
+    }
+
+    public function getMetaDescription() {
+        return $this->get('seo.meta_description') ?? '';
+    }
+
+    public function getMetaKeywords() {
+        return $this->get('seo.meta_keywords') ?? '';
+    }
+
+    // Weather Helper
+    public function isWeatherEnabled() {
+        return $this->get('weather.enabled') === true;
+    }
+
+    public function getWeatherApiKey() {
+        return $this->get('weather.api_key') ?? '';
+    }
+
+    public function getWeatherLocation() {
+        return $this->get('weather.location') ?? 'Oberdürnten,CH';
+    }
+
+    public function getWeatherCoords() {
+        return [
+            'lat' => $this->get('weather.lat') ?? '47.2833',
+            'lon' => $this->get('weather.lon') ?? '8.7167'
+        ];
+    }
+
+    public function getWeatherUpdateInterval() {
+        return $this->get('weather.update_interval') ?? 5;
+    }
+
+    public function getWeatherUnits() {
+        return $this->get('weather.units') ?? 'metric';
     }
 }
