@@ -78,7 +78,48 @@ if (in_array($_SERVER['HTTP_HOST'], $oldDomains)) {
     exit();
 }
 
+// Site-Konfiguration basierend auf Domain
+$isSeecam = ($_SERVER['HTTP_HOST'] === 'www.seecam.ch' || $_SERVER['HTTP_HOST'] === 'seecam.ch');
 
+if ($isSeecam) {
+    $siteConfig = [
+        'domain' => 'www.seecam.ch',
+        'domainUrl' => 'https://www.seecam.ch',
+        'logo' => 'seecam.jpg',
+        'siteName' => 'Seecam',
+        'siteNameFull' => 'Seecam Wetter Livecam',
+        'siteNameFullEn' => 'Seecam Weather Livecam',
+        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Seecam 24/7',
+        'author' => 'Seecam Wetter Livecam',
+        'alternateName' => 'Seecam Webcam Schweiz',
+        'welcomeDe' => 'Willkommen bei Seecam Wetter Livecam',
+        'welcomeEn' => 'Welcome to Seecam Weather Livecam',
+        'aboutDe' => 'Seecam Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
+        'aboutEn' => 'Seecam Weather Livecam is a passion project...',
+        'blogTitle' => 'Seecam Wetter Blog',
+        'footerName' => 'Seecam Wetter Livecam',
+        'copyright' => '© 2024 Seecam Wetter Livecam - Webcam Zürich Oberland'
+    ];
+} else {
+    $siteConfig = [
+        'domain' => 'www.aurora-weather-livecam.com',
+        'domainUrl' => 'https://www.aurora-weather-livecam.com',
+        'logo' => 'logo.png',
+        'siteName' => 'Aurora',
+        'siteNameFull' => 'Aurora Wetter Livecam',
+        'siteNameFullEn' => 'Aurora Weather Livecam',
+        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Aurora Livecam 24/7',
+        'author' => 'Aurora Wetter Livecam',
+        'alternateName' => 'Aurora Webcam Schweiz',
+        'welcomeDe' => 'Willkommen bei Aurora Wetter Livecam',
+        'welcomeEn' => 'Welcome to Aurora Weather Livecam',
+        'aboutDe' => 'Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
+        'aboutEn' => 'Aurora Weather Livecam is a passion project...',
+        'blogTitle' => 'Aurora Wetter Blog',
+        'footerName' => 'Aurora Wetter Livecam',
+        'copyright' => '© 2024 Aurora Wetter Lifecam - Webcam Zürich Oberland'
+    ];
+}
 
 
 
@@ -693,8 +734,9 @@ class GuestbookManager {
           <label for="guest-name"
        data-en="Name:"
        data-de="Name:"
-       data-it="Nome:"   data-zh="姓名：
-       data-fr="Nom:">
+       data-it="Nome:"
+       data-fr="Nom:"
+       data-zh="姓名：">
     Name:
 </label>
 <input type="text" id="guest-name" name="guest-name" required>
@@ -702,7 +744,8 @@ class GuestbookManager {
        data-en="Message:"
        data-de="Nachricht:"
        data-it="Messaggio:"
-       data-fr="Message:">
+       data-fr="Message :"
+       data-zh="留言：">
     Nachricht:
 </label>
 <textarea id="guest-message" name="guest-message" required></textarea>
@@ -710,7 +753,8 @@ class GuestbookManager {
         data-en="Add Entry"
         data-de="Eintrag hinzufügen"
         data-it="Aggiungi Voce"
-        data-fr="Ajouter une entrée">
+        data-fr="Ajouter une entrée"
+        data-zh="添加留言">
     Eintrag hinzufügen
 </button>
 
@@ -1338,28 +1382,104 @@ $minViewersToShow = $settingsManager->get('viewer_display.min_viewers');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Aurora Livecam Zürich Oberland | Live Wetter Webcam Schweiz 24/7</title>
-    <meta name="description" content="Live Webcam aus dem Zürcher Oberland. Echtzeit-Wetter, Tagesvideos, Timelapse und einzigartige Einblicke auf die Schweizer Alpen. Kostenlos 24/7.">
-    <meta name="keywords" content="Webcam Zürich, Live Wetter Schweiz, Zürcher Oberland, Livecam Alpen, Wetter Webcam, Aurora Webcam, Schweiz Livestream, Patrouille Suisse, Wetter heute">
-    <meta name="author" content="Aurora Wetter Livecam">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://www.aurora-weather-livecam.com/">
+    <!-- SEO-optimierter Title -->
+    <title><?php echo $siteConfig['siteTitle']; ?></title>
 
+    <!-- SEO Meta-Tags -->
+    <meta name="description" content="Live Webcam Zürich Oberland mit Blick auf Zürichsee. 24/7 Livestream, Tagesvideos, AI-Wettererkennung. Patrouille Suisse Trainingsflüge jeden Montag live verfolgen. Webcam Dürnten auf 616m.">
+    <meta name="keywords" content="Webcam Zürich, Zürichsee Webcam, Zürich Oberland Webcam, Live Webcam Schweiz, Patrouille Suisse Livestream, Wetter Zürich live, Webcam Dürnten, Rapperswil Webcam, Schweizer Alpen Webcam, Wetter Zürich Oberland, <?php echo $siteConfig['siteName']; ?> Webcam, Timelapse Zürich">
+    <meta name="author" content="<?php echo $siteConfig['author']; ?>">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="<?php echo $siteConfig['domainUrl']; ?>/">
+
+    <!-- Lokales SEO -->
+    <meta name="geo.region" content="CH-ZH">
+    <meta name="geo.placename" content="Dürnten, Zürich Oberland">
+    <meta name="geo.position" content="47.278;8.870">
+    <meta name="ICBM" content="47.278, 8.870">
+
+    <!-- Open Graph für Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Aurora Livecam | Live Wetter Webcam Zürich Oberland">
-    <meta property="og:description" content="Erleben Sie das Wetter im Zürcher Oberland live! 24/7 Webcam auf 616m Höhe mit Blick auf die Schweizer Alpen.">
-    <meta property="og:image" content="https://www.aurora-weather-livecam.com/og-image.jpg">
-    <meta property="og:url" content="https://www.aurora-weather-livecam.com/">
-    <meta property="og:site_name" content="Aurora Wetter Livecam">
+    <meta property="og:title" content="Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse">
+    <meta property="og:description" content="24/7 Live-Webcam aus dem Zürcher Oberland auf 616m Höhe. Patrouille Suisse Trainings jeden Montag. AI-Wettererkennung für Sonnenaufgänge, Regenbögen und mehr.">
+    <meta property="og:image" content="<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="<?php echo $siteConfig['domainUrl']; ?>/">
+    <meta property="og:site_name" content="<?php echo $siteConfig['siteNameFull']; ?> Zürich">
+    <meta property="og:locale" content="de_CH">
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Aurora Livecam | Live Wetter Webcam Schweiz">
-    <meta name="twitter:description" content="24/7 Live-Webcam aus dem Zürcher Oberland. Wetter, Timelapse & mehr.">
+    <meta name="twitter:title" content="Zürich Oberland Webcam Live | Patrouille Suisse & Zürichsee">
+    <meta name="twitter:description" content="24/7 Live-Webcam mit AI-Wettererkennung. Jeden Montag Patrouille Suisse Trainingsflüge live!">
+    <meta name="twitter:image" content="<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg">
 
     <meta name="google-site-verification" content="gzs2HE9hbMKbHYKSf2hZjXvDd7iDUeA4Jb2zngzNIZM" />
-    <meta name="geo.region" content="CH-ZH">
-    <meta name="geo.placename" content="Zürich Oberland">
-    <meta name="geo.position" content="47.278;8.870">
+
+    <!-- Schema.org JSON-LD für Webcam -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "<?php echo $siteConfig['siteNameFull']; ?> Zürich Oberland",
+        "alternateName": "<?php echo $siteConfig['alternateName']; ?>",
+        "url": "<?php echo $siteConfig['domainUrl']; ?>",
+        "description": "24/7 Live Webcam aus dem Zürcher Oberland mit Blick auf den Zürichsee. AI-gestützte Wettererkennung und Patrouille Suisse Trainingsflüge.",
+        "inLanguage": "de-CH"
+    }
+    </script>
+
+    <!-- Schema.org für Lokales Business -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "<?php echo $siteConfig['siteNameFull']; ?>",
+        "description": "Live Webcam Service aus dem Zürcher Oberland mit 24/7 Livestream, Tagesvideos und AI-Wettererkennung",
+        "url": "<?php echo $siteConfig['domainUrl']; ?>",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Dürnten",
+            "addressRegion": "Zürich",
+            "addressCountry": "CH"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "47.278",
+            "longitude": "8.870",
+            "elevation": "616"
+        },
+        "areaServed": {
+            "@type": "GeoCircle",
+            "geoMidpoint": {
+                "@type": "GeoCoordinates",
+                "latitude": "47.278",
+                "longitude": "8.870"
+            },
+            "geoRadius": "50000"
+        }
+    }
+    </script>
+
+    <!-- Schema.org für Video/Livestream -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": "Zürich Oberland Live Webcam Stream",
+        "description": "24/7 Live-Webcam aus dem Zürcher Oberland mit Blick auf Zürichsee und Schweizer Alpen",
+        "thumbnailUrl": "<?php echo $siteConfig['domainUrl']; ?>/og-image.jpg",
+        "uploadDate": "2024-01-01",
+        "contentUrl": "<?php echo $siteConfig['domainUrl']; ?>/test_video.m3u8",
+        "embedUrl": "<?php echo $siteConfig['domainUrl']; ?>/",
+        "publication": {
+            "@type": "BroadcastEvent",
+            "isLiveBroadcast": true,
+            "startDate": "2024-01-01"
+        }
+    }
+    </script>
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -1382,6 +1502,19 @@ body {
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+}
+
+/* Screen-reader only (Accessibility) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
@@ -1997,28 +2130,28 @@ body.theme-neo footer {
     <div class="container">
         <div class="logo-wrapper">
             <div class="logo">
-                <img src="logo.png" alt="Aurora Wetter Livecam">
+                <img src="<?php echo $siteConfig['logo']; ?>" alt="<?php echo $siteConfig['siteNameFull']; ?> - 24/7 Zürich Oberland Webcam Logo">
             </div>
             <div class="swiss-cross" aria-hidden="true"></div>
         </div>
         <nav>
             <ul>
-                <li><a href="#webcams" data-en="Webcam" data-de="Webcam">Webcam</a></li>
-                <li><a href="#guestbook" data-en="Guestbook" data-de="Gästebuch">Gästebuch</a></li>
-                <li><a href="#kontakt" data-en="Contact" data-de="Kontakt">Kontakt</a></li>
-                <li><a href="#gallery" data-en="Gallery" data-de="Galerie">Galerie</a></li>
-                <li><a href="#archive" data-en="Video Archive" data-de="Videoarchiv">Videoarchiv</a></li>
+                <li><a href="#webcams" data-en="Webcam" data-de="Webcam" data-it="Webcam" data-fr="Webcam" data-zh="摄像头">Webcam</a></li>
+                <li><a href="#guestbook" data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-zh="留言簿">Gästebuch</a></li>
+                <li><a href="#kontakt" data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-zh="联系">Kontakt</a></li>
+                <li><a href="#gallery" data-en="Gallery" data-de="Galerie" data-it="Galleria" data-fr="Galerie" data-zh="图库">Galerie</a></li>
+                <li><a href="#archive" data-en="Video Archive" data-de="Videoarchiv" data-it="Archivio video" data-fr="Archive vidéo" data-zh="视频档案">Videoarchiv</a></li>
                 <?php if ($adminManager->isAdmin()): ?>
-                <li><a href="#admin">Admin</a></li>
+                <li><a href="#admin" data-en="Admin" data-de="Admin" data-it="Admin" data-fr="Admin" data-zh="管理员">Admin</a></li>
                 <?php endif; ?>
             </ul>
         </nav>
-        <div class="theme-switcher" aria-label="Design wechseln">
-            <span>Design</span>
-            <button class="theme-button active" data-theme="theme-legacy" type="button">Klassisch</button>
-            <button class="theme-button" data-theme="theme-alpine" type="button">Alpin</button>
-            <button class="theme-button" data-theme="theme-neo" type="button">Modern</button>
-        </div>
+        <!-- <div class="theme-switcher" aria-label="Design wechseln">
+            <span data-en="Design" data-de="Design" data-it="Design" data-fr="Design" data-zh="设计">Design</span>
+            <button class="theme-button active" data-theme="theme-legacy" type="button" data-en="Classic" data-de="Klassisch" data-it="Classico" data-fr="Classique" data-zh="经典">Klassisch</button>
+            <button class="theme-button" data-theme="theme-alpine" type="button" data-en="Alpine" data-de="Alpin" data-it="Alpino" data-fr="Alpin" data-zh="高山">Alpin</button>
+            <button class="theme-button" data-theme="theme-neo" type="button" data-en="Modern" data-de="Modern" data-it="Moderno" data-fr="Moderne" data-zh="现代">Modern</button>
+        </div> -->
     </div>
 </header>
 
@@ -2027,13 +2160,16 @@ body.theme-neo footer {
         <div class="container">
             <div class="flag-title-container">
                 <img src="images/swiss.jpg" alt="Schweizer Flagge" class="flag-image">
-                <h1 data-en="Welcome to Aurora Weather Livecam" data-de="Willkommen bei Aurora Wetter Livecam">
-                    Willkommen bei Aurora Wetter Livecam
+                <h1 data-en="<?php echo $siteConfig['welcomeEn']; ?>" data-de="<?php echo $siteConfig['welcomeDe']; ?>" data-it="Benvenuti su <?php echo $siteConfig['siteNameFullEn']; ?>" data-fr="Bienvenue sur <?php echo $siteConfig['siteNameFullEn']; ?>" data-zh="欢迎来到<?php echo $siteConfig['siteNameFullEn']; ?>">
+                    <?php echo $siteConfig['welcomeDe']; ?>
                 </h1>
                 <img src="local-flag.jpg" alt="Ortsflagge" class="flag-image">
             </div>
             <p data-en="Experience fascinating views of the Zurich region - in real time!"
-               data-de="Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!">
+               data-de="Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!"
+               data-it="Vivi affascinanti panorami della regione di Zurigo in tempo reale!"
+               data-fr="Découvrez des panoramas fascinants de la région de Zurich en temps réel !"
+               data-zh="实时欣赏苏黎世地区的迷人景色！">
                 Erleben Sie faszinierende Ausblicke der Züricher Region - in Echtzeit!
             </p>
         </div>
@@ -2064,7 +2200,7 @@ body.theme-neo footer {
             <!-- Timelapse Overlay -->
             <div id="timelapse-viewer" style="display: none;">
                 <div id="timelapse-wrapper" class="video-zoom-wrapper">
-                    <img id="timelapse-image" src="" alt="Timelapse Image" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img id="timelapse-image" src="" alt="Zeitraffer Wetter Zürich Oberland - Aktuelle Aufnahme" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div id="timelapse-time-overlay"></div>
             </div>
@@ -2110,7 +2246,7 @@ body.theme-neo footer {
             <div class="info-badge viewer-stat" id="viewer-stat-container">
                 <span class="live-dot"></span>
                 <strong id="viewer-count-display"><?php echo $viewerCount; ?></strong>
-                <span data-en="Watching" data-de="Zuschauer">Zuschauer</span>
+                <span data-en="Watching" data-de="Zuschauer" data-it="Spettatori" data-fr="Spectateurs" data-zh="观看人数">Zuschauer</span>
             </div>
             <?php endif; ?>
 
@@ -2119,16 +2255,16 @@ body.theme-neo footer {
 
         <!-- STEUERUNG BUTTONS -->
         <div class="webcam-controls" style="text-align: center;">
-            <a href="?action=snapshot" class="button" data-en="Save Snapshot" data-de="Snapshot speichern">
+            <a href="?action=snapshot" class="button" data-en="Save Snapshot" data-de="Snapshot speichern" data-it="Salva istantanea" data-fr="Enregistrer l'instantané" data-zh="保存截图">
                 Snapshot speichern
             </a>
-            <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer">
+            <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-zh="一周延时">
                 Wochenzeitraffer
             </a>
-            <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern">
+            <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern" data-it="Salva clip video" data-fr="Enregistrer le clip vidéo" data-zh="保存视频片段">
                 Videoclip speichern
             </a>
-            <a href="?download_video=1" class="button" data-en="Download Latest Video" data-de="Tagesvideo downloaden">
+            <a href="?download_video=1" class="button" data-en="Download Latest Video" data-de="Tagesvideo downloaden" data-it="Scarica l'ultimo video" data-fr="Télécharger la dernière vidéo" data-zh="下载最新视频">
                 Tagesvideo downloaden
             </a>
         </div>
@@ -2138,7 +2274,7 @@ body.theme-neo footer {
 <!-- ARCHIVE SECTION -->
 <section id="archive" class="section">
     <div class="container">
-        <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos">Videoarchiv Tagesvideos</h2>
+        <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
         <?php
         $visualCalendar = new VisualCalendarManager('./videos/', './ai/', $settingsManager);
         echo $visualCalendar->displayVisualCalendar();
@@ -2149,10 +2285,10 @@ body.theme-neo footer {
 <!-- STANDORT -->
 <section id="standort" class="section" style="padding: 40px 0;">
     <div class="container" style="text-align: center;">
-        <h2 data-en="Camera Direction" data-de="Kamera-Blickrichtung">Kamera-Blickrichtung</h2>
+        <h2 data-en="Camera Direction" data-de="Kamera-Blickrichtung" data-it="Direzione della camera" data-fr="Direction de la caméra" data-zh="摄像头方向">Kamera-Blickrichtung</h2>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 30px; margin-top: 30px;">
             <div style="max-width: 350px;">
-                <img src="kompass1.png" alt="Kompass" style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <img src="kompass1.png" alt="Kompass zeigt Blickrichtung der Webcam Richtung Zürichsee und Schweizer Alpen" style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
             </div>
             <div style="background: rgba(255,255,255,0.95); padding: 25px 35px; border-radius: 12px; text-align: left;">
                 <h3 style="margin-bottom: 20px; color: #667eea;">📍 Ungefährer Standort</h3>
@@ -2168,12 +2304,12 @@ body.theme-neo footer {
 <section id="qr-code" class="section">
     <div class="container" style="text-align: center;">
         <h1>
-            <p data-en="Follow us and share with friends" data-de="Folge uns und teile mit Freunden">
+            <p data-en="Follow us and share with friends" data-de="Folge uns und teile mit Freunden" data-it="Seguici e condividi con gli amici" data-fr="Suivez-nous et partagez avec vos amis" data-zh="关注我们并分享给朋友">
                 Folge uns und kopiere den Code und sende es deinen Freunden
             </p>
         </h1>
-        <div id="qrcode" data-url="https://www.aurora-weather-livecam.com/"></div>
-        <p data-en="Click QR code to copy URL" data-de="Klicke auf den QR-Code um die URL zu kopieren">
+        <div id="qrcode" data-url="<?php echo $siteConfig['domainUrl']; ?>/"></div>
+        <p data-en="Click QR code to copy URL" data-de="Klicke auf den QR-Code um die URL zu kopieren" data-it="Fai clic sul codice QR per copiare l'URL" data-fr="Cliquez sur le code QR pour copier l'URL" data-zh="点击二维码复制网址">
             Klicke auf den QR-Code, um die URL zu kopieren
         </p>
     </div>
@@ -2182,7 +2318,7 @@ body.theme-neo footer {
 <!-- GUESTBOOK -->
 <section id="guestbook" class="section">
     <div class="container">
-        <h2 data-en="Guestbook" data-de="Gästebuch">Gästebuch</h2>
+        <h2 data-en="Guestbook" data-de="Gästebuch" data-it="Libro degli ospiti" data-fr="Livre d'or" data-zh="留言簿">Gästebuch</h2>
         <?php
         echo $guestbookManager->displayForm();
         echo $guestbookManager->displayEntries($adminManager->isAdmin());
@@ -2193,9 +2329,12 @@ body.theme-neo footer {
 <!-- CONTACT -->
 <section id="kontakt" class="section">
     <div class="container">
-        <h2 data-en="Contact" data-de="Kontakt">Kontakt</h2>
+        <h2 data-en="Contact" data-de="Kontakt" data-it="Contatto" data-fr="Contact" data-zh="联系">Kontakt</h2>
         <p data-en="Questions or suggestions? We look forward to hearing from you!"
-           data-de="Haben Sie Fragen, Anregungen oder möchten uns unterstützen? Wir freuen uns auf Ihre Nachricht!">
+           data-de="Haben Sie Fragen, Anregungen oder möchten uns unterstützen? Wir freuen uns auf Ihre Nachricht!"
+           data-it="Domande o suggerimenti? Saremo felici di sentirti!"
+           data-fr="Des questions ou des suggestions ? Nous serions ravis d'avoir de vos nouvelles !"
+           data-zh="有问题或建议吗？期待您的来信！">
             Haben Sie Fragen, Anregungen oder möchten uns unterstützen? Wir freuen uns auf Ihre Nachricht!
         </p>
         <?php echo $contactManager->displayForm(); ?>
@@ -2205,7 +2344,7 @@ body.theme-neo footer {
 <!-- GALLERY -->
 <section id="gallery" class="section">
     <div class="container">
-        <h2 data-en="Image Gallery" data-de="Bildergalerie">Bildergalerie</h2>
+        <h2 data-en="Image Gallery" data-de="Bildergalerie" data-it="Galleria immagini" data-fr="Galerie d'images" data-zh="图片库">Bildergalerie</h2>
         <div class="gallery-wrapper">
             <button class="gallery-nav-btn left" onclick="scrollGallery('left')"><i class="fas fa-chevron-left"></i></button>
             <?php echo $adminManager->displayGalleryImages(); ?>
@@ -2217,14 +2356,23 @@ body.theme-neo footer {
 <!-- ABOUT -->
 <section id="ueber-uns" class="section">
     <div class="container">
-        <h2 data-en="About Our Project" data-de="Über unser Projekt">Über unser Projekt</h2>
+        <h2 data-en="About Our Project" data-de="Über unser Projekt" data-it="Il nostro progetto" data-fr="À propos de notre projet" data-zh="关于我们的项目">Über unser Projekt</h2>
         <div class="about-grid">
             <div class="about-item">
-                <p data-en="Aurora Weather Livecam is a passion project..."
-                   data-de="Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten...">
-                    Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.
+                <p data-en="<?php echo $siteConfig['aboutEn']; ?>"
+                   data-de="<?php echo $siteConfig['aboutDe']; ?>"
+                   data-it="Aurora Weather Livecam è un progetto del cuore di appassionati di meteorologia. Vogliamo avvicinarvi alla bellezza della natura e al fascino del tempo."
+                   data-fr="Aurora Weather Livecam est un projet de passionnés de météo. Nous souhaitons vous faire découvrir la beauté de la nature et la fascination du temps."
+                   data-zh="Aurora Weather Livecam 是天气爱好者的热情项目。我们希望让您更贴近自然之美与天气的魅力。">
+                    <?php echo $siteConfig['aboutDe']; ?>
                 </p>
-                <p>Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.</p>
+                <p data-en="We have been operating high-resolution webcams around the clock since 2010. We are particularly proud of unique insights, such as the Patrouille Suisse training flights every Monday morning."
+                   data-de="Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen."
+                   data-it="Dal 2010 gestiamo webcam ad alta risoluzione 24 ore su 24. Siamo particolarmente orgogliosi di scorci unici, come i voli di addestramento della Patrouille Suisse ogni lunedì mattina."
+                   data-fr="Depuis 2010, nous exploitons des webcams haute résolution 24h/24. Nous sommes particulièrement fiers d'aperçus uniques, comme les vols d'entraînement de la Patrouille Suisse chaque lundi matin."
+                   data-zh="自2010年以来，我们全天候运行高分辨率摄像头。我们尤其自豪于独特的视角，例如每周一早上的瑞士巡逻兵训练飞行。">
+                    Dazu betreiben wir seit 2010 rund um die Uhr hochauflösende Webcams. Besonders stolz sind wir auf einzigartige Einblicke, wie z.B. die Trainingsflüge der Patrouille Suisse jeden Montagmorgen.
+                </p>
             </div>
         </div>
     </div>
@@ -2234,27 +2382,140 @@ body.theme-neo footer {
 <?php if ($adminManager->isAdmin()): ?>
 <section id="admin" class="section">
     <div class="container">
-        <h2>Admin-Bereich</h2>
+        <h2 data-en="Admin Area" data-de="Admin-Bereich" data-it="Area admin" data-fr="Espace admin" data-zh="管理员区域">Admin-Bereich</h2>
         <?php echo $adminManager->displayAdminContent(); ?>
     </div>
 </section>
 <?php else: ?>
 <section id="admin-login" class="section">
     <div class="container">
-        <h2>Admin Login</h2>
+        <h2 data-en="Admin Login" data-de="Admin Login" data-it="Accesso admin" data-fr="Connexion admin" data-zh="管理员登录">Admin Login</h2>
         <?php echo $adminManager->displayLoginForm(); ?>
     </div>
 </section>
 <?php endif; ?>
 
+<!-- PATROUILLE SUISSE SEKTION -->
+<section id="patrouille-suisse" class="section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+    <div class="container">
+        <h2 style="color: #fff; text-align: center;" data-en="Patrouille Suisse Live - Watch Training Flights" data-de="Patrouille Suisse Live - Trainingsflüge Beobachten" data-it="Patrouille Suisse Live - Guarda i voli di addestramento" data-fr="Patrouille Suisse en direct - Regardez les vols d'entraînement" data-zh="瑞士巡逻兵直播 - 观看训练飞行">Patrouille Suisse Live - Trainingsflüge Beobachten</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px;">
+            <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <h3 style="color: #ff6b6b; margin-bottom: 15px;" data-en="Every Monday Live!" data-de="Jeden Montag Live!" data-it="Ogni lunedì in diretta!" data-fr="Tous les lundis en direct !" data-zh="每周一直播！">Jeden Montag Live!</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="The Patrouille Suisse, the official aerobatic team of the Swiss Air Force, trains every Monday morning in the Zurich Oberland region. Our webcam offers a unique view of the spectacular flight maneuvers of the six F-5E Tiger II jets." data-de="Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden Montagmorgen in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets." data-it="La Patrouille Suisse, il team acrobatico ufficiale dell'Aeronautica militare svizzera, si addestra ogni lunedì mattina nella regione dell'Oberland di Zurigo. La nostra webcam offre una vista unica delle spettacolari manovre di volo dei sei F-5E Tiger II." data-fr="La Patrouille Suisse, l'équipe officielle de voltige des Forces aériennes suisses, s'entraîne chaque lundi matin dans la région de l'Oberland zurichois. Notre webcam offre une vue unique des spectaculaires manœuvres de vol des six F-5E Tiger II." data-zh="瑞士巡逻兵是瑞士空军的官方特技飞行队，每周一早上在苏黎世高地地区训练。我们的摄像头提供了观赏六架 F-5E Tiger II 喷气机精彩机动的独特视角。">
+                    Die Patrouille Suisse, das offizielle Kunstflugteam der Schweizer Luftwaffe, trainiert jeden <strong style="color: #fff;">Montagmorgen</strong> in der Region Zürich Oberland. Unsere Webcam bietet einen einzigartigen Blick auf die spektakulären Flugmanöver der sechs F-5E Tiger II Jets.
+                </p>
+                <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
+                    <li data-en="Training time: approx. 09:00 - 11:00" data-de="Trainingszeit: ca. 09:00 - 11:00 Uhr" data-it="Orario di addestramento: circa 09:00 - 11:00" data-fr="Heure d'entraînement : env. 09:00 - 11:00" data-zh="训练时间：约 09:00 - 11:00">Trainingszeit: ca. 09:00 - 11:00 Uhr</li>
+                    <li data-en="Visible in good weather" data-de="Bei gutem Wetter sichtbar" data-it="Visibile con bel tempo" data-fr="Visible par beau temps" data-zh="天气良好时可见">Bei gutem Wetter sichtbar</li>
+                    <li data-en="Unique perspective from Zurich Oberland" data-de="Einzigartige Perspektive aus dem Zürcher Oberland" data-it="Prospettiva unica dall'Oberland di Zurigo" data-fr="Perspective unique depuis l'Oberland zurichois" data-zh="来自苏黎世高地的独特视角">Einzigartige Perspektive aus dem Zürcher Oberland</li>
+                </ul>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <h3 style="color: #4ecdc4; margin-bottom: 15px;" data-en="History of Patrouille Suisse" data-de="Geschichte der Patrouille Suisse" data-it="Storia della Patrouille Suisse" data-fr="Histoire de la Patrouille Suisse" data-zh="瑞士巡逻兵历史">Geschichte der Patrouille Suisse</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="Founded in 1964, the Patrouille Suisse is one of Europe's most renowned aerobatic teams. The team has been flying the Northrop F-5E Tiger II since 1995 and delights audiences at shows throughout Switzerland and internationally." data-de="Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international." data-it="Fondata nel 1964, la Patrouille Suisse è uno dei team acrobatici più rinomati d'Europa. Dal 1995 il team vola con i Northrop F-5E Tiger II e entusiasma il pubblico in Svizzera e all'estero." data-fr="Fondée en 1964, la Patrouille Suisse est l'une des équipes de voltige les plus renommées d'Europe. L'équipe vole sur Northrop F-5E Tiger II depuis 1995 et séduit le public en Suisse et à l'international." data-zh="瑞士巡逻兵成立于1964年，是欧洲最著名的特技飞行队之一。该队自1995年以来驾驶 Northrop F-5E Tiger II，在瑞士及国际航展上深受观众喜爱。">
+                    Gegründet 1964, ist die Patrouille Suisse eines der renommiertesten Kunstflugteams Europas. Das Team fliegt seit 1995 die Northrop F-5E Tiger II und begeistert bei Shows in der ganzen Schweiz und international.
+                </p>
+                <p style="color: #ddd; margin-top: 15px;" data-en="Home base: Payerne (VD) | Aircraft: 6x F-5E Tiger II | Team size: 6 pilots + crew" data-de="Heimatbasis: Payerne (VD) | Flugzeuge: 6x F-5E Tiger II | Teamgrösse: 6 Piloten + Crew" data-it="Base: Payerne (VD) | Aeromobili: 6x F-5E Tiger II | Team: 6 piloti + personale" data-fr="Base : Payerne (VD) | Avions : 6x F-5E Tiger II | Équipe : 6 pilotes + équipe" data-zh="基地：Payerne (VD) | 飞机：6 架 F-5E Tiger II | 团队规模：6 名飞行员 + 机组">
+                    <strong style="color: #fff;" data-en="Home base:" data-de="Heimatbasis:" data-it="Base:" data-fr="Base :" data-zh="基地：">Heimatbasis:</strong> Payerne (VD)<br>
+                    <strong style="color: #fff;" data-en="Aircraft:" data-de="Flugzeuge:" data-it="Aeromobili:" data-fr="Avions :" data-zh="飞机：">Flugzeuge:</strong> 6x F-5E Tiger II<br>
+                    <strong style="color: #fff;" data-en="Team size:" data-de="Teamgrösse:" data-it="Team:" data-fr="Équipe :" data-zh="团队规模：">Teamgrösse:</strong> 6 <span data-en="pilots + crew" data-de="Piloten + Crew" data-it="piloti + personale" data-fr="pilotes + équipe" data-zh="飞行员 + 机组">Piloten + Crew</span>
+                </p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px);">
+                <h3 style="color: #ffd93d; margin-bottom: 15px;" data-en="Best Viewing Tips" data-de="Beste Beobachtungstipps" data-it="Consigli per la migliore visione" data-fr="Conseils pour une meilleure observation" data-zh="最佳观看提示">Beste Beobachtungstipps</h3>
+                <p style="color: #ddd; line-height: 1.8;" data-en="For the best view of the training flights, we recommend:" data-de="Für die beste Sicht auf die Trainingsflüge empfehlen wir:" data-it="Per la migliore visione dei voli di addestramento, consigliamo:" data-fr="Pour la meilleure vue des vols d'entraînement, nous recommandons :" data-zh="为获得最佳的训练飞行观赏效果，我们建议：">
+                    Für die beste Sicht auf die Trainingsflüge empfehlen wir:
+                </p>
+                <ul style="color: #ccc; margin-top: 15px; padding-left: 20px;">
+                    <li data-en="Use the zoom function of our webcam" data-de="Nutzen Sie die Zoom-Funktion unserer Webcam" data-it="Usa la funzione zoom della nostra webcam" data-fr="Utilisez la fonction zoom de notre webcam" data-zh="使用我们摄像头的缩放功能">Nutzen Sie die Zoom-Funktion unserer Webcam</li>
+                    <li data-en="Timelapse mode for accelerated view" data-de="Timelapse-Modus für beschleunigte Ansicht" data-it="Modalità timelapse per una vista accelerata" data-fr="Mode timelapse pour une vue accélérée" data-zh="使用延时模式加速观看">Timelapse-Modus für beschleunigte Ansicht</li>
+                    <li data-en="Daily videos to watch later" data-de="Tagesvideos zum Nachschauen" data-it="Video giornalieri da rivedere" data-fr="Vidéos quotidiennes à revoir" data-zh="每日视频可供回看">Tagesvideos zum Nachschauen</li>
+                    <li data-en="AI detection marks aircraft sightings" data-de="AI-Erkennung markiert Flugzeug-Sichtungen" data-it="Il rilevamento AI segnala gli avvistamenti di aerei" data-fr="La détection IA signale les observations d'avions" data-zh="AI 检测会标记飞机出现">AI-Erkennung markiert Flugzeug-Sichtungen</li>
+                </ul>
+                <p style="color: #aaa; margin-top: 15px; font-size: 14px;" data-en="Note: Trainings may be cancelled in bad weather." data-de="Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden." data-it="Nota: gli addestramenti possono essere annullati in caso di maltempo." data-fr="Remarque : les entraînements peuvent être annulés en cas de mauvais temps." data-zh="注意：恶劣天气时训练可能会取消。">
+                    <em>Hinweis: Bei schlechtem Wetter können Trainings abgesagt werden.</em>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BLOG SEKTION -->
+<section id="blog" class="section" style="background: #f8f9fa;">
+    <div class="container">
+        <h2 style="text-align: center; margin-bottom: 10px;"><?php echo $siteConfig['blogTitle']; ?></h2>
+        <p style="text-align: center; color: #666; margin-bottom: 40px;" data-en="Latest weather news, webcam updates and nature observations from Zurich Oberland" data-de="Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland" data-it="Ultime notizie meteo, aggiornamenti della webcam e osservazioni naturalistiche dall'Oberland di Zurigo" data-fr="Dernières actualités météo, mises à jour de la webcam et observations de la nature depuis l'Oberland zurichois" data-zh="来自苏黎世高地的最新天气资讯、摄像头更新和自然观察">Aktuelle Wetter-News, Webcam-Updates und Naturbeobachtungen aus dem Zürcher Oberland</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+            <!-- Blog Artikel 1 -->
+            <article style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 60px;">🌅</span>
+                </div>
+                <div style="padding: 25px;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Sunrises over Lake Zurich" data-de="Sonnenaufgänge über dem Zürichsee" data-it="Albe sul Lago di Zurigo" data-fr="Levers de soleil sur le lac de Zurich" data-zh="苏黎世湖日出">Sonnenaufgänge über dem Zürichsee</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="January 2024" data-de="Januar 2024" data-it="Gennaio 2024" data-fr="Janvier 2024" data-zh="2024年1月">Januar 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The winter months offer spectacular sunrises over Lake Zurich. Our AI detection automatically identifies the most beautiful moments and saves them in the gallery." data-de="Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie." data-it="I mesi invernali offrono spettacolari albe sul Lago di Zurigo. Il nostro rilevamento AI identifica automaticamente i momenti più belli e li salva nella galleria." data-fr="Les mois d'hiver offrent des levers de soleil spectaculaires sur le lac de Zurich. Notre détection IA identifie automatiquement les plus beaux moments et les enregistre dans la galerie." data-zh="冬季在苏黎世湖上空可见壮观的日出。我们的 AI 检测会自动识别最美瞬间并保存到图库。">
+                        Die Wintermonate bieten spektakuläre Sonnenaufgänge über dem Zürichsee. Unsere AI-Erkennung identifiziert automatisch die schönsten Momente und speichert sie in der Galerie.
+                    </p>
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Especially with high fog, impressive lighting moods are created when the sun breaks through the cloud cover." data-de="Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht." data-it="Soprattutto con la nebbia alta si creano suggestive atmosfere di luce quando il sole rompe la coltre di nubi." data-fr="Surtout en cas de brouillard élevé, des ambiances lumineuses impressionnantes se créent lorsque le soleil perce la couverture nuageuse." data-zh="尤其在高雾天气，当太阳穿透云层时会形成迷人的光影氛围。">
+                        Besonders bei Hochnebel entstehen eindrucksvolle Lichtstimmungen, wenn die Sonne durch die Wolkendecke bricht.
+                    </p>
+                </div>
+            </article>
+
+            <!-- Blog Artikel 2 -->
+            <article style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="height: 180px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 60px;">🏔️</span>
+                </div>
+                <div style="padding: 25px;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Alpine Panorama in Winter" data-de="Alpenpanorama im Winter" data-it="Panorama alpino in inverno" data-fr="Panorama alpin en hiver" data-zh="冬季阿尔卑斯全景">Alpenpanorama im Winter</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="December 2023" data-de="Dezember 2023" data-it="Dicembre 2023" data-fr="Décembre 2023" data-zh="2023年12月">Dezember 2023</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="On clear winter days, the view from our webcam at 616m altitude extends to the snow-covered peaks of the Glarus Alps. Säntis, Glärnisch and other mountain peaks are visible." data-de="An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar." data-it="Nelle limpide giornate invernali, la vista dalla nostra webcam a 616 m di altitudine si estende alle vette innevate delle Alpi di Glarona. Si vedono Säntis, Glärnisch e altre cime." data-fr="Par temps clair en hiver, la vue depuis notre webcam à 616 m d'altitude s'étend jusqu'aux sommets enneigés des Alpes glaronnaises. Le Säntis, le Glärnisch et d'autres sommets sont visibles." data-zh="在晴朗的冬日，从我们海拔616米的摄像头可远眺格拉鲁斯阿尔卑斯的雪峰，可见 Säntis、Glärnisch 等山峰。">
+                        An klaren Wintertagen reicht die Sicht von unserer Webcam auf 616m Höhe bis zu den schneebedeckten Gipfeln der Glarner Alpen. Säntis, Glärnisch und weitere Bergspitzen sind sichtbar.
+                    </p>
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="Use the zoom function for detailed views of the mountain landscape." data-de="Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft." data-it="Usa la funzione zoom per viste dettagliate del paesaggio montano." data-fr="Utilisez la fonction zoom pour des vues détaillées du paysage montagneux." data-zh="使用缩放功能可查看更细致的山景。">
+                        Nutzen Sie die Zoom-Funktion für detaillierte Ansichten der Berglandschaft.
+                    </p>
+                </div>
+            </article>
+
+            <!-- Blog Artikel 3 -->
+            <article style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="height: 180px; background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 60px;">✈️</span>
+                </div>
+                <div style="padding: 25px;">
+                    <h3 style="margin-bottom: 10px; color: #333;" data-en="Patrouille Suisse Season 2024" data-de="Patrouille Suisse Saison 2024" data-it="Stagione 2024 della Patrouille Suisse" data-fr="Saison 2024 de la Patrouille Suisse" data-zh="2024年瑞士巡逻兵季">Patrouille Suisse Saison 2024</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-en="March 2024" data-de="März 2024" data-it="Marzo 2024" data-fr="Mars 2024" data-zh="2024年3月">März 2024</p>
+                    <p style="color: #555; line-height: 1.7;" data-en="The new flight season of Patrouille Suisse has begun! Every Monday the aerobatic team trains over Zurich Oberland - our webcam captures the flight maneuvers live." data-de="Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein." data-it="È iniziata la nuova stagione di volo della Patrouille Suisse! Ogni lunedì il team acrobatico si addestra sopra l'Oberland di Zurigo: la nostra webcam cattura le manovre in diretta." data-fr="La nouvelle saison de vol de la Patrouille Suisse a commencé ! Chaque lundi, l'équipe de voltige s'entraîne au-dessus de l'Oberland zurichois : notre webcam capture les manœuvres en direct." data-zh="瑞士巡逻兵新一季飞行已开始！每周一特技飞行队在苏黎世高地训练，我们的摄像头会实时捕捉飞行动作。">
+                        Die neue Flugsaison der Patrouille Suisse hat begonnen! Jeden Montag trainiert das Kunstflugteam über dem Zürcher Oberland - unsere Webcam fängt die Flugmanöver live ein.
+                    </p>
+                    <p style="color: #555; line-height: 1.7; margin-top: 10px;" data-en="AI detection automatically marks aircraft sightings in our gallery." data-de="Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie." data-it="Il rilevamento AI contrassegna automaticamente gli avvistamenti di aerei nella nostra galleria." data-fr="La détection IA marque automatiquement les observations d'avions dans notre galerie." data-zh="AI 检测会在我们的图库中自动标记飞机出现。">
+                        Die AI-Erkennung markiert Flugzeug-Sichtungen automatisch in unserer Galerie.
+                    </p>
+                </div>
+            </article>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #888; font-size: 14px;" data-en="More weather updates and observations can be found on our social media channels." data-de="Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen." data-it="Altri aggiornamenti meteo e osservazioni sono disponibili sui nostri canali social." data-fr="D'autres mises à jour météo et observations sont disponibles sur nos réseaux sociaux." data-zh="更多天气更新和观测内容请关注我们的社交媒体渠道。">
+                Weitere Wetter-Updates und Beobachtungen finden Sie auf unseren Social Media Kanälen.
+            </p>
+        </div>
+    </div>
+</section>
+
 <!-- IMPRESSUM -->
 <section id="impressum" class="section">
     <div class="container">
-        <h2 data-en="Imprint" data-de="Impressum">Impressum</h2>
-        <p>Aurora Wetter Livecam</p>
+        <h2 data-en="Imprint" data-de="Impressum" data-it="Note legali" data-fr="Mentions légales" data-zh="法律声明">Impressum</h2>
+        <p><?php echo $siteConfig['footerName']; ?></p>
         <p>M. Kessler</p>
         <p>Dürnten, Schweiz</p>
-        <p data-en="Inquiries via contact form" data-de="Anfragen per Kontaktformular">Anfragen per Kontaktformular</p>
+        <p data-en="Inquiries via contact form" data-de="Anfragen per Kontaktformular" data-it="Richieste tramite modulo di contatto" data-fr="Demandes via le formulaire de contact" data-zh="通过联系表单咨询">Anfragen per Kontaktformular</p>
     </div>
 </section>
 
@@ -2262,15 +2523,37 @@ body.theme-neo footer {
 
 <footer>
     <div class="container">
+        <!-- Social Media Icons -->
+        <div class="footer-social" style="text-align: center; margin-bottom: 20px;">
+            <a href="https://www.instagram.com/auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf Instagram" style="display: inline-block; margin: 0 10px; color: #E1306C; font-size: 24px;">
+                <i class="fab fa-instagram" aria-hidden="true"></i>
+                <span class="sr-only">Instagram</span>
+            </a>
+            <a href="https://www.facebook.com/auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf Facebook" style="display: inline-block; margin: 0 10px; color: #1877F2; font-size: 24px;">
+                <i class="fab fa-facebook" aria-hidden="true"></i>
+                <span class="sr-only">Facebook</span>
+            </a>
+            <a href="https://www.youtube.com/@auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Abonniere unseren YouTube Kanal" style="display: inline-block; margin: 0 10px; color: #FF0000; font-size: 24px;">
+                <i class="fab fa-youtube" aria-hidden="true"></i>
+                <span class="sr-only">YouTube</span>
+            </a>
+            <a href="https://www.tiktok.com/@auroraweatherlivecam" target="_blank" rel="noopener noreferrer" title="Folge uns auf TikTok" style="display: inline-block; margin: 0 10px; color: #000000; font-size: 24px;">
+                <i class="fab fa-tiktok" aria-hidden="true"></i>
+                <span class="sr-only">TikTok</span>
+            </a>
+        </div>
         <div class="footer-links">
             <a href="#webcams">Webcam</a>
             <a href="#guestbook">Gästebuch</a>
             <a href="#kontakt">Kontakt</a>
             <a href="#gallery">Galerie</a>
+            <a href="#patrouille-suisse">Patrouille Suisse</a>
+            <a href="#blog">Blog</a>
             <a href="#impressum">Impressum</a>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 Aurora Wetter Lifecam</p>
+            <p><?php echo $siteConfig['copyright']; ?></p>
+            <p style="font-size: 12px; color: #999; margin-top: 5px;">Live Webcam Schweiz | Zürichsee Blick | Patrouille Suisse Trainings</p>
         </div>
     </div>
 </footer>
