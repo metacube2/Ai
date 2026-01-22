@@ -1,7 +1,8 @@
 {
     "viewer_display": {
         "enabled": true,
-        "min_viewers": 1
+        "min_viewers": 1,
+        "update_interval": 5
     },
     "video_mode": {
         "play_in_player": true,
@@ -9,7 +10,50 @@
     },
     "timelapse": {
         "default_speed": 1,
-        "available_speeds": [1, 10, 100]
+        "available_speeds": [
+            1,
+            10,
+            100
+        ]
+    },
+    "ui_display": {
+        "show_recommendation_banner": true,
+        "show_qr_code": true,
+        "show_social_media": true,
+        "show_patrouille_suisse": true
+    },
+    "zoom_timelapse": {
+        "show_zoom_controls": true,
+        "max_zoom_level": 4.0,
+        "timelapse_reverse_enabled": true
+    },
+    "content": {
+        "guestbook_enabled": true,
+        "gallery_enabled": true,
+        "ai_events_enabled": true,
+        "max_guestbook_entries": 50
+    },
+    "technical": {
+        "viewer_update_interval": 5,
+        "session_timeout": 30
+    },
+    "theme": {
+        "default_theme": "theme-legacy",
+        "show_theme_switcher": false
+    },
+    "seo": {
+        "custom_title": "",
+        "meta_description": "",
+        "meta_keywords": ""
+    },
+    "weather": {
+        "enabled": true,
+        "api_key": "",
+        "location": "Oberdürnten,CH",
+        "lat": "47.2833",
+        "lon": "8.7167",
+        "update_interval": 5,
+        "units": "metric"
     },
     "last_updated": null,
     "updated_by": null

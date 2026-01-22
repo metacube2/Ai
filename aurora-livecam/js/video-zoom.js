@@ -1,7 +1,6 @@
 /**
  * Video Zoom & Pan Controller
- * - Zoom für alle Video-Modi (Live, Timelapse, Tagesvideo)
- * - Pan-Funktion: Mit Maus den gezoomten Bereich verschieben
+ * Zoomt auf Wrapper-Layer statt direkt auf Video-Elemente
  */
 (() => {
     const config = window.zoomConfig || {};
@@ -11,60 +10,75 @@
     let panX = 0;
     let panY = 0;
     let isDragging = false;
-    let startX = 0;
-    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
 
     const minZoom = Number(config.minZoom || 1);
     const maxZoom = Number(config.maxZoom || 4);
-    const defaultZoom = Number(config.defaultZoom || 1);
 
     const slider = document.getElementById('zoom-range');
     const valueEl = document.getElementById('zoom-value');
 
-    // Finde das aktuell aktive Video-Element
-    function getActiveTarget() {
-        const webcam = document.getElementById('webcam-player');
-        const timelapse = document.getElementById('timelapse-image');
-        const daily = document.getElementById('daily-video');
-        const timelapseViewer = document.getElementById('timelapse-viewer');
-        const dailyPlayer = document.getElementById('daily-video-player');
+    // Wrapper-IDs für jeden Modus
+    const wrapperIds = ['live-video-wrapper', 'timelapse-wrapper', 'daily-video-wrapper'];
 
-        // Prüfe welches Element sichtbar ist
-        if (dailyPlayer && dailyPlayer.style.display !== 'none' && daily) {
-            return daily;
+    // Finde den aktuell sichtbaren Wrapper
+    function getActiveWrapper() {
+        // Prüfe daily-video-player
+        const dailyPlayer = document.getElementById('daily-video-player');
+        if (dailyPlayer && dailyPlayer.style.display !== 'none') {
+            return document.getElementById('daily-video-wrapper');
         }
-        if (timelapseViewer && timelapseViewer.style.display !== 'none' && timelapse) {
-            return timelapse;
+
+        // Prüfe timelapse-viewer
+        const timelapseViewer = document.getElementById('timelapse-viewer');
+        if (timelapseViewer && timelapseViewer.style.display !== 'none') {
+            return document.getElementById('timelapse-wrapper');
         }
-        if (webcam) {
-            return webcam;
-        }
-        return null;
+
+        // Fallback: Live-Video
+        return document.getElementById('live-video-wrapper');
     }
 
-    // Wende Zoom und Pan auf das aktive Element an
+    // Wende Transform auf ALLE Wrapper an (damit beim Wechsel der Zoom erhalten bleibt)
     function applyTransform() {
-        const target = getActiveTarget();
-        if (!target) return;
-
-        // Bei Zoom 1x: Kein Pan erlaubt
+        // Bei Zoom 1x: Kein Pan
         if (currentZoom <= 1) {
             panX = 0;
             panY = 0;
         }
 
-        // Begrenzen der Pan-Werte basierend auf Zoom
-        const maxPan = (currentZoom - 1) * 50; // Prozent
+        // Pan begrenzen basierend auf Zoom
+        const maxPan = (currentZoom - 1) * 50;
         panX = Math.max(-maxPan, Math.min(maxPan, panX));
         panY = Math.max(-maxPan, Math.min(maxPan, panY));
 
-        target.style.transform = `scale(${currentZoom}) translate(${panX}%, ${panY}%)`;
-        target.style.transformOrigin = 'center center';
-        target.style.transition = isDragging ? 'none' : 'transform 0.2s ease';
+        // Transform auf alle Wrapper anwenden
+        wrapperIds.forEach(id => {
+            const wrapper = document.getElementById(id);
+            if (wrapper) {
+                wrapper.style.transform = `scale(${currentZoom}) translate(${panX}%, ${panY}%)`;
+                wrapper.style.transition = isDragging ? 'none' : 'transform 0.15s ease-out';
+            }
+        });
 
-        // Update UI
+        // UI Update
         if (valueEl) valueEl.textContent = `${currentZoom.toFixed(1)}x`;
         if (slider) slider.value = currentZoom;
+
+        // Cursor Update
+        updateCursor();
+    }
+
+    function updateCursor() {
+        const container = document.querySelector('.video-container');
+        if (container) {
+            if (currentZoom > 1) {
+                container.classList.add('zoomed');
+            } else {
+                container.classList.remove('zoomed');
+            }
+        }
     }
 
     // Zoom setzen
@@ -91,57 +105,68 @@
         const container = document.querySelector('.video-container');
         if (!container) return;
 
+        // Mousedown - Start dragging
         container.addEventListener('mousedown', (e) => {
             if (currentZoom <= 1) return;
+            // Ignoriere Klicks auf Controls
+            if (e.target.closest('.zoom-controls, button, a')) return;
+
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            container.style.cursor = 'grabbing';
+            lastX = e.clientX;
+            lastY = e.clientY;
             e.preventDefault();
         });
 
+        // Mousemove - Dragging
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
 
-            const dx = (e.clientX - startX) / 5; // Sensitivität anpassen
-            const dy = (e.clientY - startY) / 5;
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
 
-            panX += dx / currentZoom;
-            panY += dy / currentZoom;
+            // Sensitivität basierend auf Zoom
+            const sensitivity = 0.15 / currentZoom;
+            panX += deltaX * sensitivity;
+            panY += deltaY * sensitivity;
 
-            startX = e.clientX;
-            startY = e.clientY;
+            lastX = e.clientX;
+            lastY = e.clientY;
 
             applyTransform();
         });
 
+        // Mouseup - Stop dragging
         document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                const container = document.querySelector('.video-container');
-                if (container) container.style.cursor = currentZoom > 1 ? 'grab' : 'default';
-            }
+            isDragging = false;
+        });
+
+        // Mouse leave
+        document.addEventListener('mouseleave', () => {
+            isDragging = false;
         });
 
         // Touch Events für Mobile
         container.addEventListener('touchstart', (e) => {
             if (currentZoom <= 1 || e.touches.length !== 1) return;
+            if (e.target.closest('.zoom-controls, button, a')) return;
+
             isDragging = true;
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
         }, { passive: true });
 
         container.addEventListener('touchmove', (e) => {
             if (!isDragging || e.touches.length !== 1) return;
 
-            const dx = (e.touches[0].clientX - startX) / 5;
-            const dy = (e.touches[0].clientY - startY) / 5;
+            const deltaX = e.touches[0].clientX - lastX;
+            const deltaY = e.touches[0].clientY - lastY;
 
-            panX += dx / currentZoom;
-            panY += dy / currentZoom;
+            const sensitivity = 0.15 / currentZoom;
+            panX += deltaX * sensitivity;
+            panY += deltaY * sensitivity;
 
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
 
             applyTransform();
         }, { passive: true });
@@ -150,25 +175,28 @@
             isDragging = false;
         });
 
-        // Cursor anpassen bei Zoom
-        container.style.cursor = 'default';
+        // Doppelklick zum Zurücksetzen
+        container.addEventListener('dblclick', (e) => {
+            if (e.target.closest('.zoom-controls, button, a')) return;
+            resetZoom();
+        });
     }
 
-    // Slider Events
+    // Slider Setup
     function setupSlider() {
         if (!slider) return;
 
         slider.min = minZoom;
         slider.max = maxZoom;
         slider.step = 0.5;
-        slider.value = defaultZoom;
+        slider.value = 1;
 
         slider.addEventListener('input', (e) => {
             setZoom(Number(e.target.value));
         });
     }
 
-    // Globale Funktionen für Buttons
+    // Globale Funktionen
     window.adjustZoom = adjustZoom;
     window.resetZoom = resetZoom;
     window.setZoom = setZoom;
@@ -177,31 +205,11 @@
     document.addEventListener('DOMContentLoaded', () => {
         setupSlider();
         setupPanEvents();
-        currentZoom = defaultZoom;
 
-        // Warte kurz, damit Video-Elemente geladen sind
-        setTimeout(() => {
-            applyTransform();
-        }, 500);
+        // Initial State
+        currentZoom = 1;
+        applyTransform();
 
-        // Update Cursor bei Zoom-Änderung
-        const container = document.querySelector('.video-container');
-        if (container) {
-            const observer = new MutationObserver(() => {
-                container.style.cursor = currentZoom > 1 ? 'grab' : 'default';
-            });
-        }
-    });
-
-    // Bei Moduswechsel Pan zurücksetzen
-    window.addEventListener('click', (e) => {
-        if (e.target.id === 'timelapse-button' ||
-            e.target.closest('#timelapse-button') ||
-            e.target.id === 'dvp-back-live' ||
-            e.target.closest('.play-link')) {
-            panX = 0;
-            panY = 0;
-            setTimeout(applyTransform, 100);
-        }
+        console.log('Video Zoom & Pan initialized');
     });
 })();
