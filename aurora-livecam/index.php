@@ -1023,7 +1023,7 @@ class AdminManager {
     }
 
     public function displayAdminContent() {
-        global $settingsManager;
+        global $settingsManager, $siteConfig;
 
         $feedbacks = json_decode(file_get_contents('feedbacks.json') ?: '[]', true);
 
