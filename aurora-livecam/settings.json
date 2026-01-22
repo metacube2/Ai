@@ -46,6 +46,15 @@
         "meta_description": "",
         "meta_keywords": ""
     },
+    "weather": {
+        "enabled": true,
+        "api_key": "",
+        "location": "Oberdürnten,CH",
+        "lat": "47.2833",
+        "lon": "8.7167",
+        "update_interval": 5,
+        "units": "metric"
+    },
     "last_updated": null,
     "updated_by": null
 }

@@ -4,12 +4,17 @@ use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . '/vendor/autoload.php';
 require_once 'SettingsManager.php';
+require_once 'WeatherManager.php';
 
 // SettingsManager initialisieren
 $settingsManager = new SettingsManager();
 
-// AJAX-Handler für Settings (VOR anderen Ausgaben!)
+// WeatherManager initialisieren
+$weatherManager = new WeatherManager($settingsManager);
+
+// AJAX-Handler für Settings und Weather (VOR anderen Ausgaben!)
 $settingsManager->handleAjax();
+$weatherManager->handleAjax();
 
 if (isset($_GET['download_video'])) {
     $videoDir = './videos/';
@@ -1264,6 +1269,67 @@ class AdminManager {
         $output .= '</div>';
         $output .= '</div>'; // settings-group
 
+        // Weather Settings
+        $output .= '<div class="settings-group">';
+        $output .= '<h4>🌤️ Wetter-Widget</h4>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Wetter-Widget anzeigen</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<label class="toggle-switch">';
+        $output .= '<input type="checkbox" id="setting-weather-enabled" ' . ($settingsManager->get('weather.enabled') ? 'checked' : '') . '>';
+        $output .= '<span class="toggle-slider"></span>';
+        $output .= '</label>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">OpenWeatherMap API Key <a href="https://openweathermap.org/api" target="_blank" style="font-size:11px;">(kostenlos registrieren)</a></span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-weather-api-key" class="text-input" placeholder="Dein API Key hier einfügen..." value="' . htmlspecialchars($settingsManager->get('weather.api_key')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Standort (Stadt,Land)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars($settingsManager->get('weather.location')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Latitude (Breitengrad)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-weather-lat" class="text-input" placeholder="47.2833" value="' . htmlspecialchars($settingsManager->get('weather.lat')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Longitude (Längengrad)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-weather-lon" class="text-input" placeholder="8.7167" value="' . htmlspecialchars($settingsManager->get('weather.lon')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Update-Intervall (Minuten)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="number" id="setting-weather-interval" class="number-input" min="5" max="60" value="' . $settingsManager->get('weather.update_interval') . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">Einheit</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<select id="setting-weather-units" class="select-input">';
+        $currentUnits = $settingsManager->get('weather.units');
+        $output .= '<option value="metric" ' . ($currentUnits === 'metric' ? 'selected' : '') . '>Metrisch (°C, km/h)</option>';
+        $output .= '<option value="imperial" ' . ($currentUnits === 'imperial' ? 'selected' : '') . '>Imperial (°F, mph)</option>';
+        $output .= '</select>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>'; // settings-group
+
         $output .= '</div>'; // admin-settings-panel
 
         // Bestehender Admin-Content
@@ -2065,6 +2131,90 @@ button[type="submit"]:hover { background-color: #45a049; }
 
 .delete-btn { background-color: #ff4136; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 0.8em; margin-left: 10px; border-radius: 3px; }
 
+/* Weather Widget */
+.weather-widget {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    animation: weatherFadeIn 0.5s ease;
+}
+.weather-widget.weather-error {
+    background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+    color: white;
+    font-weight: bold;
+    justify-content: center;
+}
+.weather-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    min-width: 120px;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+.weather-item:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.25);
+}
+.weather-icon {
+    font-size: 32px;
+    line-height: 1;
+}
+.weather-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    white-space: nowrap;
+}
+.weather-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.weather-description {
+    flex: 1 1 auto;
+    min-width: 180px;
+}
+.weather-description .weather-value {
+    font-size: 16px;
+    text-align: center;
+}
+@keyframes weatherFadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 768px) {
+    .weather-widget {
+        gap: 10px;
+        padding: 15px 10px;
+    }
+    .weather-item {
+        min-width: 90px;
+        padding: 8px 10px;
+    }
+    .weather-icon {
+        font-size: 24px;
+    }
+    .weather-value {
+        font-size: 14px;
+    }
+    .weather-label {
+        font-size: 10px;
+    }
+}
+
 /* Guestbook */
 .guestbook-entry { background-color: #f9f9f9; border-left: 5px solid #4CAF50; margin-bottom: 20px; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
@@ -2498,6 +2648,53 @@ body.theme-neo footer {
 <!-- WEBCAM SECTION -->
 <section id="webcams" class="section">
     <div class="container">
+        <!-- WEATHER WIDGET -->
+        <?php if ($settingsManager->isWeatherEnabled()): ?>
+        <?php
+            $weather = $weatherManager->getCurrentWeather();
+            if ($weather && !isset($weather['error'])):
+        ?>
+        <div id="weather-widget" class="weather-widget">
+            <div class="weather-item weather-temp">
+                <span class="weather-icon">🌡️</span>
+                <span class="weather-value"><?php echo $weather['temp']; ?>°C</span>
+                <span class="weather-label">Temperatur</span>
+            </div>
+            <div class="weather-item weather-wind">
+                <span class="weather-icon">💨</span>
+                <span class="weather-value"><?php echo $weather['wind_speed']; ?> km/h <?php echo $weather['wind_direction']; ?></span>
+                <span class="weather-label">Wind</span>
+            </div>
+            <div class="weather-item weather-pressure">
+                <span class="weather-icon">🔽</span>
+                <span class="weather-value"><?php echo $weather['pressure']; ?> hPa</span>
+                <span class="weather-label">Luftdruck</span>
+            </div>
+            <div class="weather-item weather-humidity">
+                <span class="weather-icon">💧</span>
+                <span class="weather-value"><?php echo $weather['humidity']; ?>%</span>
+                <span class="weather-label">Luftfeuchtigkeit</span>
+            </div>
+            <div class="weather-item weather-description">
+                <span class="weather-icon"><?php echo $weatherManager->getWeatherEmoji($weather['icon']); ?></span>
+                <span class="weather-value"><?php echo $weather['description']; ?></span>
+                <span class="weather-label"><?php echo $weather['location']; ?></span>
+            </div>
+            <?php if ($weather['rain_1h'] > 0 || $weather['snow_1h'] > 0): ?>
+            <div class="weather-item weather-precipitation">
+                <span class="weather-icon"><?php echo $weather['rain_1h'] > 0 ? '🌧️' : '❄️'; ?></span>
+                <span class="weather-value"><?php echo $weather['rain_1h'] > 0 ? $weather['rain_1h'] : $weather['snow_1h']; ?> mm</span>
+                <span class="weather-label">Niederschlag</span>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php elseif ($weather && isset($weather['error'])): ?>
+        <div class="weather-widget weather-error">
+            <span>⚠️ Wetterdaten nicht verfügbar: <?php echo $weather['error']; ?></span>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
         <!-- VIDEO PLAYER -->
         <div class="video-container" style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
             <?php echo $webcamManager->displayWebcam(); ?>
@@ -3262,6 +3459,25 @@ const AdminSettings = {
             case 'seo.meta_keywords':
                 this.showNotification('SEO Meta gespeichert (wirksam bei Reload)', 'success');
                 break;
+
+            // Weather Settings
+            case 'weather.enabled':
+                const weatherWidget = document.getElementById('weather-widget');
+                if (weatherWidget) {
+                    weatherWidget.style.display = boolValue ? 'flex' : 'none';
+                }
+                this.showNotification('Wetter-Widget ' + (boolValue ? 'aktiviert' : 'deaktiviert'), 'success');
+                break;
+            case 'weather.api_key':
+            case 'weather.location':
+            case 'weather.lat':
+            case 'weather.lon':
+            case 'weather.units':
+                this.showNotification('Wetter-Einstellung gespeichert (Reload empfohlen)', 'success');
+                break;
+            case 'weather.update_interval':
+                this.showNotification('Update-Intervall: ' + value + ' Minuten (Reload empfohlen)', 'success');
+                break;
         }
     },
 
@@ -3358,6 +3574,35 @@ const AdminSettings = {
 
         document.getElementById('setting-meta-keywords')?.addEventListener('change', (e) => {
             this.updateSetting('seo.meta_keywords', e.target.value);
+        });
+
+        // Weather Settings
+        document.getElementById('setting-weather-enabled')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.enabled', e.target.checked);
+        });
+
+        document.getElementById('setting-weather-api-key')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.api_key', e.target.value);
+        });
+
+        document.getElementById('setting-weather-location')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.location', e.target.value);
+        });
+
+        document.getElementById('setting-weather-lat')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.lat', e.target.value);
+        });
+
+        document.getElementById('setting-weather-lon')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.lon', e.target.value);
+        });
+
+        document.getElementById('setting-weather-interval')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.update_interval', parseInt(e.target.value));
+        });
+
+        document.getElementById('setting-weather-units')?.addEventListener('change', (e) => {
+            this.updateSetting('weather.units', e.target.value);
         });
     },
 
@@ -3597,7 +3842,97 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
- 
+
+<!-- WEATHER AUTO-UPDATE -->
+<script>
+const WeatherUpdater = {
+    updateInterval: <?php echo $settingsManager->getWeatherUpdateInterval() * 60 * 1000; ?>, // Minuten -> Millisekunden
+
+    init: function() {
+        if (!document.getElementById('weather-widget')) return;
+
+        // Update alle X Minuten
+        setInterval(() => this.updateWeather(), this.updateInterval);
+    },
+
+    updateWeather: function() {
+        fetch(window.location.href + '?weather_action=get')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data && !data.data.error) {
+                    this.renderWeather(data.data);
+                }
+            })
+            .catch(err => console.error('Weather update error:', err));
+    },
+
+    renderWeather: function(weather) {
+        const widget = document.getElementById('weather-widget');
+        if (!widget) return;
+
+        const rainSnow = weather.rain_1h > 0 || weather.snow_1h > 0;
+        const precipIcon = weather.rain_1h > 0 ? '🌧️' : '❄️';
+        const precipValue = weather.rain_1h > 0 ? weather.rain_1h : weather.snow_1h;
+
+        widget.innerHTML = `
+            <div class="weather-item weather-temp">
+                <span class="weather-icon">🌡️</span>
+                <span class="weather-value">${weather.temp}°C</span>
+                <span class="weather-label">Temperatur</span>
+            </div>
+            <div class="weather-item weather-wind">
+                <span class="weather-icon">💨</span>
+                <span class="weather-value">${weather.wind_speed} km/h ${weather.wind_direction}</span>
+                <span class="weather-label">Wind</span>
+            </div>
+            <div class="weather-item weather-pressure">
+                <span class="weather-icon">🔽</span>
+                <span class="weather-value">${weather.pressure} hPa</span>
+                <span class="weather-label">Luftdruck</span>
+            </div>
+            <div class="weather-item weather-humidity">
+                <span class="weather-icon">💧</span>
+                <span class="weather-value">${weather.humidity}%</span>
+                <span class="weather-label">Luftfeuchtigkeit</span>
+            </div>
+            <div class="weather-item weather-description">
+                <span class="weather-icon">${this.getWeatherEmoji(weather.icon)}</span>
+                <span class="weather-value">${weather.description}</span>
+                <span class="weather-label">${weather.location}</span>
+            </div>
+            ${rainSnow ? `
+            <div class="weather-item weather-precipitation">
+                <span class="weather-icon">${precipIcon}</span>
+                <span class="weather-value">${precipValue} mm</span>
+                <span class="weather-label">Niederschlag</span>
+            </div>
+            ` : ''}
+        `;
+
+        // Fade-in Animation
+        widget.style.animation = 'weatherFadeIn 0.5s ease';
+    },
+
+    getWeatherEmoji: function(iconCode) {
+        const map = {
+            '01d': '☀️', '01n': '🌙',
+            '02d': '⛅', '02n': '☁️',
+            '03d': '☁️', '03n': '☁️',
+            '04d': '☁️', '04n': '☁️',
+            '09d': '🌧️', '09n': '🌧️',
+            '10d': '🌦️', '10n': '🌧️',
+            '11d': '⛈️', '11n': '⛈️',
+            '13d': '❄️', '13n': '❄️',
+            '50d': '🌫️', '50n': '🌫️'
+        };
+        return map[iconCode] || '🌤️';
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    WeatherUpdater.init();
+});
+</script>
 
 </body>
 </html>

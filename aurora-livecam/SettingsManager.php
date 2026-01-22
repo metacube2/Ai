@@ -73,6 +73,16 @@ class SettingsManager {
                 'meta_description' => '',
                 'meta_keywords' => ''
             ],
+            // Weather Widget
+            'weather' => [
+                'enabled' => true,
+                'api_key' => '',
+                'location' => 'Oberdürnten,CH',
+                'lat' => '47.2833',
+                'lon' => '8.7167',
+                'update_interval' => 5, // Minuten
+                'units' => 'metric' // metric (Celsius) oder imperial (Fahrenheit)
+            ],
             'last_updated' => null,
             'updated_by' => null
         ];
@@ -238,5 +248,33 @@ class SettingsManager {
 
     public function getMetaKeywords() {
         return $this->get('seo.meta_keywords') ?? '';
+    }
+
+    // Weather Helper
+    public function isWeatherEnabled() {
+        return $this->get('weather.enabled') === true;
+    }
+
+    public function getWeatherApiKey() {
+        return $this->get('weather.api_key') ?? '';
+    }
+
+    public function getWeatherLocation() {
+        return $this->get('weather.location') ?? 'Oberdürnten,CH';
+    }
+
+    public function getWeatherCoords() {
+        return [
+            'lat' => $this->get('weather.lat') ?? '47.2833',
+            'lon' => $this->get('weather.lon') ?? '8.7167'
+        ];
+    }
+
+    public function getWeatherUpdateInterval() {
+        return $this->get('weather.update_interval') ?? 5;
+    }
+
+    public function getWeatherUnits() {
+        return $this->get('weather.units') ?? 'metric';
     }
 }
