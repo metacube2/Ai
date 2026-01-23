@@ -6,6 +6,11 @@ require __DIR__ . '/vendor/autoload.php';
 require_once 'SettingsManager.php';
 require_once 'WeatherManager.php';
 
+// Multi-Tenant Bootstrap laden (falls vorhanden)
+if (file_exists(__DIR__ . '/src/bootstrap.php')) {
+    require_once __DIR__ . '/src/bootstrap.php';
+}
+
 // SettingsManager initialisieren
 $settingsManager = new SettingsManager();
 
@@ -60,70 +65,104 @@ function safeRedirect($url) {
     exit();
 }
 
-// Hauptlogik
+// Hauptlogik - Domain Redirects werden jetzt in bootstrap.php behandelt
+// (Legacy-Redirect bleibt als Fallback falls Bootstrap nicht geladen)
 $oldDomains = [
     'www.aurora-wetter-lifecam.ch',
     'www.aurora-wetter-livecam.ch'
 ];
 $newDomain = 'www.aurora-weather-livecam.com';
 
-if (in_array($_SERVER['HTTP_HOST'], $oldDomains)) {
+if (in_array($_SERVER['HTTP_HOST'] ?? '', $oldDomains)) {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $newUrl = $protocol . '://' . $newDomain . $_SERVER['REQUEST_URI'];
-
-    // Logging für Debugging
-    error_log("Umleitung von {$_SERVER['HTTP_HOST']} nach $newUrl");
-
     if (!headers_sent()) {
         header("HTTP/1.1 301 Moved Permanently");
         header("Location: " . $newUrl);
-    } else {
-        echo '<script>window.location.href="' . $newUrl . '";</script>';
+        exit();
     }
-    exit();
 }
 
-// Site-Konfiguration basierend auf Domain
-$isSeecam = ($_SERVER['HTTP_HOST'] === 'www.seecam.ch' || $_SERVER['HTTP_HOST'] === 'seecam.ch');
+// Site-Konfiguration: Nutze Multi-Tenant System falls verfügbar, sonst Legacy
+if (function_exists('getSiteConfig')) {
+    // Multi-Tenant Modus (aus bootstrap.php)
+    $tenantConfig = getSiteConfig();
+    $isSeecam = ($tenantConfig['tenant_slug'] === 'seecam');
 
-if ($isSeecam) {
     $siteConfig = [
-        'domain' => 'www.seecam.ch',
-        'domainUrl' => 'https://www.seecam.ch',
-        'logo' => 'seecam.jpg',
-        'siteName' => 'Seecam',
-        'siteNameFull' => 'Seecam Wetter Livecam',
-        'siteNameFullEn' => 'Seecam Weather Livecam',
-        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Seecam 24/7',
-        'author' => 'Seecam Wetter Livecam',
-        'alternateName' => 'Seecam Webcam Schweiz',
-        'welcomeDe' => 'Willkommen bei Seecam Wetter Livecam',
-        'welcomeEn' => 'Welcome to Seecam Weather Livecam',
-        'aboutDe' => 'Seecam Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
-        'aboutEn' => 'Seecam Weather Livecam is a passion project...',
-        'blogTitle' => 'Seecam Wetter Blog',
-        'footerName' => 'Seecam Wetter Livecam',
-        'copyright' => '© 2024 Seecam Wetter Livecam - Webcam Zürich Oberland'
+        'domain' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+        'domainUrl' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
+        'logo' => $tenantConfig['logo_path'] ?? ($isSeecam ? 'seecam.jpg' : 'logo.png'),
+        'siteName' => $tenantConfig['site_name'],
+        'siteNameFull' => $tenantConfig['site_name_full'],
+        'siteNameFullEn' => $tenantConfig['site_name_full'],
+        'siteTitle' => $tenantConfig['site_name_full'] . ' - Live Webcam',
+        'author' => $tenantConfig['site_name_full'],
+        'alternateName' => $tenantConfig['site_name'] . ' Webcam Schweiz',
+        'welcomeDe' => $tenantConfig['welcome_de'] ?: ('Willkommen bei ' . $tenantConfig['site_name_full']),
+        'welcomeEn' => $tenantConfig['welcome_en'] ?: ('Welcome to ' . $tenantConfig['site_name_full']),
+        'aboutDe' => $tenantConfig['site_name_full'] . ' ist ein Herzensprojekt von Wetterbegeisterten.',
+        'aboutEn' => $tenantConfig['site_name_full'] . ' is a passion project by weather enthusiasts.',
+        'blogTitle' => $tenantConfig['site_name'] . ' Wetter Blog',
+        'footerName' => $tenantConfig['site_name_full'],
+        'copyright' => '© ' . date('Y') . ' ' . $tenantConfig['site_name_full'],
+        // Zusätzliche Multi-Tenant Felder
+        'tenant_id' => $tenantConfig['tenant_id'] ?? 0,
+        'primary_color' => $tenantConfig['primary_color'] ?? '#667eea',
+        'secondary_color' => $tenantConfig['secondary_color'] ?? '#764ba2',
+        'custom_css' => $tenantConfig['custom_css'] ?? '',
     ];
 } else {
-    $siteConfig = [
-        'domain' => 'www.aurora-weather-livecam.com',
-        'domainUrl' => 'https://www.aurora-weather-livecam.com',
-        'logo' => 'logo.png',
-        'siteName' => 'Aurora',
-        'siteNameFull' => 'Aurora Wetter Livecam',
-        'siteNameFullEn' => 'Aurora Weather Livecam',
-        'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Aurora Livecam 24/7',
-        'author' => 'Aurora Wetter Livecam',
-        'alternateName' => 'Aurora Webcam Schweiz',
-        'welcomeDe' => 'Willkommen bei Aurora Wetter Livecam',
-        'welcomeEn' => 'Welcome to Aurora Weather Livecam',
-        'aboutDe' => 'Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten. Wir möchten Ihnen die Schönheit der Natur und Faszination des Wetters näher bringen.',
-        'aboutEn' => 'Aurora Weather Livecam is a passion project...',
-        'blogTitle' => 'Aurora Wetter Blog',
-        'footerName' => 'Aurora Wetter Livecam',
-        'copyright' => '© 2024 Aurora Wetter Lifecam - Webcam Zürich Oberland'
-    ];
+    // Legacy-Modus (hardcoded)
+    $isSeecam = ($_SERVER['HTTP_HOST'] === 'www.seecam.ch' || $_SERVER['HTTP_HOST'] === 'seecam.ch');
+
+    if ($isSeecam) {
+        $siteConfig = [
+            'domain' => 'www.seecam.ch',
+            'domainUrl' => 'https://www.seecam.ch',
+            'logo' => 'seecam.jpg',
+            'siteName' => 'Seecam',
+            'siteNameFull' => 'Seecam Wetter Livecam',
+            'siteNameFullEn' => 'Seecam Weather Livecam',
+            'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Seecam 24/7',
+            'author' => 'Seecam Wetter Livecam',
+            'alternateName' => 'Seecam Webcam Schweiz',
+            'welcomeDe' => 'Willkommen bei Seecam Wetter Livecam',
+            'welcomeEn' => 'Welcome to Seecam Weather Livecam',
+            'aboutDe' => 'Seecam Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten.',
+            'aboutEn' => 'Seecam Weather Livecam is a passion project.',
+            'blogTitle' => 'Seecam Wetter Blog',
+            'footerName' => 'Seecam Wetter Livecam',
+            'copyright' => '© 2024 Seecam Wetter Livecam - Webcam Zürich Oberland',
+            'tenant_id' => 0,
+            'primary_color' => '#667eea',
+            'secondary_color' => '#764ba2',
+            'custom_css' => '',
+        ];
+    } else {
+        $siteConfig = [
+            'domain' => 'www.aurora-weather-livecam.com',
+            'domainUrl' => 'https://www.aurora-weather-livecam.com',
+            'logo' => 'logo.png',
+            'siteName' => 'Aurora',
+            'siteNameFull' => 'Aurora Wetter Livecam',
+            'siteNameFullEn' => 'Aurora Weather Livecam',
+            'siteTitle' => 'Zürich Oberland Webcam Live - Zürichsee & Patrouille Suisse | Aurora Livecam 24/7',
+            'author' => 'Aurora Wetter Livecam',
+            'alternateName' => 'Aurora Webcam Schweiz',
+            'welcomeDe' => 'Willkommen bei Aurora Wetter Livecam',
+            'welcomeEn' => 'Welcome to Aurora Weather Livecam',
+            'aboutDe' => 'Aurora Wetter Livecam ist ein Herzensprojekt von Wetterbegeisterten.',
+            'aboutEn' => 'Aurora Weather Livecam is a passion project.',
+            'blogTitle' => 'Aurora Wetter Blog',
+            'footerName' => 'Aurora Wetter Livecam',
+            'copyright' => '© 2024 Aurora Wetter Lifecam - Webcam Zürich Oberland',
+            'tenant_id' => 0,
+            'primary_color' => '#667eea',
+            'secondary_color' => '#764ba2',
+            'custom_css' => '',
+        ];
+    }
 }
 
 
