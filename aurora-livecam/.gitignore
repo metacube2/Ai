@@ -1,0 +1,26 @@
+# Configuration (contains secrets)
+config.php
+
+# Cache files
+weather_cache.json
+active_viewers.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Vendor (if using composer)
+# vendor/
+
+# Uploads (user content)
+uploads/
