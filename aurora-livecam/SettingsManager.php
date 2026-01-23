@@ -83,6 +83,38 @@ class SettingsManager {
                 'update_interval' => 5, // Minuten
                 'units' => 'metric' // metric (Celsius) oder imperial (Fahrenheit)
             ],
+            // SaaS Features - alle aktivierbar/deaktivierbar
+            'saas_features' => [
+                // Multi-Tenant
+                'multi_tenant_enabled' => false, // Aktiviert DB-basierte Tenant-Verwaltung
+                'customer_management_enabled' => false,
+
+                // Onboarding
+                'self_registration_enabled' => false,
+                'email_verification_required' => true,
+                'trial_enabled' => true,
+                'trial_days' => 14,
+
+                // Billing
+                'billing_enabled' => false,
+                'stripe_enabled' => false,
+                'free_plan_available' => true,
+
+                // Dashboard
+                'tenant_dashboard_enabled' => false,
+                'analytics_enabled' => false,
+                'custom_domain_enabled' => false,
+                'custom_branding_enabled' => false,
+
+                // Landing
+                'landing_page_enabled' => false,
+                'demo_mode_enabled' => false,
+
+                // Limits (Default für Free-Plan)
+                'default_max_viewers' => 50,
+                'default_storage_mb' => 500,
+                'default_retention_days' => 7
+            ],
             'last_updated' => null,
             'updated_by' => null
         ];
@@ -276,5 +308,50 @@ class SettingsManager {
 
     public function getWeatherUnits() {
         return $this->get('weather.units') ?? 'metric';
+    }
+
+    // SaaS Feature Helper
+    public function isMultiTenantEnabled() {
+        return $this->get('saas_features.multi_tenant_enabled') === true;
+    }
+
+    public function isSelfRegistrationEnabled() {
+        return $this->get('saas_features.self_registration_enabled') === true;
+    }
+
+    public function isBillingEnabled() {
+        return $this->get('saas_features.billing_enabled') === true;
+    }
+
+    public function isStripeEnabled() {
+        return $this->get('saas_features.stripe_enabled') === true;
+    }
+
+    public function isTenantDashboardEnabled() {
+        return $this->get('saas_features.tenant_dashboard_enabled') === true;
+    }
+
+    public function isAnalyticsEnabled() {
+        return $this->get('saas_features.analytics_enabled') === true;
+    }
+
+    public function isCustomDomainEnabled() {
+        return $this->get('saas_features.custom_domain_enabled') === true;
+    }
+
+    public function isCustomBrandingEnabled() {
+        return $this->get('saas_features.custom_branding_enabled') === true;
+    }
+
+    public function isLandingPageEnabled() {
+        return $this->get('saas_features.landing_page_enabled') === true;
+    }
+
+    public function getTrialDays() {
+        return $this->get('saas_features.trial_days') ?? 14;
+    }
+
+    public function getDefaultMaxViewers() {
+        return $this->get('saas_features.default_max_viewers') ?? 50;
     }
 }
