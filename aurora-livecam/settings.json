@@ -25,7 +25,18 @@
     "zoom_timelapse": {
         "show_zoom_controls": true,
         "max_zoom_level": 4.0,
-        "timelapse_reverse_enabled": true
+        "timelapse_reverse_enabled": true,
+        "weekly_timelapse_enabled": true
+    },
+    "auto_screenshot": {
+        "enabled": false,
+        "interval_minutes": 10,
+        "max_images": 144,
+        "save_to_gallery": true
+    },
+    "sharing": {
+        "email_enabled": false,
+        "share_link_expiry_hours": 24
     },
     "content": {
         "guestbook_enabled": true,

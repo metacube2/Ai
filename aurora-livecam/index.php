@@ -3444,7 +3444,7 @@ const VideoSearch = {
         resultsDiv.style.display = 'block';
         contentDiv.innerHTML = '<div style="text-align:center;padding:20px;"><span style="font-size:2rem;">🔄</span><br>Suche läuft...</div>';
 
-        fetch('/api/video-search.php?' + params.toString())
+        fetch('api/video-search.php?' + params.toString())
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -3602,7 +3602,7 @@ const ShareModal = {
         resultDiv.innerHTML = '<div style="color:#666;padding:10px;text-align:center;">🔄 Wird gesendet...</div>';
         resultDiv.style.display = 'block';
 
-        fetch('/api/share.php', {
+        fetch('api/share.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path, type, email, message, sender_name: senderName })

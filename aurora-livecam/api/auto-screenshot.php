@@ -3,7 +3,7 @@
  * Auto-Screenshot API
  *
  * Kann als Cron-Job aufgerufen werden:
- * */10 * * * * curl -s http://localhost/api/auto-screenshot.php?key=YOUR_SECRET_KEY
+ * Beispiel: 0,10,20,30,40,50 * * * * curl -s http://localhost/api/auto-screenshot.php?key=YOUR_SECRET_KEY
  *
  * Oder via Webhook/Timer
  */
