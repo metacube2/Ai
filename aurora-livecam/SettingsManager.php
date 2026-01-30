@@ -48,7 +48,20 @@ class SettingsManager {
             'zoom_timelapse' => [
                 'show_zoom_controls' => true,
                 'max_zoom_level' => 4.0,
-                'timelapse_reverse_enabled' => true
+                'timelapse_reverse_enabled' => true,
+                'weekly_timelapse_enabled' => true // Wochenzeitraffer Button
+            ],
+            // Auto-Screenshot für Galerie
+            'auto_screenshot' => [
+                'enabled' => false,
+                'interval_minutes' => 10,
+                'max_images' => 144, // 24h bei 10min Intervall
+                'save_to_gallery' => true
+            ],
+            // Email-Sharing
+            'sharing' => [
+                'email_enabled' => false,
+                'share_link_expiry_hours' => 24
             ],
             // Punkt 5: Content Management
             'content' => [
@@ -266,6 +279,32 @@ class SettingsManager {
 
     public function isTimelapseReverseEnabled() {
         return $this->get('zoom_timelapse.timelapse_reverse_enabled') === true;
+    }
+
+    public function isWeeklyTimelapseEnabled() {
+        return $this->get('zoom_timelapse.weekly_timelapse_enabled') !== false;
+    }
+
+    // Auto-Screenshot Helper
+    public function isAutoScreenshotEnabled() {
+        return $this->get('auto_screenshot.enabled') === true;
+    }
+
+    public function getAutoScreenshotInterval() {
+        return $this->get('auto_screenshot.interval_minutes') ?? 10;
+    }
+
+    public function getAutoScreenshotMaxImages() {
+        return $this->get('auto_screenshot.max_images') ?? 144;
+    }
+
+    // Sharing Helper
+    public function isEmailSharingEnabled() {
+        return $this->get('sharing.email_enabled') === true;
+    }
+
+    public function getShareLinkExpiryHours() {
+        return $this->get('sharing.share_link_expiry_hours') ?? 24;
     }
 
     // SEO Helper

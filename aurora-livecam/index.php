@@ -2796,9 +2796,11 @@ body.theme-neo footer {
             <a href="?action=snapshot" class="button" data-en="Save Snapshot" data-de="Snapshot speichern" data-it="Salva istantanea" data-fr="Enregistrer l'instantané" data-zh="保存截图">
                 Snapshot speichern
             </a>
+<?php if ($settingsManager->isWeeklyTimelapseEnabled()): ?>
             <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-zh="一周延时">
                 Wochenzeitraffer
             </a>
+            <?php endif; ?>
             <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern" data-it="Salva clip video" data-fr="Enregistrer le clip vidéo" data-zh="保存视频片段">
                 Videoclip speichern
             </a>
@@ -2813,6 +2815,40 @@ body.theme-neo footer {
 <section id="archive" class="section">
     <div class="container">
         <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
+
+        <!-- Datum/Zeit Suche -->
+        <div class="video-search-container" style="background: rgba(255,255,255,0.95); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h4 style="margin: 0 0 15px 0; color: #667eea;" data-en="Search by Date/Time" data-de="Suche nach Datum/Uhrzeit" data-it="Cerca per data/ora" data-fr="Rechercher par date/heure" data-zh="按日期/时间搜索">
+                🔍 Suche nach Datum/Uhrzeit
+            </h4>
+            <form id="video-search-form" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Date" data-de="Datum" data-it="Data" data-fr="Date" data-zh="日期">Datum</label>
+                    <input type="date" id="search-date" name="date" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Time (optional)" data-de="Uhrzeit (optional)" data-it="Ora (opzionale)" data-fr="Heure (optionnel)" data-zh="时间（可选）">Uhrzeit (optional)</label>
+                    <input type="time" id="search-time" name="time" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Type" data-de="Typ" data-it="Tipo" data-fr="Type" data-zh="类型">Typ</label>
+                    <select id="search-type" name="type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                        <option value="all" data-en="All Videos" data-de="Alle Videos" data-it="Tutti i video" data-fr="Toutes les vidéos" data-zh="所有视频">Alle Videos</option>
+                        <option value="daily" data-en="Daily Videos" data-de="Tagesvideos" data-it="Video giornalieri" data-fr="Vidéos quotidiennes" data-zh="每日视频">Tagesvideos</option>
+                        <option value="ai" data-en="AI Events" data-de="AI-Ereignisse" data-it="Eventi AI" data-fr="Événements IA" data-zh="AI事件">AI-Ereignisse</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="button" style="padding: 10px 25px;" data-en="Search" data-de="Suchen" data-it="Cerca" data-fr="Rechercher" data-zh="搜索">
+                        🔍 Suchen
+                    </button>
+                </div>
+            </form>
+            <div id="search-results" style="margin-top: 20px; display: none;">
+                <div id="search-results-content"></div>
+            </div>
+        </div>
+
         <?php
         $visualCalendar = new VisualCalendarManager('./videos/', './ai/', $settingsManager);
         echo $visualCalendar->displayVisualCalendar();
@@ -3374,6 +3410,234 @@ document.addEventListener('DOMContentLoaded', function() {
     DailyVideoPlayer.init();
 });
 </script>
+
+<!-- VIDEO SEARCH -->
+<script>
+const VideoSearch = {
+    init: function() {
+        const form = document.getElementById('video-search-form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.search();
+            });
+        }
+    },
+
+    search: function() {
+        const date = document.getElementById('search-date').value;
+        const time = document.getElementById('search-time').value;
+        const type = document.getElementById('search-type').value;
+
+        if (!date) {
+            alert('Bitte wählen Sie ein Datum aus.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('date', date);
+        if (time) params.append('time', time);
+        params.append('type', type);
+
+        const resultsDiv = document.getElementById('search-results');
+        const contentDiv = document.getElementById('search-results-content');
+        resultsDiv.style.display = 'block';
+        contentDiv.innerHTML = '<div style="text-align:center;padding:20px;"><span style="font-size:2rem;">🔄</span><br>Suche läuft...</div>';
+
+        fetch('/api/video-search.php?' + params.toString())
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    this.displayResults(data, contentDiv);
+                } else {
+                    contentDiv.innerHTML = '<div style="color:red;padding:20px;">Fehler bei der Suche.</div>';
+                }
+            })
+            .catch(err => {
+                console.error('Search error:', err);
+                contentDiv.innerHTML = '<div style="color:red;padding:20px;">Netzwerkfehler bei der Suche.</div>';
+            });
+    },
+
+    displayResults: function(data, container) {
+        let html = '';
+
+        // Statistiken
+        html += '<div style="margin-bottom:15px;padding:10px;background:#f0f4ff;border-radius:8px;">';
+        html += '<strong>Gefunden:</strong> ' + data.stats.total + ' Videos ';
+        html += '(' + data.stats.total_daily + ' Tagesvideos, ' + data.stats.total_ai + ' AI-Ereignisse)';
+        html += '</div>';
+
+        if (data.stats.total === 0) {
+            html += '<div style="text-align:center;padding:30px;color:#666;">';
+            html += '<span style="font-size:3rem;">📭</span><br>';
+            html += 'Keine Videos für dieses Datum/Uhrzeit gefunden.';
+            html += '</div>';
+        } else {
+            // Tagesvideos
+            if (data.daily_videos.length > 0) {
+                html += '<div style="margin-bottom:20px;">';
+                html += '<h5 style="margin:0 0 10px 0;">📹 Tagesvideos</h5>';
+                html += '<div style="display:grid;gap:10px;">';
+                data.daily_videos.forEach(video => {
+                    html += this.renderVideoCard(video, 'daily');
+                });
+                html += '</div></div>';
+            }
+
+            // AI-Videos
+            if (data.ai_videos.length > 0) {
+                html += '<div>';
+                html += '<h5 style="margin:0 0 10px 0;">🤖 AI-Ereignisse</h5>';
+                html += '<div style="display:grid;gap:10px;">';
+                data.ai_videos.forEach(video => {
+                    html += this.renderVideoCard(video, 'ai');
+                });
+                html += '</div></div>';
+            }
+        }
+
+        container.innerHTML = html;
+    },
+
+    renderVideoCard: function(video, type) {
+        const categoryIcons = {
+            sunny: '☀️', rainy: '🌧️', snowy: '❄️', planes: '✈️',
+            birds: '🐦', sunset: '🌅', sunrise: '🌄', rainbow: '🌈'
+        };
+        const icon = type === 'ai' ? (categoryIcons[video.category] || '🎬') : '📹';
+
+        return `
+            <div style="background:white;border:1px solid #e0e0e0;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <span style="font-size:1.2rem;">${icon}</span>
+                    <strong>${video.date}</strong> um <strong>${video.time}</strong>
+                    ${type === 'ai' ? '<span style="background:#e8f4ea;padding:2px 8px;border-radius:4px;margin-left:8px;font-size:0.85rem;">' + video.category + '</span>' : ''}
+                    <span style="color:#888;font-size:0.85rem;margin-left:10px;">${video.size_mb} MB</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="DailyVideoPlayer.playVideo('${video.path}', true)" class="button" style="padding:6px 12px;font-size:0.85rem;">
+                        ▶️ Abspielen
+                    </button>
+                    <a href="${video.path}" download class="button" style="padding:6px 12px;font-size:0.85rem;background:#4CAF50;text-decoration:none;">
+                        ⬇️ Download
+                    </a>
+                    <?php if ($settingsManager->isEmailSharingEnabled()): ?>
+                    <button onclick="ShareModal.open('${video.path}', 'video')" class="button" style="padding:6px 12px;font-size:0.85rem;background:#2196F3;">
+                        📤 Teilen
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+        `;
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    VideoSearch.init();
+});
+</script>
+
+<!-- SHARE MODAL -->
+<?php if ($settingsManager->isEmailSharingEnabled()): ?>
+<div id="share-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:30px;max-width:450px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="margin:0;color:#667eea;">📤 Per E-Mail teilen</h3>
+            <button onclick="ShareModal.close()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888;">×</button>
+        </div>
+        <form id="share-form">
+            <input type="hidden" id="share-path" name="path">
+            <input type="hidden" id="share-type" name="type">
+            <div style="margin-bottom:15px;">
+                <label style="display:block;font-size:0.85rem;color:#666;margin-bottom:5px;">Dein Name</label>
+                <input type="text" id="share-sender" name="sender_name" placeholder="Dein Name" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block;font-size:0.85rem;color:#666;margin-bottom:5px;">E-Mail-Adresse des Empfängers *</label>
+                <input type="email" id="share-email" name="email" placeholder="freund@beispiel.ch" required style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:0.85rem;color:#666;margin-bottom:5px;">Nachricht (optional)</label>
+                <textarea id="share-message" name="message" placeholder="Schau dir das an!" rows="3" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="ShareModal.close()" class="button" style="flex:1;background:#e0e0e0;color:#333;">Abbrechen</button>
+                <button type="submit" class="button" style="flex:1;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📧 Senden</button>
+            </div>
+        </form>
+        <div id="share-result" style="margin-top:15px;display:none;"></div>
+    </div>
+</div>
+<script>
+const ShareModal = {
+    open: function(path, type) {
+        document.getElementById('share-path').value = path;
+        document.getElementById('share-type').value = type;
+        document.getElementById('share-email').value = '';
+        document.getElementById('share-message').value = '';
+        document.getElementById('share-result').style.display = 'none';
+        document.getElementById('share-modal').style.display = 'flex';
+    },
+
+    close: function() {
+        document.getElementById('share-modal').style.display = 'none';
+    },
+
+    send: function() {
+        const form = document.getElementById('share-form');
+        const path = document.getElementById('share-path').value;
+        const type = document.getElementById('share-type').value;
+        const email = document.getElementById('share-email').value;
+        const message = document.getElementById('share-message').value;
+        const senderName = document.getElementById('share-sender').value || 'Ein Freund';
+        const resultDiv = document.getElementById('share-result');
+
+        if (!email) {
+            resultDiv.innerHTML = '<div style="color:#f44336;padding:10px;background:#ffebee;border-radius:8px;">Bitte E-Mail-Adresse eingeben.</div>';
+            resultDiv.style.display = 'block';
+            return;
+        }
+
+        resultDiv.innerHTML = '<div style="color:#666;padding:10px;text-align:center;">🔄 Wird gesendet...</div>';
+        resultDiv.style.display = 'block';
+
+        fetch('/api/share.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path, type, email, message, sender_name: senderName })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.innerHTML = '<div style="color:#4CAF50;padding:10px;background:#e8f5e9;border-radius:8px;">✅ E-Mail wurde gesendet!</div>';
+                setTimeout(() => ShareModal.close(), 2000);
+            } else {
+                let msg = data.error || 'Fehler beim Senden';
+                if (data.share_url) {
+                    msg += '<br><br>Link zum manuellen Teilen:<br><input type="text" value="' + data.share_url + '" style="width:100%;padding:5px;margin-top:5px;" onclick="this.select()" readonly>';
+                }
+                resultDiv.innerHTML = '<div style="color:#f44336;padding:10px;background:#ffebee;border-radius:8px;">' + msg + '</div>';
+            }
+        })
+        .catch(err => {
+            console.error('Share error:', err);
+            resultDiv.innerHTML = '<div style="color:#f44336;padding:10px;background:#ffebee;border-radius:8px;">Netzwerkfehler beim Senden.</div>';
+        });
+    }
+};
+
+document.getElementById('share-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    ShareModal.send();
+});
+
+// Modal schliessen bei Klick ausserhalb
+document.getElementById('share-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) ShareModal.close();
+});
+</script>
+<?php endif; ?>
 
 <!-- ADMIN SETTINGS (AJAX) -->
 <?php if ($adminManager->isAdmin()): ?>
