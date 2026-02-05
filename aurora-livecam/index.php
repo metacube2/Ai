@@ -1310,7 +1310,7 @@ class AdminManager {
 
         // Weather Settings
         $output .= '<div class="settings-group">';
-        $output .= '<h4>🌤️ Wetter-Widget <span style="font-size:12px; color:#4CAF50;">(Open-Meteo kostenlos, OpenWeatherMap optional)</span></h4>';
+        $output .= '<h4>🌤️ Wetter-Widget <span style="font-size:12px; color:#4CAF50;">(Open-Meteo - kostenlos, kein API-Key nötig)</span></h4>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Wetter-Widget anzeigen</span>';
@@ -1322,15 +1322,10 @@ class AdminManager {
         $output .= '</div>';
         $output .= '</div>';
 
-        $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">API Key (OpenWeatherMap, optional)</span>';
-        $output .= '<div class="setting-input">';
-        $output .= '<input type="text" id="setting-weather-api-key" class="text-input" placeholder="OWM API Key" value="' . htmlspecialchars($settingsManager->get('weather.api_key')) . '">';
-        $output .= '</div>';
-        $output .= '</div>';
+        // API-KEY FELD KOMPLETT ENTFERNT
 
         $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">Standort (Stadt,Land)</span>';
+        $output .= '<span class="setting-label">Standort (Anzeigename)</span>';
         $output .= '<div class="setting-input">';
         $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars($settingsManager->get('weather.location')) . '">';
         $output .= '</div>';
@@ -1367,7 +1362,9 @@ class AdminManager {
         $output .= '</select>';
         $output .= '</div>';
         $output .= '</div>';
+
         $output .= '</div>'; // settings-group
+
 
         $output .= '</div>'; // admin-settings-panel
 
@@ -2758,10 +2755,32 @@ body.theme-neo footer {
                     </video>
                 </div>
             </div>
-        </div>
+               </div>
+
+        <!-- EMBED-LINK FÜR EXTERNE WETTER-APPS -->
+        <!-- <div class="embed-link-box" style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.95); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <p style="margin-bottom: 10px; font-weight: bold; color: #667eea;">
+                📷 Webcam-Bild einbetten:
+            </p>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="text" 
+                       id="embed-url" 
+                       value="https://www.aurora-weather-livecam.com/image/current.jpg" 
+                       readonly 
+                       style="padding: 10px 15px; border: 2px solid #667eea; border-radius: 8px; width: 400px; max-width: 100%; font-size: 14px; background: #f9f9f9;">
+                <button onclick="copyEmbedUrl()" 
+                        style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s;">
+                    📋 Kopieren
+                </button>
+            </div>
+            <p id="copy-feedback" style="margin-top: 10px; color: #4CAF50; font-size: 14px; display: none;">
+                ✅ Link kopiert!
+            </p>
+        </div> -->
 
         <!-- TIMELAPSE CONTROLS (NEU!) -->
         <div id="timelapse-controls"></div>
+
 
         <!-- 
  CONTROLS -->
@@ -2804,9 +2823,9 @@ body.theme-neo footer {
                 Snapshot speichern
             </a>
 <?php if ($settingsManager->isWeeklyTimelapseEnabled()): ?>
-            <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-zh="一周延时">
+          <!--   <a href="#" class="button" id="timelapse-button" data-en="Week Timelapse" data-de="Wochenzeitraffer" data-it="Timelapse settimanale" data-fr="Timelapse hebdomadaire" data-zh="一周延时">
                 Wochenzeitraffer
-            </a>
+            </a> -->
             <?php endif; ?>
             <a href="?action=sequence" class="button" data-en="Save Video Clip" data-de="Videoclip speichern" data-it="Salva clip video" data-fr="Enregistrer le clip vidéo" data-zh="保存视频片段">
                 Videoclip speichern
@@ -2818,43 +2837,11 @@ body.theme-neo footer {
     </div>
 </section>
 
+ 
 <!-- ARCHIVE SECTION -->
 <section id="archive" class="section">
     <div class="container">
         <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
-
-        <!-- Datum/Zeit Suche -->
-        <div class="video-search-container" style="background: rgba(255,255,255,0.95); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <h4 style="margin: 0 0 15px 0; color: #667eea;" data-en="Search by Date/Time" data-de="Suche nach Datum/Uhrzeit" data-it="Cerca per data/ora" data-fr="Rechercher par date/heure" data-zh="按日期/时间搜索">
-                🔍 Suche nach Datum/Uhrzeit
-            </h4>
-            <form id="video-search-form" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Date" data-de="Datum" data-it="Data" data-fr="Date" data-zh="日期">Datum</label>
-                    <input type="date" id="search-date" name="date" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Time (optional)" data-de="Uhrzeit (optional)" data-it="Ora (opzionale)" data-fr="Heure (optionnel)" data-zh="时间（可选）">Uhrzeit (optional)</label>
-                    <input type="time" id="search-time" name="time" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Type" data-de="Typ" data-it="Tipo" data-fr="Type" data-zh="类型">Typ</label>
-                    <select id="search-type" name="type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                        <option value="all" data-en="All Videos" data-de="Alle Videos" data-it="Tutti i video" data-fr="Toutes les vidéos" data-zh="所有视频">Alle Videos</option>
-                        <option value="daily" data-en="Daily Videos" data-de="Tagesvideos" data-it="Video giornalieri" data-fr="Vidéos quotidiennes" data-zh="每日视频">Tagesvideos</option>
-                        <option value="ai" data-en="AI Events" data-de="AI-Ereignisse" data-it="Eventi AI" data-fr="Événements IA" data-zh="AI事件">AI-Ereignisse</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="button" style="padding: 10px 25px;" data-en="Search" data-de="Suchen" data-it="Cerca" data-fr="Rechercher" data-zh="搜索">
-                        🔍 Suchen
-                    </button>
-                </div>
-            </form>
-            <div id="search-results" style="margin-top: 20px; display: none;">
-                <div id="search-results-content"></div>
-            </div>
-        </div>
 
         <?php
         $visualCalendar = new VisualCalendarManager('./videos/', './ai/', $settingsManager);
@@ -2862,6 +2849,7 @@ body.theme-neo footer {
         ?>
     </div>
 </section>
+
 
 <!-- STANDORT -->
 <section id="standort" class="section" style="padding: 40px 0;">
@@ -3775,7 +3763,7 @@ const AdminSettings = {
                 }
                 this.showNotification('Wetter-Widget ' + (boolValue ? 'aktiviert' : 'deaktiviert'), 'success');
                 break;
-            case 'weather.api_key':
+           
             case 'weather.location':
             case 'weather.lat':
             case 'weather.lon':
@@ -3888,10 +3876,7 @@ const AdminSettings = {
             this.updateSetting('weather.enabled', e.target.checked);
         });
 
-        document.getElementById('setting-weather-api-key')?.addEventListener('change', (e) => {
-            this.updateSetting('weather.api_key', e.target.value);
-        });
-
+    
         document.getElementById('setting-weather-location')?.addEventListener('change', (e) => {
             this.updateSetting('weather.location', e.target.value);
         });
@@ -4240,6 +4225,42 @@ document.addEventListener('DOMContentLoaded', function() {
     WeatherUpdater.init();
 });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+function copyEmbedUrl() {
+    const input = document.getElementById('embed-url');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(function() {
+        const feedback = document.getElementById('copy-feedback');
+        feedback.style.display = 'block';
+        setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+    });
+}
+</script>
+
+ 
+
+
+
 
 </body>
 </html>
