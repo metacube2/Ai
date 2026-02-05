@@ -27,9 +27,24 @@ class WeatherManager {
             return $cached;
         }
 
-        // Hole frische Daten von API (Open-Meteo)
         $coords = $this->settingsManager->getWeatherCoords();
+        $apiKey = trim($this->settingsManager->getWeatherApiKey());
 
+        $weather = $apiKey !== ''
+            ? $this->fetchOpenWeather($coords, $apiKey)
+            : $this->fetchOpenMeteo($coords);
+
+        if (isset($weather['error'])) {
+            return $weather;
+        }
+
+        // Cache speichern
+        $this->saveCache($weather);
+
+        return $weather;
+    }
+
+    private function fetchOpenMeteo($coords) {
         // Open-Meteo API URL - komplett kostenlos, kein API Key!
         $url = "https://api.open-meteo.com/v1/forecast?" . http_build_query([
             'latitude' => $coords['lat'],
@@ -38,17 +53,8 @@ class WeatherManager {
             'timezone' => 'Europe/Zurich'
         ]);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200 || !$response) {
+        $response = $this->fetchUrl($url);
+        if ($response === null) {
             return ['error' => 'API Fehler'];
         }
 
@@ -59,8 +65,7 @@ class WeatherManager {
 
         $current = $data['current'];
 
-        // Formatiere Daten
-        $weather = [
+        return [
             'temp' => round($current['temperature_2m'], 1),
             'feels_like' => round($current['temperature_2m'], 1), // Open-Meteo hat keine "feels like"
             'humidity' => $current['relative_humidity_2m'],
@@ -76,11 +81,67 @@ class WeatherManager {
             'location' => $this->settingsManager->getWeatherLocation(),
             'timestamp' => time()
         ];
+    }
 
-        // Cache speichern
-        $this->saveCache($weather);
+    private function fetchOpenWeather($coords, $apiKey) {
+        $units = $this->settingsManager->getWeatherUnits();
+        $url = "https://api.openweathermap.org/data/2.5/weather?" . http_build_query([
+            'lat' => $coords['lat'],
+            'lon' => $coords['lon'],
+            'appid' => $apiKey,
+            'units' => $units,
+            'lang' => 'de'
+        ]);
 
-        return $weather;
+        $response = $this->fetchUrl($url);
+        if ($response === null) {
+            return ['error' => 'API Fehler'];
+        }
+
+        $data = json_decode($response, true);
+        if (!$data || !isset($data['main'], $data['weather'][0], $data['wind'])) {
+            return ['error' => 'Ungültige API Antwort'];
+        }
+
+        $windSpeed = $data['wind']['speed'];
+        if ($units === 'metric') {
+            $windSpeed = $windSpeed * 3.6; // m/s -> km/h
+        }
+
+        return [
+            'temp' => round($data['main']['temp'], 1),
+            'feels_like' => round($data['main']['feels_like'], 1),
+            'humidity' => $data['main']['humidity'],
+            'pressure' => round($data['main']['pressure'], 0),
+            'wind_speed' => round($windSpeed, 1),
+            'wind_deg' => $data['wind']['deg'] ?? 0,
+            'wind_direction' => $this->getWindDirection($data['wind']['deg'] ?? 0),
+            'clouds' => $data['clouds']['all'] ?? 0,
+            'description' => ucfirst($data['weather'][0]['description']),
+            'icon' => $data['weather'][0]['icon'] ?? '01d',
+            'rain_1h' => $data['rain']['1h'] ?? 0,
+            'snow_1h' => $data['snow']['1h'] ?? 0,
+            'location' => $data['name'] ?? $this->settingsManager->getWeatherLocation(),
+            'timestamp' => time()
+        ];
+    }
+
+    private function fetchUrl($url) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$response) {
+            return null;
+        }
+
+        return $response;
     }
 
     /**
