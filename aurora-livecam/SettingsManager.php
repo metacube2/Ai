@@ -89,7 +89,7 @@ class SettingsManager {
             // Weather Widget
             'weather' => [
                 'enabled' => true,
-                'api_key' => '',
+         
                 'location' => 'Oberdürnten,CH',
                 'lat' => '47.2833',
                 'lon' => '8.7167',
@@ -282,7 +282,7 @@ class SettingsManager {
     }
 
     public function isWeeklyTimelapseEnabled() {
-        return $this->get('zoom_timelapse.weekly_timelapse_enabled') !== false;
+        return $this->get('zoom_timelapse.weekly_timelapse_enabled') !== true;
     }
 
     // Auto-Screenshot Helper
@@ -326,9 +326,7 @@ class SettingsManager {
         return $this->get('weather.enabled') === true;
     }
 
-    public function getWeatherApiKey() {
-        return $this->get('weather.api_key') ?? '';
-    }
+ 
 
     public function getWeatherLocation() {
         return $this->get('weather.location') ?? 'Oberdürnten,CH';
