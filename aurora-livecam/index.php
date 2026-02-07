@@ -1310,7 +1310,7 @@ class AdminManager {
 
         // Weather Settings
         $output .= '<div class="settings-group">';
-        $output .= '<h4>🌤️ Wetter-Widget <span style="font-size:12px; color:#4CAF50;">(Open-Meteo kostenlos, OpenWeatherMap optional)</span></h4>';
+        $output .= '<h4>🌤️ Wetter-Widget <span style="font-size:12px; color:#4CAF50;">(Open-Meteo - kostenlos, kein API-Key nötig)</span></h4>';
 
         $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Wetter-Widget anzeigen</span>';
@@ -1332,7 +1332,7 @@ class AdminManager {
         $output .= '</div>';
 
         $output .= '<div class="setting-row">';
-        $output .= '<span class="setting-label">Standort (Stadt,Land)</span>';
+        $output .= '<span class="setting-label">Standort (Anzeigename)</span>';
         $output .= '<div class="setting-input">';
         $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars($settingsManager->get('weather.location')) . '">';
         $output .= '</div>';
@@ -2849,39 +2849,6 @@ body.theme-neo footer {
 <section id="archive" class="section">
     <div class="container">
         <h2 data-en="Video Archive" data-de="Videoarchiv Tagesvideos" data-it="Archivio video giornalieri" data-fr="Archive des vidéos quotidiennes" data-zh="每日视频档案">Videoarchiv Tagesvideos</h2>
-
-        <!-- Datum/Zeit Suche -->
-        <div class="video-search-container" style="background: rgba(255,255,255,0.95); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <h4 style="margin: 0 0 15px 0; color: #667eea;" data-en="Search by Date/Time" data-de="Suche nach Datum/Uhrzeit" data-it="Cerca per data/ora" data-fr="Rechercher par date/heure" data-zh="按日期/时间搜索">
-                🔍 Suche nach Datum/Uhrzeit
-            </h4>
-            <form id="video-search-form" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Date" data-de="Datum" data-it="Data" data-fr="Date" data-zh="日期">Datum</label>
-                    <input type="date" id="search-date" name="date" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Time (optional)" data-de="Uhrzeit (optional)" data-it="Ora (opzionale)" data-fr="Heure (optionnel)" data-zh="时间（可选）">Uhrzeit (optional)</label>
-                    <input type="time" id="search-time" name="time" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px;" data-en="Type" data-de="Typ" data-it="Tipo" data-fr="Type" data-zh="类型">Typ</label>
-                    <select id="search-type" name="type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                        <option value="all" data-en="All Videos" data-de="Alle Videos" data-it="Tutti i video" data-fr="Toutes les vidéos" data-zh="所有视频">Alle Videos</option>
-                        <option value="daily" data-en="Daily Videos" data-de="Tagesvideos" data-it="Video giornalieri" data-fr="Vidéos quotidiennes" data-zh="每日视频">Tagesvideos</option>
-                        <option value="ai" data-en="AI Events" data-de="AI-Ereignisse" data-it="Eventi AI" data-fr="Événements IA" data-zh="AI事件">AI-Ereignisse</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="button" style="padding: 10px 25px;" data-en="Search" data-de="Suchen" data-it="Cerca" data-fr="Rechercher" data-zh="搜索">
-                        🔍 Suchen
-                    </button>
-                </div>
-            </form>
-            <div id="search-results" style="margin-top: 20px; display: none;">
-                <div id="search-results-content"></div>
-            </div>
-        </div>
 
         <?php
         $visualCalendar = new VisualCalendarManager('./videos/', './ai/', $settingsManager);

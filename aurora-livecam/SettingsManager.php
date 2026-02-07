@@ -282,7 +282,7 @@ class SettingsManager {
     }
 
     public function isWeeklyTimelapseEnabled() {
-        return $this->get('zoom_timelapse.weekly_timelapse_enabled') !== false;
+        return $this->get('zoom_timelapse.weekly_timelapse_enabled') !== true;
     }
 
     // Auto-Screenshot Helper
