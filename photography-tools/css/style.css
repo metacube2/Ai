@@ -1607,6 +1607,138 @@ body {
     }
 }
 
+/* ==================== SIMULATION TOOLS ==================== */
+.sim-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.sim-tab {
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.sim-tab:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.sim-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.sim-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.sim-panel.active {
+    display: block;
+}
+
+.sim-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.sim-controls {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.sim-controls h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.sim-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.sim-controls .input-group {
+    margin-bottom: 1.2rem;
+}
+
+.sim-controls .input-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+}
+
+.sim-controls .input-group input[type="range"] {
+    width: 100%;
+}
+
+.sim-controls .range-value {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.sim-controls .input-group select {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.sim-canvas-wrap {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.sim-canvas-wrap canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .sim-grid {
+        grid-template-columns: 1fr;
+    }
+    .sim-tabs {
+        gap: 0.3rem;
+    }
+    .sim-tab {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
 @media (max-width: 480px) {
     .calc-tabs {
         gap: 0.3rem;
@@ -1617,5 +1749,9 @@ body {
     }
     .param-scale {
         display: none;
+    }
+    .sim-tab {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
     }
 }

@@ -763,4 +763,673 @@ window.reviewAnswers = function() {
     });
 };
 
+/* ==================== SIMULATION TOOLS ==================== */
+
+// Sim tab switching
+document.querySelectorAll('.sim-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.sim-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.sim-panel').forEach(function(p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        var panel = document.getElementById('sim-' + tab.getAttribute('data-sim'));
+        if (panel) panel.classList.add('active');
+        // Trigger redraw for active sim
+        var simId = tab.getAttribute('data-sim');
+        if (simDrawFns[simId]) simDrawFns[simId]();
+    });
+});
+
+var simDrawFns = {};
+
+/* ----- Bokeh Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-bokeh-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var apSlider = document.getElementById('sim-bokeh-aperture');
+    var blSlider = document.getElementById('sim-bokeh-blades');
+    var intSlider = document.getElementById('sim-bokeh-intensity');
+
+    function drawBokeh() {
+        var ap = parseFloat(apSlider.value);
+        var blades = parseInt(blSlider.value);
+        var intensity = parseInt(intSlider.value);
+        document.getElementById('sim-bokeh-aperture-val').textContent = 'f/' + ap.toFixed(1);
+        document.getElementById('sim-bokeh-blades-val').textContent = blades;
+        document.getElementById('sim-bokeh-intensity-val').textContent = intensity + '%';
+
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        // Dark scene background
+        var bg = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w*0.7);
+        bg.addColorStop(0, '#1a1a2e');
+        bg.addColorStop(1, '#0d0d1a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+
+        // Bokeh size inversely related to aperture
+        var maxRadius = Math.max(8, 45 - ap * 1.5);
+        var bokehCount = Math.floor(20 + (22 - ap) * 3);
+        var alpha = (intensity / 100) * 0.7;
+
+        // Seed random positions (fixed for consistency)
+        var rng = 42;
+        function seededRand() { rng = (rng * 16807 + 0) % 2147483647; return (rng - 1) / 2147483646; }
+
+        for (var i = 0; i < bokehCount; i++) {
+            var x = seededRand() * w;
+            var y = seededRand() * h;
+            var r = maxRadius * (0.4 + seededRand() * 0.6);
+            var hue = (seededRand() * 60 + 30) % 360; // warm tones
+            if (seededRand() > 0.5) hue = (seededRand() * 40 + 180) % 360; // or cool
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.globalAlpha = alpha * (0.3 + seededRand() * 0.7);
+
+            if (blades >= 9) {
+                // Circle bokeh
+                var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+                grad.addColorStop(0, 'hsla(' + hue + ',70%,70%,0.1)');
+                grad.addColorStop(0.6, 'hsla(' + hue + ',70%,65%,0.4)');
+                grad.addColorStop(0.85, 'hsla(' + hue + ',60%,60%,0.6)');
+                grad.addColorStop(1, 'hsla(' + hue + ',50%,50%,0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Polygon bokeh
+                ctx.fillStyle = 'hsla(' + hue + ',65%,65%,0.5)';
+                ctx.strokeStyle = 'hsla(' + hue + ',70%,75%,0.7)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (var j = 0; j < blades; j++) {
+                    var angle = (Math.PI * 2 / blades) * j - Math.PI / 2;
+                    var px = Math.cos(angle) * r;
+                    var py = Math.sin(angle) * r;
+                    if (j === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    }
+
+    apSlider.addEventListener('input', drawBokeh);
+    blSlider.addEventListener('input', drawBokeh);
+    intSlider.addEventListener('input', drawBokeh);
+    simDrawFns.bokeh = drawBokeh;
+    drawBokeh();
+})();
+
+/* ----- Long Exposure Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-longexp-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var timeSlider = document.getElementById('sim-longexp-time');
+    var speedSlider = document.getElementById('sim-longexp-speed');
+    var times = ['1/1000s','1/500s','1/250s','1/30s','1/4s','1s','4s','15s','30s'];
+
+    function drawLongExp() {
+        var ti = parseInt(timeSlider.value);
+        var sp = parseInt(speedSlider.value);
+        document.getElementById('sim-longexp-time-val').textContent = times[ti] || '1s';
+        document.getElementById('sim-longexp-speed-val').textContent = sp;
+
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Sky gradient
+        var sky = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+        sky.addColorStop(0, '#0f0c29');
+        sky.addColorStop(0.5, '#302b63');
+        sky.addColorStop(1, '#24243e');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, w, h * 0.6);
+
+        // Water
+        var water = ctx.createLinearGradient(0, h * 0.6, 0, h);
+        water.addColorStop(0, '#1a1a3e');
+        water.addColorStop(1, '#0d0d2b');
+        ctx.fillStyle = water;
+        ctx.fillRect(0, h * 0.6, w, h * 0.4);
+
+        // Blur amount based on time
+        var blur = ti * sp * 0.4;
+
+        // Stars / lights (become streaks with long exposure)
+        var rng = 77;
+        function sRand() { rng = (rng * 16807) % 2147483647; return (rng - 1) / 2147483646; }
+
+        // Draw light streaks/points
+        for (var i = 0; i < 30; i++) {
+            var sx = sRand() * w;
+            var sy = sRand() * h * 0.55;
+            var bright = 0.4 + sRand() * 0.6;
+            var hue = sRand() * 60 + 200;
+
+            ctx.save();
+            ctx.globalAlpha = bright;
+            ctx.strokeStyle = 'hsla(' + hue + ',60%,80%,' + bright + ')';
+            ctx.fillStyle = 'hsla(' + hue + ',60%,85%,' + bright + ')';
+            ctx.lineWidth = 1 + sRand() * 2;
+
+            if (blur < 3) {
+                // Sharp dots
+                ctx.beginPath();
+                ctx.arc(sx, sy, 1.5 + sRand() * 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Streaks
+                var streakLen = blur * (2 + sRand() * 3);
+                var angle = -0.1 + sRand() * 0.2;
+                ctx.beginPath();
+                ctx.moveTo(sx - streakLen * 0.5 * Math.cos(angle), sy - streakLen * 0.5 * Math.sin(angle));
+                ctx.lineTo(sx + streakLen * 0.5 * Math.cos(angle), sy + streakLen * 0.5 * Math.sin(angle));
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Draw water reflection streaks
+        for (var j = 0; j < 15; j++) {
+            var rx = sRand() * w;
+            var ry = h * 0.62 + sRand() * h * 0.35;
+            var rBright = 0.2 + sRand() * 0.3;
+            var rHue = sRand() * 60 + 200;
+
+            ctx.save();
+            ctx.globalAlpha = rBright;
+            ctx.fillStyle = 'hsla(' + rHue + ',50%,70%,' + rBright + ')';
+
+            if (blur < 3) {
+                ctx.beginPath();
+                ctx.arc(rx, ry, 1 + sRand(), 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Smooth water effect
+                var sLen = blur * (3 + sRand() * 4);
+                ctx.fillRect(rx - sLen / 2, ry - 0.5, sLen, 1 + blur * 0.1);
+            }
+            ctx.restore();
+        }
+
+        // Horizon line glow
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        var hGrad = ctx.createLinearGradient(0, h * 0.58, 0, h * 0.62);
+        hGrad.addColorStop(0, 'transparent');
+        hGrad.addColorStop(0.5, 'rgba(100,100,200,0.3)');
+        hGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = hGrad;
+        ctx.fillRect(0, h * 0.58, w, h * 0.04);
+        ctx.restore();
+
+        // Label
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText(times[ti] || '1s', 15, h - 15);
+    }
+
+    timeSlider.addEventListener('input', drawLongExp);
+    speedSlider.addEventListener('input', drawLongExp);
+    simDrawFns.longexp = drawLongExp;
+    drawLongExp();
+})();
+
+/* ----- White Balance Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-wb-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var kelvinSlider = document.getElementById('sim-wb-kelvin');
+    var tintSlider = document.getElementById('sim-wb-tint');
+
+    function kelvinToRGB(k) {
+        k = k / 100;
+        var r, g, b;
+        if (k <= 66) {
+            r = 255;
+            g = 99.4708025861 * Math.log(k) - 161.1195681661;
+            b = k <= 19 ? 0 : 138.5177312231 * Math.log(k - 10) - 305.0447927307;
+        } else {
+            r = 329.698727446 * Math.pow(k - 60, -0.1332047592);
+            g = 288.1221695283 * Math.pow(k - 60, -0.0755148492);
+            b = 255;
+        }
+        return [Math.max(0, Math.min(255, r)), Math.max(0, Math.min(255, g)), Math.max(0, Math.min(255, b))];
+    }
+
+    function drawWB() {
+        var kelvin = parseInt(kelvinSlider.value);
+        var tint = parseInt(tintSlider.value);
+        document.getElementById('sim-wb-kelvin-val').textContent = kelvin + 'K';
+        document.getElementById('sim-wb-tint-val').textContent = tint;
+
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        var rgb = kelvinToRGB(kelvin);
+        // Apply tint (green-magenta)
+        rgb[1] = Math.max(0, Math.min(255, rgb[1] + tint * 1.5));
+        rgb[0] = Math.max(0, Math.min(255, rgb[0] - tint * 0.5));
+
+        // Draw a sample scene with WB overlay
+        // Sky
+        var skyR = Math.min(255, 100 + rgb[0] * 0.3);
+        var skyG = Math.min(255, 140 + rgb[1] * 0.2);
+        var skyB = Math.min(255, 200 + rgb[2] * 0.15);
+        var skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.55);
+        skyGrad.addColorStop(0, 'rgb(' + Math.round(skyR*0.5) + ',' + Math.round(skyG*0.5) + ',' + Math.round(skyB) + ')');
+        skyGrad.addColorStop(1, 'rgb(' + Math.round(skyR*0.8) + ',' + Math.round(skyG*0.7) + ',' + Math.round(skyB*0.6) + ')');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.55);
+
+        // Mountains
+        ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*0.25) + ',' + Math.round(rgb[1]*0.3) + ',' + Math.round(rgb[2]*0.25) + ')';
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.5);
+        ctx.lineTo(w * 0.15, h * 0.3);
+        ctx.lineTo(w * 0.3, h * 0.45);
+        ctx.lineTo(w * 0.5, h * 0.25);
+        ctx.lineTo(w * 0.7, h * 0.4);
+        ctx.lineTo(w * 0.85, h * 0.2);
+        ctx.lineTo(w, h * 0.45);
+        ctx.lineTo(w, h * 0.55);
+        ctx.lineTo(0, h * 0.55);
+        ctx.fill();
+
+        // Ground
+        var gndR = Math.min(255, 80 + rgb[0] * 0.2);
+        var gndG = Math.min(255, 120 + rgb[1] * 0.25);
+        var gndB = Math.min(255, 40 + rgb[2] * 0.1);
+        ctx.fillStyle = 'rgb(' + Math.round(gndR) + ',' + Math.round(gndG) + ',' + Math.round(gndB) + ')';
+        ctx.fillRect(0, h * 0.55, w, h * 0.45);
+
+        // Color temperature overlay
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = 'rgb(' + Math.round(rgb[0]) + ',' + Math.round(rgb[1]) + ',' + Math.round(rgb[2]) + ')';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+
+        // Temperature label with warm/cool indicator
+        var tempLabel = kelvin < 4000 ? 'Warm' : kelvin > 7000 ? 'Cool' : 'Neutral';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText(kelvin + 'K - ' + tempLabel, 15, h - 15);
+
+        // Color swatch
+        ctx.fillStyle = 'rgb(' + Math.round(rgb[0]) + ',' + Math.round(rgb[1]) + ',' + Math.round(rgb[2]) + ')';
+        ctx.fillRect(w - 50, h - 30, 35, 15);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.strokeRect(w - 50, h - 30, 35, 15);
+    }
+
+    kelvinSlider.addEventListener('input', drawWB);
+    tintSlider.addEventListener('input', drawWB);
+    simDrawFns.wb = drawWB;
+    drawWB();
+})();
+
+/* ----- ISO Noise Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-noise-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var isoSlider = document.getElementById('sim-noise-iso');
+    var levelSlider = document.getElementById('sim-noise-level');
+    var isoValues = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600];
+
+    function drawNoise() {
+        var isoIdx = parseInt(isoSlider.value);
+        var level = parseInt(levelSlider.value);
+        var iso = isoValues[isoIdx] || 400;
+        document.getElementById('sim-noise-iso-val').textContent = 'ISO ' + iso;
+        document.getElementById('sim-noise-level-val').textContent = level + '%';
+
+        var w = canvas.width, h = canvas.height;
+
+        // Draw base scene (gradient photo)
+        var base = ctx.createLinearGradient(0, 0, w, h);
+        base.addColorStop(0, '#2d3436');
+        base.addColorStop(0.3, '#636e72');
+        base.addColorStop(0.6, '#b2bec3');
+        base.addColorStop(1, '#dfe6e9');
+        ctx.fillStyle = base;
+        ctx.fillRect(0, 0, w, h);
+
+        // Circle subject
+        var cGrad = ctx.createRadialGradient(w * 0.4, h * 0.45, 20, w * 0.4, h * 0.45, 120);
+        cGrad.addColorStop(0, '#6c5ce7');
+        cGrad.addColorStop(0.5, '#a29bfe');
+        cGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = cGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Noise overlay
+        var noiseIntensity = (isoIdx / 8) * (level / 100);
+        if (noiseIntensity > 0.02) {
+            var imageData = ctx.getImageData(0, 0, w, h);
+            var data = imageData.data;
+            var strength = noiseIntensity * 120;
+            for (var i = 0; i < data.length; i += 4) {
+                var noise = (Math.random() - 0.5) * strength;
+                data[i] = Math.max(0, Math.min(255, data[i] + noise));
+                data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise * 0.9));
+                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise * 1.1));
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Color noise at high ISO
+        if (isoIdx >= 5 && level > 20) {
+            ctx.save();
+            ctx.globalAlpha = noiseIntensity * 0.3;
+            for (var j = 0; j < 200; j++) {
+                var nx = Math.random() * w;
+                var ny = Math.random() * h;
+                var nh = Math.random() * 360;
+                ctx.fillStyle = 'hsl(' + nh + ',80%,50%)';
+                ctx.fillRect(nx, ny, 2, 2);
+            }
+            ctx.restore();
+        }
+
+        // Label
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText('ISO ' + iso, 15, h - 15);
+    }
+
+    isoSlider.addEventListener('input', drawNoise);
+    levelSlider.addEventListener('input', drawNoise);
+    simDrawFns.noise = drawNoise;
+    drawNoise();
+})();
+
+/* ----- Perspective Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-perspective-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var focalSlider = document.getElementById('sim-perspective-focal');
+    var typeSelect = document.getElementById('sim-perspective-type');
+
+    function drawPerspective() {
+        var focal = parseInt(focalSlider.value);
+        var distType = typeSelect.value;
+        document.getElementById('sim-perspective-focal-val').textContent = focal + 'mm';
+
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Background
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, w, h);
+
+        // Perspective grid
+        var fov = Math.atan(18 / focal) * 2 * 180 / Math.PI;
+        var compression = 1 - (focal - 14) / 186 * 0.7;
+        var vanishY = h * (0.35 + (1 - compression) * 0.15);
+
+        // Floor grid
+        ctx.strokeStyle = 'rgba(108, 92, 231, 0.4)';
+        ctx.lineWidth = 1;
+        var gridLines = 12;
+        for (var i = 0; i <= gridLines; i++) {
+            var t = i / gridLines;
+            var y = vanishY + (h - vanishY) * t;
+            var spread = (t * t) * (w * compression);
+            ctx.beginPath();
+            ctx.moveTo(w / 2 - spread, y);
+            ctx.lineTo(w / 2 + spread, y);
+            ctx.stroke();
+        }
+
+        // Vertical converging lines
+        for (var j = -6; j <= 6; j++) {
+            var xBottom = w / 2 + j * (w / 14) * compression;
+            ctx.beginPath();
+            ctx.moveTo(w / 2, vanishY);
+            ctx.lineTo(xBottom, h);
+            ctx.stroke();
+        }
+
+        // Buildings (affected by perspective compression)
+        var buildingCount = 5;
+        var bWidth = (w * compression) / (buildingCount + 2);
+        for (var b = 0; b < buildingCount; b++) {
+            var bx = w / 2 - (buildingCount * bWidth) / 2 + b * bWidth + bWidth * 0.1;
+            var bh = (80 + Math.sin(b * 1.5) * 50) * (1 + (1 - compression) * 0.5);
+            var by = h - bh;
+
+            ctx.fillStyle = 'rgba(108, 92, 231, ' + (0.2 + b * 0.08) + ')';
+            ctx.fillRect(bx, by, bWidth * 0.8, bh);
+            ctx.strokeStyle = 'rgba(108, 92, 231, 0.6)';
+            ctx.strokeRect(bx, by, bWidth * 0.8, bh);
+
+            // Windows
+            ctx.fillStyle = 'rgba(255, 214, 100, 0.3)';
+            var winRows = Math.floor(bh / 20);
+            for (var wr = 0; wr < winRows; wr++) {
+                for (var wc = 0; wc < 2; wc++) {
+                    ctx.fillRect(bx + 5 + wc * (bWidth * 0.4 - 5), by + 8 + wr * 20, bWidth * 0.25, 10);
+                }
+            }
+        }
+
+        // Barrel/Pincushion distortion overlay
+        if (distType !== 'none') {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 107, 107, 0.5)';
+            ctx.lineWidth = 1.5;
+            var cx = w / 2, cy = h / 2;
+            var gridSize = 8;
+            for (var gx = 0; gx <= gridSize; gx++) {
+                ctx.beginPath();
+                for (var gy = 0; gy <= gridSize * 4; gy++) {
+                    var nx2 = (gx / gridSize) * 2 - 1;
+                    var ny2 = (gy / (gridSize * 4)) * 2 - 1;
+                    var r2 = nx2 * nx2 + ny2 * ny2;
+                    var factor = distType === 'barrel' ? 1 + 0.3 * r2 : 1 - 0.2 * r2;
+                    var dx = cx + nx2 * factor * w * 0.45;
+                    var dy = cy + ny2 * factor * h * 0.45;
+                    if (gy === 0) ctx.moveTo(dx, dy); else ctx.lineTo(dx, dy);
+                }
+                ctx.stroke();
+            }
+            for (var gy2 = 0; gy2 <= gridSize; gy2++) {
+                ctx.beginPath();
+                for (var gx2 = 0; gx2 <= gridSize * 4; gx2++) {
+                    var nx3 = (gx2 / (gridSize * 4)) * 2 - 1;
+                    var ny3 = (gy2 / gridSize) * 2 - 1;
+                    var r3 = nx3 * nx3 + ny3 * ny3;
+                    var factor2 = distType === 'barrel' ? 1 + 0.3 * r3 : 1 - 0.2 * r3;
+                    var dx2 = cx + nx3 * factor2 * w * 0.45;
+                    var dy2 = cy + ny3 * factor2 * h * 0.45;
+                    if (gx2 === 0) ctx.moveTo(dx2, dy2); else ctx.lineTo(dx2, dy2);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // FOV arc
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 206, 201, 0.6)';
+        ctx.lineWidth = 2;
+        var fovRad = fov * Math.PI / 180;
+        ctx.beginPath();
+        ctx.arc(w / 2, h + 80, h * 0.5, -Math.PI / 2 - fovRad / 2, -Math.PI / 2 + fovRad / 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Label
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText(focal + 'mm — FOV: ' + fov.toFixed(1) + '°', 15, h - 15);
+    }
+
+    focalSlider.addEventListener('input', drawPerspective);
+    typeSelect.addEventListener('change', drawPerspective);
+    simDrawFns.perspective = drawPerspective;
+    drawPerspective();
+})();
+
+/* ----- Histogram Simulator ----- */
+(function() {
+    var canvas = document.getElementById('sim-histogram-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var apSlider = document.getElementById('sim-hist-aperture');
+    var shSlider = document.getElementById('sim-hist-shutter');
+    var isoSlider2 = document.getElementById('sim-hist-iso');
+    var apertureStops = [1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32];
+    var shutterStops = ['30s','15s','1s','1/4','1/30','1/125','1/250','1/500','1/1000','1/2000','1/4000','1/8000'];
+    var isoStops = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600];
+
+    function drawHistogram() {
+        var apIdx = parseInt(apSlider.value);
+        var shIdx = parseInt(shSlider.value);
+        var isoIdx = parseInt(isoSlider2.value);
+        document.getElementById('sim-hist-aperture-val').textContent = 'f/' + apertureStops[apIdx];
+        document.getElementById('sim-hist-shutter-val').textContent = shutterStops[shIdx];
+        document.getElementById('sim-hist-iso-val').textContent = 'ISO ' + isoStops[isoIdx];
+
+        // Calculate EV (higher = more light)
+        var ev = (9 - apIdx) + (11 - shIdx) + isoIdx;
+        var brightness = ev / 28; // 0 to ~1
+        brightness = Math.max(0, Math.min(1, brightness));
+
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Background
+        ctx.fillStyle = '#0d0d1a';
+        ctx.fillRect(0, 0, w, h);
+
+        // Generate histogram data
+        var bins = 64;
+        var histR = new Array(bins).fill(0);
+        var histG = new Array(bins).fill(0);
+        var histB = new Array(bins).fill(0);
+
+        // Generate mock distribution based on brightness
+        var mean = brightness * (bins - 1);
+        var stddev = bins * 0.15;
+        for (var i = 0; i < bins; i++) {
+            var v = Math.exp(-Math.pow(i - mean, 2) / (2 * stddev * stddev));
+            histR[i] = v * (0.8 + Math.sin(i * 0.2) * 0.2);
+            histG[i] = v * (0.9 + Math.cos(i * 0.15) * 0.1);
+            histB[i] = v * (0.85 + Math.sin(i * 0.3) * 0.15);
+        }
+
+        // Add secondary peak
+        var mean2 = mean + (bins * 0.2 * (Math.random() > 0.5 ? 1 : -1));
+        mean2 = Math.max(0, Math.min(bins - 1, mean2));
+        for (var i2 = 0; i2 < bins; i2++) {
+            var v2 = Math.exp(-Math.pow(i2 - mean2, 2) / (2 * (stddev * 0.6) * (stddev * 0.6))) * 0.5;
+            histR[i2] += v2;
+            histG[i2] += v2 * 0.8;
+            histB[i2] += v2 * 0.6;
+        }
+
+        // Normalize
+        var maxVal = 0;
+        for (var n = 0; n < bins; n++) {
+            maxVal = Math.max(maxVal, histR[n], histG[n], histB[n]);
+        }
+
+        var chartTop = 30, chartBottom = h - 50;
+        var chartLeft = 30, chartRight = w - 20;
+        var chartH = chartBottom - chartTop;
+        var chartW = chartRight - chartLeft;
+        var barW = chartW / bins;
+
+        // Draw histogram bars
+        var channels = [
+            { data: histR, color: 'rgba(255,100,100,' },
+            { data: histG, color: 'rgba(100,255,100,' },
+            { data: histB, color: 'rgba(100,150,255,' }
+        ];
+
+        channels.forEach(function(ch) {
+            ctx.beginPath();
+            ctx.moveTo(chartLeft, chartBottom);
+            for (var b = 0; b < bins; b++) {
+                var barH = (ch.data[b] / maxVal) * chartH;
+                ctx.lineTo(chartLeft + b * barW, chartBottom - barH);
+            }
+            ctx.lineTo(chartLeft + (bins - 1) * barW, chartBottom);
+            ctx.closePath();
+            ctx.fillStyle = ch.color + '0.25)';
+            ctx.fill();
+            ctx.strokeStyle = ch.color + '0.6)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (var b2 = 0; b2 < bins; b2++) {
+                var barH2 = (ch.data[b2] / maxVal) * chartH;
+                if (b2 === 0) ctx.moveTo(chartLeft + b2 * barW, chartBottom - barH2);
+                else ctx.lineTo(chartLeft + b2 * barW, chartBottom - barH2);
+            }
+            ctx.stroke();
+        });
+
+        // Luminance line (white)
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var l = 0; l < bins; l++) {
+            var lum = histR[l] * 0.299 + histG[l] * 0.587 + histB[l] * 0.114;
+            var lH = (lum / maxVal) * chartH;
+            if (l === 0) ctx.moveTo(chartLeft + l * barW, chartBottom - lH);
+            else ctx.lineTo(chartLeft + l * barW, chartBottom - lH);
+        }
+        ctx.stroke();
+
+        // Axis labels
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText('Shadows', chartLeft, chartBottom + 20);
+        ctx.fillText('Midtones', chartLeft + chartW * 0.4, chartBottom + 20);
+        ctx.textAlign = 'right';
+        ctx.fillText('Highlights', chartRight, chartBottom + 20);
+        ctx.textAlign = 'left';
+
+        // EV indicator
+        var evText = brightness < 0.3 ? t('exp.under') : brightness > 0.7 ? t('exp.over') : t('exp.correct');
+        var evColor = brightness < 0.3 ? '#ff6b6b' : brightness > 0.7 ? '#fdcb6e' : '#00cec9';
+        ctx.fillStyle = evColor;
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText(evText, chartLeft, chartTop - 10);
+
+        // Clipping warnings
+        if (brightness > 0.85) {
+            ctx.fillStyle = 'rgba(255,107,107,0.3)';
+            ctx.fillRect(chartRight - barW * 5, chartTop, barW * 5, chartH);
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillText('CLIP', chartRight - barW * 4, chartTop + 15);
+        }
+        if (brightness < 0.15) {
+            ctx.fillStyle = 'rgba(255,107,107,0.3)';
+            ctx.fillRect(chartLeft, chartTop, barW * 5, chartH);
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillText('CLIP', chartLeft + 5, chartTop + 15);
+        }
+    }
+
+    apSlider.addEventListener('input', drawHistogram);
+    shSlider.addEventListener('input', drawHistogram);
+    isoSlider2.addEventListener('input', drawHistogram);
+    simDrawFns.histogram = drawHistogram;
+    drawHistogram();
+})();
+
 })();

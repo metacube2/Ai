@@ -28,6 +28,8 @@
                     <button class="lang-option" data-lang="it"><span class="lang-code">IT</span> Italiano</button>
                     <button class="lang-option" data-lang="sr"><span class="lang-code">SR</span> Srpski</button>
                     <button class="lang-option" data-lang="sq"><span class="lang-code">SQ</span> Shqip</button>
+                    <button class="lang-option" data-lang="tr"><span class="lang-code">TR</span> T&uuml;rk&ccedil;e</button>
+                    <button class="lang-option" data-lang="sv"><span class="lang-code">SV</span> Svenska</button>
                 </div>
             </div>
             <button class="nav-toggle" id="navToggle" aria-label="Menu">
@@ -39,6 +41,7 @@
                 <li><a href="#motif" class="nav-link" data-i18n="nav.motif">Motiverkennung</a></li>
                 <li><a href="#exposure" class="nav-link" data-i18n="nav.exposure">Belichtung</a></li>
                 <li><a href="#quiz" class="nav-link" data-i18n="nav.quiz">Quiz</a></li>
+                <li><a href="#simtools" class="nav-link" data-i18n="nav.simtools">Simulation</a></li>
             </ul>
         </div>
     </nav>
@@ -59,7 +62,7 @@
             </p>
             <div class="hero-stats">
                 <div class="stat">
-                    <span class="stat-number" data-target="6">0</span>
+                    <span class="stat-number" data-target="12">0</span>
                     <span class="stat-label" data-i18n="hero.calculators">Rechner</span>
                 </div>
                 <div class="stat">
@@ -560,6 +563,177 @@
         </div>
     </section>
 
+    <!-- ==================== SIMULATION TOOLS ==================== -->
+    <section class="section section-dark" id="simtools">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="sim.tag">Simulation</span>
+                <h2 class="section-title" data-i18n="sim.title">Foto-Simulationen</h2>
+                <p class="section-desc" data-i18n="sim.desc">Simuliere verschiedene Foto-Effekte in Echtzeit.</p>
+            </div>
+
+            <div class="sim-tabs">
+                <button class="sim-tab active" data-sim="bokeh" data-i18n="sim.bokeh">Bokeh</button>
+                <button class="sim-tab" data-sim="longexp" data-i18n="sim.longexp">Langzeitbelichtung</button>
+                <button class="sim-tab" data-sim="wb" data-i18n="sim.wb">Wei&szlig;abgleich</button>
+                <button class="sim-tab" data-sim="noise" data-i18n="sim.noise">ISO-Rauschen</button>
+                <button class="sim-tab" data-sim="perspective" data-i18n="sim.perspective">Perspektive</button>
+                <button class="sim-tab" data-sim="histogram" data-i18n="sim.histogram">Histogramm</button>
+            </div>
+
+            <!-- Bokeh Simulator -->
+            <div class="sim-panel active" id="sim-bokeh">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.bokeh.title">Bokeh-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.bokeh.info">Sieh wie sich Bokeh mit verschiedenen Blenden und Brennweiten ver&auml;ndert.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.aperture">Blende (f/)</label>
+                            <input type="range" id="sim-bokeh-aperture" min="1.4" max="22" step="0.1" value="2.8">
+                            <span class="range-value" id="sim-bokeh-aperture-val">f/2.8</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.bokeh.blades">Blendenlamellen</label>
+                            <input type="range" id="sim-bokeh-blades" min="5" max="11" step="1" value="7">
+                            <span class="range-value" id="sim-bokeh-blades-val">7</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.bokeh.intensity">Bokeh-Intensit&auml;t</label>
+                            <input type="range" id="sim-bokeh-intensity" min="0" max="100" step="1" value="70">
+                            <span class="range-value" id="sim-bokeh-intensity-val">70%</span>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-bokeh-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Long Exposure Simulator -->
+            <div class="sim-panel" id="sim-longexp">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.longexp.title">Langzeitbelichtungs-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.longexp.info">Sieh den Effekt verschiedener Belichtungszeiten auf Bewegung.</p>
+                        <div class="input-group">
+                            <label data-i18n="sim.longexp.time">Belichtungszeit (s)</label>
+                            <input type="range" id="sim-longexp-time" min="0" max="8" step="1" value="3">
+                            <span class="range-value" id="sim-longexp-time-val">1/4s</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.longexp.speed">Bewegungsgeschwindigkeit</label>
+                            <input type="range" id="sim-longexp-speed" min="1" max="10" step="1" value="5">
+                            <span class="range-value" id="sim-longexp-speed-val">5</span>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-longexp-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- White Balance Simulator -->
+            <div class="sim-panel" id="sim-wb">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.wb.title">Wei&szlig;abgleich-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.wb.info">Sieh wie die Farbtemperatur dein Bild beeinflusst.</p>
+                        <div class="input-group">
+                            <label data-i18n="sim.wb.kelvin">Temperatur (K)</label>
+                            <input type="range" id="sim-wb-kelvin" min="2000" max="12000" step="100" value="5500">
+                            <span class="range-value" id="sim-wb-kelvin-val">5500K</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.wb.tint">T&ouml;nung</label>
+                            <input type="range" id="sim-wb-tint" min="-50" max="50" step="1" value="0">
+                            <span class="range-value" id="sim-wb-tint-val">0</span>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-wb-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ISO Noise Simulator -->
+            <div class="sim-panel" id="sim-noise">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.noise.title">ISO-Rausch-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.noise.info">Sieh wie digitales Rauschen mit h&ouml;heren ISO-Werten zunimmt.</p>
+                        <div class="input-group">
+                            <label>ISO</label>
+                            <input type="range" id="sim-noise-iso" min="0" max="8" step="1" value="2">
+                            <span class="range-value" id="sim-noise-iso-val">ISO 400</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.noise.level">Rausch-Level</label>
+                            <input type="range" id="sim-noise-level" min="0" max="100" step="1" value="50">
+                            <span class="range-value" id="sim-noise-level-val">50%</span>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-noise-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perspective Simulator -->
+            <div class="sim-panel" id="sim-perspective">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.perspective.title">Perspektiv-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.perspective.info">Sieh wie die Brennweite die Perspektive beeinflusst.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.focal">Brennweite (mm)</label>
+                            <input type="range" id="sim-perspective-focal" min="14" max="200" step="1" value="50">
+                            <span class="range-value" id="sim-perspective-focal-val">50mm</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="sim.perspective.type">Verzerrungstyp</label>
+                            <select id="sim-perspective-type">
+                                <option value="barrel">Barrel</option>
+                                <option value="pincushion">Pincushion</option>
+                                <option value="none" selected>None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-perspective-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histogram Simulator -->
+            <div class="sim-panel" id="sim-histogram">
+                <div class="sim-grid">
+                    <div class="sim-controls">
+                        <h3 data-i18n="sim.histogram.title">Histogramm-Simulator</h3>
+                        <p class="sim-info" data-i18n="sim.histogram.info">Sieh das Histogramm basierend auf Belichtungseinstellungen.</p>
+                        <div class="input-group">
+                            <label data-i18n="exp.aperture">Blende</label>
+                            <input type="range" id="sim-hist-aperture" min="0" max="9" step="1" value="4">
+                            <span class="range-value" id="sim-hist-aperture-val">f/5.6</span>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="exp.shutter">Verschlusszeit</label>
+                            <input type="range" id="sim-hist-shutter" min="0" max="11" step="1" value="5">
+                            <span class="range-value" id="sim-hist-shutter-val">1/125s</span>
+                        </div>
+                        <div class="input-group">
+                            <label>ISO</label>
+                            <input type="range" id="sim-hist-iso" min="0" max="8" step="1" value="2">
+                            <span class="range-value" id="sim-hist-iso-val">ISO 400</span>
+                        </div>
+                    </div>
+                    <div class="sim-canvas-wrap">
+                        <canvas id="sim-histogram-canvas" width="500" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
@@ -575,6 +749,7 @@
                     <a href="#motif" data-i18n="nav.motif">Motiverkennung</a>
                     <a href="#exposure" data-i18n="footer.exptriangle">Belichtungsdreieck</a>
                     <a href="#quiz">Quiz</a>
+                    <a href="#simtools" data-i18n="nav.simtools">Simulation</a>
                 </div>
                 <div class="footer-links">
                     <h4 data-i18n="footer.calcs">Rechner</h4>
