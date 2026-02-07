@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoPro Tools</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">
+                <span class="logo-icon">&#9673;</span> PhotoPro Tools
+            </a>
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-current" id="langCurrent" aria-label="Language">
+                    <span class="lang-flag" id="langFlag">DE</span>
+                    <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-option active" data-lang="de"><span class="lang-code">DE</span> Deutsch</button>
+                    <button class="lang-option" data-lang="en"><span class="lang-code">EN</span> English</button>
+                    <button class="lang-option" data-lang="fr"><span class="lang-code">FR</span> Fran&ccedil;ais</button>
+                    <button class="lang-option" data-lang="it"><span class="lang-code">IT</span> Italiano</button>
+                    <button class="lang-option" data-lang="sr"><span class="lang-code">SR</span> Srpski</button>
+                    <button class="lang-option" data-lang="sq"><span class="lang-code">SQ</span> Shqip</button>
+                </div>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#lens-calc" class="nav-link" data-i18n="nav.lens">Linsenrechner</a></li>
+                <li><a href="#composition" class="nav-link" data-i18n="nav.composition">Komposition</a></li>
+                <li><a href="#motif" class="nav-link" data-i18n="nav.motif">Motiverkennung</a></li>
+                <li><a href="#exposure" class="nav-link" data-i18n="nav.exposure">Belichtung</a></li>
+                <li><a href="#quiz" class="nav-link" data-i18n="nav.quiz">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-bg">
+            <div class="hero-particles" id="heroParticles"></div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="hero-subtitle" data-i18n="hero.welcome">Willkommen bei</span>
+                PhotoPro Tools
+            </h1>
+            <p class="hero-description" data-i18n="hero.desc">
+                Dein ultimativer Fotografie-Werkzeugkasten. Linsenberechnungen, Kompositionsregeln,
+                Motiverkennung und interaktive Quizze &mdash; alles an einem Ort.
+            </p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number" data-target="6">0</span>
+                    <span class="stat-label" data-i18n="hero.calculators">Rechner</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" data-target="8">0</span>
+                    <span class="stat-label" data-i18n="hero.rules">Regeln</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" data-target="50">0</span>
+                    <span class="stat-label" data-i18n="hero.questions">Quiz-Fragen</span>
+                </div>
+            </div>
+            <a href="#lens-calc" class="hero-cta" data-i18n="hero.cta">Jetzt starten</a>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-arrow"></div>
+        </div>
+    </section>
+
+    <!-- ==================== LENS CALCULATOR ==================== -->
+    <section class="section" id="lens-calc">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="lens.tag">Werkzeuge</span>
+                <h2 class="section-title" data-i18n="lens.title">Linsenrechner</h2>
+                <p class="section-desc" data-i18n="lens.desc">Berechne Scharfentiefe, Bildwinkel, Crop-Faktor und mehr.</p>
+            </div>
+
+            <div class="calc-tabs">
+                <button class="calc-tab active" data-calc="dof" data-i18n="lens.tab.dof">Scharfentiefe (DOF)</button>
+                <button class="calc-tab" data-calc="fov" data-i18n="lens.tab.fov">Bildwinkel (FOV)</button>
+                <button class="calc-tab" data-calc="crop" data-i18n="lens.tab.crop">Crop-Faktor</button>
+                <button class="calc-tab" data-calc="hyperfocal" data-i18n="lens.tab.hyper">Hyperfokale Distanz</button>
+                <button class="calc-tab" data-calc="flash" data-i18n="lens.tab.flash">Blitz-Reichweite</button>
+                <button class="calc-tab" data-calc="magnification" data-i18n="lens.tab.mag">Abbildungsmassstab</button>
+            </div>
+
+            <!-- DOF Calculator -->
+            <div class="calc-panel active" id="calc-dof">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="dof.title">Scharfentiefe berechnen</h3>
+                        <p class="calc-info" data-i18n="dof.info">Die Scharfentiefe (Depth of Field) gibt den Bereich an, der im Bild scharf abgebildet wird.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.focal">Brennweite (mm)</label>
+                            <input type="number" id="dof-focal" value="50" min="1" max="2000" step="1">
+                            <input type="range" id="dof-focal-range" value="50" min="1" max="800" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.aperture">Blende (f/)</label>
+                            <input type="number" id="dof-aperture" value="2.8" min="0.7" max="64" step="0.1">
+                            <input type="range" id="dof-aperture-range" value="2.8" min="0.7" max="64" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="dof.distance">Entfernung zum Motiv (m)</label>
+                            <input type="number" id="dof-distance" value="5" min="0.1" max="10000" step="0.1">
+                            <input type="range" id="dof-distance-range" value="5" min="0.1" max="100" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.sensor">Sensorgr&ouml;sse</label>
+                            <select id="dof-sensor">
+                                <option value="0.043" selected data-i18n-opt="sensor.ff">Vollformat (36x24mm)</option>
+                                <option value="0.029" data-i18n-opt="sensor.apsc">APS-C (23.5x15.6mm)</option>
+                                <option value="0.023" data-i18n-opt="sensor.apsc_canon">APS-C Canon (22.3x14.9mm)</option>
+                                <option value="0.019" data-i18n-opt="sensor.m43">Micro 4/3 (17.3x13mm)</option>
+                                <option value="0.011" data-i18n-opt="sensor.1inch">1 Zoll (13.2x8.8mm)</option>
+                                <option value="0.006" data-i18n-opt="sensor.small">1/2.3 Zoll (6.17x4.55mm)</option>
+                            </select>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateDOF()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="dof.total">Scharfentiefe</span>
+                                <span class="result-value" id="dof-total">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="dof.near">Nahpunkt</span>
+                                <span class="result-value" id="dof-near">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="dof.far">Fernpunkt</span>
+                                <span class="result-value" id="dof-far">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="dof.coc">Zerstreuungskreis</span>
+                                <span class="result-value" id="dof-coc">--</span>
+                            </div>
+                        </div>
+                        <div class="dof-visualization">
+                            <div class="dof-bar">
+                                <div class="dof-sharp" id="dof-sharp-zone"></div>
+                                <div class="dof-subject" id="dof-subject-marker"></div>
+                            </div>
+                            <div class="dof-labels">
+                                <span id="dof-label-near">0m</span>
+                                <span id="dof-label-subject">5m</span>
+                                <span id="dof-label-far">&infin;</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOV Calculator -->
+            <div class="calc-panel" id="calc-fov">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="fov.title">Bildwinkel berechnen</h3>
+                        <p class="calc-info" data-i18n="fov.info">Der Bildwinkel bestimmt, wie viel der Szene die Kamera erfasst.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.focal">Brennweite (mm)</label>
+                            <input type="number" id="fov-focal" value="50" min="1" max="2000">
+                            <input type="range" id="fov-focal-range" value="50" min="1" max="800">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.sensor">Sensorgr&ouml;sse</label>
+                            <select id="fov-sensor">
+                                <option value="36x24" selected data-i18n-opt="sensor.ff">Vollformat (36x24mm)</option>
+                                <option value="23.5x15.6" data-i18n-opt="sensor.apsc">APS-C (23.5x15.6mm)</option>
+                                <option value="22.3x14.9" data-i18n-opt="sensor.apsc_canon">APS-C Canon (22.3x14.9mm)</option>
+                                <option value="17.3x13" data-i18n-opt="sensor.m43">Micro 4/3 (17.3x13mm)</option>
+                                <option value="13.2x8.8" data-i18n-opt="sensor.1inch">1 Zoll (13.2x8.8mm)</option>
+                            </select>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateFOV()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="fov.horizontal">Horizontaler Bildwinkel</span>
+                                <span class="result-value" id="fov-horizontal">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="fov.vertical">Vertikaler Bildwinkel</span>
+                                <span class="result-value" id="fov-vertical">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="fov.diagonal">Diagonaler Bildwinkel</span>
+                                <span class="result-value" id="fov-diagonal">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="fov.lenstype">Objektivtyp</span>
+                                <span class="result-value" id="fov-type">--</span>
+                            </div>
+                        </div>
+                        <div class="fov-visualization">
+                            <canvas id="fov-canvas" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop Factor Calculator -->
+            <div class="calc-panel" id="calc-crop">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="crop.title">Crop-Faktor berechnen</h3>
+                        <p class="calc-info" data-i18n="crop.info">Der Crop-Faktor zeigt den &auml;quivalenten Bildausschnitt im Vergleich zum Vollformat.</p>
+                        <div class="input-group">
+                            <label data-i18n="crop.lensfocal">Brennweite am Objektiv (mm)</label>
+                            <input type="number" id="crop-focal" value="50" min="1" max="2000">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="crop.lensaperture">Blende am Objektiv (f/)</label>
+                            <input type="number" id="crop-aperture" value="1.8" min="0.7" max="64" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="crop.camerasensor">Kamerasensor</label>
+                            <select id="crop-sensor">
+                                <option value="1.0" data-i18n-opt="sensor.ff_1x">Vollformat (1.0x)</option>
+                                <option value="1.5" selected data-i18n-opt="sensor.apsc_nikon">APS-C Nikon/Sony (1.5x)</option>
+                                <option value="1.6" data-i18n-opt="sensor.apsc_canon_1_6">APS-C Canon (1.6x)</option>
+                                <option value="2.0" data-i18n-opt="sensor.m43_2x">Micro 4/3 (2.0x)</option>
+                                <option value="2.7" data-i18n-opt="sensor.1inch_2_7">1 Zoll (2.7x)</option>
+                                <option value="5.6" data-i18n-opt="sensor.small_5_6">1/2.3 Zoll (5.6x)</option>
+                            </select>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateCrop()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="crop.equivfocal">&#196;quivalente Brennweite (KB)</span>
+                                <span class="result-value" id="crop-equiv-focal">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="crop.equivaperture">&#196;quivalente Blende (KB)</span>
+                                <span class="result-value" id="crop-equiv-aperture">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="crop.factor">Crop-Faktor</span>
+                                <span class="result-value" id="crop-factor-result">--</span>
+                            </div>
+                        </div>
+                        <div class="crop-comparison">
+                            <div class="crop-frame fullframe">
+                                <span data-i18n="crop.fullframe">Vollformat</span>
+                            </div>
+                            <div class="crop-frame cropped" id="crop-overlay">
+                                <span id="crop-overlay-label">APS-C</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hyperfocal Distance Calculator -->
+            <div class="calc-panel" id="calc-hyperfocal">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="hyper.title">Hyperfokale Distanz</h3>
+                        <p class="calc-info" data-i18n="hyper.info">Die Entfernung, ab der alles bis unendlich scharf ist.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.focal">Brennweite (mm)</label>
+                            <input type="number" id="hyper-focal" value="24" min="1" max="2000">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.aperture">Blende (f/)</label>
+                            <input type="number" id="hyper-aperture" value="11" min="0.7" max="64" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.sensor">Sensorgr&ouml;sse</label>
+                            <select id="hyper-sensor">
+                                <option value="0.030" selected data-i18n-opt="sensor.ff_short">Vollformat</option>
+                                <option value="0.020" data-i18n-opt="sensor.apsc_short">APS-C</option>
+                                <option value="0.015" data-i18n-opt="sensor.m43_short">Micro 4/3</option>
+                            </select>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateHyperfocal()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="hyper.distance">Hyperfokale Distanz</span>
+                                <span class="result-value" id="hyper-distance">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="hyper.near">Nahpunkt (bei Fokus auf H)</span>
+                                <span class="result-value" id="hyper-near">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="hyper.tiplabel">Tipp</span>
+                                <span class="result-value small" id="hyper-tip" data-i18n="hyper.tip">Fokussiere auf die hyperfokale Distanz f&uuml;r maximale Sch&auml;rfe.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flash Range Calculator -->
+            <div class="calc-panel" id="calc-flash">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="flash.title">Blitz-Reichweite</h3>
+                        <p class="calc-info" data-i18n="flash.info">Berechne die maximale Blitzreichweite basierend auf Leitzahl und Einstellungen.</p>
+                        <div class="input-group">
+                            <label data-i18n="flash.gn">Leitzahl (GN)</label>
+                            <input type="number" id="flash-gn" value="58" min="1" max="200">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="calc.aperture">Blende (f/)</label>
+                            <input type="number" id="flash-aperture" value="5.6" min="0.7" max="64" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>ISO</label>
+                            <select id="flash-iso">
+                                <option value="100" selected>ISO 100</option>
+                                <option value="200">ISO 200</option>
+                                <option value="400">ISO 400</option>
+                                <option value="800">ISO 800</option>
+                                <option value="1600">ISO 1600</option>
+                                <option value="3200">ISO 3200</option>
+                            </select>
+                        </div>
+                        <button class="btn-calculate" onclick="calculateFlash()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="flash.maxrange">Maximale Reichweite</span>
+                                <span class="result-value" id="flash-range">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="flash.at100">Bei ISO 100</span>
+                                <span class="result-value" id="flash-range-100">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Magnification Calculator -->
+            <div class="calc-panel" id="calc-magnification">
+                <div class="calc-grid">
+                    <div class="calc-inputs">
+                        <h3 data-i18n="mag.title">Abbildungsmassstab</h3>
+                        <p class="calc-info" data-i18n="mag.info">Berechne den Abbildungsmassstab f&uuml;r Makrofotografie.</p>
+                        <div class="input-group">
+                            <label data-i18n="calc.focal">Brennweite (mm)</label>
+                            <input type="number" id="mag-focal" value="100" min="1" max="2000">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="mag.mindist">Naheinstellgrenze (cm)</label>
+                            <input type="number" id="mag-min-focus" value="30" min="1" max="10000">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="mag.sensorwidth">Sensorbreite (mm)</label>
+                            <input type="number" id="mag-sensor-w" value="36" min="1" max="100" step="0.1">
+                        </div>
+                        <button class="btn-calculate" onclick="calculateMagnification()" data-i18n="calc.calculate">Berechnen</button>
+                    </div>
+                    <div class="calc-results">
+                        <h3 data-i18n="calc.results">Ergebnisse</h3>
+                        <div class="result-card">
+                            <div class="result-item highlight">
+                                <span class="result-label" data-i18n="mag.ratio">Abbildungsmassstab</span>
+                                <span class="result-value" id="mag-ratio">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="mag.field">Erfasstes Feld (Breite)</span>
+                                <span class="result-value" id="mag-field">--</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label" data-i18n="mag.macro">Makro-Tauglichkeit</span>
+                                <span class="result-value" id="mag-macro">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== COMPOSITION RULES ==================== -->
+    <section class="section section-dark" id="composition">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="comp.tag">Komposition</span>
+                <h2 class="section-title" data-i18n="comp.title">Fotografie-Regeln</h2>
+                <p class="section-desc" data-i18n="comp.desc">Beherrsche die wichtigsten Kompositionsregeln f&uuml;r beeindruckende Fotos.</p>
+            </div>
+
+            <div class="rules-grid" id="rulesGrid">
+                <!-- Generated by JS for i18n -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MOTIF RECOGNITION ==================== -->
+    <section class="section" id="motif">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="motif.tag">Motiverkennung</span>
+                <h2 class="section-title" data-i18n="motif.title">Motiverkennung &amp; Genres</h2>
+                <p class="section-desc" data-i18n="motif.desc">Lerne verschiedene Fotografie-Genres und ihre optimalen Einstellungen kennen.</p>
+            </div>
+
+            <div class="motif-filter" id="motifFilter">
+                <!-- Generated by JS for i18n -->
+            </div>
+
+            <div class="motif-grid" id="motifGrid">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== EXPOSURE TRIANGLE ==================== -->
+    <section class="section section-dark" id="exposure">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="exp.tag">Grundlagen</span>
+                <h2 class="section-title" data-i18n="exp.title">Belichtungsdreieck</h2>
+                <p class="section-desc" data-i18n="exp.desc">Verstehe das Zusammenspiel von Blende, Verschlusszeit und ISO.</p>
+            </div>
+
+            <div class="exposure-interactive">
+                <div class="exposure-triangle-visual">
+                    <canvas id="exposure-canvas" width="500" height="450"></canvas>
+                </div>
+                <div class="exposure-controls">
+                    <div class="exposure-param">
+                        <div class="param-header">
+                            <h3 data-i18n="exp.aperture">Blende (Aperture)</h3>
+                            <span class="param-value" id="exp-aperture-val">f/5.6</span>
+                        </div>
+                        <input type="range" id="exp-aperture" min="0" max="9" step="1" value="4">
+                        <div class="param-scale">
+                            <span>f/1.4</span><span>f/2</span><span>f/2.8</span><span>f/4</span><span>f/5.6</span><span>f/8</span><span>f/11</span><span>f/16</span><span>f/22</span><span>f/32</span>
+                        </div>
+                        <p class="param-desc" id="exp-aperture-desc" data-i18n="exp.aperture.mid">Mittlere Blende &ndash; guter Kompromiss aus Sch&auml;rfe und Licht.</p>
+                    </div>
+                    <div class="exposure-param">
+                        <div class="param-header">
+                            <h3 data-i18n="exp.shutter">Verschlusszeit (Shutter)</h3>
+                            <span class="param-value" id="exp-shutter-val">1/125s</span>
+                        </div>
+                        <input type="range" id="exp-shutter" min="0" max="11" step="1" value="5">
+                        <div class="param-scale">
+                            <span>30s</span><span>15s</span><span>1s</span><span>1/4</span><span>1/30</span><span>1/125</span><span>1/250</span><span>1/500</span><span>1/1000</span><span>1/2000</span><span>1/4000</span><span>1/8000</span>
+                        </div>
+                        <p class="param-desc" id="exp-shutter-desc" data-i18n="exp.shutter.mid">Standard-Verschlusszeit &ndash; friert die meisten Bewegungen ein.</p>
+                    </div>
+                    <div class="exposure-param">
+                        <div class="param-header">
+                            <h3>ISO</h3>
+                            <span class="param-value" id="exp-iso-val">ISO 400</span>
+                        </div>
+                        <input type="range" id="exp-iso" min="0" max="8" step="1" value="2">
+                        <div class="param-scale">
+                            <span>100</span><span>200</span><span>400</span><span>800</span><span>1600</span><span>3200</span><span>6400</span><span>12800</span><span>25600</span>
+                        </div>
+                        <p class="param-desc" id="exp-iso-desc" data-i18n="exp.iso.low">Niedriges ISO &ndash; minimales Rauschen, beste Qualit&auml;t.</p>
+                    </div>
+                    <div class="exposure-result">
+                        <div class="ev-meter">
+                            <div class="ev-bar">
+                                <div class="ev-indicator" id="ev-indicator"></div>
+                            </div>
+                            <div class="ev-labels">
+                                <span>-3 EV</span><span>-2</span><span>-1</span><span>0</span><span>+1</span><span>+2</span><span>+3 EV</span>
+                            </div>
+                        </div>
+                        <p class="ev-text" id="ev-text" data-i18n="exp.correct">Korrekte Belichtung</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== QUIZ SECTION ==================== -->
+    <section class="section" id="quiz">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag" data-i18n="quiz.tag">Lernkontrolle</span>
+                <h2 class="section-title" data-i18n="quiz.title">Fotografie-Quiz</h2>
+                <p class="section-desc" data-i18n="quiz.desc">Teste dein Wissen mit interaktiven Quizfragen zu allen Themen.</p>
+            </div>
+
+            <div class="quiz-categories" id="quizCategories">
+                <!-- Generated by JS for i18n -->
+            </div>
+
+            <div class="quiz-container" id="quizContainer">
+                <div class="quiz-start" id="quizStart">
+                    <div class="quiz-start-icon">&#127909;</div>
+                    <h3 data-i18n="quiz.ready">Bereit f&uuml;r das Quiz?</h3>
+                    <p data-i18n="quiz.choose">W&auml;hle eine Kategorie und teste dein Fotografie-Wissen!</p>
+                    <p class="quiz-info" data-i18n="quiz.info">10 Fragen pro Runde &bull; Multiple Choice &bull; Sofortiges Feedback</p>
+                    <button class="btn-quiz-start" onclick="startQuiz('all')" data-i18n="quiz.start">Quiz starten</button>
+                </div>
+
+                <div class="quiz-active" id="quizActive" style="display:none">
+                    <div class="quiz-progress">
+                        <div class="quiz-progress-bar">
+                            <div class="quiz-progress-fill" id="quizProgress"></div>
+                        </div>
+                        <span class="quiz-progress-text" id="quizProgressText">1 / 10</span>
+                    </div>
+                    <div class="quiz-score-bar">
+                        <span class="quiz-score" id="quizScore"></span>
+                        <span class="quiz-timer" id="quizTimer">00:00</span>
+                    </div>
+                    <div class="quiz-question-card" id="quizQuestionCard">
+                        <span class="quiz-category-badge" id="quizCategoryBadge"></span>
+                        <h3 class="quiz-question" id="quizQuestion"></h3>
+                        <div class="quiz-options" id="quizOptions"></div>
+                        <div class="quiz-explanation" id="quizExplanation" style="display:none">
+                            <p id="quizExplanationText"></p>
+                        </div>
+                        <button class="btn-quiz-next" id="quizNextBtn" style="display:none" onclick="nextQuestion()" data-i18n="quiz.next">N&auml;chste Frage</button>
+                    </div>
+                </div>
+
+                <div class="quiz-results" id="quizResults" style="display:none">
+                    <div class="results-circle">
+                        <svg viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="54" class="results-circle-bg"/>
+                            <circle cx="60" cy="60" r="54" class="results-circle-fill" id="resultsCircle"/>
+                        </svg>
+                        <span class="results-percent" id="resultsPercent">0%</span>
+                    </div>
+                    <h3 class="results-title" id="resultsTitle" data-i18n="quiz.finished">Quiz beendet!</h3>
+                    <p class="results-text" id="resultsText"></p>
+                    <div class="results-breakdown" id="resultsBreakdown"></div>
+                    <div class="results-actions">
+                        <button class="btn-quiz-restart" onclick="startQuiz('all')" data-i18n="quiz.playagain">Nochmal spielen</button>
+                        <button class="btn-quiz-review" onclick="reviewAnswers()" data-i18n="quiz.review">Antworten ansehen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <span class="logo-icon">&#9673;</span> PhotoPro Tools
+                    <p data-i18n="footer.brand">Dein kostenloser Fotografie-Werkzeugkasten f&uuml;r bessere Bilder.</p>
+                </div>
+                <div class="footer-links">
+                    <h4 data-i18n="footer.tools">Werkzeuge</h4>
+                    <a href="#lens-calc" data-i18n="nav.lens">Linsenrechner</a>
+                    <a href="#composition" data-i18n="footer.comprules">Kompositionsregeln</a>
+                    <a href="#motif" data-i18n="nav.motif">Motiverkennung</a>
+                    <a href="#exposure" data-i18n="footer.exptriangle">Belichtungsdreieck</a>
+                    <a href="#quiz">Quiz</a>
+                </div>
+                <div class="footer-links">
+                    <h4 data-i18n="footer.calcs">Rechner</h4>
+                    <a href="#lens-calc" data-i18n="dof.total">Scharfentiefe</a>
+                    <a href="#lens-calc" data-i18n="fov.title">Bildwinkel</a>
+                    <a href="#lens-calc" data-i18n="crop.factor">Crop-Faktor</a>
+                    <a href="#lens-calc" data-i18n="hyper.title">Hyperfokale Distanz</a>
+                    <a href="#lens-calc" data-i18n="flash.title">Blitz-Reichweite</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-i18n="footer.copy">&copy; 2026 PhotoPro Tools &mdash; Erstellt mit Leidenschaft f&uuml;r die Fotografie.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/i18n.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
