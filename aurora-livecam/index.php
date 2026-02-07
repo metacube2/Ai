@@ -1325,6 +1325,13 @@ class AdminManager {
         // API-KEY FELD KOMPLETT ENTFERNT
 
         $output .= '<div class="setting-row">';
+        $output .= '<span class="setting-label">API Key (OpenWeatherMap, optional)</span>';
+        $output .= '<div class="setting-input">';
+        $output .= '<input type="text" id="setting-weather-api-key" class="text-input" placeholder="OWM API Key" value="' . htmlspecialchars($settingsManager->get('weather.api_key')) . '">';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="setting-row">';
         $output .= '<span class="setting-label">Standort (Anzeigename)</span>';
         $output .= '<div class="setting-input">';
         $output .= '<input type="text" id="setting-weather-location" class="text-input" placeholder="Oberdürnten,CH" value="' . htmlspecialchars($settingsManager->get('weather.location')) . '">';
