@@ -1,0 +1,15 @@
+/vendor/
+/storage/uploads/*
+/storage/outputs/*
+/storage/thumbnails/*
+/storage/logs/*
+/storage/temp/*
+!storage/uploads/.gitkeep
+!storage/outputs/.gitkeep
+!storage/thumbnails/.gitkeep
+!storage/logs/.gitkeep
+!storage/temp/.gitkeep
+.env
+*.swp
+*.swo
+.DS_Store
