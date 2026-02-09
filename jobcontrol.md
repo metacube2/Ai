@@ -321,11 +321,14 @@ CLASS lcl_lifecycle_processor IMPLEMENTATION.
 
     GET TIME STAMP FIELD lv_start_time.
 
-    " Phase 1: Datenladen
+    " *** NEU: Job deaktivieren (nur produktiv) ***"
+    PERFORM deactivate_job.
+
+    " Phase 1: Datenladen"
     ""Write: / 'Phase 1: Lade Materialstammdaten...'.
     load_materials( ).
 
-    " ===== HIER EINFÜGEN: Debug nach dem Laden =====
+    " ===== HIER EINFÜGEN: Debug nach dem Laden ====="
     me->debug_show_relations( ).
     ""Write: / 'Phase 2: Lade Stücklistenbeziehungen...'.
 
@@ -336,34 +339,22 @@ CLASS lcl_lifecycle_processor IMPLEMENTATION.
     ""Write: / 'Phase 4: Lade Verbrauchsdaten...'.
     load_consumption_data( ).
 
-    " Phase 5: Berechnungen basierend auf Auswahl durchführen
+    " Phase 5: Berechnungen basierend auf Auswahl durchführen"
     IF p_lzc = abap_true.
-      " Modus: Nur Lebenszykluscode (ZZLZCOD)
+      " Modus: Nur Lebenszykluscode (ZZLZCOD)"
       ""Write: / 'Phase 5: Berechne Lebenszykluscode-Vererbung (ZZLZCOD)...'.
-
-
-
-
-
       PERFORM save_vknr_codes.
-
-
       calculate_inheritance( ).
-
       PERFORM restore_vknr_codes.
 
-
-
-
-
-      " PERFORM protect_vknr_from_update USING '1'.
+      " PERFORM protect_vknr_from_update USING '1'."
       IF p_upda = abap_true AND p_test = abap_false.
         ""Write: / 'Phase 6: Aktualisiere Datenbank für ZZLZCOD...'.
         update_database( ).
       ENDIF.
 
     ELSEIF p_sort = abap_true.
-      " Modus: Nur Sortimentscode (ZZLZCODSORT)
+      " Modus: Nur Sortimentscode (ZZLZCODSORT)"
       ""Write: / 'Phase 5: Berechne Sortiments-Lebenszykluscode-Vererbung (ZZLZCODSORT)...'.
       calculate_sortiment_inhe( ).
 
@@ -377,6 +368,9 @@ CLASS lcl_lifecycle_processor IMPLEMENTATION.
     GET TIME STAMP FIELD lv_end_time.
     DATA(lv_runtime) = lv_end_time - lv_start_time.
     ""Write: / |Gesamtlaufzeit: { lv_runtime } Sekunden|.
+
+    " *** NEU: Job reaktivieren (nur produktiv) ***"
+    PERFORM reactivate_job.
 
   ENDMETHOD.
 
@@ -3569,6 +3563,116 @@ END-OF-SELECTION.
 
 
   ENDIF.
+*&---------------------------------------------------------------------*
+*& Form DEACTIVATE_JOB
+*& Entfernt Startbedingung des Jobs VC_AUFLOESUNG_ZLO
+*& Nur im produktiven Modus (p_test = abap_false)
+*&---------------------------------------------------------------------*
+FORM deactivate_job.
+  DATA: lt_joblist TYPE STANDARD TABLE OF tbtcjob,
+        ls_job     TYPE tbtcjob.
+
+  " Nur im produktiven Modus
+  IF p_test = abap_true.
+    WRITE: / 'Testmodus: Job-Deaktivierung übersprungen'.
+    RETURN.
+  ENDIF.
+
+  CLEAR: gv_job_was_active, gv_job_count.
+
+  " Suche freigegebenen Job (Status 'S' = Scheduled/Released)
+  CALL FUNCTION 'BP_JOB_SELECT'
+    EXPORTING
+      jobselect_dialog  = abap_false
+      jobname           = gc_job_name
+      username          = gc_job_user
+    TABLES
+      jobselect_joblist = lt_joblist
+    EXCEPTIONS
+      OTHERS            = 1.
+
+  IF sy-subrc <> 0.
+    WRITE: / 'WARNUNG: Job', gc_job_name, 'nicht gefunden'.
+    RETURN.
+  ENDIF.
+
+  " Finde freigegebenen Job (Status S = Scheduled)
+  LOOP AT lt_joblist INTO ls_job WHERE status = 'S'.
+    EXIT.
+  ENDLOOP.
+
+  IF sy-subrc <> 0.
+    WRITE: / 'INFO: Kein freigegebener Job', gc_job_name, 'gefunden'.
+    RETURN.
+  ENDIF.
+
+  " Sichere Job-Count für spätere Reaktivierung
+  gv_job_count = ls_job-jobcount.
+  gv_job_was_active = abap_true.
+
+  " Entferne Startbedingung (Job auf 'P' = Planned setzen)
+  CALL FUNCTION 'BP_JOB_MODIFY'
+    EXPORTING
+      jobname    = gc_job_name
+      jobcount   = gv_job_count
+      new_status = 'P'
+    EXCEPTIONS
+      OTHERS     = 1.
+
+  IF sy-subrc = 0.
+    WRITE: / 'Job', gc_job_name, 'deaktiviert (Startbedingung entfernt)'.
+  ELSE.
+    WRITE: / 'FEHLER: Job', gc_job_name, 'konnte nicht deaktiviert werden'.
+    CLEAR gv_job_was_active.
+  ENDIF.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form REACTIVATE_JOB
+*& Setzt Startbedingung des Jobs wieder (01:00 nächster Tag, täglich)
+*& Nur wenn Job vorher aktiv war und produktiver Modus
+*&---------------------------------------------------------------------*
+FORM reactivate_job.
+  DATA: lv_next_date  TYPE sy-datum,
+        lv_start_time TYPE sy-uzeit VALUE '010000'.
+
+  " Nur im produktiven Modus und wenn Job vorher aktiv war
+  IF p_test = abap_true.
+    WRITE: / 'Testmodus: Job-Reaktivierung übersprungen'.
+    RETURN.
+  ENDIF.
+
+  IF gv_job_was_active = abap_false.
+    WRITE: / 'INFO: Job war nicht aktiv, keine Reaktivierung nötig'.
+    RETURN.
+  ENDIF.
+
+  " Berechne nächsten Tag
+  lv_next_date = sy-datum + 1.
+
+  " Setze Startbedingung wieder (täglich um 01:00)
+  CALL FUNCTION 'BP_JOB_MODIFY'
+    EXPORTING
+      jobname       = gc_job_name
+      jobcount      = gv_job_count
+      new_status    = 'S'
+      new_sdlstrtdt = lv_next_date
+      new_sdlstrttm = lv_start_time
+      new_prddays   = 1
+      new_periodic  = abap_true
+    EXCEPTIONS
+      OTHERS        = 1.
+
+  IF sy-subrc = 0.
+    WRITE: / 'Job', gc_job_name, 'reaktiviert für', lv_next_date, lv_start_time.
+  ELSE.
+    WRITE: / 'FEHLER: Job', gc_job_name, 'konnte nicht reaktiviert werden!'.
+    WRITE: / 'ACHTUNG: Job muss manuell in SM37 freigegeben werden!'.
+  ENDIF.
+
+ENDFORM.
+
 *----------------------------------------------------------------------*
 * Unit-Tests (wenn p_test = 'X')
 *----------------------------------------------------------------------*
@@ -3681,6 +3785,15 @@ TYPES: BEGIN OF ty_vknr_backup,
        END OF ty_vknr_backup.
 
 DATA: gt_vknr_backup TYPE STANDARD TABLE OF ty_vknr_backup.
+
+*&---------------------------------------------------------------------*
+*& Globale Variablen für Job-Steuerung
+*&---------------------------------------------------------------------*
+DATA: gv_job_was_active TYPE abap_bool,
+      gv_job_count      TYPE tbtcjob-jobcount.
+
+CONSTANTS: gc_job_name   TYPE tbtcjob-jobname VALUE 'VC_AUFLOESUNG_ZLO',
+           gc_job_user   TYPE tbtcjob-authcknam VALUE 'KOI'.
 
 *&---------------------------------------------------------------------*
 *& Form SAVE_VKNR_CODES
