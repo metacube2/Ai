@@ -26,15 +26,19 @@ class CATProtocol: ObservableObject {
 
     private let serialManager: SerialPortManager
     private var responseQueue: [CATResponse] = []
-    private var pollingTimer: Timer?
+    private var fastPollingTimer: Timer?
+    private var slowPollingTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
     private let commandQueue = DispatchQueue(label: "cat.command", qos: .userInitiated)
     private var commandSemaphore = DispatchSemaphore(value: 1)
+    private var resumePollingWorkItem: DispatchWorkItem?
+    private var meterPollPhase = 0
+    private var statusPollPhase = 0
 
     // Polling intervals
-    private let fastPollInterval: TimeInterval = 0.1    // 100ms for meters
-    private let slowPollInterval: TimeInterval = 0.5    // 500ms for frequency/mode
+    private let fastPollInterval: TimeInterval = 0.9
+    private let slowPollInterval: TimeInterval = 1.4
 
     // MARK: - Initialization
 
@@ -76,9 +80,19 @@ class CATProtocol: ObservableObject {
         }
     }
 
+    private func prioritizeUserCommand(_ command: CATCommand) {
+        pausePollingTemporarily()
+        send(command)
+    }
+
     func sendRaw(_ command: String) {
         let catCommand = CATCommand(command, description: "Manual: \(command)")
         send(catCommand)
+    }
+
+    func ping() {
+        send(CAT.readID)
+        send(CAT.readVFOA)
     }
 
     // MARK: - Response Handling
@@ -87,6 +101,20 @@ class CATProtocol: ObservableObject {
         guard let responseString = String(data: data, encoding: .ascii) else { return }
 
         let response = CATResponse(rawData: responseString)
+
+        if response.isEchoOnly {
+            Logger.shared.log("Ignoring CAT echo: \(response.rawData)", level: .debug)
+            Logger.shared.catTrace("RX class=echo value=\(response.rawData)")
+            return
+        }
+
+        if response.isOverflowMessage {
+            Logger.shared.log("Radio reports CAT overflow", level: .warning)
+            Logger.shared.catTrace("RX class=overflow value=\(response.rawData)")
+        } else {
+            serialManager.noteCATResponse()
+            Logger.shared.catTrace("RX class=valid cmd=\(response.command) value=\(response.value)")
+        }
 
         // Log response
         let entry = CommandLogEntry(
@@ -218,68 +246,70 @@ class CATProtocol: ObservableObject {
         isPolling = true
 
         // Fast polling for meters
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: fastPollInterval, repeats: true) { [weak self] _ in
+        fastPollingTimer = Timer.scheduledTimer(withTimeInterval: fastPollInterval, repeats: true) { [weak self] _ in
             self?.pollMeters()
         }
 
         // Start slow polling for frequency/mode
-        Timer.scheduledTimer(withTimeInterval: slowPollInterval, repeats: true) { [weak self] _ in
+        slowPollingTimer = Timer.scheduledTimer(withTimeInterval: slowPollInterval, repeats: true) { [weak self] _ in
             self?.pollStatus()
         }
     }
 
     func stopPolling() {
-        pollingTimer?.invalidate()
-        pollingTimer = nil
+        fastPollingTimer?.invalidate()
+        fastPollingTimer = nil
+        slowPollingTimer?.invalidate()
+        slowPollingTimer = nil
         isPolling = false
     }
 
     private func pollMeters() {
-        send(CAT.readSMeter)
         if radioState.isTransmitting {
-            send(CAT.readPowerMeter)
-            send(CAT.readSWRMeter)
+            if meterPollPhase % 2 == 0 {
+                send(CAT.readPowerMeter)
+            } else {
+                send(CAT.readSWRMeter)
+            }
+        } else {
+            send(CAT.readSMeter)
         }
+        meterPollPhase += 1
     }
 
     private func pollStatus() {
-        send(CAT.readVFOA)
-        send(CAT.readVFOB)
-        send(CAT.readActiveVFO)
-        send(CAT.readMode)
+        let commands: [CATCommand] = [CAT.readVFOA, CAT.readVFOB, CAT.readActiveVFO, CAT.readMode]
+        send(commands[statusPollPhase % commands.count])
+        statusPollPhase += 1
     }
 
     // MARK: - Initial State
 
     private func requestInitialState() {
-        // Verify radio identity
-        send(CAT.readID)
+        let startupCommands: [CATCommand] = [
+            CAT.readID,
+            CAT.readVFOA,
+            CAT.readActiveVFO,
+            CAT.readMode,
+            CAT.readAFGain,
+        ]
 
-        // Request all current values
-        send(CAT.readVFOA)
-        send(CAT.readVFOB)
-        send(CAT.readActiveVFO)
-        send(CAT.readMode)
-        send(CAT.readAFGain)
-        send(CAT.readRFGain)
-        send(CAT.readSquelch)
-        send(CAT.readMICGain)
-        send(CAT.readPower)
-        send(CAT.readNB)
-        send(CAT.readNR)
-        send(CAT.readDNF)
-        send(CAT.readSplit)
-        send(CAT.readSMeter)
+        for (index, command) in startupCommands.enumerated() {
+            let delay = DispatchTime.now() + .milliseconds(index * 220)
+            commandQueue.asyncAfter(deadline: delay) { [weak self] in
+                self?.send(command)
+            }
+        }
     }
 
     // MARK: - Radio Control
 
     func setFrequency(_ frequency: Int, vfo: VFO = .a) {
         if vfo == .a {
-            send(CAT.setVFOA(frequency))
+            prioritizeUserCommand(CAT.setVFOA(frequency))
             radioState.vfoAFrequency = frequency
         } else {
-            send(CAT.setVFOB(frequency))
+            prioritizeUserCommand(CAT.setVFOB(frequency))
             radioState.vfoBFrequency = frequency
         }
     }
@@ -290,70 +320,70 @@ class CATProtocol: ObservableObject {
     }
 
     func setMode(_ mode: OperatingMode) {
-        send(CAT.setMode(mode))
+        prioritizeUserCommand(CAT.setMode(mode))
         radioState.mode = mode
     }
 
     func setAFGain(_ value: Int) {
-        send(CAT.setAFGain(value))
+        prioritizeUserCommand(CAT.setAFGain(value))
         radioState.afGain = value
     }
 
     func setRFGain(_ value: Int) {
-        send(CAT.setRFGain(value))
+        prioritizeUserCommand(CAT.setRFGain(value))
         radioState.rfGain = value
     }
 
     func setSquelch(_ value: Int) {
-        send(CAT.setSquelch(value))
+        prioritizeUserCommand(CAT.setSquelch(value))
         radioState.squelch = value
     }
 
     func setMICGain(_ value: Int) {
-        send(CAT.setMICGain(value))
+        prioritizeUserCommand(CAT.setMICGain(value))
         radioState.micGain = value
     }
 
     func setPower(_ value: Int) {
-        send(CAT.setPower(value))
+        prioritizeUserCommand(CAT.setPower(value))
         radioState.power = value
     }
 
     func toggleNB() {
         let newValue = !radioState.noiseBlanker
-        send(CAT.setNB(newValue))
+        prioritizeUserCommand(CAT.setNB(newValue))
         radioState.noiseBlanker = newValue
     }
 
     func toggleNR() {
         let newValue = !radioState.noiseReduction
-        send(CAT.setNR(newValue))
+        prioritizeUserCommand(CAT.setNR(newValue))
         radioState.noiseReduction = newValue
     }
 
     func toggleDNF() {
         let newValue = !radioState.dnf
-        send(CAT.setDNF(newValue))
+        prioritizeUserCommand(CAT.setDNF(newValue))
         radioState.dnf = newValue
     }
 
     func toggleSplit() {
         let newValue = !radioState.split
-        send(CAT.setSplit(newValue))
+        prioritizeUserCommand(CAT.setSplit(newValue))
         radioState.split = newValue
     }
 
     func selectVFO(_ vfo: VFO) {
         if vfo == .a {
-            send(CAT.selectVFOA)
+            prioritizeUserCommand(CAT.selectVFOA)
         } else {
-            send(CAT.selectVFOB)
+            prioritizeUserCommand(CAT.selectVFOB)
         }
         radioState.activeVFO = vfo
     }
 
     func swapVFO() {
-        send(CAT.swapVFO)
+        prioritizeUserCommand(CAT.swapVFO)
         let temp = radioState.vfoAFrequency
         radioState.vfoAFrequency = radioState.vfoBFrequency
         radioState.vfoBFrequency = temp
@@ -361,27 +391,27 @@ class CATProtocol: ObservableObject {
 
     func equalizeVFO() {
         // Set VFO-B to VFO-A frequency
-        send(CAT.setVFOB(radioState.vfoAFrequency))
+        prioritizeUserCommand(CAT.setVFOB(radioState.vfoAFrequency))
         radioState.vfoBFrequency = radioState.vfoAFrequency
     }
 
     func startATUTune() {
-        send(CAT.startATUTune)
+        prioritizeUserCommand(CAT.startATUTune)
     }
 
     // MARK: - PTT Control
 
     func startTransmit(dataMode: Bool = false) {
         if dataMode {
-            send(CAT.txOnData)
+            prioritizeUserCommand(CAT.txOnData)
         } else {
-            send(CAT.txOn)
+            prioritizeUserCommand(CAT.txOn)
         }
         radioState.isTransmitting = true
     }
 
     func stopTransmit() {
-        send(CAT.txOff)
+        prioritizeUserCommand(CAT.txOff)
         radioState.isTransmitting = false
     }
 
@@ -403,6 +433,20 @@ class CATProtocol: ObservableObject {
 
     func clearCommandHistory() {
         commandHistory.removeAll()
+    }
+
+    private func pausePollingTemporarily() {
+        guard isPolling else { return }
+        stopPolling()
+        resumePollingWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            if self.serialManager.isConnected {
+                self.startPolling()
+            }
+        }
+        resumePollingWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
     }
 }
 

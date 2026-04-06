@@ -24,6 +24,10 @@ struct MenuBarView: View {
                 Text(radioViewModel.isConnected ? "Verbunden" : "Getrennt")
                     .font(.headline)
 
+                Circle()
+                    .fill(radioViewModel.catAlive ? Color.green : (radioViewModel.isConnected ? Color.orange : Color.secondary))
+                    .frame(width: 8, height: 8)
+
                 Spacer()
 
                 Button(radioViewModel.isConnected ? "Trennen" : "Verbinden") {
@@ -33,6 +37,10 @@ struct MenuBarView: View {
             }
 
             if radioViewModel.isConnected {
+                Text(radioViewModel.catStatusText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Divider()
 
                 // Frequency display

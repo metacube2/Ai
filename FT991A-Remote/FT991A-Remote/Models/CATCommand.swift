@@ -263,4 +263,18 @@ struct CATResponse {
     var isFT991A: Bool {
         command == "ID" && value == "0670"
     }
+
+    var isEchoOnly: Bool {
+        if rawData.hasPrefix("INFO:") { return false }
+        switch command {
+        case "FA", "FB", "VS", "MD", "SM", "RM", "AG", "RG", "SQ", "NB", "NR", "BC", "FT", "TX", "ID":
+            return value.isEmpty
+        default:
+            return false
+        }
+    }
+
+    var isOverflowMessage: Bool {
+        rawData.contains("Cmd overflow")
+    }
 }

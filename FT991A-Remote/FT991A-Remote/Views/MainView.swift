@@ -107,8 +107,11 @@ struct SidebarView: View {
                     VStack(alignment: .leading) {
                         Text(radioViewModel.isConnected ? "Verbunden" : "Getrennt")
                             .font(.headline)
+                        Text(radioViewModel.catStatusText)
+                            .font(.caption)
+                            .foregroundColor(radioViewModel.catAlive ? .green : .secondary)
                         if radioViewModel.isConnected {
-                            Text(radioViewModel.selectedPort)
+                            Text(radioViewModel.selectedPortDisplayName)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -193,7 +196,30 @@ struct ConnectionBar: View {
                     .foregroundColor(.secondary)
             }
 
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(radioViewModel.catAlive ? Color.green : (radioViewModel.isConnected ? Color.orange : Color.secondary))
+                    .frame(width: 8, height: 8)
+
+                Text(radioViewModel.catStatusText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .frame(width: 240, alignment: .leading)
+            }
+
             // Connect button
+            Button("Ping CAT") {
+                radioViewModel.pingCAT()
+            }
+            .disabled(!radioViewModel.isConnected)
+            .help("Sendet ID und VFO-A Abfrage an das Funkgerät")
+
+            Toggle("Auto-Ping", isOn: $radioViewModel.autoPingEnabled)
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .disabled(!radioViewModel.isConnected)
+
             Button {
                 radioViewModel.toggleConnection()
             } label: {

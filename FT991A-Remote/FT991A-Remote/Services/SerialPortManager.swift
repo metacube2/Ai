@@ -18,14 +18,20 @@ struct SerialPort: Identifiable, Hashable {
     let vendorID: Int?
     let productID: Int?
     let isFT991A: Bool
+    let shortPath: String
+    let interfaceName: String?
+    let preferredCATLineMode: String?
 
-    init(path: String, name: String, vendorID: Int? = nil, productID: Int? = nil, isFT991A: Bool = false) {
+    init(path: String, name: String, vendorID: Int? = nil, productID: Int? = nil, isFT991A: Bool = false, interfaceName: String? = nil, preferredCATLineMode: String? = nil) {
         self.id = path
         self.path = path
         self.name = name
         self.vendorID = vendorID
         self.productID = productID
         self.isFT991A = isFT991A
+        self.shortPath = URL(fileURLWithPath: path).lastPathComponent
+        self.interfaceName = interfaceName
+        self.preferredCATLineMode = preferredCATLineMode
     }
 }
 
@@ -55,6 +61,10 @@ enum ConnectionState: Equatable {
 // MARK: - Serial Port Manager
 
 class SerialPortManager: ObservableObject {
+    private enum CATLineMode: String {
+        case rtsOff = "rts-off"
+        case rtsOn = "rts-on"
+    }
 
     // MARK: - Published Properties
 
@@ -63,6 +73,8 @@ class SerialPortManager: ObservableObject {
     @Published var selectedPortPath: String = ""
     @Published var baudRate: Int = 38400
     @Published var lastError: String?
+    @Published var lastResponseAt: Date?
+    @Published var hasCATResponse = false
 
     @Published var bytesSent: UInt64 = 0
     @Published var bytesReceived: UInt64 = 0
@@ -85,11 +97,16 @@ class SerialPortManager: ObservableObject {
     // Auto-reconnect
     private var reconnectTimer: Timer?
     private var shouldReconnect = false
+    private var handshakeTimer: Timer?
+    private var awaitingInitialCATResponse = false
+    private var lastWriteTime: Date = .distantPast
+    private var lineMode: CATLineMode = .rtsOff
 
     // MARK: - Constants
 
     private static let CP210X_VENDOR_ID = 0x10C4   // Silicon Labs
     private static let CP210X_PRODUCT_ID = 0xEA60 // CP210x
+    private let minimumCommandSpacing: TimeInterval = 0.11
 
     // MARK: - Initialization
 
@@ -141,6 +158,9 @@ class SerialPortManager: ObservableObject {
             var vendorID: Int?
             var productID: Int?
             var isFT991A = false
+            let shortPath = URL(fileURLWithPath: path).lastPathComponent
+            var interfaceName: String?
+            var preferredCATLineMode: String?
 
             // Check for Silicon Labs CP210x (FT-991A uses this)
             if path.contains("SLAB_USBtoUART") || path.contains("CP210") {
@@ -165,34 +185,91 @@ class SerialPortManager: ObservableObject {
                     productID = pid
                 }
                 if let usbName = IORegistryEntryCreateCFProperty(current, "USB Product Name" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
-                    if usbName.contains("CP210") || usbName.contains("UART") {
+                    if !usbName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         name = usbName
                     }
+                }
+                if let ifName = IORegistryEntryCreateCFProperty(current, "USB Interface Name" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
+                    interfaceName = ifName
+                }
+                if let ifName = IORegistryEntryCreateCFProperty(current, "kUSBString" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
+                    interfaceName = ifName
                 }
 
                 // Silicon Labs CP210x = likely FT-991A
                 if vendorID == Self.CP210X_VENDOR_ID && productID == Self.CP210X_PRODUCT_ID {
                     isFT991A = true
-                    name = "FT-991A (CP210x)"
+                    name = "FT-991A CAT"
                 }
 
                 if vendorID != nil && productID != nil { break }
             }
             IOObjectRelease(current)
 
+            if name == shortPath || name.lowercased() == "usb serial" || name.lowercased().contains("usbtouart") {
+                if isFT991A {
+                    name = "FT-991A CAT"
+                } else if let vendorID, let productID {
+                    name = String(format: "USB Serial [%04X:%04X]", vendorID, productID)
+                } else {
+                    name = "USB Serial"
+                }
+            }
+
+            if let interfaceName {
+                let lowered = interfaceName.lowercased()
+                if lowered.contains("enhanced") {
+                    name = "FT-991A CAT Enhanced"
+                    preferredCATLineMode = "rts-on"
+                } else if lowered.contains("standard") {
+                    name = "FT-991A CAT Standard"
+                    preferredCATLineMode = "rts-off"
+                }
+            } else if isFT991A && shortPath.hasSuffix("0") {
+                name = "FT-991A CAT Enhanced"
+                preferredCATLineMode = "rts-on"
+            } else if isFT991A && shortPath.hasSuffix("1") {
+                name = "FT-991A CAT Standard"
+                preferredCATLineMode = "rts-off"
+            }
+
             ports.append(SerialPort(
                 path: path,
                 name: name,
                 vendorID: vendorID,
                 productID: productID,
-                isFT991A: isFT991A
+                isFT991A: isFT991A,
+                interfaceName: interfaceName,
+                preferredCATLineMode: preferredCATLineMode
             ))
         }
 
         IOObjectRelease(iterator)
 
         // Sort: FT-991A first, then alphabetically
-        return ports.sorted { ($0.isFT991A ? 0 : 1, $0.name) < ($1.isFT991A ? 0 : 1, $1.name) }
+        let sorted = ports.sorted {
+            let lhsRank = $0.preferredCATLineMode == "rts-on" ? 0 : ($0.isFT991A ? 1 : 2)
+            let rhsRank = $1.preferredCATLineMode == "rts-on" ? 0 : ($1.isFT991A ? 1 : 2)
+            return (lhsRank, $0.name) < (rhsRank, $1.name)
+        }
+
+        // If multiple devices share the same USB name, disambiguate with the serial node.
+        let duplicateNames = Dictionary(grouping: sorted, by: \.name)
+            .filter { $0.value.count > 1 }
+            .map { $0.key }
+
+        return sorted.map { port in
+            guard duplicateNames.contains(port.name) else { return port }
+            return SerialPort(
+                path: port.path,
+                name: "\(port.name) · \(port.shortPath)",
+                vendorID: port.vendorID,
+                productID: port.productID,
+                isFT991A: port.isFT991A,
+                interfaceName: port.interfaceName,
+                preferredCATLineMode: port.preferredCATLineMode
+            )
+        }
     }
 
     // MARK: - Connection
@@ -204,6 +281,12 @@ class SerialPortManager: ObservableObject {
         }
 
         connectionState = .connecting
+        if let preferred = availablePorts.first(where: { $0.path == selectedPortPath })?.preferredCATLineMode,
+           preferred == "rts-on" {
+            lineMode = .rtsOn
+        } else {
+            lineMode = .rtsOff
+        }
 
         // Open port
         fileDescriptor = open(selectedPortPath, O_RDWR | O_NOCTTY | O_NONBLOCK)
@@ -224,15 +307,19 @@ class SerialPortManager: ObservableObject {
         // Clear buffers
         tcflush(fileDescriptor, TCIOFLUSH)
         readBuffer.removeAll()
+        hasCATResponse = false
+        lastResponseAt = nil
 
         // Start reading
         startReading()
-
-        connectionState = .connected
         lastError = nil
-        onConnectionChanged?(true)
+        awaitingInitialCATResponse = true
+        startHandshakeTimer()
+        let portName = availablePorts.first(where: { $0.path == selectedPortPath })?.name ?? selectedPortPath
+        Logger.shared.startCATSession(portName: portName, portPath: selectedPortPath, baudRate: baudRate)
+        startHandshakeProbe()
 
-        Logger.shared.log("Connected to \(selectedPortPath) at \(baudRate) baud", level: .info)
+        Logger.shared.log("Port opened: \(selectedPortPath) at \(baudRate) baud, waiting for CAT response", level: .info)
     }
 
     private func configurePort() -> Bool {
@@ -255,6 +342,7 @@ class SerialPortManager: ObservableObject {
 
         // Enable receiver, ignore modem control
         options.c_cflag |= UInt(CREAD | CLOCAL)
+        options.c_cflag &= ~UInt(HUPCL)
 
         // No hardware flow control
         options.c_cflag &= ~UInt(CRTSCTS)
@@ -272,6 +360,8 @@ class SerialPortManager: ObservableObject {
             connectionState = .error("Fehler beim Setzen der Port-Einstellungen")
             return false
         }
+
+        applyLineMode(lineMode)
 
         return true
     }
@@ -291,6 +381,8 @@ class SerialPortManager: ObservableObject {
     func disconnect() {
         stopReading()
         stopReconnectTimer()
+        stopHandshakeTimer()
+        awaitingInitialCATResponse = false
 
         if fileDescriptor != -1 {
             close(fileDescriptor)
@@ -364,11 +456,19 @@ class SerialPortManager: ObservableObject {
 
     private func processBuffer() {
         while let semicolonIndex = readBuffer.firstIndex(of: 0x3B) { // ';'
-            let responseData = readBuffer.prefix(through: semicolonIndex)
-            readBuffer.removeFirst(semicolonIndex + 1)
+            let count = readBuffer.distance(from: readBuffer.startIndex, to: semicolonIndex) + 1
+            guard count > 0, count <= readBuffer.count else {
+                Logger.shared.log("RX buffer out of sync while parsing semicolon-terminated CAT response", level: .error)
+                readBuffer.removeAll()
+                return
+            }
+
+            let responseData = readBuffer.prefix(count)
+            readBuffer.removeFirst(count)
 
             if let response = String(data: Data(responseData), encoding: .ascii) {
                 Logger.shared.log("RX: \(response)", level: .debug)
+                Logger.shared.catTrace("RX raw=\(response.trimmingCharacters(in: .newlines))")
             }
 
             onDataReceived?(Data(responseData))
@@ -379,6 +479,8 @@ class SerialPortManager: ObservableObject {
         let error = String(cString: strerror(errno))
         connectionState = .error(error)
         lastError = error
+        stopHandshakeTimer()
+        awaitingInitialCATResponse = false
 
         if shouldReconnect {
             startReconnectTimer()
@@ -394,8 +496,30 @@ class SerialPortManager: ObservableObject {
             guard let self = self, self.fileDescriptor != -1 else { return }
 
             let written = data.withUnsafeBytes { buffer -> Int in
-                guard let base = buffer.baseAddress else { return -1 }
-                return write(self.fileDescriptor, base, data.count)
+                guard let rawBase = buffer.baseAddress else { return -1 }
+                let base = rawBase.assumingMemoryBound(to: UInt8.self)
+                var totalWritten = 0
+
+                let elapsed = Date().timeIntervalSince(self.lastWriteTime)
+                if elapsed < self.minimumCommandSpacing {
+                    usleep(useconds_t((self.minimumCommandSpacing - elapsed) * 1_000_000))
+                }
+
+                while totalWritten < data.count {
+                    let chunk = write(self.fileDescriptor, base.advanced(by: totalWritten), data.count - totalWritten)
+                    if chunk > 0 {
+                        totalWritten += chunk
+                        continue
+                    }
+                    if chunk < 0 && errno == EAGAIN {
+                        usleep(2_000)
+                        continue
+                    }
+                    return -1
+                }
+
+                self.lastWriteTime = Date()
+                return totalWritten
             }
 
             if written > 0 {
@@ -405,6 +529,7 @@ class SerialPortManager: ObservableObject {
 
                 if let command = String(data: data, encoding: .ascii) {
                     Logger.shared.log("TX: \(command.trimmingCharacters(in: .whitespaces))", level: .debug)
+                    Logger.shared.catTrace("TX raw=\(command.trimmingCharacters(in: .whitespacesAndNewlines))")
                 }
             } else if written < 0 {
                 DispatchQueue.main.async {
@@ -428,6 +553,25 @@ class SerialPortManager: ObservableObject {
         let error = String(cString: strerror(errno))
         connectionState = .error(error)
         lastError = error
+        stopHandshakeTimer()
+        awaitingInitialCATResponse = false
+    }
+
+    func noteCATResponse() {
+        DispatchQueue.main.async {
+            self.lastResponseAt = Date()
+            self.hasCATResponse = true
+            self.lastError = nil
+
+            if self.awaitingInitialCATResponse {
+                self.awaitingInitialCATResponse = false
+                self.stopHandshakeTimer()
+                self.connectionState = .connected
+                self.onConnectionChanged?(true)
+                Logger.shared.catTrace("HANDSHAKE success mode=\(self.lineMode.rawValue)")
+                Logger.shared.log("CAT handshake confirmed on \(self.selectedPortPath)", level: .info)
+            }
+        }
     }
 
     // MARK: - Auto-Reconnect
@@ -460,6 +604,53 @@ class SerialPortManager: ObservableObject {
     private func stopReconnectTimer() {
         reconnectTimer?.invalidate()
         reconnectTimer = nil
+    }
+
+    private func startHandshakeTimer() {
+        stopHandshakeTimer()
+        handshakeTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            guard self.awaitingInitialCATResponse else { return }
+            if self.lineMode == .rtsOff {
+                self.retryHandshakeWithRTS()
+                return
+            }
+            self.connectionState = .error("Keine CAT-Antwort vom Funkgerät. Port, Baudrate und FT-991A CAT-Einstellungen prüfen.")
+            self.lastError = "CAT handshake timeout"
+            Logger.shared.catTrace("HANDSHAKE failed mode=\(self.lineMode.rawValue)")
+            Logger.shared.log("No CAT response received after opening \(self.selectedPortPath)", level: .error)
+        }
+    }
+
+    private func stopHandshakeTimer() {
+        handshakeTimer?.invalidate()
+        handshakeTimer = nil
+    }
+
+    private func startHandshakeProbe() {
+        Logger.shared.catTrace("HANDSHAKE probe mode=\(lineMode.rawValue)")
+        sendString("ID;")
+        sendString("FA;")
+    }
+
+    private func retryHandshakeWithRTS() {
+        lineMode = .rtsOn
+        readBuffer.removeAll()
+        tcflush(fileDescriptor, TCIOFLUSH)
+        applyLineMode(.rtsOn)
+        Logger.shared.catTrace("HANDSHAKE retry mode=\(lineMode.rawValue)")
+        startHandshakeTimer()
+        startHandshakeProbe()
+    }
+
+    private func applyLineMode(_ mode: CATLineMode) {
+        guard fileDescriptor != -1 else { return }
+        var clearBits = Int(TIOCM_RTS | TIOCM_DTR)
+        ioctl(fileDescriptor, TIOCMBIC, &clearBits)
+        if mode == .rtsOn {
+            var setBits = Int(TIOCM_RTS)
+            ioctl(fileDescriptor, TIOCMBIS, &setBits)
+        }
     }
 
     // MARK: - Statistics

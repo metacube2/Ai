@@ -22,6 +22,9 @@ class RadioViewModel: ObservableObject {
     @Published var availablePorts: [SerialPort] = []
     @Published var selectedPort: String = ""
     @Published var baudRate: Int = 38400
+    @Published var hasCATResponse = false
+    @Published var lastCATResponseAt: Date?
+    @Published var autoPingEnabled = false
 
     // Radio State (mirrored for convenience)
     @Published var vfoAFrequency: Int = 14_250_000
@@ -64,6 +67,7 @@ class RadioViewModel: ObservableObject {
     private let serialManager = SerialPortManager()
     private let catProtocol: CATProtocol
     private var cancellables = Set<AnyCancellable>()
+    private var autoPingTimer: Timer?
 
     // MARK: - Computed Properties
 
@@ -90,6 +94,40 @@ class RadioViewModel: ObservableObject {
         Band.from(frequency: activeFrequency)
     }
 
+    var selectedPortDisplayName: String {
+        availablePorts.first(where: { $0.path == selectedPort })?.name ?? selectedPort
+    }
+
+    var catAlive: Bool {
+        guard isConnected, hasCATResponse, let lastCATResponseAt else { return false }
+        return Date().timeIntervalSince(lastCATResponseAt) < 2.0
+    }
+
+    var catStatusText: String {
+        if case .connecting = connectionState {
+            return "CAT wartet auf Antwort"
+        }
+        if case .error(let message) = connectionState {
+            return message
+        }
+        if !isConnected {
+            return "CAT offline"
+        }
+        if catAlive, let lastCATResponseAt {
+            let age = Date().timeIntervalSince(lastCATResponseAt)
+            return String(format: "CAT alive%@ · RX %.1fs", autoPingEnabled ? " · Auto-Ping" : "", age)
+        }
+        if hasCATResponse {
+            return "CAT verbunden\(autoPingEnabled ? " · Auto-Ping" : "") · keine frische Antwort"
+        }
+        return "Port offen\(autoPingEnabled ? " · Auto-Ping" : "") · keine CAT-Antwort"
+    }
+
+    var catLastSeenText: String {
+        guard let lastCATResponseAt else { return "keine RX" }
+        return lastCATResponseAt.formatted(date: .omitted, time: .standard)
+    }
+
     // MARK: - Initialization
 
     init() {
@@ -105,6 +143,11 @@ class RadioViewModel: ObservableObject {
             .sink { [weak self] state in
                 self?.connectionState = state
                 self?.isConnected = state.isConnected
+                if !state.isConnected {
+                    self?.stopAutoPing()
+                } else if self?.autoPingEnabled == true {
+                    self?.startAutoPing()
+                }
             }
             .store(in: &cancellables)
 
@@ -123,6 +166,26 @@ class RadioViewModel: ObservableObject {
         serialManager.$bytesReceived
             .receive(on: DispatchQueue.main)
             .assign(to: &$bytesReceived)
+
+        serialManager.$hasCATResponse
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$hasCATResponse)
+
+        serialManager.$lastResponseAt
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$lastCATResponseAt)
+
+        $autoPingEnabled
+            .removeDuplicates()
+            .sink { [weak self] enabled in
+                guard let self else { return }
+                if enabled, self.isConnected {
+                    self.startAutoPing()
+                } else {
+                    self.stopAutoPing()
+                }
+            }
+            .store(in: &cancellables)
 
         // CAT Protocol bindings
         catProtocol.$radioState
@@ -173,6 +236,7 @@ class RadioViewModel: ObservableObject {
     }
 
     func disconnect() {
+        stopAutoPing()
         serialManager.disconnect()
     }
 
@@ -182,6 +246,24 @@ class RadioViewModel: ObservableObject {
         } else {
             connect()
         }
+    }
+
+    func pingCAT() {
+        guard isConnected else { return }
+        catProtocol.ping()
+    }
+
+    private func startAutoPing() {
+        stopAutoPing()
+        autoPingTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self, self.isConnected, self.autoPingEnabled else { return }
+            self.catProtocol.ping()
+        }
+    }
+
+    private func stopAutoPing() {
+        autoPingTimer?.invalidate()
+        autoPingTimer = nil
     }
 
     func selectPort(_ path: String) {

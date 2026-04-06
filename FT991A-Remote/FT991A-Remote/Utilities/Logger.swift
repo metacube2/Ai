@@ -95,6 +95,8 @@ class Logger: ObservableObject {
     // File logging
     private var logFileURL: URL?
     private var logFileHandle: FileHandle?
+    private var catTraceFileURL: URL?
+    private var catTraceFileHandle: FileHandle?
 
     // MARK: - Initialization
 
@@ -104,6 +106,7 @@ class Logger: ObservableObject {
 
     deinit {
         logFileHandle?.closeFile()
+        catTraceFileHandle?.closeFile()
     }
 
     // MARK: - Logging
@@ -164,6 +167,22 @@ class Logger: ObservableObject {
         log(message, level: .error, file: file, function: function, line: line)
     }
 
+    func catTrace(_ message: String) {
+        queue.async {
+            guard let handle = self.catTraceFileHandle else { return }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss.SSS"
+            let line = "[\(formatter.string(from: Date()))] \(message)\n"
+            if let data = line.data(using: .utf8) {
+                handle.write(data)
+            }
+        }
+    }
+
+    func startCATSession(portName: String, portPath: String, baudRate: Int) {
+        catTrace("=== SESSION START port=\(portName) path=\(portPath) baud=\(baudRate) ===")
+    }
+
     // MARK: - File Logging
 
     private func setupFileLogging() {
@@ -178,19 +197,32 @@ class Logger: ObservableObject {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             let fileName = "ft991a_\(formatter.string(from: Date())).log"
+            let catTraceName = "ft991a_cat_trace_\(formatter.string(from: Date())).log"
 
             logFileURL = appLogsDir.appendingPathComponent(fileName)
+            catTraceFileURL = appLogsDir.appendingPathComponent(catTraceName)
 
             if !fileManager.fileExists(atPath: logFileURL!.path) {
                 fileManager.createFile(atPath: logFileURL!.path, contents: nil)
             }
+            if let catTraceFileURL, !fileManager.fileExists(atPath: catTraceFileURL.path) {
+                fileManager.createFile(atPath: catTraceFileURL.path, contents: nil)
+            }
 
             logFileHandle = try FileHandle(forWritingTo: logFileURL!)
+            if let catTraceFileURL {
+                catTraceFileHandle = try FileHandle(forWritingTo: catTraceFileURL)
+                catTraceFileHandle?.seekToEndOfFile()
+            }
             logFileHandle?.seekToEndOfFile()
 
             let header = "\n=== FT-991A Remote Log Started at \(Date()) ===\n"
             if let data = header.data(using: .utf8) {
                 logFileHandle?.write(data)
+            }
+            let catHeader = "\n=== FT-991A CAT Trace Started at \(Date()) ===\n"
+            if let data = catHeader.data(using: .utf8) {
+                catTraceFileHandle?.write(data)
             }
         } catch {
             print("Failed to setup file logging: \(error)")

@@ -32,6 +32,14 @@ struct DebugPanel: View {
                 Text("CAT Konsole")
                     .font(.headline)
 
+                Circle()
+                    .fill(radioViewModel.catAlive ? Color.green : (radioViewModel.isConnected ? Color.orange : Color.red))
+                    .frame(width: 8, height: 8)
+
+                Text(radioViewModel.catStatusText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Spacer()
 
                 // Filter buttons
@@ -63,6 +71,18 @@ struct DebugPanel: View {
                 }
                 .controlSize(.small)
                 .help("Verlauf löschen")
+
+                Button("Ping") {
+                    radioViewModel.pingCAT()
+                }
+                .controlSize(.small)
+                .disabled(!radioViewModel.isConnected)
+                .help("ID + VFO-A lesen")
+
+                Toggle("Auto-Ping", isOn: $radioViewModel.autoPingEnabled)
+                    .toggleStyle(.button)
+                    .controlSize(.small)
+                    .disabled(!radioViewModel.isConnected)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
@@ -117,6 +137,12 @@ struct DebugPanel: View {
                 Text("TX: \(radioViewModel.bytesSent) Bytes")
                 Spacer()
                 Text("RX: \(radioViewModel.bytesReceived) Bytes")
+                Spacer()
+                if let last = radioViewModel.lastCATResponseAt {
+                    Text("Letzte RX: \(last.formatted(date: .omitted, time: .standard))")
+                    Spacer()
+                }
+                Text("CAT: \(radioViewModel.catLastSeenText)")
                 Spacer()
                 Text("\(radioViewModel.commandHistory.count) Befehle")
             }
