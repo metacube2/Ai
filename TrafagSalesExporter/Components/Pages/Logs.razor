@@ -1,0 +1,94 @@
+@page "/logs"
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Logs</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Logs</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" md="3"><MudTextField Label="Land" @bind-Value="filterLand" /></MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Status" @bind-Value="filterStatus">
+            <MudSelectItem Value="">Alle</MudSelectItem>
+            <MudSelectItem Value="OK">OK</MudSelectItem>
+            <MudSelectItem Value="Error">Error</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3"><MudDatePicker Label="Ab Datum" @bind-Date="filterFromDate" /></MudItem>
+    <MudItem xs="12" md="3"><MudButton Variant="Variant.Filled" OnClick="LoadAsync">Filtern</MudButton></MudItem>
+</MudGrid>
+
+<MudStack Row="true" Spacing="2" Class="mb-2">
+    <MudNumericField T="int" Label="Logs älter als Tage löschen" @bind-Value="deleteOlderThanDays" Min="1" />
+    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteOlderAsync">Logs löschen</MudButton>
+</MudStack>
+
+<MudTable Items="logs" Dense="true" Hover="true" RowClassFunc="GetRowClass">
+    <HeaderContent>
+        <MudTh>Timestamp</MudTh>
+        <MudTh>Land</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Rows</MudTh>
+        <MudTh>Dauer</MudTh>
+        <MudTh>Fehler</MudTh>
+        <MudTh>Dateiname</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Timestamp.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd>@context.RowCount</MudTd>
+        <MudTd>@($"{context.DurationSeconds:F1}s")</MudTd>
+        <MudTd>@context.ErrorMessage</MudTd>
+        <MudTd>@context.FileName</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<ExportLog> logs = [];
+    private string filterLand = string.Empty;
+    private string filterStatus = string.Empty;
+    private DateTime? filterFromDate;
+    private int deleteOlderThanDays = 30;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var query = db.ExportLogs.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filterLand))
+        {
+            query = query.Where(x => x.Land.Contains(filterLand));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterStatus))
+        {
+            query = query.Where(x => x.Status == filterStatus);
+        }
+
+        if (filterFromDate.HasValue)
+        {
+            var fromUtc = filterFromDate.Value.Date.ToUniversalTime();
+            query = query.Where(x => x.Timestamp >= fromUtc);
+        }
+
+        logs = await query.OrderByDescending(x => x.Timestamp).ToListAsync();
+    }
+
+    private string GetRowClass(ExportLog log, int _) => log.Status == "Error" ? "mud-theme-error" : string.Empty;
+
+    private async Task DeleteOlderAsync()
+    {
+        var threshold = DateTime.UtcNow.AddDays(-deleteOlderThanDays);
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var oldLogs = await db.ExportLogs.Where(x => x.Timestamp < threshold).ToListAsync();
+        db.ExportLogs.RemoveRange(oldLogs);
+        await db.SaveChangesAsync();
+        await LoadAsync();
+    }
+}

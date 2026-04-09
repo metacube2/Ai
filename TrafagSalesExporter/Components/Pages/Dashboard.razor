@@ -1,0 +1,117 @@
+@page "/"
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ExportOrchestrationService ExportService
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+
+<MudStack Row="true" Spacing="2" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@isRunningAll" OnClick="ExportAllAsync">Alle exportieren</MudButton>
+    <MudText Typo="Typo.body1">Nächster automatischer Lauf: @nextRunText</MudText>
+</MudStack>
+
+<MudTable Items="sites" Hover="true" Dense="true">
+    <HeaderContent>
+        <MudTh>Land</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>Schema</MudTh>
+        <MudTh>Server</MudTh>
+        <MudTh>Letzter Status</MudTh>
+        <MudTh>Row Count</MudTh>
+        <MudTh>Letzter Lauf</MudTh>
+        <MudTh>Dauer</MudTh>
+        <MudTh>Aktion</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd>@context.Schema</MudTd>
+        <MudTd>@context.HanaServer?.Name</MudTd>
+        <MudTd>@GetStatusIcon(context.Id)</MudTd>
+        <MudTd>@GetRows(context.Id)</MudTd>
+        <MudTd>@GetLastRun(context.Id)</MudTd>
+        <MudTd>@GetDuration(context.Id)</MudTd>
+        <MudTd>
+            @if (runningSiteIds.Contains(context.Id))
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+            }
+            else
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => ExportSingleAsync(context.Id)">Einzeln exportieren</MudButton>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Site> sites = [];
+    private Dictionary<int, ExportLog?> latestLogs = new();
+    private HashSet<int> runningSiteIds = [];
+    private bool isRunningAll;
+    private string nextRunText = "-";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        sites = await db.Sites
+            .Include(x => x.HanaServer)
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Land)
+            .ToListAsync();
+
+        latestLogs = await ExportService.GetLatestLogsPerSiteAsync();
+        var nextRun = await ExportService.GetNextRunAsync();
+        nextRunText = nextRun.HasValue ? nextRun.Value.ToString("dd.MM.yyyy HH:mm") : "Deaktiviert";
+    }
+
+    private async Task ExportAllAsync()
+    {
+        isRunningAll = true;
+        foreach (var site in sites)
+        {
+            runningSiteIds.Add(site.Id);
+        }
+
+        StateHasChanged();
+        await ExportService.ExportAllActiveSitesAsync();
+        runningSiteIds.Clear();
+        isRunningAll = false;
+        await LoadAsync();
+    }
+
+    private async Task ExportSingleAsync(int siteId)
+    {
+        runningSiteIds.Add(siteId);
+        StateHasChanged();
+        await ExportService.ExportSiteAsync(siteId);
+        runningSiteIds.Remove(siteId);
+        await LoadAsync();
+    }
+
+    private string GetStatusIcon(int siteId)
+    {
+        if (!latestLogs.TryGetValue(siteId, out var log) || log is null)
+        {
+            return "-";
+        }
+
+        return log.Status == "OK" ? "✅" : "❌";
+    }
+
+    private string GetRows(int siteId) =>
+        latestLogs.TryGetValue(siteId, out var log) && log is not null ? log.RowCount.ToString() : "-";
+
+    private string GetLastRun(int siteId) =>
+        latestLogs.TryGetValue(siteId, out var log) && log is not null ? log.Timestamp.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss") : "-";
+
+    private string GetDuration(int siteId) =>
+        latestLogs.TryGetValue(siteId, out var log) && log is not null ? $"{log.DurationSeconds:F1}s" : "-";
+}

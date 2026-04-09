@@ -1,0 +1,93 @@
+@page "/settings"
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject CryptoService CryptoService
+@inject SharePointUploadService SharePointUploadService
+
+<PageTitle>Settings</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6">SharePoint</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6"><MudTextField Label="SiteUrl" @bind-Value="sharePointConfig.SiteUrl" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField Label="ExportFolder" @bind-Value="sharePointConfig.ExportFolder" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField Label="TenantId" @bind-Value="sharePointConfig.TenantId" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField Label="ClientId" @bind-Value="sharePointConfig.ClientId" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField Label="ClientSecret" InputType="InputType.Password" @bind-Value="sharePointClientSecret" /></MudItem>
+    </MudGrid>
+    <MudStack Row="true" Spacing="2" Class="mt-3">
+        <MudButton Variant="Variant.Filled" OnClick="SaveAsync">Speichern</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="TestSharePointAsync">SharePoint Verbindung testen</MudButton>
+    </MudStack>
+</MudPaper>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6">Export & Timer</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="3"><MudTextField Label="DateFilter" @bind-Value="settings.DateFilter" /></MudItem>
+        <MudItem xs="12" md="2"><MudNumericField T="int" Label="TimerHour" Min="0" Max="23" @bind-Value="settings.TimerHour" /></MudItem>
+        <MudItem xs="12" md="2"><MudNumericField T="int" Label="TimerMinute" Min="0" Max="59" @bind-Value="settings.TimerMinute" /></MudItem>
+        <MudItem xs="12" md="2"><MudCheckBox Label="TimerEnabled" @bind-Value="settings.TimerEnabled" /></MudItem>
+    </MudGrid>
+    <MudText Typo="Typo.body2" Class="mt-3">Dateiname-Vorschau: @PreviewFileName</MudText>
+</MudPaper>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@message</MudAlert>
+
+@code {
+    private SharePointConfig sharePointConfig = new();
+    private ExportSettings settings = new();
+    private string sharePointClientSecret = string.Empty;
+    private string message = "Bereit.";
+
+    private string PreviewFileName => $"Sales_{{TSC}}_{DateTime.UtcNow:yyyy-MM-dd}.xlsx";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        sharePointConfig = await db.SharePointConfigs.OrderBy(x => x.Id).FirstAsync();
+        settings = await db.ExportSettings.OrderBy(x => x.Id).FirstAsync();
+        sharePointClientSecret = CryptoService.Decrypt(sharePointConfig.EncryptedClientSecret);
+    }
+
+    private async Task SaveAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var sp = await db.SharePointConfigs.SingleAsync(x => x.Id == sharePointConfig.Id);
+        var es = await db.ExportSettings.SingleAsync(x => x.Id == settings.Id);
+
+        sp.SiteUrl = sharePointConfig.SiteUrl;
+        sp.ExportFolder = sharePointConfig.ExportFolder;
+        sp.TenantId = sharePointConfig.TenantId;
+        sp.ClientId = sharePointConfig.ClientId;
+        sp.EncryptedClientSecret = CryptoService.Encrypt(sharePointClientSecret);
+
+        es.DateFilter = settings.DateFilter;
+        es.TimerHour = settings.TimerHour;
+        es.TimerMinute = settings.TimerMinute;
+        es.TimerEnabled = settings.TimerEnabled;
+
+        await db.SaveChangesAsync();
+        message = "Settings gespeichert.";
+    }
+
+    private async Task TestSharePointAsync()
+    {
+        try
+        {
+            var ok = await SharePointUploadService.TestConnectionAsync(
+                sharePointConfig.SiteUrl,
+                sharePointConfig.TenantId,
+                sharePointConfig.ClientId,
+                sharePointClientSecret);
+
+            message = ok ? "SharePoint Verbindung OK." : "SharePoint Verbindung fehlgeschlagen.";
+        }
+        catch (Exception ex)
+        {
+            message = $"SharePoint Test fehlgeschlagen: {ex.Message}";
+        }
+    }
+}

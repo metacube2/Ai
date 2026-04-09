@@ -1,0 +1,215 @@
+@page "/standorte"
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject HanaQueryService HanaQueryService
+@inject CryptoService CryptoService
+
+<PageTitle>Standorte</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Standorte</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6">Neuen Standort hinzufügen</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="3"><MudSelect T="int" Label="Server" @bind-Value="newSite.HanaServerId">@foreach (var srv in servers) { <MudSelectItem Value="@srv.Id">@srv.Name</MudSelectItem> }</MudSelect></MudItem>
+        <MudItem xs="12" md="2"><MudTextField Label="Schema" @bind-Value="newSite.Schema" /></MudItem>
+        <MudItem xs="12" md="2"><MudTextField Label="TSC" @bind-Value="newSite.TSC" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField Label="Land" @bind-Value="newSite.Land" /></MudItem>
+        <MudItem xs="12" md="1"><MudCheckBox Label="Aktiv" @bind-Value="newSite.IsActive" /></MudItem>
+        <MudItem xs="12" md="1"><MudButton Variant="Variant.Filled" OnClick="AddSiteAsync">Speichern</MudButton></MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="sites" Dense="true" Hover="true" Class="mb-6">
+    <HeaderContent>
+        <MudTh>Land</MudTh><MudTh>TSC</MudTh><MudTh>Schema</MudTh><MudTh>Server</MudTh><MudTh>Aktiv</MudTh><MudTh>Aktion</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd>@context.Schema</MudTd>
+        <MudTd>@context.HanaServer?.Name</MudTd>
+        <MudTd>@(context.IsActive ? "Ja" : "Nein")</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => EditSite(context)">Edit</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="() => DeleteSiteAsync(context.Id)">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@if (editingSite is not null)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">Standort bearbeiten</MudText>
+        <MudGrid>
+            <MudItem xs="12" md="3"><MudSelect T="int" Label="Server" @bind-Value="editingSite.HanaServerId">@foreach (var srv in servers) { <MudSelectItem Value="@srv.Id">@srv.Name</MudSelectItem> }</MudSelect></MudItem>
+            <MudItem xs="12" md="2"><MudTextField Label="Schema" @bind-Value="editingSite.Schema" /></MudItem>
+            <MudItem xs="12" md="2"><MudTextField Label="TSC" @bind-Value="editingSite.TSC" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField Label="Land" @bind-Value="editingSite.Land" /></MudItem>
+            <MudItem xs="12" md="1"><MudCheckBox Label="Aktiv" @bind-Value="editingSite.IsActive" /></MudItem>
+            <MudItem xs="12" md="1"><MudButton Variant="Variant.Filled" OnClick="SaveSiteAsync">Update</MudButton></MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+<MudDivider Class="my-4" />
+<MudText Typo="Typo.h5" Class="mb-3">HANA Server</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="2"><MudTextField Label="Name" @bind-Value="newServer.Name" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField Label="Host" @bind-Value="newServer.Host" /></MudItem>
+        <MudItem xs="12" md="1"><MudNumericField T="int" Label="Port" @bind-Value="newServer.Port" /></MudItem>
+        <MudItem xs="12" md="2"><MudTextField Label="Username" @bind-Value="newServer.Username" /></MudItem>
+        <MudItem xs="12" md="2"><MudTextField Label="Password" InputType="InputType.Password" @bind-Value="newServerPassword" /></MudItem>
+        <MudItem xs="12" md="2"><MudButton Variant="Variant.Filled" OnClick="AddServerAsync">Server speichern</MudButton></MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="servers" Dense="true" Hover="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh><MudTh>Host</MudTh><MudTh>Port</MudTh><MudTh>Username</MudTh><MudTh>Aktion</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.Host</MudTd>
+        <MudTd>@context.Port</MudTd>
+        <MudTd>@context.Username</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => TestServerAsync(context)">Verbindung testen</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="() => DeleteServerAsync(context.Id)">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">@message</MudAlert>
+
+@code {
+    private List<Site> sites = [];
+    private List<HanaServer> servers = [];
+    private Site newSite = new() { IsActive = true };
+    private Site? editingSite;
+    private HanaServer newServer = new() { Port = 30015 };
+    private string newServerPassword = string.Empty;
+    private string message = "Bereit.";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        servers = await db.HanaServers.OrderBy(x => x.Name).ToListAsync();
+        sites = await db.Sites.Include(x => x.HanaServer).OrderBy(x => x.Land).ToListAsync();
+
+        if (servers.Count > 0 && newSite.HanaServerId == 0)
+        {
+            newSite.HanaServerId = servers[0].Id;
+        }
+    }
+
+    private async Task AddSiteAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        db.Sites.Add(new Site
+        {
+            HanaServerId = newSite.HanaServerId,
+            Schema = newSite.Schema,
+            TSC = newSite.TSC,
+            Land = newSite.Land,
+            IsActive = newSite.IsActive
+        });
+        await db.SaveChangesAsync();
+        newSite = new Site { IsActive = true, HanaServerId = servers.FirstOrDefault()?.Id ?? 0 };
+        await LoadAsync();
+    }
+
+    private void EditSite(Site site)
+    {
+        editingSite = new Site
+        {
+            Id = site.Id,
+            HanaServerId = site.HanaServerId,
+            Schema = site.Schema,
+            TSC = site.TSC,
+            Land = site.Land,
+            IsActive = site.IsActive
+        };
+    }
+
+    private async Task SaveSiteAsync()
+    {
+        if (editingSite is null)
+        {
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var entity = await db.Sites.SingleAsync(x => x.Id == editingSite.Id);
+        entity.HanaServerId = editingSite.HanaServerId;
+        entity.Schema = editingSite.Schema;
+        entity.TSC = editingSite.TSC;
+        entity.Land = editingSite.Land;
+        entity.IsActive = editingSite.IsActive;
+        await db.SaveChangesAsync();
+        editingSite = null;
+        await LoadAsync();
+    }
+
+    private async Task DeleteSiteAsync(int id)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var site = await db.Sites.SingleAsync(x => x.Id == id);
+        db.Sites.Remove(site);
+        await db.SaveChangesAsync();
+        await LoadAsync();
+    }
+
+    private async Task AddServerAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        db.HanaServers.Add(new HanaServer
+        {
+            Name = newServer.Name,
+            Host = newServer.Host,
+            Port = newServer.Port,
+            Username = newServer.Username,
+            EncryptedPassword = CryptoService.Encrypt(newServerPassword)
+        });
+        await db.SaveChangesAsync();
+
+        newServer = new HanaServer { Port = 30015 };
+        newServerPassword = string.Empty;
+        await LoadAsync();
+    }
+
+    private async Task DeleteServerAsync(int id)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var isUsed = await db.Sites.AnyAsync(x => x.HanaServerId == id);
+        if (isUsed)
+        {
+            message = "Server kann nicht gelöscht werden, solange Sites darauf zeigen.";
+            return;
+        }
+
+        var server = await db.HanaServers.SingleAsync(x => x.Id == id);
+        db.HanaServers.Remove(server);
+        await db.SaveChangesAsync();
+        await LoadAsync();
+    }
+
+    private async Task TestServerAsync(HanaServer server)
+    {
+        try
+        {
+            var ok = HanaQueryService.TestConnection(server.Host, server.Port, server.Username, CryptoService.Decrypt(server.EncryptedPassword));
+            message = ok ? $"Verbindung OK: {server.Name}" : $"Verbindung fehlgeschlagen: {server.Name}";
+        }
+        catch (Exception ex)
+        {
+            message = $"Verbindung fehlgeschlagen: {ex.Message}";
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+}
