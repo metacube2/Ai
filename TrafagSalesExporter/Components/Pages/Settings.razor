@@ -1,0 +1,164 @@
+@page "/settings"
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject SharePointUploadService SpService
+@inject TimerBackgroundService TimerService
+@inject ISnackbar Snackbar
+
+<PageTitle>Settings</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
+
+@* SharePoint Config *@
+<MudText Typo="Typo.h5" Class="mb-2">SharePoint Konfiguration</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.SiteUrl" Label="Site URL" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.ExportFolder" Label="Export Folder" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.TenantId" Label="Tenant ID" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.ClientId" Label="Client ID" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.ClientSecret" Label="Client Secret" InputType="InputType.Password" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSharePoint"
+                           StartIcon="@Icons.Material.Filled.Save">
+                    Speichern
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="TestSharePoint"
+                           StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled="_testingSp">
+                    @if (_testingSp)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Teste...")
+                    }
+                    else
+                    {
+                        @("SharePoint Verbindung testen")
+                    }
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* Export Settings *@
+<MudText Typo="Typo.h5" Class="mb-2">Export Einstellungen</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_exportSettings.DateFilter" Label="Datum-Filter (ab)"
+                          HelperText="Format: yyyy-MM-dd" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudNumericField @bind-Value="_exportSettings.TimerHour" Label="Timer Stunde" Min="0" Max="23" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudNumericField @bind-Value="_exportSettings.TimerMinute" Label="Timer Minute" Min="0" Max="59" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.TimerEnabled" Label="Timer aktiviert" Color="Color.Primary" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Speichern
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* Filename Preview *@
+<MudText Typo="Typo.h5" Class="mb-2">Dateiname Vorschau</MudText>
+<MudPaper Class="pa-4" Elevation="1">
+    <MudText Typo="Typo.body1">
+        <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" Class="mr-1" />
+        Sales_{"{TSC}"}_{DateTime.Now:yyyy-MM-dd}.xlsx
+    </MudText>
+    <MudText Typo="Typo.caption" Class="mt-1">
+        Beispiel: Sales_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).xlsx
+    </MudText>
+</MudPaper>
+
+@code {
+    private SharePointConfig _spConfig = new();
+    private ExportSettings _exportSettings = new();
+    private bool _testingSp;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
+        _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+    }
+
+    private async Task SaveSharePoint()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var existing = await db.SharePointConfigs.FirstOrDefaultAsync();
+        if (existing is null)
+        {
+            db.SharePointConfigs.Add(_spConfig);
+        }
+        else
+        {
+            existing.SiteUrl = _spConfig.SiteUrl;
+            existing.ExportFolder = _spConfig.ExportFolder;
+            existing.TenantId = _spConfig.TenantId;
+            existing.ClientId = _spConfig.ClientId;
+            existing.ClientSecret = _spConfig.ClientSecret;
+        }
+        await db.SaveChangesAsync();
+        Snackbar.Add("SharePoint Konfiguration gespeichert", Severity.Success);
+    }
+
+    private async Task TestSharePoint()
+    {
+        _testingSp = true;
+        try
+        {
+            await SpService.TestConnectionAsync(
+                _spConfig.TenantId, _spConfig.ClientId, _spConfig.ClientSecret, _spConfig.SiteUrl);
+            Snackbar.Add("SharePoint Verbindung erfolgreich!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Verbindung fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _testingSp = false;
+        }
+    }
+
+    private async Task SaveExportSettings()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var existing = await db.ExportSettings.FirstOrDefaultAsync();
+        if (existing is null)
+        {
+            db.ExportSettings.Add(_exportSettings);
+        }
+        else
+        {
+            existing.DateFilter = _exportSettings.DateFilter;
+            existing.TimerHour = _exportSettings.TimerHour;
+            existing.TimerMinute = _exportSettings.TimerMinute;
+            existing.TimerEnabled = _exportSettings.TimerEnabled;
+        }
+        await db.SaveChangesAsync();
+        TimerService.Recalculate();
+        Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
+    }
+}

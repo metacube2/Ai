@@ -1,0 +1,134 @@
+@page "/logs"
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Logs</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Export Logs</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
+        <MudSelect @bind-Value="_filterLand" Label="Land" Clearable Dense Style="max-width:200px;">
+            @foreach (var land in _availableLands)
+            {
+                <MudSelectItem Value="@land">@land</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect @bind-Value="_filterStatus" Label="Status" Clearable Dense Style="max-width:150px;">
+            <MudSelectItem Value="@("OK")">OK</MudSelectItem>
+            <MudSelectItem Value="@("Error")">Error</MudSelectItem>
+        </MudSelect>
+        <MudDatePicker @bind-Date="_filterDate" Label="Datum" Clearable Dense Style="max-width:200px;" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilter"
+                   StartIcon="@Icons.Material.Filled.FilterAlt">
+            Filtern
+        </MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteOldLogs"
+                   StartIcon="@Icons.Material.Filled.DeleteSweep">
+            Alte Logs löschen
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+<MudTable Items="_logs" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>Zeitpunkt</MudTh>
+        <MudTh>Land</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Zeilen</MudTh>
+        <MudTh>Dauer</MudTh>
+        <MudTh>Dateiname</MudTh>
+        <MudTh>Fehler</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Timestamp.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd>
+            @if (context.Status == "OK")
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Success">OK</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error">Error</MudChip>
+            }
+        </MudTd>
+        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+        <MudTd>@($"{context.DurationSeconds:F1}s")</MudTd>
+        <MudTd>@context.FileName</MudTd>
+        <MudTd>
+            @if (!string.IsNullOrEmpty(context.ErrorMessage))
+            {
+                <MudTooltip Text="@context.ErrorMessage">
+                    <MudText Typo="Typo.caption" Color="Color.Error" Style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
+                        @context.ErrorMessage
+                    </MudText>
+                </MudTooltip>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<ExportLog> _logs = new();
+    private List<string> _availableLands = new();
+    private string? _filterLand;
+    private string? _filterStatus;
+    private DateTime? _filterDate;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        _availableLands = await db.ExportLogs.Select(l => l.Land).Distinct().OrderBy(l => l).ToListAsync();
+        await LoadLogsAsync();
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        _loading = true;
+        using var db = await DbFactory.CreateDbContextAsync();
+        IQueryable<ExportLog> query = db.ExportLogs.OrderByDescending(l => l.Timestamp);
+
+        if (!string.IsNullOrEmpty(_filterLand))
+            query = query.Where(l => l.Land == _filterLand);
+
+        if (!string.IsNullOrEmpty(_filterStatus))
+            query = query.Where(l => l.Status == _filterStatus);
+
+        if (_filterDate.HasValue)
+            query = query.Where(l => l.Timestamp.Date == _filterDate.Value.Date);
+
+        _logs = await query.Take(500).ToListAsync();
+        _loading = false;
+    }
+
+    private async Task ApplyFilter()
+    {
+        await LoadLogsAsync();
+    }
+
+    private async Task DeleteOldLogs()
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Alte Logs löschen",
+            "Logs älter als 90 Tage löschen?",
+            yesText: "Löschen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var cutoff = DateTime.Now.AddDays(-90);
+        var oldLogs = await db.ExportLogs.Where(l => l.Timestamp < cutoff).ToListAsync();
+        db.ExportLogs.RemoveRange(oldLogs);
+        var count = await db.SaveChangesAsync();
+        await LoadLogsAsync();
+        Snackbar.Add($"{oldLogs.Count} alte Logs gelöscht", Severity.Info);
+    }
+}
