@@ -5,7 +5,8 @@ namespace TrafagSalesExporter.Services;
 
 public class HanaQueryService
 {
-    public List<SalesRecord> GetSalesRecords(string host, int port, string username, string password, string schema, string tsc, string land)
+    public List<SalesRecord> GetSalesRecords(string host, int port, string username, string password,
+        string schema, string tsc, string land, string dateFilter)
     {
         var connectionString = $"ServerNode={host}:{port};UserName={username};Password={password}";
         var result = new List<SalesRecord>();
@@ -13,8 +14,8 @@ public class HanaQueryService
         using var connection = new HanaConnection(connectionString);
         connection.Open();
 
-        var invoiceQuery = GetInvoiceQuery(schema, tsc);
-        var creditNoteQuery = GetCreditNoteQuery(schema, tsc);
+        var invoiceQuery = GetInvoiceQuery(schema, tsc, dateFilter);
+        var creditNoteQuery = GetCreditNoteQuery(schema, tsc, dateFilter);
 
         result.AddRange(ReadRecords(connection, invoiceQuery, land));
         result.AddRange(ReadRecords(connection, creditNoteQuery, land));
@@ -29,6 +30,13 @@ public class HanaQueryService
         }
 
         return result;
+    }
+
+    public void TestConnection(string host, int port, string username, string password)
+    {
+        var connectionString = $"ServerNode={host}:{port};UserName={username};Password={password}";
+        using var connection = new HanaConnection(connectionString);
+        connection.Open();
     }
 
     private static List<SalesRecord> ReadRecords(HanaConnection connection, string query, string land)
@@ -74,7 +82,7 @@ public class HanaQueryService
         return records;
     }
 
-    private static string GetInvoiceQuery(string schema, string tsc) => $@"
+    private static string GetInvoiceQuery(string schema, string tsc, string dateFilter) => $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
     '{tsc}' AS tsc,
@@ -119,10 +127,10 @@ LEFT JOIN {schema}.""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
 LEFT JOIN {schema}.""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
 LEFT JOIN {schema}.""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
-WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= '2025-01-01'
+WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= '{dateFilter}'
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
 
-    private static string GetCreditNoteQuery(string schema, string tsc) => $@"
+    private static string GetCreditNoteQuery(string schema, string tsc, string dateFilter) => $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
     '{tsc}' AS tsc,
@@ -162,6 +170,6 @@ LEFT JOIN {schema}.""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
 LEFT JOIN {schema}.""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
 LEFT JOIN {schema}.""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
-WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= '2025-01-01'
+WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= '{dateFilter}'
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
 }

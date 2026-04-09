@@ -1,0 +1,193 @@
+@page "/"
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ExportOrchestrationService Orchestrator
+@inject TimerBackgroundService TimerService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
+                   OnClick="ExportAll" Disabled="_anyRunning">
+            Alle exportieren
+        </MudButton>
+        <MudText Typo="Typo.body1">
+            @if (TimerService.NextRun < DateTime.MaxValue)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                @($"Nächster automatischer Lauf: {TimerService.NextRun:dd.MM.yyyy HH:mm}")
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.TimerOff" Size="Size.Small" Class="mr-1" />
+                @("Timer deaktiviert")
+            }
+        </MudText>
+    </MudStack>
+</MudPaper>
+
+<MudTable Items="_dashboardRows" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>Land</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>Schema</MudTh>
+        <MudTh>Server</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Zeilen</MudTh>
+        <MudTh>Letzter Lauf</MudTh>
+        <MudTh>Dauer</MudTh>
+        <MudTh>Aktion</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd>@context.Schema</MudTd>
+        <MudTd>@context.ServerName</MudTd>
+        <MudTd>
+            @if (Orchestrator.IsExporting(context.SiteId))
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" Class="mr-1" />
+                <MudText Typo="Typo.caption">@Orchestrator.GetExportStatus(context.SiteId)</MudText>
+            }
+            else if (context.LastStatus == "OK")
+            {
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+            }
+            else if (context.LastStatus == "Error")
+            {
+                <MudTooltip Text="@context.ErrorMessage">
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" />
+                </MudTooltip>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
+        <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
+        <MudTd>@(context.LastRun.HasValue ? context.LastRun.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
+        <MudTd>@(context.DurationSeconds > 0 ? $"{context.DurationSeconds:F1}s" : "-")</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.FileDownload"
+                       OnClick="() => ExportSingle(context.SiteId)"
+                       Disabled="Orchestrator.IsExporting(context.SiteId)">
+                Export
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<DashboardRow> _dashboardRows = new();
+    private bool _loading = true;
+    private bool _anyRunning;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Orchestrator.OnExportStatusChanged += HandleStatusChanged;
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
+        var logs = await db.ExportLogs
+            .GroupBy(l => l.SiteId)
+            .Select(g => g.OrderByDescending(l => l.Timestamp).First())
+            .ToListAsync();
+
+        _dashboardRows = sites.Select(s =>
+        {
+            var log = logs.FirstOrDefault(l => l.SiteId == s.Id);
+            return new DashboardRow
+            {
+                SiteId = s.Id,
+                Land = s.Land,
+                TSC = s.TSC,
+                Schema = s.Schema,
+                ServerName = s.HanaServer?.Name ?? "",
+                LastStatus = log?.Status ?? "",
+                RowCount = log?.RowCount ?? 0,
+                LastRun = log?.Timestamp,
+                DurationSeconds = log?.DurationSeconds ?? 0,
+                ErrorMessage = log?.ErrorMessage ?? ""
+            };
+        }).ToList();
+
+        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+        _loading = false;
+    }
+
+    private async Task ExportAll()
+    {
+        _anyRunning = true;
+        _ = Task.Run(async () =>
+        {
+            await Orchestrator.ExportAllAsync();
+            await InvokeAsync(async () =>
+            {
+                await LoadDataAsync();
+                StateHasChanged();
+            });
+        });
+        Snackbar.Add("Export für alle Standorte gestartet", Severity.Info);
+    }
+
+    private void ExportSingle(int siteId)
+    {
+        _ = Task.Run(async () =>
+        {
+            await Orchestrator.ExportSiteByIdAsync(siteId);
+            await InvokeAsync(async () =>
+            {
+                await LoadDataAsync();
+                StateHasChanged();
+            });
+        });
+        Snackbar.Add("Export gestartet", Severity.Info);
+    }
+
+    private async void HandleStatusChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+            StateHasChanged();
+            if (!_anyRunning)
+            {
+                await LoadDataAsync();
+                StateHasChanged();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        Orchestrator.OnExportStatusChanged -= HandleStatusChanged;
+    }
+
+    private class DashboardRow
+    {
+        public int SiteId { get; set; }
+        public string Land { get; set; } = "";
+        public string TSC { get; set; } = "";
+        public string Schema { get; set; } = "";
+        public string ServerName { get; set; } = "";
+        public string LastStatus { get; set; } = "";
+        public int RowCount { get; set; }
+        public DateTime? LastRun { get; set; }
+        public double DurationSeconds { get; set; }
+        public string ErrorMessage { get; set; } = "";
+    }
+}

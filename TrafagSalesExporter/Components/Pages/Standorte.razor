@@ -1,0 +1,299 @@
+@page "/standorte"
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject HanaQueryService HanaService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Standorte</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Standorte</MudText>
+
+@* HANA Server Section *@
+<MudText Typo="Typo.h5" Class="mb-2">HANA Server</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="AddServer" Class="mb-3">
+        Server hinzufügen
+    </MudButton>
+
+    <MudTable Items="_servers" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Host</MudTh>
+            <MudTh>Port</MudTh>
+            <MudTh>Username</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Host</MudTd>
+            <MudTd>@context.Port</MudTd>
+            <MudTd>@context.Username</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditServer(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck" Size="Size.Small" Color="Color.Info"
+                               OnClick="() => TestServerConnection(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteServer(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@* Sites Section *@
+<MudText Typo="Typo.h5" Class="mb-2">Standorte (Sites)</MudText>
+<MudPaper Class="pa-4" Elevation="1">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="AddSite" Class="mb-3">
+        Neuen Standort hinzufügen
+    </MudButton>
+
+    <MudTable Items="_sites" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Land</MudTh>
+            <MudTh>TSC</MudTh>
+            <MudTh>Schema</MudTh>
+            <MudTh>Server</MudTh>
+            <MudTh>Aktiv</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Land</MudTd>
+            <MudTd>@context.TSC</MudTd>
+            <MudTd>@context.Schema</MudTd>
+            <MudTd>@(context.HanaServer?.Name ?? "-")</MudTd>
+            <MudTd>
+                @if (context.IsActive)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" />
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditSite(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteSite(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@* Server Dialog *@
+<MudDialog @bind-Visible="_serverDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingServer.Id == 0 ? "Server hinzufügen" : "Server bearbeiten")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editingServer.Name" Label="Name" Required />
+        <MudTextField @bind-Value="_editingServer.Host" Label="Host" Required />
+        <MudNumericField @bind-Value="_editingServer.Port" Label="Port" />
+        <MudTextField @bind-Value="_editingServer.Username" Label="Username" />
+        <MudTextField @bind-Value="_editingServer.Password" Label="Password" InputType="InputType.Password" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _serverDialogVisible = false">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveServer">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Site Dialog *@
+<MudDialog @bind-Visible="_siteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingSite.Id == 0 ? "Standort hinzufügen" : "Standort bearbeiten")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect @bind-Value="_editingSite.HanaServerId" Label="Server" Required>
+            @foreach (var s in _servers)
+            {
+                <MudSelectItem Value="s.Id">@s.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
+        <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
+        <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
+        <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _siteDialogVisible = false">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<HanaServer> _servers = new();
+    private List<Site> _sites = new();
+    private HanaServer _editingServer = new();
+    private Site _editingSite = new();
+    private bool _serverDialogVisible;
+    private bool _siteDialogVisible;
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        _servers = await db.HanaServers.OrderBy(s => s.Name).ToListAsync();
+        _sites = await db.Sites.Include(s => s.HanaServer).OrderBy(s => s.Land).ToListAsync();
+    }
+
+    // Server CRUD
+    private void AddServer()
+    {
+        _editingServer = new HanaServer { Port = 30015 };
+        _serverDialogVisible = true;
+    }
+
+    private void EditServer(HanaServer server)
+    {
+        _editingServer = new HanaServer
+        {
+            Id = server.Id,
+            Name = server.Name,
+            Host = server.Host,
+            Port = server.Port,
+            Username = server.Username,
+            Password = server.Password
+        };
+        _serverDialogVisible = true;
+    }
+
+    private async Task SaveServer()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        if (_editingServer.Id == 0)
+        {
+            db.HanaServers.Add(_editingServer);
+        }
+        else
+        {
+            var existing = await db.HanaServers.FindAsync(_editingServer.Id);
+            if (existing is not null)
+            {
+                existing.Name = _editingServer.Name;
+                existing.Host = _editingServer.Host;
+                existing.Port = _editingServer.Port;
+                existing.Username = _editingServer.Username;
+                existing.Password = _editingServer.Password;
+            }
+        }
+        await db.SaveChangesAsync();
+        _serverDialogVisible = false;
+        await LoadDataAsync();
+        Snackbar.Add("Server gespeichert", Severity.Success);
+    }
+
+    private async Task DeleteServer(HanaServer server)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Server löschen",
+            $"Server '{server.Name}' wirklich löschen?",
+            yesText: "Löschen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var entity = await db.HanaServers.FindAsync(server.Id);
+        if (entity is not null)
+        {
+            db.HanaServers.Remove(entity);
+            await db.SaveChangesAsync();
+        }
+        await LoadDataAsync();
+        Snackbar.Add("Server gelöscht", Severity.Info);
+    }
+
+    private async Task TestServerConnection(HanaServer server)
+    {
+        try
+        {
+            await Task.Run(() => HanaService.TestConnection(server.Host, server.Port, server.Username, server.Password));
+            Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Verbindung fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Site CRUD
+    private void AddSite()
+    {
+        _editingSite = new Site
+        {
+            IsActive = true,
+            HanaServerId = _servers.FirstOrDefault()?.Id ?? 0
+        };
+        _siteDialogVisible = true;
+    }
+
+    private void EditSite(Site site)
+    {
+        _editingSite = new Site
+        {
+            Id = site.Id,
+            HanaServerId = site.HanaServerId,
+            Schema = site.Schema,
+            TSC = site.TSC,
+            Land = site.Land,
+            IsActive = site.IsActive
+        };
+        _siteDialogVisible = true;
+    }
+
+    private async Task SaveSite()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        if (_editingSite.Id == 0)
+        {
+            db.Sites.Add(_editingSite);
+        }
+        else
+        {
+            var existing = await db.Sites.FindAsync(_editingSite.Id);
+            if (existing is not null)
+            {
+                existing.HanaServerId = _editingSite.HanaServerId;
+                existing.Schema = _editingSite.Schema;
+                existing.TSC = _editingSite.TSC;
+                existing.Land = _editingSite.Land;
+                existing.IsActive = _editingSite.IsActive;
+            }
+        }
+        await db.SaveChangesAsync();
+        _siteDialogVisible = false;
+        await LoadDataAsync();
+        Snackbar.Add("Standort gespeichert", Severity.Success);
+    }
+
+    private async Task DeleteSite(Site site)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Standort löschen",
+            $"Standort '{site.Land}' wirklich löschen?",
+            yesText: "Löschen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var entity = await db.Sites.FindAsync(site.Id);
+        if (entity is not null)
+        {
+            db.Sites.Remove(entity);
+            await db.SaveChangesAsync();
+        }
+        await LoadDataAsync();
+        Snackbar.Add("Standort gelöscht", Severity.Info);
+    }
+}
