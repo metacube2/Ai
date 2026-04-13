@@ -27,6 +27,7 @@ using (var scope = app.Services.CreateScope())
     var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     using var db = await dbFactory.CreateDbContextAsync();
     await db.Database.EnsureCreatedAsync();
+    AppDbContext.EnsureSchema(db);
     AppDbContext.SeedIfEmpty(db);
 }
 

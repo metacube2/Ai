@@ -94,9 +94,7 @@ public class ExportOrchestrationService
 
             UpdateStatus(site.Id, "HANA Abfrage...");
             var records = await Task.Run(() => _hanaService.GetSalesRecords(
-                site.HanaServer.Host, site.HanaServer.Port,
-                site.HanaServer.Username, site.HanaServer.Password,
-                site.Schema, site.TSC, site.Land, settings.DateFilter));
+                site.HanaServer, site.Schema, site.TSC, site.Land, settings.DateFilter));
 
             UpdateStatus(site.Id, "Excel erstellen...");
             var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
