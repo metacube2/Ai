@@ -36,14 +36,14 @@
                 @if (_connectionStatus.TryGetValue(context.Id, out var status))
                 {
                     <MudTooltip Text="@BuildStatusTooltip(status)">
-                        <MudChip Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
+                        <MudChip T="string" Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
                             @(status.Success ? "OK" : "Fehler") - @status.Stage
                         </MudChip>
                     </MudTooltip>
                 }
                 else
                 {
-                    <MudChip Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
                 }
             </MudTd>
             <MudTd>
@@ -71,7 +71,7 @@
             <MudTh>TSC</MudTh>
             <MudTh>Schema</MudTh>
             <MudTh>Quellsystem</MudTh>
-            <MudTh>Server</MudTh>
+            <MudTh>Host</MudTh>
             <MudTh>Aktiv</MudTh>
             <MudTh>Aktionen</MudTh>
         </HeaderContent>
@@ -80,7 +80,7 @@
             <MudTd>@context.TSC</MudTd>
             <MudTd>@context.Schema</MudTd>
             <MudTd>@context.SourceSystem</MudTd>
-            <MudTd>@(context.HanaServer?.Name ?? "-")</MudTd>
+            <MudTd>@GetServerNode(context.HanaServer)</MudTd>
             <MudTd>
                 @if (context.IsActive)
                 {
@@ -132,12 +132,6 @@
         <MudText Typo="Typo.h6">@(_editingSite.Id == 0 ? "Standort hinzufügen" : "Standort bearbeiten")</MudText>
     </TitleContent>
     <DialogContent>
-        <MudSelect @bind-Value="_editingSite.HanaServerId" Label="Server" Required>
-            @foreach (var s in _servers)
-            {
-                <MudSelectItem Value="@s.Id">@s.Name</MudSelectItem>
-            }
-        </MudSelect>
         <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
         <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
         <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
@@ -148,6 +142,25 @@
             }
         </MudSelect>
         <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
+        <MudTextField @bind-Value="_editingSiteServer.Name" Label="Verbindungsname" Required
+                      HelperText="Interner Anzeigename für diesen Standort" />
+        <MudTextField @bind-Value="_editingSiteServer.Host" Label="Host oder ServerNode" Required
+                      HelperText="z.B. hana01 oder hana01:30015 oder derselbe HanaServer-Wert wie in Power BI" />
+        <MudNumericField @bind-Value="_editingSiteServer.Port" Label="Port"
+                         HelperText="Wird ignoriert, wenn im Host bereits ein Port enthalten ist" />
+        <MudTextField @bind-Value="_editingSiteServer.Username" Label="Username" />
+        <MudTextField @bind-Value="_editingSiteServer.Password" Label="Password" InputType="InputType.Password" />
+        <MudTextField @bind-Value="_editingSiteServer.DatabaseName" Label="Database Name (MDC)"
+                      HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
+        <MudSwitch @bind-Value="_editingSiteServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
+        <MudSwitch @bind-Value="_editingSiteServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
+                   Disabled="!_editingSiteServer.UseSsl" />
+        <MudTextField @bind-Value="_editingSiteServer.AdditionalParams" Label="Zusätzliche Parameter"
+                      HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _siteDialogVisible = false">Abbrechen</MudButton>
@@ -162,6 +175,7 @@
     private List<Site> _sites = new();
     private HanaServer _editingServer = new();
     private Site _editingSite = new();
+    private HanaServer _editingSiteServer = new();
     private bool _serverDialogVisible;
     private bool _siteDialogVisible;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
@@ -186,19 +200,7 @@
 
     private void EditServer(HanaServer server)
     {
-        _editingServer = new HanaServer
-        {
-            Id = server.Id,
-            Name = server.Name,
-            Host = server.Host,
-            Port = server.Port,
-            Username = server.Username,
-            Password = server.Password,
-            DatabaseName = server.DatabaseName,
-            UseSsl = server.UseSsl,
-            ValidateCertificate = server.ValidateCertificate,
-            AdditionalParams = server.AdditionalParams
-        };
+        _editingServer = CloneServer(server);
         _serverDialogVisible = true;
     }
 
@@ -283,8 +285,9 @@
         {
             IsActive = true,
             SourceSystem = "SAP",
-            HanaServerId = _servers.FirstOrDefault()?.Id ?? 0
+            HanaServerId = 0
         };
+        _editingSiteServer = CreateDefaultSiteServer();
         _siteDialogVisible = true;
     }
 
@@ -300,14 +303,20 @@
             SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem,
             IsActive = site.IsActive
         };
+        _editingSiteServer = site.HanaServer is null
+            ? CreateDefaultSiteServer(site)
+            : CloneServer(site.HanaServer);
         _siteDialogVisible = true;
     }
 
     private async Task SaveSite()
     {
         using var db = await DbFactory.CreateDbContextAsync();
+        var serverId = await SaveOrCreateSiteServerAsync(db);
+
         if (_editingSite.Id == 0)
         {
+            _editingSite.HanaServerId = serverId;
             db.Sites.Add(_editingSite);
         }
         else
@@ -315,7 +324,7 @@
             var existing = await db.Sites.FindAsync(_editingSite.Id);
             if (existing is not null)
             {
-                existing.HanaServerId = _editingSite.HanaServerId;
+                existing.HanaServerId = serverId;
                 existing.Schema = _editingSite.Schema;
                 existing.TSC = _editingSite.TSC;
                 existing.Land = _editingSite.Land;
@@ -349,5 +358,94 @@
 
         await LoadDataAsync();
         Snackbar.Add("Standort gelöscht", Severity.Info);
+    }
+
+    private static string GetServerNode(HanaServer? server)
+    {
+        if (server is null || string.IsNullOrWhiteSpace(server.Host))
+            return "-";
+
+        return server.Host.Contains(':', StringComparison.Ordinal) ? server.Host : $"{server.Host}:{server.Port}";
+    }
+
+    private HanaServer CreateDefaultSiteServer(Site? site = null)
+    {
+        var label = !string.IsNullOrWhiteSpace(site?.Land) ? site!.Land : site?.TSC;
+        if (string.IsNullOrWhiteSpace(label))
+            label = "Neuer Standort";
+
+        return new HanaServer
+        {
+            Name = $"{label} HANA",
+            Port = 30015
+        };
+    }
+
+    private static HanaServer CloneServer(HanaServer server)
+    {
+        return new HanaServer
+        {
+            Id = server.Id,
+            Name = server.Name,
+            Host = server.Host,
+            Port = server.Port,
+            Username = server.Username,
+            Password = server.Password,
+            DatabaseName = server.DatabaseName,
+            UseSsl = server.UseSsl,
+            ValidateCertificate = server.ValidateCertificate,
+            AdditionalParams = server.AdditionalParams
+        };
+    }
+
+    private async Task<int> SaveOrCreateSiteServerAsync(AppDbContext db)
+    {
+        _editingSiteServer.Name = string.IsNullOrWhiteSpace(_editingSiteServer.Name)
+            ? $"{_editingSite.Land} HANA".Trim()
+            : _editingSiteServer.Name.Trim();
+        _editingSiteServer.Host = _editingSiteServer.Host.Trim();
+        _editingSiteServer.Username = _editingSiteServer.Username.Trim();
+        _editingSiteServer.DatabaseName = _editingSiteServer.DatabaseName.Trim();
+        _editingSiteServer.AdditionalParams = _editingSiteServer.AdditionalParams.Trim();
+
+        if (string.IsNullOrWhiteSpace(_editingSiteServer.Host))
+            throw new InvalidOperationException("Host oder ServerNode muss gesetzt sein.");
+
+        if (_editingSite.HanaServerId == 0)
+        {
+            db.HanaServers.Add(_editingSiteServer);
+            await db.SaveChangesAsync();
+            return _editingSiteServer.Id;
+        }
+
+        var sharedUseCount = await db.Sites.CountAsync(s => s.HanaServerId == _editingSite.HanaServerId && s.Id != _editingSite.Id);
+        if (sharedUseCount > 0)
+        {
+            var dedicatedServer = CloneServer(_editingSiteServer);
+            dedicatedServer.Id = 0;
+            db.HanaServers.Add(dedicatedServer);
+            await db.SaveChangesAsync();
+            return dedicatedServer.Id;
+        }
+
+        var existingServer = await db.HanaServers.FindAsync(_editingSite.HanaServerId);
+        if (existingServer is null)
+        {
+            db.HanaServers.Add(_editingSiteServer);
+            await db.SaveChangesAsync();
+            return _editingSiteServer.Id;
+        }
+
+        existingServer.Name = _editingSiteServer.Name;
+        existingServer.Host = _editingSiteServer.Host;
+        existingServer.Port = _editingSiteServer.Port;
+        existingServer.Username = _editingSiteServer.Username;
+        existingServer.Password = _editingSiteServer.Password;
+        existingServer.DatabaseName = _editingSiteServer.DatabaseName;
+        existingServer.UseSsl = _editingSiteServer.UseSsl;
+        existingServer.ValidateCertificate = _editingSiteServer.ValidateCertificate;
+        existingServer.AdditionalParams = _editingSiteServer.AdditionalParams;
+        await db.SaveChangesAsync();
+        return existingServer.Id;
     }
 }

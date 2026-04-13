@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 
 namespace TrafagSalesExporter.Models;
 
@@ -41,26 +42,23 @@ public class HanaServer
 
     public string BuildConnectionString()
     {
-        var parts = new List<string>
-        {
-            $"ServerNode={Host}:{Port}",
-            $"UserName={Username}",
-            $"Password={Password}"
-        };
+        var builder = new DbConnectionStringBuilder();
+        builder["ServerNode"] = BuildServerNode();
+        builder["UserName"] = Username.Trim();
+        builder["Password"] = Password;
 
         if (!string.IsNullOrWhiteSpace(DatabaseName))
-            parts.Add($"DatabaseName={DatabaseName}");
+            builder["DatabaseName"] = DatabaseName.Trim();
 
         if (UseSsl)
         {
-            parts.Add("encrypt=true");
-            parts.Add($"sslValidateCertificate={(ValidateCertificate ? "true" : "false")}");
+            builder["encrypt"] = true;
+            builder["sslValidateCertificate"] = ValidateCertificate;
         }
 
-        if (!string.IsNullOrWhiteSpace(AdditionalParams))
-            parts.Add(AdditionalParams.Trim().Trim(';'));
+        AppendAdditionalParams(builder);
 
-        return string.Join(";", parts);
+        return builder.ConnectionString;
     }
 
     public string GetConnectionStringPreview()
@@ -79,6 +77,68 @@ public class HanaServer
         };
 
         return copy.BuildConnectionString();
+    }
+
+    private string BuildServerNode()
+    {
+        var normalizedHost = NormalizeHost(Host);
+        if (string.IsNullOrWhiteSpace(normalizedHost))
+            throw new InvalidOperationException("HANA Host darf nicht leer sein.");
+
+        if (HasExplicitPort(normalizedHost))
+            return normalizedHost;
+
+        return $"{normalizedHost}:{Port}";
+    }
+
+    private static string NormalizeHost(string host)
+    {
+        var value = host.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        {
+            return uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
+        }
+
+        var schemeIndex = value.IndexOf("://", StringComparison.Ordinal);
+        if (schemeIndex >= 0)
+            value = value[(schemeIndex + 3)..];
+
+        var slashIndex = value.IndexOf('/');
+        if (slashIndex >= 0)
+            value = value[..slashIndex];
+
+        return value.Trim();
+    }
+
+    private static bool HasExplicitPort(string host)
+    {
+        if (host.StartsWith('['))
+            return host.Contains("]:", StringComparison.Ordinal);
+
+        return host.Count(c => c == ':') == 1;
+    }
+
+    private void AppendAdditionalParams(DbConnectionStringBuilder builder)
+    {
+        if (string.IsNullOrWhiteSpace(AdditionalParams))
+            return;
+
+        foreach (var rawPart in AdditionalParams.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var separatorIndex = rawPart.IndexOf('=');
+            if (separatorIndex <= 0 || separatorIndex == rawPart.Length - 1)
+                continue;
+
+            var key = rawPart[..separatorIndex].Trim();
+            var value = rawPart[(separatorIndex + 1)..].Trim();
+            if (key.Length == 0)
+                continue;
+
+            builder[key] = value;
+        }
     }
 }
 
