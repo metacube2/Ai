@@ -5,10 +5,10 @@ namespace TrafagSalesExporter.Services;
 
 public class HanaQueryService
 {
-    public List<SalesRecord> GetSalesRecords(string host, int port, string username, string password,
+    public List<SalesRecord> GetSalesRecords(HanaServer server,
         string schema, string tsc, string land, string dateFilter)
     {
-        var connectionString = $"ServerNode={host}:{port};UserName={username};Password={password}";
+        var connectionString = server.BuildConnectionString();
         var result = new List<SalesRecord>();
 
         using var connection = new HanaConnection(connectionString);
@@ -32,9 +32,9 @@ public class HanaQueryService
         return result;
     }
 
-    public void TestConnection(string host, int port, string username, string password)
+    public void TestConnection(HanaServer server)
     {
-        var connectionString = $"ServerNode={host}:{port};UserName={username};Password={password}";
+        var connectionString = server.BuildConnectionString();
         using var connection = new HanaConnection(connectionString);
         connection.Open();
     }

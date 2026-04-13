@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Models;
 
@@ -12,6 +13,46 @@ public class AppDbContext : DbContext
     public DbSet<SharePointConfig> SharePointConfigs => Set<SharePointConfig>();
     public DbSet<ExportSettings> ExportSettings => Set<ExportSettings>();
     public DbSet<ExportLog> ExportLogs => Set<ExportLog>();
+
+    /// <summary>
+    /// Fügt Spalten zu existierenden Tabellen hinzu, die bei neueren Versionen
+    /// hinzugekommen sind. EnsureCreated aktualisiert das Schema nicht automatisch.
+    /// </summary>
+    public static void EnsureSchema(AppDbContext db)
+    {
+        AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "HanaServers", "AdditionalParams", "TEXT NOT NULL DEFAULT ''");
+    }
+
+    private static void AddColumnIfMissing(AppDbContext db, string table, string column, string type)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) conn.Open();
+
+        bool exists = false;
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = $"PRAGMA table_info({table})";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (string.Equals(reader["name"]?.ToString(), column, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists)
+        {
+            using var alter = conn.CreateCommand();
+            alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {type}";
+            alter.ExecuteNonQuery();
+        }
+    }
 
     public static void SeedIfEmpty(AppDbContext db)
     {
