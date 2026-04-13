@@ -3,7 +3,7 @@ using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
-public class ExcelExportService
+public class ExcelExportService : IExcelExportService
 {
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {

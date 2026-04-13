@@ -3,11 +3,18 @@ using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
-public class RecordTransformationService
+public class RecordTransformationService : IRecordTransformationService
 {
     private static readonly Dictionary<string, PropertyInfo> PropertyMap = typeof(SalesRecord)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+    private readonly IReadOnlyDictionary<string, ITransformationStrategy> _strategies;
+
+    public RecordTransformationService(IEnumerable<ITransformationStrategy> strategies)
+    {
+        _strategies = strategies.ToDictionary(s => s.TransformationType, StringComparer.OrdinalIgnoreCase);
+    }
 
     public void Apply(List<SalesRecord> records, IEnumerable<FieldTransformationRule> rules)
     {
@@ -23,35 +30,17 @@ public class RecordTransformationService
         }
     }
 
-    private static void ApplyRule(SalesRecord record, FieldTransformationRule rule)
+    private void ApplyRule(SalesRecord record, FieldTransformationRule rule)
     {
         if (!PropertyMap.TryGetValue(rule.SourceField, out var sourceProp)) return;
         if (!PropertyMap.TryGetValue(rule.TargetField, out var targetProp)) return;
 
         var sourceValue = sourceProp.GetValue(record);
-        object? result = rule.TransformationType switch
-        {
-            "Copy" => sourceValue,
-            "Uppercase" => sourceValue?.ToString()?.ToUpperInvariant(),
-            "Lowercase" => sourceValue?.ToString()?.ToLowerInvariant(),
-            "Prefix" => $"{rule.Argument}{sourceValue}",
-            "Suffix" => $"{sourceValue}{rule.Argument}",
-            "Replace" => ApplyReplace(sourceValue?.ToString(), rule.Argument),
-            "Constant" => rule.Argument,
-            _ => sourceValue
-        };
+        object? result = _strategies.TryGetValue(rule.TransformationType, out var strategy)
+            ? strategy.Transform(sourceValue, rule.Argument)
+            : sourceValue;
 
         SetPropertyValue(record, targetProp, result);
-    }
-
-    private static string ApplyReplace(string? input, string? argument)
-    {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
-        if (string.IsNullOrWhiteSpace(argument)) return input;
-
-        var parts = argument.Split("=>", 2, StringSplitOptions.TrimEntries);
-        if (parts.Length != 2) return input;
-        return input.Replace(parts[0], parts[1], StringComparison.OrdinalIgnoreCase);
     }
 
     private static void SetPropertyValue(SalesRecord record, PropertyInfo property, object? value)

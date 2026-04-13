@@ -3,7 +3,7 @@ using Microsoft.Graph;
 
 namespace TrafagSalesExporter.Services;
 
-public class SharePointUploadService
+public class SharePointUploadService : ISharePointUploadService
 {
     public async Task UploadAsync(string tenantId, string clientId, string clientSecret,
         string siteUrl, string exportFolder, string land, string localFilePath)

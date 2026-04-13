@@ -3,7 +3,7 @@ using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
-public class HanaQueryService
+public class HanaQueryService : IHanaQueryService
 {
     public List<SalesRecord> GetSalesRecords(HanaServer server,
         string schema, string tsc, string land, string dateFilter)

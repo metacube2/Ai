@@ -13,10 +13,21 @@ builder.Services.AddMudServices();
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db"));
 
-builder.Services.AddSingleton<HanaQueryService>();
-builder.Services.AddSingleton<ExcelExportService>();
-builder.Services.AddSingleton<SharePointUploadService>();
-builder.Services.AddSingleton<RecordTransformationService>();
+builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
+builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
+builder.Services.AddSingleton<ISharePointUploadService, SharePointUploadService>();
+builder.Services.AddSingleton<ITransformationStrategy, CopyTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, UppercaseTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, LowercaseTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, PrefixTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
+builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
+builder.Services.AddSingleton<ISiteExportService, SiteExportService>();
+builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
+builder.Services.AddSingleton<IExportLogService, ExportLogService>();
+builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
 builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundService>());
@@ -25,11 +36,8 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    using var db = await dbFactory.CreateDbContextAsync();
-    await db.Database.EnsureCreatedAsync();
-    AppDbContext.EnsureSchema(db);
-    AppDbContext.SeedIfEmpty(db);
+    var databaseInitialization = scope.ServiceProvider.GetRequiredService<IDatabaseInitializationService>();
+    await databaseInitialization.InitializeAsync();
 }
 
 if (!app.Environment.IsDevelopment())
