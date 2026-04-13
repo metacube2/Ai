@@ -11,7 +11,6 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">Standorte</MudText>
 
-@* HANA Server Section *@
 <MudText Typo="Typo.h5" Class="mb-2">HANA Server</MudText>
 <MudPaper Class="pa-4 mb-6" Elevation="1">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -25,6 +24,7 @@
             <MudTh>Host</MudTh>
             <MudTh>Port</MudTh>
             <MudTh>Username</MudTh>
+            <MudTh>Verbindungsstatus</MudTh>
             <MudTh>Aktionen</MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -32,6 +32,20 @@
             <MudTd>@context.Host</MudTd>
             <MudTd>@context.Port</MudTd>
             <MudTd>@context.Username</MudTd>
+            <MudTd>
+                @if (_connectionStatus.TryGetValue(context.Id, out var status))
+                {
+                    <MudTooltip Text="@BuildStatusTooltip(status)">
+                        <MudChip T="string" Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
+                            @(status.Success ? "OK" : "Fehler") - @status.Stage
+                        </MudChip>
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
+                }
+            </MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                OnClick="() => EditServer(context)" />
@@ -44,7 +58,6 @@
     </MudTable>
 </MudPaper>
 
-@* Sites Section *@
 <MudText Typo="Typo.h5" Class="mb-2">Standorte (Sites)</MudText>
 <MudPaper Class="pa-4" Elevation="1">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -57,6 +70,7 @@
             <MudTh>Land</MudTh>
             <MudTh>TSC</MudTh>
             <MudTh>Schema</MudTh>
+            <MudTh>Quellsystem</MudTh>
             <MudTh>Server</MudTh>
             <MudTh>Aktiv</MudTh>
             <MudTh>Aktionen</MudTh>
@@ -65,6 +79,7 @@
             <MudTd>@context.Land</MudTd>
             <MudTd>@context.TSC</MudTd>
             <MudTd>@context.Schema</MudTd>
+            <MudTd>@context.SourceSystem</MudTd>
             <MudTd>@(context.HanaServer?.Name ?? "-")</MudTd>
             <MudTd>
                 @if (context.IsActive)
@@ -86,7 +101,6 @@
     </MudTable>
 </MudPaper>
 
-@* Server Dialog *@
 <MudDialog @bind-Visible="_serverDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">@(_editingServer.Id == 0 ? "Server hinzufügen" : "Server bearbeiten")</MudText>
@@ -113,7 +127,6 @@
     </DialogActions>
 </MudDialog>
 
-@* Site Dialog *@
 <MudDialog @bind-Visible="_siteDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">@(_editingSite.Id == 0 ? "Standort hinzufügen" : "Standort bearbeiten")</MudText>
@@ -122,12 +135,18 @@
         <MudSelect @bind-Value="_editingSite.HanaServerId" Label="Server" Required>
             @foreach (var s in _servers)
             {
-                <MudSelectItem Value="s.Id">@s.Name</MudSelectItem>
+                <MudSelectItem Value="@s.Id">@s.Name</MudSelectItem>
             }
         </MudSelect>
         <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
         <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
         <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
+        <MudSelect @bind-Value="_editingSite.SourceSystem" Label="Quellsystem" Required>
+            @foreach (var system in _sourceSystems)
+            {
+                <MudSelectItem Value="@system">@system</MudSelectItem>
+            }
+        </MudSelect>
         <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
     </DialogContent>
     <DialogActions>
@@ -137,6 +156,8 @@
 </MudDialog>
 
 @code {
+    private readonly string[] _sourceSystems = ["SAP", "BI1", "SAGE"];
+    private readonly Dictionary<int, ConnectionTestResult> _connectionStatus = new();
     private List<HanaServer> _servers = new();
     private List<Site> _sites = new();
     private HanaServer _editingServer = new();
@@ -157,7 +178,6 @@
         _sites = await db.Sites.Include(s => s.HanaServer).OrderBy(s => s.Land).ToListAsync();
     }
 
-    // Server CRUD
     private void AddServer()
     {
         _editingServer = new HanaServer { Port = 30015 };
@@ -205,6 +225,7 @@
                 existing.AdditionalParams = _editingServer.AdditionalParams;
             }
         }
+
         await db.SaveChangesAsync();
         _serverDialogVisible = false;
         await LoadDataAsync();
@@ -227,29 +248,41 @@
             db.HanaServers.Remove(entity);
             await db.SaveChangesAsync();
         }
+
         await LoadDataAsync();
         Snackbar.Add("Server gelöscht", Severity.Info);
     }
 
     private async Task TestServerConnection(HanaServer server)
     {
-        try
+        var result = await Task.Run(() => HanaService.TestConnectionDetailed(server));
+        _connectionStatus[server.Id] = result;
+
+        if (result.Success)
         {
-            await Task.Run(() => HanaService.TestConnection(server));
-            Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich!", Severity.Success);
+            Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich.", Severity.Success);
         }
-        catch (Exception ex)
+        else
         {
-            Snackbar.Add($"Verbindung fehlgeschlagen: {ex.Message}", Severity.Error);
+            Snackbar.Add($"{server.Name}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
         }
     }
 
-    // Site CRUD
+    private static string BuildStatusTooltip(ConnectionTestResult status)
+    {
+        var stamp = status.TestedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        if (status.Success)
+            return $"Letzter Test: {stamp}\nStage: {status.Stage}\n{status.ConnectionStringPreview}";
+
+        return $"Letzter Test: {stamp}\nStage: {status.Stage}\nFehler: {status.ErrorMessage}\n{status.ConnectionStringPreview}";
+    }
+
     private void AddSite()
     {
         _editingSite = new Site
         {
             IsActive = true,
+            SourceSystem = "SAP",
             HanaServerId = _servers.FirstOrDefault()?.Id ?? 0
         };
         _siteDialogVisible = true;
@@ -264,6 +297,7 @@
             Schema = site.Schema,
             TSC = site.TSC,
             Land = site.Land,
+            SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem,
             IsActive = site.IsActive
         };
         _siteDialogVisible = true;
@@ -285,9 +319,11 @@
                 existing.Schema = _editingSite.Schema;
                 existing.TSC = _editingSite.TSC;
                 existing.Land = _editingSite.Land;
+                existing.SourceSystem = _editingSite.SourceSystem;
                 existing.IsActive = _editingSite.IsActive;
             }
         }
+
         await db.SaveChangesAsync();
         _siteDialogVisible = false;
         await LoadDataAsync();
@@ -310,6 +346,7 @@
             db.Sites.Remove(entity);
             await db.SaveChangesAsync();
         }
+
         await LoadDataAsync();
         Snackbar.Add("Standort gelöscht", Severity.Info);
     }
