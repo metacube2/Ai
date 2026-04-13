@@ -93,10 +93,19 @@
     </TitleContent>
     <DialogContent>
         <MudTextField @bind-Value="_editingServer.Name" Label="Name" Required />
-        <MudTextField @bind-Value="_editingServer.Host" Label="Host" Required />
-        <MudNumericField @bind-Value="_editingServer.Port" Label="Port" />
+        <MudTextField @bind-Value="_editingServer.Host" Label="Host" Required
+                      HelperText="IP oder Hostname (ohne Protokoll)" />
+        <MudNumericField @bind-Value="_editingServer.Port" Label="Port"
+                         HelperText="Typisch 30015 (Tenant), 30013 (SystemDB), 3xx15 für Instanz xx" />
         <MudTextField @bind-Value="_editingServer.Username" Label="Username" />
         <MudTextField @bind-Value="_editingServer.Password" Label="Password" InputType="InputType.Password" />
+        <MudTextField @bind-Value="_editingServer.DatabaseName" Label="Database Name (MDC)"
+                      HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
+        <MudSwitch @bind-Value="_editingServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
+        <MudSwitch @bind-Value="_editingServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
+                   Disabled="!_editingServer.UseSsl" />
+        <MudTextField @bind-Value="_editingServer.AdditionalParams" Label="Zusätzliche Parameter"
+                      HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _serverDialogVisible = false">Abbrechen</MudButton>
@@ -164,7 +173,11 @@
             Host = server.Host,
             Port = server.Port,
             Username = server.Username,
-            Password = server.Password
+            Password = server.Password,
+            DatabaseName = server.DatabaseName,
+            UseSsl = server.UseSsl,
+            ValidateCertificate = server.ValidateCertificate,
+            AdditionalParams = server.AdditionalParams
         };
         _serverDialogVisible = true;
     }
@@ -186,6 +199,10 @@
                 existing.Port = _editingServer.Port;
                 existing.Username = _editingServer.Username;
                 existing.Password = _editingServer.Password;
+                existing.DatabaseName = _editingServer.DatabaseName;
+                existing.UseSsl = _editingServer.UseSsl;
+                existing.ValidateCertificate = _editingServer.ValidateCertificate;
+                existing.AdditionalParams = _editingServer.AdditionalParams;
             }
         }
         await db.SaveChangesAsync();
@@ -218,7 +235,7 @@
     {
         try
         {
-            await Task.Run(() => HanaService.TestConnection(server.Host, server.Port, server.Username, server.Password));
+            await Task.Run(() => HanaService.TestConnection(server));
             Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich!", Severity.Success);
         }
         catch (Exception ex)
