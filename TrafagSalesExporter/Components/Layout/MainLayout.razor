@@ -9,7 +9,9 @@
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="ml-3">Trafag Sales Exporter</MudText>
+        <MudText Typo="Typo.h6" Class="ml-3 app-title">Trafag Finanze/Sales Management Cockpit</MudText>
+        <MudSpacer />
+        <img src="trafag.jpg" alt="Trafag" class="app-logo" />
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
@@ -28,9 +30,9 @@
     {
         PaletteLight = new PaletteLight
         {
-            Primary = "#1565C0",
-            Secondary = "#00897B",
-            AppbarBackground = "#1565C0"
+            Primary = "#B71C1C",
+            Secondary = "#7F1D1D",
+            AppbarBackground = "#B71C1C"
         }
     };
 
