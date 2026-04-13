@@ -36,14 +36,14 @@
                 @if (_connectionStatus.TryGetValue(context.Id, out var status))
                 {
                     <MudTooltip Text="@BuildStatusTooltip(status)">
-                        <MudChip T="string" Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
+                        <MudChip Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
                             @(status.Success ? "OK" : "Fehler") - @status.Stage
                         </MudChip>
                     </MudTooltip>
                 }
                 else
                 {
-                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
+                    <MudChip Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
                 }
             </MudTd>
             <MudTd>
@@ -144,7 +144,7 @@
         <MudSelect @bind-Value="_editingSite.SourceSystem" Label="Quellsystem" Required>
             @foreach (var system in _sourceSystems)
             {
-                <MudSelectItem Value="@system">@system</MudSelectItem>
+                <MudSelectItem Value="system">@system</MudSelectItem>
             }
         </MudSelect>
         <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />

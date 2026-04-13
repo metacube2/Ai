@@ -35,43 +35,43 @@
         <RowTemplate>
             <MudTd><MudCheckBox @bind-Value="context.IsActive" /></MudTd>
             <MudTd>
-                <MudSelect T="string" @bind-Value="context.SourceSystem" Dense>
+                <MudSelect T="string" Value="@context.SourceSystem" ValueChanged="@(v => context.SourceSystem = v)" Dense>
                     @foreach (var system in _systems)
                     {
-                        <MudSelectItem Value="@system">@system</MudSelectItem>
+                        <MudSelectItem Value="system">@system</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" @bind-Value="context.SourceField" Dense>
+                <MudSelect T="string" Value="@context.SourceField" ValueChanged="@(v => context.SourceField = v)" Dense>
                     @foreach (var field in _recordFields)
                     {
-                        <MudSelectItem Value="@field">@field</MudSelectItem>
+                        <MudSelectItem Value="field">@field</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" @bind-Value="context.TargetField" Dense>
+                <MudSelect T="string" Value="@context.TargetField" ValueChanged="@(v => context.TargetField = v)" Dense>
                     @foreach (var field in _recordFields)
                     {
-                        <MudSelectItem Value="@field">@field</MudSelectItem>
+                        <MudSelectItem Value="field">@field</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" @bind-Value="context.TransformationType" Dense>
+                <MudSelect T="string" Value="@context.TransformationType" ValueChanged="@(v => context.TransformationType = v)" Dense>
                     @foreach (var type in _types)
                     {
-                        <MudSelectItem Value="@type">@type</MudSelectItem>
+                        <MudSelectItem Value="type">@type</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudTextField @bind-Value="context.Argument" Dense
+                <MudTextField Value="@context.Argument" ValueChanged="@(v => context.Argument = v)" Dense
                               HelperText="Replace: alt=>neu" />
             </MudTd>
             <MudTd>
-                <MudNumericField T="int" @bind-Value="context.SortOrder" />
+                <MudNumericField T="int" Value="@context.SortOrder" ValueChanged="@(v => context.SortOrder = v)" Dense />
             </MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
