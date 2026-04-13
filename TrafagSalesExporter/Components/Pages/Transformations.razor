@@ -1,0 +1,137 @@
+@page "/transformations"
+@using Microsoft.EntityFrameworkCore
+@using System.Reflection
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ISnackbar Snackbar
+
+<PageTitle>Transformationen</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Transformer Ansicht</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">Definiere pro Quellsystem (SAP, BI1, SAGE) Feld-Remapping und Transformationen.</MudText>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Row="true" Spacing="2" Class="mb-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRule">
+            Regel hinzufügen
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAllAsync">
+            Alle speichern
+        </MudButton>
+    </MudStack>
+
+    <MudTable Items="_rules" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Aktiv</MudTh>
+            <MudTh>System</MudTh>
+            <MudTh>Source</MudTh>
+            <MudTh>Target</MudTh>
+            <MudTh>Typ</MudTh>
+            <MudTh>Argument</MudTh>
+            <MudTh>Sort</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><MudCheckBox @bind-Value="context.IsActive" /></MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.SourceSystem" Dense>
+                    @foreach (var system in _systems)
+                    {
+                        <MudSelectItem Value="@system">@system</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.SourceField" Dense>
+                    @foreach (var field in _recordFields)
+                    {
+                        <MudSelectItem Value="@field">@field</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.TargetField" Dense>
+                    @foreach (var field in _recordFields)
+                    {
+                        <MudSelectItem Value="@field">@field</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.TransformationType" Dense>
+                    @foreach (var type in _types)
+                    {
+                        <MudSelectItem Value="@type">@type</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.Argument" Dense
+                              HelperText="Replace: alt=>neu" />
+            </MudTd>
+            <MudTd>
+                <MudNumericField T="int" @bind-Value="context.SortOrder" />
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                               OnClick="() => RemoveRule(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private readonly string[] _systems = ["SAP", "BI1", "SAGE"];
+    private readonly string[] _types = ["Copy", "Uppercase", "Lowercase", "Prefix", "Suffix", "Replace", "Constant"];
+    private readonly string[] _recordFields = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Select(p => p.Name)
+        .OrderBy(n => n)
+        .ToArray();
+
+    private List<FieldTransformationRule> _rules = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        _rules = await db.FieldTransformationRules.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToListAsync();
+    }
+
+    private void AddRule()
+    {
+        var nextSort = _rules.Count == 0 ? 10 : _rules.Max(r => r.SortOrder) + 10;
+        _rules.Add(new FieldTransformationRule
+        {
+            SourceSystem = "SAP",
+            SourceField = nameof(SalesRecord.Material),
+            TargetField = nameof(SalesRecord.Material),
+            TransformationType = "Copy",
+            SortOrder = nextSort,
+            IsActive = true
+        });
+    }
+
+    private void RemoveRule(FieldTransformationRule rule)
+    {
+        _rules.Remove(rule);
+    }
+
+    private async Task SaveAllAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        db.FieldTransformationRules.RemoveRange(db.FieldTransformationRules);
+        await db.SaveChangesAsync();
+
+        db.FieldTransformationRules.AddRange(_rules);
+        await db.SaveChangesAsync();
+
+        Snackbar.Add("Transformationsregeln gespeichert.", Severity.Success);
+        await LoadAsync();
+    }
+}

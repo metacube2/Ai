@@ -32,6 +32,38 @@ public class HanaQueryService
         return result;
     }
 
+    public ConnectionTestResult TestConnectionDetailed(HanaServer server)
+    {
+        var testResult = new ConnectionTestResult
+        {
+            TestedAtUtc = DateTime.UtcNow,
+            ConnectionStringPreview = server.GetConnectionStringPreview(),
+            Stage = "Verbindungsaufbau"
+        };
+
+        try
+        {
+            var connectionString = server.BuildConnectionString();
+            using var connection = new HanaConnection(connectionString);
+            connection.Open();
+
+            testResult.Stage = "Ping-Query";
+            using var command = new HanaCommand("SELECT 1 FROM DUMMY", connection);
+            command.ExecuteScalar();
+
+            testResult.Success = true;
+            testResult.Stage = "OK";
+            return testResult;
+        }
+        catch (Exception ex)
+        {
+            testResult.Success = false;
+            testResult.ErrorMessage = ex.Message;
+            testResult.ExceptionType = ex.GetType().Name;
+            return testResult;
+        }
+    }
+
     public void TestConnection(HanaServer server)
     {
         var connectionString = server.BuildConnectionString();
@@ -172,4 +204,14 @@ LEFT JOIN {schema}.""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
 LEFT JOIN {schema}.""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= '{dateFilter}'
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
+}
+
+public class ConnectionTestResult
+{
+    public bool Success { get; set; }
+    public DateTime TestedAtUtc { get; set; }
+    public string Stage { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; } = string.Empty;
+    public string ExceptionType { get; set; } = string.Empty;
+    public string ConnectionStringPreview { get; set; } = string.Empty;
 }

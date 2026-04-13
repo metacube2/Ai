@@ -16,6 +16,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 builder.Services.AddSingleton<HanaQueryService>();
 builder.Services.AddSingleton<ExcelExportService>();
 builder.Services.AddSingleton<SharePointUploadService>();
+builder.Services.AddSingleton<RecordTransformationService>();
 builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundService>());

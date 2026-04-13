@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<SharePointConfig> SharePointConfigs => Set<SharePointConfig>();
     public DbSet<ExportSettings> ExportSettings => Set<ExportSettings>();
     public DbSet<ExportLog> ExportLogs => Set<ExportLog>();
+    public DbSet<FieldTransformationRule> FieldTransformationRules => Set<FieldTransformationRule>();
 
     /// <summary>
     /// Fügt Spalten zu existierenden Tabellen hinzu, die bei neueren Versionen
@@ -24,6 +25,8 @@ public class AppDbContext : DbContext
         AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "AdditionalParams", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SourceSystem", "TEXT NOT NULL DEFAULT 'SAP'");
+        EnsureTransformationTable(db);
     }
 
     private static void AddColumnIfMissing(AppDbContext db, string table, string column, string type)
@@ -52,6 +55,26 @@ public class AppDbContext : DbContext
             alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {type}";
             alter.ExecuteNonQuery();
         }
+    }
+
+    private static void EnsureTransformationTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS FieldTransformationRules (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SourceSystem TEXT NOT NULL DEFAULT 'SAP',
+    SourceField TEXT NOT NULL,
+    TargetField TEXT NOT NULL,
+    TransformationType TEXT NOT NULL,
+    Argument TEXT NOT NULL DEFAULT '',
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
+        cmd.ExecuteNonQuery();
     }
 
     public static void SeedIfEmpty(AppDbContext db)

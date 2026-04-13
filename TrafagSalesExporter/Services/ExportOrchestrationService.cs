@@ -11,6 +11,7 @@ public class ExportOrchestrationService
     private readonly HanaQueryService _hanaService;
     private readonly ExcelExportService _excelService;
     private readonly SharePointUploadService _sharePointService;
+    private readonly RecordTransformationService _transformationService;
     private readonly ILogger<ExportOrchestrationService> _logger;
 
     public event Action? OnExportStatusChanged;
@@ -23,12 +24,14 @@ public class ExportOrchestrationService
         HanaQueryService hanaService,
         ExcelExportService excelService,
         SharePointUploadService sharePointService,
+        RecordTransformationService transformationService,
         ILogger<ExportOrchestrationService> logger)
     {
         _dbFactory = dbFactory;
         _hanaService = hanaService;
         _excelService = excelService;
         _sharePointService = sharePointService;
+        _transformationService = transformationService;
         _logger = logger;
     }
 
@@ -95,6 +98,13 @@ public class ExportOrchestrationService
             UpdateStatus(site.Id, "HANA Abfrage...");
             var records = await Task.Run(() => _hanaService.GetSalesRecords(
                 site.HanaServer, site.Schema, site.TSC, site.Land, settings.DateFilter));
+
+            UpdateStatus(site.Id, "Transformationen anwenden...");
+            var rules = await db.FieldTransformationRules
+                .Where(r => r.IsActive && r.SourceSystem == (string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem))
+                .OrderBy(r => r.SortOrder)
+                .ToListAsync();
+            _transformationService.Apply(records, rules);
 
             UpdateStatus(site.Id, "Excel erstellen...");
             var outputDir = Path.Combine(AppContext.BaseDirectory, "output");

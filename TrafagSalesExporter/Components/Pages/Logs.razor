@@ -11,17 +11,17 @@
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
-        <MudSelect @bind-Value="_filterLand" Label="Land" Clearable Dense Style="max-width:200px;">
+        <MudSelect @bind-Value="_filterLand" Label="Land" Clearable Style="max-width:200px;">
             @foreach (var land in _availableLands)
             {
                 <MudSelectItem Value="@land">@land</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect @bind-Value="_filterStatus" Label="Status" Clearable Dense Style="max-width:150px;">
+        <MudSelect @bind-Value="_filterStatus" Label="Status" Clearable Style="max-width:150px;">
             <MudSelectItem Value="@("OK")">OK</MudSelectItem>
             <MudSelectItem Value="@("Error")">Error</MudSelectItem>
         </MudSelect>
-        <MudDatePicker @bind-Date="_filterDate" Label="Datum" Clearable Dense Style="max-width:200px;" />
+        <MudDatePicker @bind-Date="_filterDate" Label="Datum" Clearable Style="max-width:200px;" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilter"
                    StartIcon="@Icons.Material.Filled.FilterAlt">
             Filtern

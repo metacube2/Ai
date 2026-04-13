@@ -21,5 +21,8 @@ public class Site
     [Required]
     public string Land { get; set; } = string.Empty;
 
+    [Required]
+    public string SourceSystem { get; set; } = "SAP";
+
     public bool IsActive { get; set; } = true;
 }
