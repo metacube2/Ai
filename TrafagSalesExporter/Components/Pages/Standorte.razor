@@ -135,7 +135,7 @@
         <MudSelect @bind-Value="_editingSite.HanaServerId" Label="Server" Required>
             @foreach (var s in _servers)
             {
-                <MudSelectItem Value="s.Id">@s.Name</MudSelectItem>
+                <MudSelectItem Value="@s.Id">@s.Name</MudSelectItem>
             }
         </MudSelect>
         <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
