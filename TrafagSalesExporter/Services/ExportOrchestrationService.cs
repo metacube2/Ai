@@ -55,9 +55,39 @@ public class ExportOrchestrationService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
+        var consolidatedRecords = new List<SalesRecord>();
+
         foreach (var site in sites)
         {
-            await ExportSiteAsync(site);
+            var result = await ExportSiteAsync(site);
+            if (result?.Records is { Count: > 0 })
+                consolidatedRecords.AddRange(result.Records);
+        }
+
+        if (consolidatedRecords.Count > 0)
+        {
+            var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
+            var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
+            var consolidatedPath = _excelService.CreateConsolidatedExcelFile(
+                outputDir,
+                DateTime.UtcNow.Date,
+                consolidatedRecords
+                    .OrderBy(r => r.Land)
+                    .ThenBy(r => r.Tsc)
+                    .ThenByDescending(r => r.InvoiceDate ?? DateTime.MinValue)
+                    .ThenBy(r => r.InvoiceNumber)
+                    .ThenBy(r => r.PositionOnInvoice)
+                    .ToList());
+
+            if (spConfig is not null &&
+                !string.IsNullOrWhiteSpace(spConfig.TenantId) &&
+                !string.IsNullOrWhiteSpace(spConfig.ClientId) &&
+                !string.IsNullOrWhiteSpace(spConfig.ClientSecret))
+            {
+                await _sharePointService.UploadAsync(
+                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
+                    spConfig.SiteUrl, spConfig.ExportFolder, "Alle", consolidatedPath);
+            }
         }
     }
 
@@ -69,13 +99,13 @@ public class ExportOrchestrationService
         await ExportSiteAsync(site);
     }
 
-    private async Task ExportSiteAsync(Site site)
+    private async Task<SiteExportResult?> ExportSiteAsync(Site site)
     {
-        if (site.HanaServer is null) return;
+        if (site.HanaServer is null) return null;
 
         lock (_lock)
         {
-            if (_runningExports.ContainsKey(site.Id)) return;
+            if (_runningExports.ContainsKey(site.Id)) return null;
             _runningExports[site.Id] = "HANA Abfrage...";
         }
         NotifyChanged();
@@ -130,6 +160,8 @@ public class ExportOrchestrationService
 
             _logger.LogInformation("Export OK: {Land} ({TSC}) - {Rows} Zeilen in {Duration:F1}s",
                 site.Land, site.TSC, records.Count, sw.Elapsed.TotalSeconds);
+
+            return new SiteExportResult(records, filePath);
         }
         catch (Exception ex)
         {
@@ -140,6 +172,7 @@ public class ExportOrchestrationService
             log.DurationSeconds = sw.Elapsed.TotalSeconds;
 
             _logger.LogError(ex, "Export Fehler: {Land} ({TSC})", site.Land, site.TSC);
+            return null;
         }
         finally
         {
@@ -168,4 +201,6 @@ public class ExportOrchestrationService
     {
         OnExportStatusChanged?.Invoke();
     }
+
+    private sealed record SiteExportResult(List<SalesRecord> Records, string FilePath);
 }

@@ -10,7 +10,21 @@ public class ExcelExportService
         Directory.CreateDirectory(outputDirectory);
         var fileName = $"Sales_{tsc}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
+        WriteWorkbook(fullPath, records);
+        return fullPath;
+    }
 
+    public string CreateConsolidatedExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records)
+    {
+        Directory.CreateDirectory(outputDirectory);
+        var fileName = $"Sales_All_{fileDate:yyyy-MM-dd}.xlsx";
+        var fullPath = Path.Combine(outputDirectory, fileName);
+        WriteWorkbook(fullPath, records);
+        return fullPath;
+    }
+
+    private static void WriteWorkbook(string fullPath, List<SalesRecord> records)
+    {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
 
@@ -84,6 +98,5 @@ public class ExcelExportService
 
         ws.Columns().AdjustToContents();
         workbook.SaveAs(fullPath);
-        return fullPath;
     }
 }
