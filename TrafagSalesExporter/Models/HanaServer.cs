@@ -62,4 +62,23 @@ public class HanaServer
 
         return string.Join(";", parts);
     }
+
+    public string GetConnectionStringPreview()
+    {
+        var pwdMasked = string.IsNullOrEmpty(Password) ? "" : "***";
+        var copy = new HanaServer
+        {
+            Host = Host,
+            Port = Port,
+            Username = Username,
+            Password = pwdMasked,
+            DatabaseName = DatabaseName,
+            UseSsl = UseSsl,
+            ValidateCertificate = ValidateCertificate,
+            AdditionalParams = AdditionalParams
+        };
+
+        return copy.BuildConnectionString();
+    }
 }
+
