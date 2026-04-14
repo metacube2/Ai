@@ -24,6 +24,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
 
     private static void EnsureSchema(AppDbContext db)
     {
+        EnsureSitesTableSupportsOptionalHanaServer(db);
         AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
@@ -31,6 +32,10 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "Sites", "SourceSystem", "TEXT NOT NULL DEFAULT 'SAP'");
         AddColumnIfMissing(db, "Sites", "UsernameOverride", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "PasswordOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapServiceUrl", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySet", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySetsCache", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySetsRefreshedAtUtc", "TEXT NULL");
         AddColumnIfMissing(db, "ExportSettings", "SapUsername", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "SapPassword", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "Bi1Username", "TEXT NOT NULL DEFAULT ''");
@@ -38,6 +43,104 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "ExportSettings", "SageUsername", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "SagePassword", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
+    }
+
+    private static void EnsureSitesTableSupportsOptionalHanaServer(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        var hanaServerIdIsRequired = false;
+        {
+            using var pragma = conn.CreateCommand();
+            pragma.CommandText = "PRAGMA table_info(Sites)";
+            using var reader = pragma.ExecuteReader();
+
+            while (reader.Read())
+            {
+                if (string.Equals(reader["name"]?.ToString(), "HanaServerId", StringComparison.OrdinalIgnoreCase))
+                {
+                    hanaServerIdIsRequired = Convert.ToInt32(reader["notnull"]) == 1;
+                    break;
+                }
+            }
+        }
+
+        if (!hanaServerIdIsRequired)
+            return;
+
+        using var disableFk = conn.CreateCommand();
+        disableFk.CommandText = "PRAGMA foreign_keys = OFF;";
+        disableFk.ExecuteNonQuery();
+
+        using var transaction = conn.BeginTransaction();
+
+        using (var rename = conn.CreateCommand())
+        {
+            rename.Transaction = transaction;
+            rename.CommandText = "ALTER TABLE Sites RENAME TO Sites_old;";
+            rename.ExecuteNonQuery();
+        }
+
+        using (var create = conn.CreateCommand())
+        {
+            create.Transaction = transaction;
+            create.CommandText = @"
+CREATE TABLE Sites (
+    Id INTEGER NOT NULL CONSTRAINT PK_Sites PRIMARY KEY AUTOINCREMENT,
+    HanaServerId INTEGER NULL,
+    Schema TEXT NOT NULL,
+    TSC TEXT NOT NULL,
+    Land TEXT NOT NULL,
+    SourceSystem TEXT NOT NULL DEFAULT 'SAP',
+    UsernameOverride TEXT NOT NULL DEFAULT '',
+    PasswordOverride TEXT NOT NULL DEFAULT '',
+    SapServiceUrl TEXT NOT NULL DEFAULT '',
+    SapEntitySet TEXT NOT NULL DEFAULT '',
+    SapEntitySetsCache TEXT NOT NULL DEFAULT '',
+    SapEntitySetsRefreshedAtUtc TEXT NULL,
+    IsActive INTEGER NOT NULL,
+    CONSTRAINT FK_Sites_HanaServers_HanaServerId FOREIGN KEY (HanaServerId) REFERENCES HanaServers (Id)
+);";
+            create.ExecuteNonQuery();
+        }
+
+        using (var copy = conn.CreateCommand())
+        {
+            copy.Transaction = transaction;
+            copy.CommandText = @"
+INSERT INTO Sites (
+    Id, HanaServerId, Schema, TSC, Land, SourceSystem,
+    UsernameOverride, PasswordOverride, SapServiceUrl, SapEntitySet,
+    SapEntitySetsCache, SapEntitySetsRefreshedAtUtc, IsActive
+)
+SELECT
+    Id, HanaServerId, Schema, TSC, Land,
+    COALESCE(SourceSystem, 'SAP'),
+    COALESCE(UsernameOverride, ''),
+    COALESCE(PasswordOverride, ''),
+    COALESCE(SapServiceUrl, ''),
+    COALESCE(SapEntitySet, ''),
+    COALESCE(SapEntitySetsCache, ''),
+    SapEntitySetsRefreshedAtUtc,
+    IsActive
+FROM Sites_old;";
+            copy.ExecuteNonQuery();
+        }
+
+        using (var drop = conn.CreateCommand())
+        {
+            drop.Transaction = transaction;
+            drop.CommandText = "DROP TABLE Sites_old;";
+            drop.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+
+        using var enableFk = conn.CreateCommand();
+        enableFk.CommandText = "PRAGMA foreign_keys = ON;";
+        enableFk.ExecuteNonQuery();
     }
 
     private static void AddColumnIfMissing(AppDbContext db, string table, string column, string type)

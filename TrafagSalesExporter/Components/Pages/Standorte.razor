@@ -1,9 +1,12 @@
 @page "/standorte"
 @using Microsoft.EntityFrameworkCore
+@using System.Text.Json
 @using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IHanaQueryService HanaService
+@inject ISapGatewayService SapGatewayService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -71,7 +74,7 @@
             <MudTh>TSC</MudTh>
             <MudTh>Schema</MudTh>
             <MudTh>Quellsystem</MudTh>
-            <MudTh>Host</MudTh>
+            <MudTh>Quelle</MudTh>
             <MudTh>Aktiv</MudTh>
             <MudTh>Aktionen</MudTh>
         </HeaderContent>
@@ -80,7 +83,7 @@
             <MudTd>@context.TSC</MudTd>
             <MudTd>@context.Schema</MudTd>
             <MudTd>@context.SourceSystem</MudTd>
-            <MudTd>@GetServerNode(context.HanaServer)</MudTd>
+            <MudTd>@GetConnectionTarget(context)</MudTd>
             <MudTd>
                 @if (context.IsActive)
                 {
@@ -122,8 +125,8 @@
                       HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="() => _serverDialogVisible = false">Abbrechen</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveServer">Speichern</MudButton>
+        <MudButton OnClick="CloseServerDialog">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveServer" Disabled="_savingServer">Speichern</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -138,7 +141,7 @@
         <MudSelect @bind-Value="_editingSite.SourceSystem" Label="Quellsystem" Required>
             @foreach (var system in _sourceSystems)
             {
-                <MudSelectItem Value="system">@system</MudSelectItem>
+                <MudSelectItem Value="@system">@system</MudSelectItem>
             }
         </MudSelect>
         <MudTextField @bind-Value="_editingSite.UsernameOverride" Label="Username Override"
@@ -149,29 +152,67 @@
 
         <MudDivider Class="my-4" />
 
-        <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
-        <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
-            Host, Port und technische HANA-Parameter kommen von dieser Verbindung. Username und Password hier dienen nur noch als Fallback für bestehende Einträge.
-        </MudAlert>
-        <MudTextField @bind-Value="_editingSiteServer.Name" Label="Verbindungsname" Required
-                      HelperText="Interner Anzeigename für diesen Standort" />
-        <MudTextField @bind-Value="_editingSiteServer.Host" Label="Host oder ServerNode" Required
-                      HelperText="z.B. hana01 oder hana01:30015 oder derselbe HanaServer-Wert wie in Power BI" />
-        <MudNumericField @bind-Value="_editingSiteServer.Port" Label="Port"
-                         HelperText="Wird ignoriert, wenn im Host bereits ein Port enthalten ist" />
-        <MudTextField @bind-Value="_editingSiteServer.Username" Label="Username" />
-        <MudTextField @bind-Value="_editingSiteServer.Password" Label="Password" InputType="InputType.Password" />
-        <MudTextField @bind-Value="_editingSiteServer.DatabaseName" Label="Database Name (MDC)"
-                      HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
-        <MudSwitch @bind-Value="_editingSiteServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
-        <MudSwitch @bind-Value="_editingSiteServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
-                   Disabled="!_editingSiteServer.UseSsl" />
-        <MudTextField @bind-Value="_editingSiteServer.AdditionalParams" Label="Zusätzliche Parameter"
-                      HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
+        @if (IsSapSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">SAP Gateway</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Die Service-URL zeigt auf den OData-Service. Die verfügbaren Entity Sets werden nur per Knopfdruck aktualisiert und lokal zwischengespeichert.
+            </MudAlert>
+            <MudTextField @bind-Value="_editingSite.SapServiceUrl" Label="SAP Service URL" Required
+                          HelperText="z.B. http://server:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/" />
+            <MudStack Row Spacing="2" Class="mb-3">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshSapEntitySets"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingSapEntitySets">
+                    @if (_refreshingSapEntitySets)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade...")
+                    }
+                    else
+                    {
+                        @("Quellen refreshen")
+                    }
+                </MudButton>
+                @if (_editingSite.SapEntitySetsRefreshedAtUtc.HasValue)
+                {
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        Letzter Refresh: @_editingSite.SapEntitySetsRefreshedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                    </MudText>
+                }
+            </MudStack>
+            <MudSelect @bind-Value="_editingSite.SapEntitySet" Label="SAP Entity Set" Required>
+                @foreach (var entitySet in _sapEntitySetsCache)
+                {
+                    <MudSelectItem Value="@entitySet">@entitySet</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Host, Port und technische HANA-Parameter kommen von dieser Verbindung. Username und Password hier dienen nur noch als Fallback für bestehende Einträge.
+            </MudAlert>
+            <MudTextField @bind-Value="_editingSiteServer.Name" Label="Verbindungsname" Required
+                          HelperText="Interner Anzeigename für diesen Standort" />
+            <MudTextField @bind-Value="_editingSiteServer.Host" Label="Host oder ServerNode" Required
+                          HelperText="z.B. hana01 oder hana01:30015 oder derselbe HanaServer-Wert wie in Power BI" />
+            <MudNumericField @bind-Value="_editingSiteServer.Port" Label="Port"
+                             HelperText="Wird ignoriert, wenn im Host bereits ein Port enthalten ist" />
+            <MudTextField @bind-Value="_editingSiteServer.Username" Label="Username" />
+            <MudTextField @bind-Value="_editingSiteServer.Password" Label="Password" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_editingSiteServer.DatabaseName" Label="Database Name (MDC)"
+                          HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
+            <MudSwitch @bind-Value="_editingSiteServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
+            <MudSwitch @bind-Value="_editingSiteServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
+                       Disabled="!_editingSiteServer.UseSsl" />
+            <MudTextField @bind-Value="_editingSiteServer.AdditionalParams" Label="Zusätzliche Parameter"
+                          HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
+        }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="() => _siteDialogVisible = false">Abbrechen</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite">Speichern</MudButton>
+        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets">Speichern</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -180,11 +221,15 @@
     private readonly Dictionary<int, ConnectionTestResult> _connectionStatus = new();
     private List<HanaServer> _servers = new();
     private List<Site> _sites = new();
+    private List<string> _sapEntitySetsCache = [];
     private HanaServer _editingServer = new();
     private Site _editingSite = new();
     private HanaServer _editingSiteServer = new();
     private bool _serverDialogVisible;
     private bool _siteDialogVisible;
+    private bool _refreshingSapEntitySets;
+    private bool _savingServer;
+    private bool _savingSite;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
@@ -213,6 +258,12 @@
 
     private async Task SaveServer()
     {
+        if (_savingServer)
+            return;
+
+        _savingServer = true;
+        try
+        {
         using var db = await DbFactory.CreateDbContextAsync();
         if (_editingServer.Id == 0)
         {
@@ -239,6 +290,11 @@
         _serverDialogVisible = false;
         await LoadDataAsync();
         Snackbar.Add("Server gespeichert", Severity.Success);
+        }
+        finally
+        {
+            _savingServer = false;
+        }
     }
 
     private async Task DeleteServer(HanaServer server)
@@ -294,6 +350,7 @@
             SourceSystem = "SAP",
             HanaServerId = 0
         };
+        _sapEntitySetsCache = [];
         _editingSiteServer = CreateDefaultSiteServer();
         _siteDialogVisible = true;
     }
@@ -310,8 +367,13 @@
             SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem,
             UsernameOverride = site.UsernameOverride,
             PasswordOverride = site.PasswordOverride,
+            SapServiceUrl = site.SapServiceUrl,
+            SapEntitySet = site.SapEntitySet,
+            SapEntitySetsCache = site.SapEntitySetsCache,
+            SapEntitySetsRefreshedAtUtc = site.SapEntitySetsRefreshedAtUtc,
             IsActive = site.IsActive
         };
+        _sapEntitySetsCache = ParseSapEntitySets(site.SapEntitySetsCache);
         _editingSiteServer = site.HanaServer is null
             ? CreateDefaultSiteServer(site)
             : CloneServer(site.HanaServer);
@@ -320,34 +382,54 @@
 
     private async Task SaveSite()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        var serverId = await SaveOrCreateSiteServerAsync(db);
+        if (_savingSite)
+            return;
 
-        if (_editingSite.Id == 0)
+        _savingSite = true;
+        try
         {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var serverId = IsSapSite() ? (int?)null : await SaveOrCreateSiteServerAsync(db);
             _editingSite.HanaServerId = serverId;
-            db.Sites.Add(_editingSite);
-        }
-        else
-        {
-            var existing = await db.Sites.FindAsync(_editingSite.Id);
-            if (existing is not null)
-            {
-                existing.HanaServerId = serverId;
-                existing.Schema = _editingSite.Schema;
-                existing.TSC = _editingSite.TSC;
-                existing.Land = _editingSite.Land;
-                existing.SourceSystem = _editingSite.SourceSystem;
-                existing.UsernameOverride = _editingSite.UsernameOverride;
-                existing.PasswordOverride = _editingSite.PasswordOverride;
-                existing.IsActive = _editingSite.IsActive;
-            }
-        }
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(_sapEntitySetsCache);
 
-        await db.SaveChangesAsync();
-        _siteDialogVisible = false;
-        await LoadDataAsync();
-        Snackbar.Add("Standort gespeichert", Severity.Success);
+            if (_editingSite.Id == 0)
+            {
+                db.Sites.Add(_editingSite);
+            }
+            else
+            {
+                var existing = await db.Sites.FindAsync(_editingSite.Id);
+                if (existing is not null)
+                {
+                    existing.HanaServerId = serverId;
+                    existing.Schema = _editingSite.Schema;
+                    existing.TSC = _editingSite.TSC;
+                    existing.Land = _editingSite.Land;
+                    existing.SourceSystem = _editingSite.SourceSystem;
+                    existing.UsernameOverride = _editingSite.UsernameOverride;
+                    existing.PasswordOverride = _editingSite.PasswordOverride;
+                    existing.SapServiceUrl = _editingSite.SapServiceUrl;
+                    existing.SapEntitySet = _editingSite.SapEntitySet;
+                    existing.SapEntitySetsCache = _editingSite.SapEntitySetsCache;
+                    existing.SapEntitySetsRefreshedAtUtc = _editingSite.SapEntitySetsRefreshedAtUtc;
+                    existing.IsActive = _editingSite.IsActive;
+                }
+            }
+
+            await db.SaveChangesAsync();
+            _siteDialogVisible = false;
+            await LoadDataAsync();
+            Snackbar.Add("Standort gespeichert", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Speichern fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _savingSite = false;
+        }
     }
 
     private async Task DeleteSite(Site site)
@@ -377,6 +459,15 @@
             return "-";
 
         return server.Host.Contains(':', StringComparison.Ordinal) ? server.Host : $"{server.Host}:{server.Port}";
+    }
+
+    private static string GetConnectionTarget(Site site)
+    {
+        var sourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem;
+        if (string.Equals(sourceSystem, "SAP", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(site.SapServiceUrl) ? "-" : site.SapServiceUrl;
+
+        return GetServerNode(site.HanaServer);
     }
 
     private HanaServer CreateDefaultSiteServer(Site? site = null)
@@ -416,6 +507,8 @@
             : _editingSiteServer.Name.Trim();
         _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
         _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
+        _editingSite.SapServiceUrl = _editingSite.SapServiceUrl.Trim();
+        _editingSite.SapEntitySet = _editingSite.SapEntitySet.Trim();
         _editingSiteServer.Host = _editingSiteServer.Host.Trim();
         _editingSiteServer.Username = _editingSiteServer.Username.Trim();
         _editingSiteServer.DatabaseName = _editingSiteServer.DatabaseName.Trim();
@@ -461,4 +554,82 @@
         await db.SaveChangesAsync();
         return existingServer.Id;
     }
+
+    private bool IsSapSite() => string.Equals(_editingSite.SourceSystem, "SAP", StringComparison.OrdinalIgnoreCase);
+
+    private async Task RefreshSapEntitySets()
+    {
+        if (_refreshingSapEntitySets)
+            return;
+
+        _refreshingSapEntitySets = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl))
+                throw new InvalidOperationException("SAP Service URL muss gesetzt sein.");
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new();
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride) ? settings.SapUsername : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride) ? settings.SapPassword : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("Für SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            var entitySets = await SapGatewayService.GetEntitySetsAsync(_editingSite.SapServiceUrl, username.Trim(), password.Trim());
+            _sapEntitySetsCache = entitySets;
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(entitySets);
+            _editingSite.SapEntitySetsRefreshedAtUtc = DateTime.UtcNow;
+
+            if (!string.IsNullOrWhiteSpace(_editingSite.SapEntitySet) &&
+                !_sapEntitySetsCache.Contains(_editingSite.SapEntitySet, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.SapEntitySet = string.Empty;
+            }
+
+            Snackbar.Add($"{entitySets.Count} SAP Entity Sets geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshingSapEntitySets = false;
+        }
+    }
+
+    private void CloseServerDialog()
+    {
+        if (_savingServer)
+            return;
+
+        _serverDialogVisible = false;
+    }
+
+    private void CloseSiteDialog()
+    {
+        if (_savingSite || _refreshingSapEntitySets)
+            return;
+
+        _siteDialogVisible = false;
+    }
+
+    private static List<string> ParseSapEntitySets(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return [];
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string SerializeSapEntitySets(List<string> entitySets)
+        => JsonSerializer.Serialize(entitySets);
 }

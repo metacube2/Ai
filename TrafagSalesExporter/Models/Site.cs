@@ -7,7 +7,7 @@ public class Site
 {
     public int Id { get; set; }
 
-    public int HanaServerId { get; set; }
+    public int? HanaServerId { get; set; }
 
     [ForeignKey(nameof(HanaServerId))]
     public HanaServer? HanaServer { get; set; }
@@ -27,6 +27,14 @@ public class Site
     public string UsernameOverride { get; set; } = string.Empty;
 
     public string PasswordOverride { get; set; } = string.Empty;
+
+    public string SapServiceUrl { get; set; } = string.Empty;
+
+    public string SapEntitySet { get; set; } = string.Empty;
+
+    public string SapEntitySetsCache { get; set; } = string.Empty;
+
+    public DateTime? SapEntitySetsRefreshedAtUtc { get; set; }
 
     public bool IsActive { get; set; } = true;
 }

@@ -16,6 +16,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
 builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
 builder.Services.AddSingleton<ISharePointUploadService, SharePointUploadService>();
+builder.Services.AddSingleton<ISapGatewayService, SapGatewayService>();
 builder.Services.AddSingleton<ITransformationStrategy, CopyTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, UppercaseTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, LowercaseTransformationStrategy>();

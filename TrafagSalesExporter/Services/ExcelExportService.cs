@@ -23,6 +23,16 @@ public class ExcelExportService : IExcelExportService
         return fullPath;
     }
 
+    public string CreateGenericExcelFile(string outputDirectory, string filePrefix, DateTime fileDate, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
+    {
+        Directory.CreateDirectory(outputDirectory);
+        var safePrefix = string.IsNullOrWhiteSpace(filePrefix) ? "Export" : filePrefix.Trim();
+        var fileName = $"{safePrefix}_{fileDate:yyyy-MM-dd}.xlsx";
+        var fullPath = Path.Combine(outputDirectory, fileName);
+        WriteGenericWorkbook(fullPath, worksheetName, rows);
+        return fullPath;
+    }
+
     private static void WriteWorkbook(string fullPath, List<SalesRecord> records)
     {
         using var workbook = new XLWorkbook();
@@ -94,6 +104,37 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 25).Value = record.Land;
             ws.Cell(row, 26).Value = record.DocumentType;
             row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        workbook.SaveAs(fullPath);
+    }
+
+    private static void WriteGenericWorkbook(string fullPath, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
+    {
+        using var workbook = new XLWorkbook();
+        var sheetName = string.IsNullOrWhiteSpace(worksheetName) ? "Export" : worksheetName.Trim();
+        var ws = workbook.Worksheets.Add(sheetName.Length > 31 ? sheetName[..31] : sheetName);
+
+        var headers = rows
+            .SelectMany(r => r.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        for (var i = 0; i < headers.Count; i++)
+        {
+            ws.Cell(1, i + 1).Value = headers[i];
+            ws.Cell(1, i + 1).Style.Font.Bold = true;
+        }
+
+        for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
+        {
+            var row = rows[rowIndex];
+            for (var colIndex = 0; colIndex < headers.Count; colIndex++)
+            {
+                row.TryGetValue(headers[colIndex], out var value);
+                ws.Cell(rowIndex + 2, colIndex + 1).Value = value?.ToString() ?? string.Empty;
+            }
         }
 
         ws.Columns().AdjustToContents();

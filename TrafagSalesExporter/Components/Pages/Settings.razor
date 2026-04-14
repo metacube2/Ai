@@ -7,6 +7,7 @@
 @inject ISharePointUploadService SpService
 @inject TimerBackgroundService TimerService
 @inject IHanaQueryService HanaService
+@inject ISapGatewayService SapGatewayService
 @inject ISnackbar Snackbar
 
 <PageTitle>Settings</PageTitle>
@@ -241,6 +242,17 @@
 
     private async Task TestCentralCredentials(string sourceSystem)
     {
+        if (sourceSystem == "SAP")
+        {
+            await TestCentralSapCredentials();
+            return;
+        }
+
+        await TestCentralHanaCredentials(sourceSystem);
+    }
+
+    private async Task TestCentralHanaCredentials(string sourceSystem)
+    {
         if (!_testingSystems.Add(sourceSystem))
             return;
 
@@ -290,6 +302,49 @@
             {
                 Snackbar.Add($"{sourceSystem}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
             }
+        }
+        finally
+        {
+            _testingSystems.Remove(sourceSystem);
+        }
+    }
+
+    private async Task TestCentralSapCredentials()
+    {
+        const string sourceSystem = "SAP";
+        if (!_testingSystems.Add(sourceSystem))
+            return;
+
+        try
+        {
+            var username = GetCentralUsername(sourceSystem);
+            var password = GetCentralPassword(sourceSystem);
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                Snackbar.Add("Für SAP sind keine zentralen Gateway-Zugangsdaten gepflegt.", Severity.Warning);
+                return;
+            }
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            var site = await db.Sites
+                .Where(s => (string.IsNullOrWhiteSpace(s.SourceSystem) ? "SAP" : s.SourceSystem) == sourceSystem
+                    && !string.IsNullOrWhiteSpace(s.SapServiceUrl))
+                .OrderBy(s => s.Land)
+                .FirstOrDefaultAsync();
+
+            if (site is null)
+            {
+                Snackbar.Add("Kein SAP-Standort mit Service URL gefunden.", Severity.Warning);
+                return;
+            }
+
+            await SapGatewayService.TestConnectionAsync(site.SapServiceUrl, username.Trim(), password.Trim());
+            Snackbar.Add($"SAP: Gateway-Verbindung erfolgreich über Standort '{site.Land}'.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"SAP: {ex.Message}", Severity.Error);
         }
         finally
         {

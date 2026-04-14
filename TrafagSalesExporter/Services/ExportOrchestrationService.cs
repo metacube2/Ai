@@ -70,7 +70,6 @@ public class ExportOrchestrationService
 
     private async Task<SiteExportResult?> ExportSiteAsync(Site site)
     {
-        if (site.HanaServer is null) return null;
         SiteExportResult? result = null;
 
         lock (_lock)
