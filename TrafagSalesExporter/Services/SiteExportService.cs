@@ -49,10 +49,11 @@ public class SiteExportService : ISiteExportService
             using var db = await _dbFactory.CreateDbContextAsync();
             var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
             var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
+            var exportServer = BuildEffectiveServer(site, settings);
 
             updateStatus?.Invoke("HANA Abfrage...");
             var records = await Task.Run(() => _hanaService.GetSalesRecords(
-                site.HanaServer, site.Schema, site.TSC, site.Land, settings.DateFilter));
+                exportServer, site.Schema, site.TSC, site.Land, settings.DateFilter));
 
             updateStatus?.Invoke("Transformationen anwenden...");
             var rules = await db.FieldTransformationRules
@@ -110,5 +111,54 @@ public class SiteExportService : ISiteExportService
                 FilePath = null
             };
         }
+    }
+
+    private static HanaServer BuildEffectiveServer(Site site, ExportSettings settings)
+    {
+        if (site.HanaServer is null)
+            throw new InvalidOperationException($"Standort '{site.Land}' hat keinen HANA-Server.");
+
+        var sourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem.Trim().ToUpperInvariant();
+        var inheritedUsername = GetCentralUsername(sourceSystem, settings);
+        var inheritedPassword = GetCentralPassword(sourceSystem, settings);
+
+        return new HanaServer
+        {
+            Id = site.HanaServer.Id,
+            Name = site.HanaServer.Name,
+            Host = site.HanaServer.Host,
+            Port = site.HanaServer.Port,
+            Username = FirstNonEmpty(site.UsernameOverride, inheritedUsername, site.HanaServer.Username),
+            Password = FirstNonEmpty(site.PasswordOverride, inheritedPassword, site.HanaServer.Password),
+            DatabaseName = site.HanaServer.DatabaseName,
+            UseSsl = site.HanaServer.UseSsl,
+            ValidateCertificate = site.HanaServer.ValidateCertificate,
+            AdditionalParams = site.HanaServer.AdditionalParams
+        };
+    }
+
+    private static string GetCentralUsername(string sourceSystem, ExportSettings settings) => sourceSystem switch
+    {
+        "BI1" => settings.Bi1Username,
+        "SAGE" => settings.SageUsername,
+        _ => settings.SapUsername
+    };
+
+    private static string GetCentralPassword(string sourceSystem, ExportSettings settings) => sourceSystem switch
+    {
+        "BI1" => settings.Bi1Password,
+        "SAGE" => settings.SagePassword,
+        _ => settings.SapPassword
+    };
+
+    private static string FirstNonEmpty(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value.Trim();
+        }
+
+        return string.Empty;
     }
 }

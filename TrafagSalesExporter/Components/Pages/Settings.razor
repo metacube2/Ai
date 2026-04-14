@@ -1,10 +1,12 @@
 @page "/settings"
 @using Microsoft.EntityFrameworkCore
 @using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject ISharePointUploadService SpService
 @inject TimerBackgroundService TimerService
+@inject IHanaQueryService HanaService
 @inject ISnackbar Snackbar
 
 <PageTitle>Settings</PageTitle>
@@ -53,6 +55,74 @@
     </MudGrid>
 </MudPaper>
 
+<MudText Typo="Typo.h5" Class="mb-2">Zentrale Quellsystem-Zugangsdaten</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
+                Diese Zugangsdaten werden pro Quellsystem als Standard verwendet. Ein Standort kann sie bei Bedarf mit eigenen Overrides überschreiben.
+            </MudAlert>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.h6" Class="mb-2">SAP</MudText>
+            <MudTextField @bind-Value="_exportSettings.SapUsername" Label="SAP Username" />
+            <MudTextField @bind-Value="_exportSettings.SapPassword" Label="SAP Password" InputType="InputType.Password" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("SAP"))'
+                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("SAP")' Class="mt-2">
+                @if (_testingSystems.Contains("SAP"))
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                    @("Teste...")
+                }
+                else
+                {
+                    @("SAP testen")
+                }
+            </MudButton>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.h6" Class="mb-2">BI1</MudText>
+            <MudTextField @bind-Value="_exportSettings.Bi1Username" Label="BI1 Username" />
+            <MudTextField @bind-Value="_exportSettings.Bi1Password" Label="BI1 Password" InputType="InputType.Password" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("BI1"))'
+                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("BI1")' Class="mt-2">
+                @if (_testingSystems.Contains("BI1"))
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                    @("Teste...")
+                }
+                else
+                {
+                    @("BI1 testen")
+                }
+            </MudButton>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.h6" Class="mb-2">SAGE</MudText>
+            <MudTextField @bind-Value="_exportSettings.SageUsername" Label="SAGE Username" />
+            <MudTextField @bind-Value="_exportSettings.SagePassword" Label="SAGE Password" InputType="InputType.Password" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("SAGE"))'
+                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("SAGE")' Class="mt-2">
+                @if (_testingSystems.Contains("SAGE"))
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                    @("Teste...")
+                }
+                else
+                {
+                    @("SAGE testen")
+                }
+            </MudButton>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Speichern
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
 @* Export Settings *@
 <MudText Typo="Typo.h5" Class="mb-2">Export Einstellungen</MudText>
 <MudPaper Class="pa-4 mb-6" Elevation="1">
@@ -95,6 +165,7 @@
     private SharePointConfig _spConfig = new();
     private ExportSettings _exportSettings = new();
     private bool _testingSp;
+    private readonly HashSet<string> _testingSystems = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -156,9 +227,87 @@
             existing.TimerHour = _exportSettings.TimerHour;
             existing.TimerMinute = _exportSettings.TimerMinute;
             existing.TimerEnabled = _exportSettings.TimerEnabled;
+            existing.SapUsername = _exportSettings.SapUsername;
+            existing.SapPassword = _exportSettings.SapPassword;
+            existing.Bi1Username = _exportSettings.Bi1Username;
+            existing.Bi1Password = _exportSettings.Bi1Password;
+            existing.SageUsername = _exportSettings.SageUsername;
+            existing.SagePassword = _exportSettings.SagePassword;
         }
         await db.SaveChangesAsync();
         TimerService.Recalculate();
         Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
     }
+
+    private async Task TestCentralCredentials(string sourceSystem)
+    {
+        if (!_testingSystems.Add(sourceSystem))
+            return;
+
+        try
+        {
+            var username = GetCentralUsername(sourceSystem);
+            var password = GetCentralPassword(sourceSystem);
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                Snackbar.Add($"Für {sourceSystem} sind keine zentralen Zugangsdaten gepflegt.", Severity.Warning);
+                return;
+            }
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            var site = await db.Sites
+                .Include(s => s.HanaServer)
+                .Where(s => (string.IsNullOrWhiteSpace(s.SourceSystem) ? "SAP" : s.SourceSystem) == sourceSystem)
+                .OrderBy(s => s.Land)
+                .FirstOrDefaultAsync();
+
+            if (site?.HanaServer is null)
+            {
+                Snackbar.Add($"Kein Standort mit Quellsystem {sourceSystem} und HANA-Verbindung gefunden.", Severity.Warning);
+                return;
+            }
+
+            var testServer = new HanaServer
+            {
+                Name = $"{sourceSystem} Central Test",
+                Host = site.HanaServer.Host,
+                Port = site.HanaServer.Port,
+                Username = username.Trim(),
+                Password = password.Trim(),
+                DatabaseName = site.HanaServer.DatabaseName,
+                UseSsl = site.HanaServer.UseSsl,
+                ValidateCertificate = site.HanaServer.ValidateCertificate,
+                AdditionalParams = site.HanaServer.AdditionalParams
+            };
+
+            var result = await Task.Run(() => HanaService.TestConnectionDetailed(testServer));
+            if (result.Success)
+            {
+                Snackbar.Add($"{sourceSystem}: Verbindung erfolgreich über Standort '{site.Land}'.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"{sourceSystem}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
+            }
+        }
+        finally
+        {
+            _testingSystems.Remove(sourceSystem);
+        }
+    }
+
+    private string GetCentralUsername(string sourceSystem) => sourceSystem switch
+    {
+        "BI1" => _exportSettings.Bi1Username,
+        "SAGE" => _exportSettings.SageUsername,
+        _ => _exportSettings.SapUsername
+    };
+
+    private string GetCentralPassword(string sourceSystem) => sourceSystem switch
+    {
+        "BI1" => _exportSettings.Bi1Password,
+        "SAGE" => _exportSettings.SagePassword,
+        _ => _exportSettings.SapPassword
+    };
 }

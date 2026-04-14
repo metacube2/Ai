@@ -29,6 +29,14 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "AdditionalParams", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SourceSystem", "TEXT NOT NULL DEFAULT 'SAP'");
+        AddColumnIfMissing(db, "Sites", "UsernameOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "PasswordOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "SapUsername", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "SapPassword", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "Bi1Username", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "Bi1Password", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "SageUsername", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "SagePassword", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
     }
 

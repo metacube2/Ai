@@ -141,11 +141,18 @@
                 <MudSelectItem Value="system">@system</MudSelectItem>
             }
         </MudSelect>
+        <MudTextField @bind-Value="_editingSite.UsernameOverride" Label="Username Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Username des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.PasswordOverride" Label="Password Override" InputType="InputType.Password"
+                      HelperText="Optional. Wenn leer, wird das zentrale Passwort des Quellsystems verwendet." />
         <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
 
         <MudDivider Class="my-4" />
 
         <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
+        <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+            Host, Port und technische HANA-Parameter kommen von dieser Verbindung. Username und Password hier dienen nur noch als Fallback für bestehende Einträge.
+        </MudAlert>
         <MudTextField @bind-Value="_editingSiteServer.Name" Label="Verbindungsname" Required
                       HelperText="Interner Anzeigename für diesen Standort" />
         <MudTextField @bind-Value="_editingSiteServer.Host" Label="Host oder ServerNode" Required
@@ -301,6 +308,8 @@
             TSC = site.TSC,
             Land = site.Land,
             SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem,
+            UsernameOverride = site.UsernameOverride,
+            PasswordOverride = site.PasswordOverride,
             IsActive = site.IsActive
         };
         _editingSiteServer = site.HanaServer is null
@@ -329,6 +338,8 @@
                 existing.TSC = _editingSite.TSC;
                 existing.Land = _editingSite.Land;
                 existing.SourceSystem = _editingSite.SourceSystem;
+                existing.UsernameOverride = _editingSite.UsernameOverride;
+                existing.PasswordOverride = _editingSite.PasswordOverride;
                 existing.IsActive = _editingSite.IsActive;
             }
         }
@@ -403,6 +414,8 @@
         _editingSiteServer.Name = string.IsNullOrWhiteSpace(_editingSiteServer.Name)
             ? $"{_editingSite.Land} HANA".Trim()
             : _editingSiteServer.Name.Trim();
+        _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
+        _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
         _editingSiteServer.Host = _editingSiteServer.Host.Trim();
         _editingSiteServer.Username = _editingSiteServer.Username.Trim();
         _editingSiteServer.DatabaseName = _editingSiteServer.DatabaseName.Trim();

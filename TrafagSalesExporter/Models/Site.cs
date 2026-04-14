@@ -24,5 +24,9 @@ public class Site
     [Required]
     public string SourceSystem { get; set; } = "SAP";
 
+    public string UsernameOverride { get; set; } = string.Empty;
+
+    public string PasswordOverride { get; set; } = string.Empty;
+
     public bool IsActive { get; set; } = true;
 }

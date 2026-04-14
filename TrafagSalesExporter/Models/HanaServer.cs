@@ -97,7 +97,10 @@ public class HanaServer
         if (string.IsNullOrWhiteSpace(value))
             return string.Empty;
 
-        if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        // Treat plain "host:port" values as HANA ServerNode, not as a URI scheme.
+        // Only parse as URI when an explicit scheme is present.
+        if (value.Contains("://", StringComparison.Ordinal) &&
+            Uri.TryCreate(value, UriKind.Absolute, out var uri))
         {
             return uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
         }
