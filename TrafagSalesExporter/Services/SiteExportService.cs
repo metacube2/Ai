@@ -10,26 +10,32 @@ public class SiteExportService : ISiteExportService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IHanaQueryService _hanaService;
     private readonly ISapGatewayService _sapGatewayService;
+    private readonly ISapCompositionService _sapCompositionService;
     private readonly IExcelExportService _excelService;
     private readonly ISharePointUploadService _sharePointService;
     private readonly IRecordTransformationService _transformationService;
+    private readonly ICentralSalesRecordService _centralSalesRecordService;
     private readonly ILogger<SiteExportService> _logger;
 
     public SiteExportService(
         IDbContextFactory<AppDbContext> dbFactory,
         IHanaQueryService hanaService,
         ISapGatewayService sapGatewayService,
+        ISapCompositionService sapCompositionService,
         IExcelExportService excelService,
         ISharePointUploadService sharePointService,
         IRecordTransformationService transformationService,
+        ICentralSalesRecordService centralSalesRecordService,
         ILogger<SiteExportService> logger)
     {
         _dbFactory = dbFactory;
         _hanaService = hanaService;
         _sapGatewayService = sapGatewayService;
+        _sapCompositionService = sapCompositionService;
         _excelService = excelService;
         _sharePointService = sharePointService;
         _transformationService = transformationService;
+        _centralSalesRecordService = centralSalesRecordService;
         _logger = logger;
     }
 
@@ -59,14 +65,25 @@ public class SiteExportService : ISiteExportService
                 var credentials = ResolveCredentials(site, settings, sourceSystem);
                 if (string.IsNullOrWhiteSpace(site.SapServiceUrl))
                     throw new InvalidOperationException($"Standort '{site.Land}' hat keine SAP Service URL.");
-                if (string.IsNullOrWhiteSpace(site.SapEntitySet))
-                    throw new InvalidOperationException($"Standort '{site.Land}' hat kein SAP Entity Set ausgewählt.");
+                var sapSources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
+                var sapJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
+                var sapMappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
+                if (sapSources.Count == 0)
+                    throw new InvalidOperationException($"Standort '{site.Land}' hat keine SAP-Quellen konfiguriert.");
+                if (sapMappings.Count == 0)
+                    throw new InvalidOperationException($"Standort '{site.Land}' hat keine SAP-Feldmappings.");
 
-                updateStatus?.Invoke("SAP Gateway Abfrage...");
-                var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, site.SapEntitySet, credentials.Username, credentials.Password);
+                updateStatus?.Invoke("SAP Quellen laden...");
+                records = await _sapCompositionService.BuildSalesRecordsAsync(site, sapSources, sapJoins, sapMappings, credentials.Username, credentials.Password);
+                updateStatus?.Invoke("Transformationen anwenden...");
+                var rules = await db.FieldTransformationRules
+                    .Where(r => r.IsActive && r.SourceSystem == sourceSystem)
+                    .OrderBy(r => r.SortOrder)
+                    .ToListAsync();
+                _transformationService.Apply(records, rules);
                 updateStatus?.Invoke("Excel erstellen...");
-                filePath = _excelService.CreateGenericExcelFile(outputDir, $"SAP_{site.TSC}_{site.SapEntitySet}", DateTime.UtcNow.Date, site.SapEntitySet, rows);
-                log.RowCount = rows.Count;
+                filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
+                log.RowCount = records.Count;
             }
             else
             {
@@ -86,6 +103,9 @@ public class SiteExportService : ISiteExportService
                 filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
                 log.RowCount = records.Count;
             }
+
+            updateStatus?.Invoke("Zentrale Tabelle aktualisieren...");
+            await _centralSalesRecordService.ReplaceForSiteAsync(site, records);
 
             var fileName = Path.GetFileName(filePath);
 

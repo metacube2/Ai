@@ -1,6 +1,7 @@
 @page "/standorte"
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
+@using System.Reflection
 @using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
@@ -180,12 +181,110 @@
                     </MudText>
                 }
             </MudStack>
-            <MudSelect @bind-Value="_editingSite.SapEntitySet" Label="SAP Entity Set" Required>
-                @foreach (var entitySet in _sapEntitySetsCache)
-                {
-                    <MudSelectItem Value="@entitySet">@entitySet</MudSelectItem>
-                }
-            </MudSelect>
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">SAP Quellen</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapSource">Quelle hinzufügen</MudButton>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Pro Quelle Alias und Entity Set definieren. Joins verwenden links/rechts kommagetrennte Schlüsselfelder wie `VBELN,POSNR`. Feldmappings erwarten `Alias.Feldname` oder Konstanten wie `=SAP`.
+            </MudText>
+            <MudTable Items="_sapSources" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Alias</MudTh>
+                    <MudTh>Entity Set</MudTh>
+                    <MudTh>Primär</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.Alias" Dense /></MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.EntitySet" Dense>
+                            @foreach (var entitySet in _sapEntitySetsCache)
+                            {
+                                <MudSelectItem Value="@entitySet">@entitySet</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsPrimary" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapSource(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">SAP Joins</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapJoin">Join hinzufügen</MudButton>
+            </MudStack>
+            <MudTable Items="_sapJoins" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Links</MudTh>
+                    <MudTh>Left Keys</MudTh>
+                    <MudTh>Rechts</MudTh>
+                    <MudTh>Right Keys</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.LeftAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudTextField @bind-Value="context.LeftKeys" Dense Placeholder="VBELN,POSNR" /></MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.RightAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudTextField @bind-Value="context.RightKeys" Dense Placeholder="VBELN,POSNR" /></MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.JoinType" Dense>
+                            <MudSelectItem Value="@("Left")">Left</MudSelectItem>
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapJoin(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Feldmappings ins zentrale Schema</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapMapping">Mapping hinzufügen</MudButton>
+            </MudStack>
+            <MudTable Items="_sapMappings" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Zielfeld</MudTh>
+                    <MudTh>Source Expression</MudTh>
+                    <MudTh>Pflicht</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.TargetField" Dense>
+                            @foreach (var field in _salesRecordFields)
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudTextField @bind-Value="context.SourceExpression" Dense Placeholder="VBAK.VBELN oder =SAP" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
         }
         else
         {
@@ -222,6 +321,13 @@
     private List<HanaServer> _servers = new();
     private List<Site> _sites = new();
     private List<string> _sapEntitySetsCache = [];
+    private List<SapSourceDefinition> _sapSources = [];
+    private List<SapJoinDefinition> _sapJoins = [];
+    private List<SapFieldMapping> _sapMappings = [];
+    private readonly string[] _salesRecordFields = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Select(p => p.Name)
+        .ToArray();
     private HanaServer _editingServer = new();
     private Site _editingSite = new();
     private HanaServer _editingSiteServer = new();
@@ -348,9 +454,12 @@
         {
             IsActive = true,
             SourceSystem = "SAP",
-            HanaServerId = 0
+            HanaServerId = null
         };
         _sapEntitySetsCache = [];
+        _sapSources = [];
+        _sapJoins = [];
+        _sapMappings = [];
         _editingSiteServer = CreateDefaultSiteServer();
         _siteDialogVisible = true;
     }
@@ -374,6 +483,10 @@
             IsActive = site.IsActive
         };
         _sapEntitySetsCache = ParseSapEntitySets(site.SapEntitySetsCache);
+        using var db = DbFactory.CreateDbContext();
+        _sapSources = db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
+        _sapJoins = db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).OrderBy(j => j.SortOrder).ThenBy(j => j.Id).ToList();
+        _sapMappings = db.SapFieldMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
         _editingSiteServer = site.HanaServer is null
             ? CreateDefaultSiteServer(site)
             : CloneServer(site.HanaServer);
@@ -418,6 +531,7 @@
             }
 
             await db.SaveChangesAsync();
+            await SaveSapConfigurationAsync(db, _editingSite.Id);
             _siteDialogVisible = false;
             await LoadDataAsync();
             Snackbar.Add("Standort gespeichert", Severity.Success);
@@ -445,6 +559,14 @@
         var entity = await db.Sites.FindAsync(site.Id);
         if (entity is not null)
         {
+            var sources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
+            var joins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
+            var mappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
+            var centralRows = await db.CentralSalesRecords.Where(r => r.SiteId == site.Id).ToListAsync();
+            if (sources.Count > 0) db.SapSourceDefinitions.RemoveRange(sources);
+            if (joins.Count > 0) db.SapJoinDefinitions.RemoveRange(joins);
+            if (mappings.Count > 0) db.SapFieldMappings.RemoveRange(mappings);
+            if (centralRows.Count > 0) db.CentralSalesRecords.RemoveRange(centralRows);
             db.Sites.Remove(entity);
             await db.SaveChangesAsync();
         }
@@ -632,4 +754,97 @@
 
     private static string SerializeSapEntitySets(List<string> entitySets)
         => JsonSerializer.Serialize(entitySets);
+
+    private void AddSapSource()
+    {
+        _sapSources.Add(new SapSourceDefinition
+        {
+            Alias = $"SRC{_sapSources.Count + 1}",
+            EntitySet = _sapEntitySetsCache.FirstOrDefault() ?? string.Empty,
+            IsActive = true,
+            IsPrimary = _sapSources.Count == 0,
+            SortOrder = _sapSources.Count
+        });
+    }
+
+    private void RemoveSapSource(SapSourceDefinition source)
+    {
+        _sapSources.Remove(source);
+    }
+
+    private void AddSapJoin()
+    {
+        _sapJoins.Add(new SapJoinDefinition
+        {
+            JoinType = "Left",
+            IsActive = true,
+            SortOrder = _sapJoins.Count
+        });
+    }
+
+    private void RemoveSapJoin(SapJoinDefinition join)
+    {
+        _sapJoins.Remove(join);
+    }
+
+    private void AddSapMapping()
+    {
+        _sapMappings.Add(new SapFieldMapping
+        {
+            TargetField = _salesRecordFields.First(),
+            IsActive = true,
+            SortOrder = _sapMappings.Count
+        });
+    }
+
+    private void RemoveSapMapping(SapFieldMapping mapping)
+    {
+        _sapMappings.Remove(mapping);
+    }
+
+    private IEnumerable<string> GetSapAliases()
+        => _sapSources.Where(s => !string.IsNullOrWhiteSpace(s.Alias)).Select(s => s.Alias).Distinct(StringComparer.OrdinalIgnoreCase);
+
+    private async Task SaveSapConfigurationAsync(AppDbContext db, int siteId)
+    {
+        var oldSources = await db.SapSourceDefinitions.Where(s => s.SiteId == siteId).ToListAsync();
+        var oldJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == siteId).ToListAsync();
+        var oldMappings = await db.SapFieldMappings.Where(m => m.SiteId == siteId).ToListAsync();
+        if (oldSources.Count > 0) db.SapSourceDefinitions.RemoveRange(oldSources);
+        if (oldJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(oldJoins);
+        if (oldMappings.Count > 0) db.SapFieldMappings.RemoveRange(oldMappings);
+
+        if (IsSapSite())
+        {
+            NormalizeSapConfigCollections();
+            foreach (var source in _sapSources)
+                source.SiteId = siteId;
+            foreach (var join in _sapJoins)
+                join.SiteId = siteId;
+            foreach (var mapping in _sapMappings)
+                mapping.SiteId = siteId;
+            db.SapSourceDefinitions.AddRange(_sapSources);
+            db.SapJoinDefinitions.AddRange(_sapJoins);
+            db.SapFieldMappings.AddRange(_sapMappings);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private void NormalizeSapConfigCollections()
+    {
+        for (var i = 0; i < _sapSources.Count; i++)
+            _sapSources[i].SortOrder = i;
+        for (var i = 0; i < _sapJoins.Count; i++)
+            _sapJoins[i].SortOrder = i;
+        for (var i = 0; i < _sapMappings.Count; i++)
+            _sapMappings[i].SortOrder = i;
+
+        var selectedPrimaryIndex = _sapSources.FindIndex(s => s.IsPrimary);
+        var primarySource = selectedPrimaryIndex >= 0 ? _sapSources[selectedPrimaryIndex] : _sapSources.FirstOrDefault();
+        foreach (var source in _sapSources)
+            source.IsPrimary = primarySource is not null && ReferenceEquals(source, primarySource);
+        if (_sapSources.Count > 0 && _sapSources.All(s => !s.IsPrimary))
+            _sapSources[0].IsPrimary = true;
+    }
 }

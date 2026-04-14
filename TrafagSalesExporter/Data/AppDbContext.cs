@@ -13,4 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<ExportSettings> ExportSettings => Set<ExportSettings>();
     public DbSet<ExportLog> ExportLogs => Set<ExportLog>();
     public DbSet<FieldTransformationRule> FieldTransformationRules => Set<FieldTransformationRule>();
+    public DbSet<SapSourceDefinition> SapSourceDefinitions => Set<SapSourceDefinition>();
+    public DbSet<SapJoinDefinition> SapJoinDefinitions => Set<SapJoinDefinition>();
+    public DbSet<SapFieldMapping> SapFieldMappings => Set<SapFieldMapping>();
+    public DbSet<CentralSalesRecord> CentralSalesRecords => Set<CentralSalesRecord>();
 }

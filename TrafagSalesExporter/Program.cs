@@ -17,6 +17,7 @@ builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
 builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
 builder.Services.AddSingleton<ISharePointUploadService, SharePointUploadService>();
 builder.Services.AddSingleton<ISapGatewayService, SapGatewayService>();
+builder.Services.AddSingleton<ISapCompositionService, SapCompositionService>();
 builder.Services.AddSingleton<ITransformationStrategy, CopyTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, UppercaseTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, LowercaseTransformationStrategy>();
@@ -28,6 +29,8 @@ builder.Services.AddSingleton<IRecordTransformationService, RecordTransformation
 builder.Services.AddSingleton<ISiteExportService, SiteExportService>();
 builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();
+builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
+builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
 builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();

@@ -43,6 +43,10 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "ExportSettings", "SageUsername", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "SagePassword", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
+        EnsureSapSourceTable(db);
+        EnsureSapJoinTable(db);
+        EnsureSapFieldMappingTable(db);
+        EnsureCentralSalesRecordTable(db);
     }
 
     private static void EnsureSitesTableSupportsOptionalHanaServer(AppDbContext db)
@@ -189,6 +193,115 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
     Argument TEXT NOT NULL DEFAULT '',
     SortOrder INTEGER NOT NULL DEFAULT 0,
     IsActive INTEGER NOT NULL DEFAULT 1
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureSapSourceTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS SapSourceDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    Alias TEXT NOT NULL,
+    EntitySet TEXT NOT NULL,
+    IsPrimary INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureSapJoinTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS SapJoinDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    LeftAlias TEXT NOT NULL,
+    RightAlias TEXT NOT NULL,
+    LeftKeys TEXT NOT NULL,
+    RightKeys TEXT NOT NULL,
+    JoinType TEXT NOT NULL DEFAULT 'Left',
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureSapFieldMappingTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS SapFieldMappings (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    TargetField TEXT NOT NULL,
+    SourceExpression TEXT NOT NULL,
+    IsRequired INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureCentralSalesRecordTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS CentralSalesRecords (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    StoredAtUtc TEXT NOT NULL,
+    SiteId INTEGER NOT NULL,
+    SourceSystem TEXT NOT NULL,
+    ExtractionDate TEXT NOT NULL,
+    Tsc TEXT NOT NULL,
+    InvoiceNumber TEXT NOT NULL,
+    PositionOnInvoice INTEGER NOT NULL,
+    Material TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    ProductGroup TEXT NOT NULL,
+    Quantity TEXT NOT NULL,
+    SupplierNumber TEXT NOT NULL,
+    SupplierName TEXT NOT NULL,
+    SupplierCountry TEXT NOT NULL,
+    CustomerNumber TEXT NOT NULL,
+    CustomerName TEXT NOT NULL,
+    CustomerCountry TEXT NOT NULL,
+    CustomerIndustry TEXT NOT NULL,
+    StandardCost TEXT NOT NULL,
+    StandardCostCurrency TEXT NOT NULL,
+    PurchaseOrderNumber TEXT NOT NULL,
+    SalesPriceValue TEXT NOT NULL,
+    SalesCurrency TEXT NOT NULL,
+    Incoterms2020 TEXT NOT NULL,
+    SalesResponsibleEmployee TEXT NOT NULL,
+    InvoiceDate TEXT NULL,
+    OrderDate TEXT NULL,
+    Land TEXT NOT NULL,
+    DocumentType TEXT NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
 );";
         cmd.ExecuteNonQuery();
     }

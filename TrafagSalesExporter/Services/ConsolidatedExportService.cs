@@ -7,22 +7,26 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ICentralSalesRecordService _centralSalesRecordService;
     private readonly IExcelExportService _excelService;
     private readonly ISharePointUploadService _sharePointService;
 
     public ConsolidatedExportService(
         IDbContextFactory<AppDbContext> dbFactory,
+        ICentralSalesRecordService centralSalesRecordService,
         IExcelExportService excelService,
         ISharePointUploadService sharePointService)
     {
         _dbFactory = dbFactory;
+        _centralSalesRecordService = centralSalesRecordService;
         _excelService = excelService;
         _sharePointService = sharePointService;
     }
 
     public async Task<string?> ExportAsync(List<SalesRecord> records)
     {
-        if (records.Count == 0)
+        var consolidatedRecords = await _centralSalesRecordService.GetAllAsync();
+        if (consolidatedRecords.Count == 0)
             return null;
 
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -31,7 +35,7 @@ public class ConsolidatedExportService : IConsolidatedExportService
         var consolidatedPath = _excelService.CreateConsolidatedExcelFile(
             outputDir,
             DateTime.UtcNow.Date,
-            records
+            consolidatedRecords
                 .OrderBy(r => r.Land)
                 .ThenBy(r => r.Tsc)
                 .ThenByDescending(r => r.InvoiceDate ?? DateTime.MinValue)

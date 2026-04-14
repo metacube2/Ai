@@ -8,11 +8,38 @@
 @inject TimerBackgroundService TimerService
 @inject IHanaQueryService HanaService
 @inject ISapGatewayService SapGatewayService
+@inject IConfigTransferService ConfigTransferService
+@inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
 <PageTitle>Settings</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
+
+<MudText Typo="Typo.h5" Class="mb-2">Konfiguration Import/Export</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCheckBox @bind-Value="_includeSecretsInExport" Label="Mit Secrets exportieren" />
+            <MudText Typo="Typo.caption">
+                Wenn deaktiviert, bleiben Passwörter und Secrets beim Export leer. Beim Import ohne Secrets werden bestehende Secrets auf dem Zielsystem beibehalten.
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportConfiguration"
+                           StartIcon="@Icons.Material.Filled.Download" Disabled="_exportingConfig">
+                    @(_exportingConfig ? "Exportiere..." : "Konfiguration exportieren")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" HtmlTag="label"
+                           StartIcon="@Icons.Material.Filled.UploadFile" Disabled="_importingConfig">
+                    @(_importingConfig ? "Importiere..." : "Konfiguration importieren")
+                    <InputFile OnChange="ImportConfiguration" accept=".json,application/json" style="display:none" />
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
 
 @* SharePoint Config *@
 <MudText Typo="Typo.h5" Class="mb-2">SharePoint Konfiguration</MudText>
@@ -166,6 +193,9 @@
     private SharePointConfig _spConfig = new();
     private ExportSettings _exportSettings = new();
     private bool _testingSp;
+    private bool _includeSecretsInExport;
+    private bool _exportingConfig;
+    private bool _importingConfig;
     private readonly HashSet<string> _testingSystems = [];
 
     protected override async Task OnInitializedAsync()
@@ -238,6 +268,60 @@
         await db.SaveChangesAsync();
         TimerService.Recalculate();
         Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
+    }
+
+    private async Task ExportConfiguration()
+    {
+        if (_exportingConfig)
+            return;
+
+        _exportingConfig = true;
+        try
+        {
+            var json = await ConfigTransferService.ExportJsonAsync(_includeSecretsInExport);
+            var suffix = _includeSecretsInExport ? "with-secrets" : "without-secrets";
+            var fileName = $"trafag-config-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{suffix}.json";
+            await JS.InvokeVoidAsync("trafagDownload.saveTextFile", fileName, json, "application/json;charset=utf-8");
+            Snackbar.Add("Konfiguration exportiert", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _exportingConfig = false;
+        }
+    }
+
+    private async Task ImportConfiguration(InputFileChangeEventArgs args)
+    {
+        if (_importingConfig)
+            return;
+
+        _importingConfig = true;
+        try
+        {
+            var file = args.File;
+            await using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            await ConfigTransferService.ImportJsonAsync(json);
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
+            _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+            TimerService.Recalculate();
+            Snackbar.Add("Konfiguration importiert", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Import fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _importingConfig = false;
+        }
     }
 
     private async Task TestCentralCredentials(string sourceSystem)

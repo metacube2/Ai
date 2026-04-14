@@ -116,7 +116,9 @@
                 Land = s.Land,
                 TSC = s.TSC,
                 Schema = s.Schema,
-                ServerName = s.HanaServer?.Name ?? "",
+                ServerName = string.Equals(s.SourceSystem, "SAP", StringComparison.OrdinalIgnoreCase)
+                    ? (string.IsNullOrWhiteSpace(s.SapServiceUrl) ? "SAP Gateway" : s.SapServiceUrl)
+                    : s.HanaServer?.Name ?? "",
                 LastStatus = log?.Status ?? "",
                 RowCount = log?.RowCount ?? 0,
                 LastRun = log?.Timestamp,
