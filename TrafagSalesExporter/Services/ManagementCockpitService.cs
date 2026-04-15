@@ -106,6 +106,152 @@ public class ManagementCockpitService : IManagementCockpitService
         return Task.FromResult(result);
     }
 
+    public async Task<List<int>> GetAvailableCentralYearsAsync()
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var years = await db.CentralSalesRecords
+            .Select(r => r.InvoiceDate.HasValue ? r.InvoiceDate.Value.Year : r.ExtractionDate.Year)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+        return years;
+    }
+
+    public async Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var baseRows = await db.CentralSalesRecords
+            .Select(r => new CentralCockpitRow
+            {
+                SourceSystem = r.SourceSystem,
+                Land = r.Land,
+                Tsc = r.Tsc,
+                InvoiceNumber = r.InvoiceNumber,
+                SalesCurrency = string.IsNullOrWhiteSpace(r.SalesCurrency) ? "-" : r.SalesCurrency,
+                SalesValue = r.SalesPriceValue,
+                PeriodDate = r.InvoiceDate ?? r.ExtractionDate
+            })
+            .ToListAsync();
+
+        if (baseRows.Count == 0)
+            throw new InvalidOperationException("Die zentrale Tabelle enthält noch keine Datensätze.");
+
+        var selectedRows = baseRows
+            .Where(r => r.PeriodDate.Year == year && (!month.HasValue || r.PeriodDate.Month == month.Value))
+            .ToList();
+
+        if (selectedRows.Count == 0)
+            throw new InvalidOperationException("Für den gewählten Zeitraum gibt es keine Datensätze in der zentralen Tabelle.");
+
+        var yearlyRows = baseRows
+            .Where(r => r.PeriodDate.Year == 2025 || r.PeriodDate.Year == 2026)
+            .ToList();
+
+        var dailyBaseRows = selectedRows
+            .Where(r => month.HasValue)
+            .ToList();
+
+        return new ManagementCockpitCentralResult
+        {
+            Filter = new ManagementCockpitCentralFilter
+            {
+                Year = year,
+                Month = month
+            },
+            Summary = new ManagementCockpitCentralSummary
+            {
+                RowCount = selectedRows.Count,
+                InvoiceCount = selectedRows.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                SiteCount = selectedRows.Select(x => x.Tsc).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                CountryCount = selectedRows.Select(x => x.Land).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                CurrencyCount = selectedRows.Select(x => x.SalesCurrency).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                PeriodStart = selectedRows.Min(x => x.PeriodDate),
+                PeriodEnd = selectedRows.Max(x => x.PeriodDate)
+            },
+            Notices =
+            [
+                "Roh-Auswertung aus CentralSalesRecords.",
+                "Keine Intercompany-Bereinigung angewendet.",
+                "Keine CHF-Umrechnung angewendet. Umsatz bleibt in Sales Currency.",
+                "Kein Budget- und kein Spartemapping angewendet.",
+                "Periodenlogik basiert auf Invoice Date, falls vorhanden, sonst auf Extraction Date."
+            ],
+            YearlyTotals = yearlyRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.SalesCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.SalesCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitTimeValueRow
+                {
+                    Label = g.Key.Year.ToString(),
+                    Year = g.Key.Year,
+                    Currency = g.Key.SalesCurrency,
+                    SalesValue = g.Sum(x => x.SalesValue),
+                    RowCount = g.Count()
+                })
+                .ToList(),
+            MonthlyTotals = selectedRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.PeriodDate.Month, x.SalesCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .ThenBy(g => g.Key.SalesCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitTimeValueRow
+                {
+                    Label = $"{g.Key.Year:D4}-{g.Key.Month:D2}",
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Currency = g.Key.SalesCurrency,
+                    SalesValue = g.Sum(x => x.SalesValue),
+                    RowCount = g.Count()
+                })
+                .ToList(),
+            DailyTotals = dailyBaseRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.PeriodDate.Month, x.PeriodDate.Day, x.SalesCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .ThenBy(g => g.Key.Day)
+                .ThenBy(g => g.Key.SalesCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitTimeValueRow
+                {
+                    Label = $"{g.Key.Year:D4}-{g.Key.Month:D2}-{g.Key.Day:D2}",
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Day = g.Key.Day,
+                    Currency = g.Key.SalesCurrency,
+                    SalesValue = g.Sum(x => x.SalesValue),
+                    RowCount = g.Count()
+                })
+                .ToList(),
+            SourceSystemTotals = selectedRows
+                .GroupBy(x => new { x.SourceSystem, x.SalesCurrency })
+                .OrderBy(g => g.Key.SourceSystem, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(g => g.Key.SalesCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitDimensionValueRow
+                {
+                    Label = g.Key.SourceSystem,
+                    Currency = g.Key.SalesCurrency,
+                    SalesValue = g.Sum(x => x.SalesValue),
+                    RowCount = g.Count(),
+                    InvoiceCount = g.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                })
+                .ToList(),
+            CountryTotals = selectedRows
+                .GroupBy(x => new { x.Land, x.SalesCurrency })
+                .OrderByDescending(g => g.Sum(x => x.SalesValue))
+                .ThenBy(g => g.Key.Land, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(g => g.Key.SalesCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitDimensionValueRow
+                {
+                    Label = g.Key.Land,
+                    Currency = g.Key.SalesCurrency,
+                    SalesValue = g.Sum(x => x.SalesValue),
+                    RowCount = g.Count(),
+                    InvoiceCount = g.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                })
+                .ToList()
+        };
+    }
+
     private static IEnumerable<string> GetCandidateDirectories(ExportSettings settings)
     {
         yield return Path.Combine(AppContext.BaseDirectory, "output");
@@ -383,5 +529,16 @@ public class ManagementCockpitService : IManagementCockpitService
         public string Land { get; set; } = string.Empty;
         public decimal EstimatedCostTotal { get; set; }
         public decimal EstimatedMarginTotal { get; set; }
+    }
+
+    private class CentralCockpitRow
+    {
+        public string SourceSystem { get; set; } = string.Empty;
+        public string Land { get; set; } = string.Empty;
+        public string Tsc { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string SalesCurrency { get; set; } = string.Empty;
+        public decimal SalesValue { get; set; }
+        public DateTime PeriodDate { get; set; }
     }
 }

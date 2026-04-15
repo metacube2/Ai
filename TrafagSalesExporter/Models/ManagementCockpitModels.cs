@@ -48,3 +48,52 @@ public class ManagementCockpitResult
     public List<ManagementCockpitTopItem> TopSalesEmployees { get; set; } = [];
     public Dictionary<string, int> DataQualityCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
+
+public class ManagementCockpitCentralFilter
+{
+    public int Year { get; set; }
+    public int? Month { get; set; }
+}
+
+public class ManagementCockpitCentralSummary
+{
+    public int RowCount { get; set; }
+    public int InvoiceCount { get; set; }
+    public int SiteCount { get; set; }
+    public int CountryCount { get; set; }
+    public int CurrencyCount { get; set; }
+    public DateTime? PeriodStart { get; set; }
+    public DateTime? PeriodEnd { get; set; }
+}
+
+public class ManagementCockpitTimeValueRow
+{
+    public string Label { get; set; } = string.Empty;
+    public int? Year { get; set; }
+    public int? Month { get; set; }
+    public int? Day { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public decimal SalesValue { get; set; }
+    public int RowCount { get; set; }
+}
+
+public class ManagementCockpitDimensionValueRow
+{
+    public string Label { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal SalesValue { get; set; }
+    public int RowCount { get; set; }
+    public int InvoiceCount { get; set; }
+}
+
+public class ManagementCockpitCentralResult
+{
+    public ManagementCockpitCentralFilter Filter { get; set; } = new();
+    public ManagementCockpitCentralSummary Summary { get; set; } = new();
+    public List<string> Notices { get; set; } = [];
+    public List<ManagementCockpitTimeValueRow> YearlyTotals { get; set; } = [];
+    public List<ManagementCockpitTimeValueRow> MonthlyTotals { get; set; } = [];
+    public List<ManagementCockpitTimeValueRow> DailyTotals { get; set; } = [];
+    public List<ManagementCockpitDimensionValueRow> SourceSystemTotals { get; set; } = [];
+    public List<ManagementCockpitDimensionValueRow> CountryTotals { get; set; } = [];
+}

@@ -497,12 +497,34 @@
 
         if (result != true) return;
 
-        using var db = await DbFactory.CreateDbContextAsync();
-        var entity = await db.HanaServers.FindAsync(server.Id);
-        if (entity is not null)
+        try
         {
-            db.HanaServers.Remove(entity);
-            await db.SaveChangesAsync();
+            using var db = await DbFactory.CreateDbContextAsync();
+            var linkedSites = await db.Sites
+                .Where(s => s.HanaServerId == server.Id)
+                .OrderBy(s => s.Land)
+                .Select(s => $"{s.Land} ({s.TSC})")
+                .ToListAsync();
+
+            if (linkedSites.Count > 0)
+            {
+                Snackbar.Add(
+                    $"Server kann nicht gelöscht werden. Noch verknüpfte Standorte: {string.Join(", ", linkedSites)}",
+                    Severity.Warning);
+                return;
+            }
+
+            var entity = await db.HanaServers.FindAsync(server.Id);
+            if (entity is not null)
+            {
+                db.HanaServers.Remove(entity);
+                await db.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Server konnte nicht gelöscht werden: {ex.Message}", Severity.Error);
+            return;
         }
 
         await LoadDataAsync();

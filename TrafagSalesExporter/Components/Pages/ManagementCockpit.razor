@@ -33,6 +33,37 @@
     </MudGrid>
 </MudPaper>
 
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudText Typo="Typo.h6" Class="mb-3">Zentrale Roh-Auswertung</MudText>
+    <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+        Diese Sicht arbeitet direkt auf `CentralSalesRecords` und zeigt nur fachlich neutrale Rohkennzahlen. Kein Intercompany-Filter, keine CHF-Umrechnung, kein Budget, keine Spartenlogik.
+    </MudAlert>
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudSelect T="int" @bind-Value="_selectedCentralYear" Label="Jahr" Dense>
+                @foreach (var year in _centralYears)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label="Monat (optional)" Dense Clearable>
+                @foreach (var month in Enumerable.Range(1, 12))
+                {
+                    <MudSelectItem Value="@((int?)month)">@($"{month:D2}")</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
+                       StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
+                @(_analyzingCentral ? "Analysiere..." : "Zentrale Auswertung laden")
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
 @if (_result is not null)
 {
     <MudGrid Class="mb-4">
@@ -91,16 +122,147 @@
     </MudPaper>
 }
 
+@if (_centralResult is not null)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Zeilen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.RowCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Rechnungen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.InvoiceCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Standorte</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.SiteCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Länder</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Währungen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CurrencyCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Periode</MudText><MudText Typo="Typo.h6">@BuildPeriodLabel(_centralResult)</MudText></MudPaper></MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Hinweise</MudText>
+        @foreach (var notice in _centralResult.Notices)
+        {
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-2">@notice</MudAlert>
+        }
+    </MudPaper>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Jahresumsatz 2025/2026</MudText>
+                <MudTable Items="_centralResult.YearlyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>Jahr</MudTh>
+                        <MudTh>Währung</MudTh>
+                        <MudTh>Umsatz</MudTh>
+                        <MudTh>Zeilen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Monatsumsatz</MudText>
+                <MudTable Items="_centralResult.MonthlyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>Monat</MudTh>
+                        <MudTh>Währung</MudTh>
+                        <MudTh>Umsatz</MudTh>
+                        <MudTh>Zeilen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Tagesumsatz im ausgewählten Monat</MudText>
+                <MudTable Items="_centralResult.DailyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>Tag</MudTh>
+                        <MudTh>Währung</MudTh>
+                        <MudTh>Umsatz</MudTh>
+                        <MudTh>Zeilen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.caption">Für die Tagessicht bitte zusätzlich einen Monat wählen.</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Umsatz nach Quelle</MudText>
+                <MudTable Items="_centralResult.SourceSystemTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>Quelle</MudTh>
+                        <MudTh>Währung</MudTh>
+                        <MudTh>Umsatz</MudTh>
+                        <MudTh>Rechnungen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Umsatz nach Land</MudText>
+        <MudTable Items="_centralResult.CountryTotals" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>Land</MudTh>
+                <MudTh>Währung</MudTh>
+                <MudTh>Umsatz</MudTh>
+                <MudTh>Rechnungen</MudTh>
+                <MudTh>Zeilen</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Label</MudTd>
+                <MudTd>@context.Currency</MudTd>
+                <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
+                <MudTd>@context.RowCount.ToString("N0")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
 @code {
     private List<ManagementCockpitFileOption> _files = [];
+    private List<int> _centralYears = [];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
+    private ManagementCockpitCentralResult? _centralResult;
+    private int _selectedCentralYear;
+    private int? _selectedCentralMonth;
     private bool _loadingFiles;
     private bool _analyzing;
+    private bool _analyzingCentral;
 
     protected override async Task OnInitializedAsync()
     {
         await ReloadFiles();
+        await ReloadCentralYears();
     }
 
     private async Task ReloadFiles()
@@ -115,6 +277,13 @@
         {
             _loadingFiles = false;
         }
+    }
+
+    private async Task ReloadCentralYears()
+    {
+        _centralYears = await CockpitService.GetAvailableCentralYearsAsync();
+        if (_selectedCentralYear == 0)
+            _selectedCentralYear = _centralYears.LastOrDefault();
     }
 
     private async Task Analyze()
@@ -137,10 +306,38 @@
         }
     }
 
+    private async Task AnalyzeCentral()
+    {
+        if (_selectedCentralYear == 0)
+            return;
+
+        _analyzingCentral = true;
+        try
+        {
+            _centralResult = await CockpitService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Zentrale Auswertung konnte nicht erzeugt werden: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _analyzingCentral = false;
+        }
+    }
+
     private static Severity MapSeverity(string severity) => severity switch
     {
         "Warning" => Severity.Warning,
         "Error" => Severity.Error,
         _ => Severity.Info
     };
+
+    private static string BuildPeriodLabel(ManagementCockpitCentralResult result)
+    {
+        if (result.Summary.PeriodStart is null || result.Summary.PeriodEnd is null)
+            return "-";
+
+        return $"{result.Summary.PeriodStart.Value:dd.MM.yyyy} - {result.Summary.PeriodEnd.Value:dd.MM.yyyy}";
+    }
 }
