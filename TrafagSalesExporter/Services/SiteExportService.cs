@@ -15,6 +15,7 @@ public class SiteExportService : ISiteExportService
     private readonly ISharePointUploadService _sharePointService;
     private readonly IRecordTransformationService _transformationService;
     private readonly ICentralSalesRecordService _centralSalesRecordService;
+    private readonly IAppEventLogService _appEventLogService;
     private readonly ILogger<SiteExportService> _logger;
 
     public SiteExportService(
@@ -26,6 +27,7 @@ public class SiteExportService : ISiteExportService
         ISharePointUploadService sharePointService,
         IRecordTransformationService transformationService,
         ICentralSalesRecordService centralSalesRecordService,
+        IAppEventLogService appEventLogService,
         ILogger<SiteExportService> logger)
     {
         _dbFactory = dbFactory;
@@ -36,6 +38,7 @@ public class SiteExportService : ISiteExportService
         _sharePointService = sharePointService;
         _transformationService = transformationService;
         _centralSalesRecordService = centralSalesRecordService;
+        _appEventLogService = appEventLogService;
         _logger = logger;
     }
 
@@ -52,10 +55,12 @@ public class SiteExportService : ISiteExportService
 
         try
         {
+            await _appEventLogService.WriteAsync("Export", "Export gestartet", siteId: site.Id, land: site.Land,
+                details: $"Quelle={NormalizeSourceSystem(site.SourceSystem)} | TSC={site.TSC}");
             using var db = await _dbFactory.CreateDbContextAsync();
             var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
             var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
-            var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
+            var outputDir = ResolveSiteOutputDirectory(settings, site);
             var sourceSystem = NormalizeSourceSystem(site.SourceSystem);
             var records = new List<SalesRecord>();
             string filePath;
@@ -74,14 +79,20 @@ public class SiteExportService : ISiteExportService
                     throw new InvalidOperationException($"Standort '{site.Land}' hat keine SAP-Feldmappings.");
 
                 updateStatus?.Invoke("SAP Quellen laden...");
+                await _appEventLogService.WriteAsync("Export", "SAP Quellen laden", siteId: site.Id, land: site.Land,
+                    details: $"Sources={sapSources.Count} | Mappings={sapMappings.Count}");
                 records = await _sapCompositionService.BuildSalesRecordsAsync(site, sapSources, sapJoins, sapMappings, credentials.Username, credentials.Password);
                 updateStatus?.Invoke("Transformationen anwenden...");
+                await _appEventLogService.WriteAsync("Export", "Transformationen anwenden", siteId: site.Id, land: site.Land,
+                    details: $"Records vor Transformation={records.Count}");
                 var rules = await db.FieldTransformationRules
                     .Where(r => r.IsActive && r.SourceSystem == sourceSystem)
                     .OrderBy(r => r.SortOrder)
                     .ToListAsync();
                 _transformationService.Apply(records, rules);
                 updateStatus?.Invoke("Excel erstellen...");
+                await _appEventLogService.WriteAsync("Export", "Excel erstellen", siteId: site.Id, land: site.Land,
+                    details: $"Records={records.Count}");
                 filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
                 log.RowCount = records.Count;
             }
@@ -89,10 +100,14 @@ public class SiteExportService : ISiteExportService
             {
                 var exportServer = BuildEffectiveServer(site, settings, sourceSystem);
                 updateStatus?.Invoke("HANA Abfrage...");
+                await _appEventLogService.WriteAsync("Export", "HANA Abfrage gestartet", siteId: site.Id, land: site.Land,
+                    details: exportServer.GetConnectionStringPreview());
                 records = await Task.Run(() => _hanaService.GetSalesRecords(
                     exportServer, site.Schema, site.TSC, site.Land, settings.DateFilter));
 
                 updateStatus?.Invoke("Transformationen anwenden...");
+                await _appEventLogService.WriteAsync("Export", "Transformationen anwenden", siteId: site.Id, land: site.Land,
+                    details: $"Records vor Transformation={records.Count}");
                 var rules = await db.FieldTransformationRules
                     .Where(r => r.IsActive && r.SourceSystem == sourceSystem)
                     .OrderBy(r => r.SortOrder)
@@ -100,12 +115,16 @@ public class SiteExportService : ISiteExportService
                 _transformationService.Apply(records, rules);
 
                 updateStatus?.Invoke("Excel erstellen...");
+                await _appEventLogService.WriteAsync("Export", "Excel erstellen", siteId: site.Id, land: site.Land,
+                    details: $"Records={records.Count}");
                 filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
                 log.RowCount = records.Count;
             }
 
             updateStatus?.Invoke("Zentrale Tabelle aktualisieren...");
-            await _centralSalesRecordService.ReplaceForSiteAsync(site, records);
+            await _appEventLogService.WriteAsync("Export", "Zentrale Tabelle aktualisieren", siteId: site.Id, land: site.Land,
+                details: $"Records={records.Count}");
+            await _centralSalesRecordService.ReplaceForSiteAsync(site, records, updateStatus);
 
             var fileName = Path.GetFileName(filePath);
 
@@ -115,6 +134,8 @@ public class SiteExportService : ISiteExportService
                 !string.IsNullOrWhiteSpace(spConfig.ClientSecret))
             {
                 updateStatus?.Invoke("SharePoint Upload...");
+                await _appEventLogService.WriteAsync("Export", "SharePoint Upload gestartet", siteId: site.Id, land: site.Land,
+                    details: $"{spConfig.SiteUrl} | {spConfig.ExportFolder}");
                 await _sharePointService.UploadAsync(
                     spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
                     spConfig.SiteUrl, spConfig.ExportFolder, site.Land, filePath);
@@ -123,10 +144,13 @@ public class SiteExportService : ISiteExportService
             sw.Stop();
             log.Status = "OK";
             log.FileName = fileName;
+            log.FilePath = filePath;
             log.DurationSeconds = sw.Elapsed.TotalSeconds;
 
             _logger.LogInformation("Export OK: {Land} ({TSC}) - {Rows} Zeilen in {Duration:F1}s",
                 site.Land, site.TSC, log.RowCount, sw.Elapsed.TotalSeconds);
+            await _appEventLogService.WriteAsync("Export", "Export erfolgreich", siteId: site.Id, land: site.Land,
+                details: $"Rows={log.RowCount} | Datei={fileName} | Pfad={filePath} | Dauer={sw.Elapsed.TotalSeconds:F1}s");
 
             return new SiteExportResult
             {
@@ -141,9 +165,12 @@ public class SiteExportService : ISiteExportService
             log.Status = "Error";
             log.ErrorMessage = ex.Message;
             log.FileName = string.Empty;
+            log.FilePath = string.Empty;
             log.DurationSeconds = sw.Elapsed.TotalSeconds;
 
             _logger.LogError(ex, "Export Fehler: {Land} ({TSC})", site.Land, site.TSC);
+            await _appEventLogService.WriteAsync("Export", "Export fehlgeschlagen", "Error", siteId: site.Id, land: site.Land,
+                details: ex.ToString());
 
             return new SiteExportResult
             {
@@ -206,5 +233,13 @@ public class SiteExportService : ISiteExportService
         }
 
         return string.Empty;
+    }
+
+    private static string ResolveSiteOutputDirectory(ExportSettings settings, Site site)
+    {
+        var configured = FirstNonEmpty(site.LocalExportFolderOverride, settings.LocalSiteExportFolder);
+        return string.IsNullOrWhiteSpace(configured)
+            ? Path.Combine(AppContext.BaseDirectory, "output")
+            : configured;
     }
 }

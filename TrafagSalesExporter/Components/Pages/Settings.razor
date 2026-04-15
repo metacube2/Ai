@@ -168,6 +168,20 @@
         <MudItem xs="12" md="4">
             <MudSwitch @bind-Value="_exportSettings.TimerEnabled" Label="Timer aktiviert" Color="Color.Primary" />
         </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="Debug Live-Logging" Color="Color.Warning" />
+            <MudText Typo="Typo.caption">
+                Schreibt zusÃ¤tzliche technische Fortschrittsmeldungen fÃ¼r HANA- und SAP-LesevorgÃ¤nge ins Dashboard und in die Logs.
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_exportSettings.LocalSiteExportFolder" Label="Lokaler Standardpfad Standort-Dateien"
+                          HelperText="Wenn leer, wird ./output unter dem Programmverzeichnis verwendet." />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="Lokaler Pfad Zentrale Datei"
+                          HelperText="Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet." />
+        </MudItem>
         <MudItem xs="12">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
                        StartIcon="@Icons.Material.Filled.Save">
@@ -258,6 +272,9 @@
             existing.TimerHour = _exportSettings.TimerHour;
             existing.TimerMinute = _exportSettings.TimerMinute;
             existing.TimerEnabled = _exportSettings.TimerEnabled;
+            existing.DebugLoggingEnabled = _exportSettings.DebugLoggingEnabled;
+            existing.LocalSiteExportFolder = _exportSettings.LocalSiteExportFolder;
+            existing.LocalConsolidatedExportFolder = _exportSettings.LocalConsolidatedExportFolder;
             existing.SapUsername = _exportSettings.SapUsername;
             existing.SapPassword = _exportSettings.SapPassword;
             existing.Bi1Username = _exportSettings.Bi1Username;

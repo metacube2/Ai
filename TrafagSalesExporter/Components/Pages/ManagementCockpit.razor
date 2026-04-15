@@ -1,0 +1,146 @@
+@page "/management-cockpit"
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IManagementCockpitService CockpitService
+@inject ISnackbar Snackbar
+
+<PageTitle>Management Cockpit</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Management Cockpit</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudSelect T="string" @bind-Value="_selectedFilePath" Label="Vorhandene Excel-Datei" Dense>
+                @foreach (var file in _files)
+                {
+                    <MudSelectItem Value="@file.Path">@file.DisplayName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadFiles"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loadingFiles">
+                    Dateien laden
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Analyze"
+                           StartIcon="@Icons.Material.Filled.Analytics" Disabled="_analyzing || string.IsNullOrWhiteSpace(_selectedFilePath)">
+                    @(_analyzing ? "Analysiere..." : "Cockpit erzeugen")
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_result is not null)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Land</MudText><MudText Typo="Typo.h6">@_result.Summary.Land</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">TSC</MudText><MudText Typo="Typo.h6">@_result.Summary.Tsc</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Umsatz</MudText><MudText Typo="Typo.h6">@_result.Summary.SalesValueTotal.ToString("N2")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Geschätzte Marge</MudText><MudText Typo="Typo.h6">@($"{_result.Summary.EstimatedMarginPercent:F1}%")</MudText></MudPaper></MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Management Aussagen</MudText>
+        @foreach (var finding in _result.Findings)
+        {
+            <MudAlert Severity="@MapSeverity(finding.Severity)" Dense Variant="Variant.Outlined" Class="mb-2">
+                <b>@finding.Title:</b> @finding.Detail
+            </MudAlert>
+        }
+    </MudPaper>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Top Kunden</MudText>
+                @foreach (var item in _result.TopCustomers)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Top Produktgruppen</MudText>
+                @foreach (var item in _result.TopProductGroups)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Top Sales Owner</MudText>
+                @foreach (var item in _result.TopSalesEmployees)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Datenqualität</MudText>
+        @foreach (var entry in _result.DataQualityCounts.OrderByDescending(x => x.Value))
+        {
+            <MudText Typo="Typo.body2">@($"{entry.Key}: {entry.Value}")</MudText>
+        }
+    </MudPaper>
+}
+
+@code {
+    private List<ManagementCockpitFileOption> _files = [];
+    private string? _selectedFilePath;
+    private ManagementCockpitResult? _result;
+    private bool _loadingFiles;
+    private bool _analyzing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadFiles();
+    }
+
+    private async Task ReloadFiles()
+    {
+        _loadingFiles = true;
+        try
+        {
+            _files = await CockpitService.GetAvailableFilesAsync();
+            _selectedFilePath ??= _files.FirstOrDefault()?.Path;
+        }
+        finally
+        {
+            _loadingFiles = false;
+        }
+    }
+
+    private async Task Analyze()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedFilePath))
+            return;
+
+        _analyzing = true;
+        try
+        {
+            _result = await CockpitService.AnalyzeAsync(_selectedFilePath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Cockpit konnte nicht erzeugt werden: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _analyzing = false;
+        }
+    }
+
+    private static Severity MapSeverity(string severity) => severity switch
+    {
+        "Warning" => Severity.Warning,
+        "Error" => Severity.Error,
+        _ => Severity.Info
+    };
+}

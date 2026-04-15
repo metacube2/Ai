@@ -1,5 +1,6 @@
 @page "/"
 @using Microsoft.EntityFrameworkCore
+@using System.Diagnostics
 @using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Services
 @inject IDbContextFactory<AppDbContext> DbFactory
@@ -40,6 +41,7 @@
         <MudTh>Schema</MudTh>
         <MudTh>Server</MudTh>
         <MudTh>Status</MudTh>
+        <MudTh>Live-Status</MudTh>
         <MudTh>Zeilen</MudTh>
         <MudTh>Letzter Lauf</MudTh>
         <MudTh>Dauer</MudTh>
@@ -71,16 +73,38 @@
                 <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
             }
         </MudTd>
+        <MudTd>
+            @if (!string.IsNullOrWhiteSpace(context.LiveMessage))
+            {
+                <MudTooltip Text="@context.LiveDetails">
+                    <MudText Typo="Typo.caption" Style="max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
+                        @context.LiveMessage
+                    </MudText>
+                </MudTooltip>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
         <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
         <MudTd>@(context.LastRun.HasValue ? context.LastRun.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
         <MudTd>@(context.DurationSeconds > 0 ? $"{context.DurationSeconds:F1}s" : "-")</MudTd>
         <MudTd>
-            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.FileDownload"
-                       OnClick="() => ExportSingle(context.SiteId)"
-                       Disabled="Orchestrator.IsExporting(context.SiteId)">
-                Export
-            </MudButton>
+            <MudStack Row Spacing="1">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FileDownload"
+                           OnClick="() => ExportSingle(context.SiteId)"
+                           Disabled="Orchestrator.IsExporting(context.SiteId)">
+                    Export
+                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.OpenInNew"
+                           OnClick="() => OpenExportFile(context)"
+                           Disabled="@(!context.HasOpenableFile || Orchestrator.IsExporting(context.SiteId))">
+                    Excel öffnen
+                </MudButton>
+            </MudStack>
         </MudTd>
     </RowTemplate>
 </MudTable>
@@ -89,6 +113,7 @@
     private List<DashboardRow> _dashboardRows = new();
     private bool _loading = true;
     private bool _anyRunning;
+    private CancellationTokenSource? _pollingCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -106,10 +131,19 @@
             .GroupBy(l => l.SiteId)
             .Select(g => g.OrderByDescending(l => l.Timestamp).First())
             .ToListAsync();
+        var appLogs = await db.AppEventLogs
+            .Where(l => l.SiteId != null)
+            .OrderByDescending(l => l.Timestamp)
+            .Take(1000)
+            .ToListAsync();
+        var latestAppLogsBySite = appLogs
+            .GroupBy(l => l.SiteId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
 
         _dashboardRows = sites.Select(s =>
         {
             var log = logs.FirstOrDefault(l => l.SiteId == s.Id);
+            latestAppLogsBySite.TryGetValue(s.Id, out var appLog);
             return new DashboardRow
             {
                 SiteId = s.Id,
@@ -123,7 +157,10 @@
                 RowCount = log?.RowCount ?? 0,
                 LastRun = log?.Timestamp,
                 DurationSeconds = log?.DurationSeconds ?? 0,
-                ErrorMessage = log?.ErrorMessage ?? ""
+                ErrorMessage = log?.ErrorMessage ?? "",
+                FilePath = log?.FilePath ?? "",
+                LiveMessage = appLog is null ? string.Empty : $"{appLog.Category}: {appLog.Message}",
+                LiveDetails = appLog?.Details ?? ""
             };
         }).ToList();
 
@@ -134,6 +171,8 @@
     private async Task ExportAll()
     {
         _anyRunning = true;
+        await LoadDataAsync();
+        StartPolling();
         _ = Task.Run(async () =>
         {
             await Orchestrator.ExportAllAsync();
@@ -148,14 +187,28 @@
 
     private void ExportSingle(int siteId)
     {
+        _anyRunning = true;
+        _ = InvokeAsync(async () => await LoadDataAsync());
+        StartPolling();
         _ = Task.Run(async () =>
         {
-            await Orchestrator.ExportSiteByIdAsync(siteId);
+            var result = await Orchestrator.ExportSiteByIdAsync(siteId);
             await InvokeAsync(async () =>
             {
                 await LoadDataAsync();
                 StateHasChanged();
             });
+
+            if (result?.Log.Status == "OK" && !string.IsNullOrWhiteSpace(result.FilePath))
+            {
+                await InvokeAsync(() =>
+                    Snackbar.Add($"Export gespeichert: {result.FilePath}", Severity.Success));
+            }
+            else if (result?.Log.Status == "Error" && !string.IsNullOrWhiteSpace(result.Log.ErrorMessage))
+            {
+                await InvokeAsync(() =>
+                    Snackbar.Add($"Export fehlgeschlagen: {result.Log.ErrorMessage}", Severity.Error));
+            }
         });
         Snackbar.Add("Export gestartet", Severity.Info);
     }
@@ -164,19 +217,134 @@
     {
         await InvokeAsync(async () =>
         {
-            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
-            StateHasChanged();
-            if (!_anyRunning)
+            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || _dashboardRows.Count == 0;
+            if (_anyRunning)
             {
-                await LoadDataAsync();
+                StartPolling();
+                await RefreshLiveDataAsync();
                 StateHasChanged();
+                return;
             }
+
+            StopPolling();
+            await LoadDataAsync();
+            StateHasChanged();
         });
     }
 
     public void Dispose()
     {
+        StopPolling();
         Orchestrator.OnExportStatusChanged -= HandleStatusChanged;
+    }
+
+    private void OpenExportFile(DashboardRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.FilePath) || !File.Exists(row.FilePath))
+        {
+            Snackbar.Add("Exportdatei nicht gefunden.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = row.FilePath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Datei konnte nicht geöffnet werden: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void StartPolling()
+    {
+        if (_pollingCts is not null && !_pollingCts.IsCancellationRequested)
+            return;
+
+        _pollingCts = new CancellationTokenSource();
+        _ = PollDashboardAsync(_pollingCts.Token);
+    }
+
+    private void StopPolling()
+    {
+        _pollingCts?.Cancel();
+        _pollingCts?.Dispose();
+        _pollingCts = null;
+    }
+
+    private async Task PollDashboardAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                var anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+                if (!anyRunning)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        _anyRunning = false;
+                        await LoadDataAsync();
+                        StateHasChanged();
+                    });
+                    StopPolling();
+                    break;
+                }
+
+                await InvokeAsync(async () =>
+                {
+                    _anyRunning = true;
+                    await RefreshLiveDataAsync();
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task RefreshLiveDataAsync()
+    {
+        var runningSiteIds = _dashboardRows
+            .Where(r => Orchestrator.IsExporting(r.SiteId))
+            .Select(r => r.SiteId)
+            .Distinct()
+            .ToList();
+
+        if (runningSiteIds.Count == 0)
+        {
+            _anyRunning = false;
+            return;
+        }
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var appLogs = await db.AppEventLogs
+            .Where(l => l.SiteId != null && runningSiteIds.Contains(l.SiteId.Value))
+            .OrderByDescending(l => l.Timestamp)
+            .Take(200)
+            .ToListAsync();
+
+        var latestAppLogsBySite = appLogs
+            .GroupBy(l => l.SiteId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
+
+        foreach (var row in _dashboardRows)
+        {
+            if (!latestAppLogsBySite.TryGetValue(row.SiteId, out var appLog))
+                continue;
+
+            row.LiveMessage = $"{appLog.Category}: {appLog.Message}";
+            row.LiveDetails = appLog.Details ?? string.Empty;
+        }
+
+        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
     }
 
     private class DashboardRow
@@ -191,5 +359,9 @@
         public DateTime? LastRun { get; set; }
         public double DurationSeconds { get; set; }
         public string ErrorMessage { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string LiveMessage { get; set; } = "";
+        public string LiveDetails { get; set; } = "";
+        public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
     }
 }

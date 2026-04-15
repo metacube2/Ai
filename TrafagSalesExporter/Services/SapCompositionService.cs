@@ -6,10 +6,12 @@ namespace TrafagSalesExporter.Services;
 public class SapCompositionService : ISapCompositionService
 {
     private readonly ISapGatewayService _sapGatewayService;
+    private readonly IAppEventLogService _appEventLogService;
 
-    public SapCompositionService(ISapGatewayService sapGatewayService)
+    public SapCompositionService(ISapGatewayService sapGatewayService, IAppEventLogService appEventLogService)
     {
         _sapGatewayService = sapGatewayService;
+        _appEventLogService = appEventLogService;
     }
 
     public async Task<List<SalesRecord>> BuildSalesRecordsAsync(
@@ -36,25 +38,38 @@ public class SapCompositionService : ISapCompositionService
         var sourceRows = new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in activeSources)
         {
+            await _appEventLogService.WriteDebugAsync("SAP", "Quelle wird gelesen", site.Id, site.Land,
+                $"Alias={source.Alias} | EntitySet={source.EntitySet}");
             var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, cancellationToken);
             sourceRows[source.Alias] = rows;
+            await _appEventLogService.WriteDebugAsync("SAP", "Quelle gelesen", site.Id, site.Land,
+                $"Alias={source.Alias} | EntitySet={source.EntitySet} | Zeilen={rows.Count}");
         }
 
         var composedRows = sourceRows[primarySource.Alias]
             .Select(r => PrefixRow(primarySource.Alias, r))
             .ToList();
+        await _appEventLogService.WriteDebugAsync("SAP", "Primärquelle vorbereitet", site.Id, site.Land,
+            $"Alias={primarySource.Alias} | Startzeilen={composedRows.Count}");
 
         foreach (var join in joins.Where(j => j.IsActive).OrderBy(j => j.SortOrder).ThenBy(j => j.Id))
         {
             if (!sourceRows.TryGetValue(join.RightAlias, out var rightRows))
                 continue;
 
+            await _appEventLogService.WriteDebugAsync("SAP", "Join gestartet", site.Id, site.Land,
+                $"{join.LeftAlias}({join.LeftKeys}) -> {join.RightAlias}({join.RightKeys}) | RightRows={rightRows.Count}");
             composedRows = ApplyLeftJoin(composedRows, join.LeftAlias, join.LeftKeys, join.RightAlias, join.RightKeys, rightRows);
+            await _appEventLogService.WriteDebugAsync("SAP", "Join beendet", site.Id, site.Land,
+                $"{join.LeftAlias} -> {join.RightAlias} | Ergebniszeilen={composedRows.Count}");
         }
 
-        return composedRows
+        var result = composedRows
             .Select(row => MapToSalesRecord(site, row, mappings))
             .ToList();
+        await _appEventLogService.WriteDebugAsync("SAP", "Mapping ins Zielschema beendet", site.Id, site.Land,
+            $"SalesRecords={result.Count} | Mappings={mappings.Count(x => x.IsActive)}");
+        return result;
     }
 
     private static Dictionary<string, object?> PrefixRow(string alias, Dictionary<string, object?> row)

@@ -8,6 +8,7 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IHanaQueryService HanaService
 @inject ISapGatewayService SapGatewayService
+@inject IAppEventLogService AppEventLogService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -149,6 +150,8 @@
                       HelperText="Optional. Wenn leer, wird der zentrale Username des Quellsystems verwendet." />
         <MudTextField @bind-Value="_editingSite.PasswordOverride" Label="Password Override" InputType="InputType.Password"
                       HelperText="Optional. Wenn leer, wird das zentrale Passwort des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.LocalExportFolderOverride" Label="Lokaler Exportpfad Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Standardpfad für Standort-Dateien verwendet." />
         <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
 
         <MudDivider Class="my-4" />
@@ -216,7 +219,13 @@
             <MudDivider Class="my-4" />
             <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                 <MudText Typo="Typo.h6">SAP Joins</MudText>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapJoin">Join hinzufügen</MudButton>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="AutoMatchSapJoins">
+                        Auto-Match
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapJoin">Join hinzufügen</MudButton>
+                </MudStack>
             </MudStack>
             <MudTable Items="_sapJoins" Dense Hover Striped>
                 <HeaderContent>
@@ -237,7 +246,18 @@
                             }
                         </MudSelect>
                     </MudTd>
-                    <MudTd><MudTextField @bind-Value="context.LeftKeys" Dense Placeholder="VBELN,POSNR" /></MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.LeftKeys)"
+                                   SelectedValuesChanged="@(values => context.LeftKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.LeftAlias, context.LeftKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
                     <MudTd>
                         <MudSelect @bind-Value="context.RightAlias" Dense>
                             @foreach (var alias in GetSapAliases())
@@ -246,7 +266,18 @@
                             }
                         </MudSelect>
                     </MudTd>
-                    <MudTd><MudTextField @bind-Value="context.RightKeys" Dense Placeholder="VBELN,POSNR" /></MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.RightKeys)"
+                                   SelectedValuesChanged="@(values => context.RightKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.RightAlias, context.RightKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
                     <MudTd>
                         <MudSelect @bind-Value="context.JoinType" Dense>
                             <MudSelectItem Value="@("Left")">Left</MudSelectItem>
@@ -260,8 +291,25 @@
             <MudDivider Class="my-4" />
             <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                 <MudText Typo="Typo.h6">Feldmappings ins zentrale Schema</MudText>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapMapping">Mapping hinzufügen</MudButton>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Schema"
+                               OnClick="RefreshSapSourceFields" Disabled="_refreshingSapSourceFields">
+                        @if (_refreshingSapSourceFields)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                            @("Lade Felder...")
+                        }
+                        else
+                        {
+                            @("Felder aus Quellen laden")
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapMapping">Mapping hinzufügen</MudButton>
+                </MudStack>
             </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Source Expressions werden aus den hinzugefügten SAP-Quellen als `Alias.Feldname` gelesen. Vorhandene manuelle Werte bleiben auswählbar.
+            </MudText>
             <MudTable Items="_sapMappings" Dense Hover Striped>
                 <HeaderContent>
                     <MudTh>Zielfeld</MudTh>
@@ -279,7 +327,14 @@
                             }
                         </MudSelect>
                     </MudTd>
-                    <MudTd><MudTextField @bind-Value="context.SourceExpression" Dense Placeholder="VBAK.VBELN oder =SAP" /></MudTd>
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="context.SourceExpression" Dense>
+                            @foreach (var expression in GetAvailableSourceExpressions(context.SourceExpression))
+                            {
+                                <MudSelectItem Value="@expression">@expression</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
                     <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
                     <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
                     <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapMapping(context)" /></MudTd>
@@ -321,6 +376,8 @@
     private List<HanaServer> _servers = new();
     private List<Site> _sites = new();
     private List<string> _sapEntitySetsCache = [];
+    private List<string> _sapAvailableSourceExpressions = [];
+    private Dictionary<string, List<string>> _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
     private List<SapSourceDefinition> _sapSources = [];
     private List<SapJoinDefinition> _sapJoins = [];
     private List<SapFieldMapping> _sapMappings = [];
@@ -334,6 +391,7 @@
     private bool _serverDialogVisible;
     private bool _siteDialogVisible;
     private bool _refreshingSapEntitySets;
+    private bool _refreshingSapSourceFields;
     private bool _savingServer;
     private bool _savingSite;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
@@ -426,6 +484,8 @@
 
     private async Task TestServerConnection(HanaServer server)
     {
+        await AppEventLogService.WriteAsync("HANA", "Server-Test aus UI gestartet",
+            details: server.GetConnectionStringPreview());
         var result = await Task.Run(() => HanaService.TestConnectionDetailed(server));
         _connectionStatus[server.Id] = result;
 
@@ -457,6 +517,8 @@
             HanaServerId = null
         };
         _sapEntitySetsCache = [];
+        _sapAvailableSourceExpressions = [];
+        _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
         _sapSources = [];
         _sapJoins = [];
         _sapMappings = [];
@@ -476,6 +538,7 @@
             SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem,
             UsernameOverride = site.UsernameOverride,
             PasswordOverride = site.PasswordOverride,
+            LocalExportFolderOverride = site.LocalExportFolderOverride,
             SapServiceUrl = site.SapServiceUrl,
             SapEntitySet = site.SapEntitySet,
             SapEntitySetsCache = site.SapEntitySetsCache,
@@ -487,6 +550,8 @@
         _sapSources = db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
         _sapJoins = db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).OrderBy(j => j.SortOrder).ThenBy(j => j.Id).ToList();
         _sapMappings = db.SapFieldMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
+        _sapAvailableSourceExpressions = BuildSourceExpressionsFromMappings();
+        _sapSourceFieldMap = BuildSourceFieldMapFromJoins();
         _editingSiteServer = site.HanaServer is null
             ? CreateDefaultSiteServer(site)
             : CloneServer(site.HanaServer);
@@ -522,6 +587,7 @@
                     existing.SourceSystem = _editingSite.SourceSystem;
                     existing.UsernameOverride = _editingSite.UsernameOverride;
                     existing.PasswordOverride = _editingSite.PasswordOverride;
+                    existing.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride;
                     existing.SapServiceUrl = _editingSite.SapServiceUrl;
                     existing.SapEntitySet = _editingSite.SapEntitySet;
                     existing.SapEntitySetsCache = _editingSite.SapEntitySetsCache;
@@ -629,6 +695,7 @@
             : _editingSiteServer.Name.Trim();
         _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
         _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
+        _editingSite.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride.Trim();
         _editingSite.SapServiceUrl = _editingSite.SapServiceUrl.Trim();
         _editingSite.SapEntitySet = _editingSite.SapEntitySet.Trim();
         _editingSiteServer.Host = _editingSiteServer.Host.Trim();
@@ -698,6 +765,8 @@
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 throw new InvalidOperationException("Für SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
 
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI gestartet", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: _editingSite.SapServiceUrl);
             var entitySets = await SapGatewayService.GetEntitySetsAsync(_editingSite.SapServiceUrl, username.Trim(), password.Trim());
             _sapEntitySetsCache = entitySets;
             _editingSite.SapEntitySetsCache = SerializeSapEntitySets(entitySets);
@@ -710,10 +779,14 @@
             }
 
             Snackbar.Add($"{entitySets.Count} SAP Entity Sets geladen.", Severity.Success);
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI erfolgreich", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: $"EntitySets={entitySets.Count}");
         }
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: ex.ToString());
         }
         finally
         {
@@ -782,6 +855,83 @@
         });
     }
 
+    private void AutoMatchSapJoins()
+    {
+        var activeSources = _sapSources
+            .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias))
+            .OrderBy(s => s.SortOrder)
+            .ThenBy(s => s.Id)
+            .ToList();
+
+        if (activeSources.Count < 2)
+        {
+            Snackbar.Add("Für Auto-Match werden mindestens zwei aktive SAP-Quellen benötigt.", Severity.Warning);
+            return;
+        }
+
+        if (_sapSourceFieldMap.Count == 0)
+        {
+            Snackbar.Add("Bitte zuerst 'Felder aus Quellen laden' ausführen.", Severity.Warning);
+            return;
+        }
+
+        var primary = activeSources.FirstOrDefault(s => s.IsPrimary) ?? activeSources.First();
+        var createdOrUpdated = 0;
+
+        foreach (var source in activeSources.Where(s => !string.Equals(s.Alias, primary.Alias, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (!_sapSourceFieldMap.TryGetValue(primary.Alias, out var leftFields) || leftFields.Count == 0)
+                continue;
+            if (!_sapSourceFieldMap.TryGetValue(source.Alias, out var rightFields) || rightFields.Count == 0)
+                continue;
+
+            var matchingFields = leftFields
+                .Intersect(rightFields, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (matchingFields.Count == 0)
+                continue;
+
+            var existingJoin = _sapJoins.FirstOrDefault(j =>
+                string.Equals(j.LeftAlias, primary.Alias, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(j.RightAlias, source.Alias, StringComparison.OrdinalIgnoreCase));
+
+            var keyList = string.Join(',', matchingFields);
+            if (existingJoin is null)
+            {
+                _sapJoins.Add(new SapJoinDefinition
+                {
+                    LeftAlias = primary.Alias,
+                    RightAlias = source.Alias,
+                    LeftKeys = keyList,
+                    RightKeys = keyList,
+                    JoinType = "Left",
+                    IsActive = true,
+                    SortOrder = _sapJoins.Count
+                });
+            }
+            else
+            {
+                existingJoin.LeftKeys = keyList;
+                existingJoin.RightKeys = keyList;
+                existingJoin.JoinType = "Left";
+                existingJoin.IsActive = true;
+            }
+
+            createdOrUpdated++;
+        }
+
+        if (createdOrUpdated == 0)
+        {
+            Snackbar.Add("Kein passender Join-Vorschlag gefunden.", Severity.Info);
+            return;
+        }
+
+        NormalizeSapConfigCollections();
+        Snackbar.Add($"{createdOrUpdated} Join-Vorschläge gesetzt.", Severity.Success);
+    }
+
     private void RemoveSapJoin(SapJoinDefinition join)
     {
         _sapJoins.Remove(join);
@@ -792,6 +942,7 @@
         _sapMappings.Add(new SapFieldMapping
         {
             TargetField = _salesRecordFields.First(),
+            SourceExpression = _sapAvailableSourceExpressions.FirstOrDefault() ?? "=SAP",
             IsActive = true,
             SortOrder = _sapMappings.Count
         });
@@ -847,4 +998,147 @@
         if (_sapSources.Count > 0 && _sapSources.All(s => !s.IsPrimary))
             _sapSources[0].IsPrimary = true;
     }
+
+    private async Task RefreshSapSourceFields()
+    {
+        if (_refreshingSapSourceFields)
+            return;
+
+        _refreshingSapSourceFields = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl))
+                throw new InvalidOperationException("SAP Service URL muss gesetzt sein.");
+
+            var activeSources = _sapSources
+                .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias) && !string.IsNullOrWhiteSpace(s.EntitySet))
+                .OrderBy(s => s.SortOrder)
+                .ThenBy(s => s.Id)
+                .ToList();
+
+            if (activeSources.Count == 0)
+                throw new InvalidOperationException("Es gibt keine aktiven SAP-Quellen mit Alias und Entity Set.");
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new();
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride) ? settings.SapUsername : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride) ? settings.SapPassword : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("Für SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            var expressions = new List<string> { "=SAP" };
+            var sourceFieldMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var source in activeSources)
+            {
+                var fieldNames = await SapGatewayService.GetEntityFieldNamesAsync(_editingSite.SapServiceUrl, source.EntitySet, username.Trim(), password.Trim());
+                sourceFieldMap[source.Alias] = fieldNames;
+                expressions.AddRange(fieldNames.Select(field => $"{source.Alias}.{field}"));
+            }
+
+            _sapAvailableSourceExpressions = expressions
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            _sapSourceFieldMap = sourceFieldMap;
+
+            foreach (var current in BuildSourceExpressionsFromMappings())
+            {
+                if (!_sapAvailableSourceExpressions.Contains(current, StringComparer.OrdinalIgnoreCase))
+                    _sapAvailableSourceExpressions.Add(current);
+            }
+
+            _sapAvailableSourceExpressions = _sapAvailableSourceExpressions
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            Snackbar.Add($"{_sapAvailableSourceExpressions.Count} Source Expressions geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshingSapSourceFields = false;
+        }
+    }
+
+    private IEnumerable<string> GetAvailableSourceExpressions(string? currentValue)
+    {
+        var expressions = new List<string>(_sapAvailableSourceExpressions);
+        if (!string.IsNullOrWhiteSpace(currentValue) && !expressions.Contains(currentValue, StringComparer.OrdinalIgnoreCase))
+            expressions.Insert(0, currentValue);
+
+        return expressions;
+    }
+
+    private List<string> BuildSourceExpressionsFromMappings()
+        => _sapMappings
+            .Select(m => m.SourceExpression)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private Dictionary<string, List<string>> BuildSourceFieldMapFromJoins()
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var join in _sapJoins)
+        {
+            AddJoinKeysToFieldMap(result, join.LeftAlias, join.LeftKeys);
+            AddJoinKeysToFieldMap(result, join.RightAlias, join.RightKeys);
+        }
+
+        return result;
+    }
+
+    private static void AddJoinKeysToFieldMap(Dictionary<string, List<string>> target, string alias, string keys)
+    {
+        if (string.IsNullOrWhiteSpace(alias))
+            return;
+
+        if (!target.TryGetValue(alias, out var fields))
+        {
+            fields = [];
+            target[alias] = fields;
+        }
+
+        foreach (var key in GetSelectedJoinKeys(keys))
+        {
+            if (!fields.Contains(key, StringComparer.OrdinalIgnoreCase))
+                fields.Add(key);
+        }
+
+        fields.Sort(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private IEnumerable<string> GetAvailableJoinFields(string? alias, string? currentKeys)
+    {
+        var values = new List<string>();
+        if (!string.IsNullOrWhiteSpace(alias) && _sapSourceFieldMap.TryGetValue(alias, out var fields))
+            values.AddRange(fields);
+
+        foreach (var key in GetSelectedJoinKeys(currentKeys))
+        {
+            if (!values.Contains(key, StringComparer.OrdinalIgnoreCase))
+                values.Add(key);
+        }
+
+        return values
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static HashSet<string> GetSelectedJoinKeys(string? keys)
+        => keys?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ?? [];
 }

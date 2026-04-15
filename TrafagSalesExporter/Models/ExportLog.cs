@@ -17,5 +17,6 @@ public class ExportLog
     public int RowCount { get; set; }
     public string? ErrorMessage { get; set; }
     public string FileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
     public double DurationSeconds { get; set; }
 }

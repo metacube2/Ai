@@ -75,8 +75,39 @@
     </RowTemplate>
 </MudTable>
 
+<MudText Typo="Typo.h5" Class="mt-6 mb-2">Technische Logs</MudText>
+
+<MudTable Items="_appLogs" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>Zeitpunkt</MudTh>
+        <MudTh>Level</MudTh>
+        <MudTh>Kategorie</MudTh>
+        <MudTh>Land</MudTh>
+        <MudTh>Meldung</MudTh>
+        <MudTh>Details</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Timestamp.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
+        <MudTd>@context.Level</MudTd>
+        <MudTd>@context.Category</MudTd>
+        <MudTd>@(string.IsNullOrWhiteSpace(context.Land) ? "-" : context.Land)</MudTd>
+        <MudTd>@context.Message</MudTd>
+        <MudTd>
+            @if (!string.IsNullOrWhiteSpace(context.Details))
+            {
+                <MudTooltip Text="@context.Details">
+                    <MudText Typo="Typo.caption" Style="max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
+                        @context.Details
+                    </MudText>
+                </MudTooltip>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
 @code {
     private List<ExportLog> _logs = new();
+    private List<AppEventLog> _appLogs = new();
     private List<string> _availableLands = new();
     private string? _filterLand;
     private string? _filterStatus;
@@ -106,6 +137,16 @@
             query = query.Where(l => l.Timestamp.Date == _filterDate.Value.Date);
 
         _logs = await query.Take(500).ToListAsync();
+
+        IQueryable<AppEventLog> appLogQuery = db.AppEventLogs.OrderByDescending(l => l.Timestamp);
+
+        if (!string.IsNullOrEmpty(_filterLand))
+            appLogQuery = appLogQuery.Where(l => l.Land == _filterLand);
+
+        if (_filterDate.HasValue)
+            appLogQuery = appLogQuery.Where(l => l.Timestamp.Date == _filterDate.Value.Date);
+
+        _appLogs = await appLogQuery.Take(500).ToListAsync();
         _loading = false;
     }
 

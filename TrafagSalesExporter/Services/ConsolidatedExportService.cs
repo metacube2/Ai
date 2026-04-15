@@ -31,7 +31,8 @@ public class ConsolidatedExportService : IConsolidatedExportService
 
         using var db = await _dbFactory.CreateDbContextAsync();
         var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
-        var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
+        var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+        var outputDir = ResolveConsolidatedOutputDirectory(settings);
         var consolidatedPath = _excelService.CreateConsolidatedExcelFile(
             outputDir,
             DateTime.UtcNow.Date,
@@ -54,5 +55,16 @@ public class ConsolidatedExportService : IConsolidatedExportService
         }
 
         return consolidatedPath;
+    }
+
+    private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
+            return settings.LocalConsolidatedExportFolder.Trim();
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
+            return settings.LocalSiteExportFolder.Trim();
+
+        return Path.Combine(AppContext.BaseDirectory, "output");
     }
 }

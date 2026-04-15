@@ -30,6 +30,9 @@ public class ConfigTransferExportSettings
     public int TimerHour { get; set; } = 3;
     public int TimerMinute { get; set; }
     public bool TimerEnabled { get; set; } = true;
+    public bool DebugLoggingEnabled { get; set; }
+    public string LocalSiteExportFolder { get; set; } = string.Empty;
+    public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
     public string? SapUsername { get; set; }
     public string? SapPassword { get; set; }
     public string? Bi1Username { get; set; }
@@ -62,6 +65,7 @@ public class ConfigTransferSite
     public string SourceSystem { get; set; } = "SAP";
     public string? UsernameOverride { get; set; }
     public string? PasswordOverride { get; set; }
+    public string LocalExportFolderOverride { get; set; } = string.Empty;
     public string SapServiceUrl { get; set; } = string.Empty;
     public string SapEntitySet { get; set; } = string.Empty;
     public string SapEntitySetsCache { get; set; } = string.Empty;

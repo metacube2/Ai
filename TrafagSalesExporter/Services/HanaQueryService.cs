@@ -5,20 +5,48 @@ namespace TrafagSalesExporter.Services;
 
 public class HanaQueryService : IHanaQueryService
 {
+    private readonly IAppEventLogService _appEventLogService;
+
+    public HanaQueryService(IAppEventLogService appEventLogService)
+    {
+        _appEventLogService = appEventLogService;
+    }
+
     public List<SalesRecord> GetSalesRecords(HanaServer server,
         string schema, string tsc, string land, string dateFilter)
     {
         var connectionString = server.BuildConnectionString();
         var result = new List<SalesRecord>();
 
-        using var connection = new HanaConnection(connectionString);
-        connection.Open();
+        try
+        {
+            _appEventLogService.WriteAsync("HANA", "Verbindungsaufbau gestartet", land: land,
+                details: $"Server={server.GetConnectionStringPreview()} | Schema={schema} | TSC={tsc}").GetAwaiter().GetResult();
 
-        var invoiceQuery = GetInvoiceQuery(schema, tsc, dateFilter);
-        var creditNoteQuery = GetCreditNoteQuery(schema, tsc, dateFilter);
+            using var connection = new HanaConnection(connectionString);
+            connection.Open();
 
-        result.AddRange(ReadRecords(connection, invoiceQuery, land));
-        result.AddRange(ReadRecords(connection, creditNoteQuery, land));
+            _appEventLogService.WriteAsync("HANA", "Verbindung erfolgreich", land: land,
+                details: $"Schema={schema} | TSC={tsc}").GetAwaiter().GetResult();
+
+            var invoiceQuery = GetInvoiceQuery(schema, tsc, dateFilter);
+            var creditNoteQuery = GetCreditNoteQuery(schema, tsc, dateFilter);
+
+            _appEventLogService.WriteAsync("HANA", "Invoice-Query gestartet", land: land, details: invoiceQuery).GetAwaiter().GetResult();
+            var invoiceRecords = ReadRecords(connection, invoiceQuery, land, "Invoice");
+            result.AddRange(invoiceRecords);
+            _appEventLogService.WriteAsync("HANA", "Invoice-Query beendet", land: land, details: $"Zeilen={invoiceRecords.Count}").GetAwaiter().GetResult();
+
+            _appEventLogService.WriteAsync("HANA", "Credit-Query gestartet", land: land, details: creditNoteQuery).GetAwaiter().GetResult();
+            var creditRecords = ReadRecords(connection, creditNoteQuery, land, "Credit");
+            result.AddRange(creditRecords);
+            _appEventLogService.WriteAsync("HANA", "Credit-Query beendet", land: land, details: $"Zeilen={creditRecords.Count}").GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _appEventLogService.WriteAsync("HANA", "HANA-Abfrage fehlgeschlagen", "Error", land: land, details: ex.ToString()).GetAwaiter().GetResult();
+            throw;
+        }
 
         foreach (var record in result)
         {
@@ -43,6 +71,8 @@ public class HanaQueryService : IHanaQueryService
 
         try
         {
+            _appEventLogService.WriteAsync("HANA", "Verbindungstest gestartet",
+                details: testResult.ConnectionStringPreview).GetAwaiter().GetResult();
             var connectionString = server.BuildConnectionString();
             using var connection = new HanaConnection(connectionString);
             connection.Open();
@@ -53,6 +83,8 @@ public class HanaQueryService : IHanaQueryService
 
             testResult.Success = true;
             testResult.Stage = "OK";
+            _appEventLogService.WriteAsync("HANA", "Verbindungstest erfolgreich",
+                details: testResult.ConnectionStringPreview).GetAwaiter().GetResult();
             return testResult;
         }
         catch (Exception ex)
@@ -60,6 +92,8 @@ public class HanaQueryService : IHanaQueryService
             testResult.Success = false;
             testResult.ErrorMessage = ex.Message;
             testResult.ExceptionType = ex.GetType().Name;
+            _appEventLogService.WriteAsync("HANA", "Verbindungstest fehlgeschlagen", "Error",
+                details: $"{testResult.ConnectionStringPreview}{Environment.NewLine}{ex}").GetAwaiter().GetResult();
             return testResult;
         }
     }
@@ -71,12 +105,13 @@ public class HanaQueryService : IHanaQueryService
         connection.Open();
     }
 
-    private static List<SalesRecord> ReadRecords(HanaConnection connection, string query, string land)
+    private List<SalesRecord> ReadRecords(HanaConnection connection, string query, string land, string queryName)
     {
         var records = new List<SalesRecord>();
 
         using var command = new HanaCommand(query, connection);
         using var reader = command.ExecuteReader();
+        var counter = 0;
 
         while (reader.Read())
         {
@@ -109,6 +144,13 @@ public class HanaQueryService : IHanaQueryService
                 Land = land,
                 DocumentType = reader["doc_type"]?.ToString() ?? string.Empty
             });
+
+            counter++;
+            if (counter % 250 == 0)
+            {
+                _appEventLogService.WriteDebugAsync("HANA", $"{queryName}-Query liest Daten", land: land,
+                    details: $"Bisher gelesene Zeilen={counter}").GetAwaiter().GetResult();
+            }
         }
 
         return records;

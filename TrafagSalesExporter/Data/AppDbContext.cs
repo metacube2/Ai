@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<SharePointConfig> SharePointConfigs => Set<SharePointConfig>();
     public DbSet<ExportSettings> ExportSettings => Set<ExportSettings>();
     public DbSet<ExportLog> ExportLogs => Set<ExportLog>();
+    public DbSet<AppEventLog> AppEventLogs => Set<AppEventLog>();
     public DbSet<FieldTransformationRule> FieldTransformationRules => Set<FieldTransformationRule>();
     public DbSet<SapSourceDefinition> SapSourceDefinitions => Set<SapSourceDefinition>();
     public DbSet<SapJoinDefinition> SapJoinDefinitions => Set<SapJoinDefinition>();

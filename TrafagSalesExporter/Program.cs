@@ -11,7 +11,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite("Data Source=trafag_exporter.db"));
+    options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=10"));
 
 builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
 builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
@@ -26,6 +26,8 @@ builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrat
 builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
 builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
+builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
+builder.Services.AddSingleton<IManagementCockpitService, ManagementCockpitService>();
 builder.Services.AddSingleton<ISiteExportService, SiteExportService>();
 builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();

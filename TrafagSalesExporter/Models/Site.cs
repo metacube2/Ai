@@ -27,6 +27,7 @@ public class Site
     public string UsernameOverride { get; set; } = string.Empty;
 
     public string PasswordOverride { get; set; } = string.Empty;
+    public string LocalExportFolderOverride { get; set; } = string.Empty;
 
     public string SapServiceUrl { get; set; } = string.Empty;
 

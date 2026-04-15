@@ -18,8 +18,28 @@ public class DatabaseInitializationService : IDatabaseInitializationService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         await db.Database.EnsureCreatedAsync();
+        ConfigureSqlite(db);
         EnsureSchema(db);
         SeedIfEmpty(db);
+    }
+
+    private static void ConfigureSqlite(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using (var wal = conn.CreateCommand())
+        {
+            wal.CommandText = "PRAGMA journal_mode=WAL;";
+            wal.ExecuteNonQuery();
+        }
+
+        using (var timeout = conn.CreateCommand())
+        {
+            timeout.CommandText = "PRAGMA busy_timeout=10000;";
+            timeout.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureSchema(AppDbContext db)
@@ -32,6 +52,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "Sites", "SourceSystem", "TEXT NOT NULL DEFAULT 'SAP'");
         AddColumnIfMissing(db, "Sites", "UsernameOverride", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "PasswordOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "LocalExportFolderOverride", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapServiceUrl", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySet", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySetsCache", "TEXT NOT NULL DEFAULT ''");
@@ -42,11 +63,16 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "ExportSettings", "Bi1Password", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "SageUsername", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "SagePassword", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "DebugLoggingEnabled", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "ExportSettings", "LocalSiteExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "LocalConsolidatedExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
         EnsureSapSourceTable(db);
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
         EnsureCentralSalesRecordTable(db);
+        EnsureAppEventLogTable(db);
     }
 
     private static void EnsureSitesTableSupportsOptionalHanaServer(AppDbContext db)
@@ -100,6 +126,7 @@ CREATE TABLE Sites (
     SourceSystem TEXT NOT NULL DEFAULT 'SAP',
     UsernameOverride TEXT NOT NULL DEFAULT '',
     PasswordOverride TEXT NOT NULL DEFAULT '',
+    LocalExportFolderOverride TEXT NOT NULL DEFAULT '',
     SapServiceUrl TEXT NOT NULL DEFAULT '',
     SapEntitySet TEXT NOT NULL DEFAULT '',
     SapEntitySetsCache TEXT NOT NULL DEFAULT '',
@@ -116,7 +143,7 @@ CREATE TABLE Sites (
             copy.CommandText = @"
 INSERT INTO Sites (
     Id, HanaServerId, Schema, TSC, Land, SourceSystem,
-    UsernameOverride, PasswordOverride, SapServiceUrl, SapEntitySet,
+    UsernameOverride, PasswordOverride, LocalExportFolderOverride, SapServiceUrl, SapEntitySet,
     SapEntitySetsCache, SapEntitySetsRefreshedAtUtc, IsActive
 )
 SELECT
@@ -124,6 +151,7 @@ SELECT
     COALESCE(SourceSystem, 'SAP'),
     COALESCE(UsernameOverride, ''),
     COALESCE(PasswordOverride, ''),
+    COALESCE(LocalExportFolderOverride, ''),
     COALESCE(SapServiceUrl, ''),
     COALESCE(SapEntitySet, ''),
     COALESCE(SapEntitySetsCache, ''),
@@ -306,6 +334,28 @@ CREATE TABLE IF NOT EXISTS CentralSalesRecords (
         cmd.ExecuteNonQuery();
     }
 
+    private static void EnsureAppEventLogTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS AppEventLogs (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Timestamp TEXT NOT NULL,
+    Level TEXT NOT NULL,
+    Category TEXT NOT NULL,
+    SiteId INTEGER NULL,
+    Land TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    Details TEXT NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+        cmd.ExecuteNonQuery();
+    }
+
     private static void SeedIfEmpty(AppDbContext db)
     {
         if (db.HanaServers.Any())
@@ -337,7 +387,10 @@ CREATE TABLE IF NOT EXISTS CentralSalesRecords (
             DateFilter = "2025-01-01",
             TimerHour = 3,
             TimerMinute = 0,
-            TimerEnabled = true
+            TimerEnabled = true,
+            DebugLoggingEnabled = false,
+            LocalSiteExportFolder = "",
+            LocalConsolidatedExportFolder = ""
         });
 
         db.SaveChanges();
