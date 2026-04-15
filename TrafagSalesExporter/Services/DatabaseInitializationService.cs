@@ -45,6 +45,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
     private static void EnsureSchema(AppDbContext db)
     {
         EnsureSitesTableSupportsOptionalHanaServer(db);
+        RepairBrokenSiteForeignKeys(db);
         AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
@@ -174,6 +175,221 @@ FROM Sites_old;";
         enableFk.CommandText = "PRAGMA foreign_keys = ON;";
         enableFk.ExecuteNonQuery();
     }
+
+    private static void RepairBrokenSiteForeignKeys(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        var tablesToRepair = new[]
+        {
+            ("ExportLogs", GetExportLogsCreateSql()),
+            ("AppEventLogs", GetAppEventLogsCreateSql()),
+            ("CentralSalesRecords", GetCentralSalesRecordsCreateSql()),
+            ("SapSourceDefinitions", GetSapSourceDefinitionsCreateSql()),
+            ("SapJoinDefinitions", GetSapJoinDefinitionsCreateSql()),
+            ("SapFieldMappings", GetSapFieldMappingsCreateSql())
+        };
+
+        foreach (var (tableName, createSql) in tablesToRepair)
+        {
+            if (TableReferencesSitesOld(conn, tableName))
+                RebuildTable(conn, tableName, createSql);
+        }
+    }
+
+    private static bool TableReferencesSitesOld(System.Data.Common.DbConnection connection, string tableName)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $tableName;";
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$tableName";
+        parameter.Value = tableName;
+        command.Parameters.Add(parameter);
+
+        var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
+        return sql.Contains("Sites_old", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void RebuildTable(System.Data.Common.DbConnection connection, string tableName, string createSql)
+    {
+        using var disableFk = connection.CreateCommand();
+        disableFk.CommandText = "PRAGMA foreign_keys = OFF;";
+        disableFk.ExecuteNonQuery();
+
+        using var transaction = connection.BeginTransaction();
+
+        var tempTableName = $"{tableName}_repair_old";
+
+        using (var rename = connection.CreateCommand())
+        {
+            rename.Transaction = transaction;
+            rename.CommandText = $"ALTER TABLE {tableName} RENAME TO {tempTableName};";
+            rename.ExecuteNonQuery();
+        }
+
+        using (var create = connection.CreateCommand())
+        {
+            create.Transaction = transaction;
+            create.CommandText = createSql;
+            create.ExecuteNonQuery();
+        }
+
+        var columns = GetSharedColumns(connection, transaction, tableName, tempTableName);
+        if (columns.Count > 0)
+        {
+            var columnList = string.Join(", ", columns);
+
+            using var copy = connection.CreateCommand();
+            copy.Transaction = transaction;
+            copy.CommandText = $"INSERT INTO {tableName} ({columnList}) SELECT {columnList} FROM {tempTableName};";
+            copy.ExecuteNonQuery();
+        }
+
+        using (var drop = connection.CreateCommand())
+        {
+            drop.Transaction = transaction;
+            drop.CommandText = $"DROP TABLE {tempTableName};";
+            drop.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+
+        using var enableFk = connection.CreateCommand();
+        enableFk.CommandText = "PRAGMA foreign_keys = ON;";
+        enableFk.ExecuteNonQuery();
+    }
+
+    private static List<string> GetSharedColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction, string newTableName, string oldTableName)
+    {
+        var newColumns = GetTableColumns(connection, transaction, newTableName);
+        var oldColumns = GetTableColumns(connection, transaction, oldTableName);
+
+        return newColumns.Where(oldColumns.Contains).ToList();
+    }
+
+    private static HashSet<string> GetTableColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction, string tableName)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"PRAGMA table_info({tableName})";
+
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var name = reader["name"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(name))
+                columns.Add(name);
+        }
+
+        return columns;
+    }
+
+    private static string GetExportLogsCreateSql() => @"
+CREATE TABLE ExportLogs (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Timestamp TEXT NOT NULL,
+    SiteId INTEGER NOT NULL,
+    Land TEXT NOT NULL,
+    TSC TEXT NOT NULL,
+    Status TEXT NOT NULL,
+    RowCount INTEGER NOT NULL,
+    ErrorMessage TEXT NULL,
+    FileName TEXT NOT NULL DEFAULT '',
+    FilePath TEXT NOT NULL DEFAULT '',
+    DurationSeconds REAL NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetAppEventLogsCreateSql() => @"
+CREATE TABLE AppEventLogs (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Timestamp TEXT NOT NULL,
+    Level TEXT NOT NULL,
+    Category TEXT NOT NULL,
+    SiteId INTEGER NULL,
+    Land TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    Details TEXT NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetCentralSalesRecordsCreateSql() => @"
+CREATE TABLE CentralSalesRecords (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    StoredAtUtc TEXT NOT NULL,
+    SiteId INTEGER NOT NULL,
+    SourceSystem TEXT NOT NULL,
+    ExtractionDate TEXT NOT NULL,
+    Tsc TEXT NOT NULL,
+    InvoiceNumber TEXT NOT NULL,
+    PositionOnInvoice INTEGER NOT NULL,
+    Material TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    ProductGroup TEXT NOT NULL,
+    Quantity TEXT NOT NULL,
+    SupplierNumber TEXT NOT NULL,
+    SupplierName TEXT NOT NULL,
+    SupplierCountry TEXT NOT NULL,
+    CustomerNumber TEXT NOT NULL,
+    CustomerName TEXT NOT NULL,
+    CustomerCountry TEXT NOT NULL,
+    CustomerIndustry TEXT NOT NULL,
+    StandardCost TEXT NOT NULL,
+    StandardCostCurrency TEXT NOT NULL,
+    PurchaseOrderNumber TEXT NOT NULL,
+    SalesPriceValue TEXT NOT NULL,
+    SalesCurrency TEXT NOT NULL,
+    Incoterms2020 TEXT NOT NULL,
+    SalesResponsibleEmployee TEXT NOT NULL,
+    InvoiceDate TEXT NULL,
+    OrderDate TEXT NULL,
+    Land TEXT NOT NULL,
+    DocumentType TEXT NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetSapSourceDefinitionsCreateSql() => @"
+CREATE TABLE SapSourceDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    Alias TEXT NOT NULL,
+    EntitySet TEXT NOT NULL,
+    IsPrimary INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetSapJoinDefinitionsCreateSql() => @"
+CREATE TABLE SapJoinDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    LeftAlias TEXT NOT NULL,
+    RightAlias TEXT NOT NULL,
+    LeftKeys TEXT NOT NULL,
+    RightKeys TEXT NOT NULL,
+    JoinType TEXT NOT NULL DEFAULT 'Left',
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetSapFieldMappingsCreateSql() => @"
+CREATE TABLE SapFieldMappings (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    TargetField TEXT NOT NULL,
+    SourceExpression TEXT NOT NULL,
+    IsRequired INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
 
     private static void AddColumnIfMissing(AppDbContext db, string table, string column, string type)
     {

@@ -39,6 +39,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
 
             updateStatus?.Invoke("Zentrale Tabelle: neue Saetze vorbereiten...");
             await InsertRecordsInCommittedBatchesAsync(connection, site, recordList, updateStatus);
+            updateStatus?.Invoke("Zentrale Tabelle aktualisiert");
 
             await _appEventLogService.WriteAsync(
                 "Export",

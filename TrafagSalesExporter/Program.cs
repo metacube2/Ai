@@ -11,7 +11,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=10"));
+    options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
 
 builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
 builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();

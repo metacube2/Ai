@@ -310,41 +310,19 @@
         }
     }
 
-    private async Task RefreshLiveDataAsync()
+    private Task RefreshLiveDataAsync()
     {
-        var runningSiteIds = _dashboardRows
-            .Where(r => Orchestrator.IsExporting(r.SiteId))
-            .Select(r => r.SiteId)
-            .Distinct()
-            .ToList();
-
-        if (runningSiteIds.Count == 0)
-        {
-            _anyRunning = false;
-            return;
-        }
-
-        using var db = await DbFactory.CreateDbContextAsync();
-        var appLogs = await db.AppEventLogs
-            .Where(l => l.SiteId != null && runningSiteIds.Contains(l.SiteId.Value))
-            .OrderByDescending(l => l.Timestamp)
-            .Take(200)
-            .ToListAsync();
-
-        var latestAppLogsBySite = appLogs
-            .GroupBy(l => l.SiteId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
-
         foreach (var row in _dashboardRows)
         {
-            if (!latestAppLogsBySite.TryGetValue(row.SiteId, out var appLog))
+            if (!Orchestrator.IsExporting(row.SiteId))
                 continue;
 
-            row.LiveMessage = $"{appLog.Category}: {appLog.Message}";
-            row.LiveDetails = appLog.Details ?? string.Empty;
+            row.LiveMessage = Orchestrator.GetExportStatus(row.SiteId);
+            row.LiveDetails = string.Empty;
         }
 
         _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+        return Task.CompletedTask;
     }
 
     private class DashboardRow
