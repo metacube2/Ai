@@ -28,6 +28,8 @@ public class Site
 
     public string PasswordOverride { get; set; } = string.Empty;
     public string LocalExportFolderOverride { get; set; } = string.Empty;
+    public string ManualImportFilePath { get; set; } = string.Empty;
+    public DateTime? ManualImportLastUploadedAtUtc { get; set; }
 
     public string SapServiceUrl { get; set; } = string.Empty;
 

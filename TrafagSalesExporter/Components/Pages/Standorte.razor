@@ -1,4 +1,5 @@
 @page "/standorte"
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
 @using System.Reflection
@@ -341,6 +342,31 @@
                 </RowTemplate>
             </MudTable>
         }
+        else if (IsManualExcelSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">Manueller Excel-Import</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Für diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-Datei gelesen und in `CentralSalesRecords` übernommen.
+            </MudAlert>
+            <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx" />
+            @if (_uploadingManualImport)
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Datei wird hochgeladen...</MudText>
+            }
+            @if (!string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
+            {
+                <MudPaper Class="pa-3 mt-3" Elevation="0">
+                    <MudText Typo="Typo.body2">Datei: @_editingSite.ManualImportFilePath</MudText>
+                    <MudText Typo="Typo.caption">
+                        Letzter Upload: @(_editingSite.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
+                    </MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Noch keine Datei hinterlegt.</MudText>
+            }
+        }
         else
         {
             <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
@@ -365,13 +391,13 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite">Abbrechen</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets">Speichern</MudButton>
+        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite || _uploadingManualImport">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets || _uploadingManualImport">Speichern</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    private readonly string[] _sourceSystems = ["SAP", "BI1", "SAGE"];
+    private readonly string[] _sourceSystems = ["SAP", "BI1", "SAGE", "MANUAL_EXCEL"];
     private readonly Dictionary<int, ConnectionTestResult> _connectionStatus = new();
     private List<HanaServer> _servers = new();
     private List<Site> _sites = new();
@@ -394,6 +420,7 @@
     private bool _refreshingSapSourceFields;
     private bool _savingServer;
     private bool _savingSite;
+    private bool _uploadingManualImport;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
@@ -514,7 +541,8 @@
         {
             IsActive = true,
             SourceSystem = "SAP",
-            HanaServerId = null
+            HanaServerId = null,
+            ManualImportFilePath = string.Empty
         };
         _sapEntitySetsCache = [];
         _sapAvailableSourceExpressions = [];
@@ -539,6 +567,8 @@
             UsernameOverride = site.UsernameOverride,
             PasswordOverride = site.PasswordOverride,
             LocalExportFolderOverride = site.LocalExportFolderOverride,
+            ManualImportFilePath = site.ManualImportFilePath,
+            ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
             SapServiceUrl = site.SapServiceUrl,
             SapEntitySet = site.SapEntitySet,
             SapEntitySetsCache = site.SapEntitySetsCache,
@@ -567,7 +597,7 @@
         try
         {
             using var db = await DbFactory.CreateDbContextAsync();
-            var serverId = IsSapSite() ? (int?)null : await SaveOrCreateSiteServerAsync(db);
+            var serverId = UsesHanaConnection() ? await SaveOrCreateSiteServerAsync(db) : (int?)null;
             _editingSite.HanaServerId = serverId;
             _editingSite.SapEntitySetsCache = SerializeSapEntitySets(_sapEntitySetsCache);
 
@@ -588,6 +618,8 @@
                     existing.UsernameOverride = _editingSite.UsernameOverride;
                     existing.PasswordOverride = _editingSite.PasswordOverride;
                     existing.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride;
+                    existing.ManualImportFilePath = _editingSite.ManualImportFilePath;
+                    existing.ManualImportLastUploadedAtUtc = _editingSite.ManualImportLastUploadedAtUtc;
                     existing.SapServiceUrl = _editingSite.SapServiceUrl;
                     existing.SapEntitySet = _editingSite.SapEntitySet;
                     existing.SapEntitySetsCache = _editingSite.SapEntitySetsCache;
@@ -654,6 +686,8 @@
         var sourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? "SAP" : site.SourceSystem;
         if (string.Equals(sourceSystem, "SAP", StringComparison.OrdinalIgnoreCase))
             return string.IsNullOrWhiteSpace(site.SapServiceUrl) ? "-" : site.SapServiceUrl;
+        if (string.Equals(sourceSystem, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(site.ManualImportFilePath) ? "-" : Path.GetFileName(site.ManualImportFilePath);
 
         return GetServerNode(site.HanaServer);
     }
@@ -696,6 +730,7 @@
         _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
         _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
         _editingSite.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride.Trim();
+        _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
         _editingSite.SapServiceUrl = _editingSite.SapServiceUrl.Trim();
         _editingSite.SapEntitySet = _editingSite.SapEntitySet.Trim();
         _editingSiteServer.Host = _editingSiteServer.Host.Trim();
@@ -745,6 +780,8 @@
     }
 
     private bool IsSapSite() => string.Equals(_editingSite.SourceSystem, "SAP", StringComparison.OrdinalIgnoreCase);
+    private bool IsManualExcelSite() => string.Equals(_editingSite.SourceSystem, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase);
+    private bool UsesHanaConnection() => !IsSapSite() && !IsManualExcelSite();
 
     private async Task RefreshSapEntitySets()
     {
@@ -804,10 +841,60 @@
 
     private void CloseSiteDialog()
     {
-        if (_savingSite || _refreshingSapEntitySets)
+        if (_savingSite || _refreshingSapEntitySets || _uploadingManualImport)
             return;
 
         _siteDialogVisible = false;
+    }
+
+    private async Task UploadManualImportFileAsync(InputFileChangeEventArgs args)
+    {
+        if (_uploadingManualImport)
+            return;
+
+        var file = args.File;
+        if (file is null)
+            return;
+
+        _uploadingManualImport = true;
+        try
+        {
+            var extension = Path.GetExtension(file.Name);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx auswählen.");
+            }
+
+            var uploadDirectory = Path.Combine(AppContext.BaseDirectory, "manual-imports");
+            Directory.CreateDirectory(uploadDirectory);
+
+            var safeBaseName = string.Concat(Path.GetFileNameWithoutExtension(file.Name).Select(ch =>
+                char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' ? ch : '_'));
+            if (string.IsNullOrWhiteSpace(safeBaseName))
+                safeBaseName = "manual_import";
+
+            var targetPath = Path.Combine(uploadDirectory, $"{safeBaseName}_{Guid.NewGuid():N}{extension}");
+
+            await using (var sourceStream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024))
+            await using (var targetStream = File.Create(targetPath))
+            {
+                await sourceStream.CopyToAsync(targetStream);
+            }
+
+            _editingSite.ManualImportFilePath = targetPath;
+            _editingSite.ManualImportLastUploadedAtUtc = DateTime.UtcNow;
+            Snackbar.Add("Excel-Datei hochgeladen.", Severity.Success);
+            await AppEventLogService.WriteAsync("ManualImport", "Excel-Datei hochgeladen", siteId: _editingSite.Id, land: _editingSite.Land, details: targetPath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload fehlgeschlagen: {ex.Message}", Severity.Error);
+            await AppEventLogService.WriteAsync("ManualImport", "Excel-Upload fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
+        }
+        finally
+        {
+            _uploadingManualImport = false;
+        }
     }
 
     private static List<string> ParseSapEntitySets(string json)

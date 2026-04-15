@@ -2,63 +2,51 @@
 
 Stand: 2026-04-15
 
-## 1. Erstes Ziel
+## 1. Status
 
-Prüfen, ob die aktuelle Version beim Standort-Export noch in der zentralen SQLite-Speicherung hängen bleibt.
+Der Export geht jetzt wieder durch.
 
-Wichtig:
+Die zuletzt gefundene Hauptursache war nicht mehr ein reiner SQLite-Lock beim Batch-Insert, sondern ein kaputter FK-Schemazustand in der bestehenden DB:
 
-- App neu starten
-- denselben Standort erneut exportieren
-- letzte sichtbare `Live-Status`-Meldung exakt notieren
+- SQLite referenzierte in mindestens einer Tabelle noch `main.Sites_old`
+- dadurch scheiterte `SaveChangesAsync()` beim Schreiben z. B. in `AppEventLogs` oder `ExportLogs`
+- sichtbarer Effekt: Export blieb nach `Zentrale Tabelle: ... Datensaetze gespeichert.` haengen
 
-Interessant sind vor allem diese Fälle:
+## 2. Umgesetzter Fix
 
-- `Zentrale Tabelle: Batch x/y speichern...`
-- `Zentrale Tabelle: Batch x/y abschliessen...`
-- `Zentrale Tabelle aktualisiert`
-- `Export erfolgreich`
+Umgesetzt wurde:
 
-## 2. Hauptverdächtiger
+- Dashboard-Live-Status liest waehrend laufendem Export nicht mehr staendig aus `AppEventLogs`, sondern nutzt den In-Memory-Status des `ExportOrchestrationService`
+- SQLite `Default Timeout` in `Program.cs` auf `60` erhoeht
+- `CentralSalesRecordService` setzt nach den Batches explizit `Zentrale Tabelle aktualisiert`
+- `DatabaseInitializationService` repariert beim App-Start automatisch Tabellen, deren FK-SQL noch `Sites_old` referenziert
 
-Datei:
+Betroffene Dateien:
 
-- `Services/CentralSalesRecordService.cs`
-
-Aktueller Stand:
-
-- alte Sätze werden in eigener Transaktion gelöscht
-- Inserts laufen in Batches von 25
-- jeder Batch wird separat committed
-
-Wenn es noch hängt, dort zuerst ansetzen.
-
-## 3. Falls es weiter hängt
-
-In dieser Reihenfolge prüfen:
-
-1. Batchgröße weiter reduzieren
-   - z. B. `10` statt `25`
-2. Direkt vor und direkt nach `transaction.CommitAsync()` zusätzlich technische Logs setzen
-3. Prüfen, ob parallel noch andere SQLite-Zugriffe laufen
-4. Optional zentrale Speicherung vorübergehend per Setting deaktivierbar machen
-5. Falls nötig zentrale Speicherung in separate DB-Datei auslagern
-
-## 4. Dashboard / UI prüfen
-
-Zu testen:
-
-- `Excel öffnen` wird nach neuem erfolgreichen Export aktiv
-- `Export erfolgreich` zeigt `Pfad=...`
-- Dashboard-Live-Status setzt sich nach Abschluss sauber zurück
-
-Dateien:
-
+- `Program.cs`
 - `Components/Pages/Dashboard.razor`
-- `Services/SiteExportService.cs`
-- `Models/ExportLog.cs`
+- `Services/CentralSalesRecordService.cs`
+- `Services/DatabaseInitializationService.cs`
 
-## 5. SAP-Funktionalität kurz gegenprüfen
+## 3. Was noch getestet werden sollte
+
+Kurz gegenpruefen:
+
+- Export eines Standorts erneut
+- `Excel oeffnen` nach erfolgreichem Export
+- `Export erfolgreich` inkl. `Pfad=...`
+- Dashboard-Live-Status setzt sich nach Abschluss sauber zurueck
+
+## 4. Falls wieder ein Fehler auftritt
+
+In dieser Reihenfolge pruefen:
+
+1. Exakte Fehlermeldung aus `AppEventLogs` bzw. Console notieren
+2. Pruefen, ob die Reparaturlogik beim Start gelaufen ist
+3. Pruefen, ob noch weitere Tabellen mit veralteter FK-Referenz existieren
+4. Erst danach wieder am Batch-/Commit-Pfad der zentralen Speicherung arbeiten
+
+## 5. SAP-Funktionalitaet kurz gegenpruefen
 
 Zu testen:
 
@@ -73,12 +61,12 @@ Dateien:
 - `Services/SapGatewayService.cs`
 - `Services/SapCompositionService.cs`
 
-## 6. Management Cockpit prüfen
+## 6. Management Cockpit pruefen
 
 Zu testen:
 
-- vorhandene Excel-Datei auswählbar
-- Analyse läuft
+- vorhandene Excel-Datei auswaehlbar
+- Analyse laeuft
 - Kennzahlen plausibel
 
 Dateien:
@@ -86,17 +74,8 @@ Dateien:
 - `Components/Pages/ManagementCockpit.razor`
 - `Services/ManagementCockpitService.cs`
 
-## 7. Wenn Stabilität vor Funktion geht
+## 7. Referenzdatei
 
-Sinnvolle pragmatische Zwischenlösung:
-
-- zentrale SQLite-Speicherung per Setting abschaltbar machen
-- Export lokal und zentral Excel weiter erlauben
-- zentrale DB erst wieder aktivieren, wenn der Commit-Pfad stabil ist
-
-## 8. Referenzdatei
-
-Für den vollständigen Kontext zuerst lesen:
+Fuer den vollstaendigen Kontext zuerst lesen:
 
 - `HANDOFF_2026-04-15.md`
-

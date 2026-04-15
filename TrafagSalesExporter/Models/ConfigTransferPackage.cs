@@ -66,6 +66,8 @@ public class ConfigTransferSite
     public string? UsernameOverride { get; set; }
     public string? PasswordOverride { get; set; }
     public string LocalExportFolderOverride { get; set; } = string.Empty;
+    public string ManualImportFilePath { get; set; } = string.Empty;
+    public DateTime? ManualImportLastUploadedAtUtc { get; set; }
     public string SapServiceUrl { get; set; } = string.Empty;
     public string SapEntitySet { get; set; } = string.Empty;
     public string SapEntitySetsCache { get; set; } = string.Empty;

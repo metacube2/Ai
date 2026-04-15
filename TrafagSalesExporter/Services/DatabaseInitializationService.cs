@@ -54,6 +54,8 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "Sites", "UsernameOverride", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "PasswordOverride", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "LocalExportFolderOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "ManualImportFilePath", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "ManualImportLastUploadedAtUtc", "TEXT NULL");
         AddColumnIfMissing(db, "Sites", "SapServiceUrl", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySet", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySetsCache", "TEXT NOT NULL DEFAULT ''");
@@ -128,6 +130,8 @@ CREATE TABLE Sites (
     UsernameOverride TEXT NOT NULL DEFAULT '',
     PasswordOverride TEXT NOT NULL DEFAULT '',
     LocalExportFolderOverride TEXT NOT NULL DEFAULT '',
+    ManualImportFilePath TEXT NOT NULL DEFAULT '',
+    ManualImportLastUploadedAtUtc TEXT NULL,
     SapServiceUrl TEXT NOT NULL DEFAULT '',
     SapEntitySet TEXT NOT NULL DEFAULT '',
     SapEntitySetsCache TEXT NOT NULL DEFAULT '',
@@ -145,7 +149,7 @@ CREATE TABLE Sites (
 INSERT INTO Sites (
     Id, HanaServerId, Schema, TSC, Land, SourceSystem,
     UsernameOverride, PasswordOverride, LocalExportFolderOverride, SapServiceUrl, SapEntitySet,
-    SapEntitySetsCache, SapEntitySetsRefreshedAtUtc, IsActive
+    ManualImportFilePath, ManualImportLastUploadedAtUtc, SapEntitySetsCache, SapEntitySetsRefreshedAtUtc, IsActive
 )
 SELECT
     Id, HanaServerId, Schema, TSC, Land,
@@ -153,6 +157,8 @@ SELECT
     COALESCE(UsernameOverride, ''),
     COALESCE(PasswordOverride, ''),
     COALESCE(LocalExportFolderOverride, ''),
+    COALESCE(ManualImportFilePath, ''),
+    ManualImportLastUploadedAtUtc,
     COALESCE(SapServiceUrl, ''),
     COALESCE(SapEntitySet, ''),
     COALESCE(SapEntitySetsCache, ''),

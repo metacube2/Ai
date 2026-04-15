@@ -28,6 +28,7 @@ builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStr
 builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
 builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
 builder.Services.AddSingleton<IManagementCockpitService, ManagementCockpitService>();
+builder.Services.AddSingleton<IManualExcelImportService, ManualExcelImportService>();
 builder.Services.AddSingleton<ISiteExportService, SiteExportService>();
 builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();

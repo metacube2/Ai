@@ -14,6 +14,8 @@ public class ExportOrchestrationService
     public event Action? OnExportStatusChanged;
 
     private readonly Dictionary<int, string> _runningExports = new();
+    private bool _consolidatedExportRunning;
+    private string _consolidatedExportStatus = string.Empty;
     private readonly object _lock = new();
 
     public ExportOrchestrationService(
@@ -44,6 +46,22 @@ public class ExportOrchestrationService
         }
     }
 
+    public bool IsConsolidatedExporting()
+    {
+        lock (_lock)
+        {
+            return _consolidatedExportRunning;
+        }
+    }
+
+    public string GetConsolidatedExportStatus()
+    {
+        lock (_lock)
+        {
+            return _consolidatedExportStatus;
+        }
+    }
+
     public async Task ExportAllAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -57,7 +75,12 @@ public class ExportOrchestrationService
                 consolidatedRecords.AddRange(result.Records);
         }
 
-        await _consolidatedExportService.ExportAsync(consolidatedRecords);
+        await RunConsolidatedExportAsync(consolidatedRecords);
+    }
+
+    public async Task<string?> ExportConsolidatedOnlyAsync()
+    {
+        return await RunConsolidatedExportAsync(null);
     }
 
     public async Task<SiteExportResult?> ExportSiteByIdAsync(int siteId)
@@ -111,5 +134,32 @@ public class ExportOrchestrationService
     private void NotifyChanged()
     {
         OnExportStatusChanged?.Invoke();
+    }
+
+    private async Task<string?> RunConsolidatedExportAsync(List<SalesRecord>? records)
+    {
+        lock (_lock)
+        {
+            if (_consolidatedExportRunning)
+                return null;
+
+            _consolidatedExportRunning = true;
+            _consolidatedExportStatus = "Zentrale Datei erzeugen...";
+        }
+        NotifyChanged();
+
+        try
+        {
+            return await _consolidatedExportService.ExportAsync(records ?? []);
+        }
+        finally
+        {
+            lock (_lock)
+            {
+                _consolidatedExportRunning = false;
+                _consolidatedExportStatus = string.Empty;
+            }
+            NotifyChanged();
+        }
     }
 }

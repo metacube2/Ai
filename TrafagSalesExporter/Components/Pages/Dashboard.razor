@@ -19,6 +19,10 @@
                    OnClick="ExportAll" Disabled="_anyRunning">
             Alle exportieren
         </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.TableView"
+                   OnClick="ExportConsolidatedOnly" Disabled="_anyRunning">
+            Zentrale Datei neu erzeugen
+        </MudButton>
         <MudText Typo="Typo.body1">
             @if (TimerService.NextRun < DateTime.MaxValue)
             {
@@ -109,8 +113,49 @@
     </RowTemplate>
 </MudTable>
 
+<MudPaper Class="pa-4 mt-4" Elevation="1">
+    <MudText Typo="Typo.h6" Class="mb-3">Zentrale Datei</MudText>
+    <MudTable Items="_consolidatedRows" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Datei</MudTh>
+            <MudTh>Pfad</MudTh>
+            <MudTh>Letzte Änderung</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Aktion</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Label</MudTd>
+            <MudTd>@context.DisplayPath</MudTd>
+            <MudTd>@(context.LastModified.HasValue ? context.LastModified.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
+            <MudTd>
+                @if (Orchestrator.IsConsolidatedExporting())
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" Class="mr-1" />
+                    <MudText Typo="Typo.caption">@Orchestrator.GetConsolidatedExportStatus()</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+                }
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.OpenInNew"
+                           OnClick="() => OpenFile(context.FilePath)"
+                           Disabled="@(!context.HasOpenableFile)">
+                    Excel öffnen
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.caption">Keine zentrale Excel-Datei gefunden.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
 @code {
     private List<DashboardRow> _dashboardRows = new();
+    private List<ConsolidatedDashboardRow> _consolidatedRows = new();
     private bool _loading = true;
     private bool _anyRunning;
     private CancellationTokenSource? _pollingCts;
@@ -164,7 +209,9 @@
             };
         }).ToList();
 
-        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+        _consolidatedRows = BuildConsolidatedRows(settings: await db.ExportSettings.FirstOrDefaultAsync() ?? new());
+
+        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         _loading = false;
     }
 
@@ -183,6 +230,34 @@
             });
         });
         Snackbar.Add("Export für alle Standorte gestartet", Severity.Info);
+    }
+
+    private async Task ExportConsolidatedOnly()
+    {
+        _anyRunning = true;
+        await LoadDataAsync();
+        StartPolling();
+        _ = Task.Run(async () =>
+        {
+            var filePath = await Orchestrator.ExportConsolidatedOnlyAsync();
+            await InvokeAsync(async () =>
+            {
+                await LoadDataAsync();
+                StateHasChanged();
+            });
+
+            if (!string.IsNullOrWhiteSpace(filePath))
+            {
+                await InvokeAsync(() =>
+                    Snackbar.Add($"Zentrale Datei erzeugt: {filePath}", Severity.Success));
+            }
+            else
+            {
+                await InvokeAsync(() =>
+                    Snackbar.Add("Zentrale Datei konnte nicht erzeugt werden.", Severity.Warning));
+            }
+        });
+        Snackbar.Add("Zentrale Datei wird erzeugt", Severity.Info);
     }
 
     private void ExportSingle(int siteId)
@@ -217,7 +292,7 @@
     {
         await InvokeAsync(async () =>
         {
-            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || _dashboardRows.Count == 0;
+            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting() || _dashboardRows.Count == 0;
             if (_anyRunning)
             {
                 StartPolling();
@@ -240,7 +315,12 @@
 
     private void OpenExportFile(DashboardRow row)
     {
-        if (string.IsNullOrWhiteSpace(row.FilePath) || !File.Exists(row.FilePath))
+        OpenFile(row.FilePath);
+    }
+
+    private void OpenFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
         {
             Snackbar.Add("Exportdatei nicht gefunden.", Severity.Warning);
             return;
@@ -250,7 +330,7 @@
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = row.FilePath,
+                FileName = filePath,
                 UseShellExecute = true
             });
         }
@@ -284,7 +364,7 @@
         {
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
-                var anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+                var anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
                 if (!anyRunning)
                 {
                     await InvokeAsync(async () =>
@@ -321,8 +401,39 @@
             row.LiveDetails = string.Empty;
         }
 
-        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId));
+        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         return Task.CompletedTask;
+    }
+
+    private static List<ConsolidatedDashboardRow> BuildConsolidatedRows(ExportSettings settings)
+    {
+        var outputDirectory = ResolveConsolidatedOutputDirectory(settings);
+        if (!Directory.Exists(outputDirectory))
+            return [];
+
+        return Directory.GetFiles(outputDirectory, "Sales_All_*.xlsx")
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTime)
+            .Take(1)
+            .Select(file => new ConsolidatedDashboardRow
+            {
+                Label = "Konsolidierter Export",
+                FilePath = file.FullName,
+                DisplayPath = file.FullName,
+                LastModified = file.LastWriteTime
+            })
+            .ToList();
+    }
+
+    private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
+            return settings.LocalConsolidatedExportFolder.Trim();
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
+            return settings.LocalSiteExportFolder.Trim();
+
+        return Path.Combine(AppContext.BaseDirectory, "output");
     }
 
     private class DashboardRow
@@ -340,6 +451,15 @@
         public string FilePath { get; set; } = "";
         public string LiveMessage { get; set; } = "";
         public string LiveDetails { get; set; } = "";
+        public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
+    }
+
+    private class ConsolidatedDashboardRow
+    {
+        public string Label { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string DisplayPath { get; set; } = "";
+        public DateTime? LastModified { get; set; }
         public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
     }
 }

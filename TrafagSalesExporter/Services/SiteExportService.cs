@@ -15,6 +15,7 @@ public class SiteExportService : ISiteExportService
     private readonly ISharePointUploadService _sharePointService;
     private readonly IRecordTransformationService _transformationService;
     private readonly ICentralSalesRecordService _centralSalesRecordService;
+    private readonly IManualExcelImportService _manualExcelImportService;
     private readonly IAppEventLogService _appEventLogService;
     private readonly ILogger<SiteExportService> _logger;
 
@@ -27,6 +28,7 @@ public class SiteExportService : ISiteExportService
         ISharePointUploadService sharePointService,
         IRecordTransformationService transformationService,
         ICentralSalesRecordService centralSalesRecordService,
+        IManualExcelImportService manualExcelImportService,
         IAppEventLogService appEventLogService,
         ILogger<SiteExportService> logger)
     {
@@ -38,6 +40,7 @@ public class SiteExportService : ISiteExportService
         _sharePointService = sharePointService;
         _transformationService = transformationService;
         _centralSalesRecordService = centralSalesRecordService;
+        _manualExcelImportService = manualExcelImportService;
         _appEventLogService = appEventLogService;
         _logger = logger;
     }
@@ -94,6 +97,30 @@ public class SiteExportService : ISiteExportService
                 await _appEventLogService.WriteAsync("Export", "Excel erstellen", siteId: site.Id, land: site.Land,
                     details: $"Records={records.Count}");
                 filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
+                log.RowCount = records.Count;
+            }
+            else if (sourceSystem == "MANUAL_EXCEL")
+            {
+                if (string.IsNullOrWhiteSpace(site.ManualImportFilePath))
+                    throw new InvalidOperationException($"Standort '{site.Land}' hat keine manuelle Excel-Datei.");
+                if (!File.Exists(site.ManualImportFilePath))
+                    throw new InvalidOperationException($"Die manuelle Excel-Datei wurde nicht gefunden: {site.ManualImportFilePath}");
+
+                updateStatus?.Invoke("Manuelle Excel lesen...");
+                await _appEventLogService.WriteAsync("Export", "Manuelle Excel lesen", siteId: site.Id, land: site.Land,
+                    details: site.ManualImportFilePath);
+                records = await _manualExcelImportService.ReadSalesRecordsAsync(site.ManualImportFilePath, site);
+
+                updateStatus?.Invoke("Transformationen anwenden...");
+                await _appEventLogService.WriteAsync("Export", "Transformationen anwenden", siteId: site.Id, land: site.Land,
+                    details: $"Records vor Transformation={records.Count}");
+                var rules = await db.FieldTransformationRules
+                    .Where(r => r.IsActive && r.SourceSystem == sourceSystem)
+                    .OrderBy(r => r.SortOrder)
+                    .ToListAsync();
+                _transformationService.Apply(records, rules);
+
+                filePath = site.ManualImportFilePath;
                 log.RowCount = records.Count;
             }
             else
