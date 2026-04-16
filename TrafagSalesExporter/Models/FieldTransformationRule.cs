@@ -18,6 +18,9 @@ public class FieldTransformationRule
     [Required]
     public string TransformationType { get; set; } = "Copy";
 
+    [Required]
+    public string RuleScope { get; set; } = "Value";
+
     public string Argument { get; set; } = string.Empty;
 
     public int SortOrder { get; set; }

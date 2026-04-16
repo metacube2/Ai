@@ -25,6 +25,8 @@ builder.Services.AddSingleton<ITransformationStrategy, PrefixTransformationStrat
 builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
+builder.Services.AddSingleton<IRecordTransformationStrategy, FirstNonEmptyRecordTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationCatalog, TransformationCatalog>();
 builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
 builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
 builder.Services.AddSingleton<IManagementCockpitService, ManagementCockpitService>();

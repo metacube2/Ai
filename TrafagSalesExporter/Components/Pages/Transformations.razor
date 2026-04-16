@@ -3,18 +3,24 @@
 @using System.Reflection
 @using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject ITransformationCatalog TransformationCatalog
 @inject ISnackbar Snackbar
 
 <PageTitle>Transformationen</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Transformer Ansicht</MudText>
-<MudText Typo="Typo.body1" Class="mb-4">Definiere pro Quellsystem (SAP, BI1, SAGE) Feld-Remapping und Transformationen.</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">Definiere pro Quellsystem einfache Feldregeln und komplexe record-basierte Strategien.</MudText>
 
 <MudPaper Class="pa-4" Elevation="1">
+    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+        `Value`-Regeln arbeiten feldweise. `Record`-Regeln rufen eine registrierte C#-Strategie auf und koennen mehrere Felder eines Datensatzes verwenden.
+    </MudAlert>
+
     <MudStack Row="true" Spacing="2" Class="mb-3">
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRule">
-            Regel hinzufügen
+            Regel hinzufuegen
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAllAsync">
             Alle speichern
@@ -25,6 +31,7 @@
         <HeaderContent>
             <MudTh>Aktiv</MudTh>
             <MudTh>System</MudTh>
+            <MudTh>Scope</MudTh>
             <MudTh>Source</MudTh>
             <MudTh>Target</MudTh>
             <MudTh>Typ</MudTh>
@@ -38,15 +45,23 @@
                 <MudSelect T="string" Value="@context.SourceSystem" ValueChanged="@(v => context.SourceSystem = v)" Dense>
                     @foreach (var system in _systems)
                     {
-                        <MudSelectItem Value="system">@system</MudSelectItem>
+                        <MudSelectItem Value="@system">@system</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" Value="@context.SourceField" ValueChanged="@(v => context.SourceField = v)" Dense>
+                <MudSelect T="string" Value="@context.RuleScope" ValueChanged="@(v => ChangeRuleScope(context, v))" Dense>
+                    @foreach (var scope in _ruleScopes)
+                    {
+                        <MudSelectItem Value="@scope">@scope</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" Value="@context.SourceField" ValueChanged="@(v => context.SourceField = v)" Dense Disabled="@IsRecordScope(context)">
                     @foreach (var field in _recordFields)
                     {
-                        <MudSelectItem Value="field">@field</MudSelectItem>
+                        <MudSelectItem Value="@field">@field</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
@@ -54,21 +69,21 @@
                 <MudSelect T="string" Value="@context.TargetField" ValueChanged="@(v => context.TargetField = v)" Dense>
                     @foreach (var field in _recordFields)
                     {
-                        <MudSelectItem Value="field">@field</MudSelectItem>
+                        <MudSelectItem Value="@field">@field</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
                 <MudSelect T="string" Value="@context.TransformationType" ValueChanged="@(v => context.TransformationType = v)" Dense>
-                    @foreach (var type in _types)
+                    @foreach (var type in GetTypesForScope(context.RuleScope))
                     {
-                        <MudSelectItem Value="type">@type</MudSelectItem>
+                        <MudSelectItem Value="@type.Key">@type.Key</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
             <MudTd>
                 <MudTextField T="string" Value="@context.Argument" ValueChanged="@(v => context.Argument = v)"
-                              HelperText="Replace: alt=>neu" />
+                              HelperText="@GetArgumentHelperText(context)" />
             </MudTd>
             <MudTd>
                 <MudNumericField T="int" Value="@context.SortOrder" ValueChanged="@(v => context.SortOrder = v)" Dense />
@@ -82,8 +97,8 @@
 </MudPaper>
 
 @code {
-    private readonly string[] _systems = ["SAP", "BI1", "SAGE"];
-    private readonly string[] _types = ["Copy", "Uppercase", "Lowercase", "Prefix", "Suffix", "Replace", "Constant"];
+    private readonly string[] _systems = ["SAP", "BI1", "SAGE", "MANUAL_EXCEL"];
+    private readonly string[] _ruleScopes = ["Value", "Record"];
     private readonly string[] _recordFields = typeof(SalesRecord)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .Select(p => p.Name)
@@ -91,9 +106,11 @@
         .ToArray();
 
     private List<FieldTransformationRule> _rules = new();
+    private IReadOnlyList<TransformationCatalogItem> _catalogItems = [];
 
     protected override async Task OnInitializedAsync()
     {
+        _catalogItems = TransformationCatalog.GetAll();
         await LoadAsync();
     }
 
@@ -101,6 +118,15 @@
     {
         using var db = await DbFactory.CreateDbContextAsync();
         _rules = await db.FieldTransformationRules.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToListAsync();
+
+        foreach (var rule in _rules)
+        {
+            rule.RuleScope = string.IsNullOrWhiteSpace(rule.RuleScope) ? "Value" : rule.RuleScope;
+            if (!GetTypesForScope(rule.RuleScope).Any(x => string.Equals(x.Key, rule.TransformationType, StringComparison.OrdinalIgnoreCase)))
+            {
+                rule.TransformationType = GetTypesForScope(rule.RuleScope).FirstOrDefault()?.Key ?? "Copy";
+            }
+        }
     }
 
     private void AddRule()
@@ -109,6 +135,7 @@
         _rules.Add(new FieldTransformationRule
         {
             SourceSystem = "SAP",
+            RuleScope = "Value",
             SourceField = nameof(SalesRecord.Material),
             TargetField = nameof(SalesRecord.Material),
             TransformationType = "Copy",
@@ -133,5 +160,36 @@
 
         Snackbar.Add("Transformationsregeln gespeichert.", Severity.Success);
         await LoadAsync();
+    }
+
+    private IReadOnlyList<TransformationCatalogItem> GetTypesForScope(string? ruleScope)
+    {
+        var scope = string.IsNullOrWhiteSpace(ruleScope) ? "Value" : ruleScope;
+        return TransformationCatalog.GetByScope(scope);
+    }
+
+    private static bool IsRecordScope(FieldTransformationRule rule)
+        => string.Equals(rule.RuleScope, "Record", StringComparison.OrdinalIgnoreCase);
+
+    private void ChangeRuleScope(FieldTransformationRule rule, string scope)
+    {
+        rule.RuleScope = scope;
+        var firstType = GetTypesForScope(scope).FirstOrDefault()?.Key;
+        if (!string.IsNullOrWhiteSpace(firstType))
+            rule.TransformationType = firstType;
+
+        if (IsRecordScope(rule))
+            rule.SourceField = string.Empty;
+        else if (string.IsNullOrWhiteSpace(rule.SourceField))
+            rule.SourceField = nameof(SalesRecord.Material);
+    }
+
+    private string GetArgumentHelperText(FieldTransformationRule rule)
+    {
+        var item = _catalogItems.FirstOrDefault(x =>
+            string.Equals(x.RuleScope, rule.RuleScope, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Key, rule.TransformationType, StringComparison.OrdinalIgnoreCase));
+
+        return item?.Description ?? "Optionales Argument.";
     }
 }

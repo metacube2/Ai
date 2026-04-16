@@ -71,6 +71,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "ExportSettings", "LocalConsolidatedExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
+        AddColumnIfMissing(db, "FieldTransformationRules", "RuleScope", "TEXT NOT NULL DEFAULT 'Value'");
         EnsureSapSourceTable(db);
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
@@ -440,6 +441,7 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
     SourceField TEXT NOT NULL,
     TargetField TEXT NOT NULL,
     TransformationType TEXT NOT NULL,
+    RuleScope TEXT NOT NULL DEFAULT 'Value',
     Argument TEXT NOT NULL DEFAULT '',
     SortOrder INTEGER NOT NULL DEFAULT 0,
     IsActive INTEGER NOT NULL DEFAULT 1

@@ -5,15 +5,17 @@ namespace TrafagSalesExporter.Services;
 
 public class RecordTransformationService : IRecordTransformationService
 {
-    private static readonly Dictionary<string, PropertyInfo> PropertyMap = typeof(SalesRecord)
+    internal static readonly Dictionary<string, PropertyInfo> PropertyMap = typeof(SalesRecord)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
     private readonly IReadOnlyDictionary<string, ITransformationStrategy> _strategies;
+    private readonly IReadOnlyDictionary<string, IRecordTransformationStrategy> _recordStrategies;
 
-    public RecordTransformationService(IEnumerable<ITransformationStrategy> strategies)
+    public RecordTransformationService(IEnumerable<ITransformationStrategy> strategies, IEnumerable<IRecordTransformationStrategy> recordStrategies)
     {
         _strategies = strategies.ToDictionary(s => s.TransformationType, StringComparer.OrdinalIgnoreCase);
+        _recordStrategies = recordStrategies.ToDictionary(s => s.TransformationType, StringComparer.OrdinalIgnoreCase);
     }
 
     public void Apply(List<SalesRecord> records, IEnumerable<FieldTransformationRule> rules)
@@ -32,6 +34,13 @@ public class RecordTransformationService : IRecordTransformationService
 
     private void ApplyRule(SalesRecord record, FieldTransformationRule rule)
     {
+        if (string.Equals(rule.RuleScope, "Record", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_recordStrategies.TryGetValue(rule.TransformationType, out var recordStrategy))
+                recordStrategy.Transform(record, rule);
+            return;
+        }
+
         if (!PropertyMap.TryGetValue(rule.SourceField, out var sourceProp)) return;
         if (!PropertyMap.TryGetValue(rule.TargetField, out var targetProp)) return;
 
@@ -43,7 +52,7 @@ public class RecordTransformationService : IRecordTransformationService
         SetPropertyValue(record, targetProp, result);
     }
 
-    private static void SetPropertyValue(SalesRecord record, PropertyInfo property, object? value)
+    internal static void SetPropertyValue(SalesRecord record, PropertyInfo property, object? value)
     {
         try
         {

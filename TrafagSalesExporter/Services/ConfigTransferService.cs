@@ -95,6 +95,7 @@ public class ConfigTransferService : IConfigTransferService
                 SourceField = r.SourceField,
                 TargetField = r.TargetField,
                 TransformationType = r.TransformationType,
+                RuleScope = r.RuleScope,
                 Argument = r.Argument,
                 SortOrder = r.SortOrder,
                 IsActive = r.IsActive
@@ -265,6 +266,7 @@ public class ConfigTransferService : IConfigTransferService
                 SourceField = r.SourceField,
                 TargetField = r.TargetField,
                 TransformationType = r.TransformationType,
+                RuleScope = r.RuleScope,
                 Argument = r.Argument,
                 SortOrder = r.SortOrder,
                 IsActive = r.IsActive
