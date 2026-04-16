@@ -32,6 +32,13 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="TrafagSalesExporter.Tests\**\*.cs" />
+    <Content Remove="TrafagSalesExporter.Tests\**\*" />
+    <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
+    <None Remove="TrafagSalesExporter.Tests\**\*" />
+  </ItemGroup>
+
   <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">
     <Warning Condition="!Exists('$(HanaClientDll)')"
              Text="SAP HANA Client DLL nicht gefunden: $(HanaClientDll). Bitte SAP HANA Client installieren (https://tools.hana.ondemand.com) oder MSBuild-Property 'HanaClientDll' setzen." />

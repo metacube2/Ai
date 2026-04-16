@@ -134,11 +134,11 @@ public class ManualExcelImportService : IManualExcelImportService
         if (string.IsNullOrWhiteSpace(text))
             return 0m;
 
-        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimalValue))
-            return decimalValue;
         if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-CH"), out decimalValue))
             return decimalValue;
         if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-DE"), out decimalValue))
+            return decimalValue;
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimalValue))
             return decimalValue;
 
         return 0m;
