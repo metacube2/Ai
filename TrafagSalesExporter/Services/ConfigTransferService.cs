@@ -158,19 +158,21 @@ public class ConfigTransferService : IConfigTransferService
     {
         var package = JsonSerializer.Deserialize<ConfigTransferPackage>(json, JsonOptions)
             ?? throw new InvalidOperationException("Konfigurationsdatei konnte nicht gelesen werden.");
+        var importedSourceSystems = ResolveImportedSourceSystems(json, package);
 
         using var db = await _dbFactory.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
         var existingSharePoint = await db.SharePointConfigs.FirstOrDefaultAsync();
         var existingSettings = await db.ExportSettings.FirstOrDefaultAsync();
         var existingSourceSystems = await db.SourceSystemDefinitions.ToListAsync();
         var existingServers = await db.HanaServers.ToListAsync();
         var existingExchangeRates = await db.CurrencyExchangeRates.ToListAsync();
         var existingSites = await db.Sites.ToListAsync();
+        var existingCentralRecords = await db.CentralSalesRecords.AsNoTracking().ToListAsync();
         var existingRules = await db.FieldTransformationRules.ToListAsync();
         var existingSapSources = await db.SapSourceDefinitions.ToListAsync();
         var existingSapJoins = await db.SapJoinDefinitions.ToListAsync();
         var existingSapMappings = await db.SapFieldMappings.ToListAsync();
-        var existingCentralRecords = await db.CentralSalesRecords.ToListAsync();
 
         var preservedSharePointSecret = existingSharePoint?.ClientSecret ?? string.Empty;
         var preservedSourceSystemSecrets = existingSourceSystems.ToDictionary(
@@ -180,13 +182,15 @@ public class ConfigTransferService : IConfigTransferService
         var preservedSiteSecrets = existingSites.ToDictionary(
             x => BuildSiteSignature(x.Land, x.TSC, x.Schema, x.SourceSystem),
             x => (x.UsernameOverride, x.PasswordOverride));
+        var existingSiteSignaturesById = existingSites.ToDictionary(
+            x => x.Id,
+            x => BuildSiteSignature(x.Land, x.TSC, x.Schema, x.SourceSystem));
 
         if (existingSapMappings.Count > 0) db.SapFieldMappings.RemoveRange(existingSapMappings);
         if (existingSapJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(existingSapJoins);
         if (existingSapSources.Count > 0) db.SapSourceDefinitions.RemoveRange(existingSapSources);
         if (existingRules.Count > 0) db.FieldTransformationRules.RemoveRange(existingRules);
         if (existingExchangeRates.Count > 0) db.CurrencyExchangeRates.RemoveRange(existingExchangeRates);
-        if (existingCentralRecords.Count > 0) db.CentralSalesRecords.RemoveRange(existingCentralRecords);
         if (existingSites.Count > 0) db.Sites.RemoveRange(existingSites);
         if (existingServers.Count > 0) db.HanaServers.RemoveRange(existingServers);
         if (existingSourceSystems.Count > 0) db.SourceSystemDefinitions.RemoveRange(existingSourceSystems);
@@ -216,10 +220,6 @@ public class ConfigTransferService : IConfigTransferService
             LocalSiteExportFolder = importedSettings.LocalSiteExportFolder,
             LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder
         });
-
-        var importedSourceSystems = package.SourceSystemDefinitions.Count > 0
-            ? package.SourceSystemDefinitions
-            : BuildDefaultSourceSystems();
 
         foreach (var sourceSystem in importedSourceSystems)
         {
@@ -272,6 +272,7 @@ public class ConfigTransferService : IConfigTransferService
         }
 
         var siteIdMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var importedSiteIdBySignature = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var site in package.Sites)
         {
             preservedSiteSecrets.TryGetValue(BuildSiteSignature(site.Land, site.TSC, site.Schema, site.SourceSystem), out var preserved);
@@ -298,7 +299,51 @@ public class ConfigTransferService : IConfigTransferService
             db.Sites.Add(entity);
             await db.SaveChangesAsync();
             siteIdMap[site.Key] = entity.Id;
+            importedSiteIdBySignature[BuildSiteSignature(site.Land, site.TSC, site.Schema, site.SourceSystem)] = entity.Id;
         }
+
+        var centralRecordsToPreserve = existingCentralRecords
+            .Where(record => existingSiteSignaturesById.TryGetValue(record.SiteId, out var signature) && importedSiteIdBySignature.ContainsKey(signature))
+            .Select(record =>
+            {
+                var signature = existingSiteSignaturesById[record.SiteId];
+                return new CentralSalesRecord
+                {
+                    StoredAtUtc = record.StoredAtUtc,
+                    SiteId = importedSiteIdBySignature[signature],
+                    SourceSystem = record.SourceSystem,
+                    ExtractionDate = record.ExtractionDate,
+                    Tsc = record.Tsc,
+                    InvoiceNumber = record.InvoiceNumber,
+                    PositionOnInvoice = record.PositionOnInvoice,
+                    Material = record.Material,
+                    Name = record.Name,
+                    ProductGroup = record.ProductGroup,
+                    Quantity = record.Quantity,
+                    SupplierNumber = record.SupplierNumber,
+                    SupplierName = record.SupplierName,
+                    SupplierCountry = record.SupplierCountry,
+                    CustomerNumber = record.CustomerNumber,
+                    CustomerName = record.CustomerName,
+                    CustomerCountry = record.CustomerCountry,
+                    CustomerIndustry = record.CustomerIndustry,
+                    StandardCost = record.StandardCost,
+                    StandardCostCurrency = record.StandardCostCurrency,
+                    PurchaseOrderNumber = record.PurchaseOrderNumber,
+                    SalesPriceValue = record.SalesPriceValue,
+                    SalesCurrency = record.SalesCurrency,
+                    Incoterms2020 = record.Incoterms2020,
+                    SalesResponsibleEmployee = record.SalesResponsibleEmployee,
+                    InvoiceDate = record.InvoiceDate,
+                    OrderDate = record.OrderDate,
+                    Land = record.Land,
+                    DocumentType = record.DocumentType
+                };
+            })
+            .ToList();
+
+        if (centralRecordsToPreserve.Count > 0)
+            db.CentralSalesRecords.AddRange(centralRecordsToPreserve);
 
         if (package.FieldTransformationRules.Count > 0)
         {
@@ -363,9 +408,52 @@ public class ConfigTransferService : IConfigTransferService
         }
 
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
+
     private static string BuildSiteSignature(string land, string tsc, string schema, string sourceSystem)
         => $"{land}|{tsc}|{schema}|{sourceSystem}".ToUpperInvariant();
+
+    private static List<ConfigTransferSourceSystemDefinition> ResolveImportedSourceSystems(string json, ConfigTransferPackage package)
+    {
+        if (package.SourceSystemDefinitions.Count == 0)
+            return BuildDefaultSourceSystems();
+
+        using var document = JsonDocument.Parse(json);
+        if (!document.RootElement.TryGetProperty(nameof(ConfigTransferPackage.SourceSystemDefinitions), out var sourceSystemsElement) ||
+            sourceSystemsElement.ValueKind != JsonValueKind.Array)
+        {
+            return package.SourceSystemDefinitions;
+        }
+
+        var imported = package.SourceSystemDefinitions
+            .Select((sourceSystem, index) =>
+            {
+                var hasExplicitConnectionKind =
+                    index < sourceSystemsElement.GetArrayLength() &&
+                    sourceSystemsElement[index].TryGetProperty(nameof(ConfigTransferSourceSystemDefinition.ConnectionKind), out _);
+
+                if (hasExplicitConnectionKind)
+                    return sourceSystem;
+
+                sourceSystem.ConnectionKind = InferLegacyConnectionKind(sourceSystem.Code);
+                return sourceSystem;
+            })
+            .ToList();
+
+        return imported;
+    }
+
+    private static string InferLegacyConnectionKind(string code)
+    {
+        if (string.Equals(code, "SAP", StringComparison.OrdinalIgnoreCase))
+            return SourceSystemConnectionKinds.SapGateway;
+
+        if (string.Equals(code, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase))
+            return SourceSystemConnectionKinds.ManualExcel;
+
+        return SourceSystemConnectionKinds.Hana;
+    }
 
     private static List<ConfigTransferSourceSystemDefinition> BuildDefaultSourceSystems()
     {

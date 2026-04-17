@@ -224,6 +224,96 @@ public class ConfigTransferServiceTests : IDisposable
         Assert.Equal("FirstNonEmpty", rule.TransformationType);
     }
 
+    [Fact]
+    public async Task ImportJsonAsync_Preserves_CentralSalesRecords()
+    {
+        await SeedExistingSecretsAsync();
+
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.CentralSalesRecords.Add(new CentralSalesRecord
+            {
+                StoredAtUtc = new DateTime(2026, 4, 17, 8, 0, 0, DateTimeKind.Utc),
+                SiteId = 1,
+                SourceSystem = "MANUAL_EXCEL",
+                ExtractionDate = new DateTime(2026, 4, 17),
+                Tsc = "TRCH",
+                InvoiceNumber = "INV-1",
+                PositionOnInvoice = 1,
+                Material = "MAT-1",
+                Name = "Material 1",
+                ProductGroup = "PG",
+                Quantity = 1m,
+                SupplierNumber = "SUP-1",
+                SupplierName = "Supplier 1",
+                SupplierCountry = "CH",
+                CustomerNumber = "CUS-1",
+                CustomerName = "Customer 1",
+                CustomerCountry = "CH",
+                CustomerIndustry = "Industry",
+                StandardCost = 10m,
+                StandardCostCurrency = "CHF",
+                PurchaseOrderNumber = "PO-1",
+                SalesPriceValue = 20m,
+                SalesCurrency = "CHF",
+                Incoterms2020 = "EXW",
+                SalesResponsibleEmployee = "Owner",
+                InvoiceDate = new DateTime(2026, 4, 17),
+                OrderDate = new DateTime(2026, 4, 16),
+                Land = "Schweiz",
+                DocumentType = "Invoice"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var package = new ConfigTransferPackage
+        {
+            IncludesSecrets = false,
+            SourceSystemDefinitions = BuildStandardSourceSystems(),
+            Sites =
+            [
+                new ConfigTransferSite
+                {
+                    Key = "site-1",
+                    Schema = "schema_a",
+                    TSC = "TRCH",
+                    Land = "Schweiz",
+                    SourceSystem = "MANUAL_EXCEL",
+                    IsActive = true
+                }
+            ]
+        };
+
+        await _service.ImportJsonAsync(JsonSerializer.Serialize(package));
+
+        await using var verifyDb = await _dbFactory.CreateDbContextAsync();
+        Assert.Single(verifyDb.CentralSalesRecords);
+    }
+
+    [Fact]
+    public async Task ImportJsonAsync_Uses_Legacy_ConnectionKind_Fallbacks()
+    {
+        var packageJson = """
+{
+  "includesSecrets": false,
+  "sourceSystemDefinitions": [
+    { "code": "SAP", "displayName": "SAP", "isActive": true },
+    { "code": "BI1", "displayName": "BI1", "isActive": true },
+    { "code": "MANUAL_EXCEL", "displayName": "Manual Excel", "isActive": true }
+  ]
+}
+""";
+
+        await _service.ImportJsonAsync(packageJson);
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var systems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
+
+        Assert.Equal(SourceSystemConnectionKinds.Hana, Assert.Single(systems, x => x.Code == "BI1").ConnectionKind);
+        Assert.Equal(SourceSystemConnectionKinds.ManualExcel, Assert.Single(systems, x => x.Code == "MANUAL_EXCEL").ConnectionKind);
+        Assert.Equal(SourceSystemConnectionKinds.SapGateway, Assert.Single(systems, x => x.Code == "SAP").ConnectionKind);
+    }
+
     private async Task SeedExportConfigurationAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -379,6 +469,41 @@ public class ConfigTransferServiceTests : IDisposable
             IsActive = true
         });
         await db.SaveChangesAsync();
+    }
+
+    private static List<ConfigTransferSourceSystemDefinition> BuildStandardSourceSystems()
+    {
+        return
+        [
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "SAP",
+                DisplayName = "SAP",
+                ConnectionKind = SourceSystemConnectionKinds.SapGateway,
+                IsActive = true
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "BI1",
+                DisplayName = "BI1",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "SAGE",
+                DisplayName = "SAGE",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "MANUAL_EXCEL",
+                DisplayName = "Manual Excel",
+                ConnectionKind = SourceSystemConnectionKinds.ManualExcel,
+                IsActive = true
+            }
+        ];
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>

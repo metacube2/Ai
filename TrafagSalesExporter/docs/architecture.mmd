@@ -1,0 +1,66 @@
+flowchart TD
+    User[Benutzer]
+    UI[Blazor Server UI\nDashboard / Standorte / Settings / Cockpit / Logs]
+    Orch[ExportOrchestrationService]
+    SiteExport[SiteExportService]
+    Consolidated[ConsolidatedExportService]
+    Hana[HanaQueryService]
+    SapGateway[SapGatewayService]
+    SapComposition[SapCompositionService]
+    ManualExcel[ManualExcelImportService]
+    Transform[TransformationCatalog + RecordTransformationService]
+    Central[CentralSalesRecordService]
+    Cockpit[ManagementCockpitService]
+    Config[ConfigTransferService]
+    Init[DatabaseInitializationService]
+    Timer[TimerBackgroundService]
+    Logs[AppEventLogService + ExportLogService]
+    SQLite[(SQLite\ntrafag_exporter.db)]
+    HANA[(SAP HANA)]
+    SAP[(SAP Gateway / OData)]
+    LocalFS[(Lokales Dateisystem)]
+    SharePoint[(SharePoint)]
+
+    User --> UI
+    UI --> Orch
+    UI --> Cockpit
+    UI --> Config
+    UI --> Init
+
+    Timer --> Orch
+    Orch --> SiteExport
+    Orch --> Consolidated
+
+    SiteExport --> Hana
+    SiteExport --> SapComposition
+    SiteExport --> ManualExcel
+    SiteExport --> Transform
+    SiteExport --> Central
+    SiteExport --> Logs
+
+    SapComposition --> SapGateway
+    Consolidated --> LocalFS
+    Consolidated --> SharePoint
+    Cockpit --> SQLite
+    Cockpit --> LocalFS
+    Config --> SQLite
+    Init --> SQLite
+    Logs --> SQLite
+    Central --> SQLite
+
+    Hana --> HANA
+    SapGateway --> SAP
+    ManualExcel --> LocalFS
+    ManualExcel --> SharePoint
+    SiteExport --> LocalFS
+    SiteExport --> SharePoint
+    SiteExport --> SQLite
+    UI --> SQLite
+
+    classDef infra fill:#eef6ff,stroke:#336699,color:#102030;
+    classDef app fill:#f7f2ff,stroke:#6f42c1,color:#201030;
+    classDef ext fill:#eefaf0,stroke:#2d7a46,color:#102010;
+
+    class UI,Orch,SiteExport,Consolidated,Hana,SapGateway,SapComposition,ManualExcel,Transform,Central,Cockpit,Config,Init,Timer,Logs app;
+    class SQLite,LocalFS infra;
+    class HANA,SAP,SharePoint,User ext;

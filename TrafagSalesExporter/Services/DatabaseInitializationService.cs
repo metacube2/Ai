@@ -48,7 +48,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         EnsureSitesTableSupportsOptionalHanaServer(db);
         EnsureExportSettingsTableSupportsCurrentSchema(db);
         EnsureHanaServersTableSupportsCurrentSchema(db);
-        RepairBrokenSiteForeignKeys(db);
+        RepairBrokenForeignKeys(db);
         AddColumnIfMissing(db, "HanaServers", "SourceSystem", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
@@ -166,26 +166,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         using (var create = conn.CreateCommand())
         {
             create.Transaction = transaction;
-            create.CommandText = @"
-CREATE TABLE Sites (
-    Id INTEGER NOT NULL CONSTRAINT PK_Sites PRIMARY KEY AUTOINCREMENT,
-    HanaServerId INTEGER NULL,
-    Schema TEXT NOT NULL,
-    TSC TEXT NOT NULL,
-    Land TEXT NOT NULL,
-    SourceSystem TEXT NOT NULL DEFAULT 'SAP',
-    UsernameOverride TEXT NOT NULL DEFAULT '',
-    PasswordOverride TEXT NOT NULL DEFAULT '',
-    LocalExportFolderOverride TEXT NOT NULL DEFAULT '',
-    ManualImportFilePath TEXT NOT NULL DEFAULT '',
-    ManualImportLastUploadedAtUtc TEXT NULL,
-    SapServiceUrl TEXT NOT NULL DEFAULT '',
-    SapEntitySet TEXT NOT NULL DEFAULT '',
-    SapEntitySetsCache TEXT NOT NULL DEFAULT '',
-    SapEntitySetsRefreshedAtUtc TEXT NULL,
-    IsActive INTEGER NOT NULL,
-    CONSTRAINT FK_Sites_HanaServers_HanaServerId FOREIGN KEY (HanaServerId) REFERENCES HanaServers (Id)
-);";
+            create.CommandText = GetSitesCreateSql();
             create.ExecuteNonQuery();
         }
 
@@ -195,8 +176,9 @@ CREATE TABLE Sites (
             copy.CommandText = @"
 INSERT INTO Sites (
     Id, HanaServerId, Schema, TSC, Land, SourceSystem,
-    UsernameOverride, PasswordOverride, LocalExportFolderOverride, SapServiceUrl, SapEntitySet,
-    ManualImportFilePath, ManualImportLastUploadedAtUtc, SapEntitySetsCache, SapEntitySetsRefreshedAtUtc, IsActive
+    UsernameOverride, PasswordOverride, LocalExportFolderOverride, ManualImportFilePath,
+    ManualImportLastUploadedAtUtc, SapServiceUrl, SapEntitySet, SapEntitySetsCache,
+    SapEntitySetsRefreshedAtUtc, IsActive
 )
 SELECT
     Id, HanaServerId, Schema, TSC, Land,
@@ -229,13 +211,13 @@ FROM Sites_old;";
         enableFk.ExecuteNonQuery();
     }
 
-    private static void RepairBrokenSiteForeignKeys(AppDbContext db)
+    private static void RepairBrokenForeignKeys(AppDbContext db)
     {
         var conn = db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             conn.Open();
 
-        var tablesToRepair = new[]
+        var siteDependentTables = new[]
         {
             ("ExportLogs", GetExportLogsCreateSql()),
             ("AppEventLogs", GetAppEventLogsCreateSql()),
@@ -245,14 +227,17 @@ FROM Sites_old;";
             ("SapFieldMappings", GetSapFieldMappingsCreateSql())
         };
 
-        foreach (var (tableName, createSql) in tablesToRepair)
+        foreach (var (tableName, createSql) in siteDependentTables)
         {
-            if (TableReferencesSitesOld(conn, tableName))
+            if (TableReferences(conn, tableName, "Sites_old"))
                 RebuildTable(conn, tableName, createSql);
         }
+
+        if (TableReferences(conn, "Sites", "HanaServers_repair_old"))
+            RebuildTable(conn, "Sites", GetSitesCreateSql());
     }
 
-    private static bool TableReferencesSitesOld(System.Data.Common.DbConnection connection, string tableName)
+    private static bool TableReferences(System.Data.Common.DbConnection connection, string tableName, string referencedTableName)
     {
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $tableName;";
@@ -263,7 +248,7 @@ FROM Sites_old;";
         command.Parameters.Add(parameter);
 
         var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
-        return sql.Contains("Sites_old", StringComparison.OrdinalIgnoreCase);
+        return sql.Contains(referencedTableName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void RebuildTable(System.Data.Common.DbConnection connection, string tableName, string createSql)
@@ -381,6 +366,27 @@ CREATE TABLE HanaServers (
     UseSsl INTEGER NOT NULL DEFAULT 0,
     ValidateCertificate INTEGER NOT NULL DEFAULT 0,
     AdditionalParams TEXT NOT NULL DEFAULT ''
+);";
+
+    private static string GetSitesCreateSql() => @"
+CREATE TABLE Sites (
+    Id INTEGER NOT NULL CONSTRAINT PK_Sites PRIMARY KEY AUTOINCREMENT,
+    HanaServerId INTEGER NULL,
+    Schema TEXT NOT NULL,
+    TSC TEXT NOT NULL,
+    Land TEXT NOT NULL,
+    SourceSystem TEXT NOT NULL DEFAULT 'SAP',
+    UsernameOverride TEXT NOT NULL DEFAULT '',
+    PasswordOverride TEXT NOT NULL DEFAULT '',
+    LocalExportFolderOverride TEXT NOT NULL DEFAULT '',
+    ManualImportFilePath TEXT NOT NULL DEFAULT '',
+    ManualImportLastUploadedAtUtc TEXT NULL,
+    SapServiceUrl TEXT NOT NULL DEFAULT '',
+    SapEntitySet TEXT NOT NULL DEFAULT '',
+    SapEntitySetsCache TEXT NOT NULL DEFAULT '',
+    SapEntitySetsRefreshedAtUtc TEXT NULL,
+    IsActive INTEGER NOT NULL,
+    CONSTRAINT FK_Sites_HanaServers_HanaServerId FOREIGN KEY (HanaServerId) REFERENCES HanaServers (Id)
 );";
 
     private static string GetAppEventLogsCreateSql() => @"

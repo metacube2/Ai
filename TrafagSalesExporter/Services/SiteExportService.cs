@@ -110,13 +110,48 @@ public class SiteExportService : ISiteExportService
             {
                 if (string.IsNullOrWhiteSpace(site.ManualImportFilePath))
                     throw new InvalidOperationException($"Standort '{site.Land}' hat keine manuelle Excel-Datei.");
-                if (!File.Exists(site.ManualImportFilePath))
-                    throw new InvalidOperationException($"Die manuelle Excel-Datei wurde nicht gefunden: {site.ManualImportFilePath}");
+                string? tempManualImportPath = null;
+                try
+                {
+                    var manualImportPath = site.ManualImportFilePath.Trim();
+                    if (File.Exists(manualImportPath))
+                    {
+                        filePath = manualImportPath;
+                    }
+                    else if (LooksLikeSharePointReference(manualImportPath))
+                    {
+                        if (spConfig is null ||
+                            string.IsNullOrWhiteSpace(spConfig.TenantId) ||
+                            string.IsNullOrWhiteSpace(spConfig.ClientId) ||
+                            string.IsNullOrWhiteSpace(spConfig.ClientSecret) ||
+                            string.IsNullOrWhiteSpace(spConfig.SiteUrl))
+                        {
+                            throw new InvalidOperationException("Fuer SharePoint-Manuellimport fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
+                        }
 
-                updateStatus?.Invoke("Manuelle Excel lesen...");
-                await _appEventLogService.WriteAsync("Export", "Manuelle Excel lesen", siteId: site.Id, land: site.Land,
-                    details: site.ManualImportFilePath);
-                records = await _manualExcelImportService.ReadSalesRecordsAsync(site.ManualImportFilePath, site);
+                        updateStatus?.Invoke("Manuelle Excel von SharePoint laden...");
+                        await _appEventLogService.WriteAsync("Export", "Manuelle Excel von SharePoint laden", siteId: site.Id, land: site.Land,
+                            details: manualImportPath);
+                        tempManualImportPath = await _sharePointService.DownloadToTempFileAsync(
+                            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, manualImportPath);
+                        filePath = manualImportPath;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Die manuelle Excel-Datei wurde nicht gefunden: {manualImportPath}");
+                    }
+
+                    var readPath = tempManualImportPath ?? filePath;
+                    updateStatus?.Invoke("Manuelle Excel lesen...");
+                    await _appEventLogService.WriteAsync("Export", "Manuelle Excel lesen", siteId: site.Id, land: site.Land,
+                        details: filePath);
+                    records = await _manualExcelImportService.ReadSalesRecordsAsync(readPath, site);
+                }
+                finally
+                {
+                    if (!string.IsNullOrWhiteSpace(tempManualImportPath) && File.Exists(tempManualImportPath))
+                        File.Delete(tempManualImportPath);
+                }
 
                 updateStatus?.Invoke("Transformationen anwenden...");
                 await _appEventLogService.WriteAsync("Export", "Transformationen anwenden", siteId: site.Id, land: site.Land,
@@ -127,7 +162,6 @@ public class SiteExportService : ISiteExportService
                     .ToListAsync();
                 _transformationService.Apply(records, rules);
 
-                filePath = site.ManualImportFilePath;
                 log.RowCount = records.Count;
             }
             else
@@ -271,6 +305,12 @@ public class SiteExportService : ISiteExportService
             ? Path.Combine(AppContext.BaseDirectory, "output")
             : configured;
     }
+
+    private static bool LooksLikeSharePointReference(string path)
+        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
 
     private static Site CloneSiteWithSapServiceUrl(Site site, string sapServiceUrl)
     {

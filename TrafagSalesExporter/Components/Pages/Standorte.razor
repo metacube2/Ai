@@ -9,6 +9,7 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IHanaQueryService HanaService
 @inject ISapGatewayService SapGatewayService
+@inject ISharePointUploadService SharePointService
 @inject IAppEventLogService AppEventLogService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -141,9 +142,44 @@
     </TitleContent>
     <DialogContent>
         <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
+        @if (UsesHanaConnection())
+        {
+            <MudStack Row Spacing="2" Class="mb-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="LoadAvailableSchemasAsync"
+                           Disabled="_loadingSchemas">
+                    @if (_loadingSchemas)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade Schemas...")
+                    }
+                    else
+                    {
+                        @("Schemas laden")
+                    }
+                </MudButton>
+                @if (_availableSchemas.Count > 0)
+                {
+                    <MudSelect T="string" Value="_editingSite.Schema"
+                               ValueChanged="OnSchemaSelected"
+                               Label="Gefundene Schemas"
+                               Dense
+                               Style="min-width: 260px;">
+                        @foreach (var schema in _availableSchemas)
+                        {
+                            <MudSelectItem Value="@schema">@schema</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Die Liste wird aus der zentralen HANA-Verbindung des Quellsystems gelesen und auf typische B1-Schemas eingeschraenkt.
+            </MudText>
+        }
         <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
         <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
-        <MudSelect @bind-Value="_editingSite.SourceSystem" Label="Quellsystem" Required>
+        <MudSelect T="string" Value="_editingSite.SourceSystem" ValueChanged="OnSourceSystemChanged" Label="Quellsystem" Required>
             @foreach (var system in GetAvailableSourceSystems())
             {
                 <MudSelectItem Value="@system.Code">@GetSourceSystemLabel(system)</MudSelectItem>
@@ -351,6 +387,13 @@
             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
                 FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
             </MudAlert>
+            <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-Dateipfad"
+                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade und SharePoint-Referenzen wie https://... oder Shared Documents/Ordner/Datei.xlsx."
+                          Class="mb-2" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateManualImportPathAsync"
+                       Disabled="_uploadingManualImport" Class="mb-3">
+                Pfad pruefen
+            </MudButton>
             <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx" />
             @if (_uploadingManualImport)
             {
@@ -394,6 +437,7 @@
     private List<Site> _sites = new();
     private List<SourceSystemDefinition> _sourceSystemDefinitions = new();
     private List<string> _sapEntitySetsCache = [];
+    private List<string> _availableSchemas = [];
     private List<string> _sapAvailableSourceExpressions = [];
     private Dictionary<string, List<string>> _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
     private List<SapSourceDefinition> _sapSources = [];
@@ -411,6 +455,7 @@
     private bool _refreshingSapSourceFields;
     private bool _savingServer;
     private bool _savingSite;
+    private bool _loadingSchemas;
     private bool _uploadingManualImport;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
@@ -625,6 +670,7 @@
             HanaServerId = null,
             ManualImportFilePath = string.Empty
         };
+        _availableSchemas = [];
         _sapEntitySetsCache = [];
         _sapAvailableSourceExpressions = [];
         _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
@@ -657,6 +703,7 @@
             SapEntitySetsRefreshedAtUtc = site.SapEntitySetsRefreshedAtUtc,
             IsActive = site.IsActive
         };
+        _availableSchemas = [];
         _sapEntitySetsCache = ParseSapEntitySets(site.SapEntitySetsCache);
         using var db = DbFactory.CreateDbContext();
         _sapSources = db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
@@ -798,6 +845,19 @@
         return centralServer.Id;
     }
 
+    private Task OnSchemaSelected(string schema)
+    {
+        _editingSite.Schema = schema;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSourceSystemChanged(string value)
+    {
+        _editingSite.SourceSystem = value;
+        _availableSchemas = [];
+        return Task.CompletedTask;
+    }
+
     private IEnumerable<SourceSystemDefinition> GetAvailableSourceSystems()
         => _sourceSystemDefinitions
             .Where(x => x.IsActive || string.Equals(x.Code, _editingSite.SourceSystem, StringComparison.OrdinalIgnoreCase))
@@ -869,6 +929,85 @@
             return $"keine zentrale HANA-Konfiguration fuer {normalizedSourceSystem}";
 
         return $"{centralServer.Name} | {GetServerNode(centralServer)}";
+    }
+
+    private async Task LoadAvailableSchemasAsync()
+    {
+        if (_loadingSchemas)
+            return;
+
+        _loadingSchemas = true;
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var sourceDefinition = await db.SourceSystemDefinitions
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
+
+            if (sourceDefinition is null)
+                throw new InvalidOperationException($"Quellsystem '{_editingSite.SourceSystem}' nicht gefunden.");
+
+            var centralServer = await db.HanaServers
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.SourceSystem == _editingSite.SourceSystem);
+
+            if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
+                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
+
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
+                ? sourceDefinition.CentralUsername ?? string.Empty
+                : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
+                ? sourceDefinition.CentralPassword ?? string.Empty
+                : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            var lookupServer = new HanaServer
+            {
+                Id = centralServer.Id,
+                SourceSystem = centralServer.SourceSystem,
+                Name = centralServer.Name,
+                Host = centralServer.Host,
+                Port = centralServer.Port,
+                Username = username.Trim(),
+                Password = password,
+                DatabaseName = centralServer.DatabaseName,
+                UseSsl = centralServer.UseSsl,
+                ValidateCertificate = centralServer.ValidateCertificate,
+                AdditionalParams = centralServer.AdditionalParams
+            };
+
+            var schemas = await Task.Run(() => HanaService.GetAvailableSchemas(lookupServer));
+            _availableSchemas = schemas
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (_availableSchemas.Count == 0)
+            {
+                Snackbar.Add("Keine passenden Schemas gefunden.", Severity.Info);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_editingSite.Schema) ||
+                !_availableSchemas.Contains(_editingSite.Schema, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.Schema = _availableSchemas[0];
+            }
+
+            Snackbar.Add($"{_availableSchemas.Count} Schemas geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Schemas laden fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingSchemas = false;
+        }
     }
 
     private async Task RefreshSapEntitySets()
@@ -993,6 +1132,62 @@
         }
     }
 
+    private async Task ValidateManualImportPathAsync()
+    {
+        try
+        {
+            _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
+
+            if (string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
+                throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
+
+            if (!string.Equals(Path.GetExtension(_editingSite.ManualImportFilePath), ".xlsx", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx angeben.");
+
+            if (File.Exists(_editingSite.ManualImportFilePath))
+            {
+                _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(_editingSite.ManualImportFilePath);
+            }
+            else if (LooksLikeSharePointReference(_editingSite.ManualImportFilePath))
+            {
+                using var db = await DbFactory.CreateDbContextAsync();
+                var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
+                if (spConfig is null ||
+                    string.IsNullOrWhiteSpace(spConfig.TenantId) ||
+                    string.IsNullOrWhiteSpace(spConfig.ClientId) ||
+                    string.IsNullOrWhiteSpace(spConfig.ClientSecret) ||
+                    string.IsNullOrWhiteSpace(spConfig.SiteUrl))
+                {
+                    throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
+                }
+
+                var tempPath = await SharePointService.DownloadToTempFileAsync(
+                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, _editingSite.ManualImportFilePath);
+                try
+                {
+                    _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(tempPath);
+                }
+                finally
+                {
+                    if (File.Exists(tempPath))
+                        File.Delete(tempPath);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {_editingSite.ManualImportFilePath}");
+            }
+
+            Snackbar.Add("Dateipfad ist gueltig und die Excel-Datei ist erreichbar.", Severity.Success);
+            await AppEventLogService.WriteAsync("ManualImport", "Dateipfad erfolgreich geprueft", siteId: _editingSite.Id, land: _editingSite.Land, details: _editingSite.ManualImportFilePath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Pfadpruefung fehlgeschlagen: {ex.Message}", Severity.Error);
+            await AppEventLogService.WriteAsync("ManualImport", "Dateipfadpruefung fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
+        }
+    }
+
     private static List<string> ParseSapEntitySets(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -1010,6 +1205,12 @@
 
     private static string SerializeSapEntitySets(List<string> entitySets)
         => JsonSerializer.Serialize(entitySets);
+
+    private static bool LooksLikeSharePointReference(string path)
+        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
 
     private void AddSapSource()
     {

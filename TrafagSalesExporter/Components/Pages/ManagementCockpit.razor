@@ -135,6 +135,46 @@
     </MudGrid>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Cockpit Manometer", "Cockpit gauges")</MudText>
+        <MudText Typo="Typo.caption" Class="d-block mb-3">
+            @T("Verdichtete Kennzahlen aus der zentralen Rohsicht. Die Manometer zeigen Anteile, Dichte und Abdeckung, ohne Waehrungsumrechnung oder Budgetlogik.", "Condensed metrics from the central raw view. The gauges show shares, density and coverage without currency conversion or budget logic.")
+        </MudText>
+        <MudGrid>
+            @foreach (var gauge in BuildCentralGauges(_centralResult))
+            {
+                <MudItem xs="12" sm="6" lg="3">
+                    <MudPaper Class="pa-3 cockpit-gauge-card" Elevation="0">
+                        <MudText Typo="Typo.caption" Class="d-block mb-1">@gauge.Title</MudText>
+                        <div class="cockpit-gauge-wrap">
+                            <svg viewBox="0 0 220 140" class="cockpit-gauge" role="img" aria-label="@gauge.Title">
+                                <path d="@GaugeArcPath"
+                                      fill="none"
+                                      stroke="#d7e2ea"
+                                      stroke-width="16"
+                                      stroke-linecap="round" />
+                                <path d="@GaugeArcPath"
+                                      fill="none"
+                                      stroke="@gauge.Color"
+                                      stroke-width="16"
+                                      stroke-linecap="round"
+                                      pathLength="100"
+                                      stroke-dasharray="@BuildGaugeDashArray(gauge.Percent)" />
+                                <line x1="110" y1="110" x2="@BuildGaugeNeedleX(gauge.Percent)" y2="@BuildGaugeNeedleY(gauge.Percent)"
+                                      stroke="#23313d"
+                                      stroke-width="5"
+                                      stroke-linecap="round" />
+                                <circle cx="110" cy="110" r="8" fill="#23313d" />
+                                <text x="110" y="76" text-anchor="middle" class="cockpit-gauge-value">@gauge.DisplayValue</text>
+                                <text x="110" y="96" text-anchor="middle" class="cockpit-gauge-subtitle">@gauge.Subtitle</text>
+                            </svg>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
         @foreach (var notice in _centralResult.Notices)
         {
@@ -248,9 +288,42 @@
     </MudPaper>
 }
 
+<style>
+    .cockpit-gauge-card {
+        background: linear-gradient(180deg, #fbfdff 0%, #f1f6fa 100%);
+        border: 1px solid #dce7ee;
+        border-radius: 18px;
+        min-height: 220px;
+    }
+
+    .cockpit-gauge-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cockpit-gauge {
+        width: 100%;
+        max-width: 240px;
+        height: auto;
+    }
+
+    .cockpit-gauge-value {
+        font-size: 22px;
+        font-weight: 700;
+        fill: #153047;
+    }
+
+    .cockpit-gauge-subtitle {
+        font-size: 11px;
+        fill: #607587;
+    }
+</style>
+
 @code {
     private List<ManagementCockpitFileOption> _files = [];
     private List<int> _centralYears = [];
+    private const string GaugeArcPath = "M 30 110 A 80 80 0 0 1 190 110";
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
@@ -340,6 +413,181 @@
             return "-";
 
         return $"{result.Summary.PeriodStart.Value:dd.MM.yyyy} - {result.Summary.PeriodEnd.Value:dd.MM.yyyy}";
+    }
+
+    private List<CentralGaugeModel> BuildCentralGauges(ManagementCockpitCentralResult result)
+    {
+        var invoiceDensity = result.Summary.RowCount == 0 ? 0m : result.Summary.InvoiceCount * 100m / result.Summary.RowCount;
+        var sourceDominance = result.SourceSystemTotals.Count == 0
+            ? 0m
+            : result.SourceSystemTotals.Max(x => x.RowCount) * 100m / Math.Max(1, result.Summary.RowCount);
+        var countryDominance = result.CountryTotals.Count == 0
+            ? 0m
+            : result.CountryTotals.Max(x => x.RowCount) * 100m / Math.Max(1, result.Summary.RowCount);
+        var periodCoverage = BuildPeriodCoveragePercent(result);
+        var topCountrySalesShare = BuildTopSalesSharePercent(result.CountryTotals);
+        var topSourceSalesShare = BuildTopSalesSharePercent(result.SourceSystemTotals);
+        var currencyComplexity = result.Summary.CurrencyCount <= 1 ? 0m : Math.Min(100m, (result.Summary.CurrencyCount - 1) * 25m);
+        var peakVsAverageMonth = BuildPeakVsAverageMonthPercent(result);
+
+        return
+        [
+            new CentralGaugeModel
+            {
+                Title = T("Rechnungsdichte", "Invoice density"),
+                Percent = invoiceDensity,
+                DisplayValue = $"{invoiceDensity:F0}%",
+                Subtitle = T("Rechnungen pro 100 Zeilen", "Invoices per 100 rows"),
+                Color = "#1f8a70"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Quellen-Dominanz", "Source dominance"),
+                Percent = sourceDominance,
+                DisplayValue = $"{sourceDominance:F0}%",
+                Subtitle = T("Groesste Quelle nach Zeilen", "Largest source by rows"),
+                Color = "#d9822b"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Land-Dominanz", "Country dominance"),
+                Percent = countryDominance,
+                DisplayValue = $"{countryDominance:F0}%",
+                Subtitle = T("Groesstes Land nach Zeilen", "Largest country by rows"),
+                Color = "#c4496b"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Perioden-Abdeckung", "Period coverage"),
+                Percent = periodCoverage,
+                DisplayValue = $"{periodCoverage:F0}%",
+                Subtitle = BuildPeriodGaugeSubtitle(result),
+                Color = "#3d7ff0"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Top-Land Umsatz", "Top country sales"),
+                Percent = topCountrySalesShare,
+                DisplayValue = $"{topCountrySalesShare:F0}%",
+                Subtitle = T("Anteil des umsatzstaerksten Landes", "Share of top-selling country"),
+                Color = "#7f56d9"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Top-Quelle Umsatz", "Top source sales"),
+                Percent = topSourceSalesShare,
+                DisplayValue = $"{topSourceSalesShare:F0}%",
+                Subtitle = T("Anteil der staerksten Quelle", "Share of strongest source"),
+                Color = "#0f9fb5"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Waehrungs-Komplexitaet", "Currency complexity"),
+                Percent = currencyComplexity,
+                DisplayValue = result.Summary.CurrencyCount.ToString("N0"),
+                Subtitle = T("Anzahl Waehrungen im Zeitraum", "Number of currencies in period"),
+                Color = "#b54708"
+            },
+            new CentralGaugeModel
+            {
+                Title = T("Monat gegen Peak", "Month vs peak"),
+                Percent = peakVsAverageMonth,
+                DisplayValue = $"{peakVsAverageMonth:F0}%",
+                Subtitle = T("Durchschnittsmonat relativ zum Peak", "Average month relative to peak"),
+                Color = "#d92d20"
+            }
+        ];
+    }
+
+    private static decimal BuildPeriodCoveragePercent(ManagementCockpitCentralResult result)
+    {
+        if (result.Summary.PeriodStart is null || result.Summary.PeriodEnd is null)
+            return 0m;
+
+        if (result.Filter.Month.HasValue)
+        {
+            var daysInMonth = DateTime.DaysInMonth(result.Filter.Year, result.Filter.Month.Value);
+            var coveredDays = result.DailyTotals
+                .Select(x => x.Day)
+                .Where(x => x.HasValue)
+                .Distinct()
+                .Count();
+            return daysInMonth == 0 ? 0m : coveredDays * 100m / daysInMonth;
+        }
+
+        var coveredMonths = result.MonthlyTotals
+            .Select(x => x.Month)
+            .Where(x => x.HasValue)
+            .Distinct()
+            .Count();
+        return coveredMonths * 100m / 12m;
+    }
+
+    private string BuildPeriodGaugeSubtitle(ManagementCockpitCentralResult result)
+        => result.Filter.Month.HasValue
+            ? T("Tage mit Daten im Monat", "Days with data in month")
+            : T("Monate mit Daten im Jahr", "Months with data in year");
+
+    private static decimal BuildTopSalesSharePercent(IEnumerable<ManagementCockpitDimensionValueRow> rows)
+    {
+        var materialized = rows.ToList();
+        if (materialized.Count == 0)
+            return 0m;
+
+        var total = materialized.Sum(x => x.SalesValue);
+        if (total == 0)
+            return 0m;
+
+        return materialized.Max(x => x.SalesValue) * 100m / total;
+    }
+
+    private static decimal BuildPeakVsAverageMonthPercent(ManagementCockpitCentralResult result)
+    {
+        var monthRows = result.MonthlyTotals.ToList();
+        if (monthRows.Count == 0)
+            return 0m;
+
+        var groupedMonths = monthRows
+            .GroupBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.Sum(x => x.SalesValue))
+            .ToList();
+
+        if (groupedMonths.Count == 0)
+            return 0m;
+
+        var peak = groupedMonths.Max();
+        if (peak == 0)
+            return 0m;
+
+        var average = groupedMonths.Average();
+        return Math.Min(100m, average * 100m / peak);
+    }
+
+    private static string BuildGaugeDashArray(decimal percent)
+        => $"{Math.Clamp(percent, 0m, 100m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} 100";
+
+    private static string BuildGaugeNeedleX(decimal percent)
+        => GetGaugePoint(percent, 68d).X.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string BuildGaugeNeedleY(decimal percent)
+        => GetGaugePoint(percent, 68d).Y.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static (double X, double Y) GetGaugePoint(decimal percent, double radius = 80d)
+    {
+        var clamped = Math.Clamp((double)percent, 0d, 100d);
+        var angle = Math.PI * (1d - clamped / 100d);
+        var x = 110d + radius * Math.Cos(angle);
+        var y = 110d - radius * Math.Sin(angle);
+        return (x, y);
+    }
+
+    private sealed class CentralGaugeModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public decimal Percent { get; set; }
+        public string DisplayValue { get; set; } = string.Empty;
+        public string Subtitle { get; set; } = string.Empty;
+        public string Color { get; set; } = "#3d7ff0";
     }
 }
 

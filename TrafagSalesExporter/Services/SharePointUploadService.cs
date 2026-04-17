@@ -43,6 +43,45 @@ public class SharePointUploadService : ISharePointUploadService
         await graphClient.Drives[drive.Id].Root.ItemWithPath(remotePath).Content.PutAsync(stream);
     }
 
+    public async Task<string> DownloadToTempFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string fileReference)
+    {
+        var normalizedTenantId = Normalize(tenantId);
+        var normalizedClientId = Normalize(clientId);
+        var normalizedClientSecret = Normalize(clientSecret);
+        var normalizedSiteUrl = Normalize(siteUrl);
+        var normalizedReference = Normalize(fileReference);
+
+        if (string.IsNullOrWhiteSpace(normalizedReference))
+            throw new InvalidOperationException("SharePoint-Dateireferenz fehlt.");
+
+        var credential = new ClientSecretCredential(normalizedTenantId, normalizedClientId, normalizedClientSecret);
+        var graphClient = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
+
+        var siteUri = new Uri(normalizedSiteUrl);
+        var sitePath = siteUri.AbsolutePath.TrimEnd('/');
+        var site = await graphClient.Sites[$"{siteUri.Host}:{sitePath}"].GetAsync();
+
+        if (site?.Id is null)
+            throw new InvalidOperationException("SharePoint Site konnte nicht gefunden werden.");
+
+        var drive = await graphClient.Sites[site.Id].Drive.GetAsync();
+        if (drive?.Id is null)
+            throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
+
+        var remotePath = ResolveRemotePath(normalizedReference, siteUri);
+        var fileName = Path.GetFileName(remotePath);
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new InvalidOperationException("Aus der SharePoint-Dateireferenz konnte kein Dateiname gelesen werden.");
+
+        await using var contentStream = await graphClient.Drives[drive.Id].Root.ItemWithPath(remotePath).Content.GetAsync()
+            ?? throw new InvalidOperationException("SharePoint-Datei konnte nicht gelesen werden.");
+
+        var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}_{fileName}");
+        await using var targetStream = File.Create(tempPath);
+        await contentStream.CopyToAsync(targetStream);
+        return tempPath;
+    }
+
     public async Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)
     {
         var normalizedTenantId = Normalize(tenantId);
@@ -85,6 +124,24 @@ public class SharePointUploadService : ISharePointUploadService
     }
 
     private static string Normalize(string value) => value?.Trim() ?? string.Empty;
+
+    private static string ResolveRemotePath(string fileReference, Uri siteUri)
+    {
+        if (Uri.TryCreate(fileReference, UriKind.Absolute, out var fileUri))
+        {
+            if (!string.Equals(fileUri.Host, siteUri.Host, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Die SharePoint-Datei muss auf derselben SharePoint-Site liegen wie die zentrale Konfiguration.");
+
+            var sitePath = siteUri.AbsolutePath.TrimEnd('/');
+            var absolutePath = Uri.UnescapeDataString(fileUri.AbsolutePath);
+            if (absolutePath.StartsWith(sitePath, StringComparison.OrdinalIgnoreCase))
+                absolutePath = absolutePath[sitePath.Length..];
+
+            return absolutePath.Trim('/').Trim();
+        }
+
+        return fileReference.Trim('/').Trim();
+    }
 
     private static string BuildInputPreview(string tenantId, string clientId, string clientSecret, string siteUrl)
     {
