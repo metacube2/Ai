@@ -150,7 +150,7 @@ public sealed class StandortePageService : IStandortePageService
         };
 
         await _appEventLogService.WriteAsync("HANA", "Server-Test aus UI gestartet", details: testServer.GetConnectionStringPreview());
-        return await Task.Run(() => _hanaService.TestConnectionDetailed(testServer));
+        return await _hanaService.TestConnectionDetailedAsync(testServer);
     }
 
     public async Task<StandortEditorState> LoadSiteEditorAsync(Site site, IEnumerable<SourceSystemDefinition> sourceSystems)
@@ -263,12 +263,12 @@ public sealed class StandortePageService : IStandortePageService
             AdditionalParams = centralServer.AdditionalParams
         };
 
-        return await Task.Run(() => _hanaService.GetAvailableSchemas(lookupServer))
-            .ContinueWith(task => task.Result
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList());
+        var schemas = await _hanaService.GetAvailableSchemasAsync(lookupServer);
+        return schemas
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public async Task<SapEntitySetRefreshResult> RefreshSapEntitySetsAsync(Site site)

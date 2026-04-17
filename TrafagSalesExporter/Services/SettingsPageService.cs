@@ -236,7 +236,7 @@ public sealed class SettingsPageService : ISettingsPageService
             AdditionalParams = centralServer.AdditionalParams
         };
 
-        var result = await Task.Run(() => _hanaService.TestConnectionDetailed(testServer));
+        var result = await _hanaService.TestConnectionDetailedAsync(testServer);
         return result.Success
             ? PageActionResult.SuccessResult($"{sourceSystem}: Zentrale HANA-Verbindung erfolgreich.")
             : PageActionResult.ErrorResult($"{sourceSystem}: {result.ExceptionType} - {result.ErrorMessage}");

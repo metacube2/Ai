@@ -35,8 +35,8 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
             siteId: site.Id, land: site.Land,
             details: exportServer.GetConnectionStringPreview());
 
-        var records = await Task.Run(() => _hanaService.GetSalesRecords(
-            exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter));
+        var records = await _hanaService.GetSalesRecordsAsync(
+            exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter);
 
         return new DataSourceFetchResult { Records = records };
     }
