@@ -21,7 +21,8 @@ public class RecordTransformationServiceTests
         ];
         IRecordTransformationStrategy[] recordStrategies =
         [
-            new FirstNonEmptyRecordTransformationStrategy()
+            new FirstNonEmptyRecordTransformationStrategy(),
+            new ConvertCurrencyRecordTransformationStrategy(new FakeCurrencyExchangeRateService())
         ];
 
         _service = new RecordTransformationService(valueStrategies, recordStrategies);
@@ -140,5 +141,44 @@ public class RecordTransformationServiceTests
         _service.Apply(records, rules);
 
         Assert.Equal(42, records[0].PositionOnInvoice);
+    }
+
+    [Fact]
+    public void Apply_Uses_ConvertCurrency_Record_Strategy()
+    {
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                SalesPriceValue = 100m,
+                SalesCurrency = "CHF",
+                InvoiceDate = new DateTime(2026, 4, 17)
+            }
+        };
+        var rules = new[]
+        {
+            new FieldTransformationRule
+            {
+                IsActive = true,
+                RuleScope = "Record",
+                TargetField = nameof(SalesRecord.SalesPriceValue),
+                TransformationType = "ConvertCurrency",
+                Argument = "amountField=SalesPriceValue;currencyField=SalesCurrency;targetCurrency=EUR;dateField=InvoiceDate;targetCurrencyField=SalesCurrency",
+                SortOrder = 10
+            }
+        };
+
+        _service.Apply(records, rules);
+
+        Assert.Equal(95m, records[0].SalesPriceValue);
+        Assert.Equal("EUR", records[0].SalesCurrency);
+    }
+
+    private sealed class FakeCurrencyExchangeRateService : ICurrencyExchangeRateService
+    {
+        public decimal? ResolveRate(string fromCurrency, string toCurrency, DateTime? effectiveDate) => 0.95m;
+
+        public string NormalizeCurrencyCode(string? currencyCode)
+            => currencyCode?.Trim().ToUpperInvariant() ?? string.Empty;
     }
 }

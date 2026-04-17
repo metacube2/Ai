@@ -2,6 +2,31 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-17
+
+Der Punkt `CHF-Umrechnung / Wechselkurse` ist nicht mehr komplett offen.
+
+Der aktuelle Ist-Stand ist:
+
+- `CurrencyExchangeRateService` ist implementiert
+- `ExchangeRateImportService` importiert ECB-Kurse
+- `NormalizeCurrencyCode` und `ConvertCurrency` sind im Transformationssystem registriert
+- fehlende Unit-Tests dafuer wurden am 2026-04-17 ergaenzt
+
+Neuer Teststand:
+
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal`
+- erfolgreich
+- `31/31` Tests gruen
+
+Was fuer Waehrungen trotzdem noch offen bleibt:
+
+- fachlicher Einsatz der `ConvertCurrency`-Regeln in echten Standortkonfigurationen pruefen
+- UI-Flow fuer Wechselkurspflege in `Settings.razor` manuell gegenpruefen
+- ECB-Import einmal real ueber die UI bzw. App-Funktion pruefen
+- bestaetigen, fuer welche Sichten CHF die Zielwaehrung sein soll
+- Management-Cockpit-Rohsicht nur dann auf CHF umstellen, wenn fachlich gewuenscht
+
 ## Nachtrag 2026-04-16
 
 Seit dem letzten Stand kamen mehrere groessere Erweiterungen dazu. Die offenen Punkte unten muessen deshalb im neuen Kontext gelesen werden.
@@ -131,7 +156,7 @@ Dateien:
 Noch nicht final umsetzen ohne Rueckmeldung Fachseite:
 
 - Intercompany-Filter
-- CHF-Umrechnung / Wechselkurse
+- fachliche Nutzung der CHF-Umrechnung in Cockpit / Reports
 - Budgetvergleich
 - Gruppenlogik
 - Spartenlogik
@@ -144,13 +169,14 @@ Diese Punkte sollen spaeter moeglichst dynamisch auf dem neuen Transformations-/
 Wenn weiter in Tests investiert wird, sind die naechsten Kandidaten:
 
 - `ExportOrchestrationService`
+- spaeter End-to-End-Tests fuer den Wechselkurs-/Transformationspfad
 - spaeter evtl. SQLite-nahe Integrationstests fuer `DatabaseInitializationService`
 
 Aktueller Teststatus:
 
-- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal`
 - erfolgreich
-- `18/18` Tests gruen
+- `31/31` Tests gruen
 
 ## 7. Referenzdatei
 
