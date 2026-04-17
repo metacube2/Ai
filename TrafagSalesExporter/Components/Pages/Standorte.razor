@@ -1,16 +1,11 @@
 ﻿@page "/standorte"
 @using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.EntityFrameworkCore
 @using System.Text.Json
 @using System.Reflection
-@using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
-@inject IDbContextFactory<AppDbContext> DbFactory
-@inject IHanaQueryService HanaService
-@inject ISapGatewayService SapGatewayService
-@inject ISharePointUploadService SharePointService
-@inject IAppEventLogService AppEventLogService
+@inject IStandortePageService StandortePageService
+@inject IStandorteSapEditorService SapEditorService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -466,16 +461,10 @@
 
     private async Task LoadDataAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        _sourceSystemDefinitions = await db.SourceSystemDefinitions
-            .OrderBy(x => x.Code)
-            .ToListAsync();
-        _servers = await db.HanaServers
-            .Where(s => GetHanaSourceSystemCodes().Contains(s.SourceSystem))
-            .OrderBy(s => s.SourceSystem)
-            .ThenBy(s => s.Name)
-            .ToListAsync();
-        _sites = await db.Sites.Include(s => s.HanaServer).OrderBy(s => s.Land).ToListAsync();
+        var state = await StandortePageService.LoadAsync();
+        _sourceSystemDefinitions = state.SourceSystems;
+        _servers = state.Servers;
+        _sites = state.Sites;
     }
 
     private void EditServer(HanaServer server)
@@ -492,61 +481,10 @@
         _savingServer = true;
         try
         {
-        _editingServer.SourceSystem = string.IsNullOrWhiteSpace(_editingServer.SourceSystem)
-            ? GetHanaSourceSystemCodes().FirstOrDefault() ?? string.Empty
-            : _editingServer.SourceSystem.Trim().ToUpperInvariant();
-        _editingServer.Name = string.IsNullOrWhiteSpace(_editingServer.Name) ? _editingServer.SourceSystem : _editingServer.Name.Trim();
-        _editingServer.Host = _editingServer.Host.Trim();
-        _editingServer.DatabaseName = _editingServer.DatabaseName.Trim();
-        _editingServer.AdditionalParams = _editingServer.AdditionalParams.Trim();
-        _editingServer.Username = string.Empty;
-        _editingServer.Password = string.Empty;
-        using var db = await DbFactory.CreateDbContextAsync();
-        if (_editingServer.Id == 0)
-        {
-            var existingForSourceSystem = await db.HanaServers
-                .OrderBy(x => x.Id)
-                .FirstOrDefaultAsync(x => x.SourceSystem == _editingServer.SourceSystem);
-
-            if (existingForSourceSystem is null)
-            {
-                db.HanaServers.Add(_editingServer);
-            }
-            else
-            {
-                existingForSourceSystem.Name = _editingServer.Name;
-                existingForSourceSystem.Host = _editingServer.Host;
-                existingForSourceSystem.Port = _editingServer.Port;
-                existingForSourceSystem.Username = string.Empty;
-                existingForSourceSystem.Password = string.Empty;
-                existingForSourceSystem.DatabaseName = _editingServer.DatabaseName;
-                existingForSourceSystem.UseSsl = _editingServer.UseSsl;
-                existingForSourceSystem.ValidateCertificate = _editingServer.ValidateCertificate;
-                existingForSourceSystem.AdditionalParams = _editingServer.AdditionalParams;
-            }
-        }
-        else
-        {
-            var existing = await db.HanaServers.FindAsync(_editingServer.Id);
-            if (existing is not null)
-            {
-                existing.SourceSystem = _editingServer.SourceSystem;
-                existing.Name = _editingServer.Name;
-                existing.Host = _editingServer.Host;
-                existing.Port = _editingServer.Port;
-                existing.Username = string.Empty;
-                existing.Password = string.Empty;
-                existing.DatabaseName = _editingServer.DatabaseName;
-                existing.UseSsl = _editingServer.UseSsl;
-                existing.ValidateCertificate = _editingServer.ValidateCertificate;
-                existing.AdditionalParams = _editingServer.AdditionalParams;
-            }
-        }
-
-        await db.SaveChangesAsync();
-        _serverDialogVisible = false;
-        await LoadDataAsync();
-        Snackbar.Add("Server gespeichert", Severity.Success);
+            await StandortePageService.SaveServerAsync(_editingServer, GetHanaSourceSystemCodes());
+            _serverDialogVisible = false;
+            await LoadDataAsync();
+            Snackbar.Add("Server gespeichert", Severity.Success);
         }
         finally
         {
@@ -571,27 +509,7 @@
 
         try
         {
-            using var db = await DbFactory.CreateDbContextAsync();
-            var linkedSites = await db.Sites
-                .Where(s => s.HanaServerId == server.Id)
-                .OrderBy(s => s.Land)
-                .Select(s => $"{s.Land} ({s.TSC})")
-                .ToListAsync();
-
-            if (linkedSites.Count > 0)
-            {
-                Snackbar.Add(
-                    $"Server kann nicht gelÃ¶scht werden. Noch verknÃ¼pfte Standorte: {string.Join(", ", linkedSites)}",
-                    Severity.Warning);
-                return;
-            }
-
-            var entity = await db.HanaServers.FindAsync(server.Id);
-            if (entity is not null)
-            {
-                db.HanaServers.Remove(entity);
-                await db.SaveChangesAsync();
-            }
+            await StandortePageService.DeleteServerAsync(server);
         }
         catch (Exception ex)
         {
@@ -605,50 +523,19 @@
 
     private async Task TestServerConnection(HanaServer server)
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        var sourceDefinition = await db.SourceSystemDefinitions
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync(x => x.Code == server.SourceSystem);
-
-        if (sourceDefinition is null)
+        try
         {
-            Snackbar.Add($"Quellsystem '{server.SourceSystem}' nicht gefunden.", Severity.Warning);
-            return;
+            var result = await StandortePageService.TestServerConnectionAsync(server);
+            _connectionStatus[server.Id] = result;
+            Snackbar.Add(
+                result.Success
+                    ? $"Verbindung zu '{server.Name}' erfolgreich."
+                    : $"{server.Name}: {result.ExceptionType} - {result.ErrorMessage}",
+                result.Success ? Severity.Success : Severity.Error);
         }
-
-        if (string.IsNullOrWhiteSpace(sourceDefinition.CentralUsername) || string.IsNullOrWhiteSpace(sourceDefinition.CentralPassword))
+        catch (Exception ex)
         {
-            Snackbar.Add($"Fuer {server.SourceSystem} sind keine zentralen Zugangsdaten im Quellsystem gepflegt.", Severity.Warning);
-            return;
-        }
-
-        var testServer = new HanaServer
-        {
-            Id = server.Id,
-            SourceSystem = server.SourceSystem,
-            Name = server.Name,
-            Host = server.Host,
-            Port = server.Port,
-            Username = sourceDefinition.CentralUsername.Trim(),
-            Password = sourceDefinition.CentralPassword,
-            DatabaseName = server.DatabaseName,
-            UseSsl = server.UseSsl,
-            ValidateCertificate = server.ValidateCertificate,
-            AdditionalParams = server.AdditionalParams
-        };
-
-        await AppEventLogService.WriteAsync("HANA", "Server-Test aus UI gestartet",
-            details: testServer.GetConnectionStringPreview());
-        var result = await Task.Run(() => HanaService.TestConnectionDetailed(testServer));
-        _connectionStatus[server.Id] = result;
-
-        if (result.Success)
-        {
-            Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich.", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add($"{server.Name}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
+            Snackbar.Add(ex.Message, Severity.Warning);
         }
     }
 
@@ -682,33 +569,18 @@
 
     private void EditSite(Site site)
     {
-        _editingSite = new Site
-        {
-            Id = site.Id,
-            HanaServerId = site.HanaServerId,
-            Schema = site.Schema,
-            TSC = site.TSC,
-            Land = site.Land,
-            SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem)
-                ? GetAvailableSourceSystems().FirstOrDefault()?.Code ?? "SAP"
-                : site.SourceSystem,
-            UsernameOverride = site.UsernameOverride,
-            PasswordOverride = site.PasswordOverride,
-            LocalExportFolderOverride = site.LocalExportFolderOverride,
-            ManualImportFilePath = site.ManualImportFilePath,
-            ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
-            SapServiceUrl = site.SapServiceUrl,
-            SapEntitySet = site.SapEntitySet,
-            SapEntitySetsCache = site.SapEntitySetsCache,
-            SapEntitySetsRefreshedAtUtc = site.SapEntitySetsRefreshedAtUtc,
-            IsActive = site.IsActive
-        };
+        _ = EditSiteAsync(site);
+    }
+
+    private async Task EditSiteAsync(Site site)
+    {
+        var editorState = await StandortePageService.LoadSiteEditorAsync(site, GetAvailableSourceSystems());
+        _editingSite = editorState.Site;
         _availableSchemas = [];
-        _sapEntitySetsCache = ParseSapEntitySets(site.SapEntitySetsCache);
-        using var db = DbFactory.CreateDbContext();
-        _sapSources = db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
-        _sapJoins = db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).OrderBy(j => j.SortOrder).ThenBy(j => j.Id).ToList();
-        _sapMappings = db.SapFieldMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
+        _sapEntitySetsCache = editorState.SapEntitySets;
+        _sapSources = editorState.SapSources;
+        _sapJoins = editorState.SapJoins;
+        _sapMappings = editorState.SapMappings;
         _sapAvailableSourceExpressions = BuildSourceExpressionsFromMappings();
         _sapSourceFieldMap = BuildSourceFieldMapFromJoins();
         _siteDialogVisible = true;
@@ -722,40 +594,7 @@
         _savingSite = true;
         try
         {
-            using var db = await DbFactory.CreateDbContextAsync();
-            var serverId = UsesHanaConnection() ? await ResolveCentralHanaServerIdAsync(db, _editingSite.SourceSystem) : (int?)null;
-            _editingSite.HanaServerId = serverId;
-            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(_sapEntitySetsCache);
-
-            if (_editingSite.Id == 0)
-            {
-                db.Sites.Add(_editingSite);
-            }
-            else
-            {
-                var existing = await db.Sites.FindAsync(_editingSite.Id);
-                if (existing is not null)
-                {
-                    existing.HanaServerId = serverId;
-                    existing.Schema = _editingSite.Schema;
-                    existing.TSC = _editingSite.TSC;
-                    existing.Land = _editingSite.Land;
-                    existing.SourceSystem = _editingSite.SourceSystem;
-                    existing.UsernameOverride = _editingSite.UsernameOverride;
-                    existing.PasswordOverride = _editingSite.PasswordOverride;
-                    existing.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride;
-                    existing.ManualImportFilePath = _editingSite.ManualImportFilePath;
-                    existing.ManualImportLastUploadedAtUtc = _editingSite.ManualImportLastUploadedAtUtc;
-                    existing.SapServiceUrl = _editingSite.SapServiceUrl;
-                    existing.SapEntitySet = _editingSite.SapEntitySet;
-                    existing.SapEntitySetsCache = _editingSite.SapEntitySetsCache;
-                    existing.SapEntitySetsRefreshedAtUtc = _editingSite.SapEntitySetsRefreshedAtUtc;
-                    existing.IsActive = _editingSite.IsActive;
-                }
-            }
-
-            await db.SaveChangesAsync();
-            await SaveSapConfigurationAsync(db, _editingSite.Id);
+            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsSapSite(), _sapSources, _sapJoins, _sapMappings, _sapEntitySetsCache);
             _siteDialogVisible = false;
             await LoadDataAsync();
             Snackbar.Add("Standort gespeichert", Severity.Success);
@@ -779,22 +618,7 @@
 
         if (result != true) return;
 
-        using var db = await DbFactory.CreateDbContextAsync();
-        var entity = await db.Sites.FindAsync(site.Id);
-        if (entity is not null)
-        {
-            var sources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
-            var joins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
-            var mappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
-            var centralRows = await db.CentralSalesRecords.Where(r => r.SiteId == site.Id).ToListAsync();
-            if (sources.Count > 0) db.SapSourceDefinitions.RemoveRange(sources);
-            if (joins.Count > 0) db.SapJoinDefinitions.RemoveRange(joins);
-            if (mappings.Count > 0) db.SapFieldMappings.RemoveRange(mappings);
-            if (centralRows.Count > 0) db.CentralSalesRecords.RemoveRange(centralRows);
-            db.Sites.Remove(entity);
-            await db.SaveChangesAsync();
-        }
-
+        await StandortePageService.DeleteSiteAsync(site);
         await LoadDataAsync();
         Snackbar.Add("Standort gelÃ¶scht", Severity.Info);
     }
@@ -823,26 +647,6 @@
             ValidateCertificate = server.ValidateCertificate,
             AdditionalParams = server.AdditionalParams
         };
-    }
-
-    private async Task<int> ResolveCentralHanaServerIdAsync(AppDbContext db, string sourceSystem)
-    {
-        _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
-        _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
-        _editingSite.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride.Trim();
-        _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
-        _editingSite.SapServiceUrl = _editingSite.SapServiceUrl.Trim();
-        _editingSite.SapEntitySet = _editingSite.SapEntitySet.Trim();
-
-        var normalizedSourceSystem = string.IsNullOrWhiteSpace(sourceSystem) ? string.Empty : sourceSystem.Trim().ToUpperInvariant();
-        var centralServer = await db.HanaServers
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync(x => x.SourceSystem == normalizedSourceSystem);
-
-        if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
-            throw new InvalidOperationException($"Fuer Quellsystem '{normalizedSourceSystem}' ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
-
-        return centralServer.Id;
     }
 
     private Task OnSchemaSelected(string schema)
@@ -939,52 +743,7 @@
         _loadingSchemas = true;
         try
         {
-            using var db = await DbFactory.CreateDbContextAsync();
-            var sourceDefinition = await db.SourceSystemDefinitions
-                .OrderBy(x => x.Id)
-                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
-
-            if (sourceDefinition is null)
-                throw new InvalidOperationException($"Quellsystem '{_editingSite.SourceSystem}' nicht gefunden.");
-
-            var centralServer = await db.HanaServers
-                .OrderBy(x => x.Id)
-                .FirstOrDefaultAsync(x => x.SourceSystem == _editingSite.SourceSystem);
-
-            if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
-                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
-
-            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
-                ? sourceDefinition.CentralUsername ?? string.Empty
-                : _editingSite.UsernameOverride;
-            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
-                ? sourceDefinition.CentralPassword ?? string.Empty
-                : _editingSite.PasswordOverride;
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
-
-            var lookupServer = new HanaServer
-            {
-                Id = centralServer.Id,
-                SourceSystem = centralServer.SourceSystem,
-                Name = centralServer.Name,
-                Host = centralServer.Host,
-                Port = centralServer.Port,
-                Username = username.Trim(),
-                Password = password,
-                DatabaseName = centralServer.DatabaseName,
-                UseSsl = centralServer.UseSsl,
-                ValidateCertificate = centralServer.ValidateCertificate,
-                AdditionalParams = centralServer.AdditionalParams
-            };
-
-            var schemas = await Task.Run(() => HanaService.GetAvailableSchemas(lookupServer));
-            _availableSchemas = schemas
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            _availableSchemas = await StandortePageService.LoadAvailableSchemasAsync(_editingSite);
 
             if (_availableSchemas.Count == 0)
             {
@@ -1018,31 +777,10 @@
         _refreshingSapEntitySets = true;
         try
         {
-            using var db = await DbFactory.CreateDbContextAsync();
-            var sourceDefinition = await db.SourceSystemDefinitions
-                .OrderBy(x => x.Id)
-                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
-            var serviceUrl = string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl)
-                ? sourceDefinition?.CentralServiceUrl ?? string.Empty
-                : _editingSite.SapServiceUrl;
-            if (string.IsNullOrWhiteSpace(serviceUrl))
-                throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
-            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
-                ? sourceDefinition?.CentralUsername ?? string.Empty
-                : _editingSite.UsernameOverride;
-            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
-                ? sourceDefinition?.CentralPassword ?? string.Empty
-                : _editingSite.PasswordOverride;
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException("FÃ¼r SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
-
-            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI gestartet", siteId: _editingSite.Id, land: _editingSite.Land,
-                details: serviceUrl);
-            var entitySets = await SapGatewayService.GetEntitySetsAsync(serviceUrl, username.Trim(), password.Trim());
-            _sapEntitySetsCache = entitySets;
-            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(entitySets);
-            _editingSite.SapEntitySetsRefreshedAtUtc = DateTime.UtcNow;
+            var result = await StandortePageService.RefreshSapEntitySetsAsync(_editingSite);
+            _sapEntitySetsCache = result.EntitySets;
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(result.EntitySets);
+            _editingSite.SapEntitySetsRefreshedAtUtc = result.RefreshedAtUtc;
 
             if (!string.IsNullOrWhiteSpace(_editingSite.SapEntitySet) &&
                 !_sapEntitySetsCache.Contains(_editingSite.SapEntitySet, StringComparer.OrdinalIgnoreCase))
@@ -1050,15 +788,11 @@
                 _editingSite.SapEntitySet = string.Empty;
             }
 
-            Snackbar.Add($"{entitySets.Count} SAP Entity Sets geladen.", Severity.Success);
-            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI erfolgreich", siteId: _editingSite.Id, land: _editingSite.Land,
-                details: $"EntitySets={entitySets.Count}");
+            Snackbar.Add($"{result.EntitySets.Count} SAP Entity Sets geladen.", Severity.Success);
         }
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
-            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land,
-                details: ex.ToString());
         }
         finally
         {
@@ -1119,12 +853,10 @@
             _editingSite.ManualImportFilePath = targetPath;
             _editingSite.ManualImportLastUploadedAtUtc = DateTime.UtcNow;
             Snackbar.Add("Excel-Datei hochgeladen.", Severity.Success);
-            await AppEventLogService.WriteAsync("ManualImport", "Excel-Datei hochgeladen", siteId: _editingSite.Id, land: _editingSite.Land, details: targetPath);
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Upload fehlgeschlagen: {ex.Message}", Severity.Error);
-            await AppEventLogService.WriteAsync("ManualImport", "Excel-Upload fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
         }
         finally
         {
@@ -1136,55 +868,12 @@
     {
         try
         {
-            _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
-
-            if (string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
-                throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
-
-            if (!string.Equals(Path.GetExtension(_editingSite.ManualImportFilePath), ".xlsx", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx angeben.");
-
-            if (File.Exists(_editingSite.ManualImportFilePath))
-            {
-                _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(_editingSite.ManualImportFilePath);
-            }
-            else if (LooksLikeSharePointReference(_editingSite.ManualImportFilePath))
-            {
-                using var db = await DbFactory.CreateDbContextAsync();
-                var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
-                if (spConfig is null ||
-                    string.IsNullOrWhiteSpace(spConfig.TenantId) ||
-                    string.IsNullOrWhiteSpace(spConfig.ClientId) ||
-                    string.IsNullOrWhiteSpace(spConfig.ClientSecret) ||
-                    string.IsNullOrWhiteSpace(spConfig.SiteUrl))
-                {
-                    throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
-                }
-
-                var tempPath = await SharePointService.DownloadToTempFileAsync(
-                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, _editingSite.ManualImportFilePath);
-                try
-                {
-                    _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(tempPath);
-                }
-                finally
-                {
-                    if (File.Exists(tempPath))
-                        File.Delete(tempPath);
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {_editingSite.ManualImportFilePath}");
-            }
-
+            _editingSite.ManualImportLastUploadedAtUtc = await StandortePageService.ValidateManualImportPathAsync(_editingSite.ManualImportFilePath);
             Snackbar.Add("Dateipfad ist gueltig und die Excel-Datei ist erreichbar.", Severity.Success);
-            await AppEventLogService.WriteAsync("ManualImport", "Dateipfad erfolgreich geprueft", siteId: _editingSite.Id, land: _editingSite.Land, details: _editingSite.ManualImportFilePath);
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Pfadpruefung fehlgeschlagen: {ex.Message}", Severity.Error);
-            await AppEventLogService.WriteAsync("ManualImport", "Dateipfadpruefung fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
         }
     }
 
@@ -1206,182 +895,48 @@
     private static string SerializeSapEntitySets(List<string> entitySets)
         => JsonSerializer.Serialize(entitySets);
 
-    private static bool LooksLikeSharePointReference(string path)
-        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
-           path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
-           path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
-
     private void AddSapSource()
     {
-        _sapSources.Add(new SapSourceDefinition
-        {
-            Alias = $"SRC{_sapSources.Count + 1}",
-            EntitySet = _sapEntitySetsCache.FirstOrDefault() ?? string.Empty,
-            IsActive = true,
-            IsPrimary = _sapSources.Count == 0,
-            SortOrder = _sapSources.Count
-        });
+        SapEditorService.AddSapSource(_sapSources, _sapEntitySetsCache);
     }
 
     private void RemoveSapSource(SapSourceDefinition source)
     {
-        _sapSources.Remove(source);
+        SapEditorService.RemoveSapSource(_sapSources, source);
     }
 
     private void AddSapJoin()
     {
-        _sapJoins.Add(new SapJoinDefinition
-        {
-            JoinType = "Left",
-            IsActive = true,
-            SortOrder = _sapJoins.Count
-        });
+        SapEditorService.AddSapJoin(_sapJoins);
     }
 
     private void AutoMatchSapJoins()
     {
-        var activeSources = _sapSources
-            .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias))
-            .OrderBy(s => s.SortOrder)
-            .ThenBy(s => s.Id)
-            .ToList();
-
-        if (activeSources.Count < 2)
-        {
-            Snackbar.Add("FÃ¼r Auto-Match werden mindestens zwei aktive SAP-Quellen benÃ¶tigt.", Severity.Warning);
-            return;
-        }
-
-        if (_sapSourceFieldMap.Count == 0)
-        {
-            Snackbar.Add("Bitte zuerst 'Felder aus Quellen laden' ausfÃ¼hren.", Severity.Warning);
-            return;
-        }
-
-        var primary = activeSources.FirstOrDefault(s => s.IsPrimary) ?? activeSources.First();
-        var createdOrUpdated = 0;
-
-        foreach (var source in activeSources.Where(s => !string.Equals(s.Alias, primary.Alias, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (!_sapSourceFieldMap.TryGetValue(primary.Alias, out var leftFields) || leftFields.Count == 0)
-                continue;
-            if (!_sapSourceFieldMap.TryGetValue(source.Alias, out var rightFields) || rightFields.Count == 0)
-                continue;
-
-            var matchingFields = leftFields
-                .Intersect(rightFields, StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (matchingFields.Count == 0)
-                continue;
-
-            var existingJoin = _sapJoins.FirstOrDefault(j =>
-                string.Equals(j.LeftAlias, primary.Alias, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(j.RightAlias, source.Alias, StringComparison.OrdinalIgnoreCase));
-
-            var keyList = string.Join(',', matchingFields);
-            if (existingJoin is null)
-            {
-                _sapJoins.Add(new SapJoinDefinition
-                {
-                    LeftAlias = primary.Alias,
-                    RightAlias = source.Alias,
-                    LeftKeys = keyList,
-                    RightKeys = keyList,
-                    JoinType = "Left",
-                    IsActive = true,
-                    SortOrder = _sapJoins.Count
-                });
-            }
-            else
-            {
-                existingJoin.LeftKeys = keyList;
-                existingJoin.RightKeys = keyList;
-                existingJoin.JoinType = "Left";
-                existingJoin.IsActive = true;
-            }
-
-            createdOrUpdated++;
-        }
-
-        if (createdOrUpdated == 0)
-        {
-            Snackbar.Add("Kein passender Join-Vorschlag gefunden.", Severity.Info);
-            return;
-        }
-
-        NormalizeSapConfigCollections();
-        Snackbar.Add($"{createdOrUpdated} Join-VorschlÃ¤ge gesetzt.", Severity.Success);
+        var result = SapEditorService.AutoMatchSapJoins(_sapSources, _sapJoins, _sapSourceFieldMap);
+        SapEditorService.NormalizeSapConfigCollections(_sapSources, _sapJoins, _sapMappings);
+        Snackbar.Add(result.Message, result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Info);
     }
 
     private void RemoveSapJoin(SapJoinDefinition join)
     {
-        _sapJoins.Remove(join);
+        SapEditorService.RemoveSapJoin(_sapJoins, join);
     }
 
     private void AddSapMapping()
     {
-        _sapMappings.Add(new SapFieldMapping
-        {
-            TargetField = _salesRecordFields.First(),
-            SourceExpression = _sapAvailableSourceExpressions.FirstOrDefault() ?? "=SAP",
-            IsActive = true,
-            SortOrder = _sapMappings.Count
-        });
+        SapEditorService.AddSapMapping(_sapMappings, _salesRecordFields, _sapAvailableSourceExpressions);
     }
 
     private void RemoveSapMapping(SapFieldMapping mapping)
     {
-        _sapMappings.Remove(mapping);
+        SapEditorService.RemoveSapMapping(_sapMappings, mapping);
     }
 
     private IEnumerable<string> GetSapAliases()
-        => _sapSources.Where(s => !string.IsNullOrWhiteSpace(s.Alias)).Select(s => s.Alias).Distinct(StringComparer.OrdinalIgnoreCase);
-
-    private async Task SaveSapConfigurationAsync(AppDbContext db, int siteId)
-    {
-        var oldSources = await db.SapSourceDefinitions.Where(s => s.SiteId == siteId).ToListAsync();
-        var oldJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == siteId).ToListAsync();
-        var oldMappings = await db.SapFieldMappings.Where(m => m.SiteId == siteId).ToListAsync();
-        if (oldSources.Count > 0) db.SapSourceDefinitions.RemoveRange(oldSources);
-        if (oldJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(oldJoins);
-        if (oldMappings.Count > 0) db.SapFieldMappings.RemoveRange(oldMappings);
-
-        if (IsSapSite())
-        {
-            NormalizeSapConfigCollections();
-            foreach (var source in _sapSources)
-                source.SiteId = siteId;
-            foreach (var join in _sapJoins)
-                join.SiteId = siteId;
-            foreach (var mapping in _sapMappings)
-                mapping.SiteId = siteId;
-            db.SapSourceDefinitions.AddRange(_sapSources);
-            db.SapJoinDefinitions.AddRange(_sapJoins);
-            db.SapFieldMappings.AddRange(_sapMappings);
-        }
-
-        await db.SaveChangesAsync();
-    }
+        => SapEditorService.GetSapAliases(_sapSources);
 
     private void NormalizeSapConfigCollections()
-    {
-        for (var i = 0; i < _sapSources.Count; i++)
-            _sapSources[i].SortOrder = i;
-        for (var i = 0; i < _sapJoins.Count; i++)
-            _sapJoins[i].SortOrder = i;
-        for (var i = 0; i < _sapMappings.Count; i++)
-            _sapMappings[i].SortOrder = i;
-
-        var selectedPrimaryIndex = _sapSources.FindIndex(s => s.IsPrimary);
-        var primarySource = selectedPrimaryIndex >= 0 ? _sapSources[selectedPrimaryIndex] : _sapSources.FirstOrDefault();
-        foreach (var source in _sapSources)
-            source.IsPrimary = primarySource is not null && ReferenceEquals(source, primarySource);
-        if (_sapSources.Count > 0 && _sapSources.All(s => !s.IsPrimary))
-            _sapSources[0].IsPrimary = true;
-    }
+        => SapEditorService.NormalizeSapConfigCollections(_sapSources, _sapJoins, _sapMappings);
 
     private async Task RefreshSapSourceFields()
     {
@@ -1400,51 +955,9 @@
             if (activeSources.Count == 0)
                 throw new InvalidOperationException("Es gibt keine aktiven SAP-Quellen mit Alias und Entity Set.");
 
-            using var db = await DbFactory.CreateDbContextAsync();
-            var sourceDefinition = await db.SourceSystemDefinitions
-                .OrderBy(x => x.Id)
-                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
-            var serviceUrl = string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl)
-                ? sourceDefinition?.CentralServiceUrl ?? string.Empty
-                : _editingSite.SapServiceUrl;
-            if (string.IsNullOrWhiteSpace(serviceUrl))
-                throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
-            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
-                ? sourceDefinition?.CentralUsername ?? string.Empty
-                : _editingSite.UsernameOverride;
-            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
-                ? sourceDefinition?.CentralPassword ?? string.Empty
-                : _editingSite.PasswordOverride;
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException("FÃ¼r SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
-
-            var expressions = new List<string> { "=SAP" };
-            var sourceFieldMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var source in activeSources)
-            {
-                var fieldNames = await SapGatewayService.GetEntityFieldNamesAsync(serviceUrl, source.EntitySet, username.Trim(), password.Trim());
-                sourceFieldMap[source.Alias] = fieldNames;
-                expressions.AddRange(fieldNames.Select(field => $"{source.Alias}.{field}"));
-            }
-
-            _sapAvailableSourceExpressions = expressions
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            _sapSourceFieldMap = sourceFieldMap;
-
-            foreach (var current in BuildSourceExpressionsFromMappings())
-            {
-                if (!_sapAvailableSourceExpressions.Contains(current, StringComparer.OrdinalIgnoreCase))
-                    _sapAvailableSourceExpressions.Add(current);
-            }
-
-            _sapAvailableSourceExpressions = _sapAvailableSourceExpressions
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var result = await StandortePageService.RefreshSapSourceFieldsAsync(_editingSite, activeSources, _sapMappings);
+            _sapAvailableSourceExpressions = result.SourceExpressions;
+            _sapSourceFieldMap = result.SourceFieldMap;
 
             Snackbar.Add($"{_sapAvailableSourceExpressions.Count} Source Expressions geladen.", Severity.Success);
         }
@@ -1459,73 +972,16 @@
     }
 
     private IEnumerable<string> GetAvailableSourceExpressions(string? currentValue)
-    {
-        var expressions = new List<string>(_sapAvailableSourceExpressions);
-        if (!string.IsNullOrWhiteSpace(currentValue) && !expressions.Contains(currentValue, StringComparer.OrdinalIgnoreCase))
-            expressions.Insert(0, currentValue);
-
-        return expressions;
-    }
+        => SapEditorService.GetAvailableSourceExpressions(_sapAvailableSourceExpressions, currentValue);
 
     private List<string> BuildSourceExpressionsFromMappings()
-        => _sapMappings
-            .Select(m => m.SourceExpression)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        => SapEditorService.BuildSourceExpressionsFromMappings(_sapMappings);
 
     private Dictionary<string, List<string>> BuildSourceFieldMapFromJoins()
-    {
-        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var join in _sapJoins)
-        {
-            AddJoinKeysToFieldMap(result, join.LeftAlias, join.LeftKeys);
-            AddJoinKeysToFieldMap(result, join.RightAlias, join.RightKeys);
-        }
-
-        return result;
-    }
-
-    private static void AddJoinKeysToFieldMap(Dictionary<string, List<string>> target, string alias, string keys)
-    {
-        if (string.IsNullOrWhiteSpace(alias))
-            return;
-
-        if (!target.TryGetValue(alias, out var fields))
-        {
-            fields = [];
-            target[alias] = fields;
-        }
-
-        foreach (var key in GetSelectedJoinKeys(keys))
-        {
-            if (!fields.Contains(key, StringComparer.OrdinalIgnoreCase))
-                fields.Add(key);
-        }
-
-        fields.Sort(StringComparer.OrdinalIgnoreCase);
-    }
+        => SapEditorService.BuildSourceFieldMapFromJoins(_sapJoins);
 
     private IEnumerable<string> GetAvailableJoinFields(string? alias, string? currentKeys)
-    {
-        var values = new List<string>();
-        if (!string.IsNullOrWhiteSpace(alias) && _sapSourceFieldMap.TryGetValue(alias, out var fields))
-            values.AddRange(fields);
-
-        foreach (var key in GetSelectedJoinKeys(currentKeys))
-        {
-            if (!values.Contains(key, StringComparer.OrdinalIgnoreCase))
-                values.Add(key);
-        }
-
-        return values
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
+        => SapEditorService.GetAvailableJoinFields(_sapSourceFieldMap, alias, currentKeys);
 
     private static HashSet<string> GetSelectedJoinKeys(string? keys)
         => keys?

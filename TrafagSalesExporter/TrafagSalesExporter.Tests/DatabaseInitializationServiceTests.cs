@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services;
 
 namespace TrafagSalesExporter.Tests;
@@ -37,7 +38,7 @@ public class DatabaseInitializationServiceTests : IDisposable
     {
         await PrepareLegacySitesTableAsync();
 
-        var service = new DatabaseInitializationService(_dbFactory);
+        var service = CreateService();
         await service.InitializeAsync();
 
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -59,7 +60,7 @@ public class DatabaseInitializationServiceTests : IDisposable
     {
         await PrepareBrokenHanaServerForeignKeyAsync();
 
-        var service = new DatabaseInitializationService(_dbFactory);
+        var service = CreateService();
         await service.InitializeAsync();
 
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -70,6 +71,25 @@ public class DatabaseInitializationServiceTests : IDisposable
         var tableSql = await ReadTableSqlAsync("Sites");
         Assert.Contains("REFERENCES HanaServers (Id)", tableSql, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("HanaServers_repair_old", tableSql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_Seeds_Default_SourceSystems_And_Central_HanaServers()
+    {
+        var service = CreateService();
+
+        await service.InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        Assert.Contains(db.SourceSystemDefinitions, x => x.Code == "SAP" && x.ConnectionKind == SourceSystemConnectionKinds.SapGateway);
+        Assert.Contains(db.SourceSystemDefinitions, x => x.Code == "BI1" && x.ConnectionKind == SourceSystemConnectionKinds.Hana);
+        Assert.Contains(db.SourceSystemDefinitions, x => x.Code == "SAGE" && x.ConnectionKind == SourceSystemConnectionKinds.Hana);
+        Assert.Contains(db.SourceSystemDefinitions, x => x.Code == "MANUAL_EXCEL" && x.ConnectionKind == SourceSystemConnectionKinds.ManualExcel);
+
+        Assert.Contains(db.HanaServers, x => x.SourceSystem == "BI1");
+        Assert.Contains(db.HanaServers, x => x.SourceSystem == "SAGE");
+        Assert.Equal(2, db.FieldTransformationRules.Count(x => x.SourceSystem == "MANUAL_EXCEL"));
     }
 
     private async Task PrepareLegacySitesTableAsync()
@@ -178,6 +198,9 @@ VALUES (
         command.Parameters.AddWithValue("$tableName", tableName);
         return (await command.ExecuteScalarAsync())?.ToString() ?? string.Empty;
     }
+
+    private DatabaseInitializationService CreateService()
+        => new(_dbFactory, new DatabaseSchemaMaintenanceService(), new DatabaseSeedService());
 
     private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>
     {

@@ -1,10 +1,8 @@
 @page "/transformations"
-@using Microsoft.EntityFrameworkCore
 @using System.Reflection
-@using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ITransformationsPageService TransformationsPageActions
 @inject ITransformationCatalog TransformationCatalog
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
@@ -199,9 +197,9 @@
 
     private async Task LoadAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
-        _rules = await db.FieldTransformationRules.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToListAsync();
+        var state = await TransformationsPageActions.LoadAsync();
+        _sourceSystems = state.SourceSystems;
+        _rules = state.Rules;
 
         foreach (var rule in _rules)
         {
@@ -235,12 +233,7 @@
 
     private async Task SaveAllAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        db.FieldTransformationRules.RemoveRange(db.FieldTransformationRules);
-        await db.SaveChangesAsync();
-
-        db.FieldTransformationRules.AddRange(_rules);
-        await db.SaveChangesAsync();
+        _rules = await TransformationsPageActions.SaveAllAsync(_rules);
 
         Snackbar.Add(T("Transformationsregeln gespeichert.", "Transformation rules saved."), Severity.Success);
         await LoadAsync();

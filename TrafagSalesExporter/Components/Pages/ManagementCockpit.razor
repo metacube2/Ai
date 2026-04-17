@@ -1,7 +1,7 @@
 @page "/management-cockpit"
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
-@inject IManagementCockpitService CockpitService
+@inject IManagementCockpitPageService CockpitPageService
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 
@@ -335,8 +335,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ReloadFiles();
-        await ReloadCentralYears();
+        var state = await CockpitPageService.InitializeAsync(_selectedFilePath, _selectedCentralYear);
+        _files = state.Files;
+        _centralYears = state.CentralYears;
+        _selectedFilePath = state.SelectedFilePath;
+        _selectedCentralYear = state.SelectedCentralYear;
     }
 
     private async Task ReloadFiles()
@@ -344,7 +347,7 @@
         _loadingFiles = true;
         try
         {
-            _files = await CockpitService.GetAvailableFilesAsync();
+            _files = await CockpitPageService.LoadFilesAsync();
             _selectedFilePath ??= _files.FirstOrDefault()?.Path;
         }
         finally
@@ -355,7 +358,7 @@
 
     private async Task ReloadCentralYears()
     {
-        _centralYears = await CockpitService.GetAvailableCentralYearsAsync();
+        _centralYears = await CockpitPageService.LoadCentralYearsAsync();
         if (_selectedCentralYear == 0)
             _selectedCentralYear = _centralYears.LastOrDefault();
     }
@@ -368,7 +371,7 @@
         _analyzing = true;
         try
         {
-            _result = await CockpitService.AnalyzeAsync(_selectedFilePath);
+            _result = await CockpitPageService.AnalyzeAsync(_selectedFilePath);
         }
         catch (Exception ex)
         {
@@ -388,7 +391,7 @@
         _analyzingCentral = true;
         try
         {
-            _centralResult = await CockpitService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth);
+            _centralResult = await CockpitPageService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth);
         }
         catch (Exception ex)
         {

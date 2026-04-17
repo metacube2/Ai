@@ -41,7 +41,16 @@ builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportServ
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();
 builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
 builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
+builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
+builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
+builder.Services.AddSingleton<ISettingsPageService, SettingsPageService>();
+builder.Services.AddSingleton<IStandortePageService, StandortePageService>();
+builder.Services.AddSingleton<IStandorteSapEditorService, StandorteSapEditorService>();
+builder.Services.AddSingleton<IManagementCockpitPageService, ManagementCockpitPageService>();
+builder.Services.AddSingleton<IDashboardPageService, DashboardPageService>();
+builder.Services.AddSingleton<ILogsPageService, LogsPageService>();
+builder.Services.AddSingleton<ITransformationsPageService, TransformationsPageService>();
 builder.Services.AddSingleton<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();

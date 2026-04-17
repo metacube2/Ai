@@ -1,7 +1,6 @@
 @page "/logs"
-@using Microsoft.EntityFrameworkCore
-@using TrafagSalesExporter.Data
-@inject IDbContextFactory<AppDbContext> DbFactory
+@using TrafagSalesExporter.Services
+@inject ILogsPageService LogsPageActions
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject TrafagSalesExporter.Services.IUiTextService UiText
@@ -117,37 +116,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        _availableLands = await db.ExportLogs.Select(l => l.Land).Distinct().OrderBy(l => l).ToListAsync();
         await LoadLogsAsync();
     }
 
     private async Task LoadLogsAsync()
     {
         _loading = true;
-        using var db = await DbFactory.CreateDbContextAsync();
-        IQueryable<ExportLog> query = db.ExportLogs.OrderByDescending(l => l.Timestamp);
-
-        if (!string.IsNullOrEmpty(_filterLand))
-            query = query.Where(l => l.Land == _filterLand);
-
-        if (!string.IsNullOrEmpty(_filterStatus))
-            query = query.Where(l => l.Status == _filterStatus);
-
-        if (_filterDate.HasValue)
-            query = query.Where(l => l.Timestamp.Date == _filterDate.Value.Date);
-
-        _logs = await query.Take(500).ToListAsync();
-
-        IQueryable<AppEventLog> appLogQuery = db.AppEventLogs.OrderByDescending(l => l.Timestamp);
-
-        if (!string.IsNullOrEmpty(_filterLand))
-            appLogQuery = appLogQuery.Where(l => l.Land == _filterLand);
-
-        if (_filterDate.HasValue)
-            appLogQuery = appLogQuery.Where(l => l.Timestamp.Date == _filterDate.Value.Date);
-
-        _appLogs = await appLogQuery.Take(500).ToListAsync();
+        var state = await LogsPageActions.LoadAsync(_filterLand, _filterStatus, _filterDate);
+        _availableLands = state.AvailableLands;
+        _logs = state.Logs;
+        _appLogs = state.AppLogs;
         _loading = false;
     }
 
@@ -165,13 +143,9 @@
 
         if (result != true) return;
 
-        using var db = await DbFactory.CreateDbContextAsync();
-        var cutoff = DateTime.Now.AddDays(-90);
-        var oldLogs = await db.ExportLogs.Where(l => l.Timestamp < cutoff).ToListAsync();
-        db.ExportLogs.RemoveRange(oldLogs);
-        var count = await db.SaveChangesAsync();
+        var deletedCount = await LogsPageActions.DeleteOldLogsAsync(90);
         await LoadLogsAsync();
-        Snackbar.Add(string.Format(T("{0} alte Logs geloescht", "{0} old logs deleted"), oldLogs.Count), Severity.Info);
+        Snackbar.Add(string.Format(T("{0} alte Logs geloescht", "{0} old logs deleted"), deletedCount), Severity.Info);
     }
 }
 

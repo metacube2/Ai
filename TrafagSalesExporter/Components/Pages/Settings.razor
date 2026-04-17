@@ -1,15 +1,7 @@
 ﻿@page "/settings"
-@using Microsoft.EntityFrameworkCore
-@using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
-@inject IDbContextFactory<AppDbContext> DbFactory
-@inject ISharePointUploadService SpService
-@inject TimerBackgroundService TimerService
-@inject IHanaQueryService HanaService
-@inject ISapGatewayService SapGatewayService
-@inject IConfigTransferService ConfigTransferService
-@inject IExchangeRateImportService ExchangeRateImportService
+@inject ISettingsPageService SettingsPageActions
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
@@ -328,35 +320,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
-        _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
-        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
-        _exchangeRates = await db.CurrencyExchangeRates
-            .OrderBy(x => x.FromCurrency)
-            .ThenBy(x => x.ToCurrency)
-            .ThenByDescending(x => x.ValidFrom)
-            .ToListAsync();
+        var state = await SettingsPageActions.LoadAsync();
+        _spConfig = state.SharePointConfig;
+        _exportSettings = state.ExportSettings;
+        _sourceSystems = state.SourceSystems;
+        _exchangeRates = state.ExchangeRates;
     }
 
     private async Task SaveSharePoint()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        var existing = await db.SharePointConfigs.FirstOrDefaultAsync();
-        if (existing is null)
-        {
-            db.SharePointConfigs.Add(_spConfig);
-        }
-        else
-        {
-            existing.SiteUrl = _spConfig.SiteUrl;
-            existing.ExportFolder = _spConfig.ExportFolder;
-            existing.CentralExportFolder = _spConfig.CentralExportFolder;
-            existing.TenantId = _spConfig.TenantId;
-            existing.ClientId = _spConfig.ClientId;
-            existing.ClientSecret = _spConfig.ClientSecret;
-        }
-        await db.SaveChangesAsync();
+        await SettingsPageActions.SaveSharePointAsync(_spConfig);
         Snackbar.Add("SharePoint Konfiguration gespeichert", Severity.Success);
     }
 
@@ -365,15 +338,7 @@
         _testingSp = true;
         try
         {
-            var tenantId = NormalizeConfigValue(_spConfig.TenantId);
-            var clientId = NormalizeConfigValue(_spConfig.ClientId);
-            var clientSecret = NormalizeConfigValue(_spConfig.ClientSecret);
-            var siteUrl = NormalizeConfigValue(_spConfig.SiteUrl);
-
-            _sharePointTestPreview = BuildSharePointTestPreview(tenantId, clientId, clientSecret, siteUrl);
-
-            await SpService.TestConnectionAsync(
-                tenantId, clientId, clientSecret, siteUrl);
+            _sharePointTestPreview = await SettingsPageActions.BuildSharePointTestPreviewAsync(_spConfig);
             Snackbar.Add("SharePoint Verbindung erfolgreich!", Severity.Success);
         }
         catch (Exception ex)
@@ -388,24 +353,7 @@
 
     private async Task SaveExportSettings()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        var existing = await db.ExportSettings.FirstOrDefaultAsync();
-        if (existing is null)
-        {
-            db.ExportSettings.Add(_exportSettings);
-        }
-        else
-        {
-            existing.DateFilter = _exportSettings.DateFilter;
-            existing.TimerHour = _exportSettings.TimerHour;
-            existing.TimerMinute = _exportSettings.TimerMinute;
-            existing.TimerEnabled = _exportSettings.TimerEnabled;
-            existing.DebugLoggingEnabled = _exportSettings.DebugLoggingEnabled;
-            existing.LocalSiteExportFolder = _exportSettings.LocalSiteExportFolder;
-            existing.LocalConsolidatedExportFolder = _exportSettings.LocalConsolidatedExportFolder;
-        }
-        await db.SaveChangesAsync();
-        TimerService.Recalculate();
+        await SettingsPageActions.SaveExportSettingsAsync(_exportSettings);
         Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
     }
 
@@ -493,46 +441,15 @@
 
     private async Task SaveSourceSystems()
     {
-        var normalized = _sourceSystems
-            .Select(x => new SourceSystemDefinition
-            {
-                Id = x.Id,
-                Code = NormalizeSourceSystemCode(x.Code),
-                DisplayName = NormalizeConfigValue(x.DisplayName),
-                ConnectionKind = NormalizeConnectionKind(x.ConnectionKind),
-                IsActive = x.IsActive,
-                CentralServiceUrl = NormalizeConfigValue(x.CentralServiceUrl),
-                CentralUsername = NormalizeConfigValue(x.CentralUsername),
-                CentralPassword = x.CentralPassword ?? string.Empty
-            })
-            .Where(x => !string.IsNullOrWhiteSpace(x.Code))
-            .ToList();
-
-        if (normalized.Any(x => string.IsNullOrWhiteSpace(x.DisplayName)))
+        try
         {
-            Snackbar.Add("Jedes Quellsystem braucht einen Anzeigenamen.", Severity.Warning);
-            return;
+            _sourceSystems = await SettingsPageActions.SaveSourceSystemsAsync(_sourceSystems);
+            Snackbar.Add("Quellsysteme gespeichert", Severity.Success);
         }
-
-        var duplicates = normalized
-            .GroupBy(x => x.Code)
-            .FirstOrDefault(g => g.Count() > 1);
-        if (duplicates is not null)
+        catch (Exception ex)
         {
-            Snackbar.Add($"Quellsystem-Code doppelt vorhanden: {duplicates.Key}", Severity.Warning);
-            return;
+            Snackbar.Add(ex.Message, Severity.Warning);
         }
-
-        using var db = await DbFactory.CreateDbContextAsync();
-        var existing = await db.SourceSystemDefinitions.ToListAsync();
-        if (existing.Count > 0)
-            db.SourceSystemDefinitions.RemoveRange(existing);
-
-        db.SourceSystemDefinitions.AddRange(normalized);
-        await db.SaveChangesAsync();
-
-        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
-        Snackbar.Add("Quellsysteme gespeichert", Severity.Success);
     }
 
     private void AddExchangeRate()
@@ -554,32 +471,7 @@
 
     private async Task SaveExchangeRates()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        var existingRates = await db.CurrencyExchangeRates.ToListAsync();
-        if (existingRates.Count > 0)
-            db.CurrencyExchangeRates.RemoveRange(existingRates);
-
-        db.CurrencyExchangeRates.AddRange(_exchangeRates.Select(rate => new CurrencyExchangeRate
-        {
-            FromCurrency = NormalizeConfigValue(rate.FromCurrency).ToUpperInvariant(),
-            ToCurrency = NormalizeConfigValue(rate.ToCurrency).ToUpperInvariant(),
-            Rate = rate.Rate,
-            ValidFrom = rate.ValidFrom.Date,
-            ValidTo = rate.ValidTo?.Date,
-            Notes = NormalizeConfigValue(rate.Notes),
-            IsActive = rate.IsActive
-        }).Where(rate => !string.IsNullOrWhiteSpace(rate.FromCurrency)
-            && !string.IsNullOrWhiteSpace(rate.ToCurrency)
-            && rate.Rate > 0m));
-
-        await db.SaveChangesAsync();
-
-        _exchangeRates = await db.CurrencyExchangeRates
-            .OrderBy(x => x.FromCurrency)
-            .ThenBy(x => x.ToCurrency)
-            .ThenByDescending(x => x.ValidFrom)
-            .ToListAsync();
-
+        _exchangeRates = await SettingsPageActions.SaveExchangeRatesAsync(_exchangeRates);
         Snackbar.Add("Wechselkurse gespeichert", Severity.Success);
     }
 
@@ -591,8 +483,8 @@
         _refreshingExchangeRates = true;
         try
         {
-            var result = await ExchangeRateImportService.RefreshEcbRatesAsync();
-            _exchangeRates = await LoadExchangeRatesAsync();
+            var result = await SettingsPageActions.RefreshEcbRatesAsync();
+            _exchangeRates = result.ExchangeRates;
             Snackbar.Add($"ECB-Kurse aktualisiert: {result.ImportedCount} Kurse vom {result.RateDate:yyyy-MM-dd}.", Severity.Success);
         }
         catch (Exception ex)
@@ -613,7 +505,7 @@
         _exportingConfig = true;
         try
         {
-            var json = await ConfigTransferService.ExportJsonAsync(_includeSecretsInExport);
+            var json = await SettingsPageActions.ExportConfigurationAsync(_includeSecretsInExport);
             var suffix = _includeSecretsInExport ? "with-secrets" : "without-secrets";
             var fileName = $"trafag-config-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{suffix}.json";
             await JS.InvokeVoidAsync("trafagDownload.saveTextFile", fileName, json, "application/json;charset=utf-8");
@@ -641,18 +533,11 @@
             await using var stream = file.OpenReadStream(5 * 1024 * 1024);
             using var reader = new StreamReader(stream);
             var json = await reader.ReadToEndAsync();
-            await ConfigTransferService.ImportJsonAsync(json);
-
-            using var db = await DbFactory.CreateDbContextAsync();
-            _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
-            _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
-            _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
-            _exchangeRates = await db.CurrencyExchangeRates
-                .OrderBy(x => x.FromCurrency)
-                .ThenBy(x => x.ToCurrency)
-                .ThenByDescending(x => x.ValidFrom)
-                .ToListAsync();
-            TimerService.Recalculate();
+            var state = await SettingsPageActions.ImportConfigurationAsync(json);
+            _spConfig = state.SharePointConfig;
+            _exportSettings = state.ExportSettings;
+            _sourceSystems = state.SourceSystems;
+            _exchangeRates = state.ExchangeRates;
             Snackbar.Add("Konfiguration importiert", Severity.Success);
         }
         catch (Exception ex)
@@ -674,70 +559,13 @@
             return;
         }
 
-        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
-        {
-            await TestCentralSapCredentials(definition);
-            return;
-        }
-
-        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
-        {
-            await TestCentralHanaCredentials(definition);
-        }
-    }
-
-    private async Task TestCentralHanaCredentials(SourceSystemDefinition definition)
-    {
-        var sourceSystem = definition.Code;
         if (!_testingSystems.Add(sourceSystem))
             return;
 
         try
         {
-            var username = definition.CentralUsername;
-            var password = definition.CentralPassword;
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                Snackbar.Add($"FÃ¼r {sourceSystem} sind keine zentralen Zugangsdaten gepflegt.", Severity.Warning);
-                return;
-            }
-
-            using var db = await DbFactory.CreateDbContextAsync();
-            var centralServer = await db.HanaServers
-                .Where(s => s.SourceSystem == sourceSystem)
-                .OrderBy(s => s.Id)
-                .FirstOrDefaultAsync();
-
-            if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
-            {
-                Snackbar.Add($"Keine zentrale HANA-Konfiguration fuer {sourceSystem} gefunden.", Severity.Warning);
-                return;
-            }
-
-            var testServer = new HanaServer
-            {
-                SourceSystem = sourceSystem,
-                Name = $"{sourceSystem} Central Test",
-                Host = centralServer.Host,
-                Port = centralServer.Port,
-                Username = username.Trim(),
-                Password = password.Trim(),
-                DatabaseName = centralServer.DatabaseName,
-                UseSsl = centralServer.UseSsl,
-                ValidateCertificate = centralServer.ValidateCertificate,
-                AdditionalParams = centralServer.AdditionalParams
-            };
-
-            var result = await Task.Run(() => HanaService.TestConnectionDetailed(testServer));
-            if (result.Success)
-            {
-                Snackbar.Add($"{sourceSystem}: Zentrale HANA-Verbindung erfolgreich.", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add($"{sourceSystem}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
-            }
+            var result = await SettingsPageActions.TestCentralCredentialsAsync(definition);
+            Snackbar.Add(result.Message, result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Error);
         }
         finally
         {
@@ -745,48 +573,9 @@
         }
     }
 
-    private async Task TestCentralSapCredentials(SourceSystemDefinition definition)
-    {
-        var sourceSystem = definition.Code;
-        if (!_testingSystems.Add(sourceSystem))
-            return;
+    private static string NormalizeSourceSystemCode(string? code) => Services.SettingsPageService.NormalizeSourceSystemCode(code);
 
-        try
-        {
-            var username = definition.CentralUsername;
-            var password = definition.CentralPassword;
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                Snackbar.Add("FÃ¼r SAP sind keine zentralen Gateway-Zugangsdaten gepflegt.", Severity.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(definition.CentralServiceUrl))
-            {
-                Snackbar.Add($"Fuer {sourceSystem} ist keine zentrale SAP Service URL gepflegt.", Severity.Warning);
-                return;
-            }
-
-            await SapGatewayService.TestConnectionAsync(definition.CentralServiceUrl, username.Trim(), password.Trim());
-            Snackbar.Add($"{sourceSystem}: Zentrale SAP Gateway-Verbindung erfolgreich.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"{sourceSystem}: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _testingSystems.Remove(sourceSystem);
-        }
-    }
-
-    private static string NormalizeSourceSystemCode(string? code) => NormalizeConfigValue(code).ToUpperInvariant();
-
-    private static string NormalizeConnectionKind(string? connectionKind)
-        => SourceSystemConnectionKinds.All.Contains(connectionKind ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-            ? (connectionKind ?? string.Empty).Trim().ToUpperInvariant()
-            : SourceSystemConnectionKinds.Hana;
+    private static string NormalizeConnectionKind(string? connectionKind) => Services.SettingsPageService.NormalizeConnectionKind(connectionKind);
 
     private static string GetConnectionKindLabel(string connectionKind) => connectionKind switch
     {
@@ -808,31 +597,6 @@
     private static string GetUsernameSummary(SourceSystemDefinition definition)
         => string.IsNullOrWhiteSpace(definition.CentralUsername) ? "-" : definition.CentralUsername;
 
-    private static string NormalizeConfigValue(string? value) => value?.Trim() ?? string.Empty;
-
-    private static string BuildSharePointTestPreview(string tenantId, string clientId, string clientSecret, string siteUrl)
-    {
-        var maskedSecret = string.IsNullOrEmpty(clientSecret)
-            ? "<leer>"
-            : $"{new string('*', Math.Min(clientSecret.Length, 8))} (len={clientSecret.Length})";
-
-        return string.Join(Environment.NewLine,
-        [
-            $"Tenant ID: {tenantId}",
-            $"Client ID: {clientId}",
-            $"Client Secret: {maskedSecret}",
-            $"Site URL: {siteUrl}"
-        ]);
-    }
-
-    private async Task<List<CurrencyExchangeRate>> LoadExchangeRatesAsync()
-    {
-        using var db = await DbFactory.CreateDbContextAsync();
-        return await db.CurrencyExchangeRates
-            .OrderBy(x => x.FromCurrency)
-            .ThenBy(x => x.ToCurrency)
-            .ThenByDescending(x => x.ValidFrom)
-            .ToListAsync();
-    }
+    private static string NormalizeConfigValue(string? value) => Services.SettingsPageService.NormalizeConfigValue(value);
 }
 

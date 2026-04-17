@@ -1,9 +1,7 @@
 @page "/"
-@using Microsoft.EntityFrameworkCore
 @using System.Diagnostics
-@using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Services
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IDashboardPageService DashboardPageActions
 @inject ExportOrchestrationService Orchestrator
 @inject TimerBackgroundService TimerService
 @inject ISnackbar Snackbar
@@ -170,49 +168,9 @@
     private async Task LoadDataAsync()
     {
         _loading = true;
-        using var db = await DbFactory.CreateDbContextAsync();
-
-        var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
-        var sourceSystems = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync();
-        var logs = await db.ExportLogs
-            .GroupBy(l => l.SiteId)
-            .Select(g => g.OrderByDescending(l => l.Timestamp).First())
-            .ToListAsync();
-        var appLogs = await db.AppEventLogs
-            .Where(l => l.SiteId != null)
-            .OrderByDescending(l => l.Timestamp)
-            .Take(1000)
-            .ToListAsync();
-        var latestAppLogsBySite = appLogs
-            .GroupBy(l => l.SiteId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
-
-        _dashboardRows = sites.Select(s =>
-        {
-            var log = logs.FirstOrDefault(l => l.SiteId == s.Id);
-            latestAppLogsBySite.TryGetValue(s.Id, out var appLog);
-            var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, s.SourceSystem, StringComparison.OrdinalIgnoreCase));
-            return new DashboardRow
-            {
-                SiteId = s.Id,
-                Land = s.Land,
-                TSC = s.TSC,
-                Schema = s.Schema,
-                ServerName = string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase)
-                    ? ResolveDashboardSapServiceUrl(s, sourceSystems)
-                    : s.HanaServer?.Name ?? "",
-                LastStatus = log?.Status ?? "",
-                RowCount = log?.RowCount ?? 0,
-                LastRun = log?.Timestamp,
-                DurationSeconds = log?.DurationSeconds ?? 0,
-                ErrorMessage = log?.ErrorMessage ?? "",
-                FilePath = log?.FilePath ?? "",
-                LiveMessage = appLog is null ? string.Empty : $"{appLog.Category}: {appLog.Message}",
-                LiveDetails = appLog?.Details ?? ""
-            };
-        }).ToList();
-
-        _consolidatedRows = BuildConsolidatedRows(settings: await db.ExportSettings.FirstOrDefaultAsync() ?? new());
+        var state = await DashboardPageActions.LoadAsync();
+        _dashboardRows = state.DashboardRows;
+        _consolidatedRows = state.ConsolidatedRows;
 
         _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         _loading = false;
@@ -321,15 +279,6 @@
         OpenFile(row.FilePath);
     }
 
-    private static string ResolveDashboardSapServiceUrl(Site site, List<SourceSystemDefinition> sourceSystems)
-    {
-        if (!string.IsNullOrWhiteSpace(site.SapServiceUrl))
-            return site.SapServiceUrl;
-
-        var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
-        return string.IsNullOrWhiteSpace(sourceSystem?.CentralServiceUrl) ? "SAP Gateway" : sourceSystem.CentralServiceUrl;
-    }
-
     private void OpenFile(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
@@ -417,63 +366,6 @@
         return Task.CompletedTask;
     }
 
-    private static List<ConsolidatedDashboardRow> BuildConsolidatedRows(ExportSettings settings)
-    {
-        var outputDirectory = ResolveConsolidatedOutputDirectory(settings);
-        if (!Directory.Exists(outputDirectory))
-            return [];
-
-        return Directory.GetFiles(outputDirectory, "Sales_All_*.xlsx")
-            .Select(path => new FileInfo(path))
-            .OrderByDescending(file => file.LastWriteTime)
-            .Take(1)
-            .Select(file => new ConsolidatedDashboardRow
-            {
-                Label = "Konsolidierter Export",
-                FilePath = file.FullName,
-                DisplayPath = file.FullName,
-                LastModified = file.LastWriteTime
-            })
-            .ToList();
-    }
-
-    private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
-            return settings.LocalConsolidatedExportFolder.Trim();
-
-        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
-            return settings.LocalSiteExportFolder.Trim();
-
-        return Path.Combine(AppContext.BaseDirectory, "output");
-    }
-
-    private class DashboardRow
-    {
-        public int SiteId { get; set; }
-        public string Land { get; set; } = "";
-        public string TSC { get; set; } = "";
-        public string Schema { get; set; } = "";
-        public string ServerName { get; set; } = "";
-        public string LastStatus { get; set; } = "";
-        public int RowCount { get; set; }
-        public DateTime? LastRun { get; set; }
-        public double DurationSeconds { get; set; }
-        public string ErrorMessage { get; set; } = "";
-        public string FilePath { get; set; } = "";
-        public string LiveMessage { get; set; } = "";
-        public string LiveDetails { get; set; } = "";
-        public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
-    }
-
-    private class ConsolidatedDashboardRow
-    {
-        public string Label { get; set; } = "";
-        public string FilePath { get; set; } = "";
-        public string DisplayPath { get; set; } = "";
-        public DateTime? LastModified { get; set; }
-        public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
-    }
 }
 
 @code {
