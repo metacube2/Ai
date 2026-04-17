@@ -8,6 +8,7 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<HanaServer> HanaServers => Set<HanaServer>();
+    public DbSet<SourceSystemDefinition> SourceSystemDefinitions => Set<SourceSystemDefinition>();
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<SharePointConfig> SharePointConfigs => Set<SharePointConfig>();
     public DbSet<ExportSettings> ExportSettings => Set<ExportSettings>();

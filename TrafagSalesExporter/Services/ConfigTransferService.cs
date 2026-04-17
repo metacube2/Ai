@@ -20,6 +20,7 @@ public class ConfigTransferService : IConfigTransferService
         using var db = await _dbFactory.CreateDbContextAsync();
         var sharePoint = await db.SharePointConfigs.FirstOrDefaultAsync();
         var exportSettings = await db.ExportSettings.FirstOrDefaultAsync();
+        var sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
         var exchangeRates = await db.CurrencyExchangeRates
             .OrderBy(x => x.FromCurrency)
             .ThenBy(x => x.ToCurrency)
@@ -55,14 +56,18 @@ public class ConfigTransferService : IConfigTransferService
                 TimerEnabled = exportSettings.TimerEnabled,
                 DebugLoggingEnabled = exportSettings.DebugLoggingEnabled,
                 LocalSiteExportFolder = exportSettings.LocalSiteExportFolder,
-                LocalConsolidatedExportFolder = exportSettings.LocalConsolidatedExportFolder,
-                SapUsername = includeSecrets ? exportSettings.SapUsername : null,
-                SapPassword = includeSecrets ? exportSettings.SapPassword : null,
-                Bi1Username = includeSecrets ? exportSettings.Bi1Username : null,
-                Bi1Password = includeSecrets ? exportSettings.Bi1Password : null,
-                SageUsername = includeSecrets ? exportSettings.SageUsername : null,
-                SagePassword = includeSecrets ? exportSettings.SagePassword : null
+                LocalConsolidatedExportFolder = exportSettings.LocalConsolidatedExportFolder
             },
+            SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
+            {
+                Code = system.Code,
+                DisplayName = system.DisplayName,
+                ConnectionKind = system.ConnectionKind,
+                IsActive = system.IsActive,
+                CentralServiceUrl = system.CentralServiceUrl,
+                CentralUsername = includeSecrets ? system.CentralUsername : null,
+                CentralPassword = includeSecrets ? system.CentralPassword : null
+            }).ToList(),
             CurrencyExchangeRates = exchangeRates.Select(rate => new ConfigTransferCurrencyExchangeRate
             {
                 FromCurrency = rate.FromCurrency,
@@ -76,11 +81,10 @@ public class ConfigTransferService : IConfigTransferService
             HanaServers = hanaServers.Select(server => new ConfigTransferHanaServer
             {
                 Key = serverKeyMap[server.Id],
+                SourceSystem = server.SourceSystem,
                 Name = server.Name,
                 Host = server.Host,
                 Port = server.Port,
-                Username = includeSecrets ? server.Username : null,
-                Password = includeSecrets ? server.Password : null,
                 DatabaseName = server.DatabaseName,
                 UseSsl = server.UseSsl,
                 ValidateCertificate = server.ValidateCertificate,
@@ -158,6 +162,7 @@ public class ConfigTransferService : IConfigTransferService
         using var db = await _dbFactory.CreateDbContextAsync();
         var existingSharePoint = await db.SharePointConfigs.FirstOrDefaultAsync();
         var existingSettings = await db.ExportSettings.FirstOrDefaultAsync();
+        var existingSourceSystems = await db.SourceSystemDefinitions.ToListAsync();
         var existingServers = await db.HanaServers.ToListAsync();
         var existingExchangeRates = await db.CurrencyExchangeRates.ToListAsync();
         var existingSites = await db.Sites.ToListAsync();
@@ -168,20 +173,10 @@ public class ConfigTransferService : IConfigTransferService
         var existingCentralRecords = await db.CentralSalesRecords.ToListAsync();
 
         var preservedSharePointSecret = existingSharePoint?.ClientSecret ?? string.Empty;
-        var preservedSecrets = existingSettings is null
-            ? new ConfigTransferExportSettings()
-            : new ConfigTransferExportSettings
-            {
-                SapUsername = existingSettings.SapUsername,
-                SapPassword = existingSettings.SapPassword,
-                Bi1Username = existingSettings.Bi1Username,
-                Bi1Password = existingSettings.Bi1Password,
-                SageUsername = existingSettings.SageUsername,
-                SagePassword = existingSettings.SagePassword
-            };
-        var preservedServerSecrets = existingServers.ToDictionary(
-            x => BuildServerSignature(x.Name, x.Host, x.Port, x.DatabaseName),
-            x => (x.Username, x.Password));
+        var preservedSourceSystemSecrets = existingSourceSystems.ToDictionary(
+            x => x.Code,
+            x => (CentralUsername: x.CentralUsername, CentralPassword: x.CentralPassword),
+            StringComparer.OrdinalIgnoreCase);
         var preservedSiteSecrets = existingSites.ToDictionary(
             x => BuildSiteSignature(x.Land, x.TSC, x.Schema, x.SourceSystem),
             x => (x.UsernameOverride, x.PasswordOverride));
@@ -194,6 +189,7 @@ public class ConfigTransferService : IConfigTransferService
         if (existingCentralRecords.Count > 0) db.CentralSalesRecords.RemoveRange(existingCentralRecords);
         if (existingSites.Count > 0) db.Sites.RemoveRange(existingSites);
         if (existingServers.Count > 0) db.HanaServers.RemoveRange(existingServers);
+        if (existingSourceSystems.Count > 0) db.SourceSystemDefinitions.RemoveRange(existingSourceSystems);
         if (existingSharePoint is not null) db.SharePointConfigs.Remove(existingSharePoint);
         if (existingSettings is not null) db.ExportSettings.Remove(existingSettings);
         await db.SaveChangesAsync();
@@ -218,14 +214,27 @@ public class ConfigTransferService : IConfigTransferService
             TimerEnabled = importedSettings.TimerEnabled,
             DebugLoggingEnabled = importedSettings.DebugLoggingEnabled,
             LocalSiteExportFolder = importedSettings.LocalSiteExportFolder,
-            LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder,
-            SapUsername = package.IncludesSecrets ? importedSettings.SapUsername ?? string.Empty : preservedSecrets.SapUsername ?? string.Empty,
-            SapPassword = package.IncludesSecrets ? importedSettings.SapPassword ?? string.Empty : preservedSecrets.SapPassword ?? string.Empty,
-            Bi1Username = package.IncludesSecrets ? importedSettings.Bi1Username ?? string.Empty : preservedSecrets.Bi1Username ?? string.Empty,
-            Bi1Password = package.IncludesSecrets ? importedSettings.Bi1Password ?? string.Empty : preservedSecrets.Bi1Password ?? string.Empty,
-            SageUsername = package.IncludesSecrets ? importedSettings.SageUsername ?? string.Empty : preservedSecrets.SageUsername ?? string.Empty,
-            SagePassword = package.IncludesSecrets ? importedSettings.SagePassword ?? string.Empty : preservedSecrets.SagePassword ?? string.Empty
+            LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder
         });
+
+        var importedSourceSystems = package.SourceSystemDefinitions.Count > 0
+            ? package.SourceSystemDefinitions
+            : BuildDefaultSourceSystems();
+
+        foreach (var sourceSystem in importedSourceSystems)
+        {
+            preservedSourceSystemSecrets.TryGetValue(sourceSystem.Code, out var preserved);
+            db.SourceSystemDefinitions.Add(new SourceSystemDefinition
+            {
+                Code = sourceSystem.Code,
+                DisplayName = sourceSystem.DisplayName,
+                ConnectionKind = sourceSystem.ConnectionKind,
+                IsActive = sourceSystem.IsActive,
+                CentralServiceUrl = sourceSystem.CentralServiceUrl,
+                CentralUsername = package.IncludesSecrets ? sourceSystem.CentralUsername ?? string.Empty : preserved.CentralUsername ?? string.Empty,
+                CentralPassword = package.IncludesSecrets ? sourceSystem.CentralPassword ?? string.Empty : preserved.CentralPassword ?? string.Empty
+            });
+        }
 
         if (package.CurrencyExchangeRates.Count > 0)
         {
@@ -244,14 +253,14 @@ public class ConfigTransferService : IConfigTransferService
         var serverIdMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var server in package.HanaServers)
         {
-            preservedServerSecrets.TryGetValue(BuildServerSignature(server.Name, server.Host, server.Port, server.DatabaseName), out var preserved);
             var entity = new HanaServer
             {
+                SourceSystem = server.SourceSystem,
                 Name = server.Name,
                 Host = server.Host,
                 Port = server.Port,
-                Username = package.IncludesSecrets ? server.Username ?? string.Empty : preserved.Username ?? string.Empty,
-                Password = package.IncludesSecrets ? server.Password ?? string.Empty : preserved.Password ?? string.Empty,
+                Username = string.Empty,
+                Password = string.Empty,
                 DatabaseName = server.DatabaseName,
                 UseSsl = server.UseSsl,
                 ValidateCertificate = server.ValidateCertificate,
@@ -355,10 +364,42 @@ public class ConfigTransferService : IConfigTransferService
 
         await db.SaveChangesAsync();
     }
-
-    private static string BuildServerSignature(string name, string host, int port, string databaseName)
-        => $"{name}|{host}|{port}|{databaseName}".ToUpperInvariant();
-
     private static string BuildSiteSignature(string land, string tsc, string schema, string sourceSystem)
         => $"{land}|{tsc}|{schema}|{sourceSystem}".ToUpperInvariant();
+
+    private static List<ConfigTransferSourceSystemDefinition> BuildDefaultSourceSystems()
+    {
+        return
+        [
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "SAP",
+                DisplayName = "SAP",
+                ConnectionKind = SourceSystemConnectionKinds.SapGateway,
+                IsActive = true,
+                CentralServiceUrl = string.Empty
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "BI1",
+                DisplayName = "BI1",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "SAGE",
+                DisplayName = "SAGE",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true
+            },
+            new ConfigTransferSourceSystemDefinition
+            {
+                Code = "MANUAL_EXCEL",
+                DisplayName = "Manual Excel",
+                ConnectionKind = SourceSystemConnectionKinds.ManualExcel,
+                IsActive = true
+            }
+        ];
+    }
 }

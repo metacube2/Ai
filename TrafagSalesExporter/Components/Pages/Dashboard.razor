@@ -173,6 +173,7 @@
         using var db = await DbFactory.CreateDbContextAsync();
 
         var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
+        var sourceSystems = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync();
         var logs = await db.ExportLogs
             .GroupBy(l => l.SiteId)
             .Select(g => g.OrderByDescending(l => l.Timestamp).First())
@@ -190,14 +191,15 @@
         {
             var log = logs.FirstOrDefault(l => l.SiteId == s.Id);
             latestAppLogsBySite.TryGetValue(s.Id, out var appLog);
+            var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, s.SourceSystem, StringComparison.OrdinalIgnoreCase));
             return new DashboardRow
             {
                 SiteId = s.Id,
                 Land = s.Land,
                 TSC = s.TSC,
                 Schema = s.Schema,
-                ServerName = string.Equals(s.SourceSystem, "SAP", StringComparison.OrdinalIgnoreCase)
-                    ? (string.IsNullOrWhiteSpace(s.SapServiceUrl) ? "SAP Gateway" : s.SapServiceUrl)
+                ServerName = string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase)
+                    ? ResolveDashboardSapServiceUrl(s, sourceSystems)
                     : s.HanaServer?.Name ?? "",
                 LastStatus = log?.Status ?? "",
                 RowCount = log?.RowCount ?? 0,
@@ -317,6 +319,15 @@
     private void OpenExportFile(DashboardRow row)
     {
         OpenFile(row.FilePath);
+    }
+
+    private static string ResolveDashboardSapServiceUrl(Site site, List<SourceSystemDefinition> sourceSystems)
+    {
+        if (!string.IsNullOrWhiteSpace(site.SapServiceUrl))
+            return site.SapServiceUrl;
+
+        var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
+        return string.IsNullOrWhiteSpace(sourceSystem?.CentralServiceUrl) ? "SAP Gateway" : sourceSystem.CentralServiceUrl;
     }
 
     private void OpenFile(string filePath)

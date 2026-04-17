@@ -47,14 +47,16 @@ public class ConfigTransferServiceTests : IDisposable
 
         Assert.False(package.IncludesSecrets);
         Assert.NotNull(package.ExportSettings);
-        Assert.Null(package.ExportSettings.SapUsername);
-        Assert.Null(package.ExportSettings.SapPassword);
         Assert.NotNull(package.SharePointConfig);
         Assert.Null(package.SharePointConfig.ClientSecret);
+        Assert.NotEmpty(package.SourceSystemDefinitions);
+        Assert.All(package.SourceSystemDefinitions, system =>
+        {
+            Assert.Null(system.CentralUsername);
+            Assert.Null(system.CentralPassword);
+        });
 
-        var server = Assert.Single(package.HanaServers);
-        Assert.Null(server.Username);
-        Assert.Null(server.Password);
+        Assert.Single(package.HanaServers);
 
         var site = Assert.Single(package.Sites);
         Assert.Null(site.UsernameOverride);
@@ -90,14 +92,47 @@ public class ConfigTransferServiceTests : IDisposable
                 TimerEnabled = false,
                 DebugLoggingEnabled = true,
                 LocalSiteExportFolder = "D:\\site",
-                LocalConsolidatedExportFolder = "D:\\consolidated",
-                SapUsername = null,
-                SapPassword = null,
-                Bi1Username = null,
-                Bi1Password = null,
-                SageUsername = null,
-                SagePassword = null
+                LocalConsolidatedExportFolder = "D:\\consolidated"
             },
+            SourceSystemDefinitions =
+            [
+                new ConfigTransferSourceSystemDefinition
+                {
+                    Code = "SAP",
+                    DisplayName = "SAP",
+                    ConnectionKind = SourceSystemConnectionKinds.SapGateway,
+                    IsActive = true,
+                    CentralUsername = null,
+                    CentralPassword = null
+                },
+                new ConfigTransferSourceSystemDefinition
+                {
+                    Code = "BI1",
+                    DisplayName = "BI1",
+                    ConnectionKind = SourceSystemConnectionKinds.Hana,
+                    IsActive = true,
+                    CentralUsername = null,
+                    CentralPassword = null
+                },
+                new ConfigTransferSourceSystemDefinition
+                {
+                    Code = "SAGE",
+                    DisplayName = "SAGE",
+                    ConnectionKind = SourceSystemConnectionKinds.Hana,
+                    IsActive = true,
+                    CentralUsername = null,
+                    CentralPassword = null
+                },
+                new ConfigTransferSourceSystemDefinition
+                {
+                    Code = "MANUAL_EXCEL",
+                    DisplayName = "Manual Excel",
+                    ConnectionKind = SourceSystemConnectionKinds.ManualExcel,
+                    IsActive = true,
+                    CentralUsername = null,
+                    CentralPassword = null
+                }
+            ],
             HanaServers =
             [
                 new ConfigTransferHanaServer
@@ -106,8 +141,6 @@ public class ConfigTransferServiceTests : IDisposable
                     Name = "Server A",
                     Host = "hana-a",
                     Port = 30015,
-                    Username = null,
-                    Password = null,
                     DatabaseName = "DB1",
                     UseSsl = true,
                     ValidateCertificate = false,
@@ -152,20 +185,34 @@ public class ConfigTransferServiceTests : IDisposable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var settings = await db.ExportSettings.SingleAsync();
         var sharePoint = await db.SharePointConfigs.SingleAsync();
+        var systems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
         var server = await db.HanaServers.SingleAsync();
         var site = await db.Sites.SingleAsync();
         var rule = await db.FieldTransformationRules.SingleAsync();
 
-        Assert.Equal("preserved-sap-user", settings.SapUsername);
-        Assert.Equal("preserved-sap-password", settings.SapPassword);
-        Assert.Equal("preserved-bi1-user", settings.Bi1Username);
-        Assert.Equal("preserved-sage-password", settings.SagePassword);
+        Assert.Equal("2026-01-01", settings.DateFilter);
+        Assert.Equal(5, settings.TimerHour);
+        Assert.Equal(30, settings.TimerMinute);
+        Assert.False(settings.TimerEnabled);
+        Assert.True(settings.DebugLoggingEnabled);
+        Assert.Equal("D:\\site", settings.LocalSiteExportFolder);
+        Assert.Equal("D:\\consolidated", settings.LocalConsolidatedExportFolder);
 
         Assert.Equal("preserved-sharepoint-secret", sharePoint.ClientSecret);
         Assert.Equal("new-tenant", sharePoint.TenantId);
 
-        Assert.Equal("preserved-server-user", server.Username);
-        Assert.Equal("preserved-server-password", server.Password);
+        var sapSystem = Assert.Single(systems, x => x.Code == "SAP");
+        Assert.Equal("preserved-sap-user", sapSystem.CentralUsername);
+        Assert.Equal("preserved-sap-password", sapSystem.CentralPassword);
+        var bi1System = Assert.Single(systems, x => x.Code == "BI1");
+        Assert.Equal("preserved-bi1-user", bi1System.CentralUsername);
+        Assert.Equal("preserved-bi1-password", bi1System.CentralPassword);
+        var sageSystem = Assert.Single(systems, x => x.Code == "SAGE");
+        Assert.Equal("preserved-sage-user", sageSystem.CentralUsername);
+        Assert.Equal("preserved-sage-password", sageSystem.CentralPassword);
+
+        Assert.Equal(string.Empty, server.Username);
+        Assert.Equal(string.Empty, server.Password);
         Assert.True(server.UseSsl);
 
         Assert.Equal("preserved-site-user", site.UsernameOverride);
@@ -188,23 +235,50 @@ public class ConfigTransferServiceTests : IDisposable
             ClientId = "client",
             ClientSecret = "secret"
         });
-        db.ExportSettings.Add(new ExportSettings
-        {
-            SapUsername = "sap-user",
-            SapPassword = "sap-password",
-            Bi1Username = "bi1-user",
-            Bi1Password = "bi1-password",
-            SageUsername = "sage-user",
-            SagePassword = "sage-password"
-        });
+        db.ExportSettings.Add(new ExportSettings());
+        db.SourceSystemDefinitions.AddRange(
+            new SourceSystemDefinition
+            {
+                Code = "SAP",
+                DisplayName = "SAP",
+                ConnectionKind = SourceSystemConnectionKinds.SapGateway,
+                IsActive = true,
+                CentralUsername = "sap-user",
+                CentralPassword = "sap-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "BI1",
+                DisplayName = "BI1",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true,
+                CentralUsername = "bi1-user",
+                CentralPassword = "bi1-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "SAGE",
+                DisplayName = "SAGE",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true,
+                CentralUsername = "sage-user",
+                CentralPassword = "sage-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "MANUAL_EXCEL",
+                DisplayName = "Manual Excel",
+                ConnectionKind = SourceSystemConnectionKinds.ManualExcel,
+                IsActive = true
+            });
         db.HanaServers.Add(new HanaServer
         {
             Id = 1,
             Name = "Server A",
             Host = "hana-a",
             Port = 30015,
-            Username = "server-user",
-            Password = "server-password",
+            Username = string.Empty,
+            Password = string.Empty,
             DatabaseName = "DB1"
         });
         db.Sites.Add(new Site
@@ -246,15 +320,42 @@ public class ConfigTransferServiceTests : IDisposable
             ClientId = "old-client",
             ClientSecret = "preserved-sharepoint-secret"
         });
-        db.ExportSettings.Add(new ExportSettings
-        {
-            SapUsername = "preserved-sap-user",
-            SapPassword = "preserved-sap-password",
-            Bi1Username = "preserved-bi1-user",
-            Bi1Password = "preserved-bi1-password",
-            SageUsername = "preserved-sage-user",
-            SagePassword = "preserved-sage-password"
-        });
+        db.ExportSettings.Add(new ExportSettings());
+        db.SourceSystemDefinitions.AddRange(
+            new SourceSystemDefinition
+            {
+                Code = "SAP",
+                DisplayName = "SAP",
+                ConnectionKind = SourceSystemConnectionKinds.SapGateway,
+                IsActive = true,
+                CentralUsername = "preserved-sap-user",
+                CentralPassword = "preserved-sap-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "BI1",
+                DisplayName = "BI1",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true,
+                CentralUsername = "preserved-bi1-user",
+                CentralPassword = "preserved-bi1-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "SAGE",
+                DisplayName = "SAGE",
+                ConnectionKind = SourceSystemConnectionKinds.Hana,
+                IsActive = true,
+                CentralUsername = "preserved-sage-user",
+                CentralPassword = "preserved-sage-password"
+            },
+            new SourceSystemDefinition
+            {
+                Code = "MANUAL_EXCEL",
+                DisplayName = "Manual Excel",
+                ConnectionKind = SourceSystemConnectionKinds.ManualExcel,
+                IsActive = true
+            });
         db.HanaServers.Add(new HanaServer
         {
             Id = 1,

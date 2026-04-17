@@ -7,6 +7,7 @@ public class ConfigTransferPackage
     public bool IncludesSecrets { get; set; }
     public ConfigTransferSharePoint? SharePointConfig { get; set; }
     public ConfigTransferExportSettings? ExportSettings { get; set; }
+    public List<ConfigTransferSourceSystemDefinition> SourceSystemDefinitions { get; set; } = [];
     public List<ConfigTransferCurrencyExchangeRate> CurrencyExchangeRates { get; set; } = [];
     public List<ConfigTransferHanaServer> HanaServers { get; set; } = [];
     public List<ConfigTransferSite> Sites { get; set; } = [];
@@ -14,6 +15,17 @@ public class ConfigTransferPackage
     public List<ConfigTransferSapSourceDefinition> SapSourceDefinitions { get; set; } = [];
     public List<ConfigTransferSapJoinDefinition> SapJoinDefinitions { get; set; } = [];
     public List<ConfigTransferSapFieldMapping> SapFieldMappings { get; set; } = [];
+}
+
+public class ConfigTransferSourceSystemDefinition
+{
+    public string Code { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string ConnectionKind { get; set; } = SourceSystemConnectionKinds.Hana;
+    public bool IsActive { get; set; } = true;
+    public string CentralServiceUrl { get; set; } = string.Empty;
+    public string? CentralUsername { get; set; }
+    public string? CentralPassword { get; set; }
 }
 
 public class ConfigTransferSharePoint
@@ -35,12 +47,6 @@ public class ConfigTransferExportSettings
     public bool DebugLoggingEnabled { get; set; }
     public string LocalSiteExportFolder { get; set; } = string.Empty;
     public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
-    public string? SapUsername { get; set; }
-    public string? SapPassword { get; set; }
-    public string? Bi1Username { get; set; }
-    public string? Bi1Password { get; set; }
-    public string? SageUsername { get; set; }
-    public string? SagePassword { get; set; }
 }
 
 public class ConfigTransferCurrencyExchangeRate
@@ -57,11 +63,10 @@ public class ConfigTransferCurrencyExchangeRate
 public class ConfigTransferHanaServer
 {
     public string Key { get; set; } = Guid.NewGuid().ToString("N");
+    public string SourceSystem { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; } = 30015;
-    public string? Username { get; set; }
-    public string? Password { get; set; }
     public string DatabaseName { get; set; } = string.Empty;
     public bool UseSsl { get; set; }
     public bool ValidateCertificate { get; set; }
@@ -75,7 +80,7 @@ public class ConfigTransferSite
     public string Schema { get; set; } = string.Empty;
     public string TSC { get; set; } = string.Empty;
     public string Land { get; set; } = string.Empty;
-    public string SourceSystem { get; set; } = "SAP";
+    public string SourceSystem { get; set; } = string.Empty;
     public string? UsernameOverride { get; set; }
     public string? PasswordOverride { get; set; }
     public string LocalExportFolderOverride { get; set; } = string.Empty;

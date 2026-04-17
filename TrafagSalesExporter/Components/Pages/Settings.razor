@@ -1,4 +1,4 @@
-@page "/settings"
+﻿@page "/settings"
 @using Microsoft.EntityFrameworkCore
 @using TrafagSalesExporter.Data
 @using TrafagSalesExporter.Models
@@ -23,7 +23,7 @@
         <MudItem xs="12" md="6">
             <MudCheckBox @bind-Value="_includeSecretsInExport" Label="Mit Secrets exportieren" />
             <MudText Typo="Typo.caption">
-                Wenn deaktiviert, bleiben Passwörter und Secrets beim Export leer. Beim Import ohne Secrets werden bestehende Secrets auf dem Zielsystem beibehalten.
+                Wenn deaktiviert, bleiben PasswÃ¶rter und Secrets beim Export leer. Beim Import ohne Secrets werden bestehende Secrets auf dem Zielsystem beibehalten.
             </MudText>
         </MudItem>
         <MudItem xs="12" md="6">
@@ -98,73 +98,101 @@
     </MudGrid>
 </MudPaper>
 
-<MudText Typo="Typo.h5" Class="mb-2">Zentrale Quellsystem-Zugangsdaten</MudText>
+<MudText Typo="Typo.h5" Class="mb-2">Quellsysteme</MudText>
 <MudPaper Class="pa-4 mb-6" Elevation="1">
     <MudGrid>
         <MudItem xs="12">
             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
-                Diese Zugangsdaten werden pro Quellsystem als Standard verwendet. Ein Standort kann sie bei Bedarf mit eigenen Overrides überschreiben.
+                Diese Zugangsdaten werden pro Quellsystem als Standard verwendet. Ein Standort kann sie bei Bedarf mit eigenen Overrides Ã¼berschreiben.
             </MudAlert>
         </MudItem>
-        <MudItem xs="12" md="4">
-            <MudText Typo="Typo.h6" Class="mb-2">SAP</MudText>
-            <MudTextField @bind-Value="_exportSettings.SapUsername" Label="SAP Username" />
-            <MudTextField @bind-Value="_exportSettings.SapPassword" Label="SAP Password" InputType="InputType.Password" />
-            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("SAP"))'
-                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("SAP")' Class="mt-2">
-                @if (_testingSystems.Contains("SAP"))
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
-                    @("Teste...")
-                }
-                else
-                {
-                    @("SAP testen")
-                }
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddSourceSystem"
+                       StartIcon="@Icons.Material.Filled.Add" Class="mb-3">
+                Quellsystem hinzufuegen
             </MudButton>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudText Typo="Typo.h6" Class="mb-2">BI1</MudText>
-            <MudTextField @bind-Value="_exportSettings.Bi1Username" Label="BI1 Username" />
-            <MudTextField @bind-Value="_exportSettings.Bi1Password" Label="BI1 Password" InputType="InputType.Password" />
-            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("BI1"))'
-                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("BI1")' Class="mt-2">
-                @if (_testingSystems.Contains("BI1"))
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
-                    @("Teste...")
-                }
-                else
-                {
-                    @("BI1 testen")
-                }
-            </MudButton>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudText Typo="Typo.h6" Class="mb-2">SAGE</MudText>
-            <MudTextField @bind-Value="_exportSettings.SageUsername" Label="SAGE Username" />
-            <MudTextField @bind-Value="_exportSettings.SagePassword" Label="SAGE Password" InputType="InputType.Password" />
-            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => TestCentralCredentials("SAGE"))'
-                       StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled='@_testingSystems.Contains("SAGE")' Class="mt-2">
-                @if (_testingSystems.Contains("SAGE"))
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
-                    @("Teste...")
-                }
-                else
-                {
-                    @("SAGE testen")
-                }
-            </MudButton>
+            <MudTable Items="_sourceSystems" Dense Hover Striped Breakpoint="Breakpoint.Md">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Anschlussart</MudTh>
+                    <MudTh>Zentrale URL</MudTh>
+                    <MudTh>User</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Test</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Code</MudTd>
+                    <MudTd>@context.DisplayName</MudTd>
+                    <MudTd>@GetConnectionKindLabel(context.ConnectionKind)</MudTd>
+                    <MudTd>@GetServiceUrlSummary(context)</MudTd>
+                    <MudTd>@GetUsernameSummary(context)</MudTd>
+                    <MudTd>
+                        @if (context.IsActive)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" />
+                        }
+                    </MudTd>
+                    <MudTd>
+                        @if (!UsesManualImport(context))
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                                       OnClick='@(() => TestCentralCredentials(context.Code))'
+                                       Disabled='@_testingSystems.Contains(context.Code)'>
+                                @(_testingSystems.Contains(context.Code) ? "Teste..." : "Testen")
+                            </MudButton>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="() => EditSourceSystem(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="() => RemoveSourceSystem(context)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
         </MudItem>
         <MudItem xs="12">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSourceSystems"
                        StartIcon="@Icons.Material.Filled.Save">
-                Speichern
+                Quellsysteme speichern
             </MudButton>
         </MudItem>
     </MudGrid>
 </MudPaper>
+
+<MudDialog @bind-Visible="_sourceSystemDialogVisible" Options="_sourceSystemDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingSourceSystem.Id == 0 ? "Quellsystem hinzufuegen" : "Quellsystem bearbeiten")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editingSourceSystem.Code" Label="Code" Required />
+        <MudTextField @bind-Value="_editingSourceSystem.DisplayName" Label="Name" Required />
+        <MudSelect T="string" @bind-Value="_editingSourceSystem.ConnectionKind" Label="Anschlussart" Required>
+            @foreach (var kind in SourceSystemConnectionKinds.All)
+            {
+                <MudSelectItem Value="@kind">@GetConnectionKindLabel(kind)</MudSelectItem>
+            }
+        </MudSelect>
+        @if (UsesSapGateway(_editingSourceSystem))
+        {
+            <MudTextField @bind-Value="_editingSourceSystem.CentralServiceUrl" Label="Zentrale SAP Service URL"
+                          HelperText="Zentrale Standard-URL fuer SAP Gateway. Ein Standort darf sie nur bei Bedarf ueberschreiben." />
+        }
+        <MudTextField @bind-Value="_editingSourceSystem.CentralUsername" Label="Zentraler Username" />
+        <MudTextField @bind-Value="_editingSourceSystem.CentralPassword" Label="Zentrales Passwort" InputType="InputType.Password" />
+        <MudCheckBox @bind-Value="_editingSourceSystem.IsActive" Label="Aktiv" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseSourceSystemDialog">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSourceSystemEdit">Uebernehmen</MudButton>
+    </DialogActions>
+</MudDialog>
 
 <MudText Typo="Typo.h5" Class="mb-2">Wechselkurse</MudText>
 <MudPaper Class="pa-4 mb-6" Elevation="1">
@@ -250,7 +278,7 @@
         <MudItem xs="12" md="4">
             <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="Debug Live-Logging" Color="Color.Warning" />
             <MudText Typo="Typo.caption">
-                Schreibt zusÃ¤tzliche technische Fortschrittsmeldungen fÃ¼r HANA- und SAP-LesevorgÃ¤nge ins Dashboard und in die Logs.
+                Schreibt zusÃƒÂ¤tzliche technische Fortschrittsmeldungen fÃƒÂ¼r HANA- und SAP-LesevorgÃƒÂ¤nge ins Dashboard und in die Logs.
             </MudText>
         </MudItem>
         <MudItem xs="12" md="6">
@@ -285,6 +313,8 @@
 @code {
     private SharePointConfig _spConfig = new();
     private ExportSettings _exportSettings = new();
+    private List<SourceSystemDefinition> _sourceSystems = [];
+    private SourceSystemDefinition _editingSourceSystem = new();
     private bool _testingSp;
     private bool _includeSecretsInExport;
     private bool _exportingConfig;
@@ -293,12 +323,15 @@
     private string _sharePointTestPreview = string.Empty;
     private List<CurrencyExchangeRate> _exchangeRates = [];
     private readonly HashSet<string> _testingSystems = [];
+    private bool _sourceSystemDialogVisible;
+    private readonly DialogOptions _sourceSystemDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
         using var db = await DbFactory.CreateDbContextAsync();
         _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
         _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
         _exchangeRates = await db.CurrencyExchangeRates
             .OrderBy(x => x.FromCurrency)
             .ThenBy(x => x.ToCurrency)
@@ -370,16 +403,136 @@
             existing.DebugLoggingEnabled = _exportSettings.DebugLoggingEnabled;
             existing.LocalSiteExportFolder = _exportSettings.LocalSiteExportFolder;
             existing.LocalConsolidatedExportFolder = _exportSettings.LocalConsolidatedExportFolder;
-            existing.SapUsername = _exportSettings.SapUsername;
-            existing.SapPassword = _exportSettings.SapPassword;
-            existing.Bi1Username = _exportSettings.Bi1Username;
-            existing.Bi1Password = _exportSettings.Bi1Password;
-            existing.SageUsername = _exportSettings.SageUsername;
-            existing.SagePassword = _exportSettings.SagePassword;
         }
         await db.SaveChangesAsync();
         TimerService.Recalculate();
         Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
+    }
+
+    private void AddSourceSystem()
+    {
+        _editingSourceSystem = new SourceSystemDefinition
+        {
+            Code = string.Empty,
+            DisplayName = string.Empty,
+            ConnectionKind = SourceSystemConnectionKinds.Hana,
+            IsActive = true
+        };
+        _sourceSystemDialogVisible = true;
+    }
+
+    private void EditSourceSystem(SourceSystemDefinition definition)
+    {
+        _editingSourceSystem = new SourceSystemDefinition
+        {
+            Id = definition.Id,
+            Code = definition.Code,
+            DisplayName = definition.DisplayName,
+            ConnectionKind = definition.ConnectionKind,
+            IsActive = definition.IsActive,
+            CentralServiceUrl = definition.CentralServiceUrl,
+            CentralUsername = definition.CentralUsername,
+            CentralPassword = definition.CentralPassword
+        };
+        _sourceSystemDialogVisible = true;
+    }
+
+    private void SaveSourceSystemEdit()
+    {
+        _editingSourceSystem.Code = NormalizeSourceSystemCode(_editingSourceSystem.Code);
+        _editingSourceSystem.DisplayName = NormalizeConfigValue(_editingSourceSystem.DisplayName);
+        _editingSourceSystem.ConnectionKind = NormalizeConnectionKind(_editingSourceSystem.ConnectionKind);
+        _editingSourceSystem.CentralServiceUrl = NormalizeConfigValue(_editingSourceSystem.CentralServiceUrl);
+        _editingSourceSystem.CentralUsername = NormalizeConfigValue(_editingSourceSystem.CentralUsername);
+        _editingSourceSystem.CentralPassword = _editingSourceSystem.CentralPassword ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_editingSourceSystem.Code) || string.IsNullOrWhiteSpace(_editingSourceSystem.DisplayName))
+        {
+            Snackbar.Add("Code und Name fuer das Quellsystem sind Pflicht.", Severity.Warning);
+            return;
+        }
+
+        if (_sourceSystems.Any(x => x.Id != _editingSourceSystem.Id && x.Code == _editingSourceSystem.Code))
+        {
+            Snackbar.Add($"Quellsystem-Code doppelt vorhanden: {_editingSourceSystem.Code}", Severity.Warning);
+            return;
+        }
+
+        if (_editingSourceSystem.Id == 0)
+        {
+            _sourceSystems.Add(_editingSourceSystem);
+        }
+        else
+        {
+            var existing = _sourceSystems.FirstOrDefault(x => x.Id == _editingSourceSystem.Id);
+            if (existing is not null)
+            {
+                existing.Code = _editingSourceSystem.Code;
+                existing.DisplayName = _editingSourceSystem.DisplayName;
+                existing.ConnectionKind = _editingSourceSystem.ConnectionKind;
+                existing.IsActive = _editingSourceSystem.IsActive;
+                existing.CentralServiceUrl = _editingSourceSystem.CentralServiceUrl;
+                existing.CentralUsername = _editingSourceSystem.CentralUsername;
+                existing.CentralPassword = _editingSourceSystem.CentralPassword;
+            }
+        }
+
+        _sourceSystems = _sourceSystems.OrderBy(x => x.Code).ToList();
+        _sourceSystemDialogVisible = false;
+    }
+
+    private void CloseSourceSystemDialog()
+    {
+        _sourceSystemDialogVisible = false;
+    }
+
+    private void RemoveSourceSystem(SourceSystemDefinition definition)
+    {
+        _sourceSystems.Remove(definition);
+    }
+
+    private async Task SaveSourceSystems()
+    {
+        var normalized = _sourceSystems
+            .Select(x => new SourceSystemDefinition
+            {
+                Id = x.Id,
+                Code = NormalizeSourceSystemCode(x.Code),
+                DisplayName = NormalizeConfigValue(x.DisplayName),
+                ConnectionKind = NormalizeConnectionKind(x.ConnectionKind),
+                IsActive = x.IsActive,
+                CentralServiceUrl = NormalizeConfigValue(x.CentralServiceUrl),
+                CentralUsername = NormalizeConfigValue(x.CentralUsername),
+                CentralPassword = x.CentralPassword ?? string.Empty
+            })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+            .ToList();
+
+        if (normalized.Any(x => string.IsNullOrWhiteSpace(x.DisplayName)))
+        {
+            Snackbar.Add("Jedes Quellsystem braucht einen Anzeigenamen.", Severity.Warning);
+            return;
+        }
+
+        var duplicates = normalized
+            .GroupBy(x => x.Code)
+            .FirstOrDefault(g => g.Count() > 1);
+        if (duplicates is not null)
+        {
+            Snackbar.Add($"Quellsystem-Code doppelt vorhanden: {duplicates.Key}", Severity.Warning);
+            return;
+        }
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var existing = await db.SourceSystemDefinitions.ToListAsync();
+        if (existing.Count > 0)
+            db.SourceSystemDefinitions.RemoveRange(existing);
+
+        db.SourceSystemDefinitions.AddRange(normalized);
+        await db.SaveChangesAsync();
+
+        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
+        Snackbar.Add("Quellsysteme gespeichert", Severity.Success);
     }
 
     private void AddExchangeRate()
@@ -493,6 +646,7 @@
             using var db = await DbFactory.CreateDbContextAsync();
             _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
             _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+            _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
             _exchangeRates = await db.CurrencyExchangeRates
                 .OrderBy(x => x.FromCurrency)
                 .ThenBy(x => x.ToCurrency)
@@ -513,61 +667,72 @@
 
     private async Task TestCentralCredentials(string sourceSystem)
     {
-        if (sourceSystem == "SAP")
+        var definition = _sourceSystems.FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase));
+        if (definition is null)
         {
-            await TestCentralSapCredentials();
+            Snackbar.Add($"Quellsystem '{sourceSystem}' nicht gefunden.", Severity.Warning);
             return;
         }
 
-        await TestCentralHanaCredentials(sourceSystem);
+        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+        {
+            await TestCentralSapCredentials(definition);
+            return;
+        }
+
+        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+        {
+            await TestCentralHanaCredentials(definition);
+        }
     }
 
-    private async Task TestCentralHanaCredentials(string sourceSystem)
+    private async Task TestCentralHanaCredentials(SourceSystemDefinition definition)
     {
+        var sourceSystem = definition.Code;
         if (!_testingSystems.Add(sourceSystem))
             return;
 
         try
         {
-            var username = GetCentralUsername(sourceSystem);
-            var password = GetCentralPassword(sourceSystem);
+            var username = definition.CentralUsername;
+            var password = definition.CentralPassword;
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                Snackbar.Add($"Für {sourceSystem} sind keine zentralen Zugangsdaten gepflegt.", Severity.Warning);
+                Snackbar.Add($"FÃ¼r {sourceSystem} sind keine zentralen Zugangsdaten gepflegt.", Severity.Warning);
                 return;
             }
 
             using var db = await DbFactory.CreateDbContextAsync();
-            var site = await db.Sites
-                .Include(s => s.HanaServer)
-                .Where(s => (string.IsNullOrWhiteSpace(s.SourceSystem) ? "SAP" : s.SourceSystem) == sourceSystem)
-                .OrderBy(s => s.Land)
+            var centralServer = await db.HanaServers
+                .Where(s => s.SourceSystem == sourceSystem)
+                .OrderBy(s => s.Id)
                 .FirstOrDefaultAsync();
 
-            if (site?.HanaServer is null)
+            if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
             {
-                Snackbar.Add($"Kein Standort mit Quellsystem {sourceSystem} und HANA-Verbindung gefunden.", Severity.Warning);
+                Snackbar.Add($"Keine zentrale HANA-Konfiguration fuer {sourceSystem} gefunden.", Severity.Warning);
                 return;
             }
 
             var testServer = new HanaServer
             {
+                SourceSystem = sourceSystem,
                 Name = $"{sourceSystem} Central Test",
-                Host = site.HanaServer.Host,
-                Port = site.HanaServer.Port,
+                Host = centralServer.Host,
+                Port = centralServer.Port,
                 Username = username.Trim(),
                 Password = password.Trim(),
-                DatabaseName = site.HanaServer.DatabaseName,
-                UseSsl = site.HanaServer.UseSsl,
-                ValidateCertificate = site.HanaServer.ValidateCertificate,
-                AdditionalParams = site.HanaServer.AdditionalParams
+                DatabaseName = centralServer.DatabaseName,
+                UseSsl = centralServer.UseSsl,
+                ValidateCertificate = centralServer.ValidateCertificate,
+                AdditionalParams = centralServer.AdditionalParams
             };
 
             var result = await Task.Run(() => HanaService.TestConnectionDetailed(testServer));
             if (result.Success)
             {
-                Snackbar.Add($"{sourceSystem}: Verbindung erfolgreich über Standort '{site.Land}'.", Severity.Success);
+                Snackbar.Add($"{sourceSystem}: Zentrale HANA-Verbindung erfolgreich.", Severity.Success);
             }
             else
             {
@@ -580,42 +745,35 @@
         }
     }
 
-    private async Task TestCentralSapCredentials()
+    private async Task TestCentralSapCredentials(SourceSystemDefinition definition)
     {
-        const string sourceSystem = "SAP";
+        var sourceSystem = definition.Code;
         if (!_testingSystems.Add(sourceSystem))
             return;
 
         try
         {
-            var username = GetCentralUsername(sourceSystem);
-            var password = GetCentralPassword(sourceSystem);
+            var username = definition.CentralUsername;
+            var password = definition.CentralPassword;
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                Snackbar.Add("Für SAP sind keine zentralen Gateway-Zugangsdaten gepflegt.", Severity.Warning);
+                Snackbar.Add("FÃ¼r SAP sind keine zentralen Gateway-Zugangsdaten gepflegt.", Severity.Warning);
                 return;
             }
 
-            using var db = await DbFactory.CreateDbContextAsync();
-            var site = await db.Sites
-                .Where(s => (string.IsNullOrWhiteSpace(s.SourceSystem) ? "SAP" : s.SourceSystem) == sourceSystem
-                    && !string.IsNullOrWhiteSpace(s.SapServiceUrl))
-                .OrderBy(s => s.Land)
-                .FirstOrDefaultAsync();
-
-            if (site is null)
+            if (string.IsNullOrWhiteSpace(definition.CentralServiceUrl))
             {
-                Snackbar.Add("Kein SAP-Standort mit Service URL gefunden.", Severity.Warning);
+                Snackbar.Add($"Fuer {sourceSystem} ist keine zentrale SAP Service URL gepflegt.", Severity.Warning);
                 return;
             }
 
-            await SapGatewayService.TestConnectionAsync(site.SapServiceUrl, username.Trim(), password.Trim());
-            Snackbar.Add($"SAP: Gateway-Verbindung erfolgreich über Standort '{site.Land}'.", Severity.Success);
+            await SapGatewayService.TestConnectionAsync(definition.CentralServiceUrl, username.Trim(), password.Trim());
+            Snackbar.Add($"{sourceSystem}: Zentrale SAP Gateway-Verbindung erfolgreich.", Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"SAP: {ex.Message}", Severity.Error);
+            Snackbar.Add($"{sourceSystem}: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -623,19 +781,32 @@
         }
     }
 
-    private string GetCentralUsername(string sourceSystem) => sourceSystem switch
+    private static string NormalizeSourceSystemCode(string? code) => NormalizeConfigValue(code).ToUpperInvariant();
+
+    private static string NormalizeConnectionKind(string? connectionKind)
+        => SourceSystemConnectionKinds.All.Contains(connectionKind ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            ? (connectionKind ?? string.Empty).Trim().ToUpperInvariant()
+            : SourceSystemConnectionKinds.Hana;
+
+    private static string GetConnectionKindLabel(string connectionKind) => connectionKind switch
     {
-        "BI1" => _exportSettings.Bi1Username,
-        "SAGE" => _exportSettings.SageUsername,
-        _ => _exportSettings.SapUsername
+        SourceSystemConnectionKinds.Hana => "HANA",
+        SourceSystemConnectionKinds.SapGateway => "SAP Gateway",
+        SourceSystemConnectionKinds.ManualExcel => "Manual Excel",
+        _ => connectionKind
     };
 
-    private string GetCentralPassword(string sourceSystem) => sourceSystem switch
-    {
-        "BI1" => _exportSettings.Bi1Password,
-        "SAGE" => _exportSettings.SagePassword,
-        _ => _exportSettings.SapPassword
-    };
+    private static bool UsesManualImport(SourceSystemDefinition definition)
+        => string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase);
+
+    private static bool UsesSapGateway(SourceSystemDefinition definition)
+        => string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase);
+
+    private static string GetServiceUrlSummary(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.CentralServiceUrl) ? "-" : definition.CentralServiceUrl;
+
+    private static string GetUsernameSummary(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.CentralUsername) ? "-" : definition.CentralUsername;
 
     private static string NormalizeConfigValue(string? value) => value?.Trim() ?? string.Empty;
 
@@ -664,3 +835,4 @@
             .ToListAsync();
     }
 }
+

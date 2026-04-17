@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 
 namespace TrafagSalesExporter.Models;
@@ -8,6 +9,9 @@ public class HanaServer
     public int Id { get; set; }
 
     [Required]
+    public string SourceSystem { get; set; } = string.Empty;
+
+    [Required]
     public string Name { get; set; } = string.Empty;
 
     [Required]
@@ -15,8 +19,10 @@ public class HanaServer
 
     public int Port { get; set; } = 30015;
 
+    [NotMapped]
     public string Username { get; set; } = string.Empty;
 
+    [NotMapped]
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
@@ -66,6 +72,7 @@ public class HanaServer
         var pwdMasked = string.IsNullOrEmpty(Password) ? "" : "***";
         var copy = new HanaServer
         {
+            SourceSystem = SourceSystem,
             Host = Host,
             Port = Port,
             Username = Username,

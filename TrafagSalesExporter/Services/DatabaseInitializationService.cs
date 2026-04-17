@@ -46,7 +46,10 @@ public class DatabaseInitializationService : IDatabaseInitializationService
     private static void EnsureSchema(AppDbContext db)
     {
         EnsureSitesTableSupportsOptionalHanaServer(db);
+        EnsureExportSettingsTableSupportsCurrentSchema(db);
+        EnsureHanaServersTableSupportsCurrentSchema(db);
         RepairBrokenSiteForeignKeys(db);
+        AddColumnIfMissing(db, "HanaServers", "SourceSystem", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
@@ -61,12 +64,6 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "Sites", "SapEntitySet", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySetsCache", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "Sites", "SapEntitySetsRefreshedAtUtc", "TEXT NULL");
-        AddColumnIfMissing(db, "ExportSettings", "SapUsername", "TEXT NOT NULL DEFAULT ''");
-        AddColumnIfMissing(db, "ExportSettings", "SapPassword", "TEXT NOT NULL DEFAULT ''");
-        AddColumnIfMissing(db, "ExportSettings", "Bi1Username", "TEXT NOT NULL DEFAULT ''");
-        AddColumnIfMissing(db, "ExportSettings", "Bi1Password", "TEXT NOT NULL DEFAULT ''");
-        AddColumnIfMissing(db, "ExportSettings", "SageUsername", "TEXT NOT NULL DEFAULT ''");
-        AddColumnIfMissing(db, "ExportSettings", "SagePassword", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "DebugLoggingEnabled", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "ExportSettings", "LocalSiteExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "LocalConsolidatedExportFolder", "TEXT NOT NULL DEFAULT ''");
@@ -75,11 +72,57 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         EnsureTransformationTable(db);
         AddColumnIfMissing(db, "FieldTransformationRules", "RuleScope", "TEXT NOT NULL DEFAULT 'Value'");
         EnsureCurrencyExchangeRateTable(db);
+        EnsureSourceSystemDefinitionTable(db);
+        AddColumnIfMissing(db, "SourceSystemDefinitions", "CentralServiceUrl", "TEXT NOT NULL DEFAULT ''");
         EnsureSapSourceTable(db);
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
         EnsureCentralSalesRecordTable(db);
         EnsureAppEventLogTable(db);
+        EnsureSourceSystemDefinitions(db);
+        EnsureCentralHanaServerRecords(db);
+    }
+
+    private static void EnsureExportSettingsTableSupportsCurrentSchema(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        var columns = GetTableColumns(conn, transaction: null, "ExportSettings");
+        if (columns.Count == 0)
+            return;
+
+        var legacyColumns = new[]
+        {
+            "SapUsername",
+            "SapPassword",
+            "Bi1Username",
+            "Bi1Password",
+            "SageUsername",
+            "SagePassword"
+        };
+
+        if (!legacyColumns.Any(columns.Contains))
+            return;
+
+        RebuildTable(conn, "ExportSettings", GetExportSettingsCreateSql());
+    }
+
+    private static void EnsureHanaServersTableSupportsCurrentSchema(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        var columns = GetTableColumns(conn, transaction: null, "HanaServers");
+        if (columns.Count == 0)
+            return;
+
+        if (!columns.Contains("Username") && !columns.Contains("Password"))
+            return;
+
+        RebuildTable(conn, "HanaServers", GetHanaServersCreateSql());
     }
 
     private static void EnsureSitesTableSupportsOptionalHanaServer(AppDbContext db)
@@ -272,7 +315,7 @@ FROM Sites_old;";
         enableFk.ExecuteNonQuery();
     }
 
-    private static List<string> GetSharedColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction, string newTableName, string oldTableName)
+    private static List<string> GetSharedColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction? transaction, string newTableName, string oldTableName)
     {
         var newColumns = GetTableColumns(connection, transaction, newTableName);
         var oldColumns = GetTableColumns(connection, transaction, oldTableName);
@@ -280,7 +323,7 @@ FROM Sites_old;";
         return newColumns.Where(oldColumns.Contains).ToList();
     }
 
-    private static HashSet<string> GetTableColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction, string tableName)
+    private static HashSet<string> GetTableColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction? transaction, string tableName)
     {
         var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -313,6 +356,31 @@ CREATE TABLE ExportLogs (
     FilePath TEXT NOT NULL DEFAULT '',
     DurationSeconds REAL NOT NULL,
     FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    private static string GetExportSettingsCreateSql() => @"
+CREATE TABLE ExportSettings (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    DateFilter TEXT NOT NULL,
+    TimerHour INTEGER NOT NULL,
+    TimerMinute INTEGER NOT NULL,
+    TimerEnabled INTEGER NOT NULL,
+    DebugLoggingEnabled INTEGER NOT NULL DEFAULT 0,
+    LocalSiteExportFolder TEXT NOT NULL DEFAULT '',
+    LocalConsolidatedExportFolder TEXT NOT NULL DEFAULT ''
+);";
+
+    private static string GetHanaServersCreateSql() => @"
+CREATE TABLE HanaServers (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SourceSystem TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    Host TEXT NOT NULL,
+    Port INTEGER NOT NULL,
+    DatabaseName TEXT NOT NULL DEFAULT '',
+    UseSsl INTEGER NOT NULL DEFAULT 0,
+    ValidateCertificate INTEGER NOT NULL DEFAULT 0,
+    AdditionalParams TEXT NOT NULL DEFAULT ''
 );";
 
     private static string GetAppEventLogsCreateSql() => @"
@@ -604,21 +672,42 @@ CREATE TABLE IF NOT EXISTS AppEventLogs (
         cmd.ExecuteNonQuery();
     }
 
+    private static void EnsureSourceSystemDefinitionTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS SourceSystemDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Code TEXT NOT NULL,
+    DisplayName TEXT NOT NULL,
+    ConnectionKind TEXT NOT NULL,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    CentralServiceUrl TEXT NOT NULL DEFAULT '',
+    CentralUsername TEXT NOT NULL DEFAULT '',
+    CentralPassword TEXT NOT NULL DEFAULT ''
+);";
+        cmd.ExecuteNonQuery();
+    }
+
     private static void SeedIfEmpty(AppDbContext db)
     {
-        if (db.HanaServers.Any())
+        if (db.Sites.Any() || db.HanaServers.Any() || db.SharePointConfigs.Any() || db.ExportSettings.Any())
             return;
 
-        var serverInternal = new HanaServer { Name = "Internal", Host = "travtrp0", Port = 30015, Username = "", Password = "" };
-        var serverIndia = new HanaServer { Name = "India", Host = "20.197.20.60", Port = 30015, Username = "", Password = "" };
-        db.HanaServers.AddRange(serverInternal, serverIndia);
+        var serverBi1 = new HanaServer { SourceSystem = "BI1", Name = "BI1", Host = "travtrp0", Port = 30015, Username = "", Password = "" };
+        var serverSage = new HanaServer { SourceSystem = "SAGE", Name = "SAGE", Host = "20.197.20.60", Port = 30015, Username = "", Password = "" };
+        db.HanaServers.AddRange(serverBi1, serverSage);
         db.SaveChanges();
 
         db.Sites.AddRange(
-            new Site { HanaServerId = serverInternal.Id, Schema = "fr01_p", TSC = "TRFR", Land = "Frankreich", IsActive = true },
-            new Site { HanaServerId = serverInternal.Id, Schema = "it01_p", TSC = "TRIT", Land = "Italien", IsActive = true },
-            new Site { HanaServerId = serverInternal.Id, Schema = "us01_p", TSC = "TRUS", Land = "USA", IsActive = true },
-            new Site { HanaServerId = serverIndia.Id, Schema = "TRAFAG_LIVE", TSC = "TRIN", Land = "Indien", IsActive = true }
+            new Site { HanaServerId = serverBi1.Id, Schema = "fr01_p", TSC = "TRFR", Land = "Frankreich", SourceSystem = "BI1", IsActive = true },
+            new Site { HanaServerId = serverBi1.Id, Schema = "it01_p", TSC = "TRIT", Land = "Italien", SourceSystem = "BI1", IsActive = true },
+            new Site { HanaServerId = serverBi1.Id, Schema = "us01_p", TSC = "TRUS", Land = "USA", SourceSystem = "BI1", IsActive = true },
+            new Site { HanaServerId = serverSage.Id, Schema = "TRAFAG_LIVE", TSC = "TRIN", Land = "Indien", SourceSystem = "SAGE", IsActive = true }
         );
 
         db.SharePointConfigs.Add(new SharePointConfig
@@ -693,6 +782,123 @@ CREATE TABLE IF NOT EXISTS AppEventLogs (
         }
 
         if (hasChanges)
+            db.SaveChanges();
+    }
+
+    private static void EnsureCentralHanaServerRecords(AppDbContext db)
+    {
+        var centralSystems = db.SourceSystemDefinitions
+            .AsNoTracking()
+            .Where(x => x.ConnectionKind == SourceSystemConnectionKinds.Hana)
+            .OrderBy(x => x.Code)
+            .Select(x => x.Code)
+            .ToList();
+        var changed = false;
+
+        foreach (var sourceSystem in centralSystems)
+        {
+            var existingCentral = db.HanaServers
+                .OrderBy(x => x.Id)
+                .FirstOrDefault(x => x.SourceSystem == sourceSystem);
+
+            if (existingCentral is not null)
+            {
+                if (string.IsNullOrWhiteSpace(existingCentral.Name))
+                {
+                    existingCentral.Name = sourceSystem;
+                    changed = true;
+                }
+
+                continue;
+            }
+
+            var linkedServer = db.Sites
+                .Include(x => x.HanaServer)
+                .Where(x => x.SourceSystem == sourceSystem && x.HanaServerId != null && x.HanaServer != null)
+                .Select(x => x.HanaServer!)
+                .OrderBy(x => x.Id)
+                .FirstOrDefault();
+
+            if (linkedServer is not null)
+            {
+                linkedServer.SourceSystem = sourceSystem;
+                if (string.IsNullOrWhiteSpace(linkedServer.Name))
+                    linkedServer.Name = sourceSystem;
+                changed = true;
+                continue;
+            }
+
+            db.HanaServers.Add(new HanaServer
+            {
+                SourceSystem = sourceSystem,
+                Name = sourceSystem,
+                Host = string.Empty,
+                Port = 30015,
+                Username = string.Empty,
+                Password = string.Empty,
+                DatabaseName = string.Empty,
+                AdditionalParams = string.Empty
+            });
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureSourceSystemDefinitions(AppDbContext db)
+    {
+        var defaults = new[]
+        {
+            new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+            new SourceSystemDefinition { Code = "BI1", DisplayName = "BI1", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+            new SourceSystemDefinition { Code = "SAGE", DisplayName = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+            new SourceSystemDefinition { Code = "MANUAL_EXCEL", DisplayName = "Manual Excel", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true }
+        };
+
+        var existing = db.SourceSystemDefinitions.ToList();
+        var changed = false;
+
+        foreach (var item in defaults)
+        {
+            var current = existing.FirstOrDefault(x => x.Code == item.Code);
+            if (current is null)
+            {
+                db.SourceSystemDefinitions.Add(item);
+                existing.Add(item);
+                changed = true;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(current.DisplayName))
+            {
+                current.DisplayName = item.DisplayName;
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(current.ConnectionKind))
+            {
+                current.ConnectionKind = item.ConnectionKind;
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(current.CentralServiceUrl) &&
+                string.Equals(current.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            {
+                var sapSite = db.Sites
+                    .Where(x => x.SourceSystem == current.Code && !string.IsNullOrWhiteSpace(x.SapServiceUrl))
+                    .OrderBy(x => x.Id)
+                    .FirstOrDefault();
+
+                if (sapSite is not null)
+                {
+                    current.CentralServiceUrl = sapSite.SapServiceUrl;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed)
             db.SaveChanges();
     }
 }

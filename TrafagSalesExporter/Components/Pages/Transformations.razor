@@ -45,9 +45,9 @@
             <MudTd><MudCheckBox @bind-Value="context.IsActive" /></MudTd>
             <MudTd>
                 <MudSelect T="string" Value="@context.SourceSystem" ValueChanged="@(v => context.SourceSystem = v)" Dense>
-                    @foreach (var system in _systems)
+                    @foreach (var system in _sourceSystems.Where(x => x.IsActive))
                     {
-                        <MudSelectItem Value="@system">@system</MudSelectItem>
+                        <MudSelectItem Value="@system.Code">@system.DisplayName (@system.Code)</MudSelectItem>
                     }
                 </MudSelect>
             </MudTd>
@@ -176,7 +176,6 @@
 </MudDialog>
 
 @code {
-    private readonly string[] _systems = ["SAP", "BI1", "SAGE", "MANUAL_EXCEL"];
     private readonly string[] _ruleScopes = ["Value", "Record"];
     private readonly string[] _recordFields = typeof(SalesRecord)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -185,6 +184,7 @@
         .ToArray();
 
     private List<FieldTransformationRule> _rules = new();
+    private List<SourceSystemDefinition> _sourceSystems = [];
     private IReadOnlyList<TransformationCatalogItem> _catalogItems = [];
     private bool _codeDialogVisible;
     private FieldTransformationRule? _selectedRule;
@@ -200,6 +200,7 @@
     private async Task LoadAsync()
     {
         using var db = await DbFactory.CreateDbContextAsync();
+        _sourceSystems = await db.SourceSystemDefinitions.OrderBy(x => x.Code).ToListAsync();
         _rules = await db.FieldTransformationRules.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToListAsync();
 
         foreach (var rule in _rules)
@@ -217,7 +218,7 @@
         var nextSort = _rules.Count == 0 ? 10 : _rules.Max(r => r.SortOrder) + 10;
         _rules.Add(new FieldTransformationRule
         {
-            SourceSystem = "SAP",
+            SourceSystem = _sourceSystems.FirstOrDefault(x => x.IsActive)?.Code ?? "SAP",
             RuleScope = "Value",
             SourceField = nameof(SalesRecord.Material),
             TargetField = nameof(SalesRecord.Material),

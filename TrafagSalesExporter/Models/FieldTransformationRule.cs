@@ -7,7 +7,7 @@ public class FieldTransformationRule
     public int Id { get; set; }
 
     [Required]
-    public string SourceSystem { get; set; } = "SAP";
+    public string SourceSystem { get; set; } = string.Empty;
 
     [Required]
     public string SourceField { get; set; } = nameof(SalesRecord.Material);

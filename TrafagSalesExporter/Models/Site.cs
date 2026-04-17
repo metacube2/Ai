@@ -22,7 +22,7 @@ public class Site
     public string Land { get; set; } = string.Empty;
 
     [Required]
-    public string SourceSystem { get; set; } = "SAP";
+    public string SourceSystem { get; set; } = string.Empty;
 
     public string UsernameOverride { get; set; } = string.Empty;
 

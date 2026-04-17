@@ -65,13 +65,19 @@ public class SiteExportService : ISiteExportService
             var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
             var outputDir = ResolveSiteOutputDirectory(settings, site);
             var sourceSystem = NormalizeSourceSystem(site.SourceSystem);
+            var sourceDefinition = await db.SourceSystemDefinitions
+                .AsNoTracking()
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.Code == sourceSystem)
+                ?? throw new InvalidOperationException($"Quellsystem '{sourceSystem}' ist nicht konfiguriert.");
             var records = new List<SalesRecord>();
             string filePath;
 
-            if (sourceSystem == "SAP")
+            if (string.Equals(sourceDefinition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
             {
-                var credentials = ResolveCredentials(site, settings, sourceSystem);
-                if (string.IsNullOrWhiteSpace(site.SapServiceUrl))
+                var credentials = ResolveCredentials(site, sourceDefinition);
+                var sapServiceUrl = ResolveSapServiceUrl(site, sourceDefinition);
+                if (string.IsNullOrWhiteSpace(sapServiceUrl))
                     throw new InvalidOperationException($"Standort '{site.Land}' hat keine SAP Service URL.");
                 var sapSources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
                 var sapJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
@@ -84,7 +90,8 @@ public class SiteExportService : ISiteExportService
                 updateStatus?.Invoke("SAP Quellen laden...");
                 await _appEventLogService.WriteAsync("Export", "SAP Quellen laden", siteId: site.Id, land: site.Land,
                     details: $"Sources={sapSources.Count} | Mappings={sapMappings.Count}");
-                records = await _sapCompositionService.BuildSalesRecordsAsync(site, sapSources, sapJoins, sapMappings, credentials.Username, credentials.Password);
+                var effectiveSite = CloneSiteWithSapServiceUrl(site, sapServiceUrl);
+                records = await _sapCompositionService.BuildSalesRecordsAsync(effectiveSite, sapSources, sapJoins, sapMappings, credentials.Username, credentials.Password);
                 updateStatus?.Invoke("Transformationen anwenden...");
                 await _appEventLogService.WriteAsync("Export", "Transformationen anwenden", siteId: site.Id, land: site.Land,
                     details: $"Records vor Transformation={records.Count}");
@@ -99,7 +106,7 @@ public class SiteExportService : ISiteExportService
                 filePath = _excelService.CreateExcelFile(outputDir, site.TSC, DateTime.UtcNow.Date, records);
                 log.RowCount = records.Count;
             }
-            else if (sourceSystem == "MANUAL_EXCEL")
+            else if (string.Equals(sourceDefinition.ConnectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
             {
                 if (string.IsNullOrWhiteSpace(site.ManualImportFilePath))
                     throw new InvalidOperationException($"Standort '{site.Land}' hat keine manuelle Excel-Datei.");
@@ -125,7 +132,7 @@ public class SiteExportService : ISiteExportService
             }
             else
             {
-                var exportServer = BuildEffectiveServer(site, settings, sourceSystem);
+                var exportServer = await BuildEffectiveServerAsync(db, site, sourceDefinition);
                 updateStatus?.Invoke("HANA Abfrage...");
                 await _appEventLogService.WriteAsync("Export", "HANA Abfrage gestartet", siteId: site.Id, land: site.Land,
                     details: exportServer.GetConnectionStringPreview());
@@ -208,45 +215,40 @@ public class SiteExportService : ISiteExportService
         }
     }
 
-    private static HanaServer BuildEffectiveServer(Site site, ExportSettings settings, string sourceSystem)
+    private static async Task<HanaServer> BuildEffectiveServerAsync(AppDbContext db, Site site, SourceSystemDefinition sourceDefinition)
     {
-        if (site.HanaServer is null)
-            throw new InvalidOperationException($"Standort '{site.Land}' hat keinen HANA-Server.");
+        var centralServer = await db.HanaServers
+            .AsNoTracking()
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(x => x.SourceSystem == sourceDefinition.Code);
 
-        var credentials = ResolveCredentials(site, settings, sourceSystem);
+        if (centralServer is null)
+            throw new InvalidOperationException($"Fuer Quellsystem '{sourceDefinition.Code}' ist keine zentrale HANA-Konfiguration vorhanden.");
+
+        var credentials = ResolveCredentials(site, sourceDefinition);
 
         return new HanaServer
         {
-            Id = site.HanaServer.Id,
-            Name = site.HanaServer.Name,
-            Host = site.HanaServer.Host,
-            Port = site.HanaServer.Port,
-            Username = FirstNonEmpty(credentials.Username, site.HanaServer.Username),
-            Password = FirstNonEmpty(credentials.Password, site.HanaServer.Password),
-            DatabaseName = site.HanaServer.DatabaseName,
-            UseSsl = site.HanaServer.UseSsl,
-            ValidateCertificate = site.HanaServer.ValidateCertificate,
-            AdditionalParams = site.HanaServer.AdditionalParams
+            Id = centralServer.Id,
+            SourceSystem = centralServer.SourceSystem,
+            Name = centralServer.Name,
+            Host = centralServer.Host,
+            Port = centralServer.Port,
+            Username = credentials.Username,
+            Password = credentials.Password,
+            DatabaseName = centralServer.DatabaseName,
+            UseSsl = centralServer.UseSsl,
+            ValidateCertificate = centralServer.ValidateCertificate,
+            AdditionalParams = centralServer.AdditionalParams
         };
     }
 
-    private static (string Username, string Password) ResolveCredentials(Site site, ExportSettings settings, string sourceSystem)
-        => (FirstNonEmpty(site.UsernameOverride, GetCentralUsername(sourceSystem, settings)),
-            FirstNonEmpty(site.PasswordOverride, GetCentralPassword(sourceSystem, settings)));
+    private static (string Username, string Password) ResolveCredentials(Site site, SourceSystemDefinition sourceDefinition)
+        => (FirstNonEmpty(site.UsernameOverride, sourceDefinition.CentralUsername),
+            FirstNonEmpty(site.PasswordOverride, sourceDefinition.CentralPassword));
 
-    private static string GetCentralUsername(string sourceSystem, ExportSettings settings) => sourceSystem switch
-    {
-        "BI1" => settings.Bi1Username,
-        "SAGE" => settings.SageUsername,
-        _ => settings.SapUsername
-    };
-
-    private static string GetCentralPassword(string sourceSystem, ExportSettings settings) => sourceSystem switch
-    {
-        "BI1" => settings.Bi1Password,
-        "SAGE" => settings.SagePassword,
-        _ => settings.SapPassword
-    };
+    private static string ResolveSapServiceUrl(Site site, SourceSystemDefinition sourceDefinition)
+        => FirstNonEmpty(site.SapServiceUrl, sourceDefinition.CentralServiceUrl);
 
     private static string NormalizeSourceSystem(string? sourceSystem)
         => string.IsNullOrWhiteSpace(sourceSystem) ? "SAP" : sourceSystem.Trim().ToUpperInvariant();
@@ -268,5 +270,29 @@ public class SiteExportService : ISiteExportService
         return string.IsNullOrWhiteSpace(configured)
             ? Path.Combine(AppContext.BaseDirectory, "output")
             : configured;
+    }
+
+    private static Site CloneSiteWithSapServiceUrl(Site site, string sapServiceUrl)
+    {
+        return new Site
+        {
+            Id = site.Id,
+            HanaServerId = site.HanaServerId,
+            HanaServer = site.HanaServer,
+            Schema = site.Schema,
+            TSC = site.TSC,
+            Land = site.Land,
+            SourceSystem = site.SourceSystem,
+            UsernameOverride = site.UsernameOverride,
+            PasswordOverride = site.PasswordOverride,
+            LocalExportFolderOverride = site.LocalExportFolderOverride,
+            ManualImportFilePath = site.ManualImportFilePath,
+            ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
+            SapServiceUrl = sapServiceUrl,
+            SapEntitySet = site.SapEntitySet,
+            SapEntitySetsCache = site.SapEntitySetsCache,
+            SapEntitySetsRefreshedAtUtc = site.SapEntitySetsRefreshedAtUtc,
+            IsActive = site.IsActive
+        };
     }
 }

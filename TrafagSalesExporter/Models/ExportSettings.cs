@@ -10,10 +10,4 @@ public class ExportSettings
     public bool DebugLoggingEnabled { get; set; }
     public string LocalSiteExportFolder { get; set; } = string.Empty;
     public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
-    public string SapUsername { get; set; } = string.Empty;
-    public string SapPassword { get; set; } = string.Empty;
-    public string Bi1Username { get; set; } = string.Empty;
-    public string Bi1Password { get; set; } = string.Empty;
-    public string SageUsername { get; set; } = string.Empty;
-    public string SagePassword { get; set; } = string.Empty;
 }
