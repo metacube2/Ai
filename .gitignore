@@ -1,0 +1,10 @@
+# Ignore Visual Studio + build artifacts
+.vs/
+TrafagSalesExporter/.vs/
+TrafagSalesExporter/bin/
+TrafagSalesExporter/obj/
+TrafagSalesExporter/*.user
+TrafagSalesExporter/*.suo
+TrafagSalesExporter/*.db
+TrafagSalesExporter/*.db-shm
+TrafagSalesExporter/*.db-wal

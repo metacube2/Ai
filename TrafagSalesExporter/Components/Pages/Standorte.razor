@@ -1,0 +1,1538 @@
+﻿@page "/standorte"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+@using System.Reflection
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IHanaQueryService HanaService
+@inject ISapGatewayService SapGatewayService
+@inject ISharePointUploadService SharePointService
+@inject IAppEventLogService AppEventLogService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Standorte</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Standorte</MudText>
+
+<MudText Typo="Typo.h5" Class="mb-2">Zentrale HANA-Technik</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+        Hier erscheinen nur Quellsysteme mit Anschlussart HANA. SAP wird zentral unter Settings -> Quellsysteme gepflegt.
+        Standorte mit `BI1` oder `SAGE` verwenden diese technischen HANA-Werte automatisch. Im Standort selbst bleiben nur Schema, TSC, Land und optionale Username-/Password-Overrides.
+    </MudAlert>
+    <MudText Typo="Typo.body2" Class="mb-3">
+        Neue HANA-Zeilen entstehen aus den zentral gepflegten Quellsystemen. Falls hier etwas fehlt, lege das Quellsystem in Settings -> Quellsysteme mit Anschlussart `HANA` an.
+    </MudText>
+
+    <MudTable Items="_servers" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Quellsystem</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Host</MudTh>
+            <MudTh>Port</MudTh>
+            <MudTh>Verbindungsstatus</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.SourceSystem</MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Host</MudTd>
+            <MudTd>@context.Port</MudTd>
+            <MudTd>
+                @if (_connectionStatus.TryGetValue(context.Id, out var status))
+                {
+                    <MudTooltip Text="@BuildStatusTooltip(status)">
+                        <MudChip T="string" Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
+                            @(status.Success ? "OK" : "Fehler") - @status.Stage
+                        </MudChip>
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditServer(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck" Size="Size.Small" Color="Color.Info"
+                               OnClick="() => TestServerConnection(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteServer(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+<MudText Typo="Typo.h5" Class="mb-2">Standorte (Sites)</MudText>
+<MudPaper Class="pa-4" Elevation="1">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="AddSite" Class="mb-3">
+        Neuen Standort hinzufÃ¼gen
+    </MudButton>
+
+    <MudTable Items="_sites" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Land</MudTh>
+            <MudTh>TSC</MudTh>
+            <MudTh>Schema</MudTh>
+            <MudTh>Quellsystem</MudTh>
+            <MudTh>Quelle</MudTh>
+            <MudTh>Aktiv</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Land</MudTd>
+            <MudTd>@context.TSC</MudTd>
+            <MudTd>@context.Schema</MudTd>
+            <MudTd>@context.SourceSystem</MudTd>
+            <MudTd>@GetConnectionTarget(context)</MudTd>
+            <MudTd>
+                @if (context.IsActive)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" />
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditSite(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteSite(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+<MudDialog @bind-Visible="_serverDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Zentrale HANA-Technik bearbeiten</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Value="_editingServer.SourceSystem" Label="Quellsystem" ReadOnly />
+        <MudTextField @bind-Value="_editingServer.Name" Label="Name" Required />
+        <MudTextField @bind-Value="_editingServer.Host" Label="Host" Required
+                      HelperText="IP oder Hostname (ohne Protokoll)" />
+        <MudNumericField @bind-Value="_editingServer.Port" Label="Port"
+                         HelperText="Typisch 30015 (Tenant), 30013 (SystemDB), 3xx15 fÃ¼r Instanz xx" />
+        <MudTextField @bind-Value="_editingServer.DatabaseName" Label="Database Name (MDC)"
+                      HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
+        <MudSwitch @bind-Value="_editingServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
+        <MudSwitch @bind-Value="_editingServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
+                   Disabled="!_editingServer.UseSsl" />
+        <MudTextField @bind-Value="_editingServer.AdditionalParams" Label="ZusÃ¤tzliche Parameter"
+                      HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseServerDialog">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveServer" Disabled="_savingServer">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="_siteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingSite.Id == 0 ? "Standort hinzufÃ¼gen" : "Standort bearbeiten")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
+        @if (UsesHanaConnection())
+        {
+            <MudStack Row Spacing="2" Class="mb-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="LoadAvailableSchemasAsync"
+                           Disabled="_loadingSchemas">
+                    @if (_loadingSchemas)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade Schemas...")
+                    }
+                    else
+                    {
+                        @("Schemas laden")
+                    }
+                </MudButton>
+                @if (_availableSchemas.Count > 0)
+                {
+                    <MudSelect T="string" Value="_editingSite.Schema"
+                               ValueChanged="OnSchemaSelected"
+                               Label="Gefundene Schemas"
+                               Dense
+                               Style="min-width: 260px;">
+                        @foreach (var schema in _availableSchemas)
+                        {
+                            <MudSelectItem Value="@schema">@schema</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Die Liste wird aus der zentralen HANA-Verbindung des Quellsystems gelesen und auf typische B1-Schemas eingeschraenkt.
+            </MudText>
+        }
+        <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
+        <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
+        <MudSelect T="string" Value="_editingSite.SourceSystem" ValueChanged="OnSourceSystemChanged" Label="Quellsystem" Required>
+            @foreach (var system in GetAvailableSourceSystems())
+            {
+                <MudSelectItem Value="@system.Code">@GetSourceSystemLabel(system)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_editingSite.UsernameOverride" Label="Username Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Username des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.PasswordOverride" Label="Password Override" InputType="InputType.Password"
+                      HelperText="Optional. Wenn leer, wird das zentrale Passwort des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.LocalExportFolderOverride" Label="Lokaler Exportpfad Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Standardpfad fÃ¼r Standort-Dateien verwendet." />
+        <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
+
+        <MudDivider Class="my-4" />
+
+        @if (IsSapSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">SAP Gateway</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Die Service-URL zeigt auf den OData-Service. Die verfÃ¼gbaren Entity Sets werden nur per Knopfdruck aktualisiert und lokal zwischengespeichert.
+            </MudAlert>
+            <MudText Typo="Typo.body2">Zentrale SAP Service URL: @GetCentralSapServiceUrlSummary(_editingSite.SourceSystem)</MudText>
+            <MudTextField @bind-Value="_editingSite.SapServiceUrl" Label="SAP Service URL Override"
+                          HelperText="Optional. Wenn leer, wird die zentrale SAP Service URL des Quellsystems verwendet." />
+            <MudStack Row Spacing="2" Class="mb-3">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshSapEntitySets"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingSapEntitySets">
+                    @if (_refreshingSapEntitySets)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade...")
+                    }
+                    else
+                    {
+                        @("Quellen refreshen")
+                    }
+                </MudButton>
+                @if (_editingSite.SapEntitySetsRefreshedAtUtc.HasValue)
+                {
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        Letzter Refresh: @_editingSite.SapEntitySetsRefreshedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                    </MudText>
+                }
+            </MudStack>
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">SAP Quellen</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapSource">Quelle hinzufÃ¼gen</MudButton>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Pro Quelle Alias und Entity Set definieren. Joins verwenden links/rechts kommagetrennte SchlÃ¼sselfelder wie `VBELN,POSNR`. Feldmappings erwarten `Alias.Feldname` oder Konstanten wie `=SAP`.
+            </MudText>
+            <MudTable Items="_sapSources" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Alias</MudTh>
+                    <MudTh>Entity Set</MudTh>
+                    <MudTh>PrimÃ¤r</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.Alias" Dense /></MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.EntitySet" Dense>
+                            @foreach (var entitySet in _sapEntitySetsCache)
+                            {
+                                <MudSelectItem Value="@entitySet">@entitySet</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsPrimary" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapSource(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">SAP Joins</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="AutoMatchSapJoins">
+                        Auto-Match
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapJoin">Join hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudTable Items="_sapJoins" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Links</MudTh>
+                    <MudTh>Left Keys</MudTh>
+                    <MudTh>Rechts</MudTh>
+                    <MudTh>Right Keys</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.LeftAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.LeftKeys)"
+                                   SelectedValuesChanged="@(values => context.LeftKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.LeftAlias, context.LeftKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.RightAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.RightKeys)"
+                                   SelectedValuesChanged="@(values => context.RightKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.RightAlias, context.RightKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.JoinType" Dense>
+                            <MudSelectItem Value="@("Left")">Left</MudSelectItem>
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapJoin(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Feldmappings ins zentrale Schema</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Schema"
+                               OnClick="RefreshSapSourceFields" Disabled="_refreshingSapSourceFields">
+                        @if (_refreshingSapSourceFields)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                            @("Lade Felder...")
+                        }
+                        else
+                        {
+                            @("Felder aus Quellen laden")
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapMapping">Mapping hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Source Expressions werden aus den hinzugefÃ¼gten SAP-Quellen als `Alias.Feldname` gelesen. Vorhandene manuelle Werte bleiben auswÃ¤hlbar.
+            </MudText>
+            <MudTable Items="_sapMappings" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Zielfeld</MudTh>
+                    <MudTh>Source Expression</MudTh>
+                    <MudTh>Pflicht</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.TargetField" Dense>
+                            @foreach (var field in _salesRecordFields)
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="context.SourceExpression" Dense>
+                            @foreach (var expression in GetAvailableSourceExpressions(context.SourceExpression))
+                            {
+                                <MudSelectItem Value="@expression">@expression</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else if (IsManualExcelSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">Manueller Excel-Import</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
+            </MudAlert>
+            <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-Dateipfad"
+                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade und SharePoint-Referenzen wie https://... oder Shared Documents/Ordner/Datei.xlsx."
+                          Class="mb-2" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateManualImportPathAsync"
+                       Disabled="_uploadingManualImport" Class="mb-3">
+                Pfad pruefen
+            </MudButton>
+            <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx" />
+            @if (_uploadingManualImport)
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Datei wird hochgeladen...</MudText>
+            }
+            @if (!string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
+            {
+                <MudPaper Class="pa-3 mt-3" Elevation="0">
+                    <MudText Typo="Typo.body2">Datei: @_editingSite.ManualImportFilePath</MudText>
+                    <MudText Typo="Typo.caption">
+                        Letzter Upload: @(_editingSite.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
+                    </MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Noch keine Datei hinterlegt.</MudText>
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Die technische HANA-Verbindung kommt aus der zentralen HANA-Konfiguration des Quellsystems. Im Standort selbst pflegst du nur fachliche Standortdaten und optionale Username-/Password-Overrides.
+            </MudAlert>
+            <MudText Typo="Typo.body2">Aktive Zentralverbindung: @GetCentralHanaSummary(_editingSite.SourceSystem)</MudText>
+            <MudText Typo="Typo.caption" Class="mt-2">
+                Host, Port, SSL und technische Parameter bearbeitest du oben in der zentralen HANA-Konfiguration.
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite || _uploadingManualImport">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets || _uploadingManualImport">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly Dictionary<int, ConnectionTestResult> _connectionStatus = new();
+    private List<HanaServer> _servers = new();
+    private List<Site> _sites = new();
+    private List<SourceSystemDefinition> _sourceSystemDefinitions = new();
+    private List<string> _sapEntitySetsCache = [];
+    private List<string> _availableSchemas = [];
+    private List<string> _sapAvailableSourceExpressions = [];
+    private Dictionary<string, List<string>> _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
+    private List<SapSourceDefinition> _sapSources = [];
+    private List<SapJoinDefinition> _sapJoins = [];
+    private List<SapFieldMapping> _sapMappings = [];
+    private readonly string[] _salesRecordFields = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Select(p => p.Name)
+        .ToArray();
+    private HanaServer _editingServer = new();
+    private Site _editingSite = new();
+    private bool _serverDialogVisible;
+    private bool _siteDialogVisible;
+    private bool _refreshingSapEntitySets;
+    private bool _refreshingSapSourceFields;
+    private bool _savingServer;
+    private bool _savingSite;
+    private bool _loadingSchemas;
+    private bool _uploadingManualImport;
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        _sourceSystemDefinitions = await db.SourceSystemDefinitions
+            .OrderBy(x => x.Code)
+            .ToListAsync();
+        _servers = await db.HanaServers
+            .Where(s => GetHanaSourceSystemCodes().Contains(s.SourceSystem))
+            .OrderBy(s => s.SourceSystem)
+            .ThenBy(s => s.Name)
+            .ToListAsync();
+        _sites = await db.Sites.Include(s => s.HanaServer).OrderBy(s => s.Land).ToListAsync();
+    }
+
+    private void EditServer(HanaServer server)
+    {
+        _editingServer = CloneServer(server);
+        _serverDialogVisible = true;
+    }
+
+    private async Task SaveServer()
+    {
+        if (_savingServer)
+            return;
+
+        _savingServer = true;
+        try
+        {
+        _editingServer.SourceSystem = string.IsNullOrWhiteSpace(_editingServer.SourceSystem)
+            ? GetHanaSourceSystemCodes().FirstOrDefault() ?? string.Empty
+            : _editingServer.SourceSystem.Trim().ToUpperInvariant();
+        _editingServer.Name = string.IsNullOrWhiteSpace(_editingServer.Name) ? _editingServer.SourceSystem : _editingServer.Name.Trim();
+        _editingServer.Host = _editingServer.Host.Trim();
+        _editingServer.DatabaseName = _editingServer.DatabaseName.Trim();
+        _editingServer.AdditionalParams = _editingServer.AdditionalParams.Trim();
+        _editingServer.Username = string.Empty;
+        _editingServer.Password = string.Empty;
+        using var db = await DbFactory.CreateDbContextAsync();
+        if (_editingServer.Id == 0)
+        {
+            var existingForSourceSystem = await db.HanaServers
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.SourceSystem == _editingServer.SourceSystem);
+
+            if (existingForSourceSystem is null)
+            {
+                db.HanaServers.Add(_editingServer);
+            }
+            else
+            {
+                existingForSourceSystem.Name = _editingServer.Name;
+                existingForSourceSystem.Host = _editingServer.Host;
+                existingForSourceSystem.Port = _editingServer.Port;
+                existingForSourceSystem.Username = string.Empty;
+                existingForSourceSystem.Password = string.Empty;
+                existingForSourceSystem.DatabaseName = _editingServer.DatabaseName;
+                existingForSourceSystem.UseSsl = _editingServer.UseSsl;
+                existingForSourceSystem.ValidateCertificate = _editingServer.ValidateCertificate;
+                existingForSourceSystem.AdditionalParams = _editingServer.AdditionalParams;
+            }
+        }
+        else
+        {
+            var existing = await db.HanaServers.FindAsync(_editingServer.Id);
+            if (existing is not null)
+            {
+                existing.SourceSystem = _editingServer.SourceSystem;
+                existing.Name = _editingServer.Name;
+                existing.Host = _editingServer.Host;
+                existing.Port = _editingServer.Port;
+                existing.Username = string.Empty;
+                existing.Password = string.Empty;
+                existing.DatabaseName = _editingServer.DatabaseName;
+                existing.UseSsl = _editingServer.UseSsl;
+                existing.ValidateCertificate = _editingServer.ValidateCertificate;
+                existing.AdditionalParams = _editingServer.AdditionalParams;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        _serverDialogVisible = false;
+        await LoadDataAsync();
+        Snackbar.Add("Server gespeichert", Severity.Success);
+        }
+        finally
+        {
+            _savingServer = false;
+        }
+    }
+
+    private async Task DeleteServer(HanaServer server)
+    {
+        if (IsHanaSourceSystem(server.SourceSystem))
+        {
+            Snackbar.Add($"Die zentrale HANA-Konfiguration fuer {server.SourceSystem} kann nicht geloescht werden.", Severity.Warning);
+            return;
+        }
+
+        var result = await DialogService.ShowMessageBox(
+            "Server lÃ¶schen",
+            $"Server '{server.Name}' wirklich lÃ¶schen?",
+            yesText: "LÃ¶schen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var linkedSites = await db.Sites
+                .Where(s => s.HanaServerId == server.Id)
+                .OrderBy(s => s.Land)
+                .Select(s => $"{s.Land} ({s.TSC})")
+                .ToListAsync();
+
+            if (linkedSites.Count > 0)
+            {
+                Snackbar.Add(
+                    $"Server kann nicht gelÃ¶scht werden. Noch verknÃ¼pfte Standorte: {string.Join(", ", linkedSites)}",
+                    Severity.Warning);
+                return;
+            }
+
+            var entity = await db.HanaServers.FindAsync(server.Id);
+            if (entity is not null)
+            {
+                db.HanaServers.Remove(entity);
+                await db.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Server konnte nicht gelÃ¶scht werden: {ex.Message}", Severity.Error);
+            return;
+        }
+
+        await LoadDataAsync();
+        Snackbar.Add("Server gelÃ¶scht", Severity.Info);
+    }
+
+    private async Task TestServerConnection(HanaServer server)
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var sourceDefinition = await db.SourceSystemDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(x => x.Code == server.SourceSystem);
+
+        if (sourceDefinition is null)
+        {
+            Snackbar.Add($"Quellsystem '{server.SourceSystem}' nicht gefunden.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(sourceDefinition.CentralUsername) || string.IsNullOrWhiteSpace(sourceDefinition.CentralPassword))
+        {
+            Snackbar.Add($"Fuer {server.SourceSystem} sind keine zentralen Zugangsdaten im Quellsystem gepflegt.", Severity.Warning);
+            return;
+        }
+
+        var testServer = new HanaServer
+        {
+            Id = server.Id,
+            SourceSystem = server.SourceSystem,
+            Name = server.Name,
+            Host = server.Host,
+            Port = server.Port,
+            Username = sourceDefinition.CentralUsername.Trim(),
+            Password = sourceDefinition.CentralPassword,
+            DatabaseName = server.DatabaseName,
+            UseSsl = server.UseSsl,
+            ValidateCertificate = server.ValidateCertificate,
+            AdditionalParams = server.AdditionalParams
+        };
+
+        await AppEventLogService.WriteAsync("HANA", "Server-Test aus UI gestartet",
+            details: testServer.GetConnectionStringPreview());
+        var result = await Task.Run(() => HanaService.TestConnectionDetailed(testServer));
+        _connectionStatus[server.Id] = result;
+
+        if (result.Success)
+        {
+            Snackbar.Add($"Verbindung zu '{server.Name}' erfolgreich.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{server.Name}: {result.ExceptionType} - {result.ErrorMessage}", Severity.Error);
+        }
+    }
+
+    private static string BuildStatusTooltip(ConnectionTestResult status)
+    {
+        var stamp = status.TestedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        if (status.Success)
+            return $"Letzter Test: {stamp}\nStage: {status.Stage}\n{status.ConnectionStringPreview}";
+
+        return $"Letzter Test: {stamp}\nStage: {status.Stage}\nFehler: {status.ErrorMessage}\n{status.ConnectionStringPreview}";
+    }
+
+    private void AddSite()
+    {
+        _editingSite = new Site
+        {
+            IsActive = true,
+            SourceSystem = GetAvailableSourceSystems().FirstOrDefault()?.Code ?? "SAP",
+            HanaServerId = null,
+            ManualImportFilePath = string.Empty
+        };
+        _availableSchemas = [];
+        _sapEntitySetsCache = [];
+        _sapAvailableSourceExpressions = [];
+        _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
+        _sapSources = [];
+        _sapJoins = [];
+        _sapMappings = [];
+        _siteDialogVisible = true;
+    }
+
+    private void EditSite(Site site)
+    {
+        _editingSite = new Site
+        {
+            Id = site.Id,
+            HanaServerId = site.HanaServerId,
+            Schema = site.Schema,
+            TSC = site.TSC,
+            Land = site.Land,
+            SourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem)
+                ? GetAvailableSourceSystems().FirstOrDefault()?.Code ?? "SAP"
+                : site.SourceSystem,
+            UsernameOverride = site.UsernameOverride,
+            PasswordOverride = site.PasswordOverride,
+            LocalExportFolderOverride = site.LocalExportFolderOverride,
+            ManualImportFilePath = site.ManualImportFilePath,
+            ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
+            SapServiceUrl = site.SapServiceUrl,
+            SapEntitySet = site.SapEntitySet,
+            SapEntitySetsCache = site.SapEntitySetsCache,
+            SapEntitySetsRefreshedAtUtc = site.SapEntitySetsRefreshedAtUtc,
+            IsActive = site.IsActive
+        };
+        _availableSchemas = [];
+        _sapEntitySetsCache = ParseSapEntitySets(site.SapEntitySetsCache);
+        using var db = DbFactory.CreateDbContext();
+        _sapSources = db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
+        _sapJoins = db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).OrderBy(j => j.SortOrder).ThenBy(j => j.Id).ToList();
+        _sapMappings = db.SapFieldMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
+        _sapAvailableSourceExpressions = BuildSourceExpressionsFromMappings();
+        _sapSourceFieldMap = BuildSourceFieldMapFromJoins();
+        _siteDialogVisible = true;
+    }
+
+    private async Task SaveSite()
+    {
+        if (_savingSite)
+            return;
+
+        _savingSite = true;
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var serverId = UsesHanaConnection() ? await ResolveCentralHanaServerIdAsync(db, _editingSite.SourceSystem) : (int?)null;
+            _editingSite.HanaServerId = serverId;
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(_sapEntitySetsCache);
+
+            if (_editingSite.Id == 0)
+            {
+                db.Sites.Add(_editingSite);
+            }
+            else
+            {
+                var existing = await db.Sites.FindAsync(_editingSite.Id);
+                if (existing is not null)
+                {
+                    existing.HanaServerId = serverId;
+                    existing.Schema = _editingSite.Schema;
+                    existing.TSC = _editingSite.TSC;
+                    existing.Land = _editingSite.Land;
+                    existing.SourceSystem = _editingSite.SourceSystem;
+                    existing.UsernameOverride = _editingSite.UsernameOverride;
+                    existing.PasswordOverride = _editingSite.PasswordOverride;
+                    existing.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride;
+                    existing.ManualImportFilePath = _editingSite.ManualImportFilePath;
+                    existing.ManualImportLastUploadedAtUtc = _editingSite.ManualImportLastUploadedAtUtc;
+                    existing.SapServiceUrl = _editingSite.SapServiceUrl;
+                    existing.SapEntitySet = _editingSite.SapEntitySet;
+                    existing.SapEntitySetsCache = _editingSite.SapEntitySetsCache;
+                    existing.SapEntitySetsRefreshedAtUtc = _editingSite.SapEntitySetsRefreshedAtUtc;
+                    existing.IsActive = _editingSite.IsActive;
+                }
+            }
+
+            await db.SaveChangesAsync();
+            await SaveSapConfigurationAsync(db, _editingSite.Id);
+            _siteDialogVisible = false;
+            await LoadDataAsync();
+            Snackbar.Add("Standort gespeichert", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Speichern fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _savingSite = false;
+        }
+    }
+
+    private async Task DeleteSite(Site site)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Standort lÃ¶schen",
+            $"Standort '{site.Land}' wirklich lÃ¶schen?",
+            yesText: "LÃ¶schen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        var entity = await db.Sites.FindAsync(site.Id);
+        if (entity is not null)
+        {
+            var sources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
+            var joins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
+            var mappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
+            var centralRows = await db.CentralSalesRecords.Where(r => r.SiteId == site.Id).ToListAsync();
+            if (sources.Count > 0) db.SapSourceDefinitions.RemoveRange(sources);
+            if (joins.Count > 0) db.SapJoinDefinitions.RemoveRange(joins);
+            if (mappings.Count > 0) db.SapFieldMappings.RemoveRange(mappings);
+            if (centralRows.Count > 0) db.CentralSalesRecords.RemoveRange(centralRows);
+            db.Sites.Remove(entity);
+            await db.SaveChangesAsync();
+        }
+
+        await LoadDataAsync();
+        Snackbar.Add("Standort gelÃ¶scht", Severity.Info);
+    }
+
+    private static string GetServerNode(HanaServer? server)
+    {
+        if (server is null || string.IsNullOrWhiteSpace(server.Host))
+            return "-";
+
+        return server.Host.Contains(':', StringComparison.Ordinal) ? server.Host : $"{server.Host}:{server.Port}";
+    }
+
+    private static HanaServer CloneServer(HanaServer server)
+    {
+        return new HanaServer
+        {
+            Id = server.Id,
+            SourceSystem = server.SourceSystem,
+            Name = server.Name,
+            Host = server.Host,
+            Port = server.Port,
+            Username = string.Empty,
+            Password = string.Empty,
+            DatabaseName = server.DatabaseName,
+            UseSsl = server.UseSsl,
+            ValidateCertificate = server.ValidateCertificate,
+            AdditionalParams = server.AdditionalParams
+        };
+    }
+
+    private async Task<int> ResolveCentralHanaServerIdAsync(AppDbContext db, string sourceSystem)
+    {
+        _editingSite.UsernameOverride = _editingSite.UsernameOverride.Trim();
+        _editingSite.PasswordOverride = _editingSite.PasswordOverride.Trim();
+        _editingSite.LocalExportFolderOverride = _editingSite.LocalExportFolderOverride.Trim();
+        _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
+        _editingSite.SapServiceUrl = _editingSite.SapServiceUrl.Trim();
+        _editingSite.SapEntitySet = _editingSite.SapEntitySet.Trim();
+
+        var normalizedSourceSystem = string.IsNullOrWhiteSpace(sourceSystem) ? string.Empty : sourceSystem.Trim().ToUpperInvariant();
+        var centralServer = await db.HanaServers
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(x => x.SourceSystem == normalizedSourceSystem);
+
+        if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
+            throw new InvalidOperationException($"Fuer Quellsystem '{normalizedSourceSystem}' ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
+
+        return centralServer.Id;
+    }
+
+    private Task OnSchemaSelected(string schema)
+    {
+        _editingSite.Schema = schema;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSourceSystemChanged(string value)
+    {
+        _editingSite.SourceSystem = value;
+        _availableSchemas = [];
+        return Task.CompletedTask;
+    }
+
+    private IEnumerable<SourceSystemDefinition> GetAvailableSourceSystems()
+        => _sourceSystemDefinitions
+            .Where(x => x.IsActive || string.Equals(x.Code, _editingSite.SourceSystem, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.DisplayName)
+            .ThenBy(x => x.Code);
+
+    private List<string> GetHanaSourceSystemCodes()
+        => _sourceSystemDefinitions
+            .Where(x => string.Equals(x.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Code)
+            .OrderBy(x => x)
+            .ToList();
+
+    private string GetSourceSystemConnectionKind(string? sourceSystem)
+        => _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase))
+            ?.ConnectionKind
+            ?? SourceSystemConnectionKinds.SapGateway;
+
+    private bool IsHanaSourceSystem(string? sourceSystem)
+        => string.Equals(GetSourceSystemConnectionKind(sourceSystem), SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsSapSite()
+        => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsManualExcelSite()
+        => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase);
+
+    private bool UsesHanaConnection() => IsHanaSourceSystem(_editingSite.SourceSystem);
+
+    private string GetSourceSystemLabel(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.DisplayName) ? definition.Code : $"{definition.DisplayName} ({definition.Code})";
+
+    private string GetConnectionTarget(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return GetEffectiveSapServiceUrl(site);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(site.ManualImportFilePath) ? "-" : Path.GetFileName(site.ManualImportFilePath);
+
+        return GetServerNode(site.HanaServer);
+    }
+
+    private string GetEffectiveSapServiceUrl(Site site)
+    {
+        if (!string.IsNullOrWhiteSpace(site.SapServiceUrl))
+            return site.SapServiceUrl;
+
+        var sourceDefinition = _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
+
+        return string.IsNullOrWhiteSpace(sourceDefinition?.CentralServiceUrl) ? "-" : sourceDefinition.CentralServiceUrl;
+    }
+
+    private string GetCentralSapServiceUrlSummary(string sourceSystem)
+    {
+        var sourceDefinition = _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase));
+
+        return string.IsNullOrWhiteSpace(sourceDefinition?.CentralServiceUrl) ? "-" : sourceDefinition.CentralServiceUrl;
+    }
+
+    private string GetCentralHanaSummary(string sourceSystem)
+    {
+        var normalizedSourceSystem = string.IsNullOrWhiteSpace(sourceSystem) ? string.Empty : sourceSystem.Trim().ToUpperInvariant();
+        var centralServer = _servers.FirstOrDefault(x => x.SourceSystem == normalizedSourceSystem);
+        if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
+            return $"keine zentrale HANA-Konfiguration fuer {normalizedSourceSystem}";
+
+        return $"{centralServer.Name} | {GetServerNode(centralServer)}";
+    }
+
+    private async Task LoadAvailableSchemasAsync()
+    {
+        if (_loadingSchemas)
+            return;
+
+        _loadingSchemas = true;
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var sourceDefinition = await db.SourceSystemDefinitions
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
+
+            if (sourceDefinition is null)
+                throw new InvalidOperationException($"Quellsystem '{_editingSite.SourceSystem}' nicht gefunden.");
+
+            var centralServer = await db.HanaServers
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.SourceSystem == _editingSite.SourceSystem);
+
+            if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
+                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
+
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
+                ? sourceDefinition.CentralUsername ?? string.Empty
+                : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
+                ? sourceDefinition.CentralPassword ?? string.Empty
+                : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"Fuer {_editingSite.SourceSystem} sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            var lookupServer = new HanaServer
+            {
+                Id = centralServer.Id,
+                SourceSystem = centralServer.SourceSystem,
+                Name = centralServer.Name,
+                Host = centralServer.Host,
+                Port = centralServer.Port,
+                Username = username.Trim(),
+                Password = password,
+                DatabaseName = centralServer.DatabaseName,
+                UseSsl = centralServer.UseSsl,
+                ValidateCertificate = centralServer.ValidateCertificate,
+                AdditionalParams = centralServer.AdditionalParams
+            };
+
+            var schemas = await Task.Run(() => HanaService.GetAvailableSchemas(lookupServer));
+            _availableSchemas = schemas
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (_availableSchemas.Count == 0)
+            {
+                Snackbar.Add("Keine passenden Schemas gefunden.", Severity.Info);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_editingSite.Schema) ||
+                !_availableSchemas.Contains(_editingSite.Schema, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.Schema = _availableSchemas[0];
+            }
+
+            Snackbar.Add($"{_availableSchemas.Count} Schemas geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Schemas laden fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingSchemas = false;
+        }
+    }
+
+    private async Task RefreshSapEntitySets()
+    {
+        if (_refreshingSapEntitySets)
+            return;
+
+        _refreshingSapEntitySets = true;
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var sourceDefinition = await db.SourceSystemDefinitions
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
+            var serviceUrl = string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl)
+                ? sourceDefinition?.CentralServiceUrl ?? string.Empty
+                : _editingSite.SapServiceUrl;
+            if (string.IsNullOrWhiteSpace(serviceUrl))
+                throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
+                ? sourceDefinition?.CentralUsername ?? string.Empty
+                : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
+                ? sourceDefinition?.CentralPassword ?? string.Empty
+                : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("FÃ¼r SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI gestartet", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: serviceUrl);
+            var entitySets = await SapGatewayService.GetEntitySetsAsync(serviceUrl, username.Trim(), password.Trim());
+            _sapEntitySetsCache = entitySets;
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(entitySets);
+            _editingSite.SapEntitySetsRefreshedAtUtc = DateTime.UtcNow;
+
+            if (!string.IsNullOrWhiteSpace(_editingSite.SapEntitySet) &&
+                !_sapEntitySetsCache.Contains(_editingSite.SapEntitySet, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.SapEntitySet = string.Empty;
+            }
+
+            Snackbar.Add($"{entitySets.Count} SAP Entity Sets geladen.", Severity.Success);
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI erfolgreich", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: $"EntitySets={entitySets.Count}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            await AppEventLogService.WriteAsync("SAP", "Refresh aus UI fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land,
+                details: ex.ToString());
+        }
+        finally
+        {
+            _refreshingSapEntitySets = false;
+        }
+    }
+
+    private void CloseServerDialog()
+    {
+        if (_savingServer)
+            return;
+
+        _serverDialogVisible = false;
+    }
+
+    private void CloseSiteDialog()
+    {
+        if (_savingSite || _refreshingSapEntitySets || _uploadingManualImport)
+            return;
+
+        _siteDialogVisible = false;
+    }
+
+    private async Task UploadManualImportFileAsync(InputFileChangeEventArgs args)
+    {
+        if (_uploadingManualImport)
+            return;
+
+        var file = args.File;
+        if (file is null)
+            return;
+
+        _uploadingManualImport = true;
+        try
+        {
+            var extension = Path.GetExtension(file.Name);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx auswÃ¤hlen.");
+            }
+
+            var uploadDirectory = Path.Combine(AppContext.BaseDirectory, "manual-imports");
+            Directory.CreateDirectory(uploadDirectory);
+
+            var safeBaseName = string.Concat(Path.GetFileNameWithoutExtension(file.Name).Select(ch =>
+                char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' ? ch : '_'));
+            if (string.IsNullOrWhiteSpace(safeBaseName))
+                safeBaseName = "manual_import";
+
+            var targetPath = Path.Combine(uploadDirectory, $"{safeBaseName}_{Guid.NewGuid():N}{extension}");
+
+            await using (var sourceStream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024))
+            await using (var targetStream = File.Create(targetPath))
+            {
+                await sourceStream.CopyToAsync(targetStream);
+            }
+
+            _editingSite.ManualImportFilePath = targetPath;
+            _editingSite.ManualImportLastUploadedAtUtc = DateTime.UtcNow;
+            Snackbar.Add("Excel-Datei hochgeladen.", Severity.Success);
+            await AppEventLogService.WriteAsync("ManualImport", "Excel-Datei hochgeladen", siteId: _editingSite.Id, land: _editingSite.Land, details: targetPath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload fehlgeschlagen: {ex.Message}", Severity.Error);
+            await AppEventLogService.WriteAsync("ManualImport", "Excel-Upload fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
+        }
+        finally
+        {
+            _uploadingManualImport = false;
+        }
+    }
+
+    private async Task ValidateManualImportPathAsync()
+    {
+        try
+        {
+            _editingSite.ManualImportFilePath = _editingSite.ManualImportFilePath.Trim();
+
+            if (string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
+                throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
+
+            if (!string.Equals(Path.GetExtension(_editingSite.ManualImportFilePath), ".xlsx", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx angeben.");
+
+            if (File.Exists(_editingSite.ManualImportFilePath))
+            {
+                _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(_editingSite.ManualImportFilePath);
+            }
+            else if (LooksLikeSharePointReference(_editingSite.ManualImportFilePath))
+            {
+                using var db = await DbFactory.CreateDbContextAsync();
+                var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
+                if (spConfig is null ||
+                    string.IsNullOrWhiteSpace(spConfig.TenantId) ||
+                    string.IsNullOrWhiteSpace(spConfig.ClientId) ||
+                    string.IsNullOrWhiteSpace(spConfig.ClientSecret) ||
+                    string.IsNullOrWhiteSpace(spConfig.SiteUrl))
+                {
+                    throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
+                }
+
+                var tempPath = await SharePointService.DownloadToTempFileAsync(
+                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, _editingSite.ManualImportFilePath);
+                try
+                {
+                    _editingSite.ManualImportLastUploadedAtUtc = File.GetLastWriteTimeUtc(tempPath);
+                }
+                finally
+                {
+                    if (File.Exists(tempPath))
+                        File.Delete(tempPath);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {_editingSite.ManualImportFilePath}");
+            }
+
+            Snackbar.Add("Dateipfad ist gueltig und die Excel-Datei ist erreichbar.", Severity.Success);
+            await AppEventLogService.WriteAsync("ManualImport", "Dateipfad erfolgreich geprueft", siteId: _editingSite.Id, land: _editingSite.Land, details: _editingSite.ManualImportFilePath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Pfadpruefung fehlgeschlagen: {ex.Message}", Severity.Error);
+            await AppEventLogService.WriteAsync("ManualImport", "Dateipfadpruefung fehlgeschlagen", "Error", siteId: _editingSite.Id, land: _editingSite.Land, details: ex.ToString());
+        }
+    }
+
+    private static List<string> ParseSapEntitySets(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return [];
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string SerializeSapEntitySets(List<string> entitySets)
+        => JsonSerializer.Serialize(entitySets);
+
+    private static bool LooksLikeSharePointReference(string path)
+        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
+
+    private void AddSapSource()
+    {
+        _sapSources.Add(new SapSourceDefinition
+        {
+            Alias = $"SRC{_sapSources.Count + 1}",
+            EntitySet = _sapEntitySetsCache.FirstOrDefault() ?? string.Empty,
+            IsActive = true,
+            IsPrimary = _sapSources.Count == 0,
+            SortOrder = _sapSources.Count
+        });
+    }
+
+    private void RemoveSapSource(SapSourceDefinition source)
+    {
+        _sapSources.Remove(source);
+    }
+
+    private void AddSapJoin()
+    {
+        _sapJoins.Add(new SapJoinDefinition
+        {
+            JoinType = "Left",
+            IsActive = true,
+            SortOrder = _sapJoins.Count
+        });
+    }
+
+    private void AutoMatchSapJoins()
+    {
+        var activeSources = _sapSources
+            .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias))
+            .OrderBy(s => s.SortOrder)
+            .ThenBy(s => s.Id)
+            .ToList();
+
+        if (activeSources.Count < 2)
+        {
+            Snackbar.Add("FÃ¼r Auto-Match werden mindestens zwei aktive SAP-Quellen benÃ¶tigt.", Severity.Warning);
+            return;
+        }
+
+        if (_sapSourceFieldMap.Count == 0)
+        {
+            Snackbar.Add("Bitte zuerst 'Felder aus Quellen laden' ausfÃ¼hren.", Severity.Warning);
+            return;
+        }
+
+        var primary = activeSources.FirstOrDefault(s => s.IsPrimary) ?? activeSources.First();
+        var createdOrUpdated = 0;
+
+        foreach (var source in activeSources.Where(s => !string.Equals(s.Alias, primary.Alias, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (!_sapSourceFieldMap.TryGetValue(primary.Alias, out var leftFields) || leftFields.Count == 0)
+                continue;
+            if (!_sapSourceFieldMap.TryGetValue(source.Alias, out var rightFields) || rightFields.Count == 0)
+                continue;
+
+            var matchingFields = leftFields
+                .Intersect(rightFields, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (matchingFields.Count == 0)
+                continue;
+
+            var existingJoin = _sapJoins.FirstOrDefault(j =>
+                string.Equals(j.LeftAlias, primary.Alias, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(j.RightAlias, source.Alias, StringComparison.OrdinalIgnoreCase));
+
+            var keyList = string.Join(',', matchingFields);
+            if (existingJoin is null)
+            {
+                _sapJoins.Add(new SapJoinDefinition
+                {
+                    LeftAlias = primary.Alias,
+                    RightAlias = source.Alias,
+                    LeftKeys = keyList,
+                    RightKeys = keyList,
+                    JoinType = "Left",
+                    IsActive = true,
+                    SortOrder = _sapJoins.Count
+                });
+            }
+            else
+            {
+                existingJoin.LeftKeys = keyList;
+                existingJoin.RightKeys = keyList;
+                existingJoin.JoinType = "Left";
+                existingJoin.IsActive = true;
+            }
+
+            createdOrUpdated++;
+        }
+
+        if (createdOrUpdated == 0)
+        {
+            Snackbar.Add("Kein passender Join-Vorschlag gefunden.", Severity.Info);
+            return;
+        }
+
+        NormalizeSapConfigCollections();
+        Snackbar.Add($"{createdOrUpdated} Join-VorschlÃ¤ge gesetzt.", Severity.Success);
+    }
+
+    private void RemoveSapJoin(SapJoinDefinition join)
+    {
+        _sapJoins.Remove(join);
+    }
+
+    private void AddSapMapping()
+    {
+        _sapMappings.Add(new SapFieldMapping
+        {
+            TargetField = _salesRecordFields.First(),
+            SourceExpression = _sapAvailableSourceExpressions.FirstOrDefault() ?? "=SAP",
+            IsActive = true,
+            SortOrder = _sapMappings.Count
+        });
+    }
+
+    private void RemoveSapMapping(SapFieldMapping mapping)
+    {
+        _sapMappings.Remove(mapping);
+    }
+
+    private IEnumerable<string> GetSapAliases()
+        => _sapSources.Where(s => !string.IsNullOrWhiteSpace(s.Alias)).Select(s => s.Alias).Distinct(StringComparer.OrdinalIgnoreCase);
+
+    private async Task SaveSapConfigurationAsync(AppDbContext db, int siteId)
+    {
+        var oldSources = await db.SapSourceDefinitions.Where(s => s.SiteId == siteId).ToListAsync();
+        var oldJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == siteId).ToListAsync();
+        var oldMappings = await db.SapFieldMappings.Where(m => m.SiteId == siteId).ToListAsync();
+        if (oldSources.Count > 0) db.SapSourceDefinitions.RemoveRange(oldSources);
+        if (oldJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(oldJoins);
+        if (oldMappings.Count > 0) db.SapFieldMappings.RemoveRange(oldMappings);
+
+        if (IsSapSite())
+        {
+            NormalizeSapConfigCollections();
+            foreach (var source in _sapSources)
+                source.SiteId = siteId;
+            foreach (var join in _sapJoins)
+                join.SiteId = siteId;
+            foreach (var mapping in _sapMappings)
+                mapping.SiteId = siteId;
+            db.SapSourceDefinitions.AddRange(_sapSources);
+            db.SapJoinDefinitions.AddRange(_sapJoins);
+            db.SapFieldMappings.AddRange(_sapMappings);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private void NormalizeSapConfigCollections()
+    {
+        for (var i = 0; i < _sapSources.Count; i++)
+            _sapSources[i].SortOrder = i;
+        for (var i = 0; i < _sapJoins.Count; i++)
+            _sapJoins[i].SortOrder = i;
+        for (var i = 0; i < _sapMappings.Count; i++)
+            _sapMappings[i].SortOrder = i;
+
+        var selectedPrimaryIndex = _sapSources.FindIndex(s => s.IsPrimary);
+        var primarySource = selectedPrimaryIndex >= 0 ? _sapSources[selectedPrimaryIndex] : _sapSources.FirstOrDefault();
+        foreach (var source in _sapSources)
+            source.IsPrimary = primarySource is not null && ReferenceEquals(source, primarySource);
+        if (_sapSources.Count > 0 && _sapSources.All(s => !s.IsPrimary))
+            _sapSources[0].IsPrimary = true;
+    }
+
+    private async Task RefreshSapSourceFields()
+    {
+        if (_refreshingSapSourceFields)
+            return;
+
+        _refreshingSapSourceFields = true;
+        try
+        {
+            var activeSources = _sapSources
+                .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias) && !string.IsNullOrWhiteSpace(s.EntitySet))
+                .OrderBy(s => s.SortOrder)
+                .ThenBy(s => s.Id)
+                .ToList();
+
+            if (activeSources.Count == 0)
+                throw new InvalidOperationException("Es gibt keine aktiven SAP-Quellen mit Alias und Entity Set.");
+
+            using var db = await DbFactory.CreateDbContextAsync();
+            var sourceDefinition = await db.SourceSystemDefinitions
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(x => x.Code == _editingSite.SourceSystem);
+            var serviceUrl = string.IsNullOrWhiteSpace(_editingSite.SapServiceUrl)
+                ? sourceDefinition?.CentralServiceUrl ?? string.Empty
+                : _editingSite.SapServiceUrl;
+            if (string.IsNullOrWhiteSpace(serviceUrl))
+                throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
+            var username = string.IsNullOrWhiteSpace(_editingSite.UsernameOverride)
+                ? sourceDefinition?.CentralUsername ?? string.Empty
+                : _editingSite.UsernameOverride;
+            var password = string.IsNullOrWhiteSpace(_editingSite.PasswordOverride)
+                ? sourceDefinition?.CentralPassword ?? string.Empty
+                : _editingSite.PasswordOverride;
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("FÃ¼r SAP sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+            var expressions = new List<string> { "=SAP" };
+            var sourceFieldMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var source in activeSources)
+            {
+                var fieldNames = await SapGatewayService.GetEntityFieldNamesAsync(serviceUrl, source.EntitySet, username.Trim(), password.Trim());
+                sourceFieldMap[source.Alias] = fieldNames;
+                expressions.AddRange(fieldNames.Select(field => $"{source.Alias}.{field}"));
+            }
+
+            _sapAvailableSourceExpressions = expressions
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            _sapSourceFieldMap = sourceFieldMap;
+
+            foreach (var current in BuildSourceExpressionsFromMappings())
+            {
+                if (!_sapAvailableSourceExpressions.Contains(current, StringComparer.OrdinalIgnoreCase))
+                    _sapAvailableSourceExpressions.Add(current);
+            }
+
+            _sapAvailableSourceExpressions = _sapAvailableSourceExpressions
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            Snackbar.Add($"{_sapAvailableSourceExpressions.Count} Source Expressions geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshingSapSourceFields = false;
+        }
+    }
+
+    private IEnumerable<string> GetAvailableSourceExpressions(string? currentValue)
+    {
+        var expressions = new List<string>(_sapAvailableSourceExpressions);
+        if (!string.IsNullOrWhiteSpace(currentValue) && !expressions.Contains(currentValue, StringComparer.OrdinalIgnoreCase))
+            expressions.Insert(0, currentValue);
+
+        return expressions;
+    }
+
+    private List<string> BuildSourceExpressionsFromMappings()
+        => _sapMappings
+            .Select(m => m.SourceExpression)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private Dictionary<string, List<string>> BuildSourceFieldMapFromJoins()
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var join in _sapJoins)
+        {
+            AddJoinKeysToFieldMap(result, join.LeftAlias, join.LeftKeys);
+            AddJoinKeysToFieldMap(result, join.RightAlias, join.RightKeys);
+        }
+
+        return result;
+    }
+
+    private static void AddJoinKeysToFieldMap(Dictionary<string, List<string>> target, string alias, string keys)
+    {
+        if (string.IsNullOrWhiteSpace(alias))
+            return;
+
+        if (!target.TryGetValue(alias, out var fields))
+        {
+            fields = [];
+            target[alias] = fields;
+        }
+
+        foreach (var key in GetSelectedJoinKeys(keys))
+        {
+            if (!fields.Contains(key, StringComparer.OrdinalIgnoreCase))
+                fields.Add(key);
+        }
+
+        fields.Sort(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private IEnumerable<string> GetAvailableJoinFields(string? alias, string? currentKeys)
+    {
+        var values = new List<string>();
+        if (!string.IsNullOrWhiteSpace(alias) && _sapSourceFieldMap.TryGetValue(alias, out var fields))
+            values.AddRange(fields);
+
+        foreach (var key in GetSelectedJoinKeys(currentKeys))
+        {
+            if (!values.Contains(key, StringComparer.OrdinalIgnoreCase))
+                values.Add(key);
+        }
+
+        return values
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static HashSet<string> GetSelectedJoinKeys(string? keys)
+        => keys?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ?? [];
+}
+
+

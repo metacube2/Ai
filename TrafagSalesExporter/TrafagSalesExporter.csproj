@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!--
+      Pfad zur SAP HANA Client DLL (wird mit dem SAP HANA Client installiert).
+      Standard-Pfad nach Installation: C:\Program Files\sap\hdbclient\dotnetcore\v2.1\
+      Kann bei Bedarf via MSBuild-Property überschrieben werden:
+        dotnet build /p:HanaClientDll="D:\pfad\zu\Sap.Data.Hana.Core.v2.1.dll"
+    -->
+    <HanaClientDll Condition="'$(HanaClientDll)' == ''">C:\Program Files\sap\hdbclient\dotnetcore\v2.1\Sap.Data.Hana.Core.v2.1.dll</HanaClientDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Graph" Version="5.80.0" />
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+    <PackageReference Include="MudBlazor" Version="7.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.Core.v2.1">
+      <HintPath>$(HanaClientDll)</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TrafagSalesExporter.Tests\**\*.cs" />
+    <Content Remove="TrafagSalesExporter.Tests\**\*" />
+    <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
+    <None Remove="TrafagSalesExporter.Tests\**\*" />
+  </ItemGroup>
+
+  <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">
+    <Warning Condition="!Exists('$(HanaClientDll)')"
+             Text="SAP HANA Client DLL nicht gefunden: $(HanaClientDll). Bitte SAP HANA Client installieren (https://tools.hana.ondemand.com) oder MSBuild-Property 'HanaClientDll' setzen." />
+  </Target>
+</Project>

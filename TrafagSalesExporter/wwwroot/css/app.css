@@ -1,0 +1,14 @@
+html, body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.app-title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.app-logo {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+}

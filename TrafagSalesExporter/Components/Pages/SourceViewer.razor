@@ -1,0 +1,134 @@
+@page "/source-viewer"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.WebUtilities
+@inject IWebHostEnvironment Environment
+@inject NavigationManager Navigation
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<PageTitle>@T("Source Viewer", "Source Viewer")</PageTitle>
+
+<MudStack Spacing="2">
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h5">@T("Source Viewer", "Source Viewer")</MudText>
+        <MudButton Variant="Variant.Outlined" Href="/transformations">
+            @T("Zurueck zur Transformation", "Back to transformations")
+        </MudButton>
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(_requestedPath))
+    {
+        <MudText Typo="Typo.body2">
+            @T("Datei:", "File:")
+            <MudText Inline="true" Typo="Typo.body2"><code>@_requestedPath</code></MudText>
+        </MudText>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_requestedType))
+    {
+        <MudText Typo="Typo.body2">
+            @T("Klasse:", "Class:")
+            <MudText Inline="true" Typo="Typo.body2"><code>@_requestedType</code></MudText>
+            @if (_highlightLineNumber is not null)
+            {
+                <span> @T("bei Zeile", "at line") @_highlightLineNumber</span>
+            }
+        </MudText>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@_error</MudAlert>
+    }
+    else if (string.IsNullOrWhiteSpace(_content))
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudPaper Class="pa-4">
+            <div style="font-family: Consolas, monospace; font-size: 0.9rem;">
+                @foreach (var line in _lines)
+                {
+                    <div id="@GetLineAnchor(line.Number)"
+                         style="@GetLineStyle(line.Number)">
+                        <span style="display:inline-block; width:4rem; color:#666;">@line.Number.ToString("0000")</span>
+                        <span>@line.Text</span>
+                    </div>
+                }
+            </div>
+        </MudPaper>
+        @if (_highlightLineNumber is not null)
+        {
+            <script>
+                location.hash = '@GetLineAnchor(_highlightLineNumber.Value)';
+            </script>
+        }
+    }
+</MudStack>
+
+@code {
+    private string? _requestedPath;
+    private string? _requestedType;
+    private string? _content;
+    private string? _error;
+    private List<SourceLine> _lines = [];
+    private int? _highlightLineNumber;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _requestedPath = query.TryGetValue("path", out var value) ? value.ToString() : null;
+        _requestedType = query.TryGetValue("type", out var typeValue) ? typeValue.ToString() : null;
+
+        if (string.IsNullOrWhiteSpace(_requestedPath))
+        {
+            _error = T("Kein Dateipfad angegeben.", "No file path provided.");
+            return;
+        }
+
+        if (_requestedPath.Contains("..", StringComparison.Ordinal) || Path.IsPathRooted(_requestedPath))
+        {
+            _error = T("Ungueltiger Dateipfad.", "Invalid file path.");
+            return;
+        }
+
+        var fullPath = Path.Combine(Environment.ContentRootPath, _requestedPath.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(fullPath))
+        {
+            _error = string.Format(T("Datei nicht gefunden: {0}", "File not found: {0}"), _requestedPath);
+            return;
+        }
+
+        _content = File.ReadAllText(fullPath);
+        _lines = _content
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Split('\n')
+            .Select((text, index) => new SourceLine(index + 1, text))
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(_requestedType))
+        {
+            _highlightLineNumber = _lines
+                .FirstOrDefault(x => x.Text.Contains($"class {_requestedType}", StringComparison.Ordinal) ||
+                                     x.Text.Contains($"sealed class {_requestedType}", StringComparison.Ordinal) ||
+                                     x.Text.Contains($"public class {_requestedType}", StringComparison.Ordinal) ||
+                                     x.Text.Contains($"public sealed class {_requestedType}", StringComparison.Ordinal))
+                ?.Number;
+        }
+    }
+
+    private static string GetLineAnchor(int lineNumber) => $"line-{lineNumber}";
+
+    private string GetLineStyle(int lineNumber)
+    {
+        var highlight = _highlightLineNumber == lineNumber;
+        return highlight
+            ? "background-color:#fff3cd; white-space:pre-wrap;"
+            : "white-space:pre-wrap;";
+    }
+
+    private sealed record SourceLine(int Number, string Text);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

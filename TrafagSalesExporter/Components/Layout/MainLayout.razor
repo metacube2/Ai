@@ -1,0 +1,74 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-3 app-title">@T("Trafag Finanze/Sales Management Cockpit", "Trafag Finance/Sales Management Cockpit")</MudText>
+        <MudSpacer />
+        <MudSelect T="string"
+                   Value="@UiText.CurrentLanguage"
+                   ValueChanged="ChangeLanguage"
+                   Dense
+                   Variant="Variant.Outlined"
+                   Class="mr-3"
+                   Style="min-width:100px; color:white;">
+            <MudSelectItem Value="@("de")">DE</MudSelectItem>
+            <MudSelectItem Value="@("en")">EN</MudSelectItem>
+        </MudSelect>
+        <img src="trafag.jpg" alt="Trafag" class="app-logo" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent Class="pa-4" @key="UiText.CurrentLanguage">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#B71C1C",
+            Secondary = "#7F1D1D",
+            AppbarBackground = "#B71C1C"
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        UiText.Changed += HandleLanguageChanged;
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private void ChangeLanguage(string language)
+    {
+        UiText.SetLanguage(language);
+    }
+
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        UiText.Changed -= HandleLanguageChanged;
+    }
+}
