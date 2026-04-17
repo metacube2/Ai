@@ -2,6 +2,100 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-17 Refactoring-Fortschritt
+
+Mehrere frueher als hoch priorisiert markierte Architekturpunkte sind inzwischen bereits umgesetzt.
+
+Erledigt:
+
+- DataSourceAdapter-Pattern fuer `HANA`, `SAP_GATEWAY`, `MANUAL_EXCEL`
+- `SiteExportService` deutlich verschlankt
+- Page-Services auf `Scoped`
+- `DatabaseInitializationService` in Schema-/Seed-/Orchestrator-Bloecke getrennt
+- `Dashboard`, `Logs` und `Transformations` von direktem `DbContext`-Zugriff befreit
+- HANA-SQL-Injection-Pfad geschlossen
+- blockierende `.GetAwaiter().GetResult()`-Aufrufe im HANA-Pfad entfernt
+
+Neuer verifizierter Stand:
+
+- `dotnet build .\TrafagSalesExporter.csproj --verbosity minimal` erfolgreich
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal`
+- `36/36` Tests gruen
+
+### Neue Top-Prioritaeten ab jetzt
+
+#### 1. Adapter- und Resolver-Tests nachziehen
+
+Prio hoch.
+
+Warum:
+
+- das neue `DataSourceAdapter`-Pattern ist architektonisch wichtig
+- genau dieser neue Schnitt hat aktuell noch keine gezielten Unit-Tests
+
+Sinnvoll waeren:
+
+- `DataSourceAdapterResolver`-Tests
+- `HanaDataSourceAdapter`-Tests
+- `SapGatewayDataSourceAdapter`-Tests
+- `ManualExcelDataSourceAdapter`-Tests
+
+#### 2. Retry-/Robustheitslayer
+
+Prio hoch.
+
+Vor allem fuer:
+
+- SharePoint
+- SAP Gateway
+- HANA-nahe Netzpfade
+
+Aktuell brechen diese Integrationen bei transienten Problemen zu direkt ab.
+
+#### 3. Secret-Store-Konzept
+
+Prio hoch bis mittel.
+
+Aktuell liegen Zugangsdaten weiterhin in der App-/DB-Konfiguration.
+Langfristig sollte entschieden werden:
+
+- Windows Credential Manager
+- DPAPI / verschluesselte Ablage
+- externer Secret Store
+
+#### 4. `DatabaseInitializationService` weiter haerten, aber nicht mehr blind gross refactoren
+
+Prio mittel.
+
+Der schlimmste Architekturteil ist deutlich besser als vorher.
+Weitere Arbeit dort sollte jetzt nur noch zielgerichtet passieren:
+
+- Regressionstests fuer konkrete Legacy-/Repair-Zustaende
+- spaeter moeglichst versionierte Migrationen
+
+#### 5. MudBlazor-Analyzer-Warnungen bereinigen
+
+Prio mittel.
+
+Nicht kritisch fuer Produktion, aber sinnvoll fuer sauberen Build:
+
+- `Logs.razor`
+- `Transformations.razor`
+- `Standorte.razor`
+
+### Was im Vergleich zu frueher nicht mehr Top-Prioritaet ist
+
+Nicht mehr ganz oben:
+
+- generisches weiteres Page-Service-Refactoring um des Refactorings willen
+- noch mehr strukturelles Verschieben ohne Risikoreduktion
+
+Der wirtschaftlich sinnvolle Fokus liegt jetzt eher auf:
+
+- Absicherung
+- Robustheit
+- Integrationsstabilitaet
+
 ## Nachtrag 2026-04-17
 
 Der Punkt `CHF-Umrechnung / Wechselkurse` ist nicht mehr komplett offen.
