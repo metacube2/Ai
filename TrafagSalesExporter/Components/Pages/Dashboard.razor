@@ -7,32 +7,33 @@
 @inject ExportOrchestrationService Orchestrator
 @inject TimerBackgroundService TimerService
 @inject ISnackbar Snackbar
+@inject IUiTextService UiText
 @implements IDisposable
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>@T("Dashboard", "Dashboard")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Dashboard", "Dashboard")</MudText>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
                    OnClick="ExportAll" Disabled="_anyRunning">
-            Alle exportieren
+            @T("Alle exportieren", "Export all")
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.TableView"
                    OnClick="ExportConsolidatedOnly" Disabled="_anyRunning">
-            Zentrale Datei neu erzeugen
+            @T("Zentrale Datei neu erzeugen", "Rebuild consolidated file")
         </MudButton>
         <MudText Typo="Typo.body1">
             @if (TimerService.NextRun < DateTime.MaxValue)
             {
                 <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
-                @($"Nächster automatischer Lauf: {TimerService.NextRun:dd.MM.yyyy HH:mm}")
+                @(string.Format(T("Naechster automatischer Lauf: {0}", "Next automatic run: {0}"), TimerService.NextRun.ToString("dd.MM.yyyy HH:mm")))
             }
             else
             {
                 <MudIcon Icon="@Icons.Material.Filled.TimerOff" Size="Size.Small" Class="mr-1" />
-                @("Timer deaktiviert")
+                @T("Timer deaktiviert", "Timer disabled")
             }
         </MudText>
     </MudStack>
@@ -40,16 +41,16 @@
 
 <MudTable Items="_dashboardRows" Dense Hover Striped Loading="_loading">
     <HeaderContent>
-        <MudTh>Land</MudTh>
+        <MudTh>@T("Land", "Country")</MudTh>
         <MudTh>TSC</MudTh>
-        <MudTh>Schema</MudTh>
-        <MudTh>Server</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh>Live-Status</MudTh>
-        <MudTh>Zeilen</MudTh>
-        <MudTh>Letzter Lauf</MudTh>
-        <MudTh>Dauer</MudTh>
-        <MudTh>Aktion</MudTh>
+        <MudTh>@T("Schema", "Schema")</MudTh>
+        <MudTh>@T("Server", "Server")</MudTh>
+        <MudTh>@T("Status", "Status")</MudTh>
+        <MudTh>@T("Live-Status", "Live status")</MudTh>
+        <MudTh>@T("Zeilen", "Rows")</MudTh>
+        <MudTh>@T("Letzter Lauf", "Last run")</MudTh>
+        <MudTh>@T("Dauer", "Duration")</MudTh>
+        <MudTh>@T("Aktion", "Action")</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Land</MudTd>
@@ -106,7 +107,7 @@
                            StartIcon="@Icons.Material.Filled.OpenInNew"
                            OnClick="() => OpenExportFile(context)"
                            Disabled="@(!context.HasOpenableFile || Orchestrator.IsExporting(context.SiteId))">
-                    Excel öffnen
+                    @T("Excel oeffnen", "Open Excel")
                 </MudButton>
             </MudStack>
         </MudTd>
@@ -114,14 +115,14 @@
 </MudTable>
 
 <MudPaper Class="pa-4 mt-4" Elevation="1">
-    <MudText Typo="Typo.h6" Class="mb-3">Zentrale Datei</MudText>
+    <MudText Typo="Typo.h6" Class="mb-3">@T("Zentrale Datei", "Consolidated file")</MudText>
     <MudTable Items="_consolidatedRows" Dense Hover Striped>
         <HeaderContent>
-            <MudTh>Datei</MudTh>
+            <MudTh>@T("Datei", "File")</MudTh>
             <MudTh>Pfad</MudTh>
             <MudTh>Letzte Änderung</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Aktion</MudTh>
+            <MudTh>@T("Status", "Status")</MudTh>
+            <MudTh>@T("Aktion", "Action")</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Label</MudTd>
@@ -143,12 +144,12 @@
                            StartIcon="@Icons.Material.Filled.OpenInNew"
                            OnClick="() => OpenFile(context.FilePath)"
                            Disabled="@(!context.HasOpenableFile)">
-                    Excel öffnen
+                    @T("Excel oeffnen", "Open Excel")
                 </MudButton>
             </MudTd>
         </RowTemplate>
         <NoRecordsContent>
-            <MudText Typo="Typo.caption">Keine zentrale Excel-Datei gefunden.</MudText>
+            <MudText Typo="Typo.caption">@T("Keine zentrale Excel-Datei gefunden.", "No consolidated Excel file found.")</MudText>
         </NoRecordsContent>
     </MudTable>
 </MudPaper>
@@ -229,7 +230,7 @@
                 StateHasChanged();
             });
         });
-        Snackbar.Add("Export für alle Standorte gestartet", Severity.Info);
+        Snackbar.Add(T("Export fuer alle Standorte gestartet", "Export started for all sites"), Severity.Info);
     }
 
     private async Task ExportConsolidatedOnly()
@@ -249,15 +250,15 @@
             if (!string.IsNullOrWhiteSpace(filePath))
             {
                 await InvokeAsync(() =>
-                    Snackbar.Add($"Zentrale Datei erzeugt: {filePath}", Severity.Success));
+                    Snackbar.Add(string.Format(T("Zentrale Datei erzeugt: {0}", "Consolidated file created: {0}"), filePath), Severity.Success));
             }
             else
             {
                 await InvokeAsync(() =>
-                    Snackbar.Add("Zentrale Datei konnte nicht erzeugt werden.", Severity.Warning));
+                    Snackbar.Add(T("Zentrale Datei konnte nicht erzeugt werden.", "Consolidated file could not be created."), Severity.Warning));
             }
         });
-        Snackbar.Add("Zentrale Datei wird erzeugt", Severity.Info);
+        Snackbar.Add(T("Zentrale Datei wird erzeugt", "Building consolidated file"), Severity.Info);
     }
 
     private void ExportSingle(int siteId)
@@ -277,15 +278,15 @@
             if (result?.Log.Status == "OK" && !string.IsNullOrWhiteSpace(result.FilePath))
             {
                 await InvokeAsync(() =>
-                    Snackbar.Add($"Export gespeichert: {result.FilePath}", Severity.Success));
+                    Snackbar.Add(string.Format(T("Export gespeichert: {0}", "Export saved: {0}"), result.FilePath), Severity.Success));
             }
             else if (result?.Log.Status == "Error" && !string.IsNullOrWhiteSpace(result.Log.ErrorMessage))
             {
                 await InvokeAsync(() =>
-                    Snackbar.Add($"Export fehlgeschlagen: {result.Log.ErrorMessage}", Severity.Error));
+                    Snackbar.Add(string.Format(T("Export fehlgeschlagen: {0}", "Export failed: {0}"), result.Log.ErrorMessage), Severity.Error));
             }
         });
-        Snackbar.Add("Export gestartet", Severity.Info);
+        Snackbar.Add(T("Export gestartet", "Export started"), Severity.Info);
     }
 
     private async void HandleStatusChanged()
@@ -322,7 +323,7 @@
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
         {
-            Snackbar.Add("Exportdatei nicht gefunden.", Severity.Warning);
+            Snackbar.Add(T("Exportdatei nicht gefunden.", "Export file not found."), Severity.Warning);
             return;
         }
 
@@ -336,7 +337,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Datei konnte nicht geöffnet werden: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(T("Datei konnte nicht geoeffnet werden: {0}", "Could not open file: {0}"), ex.Message), Severity.Error);
         }
     }
 
@@ -462,4 +463,8 @@
         public DateTime? LastModified { get; set; }
         public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
     }
+}
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
 }

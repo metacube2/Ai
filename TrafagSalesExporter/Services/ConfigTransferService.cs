@@ -20,6 +20,11 @@ public class ConfigTransferService : IConfigTransferService
         using var db = await _dbFactory.CreateDbContextAsync();
         var sharePoint = await db.SharePointConfigs.FirstOrDefaultAsync();
         var exportSettings = await db.ExportSettings.FirstOrDefaultAsync();
+        var exchangeRates = await db.CurrencyExchangeRates
+            .OrderBy(x => x.FromCurrency)
+            .ThenBy(x => x.ToCurrency)
+            .ThenByDescending(x => x.ValidFrom)
+            .ToListAsync();
         var hanaServers = await db.HanaServers.OrderBy(x => x.Name).ToListAsync();
         var sites = await db.Sites.OrderBy(x => x.Land).ToListAsync();
         var rules = await db.FieldTransformationRules.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
@@ -37,6 +42,7 @@ public class ConfigTransferService : IConfigTransferService
             {
                 SiteUrl = sharePoint.SiteUrl,
                 ExportFolder = sharePoint.ExportFolder,
+                CentralExportFolder = sharePoint.CentralExportFolder,
                 TenantId = sharePoint.TenantId,
                 ClientId = sharePoint.ClientId,
                 ClientSecret = includeSecrets ? sharePoint.ClientSecret : null
@@ -57,6 +63,16 @@ public class ConfigTransferService : IConfigTransferService
                 SageUsername = includeSecrets ? exportSettings.SageUsername : null,
                 SagePassword = includeSecrets ? exportSettings.SagePassword : null
             },
+            CurrencyExchangeRates = exchangeRates.Select(rate => new ConfigTransferCurrencyExchangeRate
+            {
+                FromCurrency = rate.FromCurrency,
+                ToCurrency = rate.ToCurrency,
+                Rate = rate.Rate,
+                ValidFrom = rate.ValidFrom,
+                ValidTo = rate.ValidTo,
+                Notes = rate.Notes,
+                IsActive = rate.IsActive
+            }).ToList(),
             HanaServers = hanaServers.Select(server => new ConfigTransferHanaServer
             {
                 Key = serverKeyMap[server.Id],
@@ -143,6 +159,7 @@ public class ConfigTransferService : IConfigTransferService
         var existingSharePoint = await db.SharePointConfigs.FirstOrDefaultAsync();
         var existingSettings = await db.ExportSettings.FirstOrDefaultAsync();
         var existingServers = await db.HanaServers.ToListAsync();
+        var existingExchangeRates = await db.CurrencyExchangeRates.ToListAsync();
         var existingSites = await db.Sites.ToListAsync();
         var existingRules = await db.FieldTransformationRules.ToListAsync();
         var existingSapSources = await db.SapSourceDefinitions.ToListAsync();
@@ -173,6 +190,7 @@ public class ConfigTransferService : IConfigTransferService
         if (existingSapJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(existingSapJoins);
         if (existingSapSources.Count > 0) db.SapSourceDefinitions.RemoveRange(existingSapSources);
         if (existingRules.Count > 0) db.FieldTransformationRules.RemoveRange(existingRules);
+        if (existingExchangeRates.Count > 0) db.CurrencyExchangeRates.RemoveRange(existingExchangeRates);
         if (existingCentralRecords.Count > 0) db.CentralSalesRecords.RemoveRange(existingCentralRecords);
         if (existingSites.Count > 0) db.Sites.RemoveRange(existingSites);
         if (existingServers.Count > 0) db.HanaServers.RemoveRange(existingServers);
@@ -184,6 +202,7 @@ public class ConfigTransferService : IConfigTransferService
         {
             SiteUrl = package.SharePointConfig.SiteUrl,
             ExportFolder = package.SharePointConfig.ExportFolder,
+            CentralExportFolder = package.SharePointConfig.CentralExportFolder,
             TenantId = package.SharePointConfig.TenantId,
             ClientId = package.SharePointConfig.ClientId,
             ClientSecret = package.IncludesSecrets ? package.SharePointConfig.ClientSecret ?? string.Empty : preservedSharePointSecret
@@ -207,6 +226,20 @@ public class ConfigTransferService : IConfigTransferService
             SageUsername = package.IncludesSecrets ? importedSettings.SageUsername ?? string.Empty : preservedSecrets.SageUsername ?? string.Empty,
             SagePassword = package.IncludesSecrets ? importedSettings.SagePassword ?? string.Empty : preservedSecrets.SagePassword ?? string.Empty
         });
+
+        if (package.CurrencyExchangeRates.Count > 0)
+        {
+            db.CurrencyExchangeRates.AddRange(package.CurrencyExchangeRates.Select(rate => new CurrencyExchangeRate
+            {
+                FromCurrency = rate.FromCurrency,
+                ToCurrency = rate.ToCurrency,
+                Rate = rate.Rate,
+                ValidFrom = rate.ValidFrom,
+                ValidTo = rate.ValidTo,
+                Notes = rate.Notes,
+                IsActive = rate.IsActive
+            }));
+        }
 
         var serverIdMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var server in package.HanaServers)

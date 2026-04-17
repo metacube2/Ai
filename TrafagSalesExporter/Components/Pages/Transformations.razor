@@ -7,11 +7,12 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject ITransformationCatalog TransformationCatalog
 @inject ISnackbar Snackbar
+@inject IUiTextService UiText
 
-<PageTitle>Transformationen</PageTitle>
+<PageTitle>@T("Transformationen", "Transformations")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Transformer Ansicht</MudText>
-<MudText Typo="Typo.body1" Class="mb-4">Definiere pro Quellsystem einfache Feldregeln und komplexe record-basierte Strategien.</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Transformer Ansicht", "Transformation view")</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">@T("Definiere pro Quellsystem einfache Feldregeln und komplexe record-basierte Strategien.", "Define simple field rules and complex record-based strategies per source system.")</MudText>
 
 <MudPaper Class="pa-4" Elevation="1">
     <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
@@ -20,10 +21,10 @@
 
     <MudStack Row="true" Spacing="2" Class="mb-3">
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRule">
-            Regel hinzufuegen
+            @T("Regel hinzufuegen", "Add rule")
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAllAsync">
-            Alle speichern
+            @T("Alle speichern", "Save all")
         </MudButton>
     </MudStack>
 
@@ -34,9 +35,10 @@
             <MudTh>Scope</MudTh>
             <MudTh>Source</MudTh>
             <MudTh>Target</MudTh>
-            <MudTh>Typ</MudTh>
+            <MudTh>Typ / Klasse</MudTh>
             <MudTh>Argument</MudTh>
             <MudTh>Sort</MudTh>
+            <MudTh>Info</MudTh>
             <MudTh>Aktionen</MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -58,12 +60,19 @@
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" Value="@context.SourceField" ValueChanged="@(v => context.SourceField = v)" Dense Disabled="@IsRecordScope(context)">
-                    @foreach (var field in _recordFields)
-                    {
-                        <MudSelectItem Value="@field">@field</MudSelectItem>
-                    }
-                </MudSelect>
+                @if (IsRecordScope(context))
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small" Text="Record-Regel" />
+                }
+                else
+                {
+                    <MudSelect T="string" Value="@context.SourceField" ValueChanged="@(v => context.SourceField = v)" Dense>
+                        @foreach (var field in _recordFields)
+                        {
+                            <MudSelectItem Value="@field">@field</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
             </MudTd>
             <MudTd>
                 <MudSelect T="string" Value="@context.TargetField" ValueChanged="@(v => context.TargetField = v)" Dense>
@@ -74,12 +83,26 @@
                 </MudSelect>
             </MudTd>
             <MudTd>
-                <MudSelect T="string" Value="@context.TransformationType" ValueChanged="@(v => context.TransformationType = v)" Dense>
-                    @foreach (var type in GetTypesForScope(context.RuleScope))
+                @{
+                    var availableTypes = GetTypesForScope(context.RuleScope);
+                }
+                <MudSelect T="string"
+                           @key="@GetTypeSelectKey(context)"
+                           Value="@context.TransformationType"
+                           ValueChanged="@(v => context.TransformationType = v)"
+                           Dense
+                           HelperText="@GetTypeHelperText(context)">
+                    @foreach (var type in availableTypes)
                     {
-                        <MudSelectItem Value="@type.Key">@type.Key</MudSelectItem>
+                        <MudSelectItem Value="@type.Key">@(IsRecordScope(context) ? $"Klasse: {type.Key}" : type.Key)</MudSelectItem>
                     }
                 </MudSelect>
+                @if (IsRecordScope(context))
+                {
+                    <MudText Typo="Typo.caption" Class="mt-1">
+                        Hier waehlt man die registrierte C#-Strategie.
+                    </MudText>
+                }
             </MudTd>
             <MudTd>
                 <MudTextField T="string" Value="@context.Argument" ValueChanged="@(v => context.Argument = v)"
@@ -89,12 +112,68 @@
                 <MudNumericField T="int" Value="@context.SortOrder" ValueChanged="@(v => context.SortOrder = v)" Dense />
             </MudTd>
             <MudTd>
+                @{
+                    var catalogItem = GetCatalogItem(context);
+                }
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.caption">@((catalogItem?.Description ?? T("Keine Beschreibung.", "No description.")) )</MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Code"
+                               Disabled="@(catalogItem is null)"
+                               OnClick="() => ShowCode(context)">
+                        @T("Code anzeigen", "Show code")
+                    </MudButton>
+                </MudStack>
+            </MudTd>
+            <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
                                OnClick="() => RemoveRule(context)" />
             </MudTd>
         </RowTemplate>
     </MudTable>
 </MudPaper>
+
+<MudDialog @bind-Visible="_codeDialogVisible" Options="_codeDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@T("Transformationscode", "Transformation code")</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_selectedCatalogItem is not null)
+        {
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle2">@_selectedCatalogItem.Key (@_selectedCatalogItem.RuleScope)</MudText>
+                <MudText Typo="Typo.body2">@_selectedCatalogItem.Description</MudText>
+                <MudText Typo="Typo.caption">Klasse: @_selectedCatalogItem.TypeName</MudText>
+                <MudText Typo="Typo.caption">
+                    Datei:
+                    <MudLink Href="@GetSourceViewerUrl(_selectedCatalogItem.SourceFile, _selectedCatalogItem.TypeName)" Target="_blank">
+                        @_selectedCatalogItem.SourceFile
+                    </MudLink>
+                </MudText>
+                <MudPaper Class="pa-3">
+                    <MudText Typo="Typo.caption">Snippet</MudText>
+                    <pre style="margin:0; white-space:pre-wrap;">@_selectedCatalogItem.CodeSnippet</pre>
+                </MudPaper>
+                @if (_selectedRule is not null)
+                {
+                    <MudPaper Class="pa-3">
+                        <MudText Typo="Typo.caption">Aktuelle Regel</MudText>
+                        <MudText Typo="Typo.body2">System: @_selectedRule.SourceSystem</MudText>
+                        <MudText Typo="Typo.body2">Target: @_selectedRule.TargetField</MudText>
+                        @if (!string.IsNullOrWhiteSpace(_selectedRule.SourceField))
+                        {
+                            <MudText Typo="Typo.body2">Source: @_selectedRule.SourceField</MudText>
+                        }
+                        <MudText Typo="Typo.body2">Argument: @(string.IsNullOrWhiteSpace(_selectedRule.Argument) ? "-" : _selectedRule.Argument)</MudText>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="CloseCodeDialog">@T("Schliessen", "Close")</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     private readonly string[] _systems = ["SAP", "BI1", "SAGE", "MANUAL_EXCEL"];
@@ -107,6 +186,10 @@
 
     private List<FieldTransformationRule> _rules = new();
     private IReadOnlyList<TransformationCatalogItem> _catalogItems = [];
+    private bool _codeDialogVisible;
+    private FieldTransformationRule? _selectedRule;
+    private TransformationCatalogItem? _selectedCatalogItem;
+    private readonly DialogOptions _codeDialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -158,7 +241,7 @@
         db.FieldTransformationRules.AddRange(_rules);
         await db.SaveChangesAsync();
 
-        Snackbar.Add("Transformationsregeln gespeichert.", Severity.Success);
+        Snackbar.Add(T("Transformationsregeln gespeichert.", "Transformation rules saved."), Severity.Success);
         await LoadAsync();
     }
 
@@ -190,6 +273,45 @@
             string.Equals(x.RuleScope, rule.RuleScope, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(x.Key, rule.TransformationType, StringComparison.OrdinalIgnoreCase));
 
-        return item?.Description ?? "Optionales Argument.";
+        return item?.Description ?? T("Optionales Argument.", "Optional argument.");
     }
+
+    private TransformationCatalogItem? GetCatalogItem(FieldTransformationRule rule)
+        => _catalogItems.FirstOrDefault(x =>
+            string.Equals(x.RuleScope, rule.RuleScope, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Key, rule.TransformationType, StringComparison.OrdinalIgnoreCase));
+
+    private void ShowCode(FieldTransformationRule rule)
+    {
+        _selectedRule = rule;
+        _selectedCatalogItem = GetCatalogItem(rule);
+        _codeDialogVisible = _selectedCatalogItem is not null;
+    }
+
+    private void CloseCodeDialog()
+    {
+        _codeDialogVisible = false;
+        _selectedRule = null;
+        _selectedCatalogItem = null;
+    }
+
+    private static string GetSourceViewerUrl(string sourceFile, string typeName)
+        => $"/source-viewer?path={Uri.EscapeDataString(sourceFile)}&type={Uri.EscapeDataString(typeName)}";
+
+    private static string GetTypeSelectKey(FieldTransformationRule rule)
+        => $"{rule.Id}:{rule.RuleScope}:{rule.TransformationType}";
+
+    private string GetTypeHelperText(FieldTransformationRule rule)
+    {
+        var types = GetTypesForScope(rule.RuleScope);
+        return types.Count == 0
+            ? T("Keine Typen fuer diesen Scope registriert.", "No types registered for this scope.")
+            : IsRecordScope(rule)
+                ? string.Format(T("Verfuegbare Klassen: {0}", "Available classes: {0}"), string.Join(", ", types.Select(x => x.Key)))
+                : string.Format(T("Verfuegbare Typen: {0}", "Available types: {0}"), string.Join(", ", types.Select(x => x.Key)));
+    }
+}
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
 }

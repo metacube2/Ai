@@ -21,6 +21,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         ConfigureSqlite(db);
         EnsureSchema(db);
         SeedIfEmpty(db);
+        EnsureRecommendedTransformationRules(db);
     }
 
     private static void ConfigureSqlite(AppDbContext db)
@@ -69,9 +70,11 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         AddColumnIfMissing(db, "ExportSettings", "DebugLoggingEnabled", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "ExportSettings", "LocalSiteExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "LocalConsolidatedExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
         AddColumnIfMissing(db, "FieldTransformationRules", "RuleScope", "TEXT NOT NULL DEFAULT 'Value'");
+        EnsureCurrencyExchangeRateTable(db);
         EnsureSapSourceTable(db);
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
@@ -470,6 +473,27 @@ CREATE TABLE IF NOT EXISTS SapSourceDefinitions (
         cmd.ExecuteNonQuery();
     }
 
+    private static void EnsureCurrencyExchangeRateTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    FromCurrency TEXT NOT NULL,
+    ToCurrency TEXT NOT NULL,
+    Rate REAL NOT NULL,
+    ValidFrom TEXT NOT NULL,
+    ValidTo TEXT NULL,
+    Notes TEXT NOT NULL DEFAULT '',
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
+        cmd.ExecuteNonQuery();
+    }
+
     private static void EnsureSapJoinTable(AppDbContext db)
     {
         var conn = db.Database.GetDbConnection();
@@ -601,6 +625,7 @@ CREATE TABLE IF NOT EXISTS AppEventLogs (
         {
             SiteUrl = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform",
             ExportFolder = "/Shared Documents/Exports/",
+            CentralExportFolder = "",
             TenantId = "",
             ClientId = "",
             ClientSecret = ""
@@ -618,5 +643,56 @@ CREATE TABLE IF NOT EXISTS AppEventLogs (
         });
 
         db.SaveChanges();
+    }
+
+    private static void EnsureRecommendedTransformationRules(AppDbContext db)
+    {
+        var recommendedRules = new[]
+        {
+            new FieldTransformationRule
+            {
+                SourceSystem = "MANUAL_EXCEL",
+                SourceField = nameof(SalesRecord.SalesCurrency),
+                TargetField = nameof(SalesRecord.SalesCurrency),
+                TransformationType = "Replace",
+                RuleScope = "Value",
+                Argument = "$=>USD",
+                SortOrder = 100,
+                IsActive = true
+            },
+            new FieldTransformationRule
+            {
+                SourceSystem = "MANUAL_EXCEL",
+                SourceField = nameof(SalesRecord.StandardCostCurrency),
+                TargetField = nameof(SalesRecord.StandardCostCurrency),
+                TransformationType = "Replace",
+                RuleScope = "Value",
+                Argument = "$=>USD",
+                SortOrder = 110,
+                IsActive = true
+            }
+        };
+
+        var hasChanges = false;
+
+        foreach (var rule in recommendedRules)
+        {
+            var exists = db.FieldTransformationRules.Any(existing =>
+                existing.SourceSystem == rule.SourceSystem &&
+                existing.RuleScope == rule.RuleScope &&
+                existing.SourceField == rule.SourceField &&
+                existing.TargetField == rule.TargetField &&
+                existing.TransformationType == rule.TransformationType &&
+                existing.Argument == rule.Argument);
+
+            if (exists)
+                continue;
+
+            db.FieldTransformationRules.Add(rule);
+            hasChanges = true;
+        }
+
+        if (hasChanges)
+            db.SaveChanges();
     }
 }

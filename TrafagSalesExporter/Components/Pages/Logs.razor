@@ -4,46 +4,47 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject TrafagSalesExporter.Services.IUiTextService UiText
 
-<PageTitle>Logs</PageTitle>
+<PageTitle>@T("Logs", "Logs")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Export Logs</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Export Logs", "Export Logs")</MudText>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
-        <MudSelect @bind-Value="_filterLand" Label="Land" Clearable Dense Style="max-width:200px;">
+        <MudSelect @bind-Value="_filterLand" Label="@T("Land", "Country")" Clearable Dense Style="max-width:200px;">
             @foreach (var land in _availableLands)
             {
                 <MudSelectItem Value="@land">@land</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect @bind-Value="_filterStatus" Label="Status" Clearable Dense Style="max-width:150px;">
+        <MudSelect @bind-Value="_filterStatus" Label="@T("Status", "Status")" Clearable Dense Style="max-width:150px;">
             <MudSelectItem Value="@("OK")">OK</MudSelectItem>
             <MudSelectItem Value="@("Error")">Error</MudSelectItem>
         </MudSelect>
-        <MudDatePicker @bind-Date="_filterDate" Label="Datum" Clearable Dense Style="max-width:200px;" />
+        <MudDatePicker @bind-Date="_filterDate" Label="@T("Datum", "Date")" Clearable Dense Style="max-width:200px;" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilter"
                    StartIcon="@Icons.Material.Filled.FilterAlt">
-            Filtern
+            @T("Filtern", "Filter")
         </MudButton>
         <MudSpacer />
         <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteOldLogs"
                    StartIcon="@Icons.Material.Filled.DeleteSweep">
-            Alte Logs löschen
+            @T("Alte Logs loeschen", "Delete old logs")
         </MudButton>
     </MudStack>
 </MudPaper>
 
 <MudTable Items="_logs" Dense Hover Striped Loading="_loading">
     <HeaderContent>
-        <MudTh>Zeitpunkt</MudTh>
-        <MudTh>Land</MudTh>
+        <MudTh>@T("Zeitpunkt", "Timestamp")</MudTh>
+        <MudTh>@T("Land", "Country")</MudTh>
         <MudTh>TSC</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh>Zeilen</MudTh>
-        <MudTh>Dauer</MudTh>
-        <MudTh>Dateiname</MudTh>
-        <MudTh>Fehler</MudTh>
+        <MudTh>@T("Status", "Status")</MudTh>
+        <MudTh>@T("Zeilen", "Rows")</MudTh>
+        <MudTh>@T("Dauer", "Duration")</MudTh>
+        <MudTh>@T("Dateiname", "File name")</MudTh>
+        <MudTh>@T("Fehler", "Error")</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Timestamp.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
@@ -75,15 +76,15 @@
     </RowTemplate>
 </MudTable>
 
-<MudText Typo="Typo.h5" Class="mt-6 mb-2">Technische Logs</MudText>
+<MudText Typo="Typo.h5" Class="mt-6 mb-2">@T("Technische Logs", "Technical logs")</MudText>
 
 <MudTable Items="_appLogs" Dense Hover Striped Loading="_loading">
     <HeaderContent>
-        <MudTh>Zeitpunkt</MudTh>
+        <MudTh>@T("Zeitpunkt", "Timestamp")</MudTh>
         <MudTh>Level</MudTh>
-        <MudTh>Kategorie</MudTh>
-        <MudTh>Land</MudTh>
-        <MudTh>Meldung</MudTh>
+        <MudTh>@T("Kategorie", "Category")</MudTh>
+        <MudTh>@T("Land", "Country")</MudTh>
+        <MudTh>@T("Meldung", "Message")</MudTh>
         <MudTh>Details</MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -158,9 +159,9 @@
     private async Task DeleteOldLogs()
     {
         var result = await DialogService.ShowMessageBox(
-            "Alte Logs löschen",
-            "Logs älter als 90 Tage löschen?",
-            yesText: "Löschen", cancelText: "Abbrechen");
+            T("Alte Logs loeschen", "Delete old logs"),
+            T("Logs aelter als 90 Tage loeschen?", "Delete logs older than 90 days?"),
+            yesText: T("Loeschen", "Delete"), cancelText: T("Abbrechen", "Cancel"));
 
         if (result != true) return;
 
@@ -170,6 +171,10 @@
         db.ExportLogs.RemoveRange(oldLogs);
         var count = await db.SaveChangesAsync();
         await LoadLogsAsync();
-        Snackbar.Add($"{oldLogs.Count} alte Logs gelöscht", Severity.Info);
+        Snackbar.Add(string.Format(T("{0} alte Logs geloescht", "{0} old logs deleted"), oldLogs.Count), Severity.Info);
     }
+}
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
 }

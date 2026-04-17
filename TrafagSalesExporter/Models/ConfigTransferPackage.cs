@@ -7,6 +7,7 @@ public class ConfigTransferPackage
     public bool IncludesSecrets { get; set; }
     public ConfigTransferSharePoint? SharePointConfig { get; set; }
     public ConfigTransferExportSettings? ExportSettings { get; set; }
+    public List<ConfigTransferCurrencyExchangeRate> CurrencyExchangeRates { get; set; } = [];
     public List<ConfigTransferHanaServer> HanaServers { get; set; } = [];
     public List<ConfigTransferSite> Sites { get; set; } = [];
     public List<FieldTransformationRule> FieldTransformationRules { get; set; } = [];
@@ -19,6 +20,7 @@ public class ConfigTransferSharePoint
 {
     public string SiteUrl { get; set; } = string.Empty;
     public string ExportFolder { get; set; } = string.Empty;
+    public string CentralExportFolder { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
     public string ClientId { get; set; } = string.Empty;
     public string? ClientSecret { get; set; }
@@ -39,6 +41,17 @@ public class ConfigTransferExportSettings
     public string? Bi1Password { get; set; }
     public string? SageUsername { get; set; }
     public string? SagePassword { get; set; }
+}
+
+public class ConfigTransferCurrencyExchangeRate
+{
+    public string FromCurrency { get; set; } = string.Empty;
+    public string ToCurrency { get; set; } = string.Empty;
+    public decimal Rate { get; set; }
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
+    public string Notes { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
 }
 
 public class ConfigTransferHanaServer

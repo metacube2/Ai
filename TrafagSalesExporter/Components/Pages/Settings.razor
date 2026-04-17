@@ -9,6 +9,7 @@
 @inject IHanaQueryService HanaService
 @inject ISapGatewayService SapGatewayService
 @inject IConfigTransferService ConfigTransferService
+@inject IExchangeRateImportService ExchangeRateImportService
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
@@ -51,6 +52,11 @@
         <MudItem xs="12" md="6">
             <MudTextField @bind-Value="_spConfig.ExportFolder" Label="Export Folder" />
         </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.CentralExportFolder"
+                          Label="Central Export Folder"
+                          HelperText="Optional. Wenn leer, wird weiterhin Export Folder/Alle verwendet." />
+        </MudItem>
         <MudItem xs="12" md="4">
             <MudTextField @bind-Value="_spConfig.TenantId" Label="Tenant ID" />
         </MudItem>
@@ -80,6 +86,15 @@
                 </MudButton>
             </MudStack>
         </MudItem>
+        @if (!string.IsNullOrWhiteSpace(_sharePointTestPreview))
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mt-3">
+                    <div><b>Test Preview</b></div>
+                    <div style="white-space: pre-wrap">@_sharePointTestPreview</div>
+                </MudAlert>
+            </MudItem>
+        }
     </MudGrid>
 </MudPaper>
 
@@ -151,6 +166,70 @@
     </MudGrid>
 </MudPaper>
 
+<MudText Typo="Typo.h5" Class="mb-2">Wechselkurse</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudText Typo="Typo.body2" Class="mb-3">
+        Diese Kurstabelle wird von der Transformation <b>ConvertCurrency</b> verwendet. Gleiche Waehrung rechnet automatisch mit Faktor 1.
+    </MudText>
+    <MudStack Row Spacing="2" Class="mb-3">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddExchangeRate"
+                   StartIcon="@Icons.Material.Filled.Add">
+            Kurs hinzufuegen
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshEcbRates"
+                   StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingExchangeRates">
+            @(_refreshingExchangeRates ? "Aktualisiere ECB-Kurse..." : "Refresh Kurse")
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExchangeRates"
+                   StartIcon="@Icons.Material.Filled.Save">
+            Kurse speichern
+        </MudButton>
+    </MudStack>
+    <MudTable Items="_exchangeRates" Hover="true" Breakpoint="Breakpoint.Md">
+        <HeaderContent>
+            <MudTh>Von</MudTh>
+            <MudTh>Nach</MudTh>
+            <MudTh>Kurs</MudTh>
+            <MudTh>Gueltig ab</MudTh>
+            <MudTh>Gueltig bis</MudTh>
+            <MudTh>Notiz</MudTh>
+            <MudTh>Aktiv</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudTextField @bind-Value="context.FromCurrency" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.ToCurrency" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudNumericField T="decimal" @bind-Value="context.Rate" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudDatePicker Date="context.ValidFrom"
+                               DateChanged="@(value => context.ValidFrom = value ?? context.ValidFrom)"
+                               Editable="true" />
+            </MudTd>
+            <MudTd>
+                <MudDatePicker Date="context.ValidTo"
+                               DateChanged="@(value => context.ValidTo = value)"
+                               Editable="true"
+                               Clearable="true" />
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.Notes" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudCheckBox @bind-Value="context.IsActive" />
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveExchangeRate(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
 @* Export Settings *@
 <MudText Typo="Typo.h5" Class="mb-2">Export Einstellungen</MudText>
 <MudPaper Class="pa-4 mb-6" Elevation="1">
@@ -210,6 +289,9 @@
     private bool _includeSecretsInExport;
     private bool _exportingConfig;
     private bool _importingConfig;
+    private bool _refreshingExchangeRates;
+    private string _sharePointTestPreview = string.Empty;
+    private List<CurrencyExchangeRate> _exchangeRates = [];
     private readonly HashSet<string> _testingSystems = [];
 
     protected override async Task OnInitializedAsync()
@@ -217,6 +299,11 @@
         using var db = await DbFactory.CreateDbContextAsync();
         _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
         _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+        _exchangeRates = await db.CurrencyExchangeRates
+            .OrderBy(x => x.FromCurrency)
+            .ThenBy(x => x.ToCurrency)
+            .ThenByDescending(x => x.ValidFrom)
+            .ToListAsync();
     }
 
     private async Task SaveSharePoint()
@@ -231,6 +318,7 @@
         {
             existing.SiteUrl = _spConfig.SiteUrl;
             existing.ExportFolder = _spConfig.ExportFolder;
+            existing.CentralExportFolder = _spConfig.CentralExportFolder;
             existing.TenantId = _spConfig.TenantId;
             existing.ClientId = _spConfig.ClientId;
             existing.ClientSecret = _spConfig.ClientSecret;
@@ -244,8 +332,15 @@
         _testingSp = true;
         try
         {
+            var tenantId = NormalizeConfigValue(_spConfig.TenantId);
+            var clientId = NormalizeConfigValue(_spConfig.ClientId);
+            var clientSecret = NormalizeConfigValue(_spConfig.ClientSecret);
+            var siteUrl = NormalizeConfigValue(_spConfig.SiteUrl);
+
+            _sharePointTestPreview = BuildSharePointTestPreview(tenantId, clientId, clientSecret, siteUrl);
+
             await SpService.TestConnectionAsync(
-                _spConfig.TenantId, _spConfig.ClientId, _spConfig.ClientSecret, _spConfig.SiteUrl);
+                tenantId, clientId, clientSecret, siteUrl);
             Snackbar.Add("SharePoint Verbindung erfolgreich!", Severity.Success);
         }
         catch (Exception ex)
@@ -285,6 +380,76 @@
         await db.SaveChangesAsync();
         TimerService.Recalculate();
         Snackbar.Add("Export Einstellungen gespeichert", Severity.Success);
+    }
+
+    private void AddExchangeRate()
+    {
+        _exchangeRates.Add(new CurrencyExchangeRate
+        {
+            FromCurrency = "USD",
+            ToCurrency = "EUR",
+            Rate = 1m,
+            ValidFrom = DateTime.Today,
+            IsActive = true
+        });
+    }
+
+    private void RemoveExchangeRate(CurrencyExchangeRate rate)
+    {
+        _exchangeRates.Remove(rate);
+    }
+
+    private async Task SaveExchangeRates()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var existingRates = await db.CurrencyExchangeRates.ToListAsync();
+        if (existingRates.Count > 0)
+            db.CurrencyExchangeRates.RemoveRange(existingRates);
+
+        db.CurrencyExchangeRates.AddRange(_exchangeRates.Select(rate => new CurrencyExchangeRate
+        {
+            FromCurrency = NormalizeConfigValue(rate.FromCurrency).ToUpperInvariant(),
+            ToCurrency = NormalizeConfigValue(rate.ToCurrency).ToUpperInvariant(),
+            Rate = rate.Rate,
+            ValidFrom = rate.ValidFrom.Date,
+            ValidTo = rate.ValidTo?.Date,
+            Notes = NormalizeConfigValue(rate.Notes),
+            IsActive = rate.IsActive
+        }).Where(rate => !string.IsNullOrWhiteSpace(rate.FromCurrency)
+            && !string.IsNullOrWhiteSpace(rate.ToCurrency)
+            && rate.Rate > 0m));
+
+        await db.SaveChangesAsync();
+
+        _exchangeRates = await db.CurrencyExchangeRates
+            .OrderBy(x => x.FromCurrency)
+            .ThenBy(x => x.ToCurrency)
+            .ThenByDescending(x => x.ValidFrom)
+            .ToListAsync();
+
+        Snackbar.Add("Wechselkurse gespeichert", Severity.Success);
+    }
+
+    private async Task RefreshEcbRates()
+    {
+        if (_refreshingExchangeRates)
+            return;
+
+        _refreshingExchangeRates = true;
+        try
+        {
+            var result = await ExchangeRateImportService.RefreshEcbRatesAsync();
+            _exchangeRates = await LoadExchangeRatesAsync();
+            Snackbar.Add($"ECB-Kurse aktualisiert: {result.ImportedCount} Kurse vom {result.RateDate:yyyy-MM-dd}.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ECB-Kursimport fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _refreshingExchangeRates = false;
+        }
     }
 
     private async Task ExportConfiguration()
@@ -328,6 +493,11 @@
             using var db = await DbFactory.CreateDbContextAsync();
             _spConfig = await db.SharePointConfigs.FirstOrDefaultAsync() ?? new SharePointConfig();
             _exportSettings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+            _exchangeRates = await db.CurrencyExchangeRates
+                .OrderBy(x => x.FromCurrency)
+                .ThenBy(x => x.ToCurrency)
+                .ThenByDescending(x => x.ValidFrom)
+                .ToListAsync();
             TimerService.Recalculate();
             Snackbar.Add("Konfiguration importiert", Severity.Success);
         }
@@ -466,4 +636,31 @@
         "SAGE" => _exportSettings.SagePassword,
         _ => _exportSettings.SapPassword
     };
+
+    private static string NormalizeConfigValue(string? value) => value?.Trim() ?? string.Empty;
+
+    private static string BuildSharePointTestPreview(string tenantId, string clientId, string clientSecret, string siteUrl)
+    {
+        var maskedSecret = string.IsNullOrEmpty(clientSecret)
+            ? "<leer>"
+            : $"{new string('*', Math.Min(clientSecret.Length, 8))} (len={clientSecret.Length})";
+
+        return string.Join(Environment.NewLine,
+        [
+            $"Tenant ID: {tenantId}",
+            $"Client ID: {clientId}",
+            $"Client Secret: {maskedSecret}",
+            $"Site URL: {siteUrl}"
+        ]);
+    }
+
+    private async Task<List<CurrencyExchangeRate>> LoadExchangeRatesAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        return await db.CurrencyExchangeRates
+            .OrderBy(x => x.FromCurrency)
+            .ThenBy(x => x.ToCurrency)
+            .ThenByDescending(x => x.ValidFrom)
+            .ToListAsync();
+    }
 }

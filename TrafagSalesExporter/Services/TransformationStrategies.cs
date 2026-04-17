@@ -66,6 +66,56 @@ public sealed class ConstantTransformationStrategy : ITransformationStrategy
     public object? Transform(object? sourceValue, string? argument) => argument;
 }
 
+public sealed class NormalizeCurrencyCodeTransformationStrategy : ITransformationStrategy
+{
+    private static readonly Dictionary<string, string> BuiltInAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["$"] = "USD",
+        ["US$"] = "USD",
+        ["USD"] = "USD",
+        ["€"] = "EUR",
+        ["EUR"] = "EUR",
+        ["CHF"] = "CHF",
+        ["SFR"] = "CHF",
+        ["INR"] = "INR",
+        ["RS"] = "INR",
+        ["GBP"] = "GBP",
+        ["CAD"] = "CAD"
+    };
+
+    public string TransformationType => "NormalizeCurrencyCode";
+    public string Description => "Normalisiert Waehrungscodes wie $, EUR, CHF, INR auf ISO-Codes. Optionale Aliase im Argument mit alt=>neu|alt2=>neu2.";
+
+    public object? Transform(object? sourceValue, string? argument)
+    {
+        var input = sourceValue?.ToString()?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        var aliases = new Dictionary<string, string>(BuiltInAliases, StringComparer.OrdinalIgnoreCase);
+        foreach (var mapping in ParseMappings(argument))
+            aliases[mapping.Key] = mapping.Value;
+
+        return aliases.TryGetValue(input, out var mapped)
+            ? mapped
+            : input.ToUpperInvariant();
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> ParseMappings(string? argument)
+    {
+        if (string.IsNullOrWhiteSpace(argument))
+            yield break;
+
+        var mappings = argument.Split(['|', ';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var mapping in mappings)
+        {
+            var parts = mapping.Split("=>", 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                yield return new KeyValuePair<string, string>(parts[0], parts[1].ToUpperInvariant());
+        }
+    }
+}
+
 public sealed class FirstNonEmptyRecordTransformationStrategy : IRecordTransformationStrategy
 {
     public string TransformationType => "FirstNonEmpty";
@@ -111,5 +161,103 @@ public sealed class FirstNonEmptyRecordTransformationStrategy : IRecordTransform
             return intNumber != 0;
 
         return true;
+    }
+}
+
+public sealed class ConvertCurrencyRecordTransformationStrategy : IRecordTransformationStrategy
+{
+    private readonly ICurrencyExchangeRateService _exchangeRateService;
+
+    public ConvertCurrencyRecordTransformationStrategy(ICurrencyExchangeRateService exchangeRateService)
+    {
+        _exchangeRateService = exchangeRateService;
+    }
+
+    public string TransformationType => "ConvertCurrency";
+    public string Description => "Record-Strategie: rechnet einen Betrag ueber die Kurstabelle in eine Zielwaehrung um. Argument z.B. amountField=SalesPriceValue;currencyField=SalesCurrency;targetCurrency=EUR;dateField=InvoiceDate;targetCurrencyField=SalesCurrency;round=2";
+
+    public void Transform(SalesRecord record, FieldTransformationRule rule)
+    {
+        if (string.IsNullOrWhiteSpace(rule.TargetField) || string.IsNullOrWhiteSpace(rule.Argument))
+            return;
+
+        var propertyMap = RecordTransformationService.PropertyMap;
+        if (!propertyMap.TryGetValue(rule.TargetField, out var targetAmountProperty))
+            return;
+
+        var options = ParseOptions(rule.Argument);
+        if (!options.TryGetValue("amountField", out var amountField)
+            || !options.TryGetValue("currencyField", out var currencyField)
+            || !options.TryGetValue("targetCurrency", out var targetCurrency)
+            || !propertyMap.TryGetValue(amountField, out var sourceAmountProperty)
+            || !propertyMap.TryGetValue(currencyField, out var sourceCurrencyProperty))
+            return;
+
+        var sourceAmount = ReadDecimal(record, sourceAmountProperty);
+        if (sourceAmount is null)
+            return;
+
+        var sourceCurrency = _exchangeRateService.NormalizeCurrencyCode(sourceCurrencyProperty.GetValue(record)?.ToString());
+        var normalizedTargetCurrency = _exchangeRateService.NormalizeCurrencyCode(targetCurrency);
+        if (string.IsNullOrWhiteSpace(sourceCurrency) || string.IsNullOrWhiteSpace(normalizedTargetCurrency))
+            return;
+
+        var effectiveDate = ResolveEffectiveDate(record, options, propertyMap);
+        var rate = _exchangeRateService.ResolveRate(sourceCurrency, normalizedTargetCurrency, effectiveDate);
+        if (!rate.HasValue)
+            return;
+
+        var convertedAmount = sourceAmount.Value * rate.Value;
+        if (options.TryGetValue("round", out var roundValue) && int.TryParse(roundValue, out var digits))
+            convertedAmount = Math.Round(convertedAmount, digits, MidpointRounding.AwayFromZero);
+
+        RecordTransformationService.SetPropertyValue(record, targetAmountProperty, convertedAmount);
+
+        if (options.TryGetValue("targetCurrencyField", out var targetCurrencyField)
+            && propertyMap.TryGetValue(targetCurrencyField, out var targetCurrencyProperty))
+        {
+            RecordTransformationService.SetPropertyValue(record, targetCurrencyProperty, normalizedTargetCurrency);
+        }
+    }
+
+    private static Dictionary<string, string> ParseOptions(string argument)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var parts = argument.Split([';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var part in parts)
+        {
+            var pair = part.Split('=', 2, StringSplitOptions.TrimEntries);
+            if (pair.Length == 2 && !string.IsNullOrWhiteSpace(pair[0]))
+                result[pair[0]] = pair[1];
+        }
+
+        return result;
+    }
+
+    private static decimal? ReadDecimal(SalesRecord record, System.Reflection.PropertyInfo property)
+    {
+        var value = property.GetValue(record);
+        if (value is decimal decimalValue)
+            return decimalValue;
+
+        return decimal.TryParse(value?.ToString(), out var parsed)
+            ? parsed
+            : null;
+    }
+
+    private static DateTime? ResolveEffectiveDate(
+        SalesRecord record,
+        IReadOnlyDictionary<string, string> options,
+        IReadOnlyDictionary<string, System.Reflection.PropertyInfo> propertyMap)
+    {
+        if (options.TryGetValue("dateField", out var dateField)
+            && propertyMap.TryGetValue(dateField, out var configuredDateProperty))
+        {
+            var configuredDate = configuredDateProperty.GetValue(record);
+            if (configuredDate is DateTime date)
+                return date;
+        }
+
+        return record.InvoiceDate ?? record.OrderDate ?? record.ExtractionDate;
     }
 }

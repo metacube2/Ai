@@ -2,6 +2,21 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-16
+
+Seit dem letzten Stand kamen mehrere groessere Erweiterungen dazu. Die offenen Punkte unten muessen deshalb im neuen Kontext gelesen werden.
+
+## 0. Neuer Ist-Stand
+
+Zusaetzlich zum alten Stand ist jetzt vorhanden:
+
+- manueller Standort-Import ueber `MANUAL_EXCEL`
+- Dashboard mit `Alle exportieren`, `Zentrale Datei neu erzeugen` und zentralem `Excel oeffnen`
+- Roh-Auswertung im `Management Cockpit` direkt aus `CentralSalesRecords`
+- erweitertes Transformationssystem mit `Value`- und `Record`-Regeln
+- HANA-Schema-Lookup im Standortdialog
+- Testprojekt mit aktuell 18 gruenden Tests
+
 ## 1. Status
 
 Der Export geht jetzt wieder durch.
@@ -36,6 +51,40 @@ Kurz gegenpruefen:
 - `Excel oeffnen` nach erfolgreichem Export
 - `Export erfolgreich` inkl. `Pfad=...`
 - Dashboard-Live-Status setzt sich nach Abschluss sauber zurueck
+- `Alle exportieren`
+- `Zentrale Datei neu erzeugen`
+- zentrale Datei im Dashboard oeffnen
+
+## 3a. Manuellen Excel-Import pruefen
+
+Zu testen:
+
+- Standort auf `MANUAL_EXCEL` stellen
+- Excel im Standort hochladen
+- Standort exportieren
+- pruefen, ob `CentralSalesRecords` fuer diesen Standort ersetzt wurden
+- pruefen, ob der zentrale Export den Standort korrekt enthaelt
+
+Dateien:
+
+- `Components/Pages/Standorte.razor`
+- `Services/ManualExcelImportService.cs`
+- `Services/SiteExportService.cs`
+
+## 3b. HANA-Schema-Lookup pruefen
+
+Zu testen:
+
+- bei `BI1`-Standort `Schemas laden`
+- bei `SAGE`-Standort `Schemas laden`
+- wird ein plausibles B1-Schema angeboten?
+- funktioniert danach Export ohne manuelle Schema-Eingabe?
+- zeigt England / Spezialstandort jetzt schneller, wenn Schema oder Rechte nicht passen?
+
+Dateien:
+
+- `Components/Pages/Standorte.razor`
+- `Services/HanaQueryService.cs`
 
 ## 4. Falls wieder ein Fehler auftritt
 
@@ -68,11 +117,40 @@ Zu testen:
 - vorhandene Excel-Datei auswaehlbar
 - Analyse laeuft
 - Kennzahlen plausibel
+- Roh-Auswertung aus `CentralSalesRecords` laeuft
+- Jahr/Monat-Filter funktionieren
+- Summen nach Quelle / Land plausibel
 
 Dateien:
 
 - `Components/Pages/ManagementCockpit.razor`
 - `Services/ManagementCockpitService.cs`
+
+## 6a. Fachlich bewusst noch offen
+
+Noch nicht final umsetzen ohne Rueckmeldung Fachseite:
+
+- Intercompany-Filter
+- CHF-Umrechnung / Wechselkurse
+- Budgetvergleich
+- Gruppenlogik
+- Spartenlogik
+- Margenlogik
+
+Diese Punkte sollen spaeter moeglichst dynamisch auf dem neuen Transformations-/Mapping-Ansatz aufsetzen, aber aktuell nicht hart geraten werden.
+
+## 6b. Naechste sinnvolle Testkandidaten
+
+Wenn weiter in Tests investiert wird, sind die naechsten Kandidaten:
+
+- `ExportOrchestrationService`
+- spaeter evtl. SQLite-nahe Integrationstests fuer `DatabaseInitializationService`
+
+Aktueller Teststatus:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- erfolgreich
+- `18/18` Tests gruen
 
 ## 7. Referenzdatei
 

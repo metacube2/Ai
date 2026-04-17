@@ -3,15 +3,16 @@
 @using TrafagSalesExporter.Services
 @inject IManagementCockpitService CockpitService
 @inject ISnackbar Snackbar
+@inject IUiTextService UiText
 
-<PageTitle>Management Cockpit</PageTitle>
+<PageTitle>@T("Management Cockpit", "Management Cockpit")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Management Cockpit</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Management Cockpit", "Management Cockpit")</MudText>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudGrid>
         <MudItem xs="12" md="8">
-            <MudSelect T="string" @bind-Value="_selectedFilePath" Label="Vorhandene Excel-Datei" Dense>
+            <MudSelect T="string" @bind-Value="_selectedFilePath" Label="@T("Vorhandene Excel-Datei", "Available Excel file")" Dense>
                 @foreach (var file in _files)
                 {
                     <MudSelectItem Value="@file.Path">@file.DisplayName</MudSelectItem>
@@ -22,11 +23,11 @@
             <MudStack Row Spacing="2">
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadFiles"
                            StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loadingFiles">
-                    Dateien laden
+                    @T("Dateien laden", "Load files")
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Analyze"
                            StartIcon="@Icons.Material.Filled.Analytics" Disabled="_analyzing || string.IsNullOrWhiteSpace(_selectedFilePath)">
-                    @(_analyzing ? "Analysiere..." : "Cockpit erzeugen")
+                    @(_analyzing ? T("Analysiere...", "Analyzing...") : T("Cockpit erzeugen", "Build cockpit"))
                 </MudButton>
             </MudStack>
         </MudItem>
@@ -34,13 +35,13 @@
 </MudPaper>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudText Typo="Typo.h6" Class="mb-3">Zentrale Roh-Auswertung</MudText>
+    <MudText Typo="Typo.h6" Class="mb-3">@T("Zentrale Roh-Auswertung", "Central raw analysis")</MudText>
     <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
-        Diese Sicht arbeitet direkt auf `CentralSalesRecords` und zeigt nur fachlich neutrale Rohkennzahlen. Kein Intercompany-Filter, keine CHF-Umrechnung, kein Budget, keine Spartenlogik.
+        @T("Diese Sicht arbeitet direkt auf `CentralSalesRecords` und zeigt nur fachlich neutrale Rohkennzahlen. Kein Intercompany-Filter, keine CHF-Umrechnung, kein Budget, keine Spartenlogik.", "This view works directly on `CentralSalesRecords` and shows only neutral raw metrics. No intercompany filter, no CHF conversion, no budget, no divisional logic.")
     </MudAlert>
     <MudGrid>
         <MudItem xs="12" md="4">
-            <MudSelect T="int" @bind-Value="_selectedCentralYear" Label="Jahr" Dense>
+            <MudSelect T="int" @bind-Value="_selectedCentralYear" Label='@T("Jahr", "Year")' Dense>
                 @foreach (var year in _centralYears)
                 {
                     <MudSelectItem Value="@year">@year</MudSelectItem>
@@ -48,7 +49,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="4">
-            <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label="Monat (optional)" Dense Clearable>
+            <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label='@T("Monat (optional)", "Month (optional)")' Dense Clearable>
                 @foreach (var month in Enumerable.Range(1, 12))
                 {
                     <MudSelectItem Value="@((int?)month)">@($"{month:D2}")</MudSelectItem>
@@ -58,7 +59,7 @@
         <MudItem xs="12" md="4">
             <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
                        StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
-                @(_analyzingCentral ? "Analysiere..." : "Zentrale Auswertung laden")
+                @(_analyzingCentral ? T("Analysiere...", "Analyzing...") : T("Zentrale Auswertung laden", "Load central analysis"))
             </MudButton>
         </MudItem>
     </MudGrid>
@@ -67,14 +68,14 @@
 @if (_result is not null)
 {
     <MudGrid Class="mb-4">
-        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Land</MudText><MudText Typo="Typo.h6">@_result.Summary.Land</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Land", "Country")</MudText><MudText Typo="Typo.h6">@_result.Summary.Land</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">TSC</MudText><MudText Typo="Typo.h6">@_result.Summary.Tsc</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Umsatz</MudText><MudText Typo="Typo.h6">@_result.Summary.SalesValueTotal.ToString("N2")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Geschätzte Marge</MudText><MudText Typo="Typo.h6">@($"{_result.Summary.EstimatedMarginPercent:F1}%")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Umsatz", "Sales")</MudText><MudText Typo="Typo.h6">@_result.Summary.SalesValueTotal.ToString("N2")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Geschaetzte Marge", "Estimated margin")</MudText><MudText Typo="Typo.h6">@($"{_result.Summary.EstimatedMarginPercent:F1}%")</MudText></MudPaper></MudItem>
     </MudGrid>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">Management Aussagen</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Management Aussagen", "Management statements")</MudText>
         @foreach (var finding in _result.Findings)
         {
             <MudAlert Severity="@MapSeverity(finding.Severity)" Dense Variant="Variant.Outlined" Class="mb-2">
@@ -86,7 +87,7 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Top Kunden</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Kunden", "Top customers")</MudText>
                 @foreach (var item in _result.TopCustomers)
                 {
                     <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
@@ -95,7 +96,7 @@
         </MudItem>
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Top Produktgruppen</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Produktgruppen", "Top product groups")</MudText>
                 @foreach (var item in _result.TopProductGroups)
                 {
                     <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
@@ -104,7 +105,7 @@
         </MudItem>
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Top Sales Owner</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Sales Owner", "Top sales owner")</MudText>
                 @foreach (var item in _result.TopSalesEmployees)
                 {
                     <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
@@ -114,7 +115,7 @@
     </MudGrid>
 
     <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">Datenqualität</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Datenqualitaet", "Data quality")</MudText>
         @foreach (var entry in _result.DataQualityCounts.OrderByDescending(x => x.Value))
         {
             <MudText Typo="Typo.body2">@($"{entry.Key}: {entry.Value}")</MudText>
@@ -125,16 +126,16 @@
 @if (_centralResult is not null)
 {
     <MudGrid Class="mb-4">
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Zeilen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.RowCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Rechnungen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.InvoiceCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Standorte</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.SiteCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Länder</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Währungen</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CurrencyCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">Periode</MudText><MudText Typo="Typo.h6">@BuildPeriodLabel(_centralResult)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Zeilen", "Rows")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.RowCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Rechnungen", "Invoices")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.InvoiceCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Standorte", "Sites")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.SiteCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Laender", "Countries")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Waehrungen", "Currencies")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CurrencyCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Periode", "Period")</MudText><MudText Typo="Typo.h6">@BuildPeriodLabel(_centralResult)</MudText></MudPaper></MudItem>
     </MudGrid>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">Hinweise</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
         @foreach (var notice in _centralResult.Notices)
         {
             <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-2">@notice</MudAlert>
@@ -144,13 +145,13 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Jahresumsatz 2025/2026</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahresumsatz 2025/2026", "Yearly sales 2025/2026")</MudText>
                 <MudTable Items="_centralResult.YearlyTotals" Dense Hover Striped>
                     <HeaderContent>
-                        <MudTh>Jahr</MudTh>
-                        <MudTh>Währung</MudTh>
-                        <MudTh>Umsatz</MudTh>
-                        <MudTh>Zeilen</MudTh>
+                        <MudTh>@T("Jahr", "Year")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Year</MudTd>
@@ -163,13 +164,13 @@
         </MudItem>
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Monatsumsatz</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Monatsumsatz", "Monthly sales")</MudText>
                 <MudTable Items="_centralResult.MonthlyTotals" Dense Hover Striped>
                     <HeaderContent>
-                        <MudTh>Monat</MudTh>
-                        <MudTh>Währung</MudTh>
-                        <MudTh>Umsatz</MudTh>
-                        <MudTh>Zeilen</MudTh>
+                        <MudTh>@T("Monat", "Month")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
@@ -185,13 +186,13 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Tagesumsatz im ausgewählten Monat</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Tagesumsatz im ausgewaehlten Monat", "Daily sales in selected month")</MudText>
                 <MudTable Items="_centralResult.DailyTotals" Dense Hover Striped>
                     <HeaderContent>
-                        <MudTh>Tag</MudTh>
-                        <MudTh>Währung</MudTh>
-                        <MudTh>Umsatz</MudTh>
-                        <MudTh>Zeilen</MudTh>
+                        <MudTh>@T("Tag", "Day")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
@@ -200,20 +201,20 @@
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
-                        <MudText Typo="Typo.caption">Für die Tagessicht bitte zusätzlich einen Monat wählen.</MudText>
+                        <MudText Typo="Typo.caption">@T("Fuer die Tagessicht bitte zusaetzlich einen Monat waehlen.", "Please select a month as well for the daily view.")</MudText>
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">Umsatz nach Quelle</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Quelle", "Sales by source")</MudText>
                 <MudTable Items="_centralResult.SourceSystemTotals" Dense Hover Striped>
                     <HeaderContent>
-                        <MudTh>Quelle</MudTh>
-                        <MudTh>Währung</MudTh>
-                        <MudTh>Umsatz</MudTh>
-                        <MudTh>Rechnungen</MudTh>
+                        <MudTh>@T("Quelle", "Source")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Rechnungen", "Invoices")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
@@ -227,14 +228,14 @@
     </MudGrid>
 
     <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">Umsatz nach Land</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Land", "Sales by country")</MudText>
         <MudTable Items="_centralResult.CountryTotals" Dense Hover Striped>
             <HeaderContent>
-                <MudTh>Land</MudTh>
-                <MudTh>Währung</MudTh>
-                <MudTh>Umsatz</MudTh>
-                <MudTh>Rechnungen</MudTh>
-                <MudTh>Zeilen</MudTh>
+                <MudTh>@T("Land", "Country")</MudTh>
+                <MudTh>@T("Waehrung", "Currency")</MudTh>
+                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                <MudTh>@T("Rechnungen", "Invoices")</MudTh>
+                <MudTh>@T("Zeilen", "Rows")</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd>@context.Label</MudTd>
@@ -298,7 +299,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Cockpit konnte nicht erzeugt werden: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(T("Cockpit konnte nicht erzeugt werden: {0}", "Could not build cockpit: {0}"), ex.Message), Severity.Error);
         }
         finally
         {
@@ -318,7 +319,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Zentrale Auswertung konnte nicht erzeugt werden: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(T("Zentrale Auswertung konnte nicht erzeugt werden: {0}", "Could not build central analysis: {0}"), ex.Message), Severity.Error);
         }
         finally
         {
@@ -340,4 +341,8 @@
 
         return $"{result.Summary.PeriodStart.Value:dd.MM.yyyy} - {result.Summary.PeriodEnd.Value:dd.MM.yyyy}";
     }
+}
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
 }

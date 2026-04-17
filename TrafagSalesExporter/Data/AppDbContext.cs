@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<ExportLog> ExportLogs => Set<ExportLog>();
     public DbSet<AppEventLog> AppEventLogs => Set<AppEventLog>();
     public DbSet<FieldTransformationRule> FieldTransformationRules => Set<FieldTransformationRule>();
+    public DbSet<CurrencyExchangeRate> CurrencyExchangeRates => Set<CurrencyExchangeRate>();
     public DbSet<SapSourceDefinition> SapSourceDefinitions => Set<SapSourceDefinition>();
     public DbSet<SapJoinDefinition> SapJoinDefinitions => Set<SapJoinDefinition>();
     public DbSet<SapFieldMapping> SapFieldMappings => Set<SapFieldMapping>();

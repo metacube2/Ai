@@ -9,6 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
@@ -25,7 +26,11 @@ builder.Services.AddSingleton<ITransformationStrategy, PrefixTransformationStrat
 builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, NormalizeCurrencyCodeTransformationStrategy>();
+builder.Services.AddSingleton<ICurrencyExchangeRateService, CurrencyExchangeRateService>();
+builder.Services.AddSingleton<IExchangeRateImportService, ExchangeRateImportService>();
 builder.Services.AddSingleton<IRecordTransformationStrategy, FirstNonEmptyRecordTransformationStrategy>();
+builder.Services.AddSingleton<IRecordTransformationStrategy, ConvertCurrencyRecordTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationCatalog, TransformationCatalog>();
 builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
 builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
@@ -37,6 +42,7 @@ builder.Services.AddSingleton<IExportLogService, ExportLogService>();
 builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
 builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
+builder.Services.AddSingleton<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundService>());

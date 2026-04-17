@@ -1,5 +1,3 @@
-using System.Net.Http.Headers;
-using System.Text;
 using Microsoft.Data.Sqlite;
 
 var conn = new SqliteConnection(@"Data Source=C:\Users\koi\source\repos\Ai\TrafagSalesExporter\trafag_exporter.db");
@@ -19,8 +17,8 @@ if (string.IsNullOrWhiteSpace(sapUsername) || string.IsNullOrWhiteSpace(sapPassw
 var serviceUrl = @"http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/";
 using var client = new HttpClient();
 client.Timeout = TimeSpan.FromSeconds(20);
-client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{sapUsername}:{sapPassword}")));
-foreach (var url in new[]{ serviceUrl, serviceUrl + "" })
+client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{sapUsername}:{sapPassword}")));
+foreach (var url in new[] { serviceUrl, serviceUrl + "" })
 {
     Console.WriteLine($"URL|{url}");
     using var response = await client.GetAsync(url);

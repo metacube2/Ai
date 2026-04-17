@@ -49,9 +49,15 @@ public class ConsolidatedExportService : IConsolidatedExportService
             !string.IsNullOrWhiteSpace(spConfig.ClientId) &&
             !string.IsNullOrWhiteSpace(spConfig.ClientSecret))
         {
+            var centralFolderConfigured = !string.IsNullOrWhiteSpace(spConfig.CentralExportFolder);
+            var sharePointFolder = centralFolderConfigured
+                ? spConfig.CentralExportFolder
+                : spConfig.ExportFolder;
+            var landSubfolder = centralFolderConfigured ? string.Empty : "Alle";
+
             await _sharePointService.UploadAsync(
                 spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                spConfig.SiteUrl, spConfig.ExportFolder, "Alle", consolidatedPath);
+                spConfig.SiteUrl, sharePointFolder, landSubfolder, consolidatedPath);
         }
 
         return consolidatedPath;

@@ -105,6 +105,38 @@ public class HanaQueryService : IHanaQueryService
         connection.Open();
     }
 
+    public List<string> GetAvailableSchemas(HanaServer server)
+    {
+        var connectionString = server.BuildConnectionString();
+        using var connection = new HanaConnection(connectionString);
+        connection.Open();
+
+        const string query = """
+            SELECT schema_name
+            FROM (
+                SELECT schema_name, COUNT(DISTINCT table_name) AS required_table_count
+                FROM sys.tables
+                WHERE table_name IN ('OINV', 'INV1', 'ORIN', 'RIN1', 'OCRD', 'OITM')
+                GROUP BY schema_name
+            ) t
+            WHERE required_table_count >= 4
+            ORDER BY schema_name;
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        using var reader = command.ExecuteReader();
+
+        var schemas = new List<string>();
+        while (reader.Read())
+        {
+            var schema = reader["schema_name"]?.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(schema))
+                schemas.Add(schema);
+        }
+
+        return schemas;
+    }
+
     private List<SalesRecord> ReadRecords(HanaConnection connection, string query, string land, string queryName)
     {
         var records = new List<SalesRecord>();
