@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Security;
 using TrafagSalesExporter.Services;
 using TrafagSalesExporter.Services.DataSources;
 
@@ -13,6 +17,29 @@ builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogL
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddCascadingAuthenticationState();
+
+var securitySettings = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
+var useDevelopmentAuthentication = builder.Environment.IsDevelopment() && securitySettings.DevelopmentBypass;
+
+if (useDevelopmentAuthentication)
+{
+    builder.Services
+        .AddAuthentication(DevelopmentAuthenticationHandler.SchemeName)
+        .AddScheme<AuthenticationSchemeOptions, DevelopmentAuthenticationHandler>(
+            DevelopmentAuthenticationHandler.SchemeName,
+            options => { });
+}
+else
+{
+    builder.Services.AddAuthentication(IISDefaults.AuthenticationScheme);
+}
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = SecurityPolicyFactory.BuildAccessPolicy(securitySettings, useDevelopmentAuthentication);
+    options.AddPolicy(SecurityPolicies.AdminOnly, SecurityPolicyFactory.BuildAdminPolicy(securitySettings, useDevelopmentAuthentication));
+});
 
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
@@ -87,6 +114,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<TrafagSalesExporter.Components.App>()

@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @implements IDisposable
+@using System.Security.Claims
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 
 <MudThemeProvider Theme="_theme" />
@@ -23,6 +24,11 @@
             <MudSelectItem Value="@("de")">DE</MudSelectItem>
             <MudSelectItem Value="@("en")">EN</MudSelectItem>
         </MudSelect>
+        <AuthorizeView>
+            <Authorized Context="authState">
+                <MudText Typo="Typo.caption" Class="mr-3">@ShortName(authState.User)</MudText>
+            </Authorized>
+        </AuthorizeView>
         <img src="trafag.jpg" alt="Trafag" class="app-logo" />
     </MudAppBar>
 
@@ -66,6 +72,13 @@
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private static string ShortName(ClaimsPrincipal user)
+    {
+        var name = user.Identity?.Name ?? string.Empty;
+        var separator = name.LastIndexOf('\\');
+        return separator >= 0 && separator < name.Length - 1 ? name[(separator + 1)..] : name;
+    }
 
     public void Dispose()
     {

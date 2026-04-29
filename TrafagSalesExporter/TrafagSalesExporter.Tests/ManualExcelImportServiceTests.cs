@@ -38,12 +38,19 @@ public class ManualExcelImportServiceTests
             ws.Cell(2, 18).Value = "PO-1";
             ws.Cell(2, 19).Value = 21.40m;
             ws.Cell(2, 20).Value = "EUR";
-            ws.Cell(2, 21).Value = "DAP";
-            ws.Cell(2, 22).Value = "Alice";
-            ws.Cell(2, 23).Value = "14.04.2026";
-            ws.Cell(2, 24).Value = "10.04.2026";
-            ws.Cell(2, 25).Value = "Deutschland";
-            ws.Cell(2, 26).Value = "Invoice";
+            ws.Cell(2, 21).Value = "EUR";
+            ws.Cell(2, 22).Value = 120.50m;
+            ws.Cell(2, 23).Value = 110.25m;
+            ws.Cell(2, 24).Value = 8.10m;
+            ws.Cell(2, 25).Value = 7.45m;
+            ws.Cell(2, 26).Value = 1.0925m;
+            ws.Cell(2, 27).Value = "CHF";
+            ws.Cell(2, 28).Value = "DAP";
+            ws.Cell(2, 29).Value = "Alice";
+            ws.Cell(2, 30).Value = "14.04.2026";
+            ws.Cell(2, 31).Value = "10.04.2026";
+            ws.Cell(2, 32).Value = "Deutschland";
+            ws.Cell(2, 33).Value = "Invoice";
         });
 
         try
@@ -60,6 +67,13 @@ public class ManualExcelImportServiceTests
             Assert.Equal(2.5m, row.Quantity);
             Assert.Equal(10.25m, row.StandardCost);
             Assert.Equal(21.40m, row.SalesPriceValue);
+            Assert.Equal("EUR", row.DocumentCurrency);
+            Assert.Equal(120.50m, row.DocumentTotalForeignCurrency);
+            Assert.Equal(110.25m, row.DocumentTotalLocalCurrency);
+            Assert.Equal(8.10m, row.VatSumForeignCurrency);
+            Assert.Equal(7.45m, row.VatSumLocalCurrency);
+            Assert.Equal(1.0925m, row.DocumentRate);
+            Assert.Equal("CHF", row.CompanyCurrency);
             Assert.Equal("Deutschland", row.Land);
             Assert.Equal("Invoice", row.DocumentType);
             Assert.Equal(new DateTime(2026, 4, 14), row.InvoiceDate);
@@ -205,6 +219,13 @@ public class ManualExcelImportServiceTests
             "Purchase Order number",
             "Sales Price/Value",
             "Sales Currency",
+            "Document Currency",
+            "Document Total FC",
+            "Document Total LC",
+            "VAT Sum FC",
+            "VAT Sum LC",
+            "Document Rate",
+            "Company Currency",
             "Incoterms 2020",
             "Sales responsible employee",
             "invoice date",

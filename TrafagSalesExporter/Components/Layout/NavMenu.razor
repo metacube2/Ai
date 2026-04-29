@@ -1,21 +1,30 @@
+@using TrafagSalesExporter.Security
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 
 <MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
         @T("Dashboard", "Dashboard")
     </MudNavLink>
-    <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
-        @T("Standorte", "Sites")
-    </MudNavLink>
-    <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
-        @T("Transformationen", "Transformations")
-    </MudNavLink>
+    <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
+        <Authorized>
+            <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
+                @T("Standorte", "Sites")
+            </MudNavLink>
+            <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
+                @T("Transformationen", "Transformations")
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
     <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Analytics">
         @T("Management Cockpit", "Management Cockpit")
     </MudNavLink>
-    <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
-        @T("Settings", "Settings")
-    </MudNavLink>
+    <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
+        <Authorized>
+            <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
+                @T("Settings", "Settings")
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
     <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
         @T("Logs", "Logs")
     </MudNavLink>

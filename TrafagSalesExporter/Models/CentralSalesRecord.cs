@@ -32,6 +32,13 @@ public class CentralSalesRecord
     public string PurchaseOrderNumber { get; set; } = string.Empty;
     public decimal SalesPriceValue { get; set; }
     public string SalesCurrency { get; set; } = string.Empty;
+    public string DocumentCurrency { get; set; } = string.Empty;
+    public decimal DocumentTotalForeignCurrency { get; set; }
+    public decimal DocumentTotalLocalCurrency { get; set; }
+    public decimal VatSumForeignCurrency { get; set; }
+    public decimal VatSumLocalCurrency { get; set; }
+    public decimal DocumentRate { get; set; }
+    public string CompanyCurrency { get; set; } = string.Empty;
     public string Incoterms2020 { get; set; } = string.Empty;
     public string SalesResponsibleEmployee { get; set; } = string.Empty;
     public DateTime? InvoiceDate { get; set; }

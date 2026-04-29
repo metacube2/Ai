@@ -2,6 +2,183 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-29 B1-Belegwaehrungsfelder
+
+Der HANA/B1-Export zieht jetzt zusaetzliche Belegwaehrungsfelder:
+
+- `DocCur`
+- `DocTotalFC`
+- `DocTotal`
+- `VatSumFC`
+- `VatSum`
+- `DocRate`
+- `OADM.MainCurncy`
+
+Neue Zielfelder:
+
+- `DocumentCurrency`
+- `DocumentTotalForeignCurrency`
+- `DocumentTotalLocalCurrency`
+- `VatSumForeignCurrency`
+- `VatSumLocalCurrency`
+- `DocumentRate`
+- `CompanyCurrency`
+
+Zusaetzlich gilt jetzt:
+
+- `StandardCostCurrency` kommt im HANA-Pfad aus `OADM.MainCurncy`
+- `Sales_All_*.xlsx` enthaelt die neuen Spalten
+- `CentralSalesRecords` enthaelt die neuen Spalten
+- bestehende SQLite-DBs werden beim Start um die Spalten erweitert
+- Manual-Excel-Import kann die neuen Spalten lesen
+
+### Wichtig fuer Auswertungen
+
+Die neuen `DocumentTotal*`- und `VatSum*`-Werte sind Belegkopfwerte und werden in der positionsbasierten Datei pro Position wiederholt.
+
+Power BI:
+
+- nicht positionsweise summieren
+- zuerst nach Beleg deduplizieren, z. B. `TSC` + `DocumentType` + `Invoice Number`
+- danach Belegkopfwerte summieren
+
+Positionswerte wie `Sales Price/Value`, `Quantity` und `Standard cost` bleiben fuer positionsbasierte Summen geeignet.
+
+### Verifikation
+
+Geprueft:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich
+- Tests erfolgreich
+- `48/48` Tests gruen
+
+## Nachtrag 2026-04-29 Clean-Code-/DI-Befund
+
+Aktueller Architektur- und DI-Zustand nach den letzten Umbauten:
+
+Gesamturteil:
+
+- die App ist deutlich besser strukturiert als zu Beginn
+- die Grundarchitektur ist brauchbar bis gut und fuer pragmatischen produktiven Einsatz geeignet
+- Dependency Injection wird grundsaetzlich sinnvoll genutzt
+- Clean Code ist mittel bis gut, aber noch nicht durchgehend konsequent
+
+Was positiv ist:
+
+- Kernservices laufen weitgehend ueber Interfaces und DI
+- `DataSourceAdapter`-Pattern trennt `HANA`, `SAP_GATEWAY` und `MANUAL_EXCEL`
+- `SiteExportService` ist dadurch deutlich schlanker als frueher
+- UI-nahe Page-Services wurden eingefuehrt
+- viele Razor-Seiten sind nicht mehr direkt `DbContext`-lastig
+- `Scoped` fuer Page-Services und `Singleton` fuer gemeinsame Infrastruktur/Orchestrierung ist bewusst gewaehlt
+- Tests decken wichtige Fachlogik ab, u. a. Transformationen, ConfigTransfer, DatabaseInitialization und ManagementCockpit
+
+Was noch nicht ideal ist:
+
+- `DatabaseInitializationService` bleibt ein produktiver Reparatur-/Migrationsblock und ist kein sauberes versioniertes Migrationssystem
+- `Settings.razor` und `Standorte.razor` enthalten weiterhin relativ viel UI-/Workflow-Logik
+- `ManagementCockpitService`, `ConfigTransferService` und Teile der Initialisierung sind noch sehr breit
+- konsolidierter Export hat historisch noch Semantikreste zwischen Live-Snapshot und `CentralSalesRecords`
+- Secrets/Zugangsdaten sind noch nicht ideal geloest
+- zentraler Retry-/Resilience-Layer fuer SAP/HANA/SharePoint fehlt
+- Auth ist jetzt pragmatisch mit User/Admin geschnitten, aber noch nicht fein nach `Viewer`, `Exporter`, `Admin`, `Finance`
+
+Sinnvolle spaetere Clean-Code-Schritte:
+
+1. `ManagementCockpitService` in kleinere Query-, Aggregation- und Currency-Komponenten teilen
+2. `Settings.razor` und `Standorte.razor` weiter Richtung Page-/Application-Services entlasten
+3. `DatabaseInitializationService` langfristig durch versionierte Migrationen ersetzen
+4. Auth-Policies fachlich feiner schneiden, z. B. `Viewer`, `Exporter`, `Admin`, `Finance`
+5. Retry/Timeout/Failure-Handling fuer externe Systeme zentralisieren
+6. Secret-Store-Konzept umsetzen
+
+## Nachtrag 2026-04-29 Authentifizierung / AD
+
+Die App wurde nach IT-Rueckmeldung gegen anonymen Zugriff abgesichert.
+
+Neuer Stand:
+
+- globale Authentifizierungspflicht
+- produktiv vorgesehen: Windows Authentication / Active Directory
+- Zugriff und Adminrechte ueber AD-Gruppen
+- kein eigener App-Login
+- kein versteckter produktiver Backdoor
+- lokaler Development-Bypass nur bei `ASPNETCORE_ENVIRONMENT=Development`
+
+Neue/angepasste Dateien:
+
+- `Program.cs`
+- `Security/SecurityOptions.cs`
+- `Security/SecurityPolicies.cs`
+- `Security/DevelopmentAuthenticationHandler.cs`
+- `Components/Routes.razor`
+- `Components/_Imports.razor`
+- `Components/Layout/NavMenu.razor`
+- `Components/Layout/MainLayout.razor`
+- `Components/Pages/Settings.razor`
+- `Components/Pages/Standorte.razor`
+- `Components/Pages/Transformations.razor`
+- `appsettings.json`
+- `appsettings.Development.json`
+
+Aktuelle Default-Gruppen:
+
+- `TRAFAG\TrafagSalesExporter-Users`
+- `TRAFAG\TrafagSalesExporter-Admins`
+
+### Noch mit IT zu klaeren
+
+1. Exakte AD-Domain-/Gruppennamen bestaetigen
+2. AD-Gruppen anlegen oder bestehende Gruppen verwenden
+3. IIS-Zielumgebung festlegen
+4. Auf IIS Windows Authentication aktivieren
+5. Auf IIS Anonymous Authentication deaktivieren
+6. Sicherstellen, dass produktiv nicht `ASPNETCORE_ENVIRONMENT=Development` gesetzt ist
+7. Test mit einem normalen User und einem Admin-User durchfuehren
+
+### Fachliche Rollenentscheidung
+
+Aktuell:
+
+- Admin:
+  - `Settings`
+  - `Standorte`
+  - `Transformations`
+- berechtigter User:
+  - Dashboard
+  - Management Cockpit
+  - Logs
+
+Noch zu entscheiden:
+
+- ob `Logs` ebenfalls Admin-only sein soll
+- ob Export-Buttons im Dashboard nur fuer eine eigene Rolle `Exporter` sichtbar sein sollen
+- ob Management Cockpit fuer alle berechtigten User oder nur fuer Management/Finance-Gruppen sichtbar sein soll
+
+### Verifikation
+
+Geprueft:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich
+- Tests erfolgreich
+- `48/48` Tests gruen
+- Auth-Policy-Tests fuer AccessGroup, AdminGroup und Development-Admin vorhanden
+- lokaler Development-Auth-Start geprueft: `http://localhost:55416` antwortet mit HTTP `200`
+
 ## Nachtrag 2026-04-29 Management Cockpit
 
 Seit dem 2026-04-17 wurden im `Management Cockpit` weitere Auswertmoeglichkeiten umgesetzt und nachtraeglich aus dem aktuellen Code rekonstruiert.

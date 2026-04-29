@@ -177,6 +177,13 @@ public class HanaQueryService : IHanaQueryService
                 PurchaseOrderNumber = reader["purchase_order_number"]?.ToString() ?? string.Empty,
                 SalesPriceValue = Convert.ToDecimal(reader["sales_value"]),
                 SalesCurrency = reader["sales_currency"]?.ToString() ?? string.Empty,
+                DocumentCurrency = reader["document_currency"]?.ToString() ?? string.Empty,
+                DocumentTotalForeignCurrency = Convert.ToDecimal(reader["document_total_fc"]),
+                DocumentTotalLocalCurrency = Convert.ToDecimal(reader["document_total_lc"]),
+                VatSumForeignCurrency = Convert.ToDecimal(reader["vat_sum_fc"]),
+                VatSumLocalCurrency = Convert.ToDecimal(reader["vat_sum_lc"]),
+                DocumentRate = Convert.ToDecimal(reader["document_rate"]),
+                CompanyCurrency = reader["company_currency"]?.ToString() ?? string.Empty,
                 Incoterms2020 = reader["incoterms_2020"]?.ToString() ?? string.Empty,
                 SalesResponsibleEmployee = reader["sales_responsible"]?.ToString() ?? string.Empty,
                 OrderDate = reader.IsDBNull(reader.GetOrdinal("order_date")) ? null : reader.GetDateTime(reader.GetOrdinal("order_date")),
@@ -217,12 +224,19 @@ SELECT
     COALESCE(cust_adr.""Country"", '') AS customer_country,
     COALESCE(ind.""IndName"", '') AS customer_industry,
     p.""StockPrice"" AS standard_cost,
-    COALESCE(p.""Currency"", h.""DocCur"") AS standard_cost_currency,
+    COALESCE(adm.""MainCurncy"", '') AS standard_cost_currency,
     CASE WHEN p.""BaseType"" = 22
          THEN CAST(p.""BaseRef"" AS NVARCHAR(20))
          ELSE '' END AS purchase_order_number,
     p.""LineTotal"" AS sales_value,
     COALESCE(p.""Currency"", h.""DocCur"") AS sales_currency,
+    COALESCE(h.""DocCur"", '') AS document_currency,
+    COALESCE(h.""DocTotalFC"", 0) AS document_total_fc,
+    COALESCE(h.""DocTotal"", 0) AS document_total_lc,
+    COALESCE(h.""VatSumFC"", 0) AS vat_sum_fc,
+    COALESCE(h.""VatSum"", 0) AS vat_sum_lc,
+    COALESCE(h.""DocRate"", 0) AS document_rate,
+    COALESCE(adm.""MainCurncy"", '') AS company_currency,
     '' AS incoterms_2020,
     COALESCE(emp.""SlpName"", '') AS sales_responsible,
     CASE WHEN p.""BaseType"" = 17
@@ -232,6 +246,7 @@ SELECT
     'INV' AS doc_type
 FROM {quotedSchema}.""OINV"" h
 INNER JOIN {quotedSchema}.""INV1"" p ON h.""DocEntry"" = p.""DocEntry""
+CROSS JOIN {quotedSchema}.""OADM"" adm
 LEFT JOIN {quotedSchema}.""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
 LEFT JOIN {quotedSchema}.""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
 LEFT JOIN {quotedSchema}.""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
@@ -269,16 +284,24 @@ SELECT
     COALESCE(cust_adr.""Country"", '') AS customer_country,
     COALESCE(ind.""IndName"", '') AS customer_industry,
     p.""StockPrice"" AS standard_cost,
-    COALESCE(p.""Currency"", h.""DocCur"") AS standard_cost_currency,
+    COALESCE(adm.""MainCurncy"", '') AS standard_cost_currency,
     '' AS purchase_order_number,
     p.""LineTotal"" * -1 AS sales_value,
     COALESCE(p.""Currency"", h.""DocCur"") AS sales_currency,
+    COALESCE(h.""DocCur"", '') AS document_currency,
+    COALESCE(h.""DocTotalFC"", 0) * -1 AS document_total_fc,
+    COALESCE(h.""DocTotal"", 0) * -1 AS document_total_lc,
+    COALESCE(h.""VatSumFC"", 0) * -1 AS vat_sum_fc,
+    COALESCE(h.""VatSum"", 0) * -1 AS vat_sum_lc,
+    COALESCE(h.""DocRate"", 0) AS document_rate,
+    COALESCE(adm.""MainCurncy"", '') AS company_currency,
     '' AS incoterms_2020,
     COALESCE(emp.""SlpName"", '') AS sales_responsible,
     NULL AS order_date,
     'CRN' AS doc_type
 FROM {quotedSchema}.""ORIN"" h
 INNER JOIN {quotedSchema}.""RIN1"" p ON h.""DocEntry"" = p.""DocEntry""
+CROSS JOIN {quotedSchema}.""OADM"" adm
 LEFT JOIN {quotedSchema}.""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
 LEFT JOIN {quotedSchema}.""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
 LEFT JOIN {quotedSchema}.""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""

@@ -25,6 +25,7 @@ Zielbild:
 ## Technologie-Stack
 
 - UI: Blazor Server + MudBlazor
+- Authentifizierung: ASP.NET Core Authentication/Authorization, produktiv Windows Authentication / Active Directory
 - Datenbank: SQLite (`trafag_exporter.db`)
 - Excel lesen/schreiben: ClosedXML
 - SAP HANA Zugriff: `Sap.Data.Hana.Core.v2.1.dll`
@@ -41,6 +42,14 @@ Wichtige Dateien:
 - [Components/Layout/NavMenu.razor](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Components/Layout/NavMenu.razor)
 
 `Program.cs` registriert fast die komplette Architektur ueber DI und fuehrt beim Start `DatabaseInitializationService.InitializeAsync()` aus.
+
+Zusaetzlich registriert `Program.cs` den Zugriffsschutz:
+
+- `AddCascadingAuthenticationState`
+- Windows Authentication fuer produktive Umgebungen
+- Development-Authentication-Handler nur bei `ASPNETCORE_ENVIRONMENT=Development` und `Security:DevelopmentBypass=true`
+- globale Fallback-Policy fuer authentifizierte/berechtigte User
+- Policy `AdminOnly` fuer administrative Seiten
 
 ## Hauptseiten
 
@@ -71,6 +80,13 @@ Kurzrollen:
 - `Settings`: SharePoint, Exportpfade, Quellsysteme, Wechselkurse, Config Import/Export
 - `Logs`: technische Ereignisprotokolle
 
+Security:
+
+- alle Routen erfordern Authentifizierung
+- `Settings`, `Standorte` und `Transformations` sind `AdminOnly`
+- Admin-Navigation wird nur fuer Admins angezeigt
+- eingeloggter Benutzer wird im App-Bar angezeigt
+
 ## Kernmodelle
 
 Wichtige Entity-Klassen:
@@ -89,6 +105,18 @@ Wichtige Entity-Klassen:
 - [Models/ExportLog.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Models/ExportLog.cs)
 - [Models/AppEventLog.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Models/AppEventLog.cs)
 - [Models/CurrencyExchangeRate.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Models/CurrencyExchangeRate.cs)
+
+`SalesRecord` / `CentralSalesRecord` enthalten neben den positionsnahen Feldern auch B1-Belegwaehrungsfelder:
+
+- `DocumentCurrency` aus `DocCur`
+- `DocumentTotalForeignCurrency` aus `DocTotalFC`
+- `DocumentTotalLocalCurrency` aus `DocTotal`
+- `VatSumForeignCurrency` aus `VatSumFC`
+- `VatSumLocalCurrency` aus `VatSum`
+- `DocumentRate` aus `DocRate`
+- `CompanyCurrency` aus `OADM.MainCurncy`
+
+Wichtig: diese Dokumentwerte sind Belegkopfwerte und werden in der positionsbasierten Excel pro Position wiederholt. Fuer Belegkopfsummen muessen Auswertungen nach Beleg deduplizieren.
 
 Wichtige Relationen:
 
@@ -403,6 +431,49 @@ Bereits gehaertete Fehlerbilder:
 - Legacy-Credential-Spalten in `HanaServers`
 - verschobene Spalten im `Sites_old -> Sites`-Kopierpfad
 
+## Authentifizierung / Autorisierung
+
+Dateien:
+
+- [Security/SecurityOptions.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Security/SecurityOptions.cs)
+- [Security/SecurityPolicies.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Security/SecurityPolicies.cs)
+- [Security/DevelopmentAuthenticationHandler.cs](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Security/DevelopmentAuthenticationHandler.cs)
+- [Components/Routes.razor](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Components/Routes.razor)
+- [Components/Layout/NavMenu.razor](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Components/Layout/NavMenu.razor)
+- [Components/Layout/MainLayout.razor](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/Components/Layout/MainLayout.razor)
+
+Produktives Ziel:
+
+- Windows Authentication / Active Directory
+- keine eigene Benutzerverwaltung
+- Zugriff ueber AD-Gruppen
+- Adminrechte ueber separate AD-Gruppe
+
+Konfiguration in `appsettings.json`:
+
+- `Security:AccessGroups`
+- `Security:AdminGroups`
+- `Security:DevelopmentBypass`
+- `Security:DevelopmentUserIsAdmin`
+- `Security:DevelopmentUserName`
+
+Default-Gruppen:
+
+- `TRAFAG\\TrafagSalesExporter-Users`
+- `TRAFAG\\TrafagSalesExporter-Admins`
+
+Development:
+
+- `appsettings.Development.json` aktiviert einen lokalen Development-Auth-Handler
+- dieser ist nur fuer lokale Entwicklung gedacht
+- produktiv darf `ASPNETCORE_ENVIRONMENT` nicht `Development` sein
+
+IIS-Betrieb:
+
+- Windows Authentication aktivieren
+- Anonymous Authentication deaktivieren
+- AD-Gruppennamen in produktiver Konfiguration setzen
+
 ## Config Import / Export
 
 Dateien:
@@ -461,6 +532,19 @@ Aktuell vorhandene Schwerpunkte:
 - Wechselkurs-Caching
 - Mengen-Auswertung ohne Waehrungsumrechnung
 - Zusatz-Summenfelder in Zeitreihen
+
+`SecurityPolicyFactoryTests` decken inzwischen ab:
+
+- App-Zugriff fuer User in `AccessGroups`
+- Ablehnung fuer User ausserhalb der Access-Gruppen
+- Development-Auth-Zugriff im lokalen Modus
+- Admin-Zugriff fuer User in `AdminGroups`
+- Ablehnung normaler User fuer `AdminOnly`
+- Development-Admin-Claim
+
+`CentralSalesRecordServiceTests` decken inzwischen ab:
+
+- Persistenz und Ruecklesen der B1-Belegwaehrungsfelder in `CentralSalesRecords`
 
 Wichtig:
 

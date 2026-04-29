@@ -40,6 +40,13 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
         EnsureCentralSalesRecordTable(db);
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "VatSumForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "VatSumLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentRate", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "CompanyCurrency", "TEXT NOT NULL DEFAULT ''");
         EnsureAppEventLogTable(db);
     }
 

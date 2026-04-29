@@ -82,6 +82,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 PurchaseOrderNumber = r.PurchaseOrderNumber,
                 SalesPriceValue = r.SalesPriceValue,
                 SalesCurrency = r.SalesCurrency,
+                DocumentCurrency = r.DocumentCurrency,
+                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
+                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
+                VatSumForeignCurrency = r.VatSumForeignCurrency,
+                VatSumLocalCurrency = r.VatSumLocalCurrency,
+                DocumentRate = r.DocumentRate,
+                CompanyCurrency = r.CompanyCurrency,
                 Incoterms2020 = r.Incoterms2020,
                 SalesResponsibleEmployee = r.SalesResponsibleEmployee,
                 InvoiceDate = r.InvoiceDate,
@@ -158,14 +165,16 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 Material, Name, ProductGroup, Quantity, SupplierNumber, SupplierName, SupplierCountry,
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
-                SalesResponsibleEmployee, InvoiceDate, OrderDate, Land, DocumentType
+                DocumentCurrency, DocumentTotalForeignCurrency, DocumentTotalLocalCurrency, VatSumForeignCurrency,
+                VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, InvoiceDate, OrderDate, Land, DocumentType
             )
             VALUES (
                 $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $invoiceNumber, $positionOnInvoice,
                 $material, $name, $productGroup, $quantity, $supplierNumber, $supplierName, $supplierCountry,
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
-                $salesResponsibleEmployee, $invoiceDate, $orderDate, $land, $documentType
+                $documentCurrency, $documentTotalForeignCurrency, $documentTotalLocalCurrency, $vatSumForeignCurrency,
+                $vatSumLocalCurrency, $documentRate, $companyCurrency, $salesResponsibleEmployee, $invoiceDate, $orderDate, $land, $documentType
             );
             """;
 
@@ -192,6 +201,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$purchaseOrderNumber", SqliteType.Text);
         command.Parameters.Add("$salesPriceValue", SqliteType.Real);
         command.Parameters.Add("$salesCurrency", SqliteType.Text);
+        command.Parameters.Add("$documentCurrency", SqliteType.Text);
+        command.Parameters.Add("$documentTotalForeignCurrency", SqliteType.Real);
+        command.Parameters.Add("$documentTotalLocalCurrency", SqliteType.Real);
+        command.Parameters.Add("$vatSumForeignCurrency", SqliteType.Real);
+        command.Parameters.Add("$vatSumLocalCurrency", SqliteType.Real);
+        command.Parameters.Add("$documentRate", SqliteType.Real);
+        command.Parameters.Add("$companyCurrency", SqliteType.Text);
         command.Parameters.Add("$incoterms2020", SqliteType.Text);
         command.Parameters.Add("$salesResponsibleEmployee", SqliteType.Text);
         command.Parameters.Add("$invoiceDate", SqliteType.Text);
@@ -227,6 +243,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$purchaseOrderNumber"].Value = record.PurchaseOrderNumber ?? string.Empty;
         command.Parameters["$salesPriceValue"].Value = record.SalesPriceValue;
         command.Parameters["$salesCurrency"].Value = record.SalesCurrency ?? string.Empty;
+        command.Parameters["$documentCurrency"].Value = record.DocumentCurrency ?? string.Empty;
+        command.Parameters["$documentTotalForeignCurrency"].Value = record.DocumentTotalForeignCurrency;
+        command.Parameters["$documentTotalLocalCurrency"].Value = record.DocumentTotalLocalCurrency;
+        command.Parameters["$vatSumForeignCurrency"].Value = record.VatSumForeignCurrency;
+        command.Parameters["$vatSumLocalCurrency"].Value = record.VatSumLocalCurrency;
+        command.Parameters["$documentRate"].Value = record.DocumentRate;
+        command.Parameters["$companyCurrency"].Value = record.CompanyCurrency ?? string.Empty;
         command.Parameters["$incoterms2020"].Value = record.Incoterms2020 ?? string.Empty;
         command.Parameters["$salesResponsibleEmployee"].Value = record.SalesResponsibleEmployee ?? string.Empty;
         command.Parameters["$invoiceDate"].Value = record.InvoiceDate?.ToString("O") ?? (object)DBNull.Value;

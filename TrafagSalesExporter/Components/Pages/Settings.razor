@@ -1,4 +1,5 @@
 ﻿@page "/settings"
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject ISettingsPageService SettingsPageActions

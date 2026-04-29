@@ -60,6 +60,13 @@ public class ExcelExportService : IExcelExportService
             "Purchase Order number",
             "Sales Price/Value",
             "Sales Currency",
+            "Document Currency",
+            "Document Total FC",
+            "Document Total LC",
+            "VAT Sum FC",
+            "VAT Sum LC",
+            "Document Rate",
+            "Company Currency",
             "Incoterms 2020",
             "Sales responsible employee",
             "invoice date",
@@ -97,12 +104,19 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 18).Value = record.PurchaseOrderNumber;
             ws.Cell(row, 19).Value = record.SalesPriceValue;
             ws.Cell(row, 20).Value = record.SalesCurrency;
-            ws.Cell(row, 21).Value = record.Incoterms2020;
-            ws.Cell(row, 22).Value = record.SalesResponsibleEmployee;
-            ws.Cell(row, 23).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 24).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 25).Value = record.Land;
-            ws.Cell(row, 26).Value = record.DocumentType;
+            ws.Cell(row, 21).Value = record.DocumentCurrency;
+            ws.Cell(row, 22).Value = record.DocumentTotalForeignCurrency;
+            ws.Cell(row, 23).Value = record.DocumentTotalLocalCurrency;
+            ws.Cell(row, 24).Value = record.VatSumForeignCurrency;
+            ws.Cell(row, 25).Value = record.VatSumLocalCurrency;
+            ws.Cell(row, 26).Value = record.DocumentRate;
+            ws.Cell(row, 27).Value = record.CompanyCurrency;
+            ws.Cell(row, 28).Value = record.Incoterms2020;
+            ws.Cell(row, 29).Value = record.SalesResponsibleEmployee;
+            ws.Cell(row, 30).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 31).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 32).Value = record.Land;
+            ws.Cell(row, 33).Value = record.DocumentType;
             row++;
         }
 
