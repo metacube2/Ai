@@ -228,12 +228,32 @@ Zwei Betriebsarten:
 1. Dateibasiert
    - vorhandene `.xlsx` waehlen
    - Datei mit ClosedXML lesen
+   - Summenfeld waehlen
+   - Anzeige-Waehrung waehlen
    - Kennzahlen, Top-Listen, Datenqualitaet, Findings erzeugen
 
 2. Zentraldatenbasiert
    - direkt aus `CentralSalesRecords`
    - Jahr/Monat Filter
-   - Rohsicht ohne Intercompany-, CHF-, Budget- oder Spartelogik
+   - Summenfeld waehlen
+   - optionale weitere Summenfelder fuer Zeitreihen waehlen
+   - Anzeige-Waehrung waehlen
+   - Rohsicht ohne Intercompany-, Budget- oder Spartelogik
+
+Aktuelle Summenfelder:
+
+- `Sales Price/Value`
+- `Quantity`
+- `Standard cost`
+- `Quantity * Standard cost`
+
+Aktuelle Anzeige-Waehrungen:
+
+- `EUR`
+- `USD`
+- `Original`
+
+Die Waehrungsumrechnung nutzt `CurrencyExchangeRateService`. Bei `Original` bleiben Werte in Quellwaehrungen gruppiert. Nicht-betragliche Summenfelder wie `Quantity` haben keine Waehrung. Fehlende Wechselkurse werden gezaehlt und in Hinweisen bzw. Findings sichtbar; betroffene Werte werden in der Zielwaehrung mit `0` einbezogen.
 
 ## Quellsystemlogik
 
@@ -323,11 +343,14 @@ Vorhanden:
 - `ExchangeRateImportService` fuer ECB-Tageskurse
 - `NormalizeCurrencyCode`
 - `ConvertCurrency`
+- `ManagementCockpitService` kann betragliche Cockpit-Kennzahlen in `EUR` oder `USD` umrechnen
 
 Wichtig:
 
-- die Rohsicht im `Management Cockpit` rechnet aktuell bewusst nicht in CHF um
-- CHF ist derzeit Teil des allgemeinen Transformationssystems, nicht Default in der Cockpit-Rohsicht
+- die Rohsicht im `Management Cockpit` kann jetzt Anzeige-Waehrungen nutzen
+- `CHF` ist im Cockpit aktuell nicht als direkte Anzeige-Waehrung in der UI angeboten
+- CHF bleibt weiterhin Teil des allgemeinen Transformationssystems
+- fachlich ist noch zu klaeren, ob CHF als Standard- oder zusaetzliche Cockpit-Anzeige-Waehrung gebraucht wird
 
 ## SharePoint-Rolle im Gesamtsystem
 
@@ -428,6 +451,16 @@ Aktuell vorhandene Schwerpunkte:
 - ManagementCockpitService
 - ConfigTransferService
 - DatabaseInitializationService
+
+`ManagementCockpitServiceTests` decken inzwischen auch ab:
+
+- zentrale Analyse nach Jahr/Monat
+- Tages-, Monats-, Jahres-, Quellen- und Laenderwerte
+- waehlbare Summenfelder
+- Waehrungsumrechnung in EUR
+- Wechselkurs-Caching
+- Mengen-Auswertung ohne Waehrungsumrechnung
+- Zusatz-Summenfelder in Zeitreihen
 
 Wichtig:
 

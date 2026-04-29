@@ -2,6 +2,54 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-29 Management Cockpit
+
+Seit dem 2026-04-17 wurden im `Management Cockpit` weitere Auswertmoeglichkeiten umgesetzt und nachtraeglich aus dem aktuellen Code rekonstruiert.
+
+Aktueller neuer Stand:
+
+- Summenfeld ist waehbar statt fest auf Umsatz:
+  - `Sales Price/Value`
+  - `Quantity`
+  - `Standard cost`
+  - `Quantity * Standard cost`
+- Anzeige-Waehrung ist waehbar:
+  - `EUR`
+  - `USD`
+  - `Original`
+- betragliche Werte werden ueber `CurrencyExchangeRateService` umgerechnet
+- nicht-betragliche Werte wie `Quantity` bleiben ohne Waehrung
+- fehlende Wechselkurse werden gezaehlt und in der UI/Hinweisen sichtbar
+- zentrale Roh-Auswertung kann weitere Summenfelder als Zusatzspalten in Jahres-, Monats- und Tageswerten anzeigen
+- dateibasierte Excel-Analyse nutzt ebenfalls Summenfeld und Anzeige-Waehrung
+
+Betroffene Dateien:
+
+- `Components/Pages/ManagementCockpit.razor`
+- `Models/ManagementCockpitModels.cs`
+- `Services/IManagementCockpitService.cs`
+- `Services/ManagementCockpitPageService.cs`
+- `Services/ManagementCockpitService.cs`
+- `TrafagSalesExporter.Tests/ManagementCockpitServiceTests.cs`
+
+Neue Tests:
+
+- Umrechnung zentraler Werte in EUR
+- Wechselkurs-Cache pro Waehrung/Ziel/Datum
+- Mengen-Auswertung ohne Waehrungsumrechnung
+- Zusatzwerte in Zeitreihen
+
+### Jetzt sinnvoll zu pruefen
+
+1. `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal`
+2. Management Cockpit in der App oeffnen
+3. zentrale Auswertung mit `Sales Price/Value` in `EUR` pruefen
+4. zentrale Auswertung mit `Quantity` pruefen und bestaetigen, dass keine Waehrung angezeigt wird
+5. Zusatzfelder `Quantity` und `Quantity * Standard cost` in Jahres-/Monatswerten pruefen
+6. Dateianalyse einer exportierten Excel mit unterschiedlichen Summenfeldern pruefen
+7. fachlich klaeren, ob `CHF` neben `EUR` und `USD` als Anzeige-Waehrung angeboten werden soll
+8. fachlich klaeren, ob fehlende Wechselkurse als `0` in Zielwaehrung korrekt sind oder separat ausgewiesen werden sollen
+
 ## Nachtrag 2026-04-17 Refactoring-Fortschritt
 
 Mehrere frueher als hoch priorisiert markierte Architekturpunkte sind inzwischen bereits umgesetzt.

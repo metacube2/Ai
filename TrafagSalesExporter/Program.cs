@@ -6,6 +6,11 @@ using TrafagSalesExporter.Services.DataSources;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 

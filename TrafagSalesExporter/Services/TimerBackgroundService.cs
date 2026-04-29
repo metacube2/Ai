@@ -26,7 +26,9 @@ public class TimerBackgroundService : BackgroundService
     {
         var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         using var db = await dbFactory.CreateDbContextAsync();
-        var settings = await db.ExportSettings.FirstOrDefaultAsync();
+        var settings = await db.ExportSettings
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync();
 
         if (settings is null || !settings.TimerEnabled)
         {

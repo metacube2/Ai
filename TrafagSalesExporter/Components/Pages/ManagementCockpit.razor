@@ -11,7 +11,7 @@
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudGrid>
-        <MudItem xs="12" md="8">
+        <MudItem xs="12" md="6">
             <MudSelect T="string" @bind-Value="_selectedFilePath" Label="@T("Vorhandene Excel-Datei", "Available Excel file")" Dense>
                 @foreach (var file in _files)
                 {
@@ -19,7 +19,23 @@
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="12" md="4">
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFileValueField" Label="@T("Summenfeld", "Value field")" Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFileTargetCurrency" Label="@T("Anzeige-Waehrung", "Display currency")" Dense>
+                @foreach (var option in _currencyOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
             <MudStack Row Spacing="2">
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadFiles"
                            StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loadingFiles">
@@ -37,10 +53,10 @@
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudText Typo="Typo.h6" Class="mb-3">@T("Zentrale Roh-Auswertung", "Central raw analysis")</MudText>
     <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
-        @T("Diese Sicht arbeitet direkt auf `CentralSalesRecords` und zeigt nur fachlich neutrale Rohkennzahlen. Kein Intercompany-Filter, keine CHF-Umrechnung, kein Budget, keine Spartenlogik.", "This view works directly on `CentralSalesRecords` and shows only neutral raw metrics. No intercompany filter, no CHF conversion, no budget, no divisional logic.")
+        @T("Diese Sicht arbeitet direkt auf `CentralSalesRecords`. Summenfeld und Anzeige-Waehrung koennen gewaehlt werden; fachliche Filter wie Intercompany, Budget und Spartenlogik sind weiterhin nicht enthalten.", "This view works directly on `CentralSalesRecords`. Value field and display currency can be selected; business filters such as intercompany, budget and divisional logic are still not included.")
     </MudAlert>
     <MudGrid>
-        <MudItem xs="12" md="4">
+        <MudItem xs="12" md="2">
             <MudSelect T="int" @bind-Value="_selectedCentralYear" Label='@T("Jahr", "Year")' Dense>
                 @foreach (var year in _centralYears)
                 {
@@ -48,7 +64,7 @@
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="12" md="4">
+        <MudItem xs="12" md="2">
             <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label='@T("Monat (optional)", "Month (optional)")' Dense Clearable>
                 @foreach (var month in Enumerable.Range(1, 12))
                 {
@@ -56,7 +72,36 @@
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="12" md="4">
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedCentralValueField" Label="@T("Summenfeld", "Value field")" Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string"
+                       SelectedValues="_selectedCentralAdditionalValueFields"
+                       SelectedValuesChanged="SetSelectedCentralAdditionalValueFields"
+                       MultiSelection="true"
+                       Label="@T("Weitere Summenfelder", "Additional value fields")"
+                       Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudSelect T="string" @bind-Value="_selectedCentralTargetCurrency" Label="@T("Anzeige-Waehrung", "Display currency")" Dense>
+                @foreach (var option in _currencyOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
             <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
                        StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
                 @(_analyzingCentral ? T("Analysiere...", "Analyzing...") : T("Zentrale Auswertung laden", "Load central analysis"))
@@ -70,8 +115,8 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Land", "Country")</MudText><MudText Typo="Typo.h6">@_result.Summary.Land</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">TSC</MudText><MudText Typo="Typo.h6">@_result.Summary.Tsc</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Umsatz", "Sales")</MudText><MudText Typo="Typo.h6">@_result.Summary.SalesValueTotal.ToString("N2")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Geschaetzte Marge", "Estimated margin")</MudText><MudText Typo="Typo.h6">@($"{_result.Summary.EstimatedMarginPercent:F1}%")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@_result.Summary.ValueFieldLabel</MudText><MudText Typo="Typo.h6">@FormatValue(_result.Summary.AggregatedValueTotal, _result.Summary.DisplayCurrency)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Nicht umgerechnet", "Not converted")</MudText><MudText Typo="Typo.h6">@_result.Summary.MissingExchangeRateCount.ToString("N0")</MudText></MudPaper></MudItem>
     </MudGrid>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -90,7 +135,7 @@
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Top Kunden", "Top customers")</MudText>
                 @foreach (var item in _result.TopCustomers)
                 {
-                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
                 }
             </MudPaper>
         </MudItem>
@@ -99,7 +144,7 @@
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Top Produktgruppen", "Top product groups")</MudText>
                 @foreach (var item in _result.TopProductGroups)
                 {
-                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
                 }
             </MudPaper>
         </MudItem>
@@ -108,7 +153,7 @@
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Top Sales Owner", "Top sales owner")</MudText>
                 @foreach (var item in _result.TopSalesEmployees)
                 {
-                    <MudText Typo="Typo.body2">@($"{item.Label}: {item.Value:N2} ({item.SharePercent:F1}%)")</MudText>
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
                 }
             </MudPaper>
         </MudItem>
@@ -130,49 +175,9 @@
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Rechnungen", "Invoices")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.InvoiceCount.ToString("N0")</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Standorte", "Sites")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.SiteCount.ToString("N0")</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Laender", "Countries")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Waehrungen", "Currencies")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CurrencyCount.ToString("N0")</MudText></MudPaper></MudItem>
-        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Periode", "Period")</MudText><MudText Typo="Typo.h6">@BuildPeriodLabel(_centralResult)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@_centralResult.Summary.ValueFieldLabel</MudText><MudText Typo="Typo.h6">@FormatValue(_centralResult.Summary.ValueTotal, _centralResult.Summary.DisplayCurrency)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Nicht umgerechnet", "Not converted")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.MissingExchangeRateCount.ToString("N0")</MudText></MudPaper></MudItem>
     </MudGrid>
-
-    <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">@T("Cockpit Manometer", "Cockpit gauges")</MudText>
-        <MudText Typo="Typo.caption" Class="d-block mb-3">
-            @T("Verdichtete Kennzahlen aus der zentralen Rohsicht. Die Manometer zeigen Anteile, Dichte und Abdeckung, ohne Waehrungsumrechnung oder Budgetlogik.", "Condensed metrics from the central raw view. The gauges show shares, density and coverage without currency conversion or budget logic.")
-        </MudText>
-        <MudGrid>
-            @foreach (var gauge in BuildCentralGauges(_centralResult))
-            {
-                <MudItem xs="12" sm="6" lg="3">
-                    <MudPaper Class="pa-3 cockpit-gauge-card" Elevation="0">
-                        <MudText Typo="Typo.caption" Class="d-block mb-1">@gauge.Title</MudText>
-                        <div class="cockpit-gauge-wrap">
-                            <svg viewBox="0 0 220 140" class="cockpit-gauge" role="img" aria-label="@gauge.Title">
-                                <path d="@GaugeArcPath"
-                                      fill="none"
-                                      stroke="#d7e2ea"
-                                      stroke-width="16"
-                                      stroke-linecap="round" />
-                                <path d="@GaugeArcPath"
-                                      fill="none"
-                                      stroke="@gauge.Color"
-                                      stroke-width="16"
-                                      stroke-linecap="round"
-                                      pathLength="100"
-                                      stroke-dasharray="@BuildGaugeDashArray(gauge.Percent)" />
-                                <line x1="110" y1="110" x2="@BuildGaugeNeedleX(gauge.Percent)" y2="@BuildGaugeNeedleY(gauge.Percent)"
-                                      stroke="#23313d"
-                                      stroke-width="5"
-                                      stroke-linecap="round" />
-                                <circle cx="110" cy="110" r="8" fill="#23313d" />
-                                <text x="110" y="76" text-anchor="middle" class="cockpit-gauge-value">@gauge.DisplayValue</text>
-                                <text x="110" y="96" text-anchor="middle" class="cockpit-gauge-subtitle">@gauge.Subtitle</text>
-                            </svg>
-                        </div>
-                    </MudPaper>
-                </MudItem>
-            }
-        </MudGrid>
-    </MudPaper>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
@@ -185,18 +190,26 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahresumsatz 2025/2026", "Yearly sales 2025/2026")</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahreswerte", "Yearly values")</MudText>
                 <MudTable Items="_centralResult.YearlyTotals" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>@T("Jahr", "Year")</MudTh>
                         <MudTh>@T("Waehrung", "Currency")</MudTh>
-                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
                         <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Year</MudTd>
                         <MudTd>@context.Currency</MudTd>
-                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -204,18 +217,26 @@
         </MudItem>
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@T("Monatsumsatz", "Monthly sales")</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Monatswerte", "Monthly values")</MudText>
                 <MudTable Items="_centralResult.MonthlyTotals" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>@T("Monat", "Month")</MudTh>
                         <MudTh>@T("Waehrung", "Currency")</MudTh>
-                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
                         <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
                         <MudTd>@context.Currency</MudTd>
-                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -226,18 +247,26 @@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@T("Tagesumsatz im ausgewaehlten Monat", "Daily sales in selected month")</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Tageswerte im ausgewaehlten Monat", "Daily values in selected month")</MudText>
                 <MudTable Items="_centralResult.DailyTotals" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>@T("Tag", "Day")</MudTh>
                         <MudTh>@T("Waehrung", "Currency")</MudTh>
-                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
                         <MudTh>@T("Zeilen", "Rows")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
                         <MudTd>@context.Currency</MudTd>
-                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
@@ -248,18 +277,18 @@
         </MudItem>
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Quelle", "Sales by source")</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Werte nach Quelle", "Values by source")</MudText>
                 <MudTable Items="_centralResult.SourceSystemTotals" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>@T("Quelle", "Source")</MudTh>
                         <MudTh>@T("Waehrung", "Currency")</MudTh>
-                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
                         <MudTh>@T("Rechnungen", "Invoices")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Label</MudTd>
                         <MudTd>@context.Currency</MudTd>
-                        <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
                         <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -268,19 +297,19 @@
     </MudGrid>
 
     <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Land", "Sales by country")</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Werte nach Land", "Values by country")</MudText>
         <MudTable Items="_centralResult.CountryTotals" Dense Hover Striped>
             <HeaderContent>
                 <MudTh>@T("Land", "Country")</MudTh>
                 <MudTh>@T("Waehrung", "Currency")</MudTh>
-                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
                 <MudTh>@T("Rechnungen", "Invoices")</MudTh>
                 <MudTh>@T("Zeilen", "Rows")</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd>@context.Label</MudTd>
                 <MudTd>@context.Currency</MudTd>
-                <MudTd>@context.SalesValue.ToString("N2")</MudTd>
+                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
                 <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
                 <MudTd>@context.RowCount.ToString("N0")</MudTd>
             </RowTemplate>
@@ -288,47 +317,26 @@
     </MudPaper>
 }
 
-<style>
-    .cockpit-gauge-card {
-        background: linear-gradient(180deg, #fbfdff 0%, #f1f6fa 100%);
-        border: 1px solid #dce7ee;
-        border-radius: 18px;
-        min-height: 220px;
-    }
-
-    .cockpit-gauge-wrap {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .cockpit-gauge {
-        width: 100%;
-        max-width: 240px;
-        height: auto;
-    }
-
-    .cockpit-gauge-value {
-        font-size: 22px;
-        font-weight: 700;
-        fill: #153047;
-    }
-
-    .cockpit-gauge-subtitle {
-        font-size: 11px;
-        fill: #607587;
-    }
-</style>
-
 @code {
     private List<ManagementCockpitFileOption> _files = [];
     private List<int> _centralYears = [];
-    private const string GaugeArcPath = "M 30 110 A 80 80 0 0 1 190 110";
+    private List<ManagementCockpitValueFieldOption> _valueFieldOptions = [];
+    private readonly List<CurrencySelectOption> _currencyOptions =
+    [
+        new(ManagementCockpitCurrencyOptions.Eur, "EUR"),
+        new(ManagementCockpitCurrencyOptions.Usd, "USD"),
+        new(ManagementCockpitCurrencyOptions.Native, "Original")
+    ];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
     private int _selectedCentralYear;
     private int? _selectedCentralMonth;
+    private string _selectedFileValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
+    private string _selectedCentralValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
+    private IEnumerable<string> _selectedCentralAdditionalValueFields = [];
+    private string _selectedFileTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
+    private string _selectedCentralTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
     private bool _loadingFiles;
     private bool _analyzing;
     private bool _analyzingCentral;
@@ -337,6 +345,7 @@
     {
         var state = await CockpitPageService.InitializeAsync(_selectedFilePath, _selectedCentralYear);
         _files = state.Files;
+        _valueFieldOptions = state.ValueFieldOptions;
         _centralYears = state.CentralYears;
         _selectedFilePath = state.SelectedFilePath;
         _selectedCentralYear = state.SelectedCentralYear;
@@ -371,7 +380,11 @@
         _analyzing = true;
         try
         {
-            _result = await CockpitPageService.AnalyzeAsync(_selectedFilePath);
+            _result = await CockpitPageService.AnalyzeAsync(_selectedFilePath, new ManagementCockpitAnalysisOptions
+            {
+                ValueField = _selectedFileValueField,
+                TargetCurrency = _selectedFileTargetCurrency
+            });
         }
         catch (Exception ex)
         {
@@ -391,7 +404,12 @@
         _analyzingCentral = true;
         try
         {
-            _centralResult = await CockpitPageService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth);
+            _centralResult = await CockpitPageService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth, new ManagementCockpitAnalysisOptions
+            {
+                ValueField = _selectedCentralValueField,
+                AdditionalValueFields = _selectedCentralAdditionalValueFields.ToList(),
+                TargetCurrency = _selectedCentralTargetCurrency
+            });
         }
         catch (Exception ex)
         {
@@ -418,180 +436,31 @@
         return $"{result.Summary.PeriodStart.Value:dd.MM.yyyy} - {result.Summary.PeriodEnd.Value:dd.MM.yyyy}";
     }
 
-    private List<CentralGaugeModel> BuildCentralGauges(ManagementCockpitCentralResult result)
+    private static string FormatValue(decimal value, string currency)
+        => string.IsNullOrWhiteSpace(currency) || currency == "-"
+            ? value.ToString("N2")
+            : $"{value:N2} {currency}";
+
+    private void SetSelectedCentralAdditionalValueFields(IEnumerable<string> values)
     {
-        var invoiceDensity = result.Summary.RowCount == 0 ? 0m : result.Summary.InvoiceCount * 100m / result.Summary.RowCount;
-        var sourceDominance = result.SourceSystemTotals.Count == 0
-            ? 0m
-            : result.SourceSystemTotals.Max(x => x.RowCount) * 100m / Math.Max(1, result.Summary.RowCount);
-        var countryDominance = result.CountryTotals.Count == 0
-            ? 0m
-            : result.CountryTotals.Max(x => x.RowCount) * 100m / Math.Max(1, result.Summary.RowCount);
-        var periodCoverage = BuildPeriodCoveragePercent(result);
-        var topCountrySalesShare = BuildTopSalesSharePercent(result.CountryTotals);
-        var topSourceSalesShare = BuildTopSalesSharePercent(result.SourceSystemTotals);
-        var currencyComplexity = result.Summary.CurrencyCount <= 1 ? 0m : Math.Min(100m, (result.Summary.CurrencyCount - 1) * 25m);
-        var peakVsAverageMonth = BuildPeakVsAverageMonthPercent(result);
-
-        return
-        [
-            new CentralGaugeModel
-            {
-                Title = T("Rechnungsdichte", "Invoice density"),
-                Percent = invoiceDensity,
-                DisplayValue = $"{invoiceDensity:F0}%",
-                Subtitle = T("Rechnungen pro 100 Zeilen", "Invoices per 100 rows"),
-                Color = "#1f8a70"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Quellen-Dominanz", "Source dominance"),
-                Percent = sourceDominance,
-                DisplayValue = $"{sourceDominance:F0}%",
-                Subtitle = T("Groesste Quelle nach Zeilen", "Largest source by rows"),
-                Color = "#d9822b"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Land-Dominanz", "Country dominance"),
-                Percent = countryDominance,
-                DisplayValue = $"{countryDominance:F0}%",
-                Subtitle = T("Groesstes Land nach Zeilen", "Largest country by rows"),
-                Color = "#c4496b"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Perioden-Abdeckung", "Period coverage"),
-                Percent = periodCoverage,
-                DisplayValue = $"{periodCoverage:F0}%",
-                Subtitle = BuildPeriodGaugeSubtitle(result),
-                Color = "#3d7ff0"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Top-Land Umsatz", "Top country sales"),
-                Percent = topCountrySalesShare,
-                DisplayValue = $"{topCountrySalesShare:F0}%",
-                Subtitle = T("Anteil des umsatzstaerksten Landes", "Share of top-selling country"),
-                Color = "#7f56d9"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Top-Quelle Umsatz", "Top source sales"),
-                Percent = topSourceSalesShare,
-                DisplayValue = $"{topSourceSalesShare:F0}%",
-                Subtitle = T("Anteil der staerksten Quelle", "Share of strongest source"),
-                Color = "#0f9fb5"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Waehrungs-Komplexitaet", "Currency complexity"),
-                Percent = currencyComplexity,
-                DisplayValue = result.Summary.CurrencyCount.ToString("N0"),
-                Subtitle = T("Anzahl Waehrungen im Zeitraum", "Number of currencies in period"),
-                Color = "#b54708"
-            },
-            new CentralGaugeModel
-            {
-                Title = T("Monat gegen Peak", "Month vs peak"),
-                Percent = peakVsAverageMonth,
-                DisplayValue = $"{peakVsAverageMonth:F0}%",
-                Subtitle = T("Durchschnittsmonat relativ zum Peak", "Average month relative to peak"),
-                Color = "#d92d20"
-            }
-        ];
-    }
-
-    private static decimal BuildPeriodCoveragePercent(ManagementCockpitCentralResult result)
-    {
-        if (result.Summary.PeriodStart is null || result.Summary.PeriodEnd is null)
-            return 0m;
-
-        if (result.Filter.Month.HasValue)
-        {
-            var daysInMonth = DateTime.DaysInMonth(result.Filter.Year, result.Filter.Month.Value);
-            var coveredDays = result.DailyTotals
-                .Select(x => x.Day)
-                .Where(x => x.HasValue)
-                .Distinct()
-                .Count();
-            return daysInMonth == 0 ? 0m : coveredDays * 100m / daysInMonth;
-        }
-
-        var coveredMonths = result.MonthlyTotals
-            .Select(x => x.Month)
-            .Where(x => x.HasValue)
-            .Distinct()
-            .Count();
-        return coveredMonths * 100m / 12m;
-    }
-
-    private string BuildPeriodGaugeSubtitle(ManagementCockpitCentralResult result)
-        => result.Filter.Month.HasValue
-            ? T("Tage mit Daten im Monat", "Days with data in month")
-            : T("Monate mit Daten im Jahr", "Months with data in year");
-
-    private static decimal BuildTopSalesSharePercent(IEnumerable<ManagementCockpitDimensionValueRow> rows)
-    {
-        var materialized = rows.ToList();
-        if (materialized.Count == 0)
-            return 0m;
-
-        var total = materialized.Sum(x => x.SalesValue);
-        if (total == 0)
-            return 0m;
-
-        return materialized.Max(x => x.SalesValue) * 100m / total;
-    }
-
-    private static decimal BuildPeakVsAverageMonthPercent(ManagementCockpitCentralResult result)
-    {
-        var monthRows = result.MonthlyTotals.ToList();
-        if (monthRows.Count == 0)
-            return 0m;
-
-        var groupedMonths = monthRows
-            .GroupBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.Sum(x => x.SalesValue))
+        _selectedCentralAdditionalValueFields = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-
-        if (groupedMonths.Count == 0)
-            return 0m;
-
-        var peak = groupedMonths.Max();
-        if (peak == 0)
-            return 0m;
-
-        var average = groupedMonths.Average();
-        return Math.Min(100m, average * 100m / peak);
     }
 
-    private static string BuildGaugeDashArray(decimal percent)
-        => $"{Math.Clamp(percent, 0m, 100m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} 100";
-
-    private static string BuildGaugeNeedleX(decimal percent)
-        => GetGaugePoint(percent, 68d).X.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-
-    private static string BuildGaugeNeedleY(decimal percent)
-        => GetGaugePoint(percent, 68d).Y.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-
-    private static (double X, double Y) GetGaugePoint(decimal percent, double radius = 80d)
+    private static string FormatAdditionalValue(ManagementCockpitTimeValueRow row, string fieldKey)
     {
-        var clamped = Math.Clamp((double)percent, 0d, 100d);
-        var angle = Math.PI * (1d - clamped / 100d);
-        var x = 110d + radius * Math.Cos(angle);
-        var y = 110d - radius * Math.Sin(angle);
-        return (x, y);
+        if (!row.AdditionalValues.TryGetValue(fieldKey, out var value))
+            return "-";
+
+        var formattedValue = FormatValue(value.Value, value.Currency);
+        return value.MissingExchangeRateCount == 0
+            ? formattedValue
+            : $"{formattedValue} / {value.MissingExchangeRateCount} ohne Kurs";
     }
 
-    private sealed class CentralGaugeModel
-    {
-        public string Title { get; set; } = string.Empty;
-        public decimal Percent { get; set; }
-        public string DisplayValue { get; set; } = string.Empty;
-        public string Subtitle { get; set; } = string.Empty;
-        public string Color { get; set; } = "#3d7ff0";
-    }
+    private sealed record CurrencySelectOption(string Key, string Label);
 }
 
 @code {
