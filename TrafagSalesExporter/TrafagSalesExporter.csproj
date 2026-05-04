@@ -35,9 +35,13 @@
 
   <ItemGroup>
     <Compile Remove="TrafagSalesExporter.Tests\**\*.cs" />
+    <Compile Remove="Tools\**\*.cs" />
     <Content Remove="TrafagSalesExporter.Tests\**\*" />
+    <Content Remove="Tools\**\*" />
     <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
+    <EmbeddedResource Remove="Tools\**\*" />
     <None Remove="TrafagSalesExporter.Tests\**\*" />
+    <None Remove="Tools\**\*" />
   </ItemGroup>
 
   <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">

@@ -74,6 +74,7 @@ builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportServ
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();
 builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
 builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
+builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliationService>();
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
