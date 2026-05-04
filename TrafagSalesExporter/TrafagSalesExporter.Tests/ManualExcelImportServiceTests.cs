@@ -20,37 +20,38 @@ public class ManualExcelImportServiceTests
             WriteHeaders(ws);
             ws.Cell(2, 1).Value = "15.04.2026 13:45:00";
             ws.Cell(2, 2).Value = "TRDE";
-            ws.Cell(2, 3).Value = "INV-100";
-            ws.Cell(2, 4).Value = 7;
-            ws.Cell(2, 5).Value = "MAT-1";
-            ws.Cell(2, 6).Value = "Pressure Sensor";
-            ws.Cell(2, 7).Value = "PG-A";
-            ws.Cell(2, 8).Value = 2.5m;
-            ws.Cell(2, 9).Value = "SUP-1";
-            ws.Cell(2, 10).Value = "Supplier";
-            ws.Cell(2, 11).Value = "DE";
-            ws.Cell(2, 12).Value = "CUST-1";
-            ws.Cell(2, 13).Value = "Customer";
-            ws.Cell(2, 14).Value = "CH";
-            ws.Cell(2, 15).Value = "Industry";
-            ws.Cell(2, 16).Value = 10.25m;
-            ws.Cell(2, 17).Value = "EUR";
-            ws.Cell(2, 18).Value = "PO-1";
-            ws.Cell(2, 19).Value = 21.40m;
-            ws.Cell(2, 20).Value = "EUR";
+            ws.Cell(2, 3).Value = 12345;
+            ws.Cell(2, 4).Value = "INV-100";
+            ws.Cell(2, 5).Value = 7;
+            ws.Cell(2, 6).Value = "MAT-1";
+            ws.Cell(2, 7).Value = "Pressure Sensor";
+            ws.Cell(2, 8).Value = "PG-A";
+            ws.Cell(2, 9).Value = 2.5m;
+            ws.Cell(2, 10).Value = "SUP-1";
+            ws.Cell(2, 11).Value = "Supplier";
+            ws.Cell(2, 12).Value = "DE";
+            ws.Cell(2, 13).Value = "CUST-1";
+            ws.Cell(2, 14).Value = "Customer";
+            ws.Cell(2, 15).Value = "CH";
+            ws.Cell(2, 16).Value = "Industry";
+            ws.Cell(2, 17).Value = 10.25m;
+            ws.Cell(2, 18).Value = "EUR";
+            ws.Cell(2, 19).Value = "PO-1";
+            ws.Cell(2, 20).Value = 21.40m;
             ws.Cell(2, 21).Value = "EUR";
-            ws.Cell(2, 22).Value = 120.50m;
-            ws.Cell(2, 23).Value = 110.25m;
-            ws.Cell(2, 24).Value = 8.10m;
-            ws.Cell(2, 25).Value = 7.45m;
-            ws.Cell(2, 26).Value = 1.0925m;
-            ws.Cell(2, 27).Value = "CHF";
-            ws.Cell(2, 28).Value = "DAP";
-            ws.Cell(2, 29).Value = "Alice";
-            ws.Cell(2, 30).Value = "14.04.2026";
-            ws.Cell(2, 31).Value = "10.04.2026";
-            ws.Cell(2, 32).Value = "Deutschland";
-            ws.Cell(2, 33).Value = "Invoice";
+            ws.Cell(2, 22).Value = "EUR";
+            ws.Cell(2, 23).Value = 120.50m;
+            ws.Cell(2, 24).Value = 110.25m;
+            ws.Cell(2, 25).Value = 8.10m;
+            ws.Cell(2, 26).Value = 7.45m;
+            ws.Cell(2, 27).Value = 1.0925m;
+            ws.Cell(2, 28).Value = "CHF";
+            ws.Cell(2, 29).Value = "DAP";
+            ws.Cell(2, 30).Value = "Alice";
+            ws.Cell(2, 31).Value = "14.04.2026";
+            ws.Cell(2, 32).Value = "10.04.2026";
+            ws.Cell(2, 33).Value = "Deutschland";
+            ws.Cell(2, 34).Value = "Invoice";
         });
 
         try
@@ -61,6 +62,7 @@ public class ManualExcelImportServiceTests
 
             var row = Assert.Single(rows);
             Assert.Equal("TRDE", row.Tsc);
+            Assert.Equal(12345, row.DocumentEntry);
             Assert.Equal("INV-100", row.InvoiceNumber);
             Assert.Equal(7, row.PositionOnInvoice);
             Assert.Equal("MAT-1", row.Material);
@@ -98,7 +100,7 @@ public class ManualExcelImportServiceTests
             var ws = workbook.Worksheets.Add("Sales");
             WriteHeaders(ws);
             ws.Cell(2, 3).Value = "INV-200";
-            ws.Cell(2, 5).Value = "MAT-2";
+            ws.Cell(2, 6).Value = "MAT-2";
         });
 
         try
@@ -130,9 +132,9 @@ public class ManualExcelImportServiceTests
             var ws = workbook.Worksheets.Add("Sales");
             WriteHeaders(ws);
             ws.Cell(2, 3).Value = "INV-300";
-            ws.Cell(2, 8).Value = "1,50";
-            ws.Cell(2, 16).Value = "3,25";
-            ws.Cell(2, 19).Value = "7,90";
+            ws.Cell(2, 9).Value = "1,50";
+            ws.Cell(2, 17).Value = "3,25";
+            ws.Cell(2, 20).Value = "7,90";
             ws.Cell(3, 1).Value = "";
             ws.Cell(3, 2).Value = "";
             ws.Cell(3, 3).Value = "";
@@ -186,6 +188,115 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Uses_Configured_Manual_Excel_Mapping_For_German_Headers()
+    {
+        var site = new Site
+        {
+            TSC = "TRDE",
+            Land = "Deutschland"
+        };
+        var filePath = CreateWorkbook(workbook =>
+        {
+            var ws = workbook.Worksheets.Add("Sales");
+            var headers = new[]
+            {
+                "Export-Datum", "Firma", "Belegnummer", "Position", "ArtikelBezeichnung",
+                "Warengruppen-Bezeichnung", "Anz. VE", "Lieferanten Nummer", "Name Lieferant",
+                "Land Lieferant", "AdressNummer-Kunde", "Name Kunde", "Land Kunde", "Branche",
+                "EinstandsPreis", "Währung", "BestellNummer", "NettoPreisEinzelX",
+                "NettoPreisGesamtX", "Versandbedingung", "AdressNummer_V", "Belegdatum-Rechnung",
+                "BelegDatum Auftrag", "ArtikelNummer"
+            };
+
+            for (var i = 0; i < headers.Length; i++)
+                ws.Cell(1, i + 1).Value = headers[i];
+
+            ws.Cell(2, 1).Value = "28.04.2026";
+            ws.Cell(2, 3).Value = "RE2610536";
+            ws.Cell(2, 5).Value = "Kommentar ohne Position";
+
+            ws.Cell(3, 1).Value = "28.04.2026";
+            ws.Cell(3, 3).Value = "RE2610536";
+            ws.Cell(3, 4).Value = 10;
+            ws.Cell(3, 5).Value = "Drucktransmitter NAR";
+            ws.Cell(3, 6).Value = "Drucktransmitter";
+            ws.Cell(3, 7).Value = 100;
+            ws.Cell(3, 8).Value = "60000";
+            ws.Cell(3, 9).Value = "Trafag AG";
+            ws.Cell(3, 10).Value = "Schweiz";
+            ws.Cell(3, 11).Value = "11264";
+            ws.Cell(3, 12).Value = "Hanning & Kahl GmbH & Co KG";
+            ws.Cell(3, 13).Value = "Deutschland";
+            ws.Cell(3, 14).Value = "00 Bahn";
+            ws.Cell(3, 15).Value = 55m;
+            ws.Cell(3, 16).Value = "EUR";
+            ws.Cell(3, 18).Value = 82.8m;
+            ws.Cell(3, 19).Value = "8’280.00";
+            ws.Cell(3, 20).Value = "ab Lager";
+            ws.Cell(3, 21).Value = "JR";
+            ws.Cell(3, 22).Value = "27.04.2026";
+            ws.Cell(3, 23).Value = "09.03.2026";
+            ws.Cell(3, 24).Value = "8258.85.2317/55441";
+        });
+
+        var mappings = new List<ManualExcelColumnMapping>
+        {
+            Map(nameof(SalesRecord.ExtractionDate), "Export-Datum"),
+            Map(nameof(SalesRecord.InvoiceNumber), "Belegnummer"),
+            Map(nameof(SalesRecord.PositionOnInvoice), "Position"),
+            Map(nameof(SalesRecord.Material), "ArtikelNummer"),
+            Map(nameof(SalesRecord.Name), "ArtikelBezeichnung"),
+            Map(nameof(SalesRecord.ProductGroup), "Warengruppen-Bezeichnung"),
+            Map(nameof(SalesRecord.Quantity), "Anz. VE"),
+            Map(nameof(SalesRecord.SupplierNumber), "Lieferanten Nummer"),
+            Map(nameof(SalesRecord.SupplierName), "Name Lieferant"),
+            Map(nameof(SalesRecord.SupplierCountry), "Land Lieferant"),
+            Map(nameof(SalesRecord.CustomerNumber), "AdressNummer-Kunde"),
+            Map(nameof(SalesRecord.CustomerName), "Name Kunde"),
+            Map(nameof(SalesRecord.CustomerCountry), "Land Kunde"),
+            Map(nameof(SalesRecord.CustomerIndustry), "Branche"),
+            Map(nameof(SalesRecord.StandardCost), "EinstandsPreis"),
+            Map(nameof(SalesRecord.StandardCostCurrency), "Währung"),
+            Map(nameof(SalesRecord.SalesPriceValue), "NettoPreisGesamtX"),
+            Map(nameof(SalesRecord.SalesCurrency), "Währung"),
+            Map(nameof(SalesRecord.DocumentCurrency), "Währung"),
+            Map(nameof(SalesRecord.CompanyCurrency), "Währung"),
+            Map(nameof(SalesRecord.Incoterms2020), "Versandbedingung"),
+            Map(nameof(SalesRecord.SalesResponsibleEmployee), "AdressNummer_V"),
+            Map(nameof(SalesRecord.InvoiceDate), "Belegdatum-Rechnung"),
+            Map(nameof(SalesRecord.OrderDate), "BelegDatum Auftrag"),
+            Map(nameof(SalesRecord.DocumentType), "=Manual Excel")
+        };
+
+        try
+        {
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(filePath, site, mappings);
+
+            var row = Assert.Single(rows);
+            Assert.Equal("TRDE", row.Tsc);
+            Assert.Equal("Deutschland", row.Land);
+            Assert.Equal("RE2610536", row.InvoiceNumber);
+            Assert.Equal(10, row.PositionOnInvoice);
+            Assert.Equal("8258.85.2317/55441", row.Material);
+            Assert.Equal(100m, row.Quantity);
+            Assert.Equal(55m, row.StandardCost);
+            Assert.Equal(8280m, row.SalesPriceValue);
+            Assert.Equal("EUR", row.SalesCurrency);
+            Assert.Equal("EUR", row.DocumentCurrency);
+            Assert.Equal("EUR", row.CompanyCurrency);
+            Assert.Equal(new DateTime(2026, 4, 27), row.InvoiceDate);
+            Assert.Equal(new DateTime(2026, 3, 9), row.OrderDate);
+            Assert.Equal("Manual Excel", row.DocumentType);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     private static string CreateWorkbook(Action<XLWorkbook> fillWorkbook)
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
@@ -201,6 +312,7 @@ public class ManualExcelImportServiceTests
         {
             "extraction date",
             "TSC",
+            "Document Entry",
             "Invoice Number",
             "Position on invoice",
             "Material",
@@ -239,4 +351,12 @@ public class ManualExcelImportServiceTests
             ws.Cell(1, i + 1).Value = headers[i];
         }
     }
+
+    private static ManualExcelColumnMapping Map(string targetField, string sourceHeader)
+        => new()
+        {
+            TargetField = targetField,
+            SourceHeader = sourceHeader,
+            IsActive = true
+        };
 }

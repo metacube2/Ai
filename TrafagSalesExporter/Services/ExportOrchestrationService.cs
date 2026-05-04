@@ -10,6 +10,7 @@ public class ExportOrchestrationService
     private readonly ISiteExportService _siteExportService;
     private readonly IConsolidatedExportService _consolidatedExportService;
     private readonly IExportLogService _exportLogService;
+    private readonly IAppEventLogService _appEventLogService;
 
     public event Action? OnExportStatusChanged;
 
@@ -22,12 +23,14 @@ public class ExportOrchestrationService
         IDbContextFactory<AppDbContext> dbFactory,
         ISiteExportService siteExportService,
         IConsolidatedExportService consolidatedExportService,
-        IExportLogService exportLogService)
+        IExportLogService exportLogService,
+        IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _siteExportService = siteExportService;
         _consolidatedExportService = consolidatedExportService;
         _exportLogService = exportLogService;
+        _appEventLogService = appEventLogService;
     }
 
     public bool IsExporting(int siteId)
@@ -151,6 +154,11 @@ public class ExportOrchestrationService
         try
         {
             return await _consolidatedExportService.ExportAsync(records ?? []);
+        }
+        catch (Exception ex)
+        {
+            await _appEventLogService.WriteAsync("Export", "Zentrale Datei fehlgeschlagen", "Error", details: ex.ToString());
+            return null;
         }
         finally
         {

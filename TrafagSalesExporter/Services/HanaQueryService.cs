@@ -158,6 +158,7 @@ public class HanaQueryService : IHanaQueryService
             {
                 ExtractionDate = reader.GetDateTime(reader.GetOrdinal("extraction_date")),
                 Tsc = reader.GetString(reader.GetOrdinal("tsc")),
+                DocumentEntry = Convert.ToInt32(reader["document_entry"]),
                 InvoiceNumber = reader["invoice_number"]?.ToString() ?? string.Empty,
                 PositionOnInvoice = Convert.ToInt32(reader["invoice_position"]),
                 InvoiceDate = reader.IsDBNull(reader.GetOrdinal("invoice_date")) ? null : reader.GetDateTime(reader.GetOrdinal("invoice_date")),
@@ -204,11 +205,12 @@ public class HanaQueryService : IHanaQueryService
 
     private static string GetInvoiceQuery(string schema)
     {
-        var quotedSchema = QuoteIdentifier(schema);
+        var schemaPrefix = BuildSchemaPrefix(schema);
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
     :{TscParameterName} AS tsc,
+    h.""DocEntry"" AS document_entry,
     h.""DocNum"" AS invoice_number,
     p.""LineNum"" AS invoice_position,
     h.""DocDate"" AS invoice_date,
@@ -240,35 +242,36 @@ SELECT
     '' AS incoterms_2020,
     COALESCE(emp.""SlpName"", '') AS sales_responsible,
     CASE WHEN p.""BaseType"" = 17
-         THEN (SELECT o.""DocDate"" FROM {quotedSchema}.""ORDR"" o
+         THEN (SELECT o.""DocDate"" FROM {schemaPrefix}""ORDR"" o
                WHERE o.""DocEntry"" = p.""BaseEntry"")
          ELSE NULL END AS order_date,
     'INV' AS doc_type
-FROM {quotedSchema}.""OINV"" h
-INNER JOIN {quotedSchema}.""INV1"" p ON h.""DocEntry"" = p.""DocEntry""
-CROSS JOIN {quotedSchema}.""OADM"" adm
-LEFT JOIN {quotedSchema}.""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
-LEFT JOIN {quotedSchema}.""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
-LEFT JOIN {quotedSchema}.""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
-LEFT JOIN {quotedSchema}.""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
+FROM {schemaPrefix}""OINV"" h
+INNER JOIN {schemaPrefix}""INV1"" p ON h.""DocEntry"" = p.""DocEntry""
+CROSS JOIN {schemaPrefix}""OADM"" adm
+LEFT JOIN {schemaPrefix}""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
+LEFT JOIN {schemaPrefix}""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
+LEFT JOIN {schemaPrefix}""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
+LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
     AND cust_adr.""AdresType"" = 'B' AND cust_adr.""Address"" = h.""PayToCode""
-LEFT JOIN {quotedSchema}.""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
-LEFT JOIN {quotedSchema}.""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
+LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
+LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-LEFT JOIN {quotedSchema}.""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
+LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
-LEFT JOIN {quotedSchema}.""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
+LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
 
     private static string GetCreditNoteQuery(string schema)
     {
-        var quotedSchema = QuoteIdentifier(schema);
+        var schemaPrefix = BuildSchemaPrefix(schema);
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
     :{TscParameterName} AS tsc,
+    h.""DocEntry"" AS document_entry,
     h.""DocNum"" AS invoice_number,
     p.""LineNum"" AS invoice_position,
     h.""DocDate"" AS invoice_date,
@@ -299,20 +302,20 @@ SELECT
     COALESCE(emp.""SlpName"", '') AS sales_responsible,
     NULL AS order_date,
     'CRN' AS doc_type
-FROM {quotedSchema}.""ORIN"" h
-INNER JOIN {quotedSchema}.""RIN1"" p ON h.""DocEntry"" = p.""DocEntry""
-CROSS JOIN {quotedSchema}.""OADM"" adm
-LEFT JOIN {quotedSchema}.""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
-LEFT JOIN {quotedSchema}.""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
-LEFT JOIN {quotedSchema}.""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
-LEFT JOIN {quotedSchema}.""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
+FROM {schemaPrefix}""ORIN"" h
+INNER JOIN {schemaPrefix}""RIN1"" p ON h.""DocEntry"" = p.""DocEntry""
+CROSS JOIN {schemaPrefix}""OADM"" adm
+LEFT JOIN {schemaPrefix}""OITM"" itm ON p.""ItemCode"" = itm.""ItemCode""
+LEFT JOIN {schemaPrefix}""OITB"" grp ON itm.""ItmsGrpCod"" = grp.""ItmsGrpCod""
+LEFT JOIN {schemaPrefix}""OCRD"" cust ON h.""CardCode"" = cust.""CardCode""
+LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCode""
     AND cust_adr.""AdresType"" = 'B' AND cust_adr.""Address"" = h.""PayToCode""
-LEFT JOIN {quotedSchema}.""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
-LEFT JOIN {quotedSchema}.""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
+LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
+LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-LEFT JOIN {quotedSchema}.""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
+LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
-LEFT JOIN {quotedSchema}.""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
+LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
@@ -328,7 +331,7 @@ ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     private static string BuildQueryLogDetails(string query, string schema, string tsc, DateTime dateFilter)
         => $"{query}{Environment.NewLine}-- schema={schema}; tsc={tsc}; dateFilter={dateFilter:yyyy-MM-dd}";
 
-    private static string QuoteIdentifier(string identifier)
+    private static string BuildSchemaPrefix(string identifier)
     {
         var value = identifier?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(value))
@@ -340,7 +343,7 @@ ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
                 throw new InvalidOperationException($"Ungueltiger HANA-Identifier: '{identifier}'.");
         }
 
-        return $@"""{value}""";
+        return $"{value}.";
     }
 }
 

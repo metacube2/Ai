@@ -19,5 +19,6 @@ public class AppDbContext : DbContext
     public DbSet<SapSourceDefinition> SapSourceDefinitions => Set<SapSourceDefinition>();
     public DbSet<SapJoinDefinition> SapJoinDefinitions => Set<SapJoinDefinition>();
     public DbSet<SapFieldMapping> SapFieldMappings => Set<SapFieldMapping>();
+    public DbSet<ManualExcelColumnMapping> ManualExcelColumnMappings => Set<ManualExcelColumnMapping>();
     public DbSet<CentralSalesRecord> CentralSalesRecords => Set<CentralSalesRecord>();
 }

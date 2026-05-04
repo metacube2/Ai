@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
@@ -12,11 +13,12 @@ public interface IStandortePageService
     Task DeleteServerAsync(HanaServer server);
     Task<ConnectionTestResult> TestServerConnectionAsync(HanaServer server);
     Task<StandortEditorState> LoadSiteEditorAsync(Site site, IEnumerable<SourceSystemDefinition> sourceSystems);
-    Task SaveSiteAsync(Site site, bool usesHanaConnection, bool isSapSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings, List<string> sapEntitySetsCache);
+    Task SaveSiteAsync(Site site, bool usesHanaConnection, bool isSapSite, bool isManualExcelSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings, List<ManualExcelColumnMapping> manualExcelMappings, List<string> sapEntitySetsCache);
     Task DeleteSiteAsync(Site site);
     Task<List<string>> LoadAvailableSchemasAsync(Site site);
     Task<SapEntitySetRefreshResult> RefreshSapEntitySetsAsync(Site site);
     Task<SapSourceFieldRefreshResult> RefreshSapSourceFieldsAsync(Site site, List<SapSourceDefinition> sapSources, List<SapFieldMapping> sapMappings);
+    Task<List<string>> LoadManualExcelHeadersAsync(string manualImportFilePath);
     Task<DateTime> ValidateManualImportPathAsync(string manualImportFilePath);
 }
 
@@ -163,6 +165,7 @@ public sealed class StandortePageService : IStandortePageService
         var sapSources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToListAsync();
         var sapJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).OrderBy(j => j.SortOrder).ThenBy(j => j.Id).ToListAsync();
         var sapMappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToListAsync();
+        var manualExcelMappings = await db.ManualExcelColumnMappings.Where(m => m.SiteId == site.Id).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToListAsync();
 
         return new StandortEditorState
         {
@@ -188,11 +191,12 @@ public sealed class StandortePageService : IStandortePageService
             SapEntitySets = ParseSapEntitySets(site.SapEntitySetsCache),
             SapSources = sapSources,
             SapJoins = sapJoins,
-            SapMappings = sapMappings
+            SapMappings = sapMappings,
+            ManualExcelMappings = manualExcelMappings
         };
     }
 
-    public async Task SaveSiteAsync(Site site, bool usesHanaConnection, bool isSapSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings, List<string> sapEntitySetsCache)
+    public async Task SaveSiteAsync(Site site, bool usesHanaConnection, bool isSapSite, bool isManualExcelSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings, List<ManualExcelColumnMapping> manualExcelMappings, List<string> sapEntitySetsCache)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var serverId = usesHanaConnection ? await ResolveCentralHanaServerIdAsync(db, site) : (int?)null;
@@ -212,6 +216,7 @@ public sealed class StandortePageService : IStandortePageService
 
         await db.SaveChangesAsync();
         await SaveSapConfigurationAsync(db, site.Id, isSapSite, sapSources, sapJoins, sapMappings);
+        await SaveManualExcelConfigurationAsync(db, site.Id, isManualExcelSite, manualExcelMappings);
     }
 
     public async Task DeleteSiteAsync(Site site)
@@ -224,10 +229,12 @@ public sealed class StandortePageService : IStandortePageService
         var sources = await db.SapSourceDefinitions.Where(s => s.SiteId == site.Id).ToListAsync();
         var joins = await db.SapJoinDefinitions.Where(j => j.SiteId == site.Id).ToListAsync();
         var mappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
+        var manualMappings = await db.ManualExcelColumnMappings.Where(m => m.SiteId == site.Id).ToListAsync();
         var centralRows = await db.CentralSalesRecords.Where(r => r.SiteId == site.Id).ToListAsync();
         if (sources.Count > 0) db.SapSourceDefinitions.RemoveRange(sources);
         if (joins.Count > 0) db.SapJoinDefinitions.RemoveRange(joins);
         if (mappings.Count > 0) db.SapFieldMappings.RemoveRange(mappings);
+        if (manualMappings.Count > 0) db.ManualExcelColumnMappings.RemoveRange(manualMappings);
         if (centralRows.Count > 0) db.CentralSalesRecords.RemoveRange(centralRows);
         db.Sites.Remove(entity);
         await db.SaveChangesAsync();
@@ -381,6 +388,59 @@ public sealed class StandortePageService : IStandortePageService
         }
     }
 
+    public async Task<List<string>> LoadManualExcelHeadersAsync(string manualImportFilePath)
+    {
+        var filePath = await ResolveManualImportFilePathAsync(manualImportFilePath);
+        var deleteAfterRead = !string.Equals(filePath, manualImportFilePath?.Trim(), StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            using var workbook = new XLWorkbook(filePath);
+            var worksheet = workbook.Worksheets.FirstOrDefault()
+                ?? throw new InvalidOperationException("Die Excel-Datei enthaelt kein Arbeitsblatt.");
+            var usedRange = worksheet.RangeUsed()
+                ?? throw new InvalidOperationException("Die Excel-Datei enthaelt keine Daten.");
+
+            return usedRange.FirstRow().CellsUsed()
+                .Select(cell => cell.GetString().Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+        finally
+        {
+            if (deleteAfterRead && File.Exists(filePath))
+                File.Delete(filePath);
+        }
+    }
+
+    private async Task<string> ResolveManualImportFilePathAsync(string manualImportFilePath)
+    {
+        var trimmedPath = manualImportFilePath.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedPath))
+            throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
+
+        if (File.Exists(trimmedPath))
+            return trimmedPath;
+
+        if (!LooksLikeSharePointReference(trimmedPath))
+            throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {trimmedPath}");
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
+        if (spConfig is null ||
+            string.IsNullOrWhiteSpace(spConfig.TenantId) ||
+            string.IsNullOrWhiteSpace(spConfig.ClientId) ||
+            string.IsNullOrWhiteSpace(spConfig.ClientSecret) ||
+            string.IsNullOrWhiteSpace(spConfig.SiteUrl))
+        {
+            throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
+        }
+
+        return await _sharePointService.DownloadToTempFileAsync(
+            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, trimmedPath);
+    }
+
     private static void ApplyServer(HanaServer target, HanaServer source)
     {
         target.SourceSystem = source.SourceSystem;
@@ -452,6 +512,12 @@ public sealed class StandortePageService : IStandortePageService
             sapSources[0].IsPrimary = true;
     }
 
+    private static void NormalizeManualExcelMappings(List<ManualExcelColumnMapping> manualExcelMappings)
+    {
+        for (var i = 0; i < manualExcelMappings.Count; i++)
+            manualExcelMappings[i].SortOrder = i;
+    }
+
     private static async Task SaveSapConfigurationAsync(AppDbContext db, int siteId, bool isSapSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings)
     {
         var oldSources = await db.SapSourceDefinitions.Where(s => s.SiteId == siteId).ToListAsync();
@@ -470,6 +536,22 @@ public sealed class StandortePageService : IStandortePageService
             db.SapSourceDefinitions.AddRange(sapSources);
             db.SapJoinDefinitions.AddRange(sapJoins);
             db.SapFieldMappings.AddRange(sapMappings);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SaveManualExcelConfigurationAsync(AppDbContext db, int siteId, bool isManualExcelSite, List<ManualExcelColumnMapping> manualExcelMappings)
+    {
+        var oldMappings = await db.ManualExcelColumnMappings.Where(m => m.SiteId == siteId).ToListAsync();
+        if (oldMappings.Count > 0) db.ManualExcelColumnMappings.RemoveRange(oldMappings);
+
+        if (isManualExcelSite)
+        {
+            NormalizeManualExcelMappings(manualExcelMappings);
+            foreach (var mapping in manualExcelMappings)
+                mapping.SiteId = siteId;
+            db.ManualExcelColumnMappings.AddRange(manualExcelMappings);
         }
 
         await db.SaveChangesAsync();
@@ -507,6 +589,7 @@ public sealed class StandortEditorState
     public List<SapSourceDefinition> SapSources { get; set; } = [];
     public List<SapJoinDefinition> SapJoins { get; set; } = [];
     public List<SapFieldMapping> SapMappings { get; set; } = [];
+    public List<ManualExcelColumnMapping> ManualExcelMappings { get; set; } = [];
 }
 
 public sealed class SapEntitySetRefreshResult

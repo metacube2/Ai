@@ -64,6 +64,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
             {
                 ExtractionDate = r.ExtractionDate,
                 Tsc = r.Tsc,
+                DocumentEntry = r.DocumentEntry,
                 InvoiceNumber = r.InvoiceNumber,
                 PositionOnInvoice = r.PositionOnInvoice,
                 Material = r.Material,
@@ -161,7 +162,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO CentralSalesRecords (
-                StoredAtUtc, SiteId, SourceSystem, ExtractionDate, Tsc, InvoiceNumber, PositionOnInvoice,
+                StoredAtUtc, SiteId, SourceSystem, ExtractionDate, Tsc, DocumentEntry, InvoiceNumber, PositionOnInvoice,
                 Material, Name, ProductGroup, Quantity, SupplierNumber, SupplierName, SupplierCountry,
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
@@ -169,7 +170,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, InvoiceDate, OrderDate, Land, DocumentType
             )
             VALUES (
-                $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $invoiceNumber, $positionOnInvoice,
+                $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $documentEntry, $invoiceNumber, $positionOnInvoice,
                 $material, $name, $productGroup, $quantity, $supplierNumber, $supplierName, $supplierCountry,
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
@@ -183,6 +184,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$sourceSystem", SqliteType.Text);
         command.Parameters.Add("$extractionDate", SqliteType.Text);
         command.Parameters.Add("$tsc", SqliteType.Text);
+        command.Parameters.Add("$documentEntry", SqliteType.Integer);
         command.Parameters.Add("$invoiceNumber", SqliteType.Text);
         command.Parameters.Add("$positionOnInvoice", SqliteType.Integer);
         command.Parameters.Add("$material", SqliteType.Text);
@@ -225,6 +227,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$sourceSystem"].Value = sourceSystem;
         command.Parameters["$extractionDate"].Value = record.ExtractionDate.ToString("O");
         command.Parameters["$tsc"].Value = record.Tsc ?? string.Empty;
+        command.Parameters["$documentEntry"].Value = record.DocumentEntry;
         command.Parameters["$invoiceNumber"].Value = record.InvoiceNumber ?? string.Empty;
         command.Parameters["$positionOnInvoice"].Value = record.PositionOnInvoice;
         command.Parameters["$material"].Value = record.Material ?? string.Empty;

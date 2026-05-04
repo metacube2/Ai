@@ -39,7 +39,9 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureSapSourceTable(db);
         EnsureSapJoinTable(db);
         EnsureSapFieldMappingTable(db);
+        EnsureManualExcelColumnMappingTable(db);
         EnsureCentralSalesRecordTable(db);
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -191,16 +193,19 @@ FROM Sites_old;";
             ("CentralSalesRecords", DatabaseSchemaSql.GetCentralSalesRecordsCreateSql()),
             ("SapSourceDefinitions", DatabaseSchemaSql.GetSapSourceDefinitionsCreateSql()),
             ("SapJoinDefinitions", DatabaseSchemaSql.GetSapJoinDefinitionsCreateSql()),
-            ("SapFieldMappings", DatabaseSchemaSql.GetSapFieldMappingsCreateSql())
+            ("SapFieldMappings", DatabaseSchemaSql.GetSapFieldMappingsCreateSql()),
+            ("ManualExcelColumnMappings", DatabaseSchemaSql.GetManualExcelColumnMappingsCreateSql())
         };
 
         foreach (var (tableName, createSql) in siteDependentTables)
         {
-            if (DatabaseSchemaTools.TableReferences(conn, tableName, "Sites_old"))
+            if (DatabaseSchemaTools.TableReferences(conn, tableName, "Sites_old") ||
+                DatabaseSchemaTools.TableReferencesObsoleteTable(conn, tableName, "Sites"))
                 DatabaseSchemaTools.RebuildTable(conn, tableName, createSql);
         }
 
-        if (DatabaseSchemaTools.TableReferences(conn, "Sites", "HanaServers_repair_old"))
+        if (DatabaseSchemaTools.TableReferences(conn, "Sites", "HanaServers_repair_old") ||
+            DatabaseSchemaTools.TableReferencesObsoleteTable(conn, "Sites", "HanaServers"))
             DatabaseSchemaTools.RebuildTable(conn, "Sites", DatabaseSchemaSql.GetSitesCreateSql());
     }
 
@@ -309,6 +314,17 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         cmd.ExecuteNonQuery();
     }
 
+    private static void EnsureManualExcelColumnMappingTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetManualExcelColumnMappingsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
     private static void EnsureCentralSalesRecordTable(AppDbContext db)
     {
         var conn = db.Database.GetDbConnection();
@@ -367,6 +383,25 @@ internal static class DatabaseSchemaTools
 
         var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
         return sql.Contains(referencedTableName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool TableReferencesObsoleteTable(System.Data.Common.DbConnection connection, string tableName, string currentTableName)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $tableName;";
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$tableName";
+        parameter.Value = tableName;
+        command.Parameters.Add(parameter);
+
+        var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
+        var obsoletePrefix = $"{currentTableName}_";
+
+        return sql.Contains($"REFERENCES {obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES \"{obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES [{obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES `{obsoletePrefix}", StringComparison.OrdinalIgnoreCase);
     }
 
     internal static void RebuildTable(System.Data.Common.DbConnection connection, string tableName, string createSql)

@@ -356,3 +356,282 @@ Bekannte Warnungen:
 6. Wenn Regeln bestaetigt sind:
    - Finance-Probe erweitert anzeigen
    - spaeter produktiv ins Hauptprogramm uebernehmen
+
+---
+
+## Nachtrag 2026-05-04: Excel-Spaltenmapper fuer manuelle Land-Excel-Dateien
+
+Ausloeser:
+
+- Deutschland hat ein eigenes Excel-Beispiel geliefert.
+- Das Format entspricht nicht dem bisherigen Standard-Excel-Import.
+- Ziel war, nicht fuer jedes Land statischen Spezialcode zu schreiben, sondern die Spaltenzuordnung konfigurierbar zu machen.
+
+Beispielhafte deutsche Spalten:
+
+- `Export-Datum`
+- `Firma`
+- `Belegnummer`
+- `Position`
+- `ArtikelBezeichnung`
+- `Warengruppen-Bezeichnung`
+- `Anz. VE`
+- `Lieferanten Nummer`
+- `Name Lieferant`
+- `Land Lieferant`
+- `AdressNummer-Kunde`
+- `Name Kunde`
+- `Land Kunde`
+- `Branche`
+- `EinstandsPreis`
+- `Währung`
+- `BestellNummer`
+- `NettoPreisEinzelX`
+- `NettoPreisGesamtX`
+- `Versandbedingung`
+- `AdressNummer_V`
+- `Belegdatum-Rechnung`
+- `BelegDatum Auftrag`
+- `ArtikelNummer`
+
+Wichtige fachliche/technische Interpretation fuer Deutschland:
+
+- `NettoPreisGesamtX` wird als `SalesPriceValue` verwendet.
+- `Währung` wird fuer `SalesCurrency`, `DocumentCurrency`, `CompanyCurrency` und `StandardCostCurrency` verwendet.
+- `Belegdatum-Rechnung` wird als `InvoiceDate` verwendet.
+- `BelegDatum Auftrag` wird als `OrderDate` verwendet.
+- `ArtikelNummer` wird als `Material` verwendet.
+- Kommentar-/Info-Zeilen ohne echte Position und ohne Betrag werden beim Import ignoriert.
+
+## Neue Datenstruktur
+
+Neue Tabelle / neues Model:
+
+```text
+ManualExcelColumnMappings
+Models/ManualExcelColumnMapping.cs
+```
+
+Felder:
+
+- `SiteId`
+- `TargetField`
+- `SourceHeader`
+- `IsRequired`
+- `IsActive`
+- `SortOrder`
+
+Zweck:
+
+- Pro Standort kann festgelegt werden, welche Excel-Spalte auf welches internes `SalesRecord`-Feld gemappt wird.
+- Konstanten sind moeglich, wenn `SourceHeader` mit `=` beginnt, z. B. `=Manual Excel`.
+
+## Geaenderte Hauptlogik
+
+Geaendert:
+
+```text
+Services/ManualExcelImportService.cs
+```
+
+Neue Logik:
+
+- Beim manuellen Excel-Import werden zuerst aktive `ManualExcelColumnMappings` des Standorts geladen.
+- Wenn Mapping-Zeilen vorhanden sind, wird dieses Mapping verwendet.
+- Wenn kein Mapping vorhanden ist, laeuft weiterhin die bisherige statische Standarderkennung.
+- Damit bleiben bestehende manuelle Excel-Imports abwaertskompatibel.
+
+Wichtig:
+
+- Der Mapper ersetzt nicht die fachliche Finanzlogik.
+- Er sorgt nur dafuer, dass fremde Excel-Spalten korrekt in die internen Felder geschrieben werden.
+- Welche Summe spaeter fuer Finance gilt, muss weiterhin fachlich entschieden werden.
+
+## Geaenderte Standort-UI
+
+Geaendert:
+
+```text
+Components/Pages/Standorte.razor
+Services/StandortePageService.cs
+```
+
+In der Standortbearbeitung fuer manuelle Excel-Standorte gibt es neu:
+
+- Bereich `Excel-Spaltenmapping`
+- Button `Spalten aus Excel laden`
+- Button `Auto-Match`
+- Button `Mapping hinzufuegen`
+- Tabelle mit:
+  - Zielfeld
+  - Excel-Spalte / Konstante
+  - Pflicht
+  - Aktiv
+  - Loeschen
+
+Auto-Match erkennt aktuell u. a. die deutschen Spalten und schlaegt passende Zuordnungen vor.
+
+## Config-Export / Import
+
+Geaendert:
+
+```text
+Services/ConfigTransferService.cs
+Models/ConfigTransferPackage.cs
+```
+
+Neu:
+
+- `ManualExcelColumnMappings` werden im Konfigurationspaket mit exportiert.
+- Beim Import werden die Mapping-Zeilen wieder hergestellt.
+
+Damit kann die Konfiguration spaeter zwischen Umgebungen mitgenommen werden.
+
+## Datenbank-Schema
+
+Geaendert:
+
+```text
+Data/AppDbContext.cs
+Services/DatabaseInitializationService.SchemaSql.cs
+Services/DatabaseSchemaMaintenanceService.cs
+```
+
+Neu:
+
+- `DbSet<ManualExcelColumnMapping>`
+- `CREATE TABLE ManualExcelColumnMappings`
+- Schema-Wartung legt die Tabelle nachtraeglich an, falls sie in einer bestehenden DB fehlt.
+- Beim Loeschen eines Standorts werden dessen manuelle Excel-Mappings mit geloescht.
+
+## Deutschland lokal eingerichtet
+
+Am 2026-05-04 wurde Deutschland in der lokalen Datenbank direkt ohne UI eingerichtet.
+
+Lokale DB:
+
+```text
+C:\Users\koi\source\repos\Ai\TrafagSalesExporter\trafag_exporter.db
+```
+
+Gefundener/konfigurierter Standort:
+
+```text
+Id=8
+TSC=TRDE
+Land=Deutschland
+SourceSystem=MANUAL_EXCEL
+```
+
+Aktive Mapping-Zeilen:
+
+```text
+26
+```
+
+Konkrete Zuordnung fuer DE:
+
+```text
+ExtractionDate           <- Export-Datum
+InvoiceNumber            <- Belegnummer
+PositionOnInvoice        <- Position
+Material                 <- ArtikelNummer
+Name                     <- ArtikelBezeichnung
+ProductGroup             <- Warengruppen-Bezeichnung
+Quantity                 <- Anz. VE
+SupplierNumber           <- Lieferanten Nummer
+SupplierName             <- Name Lieferant
+SupplierCountry          <- Land Lieferant
+CustomerNumber           <- AdressNummer-Kunde
+CustomerName             <- Name Kunde
+CustomerCountry          <- Land Kunde
+CustomerIndustry         <- Branche
+StandardCost             <- EinstandsPreis
+StandardCostCurrency     <- Währung
+PurchaseOrderNumber      <- BestellNummer
+SalesPriceValue          <- NettoPreisGesamtX
+SalesCurrency            <- Währung
+DocumentCurrency         <- Währung
+CompanyCurrency          <- Währung
+Incoterms2020            <- Versandbedingung
+SalesResponsibleEmployee <- AdressNummer_V
+InvoiceDate              <- Belegdatum-Rechnung
+OrderDate                <- BelegDatum Auftrag
+DocumentType             <- =Manual Excel
+```
+
+Wichtig fuer Rollback/Umzug:
+
+- Diese DE-Einrichtung wurde direkt in `trafag_exporter.db` gespeichert.
+- Die DB-Aenderung ist kein Git-Commit-Inhalt, weil SQLite-Datenbankdaten normalerweise nicht sauber versioniert werden.
+- Der Code fuer den Mapper ist aktuell im Worktree vorhanden, aber noch nicht committed.
+- Wenn die DB zurueckgerollt oder neu erstellt wird, muss das DE-Mapping erneut ueber die UI, Config-Import oder ein Hilfsskript eingerichtet werden.
+
+## Tests
+
+Ergaenzt:
+
+```text
+TrafagSalesExporter.Tests/ManualExcelImportServiceTests.cs
+```
+
+Neuer Test:
+
+```text
+ReadSalesRecordsAsync_Uses_Configured_Manual_Excel_Mapping_For_German_Headers
+```
+
+Der Test prueft:
+
+- deutsches Excel-Headerformat
+- Kommentarzeile ohne echte Position wird ignoriert
+- echte Belegposition wird importiert
+- `NettoPreisGesamtX` mit Schweizer Tausenderzeichen wird korrekt als Dezimalzahl gelesen
+- Waehrung `EUR` wird in Sales-/Document-/Company-Currency uebernommen
+- Rechnungsdatum und Auftragsdatum werden korrekt gelesen
+
+Letzter bekannter Teststand nach Mapper-Arbeit:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --verbosity minimal
+dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal --no-restore
+```
+
+Ergebnis:
+
+- Hauptprojekt baut erfolgreich
+- FinanceProbe baut erfolgreich
+- Tests erfolgreich
+- `49/49` Tests gruen
+
+Bekannte Warnung:
+
+- `NU1900`, weil NuGet-Sicherheitsdaten wegen Netzwerk/nuget.org nicht geladen werden konnten
+
+## Aktueller Laufstand
+
+Die Haupt-App war nach der DE-Konfiguration erreichbar:
+
+```text
+http://localhost:55416/standorte
+HTTP 200
+```
+
+Hinweis:
+
+- Der Browser kann geschlossen sein, waehrend der Serverprozess weiterlaeuft.
+- Wenn ein Build wegen gesperrter Dateien fehlschlaegt, zuerst den laufenden `TrafagSalesExporter`-Prozess beenden.
+
+## Noch offen nach Excel-Spaltenmapper
+
+1. Mapper-Code committen, sobald der aktuelle Stand als Rollback-Punkt gesichert werden soll.
+2. In der Standort-UI Deutschland oeffnen und visuell pruefen, ob die 26 Mapping-Zeilen angezeigt werden.
+3. Mit echtem DE-Excel einen Importlauf testen.
+4. Danach Finance-Probe erneut pruefen:
+   - ob DE nicht mehr `Keine Daten` ist
+   - ob `SalesPriceValue` gegen Soll aus `check.xlsx` passt
+5. Falls weitere Laender eigene Excel-Formate liefern:
+   - nicht statischen Code bauen
+   - neues Mapping pro Standort pflegen
+6. Klaeren, ob DE fachlich `NettoPreisGesamtX` in EUR als Ist-Wert verwenden soll oder ob CHF-Umrechnung noetig ist.

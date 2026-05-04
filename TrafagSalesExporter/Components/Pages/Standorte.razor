@@ -408,6 +408,63 @@
             {
                 <MudText Typo="Typo.caption" Class="mt-2">Noch keine Datei hinterlegt.</MudText>
             }
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Excel-Spaltenmapping</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Schema"
+                               OnClick="LoadManualExcelHeadersAsync" Disabled="_loadingManualExcelHeaders">
+                        @if (_loadingManualExcelHeaders)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                            @("Lade Spalten...")
+                        }
+                        else
+                        {
+                            @("Spalten aus Excel laden")
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="AutoMatchManualExcelMappings">
+                        Auto-Match
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddManualExcelMapping">Mapping hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Wenn hier Mappings gepflegt sind, werden diese vor dem Standardformat verwendet. Konstanten sind mit `=Wert` moeglich, z. B. `=Manual Excel`.
+            </MudText>
+            <MudTable Items="_manualExcelMappings" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Zielfeld</MudTh>
+                    <MudTh>Excel-Spalte / Konstante</MudTh>
+                    <MudTh>Pflicht</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.TargetField" Dense>
+                            @foreach (var field in _salesRecordFields)
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="context.SourceHeader" Dense>
+                            @foreach (var header in GetAvailableManualExcelHeaders(context.SourceHeader))
+                            {
+                                <MudSelectItem Value="@header">@header</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveManualExcelMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
         }
         else
         {
@@ -422,8 +479,8 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite || _uploadingManualImport">Abbrechen</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets || _uploadingManualImport">Speichern</MudButton>
+        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite || _uploadingManualImport || _loadingManualExcelHeaders">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets || _uploadingManualImport || _loadingManualExcelHeaders">Speichern</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -439,6 +496,8 @@
     private List<SapSourceDefinition> _sapSources = [];
     private List<SapJoinDefinition> _sapJoins = [];
     private List<SapFieldMapping> _sapMappings = [];
+    private List<ManualExcelColumnMapping> _manualExcelMappings = [];
+    private List<string> _manualExcelHeaders = [];
     private readonly string[] _salesRecordFields = typeof(SalesRecord)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .Select(p => p.Name)
@@ -453,6 +512,7 @@
     private bool _savingSite;
     private bool _loadingSchemas;
     private bool _uploadingManualImport;
+    private bool _loadingManualExcelHeaders;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
@@ -565,6 +625,8 @@
         _sapSources = [];
         _sapJoins = [];
         _sapMappings = [];
+        _manualExcelMappings = [];
+        _manualExcelHeaders = [];
         _siteDialogVisible = true;
     }
 
@@ -582,6 +644,8 @@
         _sapSources = editorState.SapSources;
         _sapJoins = editorState.SapJoins;
         _sapMappings = editorState.SapMappings;
+        _manualExcelMappings = editorState.ManualExcelMappings;
+        _manualExcelHeaders = BuildHeadersFromManualExcelMappings();
         _sapAvailableSourceExpressions = BuildSourceExpressionsFromMappings();
         _sapSourceFieldMap = BuildSourceFieldMapFromJoins();
         _siteDialogVisible = true;
@@ -595,7 +659,7 @@
         _savingSite = true;
         try
         {
-            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsSapSite(), _sapSources, _sapJoins, _sapMappings, _sapEntitySetsCache);
+            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsSapSite(), IsManualExcelSite(), _sapSources, _sapJoins, _sapMappings, _manualExcelMappings, _sapEntitySetsCache);
             _siteDialogVisible = false;
             await LoadDataAsync();
             Snackbar.Add("Standort gespeichert", Severity.Success);
@@ -811,7 +875,7 @@
 
     private void CloseSiteDialog()
     {
-        if (_savingSite || _refreshingSapEntitySets || _uploadingManualImport)
+        if (_savingSite || _refreshingSapEntitySets || _uploadingManualImport || _loadingManualExcelHeaders)
             return;
 
         _siteDialogVisible = false;
@@ -876,6 +940,170 @@
         {
             Snackbar.Add($"Pfadpruefung fehlgeschlagen: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task LoadManualExcelHeadersAsync()
+    {
+        if (_loadingManualExcelHeaders)
+            return;
+
+        _loadingManualExcelHeaders = true;
+        try
+        {
+            _manualExcelHeaders = await StandortePageService.LoadManualExcelHeadersAsync(_editingSite.ManualImportFilePath);
+            Snackbar.Add($"{_manualExcelHeaders.Count} Excel-Spalten geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Spalten laden fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingManualExcelHeaders = false;
+        }
+    }
+
+    private void AddManualExcelMapping()
+    {
+        _manualExcelMappings.Add(new ManualExcelColumnMapping
+        {
+            TargetField = _salesRecordFields.First(),
+            SourceHeader = GetAvailableManualExcelHeaders(null).FirstOrDefault() ?? string.Empty,
+            IsActive = true,
+            SortOrder = _manualExcelMappings.Count
+        });
+    }
+
+    private void RemoveManualExcelMapping(ManualExcelColumnMapping mapping)
+        => _manualExcelMappings.Remove(mapping);
+
+    private void AutoMatchManualExcelMappings()
+    {
+        if (_manualExcelHeaders.Count == 0)
+        {
+            Snackbar.Add("Bitte zuerst 'Spalten aus Excel laden' ausfuehren.", Severity.Warning);
+            return;
+        }
+
+        var suggestions = BuildManualExcelAutoMatchSuggestions();
+        var addedOrUpdated = 0;
+        foreach (var (targetField, sourceHeader) in suggestions)
+        {
+            var existing = _manualExcelMappings.FirstOrDefault(m =>
+                string.Equals(m.TargetField, targetField, StringComparison.OrdinalIgnoreCase));
+
+            if (existing is null)
+            {
+                _manualExcelMappings.Add(new ManualExcelColumnMapping
+                {
+                    TargetField = targetField,
+                    SourceHeader = sourceHeader,
+                    IsActive = true,
+                    IsRequired = IsImportantManualExcelField(targetField),
+                    SortOrder = _manualExcelMappings.Count
+                });
+            }
+            else
+            {
+                existing.SourceHeader = sourceHeader;
+                existing.IsActive = true;
+            }
+
+            addedOrUpdated++;
+        }
+
+        Snackbar.Add(
+            addedOrUpdated == 0 ? "Keine passenden Spalten gefunden." : $"{addedOrUpdated} Mapping-Vorschlaege gesetzt.",
+            addedOrUpdated == 0 ? Severity.Info : Severity.Success);
+    }
+
+    private List<(string TargetField, string SourceHeader)> BuildManualExcelAutoMatchSuggestions()
+    {
+        var headerByNormalized = _manualExcelHeaders
+            .GroupBy(NormalizeHeader, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var aliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(SalesRecord.ExtractionDate)] = ["Export-Datum", "Extraction Date"],
+            [nameof(SalesRecord.InvoiceNumber)] = ["Belegnummer", "Invoice Number"],
+            [nameof(SalesRecord.PositionOnInvoice)] = ["Position", "Position on invoice"],
+            [nameof(SalesRecord.Material)] = ["ArtikelNummer", "Material", "Groesse"],
+            [nameof(SalesRecord.Name)] = ["ArtikelBezeichnung", "Name"],
+            [nameof(SalesRecord.ProductGroup)] = ["Warengruppen-Bezeichnung", "Product Group"],
+            [nameof(SalesRecord.Quantity)] = ["Anz. VE", "Quantity"],
+            [nameof(SalesRecord.SupplierNumber)] = ["Lieferanten Nummer", "Supplier number"],
+            [nameof(SalesRecord.SupplierName)] = ["Name Lieferant", "Supplier name"],
+            [nameof(SalesRecord.SupplierCountry)] = ["Land Lieferant", "Supplier country"],
+            [nameof(SalesRecord.CustomerNumber)] = ["AdressNummer-Kunde", "Customer number"],
+            [nameof(SalesRecord.CustomerName)] = ["Name Kunde", "Customer name"],
+            [nameof(SalesRecord.CustomerCountry)] = ["Land Kunde", "Customer country"],
+            [nameof(SalesRecord.CustomerIndustry)] = ["Branche", "Customer Industry"],
+            [nameof(SalesRecord.StandardCost)] = ["EinstandsPreis", "Standard cost"],
+            [nameof(SalesRecord.StandardCostCurrency)] = ["Währung", "Waehrung", "Standard Cost Currency"],
+            [nameof(SalesRecord.PurchaseOrderNumber)] = ["BestellNummer", "Purchase Order number"],
+            [nameof(SalesRecord.SalesPriceValue)] = ["NettoPreisGesamtX", "Sales Price/Value"],
+            [nameof(SalesRecord.SalesCurrency)] = ["Währung", "Waehrung", "Sales Currency"],
+            [nameof(SalesRecord.DocumentCurrency)] = ["Währung", "Waehrung", "Document Currency"],
+            [nameof(SalesRecord.CompanyCurrency)] = ["Währung", "Waehrung", "Company Currency"],
+            [nameof(SalesRecord.Incoterms2020)] = ["Versandbedingung", "Incoterms 2020"],
+            [nameof(SalesRecord.SalesResponsibleEmployee)] = ["AdressNummer_V", "Sales responsible employee"],
+            [nameof(SalesRecord.InvoiceDate)] = ["Belegdatum-Rechnung", "invoice date"],
+            [nameof(SalesRecord.OrderDate)] = ["BelegDatum Auftrag", "order date"]
+        };
+
+        var result = new List<(string TargetField, string SourceHeader)>();
+        foreach (var (targetField, sourceAliases) in aliases)
+        {
+            foreach (var alias in sourceAliases)
+            {
+                if (headerByNormalized.TryGetValue(NormalizeHeader(alias), out var actualHeader))
+                {
+                    result.Add((targetField, actualHeader));
+                    break;
+                }
+            }
+        }
+
+        result.Add((nameof(SalesRecord.DocumentType), "=Manual Excel"));
+        return result;
+    }
+
+    private IEnumerable<string> GetAvailableManualExcelHeaders(string? currentValue)
+    {
+        var values = new List<string>(_manualExcelHeaders);
+        values.Add("=Manual Excel");
+        if (!string.IsNullOrWhiteSpace(currentValue) && !values.Contains(currentValue, StringComparer.OrdinalIgnoreCase))
+            values.Insert(0, currentValue);
+
+        return values
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x.StartsWith('=') ? 1 : 0)
+            .ThenBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private List<string> BuildHeadersFromManualExcelMappings()
+        => _manualExcelMappings
+            .Select(m => m.SourceHeader)
+            .Where(x => !string.IsNullOrWhiteSpace(x) && !x.Trim().StartsWith('='))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static bool IsImportantManualExcelField(string targetField)
+        => targetField is nameof(SalesRecord.InvoiceNumber) or
+                          nameof(SalesRecord.SalesPriceValue) or
+                          nameof(SalesRecord.InvoiceDate);
+
+    private static string NormalizeHeader(string value)
+    {
+        var chars = value
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray();
+        return new string(chars);
     }
 
     private static List<string> ParseSapEntitySets(string json)

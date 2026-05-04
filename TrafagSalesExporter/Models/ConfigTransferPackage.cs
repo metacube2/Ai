@@ -15,6 +15,7 @@ public class ConfigTransferPackage
     public List<ConfigTransferSapSourceDefinition> SapSourceDefinitions { get; set; } = [];
     public List<ConfigTransferSapJoinDefinition> SapJoinDefinitions { get; set; } = [];
     public List<ConfigTransferSapFieldMapping> SapFieldMappings { get; set; } = [];
+    public List<ConfigTransferManualExcelColumnMapping> ManualExcelColumnMappings { get; set; } = [];
 }
 
 public class ConfigTransferSourceSystemDefinition
@@ -120,6 +121,16 @@ public class ConfigTransferSapFieldMapping
     public string SiteKey { get; set; } = string.Empty;
     public string TargetField { get; set; } = string.Empty;
     public string SourceExpression { get; set; } = string.Empty;
+    public bool IsRequired { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
+}
+
+public class ConfigTransferManualExcelColumnMapping
+{
+    public string SiteKey { get; set; } = string.Empty;
+    public string TargetField { get; set; } = string.Empty;
+    public string SourceHeader { get; set; } = string.Empty;
     public bool IsRequired { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }

@@ -2,10 +2,70 @@
 
 Stand: 2026-04-15
 
+## Nachtrag 2026-04-29 Dashboard-Referenzcheck
+
+Das Dashboard enthaelt jetzt oben einen `Net Sales Actuals 2025`-Referenzcheck gegen die Zahlen aus `check.xlsx` / Power BI Stand 2026-04-29.
+
+Technischer Stand:
+
+- Ist-Wert wird automatisch aus dem besten Kandidaten gegen die Referenz gewaehlt:
+  - `SalesPriceValue`
+  - `DocumentTotalForeignCurrency - VatSumForeignCurrency`
+  - `DocumentTotalLocalCurrency - VatSumLocalCurrency`
+- Belegkopfwerte werden per `TSC` + `DocumentType` + `DocumentEntry` dedupliziert; Fallback ist `InvoiceNumber`
+- Jahr 2025 ueber `InvoiceDate`, fallback `ExtractionDate`
+- Vergleich gegen Power-BI-Wert, falls vorhanden, sonst LC-Referenz
+- Dashboard zeigt das verwendete `Summenfeld`
+
+Noch fachlich zu pruefen:
+
+- IT bleibt als bekannter `not ok`-Fall offen
+- UK/US bleiben offen, bis die richtige Quelle bzw. Config geklaert ist
+- bei weiteren Standorten erst Referenzwert und Datenquelle bestaetigen
+- bestehende zentrale Altdaten enthalten fuer die neuen B1-Felder noch `0`; fuer den echten Feldvergleich ist ein neuer Export/Rebuild noetig
+
+Konkreter Ablauf nach Neustart/PC-Absturz:
+
+1. App starten und Dashboard oeffnen: `http://localhost:55416`
+2. `Alle exportieren` ausfuehren oder betroffene Standorte einzeln exportieren.
+3. Danach `Zentrale Datei neu erzeugen` ausfuehren.
+4. Im oberen Dashboard-Block `Net Sales Actuals 2025 Referenz` die Spalte `Summenfeld` kontrollieren.
+5. Wenn `Status = OK`, passt die Summe zur hinterlegten Referenz.
+6. Wenn `Status = Pruefen`, zuerst kontrollieren:
+   - richtige Standortquelle/Config
+   - richtiges Jahr
+   - ob nach der Codeaenderung wirklich neu exportiert wurde
+   - ob das gewaehlte Summenfeld fachlich Sinn macht
+
+Naechster technischer Schritt fuer neue Jahre:
+
+- Jahresauswahl im Dashboard einbauen.
+- Fuer Jahre ohne Referenz trotzdem Ist-Summen und verwendetes Summenfeld anzeigen.
+- Sobald eine neue Referenzdatei fuer 2026/2027 vorliegt, Referenzwerte ergaenzen.
+
+Export-all-Abbruch am 2026-04-29:
+
+- Fehler war SQLite-Schema: `ExportLogs`, `AppEventLogs`, `CentralSalesRecords` zeigten noch auf `"Sites_repair_old"`
+- Schema-Reparatur wurde erweitert und beim App-Start erfolgreich angewendet
+- gepruefter Zustand danach: alle drei Tabellen referenzieren wieder `Sites`
+- Export kann jetzt erneut getestet werden
+- falls erneut Fehler kommt, sollte die Snackbar die Inner Exception anzeigen und die Logs sollten nicht mehr selbst den Export abbrechen
+
+Nachtest Export all:
+
+- HANA-Schema-Fehler fuer Frankreich/Italien/USA wurde auf HANA-Quoting zurueckgefuehrt und korrigiert
+- Indien bleibt Auth-/Credential-Thema
+- England, Spanien und Deutschland sind aktuell `MANUAL_EXCEL` ohne hinterlegte Datei
+- Fuer einen sauberen Export-all-Lauf:
+  - HANA-Standorte mit korrigierter Query nochmals testen
+  - Indien Credentials pruefen
+  - manuelle Standorte entweder Datei hinterlegen oder deaktivieren, falls sie nicht im Export-all laufen sollen
+
 ## Nachtrag 2026-04-29 B1-Belegwaehrungsfelder
 
 Der HANA/B1-Export zieht jetzt zusaetzliche Belegwaehrungsfelder:
 
+- `DocEntry`
 - `DocCur`
 - `DocTotalFC`
 - `DocTotal`
@@ -16,6 +76,7 @@ Der HANA/B1-Export zieht jetzt zusaetzliche Belegwaehrungsfelder:
 
 Neue Zielfelder:
 
+- `DocumentEntry`
 - `DocumentCurrency`
 - `DocumentTotalForeignCurrency`
 - `DocumentTotalLocalCurrency`
@@ -39,7 +100,7 @@ Die neuen `DocumentTotal*`- und `VatSum*`-Werte sind Belegkopfwerte und werden i
 Power BI:
 
 - nicht positionsweise summieren
-- zuerst nach Beleg deduplizieren, z. B. `TSC` + `DocumentType` + `Invoice Number`
+- zuerst nach Beleg deduplizieren, bevorzugt `TSC` + `DocumentType` + `DocumentEntry`
 - danach Belegkopfwerte summieren
 
 Positionswerte wie `Sales Price/Value`, `Quantity` und `Standard cost` bleiben fuer positionsbasierte Summen geeignet.

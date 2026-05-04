@@ -32,6 +32,7 @@ public class ConfigTransferService : IConfigTransferService
         var sapSources = await db.SapSourceDefinitions.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
         var sapJoins = await db.SapJoinDefinitions.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
         var sapMappings = await db.SapFieldMappings.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
+        var manualExcelMappings = await db.ManualExcelColumnMappings.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
 
         var serverKeyMap = hanaServers.ToDictionary(x => x.Id, _ => Guid.NewGuid().ToString("N"));
         var siteKeyMap = sites.ToDictionary(x => x.Id, _ => Guid.NewGuid().ToString("N"));
@@ -148,6 +149,15 @@ public class ConfigTransferService : IConfigTransferService
                 IsRequired = m.IsRequired,
                 IsActive = m.IsActive,
                 SortOrder = m.SortOrder
+            }).ToList(),
+            ManualExcelColumnMappings = manualExcelMappings.Select(m => new ConfigTransferManualExcelColumnMapping
+            {
+                SiteKey = siteKeyMap[m.SiteId],
+                TargetField = m.TargetField,
+                SourceHeader = m.SourceHeader,
+                IsRequired = m.IsRequired,
+                IsActive = m.IsActive,
+                SortOrder = m.SortOrder
             }).ToList()
         };
 
@@ -173,6 +183,7 @@ public class ConfigTransferService : IConfigTransferService
         var existingSapSources = await db.SapSourceDefinitions.ToListAsync();
         var existingSapJoins = await db.SapJoinDefinitions.ToListAsync();
         var existingSapMappings = await db.SapFieldMappings.ToListAsync();
+        var existingManualExcelMappings = await db.ManualExcelColumnMappings.ToListAsync();
 
         var preservedSharePointSecret = existingSharePoint?.ClientSecret ?? string.Empty;
         var preservedSourceSystemSecrets = existingSourceSystems.ToDictionary(
@@ -187,6 +198,7 @@ public class ConfigTransferService : IConfigTransferService
             x => BuildSiteSignature(x.Land, x.TSC, x.Schema, x.SourceSystem));
 
         if (existingSapMappings.Count > 0) db.SapFieldMappings.RemoveRange(existingSapMappings);
+        if (existingManualExcelMappings.Count > 0) db.ManualExcelColumnMappings.RemoveRange(existingManualExcelMappings);
         if (existingSapJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(existingSapJoins);
         if (existingSapSources.Count > 0) db.SapSourceDefinitions.RemoveRange(existingSapSources);
         if (existingRules.Count > 0) db.FieldTransformationRules.RemoveRange(existingRules);
@@ -314,6 +326,7 @@ public class ConfigTransferService : IConfigTransferService
                     SourceSystem = record.SourceSystem,
                     ExtractionDate = record.ExtractionDate,
                     Tsc = record.Tsc,
+                    DocumentEntry = record.DocumentEntry,
                     InvoiceNumber = record.InvoiceNumber,
                     PositionOnInvoice = record.PositionOnInvoice,
                     Material = record.Material,
@@ -408,6 +421,21 @@ public class ConfigTransferService : IConfigTransferService
                     SiteId = siteIdMap[x.SiteKey],
                     TargetField = x.TargetField,
                     SourceExpression = x.SourceExpression,
+                    IsRequired = x.IsRequired,
+                    IsActive = x.IsActive,
+                    SortOrder = x.SortOrder
+                }));
+        }
+
+        if (package.ManualExcelColumnMappings.Count > 0)
+        {
+            db.ManualExcelColumnMappings.AddRange(package.ManualExcelColumnMappings
+                .Where(x => siteIdMap.ContainsKey(x.SiteKey))
+                .Select(x => new ManualExcelColumnMapping
+                {
+                    SiteId = siteIdMap[x.SiteKey],
+                    TargetField = x.TargetField,
+                    SourceHeader = x.SourceHeader,
                     IsRequired = x.IsRequired,
                     IsActive = x.IsActive,
                     SortOrder = x.SortOrder

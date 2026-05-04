@@ -1,15 +1,23 @@
 using System.Globalization;
+using System.Reflection;
 using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
 public class ManualExcelImportService : IManualExcelImportService
 {
+    private static readonly Dictionary<string, PropertyInfo> SalesRecordProperties = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
     private static readonly Dictionary<string, string> HeaderMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["extractiondate"] = nameof(SalesRecord.ExtractionDate),
         ["tsc"] = nameof(SalesRecord.Tsc),
+        ["documententry"] = nameof(SalesRecord.DocumentEntry),
         ["invoicenumber"] = nameof(SalesRecord.InvoiceNumber),
         ["positiononinvoice"] = nameof(SalesRecord.PositionOnInvoice),
         ["material"] = nameof(SalesRecord.Material),
@@ -47,15 +55,62 @@ public class ManualExcelImportService : IManualExcelImportService
         ["documenttype"] = nameof(SalesRecord.DocumentType)
     };
 
-    public Task<List<SalesRecord>> ReadSalesRecordsAsync(string filePath, Site site)
+    private readonly IDbContextFactory<AppDbContext>? _dbFactory;
+
+    public ManualExcelImportService()
+    {
+    }
+
+    public ManualExcelImportService(IDbContextFactory<AppDbContext> dbFactory)
+    {
+        _dbFactory = dbFactory;
+    }
+
+    public async Task<List<SalesRecord>> ReadSalesRecordsAsync(string filePath, Site site)
+    {
+        var mappings = await LoadMappingsAsync(site.Id);
+        return ReadSalesRecords(filePath, site, mappings);
+    }
+
+    public Task<List<SalesRecord>> ReadSalesRecordsAsync(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
+        => Task.FromResult(ReadSalesRecords(filePath, site, mappings));
+
+    private async Task<List<ManualExcelColumnMapping>> LoadMappingsAsync(int siteId)
+    {
+        if (_dbFactory is null || siteId <= 0)
+            return [];
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.ManualExcelColumnMappings
+            .AsNoTracking()
+            .Where(m => m.SiteId == siteId && m.IsActive)
+            .OrderBy(m => m.SortOrder)
+            .ThenBy(m => m.Id)
+            .ToListAsync();
+    }
+
+    private static List<SalesRecord> ReadSalesRecords(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
     {
         using var workbook = new XLWorkbook(filePath);
         var worksheet = workbook.Worksheets.FirstOrDefault()
-            ?? throw new InvalidOperationException("Die Excel-Datei enthält kein Arbeitsblatt.");
+            ?? throw new InvalidOperationException("Die Excel-Datei enthaelt kein Arbeitsblatt.");
         var usedRange = worksheet.RangeUsed()
-            ?? throw new InvalidOperationException("Die Excel-Datei enthält keine Daten.");
+            ?? throw new InvalidOperationException("Die Excel-Datei enthaelt keine Daten.");
 
         var headerRow = usedRange.FirstRow();
+        var activeMappings = mappings
+            .Where(m => m.IsActive && !string.IsNullOrWhiteSpace(m.TargetField) && !string.IsNullOrWhiteSpace(m.SourceHeader))
+            .OrderBy(m => m.SortOrder)
+            .ThenBy(m => m.Id)
+            .ToList();
+
+        return activeMappings.Count > 0
+            ? ReadMappedRows(usedRange, headerRow, site, activeMappings)
+            : ReadDefaultRows(usedRange, headerRow, site);
+    }
+
+    private static List<SalesRecord> ReadDefaultRows(IXLRange usedRange, IXLRangeRow headerRow, Site site)
+    {
         var headerIndexes = BuildHeaderIndexMap(headerRow);
         var rows = new List<SalesRecord>();
 
@@ -68,6 +123,7 @@ public class ManualExcelImportService : IManualExcelImportService
             {
                 ExtractionDate = ReadDate(headerIndexes, row, nameof(SalesRecord.ExtractionDate)) ?? DateTime.UtcNow,
                 Tsc = ReadString(headerIndexes, row, nameof(SalesRecord.Tsc), site.TSC),
+                DocumentEntry = (int)Math.Round(ReadDecimal(headerIndexes, row, nameof(SalesRecord.DocumentEntry))),
                 InvoiceNumber = ReadString(headerIndexes, row, nameof(SalesRecord.InvoiceNumber)),
                 PositionOnInvoice = (int)Math.Round(ReadDecimal(headerIndexes, row, nameof(SalesRecord.PositionOnInvoice))),
                 Material = ReadString(headerIndexes, row, nameof(SalesRecord.Material)),
@@ -102,7 +158,64 @@ public class ManualExcelImportService : IManualExcelImportService
             });
         }
 
-        return Task.FromResult(rows);
+        return rows;
+    }
+
+    private static List<SalesRecord> ReadMappedRows(
+        IXLRange usedRange,
+        IXLRangeRow headerRow,
+        Site site,
+        IReadOnlyList<ManualExcelColumnMapping> mappings)
+    {
+        var headerIndexes = BuildRawHeaderIndexMap(headerRow);
+        foreach (var mapping in mappings.Where(m => m.IsRequired))
+        {
+            if (mapping.SourceHeader.Trim().StartsWith('='))
+                continue;
+
+            if (!TryResolveHeaderIndex(headerIndexes, mapping.SourceHeader, out _))
+                throw new InvalidOperationException($"Pflichtspalte '{mapping.SourceHeader}' fuer Zielfeld '{mapping.TargetField}' fehlt.");
+        }
+
+        var rows = new List<SalesRecord>();
+        foreach (var row in usedRange.RowsUsed().Skip(1))
+        {
+            if (IsRowEmpty(row))
+                continue;
+
+            var record = new SalesRecord
+            {
+                ExtractionDate = DateTime.UtcNow,
+                Tsc = site.TSC,
+                Land = site.Land,
+                DocumentType = "Manual Excel"
+            };
+
+            foreach (var mapping in mappings)
+            {
+                if (!SalesRecordProperties.TryGetValue(mapping.TargetField, out var property))
+                    continue;
+
+                var value = ReadMappedValue(headerIndexes, row, mapping.SourceHeader);
+                SetPropertyValue(record, property, value);
+            }
+
+            if (record.ExtractionDate == default)
+                record.ExtractionDate = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(record.Tsc))
+                record.Tsc = site.TSC;
+            if (string.IsNullOrWhiteSpace(record.Land))
+                record.Land = site.Land;
+            if (string.IsNullOrWhiteSpace(record.DocumentType))
+                record.DocumentType = "Manual Excel";
+
+            if (!IsMeaningfulMappedRecord(record))
+                continue;
+
+            rows.Add(record);
+        }
+
+        return rows;
     }
 
     private static Dictionary<string, int> BuildHeaderIndexMap(IXLRangeRow headerRow)
@@ -123,6 +236,41 @@ public class ManualExcelImportService : IManualExcelImportService
             throw new InvalidOperationException("Die Excel-Datei hat nicht das erwartete Exportformat. Spalte 'Invoice Number' fehlt.");
 
         return result;
+    }
+
+    private static Dictionary<string, int> BuildRawHeaderIndexMap(IXLRangeRow headerRow)
+    {
+        var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var cell in headerRow.CellsUsed())
+        {
+            var header = cell.GetString().Trim();
+            if (string.IsNullOrWhiteSpace(header))
+                continue;
+
+            result[header] = cell.Address.ColumnNumber;
+            result[NormalizeHeader(header)] = cell.Address.ColumnNumber;
+        }
+
+        return result;
+    }
+
+    private static bool TryResolveHeaderIndex(Dictionary<string, int> headerIndexes, string sourceHeader, out int index)
+    {
+        var trimmed = sourceHeader.Trim();
+        return headerIndexes.TryGetValue(trimmed, out index) ||
+               headerIndexes.TryGetValue(NormalizeHeader(trimmed), out index);
+    }
+
+    private static object? ReadMappedValue(Dictionary<string, int> headerIndexes, IXLRangeRow row, string sourceHeader)
+    {
+        var trimmed = sourceHeader.Trim();
+        if (trimmed.StartsWith('='))
+            return trimmed[1..];
+
+        return TryResolveHeaderIndex(headerIndexes, trimmed, out var index)
+            ? row.Cell(index).GetFormattedString().Trim()
+            : null;
     }
 
     private static bool IsRowEmpty(IXLRangeRow row)
@@ -148,18 +296,7 @@ public class ManualExcelImportService : IManualExcelImportService
         if (cell.TryGetValue<double>(out var doubleValue))
             return Convert.ToDecimal(doubleValue, CultureInfo.InvariantCulture);
 
-        var text = cell.GetFormattedString().Trim();
-        if (string.IsNullOrWhiteSpace(text))
-            return 0m;
-
-        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-CH"), out decimalValue))
-            return decimalValue;
-        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-DE"), out decimalValue))
-            return decimalValue;
-        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimalValue))
-            return decimalValue;
-
-        return 0m;
+        return ParseDecimal(cell.GetFormattedString().Trim());
     }
 
     private static DateTime? ReadDate(Dictionary<string, int> headerIndexes, IXLRangeRow row, string fieldName)
@@ -171,7 +308,65 @@ public class ManualExcelImportService : IManualExcelImportService
         if (cell.TryGetValue<DateTime>(out var dateValue))
             return dateValue;
 
-        var text = cell.GetFormattedString().Trim();
+        return ParseDate(cell.GetFormattedString().Trim());
+    }
+
+    private static void SetPropertyValue(SalesRecord record, PropertyInfo property, object? value)
+    {
+        try
+        {
+            var text = value?.ToString()?.Trim() ?? string.Empty;
+
+            if (property.PropertyType == typeof(string))
+            {
+                property.SetValue(record, text);
+                return;
+            }
+
+            if (property.PropertyType == typeof(int))
+            {
+                property.SetValue(record, (int)Math.Round(ParseDecimal(text)));
+                return;
+            }
+
+            if (property.PropertyType == typeof(decimal))
+            {
+                property.SetValue(record, ParseDecimal(text));
+                return;
+            }
+
+            if (property.PropertyType == typeof(DateTime?))
+            {
+                property.SetValue(record, ParseDate(text));
+                return;
+            }
+
+            if (property.PropertyType == typeof(DateTime))
+                property.SetValue(record, ParseDate(text) ?? default);
+        }
+        catch
+        {
+            // Einzelne fehlerhafte Zellen duerfen den kompletten manuellen Import nicht abbrechen.
+        }
+    }
+
+    private static decimal ParseDecimal(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 0m;
+
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-CH"), out var decimalValue))
+            return decimalValue;
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-DE"), out decimalValue))
+            return decimalValue;
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimalValue))
+            return decimalValue;
+
+        return 0m;
+    }
+
+    private static DateTime? ParseDate(string text)
+    {
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
@@ -184,7 +379,7 @@ public class ManualExcelImportService : IManualExcelImportService
             "O"
         };
 
-        if (DateTime.TryParseExact(text, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out dateValue))
+        if (DateTime.TryParseExact(text, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dateValue))
             return dateValue;
         if (DateTime.TryParse(text, CultureInfo.GetCultureInfo("de-CH"), DateTimeStyles.AssumeLocal, out dateValue))
             return dateValue;
@@ -193,6 +388,12 @@ public class ManualExcelImportService : IManualExcelImportService
 
         return null;
     }
+
+    private static bool IsMeaningfulMappedRecord(SalesRecord record)
+        => record.PositionOnInvoice != 0 ||
+           record.Quantity != 0m ||
+           record.SalesPriceValue != 0m ||
+           !string.IsNullOrWhiteSpace(record.Material);
 
     private static string NormalizeHeader(string value)
     {

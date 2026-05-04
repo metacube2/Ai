@@ -85,6 +85,7 @@ CREATE TABLE CentralSalesRecords (
     SourceSystem TEXT NOT NULL,
     ExtractionDate TEXT NOT NULL,
     Tsc TEXT NOT NULL,
+    DocumentEntry INTEGER NOT NULL DEFAULT 0,
     InvoiceNumber TEXT NOT NULL,
     PositionOnInvoice INTEGER NOT NULL,
     Material TEXT NOT NULL,
@@ -151,6 +152,18 @@ CREATE TABLE SapFieldMappings (
     SiteId INTEGER NOT NULL,
     TargetField TEXT NOT NULL,
     SourceExpression TEXT NOT NULL,
+    IsRequired INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (SiteId) REFERENCES Sites (Id)
+);";
+
+    internal static string GetManualExcelColumnMappingsCreateSql() => @"
+CREATE TABLE ManualExcelColumnMappings (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SiteId INTEGER NOT NULL,
+    TargetField TEXT NOT NULL,
+    SourceHeader TEXT NOT NULL,
     IsRequired INTEGER NOT NULL DEFAULT 0,
     IsActive INTEGER NOT NULL DEFAULT 1,
     SortOrder INTEGER NOT NULL DEFAULT 0,

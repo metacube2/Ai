@@ -56,6 +56,7 @@ public class CentralSalesRecordServiceTests : IDisposable
             {
                 ExtractionDate = new DateTime(2026, 4, 29),
                 Tsc = "TRCH",
+                DocumentEntry = 999,
                 InvoiceNumber = "1001",
                 PositionOnInvoice = 1,
                 Material = "MAT",
@@ -81,6 +82,7 @@ public class CentralSalesRecordServiceTests : IDisposable
         var rows = await service.GetAllAsync();
 
         var row = Assert.Single(rows);
+        Assert.Equal(999, row.DocumentEntry);
         Assert.Equal("EUR", row.DocumentCurrency);
         Assert.Equal(100m, row.DocumentTotalForeignCurrency);
         Assert.Equal(95m, row.DocumentTotalLocalCurrency);
