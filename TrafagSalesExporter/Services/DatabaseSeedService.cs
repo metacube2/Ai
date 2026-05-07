@@ -13,7 +13,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureSourceSystemDefinitions(db);
         EnsureCentralHanaServerRecords(db);
         EnsureSpainManualExcelSite(db);
-        EnsureSapHanaDachSite(db);
+        EnsureSapODataDachSite(db);
     }
 
     private static void SeedIfEmpty(AppDbContext db)
@@ -173,8 +173,8 @@ public class DatabaseSeedService : IDatabaseSeedService
     {
         var defaults = new[]
         {
-            new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
-            new SourceSystemDefinition { Code = "SAP_HANA", DisplayName = "SAP HANA", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+            new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP OData", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+            new SourceSystemDefinition { Code = "SAP_HANA", DisplayName = "SAP HANA Tables/Views", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "BI1", DisplayName = "BI1", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "SAGE", DisplayName = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "MANUAL_EXCEL", DisplayName = "Manual Excel", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true }
@@ -195,6 +195,12 @@ public class DatabaseSeedService : IDatabaseSeedService
             }
 
             if (string.IsNullOrWhiteSpace(current.DisplayName))
+            {
+                current.DisplayName = item.DisplayName;
+                changed = true;
+            }
+            else if ((current.Code == "SAP" && current.DisplayName == "SAP") ||
+                     (current.Code == "SAP_HANA" && current.DisplayName == "SAP HANA"))
             {
                 current.DisplayName = item.DisplayName;
                 changed = true;
@@ -278,7 +284,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         db.SaveChanges();
     }
 
-    private static void EnsureSapHanaDachSite(AppDbContext db)
+    private static void EnsureSapODataDachSite(AppDbContext db)
     {
         if (db.Sites.Count() <= 1)
             return;
@@ -306,16 +312,17 @@ public class DatabaseSeedService : IDatabaseSeedService
                 changed = true;
             }
 
-            if (string.IsNullOrWhiteSpace(existing.SourceSystem))
+            if (string.IsNullOrWhiteSpace(existing.SourceSystem) ||
+                string.Equals(existing.SourceSystem, "SAP_HANA", StringComparison.OrdinalIgnoreCase))
             {
-                existing.SourceSystem = "SAP_HANA";
+                existing.SourceSystem = "SAP";
                 changed = true;
             }
 
             if (changed)
                 db.SaveChanges();
 
-            EnsureSapHanaDachMapping(db, existing.Id);
+            EnsureSapODataDachMapping(db, existing.Id);
             return;
         }
 
@@ -324,19 +331,33 @@ public class DatabaseSeedService : IDatabaseSeedService
             Schema = string.Empty,
             TSC = "ZSCHWEIZ",
             Land = "Schweiz/Oesterreich",
-            SourceSystem = "SAP_HANA",
+            SourceSystem = "SAP",
             IsActive = false
         };
         db.Sites.Add(site);
         db.SaveChanges();
-        EnsureSapHanaDachMapping(db, site.Id);
+        EnsureSapODataDachMapping(db, site.Id);
     }
 
-    private static void EnsureSapHanaDachMapping(AppDbContext db, int siteId)
+    private static void EnsureSapODataDachMapping(AppDbContext db, int siteId)
     {
-        if (db.SapSourceDefinitions.Any(x => x.SiteId == siteId) ||
-            db.SapFieldMappings.Any(x => x.SiteId == siteId))
+        var existingSources = db.SapSourceDefinitions.Where(x => x.SiteId == siteId).ToList();
+        var existingMappings = db.SapFieldMappings.Where(x => x.SiteId == siteId).ToList();
+
+        if (existingSources.Count > 0 || existingMappings.Count > 0)
         {
+            var changed = false;
+            foreach (var source in existingSources.Where(x =>
+                         string.Equals(x.Alias, "Z", StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(x.EntitySet, "ZSCHWEIZ", StringComparison.OrdinalIgnoreCase)))
+            {
+                source.EntitySet = "ZSCHWEIZSet";
+                changed = true;
+            }
+
+            if (changed)
+                db.SaveChanges();
+
             return;
         }
 
@@ -344,7 +365,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         {
             SiteId = siteId,
             Alias = "Z",
-            EntitySet = "ZSCHWEIZ",
+            EntitySet = "ZSCHWEIZSet",
             IsPrimary = true,
             IsActive = true,
             SortOrder = 0
