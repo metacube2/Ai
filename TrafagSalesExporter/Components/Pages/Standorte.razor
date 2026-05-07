@@ -191,15 +191,22 @@
 
         <MudDivider Class="my-4" />
 
-        @if (IsSapSite())
+        @if (IsMappedSourceSite())
         {
-            <MudText Typo="Typo.h6" Class="mb-2">SAP Gateway</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">@GetMappingSectionTitle()</MudText>
             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
-                Die Service-URL zeigt auf den OData-Service. Die verfÃ¼gbaren Entity Sets werden nur per Knopfdruck aktualisiert und lokal zwischengespeichert.
+                Quellen und Feldmappings werden grafisch gepflegt. Bei SAP Gateway sind Quellen Entity Sets; bei HANA sind Quellen Tabellen oder Views im gewaehlten Schema.
             </MudAlert>
-            <MudText Typo="Typo.body2">Zentrale SAP Service URL: @GetCentralSapServiceUrlSummary(_editingSite.SourceSystem)</MudText>
-            <MudTextField @bind-Value="_editingSite.SapServiceUrl" Label="SAP Service URL Override"
-                          HelperText="Optional. Wenn leer, wird die zentrale SAP Service URL des Quellsystems verwendet." />
+            @if (IsSapSite())
+            {
+                <MudText Typo="Typo.body2">Zentrale SAP Service URL: @GetCentralSapServiceUrlSummary(_editingSite.SourceSystem)</MudText>
+                <MudTextField @bind-Value="_editingSite.SapServiceUrl" Label="SAP Service URL Override"
+                              HelperText="Optional. Wenn leer, wird die zentrale SAP Service URL des Quellsystems verwendet." />
+            }
+            else
+            {
+                <MudText Typo="Typo.body2">Zentrale HANA-Verbindung: @GetCentralHanaSummary(_editingSite.SourceSystem)</MudText>
+            }
             <MudStack Row Spacing="2" Class="mb-3">
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshSapEntitySets"
                            StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingSapEntitySets">
@@ -210,7 +217,7 @@
                     }
                     else
                     {
-                        @("Quellen refreshen")
+                        @(IsSapSite() ? "Entity Sets refreshen" : "Tabellen/Views refreshen")
                     }
                 </MudButton>
                 @if (_editingSite.SapEntitySetsRefreshedAtUtc.HasValue)
@@ -222,16 +229,16 @@
             </MudStack>
             <MudDivider Class="my-4" />
             <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
-                <MudText Typo="Typo.h6">SAP Quellen</MudText>
+                <MudText Typo="Typo.h6">Quellen</MudText>
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapSource">Quelle hinzufÃ¼gen</MudButton>
             </MudStack>
             <MudText Typo="Typo.caption" Class="mb-2">
-                Pro Quelle Alias und Entity Set definieren. Joins verwenden links/rechts kommagetrennte SchlÃ¼sselfelder wie `VBELN,POSNR`. Feldmappings erwarten `Alias.Feldname` oder Konstanten wie `=SAP`.
+                Pro Quelle Alias und Entity Set bzw. HANA Tabelle/View definieren. Joins verwenden links/rechts kommagetrennte Schluesselfelder wie `VBELN,POSNR`. Feldmappings erwarten `Alias.Feldname` oder Konstanten wie `=SAP` / `=HANA`.
             </MudText>
             <MudTable Items="_sapSources" Dense Hover Striped>
                 <HeaderContent>
                     <MudTh>Alias</MudTh>
-                    <MudTh>Entity Set</MudTh>
+                    <MudTh>@(IsSapSite() ? "Entity Set" : "Tabelle/View")</MudTh>
                     <MudTh>PrimÃ¤r</MudTh>
                     <MudTh>Aktiv</MudTh>
                     <MudTh>Aktionen</MudTh>
@@ -344,7 +351,7 @@
                 </MudStack>
             </MudStack>
             <MudText Typo="Typo.caption" Class="mb-2">
-                Source Expressions werden aus den hinzugefÃ¼gten SAP-Quellen als `Alias.Feldname` gelesen. Vorhandene manuelle Werte bleiben auswÃ¤hlbar.
+                Source Expressions werden aus den hinzugefuegten Quellen als `Alias.Feldname` gelesen. Vorhandene manuelle Werte bleiben auswaehlbar.
             </MudText>
             <MudTable Items="_sapMappings" Dense Hover Striped>
                 <HeaderContent>
@@ -659,7 +666,7 @@
         _savingSite = true;
         try
         {
-            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsSapSite(), IsManualExcelSite(), _sapSources, _sapJoins, _sapMappings, _manualExcelMappings, _sapEntitySetsCache);
+            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsMappedSourceSite(), IsManualExcelSite(), _sapSources, _sapJoins, _sapMappings, _manualExcelMappings, _sapEntitySetsCache);
             _siteDialogVisible = false;
             await LoadDataAsync();
             Snackbar.Add("Standort gespeichert", Severity.Success);
@@ -752,10 +759,16 @@
     private bool IsSapSite()
         => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase);
 
+    private bool IsMappedSourceSite()
+        => IsSapSite() || UsesHanaConnection();
+
     private bool IsManualExcelSite()
         => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase);
 
     private bool UsesHanaConnection() => IsHanaSourceSystem(_editingSite.SourceSystem);
+
+    private string GetMappingSectionTitle()
+        => IsSapSite() ? "SAP Gateway Mapping" : "HANA Quellen und Feldmapping";
 
     private string GetSourceSystemLabel(SourceSystemDefinition definition)
         => string.IsNullOrWhiteSpace(definition.DisplayName) ? definition.Code : $"{definition.DisplayName} ({definition.Code})";
@@ -1182,7 +1195,7 @@
                 .ToList();
 
             if (activeSources.Count == 0)
-                throw new InvalidOperationException("Es gibt keine aktiven SAP-Quellen mit Alias und Entity Set.");
+                throw new InvalidOperationException("Es gibt keine aktiven Quellen mit Alias und Entity Set/Tabelle.");
 
             var result = await StandortePageService.RefreshSapSourceFieldsAsync(_editingSite, activeSources, _sapMappings);
             _sapAvailableSourceExpressions = result.SourceExpressions;

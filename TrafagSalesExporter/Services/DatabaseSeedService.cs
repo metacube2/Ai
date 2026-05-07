@@ -12,6 +12,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureRecommendedTransformationRules(db);
         EnsureSourceSystemDefinitions(db);
         EnsureCentralHanaServerRecords(db);
+        EnsureSpainManualExcelSite(db);
+        EnsureSapHanaDachSite(db);
     }
 
     private static void SeedIfEmpty(AppDbContext db)
@@ -172,6 +174,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         var defaults = new[]
         {
             new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+            new SourceSystemDefinition { Code = "SAP_HANA", DisplayName = "SAP HANA", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "BI1", DisplayName = "BI1", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "SAGE", DisplayName = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new SourceSystemDefinition { Code = "MANUAL_EXCEL", DisplayName = "Manual Excel", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true }
@@ -221,5 +224,174 @@ public class DatabaseSeedService : IDatabaseSeedService
 
         if (changed)
             db.SaveChanges();
+    }
+
+    private static void EnsureSpainManualExcelSite(AppDbContext db)
+    {
+        if (db.Sites.Count() <= 1)
+            return;
+
+        var existing = db.Sites
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.TSC == "TRSE" ||
+                x.TSC == "TRES" ||
+                x.Land == "Spanien" ||
+                x.Land == "Spain");
+
+        if (existing is not null)
+        {
+            var changed = false;
+
+            if (string.IsNullOrWhiteSpace(existing.TSC))
+            {
+                existing.TSC = "TRES";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.Land))
+            {
+                existing.Land = "Spanien";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.SourceSystem))
+            {
+                existing.SourceSystem = "MANUAL_EXCEL";
+                changed = true;
+            }
+
+            if (changed)
+                db.SaveChanges();
+
+            return;
+        }
+
+        db.Sites.Add(new Site
+        {
+            Schema = string.Empty,
+            TSC = "TRES",
+            Land = "Spanien",
+            SourceSystem = "MANUAL_EXCEL",
+            IsActive = false
+        });
+        db.SaveChanges();
+    }
+
+    private static void EnsureSapHanaDachSite(AppDbContext db)
+    {
+        if (db.Sites.Count() <= 1)
+            return;
+
+        var existing = db.Sites
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.TSC == "ZSCHWEIZ" ||
+                x.Land == "Schweiz/Oesterreich" ||
+                x.Land == "DACH");
+
+        if (existing is not null)
+        {
+            var changed = false;
+
+            if (string.IsNullOrWhiteSpace(existing.TSC))
+            {
+                existing.TSC = "ZSCHWEIZ";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.Land))
+            {
+                existing.Land = "Schweiz/Oesterreich";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.SourceSystem))
+            {
+                existing.SourceSystem = "SAP_HANA";
+                changed = true;
+            }
+
+            if (changed)
+                db.SaveChanges();
+
+            EnsureSapHanaDachMapping(db, existing.Id);
+            return;
+        }
+
+        var site = new Site
+        {
+            Schema = string.Empty,
+            TSC = "ZSCHWEIZ",
+            Land = "Schweiz/Oesterreich",
+            SourceSystem = "SAP_HANA",
+            IsActive = false
+        };
+        db.Sites.Add(site);
+        db.SaveChanges();
+        EnsureSapHanaDachMapping(db, site.Id);
+    }
+
+    private static void EnsureSapHanaDachMapping(AppDbContext db, int siteId)
+    {
+        if (db.SapSourceDefinitions.Any(x => x.SiteId == siteId) ||
+            db.SapFieldMappings.Any(x => x.SiteId == siteId))
+        {
+            return;
+        }
+
+        db.SapSourceDefinitions.Add(new SapSourceDefinition
+        {
+            SiteId = siteId,
+            Alias = "Z",
+            EntitySet = "ZSCHWEIZ",
+            IsPrimary = true,
+            IsActive = true,
+            SortOrder = 0
+        });
+
+        var mappings = new (string Target, string Source, bool Required)[]
+        {
+            (nameof(SalesRecord.Tsc), "Z.TSC", true),
+            (nameof(SalesRecord.Land), "Z.LAND1", true),
+            (nameof(SalesRecord.DocumentEntry), "Z.VBELN", false),
+            (nameof(SalesRecord.InvoiceNumber), "Z.VBELN", true),
+            (nameof(SalesRecord.PositionOnInvoice), "Z.POSNR", true),
+            (nameof(SalesRecord.InvoiceDate), "Z.FKDAT", true),
+            (nameof(SalesRecord.Material), "Z.MATNR", false),
+            (nameof(SalesRecord.Name), "Z.ARKTX", false),
+            (nameof(SalesRecord.ProductGroup), "Z.PRODH", false),
+            (nameof(SalesRecord.Quantity), "Z.FKIMG", false),
+            (nameof(SalesRecord.CustomerNumber), "Z.KUNNR", false),
+            (nameof(SalesRecord.CustomerName), "Z.NAME1", false),
+            (nameof(SalesRecord.CustomerCountry), "Z.CUSTOMER_LAND", false),
+            (nameof(SalesRecord.StandardCost), "=0", false),
+            (nameof(SalesRecord.StandardCostCurrency), "Z.HWAER", false),
+            (nameof(SalesRecord.SalesPriceValue), "Z.NETWR_HC", true),
+            (nameof(SalesRecord.SalesCurrency), "Z.HWAER", true),
+            (nameof(SalesRecord.DocumentCurrency), "Z.WAERK", false),
+            (nameof(SalesRecord.DocumentTotalForeignCurrency), "Z.NETWR_DC", false),
+            (nameof(SalesRecord.DocumentTotalLocalCurrency), "Z.NETWR_HC", false),
+            (nameof(SalesRecord.VatSumForeignCurrency), "Z.TAX_DC", false),
+            (nameof(SalesRecord.VatSumLocalCurrency), "Z.TAX_HC", false),
+            (nameof(SalesRecord.DocumentRate), "Z.KURRF", false),
+            (nameof(SalesRecord.CompanyCurrency), "Z.HWAER", true),
+            (nameof(SalesRecord.DocumentType), "Z.FKART", false)
+        };
+
+        for (var i = 0; i < mappings.Length; i++)
+        {
+            db.SapFieldMappings.Add(new SapFieldMapping
+            {
+                SiteId = siteId,
+                TargetField = mappings[i].Target,
+                SourceExpression = mappings[i].Source,
+                IsRequired = mappings[i].Required,
+                IsActive = true,
+                SortOrder = i
+            });
+        }
+
+        db.SaveChanges();
     }
 }

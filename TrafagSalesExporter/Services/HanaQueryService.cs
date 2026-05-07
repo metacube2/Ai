@@ -1,3 +1,4 @@
+using System.Globalization;
 using Sap.Data.Hana;
 using TrafagSalesExporter.Models;
 
@@ -142,6 +143,125 @@ public class HanaQueryService : IHanaQueryService
         return schemas;
     }
 
+    public async Task<List<string>> GetAvailableTablesAsync(HanaServer server, string schema, CancellationToken cancellationToken = default)
+    {
+        var connectionString = server.BuildConnectionString();
+        using var connection = new HanaConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string query = """
+            SELECT table_name
+            FROM sys.tables
+            WHERE schema_name = :schema
+            UNION
+            SELECT view_name AS table_name
+            FROM sys.views
+            WHERE schema_name = :schema
+            ORDER BY table_name;
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        command.Parameters.Add(new HanaParameter("schema", HanaDbType.NVarChar) { Value = schema.Trim().ToUpperInvariant() });
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var tables = new List<string>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var table = reader["table_name"]?.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(table))
+                tables.Add(table);
+        }
+
+        return tables;
+    }
+
+    public async Task<List<string>> GetTableFieldNamesAsync(HanaServer server, string schema, string tableName, CancellationToken cancellationToken = default)
+    {
+        var connectionString = server.BuildConnectionString();
+        using var connection = new HanaConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string query = """
+            SELECT column_name
+            FROM sys.table_columns
+            WHERE schema_name = :schema AND table_name = :table
+            UNION
+            SELECT column_name
+            FROM sys.view_columns
+            WHERE schema_name = :schema AND view_name = :table
+            ORDER BY column_name;
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        command.Parameters.Add(new HanaParameter("schema", HanaDbType.NVarChar) { Value = schema.Trim().ToUpperInvariant() });
+        command.Parameters.Add(new HanaParameter("table", HanaDbType.NVarChar) { Value = tableName.Trim().ToUpperInvariant() });
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var fields = new List<string>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var field = reader["column_name"]?.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(field))
+                fields.Add(field);
+        }
+
+        return fields;
+    }
+
+    public async Task<List<SalesRecord>> GetMappedSalesRecordsAsync(
+        HanaServer server,
+        string schema,
+        Site site,
+        IReadOnlyList<SapSourceDefinition> sources,
+        IReadOnlyList<SapJoinDefinition> joins,
+        IReadOnlyList<SapFieldMapping> mappings,
+        string dateFilter,
+        CancellationToken cancellationToken = default)
+    {
+        var activeSources = sources
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder)
+            .ThenBy(s => s.Id)
+            .ToList();
+
+        if (activeSources.Count == 0)
+            throw new InvalidOperationException($"Standort '{site.Land}' hat keine aktiven HANA-Quellen.");
+        if (!mappings.Any(m => m.IsActive))
+            throw new InvalidOperationException($"Standort '{site.Land}' hat keine aktiven HANA-Feldmappings.");
+
+        var connectionString = server.BuildConnectionString();
+        using var connection = new HanaConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        var parsedDateFilter = ParseDateFilter(dateFilter);
+        var sourceRows = new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in activeSources)
+        {
+            await _appEventLogService.WriteDebugAsync("HANA", "Mapping-Quelle wird gelesen", site.Id, site.Land,
+                $"Alias={source.Alias} | Tabelle/View={source.EntitySet}");
+            sourceRows[source.Alias] = await ReadMappedSourceRowsAsync(connection, schema, source.EntitySet, parsedDateFilter, cancellationToken);
+            await _appEventLogService.WriteDebugAsync("HANA", "Mapping-Quelle gelesen", site.Id, site.Land,
+                $"Alias={source.Alias} | Tabelle/View={source.EntitySet} | Zeilen={sourceRows[source.Alias].Count}");
+        }
+
+        var primarySource = activeSources.FirstOrDefault(s => s.IsPrimary) ?? activeSources.First();
+        var composedRows = sourceRows[primarySource.Alias]
+            .Select(r => PrefixRow(primarySource.Alias, r))
+            .ToList();
+
+        foreach (var join in joins.Where(j => j.IsActive).OrderBy(j => j.SortOrder).ThenBy(j => j.Id))
+        {
+            if (!sourceRows.TryGetValue(join.RightAlias, out var rightRows))
+                continue;
+
+            composedRows = ApplyLeftJoin(composedRows, join.LeftAlias, join.LeftKeys, join.RightAlias, join.RightKeys, rightRows);
+        }
+
+        return composedRows
+            .Select(row => MapToSalesRecord(site, row, mappings))
+            .ToList();
+    }
+
     private async Task<List<SalesRecord>> ReadRecordsAsync(HanaConnection connection, string query, string tsc, DateTime dateFilter, string land, string queryName, CancellationToken cancellationToken)
     {
         var records = new List<SalesRecord>();
@@ -202,6 +322,209 @@ public class HanaQueryService : IHanaQueryService
 
         return records;
     }
+
+    private static async Task<List<Dictionary<string, object?>>> ReadMappedSourceRowsAsync(
+        HanaConnection connection,
+        string schema,
+        string tableName,
+        DateTime dateFilter,
+        CancellationToken cancellationToken)
+    {
+        var schemaPrefix = BuildSchemaPrefix(schema);
+        var tableIdentifier = BuildIdentifier(tableName);
+        var hasFkdat = await HasColumnAsync(connection, schema, tableName, "FKDAT", cancellationToken);
+        var query = hasFkdat
+            ? $@"SELECT * FROM {schemaPrefix}{tableIdentifier} WHERE ""FKDAT"" >= :{DateFilterParameterName}"
+            : $@"SELECT * FROM {schemaPrefix}{tableIdentifier}";
+
+        using var command = new HanaCommand(query, connection);
+        if (hasFkdat)
+            command.Parameters.Add(new HanaParameter(DateFilterParameterName, HanaDbType.Date) { Value = dateFilter.Date });
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<Dictionary<string, object?>>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < reader.FieldCount; i++)
+                row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+            rows.Add(row);
+        }
+
+        return rows;
+    }
+
+    private static async Task<bool> HasColumnAsync(HanaConnection connection, string schema, string tableName, string columnName, CancellationToken cancellationToken)
+    {
+        const string query = """
+            SELECT COUNT(*) AS cnt
+            FROM (
+                SELECT column_name
+                FROM sys.table_columns
+                WHERE schema_name = :schema AND table_name = :table AND column_name = :column
+                UNION ALL
+                SELECT column_name
+                FROM sys.view_columns
+                WHERE schema_name = :schema AND view_name = :table AND column_name = :column
+            ) x;
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        command.Parameters.Add(new HanaParameter("schema", HanaDbType.NVarChar) { Value = schema.Trim().ToUpperInvariant() });
+        command.Parameters.Add(new HanaParameter("table", HanaDbType.NVarChar) { Value = tableName.Trim().ToUpperInvariant() });
+        command.Parameters.Add(new HanaParameter("column", HanaDbType.NVarChar) { Value = columnName.Trim().ToUpperInvariant() });
+        var count = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(count) > 0;
+    }
+
+    private static Dictionary<string, object?> PrefixRow(string alias, Dictionary<string, object?> row)
+        => row.ToDictionary(kvp => $"{alias}.{kvp.Key}", kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+
+    private static List<Dictionary<string, object?>> ApplyLeftJoin(
+        List<Dictionary<string, object?>> leftRows,
+        string leftAlias,
+        string leftKeys,
+        string rightAlias,
+        string rightKeys,
+        List<Dictionary<string, object?>> rightRows)
+    {
+        var leftKeyParts = SplitKeys(leftKeys);
+        var rightKeyParts = SplitKeys(rightKeys);
+        if (leftKeyParts.Count == 0 || leftKeyParts.Count != rightKeyParts.Count)
+            return leftRows;
+
+        var rightLookup = rightRows
+            .GroupBy(r => BuildKey(r, rightKeyParts))
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var results = new List<Dictionary<string, object?>>();
+        foreach (var leftRow in leftRows)
+        {
+            var leftKey = BuildKey(leftRow, leftAlias, leftKeyParts);
+            if (rightLookup.TryGetValue(leftKey, out var matches) && matches.Count > 0)
+            {
+                foreach (var match in matches)
+                {
+                    var merged = new Dictionary<string, object?>(leftRow, StringComparer.OrdinalIgnoreCase);
+                    foreach (var kvp in PrefixRow(rightAlias, match))
+                        merged[kvp.Key] = kvp.Value;
+                    results.Add(merged);
+                }
+            }
+            else
+            {
+                results.Add(leftRow);
+            }
+        }
+
+        return results;
+    }
+
+    private static SalesRecord MapToSalesRecord(Site site, Dictionary<string, object?> row, IReadOnlyList<SapFieldMapping> mappings)
+    {
+        var record = new SalesRecord
+        {
+            ExtractionDate = DateTime.UtcNow,
+            Tsc = site.TSC,
+            Land = site.Land,
+            DocumentType = "HANA"
+        };
+
+        foreach (var mapping in mappings.Where(m => m.IsActive).OrderBy(m => m.SortOrder).ThenBy(m => m.Id))
+        {
+            var value = EvaluateExpression(row, mapping.SourceExpression);
+            ApplyValue(record, mapping.TargetField, value);
+        }
+
+        if (record.ExtractionDate == default)
+            record.ExtractionDate = DateTime.UtcNow;
+        if (string.IsNullOrWhiteSpace(record.Tsc))
+            record.Tsc = site.TSC;
+        if (string.IsNullOrWhiteSpace(record.Land))
+            record.Land = site.Land;
+
+        return record;
+    }
+
+    private static object? EvaluateExpression(Dictionary<string, object?> row, string expression)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+            return null;
+
+        var value = expression.Trim();
+        if (value.StartsWith('='))
+            return value[1..];
+
+        if (row.TryGetValue(value, out var direct))
+            return direct;
+
+        return null;
+    }
+
+    private static void ApplyValue(SalesRecord record, string targetField, object? value)
+    {
+        var property = typeof(SalesRecord).GetProperty(targetField);
+        if (property is null)
+            return;
+
+        try
+        {
+            if (property.PropertyType == typeof(string))
+            {
+                property.SetValue(record, value?.ToString() ?? string.Empty);
+                return;
+            }
+
+            if (property.PropertyType == typeof(int))
+            {
+                if (int.TryParse(value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var intValue))
+                    property.SetValue(record, intValue);
+                return;
+            }
+
+            if (property.PropertyType == typeof(decimal))
+            {
+                if (decimal.TryParse(value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var decimalValue))
+                    property.SetValue(record, decimalValue);
+                return;
+            }
+
+            if (property.PropertyType == typeof(DateTime?) || property.PropertyType == typeof(DateTime))
+            {
+                if (TryParseDate(value?.ToString(), out var date))
+                    property.SetValue(record, date);
+            }
+        }
+        catch
+        {
+            // Invalid field mappings should not stop the remaining row mapping.
+        }
+    }
+
+    private static bool TryParseDate(string? value, out DateTime date)
+    {
+        date = default;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out date)
+            || DateTime.TryParse(value.Trim(), CultureInfo.GetCultureInfo("de-CH"), DateTimeStyles.AssumeLocal, out date);
+    }
+
+    private static string BuildKey(Dictionary<string, object?> row, IReadOnlyList<string> keys)
+        => string.Join("||", keys.Select(k => NormalizeKeyValue(row.TryGetValue(k, out var value) ? value : null)));
+
+    private static string BuildKey(Dictionary<string, object?> row, string alias, IReadOnlyList<string> keys)
+        => string.Join("||", keys.Select(k =>
+        {
+            row.TryGetValue($"{alias}.{k}", out var value);
+            return NormalizeKeyValue(value);
+        }));
+
+    private static string NormalizeKeyValue(object? value) => value?.ToString()?.Trim() ?? string.Empty;
+
+    private static List<string> SplitKeys(string keys)
+        => keys.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
     private static string GetInvoiceQuery(string schema)
     {
@@ -344,6 +667,21 @@ ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
         }
 
         return $"{value}.";
+    }
+
+    private static string BuildIdentifier(string identifier)
+    {
+        var value = identifier?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException("HANA-Identifier darf nicht leer sein.");
+
+        foreach (var ch in value)
+        {
+            if (!(char.IsLetterOrDigit(ch) || ch == '_'))
+                throw new InvalidOperationException($"Ungueltiger HANA-Identifier: '{identifier}'.");
+        }
+
+        return $"\"{value}\"";
     }
 }
 

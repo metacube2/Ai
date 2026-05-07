@@ -282,6 +282,20 @@ public sealed class StandortePageService : IStandortePageService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var sourceDefinition = await db.SourceSystemDefinitions.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Code == site.SourceSystem);
+        if (string.Equals(sourceDefinition?.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+        {
+            var server = await BuildEffectiveHanaServerAsync(db, site, sourceDefinition);
+            if (string.IsNullOrWhiteSpace(site.Schema))
+                throw new InvalidOperationException("Bitte zuerst ein HANA-Schema eintragen.");
+
+            var tables = await _hanaService.GetAvailableTablesAsync(server, site.Schema);
+            return new SapEntitySetRefreshResult
+            {
+                EntitySets = tables,
+                RefreshedAtUtc = DateTime.UtcNow
+            };
+        }
+
         var serviceUrl = string.IsNullOrWhiteSpace(site.SapServiceUrl) ? sourceDefinition?.CentralServiceUrl ?? string.Empty : site.SapServiceUrl;
         if (string.IsNullOrWhiteSpace(serviceUrl))
             throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
@@ -315,6 +329,38 @@ public sealed class StandortePageService : IStandortePageService
 
         await using var db = await _dbFactory.CreateDbContextAsync();
         var sourceDefinition = await db.SourceSystemDefinitions.OrderBy(x => x.Id).FirstOrDefaultAsync(x => x.Code == site.SourceSystem);
+        if (string.Equals(sourceDefinition?.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+        {
+            var server = await BuildEffectiveHanaServerAsync(db, site, sourceDefinition);
+            if (string.IsNullOrWhiteSpace(site.Schema))
+                throw new InvalidOperationException("Bitte zuerst ein HANA-Schema eintragen.");
+
+            var hanaExpressions = new List<string> { "=HANA" };
+            var hanaSourceFieldMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var source in activeSources)
+            {
+                var fieldNames = await _hanaService.GetTableFieldNamesAsync(server, site.Schema, source.EntitySet);
+                hanaSourceFieldMap[source.Alias] = fieldNames;
+                hanaExpressions.AddRange(fieldNames.Select(field => $"{source.Alias}.{field}"));
+            }
+
+            foreach (var current in sapMappings.Select(m => m.SourceExpression).Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                if (!hanaExpressions.Contains(current, StringComparer.OrdinalIgnoreCase))
+                    hanaExpressions.Add(current);
+            }
+
+            return new SapSourceFieldRefreshResult
+            {
+                SourceFieldMap = hanaSourceFieldMap,
+                SourceExpressions = hanaExpressions
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                    .ToList()
+            };
+        }
+
         var serviceUrl = string.IsNullOrWhiteSpace(site.SapServiceUrl) ? sourceDefinition?.CentralServiceUrl ?? string.Empty : site.SapServiceUrl;
         if (string.IsNullOrWhiteSpace(serviceUrl))
             throw new InvalidOperationException("Es ist weder eine zentrale SAP Service URL noch ein Standort-Override gesetzt.");
@@ -572,6 +618,36 @@ public sealed class StandortePageService : IStandortePageService
             throw new InvalidOperationException($"Fuer Quellsystem '{normalizedSourceSystem}' ist keine gueltige zentrale HANA-Konfiguration vorhanden.");
 
         return centralServer.Id;
+    }
+
+    private static async Task<HanaServer> BuildEffectiveHanaServerAsync(AppDbContext db, Site site, SourceSystemDefinition? sourceDefinition)
+    {
+        var normalizedSourceSystem = string.IsNullOrWhiteSpace(site.SourceSystem) ? string.Empty : site.SourceSystem.Trim().ToUpperInvariant();
+        var centralServer = await db.HanaServers
+            .AsNoTracking()
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(x => x.SourceSystem == normalizedSourceSystem)
+            ?? throw new InvalidOperationException($"Fuer Quellsystem '{normalizedSourceSystem}' ist keine zentrale HANA-Konfiguration vorhanden.");
+
+        var username = string.IsNullOrWhiteSpace(site.UsernameOverride) ? sourceDefinition?.CentralUsername ?? string.Empty : site.UsernameOverride;
+        var password = string.IsNullOrWhiteSpace(site.PasswordOverride) ? sourceDefinition?.CentralPassword ?? string.Empty : site.PasswordOverride;
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            throw new InvalidOperationException($"Fuer {normalizedSourceSystem} sind weder zentrale Zugangsdaten noch Standort-Overrides gesetzt.");
+
+        return new HanaServer
+        {
+            Id = centralServer.Id,
+            SourceSystem = centralServer.SourceSystem,
+            Name = centralServer.Name,
+            Host = centralServer.Host,
+            Port = centralServer.Port,
+            Username = username.Trim(),
+            Password = password,
+            DatabaseName = centralServer.DatabaseName,
+            UseSsl = centralServer.UseSsl,
+            ValidateCertificate = centralServer.ValidateCertificate,
+            AdditionalParams = centralServer.AdditionalParams
+        };
     }
 }
 
