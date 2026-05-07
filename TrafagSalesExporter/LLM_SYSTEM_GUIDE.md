@@ -17,6 +17,48 @@ Lokaler FinanceProbe:
 http://localhost:55417/finance
 ```
 
+## Aktueller Zusatzstand 2026-05-07 SAP OData / ZSCHWEIZ
+
+Schweiz/Oesterreich werden ueber eine neue SAP-Tabelle `ZSCHWEIZ` bereitgestellt.
+
+Wichtige Punkte:
+
+- ABAP-Report: `report.abap`
+- SAP-Tabelle: `ZSCHWEIZ`
+- OData EntitySet: `ZSCHWEIZSet`
+- App-Standort: `ZSCHWEIZ` / `Schweiz/Oesterreich`
+- Geplanter App-Pfad: `SAP` = `SAP OData`, nicht direkter HANA-Spezialcode
+
+Quellsystem-Codes:
+
+- `SAP`: SAP OData/Gateway, DisplayName `SAP OData`
+- `SAP_HANA`: direkte HANA-Tabellen/Views, DisplayName `SAP HANA Tables/Views`
+- `BI1`: HANA
+- `SAGE`: HANA
+- `MANUAL_EXCEL`: Excel/CSV
+
+Mapper:
+
+- SAP OData nutzt `SapSourceDefinition`, `SapJoinDefinition`, `SapFieldMapping`.
+- Direkte HANA-Tabellen/Views koennen dieselben Mapping-Tabellen ebenfalls nutzen.
+- Bei HANA mit gepflegten Quellen/Mappings nutzt `HanaDataSourceAdapter` den generischen Mapping-Pfad.
+- Ohne HANA-Mapping bleibt der alte B1-HANA-Standardpfad fuer `OINV/INV1/ORIN/RIN1` aktiv.
+
+ZSCHWEIZ-Seed:
+
+- Quelle Alias `Z`
+- EntitySet `ZSCHWEIZSet`
+- Mapping auf `SalesRecord` ist vorbefuellt und grafisch editierbar.
+- Beim App-Start wird die ZSCHWEIZ-Quelle samt Feldmapping per Upsert angelegt oder repariert.
+- Wenn Gateway `$metadata` liefert, koennen Felder in der UI per `Felder aus Quellen laden` gelesen werden.
+
+ABAP-Fachlogik:
+
+- `BUKRS 1100` = Schweiz, `TSC TRCH`, `LAND1 CH`
+- `BUKRS 1200` = Oesterreich, `TSC TRAT`, `LAND1 AT`
+- `CUSTOMER_LAND` = Kundenland aus `KNA1-LAND1`
+- Netto-/Steuerwerte werden in Belegwaehrung und Hauswaehrung geschrieben.
+
 Aktuelle FinanceProbe-Funktionen:
 
 - `Meeting Ampel 2025` fuer alle Laender aus `check.xlsx`

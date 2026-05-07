@@ -1,5 +1,60 @@
 # Last Change 2026-05-04
 
+## SAP OData / ZSCHWEIZ / HANA Mapping 2026-05-07
+
+Aktueller Entscheid:
+
+- `ZSCHWEIZ` wird nicht direkt als SAP-HANA-Spezialfall gelesen.
+- `ZSCHWEIZ` wird ueber den bestehenden SAP-OData/Gateway-Pfad gelesen.
+- Der grafische Quellen- und Feldmapper bleibt dafuer aktiv.
+- Feldinfos muessen nicht hart codiert werden, solange der Gateway-Service `$metadata` fuer das EntitySet liefert.
+
+Quellsystem-Namen wurden zur Entwirrung geschaerft:
+
+- Code `SAP` bleibt technisch bestehen, DisplayName ist jetzt `SAP OData`.
+- Code `SAP_HANA` bleibt fuer direkte HANA-Tabellen/Views bestehen, DisplayName ist jetzt `SAP HANA Tables/Views`.
+- Bestehende Konfigurationen bleiben dadurch kompatibel.
+
+Seed / Vorkonfiguration:
+
+- Standort `ZSCHWEIZ` / Land `Schweiz/Oesterreich` wird als inaktiver Standort angelegt bzw. repariert.
+- `SourceSystem = SAP`.
+- Quelle: Alias `Z`, EntitySet `ZSCHWEIZSet`.
+- Mapping ist grafisch editierbar und wird auf die Felder der Tabelle `ZSCHWEIZ` gesetzt.
+- Die Seed-/Repair-Logik zieht Quelle und Mapping auch bei bereits vorhandener ZSCHWEIZ-Konfiguration nach; manuelles Mapping ist nur noetig, wenn die Gateway-Feldnamen vom erwarteten `ZSCHWEIZ`-Layout abweichen.
+
+Wichtig fuer die UI:
+
+1. App neu starten, damit Seed/Repair laeuft.
+2. `Settings -> Quellsysteme`: `SAP` sollte als `SAP OData` erscheinen.
+3. `Standorte -> ZSCHWEIZ`:
+   - Quellsystem `SAP OData (SAP)`
+   - SAP Service URL Override auf den finalen OData-Service fuer `ZSCHWEIZ` setzen, falls die zentrale SAP-URL noch auf `ZPOWERBI_EINKAUF_SRV` zeigt.
+   - `Entity Sets refreshen`.
+   - Quelle `Z` soll auf `ZSCHWEIZSet` zeigen.
+   - `Felder aus Quellen laden`.
+   - Mapping kontrollieren.
+
+ABAP / SAP:
+
+- ABAP-Report liegt in `report.abap`.
+- Report fuellt Tabelle `ZSCHWEIZ` aus Buchungskreis `1100` = Schweiz und `1200` = Oesterreich.
+- `LAND1` ist Reporting-Land aus Buchungskreis.
+- `CUSTOMER_LAND` ist Kundenland aus `KNA1-LAND1`.
+- Upsert erfolgt per `MODIFY zschweiz FROM TABLE`.
+
+Letzte technische Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich
+- Tests erfolgreich, `50/50`
+
 ## Finance-Abgrenzung: Antworten Andreas 2026-05-07
 
 Fachliche Vorgabe nach Rueckmeldung:

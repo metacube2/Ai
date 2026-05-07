@@ -2,6 +2,43 @@
 
 Stand: 2026-05-05
 
+## Nachtrag 2026-05-07 ZSCHWEIZ ueber SAP OData
+
+Finaler Stand fuer Schweiz/Oesterreich:
+
+- ABAP-Report `report.abap` fuellt SAP-Tabelle `ZSCHWEIZ`.
+- Buchungskreis `1100` = Schweiz, `1200` = Oesterreich.
+- `LAND1` in `ZSCHWEIZ` ist Reporting-Land aus Buchungskreis.
+- `CUSTOMER_LAND` ist Kundenland aus `KNA1-LAND1`.
+- Die App liest `ZSCHWEIZ` ueber SAP OData, nicht ueber direkten HANA-Spezialcode.
+
+In der App:
+
+- Quellsystem-Code `SAP` bleibt bestehen, DisplayName jetzt `SAP OData`.
+- `SAP_HANA` ist nur fuer direkte HANA-Tabellen/Views und heisst `SAP HANA Tables/Views`.
+- Der grafische Mapper funktioniert fuer SAP OData und fuer HANA-Tabellen/Views.
+- Vorkonfigurierter Standort:
+  - `TSC = ZSCHWEIZ`
+  - `Land = Schweiz/Oesterreich`
+  - `SourceSystem = SAP`
+  - Quelle `Z`
+  - EntitySet `ZSCHWEIZSet`
+- Quelle und Feldmapping werden beim App-Start per Seed-/Repair-Logik nachgezogen, auch wenn der Standort bereits existiert.
+
+Naechste Schritte:
+
+1. App neu starten, damit die Seed-/Repair-Logik laeuft.
+2. In `Settings -> Quellsysteme` pruefen, ob `SAP` als `SAP OData` angezeigt wird.
+3. In `Standorte` den Standort `ZSCHWEIZ` oeffnen.
+4. Falls die zentrale SAP-Service-URL noch auf `ZPOWERBI_EINKAUF_SRV` zeigt, beim Standort `SAP Service URL Override` auf den finalen OData-Service fuer `ZSCHWEIZ` setzen.
+5. `Entity Sets refreshen`.
+6. Quelle `Z` auf `ZSCHWEIZSet` kontrollieren.
+7. `Felder aus Quellen laden`.
+8. Grafisches Mapping kontrollieren; manuell mappen musst du nur, wenn Gateway-Feldnamen vom erwarteten `ZSCHWEIZ`-Layout abweichen.
+9. Standort aktivieren und Export testen.
+
+Keine manuelle Feldliste ist noetig, wenn der Gateway-Service `$metadata` korrekt liefert.
+
 ## Nachtrag 2026-05-05 Abschlussstand FinanceProbe / Spanien / Deutschland
 
 Aktueller lokaler Testpunkt:

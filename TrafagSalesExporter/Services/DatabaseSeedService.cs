@@ -341,35 +341,50 @@ public class DatabaseSeedService : IDatabaseSeedService
 
     private static void EnsureSapODataDachMapping(AppDbContext db, int siteId)
     {
-        var existingSources = db.SapSourceDefinitions.Where(x => x.SiteId == siteId).ToList();
-        var existingMappings = db.SapFieldMappings.Where(x => x.SiteId == siteId).ToList();
+        var changed = false;
+        var source = db.SapSourceDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.SiteId == siteId && x.Alias == "Z");
 
-        if (existingSources.Count > 0 || existingMappings.Count > 0)
+        if (source is null)
         {
-            var changed = false;
-            foreach (var source in existingSources.Where(x =>
-                         string.Equals(x.Alias, "Z", StringComparison.OrdinalIgnoreCase) &&
-                         string.Equals(x.EntitySet, "ZSCHWEIZ", StringComparison.OrdinalIgnoreCase)))
+            db.SapSourceDefinitions.Add(new SapSourceDefinition
+            {
+                SiteId = siteId,
+                Alias = "Z",
+                EntitySet = "ZSCHWEIZSet",
+                IsPrimary = true,
+                IsActive = true,
+                SortOrder = 0
+            });
+            changed = true;
+        }
+        else
+        {
+            if (source.EntitySet != "ZSCHWEIZSet")
             {
                 source.EntitySet = "ZSCHWEIZSet";
                 changed = true;
             }
 
-            if (changed)
-                db.SaveChanges();
+            if (!source.IsPrimary)
+            {
+                source.IsPrimary = true;
+                changed = true;
+            }
 
-            return;
+            if (!source.IsActive)
+            {
+                source.IsActive = true;
+                changed = true;
+            }
+
+            if (source.SortOrder != 0)
+            {
+                source.SortOrder = 0;
+                changed = true;
+            }
         }
-
-        db.SapSourceDefinitions.Add(new SapSourceDefinition
-        {
-            SiteId = siteId,
-            Alias = "Z",
-            EntitySet = "ZSCHWEIZSet",
-            IsPrimary = true,
-            IsActive = true,
-            SortOrder = 0
-        });
 
         var mappings = new (string Target, string Source, bool Required)[]
         {
@@ -402,17 +417,51 @@ public class DatabaseSeedService : IDatabaseSeedService
 
         for (var i = 0; i < mappings.Length; i++)
         {
-            db.SapFieldMappings.Add(new SapFieldMapping
+            var mapping = db.SapFieldMappings
+                .OrderBy(x => x.Id)
+                .FirstOrDefault(x => x.SiteId == siteId && x.TargetField == mappings[i].Target);
+
+            if (mapping is null)
             {
-                SiteId = siteId,
-                TargetField = mappings[i].Target,
-                SourceExpression = mappings[i].Source,
-                IsRequired = mappings[i].Required,
-                IsActive = true,
-                SortOrder = i
-            });
+                db.SapFieldMappings.Add(new SapFieldMapping
+                {
+                    SiteId = siteId,
+                    TargetField = mappings[i].Target,
+                    SourceExpression = mappings[i].Source,
+                    IsRequired = mappings[i].Required,
+                    IsActive = true,
+                    SortOrder = i
+                });
+                changed = true;
+                continue;
+            }
+
+            if (mapping.SourceExpression != mappings[i].Source)
+            {
+                mapping.SourceExpression = mappings[i].Source;
+                changed = true;
+            }
+
+            if (mapping.IsRequired != mappings[i].Required)
+            {
+                mapping.IsRequired = mappings[i].Required;
+                changed = true;
+            }
+
+            if (!mapping.IsActive)
+            {
+                mapping.IsActive = true;
+                changed = true;
+            }
+
+            if (mapping.SortOrder != i)
+            {
+                mapping.SortOrder = i;
+                changed = true;
+            }
         }
 
-        db.SaveChanges();
+        if (changed)
+            db.SaveChanges();
     }
 }
