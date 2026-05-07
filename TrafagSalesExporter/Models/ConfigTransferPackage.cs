@@ -9,6 +9,8 @@ public class ConfigTransferPackage
     public ConfigTransferExportSettings? ExportSettings { get; set; }
     public List<ConfigTransferSourceSystemDefinition> SourceSystemDefinitions { get; set; } = [];
     public List<ConfigTransferCurrencyExchangeRate> CurrencyExchangeRates { get; set; } = [];
+    public List<ConfigTransferFinanceReference> FinanceReferences { get; set; } = [];
+    public List<ConfigTransferFinanceIntercompanyRule> FinanceIntercompanyRules { get; set; } = [];
     public List<ConfigTransferHanaServer> HanaServers { get; set; } = [];
     public List<ConfigTransferSite> Sites { get; set; } = [];
     public List<FieldTransformationRule> FieldTransformationRules { get; set; } = [];
@@ -57,6 +59,26 @@ public class ConfigTransferCurrencyExchangeRate
     public decimal Rate { get; set; }
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
+    public string Notes { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+
+public class ConfigTransferFinanceReference
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public int Year { get; set; } = 2025;
+    public decimal? LocalCurrencyValue { get; set; }
+    public decimal? CheckValue { get; set; }
+    public string Notes { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+
+public class ConfigTransferFinanceIntercompanyRule
+{
+    public string ScopeKey { get; set; } = string.Empty;
+    public string CustomerNumber { get; set; } = string.Empty;
+    public string CustomerNameContains { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 }

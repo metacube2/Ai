@@ -169,4 +169,26 @@ CREATE TABLE ManualExcelColumnMappings (
     SortOrder INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (SiteId) REFERENCES Sites (Id)
 );";
+
+    internal static string GetFinanceReferencesCreateSql() => @"
+CREATE TABLE FinanceReferences (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Key TEXT NOT NULL,
+    Label TEXT NOT NULL,
+    Year INTEGER NOT NULL DEFAULT 2025,
+    LocalCurrencyValue TEXT NULL,
+    CheckValue TEXT NULL,
+    Notes TEXT NOT NULL DEFAULT '',
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
+
+    internal static string GetFinanceIntercompanyRulesCreateSql() => @"
+CREATE TABLE FinanceIntercompanyRules (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ScopeKey TEXT NOT NULL DEFAULT '',
+    CustomerNumber TEXT NOT NULL DEFAULT '',
+    CustomerNameContains TEXT NOT NULL DEFAULT '',
+    Notes TEXT NOT NULL DEFAULT '',
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
 }

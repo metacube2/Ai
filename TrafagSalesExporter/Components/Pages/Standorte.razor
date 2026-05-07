@@ -386,18 +386,18 @@
         }
         else if (IsManualExcelSite())
         {
-            <MudText Typo="Typo.h6" Class="mb-2">Manueller Excel-Import</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">Manueller Excel-/CSV-Import</MudText>
             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
-                FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
+                FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-/CSV-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
             </MudAlert>
-            <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-Dateipfad"
-                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade und SharePoint-Referenzen wie https://... oder Shared Documents/Ordner/Datei.xlsx."
+            <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-/CSV-Dateipfad"
+                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade und SharePoint-Referenzen wie https://... oder Shared Documents/Ordner/Datei.xlsx bzw. .csv."
                           Class="mb-2" />
             <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateManualImportPathAsync"
                        Disabled="_uploadingManualImport" Class="mb-3">
                 Pfad pruefen
             </MudButton>
-            <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx" />
+            <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx,.csv" />
             @if (_uploadingManualImport)
             {
                 <MudText Typo="Typo.caption" Class="mt-2">Datei wird hochgeladen...</MudText>
@@ -907,9 +907,10 @@
         try
         {
             var extension = Path.GetExtension(file.Name);
-            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(extension, ".csv", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx auswÃ¤hlen.");
+                throw new InvalidOperationException("Bitte eine Excel- oder CSV-Datei mit Endung .xlsx oder .csv auswaehlen.");
             }
 
             var uploadDirectory = Path.Combine(AppContext.BaseDirectory, "manual-imports");

@@ -2,6 +2,24 @@
 
 Stand: 2026-05-05
 
+## Nachtrag 2026-05-07 nach Mapper-/Finance-Aufraeumung
+
+Erledigt:
+
+- SAP-OData- und HANA-Mapping laufen ueber `MappedSalesRecordComposer`.
+- Doppelte SAP-Mapping-Normalisierung wurde entfernt.
+- Konsolidierter Export liest eindeutig aus `CentralSalesRecords`.
+- Manuelle Standortdateien duerfen `.xlsx` oder `.csv` sein.
+- Finance-Sollwerte, Budgetkurse und Intercompany-Regeln sind DB-Konfiguration mit Seed.
+
+Naechste technische Schritte:
+
+1. App neu starten, damit Schema/Seed fuer `FinanceReferences`, `FinanceIntercompanyRules` und Budgetkurse laeuft.
+2. In Settings Konfiguration exportieren und pruefen, ob Finance-Referenzen und IC-Regeln enthalten sind.
+3. Fuer produktive Pflege spaeter eine kleine UI fuer `FinanceReferences` und `FinanceIntercompanyRules` bauen.
+4. Manual Excel als naechsten Aufraeumpunkt vereinheitlichen: Header-Automatik und grafisches Mapping in eine gemeinsame Mapping-Engine ziehen.
+5. Bestehende BI1/SAGE-Standorte mittelfristig auf grafisches HANA-Mapping migrieren; erst danach den alten B1-Spezialpfad entfernen.
+
 ## Nachtrag 2026-05-07 ZSCHWEIZ ueber SAP OData
 
 Finaler Stand fuer Schweiz/Oesterreich:

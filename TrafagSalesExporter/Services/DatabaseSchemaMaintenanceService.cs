@@ -34,6 +34,8 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureTransformationTable(db);
         AddColumnIfMissing(db, "FieldTransformationRules", "RuleScope", "TEXT NOT NULL DEFAULT 'Value'");
         EnsureCurrencyExchangeRateTable(db);
+        EnsureFinanceReferenceTable(db);
+        EnsureFinanceIntercompanyRuleTable(db);
         EnsureSourceSystemDefinitionTable(db);
         AddColumnIfMissing(db, "SourceSystemDefinitions", "CentralServiceUrl", "TEXT NOT NULL DEFAULT ''");
         EnsureSapSourceTable(db);
@@ -289,6 +291,28 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
     Notes TEXT NOT NULL DEFAULT '',
     IsActive INTEGER NOT NULL DEFAULT 1
 );";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceReferenceTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceReferencesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceIntercompanyRuleTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceIntercompanyRulesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
     }
 

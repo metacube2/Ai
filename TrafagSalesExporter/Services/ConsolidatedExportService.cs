@@ -23,7 +23,7 @@ public class ConsolidatedExportService : IConsolidatedExportService
         _sharePointService = sharePointService;
     }
 
-    public async Task<string?> ExportAsync(List<SalesRecord> records)
+    public async Task<string?> ExportAsync()
     {
         var consolidatedRecords = await _centralSalesRecordService.GetAllAsync();
         if (consolidatedRecords.Count == 0)

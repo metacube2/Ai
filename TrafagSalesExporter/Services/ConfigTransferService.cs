@@ -26,6 +26,15 @@ public class ConfigTransferService : IConfigTransferService
             .ThenBy(x => x.ToCurrency)
             .ThenByDescending(x => x.ValidFrom)
             .ToListAsync();
+        var financeReferences = await db.FinanceReferences
+            .OrderBy(x => x.Year)
+            .ThenBy(x => x.Key)
+            .ToListAsync();
+        var financeIntercompanyRules = await db.FinanceIntercompanyRules
+            .OrderBy(x => x.ScopeKey)
+            .ThenBy(x => x.CustomerNumber)
+            .ThenBy(x => x.CustomerNameContains)
+            .ToListAsync();
         var hanaServers = await db.HanaServers.OrderBy(x => x.Name).ToListAsync();
         var sites = await db.Sites.OrderBy(x => x.Land).ToListAsync();
         var rules = await db.FieldTransformationRules.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
@@ -78,6 +87,24 @@ public class ConfigTransferService : IConfigTransferService
                 ValidTo = rate.ValidTo,
                 Notes = rate.Notes,
                 IsActive = rate.IsActive
+            }).ToList(),
+            FinanceReferences = financeReferences.Select(reference => new ConfigTransferFinanceReference
+            {
+                Key = reference.Key,
+                Label = reference.Label,
+                Year = reference.Year,
+                LocalCurrencyValue = reference.LocalCurrencyValue,
+                CheckValue = reference.CheckValue,
+                Notes = reference.Notes,
+                IsActive = reference.IsActive
+            }).ToList(),
+            FinanceIntercompanyRules = financeIntercompanyRules.Select(rule => new ConfigTransferFinanceIntercompanyRule
+            {
+                ScopeKey = rule.ScopeKey,
+                CustomerNumber = rule.CustomerNumber,
+                CustomerNameContains = rule.CustomerNameContains,
+                Notes = rule.Notes,
+                IsActive = rule.IsActive
             }).ToList(),
             HanaServers = hanaServers.Select(server => new ConfigTransferHanaServer
             {
@@ -177,6 +204,8 @@ public class ConfigTransferService : IConfigTransferService
         var existingSourceSystems = await db.SourceSystemDefinitions.ToListAsync();
         var existingServers = await db.HanaServers.ToListAsync();
         var existingExchangeRates = await db.CurrencyExchangeRates.ToListAsync();
+        var existingFinanceReferences = await db.FinanceReferences.ToListAsync();
+        var existingFinanceIntercompanyRules = await db.FinanceIntercompanyRules.ToListAsync();
         var existingSites = await db.Sites.ToListAsync();
         var existingCentralRecords = await db.CentralSalesRecords.AsNoTracking().ToListAsync();
         var existingRules = await db.FieldTransformationRules.ToListAsync();
@@ -202,6 +231,10 @@ public class ConfigTransferService : IConfigTransferService
         if (existingSapJoins.Count > 0) db.SapJoinDefinitions.RemoveRange(existingSapJoins);
         if (existingSapSources.Count > 0) db.SapSourceDefinitions.RemoveRange(existingSapSources);
         if (existingRules.Count > 0) db.FieldTransformationRules.RemoveRange(existingRules);
+        if (package.FinanceReferences.Count > 0 && existingFinanceReferences.Count > 0)
+            db.FinanceReferences.RemoveRange(existingFinanceReferences);
+        if (package.FinanceIntercompanyRules.Count > 0 && existingFinanceIntercompanyRules.Count > 0)
+            db.FinanceIntercompanyRules.RemoveRange(existingFinanceIntercompanyRules);
         if (existingExchangeRates.Count > 0) db.CurrencyExchangeRates.RemoveRange(existingExchangeRates);
         if (existingSites.Count > 0) db.Sites.RemoveRange(existingSites);
         if (existingServers.Count > 0) db.HanaServers.RemoveRange(existingServers);
@@ -259,6 +292,32 @@ public class ConfigTransferService : IConfigTransferService
                 ValidTo = rate.ValidTo,
                 Notes = rate.Notes,
                 IsActive = rate.IsActive
+            }));
+        }
+
+        if (package.FinanceReferences.Count > 0)
+        {
+            db.FinanceReferences.AddRange(package.FinanceReferences.Select(reference => new FinanceReference
+            {
+                Key = reference.Key,
+                Label = reference.Label,
+                Year = reference.Year,
+                LocalCurrencyValue = reference.LocalCurrencyValue,
+                CheckValue = reference.CheckValue,
+                Notes = reference.Notes,
+                IsActive = reference.IsActive
+            }));
+        }
+
+        if (package.FinanceIntercompanyRules.Count > 0)
+        {
+            db.FinanceIntercompanyRules.AddRange(package.FinanceIntercompanyRules.Select(rule => new FinanceIntercompanyRule
+            {
+                ScopeKey = rule.ScopeKey,
+                CustomerNumber = rule.CustomerNumber,
+                CustomerNameContains = rule.CustomerNameContains,
+                Notes = rule.Notes,
+                IsActive = rule.IsActive
             }));
         }
 

@@ -52,6 +52,7 @@ builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
 builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
 builder.Services.AddSingleton<ISharePointUploadService, SharePointUploadService>();
 builder.Services.AddSingleton<ISapGatewayService, SapGatewayService>();
+builder.Services.AddSingleton<IMappedSalesRecordComposer, MappedSalesRecordComposer>();
 builder.Services.AddSingleton<ISapCompositionService, SapCompositionService>();
 builder.Services.AddSingleton<ITransformationStrategy, CopyTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, UppercaseTransformationStrategy>();

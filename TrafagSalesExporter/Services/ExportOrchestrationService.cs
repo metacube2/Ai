@@ -69,21 +69,16 @@ public class ExportOrchestrationService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
-        var consolidatedRecords = new List<SalesRecord>();
 
         foreach (var site in sites)
-        {
-            var result = await ExportSiteAsync(site);
-            if (result?.Records is { Count: > 0 })
-                consolidatedRecords.AddRange(result.Records);
-        }
+            await ExportSiteAsync(site);
 
-        await RunConsolidatedExportAsync(consolidatedRecords);
+        await RunConsolidatedExportAsync();
     }
 
     public async Task<string?> ExportConsolidatedOnlyAsync()
     {
-        return await RunConsolidatedExportAsync(null);
+        return await RunConsolidatedExportAsync();
     }
 
     public async Task<SiteExportResult?> ExportSiteByIdAsync(int siteId)
@@ -139,7 +134,7 @@ public class ExportOrchestrationService
         OnExportStatusChanged?.Invoke();
     }
 
-    private async Task<string?> RunConsolidatedExportAsync(List<SalesRecord>? records)
+    private async Task<string?> RunConsolidatedExportAsync()
     {
         lock (_lock)
         {
@@ -153,7 +148,7 @@ public class ExportOrchestrationService
 
         try
         {
-            return await _consolidatedExportService.ExportAsync(records ?? []);
+            return await _consolidatedExportService.ExportAsync();
         }
         catch (Exception ex)
         {

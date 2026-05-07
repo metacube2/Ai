@@ -1,5 +1,48 @@
 # Last Change 2026-05-04
 
+## Mapper-/Finance-Konfiguration konsolidiert 2026-05-07
+
+Umgesetzte Aufraeumarbeiten:
+
+- Die doppelte SAP-OData/HANA-Mapping-Engine wurde entfernt.
+- Neuer gemeinsamer Service: `MappedSalesRecordComposer`.
+- `SapCompositionService` und `HanaQueryService.GetMappedSalesRecordsAsync` laden ihre Quellen weiterhin separat, nutzen danach aber denselben Composer fuer:
+  - Primaerquelle
+  - Left Joins
+  - `SapFieldMapping` nach `SalesRecord`
+  - Konstanten wie `=SAP` / `=HANA`
+  - Datums-/Zahlenkonvertierung
+- Der alte HANA-B1-Pfad fuer `OINV/INV1/ORIN/RIN1` bleibt bewusst bestehen, damit BI1/SAGE ohne grafisches Mapping weiter laufen.
+- Die SAP-Mapping-Normalisierung liegt nur noch in `StandorteSapEditorService`; `StandortePageService` ruft diesen Service beim Speichern auf.
+- Der tote Parameter im konsolidierten Export wurde entfernt. `ConsolidatedExportService.ExportAsync()` liest eindeutig aus `CentralSalesRecords`.
+- Manueller Import erlaubt in UI und Service jetzt `.xlsx` und `.csv`.
+
+Finance-Konfiguration:
+
+- Neue Tabelle `FinanceReferences` fuer Soll-/check.xlsx-Referenzen je Jahr.
+- Neue Tabelle `FinanceIntercompanyRules` fuer 2nd-party/IC-Erkennung nach `ScopeKey`, Kundennummer oder Namensmarker.
+- Budgetkurse 2025 werden in `CurrencyExchangeRates` mit `Notes = Budget 2025` geseedet.
+- `FinanceReconciliationService` liest Sollwerte, Budgetkurse und IC-Regeln aus der DB.
+- Config-Export/-Import enthaelt jetzt `FinanceReferences` und `FinanceIntercompanyRules`.
+
+Noch bewusst offen:
+
+- HANA-B1-Spezialpfad und generischer HANA-Mapper laufen parallel. Das ist aktuell noetig fuer bestehende BI1/SAGE-Standorte ohne Mapping.
+- Manual Excel hat weiterhin Header-Automatik und grafisches Mapping. Naechster Aufraeumpunkt waere eine gemeinsame Import-Mapping-Engine.
+
+Letzte technische Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich
+- Tests erfolgreich, `52/52`
+- Bekannte MudBlazor-Analyzerwarnungen zu `Dense` bleiben bestehen.
+
 ## SAP OData / ZSCHWEIZ / HANA Mapping 2026-05-07
 
 Aktueller Entscheid:
@@ -88,7 +131,7 @@ Umsetzung in der FinanceProbe:
 - `Sales Price/Value` bleibt als Vergleichsvariante sichtbar.
 - Zusaetzlicher Kandidat `Nettofakturawert Hauswaehrung -> CHF Budget 2025`.
 - Referenz in der Oberflaeche wird als `check.xlsx Sollwert` bezeichnet, nicht mehr als fuehrende Power-BI-Referenz.
-- Intercompany-Anzeige wurde fachlich als `2nd-party/IC` beschriftet; dauerhafte Pflege als eigenes Auswahlfeld ist noch offen.
+- Intercompany-Anzeige wurde fachlich als `2nd-party/IC` beschriftet; Regeln werden jetzt in `FinanceIntercompanyRules` geseedet und per Config exportiert/importiert.
 
 ## Finance Probe / Sales-Abgrenzung
 

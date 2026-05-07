@@ -14,6 +14,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureCentralHanaServerRecords(db);
         EnsureSpainManualExcelSite(db);
         EnsureSapODataDachSite(db);
+        EnsureFinanceReferenceDefaults(db);
+        EnsureBudgetExchangeRateDefaults(db);
+        EnsureFinanceIntercompanyRuleDefaults(db);
     }
 
     private static void SeedIfEmpty(AppDbContext db)
@@ -459,6 +462,119 @@ public class DatabaseSeedService : IDatabaseSeedService
                 mapping.SortOrder = i;
                 changed = true;
             }
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureFinanceReferenceDefaults(AppDbContext db)
+    {
+        var defaults = new[]
+        {
+            new FinanceReference { Key = "AT", Label = "Trafag AT", Year = 2025, LocalCurrencyValue = 3443863m },
+            new FinanceReference { Key = "CH", Label = "Trafag CH", Year = 2025 },
+            new FinanceReference { Key = "CN", Label = "Trafag CN", Year = 2025 },
+            new FinanceReference { Key = "CZ", Label = "Trafag CZ", Year = 2025, LocalCurrencyValue = 95458782m },
+            new FinanceReference { Key = "DE", Label = "Trafag DE", Year = 2025, LocalCurrencyValue = 3635923m },
+            new FinanceReference { Key = "ES", Label = "Trafag ES", Year = 2025, LocalCurrencyValue = 3102334m },
+            new FinanceReference { Key = "FR", Label = "Trafag FR", Year = 2025, LocalCurrencyValue = 1450582m, CheckValue = 1471218m },
+            new FinanceReference { Key = "GFS", Label = "Trafag GfS", Year = 2025, LocalCurrencyValue = 6495513m },
+            new FinanceReference { Key = "IN", Label = "Trafag IN", Year = 2025, LocalCurrencyValue = 747341702m, CheckValue = 750936591m },
+            new FinanceReference { Key = "IT", Label = "Trafag IT", Year = 2025, LocalCurrencyValue = 7669840m },
+            new FinanceReference { Key = "JP", Label = "Trafag JP", Year = 2025, LocalCurrencyValue = 187739814m },
+            new FinanceReference { Key = "MS", Label = "Trafag MS", Year = 2025, LocalCurrencyValue = 1850199m },
+            new FinanceReference { Key = "MSA", Label = "Trafag MSA", Year = 2025, LocalCurrencyValue = 1445258m },
+            new FinanceReference { Key = "PL", Label = "Trafag PL Poltraf", Year = 2025, LocalCurrencyValue = 11279297m },
+            new FinanceReference { Key = "RU", Label = "Trafag RU", Year = 2025 },
+            new FinanceReference { Key = "UK", Label = "Trafag UK", Year = 2025, LocalCurrencyValue = 3538972m, CheckValue = 3749865m },
+            new FinanceReference { Key = "US", Label = "Trafag US", Year = 2025, LocalCurrencyValue = 3896728m, CheckValue = 3749865m }
+        };
+
+        var existing = db.FinanceReferences.ToList();
+        var changed = false;
+        foreach (var item in defaults)
+        {
+            var current = existing.FirstOrDefault(x => x.Year == item.Year && x.Key == item.Key);
+            if (current is not null)
+                continue;
+
+            db.FinanceReferences.Add(item);
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureBudgetExchangeRateDefaults(AppDbContext db)
+    {
+        var defaults = new (string From, string To, decimal Rate)[]
+        {
+            ("CHF", "CHF", 1m),
+            ("USD", "CHF", 0.85m),
+            ("EUR", "CHF", 0.95m),
+            ("GBP", "CHF", 1.13m),
+            ("CNY", "CHF", 1m / 8.50m),
+            ("INR", "CHF", 1m / 90.91m),
+            ("CZK", "CHF", 1m / 25.64m),
+            ("PLN", "CHF", 0.22m),
+            ("JPY", "CHF", 1m / 156.25m)
+        };
+
+        var changed = false;
+        foreach (var item in defaults)
+        {
+            var exists = db.CurrencyExchangeRates.Any(x =>
+                x.FromCurrency == item.From &&
+                x.ToCurrency == item.To &&
+                x.ValidFrom == new DateTime(2025, 1, 1) &&
+                x.Notes == "Budget 2025");
+            if (exists)
+                continue;
+
+            db.CurrencyExchangeRates.Add(new CurrencyExchangeRate
+            {
+                FromCurrency = item.From,
+                ToCurrency = item.To,
+                Rate = item.Rate,
+                ValidFrom = new DateTime(2025, 1, 1),
+                ValidTo = new DateTime(2025, 12, 31),
+                Notes = "Budget 2025",
+                IsActive = true
+            });
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureFinanceIntercompanyRuleDefaults(AppDbContext db)
+    {
+        var defaults = new[]
+        {
+            new FinanceIntercompanyRule { CustomerNameContains = "TRAFAG", Notes = "Default IC name marker" },
+            new FinanceIntercompanyRule { CustomerNameContains = "MAGNETIC SENSE", Notes = "Default IC name marker" },
+            new FinanceIntercompanyRule { CustomerNameContains = "MAGNETS SENSE", Notes = "Default IC name marker" },
+            new FinanceIntercompanyRule { CustomerNameContains = "GESELLSCHAFT FUER SENSORIK", Notes = "Default IC name marker" },
+            new FinanceIntercompanyRule { CustomerNameContains = "GESELLSCHAFT FUR SENSORIK", Notes = "Default IC name marker" },
+            new FinanceIntercompanyRule { ScopeKey = "IT", CustomerNumber = "C_IT01_0306794", Notes = "IT IC customer number" },
+            new FinanceIntercompanyRule { ScopeKey = "IT", CustomerNumber = "C_CH01_0302179", Notes = "IT IC customer number" }
+        };
+
+        var changed = false;
+        foreach (var item in defaults)
+        {
+            var exists = db.FinanceIntercompanyRules.Any(x =>
+                x.ScopeKey == item.ScopeKey &&
+                x.CustomerNumber == item.CustomerNumber &&
+                x.CustomerNameContains == item.CustomerNameContains);
+            if (exists)
+                continue;
+
+            db.FinanceIntercompanyRules.Add(item);
+            changed = true;
         }
 
         if (changed)

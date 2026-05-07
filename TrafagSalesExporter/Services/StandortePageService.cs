@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic.FileIO;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
@@ -27,6 +28,7 @@ public sealed class StandortePageService : IStandortePageService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IHanaQueryService _hanaService;
     private readonly ISapGatewayService _sapGatewayService;
+    private readonly IStandorteSapEditorService _sapEditorService;
     private readonly ISharePointUploadService _sharePointService;
     private readonly IAppEventLogService _appEventLogService;
 
@@ -34,12 +36,14 @@ public sealed class StandortePageService : IStandortePageService
         IDbContextFactory<AppDbContext> dbFactory,
         IHanaQueryService hanaService,
         ISapGatewayService sapGatewayService,
+        IStandorteSapEditorService sapEditorService,
         ISharePointUploadService sharePointService,
         IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _hanaService = hanaService;
         _sapGatewayService = sapGatewayService;
+        _sapEditorService = sapEditorService;
         _sharePointService = sharePointService;
         _appEventLogService = appEventLogService;
     }
@@ -401,8 +405,8 @@ public sealed class StandortePageService : IStandortePageService
         var trimmedPath = manualImportFilePath.Trim();
         if (string.IsNullOrWhiteSpace(trimmedPath))
             throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
-        if (!string.Equals(Path.GetExtension(trimmedPath), ".xlsx", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Bitte eine Excel-Datei mit Endung .xlsx angeben.");
+        if (!IsSupportedManualImportFile(trimmedPath))
+            throw new InvalidOperationException("Bitte eine Excel- oder CSV-Datei mit Endung .xlsx oder .csv angeben.");
 
         if (File.Exists(trimmedPath))
             return File.GetLastWriteTimeUtc(trimmedPath);
@@ -440,18 +444,9 @@ public sealed class StandortePageService : IStandortePageService
         var deleteAfterRead = !string.Equals(filePath, manualImportFilePath?.Trim(), StringComparison.OrdinalIgnoreCase);
         try
         {
-            using var workbook = new XLWorkbook(filePath);
-            var worksheet = workbook.Worksheets.FirstOrDefault()
-                ?? throw new InvalidOperationException("Die Excel-Datei enthaelt kein Arbeitsblatt.");
-            var usedRange = worksheet.RangeUsed()
-                ?? throw new InvalidOperationException("Die Excel-Datei enthaelt keine Daten.");
-
-            return usedRange.FirstRow().CellsUsed()
-                .Select(cell => cell.GetString().Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return string.Equals(Path.GetExtension(manualImportFilePath?.Trim()), ".csv", StringComparison.OrdinalIgnoreCase)
+                ? LoadCsvHeaders(filePath)
+                : LoadExcelHeaders(filePath);
         }
         finally
         {
@@ -541,21 +536,45 @@ public sealed class StandortePageService : IStandortePageService
            path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
            path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
 
-    private static void NormalizeSapConfigCollections(List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings)
-    {
-        for (var i = 0; i < sapSources.Count; i++)
-            sapSources[i].SortOrder = i;
-        for (var i = 0; i < sapJoins.Count; i++)
-            sapJoins[i].SortOrder = i;
-        for (var i = 0; i < sapMappings.Count; i++)
-            sapMappings[i].SortOrder = i;
+    private static bool IsSupportedManualImportFile(string path)
+        => string.Equals(Path.GetExtension(path), ".xlsx", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(Path.GetExtension(path), ".csv", StringComparison.OrdinalIgnoreCase);
 
-        var selectedPrimaryIndex = sapSources.FindIndex(s => s.IsPrimary);
-        var primarySource = selectedPrimaryIndex >= 0 ? sapSources[selectedPrimaryIndex] : sapSources.FirstOrDefault();
-        foreach (var source in sapSources)
-            source.IsPrimary = primarySource is not null && ReferenceEquals(source, primarySource);
-        if (sapSources.Count > 0 && sapSources.All(s => !s.IsPrimary))
-            sapSources[0].IsPrimary = true;
+    private static List<string> LoadExcelHeaders(string filePath)
+    {
+        using var workbook = new XLWorkbook(filePath);
+        var worksheet = workbook.Worksheets.FirstOrDefault()
+            ?? throw new InvalidOperationException("Die Excel-Datei enthaelt kein Arbeitsblatt.");
+        var usedRange = worksheet.RangeUsed()
+            ?? throw new InvalidOperationException("Die Excel-Datei enthaelt keine Daten.");
+
+        return usedRange.FirstRow().CellsUsed()
+            .Select(cell => cell.GetString().Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<string> LoadCsvHeaders(string filePath)
+    {
+        using var parser = new TextFieldParser(filePath)
+        {
+            TextFieldType = FieldType.Delimited,
+            HasFieldsEnclosedInQuotes = true,
+            TrimWhiteSpace = false
+        };
+        parser.SetDelimiters(";");
+
+        var header = parser.ReadFields()
+            ?? throw new InvalidOperationException("Die CSV-Datei enthaelt keine Kopfzeile.");
+
+        return header
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static void NormalizeManualExcelMappings(List<ManualExcelColumnMapping> manualExcelMappings)
@@ -564,7 +583,7 @@ public sealed class StandortePageService : IStandortePageService
             manualExcelMappings[i].SortOrder = i;
     }
 
-    private static async Task SaveSapConfigurationAsync(AppDbContext db, int siteId, bool isSapSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings)
+    private async Task SaveSapConfigurationAsync(AppDbContext db, int siteId, bool isSapSite, List<SapSourceDefinition> sapSources, List<SapJoinDefinition> sapJoins, List<SapFieldMapping> sapMappings)
     {
         var oldSources = await db.SapSourceDefinitions.Where(s => s.SiteId == siteId).ToListAsync();
         var oldJoins = await db.SapJoinDefinitions.Where(j => j.SiteId == siteId).ToListAsync();
@@ -575,7 +594,7 @@ public sealed class StandortePageService : IStandortePageService
 
         if (isSapSite)
         {
-            NormalizeSapConfigCollections(sapSources, sapJoins, sapMappings);
+            _sapEditorService.NormalizeSapConfigCollections(sapSources, sapJoins, sapMappings);
             foreach (var source in sapSources) source.SiteId = siteId;
             foreach (var join in sapJoins) join.SiteId = siteId;
             foreach (var mapping in sapMappings) mapping.SiteId = siteId;

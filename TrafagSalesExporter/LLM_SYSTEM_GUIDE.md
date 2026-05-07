@@ -41,8 +41,17 @@ Mapper:
 
 - SAP OData nutzt `SapSourceDefinition`, `SapJoinDefinition`, `SapFieldMapping`.
 - Direkte HANA-Tabellen/Views koennen dieselben Mapping-Tabellen ebenfalls nutzen.
+- Gemeinsame Mapping-Engine ist `MappedSalesRecordComposer`.
+- `SapCompositionService` und `HanaQueryService.GetMappedSalesRecordsAsync` unterscheiden sich nur noch in der Quellenbeschaffung; Join und `SalesRecord`-Mapping sind zentral.
 - Bei HANA mit gepflegten Quellen/Mappings nutzt `HanaDataSourceAdapter` den generischen Mapping-Pfad.
 - Ohne HANA-Mapping bleibt der alte B1-HANA-Standardpfad fuer `OINV/INV1/ORIN/RIN1` aktiv.
+
+Finance-Konfiguration:
+
+- `FinanceReferences` enthaelt Soll-/check.xlsx-Referenzen.
+- `FinanceIntercompanyRules` enthaelt 2nd-party/IC-Regeln.
+- Budgetkurse werden als `CurrencyExchangeRates` mit `Notes = Budget 2025` gepflegt.
+- Config-Export/-Import umfasst Finance-Referenzen und IC-Regeln.
 
 ZSCHWEIZ-Seed:
 
