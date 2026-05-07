@@ -690,9 +690,16 @@
 
         if (result != true) return;
 
-        await StandortePageService.DeleteSiteAsync(site);
-        await LoadDataAsync();
-        Snackbar.Add("Standort gelÃ¶scht", Severity.Info);
+        try
+        {
+            await StandortePageService.DeleteSiteAsync(site);
+            await LoadDataAsync();
+            Snackbar.Add("Standort geloescht", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Standort konnte nicht geloescht werden: {ex.Message}", Severity.Error);
+        }
     }
 
     private static string GetServerNode(HanaServer? server)

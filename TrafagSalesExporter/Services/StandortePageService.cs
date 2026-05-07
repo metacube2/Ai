@@ -235,11 +235,15 @@ public sealed class StandortePageService : IStandortePageService
         var mappings = await db.SapFieldMappings.Where(m => m.SiteId == site.Id).ToListAsync();
         var manualMappings = await db.ManualExcelColumnMappings.Where(m => m.SiteId == site.Id).ToListAsync();
         var centralRows = await db.CentralSalesRecords.Where(r => r.SiteId == site.Id).ToListAsync();
+        var exportLogs = await db.ExportLogs.Where(l => l.SiteId == site.Id).ToListAsync();
+        var appEventLogs = await db.AppEventLogs.Where(l => l.SiteId == site.Id).ToListAsync();
         if (sources.Count > 0) db.SapSourceDefinitions.RemoveRange(sources);
         if (joins.Count > 0) db.SapJoinDefinitions.RemoveRange(joins);
         if (mappings.Count > 0) db.SapFieldMappings.RemoveRange(mappings);
         if (manualMappings.Count > 0) db.ManualExcelColumnMappings.RemoveRange(manualMappings);
         if (centralRows.Count > 0) db.CentralSalesRecords.RemoveRange(centralRows);
+        if (exportLogs.Count > 0) db.ExportLogs.RemoveRange(exportLogs);
+        if (appEventLogs.Count > 0) db.AppEventLogs.RemoveRange(appEventLogs);
         db.Sites.Remove(entity);
         await db.SaveChangesAsync();
     }
