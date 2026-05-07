@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic.FileIO;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
@@ -91,6 +92,9 @@ public class ManualExcelImportService : IManualExcelImportService
 
     private static List<SalesRecord> ReadSalesRecords(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
     {
+        if (string.Equals(Path.GetExtension(filePath), ".csv", StringComparison.OrdinalIgnoreCase))
+            return ReadCsvSalesRecords(filePath, site, mappings);
+
         using var workbook = new XLWorkbook(filePath);
         var worksheet = workbook.Worksheets.FirstOrDefault()
             ?? throw new InvalidOperationException("Die Excel-Datei enthaelt kein Arbeitsblatt.");
@@ -107,6 +111,141 @@ public class ManualExcelImportService : IManualExcelImportService
         return activeMappings.Count > 0
             ? ReadMappedRows(usedRange, headerRow, site, activeMappings)
             : ReadDefaultRows(usedRange, headerRow, site);
+    }
+
+    private static List<SalesRecord> ReadCsvSalesRecords(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
+    {
+        using var parser = new TextFieldParser(filePath)
+        {
+            TextFieldType = FieldType.Delimited,
+            HasFieldsEnclosedInQuotes = true,
+            TrimWhiteSpace = false
+        };
+        parser.SetDelimiters(";");
+
+        var header = parser.ReadFields()
+            ?? throw new InvalidOperationException("Die CSV-Datei enthaelt keine Kopfzeile.");
+
+        var activeMappings = mappings
+            .Where(m => m.IsActive && !string.IsNullOrWhiteSpace(m.TargetField) && !string.IsNullOrWhiteSpace(m.SourceHeader))
+            .OrderBy(m => m.SortOrder)
+            .ThenBy(m => m.Id)
+            .ToList();
+
+        return activeMappings.Count > 0
+            ? ReadMappedCsvRows(parser, header, site, activeMappings)
+            : ReadDefaultCsvRows(parser, header, site);
+    }
+
+    private static List<SalesRecord> ReadDefaultCsvRows(TextFieldParser parser, string[] header, Site site)
+    {
+        var headerIndexes = BuildHeaderIndexMap(header);
+        var rows = new List<SalesRecord>();
+
+        while (!parser.EndOfData)
+        {
+            var fields = parser.ReadFields();
+            if (fields is null || IsCsvRowEmpty(fields))
+                continue;
+
+            rows.Add(new SalesRecord
+            {
+                ExtractionDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.ExtractionDate)) ?? DateTime.UtcNow,
+                Tsc = ReadString(headerIndexes, fields, nameof(SalesRecord.Tsc), site.TSC),
+                DocumentEntry = (int)Math.Round(ReadDecimal(headerIndexes, fields, nameof(SalesRecord.DocumentEntry))),
+                InvoiceNumber = ReadString(headerIndexes, fields, nameof(SalesRecord.InvoiceNumber)),
+                PositionOnInvoice = (int)Math.Round(ReadDecimal(headerIndexes, fields, nameof(SalesRecord.PositionOnInvoice))),
+                Material = ReadString(headerIndexes, fields, nameof(SalesRecord.Material)),
+                Name = ReadString(headerIndexes, fields, nameof(SalesRecord.Name)),
+                ProductGroup = ReadString(headerIndexes, fields, nameof(SalesRecord.ProductGroup)),
+                Quantity = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.Quantity)),
+                SupplierNumber = ReadString(headerIndexes, fields, nameof(SalesRecord.SupplierNumber)),
+                SupplierName = ReadString(headerIndexes, fields, nameof(SalesRecord.SupplierName)),
+                SupplierCountry = ReadString(headerIndexes, fields, nameof(SalesRecord.SupplierCountry)),
+                CustomerNumber = ReadString(headerIndexes, fields, nameof(SalesRecord.CustomerNumber)),
+                CustomerName = ReadString(headerIndexes, fields, nameof(SalesRecord.CustomerName)),
+                CustomerCountry = ReadString(headerIndexes, fields, nameof(SalesRecord.CustomerCountry)),
+                CustomerIndustry = ReadString(headerIndexes, fields, nameof(SalesRecord.CustomerIndustry)),
+                StandardCost = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.StandardCost)),
+                StandardCostCurrency = ReadString(headerIndexes, fields, nameof(SalesRecord.StandardCostCurrency)),
+                PurchaseOrderNumber = ReadString(headerIndexes, fields, nameof(SalesRecord.PurchaseOrderNumber)),
+                SalesPriceValue = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.SalesPriceValue)),
+                SalesCurrency = ReadString(headerIndexes, fields, nameof(SalesRecord.SalesCurrency)),
+                DocumentCurrency = ReadString(headerIndexes, fields, nameof(SalesRecord.DocumentCurrency)),
+                DocumentTotalForeignCurrency = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.DocumentTotalForeignCurrency)),
+                DocumentTotalLocalCurrency = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.DocumentTotalLocalCurrency)),
+                VatSumForeignCurrency = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.VatSumForeignCurrency)),
+                VatSumLocalCurrency = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.VatSumLocalCurrency)),
+                DocumentRate = ReadDecimal(headerIndexes, fields, nameof(SalesRecord.DocumentRate)),
+                CompanyCurrency = ReadString(headerIndexes, fields, nameof(SalesRecord.CompanyCurrency)),
+                Incoterms2020 = ReadString(headerIndexes, fields, nameof(SalesRecord.Incoterms2020)),
+                SalesResponsibleEmployee = ReadString(headerIndexes, fields, nameof(SalesRecord.SalesResponsibleEmployee)),
+                InvoiceDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.InvoiceDate)),
+                OrderDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.OrderDate)),
+                Land = ReadString(headerIndexes, fields, nameof(SalesRecord.Land), site.Land),
+                DocumentType = ReadString(headerIndexes, fields, nameof(SalesRecord.DocumentType))
+            });
+        }
+
+        return rows;
+    }
+
+    private static List<SalesRecord> ReadMappedCsvRows(
+        TextFieldParser parser,
+        string[] header,
+        Site site,
+        IReadOnlyList<ManualExcelColumnMapping> mappings)
+    {
+        var headerIndexes = BuildRawHeaderIndexMap(header);
+        foreach (var mapping in mappings.Where(m => m.IsRequired))
+        {
+            if (mapping.SourceHeader.Trim().StartsWith('='))
+                continue;
+
+            if (!TryResolveHeaderIndex(headerIndexes, mapping.SourceHeader, out _))
+                throw new InvalidOperationException($"Pflichtspalte '{mapping.SourceHeader}' fuer Zielfeld '{mapping.TargetField}' fehlt.");
+        }
+
+        var rows = new List<SalesRecord>();
+        while (!parser.EndOfData)
+        {
+            var fields = parser.ReadFields();
+            if (fields is null || IsCsvRowEmpty(fields))
+                continue;
+
+            var record = new SalesRecord
+            {
+                ExtractionDate = DateTime.UtcNow,
+                Tsc = site.TSC,
+                Land = site.Land,
+                DocumentType = "Manual Excel"
+            };
+
+            foreach (var mapping in mappings)
+            {
+                if (!SalesRecordProperties.TryGetValue(mapping.TargetField, out var property))
+                    continue;
+
+                var value = ReadMappedValue(headerIndexes, fields, mapping.SourceHeader);
+                SetPropertyValue(record, property, value);
+            }
+
+            if (record.ExtractionDate == default)
+                record.ExtractionDate = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(record.Tsc))
+                record.Tsc = site.TSC;
+            if (string.IsNullOrWhiteSpace(record.Land))
+                record.Land = site.Land;
+            if (string.IsNullOrWhiteSpace(record.DocumentType))
+                record.DocumentType = "Manual Excel";
+
+            if (!IsMeaningfulMappedRecord(record))
+                continue;
+
+            rows.Add(record);
+        }
+
+        return rows;
     }
 
     private static List<SalesRecord> ReadDefaultRows(IXLRange usedRange, IXLRangeRow headerRow, Site site)
@@ -238,6 +377,26 @@ public class ManualExcelImportService : IManualExcelImportService
         return result;
     }
 
+    private static Dictionary<string, int> BuildHeaderIndexMap(string[] header)
+    {
+        var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < header.Length; i++)
+        {
+            var normalizedHeader = NormalizeHeader(header[i]);
+            if (string.IsNullOrWhiteSpace(normalizedHeader))
+                continue;
+
+            if (HeaderMap.TryGetValue(normalizedHeader, out var targetField))
+                result[targetField] = i;
+        }
+
+        if (!result.ContainsKey(nameof(SalesRecord.InvoiceNumber)))
+            throw new InvalidOperationException("Die CSV-Datei hat nicht das erwartete Exportformat. Spalte 'Invoice Number' fehlt.");
+
+        return result;
+    }
+
     private static Dictionary<string, int> BuildRawHeaderIndexMap(IXLRangeRow headerRow)
     {
         var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -250,6 +409,23 @@ public class ManualExcelImportService : IManualExcelImportService
 
             result[header] = cell.Address.ColumnNumber;
             result[NormalizeHeader(header)] = cell.Address.ColumnNumber;
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, int> BuildRawHeaderIndexMap(string[] header)
+    {
+        var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < header.Length; i++)
+        {
+            var value = header[i].Trim();
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            result[value] = i;
+            result[NormalizeHeader(value)] = i;
         }
 
         return result;
@@ -273,8 +449,22 @@ public class ManualExcelImportService : IManualExcelImportService
             : null;
     }
 
+    private static object? ReadMappedValue(Dictionary<string, int> headerIndexes, string[] fields, string sourceHeader)
+    {
+        var trimmed = sourceHeader.Trim();
+        if (trimmed.StartsWith('='))
+            return trimmed[1..];
+
+        return TryResolveHeaderIndex(headerIndexes, trimmed, out var index) && index < fields.Length
+            ? fields[index].Trim()
+            : null;
+    }
+
     private static bool IsRowEmpty(IXLRangeRow row)
         => row.CellsUsed().All(cell => string.IsNullOrWhiteSpace(cell.GetFormattedString()));
+
+    private static bool IsCsvRowEmpty(string[] fields)
+        => fields.All(string.IsNullOrWhiteSpace);
 
     private static string ReadString(Dictionary<string, int> headerIndexes, IXLRangeRow row, string fieldName, string fallback = "")
     {
@@ -282,6 +472,15 @@ public class ManualExcelImportService : IManualExcelImportService
             return fallback;
 
         var value = row.Cell(index).GetFormattedString().Trim();
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private static string ReadString(Dictionary<string, int> headerIndexes, string[] fields, string fieldName, string fallback = "")
+    {
+        if (!headerIndexes.TryGetValue(fieldName, out var index) || index >= fields.Length)
+            return fallback;
+
+        var value = fields[index].Trim();
         return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
 
@@ -299,6 +498,13 @@ public class ManualExcelImportService : IManualExcelImportService
         return ParseDecimal(cell.GetFormattedString().Trim());
     }
 
+    private static decimal ReadDecimal(Dictionary<string, int> headerIndexes, string[] fields, string fieldName)
+    {
+        return !headerIndexes.TryGetValue(fieldName, out var index) || index >= fields.Length
+            ? 0m
+            : ParseDecimal(fields[index].Trim());
+    }
+
     private static DateTime? ReadDate(Dictionary<string, int> headerIndexes, IXLRangeRow row, string fieldName)
     {
         if (!headerIndexes.TryGetValue(fieldName, out var index))
@@ -309,6 +515,13 @@ public class ManualExcelImportService : IManualExcelImportService
             return dateValue;
 
         return ParseDate(cell.GetFormattedString().Trim());
+    }
+
+    private static DateTime? ReadDate(Dictionary<string, int> headerIndexes, string[] fields, string fieldName)
+    {
+        return !headerIndexes.TryGetValue(fieldName, out var index) || index >= fields.Length
+            ? null
+            : ParseDate(fields[index].Trim());
     }
 
     private static void SetPropertyValue(SalesRecord record, PropertyInfo property, object? value)

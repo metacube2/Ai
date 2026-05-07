@@ -1,6 +1,77 @@
 # Next Steps
 
-Stand: 2026-04-15
+Stand: 2026-05-05
+
+## Nachtrag 2026-05-05 Abschlussstand FinanceProbe / Spanien / Deutschland
+
+Aktueller lokaler Testpunkt:
+
+```text
+http://localhost:55417/finance
+```
+
+FinanceProbe enthaelt jetzt:
+
+- `Meeting Ampel 2025` fuer alle Laender aus `check.xlsx`
+- Ampel:
+  - Gruen: rechnerisch passend
+  - Gelb: Differenz oder fachliche Abgrenzung offen
+  - Grau: keine belastbaren Ist-Daten
+- `Detail alle Laender`
+- `Spain CSV direct check`
+- `Germany Excel sample check`
+
+Spanien:
+
+- finale v2-Datei liegt unter `sagespain/v2/Spain_Sales_2025.csv`
+- Zeilen: `4'341`
+- Ist `SalesPriceValue`: `3'082'320.18` EUR
+- Soll aus `check.xlsx`: `3'102'333.61`
+- Differenz: `-20'013.43`
+- Status: Gelb / Pruefen
+- Export technisch lesbar, Differenz fachlich mit Spanien/Finance klaeren
+
+Deutschland:
+
+- Beispielfile liegt im Projektordner:
+
+```text
+DE_Beispiel_Export_Daten.xlsx
+```
+
+- relevante Spalte: `NettoPreisGesamtX`
+- Mapping-Ziel: `SalesPriceValue`
+- Betragszeilen: `2`
+- Summe: `8'290.70` EUR
+- das ist nur ein Sample, keine finale DE-Jahreszahl
+- Deutschland bleibt fuer die finale Ampel offen/grau, bis ein vollstaendiger DE-Jahresfile 2025 oder ein bestaetigter Importlauf vorliegt
+
+Offen fuer das Finance-Meeting / danach:
+
+1. Spanien Differenz `-20'013.43` klaeren:
+   - Periodendatum
+   - Serien `REG`, `LAT`, `PRO`, `REC`
+   - Gutschriften / `REC`
+   - offizielle Sage-Auswertung mit identischem Filter
+2. Deutschland finalen Jahresfile 2025 anfordern oder Importlauf mit finaler Datei ausfuehren.
+3. Fuer Laender mit Grau pruefen, ob Exportdaten fehlen oder Standort deaktiviert/ohne Datei ist.
+4. Fuer CHF-Aussage beachten:
+   - CHF nur direkt, wenn Quelle CHF liefert
+   - sonst Mandanten-/Originalwaehrung und separate FX-Regel noetig
+
+Letzte Verifikation:
+
+```text
+dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --verbosity minimal --no-restore
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal --no-restore
+```
+
+Ergebnis:
+
+- FinanceProbe Build erfolgreich
+- Tests erfolgreich
+- `50/50` Tests gruen
+- Web UI `HTTP 200`
 
 ## Nachtrag 2026-04-29 Dashboard-Referenzcheck
 

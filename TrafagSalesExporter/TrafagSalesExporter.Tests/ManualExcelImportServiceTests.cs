@@ -297,6 +297,48 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Reads_Sage_Spain_Csv_Format()
+    {
+        var site = new Site
+        {
+            TSC = "TRES",
+            Land = "Spanien"
+        };
+        var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
+        var csv = string.Join(Environment.NewLine,
+            "\"TSC\";\"Land\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Name\";\"ProductGroup\";\"Quantity\";\"CustomerNumber\";\"CustomerName\";\"CustomerCountry\";\"StandardCost\";\"StandardCostCurrency\";\"PurchaseOrderNumber\";\"SalesPriceValue\";\"SalesCurrency\";\"DocumentCurrency\";\"CompanyCurrency\";\"Incoterms2020\";\"SalesResponsibleEmployee\";\"InvoiceDate\";\"DocumentType\"",
+            "\"TRES\";\"Spanien\";\"20241332\";\"20\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"265.000000\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"");
+        await File.WriteAllTextAsync(filePath, csv);
+
+        try
+        {
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(filePath, site);
+
+            var row = Assert.Single(rows);
+            Assert.Equal("TRES", row.Tsc);
+            Assert.Equal("Spanien", row.Land);
+            Assert.Equal("20241332", row.InvoiceNumber);
+            Assert.Equal(20, row.PositionOnInvoice);
+            Assert.Equal("52871", row.Material);
+            Assert.Equal("TRANS", row.ProductGroup);
+            Assert.Equal(1m, row.Quantity);
+            Assert.Equal(160.760000m, row.StandardCost);
+            Assert.Equal(265.000000m, row.SalesPriceValue);
+            Assert.Equal("EUR", row.SalesCurrency);
+            Assert.Equal("EUR", row.DocumentCurrency);
+            Assert.Equal("EUR", row.CompanyCurrency);
+            Assert.Equal(new DateTime(2025, 1, 2), row.InvoiceDate);
+            Assert.Equal("Invoice", row.DocumentType);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     private static string CreateWorkbook(Action<XLWorkbook> fillWorkbook)
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");

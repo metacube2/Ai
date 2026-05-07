@@ -1,6 +1,50 @@
 # TrafagSalesExporter LLM System Guide
 
-Stand: 2026-04-17
+Stand: 2026-05-05
+
+## Aktueller Projektstand 2026-05-05
+
+Fuer den aktuellen Finance-/Laenderabgleich zuerst diese Dateien lesen:
+
+- [HANDOFF_2026-04-15.md](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/HANDOFF_2026-04-15.md)
+- [NEXT_STEPS_2026-04-15.md](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/NEXT_STEPS_2026-04-15.md)
+- [lastchange.md](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/lastchange.md)
+- [SAGE_SPAIN_EXPORT_2026-05-05.md](C:/Users/koi/source/repos/Ai/TrafagSalesExporter/SAGE_SPAIN_EXPORT_2026-05-05.md)
+
+Lokaler FinanceProbe:
+
+```text
+http://localhost:55417/finance
+```
+
+Aktuelle FinanceProbe-Funktionen:
+
+- `Meeting Ampel 2025` fuer alle Laender aus `check.xlsx`
+- `Detail alle Laender`
+- `Spain CSV direct check`
+- `Germany Excel sample check`
+
+Spanien:
+
+- Datei: `sagespain/v2/Spain_Sales_2025.csv`
+- Ist: `3'082'320.18` EUR
+- Soll: `3'102'333.61`
+- Differenz: `-20'013.43`
+- Status: Gelb / Pruefen
+- Technisch lesbar, fachliche Differenz noch offen
+
+Deutschland:
+
+- Datei: `DE_Beispiel_Export_Daten.xlsx`
+- Sample-Summe `NettoPreisGesamtX`: `8'290.70` EUR
+- Nur Beispielfile, keine finale Jahreszahl
+- Mapping technisch verstanden, finaler DE-Jahresfile fehlt
+
+Letzte Verifikation:
+
+- `dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --verbosity minimal --no-restore`
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal --no-restore`
+- Ergebnis: Build OK, Tests `50/50`, FinanceProbe `HTTP 200`
 
 Diese Datei ist fuer andere LLMs gedacht, die das Projekt schnell verstehen und daraus Architekturtexte, Visualisierungen, Ablaufdiagramme oder UI-/Datenflussgrafiken erzeugen sollen.
 

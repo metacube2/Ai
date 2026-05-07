@@ -33,6 +33,19 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         new("US", "Traga US", 3896728m, 3749865m)
     ];
 
+    private static readonly IReadOnlyDictionary<string, decimal> BudgetRatesToChf = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["CHF"] = 1m,
+        ["USD"] = 0.85m,
+        ["EUR"] = 0.95m,
+        ["GBP"] = 1.13m,
+        ["CNY"] = 1m / 8.50m,
+        ["INR"] = 1m / 90.91m,
+        ["CZK"] = 1m / 25.64m,
+        ["PLN"] = 0.22m,
+        ["JPY"] = 1m / 156.25m
+    };
+
     public FinanceReconciliationService(IDbContextFactory<AppDbContext> dbFactory)
     {
         _dbFactory = dbFactory;
@@ -84,11 +97,10 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
             {
                 groupedActuals.TryGetValue(reference.Key, out var actual);
                 var referenceValue = reference.PowerBiValue ?? reference.LocalCurrencyValue;
-                var selected = actual is null || !referenceValue.HasValue
-                    ? actual?.Candidates.FirstOrDefault()
-                    : actual.Candidates
-                        .OrderBy(candidate => Math.Abs(candidate.Value - referenceValue.Value))
-                        .FirstOrDefault();
+                var selected = actual?.Candidates
+                    .OrderByDescending(candidate => candidate.Key == "NetDocumentLocalCurrency")
+                    .ThenByDescending(candidate => candidate.Key == "SalesPriceValue")
+                    .FirstOrDefault();
                 var difference = selected is null || !referenceValue.HasValue ? (decimal?)null : selected.Value - referenceValue.Value;
                 var intercompanyAdjustedDifference = selected is null || !referenceValue.HasValue
                     ? (decimal?)null
@@ -108,8 +120,8 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
                     Currencies = actual?.Currencies ?? string.Empty,
                     ValueField = selected?.Label ?? string.Empty,
                     ActualCurrency = selected?.Currency ?? string.Empty,
-                    ReferenceSource = reference.PowerBiValue.HasValue ? "Power BI" : "LC",
-                    ReferenceCurrency = reference.PowerBiValue.HasValue ? "Power BI Original" : "LC",
+                    ReferenceSource = "check.xlsx Soll",
+                    ReferenceCurrency = reference.PowerBiValue.HasValue ? "Sollwert" : "LC",
                     Status = BuildReferenceStatus(difference),
                     Candidates = actual?.Candidates.Select(candidate => new NetSalesCandidateRow
                     {
@@ -161,20 +173,37 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         if (netDocumentLocalCurrency != 0m)
             candidates.Add(new(
                 "NetDocumentLocalCurrency",
-                "DocTotal - VatSum",
+                "Nettofakturawert Hauswaehrung",
                 ResolveCurrencyLabel(rowList.Select(row => row.CompanyCurrency)),
                 netDocumentLocalCurrency,
                 documentRows.Where(IsLikelyIntercompanyCustomer).Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency)));
 
+        var budgetChf = documentRows.Sum(row => ConvertHouseCurrencyNetToBudgetChf(row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency));
+        if (budgetChf != 0m)
+            candidates.Add(new(
+                "NetDocumentLocalCurrencyBudgetChf",
+                "Nettofakturawert Hauswaehrung -> CHF Budget 2025",
+                "CHF",
+                budgetChf,
+                documentRows.Where(IsLikelyIntercompanyCustomer).Sum(row => ConvertHouseCurrencyNetToBudgetChf(row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency))));
+
         return new NetSalesActual
         {
             RowCount = rowList.Count,
-            Currencies = string.Join(", ", rowList.Select(row => row.SalesCurrency)
+            Currencies = string.Join(", ", rowList.Select(row => string.IsNullOrWhiteSpace(row.CompanyCurrency) ? row.SalesCurrency : row.CompanyCurrency)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
             Candidates = candidates
         };
+    }
+
+    private static decimal ConvertHouseCurrencyNetToBudgetChf(NetSalesActualSourceRow row, decimal value)
+    {
+        var currency = (row.CompanyCurrency ?? string.Empty).Trim().ToUpperInvariant();
+        return BudgetRatesToChf.TryGetValue(currency, out var rate)
+            ? value * rate
+            : 0m;
     }
 
     private static string ResolveCurrencyLabel(IEnumerable<string> currencies)
@@ -201,6 +230,21 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
 
         if (string.IsNullOrWhiteSpace(customerNumber) && string.IsNullOrWhiteSpace(customerName))
             return false;
+
+        var normalizedCustomerName = customerName
+            .Replace("ä", "ae", StringComparison.OrdinalIgnoreCase)
+            .Replace("ö", "oe", StringComparison.OrdinalIgnoreCase)
+            .Replace("ü", "ue", StringComparison.OrdinalIgnoreCase)
+            .ToUpperInvariant();
+
+        if (normalizedCustomerName.Contains("TRAFAG", StringComparison.OrdinalIgnoreCase) ||
+            normalizedCustomerName.Contains("MAGNETIC SENSE", StringComparison.OrdinalIgnoreCase) ||
+            normalizedCustomerName.Contains("MAGNETS SENSE", StringComparison.OrdinalIgnoreCase) ||
+            normalizedCustomerName.Contains("GESELLSCHAFT FUER SENSORIK", StringComparison.OrdinalIgnoreCase) ||
+            normalizedCustomerName.Contains("GESELLSCHAFT FUR SENSORIK", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
 
         if (row.Tsc.Equals("TRIT", StringComparison.OrdinalIgnoreCase))
         {

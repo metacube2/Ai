@@ -1,5 +1,40 @@
 # Last Change 2026-05-04
 
+## Finance-Abgrenzung: Antworten Andreas 2026-05-07
+
+Fachliche Vorgabe nach Rueckmeldung:
+
+- Net Sales Actuals werden in Hauswaehrung gerechnet.
+- Massgebend ist der Nettofakturawert.
+- Umrechnung nach CHF erfolgt mit Budgetkursen, nicht mit Tageskursen.
+- Umrechnung/Summierung soll pro Artikel bzw. Belegposition erfolgen.
+- Indien wird in INR betrachtet.
+- Italien wird in Hauswaehrung betrachtet; Intercompany-/2nd-party-Abgrenzung wird separat angeschaut.
+- UK wird in GBP betrachtet.
+- Gutschriften haben eigene Rechnungsnummern/Rechnungspositionen und sollen ueber Artikelnummern/Positionen behandelt werden.
+- Intercompany soll im zweiten Schritt als 2nd-party/3rd-party-Klassifikation pflegbar werden.
+- Genannte 2nd-party/Intercompany-Indikatoren: Trafag, Magnetic Sense/Magnets Sense, Gesellschaft fuer Sensorik; Nummern/Uebersetzungen koennen je Land abweichen.
+
+Budgetkurse 2025 fuer CHF-Ausweis:
+
+```text
+USD/CHF = 0.85
+EUR/CHF = 0.95
+GBP/CHF = 1.13
+CHF/INR = 90.91
+CHF/CZK = 25.64
+PLN/CHF = 0.22
+CHF/JPY = 156.25
+```
+
+Umsetzung in der FinanceProbe:
+
+- Auswahl der Ist-Variante bevorzugt nun `Nettofakturawert Hauswaehrung` (`DocTotal - VatSum`).
+- `Sales Price/Value` bleibt als Vergleichsvariante sichtbar.
+- Zusaetzlicher Kandidat `Nettofakturawert Hauswaehrung -> CHF Budget 2025`.
+- Referenz in der Oberflaeche wird als `check.xlsx Sollwert` bezeichnet, nicht mehr als fuehrende Power-BI-Referenz.
+- Intercompany-Anzeige wurde fachlich als `2nd-party/IC` beschriftet; dauerhafte Pflege als eigenes Auswahlfeld ist noch offen.
+
 ## Finance Probe / Sales-Abgrenzung
 
 Ziel der heutigen Arbeit:
@@ -635,3 +670,126 @@ Hinweis:
    - nicht statischen Code bauen
    - neues Mapping pro Standort pflegen
 6. Klaeren, ob DE fachlich `NettoPreisGesamtX` in EUR als Ist-Wert verwenden soll oder ob CHF-Umrechnung noetig ist.
+
+---
+
+## Nachtrag 2026-05-05: FinanceProbe Ampel, Spanien v2 und Deutschland-Beispielfile
+
+### FinanceProbe Management-Ansicht
+
+Das Testprogramm `Tools/FinanceProbe` wurde fuer das Finance-Meeting erweitert.
+
+URL lokal:
+
+```text
+http://localhost:55417/finance
+```
+
+Neue Ansicht:
+
+- `Meeting Ampel 2025`
+- Ampel pro Land:
+  - Gruen: Zahl passt rechnerisch gegen Referenz
+  - Gelb: Differenz oder fachliche Abgrenzung offen
+  - Grau: keine belastbaren Importdaten
+- Anzeige pro Land:
+  - Ist
+  - Soll / Referenz
+  - Differenz
+  - passender technischer Wert
+  - Waehrung / CHF-Hinweis
+  - kurze fachliche Begruendung
+
+Wichtig zur Waehrung:
+
+- Wenn Quelle `CHF` liefert, kann CHF direkt gezeigt werden.
+- Wenn Quelle `EUR`, `USD`, `GBP`, `INR` usw. liefert, ist es Mandanten-/Originalwaehrung.
+- CHF-Ausweis braucht dann eine separate FX-Regel bzw. offiziellen Umrechnungskurs.
+
+### Spanien v2 im Testprogramm
+
+Spanien wird im FinanceProbe nicht mehr nur als normaler Zentralimport betrachtet.
+
+Direkter CSV-Check:
+
+```text
+sagespain/v2/Spain_Sales_2025.csv
+```
+
+Gelesene Werte:
+
+- Zeilen: `4'341`
+- Ist 2025 / `SalesPriceValue`: `3'082'320.18`
+- Waehrung: `EUR`
+- Soll aus `check.xlsx`: `3'102'333.61`
+- Differenz: `-20'013.43`
+
+Status:
+
+- Ampel: Gelb / Pruefen
+- Grund: Export technisch lesbar, aber Differenz zu `check.xlsx` offen.
+
+Offen fuer Spanien:
+
+- korrekte Datumsabgrenzung (`FechaFactura` vs. Alternativen)
+- Serien `REG`, `LAT`, `PRO`, `REC`
+- Behandlung von Gutschriften / `REC`
+- offizielle Sage-Auswertung mit identischem Filter zur Sollzahl
+
+### Deutschland-Beispielfile
+
+Neues File im Projektordner:
+
+```text
+DE_Beispiel_Export_Daten.xlsx
+```
+
+Hinweis:
+
+- Der Benutzer hatte zuerst `.xls` genannt, vorhanden ist `.xlsx`.
+- Das File ist als Beispielfile zu behandeln, nicht als finale Jahresdatei.
+
+Technischer Check:
+
+- relevante Spalte: `NettoPreisGesamtX`
+- Mapping-Ziel: `SalesPriceValue`
+- Betragszeilen: `2`
+- Summe `NettoPreisGesamtX`: `8'290.70`
+- Waehrung: `EUR`
+
+Einbau im FinanceProbe:
+
+- eigener Abschnitt `Germany Excel sample check`
+- zeigt Datei, Zeilenzahl, Summe und Referenz aus `check.xlsx`
+- markiert explizit, dass die Differenz nur Sample-Charakter hat
+- in der Management-Ampel wird Deutschland weiter nicht als OK gewertet, solange kein finaler DE-Jahresexport/import vorliegt
+
+Fachliche Interpretation fuer Deutschland:
+
+- Das Mapping funktioniert technisch.
+- `NettoPreisGesamtX` kann als Kandidat fuer `SalesPriceValue` gelesen werden.
+- Das Beispielfile darf nicht gegen die Jahresreferenz `3'635'922.91` als finale Ist-Zahl verwendet werden.
+- Fuer das Meeting ist die Aussage:
+  - Deutschland-Format ist technisch verstanden.
+  - Finale DE-Zahl fehlt noch.
+  - Benoetigt wird ein vollstaendiger DE-Jahresfile 2025 oder ein bestaetigter Importlauf.
+
+### Verifikation 2026-05-05
+
+Ausgefuehrt:
+
+```text
+dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --verbosity minimal --no-restore
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal --no-restore
+```
+
+Ergebnis:
+
+- FinanceProbe Build erfolgreich
+- Tests erfolgreich
+- `50/50` Tests gruen
+- Web UI liefert `HTTP 200`
+- FinanceProbe enthaelt:
+  - `Meeting Ampel 2025`
+  - `Spain CSV direct check`
+  - `Germany Excel sample check`
