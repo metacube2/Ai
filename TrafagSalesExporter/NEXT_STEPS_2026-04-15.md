@@ -2,6 +2,47 @@
 
 Stand: 2026-05-05
 
+## Nachtrag 2026-05-08 Manual Excel/CSV SharePoint-Automatik
+
+Erledigt:
+
+- SharePoint-Ordner koennen bei Manual Excel/CSV als Quelle hinterlegt werden.
+- Bei Ordnern wird automatisch die neueste passende `.xlsx`/`.csv` ausgewaehlt.
+- Dateinamenmuster fuer bevorzugte Auswahl: `ddMMyy_TSC.xlsx` bzw. `ddMMyy_TSC.csv`.
+- Manual-Export schreibt die erzeugte Exportdatei in den Quellordner zurueck:
+  - lokal: gleicher lokaler Ordner
+  - SharePoint: gleicher SharePoint-Ordner
+- England/TRUK ist lokal auf den SharePoint-Ordner `Import/Finance/UK_B1` korrigiert.
+- Spanien-Fehler nach erfolgreichem Einlesen der SharePoint-CSV ist behoben.
+
+Naechste konkrete Schritte:
+
+1. App neu starten, damit die Seed-/Repair-Logik aktiv ist.
+2. England/TRUK exportieren und pruefen, ob die App `010526_TRUK.xlsx` statt `010426_TRUK.xlsx` auswaehlt.
+3. Im SharePoint-Ordner `Import/Finance/UK_B1` pruefen, ob die neue Exportdatei dort wieder abgelegt wird.
+4. Deutschland/Alphaplan: im Standort den korrekten Alphaplan-Excel- oder SharePoint-Pfad hinterlegen.
+5. Deutschland exportieren und Mapping gegen die Alphaplan-Datei validieren.
+6. Falls UK-Dateinamen spaeter ein anderes Muster bekommen, Auswahlregel erweitern.
+
+## Nachtrag 2026-05-08 FinanceProbe
+
+Erledigt:
+
+- FinanceProbe zeigt alle Finance-Referenzen 2025.
+- Datenabdeckung je Standort wurde ergaenzt.
+- CH/AT-Zuordnung wurde fuer `ZSCHWEIZ` geschaerft.
+
+Naechste fachliche Schritte:
+
+1. Nach Export von England, Schweiz/Oesterreich, Spanien und Deutschland die FinanceProbe neu laden.
+2. In der Sektion `Datenabdeckung je Standort` pruefen, ob Zeilen 2025 und Periode plausibel sind.
+3. Fuer Laender mit `Keine Daten` entscheiden:
+   - Datenquelle fehlt
+   - Standort deaktiviert
+   - Mapping/Export noch nicht gelaufen
+   - Referenz ist nur zukuenftig relevant
+4. Fuer AT/CH nach `ZSCHWEIZ`-Export pruefen, ob `LAND1` korrekt `AT` bzw. `CH` liefert.
+
 ## Nachtrag 2026-05-07 nach Mapper-/Finance-Aufraeumung
 
 Erledigt:

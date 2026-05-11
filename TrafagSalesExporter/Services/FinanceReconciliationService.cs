@@ -60,16 +60,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
                 rows => BuildNetSalesActual(rows, budgetRatesToChf, intercompanyRules),
                 StringComparer.OrdinalIgnoreCase);
 
-        var activeSiteKeys = (await db.Sites
-                .AsNoTracking()
-                .Where(s => s.IsActive)
-                .Select(s => new { s.Land, s.TSC })
-                .ToListAsync())
-            .Select(s => ResolveReferenceKey(s.Land, s.TSC))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
         return financeReferences
-            .Where(reference => activeSiteKeys.Contains(reference.Key) || groupedActuals.ContainsKey(reference.Key))
             .Select(reference => BuildReferenceRow(reference, groupedActuals))
             .OrderBy(row => row.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -282,6 +273,8 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         var normalizedLand = (land ?? string.Empty).Trim().ToUpperInvariant();
         var normalizedTsc = (tsc ?? string.Empty).Trim().ToUpperInvariant();
 
+        if (normalizedLand is "AT" or "AUT" || normalizedLand.Contains("OESTER") || normalizedLand.Contains("OSTER") || normalizedLand.Contains("AUSTRIA")) return "AT";
+        if (normalizedLand is "CH" or "CHE" || normalizedLand.Contains("SCHWE") || normalizedLand.Contains("SWITZER")) return "CH";
         if (normalizedLand.Contains("FRANK") || normalizedTsc.Contains("FR")) return "FR";
         if (normalizedLand.Contains("IND") || normalizedTsc.Contains("IN")) return "IN";
         if (normalizedLand.Contains("ITAL") || normalizedTsc.Contains("IT")) return "IT";
@@ -289,7 +282,6 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         if (normalizedLand.Contains("USA") || normalizedLand.Contains("UNITED STATES") || normalizedTsc.Contains("US")) return "US";
         if (normalizedLand.Contains("DEUT") || normalizedTsc.Contains("DE")) return "DE";
         if (normalizedLand.Contains("SPAN") || normalizedTsc is "SE" or "ES") return "ES";
-        if (normalizedLand.Contains("SCHWE") || normalizedTsc.Contains("CH")) return "CH";
 
         return normalizedTsc.Replace("TR", string.Empty);
     }

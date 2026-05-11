@@ -391,7 +391,7 @@
                 FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-/CSV-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
             </MudAlert>
             <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-/CSV-Dateipfad"
-                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade und SharePoint-Referenzen wie https://... oder Shared Documents/Ordner/Datei.xlsx bzw. .csv."
+                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade, SharePoint-Dateien und SharePoint-Ordner. Bei Ordnern wird die neueste passende Excel-/CSV-Datei geladen."
                           Class="mb-2" />
             <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateManualImportPathAsync"
                        Disabled="_uploadingManualImport" Class="mb-3">

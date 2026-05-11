@@ -409,13 +409,14 @@ public sealed class StandortePageService : IStandortePageService
         var trimmedPath = manualImportFilePath.Trim();
         if (string.IsNullOrWhiteSpace(trimmedPath))
             throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
-        if (!IsSupportedManualImportFile(trimmedPath))
+        var isSharePointReference = LooksLikeSharePointReference(trimmedPath);
+        if (!isSharePointReference && !IsSupportedManualImportFile(trimmedPath))
             throw new InvalidOperationException("Bitte eine Excel- oder CSV-Datei mit Endung .xlsx oder .csv angeben.");
 
         if (File.Exists(trimmedPath))
             return File.GetLastWriteTimeUtc(trimmedPath);
 
-        if (!LooksLikeSharePointReference(trimmedPath))
+        if (!isSharePointReference)
             throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {trimmedPath}");
 
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -429,8 +430,16 @@ public sealed class StandortePageService : IStandortePageService
             throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
         }
 
+        var sharePointFileReference = trimmedPath;
+        if (!IsSupportedManualImportFile(trimmedPath))
+        {
+            var latestFile = await _sharePointService.ResolveLatestFileInFolderAsync(
+                spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, trimmedPath, string.Empty);
+            sharePointFileReference = latestFile.FileReference;
+        }
+
         var tempPath = await _sharePointService.DownloadToTempFileAsync(
-            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, trimmedPath);
+            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, sharePointFileReference);
         try
         {
             return File.GetLastWriteTimeUtc(tempPath);
@@ -448,7 +457,7 @@ public sealed class StandortePageService : IStandortePageService
         var deleteAfterRead = !string.Equals(filePath, manualImportFilePath?.Trim(), StringComparison.OrdinalIgnoreCase);
         try
         {
-            return string.Equals(Path.GetExtension(manualImportFilePath?.Trim()), ".csv", StringComparison.OrdinalIgnoreCase)
+        return string.Equals(Path.GetExtension(filePath), ".csv", StringComparison.OrdinalIgnoreCase)
                 ? LoadCsvHeaders(filePath)
                 : LoadExcelHeaders(filePath);
         }
@@ -482,8 +491,16 @@ public sealed class StandortePageService : IStandortePageService
             throw new InvalidOperationException("Fuer SharePoint-Pruefung fehlt eine vollstaendige SharePoint-Konfiguration in Settings.");
         }
 
+        var sharePointFileReference = trimmedPath;
+        if (!IsSupportedManualImportFile(trimmedPath))
+        {
+            var latestFile = await _sharePointService.ResolveLatestFileInFolderAsync(
+                spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, trimmedPath, string.Empty);
+            sharePointFileReference = latestFile.FileReference;
+        }
+
         return await _sharePointService.DownloadToTempFileAsync(
-            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, trimmedPath);
+            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret, spConfig.SiteUrl, sharePointFileReference);
     }
 
     private static void ApplyServer(HanaServer target, HanaServer source)

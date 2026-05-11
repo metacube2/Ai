@@ -43,3 +43,14 @@ Wichtige Praezisierung aus dem Code:
 ## Einsatz
 
 Die SVG-Dateien koennen direkt im Browser geoeffnet, in Markdown verlinkt oder in Praesentationen eingefuegt werden.
+
+## Nachtrag Manual Excel/CSV 2026-05-08
+
+Die Diagramme zeigen Manual Excel/CSV als Quelle. Die aktuelle Detailregel dazu ist:
+
+- Eine konkrete lokale Datei wird gelesen; die erzeugte Exportdatei wird im gleichen lokalen Ordner abgelegt.
+- Eine konkrete SharePoint-Datei wird gelesen; die erzeugte Exportdatei wird im gleichen SharePoint-Ordner abgelegt.
+- Eine SharePoint-Ordnerreferenz wird als dynamische Quelle behandelt.
+- Bei SharePoint-Ordnern wird die neueste passende `.xlsx`/`.csv` gesucht.
+- Fuer England/TRUK gilt das Dateimuster `ddMMyy_TRUK.xlsx`, z. B. `010526_TRUK.xlsx`.
+- Die Ordnerlogik ist generisch fuer Manual-Quellen, nicht hart nur fuer England implementiert.

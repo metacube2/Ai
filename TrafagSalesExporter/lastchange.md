@@ -1,5 +1,74 @@
 # Last Change 2026-05-04
 
+## Manual Excel/CSV SharePoint-Ordner und Quellordner-Export 2026-05-08
+
+Umgesetzte Anpassungen:
+
+- Manual Excel/CSV Quellen erzeugen nun immer eine neue Exportdatei; die Quelldatei wird nicht als Exportdatei weitergereicht.
+- Lokale Manual-Dateien schreiben die neue Exportdatei in denselben lokalen Ordner wie die Quelldatei.
+- SharePoint-Manual-Dateien schreiben die neue Exportdatei in denselben SharePoint-Ordner wie die Quelldatei.
+- SharePoint-Referenzen ohne Dateiendung werden als Ordner behandelt.
+- Bei SharePoint-Ordnern sucht die App die neueste passende Excel-/CSV-Datei fuer den Standort.
+- Fuer datierte Dateien wird das Muster `ddMMyy_TSC.xlsx` bzw. `ddMMyy_TSC.csv` ausgewertet.
+- Beispiel England/UK:
+  - Ordner: `https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1`
+  - `010526_TRUK.xlsx` wird vor `010426_TRUK.xlsx` gewaehlt.
+  - Falls kein Datum aus dem Dateinamen gelesen werden kann, faellt die Auswahl auf das SharePoint-Aenderungsdatum zurueck.
+
+Technischer Befund aus den Logs:
+
+- Spanien konnte die SharePoint-Datei lesen (`4'341` Zeilen), fiel danach aber auf einen ungueltigen lokalen Pfad, weil die URL als lokale Exportdatei behandelt wurde.
+- Fehlerpfad war sinngemaess `...\https:\trafagag.sharepoint.com\...\Spain_Sales_2025.csv`.
+- Deutschland hatte keinen manuellen Dateipfad hinterlegt.
+- England/TRUK zeigte lokal versehentlich auf die Deutschland-Alphaplan-Datei; die lokale DB wurde auf den UK_B1-Ordner korrigiert.
+
+Codeaenderungen:
+
+- `DataSourceFetchResult` enthaelt optionale Overrides fuer lokalen Output-Ordner und SharePoint-Zielordner.
+- `ManualExcelDataSourceAdapter` erkennt SharePoint-Dateien vs. SharePoint-Ordner und waehlt bei Ordnern die neueste passende Datei.
+- `SharePointUploadService` kann den neuesten passenden Datei-Eintrag in einem SharePoint-Ordner aufloesen.
+- `SiteExportService` nutzt fuer Manual-Quellen den Quellordner als Zielordner.
+- `StandortePageService` erlaubt fuer Manual-Importe nun auch SharePoint-Ordnerreferenzen.
+- Standort-UI-Hilfetext wurde entsprechend angepasst.
+- `DatabaseSeedService` repariert England/TRUK auf den UK_B1-Ordner, wenn der Manual-Pfad leer ist.
+
+Letzte technische Verifikation:
+
+```text
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore --verbosity minimal
+```
+
+Ergebnis:
+
+- Tests erfolgreich, `55/55`
+- Bekannte MudBlazor-Analyzerwarnungen zu `Dense` bleiben bestehen.
+
+## FinanceProbe erweitert fuer alle Finance-Referenzen 2026-05-08
+
+Umgesetzte Anpassungen:
+
+- FinanceProbe zeigt nun alle aktiven `FinanceReferences` fuer 2025, auch wenn noch kein aktiver/importierter Standort dazu Daten liefert.
+- Damit werden auch Laender wie AT, CH, CN, CZ, GFS, JP, MS, MSA, PL und RU sichtbar als `Keine Daten`, bis Ist-Daten vorhanden sind.
+- Zusaetzliche Sektion `Datenabdeckung je Standort`:
+  - Standort / TSC
+  - Quellsystem und Anschlussart
+  - Manual-Datei- oder SharePoint-Pfad
+  - Aktivstatus
+  - Anzahl 2025-Zeilen in `CentralSalesRecords`
+  - Summe `SalesPriceValue`
+  - Waehrungen
+  - importierte Periode
+  - letzter Exportstatus und Hinweis
+- Referenzschluessel-Erkennung wurde fuer CH/AT praezisiert:
+  - `AT`, `AUT`, `Oesterreich`/`Austria` -> `AT`
+  - `CH`, `CHE`, `Schweiz`/`Switzerland` -> `CH`
+- Damit koennen Zeilen aus `ZSCHWEIZ` mit `LAND1 = AT` fachlich Oesterreich zugeordnet werden.
+
+Verifikation:
+
+- `Tools/FinanceProbe` Build erfolgreich.
+- Haupttests wurden mit separatem Output/Obj-Pfad ausgefuehrt, damit die laufende App nicht stoert.
+
 ## Mapper-/Finance-Konfiguration konsolidiert 2026-05-07
 
 Umgesetzte Aufraeumarbeiten:

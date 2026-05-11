@@ -11,4 +11,10 @@ public sealed class DataSourceFetchResult
     /// SiteExportService erzeugt dann keine neue Excel-Datei.
     /// </summary>
     public string? ReferenceFilePath { get; init; }
+
+    public string? LocalOutputDirectoryOverride { get; init; }
+
+    public string? SharePointUploadFolderOverride { get; init; }
+
+    public string? SharePointUploadLandOverride { get; init; }
 }

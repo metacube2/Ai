@@ -1,6 +1,9 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace TrafagSalesExporter.Services;
 
@@ -82,6 +85,64 @@ public class SharePointUploadService : ISharePointUploadService
         return tempPath;
     }
 
+    public async Task<SharePointFileReference> ResolveLatestFileInFolderAsync(
+        string tenantId,
+        string clientId,
+        string clientSecret,
+        string siteUrl,
+        string folderReference,
+        string siteTsc)
+    {
+        var normalizedTenantId = Normalize(tenantId);
+        var normalizedClientId = Normalize(clientId);
+        var normalizedClientSecret = Normalize(clientSecret);
+        var normalizedSiteUrl = Normalize(siteUrl);
+        var normalizedReference = Normalize(folderReference);
+        var normalizedTsc = Normalize(siteTsc).ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(normalizedReference))
+            throw new InvalidOperationException("SharePoint-Ordnerreferenz fehlt.");
+
+        var credential = new ClientSecretCredential(normalizedTenantId, normalizedClientId, normalizedClientSecret);
+        var graphClient = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
+
+        var siteUri = new Uri(normalizedSiteUrl);
+        var sitePath = siteUri.AbsolutePath.TrimEnd('/');
+        var site = await graphClient.Sites[$"{siteUri.Host}:{sitePath}"].GetAsync();
+
+        if (site?.Id is null)
+            throw new InvalidOperationException("SharePoint Site konnte nicht gefunden werden.");
+
+        var drive = await graphClient.Sites[site.Id].Drive.GetAsync();
+        if (drive?.Id is null)
+            throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
+
+        var folderPath = ResolveRemotePath(normalizedReference, siteUri);
+        var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
+        var candidates = children?.Value?
+            .Where(item => item.File is not null)
+            .Where(item => IsSupportedManualImportFile(item.Name))
+            .Where(item => MatchesTsc(item.Name, normalizedTsc))
+            .Select(item => new
+            {
+                Item = item,
+                FileDate = TryParseDatedSiteFileName(item.Name, normalizedTsc, out var fileDate) ? fileDate : (DateTime?)null
+            })
+            .OrderByDescending(x => x.FileDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+            .ThenByDescending(x => x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+            .ToList() ?? [];
+
+        var selected = candidates.FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                string.IsNullOrWhiteSpace(normalizedTsc)
+                    ? $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei gefunden."
+                    : $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei fuer '{normalizedTsc}' gefunden.");
+
+        return new SharePointFileReference(
+            string.Join("/", folderPath.Trim('/'), selected.Item.Name).Trim('/'),
+            selected.Item.LastModifiedDateTime);
+    }
+
     public async Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)
     {
         var normalizedTenantId = Normalize(tenantId);
@@ -141,6 +202,41 @@ public class SharePointUploadService : ISharePointUploadService
         }
 
         return fileReference.Trim('/').Trim();
+    }
+
+    private static bool IsSupportedManualImportFile(string? fileName)
+    {
+        var extension = Path.GetExtension(fileName ?? string.Empty);
+        return extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".csv", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool MatchesTsc(string? fileName, string normalizedTsc)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedTsc))
+            return true;
+
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        return nameWithoutExtension.EndsWith($"_{normalizedTsc}", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryParseDatedSiteFileName(string? fileName, string normalizedTsc, out DateTime fileDate)
+    {
+        fileDate = default;
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        var pattern = string.IsNullOrWhiteSpace(normalizedTsc)
+            ? @"^(?<date>\d{6})_[A-Z0-9]+$"
+            : $"^(?<date>\\d{{6}})_{Regex.Escape(normalizedTsc)}$";
+        var match = Regex.Match(nameWithoutExtension, pattern, RegexOptions.IgnoreCase);
+        if (!match.Success)
+            return false;
+
+        return DateTime.TryParseExact(
+            match.Groups["date"].Value,
+            "ddMMyy",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out fileDate);
     }
 
     private static string BuildInputPreview(string tenantId, string clientId, string clientSecret, string siteUrl)

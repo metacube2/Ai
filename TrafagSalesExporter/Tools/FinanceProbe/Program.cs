@@ -16,13 +16,14 @@ builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliati
 var app = builder.Build();
 
 app.MapGet("/", () => Results.Redirect("/finance"));
-app.MapGet("/finance", async (IFinanceReconciliationService finance) =>
+app.MapGet("/finance", async (IFinanceReconciliationService finance, IDbContextFactory<AppDbContext> dbFactory) =>
 {
     var rows = await finance.BuildNetSalesReferenceRowsAsync(2025);
     var excelReferences = LoadCheckedExcelReferences(ResolveCheckedExcelPath());
     var spainCsv = LoadSpainSalesCsvProbe(ResolveSpainSalesCsvPath());
     var germanySample = LoadGermanyExcelProbe(ResolveGermanySamplePath());
-    return Results.Content(BuildPage(rows, databasePath, excelReferences, spainCsv, germanySample), "text/html; charset=utf-8");
+    var coverage = await LoadSiteCoverageAsync(dbFactory, 2025);
+    return Results.Content(BuildPage(rows, databasePath, excelReferences, spainCsv, germanySample, coverage), "text/html; charset=utf-8");
 });
 
 app.Run();
@@ -215,6 +216,79 @@ static GermanyExcelProbe? LoadGermanyExcelProbe(string? path)
     };
 }
 
+static async Task<List<SiteCoverageRow>> LoadSiteCoverageAsync(IDbContextFactory<AppDbContext> dbFactory, int year)
+{
+    await using var db = await dbFactory.CreateDbContextAsync();
+    var sites = await db.Sites
+        .AsNoTracking()
+        .OrderBy(s => s.Land)
+        .ThenBy(s => s.TSC)
+        .Select(s => new
+        {
+            s.Id,
+            s.Land,
+            s.TSC,
+            s.SourceSystem,
+            s.ManualImportFilePath,
+            s.IsActive
+        })
+        .ToListAsync();
+    var sourceSystems = await db.SourceSystemDefinitions
+        .AsNoTracking()
+        .ToDictionaryAsync(s => s.Code, StringComparer.OrdinalIgnoreCase);
+    var centralBaseRows = await db.CentralSalesRecords
+        .AsNoTracking()
+        .Where(r => (r.InvoiceDate ?? r.ExtractionDate).Year == year)
+        .Select(r => new
+        {
+            r.SiteId,
+            r.SalesPriceValue,
+            Date = r.InvoiceDate ?? r.ExtractionDate,
+            Currency = string.IsNullOrWhiteSpace(r.CompanyCurrency) ? r.SalesCurrency : r.CompanyCurrency
+        })
+        .ToListAsync();
+    var centralRows = centralBaseRows
+        .GroupBy(r => r.SiteId)
+        .ToDictionary(g => g.Key, g => new
+        {
+            Rows = g.Count(),
+            Sales = g.Sum(r => r.SalesPriceValue),
+            MinDate = g.Min(r => r.Date),
+            MaxDate = g.Max(r => r.Date),
+            Currencies = g.Select(r => r.Currency).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+        });
+    var latestLogs = await db.ExportLogs
+        .AsNoTracking()
+        .GroupBy(l => l.SiteId)
+        .Select(g => g.OrderByDescending(l => l.Id).First())
+        .ToDictionaryAsync(l => l.SiteId);
+
+    return sites.Select(site =>
+    {
+        sourceSystems.TryGetValue(site.SourceSystem, out var sourceSystem);
+        centralRows.TryGetValue(site.Id, out var central);
+        latestLogs.TryGetValue(site.Id, out var latestLog);
+        return new SiteCoverageRow
+        {
+            Land = site.Land,
+            Tsc = site.TSC,
+            SourceSystem = site.SourceSystem,
+            SourceDisplayName = sourceSystem?.DisplayName ?? site.SourceSystem,
+            ConnectionKind = sourceSystem?.ConnectionKind ?? string.Empty,
+            IsActive = site.IsActive,
+            ManualImportPath = site.ManualImportFilePath,
+            RowCount = central?.Rows ?? 0,
+            SalesPriceValue = central?.Sales,
+            MinDate = central?.MinDate,
+            MaxDate = central?.MaxDate,
+            Currencies = central is null ? string.Empty : string.Join(", ", central.Currencies.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
+            LastExportStatus = latestLog?.Status ?? string.Empty,
+            LastExportAt = latestLog?.Timestamp,
+            LastExportError = latestLog?.ErrorMessage ?? string.Empty
+        };
+    }).ToList();
+}
+
 static decimal ReadProbeDecimal(IXLCell cell)
 {
     if (cell.TryGetValue<decimal>(out var decimalValue))
@@ -336,7 +410,8 @@ static string BuildPage(
     string databasePath,
     IReadOnlyDictionary<string, CheckedExcelReference> excelReferences,
     SpainSalesCsvProbe? spainCsv,
-    GermanyExcelProbe? germanySample)
+    GermanyExcelProbe? germanySample,
+    IReadOnlyList<SiteCoverageRow> coverage)
 {
     var generatedAt = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.GetCultureInfo("de-CH"));
     var okCount = rows.Count(r => r.Status == "OK");
@@ -345,6 +420,7 @@ static string BuildPage(
     var excelCount = excelReferences.Count;
     var executiveBriefing = BuildExecutiveBriefing(rows, excelReferences, spainCsv, germanySample);
     var detailRows = BuildDetailRows(rows, excelReferences, spainCsv);
+    var coverageRows = BuildCoverageRows(coverage);
     var spainCsvSection = BuildSpainCsvSection(spainCsv);
     var germanySampleSection = BuildGermanySampleSection(germanySample, excelReferences);
 
@@ -540,6 +616,7 @@ static string BuildPage(
     <nav aria-label="Finance Probe Navigation">
       <a href="#briefing">Meeting Ampel</a>
       <a href="#all-sites">Detail alle Laender</a>
+      <a href="#coverage">Datenabdeckung</a>
       <a href="#germany-sample">Germany Excel</a>
       <a href="#spain-csv">Spain CSV</a>
     </nav>
@@ -551,6 +628,7 @@ static string BuildPage(
       <div class="metric"><strong>{{okCount}}</strong><span>OK</span></div>
       <div class="metric"><strong>{{checkCount}}</strong><span>Pruefen</span></div>
       <div class="metric"><strong>{{missingCount}}</strong><span>Keine Daten</span></div>
+      <div class="metric"><strong>{{coverage.Count}}</strong><span>Konfigurierte Standorte</span></div>
     </section>
     <div id="all-sites" class="table-wrap">
       <table>
@@ -579,12 +657,92 @@ static string BuildPage(
         </tbody>
       </table>
     </div>
+    {{coverageRows}}
     {{germanySampleSection}}
     {{spainCsvSection}}
   </main>
 </body>
 </html>
 """;
+}
+
+static string BuildCoverageRows(IReadOnlyList<SiteCoverageRow> coverage)
+{
+    if (coverage.Count == 0)
+        return string.Empty;
+
+    var rows = string.Join(Environment.NewLine, coverage.Select(row =>
+    {
+        var sourceDetail = row.ConnectionKind switch
+        {
+            "MANUAL_EXCEL" when !string.IsNullOrWhiteSpace(row.ManualImportPath) => row.ManualImportPath,
+            "MANUAL_EXCEL" => "Kein Manual-Dateipfad hinterlegt",
+            _ => row.SourceDisplayName
+        };
+        var period = row.RowCount == 0
+            ? "-"
+            : $"{row.MinDate:dd.MM.yyyy} - {row.MaxDate:dd.MM.yyyy}";
+        var lastExport = row.LastExportAt.HasValue
+            ? $"{row.LastExportAt:dd.MM.yyyy HH:mm} / {row.LastExportStatus}"
+            : "-";
+        var issue = BuildCoverageIssue(row);
+
+        return $$"""
+<tr>
+  <td><strong>{{Html(row.Land)}}</strong><div class="small">{{Html(row.Tsc)}}</div></td>
+  <td>{{Html(row.SourceSystem)}}<div class="small">{{Html(row.ConnectionKind)}}</div></td>
+  <td class="wrap">{{Html(sourceDetail)}}</td>
+  <td>{{(row.IsActive ? "Ja" : "Nein")}}</td>
+  <td class="num">{{row.RowCount}}</td>
+  <td class="num">{{Amount(row.SalesPriceValue)}}</td>
+  <td>{{Html(row.Currencies)}}</td>
+  <td>{{Html(period)}}</td>
+  <td>{{Html(lastExport)}}</td>
+  <td class="wrap">{{Html(issue)}}</td>
+</tr>
+""";
+    }));
+
+    return $$"""
+    <section id="coverage" style="margin-top:18px;">
+      <h2 style="font-size:18px;margin:0 0 8px;">Datenabdeckung je Standort</h2>
+      <p class="briefing-note">Diese Tabelle zeigt, welche Standorte in der App konfiguriert sind, welche Quelle sie nutzen und ob fuer 2025 bereits Daten in `CentralSalesRecords` liegen.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Standort</th>
+              <th>System</th>
+              <th>Quelle / Pfad</th>
+              <th>Aktiv</th>
+              <th class="num">Zeilen 2025</th>
+              <th class="num">SalesPriceValue</th>
+              <th>Waehrung</th>
+              <th>Periode</th>
+              <th>Letzter Export</th>
+              <th>Hinweis</th>
+            </tr>
+          </thead>
+          <tbody>{{rows}}</tbody>
+        </table>
+      </div>
+    </section>
+""";
+}
+
+static string BuildCoverageIssue(SiteCoverageRow row)
+{
+    if (!row.IsActive)
+        return "Standort ist deaktiviert.";
+    if (row.ConnectionKind == "MANUAL_EXCEL" && string.IsNullOrWhiteSpace(row.ManualImportPath))
+        return "Manual Excel/CSV-Pfad fehlt.";
+    if (!string.IsNullOrWhiteSpace(row.LastExportError))
+        return row.LastExportError;
+    if (row.RowCount == 0)
+        return "Keine 2025-Daten in CentralSalesRecords. Export pruefen.";
+    if (!string.IsNullOrWhiteSpace(row.LastExportStatus) && !row.LastExportStatus.Equals("OK", StringComparison.OrdinalIgnoreCase))
+        return $"Letzter Exportstatus: {row.LastExportStatus}.";
+    return "Daten vorhanden.";
 }
 
 static string BuildDetailRows(
@@ -988,4 +1146,23 @@ sealed class GermanyExcelProbe
     public int RowsIn2025 { get; set; }
     public decimal SalesPriceValueIn2025 { get; set; }
     public string Currencies { get; set; } = string.Empty;
+}
+
+sealed class SiteCoverageRow
+{
+    public string Land { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string SourceSystem { get; set; } = string.Empty;
+    public string SourceDisplayName { get; set; } = string.Empty;
+    public string ConnectionKind { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public string ManualImportPath { get; set; } = string.Empty;
+    public int RowCount { get; set; }
+    public decimal? SalesPriceValue { get; set; }
+    public DateTime? MinDate { get; set; }
+    public DateTime? MaxDate { get; set; }
+    public string Currencies { get; set; } = string.Empty;
+    public string LastExportStatus { get; set; } = string.Empty;
+    public DateTime? LastExportAt { get; set; }
+    public string LastExportError { get; set; } = string.Empty;
 }

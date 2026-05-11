@@ -13,6 +13,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureSourceSystemDefinitions(db);
         EnsureCentralHanaServerRecords(db);
         EnsureSpainManualExcelSite(db);
+        EnsureUkManualExcelFolder(db);
         EnsureSapODataDachSite(db);
         EnsureFinanceReferenceDefaults(db);
         EnsureBudgetExchangeRateDefaults(db);
@@ -285,6 +286,36 @@ public class DatabaseSeedService : IDatabaseSeedService
             IsActive = false
         });
         db.SaveChanges();
+    }
+
+    private static void EnsureUkManualExcelFolder(AppDbContext db)
+    {
+        var existing = db.Sites
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.TSC == "TRUK" ||
+                x.Land == "England" ||
+                x.Land == "UK");
+
+        if (existing is null)
+            return;
+
+        var changed = false;
+        if (string.IsNullOrWhiteSpace(existing.SourceSystem))
+        {
+            existing.SourceSystem = "MANUAL_EXCEL";
+            changed = true;
+        }
+
+        if (string.Equals(existing.SourceSystem, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(existing.ManualImportFilePath))
+        {
+            existing.ManualImportFilePath = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1";
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
     }
 
     private static void EnsureSapODataDachSite(AppDbContext db)

@@ -56,8 +56,6 @@ public class SiteExportService : ISiteExportService
                 details: $"Quelle={sourceSystem} | TSC={site.TSC}");
 
             var (settings, spConfig, sourceDefinition, rules) = await LoadExportConfigAsync(site, sourceSystem);
-            var outputDir = ResolveSiteOutputDirectory(settings, site);
-
             var adapter = _dataSourceResolver.Resolve(sourceDefinition.ConnectionKind);
             var fetchResult = await adapter.FetchAsync(new DataSourceFetchContext
             {
@@ -69,6 +67,7 @@ public class SiteExportService : ISiteExportService
             });
 
             var records = fetchResult.Records;
+            var outputDir = fetchResult.LocalOutputDirectoryOverride ?? ResolveSiteOutputDirectory(settings, site);
 
             updateStatus?.Invoke("Transformationen anwenden...");
             await _appEventLogService.WriteAsync("Export", "Transformationen anwenden",
@@ -94,7 +93,7 @@ public class SiteExportService : ISiteExportService
                 details: $"Records={records.Count}");
             await _centralSalesRecordService.ReplaceForSiteAsync(site, records, updateStatus);
 
-            await UploadToSharePointIfConfiguredAsync(site, spConfig, filePath, updateStatus);
+            await UploadToSharePointIfConfiguredAsync(site, spConfig, filePath, updateStatus, fetchResult);
 
             sw.Stop();
             log.Status = "OK";
@@ -156,7 +155,11 @@ public class SiteExportService : ISiteExportService
     }
 
     private async Task UploadToSharePointIfConfiguredAsync(
-        Site site, SharePointConfig? spConfig, string filePath, Action<string>? updateStatus)
+        Site site,
+        SharePointConfig? spConfig,
+        string filePath,
+        Action<string>? updateStatus,
+        DataSourceFetchResult fetchResult)
     {
         if (spConfig is null ||
             string.IsNullOrWhiteSpace(spConfig.TenantId) ||
@@ -165,12 +168,16 @@ public class SiteExportService : ISiteExportService
             return;
 
         updateStatus?.Invoke("SharePoint Upload...");
+        var uploadFolder = string.IsNullOrWhiteSpace(fetchResult.SharePointUploadFolderOverride)
+            ? spConfig.ExportFolder
+            : fetchResult.SharePointUploadFolderOverride;
+        var uploadLand = fetchResult.SharePointUploadLandOverride ?? site.Land;
         await _appEventLogService.WriteAsync("Export", "SharePoint Upload gestartet",
             siteId: site.Id, land: site.Land,
-            details: $"{spConfig.SiteUrl} | {spConfig.ExportFolder}");
+            details: $"{spConfig.SiteUrl} | {uploadFolder}");
         await _sharePointService.UploadAsync(
             spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-            spConfig.SiteUrl, spConfig.ExportFolder, site.Land, filePath);
+            spConfig.SiteUrl, uploadFolder, uploadLand, filePath);
     }
 
     private static string NormalizeSourceSystem(string? sourceSystem)

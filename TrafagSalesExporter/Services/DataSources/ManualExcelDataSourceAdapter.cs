@@ -29,12 +29,15 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
 
         var manualImportPath = site.ManualImportFilePath.Trim();
         string filePath;
+        string? localOutputDirectory = null;
+        string? sharePointUploadFolder = null;
         string? tempManualImportPath = null;
         try
         {
             if (File.Exists(manualImportPath))
             {
                 filePath = manualImportPath;
+                localOutputDirectory = Path.GetDirectoryName(Path.GetFullPath(manualImportPath));
             }
             else if (LooksLikeSharePointReference(manualImportPath))
             {
@@ -55,10 +58,22 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                 await _appEventLogService.WriteAsync("Export", "Manuelle Excel von SharePoint laden",
                     siteId: site.Id, land: site.Land, details: manualImportPath);
 
+                var sharePointFileReference = manualImportPath;
+                if (LooksLikeSharePointFolderReference(manualImportPath))
+                {
+                    var latestFile = await _sharePointService.ResolveLatestFileInFolderAsync(
+                        spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
+                        spConfig.SiteUrl, manualImportPath, site.TSC);
+                    sharePointFileReference = latestFile.FileReference;
+                    await _appEventLogService.WriteAsync("Export", "Neueste SharePoint-Datei ausgewaehlt",
+                        siteId: site.Id, land: site.Land, details: sharePointFileReference);
+                }
+
                 tempManualImportPath = await _sharePointService.DownloadToTempFileAsync(
                     spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                    spConfig.SiteUrl, manualImportPath);
-                filePath = manualImportPath;
+                    spConfig.SiteUrl, sharePointFileReference);
+                filePath = sharePointFileReference;
+                sharePointUploadFolder = ResolveSharePointParentFolder(sharePointFileReference, spConfig.SiteUrl);
             }
             else
             {
@@ -75,7 +90,9 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
             return new DataSourceFetchResult
             {
                 Records = records,
-                ReferenceFilePath = filePath
+                LocalOutputDirectoryOverride = localOutputDirectory,
+                SharePointUploadFolderOverride = sharePointUploadFolder,
+                SharePointUploadLandOverride = sharePointUploadFolder is null ? null : string.Empty
             };
         }
         finally
@@ -90,4 +107,25 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
            path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
            path.StartsWith("/Shared Documents/", StringComparison.OrdinalIgnoreCase) ||
            path.StartsWith("Shared Documents/", StringComparison.OrdinalIgnoreCase);
+
+    private static bool LooksLikeSharePointFolderReference(string path)
+        => LooksLikeSharePointReference(path) &&
+           string.IsNullOrWhiteSpace(Path.GetExtension(path.TrimEnd('/')));
+
+    private static string ResolveSharePointParentFolder(string fileReference, string siteUrl)
+    {
+        var remotePath = fileReference.Trim('/').Trim();
+        if (Uri.TryCreate(fileReference, UriKind.Absolute, out var fileUri) &&
+            Uri.TryCreate(siteUrl, UriKind.Absolute, out var siteUri))
+        {
+            var absolutePath = Uri.UnescapeDataString(fileUri.AbsolutePath);
+            var sitePath = siteUri.AbsolutePath.TrimEnd('/');
+            if (absolutePath.StartsWith(sitePath, StringComparison.OrdinalIgnoreCase))
+                absolutePath = absolutePath[sitePath.Length..];
+            remotePath = absolutePath.Trim('/').Trim();
+        }
+
+        var lastSlash = remotePath.LastIndexOf('/');
+        return lastSlash <= 0 ? string.Empty : remotePath[..lastSlash];
+    }
 }
