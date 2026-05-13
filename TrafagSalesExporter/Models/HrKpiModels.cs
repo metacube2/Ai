@@ -2,7 +2,7 @@ namespace TrafagSalesExporter.Models;
 
 public sealed class HrKpiOptions
 {
-    public string DataFolder { get; set; } = @"C:\temp";
+    public string DataFolder { get; set; } = HrKpiDataSourceOptions.DefaultFolder;
     public int Year { get; set; } = DateTime.Today.Year;
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
@@ -14,6 +14,33 @@ public sealed class HrKpiOptions
     public string? GlzAmpel { get; set; }
     public string? RestferienAmpel { get; set; }
     public string? SearchText { get; set; }
+}
+
+public sealed class HrKpiDataSourceOptions
+{
+    public const string SectionName = "HrKpi";
+    public const string DefaultFolder = @"C:\temp";
+
+    public string DataFolder { get; set; } = DefaultFolder;
+    public string MainFile { get; set; } = "Saldiperstichdatum.xlsx";
+    public string TimeFile { get; set; } = "Exportkommengehen.xlsx";
+    public string SapFile { get; set; } = "HR_KPI_Export.xlsx";
+    public string AbsenceFile { get; set; } = "Abwesenheitinstunden.xlsx";
+    public string LeaverFile { get; set; } = "Personalausgeschieden.xlsx";
+
+    public HrKpiDataSourceOptions Normalize()
+        => new()
+        {
+            DataFolder = NormalizeText(DataFolder, DefaultFolder),
+            MainFile = NormalizeText(MainFile, "Saldiperstichdatum.xlsx"),
+            TimeFile = NormalizeText(TimeFile, "Exportkommengehen.xlsx"),
+            SapFile = NormalizeText(SapFile, "HR_KPI_Export.xlsx"),
+            AbsenceFile = NormalizeText(AbsenceFile, "Abwesenheitinstunden.xlsx"),
+            LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx")
+        };
+
+    private static string NormalizeText(string? value, string fallback)
+        => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 }
 
 public sealed class HrKpiResult

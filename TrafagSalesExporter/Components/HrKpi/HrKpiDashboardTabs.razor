@@ -1,0 +1,587 @@
+﻿@using Microsoft.AspNetCore.Components
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
+        <MudTabPanel Text="@T("Ueberblick", "Overview")" Icon="@Icons.Material.Filled.Dashboard">
+            @MetricGrid(Result.Metrics)
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @HeadcountByOrganisationTable(Result.HeadcountByOrganisation)
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @CriticalBalancesTable(Result.CriticalTimeBalances)
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Fluktuation", "Turnover")" Icon="@Icons.Material.Filled.TrendingDown">
+            @MetricGrid(Result.TurnoverMetrics)
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @TurnoverRelevantTable(Result.FluctuationRelevantLeavers)
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @LeaverExclusionTable(Result.Leavers)
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="4">
+                    @TurnoverGauge(Result.TurnoverVisuals)
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    @TurnoverFunnel(Result.TurnoverVisuals.FunnelSteps)
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    @TurnoverDonut(Result.TurnoverVisuals.ExclusionReasons)
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @HorizontalBars(Result.TurnoverVisuals.RelevantByOrganisation)
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @MonthlyBars(Result.TurnoverVisuals.MonthlyRelevantLeavers)
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Absenzen", "Absences")" Icon="@Icons.Material.Filled.Sick">
+            @MetricGrid(Result.AbsenceMetrics)
+            <MudPaper Class="pa-4 mt-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Absenzen je Mitarbeiter", "Absences by employee")</MudText>
+                <MudTable Items="Result.Absences.OrderByDescending(x => x.KrankheitstageGesamt).Take(100)" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Personalnr.", "Personnel no.")</MudTh>
+                        <MudTh>@T("Name", "Name")</MudTh>
+                        <MudTh>@T("Organisation", "Organisation")</MudTh>
+                        <MudTh>@T("Kurz", "Short")</MudTh>
+                        <MudTh>@T("Lang", "Long")</MudTh>
+                        <MudTh>@T("Gesamt", "Total")</MudTh>
+                        <MudTh>@T("Quote", "Rate")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Personalnummer</MudTd>
+                        <MudTd>@context.Name</MudTd>
+                        <MudTd>@context.Organisationseinheit</MudTd>
+                        <MudTd>@context.KrankheitstageKurz.ToString("N1")</MudTd>
+                        <MudTd>@context.KrankheitstageLang.ToString("N1")</MudTd>
+                        <MudTd>@context.KrankheitstageGesamt.ToString("N1")</MudTd>
+                        <MudTd>@context.KrankenquoteMa.ToString("P1")</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Zeit / Ferien", "Time / Vacation")" Icon="@Icons.Material.Filled.EventAvailable">
+            @MetricGrid(Result.TimeVacationMetrics)
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @CriticalBalancesTable(Result.CriticalTimeBalances)
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Kritische Restferien", "Critical vacation balance")</MudText>
+                        <MudTable Items="Result.Employees.OrderByDescending(x => x.UrlaubRest).Take(25)" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Name", "Name")</MudTh>
+                                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                                <MudTh>@T("Rest", "Left")</MudTh>
+                                <MudTh>@T("Ausstehend", "Open")</MudTh>
+                                <MudTh>@T("Ampel", "Status")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.NameVoll</MudTd>
+                                <MudTd>@context.Organisationseinheit</MudTd>
+                                <MudTd>@context.UrlaubRest.ToString("N1")</MudTd>
+                                <MudTd>@context.FerienAusstehend.ToString("N1")</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@TrafficLightColor(context.RestferienAmpel)" Variant="Variant.Outlined">
+                                        @context.RestferienAmpel
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Mitarbeitende", "Employees")" Icon="@Icons.Material.Filled.Groups">
+            @EmployeesTable(Result.Employees)
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
+            @FileStatusTable(Result.FileStatuses)
+        </MudTabPanel>
+    </MudTabs>
+
+@code {
+    [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = new();
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private static Color MetricColor(string severity)
+        => severity == "Warning" ? Color.Warning : Color.Default;
+
+    private static Color TrafficLightColor(string value)
+        => value switch
+        {
+            "Rot" => Color.Error,
+            "Gelb" => Color.Warning,
+            _ => Color.Success
+        };
+
+    private static string FormatDate(DateTime? value)
+        => value?.ToString("dd.MM.yyyy") ?? "-";
+
+    private RenderFragment<IReadOnlyList<HrKpiMetric>> MetricGrid => metrics => @<MudGrid Class="mb-4">
+        @foreach (var metric in metrics)
+        {
+            <MudItem xs="12" sm="6" md="3" lg="2">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.caption">@metric.Label</MudText>
+                    <MudText Typo="Typo.h5">@metric.Value</MudText>
+                    <MudText Typo="Typo.body2" Color="@MetricColor(metric.Severity)">@metric.Detail</MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>;
+
+    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> HeadcountByOrganisationTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Headcount nach Organisation", "Headcount by organisation")</MudText>
+        <MudTable Items="items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                <MudTh>@T("Headcount", "Headcount")</MudTh>
+                <MudTh>FTE</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Label</MudTd>
+                <MudTd>@context.Count.ToString("N0")</MudTd>
+                <MudTd>@context.Value.ToString("N1")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiEmployeeRow>> CriticalBalancesTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Kritische GLZ-Saldi", "Critical time balances")</MudText>
+        <MudTable Items="items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Name", "Name")</MudTh>
+                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                <MudTh>@T("Saldo", "Balance")</MudTh>
+                <MudTh>@T("Ampel", "Status")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@context.Organisationseinheit</MudTd>
+                <MudTd>@context.StundenSaldo.ToString("N1")</MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@TrafficLightColor(context.GlzAmpel)" Variant="Variant.Outlined">
+                        @context.GlzAmpel
+                    </MudChip>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrLeaverRow>> TurnoverRelevantTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Fluktuationsrelevante Austritte", "Turnover relevant leavers")</MudText>
+        <MudTable Items="items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Name", "Name")</MudTh>
+                <MudTh>@T("Austritt", "Exit")</MudTh>
+                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                <MudTh>@T("Austrittsart", "Exit type")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@FormatDate(context.Austrittsdatum)</MudTd>
+                <MudTd>@context.Organisationseinheit</MudTd>
+                <MudTd>@context.Austrittsart</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrLeaverRow>> LeaverExclusionTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Ausschlussgruende", "Exclusion reasons")</MudText>
+        <MudTable Items="BuildLeaverExclusionRows(items)" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Grund", "Reason")</MudTh>
+                <MudTh>@T("Anzahl", "Count")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Label</MudTd>
+                <MudTd>@context.Count.ToString("N0")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiEmployeeRow>> EmployeesTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Mitarbeitende", "Employees")</MudText>
+        <MudTable Items="items.Take(250)" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Personalnr.", "Personnel no.")</MudTh>
+                <MudTh>@T("Name", "Name")</MudTh>
+                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                <MudTh>@T("Kostenstelle", "Cost center")</MudTh>
+                <MudTh>FTE</MudTh>
+                <MudTh>@T("Alter", "Age")</MudTh>
+                <MudTh>@T("Dienstjahre", "Service years")</MudTh>
+                <MudTh>@T("Typ", "Type")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Personalnummer</MudTd>
+                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@context.Organisationseinheit</MudTd>
+                <MudTd>@context.KostenstelleText</MudTd>
+                <MudTd>@context.Fte.ToString("N2")</MudTd>
+                <MudTd>@context.AlterJahre</MudTd>
+                <MudTd>@context.Dienstjahre</MudTd>
+                <MudTd>@context.Mitarbeitertyp</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiFileStatus>> FileStatusTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Dateistatus", "File status")</MudText>
+        <MudTable Items="items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Quelle", "Source")</MudTh>
+                <MudTh>@T("Status", "Status")</MudTh>
+                <MudTh>@T("Zeilen", "Rows")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudText Typo="Typo.body2">@context.Label</MudText>
+                    <MudText Typo="Typo.caption">@context.Path</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@(context.Exists ? Color.Success : Color.Error)" Variant="Variant.Outlined">
+                        @(context.Message ?? "-")
+                    </MudChip>
+                </MudTd>
+                <MudTd>@context.RowCount.ToString("N0")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private static IEnumerable<HrKpiGroupValue> BuildLeaverExclusionRows(IReadOnlyList<HrLeaverRow> items)
+        => items
+            .GroupBy(x => x.FluktuationAusschlussgrund ?? "Relevant")
+            .Select(g => new HrKpiGroupValue { Label = g.Key, Count = g.Count(), Value = g.Count() })
+            .OrderByDescending(x => x.Count);
+
+    private RenderFragment<HrTurnoverVisuals> TurnoverGauge => visual => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Jahres-Fluktuation", "Annual turnover")</MudText>
+        <div class="hr-gauge" style="@($"--gauge-color:{visual.GaugeColor}; --gauge-deg:{visual.GaugeRotationDegrees.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}deg")">
+            <div class="hr-gauge-track"></div>
+            <div class="hr-gauge-needle"></div>
+            <div class="hr-gauge-center">
+                <div class="hr-gauge-value">@visual.YearRateLabel</div>
+                <div class="hr-gauge-caption">0-20%</div>
+            </div>
+        </div>
+        <div class="hr-gauge-scale">
+            <span>0%</span>
+            <span>8%</span>
+            <span>12%</span>
+            <span>20%+</span>
+        </div>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> TurnoverFunnel => items => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Austritts-Funnel", "Leaver funnel")</MudText>
+        <div class="hr-funnel">
+            @foreach (var item in items)
+            {
+                <div class="hr-funnel-row">
+                    <div class="hr-funnel-label">@item.Label</div>
+                    <div class="hr-funnel-bar-wrap">
+                        <div class="hr-funnel-bar" style="@($"width:{Math.Max(item.Percent, 3).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%; background:{item.Color}")">
+                            <span>@item.Count.ToString("N0")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> TurnoverDonut => items => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Ausschlussgruende", "Exclusion reasons")</MudText>
+        <div class="hr-donut-wrap">
+            <div class="hr-donut" style="@BuildDonutStyle(items)">
+                <div class="hr-donut-hole">@items.Sum(x => x.Count).ToString("N0")</div>
+            </div>
+            <div class="hr-donut-legend">
+                @foreach (var item in items.Take(7))
+                {
+                    <div class="hr-legend-row">
+                        <span class="hr-legend-dot" style="@($"background:{item.Color}")"></span>
+                        <span>@item.Label</span>
+                        <strong>@item.Count.ToString("N0")</strong>
+                    </div>
+                }
+            </div>
+        </div>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> HorizontalBars => items => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Relevante Austritte nach Organisation", "Relevant leavers by organisation")</MudText>
+        <div class="hr-bars">
+            @foreach (var item in items)
+            {
+                <div class="hr-bar-row">
+                    <div class="hr-bar-label">@item.Label</div>
+                    <div class="hr-bar-track">
+                        <div class="hr-bar-fill" style="@($"width:{Math.Max(item.Percent, 3).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%; background:{item.Color}")"></div>
+                    </div>
+                    <div class="hr-bar-value">@item.Count.ToString("N0")</div>
+                </div>
+            }
+        </div>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> MonthlyBars => items => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Relevante Austritte pro Monat", "Relevant leavers per month")</MudText>
+        <div class="hr-month-bars">
+            @foreach (var item in items)
+            {
+                <div class="hr-month">
+                    <div class="hr-month-bar" style="@($"height:{Math.Max(item.Percent, item.Count > 0 ? 8 : 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%; background:{item.Color}")"></div>
+                    <div class="hr-month-value">@item.Count</div>
+                    <div class="hr-month-label">@item.Label</div>
+                </div>
+            }
+        </div>
+    </MudPaper>;
+
+    private static string BuildDonutStyle(IReadOnlyList<HrKpiGroupValue> items)
+    {
+        var total = items.Sum(x => x.Count);
+        if (total <= 0)
+            return "background:#e0e0e0";
+        var current = 0m;
+        var segments = new List<string>();
+        foreach (var item in items)
+        {
+            var start = current;
+            current += item.Count / (decimal)total * 100m;
+            segments.Add($"{item.Color} {start.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}% {current.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%");
+        }
+        return $"background:conic-gradient({string.Join(", ", segments)})";
+    }
+}
+
+<style>
+    .hr-viz-panel {
+        min-height: 100%;
+    }
+
+    .hr-gauge {
+        --gauge-color: #2e7d32;
+        --gauge-deg: 0deg;
+        position: relative;
+        height: 170px;
+        display: grid;
+        place-items: end center;
+        overflow: hidden;
+    }
+
+    .hr-gauge-track {
+        width: 260px;
+        height: 130px;
+        border-radius: 260px 260px 0 0;
+        background: conic-gradient(from 270deg at 50% 100%, #2e7d32 0deg 72deg, #f9a825 72deg 108deg, #c62828 108deg 180deg, transparent 180deg 360deg);
+        position: absolute;
+        bottom: 0;
+    }
+
+    .hr-gauge-track::after {
+        content: "";
+        position: absolute;
+        left: 34px;
+        right: 34px;
+        bottom: 0;
+        height: 96px;
+        border-radius: 192px 192px 0 0;
+        background: var(--mud-palette-surface);
+    }
+
+    .hr-gauge-needle {
+        position: absolute;
+        bottom: 4px;
+        width: 4px;
+        height: 112px;
+        background: #263238;
+        transform-origin: bottom center;
+        transform: rotate(calc(var(--gauge-deg) - 90deg));
+        border-radius: 4px;
+        z-index: 2;
+    }
+
+    .hr-gauge-center {
+        z-index: 3;
+        text-align: center;
+        margin-bottom: 4px;
+    }
+
+    .hr-gauge-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gauge-color);
+    }
+
+    .hr-gauge-caption,
+    .hr-gauge-scale {
+        color: var(--mud-palette-text-secondary);
+        font-size: .8rem;
+    }
+
+    .hr-gauge-scale {
+        display: flex;
+        justify-content: space-between;
+        max-width: 280px;
+        margin: 4px auto 0;
+    }
+
+    .hr-funnel-row,
+    .hr-bar-row,
+    .hr-legend-row {
+        display: grid;
+        grid-template-columns: minmax(110px, 1fr) 2fr auto;
+        gap: 10px;
+        align-items: center;
+        margin: 9px 0;
+    }
+
+    .hr-funnel-bar-wrap,
+    .hr-bar-track {
+        background: rgba(0,0,0,.08);
+        border-radius: 4px;
+        height: 24px;
+        overflow: hidden;
+    }
+
+    .hr-funnel-bar,
+    .hr-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        min-width: 26px;
+    }
+
+    .hr-donut-wrap {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 18px;
+        align-items: center;
+    }
+
+    .hr-donut {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        position: relative;
+    }
+
+    .hr-donut::after {
+        content: "";
+        position: absolute;
+        inset: 34px;
+        border-radius: 50%;
+        background: var(--mud-palette-surface);
+    }
+
+    .hr-donut-hole {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 2;
+        font-weight: 700;
+        font-size: 1.35rem;
+    }
+
+    .hr-legend-row {
+        grid-template-columns: auto 1fr auto;
+        margin: 6px 0;
+        font-size: .9rem;
+    }
+
+    .hr-legend-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .hr-bars {
+        display: grid;
+        gap: 7px;
+    }
+
+    .hr-bar-row {
+        grid-template-columns: minmax(130px, 1.2fr) 2fr auto;
+    }
+
+    .hr-month-bars {
+        height: 240px;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 8px;
+        align-items: end;
+    }
+
+    .hr-month {
+        height: 100%;
+        display: grid;
+        grid-template-rows: 1fr auto auto;
+        align-items: end;
+        text-align: center;
+        color: var(--mud-palette-text-secondary);
+        font-size: .8rem;
+    }
+
+    .hr-month-bar {
+        width: 100%;
+        min-height: 2px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .hr-month-value {
+        color: var(--mud-palette-text-primary);
+        font-weight: 600;
+    }
+
+    @@media (max-width: 700px) {
+        .hr-donut-wrap {
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+
+        .hr-funnel-row,
+        .hr-bar-row {
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+    }
+</style>
+

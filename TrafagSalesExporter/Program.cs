@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Security;
 using TrafagSalesExporter.Services;
 using TrafagSalesExporter.Services.DataSources;
@@ -43,6 +44,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
+builder.Services.Configure<HrKpiDataSourceOptions>(builder.Configuration.GetSection(HrKpiDataSourceOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
