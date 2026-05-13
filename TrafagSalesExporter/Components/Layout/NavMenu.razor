@@ -18,6 +18,9 @@
     <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Analytics">
         @T("Management Cockpit", "Management Cockpit")
     </MudNavLink>
+    <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Groups">
+        @T("HR KPI", "HR KPI")
+    </MudNavLink>
     <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
         <Authorized>
             <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">

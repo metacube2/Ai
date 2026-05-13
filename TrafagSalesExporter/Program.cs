@@ -70,6 +70,7 @@ builder.Services.AddSingleton<ITransformationCatalog, TransformationCatalog>();
 builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
 builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
 builder.Services.AddSingleton<IManagementCockpitService, ManagementCockpitService>();
+builder.Services.AddSingleton<IHrKpiService, HrKpiService>();
 builder.Services.AddSingleton<IManualExcelImportService, ManualExcelImportService>();
 builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
 builder.Services.AddSingleton<IExportLogService, ExportLogService>();
