@@ -92,6 +92,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 CompanyCurrency = r.CompanyCurrency,
                 Incoterms2020 = r.Incoterms2020,
                 SalesResponsibleEmployee = r.SalesResponsibleEmployee,
+                PostingDate = r.PostingDate,
                 InvoiceDate = r.InvoiceDate,
                 OrderDate = r.OrderDate,
                 Land = r.Land,
@@ -167,7 +168,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
                 DocumentCurrency, DocumentTotalForeignCurrency, DocumentTotalLocalCurrency, VatSumForeignCurrency,
-                VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, InvoiceDate, OrderDate, Land, DocumentType
+                VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, PostingDate, InvoiceDate, OrderDate, Land, DocumentType
             )
             VALUES (
                 $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $documentEntry, $invoiceNumber, $positionOnInvoice,
@@ -175,7 +176,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
                 $documentCurrency, $documentTotalForeignCurrency, $documentTotalLocalCurrency, $vatSumForeignCurrency,
-                $vatSumLocalCurrency, $documentRate, $companyCurrency, $salesResponsibleEmployee, $invoiceDate, $orderDate, $land, $documentType
+                $vatSumLocalCurrency, $documentRate, $companyCurrency, $salesResponsibleEmployee, $postingDate, $invoiceDate, $orderDate, $land, $documentType
             );
             """;
 
@@ -212,6 +213,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$companyCurrency", SqliteType.Text);
         command.Parameters.Add("$incoterms2020", SqliteType.Text);
         command.Parameters.Add("$salesResponsibleEmployee", SqliteType.Text);
+        command.Parameters.Add("$postingDate", SqliteType.Text);
         command.Parameters.Add("$invoiceDate", SqliteType.Text);
         command.Parameters.Add("$orderDate", SqliteType.Text);
         command.Parameters.Add("$land", SqliteType.Text);
@@ -255,6 +257,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$companyCurrency"].Value = record.CompanyCurrency ?? string.Empty;
         command.Parameters["$incoterms2020"].Value = record.Incoterms2020 ?? string.Empty;
         command.Parameters["$salesResponsibleEmployee"].Value = record.SalesResponsibleEmployee ?? string.Empty;
+        command.Parameters["$postingDate"].Value = record.PostingDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$invoiceDate"].Value = record.InvoiceDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$orderDate"].Value = record.OrderDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$land"].Value = record.Land ?? string.Empty;

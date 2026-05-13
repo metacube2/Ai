@@ -74,6 +74,8 @@ public class CentralSalesRecordServiceTests : IDisposable
                 VatSumLocalCurrency = 7.6m,
                 DocumentRate = 0.95m,
                 CompanyCurrency = "CHF",
+                PostingDate = new DateTime(2026, 4, 28),
+                InvoiceDate = new DateTime(2026, 4, 29),
                 Land = "Schweiz",
                 DocumentType = "INV"
             }
@@ -90,6 +92,8 @@ public class CentralSalesRecordServiceTests : IDisposable
         Assert.Equal(7.6m, row.VatSumLocalCurrency);
         Assert.Equal(0.95m, row.DocumentRate);
         Assert.Equal("CHF", row.CompanyCurrency);
+        Assert.Equal(new DateTime(2026, 4, 28), row.PostingDate);
+        Assert.Equal(new DateTime(2026, 4, 29), row.InvoiceDate);
     }
 
     private sealed class NullAppEventLogService : IAppEventLogService

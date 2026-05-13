@@ -81,15 +81,15 @@ public class ExportOrchestrationService
         return await RunConsolidatedExportAsync();
     }
 
-    public async Task<SiteExportResult?> ExportSiteByIdAsync(int siteId)
+    public async Task<SiteExportResult?> ExportSiteByIdAsync(int siteId, int? preferredImportYear = null)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var site = await db.Sites.Include(s => s.HanaServer).FirstOrDefaultAsync(s => s.Id == siteId);
         if (site is null) return null;
-        return await ExportSiteAsync(site);
+        return await ExportSiteAsync(site, preferredImportYear);
     }
 
-    private async Task<SiteExportResult?> ExportSiteAsync(Site site)
+    private async Task<SiteExportResult?> ExportSiteAsync(Site site, int? preferredImportYear = null)
     {
         SiteExportResult? result = null;
 
@@ -102,7 +102,7 @@ public class ExportOrchestrationService
 
         try
         {
-            result = await _siteExportService.ExportAsync(site, status => UpdateStatus(site.Id, status));
+            result = await _siteExportService.ExportAsync(site, status => UpdateStatus(site.Id, status), preferredImportYear);
             return result;
         }
         finally

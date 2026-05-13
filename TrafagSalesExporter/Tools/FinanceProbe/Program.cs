@@ -4,14 +4,52 @@ using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic.FileIO;
 using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services;
+using TrafagSalesExporter.Services.DataSources;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 var databasePath = ResolveDatabasePath(builder.Configuration["FinanceProbe:DatabasePath"]);
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite($"Data Source={databasePath};Default Timeout=60"));
+builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
+builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
+builder.Services.AddSingleton<IExcelExportService, ExcelExportService>();
+builder.Services.AddSingleton<ISharePointUploadService, SharePointUploadService>();
+builder.Services.AddSingleton<ISapGatewayService, SapGatewayService>();
+builder.Services.AddSingleton<IMappedSalesRecordComposer, MappedSalesRecordComposer>();
+builder.Services.AddSingleton<ISapCompositionService, SapCompositionService>();
+builder.Services.AddSingleton<ITransformationStrategy, CopyTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, UppercaseTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, LowercaseTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, PrefixTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, NormalizeCurrencyCodeTransformationStrategy>();
+builder.Services.AddSingleton<ICurrencyExchangeRateService, CurrencyExchangeRateService>();
+builder.Services.AddSingleton<IExchangeRateImportService, ExchangeRateImportService>();
+builder.Services.AddSingleton<IRecordTransformationStrategy, FirstNonEmptyRecordTransformationStrategy>();
+builder.Services.AddSingleton<IRecordTransformationStrategy, ConvertCurrencyRecordTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationCatalog, TransformationCatalog>();
+builder.Services.AddSingleton<IRecordTransformationService, RecordTransformationService>();
+builder.Services.AddSingleton<IAppEventLogService, AppEventLogService>();
+builder.Services.AddSingleton<IManagementCockpitService, ManagementCockpitService>();
+builder.Services.AddSingleton<IManualExcelImportService, ManualExcelImportService>();
+builder.Services.AddSingleton<IConsolidatedExportService, ConsolidatedExportService>();
+builder.Services.AddSingleton<IExportLogService, ExportLogService>();
+builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordService>();
+builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
 builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliationService>();
+builder.Services.AddSingleton<IDataSourceAdapter, HanaDataSourceAdapter>();
+builder.Services.AddSingleton<IDataSourceAdapter, SapGatewayDataSourceAdapter>();
+builder.Services.AddSingleton<IDataSourceAdapter, ManualExcelDataSourceAdapter>();
+builder.Services.AddSingleton<IDataSourceAdapterResolver, DataSourceAdapterResolver>();
+builder.Services.AddSingleton<ISiteExportService, SiteExportService>();
+builder.Services.AddSingleton<ExportOrchestrationService>();
 
 var app = builder.Build();
 
@@ -25,8 +63,156 @@ app.MapGet("/finance", async (IFinanceReconciliationService finance, IDbContextF
     var coverage = await LoadSiteCoverageAsync(dbFactory, 2025);
     return Results.Content(BuildPage(rows, databasePath, excelReferences, spainCsv, germanySample, coverage), "text/html; charset=utf-8");
 });
+app.MapGet("/run/export-all", async (ExportOrchestrationService exports, IFinanceReconciliationService finance, IDbContextFactory<AppDbContext> dbFactory) =>
+{
+    var startedAt = DateTime.Now;
+    await exports.ExportAllAsync();
+    var summary = await BuildRunSummaryAsync(finance, dbFactory, startedAt, "Alle aktiven Standorte exportiert und zentrale Datei erzeugt.");
+    return Results.Content(summary, "text/html; charset=utf-8");
+});
+app.MapGet("/run/consolidated", async (ExportOrchestrationService exports, IFinanceReconciliationService finance, IDbContextFactory<AppDbContext> dbFactory) =>
+{
+    var startedAt = DateTime.Now;
+    var path = await exports.ExportConsolidatedOnlyAsync();
+    var message = string.IsNullOrWhiteSpace(path)
+        ? "Zentrale Datei wurde nicht erzeugt; vermutlich keine CentralSalesRecords vorhanden oder Export lief bereits."
+        : $"Zentrale Datei erzeugt: {path}";
+    var summary = await BuildRunSummaryAsync(finance, dbFactory, startedAt, message);
+    return Results.Content(summary, "text/html; charset=utf-8");
+});
+app.MapGet("/run/export/{siteKey}", async (string siteKey, int? year, ExportOrchestrationService exports, IFinanceReconciliationService finance, IDbContextFactory<AppDbContext> dbFactory) =>
+{
+    var startedAt = DateTime.Now;
+    var site = await ResolveSiteAsync(dbFactory, siteKey);
+    if (site is null)
+        return Results.NotFound($"Standort nicht gefunden: {siteKey}");
+
+    var importYear = year ?? 2025;
+    var result = await exports.ExportSiteByIdAsync(site.Id, importYear);
+    var message = result is null
+        ? $"Export wurde nicht gestartet: {site.Land} / {site.TSC}"
+        : $"Export {result.Log.Status}: {site.Land} / {site.TSC}, Jahr={importYear}, Zeilen={result.Log.RowCount}, Datei={result.FilePath ?? "-"}, Fehler={result.Log.ErrorMessage}";
+    var summary = await BuildRunSummaryAsync(finance, dbFactory, startedAt, message);
+    return Results.Content(summary, "text/html; charset=utf-8");
+});
 
 app.Run();
+
+static async Task<Site?> ResolveSiteAsync(IDbContextFactory<AppDbContext> dbFactory, string siteKey)
+{
+    await using var db = await dbFactory.CreateDbContextAsync();
+    var normalized = siteKey.Trim();
+    if (int.TryParse(normalized, out var siteId))
+        return await db.Sites.AsNoTracking().FirstOrDefaultAsync(s => s.Id == siteId);
+
+    var sites = await db.Sites
+        .AsNoTracking()
+        .OrderBy(s => s.Id)
+        .ToListAsync();
+    return sites.FirstOrDefault(s =>
+        s.TSC.Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+        s.Land.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+}
+
+static async Task<string> BuildRunSummaryAsync(
+    IFinanceReconciliationService finance,
+    IDbContextFactory<AppDbContext> dbFactory,
+    DateTime startedAt,
+    string message)
+{
+    var rows = await finance.BuildNetSalesReferenceRowsAsync(2025);
+    var coverage = await LoadSiteCoverageAsync(dbFactory, 2025);
+    var recentLogs = await LoadRecentExportLogsAsync(dbFactory, startedAt);
+    var okCount = rows.Count(r => r.Status == "OK");
+    var checkCount = rows.Count(r => r.Status == "Pruefen");
+    var missingCount = rows.Count(r => r.Status == "Keine Daten");
+    var financeRows = string.Join(Environment.NewLine, rows.Select(row => $$"""
+<tr>
+  <td>{{Html(row.Status)}}</td>
+  <td>{{Html(row.Key)}}</td>
+  <td>{{Html(row.Label)}}</td>
+  <td class="num">{{Amount(row.ActualValue)}}</td>
+  <td class="num">{{Amount(row.ReferenceValue)}}</td>
+  <td class="num">{{Amount(row.Difference)}}</td>
+  <td>{{Html(row.ValueField)}}</td>
+  <td class="num">{{row.RowCount}}</td>
+</tr>
+"""));
+    var coverageRows = string.Join(Environment.NewLine, coverage.Select(row => $$"""
+<tr>
+  <td>{{Html(row.Land)}}<div class="small">{{Html(row.Tsc)}}</div></td>
+  <td>{{Html(row.SourceSystem)}}</td>
+  <td class="num">{{row.RowCount}}</td>
+  <td class="num">{{Amount(row.SalesPriceValue)}}</td>
+  <td>{{Html(row.Currencies)}}</td>
+  <td>{{Html(row.LastExportStatus)}}</td>
+  <td class="wrap">{{Html(row.LastExportError)}}</td>
+</tr>
+"""));
+    var logRows = string.Join(Environment.NewLine, recentLogs.Select(log => $$"""
+<tr>
+  <td>{{Html(log.Timestamp.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.GetCultureInfo("de-CH")))}}</td>
+  <td>{{Html(log.Land)}}</td>
+  <td>{{Html(log.TSC)}}</td>
+  <td>{{Html(log.Status)}}</td>
+  <td class="num">{{log.RowCount}}</td>
+  <td>{{Html(log.FileName)}}</td>
+  <td class="wrap">{{Html(log.ErrorMessage)}}</td>
+</tr>
+"""));
+
+    return $$"""
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>FinanceProbe Run Summary</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; background:#f6f7f9; color:#172033; }
+    .panel { background:#fff; border:1px solid #d8dee8; border-radius:6px; padding:14px; margin-bottom:14px; }
+    table { width:100%; border-collapse:collapse; background:#fff; border:1px solid #d8dee8; margin-top:8px; }
+    th { background:#22324a; color:#fff; text-align:left; padding:7px 9px; }
+    td { border-top:1px solid #d8dee8; padding:6px 9px; vertical-align:top; }
+    .num { text-align:right; font-variant-numeric:tabular-nums; }
+    .small { color:#667085; font-size:12px; }
+    .wrap { max-width:520px; }
+    a { color:#1f4f7a; }
+  </style>
+</head>
+<body>
+  <section class="panel">
+    <h1>FinanceProbe Run Summary</h1>
+    <p>{{Html(message)}}</p>
+    <p class="small">Start: {{Html(startedAt.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.GetCultureInfo("de-CH")))}} | Ergebnis: OK={{okCount}}, Pruefen={{checkCount}}, Keine Daten={{missingCount}}</p>
+    <p><a href="/finance">Zur Finance-Auswertung</a> | <a href="/run/consolidated">Zentrale Datei erzeugen</a> | <a href="/run/export-all">Alle exportieren</a></p>
+  </section>
+  <section class="panel">
+    <h2>Neue Exportlogs seit Start</h2>
+    <table><thead><tr><th>Zeit</th><th>Land</th><th>TSC</th><th>Status</th><th class="num">Zeilen</th><th>Datei</th><th>Fehler</th></tr></thead><tbody>{{logRows}}</tbody></table>
+  </section>
+  <section class="panel">
+    <h2>Finance-Abgleich</h2>
+    <table><thead><tr><th>Status</th><th>Key</th><th>Label</th><th class="num">Ist</th><th class="num">Soll</th><th class="num">Diff</th><th>Feld</th><th class="num">Zeilen</th></tr></thead><tbody>{{financeRows}}</tbody></table>
+  </section>
+  <section class="panel">
+    <h2>Datenabdeckung</h2>
+    <table><thead><tr><th>Standort</th><th>System</th><th class="num">Zeilen</th><th class="num">Sales</th><th>Waehrung</th><th>Letzter Status</th><th>Fehler</th></tr></thead><tbody>{{coverageRows}}</tbody></table>
+  </section>
+</body>
+</html>
+""";
+}
+
+static async Task<List<ExportLog>> LoadRecentExportLogsAsync(IDbContextFactory<AppDbContext> dbFactory, DateTime startedAt)
+{
+    await using var db = await dbFactory.CreateDbContextAsync();
+    return await db.ExportLogs
+        .AsNoTracking()
+        .Where(log => log.Timestamp >= startedAt.AddSeconds(-2))
+        .OrderByDescending(log => log.Id)
+        .Take(40)
+        .ToListAsync();
+}
 
 static string ResolveDatabasePath(string? configuredPath)
 {
@@ -238,12 +424,12 @@ static async Task<List<SiteCoverageRow>> LoadSiteCoverageAsync(IDbContextFactory
         .ToDictionaryAsync(s => s.Code, StringComparer.OrdinalIgnoreCase);
     var centralBaseRows = await db.CentralSalesRecords
         .AsNoTracking()
-        .Where(r => (r.InvoiceDate ?? r.ExtractionDate).Year == year)
+        .Where(r => (r.PostingDate ?? r.InvoiceDate ?? r.ExtractionDate).Year == year)
         .Select(r => new
         {
             r.SiteId,
             r.SalesPriceValue,
-            Date = r.InvoiceDate ?? r.ExtractionDate,
+            Date = r.PostingDate ?? r.InvoiceDate ?? r.ExtractionDate,
             Currency = string.IsNullOrWhiteSpace(r.CompanyCurrency) ? r.SalesCurrency : r.CompanyCurrency
         })
         .ToListAsync();

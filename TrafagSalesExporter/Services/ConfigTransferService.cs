@@ -413,6 +413,7 @@ public class ConfigTransferService : IConfigTransferService
                     CompanyCurrency = record.CompanyCurrency,
                     Incoterms2020 = record.Incoterms2020,
                     SalesResponsibleEmployee = record.SalesResponsibleEmployee,
+                    PostingDate = record.PostingDate,
                     InvoiceDate = record.InvoiceDate,
                     OrderDate = record.OrderDate,
                     Land = record.Land,

@@ -42,6 +42,7 @@ public class CentralSalesRecord
     public string CompanyCurrency { get; set; } = string.Empty;
     public string Incoterms2020 { get; set; } = string.Empty;
     public string SalesResponsibleEmployee { get; set; } = string.Empty;
+    public DateTime? PostingDate { get; set; }
     public DateTime? InvoiceDate { get; set; }
     public DateTime? OrderDate { get; set; }
     public string Land { get; set; } = string.Empty;

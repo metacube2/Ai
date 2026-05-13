@@ -140,10 +140,20 @@ public class ManualExcelDataSourceAdapterTests
             return Task.FromResult(tempPath);
         }
 
-        public Task<SharePointFileReference> ResolveLatestFileInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc)
+        public Task<SharePointFileReference> ResolveLatestFileInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc, int? preferredYear = null)
         {
             LastResolvedTsc = siteTsc;
             return Task.FromResult(new SharePointFileReference(_latestFileReference, new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero)));
+        }
+
+        public Task<IReadOnlyList<SharePointFileReference>> ResolveManualImportFilesInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc, int? preferredYear = null)
+        {
+            LastResolvedTsc = siteTsc;
+            IReadOnlyList<SharePointFileReference> result =
+            [
+                new(_latestFileReference, new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero))
+            ];
+            return Task.FromResult(result);
         }
 
         public Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)

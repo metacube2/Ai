@@ -1,5 +1,122 @@
 # Last Change 2026-05-04
 
+## UK_B1 Mapping / FinanceProbe Nachtrag 2026-05-11
+
+Anlass:
+
+- In der FinanceProbe zeigte UK/England fuer `TRUK` nur `395'605.82 GBP` Ist gegen `3'749'865.00 GBP` Soll.
+- In den Varianten fehlten weitere sinnvolle Abgrenzungen; sichtbar war nur `Positions-Netto (Sales Price/Value)`.
+- Der Standort soll weiterhin `UK_B1` verwenden.
+
+Technischer Befund:
+
+- Standort:
+  - `Land = England`
+  - `TSC = TRUK`
+  - `SourceSystem = MANUAL_EXCEL`
+- Korrekte Quelle:
+
+```text
+https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1
+```
+
+- Lokal waren fuer `TRUK` keine `ManualExcelColumnMappings` vorhanden.
+- Der Import lief deshalb ueber die Header-Automatik.
+- Die Header-Automatik behandelte `Sales Price/Value` als fertigen Positionswert.
+- In der UK-B1-Datei ist `Sales Price/Value` nach aktuellem Befund aber ein Stueckpreis.
+- Der Finance-Positionswert muss deshalb berechnet werden:
+
+```text
+[Sales Price/Value] * [Quantity]
+```
+
+Probe auf den bereits geladenen UK-Daten:
+
+| Berechnung | Wert |
+| --- | ---: |
+| Bisher importiert: Summe `SalesPriceValue` | `395'605.82 GBP` |
+| Rekonstruiert: Summe `SalesPriceValue * Quantity` | `3'533'348.89 GBP` |
+| Soll `check.xlsx` | `3'749'865.00 GBP` |
+| Restdifferenz nach Multiplikation | ca. `216'516.11 GBP` |
+
+Umgesetzte Codeaenderung:
+
+- `Services/ManualExcelImportService.cs`
+  - grafische Manual-Excel-Mappings koennen jetzt einfache berechnete Quellen auswerten
+  - aktuell benoetigte Syntax:
+
+```text
+=[Header A]*[Header B]
+```
+
+  - Konstanten wie `=GBP` bleiben unveraendert gueltig
+
+- `Services/DatabaseSeedService.cs`
+  - England/TRUK wird auf den SharePoint-Ordner `Import/Finance/UK_B1` repariert, wenn der alte/falsche Pfad `Import/Finance/England` oder ein leerer Pfad vorhanden ist
+  - fuer `TRUK` wird ein grafisches Manual-Excel-Mapping geseedet
+  - wichtigste Zuordnung:
+
+```text
+SalesPriceValue <- =[Sales Price/Value]*[Quantity]
+SalesCurrency   <- =GBP
+DocumentCurrency<- =GBP
+CompanyCurrency <- =GBP
+PostingDate     <- invoice date
+InvoiceDate     <- invoice date
+```
+
+- `TrafagSalesExporter.Tests/ManualExcelImportServiceTests.cs`
+  - neuer Test fuer Multiplikationsausdruck im Manual-Excel-Mapping
+  - prueft, dass `123.45 * 7 = 864.15` als `SalesPriceValue` importiert wird
+
+Aktueller Verifikationsstand:
+
+```text
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false --verbosity minimal
+```
+
+Ergebnis:
+
+- Tests erfolgreich.
+- `59/59` Tests gruen.
+- Bekannte Warnungen bleiben die bestehenden MudBlazor-Analyzerwarnungen zu `Dense`.
+
+Zusatzfix:
+
+- `DatabaseSeedService` wurde gehaertet.
+- Der UK-Mapping-Seed wird nur ausgefuehrt, wenn `ManualExcelColumnMappings` sauber auf `Sites` referenziert.
+- Dadurch wird der Initialisierungslauf nicht blockiert, wenn eine bestehende SQLite-DB gerade noch aus alten Reparaturtabellen wie `Sites_repair_old` bereinigt wird.
+
+Naechster praktischer Schritt:
+
+- Lokale DB wurde direkt aktualisiert:
+  - `TRUK` zeigt auf `https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1`
+  - `TRUK` hat `18` aktive Manual-Excel-Mapping-Zeilen
+  - `SalesPriceValue <= =[Sales Price/Value]*[Quantity]`
+- FinanceProbe wurde auf `http://127.0.0.1:5099` neu gestartet.
+- `/finance` antwortet mit HTTP `200`.
+- `/run/export/TRUK` wurde angestossen, konnte aber wegen lokaler SharePoint-/Graph-Authentifizierung nicht neu laden:
+
+```text
+ClientSecretCredential authentication failed
+Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (127.0.0.1:9)
+```
+
+Damit gilt:
+
+- Code, Seed und lokale Mapping-Konfiguration sind vorbereitet.
+- Die zentrale Tabelle `CentralSalesRecords` enthaelt fuer UK noch den alten Importstand, bis der SharePoint-Zugriff wieder funktioniert und `TRUK` neu exportiert wird.
+- Aktueller alter Zentralstand bleibt deshalb:
+  - `1'882` Zeilen
+  - `395'605.82 GBP` Summe `SalesPriceValue`
+  - rekonstruiert `3'533'348.89 GBP` ueber `SalesPriceValue * Quantity`
+
+Offen fachlich fuer UK:
+
+- Nach neuem Export mit Mapping muss die Restdifferenz gegen `check.xlsx` erneut gemessen werden.
+- Wenn der Wert bei ca. `3.53 Mio. GBP` liegt, UK-Datei auf Rabatte, Fracht, Nebenpositionen oder eine andere Netto-Spalte pruefen.
+- Wenn der Wert auf `3.75 Mio. GBP` steigt, war das Mapping die Hauptursache.
+
 ## Manual Excel/CSV SharePoint-Ordner und Quellordner-Export 2026-05-08
 
 Umgesetzte Anpassungen:
@@ -68,6 +185,32 @@ Verifikation:
 
 - `Tools/FinanceProbe` Build erfolgreich.
 - Haupttests wurden mit separatem Output/Obj-Pfad ausgefuehrt, damit die laufende App nicht stoert.
+
+## FinanceProbe als KI-Steuerprogramm 2026-05-11
+
+Die FinanceProbe ist bewusst als temporaeres Test-/KI-Steuerprogramm erweitert worden. Die produktive Blazor-App bleibt davon getrennt.
+
+Neue Routen:
+
+- `/run/export/{siteKey}`
+  - startet einen Standortexport nach `Id`, `TSC` oder `Land`
+  - Beispiele: `/run/export/TRUK`, `/run/export/Spanien`, `/run/export/7`
+- `/run/export-all`
+  - startet Export aller aktiven Standorte
+  - erzeugt danach die zentrale Datei
+- `/run/consolidated`
+  - erzeugt nur die zentrale Datei aus `CentralSalesRecords`
+
+Nach jedem Lauf zeigt die FinanceProbe eine Run Summary:
+
+- neue Exportlogs seit Start
+- Finance-Abgleich gegen `check.xlsx`
+- Datenabdeckung je Standort
+
+Zweck:
+
+- Exporte und Finance-Abgleich koennen fuer Tests von der KI per HTTP angestossen werden.
+- Die Funktion ist nicht als produktive Bedienoberflaeche gedacht und kann spaeter wieder entfernt werden.
 
 ## Mapper-/Finance-Konfiguration konsolidiert 2026-05-07
 
@@ -960,3 +1103,72 @@ Ergebnis:
   - `Meeting Ampel 2025`
   - `Spain CSV direct check`
   - `Germany Excel sample check`
+
+## Financechef-Regeln abgesichert 2026-05-11
+
+Umgesetzt:
+
+- `PostingDate` als eigenes Feld in `SalesRecord` und `CentralSalesRecord`.
+- Zentrale SQLite-Tabelle erhaelt `PostingDate` automatisch per Schema-Maintenance.
+- HANA-B1 liest `DocDate` als Buchungsdatum und `TaxDate` als Fakturadatum.
+- Excel/CSV-Import erkennt `posting date`, `Buchungsdatum` und `LineRegistrationDate`.
+- Finance-Abgleich filtert das Jahr nach `PostingDate`, mit Fallback auf `InvoiceDate` und danach `ExtractionDate`.
+- Finance-Abgleich bevorzugt Nettofakturawert in Hauswaehrung positionsweise.
+- Wenn lokale Belegkopfwerte pro Position wiederholt wirken, wird die Ueberzaehlung erkannt:
+  - B1-Positionswert `SalesPriceValue` wird dann als Positions-Netto bevorzugt.
+  - deduplizierter Belegkopfwert bleibt als Kandidat sichtbar.
+- Intercompany wird weiterhin separat ausgewiesen und nicht still entfernt.
+
+Verifikation:
+
+```text
+dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\verify_probe_out\ --verbosity minimal
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false --verbosity minimal
+```
+
+Ergebnis:
+
+- FinanceProbe Build erfolgreich.
+- Tests erfolgreich: `57/57`.
+- Bekannte externe Warnung: NuGet-Sicherheitsdaten konnten wegen fehlendem Zugriff auf `api.nuget.org` nicht geladen werden.
+- Lokaler Smoke-Test `/finance`: `HTTP 200`.
+- Hinweis: Ein bestehender `dotnet`-Prozess sperrt den normalen FinanceProbe-Build-Output. Der Smoke-Test wurde deshalb ohne Rebuild direkt aus dem vorhandenen Output gestartet.
+
+## Finance-Entscheide dokumentiert 2026-05-11
+
+Neue Doku:
+
+```text
+docs/FINANCE_ENTSCHEIDE.md
+```
+
+Enthaelt die verbindlichen Financechef-Entscheide:
+
+- Hauswaehrung ist fuehrend.
+- CHF-Umrechnung ueber Budgetkurse.
+- Aggregation pro Artikel/Belegposition.
+- Net Sales Actuals = Nettofakturawert.
+- Jahresabgrenzung ueber Buchungsdatum.
+- Gutschriften separat ueber Beleg-/Positionslogik.
+- Intercompany/2nd-party separat ausweisen.
+- Indien fachlich immer in `INR`.
+
+## FinanceProbe / UK Nachdokumentation 2026-05-11
+
+Ergaenzt in `docs/FINANCE_ENTSCHEIDE.md`:
+
+- Pruefstand der Finance-Regeln.
+- Testergebnis `58/58`.
+- UK/England-Befund:
+  - `TRUK`
+  - `1'881` geladene Zeilen
+  - `395'605.82 GBP` Ist
+  - `3'749'865.00` Soll
+  - Differenz `-3'354'259.18`
+  - Interpretation: vermutlich Teilmenge/Monatsfile statt Jahreswert.
+- Offener UK-Entscheid: Monatsdateien aufsummieren oder kumulierten Jahresfile lesen.
+
+Ergaenzt in `docs/PROGRAMM_DIAGRAMME.md`:
+
+- FinanceProbe-Start und Hinweis zu Console-Logging.
+- Hinweis zu DLL-Sperren durch Visual Studio bzw. alte `dotnet`-Prozesse.

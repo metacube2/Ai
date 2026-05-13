@@ -51,6 +51,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "CentralSalesRecords", "VatSumLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentRate", "TEXT NOT NULL DEFAULT '0'");
         AddColumnIfMissing(db, "CentralSalesRecords", "CompanyCurrency", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "PostingDate", "TEXT NULL");
         EnsureAppEventLogTable(db);
     }
 

@@ -37,7 +37,7 @@ public class SiteExportService : ISiteExportService
         _logger = logger;
     }
 
-    public async Task<SiteExportResult> ExportAsync(Site site, Action<string>? updateStatus = null)
+    public async Task<SiteExportResult> ExportAsync(Site site, Action<string>? updateStatus = null, int? preferredImportYear = null)
     {
         var sw = Stopwatch.StartNew();
         var log = new ExportLog
@@ -63,7 +63,8 @@ public class SiteExportService : ISiteExportService
                 SourceDefinition = sourceDefinition,
                 Settings = settings,
                 SharePointConfig = spConfig,
-                UpdateStatus = updateStatus
+                UpdateStatus = updateStatus,
+                PreferredImportYear = preferredImportYear
             });
 
             var records = fetchResult.Records;

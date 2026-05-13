@@ -50,7 +50,7 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         var effectiveSite = CloneSiteWithSapServiceUrl(site, sapServiceUrl);
         var records = await _sapCompositionService.BuildSalesRecordsAsync(
             effectiveSite, sapSources, sapJoins, sapMappings,
-            credentials.Username, credentials.Password);
+            credentials.Username, credentials.Password, context.PreferredImportYear);
 
         return new DataSourceFetchResult { Records = records };
     }

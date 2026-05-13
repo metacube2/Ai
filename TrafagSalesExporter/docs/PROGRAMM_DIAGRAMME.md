@@ -9,6 +9,10 @@ Fuer das Programm bieten sich zwei Diagrammarten an:
 
 ## Dateien
 
+- `docs/FINANCE_ENTSCHEIDE.md`
+  - dokumentiert die verbindlichen Financechef-Entscheide fuer Waehrung, Budgetkurse, Nettofakturawert, Buchungsdatum, Gutschriften und Intercompany
+  - ist die fachliche Grundlage fuer FinanceProbe und den Soll/Ist-Abgleich
+
 - `docs/program-user-stories.svg`
   - zeigt Finance, Power User/Admin und IT/SAP als Rollen
   - ordnet Stories nach Quellenpflege, Mapping, Import, Konsolidierung, Finance-Abgleich und Betrieb
@@ -19,6 +23,11 @@ Fuer das Programm bieten sich zwei Diagrammarten an:
   - enthaelt SAP ZSCHWEIZ, SAP OData, SAP HANA/BI1, Manual Excel/CSV
   - zeigt den zentralen Weg ueber grafisches Mapping, `MappedSalesRecordComposer`, `CentralSalesRecords`, Finance-Abgleich und Export
   - markiert bewusste Rest-Doppelspuren wie HANA-B1-Legacy und den offenen Ausbau fuer Finance-Regelpflege
+
+- `docs/finance-land-algorithms.svg`
+  - zeigt fuer Finance den buchhalterischen Fluss je Land
+  - beschreibt Quelle, Mapping, Hauswaehrung, Nettofakturawert, Buchungsdatum, IC-Ausweis und Sollvergleich
+  - macht sichtbar, dass der Algorithmus regelbasiert ist und nicht auf einzelne Testzahlen frisiert wurde
 
 ## Abgleich gegen Quellcode
 
@@ -37,8 +46,44 @@ Die Diagramme wurden gegen folgende Codebereiche abgeglichen:
 Wichtige Praezisierung aus dem Code:
 
 - `SalesPriceValue` wird im Finance-Abgleich positionsweise summiert.
-- Belegkopfwerte wie `DocTotal - VatSum` werden vor der Summierung pro Beleg dedupliziert.
+- `PostingDate` ist die fuehrende Jahresabgrenzung. Falls eine Quelle kein Buchungsdatum liefert, faellt der Code auf `InvoiceDate` und danach `ExtractionDate` zurueck.
+- Hauswaehrung ist fuehrend. CHF wird als Budgetkurs-Kandidat gerechnet, nicht als Tageskurs-Standard.
+- Belegkopfwerte wie `DocTotal - VatSum` werden nicht blind pro Position multipliziert. Der Code erkennt wiederholte Headerwerte und zeigt Positionswert sowie deduplizierten Belegwert als Kandidaten.
 - Der ausgewaehlte Finance-Wert ist daher ein Ist-Kandidat, nicht pauschal immer eine Positionssumme.
+
+## FinanceProbe starten
+
+Normale Ansicht:
+
+```powershell
+dotnet run --project .\Tools\FinanceProbe\FinanceProbe.csproj --urls http://127.0.0.1:5099
+```
+
+Danach im Browser:
+
+```text
+http://127.0.0.1:5099/finance
+```
+
+Export-/Prueflaeufe:
+
+```text
+http://127.0.0.1:5099/run/export-all
+http://127.0.0.1:5099/run/consolidated
+http://127.0.0.1:5099/run/export/TRUK
+```
+
+Wenn der Build-Output durch ein laufendes Programm gesperrt ist, zuerst den alten `dotnet`-Prozess beenden oder ohne Rebuild die vorhandene DLL starten:
+
+```powershell
+dotnet .\Tools\FinanceProbe\bin\Debug\net8.0\FinanceProbe.dll --urls http://127.0.0.1:5099
+```
+
+Hinweis fuer das Testprogramm:
+
+- FinanceProbe verwendet Console-Logging, damit lokale Windows-EventLog-Rechte den Prueflauf nicht abbrechen.
+- Falls Visual Studio oder ein alter `dotnet`-Prozess DLLs sperrt, den Prozess beenden und danach neu bauen/starten.
+- Der aktuelle Entwicklungs-Pruefstand wurde zusaetzlich mit einem separaten Output unter `.codex\memories\financeprobe_check\out` gebaut, um Build-Locks zu umgehen.
 
 ## Einsatz
 

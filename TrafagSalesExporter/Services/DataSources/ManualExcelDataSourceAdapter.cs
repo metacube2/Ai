@@ -31,7 +31,7 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
         string filePath;
         string? localOutputDirectory = null;
         string? sharePointUploadFolder = null;
-        string? tempManualImportPath = null;
+        var tempManualImportPaths = new List<string>();
         try
         {
             if (File.Exists(manualImportPath))
@@ -59,19 +59,28 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                     siteId: site.Id, land: site.Land, details: manualImportPath);
 
                 var sharePointFileReference = manualImportPath;
+                var sharePointFileReferences = new List<string>();
                 if (LooksLikeSharePointFolderReference(manualImportPath))
                 {
-                    var latestFile = await _sharePointService.ResolveLatestFileInFolderAsync(
+                    var files = await _sharePointService.ResolveManualImportFilesInFolderAsync(
                         spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                        spConfig.SiteUrl, manualImportPath, site.TSC);
-                    sharePointFileReference = latestFile.FileReference;
+                        spConfig.SiteUrl, manualImportPath, site.TSC, context.PreferredImportYear);
+                    sharePointFileReferences.AddRange(files.Select(file => file.FileReference));
+                    sharePointFileReference = sharePointFileReferences.FirstOrDefault() ?? manualImportPath;
                     await _appEventLogService.WriteAsync("Export", "Neueste SharePoint-Datei ausgewaehlt",
-                        siteId: site.Id, land: site.Land, details: sharePointFileReference);
+                        siteId: site.Id, land: site.Land, details: string.Join(" | ", sharePointFileReferences));
+                }
+                else
+                {
+                    sharePointFileReferences.Add(sharePointFileReference);
                 }
 
-                tempManualImportPath = await _sharePointService.DownloadToTempFileAsync(
-                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                    spConfig.SiteUrl, sharePointFileReference);
+                foreach (var fileReference in sharePointFileReferences)
+                {
+                    tempManualImportPaths.Add(await _sharePointService.DownloadToTempFileAsync(
+                        spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
+                        spConfig.SiteUrl, fileReference));
+                }
                 filePath = sharePointFileReference;
                 sharePointUploadFolder = ResolveSharePointParentFolder(sharePointFileReference, spConfig.SiteUrl);
             }
@@ -81,12 +90,14 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                     $"Die manuelle Excel-Datei wurde nicht gefunden: {manualImportPath}");
             }
 
-            var readPath = tempManualImportPath ?? filePath;
             context.UpdateStatus?.Invoke("Manuelle Excel lesen...");
             await _appEventLogService.WriteAsync("Export", "Manuelle Excel lesen",
                 siteId: site.Id, land: site.Land, details: filePath);
 
-            var records = await _manualExcelImportService.ReadSalesRecordsAsync(readPath, site);
+            var records = new List<SalesRecord>();
+            var readPaths = tempManualImportPaths.Count > 0 ? tempManualImportPaths : [filePath];
+            foreach (var readPath in readPaths)
+                records.AddRange(await _manualExcelImportService.ReadSalesRecordsAsync(readPath, site));
             return new DataSourceFetchResult
             {
                 Records = records,
@@ -97,8 +108,11 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(tempManualImportPath) && File.Exists(tempManualImportPath))
-                File.Delete(tempManualImportPath);
+            foreach (var tempManualImportPath in tempManualImportPaths)
+            {
+                if (File.Exists(tempManualImportPath))
+                    File.Delete(tempManualImportPath);
+            }
         }
     }
 

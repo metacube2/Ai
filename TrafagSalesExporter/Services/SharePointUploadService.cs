@@ -91,7 +91,22 @@ public class SharePointUploadService : ISharePointUploadService
         string clientSecret,
         string siteUrl,
         string folderReference,
-        string siteTsc)
+        string siteTsc,
+        int? preferredYear = null)
+    {
+        var files = await ResolveManualImportFilesInFolderAsync(
+            tenantId, clientId, clientSecret, siteUrl, folderReference, siteTsc, preferredYear);
+        return files.First();
+    }
+
+    public async Task<IReadOnlyList<SharePointFileReference>> ResolveManualImportFilesInFolderAsync(
+        string tenantId,
+        string clientId,
+        string clientSecret,
+        string siteUrl,
+        string folderReference,
+        string siteTsc,
+        int? preferredYear = null)
     {
         var normalizedTenantId = Normalize(tenantId);
         var normalizedClientId = Normalize(clientId);
@@ -119,18 +134,56 @@ public class SharePointUploadService : ISharePointUploadService
 
         var folderPath = ResolveRemotePath(normalizedReference, siteUri);
         var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
-        var candidates = children?.Value?
+        var allCandidates = children?.Value?
             .Where(item => item.File is not null)
             .Where(item => IsSupportedManualImportFile(item.Name))
             .Where(item => MatchesTsc(item.Name, normalizedTsc))
             .Select(item => new
             {
                 Item = item,
-                FileDate = TryParseDatedSiteFileName(item.Name, normalizedTsc, out var fileDate) ? fileDate : (DateTime?)null
+                FileDate = TryParseDatedSiteFileName(item.Name, normalizedTsc, out var fileDate) ? fileDate : (DateTime?)null,
+                AnnualYear = TryParseAnnualSiteFileName(item.Name, normalizedTsc, out var annualYear) ? annualYear : (int?)null,
+                SnapshotDate = TryParseSnapshotDate(item.Name, out var snapshotDate) ? snapshotDate : (DateTime?)null
             })
+            .ToList() ?? [];
+
+        if (preferredYear is not null)
+        {
+            var annual = allCandidates
+                .Where(x => x.AnnualYear == preferredYear.Value)
+                .OrderByDescending(x => x.SnapshotDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException(
+                    $"Im SharePoint-Ordner '{folderPath}' wurde keine Jahresdatei fuer '{normalizedTsc}' und Jahr {preferredYear.Value} gefunden.");
+
+            var references = new List<SharePointFileReference>
+            {
+                new(string.Join("/", folderPath.Trim('/'), annual.Item.Name).Trim('/'), annual.Item.LastModifiedDateTime)
+            };
+
+            if (preferredYear.Value >= DateTime.Today.Year)
+            {
+                var baseDate = annual.SnapshotDate
+                    ?? annual.Item.LastModifiedDateTime?.UtcDateTime.Date
+                    ?? new DateTime(preferredYear.Value, 1, 1);
+
+                references.AddRange(allCandidates
+                    .Where(x => x.FileDate is not null)
+                    .Where(x => x.FileDate!.Value.Year == preferredYear.Value)
+                    .Where(x => x.FileDate!.Value.Date > baseDate.Date)
+                    .OrderBy(x => x.FileDate)
+                    .Select(x => new SharePointFileReference(
+                        string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
+                        x.Item.LastModifiedDateTime)));
+            }
+
+            return references;
+        }
+
+        var candidates = allCandidates
             .OrderByDescending(x => x.FileDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
             .ThenByDescending(x => x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
-            .ToList() ?? [];
+            .ToList();
 
         var selected = candidates.FirstOrDefault()
             ?? throw new InvalidOperationException(
@@ -138,9 +191,12 @@ public class SharePointUploadService : ISharePointUploadService
                     ? $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei gefunden."
                     : $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei fuer '{normalizedTsc}' gefunden.");
 
-        return new SharePointFileReference(
-            string.Join("/", folderPath.Trim('/'), selected.Item.Name).Trim('/'),
-            selected.Item.LastModifiedDateTime);
+        return
+        [
+            new SharePointFileReference(
+                string.Join("/", folderPath.Trim('/'), selected.Item.Name).Trim('/'),
+                selected.Item.LastModifiedDateTime)
+        ];
     }
 
     public async Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)
@@ -217,7 +273,8 @@ public class SharePointUploadService : ISharePointUploadService
             return true;
 
         var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
-        return nameWithoutExtension.EndsWith($"_{normalizedTsc}", StringComparison.OrdinalIgnoreCase);
+        return nameWithoutExtension.EndsWith($"_{normalizedTsc}", StringComparison.OrdinalIgnoreCase) ||
+               Regex.IsMatch(nameWithoutExtension, $@"(^|[^A-Z0-9]){Regex.Escape(normalizedTsc)}([^A-Z0-9]|$)", RegexOptions.IgnoreCase);
     }
 
     private static bool TryParseDatedSiteFileName(string? fileName, string normalizedTsc, out DateTime fileDate)
@@ -237,6 +294,33 @@ public class SharePointUploadService : ISharePointUploadService
             CultureInfo.InvariantCulture,
             DateTimeStyles.None,
             out fileDate);
+    }
+
+    private static bool TryParseAnnualSiteFileName(string? fileName, string normalizedTsc, out int year)
+    {
+        year = default;
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        if (!Regex.IsMatch(nameWithoutExtension, $@"(^|[^A-Z0-9]){Regex.Escape(normalizedTsc)}([^A-Z0-9]|$)", RegexOptions.IgnoreCase))
+            return false;
+        if (TryParseDatedSiteFileName(fileName, normalizedTsc, out _))
+            return false;
+
+        var match = Regex.Match(nameWithoutExtension, @"(?<!\d)(20\d{2})(?!\d)");
+        return match.Success && int.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out year);
+    }
+
+    private static bool TryParseSnapshotDate(string? fileName, out DateTime snapshotDate)
+    {
+        snapshotDate = default;
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        var match = Regex.Match(nameWithoutExtension, @"(?<!\d)(?<date>20\d{2}[-_.]\d{2}[-_.]\d{2})(?!\d)");
+        return match.Success &&
+               DateTime.TryParseExact(
+                   match.Groups["date"].Value.Replace('_', '-').Replace('.', '-'),
+                   "yyyy-MM-dd",
+                   CultureInfo.InvariantCulture,
+                   DateTimeStyles.None,
+                   out snapshotDate);
     }
 
     private static string BuildInputPreview(string tenantId, string clientId, string clientSecret, string siteUrl)

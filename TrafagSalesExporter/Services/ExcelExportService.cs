@@ -70,6 +70,7 @@ public class ExcelExportService : IExcelExportService
             "Company Currency",
             "Incoterms 2020",
             "Sales responsible employee",
+            "posting date",
             "invoice date",
             "order date",
             "Land",
@@ -115,10 +116,11 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 28).Value = record.CompanyCurrency;
             ws.Cell(row, 29).Value = record.Incoterms2020;
             ws.Cell(row, 30).Value = record.SalesResponsibleEmployee;
-            ws.Cell(row, 31).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 32).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 33).Value = record.Land;
-            ws.Cell(row, 34).Value = record.DocumentType;
+            ws.Cell(row, 31).Value = record.PostingDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 32).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 33).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 34).Value = record.Land;
+            ws.Cell(row, 35).Value = record.DocumentType;
             row++;
         }
 

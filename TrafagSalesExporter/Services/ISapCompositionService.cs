@@ -11,5 +11,6 @@ public interface ISapCompositionService
         IReadOnlyList<SapFieldMapping> mappings,
         string username,
         string password,
+        int? preferredYear = null,
         CancellationToken cancellationToken = default);
 }

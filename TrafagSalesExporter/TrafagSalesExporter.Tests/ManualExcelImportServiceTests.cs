@@ -48,10 +48,11 @@ public class ManualExcelImportServiceTests
             ws.Cell(2, 28).Value = "CHF";
             ws.Cell(2, 29).Value = "DAP";
             ws.Cell(2, 30).Value = "Alice";
-            ws.Cell(2, 31).Value = "14.04.2026";
-            ws.Cell(2, 32).Value = "10.04.2026";
-            ws.Cell(2, 33).Value = "Deutschland";
-            ws.Cell(2, 34).Value = "Invoice";
+            ws.Cell(2, 31).Value = "13.04.2026";
+            ws.Cell(2, 32).Value = "14.04.2026";
+            ws.Cell(2, 33).Value = "10.04.2026";
+            ws.Cell(2, 34).Value = "Deutschland";
+            ws.Cell(2, 35).Value = "Invoice";
         });
 
         try
@@ -78,6 +79,7 @@ public class ManualExcelImportServiceTests
             Assert.Equal("CHF", row.CompanyCurrency);
             Assert.Equal("Deutschland", row.Land);
             Assert.Equal("Invoice", row.DocumentType);
+            Assert.Equal(new DateTime(2026, 4, 13), row.PostingDate);
             Assert.Equal(new DateTime(2026, 4, 14), row.InvoiceDate);
             Assert.Equal(new DateTime(2026, 4, 10), row.OrderDate);
         }
@@ -264,6 +266,7 @@ public class ManualExcelImportServiceTests
             Map(nameof(SalesRecord.CompanyCurrency), "Währung"),
             Map(nameof(SalesRecord.Incoterms2020), "Versandbedingung"),
             Map(nameof(SalesRecord.SalesResponsibleEmployee), "AdressNummer_V"),
+            Map(nameof(SalesRecord.PostingDate), "Belegdatum-Rechnung"),
             Map(nameof(SalesRecord.InvoiceDate), "Belegdatum-Rechnung"),
             Map(nameof(SalesRecord.OrderDate), "BelegDatum Auftrag"),
             Map(nameof(SalesRecord.DocumentType), "=Manual Excel")
@@ -287,6 +290,7 @@ public class ManualExcelImportServiceTests
             Assert.Equal("EUR", row.SalesCurrency);
             Assert.Equal("EUR", row.DocumentCurrency);
             Assert.Equal("EUR", row.CompanyCurrency);
+            Assert.Equal(new DateTime(2026, 4, 27), row.PostingDate);
             Assert.Equal(new DateTime(2026, 4, 27), row.InvoiceDate);
             Assert.Equal(new DateTime(2026, 3, 9), row.OrderDate);
             Assert.Equal("Manual Excel", row.DocumentType);
@@ -307,8 +311,8 @@ public class ManualExcelImportServiceTests
         };
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
         var csv = string.Join(Environment.NewLine,
-            "\"TSC\";\"Land\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Name\";\"ProductGroup\";\"Quantity\";\"CustomerNumber\";\"CustomerName\";\"CustomerCountry\";\"StandardCost\";\"StandardCostCurrency\";\"PurchaseOrderNumber\";\"SalesPriceValue\";\"SalesCurrency\";\"DocumentCurrency\";\"CompanyCurrency\";\"Incoterms2020\";\"SalesResponsibleEmployee\";\"InvoiceDate\";\"DocumentType\"",
-            "\"TRES\";\"Spanien\";\"20241332\";\"20\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"265.000000\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"");
+            "\"TSC\";\"Land\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Name\";\"ProductGroup\";\"Quantity\";\"CustomerNumber\";\"CustomerName\";\"CustomerCountry\";\"StandardCost\";\"StandardCostCurrency\";\"PurchaseOrderNumber\";\"SalesPriceValue\";\"SalesCurrency\";\"DocumentCurrency\";\"CompanyCurrency\";\"Incoterms2020\";\"SalesResponsibleEmployee\";\"LineRegistrationDate\";\"InvoiceDate\";\"DocumentType\"",
+            "\"TRES\";\"Spanien\";\"20241332\";\"20\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"265.000000\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-03 00:00:00\";\"2025-01-02 00:00:00\";\"Invoice\"");
         await File.WriteAllTextAsync(filePath, csv);
 
         try
@@ -330,8 +334,63 @@ public class ManualExcelImportServiceTests
             Assert.Equal("EUR", row.SalesCurrency);
             Assert.Equal("EUR", row.DocumentCurrency);
             Assert.Equal("EUR", row.CompanyCurrency);
+            Assert.Equal(new DateTime(2025, 1, 3), row.PostingDate);
             Assert.Equal(new DateTime(2025, 1, 2), row.InvoiceDate);
             Assert.Equal("Invoice", row.DocumentType);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Evaluates_Mapped_Multiply_Expression()
+    {
+        var site = new Site
+        {
+            TSC = "TRUK",
+            Land = "England"
+        };
+        var filePath = CreateWorkbook(workbook =>
+        {
+            var ws = workbook.Worksheets.Add("Sales");
+            ws.Cell(1, 1).Value = "Invoice Number";
+            ws.Cell(1, 2).Value = "Position on invoice";
+            ws.Cell(1, 3).Value = "Quantity";
+            ws.Cell(1, 4).Value = "Sales Price/Value";
+            ws.Cell(1, 5).Value = "invoice date";
+            ws.Cell(2, 1).Value = "42885";
+            ws.Cell(2, 2).Value = 9;
+            ws.Cell(2, 3).Value = 7;
+            ws.Cell(2, 4).Value = 123.45m;
+            ws.Cell(2, 5).Value = "18.11.2025";
+        });
+
+        var mappings = new List<ManualExcelColumnMapping>
+        {
+            Map(nameof(SalesRecord.InvoiceNumber), "Invoice Number"),
+            Map(nameof(SalesRecord.PositionOnInvoice), "Position on invoice"),
+            Map(nameof(SalesRecord.Quantity), "Quantity"),
+            Map(nameof(SalesRecord.SalesPriceValue), "=[Sales Price/Value]*[Quantity]"),
+            Map(nameof(SalesRecord.SalesCurrency), "=GBP"),
+            Map(nameof(SalesRecord.CompanyCurrency), "=GBP"),
+            Map(nameof(SalesRecord.PostingDate), "invoice date"),
+            Map(nameof(SalesRecord.DocumentType), "=Manual Excel")
+        };
+
+        try
+        {
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(filePath, site, mappings);
+
+            var row = Assert.Single(rows);
+            Assert.Equal(864.15m, row.SalesPriceValue);
+            Assert.Equal(7m, row.Quantity);
+            Assert.Equal("GBP", row.SalesCurrency);
+            Assert.Equal("GBP", row.CompanyCurrency);
+            Assert.Equal(new DateTime(2025, 11, 18), row.PostingDate);
         }
         finally
         {
@@ -382,6 +441,7 @@ public class ManualExcelImportServiceTests
             "Company Currency",
             "Incoterms 2020",
             "Sales responsible employee",
+            "posting date",
             "invoice date",
             "order date",
             "Land",

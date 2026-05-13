@@ -308,10 +308,103 @@ public class DatabaseSeedService : IDatabaseSeedService
         }
 
         if (string.Equals(existing.SourceSystem, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase) &&
-            string.IsNullOrWhiteSpace(existing.ManualImportFilePath))
+            (string.IsNullOrWhiteSpace(existing.ManualImportFilePath) ||
+             existing.ManualImportFilePath.Contains("/England", StringComparison.OrdinalIgnoreCase)))
         {
             existing.ManualImportFilePath = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1";
             changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+
+        if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
+            EnsureUkManualExcelMapping(db, existing.Id);
+    }
+
+    private static bool CanSeedSiteDependentTable(AppDbContext db, string tableName)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var columns = DatabaseSchemaTools.GetTableColumns(conn, transaction: null, tableName);
+        if (columns.Count == 0)
+            return false;
+
+        return !DatabaseSchemaTools.TableReferences(conn, tableName, "Sites_old") &&
+               !DatabaseSchemaTools.TableReferencesObsoleteTable(conn, tableName, "Sites");
+    }
+
+    private static void EnsureUkManualExcelMapping(AppDbContext db, int siteId)
+    {
+        var mappings = new (string Target, string Source, bool Required)[]
+        {
+            (nameof(SalesRecord.Tsc), "TSC", false),
+            (nameof(SalesRecord.Land), "Land", false),
+            (nameof(SalesRecord.InvoiceNumber), "Invoice Number", true),
+            (nameof(SalesRecord.PositionOnInvoice), "Position on invoice", false),
+            (nameof(SalesRecord.Material), "Material", false),
+            (nameof(SalesRecord.Name), "Name", false),
+            (nameof(SalesRecord.ProductGroup), "Product Group", false),
+            (nameof(SalesRecord.Quantity), "Quantity", true),
+            (nameof(SalesRecord.CustomerNumber), "Customer number", false),
+            (nameof(SalesRecord.CustomerName), "Customer name", false),
+            (nameof(SalesRecord.CustomerCountry), "Customer country", false),
+            (nameof(SalesRecord.SalesPriceValue), "=[Sales Price/Value]*[Quantity]", true),
+            (nameof(SalesRecord.SalesCurrency), "=GBP", false),
+            (nameof(SalesRecord.DocumentCurrency), "=GBP", false),
+            (nameof(SalesRecord.CompanyCurrency), "=GBP", false),
+            (nameof(SalesRecord.PostingDate), "invoice date", false),
+            (nameof(SalesRecord.InvoiceDate), "invoice date", false),
+            (nameof(SalesRecord.DocumentType), "=Manual Excel", false)
+        };
+
+        var changed = false;
+        for (var i = 0; i < mappings.Length; i++)
+        {
+            var mapping = db.ManualExcelColumnMappings
+                .OrderBy(x => x.Id)
+                .FirstOrDefault(x => x.SiteId == siteId && x.TargetField == mappings[i].Target);
+
+            if (mapping is null)
+            {
+                db.ManualExcelColumnMappings.Add(new ManualExcelColumnMapping
+                {
+                    SiteId = siteId,
+                    TargetField = mappings[i].Target,
+                    SourceHeader = mappings[i].Source,
+                    IsRequired = mappings[i].Required,
+                    IsActive = true,
+                    SortOrder = i
+                });
+                changed = true;
+                continue;
+            }
+
+            if (mapping.SourceHeader != mappings[i].Source)
+            {
+                mapping.SourceHeader = mappings[i].Source;
+                changed = true;
+            }
+
+            if (mapping.IsRequired != mappings[i].Required)
+            {
+                mapping.IsRequired = mappings[i].Required;
+                changed = true;
+            }
+
+            if (!mapping.IsActive)
+            {
+                mapping.IsActive = true;
+                changed = true;
+            }
+
+            if (mapping.SortOrder != i)
+            {
+                mapping.SortOrder = i;
+                changed = true;
+            }
         }
 
         if (changed)
@@ -386,7 +479,7 @@ public class DatabaseSeedService : IDatabaseSeedService
             {
                 SiteId = siteId,
                 Alias = "Z",
-                EntitySet = "ZSCHWEIZSet",
+                EntitySet = "FinanzdataSchweizOeSet",
                 IsPrimary = true,
                 IsActive = true,
                 SortOrder = 0
@@ -395,9 +488,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         }
         else
         {
-            if (source.EntitySet != "ZSCHWEIZSet")
+            if (source.EntitySet != "FinanzdataSchweizOeSet")
             {
-                source.EntitySet = "ZSCHWEIZSet";
+                source.EntitySet = "FinanzdataSchweizOeSet";
                 changed = true;
             }
 
@@ -420,33 +513,52 @@ public class DatabaseSeedService : IDatabaseSeedService
             }
         }
 
+        var obsoleteSources = db.SapSourceDefinitions
+            .Where(x => x.SiteId == siteId && x.Alias != "Z")
+            .ToList();
+        foreach (var obsoleteSource in obsoleteSources)
+        {
+            if (obsoleteSource.IsActive)
+            {
+                obsoleteSource.IsActive = false;
+                changed = true;
+            }
+
+            if (obsoleteSource.IsPrimary)
+            {
+                obsoleteSource.IsPrimary = false;
+                changed = true;
+            }
+        }
+
         var mappings = new (string Target, string Source, bool Required)[]
         {
-            (nameof(SalesRecord.Tsc), "Z.TSC", true),
-            (nameof(SalesRecord.Land), "Z.LAND1", true),
-            (nameof(SalesRecord.DocumentEntry), "Z.VBELN", false),
-            (nameof(SalesRecord.InvoiceNumber), "Z.VBELN", true),
-            (nameof(SalesRecord.PositionOnInvoice), "Z.POSNR", true),
-            (nameof(SalesRecord.InvoiceDate), "Z.FKDAT", true),
-            (nameof(SalesRecord.Material), "Z.MATNR", false),
-            (nameof(SalesRecord.Name), "Z.ARKTX", false),
-            (nameof(SalesRecord.ProductGroup), "Z.PRODH", false),
-            (nameof(SalesRecord.Quantity), "Z.FKIMG", false),
-            (nameof(SalesRecord.CustomerNumber), "Z.KUNNR", false),
-            (nameof(SalesRecord.CustomerName), "Z.NAME1", false),
-            (nameof(SalesRecord.CustomerCountry), "Z.CUSTOMER_LAND", false),
+            (nameof(SalesRecord.Tsc), "Z.Tsc", true),
+            (nameof(SalesRecord.Land), "Z.Land1", true),
+            (nameof(SalesRecord.DocumentEntry), "Z.Vbeln", false),
+            (nameof(SalesRecord.InvoiceNumber), "Z.Vbeln", true),
+            (nameof(SalesRecord.PositionOnInvoice), "Z.Posnr", true),
+            (nameof(SalesRecord.PostingDate), "Z.Fkdat", true),
+            (nameof(SalesRecord.InvoiceDate), "Z.Fkdat", true),
+            (nameof(SalesRecord.Material), "Z.Matnr", false),
+            (nameof(SalesRecord.Name), "Z.Arktx", false),
+            (nameof(SalesRecord.ProductGroup), "Z.Prodh", false),
+            (nameof(SalesRecord.Quantity), "Z.Fkimg", false),
+            (nameof(SalesRecord.CustomerNumber), "Z.Kunnr", false),
+            (nameof(SalesRecord.CustomerName), "Z.Name1", false),
+            (nameof(SalesRecord.CustomerCountry), "Z.CustomerLand", false),
             (nameof(SalesRecord.StandardCost), "=0", false),
-            (nameof(SalesRecord.StandardCostCurrency), "Z.HWAER", false),
-            (nameof(SalesRecord.SalesPriceValue), "Z.NETWR_HC", true),
-            (nameof(SalesRecord.SalesCurrency), "Z.HWAER", true),
-            (nameof(SalesRecord.DocumentCurrency), "Z.WAERK", false),
-            (nameof(SalesRecord.DocumentTotalForeignCurrency), "Z.NETWR_DC", false),
-            (nameof(SalesRecord.DocumentTotalLocalCurrency), "Z.NETWR_HC", false),
-            (nameof(SalesRecord.VatSumForeignCurrency), "Z.TAX_DC", false),
-            (nameof(SalesRecord.VatSumLocalCurrency), "Z.TAX_HC", false),
-            (nameof(SalesRecord.DocumentRate), "Z.KURRF", false),
-            (nameof(SalesRecord.CompanyCurrency), "Z.HWAER", true),
-            (nameof(SalesRecord.DocumentType), "Z.FKART", false)
+            (nameof(SalesRecord.StandardCostCurrency), "Z.Hwaer", false),
+            (nameof(SalesRecord.SalesPriceValue), "Z.NetwrHc", true),
+            (nameof(SalesRecord.SalesCurrency), "Z.Hwaer", true),
+            (nameof(SalesRecord.DocumentCurrency), "Z.Waerk", false),
+            (nameof(SalesRecord.DocumentTotalForeignCurrency), "Z.NetwrDc", false),
+            (nameof(SalesRecord.DocumentTotalLocalCurrency), "Z.NetwrHc", false),
+            (nameof(SalesRecord.VatSumForeignCurrency), "=0", false),
+            (nameof(SalesRecord.VatSumLocalCurrency), "=0", false),
+            (nameof(SalesRecord.DocumentRate), "Z.Kurrf", false),
+            (nameof(SalesRecord.CompanyCurrency), "Z.Hwaer", true),
+            (nameof(SalesRecord.DocumentType), "Z.Fkart", false)
         };
 
         for (var i = 0; i < mappings.Length; i++)

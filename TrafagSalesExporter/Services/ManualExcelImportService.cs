@@ -50,7 +50,11 @@ public class ManualExcelImportService : IManualExcelImportService
         ["companycurrency"] = nameof(SalesRecord.CompanyCurrency),
         ["incoterms2020"] = nameof(SalesRecord.Incoterms2020),
         ["salesresponsibleemployee"] = nameof(SalesRecord.SalesResponsibleEmployee),
+        ["postingdate"] = nameof(SalesRecord.PostingDate),
+        ["buchungsdatum"] = nameof(SalesRecord.PostingDate),
+        ["lineregistrationdate"] = nameof(SalesRecord.PostingDate),
         ["invoicedate"] = nameof(SalesRecord.InvoiceDate),
+        ["fakturadatum"] = nameof(SalesRecord.InvoiceDate),
         ["orderdate"] = nameof(SalesRecord.OrderDate),
         ["land"] = nameof(SalesRecord.Land),
         ["documenttype"] = nameof(SalesRecord.DocumentType)
@@ -180,6 +184,7 @@ public class ManualExcelImportService : IManualExcelImportService
                 CompanyCurrency = ReadString(headerIndexes, fields, nameof(SalesRecord.CompanyCurrency)),
                 Incoterms2020 = ReadString(headerIndexes, fields, nameof(SalesRecord.Incoterms2020)),
                 SalesResponsibleEmployee = ReadString(headerIndexes, fields, nameof(SalesRecord.SalesResponsibleEmployee)),
+                PostingDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.PostingDate)),
                 InvoiceDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.InvoiceDate)),
                 OrderDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.OrderDate)),
                 Land = ReadString(headerIndexes, fields, nameof(SalesRecord.Land), site.Land),
@@ -290,6 +295,7 @@ public class ManualExcelImportService : IManualExcelImportService
                 CompanyCurrency = ReadString(headerIndexes, row, nameof(SalesRecord.CompanyCurrency)),
                 Incoterms2020 = ReadString(headerIndexes, row, nameof(SalesRecord.Incoterms2020)),
                 SalesResponsibleEmployee = ReadString(headerIndexes, row, nameof(SalesRecord.SalesResponsibleEmployee)),
+                PostingDate = ReadDate(headerIndexes, row, nameof(SalesRecord.PostingDate)),
                 InvoiceDate = ReadDate(headerIndexes, row, nameof(SalesRecord.InvoiceDate)),
                 OrderDate = ReadDate(headerIndexes, row, nameof(SalesRecord.OrderDate)),
                 Land = ReadString(headerIndexes, row, nameof(SalesRecord.Land), site.Land),
@@ -442,7 +448,9 @@ public class ManualExcelImportService : IManualExcelImportService
     {
         var trimmed = sourceHeader.Trim();
         if (trimmed.StartsWith('='))
-            return trimmed[1..];
+            return EvaluateMappedExpression(trimmed[1..], headerIndexes, header => TryResolveHeaderIndex(headerIndexes, header, out var index)
+                ? row.Cell(index).GetFormattedString().Trim()
+                : null);
 
         return TryResolveHeaderIndex(headerIndexes, trimmed, out var index)
             ? row.Cell(index).GetFormattedString().Trim()
@@ -453,11 +461,39 @@ public class ManualExcelImportService : IManualExcelImportService
     {
         var trimmed = sourceHeader.Trim();
         if (trimmed.StartsWith('='))
-            return trimmed[1..];
+            return EvaluateMappedExpression(trimmed[1..], headerIndexes, header => TryResolveHeaderIndex(headerIndexes, header, out var index) && index < fields.Length
+                ? fields[index].Trim()
+                : null);
 
         return TryResolveHeaderIndex(headerIndexes, trimmed, out var index) && index < fields.Length
             ? fields[index].Trim()
             : null;
+    }
+
+    private static object? EvaluateMappedExpression(string expression, Dictionary<string, int> headerIndexes, Func<string, string?> readHeader)
+    {
+        if (!expression.Contains('[') || !expression.Contains(']'))
+            return expression;
+
+        var parts = expression.Split('*', 2, StringSplitOptions.TrimEntries);
+        if (parts.Length != 2)
+            return expression;
+
+        var left = ResolveExpressionOperand(parts[0], headerIndexes, readHeader);
+        var right = ResolveExpressionOperand(parts[1], headerIndexes, readHeader);
+        return left * right;
+    }
+
+    private static decimal ResolveExpressionOperand(string operand, Dictionary<string, int> headerIndexes, Func<string, string?> readHeader)
+    {
+        var trimmed = operand.Trim();
+        if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
+        {
+            var header = trimmed[1..^1].Trim();
+            return ParseDecimal(readHeader(header) ?? string.Empty);
+        }
+
+        return ParseDecimal(trimmed);
     }
 
     private static bool IsRowEmpty(IXLRangeRow row)

@@ -2,6 +2,69 @@
 
 Stand: 2026-05-05
 
+## Nachtrag 2026-05-11 UK_B1 Mapping fertigstellen
+
+Aktueller Stand:
+
+- UK/England bleibt auf Quelle `UK_B1`.
+- Korrekte Quelle:
+
+```text
+https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1
+```
+
+- Ursache der grossen UK-Abweichung:
+  - kein grafisches Mapping fuer `TRUK`
+  - `Sales Price/Value` wurde als Positionswert gelesen
+  - in UK_B1 ist es nach aktuellem Befund ein Stueckpreis
+  - korrekte Formel ist `=[Sales Price/Value]*[Quantity]`
+
+Bereits im Worktree umgesetzt:
+
+- `ManualExcelImportService` kann berechnete Mapping-Quellen `=[Header A]*[Header B]`.
+- `DatabaseSeedService` seedet/repariert UK_B1-Pfad und `TRUK`-Mapping.
+- `DatabaseSeedService` ueberspringt den UK-Mapping-Seed, solange `ManualExcelColumnMappings` noch auf eine alte SQLite-Reparaturtabelle wie `Sites_repair_old` zeigt.
+- Unit-Test fuer berechnetes Manual-Excel-Mapping ist vorhanden.
+- Doku wurde in `docs/FINANCE_ENTSCHEIDE.md`, `lastchange.md` und `HANDOFF_2026-04-15.md` ergaenzt.
+- Tests sind gruen: `59/59`.
+
+Verifizierter Testlauf:
+
+```text
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false --verbosity minimal
+```
+
+Noch offen fuer den praktischen UK-Check:
+
+1. SharePoint-/Graph-Zugriff reparieren.
+   - letzter Fehler bei `/run/export/TRUK`:
+
+```text
+ClientSecretCredential authentication failed
+127.0.0.1:9 connection refused
+```
+
+2. UK neu exportieren:
+
+```text
+http://127.0.0.1:5099/run/export/TRUK
+```
+
+3. Finance pruefen:
+
+```text
+http://127.0.0.1:5099/finance
+```
+
+4. Ergebnis bewerten:
+   - wenn UK nahe `3'749'865 GBP` liegt: Mapping war Hauptursache.
+   - wenn UK bei ca. `3'533'349 GBP` bleibt: Restdifferenz gegen weitere UK-Netto-/Discount-/Frachtspalten pruefen.
+
+Nicht vergessen:
+
+- Keine harte Spezialkorrektur fuer genau 2025 einbauen.
+- Die Loesung muss ueber Mapping und allgemeine Positionslogik laufen, damit andere Jahre ebenfalls korrekt funktionieren.
+
 ## Nachtrag 2026-05-08 Manual Excel/CSV SharePoint-Automatik
 
 Erledigt:
@@ -42,6 +105,23 @@ Naechste fachliche Schritte:
    - Mapping/Export noch nicht gelaufen
    - Referenz ist nur zukuenftig relevant
 4. Fuer AT/CH nach `ZSCHWEIZ`-Export pruefen, ob `LAND1` korrekt `AT` bzw. `CH` liefert.
+
+## Nachtrag 2026-05-11 FinanceProbe KI-Steuerung
+
+Neue Test-Routen:
+
+- `/run/export/{siteKey}` fuer Einzelstandortexporte
+- `/run/export-all` fuer alle aktiven Standorte plus zentrale Datei
+- `/run/consolidated` fuer nur zentrale Datei
+
+Naechster sinnvoller Prueflauf:
+
+1. FinanceProbe starten.
+2. `/run/export/TRUK` fuer England testen.
+3. `/run/export/Spanien` testen.
+4. `/run/export/Deutschland` testen, sobald Alphaplan-Pfad korrekt ist.
+5. `/run/export/ZSCHWEIZ` testen.
+6. Danach `/finance` und `docs/finance_status_2025.svg` aktualisieren.
 
 ## Nachtrag 2026-05-07 nach Mapper-/Finance-Aufraeumung
 

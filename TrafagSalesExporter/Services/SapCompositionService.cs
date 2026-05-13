@@ -25,6 +25,7 @@ public class SapCompositionService : ISapCompositionService
         IReadOnlyList<SapFieldMapping> mappings,
         string username,
         string password,
+        int? preferredYear = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(site.SapServiceUrl))
@@ -44,7 +45,8 @@ public class SapCompositionService : ISapCompositionService
         {
             await _appEventLogService.WriteDebugAsync("SAP", "Quelle wird gelesen", site.Id, site.Land,
                 $"Alias={source.Alias} | EntitySet={source.EntitySet}");
-            var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, cancellationToken);
+            var filter = BuildODataYearFilter(source.EntitySet, preferredYear);
+            var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, filter, cancellationToken);
             sourceRows[source.Alias] = rows;
             await _appEventLogService.WriteDebugAsync("SAP", "Quelle gelesen", site.Id, site.Land,
                 $"Alias={source.Alias} | EntitySet={source.EntitySet} | Zeilen={rows.Count}");
@@ -56,5 +58,15 @@ public class SapCompositionService : ISapCompositionService
         await _appEventLogService.WriteDebugAsync("SAP", "Mapping ins Zielschema beendet", site.Id, site.Land,
             $"SalesRecords={result.Count} | Mappings={mappings.Count(x => x.IsActive)}");
         return result;
+    }
+
+    private static string? BuildODataYearFilter(string entitySet, int? preferredYear)
+    {
+        if (preferredYear is null)
+            return null;
+
+        return string.Equals(entitySet, "FinanzdataSchweizOeSet", StringComparison.OrdinalIgnoreCase)
+            ? $"Gjahr eq '{preferredYear.Value}'"
+            : null;
     }
 }

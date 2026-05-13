@@ -9,4 +9,5 @@ public sealed class DataSourceFetchContext
     public required ExportSettings Settings { get; init; }
     public SharePointConfig? SharePointConfig { get; init; }
     public Action<string>? UpdateStatus { get; init; }
+    public int? PreferredImportYear { get; init; }
 }

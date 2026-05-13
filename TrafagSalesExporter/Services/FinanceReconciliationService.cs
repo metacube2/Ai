@@ -34,13 +34,16 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
 
         var centralRows = await db.CentralSalesRecords
             .AsNoTracking()
-            .Where(r => (r.InvoiceDate ?? r.ExtractionDate).Year == year)
+            .Where(r => (r.PostingDate ?? r.InvoiceDate ?? r.ExtractionDate).Year == year)
             .Select(r => new NetSalesActualSourceRow(
                 r.Land,
                 r.Tsc,
                 r.DocumentEntry,
                 r.InvoiceNumber,
                 r.DocumentType,
+                r.PostingDate,
+                r.InvoiceDate,
+                r.ExtractionDate,
                 r.CustomerNumber,
                 r.CustomerName,
                 r.SalesCurrency,
@@ -57,7 +60,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
             .GroupBy(r => ResolveReferenceKey(r.Land, r.Tsc), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 g => g.Key,
-                rows => BuildNetSalesActual(rows, budgetRatesToChf, intercompanyRules),
+                g => BuildNetSalesActual(g.Key, g, budgetRatesToChf, intercompanyRules),
                 StringComparer.OrdinalIgnoreCase);
 
         return financeReferences
@@ -73,7 +76,9 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         groupedActuals.TryGetValue(reference.Key, out var actual);
         var referenceValue = reference.CheckValue ?? reference.LocalCurrencyValue;
         var selected = actual?.Candidates
-            .OrderByDescending(candidate => candidate.Key == "NetDocumentLocalCurrency")
+            .OrderByDescending(candidate => candidate.IsPreferred)
+            .ThenByDescending(candidate => candidate.Key == "NetDocumentLocalCurrencyPosition")
+            .ThenByDescending(candidate => candidate.Key == "NetDocumentLocalCurrencyDocument")
             .ThenByDescending(candidate => candidate.Key == "SalesPriceValue")
             .FirstOrDefault();
         var difference = selected is null || !referenceValue.HasValue ? (decimal?)null : selected.Value - referenceValue.Value;
@@ -106,6 +111,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
                 Value = candidate.Value,
                 IntercompanyValue = candidate.IntercompanyValue,
                 ValueExcludingIntercompany = candidate.ValueExcludingIntercompany,
+                IsPreferred = candidate.IsPreferred,
                 Difference = referenceValue.HasValue ? candidate.Value - referenceValue.Value : null,
                 DifferenceExcludingIntercompany = referenceValue.HasValue
                     ? candidate.ValueExcludingIntercompany - referenceValue.Value
@@ -139,24 +145,30 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
     }
 
     private static NetSalesActual BuildNetSalesActual(
+        string referenceKey,
         IEnumerable<NetSalesActualSourceRow> rows,
         IReadOnlyDictionary<string, decimal> budgetRatesToChf,
         IReadOnlyList<FinanceIntercompanyRule> intercompanyRules)
     {
         var rowList = rows.ToList();
+        var houseCurrency = ResolveHouseCurrency(referenceKey, rowList);
         var documentRows = rowList
             .GroupBy(row => BuildDocumentKey(row.Tsc, row.DocumentType, row.DocumentEntry, row.InvoiceNumber), StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .ToList();
+        var repeatedDocumentTotals = LooksLikeRepeatedDocumentTotals(rowList);
 
+        var salesPriceValue = rowList.Sum(row => row.SalesPriceValue);
+        var salesPriceIntercompanyValue = rowList.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.SalesPriceValue);
         var candidates = new List<NetSalesCandidate>
         {
             new(
                 "SalesPriceValue",
-                "Sales Price/Value",
-                ResolveCurrencyLabel(rowList.Select(row => row.SalesCurrency)),
-                rowList.Sum(row => row.SalesPriceValue),
-                rowList.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.SalesPriceValue))
+                "Positions-Netto (Sales Price/Value)",
+                houseCurrency,
+                salesPriceValue,
+                salesPriceIntercompanyValue,
+                repeatedDocumentTotals && salesPriceValue != 0m)
         };
 
         var netDocumentForeignCurrency = documentRows.Sum(row => row.DocumentTotalForeignCurrency - row.VatSumForeignCurrency);
@@ -166,44 +178,98 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
                 "DocTotalFC - VatSumFC",
                 ResolveCurrencyLabel(rowList.Select(row => row.DocumentCurrency)),
                 netDocumentForeignCurrency,
-                documentRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.DocumentTotalForeignCurrency - row.VatSumForeignCurrency)));
+                documentRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.DocumentTotalForeignCurrency - row.VatSumForeignCurrency),
+                false));
+
+        var positionNetDocumentLocalCurrency = rowList.Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency);
+        if (positionNetDocumentLocalCurrency != 0m)
+            candidates.Add(new(
+                "NetDocumentLocalCurrencyPosition",
+                "Nettofakturawert Hauswaehrung pro Position",
+                houseCurrency,
+                positionNetDocumentLocalCurrency,
+                rowList.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency),
+                !repeatedDocumentTotals));
 
         var netDocumentLocalCurrency = documentRows.Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency);
         if (netDocumentLocalCurrency != 0m)
             candidates.Add(new(
-                "NetDocumentLocalCurrency",
-                "Nettofakturawert Hauswaehrung",
-                ResolveCurrencyLabel(rowList.Select(row => row.CompanyCurrency)),
+                "NetDocumentLocalCurrencyDocument",
+                "Nettofakturawert Hauswaehrung pro Beleg dedupliziert",
+                houseCurrency,
                 netDocumentLocalCurrency,
-                documentRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency)));
+                documentRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency),
+                repeatedDocumentTotals && salesPriceValue == 0m));
 
-        var budgetChf = documentRows.Sum(row => ConvertHouseCurrencyNetToBudgetChf(row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, budgetRatesToChf));
+        var selectedNetRows = repeatedDocumentTotals ? documentRows : rowList;
+        var budgetChf = selectedNetRows.Sum(row => ConvertHouseCurrencyNetToBudgetChf(houseCurrency, row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, budgetRatesToChf));
+
         if (budgetChf != 0m)
             candidates.Add(new(
                 "NetDocumentLocalCurrencyBudgetChf",
-                "Nettofakturawert Hauswaehrung -> CHF Budget 2025",
+                $"Nettofakturawert Hauswaehrung -> CHF Budget 2025 ({(repeatedDocumentTotals ? "Beleg" : "Position")})",
                 "CHF",
                 budgetChf,
-                documentRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => ConvertHouseCurrencyNetToBudgetChf(row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, budgetRatesToChf))));
+                selectedNetRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => ConvertHouseCurrencyNetToBudgetChf(houseCurrency, row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, budgetRatesToChf)),
+                false));
 
         return new NetSalesActual
         {
             RowCount = rowList.Count,
-            Currencies = string.Join(", ", rowList.Select(row => string.IsNullOrWhiteSpace(row.CompanyCurrency) ? row.SalesCurrency : row.CompanyCurrency)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
+            Currencies = houseCurrency,
             Candidates = candidates
         };
     }
 
+    private static bool LooksLikeRepeatedDocumentTotals(IReadOnlyList<NetSalesActualSourceRow> rows)
+    {
+        var multiLineGroups = rows
+            .GroupBy(row => BuildDocumentKey(row.Tsc, row.DocumentType, row.DocumentEntry, row.InvoiceNumber), StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .ToList();
+
+        if (multiLineGroups.Count == 0)
+            return false;
+
+        var repeatedGroups = multiLineGroups.Count(group =>
+            group.Select(row => Math.Round(row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, 2))
+                .Distinct()
+                .Count() == 1);
+
+        return repeatedGroups / (decimal)multiLineGroups.Count >= 0.8m;
+    }
+
     private static decimal ConvertHouseCurrencyNetToBudgetChf(
+        string houseCurrency,
         NetSalesActualSourceRow row,
         decimal value,
         IReadOnlyDictionary<string, decimal> budgetRatesToChf)
     {
-        var currency = (row.CompanyCurrency ?? string.Empty).Trim().ToUpperInvariant();
+        var currency = !string.IsNullOrWhiteSpace(houseCurrency) && houseCurrency != "-"
+            ? houseCurrency.Trim().ToUpperInvariant()
+            : (row.CompanyCurrency ?? string.Empty).Trim().ToUpperInvariant();
         return budgetRatesToChf.TryGetValue(currency, out var rate) ? value * rate : 0m;
+    }
+
+    private static string ResolveHouseCurrency(string referenceKey, IReadOnlyList<NetSalesActualSourceRow> rows)
+    {
+        var configured = referenceKey.ToUpperInvariant() switch
+        {
+            "CH" => "CHF",
+            "AT" => "EUR",
+            "DE" => "EUR",
+            "ES" => "EUR",
+            "FR" => "EUR",
+            "IN" => "INR",
+            "IT" => "EUR",
+            "UK" => "GBP",
+            "US" => "USD",
+            _ => string.Empty
+        };
+
+        return string.IsNullOrWhiteSpace(configured)
+            ? ResolveCurrencyLabel(rows.Select(row => string.IsNullOrWhiteSpace(row.CompanyCurrency) ? row.SalesCurrency : row.CompanyCurrency))
+            : configured;
     }
 
     private static bool IsIntercompanyCustomer(NetSalesActualSourceRow row, IReadOnlyList<FinanceIntercompanyRule> rules)
@@ -315,6 +381,7 @@ public sealed class NetSalesCandidateRow
     public decimal Value { get; set; }
     public decimal IntercompanyValue { get; set; }
     public decimal ValueExcludingIntercompany { get; set; }
+    public bool IsPreferred { get; set; }
     public decimal? Difference { get; set; }
     public decimal? DifferenceExcludingIntercompany { get; set; }
 }
@@ -332,6 +399,9 @@ internal sealed record NetSalesActualSourceRow(
     int DocumentEntry,
     string InvoiceNumber,
     string DocumentType,
+    DateTime? PostingDate,
+    DateTime? InvoiceDate,
+    DateTime ExtractionDate,
     string CustomerNumber,
     string CustomerName,
     string SalesCurrency,
@@ -343,7 +413,7 @@ internal sealed record NetSalesActualSourceRow(
     decimal VatSumForeignCurrency,
     decimal VatSumLocalCurrency);
 
-internal sealed record NetSalesCandidate(string Key, string Label, string Currency, decimal Value, decimal IntercompanyValue)
+internal sealed record NetSalesCandidate(string Key, string Label, string Currency, decimal Value, decimal IntercompanyValue, bool IsPreferred)
 {
     public decimal ValueExcludingIntercompany => Value - IntercompanyValue;
 }

@@ -87,10 +87,13 @@ public class SapGatewayService : ISapGatewayService
             .ToList();
     }
 
-    public async Task<List<Dictionary<string, object?>>> GetEntityRowsAsync(string serviceUrl, string entitySet, string username, string password, CancellationToken cancellationToken = default)
+    public async Task<List<Dictionary<string, object?>>> GetEntityRowsAsync(string serviceUrl, string entitySet, string username, string password, string? filter = null, CancellationToken cancellationToken = default)
     {
         using var client = CreateClient(username, password);
-        var requestUrl = $"{BuildServiceUri(serviceUrl)}{entitySet}?$format=json";
+        var query = string.IsNullOrWhiteSpace(filter)
+            ? "$format=json"
+            : $"$format=json&$filter={Uri.EscapeDataString(filter)}";
+        var requestUrl = $"{BuildServiceUri(serviceUrl)}{entitySet}?{query}";
         await _appEventLogService.WriteAsync("SAP", "Entity-Read gestartet", details: requestUrl);
         using var response = await client.GetAsync(requestUrl, cancellationToken);
         response.EnsureSuccessStatusCode();

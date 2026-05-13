@@ -36,12 +36,20 @@
   <ItemGroup>
     <Compile Remove="TrafagSalesExporter.Tests\**\*.cs" />
     <Compile Remove="Tools\**\*.cs" />
+    <Compile Remove=".tmp_tools\**\*.cs" />
+    <Compile Remove="verify_probe_out*\**\*.cs" />
     <Content Remove="TrafagSalesExporter.Tests\**\*" />
     <Content Remove="Tools\**\*" />
+    <Content Remove=".tmp_tools\**\*" />
+    <Content Remove="verify_probe_out*\**\*" />
     <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
     <EmbeddedResource Remove="Tools\**\*" />
+    <EmbeddedResource Remove=".tmp_tools\**\*" />
+    <EmbeddedResource Remove="verify_probe_out*\**\*" />
     <None Remove="TrafagSalesExporter.Tests\**\*" />
     <None Remove="Tools\**\*" />
+    <None Remove=".tmp_tools\**\*" />
+    <None Remove="verify_probe_out*\**\*" />
   </ItemGroup>
 
   <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">

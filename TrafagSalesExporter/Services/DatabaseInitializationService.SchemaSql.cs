@@ -113,6 +113,7 @@ CREATE TABLE CentralSalesRecords (
     CompanyCurrency TEXT NOT NULL DEFAULT '',
     Incoterms2020 TEXT NOT NULL,
     SalesResponsibleEmployee TEXT NOT NULL,
+    PostingDate TEXT NULL,
     InvoiceDate TEXT NULL,
     OrderDate TEXT NULL,
     Land TEXT NOT NULL,
