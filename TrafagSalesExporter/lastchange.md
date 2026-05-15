@@ -1313,3 +1313,111 @@ Inhalt:
 
 - Todo-Liste fuer Group Sales Reporting Intranet-Dashboard.
 - Priorisierte Punkte fuer CFO-Dokument, offene Laenderabweichungen, Intercompany, Budgetkurse und Berechtigungskonzept.
+
+## Navigation und HR-KPI-Zugriff 2026-05-15
+
+Geaendert:
+
+- Linke Navigation reduziert:
+  - Hauptgruppe `Finance Cockpit`
+  - eigener Hauptpunkt `HR KPI (Login)`
+- Bisherige Finance-Seiten liegen als Unterpunkte unter `Finance Cockpit`:
+  - Dashboard
+  - Management Cockpit
+  - Standorte
+  - Transformationen
+  - Settings
+  - Logs
+- HR KPI hat eine separate zweite Zugriffssperre mit Name und Passwort.
+- HR-Daten werden erst geladen und angezeigt, wenn die HR-KPI-Sperre erfolgreich entsperrt wurde.
+
+Konfiguration:
+
+- Abschnitt `HrKpiAccess` in `appsettings.json`
+- Benutzer: `hr`
+- Passwortvorschlag: `Trafag-HR-KPI-2026!`
+- Im Repo ist nur der SHA-256-Hash gespeichert, nicht das Klartextpasswort.
+
+Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_hrlogin\ --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich.
+- 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
+
+## Navigation in Finance/HR/Admin gegliedert 2026-05-15
+
+Geaendert:
+
+- Linke Navigation neu gegliedert:
+  - `Finance Cockpit`
+  - `HR KPI (Login)`
+  - `Admin`
+- Unter `Finance Cockpit` stehen:
+  - `Export Dashboard`
+  - `Management Analyse`
+  - `Soll/Ist Vergleich`
+- Unter `Admin` stehen:
+  - `Standorte`
+  - `Transformationen`
+  - `Settings`
+  - `Logs`
+- Seitentitel wurden an die neuen Menuebezeichnungen angepasst.
+
+Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_nav_groups\ --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich.
+- 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
+
+## Management Cockpit zentrale Filterkopplung 2026-05-15
+
+Geaendert:
+
+- Die untere `Zentrale Roh-Auswertung` im Management Cockpit ist nicht mehr nur global.
+- Neue Filterfelder: `Landfilter` und `TSC`.
+- Wenn oben eine Einzeldatei analysiert wird, uebernimmt die zentrale Auswertung automatisch Land und TSC aus dieser Datei.
+- Beispiel: Auswahl `USA | TRUS | Sales_TRUS_2026-05-08.xlsx` setzt unten automatisch `USA / TRUS`.
+- Button `Global` leert die Filter, falls wieder alle Laender/Standorte ausgewertet werden sollen.
+- Jahres-, Monats-, Jahreswerte-, Monatswerte-, Tageswerte-, Quellen- und Laendertabellen verwenden denselben Land/TSC-Filter.
+
+Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_management_scope2\ --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich.
+- 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
+
+## Finance Vergleich als eigener Reiter 2026-05-15
+
+Geaendert:
+
+- `Net Sales Actuals 2025 Referenz` aus dem Start-Dashboard entfernt.
+- Neue Seite `Finance Vergleich` unter `Finance Cockpit` angelegt.
+- Route: `/finance-cockpit/vergleich`
+- Die Seite zeigt den Soll/Ist-Vergleich gegen `check.xlsx` separat, inklusive IC-Abzug, Referenzwert, Summenfeld, Differenz, Waehrung, Zeilen und Status.
+- `DashboardPageService` laedt die Finance-Referenzdaten nicht mehr automatisch mit dem operativen Dashboard.
+
+Verifikation:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_finance_compare_tab\ --verbosity minimal
+```
+
+Ergebnis:
+
+- Build erfolgreich.
+- 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.

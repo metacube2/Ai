@@ -2,35 +2,38 @@
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 
 <MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-        @T("Dashboard", "Dashboard")
-    </MudNavLink>
-    <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
-        <Authorized>
-            <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
-                @T("Standorte", "Sites")
-            </MudNavLink>
-            <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
-                @T("Transformationen", "Transformations")
-            </MudNavLink>
-        </Authorized>
-    </AuthorizeView>
-    <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Analytics">
-        @T("Management Cockpit", "Management Cockpit")
-    </MudNavLink>
+    <MudNavGroup Title="@T("Finance Cockpit", "Finance Cockpit")" Icon="@Icons.Material.Filled.Analytics" Expanded="true">
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+            @T("Export Dashboard", "Export dashboard")
+        </MudNavLink>
+        <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">
+            @T("Management Analyse", "Management analysis")
+        </MudNavLink>
+        <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
+            @T("Soll/Ist Vergleich", "Actual/reference comparison")
+        </MudNavLink>
+    </MudNavGroup>
     <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Groups">
-        @T("HR KPI", "HR KPI")
+        @T("HR KPI (Login)", "HR KPI (login)")
     </MudNavLink>
-    <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
-        <Authorized>
-            <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
-                @T("Settings", "Settings")
-            </MudNavLink>
-        </Authorized>
-    </AuthorizeView>
-    <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
-        @T("Logs", "Logs")
-    </MudNavLink>
+    <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
+        <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
+            <Authorized>
+                <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
+                    @T("Standorte", "Sites")
+                </MudNavLink>
+                <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
+                    @T("Transformationen", "Transformations")
+                </MudNavLink>
+                <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
+                    @T("Settings", "Settings")
+                </MudNavLink>
+            </Authorized>
+        </AuthorizeView>
+        <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
+            @T("Logs", "Logs")
+        </MudNavLink>
+    </MudNavGroup>
 </MudNavMenu>
 
 @code {

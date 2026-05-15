@@ -8,66 +8,9 @@
 @inject IUiTextService UiText
 @implements IDisposable
 
-<PageTitle>@T("Dashboard", "Dashboard")</PageTitle>
+<PageTitle>@T("Export Dashboard", "Export dashboard")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("Dashboard", "Dashboard")</MudText>
-
-<MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
-        <MudText Typo="Typo.h6">@T("Net Sales Actuals 2025 Referenz", "Net sales actuals 2025 reference")</MudText>
-        <MudSpacer />
-        <MudText Typo="Typo.caption">check.xlsx / Power BI Stand 29.04.2026</MudText>
-    </MudStack>
-    <MudTable Items="_netSalesReferenceRows" Dense Hover Striped>
-        <HeaderContent>
-            <MudTh>@T("Firma", "Company")</MudTh>
-            <MudTh>@T("Ist 2025", "Actual 2025")</MudTh>
-            <MudTh>@T("IC-Abzug", "IC deduction")</MudTh>
-            <MudTh>@T("Ist exkl. IC", "Actual excl. IC")</MudTh>
-            <MudTh>@T("Referenz", "Reference")</MudTh>
-            <MudTh>@T("Summenfeld", "Value field")</MudTh>
-            <MudTh>@T("Quelle", "Source")</MudTh>
-            <MudTh>@T("Differenz", "Difference")</MudTh>
-            <MudTh>@T("Diff exkl. IC", "Diff excl. IC")</MudTh>
-            <MudTh>@T("Waehrung", "Currency")</MudTh>
-            <MudTh>@T("Zeilen", "Rows")</MudTh>
-            <MudTh>@T("Status", "Status")</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Label</MudTd>
-            <MudTd>@FormatAmount(context.ActualValue)</MudTd>
-            <MudTd>@FormatAmount(context.IntercompanyDeduction)</MudTd>
-            <MudTd>@FormatAmount(context.ActualValueExcludingIntercompany)</MudTd>
-            <MudTd>@FormatAmount(context.ReferenceValue)</MudTd>
-            <MudTd>@(string.IsNullOrWhiteSpace(context.ValueField) ? "-" : context.ValueField)</MudTd>
-            <MudTd>@context.ReferenceSource</MudTd>
-            <MudTd>@FormatAmount(context.Difference)</MudTd>
-            <MudTd>@FormatAmount(context.DifferenceExcludingIntercompany)</MudTd>
-            <MudTd>@(string.IsNullOrWhiteSpace(context.Currencies) ? "-" : context.Currencies)</MudTd>
-            <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
-            <MudTd>
-                @if (context.Status == "OK")
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">OK</MudChip>
-                }
-                else if (context.Status == "Pruefen")
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">@T("Pruefen", "Check")</MudChip>
-                }
-                else
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@T("Keine Daten", "No data")</MudChip>
-                }
-            </MudTd>
-        </RowTemplate>
-        <NoRecordsContent>
-            <MudText Typo="Typo.caption">@T("Keine Referenzdaten fuer aktive Standorte gefunden.", "No reference data found for active sites.")</MudText>
-        </NoRecordsContent>
-    </MudTable>
-    <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mt-3">
-        @T("Vergleich: Jahr 2025 aus Invoice Date, sonst Extraction Date. Das Summenfeld wird automatisch aus Sales Price/Value, DocTotalFC - VatSumFC oder DocTotal - VatSum gewaehlt; Belegkopfwerte werden pro DocEntry nur einmal gezaehlt. IC-Abzug ist eine Diagnose fuer den aktuellen Trafag-IT-Abgleich und veraendert die Originaldaten nicht.", "Comparison: year 2025 from Invoice Date, otherwise Extraction Date. The value field is selected automatically from Sales Price/Value, DocTotalFC - VatSumFC, or DocTotal - VatSum; document header values are counted only once per DocEntry. IC deduction is a diagnostic value for the current Trafag IT reconciliation and does not change the original data.")
-    </MudAlert>
-</MudPaper>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Export Dashboard", "Export dashboard")</MudText>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
@@ -212,7 +155,6 @@
 @code {
     private List<DashboardRow> _dashboardRows = new();
     private List<ConsolidatedDashboardRow> _consolidatedRows = new();
-    private List<NetSalesReferenceRow> _netSalesReferenceRows = new();
     private bool _loading = true;
     private bool _anyRunning;
     private CancellationTokenSource? _pollingCts;
@@ -229,7 +171,6 @@
         var state = await DashboardPageActions.LoadAsync();
         _dashboardRows = state.DashboardRows;
         _consolidatedRows = state.ConsolidatedRows;
-        _netSalesReferenceRows = state.NetSalesReferenceRows;
 
         _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         _loading = false;
@@ -459,9 +400,6 @@
         _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         return Task.CompletedTask;
     }
-
-    private static string FormatAmount(decimal? value)
-        => value.HasValue ? value.Value.ToString("N2") : "-";
 
     private static string FormatException(Exception ex)
         => ex.InnerException is null ? ex.Message : $"{ex.Message} Inner: {ex.InnerException.Message}";

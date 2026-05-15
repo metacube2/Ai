@@ -4,6 +4,7 @@
 @using TrafagSalesExporter.Services
 @inject IHrKpiService HrKpiService
 @inject IOptions<HrKpiDataSourceOptions> DataSourceOptions
+@inject IHrKpiAccessService HrKpiAccess
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 
@@ -11,94 +12,125 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">@T("HR KPI", "HR KPI")</MudText>
 
-<MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudGrid>
-        <MudItem xs="12" md="5">
-            <MudTextField @bind-Value="_dataFolder" Label="@T("Datenordner", "Data folder")" />
-        </MudItem>
-        <MudItem xs="6" md="2">
-            <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
-                @foreach (var option in _result?.ExitYearOptions ?? [])
-                {
-                    <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_organisation" Label="@T("Organisation", "Organisation")" Dense Clearable>
-                @foreach (var option in _result?.OrganisationOptions ?? [])
-                {
-                    <MudSelectItem Value="@option">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync"
-                       StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading" FullWidth>
-                @(_loading ? T("Lade...", "Loading...") : T("Laden", "Load"))
+@if (!CanShowHrKpi)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1" Style="max-width:520px;">
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                @T("HR KPI enthaelt sensible Personaldaten. Bitte separat anmelden.", "HR KPI contains sensitive HR data. Please sign in separately.")
+            </MudAlert>
+            @if (!HrKpiAccess.IsConfigured)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                    @T("HR-KPI-Zugang ist noch nicht konfiguriert. Bitte Username und PasswordHash in HrKpiAccess konfigurieren.", "HR KPI access is not configured yet. Please configure Username and PasswordHash in HrKpiAccess.")
+                </MudAlert>
+            }
+            <MudTextField @bind-Value="_hrUsername" Label="@T("Name", "Name")" Disabled="@(!HrKpiAccess.IsConfigured)" />
+            <MudTextField @bind-Value="_hrPassword" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!HrKpiAccess.IsConfigured)" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UnlockHrKpiAsync"
+                       StartIcon="@Icons.Material.Filled.LockOpen" Disabled="@(!HrKpiAccess.IsConfigured)">
+                @T("HR KPI entsperren", "Unlock HR KPI")
             </MudButton>
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudDatePicker @bind-Date="_fromDate" Label="@T("Von Austritt", "Exit from")" Clearable DateFormat="dd.MM.yyyy" />
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudDatePicker @bind-Date="_toDate" Label="@T("Bis Austritt", "Exit to")" Clearable DateFormat="dd.MM.yyyy" />
-        </MudItem>
-        <MudItem xs="12" md="2">
-            <MudSelect T="int?" @bind-Value="_entryYear" Label="@T("Eintrittsjahr", "Entry year")" Dense Clearable>
-                @foreach (var option in _result?.EntryYearOptions ?? [])
-                {
-                    <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudTextField @bind-Value="_searchText" Label="@T("Suche Name / Personalnr.", "Search name / personnel no.")" />
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_kostenstelle" Label="@T("Kostenstelle", "Cost center")" Dense Clearable>
-                @foreach (var option in _result?.KostenstelleOptions ?? [])
-                {
-                    <MudSelectItem Value="@option">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="3">
-            <MudSelect T="string" @bind-Value="_mitarbeitertyp" Label="@T("Mitarbeitertyp", "Employee type")" Dense Clearable>
-                @foreach (var option in _result?.MitarbeitertypOptions ?? [])
-                {
-                    <MudSelectItem Value="@option">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="2">
-            <MudSelect T="string" @bind-Value="_fluktuationFilter" Label="@T("Fluktuation", "Turnover")" Dense>
-                @foreach (var option in _fluktuationOptions)
-                {
-                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="6" md="2">
-            <MudSelect T="string" @bind-Value="_glzAmpel" Label="@T("GLZ", "Time")" Dense Clearable>
-                @foreach (var option in _ampelOptions)
-                {
-                    <MudSelectItem Value="@option">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="6" md="2">
-            <MudSelect T="string" @bind-Value="_restferienAmpel" Label="@T("Restferien", "Vacation")" Dense Clearable>
-                @foreach (var option in _restferienOptions)
-                {
-                    <MudSelectItem Value="@option">@option</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-    </MudGrid>
-</MudPaper>
+        </MudStack>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudTextField @bind-Value="_dataFolder" Label="@T("Datenordner", "Data folder")" />
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
+                    @foreach (var option in _result?.ExitYearOptions ?? [])
+                    {
+                        <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" @bind-Value="_organisation" Label="@T("Organisation", "Organisation")" Dense Clearable>
+                    @foreach (var option in _result?.OrganisationOptions ?? [])
+                    {
+                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading" FullWidth>
+                    @(_loading ? T("Lade...", "Loading...") : T("Laden", "Load"))
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_fromDate" Label="@T("Von Austritt", "Exit from")" Clearable DateFormat="dd.MM.yyyy" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_toDate" Label="@T("Bis Austritt", "Exit to")" Clearable DateFormat="dd.MM.yyyy" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudSelect T="int?" @bind-Value="_entryYear" Label="@T("Eintrittsjahr", "Entry year")" Dense Clearable>
+                    @foreach (var option in _result?.EntryYearOptions ?? [])
+                    {
+                        <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_searchText" Label="@T("Suche Name / Personalnr.", "Search name / personnel no.")" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" @bind-Value="_kostenstelle" Label="@T("Kostenstelle", "Cost center")" Dense Clearable>
+                    @foreach (var option in _result?.KostenstelleOptions ?? [])
+                    {
+                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" @bind-Value="_mitarbeitertyp" Label="@T("Mitarbeitertyp", "Employee type")" Dense Clearable>
+                    @foreach (var option in _result?.MitarbeitertypOptions ?? [])
+                    {
+                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudSelect T="string" @bind-Value="_fluktuationFilter" Label="@T("Fluktuation", "Turnover")" Dense>
+                    @foreach (var option in _fluktuationOptions)
+                    {
+                        <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudSelect T="string" @bind-Value="_glzAmpel" Label="@T("GLZ", "Time")" Dense Clearable>
+                    @foreach (var option in _ampelOptions)
+                    {
+                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudSelect T="string" @bind-Value="_restferienAmpel" Label="@T("Restferien", "Vacation")" Dense Clearable>
+                    @foreach (var option in _restferienOptions)
+                    {
+                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="LockHrKpi"
+                           StartIcon="@Icons.Material.Filled.Lock" FullWidth>
+                    @T("Sperren", "Lock")
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
 
-@if (_result is not null)
+@if (CanShowHrKpi && _result is not null)
 {
     @if (_result.Notices.Count > 0)
     {
@@ -127,6 +159,8 @@
     private string? _glzAmpel;
     private string? _restferienAmpel;
     private string? _searchText;
+    private string? _hrUsername;
+    private string? _hrPassword;
     private bool _loading;
     private HrKpiResult? _result;
     private readonly List<(string Key, string Label)> _fluktuationOptions =
@@ -142,11 +176,19 @@
     protected override async Task OnInitializedAsync()
     {
         _dataFolder = DataSourceOptions.Value.Normalize().DataFolder;
-        await LoadAsync();
+        if (CanShowHrKpi)
+        {
+            await LoadAsync();
+        }
     }
 
     private async Task LoadAsync()
     {
+        if (!CanShowHrKpi)
+        {
+            return;
+        }
+
         _loading = true;
         try
         {
@@ -175,6 +217,27 @@
             _loading = false;
         }
     }
+
+    private async Task UnlockHrKpiAsync()
+    {
+        if (!HrKpiAccess.TryUnlock(_hrUsername ?? string.Empty, _hrPassword ?? string.Empty))
+        {
+            Snackbar.Add(T("HR-KPI-Anmeldung fehlgeschlagen.", "HR KPI sign-in failed."), Severity.Error);
+            return;
+        }
+
+        _hrPassword = string.Empty;
+        await LoadAsync();
+    }
+
+    private void LockHrKpi()
+    {
+        HrKpiAccess.Lock();
+        _result = null;
+        _hrPassword = string.Empty;
+    }
+
+    private bool CanShowHrKpi => !HrKpiAccess.IsEnabled || HrKpiAccess.IsUnlocked;
 
     private string T(string german, string english) => UiText.Text(german, english);
 }

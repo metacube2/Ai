@@ -199,14 +199,17 @@ public class ManagementCockpitService : IManagementCockpitService
             .Select(row => BuildCentralAggregationRow(row, aggregation))
             .ToList();
 
-        var selectedRows = aggregatedRows
+        var scopedRows = ApplyCentralDimensionFilters(aggregatedRows, options)
+            .ToList();
+
+        var selectedRows = scopedRows
             .Where(r => r.PeriodDate.Year == year && (!month.HasValue || r.PeriodDate.Month == month.Value))
             .ToList();
 
         if (selectedRows.Count == 0)
             throw new InvalidOperationException("Für den gewählten Zeitraum gibt es keine Datensätze in der zentralen Tabelle.");
 
-        var yearlyRows = aggregatedRows;
+        var yearlyRows = scopedRows;
 
         var dailyBaseRows = selectedRows
             .Where(r => month.HasValue)
@@ -219,7 +222,9 @@ public class ManagementCockpitService : IManagementCockpitService
                 Year = year,
                 Month = month,
                 ValueField = aggregation.ValueField.Key,
-                TargetCurrency = aggregation.TargetCurrency
+                TargetCurrency = aggregation.TargetCurrency,
+                Land = NormalizeOptionalFilter(options?.LandFilter),
+                Tsc = NormalizeOptionalFilter(options?.TscFilter)
             },
             Summary = new ManagementCockpitCentralSummary
             {
@@ -239,7 +244,7 @@ public class ManagementCockpitService : IManagementCockpitService
             AdditionalValueFields = aggregation.AdditionalValueFields
                 .Select(ToValueFieldOption)
                 .ToList(),
-            Notices = BuildCentralNotices(aggregation, selectedRows.Count(x => x.MissingExchangeRate)),
+            Notices = BuildCentralNotices(aggregation, selectedRows.Count(x => x.MissingExchangeRate), options),
             YearlyTotals = yearlyRows
                 .GroupBy(x => new { x.PeriodDate.Year, x.DisplayCurrency })
                 .OrderBy(g => g.Key.Year)
@@ -289,6 +294,18 @@ public class ManagementCockpitService : IManagementCockpitService
                 })
                 .ToList()
         };
+    }
+
+    private static IEnumerable<CentralAggregationRow> ApplyCentralDimensionFilters(
+        IEnumerable<CentralAggregationRow> rows,
+        ManagementCockpitAnalysisOptions? options)
+    {
+        var landFilter = NormalizeOptionalFilter(options?.LandFilter);
+        var tscFilter = NormalizeOptionalFilter(options?.TscFilter);
+
+        return rows.Where(row =>
+            (landFilter is null || string.Equals(row.Land, landFilter, StringComparison.OrdinalIgnoreCase)) &&
+            (tscFilter is null || string.Equals(row.Tsc, tscFilter, StringComparison.OrdinalIgnoreCase)));
     }
 
     private static IEnumerable<string> GetCandidateDirectories(ExportSettings settings)
@@ -456,7 +473,10 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
-    private static List<string> BuildCentralNotices(AggregationSelection aggregation, int missingExchangeRateCount)
+    private static List<string> BuildCentralNotices(
+        AggregationSelection aggregation,
+        int missingExchangeRateCount,
+        ManagementCockpitAnalysisOptions? options)
     {
         var notices = new List<string>
         {
@@ -466,6 +486,13 @@ public class ManagementCockpitService : IManagementCockpitService
             "Kein Budget- und kein Spartemapping angewendet.",
             "Periodenlogik basiert auf Invoice Date, falls vorhanden, sonst auf Extraction Date."
         };
+
+        var landFilter = NormalizeOptionalFilter(options?.LandFilter);
+        var tscFilter = NormalizeOptionalFilter(options?.TscFilter);
+        if (landFilter is not null || tscFilter is not null)
+        {
+            notices.Add($"Filter aus Auswahl: Land {(landFilter ?? "alle")}, TSC {(tscFilter ?? "alle")}.");
+        }
 
         if (aggregation.AdditionalValueFields.Count > 0)
             notices.Add($"Weitere Summenfelder: {string.Join(", ", aggregation.AdditionalValueFields.Select(x => x.Label))}.");
@@ -487,6 +514,9 @@ public class ManagementCockpitService : IManagementCockpitService
 
         return notices;
     }
+
+    private static string? NormalizeOptionalFilter(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static ManagementCockpitTimeValueRow BuildTimeValueRow(
         IEnumerable<CentralAggregationRow> groupRows,

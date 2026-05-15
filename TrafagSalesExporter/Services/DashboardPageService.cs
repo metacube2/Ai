@@ -12,14 +12,10 @@ public interface IDashboardPageService
 public sealed class DashboardPageService : IDashboardPageService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
-    private readonly IFinanceReconciliationService _financeReconciliationService;
 
-    public DashboardPageService(
-        IDbContextFactory<AppDbContext> dbFactory,
-        IFinanceReconciliationService financeReconciliationService)
+    public DashboardPageService(IDbContextFactory<AppDbContext> dbFactory)
     {
         _dbFactory = dbFactory;
-        _financeReconciliationService = financeReconciliationService;
     }
 
     public async Task<DashboardPageState> LoadAsync()
@@ -69,8 +65,7 @@ public sealed class DashboardPageService : IDashboardPageService
         return new DashboardPageState
         {
             DashboardRows = rows,
-            ConsolidatedRows = BuildConsolidatedRows(await db.ExportSettings.FirstOrDefaultAsync() ?? new()),
-            NetSalesReferenceRows = await _financeReconciliationService.BuildNetSalesReferenceRowsAsync(2025)
+            ConsolidatedRows = BuildConsolidatedRows(await db.ExportSettings.FirstOrDefaultAsync() ?? new())
         };
     }
 
@@ -119,7 +114,6 @@ public sealed class DashboardPageState
 {
     public List<DashboardRow> DashboardRows { get; set; } = [];
     public List<ConsolidatedDashboardRow> ConsolidatedRows { get; set; } = [];
-    public List<NetSalesReferenceRow> NetSalesReferenceRows { get; set; } = [];
 }
 
 public sealed class DashboardRow

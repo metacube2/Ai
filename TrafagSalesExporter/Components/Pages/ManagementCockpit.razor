@@ -5,9 +5,9 @@
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 
-<PageTitle>@T("Management Cockpit", "Management Cockpit")</PageTitle>
+<PageTitle>@T("Management Analyse", "Management analysis")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("Management Cockpit", "Management Cockpit")</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Management Analyse", "Management analysis")</MudText>
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudGrid>
@@ -65,6 +65,12 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="2">
+            <MudTextField @bind-Value="_centralLandFilter" Label="@T("Landfilter", "Country filter")" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField @bind-Value="_centralTscFilter" Label="TSC" />
+        </MudItem>
+        <MudItem xs="12" md="2">
             <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label='@T("Monat (optional)", "Month (optional)")' Dense Clearable>
                 @foreach (var month in Enumerable.Range(1, 12))
                 {
@@ -102,10 +108,22 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12">
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
-                       StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
-                @(_analyzingCentral ? T("Analysiere...", "Analyzing...") : T("Zentrale Auswertung laden", "Load central analysis"))
-            </MudButton>
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
+                           StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
+                    @(_analyzingCentral ? T("Analysiere...", "Analyzing...") : T("Zentrale Auswertung laden", "Load central analysis"))
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearCentralScope"
+                           StartIcon="@Icons.Material.Filled.FilterAltOff">
+                    @T("Global", "Global")
+                </MudButton>
+                @if (!string.IsNullOrWhiteSpace(_centralLandFilter) || !string.IsNullOrWhiteSpace(_centralTscFilter))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                        @T("Gefiltert", "Filtered"): @($"{(_centralLandFilter ?? "-")} / {(_centralTscFilter ?? "-")}")
+                    </MudChip>
+                }
+            </MudStack>
         </MudItem>
     </MudGrid>
 </MudPaper>
@@ -332,6 +350,8 @@
     private ManagementCockpitCentralResult? _centralResult;
     private int _selectedCentralYear;
     private int? _selectedCentralMonth;
+    private string? _centralLandFilter;
+    private string? _centralTscFilter;
     private string _selectedFileValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
     private string _selectedCentralValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
     private IEnumerable<string> _selectedCentralAdditionalValueFields = [];
@@ -385,6 +405,8 @@
                 ValueField = _selectedFileValueField,
                 TargetCurrency = _selectedFileTargetCurrency
             });
+            _centralLandFilter = _result.Summary.Land;
+            _centralTscFilter = _result.Summary.Tsc;
         }
         catch (Exception ex)
         {
@@ -408,7 +430,9 @@
             {
                 ValueField = _selectedCentralValueField,
                 AdditionalValueFields = _selectedCentralAdditionalValueFields.ToList(),
-                TargetCurrency = _selectedCentralTargetCurrency
+                TargetCurrency = _selectedCentralTargetCurrency,
+                LandFilter = _centralLandFilter,
+                TscFilter = _centralTscFilter
             });
         }
         catch (Exception ex)
@@ -419,6 +443,12 @@
         {
             _analyzingCentral = false;
         }
+    }
+
+    private void ClearCentralScope()
+    {
+        _centralLandFilter = null;
+        _centralTscFilter = null;
     }
 
     private static Severity MapSeverity(string severity) => severity switch

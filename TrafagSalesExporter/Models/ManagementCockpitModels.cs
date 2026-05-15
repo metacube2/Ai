@@ -34,6 +34,8 @@ public class ManagementCockpitAnalysisOptions
     public string ValueField { get; set; } = ManagementCockpitValueFieldKeys.SalesPriceValue;
     public List<string> AdditionalValueFields { get; set; } = [];
     public string TargetCurrency { get; set; } = ManagementCockpitCurrencyOptions.Native;
+    public string? LandFilter { get; set; }
+    public string? TscFilter { get; set; }
 }
 
 public class ManagementCockpitSummary
@@ -89,6 +91,8 @@ public class ManagementCockpitCentralFilter
     public int? Month { get; set; }
     public string ValueField { get; set; } = ManagementCockpitValueFieldKeys.SalesPriceValue;
     public string TargetCurrency { get; set; } = ManagementCockpitCurrencyOptions.Native;
+    public string? Land { get; set; }
+    public string? Tsc { get; set; }
 }
 
 public class ManagementCockpitCentralSummary
