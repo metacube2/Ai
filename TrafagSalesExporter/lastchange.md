@@ -1349,6 +1349,23 @@ Ergebnis:
 - Build erfolgreich.
 - 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
 
+## Architekturreview Static/Hardcoding 2026-05-15
+
+Erstellt:
+
+- `docs/ARCHITEKTUR_REVIEW_STATICS_HARDCODING_2026-05-15.md`
+
+Inhalt:
+
+- Bewertung der vielen `static`-Methoden im Code.
+- Ergebnis: `static` ist fuer kleine zustandslose Helper akzeptabel; problematisch sind fachliche Regeln und grosse Klassen mit zu vielen Verantwortungen.
+- Dokumentierte Befunde:
+  - HR-Testpersonen sind aktuell Code-Regel und sollten in Konfiguration/DB.
+  - Finance Vergleich ist aktuell fix auf `2025` und Referenztext.
+  - Hauswaehrungen je Land sollten langfristig in Finance-/Standortkonfiguration.
+  - Finance-Sollwerte, Budgetkurse und IC-Regeln sind als Seed okay, aber produktiv pflegbar machen.
+- Empfehlung: nicht blind alle `static`-Methoden entfernen, sondern zuerst fachlich veraenderbare Regeln auslagern.
+
 ## CFO-Bericht IT/Intercompany Diagnose 2026-05-15
 
 Ergaenzt:
