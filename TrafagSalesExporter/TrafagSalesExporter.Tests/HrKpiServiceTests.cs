@@ -211,6 +211,45 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains(result.Leavers, row => row.Austrittsart == "Ruhestand" && row.FluktuationAusschlussgrund == "Pensionierung");
     }
 
+    [Fact]
+    public async Task BuildAsync_Excludes_Configured_Test_Persons_From_All_Hr_Kpi_Views()
+    {
+        RewriteEmployeeRows(
+        [
+            [1001, "Alpha, Anna", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [9001, "Jolie, Angelina", "Test", "999 / Test", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [9002, "Brad Pitt", "Test", "999 / Test", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [9003, "Peter Muster", "Test", "999 / Test", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"]
+        ]);
+        WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Personal Status",
+                "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)"
+            ],
+            [
+                [1001, "Alpha, Anna", "Org A", "Engineer", "Aktiv", 8.4, 0],
+                [9004, "ICT Trafag", "Test", "Engineer", "Aktiv", 8.4, 0]
+            ]);
+        RewriteLeaverRows(
+        [
+            [1001, "Alpha, Anna", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 3, 10), new DateTime(2020, 1, 1), "Arbeitnehmer Kuendigung"],
+            [9005, "Empfänger Reminder", "Test", "Engineer", "Inaktiv", new DateTime(2025, 3, 10), new DateTime(2020, 1, 1), "Arbeitnehmer Kuendigung"]
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        Assert.DoesNotContain(result.Employees, row => row.NameVoll.Contains("Angelina", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.Employees, row => row.NameVoll.Contains("Brad Pitt", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.Employees, row => row.NameVoll.Contains("Peter Muster", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.Absences, row => row.Name.Contains("ICT Trafag", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.Leavers, row => row.NameVoll.Contains("Reminder", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Notices, notice => notice.Contains("Testpersonen", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static void WriteFixtureFiles(string folder)
     {
         WriteWorkbook(Path.Combine(folder, "Saldiperstichdatum.xlsx"),

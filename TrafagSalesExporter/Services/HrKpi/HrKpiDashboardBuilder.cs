@@ -8,6 +8,15 @@ namespace TrafagSalesExporter.Services;
 internal sealed class HrKpiDashboardBuilder
 {
     private readonly HrKpiDataSourceOptions _dataSources;
+    private static readonly HashSet<string> ExcludedPersonNameKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        NormalizePersonExclusionKey("Angelina Jolie"),
+        NormalizePersonExclusionKey("Brad Pitt"),
+        NormalizePersonExclusionKey("Peter Muster"),
+        NormalizePersonExclusionKey("ICT Trafag"),
+        NormalizePersonExclusionKey("Empfanger Reminder"),
+        NormalizePersonExclusionKey("Empfänger Reminder")
+    };
 
     public HrKpiDashboardBuilder(HrKpiDataSourceOptions dataSources)
     {
@@ -40,6 +49,12 @@ internal sealed class HrKpiDashboardBuilder
         var employees = LoadEmployees(context, timeRows, sapRows);
         var absences = LoadAbsences(context);
         var leavers = LoadLeavers(context);
+        var excludedRows =
+            employees.RemoveAll(x => IsExcludedTestPerson(x.NameVoll)) +
+            absences.RemoveAll(x => IsExcludedTestPerson(x.Name)) +
+            leavers.RemoveAll(x => IsExcludedTestPerson(x.NameVoll));
+        if (excludedRows > 0)
+            result.Notices.Add($"{excludedRows:N0} Testpersonen-Zeilen wurden aus dem HR-KPI-Dashboard ausgeschlossen.");
 
         result.OrganisationOptions = employees
             .Select(x => x.Organisationseinheit)
@@ -938,6 +953,18 @@ internal sealed class HrKpiDashboardBuilder
 
     private static string NormalizeKey(string value)
         => value.Trim().ToUpperInvariant();
+
+    private static bool IsExcludedTestPerson(string? name)
+        => !string.IsNullOrWhiteSpace(name) &&
+           ExcludedPersonNameKeys.Contains(NormalizePersonExclusionKey(name));
+
+    private static string NormalizePersonExclusionKey(string value)
+    {
+        var normalized = NormalizeReason(value)
+            .Replace(",", " ", StringComparison.OrdinalIgnoreCase);
+        var parts = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return string.Join(" ", parts.OrderBy(x => x, StringComparer.OrdinalIgnoreCase));
+    }
 
     private static int? ParseCostCenter(string value)
     {

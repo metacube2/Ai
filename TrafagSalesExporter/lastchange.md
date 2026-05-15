@@ -1349,6 +1349,66 @@ Ergebnis:
 - Build erfolgreich.
 - 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
 
+## CFO-Bericht IT/Intercompany Diagnose 2026-05-15
+
+Ergaenzt:
+
+- `docs/CFO_Kurzbericht_270515.docx`
+- `docs/FINANCE_DASHBOARD_TODO_2026-05-15.md`
+
+Inhalt:
+
+- IT/Intercompany-Diagnose fuer die grosse Italien-Abweichung.
+- Marker dokumentiert: `TRAFAG`, `MAGNETIC SENSE`, `MAGNETS SENSE`, `GESELLSCHAFT FUER SENSORIK`, `GESELLSCHAFT FUR SENSORIK`.
+- Zahlen:
+  - IT Ist vor IC-Abzug: `14.704.336,29 EUR`
+  - IC-/2nd-party-Abzug: `4.397.746,90 EUR`
+  - IT Ist exkl. IC: `10.306.589,39 EUR`
+  - Rhino/check.xlsx Soll: `7.669.840,00 EUR`
+  - Restabweichung nach IC: `+2.636.749,39 EUR`
+
+Bewertung:
+
+- Intercompany/2nd-party erklaert einen grossen Teil der IT-Abweichung.
+- Restabweichung bleibt offen und muss ueber Summenlogik, Beleg/Position-Deduplizierung, Gutschriften/Storno und weitere lokale IC-Kunden oder Schreibweisen geprueft werden.
+
+## HR KPI Testpersonen-Ausschluss 2026-05-15
+
+Geaendert:
+
+- Folgende Testpersonen werden zentral aus dem HR-KPI-Dashboard ausgeschlossen:
+  - Angelina Jolie
+  - Brad Pitt
+  - Peter Muster
+  - ICT Trafag
+  - Empfanger Reminder / Empfaenger Reminder
+- Der Ausschluss erfolgt vor KPI-, Filter- und Tabellenberechnung.
+- Betroffen sind aktive Mitarbeitende, Absenzen und Austritte.
+- Im Dashboard erscheint eine Notice, wie viele Testpersonen-Zeilen ausgeschlossen wurden.
+
+Verifikation:
+
+```text
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_hr_exclusions\ --verbosity minimal
+```
+
+Ergebnis:
+
+- 70/70 Tests erfolgreich.
+- 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
+
+## KI-Arbeitsanweisung 2026-05-15
+
+Erstellt:
+
+- `persona.md`
+
+Inhalt:
+
+- Rolle der KI als Entwicklungs-, Analyse- und Dokumentationswerkzeug.
+- Grenzen der KI bei fachlicher Verantwortung, Finance, HR, Datenschutz und Freigaben.
+- Arbeitsprinzipien fuer dieses Projekt: bestehende Architektur nutzen, kritisch testen, sauber dokumentieren und offene fachliche Punkte als Pruefpunkte markieren.
+
 ## Navigation in Finance/HR/Admin gegliedert 2026-05-15
 
 Geaendert:
