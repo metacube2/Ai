@@ -604,6 +604,7 @@ static string BuildPage(
     var checkCount = rows.Count(r => r.Status == "Pruefen");
     var missingCount = rows.Count(r => r.Status == "Keine Daten");
     var excelCount = excelReferences.Count;
+    var financeChiefOverview = BuildFinanceChiefOverview(rows, excelReferences, spainCsv, germanySample);
     var executiveBriefing = BuildExecutiveBriefing(rows, excelReferences, spainCsv, germanySample);
     var detailRows = BuildDetailRows(rows, excelReferences, spainCsv);
     var coverageRows = BuildCoverageRows(coverage);
@@ -760,6 +761,25 @@ static string BuildPage(
       margin: 0 0 10px;
       line-height: 1.45;
     }
+    .chief-note {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.45;
+    }
+    .chief-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .chief-summary .metric {
+      margin: 0;
+    }
+    .chief-action {
+      min-width: 240px;
+      max-width: 380px;
+      line-height: 1.35;
+    }
     .ampel {
       display: inline-flex;
       align-items: center;
@@ -800,6 +820,7 @@ static string BuildPage(
       <span>Aktualisiert: {{Html(generatedAt)}}</span>
     </div>
     <nav aria-label="Finance Probe Navigation">
+      <a href="#chef">Finanzchef Übersicht</a>
       <a href="#briefing">Meeting Ampel</a>
       <a href="#all-sites">Detail alle Laender</a>
       <a href="#coverage">Datenabdeckung</a>
@@ -808,6 +829,7 @@ static string BuildPage(
     </nav>
   </header>
   <main>
+    {{financeChiefOverview}}
     {{executiveBriefing}}
     <section class="summary">
       <div class="metric"><strong>{{rows.Count}}</strong><span>Standorte</span></div>
@@ -952,6 +974,181 @@ static string BuildDetailRows(
         detailRows
             .OrderBy(row => row.Label, StringComparer.OrdinalIgnoreCase)
             .Select(row => row.Html));
+}
+
+static string BuildFinanceChiefOverview(
+    IReadOnlyList<NetSalesReferenceRow> rows,
+    IReadOnlyDictionary<string, CheckedExcelReference> excelReferences,
+    SpainSalesCsvProbe? spainCsv,
+    GermanyExcelProbe? germanySample)
+{
+    var issues = BuildFinanceChiefIssues(rows, excelReferences, spainCsv, germanySample).ToList();
+    var openIssues = issues
+        .Where(issue => issue.Status != "OK")
+        .OrderByDescending(issue => issue.SortValue)
+        .ThenBy(issue => issue.Label, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var missingCount = openIssues.Count(issue => issue.Status == "Keine Daten");
+    var checkCount = openIssues.Count(issue => issue.Status == "Pruefen");
+    var largestDifference = openIssues
+        .Where(issue => issue.Difference.HasValue)
+        .Select(issue => Math.Abs(issue.Difference!.Value))
+        .DefaultIfEmpty(0m)
+        .Max();
+    var tableRows = openIssues.Count == 0
+        ? """
+<tr>
+  <td colspan="7" class="wrap">Keine offenen Abweichungen. Alle vorhandenen Laender passen rechnerisch gegen den Sollwert.</td>
+</tr>
+"""
+        : string.Join(Environment.NewLine, openIssues.Select(BuildFinanceChiefIssueRow));
+
+    return $$"""
+    <section id="chef" class="briefing">
+      <h2>Finanzchef Übersicht</h2>
+      <p class="chief-note">Kompakte Sicht nur auf offene Soll/Ist-Themen. Detailtabellen bleiben unten fuer Analyse und Nachvollzug.</p>
+      <div class="chief-summary">
+        <div class="metric"><strong>{{openIssues.Count}}</strong><span>Offen</span></div>
+        <div class="metric"><strong>{{checkCount}}</strong><span>Abweichungen</span></div>
+        <div class="metric"><strong>{{missingCount}}</strong><span>Keine Daten</span></div>
+      </div>
+      <div class="chief-note" style="margin-bottom:10px;">Groesste absolute Abweichung: {{Amount(largestDifference)}}</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Land</th>
+              <th>Waehrung</th>
+              <th class="num">Ist</th>
+              <th class="num">Soll</th>
+              <th class="num">Abweichung</th>
+              <th>Was ist zu pruefen</th>
+            </tr>
+          </thead>
+          <tbody>{{tableRows}}</tbody>
+        </table>
+      </div>
+    </section>
+""";
+}
+
+static IEnumerable<FinanceChiefIssue> BuildFinanceChiefIssues(
+    IReadOnlyList<NetSalesReferenceRow> rows,
+    IReadOnlyDictionary<string, CheckedExcelReference> excelReferences,
+    SpainSalesCsvProbe? spainCsv,
+    GermanyExcelProbe? germanySample)
+{
+    var issues = rows
+        .Where(row => spainCsv is null || !row.Key.Equals("ES", StringComparison.OrdinalIgnoreCase))
+        .Select(row => new FinanceChiefIssue(
+            row.Status,
+            row.Label,
+            row.Key,
+            BuildFinanceChiefCurrency(row),
+            row.ActualValue,
+            row.ReferenceValue,
+            row.Difference,
+            BuildFinanceChiefReason(row, germanySample),
+            row.Difference.HasValue ? Math.Abs(row.Difference.Value) : decimal.MaxValue))
+        .ToList();
+
+    if (spainCsv is not null)
+    {
+        var status = Math.Abs(spainCsv.Difference) <= 1m ? "OK" : "Pruefen";
+        issues.Add(new FinanceChiefIssue(
+            status,
+            "Trafag ES",
+            "ES",
+            "EUR",
+            spainCsv.SalesPriceValue,
+            spainCsv.ReferenceValue,
+            spainCsv.Difference,
+            status == "OK"
+                ? "Spain CSV passt rechnerisch gegen check.xlsx."
+                : "Spain CSV hat Differenz. Periodenabgrenzung, Serien REG/LAT/PRO/REC und Gutschriften pruefen.",
+            Math.Abs(spainCsv.Difference)));
+    }
+
+    var existingLabels = issues
+        .Select(issue => issue.Label)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    foreach (var reference in excelReferences.Values)
+    {
+        if (existingLabels.Contains(reference.Label))
+            continue;
+
+        var referenceValue = reference.PowerBiValue ?? reference.LocalCurrencyValue;
+        issues.Add(new FinanceChiefIssue(
+            "Keine Daten",
+            reference.Label,
+            "check.xlsx",
+            reference.PowerBiValue.HasValue ? "Sollwert" : "LC",
+            null,
+            referenceValue,
+            null,
+            "Sollwert ist in check.xlsx vorhanden, aber es gibt keinen belastbaren Ist-Import. Standort, Export oder Aktivierung pruefen.",
+            decimal.MaxValue));
+    }
+
+    return issues;
+}
+
+static string BuildFinanceChiefIssueRow(FinanceChiefIssue issue)
+{
+    var statusClass = issue.Status.Replace(" ", string.Empty);
+
+    return $$"""
+<tr>
+  <td><span class="status {{Html(statusClass)}}">{{Html(issue.Status)}}</span></td>
+  <td><strong>{{Html(issue.Label)}}</strong><div class="small">{{Html(issue.Key)}}</div></td>
+  <td>{{Html(issue.Currency)}}</td>
+  <td class="num">{{Amount(issue.ActualValue)}}</td>
+  <td class="num">{{Amount(issue.ReferenceValue)}}</td>
+  <td class="num">{{Amount(issue.Difference)}}</td>
+  <td class="chief-action">{{Html(issue.Reason)}}</td>
+</tr>
+""";
+}
+
+static string BuildFinanceChiefCurrency(NetSalesReferenceRow row)
+{
+    var actualCurrency = string.IsNullOrWhiteSpace(row.ActualCurrency) ? row.Currencies : row.ActualCurrency;
+    var referenceCurrency = row.ReferenceCurrency;
+
+    if (string.IsNullOrWhiteSpace(actualCurrency) && string.IsNullOrWhiteSpace(referenceCurrency))
+        return "-";
+    if (string.IsNullOrWhiteSpace(referenceCurrency) ||
+        referenceCurrency.Equals("Sollwert", StringComparison.OrdinalIgnoreCase) ||
+        actualCurrency.Equals(referenceCurrency, StringComparison.OrdinalIgnoreCase))
+        return actualCurrency;
+    if (string.IsNullOrWhiteSpace(actualCurrency))
+        return referenceCurrency;
+
+    return $"{actualCurrency} / Soll {referenceCurrency}";
+}
+
+static string BuildFinanceChiefReason(NetSalesReferenceRow row, GermanyExcelProbe? germanySample)
+{
+    if (row.Key.Equals("DE", StringComparison.OrdinalIgnoreCase) && germanySample is not null)
+        return "DE-Beispielfile ist lesbar, aber nur Sample. Finalen Jahresexport/Abgrenzung pruefen.";
+
+    if (row.Status == "OK")
+        return "Passt rechnerisch gegen check.xlsx.";
+
+    if (row.Status == "Keine Daten")
+        return "Kein belastbarer Ist-Import. Standort, Export, Mapping oder Aktivierung pruefen.";
+
+    if (row.DifferenceExcludingIntercompany.HasValue &&
+        Math.Abs(row.DifferenceExcludingIntercompany.Value) <= 1m)
+        return "Abweichung ist nach 2nd-party/Intercompany-Abzug erklaerbar. IC-Regel fachlich bestaetigen.";
+
+    if (row.Candidates.Count > 1)
+        return "Abweichung offen. Gewaehlter Wert folgt Hauswaehrung/Nettofakturawert; alternative Summen sind in Details sichtbar.";
+
+    return "Abweichung offen. Quelle, Periodenabgrenzung, Gutschriften und 2nd-party/3rd-party-Abgrenzung pruefen.";
 }
 
 static string BuildExecutiveBriefing(
@@ -1301,6 +1498,17 @@ static string Amount(decimal? value)
 
 static string Html(string? value)
     => WebUtility.HtmlEncode(value ?? string.Empty);
+
+sealed record FinanceChiefIssue(
+    string Status,
+    string Label,
+    string Key,
+    string Currency,
+    decimal? ActualValue,
+    decimal? ReferenceValue,
+    decimal? Difference,
+    string Reason,
+    decimal SortValue);
 
 sealed class CheckedExcelReference
 {

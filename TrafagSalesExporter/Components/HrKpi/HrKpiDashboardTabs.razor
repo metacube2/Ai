@@ -46,7 +46,7 @@
                     @HorizontalBars(Result.TurnoverVisuals.RelevantByOrganisation)
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    @MonthlyBars(Result.TurnoverVisuals.MonthlyRelevantLeavers)
+                    @MonthlyBars(Result.TurnoverVisuals)
                 </MudItem>
             </MudGrid>
         </MudTabPanel>
@@ -286,7 +286,7 @@
             .OrderByDescending(x => x.Count);
 
     private RenderFragment<HrTurnoverVisuals> TurnoverGauge => visual => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">@T("Jahres-Fluktuation", "Annual turnover")</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@visual.RateTitle</MudText>
         <div class="hr-gauge" style="@($"--gauge-color:{visual.GaugeColor}; --gauge-deg:{visual.GaugeRotationDegrees.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}deg")">
             <div class="hr-gauge-track"></div>
             <div class="hr-gauge-needle"></div>
@@ -355,10 +355,10 @@
         </div>
     </MudPaper>;
 
-    private RenderFragment<IReadOnlyList<HrKpiGroupValue>> MonthlyBars => items => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">@T("Relevante Austritte pro Monat", "Relevant leavers per month")</MudText>
+    private RenderFragment<HrTurnoverVisuals> MonthlyBars => visual => @<MudPaper Class="pa-4 hr-viz-panel" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@visual.TimelineTitle</MudText>
         <div class="hr-month-bars">
-            @foreach (var item in items)
+            @foreach (var item in visual.MonthlyRelevantLeavers)
             {
                 <div class="hr-month">
                     <div class="hr-month-bar" style="@($"height:{Math.Max(item.Percent, item.Count > 0 ? 8 : 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%; background:{item.Color}")"></div>

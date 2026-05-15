@@ -29,6 +29,12 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Fact]
+    public void HrKpiOptions_Default_Exit_Year_Is_Empty()
+    {
+        Assert.Null(new HrKpiOptions().Year);
+    }
+
+    [Fact]
     public async Task BuildAsync_Applies_Organisation_Filter_To_Absences()
     {
         var result = await _service.BuildAsync(new HrKpiOptions
@@ -61,6 +67,90 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildAsync_With_Empty_Exit_Year_Includes_All_Leaver_Years()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = null
+        });
+
+        Assert.Contains(2025, result.ExitYearOptions);
+        Assert.Contains(2024, result.ExitYearOptions);
+        Assert.Contains(result.Leavers, row => row.Austrittsdatum?.Year == 2025);
+        Assert.Contains(result.Leavers, row => row.Austrittsdatum?.Year == 2024);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Employee_Only_Filters_Do_Not_Distort_Turnover_Denominator()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025,
+            KostenstelleText = "100 / Org A"
+        });
+
+        var activeHeadcount = Assert.Single(result.Metrics, metric => metric.Label == "Headcount aktiv");
+        Assert.Equal("1", activeHeadcount.Value);
+
+        var turnoverHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Headcount Festangestellt");
+        Assert.Equal(3.0m.ToString("N1"), turnoverHeadcount.Value);
+        Assert.Contains(result.Notices, notice => notice.Contains("nicht die Fluktuation", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Uses_Average_Headcount_For_Turnover_Formulas()
+    {
+        RewriteEmployeeRows(
+        [
+            [4001, "Stable, Anna", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [4002, "Stable, Bruno", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [4003, "Stable, Carla", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"]
+        ]);
+        RewriteLeaverRows(
+        [
+            [5001, "Leaving, Lea", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 6, 30), new DateTime(2025, 1, 1), "Kündigung AN"]
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        var avgYearHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Avg Headcount Jahr");
+        Assert.Equal(3.5m.ToString("N1"), avgYearHeadcount.Value);
+
+        var yearRate = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Jahr Effektiv %");
+        Assert.Equal((1m / 3.5m).ToString("P1"), yearRate.Value);
+        Assert.Equal("Austritte Jahr / Avg HC Jahr", yearRate.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Uses_Distinct_Persons_In_Turnover_Visuals()
+    {
+        AppendLeaverRow(
+            1001,
+            "Alpha, Anna",
+            "Org A",
+            "Engineer",
+            new DateTime(2025, 3, 20),
+            new DateTime(2020, 1, 1),
+            "Arbeitnehmer Kuendigung");
+
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        Assert.Equal(1, result.TurnoverVisuals.MonthlyRelevantLeavers[2].Count);
+        Assert.Equal(1, result.TurnoverVisuals.RelevantByOrganisation.Single(row => row.Label == "Org A").Count);
+        Assert.Equal(3, result.TurnoverVisuals.FunnelSteps.Single(row => row.Label == "Austritte Total").Count);
+    }
+
+    [Fact]
     public async Task BuildAsync_Excludes_Missing_Personalnummer_From_Distinct_Headcount_And_Uses_Fte_Fallback()
     {
         var result = await _service.BuildAsync(new HrKpiOptions
@@ -75,6 +165,9 @@ public sealed class HrKpiServiceTests : IDisposable
         var fallbackEmployee = Assert.Single(result.Employees, row => row.NameVoll == "Fallback, Fiona");
         Assert.Null(fallbackEmployee.BeschaeftigungsgradProzent);
         Assert.Equal(0.5m, fallbackEmployee.Fte);
+
+        var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
+        Assert.Contains("FTE", absenceRate.Detail);
 
         Assert.Contains(result.Notices, notice => notice.Contains("ohne Personalnummer", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(result.Notices, notice => notice.Contains("FTE-Fallback", StringComparison.OrdinalIgnoreCase));
@@ -93,7 +186,29 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Single(result.Leavers, row => row.IstFluktuationsrelevant);
         Assert.Contains(result.Leavers, row => row.FluktuationAusschlussgrund == "Kuendigung durch Trafag");
         Assert.Contains(result.Leavers, row => row.FluktuationAusschlussgrund == "Praktikant");
-        Assert.Equal(1, result.TurnoverVisuals.MonthlyRelevantLeavers.Single(row => row.Label == "Mär").Count);
+        Assert.Equal(1, result.TurnoverVisuals.MonthlyRelevantLeavers[2].Count);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Recognizes_Rexx_Kuendigung_AN_And_AG()
+    {
+        RewriteLeaverRows(
+        [
+            [3001, "Employee, Eva", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 6, 1), new DateTime(2020, 1, 1), "Kündigung AN"],
+            [3002, "Employer, Emil", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 6, 2), new DateTime(2020, 1, 1), "Kündigung AG"],
+            [3003, "Retired, Rita", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 6, 3), new DateTime(2020, 1, 1), "Ruhestand"]
+        ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte Arbeitnehmerkuendigung").Value);
+        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte Fluktuationsrelevant").Value);
+        Assert.Contains(result.Leavers, row => row.Austrittsart == "Kündigung AG" && row.FluktuationAusschlussgrund == "Kuendigung durch Trafag");
+        Assert.Contains(result.Leavers, row => row.Austrittsart == "Ruhestand" && row.FluktuationAusschlussgrund == "Pensionierung");
     }
 
     private static void WriteFixtureFiles(string folder)
@@ -151,8 +266,56 @@ public sealed class HrKpiServiceTests : IDisposable
             [
                 [1001, "Alpha, Anna", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 3, 10), new DateTime(2020, 1, 1), "Arbeitnehmer Kuendigung"],
                 [1002, "Beta, Bruno", "Org B", "Engineer", "Inaktiv", new DateTime(2025, 4, 5), new DateTime(2024, 2, 1), "Kuendigung Arbeitgeber"],
-                [2001, "Trainee, Tom", "Org A", "Praktikant", "Inaktiv", new DateTime(2025, 5, 5), new DateTime(2025, 1, 1), "Arbeitnehmer Kuendigung"]
+                [2001, "Trainee, Tom", "Org A", "Praktikant", "Inaktiv", new DateTime(2025, 5, 5), new DateTime(2025, 1, 1), "Arbeitnehmer Kuendigung"],
+                [1003, "Fallback, Fiona", "Org B", "Engineer", "Inaktiv", new DateTime(2024, 12, 15), new DateTime(2025, 1, 15), "Arbeitnehmer Kuendigung"]
             ]);
+    }
+
+    private void AppendLeaverRow(
+        int personalNumber,
+        string name,
+        string organisation,
+        string position,
+        DateTime exitDate,
+        DateTime entryDate,
+        string exitType)
+    {
+        var path = Path.Combine(_folder, "Personalausgeschieden.xlsx");
+        using var workbook = new XLWorkbook(path);
+        var sheet = workbook.Worksheets.First();
+        var row = sheet.LastRowUsed()!.RowNumber() + 1;
+
+        sheet.Cell(row, 1).Value = personalNumber;
+        sheet.Cell(row, 2).Value = name;
+        sheet.Cell(row, 3).Value = organisation;
+        sheet.Cell(row, 4).Value = position;
+        sheet.Cell(row, 5).Value = "Inaktiv";
+        sheet.Cell(row, 6).Value = exitDate;
+        sheet.Cell(row, 7).Value = entryDate;
+        sheet.Cell(row, 8).Value = exitType;
+
+        workbook.Save();
+    }
+
+    private void RewriteLeaverRows(object?[][] rows)
+    {
+        WriteWorkbook(Path.Combine(_folder, "Personalausgeschieden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation-1", "Stelle-1",
+                "Personal Status", "Austrittsdatum", "Eintrittsdatum", "Austrittsart"
+            ],
+            rows);
+    }
+
+    private void RewriteEmployeeRows(object?[][] rows)
+    {
+        WriteWorkbook(Path.Combine(_folder, "Saldiperstichdatum.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Kostenstelle", "Stelle",
+                "Leitung j/n", "Eintrittsdatum", "Personal Status", "Stunden Saldo", "Urlaubsanspruch",
+                "Urlaub Rest", "Ferien ausstehend (Tage)", "Lohn", "Lohn Waehrung"
+            ],
+            rows);
     }
 
     private static void WriteWorkbook(string path, string[] headers, object?[][] rows)

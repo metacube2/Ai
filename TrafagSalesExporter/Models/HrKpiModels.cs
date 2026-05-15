@@ -3,7 +3,7 @@ namespace TrafagSalesExporter.Models;
 public sealed class HrKpiOptions
 {
     public string DataFolder { get; set; } = HrKpiDataSourceOptions.DefaultFolder;
-    public int Year { get; set; } = DateTime.Today.Year;
+    public int? Year { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
     public int? EntryYear { get; set; }
@@ -50,6 +50,7 @@ public sealed class HrKpiResult
     public List<string> Notices { get; set; } = [];
     public List<string> OrganisationOptions { get; set; } = [];
     public List<string> KostenstelleOptions { get; set; } = [];
+    public List<int> ExitYearOptions { get; set; } = [];
     public List<int> EntryYearOptions { get; set; } = [];
     public List<string> MitarbeitertypOptions { get; set; } = [];
     public List<HrKpiMetric> Metrics { get; set; } = [];
@@ -93,10 +94,12 @@ public sealed class HrKpiGroupValue
 
 public sealed class HrTurnoverVisuals
 {
+    public string RateTitle { get; set; } = "Fluktuation Auswahl";
     public decimal YearRatePercent { get; set; }
     public string YearRateLabel { get; set; } = "0.0%";
     public string GaugeColor { get; set; } = "#2e7d32";
     public decimal GaugeRotationDegrees { get; set; }
+    public string TimelineTitle { get; set; } = "Relevante Austritte";
     public List<HrKpiGroupValue> FunnelSteps { get; set; } = [];
     public List<HrKpiGroupValue> ExclusionReasons { get; set; } = [];
     public List<HrKpiGroupValue> RelevantByOrganisation { get; set; } = [];

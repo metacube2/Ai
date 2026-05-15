@@ -17,7 +17,12 @@
             <MudTextField @bind-Value="_dataFolder" Label="@T("Datenordner", "Data folder")" />
         </MudItem>
         <MudItem xs="6" md="2">
-            <MudNumericField T="int" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Min="2000" Max="2100" />
+            <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
+                @foreach (var option in _result?.ExitYearOptions ?? [])
+                {
+                    <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
+                }
+            </MudSelect>
         </MudItem>
         <MudItem xs="12" md="3">
             <MudSelect T="string" @bind-Value="_organisation" Label="@T("Organisation", "Organisation")" Dense Clearable>
@@ -111,7 +116,7 @@
 
 @code {
     private string _dataFolder = HrKpiDataSourceOptions.DefaultFolder;
-    private int _year = DateTime.Today.Year;
+    private int? _year;
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private int? _entryYear;

@@ -38,29 +38,29 @@ Die Power-Query-/DAX-Logik wurde nicht als Interpreter umgesetzt, sondern als C#
 
 ## Pruefpunkte mit moeglicher Abweichung
 
-### 1. Fluktuationsnenner: Stichtags-Headcount statt Durchschnitt
+### 1. Fluktuationsnenner: Durchschnittlicher Headcount
 
 Aktueller Reiter:
 
-- `Headcount Festangestellt` wird aus dem aktuell geladenen Stichtagsbestand gerechnet.
-- `Avg Headcount Quartal` und `Avg Headcount Jahr` entsprechen aktuell faktisch ebenfalls diesem Stichtagswert.
+- `Headcount Monat` wird als Durchschnitt aus Monatsanfang und Monatsende gerechnet.
+- `Avg Headcount Quartal` ist der Durchschnitt der Monats-Headcounts im Quartal.
+- `Avg Headcount Jahr` ist der Durchschnitt der Monats-Headcounts im Jahr.
+- Die Berechnung nutzt Headcount, nicht FTE, und zaehlt nur Festangestellte.
 
 Best Practice:
 
 - Fluktuation sollte fuer Monat, Quartal und Jahr mit durchschnittlichem Headcount des jeweiligen Zeitraums gerechnet werden.
-- Bei stabiler Belegschaft ist der Unterschied klein.
-- Bei Wachstum, Abbau oder saisonalen Schwankungen kann der Unterschied relevant sein.
+- Das entspricht der Vorgabe aus `formeln.docx`.
 
 Pruefen:
 
-- Liefert Rexx/SAP monatliche Headcount-Snapshots?
-- Falls ja: Monatsdurchschnitt fuer Quartal/Jahr berechnen.
-- Falls nein: UI klar als `Stichtagsnahe Fluktuation` oder `Naeherung` beschriften.
+- Die aktuelle Berechnung rekonstruiert Monats-Headcounts aus Eintritts-/Austrittsdatum der aktiven Mitarbeitenden und der Austrittsdatei.
+- Echte historische Monats-Snapshots waeren fuer ein auditierbares Reporting noch genauer.
 
 Status:
 
-- fachlich akzeptabel als erste Naeherung
-- fuer offizielles HR-Reporting noch zu bestaetigen
+- fachlich deutlich naeher an `formeln.docx`
+- als Reporting-Definition mit HR bestaetigen, falls HR echte Monats-Snapshots verlangt
 
 ### 2. Freiwillige vs. unfreiwillige Austritte
 
@@ -85,25 +85,25 @@ Status:
 - HR-gepruefte Grundlogik vorhanden
 - Mappingliste muss bei neuen Austrittsarten gepflegt/validiert werden
 
-### 3. Fluktuation Quartal/Jahr bei nur einem aktuellen Bestand
+### 3. Fluktuation Quartal/Jahr ohne echte Monats-Snapshots
 
 Aktueller Reiter:
 
 - Quartals-/Jahresraten werden ueber Austrittsdatum gefiltert.
-- Headcount bleibt aktueller Stichtagsbestand.
+- Headcount wird aus Eintritts-/Austrittsintervallen pro Monat rekonstruiert.
 
 Risiko:
 
-- Wenn der aktuelle Bestand z. B. Ende Jahr niedriger/hoeher ist als im Quartal, verzerrt das die historische Rate.
+- Wenn historische Korrekturen oder Rueckdatierungen nicht in den Dateien enthalten sind, koennen rekonstruierte Monatswerte von offiziellen HR-Snapshots abweichen.
 
 Pruefen:
 
-- Fuer Quartal/Jahr entweder echte historische Headcounts laden oder die Kennzahl explizit als operative Naeherung fuehren.
+- Falls HR monatliche Headcount-Snapshots liefert, diese spaeter als bevorzugte Quelle fuer den Nenner verwenden.
 
 Status:
 
-- Darstellung gut fuer operatives Cockpit
-- nicht automatisch als auditierbare Jahreskennzahl verwenden
+- operativ passend zur Formel in `formeln.docx`
+- fuer Audit/Abschluss mit HR-Snapshot abgleichen
 
 ### 4. Absenzenquote: 21 Arbeitstage pauschal
 
@@ -304,12 +304,11 @@ Status:
 
 ## Empfehlung fuer die naechste Umsetzung
 
-Noch keine Formel aendern, bevor die Kontrollwerte protokolliert sind.
+Die Fluktuationsformel wurde gemaess `formeln.docx` auf durchschnittlichen Headcount umgestellt. Vor produktiver Nutzung bleiben die Kontrollwerte mit HR/Power BI zu protokollieren.
 
 Sinnvolle naechste technische Erweiterungen:
 
 - Tab `Datenstatus` um Join-Trefferquoten erweitern.
 - Tab `Fluktuation` mit Kontrollwerten Power BI/HR anzeigen.
 - Absenzenquote optional auf vertragliche Sollzeit/FTE umstellen.
-- Kennzahlen mit `Naeherung` markieren, solange nur ein Stichtagsbestand statt historischer Monats-Snapshots vorhanden ist.
-
+- Falls HR echte historische Monats-Snapshots liefert, diese als bevorzugte Quelle fuer den durchschnittlichen Headcount nutzen.

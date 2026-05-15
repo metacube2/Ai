@@ -1172,3 +1172,144 @@ Ergaenzt in `docs/PROGRAMM_DIAGRAMME.md`:
 
 - FinanceProbe-Start und Hinweis zu Console-Logging.
 - Hinweis zu DLL-Sperren durch Visual Studio bzw. alte `dotnet`-Prozesse.
+
+## HR KPI Cockpit und Filterkorrektur 2026-05-13
+
+Ergaenzt:
+
+- Separater HR-KPI-Reiter `/hr-kpi`.
+- Dashboard-Tabs fuer Ueberblick, Fluktuation, Absenzen, Zeit/Ferien, Mitarbeitende und Datenstatus.
+- Fluktuationsvisuals: Gauge, Funnel, Donut, Organisation-Balken und Monatsbalken.
+- Architektur-Cleanup: `HrKpiService` als Fassade, Build-Pipeline in `Services/HrKpi/HrKpiDashboardBuilder.cs`, UI-Tabs in `Components/HrKpi/HrKpiDashboardTabs.razor`.
+- Konfigurierbare HR-Dateiquellen ueber `HrKpi` in `appsettings.json`.
+- HR-KPI-Regressionstests.
+
+Korrigiert:
+
+- `Austrittsjahr` ist jetzt optional.
+- Leeres Austrittsjahr bedeutet: alle Austritte.
+- Von/Bis-Austritt hat Vorrang vor Austrittsjahr.
+- Die Austrittsjahr-Auswahl wird aus den vorhandenen Austrittsdaten aufgebaut.
+- `Austrittsjahr` ist beim Start leer statt automatisch aktuelles Jahr.
+- Fluktuation nutzt nur vergleichbare Filter auf Mitarbeitenden- und Austrittsdaten.
+- Kostenstelle, GLZ und Restferien filtern nicht die Fluktuation, weil die Austrittsdatei diese Felder nicht stabil enthaelt; das Cockpit zeigt dazu einen Hinweis.
+- Bei Mehrjahresauswahl wird die Fluktuation als Auswahlwert statt als Jahreswert gefuehrt.
+- Fluktuationsvisuals zaehlen distinct nach Personalnummer.
+- Fluktuationsraten nutzen nun durchschnittlichen Headcount statt Stichtags-Headcount: Monat, Quartal und Jahr folgen `formeln.docx`.
+- Krankenquote nutzt den FTE-Nenner: `Krankheitstage / (FTE * 21 Tage)`.
+- Rexx-Austrittsarten mit Umlaut werden korrekt normalisiert: `Kündigung AN` zaehlt als Arbeitnehmerkuendigung, `Kündigung AG` als Arbeitgeberkuendigung-Ausschluss, `Ruhestand` als Pensionierung.
+
+Nachdokumentation:
+
+```text
+docs/HR_KPI_NACHDOKU_2026-05-13.md
+```
+
+Verifikation:
+
+- `dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_app\ --verbosity minimal`
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_tests\ --verbosity minimal`
+- Ergebnis: `69/69` Tests bestanden.
+- Kontrollwert `C:\temp\Personalausgeschieden.xlsx`: `104` Austritte total, `42` `Kündigung AN`, `34` `Kündigung AG`, `33` fluktuationsrelevant.
+- Kontrollwert neuer Nenner: Avg Headcount 2025 `211.3`, Fluktuation Jahr effektiv `15.6%`.
+
+## FinanceProbe Finanzchef-Uebersicht 2026-05-13
+
+Ergaenzt:
+
+- Neuer Reiter `Finanzchef Uebersicht` in `Tools/FinanceProbe`.
+- Kompakte Soll/Ist-Sicht nur fuer offene Laender.
+- Spalten reduziert auf Status, Land, Waehrung, Ist, Soll, Abweichung und Pruefgrund.
+- Bestehende Detailtabellen bleiben unveraendert fuer Analyse/Nachvollzug.
+
+Verifikation:
+
+- `dotnet build .\Tools\FinanceProbe\FinanceProbe.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_financeprobe\ --verbosity minimal`
+- Ergebnis: Build erfolgreich, `0` Fehler.
+- Hinweis: `NU1900` wegen nicht erreichbarer NuGet-Sicherheitsdaten im eingeschraenkten Netzwerk.
+
+## Finance CFO Word-Kurzbericht 2026-05-13
+
+Erstellt:
+
+- `docs/FINANCE_CHEF_SUMMARY_2026-05-13.docx`
+- Kurzbericht fuer Finance/CFO mit Kernaussagen und Massnahmen.
+- Enthalten: FR, IN, US, AT, ES, UK/EN, DE, CH, IT.
+- Ausgeschlossen: GFS und reine 0-/Leer-Faelle ohne operative Aussage.
+
+Inhaltlicher Fokus:
+
+- Freigabefaehige Laender: FR, IN, US.
+- Kleine/mittlere Klaerung: AT, ES.
+- Hohe Prioritaet: UK/EN, DE, CH.
+- Kritisch: IT wegen groesster Abweichung und offener Berechnungsart.
+
+## Finance CFO Word-Kurzbericht Erweiterung 2026-05-15
+
+Ergaenzt:
+
+- Aktuelle Fassung: `docs/FINANCE_CHEF_SUMMARY_2026-05-15.docx`
+- Erweiterte Tabellenansicht mit Status, Ist, Soll/Rhino, Abweichung, Pruefquelle, Massnahme und Prioritaet.
+- Grafische Ampel-Uebersicht fuer OK/Klaeren/Hoch/Kritisch.
+- Prioritaetsgrafik fuer IT, DE, UK/EN, CH, AT/ES.
+- Abschnitt `Geprueft gegen` mit Rhino/Andreas `check.xlsx`, FinanceProbe/CentralSalesRecords, Spain CSV, Deutschland-Beispielfile und UK_B1.
+
+Verifikation:
+
+- DOCX enthaelt `word/document.xml`.
+- Inhalte `Rhino / Andreas check.xlsx`, `Management-Ampel`, `Prioritaetsgrafik` und `Laendertabelle mit Massnahmen` wurden im Dokumentpaket geprueft.
+
+## Finance Spanien Mailentwurf 2026-05-15
+
+Erstellt:
+
+- `docs/FINANCE_ES_MAIL_ABWEICHUNG_2026-05-15.md`
+- Spanischer Mailentwurf zur Abweichung Spanien Net Sales 2025.
+- Enthaltene Pruefpunkte: Zeitraum, Serien `REG/LAT/PRO/REC`, Abonos/Credit Notes, Datumslogik und verwendetes Netto-Umsatzfeld.
+
+## Finance IT und UK Mailentwuerfe 2026-05-15
+
+Erstellt:
+
+- `docs/FINANCE_IT_MAIL_ABWEICHUNG_2026-05-15.md`
+- `docs/FINANCE_UK_MAIL_ABWEICHUNG_2026-05-15.md`
+
+Inhalt:
+
+- Italien: grosse Abweichung `+7.034.496,29 EUR`, Fokus Berechnungsart, Beleg/Position-Deduplizierung, Intercompany, Credit Notes, Datumslogik und Waehrung.
+- UK/England: Restdifferenz `-216,154.91 GBP`, Fokus Jahresvollstaendigkeit, Periodenbereich, Credit Notes, Nettofeld, Discounts/Freight/Charges, 2nd-/3rd-party und Waehrung.
+
+## Finance Entscheide Extraktion 2026-05-15
+
+Erstellt:
+
+- `entscheide.md`
+
+Inhalt:
+
+- Fragen und Entscheide aus der Finance-Abstimmung extrahiert.
+- Festgehaltene Kernentscheide: Hauswaehrung je Land, Budgetkurse fuer CHF-Sicht, Berechnung pro Artikel/Belegposition, Nettofakturawert, Buchungsdatum, separate Gutschriftenausweisung und Intercompany/2nd-party als eigenes Auswahlfeld.
+- Intercompany-Marker dokumentiert: `MAGNETS SENSE`, `MAGNETIC SENSE`, `TRAFAG`, `GESELLSCHAFT FUER SENSORIK`, `GESELLSCHAFT FUR SENSORIK`.
+
+## Finance Dokumentgueltigkeit 2026-05-15
+
+Erstellt:
+
+- `docs/FINANCE_WELCHES_DOKUMENT_GILT_2026-05-15.md`
+
+Festgelegt:
+
+- Fuehrendes CFO-Dokument: `docs/FINANCE_CHEF_SUMMARY_2026-05-15.docx`
+- Alte CFO-Version `docs/FINANCE_CHEF_SUMMARY_2026-05-13.docx` entfernt, weil sie durch die Version vom 2026-05-15 ersetzt wurde.
+- Entscheidbasis: `entscheide.md` und `docs/FINANCE_ENTSCHEIDE.md`.
+
+## Finance Dashboard Todo 2026-05-15
+
+Erstellt:
+
+- `docs/FINANCE_DASHBOARD_TODO_2026-05-15.md`
+
+Inhalt:
+
+- Todo-Liste fuer Group Sales Reporting Intranet-Dashboard.
+- Priorisierte Punkte fuer CFO-Dokument, offene Laenderabweichungen, Intercompany, Budgetkurse und Berechtigungskonzept.
