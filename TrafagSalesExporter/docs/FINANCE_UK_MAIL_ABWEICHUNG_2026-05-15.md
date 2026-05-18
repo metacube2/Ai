@@ -14,6 +14,8 @@ Summary:
 
 The mapping has already been reviewed technically, but we still need to clarify the remaining difference before closing the 2025 value.
 
+Important clarification: UK / England is treated as a Sage source. The current SharePoint folder name `UK_B1` is only a technical folder/source reference and does not mean that UK is read from SAP Business One.
+
 Could you please check the following points?
 
 1. Full-year completeness  

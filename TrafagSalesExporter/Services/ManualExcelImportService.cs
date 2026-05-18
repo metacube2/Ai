@@ -475,6 +475,9 @@ public class ManualExcelImportService : IManualExcelImportService
         if (!expression.Contains('[') || !expression.Contains(']'))
             return expression;
 
+        if (TryEvaluateSageNetSalesExpression(expression, readHeader, out var sageNetSales))
+            return sageNetSales;
+
         var parts = expression.Split('*', 2, StringSplitOptions.TrimEntries);
         if (parts.Length != 2)
             return expression;
@@ -494,6 +497,85 @@ public class ManualExcelImportService : IManualExcelImportService
         }
 
         return ParseDecimal(trimmed);
+    }
+
+    private static bool TryEvaluateSageNetSalesExpression(string expression, Func<string, string?> readHeader, out decimal value)
+    {
+        value = 0m;
+
+        const string functionName = "SageNetSales";
+        var trimmed = expression.Trim();
+        if (!trimmed.StartsWith(functionName, StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Length <= functionName.Length + 2 ||
+            trimmed[functionName.Length] != '(' ||
+            trimmed[^1] != ')')
+            return false;
+
+        var args = SplitFunctionArguments(trimmed[(functionName.Length + 1)..^1]);
+        if (args.Count < 2)
+            return false;
+
+        var amount = ResolveSageArgumentDecimal(args[0], readHeader);
+        var quantity = ResolveSageArgumentDecimal(args[1], readHeader);
+        var documentType = args
+            .Skip(2)
+            .Select(arg => ResolveSageArgumentText(arg, readHeader))
+            .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text)) ?? string.Empty;
+
+        var netLineAmount = amount * quantity;
+        value = IsCreditNote(documentType) ? -Math.Abs(netLineAmount) : netLineAmount;
+        return true;
+    }
+
+    private static List<string> SplitFunctionArguments(string arguments)
+    {
+        var result = new List<string>();
+        var start = 0;
+        var bracketDepth = 0;
+
+        for (var i = 0; i < arguments.Length; i++)
+        {
+            var current = arguments[i];
+            if (current == '[')
+                bracketDepth++;
+            else if (current == ']')
+                bracketDepth = Math.Max(0, bracketDepth - 1);
+            else if (current == ',' && bracketDepth == 0)
+            {
+                result.Add(arguments[start..i].Trim());
+                start = i + 1;
+            }
+        }
+
+        result.Add(arguments[start..].Trim());
+        return result;
+    }
+
+    private static decimal ResolveSageArgumentDecimal(string operand, Func<string, string?> readHeader)
+        => ParseDecimal(ResolveSageArgumentText(operand, readHeader));
+
+    private static string ResolveSageArgumentText(string operand, Func<string, string?> readHeader)
+    {
+        var trimmed = operand.Trim();
+        if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
+        {
+            var header = trimmed[1..^1].Trim();
+            return readHeader(header) ?? string.Empty;
+        }
+
+        return trimmed.Trim('"', '\'');
+    }
+
+    private static bool IsCreditNote(string documentType)
+    {
+        var normalized = documentType.Trim().ToUpperInvariant();
+        return normalized.Contains("CREDIT") ||
+               normalized.Contains("CREDIT NOTE") ||
+               normalized.Contains("CREDITNOTE") ||
+               normalized.Contains("ABONO") ||
+               normalized.Contains("GUTSCHRIFT") ||
+               normalized == "CRN" ||
+               normalized == "CN";
     }
 
     private static bool IsRowEmpty(IXLRangeRow row)

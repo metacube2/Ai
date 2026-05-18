@@ -351,13 +351,13 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.CustomerNumber), "Customer number", false),
             (nameof(SalesRecord.CustomerName), "Customer name", false),
             (nameof(SalesRecord.CustomerCountry), "Customer country", false),
-            (nameof(SalesRecord.SalesPriceValue), "=[Sales Price/Value]*[Quantity]", true),
+            (nameof(SalesRecord.SalesPriceValue), "=SageNetSales([Sales Price/Value], [Quantity], [Document Type], [DocumentType], [Type])", true),
             (nameof(SalesRecord.SalesCurrency), "=GBP", false),
             (nameof(SalesRecord.DocumentCurrency), "=GBP", false),
             (nameof(SalesRecord.CompanyCurrency), "=GBP", false),
             (nameof(SalesRecord.PostingDate), "invoice date", false),
             (nameof(SalesRecord.InvoiceDate), "invoice date", false),
-            (nameof(SalesRecord.DocumentType), "=Manual Excel", false)
+            (nameof(SalesRecord.DocumentType), "Document Type", false)
         };
 
         var changed = false;

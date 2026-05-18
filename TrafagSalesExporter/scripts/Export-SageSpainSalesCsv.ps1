@@ -132,12 +132,18 @@ SELECT
     CAST(l.PrecioCoste AS decimal(19, 6)) AS StandardCost,
     CAST(l.ImporteCoste AS decimal(19, 6)) AS StandardCostValue,
     'EUR' AS StandardCostCurrency,
-    CAST(l.ImporteNeto AS decimal(19, 6)) AS SalesPriceValue,
+    CAST(CASE
+        WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN -ABS(l.ImporteNeto)
+        ELSE l.ImporteNeto
+    END AS decimal(19, 6)) AS SalesPriceValue,
     'EUR' AS SalesCurrency,
     'EUR' AS DocumentCurrency,
     'EUR' AS CompanyCurrency,
     c.CodigoDivisa AS SageCurrencyCode,
-    CAST(c.BaseImponible AS decimal(19, 6)) AS DocumentNetAmount,
+    CAST(CASE
+        WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN -ABS(c.BaseImponible)
+        ELSE c.BaseImponible
+    END AS decimal(19, 6)) AS DocumentNetAmount,
     CAST(c.TotalIva AS decimal(19, 6)) AS DocumentVatAmount,
     CAST(c.ImporteFactura AS decimal(19, 6)) AS DocumentGrossAmount,
     c.FechaFactura AS InvoiceDate,
@@ -203,8 +209,8 @@ CabeceraAlbaranCliente.FechaFactura < ToDate
 
 Notes:
 - Currency is set to EUR because Sage exports EnEuros_=-1 and CodigoDivisa is empty in the analysed rows.
-- SalesPriceValue uses LineasAlbaranCliente.ImporteNeto.
-- DocumentNetAmount uses CabeceraAlbaranCliente.BaseImponible.
+- SalesPriceValue uses LineasAlbaranCliente.ImporteNeto; credit notes are forced negative.
+- DocumentNetAmount uses CabeceraAlbaranCliente.BaseImponible; credit notes are forced negative.
 - Credit notes are marked when TipoNuevaFra=2, SerieFactura='REC', or StatusAbono is non-zero.
 "@ | Set-Content -LiteralPath $summaryPath -Encoding UTF8
 

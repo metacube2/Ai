@@ -367,6 +367,7 @@ public class HanaQueryService : IHanaQueryService
     private static string GetInvoiceQuery(string schema)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
+        var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
@@ -422,13 +423,14 @@ LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
 LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
-WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}
+WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
 
     private static string GetCreditNoteQuery(string schema)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
+        var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
@@ -479,8 +481,31 @@ LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
 LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
     AND sup_adr.""AdresType"" = 'B'
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
-WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}
+WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
+    }
+
+    private static string BuildRevenueAccountFilter(string schema, string headerAlias, string lineAlias)
+    {
+        if (!schema.Equals("it01_p", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        // Italy's Finance/B1 GUI reconciles against account group 47005
+        // "Ricavi vendite e prestazioni". The 4700504* autofattura accounts
+        // are outside the displayed net-sales subtotal from the screenshot.
+        // The customer exclusion is a provisional working filter derived from
+        // the current IT cache; it must be replaced by the official B1/Rhino
+        // report criterion once Italy confirms the common business rule.
+        return $@" AND {lineAlias}.""AcctCode"" LIKE '47005%'
+ AND {lineAlias}.""AcctCode"" NOT LIKE '4700504%'
+ AND {headerAlias}.""CardCode"" NOT IN (
+     'C_IT01_0022987',
+     'C_IT01_0306928',
+     'C_IT01_0306138',
+     'C_IT01_0309653',
+     'C_IT01_0304885',
+     'C_IT01_0306475'
+ )";
     }
 
     private static DateTime ParseDateFilter(string dateFilter)

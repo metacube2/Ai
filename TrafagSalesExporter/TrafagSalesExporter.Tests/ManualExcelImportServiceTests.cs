@@ -398,6 +398,60 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Evaluates_SageNetSales_And_Forces_CreditNotes_Negative()
+    {
+        var site = new Site
+        {
+            TSC = "TRUK",
+            Land = "England"
+        };
+        var filePath = CreateWorkbook(workbook =>
+        {
+            var ws = workbook.Worksheets.Add("Sales");
+            ws.Cell(1, 1).Value = "Invoice Number";
+            ws.Cell(1, 2).Value = "Position on invoice";
+            ws.Cell(1, 3).Value = "Quantity";
+            ws.Cell(1, 4).Value = "Sales Price/Value";
+            ws.Cell(1, 5).Value = "Document Type";
+            ws.Cell(2, 1).Value = "1001";
+            ws.Cell(2, 2).Value = 1;
+            ws.Cell(2, 3).Value = 2;
+            ws.Cell(2, 4).Value = 100m;
+            ws.Cell(2, 5).Value = "Invoice";
+            ws.Cell(3, 1).Value = "1002";
+            ws.Cell(3, 2).Value = 1;
+            ws.Cell(3, 3).Value = 2;
+            ws.Cell(3, 4).Value = 100m;
+            ws.Cell(3, 5).Value = "Credit Note";
+        });
+
+        var mappings = new List<ManualExcelColumnMapping>
+        {
+            Map(nameof(SalesRecord.InvoiceNumber), "Invoice Number"),
+            Map(nameof(SalesRecord.PositionOnInvoice), "Position on invoice"),
+            Map(nameof(SalesRecord.Quantity), "Quantity"),
+            Map(nameof(SalesRecord.SalesPriceValue), "=SageNetSales([Sales Price/Value], [Quantity], [Document Type])"),
+            Map(nameof(SalesRecord.DocumentType), "Document Type")
+        };
+
+        try
+        {
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(filePath, site, mappings);
+
+            Assert.Equal(2, rows.Count);
+            Assert.Equal(200m, rows[0].SalesPriceValue);
+            Assert.Equal(-200m, rows[1].SalesPriceValue);
+            Assert.Equal("Credit Note", rows[1].DocumentType);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     private static string CreateWorkbook(Action<XLWorkbook> fillWorkbook)
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");

@@ -28,10 +28,10 @@ Die Logik darf nicht auf einzelne Testzahlen optimiert werden. Sie muss je Jahr 
 | --- | --- |
 | IN | Immer indische Rupien (`INR`) als Hauswaehrung. Gemischte Belegwaehrungen duerfen nicht als fachliche Summenwaehrung ausgewiesen werden. |
 | IT | Hauswaehrung verwenden. Intercompany separat ausweisen und weiter fachlich abgrenzen. |
-| UK | Hauswaehrung `GBP` verwenden. Die aktuell geladene Zahl wirkt wie eine Teilmenge und muss gegen vollstaendige Jahresquelle geprueft werden. |
+| UK | Sage/Manual-Excel. Hauswaehrung `GBP` verwenden. Netto ohne VAT; Credit Notes muessen negativ in die Summe laufen. |
 | CH / AT | SAP-ZSCHWEIZ liefert Schweiz und Oesterreich aus gleichem System; Trennung ueber Buchungskreis bzw. Reporting-Land. |
 | DE | Alphaplan-Excel; finaler Jahresfile erforderlich. Sample darf nicht als Jahres-Ist verwendet werden. |
-| ES | SAGE-Excel/CSV; Serien, Gutschriften und Datumsbasis bleiben Kontrollpunkte bis fachlich final bestaetigt. |
+| ES | Sage-CSV. `ImporteNeto` als Nettozeile ohne VAT verwenden; Credit Notes/REC negativ; Datumsbasis ist `FechaFactura`, solange Finance nichts anderes vorgibt. |
 
 ## Intercompany / 2nd Party
 
@@ -65,12 +65,12 @@ Ergebnis im Reporting:
 
 ## Aktuelle Kontrollpunkte
 
-- UK: Aktuell ca. `395'605.82 GBP` bei `1'881` Zeilen gegen Soll `3'749'865.00`; Ursache ist primaer das fehlende UK-Manual-Mapping, weil `Sales Price/Value` als Stueckpreis statt als Positionswert gelesen wurde.
+- UK: Aktuell `3'533'710.09 GBP` bei `1'880` Zeilen gegen Soll `3'749'865.00`; Differenz `-216'154.91 GBP`. Mapping ist nun Sage-Netto: `Sales Price/Value * Quantity`, Credit Notes werden bei erkennbarem Sage-Typ negativ erzwungen.
 - IN: Anzeige muss fachlich `INR` zeigen, auch wenn Quellzeilen verschiedene Belegwaehrungen enthalten.
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
 - DE: finalen Jahresfile laden.
-- ES: Serien und Gutschriften fachlich final bestaetigen.
+- ES: Aktuell `3'082'320.18 EUR` gegen Soll `3'102'333.61`; Differenz `-20'013.43 EUR`. CSV nutzt `ImporteNeto`; Credit Notes/REC sind negativ. Offen bleiben Perioden-/Serienabgrenzung und ob Rhino eine andere Sage-Auswertung nutzt.
 
 ## Pruefstand 2026-05-11
 
@@ -138,7 +138,8 @@ Der UK-Befund wurde nachtraeglich technisch untersucht.
 
 Wichtige Feststellungen:
 
-- Quelle bleibt `UK_B1`.
+- Korrektur 2026-05-18: England / UK ist fachlich Sage, nicht SAP B1.
+- `UK_B1` ist im aktuellen Projektstand der SharePoint-Ordner- bzw. Quellreferenzname, aber keine Aussage, dass UK ueber SAP Business One / B1-HANA gelesen wird.
 - Der Standort ist `England`, `TSC = TRUK`, `SourceSystem = MANUAL_EXCEL`.
 - Der korrekte SharePoint-Ordner ist:
 
@@ -148,7 +149,7 @@ https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1
 
 - Lokal war fuer `TRUK` kein grafisches Manual-Excel-Mapping vorhanden.
 - Dadurch hat der Fallback-Importer `Sales Price/Value` direkt als Positionswert uebernommen.
-- In der UK-B1-Datei ist `Sales Price/Value` aber ein Stueckpreis.
+- In der UK-Sage-Datei ist `Sales Price/Value` aber ein Stueckpreis.
 - Der fachliche Positionswert muss pro Belegposition berechnet werden:
 
 ```text
@@ -168,8 +169,9 @@ Bewertung:
 
 - Die grosse UK-Abweichung war hauptsaechlich ein Mapping-Fehler.
 - Nach korrekter Multiplikation bleibt eine relevante Restdifferenz.
-- Diese Restdifferenz muss gegen UK-spezifische Netto-/Discount-/Fracht-/Nebenpositionsspalten oder eine andere Abgrenzung im UK-Export geprueft werden.
+- Diese Restdifferenz muss gegen UK-/Sage-spezifische Netto-/Discount-/Fracht-/Nebenpositionsspalten oder eine andere Abgrenzung im UK-Export geprueft werden.
 - Die bisherige Interpretation "nur Monatsfile/Teilmenge" ist nicht mehr die wahrscheinlichste Hauptursache, bleibt aber als Datenvollstaendigkeitscheck offen.
+- UK darf nicht mit B1-Belegkopfregeln von FR/IT verwechselt werden.
 
 Ziel-Mapping fuer `TRUK`:
 
