@@ -10,7 +10,8 @@ Summary:
 
 - Actual UK: `3,533,710.09 GBP`
 - Rhino reference: `3,749,865.00 GBP`
-- Difference: `-216,154.91 GBP`
+- Reference UK LC/GBP: `3,538,972.00 GBP`
+- Difference: `-5,261.91 GBP`
 
 The mapping has already been reviewed technically, but we still need to clarify the remaining difference before closing the 2025 value.
 

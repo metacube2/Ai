@@ -630,7 +630,7 @@ public class DatabaseSeedService : IDatabaseSeedService
             new FinanceReference { Key = "MSA", Label = "Trafag MSA", Year = 2025, LocalCurrencyValue = 1445258m },
             new FinanceReference { Key = "PL", Label = "Trafag PL Poltraf", Year = 2025, LocalCurrencyValue = 11279297m },
             new FinanceReference { Key = "RU", Label = "Trafag RU", Year = 2025 },
-            new FinanceReference { Key = "UK", Label = "Trafag UK", Year = 2025, LocalCurrencyValue = 3538972m, CheckValue = 3749865m },
+            new FinanceReference { Key = "UK", Label = "Trafag UK", Year = 2025, LocalCurrencyValue = 3538972m },
             new FinanceReference { Key = "US", Label = "Trafag US", Year = 2025, LocalCurrencyValue = 3896728m, CheckValue = 3749865m }
         };
 
@@ -640,7 +640,24 @@ public class DatabaseSeedService : IDatabaseSeedService
         {
             var current = existing.FirstOrDefault(x => x.Year == item.Year && x.Key == item.Key);
             if (current is not null)
+            {
+                if (current.Key == "UK" && current.Year == 2025)
+                {
+                    if (current.LocalCurrencyValue != 3538972m)
+                    {
+                        current.LocalCurrencyValue = 3538972m;
+                        changed = true;
+                    }
+
+                    if (current.CheckValue.HasValue)
+                    {
+                        current.CheckValue = null;
+                        changed = true;
+                    }
+                }
+
                 continue;
+            }
 
             db.FinanceReferences.Add(item);
             changed = true;

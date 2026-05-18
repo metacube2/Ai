@@ -54,10 +54,12 @@ Aktueller Re-Export nach der Anpassung:
 | --- | ---: |
 | Zeilen 2025 | `1'880` |
 | Ist | `3'533'710.09 GBP` |
-| Soll | `3'749'865.00 GBP` |
-| Differenz | `-216'154.91 GBP` |
+| Soll LC | `3'538'972.00 GBP` |
+| Differenz | `-5'261.91 GBP` |
 
 Die Zahl blieb unveraendert, weil die vorhandenen UK-Zeilen bereits negative Betragszeilen enthalten. Die neue Regel verhindert aber, dass kuenftige Sage-Credit-Notes mit positivem Betrag versehentlich als Umsatz addiert werden.
+
+Der fruehere `CheckValue 3'749'865.00` wird fuer UK nicht mehr verwendet. UK ist GBP-Local-Currency und wird gegen `LocalCurrencyValue = 3'538'972.00 GBP` geprueft.
 
 ## Formulierung fuer CFO / Finance
 

@@ -65,7 +65,7 @@ Ergebnis im Reporting:
 
 ## Aktuelle Kontrollpunkte
 
-- UK: Aktuell `3'533'710.09 GBP` bei `1'880` Zeilen gegen Soll `3'749'865.00`; Differenz `-216'154.91 GBP`. Mapping ist nun Sage-Netto: `Sales Price/Value * Quantity`, Credit Notes werden bei erkennbarem Sage-Typ negativ erzwungen.
+- UK: Aktuell `3'533'710.09 GBP` bei `1'880` Zeilen gegen Soll LC `3'538'972.00 GBP`; Differenz `-5'261.91 GBP`. UK wird gegen Local Currency/GBP geprueft; der fruehere `CheckValue 3'749'865.00` ist fuer UK entfernt. Mapping ist Sage-Netto: `Sales Price/Value * Quantity`, Credit Notes werden bei erkennbarem Sage-Typ negativ erzwungen.
 - IN: Anzeige muss fachlich `INR` zeigen, auch wenn Quellzeilen verschiedene Belegwaehrungen enthalten.
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
