@@ -1,5 +1,28 @@
 # Last Change 2026-05-04
 
+## IIS Deployment Handoff 2026-05-19
+
+Aktueller Deployment-/IIS-Stand wurde hier dokumentiert:
+
+```text
+docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md
+```
+
+Kurzstand:
+
+- `TrafagSalesExporter` veroeffentlicht jetzt als `BiDashboard.dll`.
+- Keine EXE im Publish.
+- Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Wahrscheinliche URL: `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/`.
+- Diagnose-`web.config` ist aktiv mit `httpErrors Detailed` und `stdoutLogEnabled=true`.
+- `logs`-Ordner existiert auf dem Share, blieb nach dem 500 aber leer.
+- ACL-Befund: `IIS_IUSRS` hat nur `ReadAndExecute`; App braucht fuer SQLite/logs wahrscheinlich `Modify`.
+- Rechte konnten lokal nicht gesetzt werden: `icacls` auf dem Share endete mit `Zugriff verweigert`.
+
+Naechster Schritt:
+
+- Server-Spezialist muss App-Pool-Identity bzw. `IIS_IUSRS` mit `Modify` auf Publish-Ordner, `logs` und `trafag_exporter.db*` berechtigen und danach App-Pool neu starten.
+
 ## ASP.NET Publish direkt aus TrafagSalesExporter 2026-05-19
 
 Entscheid:

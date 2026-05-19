@@ -2,6 +2,41 @@
 
 Stand: 2026-05-19
 
+## Nachtrag 2026-05-19 IIS Deployment / 500 Fehler
+
+Vollstaendige Doku:
+
+```text
+docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md
+```
+
+Aktueller Stand:
+
+- Publish erfolgt direkt aus `TrafagSalesExporter`.
+- Publish-Ausgabe ist an das alte `BiDashboard` angepasst:
+  - `BiDashboard.dll`
+  - keine EXE
+  - `web.config` startet `.\BiDashboard.dll`
+  - Diagnose aktiv mit `stdoutLogEnabled=true`
+- URL mit App-Pfad liefert laut Browser `500`:
+
+```text
+https://trch-webapp-bidashboard.trafagch.local/BiDashboard/
+```
+
+Wahrscheinlichstes offenes Thema:
+
+- App-Pool/IIS hat auf dem Publish-Ordner nur Lesen/Ausfuehren.
+- Die App schreibt beim Start in SQLite (`trafag_exporter.db`, `db-shm`, `db-wal`) und in `logs`.
+- `icacls`-Versuch von lokal wurde vom Server mit `Zugriff verweigert` abgelehnt.
+
+Naechster Schritt fuer Server-Spezialist:
+
+- App-Pool-Identity ermitteln.
+- `Modify` auf Publish-Ordner, `logs` und `trafag_exporter.db*` setzen.
+- App-Pool neu starten.
+- Danach URL neu testen und bei weiterem `500` stdout-Log/Event Viewer lesen.
+
 ## Nachtrag 2026-05-19 Finance-Cockpit-Login finalisieren
 
 Aktueller Stand:
