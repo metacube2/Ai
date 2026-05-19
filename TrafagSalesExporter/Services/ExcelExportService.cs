@@ -74,7 +74,14 @@ public class ExcelExportService : IExcelExportService
             "invoice date",
             "order date",
             "Land",
-            "Document Type"
+            "Document Type",
+            "Finance | Year",
+            "Finance | Country Key",
+            "Finance | Date",
+            "Finance | Net Sales Actual",
+            "Finance | Currency",
+            "Finance | Include",
+            "Finance | Source Value Field"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -121,11 +128,55 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 33).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
             ws.Cell(row, 34).Value = record.Land;
             ws.Cell(row, 35).Value = record.DocumentType;
+            var financeDate = ResolveFinanceDate(record);
+            ws.Cell(row, 36).Value = financeDate.Year;
+            ws.Cell(row, 37).Value = ResolveFinanceCountryKey(record.Land, record.Tsc);
+            ws.Cell(row, 38).Value = financeDate.ToString("dd.MM.yyyy");
+            ws.Cell(row, 39).Value = record.SalesPriceValue;
+            ws.Cell(row, 40).Value = ResolveFinanceCurrency(record);
+            ws.Cell(row, 41).Value = record.SalesPriceValue != 0m ? "TRUE" : "FALSE";
+            ws.Cell(row, 42).Value = "Sales Price/Value";
             row++;
         }
 
         ws.Columns().AdjustToContents();
         workbook.SaveAs(fullPath);
+    }
+
+    private static DateTime ResolveFinanceDate(SalesRecord record)
+        => record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate;
+
+    private static string ResolveFinanceCurrency(SalesRecord record)
+        => ResolveFinanceCountryKey(record.Land, record.Tsc) switch
+        {
+            "CH" => "CHF",
+            "AT" => "EUR",
+            "DE" => "EUR",
+            "ES" => "EUR",
+            "FR" => "EUR",
+            "IN" => "INR",
+            "IT" => "EUR",
+            "UK" => "GBP",
+            "US" => "USD",
+            _ => string.IsNullOrWhiteSpace(record.CompanyCurrency) ? record.SalesCurrency : record.CompanyCurrency
+        };
+
+    private static string ResolveFinanceCountryKey(string land, string tsc)
+    {
+        var normalizedLand = (land ?? string.Empty).Trim().ToUpperInvariant();
+        var normalizedTsc = (tsc ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (normalizedLand is "AT" or "AUT" || normalizedLand.Contains("OESTER") || normalizedLand.Contains("OSTER") || normalizedLand.Contains("AUSTRIA")) return "AT";
+        if (normalizedLand is "CH" or "CHE" || normalizedLand.Contains("SCHWE") || normalizedLand.Contains("SWITZER")) return "CH";
+        if (normalizedLand.Contains("FRANK") || normalizedTsc.Contains("FR")) return "FR";
+        if (normalizedLand.Contains("IND") || normalizedTsc.Contains("IN")) return "IN";
+        if (normalizedLand.Contains("ITAL") || normalizedTsc.Contains("IT")) return "IT";
+        if (normalizedLand.Contains("ENGL") || normalizedLand.Contains("KINGDOM") || normalizedTsc.Contains("UK") || normalizedTsc.Contains("GB")) return "UK";
+        if (normalizedLand.Contains("USA") || normalizedLand.Contains("UNITED STATES") || normalizedTsc.Contains("US")) return "US";
+        if (normalizedLand.Contains("DEUT") || normalizedTsc.Contains("DE")) return "DE";
+        if (normalizedLand.Contains("SPAN") || normalizedTsc is "SE" or "ES") return "ES";
+
+        return normalizedTsc.Replace("TR", string.Empty);
     }
 
     private static void WriteGenericWorkbook(string fullPath, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
