@@ -46,6 +46,7 @@ builder.Services.AddMudServices();
 builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
 builder.Services.Configure<HrKpiDataSourceOptions>(builder.Configuration.GetSection(HrKpiDataSourceOptions.SectionName));
 builder.Services.Configure<HrKpiAccessOptions>(builder.Configuration.GetSection(HrKpiAccessOptions.SectionName));
+builder.Services.Configure<FinanceCockpitAccessOptions>(builder.Configuration.GetSection(FinanceCockpitAccessOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
@@ -106,6 +107,7 @@ builder.Services.AddScoped<IDashboardPageService, DashboardPageService>();
 builder.Services.AddScoped<ILogsPageService, LogsPageService>();
 builder.Services.AddScoped<ITransformationsPageService, TransformationsPageService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
+builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 
 var app = builder.Build();
 

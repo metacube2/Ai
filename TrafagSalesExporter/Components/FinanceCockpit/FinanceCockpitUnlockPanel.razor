@@ -1,0 +1,47 @@
+@using TrafagSalesExporter.Services
+@inject IFinanceCockpitAccessService FinanceAccess
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IUiTextService UiText
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Finance Cockpit", "Finance Cockpit")</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1" Style="max-width:520px;">
+    <MudStack Spacing="3">
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            @T("Finance Cockpit ist geschuetzt. Bitte separat anmelden.", "Finance Cockpit is protected. Please sign in separately.")
+        </MudAlert>
+        @if (!FinanceAccess.IsConfigured)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                @T("Finance-Cockpit-Zugang ist noch nicht konfiguriert. Bitte Username und PasswordHash in FinanceCockpitAccess konfigurieren.", "Finance Cockpit access is not configured yet. Please configure Username and PasswordHash in FinanceCockpitAccess.")
+            </MudAlert>
+        }
+        <MudTextField @bind-Value="_username" Label="@T("Name", "Name")" Disabled="@(!FinanceAccess.IsConfigured)" />
+        <MudTextField @bind-Value="_password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!FinanceAccess.IsConfigured)" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UnlockAsync"
+                   StartIcon="@Icons.Material.Filled.LockOpen" Disabled="@(!FinanceAccess.IsConfigured)">
+            @T("Finance Cockpit entsperren", "Unlock Finance Cockpit")
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private string? _username;
+    private string? _password;
+
+    private Task UnlockAsync()
+    {
+        if (!FinanceAccess.TryUnlock(_username ?? string.Empty, _password ?? string.Empty))
+        {
+            Snackbar.Add(T("Finance-Cockpit-Anmeldung fehlgeschlagen.", "Finance Cockpit sign-in failed."), Severity.Error);
+            return Task.CompletedTask;
+        }
+
+        _password = string.Empty;
+        Navigation.Refresh(forceReload: false);
+        return Task.CompletedTask;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

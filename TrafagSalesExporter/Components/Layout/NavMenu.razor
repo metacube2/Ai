@@ -1,5 +1,7 @@
 @using TrafagSalesExporter.Security
 @inject TrafagSalesExporter.Services.IUiTextService UiText
+@inject TrafagSalesExporter.Services.IFinanceCockpitAccessService FinanceAccess
+@inject NavigationManager Navigation
 
 <MudNavMenu>
     <MudNavGroup Title="@T("Finance Cockpit", "Finance Cockpit")" Icon="@Icons.Material.Filled.Analytics" Expanded="true">
@@ -12,30 +14,43 @@
         <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
             @T("Soll/Ist Vergleich", "Actual/reference comparison")
         </MudNavLink>
+        <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
+            <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
+                <Authorized>
+                    <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
+                        @T("Standorte", "Sites")
+                    </MudNavLink>
+                    <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
+                        @T("Transformationen", "Transformations")
+                    </MudNavLink>
+                    <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
+                        @T("Settings", "Settings")
+                    </MudNavLink>
+                </Authorized>
+            </AuthorizeView>
+            <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
+                @T("Logs", "Logs")
+            </MudNavLink>
+        </MudNavGroup>
+        @if (FinanceAccess.IsEnabled && FinanceAccess.IsUnlocked)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Lock" OnClick="LockFinanceCockpit" Class="ml-3">
+                @T("Finance sperren", "Lock finance")
+            </MudButton>
+        }
     </MudNavGroup>
     <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Groups">
         @T("HR KPI (Login)", "HR KPI (login)")
     </MudNavLink>
-    <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
-        <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
-            <Authorized>
-                <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
-                    @T("Standorte", "Sites")
-                </MudNavLink>
-                <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
-                    @T("Transformationen", "Transformations")
-                </MudNavLink>
-                <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
-                    @T("Settings", "Settings")
-                </MudNavLink>
-            </Authorized>
-        </AuthorizeView>
-        <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
-            @T("Logs", "Logs")
-        </MudNavLink>
-    </MudNavGroup>
 </MudNavMenu>
 
 @code {
+    private void LockFinanceCockpit()
+    {
+        FinanceAccess.Lock();
+        Navigation.NavigateTo("/");
+    }
+
     private string T(string german, string english) => UiText.Text(german, english);
 }
