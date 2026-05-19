@@ -10,7 +10,7 @@ public class ExcelExportService : IExcelExportService
         Directory.CreateDirectory(outputDirectory);
         var fileName = $"Sales_{tsc}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteWorkbook(fullPath, records);
+        WriteWorkbook(fullPath, records, includeFinanceHelpSheet: false);
         return fullPath;
     }
 
@@ -19,7 +19,7 @@ public class ExcelExportService : IExcelExportService
         Directory.CreateDirectory(outputDirectory);
         var fileName = $"Sales_All_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteWorkbook(fullPath, records);
+        WriteWorkbook(fullPath, records, includeFinanceHelpSheet: true);
         return fullPath;
     }
 
@@ -33,7 +33,7 @@ public class ExcelExportService : IExcelExportService
         return fullPath;
     }
 
-    private static void WriteWorkbook(string fullPath, List<SalesRecord> records)
+    private static void WriteWorkbook(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -140,7 +140,63 @@ public class ExcelExportService : IExcelExportService
         }
 
         ws.Columns().AdjustToContents();
+        if (includeFinanceHelpSheet)
+            AddFinanceHelpSheet(workbook);
+
         workbook.SaveAs(fullPath);
+    }
+
+    private static void AddFinanceHelpSheet(XLWorkbook workbook)
+    {
+        var ws = workbook.Worksheets.Add("Finance Filter Hilfe");
+        ws.Cell(1, 1).Value = "Finance-Filter fuer Soll/Ist-Abgleich";
+        ws.Cell(1, 1).Style.Font.Bold = true;
+        ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+        var rows = new (string Label, string Value)[]
+        {
+            ("Ziel", "Diese Spalten bilden im Blatt Sales die zusammengehoerige Finance-Sicht fuer den Abgleich gegen check.xlsx."),
+            ("1. Jahr filtern", "Finance | Year = gewuenschtes Jahr, z.B. 2025"),
+            ("2. Land filtern", "Finance | Country Key = CH, AT, DE, ES, FR, IN, IT, UK oder US"),
+            ("3. Gueltige Zeilen filtern", "Finance | Include = TRUE"),
+            ("4. Summe bilden", "Finance | Net Sales Actual summieren"),
+            ("Waehrung", "Finance | Currency zeigt die fuer den Finance-Abgleich fuehrende Hauswaehrung."),
+            ("Datum", "Finance | Date verwendet PostingDate, danach InvoiceDate, danach ExtractionDate."),
+            ("Wertquelle", "Finance | Source Value Field zeigt, aus welchem Rohfeld der Finance-Wert kommt."),
+            ("Nicht verwenden", "Nicht Land, TSC, Document Total LC oder andere Betragsspalten fuer den CFO-Abgleich erraten."),
+            ("Hinweis", "Offene fachliche Differenzen bleiben sichtbar; diese Excel-Sicht soll die gleiche Ist-Summe wie das Testprogramm reproduzieren.")
+        };
+
+        ws.Cell(3, 1).Value = "Feld";
+        ws.Cell(3, 2).Value = "Anwendung";
+        ws.Range(3, 1, 3, 2).Style.Font.Bold = true;
+
+        for (var i = 0; i < rows.Length; i++)
+        {
+            ws.Cell(i + 4, 1).Value = rows[i].Label;
+            ws.Cell(i + 4, 2).Value = rows[i].Value;
+        }
+
+        var financeColumns = new[]
+        {
+            "Finance | Year",
+            "Finance | Country Key",
+            "Finance | Date",
+            "Finance | Net Sales Actual",
+            "Finance | Currency",
+            "Finance | Include",
+            "Finance | Source Value Field"
+        };
+
+        var startRow = rows.Length + 6;
+        ws.Cell(startRow, 1).Value = "Zusammengehoerige Spalten im Blatt Sales";
+        ws.Cell(startRow, 1).Style.Font.Bold = true;
+        for (var i = 0; i < financeColumns.Length; i++)
+        {
+            ws.Cell(startRow + 1 + i, 1).Value = financeColumns[i];
+        }
+
+        ws.Columns().AdjustToContents();
     }
 
     private static DateTime ResolveFinanceDate(SalesRecord record)
