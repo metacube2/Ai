@@ -15,13 +15,23 @@
             <MudText Typo="Typo.caption">@T("Gleiche Berechnungslogik wie FinanceProbe/Testprogramm", "Same calculation logic as FinanceProbe/test program")</MudText>
         </div>
         <MudSpacer />
+        <MudButton Variant="@(_hideRowsWithoutActual ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.FilterAlt"
+                   OnClick="ToggleActualFilter">
+            @T("Ohne Ist", "Without empty actuals")
+        </MudButton>
+        <MudText Typo="Typo.caption">
+            @string.Format(T("{0:N0}/{1:N0} Zeilen", "{0:N0}/{1:N0} rows"), FilteredNetSalesReferenceRows.Count, _netSalesReferenceRows.Count)
+        </MudText>
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh"
                    OnClick="LoadAsync" Disabled="_loading">
             @(_loading ? T("Lade...", "Loading...") : T("Aktualisieren", "Refresh"))
         </MudButton>
     </MudStack>
 
-    <MudTable Items="_netSalesReferenceRows" Dense Hover Striped Loading="_loading">
+    <MudTable Items="FilteredNetSalesReferenceRows" Dense Hover Striped Loading="_loading">
         <HeaderContent>
             <MudTh>@T("Ampel", "Status")</MudTh>
             <MudTh>@T("Land", "Country")</MudTh>
@@ -134,7 +144,18 @@
 
 @code {
     private List<NetSalesReferenceRow> _netSalesReferenceRows = new();
+    private bool _hideRowsWithoutActual = true;
     private bool _loading = true;
+
+    private List<NetSalesReferenceRow> FilteredNetSalesReferenceRows
+        => _hideRowsWithoutActual
+            ? _netSalesReferenceRows.Where(row => row.ActualValue.HasValue).ToList()
+            : _netSalesReferenceRows;
+
+    private void ToggleActualFilter()
+    {
+        _hideRowsWithoutActual = !_hideRowsWithoutActual;
+    }
 
     protected override async Task OnInitializedAsync()
     {
