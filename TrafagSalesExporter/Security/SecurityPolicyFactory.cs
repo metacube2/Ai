@@ -6,10 +6,18 @@ public static class SecurityPolicyFactory
 {
     public static AuthorizationPolicy BuildAccessPolicy(SecurityOptions settings, bool useDevelopmentAuthentication)
     {
+        if (!settings.Enabled)
+        {
+            return new AuthorizationPolicyBuilder()
+                .RequireAssertion(_ => true)
+                .Build();
+        }
+
         var builder = new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser();
 
-        if (!useDevelopmentAuthentication && settings.AccessGroups.Count > 0)
+        if (!useDevelopmentAuthentication &&
+            settings.AccessGroups.Count > 0)
         {
             builder.RequireAssertion(context =>
                 settings.AccessGroups.Any(group => context.User.IsInRole(group)));
@@ -20,6 +28,13 @@ public static class SecurityPolicyFactory
 
     public static AuthorizationPolicy BuildAdminPolicy(SecurityOptions settings, bool useDevelopmentAuthentication)
     {
+        if (!settings.Enabled)
+        {
+            return new AuthorizationPolicyBuilder()
+                .RequireAssertion(_ => true)
+                .Build();
+        }
+
         var builder = new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser();
 

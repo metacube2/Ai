@@ -1,5 +1,140 @@
 # Last Change 2026-05-04
 
+## Finance Cockpit Login und Vergleichsnachtrag 2026-05-19
+
+Nach dem Finance-Handoff vom 2026-05-18 wurden noch mehrere Schritte umgesetzt:
+
+- Haupt-App-Seite `/finance-cockpit/vergleich` wurde an die Logik und Darstellung der FinanceProbe angeglichen.
+- Leere Ist-Zeilen ohne belastbaren Ist-Wert werden im Finance-Vergleich ausgefiltert.
+- Die verwendeten Berechnungsformeln je Land wurden dokumentiert:
+
+```text
+docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md
+```
+
+- Finance Cockpit erhielt einen separaten Login, unabhaengig vom HR-KPI-Login.
+
+Technischer Stand Finance-Cockpit-Login:
+
+- Konfiguration: `FinanceCockpitAccess` in `appsettings.json`
+- Benutzer im aktuellen Stand: `finance`
+- Passwort ist als SHA-256-Hash gespeichert.
+- Finance nutzt ein eigenes Passwort: `Trafag-Finance-Cockpit-2026!`.
+- HR-KPI nutzt weiterhin seine eigene `HrKpiAccess`-Konfiguration.
+- Umsetzung:
+  - `Services/FinanceCockpitAccessService.cs`
+  - `Security/FinanceCockpitAccessOptions.cs`
+  - `Components/FinanceCockpit/FinanceCockpitUnlockPanel.razor`
+  - `Components/Routes.razor`
+  - `Components/Layout/NavMenu.razor`
+  - Registrierung in `Program.cs`
+
+AD-/Rollenstand:
+
+- `Security.Enabled = false` deaktiviert die globale AD-/Rollenpruefung fuer den Moment.
+- Die vorhandenen `AccessGroups` und `AdminGroups` bleiben in `appsettings.json` stehen und wurden nicht geloescht.
+- Wenn AD/Rollen wieder gelten sollen, `Security.Enabled` auf `true` setzen.
+- Finance- und HR-KPI-Sperren bleiben auch bei deaktivierter AD-Pruefung aktiv.
+
+Relevante Commits:
+
+```text
+8f1b1b8 Align main finance comparison with probe
+f855e06 Filter empty actual finance rows
+5c654ad Document finance formulas by country
+9c544af Protect finance cockpit with login
+```
+
+## Zentrale Excel Finance-Filter 2026-05-19
+
+Die zentrale Laenderdatei `Sales_All_yyyy-MM-dd.xlsx` wurde fuer den CFO-/Finance-Abgleich erweitert.
+
+Im Blatt `Sales` gibt es rechts einen zusammengehoerigen Finance-Spaltenblock:
+
+```text
+Finance | Year
+Finance | Country Key
+Finance | Date
+Finance | Net Sales Actual
+Finance | Currency
+Finance | Include
+Finance | Source Value Field
+```
+
+Ziel:
+
+- Finance kann im zentralen Excel dieselben Ist-Summen erzeugen wie im Testprogramm.
+- Es muss nicht geraten werden, ob `Land`, `TSC`, `Sales Price/Value`, `Document Total LC`, `posting date` oder `invoice date` zu verwenden ist.
+
+Filterregel fuer Finance:
+
+```text
+Finance | Year = 2025
+Finance | Country Key = gewuenschtes Land
+Finance | Include = TRUE
+Summe ueber Finance | Net Sales Actual
+```
+
+Nur in der zentralen Datei wird ein zweites Blatt erzeugt:
+
+```text
+Finance Filter Hilfe
+```
+
+Dieses Hilfsblatt beschreibt die zusammengehoerigen Finance-Spalten und die konkrete Filter-/Summenlogik.
+
+Verifikation:
+
+- Build erfolgreich:
+
+```text
+dotnet build .\TrafagSalesExporter.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_finance_help_sheet\ --verbosity minimal
+```
+
+- Preview-Excel erzeugt und geprueft:
+
+```text
+.tmp_tools\GenerateConsolidatedPreview\out\Sales_All_2026-05-19.xlsx
+```
+
+- Gepruefte Blaetter:
+
+```text
+Sales | Finance Filter Hilfe
+```
+
+- Finance-Spaltenblock im Blatt `Sales`:
+
+```text
+36: Finance | Year
+37: Finance | Country Key
+38: Finance | Date
+39: Finance | Net Sales Actual
+40: Finance | Currency
+41: Finance | Include
+42: Finance | Source Value Field
+```
+
+- Summenvergleich gegen `FinanceReconciliationService` fuer 2025:
+
+| Key | Finance-Service | Excel-Finance-Spalten | Status |
+| --- | ---: | ---: | --- |
+| AT | `3'438'121.37` | `3'438'121.37` | MATCH |
+| CH | `43'521'390.82` | `43'521'390.82` | MATCH |
+| ES | `3'082'320.18` | `3'082'320.18` | MATCH |
+| FR | `1'471'218.44` | `1'471'218.44` | MATCH |
+| IN | `750'936'591.38` | `750'936'591.38` | MATCH |
+| IT | `7'669'641.47` | `7'669'641.47` | MATCH |
+| UK | `3'533'710.09` | `3'533'710.09` | MATCH |
+| US | `3'749'865.33` | `3'749'865.33` | MATCH |
+
+Relevante Commits:
+
+```text
+ebbc5a1 Add finance filter columns to consolidated export
+b23f73e Add finance filter help sheet
+```
+
 ## UK_B1 Mapping / FinanceProbe Nachtrag 2026-05-11
 
 Anlass:

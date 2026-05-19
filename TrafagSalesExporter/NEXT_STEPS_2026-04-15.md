@@ -1,6 +1,89 @@
 # Next Steps
 
-Stand: 2026-05-05
+Stand: 2026-05-19
+
+## Nachtrag 2026-05-19 Finance-Cockpit-Login finalisieren
+
+Aktueller Stand:
+
+- Finance Cockpit hat einen separaten Login.
+- HR-KPI-Login und Finance-Cockpit-Login sind technisch getrennte Services/Konfigurationen.
+- Finance-Konfiguration liegt in `appsettings.json` unter `FinanceCockpitAccess`.
+- Aktueller Benutzer: `finance`.
+- Finance nutzt ein eigenes Passwort: `Trafag-Finance-Cockpit-2026!`.
+- Globale AD-/Rollenpruefung ist fuer den Moment mit `Security.Enabled = false` deaktiviert.
+- Die AD-Gruppen sind nicht geloescht und bleiben in `AccessGroups`/`AdminGroups` dokumentiert.
+
+Wichtig:
+
+- Finance- und HR-KPI-Sperren laufen weiter ueber eigene Passwortabfragen.
+- AD/Rollen koennen spaeter durch `Security.Enabled = true` wieder aktiviert werden.
+
+Noch offen:
+
+1. Entscheiden, wann AD-/Rollenpruefung wieder aktiviert wird.
+2. Bei Reaktivierung `Security.Enabled` auf `true` setzen und Gruppen pruefen.
+3. Pruefen, ob direkte Run-/Export-/FinanceProbe-Endpunkte ebenfalls geschuetzt werden muessen.
+4. In Browser testen:
+
+```text
+http://127.0.0.1:5099/finance-cockpit/vergleich
+```
+
+5. Nach Entsperren pruefen, dass Navigation und `Finance sperren` korrekt funktionieren.
+
+## Nachtrag 2026-05-19 Finance-Vergleich / Formeldoku
+
+Erledigt:
+
+- `/finance-cockpit/vergleich` nutzt dieselbe `FinanceReconciliationService`-Logik wie die FinanceProbe.
+- Leere Ist-Zeilen werden in der Haupt-App ausgefiltert.
+- Berechnungslogik pro Land wurde dokumentiert:
+
+```text
+docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md
+```
+
+Naechster Check:
+
+- Bei neuer Datenladung `/finance-cockpit/vergleich` und `/finance` gegeneinander vergleichen.
+- Besonders ES, AT, UK und IT weiter fachlich klaeren.
+
+## Nachtrag 2026-05-19 Zentrale Excel fuer Finance-Filter
+
+Erledigt:
+
+- Die zentrale Excel `Sales_All_yyyy-MM-dd.xlsx` enthaelt im Blatt `Sales` einen Finance-Spaltenblock:
+
+```text
+Finance | Year
+Finance | Country Key
+Finance | Date
+Finance | Net Sales Actual
+Finance | Currency
+Finance | Include
+Finance | Source Value Field
+```
+
+- Die zentrale Excel enthaelt ein Hilfsblatt `Finance Filter Hilfe`.
+- Das Hilfsblatt erklaert, wie Finance dieselben Ist-Summen wie im Testprogramm erhaelt:
+
+```text
+Finance | Year = 2025
+Finance | Country Key = Land
+Finance | Include = TRUE
+Summe Finance | Net Sales Actual
+```
+
+Geprueft:
+
+- Excel-Finance-Spalten wurden gegen `FinanceReconciliationService` fuer 2025 verglichen.
+- AT, CH, ES, FR, IN, IT, UK und US ergaben jeweils `MATCH` mit Differenz `0.00`.
+
+Naechster praktischer Check:
+
+- Nach dem naechsten echten Export die SharePoint-Datei `Sales_All_yyyy-MM-dd.xlsx` oeffnen und mit Finance die Filter-/Summenlogik einmal gemeinsam durchgehen.
+- Dabei darauf achten, dass nicht versehentlich alte Spalten wie `Land`, `TSC`, `Document Total LC` oder `Sales Price/Value` direkt fuer CFO-Summen verwendet werden.
 
 ## Nachtrag 2026-05-11 UK_B1 Mapping fertigstellen
 

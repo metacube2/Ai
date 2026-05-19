@@ -47,6 +47,20 @@ public class SecurityPolicyFactoryTests
     }
 
     [Fact]
+    public async Task AccessPolicy_Allows_User_When_Security_Is_Disabled()
+    {
+        var policy = SecurityPolicyFactory.BuildAccessPolicy(new SecurityOptions
+        {
+            Enabled = false,
+            AccessGroups = ["TRAFAG\\TrafagSalesExporter-Users"]
+        }, useDevelopmentAuthentication: false);
+
+        var result = await AuthorizeAsync(policy, CreateAnonymousUser());
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
     public async Task AdminPolicy_Allows_User_In_Admin_Group()
     {
         var policy = SecurityPolicyFactory.BuildAdminPolicy(new SecurityOptions
@@ -95,6 +109,20 @@ public class SecurityPolicyFactoryTests
         Assert.False(result.Succeeded);
     }
 
+    [Fact]
+    public async Task AdminPolicy_Allows_User_When_Security_Is_Disabled()
+    {
+        var policy = SecurityPolicyFactory.BuildAdminPolicy(new SecurityOptions
+        {
+            Enabled = false,
+            AdminGroups = ["TRAFAG\\TrafagSalesExporter-Admins"]
+        }, useDevelopmentAuthentication: false);
+
+        var result = await AuthorizeAsync(policy, CreateAnonymousUser());
+
+        Assert.True(result.Succeeded);
+    }
+
     private static async Task<AuthorizationResult> AuthorizeAsync(AuthorizationPolicy policy, ClaimsPrincipal user)
     {
         var services = new ServiceCollection();
@@ -119,4 +147,5 @@ public class SecurityPolicyFactoryTests
         return new ClaimsPrincipal(new ClaimsIdentity(allClaims, "Test"));
     }
 
+    private static ClaimsPrincipal CreateAnonymousUser() => new(new ClaimsIdentity());
 }
