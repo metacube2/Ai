@@ -1,5 +1,33 @@
 # Last Change 2026-05-04
 
+## ASP.NET Publish direkt aus TrafagSalesExporter 2026-05-19
+
+Entscheid:
+
+- `TrafagSalesExporter` bleibt das fuehrende Projekt.
+- Das separate `BiDashboard`-Projekt wird fuer den aktuellen Stand nicht benoetigt.
+- `TrafagSalesExporter` ist bereits eine ASP.NET/Blazor-Webanwendung (`Microsoft.NET.Sdk.Web`) und kann direkt veroeffentlicht werden.
+
+Umsetzung:
+
+- `OutputType=WinExe` wurde aus `TrafagSalesExporter.csproj` entfernt.
+- Der `BiDashboard`-Verweis wurde aus `TrafagSalesExporter.sln` entfernt.
+- Das Publish-Profil `Properties/PublishProfiles/FolderProfile.pubxml` zeigt auf den Server-Publish-Pfad:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$
+```
+
+Wichtig fuer Deployment:
+
+- Die Anwendung wird nicht durch Doppelklick auf eine EXE gestartet.
+- Der Server-Spezialist soll die publish-Ausgabe als ASP.NET-Webanwendung/IIS-App betreiben.
+- Publish lokal:
+
+```powershell
+dotnet publish .\TrafagSalesExporter.csproj -c Release
+```
+
 ## Finance Cockpit Login und Vergleichsnachtrag 2026-05-19
 
 Nach dem Finance-Handoff vom 2026-05-18 wurden noch mehrere Schritte umgesetzt:
