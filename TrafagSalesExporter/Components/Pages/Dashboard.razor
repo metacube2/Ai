@@ -59,6 +59,7 @@
 <MudTable Items="_dashboardRows" Dense Hover Striped Loading="_loading">
     <HeaderContent>
         <MudTh>@T("Land", "Country")</MudTh>
+        <MudTh>@T("Basis", "Basis")</MudTh>
         <MudTh>TSC</MudTh>
         <MudTh>@T("Schema", "Schema")</MudTh>
         <MudTh>@T("Server", "Server")</MudTh>
@@ -71,6 +72,14 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Land</MudTd>
+        <MudTd>
+            <MudTooltip Text="@context.DataBasis">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@GetDataBasisIcon(context.DataBasis)" Color="@GetDataBasisColor(context.DataBasis)" Size="Size.Small" />
+                    <MudText Typo="Typo.caption">@context.DataBasis</MudText>
+                </MudStack>
+            </MudTooltip>
+        </MudTd>
         <MudTd>@context.TSC</MudTd>
         <MudTd>@context.Schema</MudTd>
         <MudTd>@context.ServerName</MudTd>
@@ -435,6 +444,36 @@
 
     private static string FormatException(Exception ex)
         => ex.InnerException is null ? ex.Message : $"{ex.Message} Inner: {ex.InnerException.Message}";
+
+    private static string GetDataBasisIcon(string dataBasis)
+    {
+        if (dataBasis.Contains("Excel", StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.TableView;
+        if (dataBasis.Contains("CSV", StringComparison.OrdinalIgnoreCase) ||
+            dataBasis.Contains("Datei", StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.Description;
+        if (dataBasis.Contains("SAP", StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.CloudSync;
+        if (dataBasis.Contains("Server", StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.Storage;
+
+        return Icons.Material.Filled.Source;
+    }
+
+    private static Color GetDataBasisColor(string dataBasis)
+    {
+        if (dataBasis.Contains("Excel", StringComparison.OrdinalIgnoreCase))
+            return Color.Success;
+        if (dataBasis.Contains("CSV", StringComparison.OrdinalIgnoreCase) ||
+            dataBasis.Contains("Datei", StringComparison.OrdinalIgnoreCase))
+            return Color.Info;
+        if (dataBasis.Contains("SAP", StringComparison.OrdinalIgnoreCase))
+            return Color.Primary;
+        if (dataBasis.Contains("Server", StringComparison.OrdinalIgnoreCase))
+            return Color.Secondary;
+
+        return Color.Default;
+    }
 
 }
 

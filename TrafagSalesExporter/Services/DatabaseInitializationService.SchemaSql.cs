@@ -192,4 +192,19 @@ CREATE TABLE FinanceIntercompanyRules (
     Notes TEXT NOT NULL DEFAULT '',
     IsActive INTEGER NOT NULL DEFAULT 1
 );";
+
+    internal static string GetFinanceRulesCreateSql() => @"
+CREATE TABLE FinanceRules (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ScopeKey TEXT NOT NULL DEFAULT '',
+    Year INTEGER NULL,
+    RuleType TEXT NOT NULL DEFAULT 'Exclude',
+    FieldName TEXT NOT NULL DEFAULT '',
+    MatchType TEXT NOT NULL DEFAULT 'Contains',
+    MatchValue TEXT NOT NULL DEFAULT '',
+    NumericValue TEXT NULL,
+    Notes TEXT NOT NULL DEFAULT '',
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
 }

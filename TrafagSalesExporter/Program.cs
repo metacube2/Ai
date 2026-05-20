@@ -106,6 +106,7 @@ builder.Services.AddScoped<IManagementCockpitPageService, ManagementCockpitPageS
 builder.Services.AddScoped<IDashboardPageService, DashboardPageService>();
 builder.Services.AddScoped<ILogsPageService, LogsPageService>();
 builder.Services.AddScoped<ITransformationsPageService, TransformationsPageService>();
+builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 

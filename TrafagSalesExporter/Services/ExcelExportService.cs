@@ -1,18 +1,29 @@
 using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
 public class ExcelExportService : IExcelExportService
 {
-    private const int GermanyAlphaplanFinanceYear = 2025;
+    private readonly IDbContextFactory<AppDbContext>? _dbFactory;
+
+    public ExcelExportService()
+    {
+    }
+
+    public ExcelExportService(IDbContextFactory<AppDbContext> dbFactory)
+    {
+        _dbFactory = dbFactory;
+    }
 
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
         var fileName = $"Sales_{tsc}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteWorkbook(fullPath, records, includeFinanceHelpSheet: false);
+        WriteWorkbookWithConfiguredRules(fullPath, records, includeFinanceHelpSheet: false);
         return fullPath;
     }
 
@@ -21,7 +32,7 @@ public class ExcelExportService : IExcelExportService
         Directory.CreateDirectory(outputDirectory);
         var fileName = $"Sales_All_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteWorkbook(fullPath, records, includeFinanceHelpSheet: true);
+        WriteWorkbookWithConfiguredRules(fullPath, records, includeFinanceHelpSheet: true);
         return fullPath;
     }
 
@@ -36,9 +47,32 @@ public class ExcelExportService : IExcelExportService
     }
 
     private static void WriteWorkbook(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
+
+    private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules());
+
+    private IReadOnlyList<FinanceRule> LoadFinanceRules()
+    {
+        if (_dbFactory is null)
+            return FinanceRuleEngine.CreateDefaultRules();
+
+        using var db = _dbFactory.CreateDbContext();
+        var rules = db.FinanceRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .OrderBy(rule => rule.SortOrder)
+            .ThenBy(rule => rule.Id)
+            .ToList();
+
+        return rules.Count == 0 ? FinanceRuleEngine.CreateDefaultRules() : rules;
+    }
+
+    private static void WriteWorkbook(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet, IReadOnlyList<FinanceRule> financeRules)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
 
         var headers = new[]
         {
@@ -93,7 +127,6 @@ public class ExcelExportService : IExcelExportService
         }
 
         var row = 2;
-        var italyBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var record in records)
         {
             ws.Cell(row, 1).Value = record.ExtractionDate.ToString("dd.MM.yyyy HH:mm:ss");
@@ -131,10 +164,10 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 33).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
             ws.Cell(row, 34).Value = record.Land;
             ws.Cell(row, 35).Value = record.DocumentType;
-            var financeDate = ResolveFinanceDate(record);
             var financeCountryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
-            var financeInclude = ResolveFinanceInclude(record, financeCountryKey, italyBlankSupplierCountryRows);
-            var financeNetSalesActual = ResolveFinanceNetSalesActual(record, financeCountryKey, financeInclude);
+            var financeDate = financeRuleEngine.ResolveFinanceDate(record, financeCountryKey);
+            var financeInclude = financeRuleEngine.ShouldInclude(record, financeCountryKey);
+            var financeNetSalesActual = financeRuleEngine.ResolveNetSalesActual(record, financeCountryKey, financeInclude);
             ws.Cell(row, 36).Value = financeDate.Year;
             ws.Cell(row, 37).Value = financeCountryKey;
             ws.Cell(row, 38).Value = financeDate.ToString("dd.MM.yyyy");
@@ -143,23 +176,24 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 41).Value = financeInclude && financeNetSalesActual != 0m ? "TRUE" : "FALSE";
             ws.Cell(row, 42).Value = financeInclude
                 ? "Sales Price/Value"
-                : ResolveFinanceExclusionReason(record, financeCountryKey);
+                : financeRuleEngine.ResolveExclusionReason(record, financeCountryKey);
             row++;
         }
 
         ws.Columns().AdjustToContents();
         if (includeFinanceHelpSheet)
         {
-            AddFinanceSummarySheet(workbook, records);
+            AddFinanceSummarySheet(workbook, records, financeRules);
             AddFinanceHelpSheet(workbook);
         }
 
         workbook.SaveAs(fullPath);
     }
 
-    private static void AddFinanceSummarySheet(XLWorkbook workbook, List<SalesRecord> records)
+    private static void AddFinanceSummarySheet(XLWorkbook workbook, List<SalesRecord> records, IReadOnlyList<FinanceRule> financeRules)
     {
         var ws = workbook.Worksheets.Add("Finance Summary");
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
         ws.Position = 1;
         ws.Cell(1, 1).Value = "Finance Summary";
         ws.Cell(1, 1).Style.Font.Bold = true;
@@ -183,14 +217,13 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(4, i + 1).Style.Font.Bold = true;
         }
 
-        var italyBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var summaryRows = records
             .Select(record =>
             {
-                var financeDate = ResolveFinanceDate(record);
                 var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
-                var rawInclude = ResolveFinanceInclude(record, countryKey, italyBlankSupplierCountryRows);
-                var value = ResolveFinanceNetSalesActual(record, countryKey, rawInclude);
+                var financeDate = financeRuleEngine.ResolveFinanceDate(record, countryKey);
+                var rawInclude = financeRuleEngine.ShouldInclude(record, countryKey);
+                var value = financeRuleEngine.ResolveNetSalesActual(record, countryKey, rawInclude);
                 var include = rawInclude && value != 0m;
                 return new
                 {
@@ -298,15 +331,6 @@ public class ExcelExportService : IExcelExportService
         ws.Columns().AdjustToContents();
     }
 
-    private static DateTime ResolveFinanceDate(SalesRecord record)
-    {
-        var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
-        if (countryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
-            return new DateTime(GermanyAlphaplanFinanceYear, 12, 31);
-
-        return record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate;
-    }
-
     private static string ResolveFinanceCurrency(SalesRecord record)
         => ResolveFinanceCountryKey(record.Land, record.Tsc) switch
         {
@@ -339,108 +363,6 @@ public class ExcelExportService : IExcelExportService
 
         return normalizedTsc.Replace("TR", string.Empty);
     }
-
-    private static bool ResolveFinanceInclude(SalesRecord record, string financeCountryKey, HashSet<string> italyBlankSupplierCountryRows)
-    {
-        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
-            return IsIncludedGermanyFinanceRow(record);
-
-        if (!financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (IsExcludedItalyCustomer(record))
-            return false;
-
-        if (!string.IsNullOrWhiteSpace(record.SupplierCountry))
-            return true;
-
-        return italyBlankSupplierCountryRows.Add(BuildItalyBlankSupplierCountryDeduplicationKey(record));
-    }
-
-    private static string ResolveFinanceExclusionReason(SalesRecord record, string financeCountryKey)
-    {
-        if (financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase) && IsExcludedItalyCustomer(record))
-            return "Excluded IT customer: Trafag Italia";
-
-        if (financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(record.SupplierCountry))
-            return "Excluded IT duplicate without Supplier country";
-
-        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
-            return ResolveGermanyExclusionReason(record);
-
-        return "Excluded";
-    }
-
-    private static decimal ResolveFinanceNetSalesActual(SalesRecord record, string financeCountryKey, bool financeInclude)
-    {
-        if (!financeInclude)
-            return 0m;
-
-        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase) && IsGermanyCreditNote(record))
-            return -Math.Abs(record.SalesPriceValue);
-
-        return record.SalesPriceValue;
-    }
-
-    private static bool IsIncludedGermanyFinanceRow(SalesRecord record)
-        => !IsGermanyTrafagAgRecharge(record) &&
-           !IsGermanyMagneticSenseRecharge(record) &&
-           !IsGermanyCreditNoteAlreadyCapturedInPriorYear(record);
-
-    private static string ResolveGermanyExclusionReason(SalesRecord record)
-    {
-        if (IsGermanyTrafagAgRecharge(record))
-            return "Excluded DE Weiterberechnung Trafag AG";
-        if (IsGermanyMagneticSenseRecharge(record))
-            return "Excluded DE Weiterberechnung Magnetic Sense";
-        if (IsGermanyCreditNoteAlreadyCapturedInPriorYear(record))
-            return "Excluded DE GS2510095 already captured in 2024";
-
-        return "Excluded DE";
-    }
-
-    private static bool IsGermanyTrafagAgRecharge(SalesRecord record)
-        => NormalizeFinanceText(record.CustomerName) == "TRAFAG AG";
-
-    private static bool IsGermanyMagneticSenseRecharge(SalesRecord record)
-        => NormalizeFinanceText(record.CustomerName).Contains("MAGNETIC SENSE", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsGermanyCreditNote(SalesRecord record)
-        => (record.InvoiceNumber ?? string.Empty).Trim().StartsWith("GS", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsGermanyCreditNoteAlreadyCapturedInPriorYear(SalesRecord record)
-        => (record.InvoiceNumber ?? string.Empty).Trim().Equals("GS2510095", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsExcludedItalyCustomer(SalesRecord record)
-        => NormalizeFinanceText(record.CustomerName).Contains("TRAFAG ITALIA", StringComparison.OrdinalIgnoreCase);
-
-    private static string BuildItalyBlankSupplierCountryDeduplicationKey(SalesRecord record)
-        => string.Join("|",
-            record.Tsc,
-            record.DocumentType,
-            record.DocumentEntry,
-            record.InvoiceNumber,
-            record.PositionOnInvoice,
-            record.Material,
-            record.Name,
-            record.Quantity,
-            record.CustomerNumber,
-            record.CustomerName,
-            record.SalesPriceValue,
-            record.DocumentTotalForeignCurrency,
-            record.DocumentTotalLocalCurrency,
-            record.VatSumForeignCurrency,
-            record.VatSumLocalCurrency,
-            record.PostingDate?.ToString("O") ?? string.Empty,
-            record.InvoiceDate?.ToString("O") ?? string.Empty);
-
-    private static string NormalizeFinanceText(string value)
-        => (value ?? string.Empty)
-            .Replace("\u00e4", "ae", StringComparison.OrdinalIgnoreCase)
-            .Replace("\u00f6", "oe", StringComparison.OrdinalIgnoreCase)
-            .Replace("\u00fc", "ue", StringComparison.OrdinalIgnoreCase)
-            .Trim()
-            .ToUpperInvariant();
 
     private static void WriteGenericWorkbook(string fullPath, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
     {

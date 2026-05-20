@@ -37,10 +37,10 @@ public class FinanceReconciliationServiceTests : IDisposable
         await using (var db = await _dbFactory.CreateDbContextAsync())
         {
             db.Sites.Add(BuildSite());
-            db.FinanceReferences.Add(new FinanceReference { Key = "DE", Label = "Trafag DE", Year = 2025, CheckValue = 100m, IsActive = true });
+            db.FinanceReferences.Add(new FinanceReference { Key = "FR", Label = "Trafag FR", Year = 2025, CheckValue = 100m, IsActive = true });
             db.CentralSalesRecords.AddRange(
-                BuildCentralRecord("TRDE", "Deutschland", 1, 1, 100m, new DateTime(2025, 1, 5), new DateTime(2024, 12, 31)),
-                BuildCentralRecord("TRDE", "Deutschland", 2, 1, 999m, new DateTime(2024, 12, 31), new DateTime(2025, 1, 5)));
+                BuildCentralRecord("TRFR", "Frankreich", 1, 1, 100m, new DateTime(2025, 1, 5), new DateTime(2024, 12, 31)),
+                BuildCentralRecord("TRFR", "Frankreich", 2, 1, 999m, new DateTime(2024, 12, 31), new DateTime(2025, 1, 5)));
             await db.SaveChangesAsync();
         }
 

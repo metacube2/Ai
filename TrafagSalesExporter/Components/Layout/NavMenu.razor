@@ -1,6 +1,7 @@
 @using TrafagSalesExporter.Security
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject TrafagSalesExporter.Services.IFinanceCockpitAccessService FinanceAccess
+@inject IConfiguration Configuration
 @inject NavigationManager Navigation
 
 <MudNavMenu>
@@ -11,9 +12,12 @@
         <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">
             @T("Management Analyse", "Management analysis")
         </MudNavLink>
-        <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
-            @T("Soll/Ist Vergleich", "Actual/reference comparison")
-        </MudNavLink>
+        @if (ShowFinanceComparison)
+        {
+            <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
+                @T("Soll/Ist Vergleich", "Actual/reference comparison")
+            </MudNavLink>
+        }
         <MudNavLink Href="/manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
             @T("Manuelle Importe", "Manual imports")
         </MudNavLink>
@@ -25,6 +29,9 @@
                     </MudNavLink>
                     <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
                         @T("Transformationen", "Transformations")
+                    </MudNavLink>
+                    <MudNavLink Href="/finance-rules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Rule">
+                        @T("Finance Regeln", "Finance rules")
                     </MudNavLink>
                     <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
                         @T("Settings", "Settings")
@@ -49,6 +56,8 @@
 </MudNavMenu>
 
 @code {
+    private bool ShowFinanceComparison => Configuration.GetValue("Navigation:ShowFinanceComparison", true);
+
     private void LockFinanceCockpit()
     {
         FinanceAccess.Lock();

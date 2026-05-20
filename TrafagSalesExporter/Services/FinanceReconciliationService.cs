@@ -31,35 +31,51 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
             .AsNoTracking()
             .Where(r => r.IsActive)
             .ToListAsync();
-
-        var centralRows = await db.CentralSalesRecords
+        var financeRules = await db.FinanceRules
             .AsNoTracking()
-            .Where(r => (r.PostingDate ?? r.InvoiceDate ?? r.ExtractionDate).Year == year)
-            .Select(r => new NetSalesActualSourceRow(
-                r.Land,
-                r.Tsc,
-                r.DocumentEntry,
-                r.InvoiceNumber,
-                r.PositionOnInvoice,
-                r.Material,
-                r.Name,
-                r.Quantity,
-                r.DocumentType,
-                r.PostingDate,
-                r.InvoiceDate,
-                r.ExtractionDate,
-                r.CustomerNumber,
-                r.CustomerName,
-                r.SupplierCountry,
-                r.SalesCurrency,
-                r.DocumentCurrency,
-                r.CompanyCurrency,
-                r.SalesPriceValue,
-                r.DocumentTotalForeignCurrency,
-                r.DocumentTotalLocalCurrency,
-                r.VatSumForeignCurrency,
-                r.VatSumLocalCurrency))
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.SortOrder)
+            .ThenBy(r => r.Id)
             .ToListAsync();
+        if (financeRules.Count == 0)
+            financeRules = FinanceRuleEngine.CreateDefaultRules().ToList();
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
+
+        var centralRecords = await db.CentralSalesRecords
+            .AsNoTracking()
+            .Select(r => new SalesRecord
+            {
+                Land = r.Land,
+                Tsc = r.Tsc,
+                DocumentEntry = r.DocumentEntry,
+                InvoiceNumber = r.InvoiceNumber,
+                PositionOnInvoice = r.PositionOnInvoice,
+                Material = r.Material,
+                Name = r.Name,
+                Quantity = r.Quantity,
+                DocumentType = r.DocumentType,
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                ExtractionDate = r.ExtractionDate,
+                CustomerNumber = r.CustomerNumber,
+                CustomerName = r.CustomerName,
+                SupplierCountry = r.SupplierCountry,
+                SalesCurrency = r.SalesCurrency,
+                DocumentCurrency = r.DocumentCurrency,
+                CompanyCurrency = r.CompanyCurrency,
+                SalesPriceValue = r.SalesPriceValue,
+                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
+                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
+                VatSumForeignCurrency = r.VatSumForeignCurrency,
+                VatSumLocalCurrency = r.VatSumLocalCurrency
+            })
+            .ToListAsync();
+
+        var centralRows = centralRecords
+            .Select(record => ApplyFinanceRules(record, year, financeRuleEngine))
+            .Where(row => row is not null)
+            .Select(row => row!)
+            .ToList();
 
         var groupedActuals = centralRows
             .GroupBy(r => ResolveReferenceKey(r.Land, r.Tsc), StringComparer.OrdinalIgnoreCase)
@@ -149,13 +165,50 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         return result;
     }
 
+    private static NetSalesActualSourceRow? ApplyFinanceRules(SalesRecord record, int year, FinanceRuleEngine financeRuleEngine)
+    {
+        var referenceKey = ResolveReferenceKey(record.Land, record.Tsc);
+        if (financeRuleEngine.ResolveFinanceDate(record, referenceKey).Year != year)
+            return null;
+
+        var include = financeRuleEngine.ShouldInclude(record, referenceKey);
+        if (!include)
+            return null;
+
+        var salesPriceValue = financeRuleEngine.ResolveNetSalesActual(record, referenceKey, include);
+        return new NetSalesActualSourceRow(
+            record.Land,
+            record.Tsc,
+            record.DocumentEntry,
+            record.InvoiceNumber,
+            record.PositionOnInvoice,
+            record.Material,
+            record.Name,
+            record.Quantity,
+            record.DocumentType,
+            record.PostingDate,
+            record.InvoiceDate,
+            record.ExtractionDate,
+            record.CustomerNumber,
+            record.CustomerName,
+            record.SupplierCountry,
+            record.SalesCurrency,
+            record.DocumentCurrency,
+            record.CompanyCurrency,
+            salesPriceValue,
+            record.DocumentTotalForeignCurrency,
+            record.DocumentTotalLocalCurrency,
+            record.VatSumForeignCurrency,
+            record.VatSumLocalCurrency);
+    }
+
     private static NetSalesActual BuildNetSalesActual(
         string referenceKey,
         IEnumerable<NetSalesActualSourceRow> rows,
         IReadOnlyDictionary<string, decimal> budgetRatesToChf,
         IReadOnlyList<FinanceIntercompanyRule> intercompanyRules)
     {
-        var rowList = ApplyCountryFinanceRules(referenceKey, rows).ToList();
+        var rowList = rows.ToList();
         var houseCurrency = ResolveHouseCurrency(referenceKey, rowList);
         var documentRows = rowList
             .GroupBy(row => BuildDocumentKey(row.Tsc, row.DocumentType, row.DocumentEntry, row.InvoiceNumber), StringComparer.OrdinalIgnoreCase)
@@ -243,50 +296,6 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
 
         return repeatedGroups / (decimal)multiLineGroups.Count >= 0.8m;
     }
-
-    private static IEnumerable<NetSalesActualSourceRow> ApplyCountryFinanceRules(
-        string referenceKey,
-        IEnumerable<NetSalesActualSourceRow> rows)
-    {
-        if (!referenceKey.Equals("IT", StringComparison.OrdinalIgnoreCase))
-            return rows;
-
-        var seenBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        return rows.Where(row =>
-        {
-            if (IsExcludedItalyCustomer(row))
-                return false;
-
-            if (!string.IsNullOrWhiteSpace(row.SupplierCountry))
-                return true;
-
-            return seenBlankSupplierCountryRows.Add(BuildItalyBlankSupplierCountryDeduplicationKey(row));
-        });
-    }
-
-    private static bool IsExcludedItalyCustomer(NetSalesActualSourceRow row)
-        => ResolveReferenceKey(row.Land, row.Tsc).Equals("IT", StringComparison.OrdinalIgnoreCase) &&
-           NormalizeRuleText(row.CustomerName).Contains("TRAFAG ITALIA", StringComparison.OrdinalIgnoreCase);
-
-    private static string BuildItalyBlankSupplierCountryDeduplicationKey(NetSalesActualSourceRow row)
-        => string.Join("|",
-            row.Tsc,
-            row.DocumentType,
-            row.DocumentEntry,
-            row.InvoiceNumber,
-            row.PositionOnInvoice,
-            row.Material,
-            row.Name,
-            row.Quantity,
-            row.CustomerNumber,
-            row.CustomerName,
-            row.SalesPriceValue,
-            row.DocumentTotalForeignCurrency,
-            row.DocumentTotalLocalCurrency,
-            row.VatSumForeignCurrency,
-            row.VatSumLocalCurrency,
-            row.PostingDate?.ToString("O") ?? string.Empty,
-            row.InvoiceDate?.ToString("O") ?? string.Empty);
 
     private static decimal ConvertHouseCurrencyNetToBudgetChf(
         string houseCurrency,

@@ -1,0 +1,167 @@
+@page "/finance-rules"
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
+@using System.Reflection
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IFinanceRulesPageService FinanceRulesPageActions
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("Finance Regeln", "Finance rules")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Finance Regeln", "Finance rules")</MudText>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+        @T("Diese Regeln wirken nur auf die Finance-Sicht im zentralen Excel und im Abgleich. Rohdaten und Spaltenmapping bleiben unveraendert.",
+            "These rules only affect the finance view in the central Excel and reconciliation. Raw data and column mappings remain unchanged.")
+    </MudAlert>
+
+    <MudStack Row Spacing="2" Class="mb-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRule">
+            @T("Regel hinzufuegen", "Add rule")
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAllAsync">
+            @T("Alle speichern", "Save all")
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Restore" OnClick="LoadDefaults">
+            @T("Default-Regeln laden", "Load default rules")
+        </MudButton>
+    </MudStack>
+
+    <MudTable Items="_rules" Dense Hover Striped Breakpoint="Breakpoint.Md">
+        <HeaderContent>
+            <MudTh>Aktiv</MudTh>
+            <MudTh>Land</MudTh>
+            <MudTh>Jahr</MudTh>
+            <MudTh>Regeltyp</MudTh>
+            <MudTh>Feld</MudTh>
+            <MudTh>Vergleich</MudTh>
+            <MudTh>Wert</MudTh>
+            <MudTh>Sort</MudTh>
+            <MudTh>Notiz</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><MudCheckBox @bind-Value="context.IsActive" /></MudTd>
+            <MudTd><MudTextField @bind-Value="context.ScopeKey" Placeholder="DE" Style="width:80px" /></MudTd>
+            <MudTd><MudNumericField T="int?" @bind-Value="context.Year" Style="width:90px" /></MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.RuleType" Dense>
+                    @foreach (var type in FinanceRuleTypes.All)
+                    {
+                        <MudSelectItem Value="@type">@GetRuleTypeLabel(type)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.FieldName" Dense Disabled="@UsesNoField(context)">
+                    <MudSelectItem Value="@string.Empty">-</MudSelectItem>
+                    @foreach (var field in _recordFields)
+                    {
+                        <MudSelectItem Value="@field">@field</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudSelect T="string" @bind-Value="context.MatchType" Dense>
+                    @foreach (var type in FinanceRuleMatchTypes.All)
+                    {
+                        <MudSelectItem Value="@type">@GetMatchTypeLabel(type)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd><MudTextField @bind-Value="context.MatchValue" Disabled="@UsesNoMatchValue(context)" /></MudTd>
+            <MudTd><MudNumericField T="int" @bind-Value="context.SortOrder" Style="width:80px" /></MudTd>
+            <MudTd><MudTextField @bind-Value="context.Notes" /></MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                               OnClick="() => RemoveRule(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private readonly string[] _recordFields = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Select(property => property.Name)
+        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    private List<FinanceRule> _rules = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rules = await FinanceRulesPageActions.LoadAsync();
+    }
+
+    private void AddRule()
+    {
+        _rules.Add(new FinanceRule
+        {
+            ScopeKey = "DE",
+            RuleType = FinanceRuleTypes.Exclude,
+            FieldName = nameof(SalesRecord.CustomerName),
+            MatchType = FinanceRuleMatchTypes.Contains,
+            SortOrder = _rules.Count == 0 ? 100 : _rules.Max(rule => rule.SortOrder) + 10,
+            IsActive = true
+        });
+    }
+
+    private void RemoveRule(FinanceRule rule) => _rules.Remove(rule);
+
+    private void LoadDefaults()
+    {
+        _rules = FinanceRuleEngine.CreateDefaultRules()
+            .Select(rule => new FinanceRule
+            {
+                ScopeKey = rule.ScopeKey,
+                Year = rule.Year,
+                RuleType = rule.RuleType,
+                FieldName = rule.FieldName,
+                MatchType = rule.MatchType,
+                MatchValue = rule.MatchValue,
+                Notes = rule.Notes,
+                SortOrder = rule.SortOrder,
+                IsActive = rule.IsActive
+            })
+            .ToList();
+    }
+
+    private async Task SaveAllAsync()
+    {
+        _rules = await FinanceRulesPageActions.SaveAllAsync(_rules);
+        Snackbar.Add(T("Finance-Regeln gespeichert.", "Finance rules saved."), Severity.Success);
+    }
+
+    private static bool UsesNoField(FinanceRule rule)
+        => rule.RuleType == FinanceRuleTypes.ForceYear ||
+           rule.MatchType == FinanceRuleMatchTypes.Always;
+
+    private static bool UsesNoMatchValue(FinanceRule rule)
+        => rule.MatchType is FinanceRuleMatchTypes.Always or FinanceRuleMatchTypes.IsBlank;
+
+    private string GetRuleTypeLabel(string type)
+        => type switch
+        {
+            FinanceRuleTypes.Exclude => T("Ausschliessen", "Exclude"),
+            FinanceRuleTypes.NegateAmount => T("Betrag negativ", "Negate amount"),
+            FinanceRuleTypes.ForceYear => T("Jahr erzwingen", "Force year"),
+            FinanceRuleTypes.DeduplicateBlankSupplierCountry => T("Duplikate ohne Supplier Country", "Deduplicate blank supplier country"),
+            _ => type
+        };
+
+    private string GetMatchTypeLabel(string type)
+        => type switch
+        {
+            FinanceRuleMatchTypes.Always => T("Immer", "Always"),
+            FinanceRuleMatchTypes.Equal => T("gleich", "equals"),
+            FinanceRuleMatchTypes.Contains => T("enthaelt", "contains"),
+            FinanceRuleMatchTypes.StartsWith => T("beginnt mit", "starts with"),
+            FinanceRuleMatchTypes.IsBlank => T("ist leer", "is blank"),
+            _ => type
+        };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

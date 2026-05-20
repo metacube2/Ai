@@ -1849,3 +1849,84 @@ Ergebnis:
 
 - Build erfolgreich.
 - 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
+
+## Finance-Regeln und Dashboard-Basis-Spalte 2026-05-20
+
+Geaendert:
+
+- Neuer Admin-Reiter `Finance Regeln` angelegt.
+  - Route: `/finance-rules`
+  - Navigation: `Admin -> Finance Regeln`
+  - Zugriff wie andere Admin-Seiten ueber `AdminOnly`.
+- Neue Tabelle/Model `FinanceRules`.
+- Finance-Regeln werden beim Start geseedet und sind danach in der UI pflegbar.
+- Die Regeln wirken auf die Finance-Sicht, nicht auf Rohdaten und nicht auf das technische Spaltenmapping.
+- DE- und IT-Sonderlogik wurde aus dem zentralen Excel-Export in eine generische Regel-Engine verschoben.
+- `ConfigTransferService` exportiert/importiert `FinanceRules` mit.
+- `FinanceReconciliationService` nutzt dieselbe Regel-Engine wie das zentrale Excel, damit Soll/Ist-Vergleich und Endexcel dieselbe Finance-Sicht verwenden.
+- Export Dashboard:
+  - neue Spalte `Basis` direkt nach `Land`
+  - zeigt Datenbasis mit Icon und Text:
+    - `Excel-Datei`
+    - `CSV-Datei`
+    - `SAP Service`
+    - `Server`
+    - `Manuelle Datei`
+
+Aktuelle Default-Finance-Regeln:
+
+- `DE`
+  - Jahr auf `2025` erzwingen fuer das Alphaplan-Jahresfile.
+  - `CustomerName = Trafag AG` ausschliessen.
+  - `CustomerName contains Magnetic Sense` ausschliessen.
+  - `InvoiceNumber = GS2510095` ausschliessen, weil bereits 2024 erfasst.
+  - `InvoiceNumber starts with GS` als negativer Betrag zaehlen.
+- `IT`
+  - `CustomerName contains Trafag Italia` ausschliessen.
+  - doppelte Zeilen ohne `SupplierCountry` deduplizieren.
+
+DE-Fachabgleich nach Rueckmeldung Deutschland:
+
+```text
+Gesamtumsatz NettoPreisGesamtX:                 4'154'690.05
+- Weiterberechnungen Trafag AG:                   391'655.88
+- Weiterberechnungen Magnetic Sense 2025:          55'648.21
+- Gutschriften GS als negativ statt positiv:        28'205.60 doppelte Wirkung
+- GS2510095 nicht in 2025:                           1'419.70
+= DE Jahresabschluss-Umsatz:                    3'652'394.46
+```
+
+Verifikation:
+
+```text
+dotnet test TrafagSalesExporter.sln --verbosity minimal
+```
+
+Ergebnis:
+
+- 76/76 Tests erfolgreich.
+
+Echter DE-Import und zentrale Excel erneut geprueft:
+
+```text
+CentralSalesRecords DE 2025 rows: 4'430
+CentralSalesRecords DE 2025 SalesPriceValue: 3'652'394.46
+Central Excel Sales sheet Finance DE 2025 sum: 3'652'394.46
+Central Excel Finance Summary DE 2025 sum: 3'652'394.46
+```
+
+Technische Hauptdateien:
+
+- `Models/FinanceRule.cs`
+- `Services/FinanceRuleEngine.cs`
+- `Services/FinanceRulesPageService.cs`
+- `Components/Pages/FinanceRules.razor`
+- `Services/ExcelExportService.cs`
+- `Services/FinanceReconciliationService.cs`
+- `Services/DashboardPageService.cs`
+- `Components/Pages/Dashboard.razor`
+- `Data/AppDbContext.cs`
+- `Services/DatabaseInitializationService.SchemaSql.cs`
+- `Services/DatabaseSchemaMaintenanceService.cs`
+- `Services/DatabaseSeedService.cs`
+- `Services/ConfigTransferService.cs`

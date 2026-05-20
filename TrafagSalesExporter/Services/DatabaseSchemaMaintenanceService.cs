@@ -36,6 +36,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureCurrencyExchangeRateTable(db);
         EnsureFinanceReferenceTable(db);
         EnsureFinanceIntercompanyRuleTable(db);
+        EnsureFinanceRuleTable(db);
         EnsureSourceSystemDefinitionTable(db);
         AddColumnIfMissing(db, "SourceSystemDefinitions", "CentralServiceUrl", "TEXT NOT NULL DEFAULT ''");
         EnsureSapSourceTable(db);
@@ -314,6 +315,17 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = DatabaseSchemaSql.GetFinanceIntercompanyRulesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceRuleTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceRulesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
     }
 

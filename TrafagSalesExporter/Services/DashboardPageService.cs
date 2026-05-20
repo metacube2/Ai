@@ -46,6 +46,7 @@ public sealed class DashboardPageService : IDashboardPageService
             {
                 SiteId = s.Id,
                 Land = s.Land,
+                DataBasis = ResolveDataBasis(s, sourceSystem),
                 TSC = s.TSC,
                 Schema = s.Schema,
                 ServerName = string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase)
@@ -110,6 +111,32 @@ public sealed class DashboardPageService : IDashboardPageService
         return string.IsNullOrWhiteSpace(sourceSystem?.CentralServiceUrl) ? "SAP Gateway" : sourceSystem.CentralServiceUrl;
     }
 
+    private static string ResolveDataBasis(Site site, SourceSystemDefinition? sourceSystem)
+    {
+        if (string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+        {
+            var path = site.ManualImportFilePath ?? string.Empty;
+            var extension = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
+
+            if (extension is "CSV")
+                return "CSV-Datei";
+            if (extension is "XLS" or "XLSX" or "XLSM")
+                return "Excel-Datei";
+            if (!string.IsNullOrWhiteSpace(path))
+                return "Excel/CSV-Datei";
+
+            return "Manuelle Datei";
+        }
+
+        if (string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return "SAP Service";
+
+        if (string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+            return "Server";
+
+        return string.IsNullOrWhiteSpace(site.SourceSystem) ? "-" : site.SourceSystem;
+    }
+
     private static List<ConsolidatedDashboardRow> BuildConsolidatedRows(ExportSettings settings)
     {
         var outputDirectory = ResolveConsolidatedOutputDirectory(settings);
@@ -156,6 +183,7 @@ public sealed class DashboardRow
 {
     public int SiteId { get; set; }
     public string Land { get; set; } = string.Empty;
+    public string DataBasis { get; set; } = string.Empty;
     public string TSC { get; set; } = string.Empty;
     public string Schema { get; set; } = string.Empty;
     public string ServerName { get; set; } = string.Empty;

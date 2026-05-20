@@ -19,6 +19,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureFinanceReferenceDefaults(db);
         EnsureBudgetExchangeRateDefaults(db);
         EnsureFinanceIntercompanyRuleDefaults(db);
+        EnsureFinanceRuleDefaults(db);
     }
 
     private static void SeedIfEmpty(AppDbContext db)
@@ -892,5 +893,40 @@ public class DatabaseSeedService : IDatabaseSeedService
 
         if (changed)
             db.SaveChanges();
+    }
+
+    private static void EnsureFinanceRuleDefaults(AppDbContext db)
+    {
+        if (!CanUseTable(db, "FinanceRules"))
+            return;
+
+        var changed = false;
+        foreach (var item in FinanceRuleEngine.CreateDefaultRules())
+        {
+            var exists = db.FinanceRules.Any(rule =>
+                rule.ScopeKey == item.ScopeKey &&
+                rule.RuleType == item.RuleType &&
+                rule.FieldName == item.FieldName &&
+                rule.MatchType == item.MatchType &&
+                rule.MatchValue == item.MatchValue);
+
+            if (exists)
+                continue;
+
+            db.FinanceRules.Add(item);
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static bool CanUseTable(AppDbContext db, string tableName)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        return DatabaseSchemaTools.GetTableColumns(conn, transaction: null, tableName).Count > 0;
     }
 }

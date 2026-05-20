@@ -308,3 +308,38 @@ mainapp.*.log
 ```
 
 Ausserdem sind mehrere alte Dateien als geloescht markiert. Nicht blind committen, bevor klar ist, ob sie wirklich entfernt werden sollen.
+
+## Nachtrag 2026-05-20 IIS /BiDashboard PathBase
+
+Die App ist fuer Betrieb unter `/BiDashboard` vorbereitet.
+
+Relevant:
+
+- `web.config` setzt:
+
+```xml
+<environmentVariable name="ASPNETCORE_PATHBASE" value="/BiDashboard" />
+```
+
+- `Program.cs` liest `ASPNETCORE_PATHBASE` und ruft `UsePathBase(...)` auf.
+- `Components/App.razor` setzt `<base href>` dynamisch:
+  - lokal ohne PathBase: `/`
+  - Server mit PathBase: `/BiDashboard/`
+
+Damit ist die erwartete Server-URL:
+
+```text
+https://trch-webapp-bidashboard.trafagch.local/BiDashboard/
+```
+
+Wenn die App im stdout-Log startet, aber Browser weiter `404` zeigt, zuerst IIS Application/Binding pruefen:
+
+- Ist `BiDashboard` eine echte IIS Application und nicht nur ein Ordner?
+- Zeigt sie auf `C:\inetpub\wwwcust\BiDashboard` bzw. den aktuellen Publish-Ordner?
+- Stimmen Hostname, Port 443 und Zertifikat?
+
+Bekannter Login-Stand:
+
+- Wenn ein Browser-Popup `Diese Website fordert Sie auf, sich anzumelden` erscheint, ist das IIS/Windows Authentication.
+- Die App selbst hat in `appsettings.json` aktuell `Security.Enabled=false`.
+- Ein Login-Popup kommt daher von IIS, nicht von den App-internen HR-/Finance-Passwortseiten.

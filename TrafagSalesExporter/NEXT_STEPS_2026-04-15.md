@@ -1274,3 +1274,72 @@ Naechste saubere Haertung fuer dieses Thema:
 
 - Config-Import transaktional machen
 - Legacy-Fallback fuer fehlendes `ConnectionKind` einbauen
+
+## 10. Nachtrag 2026-05-20: Finance-Regeln statt harte Laenderlogik
+
+Aktueller Stand:
+
+- Es gibt jetzt `Admin -> Finance Regeln`.
+- Die fachliche Abgrenzung fuer Finance wird dort als Regel gepflegt:
+  - Land/Scope
+  - Jahr
+  - Regeltyp
+  - Feld
+  - Vergleich
+  - Wert
+  - Notiz
+  - Sortierung/Aktiv
+- Diese Regeln wirken auf:
+  - zentrales Excel (`Finance | ...` und `Finance Summary`)
+  - Soll/Ist Vergleich
+- Sie veraendern nicht:
+  - Rohdatenimport
+  - Mapping in `Admin -> Standorte`
+  - technische Transformationen in `Admin -> Transformationen`
+
+UI-Logik fuer Keyuser:
+
+```text
+Admin -> Standorte          = Quelle und Spaltenmapping
+Admin -> Transformationen   = technische Feldnormalisierung/-berechnung
+Admin -> Finance Regeln     = CFO-/Finance-Abgrenzung
+```
+
+Wichtige Default-Regeln:
+
+- DE:
+  - Alphaplan-Jahresfile -> Finance-Jahr 2025
+  - Trafag AG ausschliessen
+  - Magnetic Sense ausschliessen
+  - GS2510095 ausschliessen
+  - GS-Gutschriften negativ
+- IT:
+  - Trafag Italia ausschliessen
+  - doppelte Blank-Supplier-Country-Zeilen deduplizieren
+
+Nach jedem Regelwechsel testen:
+
+1. passenden Standort exportieren
+2. zentrale Datei neu erzeugen
+3. im Endexcel `Finance Summary` kontrollieren
+4. `Soll/Ist Vergleich` kontrollieren
+
+Letzter DE-Pruefstand:
+
+```text
+DE 2025 im zentralen Excel: 3'652'394.46
+```
+
+## 11. Nachtrag 2026-05-20: Export Dashboard Datenbasis
+
+Im Export Dashboard steht direkt nach `Land` die Spalte `Basis`.
+
+Angezeigt wird:
+
+- `Excel-Datei` mit Tabellen-Icon
+- `CSV-Datei` mit Datei-Icon
+- `SAP Service` mit Cloud-Sync-Icon
+- `Server` mit Storage-Icon
+- `Manuelle Datei`, falls manuelle Quelle ohne erkennbaren Pfad
+
+Die Spalte kommt aus `DashboardPageService.ResolveDataBasis`.

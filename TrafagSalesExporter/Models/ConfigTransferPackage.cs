@@ -11,6 +11,7 @@ public class ConfigTransferPackage
     public List<ConfigTransferCurrencyExchangeRate> CurrencyExchangeRates { get; set; } = [];
     public List<ConfigTransferFinanceReference> FinanceReferences { get; set; } = [];
     public List<ConfigTransferFinanceIntercompanyRule> FinanceIntercompanyRules { get; set; } = [];
+    public List<FinanceRule> FinanceRules { get; set; } = [];
     public List<ConfigTransferHanaServer> HanaServers { get; set; } = [];
     public List<ConfigTransferSite> Sites { get; set; } = [];
     public List<FieldTransformationRule> FieldTransformationRules { get; set; } = [];

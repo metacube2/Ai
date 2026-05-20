@@ -35,6 +35,10 @@ public class ConfigTransferService : IConfigTransferService
             .ThenBy(x => x.CustomerNumber)
             .ThenBy(x => x.CustomerNameContains)
             .ToListAsync();
+        var financeRules = await db.FinanceRules
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Id)
+            .ToListAsync();
         var hanaServers = await db.HanaServers.OrderBy(x => x.Name).ToListAsync();
         var sites = await db.Sites.OrderBy(x => x.Land).ToListAsync();
         var rules = await db.FieldTransformationRules.OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToListAsync();
@@ -104,6 +108,19 @@ public class ConfigTransferService : IConfigTransferService
                 CustomerNumber = rule.CustomerNumber,
                 CustomerNameContains = rule.CustomerNameContains,
                 Notes = rule.Notes,
+                IsActive = rule.IsActive
+            }).ToList(),
+            FinanceRules = financeRules.Select(rule => new FinanceRule
+            {
+                ScopeKey = rule.ScopeKey,
+                Year = rule.Year,
+                RuleType = rule.RuleType,
+                FieldName = rule.FieldName,
+                MatchType = rule.MatchType,
+                MatchValue = rule.MatchValue,
+                NumericValue = rule.NumericValue,
+                Notes = rule.Notes,
+                SortOrder = rule.SortOrder,
                 IsActive = rule.IsActive
             }).ToList(),
             HanaServers = hanaServers.Select(server => new ConfigTransferHanaServer
@@ -206,6 +223,7 @@ public class ConfigTransferService : IConfigTransferService
         var existingExchangeRates = await db.CurrencyExchangeRates.ToListAsync();
         var existingFinanceReferences = await db.FinanceReferences.ToListAsync();
         var existingFinanceIntercompanyRules = await db.FinanceIntercompanyRules.ToListAsync();
+        var existingFinanceRules = await db.FinanceRules.ToListAsync();
         var existingSites = await db.Sites.ToListAsync();
         var existingCentralRecords = await db.CentralSalesRecords.AsNoTracking().ToListAsync();
         var existingRules = await db.FieldTransformationRules.ToListAsync();
@@ -235,6 +253,8 @@ public class ConfigTransferService : IConfigTransferService
             db.FinanceReferences.RemoveRange(existingFinanceReferences);
         if (package.FinanceIntercompanyRules.Count > 0 && existingFinanceIntercompanyRules.Count > 0)
             db.FinanceIntercompanyRules.RemoveRange(existingFinanceIntercompanyRules);
+        if (package.FinanceRules.Count > 0 && existingFinanceRules.Count > 0)
+            db.FinanceRules.RemoveRange(existingFinanceRules);
         if (existingExchangeRates.Count > 0) db.CurrencyExchangeRates.RemoveRange(existingExchangeRates);
         if (existingSites.Count > 0) db.Sites.RemoveRange(existingSites);
         if (existingServers.Count > 0) db.HanaServers.RemoveRange(existingServers);
@@ -317,6 +337,23 @@ public class ConfigTransferService : IConfigTransferService
                 CustomerNumber = rule.CustomerNumber,
                 CustomerNameContains = rule.CustomerNameContains,
                 Notes = rule.Notes,
+                IsActive = rule.IsActive
+            }));
+        }
+
+        if (package.FinanceRules.Count > 0)
+        {
+            db.FinanceRules.AddRange(package.FinanceRules.Select(rule => new FinanceRule
+            {
+                ScopeKey = rule.ScopeKey,
+                Year = rule.Year,
+                RuleType = rule.RuleType,
+                FieldName = rule.FieldName,
+                MatchType = rule.MatchType,
+                MatchValue = rule.MatchValue,
+                NumericValue = rule.NumericValue,
+                Notes = rule.Notes,
+                SortOrder = rule.SortOrder,
                 IsActive = rule.IsActive
             }));
         }

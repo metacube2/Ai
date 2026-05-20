@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<CurrencyExchangeRate> CurrencyExchangeRates => Set<CurrencyExchangeRate>();
     public DbSet<FinanceReference> FinanceReferences => Set<FinanceReference>();
     public DbSet<FinanceIntercompanyRule> FinanceIntercompanyRules => Set<FinanceIntercompanyRule>();
+    public DbSet<FinanceRule> FinanceRules => Set<FinanceRule>();
     public DbSet<SapSourceDefinition> SapSourceDefinitions => Set<SapSourceDefinition>();
     public DbSet<SapJoinDefinition> SapJoinDefinitions => Set<SapJoinDefinition>();
     public DbSet<SapFieldMapping> SapFieldMappings => Set<SapFieldMapping>();
