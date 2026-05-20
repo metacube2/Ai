@@ -11,4 +11,5 @@ public interface IManagementCockpitService
     Task<List<int>> GetAvailableCentralYearsAsync();
     Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month);
     Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month, ManagementCockpitAnalysisOptions? options);
+    Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency);
 }

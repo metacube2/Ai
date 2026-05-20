@@ -123,6 +123,10 @@
         <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
             @FileStatusTable(Result.FileStatuses)
         </MudTabPanel>
+
+        <MudTabPanel Text="@T("Anleitung", "Guide")" Icon="@Icons.Material.Filled.HelpOutline">
+            @GuidePanel()
+        </MudTabPanel>
     </MudTabs>
 
 @code {
@@ -279,6 +283,75 @@
         </MudTable>
     </MudPaper>;
 
+    private RenderFragment GuidePanel() => @<MudGrid>
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Ablauf fuer HR", "HR workflow")</MudText>
+                <div class="hr-guide-steps">
+                    <div class="hr-guide-step">
+                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Large" />
+                        <span>1</span>
+                        <strong>@T("Rexx exportieren", "Export from Rexx")</strong>
+                        <p>@T("Die benoetigten Rexx-Abfragen manuell herunterladen. Excel/XLSX verwenden, nicht PDF.", "Download the required Rexx queries manually. Use Excel/XLSX, not PDF.")</p>
+                    </div>
+                    <div class="hr-guide-step">
+                        <MudIcon Icon="@Icons.Material.Filled.FolderCopy" Size="Size.Large" />
+                        <span>2</span>
+                        <strong>@T("Dateien ablegen", "Place files")</strong>
+                        <p>@T("Downloads in den Datenordner kopieren und exakt wie unten benennen.", "Copy downloads into the data folder and name them exactly as listed below.")</p>
+                    </div>
+                    <div class="hr-guide-step">
+                        <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Large" />
+                        <span>3</span>
+                        <strong>@T("Cockpit laden", "Load cockpit")</strong>
+                        <p>@T("Im HR-KPI-Cockpit den Datenordner kontrollieren und Laden klicken.", "Check the data folder in the HR KPI cockpit and click Load.")</p>
+                    </div>
+                    <div class="hr-guide-step">
+                        <MudIcon Icon="@Icons.Material.Filled.FactCheck" Size="Size.Large" />
+                        <span>4</span>
+                        <strong>@T("Datenstatus pruefen", "Check data status")</strong>
+                        <p>@T("Im Reiter Datenstatus muessen die erwarteten Dateien gruen erscheinen.", "In the Data status tab, the expected files should be green.")</p>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Datenordner", "Data folder")</MudText>
+                <MudText Typo="Typo.body1">@Result.Options.DataFolder</MudText>
+                <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mt-3">
+                    @T("Der Standardordner ist konfigurierbar. Fuer einen anderen Ordner oben im HR-KPI-Filter den Datenordner anpassen und neu laden.",
+                        "The default folder is configurable. To use another folder, change the data folder in the HR KPI filter above and reload.")
+                </MudAlert>
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mt-2">
+                    @T("HR-Dateien enthalten Personendaten. Nicht per E-Mail weiterleiten und keine Kopien in ungeschuetzten Ordnern liegen lassen.",
+                        "HR files contain personal data. Do not forward them by email and do not leave copies in unprotected folders.")
+                </MudAlert>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Erwartete Dateien", "Expected files")</MudText>
+                <MudTable Items="Result.FileStatuses" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Inhalt", "Content")</MudTh>
+                        <MudTh>@T("Datei/Pfad", "File/path")</MudTh>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Path</MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Color="@(context.Exists ? Color.Success : Color.Error)" Variant="Variant.Outlined">
+                                @(context.Exists ? T("gefunden", "found") : T("fehlt", "missing"))
+                            </MudChip>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>;
+
     private static IEnumerable<HrKpiGroupValue> BuildLeaverExclusionRows(IReadOnlyList<HrLeaverRow> items)
         => items
             .GroupBy(x => x.FluktuationAusschlussgrund ?? "Relevant")
@@ -389,6 +462,51 @@
 <style>
     .hr-viz-panel {
         min-height: 100%;
+    }
+
+    .hr-guide-steps {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .hr-guide-step {
+        min-height: 175px;
+        padding: 16px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-top: 5px solid var(--mud-palette-primary);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--mud-palette-surface);
+    }
+
+    .hr-guide-step span {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-grid;
+        place-items: center;
+        color: var(--mud-palette-primary-text);
+        background: var(--mud-palette-primary);
+        font-weight: 700;
+    }
+
+    .hr-guide-step p {
+        margin: 0;
+        color: var(--mud-palette-text-secondary);
+    }
+
+    @@media (max-width: 1100px) {
+        .hr-guide-steps {
+            grid-template-columns: repeat(2, minmax(150px, 1fr));
+        }
+    }
+
+    @@media (max-width: 700px) {
+        .hr-guide-steps {
+            grid-template-columns: 1fr;
+        }
     }
 
     .hr-gauge {

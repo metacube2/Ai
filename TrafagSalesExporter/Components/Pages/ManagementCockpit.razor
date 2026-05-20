@@ -11,6 +11,138 @@
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudGrid>
+        <MudItem xs="12" md="3">
+            <MudSelect T="int" @bind-Value="_selectedFinanceYear" Label="@T("Finance-Jahr", "Finance year")" Dense>
+                @foreach (var year in _financeYearOptions)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFinanceCountryKey" Label="@T("Land", "Country")" Dense Clearable>
+                @foreach (var option in _financeCountryOptions)
+                {
+                    <MudSelectItem Value="@option">@option</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFinanceCurrency" Label="@T("Waehrung", "Currency")" Dense Clearable>
+                @foreach (var option in _financeCurrencyOptions)
+                {
+                    <MudSelectItem Value="@option">@option</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AnalyzeFinanceSummary"
+                       StartIcon="@Icons.Material.Filled.FactCheck" Disabled="_analyzingFinance" FullWidth>
+                @(_analyzingFinance ? T("Lade...", "Loading...") : T("Finance Summary laden", "Load finance summary"))
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_financeResult is not null)
+{
+    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
+        <MudTabPanel Text="@T("Finance Summary", "Finance summary")" Icon="@Icons.Material.Filled.Dashboard">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Net Sales Actual", "Net sales actual")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.NetSalesActual, _financeResult.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.body2">@T("gefiltertes Endergebnis", "filtered final result")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Enthaltene Zeilen", "Included rows")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.IncludedRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance Include = TRUE", "Finance Include = TRUE")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Ausgeschlossen", "Excluded")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.ExcludedRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance-Regeln", "Finance rules")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Laender / Waehrungen", "Countries / currencies")</MudText>
+                        <MudText Typo="Typo.h5">@($"{_financeResult.CountryCount:N0} / {_financeResult.CurrencyCount:N0}")</MudText>
+                        <MudText Typo="Typo.body2">@($"{_financeResult.Filter.Year}")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" md="8">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Summen wie im Excel-Blatt Finance Summary", "Totals matching the Finance Summary Excel sheet")</MudText>
+                        <MudTable Items="_financeResult.Rows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Jahr", "Year")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Waehrung", "Currency")</MudTh>
+                                <MudTh>@T("Net Sales Actual", "Net sales actual")</MudTh>
+                                <MudTh>@T("Enthalten", "Included")</MudTh>
+                                <MudTh>@T("Ausgeschlossen", "Excluded")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Year</MudTd>
+                                <MudTd>@context.CountryKey</MudTd>
+                                <MudTd>@context.Currency</MudTd>
+                                <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                                <MudTd>@context.IncludedRows.ToString("N0")</MudTd>
+                                <MudTd>@context.ExcludedRows.ToString("N0")</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">
+                                    @T("Keine Finance-Summary-Daten fuer diese Filter.", "No finance summary data for these filters.")
+                                </MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
+                        @foreach (var notice in _financeResult.Notices)
+                        {
+                            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-2">@notice</MudAlert>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahresvergleich mit aktuellem Filter", "Year comparison with current filter")</MudText>
+                <MudTable Items="_financeResult.YearRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Jahr", "Year")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Net Sales Actual", "Net sales actual")</MudTh>
+                        <MudTh>@T("Enthalten", "Included")</MudTh>
+                        <MudTh>@T("Ausgeschlossen", "Excluded")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@context.IncludedRows.ToString("N0")</MudTd>
+                        <MudTd>@context.ExcludedRows.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
         <MudItem xs="12" md="6">
             <MudSelect T="string" @bind-Value="_selectedFilePath" Label="@T("Vorhandene Excel-Datei", "Available Excel file")" Dense>
                 @foreach (var file in _files)
@@ -339,9 +471,16 @@
     </MudPaper>
 }
 
+        </MudTabPanel>
+    </MudTabs>
+}
+
 @code {
     private List<ManagementCockpitFileOption> _files = [];
     private List<int> _centralYears = [];
+    private List<int> _financeYearOptions = [];
+    private List<string> _financeCountryOptions = [];
+    private List<string> _financeCurrencyOptions = [];
     private List<ManagementCockpitValueFieldOption> _valueFieldOptions = [];
     private readonly List<CurrencySelectOption> _currencyOptions =
     [
@@ -352,6 +491,10 @@
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
+    private ManagementFinanceSummaryResult? _financeResult;
+    private int _selectedFinanceYear;
+    private string? _selectedFinanceCountryKey;
+    private string? _selectedFinanceCurrency;
     private int _selectedCentralYear;
     private int? _selectedCentralMonth;
     private string? _centralLandFilter;
@@ -360,10 +503,11 @@
     private string _selectedCentralValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
     private IEnumerable<string> _selectedCentralAdditionalValueFields = [];
     private string _selectedFileTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
-    private string _selectedCentralTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
+    private string _selectedCentralTargetCurrency = ManagementCockpitCurrencyOptions.Native;
     private bool _loadingFiles;
     private bool _analyzing;
     private bool _analyzingCentral;
+    private bool _analyzingFinance;
 
     protected override async Task OnInitializedAsync()
     {
@@ -373,6 +517,8 @@
         _centralYears = state.CentralYears;
         _selectedFilePath = state.SelectedFilePath;
         _selectedCentralYear = state.SelectedCentralYear;
+        _selectedFinanceYear = _selectedCentralYear;
+        await AnalyzeFinanceSummary();
     }
 
     private async Task ReloadFiles()
@@ -446,6 +592,31 @@
         finally
         {
             _analyzingCentral = false;
+        }
+    }
+
+    private async Task AnalyzeFinanceSummary()
+    {
+        _analyzingFinance = true;
+        try
+        {
+            _financeResult = await CockpitPageService.AnalyzeFinanceSummaryAsync(
+                _selectedFinanceYear,
+                _selectedFinanceCountryKey,
+                _selectedFinanceCurrency);
+
+            _financeYearOptions = _financeResult.YearOptions;
+            _financeCountryOptions = _financeResult.CountryOptions;
+            _financeCurrencyOptions = _financeResult.CurrencyOptions;
+            _selectedFinanceYear = _financeResult.Filter.Year;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Finance Summary konnte nicht erzeugt werden: {0}", "Could not build finance summary: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _analyzingFinance = false;
         }
     }
 

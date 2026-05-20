@@ -238,6 +238,23 @@ public class ManagementCockpitServiceTests : IDisposable
         Assert.Contains("gewählten Zeitraum", ex.Message);
     }
 
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Returns_Empty_Result_For_Filter_With_No_Rows()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2026, "DE", null);
+
+        Assert.Equal(2026, result.Filter.Year);
+        Assert.Equal("DE", result.Filter.CountryKey);
+        Assert.Empty(result.Rows);
+        Assert.Equal(0m, result.NetSalesActual);
+        Assert.Contains("keine Datensaetze", result.Notices[0]);
+        Assert.Contains(2025, result.YearOptions);
+        Assert.Contains("DE", result.CountryOptions);
+    }
+
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

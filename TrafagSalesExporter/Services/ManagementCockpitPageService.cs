@@ -9,6 +9,7 @@ public interface IManagementCockpitPageService
     Task<List<int>> LoadCentralYearsAsync();
     Task<ManagementCockpitResult> AnalyzeAsync(string filePath, ManagementCockpitAnalysisOptions options);
     Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month, ManagementCockpitAnalysisOptions options);
+    Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency);
 }
 
 public sealed class ManagementCockpitPageService : IManagementCockpitPageService
@@ -46,6 +47,9 @@ public sealed class ManagementCockpitPageService : IManagementCockpitPageService
 
     public Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month, ManagementCockpitAnalysisOptions options)
         => _cockpitService.AnalyzeCentralAsync(year, month, options);
+
+    public Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency)
+        => _cockpitService.AnalyzeFinanceSummaryAsync(year, countryKey, currency);
 }
 
 public sealed class ManagementCockpitPageState

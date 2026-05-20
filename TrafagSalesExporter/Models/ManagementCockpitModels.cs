@@ -153,3 +153,37 @@ public class ManagementCockpitCentralResult
     public List<ManagementCockpitDimensionValueRow> SourceSystemTotals { get; set; } = [];
     public List<ManagementCockpitDimensionValueRow> CountryTotals { get; set; } = [];
 }
+
+public class ManagementFinanceSummaryFilter
+{
+    public int Year { get; set; }
+    public string? CountryKey { get; set; }
+    public string? Currency { get; set; }
+}
+
+public class ManagementFinanceSummaryRow
+{
+    public int Year { get; set; }
+    public string CountryKey { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public int IncludedRows { get; set; }
+    public int ExcludedRows { get; set; }
+    public decimal NetSalesActual { get; set; }
+}
+
+public class ManagementFinanceSummaryResult
+{
+    public ManagementFinanceSummaryFilter Filter { get; set; } = new();
+    public List<string> Notices { get; set; } = [];
+    public List<int> YearOptions { get; set; } = [];
+    public List<string> CountryOptions { get; set; } = [];
+    public List<string> CurrencyOptions { get; set; } = [];
+    public List<ManagementFinanceSummaryRow> Rows { get; set; } = [];
+    public List<ManagementFinanceSummaryRow> YearRows { get; set; } = [];
+    public int IncludedRows { get; set; }
+    public int ExcludedRows { get; set; }
+    public int CountryCount { get; set; }
+    public int CurrencyCount { get; set; }
+    public decimal NetSalesActual { get; set; }
+    public string DisplayCurrency { get; set; } = string.Empty;
+}

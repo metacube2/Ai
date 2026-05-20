@@ -39,7 +39,9 @@ else
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudGrid>
             <MudItem xs="12" md="5">
-                <MudTextField @bind-Value="_dataFolder" Label="@T("Datenordner", "Data folder")" />
+                <MudTextField @bind-Value="_dataFolder"
+                              Label="@T("Datenordner fuer Rexx/SAP-Dateien", "Data folder for Rexx/SAP files")"
+                              HelperText="@T("Standard ist C:\\temp. Der Ordner kann hier fuer den aktuellen Lauf angepasst oder dauerhaft in appsettings.json unter HrKpi:DataFolder geaendert werden.", "Default is C:\\temp. The folder can be changed here for the current run or permanently in appsettings.json under HrKpi:DataFolder.")" />
             </MudItem>
             <MudItem xs="6" md="2">
                 <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
