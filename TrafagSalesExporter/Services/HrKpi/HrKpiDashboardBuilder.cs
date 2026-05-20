@@ -38,7 +38,8 @@ internal sealed class HrKpiDashboardBuilder
             FluktuationFilter = NormalizeFilter(options.FluktuationFilter),
             GlzAmpel = NormalizeFilter(options.GlzAmpel),
             RestferienAmpel = NormalizeFilter(options.RestferienAmpel),
-            SearchText = NormalizeFilter(options.SearchText)
+            SearchText = NormalizeFilter(options.SearchText),
+            ManagementView = options.ManagementView
         };
 
         var result = new HrKpiResult { Options = normalizedOptions };
@@ -107,6 +108,23 @@ internal sealed class HrKpiDashboardBuilder
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
         result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees);
+        result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
+        result.TrafficLights = BuildTrafficLights(result.Metrics, result.TurnoverMetrics, result.AbsenceMetrics, result.TimeVacationMetrics, context);
+        result.DataQualityIssues = BuildDataQualityIssues(employees, absences, leavers, sapRows, context);
+        result.LeaversByType = BuildLeaverTypeGroups(leavers);
+        result.LeaversByOrganisation = BuildLeaverOrganisationGroups(leavers);
+        result.AbsenceByOrganisation = BuildAbsenceOrganisationGroups(absences);
+        result.CriticalAbsences = absences
+            .Where(x => x.KrankheitstageGesamt > 0)
+            .OrderByDescending(x => x.KrankheitstageGesamt)
+            .Select(absence => employees.FirstOrDefault(employee => employee.Personalnummer == absence.Personalnummer) ?? new HrKpiEmployeeRow
+            {
+                Personalnummer = absence.Personalnummer,
+                NameVoll = absence.Name,
+                Organisationseinheit = absence.Organisationseinheit
+            })
+            .Take(25)
+            .ToList();
         result.TurnoverVisuals = BuildTurnoverVisuals(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
         result.HeadcountByOrganisation = employees
             .GroupBy(x => BlankAsUnknown(x.Organisationseinheit), StringComparer.OrdinalIgnoreCase)
@@ -586,6 +604,171 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Restferien Rot", Value = restVacationRed.ToString("N0"), Detail = ">5 Tage Rest", Severity = restVacationRed > 0 ? "Warning" : "Normal" }
         ];
     }
+
+    private static List<HrKpiMetric> BuildPeriodComparisonMetrics(
+        IReadOnlyCollection<HrKpiEmployeeRow> employees,
+        IReadOnlyCollection<HrLeaverRow> turnoverHeadcountLeavers,
+        IReadOnlyCollection<HrLeaverRow> leavers,
+        TurnoverPeriodScope period)
+    {
+        var selectedYear = period.BreakdownYear ?? leavers
+            .Where(x => x.Austrittsjahr.HasValue)
+            .Select(x => x.Austrittsjahr!.Value)
+            .DefaultIfEmpty(DateTime.Today.Year)
+            .Max();
+        var previousYear = selectedYear - 1;
+        var intervals = BuildTurnoverIntervals(employees, turnoverHeadcountLeavers);
+        var selectedHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (selectedYear, month)));
+        var previousHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (previousYear, month)));
+        var selectedLeavers = CountDistinctPersons(leavers
+            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == selectedYear)
+            .Select(x => x.Personalnummer));
+        var previousLeavers = CountDistinctPersons(leavers
+            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == previousYear)
+            .Select(x => x.Personalnummer));
+        var selectedRate = selectedHeadcount == 0 ? 0 : selectedLeavers / selectedHeadcount;
+        var previousRate = previousHeadcount == 0 ? 0 : previousLeavers / previousHeadcount;
+        var deltaRate = selectedRate - previousRate;
+        var selectedAbs = leavers.Count(x => x.Austrittsjahr == selectedYear);
+        var previousAbs = leavers.Count(x => x.Austrittsjahr == previousYear);
+
+        return
+        [
+            new() { Label = $"Headcount {selectedYear}", Value = FormatHeadcount(selectedHeadcount), Detail = $"Vorjahr {FormatHeadcount(previousHeadcount)}", Severity = "Normal" },
+            new() { Label = $"Austritte {selectedYear}", Value = selectedAbs.ToString("N0"), Detail = $"Vorjahr {previousAbs:N0}", Severity = selectedAbs > previousAbs ? "Warning" : "Normal" },
+            new() { Label = $"Fluktuation {selectedYear}", Value = selectedRate.ToString("P1"), Detail = $"Vorjahr {previousRate:P1}", Severity = selectedRate > 0.12m ? "Warning" : "Normal" },
+            new() { Label = "Delta Fluktuation", Value = deltaRate.ToString("+0.0%;-0.0%;0.0%"), Detail = $"{selectedYear} gegen {previousYear}", Severity = deltaRate > 0.02m ? "Warning" : "Normal" }
+        ];
+    }
+
+    private static List<HrKpiTrafficLight> BuildTrafficLights(
+        IReadOnlyList<HrKpiMetric> overviewMetrics,
+        IReadOnlyList<HrKpiMetric> turnoverMetrics,
+        IReadOnlyList<HrKpiMetric> absenceMetrics,
+        IReadOnlyList<HrKpiMetric> timeVacationMetrics,
+        ImportContext context)
+    {
+        var turnover = FindMetric(turnoverMetrics, "Fluktuation Jahr Effektiv %") ?? FindMetric(overviewMetrics, "Fluktuation");
+        var absence = FindMetric(absenceMetrics, "Krankenquote");
+        var glzRed = FindMetric(timeVacationMetrics, "GLZ Rot");
+        var vacationRed = FindMetric(timeVacationMetrics, "Restferien Rot");
+        var missingFiles = context.FileStatuses.Count(x => !x.Exists);
+
+        return
+        [
+            BuildTrafficLight("Fluktuation", turnover?.Value ?? "-", turnover?.Detail ?? string.Empty, turnover?.Severity == "Warning"),
+            BuildTrafficLight("Krankenquote", absence?.Value ?? "-", absence?.Detail ?? string.Empty, absence?.Severity == "Warning"),
+            BuildTrafficLight("GLZ-Saldi", glzRed?.Value ?? "0", glzRed?.Detail ?? string.Empty, ParseInt(glzRed?.Value) > 0),
+            BuildTrafficLight("Restferien", vacationRed?.Value ?? "0", vacationRed?.Detail ?? string.Empty, ParseInt(vacationRed?.Value) > 0),
+            new()
+            {
+                Area = "Datenqualitaet",
+                Status = missingFiles == 0 ? "Gruen" : "Rot",
+                Value = missingFiles.ToString("N0"),
+                Detail = missingFiles == 0 ? "Alle erwarteten Dateien gefunden" : "Erwartete Dateien fehlen"
+            }
+        ];
+    }
+
+    private static List<HrKpiDataQualityIssue> BuildDataQualityIssues(
+        IReadOnlyCollection<HrKpiEmployeeRow> employees,
+        IReadOnlyCollection<HrAbsenceRow> absences,
+        IReadOnlyCollection<HrLeaverRow> leavers,
+        IReadOnlyDictionary<string, SapRow> sapRows,
+        ImportContext context)
+    {
+        var employeeNumbers = employees
+            .Where(x => x.Personalnummer.HasValue)
+            .Select(x => x.Personalnummer!.Value)
+            .ToHashSet();
+        var duplicateEmployeeNumbers = employees
+            .Where(x => x.Personalnummer.HasValue)
+            .GroupBy(x => x.Personalnummer!.Value)
+            .Count(g => g.Count() > 1);
+        var sapNumbers = sapRows.Keys
+            .Select(key => int.TryParse(key, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ? parsed : (int?)null)
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value)
+            .ToHashSet();
+
+        return new[]
+        {
+            CreateQualityIssue("Error", "Dateien", "Fehlende Dateien", context.FileStatuses.Count(x => !x.Exists), "Erwartete HR-KPI-Datei wurde im Datenordner nicht gefunden."),
+            CreateQualityIssue("Warning", "Mitarbeitende", "Fehlende Personalnummer", employees.Count(x => !x.Personalnummer.HasValue), "Diese Zeilen zaehlen nicht in Distinct-Headcount-Kennzahlen."),
+            CreateQualityIssue("Warning", "Mitarbeitende", "Doppelte Personalnummer", duplicateEmployeeNumbers, "Mehrere aktive Zeilen mit gleicher Personalnummer."),
+            CreateQualityIssue("Warning", "Rexx/SAP", "Rexx ohne SAP", employeeNumbers.Count(number => !sapNumbers.Contains(number)), "Aktive Mitarbeitende ohne passende SAP-Zusatzzeile."),
+            CreateQualityIssue("Info", "Rexx/SAP", "SAP ohne Rexx", sapNumbers.Count(number => !employeeNumbers.Contains(number)), "SAP-Zeile ohne aktive Rexx-Mitarbeiterzeile."),
+            CreateQualityIssue("Warning", "Mitarbeitende", "Fehlende Organisation", employees.Count(x => string.IsNullOrWhiteSpace(x.Organisationseinheit)), "Organisationseinheit fehlt."),
+            CreateQualityIssue("Warning", "Mitarbeitende", "Fehlende Kostenstelle", employees.Count(x => string.IsNullOrWhiteSpace(x.KostenstelleText)), "Kostenstelle fehlt."),
+            CreateQualityIssue("Warning", "Mitarbeitende", "Fehlender Beschaeftigungsgrad", employees.Count(x => !x.BeschaeftigungsgradProzent.HasValue), "FTE verwendet Rexx-Fallback."),
+            CreateQualityIssue("Info", "Absenzen", "Absenzen ohne aktive Person", absences.Count(x => x.Personalnummer.HasValue && !employeeNumbers.Contains(x.Personalnummer.Value)), "Absenzzeile passt nicht auf aktuell aktive Mitarbeitendenfilter."),
+            CreateQualityIssue("Info", "Austritte", "Austritte ohne Personalnummer", leavers.Count(x => !x.Personalnummer.HasValue), "Austritt kann nicht eindeutig per Personalnummer gruppiert werden.")
+        }.Where(x => x.Count > 0).ToList();
+    }
+
+    private static List<HrKpiGroupValue> BuildLeaverTypeGroups(IReadOnlyCollection<HrLeaverRow> leavers)
+        => leavers
+            .GroupBy(x => BlankAsUnknown(string.IsNullOrWhiteSpace(x.AustrittsartNormalisiert) ? x.Austrittsart : x.AustrittsartNormalisiert), StringComparer.OrdinalIgnoreCase)
+            .Select(g => new HrKpiGroupValue { Label = g.Key, Count = CountDistinctPersons(g.Select(x => x.Personalnummer)), Value = CountDistinctPersons(g.Select(x => x.Personalnummer)) })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static List<HrKpiGroupValue> BuildLeaverOrganisationGroups(IReadOnlyCollection<HrLeaverRow> leavers)
+        => leavers
+            .GroupBy(x => BlankAsUnknown(x.Organisationseinheit), StringComparer.OrdinalIgnoreCase)
+            .Select(g => new HrKpiGroupValue { Label = g.Key, Count = CountDistinctPersons(g.Select(x => x.Personalnummer)), Value = CountDistinctPersons(g.Select(x => x.Personalnummer)) })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static List<HrKpiGroupValue> BuildAbsenceOrganisationGroups(IReadOnlyCollection<HrAbsenceRow> absences)
+    {
+        var total = absences.Sum(x => x.KrankheitstageGesamt);
+        return absences
+            .GroupBy(x => BlankAsUnknown(x.Organisationseinheit), StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var value = g.Sum(x => x.KrankheitstageGesamt);
+                return new HrKpiGroupValue
+                {
+                    Label = g.Key,
+                    Count = g.Count(),
+                    Value = value,
+                    Percent = total == 0 ? 0 : value / total * 100m
+                };
+            })
+            .OrderByDescending(x => x.Value)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static HrKpiMetric? FindMetric(IEnumerable<HrKpiMetric> metrics, string labelPart)
+        => metrics.FirstOrDefault(x => x.Label.Contains(labelPart, StringComparison.OrdinalIgnoreCase));
+
+    private static HrKpiTrafficLight BuildTrafficLight(string area, string value, string detail, bool warning)
+        => new()
+        {
+            Area = area,
+            Status = warning ? "Gelb" : "Gruen",
+            Value = value,
+            Detail = detail
+        };
+
+    private static HrKpiDataQualityIssue CreateQualityIssue(string severity, string area, string issue, int count, string detail)
+        => new()
+        {
+            Severity = severity,
+            Area = area,
+            Issue = issue,
+            Count = count,
+            Detail = detail
+        };
+
+    private static int ParseInt(string? value)
+        => int.TryParse((value ?? string.Empty).Replace("'", string.Empty), NumberStyles.Any, CultureInfo.CurrentCulture, out var parsed)
+            ? parsed
+            : 0;
 
     private static HrTurnoverVisuals BuildTurnoverVisuals(
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
@@ -1219,6 +1402,8 @@ internal sealed class HrKpiDashboardBuilder
         public bool HasFile(string fileName)
             => File.Exists(BuildPath(fileName));
 
+        public IReadOnlyList<HrKpiFileStatus> FileStatuses => _result.FileStatuses;
+
         public List<T> ReadRows<T>(string fileName, string label, Func<IXLRow, IReadOnlyDictionary<string, int>, T> map)
         {
             var path = BuildPath(fileName);
@@ -1228,6 +1413,12 @@ internal sealed class HrKpiDashboardBuilder
                 Path = path,
                 Exists = File.Exists(path)
             };
+            if (status.Exists)
+            {
+                status.LastModified = File.GetLastWriteTime(path);
+                status.AgeDays = Math.Max(0, (DateTime.Today - status.LastModified.Value.Date).Days);
+                status.FreshnessStatus = status.AgeDays <= 7 ? "Aktuell" : status.AgeDays <= 31 ? "Aelter" : "Alt";
+            }
             _result.FileStatuses.Add(status);
 
             if (!status.Exists)

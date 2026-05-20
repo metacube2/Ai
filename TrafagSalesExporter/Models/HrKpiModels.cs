@@ -14,6 +14,7 @@ public sealed class HrKpiOptions
     public string? GlzAmpel { get; set; }
     public string? RestferienAmpel { get; set; }
     public string? SearchText { get; set; }
+    public bool ManagementView { get; set; }
 }
 
 public sealed class HrKpiDataSourceOptions
@@ -57,6 +58,13 @@ public sealed class HrKpiResult
     public List<HrKpiMetric> TurnoverMetrics { get; set; } = [];
     public List<HrKpiMetric> AbsenceMetrics { get; set; } = [];
     public List<HrKpiMetric> TimeVacationMetrics { get; set; } = [];
+    public List<HrKpiMetric> PeriodComparisonMetrics { get; set; } = [];
+    public List<HrKpiTrafficLight> TrafficLights { get; set; } = [];
+    public List<HrKpiDataQualityIssue> DataQualityIssues { get; set; } = [];
+    public List<HrKpiGroupValue> LeaversByType { get; set; } = [];
+    public List<HrKpiGroupValue> LeaversByOrganisation { get; set; } = [];
+    public List<HrKpiGroupValue> AbsenceByOrganisation { get; set; } = [];
+    public List<HrKpiEmployeeRow> CriticalAbsences { get; set; } = [];
     public List<HrKpiEmployeeRow> Employees { get; set; } = [];
     public List<HrAbsenceRow> Absences { get; set; } = [];
     public List<HrLeaverRow> Leavers { get; set; } = [];
@@ -73,6 +81,26 @@ public sealed class HrKpiFileStatus
     public bool Exists { get; set; }
     public int RowCount { get; set; }
     public string? Message { get; set; }
+    public DateTime? LastModified { get; set; }
+    public int? AgeDays { get; set; }
+    public string FreshnessStatus { get; set; } = "Unbekannt";
+}
+
+public sealed class HrKpiTrafficLight
+{
+    public string Area { get; set; } = string.Empty;
+    public string Status { get; set; } = "Gruen";
+    public string Value { get; set; } = string.Empty;
+    public string Detail { get; set; } = string.Empty;
+}
+
+public sealed class HrKpiDataQualityIssue
+{
+    public string Severity { get; set; } = "Info";
+    public string Area { get; set; } = string.Empty;
+    public string Issue { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public string Detail { get; set; } = string.Empty;
 }
 
 public sealed class HrKpiMetric

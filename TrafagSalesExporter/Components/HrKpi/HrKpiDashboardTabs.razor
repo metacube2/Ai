@@ -8,6 +8,15 @@
             @MetricGrid(Result.Metrics)
 
             <MudGrid Class="mt-4">
+                <MudItem xs="12" md="7">
+                    @TrafficLightPanel(Result.TrafficLights)
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    @MetricGrid(Result.PeriodComparisonMetrics)
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
                 <MudItem xs="12" md="6">
                     @HeadcountByOrganisationTable(Result.HeadcountByOrganisation)
                 </MudItem>
@@ -26,6 +35,15 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     @LeaverExclusionTable(Result.Leavers)
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @GroupValueTable(T("Austritte nach Austrittsart", "Leavers by exit type"), Result.LeaversByType, T("Austritte", "Leavers"))
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @GroupValueTable(T("Austritte nach Organisation", "Leavers by organisation"), Result.LeaversByOrganisation, T("Austritte", "Leavers"))
                 </MudItem>
             </MudGrid>
 
@@ -51,8 +69,21 @@
             </MudGrid>
         </MudTabPanel>
 
+        <MudTabPanel Text="@T("Ampel", "Status")" Icon="@Icons.Material.Filled.Traffic">
+            @TrafficLightPanel(Result.TrafficLights)
+            @MetricGrid(Result.PeriodComparisonMetrics)
+        </MudTabPanel>
+
         <MudTabPanel Text="@T("Absenzen", "Absences")" Icon="@Icons.Material.Filled.Sick">
             @MetricGrid(Result.AbsenceMetrics)
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" md="6">
+                    @GroupValueTable(T("Absenzen nach Organisation", "Absences by organisation"), Result.AbsenceByOrganisation, T("Krankheitstage", "Sick days"))
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @TopAbsencesTable(Result.Absences)
+                </MudItem>
+            </MudGrid>
             <MudPaper Class="pa-4 mt-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Absenzen je Mitarbeiter", "Absences by employee")</MudText>
                 <MudTable Items="Result.Absences.OrderByDescending(x => x.KrankheitstageGesamt).Take(100)" Dense Hover Striped>
@@ -67,7 +98,7 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Personalnummer</MudTd>
-                        <MudTd>@context.Name</MudTd>
+                        <MudTd>@DisplayPersonName(context.Name, context.Personalnummer, Result.Options.ManagementView)</MudTd>
                         <MudTd>@context.Organisationseinheit</MudTd>
                         <MudTd>@context.KrankheitstageKurz.ToString("N1")</MudTd>
                         <MudTd>@context.KrankheitstageLang.ToString("N1")</MudTd>
@@ -100,7 +131,7 @@
                                 <MudTh>@T("Ampel", "Status")</MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd>@context.NameVoll</MudTd>
+                                <MudTd>@DisplayPersonName(context.NameVoll, context.Personalnummer, Result.Options.ManagementView)</MudTd>
                                 <MudTd>@context.Organisationseinheit</MudTd>
                                 <MudTd>@context.UrlaubRest.ToString("N1")</MudTd>
                                 <MudTd>@context.FerienAusstehend.ToString("N1")</MudTd>
@@ -122,6 +153,11 @@
 
         <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
             @FileStatusTable(Result.FileStatuses)
+            <MudGrid Class="mt-4">
+                <MudItem xs="12">
+                    @DataQualityTable(Result.DataQualityIssues)
+                </MudItem>
+            </MudGrid>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Anleitung", "Guide")" Icon="@Icons.Material.Filled.HelpOutline">
@@ -144,6 +180,19 @@
             "Gelb" => Color.Warning,
             _ => Color.Success
         };
+
+    private static Color MapQualityColor(string severity)
+        => severity switch
+        {
+            "Error" => Color.Error,
+            "Warning" => Color.Warning,
+            _ => Color.Info
+        };
+
+    private static string DisplayPersonName(string name, int? personalnummer, bool managementView)
+        => managementView
+            ? (personalnummer.HasValue ? $"Personalnr. {personalnummer.Value}" : "Person anonymisiert")
+            : name;
 
     private static string FormatDate(DateTime? value)
         => value?.ToString("dd.MM.yyyy") ?? "-";
@@ -177,6 +226,93 @@
         </MudTable>
     </MudPaper>;
 
+    private RenderFragment<IReadOnlyList<HrKpiTrafficLight>> TrafficLightPanel => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("HR-Ampel", "HR status")</MudText>
+        <MudGrid>
+            @foreach (var item in items)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudPaper Class="pa-3" Elevation="0">
+                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                            <MudChip T="string" Size="Size.Small" Color="@TrafficLightColor(item.Status)" Variant="Variant.Filled">
+                                @item.Status
+                            </MudChip>
+                            <MudText Typo="Typo.subtitle2">@item.Area</MudText>
+                        </MudStack>
+                        <MudText Typo="Typo.h6">@item.Value</MudText>
+                        <MudText Typo="Typo.body2">@item.Detail</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>;
+
+    private RenderFragment<IReadOnlyList<HrKpiDataQualityIssue>> DataQualityTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Datenqualitaet", "Data quality")</MudText>
+        <MudTable Items="items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Schwere", "Severity")</MudTh>
+                <MudTh>@T("Bereich", "Area")</MudTh>
+                <MudTh>@T("Pruefpunkt", "Check")</MudTh>
+                <MudTh>@T("Anzahl", "Count")</MudTh>
+                <MudTh>@T("Hinweis", "Note")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Color="@MapQualityColor(context.Severity)" Variant="Variant.Outlined">
+                        @context.Severity
+                    </MudChip>
+                </MudTd>
+                <MudTd>@context.Area</MudTd>
+                <MudTd>@context.Issue</MudTd>
+                <MudTd>@context.Count.ToString("N0")</MudTd>
+                <MudTd>@context.Detail</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2">@T("Keine Datenqualitaetswarnungen.", "No data quality warnings.")</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment<(string Title, IReadOnlyList<HrKpiGroupValue> Items, string ValueLabel)> GroupValueTableTuple => data => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@data.Title</MudText>
+        <MudTable Items="data.Items" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Gruppe", "Group")</MudTh>
+                <MudTh>@data.ValueLabel</MudTh>
+                <MudTh>%</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Label</MudTd>
+                <MudTd>@(context.Value != 0 ? context.Value.ToString("N1") : context.Count.ToString("N0"))</MudTd>
+                <MudTd>@context.Percent.ToString("N1")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
+    private RenderFragment GroupValueTable(string title, IReadOnlyList<HrKpiGroupValue> items, string valueLabel)
+        => GroupValueTableTuple((title, items, valueLabel));
+
+    private RenderFragment<IReadOnlyList<HrAbsenceRow>> TopAbsencesTable => items => @<MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Hoechste Absenzen", "Highest absences")</MudText>
+        <MudTable Items="items.OrderByDescending(x => x.KrankheitstageGesamt).Take(25)" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Name", "Name")</MudTh>
+                <MudTh>@T("Organisation", "Organisation")</MudTh>
+                <MudTh>@T("Kurz", "Short")</MudTh>
+                <MudTh>@T("Lang", "Long")</MudTh>
+                <MudTh>@T("Gesamt", "Total")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@DisplayPersonName(context.Name, context.Personalnummer, Result.Options.ManagementView)</MudTd>
+                <MudTd>@context.Organisationseinheit</MudTd>
+                <MudTd>@context.KrankheitstageKurz.ToString("N1")</MudTd>
+                <MudTd>@context.KrankheitstageLang.ToString("N1")</MudTd>
+                <MudTd>@context.KrankheitstageGesamt.ToString("N1")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>;
+
     private RenderFragment<IReadOnlyList<HrKpiEmployeeRow>> CriticalBalancesTable => items => @<MudPaper Class="pa-4" Elevation="1">
         <MudText Typo="Typo.h6" Class="mb-2">@T("Kritische GLZ-Saldi", "Critical time balances")</MudText>
         <MudTable Items="items" Dense Hover Striped>
@@ -187,7 +323,7 @@
                 <MudTh>@T("Ampel", "Status")</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@DisplayPersonName(context.NameVoll, context.Personalnummer, Result.Options.ManagementView)</MudTd>
                 <MudTd>@context.Organisationseinheit</MudTd>
                 <MudTd>@context.StundenSaldo.ToString("N1")</MudTd>
                 <MudTd>
@@ -209,7 +345,7 @@
                 <MudTh>@T("Austrittsart", "Exit type")</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@DisplayPersonName(context.NameVoll, context.Personalnummer, Result.Options.ManagementView)</MudTd>
                 <MudTd>@FormatDate(context.Austrittsdatum)</MudTd>
                 <MudTd>@context.Organisationseinheit</MudTd>
                 <MudTd>@context.Austrittsart</MudTd>
@@ -246,7 +382,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd>@context.Personalnummer</MudTd>
-                <MudTd>@context.NameVoll</MudTd>
+                <MudTd>@DisplayPersonName(context.NameVoll, context.Personalnummer, Result.Options.ManagementView)</MudTd>
                 <MudTd>@context.Organisationseinheit</MudTd>
                 <MudTd>@context.KostenstelleText</MudTd>
                 <MudTd>@context.Fte.ToString("N2")</MudTd>
@@ -266,6 +402,8 @@
             <HeaderContent>
                 <MudTh>@T("Quelle", "Source")</MudTh>
                 <MudTh>@T("Status", "Status")</MudTh>
+                <MudTh>@T("Stand", "Modified")</MudTh>
+                <MudTh>@T("Alter", "Age")</MudTh>
                 <MudTh>@T("Zeilen", "Rows")</MudTh>
             </HeaderContent>
             <RowTemplate>
@@ -278,6 +416,8 @@
                         @(context.Message ?? "-")
                     </MudChip>
                 </MudTd>
+                <MudTd>@FormatDate(context.LastModified)</MudTd>
+                <MudTd>@(context.AgeDays.HasValue ? $"{context.AgeDays:N0} Tage / {context.FreshnessStatus}" : "-")</MudTd>
                 <MudTd>@context.RowCount.ToString("N0")</MudTd>
             </RowTemplate>
         </MudTable>

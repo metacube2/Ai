@@ -7,6 +7,7 @@
 @inject IHrKpiAccessService HrKpiAccess
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
 
 <PageTitle>@T("HR KPI", "HR KPI")</PageTitle>
 
@@ -64,6 +65,10 @@ else
                            StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading" FullWidth>
                     @(_loading ? T("Lade...", "Loading...") : T("Laden", "Load"))
                 </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudSwitch T="bool" @bind-Value="_managementView" Color="Color.Primary"
+                           Label="@T("Managementsicht", "Management view")" />
             </MudItem>
             <MudItem xs="12" md="3">
                 <MudDatePicker @bind-Date="_fromDate" Label="@T("Von Austritt", "Exit from")" Clearable DateFormat="dd.MM.yyyy" />
@@ -128,6 +133,12 @@ else
                     @T("Sperren", "Lock")
                 </MudButton>
             </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="PrintAsync"
+                           StartIcon="@Icons.Material.Filled.Print" FullWidth>
+                    @T("Drucken/PDF", "Print/PDF")
+                </MudButton>
+            </MudItem>
         </MudGrid>
     </MudPaper>
 }
@@ -161,6 +172,7 @@ else
     private string? _glzAmpel;
     private string? _restferienAmpel;
     private string? _searchText;
+    private bool _managementView;
     private string? _hrUsername;
     private string? _hrPassword;
     private bool _loading;
@@ -207,7 +219,8 @@ else
                 FluktuationFilter = _fluktuationFilter,
                 GlzAmpel = _glzAmpel,
                 RestferienAmpel = _restferienAmpel,
-                SearchText = _searchText
+                SearchText = _searchText,
+                ManagementView = _managementView
             });
         }
         catch (Exception ex)
@@ -237,6 +250,11 @@ else
         HrKpiAccess.Lock();
         _result = null;
         _hrPassword = string.Empty;
+    }
+
+    private async Task PrintAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("print");
     }
 
     private bool CanShowHrKpi => !HrKpiAccess.IsEnabled || HrKpiAccess.IsUnlocked;
