@@ -1,6 +1,54 @@
 # Next Steps
 
-Stand: 2026-05-19
+Stand: 2026-05-20
+
+## Nachtrag 2026-05-20 IIS 500 aktueller Stand
+
+Vollstaendige Doku:
+
+```text
+docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md
+```
+
+Was sicher bewiesen ist:
+
+- `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/diag.txt` ist erreichbar.
+- Browser zeigt dort:
+
+```text
+BiDashboard publish folder reached 2026-05-20T08:19:14.2667783+02:00
+```
+
+- Damit stimmt IIS-URL `/BiDashboard` und der Physical Path zum Publish-Ordner.
+- Der verbleibende `500` ist kein falscher Pfad und kein HTTP/HTTPS-Verwechslungsproblem.
+
+Was umgesetzt wurde:
+
+- Publish weiterhin aus `TrafagSalesExporter`.
+- Ausgabe weiterhin `BiDashboard.dll`, keine EXE.
+- `web.config` auf `hostingModel="outofprocess"` umgestellt.
+- `stdoutLogEnabled="true"` bleibt aktiv.
+- `ASPNETCORE_DETAILEDERRORS=true` fuer Diagnose gesetzt.
+- Neu publiziert auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+
+Offen fuer Server-Spezialist:
+
+- .NET 8 Hosting Bundle / AspNetCoreModuleV2 pruefen.
+- App Pool pruefen:
+  - `.NET CLR Version = No Managed Code`
+  - `Managed Pipeline Mode = Integrated`
+  - `Enable 32-bit Applications = False`
+- Event Viewer lesen:
+  - `IIS AspNetCore Module V2`
+  - `.NET Runtime`
+  - `Application Error`
+- App-Pool-Identity mit `Modify` auf Publish-Ordner, `logs` und `trafag_exporter.db*` bestaetigen.
+
+Wichtig:
+
+- Der Server braucht kein installiertes Microsoft Excel.
+- XLSX wird ueber ClosedXML/OpenXML gelesen.
+- CSV-Umstellung ist fuer diesen 500-Fehler nicht noetig.
 
 ## Nachtrag 2026-05-20 IT Finance-Methode
 

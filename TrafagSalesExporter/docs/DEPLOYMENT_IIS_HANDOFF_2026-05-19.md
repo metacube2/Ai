@@ -1,5 +1,7 @@
 # Deployment / IIS Handoff 2026-05-19
 
+Letzter Nachtrag: 2026-05-20
+
 ## Ziel
 
 `TrafagSalesExporter` bleibt das fuehrende Projekt, wird aber fuer den Server als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema veroeffentlicht.
@@ -63,6 +65,8 @@ f128d35 Publish web app without apphost
 e9b616f Align Trafag publish output with BiDashboard
 1533570 Exclude local build artifacts from web publish
 5087a7c Enable IIS publish diagnostics
+e3b9d8d Switch IIS hosting to out-of-process
+1dc336d Enable IIS detailed startup diagnostics
 ```
 
 ## Veroeffentlichen
@@ -89,7 +93,11 @@ Im Repo liegt eine explizite `web.config`, damit IIS/ANCM Diagnoseinformationen 
             arguments=".\BiDashboard.dll"
             stdoutLogEnabled="true"
             stdoutLogFile=".\logs\stdout"
-            hostingModel="inprocess" />
+            hostingModel="outofprocess">
+  <environmentVariables>
+    <environmentVariable name="ASPNETCORE_DETAILEDERRORS" value="true" />
+  </environmentVariables>
+</aspNetCore>
 ```
 
 Der Ordner `logs` wurde auf dem Share angelegt:
@@ -102,7 +110,62 @@ Nach einem Browser-Reload mit `500` war der Ordner weiterhin leer. Das deutet au
 
 - App-Pool darf nicht in `logs` schreiben.
 - Fehler passiert auf IIS/ANCM-Ebene vor dem App-Start.
-- IIS verwendet einen anderen Physical Path als den Share-Ordner.
+- fehlendes oder defektes .NET 8 Hosting Bundle / AspNetCoreModuleV2.
+
+## Nachtrag 2026-05-20: aktueller 500-Befund
+
+Geprueft:
+
+- `diag.txt` wurde direkt in den Publish-Ordner geschrieben:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\diag.txt
+```
+
+- Browser-Test:
+
+```text
+https://trch-webapp-bidashboard.trafagch.local/BiDashboard/diag.txt
+```
+
+- Ergebnis im Browser:
+
+```text
+BiDashboard publish folder reached 2026-05-20T08:19:14.2667783+02:00
+```
+
+Schlussfolgerung:
+
+- IIS-URL `/BiDashboard` zeigt auf den richtigen Publish-Ordner.
+- Binding/virtueller Pfad/Physical Path sind fuer statische Dateien korrekt.
+- Der `500` kommt nicht mehr von einer falschen URL.
+- Der Fehler entsteht beim ASP.NET-Core-App-Start oder im ASP.NET-Core-IIS-Modul.
+
+Zusaetzlich geprueft:
+
+- `BiDashboard.dll` konnte aus dem Publish-Ordner per `dotnet .\BiDashboard.dll` gestartet werden und brach nicht sofort mit einer Exception ab.
+- Dabei blieb ein lokaler Testprozess `dotnet` kurz aktiv und sperrte `BiDashboard.dll`; Prozess wurde beendet und danach erfolgreich neu publiziert.
+- Nach erneutem Browser-Aufruf blieb `logs` weiterhin leer.
+- HTTPS-Test von der Entwickler-Maschine per `curl` scheitert vor HTTP wegen Schannel/Client-Credentials:
+
+```text
+SEC_E_NO_CREDENTIALS (0x8009030e)
+```
+
+Diese lokale `curl`-Einschraenkung ist nicht der IIS-500-Fehler im Browser.
+
+Aktueller Verdacht in Prioritaet:
+
+1. .NET 8 Hosting Bundle / AspNetCoreModuleV2 fehlt oder ist nicht korrekt installiert.
+2. App Pool ist nicht passend fuer ASP.NET Core eingestellt.
+3. App-Pool-Identity hat noch nicht alle noetigen Rechte fuer Start, SQLite oder Logs.
+4. Details stehen nur im Windows Event Viewer, weil stdout nicht erzeugt wird.
+
+Wichtig:
+
+- Der Server braucht kein installiertes Microsoft Excel.
+- XLSX wird ueber ClosedXML/OpenXML gelesen und geschrieben.
+- Eine Umstellung auf CSV ist fuer dieses Deployment-Problem nicht noetig.
 
 ## Rechtebefund
 
@@ -127,6 +190,12 @@ Zugriff verweigert
 
 Auch per SID fuer `IIS_IUSRS` wurde es abgelehnt. Wir koennen publishen und Dateien schreiben, aber keine NTFS-/Share-Rechte auf dem Server aendern.
 
+Spaeterer Befund:
+
+- Auf Publish-Ordner und `logs` war eine konkrete App-Pool-SID mit `Modify` sichtbar.
+- `IIS_IUSRS` hatte weiterhin nur `ReadAndExecute`.
+- Trotz dieser sichtbaren App-Pool-SID blieben stdout-Logs leer; daher reicht der ACL-Befund allein nicht zur Erklaerung.
+
 ## Wahrscheinlichster aktueller Fehler
 
 Die App startet in `Program.cs` sofort die Datenbankinitialisierung:
@@ -147,7 +216,7 @@ trafag_exporter.db-shm
 trafag_exporter.db-wal
 ```
 
-Wenn der App-Pool nur Lesen/Ausfuehren hat, kann das beim Start als `500` enden.
+Wenn der App-Pool nur Lesen/Ausfuehren hat, kann das beim Start als `500` enden. Da spaeter aber eine konkrete App-Pool-SID mit `Modify` sichtbar war, muessen zusaetzlich .NET Hosting Bundle, App-Pool-Konfiguration und Event Viewer geprueft werden.
 
 ## Server-Spezialist: konkrete Bitte
 
@@ -195,6 +264,32 @@ und Windows Event Viewer:
 IIS AspNetCore Module V2
 Application Error
 .NET Runtime
+```
+
+## Kurzmeldung an Server-Spezialist
+
+```text
+diag.txt unter https://trch-webapp-bidashboard.trafagch.local/BiDashboard/diag.txt ist erreichbar.
+Der IIS-Pfad stimmt also.
+
+Die App selbst liefert weiterhin 500, und \\...\BiDashboard$\logs bleibt leer, obwohl stdoutLogEnabled=true gesetzt ist.
+Die App ist als .NET 8 ASP.NET-Core-App publiziert, ohne EXE/AppHost, Start via:
+dotnet .\BiDashboard.dll
+
+Bitte am Server pruefen:
+1. .NET 8 Hosting Bundle installiert/repariert?
+2. AspNetCoreModuleV2 im IIS vorhanden?
+3. App Pool:
+   - .NET CLR Version = No Managed Code
+   - Managed Pipeline Mode = Integrated
+   - Enable 32-bit Applications = False
+4. Event Viewer > Windows Logs > Application:
+   - IIS AspNetCore Module V2
+   - .NET Runtime
+   - Application Error
+5. App-Pool-Identity hat Modify auf Publish-Ordner, logs und trafag_exporter.db*
+
+Microsoft Excel muss nicht installiert sein; XLSX wird ueber ClosedXML/OpenXML gelesen.
 ```
 
 ## Aktueller Restzustand im Git-Working-Tree
