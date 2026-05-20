@@ -2,6 +2,49 @@
 
 Stand: 2026-05-20
 
+## Nachtrag 2026-05-20 DE Alphaplan-Excel provisorisch eingebaut
+
+Erledigt:
+
+- Deutschland wird als manueller Excel-Standort vorbereitet:
+  - `TSC = TRDE`
+  - `Land = Deutschland`
+  - `SourceSystem = MANUAL_EXCEL`
+  - neuer Standort ist standardmaessig inaktiv, damit Export-All nicht ohne Datei scheitert
+- Alphaplan-Mapping wird automatisch geseedet:
+  - `NettoPreisGesamtX` -> `SalesPriceValue`
+  - `Belegnummer` -> `InvoiceNumber`
+  - `Position` -> `PositionOnInvoice`
+  - `ArtikelNummer` -> `Material`
+  - `ArtikelBezeichnung` -> `Name`
+  - `Warengruppen-Bezeichnung` -> `ProductGroup`
+  - `Anz. VE` -> `Quantity`
+  - `Name/Land Lieferant`, `Name/Land Kunde`, `Branche`, `Versandbedingung`
+  - `Belegdatum-Rechnung` -> `PostingDate` und `InvoiceDate`
+  - `DocumentType = Alphaplan Excel`
+- Datei erhalten:
+
+```text
+docs/2025_DataExport_DE.xlsx
+```
+
+Bedienung:
+
+1. App starten.
+2. `Standorte` oeffnen.
+3. Deutschland / `TRDE` oeffnen.
+4. Alphaplan-Excel hochladen oder Pfad setzen.
+5. Standort aktivieren.
+6. Standortexport fuer DE ausfuehren.
+7. Danach zentrale Excel erzeugen; DE ist dann in `CentralSalesRecords` und im Endexcel enthalten.
+
+Offen fachlich:
+
+- Komplette Summe `NettoPreisGesamtX`: `4'154'690.05 EUR`.
+- Nur `Land Kunde = Deutschland`: `3'455'276.64 EUR`.
+- Sollwert DE: `3'635'923.00 EUR`.
+- Finance/Munir muss bestaetigen, welche Kundenlaender oder Filter zum offiziellen DE-Ist gehoeren.
+
 ## Nachtrag 2026-05-20 IIS 500 aktueller Stand
 
 Vollstaendige Doku:

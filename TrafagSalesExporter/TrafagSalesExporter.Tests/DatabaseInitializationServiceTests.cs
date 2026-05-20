@@ -89,6 +89,18 @@ public class DatabaseInitializationServiceTests : IDisposable
 
         Assert.Contains(db.HanaServers, x => x.SourceSystem == "BI1");
         Assert.Contains(db.HanaServers, x => x.SourceSystem == "SAGE");
+        var germany = Assert.Single(db.Sites, x => x.TSC == "TRDE" && x.Land == "Deutschland");
+        Assert.Equal("MANUAL_EXCEL", germany.SourceSystem);
+        Assert.False(germany.IsActive);
+        Assert.Contains(db.ManualExcelColumnMappings, x =>
+            x.SiteId == germany.Id &&
+            x.TargetField == nameof(SalesRecord.SalesPriceValue) &&
+            x.SourceHeader == "NettoPreisGesamtX" &&
+            x.IsRequired);
+        Assert.Contains(db.ManualExcelColumnMappings, x =>
+            x.SiteId == germany.Id &&
+            x.TargetField == nameof(SalesRecord.DocumentType) &&
+            x.SourceHeader == "=Alphaplan Excel");
         Assert.Equal(2, db.FieldTransformationRules.Count(x => x.SourceSystem == "MANUAL_EXCEL"));
     }
 

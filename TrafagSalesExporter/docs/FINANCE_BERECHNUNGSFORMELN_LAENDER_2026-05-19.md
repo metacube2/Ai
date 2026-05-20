@@ -144,6 +144,16 @@ Ob FKDAT fuer diese Quelle fachlich Buchungsdatum oder Fakturadatum ist, muss be
 
 ## DE
 
+Aktuelle Quelle:
+
+```text
+SourceSystem = MANUAL_EXCEL
+Fachlich = Alphaplan Excel
+TSC = TRDE
+Land = Deutschland
+Aktueller Datei-/Teststand = docs/2025_DataExport_DE.xlsx
+```
+
 Aktueller Referenzwert:
 
 ```text
@@ -151,30 +161,56 @@ FinanceReference.DE.LocalCurrencyValue = 3'635'923
 Hauswaehrung = EUR
 ```
 
-Formel im Vergleich:
+Provisorisches Import-Mapping:
 
 ```text
-Ist = gemeinsame Auswahl aus CentralSalesRecords fuer Key DE
+SalesPriceValue = NettoPreisGesamtX
+InvoiceNumber = Belegnummer
+PositionOnInvoice = Position
+Material = ArtikelNummer
+Name = ArtikelBezeichnung
+ProductGroup = Warengruppen-Bezeichnung
+Quantity = Anz. VE
+SupplierNumber = Lieferanten Nummer
+SupplierName = Name Lieferant
+SupplierCountry = Land Lieferant
+CustomerNumber = AdressNummer-Kunde
+CustomerName = Name Kunde
+CustomerCountry = Land Kunde
+CustomerIndustry = Branche
+StandardCost = EinstandsPreis
+SalesCurrency / DocumentCurrency / CompanyCurrency = Waehrung
+Incoterms2020 = Versandbedingung
+SalesResponsibleEmployee = AdressNummer_V
+PostingDate / InvoiceDate = Belegdatum-Rechnung
+OrderDate = BelegDatum Auftrag
+DocumentType = Alphaplan Excel
 ```
 
-Das heisst konkret:
+Technischer Ablauf:
 
 ```text
-bevorzugt SalesPriceValue, wenn Belegkopfwerte wiederholt aussehen
-sonst Nettofakturawert Hauswaehrung pro Position
-sonst Nettofakturawert Hauswaehrung pro Beleg dedupliziert
-sonst SalesPriceValue
+DE wird als manueller Excel-Standort vorbereitet.
+Nach Upload/Pfad setzen und Aktivieren wird die Alphaplan-Datei beim Standortexport gelesen.
+Die gelesenen Zeilen werden in CentralSalesRecords gespeichert.
+Die zentrale Excel enthaelt danach DE-Zeilen mit Finance | Country Key = DE.
+```
+
+Erster Befund aus `docs/2025_DataExport_DE.xlsx`:
+
+```text
+Zeilen: 6'198 Datenzeilen
+Summe NettoPreisGesamtX komplett: 4'154'690.05 EUR
+Nur Land Kunde = Deutschland: 3'455'276.64 EUR
+Deutschland + China: 3'647'592.44 EUR
+Sollwert DE: 3'635'923.00 EUR
 ```
 
 Offen:
 
-```text
-Fuer DE ist in diesem Dokument keine bestaetigte landesspezifische Importformel dokumentiert.
-Wenn DE aus Sage kommt, muss in einer Sitzung geklaert werden:
-- welche Datei/CSV geladen wird
-- welches Betragsfeld Rhino verwendet
-- wie Gutschriften, Zuschlaege, Freight/Charges und Steuer getrennt werden
-```
+- Finance muss bestaetigen, welche Kundenlaender fuer DE zum offiziellen Ist gehoeren.
+- Manager-Input nennt Warengruppen-Codes und Versandbedingungs-Codes, im Excel sind aktuell primär Bezeichnungen/Texte sichtbar.
+- Falls nach Codes gefiltert werden soll, braucht der Export eigene Code-Spalten oder eine eindeutige Mapping-Tabelle Text -> Code.
 
 ## ES
 

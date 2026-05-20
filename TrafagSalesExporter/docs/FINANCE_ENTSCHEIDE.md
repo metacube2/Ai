@@ -30,7 +30,7 @@ Die Logik darf nicht auf einzelne Testzahlen optimiert werden. Sie muss je Jahr 
 | IT | Hauswaehrung verwenden. Intercompany separat ausweisen und weiter fachlich abgrenzen. |
 | UK | Sage/Manual-Excel. Hauswaehrung `GBP` verwenden. Netto ohne VAT; Credit Notes muessen negativ in die Summe laufen. |
 | CH / AT | SAP-ZSCHWEIZ liefert Schweiz und Oesterreich aus gleichem System; Trennung ueber Buchungskreis bzw. Reporting-Land. |
-| DE | Alphaplan-Excel; finaler Jahresfile erforderlich. Sample darf nicht als Jahres-Ist verwendet werden. |
+| DE | Alphaplan-Excel; finaler Jahresfile `docs/2025_DataExport_DE.xlsx` liegt vor. Provisorisches Mapping nutzt `NettoPreisGesamtX` als SalesPriceValue. Fachlich offen bleibt, welche Kundenlaender fuer den Sollwert eingeschlossen werden. |
 | ES | Sage-CSV. `ImporteNeto` als Nettozeile ohne VAT verwenden; Credit Notes/REC negativ; Datumsbasis ist `FechaFactura`, solange Finance nichts anderes vorgibt. |
 
 ## Intercompany / 2nd Party
@@ -69,7 +69,7 @@ Ergebnis im Reporting:
 - IN: Anzeige muss fachlich `INR` zeigen, auch wenn Quellzeilen verschiedene Belegwaehrungen enthalten.
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
-- DE: finalen Jahresfile laden.
+- DE: finaler Alphaplan-Jahresfile liegt vor und ist technisch mappbar. Rohsumme `NettoPreisGesamtX` komplett ist `4'154'690.05 EUR`; nur `Land Kunde = Deutschland` ist `3'455'276.64 EUR`; Sollwert ist `3'635'923.00 EUR`. Offene Fachfrage: welche Kundenlaender/Abgrenzungen gehoeren offiziell zu DE?
 - ES: Aktuell `3'082'320.18 EUR` gegen Soll `3'102'333.61`; Differenz `-20'013.43 EUR`. CSV nutzt `ImporteNeto`; Credit Notes/REC sind negativ. Offen bleiben Perioden-/Serienabgrenzung und ob Rhino eine andere Sage-Auswertung nutzt.
 
 ## Pruefstand 2026-05-11

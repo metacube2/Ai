@@ -13,6 +13,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureSourceSystemDefinitions(db);
         EnsureCentralHanaServerRecords(db);
         EnsureSpainManualExcelSite(db);
+        EnsureGermanyManualExcelSite(db);
         EnsureUkManualExcelFolder(db);
         EnsureSapODataDachSite(db);
         EnsureFinanceReferenceDefaults(db);
@@ -288,6 +289,61 @@ public class DatabaseSeedService : IDatabaseSeedService
         db.SaveChanges();
     }
 
+    private static void EnsureGermanyManualExcelSite(AppDbContext db)
+    {
+        if (db.Sites.Count() <= 1)
+            return;
+
+        var existing = db.Sites
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.TSC == "TRDE" ||
+                x.Land == "Deutschland" ||
+                x.Land == "Germany");
+
+        if (existing is null)
+        {
+            existing = new Site
+            {
+                Schema = string.Empty,
+                TSC = "TRDE",
+                Land = "Deutschland",
+                SourceSystem = "MANUAL_EXCEL",
+                IsActive = false
+            };
+            db.Sites.Add(existing);
+            db.SaveChanges();
+        }
+        else
+        {
+            var changed = false;
+
+            if (string.IsNullOrWhiteSpace(existing.TSC))
+            {
+                existing.TSC = "TRDE";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.Land))
+            {
+                existing.Land = "Deutschland";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.SourceSystem))
+            {
+                existing.SourceSystem = "MANUAL_EXCEL";
+                changed = true;
+            }
+
+            if (changed)
+                db.SaveChanges();
+        }
+
+        if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
+            EnsureGermanyManualExcelMapping(db, existing.Id);
+    }
+
     private static void EnsureUkManualExcelFolder(AppDbContext db)
     {
         var existing = db.Sites
@@ -358,6 +414,91 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.PostingDate), "invoice date", false),
             (nameof(SalesRecord.InvoiceDate), "invoice date", false),
             (nameof(SalesRecord.DocumentType), "Document Type", false)
+        };
+
+        var changed = false;
+        for (var i = 0; i < mappings.Length; i++)
+        {
+            var mapping = db.ManualExcelColumnMappings
+                .OrderBy(x => x.Id)
+                .FirstOrDefault(x => x.SiteId == siteId && x.TargetField == mappings[i].Target);
+
+            if (mapping is null)
+            {
+                db.ManualExcelColumnMappings.Add(new ManualExcelColumnMapping
+                {
+                    SiteId = siteId,
+                    TargetField = mappings[i].Target,
+                    SourceHeader = mappings[i].Source,
+                    IsRequired = mappings[i].Required,
+                    IsActive = true,
+                    SortOrder = i
+                });
+                changed = true;
+                continue;
+            }
+
+            if (mapping.SourceHeader != mappings[i].Source)
+            {
+                mapping.SourceHeader = mappings[i].Source;
+                changed = true;
+            }
+
+            if (mapping.IsRequired != mappings[i].Required)
+            {
+                mapping.IsRequired = mappings[i].Required;
+                changed = true;
+            }
+
+            if (!mapping.IsActive)
+            {
+                mapping.IsActive = true;
+                changed = true;
+            }
+
+            if (mapping.SortOrder != i)
+            {
+                mapping.SortOrder = i;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureGermanyManualExcelMapping(AppDbContext db, int siteId)
+    {
+        var mappings = new (string Target, string Source, bool Required)[]
+        {
+            (nameof(SalesRecord.ExtractionDate), "Export-Datum", false),
+            (nameof(SalesRecord.Tsc), "=TRDE", false),
+            (nameof(SalesRecord.Land), "=Deutschland", false),
+            (nameof(SalesRecord.InvoiceNumber), "Belegnummer", true),
+            (nameof(SalesRecord.PositionOnInvoice), "Position", false),
+            (nameof(SalesRecord.Material), "ArtikelNummer", false),
+            (nameof(SalesRecord.Name), "ArtikelBezeichnung", false),
+            (nameof(SalesRecord.ProductGroup), "Warengruppen-Bezeichnung", false),
+            (nameof(SalesRecord.Quantity), "Anz. VE", false),
+            (nameof(SalesRecord.SupplierNumber), "Lieferanten Nummer", false),
+            (nameof(SalesRecord.SupplierName), "Name Lieferant", false),
+            (nameof(SalesRecord.SupplierCountry), "Land Lieferant", false),
+            (nameof(SalesRecord.CustomerNumber), "AdressNummer-Kunde", false),
+            (nameof(SalesRecord.CustomerName), "Name Kunde", false),
+            (nameof(SalesRecord.CustomerCountry), "Land Kunde", false),
+            (nameof(SalesRecord.CustomerIndustry), "Branche", false),
+            (nameof(SalesRecord.StandardCost), "EinstandsPreis", false),
+            (nameof(SalesRecord.StandardCostCurrency), "W\u00e4hrung", false),
+            (nameof(SalesRecord.SalesPriceValue), "NettoPreisGesamtX", true),
+            (nameof(SalesRecord.SalesCurrency), "W\u00e4hrung", false),
+            (nameof(SalesRecord.DocumentCurrency), "W\u00e4hrung", false),
+            (nameof(SalesRecord.CompanyCurrency), "W\u00e4hrung", false),
+            (nameof(SalesRecord.Incoterms2020), "Versandbedingung", false),
+            (nameof(SalesRecord.SalesResponsibleEmployee), "AdressNummer_V", false),
+            (nameof(SalesRecord.PostingDate), "Belegdatum-Rechnung", false),
+            (nameof(SalesRecord.InvoiceDate), "Belegdatum-Rechnung", false),
+            (nameof(SalesRecord.OrderDate), "BelegDatum Auftrag", false),
+            (nameof(SalesRecord.DocumentType), "=Alphaplan Excel", false)
         };
 
         var changed = false;

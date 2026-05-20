@@ -1703,6 +1703,49 @@ Ergebnis:
 - Build erfolgreich.
 - 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
 
+## DE Alphaplan-Excel provisorisch vorbereitet 2026-05-20
+
+Geaendert:
+
+- Deutschland wird beim Start als manueller Excel-Standort vorbereitet:
+  - `TSC = TRDE`
+  - `Land = Deutschland`
+  - `SourceSystem = MANUAL_EXCEL`
+  - `IsActive = false`, damit der Gesamtexport ohne gesetzte Datei nicht scheitert.
+- Alphaplan-Mapping wird fuer Deutschland geseedet:
+  - `NettoPreisGesamtX` -> `SalesPriceValue`
+  - `Belegnummer`, `Position`, `ArtikelNummer`, `ArtikelBezeichnung`
+  - `Warengruppen-Bezeichnung`, `Anz. VE`
+  - Lieferant/Kunde/Land/Branche
+  - `Waehrung`, `Versandbedingung`, `AdressNummer_V`
+  - `Belegdatum-Rechnung` fuer Posting-/Invoice-Date
+  - `DocumentType = Alphaplan Excel`
+- Testdatei erhalten und eingeordnet:
+  - `docs/2025_DataExport_DE.xlsx`
+
+Erster Befund:
+
+- `NettoPreisGesamtX` komplett: `4'154'690.05 EUR`
+- `Land Kunde = Deutschland`: `3'455'276.64 EUR`
+- `Land Kunde = Deutschland + China`: `3'647'592.44 EUR`
+- Sollwert DE: `3'635'923.00 EUR`
+
+Offen:
+
+- Finance/Munir muss bestaetigen, welche Kundenlaender und Filter in Alphaplan fuer den offiziellen DE-Istwert gelten.
+- Manager-Input nennt Warengruppen- und Versandbedingungs-Codes; im Excel sind aktuell vor allem Bezeichnungen/Texte sichtbar.
+
+Verifikation:
+
+```text
+dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore -p:UseAppHost=false -p:OutDir=.\obj\verify_de_alphaplan\ --verbosity minimal
+```
+
+Ergebnis:
+
+- 75/75 Tests erfolgreich.
+- Bestehende Warnungen: NU1900 wegen lokaler Paket-Sicherheitsdatenabfrage, sowie bekannte MudBlazor-Analyzer-Warnungen zu `Dense`.
+
 ## Management Cockpit zentrale Filterkopplung 2026-05-15
 
 Geaendert:
