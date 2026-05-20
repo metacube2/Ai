@@ -10,6 +10,8 @@ Umgesetzt:
 - Nach Einzelstandortexport wird sichtbar, dass die zentrale Excel neu erzeugt werden muss.
 - Dashboard erkennt eine veraltete zentrale Excel nach neuem Standortexport.
 - Neuer Menuepunkt `Manuelle Importe` fuer Keyuser.
+- `Manuelle Importe` hat jetzt die Reiter `Importdateien` und `Anleitung`.
+- Der Reiter `Anleitung` zeigt den Upload-/Export-/Zentraldatei-/Finance-Pruefprozess grafisch.
 - Zentrale Excel hat ein Blatt `Finance Summary`.
 - `Management Analyse` ist als Rohdaten-/Plausibilitaetssicht markiert.
 - `Soll/Ist Vergleich` ist als verbindliche Finance-Sicht markiert.

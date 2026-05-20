@@ -18,43 +18,218 @@
         "This page is for key users: Excel/CSV files for manual countries such as DE, UK and ES are maintained and activated here. Technical column mappings remain in Admin -> Sites.")
 </MudAlert>
 
-<MudTable Items="_rows" Dense Hover Striped Loading="_loading">
-    <HeaderContent>
-        <MudTh>@T("Land", "Country")</MudTh>
-        <MudTh>TSC</MudTh>
-        <MudTh>@T("Aktiv", "Active")</MudTh>
-        <MudTh>@T("Datei / SharePoint-Ordner", "File / SharePoint folder")</MudTh>
-        <MudTh>@T("Letzter Upload", "Last upload")</MudTh>
-        <MudTh>@T("Aktionen", "Actions")</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.Land</MudTd>
-        <MudTd>@context.TSC</MudTd>
-        <MudTd><MudSwitch @bind-Value="context.IsActive" Color="Color.Primary" /></MudTd>
-        <MudTd>
-            <MudTextField @bind-Value="context.ManualImportFilePath"
-                          Placeholder="@T("lokaler Pfad, UNC, SharePoint-Datei oder SharePoint-Ordner", "local path, UNC, SharePoint file or SharePoint folder")"
-                          Margin="Margin.Dense" />
-        </MudTd>
-        <MudTd>@(context.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</MudTd>
-        <MudTd>
-            <MudStack Row Spacing="1">
-                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
-                           OnClick="() => ValidatePathAsync(context)" Disabled="_busySiteId == context.Id">
-                    @T("Pfad pruefen", "Check path")
-                </MudButton>
-                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                           OnClick="() => SaveAsync(context)" Disabled="_busySiteId == context.Id">
-                    @T("Speichern", "Save")
-                </MudButton>
-            </MudStack>
-            <InputFile OnChange="args => UploadAsync(context, args)" accept=".xlsx,.csv" />
-        </MudTd>
-    </RowTemplate>
-    <NoRecordsContent>
-        <MudText Typo="Typo.caption">@T("Keine manuellen Excel-/CSV-Standorte gefunden.", "No manual Excel/CSV sites found.")</MudText>
-    </NoRecordsContent>
-</MudTable>
+<MudTabs Elevation="0" Rounded="false" PanelClass="manual-import-tab-panel">
+    <MudTabPanel Text="@T("Importdateien", "Import files")" Icon="@Icons.Material.Filled.UploadFile">
+        <MudTable Items="_rows" Dense Hover Striped Loading="_loading">
+            <HeaderContent>
+                <MudTh>@T("Land", "Country")</MudTh>
+                <MudTh>TSC</MudTh>
+                <MudTh>@T("Aktiv", "Active")</MudTh>
+                <MudTh>@T("Datei / SharePoint-Ordner", "File / SharePoint folder")</MudTh>
+                <MudTh>@T("Letzter Upload", "Last upload")</MudTh>
+                <MudTh>@T("Aktionen", "Actions")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Land</MudTd>
+                <MudTd>@context.TSC</MudTd>
+                <MudTd><MudSwitch @bind-Value="context.IsActive" Color="Color.Primary" /></MudTd>
+                <MudTd>
+                    <MudTextField @bind-Value="context.ManualImportFilePath"
+                                  Placeholder="@T("lokaler Pfad, UNC, SharePoint-Datei oder SharePoint-Ordner", "local path, UNC, SharePoint file or SharePoint folder")"
+                                  Margin="Margin.Dense" />
+                </MudTd>
+                <MudTd>@(context.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</MudTd>
+                <MudTd>
+                    <MudStack Row Spacing="1">
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+                                   StartIcon="@Icons.Material.Filled.FactCheck"
+                                   OnClick="() => ValidatePathAsync(context)" Disabled="_busySiteId == context.Id">
+                            @T("Pfad pruefen", "Check path")
+                        </MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="() => SaveAsync(context)" Disabled="_busySiteId == context.Id">
+                            @T("Speichern", "Save")
+                        </MudButton>
+                    </MudStack>
+                    <InputFile OnChange="args => UploadAsync(context, args)" accept=".xlsx,.csv" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.caption">@T("Keine manuellen Excel-/CSV-Standorte gefunden.", "No manual Excel/CSV sites found.")</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudTabPanel>
+    <MudTabPanel Text="@T("Anleitung", "Guide")" Icon="@Icons.Material.Filled.Route">
+        <div class="workflow-shell">
+            <div class="workflow-step import">
+                <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" />
+                <span class="workflow-index">1</span>
+                <h3>@T("Excel bereitstellen", "Provide Excel")</h3>
+                <p>@T("Datei hochladen oder SharePoint-/UNC-Pfad eintragen.", "Upload a file or enter a SharePoint/UNC path.")</p>
+            </div>
+            <div class="workflow-arrow">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" />
+            </div>
+            <div class="workflow-step save">
+                <MudIcon Icon="@Icons.Material.Filled.Save" Size="Size.Large" />
+                <span class="workflow-index">2</span>
+                <h3>@T("Speichern und aktivieren", "Save and activate")</h3>
+                <p>@T("Pfad pruefen, Standort aktiv setzen und speichern.", "Check the path, set the site active, and save.")</p>
+            </div>
+            <div class="workflow-arrow">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" />
+            </div>
+            <div class="workflow-step export">
+                <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" />
+                <span class="workflow-index">3</span>
+                <h3>@T("Standort exportieren", "Export site")</h3>
+                <p>@T("Im Export Dashboard den Standort starten. Die Daten landen in CentralSalesRecords.", "Start the site in the export dashboard. Data is written to CentralSalesRecords.")</p>
+            </div>
+            <div class="workflow-arrow">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" />
+            </div>
+            <div class="workflow-step central">
+                <MudIcon Icon="@Icons.Material.Filled.TableView" Size="Size.Large" />
+                <span class="workflow-index">4</span>
+                <h3>@T("Zentrale Excel erzeugen", "Build final Excel")</h3>
+                <p>@T("Danach `Zentrale Datei neu erzeugen` ausfuehren.", "Then run `Rebuild consolidated file`.")</p>
+            </div>
+            <div class="workflow-arrow">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" />
+            </div>
+            <div class="workflow-step check">
+                <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Size="Size.Large" />
+                <span class="workflow-index">5</span>
+                <h3>@T("Finance pruefen", "Check finance")</h3>
+                <p>@T("Im Endexcel `Finance | ...` oder im Reiter `Soll/Ist Vergleich` kontrollieren.", "Check the `Finance | ...` columns in the final Excel or the `Actual/reference comparison` tab.")</p>
+            </div>
+        </div>
+
+        <div class="workflow-notes">
+            <div class="workflow-note good">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
+                <div>
+                    <strong>@T("Richtige Reihenfolge", "Correct order")</strong>
+                    <p>@T("Ein Standortexport aktualisiert die Datenbasis. Die zentrale Excel muss danach neu erzeugt werden.", "A site export updates the data basis. The final Excel must be rebuilt afterwards.")</p>
+                </div>
+            </div>
+            <div class="workflow-note warn">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" />
+                <div>
+                    <strong>@T("DE bleibt fachlich offen", "DE remains open")</strong>
+                    <p>@T("Alphaplan ist technisch importierbar. Kundenlaender und Filter fuer den offiziellen DE-Istwert muessen noch bestaetigt werden.", "Alphaplan is technically importable. Customer countries and filters for the official DE actual still need confirmation.")</p>
+                </div>
+            </div>
+            <div class="workflow-note info">
+                <MudIcon Icon="@Icons.Material.Filled.Info" />
+                <div>
+                    <strong>@T("Server-Hinweis", "Server note")</strong>
+                    <p>@T("Der Server braucht kein Microsoft Excel. XLSX/CSV wird direkt von der Anwendung gelesen.", "The server does not need Microsoft Excel. XLSX/CSV is read directly by the application.")</p>
+                </div>
+            </div>
+        </div>
+    </MudTabPanel>
+</MudTabs>
+
+<style>
+    .manual-import-tab-panel {
+        padding-top: 18px;
+    }
+
+    .workflow-shell {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .workflow-step {
+        position: relative;
+        min-height: 190px;
+        padding: 18px 16px;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: var(--mud-palette-surface);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .workflow-step.import { border-top: 5px solid var(--mud-palette-info); }
+    .workflow-step.save { border-top: 5px solid var(--mud-palette-primary); }
+    .workflow-step.export { border-top: 5px solid var(--mud-palette-success); }
+    .workflow-step.central { border-top: 5px solid var(--mud-palette-secondary); }
+    .workflow-step.check { border-top: 5px solid var(--mud-palette-warning); }
+
+    .workflow-step h3 {
+        margin: 6px 0 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .workflow-step p,
+    .workflow-note p {
+        margin: 0;
+        color: var(--mud-palette-text-secondary);
+        font-size: .9rem;
+        line-height: 1.35;
+    }
+
+    .workflow-index {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--mud-palette-dark);
+        color: var(--mud-palette-dark-text);
+        font-weight: 700;
+    }
+
+    .workflow-arrow {
+        display: none;
+    }
+
+    .workflow-notes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .workflow-note {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: var(--mud-palette-surface);
+    }
+
+    .workflow-note.good { border-left: 5px solid var(--mud-palette-success); }
+    .workflow-note.warn { border-left: 5px solid var(--mud-palette-warning); }
+    .workflow-note.info { border-left: 5px solid var(--mud-palette-info); }
+
+    @@media (max-width: 1100px) {
+        .workflow-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .workflow-arrow {
+            display: flex;
+            justify-content: center;
+            transform: rotate(90deg);
+        }
+
+        .workflow-notes {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @code {
     private List<ManualImportRow> _rows = [];

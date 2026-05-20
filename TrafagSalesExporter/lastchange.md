@@ -17,6 +17,17 @@ Geaendert:
 - `Management Analyse` ist klarer als Rohdaten-/Plausibilitaetssicht markiert.
 - `Soll/Ist Vergleich` ist klarer als verbindliche Finance-Sicht markiert.
 
+Nachtrag:
+
+- Unter `Manuelle Importe` gibt es jetzt einen zweiten Reiter `Anleitung`.
+- Der Reiter zeigt den Keyuser-Ablauf grafisch:
+  - Excel bereitstellen
+  - speichern und aktivieren
+  - Standort exportieren
+  - zentrale Excel erzeugen
+  - Finance pruefen
+- Zusatzhinweise markieren die richtige Reihenfolge, den offenen DE-Fachentscheid und dass auf dem Server kein Microsoft Excel benoetigt wird.
+
 Bewusst nicht geaendert:
 
 - DE-Fachregel bleibt offen, bis Munir/Finance bestaetigt, welche Kundenlaender/Filter zum offiziellen DE-Ist gehoeren.
