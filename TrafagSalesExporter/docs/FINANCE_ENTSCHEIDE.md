@@ -1,6 +1,27 @@
 # Finance-Entscheide fuer Net Sales Actuals
 
-Stand: 2026-05-11
+Stand: 2026-05-20
+
+## Nachtrag 2026-05-20 Finance Summary / Management Analyse
+
+Aktueller Produktstand:
+
+- Das zentrale Excel enthaelt das Blatt `Finance Summary`.
+- `Management Analyse` hat einen fuehrenden Reiter `Finance Summary`.
+- Dieser Reiter nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
+- Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
+- Die alte Management-/Rohdatenansicht bleibt nur als Diagnose-/Plausibilitaetssicht erhalten.
+- DE 2026 zeigt keinen Fehler mehr, sondern wegen DE/Alphaplan-2025-Zwang einen leeren Zustand mit Hinweis.
+
+Anwenderdoku:
+
+- `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+- `docs/finance_cockpit_preview.png`
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `77/77` Tests gruen.
 
 Dieses Dokument haelt die fachlichen Entscheide fuer den Finance-Abgleich fest. Es ist die verbindliche Grundlage fuer das Testprogramm, die zentrale Tabelle und den Soll/Ist-Abgleich gegen `check.xlsx`.
 

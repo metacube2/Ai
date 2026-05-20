@@ -2,6 +2,26 @@
 
 Stand: 2026-05-20
 
+## Nachtrag 2026-05-20 Dokumentation bereinigt
+
+Erledigt:
+
+- Markdown-Bestand eingeordnet in `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`.
+- HR-Anwenderdoku als Word-Datei optisch ueberarbeitet:
+  - `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+  - inklusive 10 neuer HR-Cockpit-Punkte, Tabellen, Hinweisboxen und Vorschaugrafik.
+- Finance-Anwenderdoku als Word-Datei optisch ueberarbeitet:
+  - `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+  - inklusive Finance Summary Workflow, Filterregeln und Pruefpunkten.
+- Neue neutrale Vorschaubilder fuer die Word-Dokus:
+  - `docs/hr_kpi_cockpit_preview.png`
+  - `docs/finance_cockpit_preview.png`
+
+Bewusst nicht geloescht:
+
+- Alte Markdown-Dateien und alte Eintraege bleiben erhalten, wenn sie Pruefwerte, Zwischenentscheide, Mailkontext oder Audit-Spuren enthalten.
+- Nicht mehr fuehrende Dateien sind in `docs/MD_DOKUMENTENSTATUS_2026-05-20.md` als historisch markiert.
+
 ## Nachtrag 2026-05-20 Workflow-Fixes nach Review
 
 Umgesetzt:

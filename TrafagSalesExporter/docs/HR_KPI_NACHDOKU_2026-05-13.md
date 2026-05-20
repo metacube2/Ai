@@ -1,5 +1,32 @@
 # HR KPI Nachdokumentation 2026-05-13
 
+## Nachtrag 2026-05-20 HR KPI Cockpit Ausbau
+
+Die urspruengliche HR-KPI-Doku wurde um den produktiven Cockpit-Ausbau ergaenzt.
+
+Neu bzw. erweitert:
+
+- `Anleitung`-Reiter im HR KPI Cockpit.
+- Datenordner fuer Rexx-/SAP-Dateien ist im Cockpit sichtbar und je Lauf anpassbar; dauerhaft ueber `HrKpi:DataFolder`.
+- Dateistatus zeigt Pfad, Zeilenanzahl, letzte Aenderung, Dateialter und Frischebewertung.
+- Managementsicht anonymisiert Personennamen in Detailtabellen.
+- Ampel-Reiter fuer Fluktuation, Krankenquote, GLZ, Restferien und Datenqualitaet.
+- Filter fuer GLZ-Ampel und Restferien-Ampel.
+- Periodenvergleich fuer wichtige Kennzahlen, soweit Daten vorhanden sind.
+- Datenqualitaets-Hinweise fuer fehlende/alte Dateien und auffaellige Werte.
+- Austritte nach Austrittsart und Organisation.
+- Absenzen nach Organisation, Top-Absenzen und Drucken/PDF.
+
+Anwenderdoku:
+
+- `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+- `docs/hr_kpi_cockpit_preview.png`
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `77/77` Tests gruen.
+
 ## Ziel
 
 Das HR KPI Cockpit wurde als separater, fachlich entkoppelter Reiter umgesetzt. Es nutzt PowerBI-M-/DAX-Logik nicht als generischen Interpreter, sondern als fachliche Vorlage, die in nachvollziehbare C#-Logik uebertragen wurde.

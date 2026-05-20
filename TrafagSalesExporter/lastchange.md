@@ -1,5 +1,26 @@
 # Last Change 2026-05-04
 
+## Markdown-Doku und Anwenderdokus nachgezogen 2026-05-20
+
+Geaendert:
+
+- Neue zentrale Markdown-Uebersicht `docs/MD_DOKUMENTENSTATUS_2026-05-20.md` erstellt.
+- Markdown-Dateien werden dort als aktuell fuehrend, Detaildoku oder historisch eingeordnet.
+- Alte Markdown-Dateien wurden nicht geloescht, weil sie Pruefwerte, Zwischenentscheide und Audit-Spuren enthalten.
+- HR- und Finance-Word-Anleitungen wurden visuell ueberarbeitet:
+  - Titelbereich
+  - Tabellen
+  - Hinweisboxen
+  - eingebettete neutrale Cockpit-Vorschaugrafiken
+- Neue Bilddateien:
+  - `docs/hr_kpi_cockpit_preview.png`
+  - `docs/finance_cockpit_preview.png`
+
+Commits:
+
+- `0bff161 Document HR cockpit feature list`
+- `a044040 Improve cockpit user guide documents`
+
 ## Management Analyse auf Finance Summary ausgerichtet 2026-05-20
 
 Geaendert:

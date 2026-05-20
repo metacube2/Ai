@@ -1,6 +1,17 @@
 # Finance Entscheide Soll/Ist 2025
 
-Stand: 2026-05-15
+Stand: 2026-05-20
+
+## Nachtrag 2026-05-20
+
+Diese Kurzfassung bleibt gueltig fuer die Finance-Fachentscheide. Fuer den aktuellen Cockpit-/Anwenderstand gelten zusaetzlich:
+
+- `Management Analyse` fuehrt jetzt mit dem Reiter `Finance Summary`.
+- `Finance Summary` verwendet dieselbe `FinanceRuleEngine` wie das zentrale Excel.
+- Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
+- DE 2026 wird wegen DE/Alphaplan-2025-Zwang als leerer Zustand mit Hinweis dargestellt.
+- Anwenderdoku: `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`.
+- Dokumentenstatus: `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`.
 
 Dieses Dokument extrahiert die erkennbaren Fragen und Entscheide aus der Abstimmung. Es dient als Arbeitsgrundlage fuer die Umsetzung im Finance-Abgleich und fuer die naechste Klaerung mit Andreas/Finance.
 
@@ -53,4 +64,3 @@ Bewertung:
 | Italien | Abgrenzung mit/ohne Intercompany fachlich gegen Rhino/check.xlsx pruefen. |
 | Budgetkurse | Quelle und Gueltigkeit der Budgetkurse je Jahr festlegen. |
 | Gutschriften | Sicherstellen, dass alle Quellsysteme Gutschriften mit eigener Rechnungsnummer/Position liefern oder sauber markierbar sind. |
-

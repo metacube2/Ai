@@ -1,5 +1,18 @@
 # Programm-Diagramme
 
+Stand: 2026-05-20
+
+## Nachtrag Anwenderdokus 2026-05-20
+
+Neben den technischen SVG-Diagrammen gibt es jetzt zwei gestaltete Word-Anleitungen mit eingebetteten neutralen Cockpit-Vorschaugrafiken:
+
+- `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+- `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+- `docs/hr_kpi_cockpit_preview.png`
+- `docs/finance_cockpit_preview.png`
+
+Die Word-Dokus sind fuer Anwender gedacht. Die SVG-/Markdown-Dokumente bleiben fuer technische Nachvollziehbarkeit, Architektur und Pruefpfade.
+
 ## Empfohlene Diagrammarten
 
 Fuer das Programm bieten sich zwei Diagrammarten an:

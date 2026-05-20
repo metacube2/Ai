@@ -1,10 +1,28 @@
 # Finance: Welches Dokument gilt?
 
-Stand: 2026-05-15
+Stand: 2026-05-20
+
+## Aktueller Nachtrag 2026-05-20
+
+Zum alten CFO-/Finance-Termin-Dokument ist eine neue Anwenderdoku fuer das Cockpit hinzugekommen:
+
+```text
+docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx
+```
+
+Diese neue Word-Datei ist die bessere Anleitung fuer Finance-Anwender im Cockpit. Das CFO-Dokument vom 2026-05-15 bleibt historische Termin-/Entscheidgrundlage.
+
+Technisch/fachlich aktuell fuehrend:
+
+- `Management Analyse` Reiter `Finance Summary`
+- zentrale Excel `Finance Summary`
+- `FinanceRuleEngine`
+- `docs/FINANCE_ENTSCHEIDE.md`
+- `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`
 
 ## Fuehrendes Dokument
 
-Fuer den CFO-/Finance-Termin gilt:
+Fuer den CFO-/Finance-Termin vom 2026-05-15 galt:
 
 ```text
 docs/FINANCE_CHEF_SUMMARY_2026-05-15.docx
