@@ -2,6 +2,25 @@
 
 Stand: 2026-05-19
 
+## Nachtrag 2026-05-20 IT Finance-Methode
+
+Erledigt:
+
+- IT-Methode gemaess Finance-Leiter umgesetzt.
+- `CustomerName` enthaelt `Trafag Italia` wird fuer IT ausgeschlossen.
+- Doppelte IT-Zeilen mit leerem `Supplier country` werden nur einmal gezaehlt.
+- Regel greift im Finance-Vergleich/Testprogramm und in den Finance-Spalten der zentralen Excel.
+
+Bewusster Entscheid:
+
+- Die alte 2025-Kombination ist naeher am Soll, aber fachlich nicht zukunftssicher.
+- Fuer 2026+ gilt die neue Methode, auch wenn sie 2025 in der aktuellen DB weiter vom Sollwert abweicht.
+
+Naechster Check:
+
+- Nach neuem IT-Export pruefen, ob die vollstaendige `Trafag Italia`-Summe aus den neuen Rohdaten sichtbar wird.
+- Zentrale Excel fuer `Finance | Country Key = IT`, `Finance | Include = TRUE` filtern und gegen Finance-Vergleich kontrollieren.
+
 ## Nachtrag 2026-05-19 IIS Deployment / 500 Fehler
 
 Vollstaendige Doku:

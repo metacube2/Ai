@@ -91,6 +91,7 @@ public class ExcelExportService : IExcelExportService
         }
 
         var row = 2;
+        var italyBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var record in records)
         {
             ws.Cell(row, 1).Value = record.ExtractionDate.ToString("dd.MM.yyyy HH:mm:ss");
@@ -129,13 +130,17 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 34).Value = record.Land;
             ws.Cell(row, 35).Value = record.DocumentType;
             var financeDate = ResolveFinanceDate(record);
+            var financeCountryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+            var financeInclude = ResolveFinanceInclude(record, financeCountryKey, italyBlankSupplierCountryRows);
             ws.Cell(row, 36).Value = financeDate.Year;
-            ws.Cell(row, 37).Value = ResolveFinanceCountryKey(record.Land, record.Tsc);
+            ws.Cell(row, 37).Value = financeCountryKey;
             ws.Cell(row, 38).Value = financeDate.ToString("dd.MM.yyyy");
-            ws.Cell(row, 39).Value = record.SalesPriceValue;
+            ws.Cell(row, 39).Value = financeInclude ? record.SalesPriceValue : 0m;
             ws.Cell(row, 40).Value = ResolveFinanceCurrency(record);
-            ws.Cell(row, 41).Value = record.SalesPriceValue != 0m ? "TRUE" : "FALSE";
-            ws.Cell(row, 42).Value = "Sales Price/Value";
+            ws.Cell(row, 41).Value = financeInclude && record.SalesPriceValue != 0m ? "TRUE" : "FALSE";
+            ws.Cell(row, 42).Value = financeInclude
+                ? "Sales Price/Value"
+                : ResolveFinanceExclusionReason(record, financeCountryKey);
             row++;
         }
 
@@ -163,6 +168,7 @@ public class ExcelExportService : IExcelExportService
             ("Waehrung", "Finance | Currency zeigt die fuer den Finance-Abgleich fuehrende Hauswaehrung."),
             ("Datum", "Finance | Date verwendet PostingDate, danach InvoiceDate, danach ExtractionDate."),
             ("Wertquelle", "Finance | Source Value Field zeigt, aus welchem Rohfeld der Finance-Wert kommt."),
+            ("IT-Sonderregel", "Fuer IT wird Trafag Italia im Finance-Wert ausgeschlossen; doppelte IT-Zeilen ohne Supplier country werden nur einmal gezaehlt."),
             ("Nicht verwenden", "Nicht Land, TSC, Document Total LC oder andere Betragsspalten fuer den CFO-Abgleich erraten."),
             ("Hinweis", "Offene fachliche Differenzen bleiben sichtbar; diese Excel-Sicht soll die gleiche Ist-Summe wie das Testprogramm reproduzieren.")
         };
@@ -234,6 +240,62 @@ public class ExcelExportService : IExcelExportService
 
         return normalizedTsc.Replace("TR", string.Empty);
     }
+
+    private static bool ResolveFinanceInclude(SalesRecord record, string financeCountryKey, HashSet<string> italyBlankSupplierCountryRows)
+    {
+        if (!financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (IsExcludedItalyCustomer(record))
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(record.SupplierCountry))
+            return true;
+
+        return italyBlankSupplierCountryRows.Add(BuildItalyBlankSupplierCountryDeduplicationKey(record));
+    }
+
+    private static string ResolveFinanceExclusionReason(SalesRecord record, string financeCountryKey)
+    {
+        if (financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase) && IsExcludedItalyCustomer(record))
+            return "Excluded IT customer: Trafag Italia";
+
+        if (financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(record.SupplierCountry))
+            return "Excluded IT duplicate without Supplier country";
+
+        return "Excluded";
+    }
+
+    private static bool IsExcludedItalyCustomer(SalesRecord record)
+        => NormalizeFinanceText(record.CustomerName).Contains("TRAFAG ITALIA", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildItalyBlankSupplierCountryDeduplicationKey(SalesRecord record)
+        => string.Join("|",
+            record.Tsc,
+            record.DocumentType,
+            record.DocumentEntry,
+            record.InvoiceNumber,
+            record.PositionOnInvoice,
+            record.Material,
+            record.Name,
+            record.Quantity,
+            record.CustomerNumber,
+            record.CustomerName,
+            record.SalesPriceValue,
+            record.DocumentTotalForeignCurrency,
+            record.DocumentTotalLocalCurrency,
+            record.VatSumForeignCurrency,
+            record.VatSumLocalCurrency,
+            record.PostingDate?.ToString("O") ?? string.Empty,
+            record.InvoiceDate?.ToString("O") ?? string.Empty);
+
+    private static string NormalizeFinanceText(string value)
+        => (value ?? string.Empty)
+            .Replace("\u00e4", "ae", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00f6", "oe", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00fc", "ue", StringComparison.OrdinalIgnoreCase)
+            .Trim()
+            .ToUpperInvariant();
 
     private static void WriteGenericWorkbook(string fullPath, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
     {

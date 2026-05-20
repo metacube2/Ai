@@ -1,5 +1,37 @@
 # Last Change 2026-05-04
 
+## IT Finance-Methode fachlich bestaetigt 2026-05-20
+
+Entscheid:
+
+- Fuer Italien gilt die vom Finance-Leiter bestaetigte Methode.
+- `CustomerName` enthaelt `Trafag Italia` wird aus dem IT-Finance-Ist ausgeschlossen.
+- Doppelte IT-Zeilen mit leerem `Supplier country` werden nur einmal gezaehlt.
+- Diese Regel gilt nur fuer IT.
+
+Wichtig:
+
+- Die bisherige Kundenausschluss-Kombination passte 2025 numerisch naeher an den Sollwert, ist aber nicht die belastbare Methode fuer Folgejahre.
+- Der 2025-Zufallstreffer wird deshalb nicht als fachliche Regel weiterverwendet.
+
+Gegen aktuelle DB getestet:
+
+```text
+Soll IT:                         7'669'840.00
+Bisherige IT-Summe:              7'669'641.47
+Bisherige Differenz:                  -198.53
+Trafag Italia Abzug in DB:           6'495.71
+Dubletten-Abzug SupplierCountry leer:    0.00
+Neue fachliche Methode:          7'663'145.76
+Neue Differenz:                    -6'694.24
+```
+
+Umsetzung:
+
+- `Services/FinanceReconciliationService.cs`
+- `Services/ExcelExportService.cs`
+- Tests in `TrafagSalesExporter.Tests/FinanceReconciliationServiceTests.cs`
+
 ## IIS Deployment Handoff 2026-05-19
 
 Aktueller Deployment-/IIS-Stand wurde hier dokumentiert:

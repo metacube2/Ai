@@ -204,6 +204,37 @@ Noch zu klaeren:
 - Ist der echte Filter eine Kundengruppe, Branche, Sales-Channel, Projekt-/OEM-Abgrenzung oder ein anderes B1-Feld?
 - Soll der Filter in der App spaeter als pflegbare Finance-Regel statt als harter Code umgesetzt werden?
 
+## Nachtrag 2026-05-20 fachliche IT-Methode
+
+Finance-Leiter bestaetigt:
+
+- `CustomerName` mit `Trafag Italia` gehoert nicht in den externen IT-Finance-Istwert.
+- Doppelte Einzelpositionen mit leerem `Supplier country` sollen nur einmal gezaehlt werden.
+
+Bewertung:
+
+- Die fruehere Kundenausschluss-Kombination passt fuer 2025 rechnerisch naeher.
+- Sie ist aber keine belastbare Methode fuer Folgejahre.
+- Deshalb wird die fachlich bestaetigte Methode umgesetzt, auch wenn die aktuelle 2025-DB danach weiter vom Sollwert abweicht.
+
+Test gegen aktuelle DB:
+
+```text
+Bisherige IT-Summe:              7'669'641.47
+Trafag Italia Abzug in DB:           6'495.71
+Dubletten-Abzug SupplierCountry leer:    0.00
+Neue fachliche Methode:          7'663'145.76
+Soll IT:                         7'669'840.00
+Neue Differenz:                    -6'694.24
+```
+
+Technische Stellen:
+
+```text
+Services/FinanceReconciliationService.cs
+Services/ExcelExportService.cs
+```
+
 Naechster Test:
 
 ```text

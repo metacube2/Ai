@@ -40,12 +40,17 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
                 r.Tsc,
                 r.DocumentEntry,
                 r.InvoiceNumber,
+                r.PositionOnInvoice,
+                r.Material,
+                r.Name,
+                r.Quantity,
                 r.DocumentType,
                 r.PostingDate,
                 r.InvoiceDate,
                 r.ExtractionDate,
                 r.CustomerNumber,
                 r.CustomerName,
+                r.SupplierCountry,
                 r.SalesCurrency,
                 r.DocumentCurrency,
                 r.CompanyCurrency,
@@ -150,7 +155,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         IReadOnlyDictionary<string, decimal> budgetRatesToChf,
         IReadOnlyList<FinanceIntercompanyRule> intercompanyRules)
     {
-        var rowList = rows.ToList();
+        var rowList = ApplyCountryFinanceRules(referenceKey, rows).ToList();
         var houseCurrency = ResolveHouseCurrency(referenceKey, rowList);
         var documentRows = rowList
             .GroupBy(row => BuildDocumentKey(row.Tsc, row.DocumentType, row.DocumentEntry, row.InvoiceNumber), StringComparer.OrdinalIgnoreCase)
@@ -238,6 +243,50 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
 
         return repeatedGroups / (decimal)multiLineGroups.Count >= 0.8m;
     }
+
+    private static IEnumerable<NetSalesActualSourceRow> ApplyCountryFinanceRules(
+        string referenceKey,
+        IEnumerable<NetSalesActualSourceRow> rows)
+    {
+        if (!referenceKey.Equals("IT", StringComparison.OrdinalIgnoreCase))
+            return rows;
+
+        var seenBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        return rows.Where(row =>
+        {
+            if (IsExcludedItalyCustomer(row))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(row.SupplierCountry))
+                return true;
+
+            return seenBlankSupplierCountryRows.Add(BuildItalyBlankSupplierCountryDeduplicationKey(row));
+        });
+    }
+
+    private static bool IsExcludedItalyCustomer(NetSalesActualSourceRow row)
+        => ResolveReferenceKey(row.Land, row.Tsc).Equals("IT", StringComparison.OrdinalIgnoreCase) &&
+           NormalizeRuleText(row.CustomerName).Contains("TRAFAG ITALIA", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildItalyBlankSupplierCountryDeduplicationKey(NetSalesActualSourceRow row)
+        => string.Join("|",
+            row.Tsc,
+            row.DocumentType,
+            row.DocumentEntry,
+            row.InvoiceNumber,
+            row.PositionOnInvoice,
+            row.Material,
+            row.Name,
+            row.Quantity,
+            row.CustomerNumber,
+            row.CustomerName,
+            row.SalesPriceValue,
+            row.DocumentTotalForeignCurrency,
+            row.DocumentTotalLocalCurrency,
+            row.VatSumForeignCurrency,
+            row.VatSumLocalCurrency,
+            row.PostingDate?.ToString("O") ?? string.Empty,
+            row.InvoiceDate?.ToString("O") ?? string.Empty);
 
     private static decimal ConvertHouseCurrencyNetToBudgetChf(
         string houseCurrency,
@@ -398,12 +447,17 @@ internal sealed record NetSalesActualSourceRow(
     string Tsc,
     int DocumentEntry,
     string InvoiceNumber,
+    int PositionOnInvoice,
+    string Material,
+    string Name,
+    decimal Quantity,
     string DocumentType,
     DateTime? PostingDate,
     DateTime? InvoiceDate,
     DateTime ExtractionDate,
     string CustomerNumber,
     string CustomerName,
+    string SupplierCountry,
     string SalesCurrency,
     string DocumentCurrency,
     string CompanyCurrency,

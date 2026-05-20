@@ -357,9 +357,18 @@ AND h."CardCode" NOT IN (
 Formel im Vergleich:
 
 ```text
-Ist IT = Sum(SalesPriceValue) nach obigem B1-Filter
+Ist IT = Sum(SalesPriceValue) nach obigem B1-Filter und IT-Finance-Abgrenzung
 Soll IT = 7'669'840 EUR
 ```
+
+Zusaetzliche IT-Finance-Abgrenzung, Stand 2026-05-20:
+
+```text
+1. CustomerName enthaelt "Trafag Italia" => aus IT-Finance-Ist ausschliessen.
+2. IT-Zeilen mit leerem Supplier country => identische Zeile nur einmal zaehlen.
+```
+
+Diese Methode ist gemaess Finance-Leiter fachlich korrekt. Die alte Kundenausschluss-Kombination traf 2025 zufaellig naeher, ist aber nicht die zukunftssichere Methode.
 
 Bekannter Stand:
 

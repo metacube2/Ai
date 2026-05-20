@@ -185,6 +185,12 @@ Die sechs provisorisch ausgeschlossenen Kunden:
 
 Wichtig: Dieser IT-Filter ist ein Arbeits-/Prueffilter, noch nicht fachlich final bestaetigt.
 
+Nachtrag 2026-05-20:
+
+- Finance-Leiter bestaetigt als fachliche Methode: `Trafag Italia` aus dem externen IT-Finance-Ist ausschliessen.
+- Identische IT-Zeilen mit leerem `Supplier country` nur einmal zaehlen.
+- Die alte Kundenausschluss-Kombination bleibt als 2025-Analyse dokumentiert, ist aber nicht die fuehrende Methode fuer Folgejahre.
+
 Detaildokument:
 
 ```text

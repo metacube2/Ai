@@ -80,6 +80,53 @@ public class FinanceReconciliationServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildNetSalesReferenceRowsAsync_Excludes_Trafag_Italia_For_Italy()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(BuildSite());
+            db.FinanceReferences.Add(new FinanceReference { Key = "IT", Label = "Trafag IT", Year = 2025, CheckValue = 100m, IsActive = true });
+            db.CentralSalesRecords.AddRange(
+                BuildCentralRecord("TRIT", "Italien", 30, 1, 100m, new DateTime(2025, 4, 1), new DateTime(2025, 4, 1), salesPriceValue: 100m, customerName: "External Customer S.R.L.", supplierCountry: "IT"),
+                BuildCentralRecord("TRIT", "Italien", 31, 1, 400m, new DateTime(2025, 4, 2), new DateTime(2025, 4, 2), salesPriceValue: 400m, customerName: "TRAFAG ITALIA S.R.L.", supplierCountry: "IT"));
+            await db.SaveChangesAsync();
+        }
+
+        var service = new FinanceReconciliationService(_dbFactory);
+
+        var rows = await service.BuildNetSalesReferenceRowsAsync(2025);
+
+        var row = Assert.Single(rows);
+        Assert.Equal(100m, row.ActualValue);
+        Assert.Equal(1, row.RowCount);
+        Assert.Equal("OK", row.Status);
+    }
+
+    [Fact]
+    public async Task BuildNetSalesReferenceRowsAsync_Deduplicates_Italy_Rows_With_Blank_Supplier_Country()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(BuildSite());
+            db.FinanceReferences.Add(new FinanceReference { Key = "IT", Label = "Trafag IT", Year = 2025, CheckValue = 150m, IsActive = true });
+            db.CentralSalesRecords.AddRange(
+                BuildCentralRecord("TRIT", "Italien", 40, 1, 100m, new DateTime(2025, 5, 1), new DateTime(2025, 5, 1), salesPriceValue: 100m, customerName: "External Customer S.R.L.", supplierCountry: ""),
+                BuildCentralRecord("TRIT", "Italien", 40, 1, 100m, new DateTime(2025, 5, 1), new DateTime(2025, 5, 1), salesPriceValue: 100m, customerName: "External Customer S.R.L.", supplierCountry: ""),
+                BuildCentralRecord("TRIT", "Italien", 41, 1, 50m, new DateTime(2025, 5, 2), new DateTime(2025, 5, 2), salesPriceValue: 50m, customerName: "External Customer S.R.L.", supplierCountry: "IT"));
+            await db.SaveChangesAsync();
+        }
+
+        var service = new FinanceReconciliationService(_dbFactory);
+
+        var rows = await service.BuildNetSalesReferenceRowsAsync(2025);
+
+        var row = Assert.Single(rows);
+        Assert.Equal(150m, row.ActualValue);
+        Assert.Equal(2, row.RowCount);
+        Assert.Equal("OK", row.Status);
+    }
+
+    [Fact]
     public async Task BuildNetSalesReferenceRowsAsync_Reports_India_As_Inr_House_Currency()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
@@ -113,7 +160,9 @@ public class FinanceReconciliationServiceTests : IDisposable
         DateTime invoiceDate,
         decimal vatLocal = 0m,
         decimal? salesPriceValue = null,
-        string salesCurrency = "EUR")
+        string salesCurrency = "EUR",
+        string customerName = "",
+        string supplierCountry = "IT")
         => new()
         {
             StoredAtUtc = DateTime.UtcNow,
@@ -124,6 +173,11 @@ public class FinanceReconciliationServiceTests : IDisposable
             DocumentEntry = documentEntry,
             InvoiceNumber = documentEntry.ToString(),
             PositionOnInvoice = position,
+            Material = "MAT",
+            Name = "Item",
+            Quantity = 1m,
+            CustomerName = customerName,
+            SupplierCountry = supplierCountry,
             SalesPriceValue = salesPriceValue ?? documentTotalLocal - vatLocal,
             SalesCurrency = salesCurrency,
             DocumentCurrency = salesCurrency,
