@@ -12,7 +12,7 @@
     <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
         <div>
             <MudText Typo="Typo.h6">@T("Net Sales Actuals 2025 Referenz", "Net sales actuals 2025 reference")</MudText>
-            <MudText Typo="Typo.caption">@T("Gleiche Berechnungslogik wie FinanceProbe/Testprogramm", "Same calculation logic as FinanceProbe/test program")</MudText>
+            <MudText Typo="Typo.caption">@T("Verbindliche Finance-Sicht aus CentralSalesRecords", "Authoritative finance view from CentralSalesRecords")</MudText>
         </div>
         <MudSpacer />
         <MudButton Variant="@(_hideRowsWithoutActual ? Variant.Filled : Variant.Outlined)"
@@ -189,7 +189,9 @@
         if (row.Key.Equals("ES", StringComparison.OrdinalIgnoreCase))
             return T("Sage ImporteNeto; REC/Credit Notes negativ; Zuschlaege/Nebenkosten noch pruefen.", "Sage ImporteNeto; REC/credit notes negative; surcharges/charges still to check.");
         if (row.Key.Equals("IT", StringComparison.OrdinalIgnoreCase))
-            return T("B1 Arbeitsfilter 47005 ohne 4700504 plus provisorischer Kundenausschluss.", "B1 working filter 47005 excluding 4700504 plus provisional customer exclusions.");
+            return T("Bestaetigte IT-Regel: Trafag Italia ausgeschlossen; doppelte Zeilen ohne Supplier country nur einmal.", "Confirmed IT rule: Trafag Italia excluded; duplicate rows without supplier country counted once.");
+        if (row.Key.Equals("DE", StringComparison.OrdinalIgnoreCase))
+            return T("Alphaplan Excel; Kundenlaender/Filter fuer offiziellen DE-Istwert noch fachlich offen.", "Alphaplan Excel; customer countries/filters for official DE actual are still open.");
         if (row.Key.Equals("FR", StringComparison.OrdinalIgnoreCase) ||
             row.Key.Equals("IN", StringComparison.OrdinalIgnoreCase) ||
             row.Key.Equals("US", StringComparison.OrdinalIgnoreCase))

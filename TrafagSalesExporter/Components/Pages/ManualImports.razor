@@ -1,0 +1,192 @@
+@page "/manual-imports"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using TrafagSalesExporter.Data
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IStandortePageService StandortePageService
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("Manuelle Importe", "Manual imports")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Manuelle Importe", "Manual imports")</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+    @T("Diese Seite ist fuer Keyuser: Hier werden Excel-/CSV-Dateien fuer manuelle Laender wie DE, UK und ES hinterlegt und aktiviert. Technische Spaltenmappings bleiben in Admin -> Standorte.",
+        "This page is for key users: Excel/CSV files for manual countries such as DE, UK and ES are maintained and activated here. Technical column mappings remain in Admin -> Sites.")
+</MudAlert>
+
+<MudTable Items="_rows" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>@T("Land", "Country")</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>@T("Aktiv", "Active")</MudTh>
+        <MudTh>@T("Datei / SharePoint-Ordner", "File / SharePoint folder")</MudTh>
+        <MudTh>@T("Letzter Upload", "Last upload")</MudTh>
+        <MudTh>@T("Aktionen", "Actions")</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.TSC</MudTd>
+        <MudTd><MudSwitch @bind-Value="context.IsActive" Color="Color.Primary" /></MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="context.ManualImportFilePath"
+                          Placeholder="@T("lokaler Pfad, UNC, SharePoint-Datei oder SharePoint-Ordner", "local path, UNC, SharePoint file or SharePoint folder")"
+                          Margin="Margin.Dense" />
+        </MudTd>
+        <MudTd>@(context.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</MudTd>
+        <MudTd>
+            <MudStack Row Spacing="1">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+                           OnClick="() => ValidatePathAsync(context)" Disabled="_busySiteId == context.Id">
+                    @T("Pfad pruefen", "Check path")
+                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="() => SaveAsync(context)" Disabled="_busySiteId == context.Id">
+                    @T("Speichern", "Save")
+                </MudButton>
+            </MudStack>
+            <InputFile OnChange="args => UploadAsync(context, args)" accept=".xlsx,.csv" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText Typo="Typo.caption">@T("Keine manuellen Excel-/CSV-Standorte gefunden.", "No manual Excel/CSV sites found.")</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<ManualImportRow> _rows = [];
+    private bool _loading = true;
+    private int? _busySiteId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var manualSourceCodes = await db.SourceSystemDefinitions
+            .Where(x => x.ConnectionKind == SourceSystemConnectionKinds.ManualExcel)
+            .Select(x => x.Code)
+            .ToListAsync();
+
+        _rows = await db.Sites
+            .Where(site => manualSourceCodes.Contains(site.SourceSystem))
+            .OrderBy(site => site.Land)
+            .ThenBy(site => site.TSC)
+            .Select(site => new ManualImportRow
+            {
+                Id = site.Id,
+                Land = site.Land,
+                TSC = site.TSC,
+                IsActive = site.IsActive,
+                ManualImportFilePath = site.ManualImportFilePath,
+                ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc
+            })
+            .ToListAsync();
+        _loading = false;
+    }
+
+    private async Task SaveAsync(ManualImportRow row)
+    {
+        _busySiteId = row.Id;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var site = await db.Sites.FirstAsync(x => x.Id == row.Id);
+            site.IsActive = row.IsActive;
+            site.ManualImportFilePath = row.ManualImportFilePath.Trim();
+            site.ManualImportLastUploadedAtUtc = row.ManualImportLastUploadedAtUtc;
+            await db.SaveChangesAsync();
+            Snackbar.Add(T("Import-Einstellungen gespeichert.", "Import settings saved."), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Speichern fehlgeschlagen", "Save failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busySiteId = null;
+        }
+    }
+
+    private async Task ValidatePathAsync(ManualImportRow row)
+    {
+        _busySiteId = row.Id;
+        try
+        {
+            row.ManualImportLastUploadedAtUtc = await StandortePageService.ValidateManualImportPathAsync(row.ManualImportFilePath);
+            Snackbar.Add(T("Datei oder SharePoint-Referenz ist erreichbar.", "File or SharePoint reference is reachable."), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Pfadpruefung fehlgeschlagen", "Path check failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busySiteId = null;
+        }
+    }
+
+    private async Task UploadAsync(ManualImportRow row, InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null)
+            return;
+
+        _busySiteId = row.Id;
+        try
+        {
+            var extension = Path.GetExtension(file.Name);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(extension, ".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(T("Bitte eine .xlsx- oder .csv-Datei auswaehlen.", "Please choose a .xlsx or .csv file."));
+            }
+
+            var uploadDirectory = Path.Combine(AppContext.BaseDirectory, "manual-imports");
+            Directory.CreateDirectory(uploadDirectory);
+            var safeBaseName = string.Concat(Path.GetFileNameWithoutExtension(file.Name)
+                .Select(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' ? ch : '_'));
+            if (string.IsNullOrWhiteSpace(safeBaseName))
+                safeBaseName = "manual_import";
+
+            var targetPath = Path.Combine(uploadDirectory, $"{safeBaseName}_{Guid.NewGuid():N}{extension}");
+            await using (var sourceStream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024))
+            await using (var targetStream = File.Create(targetPath))
+            {
+                await sourceStream.CopyToAsync(targetStream);
+            }
+
+            row.ManualImportFilePath = targetPath;
+            row.ManualImportLastUploadedAtUtc = DateTime.UtcNow;
+            await SaveAsync(row);
+            Snackbar.Add(T("Datei hochgeladen.", "File uploaded."), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Upload fehlgeschlagen", "Upload failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busySiteId = null;
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private sealed class ManualImportRow
+    {
+        public int Id { get; set; }
+        public string Land { get; set; } = string.Empty;
+        public string TSC { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string ManualImportFilePath { get; set; } = string.Empty;
+        public DateTime? ManualImportLastUploadedAtUtc { get; set; }
+    }
+}

@@ -14,6 +14,9 @@
         <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
             @T("Soll/Ist Vergleich", "Actual/reference comparison")
         </MudNavLink>
+        <MudNavLink Href="/manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
+            @T("Manuelle Importe", "Manual imports")
+        </MudNavLink>
         <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
             <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
                 <Authorized>

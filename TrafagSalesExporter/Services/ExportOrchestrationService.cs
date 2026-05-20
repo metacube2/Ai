@@ -96,7 +96,7 @@ public class ExportOrchestrationService
         lock (_lock)
         {
             if (_runningExports.ContainsKey(site.Id)) return null;
-            _runningExports[site.Id] = "HANA Abfrage...";
+            _runningExports[site.Id] = BuildInitialExportStatus(site);
         }
         NotifyChanged();
 
@@ -132,6 +132,17 @@ public class ExportOrchestrationService
     private void NotifyChanged()
     {
         OnExportStatusChanged?.Invoke();
+    }
+
+    private static string BuildInitialExportStatus(Site site)
+    {
+        var sourceSystem = (site.SourceSystem ?? string.Empty).Trim().ToUpperInvariant();
+        return sourceSystem switch
+        {
+            "MANUAL_EXCEL" => "Manuelle Excel/CSV lesen...",
+            "SAP" => "SAP OData lesen...",
+            _ => "Quelldaten lesen..."
+        };
     }
 
     private async Task<string?> RunConsolidatedExportAsync()

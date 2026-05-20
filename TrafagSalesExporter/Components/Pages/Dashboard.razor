@@ -37,6 +37,25 @@
     </MudStack>
 </MudPaper>
 
+@if (_readinessWarnings.Count > 0)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense Class="mb-4">
+        <MudText Typo="Typo.body2">@T("Aktive Standorte sind noch nicht vollstaendig bereit:", "Active sites are not fully ready:")</MudText>
+        @foreach (var warning in _readinessWarnings)
+        {
+            <MudText Typo="Typo.caption">@warning</MudText>
+        }
+    </MudAlert>
+}
+
+@if (_consolidatedStale)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+        @T("Seit der letzten zentralen Excel wurde mindestens ein Standort neu exportiert. Bitte `Zentrale Datei neu erzeugen` ausfuehren, damit das Endexcel aktuell ist.",
+            "At least one site was exported after the last consolidated Excel. Please rebuild the consolidated file so the final Excel is current.")
+    </MudAlert>
+}
+
 <MudTable Items="_dashboardRows" Dense Hover Striped Loading="_loading">
     <HeaderContent>
         <MudTh>@T("Land", "Country")</MudTh>
@@ -155,6 +174,8 @@
 @code {
     private List<DashboardRow> _dashboardRows = new();
     private List<ConsolidatedDashboardRow> _consolidatedRows = new();
+    private List<string> _readinessWarnings = new();
+    private bool _consolidatedStale;
     private bool _loading = true;
     private bool _anyRunning;
     private CancellationTokenSource? _pollingCts;
@@ -171,6 +192,8 @@
         var state = await DashboardPageActions.LoadAsync();
         _dashboardRows = state.DashboardRows;
         _consolidatedRows = state.ConsolidatedRows;
+        _readinessWarnings = state.ReadinessWarnings;
+        _consolidatedStale = state.IsConsolidatedStale;
 
         _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
         _loading = false;
@@ -178,6 +201,12 @@
 
     private async Task ExportAll()
     {
+        if (_readinessWarnings.Count > 0)
+        {
+            Snackbar.Add(T("Es gibt aktive Standorte mit fehlender manueller Datei. Bitte Warnung im Dashboard pruefen.",
+                "There are active sites with missing manual files. Please check the dashboard warning."), Severity.Warning);
+        }
+
         _anyRunning = true;
         await LoadDataAsync();
         StartPolling();
@@ -260,6 +289,9 @@
                 {
                     await InvokeAsync(() =>
                         Snackbar.Add(string.Format(T("Export gespeichert: {0}", "Export saved: {0}"), result.FilePath), Severity.Success));
+                    await InvokeAsync(() =>
+                        Snackbar.Add(T("Die zentrale Excel ist danach noch nicht automatisch aktualisiert. Bitte `Zentrale Datei neu erzeugen` starten.",
+                            "The consolidated Excel is not automatically updated after this. Please rebuild the consolidated file."), Severity.Info));
                 }
                 else if (result?.Log.Status == "Error" && !string.IsNullOrWhiteSpace(result.Log.ErrorMessage))
                 {

@@ -146,10 +146,97 @@ public class ExcelExportService : IExcelExportService
 
         ws.Columns().AdjustToContents();
         if (includeFinanceHelpSheet)
+        {
+            AddFinanceSummarySheet(workbook, records);
             AddFinanceHelpSheet(workbook);
+        }
 
         workbook.SaveAs(fullPath);
     }
+
+    private static void AddFinanceSummarySheet(XLWorkbook workbook, List<SalesRecord> records)
+    {
+        var ws = workbook.Worksheets.Add("Finance Summary");
+        ws.Position = 1;
+        ws.Cell(1, 1).Value = "Finance Summary";
+        ws.Cell(1, 1).Style.Font.Bold = true;
+        ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(2, 1).Value = "Diese Summen verwenden dieselbe Finance-Sicht wie die Spalten Finance | ... im Blatt Sales.";
+
+        var headers = new[]
+        {
+            "Year",
+            "Country Key",
+            "Currency",
+            "Included Rows",
+            "Net Sales Actual",
+            "Excluded Rows",
+            "Hinweis"
+        };
+
+        for (var i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(4, i + 1).Value = headers[i];
+            ws.Cell(4, i + 1).Style.Font.Bold = true;
+        }
+
+        var italyBlankSupplierCountryRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var summaryRows = records
+            .Select(record =>
+            {
+                var financeDate = ResolveFinanceDate(record);
+                var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+                var include = ResolveFinanceInclude(record, countryKey, italyBlankSupplierCountryRows) && record.SalesPriceValue != 0m;
+                return new
+                {
+                    Year = financeDate.Year,
+                    CountryKey = countryKey,
+                    Currency = ResolveFinanceCurrency(record),
+                    Include = include,
+                    Value = include ? record.SalesPriceValue : 0m
+                };
+            })
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .OrderBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new
+            {
+                group.Key.Year,
+                group.Key.CountryKey,
+                group.Key.Currency,
+                IncludedRows = group.Count(row => row.Include),
+                NetSalesActual = group.Sum(row => row.Value),
+                ExcludedRows = group.Count(row => !row.Include)
+            })
+            .ToList();
+
+        var rowIndex = 5;
+        foreach (var row in summaryRows)
+        {
+            ws.Cell(rowIndex, 1).Value = row.Year;
+            ws.Cell(rowIndex, 2).Value = row.CountryKey;
+            ws.Cell(rowIndex, 3).Value = row.Currency;
+            ws.Cell(rowIndex, 4).Value = row.IncludedRows;
+            ws.Cell(rowIndex, 5).Value = row.NetSalesActual;
+            ws.Cell(rowIndex, 6).Value = row.ExcludedRows;
+            ws.Cell(rowIndex, 7).Value = BuildFinanceSummaryHint(row.CountryKey);
+            rowIndex++;
+        }
+
+        ws.Column(5).Style.NumberFormat.Format = "#,##0.00";
+        ws.Columns().AdjustToContents();
+    }
+
+    private static string BuildFinanceSummaryHint(string countryKey)
+        => countryKey.ToUpperInvariant() switch
+        {
+            "DE" => "DE Alphaplan ist technisch vorbereitet; Kundenlaender/Filter fachlich noch bestaetigen.",
+            "IT" => "IT: Trafag Italia ausgeschlossen; doppelte Blank-Supplier-Zeilen nur einmal.",
+            "UK" => "UK: Sage/Manual Excel, Credit Notes negativ.",
+            "ES" => "ES: Sage CSV/Manual Excel, REC/Credit Notes negativ.",
+            _ => string.Empty
+        };
 
     private static void AddFinanceHelpSheet(XLWorkbook workbook)
     {

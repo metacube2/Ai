@@ -62,11 +62,43 @@ public sealed class DashboardPageService : IDashboardPageService
             };
         }).ToList();
 
+        var consolidatedRows = BuildConsolidatedRows(await db.ExportSettings.FirstOrDefaultAsync() ?? new());
+        var latestSuccessfulSiteRun = logs
+            .Where(log => log.Status == "OK")
+            .Select(log => (DateTime?)log.Timestamp)
+            .OrderByDescending(timestamp => timestamp)
+            .FirstOrDefault();
+        var latestConsolidatedRun = consolidatedRows
+            .Select(row => row.LastModified)
+            .OrderByDescending(timestamp => timestamp)
+            .FirstOrDefault();
+
         return new DashboardPageState
         {
             DashboardRows = rows,
-            ConsolidatedRows = BuildConsolidatedRows(await db.ExportSettings.FirstOrDefaultAsync() ?? new())
+            ConsolidatedRows = consolidatedRows,
+            ReadinessWarnings = BuildReadinessWarnings(sites, sourceSystems),
+            IsConsolidatedStale = latestSuccessfulSiteRun.HasValue &&
+                (!latestConsolidatedRun.HasValue || latestSuccessfulSiteRun.Value > latestConsolidatedRun.Value),
+            LatestSuccessfulSiteRun = latestSuccessfulSiteRun,
+            LatestConsolidatedRun = latestConsolidatedRun
         };
+    }
+
+    private static List<string> BuildReadinessWarnings(List<Site> activeSites, List<SourceSystemDefinition> sourceSystems)
+    {
+        var warnings = new List<string>();
+        foreach (var site in activeSites.OrderBy(x => x.Land).ThenBy(x => x.TSC))
+        {
+            var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
+            if (!string.Equals(sourceSystem?.ConnectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (string.IsNullOrWhiteSpace(site.ManualImportFilePath))
+                warnings.Add($"{site.Land} / {site.TSC}: manuelle Excel-/CSV-Datei fehlt.");
+        }
+
+        return warnings;
     }
 
     private static string ResolveDashboardSapServiceUrl(Site site, List<SourceSystemDefinition> sourceSystems)
@@ -114,6 +146,10 @@ public sealed class DashboardPageState
 {
     public List<DashboardRow> DashboardRows { get; set; } = [];
     public List<ConsolidatedDashboardRow> ConsolidatedRows { get; set; } = [];
+    public List<string> ReadinessWarnings { get; set; } = [];
+    public bool IsConsolidatedStale { get; set; }
+    public DateTime? LatestSuccessfulSiteRun { get; set; }
+    public DateTime? LatestConsolidatedRun { get; set; }
 }
 
 public sealed class DashboardRow

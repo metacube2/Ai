@@ -2,6 +2,23 @@
 
 Stand: 2026-05-20
 
+## Nachtrag 2026-05-20 Workflow-Fixes nach Review
+
+Umgesetzt:
+
+- Dashboard warnt vor aktiven manuellen Standorten ohne Datei.
+- Nach Einzelstandortexport wird sichtbar, dass die zentrale Excel neu erzeugt werden muss.
+- Dashboard erkennt eine veraltete zentrale Excel nach neuem Standortexport.
+- Neuer Menuepunkt `Manuelle Importe` fuer Keyuser.
+- Zentrale Excel hat ein Blatt `Finance Summary`.
+- `Management Analyse` ist als Rohdaten-/Plausibilitaetssicht markiert.
+- `Soll/Ist Vergleich` ist als verbindliche Finance-Sicht markiert.
+- Export-Live-Status ist nicht mehr pauschal `HANA Abfrage...`.
+
+Weiterhin offen:
+
+- DE Alphaplan-Fachabgrenzung: Kundenlaender/Filter muessen von Munir/Finance bestaetigt werden.
+
 ## Nachtrag 2026-05-20 Keyuser Prozess-SVG
 
 Erstellt:

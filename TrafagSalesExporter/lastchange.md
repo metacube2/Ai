@@ -1,5 +1,26 @@
 # Last Change 2026-05-04
 
+## Workflow-Konsistenz fuer Keyuser verbessert 2026-05-20
+
+Geaendert:
+
+- Export Dashboard zeigt jetzt Warnungen, wenn aktive Manual-Excel-Standorte noch keine Datei/Pfad hinterlegt haben.
+- Nach einem Einzelstandortexport wird darauf hingewiesen, dass die zentrale Excel separat neu erzeugt werden muss.
+- Dashboard markiert, wenn seit der letzten zentralen Excel ein Standortexport gelaufen ist.
+- Neuer Keyuser-Menuepunkt `Manuelle Importe` fuer DE/UK/ES-artige Excel-/CSV-Quellen:
+  - Pfad/SharePoint-Referenz pflegen
+  - Datei hochladen
+  - Standort aktiv/inaktiv setzen
+  - Pfad pruefen
+- Live-Status startet nicht mehr pauschal mit `HANA Abfrage...`, sondern quellenneutral bzw. fuer Manual Excel/SAP passender.
+- Zentrale Excel enthaelt ein neues Blatt `Finance Summary` mit Summen nach Jahr, Land und Waehrung.
+- `Management Analyse` ist klarer als Rohdaten-/Plausibilitaetssicht markiert.
+- `Soll/Ist Vergleich` ist klarer als verbindliche Finance-Sicht markiert.
+
+Bewusst nicht geaendert:
+
+- DE-Fachregel bleibt offen, bis Munir/Finance bestaetigt, welche Kundenlaender/Filter zum offiziellen DE-Ist gehoeren.
+
 ## Keyuser Prozessdoku SVG 2026-05-20
 
 Erstellt:

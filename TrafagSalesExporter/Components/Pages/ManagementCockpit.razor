@@ -55,6 +55,10 @@
     <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
         @T("Diese Sicht arbeitet direkt auf `CentralSalesRecords`. Summenfeld und Anzeige-Waehrung koennen gewaehlt werden; fachliche Filter wie Intercompany, Budget und Spartenlogik sind weiterhin nicht enthalten.", "This view works directly on `CentralSalesRecords`. Value field and display currency can be selected; business filters such as intercompany, budget and divisional logic are still not included.")
     </MudAlert>
+    <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-3">
+        @T("Diese Analyse ist eine Plausibilitaets- und Rohdatensicht. Fuer den verbindlichen Finance-Abgleich bitte `Soll/Ist Vergleich` oder im Endexcel die `Finance | ...`-Spalten verwenden.",
+            "This analysis is a plausibility/raw-data view. For the authoritative finance reconciliation, use `Actual/reference comparison` or the `Finance | ...` columns in the final Excel.")
+    </MudAlert>
     <MudGrid>
         <MudItem xs="12" md="2">
             <MudSelect T="int" @bind-Value="_selectedCentralYear" Label='@T("Jahr", "Year")' Dense>
