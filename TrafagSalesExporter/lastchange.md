@@ -1930,3 +1930,42 @@ Technische Hauptdateien:
 - `Services/DatabaseSchemaMaintenanceService.cs`
 - `Services/DatabaseSeedService.cs`
 - `Services/ConfigTransferService.cs`
+
+## Finales zentralisiertes Excel `finall.xlsx` geprueft 2026-05-20
+
+Gepruefte Datei:
+
+- `C:\Users\koi\Downloads\finall.xlsx`
+
+Ergebnis:
+
+- Datei ist als zentralisierter Export lesbar.
+- Blaetter:
+  - `Finance Summary`
+  - `Sales`
+  - `Finance Filter Hilfe`
+- `Sales` enthaelt 67'247 Datenzeilen.
+- `Finance Summary` stimmt gegen die Finance-Spalten im Blatt `Sales` exakt:
+  - Differenz je Land/Jahr/Waehrung: `0.00`
+- Die Summen entsprechen der lokal erzeugten zentralen Datei `output\Sales_All_2026-05-20.xlsx`.
+- Deutschland 2025 bleibt korrekt:
+  - `DE 2025 EUR = 3'652'394.46`
+
+Finance-Summen 2025 aus `finall.xlsx`:
+
+```text
+AT  EUR   3'438'121.37
+CH  CHF  43'521'390.82
+DE  EUR   3'652'394.46
+ES  EUR   3'082'320.18
+FR  EUR   1'471'218.44
+IN  INR 750'936'591.38
+IT  EUR   7'663'145.76
+UK  GBP   3'533'710.09
+US  USD   3'749'865.33
+```
+
+Hinweis:
+
+- Der direkte Vergleich gegen die lokale SQLite-Datei `trafag_exporter.db` war nicht aussagekraeftig, weil diese lokale DB keine passenden `CentralSalesRecords` fuer diesen Stand enthaelt.
+- Die Excel-interne Summenpruefung und der Vergleich gegen `output\Sales_All_2026-05-20.xlsx` waren konsistent.
