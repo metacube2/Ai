@@ -1567,6 +1567,34 @@ Ergebnis:
 - Build erfolgreich.
 - 3 bestehende MudBlazor-Analyzer-Warnungen in `Logs.razor`, `Transformations.razor` und `Standorte.razor`.
 
+## IIS 500 Diagnose und Hosting-Modell 2026-05-20
+
+Geaendert:
+
+- `web.config` fuer IIS auf `hostingModel="outofprocess"` umgestellt.
+- `stdoutLogEnabled="true"` bleibt aktiv, Logziel bleibt `.\logs\stdout`.
+- Ziel: Wenn IIS/ASP.NET Core vor dem App-Start scheitert, sollen eher verwertbare Startlogs entstehen; ausserdem wird die App nicht mehr direkt im IIS Worker-Prozess gehostet.
+
+Aktueller Stand:
+
+- Publish-Ordner `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` enthaelt `BiDashboard.dll`, `web.config`, `wwwroot`, `runtimes`, `trafag_exporter.db` und `logs`.
+- `logs` war trotz aktivem stdout-Logging leer.
+- Die veroeffentlichte DLL liess sich vom Publish-Ordner aus starten und brach nicht sofort mit einer Exception ab.
+- Remote-Pruefung der installierten .NET-Runtimes per WinRM war nicht moeglich; der Serveradmin muss deshalb am Server pruefen, ob das .NET 8 Hosting Bundle installiert ist.
+
+Naechste Server-Pruefpunkte:
+
+- URL `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/diag.txt` testen.
+- Wenn `diag.txt` nicht erreichbar ist, stimmt IIS-Anwendung/virtueller Pfad/Binding nicht.
+- Wenn `diag.txt` erreichbar ist, aber die App 500 liefert, Windows Event Viewer pruefen:
+  - Windows Logs > Application
+  - Quellen: `IIS AspNetCore Module V2`, `.NET Runtime`, `Application Error`
+- App Pool pruefen:
+  - .NET CLR Version: `No Managed Code`
+  - Pipeline: `Integrated`
+  - 32-bit Applications: `False`
+  - Identity muss Modify-Rechte auf Publish-Ordner und `logs` haben.
+
 ## Architekturreview Static/Hardcoding 2026-05-15
 
 Erstellt:
