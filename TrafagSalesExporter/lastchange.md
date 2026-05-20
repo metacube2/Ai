@@ -1,5 +1,21 @@
 # Last Change 2026-05-04
 
+## Technische Systemarchitektur SVG 2026-05-20
+
+Erstellt:
+
+- `docs/SYSTEMARCHITEKTUR_TECHNISCH_2026-05-20.svg`
+
+Inhalt:
+
+- Laufzeit und IIS-Publish als `BiDashboard.dll` ohne EXE/AppHost.
+- Blazor-UI, Authentisierung, Start-/Background-Services.
+- Applikationskern: Export-Orchestrierung, Standortexport, Adapter, Transformationen, zentrale Tabelle.
+- Datenquellen: SAP HANA/BI1/SAGE, SAP Gateway/OData, Manual Excel/CSV, SharePoint.
+- Persistenzmodell mit wichtigsten SQLite-Tabellen.
+- Output-/SharePoint-Pfade, Finance-Sonderregeln, HR/Finance-Zugriff und Betriebspruefpunkte.
+- Test-/Probeprogramme sind bewusst nicht enthalten.
+
 ## IT Finance-Methode fachlich bestaetigt 2026-05-20
 
 Entscheid:

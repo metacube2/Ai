@@ -2,6 +2,27 @@
 
 Stand: 2026-05-20
 
+## Nachtrag 2026-05-20 Technische Architektur-SVG
+
+Erstellt:
+
+```text
+docs/SYSTEMARCHITEKTUR_TECHNISCH_2026-05-20.svg
+```
+
+Zielgruppe:
+
+- Systemarchitekt / Serveradmin / technischer Projektkontext.
+
+Abgrenzung:
+
+- Nur produktive Applikation.
+- Keine Testapp, Probe-Tools oder temporaeren Analyseprogramme.
+
+Naechster geplanter Schritt:
+
+- Separate Keyuser-Prozessdoku als zweite SVG erstellen: was wann in der App zu tun ist, inklusive Import, Standortexport, zentraler Excel, Finance-Pruefung und offener fachlicher Rueckfragen.
+
 ## Nachtrag 2026-05-20 DE Alphaplan-Excel provisorisch eingebaut
 
 Erledigt:
