@@ -471,6 +471,31 @@
         </MudItem>
         <MudItem xs="12">
             <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Neue Auswertungen im Cockpit", "New cockpit views")</MudText>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <ul class="mb-0">
+                            <li>@T("Managementsicht anonymisiert Personendaten fuer Fuehrungsberichte.", "Management view anonymizes personal data for management reports.")</li>
+                            <li>@T("Dateistatus zeigt Pfad, Zeilen, Aenderungsdatum, Alter und Frische.", "File status shows path, rows, modification date, age and freshness.")</li>
+                            <li>@T("HR-Ampel fasst Fluktuation, Krankheit, GLZ, Restferien und Datenqualitaet zusammen.", "HR status summarizes turnover, sickness, time balance, vacation balance and data quality.")</li>
+                            <li>@T("GLZ- und Restferien-Ampeln koennen gefiltert werden.", "Time-balance and vacation status can be filtered.")</li>
+                            <li>@T("Periodenvergleich zeigt die wichtigsten Vorjahreswerte, soweit Daten vorhanden sind.", "Period comparison shows key prior-year values where data is available.")</li>
+                        </ul>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <ul class="mb-0">
+                            <li>@T("Datenqualitaet markiert fehlende Dateien, alte Dateien und auffaellige Werte.", "Data quality flags missing files, old files and suspicious values.")</li>
+                            <li>@T("Austritte werden nach Austrittsart und Organisation gruppiert.", "Leavers are grouped by exit type and organisation.")</li>
+                            <li>@T("Absenzen werden nach Organisation ausgewertet.", "Absences are evaluated by organisation.")</li>
+                            <li>@T("Top-Absenzen und kritische Detailtabellen helfen bei der operativen Pruefung.", "Top absences and critical detail tables support operational checks.")</li>
+                            <li>@T("Drucken/PDF erzeugt eine weitergebbare Ansicht aus dem Browser.", "Print/PDF creates a shareable browser view.")</li>
+                        </ul>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Erwartete Dateien", "Expected files")</MudText>
                 <MudTable Items="Result.FileStatuses" Dense Hover Striped>
                     <HeaderContent>
