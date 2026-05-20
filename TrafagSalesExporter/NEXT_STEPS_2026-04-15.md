@@ -2,6 +2,27 @@
 
 Stand: 2026-05-20
 
+## Nachtrag 2026-05-20 Keyuser Prozess-SVG
+
+Erstellt:
+
+```text
+docs/KEYUSER_PROZESSDOKU_2026-05-20.svg
+```
+
+Zielgruppe:
+
+- Finance Keyuser / Poweruser.
+
+Inhalt:
+
+- Vorbereitung in Settings und Standorte.
+- Manual-Excel-Dateien fuer UK/ES/DE.
+- Einzelstandortexport, Export aller Standorte und zentrale Excel.
+- Finance-Filter im Endexcel.
+- Soll/Ist Vergleich, Management Analyse, Logs.
+- Fehlerbehandlung und fachliche Freigabe.
+
 ## Nachtrag 2026-05-20 Technische Architektur-SVG
 
 Erstellt:
@@ -19,9 +40,9 @@ Abgrenzung:
 - Nur produktive Applikation.
 - Keine Testapp, Probe-Tools oder temporaeren Analyseprogramme.
 
-Naechster geplanter Schritt:
+Status:
 
-- Separate Keyuser-Prozessdoku als zweite SVG erstellen: was wann in der App zu tun ist, inklusive Import, Standortexport, zentraler Excel, Finance-Pruefung und offener fachlicher Rueckfragen.
+- Keyuser-Prozessdoku wurde als separate SVG erstellt.
 
 ## Nachtrag 2026-05-20 DE Alphaplan-Excel provisorisch eingebaut
 

@@ -1,5 +1,18 @@
 # Last Change 2026-05-04
 
+## Keyuser Prozessdoku SVG 2026-05-20
+
+Erstellt:
+
+- `docs/KEYUSER_PROZESSDOKU_2026-05-20.svg`
+
+Inhalt:
+
+- Prozess von Vorbereitung ueber Standortexport, zentrale Excel und Finance-Soll/Ist bis Fehlerbehandlung.
+- Fokus auf Keyuser-Aktionen in der App: Settings, Standorte, Export Dashboard, Management Analyse, Soll/Ist Vergleich, Logs.
+- Enthaltene Fachpunkte: Manual Excel fuer UK/ES/DE, DE Alphaplan, IT-Sonderregel, Finance-Spalten im Endexcel.
+- Technische Implementierungsdetails und Testprogramme sind bewusst ausgeklammert.
+
 ## Technische Systemarchitektur SVG 2026-05-20
 
 Erstellt:
