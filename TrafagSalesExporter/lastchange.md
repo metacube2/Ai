@@ -1,5 +1,49 @@
 # Last Change 2026-05-04
 
+## Management Analyse auf Finance Summary ausgerichtet 2026-05-20
+
+Geaendert:
+
+- `Management Analyse` hat jetzt einen fuehrenden Reiter `Finance Summary`.
+- Die Kennzahlen in diesem Reiter verwenden dieselbe `FinanceRuleEngine` wie das zentrale Excel-Blatt `Finance Summary`.
+- Filter fuer Jahr, Land und Waehrung wirken auf das Endergebnis, nicht nur auf eine Rohdatenansicht.
+- Die bisherige Management-Tabelle bleibt als separater Rohdaten-/Diagnose-Reiter erhalten.
+- Fuer DE 2026 wird kein Fehler mehr geworfen. Da DE/Alphaplan fachlich auf 2025 gezwungen ist, zeigt das Dashboard fuer DE 2026 einen leeren Zustand mit Hinweis.
+
+Verifiziert:
+
+- Lokale Probe gegen DB und Excel zeigte, dass die alte `Management Analyse` wegen Rohwerten, anderem Datum und EUR-Umrechnung nicht mit der Finance Summary uebereinstimmte.
+- Tests: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `77/77` bestanden.
+
+Commit:
+
+- `610e771 Add finance summary view and HR guide`
+
+## HR KPI Cockpit erweitert und Anwenderdokus erstellt 2026-05-20
+
+Geaendert:
+
+- `HR KPI Cockpit` hat einen neuen Reiter `Anleitung` fuer HR-Anwenderinnen.
+- Der Datenordner fuer Rexx-/SAP-Dateien ist im Cockpit sichtbar und je Lauf anpassbar; dauerhaft ueber `HrKpi:DataFolder` in `appsettings.json`.
+- Dateistatus zeigt jetzt letzte Aenderung, Dateialter und Frischebewertung.
+- Neue Auswertungen: Ampeln, Periodenvergleich, Datenqualitaets-Hinweise, Austritte nach Typ/Organisation und Absenzen nach Organisation.
+- Managementsicht anonymisiert personenbezogene Details und reduziert die Anzeige auf aggregierte Kennzahlen.
+- Print-/PDF-Funktion im Cockpit ergaenzt.
+
+Anwenderdokus:
+
+- `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+- `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+
+Verifiziert:
+
+- Word-Dateien als gueltige DOCX-Pakete geprueft.
+- Tests: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `77/77` bestanden.
+
+Commit:
+
+- `06fb560 Expand HR KPI cockpit and add user guides`
+
 ## Workflow-Konsistenz fuer Keyuser verbessert 2026-05-20
 
 Geaendert:
