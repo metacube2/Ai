@@ -1573,6 +1573,7 @@ Geaendert:
 
 - `web.config` fuer IIS auf `hostingModel="outofprocess"` umgestellt.
 - `stdoutLogEnabled="true"` bleibt aktiv, Logziel bleibt `.\logs\stdout`.
+- `ASPNETCORE_DETAILEDERRORS=true` fuer die temporaere IIS-Fehlerdiagnose gesetzt.
 - Ziel: Wenn IIS/ASP.NET Core vor dem App-Start scheitert, sollen eher verwertbare Startlogs entstehen; ausserdem wird die App nicht mehr direkt im IIS Worker-Prozess gehostet.
 
 Aktueller Stand:
