@@ -5,6 +5,8 @@ namespace TrafagSalesExporter.Services;
 
 public class ExcelExportService : IExcelExportService
 {
+    private const int GermanyAlphaplanFinanceYear = 2025;
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -132,12 +134,13 @@ public class ExcelExportService : IExcelExportService
             var financeDate = ResolveFinanceDate(record);
             var financeCountryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
             var financeInclude = ResolveFinanceInclude(record, financeCountryKey, italyBlankSupplierCountryRows);
+            var financeNetSalesActual = ResolveFinanceNetSalesActual(record, financeCountryKey, financeInclude);
             ws.Cell(row, 36).Value = financeDate.Year;
             ws.Cell(row, 37).Value = financeCountryKey;
             ws.Cell(row, 38).Value = financeDate.ToString("dd.MM.yyyy");
-            ws.Cell(row, 39).Value = financeInclude ? record.SalesPriceValue : 0m;
+            ws.Cell(row, 39).Value = financeNetSalesActual;
             ws.Cell(row, 40).Value = ResolveFinanceCurrency(record);
-            ws.Cell(row, 41).Value = financeInclude && record.SalesPriceValue != 0m ? "TRUE" : "FALSE";
+            ws.Cell(row, 41).Value = financeInclude && financeNetSalesActual != 0m ? "TRUE" : "FALSE";
             ws.Cell(row, 42).Value = financeInclude
                 ? "Sales Price/Value"
                 : ResolveFinanceExclusionReason(record, financeCountryKey);
@@ -186,14 +189,16 @@ public class ExcelExportService : IExcelExportService
             {
                 var financeDate = ResolveFinanceDate(record);
                 var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
-                var include = ResolveFinanceInclude(record, countryKey, italyBlankSupplierCountryRows) && record.SalesPriceValue != 0m;
+                var rawInclude = ResolveFinanceInclude(record, countryKey, italyBlankSupplierCountryRows);
+                var value = ResolveFinanceNetSalesActual(record, countryKey, rawInclude);
+                var include = rawInclude && value != 0m;
                 return new
                 {
                     Year = financeDate.Year,
                     CountryKey = countryKey,
                     Currency = ResolveFinanceCurrency(record),
                     Include = include,
-                    Value = include ? record.SalesPriceValue : 0m
+                    Value = value
                 };
             })
             .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
@@ -231,7 +236,7 @@ public class ExcelExportService : IExcelExportService
     private static string BuildFinanceSummaryHint(string countryKey)
         => countryKey.ToUpperInvariant() switch
         {
-            "DE" => "DE Alphaplan ist technisch vorbereitet; Kundenlaender/Filter fachlich noch bestaetigen.",
+            "DE" => "DE Alphaplan Jahresfile 2025: Weiterberechnungen ausgeschlossen; GS negativ, GS2510095 2024.",
             "IT" => "IT: Trafag Italia ausgeschlossen; doppelte Blank-Supplier-Zeilen nur einmal.",
             "UK" => "UK: Sage/Manual Excel, Credit Notes negativ.",
             "ES" => "ES: Sage CSV/Manual Excel, REC/Credit Notes negativ.",
@@ -253,8 +258,9 @@ public class ExcelExportService : IExcelExportService
             ("3. Gueltige Zeilen filtern", "Finance | Include = TRUE"),
             ("4. Summe bilden", "Finance | Net Sales Actual summieren"),
             ("Waehrung", "Finance | Currency zeigt die fuer den Finance-Abgleich fuehrende Hauswaehrung."),
-            ("Datum", "Finance | Date verwendet PostingDate, danach InvoiceDate, danach ExtractionDate."),
+            ("Datum", "Finance | Date verwendet PostingDate, danach InvoiceDate, danach ExtractionDate. DE Alphaplan wird als Jahresfile 2025 behandelt."),
             ("Wertquelle", "Finance | Source Value Field zeigt, aus welchem Rohfeld der Finance-Wert kommt."),
+            ("DE-Sonderregel", "Fuer DE gilt die Deutschland-Rueckmeldung: Trafag AG und Magnetic Sense ausgeschlossen, GS-Gutschriften negativ, GS2510095 nicht in 2025."),
             ("IT-Sonderregel", "Fuer IT wird Trafag Italia im Finance-Wert ausgeschlossen; doppelte IT-Zeilen ohne Supplier country werden nur einmal gezaehlt."),
             ("Nicht verwenden", "Nicht Land, TSC, Document Total LC oder andere Betragsspalten fuer den CFO-Abgleich erraten."),
             ("Hinweis", "Offene fachliche Differenzen bleiben sichtbar; diese Excel-Sicht soll die gleiche Ist-Summe wie das Testprogramm reproduzieren.")
@@ -293,7 +299,13 @@ public class ExcelExportService : IExcelExportService
     }
 
     private static DateTime ResolveFinanceDate(SalesRecord record)
-        => record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate;
+    {
+        var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+        if (countryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
+            return new DateTime(GermanyAlphaplanFinanceYear, 12, 31);
+
+        return record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate;
+    }
 
     private static string ResolveFinanceCurrency(SalesRecord record)
         => ResolveFinanceCountryKey(record.Land, record.Tsc) switch
@@ -330,6 +342,9 @@ public class ExcelExportService : IExcelExportService
 
     private static bool ResolveFinanceInclude(SalesRecord record, string financeCountryKey, HashSet<string> italyBlankSupplierCountryRows)
     {
+        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
+            return IsIncludedGermanyFinanceRow(record);
+
         if (!financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase))
             return true;
 
@@ -350,8 +365,51 @@ public class ExcelExportService : IExcelExportService
         if (financeCountryKey.Equals("IT", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(record.SupplierCountry))
             return "Excluded IT duplicate without Supplier country";
 
+        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase))
+            return ResolveGermanyExclusionReason(record);
+
         return "Excluded";
     }
+
+    private static decimal ResolveFinanceNetSalesActual(SalesRecord record, string financeCountryKey, bool financeInclude)
+    {
+        if (!financeInclude)
+            return 0m;
+
+        if (financeCountryKey.Equals("DE", StringComparison.OrdinalIgnoreCase) && IsGermanyCreditNote(record))
+            return -Math.Abs(record.SalesPriceValue);
+
+        return record.SalesPriceValue;
+    }
+
+    private static bool IsIncludedGermanyFinanceRow(SalesRecord record)
+        => !IsGermanyTrafagAgRecharge(record) &&
+           !IsGermanyMagneticSenseRecharge(record) &&
+           !IsGermanyCreditNoteAlreadyCapturedInPriorYear(record);
+
+    private static string ResolveGermanyExclusionReason(SalesRecord record)
+    {
+        if (IsGermanyTrafagAgRecharge(record))
+            return "Excluded DE Weiterberechnung Trafag AG";
+        if (IsGermanyMagneticSenseRecharge(record))
+            return "Excluded DE Weiterberechnung Magnetic Sense";
+        if (IsGermanyCreditNoteAlreadyCapturedInPriorYear(record))
+            return "Excluded DE GS2510095 already captured in 2024";
+
+        return "Excluded DE";
+    }
+
+    private static bool IsGermanyTrafagAgRecharge(SalesRecord record)
+        => NormalizeFinanceText(record.CustomerName) == "TRAFAG AG";
+
+    private static bool IsGermanyMagneticSenseRecharge(SalesRecord record)
+        => NormalizeFinanceText(record.CustomerName).Contains("MAGNETIC SENSE", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsGermanyCreditNote(SalesRecord record)
+        => (record.InvoiceNumber ?? string.Empty).Trim().StartsWith("GS", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsGermanyCreditNoteAlreadyCapturedInPriorYear(SalesRecord record)
+        => (record.InvoiceNumber ?? string.Empty).Trim().Equals("GS2510095", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsExcludedItalyCustomer(SalesRecord record)
         => NormalizeFinanceText(record.CustomerName).Contains("TRAFAG ITALIA", StringComparison.OrdinalIgnoreCase);

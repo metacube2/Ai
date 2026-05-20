@@ -760,7 +760,7 @@ public class DatabaseSeedService : IDatabaseSeedService
             new FinanceReference { Key = "CH", Label = "Trafag CH", Year = 2025 },
             new FinanceReference { Key = "CN", Label = "Trafag CN", Year = 2025 },
             new FinanceReference { Key = "CZ", Label = "Trafag CZ", Year = 2025, LocalCurrencyValue = 95458782m },
-            new FinanceReference { Key = "DE", Label = "Trafag DE", Year = 2025, LocalCurrencyValue = 3635923m },
+            new FinanceReference { Key = "DE", Label = "Trafag DE", Year = 2025, LocalCurrencyValue = 3652394.46m },
             new FinanceReference { Key = "ES", Label = "Trafag ES", Year = 2025, LocalCurrencyValue = 3102333.61m },
             new FinanceReference { Key = "FR", Label = "Trafag FR", Year = 2025, LocalCurrencyValue = 1450582m, CheckValue = 1471218m },
             new FinanceReference { Key = "GFS", Label = "Trafag GfS", Year = 2025, LocalCurrencyValue = 6495513m },
@@ -800,6 +800,12 @@ public class DatabaseSeedService : IDatabaseSeedService
                 if (current.Key == "ES" && current.Year == 2025 && current.LocalCurrencyValue != 3102333.61m)
                 {
                     current.LocalCurrencyValue = 3102333.61m;
+                    changed = true;
+                }
+
+                if (current.Key == "DE" && current.Year == 2025 && current.LocalCurrencyValue != 3652394.46m)
+                {
+                    current.LocalCurrencyValue = 3652394.46m;
                     changed = true;
                 }
 

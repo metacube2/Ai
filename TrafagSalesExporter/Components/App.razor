@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trafag Finanze/Sales Management Cockpit</title>
-    <base href="/" />
+    <base href="@BaseHref" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
@@ -17,3 +17,21 @@
     <script src="js/download.js"></script>
 </body>
 </html>
+
+@code {
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
+    private string BaseHref
+    {
+        get
+        {
+            var pathBase = Configuration["ASPNETCORE_PATHBASE"]?.Trim();
+            if (string.IsNullOrWhiteSpace(pathBase) || pathBase == "/")
+                return "/";
+
+            pathBase = "/" + pathBase.Trim('/');
+            return $"{pathBase}/";
+        }
+    }
+}

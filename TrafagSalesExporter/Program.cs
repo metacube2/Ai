@@ -110,6 +110,11 @@ builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 
 var app = builder.Build();
+var pathBase = app.Configuration["ASPNETCORE_PATHBASE"];
+if (!string.IsNullOrWhiteSpace(pathBase))
+{
+    app.UsePathBase(pathBase.Trim());
+}
 
 using (var scope = app.Services.CreateScope())
 {
