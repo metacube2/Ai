@@ -112,6 +112,42 @@ Serverbefund:
 - Dadurch erreichen Requests weder `diag.txt` noch `BiDashboard.dll`.
 - Marco/IT muss in IIS die SSL Settings pruefen und Client Certificates auf `Ignore` oder hoechstens `Accept` setzen, nicht `Require`.
 
+## Adminbereich und Passwortwechsel 2026-05-21
+
+Geaendert:
+
+- Finance Cockpit und HR KPI Login-Masken haben einen Bereich `Passwort ändern`.
+- Passwortaenderung verlangt Benutzername, aktuelles Passwort, neues Passwort und Wiederholung.
+- Neue Passwoerter muessen mindestens 8 Zeichen haben.
+- Gespeichert wird ein SHA-256-Hash in `appsettings.json`, kein Klartext.
+- Neuer interner Adminbereich `/admin/sessions`.
+- Der Adminbereich hat eine eigene App-interne Sperre `AdminAccess`.
+- Adminseite `Aktive Logins` zeigt App-interne HR-/Finance-Entsperrungen seit dem letzten App-Start:
+  - Bereich
+  - Login-Name
+  - IP-Adresse, soweit aus dem Request verfuegbar
+  - Entsperrt seit
+  - Zuletzt gesehen
+- Hinweis: Da HR und Finance gemeinsame App-Logins verwenden, zeigt die Seite nicht zwingend die echte Person, sondern die verwendete App-Session.
+- Standorte-Tabelle zeigt jetzt Icons fuer den Quellentyp:
+  - Upload-Datei = Manual Excel / CSV
+  - Cloud Sync = SAP OData
+  - Storage = HANA / Server
+
+Initialer Adminzugang:
+
+```text
+Username: admin
+Initialpasswort: TrafagAdmin2026!
+```
+
+Nach erster Nutzung sollte das Adminpasswort ueber die Admin-Loginmaske geaendert werden.
+
+Verifiziert:
+
+- `dotnet build .\TrafagSalesExporter.csproj --no-restore --verbosity minimal -p:OutDir=C:\TMP\trafag_out\`
+- Ergebnis: Build erfolgreich, nur bestehende MudBlazor-Analyzer-Warnungen zu `Dense` auf vorhandenen Controls.
+
 ## Markdown-Doku und Anwenderdokus nachgezogen 2026-05-20
 
 Geaendert:

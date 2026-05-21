@@ -19,6 +19,7 @@ builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogL
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpContextAccessor();
 
 var securitySettings = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
 var useDevelopmentAuthentication = builder.Environment.IsDevelopment() && securitySettings.DevelopmentBypass;
@@ -47,6 +48,7 @@ builder.Services.AddHttpClient(nameof(ExchangeRateImportService));
 builder.Services.Configure<HrKpiDataSourceOptions>(builder.Configuration.GetSection(HrKpiDataSourceOptions.SectionName));
 builder.Services.Configure<HrKpiAccessOptions>(builder.Configuration.GetSection(HrKpiAccessOptions.SectionName));
 builder.Services.Configure<FinanceCockpitAccessOptions>(builder.Configuration.GetSection(FinanceCockpitAccessOptions.SectionName));
+builder.Services.Configure<AdminAccessOptions>(builder.Configuration.GetSection(AdminAccessOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
@@ -85,6 +87,7 @@ builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaM
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
 builder.Services.AddSingleton<IUiTextService, UiTextService>();
+builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
 
 // Datenquellen-Adapter (Strategy per ConnectionKind).
 builder.Services.AddSingleton<IDataSourceAdapter, HanaDataSourceAdapter>();
@@ -109,6 +112,7 @@ builder.Services.AddScoped<ITransformationsPageService, TransformationsPageServi
 builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
+builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
 
 var app = builder.Build();
 var pathBase = app.Configuration["ASPNETCORE_PATHBASE"];

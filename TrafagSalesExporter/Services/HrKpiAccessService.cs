@@ -11,16 +11,28 @@ public interface IHrKpiAccessService
     bool IsConfigured { get; }
     bool IsUnlocked { get; }
     bool TryUnlock(string username, string password);
+    bool TryChangePassword(string username, string currentPassword, string newPassword);
     void Lock();
 }
 
-public sealed class HrKpiAccessService : IHrKpiAccessService
+public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 {
     private readonly HrKpiAccessOptions _options;
+    private readonly IHostEnvironment _environment;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IAccessSessionTracker _sessionTracker;
+    private readonly string _sessionId = Guid.NewGuid().ToString("N");
 
-    public HrKpiAccessService(IOptions<HrKpiAccessOptions> options)
+    public HrKpiAccessService(
+        IOptions<HrKpiAccessOptions> options,
+        IHostEnvironment environment,
+        IHttpContextAccessor httpContextAccessor,
+        IAccessSessionTracker sessionTracker)
     {
         _options = options.Value;
+        _environment = environment;
+        _httpContextAccessor = httpContextAccessor;
+        _sessionTracker = sessionTracker;
     }
 
     public bool IsEnabled => _options.Enabled;
@@ -53,14 +65,48 @@ public sealed class HrKpiAccessService : IHrKpiAccessService
             : FixedEquals(password, _options.Password);
 
         IsUnlocked = valid;
+        if (valid)
+            _sessionTracker.Register(_sessionId, "HR KPI", username.Trim(), GetRemoteAddress());
         return valid;
     }
 
-    public void Lock() => IsUnlocked = false;
+    public void Lock()
+    {
+        IsUnlocked = false;
+        _sessionTracker.Unregister(_sessionId);
+    }
+
+    public bool TryChangePassword(string username, string currentPassword, string newPassword)
+    {
+        if (!IsEnabled ||
+            !IsConfigured ||
+            string.IsNullOrWhiteSpace(newPassword) ||
+            newPassword.Length < 8 ||
+            !TryUnlock(username, currentPassword))
+        {
+            return false;
+        }
+
+        var passwordHash = AccessPasswordSettingsWriter.HashPassword(newPassword);
+        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, HrKpiAccessOptions.SectionName, passwordHash);
+        _options.PasswordHash = passwordHash;
+        _options.Password = string.Empty;
+        IsUnlocked = true;
+        _sessionTracker.Register(_sessionId, "HR KPI", username.Trim(), GetRemoteAddress());
+        return true;
+    }
+
+    public void Dispose()
+    {
+        _sessionTracker.Unregister(_sessionId);
+    }
+
+    private string? GetRemoteAddress()
+        => _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
     private static bool VerifyPasswordHash(string password, string configuredHash)
     {
-        var passwordHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
+        var passwordHash = AccessPasswordSettingsWriter.HashPassword(password);
         return FixedEquals(passwordHash, configuredHash.Trim());
     }
 

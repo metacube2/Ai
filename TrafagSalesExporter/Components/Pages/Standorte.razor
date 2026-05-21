@@ -85,8 +85,22 @@
             <MudTd>@context.Land</MudTd>
             <MudTd>@context.TSC</MudTd>
             <MudTd>@context.Schema</MudTd>
-            <MudTd>@context.SourceSystem</MudTd>
-            <MudTd>@GetConnectionTarget(context)</MudTd>
+            <MudTd>
+                <MudTooltip Text="@GetConnectionKindTooltip(context)">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetConnectionKindColor(context)"
+                             Icon="@GetConnectionKindIcon(context)">
+                        @context.SourceSystem
+                    </MudChip>
+                </MudTooltip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                    <MudTooltip Text="@GetConnectionKindTooltip(context)">
+                        <MudIcon Icon="@GetConnectionKindIcon(context)" Color="@GetConnectionKindColor(context)" Size="Size.Small" />
+                    </MudTooltip>
+                    <span>@GetConnectionTarget(context)</span>
+                </MudStack>
+            </MudTd>
             <MudTd>
                 @if (context.IsActive)
                 {
@@ -789,6 +803,39 @@
             return string.IsNullOrWhiteSpace(site.ManualImportFilePath) ? "-" : Path.GetFileName(site.ManualImportFilePath);
 
         return GetServerNode(site.HanaServer);
+    }
+
+    private string GetConnectionKindIcon(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.UploadFile;
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.CloudSync;
+
+        return Icons.Material.Filled.Storage;
+    }
+
+    private Color GetConnectionKindColor(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return Color.Info;
+
+        return Color.Primary;
+    }
+
+    private string GetConnectionKindTooltip(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return "Manual Excel / CSV";
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return "SAP OData Server";
+
+        return "HANA / Server";
     }
 
     private string GetEffectiveSapServiceUrl(Site site)

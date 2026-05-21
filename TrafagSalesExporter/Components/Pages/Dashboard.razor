@@ -1,481 +1,126 @@
 @page "/"
-@using System.Diagnostics
 @using TrafagSalesExporter.Services
-@inject IDashboardPageService DashboardPageActions
-@inject ExportOrchestrationService Orchestrator
-@inject TimerBackgroundService TimerService
-@inject ISnackbar Snackbar
 @inject IUiTextService UiText
-@implements IDisposable
 
-<PageTitle>@T("Export Dashboard", "Export dashboard")</PageTitle>
+<PageTitle>@T("Trafag Cockpit", "Trafag Cockpit")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("Export Dashboard", "Export dashboard")</MudText>
+<div class="home-shell">
+    <div class="home-content">
+        <svg class="home-manometer" viewBox="0 0 600 340" role="img" aria-label="Trafag cockpit manometer">
+            <rect x="0" y="0" width="600" height="340" fill="#fff" />
+            <path d="M70 260 A230 230 0 0 1 530 260" class="gauge-outer" />
+            <path d="M115 260 A185 185 0 0 1 485 260" class="gauge-inner" />
 
-<MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
-                   OnClick="ExportAll" Disabled="_anyRunning">
-            @T("Alle exportieren", "Export all")
-        </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.TableView"
-                   OnClick="ExportConsolidatedOnly" Disabled="_anyRunning">
-            @T("Zentrale Datei neu erzeugen", "Rebuild consolidated file")
-        </MudButton>
-        <MudText Typo="Typo.body1">
-            @if (TimerService.NextRun < DateTime.MaxValue)
-            {
-                <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
-                @(string.Format(T("Naechster automatischer Lauf: {0}", "Next automatic run: {0}"), TimerService.NextRun.ToString("dd.MM.yyyy HH:mm")))
-            }
-            else
-            {
-                <MudIcon Icon="@Icons.Material.Filled.TimerOff" Size="Size.Small" Class="mr-1" />
-                @T("Timer deaktiviert", "Timer disabled")
-            }
-        </MudText>
-    </MudStack>
-</MudPaper>
+            <line x1="126" y1="260" x2="95" y2="260" class="gauge-tick" />
+            <line x1="177" y1="137" x2="155" y2="115" class="gauge-tick" />
+            <line x1="300" y1="86" x2="300" y2="55" class="gauge-tick" />
+            <line x1="423" y1="137" x2="445" y2="115" class="gauge-tick" />
+            <line x1="474" y1="260" x2="505" y2="260" class="gauge-tick" />
 
-@if (_readinessWarnings.Count > 0)
-{
-    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense Class="mb-4">
-        <MudText Typo="Typo.body2">@T("Aktive Standorte sind noch nicht vollstaendig bereit:", "Active sites are not fully ready:")</MudText>
-        @foreach (var warning in _readinessWarnings)
-        {
-            <MudText Typo="Typo.caption">@warning</MudText>
-        }
-    </MudAlert>
-}
+            <text x="150" y="230" class="gauge-label">0</text>
+            <text x="205" y="154" class="gauge-label">25</text>
+            <text x="300" y="126" class="gauge-label">50</text>
+            <text x="395" y="154" class="gauge-label">75</text>
+            <text x="450" y="230" class="gauge-label">100</text>
+            <text x="300" y="222" class="gauge-brand">TRAFAG</text>
 
-@if (_consolidatedStale)
-{
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
-        @T("Seit der letzten zentralen Excel wurde mindestens ein Standort neu exportiert. Bitte `Zentrale Datei neu erzeugen` ausfuehren, damit das Endexcel aktuell ist.",
-            "At least one site was exported after the last consolidated Excel. Please rebuild the consolidated file so the final Excel is current.")
-    </MudAlert>
-}
+            <g class="gauge-needle">
+                <line x1="300" y1="260" x2="300" y2="96" class="needle-line" />
+            </g>
+            <circle cx="300" cy="260" r="28" fill="#050505" />
+        </svg>
+        <div class="home-welcome">@T("Willkommen im Trafag Analyse Dashboard", "Welcome to the Trafag Analytical Dashboard")</div>
+    </div>
+</div>
 
-<MudTable Items="_dashboardRows" Dense Hover Striped Loading="_loading">
-    <HeaderContent>
-        <MudTh>@T("Land", "Country")</MudTh>
-        <MudTh>@T("Basis", "Basis")</MudTh>
-        <MudTh>TSC</MudTh>
-        <MudTh>@T("Schema", "Schema")</MudTh>
-        <MudTh>@T("Server", "Server")</MudTh>
-        <MudTh>@T("Status", "Status")</MudTh>
-        <MudTh>@T("Live-Status", "Live status")</MudTh>
-        <MudTh>@T("Zeilen", "Rows")</MudTh>
-        <MudTh>@T("Letzter Lauf", "Last run")</MudTh>
-        <MudTh>@T("Dauer", "Duration")</MudTh>
-        <MudTh>@T("Aktion", "Action")</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.Land</MudTd>
-        <MudTd>
-            <MudTooltip Text="@context.DataBasis">
-                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
-                    <MudIcon Icon="@GetDataBasisIcon(context.DataBasis)" Color="@GetDataBasisColor(context.DataBasis)" Size="Size.Small" />
-                    <MudText Typo="Typo.caption">@context.DataBasis</MudText>
-                </MudStack>
-            </MudTooltip>
-        </MudTd>
-        <MudTd>@context.TSC</MudTd>
-        <MudTd>@context.Schema</MudTd>
-        <MudTd>@context.ServerName</MudTd>
-        <MudTd>
-            @if (Orchestrator.IsExporting(context.SiteId))
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" Class="mr-1" />
-                <MudText Typo="Typo.caption">@Orchestrator.GetExportStatus(context.SiteId)</MudText>
-            }
-            else if (context.LastStatus == "OK")
-            {
-                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
-            }
-            else if (context.LastStatus == "Error")
-            {
-                <MudTooltip Text="@context.ErrorMessage">
-                    <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" />
-                </MudTooltip>
-            }
-            else
-            {
-                <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
-            }
-        </MudTd>
-        <MudTd>
-            @if (!string.IsNullOrWhiteSpace(context.LiveMessage))
-            {
-                <MudTooltip Text="@context.LiveDetails">
-                    <MudText Typo="Typo.caption" Style="max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
-                        @context.LiveMessage
-                    </MudText>
-                </MudTooltip>
-            }
-            else
-            {
-                <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
-            }
-        </MudTd>
-        <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
-        <MudTd>@(context.LastRun.HasValue ? context.LastRun.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
-        <MudTd>@(context.DurationSeconds > 0 ? $"{context.DurationSeconds:F1}s" : "-")</MudTd>
-        <MudTd>
-            <MudStack Row Spacing="1">
-                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.FileDownload"
-                           OnClick="() => ExportSingle(context.SiteId)"
-                           Disabled="Orchestrator.IsExporting(context.SiteId)">
-                    Export
-                </MudButton>
-                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Info"
-                           StartIcon="@Icons.Material.Filled.OpenInNew"
-                           OnClick="() => OpenExportFile(context)"
-                           Disabled="@(!context.HasOpenableFile || Orchestrator.IsExporting(context.SiteId))">
-                    @T("Excel oeffnen", "Open Excel")
-                </MudButton>
-            </MudStack>
-        </MudTd>
-    </RowTemplate>
-</MudTable>
-
-<MudPaper Class="pa-4 mt-4" Elevation="1">
-    <MudText Typo="Typo.h6" Class="mb-3">@T("Zentrale Datei", "Consolidated file")</MudText>
-    <MudTable Items="_consolidatedRows" Dense Hover Striped>
-        <HeaderContent>
-            <MudTh>@T("Datei", "File")</MudTh>
-            <MudTh>Pfad</MudTh>
-            <MudTh>Letzte Änderung</MudTh>
-            <MudTh>@T("Status", "Status")</MudTh>
-            <MudTh>@T("Aktion", "Action")</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Label</MudTd>
-            <MudTd>@context.DisplayPath</MudTd>
-            <MudTd>@(context.LastModified.HasValue ? context.LastModified.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
-            <MudTd>
-                @if (Orchestrator.IsConsolidatedExporting())
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" Class="mr-1" />
-                    <MudText Typo="Typo.caption">@Orchestrator.GetConsolidatedExportStatus()</MudText>
-                }
-                else
-                {
-                    <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
-                }
-            </MudTd>
-            <MudTd>
-                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Info"
-                           StartIcon="@Icons.Material.Filled.OpenInNew"
-                           OnClick="() => OpenFile(context.FilePath)"
-                           Disabled="@(!context.HasOpenableFile)">
-                    @T("Excel oeffnen", "Open Excel")
-                </MudButton>
-            </MudTd>
-        </RowTemplate>
-        <NoRecordsContent>
-            <MudText Typo="Typo.caption">@T("Keine zentrale Excel-Datei gefunden.", "No consolidated Excel file found.")</MudText>
-        </NoRecordsContent>
-    </MudTable>
-</MudPaper>
-
-@code {
-    private List<DashboardRow> _dashboardRows = new();
-    private List<ConsolidatedDashboardRow> _consolidatedRows = new();
-    private List<string> _readinessWarnings = new();
-    private bool _consolidatedStale;
-    private bool _loading = true;
-    private bool _anyRunning;
-    private CancellationTokenSource? _pollingCts;
-
-    protected override async Task OnInitializedAsync()
-    {
-        Orchestrator.OnExportStatusChanged += HandleStatusChanged;
-        await LoadDataAsync();
+<style>
+    .home-shell {
+        min-height: calc(100vh - 112px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
     }
 
-    private async Task LoadDataAsync()
-    {
-        _loading = true;
-        var state = await DashboardPageActions.LoadAsync();
-        _dashboardRows = state.DashboardRows;
-        _consolidatedRows = state.ConsolidatedRows;
-        _readinessWarnings = state.ReadinessWarnings;
-        _consolidatedStale = state.IsConsolidatedStale;
-
-        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
-        _loading = false;
+    .home-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
     }
 
-    private async Task ExportAll()
-    {
-        if (_readinessWarnings.Count > 0)
-        {
-            Snackbar.Add(T("Es gibt aktive Standorte mit fehlender manueller Datei. Bitte Warnung im Dashboard pruefen.",
-                "There are active sites with missing manual files. Please check the dashboard warning."), Severity.Warning);
-        }
-
-        _anyRunning = true;
-        await LoadDataAsync();
-        StartPolling();
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Orchestrator.ExportAllAsync();
-                await InvokeAsync(() =>
-                    Snackbar.Add(T("Export fuer alle Standorte beendet", "Export completed for all sites"), Severity.Success));
-            }
-            catch (Exception ex)
-            {
-                await InvokeAsync(() =>
-                    Snackbar.Add(string.Format(T("Export fuer alle Standorte fehlgeschlagen: {0}", "Export for all sites failed: {0}"), FormatException(ex)), Severity.Error));
-            }
-            finally
-            {
-                await InvokeAsync(async () =>
-                {
-                    await LoadDataAsync();
-                    StateHasChanged();
-                });
-            }
-        });
-        Snackbar.Add(T("Export fuer alle Standorte gestartet", "Export started for all sites"), Severity.Info);
+    .home-manometer {
+        width: min(336px, 58vw);
+        height: auto;
+        display: block;
     }
 
-    private async Task ExportConsolidatedOnly()
-    {
-        _anyRunning = true;
-        await LoadDataAsync();
-        StartPolling();
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var filePath = await Orchestrator.ExportConsolidatedOnlyAsync();
-
-                if (!string.IsNullOrWhiteSpace(filePath))
-                {
-                    await InvokeAsync(() =>
-                        Snackbar.Add(string.Format(T("Zentrale Datei erzeugt: {0}", "Consolidated file created: {0}"), filePath), Severity.Success));
-                }
-                else
-                {
-                    await InvokeAsync(() =>
-                        Snackbar.Add(T("Zentrale Datei konnte nicht erzeugt werden. Details stehen in den Logs.", "Consolidated file could not be created. Details are in the logs."), Severity.Warning));
-                }
-            }
-            catch (Exception ex)
-            {
-                await InvokeAsync(() =>
-                    Snackbar.Add(string.Format(T("Zentrale Datei fehlgeschlagen: {0}", "Consolidated file failed: {0}"), FormatException(ex)), Severity.Error));
-            }
-            finally
-            {
-                await InvokeAsync(async () =>
-                {
-                    await LoadDataAsync();
-                    StateHasChanged();
-                });
-            }
-        });
-        Snackbar.Add(T("Zentrale Datei wird erzeugt", "Building consolidated file"), Severity.Info);
+    .home-welcome {
+        color: #050505;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0;
     }
 
-    private void ExportSingle(int siteId)
-    {
-        _anyRunning = true;
-        _ = InvokeAsync(async () => await LoadDataAsync());
-        StartPolling();
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var result = await Orchestrator.ExportSiteByIdAsync(siteId);
-
-                if (result?.Log.Status == "OK" && !string.IsNullOrWhiteSpace(result.FilePath))
-                {
-                    await InvokeAsync(() =>
-                        Snackbar.Add(string.Format(T("Export gespeichert: {0}", "Export saved: {0}"), result.FilePath), Severity.Success));
-                    await InvokeAsync(() =>
-                        Snackbar.Add(T("Die zentrale Excel ist danach noch nicht automatisch aktualisiert. Bitte `Zentrale Datei neu erzeugen` starten.",
-                            "The consolidated Excel is not automatically updated after this. Please rebuild the consolidated file."), Severity.Info));
-                }
-                else if (result?.Log.Status == "Error" && !string.IsNullOrWhiteSpace(result.Log.ErrorMessage))
-                {
-                    await InvokeAsync(() =>
-                        Snackbar.Add(string.Format(T("Export fehlgeschlagen: {0}", "Export failed: {0}"), result.Log.ErrorMessage), Severity.Error));
-                }
-            }
-            catch (Exception ex)
-            {
-                await InvokeAsync(() =>
-                    Snackbar.Add(string.Format(T("Export fehlgeschlagen: {0}", "Export failed: {0}"), FormatException(ex)), Severity.Error));
-            }
-            finally
-            {
-                await InvokeAsync(async () =>
-                {
-                    await LoadDataAsync();
-                    StateHasChanged();
-                });
-            }
-        });
-        Snackbar.Add(T("Export gestartet", "Export started"), Severity.Info);
+    .gauge-outer,
+    .gauge-inner,
+    .gauge-tick,
+    .needle-line {
+        fill: none;
+        stroke: #050505;
+        stroke-linecap: round;
     }
 
-    private async void HandleStatusChanged()
-    {
-        await InvokeAsync(async () =>
-        {
-            _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting() || _dashboardRows.Count == 0;
-            if (_anyRunning)
-            {
-                StartPolling();
-                await RefreshLiveDataAsync();
-                StateHasChanged();
-                return;
-            }
-
-            StopPolling();
-            await LoadDataAsync();
-            StateHasChanged();
-        });
+    .gauge-outer {
+        stroke-width: 16;
     }
 
-    public void Dispose()
-    {
-        StopPolling();
-        Orchestrator.OnExportStatusChanged -= HandleStatusChanged;
+    .gauge-inner {
+        stroke-width: 4;
     }
 
-    private void OpenExportFile(DashboardRow row)
-    {
-        OpenFile(row.FilePath);
+    .gauge-tick {
+        stroke-width: 7;
     }
 
-    private void OpenFile(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-        {
-            Snackbar.Add(T("Exportdatei nicht gefunden.", "Export file not found."), Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = filePath,
-                UseShellExecute = true
-            });
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(string.Format(T("Datei konnte nicht geoeffnet werden: {0}", "Could not open file: {0}"), ex.Message), Severity.Error);
-        }
+    .gauge-label {
+        fill: #050505;
+        font-size: 24px;
+        font-weight: 800;
+        text-anchor: middle;
+        dominant-baseline: middle;
     }
 
-    private void StartPolling()
-    {
-        if (_pollingCts is not null && !_pollingCts.IsCancellationRequested)
-            return;
-
-        _pollingCts = new CancellationTokenSource();
-        _ = PollDashboardAsync(_pollingCts.Token);
+    .gauge-brand {
+        fill: #050505;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        text-anchor: middle;
     }
 
-    private void StopPolling()
-    {
-        _pollingCts?.Cancel();
-        _pollingCts?.Dispose();
-        _pollingCts = null;
+    .needle-line {
+        stroke-width: 9;
     }
 
-    private async Task PollDashboardAsync(CancellationToken cancellationToken)
-    {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
-
-        try
-        {
-            while (await timer.WaitForNextTickAsync(cancellationToken))
-            {
-                var anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
-                if (!anyRunning)
-                {
-                    await InvokeAsync(async () =>
-                    {
-                        _anyRunning = false;
-                        await LoadDataAsync();
-                        StateHasChanged();
-                    });
-                    StopPolling();
-                    break;
-                }
-
-                await InvokeAsync(async () =>
-                {
-                    _anyRunning = true;
-                    await RefreshLiveDataAsync();
-                    StateHasChanged();
-                });
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
+    .gauge-needle {
+        transform-origin: 300px 260px;
+        animation: home-gauge-sweep 6.2s infinite cubic-bezier(.42, 0, .2, 1);
     }
 
-    private Task RefreshLiveDataAsync()
-    {
-        foreach (var row in _dashboardRows)
-        {
-            if (!Orchestrator.IsExporting(row.SiteId))
-                continue;
-
-            row.LiveMessage = Orchestrator.GetExportStatus(row.SiteId);
-            row.LiveDetails = string.Empty;
-        }
-
-        _anyRunning = _dashboardRows.Any(r => Orchestrator.IsExporting(r.SiteId)) || Orchestrator.IsConsolidatedExporting();
-        return Task.CompletedTask;
+    @@keyframes home-gauge-sweep {
+        0% { transform: rotate(-58deg); }
+        9% { transform: rotate(-12deg); }
+        18% { transform: rotate(43deg); }
+        31% { transform: rotate(8deg); }
+        44% { transform: rotate(68deg); }
+        58% { transform: rotate(-35deg); }
+        72% { transform: rotate(24deg); }
+        86% { transform: rotate(56deg); }
+        100% { transform: rotate(-58deg); }
     }
-
-    private static string FormatException(Exception ex)
-        => ex.InnerException is null ? ex.Message : $"{ex.Message} Inner: {ex.InnerException.Message}";
-
-    private static string GetDataBasisIcon(string dataBasis)
-    {
-        if (dataBasis.Contains("Excel", StringComparison.OrdinalIgnoreCase))
-            return Icons.Material.Filled.TableView;
-        if (dataBasis.Contains("CSV", StringComparison.OrdinalIgnoreCase) ||
-            dataBasis.Contains("Datei", StringComparison.OrdinalIgnoreCase))
-            return Icons.Material.Filled.Description;
-        if (dataBasis.Contains("SAP", StringComparison.OrdinalIgnoreCase))
-            return Icons.Material.Filled.CloudSync;
-        if (dataBasis.Contains("Server", StringComparison.OrdinalIgnoreCase))
-            return Icons.Material.Filled.Storage;
-
-        return Icons.Material.Filled.Source;
-    }
-
-    private static Color GetDataBasisColor(string dataBasis)
-    {
-        if (dataBasis.Contains("Excel", StringComparison.OrdinalIgnoreCase))
-            return Color.Success;
-        if (dataBasis.Contains("CSV", StringComparison.OrdinalIgnoreCase) ||
-            dataBasis.Contains("Datei", StringComparison.OrdinalIgnoreCase))
-            return Color.Info;
-        if (dataBasis.Contains("SAP", StringComparison.OrdinalIgnoreCase))
-            return Color.Primary;
-        if (dataBasis.Contains("Server", StringComparison.OrdinalIgnoreCase))
-            return Color.Secondary;
-
-        return Color.Default;
-    }
-
-}
+</style>
 
 @code {
     private string T(string german, string english) => UiText.Text(german, english);

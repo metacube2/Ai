@@ -41,7 +41,8 @@
             .Trim('/')
             .ToLowerInvariant();
 
-        return path is "" or
+        return path is
+            "export-dashboard" or
             "management-cockpit" or
             "finance-cockpit/vergleich" or
             "finance-cockpit/schulung" or
@@ -49,6 +50,7 @@
             "transformations" or
             "finance-rules" or
             "settings" or
+            "admin/sessions" or
             "logs" or
             "source-viewer";
     }

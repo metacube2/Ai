@@ -5,7 +5,7 @@ using TrafagSalesExporter.Security;
 
 namespace TrafagSalesExporter.Services;
 
-public interface IFinanceCockpitAccessService
+public interface IAdminAccessService
 {
     bool IsEnabled { get; }
     bool IsConfigured { get; }
@@ -15,24 +15,15 @@ public interface IFinanceCockpitAccessService
     void Lock();
 }
 
-public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, IDisposable
+public sealed class AdminAccessService : IAdminAccessService
 {
-    private readonly FinanceCockpitAccessOptions _options;
+    private readonly AdminAccessOptions _options;
     private readonly IHostEnvironment _environment;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IAccessSessionTracker _sessionTracker;
-    private readonly string _sessionId = Guid.NewGuid().ToString("N");
 
-    public FinanceCockpitAccessService(
-        IOptions<FinanceCockpitAccessOptions> options,
-        IHostEnvironment environment,
-        IHttpContextAccessor httpContextAccessor,
-        IAccessSessionTracker sessionTracker)
+    public AdminAccessService(IOptions<AdminAccessOptions> options, IHostEnvironment environment)
     {
         _options = options.Value;
         _environment = environment;
-        _httpContextAccessor = httpContextAccessor;
-        _sessionTracker = sessionTracker;
     }
 
     public bool IsEnabled => _options.Enabled;
@@ -65,15 +56,7 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
             : FixedEquals(password, _options.Password);
 
         IsUnlocked = valid;
-        if (valid)
-            _sessionTracker.Register(_sessionId, "Finance Cockpit", username.Trim(), GetRemoteAddress());
         return valid;
-    }
-
-    public void Lock()
-    {
-        IsUnlocked = false;
-        _sessionTracker.Unregister(_sessionId);
     }
 
     public bool TryChangePassword(string username, string currentPassword, string newPassword)
@@ -88,21 +71,14 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
         }
 
         var passwordHash = AccessPasswordSettingsWriter.HashPassword(newPassword);
-        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, FinanceCockpitAccessOptions.SectionName, passwordHash);
+        AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, AdminAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
         IsUnlocked = true;
-        _sessionTracker.Register(_sessionId, "Finance Cockpit", username.Trim(), GetRemoteAddress());
         return true;
     }
 
-    public void Dispose()
-    {
-        _sessionTracker.Unregister(_sessionId);
-    }
-
-    private string? GetRemoteAddress()
-        => _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+    public void Lock() => IsUnlocked = false;
 
     private static bool VerifyPasswordHash(string password, string configuredHash)
     {
