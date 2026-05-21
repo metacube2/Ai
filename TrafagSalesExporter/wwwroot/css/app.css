@@ -1,5 +1,14 @@
-html, body {
-    font-family: 'Roboto', sans-serif;
+html,
+body,
+.mud-typography,
+.mud-button-root,
+.mud-input,
+.mud-table,
+.mud-nav-link,
+.mud-chip,
+.mud-list-item,
+.mud-menu-item {
+    font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 
 .app-title {

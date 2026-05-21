@@ -1,6 +1,7 @@
 @page "/"
 @using TrafagSalesExporter.Services
 @inject IUiTextService UiText
+@inject ILandingPageSettingsService LandingSettings
 
 <PageTitle>@T("Trafag Cockpit", "Trafag Cockpit")</PageTitle>
 
@@ -30,6 +31,21 @@
             <circle cx="300" cy="260" r="28" fill="#050505" />
         </svg>
         <div class="home-welcome">@T("Willkommen im Trafag Analyse Dashboard", "Welcome to the Trafag Analytical Dashboard")</div>
+        @if (LandingSettings.ShowWalkingLabFigure)
+        {
+            <div class="walking-stage" aria-label="Walking lab figure">
+                <div class="walking-person">
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="coat coat-left"></span>
+                    <span class="coat coat-right"></span>
+                    <span class="arm arm-left"></span>
+                    <span class="arm arm-right"></span>
+                    <span class="leg leg-left"></span>
+                    <span class="leg leg-right"></span>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -61,6 +77,114 @@
         font-weight: 700;
         text-align: center;
         letter-spacing: 0;
+    }
+
+    .walking-stage {
+        width: min(360px, 70vw);
+        height: 96px;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        border-bottom: 2px solid #050505;
+    }
+
+    .walking-person {
+        position: absolute;
+        left: 0;
+        bottom: 4px;
+        width: 48px;
+        height: 82px;
+        animation: lab-walk-path 7s linear infinite;
+    }
+
+    .walking-person span {
+        position: absolute;
+        display: block;
+        background: #050505;
+    }
+
+    .walking-person .head {
+        left: 15px;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 3px solid #050505;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .walking-person .body {
+        left: 22px;
+        top: 22px;
+        width: 4px;
+        height: 34px;
+    }
+
+    .walking-person .coat {
+        top: 25px;
+        width: 17px;
+        height: 36px;
+        border: 3px solid #050505;
+        background: #fff;
+    }
+
+    .walking-person .coat-left {
+        left: 8px;
+        transform: skewY(10deg);
+        border-right: 0;
+    }
+
+    .walking-person .coat-right {
+        left: 23px;
+        transform: skewY(-10deg);
+        border-left: 0;
+    }
+
+    .walking-person .arm,
+    .walking-person .leg {
+        width: 4px;
+        border-radius: 4px;
+        transform-origin: 50% 0;
+    }
+
+    .walking-person .arm {
+        top: 28px;
+        height: 28px;
+        animation: limb-swing 0.72s ease-in-out infinite alternate;
+    }
+
+    .walking-person .arm-left {
+        left: 13px;
+    }
+
+    .walking-person .arm-right {
+        left: 31px;
+        animation-direction: alternate-reverse;
+    }
+
+    .walking-person .leg {
+        top: 56px;
+        height: 28px;
+        animation: limb-swing 0.72s ease-in-out infinite alternate-reverse;
+    }
+
+    .walking-person .leg-left {
+        left: 20px;
+    }
+
+    .walking-person .leg-right {
+        left: 27px;
+        animation-direction: alternate;
+    }
+
+    @@keyframes lab-walk-path {
+        0% { transform: translateX(-54px); }
+        100% { transform: translateX(calc(min(360px, 70vw) + 54px)); }
+    }
+
+    @@keyframes limb-swing {
+        0% { transform: rotate(-24deg); }
+        100% { transform: rotate(24deg); }
     }
 
     .gauge-outer,

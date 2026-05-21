@@ -3,6 +3,7 @@
 @using TrafagSalesExporter.Services
 @inject IAccessSessionTracker SessionTracker
 @inject IAdminAccessService AdminAccess
+@inject ILandingPageSettingsService LandingSettings
 @inject IUiTextService UiText
 
 <PageTitle>@T("Aktive Logins", "Active logins")</PageTitle>
@@ -16,6 +17,19 @@
 else
 {
     <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row AlignItems="AlignItems.Center" Class="mb-4">
+            <div>
+                <MudText Typo="Typo.h6">@T("Startseite", "Landing page")</MudText>
+                <MudText Typo="Typo.caption">
+                    @T("Optionale Animation unter dem Willkommens-Text.", "Optional animation below the welcome text.")
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudSwitch T="bool" Value="LandingSettings.ShowWalkingLabFigure" ValueChanged="SetWalkingFigure"
+                       Color="Color.Primary"
+                       Label="@T("Strichmännchen anzeigen", "Show stick figure")" />
+        </MudStack>
+        <MudDivider Class="mb-4" />
         <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
             <div>
                 <MudText Typo="Typo.h6">@T("HR-/Finance-Cockpit Sessions", "HR/Finance cockpit sessions")</MudText>
@@ -75,6 +89,11 @@ else
     {
         AdminAccess.Lock();
         _sessions = [];
+    }
+
+    private void SetWalkingFigure(bool value)
+    {
+        LandingSettings.SetShowWalkingLabFigure(value);
     }
 
     private static string FormatDate(DateTimeOffset value)

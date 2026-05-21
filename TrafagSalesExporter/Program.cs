@@ -49,6 +49,7 @@ builder.Services.Configure<HrKpiDataSourceOptions>(builder.Configuration.GetSect
 builder.Services.Configure<HrKpiAccessOptions>(builder.Configuration.GetSection(HrKpiAccessOptions.SectionName));
 builder.Services.Configure<FinanceCockpitAccessOptions>(builder.Configuration.GetSection(FinanceCockpitAccessOptions.SectionName));
 builder.Services.Configure<AdminAccessOptions>(builder.Configuration.GetSection(AdminAccessOptions.SectionName));
+builder.Services.Configure<LandingPageOptions>(builder.Configuration.GetSection(LandingPageOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
@@ -88,6 +89,7 @@ builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
 builder.Services.AddSingleton<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
+builder.Services.AddSingleton<ILandingPageSettingsService, LandingPageSettingsService>();
 
 // Datenquellen-Adapter (Strategy per ConnectionKind).
 builder.Services.AddSingleton<IDataSourceAdapter, HanaDataSourceAdapter>();

@@ -2182,3 +2182,37 @@ Hinweis:
 
 - Der direkte Vergleich gegen die lokale SQLite-Datei `trafag_exporter.db` war nicht aussagekraeftig, weil diese lokale DB keine passenden `CentralSalesRecords` fuer diesen Stand enthaelt.
 - Die Excel-interne Summenpruefung und der Vergleich gegen `output\Sales_All_2026-05-20.xlsx` waren konsistent.
+
+## Admin Bereich und Startseite aktualisiert 2026-05-21
+
+Admin Bereich:
+
+- `/admin/sessions` ist nicht mehr durch den Finance-Cockpit-Login vorgeschaltet.
+- Der Admin Bereich nutzt weiterhin ein eigenes Admin-Passwort über `AdminAccess`.
+- Initialer Benutzer: `admin`
+- Initiales Passwort: `TrafagAdmin2026!`
+- Das Admin-Passwort ist unabhängig vom Finance-Cockpit-Passwort.
+- Dokumentation ergänzt: `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md`
+
+Startseite:
+
+- Corporate-Schrift auf `Open Sans` mit Trafag-nahen Fallbacks angepasst.
+- Manometer-Startgrafik bleibt auf weißem Hintergrund, schwarz gezeichnet und mit Trafag-Schriftzug.
+- Willkommenstext ist sprachabhängig.
+- Optionales Strichmännchen mit Kittel unter dem Willkommenstext ergänzt.
+- Das Strichmännchen ist standardmäßig deaktiviert.
+- Aktivierung über `Admin Bereich` -> `Strichmännchen anzeigen`.
+- Einstellung wird in `appsettings.json` unter `LandingPage.ShowWalkingLabFigure` gespeichert.
+
+Technische Dateien:
+
+- `Components/Routes.razor`
+- `Components/App.razor`
+- `wwwroot/css/app.css`
+- `Components/Pages/Dashboard.razor`
+- `Components/Pages/AdminSessions.razor`
+- `Program.cs`
+- `Security/LandingPageOptions.cs`
+- `Services/LandingPageSettingsService.cs`
+- `Services/UiTextService.cs`
+- `appsettings.json`
