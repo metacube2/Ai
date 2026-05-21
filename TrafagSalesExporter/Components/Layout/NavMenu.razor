@@ -19,6 +19,9 @@
                 @T("Soll/Ist Vergleich", "Actual/reference comparison")
             </MudNavLink>
         }
+        <MudNavLink Href="/finance-cockpit/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
+            @T("Finance Schulung", "Finance training")
+        </MudNavLink>
         <MudNavLink Href="/manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
             @T("Manuelle Importe", "Manual imports")
         </MudNavLink>
@@ -51,9 +54,14 @@
             </MudButton>
         }
     </MudNavGroup>
-    <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Groups">
-        @T("HR KPI (Login)", "HR KPI (login)")
-    </MudNavLink>
+    <MudNavGroup Title="@T("HR KPI (Login)", "HR KPI (login)")" Icon="@Icons.Material.Filled.Groups">
+        <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+            @T("HR Dashboard", "HR dashboard")
+        </MudNavLink>
+        <MudNavLink Href="/hr-kpi/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
+            @T("HR KPI Schulung", "HR KPI training")
+        </MudNavLink>
+    </MudNavGroup>
 </MudNavMenu>
 
 @code {

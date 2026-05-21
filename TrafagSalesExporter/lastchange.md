@@ -1,5 +1,28 @@
 # Last Change 2026-05-04
 
+## In-App-Schulungen und Finance-Detaildoku 2026-05-21
+
+Geaendert:
+
+- Neue HTML-/Razor-Schulungsseite `HR KPI Schulung` unter `/hr-kpi/schulung`.
+- Neue HTML-/Razor-Schulungsseite `Finance Schulung` unter `/finance-cockpit/schulung`.
+- Navigation erweitert:
+  - `Finance Cockpit` enthaelt jetzt `Finance Schulung`.
+  - `HR KPI (Login)` ist jetzt eine Gruppe mit `HR Dashboard` und `HR KPI Schulung`.
+- Finance-Schulung ist wie die restlichen Finance-Seiten ueber die Finance-Cockpit-Entsperrung geschuetzt.
+- Schulungsseiten enthalten Tabellen, Checklisten, Prozessablauf und eingebettete Grafiken aus `wwwroot/training`.
+- Sprachtexte fuer die neuen Menuepunkte in Englisch, Spanisch, Italienisch und Hindi ergaenzt.
+- Word-Schulungsdokumente fuer HR und Finance neu erzeugt und Umlaut-Schreibweisen korrigiert.
+- Neue Markdown-Doku `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md` beschreibt den aktuellen Delta-/Vollfile-Stand:
+  - UK kann Basis plus Deltas lesen.
+  - Spanien und Deutschland muessen vollstaendige Dateien liefern.
+  - Manual-Importe ersetzen pro Standort den aktuellen Stand in `CentralSalesRecords`.
+
+Verifiziert:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal --no-restore -p:BaseOutputPath=.tmp_build\bin\ -p:BaseIntermediateOutputPath=.tmp_build\obj\`
+- Normaler Debug-Build war lokal durch eine von Visual Studio/.NET Host gesperrte `bin\Debug\net8.0\BiDashboard.dll` blockiert.
+
 ## Markdown-Doku und Anwenderdokus nachgezogen 2026-05-20
 
 Geaendert:
