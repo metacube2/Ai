@@ -57,7 +57,8 @@ public class ConsolidatedExportService : IConsolidatedExportService
 
             await _sharePointService.UploadAsync(
                 spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                spConfig.SiteUrl, sharePointFolder, landSubfolder, consolidatedPath);
+                spConfig.SiteUrl, sharePointFolder, landSubfolder, consolidatedPath,
+                uploadTimestampedCopyIfLocked: true);
         }
 
         return consolidatedPath;

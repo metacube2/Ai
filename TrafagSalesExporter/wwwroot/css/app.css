@@ -12,3 +12,21 @@ html, body {
     width: auto;
     object-fit: contain;
 }
+
+.language-menu {
+    color: #fff;
+}
+
+.language-button {
+    min-width: 84px;
+    height: 34px;
+    border-color: rgba(255, 255, 255, 0.65) !important;
+    color: #fff !important;
+    text-transform: none;
+    font-weight: 700;
+}
+
+.language-button .mud-button-icon-start,
+.language-button .mud-button-icon-end {
+    color: #fff;
+}

@@ -129,7 +129,7 @@ public class ManualExcelDataSourceAdapterTests
 
         public string LastResolvedTsc { get; private set; } = string.Empty;
 
-        public Task UploadAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string exportFolder, string land, string localFilePath)
+        public Task UploadAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string exportFolder, string land, string localFilePath, bool uploadTimestampedCopyIfLocked = false)
             => Task.CompletedTask;
 
         public Task<string> DownloadToTempFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string fileReference)

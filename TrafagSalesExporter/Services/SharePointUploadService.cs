@@ -10,7 +10,7 @@ namespace TrafagSalesExporter.Services;
 public class SharePointUploadService : ISharePointUploadService
 {
     public async Task UploadAsync(string tenantId, string clientId, string clientSecret,
-        string siteUrl, string exportFolder, string land, string localFilePath)
+        string siteUrl, string exportFolder, string land, string localFilePath, bool uploadTimestampedCopyIfLocked = false)
     {
         var normalizedTenantId = Normalize(tenantId);
         var normalizedClientId = Normalize(clientId);
@@ -33,17 +33,16 @@ public class SharePointUploadService : ISharePointUploadService
         if (drive?.Id is null)
             throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
 
-        var fileName = Path.GetFileName(localFilePath);
-        var remotePath = string.Join("/",
-            new[]
-            {
-                normalizedExportFolder.Trim('/').Trim(),
-                normalizedLand.Trim('/').Trim(),
-                fileName
-            }.Where(segment => !string.IsNullOrWhiteSpace(segment)));
-
-        await using var stream = File.OpenRead(localFilePath);
-        await graphClient.Drives[drive.Id].Root.ItemWithPath(remotePath).Content.PutAsync(stream);
+        var remotePath = BuildUploadPath(normalizedExportFolder, normalizedLand, Path.GetFileName(localFilePath));
+        try
+        {
+            await UploadWithLockRetryAsync(graphClient, drive.Id, remotePath, localFilePath);
+        }
+        catch (Microsoft.Graph.Models.ODataErrors.ODataError ex) when (uploadTimestampedCopyIfLocked && IsLockedSharePointResource(ex))
+        {
+            var timestampedPath = BuildUploadPath(normalizedExportFolder, normalizedLand, BuildTimestampedFileName(localFilePath));
+            await UploadWithLockRetryAsync(graphClient, drive.Id, timestampedPath, localFilePath);
+        }
     }
 
     public async Task<string> DownloadToTempFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string fileReference)
@@ -241,6 +240,45 @@ public class SharePointUploadService : ISharePointUploadService
     }
 
     private static string Normalize(string value) => value?.Trim() ?? string.Empty;
+
+    private static async Task UploadWithLockRetryAsync(GraphServiceClient graphClient, string driveId, string remotePath, string localFilePath)
+    {
+        const int attempts = 4;
+        for (var attempt = 1; attempt <= attempts; attempt++)
+        {
+            try
+            {
+                await using var stream = File.OpenRead(localFilePath);
+                await graphClient.Drives[driveId].Root.ItemWithPath(remotePath).Content.PutAsync(stream);
+                return;
+            }
+            catch (Microsoft.Graph.Models.ODataErrors.ODataError ex) when (attempt < attempts && IsLockedSharePointResource(ex))
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5 * attempt));
+            }
+        }
+    }
+
+    private static string BuildUploadPath(string exportFolder, string land, string fileName)
+        => string.Join("/",
+            new[]
+            {
+                exportFolder.Trim('/').Trim(),
+                land.Trim('/').Trim(),
+                fileName
+            }.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+
+    private static string BuildTimestampedFileName(string localFilePath)
+    {
+        var name = Path.GetFileNameWithoutExtension(localFilePath);
+        var extension = Path.GetExtension(localFilePath);
+        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+        return $"{name}_{timestamp}{extension}";
+    }
+
+    private static bool IsLockedSharePointResource(Exception ex)
+        => ex.Message.Contains("locked", StringComparison.OrdinalIgnoreCase) ||
+           ex.ToString().Contains("locked", StringComparison.OrdinalIgnoreCase);
 
     private static string ResolveRemotePath(string fileReference, Uri siteUri)
     {

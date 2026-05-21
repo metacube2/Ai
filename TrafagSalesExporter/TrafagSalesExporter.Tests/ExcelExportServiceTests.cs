@@ -44,6 +44,17 @@ public class ExcelExportServiceTests
 
             Assert.Equal(2, includedGermanyRows.Count);
             Assert.Equal(80m, includedGermanyRows.Sum(row => row.Cell(39).GetValue<decimal>()));
+
+            var details = workbook.Worksheet("Finance Details");
+            var includedGermanyDetailRows = details.RowsUsed()
+                .Where(row => row.RowNumber() > 4)
+                .Where(row => row.Cell(1).GetValue<int>() == 2025)
+                .Where(row => row.Cell(2).GetString() == "DE")
+                .ToList();
+
+            Assert.Equal(2, includedGermanyDetailRows.Count);
+            Assert.Equal(80m, includedGermanyDetailRows.Sum(row => row.Cell(5).GetValue<decimal>()));
+            Assert.All(includedGermanyDetailRows, row => Assert.Equal("Sales Price/Value", row.Cell(6).GetString()));
         }
         finally
         {

@@ -184,6 +184,7 @@ public class ExcelExportService : IExcelExportService
         if (includeFinanceHelpSheet)
         {
             AddFinanceSummarySheet(workbook, records, financeRules);
+            AddFinanceDetailsSheet(workbook, records, financeRules);
             AddFinanceHelpSheet(workbook);
         }
 
@@ -266,6 +267,107 @@ public class ExcelExportService : IExcelExportService
         ws.Columns().AdjustToContents();
     }
 
+    private static void AddFinanceDetailsSheet(XLWorkbook workbook, List<SalesRecord> records, IReadOnlyList<FinanceRule> financeRules)
+    {
+        var ws = workbook.Worksheets.Add("Finance Details");
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
+        ws.Position = 2;
+
+        ws.Cell(1, 1).Value = "Finance Details";
+        ws.Cell(1, 1).Style.Font.Bold = true;
+        ws.Cell(1, 1).Style.Font.FontSize = 14;
+        ws.Cell(2, 1).Value = "Diese Zeilen fuehren zur Summe im Blatt Finance Summary. Summe ueber Net Sales Actual bilden.";
+
+        var headers = new[]
+        {
+            "Year",
+            "Country Key",
+            "Currency",
+            "Finance Date",
+            "Net Sales Actual",
+            "Source Value Field",
+            "TSC",
+            "Land",
+            "Document Type",
+            "Invoice Number",
+            "Position on invoice",
+            "Document Entry",
+            "Material",
+            "Name",
+            "Quantity",
+            "Customer number",
+            "Customer name",
+            "Customer country",
+            "Supplier number",
+            "Supplier name",
+            "Supplier country",
+            "posting date",
+            "invoice date",
+            "Sales Price/Value",
+            "Sales Currency",
+            "Document Currency",
+            "Document Total FC",
+            "Document Total LC",
+            "Company Currency"
+        };
+
+        for (var i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(4, i + 1).Value = headers[i];
+            ws.Cell(4, i + 1).Style.Font.Bold = true;
+        }
+
+        var rowIndex = 5;
+        foreach (var record in records)
+        {
+            var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+            var financeDate = financeRuleEngine.ResolveFinanceDate(record, countryKey);
+            var rawInclude = financeRuleEngine.ShouldInclude(record, countryKey);
+            var netSalesActual = financeRuleEngine.ResolveNetSalesActual(record, countryKey, rawInclude);
+            var include = rawInclude && netSalesActual != 0m;
+
+            if (!include)
+                continue;
+
+            ws.Cell(rowIndex, 1).Value = financeDate.Year;
+            ws.Cell(rowIndex, 2).Value = countryKey;
+            ws.Cell(rowIndex, 3).Value = ResolveFinanceCurrency(record);
+            ws.Cell(rowIndex, 4).Value = financeDate.ToString("dd.MM.yyyy");
+            ws.Cell(rowIndex, 5).Value = netSalesActual;
+            ws.Cell(rowIndex, 6).Value = "Sales Price/Value";
+            ws.Cell(rowIndex, 7).Value = record.Tsc;
+            ws.Cell(rowIndex, 8).Value = record.Land;
+            ws.Cell(rowIndex, 9).Value = record.DocumentType;
+            ws.Cell(rowIndex, 10).Value = record.InvoiceNumber;
+            ws.Cell(rowIndex, 11).Value = record.PositionOnInvoice;
+            ws.Cell(rowIndex, 12).Value = record.DocumentEntry;
+            ws.Cell(rowIndex, 13).Value = record.Material;
+            ws.Cell(rowIndex, 14).Value = record.Name;
+            ws.Cell(rowIndex, 15).Value = record.Quantity;
+            ws.Cell(rowIndex, 16).Value = record.CustomerNumber;
+            ws.Cell(rowIndex, 17).Value = record.CustomerName;
+            ws.Cell(rowIndex, 18).Value = record.CustomerCountry;
+            ws.Cell(rowIndex, 19).Value = record.SupplierNumber;
+            ws.Cell(rowIndex, 20).Value = record.SupplierName;
+            ws.Cell(rowIndex, 21).Value = record.SupplierCountry;
+            ws.Cell(rowIndex, 22).Value = record.PostingDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(rowIndex, 23).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(rowIndex, 24).Value = record.SalesPriceValue;
+            ws.Cell(rowIndex, 25).Value = record.SalesCurrency;
+            ws.Cell(rowIndex, 26).Value = record.DocumentCurrency;
+            ws.Cell(rowIndex, 27).Value = record.DocumentTotalForeignCurrency;
+            ws.Cell(rowIndex, 28).Value = record.DocumentTotalLocalCurrency;
+            ws.Cell(rowIndex, 29).Value = record.CompanyCurrency;
+            rowIndex++;
+        }
+
+        ws.Column(5).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(24).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(27).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(28).Style.NumberFormat.Format = "#,##0.00";
+        ws.Columns().AdjustToContents();
+    }
+
     private static string BuildFinanceSummaryHint(string countryKey)
         => countryKey.ToUpperInvariant() switch
         {
@@ -290,6 +392,7 @@ public class ExcelExportService : IExcelExportService
             ("2. Land filtern", "Finance | Country Key = CH, AT, DE, ES, FR, IN, IT, UK oder US"),
             ("3. Gueltige Zeilen filtern", "Finance | Include = TRUE"),
             ("4. Summe bilden", "Finance | Net Sales Actual summieren"),
+            ("Detailblatt", "Finance Details enthaelt nur die Zeilen, die zur Summe im Blatt Finance Summary fuehren."),
             ("Waehrung", "Finance | Currency zeigt die fuer den Finance-Abgleich fuehrende Hauswaehrung."),
             ("Datum", "Finance | Date verwendet PostingDate, danach InvoiceDate, danach ExtractionDate. DE Alphaplan wird als Jahresfile 2025 behandelt."),
             ("Wertquelle", "Finance | Source Value Field zeigt, aus welchem Rohfeld der Finance-Wert kommt."),

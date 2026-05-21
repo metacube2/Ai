@@ -1,4 +1,5 @@
 @using TrafagSalesExporter.Security
+@implements IDisposable
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject TrafagSalesExporter.Services.IFinanceCockpitAccessService FinanceAccess
 @inject IConfiguration Configuration
@@ -58,11 +59,26 @@
 @code {
     private bool ShowFinanceComparison => Configuration.GetValue("Navigation:ShowFinanceComparison", true);
 
+    protected override void OnInitialized()
+    {
+        UiText.Changed += HandleLanguageChanged;
+    }
+
     private void LockFinanceCockpit()
     {
         FinanceAccess.Lock();
         Navigation.NavigateTo("/");
     }
 
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        UiText.Changed -= HandleLanguageChanged;
+    }
 }
