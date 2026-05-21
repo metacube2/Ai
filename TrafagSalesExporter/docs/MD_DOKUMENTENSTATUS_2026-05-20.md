@@ -12,6 +12,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `NEXT_STEPS_2026-04-15.md` | Aktuelle offene Punkte und naechste Schritte | Weiter pflegen |
 | `HANDOFF_2026-04-15.md` | Technischer Handoff / Kontext fuer Weiterarbeit | Weiter pflegen |
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Server-Handoff | Aktuell fuer Deployment |
+| `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | Lokaler Uebergangsserver auf Entwicklungs-PC | Aktuell bis IIS-Fix |
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
 | `entscheide.md` | Kurzfassung der Finance-Fachentscheide | Aktuell als Kurzfassung |
 | `docs/HR_KPI_NACHDOKU_2026-05-13.md` | HR-KPI technische/fachliche Nachdoku | Aktualisiert um 2026-05-20 Erweiterungen |

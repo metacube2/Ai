@@ -23,6 +23,95 @@ Verifiziert:
 - `dotnet test TrafagSalesExporter.sln --verbosity minimal --no-restore -p:BaseOutputPath=.tmp_build\bin\ -p:BaseIntermediateOutputPath=.tmp_build\obj\`
 - Normaler Debug-Build war lokal durch eine von Visual Studio/.NET Host gesperrte `bin\Debug\net8.0\BiDashboard.dll` blockiert.
 
+## Lokaler Uebergangsserver bis IIS-Fix 2026-05-21
+
+Zweck:
+
+- Falls der zentrale IIS-Server noch nicht erreichbar ist, kann die App voruebergehend auf dem Entwicklungs-PC laufen.
+- Andere Mitarbeitende greifen dann im Firmennetz ueber die IP des PCs zu.
+- Ausfuehrliche Betriebsdoku: `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md`.
+
+Start auf dem Entwicklungs-PC:
+
+```powershell
+dotnet run --urls "http://0.0.0.0:5000"
+```
+
+Nachtrag:
+
+- `Properties/launchSettings.json` wurde so angepasst, dass das Entwicklungsprofil zusaetzlich auf `http://0.0.0.0:5000` lauscht.
+- Bei Start aus Visual Studio bzw. ueber das Projektprofil bleibt `https://localhost:55415` lokal verfuegbar, Port `5000` ist aber zusaetzlich fuer andere PCs erreichbar.
+- Falls bereits eine alte Visual-Studio-Instanz laeuft, App stoppen und neu starten, damit die geaenderte URL-Bindung aktiv wird.
+
+Zugriff von anderen PCs:
+
+```text
+http://<PC-IP>:5000
+```
+
+Aktueller Stand vom 2026-05-21:
+
+```text
+PC-IP im WLAN/Firmennetz: 172.16.9.185
+Lokale Test-URL: http://172.16.9.185:5000
+```
+
+IP des PCs ermitteln:
+
+```powershell
+ipconfig
+```
+
+Firewall-Regel einmalig in einer PowerShell "Als Administrator" anlegen:
+
+```powershell
+netsh advfirewall firewall add rule name="TrafagSalesExporter local web 5000" dir=in action=allow protocol=TCP localport=5000 profile=domain,private
+```
+
+Am 2026-05-21 wurde eine allgemeine Port-5000-Regel angelegt und danach auf alle Firewall-Profile erweitert:
+
+```text
+Regelname: Local Dev Web Port 5000
+Aktiviert: Ja
+Profile: Domaene, Privat, Oeffentlich
+Protokoll: TCP
+Lokaler Port: 5000
+Aktion: Zulassen
+```
+
+Damit koennen spaeter auch andere lokale Entwicklungsprogramme auf Port 5000 von anderen Firmen-PCs erreicht werden, sofern sie an `0.0.0.0:5000` oder die konkrete PC-IP binden.
+
+Pruefen:
+
+```powershell
+netsh advfirewall firewall show rule name="TrafagSalesExporter local web 5000"
+```
+
+Spaeter wieder entfernen:
+
+```powershell
+netsh advfirewall firewall delete rule name="TrafagSalesExporter local web 5000"
+```
+
+Hinweise:
+
+- Die Firewall-Regel bleibt nach einem Windows-Neustart aktiv.
+- Die Firewall-Regel bleibt normalerweise auch nach Windows-Updates aktiv.
+- Da die Regel auf Domaene, Privat und Oeffentlich gilt, ist Port 5000 auch abgedeckt, wenn AlwaysOnVPN oder Windows das Netzwerk nicht als Domaenenprofil erkennt.
+- Die App selbst startet nach einem Neustart nicht automatisch; `dotnet run ...` muss erneut gestartet werden.
+- Die PC-IP kann sich nach Neustart, WLAN-Wechsel oder DHCP-Erneuerung aendern; dann `ipconfig` ausfuehren und die neue URL weitergeben.
+- Der PC muss eingeschaltet bleiben und das PowerShell-Fenster muss offen bleiben.
+- Nur im Firmennetz verwenden, nicht oeffentlich freigeben.
+- Die lokale Uebergangs-URL ist bewusst HTTP, nicht HTTPS. Fuer diesen temporaeren internen Betrieb reicht das; lokales HTTPS waere moeglich, wuerde aber Zertifikats-/Trust-Aufwand fuer andere PCs verursachen.
+- Finance Cockpit und HR KPI bleiben ueber ihre App-internen Logins geschuetzt.
+- Wenn ein Finance-User im Buero die App ueber die VPN-IP des Entwicklungs-PCs trotzdem nicht erreicht, liegt es wahrscheinlich am AlwaysOnVPN-/Firmennetz-Routing. Das kann lokal auf dem PC nicht sicher freigeschaltet werden.
+
+Serverbefund:
+
+- Der IIS-Server fordert beim HTTPS/TLS-Handshake ein Client-Zertifikat (`RequestedClientCert=True`).
+- Dadurch erreichen Requests weder `diag.txt` noch `BiDashboard.dll`.
+- Marco/IT muss in IIS die SSL Settings pruefen und Client Certificates auf `Ignore` oder hoechstens `Accept` setzen, nicht `Require`.
+
 ## Markdown-Doku und Anwenderdokus nachgezogen 2026-05-20
 
 Geaendert:
