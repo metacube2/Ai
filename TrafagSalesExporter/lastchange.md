@@ -2269,3 +2269,81 @@ Validierung:
 - `dotnet build .\TrafagSalesExporter.csproj --no-restore --verbosity minimal` erfolgreich.
 - `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore --verbosity minimal` erfolgreich mit `78/78` Tests.
 - Mehrfach erfolgreich nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` publiziert.
+
+## Nachtrag 2026-05-26: Nachdokumentation Remote-/Refactoring-Commits
+
+Beim Rebase auf `origin/main` wurden zusaetzliche lokal noch nicht vorhandene Commits integriert. Der lokale Stand und `origin/main` sind danach synchron.
+
+Finance Details / Export:
+
+- Finanzdetail-Export und erweiterte Uebersetzungen wurden ergaenzt.
+- Betroffene Bereiche:
+  - `Services/ExcelExportService.cs`
+  - `Services/ConsolidatedExportService.cs`
+  - `Services/SharePointUploadService.cs`
+  - `Services/UiTextService.cs`
+  - `Components/Layout/MainLayout.razor`
+  - `Components/Layout/NavMenu.razor`
+- Tests fuer Excel-Export und UI-Texte wurden erweitert.
+- SharePoint-Upload-Schnittstelle wurde leicht angepasst.
+
+In-App-Training / Anwenderdoku:
+
+- Neue Trainingsseiten in der Anwendung:
+  - `Components/Pages/FinanceTraining.razor`
+  - `Components/Pages/HrKpiTraining.razor`
+  - `Components/TrainingSection.razor`
+- Navigation um Trainingseintraege ergaenzt.
+- Neue Trainingsassets:
+  - `wwwroot/training/systemarchitektur.svg`
+  - `wwwroot/training/keyuser-prozess.svg`
+  - `wwwroot/training/finance_cockpit_preview.png`
+  - `wwwroot/training/hr_kpi_cockpit_preview.png`
+- Aktualisierte Anwenderdokumente:
+  - `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+  - `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`
+  - `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md`
+
+Lokaler Dev-Server / Uebergang:
+
+- `launchSettings.json` wurde fuer den lokalen Uebergang angepasst.
+- Doku ergaenzt:
+  - `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md`
+  - `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`
+- Ziel: lokal lauffaehige Umgebung dokumentieren, falls IIS/Publish nicht erreichbar ist.
+
+Admin / Startseite:
+
+- Admin-Bereich wurde von Finance-Login getrennt.
+- Startseite/Landing-Dashboard und Admin-Sessions wurden erweitert.
+- Doku:
+  - `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md`
+- Relevante technische Bereiche:
+  - `Components/AdminAccessPanel.razor`
+  - `Components/Pages/AdminSessions.razor`
+  - `Security/AdminAccessOptions.cs`
+  - `Services/AdminAccessService.cs`
+  - `Services/AccessSessionTracker.cs`
+  - `Services/AccessPasswordSettingsWriter.cs`
+  - `Security/LandingPageOptions.cs`
+  - `Services/LandingPageSettingsService.cs`
+
+Trading Engine:
+
+- Ein Python-Trading-Engine-Paket wurde unter `trade_web` ergaenzt.
+- Dateien:
+  - `trade_web/trading_engine.py`
+  - `trade_web/trading_engine/__init__.py`
+- Zweck laut Commit-Historie: Trading-Cockpit-Engine als importierbares Paket bereitstellen.
+- Dieser Bereich ist separat vom TrafagSalesExporter/.NET-BI-Dashboard zu betrachten.
+
+Aktueller Git-Stand:
+
+- Rebase auf `origin/main` erfolgreich.
+- Neuer Head nach Rebase und Push: `d853f53 Add published HR KPI workflow fixes`.
+- `HEAD` und `origin/main` sind synchron.
+- Lokal unversioniert bleiben nur Arbeitsartefakte/Screenshots:
+  - `../BiDashboard/`
+  - `error.png`
+  - `it_export_result.html`
+  - `italien.png`
