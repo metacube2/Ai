@@ -2,9 +2,13 @@
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
 
     <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
         <MudTabPanel Text="@T("Ueberblick", "Overview")" Icon="@Icons.Material.Filled.Dashboard">
+            @PrintToolbar("hr-kpi-print-overview", T("Ueberblick als PDF", "Overview as PDF"))
+            <div id="hr-kpi-print-overview" class="hr-print-section">
+            @PrintHeader(T("Ueberblick", "Overview"))
             @MetricGrid(Result.Metrics)
 
             <MudGrid Class="mt-4">
@@ -24,9 +28,13 @@
                     @CriticalBalancesTable(Result.CriticalTimeBalances)
                 </MudItem>
             </MudGrid>
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Fluktuation", "Turnover")" Icon="@Icons.Material.Filled.TrendingDown">
+            @PrintToolbar("hr-kpi-print-turnover", T("Fluktuation als PDF", "Turnover as PDF"))
+            <div id="hr-kpi-print-turnover" class="hr-print-section">
+            @PrintHeader(T("Fluktuation", "Turnover"))
             @MetricGrid(Result.TurnoverMetrics)
 
             <MudGrid Class="mt-4">
@@ -67,14 +75,22 @@
                     @MonthlyBars(Result.TurnoverVisuals)
                 </MudItem>
             </MudGrid>
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Ampel", "Status")" Icon="@Icons.Material.Filled.Traffic">
+            @PrintToolbar("hr-kpi-print-status", T("Ampel als PDF", "Status as PDF"))
+            <div id="hr-kpi-print-status" class="hr-print-section">
+            @PrintHeader(T("Ampel", "Status"))
             @TrafficLightPanel(Result.TrafficLights)
             @MetricGrid(Result.PeriodComparisonMetrics)
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Absenzen", "Absences")" Icon="@Icons.Material.Filled.Sick">
+            @PrintToolbar("hr-kpi-print-absences", T("Absenzen als PDF", "Absences as PDF"))
+            <div id="hr-kpi-print-absences" class="hr-print-section">
+            @PrintHeader(T("Absenzen", "Absences"))
             @MetricGrid(Result.AbsenceMetrics)
             <MudGrid Class="mt-4">
                 <MudItem xs="12" md="6">
@@ -110,9 +126,13 @@
                     </PagerContent>
                 </MudTable>
             </MudPaper>
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Zeit / Ferien", "Time / Vacation")" Icon="@Icons.Material.Filled.EventAvailable">
+            @PrintToolbar("hr-kpi-print-time-vacation", T("Zeit/Ferien als PDF", "Time/vacation as PDF"))
+            <div id="hr-kpi-print-time-vacation" class="hr-print-section">
+            @PrintHeader(T("Zeit / Ferien", "Time / Vacation"))
             @MetricGrid(Result.TimeVacationMetrics)
 
             <MudGrid Class="mt-4">
@@ -145,19 +165,28 @@
                     </MudPaper>
                 </MudItem>
             </MudGrid>
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Mitarbeitende", "Employees")" Icon="@Icons.Material.Filled.Groups">
+            @PrintToolbar("hr-kpi-print-employees", T("Mitarbeitende als PDF", "Employees as PDF"))
+            <div id="hr-kpi-print-employees" class="hr-print-section">
+            @PrintHeader(T("Mitarbeitende", "Employees"))
             @EmployeesTable(Result.Employees)
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
+            @PrintToolbar("hr-kpi-print-data-status", T("Datenstatus als PDF", "Data status as PDF"))
+            <div id="hr-kpi-print-data-status" class="hr-print-section">
+            @PrintHeader(T("Datenstatus", "Data status"))
             @FileStatusTable(Result.FileStatuses)
             <MudGrid Class="mt-4">
                 <MudItem xs="12">
                     @DataQualityTable(Result.DataQualityIssues)
                 </MudItem>
             </MudGrid>
+            </div>
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Anleitung", "Guide")" Icon="@Icons.Material.Filled.HelpOutline">
@@ -169,6 +198,42 @@
     [Parameter, EditorRequired] public HrKpiResult Result { get; set; } = new();
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private RenderFragment PrintToolbar(string targetId, string label) => @<MudStack Row Justify="Justify.FlexEnd" Class="mb-3 hr-print-toolbar">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                   OnClick="@(() => PrintSectionAsync(targetId))">
+            @label
+        </MudButton>
+    </MudStack>;
+
+    private RenderFragment PrintHeader(string title) => @<div class="hr-print-header">
+        <h1>@title</h1>
+        <p>@Result.Options.DataFolder</p>
+        <p>@BuildFilterSummary()</p>
+    </div>;
+
+    private async Task PrintSectionAsync(string targetId)
+    {
+        await JsRuntime.InvokeVoidAsync("trafagDownload.printElement", targetId);
+    }
+
+    private string BuildFilterSummary()
+    {
+        var parts = new List<string>();
+        if (Result.Options.FromDate.HasValue || Result.Options.ToDate.HasValue)
+            parts.Add($"{T("Zeitraum", "Period")}: {FormatDate(Result.Options.FromDate)} - {FormatDate(Result.Options.ToDate)}");
+        if (Result.Options.Year.HasValue)
+            parts.Add($"{T("Austrittsjahr", "Leaver year")}: {Result.Options.Year.Value}");
+        parts.Add($"{T("Organisation", "Organisation")}: {BlankAsAll(Result.Options.Organisationseinheit)}");
+        parts.Add($"{T("Mitarbeitertyp", "Employee type")}: {BlankAsAll(Result.Options.Mitarbeitertyp)}");
+        if (!string.IsNullOrWhiteSpace(Result.Options.KostenstelleText))
+            parts.Add($"{T("Kostenstelle", "Cost center")}: {Result.Options.KostenstelleText}");
+        return string.Join(" | ", parts);
+    }
+
+    private string BlankAsAll(string? value)
+        => string.IsNullOrWhiteSpace(value) ? T("Alle", "All") : value;
 
     private static Color MetricColor(string severity)
         => severity == "Warning" ? Color.Warning : Color.Default;
@@ -627,6 +692,14 @@
 <style>
     .hr-viz-panel {
         min-height: 100%;
+    }
+
+    .hr-print-header {
+        display: none;
+    }
+
+    .hr-print-toolbar {
+        width: 100%;
     }
 
     .hr-guide-steps {

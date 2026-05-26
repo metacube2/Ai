@@ -42,13 +42,20 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
         !string.IsNullOrWhiteSpace(_options.Username) &&
         (!string.IsNullOrWhiteSpace(_options.PasswordHash) || !string.IsNullOrEmpty(_options.Password));
 
-    public bool IsUnlocked { get; private set; }
+    public bool IsUnlocked =>
+        _isUnlocked ||
+        AccessUnlockCookie.IsUnlocked(
+            _httpContextAccessor.HttpContext,
+            AccessUnlockCookie.HrCookieName,
+            _options.PasswordHash);
+
+    private bool _isUnlocked;
 
     public bool TryUnlock(string username, string password)
     {
         if (!IsEnabled)
         {
-            IsUnlocked = true;
+            _isUnlocked = true;
             return true;
         }
 
@@ -64,7 +71,7 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
             ? VerifyPasswordHash(password, _options.PasswordHash)
             : FixedEquals(password, _options.Password);
 
-        IsUnlocked = valid;
+        _isUnlocked = valid;
         if (valid)
             _sessionTracker.Register(_sessionId, "HR KPI", username.Trim(), GetRemoteAddress());
         return valid;
@@ -72,7 +79,7 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 
     public void Lock()
     {
-        IsUnlocked = false;
+        _isUnlocked = false;
         _sessionTracker.Unregister(_sessionId);
     }
 
@@ -91,7 +98,7 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
         AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, HrKpiAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
-        IsUnlocked = true;
+        _isUnlocked = true;
         _sessionTracker.Register(_sessionId, "HR KPI", username.Trim(), GetRemoteAddress());
         return true;
     }

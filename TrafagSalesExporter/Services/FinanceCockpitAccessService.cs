@@ -21,18 +21,21 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
     private readonly IHostEnvironment _environment;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAccessSessionTracker _sessionTracker;
+    private readonly ILogger<FinanceCockpitAccessService> _logger;
     private readonly string _sessionId = Guid.NewGuid().ToString("N");
 
     public FinanceCockpitAccessService(
         IOptions<FinanceCockpitAccessOptions> options,
         IHostEnvironment environment,
         IHttpContextAccessor httpContextAccessor,
-        IAccessSessionTracker sessionTracker)
+        IAccessSessionTracker sessionTracker,
+        ILogger<FinanceCockpitAccessService> logger)
     {
         _options = options.Value;
         _environment = environment;
         _httpContextAccessor = httpContextAccessor;
         _sessionTracker = sessionTracker;
+        _logger = logger;
     }
 
     public bool IsEnabled => _options.Enabled;
@@ -42,13 +45,21 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
         !string.IsNullOrWhiteSpace(_options.Username) &&
         (!string.IsNullOrWhiteSpace(_options.PasswordHash) || !string.IsNullOrEmpty(_options.Password));
 
-    public bool IsUnlocked { get; private set; }
+    public bool IsUnlocked =>
+        _isUnlocked ||
+        AccessUnlockCookie.IsUnlocked(
+            _httpContextAccessor.HttpContext,
+            AccessUnlockCookie.FinanceCookieName,
+            _options.PasswordHash);
+
+    private bool _isUnlocked;
 
     public bool TryUnlock(string username, string password)
     {
         if (!IsEnabled)
         {
-            IsUnlocked = true;
+            _isUnlocked = true;
+            _logger.LogInformation("Finance Cockpit access unlocked because FinanceCockpitAccess is disabled.");
             return true;
         }
 
@@ -57,6 +68,12 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
             string.IsNullOrEmpty(password) ||
             !FixedEquals(username.Trim(), _options.Username.Trim()))
         {
+            _logger.LogWarning(
+                "Finance Cockpit unlock failed before password check. IsConfigured={IsConfigured}, HasUsername={HasUsername}, PasswordLength={PasswordLength}, UsernameMatches={UsernameMatches}",
+                IsConfigured,
+                !string.IsNullOrWhiteSpace(username),
+                password?.Length ?? 0,
+                !string.IsNullOrWhiteSpace(username) && FixedEquals(username.Trim(), _options.Username.Trim()));
             return false;
         }
 
@@ -64,7 +81,14 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
             ? VerifyPasswordHash(password, _options.PasswordHash)
             : FixedEquals(password, _options.Password);
 
-        IsUnlocked = valid;
+        _isUnlocked = valid;
+        _logger.Log(
+            valid ? LogLevel.Information : LogLevel.Warning,
+            "Finance Cockpit password check completed. Success={Success}, Username={Username}, PasswordLength={PasswordLength}, UsesHash={UsesHash}",
+            valid,
+            username.Trim(),
+            password.Length,
+            !string.IsNullOrWhiteSpace(_options.PasswordHash));
         if (valid)
             _sessionTracker.Register(_sessionId, "Finance Cockpit", username.Trim(), GetRemoteAddress());
         return valid;
@@ -72,7 +96,7 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
 
     public void Lock()
     {
-        IsUnlocked = false;
+        _isUnlocked = false;
         _sessionTracker.Unregister(_sessionId);
     }
 
@@ -91,7 +115,7 @@ public sealed class FinanceCockpitAccessService : IFinanceCockpitAccessService, 
         AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, FinanceCockpitAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
-        IsUnlocked = true;
+        _isUnlocked = true;
         _sessionTracker.Register(_sessionId, "Finance Cockpit", username.Trim(), GetRemoteAddress());
         return true;
     }

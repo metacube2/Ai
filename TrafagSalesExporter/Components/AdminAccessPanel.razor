@@ -2,6 +2,8 @@
 @inject IAdminAccessService AdminAccess
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
+@inject ILogger<AdminAccessPanel> Logger
+@inject NavigationManager Navigation
 
 <MudPaper Class="pa-4 mb-4" Elevation="1" Style="max-width:520px;">
     <MudStack Spacing="3">
@@ -14,12 +16,20 @@
                 @T("Admin-Zugang ist noch nicht konfiguriert.", "Admin access is not configured yet.")
             </MudAlert>
         }
-        <MudTextField @bind-Value="_username" Label="@T("Name", "Name")" Disabled="@(!AdminAccess.IsConfigured)" />
-        <MudTextField @bind-Value="_password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!AdminAccess.IsConfigured)" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Unlock"
-                   StartIcon="@Icons.Material.Filled.LockOpen" Disabled="@(!AdminAccess.IsConfigured)">
-            @T("Admin entsperren", "Unlock admin")
-        </MudButton>
+        <form method="post" action="@AccessUrl">
+            <input type="hidden" name="returnUrl" value="@Navigation.Uri" />
+            <MudStack Spacing="3">
+                <MudTextField T="string" Name="username" Label="@T("Name", "Name")" Disabled="@(!AdminAccess.IsConfigured)" />
+                <MudTextField T="string" Name="password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!AdminAccess.IsConfigured)" />
+                <button type="submit" class="mud-button-root mud-button mud-button-filled mud-button-filled-primary mud-button-filled-size-medium mud-ripple">
+                    @T("Admin entsperren", "Unlock admin")
+                </button>
+            </MudStack>
+        </form>
+        <MudText Typo="Typo.caption">
+            @T("Server-Klicks", "Server clicks"): @_unlockClickCount |
+            @T("Konfiguriert", "Configured"): @(AdminAccess.IsConfigured ? "JA" : "NEIN")
+        </MudText>
         <MudDivider />
         <MudExpansionPanels Elevation="0">
             <MudExpansionPanel Text="@T("Passwort ändern", "Change password")" Icon="@Icons.Material.Filled.Password">
@@ -45,9 +55,19 @@
     private string? _currentPassword;
     private string? _newPassword;
     private string? _newPasswordRepeat;
+    private int _unlockClickCount;
+    private string AccessUrl => new Uri(new Uri(Navigation.BaseUri), "access/admin").ToString();
 
     private void Unlock()
     {
+        _unlockClickCount++;
+        Logger.LogInformation(
+            "Admin unlock button handler reached. ClickCount={ClickCount}, IsConfigured={IsConfigured}, UsernameLength={UsernameLength}, PasswordLength={PasswordLength}",
+            _unlockClickCount,
+            AdminAccess.IsConfigured,
+            _username?.Length ?? 0,
+            _password?.Length ?? 0);
+
         if (!AdminAccess.TryUnlock(_username ?? string.Empty, _password ?? string.Empty))
         {
             Snackbar.Add(T("Admin-Anmeldung fehlgeschlagen.", "Admin sign-in failed."), Severity.Error);

@@ -2216,3 +2216,56 @@ Technische Dateien:
 - `Services/LandingPageSettingsService.cs`
 - `Services/UiTextService.cs`
 - `appsettings.json`
+
+## Nachtrag 2026-05-26: Publish-Fixes, HR-KPI-Upload, Varianten und PDF
+
+Deployment / Blazor:
+
+- Interaktive Blazor-Server-Render-Mode-Deklarationen fuer die routbaren Seiten ergaenzt, damit Buttons und Formulare auf der publizierten IIS-Seite reagieren.
+- Navigation auf relative Links umgestellt, damit die Anwendung unter `/BiDashboard` nicht auf Root-URLs ohne PathBase springt.
+- Admin-, Finance- und HR-KPI-Login auf serverseitige POST-Endpunkte mit Unlock-Cookies umgestellt, damit Login auch auf der publizierten Seite ohne Blazor-Click-Event funktioniert.
+- SAP-HANA Native DLL `libadonetHDB.dll` wird mitpubliziert und `HDBDOTNETCORE` im `web.config` auf den Publish-Ordner gesetzt.
+
+HR-KPI:
+
+- Massenupload fuer die fuenf HR-KPI-Dateien direkt im HR-KPI-Cockpit eingebaut.
+- Upload-Ziel auf dem Server: `C:\inetpub\wwwcust\BiDashboard\hrdata`.
+- Erwartete Dateien:
+  - `Saldiperstichdatum.xlsx`
+  - `Exportkommengehen.xlsx`
+  - `HR_KPI_Export.xlsx`
+  - `Abwesenheitinstunden.xlsx`
+  - `Personalausgeschieden.xlsx`
+- Allgemeiner Zeitraumfilter `Von Datum` / `Bis Datum` ersetzt die reine Austrittsbeschriftung.
+- Fluktuation nutzt den Zeitraum ueber `Austrittsdatum`.
+- Absenzquote nutzt den Zeitraum als Nenner mit Arbeitstagen statt fix `21 Tage`.
+- Wenn die Rexx-Absenzen selbst Datumsfelder enthalten, werden Absenzen auf den Zeitraum gefiltert.
+- Wenn die Rexx-Absenzen keine Datumsfelder enthalten, wird angenommen, dass `Abwesenheitinstunden.xlsx` bereits fuer den gewaehlten Zeitraum exportiert wurde.
+- `MudDatePicker` nutzt explizit `de-CH`, damit Eingaben wie `31.03.2026` auf Server und Browser stabil geparst werden.
+- PDF-/Druckbuttons je HR-KPI-Reiter ergaenzt, z. B. fuer `Fluktuation`, `Absenzen`, `Ampel`, `Mitarbeitende` und `Datenstatus`.
+- Der Druck/PDF-Export rendert nur den jeweiligen Reiterinhalt inkl. Titel, Datenordner und Filterzusammenfassung.
+- Serverseitige HR-KPI-Varianten eingefuehrt:
+  - Speicherdatei: `C:\inetpub\wwwcust\BiDashboard\hrdata\hr-kpi-variants.json`
+  - letzte Selektion wird serverseitig gespeichert und beim Oeffnen wieder geladen
+  - Varianten sind fuer alle Benutzer sichtbar
+  - Varianten koennen gespeichert, geladen, aktualisiert, umbenannt und geloescht werden
+- Initiale Testvarianten fuer HR wurden auf dem Server angelegt:
+  - `Fluktuation Q1 2026`
+  - `Fluktuation Jahr 2026`
+  - `Absenzquote Q1 2026`
+
+Firewall / Betrieb:
+
+- Aktueller HANA-Fehler nach DLL-Fix ist Netzwerk/Firewall, nicht mehr SAP-DLL:
+  - Webserver: `10.120.1.17`
+  - HANA Internal: `10.194.65.22:30015`
+  - India HANA: `20.197.20.60:30015`
+  - SAP OData: `10.194.64.29:8000`
+  - SharePoint: `trafagag.sharepoint.com:443`
+- Support-Mail an externen Support vorbereitet; Freigabe muss vom Webserver zu den Zielsystemen erfolgen.
+
+Validierung:
+
+- `dotnet build .\TrafagSalesExporter.csproj --no-restore --verbosity minimal` erfolgreich.
+- `dotnet test .\TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --no-restore --verbosity minimal` erfolgreich mit `78/78` Tests.
+- Mehrfach erfolgreich nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` publiziert.

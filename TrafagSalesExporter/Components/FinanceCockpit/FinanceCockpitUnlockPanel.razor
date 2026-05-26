@@ -1,8 +1,10 @@
 @using TrafagSalesExporter.Services
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @inject IFinanceCockpitAccessService FinanceAccess
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IUiTextService UiText
+@inject ILogger<FinanceCockpitUnlockPanel> Logger
 
 <MudText Typo="Typo.h4" Class="mb-4">@T("Finance Cockpit", "Finance Cockpit")</MudText>
 
@@ -17,12 +19,20 @@
                 @T("Finance-Cockpit-Zugang ist noch nicht konfiguriert. Bitte Username und PasswordHash in FinanceCockpitAccess konfigurieren.", "Finance Cockpit access is not configured yet. Please configure Username and PasswordHash in FinanceCockpitAccess.")
             </MudAlert>
         }
-        <MudTextField @bind-Value="_username" Label="@T("Name", "Name")" Disabled="@(!FinanceAccess.IsConfigured)" />
-        <MudTextField @bind-Value="_password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!FinanceAccess.IsConfigured)" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UnlockAsync"
-                   StartIcon="@Icons.Material.Filled.LockOpen" Disabled="@(!FinanceAccess.IsConfigured)">
-            @T("Finance Cockpit entsperren", "Unlock Finance Cockpit")
-        </MudButton>
+        <form method="post" action="@AccessUrl">
+            <input type="hidden" name="returnUrl" value="@Navigation.Uri" />
+            <MudStack Spacing="3">
+                <MudTextField T="string" Name="username" Label="@T("Name", "Name")" Disabled="@(!FinanceAccess.IsConfigured)" />
+                <MudTextField T="string" Name="password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!FinanceAccess.IsConfigured)" />
+                <button type="submit" class="mud-button-root mud-button mud-button-filled mud-button-filled-primary mud-button-filled-size-medium mud-ripple">
+                    @T("Finance Cockpit entsperren", "Unlock Finance Cockpit")
+                </button>
+            </MudStack>
+        </form>
+        <MudText Typo="Typo.caption">
+            @T("Server-Klicks", "Server clicks"): @_unlockClickCount |
+            @T("Konfiguriert", "Configured"): @(FinanceAccess.IsConfigured ? "JA" : "NEIN")
+        </MudText>
         <MudDivider />
         <MudExpansionPanels Elevation="0">
             <MudExpansionPanel Text="@T("Passwort ändern", "Change password")" Icon="@Icons.Material.Filled.Password">
@@ -48,9 +58,19 @@
     private string? _currentPassword;
     private string? _newPassword;
     private string? _newPasswordRepeat;
+    private int _unlockClickCount;
+    private string AccessUrl => new Uri(new Uri(Navigation.BaseUri), "access/finance").ToString();
 
     private Task UnlockAsync()
     {
+        _unlockClickCount++;
+        Logger.LogInformation(
+            "Finance unlock button handler reached. ClickCount={ClickCount}, IsConfigured={IsConfigured}, UsernameLength={UsernameLength}, PasswordLength={PasswordLength}",
+            _unlockClickCount,
+            FinanceAccess.IsConfigured,
+            _username?.Length ?? 0,
+            _password?.Length ?? 0);
+
         if (!FinanceAccess.TryUnlock(_username ?? string.Empty, _password ?? string.Empty))
         {
             Snackbar.Add(T("Finance-Cockpit-Anmeldung fehlgeschlagen.", "Finance Cockpit sign-in failed."), Severity.Error);

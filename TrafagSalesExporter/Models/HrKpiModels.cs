@@ -184,6 +184,8 @@ public sealed class HrAbsenceRow
     public string Organisationseinheit { get; set; } = string.Empty;
     public string Stelle { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public DateTime? VonDatum { get; set; }
+    public DateTime? BisDatum { get; set; }
     public decimal KrankheitKurzStd { get; set; }
     public decimal KrankheitLangStd { get; set; }
     public decimal KrankheitGesamtStd { get; set; }

@@ -19,11 +19,19 @@ public sealed class AdminAccessService : IAdminAccessService
 {
     private readonly AdminAccessOptions _options;
     private readonly IHostEnvironment _environment;
+    private readonly ILogger<AdminAccessService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AdminAccessService(IOptions<AdminAccessOptions> options, IHostEnvironment environment)
+    public AdminAccessService(
+        IOptions<AdminAccessOptions> options,
+        IHostEnvironment environment,
+        ILogger<AdminAccessService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _options = options.Value;
         _environment = environment;
+        _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public bool IsEnabled => _options.Enabled;
@@ -33,13 +41,21 @@ public sealed class AdminAccessService : IAdminAccessService
         !string.IsNullOrWhiteSpace(_options.Username) &&
         (!string.IsNullOrWhiteSpace(_options.PasswordHash) || !string.IsNullOrEmpty(_options.Password));
 
-    public bool IsUnlocked { get; private set; }
+    public bool IsUnlocked =>
+        _isUnlocked ||
+        AccessUnlockCookie.IsUnlocked(
+            _httpContextAccessor.HttpContext,
+            AccessUnlockCookie.AdminCookieName,
+            _options.PasswordHash);
+
+    private bool _isUnlocked;
 
     public bool TryUnlock(string username, string password)
     {
         if (!IsEnabled)
         {
-            IsUnlocked = true;
+            _isUnlocked = true;
+            _logger.LogInformation("Admin access unlocked because AdminAccess is disabled.");
             return true;
         }
 
@@ -48,6 +64,12 @@ public sealed class AdminAccessService : IAdminAccessService
             string.IsNullOrEmpty(password) ||
             !FixedEquals(username.Trim(), _options.Username.Trim()))
         {
+            _logger.LogWarning(
+                "Admin access unlock failed before password check. IsConfigured={IsConfigured}, HasUsername={HasUsername}, PasswordLength={PasswordLength}, UsernameMatches={UsernameMatches}",
+                IsConfigured,
+                !string.IsNullOrWhiteSpace(username),
+                password?.Length ?? 0,
+                !string.IsNullOrWhiteSpace(username) && FixedEquals(username.Trim(), _options.Username.Trim()));
             return false;
         }
 
@@ -55,7 +77,14 @@ public sealed class AdminAccessService : IAdminAccessService
             ? VerifyPasswordHash(password, _options.PasswordHash)
             : FixedEquals(password, _options.Password);
 
-        IsUnlocked = valid;
+        _isUnlocked = valid;
+        _logger.Log(
+            valid ? LogLevel.Information : LogLevel.Warning,
+            "Admin access password check completed. Success={Success}, Username={Username}, PasswordLength={PasswordLength}, UsesHash={UsesHash}",
+            valid,
+            username.Trim(),
+            password.Length,
+            !string.IsNullOrWhiteSpace(_options.PasswordHash));
         return valid;
     }
 
@@ -74,11 +103,11 @@ public sealed class AdminAccessService : IAdminAccessService
         AccessPasswordSettingsWriter.SavePasswordHash(_environment.ContentRootPath, AdminAccessOptions.SectionName, passwordHash);
         _options.PasswordHash = passwordHash;
         _options.Password = string.Empty;
-        IsUnlocked = true;
+        _isUnlocked = true;
         return true;
     }
 
-    public void Lock() => IsUnlocked = false;
+    public void Lock() => _isUnlocked = false;
 
     private static bool VerifyPasswordHash(string password, string configuredHash)
     {

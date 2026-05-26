@@ -1,13 +1,16 @@
 ﻿@page "/hr-kpi"
-@using Microsoft.Extensions.Options
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using System.Text.Json
 @using TrafagSalesExporter.Components.HrKpi
 @using TrafagSalesExporter.Services
 @inject IHrKpiService HrKpiService
-@inject IOptions<HrKpiDataSourceOptions> DataSourceOptions
 @inject IHrKpiAccessService HrKpiAccess
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 @inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+@inject IWebHostEnvironment Environment
 
 <PageTitle>@T("HR KPI", "HR KPI")</PageTitle>
 
@@ -26,12 +29,20 @@
                     @T("HR-KPI-Zugang ist noch nicht konfiguriert. Bitte Username und PasswordHash in HrKpiAccess konfigurieren.", "HR KPI access is not configured yet. Please configure Username and PasswordHash in HrKpiAccess.")
                 </MudAlert>
             }
-            <MudTextField @bind-Value="_hrUsername" Label="@T("Name", "Name")" Disabled="@(!HrKpiAccess.IsConfigured)" />
-            <MudTextField @bind-Value="_hrPassword" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!HrKpiAccess.IsConfigured)" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UnlockHrKpiAsync"
-                       StartIcon="@Icons.Material.Filled.LockOpen" Disabled="@(!HrKpiAccess.IsConfigured)">
-                @T("HR KPI entsperren", "Unlock HR KPI")
-            </MudButton>
+            <form method="post" action="@AccessUrl">
+                <input type="hidden" name="returnUrl" value="@Navigation.Uri" />
+                <MudStack Spacing="3">
+                    <MudTextField T="string" Name="username" Label="@T("Name", "Name")" Disabled="@(!HrKpiAccess.IsConfigured)" />
+                    <MudTextField T="string" Name="password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!HrKpiAccess.IsConfigured)" />
+                    <button type="submit" class="mud-button-root mud-button mud-button-filled mud-button-filled-primary mud-button-filled-size-medium mud-ripple">
+                        @T("HR KPI entsperren", "Unlock HR KPI")
+                    </button>
+                </MudStack>
+            </form>
+            <MudText Typo="Typo.caption">
+                @T("Server-Klicks", "Server clicks"): @_unlockClickCount |
+                @T("Konfiguriert", "Configured"): @(HrKpiAccess.IsConfigured ? "JA" : "NEIN")
+            </MudText>
             <MudDivider />
             <MudExpansionPanels Elevation="0">
                 <MudExpansionPanel Text="@T("Passwort ändern", "Change password")" Icon="@Icons.Material.Filled.Password">
@@ -57,7 +68,24 @@ else
             <MudItem xs="12" md="5">
                 <MudTextField @bind-Value="_dataFolder"
                               Label="@T("Datenordner fuer Rexx/SAP-Dateien", "Data folder for Rexx/SAP files")"
-                              HelperText="@T("Standard ist C:\\temp. Der Ordner kann hier fuer den aktuellen Lauf angepasst oder dauerhaft in appsettings.json unter HrKpi:DataFolder geaendert werden.", "Default is C:\\temp. The folder can be changed here for the current run or permanently in appsettings.json under HrKpi:DataFolder.")" />
+                              HelperText="@T("Serverordner fuer hochgeladene HR-KPI-Dateien. Auf der publizierten Webseite ist das ein Ordner auf dem Webserver, nicht C:\\temp auf dem lokalen PC.", "Server folder for uploaded HR KPI files. On the published site this is a folder on the web server, not C:\\temp on the local PC.")" />
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.caption">
+                        @T("Erwartete Dateien", "Expected files"): @string.Join(", ", ExpectedUploadFileNames)
+                    </MudText>
+                    <InputFile OnChange="UploadHrKpiFilesAsync" multiple accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled="@(_loading || _uploading)" />
+                    <MudText Typo="Typo.caption">
+                        @T("Uploadziel", "Upload target"): @_serverUploadFolder
+                    </MudText>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="UseServerUploadFolderAsync"
+                           StartIcon="@Icons.Material.Filled.Folder" Disabled="@(_loading || _uploading)" FullWidth>
+                    @T("Serverordner nutzen", "Use server folder")
+                </MudButton>
             </MudItem>
             <MudItem xs="6" md="2">
                 <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
@@ -86,10 +114,10 @@ else
                            Label="@T("Managementsicht", "Management view")" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudDatePicker @bind-Date="_fromDate" Label="@T("Von Austritt", "Exit from")" Clearable DateFormat="dd.MM.yyyy" />
+                <MudDatePicker @bind-Date="_fromDate" Label="@T("Von Datum", "From date")" Clearable DateFormat="dd.MM.yyyy" Culture="_dateCulture" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudDatePicker @bind-Date="_toDate" Label="@T("Bis Austritt", "Exit to")" Clearable DateFormat="dd.MM.yyyy" />
+                <MudDatePicker @bind-Date="_toDate" Label="@T("Bis Datum", "To date")" Clearable DateFormat="dd.MM.yyyy" Culture="_dateCulture" />
             </MudItem>
             <MudItem xs="12" md="2">
                 <MudSelect T="int?" @bind-Value="_entryYear" Label="@T("Eintrittsjahr", "Entry year")" Dense Clearable>
@@ -154,6 +182,50 @@ else
                     @T("Drucken/PDF", "Print/PDF")
                 </MudButton>
             </MudItem>
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" @bind-Value="_selectedVariantName" Label="@T("Variante", "Variant")" Dense Clearable>
+                    @foreach (var variant in _variantNames)
+                    {
+                        <MudSelectItem Value="@variant">@variant</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudTextField @bind-Value="_variantName" Label="@T("Variantenname", "Variant name")" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SaveVariantAsync"
+                           StartIcon="@Icons.Material.Filled.Save" Disabled="_loading" FullWidth>
+                    @T("Variante speichern", "Save variant")
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenameVariantAsync"
+                           StartIcon="@Icons.Material.Filled.Edit" Disabled="@(_loading || string.IsNullOrWhiteSpace(_selectedVariantName) || string.IsNullOrWhiteSpace(_variantName))" FullWidth>
+                    @T("Umbenennen", "Rename")
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadVariantAsync"
+                           StartIcon="@Icons.Material.Filled.FileOpen" Disabled="@(_loading || string.IsNullOrWhiteSpace(_selectedVariantName))" FullWidth>
+                    @T("Variante laden", "Load variant")
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteVariantAsync"
+                           StartIcon="@Icons.Material.Filled.Delete" Disabled="@(_loading || string.IsNullOrWhiteSpace(_selectedVariantName))" FullWidth>
+                    @T("Löschen", "Delete")
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="UpdateSelectedVariantAsync"
+                           StartIcon="@Icons.Material.Filled.Update" Disabled="@(_loading || string.IsNullOrWhiteSpace(_selectedVariantName))" FullWidth>
+                    @T("Bestehende anpassen", "Update existing")
+                </MudButton>
+            </MudItem>
         </MudGrid>
     </MudPaper>
 }
@@ -194,8 +266,26 @@ else
     private string? _currentPassword;
     private string? _newPassword;
     private string? _newPasswordRepeat;
+    private int _unlockClickCount;
+    private string AccessUrl => new Uri(new Uri(Navigation.BaseUri), "access/hr").ToString();
     private bool _loading;
+    private bool _uploading;
+    private string _serverUploadFolder = string.Empty;
     private HrKpiResult? _result;
+    private string _selectionStorePath = string.Empty;
+    private HrKpiSelectionStore _selectionStore = new();
+    private string? _variantName;
+    private string? _selectedVariantName;
+    private List<string> _variantNames = [];
+    private static readonly SemaphoreSlim SelectionStoreLock = new(1, 1);
+    private static readonly string[] ExpectedUploadFileNames =
+    [
+        "Saldiperstichdatum.xlsx",
+        "Exportkommengehen.xlsx",
+        "HR_KPI_Export.xlsx",
+        "Abwesenheitinstunden.xlsx",
+        "Personalausgeschieden.xlsx"
+    ];
     private readonly List<(string Key, string Label)> _fluktuationOptions =
     [
         ("Alle", "Alle"),
@@ -205,10 +295,20 @@ else
     ];
     private readonly List<string> _ampelOptions = ["Gruen", "Gelb", "Rot"];
     private readonly List<string> _restferienOptions = ["Gruen", "Rot"];
+    private readonly CultureInfo _dateCulture = CultureInfo.GetCultureInfo("de-CH");
 
     protected override async Task OnInitializedAsync()
     {
-        _dataFolder = DataSourceOptions.Value.Normalize().DataFolder;
+        _serverUploadFolder = Path.Combine(Environment.ContentRootPath, "hrdata");
+        Directory.CreateDirectory(_serverUploadFolder);
+        _selectionStorePath = Path.Combine(_serverUploadFolder, "hr-kpi-variants.json");
+        _selectionStore = await ReadSelectionStoreAsync();
+        _dataFolder = _serverUploadFolder;
+        if (_selectionStore.LastSelection is not null)
+            ApplySelectionState(_selectionStore.LastSelection);
+        else
+            _mitarbeitertyp = "Festangestellt";
+        RefreshVariantNames();
         if (CanShowHrKpi)
         {
             await LoadAsync();
@@ -241,6 +341,8 @@ else
                 SearchText = _searchText,
                 ManagementView = _managementView
             });
+            _selectionStore.LastSelection = CreateSelectionState();
+            await WriteSelectionStoreAsync();
         }
         catch (Exception ex)
         {
@@ -252,8 +354,243 @@ else
         }
     }
 
+    private async Task UploadHrKpiFilesAsync(InputFileChangeEventArgs args)
+    {
+        if (!CanShowHrKpi)
+        {
+            return;
+        }
+
+        _uploading = true;
+        try
+        {
+            Directory.CreateDirectory(_serverUploadFolder);
+            var uploaded = 0;
+            var skipped = new List<string>();
+            var expected = ExpectedUploadFileNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var file in args.GetMultipleFiles(10))
+            {
+                var fileName = Path.GetFileName(file.Name);
+                if (!expected.Contains(fileName))
+                {
+                    skipped.Add(fileName);
+                    continue;
+                }
+
+                var targetPath = Path.Combine(_serverUploadFolder, fileName);
+                await using var source = file.OpenReadStream(50 * 1024 * 1024);
+                await using var target = File.Create(targetPath);
+                await source.CopyToAsync(target);
+                uploaded++;
+            }
+
+            _dataFolder = _serverUploadFolder;
+
+            if (uploaded > 0)
+            {
+                Snackbar.Add($"{uploaded} HR-KPI-Datei(en) auf den Server geladen.", Severity.Success);
+                await LoadAsync();
+            }
+
+            if (skipped.Count > 0)
+                Snackbar.Add($"Nicht uebernommen, weil Dateiname nicht erwartet wird: {string.Join(", ", skipped)}", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _uploading = false;
+        }
+    }
+
+    private async Task UseServerUploadFolderAsync()
+    {
+        _dataFolder = _serverUploadFolder;
+        await LoadAsync();
+    }
+
+    private async Task SaveVariantAsync()
+    {
+        var name = (_variantName ?? _selectedVariantName)?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Snackbar.Add(T("Bitte Variantenname eingeben.", "Please enter a variant name."), Severity.Warning);
+            return;
+        }
+
+        _selectionStore = await ReadSelectionStoreAsync();
+        _selectionStore.Variants[name] = CreateSelectionState();
+        await WriteSelectionStoreAsync();
+        RefreshVariantNames();
+        _selectedVariantName = name;
+        _variantName = name;
+        Snackbar.Add($"{T("Variante gespeichert", "Variant saved")}: {name}", Severity.Success);
+    }
+
+    private async Task UpdateSelectedVariantAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedVariantName))
+            return;
+
+        var name = _selectedVariantName.Trim();
+        _selectionStore = await ReadSelectionStoreAsync();
+        _selectionStore.Variants[name] = CreateSelectionState();
+        await WriteSelectionStoreAsync();
+        RefreshVariantNames();
+        _selectedVariantName = name;
+        _variantName = name;
+        Snackbar.Add($"{T("Variante aktualisiert", "Variant updated")}: {name}", Severity.Success);
+    }
+
+    private async Task RenameVariantAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedVariantName) || string.IsNullOrWhiteSpace(_variantName))
+            return;
+
+        var oldName = _selectedVariantName.Trim();
+        var newName = _variantName.Trim();
+        if (string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add(T("Der Variantenname ist unverändert.", "The variant name is unchanged."), Severity.Info);
+            return;
+        }
+
+        _selectionStore = await ReadSelectionStoreAsync();
+        if (!_selectionStore.Variants.TryGetValue(oldName, out var selection))
+        {
+            Snackbar.Add(T("Variante nicht gefunden.", "Variant not found."), Severity.Warning);
+            RefreshVariantNames();
+            return;
+        }
+
+        _selectionStore.Variants.Remove(oldName);
+        _selectionStore.Variants[newName] = selection;
+        await WriteSelectionStoreAsync();
+        RefreshVariantNames();
+        _selectedVariantName = newName;
+        _variantName = newName;
+        Snackbar.Add($"{T("Variante umbenannt", "Variant renamed")}: {oldName} -> {newName}", Severity.Success);
+    }
+
+    private async Task LoadVariantAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedVariantName))
+            return;
+
+        _selectionStore = await ReadSelectionStoreAsync();
+        if (!_selectionStore.Variants.TryGetValue(_selectedVariantName.Trim(), out var selection))
+        {
+            Snackbar.Add(T("Variante nicht gefunden.", "Variant not found."), Severity.Warning);
+            RefreshVariantNames();
+            return;
+        }
+
+        ApplySelectionState(selection);
+        _variantName = _selectedVariantName;
+        await LoadAsync();
+    }
+
+    private async Task DeleteVariantAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedVariantName))
+            return;
+
+        var name = _selectedVariantName.Trim();
+        _selectionStore = await ReadSelectionStoreAsync();
+        _selectionStore.Variants.Remove(name);
+        await WriteSelectionStoreAsync();
+        RefreshVariantNames();
+        _selectedVariantName = null;
+        _variantName = null;
+        Snackbar.Add($"{T("Variante gelöscht", "Variant deleted")}: {name}", Severity.Success);
+    }
+
+    private void RefreshVariantNames()
+    {
+        _variantNames = _selectionStore.Variants.Keys
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private HrKpiSelectionState CreateSelectionState()
+        => new()
+        {
+            DataFolder = _dataFolder,
+            Year = _year,
+            FromDate = _fromDate,
+            ToDate = _toDate,
+            EntryYear = _entryYear,
+            Organisation = _organisation,
+            Kostenstelle = _kostenstelle,
+            Mitarbeitertyp = _mitarbeitertyp,
+            FluktuationFilter = _fluktuationFilter,
+            GlzAmpel = _glzAmpel,
+            RestferienAmpel = _restferienAmpel,
+            SearchText = _searchText,
+            ManagementView = _managementView
+        };
+
+    private void ApplySelectionState(HrKpiSelectionState state)
+    {
+        _dataFolder = string.IsNullOrWhiteSpace(state.DataFolder) ? _serverUploadFolder : state.DataFolder;
+        _year = state.Year;
+        _fromDate = state.FromDate;
+        _toDate = state.ToDate;
+        _entryYear = state.EntryYear;
+        _organisation = state.Organisation;
+        _kostenstelle = state.Kostenstelle;
+        _mitarbeitertyp = string.IsNullOrWhiteSpace(state.Mitarbeitertyp) ? "Festangestellt" : state.Mitarbeitertyp;
+        _fluktuationFilter = string.IsNullOrWhiteSpace(state.FluktuationFilter) ? "Alle" : state.FluktuationFilter;
+        _glzAmpel = state.GlzAmpel;
+        _restferienAmpel = state.RestferienAmpel;
+        _searchText = state.SearchText;
+        _managementView = state.ManagementView;
+    }
+
+    private async Task<HrKpiSelectionStore> ReadSelectionStoreAsync()
+    {
+        await SelectionStoreLock.WaitAsync();
+        try
+        {
+            if (!File.Exists(_selectionStorePath))
+                return new HrKpiSelectionStore();
+
+            await using var stream = File.OpenRead(_selectionStorePath);
+            return await JsonSerializer.DeserializeAsync<HrKpiSelectionStore>(stream) ?? new HrKpiSelectionStore();
+        }
+        catch
+        {
+            return new HrKpiSelectionStore();
+        }
+        finally
+        {
+            SelectionStoreLock.Release();
+        }
+    }
+
+    private async Task WriteSelectionStoreAsync()
+    {
+        await SelectionStoreLock.WaitAsync();
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_selectionStorePath) ?? _serverUploadFolder);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            await using var stream = File.Create(_selectionStorePath);
+            await JsonSerializer.SerializeAsync(stream, _selectionStore, options);
+        }
+        finally
+        {
+            SelectionStoreLock.Release();
+        }
+    }
+
     private async Task UnlockHrKpiAsync()
     {
+        _unlockClickCount++;
+
         if (!HrKpiAccess.TryUnlock(_hrUsername ?? string.Empty, _hrPassword ?? string.Empty))
         {
             Snackbar.Add(T("HR-KPI-Anmeldung fehlgeschlagen.", "HR KPI sign-in failed."), Severity.Error);
@@ -306,4 +643,27 @@ else
     private bool CanShowHrKpi => !HrKpiAccess.IsEnabled || HrKpiAccess.IsUnlocked;
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private sealed class HrKpiSelectionStore
+    {
+        public HrKpiSelectionState? LastSelection { get; set; }
+        public Dictionary<string, HrKpiSelectionState> Variants { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private sealed class HrKpiSelectionState
+    {
+        public string? DataFolder { get; set; }
+        public int? Year { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public int? EntryYear { get; set; }
+        public string? Organisation { get; set; }
+        public string? Kostenstelle { get; set; }
+        public string? Mitarbeitertyp { get; set; }
+        public string? FluktuationFilter { get; set; }
+        public string? GlzAmpel { get; set; }
+        public string? RestferienAmpel { get; set; }
+        public string? SearchText { get; set; }
+        public bool ManagementView { get; set; }
+    }
 }

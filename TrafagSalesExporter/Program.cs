@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
@@ -139,7 +140,74 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
+app.MapPost("/access/finance", async (HttpContext httpContext, IOptions<FinanceCockpitAccessOptions> options) =>
+{
+    var form = await httpContext.Request.ReadFormAsync();
+    var settings = options.Value;
+    var username = form["username"].ToString();
+    var password = form["password"].ToString();
+    if (MatchesAccess(settings.Enabled, settings.Username, settings.PasswordHash, settings.Password, username, password))
+        AccessUnlockCookie.SetUnlocked(httpContext, AccessUnlockCookie.FinanceCookieName, settings.PasswordHash);
+
+    return Results.Redirect(ResolveReturnUrl(httpContext, form["returnUrl"].ToString()));
+}).DisableAntiforgery();
+
+app.MapPost("/access/admin", async (HttpContext httpContext, IOptions<AdminAccessOptions> options) =>
+{
+    var form = await httpContext.Request.ReadFormAsync();
+    var settings = options.Value;
+    var username = form["username"].ToString();
+    var password = form["password"].ToString();
+    if (MatchesAccess(settings.Enabled, settings.Username, settings.PasswordHash, settings.Password, username, password))
+        AccessUnlockCookie.SetUnlocked(httpContext, AccessUnlockCookie.AdminCookieName, settings.PasswordHash);
+
+    return Results.Redirect(ResolveReturnUrl(httpContext, form["returnUrl"].ToString()));
+}).DisableAntiforgery();
+
+app.MapPost("/access/hr", async (HttpContext httpContext, IOptions<HrKpiAccessOptions> options) =>
+{
+    var form = await httpContext.Request.ReadFormAsync();
+    var settings = options.Value;
+    var username = form["username"].ToString();
+    var password = form["password"].ToString();
+    if (MatchesAccess(settings.Enabled, settings.Username, settings.PasswordHash, settings.Password, username, password))
+        AccessUnlockCookie.SetUnlocked(httpContext, AccessUnlockCookie.HrCookieName, settings.PasswordHash);
+
+    return Results.Redirect(ResolveReturnUrl(httpContext, form["returnUrl"].ToString()));
+}).DisableAntiforgery();
+
 app.MapRazorComponents<TrafagSalesExporter.Components.App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+static bool MatchesAccess(bool enabled, string configuredUsername, string configuredHash, string configuredPassword, string username, string password)
+{
+    if (!enabled)
+        return true;
+
+    if (string.IsNullOrWhiteSpace(username) ||
+        string.IsNullOrEmpty(password) ||
+        !string.Equals(username.Trim(), configuredUsername.Trim(), StringComparison.Ordinal))
+    {
+        return false;
+    }
+
+    return !string.IsNullOrWhiteSpace(configuredHash)
+        ? string.Equals(AccessPasswordSettingsWriter.HashPassword(password), configuredHash.Trim(), StringComparison.Ordinal)
+        : string.Equals(password, configuredPassword, StringComparison.Ordinal);
+}
+
+static string ResolveReturnUrl(HttpContext httpContext, string returnUrl)
+{
+    if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var absolute) &&
+        string.Equals(absolute.Host, httpContext.Request.Host.Host, StringComparison.OrdinalIgnoreCase))
+    {
+        return absolute.PathAndQuery;
+    }
+
+    if (Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+        return returnUrl;
+
+    return $"{httpContext.Request.PathBase}/";
+}

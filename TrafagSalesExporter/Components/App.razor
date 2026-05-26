@@ -12,7 +12,14 @@
 </head>
 <body>
     <Routes @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
-    <script src="_framework/blazor.web.js"></script>
+    <script src="@($"{BaseHref}_framework/blazor.web.js")" autostart="false"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                configureSignalR: builder => builder.withUrl('@($"{BaseHref}_blazor")')
+            }
+        });
+    </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="js/download.js"></script>
 </body>

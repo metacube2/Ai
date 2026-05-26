@@ -7,42 +7,42 @@
 
 <MudNavMenu>
     <MudNavGroup Title="@T("Finance Cockpit", "Finance Cockpit")" Icon="@Icons.Material.Filled.Analytics" Expanded="true">
-        <MudNavLink Href="/export-dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
+        <MudNavLink Href="export-dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
             @T("Export Dashboard", "Export dashboard")
         </MudNavLink>
-        <MudNavLink Href="/management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">
+        <MudNavLink Href="management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">
             @T("Management Analyse", "Management analysis")
         </MudNavLink>
         @if (ShowFinanceComparison)
         {
-            <MudNavLink Href="/finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
+            <MudNavLink Href="finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
                 @T("Soll/Ist Vergleich", "Actual/reference comparison")
             </MudNavLink>
         }
-        <MudNavLink Href="/finance-cockpit/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
+        <MudNavLink Href="finance-cockpit/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
             @T("Finance Schulung", "Finance training")
         </MudNavLink>
-        <MudNavLink Href="/manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
+        <MudNavLink Href="manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
             @T("Manuelle Importe", "Manual imports")
         </MudNavLink>
         <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
             <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
                 <Authorized>
-                    <MudNavLink Href="/standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
+                    <MudNavLink Href="standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
                         @T("Standorte", "Sites")
                     </MudNavLink>
-                    <MudNavLink Href="/transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
+                    <MudNavLink Href="transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
                         @T("Transformationen", "Transformations")
                     </MudNavLink>
-                    <MudNavLink Href="/finance-rules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Rule">
+                    <MudNavLink Href="finance-rules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Rule">
                         @T("Finance Regeln", "Finance rules")
                     </MudNavLink>
-                    <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
+                    <MudNavLink Href="settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
                         @T("Settings", "Settings")
                     </MudNavLink>
                 </Authorized>
             </AuthorizeView>
-            <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
+            <MudNavLink Href="logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
                 @T("Logs", "Logs")
             </MudNavLink>
         </MudNavGroup>
@@ -55,14 +55,14 @@
         }
     </MudNavGroup>
     <MudNavGroup Title="@T("HR KPI (Login)", "HR KPI (login)")" Icon="@Icons.Material.Filled.Groups">
-        <MudNavLink Href="/hr-kpi" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+        <MudNavLink Href="hr-kpi" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
             @T("HR Dashboard", "HR dashboard")
         </MudNavLink>
-        <MudNavLink Href="/hr-kpi/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
+        <MudNavLink Href="hr-kpi/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
             @T("HR KPI Schulung", "HR KPI training")
         </MudNavLink>
     </MudNavGroup>
-    <MudNavLink Href="/admin/sessions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PeopleAlt">
+    <MudNavLink Href="admin/sessions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PeopleAlt">
         @T("Admin Bereich", "Admin area")
     </MudNavLink>
 </MudNavMenu>
@@ -78,7 +78,7 @@
     private void LockFinanceCockpit()
     {
         FinanceAccess.Lock();
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo(string.Empty);
     }
 
     private void HandleLanguageChanged()
