@@ -10,6 +10,17 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Themenrouter: `docs/RAG_ROUTER.md`.
 - Letzter dokumentierter Stand aus dem Roharchiv: Rebase/Push synchron mit `origin/main`, Head `d853f53 Add published HR KPI workflow fixes`.
 - Letzte dokumentierte Validierung: Build erfolgreich, Tests `78/78` gruen.
+- Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
+
+## Nachtrag 2026-05-27 Produktsparten-Mapping
+
+Dokumentiert:
+
+- Neue Detaildoku `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md`.
+- Neue RAG-Kurzdatei `docs/rag/PRODUCT_MAPPING.md`.
+- Router-Eintrag fuer Themen `Group Sales Report`, `Produkthierarchie`, `Produktfamilie`, `Produktsparte`.
+- Fachliche Annahme: Materialnummern aus Group Sales Report werden gegen TR-AG-Artikelstamm aufgeloest; nicht gefundene Artikel laufen unter `Sonstige/ohne Zuordnung`.
+- Offene Sitzungspunkte: Quelle des Artikelstamms, Bedeutung von `Z.Prodh`, Mapping-Tabelle von Kendra, Range-/Prefix-Regeln, Historisierung.
 
 ## Volltext Bei Bedarf
 

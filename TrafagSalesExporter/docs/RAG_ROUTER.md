@@ -23,6 +23,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Deployment/IIS | Publish, Server, BiDashboard, TLS, lokaler Uebergang | `docs/rag/DEPLOYMENT.md` |
 | Admin/Startseite | Admin Login, Sessions, Landing Page | `docs/rag/ADMIN.md` |
 | Architektur | Systemuebersicht, Diagramme, technische Einordnung | `docs/rag/ARCHITECTURE.md` |
+| Produktmapping | Group Sales Report, Produkthierarchie, Produktfamilie, Produktsparte | `docs/rag/PRODUCT_MAPPING.md` |
 
 ## Rohquellen Nur Bei Bedarf
 
@@ -38,6 +39,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Publish-Details |
 | `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | lokaler Server im Detail |
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin-/Landing-Details |
+| `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping im Detail |
 
 ## Suchwoerter
 
@@ -50,3 +52,4 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `HR KPI`, `Rexx`, `Austritte`, `Absenzen` | HR KPI |
 | `IIS`, `BiDashboard`, `Publish`, `TLS`, `Client certificate` | Deployment/IIS |
 | `Admin Bereich`, `AdminAccess`, `LandingPage` | Admin/Startseite |
+| `Group Sales Report`, `Produkthierarchie`, `Produktfamilie`, `Produktsparte`, `Z.Prodh` | Produktmapping |

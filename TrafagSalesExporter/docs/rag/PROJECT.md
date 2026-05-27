@@ -13,6 +13,7 @@ Stand: 2026-05-27
 
 - Finance Cockpit: `docs/rag/FINANCE.md`
 - Manual Import: `docs/rag/MANUAL_IMPORT.md`
+- Produktmapping: `docs/rag/PRODUCT_MAPPING.md`
 - HR KPI: `docs/rag/HR_KPI.md`
 - Deployment/IIS: `docs/rag/DEPLOYMENT.md`
 - Admin/Startseite: `docs/rag/ADMIN.md`
