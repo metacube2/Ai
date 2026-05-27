@@ -2,6 +2,8 @@
 
 Stand: 2026-05-20
 
+RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
+
 Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsnotizen nicht mit dem aktuellen Produktstand zu verwechseln.
 
 ## Aktuell fuehrend
