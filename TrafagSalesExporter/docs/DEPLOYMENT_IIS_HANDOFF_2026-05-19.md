@@ -2,6 +2,55 @@
 
 Letzter Nachtrag: 2026-05-20
 
+## Nachtrag 2026-05-27: Upgreat Firewall-Freigabe fuer neuen Webserver
+
+Wichtig: Upgreat muss die ausgehenden Verbindungen fuer den neuen IIS-/Publish-Webserver freischalten, nicht fuer den lokalen Entwicklungs-PC.
+
+Quelle / Absender:
+
+```text
+trch-webapp-bidashboard.trafagch.local
+tragvapp401.trafagch.local
+10.120.1.17
+```
+
+Der lokale PC bzw. lokale Uebergangsserver auf Port `5000` ist nur fuer temporaere Tests relevant. Eine dort bereits gemachte Firewall-Freigabe ersetzt nicht die Freigabe fuer den produktiven/publizierten Webserver.
+
+Bekannte Zielsysteme / Ports:
+
+| Zweck | Ziel | Port | Richtung |
+| --- | --- | ---: | --- |
+| HANA Internal / BI1 / Standorte FR, IT, US | `10.194.65.22` | `30015` | Webserver -> Ziel |
+| India HANA / Sage Indien | `20.197.20.60` | `30015` | Webserver -> Ziel |
+| SAP OData / ZSCHWEIZ CH/AT | `10.194.64.29` | `8000` | Webserver -> Ziel |
+| SharePoint / Graph / Manual-Importe / Upload | `trafagag.sharepoint.com` | `443` | Webserver -> Ziel |
+
+Wahrscheinlich benoetigt Upgreat eine laengere Standort-/Zielsystemliste aus der produktiven Konfiguration, nicht nur diese Kurzliste. Die vollstaendige Liste sollte aus den in der App gepflegten Quellsystemen/Standorten bzw. `HanaServers`, `SourceSystemDefinitions`, SAP-Gateway-Konfiguration und SharePoint-Konfiguration exportiert oder in der Sitzung abgestimmt werden.
+
+Mail-/Ticket-Kerntext fuer Upgreat:
+
+```text
+Bitte nicht den lokalen Entwicklungs-PC freischalten, sondern den neuen Webserver:
+
+Source:
+- trch-webapp-bidashboard.trafagch.local / tragvapp401.trafagch.local
+- IP: 10.120.1.17
+
+Benötigte ausgehende Verbindungen:
+- 10.194.65.22:30015 HANA Internal / BI1
+- 20.197.20.60:30015 India HANA
+- 10.194.64.29:8000 SAP OData / ZSCHWEIZ
+- trafagag.sharepoint.com:443 SharePoint / Microsoft Graph
+
+Bitte diese Verbindungen vom Webserver zu den Zielsystemen freischalten. Falls weitere Standort-HANA-/Sage-/SAP-Ziele in der produktiven Konfiguration vorhanden sind, diese bitte ebenfalls aufnehmen.
+```
+
+Offen:
+
+- Vollstaendige Standortliste mit Host/IP/Port aus der produktiven App-Konfiguration pruefen.
+- Klaeren, ob SharePoint/Graph zusaetzlich Microsoft-Login-/Graph-Endpunkte benoetigt oder ob `trafagag.sharepoint.com:443` fuer die Netzwerkfreigabe ausreichend ist.
+- Nach Freigabe direkt auf dem Webserver Verbindungstests fuer HANA, SAP OData und SharePoint ausfuehren.
+
 ## Ziel
 
 `TrafagSalesExporter` bleibt das fuehrende Projekt, wird aber fuer den Server als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema veroeffentlicht.

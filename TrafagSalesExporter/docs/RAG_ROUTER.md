@@ -51,5 +51,6 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `TRSE`, `Spain`, `Sage`, `ImporteNeto` | Finance Spezialfaelle |
 | `HR KPI`, `Rexx`, `Austritte`, `Absenzen` | HR KPI |
 | `IIS`, `BiDashboard`, `Publish`, `TLS`, `Client certificate` | Deployment/IIS |
+| `Upgreat`, `Firewall`, `Freigabe`, `10.120.1.17`, `30015`, `8000` | Deployment/IIS |
 | `Admin Bereich`, `AdminAccess`, `LandingPage` | Admin/Startseite |
 | `Group Sales Report`, `Produkthierarchie`, `Produktfamilie`, `Produktsparte`, `Z.Prodh` | Produktmapping |

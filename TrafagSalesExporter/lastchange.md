@@ -11,6 +11,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Letzter dokumentierter Stand aus dem Roharchiv: Rebase/Push synchron mit `origin/main`, Head `d853f53 Add published HR KPI workflow fixes`.
 - Letzte dokumentierte Validierung: Build erfolgreich, Tests `78/78` gruen.
 - Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
+- Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
 
 ## Nachtrag 2026-05-27 Produktsparten-Mapping
 
