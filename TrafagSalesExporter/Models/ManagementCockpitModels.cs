@@ -171,6 +171,50 @@ public class ManagementFinanceSummaryRow
     public decimal NetSalesActual { get; set; }
 }
 
+public class ManagementFinanceCountryStatusRow : ManagementFinanceSummaryRow
+{
+    public string SourceSystems { get; set; } = string.Empty;
+    public string Tscs { get; set; } = string.Empty;
+    public decimal? ReferenceValue { get; set; }
+    public decimal? Difference { get; set; }
+    public decimal? DifferencePercent { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
+
+public class ManagementFinanceDataStatusRow
+{
+    public string Land { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string SourceSystem { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int RowCount { get; set; }
+    public DateTime? LatestStoredAtUtc { get; set; }
+    public DateTime? LatestExtractionDate { get; set; }
+    public DateTime? LatestExportAt { get; set; }
+    public string LatestExportStatus { get; set; } = string.Empty;
+    public string ManualImportFilePath { get; set; } = string.Empty;
+    public DateTime? ManualImportLastUploadedAtUtc { get; set; }
+}
+
+public class ManagementFinanceCreditCandidateRow
+{
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string DocumentType { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal NetSalesActual { get; set; }
+    public decimal Quantity { get; set; }
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class ManagementFinanceDataQualityRow
+{
+    public string Issue { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public string Severity { get; set; } = "Info";
+}
+
 public class ManagementFinanceSummaryResult
 {
     public ManagementFinanceSummaryFilter Filter { get; set; } = new();
@@ -186,4 +230,9 @@ public class ManagementFinanceSummaryResult
     public int CurrencyCount { get; set; }
     public decimal NetSalesActual { get; set; }
     public string DisplayCurrency { get; set; } = string.Empty;
+    public List<ManagementFinanceCountryStatusRow> CountryRows { get; set; } = [];
+    public List<ManagementFinanceCountryStatusRow> DeviationRows { get; set; } = [];
+    public List<ManagementFinanceDataStatusRow> DataStatusRows { get; set; } = [];
+    public List<ManagementFinanceCreditCandidateRow> CreditCandidates { get; set; } = [];
+    public List<ManagementFinanceDataQualityRow> DataQualityRows { get; set; } = [];
 }

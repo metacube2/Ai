@@ -313,6 +313,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .AsNoTracking()
             .Select(r => new SalesRecord
             {
+                SourceSystem = r.SourceSystem,
                 Land = r.Land,
                 Tsc = r.Tsc,
                 DocumentEntry = r.DocumentEntry,
@@ -320,6 +321,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 PositionOnInvoice = r.PositionOnInvoice,
                 Material = r.Material,
                 Name = r.Name,
+                ProductGroup = r.ProductGroup,
                 Quantity = r.Quantity,
                 SupplierCountry = r.SupplierCountry,
                 CustomerNumber = r.CustomerNumber,
@@ -350,9 +352,22 @@ public class ManagementCockpitService : IManagementCockpitService
                 {
                     Year = financeDate.Year,
                     CountryKey = resolvedCountryKey,
+                    Land = record.Land,
+                    Tsc = record.Tsc,
+                    SourceSystem = string.IsNullOrWhiteSpace(record.SourceSystem) ? "-" : record.SourceSystem,
                     Currency = ResolveFinanceCurrency(record),
                     Include = include,
-                    Value = value
+                    Value = value,
+                    RawSalesValue = record.SalesPriceValue,
+                    Quantity = record.Quantity,
+                    InvoiceNumber = record.InvoiceNumber,
+                    DocumentType = record.DocumentType,
+                    Material = record.Material,
+                    ProductGroup = record.ProductGroup,
+                    CustomerName = record.CustomerName,
+                    PostingDate = record.PostingDate,
+                    InvoiceDate = record.InvoiceDate,
+                    ExtractionDate = record.ExtractionDate
                 };
             })
             .ToList();
@@ -408,6 +423,20 @@ public class ManagementCockpitService : IManagementCockpitService
             notices.Insert(0, "Fuer die gewaehlten Finance-Filter gibt es keine Datensaetze im aktuellen Zentraldatenbestand.");
         }
 
+        var references = await db.FinanceReferences
+            .AsNoTracking()
+            .Where(reference => reference.IsActive && reference.Year == year)
+            .ToListAsync();
+        var referenceByKey = references
+            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(reference => reference.CheckValue ?? reference.LocalCurrencyValue).FirstOrDefault(value => value.HasValue),
+                StringComparer.OrdinalIgnoreCase);
+
+        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db);
+        var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
+
         return new ManagementFinanceSummaryResult
         {
             Filter = new ManagementFinanceSummaryFilter
@@ -435,8 +464,203 @@ public class ManagementCockpitService : IManagementCockpitService
             CurrencyCount = resultCurrencies.Count,
             NetSalesActual = summaryRows.Sum(row => row.NetSalesActual),
             DisplayCurrency = BuildDisplayCurrencyLabel(resultCurrencies),
-            Notices = notices
+            Notices = notices,
+            CountryRows = countryRows,
+            DeviationRows = countryRows
+                .Where(row => row.Difference.HasValue)
+                .OrderByDescending(row => Math.Abs(row.Difference!.Value))
+                .ToList(),
+            DataStatusRows = dataStatusRows,
+            CreditCandidates = BuildFinanceCreditCandidates(scopedRows),
+            DataQualityRows = BuildFinanceDataQualityRows(scopedRows)
         };
+    }
+
+    private static async Task<List<ManagementFinanceDataStatusRow>> BuildFinanceDataStatusRowsAsync(AppDbContext db)
+    {
+        var sites = await db.Sites
+            .AsNoTracking()
+            .OrderBy(site => site.Land)
+            .ThenBy(site => site.TSC)
+            .ToListAsync();
+        var records = await db.CentralSalesRecords
+            .AsNoTracking()
+            .GroupBy(record => record.Tsc)
+            .Select(group => new
+            {
+                Tsc = group.Key,
+                RowCount = group.Count(),
+                LatestStoredAtUtc = group.Max(record => record.StoredAtUtc),
+                LatestExtractionDate = group.Max(record => record.ExtractionDate)
+            })
+            .ToListAsync();
+        var logs = await db.ExportLogs
+            .AsNoTracking()
+            .GroupBy(log => log.TSC)
+            .Select(group => new
+            {
+                Tsc = group.Key,
+                LatestTimestamp = group.Max(log => log.Timestamp)
+            })
+            .ToListAsync();
+        var latestLogTimes = logs.ToDictionary(x => x.Tsc, x => x.LatestTimestamp, StringComparer.OrdinalIgnoreCase);
+        var latestLogs = await db.ExportLogs
+            .AsNoTracking()
+            .Where(log => logs.Select(x => x.LatestTimestamp).Contains(log.Timestamp))
+            .ToListAsync();
+        var recordByTsc = records.ToDictionary(x => x.Tsc, StringComparer.OrdinalIgnoreCase);
+        var logByTsc = latestLogs
+            .Where(log => latestLogTimes.TryGetValue(log.TSC, out var timestamp) && log.Timestamp == timestamp)
+            .GroupBy(log => log.TSC, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(log => log.Id).First(), StringComparer.OrdinalIgnoreCase);
+
+        return sites.Select(site =>
+        {
+            recordByTsc.TryGetValue(site.TSC, out var record);
+            logByTsc.TryGetValue(site.TSC, out var log);
+            return new ManagementFinanceDataStatusRow
+            {
+                Land = site.Land,
+                Tsc = site.TSC,
+                SourceSystem = site.SourceSystem,
+                IsActive = site.IsActive,
+                RowCount = record?.RowCount ?? 0,
+                LatestStoredAtUtc = record?.LatestStoredAtUtc,
+                LatestExtractionDate = record?.LatestExtractionDate,
+                LatestExportAt = log?.Timestamp,
+                LatestExportStatus = log?.Status ?? string.Empty,
+                ManualImportFilePath = site.ManualImportFilePath,
+                ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc
+            };
+        }).ToList();
+    }
+
+    private static List<ManagementFinanceCountryStatusRow> BuildFinanceCountryStatusRows(
+        IReadOnlyCollection<FinanceAggregationRow> rows,
+        IReadOnlyDictionary<string, decimal?> referenceByKey)
+        => rows
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                referenceByKey.TryGetValue(group.Key.CountryKey, out var referenceValue);
+                var actual = rowList.Sum(row => row.Value);
+                var difference = referenceValue.HasValue ? actual - referenceValue.Value : (decimal?)null;
+                return new ManagementFinanceCountryStatusRow
+                {
+                    Year = group.Key.Year,
+                    CountryKey = group.Key.CountryKey,
+                    Currency = group.Key.Currency,
+                    IncludedRows = rowList.Count(row => row.Include),
+                    ExcludedRows = rowList.Count(row => !row.Include),
+                    NetSalesActual = actual,
+                    SourceSystems = JoinDistinct(rowList.Select(row => row.SourceSystem)),
+                    Tscs = JoinDistinct(rowList.Select(row => row.Tsc)),
+                    ReferenceValue = referenceValue,
+                    Difference = difference,
+                    DifferencePercent = referenceValue is > 0m && difference.HasValue ? difference.Value / referenceValue.Value * 100m : null,
+                    Status = BuildFinanceStatus(difference)
+                };
+            })
+            .ToList();
+
+    private static List<ManagementFinanceCreditCandidateRow> BuildFinanceCreditCandidates(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Where(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber))
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.InvoiceNumber, row.DocumentType, row.Currency })
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                return new ManagementFinanceCreditCandidateRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    InvoiceNumber = group.Key.InvoiceNumber,
+                    DocumentType = group.Key.DocumentType,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = rowList.Sum(row => row.Value),
+                    Quantity = rowList.Sum(row => row.Quantity),
+                    Reason = BuildCreditReason(rowList)
+                };
+            })
+            .OrderBy(row => row.NetSalesActual)
+            .Take(100)
+            .ToList();
+
+    private static List<ManagementFinanceDataQualityRow> BuildFinanceDataQualityRows(IReadOnlyCollection<FinanceAggregationRow> rows)
+    {
+        var rowCount = rows.Count;
+        return new List<ManagementFinanceDataQualityRow>
+        {
+            BuildQualityRow("Fehlende Materialnummer", rows.Count(row => string.IsNullOrWhiteSpace(row.Material)), rowCount),
+            BuildQualityRow("Fehlende ProductGroup", rows.Count(row => string.IsNullOrWhiteSpace(row.ProductGroup)), rowCount),
+            BuildQualityRow("Fehlende Waehrung", rows.Count(row => string.IsNullOrWhiteSpace(row.Currency) || row.Currency == "-"), rowCount),
+            BuildQualityRow("Fehlender Kunde", rows.Count(row => string.IsNullOrWhiteSpace(row.CustomerName)), rowCount),
+            BuildQualityRow("Fehlendes Rechnungsdatum", rows.Count(row => !row.InvoiceDate.HasValue), rowCount),
+            BuildQualityRow("Fehlendes Buchungsdatum", rows.Count(row => !row.PostingDate.HasValue), rowCount),
+            BuildQualityRow("Nullwerte im Finance-Wert", rows.Count(row => row.Value == 0m), rowCount),
+            BuildQualityRow("Ausgeschlossene Zeilen", rows.Count(row => !row.Include), rowCount)
+        }
+        .Where(row => row.Count > 0)
+        .OrderByDescending(row => row.Count)
+        .ThenBy(row => row.Issue, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+    }
+
+    private static ManagementFinanceDataQualityRow BuildQualityRow(string issue, int count, int totalRows)
+    {
+        var share = totalRows == 0 ? 0m : count / (decimal)totalRows;
+        return new ManagementFinanceDataQualityRow
+        {
+            Issue = issue,
+            Count = count,
+            Severity = count == 0 ? "Info" : share >= 0.2m ? "Warning" : "Info"
+        };
+    }
+
+    private static string BuildFinanceStatus(decimal? difference)
+    {
+        if (!difference.HasValue)
+            return "Kein Sollwert";
+
+        return Math.Abs(difference.Value) <= 1m ? "OK" : "Pruefen";
+    }
+
+    private static bool LooksLikeCreditDocument(string documentType, string invoiceNumber)
+    {
+        var text = $"{documentType} {invoiceNumber}".Trim();
+        return text.Contains("credit", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("gutsch", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("storno", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("abono", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("rec", StringComparison.OrdinalIgnoreCase) ||
+               invoiceNumber.StartsWith("GS", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildCreditReason(IEnumerable<FinanceAggregationRow> rows)
+    {
+        var rowList = rows.ToList();
+        var reasons = new List<string>();
+        if (rowList.Any(row => row.Value < 0m))
+            reasons.Add("negativer Finance-Wert");
+        if (rowList.Any(row => row.RawSalesValue < 0m))
+            reasons.Add("negativer Rohwert");
+        if (rowList.Any(row => LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber)))
+            reasons.Add("Belegtyp/-nummer");
+        return string.Join(", ", reasons.Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static string JoinDistinct(IEnumerable<string> values)
+    {
+        var distinct = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return distinct.Count == 0 ? "-" : string.Join(", ", distinct);
     }
 
     private static IEnumerable<CentralAggregationRow> ApplyCentralDimensionFilters(
@@ -1090,9 +1314,22 @@ public class ManagementCockpitService : IManagementCockpitService
     {
         public int Year { get; set; }
         public string CountryKey { get; set; } = string.Empty;
+        public string Land { get; set; } = string.Empty;
+        public string Tsc { get; set; } = string.Empty;
+        public string SourceSystem { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
         public bool Include { get; set; }
         public decimal Value { get; set; }
+        public decimal RawSalesValue { get; set; }
+        public decimal Quantity { get; set; }
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string DocumentType { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string ProductGroup { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime? PostingDate { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public DateTime ExtractionDate { get; set; }
     }
 
     private sealed record AggregationSelection(

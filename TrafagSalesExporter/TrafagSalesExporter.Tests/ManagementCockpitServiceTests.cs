@@ -255,6 +255,64 @@ public class ManagementCockpitServiceTests : IDisposable
         Assert.Contains("DE", result.CountryOptions);
     }
 
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Builds_Dashboard_Tab_Data()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(new Site
+            {
+                Id = 2,
+                HanaServerId = null,
+                Schema = "de",
+                TSC = "TRDE",
+                Land = "Deutschland",
+                SourceSystem = "MANUAL_EXCEL",
+                IsActive = true
+            });
+            db.FinanceReferences.RemoveRange(db.FinanceReferences);
+            db.FinanceReferences.Add(new FinanceReference
+            {
+                Key = "DE",
+                Label = "Trafag DE",
+                Year = 2025,
+                LocalCurrencyValue = 120m,
+                IsActive = true
+            });
+            db.ExportLogs.Add(new ExportLog
+            {
+                SiteId = 1,
+                Timestamp = new DateTime(2025, 1, 20, 10, 0, 0),
+                Land = "Deutschland",
+                TSC = "TRDE",
+                Status = "OK",
+                RowCount = 2,
+                FileName = "de.xlsx",
+                FilePath = "de.xlsx"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "GS-1", "EUR", -20m, new DateTime(2025, 1, 11), quantity: -1m),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-2", "EUR", 0m, new DateTime(2025, 1, 12)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        var country = Assert.Single(result.CountryRows);
+        Assert.Equal("DE", country.CountryKey);
+        Assert.Equal(80m, country.NetSalesActual);
+        Assert.Equal(120m, country.ReferenceValue);
+        Assert.Equal(-40m, country.Difference);
+        Assert.Equal("Pruefen", country.Status);
+
+        Assert.Single(result.DeviationRows);
+        Assert.Contains(result.DataStatusRows, row => row.Tsc == "TRDE" && row.RowCount == 3 && row.LatestExportStatus == "OK");
+        Assert.Contains(result.CreditCandidates, row => row.InvoiceNumber == "GS-1" && row.NetSalesActual == -20m);
+        Assert.Contains(result.DataQualityRows, row => row.Issue == "Nullwerte im Finance-Wert" && row.Count == 1);
+    }
+
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

@@ -7,6 +7,7 @@ Stand: 2026-05-27
 - Fuehrende Sicht: `Finance Summary`.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
+- `Management Analyse` hat zusaetzliche Finance-Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
 
@@ -23,6 +24,15 @@ Stand: 2026-05-27
 - DE: Finance/Munir muss bestaetigen, welche Kundenlaender/Filter zum offiziellen DE-Ist gehoeren.
 - IT: Nach neuem IT-Export pruefen, ob die vollstaendige `Trafag Italia`-Summe sichtbar wird.
 - ES: Differenz zu Rhino/check.xlsx bleibt fachlich zu klaeren.
+
+## Management-Analyse-Reiter
+
+- `Finance Summary`: KPI-Karten und Summen wie im zentralen Excel.
+- `Laender`: Ist, Soll, Differenz, Status, Quelle und TSC je Land/Waehrung.
+- `Datenstatus`: Standortbestand, letzte Speicherung, letzter Export, Manual-Import-Hinweise.
+- `Abweichungen`: Soll/Ist-Abweichungen sortiert nach Betrag.
+- `Gutschriften`: technische Kandidaten ueber negative Werte und erkennbare Belegtypen/-nummern.
+- `Datenqualitaet`: fehlende Materialnummern, ProductGroup, Waehrung, Kunde, Datum, Nullwerte und ausgeschlossene Zeilen.
 
 ## Land-Kurzindex
 

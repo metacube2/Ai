@@ -12,6 +12,26 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Letzte dokumentierte Validierung: Build erfolgreich, Tests `78/78` gruen.
 - Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
 - Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
+- Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
+
+## Nachtrag 2026-05-28 Finance Management Analyse Reiter
+
+Umgesetzt:
+
+- `Management Analyse` erweitert die bestehende `Finance Summary` um weitere Reiter im Cockpit-Stil.
+- Neue Reiter:
+  - `Laender`
+  - `Datenstatus`
+  - `Abweichungen`
+  - `Gutschriften`
+  - `Datenqualitaet`
+- Grundlage sind vorhandene Daten aus `CentralSalesRecords`, `FinanceReferences`, `Sites` und `ExportLogs`.
+- Keine neuen Fachregeln eingefuehrt:
+  - Gutschriften-Reiter zeigt technische Kandidaten.
+  - Datenqualitaet zeigt technische Pruefpunkte.
+  - Produktsparten-/Produktfamilienlogik bleibt bis Kendra-Mapping offen.
+- Test ergaenzt: `AnalyzeFinanceSummaryAsync_Builds_Dashboard_Tab_Data`.
+- Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `79/79` Tests gruen.
 
 ## Nachtrag 2026-05-27 Produktsparten-Mapping
 

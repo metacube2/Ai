@@ -3,6 +3,7 @@ namespace TrafagSalesExporter.Models;
 public class SalesRecord
 {
     public DateTime ExtractionDate { get; set; }
+    public string SourceSystem { get; set; } = string.Empty;
     public string Tsc { get; set; } = string.Empty;
     public int DocumentEntry { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
