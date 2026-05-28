@@ -8,6 +8,7 @@ Stand: 2026-05-27
 - Zentrale Persistenz ueber `CentralSalesRecords`.
 - Finance-Auswertung und zentrale Excel sollen dieselbe Regelengine verwenden.
 - Produktsparten-Mapping ist als eigene Mapping-Schicht vorgesehen, nicht als versteckte Finance-Regel.
+- Produktsparten-Referenz soll ueber SAP/ABAP bzw. Gateway als flache Tabelle geliefert werden.
 - Diagramme und Anwenderdokus existieren fuer Keyuser-Prozess und technische Architektur.
 
 ## Rohquellen Nur Bei Bedarf

@@ -70,6 +70,70 @@ Sinnvolle technische Bausteine:
 - Export-/Excel-Spalten fuer die drei neuen Klassifikationen.
 - Pruefansicht fuer nicht zugeordnete Materialnummern.
 
+## Nachtrag 2026-05-28 SAP-/ABAP-Zielbild
+
+Nach weiterer Analyse mit Andreas-/SAP-Kontext ist das fuehrende Zielbild:
+
+- SAP TR AG bleibt Quelle der Wahrheit fuer die Artikelzuordnung.
+- Die Dashboard-App baut die KEDR-/KE30-Ableitungslogik nicht direkt in C# nach.
+- Stattdessen wird eine flache Referenztabelle aus SAP bereitgestellt:
+  - `MATNR`
+  - `MAKTX`
+  - `PAPH1`
+  - `PAPH1_TEXT`
+  - `WWPFA`
+  - `WWPFA_TEXT`
+  - `WWPSP`
+  - `WWPSP_TEXT`
+  - `IS_ASSIGNED`
+- Das Dashboard mappt spaeter Umsatzzeilen ueber `Material`/`MATNR` gegen diese Referenz.
+- Falls die Materialnummer nicht in der Referenz enthalten ist oder keine eindeutige Ableitung existiert, wird die Zeile unter `Nicht zugeordnet` gefuehrt.
+
+SAP-Felder / Annahmen:
+
+- Materialnummer: `MATNR`
+- Produkthierarchie aus Vertriebssicht: `MVKE-PRODH`
+- CO-PA Merkmal fuer erste Produkthierarchieebene: `PAPH1`
+- Produktfamilie: `WWPFA`
+- Produktsparte: `WWPSP`
+- Reale Ableitung kommt aus CO-PA/KEDR und ist in `CE11000` sichtbar.
+
+ABAP-Artefakte wurden als Arbeitsstand im Repo abgelegt:
+
+| Datei | Zweck |
+| --- | --- |
+| `docs/abap/ZCL_PRODSPARTE_PROVIDER.abap` | Globale Provider-Klasse fuer ALV und spaeter OData |
+| `docs/abap/Z_PRODSPARTE_REPORT.abap` | ALV-Testreport, ruft Provider-Klasse |
+| `docs/abap/Z_PRODSPARTE_MAP_BUILD.abap` | Baut `ZPRODSPARTE_MAP` aus eindeutigen CO-PA-Kombinationen |
+| `docs/abap/README_PRODSPARTE.md` | Hinweise zu DDIC-Objekten und Pruefpunkten |
+
+Vorgeschlagene SAP-Architektur:
+
+1. `Z_PRODSPARTE_MAP_BUILD` liest eindeutige Kombinationen `PAPH1 -> WWPFA -> WWPSP` aus `CE11000`.
+2. Mehrdeutige `PAPH1` werden protokolliert und nicht in die Mapping-Tabelle geschrieben.
+3. Eindeutige Zuordnungen werden in `ZPRODSPARTE_MAP` geschrieben.
+4. `ZCL_PRODSPARTE_PROVIDER` liest verkaufsrelevante Materialien aus `MVKE`, Texte aus `MAKT`/`T179T`/`T25A0`/`T25A1` und verbindet sie mit `ZPRODSPARTE_MAP`.
+5. `Z_PRODSPARTE_REPORT` dient als ALV-Test.
+6. Ein spaeterer SAP-Gateway/OData-Service ruft dieselbe Provider-Klasse auf.
+
+Bewusst korrigierte Punkte im ABAP-Arbeitsstand:
+
+- Provider-Logik ist global auslagerbar, nicht nur lokale Reportklasse.
+- `MAKT` wird per `LEFT OUTER JOIN` gelesen, damit Materialien ohne Text nicht verschwinden.
+- `VTWEG` ist optionaler Selektionsparameter.
+- Bei mehreren Vertriebswegen gewinnt aktuell bewusst der kleinste `VTWEG`; dies ist noch fachlich zu bestaetigen.
+- Fallback setzt technischen Code `UNASS`, Text `Nicht zugeordnet` und `IS_ASSIGNED = abap_false`.
+- Mapping-Build schreibt die Tabelle nicht leer, falls keine eindeutigen Saetze aufgebaut wurden.
+
+Noch zu pruefen:
+
+- Ist `PAPH1 = MVKE-PRODH(5)` im Trafag-System exakt korrekt?
+- Sind `T25A0` und `T25A1` die richtigen Text-/Customizingtabellen fuer Produktfamilie und Produktsparte?
+- Ist `CE11000` der richtige CO-PA-Einzelposten fuer den relevanten Ergebnisbereich?
+- Ist der Fallback-Code `UNASS` in Feld `WWPSP` zulaessig/lang genug?
+- Soll `VTWEG` zwingend vorgegeben werden, statt den kleinsten Vertriebsweg zu verwenden?
+- Welche VKORG ist fuer TR AG im produktiven Lauf massgebend?
+
 ## Offene Fragen Fuer Andreas / Kendra
 
 | Frage | Warum wichtig |
@@ -86,4 +150,3 @@ Sinnvolle technische Bausteine:
 ## Abgrenzung
 
 Dieser Task ist keine Finance-Soll/Ist-Regel. Die Klassifikation kann spaeter Finance- und Management-Auswertungen ergaenzen, sollte aber fachlich getrennt von Net-Sales-Abgrenzungen bleiben.
-

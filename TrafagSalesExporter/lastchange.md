@@ -13,6 +13,31 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
 - Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
 - Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
+- Neu erstellt: ABAP-Arbeitsstand fuer Produktsparten-Mapping mit Provider-Klasse, ALV-Report und Mapping-Build-Report.
+
+## Nachtrag 2026-05-28 ABAP Produktsparten-Mapping
+
+Erstellt:
+
+- `docs/abap/ZCL_PRODSPARTE_PROVIDER.abap`
+- `docs/abap/Z_PRODSPARTE_REPORT.abap`
+- `docs/abap/Z_PRODSPARTE_MAP_BUILD.abap`
+- `docs/abap/README_PRODSPARTE.md`
+
+Dokumentierter Zielansatz:
+
+- SAP TR AG bleibt Quelle der Wahrheit fuer `MATNR -> PAPH1 -> WWPFA -> WWPSP`.
+- Mapping-Build liest reale CO-PA-Ableitungen aus `CE11000` und schreibt eindeutige Saetze in `ZPRODSPARTE_MAP`.
+- Provider liest verkaufsrelevante Materialien aus `MVKE`, Texte aus SAP-Texttabellen und Mapping aus `ZPRODSPARTE_MAP`.
+- ALV-Report und spaeter OData sollen dieselbe Provider-Methode verwenden.
+- Nicht zugeordnete Materialien erhalten Fallback `UNASS` / `Nicht zugeordnet`.
+
+Offen:
+
+- `PAPH1 = MVKE-PRODH(5)` bestaetigen.
+- Texttabellen `T25A0`/`T25A1` bestaetigen.
+- Relevante `VKORG`/`VTWEG` fuer TR AG festlegen.
+- `CE11000` als richtige CO-PA-Quelle bestaetigen.
 
 ## Nachtrag 2026-05-28 Finance Management Analyse Reiter
 
