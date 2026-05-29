@@ -23,6 +23,13 @@ Stand: 2026-05-28
 - Report `Z_PRODSPARTE_REPORT`
 - Report `Z_PRODSPARTE_MAP_BUILD`
 
+## Anlage In SAP
+
+- `ZCL_PRODSPARTE_PROVIDER.abap` ist eine globale Klasse bzw. ein Class Pool, kein ausfuehrbarer Report.
+  - In SE24 als Klasse `ZCL_PRODSPARTE_PROVIDER` anlegen und Definition/Implementation uebernehmen.
+  - Alternativ in SE38/ADT als Programtyp `Class Pool` anlegen; die Datei beginnt deshalb mit `CLASS-POOL zcl_prodsparte_provider`.
+- `Z_PRODSPARTE_REPORT.abap` und `Z_PRODSPARTE_MAP_BUILD.abap` sind normale ausfuehrbare Reports.
+
 Optional fuer Gateway/DDIC:
 
 - Struktur `ZSTR_PRODSPARTE_OUT`
@@ -46,4 +53,3 @@ Optional fuer Gateway/DDIC:
 - Ist `CE11000` der richtige CO-PA-Einzelposten fuer den relevanten Ergebnisbereich?
 - Ist Fallback-Code `UNASS` in Feld `WWPSP` lang genug/zulässig?
 - Soll `VTWEG` zwingend selektiert werden statt "kleinster VTWEG gewinnt"?
-

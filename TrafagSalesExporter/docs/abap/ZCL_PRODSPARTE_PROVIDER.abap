@@ -1,3 +1,5 @@
+CLASS-POOL zcl_prodsparte_provider.
+
 CLASS zcl_prodsparte_provider DEFINITION
   PUBLIC
   FINAL
