@@ -96,7 +96,7 @@
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@context.Year</MudTd>
-                                <MudTd>@context.CountryKey</MudTd>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                                 <MudTd>@context.Currency</MudTd>
                                 <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
                                 <MudTd>@context.IncludedRows.ToString("N0")</MudTd>
@@ -158,7 +158,7 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Tscs</MudTd>
                         <MudTd>@context.SourceSystems</MudTd>
                         <MudTd>@context.Currency</MudTd>
@@ -220,7 +220,7 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Currency</MudTd>
                         <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
                         <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
@@ -251,7 +251,7 @@
                         <MudTh>@T("Grund", "Reason")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@context.InvoiceNumber</MudTd>
                         <MudTd>@context.DocumentType</MudTd>
@@ -319,12 +319,39 @@
             </MudGrid>
 
             <MudPaper Class="pa-4 mb-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Produktsparte", "Sales by product division")</MudText>
-                <MudTable Items="_financeResult.ProductDivisionFinanceRows" Dense Hover Striped>
+                <MudGrid Class="mb-2">
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.h6">@T("Umsatz nach Produktsparte", "Sales by product division")</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="_productFinanceGroupLevel" Label="@T("Gruppierung", "Grouping")" Dense>
+                            @foreach (var option in _productFinanceGroupingOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudButton Variant="@(_limitProductFinanceTop10 ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.FilterAlt"
+                                   OnClick="ToggleProductFinanceTop10"
+                                   FullWidth>
+                            @T("Top 10 anzeigen", "Show top 10")
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+                <MudTable Items="BuildProductFinanceRows()" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>@T("Produktsparte", "Product division")</MudTh>
-                        <MudTh>@T("Produktfamilie", "Product family")</MudTh>
-                        <MudTh>PAPH1</MudTh>
+                        @if (ShowProductFamilyColumn)
+                        {
+                            <MudTh>@T("Produktfamilie", "Product family")</MudTh>
+                        }
+                        @if (ShowProductHierarchyColumn)
+                        {
+                            <MudTh>PAPH1</MudTh>
+                        }
                         <MudTh>@T("Umsatz", "Sales")</MudTh>
                         <MudTh>@T("Anteil", "Share")</MudTh>
                         <MudTh>@T("Materialien", "Materials")</MudTh>
@@ -333,13 +360,19 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
-                        <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
-                        <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        @if (ShowProductFamilyColumn)
+                        {
+                            <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
+                        }
+                        @if (ShowProductHierarchyColumn)
+                        {
+                            <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        }
                         <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
                         <MudTd>@FormatPercent(context.SharePercent)</MudTd>
                         <MudTd>@context.MaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
-                        <MudTd>@context.Countries</MudTd>
+                        <MudTd>@FormatCountriesWithFlags(context.Countries)</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body2">@T("Keine zugeordneten Spartenumsaetze fuer diese Filter.", "No assigned division sales for these filters.")</MudText>
@@ -361,7 +394,7 @@
                         <MudTh>@T("Abdeckung", "Coverage")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
@@ -435,7 +468,7 @@
                         <MudTh>@T("Trefferquote", "Match rate")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@context.DistinctMaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.MatchedMaterialCount.ToString("N0")</MudTd>
@@ -468,7 +501,7 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd><MudChip T="string" Size="Size.Small" Color="@ProductAssignmentColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
-                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@context.Material</MudTd>
                         <MudTd>@context.ArticleName</MudTd>
@@ -844,6 +877,12 @@
         new(ManagementCockpitCurrencyOptions.Usd, "USD"),
         new(ManagementCockpitCurrencyOptions.Native, "Original")
     ];
+    private readonly List<ProductFinanceGroupingOption> _productFinanceGroupingOptions =
+    [
+        new(ProductFinanceGroupLevels.Hierarchy, "PAPH1 Detail", "PAPH1 detail"),
+        new(ProductFinanceGroupLevels.Family, "Produktfamilie", "Product family"),
+        new(ProductFinanceGroupLevels.Division, "Produktsparte", "Product division")
+    ];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
@@ -866,6 +905,12 @@
     private bool _analyzingFinance;
     private int _activeFinanceTabIndex;
     private int _activeDivisionTabIndex;
+    private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
+    private bool _limitProductFinanceTop10;
+
+    private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
+
+    private bool ShowProductHierarchyColumn => _productFinanceGroupLevel == ProductFinanceGroupLevels.Hierarchy;
 
     protected override void OnParametersSet()
     {
@@ -998,6 +1043,84 @@
         _centralTscFilter = null;
     }
 
+    private void ToggleProductFinanceTop10()
+    {
+        _limitProductFinanceTop10 = !_limitProductFinanceTop10;
+    }
+
+    private IReadOnlyList<ManagementProductDivisionFinanceRow> BuildProductFinanceRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        var sourceRows = _financeResult.ProductDivisionFinanceRows;
+        var totalsByCurrency = sourceRows
+            .GroupBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(row => row.NetSalesActual), StringComparer.OrdinalIgnoreCase);
+
+        var rows = sourceRows
+            .GroupBy(row => BuildProductFinanceGroupKey(row))
+            .Select(group =>
+            {
+                var value = group.Sum(row => row.NetSalesActual);
+                totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+
+                return new ManagementProductDivisionFinanceRow
+                {
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText,
+                    ProductFamilyCode = group.Key.ProductFamilyCode,
+                    ProductFamilyText = group.Key.ProductFamilyText,
+                    ProductHierarchyCode = group.Key.ProductHierarchyCode,
+                    ProductHierarchyText = group.Key.ProductHierarchyText,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = value,
+                    SharePercent = PercentOf(value, total),
+                    MaterialCount = group.Sum(row => row.MaterialCount),
+                    RowCount = group.Sum(row => row.RowCount),
+                    Countries = JoinCountries(group.Select(row => row.Countries))
+                };
+            })
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.ProductDivisionCode, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.ProductFamilyCode, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.ProductHierarchyCode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return _limitProductFinanceTop10 ? rows.Take(10).ToList() : rows;
+    }
+
+    private ProductFinanceGroupKey BuildProductFinanceGroupKey(ManagementProductDivisionFinanceRow row)
+    {
+        return _productFinanceGroupLevel switch
+        {
+            ProductFinanceGroupLevels.Division => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                row.Currency),
+            ProductFinanceGroupLevels.Family => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                string.Empty,
+                string.Empty,
+                row.Currency),
+            _ => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                row.ProductHierarchyCode,
+                row.ProductHierarchyText,
+                row.Currency)
+        };
+    }
+
     private static Severity MapSeverity(string severity) => severity switch
     {
         "Warning" => Severity.Warning,
@@ -1023,6 +1146,9 @@
 
     private static string FormatPercent(decimal? value)
         => value.HasValue ? $"{value.Value:N1}%" : "-";
+
+    private static decimal PercentOf(decimal value, decimal total)
+        => total == 0m ? 0m : value * 100m / total;
 
     private static string FormatDateTime(DateTime? value)
         => value.HasValue ? value.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "-";
@@ -1071,6 +1197,36 @@
         return string.IsNullOrWhiteSpace(text) ? code : $"{code} - {text}";
     }
 
+    private static string JoinCountries(IEnumerable<string> countryValues)
+    {
+        var countries = countryValues
+            .SelectMany(value => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .Select(FormatCountryWithFlag);
+
+        return string.Join(", ", countries);
+    }
+
+    private static string FormatCountriesWithFlags(string countries)
+        => string.IsNullOrWhiteSpace(countries)
+            ? "-"
+            : JoinCountries([countries]);
+
+    private static string FormatCountryWithFlag(string country)
+    {
+        if (string.IsNullOrWhiteSpace(country))
+            return "-";
+
+        var normalized = country.Trim().ToUpperInvariant();
+        if (normalized.Length != 2 || normalized.Any(character => character is < 'A' or > 'Z'))
+            return country;
+
+        var flag = string.Concat(normalized.Select(character => char.ConvertFromUtf32(0x1F1E6 + character - 'A')));
+        return $"{flag} {normalized}";
+    }
+
     private void SetSelectedCentralAdditionalValueFields(IEnumerable<string> values)
     {
         _selectedCentralAdditionalValueFields = values
@@ -1090,9 +1246,25 @@
             : $"{formattedValue} / {value.MissingExchangeRateCount} ohne Kurs";
     }
 
-    private sealed record CurrencySelectOption(string Key, string Label);
-}
-
-@code {
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private static class ProductFinanceGroupLevels
+    {
+        public const string Hierarchy = "hierarchy";
+        public const string Family = "family";
+        public const string Division = "division";
+    }
+
+    private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);
+
+    private sealed record ProductFinanceGroupKey(
+        string ProductDivisionCode,
+        string ProductDivisionText,
+        string ProductFamilyCode,
+        string ProductFamilyText,
+        string ProductHierarchyCode,
+        string ProductHierarchyText,
+        string Currency);
+
+    private sealed record CurrencySelectOption(string Key, string Label);
 }
