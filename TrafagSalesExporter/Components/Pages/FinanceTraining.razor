@@ -168,8 +168,64 @@
         </TrainingSection>
     </MudTabPanel>
 
+    <MudTabPanel Text="Spartenanalyse">
+        <TrainingSection Title="11. Spartenanalyse oeffnen">
+            <p>Die Spartenanalyse liegt unter <strong>Management Analyse</strong>. Im linken Menue kann Management Analyse aufgeklappt werden.
+                Dort fuehren die Punkte <strong>Sparten-Finanzanalyse</strong> und <strong>Zentrale Spartenzuordnung</strong> direkt in die passende Sicht.</p>
+            <ul>
+                <li><strong>Sparten-Finanzanalyse</strong> zeigt Umsatz, Anteil, Materialien, Zeilen und Laender nach Produktspartenlogik.</li>
+                <li><strong>Zentrale Spartenzuordnung</strong> prueft lokale Materialnummern gegen die fuehrende TR-AG-Referenz.</li>
+                <li>Die lokalen ERP-Produktsparten werden fuer diese Fuehrungssicht nicht verwendet; massgebend ist die TR-AG-Referenz aus SAP.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="12. Gruppierung, Top 10 und Laender">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Funktion</th><th>Zweck</th><th>Pruefung</th></tr></thead>
+                <tbody>
+                    <tr><td>Gruppierung PAPH1 Detail</td><td>Feinste Sicht auf einzelne Produkt-Hierarchie-Codes</td><td>Geeignet fuer Detailanalyse und auffaellige Einzelgruppen</td></tr>
+                    <tr><td>Gruppierung Produktfamilie</td><td>Fasst mehrere PAPH1-Zeilen zusammen, z.B. Gas Density Monitor</td><td>Geeignet fuer Managementsicht und Portfolioanalyse</td></tr>
+                    <tr><td>Gruppierung Produktsparte</td><td>Verdichtet auf die oberste Spartenebene</td><td>Geeignet fuer schnelle Umsatzverteilung nach Sparten</td></tr>
+                    <tr><td>Top 10 anzeigen</td><td>Reduziert die Tabelle auf die groessten Umsatzbloecke</td><td>Hilft, die wichtigsten Sparten ohne lange Detailliste zu beurteilen</td></tr>
+                    <tr><td>Flaggen bei Laendern</td><td>Zeigt Landkuerzel optisch schneller erkennbar an</td><td>Bei mehreren Laendern werden die Laender kommasepariert angezeigt</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                Die Umsaetze und Anteile werden je Gruppierung neu aggregiert. Top 10 filtert nur die Anzeige, nicht die Berechnungsbasis.
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="13. Sparten-Icons lesen">
+            <p>Die Icons neben der Produktsparte sind eine visuelle Orientierung. Sie werden aus Sparten-, Familien- und PAPH1-Texten abgeleitet
+                und aendern keine Zahlen oder Zuordnung.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Textmuster</th><th>Icon</th><th>Bedeutung</th></tr></thead>
+                <tbody>
+                    <tr><td>Gas / Density</td><td>Sensors</td><td>Gas-Density-Produkte</td></tr>
+                    <tr><td>Pressure / Druck</td><td>Compress</td><td>Druckprodukte</td></tr>
+                    <tr><td>Temp / Thermostat</td><td>DeviceThermostat</td><td>Temperatur und Thermostate</td></tr>
+                    <tr><td>Switch / Schalter</td><td>ToggleOn</td><td>Schalterbasierte Produkte</td></tr>
+                    <tr><td>Access / Zubehoer</td><td>Extension</td><td>Zubehoer</td></tr>
+                    <tr><td>UNASS / Nicht zugeordnet</td><td>HelpOutline</td><td>TR-AG-Referenz vorhanden, aber ohne gueltige Sparte</td></tr>
+                    <tr><td>Sonstige Texte</td><td>Category</td><td>Keine spezifische Icon-Regel getroffen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="14. Interpretation fuer Finance">
+            <ul>
+                <li><strong>Zugeordnet</strong>: Material wurde im TR-AG-Stamm gefunden und hat eine verwertbare Sparteninformation.</li>
+                <li><strong>Nicht zugeordnet</strong>: Material wurde gefunden, aber die TR-AG-Referenz ist unassigned oder leer.</li>
+                <li><strong>Nicht im TR-AG-Stamm</strong>: Lokale Materialnummer konnte nicht gegen die TR-AG-Referenz gematcht werden.</li>
+                <li><strong>Material fehlt</strong>: In der Finance-Zeile fehlt die Materialnummer; diese Zeilen koennen nicht zugeordnet werden.</li>
+            </ul>
+            <p>Fuer Finanzfragen ist die wichtigste Sicht zuerst die aggregierte Produktfamilie oder Produktsparte. PAPH1 Detail wird genutzt,
+                wenn eine Abweichung oder ein auffaelliger Umsatzblock genauer erklaert werden muss.</p>
+        </TrainingSection>
+    </MudTabPanel>
+
     <MudTabPanel Text="Fehler & Freigabe">
-        <TrainingSection Title="11. Typische Fehler und Massnahmen">
+        <TrainingSection Title="15. Typische Fehler und Massnahmen">
             <MudSimpleTable Dense Hover>
                 <thead><tr><th>Fehler</th><th>Ursache</th><th>Massnahme</th></tr></thead>
                 <tbody>
@@ -182,7 +238,7 @@
             </MudSimpleTable>
         </TrainingSection>
 
-        <TrainingSection Title="12. Freigabe-Checkliste">
+        <TrainingSection Title="16. Freigabe-Checkliste">
             <MudSimpleTable Dense Hover>
                 <thead><tr><th>Nr.</th><th>Prüfpunkt</th><th>OK</th></tr></thead>
                 <tbody>
