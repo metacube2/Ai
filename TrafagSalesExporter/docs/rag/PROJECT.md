@@ -1,12 +1,15 @@
 # RAG Project
 
-Stand: 2026-05-27
+Stand: 2026-05-29
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Letzter dokumentierter Stand: Rebase/Push synchron mit `origin/main`, Head `d853f53 Add published HR KPI workflow fixes`.
-- Validierung laut Doku: Build erfolgreich, Tests zuletzt `78/78` gruen.
+- Letzter dokumentierter Stand: alle Aenderungen bis `36ca822 Add browser favicon` umgesetzt und deployed.
+- Validierung laut Doku: `80/80` Tests gruen, letzter Testlauf mit Artefaktpfad `C:\TMP\trafag-test-artifacts-favicon`.
+- Letzter Deploy: 2026-05-29 13:47 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Neu im Finance/Management-Cockpit: aufklappbare Management-Navigation, Spartenanalyse-Unterreiter, Gruppierung/Top-10/Flaggen/Icon-UX und Finance-Schulungserweiterung.
+- Neu im Browser: eigenes SVG-Favicon `wwwroot/favicon.svg`.
 - Fuer normale Weiterarbeit diese Datei plus den passenden Themen-RAG laden.
 
 ## Aktive Themen

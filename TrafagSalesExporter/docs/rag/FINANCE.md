@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-05-27
+Stand: 2026-05-29
 
 ## Kurzstand
 
@@ -8,6 +8,11 @@ Stand: 2026-05-27
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - `Management Analyse` hat zusaetzliche Finance-Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
+- `Management Analyse` ist links aufklappbar; direkte Navigationspunkte springen in die einzelnen Reiter.
+- Neu: `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
+- Sparten-Finanzanalyse nutzt die TR-AG-/SAP-Referenz, nicht lokale ERP-Sparten anderer Laender.
+- Sparten-Finanzanalyse bietet Gruppierung nach `PAPH1 Detail`, `Produktfamilie`, `Produktsparte`, optional `Top 10`, Laenderflaggen und visuelle Sparten-Icons.
+- Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
 
@@ -33,6 +38,24 @@ Stand: 2026-05-27
 - `Abweichungen`: Soll/Ist-Abweichungen sortiert nach Betrag.
 - `Gutschriften`: technische Kandidaten ueber negative Werte und erkennbare Belegtypen/-nummern.
 - `Datenqualitaet`: fehlende Materialnummern, ProductGroup, Waehrung, Kunde, Datum, Nullwerte und ausgeschlossene Zeilen.
+- `Spartenanalyse > Finanzanalyse`: Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 auf Basis der TR-AG-Referenz.
+- `Spartenanalyse > Zentrale Zuordnung`: Materialnummern aller Laender gegen TR-AG-Stamm pruefen.
+- `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf `CentralSalesRecords`.
+
+## Spartenanalyse Kurzlogik
+
+- Statuswerte:
+  - `Zugeordnet`: Material im TR-AG-Stamm gefunden und Sparte verwertbar.
+  - `Nicht zugeordnet`: TR-AG-Referenz vorhanden, aber `UNASS`/leer.
+  - `Nicht im TR-AG-Stamm`: lokale Materialnummer hat keinen TR-AG-Treffer.
+  - `Material fehlt`: Finance-Zeile ohne Materialnummer.
+- Gruppierung:
+  - `PAPH1 Detail`: feinste Hierarchie-Sicht.
+  - `Produktfamilie`: Managementsicht fuer Familien wie Gas Density Monitor.
+  - `Produktsparte`: oberste Verdichtung.
+- `Top 10 anzeigen` filtert nur die Tabelle, nicht die Summary-Berechnung.
+- Laender werden mit Flagge angezeigt.
+- Icons sind rein visuell und werden aus Textmustern abgeleitet.
 
 ## Land-Kurzindex
 

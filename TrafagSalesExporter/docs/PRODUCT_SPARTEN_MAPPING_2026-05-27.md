@@ -151,6 +151,81 @@ Noch zu pruefen:
 
 Dieser Task ist keine Finance-Soll/Ist-Regel. Die Klassifikation kann spaeter Finance- und Management-Auswertungen ergaenzen, sollte aber fachlich getrennt von Net-Sales-Abgrenzungen bleiben.
 
+## Nachtrag 2026-05-29 Web-Analyse Und Management UX
+
+Die Produktspartenlogik ist im Webprogramm produktiv als Analyse- und Pruefschicht sichtbar.
+
+### Navigation
+
+`Management Analyse` ist in der linken Navigation aufklappbar. Direkte Links springen in die relevanten Reiter:
+
+- `Finance Summary`
+- `Laender`
+- `Datenstatus`
+- `Abweichungen`
+- `Gutschriften`
+- `Datenqualitaet`
+- `Sparten-Finanzanalyse`
+- `Zentrale Spartenzuordnung`
+- `Rohdaten Diagnose`
+
+Technisch erfolgt der Sprung ueber Query-Parameter (`section`, `division`) und feste Reiter-Indizes in `ManagementCockpit.razor`.
+
+### Spartenanalyse
+
+Die beiden Sparten-Sichten sind unter einem Top-Level-Reiter `Spartenanalyse` gruppiert:
+
+- `Finanzanalyse`
+- `Zentrale Zuordnung`
+
+`Zentrale Zuordnung` bleibt die Pruefsicht fuer lokale Materialnummern gegen die fuehrende TR-AG-/SAP-Referenz aus `ProductDivisionRefSet`.
+
+`Finanzanalyse` nutzt dieselbe Statuslogik und aggregiert die Finance-Werte:
+
+- Gesamtumsatz
+- Zugeordneter Umsatz
+- Nicht zugeordneter Umsatz
+- Umsatz nicht im TR-AG-Stamm
+- Umsatz nach Produktsparte/Familie/PAPH1
+- Umsatzabdeckung nach Land/TSC
+
+### Gruppierung Und Top 10
+
+In der Tabelle `Umsatz nach Produktsparte` kann die Anzeige gruppiert werden:
+
+- `PAPH1 Detail`: feinste Sicht mit Produkthierarchie-Code.
+- `Produktfamilie`: fasst mehrere PAPH1-Zeilen zusammen, z.B. Gas Density Monitor.
+- `Produktsparte`: verdichtet auf die oberste Spartenebene.
+
+Der Button `Top 10 anzeigen` reduziert nur die Anzeige auf die groessten Umsatzbloecke. Die Berechnungsbasis und Summary-Kennzahlen bleiben unveraendert.
+
+Laender werden in den relevanten Tabellen mit Flagge und Landkuerzel angezeigt.
+
+### Sparten-Icons
+
+Neben der Produktsparte wird ein rein visuelles Icon angezeigt. Die Auswahl wird regelbasiert aus Sparten-, Familien- und PAPH1-Texten abgeleitet und aendert keine Zahlen:
+
+| Textmuster | Icon |
+| --- | --- |
+| Gas / Density | `Sensors` |
+| Pressure / Druck | `Compress` |
+| Temp / Thermostat | `DeviceThermostat` |
+| Switch / Schalter | `ToggleOn` |
+| Access / Zubehoer | `Extension` |
+| UNASS / Nicht zugeordnet | `HelpOutline` |
+| sonst | `Category` |
+
+### Schulung Und Browser
+
+- Die Finance-Schulung enthaelt einen neuen Tab `Spartenanalyse` mit Bedienung, Interpretation und Icon-Legende.
+- Die Web-App hat ein eigenes Browser-Favicon `wwwroot/favicon.svg`.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-favicon`
+- Ergebnis: `80/80` Tests gruen.
+- Letzter Deploy der dokumentierten UI-Aenderungen: 2026-05-29 13:47 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+
 ## Nachtrag 2026-05-29 Umsetzung SAP Gateway Und Web
 
 SAP/DDIC:

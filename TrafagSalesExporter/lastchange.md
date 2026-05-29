@@ -8,8 +8,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Stand aus dem Roharchiv: Rebase/Push synchron mit `origin/main`, Head `d853f53 Add published HR KPI workflow fixes`.
-- Letzte dokumentierte Validierung: Build erfolgreich, Tests `78/78` gruen.
+- Letzter dokumentierter Code-Stand: `36ca822 Add browser favicon`, alle Aenderungen bis 2026-05-29 13:47 deployt.
+- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-favicon` mit `80/80` Tests gruen.
 - Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
 - Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
 - Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
@@ -17,8 +17,72 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: Produktspartenfelder im Web-Datenmodell, Gateway-Join-Konfiguration fuer `ProductDivisionRefSet` und Excel-Ausgabe.
 - Neu umgesetzt und deployed: Reiter `Zentrale Spartenzuordnung` in `Management Analyse`, der Finance-Materialien gegen die fuehrende TR-AG-/SAP-Referenz prueft.
 - Neu umgesetzt und deployed: Reiter `Sparten-Finanzanalyse` in `Management Analyse`, der Umsatzabdeckung und Umsatz nach Produktsparte aus der zentralen Spartenzuordnung berechnet.
-- Letzter Deploy: 2026-05-29 10:42 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-division-finance` mit `80/80` Tests gruen.
+- Neu umgesetzt und deployed: `Management Analyse` ist in der linken Navigation aufklappbar; direkte Links springen in Finance Summary, Laender, Datenstatus, Abweichungen, Gutschriften, Datenqualitaet, Spartenanalyse und Rohdaten Diagnose.
+- Neu umgesetzt und deployed: Spartenanalyse ist als Hauptreiter mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung` strukturiert.
+- Neu umgesetzt und deployed: Sparten-Finanzanalyse kann nach `PAPH1 Detail`, `Produktfamilie` oder `Produktsparte` aggregieren, optional `Top 10` anzeigen und Laender mit Flaggen darstellen.
+- Neu umgesetzt und deployed: Produktsparte zeigt visuelle Kategorie-Icons fuer Gas/Density, Pressure/Druck, Temperatur/Thermostat, Switch/Schalter, Access/Zubehoer, UNASS und Sonstige.
+- Neu umgesetzt und deployed: Finance-Schulung hat einen neuen Tab `Spartenanalyse` mit Navigation, Gruppierung, Top 10, Flaggen, Icons und Statusinterpretation.
+- Neu umgesetzt und deployed: Browser-Favicon `wwwroot/favicon.svg` und Head-Link in `Components/App.razor`.
+- Letzter Deploy: 2026-05-29 13:47 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-favicon` mit `80/80` Tests gruen.
+
+## Nachtrag 2026-05-29 Management Analyse UX / Spartenanalyse / Favicon
+
+Umgesetzt und deployed:
+
+- `Management Analyse` ist in der linken Navigation als `MudNavGroup` aufklappbar.
+- Direkte Navigationspunkte:
+  - `Finance Summary`
+  - `Laender`
+  - `Datenstatus`
+  - `Abweichungen`
+  - `Gutschriften`
+  - `Datenqualitaet`
+  - `Sparten-Finanzanalyse`
+  - `Zentrale Spartenzuordnung`
+  - `Rohdaten Diagnose`
+- Die Navigation nutzt Query-Parameter (`section`, `division`), und `ManagementCockpit.razor` bindet diese auf feste Reiter-Indizes.
+- Die bisherigen Top-Level-Reiter `Sparten-Finanzanalyse` und `Zentrale Spartenzuordnung` wurden in einen Top-Level-Reiter `Spartenanalyse` mit Unterreitern zusammengefuehrt:
+  - `Finanzanalyse`
+  - `Zentrale Zuordnung`
+- `Sparten-Finanzanalyse` hat neue Controls:
+  - Dropdown `Gruppierung`: `PAPH1 Detail`, `Produktfamilie`, `Produktsparte`
+  - Button `Top 10 anzeigen` mit Filter-Icon
+  - dynamische Spaltenausblendung je Gruppierung
+- Aggregation:
+  - Umsatz, Anteil, Zeilen und Laender werden je Gruppierung neu berechnet.
+  - `Top 10` filtert nur die Anzeige, nicht die zugrunde liegende Berechnungsbasis.
+  - Laender werden mit Flagge formatiert.
+- Visuelle Produktsparte-Icons:
+  - Gas/Density -> `Sensors`
+  - Pressure/Druck -> `Compress`
+  - Temp/Thermostat -> `DeviceThermostat`
+  - Switch/Schalter -> `ToggleOn`
+  - Access/Zubehoer -> `Extension`
+  - UNASS/Nicht zugeordnet -> `HelpOutline`
+  - sonst -> `Category`
+- Finance-Schulung:
+  - Neuer Schulungs-Tab `Spartenanalyse`.
+  - Dokumentiert Navigation, Gruppierung, Top 10, Flaggen, Icons und Statusinterpretation.
+- Browser:
+  - Neues SVG-Favicon `wwwroot/favicon.svg`.
+  - Eingebunden in `Components/App.razor` via `<link rel="icon" type="image/svg+xml" href="favicon.svg" />`.
+
+Commits:
+
+- `dc2bc7d Group division analysis tabs`
+- `0a7aafb Add management analysis navigation group`
+- `3c82747 Add division finance grouping controls`
+- `18208cb Add product division category icons`
+- `61de1be Document division analysis in finance training`
+- `674c103 Expose management analysis tabs in navigation`
+- `36ca822 Add browser favicon`
+
+Validierungen:
+
+- Mehrfach `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit separaten Artefaktpfaden.
+- Letzter dokumentierter Testlauf: `80/80` Tests gruen.
+- Letzter Webserver-Deploy: `BiDashboard.dll` aktualisiert am `29.05.2026 13:47:36`.
 
 ## Nachtrag 2026-05-29 Produktsparten-Mapping Gateway/Web
 

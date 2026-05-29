@@ -10,6 +10,9 @@ Stand: 2026-05-29
 - Dashboard soll KEDR-/KE30-Ableitung nicht in C# nachbauen.
 - ABAP/Gateway soll eine flache Referenz liefern: `MATNR -> PAPH1 -> WWPFA -> WWPSP`.
 - Nicht gefundene oder nicht eindeutig ableitbare Materialnummern laufen unter `Nicht zugeordnet`.
+- Web produktiv: `Management Analyse` enthaelt `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
+- Sparten-Finanzanalyse kann nach `PAPH1 Detail`, `Produktfamilie` oder `Produktsparte` gruppieren und optional `Top 10` anzeigen.
+- Laender werden mit Flaggen angezeigt; Produktsparte erhaelt visuelle Icons nach Textmuster.
 
 ## Aktueller Code-Stand
 
@@ -74,6 +77,31 @@ Stand: 2026-05-29
 - Sie zeigt Kennzahlen, Laenderabdeckung und Detailzeilen mit Land-Material links und TR-AG-Referenz rechts.
 - Umsetzung ist eine Analyseansicht, keine persistente Mutation anderer Laenderzeilen.
 - Validierung nach Umsetzung: `80/80` Tests gruen.
+
+## Spartenanalyse UX 2026-05-29
+
+- Navigation links:
+  - `Management Analyse` ist aufklappbar.
+  - Direkte Links springen per Query-Parameter in Finance Summary, Laender, Datenstatus, Abweichungen, Gutschriften, Datenqualitaet, Sparten-Finanzanalyse, Zentrale Spartenzuordnung und Rohdaten Diagnose.
+- `Spartenanalyse` ist ein Top-Level-Reiter mit Unterreitern:
+  - `Finanzanalyse`
+  - `Zentrale Zuordnung`
+- `Finanzanalyse`:
+  - Kennzahlen Gesamt/Zugeordnet/Nicht zugeordnet/Nicht im Stamm.
+  - Umsatz nach Produktsparte mit Gruppierung `PAPH1 Detail`, `Produktfamilie`, `Produktsparte`.
+  - `Top 10 anzeigen` filtert nur die Anzeige.
+  - Laender werden mit Flagge dargestellt.
+  - Produktsparte zeigt Icon:
+    - Gas/Density -> `Sensors`
+    - Pressure/Druck -> `Compress`
+    - Temp/Thermostat -> `DeviceThermostat`
+    - Switch/Schalter -> `ToggleOn`
+    - Access/Zubehoer -> `Extension`
+    - UNASS -> `HelpOutline`
+    - sonst -> `Category`
+- Finance-Schulung hat einen neuen Tab `Spartenanalyse`.
+- Browser-Favicon wurde ergaenzt: `wwwroot/favicon.svg`.
+- Letzter dokumentierter Deploy: 2026-05-29 13:47, Tests `80/80` gruen.
 
 ## Offene Punkte Fuer Sitzung
 
