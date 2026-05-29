@@ -656,7 +656,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         }
 
         var obsoleteSources = db.SapSourceDefinitions
-            .Where(x => x.SiteId == siteId && x.Alias != "Z")
+            .Where(x => x.SiteId == siteId && x.Alias != "Z" && x.Alias != "P")
             .ToList();
         foreach (var obsoleteSource in obsoleteSources)
         {
@@ -673,6 +673,105 @@ public class DatabaseSeedService : IDatabaseSeedService
             }
         }
 
+        var productSource = db.SapSourceDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.SiteId == siteId && x.Alias == "P");
+
+        if (productSource is null)
+        {
+            db.SapSourceDefinitions.Add(new SapSourceDefinition
+            {
+                SiteId = siteId,
+                Alias = "P",
+                EntitySet = "ProductDivisionRefSet",
+                IsPrimary = false,
+                IsActive = true,
+                SortOrder = 1
+            });
+            changed = true;
+        }
+        else
+        {
+            if (productSource.EntitySet != "ProductDivisionRefSet")
+            {
+                productSource.EntitySet = "ProductDivisionRefSet";
+                changed = true;
+            }
+
+            if (productSource.IsPrimary)
+            {
+                productSource.IsPrimary = false;
+                changed = true;
+            }
+
+            if (!productSource.IsActive)
+            {
+                productSource.IsActive = true;
+                changed = true;
+            }
+
+            if (productSource.SortOrder != 1)
+            {
+                productSource.SortOrder = 1;
+                changed = true;
+            }
+        }
+
+        var productJoin = db.SapJoinDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.SiteId == siteId &&
+                x.LeftAlias == "Z" &&
+                x.RightAlias == "P");
+
+        if (productJoin is null)
+        {
+            db.SapJoinDefinitions.Add(new SapJoinDefinition
+            {
+                SiteId = siteId,
+                LeftAlias = "Z",
+                RightAlias = "P",
+                LeftKeys = "Matnr",
+                RightKeys = "Matnr",
+                JoinType = "Left",
+                IsActive = true,
+                SortOrder = 1
+            });
+            changed = true;
+        }
+        else
+        {
+            if (productJoin.LeftKeys != "Matnr")
+            {
+                productJoin.LeftKeys = "Matnr";
+                changed = true;
+            }
+
+            if (productJoin.RightKeys != "Matnr")
+            {
+                productJoin.RightKeys = "Matnr";
+                changed = true;
+            }
+
+            if (productJoin.JoinType != "Left")
+            {
+                productJoin.JoinType = "Left";
+                changed = true;
+            }
+
+            if (!productJoin.IsActive)
+            {
+                productJoin.IsActive = true;
+                changed = true;
+            }
+
+            if (productJoin.SortOrder != 1)
+            {
+                productJoin.SortOrder = 1;
+                changed = true;
+            }
+        }
+
         var mappings = new (string Target, string Source, bool Required)[]
         {
             (nameof(SalesRecord.Tsc), "Z.Tsc", true),
@@ -685,6 +784,13 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.Material), "Z.Matnr", false),
             (nameof(SalesRecord.Name), "Z.Arktx", false),
             (nameof(SalesRecord.ProductGroup), "Z.Prodh", false),
+            (nameof(SalesRecord.ProductHierarchyCode), "P.Paph1", false),
+            (nameof(SalesRecord.ProductHierarchyText), "P.Paph1Text", false),
+            (nameof(SalesRecord.ProductFamilyCode), "P.Wwpfa", false),
+            (nameof(SalesRecord.ProductFamilyText), "P.WwpfaText", false),
+            (nameof(SalesRecord.ProductDivisionCode), "P.Wwpsp", false),
+            (nameof(SalesRecord.ProductDivisionText), "P.WwpspText", false),
+            (nameof(SalesRecord.ProductMappingAssigned), "P.IsAssigned", false),
             (nameof(SalesRecord.Quantity), "Z.Fkimg", false),
             (nameof(SalesRecord.CustomerNumber), "Z.Kunnr", false),
             (nameof(SalesRecord.CustomerName), "Z.Name1", false),
