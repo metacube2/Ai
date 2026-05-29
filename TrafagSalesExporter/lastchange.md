@@ -14,6 +14,52 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
 - Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
 - Neu erstellt: ABAP-Arbeitsstand fuer Produktsparten-Mapping mit Provider-Klasse, ALV-Report und Mapping-Build-Report.
+- Neu umgesetzt: Produktspartenfelder im Web-Datenmodell, Gateway-Join-Konfiguration fuer `ProductDivisionRefSet` und Excel-Ausgabe.
+
+## Nachtrag 2026-05-29 Produktsparten-Mapping Gateway/Web
+
+SAP/Gateway:
+
+- Bestehender Service wird verwendet: `ZPOWERBI_EINKAUF_SRV`.
+- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
+- Neuer Entity Type/Entity Set:
+  - `ProductDivisionRef`
+  - `ProductDivisionRefSet`
+- Entity Type basiert auf `ZSTR_PRODSPARTE_OUT`.
+- Gateway-Test liefert Daten, Beispiel:
+  - `Matnr = VCP1000`
+  - `Paph1 = 9999`
+  - `Wwpsp = UNASS`
+  - `WwpspText = Nicht zugeordnet`
+- Wichtig: `FINANZDATASCHWEI_GET_ENTITYSET` ist der bestehende Sales-EntitySet und muss den alten `ZSCHWEIZ`-Select behalten. Produktspartenlogik gehoert in `PRODUCTDIVISIONR_GET_ENTITYSET`.
+- Fehler `/IWFND/MED/170` wurde als fehlender Slash zwischen Service und EntitySet identifiziert.
+
+Web/App:
+
+- Neue Felder in `SalesRecord` und `CentralSalesRecord`:
+  - `ProductHierarchyCode`
+  - `ProductHierarchyText`
+  - `ProductFamilyCode`
+  - `ProductFamilyText`
+  - `ProductDivisionCode`
+  - `ProductDivisionText`
+  - `ProductMappingAssigned`
+- `CentralSalesRecords` erhaelt die Spalten per Schema-Maintenance.
+- `CentralSalesRecordService` liest/schreibt die Felder.
+- Excel-Export fuehrt die Produktfelder im Blatt `Sales` direkt nach `Product Group`.
+- Manual-Excel-Header-Mapping kennt die neuen Feldnamen.
+- Lokale DB-Konfiguration fuer Standort `ZSCHWEIZ`:
+  - Quelle `P`: `ProductDivisionRefSet`
+  - Join: `Z.Matnr = P.Matnr`
+  - Mappings: `P.Paph1`, `P.Paph1Text`, `P.Wwpfa`, `P.WwpfaText`, `P.Wwpsp`, `P.WwpspText`, `P.IsAssigned`
+- Lokaler Neustart durchgefuehrt; `http://localhost:55416/` antwortet mit HTTP 200.
+- Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-productmapping` mit `79/79` Tests gruen.
+
+Offen:
+
+- `ZSCHWEIZ` im Export Dashboard neu laufen lassen.
+- Danach Fuellung der neuen Produktfelder und Quote `UNASS` pruefen.
+- Fachliche Mapping-Luecken wie `0509`/`0540` spaeter mit Andreas/Kendra klaeren.
 
 ## Nachtrag 2026-05-28 ABAP Produktsparten-Mapping
 

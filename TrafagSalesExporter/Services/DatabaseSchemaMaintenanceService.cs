@@ -52,6 +52,13 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "CentralSalesRecords", "VatSumLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentRate", "TEXT NOT NULL DEFAULT '0'");
         AddColumnIfMissing(db, "CentralSalesRecords", "CompanyCurrency", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductHierarchyCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductHierarchyText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductFamilyCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductFamilyText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductDivisionCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductDivisionText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductMappingAssigned", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "PostingDate", "TEXT NULL");
         EnsureAppEventLogTable(db);
     }

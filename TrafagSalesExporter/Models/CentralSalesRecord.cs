@@ -20,6 +20,13 @@ public class CentralSalesRecord
     public string Material { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string ProductGroup { get; set; } = string.Empty;
+    public string ProductHierarchyCode { get; set; } = string.Empty;
+    public string ProductHierarchyText { get; set; } = string.Empty;
+    public string ProductFamilyCode { get; set; } = string.Empty;
+    public string ProductFamilyText { get; set; } = string.Empty;
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+    public string ProductMappingAssigned { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public string SupplierNumber { get; set; } = string.Empty;
     public string SupplierName { get; set; } = string.Empty;

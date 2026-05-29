@@ -150,3 +150,128 @@ Noch zu pruefen:
 ## Abgrenzung
 
 Dieser Task ist keine Finance-Soll/Ist-Regel. Die Klassifikation kann spaeter Finance- und Management-Auswertungen ergaenzen, sollte aber fachlich getrennt von Net-Sales-Abgrenzungen bleiben.
+
+## Nachtrag 2026-05-29 Umsetzung SAP Gateway Und Web
+
+SAP/DDIC:
+
+- Struktur `ZSTR_PRODSPARTE_OUT` wurde fuer den Gateway-Entity-Type verwendet.
+- `PAPH1`, `WWPFA` und `WWPSP` duerfen in SE11 nicht vorausgesetzt als globale Datenelemente typisiert werden.
+- Pragmatische Typisierung ist moeglich:
+  - `PAPH1`: `CHAR 5`
+  - `WWPFA`: Laenge wie `CE11000-WWPFA`
+  - `WWPSP`: Laenge wie `CE11000-WWPSP`
+  - Textfelder: z.B. `CHAR 50`
+- Aktivierungsfehler bei `ZSTR_PRODSPARTE_OUT` waren durch nicht vorhandene/aktive Datenelemente fuer `PAPH1`, `WWPFA`, `WWPSP` verursacht.
+
+SAP/ABAP:
+
+- `ZCL_PRODSPARTE_PROVIDER` wurde als globale Klasse in SE24/quelltextbasiert angelegt.
+- `Z_PRODSPARTE_REPORT` und `Z_PRODSPARTE_MAP_BUILD` wurden als Reports angelegt.
+- `Z_PRODSPARTE_MAP_BUILD` hat `ZPRODSPARTE_MAP` befuellt.
+- Beispielhafte Mapping-Luecken aus dem ALV-Test:
+  - `0509 Multistat` nicht zugeordnet
+  - `0540 Multistat` nicht zugeordnet
+  - `0519 Multistat` zugeordnet zu `0007` / `0001`
+- Diese Luecken werden spaeter fachlich geprueft; technisch funktioniert der Provider.
+
+SAP Gateway:
+
+- Bestehender Service wird weiterverwendet:
+  - `ZPOWERBI_EINKAUF_SRV`
+  - Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+- Es wurde ein zusaetzlicher Entity Type aus `ZSTR_PRODSPARTE_OUT` erstellt:
+  - Entity Type: `ProductDivisionRef`
+  - Entity Set: `ProductDivisionRefSet`
+- Der bestehende Sales-EntitySet bleibt separat:
+  - `FinanzdataSchweizOeSet` bzw. generierte Methode `FINANZDATASCHWEI_GET_ENTITYSET`
+  - Diese Methode muss weiter aus `ZSCHWEIZ` lesen und darf nicht durch Produktsparten-Code ersetzt werden.
+- Produktsparten-Code gehoert in die separat generierte/redefinierte Methode:
+  - `PRODUCTDIVISIONR_GET_ENTITYSET`
+- Test-URL:
+  - `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`
+- OData-Feldnamen aus dem Gateway sind CamelCase:
+  - `Matnr`
+  - `Maktx`
+  - `Paph1`
+  - `Paph1Text`
+  - `Wwpfa`
+  - `WwpfaText`
+  - `Wwpsp`
+  - `WwpspText`
+  - `IsAssigned`
+- Erfolgreicher Testdatensatz aus Gateway:
+  - `Matnr = VCP1000`
+  - `Maktx = VC TRANSMITTER`
+  - `Paph1 = 9999`
+  - `Paph1Text = Zubehoer`
+  - `Wwpsp = UNASS`
+  - `WwpspText = Nicht zugeordnet`
+  - `IsAssigned = false`
+
+Wichtige Gateway-Korrektur:
+
+- Fehler `/IWFND/MED/170` trat auf, weil Service und EntitySet ohne Slash zusammengesetzt wurden.
+- Falsch:
+  - `.../ZPOWERBI_EINKAUF_SRVProductDivisionRSet`
+- Richtig:
+  - `.../ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`
+
+Webprogramm / Datenmodell:
+
+- `SalesRecord` und `CentralSalesRecord` wurden um folgende Felder erweitert:
+  - `ProductHierarchyCode`
+  - `ProductHierarchyText`
+  - `ProductFamilyCode`
+  - `ProductFamilyText`
+  - `ProductDivisionCode`
+  - `ProductDivisionText`
+  - `ProductMappingAssigned`
+- SQLite-Schema wurde erweitert:
+  - Neue Installationen erhalten die Felder in `CentralSalesRecords`.
+  - Bestehende Datenbanken erhalten die Felder per `DatabaseSchemaMaintenanceService`.
+- `CentralSalesRecordService` schreibt und liest die neuen Felder.
+- `ConfigTransferService` erhaelt die Produktfelder beim Preserve bestehender `CentralSalesRecords`.
+- Excel-Export fuehrt die neuen Produktfelder im Blatt `Sales` direkt nach `Product Group`.
+- Finance-Spalten im Export verschieben sich dadurch nach hinten; Tests wurden angepasst.
+- Manual-Excel-Import und Auto-Match kennen die neuen Feldnamen ebenfalls.
+
+Aktive lokale Web-Konfiguration:
+
+- Standort:
+  - `Schweiz/Oesterreich`
+  - `TSC = ZSCHWEIZ`
+  - `SourceSystem = SAP`
+- SAP Service URL:
+  - `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+- SAP-Quellen:
+  - Alias `Z`: bestehender Sales-EntitySet
+  - Alias `P`: `ProductDivisionRefSet`
+- Join:
+  - `Z.Matnr = P.Matnr`
+- Feldmappings:
+  - `ProductHierarchyCode <- P.Paph1`
+  - `ProductHierarchyText <- P.Paph1Text`
+  - `ProductFamilyCode <- P.Wwpfa`
+  - `ProductFamilyText <- P.WwpfaText`
+  - `ProductDivisionCode <- P.Wwpsp`
+  - `ProductDivisionText <- P.WwpspText`
+  - `ProductMappingAssigned <- P.IsAssigned`
+
+Lokaler Neustart / Validierung:
+
+- Lokaler Webprozess wurde neu gestartet.
+- App antwortet lokal mit HTTP 200 auf `http://localhost:55416/`.
+- Neue Spalten sind in `CentralSalesRecords` vorhanden.
+- Validierung:
+  - `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-productmapping`
+  - Ergebnis: `79/79` Tests gruen.
+
+Naechster fachlicher/technischer Schritt:
+
+- Standort `ZSCHWEIZ` im Export Dashboard einmal neu laufen lassen.
+- Danach pruefen:
+  - Sind Produktfelder in `CentralSalesRecords` gefuellt?
+  - Stimmen Join-Treffer fuer bekannte Materialien?
+  - Wie viele Zeilen bleiben `UNASS` / `Nicht zugeordnet`?
+- SAP-seitig muss `FINANZDATASCHWEI_GET_ENTITYSET` auf den alten `ZSCHWEIZ`-Select-Code zurueckgesetzt sein, falls er versehentlich mit Produktsparten-Code ueberschrieben wurde.

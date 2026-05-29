@@ -70,6 +70,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 Material = r.Material,
                 Name = r.Name,
                 ProductGroup = r.ProductGroup,
+                ProductHierarchyCode = r.ProductHierarchyCode,
+                ProductHierarchyText = r.ProductHierarchyText,
+                ProductFamilyCode = r.ProductFamilyCode,
+                ProductFamilyText = r.ProductFamilyText,
+                ProductDivisionCode = r.ProductDivisionCode,
+                ProductDivisionText = r.ProductDivisionText,
+                ProductMappingAssigned = r.ProductMappingAssigned,
                 Quantity = r.Quantity,
                 SupplierNumber = r.SupplierNumber,
                 SupplierName = r.SupplierName,
@@ -164,7 +171,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.CommandText = """
             INSERT INTO CentralSalesRecords (
                 StoredAtUtc, SiteId, SourceSystem, ExtractionDate, Tsc, DocumentEntry, InvoiceNumber, PositionOnInvoice,
-                Material, Name, ProductGroup, Quantity, SupplierNumber, SupplierName, SupplierCountry,
+                Material, Name, ProductGroup, ProductHierarchyCode, ProductHierarchyText, ProductFamilyCode, ProductFamilyText,
+                ProductDivisionCode, ProductDivisionText, ProductMappingAssigned, Quantity, SupplierNumber, SupplierName, SupplierCountry,
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
                 DocumentCurrency, DocumentTotalForeignCurrency, DocumentTotalLocalCurrency, VatSumForeignCurrency,
@@ -172,7 +180,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
             )
             VALUES (
                 $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $documentEntry, $invoiceNumber, $positionOnInvoice,
-                $material, $name, $productGroup, $quantity, $supplierNumber, $supplierName, $supplierCountry,
+                $material, $name, $productGroup, $productHierarchyCode, $productHierarchyText, $productFamilyCode, $productFamilyText,
+                $productDivisionCode, $productDivisionText, $productMappingAssigned, $quantity, $supplierNumber, $supplierName, $supplierCountry,
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
                 $documentCurrency, $documentTotalForeignCurrency, $documentTotalLocalCurrency, $vatSumForeignCurrency,
@@ -191,6 +200,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$material", SqliteType.Text);
         command.Parameters.Add("$name", SqliteType.Text);
         command.Parameters.Add("$productGroup", SqliteType.Text);
+        command.Parameters.Add("$productHierarchyCode", SqliteType.Text);
+        command.Parameters.Add("$productHierarchyText", SqliteType.Text);
+        command.Parameters.Add("$productFamilyCode", SqliteType.Text);
+        command.Parameters.Add("$productFamilyText", SqliteType.Text);
+        command.Parameters.Add("$productDivisionCode", SqliteType.Text);
+        command.Parameters.Add("$productDivisionText", SqliteType.Text);
+        command.Parameters.Add("$productMappingAssigned", SqliteType.Text);
         command.Parameters.Add("$quantity", SqliteType.Real);
         command.Parameters.Add("$supplierNumber", SqliteType.Text);
         command.Parameters.Add("$supplierName", SqliteType.Text);
@@ -235,6 +251,13 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$material"].Value = record.Material ?? string.Empty;
         command.Parameters["$name"].Value = record.Name ?? string.Empty;
         command.Parameters["$productGroup"].Value = record.ProductGroup ?? string.Empty;
+        command.Parameters["$productHierarchyCode"].Value = record.ProductHierarchyCode ?? string.Empty;
+        command.Parameters["$productHierarchyText"].Value = record.ProductHierarchyText ?? string.Empty;
+        command.Parameters["$productFamilyCode"].Value = record.ProductFamilyCode ?? string.Empty;
+        command.Parameters["$productFamilyText"].Value = record.ProductFamilyText ?? string.Empty;
+        command.Parameters["$productDivisionCode"].Value = record.ProductDivisionCode ?? string.Empty;
+        command.Parameters["$productDivisionText"].Value = record.ProductDivisionText ?? string.Empty;
+        command.Parameters["$productMappingAssigned"].Value = record.ProductMappingAssigned ?? string.Empty;
         command.Parameters["$quantity"].Value = record.Quantity;
         command.Parameters["$supplierNumber"].Value = record.SupplierNumber ?? string.Empty;
         command.Parameters["$supplierName"].Value = record.SupplierName ?? string.Empty;

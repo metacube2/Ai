@@ -1,6 +1,6 @@
 # RAG Product Mapping
 
-Stand: 2026-05-27
+Stand: 2026-05-29
 
 ## Kurzstand
 
@@ -14,7 +14,16 @@ Stand: 2026-05-27
 ## Aktueller Code-Stand
 
 - Vorhanden: `Material`, `ProductGroup`.
-- Noch nicht vorhanden: explizite Felder fuer Produkthierarchie, Produktfamilie, Produktsparte.
+- Neu vorhanden in `SalesRecord` und `CentralSalesRecord`:
+  - `ProductHierarchyCode`
+  - `ProductHierarchyText`
+  - `ProductFamilyCode`
+  - `ProductFamilyText`
+  - `ProductDivisionCode`
+  - `ProductDivisionText`
+  - `ProductMappingAssigned`
+- `CentralSalesRecords` wird per Schema-Maintenance um diese Spalten erweitert.
+- Excel-Export fuehrt die neuen Produktfelder im Blatt `Sales` direkt nach `Product Group`.
 - SAP-Seed-Mapping nutzt aktuell `Z.Matnr` -> `Material` und `Z.Prodh` -> `ProductGroup`.
 - Zu klaeren: Ist `Z.Prodh` fachlich die Produkthierarchie?
 
@@ -31,11 +40,28 @@ Stand: 2026-05-27
 - Eindeutige `PAPH1 -> WWPFA -> WWPSP` werden in `ZPRODSPARTE_MAP` gespeichert.
 - Mehrdeutige PAPH1 werden protokolliert und nicht geschrieben.
 - `ZCL_PRODSPARTE_PROVIDER` liest `MVKE-PRODH`, Texte und Mapping.
-- OData-Service ruft spaeter dieselbe Provider-Klasse.
+- OData-Service ruft dieselbe Provider-Klasse.
+
+## Stand 2026-05-29
+
+- SAP Gateway nutzt bestehenden Service `ZPOWERBI_EINKAUF_SRV`.
+- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
+- Produktmapping-EntitySet: `ProductDivisionRefSet`.
+- Test-Endpoint liefert Daten, z.B. `Matnr=VCP1000`, `Paph1=9999`, `Wwpsp=UNASS`.
+- OData-Felder sind CamelCase: `Matnr`, `Paph1`, `Paph1Text`, `Wwpfa`, `WwpfaText`, `Wwpsp`, `WwpspText`, `IsAssigned`.
+- Bestehender Sales-EntitySet bleibt `FinanzdataSchweizOeSet`.
+- Wichtig: `FINANZDATASCHWEI_GET_ENTITYSET` muss weiter den alten `ZSCHWEIZ`-Select enthalten.
+- Produktmapping-Code gehoert in `PRODUCTDIVISIONR_GET_ENTITYSET`.
+- Lokale App-Konfiguration fuer Standort `ZSCHWEIZ`:
+  - Quelle `Z`: bestehender Sales-EntitySet.
+  - Quelle `P`: `ProductDivisionRefSet`.
+  - Join: `Z.Matnr = P.Matnr`.
+  - Mappings: `P.Paph1`, `P.Paph1Text`, `P.Wwpfa`, `P.WwpfaText`, `P.Wwpsp`, `P.WwpspText`, `P.IsAssigned`.
+- Lokale App wurde neu gestartet; `http://localhost:55416/` antwortet mit HTTP 200.
+- Validierung: `79/79` Tests gruen mit separatem Artefaktpfad.
 
 ## Offene Punkte Fuer Sitzung
 
-- Quelle und Format des TR-AG-Artikelstamms.
 - Normalisierung der Materialnummern.
 - Struktur der Mapping-Tabelle von Kendra.
 - Matching-Regeln: exakt, Prefix, Range, Prioritaet.
@@ -44,6 +70,7 @@ Stand: 2026-05-27
 - `PAPH1 = MVKE-PRODH(5)` fachlich/technisch bestaetigen.
 - Richtige Texttabellen fuer `WWPFA`/`WWPSP` bestaetigen.
 - VKORG/VTWEG fuer TR-AG-Referenzlauf bestaetigen.
+- Standort `ZSCHWEIZ` im Export Dashboard neu laufen lassen und Fuellung der neuen Produktfelder pruefen.
 
 ## Rohquelle Nur Bei Bedarf
 

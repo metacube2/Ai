@@ -35,6 +35,33 @@ Optional fuer Gateway/DDIC:
 - Struktur `ZSTR_PRODSPARTE_OUT`
 - Tabellentyp `ZTT_PRODSPARTE_OUT`
 
+## DDIC-Hinweis Zu `ZSTR_PRODSPARTE_OUT`
+
+Wenn `ZSTR_PRODSPARTE_OUT` in SE11 angelegt wird, duerfen `PAPH1`,
+`WWPFA` und `WWPSP` nicht blind als Komponententypen eingetragen werden.
+In manchen SAP-Systemen sind das keine aktiven globalen Datenelemente,
+sondern nur Feldnamen in der CO-PA-Tabelle `CE11000`. Dann kann die
+Nametab der Struktur nicht generiert werden.
+
+Empfohlene Anlage:
+
+| Komponente | Komponententyp / Alternative |
+| --- | --- |
+| `MATNR` | `MATNR` |
+| `MAKTX` | `MAKTX` |
+| `PAPH1` | eigenes Datenelement `ZDE_PAPH1` mit Laenge wie `CE11000-PAPH1`; aktuell fachlich erwartet: `CHAR 5` |
+| `PAPH1_TEXT` | `VTEXT` oder eigenes Text-Datenelement |
+| `WWPFA` | eigenes Datenelement `ZDE_WWPFA` mit exakt gleicher Laenge wie `CE11000-WWPFA` |
+| `WWPFA_TEXT` | `BEZEK` oder eigenes Text-Datenelement |
+| `WWPSP` | eigenes Datenelement `ZDE_WWPSP` mit exakt gleicher Laenge wie `CE11000-WWPSP` |
+| `WWPSP_TEXT` | `BEZEK` oder eigenes Text-Datenelement |
+| `IS_ASSIGNED` | `BOOLE_D` oder `XFELD` |
+
+Alternativ kann die Struktur fuer den ersten ALV-Test entfallen, weil die
+Provider-Klasse intern mit `CE11000-PAPH1`, `CE11000-WWPFA` und
+`CE11000-WWPSP` typisiert. Fuer Gateway/OData ist eine globale Struktur
+aber sinnvoll.
+
 ## Gepruefte Anpassungen Gegenueber Erstentwurf
 
 - Provider-Logik aus Report in globale Klasse ausgelagert.
@@ -53,3 +80,43 @@ Optional fuer Gateway/DDIC:
 - Ist `CE11000` der richtige CO-PA-Einzelposten fuer den relevanten Ergebnisbereich?
 - Ist Fallback-Code `UNASS` in Feld `WWPSP` lang genug/zulässig?
 - Soll `VTWEG` zwingend selektiert werden statt "kleinster VTWEG gewinnt"?
+
+## Gateway-Stand 2026-05-29
+
+Der bestehende Gateway-Service wurde erweitert, statt einen separaten
+Service zu verwenden:
+
+- Service: `ZPOWERBI_EINKAUF_SRV`
+- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+- Entity Type: `ProductDivisionRef`
+- Entity Set: `ProductDivisionRefSet`
+- DDIC-Struktur fuer Entity Type: `ZSTR_PRODSPARTE_OUT`
+
+Wichtig:
+
+- `FINANZDATASCHWEI_GET_ENTITYSET` gehoert zum bestehenden Sales-EntitySet
+  und muss den bisherigen `SELECT * FROM zschweiz ...` behalten.
+- Produktspartenlogik gehoert in die separat generierte/redefinierte Methode
+  `PRODUCTDIVISIONR_GET_ENTITYSET`.
+- Wenn `/IWFND/MED/170` mit einem Servicenamen wie
+  `ZPOWERBI_EINKAUF_SRVPRODUCTDIVISIONRSET` erscheint, fehlt in der URL der
+  Slash zwischen Service und EntitySet.
+
+Korrekte Test-URL:
+
+```text
+http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet
+```
+
+Gateway-Feldnamen, wie sie im Web-Mapping verwendet werden:
+
+| Gateway-Feld | Web-Zielfeld |
+| --- | --- |
+| `Matnr` | Join gegen `Z.Matnr` |
+| `Paph1` | `ProductHierarchyCode` |
+| `Paph1Text` | `ProductHierarchyText` |
+| `Wwpfa` | `ProductFamilyCode` |
+| `WwpfaText` | `ProductFamilyText` |
+| `Wwpsp` | `ProductDivisionCode` |
+| `WwpspText` | `ProductDivisionText` |
+| `IsAssigned` | `ProductMappingAssigned` |

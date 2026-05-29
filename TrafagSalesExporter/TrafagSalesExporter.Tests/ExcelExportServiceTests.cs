@@ -37,13 +37,13 @@ public class ExcelExportServiceTests
             var sales = workbook.Worksheet("Sales");
             var includedGermanyRows = sales.RowsUsed()
                 .Skip(1)
-                .Where(row => row.Cell(36).GetValue<int>() == 2025)
-                .Where(row => row.Cell(37).GetString() == "DE")
-                .Where(row => row.Cell(41).GetString() == "TRUE")
+                .Where(row => row.Cell(43).GetValue<int>() == 2025)
+                .Where(row => row.Cell(44).GetString() == "DE")
+                .Where(row => row.Cell(48).GetString() == "TRUE")
                 .ToList();
 
             Assert.Equal(2, includedGermanyRows.Count);
-            Assert.Equal(80m, includedGermanyRows.Sum(row => row.Cell(39).GetValue<decimal>()));
+            Assert.Equal(80m, includedGermanyRows.Sum(row => row.Cell(46).GetValue<decimal>()));
 
             var details = workbook.Worksheet("Finance Details");
             var includedGermanyDetailRows = details.RowsUsed()

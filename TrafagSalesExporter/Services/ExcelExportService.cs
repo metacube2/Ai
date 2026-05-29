@@ -84,6 +84,13 @@ public class ExcelExportService : IExcelExportService
             "Material",
             "Name",
             "Product Group",
+            "Product Hierarchy Code",
+            "Product Hierarchy Text",
+            "Product Family Code",
+            "Product Family Text",
+            "Product Division Code",
+            "Product Division Text",
+            "Product Mapping Assigned",
             "Quantity",
             "Supplier number",
             "Supplier name",
@@ -137,44 +144,51 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 6).Value = record.Material;
             ws.Cell(row, 7).Value = record.Name;
             ws.Cell(row, 8).Value = record.ProductGroup;
-            ws.Cell(row, 9).Value = record.Quantity;
-            ws.Cell(row, 10).Value = record.SupplierNumber;
-            ws.Cell(row, 11).Value = record.SupplierName;
-            ws.Cell(row, 12).Value = record.SupplierCountry;
-            ws.Cell(row, 13).Value = record.CustomerNumber;
-            ws.Cell(row, 14).Value = record.CustomerName;
-            ws.Cell(row, 15).Value = record.CustomerCountry;
-            ws.Cell(row, 16).Value = record.CustomerIndustry;
-            ws.Cell(row, 17).Value = record.StandardCost;
-            ws.Cell(row, 18).Value = record.StandardCostCurrency;
-            ws.Cell(row, 19).Value = record.PurchaseOrderNumber;
-            ws.Cell(row, 20).Value = record.SalesPriceValue;
-            ws.Cell(row, 21).Value = record.SalesCurrency;
-            ws.Cell(row, 22).Value = record.DocumentCurrency;
-            ws.Cell(row, 23).Value = record.DocumentTotalForeignCurrency;
-            ws.Cell(row, 24).Value = record.DocumentTotalLocalCurrency;
-            ws.Cell(row, 25).Value = record.VatSumForeignCurrency;
-            ws.Cell(row, 26).Value = record.VatSumLocalCurrency;
-            ws.Cell(row, 27).Value = record.DocumentRate;
-            ws.Cell(row, 28).Value = record.CompanyCurrency;
-            ws.Cell(row, 29).Value = record.Incoterms2020;
-            ws.Cell(row, 30).Value = record.SalesResponsibleEmployee;
-            ws.Cell(row, 31).Value = record.PostingDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 32).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 33).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
-            ws.Cell(row, 34).Value = record.Land;
-            ws.Cell(row, 35).Value = record.DocumentType;
+            ws.Cell(row, 9).Value = record.ProductHierarchyCode;
+            ws.Cell(row, 10).Value = record.ProductHierarchyText;
+            ws.Cell(row, 11).Value = record.ProductFamilyCode;
+            ws.Cell(row, 12).Value = record.ProductFamilyText;
+            ws.Cell(row, 13).Value = record.ProductDivisionCode;
+            ws.Cell(row, 14).Value = record.ProductDivisionText;
+            ws.Cell(row, 15).Value = record.ProductMappingAssigned;
+            ws.Cell(row, 16).Value = record.Quantity;
+            ws.Cell(row, 17).Value = record.SupplierNumber;
+            ws.Cell(row, 18).Value = record.SupplierName;
+            ws.Cell(row, 19).Value = record.SupplierCountry;
+            ws.Cell(row, 20).Value = record.CustomerNumber;
+            ws.Cell(row, 21).Value = record.CustomerName;
+            ws.Cell(row, 22).Value = record.CustomerCountry;
+            ws.Cell(row, 23).Value = record.CustomerIndustry;
+            ws.Cell(row, 24).Value = record.StandardCost;
+            ws.Cell(row, 25).Value = record.StandardCostCurrency;
+            ws.Cell(row, 26).Value = record.PurchaseOrderNumber;
+            ws.Cell(row, 27).Value = record.SalesPriceValue;
+            ws.Cell(row, 28).Value = record.SalesCurrency;
+            ws.Cell(row, 29).Value = record.DocumentCurrency;
+            ws.Cell(row, 30).Value = record.DocumentTotalForeignCurrency;
+            ws.Cell(row, 31).Value = record.DocumentTotalLocalCurrency;
+            ws.Cell(row, 32).Value = record.VatSumForeignCurrency;
+            ws.Cell(row, 33).Value = record.VatSumLocalCurrency;
+            ws.Cell(row, 34).Value = record.DocumentRate;
+            ws.Cell(row, 35).Value = record.CompanyCurrency;
+            ws.Cell(row, 36).Value = record.Incoterms2020;
+            ws.Cell(row, 37).Value = record.SalesResponsibleEmployee;
+            ws.Cell(row, 38).Value = record.PostingDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 39).Value = record.InvoiceDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 40).Value = record.OrderDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 41).Value = record.Land;
+            ws.Cell(row, 42).Value = record.DocumentType;
             var financeCountryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
             var financeDate = financeRuleEngine.ResolveFinanceDate(record, financeCountryKey);
             var financeInclude = financeRuleEngine.ShouldInclude(record, financeCountryKey);
             var financeNetSalesActual = financeRuleEngine.ResolveNetSalesActual(record, financeCountryKey, financeInclude);
-            ws.Cell(row, 36).Value = financeDate.Year;
-            ws.Cell(row, 37).Value = financeCountryKey;
-            ws.Cell(row, 38).Value = financeDate.ToString("dd.MM.yyyy");
-            ws.Cell(row, 39).Value = financeNetSalesActual;
-            ws.Cell(row, 40).Value = ResolveFinanceCurrency(record);
-            ws.Cell(row, 41).Value = financeInclude && financeNetSalesActual != 0m ? "TRUE" : "FALSE";
-            ws.Cell(row, 42).Value = financeInclude
+            ws.Cell(row, 43).Value = financeDate.Year;
+            ws.Cell(row, 44).Value = financeCountryKey;
+            ws.Cell(row, 45).Value = financeDate.ToString("dd.MM.yyyy");
+            ws.Cell(row, 46).Value = financeNetSalesActual;
+            ws.Cell(row, 47).Value = ResolveFinanceCurrency(record);
+            ws.Cell(row, 48).Value = financeInclude && financeNetSalesActual != 0m ? "TRUE" : "FALSE";
+            ws.Cell(row, 49).Value = financeInclude
                 ? "Sales Price/Value"
                 : financeRuleEngine.ResolveExclusionReason(record, financeCountryKey);
             row++;
