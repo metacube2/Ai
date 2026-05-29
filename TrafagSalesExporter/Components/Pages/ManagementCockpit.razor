@@ -359,7 +359,11 @@
                         <MudTh>@T("Laender", "Countries")</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                        <MudTd>
+                            <MudIcon Icon="@ResolveProductDivisionIcon(context.ProductDivisionCode, context.ProductDivisionText, context.ProductFamilyText, context.ProductHierarchyText)"
+                                     Size="Size.Small" Class="mr-1" />
+                            @BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)
+                        </MudTd>
                         @if (ShowProductFamilyColumn)
                         {
                             <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
@@ -508,7 +512,11 @@
                         <MudTd>@context.ReferenceMaterial</MudTd>
                         <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
                         <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
-                        <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                        <MudTd>
+                            <MudIcon Icon="@ResolveProductDivisionIcon(context.ProductDivisionCode, context.ProductDivisionText, context.ProductFamilyText, context.ProductHierarchyText)"
+                                     Size="Size.Small" Class="mr-1" />
+                            @BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)
+                        </MudTd>
                         <MudTd>@context.RowCount.ToString("N0")</MudTd>
                         <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
                     </RowTemplate>
@@ -1195,6 +1203,54 @@
             return string.IsNullOrWhiteSpace(text) ? "-" : text;
 
         return string.IsNullOrWhiteSpace(text) ? code : $"{code} - {text}";
+    }
+
+    private static string ResolveProductDivisionIcon(
+        string productDivisionCode,
+        string productDivisionText,
+        string productFamilyText,
+        string productHierarchyText)
+    {
+        var combinedText = string.Join(' ', productDivisionText, productFamilyText, productHierarchyText).ToUpperInvariant();
+
+        if (string.Equals(productDivisionCode, "UNASS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("NICHT ZUGEORDNET", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("UNASS", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.HelpOutline;
+        }
+
+        if (combinedText.Contains("GAS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("DENSITY", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Sensors;
+        }
+
+        if (combinedText.Contains("PRESSURE", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("DRUCK", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Compress;
+        }
+
+        if (combinedText.Contains("TEMP", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("THERMOSTAT", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.DeviceThermostat;
+        }
+
+        if (combinedText.Contains("SWITCH", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("SCHALTER", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.ToggleOn;
+        }
+
+        if (combinedText.Contains("ACCESS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("ZUBEH", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Extension;
+        }
+
+        return Icons.Material.Filled.Category;
     }
 
     private static string JoinCountries(IEnumerable<string> countryValues)
