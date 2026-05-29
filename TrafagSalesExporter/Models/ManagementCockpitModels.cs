@@ -215,6 +215,49 @@ public class ManagementFinanceDataQualityRow
     public string Severity { get; set; } = "Info";
 }
 
+public class ManagementProductAssignmentSummary
+{
+    public int DistinctMaterialCount { get; set; }
+    public int MatchedMaterialCount { get; set; }
+    public int UnassignedMaterialCount { get; set; }
+    public int MissingReferenceMaterialCount { get; set; }
+    public int MissingMaterialNumberCount { get; set; }
+    public int ReferenceMaterialCount { get; set; }
+}
+
+public class ManagementProductAssignmentCountryRow
+{
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public int DistinctMaterialCount { get; set; }
+    public int MatchedMaterialCount { get; set; }
+    public int UnassignedMaterialCount { get; set; }
+    public int MissingReferenceMaterialCount { get; set; }
+    public int MissingMaterialNumberCount { get; set; }
+    public decimal MatchPercent { get; set; }
+}
+
+public class ManagementProductAssignmentRow
+{
+    public string Status { get; set; } = string.Empty;
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string SourceSystem { get; set; } = string.Empty;
+    public string Material { get; set; } = string.Empty;
+    public string ArticleName { get; set; } = string.Empty;
+    public string ReferenceMaterial { get; set; } = string.Empty;
+    public string ProductHierarchyCode { get; set; } = string.Empty;
+    public string ProductHierarchyText { get; set; } = string.Empty;
+    public string ProductFamilyCode { get; set; } = string.Empty;
+    public string ProductFamilyText { get; set; } = string.Empty;
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+    public string ProductMappingAssigned { get; set; } = string.Empty;
+    public int RowCount { get; set; }
+    public decimal NetSalesActual { get; set; }
+    public string Currency { get; set; } = string.Empty;
+}
+
 public class ManagementFinanceSummaryResult
 {
     public ManagementFinanceSummaryFilter Filter { get; set; } = new();
@@ -235,4 +278,7 @@ public class ManagementFinanceSummaryResult
     public List<ManagementFinanceDataStatusRow> DataStatusRows { get; set; } = [];
     public List<ManagementFinanceCreditCandidateRow> CreditCandidates { get; set; } = [];
     public List<ManagementFinanceDataQualityRow> DataQualityRows { get; set; } = [];
+    public ManagementProductAssignmentSummary ProductAssignmentSummary { get; set; } = new();
+    public List<ManagementProductAssignmentCountryRow> ProductAssignmentCountryRows { get; set; } = [];
+    public List<ManagementProductAssignmentRow> ProductAssignmentRows { get; set; } = [];
 }

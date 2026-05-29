@@ -60,6 +60,21 @@ Stand: 2026-05-29
 - Lokale App wurde neu gestartet; `http://localhost:55416/` antwortet mit HTTP 200.
 - Validierung: `79/79` Tests gruen mit separatem Artefaktpfad.
 
+## Zentrale Spartenzuordnung
+
+- Neuer Reiter in `Management Analyse`: `Zentrale Spartenzuordnung`.
+- Zweck: Materialnummern aller Laender gegen die fuehrende TR-AG-/SAP-Referenz pruefen.
+- Lokale ERP-Produktzuordnungen anderer Laender sind nicht fuehrend.
+- Statuslogik:
+  - Treffer mit zugeordneter TR-AG-Sparte: `Zugeordnet`.
+  - Treffer mit `UNASS`/nicht zugeordnet: `Nicht zugeordnet`.
+  - Kein Treffer im TR-AG-Stamm: `Nicht im TR-AG-Stamm`.
+  - Leere Materialnummer: `Material fehlt`.
+- Die Sicht nutzt den bestehenden Finance-Filter fuer Jahr/Land/Waehrung.
+- Sie zeigt Kennzahlen, Laenderabdeckung und Detailzeilen mit Land-Material links und TR-AG-Referenz rechts.
+- Umsetzung ist eine Analyseansicht, keine persistente Mutation anderer Laenderzeilen.
+- Validierung nach Umsetzung: `80/80` Tests gruen.
+
 ## Offene Punkte Fuer Sitzung
 
 - Normalisierung der Materialnummern.
@@ -71,6 +86,7 @@ Stand: 2026-05-29
 - Richtige Texttabellen fuer `WWPFA`/`WWPSP` bestaetigen.
 - VKORG/VTWEG fuer TR-AG-Referenzlauf bestaetigen.
 - Standort `ZSCHWEIZ` im Export Dashboard neu laufen lassen und Fuellung der neuen Produktfelder pruefen.
+- Treffer-/Fehlerquote im Reiter `Zentrale Spartenzuordnung` pruefen.
 
 ## Rohquelle Nur Bei Bedarf
 

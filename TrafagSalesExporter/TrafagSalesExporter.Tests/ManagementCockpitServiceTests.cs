@@ -313,6 +313,63 @@ public class ManagementCockpitServiceTests : IDisposable
         Assert.Contains(result.DataQualityRows, row => row.Issue == "Nullwerte im Finance-Wert" && row.Count == 1);
     }
 
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-1", "CHF", 100m, new DateTime(2025, 1, 10),
+                material: "MAT-OK",
+                name: "Reference article",
+                productHierarchyCode: "0414",
+                productHierarchyText: "Industat innen",
+                productFamilyCode: "0004",
+                productFamilyText: "Industat",
+                productDivisionCode: "0001",
+                productDivisionText: "Thermostate",
+                productMappingAssigned: "X"),
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-2", "CHF", 10m, new DateTime(2025, 1, 10),
+                material: "MAT-UNASS",
+                productHierarchyCode: "0509",
+                productHierarchyText: "Multistat",
+                productDivisionCode: "UNASS",
+                productDivisionText: "Nicht zugeordnet",
+                productMappingAssigned: "false"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-1", "EUR", 80m, new DateTime(2025, 1, 11),
+                material: "MAT-OK",
+                name: "German article"),
+            CreateRow("MANUAL_EXCEL", "Italien", "TRIT", "IT-1", "EUR", 50m, new DateTime(2025, 1, 12),
+                material: "MAT-MISSING",
+                name: "Unknown article"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-2", "EUR", 20m, new DateTime(2025, 1, 13),
+                material: "MAT-UNASS",
+                name: "Unassigned article"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(5, result.ProductAssignmentSummary.DistinctMaterialCount);
+        Assert.Equal(2, result.ProductAssignmentSummary.MatchedMaterialCount);
+        Assert.Equal(2, result.ProductAssignmentSummary.UnassignedMaterialCount);
+        Assert.Equal(1, result.ProductAssignmentSummary.MissingReferenceMaterialCount);
+
+        var assigned = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-OK" && row.Tsc == "TRDE");
+        Assert.Equal("Zugeordnet", assigned.Status);
+        Assert.Equal("0414", assigned.ProductHierarchyCode);
+        Assert.Equal("0001", assigned.ProductDivisionCode);
+
+        var missing = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-MISSING" && row.Tsc == "TRIT");
+        Assert.Equal("Nicht im TR-AG-Stamm", missing.Status);
+
+        var unassigned = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-UNASS" && row.Tsc == "TRDE");
+        Assert.Equal("Nicht zugeordnet", unassigned.Status);
+        Assert.Equal("UNASS", unassigned.ProductDivisionCode);
+
+        Assert.Contains(result.ProductAssignmentCountryRows, row =>
+            row.CountryKey == "DE" &&
+            row.Tsc == "TRDE" &&
+            row.MatchedMaterialCount == 1 &&
+            row.UnassignedMaterialCount == 1);
+    }
+
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -351,7 +408,16 @@ public class ManagementCockpitServiceTests : IDisposable
         DateTime? invoiceDate,
         DateTime? extractionDate = null,
         decimal quantity = 1m,
-        decimal standardCost = 1m)
+        decimal standardCost = 1m,
+        string material = "MAT",
+        string name = "Article",
+        string productHierarchyCode = "",
+        string productHierarchyText = "",
+        string productFamilyCode = "",
+        string productFamilyText = "",
+        string productDivisionCode = "",
+        string productDivisionText = "",
+        string productMappingAssigned = "")
     {
         return new CentralSalesRecord
         {
@@ -362,9 +428,16 @@ public class ManagementCockpitServiceTests : IDisposable
             Tsc = tsc,
             InvoiceNumber = invoiceNumber,
             PositionOnInvoice = 1,
-            Material = "MAT",
-            Name = "Article",
+            Material = material,
+            Name = name,
             ProductGroup = "PG",
+            ProductHierarchyCode = productHierarchyCode,
+            ProductHierarchyText = productHierarchyText,
+            ProductFamilyCode = productFamilyCode,
+            ProductFamilyText = productFamilyText,
+            ProductDivisionCode = productDivisionCode,
+            ProductDivisionText = productDivisionText,
+            ProductMappingAssigned = productMappingAssigned,
             Quantity = quantity,
             SupplierNumber = "SUP",
             SupplierName = "Supplier",

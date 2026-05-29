@@ -61,6 +61,35 @@ Offen:
 - Danach Fuellung der neuen Produktfelder und Quote `UNASS` pruefen.
 - Fachliche Mapping-Luecken wie `0509`/`0540` spaeter mit Andreas/Kendra klaeren.
 
+## Nachtrag 2026-05-29 Zentrale Spartenzuordnung
+
+Umgesetzt:
+
+- Neuer Reiter in `Management Analyse`: `Zentrale Spartenzuordnung`.
+- Fachlogik:
+  - Andere Laender-ERPs sind fuer Produktsparten nicht fuehrend.
+  - Fuehrend ist die TR-AG-/SAP-Referenz aus `ProductDivisionRefSet`.
+  - Umsatzzeilen aus `CentralSalesRecords` werden ueber `Material` gegen die TR-AG-Referenz geprueft.
+- Statuswerte:
+  - `Zugeordnet`
+  - `Nicht zugeordnet`
+  - `Nicht im TR-AG-Stamm`
+  - `Material fehlt`
+- Der Reiter zeigt:
+  - Summary-Kennzahlen
+  - Abdeckung nach Land/TSC
+  - Detailtabelle mit Land-Material links und TR-AG-MATNR/PAPH1/Familie/Sparte rechts.
+- Die Sicht verwendet die bestehenden Finance-Filter fuer Jahr, Land und Waehrung.
+- Noch keine persistente Mutation anderer Laenderzeilen; es ist bewusst eine Pruefansicht.
+
+Technisch:
+
+- Neue Modelle in `ManagementCockpitModels`.
+- Produktzuordnungsanalyse in `ManagementCockpitService`.
+- Neuer Reiter in `Components/Pages/ManagementCockpit.razor`.
+- Test ergaenzt: `AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data`.
+- Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-central-product-assignment` mit `80/80` Tests gruen.
+
 ## Nachtrag 2026-05-28 ABAP Produktsparten-Mapping
 
 Erstellt:

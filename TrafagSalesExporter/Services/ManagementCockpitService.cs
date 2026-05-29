@@ -53,6 +53,14 @@ public class ManagementCockpitService : IManagementCockpitService
         }
     ];
 
+    private static class ProductAssignmentStatuses
+    {
+        public const string Assigned = "Zugeordnet";
+        public const string Unassigned = "Nicht zugeordnet";
+        public const string NoReference = "Nicht im TR-AG-Stamm";
+        public const string MissingMaterial = "Material fehlt";
+    }
+
     public async Task<List<ManagementCockpitFileOption>> GetAvailableFilesAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -322,6 +330,13 @@ public class ManagementCockpitService : IManagementCockpitService
                 Material = r.Material,
                 Name = r.Name,
                 ProductGroup = r.ProductGroup,
+                ProductHierarchyCode = r.ProductHierarchyCode,
+                ProductHierarchyText = r.ProductHierarchyText,
+                ProductFamilyCode = r.ProductFamilyCode,
+                ProductFamilyText = r.ProductFamilyText,
+                ProductDivisionCode = r.ProductDivisionCode,
+                ProductDivisionText = r.ProductDivisionText,
+                ProductMappingAssigned = r.ProductMappingAssigned,
                 Quantity = r.Quantity,
                 SupplierCountry = r.SupplierCountry,
                 CustomerNumber = r.CustomerNumber,
@@ -363,7 +378,15 @@ public class ManagementCockpitService : IManagementCockpitService
                     InvoiceNumber = record.InvoiceNumber,
                     DocumentType = record.DocumentType,
                     Material = record.Material,
+                    ArticleName = record.Name,
                     ProductGroup = record.ProductGroup,
+                    ProductHierarchyCode = record.ProductHierarchyCode,
+                    ProductHierarchyText = record.ProductHierarchyText,
+                    ProductFamilyCode = record.ProductFamilyCode,
+                    ProductFamilyText = record.ProductFamilyText,
+                    ProductDivisionCode = record.ProductDivisionCode,
+                    ProductDivisionText = record.ProductDivisionText,
+                    ProductMappingAssigned = record.ProductMappingAssigned,
                     CustomerName = record.CustomerName,
                     PostingDate = record.PostingDate,
                     InvoiceDate = record.InvoiceDate,
@@ -436,6 +459,7 @@ public class ManagementCockpitService : IManagementCockpitService
 
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db);
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
+        var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
 
         return new ManagementFinanceSummaryResult
         {
@@ -472,7 +496,10 @@ public class ManagementCockpitService : IManagementCockpitService
                 .ToList(),
             DataStatusRows = dataStatusRows,
             CreditCandidates = BuildFinanceCreditCandidates(scopedRows),
-            DataQualityRows = BuildFinanceDataQualityRows(scopedRows)
+            DataQualityRows = BuildFinanceDataQualityRows(scopedRows),
+            ProductAssignmentSummary = BuildProductAssignmentSummary(productAssignmentRows),
+            ProductAssignmentCountryRows = BuildProductAssignmentCountryRows(productAssignmentRows),
+            ProductAssignmentRows = productAssignmentRows
         };
     }
 
@@ -608,6 +635,144 @@ public class ManagementCockpitService : IManagementCockpitService
         .ThenBy(row => row.Issue, StringComparer.OrdinalIgnoreCase)
         .ToList();
     }
+
+    private static List<ManagementProductAssignmentRow> BuildProductAssignmentRows(
+        IReadOnlyCollection<FinanceAggregationRow> scopedRows,
+        IReadOnlyCollection<FinanceAggregationRow> allRows)
+    {
+        var referenceByMaterial = allRows
+            .Where(row => !string.IsNullOrWhiteSpace(row.Material))
+            .Where(row => HasProductReference(row))
+            .GroupBy(row => NormalizeMaterialKey(row.Material), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(row => IsAssignedProductReference(row))
+                    .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+                    .First(),
+                StringComparer.OrdinalIgnoreCase);
+
+        return scopedRows
+            .GroupBy(row => new
+            {
+                MaterialKey = NormalizeMaterialKey(row.Material),
+                row.Material,
+                row.ArticleName,
+                row.CountryKey,
+                row.Tsc,
+                row.SourceSystem,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var material = group.Key.Material?.Trim() ?? string.Empty;
+                referenceByMaterial.TryGetValue(group.Key.MaterialKey, out var reference);
+                var status = BuildProductAssignmentStatus(material, reference);
+                return new ManagementProductAssignmentRow
+                {
+                    Status = status,
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    SourceSystem = group.Key.SourceSystem,
+                    Material = material,
+                    ArticleName = group.Key.ArticleName,
+                    ReferenceMaterial = reference?.Material ?? string.Empty,
+                    ProductHierarchyCode = reference?.ProductHierarchyCode ?? string.Empty,
+                    ProductHierarchyText = reference?.ProductHierarchyText ?? string.Empty,
+                    ProductFamilyCode = reference?.ProductFamilyCode ?? string.Empty,
+                    ProductFamilyText = reference?.ProductFamilyText ?? string.Empty,
+                    ProductDivisionCode = reference?.ProductDivisionCode ?? string.Empty,
+                    ProductDivisionText = reference?.ProductDivisionText ?? string.Empty,
+                    ProductMappingAssigned = reference?.ProductMappingAssigned ?? string.Empty,
+                    RowCount = group.Count(),
+                    NetSalesActual = group.Sum(row => row.Value),
+                    Currency = group.Key.Currency
+                };
+            })
+            .OrderBy(row => ProductAssignmentStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.Material, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static ManagementProductAssignmentSummary BuildProductAssignmentSummary(IReadOnlyCollection<ManagementProductAssignmentRow> rows)
+        => new()
+        {
+            DistinctMaterialCount = rows.Count,
+            MatchedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Assigned),
+            UnassignedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
+            MissingReferenceMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
+            MissingMaterialNumberCount = rows.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
+            ReferenceMaterialCount = rows
+                .Where(row => !string.IsNullOrWhiteSpace(row.ReferenceMaterial))
+                .Select(row => row.ReferenceMaterial)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count()
+        };
+
+    private static List<ManagementProductAssignmentCountryRow> BuildProductAssignmentCountryRows(IEnumerable<ManagementProductAssignmentRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                var matched = rowList.Count(row => row.Status == ProductAssignmentStatuses.Assigned);
+                var relevant = rowList.Count(row => row.Status != ProductAssignmentStatuses.MissingMaterial);
+                return new ManagementProductAssignmentCountryRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    DistinctMaterialCount = rowList.Count,
+                    MatchedMaterialCount = matched,
+                    UnassignedMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
+                    MissingReferenceMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
+                    MissingMaterialNumberCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
+                    MatchPercent = relevant == 0 ? 0m : matched * 100m / relevant
+                };
+            })
+            .ToList();
+
+    private static string BuildProductAssignmentStatus(string material, FinanceAggregationRow? reference)
+    {
+        if (string.IsNullOrWhiteSpace(material))
+            return ProductAssignmentStatuses.MissingMaterial;
+        if (reference is null)
+            return ProductAssignmentStatuses.NoReference;
+        return IsAssignedProductReference(reference)
+            ? ProductAssignmentStatuses.Assigned
+            : ProductAssignmentStatuses.Unassigned;
+    }
+
+    private static bool HasProductReference(FinanceAggregationRow row)
+        => !string.IsNullOrWhiteSpace(row.ProductHierarchyCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductFamilyCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductDivisionCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductMappingAssigned);
+
+    private static bool IsAssignedProductReference(FinanceAggregationRow row)
+        => IsTruthy(row.ProductMappingAssigned) &&
+           !string.IsNullOrWhiteSpace(row.ProductDivisionCode) &&
+           !string.Equals(row.ProductDivisionCode, "UNASS", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTruthy(string value)
+        => value.Equals("X", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("JA", StringComparison.OrdinalIgnoreCase);
+
+    private static int ProductAssignmentStatusSort(string status) => status switch
+    {
+        ProductAssignmentStatuses.NoReference => 0,
+        ProductAssignmentStatuses.Unassigned => 1,
+        ProductAssignmentStatuses.MissingMaterial => 2,
+        _ => 3
+    };
+
+    private static string NormalizeMaterialKey(string value)
+        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
 
     private static ManagementFinanceDataQualityRow BuildQualityRow(string issue, int count, int totalRows)
     {
@@ -1325,7 +1490,15 @@ public class ManagementCockpitService : IManagementCockpitService
         public string InvoiceNumber { get; set; } = string.Empty;
         public string DocumentType { get; set; } = string.Empty;
         public string Material { get; set; } = string.Empty;
+        public string ArticleName { get; set; } = string.Empty;
         public string ProductGroup { get; set; } = string.Empty;
+        public string ProductHierarchyCode { get; set; } = string.Empty;
+        public string ProductHierarchyText { get; set; } = string.Empty;
+        public string ProductFamilyCode { get; set; } = string.Empty;
+        public string ProductFamilyText { get; set; } = string.Empty;
+        public string ProductDivisionCode { get; set; } = string.Empty;
+        public string ProductDivisionText { get; set; } = string.Empty;
+        public string ProductMappingAssigned { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public DateTime? PostingDate { get; set; }
         public DateTime? InvoiceDate { get; set; }

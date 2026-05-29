@@ -275,3 +275,87 @@ Naechster fachlicher/technischer Schritt:
   - Stimmen Join-Treffer fuer bekannte Materialien?
   - Wie viele Zeilen bleiben `UNASS` / `Nicht zugeordnet`?
 - SAP-seitig muss `FINANZDATASCHWEI_GET_ENTITYSET` auf den alten `ZSCHWEIZ`-Select-Code zurueckgesetzt sein, falls er versehentlich mit Produktsparten-Code ueberschrieben wurde.
+
+## Nachtrag 2026-05-29 Zentrale Spartenzuordnung
+
+Fachliches Ziel aus Finance-Input:
+
+- Die Produktsparten-/Produktfamilienzuordnung der anderen Laender-ERPs ist nicht fuehrend.
+- Fuehrend ist die Trafag-AG-/SAP-Referenz aus dem eigenen SAP-System.
+- Jede Umsatzzeile aus `CentralSalesRecords` wird ueber ihre Materialnummer gegen die TR-AG-Referenz geprueft.
+- Wenn die Materialnummer im TR-AG-Stamm vorhanden ist, wird die dortige Produktzuordnung angezeigt.
+- Wenn die Materialnummer nicht im TR-AG-Stamm vorhanden ist, gilt der Status `Nicht im TR-AG-Stamm`.
+- Wenn die Materialnummer im TR-AG-Stamm vorhanden ist, aber dort `UNASS`/nicht zugeordnet ist, gilt der Status `Nicht zugeordnet`.
+
+Umsetzung im Web:
+
+- Neuer Reiter in `Management Analyse`:
+  - `Zentrale Spartenzuordnung`
+- Der Reiter arbeitet auf dem bestehenden Finance-Filter:
+  - Jahr
+  - Land
+  - Waehrung
+- Die Referenz wird aus zentral gespeicherten Zeilen mit Produktfeldern gebildet.
+- Der Abgleich erfolgt ueber normalisierte Materialnummer:
+  - Land-ERP-Material links
+  - TR-AG-Referenz-Material plus Produktzuordnung rechts
+- Angezeigte Statuswerte:
+  - `Zugeordnet`
+  - `Nicht zugeordnet`
+  - `Nicht im TR-AG-Stamm`
+  - `Material fehlt`
+
+UI-Inhalte:
+
+- Kennzahlen:
+  - Materialien
+  - Zugeordnet
+  - Nicht zugeordnet
+  - Nicht im Stamm
+  - Material fehlt
+  - TR-AG Referenz
+- Laenderuebersicht:
+  - Land
+  - TSC
+  - Materialanzahl
+  - Zugeordnet
+  - Nicht zugeordnet
+  - Nicht im Stamm
+  - Material fehlt
+  - Trefferquote
+- Detailtabelle:
+  - Status
+  - Land
+  - TSC
+  - Land-Material
+  - Land-Text
+  - TR-AG-MATNR
+  - PAPH1
+  - Produktfamilie
+  - Produktsparte
+  - Zeilen
+  - Finance-Wert
+
+Technische Dateien:
+
+- `Models/ManagementCockpitModels.cs`
+  - neue Modelle fuer Produktzuordnungs-Summary, Laenderzeilen und Detailzeilen.
+- `Services/ManagementCockpitService.cs`
+  - baut die TR-AG-Referenz aus Produktfeldern.
+  - prueft gefilterte Finance-Zeilen ueber `Material`.
+  - erzeugt Summary, Laenderabdeckung und Detailzeilen.
+- `Components/Pages/ManagementCockpit.razor`
+  - neuer Reiter `Zentrale Spartenzuordnung`.
+- `TrafagSalesExporter.Tests/ManagementCockpitServiceTests.cs`
+  - Test fuer Treffer, fehlende Referenz und `UNASS`.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-central-product-assignment`
+- Ergebnis: `80/80` Tests gruen.
+
+Wichtig:
+
+- Die Sicht ist zunaechst eine Pruef-/Analyseansicht.
+- Sie veraendert noch keine bestehenden Umsatzzeilen der anderen Laender.
+- Persistente Anreicherung aller `CentralSalesRecords` kann spaeter folgen, wenn die Treffer-/Fehlerquote fachlich akzeptiert ist.

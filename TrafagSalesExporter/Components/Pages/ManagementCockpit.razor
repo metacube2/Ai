@@ -284,6 +284,115 @@
                 </MudTable>
             </MudPaper>
         </MudTabPanel>
+        <MudTabPanel Text="@T("Zentrale Spartenzuordnung", "Central division mapping")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Materialien", "Materials")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.DistinctMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zugeordnet", "Assigned")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MatchedMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht zugeordnet", "Unassigned")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.UnassignedMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht im Stamm", "Not in master")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MissingReferenceMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Material fehlt", "Material missing")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MissingMaterialNumberCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("TR-AG Referenz", "TR AG reference")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.ReferenceMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-4">
+                @T("Diese Sicht prueft Materialnummern aller gefilterten Laender gegen die fuehrende TR-AG-Referenz aus `ProductDivisionRefSet`. Die Produktsparten der lokalen ERPs werden nicht verwendet.",
+                    "This view checks material numbers from all filtered countries against the leading TR AG reference from `ProductDivisionRefSet`. Local ERP product divisions are not used.")
+            </MudAlert>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Abdeckung nach Land", "Coverage by country")</MudText>
+                <MudTable Items="_financeResult.ProductAssignmentCountryRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Materialien", "Materials")</MudTh>
+                        <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
+                        <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                        <MudTh>@T("Material fehlt", "Material missing")</MudTh>
+                        <MudTh>@T("Trefferquote", "Match rate")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.DistinctMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MatchedMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.UnassignedMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MissingReferenceMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MissingMaterialNumberCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatPercent(context.MatchPercent)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Materialdaten fuer diese Filter.", "No material data for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Materialpruefung gegen TR-AG-Referenz", "Material check against TR AG reference")</MudText>
+                <MudTable Items="_financeResult.ProductAssignmentRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Land-Material", "Local material")</MudTh>
+                        <MudTh>@T("Land-Text", "Local text")</MudTh>
+                        <MudTh>@T("TR-AG-MATNR", "TR AG MATNR")</MudTh>
+                        <MudTh>PAPH1</MudTh>
+                        <MudTh>@T("Produktfamilie", "Product family")</MudTh>
+                        <MudTh>@T("Produktsparte", "Product division")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                        <MudTh>@T("Finance-Wert", "Finance value")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@ProductAssignmentColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Material</MudTd>
+                        <MudTd>@context.ArticleName</MudTd>
+                        <MudTd>@context.ReferenceMaterial</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Materialpruefung fuer diese Filter.", "No material check for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
         <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -826,6 +935,23 @@
         "Error" => Color.Error,
         _ => Color.Info
     };
+
+    private static Color ProductAssignmentColor(string status) => status switch
+    {
+        "Zugeordnet" => Color.Success,
+        "Nicht zugeordnet" => Color.Warning,
+        "Nicht im TR-AG-Stamm" => Color.Error,
+        "Material fehlt" => Color.Default,
+        _ => Color.Info
+    };
+
+    private static string BuildCodeText(string code, string text)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return string.IsNullOrWhiteSpace(text) ? "-" : text;
+
+        return string.IsNullOrWhiteSpace(text) ? code : $"{code} - {text}";
+    }
 
     private void SetSelectedCentralAdditionalValueFields(IEnumerable<string> values)
     {
