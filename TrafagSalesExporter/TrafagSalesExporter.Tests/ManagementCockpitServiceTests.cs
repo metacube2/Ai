@@ -368,6 +368,29 @@ public class ManagementCockpitServiceTests : IDisposable
             row.Tsc == "TRDE" &&
             row.MatchedMaterialCount == 1 &&
             row.UnassignedMaterialCount == 1);
+
+        Assert.Equal(260m, result.ProductFinanceSummary.TotalValue);
+        Assert.Equal(180m, result.ProductFinanceSummary.AssignedValue);
+        Assert.Equal(30m, result.ProductFinanceSummary.UnassignedValue);
+        Assert.Equal(50m, result.ProductFinanceSummary.MissingReferenceValue);
+        Assert.Equal(180m * 100m / 260m, result.ProductFinanceSummary.AssignedValuePercent);
+
+        Assert.Contains(result.ProductDivisionFinanceRows, row =>
+            row.ProductDivisionCode == "0001" &&
+            row.Currency == "EUR" &&
+            row.NetSalesActual == 80m &&
+            row.MaterialCount == 1 &&
+            row.Countries == "DE");
+        Assert.Contains(result.ProductDivisionFinanceRows, row =>
+            row.ProductDivisionCode == "0001" &&
+            row.Currency == "CHF" &&
+            row.NetSalesActual == 100m);
+
+        var deFinanceCoverage = Assert.Single(result.ProductFinanceCountryRows, row => row.CountryKey == "DE" && row.Tsc == "TRDE");
+        Assert.Equal(100m, deFinanceCoverage.TotalValue);
+        Assert.Equal(80m, deFinanceCoverage.AssignedValue);
+        Assert.Equal(20m, deFinanceCoverage.UnassignedValue);
+        Assert.Equal(80m, deFinanceCoverage.AssignedValuePercent);
     }
 
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)

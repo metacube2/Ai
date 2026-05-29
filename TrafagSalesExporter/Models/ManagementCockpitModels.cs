@@ -225,6 +225,48 @@ public class ManagementProductAssignmentSummary
     public int ReferenceMaterialCount { get; set; }
 }
 
+public class ManagementProductFinanceSummary
+{
+    public decimal TotalValue { get; set; }
+    public decimal AssignedValue { get; set; }
+    public decimal UnassignedValue { get; set; }
+    public decimal MissingReferenceValue { get; set; }
+    public decimal MissingMaterialValue { get; set; }
+    public decimal AssignedValuePercent { get; set; }
+    public decimal UnassignedValuePercent { get; set; }
+    public decimal MissingReferenceValuePercent { get; set; }
+    public string DisplayCurrency { get; set; } = string.Empty;
+}
+
+public class ManagementProductDivisionFinanceRow
+{
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+    public string ProductFamilyCode { get; set; } = string.Empty;
+    public string ProductFamilyText { get; set; } = string.Empty;
+    public string ProductHierarchyCode { get; set; } = string.Empty;
+    public string ProductHierarchyText { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal NetSalesActual { get; set; }
+    public decimal SharePercent { get; set; }
+    public int MaterialCount { get; set; }
+    public int RowCount { get; set; }
+    public string Countries { get; set; } = string.Empty;
+}
+
+public class ManagementProductFinanceCountryRow
+{
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal TotalValue { get; set; }
+    public decimal AssignedValue { get; set; }
+    public decimal UnassignedValue { get; set; }
+    public decimal MissingReferenceValue { get; set; }
+    public decimal MissingMaterialValue { get; set; }
+    public decimal AssignedValuePercent { get; set; }
+}
+
 public class ManagementProductAssignmentCountryRow
 {
     public string CountryKey { get; set; } = string.Empty;
@@ -278,6 +320,9 @@ public class ManagementFinanceSummaryResult
     public List<ManagementFinanceDataStatusRow> DataStatusRows { get; set; } = [];
     public List<ManagementFinanceCreditCandidateRow> CreditCandidates { get; set; } = [];
     public List<ManagementFinanceDataQualityRow> DataQualityRows { get; set; } = [];
+    public ManagementProductFinanceSummary ProductFinanceSummary { get; set; } = new();
+    public List<ManagementProductDivisionFinanceRow> ProductDivisionFinanceRows { get; set; } = [];
+    public List<ManagementProductFinanceCountryRow> ProductFinanceCountryRows { get; set; } = [];
     public ManagementProductAssignmentSummary ProductAssignmentSummary { get; set; } = new();
     public List<ManagementProductAssignmentCountryRow> ProductAssignmentCountryRows { get; set; } = [];
     public List<ManagementProductAssignmentRow> ProductAssignmentRows { get; set; } = [];

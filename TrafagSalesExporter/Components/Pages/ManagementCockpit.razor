@@ -284,6 +284,95 @@
                 </MudTable>
             </MudPaper>
         </MudTabPanel>
+        <MudTabPanel Text="@T("Sparten-Finanzanalyse", "Division finance")" Icon="@Icons.Material.Filled.PieChart">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Gesamtumsatz", "Total sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.TotalValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zugeordneter Umsatz", "Assigned sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.AssignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.AssignedValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht zugeordnet", "Unassigned")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.UnassignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.UnassignedValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht im Stamm", "Not in master")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.MissingReferenceValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.MissingReferenceValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatz nach Produktsparte", "Sales by product division")</MudText>
+                <MudTable Items="_financeResult.ProductDivisionFinanceRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Produktsparte", "Product division")</MudTh>
+                        <MudTh>@T("Produktfamilie", "Product family")</MudTh>
+                        <MudTh>PAPH1</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Anteil", "Share")</MudTh>
+                        <MudTh>@T("Materialien", "Materials")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                        <MudTh>@T("Laender", "Countries")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@FormatPercent(context.SharePercent)</MudTd>
+                        <MudTd>@context.MaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                        <MudTd>@context.Countries</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine zugeordneten Spartenumsaetze fuer diese Filter.", "No assigned division sales for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatzabdeckung nach Land", "Sales coverage by country")</MudText>
+                <MudTable Items="_financeResult.ProductFinanceCountryRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Gesamt", "Total")</MudTh>
+                        <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
+                        <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                        <MudTh>@T("Material fehlt", "Material missing")</MudTh>
+                        <MudTh>@T("Abdeckung", "Coverage")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.CountryKey</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.UnassignedValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MissingMaterialValue, context.Currency)</MudTd>
+                        <MudTd>@FormatPercent(context.AssignedValuePercent)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Umsatzabdeckung fuer diese Filter.", "No sales coverage for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
         <MudTabPanel Text="@T("Zentrale Spartenzuordnung", "Central division mapping")" Icon="@Icons.Material.Filled.AccountTree">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">

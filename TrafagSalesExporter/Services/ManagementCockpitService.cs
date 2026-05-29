@@ -460,6 +460,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db);
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
+        var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
 
         return new ManagementFinanceSummaryResult
         {
@@ -497,6 +498,9 @@ public class ManagementCockpitService : IManagementCockpitService
             DataStatusRows = dataStatusRows,
             CreditCandidates = BuildFinanceCreditCandidates(scopedRows),
             DataQualityRows = BuildFinanceDataQualityRows(scopedRows),
+            ProductFinanceSummary = productFinanceSummary,
+            ProductDivisionFinanceRows = BuildProductDivisionFinanceRows(productAssignmentRows),
+            ProductFinanceCountryRows = BuildProductFinanceCountryRows(productAssignmentRows),
             ProductAssignmentSummary = BuildProductAssignmentSummary(productAssignmentRows),
             ProductAssignmentCountryRows = BuildProductAssignmentCountryRows(productAssignmentRows),
             ProductAssignmentRows = productAssignmentRows
@@ -711,6 +715,101 @@ public class ManagementCockpitService : IManagementCockpitService
                 .Count()
         };
 
+    private static ManagementProductFinanceSummary BuildProductFinanceSummary(
+        IReadOnlyCollection<ManagementProductAssignmentRow> rows,
+        IReadOnlyCollection<string> currencies)
+    {
+        var total = rows.Sum(row => row.NetSalesActual);
+        var assigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+        var unassigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual);
+        var missingReference = rows.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual);
+        var missingMaterial = rows.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual);
+
+        return new ManagementProductFinanceSummary
+        {
+            TotalValue = total,
+            AssignedValue = assigned,
+            UnassignedValue = unassigned,
+            MissingReferenceValue = missingReference,
+            MissingMaterialValue = missingMaterial,
+            AssignedValuePercent = PercentOf(assigned, total),
+            UnassignedValuePercent = PercentOf(unassigned, total),
+            MissingReferenceValuePercent = PercentOf(missingReference, total),
+            DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
+        };
+    }
+
+    private static List<ManagementProductDivisionFinanceRow> BuildProductDivisionFinanceRows(IEnumerable<ManagementProductAssignmentRow> rows)
+    {
+        var assignedRows = rows
+            .Where(row => row.Status == ProductAssignmentStatuses.Assigned)
+            .ToList();
+        var totalsByCurrency = assignedRows
+            .GroupBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(row => row.NetSalesActual), StringComparer.OrdinalIgnoreCase);
+
+        return assignedRows
+            .GroupBy(row => new
+            {
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                row.ProductHierarchyCode,
+                row.ProductHierarchyText,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var value = group.Sum(row => row.NetSalesActual);
+                totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+                return new ManagementProductDivisionFinanceRow
+                {
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText,
+                    ProductFamilyCode = group.Key.ProductFamilyCode,
+                    ProductFamilyText = group.Key.ProductFamilyText,
+                    ProductHierarchyCode = group.Key.ProductHierarchyCode,
+                    ProductHierarchyText = group.Key.ProductHierarchyText,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = value,
+                    SharePercent = PercentOf(value, total),
+                    MaterialCount = group.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    RowCount = group.Sum(row => row.RowCount),
+                    Countries = JoinDistinct(group.Select(row => row.CountryKey))
+                };
+            })
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.ProductDivisionCode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<ManagementProductFinanceCountryRow> BuildProductFinanceCountryRows(IEnumerable<ManagementProductAssignmentRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.Currency })
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                var total = rowList.Sum(row => row.NetSalesActual);
+                var assigned = rowList.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+                return new ManagementProductFinanceCountryRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    Currency = group.Key.Currency,
+                    TotalValue = total,
+                    AssignedValue = assigned,
+                    UnassignedValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual),
+                    MissingReferenceValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual),
+                    MissingMaterialValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual),
+                    AssignedValuePercent = PercentOf(assigned, total)
+                };
+            })
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
     private static List<ManagementProductAssignmentCountryRow> BuildProductAssignmentCountryRows(IEnumerable<ManagementProductAssignmentRow> rows)
         => rows
             .GroupBy(row => new { row.CountryKey, row.Tsc })
@@ -773,6 +872,9 @@ public class ManagementCockpitService : IManagementCockpitService
 
     private static string NormalizeMaterialKey(string value)
         => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
+
+    private static decimal PercentOf(decimal value, decimal total)
+        => total == 0m ? 0m : value * 100m / total;
 
     private static ManagementFinanceDataQualityRow BuildQualityRow(string issue, int count, int totalRows)
     {
