@@ -1,5 +1,6 @@
 @page "/management-cockpit"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using Microsoft.AspNetCore.Components
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IManagementCockpitPageService CockpitPageService
@@ -47,7 +48,7 @@
 
 @if (_financeResult is not null)
 {
-    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
+    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4" @bind-ActivePanelIndex="_activeFinanceTabIndex">
         <MudTabPanel Text="@T("Finance Summary", "Finance summary")" Icon="@Icons.Material.Filled.Dashboard">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
@@ -285,7 +286,7 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Spartenanalyse", "Division analysis")" Icon="@Icons.Material.Filled.AccountTree">
-            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-4">
+            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-4" @bind-ActivePanelIndex="_activeDivisionTabIndex">
                 <MudTabPanel Text="@T("Finanzanalyse", "Finance analysis")" Icon="@Icons.Material.Filled.PieChart">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
@@ -823,6 +824,14 @@
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "section")]
+    public string? Section { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "division")]
+    public string? Division { get; set; }
+
     private List<ManagementCockpitFileOption> _files = [];
     private List<int> _centralYears = [];
     private List<int> _financeYearOptions = [];
@@ -855,6 +864,22 @@
     private bool _analyzing;
     private bool _analyzingCentral;
     private bool _analyzingFinance;
+    private int _activeFinanceTabIndex;
+    private int _activeDivisionTabIndex;
+
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(Section, "division", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeFinanceTabIndex = 6;
+            _activeDivisionTabIndex = string.Equals(Division, "central", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        }
+        else if (string.IsNullOrWhiteSpace(Section))
+        {
+            _activeFinanceTabIndex = 0;
+            _activeDivisionTabIndex = 0;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

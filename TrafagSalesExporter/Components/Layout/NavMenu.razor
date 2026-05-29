@@ -10,9 +10,17 @@
         <MudNavLink Href="export-dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
             @T("Export Dashboard", "Export dashboard")
         </MudNavLink>
-        <MudNavLink Href="management-cockpit" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">
-            @T("Management Analyse", "Management analysis")
-        </MudNavLink>
+        <MudNavGroup Title="@T("Management Analyse", "Management analysis")" Icon="@Icons.Material.Filled.QueryStats">
+            <MudNavLink Href="management-cockpit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                @T("Uebersicht", "Overview")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=division&division=finance" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PieChart">
+                @T("Sparten-Finanzanalyse", "Division finance")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=division&division=central" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AccountTree">
+                @T("Zentrale Spartenzuordnung", "Central division mapping")
+            </MudNavLink>
+        </MudNavGroup>
         @if (ShowFinanceComparison)
         {
             <MudNavLink Href="finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
