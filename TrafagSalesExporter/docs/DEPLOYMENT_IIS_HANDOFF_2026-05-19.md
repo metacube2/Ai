@@ -1,6 +1,58 @@
 # Deployment / IIS Handoff 2026-05-19
 
-Letzter Nachtrag: 2026-05-20
+Letzter Nachtrag: 2026-05-29
+
+## Nachtrag 2026-05-29 Deploy Produktsparten-Mapping
+
+Durchgefuehrt:
+
+- Release-Publish aus `TrafagSalesExporter` nach:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\
+```
+
+- Befehl:
+
+```powershell
+dotnet publish .\TrafagSalesExporter.csproj -c Release --no-restore /p:PublishProfile=FolderProfile --verbosity minimal
+```
+
+- Share-Pruefung nach Publish:
+  - `BiDashboard.dll` Zeitstempel `29.05.2026 09:19:43`
+  - `BiDashboard.deps.json` Zeitstempel `29.05.2026 09:19:44`
+  - `web.config` Zeitstempel `29.05.2026 09:19:50`
+  - `trafag_exporter.db` Zeitstempel `29.05.2026 09:18:42`
+
+Deploy-Inhalt:
+
+- Produktspartenfelder im Web-Datenmodell und Excel-Export.
+- SAP-Gateway-Join-Konfiguration fuer `ProductDivisionRefSet`.
+- Neuer Reiter `Zentrale Spartenzuordnung` in `Management Analyse`.
+- Lokale SQLite-Konfiguration wurde mit publiziert; `ProductDivisionRefSet` ist dort als aktive zweite SAP-Quelle fuer `ZSCHWEIZ` konfiguriert.
+
+Validierung:
+
+```powershell
+dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-deploy-20260529
+```
+
+Ergebnis:
+
+```text
+80/80 Tests gruen
+```
+
+Einschraenkung:
+
+- `Invoke-WebRequest` gegen `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/` konnte von der Entwicklungsmaschine nicht als fachlicher Smoke-Test verwendet werden, weil die HTTPS-Verbindung lokal mit Empfangs-/Credential-Fehler abbricht. Das entspricht dem bereits dokumentierten lokalen Schannel-/Client-Credential-Thema.
+- Der Publish selbst und die Share-Dateien wurden erfolgreich verifiziert.
+
+Nacharbeit im Web:
+
+- Im Export Dashboard `ZSCHWEIZ` erneut exportieren/laden, damit `CentralSalesRecords` die Produktfelder aus `ProductDivisionRefSet` erhaelt.
+- Danach `Management Analyse` -> `Zentrale Spartenzuordnung` pruefen.
+- Wenn dort `TR-AG Referenz = 0` steht, ist die zentrale Referenz noch nicht neu geladen oder der SAP-Join liefert im Webserver-Kontext keine Produktdaten.
 
 ## Nachtrag 2026-05-27: Upgreat Firewall-Freigabe fuer neuen Webserver
 

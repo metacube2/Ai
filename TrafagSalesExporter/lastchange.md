@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-05-27
+Stand: 2026-05-29
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -15,6 +15,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
 - Neu erstellt: ABAP-Arbeitsstand fuer Produktsparten-Mapping mit Provider-Klasse, ALV-Report und Mapping-Build-Report.
 - Neu umgesetzt: Produktspartenfelder im Web-Datenmodell, Gateway-Join-Konfiguration fuer `ProductDivisionRefSet` und Excel-Ausgabe.
+- Neu umgesetzt und deployed: Reiter `Zentrale Spartenzuordnung` in `Management Analyse`, der Finance-Materialien gegen die fuehrende TR-AG-/SAP-Referenz prueft.
+- Letzter Deploy: 2026-05-29 09:19 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-deploy-20260529` mit `80/80` Tests gruen.
 
 ## Nachtrag 2026-05-29 Produktsparten-Mapping Gateway/Web
 
@@ -60,6 +63,7 @@ Offen:
 - `ZSCHWEIZ` im Export Dashboard neu laufen lassen.
 - Danach Fuellung der neuen Produktfelder und Quote `UNASS` pruefen.
 - Fachliche Mapping-Luecken wie `0509`/`0540` spaeter mit Andreas/Kendra klaeren.
+- Wenn `TR-AG Referenz = 0` angezeigt wird, ist die zentrale Referenz im Web noch leer. Dann `ZSCHWEIZ` nach aktivem `ProductDivisionRefSet`-Join erneut exportieren/laden.
 
 ## Nachtrag 2026-05-29 Zentrale Spartenzuordnung
 
