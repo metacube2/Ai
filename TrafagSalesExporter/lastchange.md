@@ -16,8 +16,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu erstellt: ABAP-Arbeitsstand fuer Produktsparten-Mapping mit Provider-Klasse, ALV-Report und Mapping-Build-Report.
 - Neu umgesetzt: Produktspartenfelder im Web-Datenmodell, Gateway-Join-Konfiguration fuer `ProductDivisionRefSet` und Excel-Ausgabe.
 - Neu umgesetzt und deployed: Reiter `Zentrale Spartenzuordnung` in `Management Analyse`, der Finance-Materialien gegen die fuehrende TR-AG-/SAP-Referenz prueft.
-- Letzter Deploy: 2026-05-29 09:19 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-deploy-20260529` mit `80/80` Tests gruen.
+- Neu umgesetzt und deployed: Reiter `Sparten-Finanzanalyse` in `Management Analyse`, der Umsatzabdeckung und Umsatz nach Produktsparte aus der zentralen Spartenzuordnung berechnet.
+- Letzter Deploy: 2026-05-29 10:42 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-division-finance` mit `80/80` Tests gruen.
 
 ## Nachtrag 2026-05-29 Produktsparten-Mapping Gateway/Web
 
@@ -93,6 +94,30 @@ Technisch:
 - Neuer Reiter in `Components/Pages/ManagementCockpit.razor`.
 - Test ergaenzt: `AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data`.
 - Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-central-product-assignment` mit `80/80` Tests gruen.
+
+## Nachtrag 2026-05-29 Sparten-Finanzanalyse
+
+Umgesetzt:
+
+- Neuer Reiter in `Management Analyse`: `Sparten-Finanzanalyse`.
+- Grundlage sind die bestehenden Statuswerte aus `Zentrale Spartenzuordnung`, damit Materialstatus und Finanzwerte identisch abgegrenzt sind.
+- Kennzahlen:
+  - Gesamtumsatz
+  - Zugeordneter Umsatz
+  - Nicht zugeordneter Umsatz
+  - Umsatz nicht im TR-AG-Stamm
+- Tabellen:
+  - Umsatz nach Produktsparte mit Produktsparte, Produktfamilie, PAPH1, Umsatz, Anteil, Materialanzahl, Zeilen und Laendern.
+  - Umsatzabdeckung nach Land/TSC mit Gesamt, Zugeordnet, Nicht zugeordnet, Nicht im Stamm, Material fehlt und Abdeckungsquote.
+- Seed-Fix:
+  - SAP-Quelle `P = ProductDivisionRefSet` wird beim App-Start nicht mehr deaktiviert.
+  - Join `Z.Matnr = P.Matnr` und Produktfeld-Mappings werden als Standard gepflegt.
+- Server-DB nach Deploy geprueft:
+  - `ProductRows = 36'847`
+  - `TR-AG Referenzmaterialien = 6'805`
+  - `ProductDivisionRefSet` aktiv.
+- Deploy: `BiDashboard.dll` auf Server aktualisiert am `29.05.2026 10:42`.
+- Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-division-finance` mit `80/80` Tests gruen.
 
 ## Nachtrag 2026-05-28 ABAP Produktsparten-Mapping
 

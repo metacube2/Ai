@@ -2,6 +2,57 @@
 
 Letzter Nachtrag: 2026-05-29
 
+## Nachtrag 2026-05-29 Deploy Sparten-Finanzanalyse
+
+Durchgefuehrt:
+
+- Release-Publish aus `TrafagSalesExporter` nach:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\
+```
+
+- Befehl:
+
+```powershell
+dotnet publish .\TrafagSalesExporter.csproj -c Release --no-restore /p:PublishProfile=FolderProfile --verbosity minimal
+```
+
+- App wurde fuer den Publish kurz per `app_offline.htm` gestoppt und danach wieder online geschaltet.
+
+Deploy-Inhalt:
+
+- Neuer Reiter `Sparten-Finanzanalyse` in `Management Analyse`.
+- Umsatzabdeckung nach Produktzuordnungsstatus:
+  - Zugeordnet
+  - Nicht zugeordnet
+  - Nicht im TR-AG-Stamm
+  - Material fehlt
+- Umsatz nach Produktsparte, Produktfamilie und PAPH1.
+- Umsatzabdeckung nach Land/TSC.
+- Seed-Korrektur, damit SAP-Quelle `P = ProductDivisionRefSet` beim App-Start aktiv bleibt.
+
+Share-/DB-Pruefung:
+
+- `BiDashboard.dll` Zeitstempel `29.05.2026 10:42:44`.
+- `app_offline.htm` wurde entfernt.
+- Server-DB:
+  - `ProductRows = 36'847`
+  - `TR-AG Referenzmaterialien = 6'805`
+  - `P ProductDivisionRefSet` aktiv
+
+Validierung:
+
+```powershell
+dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-division-finance
+```
+
+Ergebnis:
+
+```text
+80/80 Tests gruen
+```
+
 ## Nachtrag 2026-05-29 Deploy Produktsparten-Mapping
 
 Durchgefuehrt:

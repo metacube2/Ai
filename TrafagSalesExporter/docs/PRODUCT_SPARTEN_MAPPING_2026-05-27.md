@@ -359,3 +359,77 @@ Wichtig:
 - Die Sicht ist zunaechst eine Pruef-/Analyseansicht.
 - Sie veraendert noch keine bestehenden Umsatzzeilen der anderen Laender.
 - Persistente Anreicherung aller `CentralSalesRecords` kann spaeter folgen, wenn die Treffer-/Fehlerquote fachlich akzeptiert ist.
+
+## Nachtrag 2026-05-29 Sparten-Finanzanalyse
+
+Fachliches Ziel:
+
+- Nach der Abgrenzung `Zugeordnet`, `Nicht zugeordnet`, `Nicht im TR-AG-Stamm` und `Material fehlt` werden die gleichen Statuswerte finanztechnisch bewertet.
+- Die Sicht beantwortet nicht nur, wie viele Materialien zugeordnet sind, sondern wie viel Umsatz sauber einer TR-AG-Produktsparte zugeordnet ist.
+
+Umsetzung im Web:
+
+- Neuer Reiter in `Management Analyse`:
+  - `Sparten-Finanzanalyse`
+- Der Reiter nutzt dieselben Finance-Filter wie die bestehende Analyse:
+  - Finance-Jahr
+  - Land
+  - Waehrung
+- Grundlage sind die bereits gebildeten Materialpruefzeilen aus `Zentrale Spartenzuordnung`.
+
+Kennzahlen:
+
+- Gesamtumsatz
+- Zugeordneter Umsatz
+- Nicht zugeordneter Umsatz
+- Umsatz nicht im TR-AG-Stamm
+- Prozentuale Abdeckung nach Umsatz
+
+Tabellen:
+
+- Umsatz nach Produktsparte:
+  - Produktsparte
+  - Produktfamilie
+  - PAPH1
+  - Umsatz
+  - Anteil
+  - Materialien
+  - Zeilen
+  - Laender
+- Umsatzabdeckung nach Land:
+  - Land
+  - TSC
+  - Gesamtumsatz
+  - Zugeordneter Umsatz
+  - Nicht zugeordneter Umsatz
+  - Nicht im Stamm
+  - Material fehlt
+  - Abdeckungsquote
+
+Technisch:
+
+- Neue Modelle:
+  - `ManagementProductFinanceSummary`
+  - `ManagementProductDivisionFinanceRow`
+  - `ManagementProductFinanceCountryRow`
+- Neue Berechnungen in `ManagementCockpitService`:
+  - Umsatzabdeckung aus `ProductAssignmentRows`
+  - Umsatz je Produktsparte nur fuer Status `Zugeordnet`
+  - Laenderabdeckung nach Umsatz und Status
+- Neuer UI-Reiter in `Components/Pages/ManagementCockpit.razor`.
+- Test erweitert:
+  - `AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data` prueft jetzt auch Umsatzabdeckung und Spartentabelle.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-division-finance`
+- Ergebnis: `80/80` Tests gruen.
+
+Deploy:
+
+- Deployed auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- `BiDashboard.dll` Zeitstempel nach Deploy: `29.05.2026 10:42`.
+- Server-DB nach Deploy geprueft:
+  - `ProductRows = 36'847`
+  - `TR-AG Referenzmaterialien = 6'805`
+  - `P ProductDivisionRefSet` aktiv.
