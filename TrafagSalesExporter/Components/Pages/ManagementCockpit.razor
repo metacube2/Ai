@@ -284,7 +284,9 @@
                 </MudTable>
             </MudPaper>
         </MudTabPanel>
-        <MudTabPanel Text="@T("Sparten-Finanzanalyse", "Division finance")" Icon="@Icons.Material.Filled.PieChart">
+        <MudTabPanel Text="@T("Spartenanalyse", "Division analysis")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-4">
+                <MudTabPanel Text="@T("Finanzanalyse", "Finance analysis")" Icon="@Icons.Material.Filled.PieChart">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -372,8 +374,8 @@
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
-        </MudTabPanel>
-        <MudTabPanel Text="@T("Zentrale Spartenzuordnung", "Central division mapping")" Icon="@Icons.Material.Filled.AccountTree">
+                </MudTabPanel>
+                <MudTabPanel Text="@T("Zentrale Zuordnung", "Central mapping")" Icon="@Icons.Material.Filled.AccountTree">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -481,6 +483,8 @@
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
+                </MudTabPanel>
+            </MudTabs>
         </MudTabPanel>
         <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
 
