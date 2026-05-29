@@ -12,13 +12,31 @@
         </MudNavLink>
         <MudNavGroup Title="@T("Management Analyse", "Management analysis")" Icon="@Icons.Material.Filled.QueryStats">
             <MudNavLink Href="management-cockpit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-                @T("Uebersicht", "Overview")
+                @T("Finance Summary", "Finance summary")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=countries" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Public">
+                @T("Laender", "Countries")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=status" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.FactCheck">
+                @T("Datenstatus", "Data status")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=deviations" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.WarningAmber">
+                @T("Abweichungen", "Deviations")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=credits" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AssignmentReturn">
+                @T("Gutschriften", "Credit notes")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=quality" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Rule">
+                @T("Datenqualitaet", "Data quality")
             </MudNavLink>
             <MudNavLink Href="management-cockpit?section=division&division=finance" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PieChart">
                 @T("Sparten-Finanzanalyse", "Division finance")
             </MudNavLink>
             <MudNavLink Href="management-cockpit?section=division&division=central" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AccountTree">
                 @T("Zentrale Spartenzuordnung", "Central division mapping")
+            </MudNavLink>
+            <MudNavLink Href="management-cockpit?section=raw" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.QueryStats">
+                @T("Rohdaten Diagnose", "Raw-data diagnostics")
             </MudNavLink>
         </MudNavGroup>
         @if (ShowFinanceComparison)

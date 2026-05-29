@@ -924,13 +924,26 @@
     {
         if (string.Equals(Section, "division", StringComparison.OrdinalIgnoreCase))
         {
-            _activeFinanceTabIndex = 6;
+            _activeFinanceTabIndex = ManagementFinanceTabIndexes.Division;
             _activeDivisionTabIndex = string.Equals(Division, "central", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         }
         else if (string.IsNullOrWhiteSpace(Section))
         {
-            _activeFinanceTabIndex = 0;
+            _activeFinanceTabIndex = ManagementFinanceTabIndexes.Summary;
             _activeDivisionTabIndex = 0;
+        }
+        else
+        {
+            _activeFinanceTabIndex = Section.ToLowerInvariant() switch
+            {
+                "countries" => ManagementFinanceTabIndexes.Countries,
+                "status" => ManagementFinanceTabIndexes.Status,
+                "deviations" => ManagementFinanceTabIndexes.Deviations,
+                "credits" => ManagementFinanceTabIndexes.Credits,
+                "quality" => ManagementFinanceTabIndexes.Quality,
+                "raw" => ManagementFinanceTabIndexes.Raw,
+                _ => ManagementFinanceTabIndexes.Summary
+            };
         }
     }
 
@@ -1309,6 +1322,18 @@
         public const string Hierarchy = "hierarchy";
         public const string Family = "family";
         public const string Division = "division";
+    }
+
+    private static class ManagementFinanceTabIndexes
+    {
+        public const int Summary = 0;
+        public const int Countries = 1;
+        public const int Status = 2;
+        public const int Deviations = 3;
+        public const int Credits = 4;
+        public const int Quality = 5;
+        public const int Division = 6;
+        public const int Raw = 7;
     }
 
     private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);
