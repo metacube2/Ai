@@ -152,6 +152,8 @@
                         <MudTh>@T("Quelle", "Source")</MudTh>
                         <MudTh>@T("Waehrung", "Currency")</MudTh>
                         <MudTh>@T("Ist", "Actual")</MudTh>
+                        <MudTh>@T("IC/2nd-party", "IC/2nd-party")</MudTh>
+                        <MudTh>@T("Ist ohne IC", "Actual excl. IC")</MudTh>
                         <MudTh>@T("Soll", "Reference")</MudTh>
                         <MudTh>@T("Differenz", "Difference")</MudTh>
                         <MudTh>@T("Zeilen", "Rows")</MudTh>
@@ -163,6 +165,8 @@
                         <MudTd>@context.SourceSystems</MudTd>
                         <MudTd>@context.Currency</MudTd>
                         <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.IntercompanyValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActualExcludingIntercompany, context.Currency)</MudTd>
                         <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
                         <MudTd>@FormatNullableValue(context.Difference, context.Currency)</MudTd>
                         <MudTd>@context.IncludedRows.ToString("N0") / @context.ExcludedRows.ToString("N0")</MudTd>
@@ -720,6 +724,7 @@
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Laender", "Countries")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@_centralResult.Summary.ValueFieldLabel</MudText><MudText Typo="Typo.h6">@FormatValue(_centralResult.Summary.ValueTotal, _centralResult.Summary.DisplayCurrency)</MudText></MudPaper></MudItem>
         <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Nicht umgerechnet", "Not converted")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.MissingExchangeRateCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Kursdatum", "Rate date")</MudText><MudText Typo="Typo.body2">@_centralResult.Summary.ExchangeRateDateLabel</MudText></MudPaper></MudItem>
     </MudGrid>
 
     <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -881,6 +886,7 @@
     private List<ManagementCockpitValueFieldOption> _valueFieldOptions = [];
     private readonly List<CurrencySelectOption> _currencyOptions =
     [
+        new(ManagementCockpitCurrencyOptions.Chf, "CHF"),
         new(ManagementCockpitCurrencyOptions.Eur, "EUR"),
         new(ManagementCockpitCurrencyOptions.Usd, "USD"),
         new(ManagementCockpitCurrencyOptions.Native, "Original")

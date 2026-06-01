@@ -184,6 +184,8 @@ public class ManagementCockpitService : IManagementCockpitService
         var aggregation = ResolveAggregation(options);
 
         using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
+        var exchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
         var baseRows = await db.CentralSalesRecords
             .Select(r => new CentralCockpitRow
             {
@@ -196,9 +198,16 @@ public class ManagementCockpitService : IManagementCockpitService
                 Quantity = r.Quantity,
                 StandardCost = r.StandardCost,
                 SalesValue = r.SalesPriceValue,
-                PeriodDate = r.InvoiceDate ?? r.ExtractionDate
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                ExtractionDate = r.ExtractionDate,
+                PeriodDate = r.InvoiceDate ?? r.ExtractionDate,
+                ExchangeRateDate = r.ExtractionDate
             })
             .ToListAsync();
+
+        foreach (var row in baseRows)
+            row.ExchangeRateDate = ResolveExchangeRateDate(exchangeRateDateField, row.PostingDate, row.InvoiceDate, row.ExtractionDate);
 
         if (baseRows.Count == 0)
             throw new InvalidOperationException("Die zentrale Tabelle enthält noch keine Datensätze.");
@@ -246,13 +255,15 @@ public class ManagementCockpitService : IManagementCockpitService
                 DisplayCurrency = BuildDisplayCurrencyLabel(selectedRows.Select(x => x.DisplayCurrency)),
                 ValueTotal = selectedRows.Sum(x => x.Value),
                 MissingExchangeRateCount = selectedRows.Count(x => x.MissingExchangeRate),
+                ExchangeRateDateField = exchangeRateDateField,
+                ExchangeRateDateLabel = BuildExchangeRateDateLabel(exchangeRateDateField),
                 PeriodStart = selectedRows.Min(x => x.PeriodDate),
                 PeriodEnd = selectedRows.Max(x => x.PeriodDate)
             },
             AdditionalValueFields = aggregation.AdditionalValueFields
                 .Select(ToValueFieldOption)
                 .ToList(),
-            Notices = BuildCentralNotices(aggregation, selectedRows.Count(x => x.MissingExchangeRate), options),
+            Notices = BuildCentralNotices(aggregation, selectedRows.Count(x => x.MissingExchangeRate), options, exchangeRateDateField),
             YearlyTotals = yearlyRows
                 .GroupBy(x => new { x.PeriodDate.Year, x.DisplayCurrency })
                 .OrderBy(g => g.Key.Year)
@@ -316,6 +327,10 @@ public class ManagementCockpitService : IManagementCockpitService
         if (financeRules.Count == 0)
             financeRules = FinanceRuleEngine.CreateDefaultRules().ToList();
 
+        var intercompanyRules = await db.FinanceIntercompanyRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .ToListAsync();
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await db.CentralSalesRecords
             .AsNoTracking()
@@ -374,6 +389,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     Include = include,
                     Value = value,
                     RawSalesValue = record.SalesPriceValue,
+                    IsIntercompany = IsIntercompanyCustomer(record, intercompanyRules),
                     Quantity = record.Quantity,
                     InvoiceNumber = record.InvoiceNumber,
                     DocumentType = record.DocumentType,
@@ -439,7 +455,8 @@ public class ManagementCockpitService : IManagementCockpitService
             "Diese Sicht verwendet dieselbe FinanceRuleEngine wie das zentrale Excel-Blatt Finance Summary.",
             "Jahr, Land und Waehrung werden auf das Endergebnis angewendet.",
             "Finance-Jahr basiert auf PostingDate, danach InvoiceDate, danach ExtractionDate; DE-Regeln koennen das Jahr erzwingen.",
-            "Include/Exclude, Gutschriften-Negierung und IT-Deduplizierung folgen den gepflegten Finance Regeln."
+            "Include/Exclude, Gutschriften-Negierung und IT-Deduplizierung folgen den gepflegten Finance Regeln.",
+            "Intercompany / 2nd-party wird als Diagnosebetrag ausgewiesen; der Standard-Ist bleibt inklusive dieser Positionen."
         };
         if (scopedRows.Count == 0)
         {
@@ -461,6 +478,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
+        notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
 
         return new ManagementFinanceSummaryResult
         {
@@ -578,6 +596,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 var rowList = group.ToList();
                 referenceByKey.TryGetValue(group.Key.CountryKey, out var referenceValue);
                 var actual = rowList.Sum(row => row.Value);
+                var intercompanyValue = rowList.Where(row => row.IsIntercompany).Sum(row => row.Value);
                 var difference = referenceValue.HasValue ? actual - referenceValue.Value : (decimal?)null;
                 return new ManagementFinanceCountryStatusRow
                 {
@@ -587,6 +606,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     IncludedRows = rowList.Count(row => row.Include),
                     ExcludedRows = rowList.Count(row => !row.Include),
                     NetSalesActual = actual,
+                    IntercompanyValue = intercompanyValue,
+                    NetSalesActualExcludingIntercompany = actual - intercompanyValue,
                     SourceSystems = JoinDistinct(rowList.Select(row => row.SourceSystem)),
                     Tscs = JoinDistinct(rowList.Select(row => row.Tsc)),
                     ReferenceValue = referenceValue,
@@ -871,7 +892,34 @@ public class ManagementCockpitService : IManagementCockpitService
     };
 
     private static string NormalizeMaterialKey(string value)
-        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var normalized = new string(value
+            .Trim()
+            .ToUpperInvariant()
+            .Where(ch => !char.IsWhiteSpace(ch))
+            .ToArray());
+
+        var withoutLeadingZeros = normalized.TrimStart('0');
+        return string.IsNullOrWhiteSpace(withoutLeadingZeros) ? "0" : withoutLeadingZeros;
+    }
+
+    private static IEnumerable<string> BuildProductAssignmentNotices(
+        IReadOnlyCollection<ManagementProductAssignmentRow> rows,
+        ManagementProductFinanceSummary summary)
+    {
+        if (rows.Count == 0 || summary.TotalValue == 0m)
+            yield break;
+
+        var unresolvedValuePercent = summary.UnassignedValuePercent + summary.MissingReferenceValuePercent;
+        if (unresolvedValuePercent >= 90m)
+        {
+            yield return $"Spartenanalyse auffaellig: {unresolvedValuePercent:N1}% des Umsatzes sind nicht zugeordnet oder nicht im TR-AG-Stamm. Das ist fachlich unplausibel und weist auf Mapping-/Referenzprobleme hin.";
+            yield return "Pruefpunkte Spartenmapping: ProductDivisionRefSet-Fuellung, Join Z.Matnr = P.Matnr, fuehrende Nullen in Materialnummern, lokale Artikelnummern und letzter ZSCHWEIZ-Export.";
+        }
+    }
 
     private static decimal PercentOf(decimal value, decimal total)
         => total == 0m ? 0m : value * 100m / total;
@@ -918,6 +966,43 @@ public class ManagementCockpitService : IManagementCockpitService
             reasons.Add("Belegtyp/-nummer");
         return string.Join(", ", reasons.Distinct(StringComparer.OrdinalIgnoreCase));
     }
+
+    private static bool IsIntercompanyCustomer(SalesRecord record, IReadOnlyList<FinanceIntercompanyRule> rules)
+    {
+        var customerNumber = record.CustomerNumber?.Trim() ?? string.Empty;
+        var customerName = record.CustomerName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(customerNumber) && string.IsNullOrWhiteSpace(customerName))
+            return false;
+
+        var normalizedCustomerName = NormalizeRuleText(customerName);
+        var referenceKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+
+        foreach (var rule in rules)
+        {
+            if (!string.IsNullOrWhiteSpace(rule.ScopeKey) &&
+                !rule.ScopeKey.Equals(referenceKey, StringComparison.OrdinalIgnoreCase) &&
+                !rule.ScopeKey.Equals(record.Tsc, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(rule.CustomerNumber) &&
+                customerNumber.Equals(rule.CustomerNumber.Trim(), StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(rule.CustomerNameContains) &&
+                normalizedCustomerName.Contains(NormalizeRuleText(rule.CustomerNameContains), StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeRuleText(string value)
+        => (value ?? string.Empty)
+            .Replace("\u00e4", "ae", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00f6", "oe", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00fc", "ue", StringComparison.OrdinalIgnoreCase)
+            .Trim()
+            .ToUpperInvariant();
 
     private static string JoinDistinct(IEnumerable<string> values)
     {
@@ -1019,7 +1104,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .ToList();
 
         var targetCurrency = (options?.TargetCurrency ?? ManagementCockpitCurrencyOptions.Native).Trim().ToUpperInvariant();
-        if (targetCurrency is not ManagementCockpitCurrencyOptions.Eur and not ManagementCockpitCurrencyOptions.Usd)
+        if (targetCurrency is not ManagementCockpitCurrencyOptions.Chf and not ManagementCockpitCurrencyOptions.Eur and not ManagementCockpitCurrencyOptions.Usd)
             targetCurrency = ManagementCockpitCurrencyOptions.Native;
 
         return new AggregationSelection(
@@ -1047,14 +1132,14 @@ public class ManagementCockpitService : IManagementCockpitService
     {
         var value = ResolveValue(row, aggregation.ValueField);
         var currency = ResolveCurrency(row, aggregation.ValueField);
-        var converted = ConvertValue(value, currency, aggregation.ValueField, aggregation, row.PeriodDate);
+        var converted = ConvertValue(value, currency, aggregation.ValueField, aggregation, row.ExchangeRateDate);
         var additionalValues = aggregation.AdditionalValueFields.ToDictionary(
             field => field.Key,
             field =>
             {
                 var additionalValue = ResolveValue(row, field);
                 var additionalCurrency = ResolveCurrency(row, field);
-                return ConvertValue(additionalValue, additionalCurrency, field, aggregation, row.PeriodDate);
+                return ConvertValue(additionalValue, additionalCurrency, field, aggregation, row.ExchangeRateDate);
             },
             StringComparer.OrdinalIgnoreCase);
 
@@ -1107,6 +1192,22 @@ public class ManagementCockpitService : IManagementCockpitService
 
     private static string BuildRateCacheKey(string fromCurrency, string toCurrency, DateTime date)
         => $"{fromCurrency}|{toCurrency}|{date:yyyy-MM-dd}";
+
+    private static DateTime ResolveExchangeRateDate(string exchangeRateDateField, DateTime? postingDate, DateTime? invoiceDate, DateTime extractionDate)
+        => exchangeRateDateField switch
+        {
+            ExchangeRateDateFields.InvoiceDate => invoiceDate ?? postingDate ?? extractionDate,
+            ExchangeRateDateFields.ExtractionDate => extractionDate,
+            _ => postingDate ?? invoiceDate ?? extractionDate
+        };
+
+    private static string BuildExchangeRateDateLabel(string exchangeRateDateField)
+        => exchangeRateDateField switch
+        {
+            ExchangeRateDateFields.InvoiceDate => "InvoiceDate / Rechnungsdatum",
+            ExchangeRateDateFields.ExtractionDate => "ExtractionDate / Extraktionsdatum",
+            _ => "PostingDate / Buchungsdatum"
+        };
 
     private static decimal ResolveValue(CockpitRow row, ValueFieldDefinition field)
         => field.Key switch
@@ -1161,7 +1262,8 @@ public class ManagementCockpitService : IManagementCockpitService
     private static List<string> BuildCentralNotices(
         AggregationSelection aggregation,
         int missingExchangeRateCount,
-        ManagementCockpitAnalysisOptions? options)
+        ManagementCockpitAnalysisOptions? options,
+        string exchangeRateDateField)
     {
         var notices = new List<string>
         {
@@ -1169,7 +1271,8 @@ public class ManagementCockpitService : IManagementCockpitService
             $"Summenfeld: {aggregation.ValueField.Label}.",
             "Keine Intercompany-Bereinigung angewendet.",
             "Kein Budget- und kein Spartemapping angewendet.",
-            "Periodenlogik basiert auf Invoice Date, falls vorhanden, sonst auf Extraction Date."
+            "Periodenlogik basiert auf Invoice Date, falls vorhanden, sonst auf Extraction Date.",
+            $"Wechselkurse werden auf {BuildExchangeRateDateLabel(exchangeRateDateField)} angewendet."
         };
 
         var landFilter = NormalizeOptionalFilter(options?.LandFilter);
@@ -1561,7 +1664,11 @@ public class ManagementCockpitService : IManagementCockpitService
         public decimal Quantity { get; set; }
         public decimal StandardCost { get; set; }
         public decimal SalesValue { get; set; }
+        public DateTime? PostingDate { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public DateTime ExtractionDate { get; set; }
         public DateTime PeriodDate { get; set; }
+        public DateTime ExchangeRateDate { get; set; }
     }
 
     private class CentralAggregationRow
@@ -1588,6 +1695,7 @@ public class ManagementCockpitService : IManagementCockpitService
         public bool Include { get; set; }
         public decimal Value { get; set; }
         public decimal RawSalesValue { get; set; }
+        public bool IsIntercompany { get; set; }
         public decimal Quantity { get; set; }
         public string InvoiceNumber { get; set; } = string.Empty;
         public string DocumentType { get; set; } = string.Empty;

@@ -172,6 +172,43 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeCentralAsync_Uses_Configured_Exchange_Rate_Date_Field()
+    {
+        var exchangeRates = new CountingCurrencyExchangeRateService();
+        var service = new ManagementCockpitService(_dbFactory, exchangeRates);
+
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.ExportSettings.Add(new ExportSettings
+            {
+                DateFilter = "2025-01-01",
+                ExchangeRateDateField = ExchangeRateDateFields.InvoiceDate
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow(
+                "SAP",
+                "USA",
+                "TRUS",
+                "INV-1",
+                "USD",
+                100m,
+                new DateTime(2025, 2, 10),
+                postingDate: new DateTime(2025, 1, 10)));
+
+        var result = await service.AnalyzeCentralAsync(2025, 2, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal(ExchangeRateDateFields.InvoiceDate, result.Summary.ExchangeRateDateField);
+        Assert.Equal(new DateTime(2025, 2, 10), Assert.Single(exchangeRates.EffectiveDates));
+    }
+
+    [Fact]
     public async Task AnalyzeCentralAsync_Can_Sum_Quantity_Without_Currency_Conversion()
     {
         await SeedCentralRowsAsync(
@@ -318,7 +355,7 @@ public class ManagementCockpitServiceTests : IDisposable
     {
         await SeedCentralRowsAsync(
             CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-1", "CHF", 100m, new DateTime(2025, 1, 10),
-                material: "MAT-OK",
+                material: "000MAT-OK",
                 name: "Reference article",
                 productHierarchyCode: "0414",
                 productHierarchyText: "Industat innen",
@@ -393,6 +430,32 @@ public class ManagementCockpitServiceTests : IDisposable
         Assert.Equal(80m, deFinanceCoverage.AssignedValuePercent);
     }
 
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Warns_When_Product_Assignment_Coverage_Is_Implausibly_Low()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-1", "CHF", 10m, new DateTime(2025, 1, 10),
+                material: "MAT-OK",
+                productHierarchyCode: "0414",
+                productFamilyCode: "0004",
+                productDivisionCode: "0001",
+                productDivisionText: "Thermostate",
+                productMappingAssigned: "X"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-1", "EUR", 90m, new DateTime(2025, 1, 11),
+                material: "MAT-MISSING"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(100m, result.ProductFinanceSummary.TotalValue);
+        Assert.Equal(90m, result.ProductFinanceSummary.MissingReferenceValue);
+        Assert.Contains(result.Notices, notice =>
+            notice.Contains("Spartenanalyse auffaellig", StringComparison.OrdinalIgnoreCase) &&
+            notice.Contains("90.0%", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Notices, notice =>
+            notice.Contains("ProductDivisionRefSet", StringComparison.OrdinalIgnoreCase) &&
+            notice.Contains("fuehrende Nullen", StringComparison.OrdinalIgnoreCase));
+    }
+
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -440,7 +503,8 @@ public class ManagementCockpitServiceTests : IDisposable
         string productFamilyText = "",
         string productDivisionCode = "",
         string productDivisionText = "",
-        string productMappingAssigned = "")
+        string productMappingAssigned = "",
+        DateTime? postingDate = null)
     {
         return new CentralSalesRecord
         {
@@ -476,6 +540,7 @@ public class ManagementCockpitServiceTests : IDisposable
             SalesCurrency = currency,
             Incoterms2020 = "DAP",
             SalesResponsibleEmployee = "Alice",
+            PostingDate = postingDate,
             InvoiceDate = invoiceDate,
             OrderDate = invoiceDate?.AddDays(-2),
             Land = land,
@@ -501,10 +566,12 @@ public class ManagementCockpitServiceTests : IDisposable
     private sealed class CountingCurrencyExchangeRateService : ICurrencyExchangeRateService
     {
         public int ResolveRateCallCount { get; private set; }
+        public List<DateTime?> EffectiveDates { get; } = [];
 
         public decimal? ResolveRate(string fromCurrency, string toCurrency, DateTime? effectiveDate)
         {
             ResolveRateCallCount++;
+            EffectiveDates.Add(effectiveDate);
             return 2m;
         }
 

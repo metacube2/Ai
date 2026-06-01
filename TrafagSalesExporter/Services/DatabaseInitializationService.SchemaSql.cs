@@ -27,7 +27,8 @@ CREATE TABLE ExportSettings (
     TimerEnabled INTEGER NOT NULL,
     DebugLoggingEnabled INTEGER NOT NULL DEFAULT 0,
     LocalSiteExportFolder TEXT NOT NULL DEFAULT '',
-    LocalConsolidatedExportFolder TEXT NOT NULL DEFAULT ''
+    LocalConsolidatedExportFolder TEXT NOT NULL DEFAULT '',
+    ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate'
 );";
 
     internal static string GetHanaServersCreateSql() => @"

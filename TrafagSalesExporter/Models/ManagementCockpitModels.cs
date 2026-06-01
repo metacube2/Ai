@@ -18,6 +18,7 @@ public static class ManagementCockpitValueFieldKeys
 public static class ManagementCockpitCurrencyOptions
 {
     public const string Native = "NATIVE";
+    public const string Chf = "CHF";
     public const string Eur = "EUR";
     public const string Usd = "USD";
 }
@@ -107,6 +108,8 @@ public class ManagementCockpitCentralSummary
     public string DisplayCurrency { get; set; } = string.Empty;
     public decimal ValueTotal { get; set; }
     public int MissingExchangeRateCount { get; set; }
+    public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
+    public string ExchangeRateDateLabel { get; set; } = "PostingDate / Buchungsdatum";
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
 }
@@ -175,6 +178,8 @@ public class ManagementFinanceCountryStatusRow : ManagementFinanceSummaryRow
 {
     public string SourceSystems { get; set; } = string.Empty;
     public string Tscs { get; set; } = string.Empty;
+    public decimal IntercompanyValue { get; set; }
+    public decimal NetSalesActualExcludingIntercompany { get; set; }
     public decimal? ReferenceValue { get; set; }
     public decimal? Difference { get; set; }
     public decimal? DifferencePercent { get; set; }

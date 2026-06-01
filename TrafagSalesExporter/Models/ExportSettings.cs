@@ -10,4 +10,12 @@ public class ExportSettings
     public bool DebugLoggingEnabled { get; set; }
     public string LocalSiteExportFolder { get; set; } = string.Empty;
     public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
+    public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
+}
+
+public static class ExchangeRateDateFields
+{
+    public const string PostingDate = nameof(PostingDate);
+    public const string InvoiceDate = nameof(InvoiceDate);
+    public const string ExtractionDate = nameof(ExtractionDate);
 }

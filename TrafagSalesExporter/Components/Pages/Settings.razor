@@ -270,6 +270,15 @@
             <MudSwitch @bind-Value="_exportSettings.TimerEnabled" Label="Timer aktiviert" Color="Color.Primary" />
         </MudItem>
         <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="_exportSettings.ExchangeRateDateField"
+                       Label="Wechselkurse anwenden auf"
+                       HelperText="Datumsfeld fuer Kursgueltigkeit in Management-Analysen.">
+                <MudSelectItem Value="@ExchangeRateDateFields.PostingDate">PostingDate / Buchungsdatum</MudSelectItem>
+                <MudSelectItem Value="@ExchangeRateDateFields.InvoiceDate">InvoiceDate / Rechnungsdatum</MudSelectItem>
+                <MudSelectItem Value="@ExchangeRateDateFields.ExtractionDate">ExtractionDate / Extraktionsdatum</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
             <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="Debug Live-Logging" Color="Color.Warning" />
             <MudText Typo="Typo.caption">
                 Schreibt zusÃƒÂ¤tzliche technische Fortschrittsmeldungen fÃƒÂ¼r HANA- und SAP-LesevorgÃƒÂ¤nge ins Dashboard und in die Logs.

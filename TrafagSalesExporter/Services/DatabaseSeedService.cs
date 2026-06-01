@@ -57,7 +57,8 @@ public class DatabaseSeedService : IDatabaseSeedService
             TimerEnabled = true,
             DebugLoggingEnabled = false,
             LocalSiteExportFolder = "",
-            LocalConsolidatedExportFolder = ""
+            LocalConsolidatedExportFolder = "",
+            ExchangeRateDateField = ExchangeRateDateFields.PostingDate
         });
 
         db.SaveChanges();
@@ -868,7 +869,7 @@ public class DatabaseSeedService : IDatabaseSeedService
             new FinanceReference { Key = "CN", Label = "Trafag CN", Year = 2025 },
             new FinanceReference { Key = "CZ", Label = "Trafag CZ", Year = 2025, LocalCurrencyValue = 95458782m },
             new FinanceReference { Key = "DE", Label = "Trafag DE", Year = 2025, LocalCurrencyValue = 3652394.46m },
-            new FinanceReference { Key = "ES", Label = "Trafag ES", Year = 2025, LocalCurrencyValue = 3102333.61m },
+            new FinanceReference { Key = "ES", Label = "Trafag ES", Year = 2025, LocalCurrencyValue = 3082320.18m, Notes = "Sitzung 2026-06-01: ES-Ist 3'082'320.18 EUR fachlich bestaetigt; alter Sollwert 3'102'333.61 war Referenz-/Excel-Fehler." },
             new FinanceReference { Key = "FR", Label = "Trafag FR", Year = 2025, LocalCurrencyValue = 1450582m, CheckValue = 1471218m },
             new FinanceReference { Key = "GFS", Label = "Trafag GfS", Year = 2025, LocalCurrencyValue = 6495513m },
             new FinanceReference { Key = "IN", Label = "Trafag IN", Year = 2025, LocalCurrencyValue = 747341702m, CheckValue = 750936591m },
@@ -904,9 +905,11 @@ public class DatabaseSeedService : IDatabaseSeedService
                     }
                 }
 
-                if (current.Key == "ES" && current.Year == 2025 && current.LocalCurrencyValue != 3102333.61m)
+                if (current.Key == "ES" && current.Year == 2025 && current.LocalCurrencyValue != 3082320.18m)
                 {
-                    current.LocalCurrencyValue = 3102333.61m;
+                    current.LocalCurrencyValue = 3082320.18m;
+                    current.CheckValue = null;
+                    current.Notes = "Sitzung 2026-06-01: ES-Ist 3'082'320.18 EUR fachlich bestaetigt; alter Sollwert 3'102'333.61 war Referenz-/Excel-Fehler.";
                     changed = true;
                 }
 

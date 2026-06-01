@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-05-29
+Stand: 2026-06-01
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,8 +8,16 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Code-Stand: `36ca822 Add browser favicon`, alle Aenderungen bis 2026-05-29 13:47 deployt.
-- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-favicon` mit `80/80` Tests gruen.
+- Letzter dokumentierter Code-Stand: Finance-Sitzungsnachtrag 2026-06-01 noch nicht deployt.
+- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+- Neu umgesetzt: ES-Referenz 2025 auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` als Referenz-/Excel-Fehler dokumentiert.
+- Neu umgesetzt: `FinanceProbe` nutzt dieselbe korrigierte ES-Referenz.
+- Neu umgesetzt: Wechselkurs-Anwendungsdatum in Settings konfigurierbar (`PostingDate`, `InvoiceDate`, `ExtractionDate`) und in Rohdaten-Diagnose sichtbar.
+- Neu umgesetzt: CHF als Anzeige-Waehrung in Management Analyse verfuegbar.
+- Neu umgesetzt: `Management Analyse > Laender` zeigt IC/2nd-party und `Ist ohne IC` als Diagnosewerte.
+- Neu umgesetzt: Sparten-Materialabgleich normalisiert fuehrende Nullen.
+- Neu umgesetzt: Warnhinweis bei >=90% nicht zugeordnet / nicht im TR-AG-Stamm, mit Test abgesichert.
+- Neu erstellt: kompaktes Andreas-Memo `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md`.
 - Neu dokumentiert: Produktsparten-Mapping fuer Group Sales Report ueber TR-AG-Artikelstamm und separate Mapping-Tabelle.
 - Neu dokumentiert: Upgreat-Firewall-Freigabe muss fuer den publizierten Webserver `10.120.1.17` erfolgen, nicht fuer den lokalen Entwicklungs-PC.
 - Neu umgesetzt: `Management Analyse` im Finance Cockpit hat zusaetzliche Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
@@ -24,7 +32,56 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt und deployed: Finance-Schulung hat einen neuen Tab `Spartenanalyse` mit Navigation, Gruppierung, Top 10, Flaggen, Icons und Statusinterpretation.
 - Neu umgesetzt und deployed: Browser-Favicon `wwwroot/favicon.svg` und Head-Link in `Components/App.razor`.
 - Letzter Deploy: 2026-05-29 13:47 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-favicon` mit `80/80` Tests gruen.
+- Aktueller Stand 2026-06-01 ist validiert, aber noch nicht deployt.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+
+## Nachtrag 2026-06-01 Finance-Sitzung Andreas
+
+Umgesetzt:
+
+- ES hat laut Sitzung keine echte Ist-Abweichung. `DatabaseSeedService` setzt `FinanceReference ES 2025` auf `3'082'320.18 EUR`; `CheckValue` wird fuer ES entfernt.
+- `Tools/FinanceProbe` verwendet fuer den Spain-CSV-Check ebenfalls `3'082'320.18 EUR`.
+- `Settings > Export Einstellungen` hat neu `Wechselkurse anwenden auf` mit Optionen:
+  - `PostingDate / Buchungsdatum`
+  - `InvoiceDate / Rechnungsdatum`
+  - `ExtractionDate / Extraktionsdatum`
+- `Management Analyse > Rohdaten Diagnose` zeigt `Kursdatum` bzw. das fuer Wechselkurse verwendete Datumsfeld.
+- `Management Analyse` erlaubt `CHF` als Anzeige-Waehrung.
+- `Management Analyse > Laender` zeigt zusaetzlich:
+  - `IC/2nd-party`
+  - `Ist ohne IC`
+- Intercompany bleibt Diagnose: Der Standard-Ist wird nicht automatisch bereinigt.
+- Sparten-Zuordnung normalisiert Materialnummern fuer den Vergleich gegen TR-AG-Referenz, insbesondere fuehrende Nullen.
+- Bei >=90% Umsatz in `Nicht zugeordnet` + `Nicht im TR-AG-Stamm` erzeugt die Management-Analyse einen Warnhinweis mit Pruefpunkten (`ProductDivisionRefSet`, Join, fuehrende Nullen, lokale Materialnummern, letzter ZSCHWEIZ-Export).
+- Der Warnhinweis ist per Test `AnalyzeFinanceSummaryAsync_Warns_When_Product_Assignment_Coverage_Is_Implausibly_Low` abgesichert.
+- Bestehender Sparten-Test prueft weiterhin, dass `000MAT-OK` in der TR-AG-Referenz zu `MAT-OK` aus einem lokalen Standort matcht.
+
+Dokumentiert:
+
+- `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md`
+- `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md`
+- `docs/rag/FINANCE.md`
+- `docs/FINANCE_ENTSCHEIDE.md`
+- `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`
+- `SAGE_SPAIN_EXPORT_2026-05-05.md`
+
+Validierung:
+
+```text
+dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof
+```
+
+Ergebnis:
+
+```text
+82/82 Tests gruen
+```
+
+Offen / fachlich:
+
+- Pro Standort bestaetigen, ob Intercompany bereits in der gelieferten Quelle herausgerechnet ist.
+- Fuer Wechselkurse fachlich final bestaetigen, welches Datumsfeld fuehrend ist.
+- Falls die Spartenanalyse weiterhin >90% ungeklaert bleibt, TR-AG-Referenz, `ProductDivisionRefSet`, Join und lokale Materialnummern mit Andreas/Kendra pruefen.
 
 ## Nachtrag 2026-05-29 Management Analyse UX / Spartenanalyse / Favicon
 

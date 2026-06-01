@@ -51,6 +51,7 @@ public class ConfigTransferExportSettings
     public bool DebugLoggingEnabled { get; set; }
     public string LocalSiteExportFolder { get; set; } = string.Empty;
     public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
+    public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
 }
 
 public class ConfigTransferCurrencyExchangeRate

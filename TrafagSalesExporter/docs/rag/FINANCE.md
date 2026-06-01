@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-05-29
+Stand: 2026-06-01
 
 ## Kurzstand
 
@@ -15,6 +15,10 @@ Stand: 2026-05-29
 - Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
+- Nach Sitzung 2026-06-01: ES-Referenz 2025 ist auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` war Referenz-/Excel-Fehler.
+- Management Analyse zeigt in `Laender` jetzt IC/2nd-party und `Ist ohne IC` als Diagnose.
+- Wechselkurs-Anwendungsdatum ist in Settings konfigurierbar und wird in der Rohdaten-Diagnose angezeigt.
+- Spartenanalyse war mit >90% nicht zugeordnet fachlich unplausibel; Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
 
 ## Wichtige Regeln
 
@@ -28,12 +32,13 @@ Stand: 2026-05-29
 
 - DE: Finance/Munir muss bestaetigen, welche Kundenlaender/Filter zum offiziellen DE-Ist gehoeren.
 - IT: Nach neuem IT-Export pruefen, ob die vollstaendige `Trafag Italia`-Summe sichtbar wird.
-- ES: Differenz zu Rhino/check.xlsx bleibt fachlich zu klaeren.
+- UK: Sage-Restdifferenz ueber Exportvollstaendigkeit, Discounts, Freight/Charges und 2nd-party klaeren.
+- Spartenanalyse: Falls weiterhin >90% nicht zugeordnet, TR-AG-Referenz/Join/Materialnummern pruefen.
 
 ## Management-Analyse-Reiter
 
 - `Finance Summary`: KPI-Karten und Summen wie im zentralen Excel.
-- `Laender`: Ist, Soll, Differenz, Status, Quelle und TSC je Land/Waehrung.
+- `Laender`: Ist, IC/2nd-party, Ist ohne IC, Soll, Differenz, Status, Quelle und TSC je Land/Waehrung.
 - `Datenstatus`: Standortbestand, letzte Speicherung, letzter Export, Manual-Import-Hinweise.
 - `Abweichungen`: Soll/Ist-Abweichungen sortiert nach Betrag.
 - `Gutschriften`: technische Kandidaten ueber negative Werte und erkennbare Belegtypen/-nummern.
@@ -63,7 +68,7 @@ Stand: 2026-05-29
 | --- | --- |
 | CH/AT | SAP OData `ZSCHWEIZ`, Trennung ueber Buchungskreis/Reporting-Land |
 | DE | Alphaplan Excel, `NettoPreisGesamtX`, 2025-Zwang |
-| ES | Sage CSV, `ImporteNeto`, REC/Credit negativ |
+| ES | Sage CSV, `ImporteNeto`, REC/Credit negativ; Referenz 2025 korrigiert auf `3'082'320.18 EUR` |
 | IT | Hauswaehrung, `Trafag Italia` ausgeschlossen, Duplikatlogik fuer leeres Supplier country |
 | UK | Sage/Manual Excel, GBP, `[Sales Price/Value] * [Quantity]`, Credit Notes negativ |
 | IN | INR als Hauswaehrung |

@@ -556,7 +556,7 @@ static SpainSalesCsvProbe? LoadSpainSalesCsvProbe(string? path)
         AddGroupValue(bySeries, series, sales);
     }
 
-    const decimal reference = 3102333.61m;
+    const decimal reference = 3082320.18m;
     return new SpainSalesCsvProbe
     {
         Path = path,

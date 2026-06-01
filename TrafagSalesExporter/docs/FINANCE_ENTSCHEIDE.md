@@ -1,6 +1,21 @@
 # Finance-Entscheide fuer Net Sales Actuals
 
-Stand: 2026-05-20
+Stand: 2026-06-01
+
+## Nachtrag 2026-06-01 Finance-Sitzung
+
+Umgesetzt:
+
+- ES-Referenz 2025 ist auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` war Referenz-/Excel-Fehler.
+- `Management Analyse > Laender` zeigt IC/2nd-party und `Ist ohne IC` als Diagnosewerte.
+- Wechselkurs-Anwendungsdatum ist in den Settings konfigurierbar und wird in der Rohdaten-Diagnose angezeigt.
+- Sparten-Materialabgleich normalisiert fuehrende Nullen; bei >=90% nicht zugeordnet / nicht im TR-AG-Stamm wird ein Warnhinweis angezeigt.
+
+Weiter fachlich zu klaeren:
+
+- Pro Standort bestaetigen, ob Intercompany bereits in der gelieferten Quelle herausgerechnet ist.
+- Fuer Wechselkurse final bestaetigen, ob `PostingDate`, `InvoiceDate` oder ein anderes Datum fuehrend ist.
+- Spartenanalyse fachlich pruefen, falls die ungeklaerte Abdeckung weiterhin extrem hoch bleibt.
 
 ## Nachtrag 2026-05-20 Finance Summary / Management Analyse
 
@@ -91,7 +106,7 @@ Ergebnis im Reporting:
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
 - DE: finaler Alphaplan-Jahresfile liegt vor und ist technisch mappbar. Rohsumme `NettoPreisGesamtX` komplett ist `4'154'690.05 EUR`; nur `Land Kunde = Deutschland` ist `3'455'276.64 EUR`; Sollwert ist `3'635'923.00 EUR`. Offene Fachfrage: welche Kundenlaender/Abgrenzungen gehoeren offiziell zu DE?
-- ES: Aktuell `3'082'320.18 EUR` gegen Soll `3'102'333.61`; Differenz `-20'013.43 EUR`. CSV nutzt `ImporteNeto`; Credit Notes/REC sind negativ. Offen bleiben Perioden-/Serienabgrenzung und ob Rhino eine andere Sage-Auswertung nutzt.
+- ES: `3'082'320.18 EUR` ist laut Sitzung fachlich plausibel und entspricht der korrigierten Referenz. CSV nutzt `ImporteNeto`; Credit Notes/REC sind negativ. Der fruehere Sollwert `3'102'333.61` war ein Referenz-/Excel-Fehler.
 
 ## Pruefstand 2026-05-11
 

@@ -1,6 +1,12 @@
 # Finance Berechnungsformeln pro Land
 
-Stand: 2026-05-19
+Stand: 2026-06-01
+
+Nachtrag 2026-06-01:
+
+- ES-Referenz 2025 wurde nach Finance-Sitzung auf `3'082'320.18 EUR` korrigiert. Der alte Wert `3'102'333.61 EUR` war ein Referenz-/Excel-Fehler.
+- In Management-Analysen ist das Wechselkurs-Anwendungsdatum konfigurierbar: `PostingDate`, `InvoiceDate` oder `ExtractionDate`.
+- Sparten-Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
 
 Zweck: Dieses Dokument beschreibt die aktuell im Programm verwendeten Formeln fuer den Soll/Ist-Vergleich 2025. Es ist fuer eine zweite KI oder eine fachliche Gegenpruefung geschrieben.
 
@@ -92,7 +98,7 @@ Der IC-Abzug veraendert die Originaldaten und den Haupt-Ist-Wert nicht.
 | Schweiz | CH | SAP OData `ZSCHWEIZ`, falls importiert | CHF | leer | kein Sollwert im Seed |
 | Oesterreich | AT | SAP OData `ZSCHWEIZ`, falls importiert | EUR | 3'443'863 | gemeinsame Logik |
 | Deutschland | DE | nur falls Daten in `CentralSalesRecords` vorhanden | EUR | 3'635'923 | gemeinsame Logik |
-| Spanien | ES | Sage SQL CSV / Manual Excel | EUR | 3'102'333.61 | SalesPriceValue aus Sage `ImporteNeto` |
+| Spanien | ES | Sage SQL CSV / Manual Excel | EUR | 3'082'320.18 | SalesPriceValue aus Sage `ImporteNeto` |
 | Frankreich | FR | SAP B1/HANA Schema `fr01_p` | EUR | CheckValue 1'471'218 | SalesPriceValue / B1 Positions-Netto |
 | Indien | IN | Sage/HANA `TRAFAG_LIVE` | INR | CheckValue 750'936'591 | Hauswaehrung INR |
 | Italien | IT | SAP B1/HANA Schema `it01_p` | EUR | 7'669'840 | B1 Positions-Netto mit provisorischem Filter |
@@ -250,22 +256,21 @@ Formel im Vergleich:
 
 ```text
 Ist ES = Sum(SalesPriceValue)
-Soll ES = 3'102'333.61 EUR
+Soll ES = 3'082'320.18 EUR
 ```
 
 Bekannter Stand:
 
 ```text
 Ist ca. 3'082'320.18 EUR
-Differenz ca. -20'013.43 EUR
+Differenz ca. 0.00 EUR
 ```
 
 Offen:
 
 ```text
-Abweichung ist ca. 0.65%.
-Wahrscheinliche Pruefpunkte: Fracht, Portes, Zuschlaege, Rundungen, Versicherung,
-Finanzierung, nicht-artikelbezogene Belegpositionen oder abweichende Rhino-Auswertung.
+Die fruehere Abweichung entstand aus einem falschen Soll-/Referenzwert.
+Falls Audit gefragt ist, muss die Herkunft des alten Werts 3'102'333.61 EUR nachvollzogen werden.
 ```
 
 ## FR

@@ -96,6 +96,7 @@ public sealed class SettingsPageService : ISettingsPageService
         var existing = await db.ExportSettings.FirstOrDefaultAsync();
         if (existing is null)
         {
+            settings.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
             db.ExportSettings.Add(settings);
         }
         else
@@ -107,6 +108,7 @@ public sealed class SettingsPageService : ISettingsPageService
             existing.DebugLoggingEnabled = settings.DebugLoggingEnabled;
             existing.LocalSiteExportFolder = settings.LocalSiteExportFolder;
             existing.LocalConsolidatedExportFolder = settings.LocalConsolidatedExportFolder;
+            existing.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
         }
 
         await db.SaveChangesAsync();
@@ -280,6 +282,18 @@ public sealed class SettingsPageService : ISettingsPageService
             : SourceSystemConnectionKinds.Hana;
 
     public static string NormalizeConfigValue(string? value) => value?.Trim() ?? string.Empty;
+
+    public static string NormalizeExchangeRateDateField(string? value)
+    {
+        var normalized = NormalizeConfigValue(value);
+        return normalized switch
+        {
+            ExchangeRateDateFields.PostingDate => ExchangeRateDateFields.PostingDate,
+            ExchangeRateDateFields.InvoiceDate => ExchangeRateDateFields.InvoiceDate,
+            ExchangeRateDateFields.ExtractionDate => ExchangeRateDateFields.ExtractionDate,
+            _ => ExchangeRateDateFields.PostingDate
+        };
+    }
 
     public static string BuildSharePointTestPreview(string tenantId, string clientId, string clientSecret, string siteUrl)
     {

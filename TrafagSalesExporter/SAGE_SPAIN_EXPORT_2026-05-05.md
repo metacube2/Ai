@@ -1,16 +1,23 @@
 # Sage Spain Export
 
-Stand: 2026-05-05
+Stand: 2026-06-01
+
+Nachtrag 2026-06-01:
+
+- Finance/Andreas bestaetigt: Spanien hat keine echte Ist-Abweichung.
+- Der Wert `3'082'320.18 EUR` ist fachlich plausibel und wird als ES-Referenz 2025 verwendet.
+- Der alte Sollwert `3'102'333.61 EUR` war ein Referenz-/Excel-Fehler.
+- Die historischen Abschnitte unten dokumentieren den frueheren Analysepfad und sind nicht mehr als aktueller ES-Status zu lesen.
 
 ## Aktueller Kurzstatus
 
 - Spanien-v2-Export ist technisch lauffaehig und im Testprogramm sichtbar.
 - Datei: `sagespain/v2/Spain_Sales_2025.csv`
 - Ist 2025: `3'082'320.18` EUR
-- Soll aus `check.xlsx`: `3'102'333.61`
-- Differenz: `-20'013.43`
-- Status FinanceProbe: Gelb / Pruefen
-- Finale Aussage: technisch importierbar, aber fachlich noch nicht abgestimmt.
+- Korrigierte Referenz: `3'082'320.18`
+- Differenz: `0.00`
+- Status FinanceProbe: OK, sofern die korrigierte Referenz geladen ist
+- Finale Aussage: technisch importierbar und laut Sitzung fachlich plausibel; alter Sollwert war falsch.
 
 FinanceProbe lokal:
 

@@ -70,7 +70,8 @@ public class ConfigTransferService : IConfigTransferService
                 TimerEnabled = exportSettings.TimerEnabled,
                 DebugLoggingEnabled = exportSettings.DebugLoggingEnabled,
                 LocalSiteExportFolder = exportSettings.LocalSiteExportFolder,
-                LocalConsolidatedExportFolder = exportSettings.LocalConsolidatedExportFolder
+                LocalConsolidatedExportFolder = exportSettings.LocalConsolidatedExportFolder,
+                ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(exportSettings.ExchangeRateDateField)
             },
             SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
             {
@@ -283,7 +284,8 @@ public class ConfigTransferService : IConfigTransferService
             TimerEnabled = importedSettings.TimerEnabled,
             DebugLoggingEnabled = importedSettings.DebugLoggingEnabled,
             LocalSiteExportFolder = importedSettings.LocalSiteExportFolder,
-            LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder
+            LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder,
+            ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(importedSettings.ExchangeRateDateField)
         });
 
         foreach (var sourceSystem in importedSourceSystems)

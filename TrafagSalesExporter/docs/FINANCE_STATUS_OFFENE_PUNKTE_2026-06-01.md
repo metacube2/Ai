@@ -10,6 +10,37 @@ Das Finance Dashboard ist technisch produktiv nutzbar. Die fuehrende Sicht ist `
 
 Offen sind nicht primaer technische Grundlagen, sondern fachliche Abgrenzungen je Land: Welche lokale Auswertung ist offiziell fuehrend, welche Filter gelten, und ob bestimmte Differenzen akzeptiert oder durch zusaetzliche Quell-/Filterlogik erklaert werden muessen.
 
+## Nachtrag Sitzung 2026-06-01
+
+Aus der Sitzung mit Finance / Andreas ergeben sich diese aktualisierten Punkte:
+
+1. Intercompany
+   - Frage aus Finance: Sind Intercompany-Umsaetze bereits in den Standortdaten herausgerechnet?
+   - Aktueller Eindruck aus der Sitzung: Anscheinend sind IC-Anteile in einzelnen Standortauswertungen bereits bereinigt, trotzdem bleiben Abweichungen.
+   - Umsetzung: `Management Analyse > Laender` zeigt jetzt IC/2nd-party und `Ist ohne IC` als Diagnosewerte.
+   - Wichtig fuer die App: Das Dashboard entfernt IC weiterhin nicht automatisch aus dem Standard-Ist.
+   - Folgeaktion: Pro Standort klaeren, ob die Quellzahl bereits netto ohne IC geliefert wird oder ob das Dashboard IC noch fachlich abziehen soll.
+
+2. Spanien
+   - Aussage Sitzung: Spanien hat fachlich keine echte Soll/Ist-Abweichung.
+   - Ist-Wert im Dashboard: `3'082'320.18 EUR`.
+   - Der bisherige Sollwert `3'102'333.61 EUR` ist falsch bzw. wahrscheinlich ein Excel-/Referenzfehler.
+   - Umsetzung: ES-FinanceReference 2025 wird auf `3'082'320.18 EUR` gesetzt; `FinanceProbe` nutzt denselben Referenzwert.
+   - Folgeaktion: Quelle der falschen Excel-/Referenzzahl weiterhin fachlich nachvollziehen, falls Audit gefragt ist.
+
+3. Wechselkurse 2025
+   - In den Settings / Kurstabellen fehlt ein Feld, auf welches Datum der Kurs angewendet wird.
+   - Zu klaeren: Anwendung auf `DocDate`, `PostingDate`, `InvoiceDate` oder ein anderes Periodendatum.
+   - Umsetzung: In `Settings > Export Einstellungen` ist `Wechselkurse anwenden auf` konfigurierbar.
+   - Umsetzung: `Management Analyse > Rohdaten Diagnose` zeigt das verwendete Kursdatum an.
+
+4. Sparten-Finanzanalyse
+   - Aktueller Befund: Mehr als 90% der Werte sind nicht zugeordnet.
+   - Aussage Andreas: Das kann fachlich nicht stimmen.
+   - Umsetzung: Sparten-Materialabgleich normalisiert fuehrende Nullen in Materialnummern.
+   - Umsetzung: Bei >=90% nicht zugeordnet / nicht im Stamm zeigt die Management-Analyse einen Warnhinweis mit Pruefpunkten.
+   - Folgeaktion: Zentrale Spartenzuordnung pruefen, insbesondere Mapping gegen TR-AG-/SAP-Referenz, Materialnummernformat, fuehrende Nullen, lokale Artikelnummern und Fuellung von `ProductDivisionRefSet`.
+
 ## Was aktuell vorhanden ist
 
 ### Finance Summary
@@ -200,7 +231,7 @@ Kosten sollten nicht direkt in die aktuelle Umsatzfreigabe gemischt werden. Sinn
 | --- | --- | --- |
 | CH / AT | SAP OData `ZSCHWEIZ`; Trennung ueber Buchungskreis / Reporting-Land | Pruefen, ob `FKDAT` fachlich als Buchungsdatum akzeptiert ist |
 | DE | Alphaplan Excel; `NettoPreisGesamtX`; finaler 2025-File liegt technisch vor | Finance muss bestaetigen, welche Kundenlaender / Filter zum offiziellen DE-Ist gehoeren |
-| ES | Sage CSV; `ImporteNeto`; Credit Notes / REC negativ | Differenz ca. `-20'013.43 EUR` gegen Soll fachlich klaeren |
+| ES | Sage CSV; `ImporteNeto`; Credit Notes / REC negativ; Ist `3'082'320.18 EUR` fachlich bestaetigt | Bisheriger Sollwert `3'102'333.61 EUR` ist falsch bzw. Excel-/Referenzfehler |
 | FR | SAP B1/HANA; Positions-Netto passt praktisch gegen Soll | Kein grosser offener Punkt dokumentiert |
 | IN | Hauswaehrung INR; Vergleich in INR | Keine CHF-Tageskurslogik fuer Standardvergleich verwenden |
 | IT | SAP B1/HANA; Finance-Methode mit IT-Abgrenzung dokumentiert | Nach neuem IT-Export pruefen, ob Summe und Abgrenzung final passen |
@@ -256,19 +287,18 @@ Aktueller Stand:
 - `ImporteNeto` wird als Nettozeile verwendet.
 - Credit Notes / REC laufen negativ.
 - Ist aktuell ca. `3'082'320.18 EUR`.
-- Sollwert ca. `3'102'333.61 EUR`.
-- Differenz ca. `-20'013.43 EUR`.
+- Sitzung 2026-06-01: Dieser Ist-Wert entspricht fachlich dem erwarteten Wert.
+- Der bisherige Sollwert ca. `3'102'333.61 EUR` ist falsch bzw. wahrscheinlich ein Excel-/Referenzfehler.
 
 Klaerung:
 
-- Ist `FechaFactura` das richtige Periodendatum?
-- Sind alle Serien enthalten (`REG`, `LAT`, `PRO`, `REC`)?
-- Gibt es Fracht, Portes, Zuschlaege, Versicherung, Finanzierung oder Nebenpositionen, die Rhino anders behandelt?
-- Gibt es eine offizielle Sage-Auswertung, die den Sollwert erzeugt, inklusive Filterbeschreibung?
+- Falschen Sollwert in `check.xlsx` / FinanceReference korrigieren.
+- Klaeren, woher der falsche Sollwert `3'102'333.61 EUR` kam.
+- Danach ES nicht mehr als fachliche Abweichung fuehren, sofern die Referenz korrigiert ist.
 
 Argument:
 
-Spanien ist technisch angebunden. Die Restabweichung ist klein genug fuer eine gezielte fachliche Filterpruefung, aber noch nicht fachlich freigegeben.
+Spanien ist technisch angebunden und fachlich plausibel. Die bisherige Abweichung entsteht aus einer falschen Soll-/Referenzzahl, nicht aus dem Sage-Ist.
 
 ### 4. UK
 
@@ -317,6 +347,7 @@ Die Datenquelle ist angebunden. Der kritische Punkt ist, ob Finance die aktuelle
 - UK ist Sage, nicht SAP B1.
 - DE ist Alphaplan, nicht SAP B1.
 - Spartenanalyse nutzt TR-AG-/SAP-Referenz als zentrale Wahrheit.
+- Wenn in der Sparten-Finanzanalyse mehr als 90% nicht zugeordnet sind, ist das nicht als fachliche Wahrheit zu akzeptieren, sondern als Mapping-/Referenzproblem zu pruefen.
 - Budget-CHF ist Kontrollsicht, nicht Standardabgleich.
 - Eine Zahl, die zufaellig naeher am Soll ist, ist nicht automatisch die richtige fachliche Methode.
 
@@ -334,6 +365,8 @@ Die Datenquelle ist angebunden. Der kritische Punkt ist, ob Finance die aktuelle
    - Hauswaehrung bleibt fuehrend fuer lokale Freigabe
    - CHF als separate Reporting-Sicht
    - offizieller Kurstyp und Kurstabelle
+   - Datumsfeld fuer Kursanwendung, z. B. `DocDate`, `PostingDate` oder `InvoiceDate`
+   - Anzeige im Dashboard, welches Datum fuer den Kurs verwendet wird
 
 3. Finance entscheidet den Kostenumfang:
    - vorerst keine offizielle Kosten-KPI
@@ -342,9 +375,10 @@ Die Datenquelle ist angebunden. Der kritische Punkt ist, ob Finance die aktuelle
 
 4. Finance priorisiert die offenen Laender:
    - DE: Kundenlaender / Filter
-   - ES: Sage-Differenz
+   - ES: Referenz-/Sollwert korrigieren, keine echte Ist-Abweichung laut Sitzung
    - UK: Sage-Differenz
    - IT: neuer Export und finale Abgrenzung
+   - Spartenanalyse: >90% nicht zugeordnet fachlich unplausibel, Mapping pruefen
 
 5. Finance liefert fuer jede offene Differenz entweder:
    - offizielle Reportfilter,
@@ -363,6 +397,9 @@ Die Datenquelle ist angebunden. Der kritische Punkt ist, ob Finance die aktuelle
 8. Welcher Kurstyp ist fuer CHF verbindlich?
 9. Sollen Kosten jetzt Bestandteil des Finance Dashboards werden oder separat als naechste Ausbaustufe?
 10. Welche Kostenquelle waere fachlich fuehrend?
+11. Sind Intercompany-Umsaetze in den Standortquellen bereits herausgerechnet?
+12. Auf welches Datum muessen 2025-Wechselkurse angewendet werden?
+13. Warum sind in der Sparten-Finanzanalyse mehr als 90% nicht zugeordnet, obwohl Andreas das fachlich ausschliesst?
 
 ## Quellen im Repo
 
