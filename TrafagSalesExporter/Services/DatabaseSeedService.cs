@@ -932,27 +932,38 @@ public class DatabaseSeedService : IDatabaseSeedService
 
     private static void EnsureBudgetExchangeRateDefaults(AppDbContext db)
     {
-        var defaults = new (string From, string To, decimal Rate)[]
+        var defaults = new (int Year, string From, string To, decimal Rate)[]
         {
-            ("CHF", "CHF", 1m),
-            ("USD", "CHF", 0.85m),
-            ("EUR", "CHF", 0.95m),
-            ("GBP", "CHF", 1.13m),
-            ("CNY", "CHF", 1m / 8.50m),
-            ("INR", "CHF", 1m / 90.91m),
-            ("CZK", "CHF", 1m / 25.64m),
-            ("PLN", "CHF", 0.22m),
-            ("JPY", "CHF", 1m / 156.25m)
+            (2025, "CHF", "CHF", 1m),
+            (2025, "USD", "CHF", 0.85m),
+            (2025, "EUR", "CHF", 0.95m),
+            (2025, "GBP", "CHF", 1.13m),
+            (2025, "CNY", "CHF", 1m / 8.50m),
+            (2025, "INR", "CHF", 1m / 90.91m),
+            (2025, "CZK", "CHF", 1m / 25.64m),
+            (2025, "PLN", "CHF", 0.22m),
+            (2025, "JPY", "CHF", 1m / 156.25m),
+            (2026, "CHF", "CHF", 1m),
+            (2026, "USD", "CHF", 0.80m),
+            (2026, "EUR", "CHF", 0.94m),
+            (2026, "GBP", "CHF", 1.09m),
+            (2026, "CNY", "CHF", 1m / 8.50m),
+            (2026, "INR", "CHF", 1m / 110m),
+            (2026, "CZK", "CHF", 1m / 26m),
+            (2026, "PLN", "CHF", 0.22m),
+            (2026, "JPY", "CHF", 1m / 175m)
         };
 
         var changed = false;
         foreach (var item in defaults)
         {
+            var validFrom = new DateTime(item.Year, 1, 1);
+            var notes = $"Budget {item.Year}";
             var exists = db.CurrencyExchangeRates.Any(x =>
                 x.FromCurrency == item.From &&
                 x.ToCurrency == item.To &&
-                x.ValidFrom == new DateTime(2025, 1, 1) &&
-                x.Notes == "Budget 2025");
+                x.ValidFrom == validFrom &&
+                x.Notes == notes);
             if (exists)
                 continue;
 
@@ -961,9 +972,9 @@ public class DatabaseSeedService : IDatabaseSeedService
                 FromCurrency = item.From,
                 ToCurrency = item.To,
                 Rate = item.Rate,
-                ValidFrom = new DateTime(2025, 1, 1),
-                ValidTo = new DateTime(2025, 12, 31),
-                Notes = "Budget 2025",
+                ValidFrom = validFrom,
+                ValidTo = new DateTime(item.Year, 12, 31),
+                Notes = notes,
                 IsActive = true
             });
             changed = true;

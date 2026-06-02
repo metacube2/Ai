@@ -508,3 +508,108 @@ Deploy:
   - `ProductRows = 36'847`
   - `TR-AG Referenzmaterialien = 6'805`
   - `P ProductDivisionRefSet` aktiv.
+
+## Nachtrag 2026-06-02 Prozessfluss Und Offene Gateway-Codes
+
+### Prozess Vom Holen Bis Anwenden
+
+```text
+SAP/TR-AG
+  |
+  | ProductDivisionRefSet
+  | Matnr, Paph1, Paph1Text, Wwpfa, WwpfaText, Wwpsp, WwpspText, IsAssigned
+  v
+Webprogramm / SAP-Komposition
+  |
+  | Quelle Z = FinanzdataSchweizOeSet
+  | Quelle P = ProductDivisionRefSet
+  | Join     = Z.Matnr = P.Matnr, Left Join
+  v
+SalesRecord
+  |
+  | ProductHierarchyCode/Text
+  | ProductFamilyCode/Text
+  | ProductDivisionCode/Text
+  | ProductMappingAssigned
+  v
+CentralSalesRecords
+  |
+  v
+Management Analyse > Spartenanalyse
+  |
+  | Zugeordnet / Nicht zugeordnet / Nicht im TR-AG-Stamm / Material fehlt
+  v
+Sparten-Finanzanalyse
+  |
+  | Umsatz nach Produktsparte nur fuer Status Zugeordnet
+```
+
+### Technische Objektliste
+
+| Rolle | Name |
+| --- | --- |
+| Gateway Service | `ZPOWERBI_EINKAUF_SRV` |
+| Sales EntitySet | `FinanzdataSchweizOeSet` |
+| Sales Gateway-Methode | `FINANZDATASCHWEI_GET_ENTITYSET` |
+| Produktsparten EntitySet | `ProductDivisionRefSet` |
+| Produktsparten Gateway-Methode | `PRODUCTDIVISIONR_GET_ENTITYSET` |
+| Produktsparten Provider | `ZCL_PRODSPARTE_PROVIDER` |
+| Mapping-Aufbau | `Z_PRODSPARTE_MAP_BUILD` |
+| ALV-Test | `Z_PRODSPARTE_REPORT` |
+| Persistente Mapping-Tabelle | `ZPRODSPARTE_MAP` |
+| Gateway/DDIC-Struktur | `ZSTR_PRODSPARTE_OUT` |
+
+### Code-Stand Im Repository
+
+Vollstaendig als ABAP-Dateien vorhanden:
+
+- `docs/abap/ZCL_PRODSPARTE_PROVIDER.abap`
+- `docs/abap/Z_PRODSPARTE_MAP_BUILD.abap`
+- `docs/abap/Z_PRODSPARTE_REPORT.abap`
+
+Nur dokumentiert, aber nicht als kompletter Gateway-Methodencode vorhanden:
+
+- `FINANZDATASCHWEI_GET_ENTITYSET`
+- `PRODUCTDIVISIONR_GET_ENTITYSET`
+
+Fachlich gilt:
+
+- `FINANZDATASCHWEI_GET_ENTITYSET` muss den bestehenden Sales-Select aus `ZSCHWEIZ` behalten.
+- Produktspartenlogik gehoert in `PRODUCTDIVISIONR_GET_ENTITYSET`.
+- `PRODUCTDIVISIONR_GET_ENTITYSET` soll die flache Referenz fuer `ProductDivisionRefSet` liefern, idealerweise ueber `ZCL_PRODSPARTE_PROVIDER->GET_DATA( )`.
+
+### Befund Zur Niedrigen Abdeckung
+
+Die Sparten-Finanzanalyse zeigt aktuell nur eine niedrige zugeordnete Umsatzabdeckung. Das ist nicht als fachliche Aussage "nur 10% des Umsatzes hat eine Sparte" zu lesen, sondern als Mapping-/Referenzbefund.
+
+Lokaler DB-Stand 2026-06-02:
+
+| Kennzahl | Wert |
+| --- | ---: |
+| `CentralSalesRecords` total | `75'089` |
+| Zeilen mit Produktsparte-Code | `36'847` |
+| Zeilen mit gueltigem Assigned-Flag | `27'047` |
+| Zeilen mit gueltiger Produktsparte | `27'047` |
+| Zeilen `UNASS` | `9'800` |
+| Zeilen ohne Materialnummer | `59` |
+
+Laenderdetail:
+
+| Land | Zeilen | Gueltig zugeordnet | `UNASS` | Keine Produktfelder |
+| --- | ---: | ---: | ---: | ---: |
+| CH | `38'838` | `26'337` | `9'187` | `3'314` |
+| AT | `1'454` | `710` | `613` | `131` |
+| Italien | `16'850` | `0` | `0` | `16'850` |
+| Indien | `5'515` | `0` | `0` | `5'515` |
+| Deutschland | `4'548` | `0` | `0` | `4'548` |
+| Spanien | `4'341` | `0` | `0` | `4'341` |
+| Frankreich | `2'285` | `0` | `0` | `2'285` |
+| USA | `1'256` | `0` | `0` | `1'256` |
+| England | `2` | `0` | `0` | `2` |
+
+Naechste Pruefpunkte:
+
+- Gateway-Methodencode `PRODUCTDIVISIONR_GET_ENTITYSET` aus SAP sichern oder im Repo nachbauen.
+- Pruefen, ob `ProductDivisionRefSet` vollstaendig genug ist.
+- Pruefen, warum Produktfelder bei IT, IN, DE, ES, FR, US und UK leer bleiben.
+- Klaeren, ob fuer lokale Materialnummern eine zusaetzliche Cross-Reference gegen TR-AG-Materialnummern notwendig ist.

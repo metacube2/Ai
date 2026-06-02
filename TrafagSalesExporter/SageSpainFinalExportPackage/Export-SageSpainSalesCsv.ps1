@@ -1,9 +1,15 @@
 param(
     [string]$ServerInstance = "localhost",
     [string]$Database = "Sage",
+    [ValidateSet("Full", "Range")]
+    [string]$ExportMode = "Full",
+    [ValidateSet("InvoiceDate", "LineRegistrationDate")]
+    [string]$DateFilter = "InvoiceDate",
+    [int]$Year = 2025,
     [datetime]$FromDate = "2025-01-01",
     [datetime]$ToDate = "2026-01-01",
-    [string]$OutputDirectory = (Join-Path $env:USERPROFILE "Desktop")
+    [string]$OutputDirectory = (Join-Path $env:USERPROFILE "Desktop"),
+    [string]$OutputFileName = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -97,12 +103,41 @@ function Export-QueryToCsv {
     }
 }
 
+if ($ExportMode -eq "Full") {
+    $FromDate = [datetime]::new($Year, 1, 1)
+    $ToDate = $FromDate.AddYears(1)
+}
+else {
+    if (-not $PSBoundParameters.ContainsKey("ToDate")) {
+        throw "Range export requires -ToDate. Example: -ExportMode Range -FromDate '2025-05-01' -ToDate '2025-06-01'"
+    }
+}
+
+if ($ToDate.Date -le $FromDate.Date) {
+    throw "ToDate must be later than FromDate. FromDate=$($FromDate.ToString("yyyy-MM-dd")), ToDate=$($ToDate.ToString("yyyy-MM-dd"))"
+}
+
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $runDirectory = Join-Path $OutputDirectory "Sage_Spain_Sales_Export_$timestamp"
 New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
 
-$csvPath = Join-Path $runDirectory "Spain_Sales_2025.csv"
-$summaryPath = Join-Path $runDirectory "Spain_Sales_2025_summary.txt"
+if ([string]::IsNullOrWhiteSpace($OutputFileName)) {
+    $fromToken = $FromDate.ToString("yyyyMMdd")
+    $toToken = $ToDate.Date.AddDays(-1).ToString("yyyyMMdd")
+    $kindToken = $ExportMode.ToLowerInvariant()
+    $OutputFileName = "Spain_Sales_${kindToken}_${fromToken}_to_${toToken}.csv"
+}
+
+$csvPath = Join-Path $runDirectory $OutputFileName
+$summaryPath = Join-Path $runDirectory ([System.IO.Path]::GetFileNameWithoutExtension($OutputFileName) + "_summary.txt")
+
+$datePredicate = if ($DateFilter -eq "LineRegistrationDate") {
+    "COALESCE(l.FechaRegistro, c.FechaFactura) >= @FromDate
+  AND COALESCE(l.FechaRegistro, c.FechaFactura) < @ToDate"
+} else {
+    "c.FechaFactura >= @FromDate
+  AND c.FechaFactura < @ToDate"
+}
 
 $sql = @"
 SELECT
@@ -170,8 +205,7 @@ JOIN dbo.LineasAlbaranCliente l
  AND l.EjercicioAlbaran = c.EjercicioAlbaran
  AND l.SerieAlbaran = c.SerieAlbaran
  AND l.NumeroAlbaran = c.NumeroAlbaran
-WHERE c.FechaFactura >= @FromDate
-  AND c.FechaFactura < @ToDate
+WHERE $datePredicate
 ORDER BY
     c.FechaFactura,
     c.SerieFactura,
@@ -188,6 +222,8 @@ Sage Spain Sales CSV export
 Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 Server instance: $ServerInstance
 Database: $Database
+Export mode: $ExportMode
+Date filter mode: $DateFilter
 From date: $($FromDate.ToString("yyyy-MM-dd"))
 To date: $($ToDate.ToString("yyyy-MM-dd"))
 
@@ -204,14 +240,15 @@ Source:
 dbo.CabeceraAlbaranCliente joined with dbo.LineasAlbaranCliente
 
 Filter:
-CabeceraAlbaranCliente.FechaFactura >= FromDate
-CabeceraAlbaranCliente.FechaFactura < ToDate
+$datePredicate
 
 Notes:
 - Currency is set to EUR because Sage exports EnEuros_=-1 and CodigoDivisa is empty in the analysed rows.
 - SalesPriceValue uses LineasAlbaranCliente.ImporteNeto; credit notes are forced negative.
 - DocumentNetAmount uses CabeceraAlbaranCliente.BaseImponible; credit notes are forced negative.
 - Credit notes are marked when TipoNuevaFra=2, SerieFactura='REC', or StatusAbono is non-zero.
+- Full exports use the complete selected year.
+- Range exports use the explicit FromDate/ToDate window.
 "@ | Set-Content -LiteralPath $summaryPath -Encoding UTF8
 
 Write-Host "Created:"

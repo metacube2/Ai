@@ -100,6 +100,27 @@ Stand: 2026-05-29
     - UNASS -> `HelpOutline`
     - sonst -> `Category`
 - Finance-Schulung hat einen neuen Tab `Spartenanalyse`.
+
+## Stand 2026-06-02
+
+- Niedrige Spartenabdeckung ist als Mapping-/Referenzproblem zu lesen, nicht als fachliche Umsatzverteilung.
+- Lokaler DB-Befund: `75'089` CentralSalesRecords, davon `27'047` mit gueltiger zugeordneter Produktsparte und `9'800` mit `UNASS`.
+- Produktfelder sind aktuell fast nur bei CH und teilweise AT gefuellt; IT, IN, DE, ES, FR, US und UK haben in den Daten keine Produktspartenfelder.
+- Prozessfluss:
+  - SAP Service `ZPOWERBI_EINKAUF_SRV`
+  - Sales EntitySet `FinanzdataSchweizOeSet`
+  - Produktmapping EntitySet `ProductDivisionRefSet`
+  - Web-Join `Z.Matnr = P.Matnr`
+  - Speicherung in `CentralSalesRecords`
+  - Anwendung in `Management Analyse > Spartenanalyse`
+- Vollstaendige ABAP-Dateien im Repo:
+  - `docs/abap/ZCL_PRODSPARTE_PROVIDER.abap`
+  - `docs/abap/Z_PRODSPARTE_MAP_BUILD.abap`
+  - `docs/abap/Z_PRODSPARTE_REPORT.abap`
+- Nicht als kompletter Gateway-Methodencode im Repo vorhanden:
+  - `FINANZDATASCHWEI_GET_ENTITYSET`
+  - `PRODUCTDIVISIONR_GET_ENTITYSET`
+- Naechster Schritt: Gateway-Methodencode aus SAP sichern oder `PRODUCTDIVISIONR_GET_ENTITYSET` sauber neu formulieren.
 - Browser-Favicon wurde ergaenzt: `wwwroot/favicon.svg`.
 - Letzter dokumentierter Deploy: 2026-05-29 13:47, Tests `80/80` gruen.
 
