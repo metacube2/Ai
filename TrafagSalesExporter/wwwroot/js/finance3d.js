@@ -14,6 +14,7 @@
 
   function createThreeScene(canvas, rows, options) {
     const THREE = window.THREE;
+    const factor = normalizeFactor(options && options.scenarioFactor);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0xf7f9fb, 1);
@@ -49,6 +50,7 @@
     root.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPoints), gridMaterial));
 
     const barGeometry = new THREE.BoxGeometry(0.68, 1, 0.68);
+    const bars = [];
     rows.forEach(row => {
       const countryIndex = Math.max(0, axes.countries.indexOf(String(row.country || "-")));
       const yearIndex = Math.max(0, axes.years.indexOf(Number(row.year || 0)));
@@ -60,8 +62,10 @@
         metalness: 0.05
       });
       const bar = new THREE.Mesh(barGeometry, material);
-      bar.scale.y = height;
-      bar.position.set(xStart + countryIndex * (xStep || 2), height / 2, zStart + yearIndex * (zStep || 2));
+      bar.userData.baseHeight = height;
+      bar.position.set(xStart + countryIndex * (xStep || 2), 0, zStart + yearIndex * (zStep || 2));
+      applyBarFactor(bar, factor);
+      bars.push(bar);
       root.add(bar);
     });
 
@@ -81,6 +85,8 @@
       targetX: previous ? previous.targetX : 0,
       targetY: previous ? previous.targetY : 2.8,
       targetZ: previous ? previous.targetZ : 0,
+      factor,
+      bars,
       dragging: false,
       dragMode: "rotate",
       lastX: 0,
@@ -89,6 +95,18 @@
     attachInteraction(canvas, state);
     stateByCanvas.set(canvas, state);
     resizeAndRender(canvas);
+  }
+
+  function normalizeFactor(value) {
+    const factor = Number(value);
+    if (!Number.isFinite(factor)) return 1;
+    return Math.max(0.5, Math.min(1.5, factor));
+  }
+
+  function applyBarFactor(bar, factor) {
+    const height = Math.max(0.02, Number(bar.userData.baseHeight || 0.08) * factor);
+    bar.scale.y = height;
+    bar.position.y = height / 2;
   }
 
   function addCanvasLabel(scene, THREE, text, x, y, z, scale) {
@@ -246,6 +264,13 @@
       } else {
         renderFallback(canvas, normalizedRows, options || {});
       }
+    },
+    updateFactor: function (canvas, factor) {
+      const state = stateByCanvas.get(canvas);
+      if (!state || !state.bars) return;
+      state.factor = normalizeFactor(factor);
+      state.bars.forEach(bar => applyBarFactor(bar, state.factor));
+      renderState(state, canvas);
     },
     resize: resizeAndRender,
     pixelProbe: function (canvas) {

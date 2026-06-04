@@ -1296,20 +1296,20 @@
         if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
         {
             _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
-            await RenderFinance3dAsync();
+            await UpdateFinance3dScenarioFactorAsync();
         }
     }
 
     private async Task ResetFinance3dScenarioFactor()
     {
         _finance3dScenarioFactor = 1d;
-        await RenderFinance3dAsync();
+        await UpdateFinance3dScenarioFactorAsync();
     }
 
     private async Task SetFinance3dScenarioFactorPreset(double value)
     {
         _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
-        await RenderFinance3dAsync();
+        await UpdateFinance3dScenarioFactorAsync();
     }
 
     private async Task RenderFinance3dAsync()
@@ -1321,8 +1321,17 @@
         await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _finance3dCanvas, rows, new
         {
             indicator = _finance3dIndicator,
-            title = ResolveFinance3dIndicatorLabel(_finance3dIndicator)
+            title = ResolveFinance3dIndicatorLabel(_finance3dIndicator),
+            scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
         });
+    }
+
+    private async Task UpdateFinance3dScenarioFactorAsync()
+    {
+        await JsRuntime.InvokeVoidAsync(
+            "trafagFinance3d.updateFactor",
+            _finance3dCanvas,
+            Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d);
     }
 
     private IReadOnlyList<object> BuildFinance3dRows()
@@ -1351,8 +1360,8 @@
                 {
                     Finance3dIndicators.IncludedRows => row.IncludedRows,
                     Finance3dIndicators.ExcludedRows => row.ExcludedRows,
-                    Finance3dIndicators.Deviation => deviation * (decimal)_finance3dScenarioFactor,
-                    _ => Math.Abs(row.NetSalesActual) * (decimal)_finance3dScenarioFactor
+                    Finance3dIndicators.Deviation => deviation,
+                    _ => Math.Abs(row.NetSalesActual)
                 };
                 return new
                 {
