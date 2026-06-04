@@ -6,7 +6,7 @@ param(
     [ValidateSet("InvoiceDate", "LineRegistrationDate")]
     [string]$DateFilter = "LineRegistrationDate",
     [int]$Year = 2025,
-    [datetime]$FromDate = (Get-Date).Date.AddDays(-1),
+    [datetime]$FromDate = (Get-Date).Date.AddDays(-7),
     [datetime]$ToDate = (Get-Date).Date,
     [string]$BaseDirectory = "C:\Trafag\SageSpain",
     [string]$RcloneExe = "rclone",

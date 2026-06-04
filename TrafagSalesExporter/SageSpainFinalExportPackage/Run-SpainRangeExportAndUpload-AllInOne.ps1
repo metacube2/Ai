@@ -3,8 +3,8 @@ param(
     [string]$Database = "Sage",
     [ValidateSet("InvoiceDate", "LineRegistrationDate")]
     [string]$DateFilter = "LineRegistrationDate",
-    [datetime]$FromDate = "2026-06-01",
-    [datetime]$ToDate = "2026-06-04",
+    [datetime]$FromDate = (Get-Date).Date.AddDays(-7),
+    [datetime]$ToDate = (Get-Date).Date,
     [string]$BaseDirectory = "C:\Trafag\SageSpain",
     [string]$RcloneExe = "C:\Tools\rclone.exe",
     [string]$RcloneRemote = "trafag-bi",

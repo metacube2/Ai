@@ -1,6 +1,6 @@
 param(
-    [datetime]$FromDate = "2026-06-01",
-    [datetime]$ToDate = "2026-06-04",
+    [datetime]$FromDate = (Get-Date).Date.AddDays(-7),
+    [datetime]$ToDate = (Get-Date).Date,
     [string]$ServerInstance = "localhost",
     [string]$Database = "Sage",
     [string]$BaseDirectory = "C:\Trafag\SageSpain",

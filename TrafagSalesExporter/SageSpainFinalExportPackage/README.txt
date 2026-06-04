@@ -86,7 +86,7 @@ rclone lsd trafag-bi:
 rclone lsd trafag-bi:"Import/Finance"
 rclone lsd trafag-bi:"Import/Finance/Spanien"
 
-Run daily range export and upload, default window yesterday until today:
+Run range export and upload with default window last 7 days until today:
 
 .\Run-SpainExportAndUpload.ps1
 
@@ -94,7 +94,7 @@ Explicit range:
 
 .\Run-SpainExportAndUpload.ps1 -ExportMode Range -DateFilter LineRegistrationDate -FromDate "2026-06-02" -ToDate "2026-06-03"
 
-Simple starter script with default test range 2026-06-01 until 2026-06-04:
+Simple starter script with default window last 7 days until today:
 
 .\Start-SpainRangeExportAndUpload.ps1
 
@@ -104,6 +104,10 @@ Same starter script with another range:
 
 Single-file all-in-one range export and upload.
 This file does not require Export-SageSpainSalesCsv.ps1 or Run-SpainExportAndUpload.ps1:
+
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1
+
+Override the all-in-one default date window:
 
 .\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
 
