@@ -713,8 +713,8 @@
                 </MudGrid>
             </MudPaper>
 
-            <MudPaper Class="pa-0 finance-3d-surface" Elevation="1">
-                <canvas @ref="_finance3dCanvas" class="finance-3d-canvas"></canvas>
+            <MudPaper Class="pa-0 finance-3d-surface" Elevation="1" Style="width:100%;height:calc(100vh - 260px);min-height:680px;overflow:hidden;background:#f7f9fb;">
+                <canvas @ref="_finance3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">

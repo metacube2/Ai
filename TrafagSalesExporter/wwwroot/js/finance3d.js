@@ -76,7 +76,7 @@
       root,
       angleX: previous ? previous.angleX : -0.62,
       angleY: previous ? previous.angleY : 0.78,
-      distance: previous ? previous.distance : 30,
+      distance: previous ? previous.distance : 23,
       targetX: previous ? previous.targetX : 0,
       targetY: previous ? previous.targetY : 2.8,
       targetZ: previous ? previous.targetZ : 0,
@@ -441,8 +441,9 @@
   }
 
   function renderState(state, canvas) {
-    const width = canvas.clientWidth || 900;
-    const height = canvas.clientHeight || 520;
+    const size = resolveCanvasSize(canvas);
+    const width = size.width;
+    const height = size.height;
     state.camera.aspect = width / height;
     state.camera.updateProjectionMatrix();
     const horizontal = Math.cos(state.angleX) * state.distance;
@@ -455,9 +456,24 @@
     state.renderer.render(state.scene, state.camera);
   }
 
+  function resolveCanvasSize(canvas) {
+    const parent = canvas.parentElement;
+    const parentRect = parent ? parent.getBoundingClientRect() : null;
+    const canvasRect = canvas.getBoundingClientRect();
+    const width = Math.max(
+      640,
+      Math.floor(parentRect && parentRect.width > 320 ? parentRect.width : canvasRect.width || canvas.clientWidth || 900));
+    const height = Math.max(
+      520,
+      Math.floor(parentRect && parentRect.height > 240 ? parentRect.height : canvasRect.height || canvas.clientHeight || 680));
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    return { width, height };
+  }
+
   function renderFallback(canvas, rows, options) {
     const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
+    const rect = resolveCanvasSize(canvas);
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.max(1, Math.floor(rect.width * dpr));
     canvas.height = Math.max(1, Math.floor(rect.height * dpr));
