@@ -94,6 +94,21 @@ Explicit range:
 
 .\Run-SpainExportAndUpload.ps1 -ExportMode Range -DateFilter LineRegistrationDate -FromDate "2026-06-02" -ToDate "2026-06-03"
 
+Simple starter script with default test range 2026-06-01 until 2026-06-04:
+
+.\Start-SpainRangeExportAndUpload.ps1
+
+Same starter script with another range:
+
+.\Start-SpainRangeExportAndUpload.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
+
+Single-file all-in-one range export and upload.
+This file does not require Export-SageSpainSalesCsv.ps1 or Run-SpainExportAndUpload.ps1:
+
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
+
+The all-in-one script checks/creates the SharePoint folder before export, uploads the generated CSV and summary, and verifies that the uploaded files are listed in SharePoint.
+
 Full export and upload:
 
 .\Run-SpainExportAndUpload.ps1 -ExportMode Full -Year 2025
