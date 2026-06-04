@@ -102,13 +102,53 @@ function Export-QueryToCsv {
     }
 }
 
+function Resolve-RcloneExecutable {
+    param([string]$ConfiguredPath)
+
+    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $candidates = @(
+        $ConfiguredPath,
+        (Join-Path $scriptDirectory "rclone.exe"),
+        "C:\Tools\rclone.exe",
+        "C:\Tools\rclone\rclone.exe",
+        "rclone"
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+
+        $command = Get-Command $candidate -ErrorAction SilentlyContinue
+        if ($null -ne $command) {
+            return $command.Source
+        }
+    }
+
+    throw "rclone executable not found. Checked: $($candidates -join ', ')"
+}
+
+function Throw-RcloneError {
+    param(
+        [string]$Message,
+        [string]$LogPath
+    )
+
+    if (Test-Path -LiteralPath $LogPath) {
+        Write-Host ""
+        Write-Host "Last rclone log lines:"
+        Get-Content -LiteralPath $LogPath -Tail 80 | ForEach-Object { Write-Host $_ }
+    }
+
+    throw "$Message Log: $LogPath"
+}
+
 if ($ToDate.Date -le $FromDate.Date) {
     throw "ToDate must be later than FromDate. FromDate=$($FromDate.ToString("yyyy-MM-dd")), ToDate=$($ToDate.ToString("yyyy-MM-dd"))"
 }
 
-if (-not (Test-Path -LiteralPath $RcloneExe)) {
-    throw "rclone executable not found: $RcloneExe"
-}
+$RcloneExe = Resolve-RcloneExecutable -ConfiguredPath $RcloneExe
+Write-Host "Using rclone: $RcloneExe"
 
 $outputDirectory = Join-Path $BaseDirectory "out"
 $logDirectory = Join-Path $BaseDirectory "logs"
@@ -120,12 +160,12 @@ $rcloneLog = Join-Path $logDirectory ("rclone-spain-" + (Get-Date -Format "yyyyM
 Write-Host "Checking SharePoint target with rclone: $target"
 & $RcloneExe mkdir $target --log-file $rcloneLog --log-level INFO
 if ($LASTEXITCODE -ne 0) {
-    throw "Could not create/check SharePoint target '$target'. rclone exit code $LASTEXITCODE. Log: $rcloneLog"
+    Throw-RcloneError -Message "Could not create/check SharePoint target '$target'. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
 }
 
 $targetListing = & $RcloneExe lsf $target --max-depth 1 --log-file $rcloneLog --log-level INFO
 if ($LASTEXITCODE -ne 0) {
-    throw "SharePoint target '$target' is not reachable. rclone exit code $LASTEXITCODE. Log: $rcloneLog"
+    Throw-RcloneError -Message "SharePoint target '$target' is not reachable. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
 }
 Write-Host "SharePoint target reachable. Existing items: $(@($targetListing).Count)"
 
@@ -275,21 +315,20 @@ Write-Host "Uploading $($filesToUpload.Count) file(s) to SharePoint target: $tar
 & $RcloneExe copy $runDirectory $target `
     --include "*.csv" `
     --include "*_summary.txt" `
-    --verbose `
     --log-file $rcloneLog `
     --log-level INFO
 if ($LASTEXITCODE -ne 0) {
-    throw "rclone upload failed with exit code $LASTEXITCODE. Log: $rcloneLog"
+    Throw-RcloneError -Message "rclone upload failed with exit code $LASTEXITCODE." -LogPath $rcloneLog
 }
 
 foreach ($file in $filesToUpload) {
     $uploadedMatch = & $RcloneExe lsf $target --files-only --include $file.Name --log-file $rcloneLog --log-level INFO
     if ($LASTEXITCODE -ne 0) {
-        throw "Could not verify uploaded file '$($file.Name)' in '$target'. rclone exit code $LASTEXITCODE. Log: $rcloneLog"
+        Throw-RcloneError -Message "Could not verify uploaded file '$($file.Name)' in '$target'. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
     }
 
     if (-not ($uploadedMatch | Where-Object { $_ -eq $file.Name })) {
-        throw "Upload verification failed. File '$($file.Name)' was not listed in '$target'. Log: $rcloneLog"
+        Throw-RcloneError -Message "Upload verification failed. File '$($file.Name)' was not listed in '$target'." -LogPath $rcloneLog
     }
 }
 
