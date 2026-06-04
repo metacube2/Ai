@@ -704,7 +704,20 @@
                             </MudText>
                         }
                     </MudItem>
-                    <MudItem xs="12" md="3">
+                    <MudItem xs="12" md="2">
+                        <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
+                        <div class="finance-3d-range-row">
+                            <input class="finance-3d-range"
+                                   type="range"
+                                   min="0.8"
+                                   max="2.5"
+                                   step="0.1"
+                                   value="@_finance3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
+                                   @oninput="SetFinance3dLabelScale" />
+                            <MudText Typo="Typo.body2" Class="finance-3d-factor">@_finance3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="1">
                         <MudText Typo="Typo.body2">
                             @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. Balken/Linie/Flaeche zeigen Land-Jahr-Verlauf, Kreis zeigt Laenderanteile.",
                                 "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. Bar/line/surface show country-year trend, pie shows country shares.")
@@ -1137,6 +1150,7 @@
     private string _finance3dIndicator = Finance3dIndicators.Actual;
     private string _finance3dChartType = Finance3dChartTypes.Bar;
     private double _finance3dScenarioFactor = 1d;
+    private double _finance3dLabelScale = 1.4d;
     private ElementReference _finance3dCanvas;
     private bool _finance3dNeedsRender;
 
@@ -1351,6 +1365,15 @@
         await UpdateFinance3dScenarioFactorAsync();
     }
 
+    private async Task SetFinance3dLabelScale(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _finance3dLabelScale = Math.Clamp(value, 0.8d, 2.5d);
+            await RenderFinance3dAsync();
+        }
+    }
+
     private async Task RenderFinance3dAsync()
     {
         if (_financeResult is null)
@@ -1366,6 +1389,7 @@
             yAxis = T("Y: Wert / Indikator", "Y: value / indicator"),
             zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
             pieAxis = T("Kreis: Laenderanteile", "Pie: country shares"),
+            labelScale = _finance3dLabelScale,
             scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
         });
     }

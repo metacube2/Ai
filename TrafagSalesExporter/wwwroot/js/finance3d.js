@@ -16,6 +16,7 @@
     const THREE = window.THREE;
     const factor = normalizeFactor(options && options.scenarioFactor);
     const chartType = normalizeChartType(options && options.chartType);
+    const labelScale = normalizeLabelScale(options && options.labelScale);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0xf7f9fb, 1);
@@ -49,7 +50,7 @@
       gridPoints.push(new THREE.Vector3(xStart - 1, 0, z), new THREE.Vector3(xStart + Math.max(1, axes.countries.length - 1) * (xStep || 2) + 1, 0, z));
     }
     root.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPoints), gridMaterial));
-    addAxisGuides(scene, THREE, layoutFromAxes(axes, xStep, zStep, xStart, zStart), options || {}, chartType);
+    addAxisGuides(scene, THREE, layoutFromAxes(axes, xStep, zStep, xStart, zStart), options || {}, chartType, labelScale);
 
     const scalables = [];
     const layout = { axes, xStep, zStep, xStart, zStart };
@@ -58,15 +59,15 @@
     } else if (chartType === "surface") {
       createSurfaceChart(THREE, root, rows, layout, scalables);
     } else if (chartType === "pie") {
-      createPieChart(THREE, root, rows, layout, scalables);
+      createPieChart(THREE, root, rows, layout, scalables, labelScale);
     } else {
       createBarChart(THREE, root, rows, layout, scalables);
     }
     applyFactorToScalables(scalables, factor);
 
-    addCanvasLabel(scene, THREE, options.title || "", -8.8, 9.2, -7.8, 1.05);
-    axes.countries.forEach((country, index) => addCanvasLabel(scene, THREE, country, xStart + index * (xStep || 2), -0.15, zStart - 1.3, 0.58));
-    axes.years.forEach((year, index) => addCanvasLabel(scene, THREE, String(year), xStart - 1.6, -0.15, zStart + index * (zStep || 2), 0.58));
+    addCanvasLabel(scene, THREE, options.title || "", -8.8, 9.2, -7.8, 1.05 * labelScale);
+    axes.countries.forEach((country, index) => addCanvasLabel(scene, THREE, country, xStart + index * (xStep || 2), -0.15, zStart - 1.3, 0.58 * labelScale));
+    axes.years.forEach((year, index) => addCanvasLabel(scene, THREE, String(year), xStart - 1.6, -0.15, zStart + index * (zStep || 2), 0.58 * labelScale));
 
     const previous = stateByCanvas.get(canvas);
     const state = {
@@ -115,10 +116,16 @@
     return ["bar", "line", "surface", "pie"].includes(text) ? text : "bar";
   }
 
-  function addAxisGuides(scene, THREE, layout, options, chartType) {
+  function normalizeLabelScale(value) {
+    const scale = Number(value);
+    if (!Number.isFinite(scale)) return 1.4;
+    return Math.max(0.8, Math.min(2.5, scale));
+  }
+
+  function addAxisGuides(scene, THREE, layout, options, chartType, labelScale) {
     if (chartType === "pie") {
-      addCanvasLabel(scene, THREE, options.pieAxis || "Pie: country shares", -8.4, 8.2, -7.6, 0.85);
-      addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", 6.2, 1.4, 6.8, 0.62);
+      addCanvasLabel(scene, THREE, options.pieAxis || "Pie: country shares", -8.4, 8.2, -7.6, 0.85 * labelScale);
+      addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", 6.2, 1.4, 6.8, 0.62 * labelScale);
       return;
     }
 
@@ -129,9 +136,9 @@
     addAxisLine(scene, THREE, new THREE.Vector3(layout.xStart - 1.1, axisYOffset, layout.zStart - 1.0), new THREE.Vector3(layout.xStart - 1.1, axisYOffset, zEnd), 0x7a8f2a);
     addAxisLine(scene, THREE, new THREE.Vector3(layout.xStart - 1.1, 0, layout.zStart - 1.0), new THREE.Vector3(layout.xStart - 1.1, 8.8, layout.zStart - 1.0), 0xb84f3a);
 
-    addCanvasLabel(scene, THREE, options.xAxis || "X: country", xEnd, 0.45, layout.zStart - 1.2, 0.66);
-    addCanvasLabel(scene, THREE, options.zAxis || "Z: year / time", layout.xStart - 1.4, 0.45, zEnd, 0.66);
-    addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", layout.xStart - 1.6, 9.3, layout.zStart - 1.0, 0.66);
+    addCanvasLabel(scene, THREE, options.xAxis || "X: country", xEnd, 0.45, layout.zStart - 1.2, 0.66 * labelScale);
+    addCanvasLabel(scene, THREE, options.zAxis || "Z: year / time", layout.xStart - 1.4, 0.45, zEnd, 0.66 * labelScale);
+    addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", layout.xStart - 1.6, 9.3, layout.zStart - 1.0, 0.66 * labelScale);
   }
 
   function addAxisLine(scene, THREE, from, to, color) {
@@ -254,7 +261,7 @@
     root.add(wire);
   }
 
-  function createPieChart(THREE, root, rows, layout, scalables) {
+  function createPieChart(THREE, root, rows, layout, scalables, labelScale) {
     const totals = [...rows.reduce((map, row) => {
       const country = String(row.country || "-");
       map.set(country, (map.get(country) || 0) + Math.abs(Number(row.value || 0)));
@@ -284,7 +291,7 @@
       root.add(slice);
 
       const labelAngle = start + angle / 2;
-      addCanvasLabel(root, THREE, country, Math.cos(labelAngle) * 7.1, 0.25, Math.sin(labelAngle) * 7.1, 0.5);
+      addCanvasLabel(root, THREE, country, Math.cos(labelAngle) * 7.1, 0.25, Math.sin(labelAngle) * 7.1, 0.5 * labelScale);
       start += angle;
     });
   }
