@@ -662,6 +662,14 @@
                             }
                         </MudSelect>
                     </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudSelect T="string" Value="_finance3dChartType" ValueChanged="SetFinance3dChartType" Label="@T("Grafik", "Chart")" Dense>
+                            @foreach (var option in _finance3dChartTypeOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
                     <MudItem xs="12" md="4">
                         <MudText Typo="Typo.caption">@T("Szenario-Faktor / Wechselkurs", "Scenario factor / exchange rate")</MudText>
                         <div class="finance-3d-range-row">
@@ -696,10 +704,10 @@
                             </MudText>
                         }
                     </MudItem>
-                    <MudItem xs="12" md="5">
+                    <MudItem xs="12" md="3">
                         <MudText Typo="Typo.body2">
-                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. X-Achse = Land, Z-Achse = Jahr, Hoehe = gewaehlter Indikator.",
-                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. X axis = country, Z axis = year, height = selected indicator.")
+                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. Balken/Linie/Flaeche zeigen Land-Jahr-Verlauf, Kreis zeigt Laenderanteile.",
+                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. Bar/line/surface show country-year trend, pie shows country shares.")
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -1083,6 +1091,13 @@
         new(Finance3dIndicators.ExcludedRows, "Ausgeschlossene Zeilen", "Excluded rows"),
         new(Finance3dIndicators.Deviation, "Soll/Ist Differenz Filterjahr", "Actual/reference difference filter year")
     ];
+    private readonly List<Finance3dChartTypeOption> _finance3dChartTypeOptions =
+    [
+        new(Finance3dChartTypes.Bar, "Balken", "Bar"),
+        new(Finance3dChartTypes.Line, "Linie", "Line"),
+        new(Finance3dChartTypes.Surface, "Flaeche", "Surface"),
+        new(Finance3dChartTypes.Pie, "Kreis / Anteil", "Pie / share")
+    ];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
@@ -1109,6 +1124,7 @@
     private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
     private bool _limitProductFinanceTop10;
     private string _finance3dIndicator = Finance3dIndicators.Actual;
+    private string _finance3dChartType = Finance3dChartTypes.Bar;
     private double _finance3dScenarioFactor = 1d;
     private ElementReference _finance3dCanvas;
     private bool _finance3dNeedsRender;
@@ -1291,6 +1307,12 @@
         await RenderFinance3dAsync();
     }
 
+    private async Task SetFinance3dChartType(string value)
+    {
+        _finance3dChartType = string.IsNullOrWhiteSpace(value) ? Finance3dChartTypes.Bar : value;
+        await RenderFinance3dAsync();
+    }
+
     private async Task SetFinance3dScenarioFactor(ChangeEventArgs args)
     {
         if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
@@ -1322,6 +1344,7 @@
         {
             indicator = _finance3dIndicator,
             title = ResolveFinance3dIndicatorLabel(_finance3dIndicator),
+            chartType = _finance3dChartType,
             scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
         });
     }
@@ -1718,8 +1741,17 @@
         public const string Deviation = "deviation";
     }
 
+    private static class Finance3dChartTypes
+    {
+        public const string Bar = "bar";
+        public const string Line = "line";
+        public const string Surface = "surface";
+        public const string Pie = "pie";
+    }
+
     private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);
     private sealed record Finance3dIndicatorOption(string Key, string GermanLabel, string EnglishLabel);
+    private sealed record Finance3dChartTypeOption(string Key, string GermanLabel, string EnglishLabel);
 
     private sealed record ProductFinanceGroupKey(
         string ProductDivisionCode,
