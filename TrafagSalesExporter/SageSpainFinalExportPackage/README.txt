@@ -46,3 +46,73 @@ Default source:
 If the SQL instance or database name differs:
 
 .\Export-SageSpainSalesCsv.ps1 -ServerInstance "localhost" -Database "Sage" -ExportMode Full -Year 2025
+
+
+Automatic upload to SharePoint with rclone
+==========================================
+
+Target SharePoint folder:
+
+https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Shared%20Documents/Import/Finance/Spanien
+
+Decoded folder path:
+
+Shared Documents/Import/Finance/Spanien
+
+Recommended rclone setup on the Spain Sage server:
+
+1. Install rclone.
+2. Run:
+
+rclone config
+
+3. Create a new remote for the SharePoint document library.
+
+Recommended remote name:
+
+trafag-bi
+
+The remote should point to the document library root "Shared Documents" of:
+
+https://trafagag.sharepoint.com/sites/WorldwideBIPlatform
+
+Then this target path is used by the wrapper script:
+
+trafag-bi:Import/Finance/Spanien
+
+Test rclone:
+
+rclone lsd trafag-bi:
+rclone lsd trafag-bi:"Import/Finance"
+rclone lsd trafag-bi:"Import/Finance/Spanien"
+
+Run daily range export and upload, default window yesterday until today:
+
+.\Run-SpainExportAndUpload.ps1
+
+Explicit range:
+
+.\Run-SpainExportAndUpload.ps1 -ExportMode Range -DateFilter LineRegistrationDate -FromDate "2026-06-02" -ToDate "2026-06-03"
+
+Full export and upload:
+
+.\Run-SpainExportAndUpload.ps1 -ExportMode Full -Year 2025
+
+If the rclone remote has another name:
+
+.\Run-SpainExportAndUpload.ps1 -RcloneRemote "YOUR_REMOTE_NAME"
+
+If rclone.exe is not in PATH:
+
+.\Run-SpainExportAndUpload.ps1 -RcloneExe "C:\Tools\rclone\rclone.exe"
+
+Suggested Windows Task Scheduler command:
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Trafag\SageSpain\Run-SpainExportAndUpload.ps1
+
+Important:
+
+- The export script only reads SQL Server data.
+- rclone only uploads the generated CSV and matching summary file.
+- For daily deltas use ExportMode Range with DateFilter LineRegistrationDate.
+- ToDate is exclusive.

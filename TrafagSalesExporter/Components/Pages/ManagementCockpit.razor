@@ -48,7 +48,123 @@
 
 @if (_financeResult is not null)
 {
-    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4" @bind-ActivePanelIndex="_activeFinanceTabIndex">
+    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4" @bind-ActivePanelIndex="_activeOverviewTabIndex">
+        <MudTabPanel Text="@T("Schnelluebersicht", "Quick overview")" Icon="@Icons.Material.Filled.Speed">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Net Sales Actual", "Net sales actual")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.NetSalesActual, _financeResult.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.body2">@($"{_financeResult.Filter.Year}")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Laender OK", "Countries OK")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "OK").ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Soll/Ist ohne Abweichung", "Actual/reference without deviation")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zu pruefen", "To check")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "Pruefen").ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Abweichung oder offene Regel", "Deviation or open rule")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Datenstandorte", "Data sites")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.DataStatusRows.Count(row => row.IsActive).ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("aktive Quellen", "active sources")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudTabs Elevation="0" Rounded="false" PanelClass="pt-4">
+                <MudTabPanel Text="@T("Freigabe", "Approval")" Icon="@Icons.Material.Filled.FactCheck">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Finance-Freigabe je Land", "Finance approval by country")</MudText>
+                        <MudTable Items="_financeResult.CountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Status", "Status")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Ist", "Actual")</MudTh>
+                                <MudTh>@T("Soll", "Reference")</MudTh>
+                                <MudTh>@T("Differenz", "Difference")</MudTh>
+                                <MudTh>@T("Datenstand", "Data status")</MudTh>
+                                <MudTh>@T("Hinweis", "Note")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Filled">@context.Status</MudChip></MudTd>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                                <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
+                                <MudTd>@FormatNullableValue(context.Difference, context.Currency)</MudTd>
+                                <MudTd>@BuildDataStatusText(context)</MudTd>
+                                <MudTd>@BuildQuickFinanceNote(context)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudTabPanel>
+                <MudTabPanel Text="@T("Datenstand", "Data status")" Icon="@Icons.Material.Filled.Storage">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Letzter Datenstand je Standort", "Latest data status by site")</MudText>
+                        <MudTable Items="_financeResult.DataStatusRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Aktiv", "Active")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Quelle", "Source")</MudTh>
+                                <MudTh>@T("Zentrale Zeilen", "Central rows")</MudTh>
+                                <MudTh>@T("Letzter Export", "Latest export")</MudTh>
+                                <MudTh>@T("Status", "Status")</MudTh>
+                                <MudTh>@T("Manual Import", "Manual import")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <MudIcon Icon="@(context.IsActive ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                             Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" />
+                                </MudTd>
+                                <MudTd>@context.Land</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@context.SourceSystem</MudTd>
+                                <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                                <MudTd>@FormatDateTime(context.LatestExportAt)</MudTd>
+                                <MudTd>@(string.IsNullOrWhiteSpace(context.LatestExportStatus) ? "-" : context.LatestExportStatus)</MudTd>
+                                <MudTd>@FormatManualImportStatus(context)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudTabPanel>
+                <MudTabPanel Text="@T("Sparten", "Divisions")" Icon="@Icons.Material.Filled.AccountTree">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Sparten-Abdeckung nach Land", "Division coverage by country")</MudText>
+                        <MudTable Items="_financeResult.ProductFinanceCountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Gesamtumsatz", "Total sales")</MudTh>
+                                <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                                <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                                <MudTh>@T("Abdeckung", "Coverage")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
+                                <MudTd>@FormatPercent(context.AssignedValuePercent)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudTabPanel>
+            </MudTabs>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Experten", "Experts")" Icon="@Icons.Material.Filled.Tune">
+    <MudTabs Elevation="0" Rounded="false" PanelClass="pt-4" @bind-ActivePanelIndex="_activeFinanceTabIndex">
         <MudTabPanel Text="@T("Finance Summary", "Finance summary")" Icon="@Icons.Material.Filled.Dashboard">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
@@ -867,6 +983,8 @@
 
         </MudTabPanel>
     </MudTabs>
+        </MudTabPanel>
+    </MudTabs>
 }
 
 @code {
@@ -917,6 +1035,7 @@
     private bool _analyzing;
     private bool _analyzingCentral;
     private bool _analyzingFinance;
+    private int _activeOverviewTabIndex;
     private int _activeFinanceTabIndex;
     private int _activeDivisionTabIndex;
     private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
@@ -928,6 +1047,8 @@
 
     protected override void OnParametersSet()
     {
+        _activeOverviewTabIndex = string.IsNullOrWhiteSpace(Section) ? 0 : 1;
+
         if (string.Equals(Section, "division", StringComparison.OrdinalIgnoreCase))
         {
             _activeFinanceTabIndex = ManagementFinanceTabIndexes.Division;
@@ -1191,6 +1312,41 @@
                 : System.IO.Path.GetFileName(row.ManualImportFilePath);
 
         return "kein Pfad";
+    }
+
+    private string BuildDataStatusText(ManagementFinanceCountryStatusRow countryRow)
+    {
+        if (_financeResult is null)
+            return "-";
+
+        var tscs = countryRow.Tscs
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var matchingRows = _financeResult.DataStatusRows
+            .Where(row => row.Land.Equals(countryRow.CountryKey, StringComparison.OrdinalIgnoreCase) ||
+                          tscs.Contains(row.Tsc))
+            .OrderByDescending(row => row.LatestExportAt ?? row.LatestStoredAtUtc ?? DateTime.MinValue)
+            .ToList();
+
+        var latest = matchingRows.FirstOrDefault();
+        if (latest is null)
+            return "-";
+
+        var date = latest.LatestExportAt ?? latest.LatestStoredAtUtc;
+        var status = string.IsNullOrWhiteSpace(latest.LatestExportStatus) ? latest.SourceSystem : latest.LatestExportStatus;
+        return $"{status} / {FormatDateTime(date)}";
+    }
+
+    private string BuildQuickFinanceNote(ManagementFinanceCountryStatusRow row)
+    {
+        if (!row.ReferenceValue.HasValue)
+            return T("Kein Sollwert gepflegt.", "No reference value maintained.");
+        if (row.Status == "OK")
+            return T("Freigabefaehig.", "Ready for approval.");
+        if (row.Difference.HasValue)
+            return T("Abweichung pruefen.", "Check deviation.");
+
+        return T("Pruefen.", "Check.");
     }
 
     private static Color StatusColor(string status) => status switch
