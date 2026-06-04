@@ -1,5 +1,6 @@
 @page "/management-cockpit"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
 @using Microsoft.AspNetCore.Components
 @using Microsoft.JSInterop
 @using TrafagSalesExporter.Models
@@ -661,10 +662,44 @@
                             }
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="12" md="9">
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.caption">@T("Szenario-Faktor / Wechselkurs", "Scenario factor / exchange rate")</MudText>
+                        <div class="finance-3d-range-row">
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetFinance3dScenarioFactorPreset(0.9d))">-10%</MudButton>
+                            <input class="finance-3d-range"
+                                   type="range"
+                                   min="0.5"
+                                   max="1.5"
+                                   step="0.01"
+                                   value="@_finance3dScenarioFactor.ToString("0.00", CultureInfo.InvariantCulture)"
+                                   @oninput="SetFinance3dScenarioFactor" />
+                            <MudText Typo="Typo.body2" Class="finance-3d-factor">@_finance3dScenarioFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
+                                           Size="Size.Small"
+                                           Color="Color.Default"
+                                           OnClick="ResetFinance3dScenarioFactor" />
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetFinance3dScenarioFactorPreset(1.1d))">+10%</MudButton>
+                        </div>
+                        @if (Finance3dScenarioAffectsValue)
+                        {
+                            <MudText Typo="Typo.caption">
+                                @T("Basis", "Base"): @FormatFinance3dValue(Finance3dBaseTotal) |
+                                @T("Szenario", "Scenario"): @FormatFinance3dValue(Finance3dScenarioTotal) |
+                                @T("Delta", "Delta"): @FormatFinance3dValue(Finance3dScenarioDelta)
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption">
+                                @T("Der Faktor wirkt nur auf Wertindikatoren, nicht auf Zeilenanzahlen.",
+                                    "The factor only affects value indicators, not row counts.")
+                            </MudText>
+                        }
+                    </MudItem>
+                    <MudItem xs="12" md="5">
                         <MudText Typo="Typo.body2">
-                            @T("Drehbar mit gedrueckter Maus, Zoom mit Mausrad. X-Achse = Land, Z-Achse = Jahr, Hoehe = gewaehlter Indikator.",
-                                "Drag with the mouse to rotate, use the mouse wheel to zoom. X axis = country, Z axis = year, height = selected indicator.")
+                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. X-Achse = Land, Z-Achse = Jahr, Hoehe = gewaehlter Indikator.",
+                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. X axis = country, Z axis = year, height = selected indicator.")
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -1074,10 +1109,17 @@
     private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
     private bool _limitProductFinanceTop10;
     private string _finance3dIndicator = Finance3dIndicators.Actual;
+    private double _finance3dScenarioFactor = 1d;
     private ElementReference _finance3dCanvas;
     private bool _finance3dNeedsRender;
 
     private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
+    private bool Finance3dScenarioAffectsValue => _finance3dIndicator is Finance3dIndicators.Actual or Finance3dIndicators.Deviation;
+    private decimal Finance3dBaseTotal => CalculateFinance3dBaseTotal();
+    private decimal Finance3dScenarioTotal => Finance3dScenarioAffectsValue
+        ? Finance3dBaseTotal * (decimal)_finance3dScenarioFactor
+        : Finance3dBaseTotal;
+    private decimal Finance3dScenarioDelta => Finance3dScenarioTotal - Finance3dBaseTotal;
 
     private bool ShowProductHierarchyColumn => _productFinanceGroupLevel == ProductFinanceGroupLevels.Hierarchy;
 
@@ -1249,6 +1291,27 @@
         await RenderFinance3dAsync();
     }
 
+    private async Task SetFinance3dScenarioFactor(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
+            await RenderFinance3dAsync();
+        }
+    }
+
+    private async Task ResetFinance3dScenarioFactor()
+    {
+        _finance3dScenarioFactor = 1d;
+        await RenderFinance3dAsync();
+    }
+
+    private async Task SetFinance3dScenarioFactorPreset(double value)
+    {
+        _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
+        await RenderFinance3dAsync();
+    }
+
     private async Task RenderFinance3dAsync()
     {
         if (_financeResult is null)
@@ -1288,8 +1351,8 @@
                 {
                     Finance3dIndicators.IncludedRows => row.IncludedRows,
                     Finance3dIndicators.ExcludedRows => row.ExcludedRows,
-                    Finance3dIndicators.Deviation => deviation,
-                    _ => Math.Abs(row.NetSalesActual)
+                    Finance3dIndicators.Deviation => deviation * (decimal)_finance3dScenarioFactor,
+                    _ => Math.Abs(row.NetSalesActual) * (decimal)_finance3dScenarioFactor
                 };
                 return new
                 {
@@ -1302,6 +1365,33 @@
             .Cast<object>()
             .ToList();
     }
+
+    private decimal CalculateFinance3dBaseTotal()
+    {
+        if (_financeResult is null)
+            return 0m;
+
+        var sourceRows = _finance3dIndicator == Finance3dIndicators.Deviation
+            ? _financeResult.Rows
+            : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
+
+        if (_finance3dIndicator == Finance3dIndicators.Deviation)
+        {
+            return _financeResult.CountryRows
+                .Where(row => row.Difference.HasValue)
+                .Sum(row => Math.Abs(row.Difference!.Value));
+        }
+
+        return _finance3dIndicator switch
+        {
+            Finance3dIndicators.IncludedRows => sourceRows.Sum(row => row.IncludedRows),
+            Finance3dIndicators.ExcludedRows => sourceRows.Sum(row => row.ExcludedRows),
+            _ => sourceRows.Sum(row => Math.Abs(row.NetSalesActual))
+        };
+    }
+
+    private string FormatFinance3dValue(decimal value)
+        => value.ToString("N0", CultureInfo.CurrentCulture);
 
     private string ResolveFinance3dIndicatorLabel(string key)
         => _finance3dIndicatorOptions.FirstOrDefault(option => option.Key == key) is { } option

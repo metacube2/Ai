@@ -69,7 +69,23 @@
     axes.countries.forEach((country, index) => addCanvasLabel(scene, THREE, country, xStart + index * (xStep || 2), -0.15, zStart - 1.3, 0.58));
     axes.years.forEach((year, index) => addCanvasLabel(scene, THREE, String(year), xStart - 1.6, -0.15, zStart + index * (zStep || 2), 0.58));
 
-    const state = { renderer, scene, camera, root, angleX: -0.62, angleY: 0.78, distance: 30, dragging: false, lastX: 0, lastY: 0 };
+    const previous = stateByCanvas.get(canvas);
+    const state = {
+      renderer,
+      scene,
+      camera,
+      root,
+      angleX: previous ? previous.angleX : -0.62,
+      angleY: previous ? previous.angleY : 0.78,
+      distance: previous ? previous.distance : 30,
+      targetX: previous ? previous.targetX : 0,
+      targetY: previous ? previous.targetY : 2.8,
+      targetZ: previous ? previous.targetZ : 0,
+      dragging: false,
+      dragMode: "rotate",
+      lastX: 0,
+      lastY: 0
+    };
     attachInteraction(canvas, state);
     stateByCanvas.set(canvas, state);
     resizeAndRender(canvas);
@@ -104,7 +120,9 @@
 
   function attachInteraction(canvas, state) {
     canvas.onpointerdown = event => {
+      event.preventDefault();
       state.dragging = true;
+      state.dragMode = event.button === 2 || event.button === 1 || event.shiftKey ? "pan" : "rotate";
       state.lastX = event.clientX;
       state.lastY = event.clientY;
       canvas.setPointerCapture(event.pointerId);
@@ -115,19 +133,53 @@
       const dy = event.clientY - state.lastY;
       state.lastX = event.clientX;
       state.lastY = event.clientY;
-      state.angleY += dx * 0.008;
-      state.angleX = Math.max(-1.25, Math.min(-0.15, state.angleX + dy * 0.006));
+      if (state.dragMode === "pan") {
+        panCamera(state, dx, dy);
+      } else {
+        state.angleY += dx * 0.008;
+        state.angleX = Math.max(-1.25, Math.min(-0.15, state.angleX + dy * 0.006));
+      }
       renderState(state, canvas);
     };
     canvas.onpointerup = event => {
       state.dragging = false;
       try { canvas.releasePointerCapture(event.pointerId); } catch { }
     };
+    canvas.onpointercancel = () => {
+      state.dragging = false;
+    };
+    canvas.oncontextmenu = event => {
+      event.preventDefault();
+    };
     canvas.onwheel = event => {
       event.preventDefault();
-      state.distance = Math.max(16, Math.min(54, state.distance + event.deltaY * 0.025));
+      const delta = normalizeWheelDelta(event);
+      const zoomFactor = delta > 0 ? 1.12 : 0.88;
+      state.distance = Math.max(14, Math.min(62, state.distance * zoomFactor));
       renderState(state, canvas);
     };
+  }
+
+  function normalizeWheelDelta(event) {
+    if (Number.isFinite(event.deltaY) && event.deltaY !== 0) {
+      return event.deltaY > 0 ? 1 : -1;
+    }
+    if (Number.isFinite(event.wheelDelta) && event.wheelDelta !== 0) {
+      return event.wheelDelta < 0 ? 1 : -1;
+    }
+    return 1;
+  }
+
+  function panCamera(state, dx, dy) {
+    const scale = state.distance * 0.0018;
+    const rightX = Math.cos(state.angleY);
+    const rightZ = -Math.sin(state.angleY);
+    const forwardX = Math.sin(state.angleY);
+    const forwardZ = Math.cos(state.angleY);
+    state.targetX -= dx * scale * rightX;
+    state.targetZ -= dx * scale * rightZ;
+    state.targetX += dy * scale * forwardX;
+    state.targetZ += dy * scale * forwardZ;
   }
 
   function renderState(state, canvas) {
@@ -136,8 +188,11 @@
     state.camera.aspect = width / height;
     state.camera.updateProjectionMatrix();
     const horizontal = Math.cos(state.angleX) * state.distance;
-    state.camera.position.set(Math.sin(state.angleY) * horizontal, Math.sin(-state.angleX) * state.distance, Math.cos(state.angleY) * horizontal);
-    state.camera.lookAt(0, 2.8, 0);
+    state.camera.position.set(
+      state.targetX + Math.sin(state.angleY) * horizontal,
+      state.targetY + Math.sin(-state.angleX) * state.distance,
+      state.targetZ + Math.cos(state.angleY) * horizontal);
+    state.camera.lookAt(state.targetX, state.targetY, state.targetZ);
     state.renderer.setSize(width, height, false);
     state.renderer.render(state.scene, state.camera);
   }

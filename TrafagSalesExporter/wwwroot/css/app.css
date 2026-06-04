@@ -54,6 +54,23 @@ body,
     touch-action: none;
 }
 
+.finance-3d-range-row {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    min-height: 38px;
+}
+
+.finance-3d-range {
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+.finance-3d-factor {
+    min-width: 48px;
+    text-align: right;
+}
+
 @media (max-width: 700px) {
     .finance-3d-surface {
         min-height: 420px;
