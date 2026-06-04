@@ -49,6 +49,7 @@
       gridPoints.push(new THREE.Vector3(xStart - 1, 0, z), new THREE.Vector3(xStart + Math.max(1, axes.countries.length - 1) * (xStep || 2) + 1, 0, z));
     }
     root.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPoints), gridMaterial));
+    addAxisGuides(scene, THREE, layoutFromAxes(axes, xStep, zStep, xStart, zStart), options || {}, chartType);
 
     const scalables = [];
     const layout = { axes, xStep, zStep, xStart, zStart };
@@ -91,6 +92,18 @@
     resizeAndRender(canvas);
   }
 
+  function layoutFromAxes(axes, xStep, zStep, xStart, zStart) {
+    return {
+      axes,
+      xStep,
+      zStep,
+      xStart,
+      zStart,
+      xEnd: xStart + Math.max(1, axes.countries.length - 1) * (xStep || 2),
+      zEnd: zStart + Math.max(1, axes.years.length - 1) * (zStep || 2)
+    };
+  }
+
   function normalizeFactor(value) {
     const factor = Number(value);
     if (!Number.isFinite(factor)) return 1;
@@ -100,6 +113,39 @@
   function normalizeChartType(value) {
     const text = String(value || "bar").toLowerCase();
     return ["bar", "line", "surface", "pie"].includes(text) ? text : "bar";
+  }
+
+  function addAxisGuides(scene, THREE, layout, options, chartType) {
+    if (chartType === "pie") {
+      addCanvasLabel(scene, THREE, options.pieAxis || "Pie: country shares", -8.4, 8.2, -7.6, 0.85);
+      addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", 6.2, 1.4, 6.8, 0.62);
+      return;
+    }
+
+    const xEnd = layout.xEnd + 1.2;
+    const zEnd = layout.zEnd + 1.2;
+    const axisYOffset = 0.04;
+    addAxisLine(scene, THREE, new THREE.Vector3(layout.xStart - 1.2, axisYOffset, layout.zStart - 1.0), new THREE.Vector3(xEnd, axisYOffset, layout.zStart - 1.0), 0x2869a6);
+    addAxisLine(scene, THREE, new THREE.Vector3(layout.xStart - 1.1, axisYOffset, layout.zStart - 1.0), new THREE.Vector3(layout.xStart - 1.1, axisYOffset, zEnd), 0x7a8f2a);
+    addAxisLine(scene, THREE, new THREE.Vector3(layout.xStart - 1.1, 0, layout.zStart - 1.0), new THREE.Vector3(layout.xStart - 1.1, 8.8, layout.zStart - 1.0), 0xb84f3a);
+
+    addCanvasLabel(scene, THREE, options.xAxis || "X: country", xEnd, 0.45, layout.zStart - 1.2, 0.66);
+    addCanvasLabel(scene, THREE, options.zAxis || "Z: year / time", layout.xStart - 1.4, 0.45, zEnd, 0.66);
+    addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", layout.xStart - 1.6, 9.3, layout.zStart - 1.0, 0.66);
+  }
+
+  function addAxisLine(scene, THREE, from, to, color) {
+    const material = new THREE.LineBasicMaterial({ color, linewidth: 3 });
+    const geometry = new THREE.BufferGeometry().setFromPoints([from, to]);
+    scene.add(new THREE.Line(geometry, material));
+
+    const direction = new THREE.Vector3().subVectors(to, from).normalize();
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.22, 0.55, 18),
+      new THREE.MeshBasicMaterial({ color }));
+    cone.position.copy(to);
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+    scene.add(cone);
   }
 
   function rowPosition(row, layout) {

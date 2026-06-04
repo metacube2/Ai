@@ -1345,6 +1345,10 @@
             indicator = _finance3dIndicator,
             title = ResolveFinance3dIndicatorLabel(_finance3dIndicator),
             chartType = _finance3dChartType,
+            xAxis = T("X: Land", "X: country"),
+            yAxis = T("Y: Wert / Indikator", "Y: value / indicator"),
+            zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
+            pieAxis = T("Kreis: Laenderanteile", "Pie: country shares"),
             scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
         });
     }
