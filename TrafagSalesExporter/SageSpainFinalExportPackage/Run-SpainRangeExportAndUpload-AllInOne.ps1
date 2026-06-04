@@ -111,6 +111,7 @@ function Resolve-RcloneExecutable {
         (Join-Path $scriptDirectory "rclone.exe"),
         "C:\Tools\rclone.exe",
         "C:\Tools\rclone\rclone.exe",
+        "C:\Tools\rclone\rclone\rclone.exe",
         "rclone"
     ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
