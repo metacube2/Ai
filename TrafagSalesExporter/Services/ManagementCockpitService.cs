@@ -443,6 +443,16 @@ public class ManagementCockpitService : IManagementCockpitService
             .Select(group => BuildFinanceSummaryRow(group.Key.Year, "Alle", group.Key.Currency, group))
             .ToList();
 
+        var yearCountryRows = allRows
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group => BuildFinanceSummaryRow(group.Key.Year, group.Key.CountryKey, group.Key.Currency, group))
+            .ToList();
+
         var includedRows = scopedRows.Count(row => row.Include);
         var excludedRows = scopedRows.Count(row => !row.Include);
         var resultCurrencies = summaryRows
@@ -501,6 +511,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 .ToList(),
             Rows = summaryRows,
             YearRows = yearRows,
+            YearCountryRows = yearCountryRows,
             IncludedRows = includedRows,
             ExcludedRows = excludedRows,
             CountryCount = summaryRows.Select(row => row.CountryKey).Distinct(StringComparer.OrdinalIgnoreCase).Count(),

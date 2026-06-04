@@ -1,11 +1,13 @@
 @page "/management-cockpit"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IManagementCockpitPageService CockpitPageService
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
 
 <PageTitle>@T("Management Analyse", "Management analysis")</PageTitle>
 
@@ -648,6 +650,30 @@
                 </MudTabPanel>
             </MudTabs>
         </MudTabPanel>
+        <MudTabPanel Text="@T("3D Datenanalyse", "3D data analysis")" Icon="@Icons.Material.Filled.ViewInAr">
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudGrid>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string" Value="_finance3dIndicator" ValueChanged="SetFinance3dIndicator" Label="@T("Indikator", "Indicator")" Dense>
+                            @foreach (var option in _finance3dIndicatorOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="9">
+                        <MudText Typo="Typo.body2">
+                            @T("Drehbar mit gedrueckter Maus, Zoom mit Mausrad. X-Achse = Land, Z-Achse = Jahr, Hoehe = gewaehlter Indikator.",
+                                "Drag with the mouse to rotate, use the mouse wheel to zoom. X axis = country, Z axis = year, height = selected indicator.")
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            <MudPaper Class="pa-0 finance-3d-surface" Elevation="1">
+                <canvas @ref="_finance3dCanvas" class="finance-3d-canvas"></canvas>
+            </MudPaper>
+        </MudTabPanel>
         <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -1015,6 +1041,13 @@
         new(ProductFinanceGroupLevels.Family, "Produktfamilie", "Product family"),
         new(ProductFinanceGroupLevels.Division, "Produktsparte", "Product division")
     ];
+    private readonly List<Finance3dIndicatorOption> _finance3dIndicatorOptions =
+    [
+        new(Finance3dIndicators.Actual, "Net Sales Actual", "Net sales actual"),
+        new(Finance3dIndicators.IncludedRows, "Enthaltene Zeilen", "Included rows"),
+        new(Finance3dIndicators.ExcludedRows, "Ausgeschlossene Zeilen", "Excluded rows"),
+        new(Finance3dIndicators.Deviation, "Soll/Ist Differenz Filterjahr", "Actual/reference difference filter year")
+    ];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
@@ -1040,6 +1073,9 @@
     private int _activeDivisionTabIndex;
     private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
     private bool _limitProductFinanceTop10;
+    private string _finance3dIndicator = Finance3dIndicators.Actual;
+    private ElementReference _finance3dCanvas;
+    private bool _finance3dNeedsRender;
 
     private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
 
@@ -1068,6 +1104,7 @@
                 "deviations" => ManagementFinanceTabIndexes.Deviations,
                 "credits" => ManagementFinanceTabIndexes.Credits,
                 "quality" => ManagementFinanceTabIndexes.Quality,
+                "3d" => ManagementFinanceTabIndexes.ThreeD,
                 "raw" => ManagementFinanceTabIndexes.Raw,
                 _ => ManagementFinanceTabIndexes.Summary
             };
@@ -1084,6 +1121,15 @@
         _selectedCentralYear = state.SelectedCentralYear;
         _selectedFinanceYear = _selectedCentralYear;
         await AnalyzeFinanceSummary();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_finance3dNeedsRender && _financeResult is not null)
+        {
+            _finance3dNeedsRender = false;
+            await RenderFinance3dAsync();
+        }
     }
 
     private async Task ReloadFiles()
@@ -1174,6 +1220,7 @@
             _financeCountryOptions = _financeResult.CountryOptions;
             _financeCurrencyOptions = _financeResult.CurrencyOptions;
             _selectedFinanceYear = _financeResult.Filter.Year;
+            _finance3dNeedsRender = true;
         }
         catch (Exception ex)
         {
@@ -1195,6 +1242,71 @@
     {
         _limitProductFinanceTop10 = !_limitProductFinanceTop10;
     }
+
+    private async Task SetFinance3dIndicator(string value)
+    {
+        _finance3dIndicator = string.IsNullOrWhiteSpace(value) ? Finance3dIndicators.Actual : value;
+        await RenderFinance3dAsync();
+    }
+
+    private async Task RenderFinance3dAsync()
+    {
+        if (_financeResult is null)
+            return;
+
+        var rows = BuildFinance3dRows();
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _finance3dCanvas, rows, new
+        {
+            indicator = _finance3dIndicator,
+            title = ResolveFinance3dIndicatorLabel(_finance3dIndicator)
+        });
+    }
+
+    private IReadOnlyList<object> BuildFinance3dRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        var deviationsByKey = _financeResult.CountryRows
+            .Where(row => row.Difference.HasValue)
+            .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Sum(row => Math.Abs(row.Difference!.Value)));
+
+        var sourceRows = _finance3dIndicator == Finance3dIndicators.Deviation
+            ? _financeResult.Rows
+            : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
+
+        return sourceRows
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Year)
+            .Select(row =>
+            {
+                deviationsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var deviation);
+                var value = _finance3dIndicator switch
+                {
+                    Finance3dIndicators.IncludedRows => row.IncludedRows,
+                    Finance3dIndicators.ExcludedRows => row.ExcludedRows,
+                    Finance3dIndicators.Deviation => deviation,
+                    _ => Math.Abs(row.NetSalesActual)
+                };
+                return new
+                {
+                    country = row.CountryKey,
+                    year = row.Year,
+                    currency = row.Currency,
+                    value
+                };
+            })
+            .Cast<object>()
+            .ToList();
+    }
+
+    private string ResolveFinance3dIndicatorLabel(string key)
+        => _finance3dIndicatorOptions.FirstOrDefault(option => option.Key == key) is { } option
+            ? T(option.GermanLabel, option.EnglishLabel)
+            : T("Net Sales Actual", "Net sales actual");
 
     private IReadOnlyList<ManagementProductDivisionFinanceRow> BuildProductFinanceRows()
     {
@@ -1495,10 +1607,20 @@
         public const int Credits = 4;
         public const int Quality = 5;
         public const int Division = 6;
-        public const int Raw = 7;
+        public const int ThreeD = 7;
+        public const int Raw = 8;
+    }
+
+    private static class Finance3dIndicators
+    {
+        public const string Actual = "actual";
+        public const string IncludedRows = "includedRows";
+        public const string ExcludedRows = "excludedRows";
+        public const string Deviation = "deviation";
     }
 
     private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);
+    private sealed record Finance3dIndicatorOption(string Key, string GermanLabel, string EnglishLabel);
 
     private sealed record ProductFinanceGroupKey(
         string ProductDivisionCode,

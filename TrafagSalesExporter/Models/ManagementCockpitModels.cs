@@ -314,6 +314,7 @@ public class ManagementFinanceSummaryResult
     public List<string> CurrencyOptions { get; set; } = [];
     public List<ManagementFinanceSummaryRow> Rows { get; set; } = [];
     public List<ManagementFinanceSummaryRow> YearRows { get; set; } = [];
+    public List<ManagementFinanceSummaryRow> YearCountryRows { get; set; } = [];
     public int IncludedRows { get; set; }
     public int ExcludedRows { get; set; }
     public int CountryCount { get; set; }
