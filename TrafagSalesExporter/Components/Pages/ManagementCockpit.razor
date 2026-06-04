@@ -1086,10 +1086,21 @@
     ];
     private readonly List<Finance3dIndicatorOption> _finance3dIndicatorOptions =
     [
-        new(Finance3dIndicators.Actual, "Net Sales Actual", "Net sales actual"),
+        new(Finance3dIndicators.Actual, "Ist Umsatz inkl. IC", "Actual sales incl. IC"),
+        new(Finance3dIndicators.ActualExcludingIntercompany, "Ist Umsatz ohne IC", "Actual sales excl. IC"),
+        new(Finance3dIndicators.IntercompanyValue, "Intercompany Wert", "Intercompany value"),
+        new(Finance3dIndicators.IntercompanyShare, "Intercompany Anteil %", "Intercompany share %"),
+        new(Finance3dIndicators.Quantity, "Menge", "Quantity"),
+        new(Finance3dIndicators.CreditValue, "Gutschriften Wert", "Credit-note value"),
+        new(Finance3dIndicators.CreditRows, "Gutschriften Zeilen", "Credit-note rows"),
+        new(Finance3dIndicators.TotalRows, "Alle Zeilen", "All rows"),
         new(Finance3dIndicators.IncludedRows, "Enthaltene Zeilen", "Included rows"),
         new(Finance3dIndicators.ExcludedRows, "Ausgeschlossene Zeilen", "Excluded rows"),
-        new(Finance3dIndicators.Deviation, "Soll/Ist Differenz Filterjahr", "Actual/reference difference filter year")
+        new(Finance3dIndicators.IncludeRate, "Include Quote %", "Include rate %"),
+        new(Finance3dIndicators.ExcludeRate, "Exclude Quote %", "Exclude rate %"),
+        new(Finance3dIndicators.ReferenceValue, "Sollwert Filterjahr", "Reference value filter year"),
+        new(Finance3dIndicators.Deviation, "Soll/Ist Differenz Filterjahr", "Actual/reference difference filter year"),
+        new(Finance3dIndicators.DeviationPercent, "Soll/Ist Abweichung % Filterjahr", "Actual/reference deviation % filter year")
     ];
     private readonly List<Finance3dChartTypeOption> _finance3dChartTypeOptions =
     [
@@ -1130,7 +1141,13 @@
     private bool _finance3dNeedsRender;
 
     private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
-    private bool Finance3dScenarioAffectsValue => _finance3dIndicator is Finance3dIndicators.Actual or Finance3dIndicators.Deviation;
+    private bool Finance3dScenarioAffectsValue => _finance3dIndicator is
+        Finance3dIndicators.Actual or
+        Finance3dIndicators.ActualExcludingIntercompany or
+        Finance3dIndicators.IntercompanyValue or
+        Finance3dIndicators.CreditValue or
+        Finance3dIndicators.ReferenceValue or
+        Finance3dIndicators.Deviation;
     private decimal Finance3dBaseTotal => CalculateFinance3dBaseTotal();
     private decimal Finance3dScenarioTotal => Finance3dScenarioAffectsValue
         ? Finance3dBaseTotal * (decimal)_finance3dScenarioFactor
@@ -1366,14 +1383,14 @@
         if (_financeResult is null)
             return [];
 
-        var deviationsByKey = _financeResult.CountryRows
-            .Where(row => row.Difference.HasValue)
+        var countryRowsByKey = _financeResult.CountryRows
             .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 group => group.Key,
-                group => group.Sum(row => Math.Abs(row.Difference!.Value)));
+                group => group.ToList(),
+                StringComparer.OrdinalIgnoreCase);
 
-        var sourceRows = _finance3dIndicator == Finance3dIndicators.Deviation
+        var sourceRows = IsFinance3dReferenceYearIndicator(_finance3dIndicator)
             ? _financeResult.Rows
             : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
 
@@ -1382,14 +1399,8 @@
             .ThenBy(row => row.Year)
             .Select(row =>
             {
-                deviationsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var deviation);
-                var value = _finance3dIndicator switch
-                {
-                    Finance3dIndicators.IncludedRows => row.IncludedRows,
-                    Finance3dIndicators.ExcludedRows => row.ExcludedRows,
-                    Finance3dIndicators.Deviation => deviation,
-                    _ => Math.Abs(row.NetSalesActual)
-                };
+                countryRowsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var countryRows);
+                var value = ResolveFinance3dRowValue(row, countryRows);
                 return new
                 {
                     country = row.CountryKey,
@@ -1407,23 +1418,67 @@
         if (_financeResult is null)
             return 0m;
 
-        var sourceRows = _finance3dIndicator == Finance3dIndicators.Deviation
+        var countryRowsByKey = _financeResult.CountryRows
+            .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.ToList(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var sourceRows = IsFinance3dReferenceYearIndicator(_finance3dIndicator)
             ? _financeResult.Rows
             : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
 
-        if (_finance3dIndicator == Finance3dIndicators.Deviation)
+        var values = sourceRows
+            .Select(row =>
+            {
+                countryRowsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var countryRows);
+                return ResolveFinance3dRowValue(row, countryRows);
+            })
+            .ToList();
+
+        if (IsFinance3dPercentIndicator(_finance3dIndicator))
         {
-            return _financeResult.CountryRows
-                .Where(row => row.Difference.HasValue)
-                .Sum(row => Math.Abs(row.Difference!.Value));
+            var nonZeroValues = values.Where(value => value != 0m).ToList();
+            return nonZeroValues.Count == 0 ? 0m : nonZeroValues.Average();
         }
 
-        return _finance3dIndicator switch
+        return values.Sum();
+    }
+
+    private decimal ResolveFinance3dRowValue(ManagementFinanceSummaryRow row, IReadOnlyCollection<ManagementFinanceCountryStatusRow>? countryRows)
+        => _finance3dIndicator switch
         {
-            Finance3dIndicators.IncludedRows => sourceRows.Sum(row => row.IncludedRows),
-            Finance3dIndicators.ExcludedRows => sourceRows.Sum(row => row.ExcludedRows),
-            _ => sourceRows.Sum(row => Math.Abs(row.NetSalesActual))
+            Finance3dIndicators.ActualExcludingIntercompany => Math.Abs(row.NetSalesActualExcludingIntercompany),
+            Finance3dIndicators.IntercompanyValue => Math.Abs(row.IntercompanyValue),
+            Finance3dIndicators.IntercompanyShare => Math.Abs(row.IntercompanySharePercent),
+            Finance3dIndicators.Quantity => Math.Abs(row.Quantity),
+            Finance3dIndicators.CreditValue => Math.Abs(row.CreditValue),
+            Finance3dIndicators.CreditRows => row.CreditRows,
+            Finance3dIndicators.TotalRows => row.TotalRows,
+            Finance3dIndicators.IncludedRows => row.IncludedRows,
+            Finance3dIndicators.ExcludedRows => row.ExcludedRows,
+            Finance3dIndicators.IncludeRate => row.IncludeRatePercent,
+            Finance3dIndicators.ExcludeRate => row.ExcludeRatePercent,
+            Finance3dIndicators.ReferenceValue => Math.Abs(countryRows?.Sum(item => item.ReferenceValue ?? 0m) ?? 0m),
+            Finance3dIndicators.Deviation => Math.Abs(countryRows?.Where(item => item.Difference.HasValue).Sum(item => item.Difference!.Value) ?? 0m),
+            Finance3dIndicators.DeviationPercent => Math.Abs(AverageNullablePercent(countryRows?.Select(item => item.DifferencePercent))),
+            _ => Math.Abs(row.NetSalesActual)
         };
+
+    private static bool IsFinance3dReferenceYearIndicator(string indicator)
+        => indicator is Finance3dIndicators.ReferenceValue or Finance3dIndicators.Deviation or Finance3dIndicators.DeviationPercent;
+
+    private static bool IsFinance3dPercentIndicator(string indicator)
+        => indicator is Finance3dIndicators.IntercompanyShare or Finance3dIndicators.IncludeRate or Finance3dIndicators.ExcludeRate or Finance3dIndicators.DeviationPercent;
+
+    private static decimal AverageNullablePercent(IEnumerable<decimal?>? values)
+    {
+        if (values is null)
+            return 0m;
+
+        var actualValues = values.Where(value => value.HasValue).Select(value => value!.Value).ToList();
+        return actualValues.Count == 0 ? 0m : actualValues.Average();
     }
 
     private string FormatFinance3dValue(decimal value)
@@ -1740,9 +1795,20 @@
     private static class Finance3dIndicators
     {
         public const string Actual = "actual";
+        public const string ActualExcludingIntercompany = "actualExcludingIntercompany";
+        public const string IntercompanyValue = "intercompanyValue";
+        public const string IntercompanyShare = "intercompanyShare";
+        public const string Quantity = "quantity";
+        public const string CreditValue = "creditValue";
+        public const string CreditRows = "creditRows";
+        public const string TotalRows = "totalRows";
         public const string IncludedRows = "includedRows";
         public const string ExcludedRows = "excludedRows";
+        public const string IncludeRate = "includeRate";
+        public const string ExcludeRate = "excludeRate";
+        public const string ReferenceValue = "referenceValue";
         public const string Deviation = "deviation";
+        public const string DeviationPercent = "deviationPercent";
     }
 
     private static class Finance3dChartTypes

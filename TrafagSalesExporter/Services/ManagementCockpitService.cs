@@ -1045,14 +1045,31 @@ public class ManagementCockpitService : IManagementCockpitService
         IEnumerable<FinanceAggregationRow> rows)
     {
         var rowList = rows.ToList();
+        var includedRows = rowList.Count(row => row.Include);
+        var excludedRows = rowList.Count(row => !row.Include);
+        var actual = rowList.Sum(row => row.Value);
+        var intercompanyValue = rowList.Where(row => row.IsIntercompany).Sum(row => row.Value);
+        var creditRows = rowList.Count(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber));
+        var creditValue = rowList
+            .Where(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber))
+            .Sum(row => Math.Abs(row.Value));
         return new ManagementFinanceSummaryRow
         {
             Year = year,
             CountryKey = countryKey,
             Currency = currency,
-            IncludedRows = rowList.Count(row => row.Include),
-            ExcludedRows = rowList.Count(row => !row.Include),
-            NetSalesActual = rowList.Sum(row => row.Value)
+            IncludedRows = includedRows,
+            ExcludedRows = excludedRows,
+            TotalRows = rowList.Count,
+            NetSalesActual = actual,
+            NetSalesActualExcludingIntercompany = actual - intercompanyValue,
+            IntercompanyValue = intercompanyValue,
+            IntercompanySharePercent = actual == 0m ? 0m : intercompanyValue / actual * 100m,
+            Quantity = rowList.Sum(row => row.Quantity),
+            CreditValue = creditValue,
+            CreditRows = creditRows,
+            IncludeRatePercent = rowList.Count == 0 ? 0m : includedRows * 100m / rowList.Count,
+            ExcludeRatePercent = rowList.Count == 0 ? 0m : excludedRows * 100m / rowList.Count
         };
     }
 

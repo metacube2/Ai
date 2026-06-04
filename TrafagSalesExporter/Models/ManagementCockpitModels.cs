@@ -171,15 +171,22 @@ public class ManagementFinanceSummaryRow
     public string Currency { get; set; } = string.Empty;
     public int IncludedRows { get; set; }
     public int ExcludedRows { get; set; }
+    public int TotalRows { get; set; }
     public decimal NetSalesActual { get; set; }
+    public decimal NetSalesActualExcludingIntercompany { get; set; }
+    public decimal IntercompanyValue { get; set; }
+    public decimal IntercompanySharePercent { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal CreditValue { get; set; }
+    public int CreditRows { get; set; }
+    public decimal IncludeRatePercent { get; set; }
+    public decimal ExcludeRatePercent { get; set; }
 }
 
 public class ManagementFinanceCountryStatusRow : ManagementFinanceSummaryRow
 {
     public string SourceSystems { get; set; } = string.Empty;
     public string Tscs { get; set; } = string.Empty;
-    public decimal IntercompanyValue { get; set; }
-    public decimal NetSalesActualExcludingIntercompany { get; set; }
     public decimal? ReferenceValue { get; set; }
     public decimal? Difference { get; set; }
     public decimal? DifferencePercent { get; set; }
