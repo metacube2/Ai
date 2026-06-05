@@ -1,8 +1,10 @@
 @page "/einkauf"
 @using System.Globalization
 @using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject IJSRuntime JsRuntime
+@inject IPurchasingDashboardService PurchasingDashboardService
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
@@ -13,8 +15,7 @@
 </MudText>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    @T("Die PBIX-Vorlage liefert Struktur und Kennzahlenlogik. Live-Werte werden sichtbar, sobald die SAP-Einkaufsdatenquelle angebunden ist.",
-       "The PBIX template provides structure and KPI logic. Live values will appear once the SAP purchasing data source is connected.")
+    @PurchasingStatusText
 </MudAlert>
 
 <MudGrid Class="mb-4" Spacing="2">
@@ -186,6 +187,8 @@
 
 @code {
     private ElementReference _purchasing3dCanvas;
+    private PurchasingDashboardLiveState _liveState = new();
+    private bool _liveLoading = true;
     private string _purchasing3dIndicator = "spend";
     private string _purchasing3dChartType = "bar";
     private double _purchasing3dFactor = 1d;
@@ -193,10 +196,10 @@
 
     private IReadOnlyList<PurchasingKpiCard> KpiCards =>
     [
-        new("Spend total", "Total spend", FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "Simulationsbasis bis SAP-Liveimport", "Simulation basis until SAP live import", Icons.Material.Filled.Payments, Color.Primary),
-        new("Offene Bestellungen", "Open orders", FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "Wert offen aus Simulationsbasis", "Open value from simulation basis", Icons.Material.Filled.PendingActions, Color.Warning),
-        new("Kontrakte", "Contracts", FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "Restverpflichtungen aus Simulationsbasis", "Remaining commitments from simulation basis", Icons.Material.Filled.Assignment, Color.Info),
-        new("Lieferantenperformance", "Supplier performance", $"{Purchasing3dBaseRows.Average(x => x.SupplierScore):N1}%", "Durchschnitt Score aus Simulationsbasis", "Average score from simulation basis", Icons.Material.Filled.Verified, Color.Success)
+        new("Spend total", "Total spend", _liveState.EkpoLoaded ? "EKPO live" : T("wartet auf EKPO", "waiting for EKPO"), _liveState.EkpoLoaded ? "Positionsdaten verfuegbar" : "EKKO live, Positionswerte fehlen noch", _liveState.EkpoLoaded ? "Position data available" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
+        new("Offene Bestellungen", "Open orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "EKKO-Belege seit Jahresbeginn" : "Noch nicht geladen", _liveState.EkkoLoaded ? "EKKO orders since start of year" : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
+        new("Kontrakte", "Contracts", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : T("wartet auf EKET", "waiting for EKET"), _liveState.EketLoaded ? "Termin-/Einteilungsprobe verfuegbar" : "EKKO live, Terminwerte fehlen noch", _liveState.EketLoaded ? "Schedule sample available" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
+        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "Lieferanten in EKKO-Liveprobe" : "Noch nicht geladen", _liveState.EkkoLoaded ? "Suppliers in EKKO live sample" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
     ];
 
     private readonly List<PurchasingAxis> AnalysisAxes =
@@ -283,6 +286,12 @@
         new("Artikel Top 10", 2026, 680000d, 105000d, 3350d, 195000d, 92d)
     ];
 
+    protected override async Task OnInitializedAsync()
+    {
+        _liveState = await PurchasingDashboardService.LoadAsync();
+        _liveLoading = false;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -291,6 +300,15 @@
 
     private string T(string german, string english) => UiText.Text(german, english);
     private static string FormatChf(double value) => $"CHF {value:N0}";
+    private string PurchasingStatusText
+        => _liveLoading
+            ? T("SAP-Einkaufsdaten werden geladen...", "Loading SAP purchasing data...")
+            : $"{_liveState.Message} {FormatLatestOrderDate()}";
+
+    private string FormatLatestOrderDate()
+        => _liveState.LatestOrderDate.HasValue
+            ? $"{T("Letztes EKKO-Datum", "Latest EKKO date")}: {_liveState.LatestOrderDate.Value:yyyy-MM-dd}."
+            : string.Empty;
 
     private async Task SetPurchasing3dIndicator(string value)
     {
