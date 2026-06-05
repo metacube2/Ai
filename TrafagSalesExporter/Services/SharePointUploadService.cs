@@ -113,6 +113,7 @@ public class SharePointUploadService : ISharePointUploadService
         var normalizedSiteUrl = Normalize(siteUrl);
         var normalizedReference = Normalize(folderReference);
         var normalizedTsc = Normalize(siteTsc).ToUpperInvariant();
+        var isSpainImport = IsSpainManualImport(normalizedTsc, normalizedReference);
 
         if (string.IsNullOrWhiteSpace(normalizedReference))
             throw new InvalidOperationException("SharePoint-Ordnerreferenz fehlt.");
@@ -136,15 +137,40 @@ public class SharePointUploadService : ISharePointUploadService
         var allCandidates = children?.Value?
             .Where(item => item.File is not null)
             .Where(item => IsSupportedManualImportFile(item.Name))
-            .Where(item => MatchesTsc(item.Name, normalizedTsc))
-            .Select(item => new
+            .Where(item => isSpainImport ? IsSpainSalesFile(item.Name) : MatchesTsc(item.Name, normalizedTsc))
+            .Select(item =>
             {
-                Item = item,
-                FileDate = TryParseDatedSiteFileName(item.Name, normalizedTsc, out var fileDate) ? fileDate : (DateTime?)null,
-                AnnualYear = TryParseAnnualSiteFileName(item.Name, normalizedTsc, out var annualYear) ? annualYear : (int?)null,
-                SnapshotDate = TryParseSnapshotDate(item.Name, out var snapshotDate) ? snapshotDate : (DateTime?)null
+                var hasSpainRange = TryParseSpainSalesRangeFileName(item.Name, out var rangeStart, out var rangeEnd);
+                return new
+                {
+                    Item = item,
+                    FileDate = TryParseDatedSiteFileName(item.Name, normalizedTsc, out var fileDate) ? fileDate : (DateTime?)null,
+                    SpainRangeStart = hasSpainRange ? rangeStart : (DateTime?)null,
+                    SpainRangeEnd = hasSpainRange ? rangeEnd : (DateTime?)null,
+                    AnnualYear = TryParseAnnualSiteFileName(item.Name, normalizedTsc, out var annualYear) ? annualYear : (int?)null,
+                    SnapshotDate = TryParseSnapshotDate(item.Name, out var snapshotDate) ? snapshotDate : (DateTime?)null
+                };
             })
             .ToList() ?? [];
+
+        if (isSpainImport)
+        {
+            var spainCandidates = allCandidates
+                .OrderBy(x => x.SpainRangeStart is null ? 0 : 1)
+                .ThenBy(x => x.SpainRangeStart ?? DateTime.MinValue)
+                .ThenBy(x => x.SpainRangeEnd ?? DateTime.MinValue)
+                .ThenBy(x => x.Item.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (spainCandidates.Count == 0)
+                throw new InvalidOperationException($"Im SharePoint-Ordner '{folderPath}' wurde keine Spain_Sales*.csv gefunden.");
+
+            return spainCandidates
+                .Select(x => new SharePointFileReference(
+                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
+                    x.Item.LastModifiedDateTime))
+                .ToList();
+        }
 
         if (preferredYear is not null)
         {
@@ -313,6 +339,39 @@ public class SharePointUploadService : ISharePointUploadService
         var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
         return nameWithoutExtension.EndsWith($"_{normalizedTsc}", StringComparison.OrdinalIgnoreCase) ||
                Regex.IsMatch(nameWithoutExtension, $@"(^|[^A-Z0-9]){Regex.Escape(normalizedTsc)}([^A-Z0-9]|$)", RegexOptions.IgnoreCase);
+    }
+
+    private static bool IsSpainManualImport(string normalizedTsc, string folderReference)
+        => string.Equals(normalizedTsc, "TRES", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(normalizedTsc, "TRSE", StringComparison.OrdinalIgnoreCase) ||
+           folderReference.Contains("Spanien", StringComparison.OrdinalIgnoreCase) ||
+           folderReference.Contains("Spain", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSpainSalesFile(string? fileName)
+        => Path.GetFileName(fileName ?? string.Empty).StartsWith("Spain_Sales", StringComparison.OrdinalIgnoreCase) &&
+           Path.GetExtension(fileName ?? string.Empty).Equals(".csv", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryParseSpainSalesRangeFileName(string? fileName, out DateTime rangeStart, out DateTime rangeEnd)
+    {
+        rangeStart = default;
+        rangeEnd = default;
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        var match = Regex.Match(nameWithoutExtension, @"^Spain_Sales_range_(?<from>\d{8})_to_(?<to>\d{8})$", RegexOptions.IgnoreCase);
+        if (!match.Success)
+            return false;
+
+        return DateTime.TryParseExact(
+                   match.Groups["from"].Value,
+                   "yyyyMMdd",
+                   CultureInfo.InvariantCulture,
+                   DateTimeStyles.None,
+                   out rangeStart) &&
+               DateTime.TryParseExact(
+                   match.Groups["to"].Value,
+                   "yyyyMMdd",
+                   CultureInfo.InvariantCulture,
+                   DateTimeStyles.None,
+                   out rangeEnd);
     }
 
     private static bool TryParseDatedSiteFileName(string? fileName, string normalizedTsc, out DateTime fileDate)

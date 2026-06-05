@@ -18,6 +18,7 @@ public class ManualExcelImportService : IManualExcelImportService
     {
         ["extractiondate"] = nameof(SalesRecord.ExtractionDate),
         ["tsc"] = nameof(SalesRecord.Tsc),
+        ["sourcelineid"] = nameof(SalesRecord.SourceLineId),
         ["documententry"] = nameof(SalesRecord.DocumentEntry),
         ["invoicenumber"] = nameof(SalesRecord.InvoiceNumber),
         ["positiononinvoice"] = nameof(SalesRecord.PositionOnInvoice),
@@ -163,6 +164,7 @@ public class ManualExcelImportService : IManualExcelImportService
             {
                 ExtractionDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.ExtractionDate)) ?? DateTime.UtcNow,
                 Tsc = ReadString(headerIndexes, fields, nameof(SalesRecord.Tsc), site.TSC),
+                SourceLineId = ReadString(headerIndexes, fields, nameof(SalesRecord.SourceLineId)),
                 DocumentEntry = (int)Math.Round(ReadDecimal(headerIndexes, fields, nameof(SalesRecord.DocumentEntry))),
                 InvoiceNumber = ReadString(headerIndexes, fields, nameof(SalesRecord.InvoiceNumber)),
                 PositionOnInvoice = (int)Math.Round(ReadDecimal(headerIndexes, fields, nameof(SalesRecord.PositionOnInvoice))),
@@ -281,6 +283,7 @@ public class ManualExcelImportService : IManualExcelImportService
             {
                 ExtractionDate = ReadDate(headerIndexes, row, nameof(SalesRecord.ExtractionDate)) ?? DateTime.UtcNow,
                 Tsc = ReadString(headerIndexes, row, nameof(SalesRecord.Tsc), site.TSC),
+                SourceLineId = ReadString(headerIndexes, row, nameof(SalesRecord.SourceLineId)),
                 DocumentEntry = (int)Math.Round(ReadDecimal(headerIndexes, row, nameof(SalesRecord.DocumentEntry))),
                 InvoiceNumber = ReadString(headerIndexes, row, nameof(SalesRecord.InvoiceNumber)),
                 PositionOnInvoice = (int)Math.Round(ReadDecimal(headerIndexes, row, nameof(SalesRecord.PositionOnInvoice))),

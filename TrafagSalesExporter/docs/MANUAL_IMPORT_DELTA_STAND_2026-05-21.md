@@ -1,6 +1,6 @@
 # Manual-Import und Delta-Stand
 
-Stand: 2026-05-21
+Stand: 2026-06-05
 
 Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden und wie neue Eintraege bzw. Delta-Dateien verarbeitet werden.
 
@@ -9,7 +9,7 @@ Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden
 | Land / Standort | Quelle aktuell | Dateityp | Neue Eintraege / Deltas | Wie die App auswaehlt | Was beim Standortexport passiert | Finance-Wert |
 | --- | --- | --- | --- | --- | --- | --- |
 | UK / England `TRUK` | SharePoint-Ordner `Import/Finance/UK_B1` | Sage Excel `.xlsx` | Delta-faehig | Bei Jahreslauf: Jahresdatei fuer `TRUK` plus spaetere datierte Dateien `ddMMyy_TRUK.xlsx` oder `.csv` | Alle gefundenen Dateien werden gelesen und zusammen in `CentralSalesRecords` fuer `TRUK` ersetzt | `Sales Price/Value * Quantity`, Credit Notes negativ, GBP |
-| Spanien `TRSE` / `TRES` | SharePoint-Datei oder Ordner / Sage CSV | `.csv` | Vollfile erforderlich, keine Deltas | Wenn Ordner: neueste passende Vollfile-Datei nach TSC/Datum | Datei wird gelesen, Standortdaten werden ersetzt | Sage `ImporteNeto`, REC/Abono/Credit negativ, EUR |
+| Spanien `TRSE` / `TRES` | SharePoint-Ordner `Import/Finance/Spanien` / Sage CSV | `.csv` | Delta-faehig mit Basis + `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv` | Wenn Ordner: alle `Spain_Sales*.csv`, Basis zuerst, danach Range-Dateien nach Datum | Alle Dateien werden gelesen, nach `SourceLineId` bzw. Invoice/Position/Material dedupliziert, danach ersetzen die deduplizierten Spanien-Zeilen den bisherigen Spanien-Stand | Sage `SalesPriceValue`/`ImporteNeto`, REC/Abono/Credit negativ, EUR |
 | Deutschland `TRDE` | Alphaplan Excel | `.xlsx` | Vollfile/Jahresfile erforderlich, keine Deltas | Pfad/Datei am Standort hinterlegt | Datei wird gelesen, DE-Zeilen ersetzen bisherigen DE-Stand | `NettoPreisGesamtX`, Finance-Regeln: Ausschluesse, GS negativ, 2025-Zwang |
 | CH/AT `ZSCHWEIZ` | SAP OData | OData | Kein manueller Delta-Excel-Prozess | App liest SAP-Service | ZSCHWEIZ-Zeilen ersetzen bisherigen Stand | `NetwrHc`, CHF/EUR nach Land |
 | FR / IT / US | HANA / SAP B1 | direkte DB | Kein manueller Delta-Excel-Prozess | App liest HANA nach Datum/Schema | Standortdaten werden neu aus HANA aufgebaut | B1 Positions-Netto, Credit Notes negativ |
@@ -44,13 +44,14 @@ Spanien nutzt technisch ebenfalls `MANUAL_EXCEL`, fachlich aber Sage CSV.
 Aktueller Implementierungsstand:
 
 - Datei/Ordner kann ueber SharePoint oder lokal hinterlegt werden.
-- Bei SharePoint-Ordnern wird die neueste passende Datei nach TSC/Datum ausgewaehlt.
-- Spanien muss immer den kompletten relevanten Datenstand liefern.
-- Delta-Dateien sind fuer Spanien nicht vorgesehen.
-- Praktisch gilt Spanien deshalb als Vollfile-Import.
-- Beim Standortexport ersetzt die App den bisherigen Spanien-Stand in `CentralSalesRecords`.
-- Wenn versehentlich nur eine Delta-Datei als neueste Datei im Ordner liegt oder direkt als Pfad hinterlegt wird, wuerde die App technisch nur dieses Delta lesen und damit den bisherigen Spanien-Stand ersetzen.
-- Es gibt aktuell keine explizite Sperre, die eine Spanien-Delta-Datei erkennt und ablehnt.
+- Bei Spanien-Ordnern werden alle `Spain_Sales*.csv` gelesen, auch wenn der Dateiname kein `TRES` enthaelt.
+- Basis-/Vollfiles werden vor Range-Dateien gelesen.
+- Range-Dateien wie `Spain_Sales_range_20260528_to_20260603.csv` werden nach Range-Start/Ende sortiert.
+- Die App dedupliziert die gelesenen Zeilen vor dem Speichern:
+  - primaer ueber `SourceLineId`.
+  - Fallback ueber `TSC + InvoiceNumber + PositionOnInvoice + Material`.
+- Beim Standortexport ersetzt die App weiterhin den bisherigen Spanien-Stand in `CentralSalesRecords`, aber mit dem zuvor zusammengesetzten und deduplizierten Gesamtstand.
+- Wenn nur eine einzelne Delta-Datei direkt als Dateipfad hinterlegt wird, kann weiterhin nur dieses Delta gelesen werden. Fuer Delta-Sync muss deshalb der Ordner hinterlegt sein.
 
 Finance-Logik:
 

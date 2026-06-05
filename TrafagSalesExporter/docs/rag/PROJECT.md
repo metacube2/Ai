@@ -13,6 +13,7 @@ Stand: 2026-06-05
 - Spanien: `Run-SpainRangeExportAndUpload-AllInOne.ps1` exportiert Sage-Range direkt und laedt CSV/Summary via rclone nach SharePoint `trafag-bi:Import/Finance/Spanien`.
 - Spanien: Default-Range ist heute minus 7 Tage bis heute; `ToDate` ist exklusiv.
 - Spanien: rclone-Fehler `Can't set -v and --log-level` im All-in-one-Script behoben; aktuelle Datei enthaelt kein `--verbose` im Upload.
+- Spanien-Import: Ordner mit `Spain_Sales*.csv` werden komplett gelesen; Basis + taegliche Range-Dateien werden nach `SourceLineId` bzw. Invoice/Position/Material dedupliziert.
 - Fuer normale Weiterarbeit diese Datei plus den passenden Themen-RAG laden.
 
 ## Aktive Themen

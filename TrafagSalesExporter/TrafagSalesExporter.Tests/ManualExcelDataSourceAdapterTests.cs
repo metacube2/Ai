@@ -80,6 +80,37 @@ public class ManualExcelDataSourceAdapterTests
         }
     }
 
+    [Fact]
+    public async Task FetchAsync_Reads_Local_Spain_Folder_And_Deduplicates_DeltaRows()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsv(Path.Combine(folder, "Spain_Sales_2025.csv"),
+                ("line-a", "1001", 10, 100m));
+            WriteSpainCsv(Path.Combine(folder, "Spain_Sales_range_20260528_to_20260603.csv"),
+                ("line-a", "1001", 10, 125m),
+                ("line-b", "1002", 20, 50m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "Spain_Sales_2025.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder));
+
+            Assert.Equal(2, result.Records.Count);
+            Assert.Equal(125m, Assert.Single(result.Records, r => r.SourceLineId == "line-a").SalesPriceValue);
+            Assert.Equal(50m, Assert.Single(result.Records, r => r.SourceLineId == "line-b").SalesPriceValue);
+            Assert.Equal(folder, result.LocalOutputDirectoryOverride);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static DataSourceFetchContext CreateContext(string manualImportPath, string tsc = "TRES", string land = "Spanien") => new()
     {
         Site = new Site
@@ -107,11 +138,19 @@ public class ManualExcelDataSourceAdapterTests
     private static string CreateSpainCsv()
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
-        var csv = string.Join(Environment.NewLine,
-            "\"TSC\";\"Land\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Name\";\"ProductGroup\";\"Quantity\";\"CustomerNumber\";\"CustomerName\";\"CustomerCountry\";\"StandardCost\";\"StandardCostCurrency\";\"PurchaseOrderNumber\";\"SalesPriceValue\";\"SalesCurrency\";\"DocumentCurrency\";\"CompanyCurrency\";\"Incoterms2020\";\"SalesResponsibleEmployee\";\"InvoiceDate\";\"DocumentType\"",
-            "\"TRES\";\"Spanien\";\"20241332\";\"20\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"265.000000\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"");
-        File.WriteAllText(filePath, csv);
+        WriteSpainCsv(filePath, ("line-a", "20241332", 20, 265m));
         return filePath;
+    }
+
+    private static void WriteSpainCsv(string filePath, params (string SourceLineId, string InvoiceNumber, int Position, decimal SalesPriceValue)[] rows)
+    {
+        var csv = string.Join(Environment.NewLine,
+            new[]
+            {
+                "\"TSC\";\"Land\";\"SourceLineId\";\"InvoiceNumber\";\"PositionOnInvoice\";\"Material\";\"Name\";\"ProductGroup\";\"Quantity\";\"CustomerNumber\";\"CustomerName\";\"CustomerCountry\";\"StandardCost\";\"StandardCostCurrency\";\"PurchaseOrderNumber\";\"SalesPriceValue\";\"SalesCurrency\";\"DocumentCurrency\";\"CompanyCurrency\";\"Incoterms2020\";\"SalesResponsibleEmployee\";\"InvoiceDate\";\"DocumentType\""
+            }.Concat(rows.Select(row =>
+                $"\"TRES\";\"Spanien\";\"{row.SourceLineId}\";\"{row.InvoiceNumber}\";\"{row.Position}\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"{row.SalesPriceValue.ToString(System.Globalization.CultureInfo.InvariantCulture)}\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"")));
+        File.WriteAllText(filePath, csv);
     }
 
     private sealed class FakeSharePointUploadService : ISharePointUploadService

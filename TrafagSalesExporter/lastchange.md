@@ -21,6 +21,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu fuer Spanien: rclone-Uploadfehler `Can't set -v and --log-level` behoben; `--verbose` wurde aus dem All-in-one-Upload entfernt.
 - Neu fuer Spanien: rclone wird automatisch an mehreren Standardpfaden gesucht, inkl. `C:\Tools\rclone.exe`, `C:\Tools\rclone\rclone.exe`, `C:\Tools\rclone\rclone\rclone.exe` und `PATH`.
 - Wichtig fuer Spanien: Nur das All-in-one-Script benoetigt keine separate `Export-SageSpainSalesCsv.ps1`; der alte Wrapper `Run-SpainExportAndUpload.ps1` braucht weiterhin das Export-Script daneben.
+- Neu fuer Spanien-Import: SharePoint-/lokale Ordner mit `Spain_Sales*.csv` werden komplett gelesen; Basisdateien und taegliche Range-/Delta-Dateien werden zu einem deduplizierten Gesamtstand zusammengefuehrt.
+- Spanien-Dedupe-Regel: primaer `SourceLineId`, Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`.
 - Neu dokumentiert: Spanien-rclone-Anleitung und Package-README auf den All-in-one-Workflow aktualisiert.
 - Neu umgesetzt: ES-Referenz 2025 auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` als Referenz-/Excel-Fehler dokumentiert.
 - Neu umgesetzt: `FinanceProbe` nutzt dieselbe korrigierte ES-Referenz.
@@ -132,6 +134,48 @@ Commits:
 - `8e0b696 Default Spain export range to last seven days`
 - `af097ca Fix Spain all-in-one rclone upload`
 - `3fd19a8 Detect nested Spain rclone executable`
+
+## Nachtrag 2026-06-05 Spanien Delta-Sync im Dashboard-Import
+
+Problem:
+
+- Der Sage-Server laedt per rclone taeglich neue Delta-Dateien in den SharePoint-Ordner.
+- Dateinamen sind z. B. `Spain_Sales_range_20260528_to_20260603.csv`.
+- Bisher haette ein einzelnes Delta beim Standortexport den kompletten Spanienbestand ersetzt, wenn nur dieses Delta gelesen wird.
+
+Umgesetzt:
+
+- `ManualExcelDataSourceAdapter` erkennt Spanien-Ordner lokal und in SharePoint.
+- Fuer Spanien werden alle `Spain_Sales*.csv` gelesen, nicht nur die neueste Datei.
+- SharePoint-Auswahl akzeptiert Spanien-Dateien ohne `TRES` im Namen.
+- Sortierung:
+  - Basis-/Vollfiles zuerst.
+  - danach `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv` nach Datumsbereich.
+- `ManualExcelImportService` liest `SourceLineId` aus dem CSV.
+- Vor dem Speichern wird Spanien dedupliziert:
+  - primaer `SourceLineId`.
+  - Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`.
+- `CentralSalesRecords` werden weiterhin pro Standort ersetzt, aber mit dem zusammengesetzten und deduplizierten Gesamtstand aus Basis + Deltas.
+
+Wichtige Bedienregel:
+
+- Fuer Delta-Sync muss im Standort/Manuellen Import der Ordner hinterlegt sein, nicht eine einzelne Delta-Datei.
+- Beispielordner lokal/testweise: `SageSpainExportPackage`.
+- Beispiel SharePoint: `Import/Finance/Spanien`.
+
+Validierung:
+
+```text
+dotnet test TrafagSalesExporter.sln --verbosity minimal --filter ManualExcel
+```
+
+Ergebnis: `12/12` Tests gruen.
+
+```text
+dotnet test TrafagSalesExporter.sln --verbosity minimal
+```
+
+Ergebnis: `83/83` Tests gruen.
 
 ## Nachtrag 2026-06-04 Finance Schnelluebersicht / Experten / 3D Datenanalyse
 
