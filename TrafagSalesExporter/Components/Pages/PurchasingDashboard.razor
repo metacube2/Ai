@@ -8,15 +8,41 @@
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-1">@T("Einkauf", "Purchasing")</MudText>
-<MudText Typo="Typo.body2" Class="mb-4 purchasing-muted">
-    @T("SAP-Einkaufsdashboard nach Power-BI-Vorlage x.pbix, vorbereitet fuer Spend, offene Bestellungen, Kontrakte und Lieferantenperformance.",
-       "SAP purchasing dashboard based on the Power BI template x.pbix, prepared for spend, open orders, contracts and supplier performance.")
-</MudText>
-
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    @PurchasingStatusText
-</MudAlert>
+<MudPaper Class="purchasing-hero mb-4" Elevation="0">
+    <div class="purchasing-hero-main">
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
+            @T("Einkauf Cockpit", "Purchasing cockpit")
+        </MudChip>
+        <MudText Typo="Typo.h3" Class="purchasing-hero-title">@T("Spend, Lieferanten, offene Verpflichtungen", "Spend, suppliers, open commitments")</MudText>
+        <MudText Typo="Typo.body1" Class="purchasing-hero-text">
+            @T("Operative Einkaufsanalyse mit Live-EKKO, klarer SAP-Datenpipeline, Simulationen und 3D-What-if-Ansicht.",
+               "Operational purchasing analytics with live EKKO, clear SAP data pipeline, simulations and 3D what-if view.")
+        </MudText>
+        <div class="purchasing-hero-actions">
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkkoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKKO @(_liveState.EkkoLoaded ? "live" : "pending")
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkpoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKPO @(_liveState.EkpoLoaded ? "live" : "pending")
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EketLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKET @(_liveState.EketLoaded ? "live" : "pending")
+            </MudChip>
+        </div>
+    </div>
+    <div class="purchasing-hero-metrics">
+        <div class="purchasing-radar" style="@BuildReadinessDonutStyle()">
+            <div>
+                <strong>@DataReadinessPercent.ToString("N0")%</strong>
+                <span>@T("Live", "Live")</span>
+            </div>
+        </div>
+        <div class="purchasing-hero-note">
+            <strong>@DataReadinessText</strong>
+            <span>@PurchasingStatusText</span>
+        </div>
+    </div>
+</MudPaper>
 
 <MudGrid Class="mb-4" Spacing="2">
     @foreach (var card in KpiCards)
@@ -24,7 +50,9 @@
         <MudItem xs="12" sm="6" lg="3">
             <MudPaper Class="purchasing-kpi pa-3" Outlined="true">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                    <MudIcon Icon="@card.Icon" Color="@card.Color" Size="Size.Large" />
+                    <div class="purchasing-kpi-icon">
+                        <MudIcon Icon="@card.Icon" Color="@card.Color" Size="Size.Medium" />
+                    </div>
                     <div>
                         <MudText Typo="Typo.caption" Class="purchasing-muted">@T(card.TitleDe, card.TitleEn)</MudText>
                         <MudText Typo="Typo.h6">@card.Value</MudText>
@@ -39,33 +67,67 @@
 <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
     <MudTabPanel Text="@T("Uebersicht", "Overview")" Icon="@Icons.Material.Filled.Dashboard">
         <MudGrid Spacing="2">
-            <MudItem xs="12" lg="7">
-                <MudPaper Class="pa-3" Outlined="true">
-                    <MudText Typo="Typo.h6" Class="mb-2">@T("Analyseachsen", "Analysis axes")</MudText>
-                    <MudTable Items="@AnalysisAxes" Dense="true" Hover="true">
-                        <HeaderContent>
-                            <MudTh>@T("Achse", "Axis")</MudTh>
-                            <MudTh>@T("PBIX-Feld", "PBIX field")</MudTh>
-                            <MudTh>@T("Verwendung", "Usage")</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@T(context.LabelDe, context.LabelEn)</MudTd>
-                            <MudTd><code>@context.Field</code></MudTd>
-                            <MudTd>@T(context.UsageDe, context.UsageEn)</MudTd>
-                        </RowTemplate>
-                    </MudTable>
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("SAP Datenfluss", "SAP data flow")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">@T("Vom OData-Service bis zur Kennzahl sichtbar, welcher Baustein echt ist.", "From OData service to KPI, it is visible which block is real.")</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@DataReadinessText</MudChip>
+                    </MudStack>
+                    <div class="purchasing-pipeline">
+                        @foreach (var step in PipelineRows)
+                        {
+                            <div class="purchasing-pipeline-step @(step.IsReady ? "is-ready" : "is-waiting")">
+                                <MudIcon Icon="@step.Icon" Color="@step.Color" />
+                                <div>
+                                    <strong>@T(step.TitleDe, step.TitleEn)</strong>
+                                    <span>@T(step.DetailDe, step.DetailEn)</span>
+                                </div>
+                                <MudChip T="string" Size="Size.Small" Color="@step.Color" Variant="Variant.Outlined">@step.Value</MudChip>
+                            </div>
+                        }
+                    </div>
                 </MudPaper>
             </MudItem>
-            <MudItem xs="12" lg="5">
-                <MudPaper Class="pa-3" Outlined="true">
-                    <MudText Typo="Typo.h6" Class="mb-2">@T("SAP-Quellen aus PBIX", "SAP sources from PBIX")</MudText>
-                    @foreach (var source in SapSources)
-                    {
-                        <div class="purchasing-source-row">
-                            <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Small" />
-                            <span><strong>@source.Name</strong> @source.Description</span>
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Management Insights", "Management insights")</MudText>
+                    <div class="purchasing-insights">
+                        @foreach (var insight in ManagementInsights)
+                        {
+                            <div class="purchasing-insight">
+                                <MudIcon Icon="@Icons.Material.Filled.AutoGraph" Color="Color.Info" Size="Size.Small" />
+                                <span>@insight</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="purchasing-mini-donut-wrap">
+                        <div class="purchasing-mini-donut" style="@BuildOverviewDonutStyle()">
+                            <strong>@DataReadinessPercent.ToString("N0")%</strong>
                         </div>
-                    }
+                        <div class="purchasing-mini-legend">
+                            <span><i class="ready"></i>@T("Live", "Live")</span>
+                            <span><i class="waiting"></i>@T("Wartet", "Waiting")</span>
+                            <span><i class="simulation"></i>@T("Simulation", "Simulation")</span>
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Analyseachsen", "Analysis axes")</MudText>
+                    <div class="purchasing-axis-grid">
+                        @foreach (var axis in AnalysisAxes)
+                        {
+                            <div class="purchasing-axis-card">
+                                <strong>@T(axis.LabelDe, axis.LabelEn)</strong>
+                                <code>@axis.Field</code>
+                                <span>@T(axis.UsageDe, axis.UsageEn)</span>
+                            </div>
+                        }
+                    </div>
                 </MudPaper>
             </MudItem>
         </MudGrid>
@@ -240,6 +302,52 @@
         new("Data (2)", "Warengruppen-Mapping und Warengruppentexte.")
     ];
 
+    private int DataReadinessPercent
+    {
+        get
+        {
+            var ready = 0;
+            if (_liveState.EkkoLoaded)
+                ready++;
+            if (_liveState.EkpoLoaded)
+                ready++;
+            if (_liveState.EketLoaded)
+                ready++;
+            return (int)Math.Round(ready / 3d * 100d);
+        }
+    }
+
+    private string DataReadinessText
+        => DataReadinessPercent switch
+        {
+            >= 100 => T("voll live", "fully live"),
+            >= 67 => T("mehrheitlich live", "mostly live"),
+            >= 34 => T("teilweise live", "partly live"),
+            _ => T("Verbindung wird geprueft", "connection being checked")
+        };
+
+    private IReadOnlyList<PurchasingPipelineStep> PipelineRows =>
+    [
+        new("EKKO Bestellkopf", "EKKO purchase header", _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-", _liveState.EkkoLoaded ? "Bestellungen seit Jahresbeginn sind live verfuegbar" : "Bestellkopf wartet auf SAP", _liveState.EkkoLoaded ? "Orders since start of year are available live" : "Purchase header is waiting for SAP", Icons.Material.Filled.ReceiptLong, _liveState.EkkoLoaded, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? "Spend, Artikel und Warengruppen koennen echt berechnet werden" : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? "Spend, articles and material groups can be calculated real" : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? "Faelligkeiten und Terminstatus koennen echt berechnet werden" : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? "Due dates and schedule status can be calculated real" : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Dashboard Layer", "Dashboard layer", _liveState.EkkoLoaded ? "aktiv" : "bereit", "Livewerte, Simulation und 3D-Analyse werden getrennt ausgewiesen", "Live values, simulation and 3D analysis are shown separately", Icons.Material.Filled.DashboardCustomize, true, Color.Info)
+    ];
+
+    private IReadOnlyList<string> ManagementInsights =>
+    [
+        _liveState.EkkoLoaded
+            ? T($"{_liveState.PurchaseOrderCount:N0} Einkaufsbelege sind fuer 2026 live im Cockpit.", $"{_liveState.PurchaseOrderCount:N0} purchase orders are live in the cockpit for 2026.")
+            : T("EKKO wird geladen; danach erscheinen Bestellungen und Lieferanten live.", "EKKO is loading; orders and suppliers appear live afterwards."),
+        _liveState.EkpoLoaded
+            ? T("Spend, Artikel und Warengruppen koennen nun aus SAP-Positionen kommen.", "Spend, articles and material groups can now come from SAP item rows.")
+            : T("Spend ist bewusst als Simulation markiert, bis EKPO Zeilen liefert.", "Spend is deliberately marked as simulation until EKPO returns rows."),
+        _liveState.EketLoaded
+            ? T("Faelligkeiten und Kontrakte koennen aus EKET berechnet werden.", "Due dates and contracts can be calculated from EKET.")
+            : T("Faelligkeiten und Restverpflichtungen warten noch auf EKET.", "Due dates and remaining commitments are still waiting for EKET."),
+        T("3D What-if zeigt sofort die Auswirkung von Preis- und Wechselkursannahmen.", "3D what-if immediately shows the effect of price and exchange-rate assumptions.")
+    ];
+
     private IReadOnlyList<PurchasingSectionKpi> SpendKpis =>
     [
         new("Spend CHF", "Spend CHF", _liveState.EkpoLoaded ? "EKPO live" : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), _liveState.EkpoLoaded ? "aus SAP Positionen" : "Simulation bis EKPO liefert", _liveState.EkpoLoaded ? "from SAP item rows" : "simulation until EKPO delivers"),
@@ -409,6 +517,19 @@
             ? $"{T("Letztes EKKO-Datum", "Latest EKKO date")}: {_liveState.LatestOrderDate.Value:yyyy-MM-dd}."
             : string.Empty;
 
+    private string BuildReadinessDonutStyle()
+    {
+        var live = DataReadinessPercent;
+        return $"background:conic-gradient(#2e7d32 0 {live.ToString("0", CultureInfo.InvariantCulture)}%, rgba(255,255,255,.2) {live.ToString("0", CultureInfo.InvariantCulture)}% 100%)";
+    }
+
+    private string BuildOverviewDonutStyle()
+    {
+        var live = DataReadinessPercent;
+        var simulationStart = Math.Min(100, live + 24);
+        return $"background:conic-gradient(#2e7d32 0 {live.ToString("0", CultureInfo.InvariantCulture)}%, #f9a825 {live.ToString("0", CultureInfo.InvariantCulture)}% {simulationStart.ToString("0", CultureInfo.InvariantCulture)}%, #cfd8dc {simulationStart.ToString("0", CultureInfo.InvariantCulture)}% 100%)";
+    }
+
     private IReadOnlyList<PurchasingSectionChartRow> BuildPurchasingChartRows(Func<Purchasing3dBaseRow, double> selector, Func<double, string> formatter)
     {
         var rows = Purchasing3dBaseRows
@@ -538,6 +659,7 @@
     private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color);
     private sealed record PurchasingAxis(string LabelDe, string LabelEn, string Field, string UsageDe, string UsageEn);
     private sealed record PurchasingSource(string Name, string Description);
+    private sealed record PurchasingPipelineStep(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, bool IsReady, Color Color);
     private sealed record PowerBiPageInfo(string Page, string Visuals, string Measure, string Dimensions);
     private sealed record Purchasing3dIndicator(string Key, string TitleDe, string TitleEn, string Unit);
     private sealed record Purchasing3dBaseRow(string Axis, int Year, double Spend, double OpenValue, double OpenQuantity, double ContractValue, double SupplierScore);
@@ -548,8 +670,267 @@
         color: var(--mud-palette-text-secondary);
     }
 
+    .purchasing-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 22px;
+        align-items: stretch;
+        padding: 24px;
+        color: #f7fbff;
+        background:
+            linear-gradient(135deg, rgba(11, 31, 51, .98), rgba(21, 101, 192, .86)),
+            linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .purchasing-hero-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .purchasing-hero-title {
+        max-width: 980px;
+        line-height: 1.08;
+    }
+
+    .purchasing-hero-text {
+        max-width: 860px;
+        color: rgba(255,255,255,.82);
+    }
+
+    .purchasing-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .purchasing-hero-metrics {
+        display: grid;
+        grid-template-columns: 128px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 8px;
+    }
+
+    .purchasing-radar,
+    .purchasing-mini-donut {
+        position: relative;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+    }
+
+    .purchasing-radar {
+        width: 128px;
+        height: 128px;
+    }
+
+    .purchasing-radar::after,
+    .purchasing-mini-donut::after {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        background: #102235;
+    }
+
+    .purchasing-radar > div,
+    .purchasing-mini-donut > strong {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .purchasing-radar strong {
+        display: block;
+        font-size: 1.75rem;
+        line-height: 1;
+    }
+
+    .purchasing-radar span {
+        color: rgba(255,255,255,.72);
+        font-size: .8rem;
+    }
+
+    .purchasing-hero-note {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .purchasing-hero-note strong {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0;
+    }
+
+    .purchasing-hero-note span {
+        color: rgba(255,255,255,.76);
+        font-size: .9rem;
+    }
+
     .purchasing-kpi {
         min-height: 104px;
+        border-left: 4px solid var(--mud-palette-primary);
+        transition: transform .16s ease, box-shadow .16s ease;
+    }
+
+    .purchasing-kpi:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+
+    .purchasing-kpi-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: rgba(21, 101, 192, .1);
+        flex: 0 0 auto;
+    }
+
+    .purchasing-overview-panel {
+        min-height: 100%;
+    }
+
+    .purchasing-pipeline {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .purchasing-pipeline-step {
+        display: grid;
+        grid-template-rows: auto minmax(96px, 1fr) auto;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 8px;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-pipeline-step.is-ready {
+        border-top: 5px solid #2e7d32;
+    }
+
+    .purchasing-pipeline-step.is-waiting {
+        border-top: 5px solid #f9a825;
+    }
+
+    .purchasing-pipeline-step strong,
+    .purchasing-axis-card strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .purchasing-pipeline-step span,
+    .purchasing-axis-card span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .86rem;
+    }
+
+    .purchasing-insights {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-insight {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-insight:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-mini-donut-wrap {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-mini-donut {
+        width: 118px;
+        height: 118px;
+    }
+
+    .purchasing-mini-donut::after {
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-mini-donut strong {
+        font-size: 1.35rem;
+    }
+
+    .purchasing-mini-legend {
+        display: grid;
+        gap: 8px;
+        color: var(--mud-palette-text-secondary);
+        font-size: .86rem;
+    }
+
+    .purchasing-mini-legend span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .purchasing-mini-legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .purchasing-mini-legend .ready {
+        background: #2e7d32;
+    }
+
+    .purchasing-mini-legend .waiting {
+        background: #cfd8dc;
+    }
+
+    .purchasing-mini-legend .simulation {
+        background: #f9a825;
+    }
+
+    .purchasing-axis-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .purchasing-axis-card {
+        min-height: 130px;
+        padding: 14px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-background);
+    }
+
+    .purchasing-axis-card code {
+        display: inline-block;
+        margin-bottom: 8px;
+        white-space: normal;
+        word-break: break-word;
     }
 
     .purchasing-source-row {
@@ -569,5 +950,27 @@
         height: calc(100vh - 300px);
         min-height: 620px;
         overflow: hidden;
+    }
+
+    @@media (max-width: 1250px) {
+        .purchasing-hero,
+        .purchasing-pipeline,
+        .purchasing-axis-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .purchasing-hero,
+        .purchasing-hero-metrics,
+        .purchasing-pipeline,
+        .purchasing-axis-grid,
+        .purchasing-mini-donut-wrap {
+            grid-template-columns: 1fr;
+        }
+
+        .purchasing-hero {
+            padding: 18px;
+        }
     }
 </style>
