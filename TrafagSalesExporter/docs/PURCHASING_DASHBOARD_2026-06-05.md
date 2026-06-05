@@ -47,9 +47,11 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
   - `Lieferanten`
   - `PBIX Vorlage`
   - `3D Simulation`
+  - `Ideen`
 - Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
 - Die Seite ist als Cockpit-Struktur umgesetzt und zweisprachig ueber den vorhandenen UI-Sprachservice vorbereitet.
-- Die Kennzahlen sind noch nicht live an SAP gebunden.
+- EKKO, EKPO und EKET werden live ueber SAP/OData gelesen.
+- Die Kennzahlen im Cockpit nutzen aktuell eine begrenzte Live-Probe, damit das Dashboard sofort echte Einkaufsdaten zeigt.
 
 ## SAP/OData-Konfiguration
 
@@ -70,6 +72,44 @@ Vorbefuellte Joins:
 
 Die Seite verwendet dieselben Grundtabellen wie die Finance-/Standorte-Quellenpflege: `Sites`, `SapSourceDefinitions`, `SapJoinDefinitions`, `SapFieldMappings`.
 
+## SAP/OData Live-Stand 2026-06-05
+
+Der SAP-Test hat bestaetigt, dass die Einkaufstabellen Daten enthalten:
+
+- `EKKO` ab `01.01.2026`: 2'748 Koepfe.
+- `EKPO` gesamt: 233'920 Positionen.
+- `EKET` gesamt: 242'571 Einteilungen.
+- Join `EKKO -> EKPO` ab `01.01.2026`: 3'464 Zeilen.
+- Join `EKKO -> EKET` ab `01.01.2026`: 3'458 Zeilen.
+
+Nach Aktivierung der angepassten SAP-Methoden liefern die OData-Services:
+
+- `EKPOSet?$top=5`: HTTP 200 mit Daten.
+- `eketSet?$top=5`: HTTP 200 mit Daten.
+- `EKPOSet?$filter=Ebeln eq '45148366'`: 1 Zeile.
+- `eketSet?$filter=Ebeln eq '45148366'`: 1 Zeile.
+
+Wichtig: Die OData-Property heisst `Ebeln`. Ein Filter mit `EBELN` liefert HTTP 400.
+
+## Live-Kennzahlen im Dashboard
+
+Die Seite `/einkauf` zeigt nun echte Werte aus SAP:
+
+- `Spend total`: Summe `EKPOSet.Netwr` aus der Live-Probe.
+- `Offene Bestellungen`: Anzahl EKKO-Belege seit Jahresbeginn.
+- `Kontrakte`: offener Restwert aus `EKET.Menge - EKET.Wemng` bewertet mit EKPO-Netto-Stueckwert.
+- `Offener Bestellwert`: berechnet aus EKET-Offenmenge und EKPO-Netto-Stueckwert.
+- `Offene Menge`: Summe offener EKET-Mengen.
+- Top-Lieferant, Top-Warengruppe und Top-Artikel werden aus EKPO gruppiert.
+- Spend-, Offenwert- und Kontrakt-Diagramme verwenden Live-Gruppierungen, sofern EKPO/EKET Daten liefern.
+
+Aktuelle technische Begrenzung:
+
+- Das Dashboard laedt fuer EKPO/EKET eine begrenzte Probe mit `$top=1000`.
+- Filter ist `Ebeln ge <erste aktuelle EKKO-Bestellnummer>`.
+- Damit sind die Werte echte SAP-Werte, aber noch keine vollstaendige Jahresaggregation.
+- Fuer definitive Management-Summen braucht es als naechsten Schritt serverseitige OData-Filter/Aggregation oder einen eigenen Import-/Cache-Prozess analog Finance.
+
 ## 3D Simulation
 
 Das Einkaufsdashboard hat eine eigene 3D-Simulation fuer wichtige Einkaufsindikatoren:
@@ -84,12 +124,25 @@ Die Simulation nutzt feste Canvas-Groessen, sichtbare Achsen, waehlbare Diagramm
 
 ## Naechster Schritt fuer Live-Daten
 
-Fuer echte Werte muessen die Einkaufsquellen sauber gemappt werden:
+Fuer definitive Vollwerte muessen die Live-Quellen noch fachlich fertig aggregiert werden:
 
-- Bestellkopf, z. B. `EKKOSet`.
-- Bestellpositionen, z. B. `EKPOSet`.
-- Offene Liefer-/Terminmengen, voraussichtlich Termin-/Schedule-Daten.
-- Kontrakte und offene Verpflichtungen.
+- Jahres-/Periodenfilter fuer `EKKOSet.Bedat`.
+- Vollstaendige Aggregation von `EKPOSet.Netwr` nach Jahr, Lieferant, Warengruppe und Artikel.
+- Vollstaendige offene Werte/Mengen aus `EKET` und `EKPO`.
+- Kontrakte und offene Verpflichtungen, inkl. fachlicher Abgrenzung von normalen Bestellungen.
 - Lieferantenbewertung / Performance, falls im SAP-System als OData- oder HANA-Quelle verfuegbar.
 
 Danach koennen Filter, Aggregationen und Delta-/Refresh-Prozess analog zu Finance/Spain umgesetzt werden.
+
+## Geaenderte Programmstellen
+
+- `Components/Pages/PurchasingDashboard.razor`
+  - KPI-Karten, Detailtabellen und Diagramme lesen jetzt Live-Werte aus `PurchasingDashboardLiveState`.
+  - Fallback-Simulation bleibt sichtbar, falls SAP/OData nicht antwortet.
+- `Services/IPurchasingDashboardService.cs`
+  - Live-State um Spend, offene Menge, offenen Wert, Kontraktwert und Live-Diagrammzeilen erweitert.
+- `Services/PurchasingDashboardService.cs`
+  - Laedt EKKO, EKPO und EKET.
+  - Berechnet Spend aus EKPO.
+  - Berechnet offene Mengen/Werte aus EKET minus Wareneingangsmenge, bewertet mit EKPO-Netto-Stueckwert.
+  - Erstellt Top-Gruppierungen fuer Lieferant, Warengruppe und Artikel.
