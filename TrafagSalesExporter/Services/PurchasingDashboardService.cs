@@ -256,59 +256,40 @@ WITH priced AS (
         COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Supplier,
         COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
         substr(k.Bedat, 1, 4) AS Year,
-        SUM(CAST(p.Netwr AS REAL)) AS Value,
-        SUM(CAST(p.Menge AS REAL)) AS Quantity
+        MIN(CASE WHEN CAST(p.Menge AS REAL) = 0 THEN NULL ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS UnitPrice
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
     WHERE COALESCE(p.Loekz, '') = '' AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
     GROUP BY Supplier, Article, Year
-),
-current_year AS (
-    SELECT Supplier, Article, Value, Quantity, Value / Quantity AS UnitPrice
-    FROM priced
-    WHERE Year = '2026'
-),
-previous_year AS (
-    SELECT Supplier, Article, Value / Quantity AS UnitPrice
-    FROM priced
-    WHERE Year = '2025' AND Quantity > 0
 )
 SELECT
-    c.Supplier || ' / ' || c.Article AS Label,
-    printf('%.1f%%', ((c.UnitPrice - p.UnitPrice) / p.UnitPrice) * 100.0) AS Value,
-    'Wirkung CHF ' || printf('%,.0f', (c.UnitPrice - p.UnitPrice) * c.Quantity) AS Detail,
-    CASE WHEN ((c.UnitPrice - p.UnitPrice) / p.UnitPrice) >= 0.10 THEN 'High'
-         WHEN ((c.UnitPrice - p.UnitPrice) / p.UnitPrice) >= 0.03 THEN 'Medium'
+    Supplier || ' / ' || Article AS Label,
+    'CHF ' || printf('%.2f', UnitPrice) AS Value,
+    'Jahr ' || Year || ' | PowerBI: Min(Netwr CHF/Stk)' AS Detail,
+    CASE WHEN UnitPrice > 1000 THEN 'High'
+         WHEN UnitPrice > 100 THEN 'Medium'
          ELSE 'Low' END AS Severity
-FROM current_year c
-JOIN previous_year p ON p.Supplier = c.Supplier AND p.Article = c.Article
-WHERE p.UnitPrice > 0 AND c.UnitPrice > p.UnitPrice
-ORDER BY (c.UnitPrice - p.UnitPrice) * c.Quantity DESC
+FROM priced
+WHERE UnitPrice IS NOT NULL
+ORDER BY Year DESC, UnitPrice DESC
 LIMIT 10;", cancellationToken);
         state.PriceVarianceChartRows = await ExecuteChartRowsAsync(conn, @"
 WITH priced AS (
     SELECT
-        COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Supplier,
-        COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
         substr(k.Bedat, 1, 4) AS Year,
-        SUM(CAST(p.Netwr AS REAL)) AS Value,
-        SUM(CAST(p.Menge AS REAL)) AS Quantity
+        COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
+        MIN(CASE WHEN CAST(p.Menge AS REAL) = 0 THEN NULL ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS UnitPrice
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
     WHERE COALESCE(p.Loekz, '') = '' AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
-    GROUP BY Supplier, Article, Year
-),
-delta AS (
-    SELECT c.Supplier, (c.Value / c.Quantity - p.Value / p.Quantity) * c.Quantity AS Impact
-    FROM priced c
-    JOIN priced p ON p.Supplier = c.Supplier AND p.Article = c.Article
-    WHERE c.Year = '2026' AND p.Year = '2025' AND p.Quantity > 0 AND c.Quantity > 0 AND c.Value / c.Quantity > p.Value / p.Quantity
+    GROUP BY Year, Article
 )
-SELECT Supplier, SUM(Impact) AS Value
-FROM delta
-GROUP BY Supplier
-ORDER BY Value DESC
-LIMIT 6;", cancellationToken);
+SELECT Year, MIN(UnitPrice) AS Value
+FROM priced
+WHERE UnitPrice IS NOT NULL
+GROUP BY Year
+ORDER BY Year;", cancellationToken);
+        state.PriceTrendChartRows = state.PriceVarianceChartRows.ToList();
 
         state.SpendConcentrationChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT 'Lieferant ' || COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value

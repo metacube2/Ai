@@ -40,6 +40,7 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> PriceVarianceChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendConcentrationChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> DataQualityChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> PriceTrendChartRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> DeliveryRiskRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> PriceVarianceRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> SpendConcentrationRows { get; set; } = [];

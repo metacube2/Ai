@@ -147,21 +147,47 @@ Technische Logik:
 
 Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 
-- `Spend total`: Summe `EKPOSet.Netwr` aus dem Cache.
-- `Offene Bestellungen`: Anzahl EKKO-Belege seit Jahresbeginn.
+- `Spend total`: Summe `EKPOSet.Netwr` aus dem Cache, begrenzt auf den gewaehlten Zeitraum.
+- `Offene Bestellungen`: Anzahl EKKO-Belege im gewaehlten Zeitraum.
 - `Kontrakte`: offener Restwert aus `EKET.Menge - EKET.Wemng` bewertet mit EKPO-Netto-Stueckwert.
 - `Offener Bestellwert`: berechnet aus EKET-Offenmenge und EKPO-Netto-Stueckwert.
 - `Offene Menge`: Summe offener EKET-Mengen.
 - Top-Lieferant, Top-Warengruppe und Top-Artikel werden aus EKPO gruppiert.
 - Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
 - Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
+- Der Standardzeitraum ist rollierend auf die letzten drei Kalenderjahre bis heute gesetzt. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`.
+
+## PowerBI-Abgleich
+
+Das Einkaufsdashboard wurde gegen die sichtbaren Auswertungen aus `x.pbix` abgeglichen:
+
+- `Besch.Volumen CHF/Lieferant`: `Sum(EKPOSet.Netwr CHF)` nach Jahr, Lieferant, Warengruppe und Artikel.
+- `Eink.Vol. CHF / Lieferant Kuchen`: `Sum(EKPOSet.Netwr CHF)` nach Lieferant.
+- `Balken Vol./Lief/WG`: `Sum(EKPOSet.Netwr CHF)` nach Jahr und Lieferant.
+- `Diagramm Vol./WG`: `Sum(EKPOSet.Netwr CHF)` nach Jahr und Warengruppe.
+- `Eink.Vol. CHF / Region`: `Sum(EKPOSet.Netwr CHF)` nach Region.
+- `Preisentwicklung CHF`: `Min(EKPOSet.Netwr CHF/Stk)` nach Artikel und Jahr.
+- `Matrix Vol./WG`: `Sum(EKPOSet.Netwr CHF)` nach Warengruppe, Lieferant und Artikel.
+
+Umgesetzt ist die gleiche Kernaggregation:
+
+- Spend und Volumen verwenden `SUM(EKPO.Netwr)` mit Zeitraumfilter auf `EKKO.Bedat`.
+- Preisentwicklung verwendet `MIN(EKPO.Netwr / EKPO.Menge)` je Artikel und Jahr mit Zeitraumfilter auf `EKKO.Bedat`.
+- Offene Werte verwenden `MAX(EKET.Menge - EKET.Wemng, 0) * (EKPO.Netwr / EKPO.Menge)`.
+
+Noch nicht final 1:1 ist die Namensauflösung:
+
+- PowerBI nutzt fuer Lieferanten- und Warengruppennamen `Data.Name`, `Data.Lieferant`, `Data (2).Warengruppe` und `Data (2).WG komplett`.
+- Der aktuelle SAP-OData-Service liefert produktiv `EKKOSet`, `EKPOSet` und `eketSet`.
+- Tests auf `Data`, `Data2`, `DataSet` und `Data2Set` liefern aktuell `404 Resource not found`.
+- Bis diese Mapping-Quelle angebunden ist, zeigt das Dashboard Lieferantennummern und Warengruppen-Codes statt vollstaendiger Namen.
 
 ## Ideen und Kennzahlen-Katalog
 
 Der Ideenbereich wurde fuer den Einkauf erweitert:
 
 - Lieferantenrisiko.
-- Preisabweichung.
+- Preisentwicklung CHF.
 - Maverick Buying.
 - Rahmenvertragsnutzung.
 - Working Capital.
@@ -178,8 +204,8 @@ Der separate Kennzahlen-Katalog enthaelt nun konkrete Ausbau-KPIs mit Dimension 
 - Spend CHF.
 - Top-10-Lieferantenanteil.
 - Risiko-Score 0-100.
-- Preisdelta in Prozent und CHF.
-- Letzter Preis vs. Vorjahr.
+- Min. Netto-Stueckpreis nach Artikel und Jahr.
+- Preisentwicklung analog PowerBI.
 - Anteil ausserhalb Vertrag.
 - Abrufquote.
 - Ueberfaelliger offener Wert.
@@ -206,8 +232,8 @@ Die Simulation nutzt feste Canvas-Groessen, sichtbare Achsen, waehlbare Diagramm
 
 Die technische Vollbasis ist geladen. Fuer fachlich finale Management-Sichten muessen noch diese Abgrenzungen abgestimmt werden:
 
-- Jahres-/Periodenfilter fuer `EKKOSet.Bedat`.
-- Periodenlogik fuer historische und offene Werte.
+- Mapping-Quelle fuer Lieferantennamen, Region und Warengruppentexte bereitstellen oder als eigene Cache-Tabelle laden.
+- PowerBI-Zielwerte mit Marco/Finanzen anhand eines konkreten Monats und Lieferanten gegenpruefen.
 - Kontrakte und offene Verpflichtungen, inkl. fachlicher Abgrenzung von normalen Bestellungen und Umlagerungen.
 - Lieferantenbewertung / Performance, falls im SAP-System als OData- oder HANA-Quelle verfuegbar.
 

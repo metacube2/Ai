@@ -197,7 +197,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-ideas-overview", "purchasing-ideas", "Uebersicht", "Overview", "Lightbulb", "einkauf/ideen", 10, "All"),
         Link("purchasing-idea-data-service", "purchasing-ideas", "Einkauf-Datenservice", "Purchasing data service", "Storage", "einkauf/ideen/datenservice", 20, "All"),
         Link("purchasing-idea-delivery-risk", "purchasing-ideas", "Liefertermin-Risiko", "Delivery due-date risk", "PendingActions", "einkauf/ideen/liefertermin-risiko", 30, "All"),
-        Link("purchasing-idea-price-variance", "purchasing-ideas", "Preisabweichung", "Price variance", "TrendingUp", "einkauf/ideen/preisabweichung", 40, "All"),
+        Link("purchasing-idea-price-variance", "purchasing-ideas", "Preisentwicklung", "Price trend", "TrendingUp", "einkauf/ideen/preisabweichung", 40, "All"),
         Link("purchasing-idea-spend-concentration", "purchasing-ideas", "Spend-Konzentration", "Spend concentration", "PieChart", "einkauf/ideen/spend-konzentration", 50, "All"),
         Link("purchasing-idea-data-quality", "purchasing-ideas", "Datenqualitaet", "Data quality", "FactCheck", "einkauf/ideen/datenqualitaet", 60, "All"),
         Link("purchasing-kpi-catalog", "purchasing", "Kennzahlen-Katalog", "KPI catalogue", "Checklist", "einkauf/kennzahlen", 70, "All"),

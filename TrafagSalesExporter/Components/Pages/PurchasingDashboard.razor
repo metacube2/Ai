@@ -800,7 +800,7 @@
     private IReadOnlyList<PurchasingIdea> PurchasingIdeas =>
     [
         new("Lieferantenrisiko", "Supplier risk", "Kombiniert Abhaengigkeit, Single-Source-Anteil, offene Bestellungen und Lieferperformance zu einem Risiko-Score.", "Combines dependency, single-source share, open orders and delivery performance into one risk score.", "EKKO, EKPO, EKET, LFA1", "Engpaesse und Lieferantenabhaengigkeit frueh sehen", "see shortages and supplier dependency early", _liveState.EkpoLoaded && _liveState.EketLoaded ? "berechenbar" : "wartet auf EKPO/EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "calculable" : "waiting for EKPO/EKET", Icons.Material.Filled.WarningAmber, _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
-        new("Preisabweichung", "Price variance", "Zeigt Preissteigerungen pro Artikel/Lieferant gegen Vorjahr, Budget oder letzten Einkaufspreis.", "Shows price increases by article/supplier against prior year, budget or last purchase price.", "EKPO, EKKO, FX", "Sparpotenziale und Ausreisser direkt sichtbar", "savings potential and outliers visible immediately", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.TrendingUp, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Preisentwicklung CHF", "Price trend CHF", "Entspricht PowerBI: Minimum Netto-Stueckpreis pro Artikel und Jahr.", "Matches Power BI: minimum net unit price by article and year.", "EKPO, EKKO", "Artikelpreise wie in PowerBI pruefen", "check article prices like in Power BI", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.TrendingUp, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Maverick Buying", "Maverick buying", "Findet Bestellungen ausserhalb bevorzugter Lieferanten, Rahmenvertraege oder Warengruppenregeln.", "Finds orders outside preferred suppliers, contracts or material-group rules.", "EKKO, EKPO, Kontrakte", "Compliance und Buendelung verbessern", "improve compliance and bundling", "Konzept", "concept", Icons.Material.Filled.Policy, Color.Info),
         new("Rahmenvertragsnutzung", "Contract utilisation", "Zeigt Kontraktmenge, Abrufmenge, Restmenge, Laufzeit und drohenden Verfall.", "Shows contract quantity, call-off quantity, remaining quantity, term and expiry risk.", "EKKO, EKPO, EKET", "Restverpflichtungen aktiv steuern", "actively manage remaining commitments", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", Icons.Material.Filled.AssignmentTurnedIn, _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Working Capital", "Working capital", "Verbindet offene Bestellungen, Liefertermine und Zahlungs-/Bestandswirkung zu Cash-Ausblick.", "Connects open orders, delivery dates and payment/inventory impact into a cash outlook.", "EKPO, EKET, FI/AP", "Cashbedarf aus Einkauf vorhersagen", "forecast purchasing cash needs", "Konzept", "concept", Icons.Material.Filled.AccountBalanceWallet, Color.Info),
@@ -814,7 +814,7 @@
     private IReadOnlyList<PurchasingIdeaPriority> PurchasingIdeaPriorities =>
     [
         new("1. Live-Probe zu Vollaggregation", "1. Live sample to full aggregation", "EKPO/EKET liefern Daten; jetzt braucht es saubere Jahres-/Periodenaggregation.", "EKPO/EKET now deliver data; next is clean year/period aggregation.", Icons.Material.Filled.BuildCircle, Color.Success),
-        new("2. Preisabweichung aktivieren", "2. Activate price variance", "Hoher Nutzen, weil EKPO Werte, Artikel und Lieferanten jetzt verfuegbar sind.", "High value because EKPO values, articles and suppliers are now available.", Icons.Material.Filled.TrendingUp, Color.Info),
+        new("2. Preisentwicklung aktivieren", "2. Activate price trend", "PowerBI nutzt Min(EKPO.Netwr CHF/Stk); diese Logik ist jetzt lokal nachgebaut.", "Power BI uses Min(EKPO.Netwr CHF/unit); this logic is now rebuilt locally.", Icons.Material.Filled.TrendingUp, Color.Info),
         new("3. Liefertermin-Risiko anzeigen", "3. Show delivery due-date risk", "EKET offene Mengen und Termine sind die beste operative Fruehwarnung.", "EKET open quantities and dates are the best operational early warning.", Icons.Material.Filled.PendingActions, Color.Info),
         new("4. Lieferantenrisiko aufbauen", "4. Build supplier risk", "Kombiniert Performance, offene Werte, Konzentration und Abhaengigkeit.", "Combines performance, open values, concentration and dependency.", Icons.Material.Filled.Security, Color.Info),
         new("5. Contract Cockpit ausbauen", "5. Extend contract cockpit", "Mengenkontrakte und Restverpflichtungen brauchen klare fachliche Abgrenzung.", "Quantity contracts and remaining commitments need clear functional separation.", Icons.Material.Filled.Assignment, Color.Info)
@@ -876,27 +876,27 @@
             ]),
         new(
             "ideen/preisabweichung",
-            "Preisabweichung",
-            "Price variance",
-            "Preisveraenderungen pro Artikel/Lieferant.",
-            "Price changes by article/supplier.",
-            "Preissteigerungen und Ausreisser werden gegen Vorjahr, letzte Bestellung oder Budget-/Referenzpreis sichtbar gemacht.",
-            "Price increases and outliers are shown against prior year, last order or budget/reference price.",
+            "Preisentwicklung CHF",
+            "Price trend CHF",
+            "PowerBI-Logik pro Artikel/Jahr.",
+            "Power BI logic by article/year.",
+            "Minimum Netto-Stueckpreis wird pro Artikel und Jahr sichtbar gemacht.",
+            "Minimum net unit price is shown by article and year.",
             "EKPO.Netwr, EKPO.Menge, EKPO.Matnr, EKKO.Bedat, EKKO.Lifnr, FX/Budgetkurse",
-            "Preisdelta %, Preisdelta CHF, letzter Preis, Referenzpreis, potentieller Mehrpreis.",
-            "price delta %, price delta CHF, last price, reference price, potential extra cost.",
-            "Netto-Stueckpreis je Artikel/Lieferant/Periode bilden und gegen Referenzperiode vergleichen; Mengenwirkung separat ausweisen.",
-            "calculate net unit price by article/supplier/period and compare against reference period; show quantity effect separately.",
-            "Naechster Schritt: Referenzlogik festlegen: Vorjahr, letzter Preis oder Budgetpreis.",
-            "Next step: define reference logic: prior year, last price or budget price.",
+            "Min(Netwr CHF/Stk), Artikel, Jahr, Lieferantenslicer.",
+            "Min(Netwr CHF/unit), article, year, supplier slicer.",
+            "Netto-Stueckpreis als Netwr/Menge bilden und Minimum je Artikel/Jahr ausweisen.",
+            "calculate net unit price as Netwr/quantity and show minimum by article/year.",
+            "Naechster Schritt: Lieferantennamen aus Data-Quelle mitcachen.",
+            "Next step: cache supplier names from Data source.",
             _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
             _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
             Icons.Material.Filled.TrendingUp,
             _liveState.EkpoLoaded ? Color.Success : Color.Warning,
             [
                 new("Preisnormalisierung", "Price normalisation", "Preis pro Einheit stabil aus NETWR/MENGE bilden.", "derive stable unit price from NETWR/MENGE."),
-                new("Referenzperiode", "Reference period", "Vergleich gegen Vorjahr oder letzten Einkaufspreis waehlen.", "choose comparison against prior year or last purchase price."),
-                new("Ausreisser", "Outliers", "Top Preissteigerungen nach CHF-Wirkung und Prozent anzeigen.", "show top price increases by CHF impact and percent.")
+                new("Jahr", "Year", "PowerBI nutzt EKKO.Bedat Jahr als Spalte.", "Power BI uses EKKO.Bedat year as column."),
+                new("Minimum", "Minimum", "PowerBI aggregiert mit Min(Netwr CHF/Stk).", "Power BI aggregates with Min(Netwr CHF/unit).")
             ]),
         new(
             "ideen/spend-konzentration",
@@ -971,21 +971,21 @@
             Icons.Material.Filled.WarningAmber,
             _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
         new(
-            "Preisabweichung",
-            "Price variance",
-            "Preisveraenderungen pro Artikel und Lieferant.",
-            "Price changes by article and supplier.",
-            "Preissteigerungen, Ausreisser und Verhandlungspotenzial transparent machen.",
-            "Make price increases, outliers and negotiation potential transparent.",
-            "EKPO, EKKO.Bedat, Waehrung/FX, Artikel, Lieferant",
-            "Preisdelta CHF, Preisdelta %, letzter Preis, Vorjahrespreis, Budgetpreis, Einsparpotenzial.",
-            "price delta CHF, price delta %, last price, prior-year price, budget price, savings potential.",
-            "Netto-Stueckpreis je Artikel/Lieferant/Periode bilden und gegen Referenzperiode oder Budgetkurs vergleichen.",
-            "Calculate net unit price by article/supplier/period and compare against reference period or budget rate.",
-            "Preis-Waterfall, Ausreisserliste, Trendlinie je Artikel, Drilldown Lieferant -> Artikel.",
-            "price waterfall, outlier list, trend line by article, drilldown supplier -> article.",
-            "Naechster Schritt: Preisbasis in EKPO final klaeren und historische Vergleichsperiode definieren.",
-            "Next step: finalise EKPO price basis and define historical comparison period.",
+            "Preisentwicklung CHF",
+            "Price trend CHF",
+            "PowerBI-Preislogik nach Artikel und Jahr.",
+            "Power BI price logic by article and year.",
+            "Minimum Netto-Stueckpreis wie in PowerBI transparent machen.",
+            "Make minimum net unit price transparent like in Power BI.",
+            "EKPO.Netwr, EKPO.Menge, EKPO.Matnr, EKPO.Txz01, EKKO.Bedat",
+            "Min(Netwr CHF/Stk), Artikel, Jahr, Lieferantenslicer.",
+            "Min(Netwr CHF/unit), article, year, supplier slicer.",
+            "Stueckpreis = Netto / Menge, danach Minimum je Artikel/Jahr wie PowerBI.",
+            "Unit price = net / quantity, then minimum by article/year like Power BI.",
+            "Pivot nach Jahr, Artikel-Hotlist, Verlaufslinie je Artikel.",
+            "pivot by year, article hotlist, trend line by article.",
+            "Naechster Schritt: Lieferanten- und Warengruppennamen aus Data/Data2 als Mapping anbinden.",
+            "Next step: connect supplier and material group names from Data/Data2 as mapping.",
             _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
             _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
             Icons.Material.Filled.TrendingUp,
@@ -1157,8 +1157,8 @@
         new("Spend Management", "Spend management", "Spend CHF", "spend CHF", "Jahr / Lieferant / Warengruppe / Artikel", "EKKO+EKPO", _liveState.EkpoLoaded ? "Live-Probe" : "wartet auf EKPO", _liveState.EkpoLoaded ? "live sample" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Spend Management", "Spend management", "Top-10-Lieferantenanteil %", "top-10 supplier share %", "Jahr / Warengruppe", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Lieferantenrisiko", "Supplier risk", "Risiko-Score 0-100", "Risk score 0-100", "Lieferant / Warengruppe / Artikel", "EKKO+EKPO+EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "bereit" : "wartet auf Tabellen", _liveState.EkpoLoaded && _liveState.EketLoaded ? "ready" : "waiting for tables", _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
-        new("Preisabweichung", "Price variance", "Preisdelta % / CHF", "price delta % / CHF", "Artikel / Lieferant / Jahr", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
-        new("Preisabweichung", "Price variance", "Letzter Preis vs. Vorjahr", "last price vs. prior year", "Artikel / Lieferant", "EKPO+EKKO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Preisentwicklung", "Price trend", "Min(Netwr CHF/Stk)", "Min(Netwr CHF/unit)", "Artikel / Jahr", "EKPO+EKKO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("PowerBI Abgleich", "Power BI alignment", "gleiche Aggregation", "same aggregation", "Artikel / Lieferant / Jahr", "x.pbix", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Maverick Buying", "Maverick buying", "Anteil ausserhalb Vertrag", "share outside contract", "Einkaeufer / Lieferant / Warengruppe", "EKKO+EKPO+Kontrakt", "Konzept", "concept", Color.Info),
         new("Rahmenvertragsnutzung", "Contract utilisation", "Abrufquote %", "consumption rate %", "Kontrakt / Lieferant / Artikel", "EKPO+EKET", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Liefertermin-Risiko", "Delivery due-date risk", "Ueberfaelliger offener Wert CHF", "overdue open value CHF", "Monat / Lieferant / Artikel", "EKET+EKPO", _liveState.EketLoaded ? "bereit" : "wartet auf EKET", _liveState.EketLoaded ? "ready" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
@@ -1177,7 +1177,7 @@
         new("openQuantity", "Offene Menge", "Open quantity", "Qty"),
         new("contractValue", "Kontrakt-Restwert", "Contract remaining value", "CHF"),
         new("deliveryRisk", "Liefertermin-Risiko", "Delivery due-date risk", "CHF"),
-        new("priceVariance", "Preisabweichung", "Price variance", "CHF"),
+        new("priceVariance", "Preisentwicklung CHF", "Price trend CHF", "CHF"),
         new("spendConcentration", "Spend-Konzentration", "Spend concentration", "CHF"),
         new("dataQuality", "Datenqualitaet", "Data quality", "Issues"),
         new("supplierScore", "Lieferantenperformance", "Supplier performance", "%")
@@ -1246,10 +1246,10 @@
         ],
         "ideen/preisabweichung" =>
         [
-            new("Preissteigerungen", "Price increases", _liveState.PriceVarianceRows.Count.ToString("N0"), "2026 gegen 2025", "2026 vs 2025"),
-            new("Top Wirkung", "Top impact", _liveState.PriceVarianceChartRows.Count > 0 ? FormatChf(_liveState.PriceVarianceChartRows.Max(x => x.Value)) : "-", "CHF Effekt", "CHF effect"),
-            new("Lieferanten", "Suppliers", _liveState.PriceVarianceChartRows.Count.ToString("N0"), "mit Abweichung", "with variance"),
-            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Stueckpreis", "unit price")
+            new("Artikelpreise", "Article prices", _liveState.PriceVarianceRows.Count.ToString("N0"), "PowerBI Pivot", "Power BI pivot"),
+            new("Min Stueckpreis", "Min unit price", _liveState.PriceVarianceChartRows.Count > 0 ? FormatChf(_liveState.PriceVarianceChartRows.Min(x => x.Value)) : "-", "Netwr/Menge", "Netwr/quantity"),
+            new("Jahre", "Years", _liveState.PriceVarianceChartRows.Count.ToString("N0"), "EKKO.Bedat", "EKKO.Bedat"),
+            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Min(Netwr CHF/Stk)", "Min(Netwr CHF/unit)")
         ],
         "ideen/spend-konzentration" =>
         [
@@ -1287,10 +1287,10 @@
         ],
         "ideen/preisabweichung" =>
         [
-            new("Vergleich", "Comparison", "2026 vs 2025", "EKKO.Bedat", "SAP live"),
+            new("PowerBI Kennzahl", "Power BI measure", "Min(Netwr CHF/Stk)", "EKPO", "SAP live"),
             new("Preis", "Price", "NETWR / MENGE", "EKPO", "SAP live"),
-            new("CHF Wirkung", "CHF impact", FormatChf(_liveState.PriceVarianceChartRows.Sum(x => x.Value)), "Preisdelta * Menge", "SAP live"),
-            new("Hotlist", "Hotlist", $"{_liveState.PriceVarianceRows.Count:N0}", "Lieferant / Artikel", "SAP live")
+            new("Jahresspalten", "Year columns", $"{_liveState.PriceVarianceChartRows.Count:N0}", "EKKO.Bedat Jahr", "SAP live"),
+            new("Hotlist", "Hotlist", $"{_liveState.PriceVarianceRows.Count:N0}", "Artikel / Jahr", "SAP live")
         ],
         "ideen/spend-konzentration" =>
         [
@@ -1312,7 +1312,7 @@
     private string SelectedIdeaAnalysisTitleDe => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Liefertermin-Risiko produktiv",
-        "ideen/preisabweichung" => "Preisabweichung produktiv",
+        "ideen/preisabweichung" => "Preisentwicklung CHF produktiv",
         "ideen/spend-konzentration" => "Spend-Konzentration produktiv",
         "ideen/datenqualitaet" => "Datenqualitaet produktiv",
         _ => "Einkauf Analyse"
@@ -1321,7 +1321,7 @@
     private string SelectedIdeaAnalysisTitleEn => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Delivery due-date risk productive",
-        "ideen/preisabweichung" => "Price variance productive",
+        "ideen/preisabweichung" => "Price trend CHF productive",
         "ideen/spend-konzentration" => "Spend concentration productive",
         "ideen/datenqualitaet" => "Data quality productive",
         _ => "Purchasing analysis"
@@ -1330,7 +1330,7 @@
     private string SelectedIdeaAnalysisDescriptionDe => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Offene EKET-Mengen werden bewertet und nach Faelligkeit, Lieferant und Artikel priorisiert.",
-        "ideen/preisabweichung" => "Netto-Stueckpreise werden 2026 gegen 2025 verglichen und nach CHF-Wirkung sortiert.",
+        "ideen/preisabweichung" => "Netto-Stueckpreise werden wie in PowerBI als Minimum je Artikel und Jahr gezeigt.",
         "ideen/spend-konzentration" => "Lieferantenspend wird als Pareto ausgewertet, um Abhaengigkeit und Buendelungspotenzial zu zeigen.",
         "ideen/datenqualitaet" => "Pflichtfelder und Nullwerte im Einkauf-Cache werden als Qualitaetsampel gezaehlt.",
         _ => "Echte Analyse aus dem Einkauf-Cache."
@@ -1339,7 +1339,7 @@
     private string SelectedIdeaAnalysisDescriptionEn => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Open EKET quantities are valued and prioritised by due date, supplier and article.",
-        "ideen/preisabweichung" => "Net unit prices are compared 2026 against 2025 and sorted by CHF impact.",
+        "ideen/preisabweichung" => "Net unit prices are shown like in Power BI as minimum by article and year.",
         "ideen/spend-konzentration" => "Supplier spend is evaluated as pareto to show dependency and bundling potential.",
         "ideen/datenqualitaet" => "Required fields and zero values in the purchasing cache are counted as quality indicators.",
         _ => "Real analysis from the purchasing cache."
@@ -1348,7 +1348,7 @@
     private string SelectedIdeaChartTitleDe => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Offener Wert nach Faelligkeit",
-        "ideen/preisabweichung" => "Preissteigerungswirkung nach Lieferant",
+        "ideen/preisabweichung" => "Min. Stueckpreis nach Jahr",
         "ideen/spend-konzentration" => "Top Lieferanten Spend",
         "ideen/datenqualitaet" => "Datenqualitaetsfehler",
         _ => "Analyse"
@@ -1357,7 +1357,7 @@
     private string SelectedIdeaChartTitleEn => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => "Open value by due date",
-        "ideen/preisabweichung" => "Price increase impact by supplier",
+        "ideen/preisabweichung" => "Min. unit price by year",
         "ideen/spend-konzentration" => "Top supplier spend",
         "ideen/datenqualitaet" => "Data quality issues",
         _ => "Analysis"
