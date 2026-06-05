@@ -47,6 +47,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt und deployed: Browser-Favicon `wwwroot/favicon.svg` und Head-Link in `Components/App.razor`.
 - Letzter dokumentierter Finance-Deploy: 2026-06-04 nach 3D-Datenanalyse-/Schnelluebersicht-Anpassungen auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Aktueller Stand 2026-06-05: Spanien-Scriptfixes sind committed; Server muss die aktuelle All-in-one-PS1 verwenden, nicht alte Kopien mit `(1)` und nicht den alten Wrapper.
+- Spanien-Delta-Sync im Dashboard-Import wurde am 2026-06-05 publiziert. Publish brauchte kurz `app_offline.htm`, weil `BiDashboard.dll` gesperrt war; danach wurde `app_offline.htm` wieder entfernt.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
 
 ## Nachtrag 2026-06-05 Spanien Sage / rclone Upload
@@ -176,6 +177,13 @@ dotnet test TrafagSalesExporter.sln --verbosity minimal
 ```
 
 Ergebnis: `83/83` Tests gruen.
+
+Deploy:
+
+- `dotnet publish .\TrafagSalesExporter.csproj -c Release --no-restore /p:PublishProfile=FolderProfile --verbosity minimal`
+- Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`
+- Erster Publishversuch scheiterte wegen gesperrter `BiDashboard.dll`.
+- Danach `app_offline.htm` gesetzt, Publish erfolgreich ausgefuehrt und `app_offline.htm` wieder entfernt.
 
 ## Nachtrag 2026-06-04 Finance Schnelluebersicht / Experten / 3D Datenanalyse
 
