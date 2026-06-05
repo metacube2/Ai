@@ -33,9 +33,11 @@ public sealed class PurchasingDashboardLiveState
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;
+    public string TopCommitmentLabel { get; set; } = string.Empty;
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> ContractChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> CommitmentDetailChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> DeliveryRiskChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> PriceVarianceChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendConcentrationChartRows { get; set; } = [];

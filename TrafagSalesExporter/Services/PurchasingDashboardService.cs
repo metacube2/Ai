@@ -23,6 +23,12 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         return new PurchasingDashboardFilter(new DateTime(today.Year - 2, 1, 1), today);
     }
 
+    private static string SupplierLabelSql(string lifnrExpression)
+        => $@"CASE
+            WHEN COALESCE(NULLIF({lifnrExpression}, ''), '') = '' THEN 'ohne Lieferant'
+            ELSE 'Lief. ' || {lifnrExpression} || ' (Name fehlt)'
+        END";
+
     public async Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var state = new PurchasingDashboardLiveState();
@@ -100,7 +106,7 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
                 state.EketLoaded = eketRows.Count > 0;
 
                 ApplyEkpoMetrics(state, ekkoRows, ekpoRows);
-                ApplyEketMetrics(state, ekpoRows, eketRows);
+                ApplyEketMetrics(state, ekkoRows, ekpoRows, eketRows);
             }
 
             state.Message = state.EkpoLoaded && state.EketLoaded
@@ -164,7 +170,7 @@ LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + ";", cancellationToken);
         state.ContractValueSample = state.OpenValueSample;
         state.TopSupplierLabel = await ExecuteTopLabelAsync(conn, @"
-SELECT COALESCE(k.Lifnr, 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+SELECT " + SupplierLabelSql("k.Lifnr") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
@@ -180,15 +186,19 @@ GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
 ORDER BY Value DESC
 LIMIT 1;", "Warengruppe", cancellationToken);
         state.TopArticleLabel = await ExecuteTopLabelAsync(conn, @"
-SELECT COALESCE(NULLIF(Matnr, ''), NULLIF(Txz01, ''), 'ohne Artikel') AS Label, SUM(CAST(Netwr AS REAL)) AS Value
+SELECT
+    COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') || ' | ' ||
+    " + SupplierLabelSql("k.Lifnr") + @" || ' | Monat ' ||
+    COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum') AS Label,
+    SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(Matnr, ''), NULLIF(Txz01, ''), 'ohne Artikel')
+GROUP BY COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), COALESCE(k.Lifnr, 'ohne Lieferant'), COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum')
 ORDER BY Value DESC
 LIMIT 1;", "Artikel", cancellationToken);
         state.SpendChartRows = await ExecuteChartRowsAsync(conn, @"
-SELECT 'Lieferant ' || COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+SELECT " + SupplierLabelSql("k.Lifnr") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
@@ -205,7 +215,26 @@ WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @"
 GROUP BY COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
 ORDER BY Label
 LIMIT 6;", cancellationToken);
-        state.ContractChartRows = state.OpenValueChartRows.ToList();
+        state.CommitmentDetailChartRows = await ExecuteChartRowsAsync(conn, @"
+SELECT
+    " + SupplierLabelSql("k.Lifnr") + @" || ' | ' ||
+    COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') || ' | faellig ' ||
+    COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
+    SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+        CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS Value
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant'), COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
+ORDER BY Value DESC
+LIMIT 6;", cancellationToken);
+        state.ContractChartRows = state.CommitmentDetailChartRows.Count > 0
+            ? state.CommitmentDetailChartRows.ToList()
+            : state.OpenValueChartRows.ToList();
+        state.TopCommitmentLabel = state.CommitmentDetailChartRows.Count > 0
+            ? $"{state.CommitmentDetailChartRows[0].Label}: CHF {state.CommitmentDetailChartRows[0].Value:N0}"
+            : string.Empty;
         await ApplyIdeaAnalyticsAsync(conn, state, joinedEkkoPeriod, eketPeriod, cancellationToken);
         state.CacheStatus = latestStatus.Status;
         state.CacheCompletedAtUtc = latestStatus.CompletedAtUtc;
@@ -349,22 +378,29 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
             return;
 
         var supplierByEbeln = ekkoRows
-            .Select(row => new { Ebeln = GetText(row, "Ebeln"), Lifnr = GetText(row, "Lifnr") })
+            .Select(row => new { Ebeln = GetText(row, "Ebeln"), Lifnr = FormatSupplierLabel(GetText(row, "Lifnr")) })
             .Where(row => !string.IsNullOrWhiteSpace(row.Ebeln))
             .GroupBy(row => row.Ebeln, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.First().Lifnr, StringComparer.OrdinalIgnoreCase);
+        var monthByEbeln = ekkoRows
+            .Select(row => new { Ebeln = GetText(row, "Ebeln"), Month = TryParseSapDate(GetText(row, "Bedat"))?.ToString("yyyy-MM") ?? "ohne Datum" })
+            .Where(row => !string.IsNullOrWhiteSpace(row.Ebeln))
+            .GroupBy(row => row.Ebeln, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Month, StringComparer.OrdinalIgnoreCase);
 
         var enriched = ekpoRows
             .Select(row =>
             {
                 var ebeln = GetText(row, "Ebeln");
                 supplierByEbeln.TryGetValue(ebeln, out var supplier);
+                monthByEbeln.TryGetValue(ebeln, out var month);
                 var netwr = GetDecimal(row, "Netwr");
                 var quantity = GetDecimal(row, "Menge");
                 return new
                 {
                     Ebeln = ebeln,
                     Supplier = string.IsNullOrWhiteSpace(supplier) ? "ohne Lieferant" : supplier,
+                    Month = string.IsNullOrWhiteSpace(month) ? "ohne Datum" : month,
                     Material = FirstNonEmpty(GetText(row, "Matnr"), GetText(row, "Txz01"), "ohne Artikel"),
                     MaterialGroup = FirstNonEmpty(GetText(row, "Matkl"), "ohne Warengruppe"),
                     NetValue = netwr,
@@ -376,10 +412,10 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
         state.SpendChfSample = enriched.Sum(row => row.NetValue);
         state.TopSupplierLabel = BuildTopLabel(enriched.GroupBy(row => row.Supplier), row => row.NetValue, "Lieferant");
         state.TopMaterialGroupLabel = BuildTopLabel(enriched.GroupBy(row => row.MaterialGroup), row => row.NetValue, "Warengruppe");
-        state.TopArticleLabel = BuildTopLabel(enriched.GroupBy(row => row.Material), row => row.NetValue, "Artikel");
+        state.TopArticleLabel = BuildTopLabel(enriched.GroupBy(row => $"{row.Material} | {row.Supplier} | Monat {row.Month}"), row => row.NetValue, "Artikel");
         state.SpendChartRows = enriched
             .GroupBy(row => row.Supplier)
-            .Select(group => new PurchasingLiveChartPoint($"Lief. {group.Key}", group.Sum(row => row.NetValue)))
+            .Select(group => new PurchasingLiveChartPoint(group.Key, group.Sum(row => row.NetValue)))
             .OrderByDescending(row => row.Value)
             .Take(6)
             .ToList();
@@ -387,12 +423,31 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
 
     private static void ApplyEketMetrics(
         PurchasingDashboardLiveState state,
+        List<Dictionary<string, object?>> ekkoRows,
         List<Dictionary<string, object?>> ekpoRows,
         List<Dictionary<string, object?>> eketRows)
     {
         if (eketRows.Count == 0)
             return;
 
+        var supplierByEbeln = ekkoRows
+            .Select(row => new { Ebeln = GetText(row, "Ebeln"), Lifnr = FormatSupplierLabel(GetText(row, "Lifnr")) })
+            .Where(row => !string.IsNullOrWhiteSpace(row.Ebeln))
+            .GroupBy(row => row.Ebeln, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Lifnr, StringComparer.OrdinalIgnoreCase);
+        var itemByPosition = ekpoRows
+            .Select(row =>
+            {
+                var ebeln = GetText(row, "Ebeln");
+                var ebelp = GetText(row, "Ebelp");
+                return new
+                {
+                    key = $"{ebeln}|{ebelp}",
+                    Article = FirstNonEmpty(GetText(row, "Matnr"), GetText(row, "Txz01"), "ohne Artikel")
+                };
+            })
+            .GroupBy(row => row.key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Article, StringComparer.OrdinalIgnoreCase);
         var netPriceByPosition = ekpoRows
             .Select(row =>
             {
@@ -414,12 +469,16 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
                 var ebelp = GetText(row, "Ebelp");
                 var key = $"{ebeln}|{ebelp}";
                 netPriceByPosition.TryGetValue(key, out var netPrice);
+                itemByPosition.TryGetValue(key, out var article);
+                supplierByEbeln.TryGetValue(ebeln, out var supplier);
                 var quantity = GetDecimal(row, "Menge");
                 var received = GetDecimal(row, "Wemng");
                 var openQuantity = Math.Max(0, quantity - received);
                 return new
                 {
                     Ebeln = ebeln,
+                    Supplier = string.IsNullOrWhiteSpace(supplier) ? "ohne Lieferant" : supplier,
+                    Article = string.IsNullOrWhiteSpace(article) ? "ohne Artikel" : article,
                     DueDate = TryParseSapDate(GetText(row, "Eindt")),
                     OpenQuantity = openQuantity,
                     OpenValue = openQuantity * netPrice
@@ -436,7 +495,19 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
             .OrderBy(row => row.Label)
             .Take(6)
             .ToList();
-        state.ContractChartRows = state.OpenValueChartRows.ToList();
+        state.CommitmentDetailChartRows = enriched
+            .Where(row => row.OpenValue > 0)
+            .GroupBy(row => $"{row.Supplier} | {row.Article} | faellig {row.DueDate?.ToString("yyyy-MM") ?? "ohne Termin"}")
+            .Select(group => new PurchasingLiveChartPoint(group.Key, group.Sum(row => row.OpenValue)))
+            .OrderByDescending(row => row.Value)
+            .Take(6)
+            .ToList();
+        state.ContractChartRows = state.CommitmentDetailChartRows.Count > 0
+            ? state.CommitmentDetailChartRows.ToList()
+            : state.OpenValueChartRows.ToList();
+        state.TopCommitmentLabel = state.CommitmentDetailChartRows.Count > 0
+            ? $"{state.CommitmentDetailChartRows[0].Label}: CHF {state.CommitmentDetailChartRows[0].Value:N0}"
+            : string.Empty;
     }
 
     private static HttpClient CreateClient(string username, string password)
@@ -596,6 +667,11 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
 
     private static string FirstNonEmpty(params string[] values)
         => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+
+    private static string FormatSupplierLabel(string supplierNumber)
+        => string.IsNullOrWhiteSpace(supplierNumber)
+            ? "ohne Lieferant"
+            : $"Lief. {supplierNumber} (Name fehlt)";
 
     private static string BuildTopLabel<T>(IEnumerable<IGrouping<string, T>> groups, Func<T, decimal> selector, string fallback)
     {

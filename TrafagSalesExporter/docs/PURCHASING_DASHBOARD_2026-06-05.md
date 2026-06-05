@@ -153,6 +153,8 @@ Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 - `Offener Bestellwert`: berechnet aus EKET-Offenmenge und EKPO-Netto-Stueckwert.
 - `Offene Menge`: Summe offener EKET-Mengen.
 - Top-Lieferant, Top-Warengruppe und Top-Artikel werden aus EKPO gruppiert.
+- Top-Artikel zeigt nun Artikel, Lieferant und Bestellmonat, damit ein Wert wie `C42698: CHF 1` fachlich nachvollziehbar ist.
+- Die Verpflichtungs-/Kontraktseite zeigt Top-Restverpflichtungen nach Lieferant, Artikel und Faelligkeitsmonat, nicht nur den Monatsverlauf.
 - Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
 - Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
 - Der Standardzeitraum ist rollierend auf die letzten drei Kalenderjahre bis heute gesetzt. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`.
@@ -180,7 +182,7 @@ Noch nicht final 1:1 ist die Namensauflösung:
 - PowerBI nutzt fuer Lieferanten- und Warengruppennamen `Data.Name`, `Data.Lieferant`, `Data (2).Warengruppe` und `Data (2).WG komplett`.
 - Der aktuelle SAP-OData-Service liefert produktiv `EKKOSet`, `EKPOSet` und `eketSet`.
 - Tests auf `Data`, `Data2`, `DataSet` und `Data2Set` liefern aktuell `404 Resource not found`.
-- Bis diese Mapping-Quelle angebunden ist, zeigt das Dashboard Lieferantennummern und Warengruppen-Codes statt vollstaendiger Namen.
+- Bis diese Mapping-Quelle angebunden ist, zeigt das Dashboard Lieferanten als `Lief. <Nummer> (Name fehlt)` und Warengruppen-Codes statt vollstaendiger Namen.
 
 ## Ideen und Kennzahlen-Katalog
 
