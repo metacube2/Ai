@@ -140,6 +140,14 @@ public class DatabaseSeedService : IDatabaseSeedService
             if (string.IsNullOrWhiteSpace(existing.ItemType)) existing.ItemType = item.ItemType;
             if (string.IsNullOrWhiteSpace(existing.Match)) existing.Match = item.Match;
             if (string.IsNullOrWhiteSpace(existing.RequiredPolicy)) existing.RequiredPolicy = item.RequiredPolicy;
+            if (existing.Key == "purchasing-ideas")
+            {
+                existing.ItemType = item.ItemType;
+                existing.Href = item.Href;
+                existing.Match = item.Match;
+                existing.Icon = item.Icon;
+                existing.IsExpanded = item.IsExpanded;
+            }
             existing.IsSystem = true;
             changed = true;
         }
@@ -185,7 +193,13 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-open-orders", "purchasing", "Offene Bestellungen", "Open orders", "PendingActions", "einkauf/offene-bestellungen", 30, "All"),
         Link("purchasing-contracts", "purchasing", "Kontrakte", "Contracts", "Assignment", "einkauf/kontrakte", 40, "All"),
         Link("purchasing-suppliers", "purchasing", "Lieferanten", "Suppliers", "Verified", "einkauf/lieferanten", 50, "All"),
-        Link("purchasing-ideas", "purchasing", "Ideen", "Ideas", "Lightbulb", "einkauf/ideen", 60, "All"),
+        Group("purchasing-ideas", "purchasing", "Ideen", "Ideas", "Lightbulb", 60, expanded: true),
+        Link("purchasing-ideas-overview", "purchasing-ideas", "Uebersicht", "Overview", "Lightbulb", "einkauf/ideen", 10, "All"),
+        Link("purchasing-idea-data-service", "purchasing-ideas", "Einkauf-Datenservice", "Purchasing data service", "Storage", "einkauf/ideen/datenservice", 20, "All"),
+        Link("purchasing-idea-delivery-risk", "purchasing-ideas", "Liefertermin-Risiko", "Delivery due-date risk", "PendingActions", "einkauf/ideen/liefertermin-risiko", 30, "All"),
+        Link("purchasing-idea-price-variance", "purchasing-ideas", "Preisabweichung", "Price variance", "TrendingUp", "einkauf/ideen/preisabweichung", 40, "All"),
+        Link("purchasing-idea-spend-concentration", "purchasing-ideas", "Spend-Konzentration", "Spend concentration", "PieChart", "einkauf/ideen/spend-konzentration", 50, "All"),
+        Link("purchasing-idea-data-quality", "purchasing-ideas", "Datenqualitaet", "Data quality", "FactCheck", "einkauf/ideen/datenqualitaet", 60, "All"),
         Link("purchasing-kpi-catalog", "purchasing", "Kennzahlen-Katalog", "KPI catalogue", "Checklist", "einkauf/kennzahlen", 70, "All"),
         Link("purchasing-pbix", "purchasing", "PBIX Vorlage", "PBIX template", "InsertChart", "einkauf/pbix", 80, "All"),
         Link("purchasing-3d", "purchasing", "3D Simulation", "3D simulation", "ViewInAr", "einkauf/3d", 90, "All"),

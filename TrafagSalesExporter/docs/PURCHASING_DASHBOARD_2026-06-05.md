@@ -41,19 +41,25 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Hauptnavigation: eigener Punkt `Einkauf` mit Einkaufswagen-Icon.
 - Tabs im Einkaufsdashboard:
   - Die frueheren Tabs wurden in echte linke Navigationspunkte unter `Einkauf` umgebaut.
-  - `Einkauf Dashboard`: Uebersicht, SAP-Datenfluss, Live-Status und Analyseachsen.
-  - `Spend`: Spend total vergangen nach Jahr, Lieferant, Warengruppe und Artikel.
-  - `Offene Bestellungen`: offene Werte, Mengen und Faelligkeiten.
-  - `Kontrakte`: offene Verpflichtungen und Kontrakt-Restwerte.
-  - `Lieferanten`: Lieferantenbasis, Performance und Datenstatus.
-  - `Ideen`: Roadmap fuer weitere Einkaufsanalysen.
-  - `Kennzahlen-Katalog`: fachlicher KPI-Katalog fuer den naechsten Ausbau.
+- `Einkauf Dashboard`: Uebersicht, SAP-Datenfluss, Live-Status und Analyseachsen.
+- `Spend`: Spend total vergangen nach Jahr, Lieferant, Warengruppe und Artikel.
+- `Offene Bestellungen`: offene Werte, Mengen und Faelligkeiten.
+- `Kontrakte`: offene Verpflichtungen und Kontrakt-Restwerte.
+- `Lieferanten`: Lieferantenbasis, Performance und Datenstatus.
+- `Ideen`: aufklappbarer Navigationspunkt fuer die naechsten Umsetzungsbausteine.
+  - `Uebersicht`.
+  - `Einkauf-Datenservice`.
+  - `Liefertermin-Risiko`.
+  - `Preisabweichung`.
+  - `Spend-Konzentration`.
+  - `Datenqualitaet`.
+- `Kennzahlen-Katalog`: fachlicher KPI-Katalog fuer den naechsten Ausbau.
   - `PBIX Vorlage`: aus `x.pbix` uebernommene Seiten/Visuals.
   - `3D Simulation`: drehbare 3D-What-if-Analyse.
 - Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
 - Die Seite ist als Cockpit-Struktur umgesetzt und zweisprachig ueber den vorhandenen UI-Sprachservice vorbereitet.
-- EKKO, EKPO und EKET werden live ueber SAP/OData gelesen.
-- Die Kennzahlen im Cockpit nutzen aktuell eine begrenzte Live-Probe, damit das Dashboard sofort echte Einkaufsdaten zeigt.
+- EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
+- Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist.
 
 ## Navigation und Admin-Steuerung
 
@@ -65,6 +71,11 @@ Stand 2026-06-05: Die Einkaufsbereiche sind nicht mehr als obere Tabs im Dashboa
 - `/einkauf/kontrakte`
 - `/einkauf/lieferanten`
 - `/einkauf/ideen`
+- `/einkauf/ideen/datenservice`
+- `/einkauf/ideen/liefertermin-risiko`
+- `/einkauf/ideen/preisabweichung`
+- `/einkauf/ideen/spend-konzentration`
+- `/einkauf/ideen/datenqualitaet`
 - `/einkauf/kennzahlen`
 - `/einkauf/pbix`
 - `/einkauf/3d`
@@ -110,24 +121,40 @@ Nach Aktivierung der angepassten SAP-Methoden liefern die OData-Services:
 
 Wichtig: Die OData-Property heisst `Ebeln`. Ein Filter mit `EBELN` liefert HTTP 400.
 
+## Full Load / Delta Stand 2026-06-05
+
+Der erste vollstaendige SAP-Load wurde am 2026-06-05 ausgefuehrt.
+
+Geladene Cache-Zeilen:
+
+- `PurchasingEkkoCache`: 172'874 EKKO-Koepfe.
+- `PurchasingEkpoCache`: 233'921 EKPO-Positionen.
+- `PurchasingEketCache`: 242'572 EKET-Einteilungen.
+
+Technische Logik:
+
+- SAP liefert pro OData-Seite maximal 1'000 Zeilen.
+- Der Loader liest deshalb mit `$top=1000`, `$skip` und stabiler Sortierung:
+  - `EKKOSet`: `$orderby=Ebeln`.
+  - `EKPOSet`: `$orderby=Ebeln,Ebelp`.
+  - `eketSet`: `$orderby=Ebeln,Ebelp,Etenr`.
+- Nicht vorhandene OData-Felder wurden entfernt:
+  - `EKKOSet.Bsart` existiert in diesem Service nicht.
+  - `EKPOSet.Meins` existiert in diesem Service nicht.
+- Nach dem Full Load kann `Delta aktualisieren` genutzt werden. Delta liest geaenderte EKKO-Belege ab `Aedat` und laedt die zugehoerigen EKPO/EKET-Zeilen je Beleg nach.
+
 ## Live-Kennzahlen im Dashboard
 
-Die Seite `/einkauf` zeigt nun echte Werte aus SAP:
+Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 
-- `Spend total`: Summe `EKPOSet.Netwr` aus der Live-Probe.
+- `Spend total`: Summe `EKPOSet.Netwr` aus dem Cache.
 - `Offene Bestellungen`: Anzahl EKKO-Belege seit Jahresbeginn.
 - `Kontrakte`: offener Restwert aus `EKET.Menge - EKET.Wemng` bewertet mit EKPO-Netto-Stueckwert.
 - `Offener Bestellwert`: berechnet aus EKET-Offenmenge und EKPO-Netto-Stueckwert.
 - `Offene Menge`: Summe offener EKET-Mengen.
 - Top-Lieferant, Top-Warengruppe und Top-Artikel werden aus EKPO gruppiert.
-- Spend-, Offenwert- und Kontrakt-Diagramme verwenden Live-Gruppierungen, sofern EKPO/EKET Daten liefern.
-
-Aktuelle technische Begrenzung:
-
-- Das Dashboard laedt fuer EKPO/EKET eine begrenzte Probe mit `$top=1000`.
-- Filter ist `Ebeln ge <erste aktuelle EKKO-Bestellnummer>`.
-- Damit sind die Werte echte SAP-Werte, aber noch keine vollstaendige Jahresaggregation.
-- Fuer definitive Management-Summen braucht es als naechsten Schritt serverseitige OData-Filter/Aggregation oder einen eigenen Import-/Cache-Prozess analog Finance.
+- Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
+- Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
 
 ## Ideen und Kennzahlen-Katalog
 
@@ -177,15 +204,14 @@ Die Simulation nutzt feste Canvas-Groessen, sichtbare Achsen, waehlbare Diagramm
 
 ## Naechster Schritt fuer Live-Daten
 
-Fuer definitive Vollwerte muessen die Live-Quellen noch fachlich fertig aggregiert werden:
+Die technische Vollbasis ist geladen. Fuer fachlich finale Management-Sichten muessen noch diese Abgrenzungen abgestimmt werden:
 
 - Jahres-/Periodenfilter fuer `EKKOSet.Bedat`.
-- Vollstaendige Aggregation von `EKPOSet.Netwr` nach Jahr, Lieferant, Warengruppe und Artikel.
-- Vollstaendige offene Werte/Mengen aus `EKET` und `EKPO`.
-- Kontrakte und offene Verpflichtungen, inkl. fachlicher Abgrenzung von normalen Bestellungen.
+- Periodenlogik fuer historische und offene Werte.
+- Kontrakte und offene Verpflichtungen, inkl. fachlicher Abgrenzung von normalen Bestellungen und Umlagerungen.
 - Lieferantenbewertung / Performance, falls im SAP-System als OData- oder HANA-Quelle verfuegbar.
 
-Danach koennen Filter, Aggregationen und Delta-/Refresh-Prozess analog zu Finance/Spain umgesetzt werden.
+Der Delta-/Refresh-Prozess ist technisch vorbereitet und im Dashboard unter `Einkauf > Ideen > Einkauf-Datenservice` bedienbar.
 
 ## Geaenderte Programmstellen
 
@@ -200,7 +226,12 @@ Danach koennen Filter, Aggregationen und Delta-/Refresh-Prozess analog zu Financ
 - `Services/IPurchasingDashboardService.cs`
   - Live-State um Spend, offene Menge, offenen Wert, Kontraktwert und Live-Diagrammzeilen erweitert.
 - `Services/PurchasingDashboardService.cs`
-  - Laedt EKKO, EKPO und EKET.
+  - Liest EKKO, EKPO und EKET aus dem Einkauf-Cache und nutzt SAP-Live nur als Fallback.
   - Berechnet Spend aus EKPO.
   - Berechnet offene Mengen/Werte aus EKET minus Wareneingangsmenge, bewertet mit EKPO-Netto-Stueckwert.
   - Erstellt Top-Gruppierungen fuer Lieferant, Warengruppe und Artikel.
+- `Services/PurchasingDataRefreshService.cs`
+  - Fuehrt Full Load und Delta-Refresh fuer EKKO/EKPO/EKET aus.
+  - Beruecksichtigt das SAP-Seitenlimit von 1'000 Zeilen.
+- `Services/DatabaseInitializationService.SchemaSql.cs`
+  - Erstellt `PurchasingEkkoCache`, `PurchasingEkpoCache`, `PurchasingEketCache` und `PurchasingSyncState`.

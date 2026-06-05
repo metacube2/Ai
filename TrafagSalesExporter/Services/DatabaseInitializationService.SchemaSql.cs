@@ -233,4 +233,61 @@ CREATE TABLE NavigationMenuItems (
     IsSystem INTEGER NOT NULL DEFAULT 1,
     SortOrder INTEGER NOT NULL DEFAULT 0
 );";
+
+    internal static string GetPurchasingEkkoCacheCreateSql() => @"
+CREATE TABLE PurchasingEkkoCache (
+    Ebeln TEXT NOT NULL PRIMARY KEY,
+    Bedat TEXT NULL,
+    Aedat TEXT NULL,
+    Lifnr TEXT NOT NULL DEFAULT '',
+    Bukrs TEXT NOT NULL DEFAULT '',
+    Bsart TEXT NOT NULL DEFAULT '',
+    RawJson TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL
+);";
+
+    internal static string GetPurchasingEkpoCacheCreateSql() => @"
+CREATE TABLE PurchasingEkpoCache (
+    Ebeln TEXT NOT NULL,
+    Ebelp TEXT NOT NULL,
+    Matnr TEXT NOT NULL DEFAULT '',
+    Txz01 TEXT NOT NULL DEFAULT '',
+    Matkl TEXT NOT NULL DEFAULT '',
+    Menge TEXT NOT NULL DEFAULT '0',
+    Meins TEXT NOT NULL DEFAULT '',
+    Netwr TEXT NOT NULL DEFAULT '0',
+    Loekz TEXT NOT NULL DEFAULT '',
+    RawJson TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (Ebeln, Ebelp)
+);";
+
+    internal static string GetPurchasingEketCacheCreateSql() => @"
+CREATE TABLE PurchasingEketCache (
+    Ebeln TEXT NOT NULL,
+    Ebelp TEXT NOT NULL,
+    Etenr TEXT NOT NULL,
+    Eindt TEXT NULL,
+    Menge TEXT NOT NULL DEFAULT '0',
+    Wemng TEXT NOT NULL DEFAULT '0',
+    RawJson TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (Ebeln, Ebelp, Etenr)
+);";
+
+    internal static string GetPurchasingSyncStateCreateSql() => @"
+CREATE TABLE PurchasingSyncState (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Mode TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT '',
+    StartedAtUtc TEXT NULL,
+    CompletedAtUtc TEXT NULL,
+    FromDate TEXT NULL,
+    ToDate TEXT NULL,
+    LastSuccessfulDeltaAtUtc TEXT NULL,
+    EkkoRows INTEGER NOT NULL DEFAULT 0,
+    EkpoRows INTEGER NOT NULL DEFAULT 0,
+    EketRows INTEGER NOT NULL DEFAULT 0,
+    Message TEXT NOT NULL DEFAULT ''
+);";
 }

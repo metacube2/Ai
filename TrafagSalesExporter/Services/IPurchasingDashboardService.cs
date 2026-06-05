@@ -16,6 +16,9 @@ public sealed class PurchasingDashboardLiveState
     public DateTime? LatestOrderDate { get; set; }
     public int PositionSampleCount { get; set; }
     public int ScheduleSampleCount { get; set; }
+    public bool UsesCache { get; set; }
+    public string CacheStatus { get; set; } = string.Empty;
+    public DateTime? CacheCompletedAtUtc { get; set; }
     public decimal SpendChfSample { get; set; }
     public decimal OpenQuantitySample { get; set; }
     public decimal OpenValueSample { get; set; }

@@ -46,6 +46,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureManualExcelColumnMappingTable(db);
         EnsureCentralSalesRecordTable(db);
         EnsureNavigationMenuItemTable(db);
+        EnsurePurchasingCacheTables(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -282,6 +283,34 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         using var cmd = conn.CreateCommand();
         cmd.CommandText = DatabaseSchemaSql.GetNavigationMenuItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsurePurchasingCacheTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        foreach (var createSql in new[]
+        {
+            DatabaseSchemaSql.GetPurchasingEkkoCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingEkpoCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingSyncStateCreateSql()
+        })
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = createSql.Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var ekpoIndex = conn.CreateCommand();
+        ekpoIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Matkl ON PurchasingEkpoCache (Matkl);";
+        ekpoIndex.ExecuteNonQuery();
+
+        using var eketDateIndex = conn.CreateCommand();
+        eketDateIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_Eindt ON PurchasingEketCache (Eindt);";
+        eketDateIndex.ExecuteNonQuery();
     }
 
     private static void EnsureSapSourceTable(AppDbContext db)

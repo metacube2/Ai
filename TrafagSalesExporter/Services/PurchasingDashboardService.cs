@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 
@@ -23,6 +24,9 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            if (await TryLoadCacheStateAsync(db, state, cancellationToken))
+                return state;
+
             var sap = await db.SourceSystemDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.Code == "SAP", cancellationToken);
             var site = await db.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.TSC == PurchasingDataSourcePageService.PurchasingTsc, cancellationToken);
             if (sap is null || site is null)
@@ -102,6 +106,85 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         }
 
         return state;
+    }
+
+    private static async Task<bool> TryLoadCacheStateAsync(AppDbContext db, PurchasingDashboardLiveState state, CancellationToken cancellationToken)
+    {
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        var ekkoRows = await ExecuteScalarIntAsync(conn, "SELECT COUNT(1) FROM PurchasingEkkoCache;", cancellationToken);
+        var ekpoRows = await ExecuteScalarIntAsync(conn, "SELECT COUNT(1) FROM PurchasingEkpoCache;", cancellationToken);
+        var eketRows = await ExecuteScalarIntAsync(conn, "SELECT COUNT(1) FROM PurchasingEketCache;", cancellationToken);
+        if (ekkoRows <= 0 || ekpoRows <= 0 || eketRows <= 0)
+            return false;
+
+        var latestStatus = await ReadCacheStatusAsync(conn, cancellationToken);
+        state.UsesCache = true;
+        state.SapReachable = true;
+        state.EkkoLoaded = true;
+        state.EkpoLoaded = true;
+        state.EketLoaded = true;
+        state.PurchaseOrderCount = ekkoRows;
+        state.PositionSampleCount = ekpoRows;
+        state.ScheduleSampleCount = eketRows;
+        state.SupplierCount = await ExecuteScalarIntAsync(conn, "SELECT COUNT(DISTINCT Lifnr) FROM PurchasingEkkoCache WHERE Lifnr <> '';", cancellationToken);
+        state.LatestOrderDate = await ExecuteScalarDateAsync(conn, "SELECT MAX(Bedat) FROM PurchasingEkkoCache;", cancellationToken);
+        state.SpendChfSample = await ExecuteScalarDecimalAsync(conn, "SELECT COALESCE(SUM(CAST(Netwr AS REAL)), 0) FROM PurchasingEkpoCache WHERE Loekz = '';", cancellationToken);
+        state.OpenQuantitySample = await ExecuteScalarDecimalAsync(conn, "SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0) FROM PurchasingEketCache e;", cancellationToken);
+        state.OpenValueSample = await ExecuteScalarDecimalAsync(conn, @"
+SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+    CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END), 0)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+WHERE COALESCE(p.Loekz, '') = '';", cancellationToken);
+        state.ContractValueSample = state.OpenValueSample;
+        state.TopSupplierLabel = await ExecuteTopLabelAsync(conn, @"
+SELECT COALESCE(k.Lifnr, 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE p.Loekz = ''
+GROUP BY COALESCE(k.Lifnr, 'ohne Lieferant')
+ORDER BY Value DESC
+LIMIT 1;", "Lieferant", cancellationToken);
+        state.TopMaterialGroupLabel = await ExecuteTopLabelAsync(conn, @"
+SELECT COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe') AS Label, SUM(CAST(Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache
+WHERE Loekz = ''
+GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
+ORDER BY Value DESC
+LIMIT 1;", "Warengruppe", cancellationToken);
+        state.TopArticleLabel = await ExecuteTopLabelAsync(conn, @"
+SELECT COALESCE(NULLIF(Matnr, ''), NULLIF(Txz01, ''), 'ohne Artikel') AS Label, SUM(CAST(Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache
+WHERE Loekz = ''
+GROUP BY COALESCE(NULLIF(Matnr, ''), NULLIF(Txz01, ''), 'ohne Artikel')
+ORDER BY Value DESC
+LIMIT 1;", "Artikel", cancellationToken);
+        state.SpendChartRows = await ExecuteChartRowsAsync(conn, @"
+SELECT 'Lief. ' || COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE p.Loekz = ''
+GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant')
+ORDER BY Value DESC
+LIMIT 6;", cancellationToken);
+        state.OpenValueChartRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
+       SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+           CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS Value
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+WHERE COALESCE(p.Loekz, '') = ''
+GROUP BY COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
+ORDER BY Label
+LIMIT 6;", cancellationToken);
+        state.ContractChartRows = state.OpenValueChartRows.ToList();
+        state.CacheStatus = latestStatus.Status;
+        state.CacheCompletedAtUtc = latestStatus.CompletedAtUtc;
+        state.Message = $"Einkauf Cache geladen: EKKO={ekkoRows:N0}, EKPO={ekpoRows:N0}, EKET={eketRows:N0}. {latestStatus.Message}";
+        return true;
     }
 
     private static void ApplyEkpoMetrics(
@@ -240,6 +323,74 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
 
         var text = await response.Content.ReadAsStringAsync(cancellationToken);
         return int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ? value : null;
+    }
+
+    private static async Task<int> ExecuteScalarIntAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(value ?? 0, CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<decimal> ExecuteScalarDecimalAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToDecimal(value ?? 0, CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<DateTime?> ExecuteScalarDateAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+        var value = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
+        return string.IsNullOrWhiteSpace(value) ? null : TryParseSapDate(value);
+    }
+
+    private static async Task<string> ExecuteTopLabelAsync(SqliteConnection conn, string sql, string fallback, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+            return fallback;
+
+        var label = reader.GetString(0);
+        var value = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
+        return $"{label}: CHF {value:N0}";
+    }
+
+    private static async Task<List<PurchasingLiveChartPoint>> ExecuteChartRowsAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)
+    {
+        var rows = new List<PurchasingLiveChartPoint>();
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var label = reader.GetString(0);
+            var value = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
+            rows.Add(new PurchasingLiveChartPoint(label, value));
+        }
+
+        return rows;
+    }
+
+    private static async Task<(string Status, DateTime? CompletedAtUtc, string Message)> ReadCacheStatusAsync(SqliteConnection conn, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT Status, CompletedAtUtc, Message FROM PurchasingSyncState ORDER BY Id DESC LIMIT 1;";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+            return ("Cache", null, string.Empty);
+
+        var completedText = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+        var completed = DateTime.TryParse(completedText, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed)
+            ? parsed
+            : (DateTime?)null;
+        return (reader.GetString(0), completed, reader.GetString(2));
     }
 
     private static object? ConvertJsonValue(JsonElement value) => value.ValueKind switch

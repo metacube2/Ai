@@ -116,6 +116,7 @@ builder.Services.AddScoped<ITransformationsPageService, TransformationsPageServi
 builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
 builder.Services.AddScoped<IPurchasingDataSourcePageService, PurchasingDataSourcePageService>();
 builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>();
+builder.Services.AddScoped<IPurchasingDataRefreshService, PurchasingDataRefreshService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
