@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
@@ -28,14 +29,7 @@ public sealed class DashboardPageService : IDashboardPageService
             .GroupBy(l => l.SiteId)
             .Select(g => g.OrderByDescending(l => l.Timestamp).First())
             .ToListAsync();
-        var appLogs = await db.AppEventLogs
-            .Where(l => l.SiteId != null)
-            .OrderByDescending(l => l.Timestamp)
-            .Take(1000)
-            .ToListAsync();
-        var latestAppLogsBySite = appLogs
-            .GroupBy(l => l.SiteId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
+        var latestAppLogsBySite = await LoadLatestAppLogsBySiteAsync(db);
 
         var rows = sites.Select(s =>
         {
@@ -84,6 +78,75 @@ public sealed class DashboardPageService : IDashboardPageService
             LatestSuccessfulSiteRun = latestSuccessfulSiteRun,
             LatestConsolidatedRun = latestConsolidatedRun
         };
+    }
+
+    private static async Task<Dictionary<int, AppEventLog>> LoadLatestAppLogsBySiteAsync(AppDbContext db)
+    {
+        var connection = db.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+        if (shouldClose)
+            await connection.OpenAsync();
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+SELECT Id, Timestamp, Level, Category, SiteId, Land, Message, Details
+FROM AppEventLogs
+WHERE SiteId IS NOT NULL
+ORDER BY Id DESC
+LIMIT 1000;
+""";
+
+            var logs = new List<AppEventLog>();
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (!TryReadInt(reader["SiteId"], out var siteId))
+                    continue;
+
+                if (!DateTime.TryParse(Convert.ToString(reader["Timestamp"]), out var timestamp))
+                    continue;
+
+                logs.Add(new AppEventLog
+                {
+                    Id = TryReadInt(reader["Id"], out var id) ? id : 0,
+                    Timestamp = timestamp,
+                    Level = Convert.ToString(reader["Level"]) ?? string.Empty,
+                    Category = Convert.ToString(reader["Category"]) ?? string.Empty,
+                    SiteId = siteId,
+                    Land = Convert.ToString(reader["Land"]) ?? string.Empty,
+                    Message = Convert.ToString(reader["Message"]) ?? string.Empty,
+                    Details = Convert.ToString(reader["Details"]) ?? string.Empty
+                });
+            }
+
+            return logs
+                .GroupBy(l => l.SiteId!.Value)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Timestamp).First());
+        }
+        finally
+        {
+            if (shouldClose)
+                await connection.CloseAsync();
+        }
+    }
+
+    private static bool TryReadInt(object? value, out int number)
+    {
+        if (value is int intValue)
+        {
+            number = intValue;
+            return true;
+        }
+
+        if (value is long longValue && longValue >= int.MinValue && longValue <= int.MaxValue)
+        {
+            number = (int)longValue;
+            return true;
+        }
+
+        return int.TryParse(Convert.ToString(value), out number);
     }
 
     private static List<string> BuildReadinessWarnings(List<Site> activeSites, List<SourceSystemDefinition> sourceSystems)

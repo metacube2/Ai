@@ -515,7 +515,7 @@
 
   window.trafagFinance3d = {
     render: function (canvas, rows, options) {
-      if (!canvas) return;
+      if (!canvas || typeof canvas.addEventListener !== "function") return;
       const normalizedRows = normalizeRows(rows);
       if (normalizedRows.length === 0) return;
       const existing = stateByCanvas.get(canvas);

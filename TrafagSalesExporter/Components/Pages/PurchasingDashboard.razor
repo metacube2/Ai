@@ -191,12 +191,12 @@
     private double _purchasing3dFactor = 1d;
     private double _purchasing3dLabelScale = 1.5d;
 
-    private readonly List<PurchasingKpiCard> KpiCards =
+    private IReadOnlyList<PurchasingKpiCard> KpiCards =>
     [
-        new("Spend total", "Total spend", "-", "Netwr CHF historisch", "Historic Netwr CHF", Icons.Material.Filled.Payments, Color.Primary),
-        new("Offene Bestellungen", "Open orders", "-", "Wert und Menge offen", "Open value and quantity", Icons.Material.Filled.PendingActions, Color.Warning),
-        new("Kontrakte", "Contracts", "-", "Restverpflichtungen", "Remaining commitments", Icons.Material.Filled.Assignment, Color.Info),
-        new("Lieferantenperformance", "Supplier performance", "-", "Bewertung / Liefertermintreue", "Rating / delivery reliability", Icons.Material.Filled.Verified, Color.Success)
+        new("Spend total", "Total spend", FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "Simulationsbasis bis SAP-Liveimport", "Simulation basis until SAP live import", Icons.Material.Filled.Payments, Color.Primary),
+        new("Offene Bestellungen", "Open orders", FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "Wert offen aus Simulationsbasis", "Open value from simulation basis", Icons.Material.Filled.PendingActions, Color.Warning),
+        new("Kontrakte", "Contracts", FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "Restverpflichtungen aus Simulationsbasis", "Remaining commitments from simulation basis", Icons.Material.Filled.Assignment, Color.Info),
+        new("Lieferantenperformance", "Supplier performance", $"{Purchasing3dBaseRows.Average(x => x.SupplierScore):N1}%", "Durchschnitt Score aus Simulationsbasis", "Average score from simulation basis", Icons.Material.Filled.Verified, Color.Success)
     ];
 
     private readonly List<PurchasingAxis> AnalysisAxes =
@@ -290,6 +290,7 @@
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
+    private static string FormatChf(double value) => $"CHF {value:N0}";
 
     private async Task SetPurchasing3dIndicator(string value)
     {
