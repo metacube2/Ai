@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
+using TrafagSalesExporter.Security;
 
 namespace TrafagSalesExporter.Services;
 
@@ -20,6 +21,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureBudgetExchangeRateDefaults(db);
         EnsureFinanceIntercompanyRuleDefaults(db);
         EnsureFinanceRuleDefaults(db);
+        EnsureNavigationMenuDefaults(db);
     }
 
     private static void SeedIfEmpty(AppDbContext db)
@@ -114,6 +116,112 @@ public class DatabaseSeedService : IDatabaseSeedService
         if (hasChanges)
             db.SaveChanges();
     }
+
+    private static void EnsureNavigationMenuDefaults(AppDbContext db)
+    {
+        var defaults = BuildDefaultNavigationMenuItems();
+        var changed = false;
+
+        foreach (var item in defaults)
+        {
+            var existing = db.NavigationMenuItems.FirstOrDefault(x => x.Key == item.Key);
+            if (existing is null)
+            {
+                db.NavigationMenuItems.Add(item);
+                changed = true;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(existing.TitleDe)) existing.TitleDe = item.TitleDe;
+            if (string.IsNullOrWhiteSpace(existing.TitleEn)) existing.TitleEn = item.TitleEn;
+            if (string.IsNullOrWhiteSpace(existing.Icon)) existing.Icon = item.Icon;
+            if (string.IsNullOrWhiteSpace(existing.Href)) existing.Href = item.Href;
+            if (string.IsNullOrWhiteSpace(existing.ItemType)) existing.ItemType = item.ItemType;
+            if (string.IsNullOrWhiteSpace(existing.Match)) existing.Match = item.Match;
+            if (string.IsNullOrWhiteSpace(existing.RequiredPolicy)) existing.RequiredPolicy = item.RequiredPolicy;
+            existing.IsSystem = true;
+            changed = true;
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static List<NavigationMenuItem> BuildDefaultNavigationMenuItems() =>
+    [
+        Group("finance", null, "Finance Cockpit", "Finance Cockpit", "Analytics", 10, expanded: true),
+        Link("export-dashboard", "finance", "Export Dashboard", "Export dashboard", "Dashboard", "export-dashboard", 10),
+        Group("management-analysis", "finance", "Management Analyse", "Management analysis", "QueryStats", 20),
+        Link("management-quick", "management-analysis", "Schnelluebersicht", "Quick overview", "Speed", "management-cockpit", 10, "All"),
+        Group("experts", "management-analysis", "Experten", "Experts", "Tune", 20),
+        Link("finance-summary", "experts", "Finance Summary", "Finance summary", "Dashboard", "management-cockpit?section=summary", 10, "All"),
+        Link("country-diagnostics", "experts", "Laender Diagnose", "Country diagnostics", "Public", "management-cockpit?section=countries", 20, "All"),
+        Link("data-status", "experts", "Datenstatus", "Data status", "FactCheck", "management-cockpit?section=status", 30, "All"),
+        Link("deviations", "experts", "Abweichungen", "Deviations", "WarningAmber", "management-cockpit?section=deviations", 40, "All"),
+        Link("credits", "experts", "Gutschriften", "Credit notes", "AssignmentReturn", "management-cockpit?section=credits", 50, "All"),
+        Link("data-quality", "experts", "Datenqualitaet", "Data quality", "Rule", "management-cockpit?section=quality", 60, "All"),
+        Link("division-finance", "experts", "Sparten-Finanzanalyse", "Division finance", "PieChart", "management-cockpit?section=division&division=finance", 70, "All"),
+        Link("division-central", "experts", "Zentrale Spartenzuordnung", "Central division mapping", "AccountTree", "management-cockpit?section=division&division=central", 80, "All"),
+        Link("finance-3d", "experts", "3D Datenanalyse", "3D data analysis", "ViewInAr", "management-cockpit?section=3d", 90, "All"),
+        Link("raw-diagnostics", "experts", "Rohdaten Diagnose", "Raw-data diagnostics", "QueryStats", "management-cockpit?section=raw", 100, "All"),
+        Link("finance-comparison", "finance", "Soll/Ist Vergleich", "Actual/reference comparison", "CompareArrows", "finance-cockpit/vergleich", 30),
+        Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
+        Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),
+        Group("finance-admin", "finance", "Admin", "Admin", "AdminPanelSettings", 60),
+        Link("sites", "finance-admin", "Standorte", "Sites", "LocationOn", "standorte", 10, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("transformations", "finance-admin", "Transformationen", "Transformations", "Transform", "transformations", 20, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("finance-rules", "finance-admin", "Finance Regeln", "Finance rules", "Rule", "finance-rules", 30, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("settings", "finance-admin", "Settings", "Settings", "Settings", "settings", 40, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("menu-structure", "finance-admin", "Menuestruktur", "Menu structure", "AccountTree", "admin/menu-structure", 45, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("logs", "finance-admin", "Logs", "Logs", "List", "logs", 50),
+        Action("finance-lock", "finance", "Finance sperren", "Lock finance", "Lock", 70),
+        Group("hr", null, "HR KPI (Login)", "HR KPI (login)", "Groups", 20),
+        Link("hr-dashboard", "hr", "HR Dashboard", "HR dashboard", "Dashboard", "hr-kpi", 10, "All"),
+        Link("hr-training", "hr", "HR KPI Schulung", "HR KPI training", "School", "hr-kpi/schulung", 20),
+        Group("purchasing", null, "Einkauf", "Purchasing", "ShoppingCart", 30),
+        Link("purchasing-dashboard", "purchasing", "Einkauf Dashboard", "Purchasing dashboard", "Dashboard", "einkauf", 10, "All"),
+        Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
+    ];
+
+    private static NavigationMenuItem Group(string key, string? parentKey, string titleDe, string titleEn, string icon, int sortOrder, bool expanded = false)
+        => new()
+        {
+            Key = key,
+            ParentKey = parentKey,
+            TitleDe = titleDe,
+            TitleEn = titleEn,
+            Icon = icon,
+            ItemType = NavigationMenuItemTypes.Group,
+            IsExpanded = expanded,
+            SortOrder = sortOrder
+        };
+
+    private static NavigationMenuItem Link(string key, string? parentKey, string titleDe, string titleEn, string icon, string href, int sortOrder, string match = "Prefix", string requiredPolicy = "")
+        => new()
+        {
+            Key = key,
+            ParentKey = parentKey,
+            TitleDe = titleDe,
+            TitleEn = titleEn,
+            Icon = icon,
+            Href = href,
+            Match = match,
+            RequiredPolicy = requiredPolicy,
+            ItemType = NavigationMenuItemTypes.Link,
+            SortOrder = sortOrder
+        };
+
+    private static NavigationMenuItem Action(string key, string? parentKey, string titleDe, string titleEn, string icon, int sortOrder)
+        => new()
+        {
+            Key = key,
+            ParentKey = parentKey,
+            TitleDe = titleDe,
+            TitleEn = titleEn,
+            Icon = icon,
+            ItemType = NavigationMenuItemTypes.Action,
+            SortOrder = sortOrder
+        };
 
     private static void EnsureCentralHanaServerRecords(AppDbContext db)
     {

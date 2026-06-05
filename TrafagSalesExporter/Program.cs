@@ -91,6 +91,7 @@ builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializa
 builder.Services.AddSingleton<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
 builder.Services.AddSingleton<ILandingPageSettingsService, LandingPageSettingsService>();
+builder.Services.AddSingleton<INavigationMenuService, NavigationMenuService>();
 
 // Datenquellen-Adapter (Strategy per ConnectionKind).
 builder.Services.AddSingleton<IDataSourceAdapter, HanaDataSourceAdapter>();

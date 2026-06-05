@@ -45,6 +45,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureSapFieldMappingTable(db);
         EnsureManualExcelColumnMappingTable(db);
         EnsureCentralSalesRecordTable(db);
+        EnsureNavigationMenuItemTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -269,6 +270,17 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
     SortOrder INTEGER NOT NULL DEFAULT 0,
     IsActive INTEGER NOT NULL DEFAULT 1
 );";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureNavigationMenuItemTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetNavigationMenuItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
     }
 

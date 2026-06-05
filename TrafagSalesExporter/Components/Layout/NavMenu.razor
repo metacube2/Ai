@@ -1,126 +1,93 @@
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Security
+@using TrafagSalesExporter.Services
 @implements IDisposable
-@inject TrafagSalesExporter.Services.IUiTextService UiText
-@inject TrafagSalesExporter.Services.IFinanceCockpitAccessService FinanceAccess
+@inject IUiTextService UiText
+@inject IFinanceCockpitAccessService FinanceAccess
+@inject INavigationMenuService NavigationMenuService
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthorizationService AuthorizationService
 
 <MudNavMenu>
-    <MudNavGroup Title="@T("Finance Cockpit", "Finance Cockpit")" Icon="@Icons.Material.Filled.Analytics" Expanded="true">
-        <MudNavLink Href="export-dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
-            @T("Export Dashboard", "Export dashboard")
-        </MudNavLink>
-        <MudNavGroup Title="@T("Management Analyse", "Management analysis")" Icon="@Icons.Material.Filled.QueryStats">
-            <MudNavLink Href="management-cockpit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Speed">
-                @T("Schnelluebersicht", "Quick overview")
-            </MudNavLink>
-            <MudNavGroup Title="@T("Experten", "Experts")" Icon="@Icons.Material.Filled.Tune">
-                <MudNavLink Href="management-cockpit?section=summary" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-                    @T("Finance Summary", "Finance summary")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=countries" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Public">
-                    @T("Laender Diagnose", "Country diagnostics")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=status" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.FactCheck">
-                    @T("Datenstatus", "Data status")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=deviations" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.WarningAmber">
-                    @T("Abweichungen", "Deviations")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=credits" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AssignmentReturn">
-                    @T("Gutschriften", "Credit notes")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=quality" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Rule">
-                    @T("Datenqualitaet", "Data quality")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=division&division=finance" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PieChart">
-                    @T("Sparten-Finanzanalyse", "Division finance")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=division&division=central" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AccountTree">
-                    @T("Zentrale Spartenzuordnung", "Central division mapping")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=3d" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ViewInAr">
-                    @T("3D Datenanalyse", "3D data analysis")
-                </MudNavLink>
-                <MudNavLink Href="management-cockpit?section=raw" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.QueryStats">
-                    @T("Rohdaten Diagnose", "Raw-data diagnostics")
-                </MudNavLink>
-            </MudNavGroup>
-        </MudNavGroup>
-        @if (ShowFinanceComparison)
-        {
-            <MudNavLink Href="finance-cockpit/vergleich" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CompareArrows">
-                @T("Soll/Ist Vergleich", "Actual/reference comparison")
-            </MudNavLink>
-        }
-        <MudNavLink Href="finance-cockpit/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
-            @T("Finance Schulung", "Finance training")
-        </MudNavLink>
-        <MudNavLink Href="manual-imports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.UploadFile">
-            @T("Manuelle Importe", "Manual imports")
-        </MudNavLink>
-        <MudNavGroup Title="@T("Admin", "Admin")" Icon="@Icons.Material.Filled.AdminPanelSettings">
-            <AuthorizeView Policy="@SecurityPolicies.AdminOnly">
-                <Authorized>
-                    <MudNavLink Href="standorte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationOn">
-                        @T("Standorte", "Sites")
-                    </MudNavLink>
-                    <MudNavLink Href="transformations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Transform">
-                        @T("Transformationen", "Transformations")
-                    </MudNavLink>
-                    <MudNavLink Href="finance-rules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Rule">
-                        @T("Finance Regeln", "Finance rules")
-                    </MudNavLink>
-                    <MudNavLink Href="settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
-                        @T("Settings", "Settings")
-                    </MudNavLink>
-                </Authorized>
-            </AuthorizeView>
-            <MudNavLink Href="logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
-                @T("Logs", "Logs")
-            </MudNavLink>
-        </MudNavGroup>
-        @if (FinanceAccess.IsEnabled && FinanceAccess.IsUnlocked)
-        {
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small"
-                       StartIcon="@Icons.Material.Filled.Lock" OnClick="LockFinanceCockpit" Class="ml-3">
-                @T("Finance sperren", "Lock finance")
-            </MudButton>
-        }
-    </MudNavGroup>
-    <MudNavGroup Title="@T("HR KPI (Login)", "HR KPI (login)")" Icon="@Icons.Material.Filled.Groups">
-        <MudNavLink Href="hr-kpi" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-            @T("HR Dashboard", "HR dashboard")
-        </MudNavLink>
-        <MudNavLink Href="hr-kpi/schulung" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.School">
-            @T("HR KPI Schulung", "HR KPI training")
-        </MudNavLink>
-    </MudNavGroup>
-    <MudNavLink Href="admin/sessions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PeopleAlt">
-        @T("Admin Bereich", "Admin area")
-    </MudNavLink>
+    @foreach (var item in RootItems)
+    {
+        <NavMenuNode Item="item"
+                     Items="_visibleItems"
+                     HiddenKeys="_hiddenKeys"
+                     OnAction="HandleMenuActionAsync" />
+    }
 </MudNavMenu>
 
 @code {
+    private List<NavigationMenuItem> _visibleItems = [];
+    private readonly HashSet<string> _hiddenKeys = [];
+
     private bool ShowFinanceComparison => Configuration.GetValue("Navigation:ShowFinanceComparison", true);
 
-    protected override void OnInitialized()
+    private IEnumerable<NavigationMenuItem> RootItems => _visibleItems
+        .Where(x => string.IsNullOrWhiteSpace(x.ParentKey))
+        .Where(x => !_hiddenKeys.Contains(x.Key))
+        .OrderBy(x => x.SortOrder)
+        .ThenBy(x => x.TitleDe);
+
+    protected override async Task OnInitializedAsync()
     {
         UiText.Changed += HandleLanguageChanged;
+        await LoadMenuAsync();
     }
 
-    private void LockFinanceCockpit()
+    private async Task LoadMenuAsync()
     {
-        FinanceAccess.Lock();
-        Navigation.NavigateTo(string.Empty);
+        var items = await NavigationMenuService.GetItemsAsync();
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+        var filtered = new List<NavigationMenuItem>();
+
+        foreach (var item in items.Where(x => x.IsVisible))
+        {
+            if (!await IsAuthorizedAsync(user, item))
+                continue;
+
+            filtered.Add(item);
+        }
+
+        _hiddenKeys.Clear();
+        if (!ShowFinanceComparison)
+            _hiddenKeys.Add("finance-comparison");
+        if (!FinanceAccess.IsEnabled || !FinanceAccess.IsUnlocked)
+            _hiddenKeys.Add("finance-lock");
+
+        _visibleItems = filtered;
+    }
+
+    private async Task<bool> IsAuthorizedAsync(System.Security.Claims.ClaimsPrincipal user, NavigationMenuItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.RequiredPolicy))
+            return true;
+
+        var result = await AuthorizationService.AuthorizeAsync(user, item.RequiredPolicy);
+        return result.Succeeded;
+    }
+
+    private Task HandleMenuActionAsync(string key)
+    {
+        if (key == "finance-lock")
+        {
+            FinanceAccess.Lock();
+            Navigation.NavigateTo(string.Empty);
+        }
+
+        return Task.CompletedTask;
     }
 
     private void HandleLanguageChanged()
     {
         InvokeAsync(StateHasChanged);
     }
-
-    private string T(string german, string english) => UiText.Text(german, english);
 
     public void Dispose()
     {

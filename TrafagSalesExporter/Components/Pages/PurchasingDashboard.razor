@@ -1,0 +1,23 @@
+@page "/einkauf"
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Einkauf", "Purchasing")</MudText>
+
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Primary" Size="Size.Large" />
+        <div>
+            <MudText Typo="Typo.h6">@T("Einkauf Dashboard", "Purchasing dashboard")</MudText>
+            <MudText Typo="Typo.body2">
+                @T("Dieser Bereich ist als Einstiegspunkt fuer Einkaufsauswertungen vorbereitet.",
+                   "This area is prepared as the entry point for purchasing analytics.")
+            </MudText>
+        </div>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+}

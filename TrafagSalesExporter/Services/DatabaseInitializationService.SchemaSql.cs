@@ -215,4 +215,22 @@ CREATE TABLE FinanceRules (
     SortOrder INTEGER NOT NULL DEFAULT 0,
     IsActive INTEGER NOT NULL DEFAULT 1
 );";
+
+    internal static string GetNavigationMenuItemsCreateSql() => @"
+CREATE TABLE NavigationMenuItems (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Key TEXT NOT NULL,
+    ParentKey TEXT NULL,
+    TitleDe TEXT NOT NULL DEFAULT '',
+    TitleEn TEXT NOT NULL DEFAULT '',
+    Icon TEXT NOT NULL DEFAULT '',
+    Href TEXT NOT NULL DEFAULT '',
+    ItemType TEXT NOT NULL DEFAULT 'Link',
+    Match TEXT NOT NULL DEFAULT 'Prefix',
+    RequiredPolicy TEXT NOT NULL DEFAULT '',
+    IsVisible INTEGER NOT NULL DEFAULT 1,
+    IsExpanded INTEGER NOT NULL DEFAULT 0,
+    IsSystem INTEGER NOT NULL DEFAULT 1,
+    SortOrder INTEGER NOT NULL DEFAULT 0
+);";
 }
