@@ -1,6 +1,6 @@
 # Sage Spain Rclone Upload Guide
 
-Status: 2026-06-03
+Status: 2026-06-05
 
 Purpose: The Sage server in Spain creates the sales CSV locally and then automatically uploads the file to the SharePoint folder used by the dashboard import.
 
@@ -32,24 +32,25 @@ https://trafagag.sharepoint.com/sites/WorldwideBIPlatform
 
 ## Required Files On The Spain Server
 
-Recommended folder:
+Recommended folder for export output and logs:
 
 ```text
 C:\Trafag\SageSpain
 ```
 
-Required files:
+Recommended script folder:
 
 ```text
-Export-SageSpainSalesCsv.ps1
-Run-SpainExportAndUpload.ps1
+C:\Tools\rclone
 ```
 
-The files are included in:
+Required file for the current single-file workflow:
 
 ```text
-SageSpainFinalExportPackage.zip
+Run-SpainRangeExportAndUpload-AllInOne.ps1
 ```
+
+This all-in-one script does not require `Export-SageSpainSalesCsv.ps1` or `Run-SpainExportAndUpload.ps1`.
 
 ## Install rclone
 
@@ -59,10 +60,11 @@ If `winget` is available:
 winget install Rclone.Rclone
 ```
 
-Alternatively, install the rclone ZIP manually, for example to:
+Alternatively, install the rclone ZIP manually, for example to one of these paths:
 
 ```text
 C:\Tools\rclone\rclone.exe
+C:\Tools\rclone\rclone\rclone.exe
 ```
 
 Test the installation:
@@ -75,6 +77,14 @@ If `rclone` is not in the PATH, use the full path later:
 
 ```powershell
 C:\Tools\rclone\rclone.exe version
+```
+
+The current all-in-one script auto-detects rclone in:
+
+```text
+C:\Tools\rclone.exe
+C:\Tools\rclone\rclone.exe
+C:\Tools\rclone\rclone\rclone.exe
 ```
 
 ## Configure The rclone Remote
@@ -138,36 +148,39 @@ Notes:
 
 ## Run Export And Upload Together
 
-Default: daily delta run, yesterday until today:
+Current recommended command: one file, range export and upload.
+
+Default: last 7 days until today. `ToDate` is exclusive.
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-cd C:\Trafag\SageSpain
-.\Run-SpainExportAndUpload.ps1
+cd C:\Tools\rclone
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1
 ```
 
 Explicit date range:
 
 ```powershell
-.\Run-SpainExportAndUpload.ps1 -ExportMode Range -DateFilter LineRegistrationDate -FromDate "2026-06-02" -ToDate "2026-06-03"
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
 ```
 
-Full export with upload:
+If rclone is in a non-standard location:
 
 ```powershell
-.\Run-SpainExportAndUpload.ps1 -ExportMode Full -Year 2025
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -RcloneExe "C:\Tools\rclone\rclone\rclone.exe"
 ```
 
-If rclone is not in the PATH:
+Older two-file wrapper, only use if both scripts are present in the same folder:
 
 ```powershell
-.\Run-SpainExportAndUpload.ps1 -RcloneExe "C:\Tools\rclone\rclone.exe"
+.\Run-SpainExportAndUpload.ps1
 ```
 
-If the rclone remote has another name:
+This older wrapper requires:
 
-```powershell
-.\Run-SpainExportAndUpload.ps1 -RcloneRemote "YOUR_REMOTE_NAME"
+```text
+Export-SageSpainSalesCsv.ps1
+Run-SpainExportAndUpload.ps1
 ```
 
 ## What Gets Uploaded?
@@ -194,7 +207,7 @@ Recommended daily run, for example at 02:00:
 ```powershell
 $action = New-ScheduledTaskAction `
   -Execute "powershell.exe" `
-  -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\Trafag\SageSpain\Run-SpainExportAndUpload.ps1"
+  -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\Tools\rclone\Run-SpainRangeExportAndUpload-AllInOne.ps1"
 
 $trigger = New-ScheduledTaskTrigger -Daily -At 02:00
 
@@ -210,7 +223,7 @@ If rclone is not in the PATH:
 ```powershell
 $action = New-ScheduledTaskAction `
   -Execute "powershell.exe" `
-  -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\Trafag\SageSpain\Run-SpainExportAndUpload.ps1 -RcloneExe C:\Tools\rclone\rclone.exe"
+  -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\Tools\rclone\Run-SpainRangeExportAndUpload-AllInOne.ps1 -RcloneExe C:\Tools\rclone\rclone\rclone.exe"
 ```
 
 ## Check After The Run
@@ -239,7 +252,18 @@ https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Shared%20Documents/Imp
 `rclone: command not found`
 
 - rclone is not in the PATH.
-- Use `-RcloneExe "C:\Tools\rclone\rclone.exe"`.
+- Use `-RcloneExe "C:\Tools\rclone\rclone.exe"` or `-RcloneExe "C:\Tools\rclone\rclone\rclone.exe"`.
+
+`Export script not found`
+
+- You started the older wrapper `Run-SpainExportAndUpload.ps1`.
+- For the single-file workflow start `Run-SpainRangeExportAndUpload-AllInOne.ps1`.
+
+`CRITICAL: Can't set -v and --log-level`
+
+- The server is running an old copy of the script that still contains `--verbose`.
+- Remove the line `--verbose \`` from the rclone `copy` block, or replace the file with the current all-in-one script.
+- The corrected upload block keeps `--log-level INFO` and does not use `--verbose`.
 
 `directory not found`
 

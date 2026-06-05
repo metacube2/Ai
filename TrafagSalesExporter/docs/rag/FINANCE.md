@@ -1,12 +1,14 @@
 # RAG Finance
 
-Stand: 2026-06-01
+Stand: 2026-06-05
 
 ## Kurzstand
 
 - Fuehrende Sicht: `Finance Summary`.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
+- Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
+- Neuer Expertenpunkt: `3D Datenanalyse` fuer interaktive visuelle Analyse und Simulation.
 - `Management Analyse` hat zusaetzliche Finance-Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
 - `Management Analyse` ist links aufklappbar; direkte Navigationspunkte springen in die einzelnen Reiter.
 - Neu: `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
@@ -19,6 +21,8 @@ Stand: 2026-06-01
 - Management Analyse zeigt in `Laender` jetzt IC/2nd-party und `Ist ohne IC` als Diagnose.
 - Wechselkurs-Anwendungsdatum ist in Settings konfigurierbar und wird in der Rohdaten-Diagnose angezeigt.
 - Spartenanalyse war mit >90% nicht zugeordnet fachlich unplausibel; Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
+- Budgetkurse wurden als Finance-Kurse behandelt; CHF-Sicht bleibt getrennte Reporting-/Kontrollsicht, nicht stiller Ersatz fuer Hauswaehrungsabgleich.
+- Browser-Hinweis: 3D-Ansicht wurde in Chrome als korrekt bestaetigt; Firefox zeigte auf dem Client Interaktions-/Zoomprobleme.
 
 ## Wichtige Regeln
 
@@ -46,6 +50,20 @@ Stand: 2026-06-01
 - `Spartenanalyse > Finanzanalyse`: Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 auf Basis der TR-AG-Referenz.
 - `Spartenanalyse > Zentrale Zuordnung`: Materialnummern aller Laender gegen TR-AG-Stamm pruefen.
 - `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf `CentralSalesRecords`.
+
+## Experten / 3D Datenanalyse
+
+- Unter `Experten` gibt es den Punkt `3D Datenanalyse`.
+- Zweck: Verlauf und Kennzahlen im Raum betrachten, nicht Ersatz fuer den offiziellen Soll/Ist-Wert.
+- Funktionen:
+  - drehbare 3D-Ansicht mit Maus.
+  - Achsenbeschriftung fuer Zeit/Wert/Indikator.
+  - Auswahl sinnvoller Finance-Indikatoren.
+  - Diagrammarten wie Balken/Linien/weitere Analyseformen.
+  - einstellbare Labelgroesse.
+  - Schieberegler fuer Szenarien, u. a. Wechselkursveraenderungen.
+  - Realtime-Neuberechnung bei Szenarioaenderungen.
+- Bekannter Hinweis: Wenn Interaktion/Zoom in Firefox fehlerhaft ist, mit Chrome pruefen.
 
 ## Spartenanalyse Kurzlogik
 

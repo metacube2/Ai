@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-01
+Stand: 2026-06-05
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,8 +8,20 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Code-Stand: Finance-Sitzungsnachtrag 2026-06-01 noch nicht deployt.
+- Letzter dokumentierter Code-Stand: Finance-Dashboard-Vereinfachung, Expertenbereich mit 3D-Datenanalyse und Spanien-Sage-All-in-one-rclone-Upload.
 - Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+- Neu umgesetzt und deployed: Finance bekommt links eine einfache Schnelluebersicht; die bisherigen tieferen Analysefunktionen bleiben unter `Experten`.
+- Neu umgesetzt und deployed: `Experten > 3D Datenanalyse` mit drehbarer 3D-Visualisierung, Achsenbeschriftung, waehlbaren Indikatoren, Diagrammarten und Simulation.
+- Neu umgesetzt und deployed: 3D-Simulation mit Schiebereglern, u. a. fuer Wechselkurs-/Szenarioveraenderungen; Grafik reagiert in Echtzeit.
+- Neu umgesetzt und deployed: 3D-Darstellung korrigiert fuer Canvas-Groesse, Achsen, Labelgroesse und breitere Indikatorauswahl.
+- Bekannter Browser-Hinweis: 3D-Ansicht wurde in Chrome als korrekt bestaetigt; Firefox zeigte auf dem Client Probleme mit Interaktion/Groesse.
+- Neu fuer Spanien: All-in-one-PS1 `SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1` erstellt; es exportiert Sage direkt per SQL-Range und laedt CSV/Summary via rclone nach SharePoint.
+- Neu fuer Spanien: Standard-Range ist letzte 7 Tage bis heute; `FromDate`/`ToDate` koennen per Parameter ueberschrieben werden.
+- Neu fuer Spanien: SharePoint-Ziel wird vor Export per rclone geprueft/angelegt: `trafag-bi:Import/Finance/Spanien`.
+- Neu fuer Spanien: rclone-Uploadfehler `Can't set -v and --log-level` behoben; `--verbose` wurde aus dem All-in-one-Upload entfernt.
+- Neu fuer Spanien: rclone wird automatisch an mehreren Standardpfaden gesucht, inkl. `C:\Tools\rclone.exe`, `C:\Tools\rclone\rclone.exe`, `C:\Tools\rclone\rclone\rclone.exe` und `PATH`.
+- Wichtig fuer Spanien: Nur das All-in-one-Script benoetigt keine separate `Export-SageSpainSalesCsv.ps1`; der alte Wrapper `Run-SpainExportAndUpload.ps1` braucht weiterhin das Export-Script daneben.
+- Neu dokumentiert: Spanien-rclone-Anleitung und Package-README auf den All-in-one-Workflow aktualisiert.
 - Neu umgesetzt: ES-Referenz 2025 auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` als Referenz-/Excel-Fehler dokumentiert.
 - Neu umgesetzt: `FinanceProbe` nutzt dieselbe korrigierte ES-Referenz.
 - Neu umgesetzt: Wechselkurs-Anwendungsdatum in Settings konfigurierbar (`PostingDate`, `InvoiceDate`, `ExtractionDate`) und in Rohdaten-Diagnose sichtbar.
@@ -31,9 +43,136 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt und deployed: Produktsparte zeigt visuelle Kategorie-Icons fuer Gas/Density, Pressure/Druck, Temperatur/Thermostat, Switch/Schalter, Access/Zubehoer, UNASS und Sonstige.
 - Neu umgesetzt und deployed: Finance-Schulung hat einen neuen Tab `Spartenanalyse` mit Navigation, Gruppierung, Top 10, Flaggen, Icons und Statusinterpretation.
 - Neu umgesetzt und deployed: Browser-Favicon `wwwroot/favicon.svg` und Head-Link in `Components/App.razor`.
-- Letzter Deploy: 2026-05-29 13:47 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Aktueller Stand 2026-06-01 ist validiert, aber noch nicht deployt.
+- Letzter dokumentierter Finance-Deploy: 2026-06-04 nach 3D-Datenanalyse-/Schnelluebersicht-Anpassungen auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Aktueller Stand 2026-06-05: Spanien-Scriptfixes sind committed; Server muss die aktuelle All-in-one-PS1 verwenden, nicht alte Kopien mit `(1)` und nicht den alten Wrapper.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+
+## Nachtrag 2026-06-05 Spanien Sage / rclone Upload
+
+Ziel:
+
+- Spanien soll auf dem Sage-Server selbst exportieren und die Datei automatisch nach SharePoint laden.
+- Nach dem alten Vollbestand werden kuenftig nur noch Range-/Delta-Exporte benoetigt.
+
+Server-/rclone-Kontext:
+
+- Spanien-Server laut Chat:
+  - IP: `194.30.41.41`
+  - Hostname: `WIN-4BJQJ9S1PVJ`
+  - VPS im Netzwerkprovider von Spanien, Wartung durch Spanien.
+- Microsoft-365/rclone-Berechtigung wurde durch Admin genehmigt; rclone-Remote-Konfiguration war danach erfolgreich.
+- Zielordner:
+  - Browser: `https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Shared%20Documents/Import/Finance/Spanien`
+  - rclone: `trafag-bi:Import/Finance/Spanien`
+
+Umgesetzt:
+
+- Neues Einzel-Script `SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1`.
+- Das Script macht alles in einem Lauf:
+  - Datum pruefen.
+  - rclone finden.
+  - SharePoint-Ziel pruefen/erstellen.
+  - Sage-SQL direkt lesen.
+  - Range-CSV und Summary schreiben.
+  - CSV/Summary per rclone hochladen.
+  - Upload via `rclone lsf` verifizieren.
+- Default:
+  - `FromDate = heute - 7 Tage`
+  - `ToDate = heute`
+  - `ToDate` ist exklusiv.
+- Parameter koennen ueberschrieben werden:
+
+```powershell
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
+```
+
+rclone-Fix:
+
+- Fehler im Serverlog:
+
+```text
+CRITICAL: Can't set -v and --log-level
+```
+
+- Ursache: rclone darf nicht gleichzeitig mit `--verbose` / `-v` und `--log-level INFO` gestartet werden.
+- Fix im All-in-one-Script:
+  - `--verbose` aus dem `rclone copy` Uploadblock entfernt.
+  - `--log-level INFO` bleibt erhalten.
+  - Bei rclone-Fehlern werden die letzten 80 Logzeilen direkt ausgegeben.
+
+rclone-Pfade:
+
+- Automatische Suche prueft:
+  - expliziter Parameter `-RcloneExe`
+  - `rclone.exe` im Scriptordner
+  - `C:\Tools\rclone.exe`
+  - `C:\Tools\rclone\rclone.exe`
+  - `C:\Tools\rclone\rclone\rclone.exe`
+  - `rclone` aus `PATH`
+
+Wichtige Bedienregel:
+
+- Fuer den Ein-Datei-Betrieb immer starten:
+
+```powershell
+.\Run-SpainRangeExportAndUpload-AllInOne.ps1
+```
+
+- Nicht starten:
+
+```powershell
+.\Run-SpainExportAndUpload.ps1
+```
+
+Dieser alte Wrapper erwartet daneben `Export-SageSpainSalesCsv.ps1` und ist nicht der gewuenschte Ein-Datei-Workflow.
+
+Commits:
+
+- `e55a86c Add Spain all-in-one export upload script`
+- `8e0b696 Default Spain export range to last seven days`
+- `af097ca Fix Spain all-in-one rclone upload`
+- `3fd19a8 Detect nested Spain rclone executable`
+
+## Nachtrag 2026-06-04 Finance Schnelluebersicht / Experten / 3D Datenanalyse
+
+Ziel:
+
+- Finance Dashboard war fuer Finance/Andreas zu unuebersichtlich.
+- Bestehende Funktionen bleiben erhalten, werden aber als Expertenbereich eingeordnet.
+- Neue fuehrende Navigation soll links klarer sein: einfache Uebersicht zuerst, tiefe Analysen darunter.
+
+Umgesetzt und deployed:
+
+- Finance-Schnelluebersicht links sichtbarer gemacht.
+- Bestehende tiefe Funktionen unter `Experten` zusammengefasst.
+- Neuer Expertenpunkt `3D Datenanalyse`.
+- 3D-Datenanalyse:
+  - drehbare 3D-Ansicht mit Maus.
+  - Achsenbeschriftung fuer Zeit/Werte/Indikatoren.
+  - waehlbare Indikatoren erweitert.
+  - Diagrammarten erweitert, u. a. Balken, Linien und weitere Analyseformen.
+  - Labelgroesse in der Grafik einstellbar.
+  - Canvas-/Frame-Groesse korrigiert, damit die Grafik nicht eingequetscht ist.
+  - Simulation mit Schiebereglern, u. a. fuer Wechselkurs-/Szenarioaenderungen.
+  - Realtime-Aktualisierung der Grafik bei Parameterveraenderungen.
+
+Bekannte Beobachtung:
+
+- In Chrome sah die 3D-Ansicht korrekt aus.
+- In Firefox gab es auf dem Client Interaktions-/Zoomprobleme; vorerst als Browser-Hinweis merken.
+
+Commits:
+
+- `40805e0 Simplify finance dashboard overview`
+- `b44e8ba Expose quick finance overview in navigation`
+- `a8dc565 Add finance 3D data analysis`
+- `13a7331 Improve finance 3D controls and simulation`
+- `9409174 Fix finance 3D scenario scaling`
+- `fde7f6b Add finance 3D chart modes`
+- `1049216 Label finance 3D axes`
+- `e33a2fd Expand finance 3D indicators`
+- `9c63c36 Fix finance 3D canvas sizing`
+- `cad2140 Add finance 3D label size control`
 
 ## Nachtrag 2026-06-01 Finance-Sitzung Andreas
 

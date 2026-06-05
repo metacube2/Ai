@@ -107,11 +107,38 @@ This file does not require Export-SageSpainSalesCsv.ps1 or Run-SpainExportAndUpl
 
 .\Run-SpainRangeExportAndUpload-AllInOne.ps1
 
+Default date window:
+
+- FromDate = today - 7 days
+- ToDate = today
+- ToDate is exclusive
+
 Override the all-in-one default date window:
 
 .\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-06-01" -ToDate "2026-06-04"
 
 The all-in-one script checks/creates the SharePoint folder before export, uploads the generated CSV and summary, and verifies that the uploaded files are listed in SharePoint.
+
+rclone.exe lookup for the all-in-one script:
+
+- explicit -RcloneExe parameter
+- rclone.exe in the same folder as the script
+- C:\Tools\rclone.exe
+- C:\Tools\rclone\rclone.exe
+- C:\Tools\rclone\rclone\rclone.exe
+- rclone from PATH
+
+Known rclone upload issue:
+
+If the log says:
+
+CRITICAL: Can't set -v and --log-level
+
+then the server is running an old script copy that still contains:
+
+--verbose `
+
+Remove that line from the rclone copy block or replace the file with the current Run-SpainRangeExportAndUpload-AllInOne.ps1.
 
 Full export and upload:
 
