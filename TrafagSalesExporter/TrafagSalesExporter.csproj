@@ -39,9 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="trafag_exporter.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="trafag_exporter.db-wal" Condition="Exists('trafag_exporter.db-wal')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="trafag_exporter.db-shm" Condition="Exists('trafag_exporter.db-shm')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="trafag_exporter.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <Content Include="trafag_exporter.db-wal" Condition="Exists('trafag_exporter.db-wal')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <Content Include="trafag_exporter.db-shm" Condition="Exists('trafag_exporter.db-shm')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
     <Content Include="check.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="DE_Beispiel_Export_Daten.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="formeln.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
