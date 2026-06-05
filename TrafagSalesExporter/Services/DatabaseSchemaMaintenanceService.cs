@@ -304,13 +304,20 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             cmd.ExecuteNonQuery();
         }
 
-        using var ekpoIndex = conn.CreateCommand();
-        ekpoIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Matkl ON PurchasingEkpoCache (Matkl);";
-        ekpoIndex.ExecuteNonQuery();
-
-        using var eketDateIndex = conn.CreateCommand();
-        eketDateIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_Eindt ON PurchasingEketCache (Eindt);";
-        eketDateIndex.ExecuteNonQuery();
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkkoCache_Bedat ON PurchasingEkkoCache (Bedat);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkkoCache_Lifnr ON PurchasingEkkoCache (Lifnr);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Ebeln ON PurchasingEkpoCache (Ebeln);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Matkl ON PurchasingEkpoCache (Matkl);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_Eindt ON PurchasingEketCache (Eindt);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_EbelnEbelp ON PurchasingEketCache (Ebeln, Ebelp);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureSapSourceTable(AppDbContext db)

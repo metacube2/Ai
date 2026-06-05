@@ -2,7 +2,12 @@ namespace TrafagSalesExporter.Services;
 
 public interface IPurchasingDashboardService
 {
-    Task<PurchasingDashboardLiveState> LoadAsync(CancellationToken cancellationToken = default);
+    Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default);
+}
+
+public sealed record PurchasingDashboardFilter(DateTime FromDate, DateTime ToDate)
+{
+    public string Label => $"{FromDate:yyyy-MM-dd} bis {ToDate:yyyy-MM-dd}";
 }
 
 public sealed class PurchasingDashboardLiveState
@@ -19,6 +24,8 @@ public sealed class PurchasingDashboardLiveState
     public bool UsesCache { get; set; }
     public string CacheStatus { get; set; } = string.Empty;
     public DateTime? CacheCompletedAtUtc { get; set; }
+    public DateTime? PeriodFrom { get; set; }
+    public DateTime? PeriodTo { get; set; }
     public decimal SpendChfSample { get; set; }
     public decimal OpenQuantitySample { get; set; }
     public decimal OpenValueSample { get; set; }
@@ -29,7 +36,16 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> ContractChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> DeliveryRiskChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> PriceVarianceChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> SpendConcentrationChartRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> DataQualityChartRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> DeliveryRiskRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> PriceVarianceRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> SpendConcentrationRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> DataQualityRows { get; set; } = [];
     public string Message { get; set; } = string.Empty;
 }
 
 public sealed record PurchasingLiveChartPoint(string Label, decimal Value);
+public sealed record PurchasingIdeaAnalysisRow(string Label, string Value, string Detail, string Severity);
