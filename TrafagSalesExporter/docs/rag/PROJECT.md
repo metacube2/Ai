@@ -11,7 +11,7 @@ Stand: 2026-06-05
 - Neu im Finance/Management-Cockpit: einfache Schnelluebersicht links sichtbar; tiefere Funktionen bleiben unter `Experten`.
 - Neu in der Navigation: Menuebaum wird aus `NavigationMenuItems` gerendert; Admins koennen bestehende Punkte unter `Admin > Menuestruktur` umhaengen, sortieren und aus-/einblenden.
 - Neu als Hauptbereich: `Einkauf` mit Einkaufswagen-Icon und erweitertem `Einkauf Dashboard`.
-- Einkauf: `x.pbix` wurde als Vorlage analysiert; `/einkauf` enthaelt jetzt Struktur fuer Spend, offene Bestellungen, Mengenkontrakte, Lieferantenperformance, PBIX-Reportseiten und 3D-Simulation.
+- Einkauf: `x.pbix` wurde als Vorlage analysiert; die frueheren Tabs wurden in linke Navigationspunkte unter `Einkauf` aufgeteilt: Dashboard, Spend, offene Bestellungen, Kontrakte, Lieferanten, Ideen, Kennzahlen-Katalog, PBIX Vorlage und 3D Simulation.
 - Einkauf: `Einkauf > Datenquellen` pflegt die SAP/OData-Konfiguration grafisch und ist mit `EKKOSet`, `EKPOSet`, `eketSet`, `Data`, `Data2`, Joins und Zielmappings vorbefuellt. `/einkauf` laedt EKKO/EKPO/EKET live und zeigt eine echte, begrenzte SAP-Probe fuer Spend, offene Werte/Mengen und Kontrakt-Restwerte. Vollstaendige Jahresaggregation und Lieferantenperformance sind noch offen.
 - Neu im Expertenbereich: `3D Datenanalyse` mit drehbarer 3D-Grafik, Achsen, Diagrammarten, Indikatorauswahl, Labelgroesse und Simulation per Schieberegler.
 - Spanien: `Run-SpainRangeExportAndUpload-AllInOne.ps1` exportiert Sage-Range direkt und laedt CSV/Summary via rclone nach SharePoint `trafag-bi:Import/Finance/Spanien`.

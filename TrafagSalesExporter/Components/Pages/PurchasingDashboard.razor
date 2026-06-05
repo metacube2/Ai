@@ -1,9 +1,18 @@
 @page "/einkauf"
+@page "/einkauf/spend"
+@page "/einkauf/offene-bestellungen"
+@page "/einkauf/kontrakte"
+@page "/einkauf/lieferanten"
+@page "/einkauf/ideen"
+@page "/einkauf/kennzahlen"
+@page "/einkauf/pbix"
+@page "/einkauf/3d"
 @using System.Globalization
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
 @inject IPurchasingDashboardService PurchasingDashboardService
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
@@ -64,8 +73,226 @@
     }
 </MudGrid>
 
-<MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
-    <MudTabPanel Text="@T("Uebersicht", "Overview")" Icon="@Icons.Material.Filled.Dashboard">
+@switch (CurrentPurchasingPage)
+{
+    case "spend":
+        <PurchasingSection TitleDe="Spend total vergangen"
+                           TitleEn="Historic total spend"
+                           DescriptionDe="Beschaffungsvolumen in CHF nach Jahr, Lieferant, Warengruppe und Artikel. Spend-Werte brauchen EKPO; bis SAP Positionen liefert, ist die Ansicht als Simulation markiert."
+                           DescriptionEn="Purchasing volume in CHF by year, supplier, material group and article. Spend values need EKPO; until SAP provides item rows, this view is marked as simulation."
+                           ChartTitleDe="Spend-Verlauf nach Einkaufsdimension"
+                           ChartTitleEn="Spend trend by purchasing dimension"
+                           Kpis="@SpendKpis"
+                           ChartRows="@SpendChartRows"
+                           StatusRows="@SpendStatusRows"
+                           DetailRows="@SpendDetailRows" />
+        break;
+    case "offene-bestellungen":
+        <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
+                           TitleEn="Open order values and quantities"
+                           DescriptionDe="Live-Bestellkoepfe aus EKKO sind angebunden. Offene Werte und Mengen brauchen zusaetzlich EKPO/EKET."
+                           DescriptionEn="Live purchase-order headers from EKKO are connected. Open values and quantities additionally need EKPO/EKET."
+                           ChartTitleDe="Bestellaktivitaet und offene Positionen"
+                           ChartTitleEn="Order activity and open items"
+                           Kpis="@OpenOrderKpis"
+                           ChartRows="@OpenOrderChartRows"
+                           StatusRows="@OpenOrderStatusRows"
+                           DetailRows="@OpenOrderDetailRows" />
+        break;
+    case "kontrakte":
+        <PurchasingSection TitleDe="Offene Verpflichtungen"
+                           TitleEn="Open commitments"
+                           DescriptionDe="Kontrakte und Restverpflichtungen werden auf EKPO/EKET aufgebaut. Der Bereich zeigt bereits die Zielkennzahlen und den aktuellen Ladezustand."
+                           DescriptionEn="Contracts and remaining commitments are built on EKPO/EKET. This area already shows the target KPIs and current load status."
+                           ChartTitleDe="Kontrakt- und Verpflichtungsuebersicht"
+                           ChartTitleEn="Contract and commitment overview"
+                           Kpis="@ContractKpis"
+                           ChartRows="@ContractChartRows"
+                           StatusRows="@ContractStatusRows"
+                           DetailRows="@ContractDetailRows" />
+        break;
+    case "lieferanten":
+        <PurchasingSection TitleDe="Lieferantenbewertung und Performance"
+                           TitleEn="Supplier rating and performance"
+                           DescriptionDe="Lieferantenbasis kommt live aus EKKO. Bewertung, Termintreue und Preisentwicklung brauchen spaeter EKPO/EKET und Reklamationsdaten."
+                           DescriptionEn="The supplier base comes live from EKKO. Rating, delivery reliability and price development later need EKPO/EKET and claim data."
+                           ChartTitleDe="Lieferantenbasis und Performance-Indikatoren"
+                           ChartTitleEn="Supplier base and performance indicators"
+                           Kpis="@SupplierKpis"
+                           ChartRows="@SupplierChartRows"
+                           StatusRows="@SupplierStatusRows"
+                           DetailRows="@SupplierDetailRows" />
+        break;
+    case "ideen":
+        <MudGrid Spacing="2">
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("Weitere Einkaufsanalysen", "Additional purchasing analytics")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                @T("Analysen, die dem Einkauf neben PowerBI mehr Steuerung, Risiko- und Sparpotenzial zeigen.",
+                                   "Analytics that give purchasing more steering, risk and savings potential beyond Power BI.")
+                            </MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">
+                            @T("Roadmap", "Roadmap")
+                        </MudChip>
+                    </MudStack>
+                    <div class="purchasing-idea-grid">
+                        @foreach (var idea in PurchasingIdeas)
+                        {
+                            <div class="purchasing-idea-card">
+                                <div class="purchasing-idea-icon">
+                                    <MudIcon Icon="@idea.Icon" Color="@idea.Color" />
+                                </div>
+                                <div class="purchasing-idea-content">
+                                    <div class="purchasing-idea-title">
+                                        <strong>@T(idea.TitleDe, idea.TitleEn)</strong>
+                                        <MudChip T="string" Size="Size.Small" Color="@idea.Color" Variant="Variant.Outlined">@T(idea.StatusDe, idea.StatusEn)</MudChip>
+                                    </div>
+                                    <span>@T(idea.DescriptionDe, idea.DescriptionEn)</span>
+                                    <div class="purchasing-idea-meta">
+                                        <code>@idea.RequiredData</code>
+                                        <span>@T("Nutzen", "Value"): @T(idea.ValueDe, idea.ValueEn)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Prioritaet", "Priority")</MudText>
+                    <div class="purchasing-priority-stack">
+                        @foreach (var priority in PurchasingIdeaPriorities)
+                        {
+                            <div class="purchasing-priority-row">
+                                <MudIcon Icon="@priority.Icon" Color="@priority.Color" Size="Size.Small" />
+                                <div>
+                                    <strong>@T(priority.TitleDe, priority.TitleEn)</strong>
+                                    <span>@T(priority.DetailDe, priority.DetailEn)</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        break;
+    case "kennzahlen":
+        <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                <div>
+                    <MudText Typo="Typo.h6">@T("Kennzahlen-Katalog fuer den naechsten Ausbau", "KPI catalogue for the next build-out")</MudText>
+                    <MudText Typo="Typo.body2" Class="purchasing-muted">
+                        @T("Fachlicher Ausbauplan mit Kennzahl, Dimension, Datenbasis und aktuellem Umsetzungsstand.",
+                           "Functional build-out plan with KPI, dimension, data basis and current implementation status.")
+                    </MudText>
+                </div>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@PurchasingIdeaKpis.Count @T("Kennzahlen", "KPIs")</MudChip>
+            </MudStack>
+            <MudTable Items="@PurchasingIdeaKpis" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>@T("Analyse", "Analysis")</MudTh>
+                    <MudTh>@T("Kennzahl", "KPI")</MudTh>
+                    <MudTh>@T("Dimension", "Dimension")</MudTh>
+                    <MudTh>@T("Datenbasis", "Data basis")</MudTh>
+                    <MudTh>@T("Status", "Status")</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@T(context.AnalysisDe, context.AnalysisEn)</MudTd>
+                    <MudTd><strong>@T(context.KpiDe, context.KpiEn)</strong></MudTd>
+                    <MudTd>@context.Dimension</MudTd>
+                    <MudTd><code>@context.Source</code></MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="@context.Color" Variant="Variant.Outlined">@T(context.StatusDe, context.StatusEn)</MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+        break;
+    case "pbix":
+        <MudPaper Class="pa-3" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Aus x.pbix uebernommene Seiten", "Pages derived from x.pbix")</MudText>
+            <MudTable Items="@PowerBiPages" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>@T("Power-BI-Seite", "Power BI page")</MudTh>
+                    <MudTh>@T("Visuals", "Visuals")</MudTh>
+                    <MudTh>@T("Kennzahl", "Measure")</MudTh>
+                    <MudTh>@T("Dimensionen", "Dimensions")</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Page</MudTd>
+                    <MudTd>@context.Visuals</MudTd>
+                    <MudTd><code>@context.Measure</code></MudTd>
+                    <MudTd>@context.Dimensions</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+        break;
+    case "3d":
+        <MudPaper Class="pa-3 mb-3" Outlined="true">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="3">
+                    <MudSelect T="string" Value="_purchasing3dIndicator" ValueChanged="SetPurchasing3dIndicator" Label="@T("Indikator", "Indicator")" Dense="true">
+                        @foreach (var option in Purchasing3dIndicators)
+                        {
+                            <MudSelectItem Value="@option.Key">@T(option.TitleDe, option.TitleEn)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudSelect T="string" Value="_purchasing3dChartType" ValueChanged="SetPurchasing3dChartType" Label="@T("Grafik", "Chart")" Dense="true">
+                        <MudSelectItem Value="@("bar")">@T("Balken", "Bars")</MudSelectItem>
+                        <MudSelectItem Value="@("line")">@T("Linie", "Line")</MudSelectItem>
+                        <MudSelectItem Value="@("surface")">@T("Flaeche", "Surface")</MudSelectItem>
+                        <MudSelectItem Value="@("pie")">@T("Kreis", "Pie")</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption">@T("Preis-/Wechselkurs-Szenario", "Price/exchange-rate scenario")</MudText>
+                    <div class="finance-3d-range-row">
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetPurchasing3dFactorPreset(0.9d))">-10%</MudButton>
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.5"
+                               max="1.5"
+                               step="0.01"
+                               value="@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dFactor" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                    <MudText Typo="Typo.caption">
+                        @T("Delta", "Delta"): @FormatScenarioDelta()
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
+                    <div class="finance-3d-range-row">
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.8"
+                               max="2.5"
+                               step="0.1"
+                               value="@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dLabelScale" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RenderPurchasing3dAsync">
+                        @T("Neu zeichnen", "Redraw")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+        <MudPaper Class="pa-0 finance-3d-surface purchasing-3d-surface" Elevation="1">
+            <canvas @ref="_purchasing3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
+        </MudPaper>
+        break;
+    default:
         <MudGrid Spacing="2">
             <MudItem xs="12" lg="8">
                 <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
@@ -131,223 +358,8 @@
                 </MudPaper>
             </MudItem>
         </MudGrid>
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("Spend", "Spend")" Icon="@Icons.Material.Filled.Payments">
-        <PurchasingSection TitleDe="Spend total vergangen"
-                           TitleEn="Historic total spend"
-                           DescriptionDe="Beschaffungsvolumen in CHF nach Jahr, Lieferant, Warengruppe und Artikel. Spend-Werte brauchen EKPO; bis SAP Positionen liefert, ist die Ansicht als Simulation markiert."
-                           DescriptionEn="Purchasing volume in CHF by year, supplier, material group and article. Spend values need EKPO; until SAP provides item rows, this view is marked as simulation."
-                           ChartTitleDe="Spend-Verlauf nach Einkaufsdimension"
-                           ChartTitleEn="Spend trend by purchasing dimension"
-                           Kpis="@SpendKpis"
-                           ChartRows="@SpendChartRows"
-                           StatusRows="@SpendStatusRows"
-                           DetailRows="@SpendDetailRows" />
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("Offene Bestellungen", "Open orders")" Icon="@Icons.Material.Filled.PendingActions">
-        <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
-                           TitleEn="Open order values and quantities"
-                           DescriptionDe="Live-Bestellkoepfe aus EKKO sind angebunden. Offene Werte und Mengen brauchen zusaetzlich EKPO/EKET."
-                           DescriptionEn="Live purchase-order headers from EKKO are connected. Open values and quantities additionally need EKPO/EKET."
-                           ChartTitleDe="Bestellaktivitaet und offene Positionen"
-                           ChartTitleEn="Order activity and open items"
-                           Kpis="@OpenOrderKpis"
-                           ChartRows="@OpenOrderChartRows"
-                           StatusRows="@OpenOrderStatusRows"
-                           DetailRows="@OpenOrderDetailRows" />
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("Kontrakte", "Contracts")" Icon="@Icons.Material.Filled.Assignment">
-        <PurchasingSection TitleDe="Offene Verpflichtungen"
-                           TitleEn="Open commitments"
-                           DescriptionDe="Kontrakte und Restverpflichtungen werden auf EKPO/EKET aufgebaut. Der Reiter zeigt bereits die Zielkennzahlen und den aktuellen Ladezustand."
-                           DescriptionEn="Contracts and remaining commitments are built on EKPO/EKET. This tab already shows the target KPIs and current load status."
-                           ChartTitleDe="Kontrakt- und Verpflichtungsuebersicht"
-                           ChartTitleEn="Contract and commitment overview"
-                           Kpis="@ContractKpis"
-                           ChartRows="@ContractChartRows"
-                           StatusRows="@ContractStatusRows"
-                           DetailRows="@ContractDetailRows" />
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("Lieferanten", "Suppliers")" Icon="@Icons.Material.Filled.Verified">
-        <PurchasingSection TitleDe="Lieferantenbewertung und Performance"
-                           TitleEn="Supplier rating and performance"
-                           DescriptionDe="Lieferantenbasis kommt live aus EKKO. Bewertung, Termintreue und Preisentwicklung brauchen spaeter EKPO/EKET und Reklamationsdaten."
-                           DescriptionEn="The supplier base comes live from EKKO. Rating, delivery reliability and price development later need EKPO/EKET and claim data."
-                           ChartTitleDe="Lieferantenbasis und Performance-Indikatoren"
-                           ChartTitleEn="Supplier base and performance indicators"
-                           Kpis="@SupplierKpis"
-                           ChartRows="@SupplierChartRows"
-                           StatusRows="@SupplierStatusRows"
-                           DetailRows="@SupplierDetailRows" />
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("Ideen", "Ideas")" Icon="@Icons.Material.Filled.Lightbulb">
-        <MudGrid Spacing="2">
-            <MudItem xs="12" lg="8">
-                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
-                        <div>
-                            <MudText Typo="Typo.h6">@T("Weitere Einkaufsanalysen", "Additional purchasing analytics")</MudText>
-                            <MudText Typo="Typo.body2" Class="purchasing-muted">
-                                @T("Analysen, die dem Einkauf neben PowerBI mehr Steuerung, Risiko- und Sparpotenzial zeigen.",
-                                   "Analytics that give purchasing more steering, risk and savings potential beyond Power BI.")
-                            </MudText>
-                        </div>
-                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">
-                            @T("Roadmap", "Roadmap")
-                        </MudChip>
-                    </MudStack>
-                    <div class="purchasing-idea-grid">
-                        @foreach (var idea in PurchasingIdeas)
-                        {
-                            <div class="purchasing-idea-card">
-                                <div class="purchasing-idea-icon">
-                                    <MudIcon Icon="@idea.Icon" Color="@idea.Color" />
-                                </div>
-                                <div class="purchasing-idea-content">
-                                    <div class="purchasing-idea-title">
-                                        <strong>@T(idea.TitleDe, idea.TitleEn)</strong>
-                                        <MudChip T="string" Size="Size.Small" Color="@idea.Color" Variant="Variant.Outlined">@T(idea.StatusDe, idea.StatusEn)</MudChip>
-                                    </div>
-                                    <span>@T(idea.DescriptionDe, idea.DescriptionEn)</span>
-                                    <div class="purchasing-idea-meta">
-                                        <code>@idea.RequiredData</code>
-                                        <span>@T("Nutzen", "Value"): @T(idea.ValueDe, idea.ValueEn)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </MudPaper>
-            </MudItem>
-            <MudItem xs="12" lg="4">
-                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
-                    <MudText Typo="Typo.h6" Class="mb-2">@T("Prioritaet", "Priority")</MudText>
-                    <div class="purchasing-priority-stack">
-                        @foreach (var priority in PurchasingIdeaPriorities)
-                        {
-                            <div class="purchasing-priority-row">
-                                <MudIcon Icon="@priority.Icon" Color="@priority.Color" Size="Size.Small" />
-                                <div>
-                                    <strong>@T(priority.TitleDe, priority.TitleEn)</strong>
-                                    <span>@T(priority.DetailDe, priority.DetailEn)</span>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </MudPaper>
-            </MudItem>
-            <MudItem xs="12">
-                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
-                    <MudText Typo="Typo.h6" Class="mb-2">@T("Kennzahlen-Katalog fuer den naechsten Ausbau", "KPI catalogue for the next build-out")</MudText>
-                    <MudTable Items="@PurchasingIdeaKpis" Dense="true" Hover="true" Striped="true">
-                        <HeaderContent>
-                            <MudTh>@T("Analyse", "Analysis")</MudTh>
-                            <MudTh>@T("Kennzahl", "KPI")</MudTh>
-                            <MudTh>@T("Dimension", "Dimension")</MudTh>
-                            <MudTh>@T("Datenbasis", "Data basis")</MudTh>
-                            <MudTh>@T("Status", "Status")</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@T(context.AnalysisDe, context.AnalysisEn)</MudTd>
-                            <MudTd><strong>@T(context.KpiDe, context.KpiEn)</strong></MudTd>
-                            <MudTd>@context.Dimension</MudTd>
-                            <MudTd><code>@context.Source</code></MudTd>
-                            <MudTd>
-                                <MudChip T="string" Size="Size.Small" Color="@context.Color" Variant="Variant.Outlined">@T(context.StatusDe, context.StatusEn)</MudChip>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("PBIX Vorlage", "PBIX template")" Icon="@Icons.Material.Filled.InsertChart">
-        <MudPaper Class="pa-3" Outlined="true">
-            <MudText Typo="Typo.h6" Class="mb-2">@T("Aus x.pbix uebernommene Seiten", "Pages derived from x.pbix")</MudText>
-            <MudTable Items="@PowerBiPages" Dense="true" Hover="true">
-                <HeaderContent>
-                    <MudTh>@T("Power-BI-Seite", "Power BI page")</MudTh>
-                    <MudTh>@T("Visuals", "Visuals")</MudTh>
-                    <MudTh>@T("Kennzahl", "Measure")</MudTh>
-                    <MudTh>@T("Dimensionen", "Dimensions")</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>@context.Page</MudTd>
-                    <MudTd>@context.Visuals</MudTd>
-                    <MudTd><code>@context.Measure</code></MudTd>
-                    <MudTd>@context.Dimensions</MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudPaper>
-    </MudTabPanel>
-
-    <MudTabPanel Text="@T("3D Simulation", "3D simulation")" Icon="@Icons.Material.Filled.ViewInAr">
-        <MudPaper Class="pa-3 mb-3" Outlined="true">
-            <MudGrid Spacing="2">
-                <MudItem xs="12" md="3">
-                    <MudSelect T="string" Value="_purchasing3dIndicator" ValueChanged="SetPurchasing3dIndicator" Label="@T("Indikator", "Indicator")" Dense="true">
-                        @foreach (var option in Purchasing3dIndicators)
-                        {
-                            <MudSelectItem Value="@option.Key">@T(option.TitleDe, option.TitleEn)</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="2">
-                    <MudSelect T="string" Value="_purchasing3dChartType" ValueChanged="SetPurchasing3dChartType" Label="@T("Grafik", "Chart")" Dense="true">
-                        <MudSelectItem Value="@("bar")">@T("Balken", "Bars")</MudSelectItem>
-                        <MudSelectItem Value="@("line")">@T("Linie", "Line")</MudSelectItem>
-                        <MudSelectItem Value="@("surface")">@T("Flaeche", "Surface")</MudSelectItem>
-                        <MudSelectItem Value="@("pie")">@T("Kreis", "Pie")</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.caption">@T("Preis-/Wechselkurs-Szenario", "Price/exchange-rate scenario")</MudText>
-                    <div class="finance-3d-range-row">
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetPurchasing3dFactorPreset(0.9d))">-10%</MudButton>
-                        <input class="finance-3d-range"
-                               type="range"
-                               min="0.5"
-                               max="1.5"
-                               step="0.01"
-                               value="@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)"
-                               @oninput="SetPurchasing3dFactor" />
-                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
-                    </div>
-                    <MudText Typo="Typo.caption">
-                        @T("Delta", "Delta"): @FormatScenarioDelta()
-                    </MudText>
-                </MudItem>
-                <MudItem xs="12" md="2">
-                    <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
-                    <div class="finance-3d-range-row">
-                        <input class="finance-3d-range"
-                               type="range"
-                               min="0.8"
-                               max="2.5"
-                               step="0.1"
-                               value="@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
-                               @oninput="SetPurchasing3dLabelScale" />
-                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
-                    </div>
-                </MudItem>
-                <MudItem xs="12" md="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RenderPurchasing3dAsync">
-                        @T("Neu zeichnen", "Redraw")
-                    </MudButton>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
-        <MudPaper Class="pa-0 finance-3d-surface purchasing-3d-surface" Elevation="1">
-            <canvas @ref="_purchasing3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
-        </MudPaper>
-    </MudTabPanel>
-</MudTabs>
+        break;
+}
 
 @code {
     private ElementReference _purchasing3dCanvas;
@@ -357,6 +369,19 @@
     private string _purchasing3dChartType = "bar";
     private double _purchasing3dFactor = 1d;
     private double _purchasing3dLabelScale = 1.5d;
+
+    private string CurrentPurchasingPage
+    {
+        get
+        {
+            var relative = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+            if (!relative.StartsWith("einkauf", StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            var parts = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length <= 1 ? string.Empty : parts[1].ToLowerInvariant();
+        }
+    }
 
     private IReadOnlyList<PurchasingKpiCard> KpiCards =>
     [
@@ -480,25 +505,38 @@
         new("Maverick Buying", "Maverick buying", "Findet Bestellungen ausserhalb bevorzugter Lieferanten, Rahmenvertraege oder Warengruppenregeln.", "Finds orders outside preferred suppliers, contracts or material-group rules.", "EKKO, EKPO, Kontrakte", "Compliance und Buendelung verbessern", "improve compliance and bundling", "Konzept", "concept", Icons.Material.Filled.Policy, Color.Info),
         new("Rahmenvertragsnutzung", "Contract utilisation", "Zeigt Kontraktmenge, Abrufmenge, Restmenge, Laufzeit und drohenden Verfall.", "Shows contract quantity, call-off quantity, remaining quantity, term and expiry risk.", "EKKO, EKPO, EKET", "Restverpflichtungen aktiv steuern", "actively manage remaining commitments", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", Icons.Material.Filled.AssignmentTurnedIn, _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Working Capital", "Working capital", "Verbindet offene Bestellungen, Liefertermine und Zahlungs-/Bestandswirkung zu Cash-Ausblick.", "Connects open orders, delivery dates and payment/inventory impact into a cash outlook.", "EKPO, EKET, FI/AP", "Cashbedarf aus Einkauf vorhersagen", "forecast purchasing cash needs", "Konzept", "concept", Icons.Material.Filled.AccountBalanceWallet, Color.Info),
-        new("Datenqualitaet", "Data quality", "Prueft fehlende Lieferanten, Warengruppen, Artikeltexte, Waehrung, Preisbasis und Dubletten.", "Checks missing suppliers, material groups, article texts, currency, price basis and duplicates.", "EKKO, EKPO, Mapping", "Vertrauen in Kennzahlen sichern", "secure trust in KPIs", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", Icons.Material.Filled.FactCheck, _liveState.EkkoLoaded ? Color.Success : Color.Warning)
+        new("Datenqualitaet", "Data quality", "Prueft fehlende Lieferanten, Warengruppen, Artikeltexte, Waehrung, Preisbasis und Dubletten.", "Checks missing suppliers, material groups, article texts, currency, price basis and duplicates.", "EKKO, EKPO, Mapping", "Vertrauen in Kennzahlen sichern", "secure trust in KPIs", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", Icons.Material.Filled.FactCheck, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Markiert ueberfaellige und bald faellige EKET-Termine mit offenem Wert und Lieferant.", "Marks overdue and soon-due EKET schedules with open value and supplier.", "EKET, EKPO, EKKO", "Rueckstaende vor Eskalation sehen", "see delays before escalation", _liveState.EketLoaded ? "berechenbar" : "wartet auf EKET", _liveState.EketLoaded ? "calculable" : "waiting for EKET", Icons.Material.Filled.PendingActions, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Spend-Konzentration", "Spend concentration", "Zeigt Top-10-Lieferantenanteil, Single-Source-Risiko und Konzentration je Warengruppe.", "Shows top-10 supplier share, single-source risk and concentration by material group.", "EKKO, EKPO", "Verhandlungshebel und Abhaengigkeit erkennen", "identify negotiation leverage and dependency", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.PieChart, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Savings Tracker", "Savings tracker", "Misst Preisreduktionen, vermiedene Preissteigerungen und realisierte Einsparung pro Massnahme.", "Measures price reductions, avoided increases and realised savings by initiative.", "EKPO, Massnahmenliste, FX", "Einkaufserfolg sichtbar machen", "make purchasing impact visible", "Konzept", "concept", Icons.Material.Filled.QueryStats, Color.Info),
+        new("Bestellrhythmus", "Order cadence", "Erkennt Kleinstbestellungen, zu haeufige Bestellungen und Buendelungspotenzial pro Artikel/Lieferant.", "Detects small orders, too frequent orders and bundling potential by article/supplier.", "EKKO, EKPO", "Prozesskosten senken", "reduce process cost", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.AutoGraph, _liveState.EkpoLoaded ? Color.Success : Color.Warning)
     ];
 
     private IReadOnlyList<PurchasingIdeaPriority> PurchasingIdeaPriorities =>
     [
-        new("1. EKPO/EKET Daten reparieren", "1. Repair EKPO/EKET data", "Ohne Positionen fehlen echte Spend-, Artikel-, Warengruppen- und Termindaten.", "Without item rows, real spend, article, material-group and schedule data are missing.", Icons.Material.Filled.BuildCircle, Color.Warning),
-        new("2. Preisabweichung aktivieren", "2. Activate price variance", "Sehr hoher Managementnutzen, sobald EKPO Werte liefert.", "Very high management value as soon as EKPO provides values.", Icons.Material.Filled.TrendingUp, Color.Info),
-        new("3. Lieferantenrisiko aufbauen", "3. Build supplier risk", "Kombiniert Performance, offene Werte und Abhaengigkeit.", "Combines performance, open values and dependency.", Icons.Material.Filled.Security, Color.Info),
-        new("4. Contract Cockpit ausbauen", "4. Extend contract cockpit", "Mengenkontrakte und Restverpflichtungen brauchen EKET/EKPO.", "Quantity contracts and remaining commitments need EKET/EKPO.", Icons.Material.Filled.Assignment, Color.Info)
+        new("1. Live-Probe zu Vollaggregation", "1. Live sample to full aggregation", "EKPO/EKET liefern Daten; jetzt braucht es saubere Jahres-/Periodenaggregation.", "EKPO/EKET now deliver data; next is clean year/period aggregation.", Icons.Material.Filled.BuildCircle, Color.Success),
+        new("2. Preisabweichung aktivieren", "2. Activate price variance", "Hoher Nutzen, weil EKPO Werte, Artikel und Lieferanten jetzt verfuegbar sind.", "High value because EKPO values, articles and suppliers are now available.", Icons.Material.Filled.TrendingUp, Color.Info),
+        new("3. Liefertermin-Risiko anzeigen", "3. Show delivery due-date risk", "EKET offene Mengen und Termine sind die beste operative Fruehwarnung.", "EKET open quantities and dates are the best operational early warning.", Icons.Material.Filled.PendingActions, Color.Info),
+        new("4. Lieferantenrisiko aufbauen", "4. Build supplier risk", "Kombiniert Performance, offene Werte, Konzentration und Abhaengigkeit.", "Combines performance, open values, concentration and dependency.", Icons.Material.Filled.Security, Color.Info),
+        new("5. Contract Cockpit ausbauen", "5. Extend contract cockpit", "Mengenkontrakte und Restverpflichtungen brauchen klare fachliche Abgrenzung.", "Quantity contracts and remaining commitments need clear functional separation.", Icons.Material.Filled.Assignment, Color.Info)
     ];
 
     private IReadOnlyList<PurchasingIdeaKpi> PurchasingIdeaKpis =>
     [
+        new("Spend Management", "Spend management", "Spend CHF", "spend CHF", "Jahr / Lieferant / Warengruppe / Artikel", "EKKO+EKPO", _liveState.EkpoLoaded ? "Live-Probe" : "wartet auf EKPO", _liveState.EkpoLoaded ? "live sample" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Spend Management", "Spend management", "Top-10-Lieferantenanteil %", "top-10 supplier share %", "Jahr / Warengruppe", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Lieferantenrisiko", "Supplier risk", "Risiko-Score 0-100", "Risk score 0-100", "Lieferant / Warengruppe / Artikel", "EKKO+EKPO+EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "bereit" : "wartet auf Tabellen", _liveState.EkpoLoaded && _liveState.EketLoaded ? "ready" : "waiting for tables", _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Preisabweichung", "Price variance", "Preisdelta % / CHF", "price delta % / CHF", "Artikel / Lieferant / Jahr", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Preisabweichung", "Price variance", "Letzter Preis vs. Vorjahr", "last price vs. prior year", "Artikel / Lieferant", "EKPO+EKKO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Maverick Buying", "Maverick buying", "Anteil ausserhalb Vertrag", "share outside contract", "Einkaeufer / Lieferant / Warengruppe", "EKKO+EKPO+Kontrakt", "Konzept", "concept", Color.Info),
         new("Rahmenvertragsnutzung", "Contract utilisation", "Abrufquote %", "consumption rate %", "Kontrakt / Lieferant / Artikel", "EKPO+EKET", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Ueberfaelliger offener Wert CHF", "overdue open value CHF", "Monat / Lieferant / Artikel", "EKET+EKPO", _liveState.EketLoaded ? "bereit" : "wartet auf EKET", _liveState.EketLoaded ? "ready" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Offene Menge faellig 30 Tage", "open quantity due 30 days", "Termin / Artikel / Lieferant", "EKET", _liveState.EketLoaded ? "bereit" : "wartet auf EKET", _liveState.EketLoaded ? "ready" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Working Capital", "Working capital", "Cash Forecast CHF", "cash forecast CHF", "Monat / Lieferant / Warengruppe", "EKPO+EKET+FI", "Konzept", "concept", Color.Info),
-        new("Datenqualitaet", "Data quality", "Mapping-Abdeckung %", "mapping coverage %", "Tabelle / Feld / Land", "EKKO+EKPO+Mapping", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", _liveState.EkkoLoaded ? Color.Success : Color.Warning)
+        new("Bestellrhythmus", "Order cadence", "Kleinstbestellungen Anzahl", "small order count", "Lieferant / Artikel / Monat", "EKKO+EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Savings Tracker", "Savings tracker", "Realisierte Einsparung CHF", "realised savings CHF", "Massnahme / Lieferant / Artikel", "EKPO+Massnahmen", "Konzept", "concept", Color.Info),
+        new("Datenqualitaet", "Data quality", "Mapping-Abdeckung %", "mapping coverage %", "Tabelle / Feld / Land", "EKKO+EKPO+Mapping", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("Datenqualitaet", "Data quality", "Fehlende Warengruppe / Artikeltext", "missing material group / text", "Artikel / Warengruppe", "EKPO+Mapping", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning)
     ];
 
     private readonly List<Purchasing3dIndicator> Purchasing3dIndicators =
@@ -612,7 +650,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && CurrentPurchasingPage == "3d")
             await RenderPurchasing3dAsync();
     }
 

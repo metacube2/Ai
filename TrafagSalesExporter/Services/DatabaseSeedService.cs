@@ -181,7 +181,15 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("hr-training", "hr", "HR KPI Schulung", "HR KPI training", "School", "hr-kpi/schulung", 20),
         Group("purchasing", null, "Einkauf", "Purchasing", "ShoppingCart", 30),
         Link("purchasing-dashboard", "purchasing", "Einkauf Dashboard", "Purchasing dashboard", "Dashboard", "einkauf", 10, "All"),
-        Link("purchasing-data-sources", "purchasing", "Datenquellen", "Data sources", "Hub", "einkauf/verbindungen", 20, "All"),
+        Link("purchasing-spend", "purchasing", "Spend", "Spend", "Payments", "einkauf/spend", 20, "All"),
+        Link("purchasing-open-orders", "purchasing", "Offene Bestellungen", "Open orders", "PendingActions", "einkauf/offene-bestellungen", 30, "All"),
+        Link("purchasing-contracts", "purchasing", "Kontrakte", "Contracts", "Assignment", "einkauf/kontrakte", 40, "All"),
+        Link("purchasing-suppliers", "purchasing", "Lieferanten", "Suppliers", "Verified", "einkauf/lieferanten", 50, "All"),
+        Link("purchasing-ideas", "purchasing", "Ideen", "Ideas", "Lightbulb", "einkauf/ideen", 60, "All"),
+        Link("purchasing-kpi-catalog", "purchasing", "Kennzahlen-Katalog", "KPI catalogue", "Checklist", "einkauf/kennzahlen", 70, "All"),
+        Link("purchasing-pbix", "purchasing", "PBIX Vorlage", "PBIX template", "InsertChart", "einkauf/pbix", 80, "All"),
+        Link("purchasing-3d", "purchasing", "3D Simulation", "3D simulation", "ViewInAr", "einkauf/3d", 90, "All"),
+        Link("purchasing-data-sources", "purchasing", "Datenquellen", "Data sources", "Hub", "einkauf/verbindungen", 100, "All"),
         Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
     ];
 

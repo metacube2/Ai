@@ -40,18 +40,37 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Route: `/einkauf`.
 - Hauptnavigation: eigener Punkt `Einkauf` mit Einkaufswagen-Icon.
 - Tabs im Einkaufsdashboard:
-  - `Uebersicht`
-  - `Spend`
-  - `Offene Bestellungen`
-  - `Kontrakte`
-  - `Lieferanten`
-  - `PBIX Vorlage`
-  - `3D Simulation`
-  - `Ideen`
+  - Die frueheren Tabs wurden in echte linke Navigationspunkte unter `Einkauf` umgebaut.
+  - `Einkauf Dashboard`: Uebersicht, SAP-Datenfluss, Live-Status und Analyseachsen.
+  - `Spend`: Spend total vergangen nach Jahr, Lieferant, Warengruppe und Artikel.
+  - `Offene Bestellungen`: offene Werte, Mengen und Faelligkeiten.
+  - `Kontrakte`: offene Verpflichtungen und Kontrakt-Restwerte.
+  - `Lieferanten`: Lieferantenbasis, Performance und Datenstatus.
+  - `Ideen`: Roadmap fuer weitere Einkaufsanalysen.
+  - `Kennzahlen-Katalog`: fachlicher KPI-Katalog fuer den naechsten Ausbau.
+  - `PBIX Vorlage`: aus `x.pbix` uebernommene Seiten/Visuals.
+  - `3D Simulation`: drehbare 3D-What-if-Analyse.
 - Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
 - Die Seite ist als Cockpit-Struktur umgesetzt und zweisprachig ueber den vorhandenen UI-Sprachservice vorbereitet.
 - EKKO, EKPO und EKET werden live ueber SAP/OData gelesen.
 - Die Kennzahlen im Cockpit nutzen aktuell eine begrenzte Live-Probe, damit das Dashboard sofort echte Einkaufsdaten zeigt.
+
+## Navigation und Admin-Steuerung
+
+Stand 2026-06-05: Die Einkaufsbereiche sind nicht mehr als obere Tabs im Dashboard versteckt, sondern als eigene URLs umgesetzt:
+
+- `/einkauf`
+- `/einkauf/spend`
+- `/einkauf/offene-bestellungen`
+- `/einkauf/kontrakte`
+- `/einkauf/lieferanten`
+- `/einkauf/ideen`
+- `/einkauf/kennzahlen`
+- `/einkauf/pbix`
+- `/einkauf/3d`
+- `/einkauf/verbindungen`
+
+Die Defaults werden ueber `NavigationMenuItems` geseedet. Dadurch kann der Admin in `Admin > Menuestruktur` einzelne Einkaufs-Unterpunkte ausblenden, sortieren oder umhaengen.
 
 ## SAP/OData-Konfiguration
 
@@ -110,6 +129,38 @@ Aktuelle technische Begrenzung:
 - Damit sind die Werte echte SAP-Werte, aber noch keine vollstaendige Jahresaggregation.
 - Fuer definitive Management-Summen braucht es als naechsten Schritt serverseitige OData-Filter/Aggregation oder einen eigenen Import-/Cache-Prozess analog Finance.
 
+## Ideen und Kennzahlen-Katalog
+
+Der Ideenbereich wurde fuer den Einkauf erweitert:
+
+- Lieferantenrisiko.
+- Preisabweichung.
+- Maverick Buying.
+- Rahmenvertragsnutzung.
+- Working Capital.
+- Datenqualitaet.
+- Liefertermin-Risiko.
+- Spend-Konzentration.
+- Savings Tracker.
+- Bestellrhythmus.
+
+Der separate Kennzahlen-Katalog enthaelt nun konkrete Ausbau-KPIs mit Dimension und Datenbasis, darunter:
+
+- Spend CHF.
+- Top-10-Lieferantenanteil.
+- Risiko-Score 0-100.
+- Preisdelta in Prozent und CHF.
+- Letzter Preis vs. Vorjahr.
+- Anteil ausserhalb Vertrag.
+- Abrufquote.
+- Ueberfaelliger offener Wert.
+- Offene Menge faellig in 30 Tagen.
+- Cash Forecast.
+- Kleinstbestellungen.
+- Realisierte Einsparung.
+- Mapping-Abdeckung.
+- Fehlende Warengruppe / fehlender Artikeltext.
+
 ## 3D Simulation
 
 Das Einkaufsdashboard hat eine eigene 3D-Simulation fuer wichtige Einkaufsindikatoren:
@@ -139,6 +190,11 @@ Danach koennen Filter, Aggregationen und Delta-/Refresh-Prozess analog zu Financ
 - `Components/Pages/PurchasingDashboard.razor`
   - KPI-Karten, Detailtabellen und Diagramme lesen jetzt Live-Werte aus `PurchasingDashboardLiveState`.
   - Fallback-Simulation bleibt sichtbar, falls SAP/OData nicht antwortet.
+  - Die alten Tabs wurden in routenbasierte Seiten unter `/einkauf/...` umgebaut.
+  - Ideen und Kennzahlen-Katalog sind getrennte Seiten.
+- `Services/DatabaseSeedService.cs`
+  - Neue Einkaufs-Unterpunkte werden in `NavigationMenuItems` geseedet.
+  - Admins koennen die Unterpunkte ueber die Menuestruktur ausblenden, sortieren oder umhaengen.
 - `Services/IPurchasingDashboardService.cs`
   - Live-State um Spend, offene Menge, offenen Wert, Kontraktwert und Live-Diagrammzeilen erweitert.
 - `Services/PurchasingDashboardService.cs`
