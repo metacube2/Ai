@@ -144,6 +144,8 @@ Der Ideenbereich wurde fuer den Einkauf erweitert:
 - Savings Tracker.
 - Bestellrhythmus.
 
+Stand nach Ausbau: Unter `/einkauf/ideen` ist jede Idee als aufklappbarer Baustein beschrieben. Pro Idee sind Ziel, Datenbasis, Kennzahlen, Berechnungslogik, Visualisierung und naechster Umsetzungsschritt hinterlegt.
+
 Der separate Kennzahlen-Katalog enthaelt nun konkrete Ausbau-KPIs mit Dimension und Datenbasis, darunter:
 
 - Spend CHF.
