@@ -1,0 +1,42 @@
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+@using TrafagSalesExporter.Models
+
+<MudPaper Class="pa-3" Outlined="true">
+    <MudText Typo="Typo.h6">@T(TitleDe, TitleEn)</MudText>
+    <MudText Typo="Typo.body2" Class="mb-3 purchasing-section-muted">@T(DescriptionDe, DescriptionEn)</MudText>
+
+    <MudTable Items="@Rows" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>@T("Analyse", "Analysis")</MudTh>
+            <MudTh>@T("Kennzahl", "Measure")</MudTh>
+            <MudTh>@T("Dimension", "Dimension")</MudTh>
+            <MudTh>@T("Quelle", "Source")</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@T(context.TitleDe, context.TitleEn)</MudTd>
+            <MudTd><code>@context.Measure</code></MudTd>
+            <MudTd>@context.Dimension</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(context.Source == "PBIX" ? Color.Primary : Color.Secondary)">
+                    @context.Source
+                </MudChip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string TitleDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string TitleEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DescriptionDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DescriptionEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingAnalysisRow> Rows { get; set; } = [];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
+
+<style>
+    .purchasing-section-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+</style>

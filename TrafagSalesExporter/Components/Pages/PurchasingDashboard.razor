@@ -1,23 +1,221 @@
 @page "/einkauf"
+@using TrafagSalesExporter.Models
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("Einkauf", "Purchasing")</MudText>
+<MudText Typo="Typo.h4" Class="mb-1">@T("Einkauf", "Purchasing")</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 purchasing-muted">
+    @T("SAP-Einkaufsdashboard nach Power-BI-Vorlage x.pbix, vorbereitet fuer Spend, offene Bestellungen, Kontrakte und Lieferantenperformance.",
+       "SAP purchasing dashboard based on the Power BI template x.pbix, prepared for spend, open orders, contracts and supplier performance.")
+</MudText>
 
-<MudPaper Class="pa-4" Outlined="true">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Primary" Size="Size.Large" />
-        <div>
-            <MudText Typo="Typo.h6">@T("Einkauf Dashboard", "Purchasing dashboard")</MudText>
-            <MudText Typo="Typo.body2">
-                @T("Dieser Bereich ist als Einstiegspunkt fuer Einkaufsauswertungen vorbereitet.",
-                   "This area is prepared as the entry point for purchasing analytics.")
-            </MudText>
-        </div>
-    </MudStack>
-</MudPaper>
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    @T("Die PBIX-Vorlage liefert Struktur und Kennzahlenlogik. Live-Werte werden sichtbar, sobald die SAP-Einkaufsdatenquelle angebunden ist.",
+       "The PBIX template provides structure and KPI logic. Live values will appear once the SAP purchasing data source is connected.")
+</MudAlert>
+
+<MudGrid Class="mb-4" Spacing="2">
+    @foreach (var card in KpiCards)
+    {
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="purchasing-kpi pa-3" Outlined="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@card.Icon" Color="@card.Color" Size="Size.Large" />
+                    <div>
+                        <MudText Typo="Typo.caption" Class="purchasing-muted">@T(card.TitleDe, card.TitleEn)</MudText>
+                        <MudText Typo="Typo.h6">@card.Value</MudText>
+                        <MudText Typo="Typo.caption">@T(card.DetailDe, card.DetailEn)</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+<MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
+    <MudTabPanel Text="@T("Uebersicht", "Overview")" Icon="@Icons.Material.Filled.Dashboard">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" lg="7">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Analyseachsen", "Analysis axes")</MudText>
+                    <MudTable Items="@AnalysisAxes" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>@T("Achse", "Axis")</MudTh>
+                            <MudTh>@T("PBIX-Feld", "PBIX field")</MudTh>
+                            <MudTh>@T("Verwendung", "Usage")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@T(context.LabelDe, context.LabelEn)</MudTd>
+                            <MudTd><code>@context.Field</code></MudTd>
+                            <MudTd>@T(context.UsageDe, context.UsageEn)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="5">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("SAP-Quellen aus PBIX", "SAP sources from PBIX")</MudText>
+                    @foreach (var source in SapSources)
+                    {
+                        <div class="purchasing-source-row">
+                            <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Small" />
+                            <span><strong>@source.Name</strong> @source.Description</span>
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="@T("Spend", "Spend")" Icon="@Icons.Material.Filled.Payments">
+        <PurchasingSection TitleDe="Spend total vergangen"
+                           TitleEn="Historic total spend"
+                           DescriptionDe="Beschaffungsvolumen in CHF nach Jahr, Lieferant, Warengruppe und Artikel."
+                           DescriptionEn="Purchasing volume in CHF by year, supplier, material group and article."
+                           Rows="@SpendRows" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="@T("Offene Bestellungen", "Open orders")" Icon="@Icons.Material.Filled.PendingActions">
+        <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
+                           TitleEn="Open order values and quantities"
+                           DescriptionDe="Vorbereitet fuer offene Werte/Mengen pro Lieferant, Warengruppe und Artikel."
+                           DescriptionEn="Prepared for open values/quantities by supplier, material group and article."
+                           Rows="@OpenOrderRows" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="@T("Kontrakte", "Contracts")" Icon="@Icons.Material.Filled.Assignment">
+        <PurchasingSection TitleDe="Offene Verpflichtungen"
+                           TitleEn="Open commitments"
+                           DescriptionDe="Vorbereitet fuer Mengenkontrakte und Restverpflichtungen pro Lieferant, Warengruppe und Artikel."
+                           DescriptionEn="Prepared for quantity contracts and remaining commitments by supplier, material group and article."
+                           Rows="@ContractRows" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="@T("Lieferanten", "Suppliers")" Icon="@Icons.Material.Filled.Verified">
+        <PurchasingSection TitleDe="Lieferantenbewertung und Performance"
+                           TitleEn="Supplier rating and performance"
+                           DescriptionDe="Vorbereitet fuer Liefertermintreue, Qualitaet, Preisentwicklung und Reklamationen."
+                           DescriptionEn="Prepared for delivery reliability, quality, price development and claims."
+                           Rows="@SupplierPerformanceRows" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="@T("PBIX Vorlage", "PBIX template")" Icon="@Icons.Material.Filled.InsertChart">
+        <MudPaper Class="pa-3" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Aus x.pbix uebernommene Seiten", "Pages derived from x.pbix")</MudText>
+            <MudTable Items="@PowerBiPages" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>@T("Power-BI-Seite", "Power BI page")</MudTh>
+                    <MudTh>@T("Visuals", "Visuals")</MudTh>
+                    <MudTh>@T("Kennzahl", "Measure")</MudTh>
+                    <MudTh>@T("Dimensionen", "Dimensions")</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Page</MudTd>
+                    <MudTd>@context.Visuals</MudTd>
+                    <MudTd><code>@context.Measure</code></MudTd>
+                    <MudTd>@context.Dimensions</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudTabPanel>
+</MudTabs>
 
 @code {
+    private readonly List<PurchasingKpiCard> KpiCards =
+    [
+        new("Spend total", "Total spend", "-", "Netwr CHF historisch", "Historic Netwr CHF", Icons.Material.Filled.Payments, Color.Primary),
+        new("Offene Bestellungen", "Open orders", "-", "Wert und Menge offen", "Open value and quantity", Icons.Material.Filled.PendingActions, Color.Warning),
+        new("Kontrakte", "Contracts", "-", "Restverpflichtungen", "Remaining commitments", Icons.Material.Filled.Assignment, Color.Info),
+        new("Lieferantenperformance", "Supplier performance", "-", "Bewertung / Liefertermintreue", "Rating / delivery reliability", Icons.Material.Filled.Verified, Color.Success)
+    ];
+
+    private readonly List<PurchasingAxis> AnalysisAxes =
+    [
+        new("Jahr", "Year", "EKKOSet.Bedat", "Zeitfilter und Verlauf", "Time filter and trend"),
+        new("Lieferant", "Supplier", "Data.Name / Data.Lieferant", "Spend und Performance pro Lieferant", "Spend and performance by supplier"),
+        new("Warengruppe", "Material group", "Data (2).Warengruppe / WG komplett", "Spend nach Warengruppe", "Spend by material group"),
+        new("Artikel", "Article", "EKPOSet.Matnr / EKPOSet.Txz01", "Artikel- und Preisentwicklung", "Article and price development"),
+        new("Region", "Region", "Data.Laender-/Regionenschluessel", "Regionale Spend-Verteilung", "Regional spend distribution")
+    ];
+
+    private readonly List<PurchasingSource> SapSources =
+    [
+        new("EKKOSet", "Bestellkopf: Datum, Lieferant, Einkaufsbeleg."),
+        new("EKPOSet", "Bestellposition: Artikel, Text, Netwr CHF, Preis pro Stueck."),
+        new("eketSet", "Einteilungen/Termine: Basis fuer offene Mengen und Liefertermine."),
+        new("Data", "Lieferanten-Mapping und Lieferantennamen."),
+        new("Data (2)", "Warengruppen-Mapping und Warengruppentexte.")
+    ];
+
+    private readonly List<PurchasingAnalysisRow> SpendRows =
+    [
+        new("Spend nach Jahr", "Spend by year", "Sum(EKPOSet.Netwr CHF)", "EKKOSet.Bedat Jahr", "PBIX"),
+        new("Spend nach Lieferant", "Spend by supplier", "Sum(EKPOSet.Netwr CHF)", "Data.Name", "PBIX"),
+        new("Spend nach Warengruppe", "Spend by material group", "Sum(EKPOSet.Netwr CHF)", "Data (2).Warengruppe", "PBIX"),
+        new("Spend nach Artikel", "Spend by article", "Sum(EKPOSet.Netwr CHF)", "EKPOSet.Matnr / Txz01", "PBIX")
+    ];
+
+    private readonly List<PurchasingAnalysisRow> OpenOrderRows =
+    [
+        new("Offener Bestellwert", "Open order value", "Bestellwert offen CHF", "Lieferant / Warengruppe / Artikel", "Neu"),
+        new("Offene Bestellmenge", "Open order quantity", "Menge offen", "Lieferant / Warengruppe / Artikel", "Neu"),
+        new("Faelligkeiten", "Due dates", "Termin / Rueckstand", "Lieferant / Artikel", "Neu")
+    ];
+
+    private readonly List<PurchasingAnalysisRow> ContractRows =
+    [
+        new("Mengenkontrakte", "Quantity contracts", "Kontraktmenge / Abrufmenge", "Lieferant / Warengruppe / Artikel", "Neu"),
+        new("Restverpflichtung", "Remaining commitment", "Restwert CHF", "Lieferant / Warengruppe / Artikel", "Neu"),
+        new("Kontrakt-Ausnutzung", "Contract consumption", "Abrufquote", "Lieferant / Artikel", "Neu")
+    ];
+
+    private readonly List<PurchasingAnalysisRow> SupplierPerformanceRows =
+    [
+        new("Liefertermintreue", "Delivery reliability", "On-time %", "Lieferant / Artikel", "Neu"),
+        new("Preisentwicklung", "Price development", "Netwr CHF/Stk", "Lieferant / Artikel / Jahr", "PBIX"),
+        new("Qualitaet / Reklamation", "Quality / claims", "Fehlerquote", "Lieferant / Warengruppe", "Neu"),
+        new("Lieferantenbewertung", "Supplier rating", "Score", "Lieferant", "Neu")
+    ];
+
+    private readonly List<PowerBiPageInfo> PowerBiPages =
+    [
+        new("Besch.Volumen CHF/Lieferant", "Pivot, Slicer", "Sum(EKPOSet.Netwr CHF)", "Jahr, Lieferant, Warengruppe, Artikel"),
+        new("Eink.Vol. CHF / Lieferant Kuchen", "Pie, Slicer", "Sum(EKPOSet.Netwr CHF)", "Lieferant, Warengruppe, Jahr"),
+        new("Balken Vol./Lief/WG", "Column, Slicer", "Sum(EKPOSet.Netwr CHF)", "Lieferant, Warengruppe, Artikel"),
+        new("Diagramm Vol./WG", "Column, Slicer", "Sum(EKPOSet.Netwr CHF)", "Warengruppe, Jahr"),
+        new("Eink.Vol. CHF / Region", "Pie, Slicer", "Sum(EKPOSet.Netwr CHF)", "Region, Warengruppe, Jahr"),
+        new("Preisentwicklung CHF", "Pivot, Slicer", "Min(EKPOSet.Netwr CHF/Stk)", "Lieferant, Artikel, Jahr"),
+        new("Matrix Vol./WG", "Pivot, Slicer", "Sum(EKPOSet.Netwr CHF)", "Warengruppe, Lieferant, Artikel")
+    ];
+
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color);
+    private sealed record PurchasingAxis(string LabelDe, string LabelEn, string Field, string UsageDe, string UsageEn);
+    private sealed record PurchasingSource(string Name, string Description);
+    private sealed record PowerBiPageInfo(string Page, string Visuals, string Measure, string Dimensions);
 }
+
+<style>
+    .purchasing-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-kpi {
+        min-height: 104px;
+    }
+
+    .purchasing-source-row {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-source-row:last-child {
+        border-bottom: 0;
+    }
+</style>

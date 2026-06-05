@@ -50,7 +50,31 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Spanien-Delta-Sync im Dashboard-Import wurde am 2026-06-05 publiziert. Publish brauchte kurz `app_offline.htm`, weil `BiDashboard.dll` gesperrt war; danach wurde `app_offline.htm` wieder entfernt.
 - Neu umgesetzt: Linker Menuebaum ist datengetrieben und ueber `Admin > Menuestruktur` umhaengbar/sortierbar; bestehende Punkte koennen in andere Untermenues verschoben werden.
 - Neu umgesetzt: Neuer Hauptpunkt `Einkauf` mit Einkaufswagen-Icon und vorbereiteter Einstiegseite `Einkauf Dashboard`.
-- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+- Neu umgesetzt: `x.pbix` als Einkaufs-/SAP-Vorlage analysiert und `Einkauf Dashboard` auf Spend, offene Bestellungen, Kontrakte, Lieferantenperformance und PBIX-Vorlagenstruktur erweitert.
+- Wichtig Einkauf: Aktuell ist die Seite fachlich strukturiert, aber noch nicht live an SAP/OData angebunden; fuer Echtwerte muessen Einkaufsquellen wie `EKKOSet`, `EKPOSet`, ggf. Termin-/Kontrakt- und Lieferantenbewertungsdaten gemappt werden.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen.
+
+## Nachtrag 2026-06-05 Einkauf / PBIX
+
+Quelle:
+
+- Lokale Vorlage `x.pbix` wurde geoeffnet und die Report-Struktur ausgewertet.
+- PBIX-Reportseiten: Beschaffungsvolumen CHF je Lieferant, Einkaufsvolumen als Lieferanten-Kuchen, Balken Lieferant/Warengruppe, Diagramm Warengruppe, Einkaufsvolumen CHF je Region, Preisentwicklung CHF und Matrix Volumen/Warengruppe.
+- In der PBIX sichtbare Felder: `EKPOSet.Netwr CHF`, `EKKOSet.Bedat`, `Data.Name`, `Data (2).WG komplett`, `EKPOSet.Matnr`, `EKPOSet.Txz01` und `EKPOSet.Netwr CHF/Stk`.
+
+Umgesetzt:
+
+- Einkaufsseite `/einkauf` von Platzhalter zu fachlichem Cockpit erweitert.
+- Tabs: `Uebersicht`, `Spend`, `Offene Bestellungen`, `Kontrakte`, `Lieferanten`, `PBIX Vorlage`.
+- Zusaetzlich zu den PBIX-Sichten wurden die vom Einkauf genannten SAP-Themen aufgenommen:
+  - Spend total vergangen nach Jahr, Lieferant, Warengruppe, Artikel.
+  - Offene Bestellwerte und Mengen nach Lieferant, Warengruppe, Artikel.
+  - Offene Verpflichtungen / Mengenkontrakte nach Lieferant, Warengruppe, Artikel.
+  - Lieferantenbewertung / Performance nach Lieferant, Warengruppe, Artikel.
+
+Naechster technischer Schritt:
+
+- Live-Anbindung der Einkaufsdatenquellen definieren und implementieren. Die UI ist vorbereitet; echte Kennzahlen brauchen noch SAP/OData-Feldmapping, Filterlogik und Aktualisierungsprozess.
 
 ## Nachtrag 2026-06-05 Spanien Sage / rclone Upload
 
