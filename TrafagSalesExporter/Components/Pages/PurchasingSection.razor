@@ -5,19 +5,65 @@
     <MudText Typo="Typo.h6">@T(TitleDe, TitleEn)</MudText>
     <MudText Typo="Typo.body2" Class="mb-3 purchasing-section-muted">@T(DescriptionDe, DescriptionEn)</MudText>
 
-    <MudTable Items="@Rows" Dense="true" Hover="true">
+    <MudGrid Spacing="2" Class="mb-3">
+        @foreach (var kpi in Kpis)
+        {
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                    <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T(kpi.LabelDe, kpi.LabelEn)</MudText>
+                    <MudText Typo="Typo.h6">@kpi.Value</MudText>
+                    <MudText Typo="Typo.caption">@T(kpi.DetailDe, kpi.DetailEn)</MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudGrid Spacing="2" Class="mb-3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 purchasing-section-panel" Outlined="true">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@T(ChartTitleDe, ChartTitleEn)</MudText>
+                <div class="purchasing-bars">
+                    @foreach (var item in ChartRows)
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@item.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{BuildWidth(item.Percent)}%; background:{item.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@item.Value</div>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 purchasing-section-panel" Outlined="true">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@T("Datenstatus", "Data status")</MudText>
+                @foreach (var status in StatusRows)
+                {
+                    <div class="purchasing-status-row">
+                        <MudIcon Icon="@status.Icon" Color="@status.Color" Size="Size.Small" />
+                        <span>@T(status.LabelDe, status.LabelEn)</span>
+                        <strong>@status.Value</strong>
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudTable Items="@DetailRows" Dense="true" Hover="true" Striped="true">
         <HeaderContent>
-            <MudTh>@T("Analyse", "Analysis")</MudTh>
-            <MudTh>@T("Kennzahl", "Measure")</MudTh>
+            <MudTh>@T("Bereich", "Area")</MudTh>
+            <MudTh>@T("Wert", "Value")</MudTh>
             <MudTh>@T("Dimension", "Dimension")</MudTh>
             <MudTh>@T("Quelle", "Source")</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd>@T(context.TitleDe, context.TitleEn)</MudTd>
-            <MudTd><code>@context.Measure</code></MudTd>
+            <MudTd>@T(context.LabelDe, context.LabelEn)</MudTd>
+            <MudTd><strong>@context.Value</strong></MudTd>
             <MudTd>@context.Dimension</MudTd>
             <MudTd>
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(context.Source == "PBIX" ? Color.Primary : Color.Secondary)">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@ResolveSourceColor(context.Source)">
                     @context.Source
                 </MudChip>
             </MudTd>
@@ -30,13 +76,76 @@
     [Parameter, EditorRequired] public string TitleEn { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string DescriptionDe { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string DescriptionEn { get; set; } = string.Empty;
-    [Parameter, EditorRequired] public IReadOnlyList<PurchasingAnalysisRow> Rows { get; set; } = [];
+    [Parameter, EditorRequired] public string ChartTitleDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ChartTitleEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionKpi> Kpis { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionChartRow> ChartRows { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionStatusRow> StatusRows { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionDetailRow> DetailRows { get; set; } = [];
 
     private string T(string german, string english) => UiText.Text(german, english);
+    private static string BuildWidth(double percent)
+        => Math.Clamp(percent, 3d, 100d).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static Color ResolveSourceColor(string source)
+        => source.Equals("SAP live", StringComparison.OrdinalIgnoreCase)
+            ? Color.Success
+            : source.Equals("Wartet auf SAP", StringComparison.OrdinalIgnoreCase)
+                ? Color.Warning
+                : Color.Primary;
 }
 
 <style>
     .purchasing-section-muted {
         color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-section-kpi {
+        min-height: 104px;
+    }
+
+    .purchasing-section-panel {
+        min-height: 240px;
+    }
+
+    .purchasing-bars {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-bar-row,
+    .purchasing-status-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) 2fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .purchasing-status-row {
+        grid-template-columns: 28px minmax(120px, 1fr) auto;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-status-row:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-bar-track {
+        height: 24px;
+        background: rgba(0,0,0,.08);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .purchasing-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        min-width: 26px;
+    }
+
+    .purchasing-bar-value {
+        font-weight: 700;
+        text-align: right;
     }
 </style>
