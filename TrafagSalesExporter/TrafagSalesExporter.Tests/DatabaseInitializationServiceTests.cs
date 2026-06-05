@@ -102,6 +102,14 @@ public class DatabaseInitializationServiceTests : IDisposable
             x.TargetField == nameof(SalesRecord.DocumentType) &&
             x.SourceHeader == "=Alphaplan Excel");
         Assert.Equal(2, db.FieldTransformationRules.Count(x => x.SourceSystem == "MANUAL_EXCEL"));
+
+        var purchasing = Assert.Single(db.Sites, x => x.TSC == PurchasingDataSourcePageService.PurchasingTsc);
+        Assert.Equal("SAP", purchasing.SourceSystem);
+        Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == purchasing.Id && x.Alias == "EKKO" && x.EntitySet == "EKKOSet" && x.IsPrimary);
+        Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == purchasing.Id && x.Alias == "EKPO" && x.EntitySet == "EKPOSet");
+        Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == purchasing.Id && x.Alias == "EKET" && x.EntitySet == "eketSet");
+        Assert.Contains(db.SapJoinDefinitions, x => x.SiteId == purchasing.Id && x.LeftAlias == "EKKO" && x.RightAlias == "EKPO");
+        Assert.Contains(db.SapFieldMappings, x => x.SiteId == purchasing.Id && x.TargetField == "NetValueChf" && x.SourceExpression == "EKPO.NetwrChf");
     }
 
     private async Task PrepareLegacySitesTableAsync()

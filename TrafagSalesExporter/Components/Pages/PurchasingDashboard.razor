@@ -1,6 +1,8 @@
 @page "/einkauf"
+@using System.Globalization
 @using TrafagSalesExporter.Models
 @inject TrafagSalesExporter.Services.IUiTextService UiText
+@inject IJSRuntime JsRuntime
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
@@ -119,9 +121,76 @@
             </MudTable>
         </MudPaper>
     </MudTabPanel>
+
+    <MudTabPanel Text="@T("3D Simulation", "3D simulation")" Icon="@Icons.Material.Filled.ViewInAr">
+        <MudPaper Class="pa-3 mb-3" Outlined="true">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="3">
+                    <MudSelect T="string" Value="_purchasing3dIndicator" ValueChanged="SetPurchasing3dIndicator" Label="@T("Indikator", "Indicator")" Dense="true">
+                        @foreach (var option in Purchasing3dIndicators)
+                        {
+                            <MudSelectItem Value="@option.Key">@T(option.TitleDe, option.TitleEn)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudSelect T="string" Value="_purchasing3dChartType" ValueChanged="SetPurchasing3dChartType" Label="@T("Grafik", "Chart")" Dense="true">
+                        <MudSelectItem Value="@("bar")">@T("Balken", "Bars")</MudSelectItem>
+                        <MudSelectItem Value="@("line")">@T("Linie", "Line")</MudSelectItem>
+                        <MudSelectItem Value="@("surface")">@T("Flaeche", "Surface")</MudSelectItem>
+                        <MudSelectItem Value="@("pie")">@T("Kreis", "Pie")</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption">@T("Preis-/Wechselkurs-Szenario", "Price/exchange-rate scenario")</MudText>
+                    <div class="finance-3d-range-row">
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetPurchasing3dFactorPreset(0.9d))">-10%</MudButton>
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.5"
+                               max="1.5"
+                               step="0.01"
+                               value="@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dFactor" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                    <MudText Typo="Typo.caption">
+                        @T("Delta", "Delta"): @FormatScenarioDelta()
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
+                    <div class="finance-3d-range-row">
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.8"
+                               max="2.5"
+                               step="0.1"
+                               value="@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dLabelScale" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RenderPurchasing3dAsync">
+                        @T("Neu zeichnen", "Redraw")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+        <MudPaper Class="pa-0 finance-3d-surface purchasing-3d-surface" Elevation="1">
+            <canvas @ref="_purchasing3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
+        </MudPaper>
+    </MudTabPanel>
 </MudTabs>
 
 @code {
+    private ElementReference _purchasing3dCanvas;
+    private string _purchasing3dIndicator = "spend";
+    private string _purchasing3dChartType = "bar";
+    private double _purchasing3dFactor = 1d;
+    private double _purchasing3dLabelScale = 1.5d;
+
     private readonly List<PurchasingKpiCard> KpiCards =
     [
         new("Spend total", "Total spend", "-", "Netwr CHF historisch", "Historic Netwr CHF", Icons.Material.Filled.Payments, Color.Primary),
@@ -189,12 +258,134 @@
         new("Matrix Vol./WG", "Pivot, Slicer", "Sum(EKPOSet.Netwr CHF)", "Warengruppe, Lieferant, Artikel")
     ];
 
+    private readonly List<Purchasing3dIndicator> Purchasing3dIndicators =
+    [
+        new("spend", "Spend CHF", "Spend CHF", "CHF"),
+        new("openValue", "Offener Bestellwert", "Open order value", "CHF"),
+        new("openQuantity", "Offene Menge", "Open quantity", "Qty"),
+        new("contractValue", "Kontrakt-Restwert", "Contract remaining value", "CHF"),
+        new("supplierScore", "Lieferantenperformance", "Supplier performance", "%")
+    ];
+
+    private readonly List<Purchasing3dBaseRow> Purchasing3dBaseRows =
+    [
+        new("Lieferant A", 2024, 1450000d, 260000d, 11800d, 420000d, 91d),
+        new("Lieferant A", 2025, 1680000d, 310000d, 13200d, 460000d, 93d),
+        new("Lieferant A", 2026, 1820000d, 335000d, 14100d, 490000d, 92d),
+        new("Lieferant B", 2024, 980000d, 190000d, 9300d, 260000d, 86d),
+        new("Lieferant B", 2025, 1120000d, 225000d, 10100d, 315000d, 88d),
+        new("Lieferant B", 2026, 1240000d, 250000d, 10800d, 350000d, 89d),
+        new("Warengruppe Sensorik", 2024, 760000d, 120000d, 6400d, 210000d, 94d),
+        new("Warengruppe Sensorik", 2025, 890000d, 145000d, 7100d, 230000d, 95d),
+        new("Warengruppe Sensorik", 2026, 940000d, 155000d, 7400d, 245000d, 94d),
+        new("Artikel Top 10", 2024, 520000d, 83000d, 2800d, 160000d, 90d),
+        new("Artikel Top 10", 2025, 610000d, 97000d, 3100d, 180000d, 91d),
+        new("Artikel Top 10", 2026, 680000d, 105000d, 3350d, 195000d, 92d)
+    ];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await RenderPurchasing3dAsync();
+    }
+
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private async Task SetPurchasing3dIndicator(string value)
+    {
+        _purchasing3dIndicator = value;
+        await RenderPurchasing3dAsync();
+    }
+
+    private async Task SetPurchasing3dChartType(string value)
+    {
+        _purchasing3dChartType = value;
+        await RenderPurchasing3dAsync();
+    }
+
+    private async Task SetPurchasing3dFactor(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _purchasing3dFactor = Math.Clamp(value, 0.5d, 1.5d);
+            await JsRuntime.InvokeVoidAsync("trafagFinance3d.updateFactor", _purchasing3dCanvas, ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d);
+        }
+    }
+
+    private async Task SetPurchasing3dFactorPreset(double value)
+    {
+        _purchasing3dFactor = Math.Clamp(value, 0.5d, 1.5d);
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.updateFactor", _purchasing3dCanvas, ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d);
+    }
+
+    private async Task SetPurchasing3dLabelScale(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _purchasing3dLabelScale = Math.Clamp(value, 0.8d, 2.5d);
+            await RenderPurchasing3dAsync();
+        }
+    }
+
+    private async Task RenderPurchasing3dAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _purchasing3dCanvas, BuildPurchasing3dRows(), new
+        {
+            indicator = _purchasing3dIndicator,
+            title = ResolvePurchasing3dIndicatorLabel(),
+            chartType = _purchasing3dChartType,
+            xAxis = T("X: Lieferant / Warengruppe / Artikel", "X: supplier / material group / article"),
+            yAxis = T("Y: Wert / Menge / Score", "Y: value / quantity / score"),
+            zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
+            pieAxis = T("Kreis: Anteil am aktuellen Indikator", "Pie: share of current indicator"),
+            labelScale = _purchasing3dLabelScale,
+            scenarioFactor = ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d
+        });
+    }
+
+    private IReadOnlyList<object> BuildPurchasing3dRows()
+        => Purchasing3dBaseRows
+            .Select(row => new
+            {
+                country = row.Axis,
+                year = row.Year,
+                value = ResolvePurchasing3dValue(row)
+            })
+            .Cast<object>()
+            .ToList();
+
+    private double ResolvePurchasing3dValue(Purchasing3dBaseRow row) => _purchasing3dIndicator switch
+    {
+        "openValue" => row.OpenValue,
+        "openQuantity" => row.OpenQuantity,
+        "contractValue" => row.ContractValue,
+        "supplierScore" => row.SupplierScore,
+        _ => row.Spend
+    };
+
+    private bool ScenarioAffectsPurchasingValue => _purchasing3dIndicator is "spend" or "openValue" or "contractValue";
+
+    private string ResolvePurchasing3dIndicatorLabel()
+        => T(
+            Purchasing3dIndicators.FirstOrDefault(x => x.Key == _purchasing3dIndicator)?.TitleDe ?? "Spend CHF",
+            Purchasing3dIndicators.FirstOrDefault(x => x.Key == _purchasing3dIndicator)?.TitleEn ?? "Spend CHF");
+
+    private string FormatScenarioDelta()
+    {
+        if (!ScenarioAffectsPurchasingValue)
+            return T("nicht auf diesen Indikator angewendet", "not applied to this indicator");
+
+        var baseTotal = Purchasing3dBaseRows.Sum(ResolvePurchasing3dValue);
+        var delta = baseTotal * _purchasing3dFactor - baseTotal;
+        return $"{delta:N0} {Purchasing3dIndicators.First(x => x.Key == _purchasing3dIndicator).Unit}";
+    }
 
     private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color);
     private sealed record PurchasingAxis(string LabelDe, string LabelEn, string Field, string UsageDe, string UsageEn);
     private sealed record PurchasingSource(string Name, string Description);
     private sealed record PowerBiPageInfo(string Page, string Visuals, string Measure, string Dimensions);
+    private sealed record Purchasing3dIndicator(string Key, string TitleDe, string TitleEn, string Unit);
+    private sealed record Purchasing3dBaseRow(string Axis, int Year, double Spend, double OpenValue, double OpenQuantity, double ContractValue, double SupplierScore);
 }
 
 <style>
@@ -217,5 +408,11 @@
 
     .purchasing-source-row:last-child {
         border-bottom: 0;
+    }
+
+    .purchasing-3d-surface {
+        height: calc(100vh - 300px);
+        min-height: 620px;
+        overflow: hidden;
     }
 </style>

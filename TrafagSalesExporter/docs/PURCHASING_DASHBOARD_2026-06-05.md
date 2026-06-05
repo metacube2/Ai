@@ -46,8 +46,41 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
   - `Kontrakte`
   - `Lieferanten`
   - `PBIX Vorlage`
+  - `3D Simulation`
+- Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
 - Die Seite ist als Cockpit-Struktur umgesetzt und zweisprachig ueber den vorhandenen UI-Sprachservice vorbereitet.
 - Die Kennzahlen sind noch nicht live an SAP gebunden.
+
+## SAP/OData-Konfiguration
+
+Vorbefuellte Quellen:
+
+- `EKKO -> EKKOSet`
+- `EKPO -> EKPOSet`
+- `EKET -> eketSet`
+- `LIEF -> Data`
+- `WG -> Data2`
+
+Vorbefuellte Joins:
+
+- `EKKO.Ebeln = EKPO.Ebeln`
+- `EKPO.Ebeln,Ebelp = EKET.Ebeln,Ebelp`
+- `EKKO.Lifnr = LIEF.Lifnr`
+- `EKPO.Matkl = WG.Matkl`
+
+Die Seite verwendet dieselben Grundtabellen wie die Finance-/Standorte-Quellenpflege: `Sites`, `SapSourceDefinitions`, `SapJoinDefinitions`, `SapFieldMappings`.
+
+## 3D Simulation
+
+Das Einkaufsdashboard hat eine eigene 3D-Simulation fuer wichtige Einkaufsindikatoren:
+
+- Spend CHF.
+- Offener Bestellwert.
+- Offene Menge.
+- Kontrakt-Restwert.
+- Lieferantenperformance.
+
+Die Simulation nutzt feste Canvas-Groessen, sichtbare Achsen, waehlbare Diagrammarten, Labelgroesse und einen Szenario-Slider fuer Preis-/Wechselkurswirkung.
 
 ## Naechster Schritt fuer Live-Daten
 

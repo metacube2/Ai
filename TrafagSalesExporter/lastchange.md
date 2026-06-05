@@ -52,7 +52,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: Neuer Hauptpunkt `Einkauf` mit Einkaufswagen-Icon und vorbereiteter Einstiegseite `Einkauf Dashboard`.
 - Neu umgesetzt: `x.pbix` als Einkaufs-/SAP-Vorlage analysiert und `Einkauf Dashboard` auf Spend, offene Bestellungen, Kontrakte, Lieferantenperformance und PBIX-Vorlagenstruktur erweitert.
 - Wichtig Einkauf: Aktuell ist die Seite fachlich strukturiert, aber noch nicht live an SAP/OData angebunden; fuer Echtwerte muessen Einkaufsquellen wie `EKKOSet`, `EKPOSet`, ggf. Termin-/Kontrakt- und Lieferantenbewertungsdaten gemappt werden.
-- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen.
+- Neu umgesetzt: `Einkauf > Datenquellen` als grafische SAP/OData-Quellenpflege analog Finance/Standorte; vorbefuellt mit `EKKOSet`, `EKPOSet`, `eketSet`, Lieferanten- und Warengruppen-Mapping, Joins und Zielmappings.
+- Neu umgesetzt: `Einkauf Dashboard > 3D Simulation` mit festen Canvas-Abmessungen, Achsenbeschriftung, Diagrammarten, Labelgroesse und Szenario-Slider fuer Preis-/Wechselkurswirkung.
+- Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen; Test prueft auch Einkaufs-SAP-Seed mit Quellen/Joins/Mappings.
 
 ## Nachtrag 2026-06-05 Einkauf / PBIX
 
@@ -65,7 +67,10 @@ Quelle:
 Umgesetzt:
 
 - Einkaufsseite `/einkauf` von Platzhalter zu fachlichem Cockpit erweitert.
-- Tabs: `Uebersicht`, `Spend`, `Offene Bestellungen`, `Kontrakte`, `Lieferanten`, `PBIX Vorlage`.
+- Tabs: `Uebersicht`, `Spend`, `Offene Bestellungen`, `Kontrakte`, `Lieferanten`, `PBIX Vorlage`, `3D Simulation`.
+- Neuer Unterpunkt `Einkauf > Datenquellen` fuer die grafische SAP/OData-Konfiguration.
+- Standardquellen: `EKKO -> EKKOSet`, `EKPO -> EKPOSet`, `EKET -> eketSet`, `LIEF -> Data`, `WG -> Data2`.
+- Standardjoins: `EKKO.Ebeln = EKPO.Ebeln`, `EKPO.Ebeln,Ebelp = EKET.Ebeln,Ebelp`, `EKKO.Lifnr = LIEF.Lifnr`, `EKPO.Matkl = WG.Matkl`.
 - Zusaetzlich zu den PBIX-Sichten wurden die vom Einkauf genannten SAP-Themen aufgenommen:
   - Spend total vergangen nach Jahr, Lieferant, Warengruppe, Artikel.
   - Offene Bestellwerte und Mengen nach Lieferant, Warengruppe, Artikel.

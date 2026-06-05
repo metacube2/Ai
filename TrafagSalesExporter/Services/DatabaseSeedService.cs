@@ -17,6 +17,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         EnsureGermanyManualExcelSite(db);
         EnsureUkManualExcelFolder(db);
         EnsureSapODataDachSite(db);
+        EnsurePurchasingSapSite(db);
         EnsureFinanceReferenceDefaults(db);
         EnsureBudgetExchangeRateDefaults(db);
         EnsureFinanceIntercompanyRuleDefaults(db);
@@ -180,6 +181,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("hr-training", "hr", "HR KPI Schulung", "HR KPI training", "School", "hr-kpi/schulung", 20),
         Group("purchasing", null, "Einkauf", "Purchasing", "ShoppingCart", 30),
         Link("purchasing-dashboard", "purchasing", "Einkauf Dashboard", "Purchasing dashboard", "Dashboard", "einkauf", 10, "All"),
+        Link("purchasing-data-sources", "purchasing", "Datenquellen", "Data sources", "Hub", "einkauf/verbindungen", 20, "All"),
         Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
     ];
 
@@ -962,6 +964,89 @@ public class DatabaseSeedService : IDatabaseSeedService
                 mapping.SortOrder = i;
                 changed = true;
             }
+        }
+
+        if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsurePurchasingSapSite(AppDbContext db)
+    {
+        if (db.Sites.Count() <= 1)
+            return;
+
+        var site = db.Sites
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.TSC == PurchasingDataSourcePageService.PurchasingTsc);
+
+        var changed = false;
+        if (site is null)
+        {
+            site = new Site
+            {
+                Schema = string.Empty,
+                TSC = PurchasingDataSourcePageService.PurchasingTsc,
+                Land = "Einkauf SAP",
+                SourceSystem = "SAP",
+                IsActive = false
+            };
+            db.Sites.Add(site);
+            db.SaveChanges();
+        }
+        else
+        {
+            if (site.SourceSystem != "SAP")
+            {
+                site.SourceSystem = "SAP";
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(site.Land))
+            {
+                site.Land = "Einkauf SAP";
+                changed = true;
+            }
+        }
+
+        if (!db.SapSourceDefinitions.Any(x => x.SiteId == site.Id))
+        {
+            db.SapSourceDefinitions.AddRange(
+                new SapSourceDefinition { SiteId = site.Id, Alias = "EKKO", EntitySet = "EKKOSet", IsPrimary = true, IsActive = true, SortOrder = 10 },
+                new SapSourceDefinition { SiteId = site.Id, Alias = "EKPO", EntitySet = "EKPOSet", IsPrimary = false, IsActive = true, SortOrder = 20 },
+                new SapSourceDefinition { SiteId = site.Id, Alias = "EKET", EntitySet = "eketSet", IsPrimary = false, IsActive = true, SortOrder = 30 },
+                new SapSourceDefinition { SiteId = site.Id, Alias = "LIEF", EntitySet = "Data", IsPrimary = false, IsActive = true, SortOrder = 40 },
+                new SapSourceDefinition { SiteId = site.Id, Alias = "WG", EntitySet = "Data2", IsPrimary = false, IsActive = true, SortOrder = 50 });
+            changed = true;
+        }
+
+        if (!db.SapJoinDefinitions.Any(x => x.SiteId == site.Id))
+        {
+            db.SapJoinDefinitions.AddRange(
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKKO", RightAlias = "EKPO", LeftKeys = "Ebeln", RightKeys = "Ebeln", JoinType = "Left", IsActive = true, SortOrder = 10 },
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "EKET", LeftKeys = "Ebeln,Ebelp", RightKeys = "Ebeln,Ebelp", JoinType = "Left", IsActive = true, SortOrder = 20 },
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKKO", RightAlias = "LIEF", LeftKeys = "Lifnr", RightKeys = "Lifnr", JoinType = "Left", IsActive = true, SortOrder = 30 },
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "WG", LeftKeys = "Matkl", RightKeys = "Matkl", JoinType = "Left", IsActive = true, SortOrder = 40 });
+            changed = true;
+        }
+
+        if (!db.SapFieldMappings.Any(x => x.SiteId == site.Id))
+        {
+            db.SapFieldMappings.AddRange(
+                new SapFieldMapping { SiteId = site.Id, TargetField = "PurchaseOrder", SourceExpression = "EKKO.Ebeln", IsRequired = true, IsActive = true, SortOrder = 10 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "PurchaseOrderDate", SourceExpression = "EKKO.Bedat", IsRequired = true, IsActive = true, SortOrder = 20 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "SupplierNumber", SourceExpression = "EKKO.Lifnr", IsRequired = false, IsActive = true, SortOrder = 30 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "SupplierName", SourceExpression = "LIEF.Name", IsRequired = false, IsActive = true, SortOrder = 40 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "Position", SourceExpression = "EKPO.Ebelp", IsRequired = true, IsActive = true, SortOrder = 50 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "Material", SourceExpression = "EKPO.Matnr", IsRequired = false, IsActive = true, SortOrder = 60 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "MaterialText", SourceExpression = "EKPO.Txz01", IsRequired = false, IsActive = true, SortOrder = 70 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "MaterialGroup", SourceExpression = "EKPO.Matkl", IsRequired = false, IsActive = true, SortOrder = 80 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "MaterialGroupText", SourceExpression = "WG.WgKomplett", IsRequired = false, IsActive = true, SortOrder = 90 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "NetValueChf", SourceExpression = "EKPO.NetwrChf", IsRequired = false, IsActive = true, SortOrder = 100 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "NetValueChfPerPiece", SourceExpression = "EKPO.NetwrChfStk", IsRequired = false, IsActive = true, SortOrder = 110 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "OrderQuantity", SourceExpression = "EKPO.Menge", IsRequired = false, IsActive = true, SortOrder = 120 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "ScheduleDate", SourceExpression = "EKET.Eindt", IsRequired = false, IsActive = true, SortOrder = 130 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "ScheduleQuantity", SourceExpression = "EKET.Menge", IsRequired = false, IsActive = true, SortOrder = 140 });
+            changed = true;
         }
 
         if (changed)
