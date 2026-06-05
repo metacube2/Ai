@@ -21,6 +21,23 @@ public sealed class NavigationMenuService : INavigationMenuService
             .OrderBy(x => x.ParentKey ?? string.Empty)
             .ThenBy(x => x.SortOrder)
             .ThenBy(x => x.TitleDe)
+            .Select(x => new NavigationMenuItem
+            {
+                Id = x.Id,
+                Key = x.Key ?? string.Empty,
+                ParentKey = string.IsNullOrWhiteSpace(x.ParentKey) ? null : x.ParentKey,
+                TitleDe = x.TitleDe ?? string.Empty,
+                TitleEn = x.TitleEn ?? string.Empty,
+                Icon = x.Icon ?? string.Empty,
+                Href = x.Href ?? string.Empty,
+                ItemType = x.ItemType ?? NavigationMenuItemTypes.Link,
+                Match = x.Match ?? "Prefix",
+                RequiredPolicy = x.RequiredPolicy ?? string.Empty,
+                IsVisible = x.IsVisible,
+                IsExpanded = x.IsExpanded,
+                IsSystem = x.IsSystem,
+                SortOrder = x.SortOrder
+            })
             .ToListAsync();
     }
 
