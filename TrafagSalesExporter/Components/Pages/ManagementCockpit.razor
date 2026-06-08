@@ -441,6 +441,14 @@
                 </MudItem>
             </MudGrid>
 
+            @if (IsProductFinanceMixedCurrency)
+            {
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-4">
+                    @T("Diese Sparten-Finanzanalyse enthaelt mehrere Waehrungen. Die Summary-Karten mit `Mixed` addieren lokale Werte numerisch; fuer belastbare Prozentwerte bitte eine einzelne Waehrung oder ein einzelnes Land filtern.",
+                        "This division finance analysis contains multiple currencies. Summary cards marked `Mixed` add local values numerically; filter to one currency or one country for reliable percentages.")
+                </MudAlert>
+            }
+
             <MudPaper Class="pa-4 mb-4" Elevation="1">
                 <MudGrid Class="mb-2">
                     <MudItem xs="12" md="6">
@@ -503,6 +511,37 @@
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body2">@T("Keine zugeordneten Spartenumsaetze fuer diese Filter.", "No assigned division sales for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Groesste Treiber: Nicht im Stamm", "Top drivers: not in master")</MudText>
+                <MudTable Items="BuildMissingReferenceDriverRows()" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Material", "Material")</MudTh>
+                        <MudTh>@T("Text", "Text")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Material</MudTd>
+                        <MudTd>
+                            <MudTooltip Text="@context.ArticleName">
+                                <MudText Typo="Typo.caption" Style="max-width:520px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
+                                    @context.ArticleName
+                                </MudText>
+                            </MudTooltip>
+                        </MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine fehlenden TR-AG-Referenzen fuer diese Filter.", "No missing TR AG references for these filters.")</MudText>
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
@@ -1093,9 +1132,9 @@
     ];
     private readonly List<ProductFinanceGroupingOption> _productFinanceGroupingOptions =
     [
-        new(ProductFinanceGroupLevels.Hierarchy, "PAPH1 Detail", "PAPH1 detail"),
+        new(ProductFinanceGroupLevels.Division, "Produktsparte", "Product division"),
         new(ProductFinanceGroupLevels.Family, "Produktfamilie", "Product family"),
-        new(ProductFinanceGroupLevels.Division, "Produktsparte", "Product division")
+        new(ProductFinanceGroupLevels.Hierarchy, "PAPH1 Detail", "PAPH1 detail")
     ];
     private readonly List<Finance3dIndicatorOption> _finance3dIndicatorOptions =
     [
@@ -1145,7 +1184,7 @@
     private int _activeOverviewTabIndex;
     private int _activeFinanceTabIndex;
     private int _activeDivisionTabIndex;
-    private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Hierarchy;
+    private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Division;
     private bool _limitProductFinanceTop10;
     private string _finance3dIndicator = Finance3dIndicators.Actual;
     private string _finance3dChartType = Finance3dChartTypes.Bar;
@@ -1512,6 +1551,23 @@
         => _finance3dIndicatorOptions.FirstOrDefault(option => option.Key == key) is { } option
             ? T(option.GermanLabel, option.EnglishLabel)
             : T("Net Sales Actual", "Net sales actual");
+
+    private bool IsProductFinanceMixedCurrency
+        => string.Equals(_financeResult?.ProductFinanceSummary.DisplayCurrency, "Mixed", StringComparison.OrdinalIgnoreCase);
+
+    private IReadOnlyList<ManagementProductAssignmentRow> BuildMissingReferenceDriverRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.ProductAssignmentRows
+            .Where(row => string.Equals(row.Status, "Nicht im TR-AG-Stamm", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Material, StringComparer.OrdinalIgnoreCase)
+            .Take(15)
+            .ToList();
+    }
 
     private IReadOnlyList<ManagementProductDivisionFinanceRow> BuildProductFinanceRows()
     {

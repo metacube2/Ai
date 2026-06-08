@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-05
+Stand: 2026-06-08
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,8 +8,17 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Code-Stand: Finance-Dashboard-Vereinfachung, Expertenbereich mit 3D-Datenanalyse und Spanien-Sage-All-in-one-rclone-Upload.
-- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal --artifacts-path C:\TMP\trafag-test-artifacts-finance-session-proof` mit `82/82` Tests gruen.
+- Letzter dokumentierter Code-Stand: Finance-Spartenanalyse lokal weiter verbessert, Datenfluss fuer Andreas dokumentiert, Alphaplan-Discovery-Exporter fuer Deutschland erstellt.
+- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --no-restore --verbosity minimal` mit `83/83` Tests gruen.
+- Wichtig: Die lokalen Finance-/Alphaplan-Aenderungen vom 2026-06-08 sind dokumentiert, aber noch nicht als neuer Deploy auf den IIS-Server beschrieben.
+- Neu lokal: Sparten-Finanzanalyse gruppiert standardmaessig nach `Produktsparte`; `Produktfamilie` und `PAPH1 Detail` bleiben als Umschaltoptionen erhalten.
+- Neu lokal: Sparten-Finanzanalyse zeigt bei `Mixed`-Waehrung einen Warnhinweis, weil Summen/Anteile ueber mehrere Waehrungen fachlich nur eingeschraenkt belastbar sind.
+- Neu lokal: Sparten-Finanzanalyse zeigt die groessten Treiber fuer `Nicht im TR-AG-Stamm`, damit hohe nicht zugeordnete Umsaetze nach Land/TSC/Material analysiert werden koennen.
+- Neu dokumentiert: genauer Finance-Datenfluss fuer Andreas in `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md`.
+- Neu dokumentiert: Alphaplan SQL/rclone Konzept Deutschland in `docs/ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
+- Neu erstellt: Alphaplan Phase-1-Discovery-Paket `AlphaplanExportPackage` und `AlphaplanExportPackage.zip`.
+- Neu dokumentiert: Alphaplan Discovery Exporter Guide in `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`.
+- Alphaplan-Ziel: DE-Server exportiert SQL-Discovery/Rohdaten lokal und laedt per `rclone` nach `trafag-bi:Import/Finance/Deutschland/AlphaplanRaw`; BiDashboard-Importanpassung ist separater Folgeschritt.
 - Neu umgesetzt und deployed: Finance bekommt links eine einfache Schnelluebersicht; die bisherigen tieferen Analysefunktionen bleiben unter `Experten`.
 - Neu umgesetzt und deployed: `Experten > 3D Datenanalyse` mit drehbarer 3D-Visualisierung, Achsenbeschriftung, waehlbaren Indikatoren, Diagrammarten und Simulation.
 - Neu umgesetzt und deployed: 3D-Simulation mit Schiebereglern, u. a. fuer Wechselkurs-/Szenarioveraenderungen; Grafik reagiert in Echtzeit.
@@ -55,6 +64,122 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: `Einkauf > Datenquellen` als grafische SAP/OData-Quellenpflege analog Finance/Standorte; vorbefuellt mit `EKKOSet`, `EKPOSet`, `eketSet`, Lieferanten- und Warengruppen-Mapping, Joins und Zielmappings.
 - Neu umgesetzt: `Einkauf Dashboard > 3D Simulation` mit festen Canvas-Abmessungen, Achsenbeschriftung, Diagrammarten, Labelgroesse und Szenario-Slider fuer Preis-/Wechselkurswirkung.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen; Test prueft auch Einkaufs-SAP-Seed mit Quellen/Joins/Mappings.
+
+## Nachtrag 2026-06-08 Alphaplan Deutschland / SQL Discovery / rclone Upload
+
+Ziel:
+
+- Deutschland nutzt Alphaplan.
+- Vor einer finalen Importanpassung sollen direkt auf dem deutschen Alphaplan-/SQL-Server relevante Datenbanken, Tabellen und Views gefunden werden.
+- Die Discovery-Ergebnisse sollen analog Spanien per `rclone` nach SharePoint hochgeladen werden.
+
+Erstellte Dateien:
+
+- `docs/ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`
+- `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
+- `AlphaplanExportPackage/Run-AlphaplanDiscoveryAndUpload.ps1`
+- `AlphaplanExportPackage/README.txt`
+- `AlphaplanExportPackage.zip`
+
+SharePoint-Ziel:
+
+```text
+trafag-bi:Import/Finance/Deutschland/AlphaplanRaw
+```
+
+Grund fuer eigenen Rohdatenordner:
+
+- Die Discovery-Dateien entsprechen noch nicht dem finalen Finance-Importformat.
+- Der bestehende Deutschland-Import soll nicht gestoert werden.
+
+Script-Funktion:
+
+- SQL Server read-only scannen.
+- Wenn `-Database` leer ist: alle erreichbaren User-Datenbanken scannen.
+- Kandidaten fuer Rechnung, Faktura, Beleg, Umsatz, Verkauf, Position, Artikel, Material, Kunde, Betrag, Netto, Menge, Waehrung, Warengruppe, Gutschrift und Storno erkennen.
+- `candidate_objects.csv` mit Score, Spalten, Datums-/Betrags-/Key-Kandidaten schreiben.
+- `export_summary.csv` schreiben.
+- Optional mit `-ExportSamples` kleine `sample_*.csv` aus Top-Kandidaten schreiben.
+- Optional mit `-SkipUpload` ohne SharePoint laufen.
+- Standardmaessig Upload per `rclone` nach SharePoint und Verifikation von `candidate_objects.csv`.
+
+Wichtige Befehle fuer den DE-Server:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\Run-AlphaplanDiscoveryAndUpload.ps1 -SkipUpload
+```
+
+```powershell
+.\Run-AlphaplanDiscoveryAndUpload.ps1 -Database "ALPHAPLAN" -ExportSamples
+```
+
+```powershell
+$cred = Get-Credential
+.\Run-AlphaplanDiscoveryAndUpload.ps1 -ServerInstance "SERVERNAME\INSTANCE" -Database "ALPHAPLAN" -SqlCredential $cred
+```
+
+Default-Pfade:
+
+- Lokaler Arbeitsordner: `C:\Trafag\AlphaplanExport`
+- Runs: `C:\Trafag\AlphaplanExport\out\Alphaplan_SQL_Discovery_YYYYMMDD_HHMMSS`
+- Logs: `C:\Trafag\AlphaplanExport\logs`
+
+rclone-Kontext:
+
+- Erwarteter Remote: `trafag-bi`
+- Remote soll auf `Shared Documents` von `https://trafagag.sharepoint.com/sites/WorldwideBIPlatform` zeigen.
+- Fuer Phase 1 braucht nur der DE-Server ausgehend TCP 443 zu Microsoft 365/SharePoint.
+- Der BiDashboard-Server braucht keinen direkten SQL-Zugriff auf Alphaplan.
+
+Validierung:
+
+- PowerShell-Syntax des Scripts lokal mit Parser geprueft: OK.
+- Noch kein echter Lauf gegen den deutschen Alphaplan-Server.
+- Noch keine BiDashboard-Importanpassung fuer Alphaplan-Rohdaten.
+
+Naechster Schritt:
+
+- ZIP auf DE-Server kopieren.
+- Discovery zuerst mit `-SkipUpload` starten.
+- `candidate_objects.csv` von DE/IT/Andreas pruefen lassen.
+- Danach finale Alphaplan-View oder gemappten CSV-Export definieren.
+
+## Nachtrag 2026-06-08 Finance Spartenanalyse / Datenfluss Andreas
+
+Umgesetzt lokal:
+
+- Sparten-Finanzanalyse gruppiert standardmaessig nach `Produktsparte`.
+- Gruppierungsoptionen bleiben: `Produktsparte`, `Produktfamilie`, `PAPH1 Detail`.
+- Bei `Mixed`-Waehrung wird ein Warnhinweis angezeigt, weil Umsaetze aus mehreren Waehrungen numerisch addiert werden.
+- Zusaetzlich wird eine Tabelle `Groesste Treiber: Nicht im Stamm` angezeigt.
+- Diese Tabelle zeigt Land, TSC, Material, Bezeichnung, Umsatz und Zeilenanzahl fuer die wichtigsten nicht gematchten Materialien.
+
+Analyseergebnis:
+
+- Finance Summary, Management Analyse und Spartenanalyse lesen aus `CentralSalesRecords`, nicht aus dem SharePoint-Zentral-Excel.
+- `Nicht im TR-AG-Stamm` entsteht, wenn Materialnummern aus lokalen Systemen nicht gegen die TR-AG-Referenz `ProductDivisionRefSet` gematcht werden.
+- In der lokalen Analyse war Indien der groesste Treiber, weil lokale/Sage/B1-Materialnummern wie `DM000010`, `DM000001`, `DM000018`, `IC15415` usw. nicht in der TR-AG-Referenz gefunden wurden.
+- `Mixed`-Summen sind fachlich vorsichtig zu interpretieren, weil INR/EUR/CHF/USD ohne Zielwaehrungsauswahl addiert werden.
+
+Dokumentiert:
+
+- `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md`
+
+Wichtige Aussagen fuer Andreas:
+
+- Standortexport: Daten holen, Transformationen anwenden, lokale Standort-Excel erstellen, `CentralSalesRecords` fuer Standort ersetzen, optional SharePoint-Upload.
+- Zentrale Excel wird aus `CentralSalesRecords` erzeugt und ist nicht die Live-Quelle der Cockpit-Anzeige.
+- Wechselkurse veraendern `CentralSalesRecords` normalerweise nicht; sie wirken in Anzeige-/Analyse-Sichten bei Zielwaehrung oder in expliziten `ConvertCurrency`-Transformationen.
+- Sparteninformationen kommen fuehrend aus SAP/TR-AG `ProductDivisionRefSet`; CH/AT werden direkt damit geladen, andere Laender werden in der Analyse ueber Materialnummern gematcht.
+
+Validierung:
+
+```text
+dotnet test TrafagSalesExporter.sln --no-restore --verbosity minimal
+```
+
+Ergebnis: `83/83` Tests gruen.
 
 ## Nachtrag 2026-06-05 Einkauf / PBIX
 
