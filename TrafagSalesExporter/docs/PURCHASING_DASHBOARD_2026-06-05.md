@@ -241,6 +241,61 @@ Die technische Vollbasis ist geladen. Fuer fachlich finale Management-Sichten mu
 
 Der Delta-/Refresh-Prozess ist technisch vorbereitet und im Dashboard unter `Einkauf > Ideen > Einkauf-Datenservice` bedienbar.
 
+## Server-Restore und Full Load 2026-06-08
+
+Beim Publish wurde frueher die Runtime-Datei `trafag_exporter.db` mitpubliziert. Dadurch war die Server-DB zeitweise wieder leer. Das ist im Projektfile korrigiert: `trafag_exporter.db`, `trafag_exporter.db-wal` und `trafag_exporter.db-shm` werden nicht mehr in das Publish-Paket kopiert.
+
+Wiederherstellung am Server:
+
+- Server-DB zuerst aus der lokalen Haupt-DB wiederhergestellt, damit Finance-Daten, Navigation und SAP-Credentials wieder vorhanden sind.
+- Backup vor Restore:
+  - `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-restore-20260605-144709.bak`
+- Danach Einkauf-Full-Load nicht direkt ueber die UNC-Server-DB ausgefuehrt, sondern lokal gegen eine DB-Kopie:
+  - Arbeitsordner: `C:\TMP\purchasing-fullload-20260607-205623`
+  - Grund: langer SAP-Abruf plus SQLite ueber UNC ist fragil.
+- Lokaler Full Load erfolgreich abgeschlossen:
+  - `PurchasingEkkoCache`: 172'874
+  - `PurchasingEkpoCache`: 233'921
+  - `PurchasingEketCache`: 242'572
+- Die fertig geladene DB wurde anschliessend auf den Server kopiert.
+- Backup vor dem Zurueckkopieren der Full-Load-DB:
+  - `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-purchasing-fullload-20260608-061149.bak`
+
+Wichtiger Fix nach dem Kopieren:
+
+- Auf dem Server lagen noch alte SQLite-Sidecar-Dateien neben der neuen Haupt-DB:
+  - `trafag_exporter.db-wal`
+  - `trafag_exporter.db-shm`
+- Diese passten nicht mehr zur neuen Hauptdatei und verursachten beim App-Start `SQLite Error 11: database disk image is malformed`.
+- Beide Sidecar-Dateien wurden gesichert und entfernt:
+  - `trafag_exporter.db-wal.before-cleanup-20260608-065012.bak`
+  - `trafag_exporter.db-shm.before-cleanup-20260608-065012.bak`
+
+Verifizierter Serverstand nach Cleanup:
+
+- HTTP-Check `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/`: Status 200.
+- Server-DB:
+  - `SourceSystemDefinitions`: 5
+  - `Sites`: 9
+  - `SapSourceDefinitions`: 8
+  - `SapJoinDefinitions`: 5
+  - `SapFieldMappings`: 47
+  - `NavigationMenuItems`: 47
+  - `CentralSalesRecords`: 75'089
+  - `PurchasingEkkoCache`: 172'874
+  - `PurchasingEkpoCache`: 233'921
+  - `PurchasingEketCache`: 242'572
+  - SAP-Credentials vorhanden.
+  - Neueste EKKO-Bestelldaten: `2026-06-05`.
+  - Neueste EKET-Einteilung: `2027-04-20`.
+
+Empfehlung fuer kuenftige grosse Einkauf-Ladevorgaenge:
+
+- Full Load immer lokal gegen eine Kopie der produktiven DB ausfuehren.
+- Erst nach erfolgreichem Abschluss die fertige DB auf den Server kopieren.
+- Beim Ersetzen der SQLite-Hauptdatei immer `trafag_exporter.db-wal` und `trafag_exporter.db-shm` passend mitsichern/entfernen.
+- Danach HTTP-Start und Cache-Counts pruefen.
+
 ## Geaenderte Programmstellen
 
 - `Components/Pages/PurchasingDashboard.razor`

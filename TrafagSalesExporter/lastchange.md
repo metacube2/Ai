@@ -530,3 +530,29 @@ docs/raw_md_archive/original_history_raws.zip
 ```
 
 Nur laden, wenn genaue Chronologie, alte Zwischenstaende, Commit-Historie oder Audit-Spuren benoetigt werden.
+
+## Nachtrag 2026-06-08 Einkauf Server-DB Restore
+
+Server-DB wiederhergestellt und Einkauf-Full-Load abgeschlossen:
+
+- Ursache: Runtime-DB wurde frueher beim Publish mitkopiert und hatte die produktive Server-DB geleert. Das Projektfile ist bereits korrigiert, DB/WAL/SHM werden nicht mehr publiziert.
+- Server-DB zuerst aus lokaler Haupt-DB wiederhergestellt:
+  - `CentralSalesRecords`: 75'089
+  - Navigation und SAP-Credentials wieder vorhanden.
+- Einkauf-Full-Load lokal gegen DB-Kopie ausgefuehrt, nicht direkt auf UNC:
+  - Arbeitsordner: `C:\TMP\purchasing-fullload-20260607-205623`
+  - `PurchasingEkkoCache`: 172'874
+  - `PurchasingEkpoCache`: 233'921
+  - `PurchasingEketCache`: 242'572
+- Gefuellte DB auf Server kopiert.
+- Alte SQLite-Sidecar-Dateien `trafag_exporter.db-wal` und `trafag_exporter.db-shm` auf dem Server gesichert und entfernt, weil sie nicht zur neuen Haupt-DB passten und `SQLite Error 11: database disk image is malformed` verursachten.
+- Verifikation:
+  - Server-DB read-only geprueft mit korrekten Counts.
+  - HTTP-Check `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/`: Status 200.
+
+Backups auf Server:
+
+- `trafag_exporter.db.before-restore-20260605-144709.bak`
+- `trafag_exporter.db.before-purchasing-fullload-20260608-061149.bak`
+- `trafag_exporter.db-wal.before-cleanup-20260608-065012.bak`
+- `trafag_exporter.db-shm.before-cleanup-20260608-065012.bak`
