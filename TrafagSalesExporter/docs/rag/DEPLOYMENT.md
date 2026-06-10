@@ -1,18 +1,23 @@
 # RAG Deployment
 
-Stand: 2026-05-27
+Stand: 2026-06-10
 
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
+- Letzter dokumentierter Deploy: 2026-06-10 India/SAGE-HANA-Fix.
+- Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzter Deploy-Zeitstempel: `BiDashboard.dll` am `10.06.2026 08:20:25`.
+- Produktive India-DB-Konfiguration nach Seed: `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.
+- DB-Backup vor India-Seed: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-india-sage-20260610-0825.bak`.
 - Lokaler Uebergangsserver: `http://172.16.9.185:5000` im Trafag-Netz, IP kann wechseln.
 - Lokale URLs bleiben `https://localhost:55415` und `http://localhost:55416`.
 - Fuer andere PCs nutzt der Uebergang bewusst HTTP auf Port `5000`.
 
 ## Serverproblem
 
-- IIS/HTTPS blockiert vor der App.
-- Dokumentierter Befund: TLS fordert Client-Zertifikat.
+- Lokaler HTTPS-Smoke-Test per `Invoke-WebRequest` scheitert weiterhin mit Empfangs-/TLS-Fehler; Publish und Share-/DB-Pruefungen sind davon getrennt.
+- Aelterer dokumentierter Befund: TLS fordert Client-Zertifikat.
 - IT soll IIS SSL Settings pruefen: Client certificates `Ignore` oder hoechstens `Accept`, nicht `Require`.
 
 ## Upgreat Firewall

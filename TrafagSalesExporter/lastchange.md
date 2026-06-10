@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-08
+Stand: 2026-06-10
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,13 +8,20 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Code-Stand: Finance-Spartenanalyse lokal weiter verbessert, Datenfluss fuer Andreas dokumentiert, Alphaplan-Discovery-Exporter fuer Deutschland erstellt.
-- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --no-restore --verbosity minimal` mit `83/83` Tests gruen.
-- Wichtig: Die lokalen Finance-/Alphaplan-Aenderungen vom 2026-06-08 sind dokumentiert, aber noch nicht als neuer Deploy auf den IIS-Server beschrieben.
+- Letzter dokumentierter Code-Stand: India/TRIN HANA-Route gegen SourceSystem-Drift abgesichert; Finance-Kursworkflow und Markdown-Bereinigung dokumentiert.
+- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal` mit `84/84` Tests gruen.
+- Letzter dokumentierter Deploy: 2026-06-10 India/SAGE-HANA-Fix nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Neu umgesetzt und deployed: `TRIN`/Indien wird beim Seed auf `SourceSystem=SAGE`, Schema `TRAFAG_LIVE` und zentralen SAGE-HANA-Server `20.197.20.60:30015` repariert; Standort-User-/Passwort-Override bleibt erhalten.
+- Server-DB am 2026-06-10 korrigiert: `TRIN -> SAGE -> 20.197.20.60:30015`, User-Override `TRAFAGCONTROLS`, Passwort-Override vorhanden. Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-india-sage-20260610-0825.bak`.
+- Deploy-Status 2026-06-10: `BiDashboard.dll` Zeitstempel `10.06.2026 08:20:25`; `app_offline.htm` wurde entfernt.
+- Git-Commit India-Fix: `586adc3 Fix India SAGE HANA mapping`.
+- Neu dokumentiert: Delta zum India-Deploy in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`.
 - Neu lokal: Sparten-Finanzanalyse gruppiert standardmaessig nach `Produktsparte`; `Produktfamilie` und `PAPH1 Detail` bleiben als Umschaltoptionen erhalten.
 - Neu lokal: Sparten-Finanzanalyse zeigt bei `Mixed`-Waehrung einen Warnhinweis, weil Summen/Anteile ueber mehrere Waehrungen fachlich nur eingeschraenkt belastbar sind.
 - Neu lokal: Sparten-Finanzanalyse zeigt die groessten Treiber fuer `Nicht im TR-AG-Stamm`, damit hohe nicht zugeordnete Umsaetze nach Land/TSC/Material analysiert werden koennen.
 - Neu dokumentiert: genauer Finance-Datenfluss fuer Andreas in `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md`.
+- Neu dokumentiert: isolierter Finance-Kursworkflow in `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` mit SVG-Visualisierung `docs/FINANCE_KURS_WORKFLOW_2026-06-09.svg`, vom Land/Quellwert ueber `CurrencyExchangeRates` bis zur zentralen Dashboard-Analyse.
+- Doku-Bereinigung: historische Finance-Stubs und der alte Finance-Handoff wurden aus der aktiven Markdown-Struktur entfernt; Volltexte bleiben in `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`. Die veraltete deutsche Spanien-rclone-Anleitung wurde durch den aktuellen All-in-one-Guide ersetzt.
 - Neu dokumentiert: Alphaplan SQL/rclone Konzept Deutschland in `docs/ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
 - Neu erstellt: Alphaplan Phase-1-Discovery-Paket `AlphaplanExportPackage` und `AlphaplanExportPackage.zip`.
 - Neu dokumentiert: Alphaplan Discovery Exporter Guide in `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`.
@@ -24,7 +31,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt und deployed: 3D-Simulation mit Schiebereglern, u. a. fuer Wechselkurs-/Szenarioveraenderungen; Grafik reagiert in Echtzeit.
 - Neu umgesetzt und deployed: 3D-Darstellung korrigiert fuer Canvas-Groesse, Achsen, Labelgroesse und breitere Indikatorauswahl.
 - Bekannter Browser-Hinweis: 3D-Ansicht wurde in Chrome als korrekt bestaetigt; Firefox zeigte auf dem Client Probleme mit Interaktion/Groesse.
-- Neu fuer Spanien: All-in-one-PS1 `SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1` erstellt; es exportiert Sage direkt per SQL-Range und laedt CSV/Summary via rclone nach SharePoint.
+- Neu fuer Spanien: All-in-one-PS1 `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1` erstellt; es exportiert Sage direkt per SQL-Range und laedt CSV/Summary via rclone nach SharePoint.
 - Neu fuer Spanien: Standard-Range ist letzte 7 Tage bis heute; `FromDate`/`ToDate` koennen per Parameter ueberschrieben werden.
 - Neu fuer Spanien: SharePoint-Ziel wird vor Export per rclone geprueft/angelegt: `trafag-bi:Import/Finance/Spanien`.
 - Neu fuer Spanien: rclone-Uploadfehler `Can't set -v and --log-level` behoben; `--verbose` wurde aus dem All-in-one-Upload entfernt.
@@ -64,6 +71,41 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: `Einkauf > Datenquellen` als grafische SAP/OData-Quellenpflege analog Finance/Standorte; vorbefuellt mit `EKKOSet`, `EKPOSet`, `eketSet`, Lieferanten- und Warengruppen-Mapping, Joins und Zielmappings.
 - Neu umgesetzt: `Einkauf Dashboard > 3D Simulation` mit festen Canvas-Abmessungen, Achsenbeschriftung, Diagrammarten, Labelgroesse und Szenario-Slider fuer Preis-/Wechselkurswirkung.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen; Test prueft auch Einkaufs-SAP-Seed mit Quellen/Joins/Mappings.
+
+## Nachtrag 2026-06-10 India / SAGE HANA / Deploy
+
+Ausgangslage:
+
+- Indien (`TRIN`) schlug in den Exportlogs mit `authentication failed` fehl.
+- Vergleich mit den Anfangslogs zeigte: erfolgreiche Laeufe am 2026-04-16 liefen auf `20.197.20.60:30015`; neuere Fehllauefe liefen auf `travtrp0:30015`.
+- Ursache war Konfigurationsdrift: `TRIN` stand auf `SourceSystem=BI1`, der India-Server hatte kein `SourceSystem`, und der zentrale `SAGE`-Server hatte keinen Host.
+
+Umgesetzt:
+
+- Seed-Reparatur in `DatabaseSeedService`: `TRIN`/Indien wird auf `SAGE`, Schema `TRAFAG_LIVE` und SAGE-HANA `20.197.20.60:30015` gesetzt.
+- Regressionstest `InitializeAsync_Repairs_India_Sage_Hana_Mapping`.
+- Produktive Server-DB mit Backup direkt auf der Freigabe repariert.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal`
+- Ergebnis: `84/84` Tests gruen.
+- Server-DB-Pruefung: `TRIN -> SAGE -> 20.197.20.60:30015`, User-Override `TRAFAGCONTROLS`, Passwort-Override vorhanden.
+
+Deploy:
+
+- Release-Publish auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- `BiDashboard.dll` Zeitstempel nach Deploy: `10.06.2026 08:20:25`.
+- `app_offline.htm` wurde nach Publish/DB-Seed entfernt.
+- Commit: `586adc3 Fix India SAGE HANA mapping`.
+
+## Nachtrag 2026-06-10 Dokumentationsdelta
+
+- Isolierter Kursworkflow angelegt: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
+- SVG-Visualisierung angelegt: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.svg`.
+- Aktive Markdown-Dokumente bereinigt: historische Finance-Stubs und die alte deutsche Spain-rclone-Anleitung entfernt.
+- Fachinhalte bleiben erhalten: alte Volltexte liegen in `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`.
+- Spain-Finalpaket unter den bestehenden Spain-Paketordner verschoben: `SageSpainExportPackage/SageSpainFinalExportPackage/`.
 
 ## Nachtrag 2026-06-08 Alphaplan Deutschland / SQL Discovery / rclone Upload
 
@@ -226,7 +268,7 @@ Server-/rclone-Kontext:
 
 Umgesetzt:
 
-- Neues Einzel-Script `SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1`.
+- Neues Einzel-Script `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1`.
 - Das Script macht alles in einem Lauf:
   - Datum pruefen.
   - rclone finden.

@@ -79,7 +79,7 @@ Beobachtung:
 
 ## Export v2
 
-Finaler Export-Kandidat wurde mit `SageSpainFinalExportPackage.zip` bzw. danach `v2.zip` erstellt.
+Finaler Export-Kandidat wurde mit `SageSpainFinalExportPackage.zip` bzw. danach `v2.zip` erstellt; aktueller Paketordner im Repo: `SageSpainExportPackage/SageSpainFinalExportPackage/`.
 
 Script:
 

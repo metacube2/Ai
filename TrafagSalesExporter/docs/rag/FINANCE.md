@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-06-05
+Stand: 2026-06-10
 
 ## Kurzstand
 
@@ -22,6 +22,8 @@ Stand: 2026-06-05
 - Wechselkurs-Anwendungsdatum ist in Settings konfigurierbar und wird in der Rohdaten-Diagnose angezeigt.
 - Spartenanalyse war mit >90% nicht zugeordnet fachlich unplausibel; Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
 - Budgetkurse wurden als Finance-Kurse behandelt; CHF-Sicht bleibt getrennte Reporting-/Kontrollsicht, nicht stiller Ersatz fuer Hauswaehrungsabgleich.
+- Fokusdoku zum isolierten Kursfluss: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
+- India/TRIN: produktive Route nach Fix/Deploy 2026-06-10 ist `SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`; Standort-Override nutzt `TRAFAGCONTROLS`.
 - Browser-Hinweis: 3D-Ansicht wurde in Chrome als korrekt bestaetigt; Firefox zeigte auf dem Client Interaktions-/Zoomprobleme.
 
 ## Wichtige Regeln
@@ -31,6 +33,7 @@ Stand: 2026-06-05
 - Jahresabgrenzung ueber `PostingDate`, Fallback `InvoiceDate`, danach `ExtractionDate`.
 - Gutschriften/Storno laufen als negative Beleg-/Positionszeilen.
 - Budget-CHF ist Kontroll-/Reporting-Kandidat, nicht Standardabgleich.
+- `DocumentRate` aus dem ERP ist ein gespeichertes Quellfeld; die App-Kurstabelle wird nur bei Anzeige-Waehrung, expliziter `ConvertCurrency`-Transformation oder Budget-CHF-Kandidat verwendet.
 
 ## Offene Fachpunkte
 
@@ -89,12 +92,13 @@ Stand: 2026-06-05
 | ES | Sage CSV, `ImporteNeto`, REC/Credit negativ; Referenz 2025 korrigiert auf `3'082'320.18 EUR` |
 | IT | Hauswaehrung, `Trafag Italia` ausgeschlossen, Duplikatlogik fuer leeres Supplier country |
 | UK | Sage/Manual Excel, GBP, `[Sales Price/Value] * [Quantity]`, Credit Notes negativ |
-| IN | INR als Hauswaehrung |
+| IN | SAGE/HANA `TRIN`, Schema `TRAFAG_LIVE`, INR als Hauswaehrung |
 
 ## Rohquellen Nur Bei Bedarf
 
 - Entscheide: `docs/FINANCE_ENTSCHEIDE.md`, `entscheide.md`
 - Formeln je Land: `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`
+- Isolierter Kurs-Workflow: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`
 - IT Detail: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`
 - UK Korrektur: `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md`
 - ES Detail: `SAGE_SPAIN_EXPORT_2026-05-05.md`

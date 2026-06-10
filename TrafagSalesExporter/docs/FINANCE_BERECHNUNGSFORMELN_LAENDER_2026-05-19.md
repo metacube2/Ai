@@ -232,7 +232,7 @@ Exportskripte:
 
 ```text
 scripts/Export-SageSpainSalesCsv.ps1
-SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1
+SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1
 ```
 
 Sage-SQL-Formel im Export:
@@ -555,6 +555,6 @@ Services/DatabaseSeedService.cs
   FinanceReference-Sollwerte, UK Mapping, ZSCHWEIZ Mapping, Default-Waehrungen
 
 scripts/Export-SageSpainSalesCsv.ps1
-SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1
+SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1
   Spanien Sage SQL Export und Gutschrift-Logik
 ```

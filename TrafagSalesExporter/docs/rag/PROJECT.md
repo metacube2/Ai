@@ -1,13 +1,15 @@
 # RAG Project
 
-Stand: 2026-06-05
+Stand: 2026-06-10
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Letzter dokumentierter Stand: Finance-Schnelluebersicht, Expertenbereich, 3D-Datenanalyse und Spanien-Sage-All-in-one-rclone-Upload.
-- Validierung laut Doku: Finance-Sitzungsstand `82/82` Tests gruen; spaetere UI-/Deploy-Schritte wurden einzeln umgesetzt und deployed.
-- Letzter dokumentierter Finance-Deploy: 2026-06-05 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzter dokumentierter Stand: India/TRIN SAGE-HANA-Fix deployed, Finance-Kursworkflow dokumentiert, aktive Markdown-Doku bereinigt.
+- Validierung laut Doku: `84/84` Tests gruen fuer den India-Fix; fruehere UI-/Deploy-Schritte wurden einzeln umgesetzt und deployed.
+- Letzter dokumentierter Deploy: 2026-06-10 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- India/TRIN: produktive Server-DB steht auf `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.
+- Doku-Delta: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` plus SVG; alte Finance-Stubs aus aktiver Markdown-Struktur entfernt, Volltexte bleiben im Raw-Archiv.
 - Neu im Finance/Management-Cockpit: einfache Schnelluebersicht links sichtbar; tiefere Funktionen bleiben unter `Experten`.
 - Neu in der Navigation: Menuebaum wird aus `NavigationMenuItems` gerendert; Admins koennen bestehende Punkte unter `Admin > Menuestruktur` umhaengen, sortieren und aus-/einblenden.
 - Neu als Hauptbereich: `Einkauf` mit Einkaufswagen-Icon und erweitertem `Einkauf Dashboard`.

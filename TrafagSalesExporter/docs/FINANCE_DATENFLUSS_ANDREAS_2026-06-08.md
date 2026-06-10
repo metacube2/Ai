@@ -4,6 +4,8 @@ Stand: 2026-06-08
 
 Zweck: Diese Notiz beschreibt den tatsaechlichen technischen Datenfluss im Finance Cockpit: wo Daten geholt werden, wann Felder veraendert werden, wann Wechselkurse wirken, wie die zentrale Excel entsteht und welche Quelle die Sparteninformationen liefert.
 
+Fokus nur Wechselkurs/Kursanwendung: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
+
 ## Kurzfazit
 
 - Finance Summary, Management Analyse und Spartenanalyse lesen nicht aus dem SharePoint-Excel, sondern direkt aus der App-Datenbank `CentralSalesRecords`.
@@ -212,6 +214,8 @@ INSERT neue Records fuer diesen Standort
 ## Wann wirkt der Wechselkurs?
 
 Es gibt drei getrennte Faelle.
+
+Detail nur zum Kursfluss vom Land bis zur zentralen Dashboard-Analyse: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
 
 ### 1. Standard-Finance-Soll/Ist und Finance Summary
 
@@ -458,4 +462,3 @@ Zentrale Excel
 6. Wechselkurse sind keine stille Vorverarbeitung fuer den Standard-Soll/Ist-Abgleich.
 7. `Mixed` bedeutet: mehrere Waehrungen im Filter. Prozentwerte auf `Mixed` sind nur eingeschraenkt interpretierbar; fuer belastbare Spartenanteile nach Wert muss Land oder Waehrung gefiltert werden.
 8. Die zentrale Excel wird nach den Standortexporten aus `CentralSalesRecords` erstellt. Sie ist Ergebnis, nicht Eingang.
-

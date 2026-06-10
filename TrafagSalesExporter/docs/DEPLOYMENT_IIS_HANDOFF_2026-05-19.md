@@ -1,6 +1,67 @@
 # Deployment / IIS Handoff 2026-05-19
 
-Letzter Nachtrag: 2026-05-29
+Letzter Nachtrag: 2026-06-10
+
+## Nachtrag 2026-06-10 Deploy India / SAGE HANA Mapping
+
+Durchgefuehrt:
+
+- Release-Publish aus `TrafagSalesExporter` nach:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\
+```
+
+- Befehl:
+
+```powershell
+dotnet publish .\TrafagSalesExporter.csproj -c Release --no-restore /p:PublishProfile=FolderProfile --verbosity minimal
+```
+
+- App wurde fuer Publish und DB-Seed kurz per `app_offline.htm` gestoppt und danach wieder online geschaltet.
+
+Deploy-Inhalt:
+
+- Seed-Reparatur fuer India/TRIN:
+  - Standort `TRIN` / `Indien`
+  - `SourceSystem = SAGE`
+  - Schema `TRAFAG_LIVE`
+  - zentraler SAGE-HANA-Server `20.197.20.60:30015`
+- Vorhandene Standort-Credentials bleiben erhalten; der produktive TRIN-Override nutzt `TRAFAGCONTROLS`.
+- Regressionstest fuer die alte Drift-Konfiguration: TRIN auf BI1, India-Server ohne SourceSystem, leerer SAGE-Server.
+
+Share-/DB-Pruefung:
+
+- `BiDashboard.dll` Zeitstempel nach Deploy: `10.06.2026 08:20:25`.
+- `app_offline.htm` wurde entfernt.
+- Server-DB-Backup vor Seed:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-india-sage-20260610-0825.bak
+```
+
+- Server-DB nach Seed:
+  - `TRIN -> SAGE -> 20.197.20.60:30015`
+  - Schema `TRAFAG_LIVE`
+  - User-Override `TRAFAGCONTROLS`
+  - Passwort-Override vorhanden
+
+Validierung:
+
+```powershell
+dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal
+```
+
+Ergebnis:
+
+```text
+84/84 Tests gruen
+```
+
+Einschraenkung:
+
+- Kein echter India-HANA-Verbindungstest von der Entwicklungsmaschine aus.
+- Lokaler `Invoke-WebRequest` gegen `https://trch-webapp-bidashboard.trafagch.local/BiDashboard/` scheitert weiterhin am bekannten lokalen TLS-/Empfangsproblem; Publish und Share-/DB-Pruefung waren erfolgreich.
 
 ## Nachtrag 2026-05-29 Deploy Sparten-Finanzanalyse
 
