@@ -5,9 +5,12 @@ Stand: 2026-06-10
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-10 India/SAGE-HANA-Fix.
+- Letzter dokumentierter Deploy: 2026-06-10 Produktsparten-Fallback `ProductDivisionMapSet`.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzter Deploy-Zeitstempel: `BiDashboard.dll` am `10.06.2026 08:20:25`.
+- Letzter Deploy-Zeitstempel: `BiDashboard.dll` am `10.06.2026 16:09:44`.
+- Produktive CH/AT-DB-Konfiguration nach Seed: `ZSCHWEIZ` Quellen `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet`, `M:ProductDivisionMapSet`; Joins `Z.Matnr=P.Matnr` und `Z.Prodh=M.Paph1`.
+- CH/AT-Import nach Deploy: `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`.
+- DB-Backup vor Produktsparten-Seed/Import: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak`.
 - Produktive India-DB-Konfiguration nach Seed: `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.
 - DB-Backup vor India-Seed: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-india-sage-20260610-0825.bak`.
 - Lokaler Uebergangsserver: `http://172.16.9.185:5000` im Trafag-Netz, IP kann wechseln.

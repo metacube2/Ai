@@ -2,6 +2,83 @@
 
 Letzter Nachtrag: 2026-06-10
 
+## Nachtrag 2026-06-10 Deploy Produktsparten-Fallback `ProductDivisionMapSet`
+
+Durchgefuehrt:
+
+- Release-Publish aus `TrafagSalesExporter` nach:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\
+```
+
+- Befehl:
+
+```powershell
+dotnet publish .\TrafagSalesExporter.csproj -c Release --no-restore /p:PublishProfile=FolderProfile --verbosity minimal
+```
+
+- App wurde fuer Publish und Server-DB-Aktualisierung per `app_offline.htm` gestoppt und danach wieder online geschaltet.
+
+Deploy-Inhalt:
+
+- Neuer SAP-OData-Fallback fuer CH/AT:
+  - Quelle `M = ProductDivisionMapSet`
+  - Join `Z.Prodh = M.Paph1`
+  - Produktfelder nutzen `FirstNonEmpty(P.*, M.*)`
+- Materialbasierter Treffer aus `ProductDivisionRefSet` bleibt fuehrend.
+- Wenn die Materialreferenz fehlt, aber `Z.Prodh` gefuellt ist, wird die flache `PAPH1 -> WWPFA -> WWPSP`-Map genutzt.
+- Wenn auch `Z.Prodh` leer ist, bleibt die Zeile ohne Produktreferenz; dafuer gibt es keinen technischen Schluessel.
+- Spain-Seed-Reparatur bleibt enthalten: `TRSE` zeigt auf den SharePoint-Ordner fuer Basis- und Range-/Delta-CSV.
+
+Share-/DB-Pruefung:
+
+- `BiDashboard.dll` Zeitstempel nach Deploy: `10.06.2026 16:09:44`.
+- `app_offline.htm` wurde entfernt.
+- Server-DB-Backup vor Seed/Import:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak
+```
+
+- Server-DB nach Seed:
+  - `ZSCHWEIZ` Quellen: `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet`, `M:ProductDivisionMapSet`
+  - Joins: `Z.Matnr = P.Matnr`, `Z.Prodh = M.Paph1`
+  - Produkt-Mappings: `FirstNonEmpty(P.*, M.*)`
+
+CH/AT-Import auf Server-DB:
+
+```text
+FetchedRecords = 40'292
+Assigned = 36'953
+UnassignedWithReference = 0
+```
+
+Aufteilung nach TSC:
+
+```text
+TRCH Rows 38'838, Assigned 35'526, NoReferenceFields 3'312
+TRAT Rows  1'454, Assigned  1'427, NoReferenceFields    27
+```
+
+Validierung:
+
+```powershell
+dotnet test TrafagSalesExporter.sln --verbosity minimal
+```
+
+Ergebnis:
+
+```text
+87/87 Tests gruen
+```
+
+SAP-Gateway-Vorbedingung:
+
+- `ProductDivisionMapSet` ist im Service `ZPOWERBI_EINKAUF_SRV` aktiv.
+- `$metadata` enthaelt `ProductDivisionMap` mit `WwpfaText`.
+- `ProductDivisionMapSet` liefert 1'296 Zeilen.
+
 ## Nachtrag 2026-06-10 Deploy India / SAGE HANA Mapping
 
 Durchgefuehrt:

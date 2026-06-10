@@ -129,10 +129,52 @@ public sealed class MappedSalesRecordComposer : IMappedSalesRecordComposer
         if (value.StartsWith('='))
             return value[1..];
 
+        if (TryEvaluateFirstNonEmpty(row, value, out var firstNonEmpty))
+            return firstNonEmpty;
+
         if (row.TryGetValue(value, out var direct))
             return direct;
 
         return null;
+    }
+
+    private static bool TryEvaluateFirstNonEmpty(Dictionary<string, object?> row, string expression, out object? result)
+    {
+        result = null;
+        const string functionName = "FirstNonEmpty";
+        if (!expression.StartsWith(functionName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var openParen = expression.IndexOf('(');
+        var closeParen = expression.LastIndexOf(')');
+        if (openParen < functionName.Length || closeParen <= openParen)
+            return false;
+
+        var arguments = expression[(openParen + 1)..closeParen]
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var argument in arguments)
+        {
+            var value = EvaluateExpression(row, argument);
+            if (!IsEmptyValue(value))
+            {
+                result = value;
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsEmptyValue(object? value)
+    {
+        if (value is null)
+            return true;
+
+        if (value is string text)
+            return string.IsNullOrWhiteSpace(text);
+
+        return string.IsNullOrWhiteSpace(value.ToString());
     }
 
     private static void ApplyValue(SalesRecord record, string targetField, object? value)

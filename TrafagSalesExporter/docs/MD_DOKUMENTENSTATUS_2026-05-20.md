@@ -66,7 +66,7 @@ Bereinigung 2026-06-09:
 - Historische Finance-Stubs und der alte Finance-Handoff wurden aus der aktiven Doku entfernt, weil der Volltext im Raw-Archiv liegt.
 - Die alte deutsche Spanien-rclone-Anleitung wurde entfernt, weil der aktuelle All-in-one-Workflow im Guide vom 2026-06-05 dokumentiert ist.
 - Die Alphaplan-Konzept- und Anleitungsdateien vom 2026-06-08 wurden bewusst nicht veraendert.
-- Delta 2026-06-10: India/SAGE-HANA-Deploy und Server-DB-Seed wurden in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` und `lastchange.md` nachdokumentiert.
+- Delta 2026-06-10: Produktsparten-Fallback `ProductDivisionMapSet`, India/SAGE-HANA-Deploy und Server-DB-Seeds wurden in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
 
 Weiterhin gilt:
 

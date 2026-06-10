@@ -8,14 +8,17 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Letzter dokumentierter Code-Stand: India/TRIN HANA-Route gegen SourceSystem-Drift abgesichert; Finance-Kursworkflow und Markdown-Bereinigung dokumentiert.
-- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal` mit `84/84` Tests gruen.
-- Letzter dokumentierter Deploy: 2026-06-10 India/SAGE-HANA-Fix nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzter dokumentierter Code-Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN HANA-Route und Spanien-SharePoint-Pfad bleiben im Seed abgesichert.
+- Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `87/87` Tests gruen.
+- Letzter dokumentierter Deploy: 2026-06-10 Produktsparten-Fallback nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Neu umgesetzt und deployed: `ZSCHWEIZ` nutzt zusaetzlich `M = ProductDivisionMapSet` und den Join `Z.Prodh = M.Paph1`; Produktfelder fallen per `FirstNonEmpty(P.*, M.*)` von Materialreferenz auf PAPH1-Mapping zurueck.
+- Server-DB am 2026-06-10 aktualisiert: CH/AT neu importiert, `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`; Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak`.
+- Deploy-Status 2026-06-10: `BiDashboard.dll` Zeitstempel `10.06.2026 16:09:44`; `app_offline.htm` wurde entfernt.
 - Neu umgesetzt und deployed: `TRIN`/Indien wird beim Seed auf `SourceSystem=SAGE`, Schema `TRAFAG_LIVE` und zentralen SAGE-HANA-Server `20.197.20.60:30015` repariert; Standort-User-/Passwort-Override bleibt erhalten.
 - Server-DB am 2026-06-10 korrigiert: `TRIN -> SAGE -> 20.197.20.60:30015`, User-Override `TRAFAGCONTROLS`, Passwort-Override vorhanden. Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-india-sage-20260610-0825.bak`.
-- Deploy-Status 2026-06-10: `BiDashboard.dll` Zeitstempel `10.06.2026 08:20:25`; `app_offline.htm` wurde entfernt.
+- Server-DB am 2026-06-10 korrigiert: Spanien (`TRSE`) zeigt im manuellen Import jetzt auf den SharePoint-Ordner `https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien` statt auf die Einzeldatei `Spain_Sales_2025.csv`, damit Basis- und Range-/Delta-CSV zusammen gelesen werden. Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-spain-folder-path-20260610-100627.bak`.
 - Git-Commit India-Fix: `586adc3 Fix India SAGE HANA mapping`.
-- Neu dokumentiert: Delta zum India-Deploy in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`.
+- Neu dokumentiert: Delta zum Produktsparten-Fallback-Deploy in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` und `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`.
 - Neu lokal: Sparten-Finanzanalyse gruppiert standardmaessig nach `Produktsparte`; `Produktfamilie` und `PAPH1 Detail` bleiben als Umschaltoptionen erhalten.
 - Neu lokal: Sparten-Finanzanalyse zeigt bei `Mixed`-Waehrung einen Warnhinweis, weil Summen/Anteile ueber mehrere Waehrungen fachlich nur eingeschraenkt belastbar sind.
 - Neu lokal: Sparten-Finanzanalyse zeigt die groessten Treiber fuer `Nicht im TR-AG-Stamm`, damit hohe nicht zugeordnete Umsaetze nach Land/TSC/Material analysiert werden koennen.

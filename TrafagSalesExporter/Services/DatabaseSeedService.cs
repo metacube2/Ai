@@ -7,6 +7,8 @@ namespace TrafagSalesExporter.Services;
 
 public class DatabaseSeedService : IDatabaseSeedService
 {
+    private const string SpainSharePointFolder = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien";
+
     public void SeedDefaults(AppDbContext db)
     {
         SeedIfEmpty(db);
@@ -529,6 +531,12 @@ public class DatabaseSeedService : IDatabaseSeedService
                 changed = true;
             }
 
+            if (ShouldRepairSpainManualImportPath(existing.ManualImportFilePath))
+            {
+                existing.ManualImportFilePath = SpainSharePointFolder;
+                changed = true;
+            }
+
             if (changed)
                 db.SaveChanges();
 
@@ -541,9 +549,20 @@ public class DatabaseSeedService : IDatabaseSeedService
             TSC = "TRES",
             Land = "Spanien",
             SourceSystem = "MANUAL_EXCEL",
+            ManualImportFilePath = SpainSharePointFolder,
             IsActive = false
         });
         db.SaveChanges();
+    }
+
+    private static bool ShouldRepairSpainManualImportPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return true;
+
+        var normalized = path.Trim().Replace('\\', '/');
+        return normalized.Contains("/Import/Finance/Spanien/Spain_Sales_", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("/Import/Finance/Spanien/Spain_Sales_2025.csv", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void EnsureGermanyManualExcelSite(AppDbContext db)
@@ -912,7 +931,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         }
 
         var obsoleteSources = db.SapSourceDefinitions
-            .Where(x => x.SiteId == siteId && x.Alias != "Z" && x.Alias != "P")
+            .Where(x => x.SiteId == siteId && x.Alias != "Z" && x.Alias != "P" && x.Alias != "M")
             .ToList();
         foreach (var obsoleteSource in obsoleteSources)
         {
@@ -973,6 +992,50 @@ public class DatabaseSeedService : IDatabaseSeedService
             }
         }
 
+        var productMapSource = db.SapSourceDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.SiteId == siteId && x.Alias == "M");
+
+        if (productMapSource is null)
+        {
+            db.SapSourceDefinitions.Add(new SapSourceDefinition
+            {
+                SiteId = siteId,
+                Alias = "M",
+                EntitySet = "ProductDivisionMapSet",
+                IsPrimary = false,
+                IsActive = true,
+                SortOrder = 2
+            });
+            changed = true;
+        }
+        else
+        {
+            if (productMapSource.EntitySet != "ProductDivisionMapSet")
+            {
+                productMapSource.EntitySet = "ProductDivisionMapSet";
+                changed = true;
+            }
+
+            if (productMapSource.IsPrimary)
+            {
+                productMapSource.IsPrimary = false;
+                changed = true;
+            }
+
+            if (!productMapSource.IsActive)
+            {
+                productMapSource.IsActive = true;
+                changed = true;
+            }
+
+            if (productMapSource.SortOrder != 2)
+            {
+                productMapSource.SortOrder = 2;
+                changed = true;
+            }
+        }
+
         var productJoin = db.SapJoinDefinitions
             .OrderBy(x => x.Id)
             .FirstOrDefault(x =>
@@ -1028,6 +1091,61 @@ public class DatabaseSeedService : IDatabaseSeedService
             }
         }
 
+        var productMapJoin = db.SapJoinDefinitions
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x =>
+                x.SiteId == siteId &&
+                x.LeftAlias == "Z" &&
+                x.RightAlias == "M");
+
+        if (productMapJoin is null)
+        {
+            db.SapJoinDefinitions.Add(new SapJoinDefinition
+            {
+                SiteId = siteId,
+                LeftAlias = "Z",
+                RightAlias = "M",
+                LeftKeys = "Prodh",
+                RightKeys = "Paph1",
+                JoinType = "Left",
+                IsActive = true,
+                SortOrder = 2
+            });
+            changed = true;
+        }
+        else
+        {
+            if (productMapJoin.LeftKeys != "Prodh")
+            {
+                productMapJoin.LeftKeys = "Prodh";
+                changed = true;
+            }
+
+            if (productMapJoin.RightKeys != "Paph1")
+            {
+                productMapJoin.RightKeys = "Paph1";
+                changed = true;
+            }
+
+            if (productMapJoin.JoinType != "Left")
+            {
+                productMapJoin.JoinType = "Left";
+                changed = true;
+            }
+
+            if (!productMapJoin.IsActive)
+            {
+                productMapJoin.IsActive = true;
+                changed = true;
+            }
+
+            if (productMapJoin.SortOrder != 2)
+            {
+                productMapJoin.SortOrder = 2;
+                changed = true;
+            }
+        }
+
         var mappings = new (string Target, string Source, bool Required)[]
         {
             (nameof(SalesRecord.Tsc), "Z.Tsc", true),
@@ -1040,13 +1158,13 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.Material), "Z.Matnr", false),
             (nameof(SalesRecord.Name), "Z.Arktx", false),
             (nameof(SalesRecord.ProductGroup), "Z.Prodh", false),
-            (nameof(SalesRecord.ProductHierarchyCode), "P.Paph1", false),
-            (nameof(SalesRecord.ProductHierarchyText), "P.Paph1Text", false),
-            (nameof(SalesRecord.ProductFamilyCode), "P.Wwpfa", false),
-            (nameof(SalesRecord.ProductFamilyText), "P.WwpfaText", false),
-            (nameof(SalesRecord.ProductDivisionCode), "P.Wwpsp", false),
-            (nameof(SalesRecord.ProductDivisionText), "P.WwpspText", false),
-            (nameof(SalesRecord.ProductMappingAssigned), "P.IsAssigned", false),
+            (nameof(SalesRecord.ProductHierarchyCode), "FirstNonEmpty(P.Paph1, M.Paph1)", false),
+            (nameof(SalesRecord.ProductHierarchyText), "FirstNonEmpty(P.Paph1Text, M.Paph1Text)", false),
+            (nameof(SalesRecord.ProductFamilyCode), "FirstNonEmpty(P.Wwpfa, M.Wwpfa)", false),
+            (nameof(SalesRecord.ProductFamilyText), "FirstNonEmpty(P.WwpfaText, M.WwpfaText)", false),
+            (nameof(SalesRecord.ProductDivisionCode), "FirstNonEmpty(P.Wwpsp, M.Wwpsp)", false),
+            (nameof(SalesRecord.ProductDivisionText), "FirstNonEmpty(P.WwpspText, M.WwpspText)", false),
+            (nameof(SalesRecord.ProductMappingAssigned), "FirstNonEmpty(P.IsAssigned, M.IsAssigned)", false),
             (nameof(SalesRecord.Quantity), "Z.Fkimg", false),
             (nameof(SalesRecord.CustomerNumber), "Z.Kunnr", false),
             (nameof(SalesRecord.CustomerName), "Z.Name1", false),

@@ -5,9 +5,10 @@ Stand: 2026-06-10
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Letzter dokumentierter Stand: India/TRIN SAGE-HANA-Fix deployed, Finance-Kursworkflow dokumentiert, aktive Markdown-Doku bereinigt.
-- Validierung laut Doku: `84/84` Tests gruen fuer den India-Fix; fruehere UI-/Deploy-Schritte wurden einzeln umgesetzt und deployed.
+- Letzter dokumentierter Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
+- Validierung laut Doku: `87/87` Tests gruen fuer den Produktsparten-Fallback; fruehere UI-/Deploy-Schritte wurden einzeln umgesetzt und deployed.
 - Letzter dokumentierter Deploy: 2026-06-10 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Produktsparten CH/AT: `ProductDivisionRefSet` bleibt materialbasiert fuehrend; Fallback `ProductDivisionMapSet` joined `Z.Prodh = M.Paph1`. Server-Import: 40'292 CH/AT-Datensaetze, 36'953 assigned, 0 `UnassignedWithReference`.
 - India/TRIN: produktive Server-DB steht auf `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.
 - Doku-Delta: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` plus SVG; alte Finance-Stubs aus aktiver Markdown-Struktur entfernt, Volltexte bleiben im Raw-Archiv.
 - Neu im Finance/Management-Cockpit: einfache Schnelluebersicht links sichtbar; tiefere Funktionen bleiben unter `Experten`.

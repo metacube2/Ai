@@ -135,6 +135,23 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.Equal(sageServer.Id, india.HanaServerId);
     }
 
+    [Fact]
+    public async Task InitializeAsync_Repairs_Spain_Manual_Import_File_To_Folder()
+    {
+        await PrepareSpainManualImportFilePathAsync();
+
+        var service = CreateService();
+        await service.InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var spain = Assert.Single(db.Sites, x => x.TSC == "TRSE");
+
+        Assert.Equal("MANUAL_EXCEL", spain.SourceSystem);
+        Assert.Equal(
+            "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien",
+            spain.ManualImportFilePath);
+    }
+
     private async Task PrepareLegacySitesTableAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -237,6 +254,35 @@ VALUES (
             PasswordOverride = "india-password",
             IsActive = true
         });
+        await db.SaveChangesAsync();
+    }
+
+    private async Task PrepareSpainManualImportFilePathAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        db.HanaServers.RemoveRange(db.HanaServers);
+        db.Sites.RemoveRange(db.Sites);
+        await db.SaveChangesAsync();
+
+        db.Sites.AddRange(
+            new Site
+            {
+                Schema = "fr01_p",
+                TSC = "TRFR",
+                Land = "Frankreich",
+                SourceSystem = "BI1",
+                IsActive = true
+            },
+            new Site
+            {
+                Schema = "Spanien",
+                TSC = "TRSE",
+                Land = "Spanien",
+                SourceSystem = "MANUAL_EXCEL",
+                ManualImportFilePath = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien/Spain_Sales_2025.csv",
+                IsActive = true
+            });
         await db.SaveChangesAsync();
     }
 
