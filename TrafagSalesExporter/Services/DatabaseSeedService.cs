@@ -12,6 +12,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         SeedIfEmpty(db);
         EnsureRecommendedTransformationRules(db);
         EnsureSourceSystemDefinitions(db);
+        EnsureIndiaSageHanaConfiguration(db);
         EnsureCentralHanaServerRecords(db);
         EnsureSpainManualExcelSite(db);
         EnsureGermanyManualExcelSite(db);
@@ -305,6 +306,128 @@ public class DatabaseSeedService : IDatabaseSeedService
         }
 
         if (changed)
+            db.SaveChanges();
+    }
+
+    private static void EnsureIndiaSageHanaConfiguration(AppDbContext db)
+    {
+        const string sageSourceSystem = "SAGE";
+        const string indiaTsc = "TRIN";
+        const string indiaSchema = "TRAFAG_LIVE";
+        const string indiaHost = "20.197.20.60";
+        const int indiaPort = 30015;
+
+        var site = db.Sites
+            .Include(x => x.HanaServer)
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.TSC == indiaTsc || x.Land == "Indien" || x.Land == "India");
+
+        if (site is null)
+            return;
+
+        var changed = false;
+        var sourceServer = db.HanaServers
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.Host == indiaHost)
+            ?? site.HanaServer;
+
+        var centralSageServer = db.HanaServers
+            .OrderBy(x => x.Id)
+            .FirstOrDefault(x => x.SourceSystem == sageSourceSystem);
+
+        if (centralSageServer is null)
+        {
+            centralSageServer = sourceServer ?? new HanaServer
+            {
+                Name = sageSourceSystem,
+                Host = indiaHost,
+                Port = indiaPort,
+                Username = string.Empty,
+                Password = string.Empty,
+                DatabaseName = string.Empty,
+                AdditionalParams = string.Empty
+            };
+
+            if (centralSageServer.Id == 0)
+            {
+                db.HanaServers.Add(centralSageServer);
+            }
+        }
+
+        if (centralSageServer.SourceSystem != sageSourceSystem)
+        {
+            centralSageServer.SourceSystem = sageSourceSystem;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(centralSageServer.Name))
+        {
+            centralSageServer.Name = sageSourceSystem;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(centralSageServer.Host))
+        {
+            centralSageServer.Host = !string.IsNullOrWhiteSpace(sourceServer?.Host)
+                ? sourceServer.Host
+                : indiaHost;
+            changed = true;
+        }
+
+        if (centralSageServer.Port <= 0)
+        {
+            centralSageServer.Port = sourceServer?.Port > 0 ? sourceServer.Port : indiaPort;
+            changed = true;
+        }
+
+        if (sourceServer is not null && !ReferenceEquals(sourceServer, centralSageServer))
+        {
+            if (string.IsNullOrWhiteSpace(centralSageServer.DatabaseName) &&
+                !string.IsNullOrWhiteSpace(sourceServer.DatabaseName))
+            {
+                centralSageServer.DatabaseName = sourceServer.DatabaseName;
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(centralSageServer.AdditionalParams) &&
+                !string.IsNullOrWhiteSpace(sourceServer.AdditionalParams))
+            {
+                centralSageServer.AdditionalParams = sourceServer.AdditionalParams;
+                changed = true;
+            }
+
+            if (centralSageServer.UseSsl != sourceServer.UseSsl)
+            {
+                centralSageServer.UseSsl = sourceServer.UseSsl;
+                changed = true;
+            }
+
+            if (centralSageServer.ValidateCertificate != sourceServer.ValidateCertificate)
+            {
+                centralSageServer.ValidateCertificate = sourceServer.ValidateCertificate;
+                changed = true;
+            }
+        }
+
+        if (site.SourceSystem != sageSourceSystem)
+        {
+            site.SourceSystem = sageSourceSystem;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(site.Schema))
+        {
+            site.Schema = indiaSchema;
+            changed = true;
+        }
+
+        if (site.HanaServerId != centralSageServer.Id || site.HanaServerId is null)
+        {
+            site.HanaServer = centralSageServer;
+            changed = true;
+        }
+
+        if (changed || centralSageServer.Id == 0)
             db.SaveChanges();
     }
 

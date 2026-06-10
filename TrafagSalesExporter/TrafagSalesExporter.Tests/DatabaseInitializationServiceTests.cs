@@ -112,6 +112,29 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.Contains(db.SapFieldMappings, x => x.SiteId == purchasing.Id && x.TargetField == "NetValueChf" && x.SourceExpression == "EKPO.NetwrChf");
     }
 
+    [Fact]
+    public async Task InitializeAsync_Repairs_India_Sage_Hana_Mapping()
+    {
+        await PrepareIndiaSourceSystemDriftAsync();
+
+        var service = CreateService();
+        await service.InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var india = Assert.Single(db.Sites.Include(x => x.HanaServer), x => x.TSC == "TRIN");
+        var sageServer = db.HanaServers
+            .OrderBy(x => x.Id)
+            .First(x => x.SourceSystem == "SAGE");
+
+        Assert.Equal("SAGE", india.SourceSystem);
+        Assert.Equal("TRAFAG_LIVE", india.Schema);
+        Assert.Equal("india-user", india.UsernameOverride);
+        Assert.Equal("india-password", india.PasswordOverride);
+        Assert.Equal("20.197.20.60", sageServer.Host);
+        Assert.Equal(30015, sageServer.Port);
+        Assert.Equal(sageServer.Id, india.HanaServerId);
+    }
+
     private async Task PrepareLegacySitesTableAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -162,6 +185,59 @@ VALUES (
 """);
         await db.Database.ExecuteSqlRawAsync("DROP TABLE Sites_current;");
         await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;");
+    }
+
+    private async Task PrepareIndiaSourceSystemDriftAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        db.HanaServers.RemoveRange(db.HanaServers);
+        db.Sites.RemoveRange(db.Sites);
+        await db.SaveChangesAsync();
+
+        var bi1Server = new HanaServer
+        {
+            SourceSystem = "BI1",
+            Name = "Internal",
+            Host = "travtrp0",
+            Port = 30015,
+            Username = string.Empty,
+            Password = string.Empty
+        };
+        var indiaServer = new HanaServer
+        {
+            SourceSystem = string.Empty,
+            Name = "India",
+            Host = "20.197.20.60",
+            Port = 30015,
+            Username = string.Empty,
+            Password = string.Empty
+        };
+        var emptySageServer = new HanaServer
+        {
+            SourceSystem = "SAGE",
+            Name = "SAGE",
+            Host = string.Empty,
+            Port = 30015,
+            Username = string.Empty,
+            Password = string.Empty
+        };
+
+        db.HanaServers.AddRange(bi1Server, indiaServer, emptySageServer);
+        await db.SaveChangesAsync();
+
+        db.Sites.Add(new Site
+        {
+            HanaServerId = indiaServer.Id,
+            Schema = "TRAFAG_LIVE",
+            TSC = "TRIN",
+            Land = "Indien",
+            SourceSystem = "BI1",
+            UsernameOverride = "india-user",
+            PasswordOverride = "india-password",
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
     }
 
     private async Task PrepareBrokenHanaServerForeignKeyAsync()
