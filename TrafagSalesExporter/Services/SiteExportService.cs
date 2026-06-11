@@ -106,7 +106,7 @@ public class SiteExportService : ISiteExportService
                 details: $"Records={records.Count}");
             await _centralSalesRecordService.ReplaceForSiteAsync(site, records, updateStatus);
 
-            await UploadToSharePointIfConfiguredAsync(site, spConfig, filePath, updateStatus, fetchResult);
+            await UploadToSharePointIfConfiguredAsync(site, spConfig, filePath, auditCsvPath, updateStatus, fetchResult);
 
             sw.Stop();
             log.Status = "OK";
@@ -171,6 +171,7 @@ public class SiteExportService : ISiteExportService
         Site site,
         SharePointConfig? spConfig,
         string filePath,
+        string? auditCsvPath,
         Action<string>? updateStatus,
         DataSourceFetchResult fetchResult)
     {
@@ -191,6 +192,17 @@ public class SiteExportService : ISiteExportService
         await _sharePointService.UploadAsync(
             spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
             spConfig.SiteUrl, uploadFolder, uploadLand, filePath);
+
+        if (string.IsNullOrWhiteSpace(auditCsvPath) || !File.Exists(auditCsvPath))
+            return;
+
+        updateStatus?.Invoke("Audit-CSV SharePoint Upload...");
+        await _appEventLogService.WriteAsync("Export", "Audit-CSV SharePoint Upload gestartet",
+            siteId: site.Id, land: site.Land,
+            details: $"{spConfig.SiteUrl} | {uploadFolder}");
+        await _sharePointService.UploadAsync(
+            spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
+            spConfig.SiteUrl, uploadFolder, uploadLand, auditCsvPath);
     }
 
     private static string NormalizeSourceSystem(string? sourceSystem)
