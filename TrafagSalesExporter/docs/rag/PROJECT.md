@@ -10,6 +10,7 @@ Stand: 2026-06-11
 - Neu deployed: Einkaufsdashboard und `Einkauf > Datenquellen` haben erweiterte UI-Uebersetzungen fuer Spanisch, Italienisch und Hindi; technische Feldnamen wie SAP-Entity-Sets bleiben bewusst unveraendert.
 - Neu lokal: Audit-CSV-Modus fuer Finance/Revision. Standortexporte schreiben optional nach Mapping/Transformation je Standort `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`; zentrale Excel, Finance Summary, Soll/Ist und Management-Analyse koennen per Setting aus den neuesten Standort-CSV statt aus der internen DB lesen.
 - Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Exportfluss, Audit-CSV-Auswertungsquelle und Waehrungsumrechnung.
+- Produktsparten-Komponentenfallback 2026-06-11: `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` soll Komponenten aus `ZPOWERBI_VC_TXT` ueber eindeutige Kopfmaterial-Produktsparte zusaetzlich in `ProductDivisionRefSet` liefern; Prod `travp762` liefert die EntitySets, aber der CSV-Abgleich zeigt noch 804/804 Komponenten ohne Treffer, daher direkter SAP-Provider-Lauf als naechster Pruefpunkt.
 - Vorheriges UI-Delta 2026-06-11: Export-Dashboard-Manometer als fixes SVG mit Beschriftung; doppelte obere Finance-/Management-Tabbaender reduziert.
 - Letzter dokumentierter Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
 - Vorheriger Deploy: 2026-06-10 Produktsparten-Fallback auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.

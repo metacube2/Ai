@@ -1,6 +1,6 @@
 # RAG Product Mapping
 
-Stand: 2026-05-29
+Stand: 2026-06-11
 
 ## Kurzstand
 
@@ -48,7 +48,7 @@ Stand: 2026-05-29
 ## Stand 2026-05-29
 
 - SAP Gateway nutzt bestehenden Service `ZPOWERBI_EINKAUF_SRV`.
-- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
+- Service Root: `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
 - Produktmapping-EntitySet: `ProductDivisionRefSet`.
 - Test-Endpoint liefert Daten, z.B. `Matnr=VCP1000`, `Paph1=9999`, `Wwpsp=UNASS`.
 - OData-Felder sind CamelCase: `Matnr`, `Paph1`, `Paph1Text`, `Wwpfa`, `WwpfaText`, `Wwpsp`, `WwpspText`, `IsAssigned`.
@@ -135,6 +135,14 @@ Stand: 2026-05-29
 - Richtige Texttabellen fuer `WWPFA`/`WWPSP` bestaetigen.
 - VKORG/VTWEG fuer TR-AG-Referenzlauf bestaetigen.
 - Standort `ZSCHWEIZ` im Export Dashboard neu laufen lassen und Fuellung der neuen Produktfelder pruefen.
+
+## Komponenten-Fallback 2026-06-11
+
+- CH/TRCH enthaelt auch Komponenten-MATNR mit Buchstabenpraefix; `nicht_im_stamm_TRCH_alle_jahre.csv` enthaelt 804 solche Materialien ohne Treffer.
+- Fachlicher Fallback: `ZPOWERBI_VC_TXT-KOMPNR -> ZPOWERBI_VC_TXT-MATNR` und danach Sparte vom Kopfmaterial erben.
+- Minimaler Code-Ort: `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`; keine SEGW-/Web-App-Metadata-Aenderung.
+- Schutzregel: automatisch nur uebernehmen, wenn alle Kopfmaterialien dieselbe `WWPSP` ergeben.
+- Prod `travp762` liefert `ProductDivisionRefSet`, `ProductDivisionMapSet`, `FinanzdataSchweizOeSet`; aktueller Check: 42'486 Ref-Zeilen, 804 CSV-Materialien, 0 Treffer. Fallback in OData noch nicht wirksam.
 - Treffer-/Fehlerquote im Reiter `Zentrale Spartenzuordnung` pruefen.
 
 ## Rohquelle Nur Bei Bedarf

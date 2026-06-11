@@ -8,6 +8,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
+- Neu lokal dokumentiert/umgesetzt: Komponenten-Fallback fuer Produktsparten im ABAP-Provider `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`; Komponenten aus `ZPOWERBI_VC_TXT` sollen ueber eindeutige Kopfmaterial-Produktsparte in `ProductDivisionRefSet` erscheinen.
+- Aktueller Prod-Check 2026-06-11 gegen `travp762`: `ProductDivisionRefSet`, `ProductDivisionMapSet`, `FinanzdataSchweizOeSet` sind in Metadata vorhanden; `ProductDivisionRefSet` liefert 42'486 Zeilen, aber 804 Materialien aus `spartenlogic/nicht_im_stamm_TRCH_alle_jahre.csv` bleiben ohne Treffer. Naechster SAP-Pruefpunkt: direkter Lauf `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` / `Z_PRODSPARTE_ALL` mit `E01758`, `E01752`, `E00613`, `R85012`.
 - Neu deployed: Commit `1dbaa66 Add purchasing translations` auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Deploy-Status 2026-06-11: `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`; `app_offline.htm` wurde nach Publish entfernt.
 - Validierung vor Deploy aus sauberer Worktree-Kopie: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
@@ -547,7 +549,7 @@ Validierungen:
 SAP/Gateway:
 
 - Bestehender Service wird verwendet: `ZPOWERBI_EINKAUF_SRV`.
-- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
+- Service Root: `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`.
 - Neuer Entity Type/Entity Set:
   - `ProductDivisionRef`
   - `ProductDivisionRefSet`

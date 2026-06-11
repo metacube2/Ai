@@ -1,6 +1,6 @@
 # ABAP Produktsparten-Mapping
 
-Stand: 2026-05-28
+Stand: 2026-06-11
 
 ## Dateien
 
@@ -9,6 +9,18 @@ Stand: 2026-05-28
 | `ZCL_PRODSPARTE_PROVIDER.abap` | Wiederverwendbare Provider-Klasse fuer ALV und spaeter OData |
 | `Z_PRODSPARTE_REPORT.abap` | Schlanker ALV-Testreport |
 | `Z_PRODSPARTE_MAP_BUILD.abap` | Baut `ZPRODSPARTE_MAP` aus eindeutigen CO-PA-Kombinationen |
+
+## Komponenten-Fallback 2026-06-11
+
+`ZCL_PRODSPARTE_PROVIDER=>GET_DATA` enthaelt den minimalen Fallback fuer Komponenten aus `ZPOWERBI_VC_TXT`:
+
+- `KOMPNR` ist die Komponente, die in Verkaufszeilen als Materialnummer vorkommen kann.
+- `MATNR` ist das Kopfmaterial bzw. Elternmaterial aus der Stueckliste.
+- Der Provider uebernimmt eine Komponente nur, wenn das Kopfmaterial bereits assigned ist und alle gefundenen Kopfmaterialien dieselbe `WWPSP` ergeben.
+- Alle `STUFE`-Werte werden beruecksichtigt; `STUFE = 1` alleine ist in echten Daten zu eng.
+- SEGW/OData-Metadata und Web-App bleiben unveraendert, weil `ProductDivisionRefSet` nur zusaetzliche `Matnr`-Zeilen liefert.
+
+Aktuelle Prod-Pruefung gegen `travp762`: `ProductDivisionRefSet`, `ProductDivisionMapSet` und `FinanzdataSchweizOeSet` sind registriert, aber `nicht_im_stamm_TRCH_alle_jahre.csv` bleibt mit 804/804 Komponenten ohne Treffer. Naechster Pruefpunkt ist ein direkter SAP-Lauf von `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` oder `Z_PRODSPARTE_ALL` fuer `E01758`, `E01752`, `E00613`, `R85012`.
 
 ## Benoetigte SAP-Objekte
 
@@ -87,7 +99,7 @@ Der bestehende Gateway-Service wurde erweitert, statt einen separaten
 Service zu verwenden:
 
 - Service: `ZPOWERBI_EINKAUF_SRV`
-- Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+- Service Root: `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
 - Entity Type: `ProductDivisionRef`
 - Entity Set: `ProductDivisionRefSet`
 - DDIC-Struktur fuer Entity Type: `ZSTR_PRODSPARTE_OUT`
@@ -105,7 +117,7 @@ Wichtig:
 Korrekte Test-URL:
 
 ```text
-http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet
+http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet
 ```
 
 Gateway-Feldnamen, wie sie im Web-Mapping verwendet werden:

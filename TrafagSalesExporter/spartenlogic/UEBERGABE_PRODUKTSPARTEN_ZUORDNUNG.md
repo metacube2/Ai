@@ -1,6 +1,6 @@
 # Uebergabe: Produktsparten-Zuordnung Trafag AG
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 ## Ziel
 
@@ -407,6 +407,106 @@ Verifizierter Stand nach Aktivierung von `ProductDivisionMapSet`:
 - Ergebnis CH/AT gesamt: 40'292 Verkaufszeilen, 36'953 zugeordnet, 0 `UnassignedWithReference`.
 - Gegenueber dem vorherigen Stand sind genau 106 zusaetzliche Zeilen zugeordnet.
 - Rest ohne Referenz: TRCH 3'312, TRAT 27; bei diesen Zeilen ist `ProductGroup/Z.Prodh` leer.
+
+## Komponenten-Fallback ueber `ZPOWERBI_VC_TXT`
+
+Am 2026-06-11 wurde ein weiterer fachlicher Sonderfall analysiert:
+
+- In CH/TRCH-Verkaufszeilen stehen nicht nur verkaufsfaehige Kopfmaterialien, sondern auch Komponenten/Einbauteile mit Buchstabenpraefix.
+- Die Datei `nicht_im_stamm_TRCH_alle_jahre.csv` enthaelt 804 distinct TRCH-Materialien, die nicht in `ProductDivisionRefSet` gefunden wurden.
+- Alle 804 Materialien haben Buchstabenpraefix, z.B. `E01758`, `E01752`, `E00613`, `R85012`, `B56237`, `B87813`, `C15414`, `D34604`.
+- Diese Materialien sind fachlich meist Komponenten, die in einem Kopfmaterial verbaut sind.
+
+Relevante SAP-Tabelle:
+
+`ZPOWERBI_VC_TXT`
+
+Wichtige Felder:
+
+- `KOMPNR`: Komponente / Einbauteil
+- `MATNR`: Kopfmaterial / Elternmaterial
+- `STUFE`: Stuecklistenstufe
+- `KOM_MSTAE`, `KOM_MSTAV`: Status der Komponente
+- `MAT_MSTAE`, `MAT_MSTAV`: Status des Kopfmaterials
+- `MAT_TXT`: Text zum Kopfmaterial
+
+Beispiel aus SAP:
+
+```text
+KOMPNR = E01758
+MATNR  = 37 / 41 / 59
+STUFE  = 1 oder 2
+```
+
+Die erste Annahme `STUFE = 1` war zu eng. In echten Daten liegen relevante Komponenten auch auf `STUFE = 2` oder `STUFE = 3`, z.B. `E00613` und `R85012`.
+
+### Minimaler ABAP-Eingriff
+
+Die Aenderung gehoert bewusst in `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`, nicht in KEDE/KEDR und nicht in `ZPRODSPARTE_MAP`.
+
+Logik:
+
+1. Normale Referenz wie bisher bauen:
+   `MVKE-MATNR -> MVKE-PRODH(5) -> ZPRODSPARTE_MAP`.
+2. Danach Komponenten aus `ZPOWERBI_VC_TXT` lesen:
+   `KOMPNR -> MATNR`.
+3. Wenn `MATNR` als Kopfmaterial bereits im Provider assigned ist, wird die Komponente als zusaetzliche `ProductDivisionRefSet`-Zeile erzeugt.
+4. Es werden alle `STUFE` beruecksichtigt.
+5. Automatische Uebernahme erfolgt nur, wenn alle gefundenen Kopfmaterialien dieselbe `WWPSP` ergeben.
+6. Mehrdeutige Komponenten werden bewusst nicht automatisch zugeordnet.
+
+Damit bleibt die OData-Schnittstelle unveraendert:
+
+```text
+ProductDivisionRefSet
+Matnr / Maktx / Paph1 / Wwpfa / Wwpsp / IsAssigned
+```
+
+SEGW und Web-App brauchen fuer diese Minimalvariante keine Metadatenaenderung. Der bestehende Join bleibt:
+
+```text
+Z.Matnr = P.Matnr
+```
+
+### Aktuelle Verifikation 2026-06-11
+
+Prod-URL nach Transport:
+
+```text
+http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/
+```
+
+Prod-Metadata enthaelt wieder:
+
+```text
+FinanzdataSchweizOeSet
+ProductDivisionRefSet
+ProductDivisionMapSet
+```
+
+Live-Pruefung gegen `nicht_im_stamm_TRCH_alle_jahre.csv`:
+
+```text
+ProductDivisionRefSet rows: 42'486
+Alpha-MATNR rows:          4'433
+CSV materials:               804
+Jetzt gefunden:                0
+Weiterhin fehlend:           804
+```
+
+Interpretation:
+
+- Der Prod-Service ist erreichbar und die EntitySets sind registriert.
+- `ProductDivisionRefSet` liefert 254 Zeilen mehr als Test (`travt762`: 42'232), aber diese Mehrzeilen sind numerische Materialien, nicht die Komponenten aus der CSV.
+- Der Komponenten-Fallback ist in der aktuell abgefragten Prod-Ausgabe noch nicht wirksam.
+
+Naechste SAP-Pruefung:
+
+1. In SAP `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` bzw. `Z_PRODSPARTE_ALL` direkt ausfuehren.
+2. Nach Beispielkomponenten suchen, z.B. `E01758`, `E01752`, `E00613`, `R85012`.
+3. Wenn sie im Provider fehlen: Fallback-Code/Tabellenzugriff `ZPOWERBI_VC_TXT` pruefen.
+4. Wenn sie im Provider vorhanden sind, aber im OData fehlen: Gateway-Implementierung/Cache pruefen.
+5. Danach erneut `ProductDivisionRefSet` gegen `nicht_im_stamm_TRCH_alle_jahre.csv` abgleichen.
 
 ### `PAPH1 = 8950`
 

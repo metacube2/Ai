@@ -1,6 +1,6 @@
 # Produktsparten-Mapping Group Sales Report
 
-Stand: 2026-05-27
+Stand: 2026-06-11
 
 ## Anlass
 
@@ -254,7 +254,7 @@ SAP Gateway:
 
 - Bestehender Service wird weiterverwendet:
   - `ZPOWERBI_EINKAUF_SRV`
-  - Service Root: `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+  - Service Root: `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
 - Es wurde ein zusaetzlicher Entity Type aus `ZSTR_PRODSPARTE_OUT` erstellt:
   - Entity Type: `ProductDivisionRef`
   - Entity Set: `ProductDivisionRefSet`
@@ -264,7 +264,7 @@ SAP Gateway:
 - Produktsparten-Code gehoert in die separat generierte/redefinierte Methode:
   - `PRODUCTDIVISIONR_GET_ENTITYSET`
 - Test-URL:
-  - `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`
+  - `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet`
 - OData-Feldnamen aus dem Gateway sind CamelCase:
   - `Matnr`
   - `Maktx`
@@ -318,7 +318,7 @@ Aktive lokale Web-Konfiguration:
   - `TSC = ZSCHWEIZ`
   - `SourceSystem = SAP`
 - SAP Service URL:
-  - `http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
+  - `http://travp762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/`
 - SAP-Quellen:
   - Alias `Z`: bestehender Sales-EntitySet
   - Alias `P`: `ProductDivisionRefSet`
@@ -611,5 +611,44 @@ Naechste Pruefpunkte:
 
 - Gateway-Methodencode `PRODUCTDIVISIONR_GET_ENTITYSET` aus SAP sichern oder im Repo nachbauen.
 - Pruefen, ob `ProductDivisionRefSet` vollstaendig genug ist.
+
+## Nachtrag 2026-06-11 Komponenten-Fallback
+
+CH/TRCH enthaelt Verkaufszeilen mit Komponenten/Einbauteilen als `MATNR`, nicht nur verkaufsfaehige Kopfmaterialien. Die Analyse-Datei `spartenlogic/nicht_im_stamm_TRCH_alle_jahre.csv` enthaelt 804 distinct TRCH-Materialien ohne Treffer in `ProductDivisionRefSet`; alle haben Buchstabenpraefix.
+
+SAP-Tabelle fuer die Ableitung:
+
+```text
+ZPOWERBI_VC_TXT
+KOMPNR -> MATNR
+```
+
+Minimaler technischer Ansatz:
+
+```text
+Verkaufs-MATNR = KOMPNR
+-> Kopfmaterial MATNR aus ZPOWERBI_VC_TXT
+-> Kopfmaterial in ProductDivisionRefSet / Provider suchen
+-> Komponente erbt PAPH1 / WWPFA / WWPSP
+```
+
+Die Umsetzung gehoert in `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`, nicht in `ZPRODSPARTE_MAP` und nicht in KEDE/KEDR. Die OData-Metadata bleibt unveraendert, weil `ProductDivisionRefSet` nur zusaetzliche `Matnr`-Zeilen liefern soll.
+
+Wichtige Schutzregel:
+
+```text
+Automatisch nur zuordnen, wenn alle gefundenen Kopfmaterialien dieselbe WWPSP ergeben.
+```
+
+Aktueller Live-Stand nach Prod-Transport gegen `travp762`:
+
+```text
+ProductDivisionRefSet rows: 42'486
+CSV materials:              804
+Jetzt gefunden:               0
+Weiterhin fehlend:          804
+```
+
+Damit ist der Service in Prod wieder vollstaendig registriert, der Komponenten-Fallback ist in der OData-Ausgabe aber noch nicht wirksam. Naechster Pruefpunkt ist der direkte SAP-Lauf von `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` bzw. `Z_PRODSPARTE_ALL` mit Beispielmaterialien `E01758`, `E01752`, `E00613`, `R85012`.
 - Pruefen, warum Produktfelder bei IT, IN, DE, ES, FR, US und UK leer bleiben.
 - Klaeren, ob fuer lokale Materialnummern eine zusaetzliche Cross-Reference gegen TR-AG-Materialnummern notwendig ist.
