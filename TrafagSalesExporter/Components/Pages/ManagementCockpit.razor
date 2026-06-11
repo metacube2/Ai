@@ -1446,6 +1446,28 @@
         if (_financeResult is null)
             return [];
 
+        if (IsFinance3dReferenceYearIndicator(_finance3dIndicator))
+        {
+            return _financeResult.CountryRows
+                .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+                .Select(group =>
+                {
+                    var rows = group.ToList();
+                    var first = rows[0];
+                    return new
+                    {
+                        country = first.CountryKey,
+                        year = first.Year,
+                        currency = BuildDisplayCurrencyLabel(rows.Select(row => row.Currency).Where(value => value != "-")),
+                        value = ResolveFinance3dCountryValue(rows)
+                    };
+                })
+                .OrderBy(row => row.country, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(row => row.year)
+                .Cast<object>()
+                .ToList();
+        }
+
         var countryRowsByKey = _financeResult.CountryRows
             .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -1453,9 +1475,7 @@
                 group => group.ToList(),
                 StringComparer.OrdinalIgnoreCase);
 
-        var sourceRows = IsFinance3dReferenceYearIndicator(_finance3dIndicator)
-            ? _financeResult.Rows
-            : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
+        var sourceRows = _financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows;
 
         return sourceRows
             .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
@@ -1481,6 +1501,22 @@
         if (_financeResult is null)
             return 0m;
 
+        if (IsFinance3dReferenceYearIndicator(_finance3dIndicator))
+        {
+            var referenceValues = _financeResult.CountryRows
+                .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+                .Select(group => ResolveFinance3dCountryValue(group.ToList()))
+                .ToList();
+
+            if (IsFinance3dPercentIndicator(_finance3dIndicator))
+            {
+                var nonZeroValues = referenceValues.Where(value => value != 0m).ToList();
+                return nonZeroValues.Count == 0 ? 0m : nonZeroValues.Average();
+            }
+
+            return referenceValues.Sum();
+        }
+
         var countryRowsByKey = _financeResult.CountryRows
             .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -1488,9 +1524,7 @@
                 group => group.ToList(),
                 StringComparer.OrdinalIgnoreCase);
 
-        var sourceRows = IsFinance3dReferenceYearIndicator(_finance3dIndicator)
-            ? _financeResult.Rows
-            : (_financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows);
+        var sourceRows = _financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows;
 
         var values = sourceRows
             .Select(row =>
@@ -1527,6 +1561,15 @@
             Finance3dIndicators.Deviation => Math.Abs(countryRows?.Where(item => item.Difference.HasValue).Sum(item => item.Difference!.Value) ?? 0m),
             Finance3dIndicators.DeviationPercent => Math.Abs(AverageNullablePercent(countryRows?.Select(item => item.DifferencePercent))),
             _ => Math.Abs(row.NetSalesActual)
+        };
+
+    private decimal ResolveFinance3dCountryValue(IReadOnlyCollection<ManagementFinanceCountryStatusRow> rows)
+        => _finance3dIndicator switch
+        {
+            Finance3dIndicators.ReferenceValue => Math.Abs(rows.Select(row => row.ReferenceValue).FirstOrDefault(value => value.HasValue) ?? 0m),
+            Finance3dIndicators.Deviation => Math.Abs(rows.Where(row => row.Difference.HasValue).Sum(row => row.Difference!.Value)),
+            Finance3dIndicators.DeviationPercent => Math.Abs(AverageNullablePercent(rows.Select(row => row.DifferencePercent))),
+            _ => 0m
         };
 
     private static bool IsFinance3dReferenceYearIndicator(string indicator)
@@ -1662,6 +1705,17 @@
             ? value.ToString("N2")
             : $"{value:N2} {currency}";
 
+    private static string BuildDisplayCurrencyLabel(IEnumerable<string> currencies)
+    {
+        var distinct = currencies
+            .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != "-")
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(currency => currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinct.Count == 0 ? "-" : string.Join("/", distinct);
+    }
+
     private static string FormatNullableValue(decimal? value, string currency)
         => value.HasValue ? FormatValue(value.Value, currency) : "-";
 
@@ -1714,6 +1768,8 @@
     {
         if (!row.ReferenceValue.HasValue)
             return T("Kein Sollwert gepflegt.", "No reference value maintained.");
+        if (row.TotalRows == 0)
+            return T("Sollwert gepflegt, aber kein Ist im aktuellen Filter.", "Reference maintained, but no actuals in the current filter.");
         if (row.Status == "OK")
             return T("Freigabefaehig.", "Ready for approval.");
         if (row.Difference.HasValue)

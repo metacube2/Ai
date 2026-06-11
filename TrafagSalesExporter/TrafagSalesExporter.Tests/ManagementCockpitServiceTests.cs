@@ -351,6 +351,50 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.FinanceReferences.RemoveRange(db.FinanceReferences);
+            db.FinanceReferences.AddRange(
+                new FinanceReference
+                {
+                    Key = "DE",
+                    Label = "Trafag DE",
+                    Year = 2025,
+                    LocalCurrencyValue = 120m,
+                    IsActive = true
+                },
+                new FinanceReference
+                {
+                    Key = "IT",
+                    Label = "Trafag IT",
+                    Year = 2025,
+                    LocalCurrencyValue = 7669840m,
+                    IsActive = true
+                });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var italy = Assert.Single(result.CountryRows, row => row.CountryKey == "IT");
+        Assert.Equal(7669840m, italy.ReferenceValue);
+        Assert.Equal(0m, italy.NetSalesActual);
+        Assert.Equal(0, italy.TotalRows);
+        Assert.Equal("Keine Daten", italy.Status);
+        Assert.Contains("IT", result.CountryOptions);
+
+        var filteredResult = await _service.AnalyzeFinanceSummaryAsync(2025, "IT", null);
+        var filteredItaly = Assert.Single(filteredResult.CountryRows);
+        Assert.Equal("IT", filteredItaly.CountryKey);
+        Assert.Equal(7669840m, filteredItaly.ReferenceValue);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data()
     {
         await SeedCentralRowsAsync(

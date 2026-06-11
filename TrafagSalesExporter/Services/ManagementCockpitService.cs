@@ -390,13 +390,43 @@ public class ManagementCockpitService : IManagementCockpitService
             })
             .ToList();
 
+        var references = await db.FinanceReferences
+            .AsNoTracking()
+            .Where(reference => reference.IsActive)
+            .ToListAsync();
+        var referenceByKey = references
+            .Where(reference => reference.Year == year)
+            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(reference => new FinanceReferenceValue(
+                        reference.Key,
+                        reference.Label,
+                        reference.CheckValue ?? reference.LocalCurrencyValue))
+                    .FirstOrDefault(reference => reference.Value.HasValue),
+                StringComparer.OrdinalIgnoreCase);
+
         var yearOptions = allRows
             .Select(row => row.Year)
+            .Concat(references.Select(reference => reference.Year))
             .Distinct()
             .OrderBy(yearValue => yearValue)
             .ToList();
         if (year == 0)
             year = yearOptions.LastOrDefault();
+        referenceByKey = references
+            .Where(reference => reference.Year == year)
+            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(reference => new FinanceReferenceValue(
+                        reference.Key,
+                        reference.Label,
+                        reference.CheckValue ?? reference.LocalCurrencyValue))
+                    .FirstOrDefault(reference => reference.Value.HasValue),
+                StringComparer.OrdinalIgnoreCase);
 
         var countryFilter = NormalizeOptionalFilter(countryKey);
         var currencyFilter = NormalizeOptionalFilter(currency);
@@ -452,19 +482,8 @@ public class ManagementCockpitService : IManagementCockpitService
             notices.Insert(0, "Fuer die gewaehlten Finance-Filter gibt es keine Datensaetze im aktuellen Zentraldatenbestand.");
         }
 
-        var references = await db.FinanceReferences
-            .AsNoTracking()
-            .Where(reference => reference.IsActive && reference.Year == year)
-            .ToListAsync();
-        var referenceByKey = references
-            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(reference => reference.CheckValue ?? reference.LocalCurrencyValue).FirstOrDefault(value => value.HasValue),
-                StringComparer.OrdinalIgnoreCase);
-
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings.UseAuditCsvAsCentralSource);
-        var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
+        var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey, year, countryFilter, currencyFilter);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
@@ -480,6 +499,7 @@ public class ManagementCockpitService : IManagementCockpitService
             YearOptions = yearOptions,
             CountryOptions = allRows
                 .Select(row => row.CountryKey)
+                .Concat(references.Where(reference => reference.Year == year).Select(reference => reference.Key))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
                 .ToList(),
@@ -647,15 +667,18 @@ public class ManagementCockpitService : IManagementCockpitService
 
     private static List<ManagementFinanceCountryStatusRow> BuildFinanceCountryStatusRows(
         IReadOnlyCollection<FinanceAggregationRow> rows,
-        IReadOnlyDictionary<string, decimal?> referenceByKey)
-        => rows
+        IReadOnlyDictionary<string, FinanceReferenceValue?> referenceByKey,
+        int year,
+        string? countryFilter,
+        string? currencyFilter)
+    {
+        var actualRows = rows
             .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
-            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
             .Select(group =>
             {
                 var rowList = group.ToList();
-                referenceByKey.TryGetValue(group.Key.CountryKey, out var referenceValue);
+                referenceByKey.TryGetValue(group.Key.CountryKey, out var reference);
+                var referenceValue = reference?.Value;
                 var actual = rowList.Sum(row => row.Value);
                 var intercompanyValue = rowList.Where(row => row.IsIntercompany).Sum(row => row.Value);
                 var difference = referenceValue.HasValue ? actual - referenceValue.Value : (decimal?)null;
@@ -674,10 +697,37 @@ public class ManagementCockpitService : IManagementCockpitService
                     ReferenceValue = referenceValue,
                     Difference = difference,
                     DifferencePercent = referenceValue is > 0m && difference.HasValue ? difference.Value / referenceValue.Value * 100m : null,
-                    Status = BuildFinanceStatus(difference)
+                    Status = BuildFinanceStatus(referenceValue, rowList.Count, difference)
                 };
             })
             .ToList();
+
+        var actualCountryKeys = actualRows
+            .Select(row => row.CountryKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var referenceOnlyRows = currencyFilter is null
+            ? referenceByKey.Values
+                .Where(reference => reference?.Value.HasValue == true)
+                .Select(reference => reference!)
+                .Where(reference => countryFilter is null || reference.Key.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+                .Where(reference => !actualCountryKeys.Contains(reference.Key))
+                .Select(reference => new ManagementFinanceCountryStatusRow
+                {
+                    Year = year,
+                    CountryKey = reference.Key,
+                    Currency = "-",
+                    ReferenceValue = reference.Value,
+                    Status = BuildFinanceStatus(reference.Value, 0, null)
+                })
+                .ToList()
+            : [];
+
+        return actualRows
+            .Concat(referenceOnlyRows)
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
     private static List<ManagementFinanceCreditCandidateRow> BuildFinanceCreditCandidates(IEnumerable<FinanceAggregationRow> rows)
         => rows
@@ -996,10 +1046,14 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
-    private static string BuildFinanceStatus(decimal? difference)
+    private static string BuildFinanceStatus(decimal? referenceValue, int actualRowCount, decimal? difference)
     {
-        if (!difference.HasValue)
+        if (!referenceValue.HasValue)
             return "Kein Sollwert";
+        if (actualRowCount == 0)
+            return "Keine Daten";
+        if (!difference.HasValue)
+            return "Pruefen";
 
         return Math.Abs(difference.Value) <= 1m ? "OK" : "Pruefen";
     }
@@ -1792,6 +1846,8 @@ public class ManagementCockpitService : IManagementCockpitService
         public DateTime? InvoiceDate { get; set; }
         public DateTime ExtractionDate { get; set; }
     }
+
+    private sealed record FinanceReferenceValue(string Key, string Label, decimal? Value);
 
     private sealed record AggregationSelection(
         ValueFieldDefinition ValueField,
