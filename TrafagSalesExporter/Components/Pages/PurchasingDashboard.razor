@@ -37,13 +37,13 @@
         </MudText>
         <div class="purchasing-hero-actions">
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkkoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKKO @(_liveState.EkkoLoaded ? "live" : "pending")
+                EKKO @(_liveState.EkkoLoaded ? T("live", "live") : T("wartet", "pending"))
             </MudChip>
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkpoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKPO @(_liveState.EkpoLoaded ? "live" : "pending")
+                EKPO @(_liveState.EkpoLoaded ? T("live", "live") : T("wartet", "pending"))
             </MudChip>
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EketLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKET @(_liveState.EketLoaded ? "live" : "pending")
+                EKET @(_liveState.EketLoaded ? T("live", "live") : T("wartet", "pending"))
             </MudChip>
         </div>
     </div>
@@ -371,7 +371,7 @@
                                        "Full load builds the correct base. Delta then updates only changed purchase documents.")
                                 </MudText>
                             </div>
-                            <MudChip T="string" Color="@ResolveRefreshStatusColor()" Variant="Variant.Outlined">@_refreshStatus.Status</MudChip>
+                            <MudChip T="string" Color="@ResolveRefreshStatusColor()" Variant="Variant.Outlined">@TranslateRefreshStatus(_refreshStatus.Status)</MudChip>
                         </MudStack>
                         <MudGrid Spacing="2" Class="mb-3">
                             <MudItem xs="12" sm="6" lg="3">
@@ -399,7 +399,7 @@
                                 <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
                                     <MudText Typo="Typo.caption" Class="purchasing-muted">@T("Letzter Stand", "Latest state")</MudText>
                                     <MudText Typo="Typo.h6">@FormatRefreshDate(_refreshStatus.CompletedAtUtc)</MudText>
-                                    <MudText Typo="Typo.caption">@_refreshStatus.Mode</MudText>
+                                    <MudText Typo="Typo.caption">@TranslateRefreshMode(_refreshStatus.Mode)</MudText>
                                 </MudPaper>
                             </MudItem>
                         </MudGrid>
@@ -415,7 +415,7 @@
                         {
                             <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
                         }
-                        <MudText Typo="Typo.body2" Class="purchasing-muted">@_refreshStatus.Message</MudText>
+                        <MudText Typo="Typo.body2" Class="purchasing-muted">@TranslatePurchasingMessage(_refreshStatus.Message)</MudText>
                     </MudPaper>
                 </MudItem>
             }
@@ -1534,7 +1534,66 @@
     private string PurchasingStatusText
         => _liveLoading
             ? T("SAP-Einkaufsdaten werden geladen...", "Loading SAP purchasing data...")
-            : $"{_liveState.Message} {FormatLatestOrderDate()}";
+            : $"{TranslatePurchasingMessage(_liveState.Message)} {FormatLatestOrderDate()}";
+
+    private string TranslateRefreshStatus(string status)
+        => status switch
+        {
+            "Success" => T("Erfolgreich", "Success"),
+            "Running" => T("Laeuft", "Running"),
+            "Error" => T("Fehler", "Error"),
+            "Empty" => T("Noch leer", "Empty"),
+            _ => string.IsNullOrWhiteSpace(status) ? "-" : status
+        };
+
+    private string TranslateRefreshMode(string mode)
+        => mode switch
+        {
+            "Full" => T("Full Load", "Full load"),
+            "Delta" => T("Delta", "Delta"),
+            _ => string.IsNullOrWhiteSpace(mode) ? "-" : mode
+        };
+
+    private string TranslatePurchasingMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return string.Empty;
+
+        if (message.Contains("SAP Einkaufsquelle ist noch nicht konfiguriert", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsquelle ist noch nicht konfiguriert.", "SAP purchasing source is not configured yet.");
+        if (message.Contains("SAP URL oder Zugangsdaten fehlen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP URL oder Zugangsdaten fehlen.", "SAP URL or credentials are missing.");
+        if (message.Contains("SAP Einkaufsdaten inkl. EKPO/EKET geladen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsdaten inkl. EKPO/EKET geladen.", "SAP purchasing data including EKPO/EKET loaded.");
+        if (message.Contains("SAP Einkaufsdaten inkl. EKPO geladen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsdaten inkl. EKPO geladen; EKET liefert noch keine Termindaten.", "SAP purchasing data including EKPO loaded; EKET does not return schedule data yet.");
+        if (message.Contains("EKKO ist live geladen", StringComparison.OrdinalIgnoreCase))
+            return T("EKKO ist live geladen; EKPO/EKET liefern aktuell noch keine Positionsdaten.", "EKKO is loaded live; EKPO/EKET currently do not return item data.");
+        if (message.Contains("Noch kein Einkauf Full Load ausgefuehrt", StringComparison.OrdinalIgnoreCase))
+            return T("Noch kein Einkauf Full Load ausgefuehrt.", "No purchasing full load has been run yet.");
+        if (message.StartsWith("Full Load gestartet", StringComparison.OrdinalIgnoreCase))
+            return T("Full Load gestartet.", "Full load started.");
+        if (message.StartsWith("Delta gestartet", StringComparison.OrdinalIgnoreCase))
+            return T("Delta gestartet.", "Delta started.");
+        if (message.StartsWith("Full Load abgeschlossen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Full Load abgeschlossen", T("Full Load abgeschlossen", "Full load completed"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Delta abgeschlossen", StringComparison.OrdinalIgnoreCase))
+            return message
+                .Replace("Delta abgeschlossen", T("Delta abgeschlossen", "Delta completed"), StringComparison.OrdinalIgnoreCase)
+                .Replace("geaenderte Belege", T("geaenderte Belege", "changed documents"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Einkauf Cache geladen fuer", StringComparison.OrdinalIgnoreCase))
+            return message
+                .Replace("Einkauf Cache geladen fuer", T("Einkauf Cache geladen fuer", "Purchasing cache loaded for"), StringComparison.OrdinalIgnoreCase)
+                .Replace(" bis ", $" {T("bis", "to")} ", StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("SAP Einkauf konnte nicht geladen werden", T("SAP Einkauf konnte nicht geladen werden", "SAP purchasing could not be loaded"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Full Load fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Full Load fehlgeschlagen", T("Full Load fehlgeschlagen", "Full load failed"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Delta fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Delta fehlgeschlagen", T("Delta fehlgeschlagen", "Delta failed"), StringComparison.OrdinalIgnoreCase);
+
+        return message;
+    }
 
     private string FormatLatestOrderDate()
         => _liveState.LatestOrderDate.HasValue

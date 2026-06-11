@@ -207,7 +207,7 @@ else
         await RunAsync(async () =>
         {
             var result = await DataSourceService.TestConnectionAsync(_state);
-            Snackbar.Add(result.Message, result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Error);
+            Snackbar.Add(TranslateConnectionMessage(result.Message), result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Error);
         });
     }
 
@@ -246,6 +246,23 @@ else
 
     private string T(string german, string english) => UiText.Text(german, english);
     private static string Display(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+    private string TranslateConnectionMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return string.Empty;
+
+        if (message.Contains("Keine SAP Service URL gepflegt", StringComparison.OrdinalIgnoreCase))
+            return T("Keine SAP Service URL gepflegt.", "No SAP service URL maintained.");
+        if (message.Contains("Keine SAP Gateway Zugangsdaten gepflegt", StringComparison.OrdinalIgnoreCase))
+            return T("Keine SAP Gateway Zugangsdaten gepflegt.", "No SAP Gateway credentials maintained.");
+        if (message.Contains("SAP OData Verbindung erfolgreich", StringComparison.OrdinalIgnoreCase))
+            return T("SAP OData Verbindung erfolgreich.", "SAP OData connection successful.");
+        if (message.StartsWith("SAP OData Verbindung fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("SAP OData Verbindung fehlgeschlagen", T("SAP OData Verbindung fehlgeschlagen", "SAP OData connection failed"), StringComparison.OrdinalIgnoreCase);
+
+        return message;
+    }
 }
 
 <style>
