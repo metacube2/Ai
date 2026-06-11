@@ -1,6 +1,6 @@
 # Markdown-Dokumentenstatus
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
 
@@ -18,6 +18,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
 | `entscheide.md` | Kurzfassung der Finance-Fachentscheide | Aktuell als Kurzfassung |
 | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` | Technischer Finance-Datenfluss | Aktuell fuer End-to-end-Datenfluss |
+| `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` | Aktuelle Finance-Schulung fuer Anwender, Keyuser und Revision | Fuehrend fuer Schulung; ersetzt den alten Word-Inhalt fachlich |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping fuer Group Sales Report | Aktuell fuehrend fuer neues Produktmapping-Thema |
 | `docs/HR_KPI_NACHDOKU_2026-05-13.md` | HR-KPI technische/fachliche Nachdoku | Aktualisiert um 2026-05-20 Erweiterungen |
 | `docs/PROGRAMM_DIAGRAMME.md` | Uebersicht Diagramme und technische Einordnung | Aktualisiert um neue Anwenderdokus |
@@ -27,7 +28,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | Datei | Rolle | Status |
 | --- | --- | --- |
 | `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` | Detailregeln je Land | Behalten |
-| `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` | Isolierter Workflow fuer Kurs-/Waehrungsanwendung vom Land bis Dashboard | Aktuell fuer Kursfragen; SVG daneben |
+| `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` | Isolierter Workflow fuer Kurs-/Waehrungsanwendung vom Land bis Dashboard | Aktuell fuer Kursfragen; SVGs daneben |
 | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` | Italien-Pruefpfad | Behalten |
 | `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` | UK-Quellkorrektur | Behalten |
 | `docs/SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md` | Aktueller Spanien-rclone-All-in-one-Workflow | Ersetzt alte deutsche Anleitung vom 2026-06-03 |
@@ -59,6 +60,14 @@ Diese Dateien wurden am 2026-06-09 aus der aktiven Markdown-Struktur entfernt, w
 | `docs/hr_kpi_cockpit_preview.png` | neutrale HR-Cockpit-Vorschaugrafik fuer DOCX |
 | `docs/finance_cockpit_preview.png` | neutrale Finance-Cockpit-Vorschaugrafik fuer DOCX |
 
+## Neue Finance-Schulungsgrafiken seit 2026-06-11
+
+| Datei | Zweck |
+| --- | --- |
+| `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg` | End-to-end-Prozess vom Standortexport bis Dashboard/zentrale Excel |
+| `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg` | Umschaltung zentrale Quelle: DB oder verarbeitete Audit-CSV |
+| `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg` | Wo die App-Kurstabelle wirkt und wo nicht |
+
 ## Bereinigung
 
 Bereinigung 2026-06-09:
@@ -67,6 +76,7 @@ Bereinigung 2026-06-09:
 - Die alte deutsche Spanien-rclone-Anleitung wurde entfernt, weil der aktuelle All-in-one-Workflow im Guide vom 2026-06-05 dokumentiert ist.
 - Die Alphaplan-Konzept- und Anleitungsdateien vom 2026-06-08 wurden bewusst nicht veraendert.
 - Delta 2026-06-10: Produktsparten-Fallback `ProductDivisionMapSet`, India/SAGE-HANA-Deploy und Server-DB-Seeds wurden in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
+- Delta 2026-06-11: Finance-Schulung, Audit-CSV-Prozessfluss, zentrale Auswertungsquelle und Kursfluss wurden in `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` und den neuen SVG-Grafiken dokumentiert.
 
 Weiterhin gilt:
 

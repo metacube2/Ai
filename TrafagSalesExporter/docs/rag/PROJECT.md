@@ -1,11 +1,12 @@
 # RAG Project
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Neu lokal: Audit-CSV-Modus fuer Finance/Revision. Standortexporte schreiben optional nach Mapping/Transformation je Standort eine lesbare CSV; zentrale Excel, Finance Summary und Management-Analyse koennen per Setting aus den neuesten Standort-CSV statt aus der internen DB lesen.
+- Neu lokal: Audit-CSV-Modus fuer Finance/Revision. Standortexporte schreiben optional nach Mapping/Transformation je Standort `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`; zentrale Excel, Finance Summary, Soll/Ist und Management-Analyse koennen per Setting aus den neuesten Standort-CSV statt aus der internen DB lesen.
+- Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Exportfluss, Audit-CSV-Auswertungsquelle und Waehrungsumrechnung.
 - Letzter dokumentierter Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
 - Validierung laut Doku: `87/87` Tests gruen fuer den Produktsparten-Fallback; fruehere UI-/Deploy-Schritte wurden einzeln umgesetzt und deployed.
 - Letzter dokumentierter Deploy: 2026-06-10 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.

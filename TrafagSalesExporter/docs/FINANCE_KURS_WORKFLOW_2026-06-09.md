@@ -1,17 +1,22 @@
 # Finance Kurs-Workflow
 
-Stand: 2026-06-09
+Stand: 2026-06-11
 
 Zweck: Diese Doku beschreibt isoliert den Weg eines Umrechnungskurses vom einzelnen Land bis zur Analyse eines zentralen Dashboard-Wertes. Sie ersetzt nicht die allgemeine Finance-Datenflussdoku, sondern schneidet nur das Thema Kurs/Waehrung heraus.
+Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
 
 Visualisierung: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.svg`
+Aktuelle Kurs-/Waehrungsgrafik: `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`
 
 ![Finance Kurs-Workflow](FINANCE_KURS_WORKFLOW_2026-06-09.svg)
+
+![Finance Waehrungs- und Kursfluss](FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg)
 
 ## Kurzfazit
 
 - Der Standortimport rechnet Werte normalerweise nicht ueber die App-Kurstabelle um.
 - `CentralSalesRecords` speichert die Werte und Waehrungen so, wie sie nach Import und optionalen Transformationen vorliegen.
+- Wenn Audit-CSV als zentrale Auswertungsquelle aktiv ist, enthalten die `Sales_ProcessedMergeInput_*.csv` dieselben verarbeiteten Werte nach Mapping und Transformation.
 - `DocumentRate` ist ein Quellfeld aus SAP/B1/OData, kein automatisch angewendeter App-Kurs.
 - Die fuehrende `Finance Summary` und das zentrale Excel nutzen Hauswaehrung je Land. Die App-Kurstabelle wird dort nicht still angewendet.
 - Eine echte App-Umrechnung passiert nur in Analyse-/Anzeige-Sichten mit Zielwaehrung, in einer expliziten `ConvertCurrency`-Transformation oder im separaten Budget-CHF-Kandidaten.
@@ -29,6 +34,7 @@ Visualisierung: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.svg`
 | App-Kurstabelle | Tabelle `CurrencyExchangeRates` mit `FromCurrency`, `ToCurrency`, `Rate`, `ValidFrom`, `ValidTo`, `Notes`, `IsActive`. |
 | Anzeige-Waehrung | Zielwaehrung in Analyse-Sichten, aktuell `NATIVE`, `CHF`, `EUR`, `USD`. |
 | Budgetkurs | Kurs mit `Notes = Budget <Jahr>`, z. B. `Budget 2025`, fuer separaten CHF-Kontrollkandidaten. |
+| Audit-CSV | Verarbeitete Standort-CSV `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`; optional zentrale Quelle fuer Dashboard und zentrale Excel. |
 
 ## Gesamtfluss
 
@@ -45,7 +51,14 @@ Land / Quellsystem
   |
   +-- Standort-Excel schreiben
   |
+  +-- optional Audit-CSV schreiben
+  |     Sales_ProcessedMergeInput_<TSC>_<Datum>.csv
+  |
   +-- CentralSalesRecords fuer Standort ersetzen
+  |
+  +-- zentrale Auswertungsquelle
+  |     Standard: CentralSalesRecords
+  |     optional: neueste Audit-CSV je TSC
   |
   +-- zentrale Excel / Finance Summary
   |     Hauswaehrung, keine stille App-Kursumrechnung
@@ -111,6 +124,7 @@ Beim normalen Standortexport gilt:
 ```text
 Daten holen
   -> Transformationen anwenden
+  -> optional Audit-CSV Sales_ProcessedMergeInput_*.csv schreiben
   -> Standort-Excel schreiben
   -> CentralSalesRecords fuer diesen Standort ersetzen
   -> optional SharePoint Upload
@@ -125,6 +139,8 @@ Ohne aktive `ConvertCurrency`-Transformation passiert keine App-Kursumrechnung. 
 
 Damit bleibt nachvollziehbar, ob ein Wert bereits vom Landessystem als Hauswaehrungswert geliefert wurde oder ob er spaeter nur in der Anzeige umgerechnet wurde.
 
+Die Audit-CSV wird an derselben Stelle im Ablauf geschrieben: nach Mapping/Transformation und vor der zentralen Auswertung. Sie ist deshalb fuer Finance/Revision das lesbare Abbild des verarbeiteten Merge-Eingangs, nicht das originale Standortfile.
+
 ## Schritt 5: Fuehrende Finance Summary
 
 Die fuehrende Finance Summary im Dashboard und das zentrale Excel-Blatt `Finance Summary` rechnen nicht automatisch in eine globale Zielwaehrung um.
@@ -132,7 +148,9 @@ Die fuehrende Finance Summary im Dashboard und das zentrale Excel-Blatt `Finance
 Logik:
 
 ```text
-CentralSalesRecords
+zentrale Auswertungsquelle
+  Standard: CentralSalesRecords
+  optional: Sales_ProcessedMergeInput_*.csv
   -> FinanceRuleEngine
   -> Finance | Net Sales Actual
   -> Gruppierung nach Jahr, Land, Finance-Waehrung
@@ -166,7 +184,7 @@ Die Kursanwendung fuer einen zentralen Dashboard-Wert passiert in der Management
 
 Eingaben:
 
-- Datenbasis: `CentralSalesRecords`.
+- Datenbasis: zentrale Auswertungsquelle, also `CentralSalesRecords` oder bei aktivem Audit-Modus die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC.
 - Summenfeld: z. B. `SalesPriceValue`, `StandardCost`, `StandardCostTotal`, `Quantity`.
 - Anzeige-Waehrung: `NATIVE`, `CHF`, `EUR` oder `USD`.
 - Zeitraum/Filter: Jahr, Monat, Land, TSC.
@@ -296,6 +314,8 @@ ORDER BY FromCurrency, ToCurrency, ValidFrom DESC;
 | ECB-Import | `Services/ExchangeRateImportService.cs` |
 | Settings/Kurspflege | `Services/SettingsPageService.cs`, `Components/Pages/Settings.razor` |
 | Standortexport-Reihenfolge | `Services/SiteExportService.cs` |
+| Audit-CSV schreiben/lesen | `Services/ExportAuditCsvService.cs` |
+| zentrale Quelle DB oder CSV | `Services/CentralSalesDataProvider.cs` |
 | zentrale Speicherung | `Services/CentralSalesRecordService.cs` |
 | zentrale Analyse mit Zielwaehrung | `Services/ManagementCockpitService.cs` |
 | Finance Summary ohne stille Umrechnung | `Services/ManagementCockpitService.cs`, `Services/ExcelExportService.cs` |

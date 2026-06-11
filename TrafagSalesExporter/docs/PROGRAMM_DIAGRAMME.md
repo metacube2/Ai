@@ -1,6 +1,19 @@
 # Programm-Diagramme
 
-Stand: 2026-05-20
+Stand: 2026-06-11
+
+## Nachtrag Finance-Schulung 2026-06-11
+
+Die aktuelle Finance-Schulung nutzt drei neue Prozessgrafiken:
+
+- `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`
+  - zeigt den End-to-end-Fluss von Quellsystem ueber Mapping, Transformation, Audit-CSV, Standort-Excel, DB/CSV-Auswertungsquelle bis Dashboard und zentraler Excel.
+- `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`
+  - zeigt den Schalter zwischen Standard-Auswertung aus `CentralSalesRecords` und Audit-Auswertung aus den neuesten `Sales_ProcessedMergeInput_*.csv` je TSC.
+- `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`
+  - zeigt, dass Standard-Soll/Ist in Hauswaehrung bleibt und die App-Kurstabelle nur in expliziten Analyse-/Transformationspfaden wirkt.
+
+Die Markdown-Schulung dazu ist `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
 
 ## Nachtrag Anwenderdokus 2026-05-20
 
@@ -42,6 +55,15 @@ Fuer das Programm bieten sich zwei Diagrammarten an:
   - beschreibt Quelle, Mapping, Hauswaehrung, Nettofakturawert, Buchungsdatum, IC-Ausweis und Sollvergleich
   - macht sichtbar, dass der Algorithmus regelbasiert ist und nicht auf einzelne Testzahlen frisiert wurde
 
+- `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`
+  - aktuelle Schulungsgrafik fuer Export Dashboard bis Finance-Ausgabe
+
+- `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`
+  - aktuelle Schulungsgrafik fuer DB-/Audit-CSV-Auswertungsquelle
+
+- `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`
+  - aktuelle Schulungsgrafik fuer Wechselkurs- und Waehrungspfad
+
 ## Abgleich gegen Quellcode
 
 Die Diagramme wurden gegen folgende Codebereiche abgeglichen:
@@ -50,7 +72,9 @@ Die Diagramme wurden gegen folgende Codebereiche abgeglichen:
 - `Services/DataSources/*`: HANA, SAP Gateway und Manual Excel/CSV Adapter
 - `Services/SiteExportService.cs`: Standortexport, Transformation, Excel-Erzeugung, zentrale Speicherung, SharePoint-Upload
 - `Services/ExportOrchestrationService.cs`: Export aller aktiven Standorte und anschliessender konsolidierter Export
-- `Services/ConsolidatedExportService.cs`: zentrale Datei aus `CentralSalesRecords`
+- `Services/ConsolidatedExportService.cs`: zentrale Datei aus der zentralen Auswertungsquelle
+- `Services/CentralSalesDataProvider.cs`: Umschaltung zwischen `CentralSalesRecords` und Audit-CSV
+- `Services/ExportAuditCsvService.cs`: Schreiben/Lesen von `Sales_ProcessedMergeInput_*.csv`
 - `Services/MappedSalesRecordComposer.cs`: gemeinsame Mapping-Engine fuer SAP OData und generisches HANA-Mapping
 - `Services/FinanceReconciliationService.cs`: Soll/Ist-Kandidaten, Budgetkurse, IC-Regeln und Ampelstatus
 - `Services/DatabaseSeedService.cs`: Seed fuer Quellsysteme, ZSCHWEIZ, Finance-Referenzen, Budgetkurse und IC-Regeln

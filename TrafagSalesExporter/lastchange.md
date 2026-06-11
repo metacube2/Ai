@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,6 +8,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
+- Neu lokal dokumentiert: aktuelle Finance-Schulung `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Export Dashboard, Audit-CSV-Auswertungsquelle und Waehrungs-/Kursfluss.
+- Neue Schulungsgrafiken: `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`, `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`, `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`.
 - Neu lokal umgesetzt: Standortexporte koennen nach Mapping und Transformation eine lesbare Audit-CSV je Standort schreiben; zentrale Excel, Finance Summary und Management-Analyse koennen per Setting wahlweise aus den neuesten Audit-CSV statt aus `CentralSalesRecords` lesen.
 - Letzter dokumentierter Code-Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN HANA-Route und Spanien-SharePoint-Pfad bleiben im Seed abgesichert.
 - Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `87/87` Tests gruen.

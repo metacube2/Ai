@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-06-05
+Stand: 2026-06-11
 
 ## Kurzstand
 
@@ -10,6 +10,8 @@ Stand: 2026-06-05
 - ES/Spanien liest im Ordner alle `Spain_Sales*.csv`, also Basisdatei plus taegliche `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv`.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.
 - DE muss weiterhin Vollfiles liefern.
+- Wenn Audit-CSV aktiv ist, schreibt der Standortexport nach Mapping/Transformation zusaetzlich `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv` in den Standort-Exportordner.
+- Zentrale Auswertungen koennen per Setting aus den neuesten Audit-CSV je TSC statt direkt aus `CentralSalesRecords` lesen.
 
 ## Laender
 
@@ -24,8 +26,10 @@ Stand: 2026-06-05
 1. Datei oder Delta im richtigen Ordner bereitstellen.
 2. In `Manuelle Importe` Pfad/Standort pruefen.
 3. Standortexport ausfuehren.
-4. Zentrale Datei neu erzeugen.
-5. `Finance Summary` und `Finance Details` pruefen.
+4. Optional Audit-CSV im Standort-Exportordner pruefen.
+5. Zentrale Auswertungsquelle bewusst setzen: DB oder Audit-CSV.
+6. Zentrale Datei neu erzeugen.
+7. `Finance Summary` und `Finance Details` pruefen.
 
 ## Spanien Delta-Sync
 

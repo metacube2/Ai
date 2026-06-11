@@ -1,18 +1,28 @@
 # Finance Datenfluss fuer Andreas
 
-Stand: 2026-06-08
+Stand: 2026-06-11
 
 Zweck: Diese Notiz beschreibt den tatsaechlichen technischen Datenfluss im Finance Cockpit: wo Daten geholt werden, wann Felder veraendert werden, wann Wechselkurse wirken, wie die zentrale Excel entsteht und welche Quelle die Sparteninformationen liefert.
 
 Fokus nur Wechselkurs/Kursanwendung: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
+Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
+Prozessgrafiken:
+
+- `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`
+- `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`
+
+![Finance Prozessfluss](FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg)
+
+![Audit-CSV als zentrale Auswertungsquelle](FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg)
 
 ## Kurzfazit
 
-- Finance Summary, Management Analyse und Spartenanalyse lesen nicht aus dem SharePoint-Excel, sondern direkt aus der App-Datenbank `CentralSalesRecords`.
-- Nachtrag 2026-06-11: Fuer Finance/Revision gibt es lokal einen Audit-CSV-Modus. Standortexporte koennen nach Mapping und Transformation je Standort eine CSV schreiben; per Setting koennen zentrale Excel, Finance Summary und Management-Analyse aus den neuesten Audit-CSV statt aus `CentralSalesRecords` lesen.
+- Finance Summary, Management Analyse und Spartenanalyse lesen nicht aus dem SharePoint-Excel. Sie lesen entweder aus `CentralSalesRecords` oder, wenn aktiviert, aus den neuesten verarbeiteten Audit-CSV je Standort.
+- Fuer Finance/Revision gibt es einen Audit-CSV-Modus. Standortexporte koennen nach Mapping und Transformation je Standort eine CSV schreiben; per Setting koennen zentrale Excel, Finance Summary, Soll/Ist und Management-Analyse aus diesen CSV statt aus `CentralSalesRecords` lesen.
+- Die Audit-CSV heisst `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv`. Der Name markiert bewusst, dass es das verarbeitete Merge-Eingangsfile ist, nicht die originale Standortdatei.
 - Das SharePoint-Excel `Sales_All_*.xlsx` ist ein Export-/Ablageergebnis, nicht die Live-Quelle der Cockpit-Anzeige.
 - Jeder Standortexport ersetzt in `CentralSalesRecords` nur die Daten dieses Standorts.
-- Die zentrale Excel wird danach aus dem aktuellen Stand von `CentralSalesRecords` erzeugt.
+- Die zentrale Excel wird danach aus der aktuell gewaehlten zentralen Auswertungsquelle erzeugt: Standard `CentralSalesRecords`, optional Audit-CSV.
 - Wechselkurse veraendern den Standortexport und `CentralSalesRecords` normalerweise nicht. Sie wirken in Analyse-/Anzeige-Sichten, wenn eine Zielwaehrung wie CHF/EUR/USD ausgewaehlt ist, oder in explizit konfigurierten Transformationen.
 - Sparteninformationen kommen fuehrend aus SAP/TR-AG `ProductDivisionRefSet`. Aktuell werden sie beim ZSCHWEIZ-/CH-/AT-Export direkt mitgeladen. Andere Laender werden in der Analyse ueber ihre Materialnummer gegen diese TR-AG-Referenz gematcht.
 
@@ -33,13 +43,33 @@ Ablauf pro Standort:
    - `ManualExcelDataSourceAdapter` fuer Excel/CSV/SharePoint-Dateien.
 3. Rohdaten werden als `SalesRecord`-Liste aufgebaut.
 4. Aktive `FieldTransformationRules` fuer das Quellsystem werden angewendet.
-5. Eine lokale Standort-Excel `Sales_<TSC>_<Datum>.xlsx` wird erzeugt.
-6. `CentralSalesRecords` wird fuer diesen Standort ersetzt:
+5. Falls `Audit-CSV je Standort schreiben` aktiv ist, wird eine verarbeitete CSV geschrieben:
+   - Datei: `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`.
+   - Ordner: gleicher lokaler Ordner wie die Standort-Excel.
+   - Inhalt: Daten nach Mapping und Transformation.
+6. Eine lokale Standort-Excel `Sales_<TSC>_<Datum>.xlsx` wird erzeugt.
+7. `CentralSalesRecords` wird fuer diesen Standort ersetzt:
    - alte Saetze mit `SiteId = Standort` loeschen.
    - neue Saetze einfuegen.
-7. Falls SharePoint komplett konfiguriert ist, wird die Standort-Excel nach SharePoint hochgeladen.
+8. Falls SharePoint komplett konfiguriert ist, werden Standort-Excel und Audit-CSV in den Landesordner hochgeladen.
 
-Wichtig: Die Reihenfolge ist zuerst Daten holen, dann Transformationen, dann lokale Excel, dann zentrale Tabelle, dann SharePoint-Upload. Der SharePoint-Upload entscheidet nicht, was in der Cockpit-Anzeige erscheint.
+Wichtig: Die Reihenfolge ist zuerst Daten holen, dann Transformationen, dann Audit-CSV, dann lokale Excel, dann zentrale Tabelle, dann SharePoint-Upload. Der SharePoint-Upload entscheidet nicht, was in der Cockpit-Anzeige erscheint.
+
+## Zentrale Auswertungsquelle
+
+Der Schalter liegt in der App unter:
+
+```text
+Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss
+```
+
+| Schalter | Wirkung |
+| --- | --- |
+| `Audit-CSV je Standort schreiben` | Standortexport schreibt `Sales_ProcessedMergeInput_*.csv` nach Mapping und Transformation. |
+| `Zentrale Auswertung aus Audit-CSV` | Finance Summary, Management Analyse, Soll/Ist und zentrale Excel lesen die neuesten Audit-CSV je TSC statt `CentralSalesRecords`. |
+| `Lokaler Standardpfad Standort-Dateien` | Ordner fuer Standort-Excel und Audit-CSV. |
+
+Wenn `Zentrale Auswertung aus Audit-CSV` aktiv ist, sucht die App im Standort-Exportordner je TSC die neueste passende CSV. Wenn keine `Sales_ProcessedMergeInput_*.csv` vorhanden ist, ist der Audit-Modus nicht auswertbar.
 
 ## Datenquellen pro Quelltyp
 
@@ -315,7 +345,9 @@ Ausloeser:
 
 Ablauf:
 
-1. `ConsolidatedExportService` liest alle Saetze aus `CentralSalesRecords`.
+1. `ConsolidatedExportService` liest alle Saetze aus der zentralen Auswertungsquelle:
+   - Standard: `CentralSalesRecords`.
+   - Audit-Modus: neueste `Sales_ProcessedMergeInput_*.csv` je TSC.
 2. `ExcelExportService.CreateConsolidatedExcelFile(...)` erzeugt `Sales_All_<Datum>.xlsx`.
 3. Die Datei wird lokal geschrieben.
 4. Falls SharePoint konfiguriert ist, wird sie hochgeladen.
@@ -342,14 +374,16 @@ Wichtig:
 
 - `Finance Summary` im Excel wird beim Schreiben aus den Records berechnet.
 - Es liest nicht aus einem vorherigen SharePoint-Excel.
+- Je nach Setting sind diese Records entweder DB-Eintraege oder die neuesten verarbeiteten Audit-CSV.
 - Wechselkurs-Zielwaehrung aus der UI wird dabei nicht angewendet.
 
 ## Finance Summary und Spartenanalyse in der App
 
-Die App-Anzeigen lesen direkt aus:
+Die App-Anzeigen lesen direkt aus der zentralen Auswertungsquelle:
 
 ```text
-CentralSalesRecords
+Standard: CentralSalesRecords
+Audit-Modus: neueste Sales_ProcessedMergeInput_*.csv je TSC
 ```
 
 Nicht aus:
@@ -360,9 +394,9 @@ SharePoint Sales_All_*.xlsx
 
 Das bedeutet:
 
-- Lokal zeigt die App lokale DB-Daten.
-- Publizierter Server zeigt Server-DB-Daten.
-- Wenn lokale und Server-DB gleich sind, sehen beide gleich aus.
+- Lokal zeigt die App lokale DB-Daten oder lokale Audit-CSV, je nach Setting.
+- Publizierter Server zeigt Server-DB-Daten oder Server-Audit-CSV, je nach Setting.
+- Wenn lokale und Server-Auswertungsquelle gleich sind, sehen beide gleich aus.
 - Ein SharePoint-Upload veraendert die App-Anzeige nicht.
 
 ## Spartenanalyse: genaue Logik
@@ -433,21 +467,26 @@ SalesRecord-Liste
   +-- FieldTransformationRules anwenden
   |       -> optional Feldkopien, FirstNonEmpty, ConvertCurrency
   |
+  +-- optional Audit-CSV Sales_ProcessedMergeInput_<TSC>_<Datum>.csv schreiben
+  |       -> verarbeitete Daten fuer Finance/Revision
+  |
   +-- Standort-Excel Sales_<TSC>_<Datum>.xlsx lokal schreiben
   |
   +-- CentralSalesRecords fuer SiteId ersetzen
   |
-  +-- Standort-Excel optional nach SharePoint hochladen
+  +-- Standort-Excel und Audit-CSV optional nach SharePoint hochladen
 
 Finance Summary / Spartenanalyse
   |
-  +-- liest CentralSalesRecords
+  +-- liest zentrale Auswertungsquelle
+  |       -> Standard: CentralSalesRecords
+  |       -> optional: neueste Sales_ProcessedMergeInput_*.csv je TSC
   +-- FinanceRuleEngine rechnet Include/Exclude/Net Sales Actual
-  +-- Spartenanalyse matched lokale Materialien gegen TR-AG-Referenz aus CentralSalesRecords
+  +-- Spartenanalyse matched lokale Materialien gegen TR-AG-Referenz aus den Records
 
 Zentrale Excel
   |
-  +-- liest CentralSalesRecords
+  +-- liest zentrale Auswertungsquelle
   +-- erzeugt Sales_All_<Datum>.xlsx lokal
   +-- erzeugt Finance Summary / Finance Details im Excel
   +-- laedt Datei optional nach SharePoint
@@ -456,10 +495,10 @@ Zentrale Excel
 ## Wichtige Klarstellungen fuer Finance
 
 1. SharePoint ist Ablage und Quelle fuer manuelle Dateien, aber nicht Live-Quelle der Finance Summary.
-2. `CentralSalesRecords` ist der operative zentrale Datenbestand der App.
+2. `CentralSalesRecords` ist der operative zentrale Datenbestand der App, solange nicht Audit-CSV als zentrale Auswertungsquelle aktiv ist.
 3. Sparten kommen fachlich aus TR-AG/SAP `ProductDivisionRefSet`, nicht aus lokalen ERP-Sparten.
 4. CH/AT bekommen Spartenfelder direkt beim ZSCHWEIZ-Export.
 5. Andere Laender bekommen Sparten in der Analyse nur, wenn ihre Materialnummern zur TR-AG-Referenz matchen.
 6. Wechselkurse sind keine stille Vorverarbeitung fuer den Standard-Soll/Ist-Abgleich.
 7. `Mixed` bedeutet: mehrere Waehrungen im Filter. Prozentwerte auf `Mixed` sind nur eingeschraenkt interpretierbar; fuer belastbare Spartenanteile nach Wert muss Land oder Waehrung gefiltert werden.
-8. Die zentrale Excel wird nach den Standortexporten aus `CentralSalesRecords` erstellt. Sie ist Ergebnis, nicht Eingang.
+8. Die zentrale Excel wird nach den Standortexporten aus der gewaehlten zentralen Auswertungsquelle erstellt. Sie ist Ergebnis, nicht Eingang.

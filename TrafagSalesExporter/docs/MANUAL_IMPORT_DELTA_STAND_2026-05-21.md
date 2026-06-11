@@ -1,6 +1,6 @@
 # Manual-Import und Delta-Stand
 
-Stand: 2026-06-05
+Stand: 2026-06-11
 
 Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden und wie neue Eintraege bzw. Delta-Dateien verarbeitet werden.
 
@@ -28,6 +28,7 @@ UK ist aktuell am besten fuer laufende Delta-Lieferungen vorbereitet.
 | Auswahl | Jahresdatei zuerst, danach alle spaeteren Delta-Dateien im gleichen Jahr |
 | Import | App liest alle ausgewaehlten Dateien in einem Lauf zusammen |
 | Persistenz | `CentralSalesRecords` fuer `TRUK` werden ersetzt, nicht blind additiv angehaengt |
+| Audit-CSV | optional `Sales_ProcessedMergeInput_TRUK_<Datum>.csv` nach Mapping/Transformation |
 | Nach Delta-Lieferung | Delta-Datei in den Ordner legen, `TRUK` exportieren, danach zentrale Excel neu erzeugen |
 
 Wichtig:
@@ -51,6 +52,7 @@ Aktueller Implementierungsstand:
   - primaer ueber `SourceLineId`.
   - Fallback ueber `TSC + InvoiceNumber + PositionOnInvoice + Material`.
 - Beim Standortexport ersetzt die App weiterhin den bisherigen Spanien-Stand in `CentralSalesRecords`, aber mit dem zuvor zusammengesetzten und deduplizierten Gesamtstand.
+- Falls Audit-CSV aktiv ist, schreibt der Export zusaetzlich `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv` in den Standort-Exportordner und laedt sie in denselben SharePoint-Landesordner wie die Standort-Excel.
 - Wenn nur eine einzelne Delta-Datei direkt als Dateipfad hinterlegt wird, kann weiterhin nur dieses Delta gelesen werden. Fuer Delta-Sync muss deshalb der Ordner hinterlegt sein.
 
 Finance-Logik:
@@ -92,11 +94,18 @@ Offen:
 1. Neue Datei oder Delta-Datei im richtigen Ordner bereitstellen.
 2. In `Manuelle Importe` Pfad pruefen bzw. Standort aktiv lassen.
 3. Standortexport fuer das betroffene Land ausfuehren.
-4. Danach `Zentrale Datei neu erzeugen` starten.
-5. Im zentralen Excel `Finance Summary` und `Finance Details` pruefen.
+4. Falls Audit-CSV fuer Finance/Revision gebraucht wird, im Exportordner `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv` pruefen.
+5. Falls die zentrale Auswertung aus CSV erfolgen soll, in `Einstellungen > Export Einstellungen` den Schalter `Zentrale Auswertung aus Audit-CSV` setzen.
+6. Danach `Zentrale Datei neu erzeugen` starten.
+7. Im zentralen Excel `Finance Summary` und `Finance Details` pruefen.
 
 ## Merksatz
 
-Manual-Importe ersetzen pro Standort den aktuellen Stand in `CentralSalesRecords`. Delta-Dateien muessen daher beim Import zusammen mit der passenden Basisdatei gelesen werden. Das ist aktuell nur fuer UK vorgesehen. Spanien und Deutschland muessen immer Vollfiles liefern.
+Manual-Importe ersetzen pro Standort den aktuellen Stand in `CentralSalesRecords`. Delta-Dateien muessen daher beim Import zusammen mit der passenden Basisdatei gelesen werden.
 
-Wichtig: Fuer Spanien und Deutschland ist das fachlich/prozessual so vorgesehen und durch den Ersetzungsmechanismus praktisch erforderlich. Eine technische Validierung, die Delta-Dateien fuer ES/DE aktiv blockiert, ist aktuell noch nicht eingebaut.
+Aktueller Stand:
+
+- UK: Basis plus Delta-Dateien.
+- Spanien: Basis plus `Spain_Sales_range_*.csv`, wenn ein Ordner hinterlegt ist.
+- Deutschland: weiterhin Vollfile/Jahresfile, keine Delta-Logik.
+- Audit-CSV ist ein zusaetzliches verarbeitetes Prueffile; es ersetzt nicht die originalen Standortdateien.

@@ -1,11 +1,13 @@
 # RAG Finance
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 ## Kurzstand
 
 - Fuehrende Sicht: `Finance Summary`.
-- Neu lokal: `Finance Summary`, zentrale Excel und Management-Analyse koennen wahlweise aus Audit-CSV statt direkt aus `CentralSalesRecords` lesen. Die Audit-CSV werden nach Mapping und Transformation geschrieben und dienen der Nachvollziehbarkeit fuer Finance/Revision.
+- Aktuelle Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
+- `Finance Summary`, zentrale Excel, Soll/Ist und Management-Analyse koennen wahlweise aus Audit-CSV statt direkt aus `CentralSalesRecords` lesen. Die Audit-CSV werden nach Mapping und Transformation geschrieben und dienen der Nachvollziehbarkeit fuer Finance/Revision.
+- Audit-CSV-Dateiname: `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv`; liegt im gleichen Ordner wie das Standort-Excel und wird beim Standortexport in denselben SharePoint-Landesordner hochgeladen.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
@@ -35,6 +37,7 @@ Stand: 2026-06-10
 - Gutschriften/Storno laufen als negative Beleg-/Positionszeilen.
 - Budget-CHF ist Kontroll-/Reporting-Kandidat, nicht Standardabgleich.
 - `DocumentRate` aus dem ERP ist ein gespeichertes Quellfeld; die App-Kurstabelle wird nur bei Anzeige-Waehrung, expliziter `ConvertCurrency`-Transformation oder Budget-CHF-Kandidat verwendet.
+- Schalter fuer Finance/Revision: `Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss`.
 
 ## Offene Fachpunkte
 
@@ -53,7 +56,15 @@ Stand: 2026-06-10
 - `Datenqualitaet`: fehlende Materialnummern, ProductGroup, Waehrung, Kunde, Datum, Nullwerte und ausgeschlossene Zeilen.
 - `Spartenanalyse > Finanzanalyse`: Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 auf Basis der TR-AG-Referenz.
 - `Spartenanalyse > Zentrale Zuordnung`: Materialnummern aller Laender gegen TR-AG-Stamm pruefen.
-- `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf `CentralSalesRecords`.
+- `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf die zentrale Auswertungsquelle.
+
+## Audit-CSV / Auswertungsquelle
+
+- `Audit-CSV je Standort schreiben`: schreibt beim Laenderexport eine verarbeitete CSV nach Mapping und Transformation.
+- `Zentrale Auswertung aus Audit-CSV`: zentrale Auswertungen lesen je TSC die neueste `Sales_ProcessedMergeInput_*.csv`.
+- Der Pfad ist der `Lokaler Standardpfad Standort-Dateien`; ein separater sichtbarer Audit-Pfad wird nicht verwendet.
+- Standard ohne CSV-Schalter: zentrale Auswertungen lesen `CentralSalesRecords`.
+- Wenn der CSV-Schalter aktiv ist und keine passenden CSV vorhanden sind, ist die zentrale Auswertung nicht ausfuehrbar.
 
 ## Experten / 3D Datenanalyse
 
@@ -98,6 +109,7 @@ Stand: 2026-06-10
 ## Rohquellen Nur Bei Bedarf
 
 - Entscheide: `docs/FINANCE_ENTSCHEIDE.md`, `entscheide.md`
+- Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`
 - Formeln je Land: `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`
 - Isolierter Kurs-Workflow: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`
 - IT Detail: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`

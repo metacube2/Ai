@@ -1,12 +1,13 @@
 # Finance Berechnungsformeln pro Land
 
-Stand: 2026-06-01
+Stand: 2026-06-11
 
-Nachtrag 2026-06-01:
+Nachtrag 2026-06-11:
 
 - ES-Referenz 2025 wurde nach Finance-Sitzung auf `3'082'320.18 EUR` korrigiert. Der alte Wert `3'102'333.61 EUR` war ein Referenz-/Excel-Fehler.
 - In Management-Analysen ist das Wechselkurs-Anwendungsdatum konfigurierbar: `PostingDate`, `InvoiceDate` oder `ExtractionDate`.
 - Sparten-Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
+- Zentrale Finance-Auswertungen koennen optional aus den neuesten `Sales_ProcessedMergeInput_*.csv` je TSC statt aus `CentralSalesRecords` lesen. Die Formel bleibt gleich; nur die Datenquelle wird per Setting umgeschaltet.
 
 Zweck: Dieses Dokument beschreibt die aktuell im Programm verwendeten Formeln fuer den Soll/Ist-Vergleich 2025. Es ist fuer eine zweite KI oder eine fachliche Gegenpruefung geschrieben.
 
@@ -14,7 +15,12 @@ Zweck: Dieses Dokument beschreibt die aktuell im Programm verwendeten Formeln fu
 
 Die echte Webseite `/finance-cockpit/vergleich` und das Testprogramm `/finance` verwenden beide `FinanceReconciliationService`.
 
-Quelle fuer den Ist-Wert ist immer `CentralSalesRecords`. Die Jahresabgrenzung ist:
+Quelle fuer den Ist-Wert ist die zentrale Auswertungsquelle:
+
+- Standard: `CentralSalesRecords`.
+- Audit-Modus: neueste `Sales_ProcessedMergeInput_*.csv` je TSC.
+
+Die Jahresabgrenzung ist:
 
 ```text
 Jahr = Year(PostingDate ?? InvoiceDate ?? ExtractionDate)
@@ -26,7 +32,7 @@ Pro Land berechnet das Programm mehrere Kandidaten:
 
 ```text
 SalesPriceValue
-  = Sum(CentralSalesRecords.SalesPriceValue)
+  = Sum(SalesPriceValue aus zentraler Auswertungsquelle)
 
 DocTotalFC - VatSumFC
   = Sum(DocumentTotalForeignCurrency - VatSumForeignCurrency)
