@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject TrafagSalesExporter.Services.IFinanceCockpitAccessService FinanceAccess
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Program).Assembly">
+        <Found Context="routeData">
+            @if (RequiresFinanceUnlock() && FinanceAccess.IsEnabled && !FinanceAccess.IsUnlocked)
+            {
+                <LayoutView Layout="typeof(Layout.MainLayout)">
+                    <FinanceCockpitUnlockPanel />
+                </LayoutView>
+            }
+            else
+            {
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                    <NotAuthorized>
+                        <LayoutView Layout="typeof(Layout.MainLayout)">
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+                                Zugriff verweigert. Bitte mit einem berechtigten Windows-/Domain-Benutzer anmelden.
+                            </MudAlert>
+                        </LayoutView>
+                    </NotAuthorized>
+                    <Authorizing>
+                        <LayoutView Layout="typeof(Layout.MainLayout)">
+                            <MudProgressCircular Indeterminate="true" />
+                        </LayoutView>
+                    </Authorizing>
+                </AuthorizeRouteView>
+            }
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+    private bool RequiresFinanceUnlock()
+    {
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri)
+            .Split('?', '#')[0]
+            .Trim('/')
+            .ToLowerInvariant();
+
+        return path is
+            "export-dashboard" or
+            "management-cockpit" or
+            "finance-cockpit/vergleich" or
+            "finance-cockpit/schulung" or
+            "standorte" or
+            "transformations" or
+            "finance-rules" or
+            "settings" or
+            "logs" or
+            "source-viewer";
+    }
+}

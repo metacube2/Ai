@@ -1,0 +1,41 @@
+flowchart TD
+    Start([Export gestartet])
+    Decide{ConnectionKind}
+
+    Start --> Decide
+
+    Decide -->|HANA| H1[Zentrale HANA-Konfiguration laden]
+    H1 --> H2[Optionale Standort-Credentials anwenden]
+    H2 --> H3[Schema in HANA lesen]
+    H3 --> H4[SalesRecord-Liste erzeugen]
+
+    Decide -->|SAP_GATEWAY| S1[Zentrale oder Override Service URL aufloesen]
+    S1 --> S2[SAP Quellen laden]
+    S2 --> S3[Joins anwenden]
+    S3 --> S4[Feldmappings auf SalesRecord]
+
+    Decide -->|MANUAL_EXCEL| M1{ManualImportFilePath Typ}
+    M1 -->|lokal / UNC| M2[Excel lokal lesen]
+    M1 -->|SharePoint| M3[Excel via Graph temp herunterladen]
+    M3 --> M4[Excel aus Temp-Datei lesen]
+    M2 --> M5[SalesRecord-Liste erzeugen]
+    M4 --> M5
+
+    H4 --> T[Transformationen anwenden]
+    S4 --> T
+    M5 --> T
+
+    T --> C1[CentralSalesRecords fuer Standort ersetzen]
+    C1 --> E1{Standortdatei erzeugen?}
+
+    E1 -->|ja: HANA / SAP| E2[Excel-Datei lokal erzeugen]
+    E1 -->|nein: MANUAL_EXCEL| E3[Eingangsdatei bleibt Referenz]
+
+    E2 --> SP{SharePoint konfiguriert?}
+    E3 --> SP
+    SP -->|ja| SP1[Datei nach SharePoint hochladen]
+    SP -->|nein| L1[Kein Upload]
+
+    SP1 --> Log[ExportLog + AppEventLog schreiben]
+    L1 --> Log
+    Log --> Done([Export fertig])

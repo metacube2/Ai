@@ -1,0 +1,2285 @@
+@page "/einkauf"
+@page "/einkauf/spend"
+@page "/einkauf/offene-bestellungen"
+@page "/einkauf/kontrakte"
+@page "/einkauf/lieferanten"
+@page "/einkauf/ideen"
+@page "/einkauf/ideen/datenservice"
+@page "/einkauf/ideen/liefertermin-risiko"
+@page "/einkauf/ideen/preisabweichung"
+@page "/einkauf/ideen/spend-konzentration"
+@page "/einkauf/ideen/datenqualitaet"
+@page "/einkauf/kennzahlen"
+@page "/einkauf/pbix"
+@page "/einkauf/3d"
+@using System.Globalization
+@using Microsoft.AspNetCore.Components.Routing
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+@inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+@inject IPurchasingDashboardService PurchasingDashboardService
+@inject IPurchasingDataRefreshService PurchasingDataRefreshService
+
+<PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
+
+<MudPaper Class="purchasing-hero mb-4" Elevation="0">
+    <div class="purchasing-hero-main">
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
+            @T("Einkauf Cockpit", "Purchasing cockpit")
+        </MudChip>
+        <MudText Typo="Typo.h3" Class="purchasing-hero-title">@T("Spend, Lieferanten, offene Verpflichtungen", "Spend, suppliers, open commitments")</MudText>
+        <MudText Typo="Typo.body1" Class="purchasing-hero-text">
+            @T("Operative Einkaufsanalyse mit Live-EKKO, klarer SAP-Datenpipeline, Simulationen und 3D-What-if-Ansicht.",
+               "Operational purchasing analytics with live EKKO, clear SAP data pipeline, simulations and 3D what-if view.")
+        </MudText>
+        <div class="purchasing-hero-actions">
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkkoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKKO @(_liveState.EkkoLoaded ? T("live", "live") : T("wartet", "pending"))
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkpoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKPO @(_liveState.EkpoLoaded ? T("live", "live") : T("wartet", "pending"))
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(_liveState.EketLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                EKET @(_liveState.EketLoaded ? T("live", "live") : T("wartet", "pending"))
+            </MudChip>
+        </div>
+    </div>
+    <div class="purchasing-hero-metrics">
+        <div class="purchasing-radar" style="@BuildReadinessDonutStyle()">
+            <div>
+                <strong>@DataReadinessPercent.ToString("N0")%</strong>
+                <span>@T("Live", "Live")</span>
+            </div>
+        </div>
+        <div class="purchasing-hero-note">
+            <strong>@DataReadinessText</strong>
+            <span>@PurchasingStatusText</span>
+        </div>
+    </div>
+</MudPaper>
+
+<MudPaper Class="pa-3 mb-4 purchasing-filter-panel" Outlined="true">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+        <div>
+            <MudText Typo="Typo.subtitle1">@T("Zeitraum", "Period")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-muted">
+                @T("Alle Einkauf-Kennzahlen, Top-Listen und 3D-Daten werden auf diesen Zeitraum abgegrenzt.",
+                   "All purchasing KPIs, top lists and 3D data are limited to this period.")
+            </MudText>
+        </div>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@FilterLabel</MudChip>
+    </MudStack>
+    <div class="purchasing-filter-grid">
+        <label>
+            <span>@T("Von Monat", "From month")</span>
+            <input type="month" value="@_filterFromMonth" @onchange="SetFilterFromMonth" />
+        </label>
+        <label>
+            <span>@T("Bis Monat", "To month")</span>
+            <input type="month" value="@_filterToMonth" @onchange="SetFilterToMonth" />
+        </label>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="ApplyPurchasingFilterAsync" Disabled="_liveLoading">
+            @T("Anwenden", "Apply")
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Update" OnClick="SetLastThreeYearsAsync" Disabled="_liveLoading">
+            @T("Letzte 3 Jahre", "Last 3 years")
+        </MudButton>
+    </div>
+</MudPaper>
+
+<MudGrid Class="mb-4" Spacing="2">
+    @foreach (var card in KpiCards)
+    {
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="purchasing-kpi pa-3" Outlined="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <div class="purchasing-kpi-icon">
+                        <MudIcon Icon="@card.Icon" Color="@card.Color" Size="Size.Medium" />
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.caption" Class="purchasing-muted">@T(card.TitleDe, card.TitleEn)</MudText>
+                        <MudText Typo="Typo.h6">@card.Value</MudText>
+                        <MudText Typo="Typo.caption">@T(card.DetailDe, card.DetailEn)</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@switch (CurrentPurchasingPage)
+{
+    case "spend":
+        <PurchasingSection TitleDe="Spend total vergangen"
+                           TitleEn="Historic total spend"
+                           DescriptionDe="Beschaffungsvolumen in CHF nach Jahr, Lieferant, Warengruppe und Artikel. Spend-Werte brauchen EKPO; bis SAP Positionen liefert, ist die Ansicht als Simulation markiert."
+                           DescriptionEn="Purchasing volume in CHF by year, supplier, material group and article. Spend values need EKPO; until SAP provides item rows, this view is marked as simulation."
+                           ChartTitleDe="Spend-Verlauf nach Einkaufsdimension"
+                           ChartTitleEn="Spend trend by purchasing dimension"
+                           Kpis="@SpendKpis"
+                           ChartRows="@SpendChartRows"
+                           StatusRows="@SpendStatusRows"
+                           DetailRows="@SpendDetailRows" />
+        break;
+    case "offene-bestellungen":
+        <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
+                           TitleEn="Open order values and quantities"
+                           DescriptionDe="Live-Bestellkoepfe aus EKKO sind angebunden. Offene Werte und Mengen brauchen zusaetzlich EKPO/EKET."
+                           DescriptionEn="Live purchase-order headers from EKKO are connected. Open values and quantities additionally need EKPO/EKET."
+                           ChartTitleDe="Bestellaktivitaet und offene Positionen"
+                           ChartTitleEn="Order activity and open items"
+                           Kpis="@OpenOrderKpis"
+                           ChartRows="@OpenOrderChartRows"
+                           StatusRows="@OpenOrderStatusRows"
+                           DetailRows="@OpenOrderDetailRows" />
+        break;
+    case "kontrakte":
+        <PurchasingSection TitleDe="Offene Verpflichtungen"
+                           TitleEn="Open commitments"
+                           DescriptionDe="Restverpflichtungen werden aus EKET-Offenmenge und EKPO-Stueckwert berechnet und nach Lieferant, Artikel und Faelligkeitsmonat gezeigt."
+                           DescriptionEn="Remaining commitments are calculated from EKET open quantity and EKPO unit value and shown by supplier, article and due month."
+                           ChartTitleDe="Top Verpflichtungen nach Lieferant, Artikel und Faelligkeit"
+                           ChartTitleEn="Top commitments by supplier, article and due date"
+                           Kpis="@ContractKpis"
+                           ChartRows="@ContractChartRows"
+                           StatusRows="@ContractStatusRows"
+                           DetailRows="@ContractDetailRows" />
+        break;
+    case "lieferanten":
+        <PurchasingSection TitleDe="Lieferantenbewertung und Performance"
+                           TitleEn="Supplier rating and performance"
+                           DescriptionDe="Lieferantenbasis kommt live aus EKKO. Bewertung, Termintreue und Preisentwicklung brauchen spaeter EKPO/EKET und Reklamationsdaten."
+                           DescriptionEn="The supplier base comes live from EKKO. Rating, delivery reliability and price development later need EKPO/EKET and claim data."
+                           ChartTitleDe="Lieferantenbasis und Performance-Indikatoren"
+                           ChartTitleEn="Supplier base and performance indicators"
+                           Kpis="@SupplierKpis"
+                           ChartRows="@SupplierChartRows"
+                           StatusRows="@SupplierStatusRows"
+                           DetailRows="@SupplierDetailRows" />
+        break;
+    case "ideen":
+        <MudGrid Spacing="2">
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("Weitere Einkaufsanalysen", "Additional purchasing analytics")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                @T("Analysen, die dem Einkauf neben PowerBI mehr Steuerung, Risiko- und Sparpotenzial zeigen.",
+                                   "Analytics that give purchasing more steering, risk and savings potential beyond Power BI.")
+                            </MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">
+                            @T("Roadmap", "Roadmap")
+                        </MudChip>
+                    </MudStack>
+                    <div class="purchasing-idea-grid">
+                        @foreach (var idea in PurchasingIdeas)
+                        {
+                            <div class="purchasing-idea-card">
+                                <div class="purchasing-idea-icon">
+                                    <MudIcon Icon="@idea.Icon" Color="@idea.Color" />
+                                </div>
+                                <div class="purchasing-idea-content">
+                                    <div class="purchasing-idea-title">
+                                        <strong>@T(idea.TitleDe, idea.TitleEn)</strong>
+                                        <MudChip T="string" Size="Size.Small" Color="@idea.Color" Variant="Variant.Outlined">@T(idea.StatusDe, idea.StatusEn)</MudChip>
+                                    </div>
+                                    <span>@T(idea.DescriptionDe, idea.DescriptionEn)</span>
+                                    <div class="purchasing-idea-meta">
+                                        <code>@idea.RequiredData</code>
+                                        <span>@T("Nutzen", "Value"): @T(idea.ValueDe, idea.ValueEn)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Prioritaet", "Priority")</MudText>
+                    <div class="purchasing-priority-stack">
+                        @foreach (var priority in PurchasingIdeaPriorities)
+                        {
+                            <div class="purchasing-priority-row">
+                                <MudIcon Icon="@priority.Icon" Color="@priority.Color" Size="Size.Small" />
+                                <div>
+                                    <strong>@T(priority.TitleDe, priority.TitleEn)</strong>
+                                    <span>@T(priority.DetailDe, priority.DetailEn)</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("Ideen ausgearbeitet", "Ideas worked out")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                @T("Jede Idee ist als aufklappbarer Ausbau-Baustein beschrieben.",
+                                   "Each idea is described as an expandable build-out block.")
+                            </MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@PurchasingIdeaWorkPackages.Count @T("Bausteine", "blocks")</MudChip>
+                    </MudStack>
+                    <MudExpansionPanels MultiExpansion="true" Elevation="0" Class="purchasing-idea-expansion">
+                        @foreach (var package in PurchasingIdeaWorkPackages)
+                        {
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div class="purchasing-idea-panel-title">
+                                        <MudIcon Icon="@package.Icon" Color="@package.Color" />
+                                        <div>
+                                            <strong>@T(package.TitleDe, package.TitleEn)</strong>
+                                            <span>@T(package.ShortDe, package.ShortEn)</span>
+                                        </div>
+                                        <MudChip T="string" Size="Size.Small" Color="@package.Color" Variant="Variant.Outlined">@T(package.StatusDe, package.StatusEn)</MudChip>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" md="6">
+                                            <div class="purchasing-idea-detail-block">
+                                                <MudText Typo="Typo.subtitle2">@T("Ziel", "Goal")</MudText>
+                                                <span>@T(package.GoalDe, package.GoalEn)</span>
+                                            </div>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <div class="purchasing-idea-detail-block">
+                                                <MudText Typo="Typo.subtitle2">@T("Datenbasis", "Data basis")</MudText>
+                                                <code>@package.DataBasis</code>
+                                            </div>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <div class="purchasing-idea-detail-block">
+                                                <MudText Typo="Typo.subtitle2">@T("Kennzahlen", "KPIs")</MudText>
+                                                <span>@T(package.KpisDe, package.KpisEn)</span>
+                                            </div>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <div class="purchasing-idea-detail-block">
+                                                <MudText Typo="Typo.subtitle2">@T("Berechnung", "Calculation")</MudText>
+                                                <span>@T(package.LogicDe, package.LogicEn)</span>
+                                            </div>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <div class="purchasing-idea-detail-block">
+                                                <MudText Typo="Typo.subtitle2">@T("Visualisierung", "Visualisation")</MudText>
+                                                <span>@T(package.VisualDe, package.VisualEn)</span>
+                                            </div>
+                                        </MudItem>
+                                        <MudItem xs="12">
+                                            <div class="purchasing-idea-next-step">
+                                                <MudIcon Icon="@Icons.Material.Filled.PlaylistAddCheck" Color="Color.Success" />
+                                                <span>@T(package.NextStepDe, package.NextStepEn)</span>
+                                            </div>
+                                        </MudItem>
+                                    </MudGrid>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        }
+                    </MudExpansionPanels>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        break;
+    case "ideen/datenservice":
+    case "ideen/liefertermin-risiko":
+    case "ideen/preisabweichung":
+    case "ideen/spend-konzentration":
+    case "ideen/datenqualitaet":
+        var implementation = SelectedImplementationPackage;
+        <MudGrid Spacing="2">
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                        <div class="purchasing-idea-icon">
+                            <MudIcon Icon="@implementation.Icon" Color="@implementation.Color" />
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.h6">@T(implementation.TitleDe, implementation.TitleEn)</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">@T(implementation.SubtitleDe, implementation.SubtitleEn)</MudText>
+                        </div>
+                    </MudStack>
+                    <MudChip T="string" Color="@implementation.Color" Variant="Variant.Outlined" Class="mb-3">@T(implementation.StatusDe, implementation.StatusEn)</MudChip>
+                    <div class="purchasing-priority-stack">
+                        @foreach (var step in implementation.Steps)
+                        {
+                            <div class="purchasing-priority-row">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                                <div>
+                                    <strong>@T(step.TitleDe, step.TitleEn)</strong>
+                                    <span>@T(step.DetailDe, step.DetailEn)</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Umsetzung", "Implementation")</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <div class="purchasing-idea-detail-block">
+                                <MudText Typo="Typo.subtitle2">@T("Zielbild", "Target state")</MudText>
+                                <span>@T(implementation.TargetDe, implementation.TargetEn)</span>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <div class="purchasing-idea-detail-block">
+                                <MudText Typo="Typo.subtitle2">@T("Datenbasis", "Data basis")</MudText>
+                                <code>@implementation.DataBasis</code>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <div class="purchasing-idea-detail-block">
+                                <MudText Typo="Typo.subtitle2">@T("Kennzahlen", "KPIs")</MudText>
+                                <span>@T(implementation.KpisDe, implementation.KpisEn)</span>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <div class="purchasing-idea-detail-block">
+                                <MudText Typo="Typo.subtitle2">@T("Technische Umsetzung", "Technical implementation")</MudText>
+                                <span>@T(implementation.TechnicalDe, implementation.TechnicalEn)</span>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <div class="purchasing-idea-next-step">
+                                <MudIcon Icon="@Icons.Material.Filled.PlaylistAddCheck" Color="Color.Success" />
+                                <span>@T(implementation.NextStepDe, implementation.NextStepEn)</span>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            @if (implementation.Key == "ideen/datenservice")
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                            <div>
+                                <MudText Typo="Typo.h6">@T("Refresh Steuerung", "Refresh control")</MudText>
+                                <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                    @T("Full Load baut die korrekte Basis auf. Delta aktualisiert danach nur geaenderte Einkaufsbelege.",
+                                       "Full load builds the correct base. Delta then updates only changed purchase documents.")
+                                </MudText>
+                            </div>
+                            <MudChip T="string" Color="@ResolveRefreshStatusColor()" Variant="Variant.Outlined">@TranslateRefreshStatus(_refreshStatus.Status)</MudChip>
+                        </MudStack>
+                        <MudGrid Spacing="2" Class="mb-3">
+                            <MudItem xs="12" sm="6" lg="3">
+                                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                                    <MudText Typo="Typo.caption" Class="purchasing-muted">EKKO</MudText>
+                                    <MudText Typo="Typo.h6">@_refreshStatus.EkkoRows.ToString("N0")</MudText>
+                                    <MudText Typo="Typo.caption">@T("Bestellkoepfe im Cache", "purchase headers in cache")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" lg="3">
+                                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                                    <MudText Typo="Typo.caption" Class="purchasing-muted">EKPO</MudText>
+                                    <MudText Typo="Typo.h6">@_refreshStatus.EkpoRows.ToString("N0")</MudText>
+                                    <MudText Typo="Typo.caption">@T("Positionen im Cache", "item rows in cache")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" lg="3">
+                                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                                    <MudText Typo="Typo.caption" Class="purchasing-muted">EKET</MudText>
+                                    <MudText Typo="Typo.h6">@_refreshStatus.EketRows.ToString("N0")</MudText>
+                                    <MudText Typo="Typo.caption">@T("Einteilungen im Cache", "schedules in cache")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" lg="3">
+                                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                                    <MudText Typo="Typo.caption" Class="purchasing-muted">@T("Letzter Stand", "Latest state")</MudText>
+                                    <MudText Typo="Typo.h6">@FormatRefreshDate(_refreshStatus.CompletedAtUtc)</MudText>
+                                    <MudText Typo="Typo.caption">@TranslateRefreshMode(_refreshStatus.Mode)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                        <MudStack Row="true" Spacing="2" Class="mb-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" Disabled="_refreshBusy" OnClick="RunPurchasingFullLoadAsync">
+                                @T("Full Load starten", "Start full load")
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshBusy" OnClick="RunPurchasingDeltaAsync">
+                                @T("Delta aktualisieren", "Refresh delta")
+                            </MudButton>
+                        </MudStack>
+                        @if (_refreshBusy)
+                        {
+                            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+                        }
+                        <MudText Typo="Typo.body2" Class="purchasing-muted">@TranslatePurchasingMessage(_refreshStatus.Message)</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+            else
+            {
+                <MudItem xs="12">
+                    <PurchasingSection TitleDe="@SelectedIdeaAnalysisTitleDe"
+                                       TitleEn="@SelectedIdeaAnalysisTitleEn"
+                                       DescriptionDe="@SelectedIdeaAnalysisDescriptionDe"
+                                       DescriptionEn="@SelectedIdeaAnalysisDescriptionEn"
+                                       ChartTitleDe="@SelectedIdeaChartTitleDe"
+                                       ChartTitleEn="@SelectedIdeaChartTitleEn"
+                                       Kpis="@SelectedIdeaKpis"
+                                       ChartRows="@SelectedIdeaChartRows"
+                                       StatusRows="@SelectedIdeaStatusRows"
+                                       DetailRows="@SelectedIdeaDetailRows" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                            <div>
+                                <MudText Typo="Typo.h6">@T("Detail-Hotlist", "Detail hotlist")</MudText>
+                                <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                    @T("Direkt aus dem Einkauf-Cache berechnet, keine Simulation.",
+                                       "Calculated directly from the purchasing cache, no simulation.")
+                                </MudText>
+                            </div>
+                            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">@SelectedIdeaRows.Count @T("Zeilen", "rows")</MudChip>
+                        </MudStack>
+                        <MudTable Items="@SelectedIdeaRows" Dense="true" Hover="true" Striped="true">
+                            <HeaderContent>
+                                <MudTh>@T("Objekt", "Object")</MudTh>
+                                <MudTh>@T("Wert", "Value")</MudTh>
+                                <MudTh>@T("Detail", "Detail")</MudTh>
+                                <MudTh>@T("Ampel", "Status")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Label</MudTd>
+                                <MudTd><strong>@context.Value</strong></MudTd>
+                                <MudTd>@context.Detail</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@ResolveAnalysisSeverityColor(context.Severity)" Variant="Variant.Outlined">
+                                        @context.Severity
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+        break;
+    case "kennzahlen":
+        <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                <div>
+                    <MudText Typo="Typo.h6">@T("Kennzahlen-Katalog fuer den naechsten Ausbau", "KPI catalogue for the next build-out")</MudText>
+                    <MudText Typo="Typo.body2" Class="purchasing-muted">
+                        @T("Fachlicher Ausbauplan mit Kennzahl, Dimension, Datenbasis und aktuellem Umsetzungsstand.",
+                           "Functional build-out plan with KPI, dimension, data basis and current implementation status.")
+                    </MudText>
+                </div>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@PurchasingIdeaKpis.Count @T("Kennzahlen", "KPIs")</MudChip>
+            </MudStack>
+            <MudTable Items="@PurchasingIdeaKpis" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>@T("Analyse", "Analysis")</MudTh>
+                    <MudTh>@T("Kennzahl", "KPI")</MudTh>
+                    <MudTh>@T("Dimension", "Dimension")</MudTh>
+                    <MudTh>@T("Datenbasis", "Data basis")</MudTh>
+                    <MudTh>@T("Status", "Status")</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@T(context.AnalysisDe, context.AnalysisEn)</MudTd>
+                    <MudTd><strong>@T(context.KpiDe, context.KpiEn)</strong></MudTd>
+                    <MudTd>@context.Dimension</MudTd>
+                    <MudTd><code>@context.Source</code></MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="@context.Color" Variant="Variant.Outlined">@T(context.StatusDe, context.StatusEn)</MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+        break;
+    case "pbix":
+        <MudPaper Class="pa-3" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">@T("Aus x.pbix uebernommene Seiten", "Pages derived from x.pbix")</MudText>
+            <MudTable Items="@PowerBiPages" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>@T("Power-BI-Seite", "Power BI page")</MudTh>
+                    <MudTh>@T("Visuals", "Visuals")</MudTh>
+                    <MudTh>@T("Kennzahl", "Measure")</MudTh>
+                    <MudTh>@T("Dimensionen", "Dimensions")</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Page</MudTd>
+                    <MudTd>@context.Visuals</MudTd>
+                    <MudTd><code>@context.Measure</code></MudTd>
+                    <MudTd>@context.Dimensions</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+        break;
+    case "3d":
+        <MudPaper Class="pa-3 mb-3" Outlined="true">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="3">
+                    <MudSelect T="string" Value="_purchasing3dIndicator" ValueChanged="SetPurchasing3dIndicator" Label="@T("Indikator", "Indicator")" Dense="true">
+                        @foreach (var option in Purchasing3dIndicators)
+                        {
+                            <MudSelectItem Value="@option.Key">@T(option.TitleDe, option.TitleEn)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudSelect T="string" Value="_purchasing3dChartType" ValueChanged="SetPurchasing3dChartType" Label="@T("Grafik", "Chart")" Dense="true">
+                        <MudSelectItem Value="@("bar")">@T("Balken", "Bars")</MudSelectItem>
+                        <MudSelectItem Value="@("line")">@T("Linie", "Line")</MudSelectItem>
+                        <MudSelectItem Value="@("surface")">@T("Flaeche", "Surface")</MudSelectItem>
+                        <MudSelectItem Value="@("pie")">@T("Kreis", "Pie")</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption">@T("Preis-/Wechselkurs-Szenario", "Price/exchange-rate scenario")</MudText>
+                    <div class="finance-3d-range-row">
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetPurchasing3dFactorPreset(0.9d))">-10%</MudButton>
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.5"
+                               max="1.5"
+                               step="0.01"
+                               value="@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dFactor" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                    <MudText Typo="Typo.caption">
+                        @T("Delta", "Delta"): @FormatScenarioDelta()
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
+                    <div class="finance-3d-range-row">
+                        <input class="finance-3d-range"
+                               type="range"
+                               min="0.8"
+                               max="2.5"
+                               step="0.1"
+                               value="@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
+                               @oninput="SetPurchasing3dLabelScale" />
+                        <MudText Typo="Typo.body2" Class="finance-3d-factor">@_purchasing3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RenderPurchasing3dAsync">
+                        @T("Neu zeichnen", "Redraw")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+        <MudPaper Class="pa-0 finance-3d-surface purchasing-3d-surface" Elevation="1">
+            <canvas @ref="_purchasing3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
+        </MudPaper>
+        break;
+    default:
+        <MudGrid Spacing="2">
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("SAP Datenfluss", "SAP data flow")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">@T("Vom OData-Service bis zur Kennzahl sichtbar, welcher Baustein echt ist.", "From OData service to KPI, it is visible which block is real.")</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@DataReadinessText</MudChip>
+                    </MudStack>
+                    <div class="purchasing-pipeline">
+                        @foreach (var step in PipelineRows)
+                        {
+                            <div class="purchasing-pipeline-step @(step.IsReady ? "is-ready" : "is-waiting")">
+                                <MudIcon Icon="@step.Icon" Color="@step.Color" />
+                                <div>
+                                    <strong>@T(step.TitleDe, step.TitleEn)</strong>
+                                    <span>@T(step.DetailDe, step.DetailEn)</span>
+                                </div>
+                                <MudChip T="string" Size="Size.Small" Color="@step.Color" Variant="Variant.Outlined">@step.Value</MudChip>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Management Insights", "Management insights")</MudText>
+                    <div class="purchasing-insights">
+                        @foreach (var insight in ManagementInsights)
+                        {
+                            <div class="purchasing-insight">
+                                <MudIcon Icon="@Icons.Material.Filled.AutoGraph" Color="Color.Info" Size="Size.Small" />
+                                <span>@insight</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="purchasing-mini-donut-wrap">
+                        <div class="purchasing-mini-donut" style="@BuildOverviewDonutStyle()">
+                            <strong>@DataReadinessPercent.ToString("N0")%</strong>
+                        </div>
+                        <div class="purchasing-mini-legend">
+                            <span><i class="ready"></i>@T("Live", "Live")</span>
+                            <span><i class="waiting"></i>@T("Wartet", "Waiting")</span>
+                            <span><i class="simulation"></i>@T("Simulation", "Simulation")</span>
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Analyseachsen", "Analysis axes")</MudText>
+                    <div class="purchasing-axis-grid">
+                        @foreach (var axis in AnalysisAxes)
+                        {
+                            <div class="purchasing-axis-card">
+                                <strong>@T(axis.LabelDe, axis.LabelEn)</strong>
+                                <code>@axis.Field</code>
+                                <span>@T(axis.UsageDe, axis.UsageEn)</span>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        break;
+}
+
+@code {
+    private ElementReference _purchasing3dCanvas;
+    private PurchasingDashboardLiveState _liveState = new();
+    private PurchasingDataRefreshStatus _refreshStatus = new();
+    private bool _liveLoading = true;
+    private bool _refreshBusy;
+    private string _purchasing3dIndicator = "spend";
+    private string _purchasing3dChartType = "bar";
+    private double _purchasing3dFactor = 1d;
+    private double _purchasing3dLabelScale = 1.5d;
+    private string _lastRendered3dUri = string.Empty;
+    private string _filterFromMonth = BuildDefaultFromMonth();
+    private string _filterToMonth = BuildDefaultToMonth();
+
+    private string FilterLabel => $"{_filterFromMonth} - {_filterToMonth}";
+
+    private string CurrentPurchasingPage
+    {
+        get
+        {
+            var relative = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+            if (!relative.StartsWith("einkauf", StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            var parts = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length <= 1)
+                return string.Empty;
+
+            return parts.Length >= 3 && parts[1].Equals("ideen", StringComparison.OrdinalIgnoreCase)
+                ? $"{parts[1]}/{parts[2]}".ToLowerInvariant()
+                : parts[1].ToLowerInvariant();
+        }
+    }
+
+    private IReadOnlyList<PurchasingKpiCard> KpiCards =>
+    [
+        new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
+        new("Offene Bestellungen", "Open orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? $"EKKO-Belege im Zeitraum {FilterLabel}" : "Noch nicht geladen", _liveState.EkkoLoaded ? $"EKKO orders in period {FilterLabel}" : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
+        new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "nach Lieferant / Artikel / Faelligkeit" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "by supplier / article / due date" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
+        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "Lieferanten in EKKO-Liveprobe" : "Noch nicht geladen", _liveState.EkkoLoaded ? "Suppliers in EKKO live sample" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
+    ];
+
+    private readonly List<PurchasingAxis> AnalysisAxes =
+    [
+        new("Jahr", "Year", "EKKOSet.Bedat", "Zeitfilter und Verlauf", "Time filter and trend"),
+        new("Lieferant", "Supplier", "Data.Name / Data.Lieferant", "Spend und Performance pro Lieferant", "Spend and performance by supplier"),
+        new("Warengruppe", "Material group", "Data (2).Warengruppe / WG komplett", "Spend nach Warengruppe", "Spend by material group"),
+        new("Artikel", "Article", "EKPOSet.Matnr / EKPOSet.Txz01", "Artikel- und Preisentwicklung", "Article and price development"),
+        new("Region", "Region", "Data.Laender-/Regionenschluessel", "Regionale Spend-Verteilung", "Regional spend distribution")
+    ];
+
+    private readonly List<PurchasingSource> SapSources =
+    [
+        new("EKKOSet", "Bestellkopf: Datum, Lieferant, Einkaufsbeleg."),
+        new("EKPOSet", "Bestellposition: Artikel, Text, Netwr CHF, Preis pro Stueck."),
+        new("eketSet", "Einteilungen/Termine: Basis fuer offene Mengen und Liefertermine."),
+        new("Data", "Lieferanten-Mapping und Lieferantennamen."),
+        new("Data (2)", "Warengruppen-Mapping und Warengruppentexte.")
+    ];
+
+    private int DataReadinessPercent
+    {
+        get
+        {
+            var ready = 0;
+            if (_liveState.EkkoLoaded)
+                ready++;
+            if (_liveState.EkpoLoaded)
+                ready++;
+            if (_liveState.EketLoaded)
+                ready++;
+            return (int)Math.Round(ready / 3d * 100d);
+        }
+    }
+
+    private string DataReadinessText
+        => DataReadinessPercent switch
+        {
+            >= 100 => T("voll live", "fully live"),
+            >= 67 => T("mehrheitlich live", "mostly live"),
+            >= 34 => T("teilweise live", "partly live"),
+            _ => T("Verbindung wird geprueft", "connection being checked")
+        };
+
+    private IReadOnlyList<PurchasingPipelineStep> PipelineRows =>
+    [
+        new("EKKO Bestellkopf", "EKKO purchase header", _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-", _liveState.EkkoLoaded ? $"Bestellungen im Zeitraum {FilterLabel}" : "Bestellkopf wartet auf SAP", _liveState.EkkoLoaded ? $"Orders in period {FilterLabel}" : "Purchase header is waiting for SAP", Icons.Material.Filled.ReceiptLong, _liveState.EkkoLoaded, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? "Spend, Artikel und Warengruppen koennen echt berechnet werden" : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? "Spend, articles and material groups can be calculated real" : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? "Faelligkeiten und Terminstatus koennen echt berechnet werden" : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? "Due dates and schedule status can be calculated real" : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Dashboard Layer", "Dashboard layer", _liveState.EkkoLoaded ? "aktiv" : "bereit", "Livewerte, Simulation und 3D-Analyse werden getrennt ausgewiesen", "Live values, simulation and 3D analysis are shown separately", Icons.Material.Filled.DashboardCustomize, true, Color.Info)
+    ];
+
+    private IReadOnlyList<string> ManagementInsights =>
+    [
+        _liveState.EkkoLoaded
+            ? T($"{_liveState.PurchaseOrderCount:N0} Einkaufsbelege sind im Zeitraum {FilterLabel} im Cockpit.", $"{_liveState.PurchaseOrderCount:N0} purchase orders are in the cockpit for {FilterLabel}.")
+            : T("EKKO wird geladen; danach erscheinen Bestellungen und Lieferanten live.", "EKKO is loading; orders and suppliers appear live afterwards."),
+        _liveState.EkpoLoaded
+            ? T("Spend, Artikel und Warengruppen koennen nun aus SAP-Positionen kommen.", "Spend, articles and material groups can now come from SAP item rows.")
+            : T("Spend ist bewusst als Simulation markiert, bis EKPO Zeilen liefert.", "Spend is deliberately marked as simulation until EKPO returns rows."),
+        _liveState.EketLoaded
+            ? T("Faelligkeiten und Kontrakte koennen aus EKET berechnet werden.", "Due dates and contracts can be calculated from EKET.")
+            : T("Faelligkeiten und Restverpflichtungen warten noch auf EKET.", "Due dates and remaining commitments are still waiting for EKET."),
+        T("3D What-if zeigt sofort die Auswirkung von Preis- und Wechselkursannahmen.", "3D what-if immediately shows the effect of price and exchange-rate assumptions.")
+    ];
+
+    private IReadOnlyList<PurchasingSectionKpi> SpendKpis =>
+    [
+        new("Spend CHF", "Spend CHF", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), _liveState.EkpoLoaded ? "aus SAP Positionen" : "Simulation bis EKPO liefert", _liveState.EkpoLoaded ? "from SAP item rows" : "simulation until EKPO delivers"),
+        new("Jahre", "Years", "2024-2026", "aus PBIX-Struktur", "from PBIX structure"),
+        new("Dimensionen", "Dimensions", "4", "Jahr, Lieferant, Warengruppe, Artikel", "year, supplier, material group, article"),
+        new("SAP Status", "SAP status", _liveState.EkpoLoaded ? "live" : "wartet", "EKPOSet fuer Spend notwendig", "EKPOSet required for spend")
+    ];
+
+    private IReadOnlyList<PurchasingSectionKpi> OpenOrderKpis =>
+    [
+        new("Bestellungen", "Orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", $"EKKO im Zeitraum {FilterLabel}", $"EKKO in period {FilterLabel}"),
+        new("Lieferanten", "Suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "aus EKKO-Liveprobe", "from EKKO live sample"),
+        new("Offener Wert", "Open value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), _liveState.EketLoaded ? "aus SAP Terminen/Positionen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules/items" : "simulation until EKET delivers"),
+        new("Offene Menge", "Open quantity", _liveState.EketLoaded ? _liveState.OpenQuantitySample.ToString("N0") : Purchasing3dBaseRows.Sum(x => x.OpenQuantity).ToString("N0"), _liveState.EketLoaded ? "aus SAP Terminen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers")
+    ];
+
+    private IReadOnlyList<PurchasingSectionKpi> ContractKpis =>
+    [
+        new("Restwert", "Remaining value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
+        new("Einteilungen", "Schedules", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : "-", "EKET-Probe", "EKET sample"),
+        new("Top Verpflichtung", "Top commitment", TopCommitmentLabel, "Lieferant / Artikel / Monat", "supplier / article / month"),
+        new("Faelligkeit", "Due date", _liveState.LatestOrderDate?.ToString("yyyy-MM-dd") ?? "-", "letztes bekanntes EKKO-Datum", "latest known EKKO date")
+    ];
+
+    private IReadOnlyList<PurchasingSectionKpi> SupplierKpis =>
+    [
+        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", $"EKKO im Zeitraum {FilterLabel}", $"EKKO in period {FilterLabel}"),
+        new("Performance Score", "Performance score", $"{Purchasing3dBaseRows.Average(x => x.SupplierScore):N1}%", "Simulation bis Bewertungsdaten kommen", "simulation until rating data arrives"),
+        new("Preisindikator", "Price indicator", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet", "Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
+        new("Qualitaet", "Quality", "offen", "Reklamationsquelle noch nicht angebunden", "claim source not connected yet")
+    ];
+
+    private readonly List<PowerBiPageInfo> PowerBiPages =
+    [
+        new("Besch.Volumen CHF/Lieferant", "Pivot, Slicer", "Sum(EKPOSet.Netwr CHF)", "Jahr, Lieferant, Warengruppe, Artikel"),
+        new("Eink.Vol. CHF / Lieferant Kuchen", "Pie, Slicer", "Sum(EKPOSet.Netwr CHF)", "Lieferant, Warengruppe, Jahr"),
+        new("Balken Vol./Lief/WG", "Column, Slicer", "Sum(EKPOSet.Netwr CHF)", "Lieferant, Warengruppe, Artikel"),
+        new("Diagramm Vol./WG", "Column, Slicer", "Sum(EKPOSet.Netwr CHF)", "Warengruppe, Jahr"),
+        new("Eink.Vol. CHF / Region", "Pie, Slicer", "Sum(EKPOSet.Netwr CHF)", "Region, Warengruppe, Jahr"),
+        new("Preisentwicklung CHF", "Pivot, Slicer", "Min(EKPOSet.Netwr CHF/Stk)", "Lieferant, Artikel, Jahr"),
+        new("Matrix Vol./WG", "Pivot, Slicer", "Sum(EKPOSet.Netwr CHF)", "Warengruppe, Lieferant, Artikel")
+    ];
+
+    private IReadOnlyList<PurchasingIdea> PurchasingIdeas =>
+    [
+        new("Lieferantenrisiko", "Supplier risk", "Kombiniert Abhaengigkeit, Single-Source-Anteil, offene Bestellungen und Lieferperformance zu einem Risiko-Score.", "Combines dependency, single-source share, open orders and delivery performance into one risk score.", "EKKO, EKPO, EKET, LFA1", "Engpaesse und Lieferantenabhaengigkeit frueh sehen", "see shortages and supplier dependency early", _liveState.EkpoLoaded && _liveState.EketLoaded ? "berechenbar" : "wartet auf EKPO/EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "calculable" : "waiting for EKPO/EKET", Icons.Material.Filled.WarningAmber, _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Preisentwicklung CHF", "Price trend CHF", "Entspricht PowerBI: Minimum Netto-Stueckpreis pro Artikel und Jahr.", "Matches Power BI: minimum net unit price by article and year.", "EKPO, EKKO", "Artikelpreise wie in PowerBI pruefen", "check article prices like in Power BI", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.TrendingUp, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Maverick Buying", "Maverick buying", "Findet Bestellungen ausserhalb bevorzugter Lieferanten, Rahmenvertraege oder Warengruppenregeln.", "Finds orders outside preferred suppliers, contracts or material-group rules.", "EKKO, EKPO, Kontrakte", "Compliance und Buendelung verbessern", "improve compliance and bundling", "Konzept", "concept", Icons.Material.Filled.Policy, Color.Info),
+        new("Rahmenvertragsnutzung", "Contract utilisation", "Zeigt Kontraktmenge, Abrufmenge, Restmenge, Laufzeit und drohenden Verfall.", "Shows contract quantity, call-off quantity, remaining quantity, term and expiry risk.", "EKKO, EKPO, EKET", "Restverpflichtungen aktiv steuern", "actively manage remaining commitments", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", Icons.Material.Filled.AssignmentTurnedIn, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Working Capital", "Working capital", "Verbindet offene Bestellungen, Liefertermine und Zahlungs-/Bestandswirkung zu Cash-Ausblick.", "Connects open orders, delivery dates and payment/inventory impact into a cash outlook.", "EKPO, EKET, FI/AP", "Cashbedarf aus Einkauf vorhersagen", "forecast purchasing cash needs", "Konzept", "concept", Icons.Material.Filled.AccountBalanceWallet, Color.Info),
+        new("Datenqualitaet", "Data quality", "Prueft fehlende Lieferanten, Warengruppen, Artikeltexte, Waehrung, Preisbasis und Dubletten.", "Checks missing suppliers, material groups, article texts, currency, price basis and duplicates.", "EKKO, EKPO, Mapping", "Vertrauen in Kennzahlen sichern", "secure trust in KPIs", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", Icons.Material.Filled.FactCheck, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Markiert ueberfaellige und bald faellige EKET-Termine mit offenem Wert und Lieferant.", "Marks overdue and soon-due EKET schedules with open value and supplier.", "EKET, EKPO, EKKO", "Rueckstaende vor Eskalation sehen", "see delays before escalation", _liveState.EketLoaded ? "berechenbar" : "wartet auf EKET", _liveState.EketLoaded ? "calculable" : "waiting for EKET", Icons.Material.Filled.PendingActions, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Spend-Konzentration", "Spend concentration", "Zeigt Top-10-Lieferantenanteil, Single-Source-Risiko und Konzentration je Warengruppe.", "Shows top-10 supplier share, single-source risk and concentration by material group.", "EKKO, EKPO", "Verhandlungshebel und Abhaengigkeit erkennen", "identify negotiation leverage and dependency", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.PieChart, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Savings Tracker", "Savings tracker", "Misst Preisreduktionen, vermiedene Preissteigerungen und realisierte Einsparung pro Massnahme.", "Measures price reductions, avoided increases and realised savings by initiative.", "EKPO, Massnahmenliste, FX", "Einkaufserfolg sichtbar machen", "make purchasing impact visible", "Konzept", "concept", Icons.Material.Filled.QueryStats, Color.Info),
+        new("Bestellrhythmus", "Order cadence", "Erkennt Kleinstbestellungen, zu haeufige Bestellungen und Buendelungspotenzial pro Artikel/Lieferant.", "Detects small orders, too frequent orders and bundling potential by article/supplier.", "EKKO, EKPO", "Prozesskosten senken", "reduce process cost", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.AutoGraph, _liveState.EkpoLoaded ? Color.Success : Color.Warning)
+    ];
+
+    private IReadOnlyList<PurchasingIdeaPriority> PurchasingIdeaPriorities =>
+    [
+        new("1. Live-Probe zu Vollaggregation", "1. Live sample to full aggregation", "EKPO/EKET liefern Daten; jetzt braucht es saubere Jahres-/Periodenaggregation.", "EKPO/EKET now deliver data; next is clean year/period aggregation.", Icons.Material.Filled.BuildCircle, Color.Success),
+        new("2. Preisentwicklung aktivieren", "2. Activate price trend", "PowerBI nutzt Min(EKPO.Netwr CHF/Stk); diese Logik ist jetzt lokal nachgebaut.", "Power BI uses Min(EKPO.Netwr CHF/unit); this logic is now rebuilt locally.", Icons.Material.Filled.TrendingUp, Color.Info),
+        new("3. Liefertermin-Risiko anzeigen", "3. Show delivery due-date risk", "EKET offene Mengen und Termine sind die beste operative Fruehwarnung.", "EKET open quantities and dates are the best operational early warning.", Icons.Material.Filled.PendingActions, Color.Info),
+        new("4. Lieferantenrisiko aufbauen", "4. Build supplier risk", "Kombiniert Performance, offene Werte, Konzentration und Abhaengigkeit.", "Combines performance, open values, concentration and dependency.", Icons.Material.Filled.Security, Color.Info),
+        new("5. Contract Cockpit ausbauen", "5. Extend contract cockpit", "Mengenkontrakte und Restverpflichtungen brauchen klare fachliche Abgrenzung.", "Quantity contracts and remaining commitments need clear functional separation.", Icons.Material.Filled.Assignment, Color.Info)
+    ];
+
+    private PurchasingImplementationPackage SelectedImplementationPackage
+        => PurchasingImplementationPackages.FirstOrDefault(x => string.Equals(x.Key, CurrentPurchasingPage, StringComparison.OrdinalIgnoreCase))
+           ?? PurchasingImplementationPackages[0];
+
+    private IReadOnlyList<PurchasingImplementationPackage> PurchasingImplementationPackages =>
+    [
+        new(
+            "ideen/datenservice",
+            "Echter Einkauf-Datenservice",
+            "Real purchasing data service",
+            "Grundlage fuer alle echten Einkaufskennzahlen.",
+            "Foundation for all real purchasing KPIs.",
+            "Die aktuelle Live-Probe wird zu einer belastbaren Aggregationsschicht ausgebaut, damit alle weiteren Ideen nicht auf `$top=1000`, sondern auf vollstaendigen Periodenwerten laufen.",
+            "The current live sample is expanded into a reliable aggregation layer so all later ideas run on full period values instead of `$top=1000`.",
+            "EKKOSet, EKPOSet, eketSet, Zeitraumfilter, Belegart, Lieferant, Warengruppe, Artikel",
+            "Spend CHF, offene Menge, offener Wert, Kontraktwert, Beleganzahl, Lieferantenanzahl, letzter Refresh.",
+            "spend CHF, open quantity, open value, contract value, order count, supplier count, latest refresh.",
+            "Service/Cache fuer periodische Aggregation bauen; Filter fuer Jahr/Von-Bis/Lieferant/Warengruppe; Belegarten fuer Bestellung vs. Kontrakt trennen.",
+            "Build service/cache for periodic aggregation; filters for year/from-to/supplier/material group; separate document types for order vs. contract.",
+            "Naechster Schritt: Datenmodell fuer Aggregation definieren und EKPO/EKET Vollabzug gegen SAP testen.",
+            "Next step: define aggregation data model and test full EKPO/EKET extraction against SAP.",
+            "Startpunkt",
+            "starting point",
+            Icons.Material.Filled.Storage,
+            Color.Success,
+            [
+                new("Aggregationsmodell", "Aggregation model", "Zieltabelle oder Cache fuer Spend, offene Werte und offene Mengen definieren.", "define target table or cache for spend, open values and open quantities."),
+                new("Filterlogik", "Filter logic", "Jahr, Von/Bis, Lieferant, Warengruppe und Artikel als Standardfilter vorbereiten.", "prepare year, from/to, supplier, material group and article as standard filters."),
+                new("Performance", "Performance", "Dashboard liest Aggregatwerte, nicht bei jedem Seitenaufruf alle SAP-Zeilen.", "dashboard reads aggregate values instead of all SAP rows on every page request.")
+            ]),
+        new(
+            "ideen/liefertermin-risiko",
+            "Liefertermin-Risiko",
+            "Delivery due-date risk",
+            "Sofortnutzen aus EKET.",
+            "Immediate value from EKET.",
+            "Offene Mengen und Werte werden nach Faelligkeit klassiert, damit Rueckstaende und kurzfristige Risiken pro Lieferant/Artikel sichtbar werden.",
+            "Open quantities and values are classified by due date so delays and short-term risks by supplier/article become visible.",
+            "EKET.Eindt, EKET.Menge, EKET.Wemng, EKPO.Netwr, EKPO.Menge, EKKO.Lifnr",
+            "Ueberfaelliger offener Wert, offene Menge 7/30 Tage, Terminampel, Rueckstandsquote.",
+            "overdue open value, open quantity 7/30 days, due-date traffic light, overdue rate.",
+            "Offenmenge = EKET.Menge - EKET.Wemng; Bewertung mit EKPO-Stueckwert; EINDT gegen Heute in Klassen einteilen.",
+            "open quantity = EKET.Menge - EKET.Wemng; value with EKPO unit price; classify EINDT against today.",
+            "Naechster Schritt: eigene Seite mit Faelligkeitskalender, Rueckstands-Hotlist und Lieferant/Artikel-Drilldown bauen.",
+            "Next step: build own page with due-date calendar, overdue hotlist and supplier/article drilldown.",
+            _liveState.EketLoaded ? "bereit" : "wartet auf EKET",
+            _liveState.EketLoaded ? "ready" : "waiting for EKET",
+            Icons.Material.Filled.PendingActions,
+            _liveState.EketLoaded ? Color.Success : Color.Warning,
+            [
+                new("Datumsklassen", "Date buckets", "Ueberfaellig, 0-7 Tage, 8-30 Tage und spaeter als Standardklassen.", "overdue, 0-7 days, 8-30 days and later as standard classes."),
+                new("Bewertung", "Valuation", "Offene EKET-Mengen mit EKPO-Netto-Stueckwert bewerten.", "value open EKET quantities with EKPO net unit price."),
+                new("Drilldown", "Drilldown", "Von Lieferant zu Artikel und Bestellbeleg navigieren.", "navigate from supplier to article and purchase order.")
+            ]),
+        new(
+            "ideen/preisabweichung",
+            "Preisentwicklung CHF",
+            "Price trend CHF",
+            "PowerBI-Logik pro Artikel/Jahr.",
+            "Power BI logic by article/year.",
+            "Minimum Netto-Stueckpreis wird pro Artikel und Jahr sichtbar gemacht.",
+            "Minimum net unit price is shown by article and year.",
+            "EKPO.Netwr, EKPO.Menge, EKPO.Matnr, EKKO.Bedat, EKKO.Lifnr, FX/Budgetkurse",
+            "Min(Netwr CHF/Stk), Artikel, Jahr, Lieferantenslicer.",
+            "Min(Netwr CHF/unit), article, year, supplier slicer.",
+            "Netto-Stueckpreis als Netwr/Menge bilden und Minimum je Artikel/Jahr ausweisen.",
+            "calculate net unit price as Netwr/quantity and show minimum by article/year.",
+            "Naechster Schritt: Lieferantennamen aus Data-Quelle mitcachen.",
+            "Next step: cache supplier names from Data source.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.TrendingUp,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning,
+            [
+                new("Preisnormalisierung", "Price normalisation", "Preis pro Einheit stabil aus NETWR/MENGE bilden.", "derive stable unit price from NETWR/MENGE."),
+                new("Jahr", "Year", "PowerBI nutzt EKKO.Bedat Jahr als Spalte.", "Power BI uses EKKO.Bedat year as column."),
+                new("Minimum", "Minimum", "PowerBI aggregiert mit Min(Netwr CHF/Stk).", "Power BI aggregates with Min(Netwr CHF/unit).")
+            ]),
+        new(
+            "ideen/spend-konzentration",
+            "Spend-Konzentration",
+            "Spend concentration",
+            "Lieferantenabhaengigkeit und Buendelungspotenzial.",
+            "Supplier dependency and bundling potential.",
+            "Spend wird nach Lieferant und Warengruppe verdichtet, um Top-Lieferantenanteile, Single-Source-Risiken und Fragmentierung sichtbar zu machen.",
+            "Spend is aggregated by supplier and material group to show top supplier shares, single-source risks and fragmentation.",
+            "EKPO.Netwr, EKPO.Matkl, EKKO.Lifnr, Lieferantenname, Warengruppentext",
+            "Top-10-Anteil, Lieferantenanzahl je Warengruppe, Single-Source-Wert, Spend-Pareto.",
+            "top-10 share, supplier count by material group, single-source value, spend Pareto.",
+            "Spend je Warengruppe sortieren, kumulierten Anteil berechnen und Lieferantenkonzentration klassieren.",
+            "sort spend by material group, calculate cumulative share and classify supplier concentration.",
+            "Naechster Schritt: Pareto-Ansicht und Treemap fuer Lieferant/Warengruppe bauen.",
+            "Next step: build Pareto view and treemap for supplier/material group.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.PieChart,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning,
+            [
+                new("Pareto", "Pareto", "Top-N Lieferanten und kumulierten Spend-Anteil berechnen.", "calculate top-N suppliers and cumulative spend share."),
+                new("Fragmentierung", "Fragmentation", "Viele kleine Lieferanten pro Warengruppe markieren.", "mark many small suppliers per material group."),
+                new("Buendelung", "Bundling", "Warengruppen mit hohem Buendelungspotenzial hervorheben.", "highlight material groups with high bundling potential.")
+            ]),
+        new(
+            "ideen/datenqualitaet",
+            "Datenqualitaet Einkauf",
+            "Purchasing data quality",
+            "Vertrauen in die Einkaufskennzahlen sichern.",
+            "Secure trust in purchasing KPIs.",
+            "Fehlende Stammdaten und Mapping-Luecken werden als eigene Qualitaetskennzahlen angezeigt, damit falsche Analysen frueh auffallen.",
+            "Missing master data and mapping gaps are shown as dedicated quality KPIs so wrong analyses are detected early.",
+            "EKKO, EKPO, EKET, Lieferantenmapping, Warengruppenmapping, Artikeltext",
+            "Mapping-Abdeckung %, fehlende Warengruppe, fehlender Artikeltext, fehlender Lieferant, Nullpreis.",
+            "mapping coverage %, missing material group, missing article text, missing supplier, zero price.",
+            "Pflichtfelder zaehlen, Leerwerte klassieren, Mappingtreffer berechnen und Fehler nach Auswirkung priorisieren.",
+            "count required fields, classify empty values, calculate mapping hits and prioritise errors by impact.",
+            "Naechster Schritt: Pflichtfeldkatalog fuer Einkauf definieren und Datenqualitaetsampel bauen.",
+            "Next step: define purchasing required-field catalogue and build data quality traffic light.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.FactCheck,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning,
+            [
+                new("Pflichtfelder", "Required fields", "Ebeln, Ebelp, Matnr, Matkl, Menge, Netwr, Lifnr pruefen.", "check Ebeln, Ebelp, Matnr, Matkl, Menge, Netwr, Lifnr."),
+                new("Mappingquote", "Mapping rate", "Warengruppen- und Lieferantenmapping pro Quelle messen.", "measure material group and supplier mapping per source."),
+                new("Fehlerwirkung", "Error impact", "Fehler nach betroffenem Spend oder offenem Wert priorisieren.", "prioritise errors by affected spend or open value.")
+            ])
+    ];
+
+    private IReadOnlyList<PurchasingIdeaWorkPackage> PurchasingIdeaWorkPackages =>
+    [
+        new(
+            "Lieferantenrisiko",
+            "Supplier risk",
+            "Abhaengigkeit und Lieferfaehigkeit in einem Score.",
+            "Dependency and delivery capability in one score.",
+            "Einen fruehen Warnindikator fuer kritische Lieferanten schaffen, bevor offene Termine oder Single-Source-Abhaengigkeit operativ eskalieren.",
+            "Create an early warning indicator for critical suppliers before open schedules or single-source dependency escalate operationally.",
+            "EKKO, EKPO, EKET, Lieferantenstamm, optional Reklamationen",
+            "Risiko-Score 0-100, Top-10-Abhaengigkeit, offener Wert je Lieferant, ueberfaellige Menge.",
+            "risk score 0-100, top-10 dependency, open value by supplier, overdue quantity.",
+            "Gewichtung aus Spend-Anteil, Anzahl offenen Belegen, Terminrueckstand, Single-Source-Hinweis und Datenqualitaet.",
+            "Weighted score from spend share, open order count, schedule delay, single-source marker and data quality.",
+            "Ampelmatrix Lieferant x Warengruppe, Risiko-Hotlist, 3D-Raum Spend/Rueckstand/Score.",
+            "traffic-light matrix supplier x material group, risk hotlist, 3D space spend/delay/score.",
+            "Naechster Schritt: EKPO/EKET Vollaggregation pro Lieferant aufbauen und Score-Gewichtung fachlich mit Einkauf festlegen.",
+            "Next step: build full EKPO/EKET aggregation by supplier and agree score weights with purchasing.",
+            _liveState.EkpoLoaded && _liveState.EketLoaded ? "bereit" : "wartet auf EKPO/EKET",
+            _liveState.EkpoLoaded && _liveState.EketLoaded ? "ready" : "waiting for EKPO/EKET",
+            Icons.Material.Filled.WarningAmber,
+            _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new(
+            "Preisentwicklung CHF",
+            "Price trend CHF",
+            "PowerBI-Preislogik nach Artikel und Jahr.",
+            "Power BI price logic by article and year.",
+            "Minimum Netto-Stueckpreis wie in PowerBI transparent machen.",
+            "Make minimum net unit price transparent like in Power BI.",
+            "EKPO.Netwr, EKPO.Menge, EKPO.Matnr, EKPO.Txz01, EKKO.Bedat",
+            "Min(Netwr CHF/Stk), Artikel, Jahr, Lieferantenslicer.",
+            "Min(Netwr CHF/unit), article, year, supplier slicer.",
+            "Stueckpreis = Netto / Menge, danach Minimum je Artikel/Jahr wie PowerBI.",
+            "Unit price = net / quantity, then minimum by article/year like Power BI.",
+            "Pivot nach Jahr, Artikel-Hotlist, Verlaufslinie je Artikel.",
+            "pivot by year, article hotlist, trend line by article.",
+            "Naechster Schritt: Lieferanten- und Warengruppennamen aus Data/Data2 als Mapping anbinden.",
+            "Next step: connect supplier and material group names from Data/Data2 as mapping.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.TrendingUp,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new(
+            "Maverick Buying",
+            "Maverick buying",
+            "Einkauf ausserhalb Standards erkennen.",
+            "Detect purchasing outside standards.",
+            "Bestellungen sichtbar machen, die ausserhalb bevorzugter Lieferanten, Kontrakte oder Warengruppenregeln laufen.",
+            "Show orders that run outside preferred suppliers, contracts or material-group rules.",
+            "EKKO, EKPO, Kontrakte, Preferred-Supplier-Liste",
+            "Maverick-Anteil %, Wert ausserhalb Vertrag, Anzahl Regelverletzungen, betroffene Warengruppen.",
+            "maverick share %, value outside contract, rule violation count, affected material groups.",
+            "Bestellpositionen gegen Vertrags-/Preferred-Supplier-Regeln matchen und Abweichungen gruppieren.",
+            "Match order items against contract/preferred-supplier rules and group deviations.",
+            "Compliance-Funnel, Abweichungstabelle, Heatmap Einkaeufer x Warengruppe.",
+            "compliance funnel, deviation table, heatmap purchaser x material group.",
+            "Naechster Schritt: Preferred-Supplier- und Vertragsregeln als Stammdatenquelle definieren.",
+            "Next step: define preferred supplier and contract rules as master-data source.",
+            "Konzept",
+            "concept",
+            Icons.Material.Filled.Policy,
+            Color.Info),
+        new(
+            "Rahmenvertragsnutzung",
+            "Contract utilisation",
+            "Kontrakte, Abrufe und Restmengen steuern.",
+            "Manage contracts, call-offs and remaining quantities.",
+            "Mengenkontrakte so auswerten, dass Restmenge, Restwert und Verfallsrisiko aktiv steuerbar werden.",
+            "Evaluate quantity contracts so remaining quantity, remaining value and expiry risk become manageable.",
+            "EKKO, EKPO, EKET, Vertragsbelegarten",
+            "Abrufquote %, Restmenge, Restwert CHF, Laufzeit, faellige Verpflichtung.",
+            "consumption rate %, remaining quantity, remaining value CHF, term, due commitment.",
+            "Kontraktpositionen von normalen Bestellungen trennen und EKET-Mengen gegen Bestell-/Abrufmenge rechnen.",
+            "Separate contract items from normal orders and calculate EKET quantities against ordered/called-off quantity.",
+            "Kontrakt-Cockpit, Ampel Restlaufzeit, Lieferant/Artikel-Ranking.",
+            "contract cockpit, remaining-term traffic light, supplier/article ranking.",
+            "Naechster Schritt: SAP-Belegarten und Kennzeichen fuer Kontrakte mit Einkauf/SAP klaeren.",
+            "Next step: clarify SAP document types and markers for contracts with purchasing/SAP.",
+            _liveState.EketLoaded ? "teilweise" : "wartet auf EKET",
+            _liveState.EketLoaded ? "partial" : "waiting for EKET",
+            Icons.Material.Filled.AssignmentTurnedIn,
+            _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new(
+            "Working Capital",
+            "Working capital",
+            "Cash-Wirkung offener Bestellungen prognostizieren.",
+            "Forecast cash effect of open orders.",
+            "Aus offenen Bestellungen und Faelligkeiten ableiten, wann Einkaufs-Cash-Abfluss oder Lageraufbau zu erwarten ist.",
+            "Use open orders and due dates to derive expected purchasing cash outflow or inventory build-up.",
+            "EKPO, EKET, FI/AP, Zahlungsbedingungen",
+            "Cash Forecast CHF, faelliger offener Wert, Rueckstandswert, Monatsbedarf.",
+            "cash forecast CHF, due open value, overdue value, monthly requirement.",
+            "Offenen Wert aus EKET/EKPO berechnen und nach Faelligkeitsmonat plus Zahlungsziel verschieben.",
+            "Calculate open value from EKET/EKPO and shift by due month plus payment terms.",
+            "Monatskurve, Cash-Kalender, Lieferant mit groesster Cash-Wirkung.",
+            "monthly curve, cash calendar, supplier with highest cash impact.",
+            "Naechster Schritt: Zahlungsbedingungen/FI-Quelle anbinden oder zunaechst mit Standard-Zahlungsziel simulieren.",
+            "Next step: connect payment terms/FI source or start with standard payment-term simulation.",
+            "Konzept",
+            "concept",
+            Icons.Material.Filled.AccountBalanceWallet,
+            Color.Info),
+        new(
+            "Datenqualitaet",
+            "Data quality",
+            "Luecken in Einkaufsdaten sichtbar machen.",
+            "Make gaps in purchasing data visible.",
+            "Fehlende oder falsche Stammdaten erkennen, damit Kennzahlen belastbar werden.",
+            "Detect missing or wrong master data so KPIs become reliable.",
+            "EKKO, EKPO, EKET, Lieferanten-/Warengruppenmapping",
+            "Mapping-Abdeckung %, fehlende Warengruppe, fehlender Artikeltext, Preisbasis fehlt, Dubletten.",
+            "mapping coverage %, missing material group, missing article text, missing price basis, duplicates.",
+            "Pflichtfelder je Quelle pruefen, Null-/Leerwerte zaehlen und Mappingtreffer gegen Stammdatentabellen berechnen.",
+            "Check required fields by source, count null/empty values and calculate mapping matches against master-data tables.",
+            "Qualitaetsampel, Fehlerliste, Verlauf Datenqualitaet pro Refresh.",
+            "quality traffic light, error list, data-quality trend by refresh.",
+            "Naechster Schritt: Pflichtfeldliste fuer Einkauf definieren und Datenqualitaetsregeln analog Finance anlegen.",
+            "Next step: define required-field list for purchasing and create quality rules analogous to finance.",
+            _liveState.EkkoLoaded ? "startklar" : "wartet",
+            _liveState.EkkoLoaded ? "ready" : "waiting",
+            Icons.Material.Filled.FactCheck,
+            _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new(
+            "Liefertermin-Risiko",
+            "Delivery due-date risk",
+            "Rueckstand und kurzfristige Faelligkeiten erkennen.",
+            "Detect overdue and near-due deliveries.",
+            "Operativ zeigen, welche offenen Mengen und Werte ueberfaellig oder kurzfristig faellig sind.",
+            "Operationally show which open quantities and values are overdue or due soon.",
+            "EKET.Eindt, EKET.Menge, EKET.Wemng, EKPO.Netwr, EKKO.Lifnr",
+            "Ueberfaelliger offener Wert, offene Menge 7/30 Tage, Terminampel, Rueckstandsquote.",
+            "overdue open value, open quantity 7/30 days, due-date traffic light, overdue rate.",
+            "Offenmenge = EKET.Menge - EKET.Wemng; Bewertung mit EKPO-Stueckwert; Faelligkeit gegen Heute klassieren.",
+            "open quantity = EKET.Menge - EKET.Wemng; value with EKPO unit price; classify due date against today.",
+            "Faelligkeitskalender, Rueckstands-Hotlist, Balken Lieferant x Monat.",
+            "due-date calendar, overdue hotlist, supplier x month bars.",
+            "Naechster Schritt: Vollaggregation mit Datumsklassen ueberfaellig, 0-7, 8-30, >30 Tage bauen.",
+            "Next step: build full aggregation with date classes overdue, 0-7, 8-30, >30 days.",
+            _liveState.EketLoaded ? "bereit" : "wartet auf EKET",
+            _liveState.EketLoaded ? "ready" : "waiting for EKET",
+            Icons.Material.Filled.PendingActions,
+            _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new(
+            "Spend-Konzentration",
+            "Spend concentration",
+            "Abhaengigkeit und Buendelungspotenzial messen.",
+            "Measure dependency and bundling potential.",
+            "Zeigen, wo zu viel Spend bei wenigen Lieferanten liegt oder wo Buendelung bessere Konditionen bringen kann.",
+            "Show where too much spend is concentrated with few suppliers or where bundling can improve terms.",
+            "EKPO, EKKO, Warengruppe, Lieferant",
+            "Top-10-Anteil %, Lieferantenanzahl je Warengruppe, Single-Source-Wert, Fragmentierung.",
+            "top-10 share %, supplier count by material group, single-source value, fragmentation.",
+            "Spend je Warengruppe nach Lieferant sortieren und Konzentrationsquoten berechnen.",
+            "Sort spend by supplier within material group and calculate concentration ratios.",
+            "Pareto, Treemap, Konzentrationsmatrix Warengruppe x Lieferant.",
+            "Pareto, treemap, concentration matrix material group x supplier.",
+            "Naechster Schritt: Materialgruppen-Texte stabil anbinden und Top-N/Pareto-Komponente bauen.",
+            "Next step: stabilise material-group texts and build top-N/Pareto component.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.PieChart,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new(
+            "Savings Tracker",
+            "Savings tracker",
+            "Einkaufserfolg als Massnahmenwirkung zeigen.",
+            "Show purchasing success as initiative impact.",
+            "Realisierte Einsparungen und vermiedene Preissteigerungen pro Massnahme transparent machen.",
+            "Make realised savings and avoided price increases transparent by initiative.",
+            "EKPO, Massnahmenliste, Referenzpreis, FX",
+            "Realisierte Einsparung CHF, Avoided Cost CHF, Pipeline CHF, Umsetzungsgrad %.",
+            "realised savings CHF, avoided cost CHF, pipeline CHF, implementation rate %.",
+            "Istpreis gegen Referenzpreis und Menge rechnen; Massnahmenstatus separat pflegen.",
+            "Calculate actual price against reference price and quantity; maintain initiative status separately.",
+            "Savings Funnel, Massnahmenboard, Monatsverlauf realisiert/geplant.",
+            "savings funnel, initiative board, monthly trend realised/planned.",
+            "Naechster Schritt: einfache Massnahmenliste als manuelle Tabelle oder Upload definieren.",
+            "Next step: define a simple initiative list as manual table or upload.",
+            "Konzept",
+            "concept",
+            Icons.Material.Filled.QueryStats,
+            Color.Info),
+        new(
+            "Bestellrhythmus",
+            "Order cadence",
+            "Kleinstbestellungen und Prozesskosten reduzieren.",
+            "Reduce small orders and process cost.",
+            "Zu haeufige oder sehr kleine Bestellungen erkennen und Buendelungspotenzial anzeigen.",
+            "Detect too frequent or very small orders and show bundling potential.",
+            "EKKO, EKPO, Artikel, Lieferant, Bestellwert",
+            "Kleinstbestellungen Anzahl, Median-Bestellwert, Bestellungen je Monat, Buendelungspotenzial.",
+            "small order count, median order value, orders per month, bundling potential.",
+            "Bestellungen je Artikel/Lieferant/Monat zaehlen und gegen Mindestwert oder Frequenzschwelle pruefen.",
+            "Count orders by article/supplier/month and check against minimum value or frequency threshold.",
+            "Scatter Menge/Wert, Prozesskosten-Hotlist, Monatsverteilung.",
+            "scatter quantity/value, process-cost hotlist, monthly distribution.",
+            "Naechster Schritt: Schwellwerte fuer Kleinstbestellung und Prozesskostensatz fachlich festlegen.",
+            "Next step: agree thresholds for small orders and process-cost rate.",
+            _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
+            _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
+            Icons.Material.Filled.AutoGraph,
+            _liveState.EkpoLoaded ? Color.Success : Color.Warning)
+    ];
+
+    private IReadOnlyList<PurchasingIdeaKpi> PurchasingIdeaKpis =>
+    [
+        new("Spend Management", "Spend management", "Spend CHF", "spend CHF", "Jahr / Lieferant / Warengruppe / Artikel", "EKKO+EKPO", _liveState.EkpoLoaded ? "Live-Probe" : "wartet auf EKPO", _liveState.EkpoLoaded ? "live sample" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Spend Management", "Spend management", "Top-10-Lieferantenanteil %", "top-10 supplier share %", "Jahr / Warengruppe", "EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Lieferantenrisiko", "Supplier risk", "Risiko-Score 0-100", "Risk score 0-100", "Lieferant / Warengruppe / Artikel", "EKKO+EKPO+EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "bereit" : "wartet auf Tabellen", _liveState.EkpoLoaded && _liveState.EketLoaded ? "ready" : "waiting for tables", _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Preisentwicklung", "Price trend", "Min(Netwr CHF/Stk)", "Min(Netwr CHF/unit)", "Artikel / Jahr", "EKPO+EKKO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("PowerBI Abgleich", "Power BI alignment", "gleiche Aggregation", "same aggregation", "Artikel / Lieferant / Jahr", "x.pbix", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Maverick Buying", "Maverick buying", "Anteil ausserhalb Vertrag", "share outside contract", "Einkaeufer / Lieferant / Warengruppe", "EKKO+EKPO+Kontrakt", "Konzept", "concept", Color.Info),
+        new("Rahmenvertragsnutzung", "Contract utilisation", "Abrufquote %", "consumption rate %", "Kontrakt / Lieferant / Artikel", "EKPO+EKET", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Ueberfaelliger offener Wert CHF", "overdue open value CHF", "Monat / Lieferant / Artikel", "EKET+EKPO", _liveState.EketLoaded ? "bereit" : "wartet auf EKET", _liveState.EketLoaded ? "ready" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Liefertermin-Risiko", "Delivery due-date risk", "Offene Menge faellig 30 Tage", "open quantity due 30 days", "Termin / Artikel / Lieferant", "EKET", _liveState.EketLoaded ? "bereit" : "wartet auf EKET", _liveState.EketLoaded ? "ready" : "waiting for EKET", _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Working Capital", "Working capital", "Cash Forecast CHF", "cash forecast CHF", "Monat / Lieferant / Warengruppe", "EKPO+EKET+FI", "Konzept", "concept", Color.Info),
+        new("Bestellrhythmus", "Order cadence", "Kleinstbestellungen Anzahl", "small order count", "Lieferant / Artikel / Monat", "EKKO+EKPO", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("Savings Tracker", "Savings tracker", "Realisierte Einsparung CHF", "realised savings CHF", "Massnahme / Lieferant / Artikel", "EKPO+Massnahmen", "Konzept", "concept", Color.Info),
+        new("Datenqualitaet", "Data quality", "Mapping-Abdeckung %", "mapping coverage %", "Tabelle / Feld / Land", "EKKO+EKPO+Mapping", _liveState.EkkoLoaded ? "startklar" : "wartet", _liveState.EkkoLoaded ? "ready" : "waiting", _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("Datenqualitaet", "Data quality", "Fehlende Warengruppe / Artikeltext", "missing material group / text", "Artikel / Warengruppe", "EKPO+Mapping", _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO", _liveState.EkpoLoaded ? "ready" : "waiting for EKPO", _liveState.EkpoLoaded ? Color.Success : Color.Warning)
+    ];
+
+    private readonly List<Purchasing3dIndicator> Purchasing3dIndicators =
+    [
+        new("spend", "Spend CHF", "Spend CHF", "CHF"),
+        new("openValue", "Offener Bestellwert", "Open order value", "CHF"),
+        new("openQuantity", "Offene Menge", "Open quantity", "Qty"),
+        new("contractValue", "Kontrakt-Restwert", "Contract remaining value", "CHF"),
+        new("deliveryRisk", "Liefertermin-Risiko", "Delivery due-date risk", "CHF"),
+        new("priceVariance", "Preisentwicklung CHF", "Price trend CHF", "CHF"),
+        new("spendConcentration", "Spend-Konzentration", "Spend concentration", "CHF"),
+        new("dataQuality", "Datenqualitaet", "Data quality", "Issues"),
+        new("supplierScore", "Lieferantenperformance", "Supplier performance", "%")
+    ];
+
+    private readonly List<Purchasing3dBaseRow> Purchasing3dBaseRows =
+    [
+        new("Lieferant A", 2024, 1450000d, 260000d, 11800d, 420000d, 91d),
+        new("Lieferant A", 2025, 1680000d, 310000d, 13200d, 460000d, 93d),
+        new("Lieferant A", 2026, 1820000d, 335000d, 14100d, 490000d, 92d),
+        new("Lieferant B", 2024, 980000d, 190000d, 9300d, 260000d, 86d),
+        new("Lieferant B", 2025, 1120000d, 225000d, 10100d, 315000d, 88d),
+        new("Lieferant B", 2026, 1240000d, 250000d, 10800d, 350000d, 89d),
+        new("Warengruppe Sensorik", 2024, 760000d, 120000d, 6400d, 210000d, 94d),
+        new("Warengruppe Sensorik", 2025, 890000d, 145000d, 7100d, 230000d, 95d),
+        new("Warengruppe Sensorik", 2026, 940000d, 155000d, 7400d, 245000d, 94d),
+        new("Artikel Top 10", 2024, 520000d, 83000d, 2800d, 160000d, 90d),
+        new("Artikel Top 10", 2025, 610000d, 97000d, 3100d, 180000d, 91d),
+        new("Artikel Top 10", 2026, 680000d, 105000d, 3350d, 195000d, 92d)
+    ];
+
+    private IReadOnlyList<PurchasingSectionChartRow> SpendChartRows
+        => _liveState.EkpoLoaded && _liveState.SpendChartRows.Count > 0
+            ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
+            : BuildPurchasingChartRows(x => x.Spend, FormatChf);
+
+    private IReadOnlyList<PurchasingSectionChartRow> OpenOrderChartRows
+        => _liveState.EkkoLoaded
+            ? BuildOpenOrderLiveChartRows()
+            : BuildPurchasingChartRows(x => x.OpenValue, FormatChf);
+
+    private IReadOnlyList<PurchasingSectionChartRow> ContractChartRows
+        => _liveState.EketLoaded && _liveState.ContractChartRows.Count > 0
+            ? BuildLiveChartRows(_liveState.ContractChartRows, FormatChf)
+            : BuildPurchasingChartRows(x => x.ContractValue, FormatChf);
+
+    private IReadOnlyList<PurchasingSectionChartRow> SupplierChartRows
+        => BuildPurchasingChartRows(x => x.SupplierScore, value => $"{value:N1}%");
+
+    private IReadOnlyList<PurchasingIdeaAnalysisRow> SelectedIdeaRows => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => _liveState.DeliveryRiskRows,
+        "ideen/preisabweichung" => _liveState.PriceVarianceRows,
+        "ideen/spend-konzentration" => _liveState.SpendConcentrationRows,
+        "ideen/datenqualitaet" => _liveState.DataQualityRows,
+        _ => []
+    };
+
+    private IReadOnlyList<PurchasingSectionChartRow> SelectedIdeaChartRows => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => BuildLiveChartRows(_liveState.DeliveryRiskChartRows, FormatChf),
+        "ideen/preisabweichung" => BuildLiveChartRows(_liveState.PriceVarianceChartRows, FormatChf),
+        "ideen/spend-konzentration" => BuildLiveChartRows(_liveState.SpendConcentrationChartRows, FormatChf),
+        "ideen/datenqualitaet" => BuildLiveChartRows(_liveState.DataQualityChartRows, value => value.ToString("N0")),
+        _ => []
+    };
+
+    private IReadOnlyList<PurchasingSectionKpi> SelectedIdeaKpis => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" =>
+        [
+            new("Ueberfaellig", "Overdue", FormatChartValue("Ueberfaellig", _liveState.DeliveryRiskChartRows, FormatChf), "offener Wert", "open value"),
+            new("0-7 Tage", "0-7 days", FormatChartValue("0-7 Tage", _liveState.DeliveryRiskChartRows, FormatChf), "kurzfristig faellig", "due short-term"),
+            new("Hotlist", "Hotlist", _liveState.DeliveryRiskRows.Count.ToString("N0"), "Lieferant / Artikel", "supplier / article"),
+            new("Datenbasis", "Data basis", _liveState.EketLoaded ? "EKET Cache" : "-", "offene Mengen", "open quantities")
+        ],
+        "ideen/preisabweichung" =>
+        [
+            new("Artikelpreise", "Article prices", _liveState.PriceVarianceRows.Count.ToString("N0"), "PowerBI Pivot", "Power BI pivot"),
+            new("Min Stueckpreis", "Min unit price", _liveState.PriceVarianceChartRows.Count > 0 ? FormatChf(_liveState.PriceVarianceChartRows.Min(x => x.Value)) : "-", "Netwr/Menge", "Netwr/quantity"),
+            new("Jahre", "Years", _liveState.PriceVarianceChartRows.Count.ToString("N0"), "EKKO.Bedat", "EKKO.Bedat"),
+            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Min(Netwr CHF/Stk)", "Min(Netwr CHF/unit)")
+        ],
+        "ideen/spend-konzentration" =>
+        [
+            new("Top 10 Spend", "Top 10 spend", FormatChf(_liveState.SpendConcentrationChartRows.Sum(x => x.Value)), "Lieferanten-Pareto", "supplier pareto"),
+            new("Top Anteil", "Top share", FormatTopShare(), "vom Gesamtspend", "of total spend"),
+            new("Lieferanten", "Suppliers", _liveState.SupplierCount.ToString("N0"), "EKKO Cache", "EKKO cache"),
+            new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Spend netto", "net spend")
+        ],
+        "ideen/datenqualitaet" =>
+        [
+            new("Pruefungen", "Checks", _liveState.DataQualityRows.Count.ToString("N0"), "Pflichtfelder", "required fields"),
+            new("Fehler gesamt", "Total issues", _liveState.DataQualityChartRows.Sum(x => x.Value).ToString("N0"), "Cache-Zeilen", "cache rows"),
+            new("EKPO", "EKPO", _liveState.PositionSampleCount.ToString("N0"), "Positionen", "items"),
+            new("EKKO", "EKKO", _liveState.PurchaseOrderCount.ToString("N0"), "Bestellkoepfe", "headers")
+        ],
+        _ => []
+    };
+
+    private IReadOnlyList<PurchasingSectionStatusRow> SelectedIdeaStatusRows =>
+    [
+        BuildStatus("Cache", "Cache", _liveState.UsesCache, _liveState.UsesCache ? _liveState.CacheStatus : "leer"),
+        BuildStatus("EKKO", "EKKO", _liveState.EkkoLoaded, _liveState.PurchaseOrderCount.ToString("N0")),
+        BuildStatus("EKPO", "EKPO", _liveState.EkpoLoaded, _liveState.PositionSampleCount.ToString("N0")),
+        BuildStatus("EKET", "EKET", _liveState.EketLoaded, _liveState.ScheduleSampleCount.ToString("N0"))
+    ];
+
+    private IReadOnlyList<PurchasingSectionDetailRow> SelectedIdeaDetailRows => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" =>
+        [
+            new("Faelligkeits-Buckets", "Due-date buckets", $"{_liveState.DeliveryRiskChartRows.Count:N0}", "EKET.Eindt", "SAP live"),
+            new("Offener Wert", "Open value", FormatChf(_liveState.OpenValueSample), "EKET/EKPO", "SAP live"),
+            new("Hotlist", "Hotlist", $"{_liveState.DeliveryRiskRows.Count:N0}", "Lieferant / Artikel", "SAP live"),
+            new("Berechnung", "Calculation", "Menge - WEMNG", "EKET", "SAP live")
+        ],
+        "ideen/preisabweichung" =>
+        [
+            new("PowerBI Kennzahl", "Power BI measure", "Min(Netwr CHF/Stk)", "EKPO", "SAP live"),
+            new("Preis", "Price", "NETWR / MENGE", "EKPO", "SAP live"),
+            new("Jahresspalten", "Year columns", $"{_liveState.PriceVarianceChartRows.Count:N0}", "EKKO.Bedat Jahr", "SAP live"),
+            new("Hotlist", "Hotlist", $"{_liveState.PriceVarianceRows.Count:N0}", "Artikel / Jahr", "SAP live")
+        ],
+        "ideen/spend-konzentration" =>
+        [
+            new("Gesamtspend", "Total spend", FormatChf(_liveState.SpendChfSample), "EKPO.Netwr", "SAP live"),
+            new("Top Lieferanten", "Top suppliers", $"{_liveState.SpendConcentrationRows.Count:N0}", "EKKO.Lifnr", "SAP live"),
+            new("Top Anteil", "Top share", FormatTopShare(), "Pareto", "SAP live"),
+            new("Warengruppen", "Material groups", TopMaterialGroupLabel, "EKPO.Matkl", "SAP live")
+        ],
+        "ideen/datenqualitaet" =>
+        [
+            new("Fehlender Lieferant", "Missing supplier", FormatChartValue("fehlender Lieferant", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKKO.Lifnr", "SAP live"),
+            new("Fehlende Warengruppe", "Missing material group", FormatChartValue("fehlende Warengruppe", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Matkl", "SAP live"),
+            new("Nullmenge", "Zero quantity", FormatChartValue("Nullmenge", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Menge", "SAP live"),
+            new("Nullwert", "Zero value", FormatChartValue("Nullwert", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Netwr", "SAP live")
+        ],
+        _ => []
+    };
+
+    private string SelectedIdeaAnalysisTitleDe => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Liefertermin-Risiko produktiv",
+        "ideen/preisabweichung" => "Preisentwicklung CHF produktiv",
+        "ideen/spend-konzentration" => "Spend-Konzentration produktiv",
+        "ideen/datenqualitaet" => "Datenqualitaet produktiv",
+        _ => "Einkauf Analyse"
+    };
+
+    private string SelectedIdeaAnalysisTitleEn => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Delivery due-date risk productive",
+        "ideen/preisabweichung" => "Price trend CHF productive",
+        "ideen/spend-konzentration" => "Spend concentration productive",
+        "ideen/datenqualitaet" => "Data quality productive",
+        _ => "Purchasing analysis"
+    };
+
+    private string SelectedIdeaAnalysisDescriptionDe => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Offene EKET-Mengen werden bewertet und nach Faelligkeit, Lieferant und Artikel priorisiert.",
+        "ideen/preisabweichung" => "Netto-Stueckpreise werden wie in PowerBI als Minimum je Artikel und Jahr gezeigt.",
+        "ideen/spend-konzentration" => "Lieferantenspend wird als Pareto ausgewertet, um Abhaengigkeit und Buendelungspotenzial zu zeigen.",
+        "ideen/datenqualitaet" => "Pflichtfelder und Nullwerte im Einkauf-Cache werden als Qualitaetsampel gezaehlt.",
+        _ => "Echte Analyse aus dem Einkauf-Cache."
+    };
+
+    private string SelectedIdeaAnalysisDescriptionEn => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Open EKET quantities are valued and prioritised by due date, supplier and article.",
+        "ideen/preisabweichung" => "Net unit prices are shown like in Power BI as minimum by article and year.",
+        "ideen/spend-konzentration" => "Supplier spend is evaluated as pareto to show dependency and bundling potential.",
+        "ideen/datenqualitaet" => "Required fields and zero values in the purchasing cache are counted as quality indicators.",
+        _ => "Real analysis from the purchasing cache."
+    };
+
+    private string SelectedIdeaChartTitleDe => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Offener Wert nach Faelligkeit",
+        "ideen/preisabweichung" => "Min. Stueckpreis nach Jahr",
+        "ideen/spend-konzentration" => "Top Lieferanten Spend",
+        "ideen/datenqualitaet" => "Datenqualitaetsfehler",
+        _ => "Analyse"
+    };
+
+    private string SelectedIdeaChartTitleEn => CurrentPurchasingPage switch
+    {
+        "ideen/liefertermin-risiko" => "Open value by due date",
+        "ideen/preisabweichung" => "Min. unit price by year",
+        "ideen/spend-konzentration" => "Top supplier spend",
+        "ideen/datenqualitaet" => "Data quality issues",
+        _ => "Analysis"
+    };
+
+    private IReadOnlyList<PurchasingSectionStatusRow> SpendStatusRows =>
+    [
+        BuildStatus("EKKO Bestellkoepfe", "EKKO purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-"),
+        BuildStatus("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0"),
+        BuildStatus("Spend CHF", "Spend CHF", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "Simulation")
+    ];
+
+    private IReadOnlyList<PurchasingSectionStatusRow> OpenOrderStatusRows =>
+    [
+        BuildStatus("Bestellkoepfe", "Purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? "live" : "-"),
+        BuildStatus("Offene Werte", "Open values", _liveState.EketLoaded, _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "wartet auf EKET"),
+        BuildStatus("Faelligkeiten", "Due dates", _liveState.EketLoaded, _liveState.EketLoaded ? "live" : "wartet auf EKET")
+    ];
+
+    private IReadOnlyList<PurchasingSectionStatusRow> ContractStatusRows =>
+    [
+        BuildStatus("Kontraktkopf/-position", "Contract header/item", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? "live" : "wartet auf EKPO"),
+        BuildStatus("Einteilungen", "Schedules", _liveState.EketLoaded, _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0"),
+        BuildStatus("Restverpflichtung", "Remaining commitment", _liveState.EkpoLoaded && _liveState.EketLoaded, _liveState.EkpoLoaded && _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : "Simulation")
+    ];
+
+    private IReadOnlyList<PurchasingSectionStatusRow> SupplierStatusRows =>
+    [
+        BuildStatus("Lieferantenbasis", "Supplier base", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.SupplierCount:N0}" : "-"),
+        BuildStatus("Preisentwicklung", "Price trend", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? "live" : "wartet auf EKPO"),
+        BuildStatus("Termintreue", "Delivery reliability", _liveState.EketLoaded, _liveState.EketLoaded ? "live" : "wartet auf EKET")
+    ];
+
+    private IReadOnlyList<PurchasingSectionDetailRow> SpendDetailRows =>
+    [
+        new("Spend nach Jahr", "Spend by year", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "EKKOSet.Bedat Jahr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "Data.Name / EKKOSet.Lifnr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Spend nach Warengruppe", "Spend by material group", TopMaterialGroupLabel, "Data (2).Warengruppe", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Spend nach Artikel", "Spend by article", TopArticleLabel, "Artikel / Lieferant / Monat", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP")
+    ];
+
+    private IReadOnlyList<PurchasingSectionDetailRow> OpenOrderDetailRows =>
+    [
+        new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", "EKKOSet.Bedat", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Lieferanten mit Bestellung", "Suppliers with order", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKOSet.Lifnr", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Offener Bestellwert", "Open order value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "EKPO/EKET", _liveState.EketLoaded ? "SAP live" : "Simulation"),
+        new("Faelligkeiten", "Due dates", _liveState.EketLoaded ? "SAP live" : "wartet auf EKET", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+    ];
+
+    private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
+    [
+        new("Restverpflichtung", "Remaining commitment", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "EKET offen * EKPO Stueckwert", _liveState.EketLoaded ? "SAP live" : "Simulation"),
+        new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Faelligkeitsverlauf", "Due-date trend", _liveState.OpenValueChartRows.Count > 0 ? $"{_liveState.OpenValueChartRows.Count:N0} Monate" : "-", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "Lifnr sichtbar, Name offen" : "wartet", "Data/LFA1 fehlt im OData", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+    ];
+
+    private IReadOnlyList<PurchasingSectionDetailRow> SupplierDetailRows =>
+    [
+        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKOSet.Lifnr", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Top Spend Lieferant", "Top spend supplier", TopSpendLabel, "Lieferant / Spend CHF", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Preisentwicklung", "Price trend", _liveState.EkpoLoaded ? "SAP live" : "wartet auf EKPO", "Netwr CHF/Stk", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Liefertermintreue", "Delivery reliability", _liveState.EketLoaded ? "SAP live" : "wartet auf EKET", "Termin / Rueckstand", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += HandleLocationChanged;
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
+        _liveLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (CurrentPurchasingPage == "3d" && _lastRendered3dUri != Navigation.Uri)
+        {
+            _lastRendered3dUri = Navigation.Uri;
+            await RenderPurchasing3dAsync();
+        }
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        if (!args.Location.Contains("/einkauf/3d", StringComparison.OrdinalIgnoreCase))
+            _lastRendered3dUri = string.Empty;
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+    private static string FormatChf(double value) => $"CHF {value:N0}";
+    private static string FormatChf(decimal value) => $"CHF {value:N0}";
+    private static string BuildDefaultFromMonth()
+    {
+        var today = DateTime.Today;
+        return $"{today.Year - 2}-01";
+    }
+
+    private static string BuildDefaultToMonth()
+        => DateTime.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+
+    private PurchasingDashboardFilter BuildCurrentFilter()
+    {
+        var from = ParseMonth(_filterFromMonth, new DateTime(DateTime.Today.Year - 2, 1, 1));
+        var toMonth = ParseMonth(_filterToMonth, DateTime.Today);
+        var to = new DateTime(toMonth.Year, toMonth.Month, DateTime.DaysInMonth(toMonth.Year, toMonth.Month));
+        if (to < from)
+            from = new DateTime(to.Year, 1, 1);
+
+        if (to > DateTime.Today)
+            to = DateTime.Today;
+
+        return new PurchasingDashboardFilter(from, to);
+    }
+
+    private static DateTime ParseMonth(string value, DateTime fallback)
+        => DateTime.TryParseExact(value, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+            ? new DateTime(parsed.Year, parsed.Month, 1)
+            : fallback;
+
+    private void SetFilterFromMonth(ChangeEventArgs args)
+        => _filterFromMonth = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterFromMonth;
+
+    private void SetFilterToMonth(ChangeEventArgs args)
+        => _filterToMonth = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterToMonth;
+
+    private async Task ApplyPurchasingFilterAsync()
+    {
+        _liveLoading = true;
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        _liveLoading = false;
+        if (CurrentPurchasingPage == "3d")
+            await RenderPurchasing3dAsync();
+    }
+
+    private async Task SetLastThreeYearsAsync()
+    {
+        _filterFromMonth = BuildDefaultFromMonth();
+        _filterToMonth = BuildDefaultToMonth();
+        await ApplyPurchasingFilterAsync();
+    }
+
+    private static string FormatChartValue(string label, IReadOnlyList<PurchasingLiveChartPoint> rows, Func<decimal, string> formatter)
+        => formatter(rows.FirstOrDefault(row => row.Label.Equals(label, StringComparison.OrdinalIgnoreCase))?.Value ?? 0m);
+
+    private string FormatTopShare()
+    {
+        if (_liveState.SpendChfSample <= 0)
+            return "-";
+
+        var share = _liveState.SpendConcentrationChartRows.Sum(row => row.Value) / _liveState.SpendChfSample * 100m;
+        return $"{share:N1}%";
+    }
+
+    private static Color ResolveAnalysisSeverityColor(string severity)
+        => severity switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Low" => Color.Success,
+            _ => Color.Info
+        };
+
+    private string TopSpendLabel => _liveState.EkpoLoaded && !string.IsNullOrWhiteSpace(_liveState.TopSupplierLabel) ? _liveState.TopSupplierLabel : BuildTopLabel(x => x.Spend, FormatChf);
+    private string TopMaterialGroupLabel => _liveState.EkpoLoaded && !string.IsNullOrWhiteSpace(_liveState.TopMaterialGroupLabel) ? _liveState.TopMaterialGroupLabel : BuildTopLabel(x => x.Spend, FormatChf, "Warengruppe");
+    private string TopArticleLabel => _liveState.EkpoLoaded && !string.IsNullOrWhiteSpace(_liveState.TopArticleLabel) ? _liveState.TopArticleLabel : BuildTopLabel(x => x.Spend, FormatChf, "Artikel");
+    private string TopCommitmentLabel => _liveState.EketLoaded && !string.IsNullOrWhiteSpace(_liveState.TopCommitmentLabel) ? _liveState.TopCommitmentLabel : "-";
+    private string PurchasingStatusText
+        => _liveLoading
+            ? T("SAP-Einkaufsdaten werden geladen...", "Loading SAP purchasing data...")
+            : $"{TranslatePurchasingMessage(_liveState.Message)} {FormatLatestOrderDate()}";
+
+    private string TranslateRefreshStatus(string status)
+        => status switch
+        {
+            "Success" => T("Erfolgreich", "Success"),
+            "Running" => T("Laeuft", "Running"),
+            "Error" => T("Fehler", "Error"),
+            "Empty" => T("Noch leer", "Empty"),
+            _ => string.IsNullOrWhiteSpace(status) ? "-" : status
+        };
+
+    private string TranslateRefreshMode(string mode)
+        => mode switch
+        {
+            "Full" => T("Full Load", "Full load"),
+            "Delta" => T("Delta", "Delta"),
+            _ => string.IsNullOrWhiteSpace(mode) ? "-" : mode
+        };
+
+    private string TranslatePurchasingMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return string.Empty;
+
+        if (message.Contains("SAP Einkaufsquelle ist noch nicht konfiguriert", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsquelle ist noch nicht konfiguriert.", "SAP purchasing source is not configured yet.");
+        if (message.Contains("SAP URL oder Zugangsdaten fehlen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP URL oder Zugangsdaten fehlen.", "SAP URL or credentials are missing.");
+        if (message.Contains("SAP Einkaufsdaten inkl. EKPO/EKET geladen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsdaten inkl. EKPO/EKET geladen.", "SAP purchasing data including EKPO/EKET loaded.");
+        if (message.Contains("SAP Einkaufsdaten inkl. EKPO geladen", StringComparison.OrdinalIgnoreCase))
+            return T("SAP Einkaufsdaten inkl. EKPO geladen; EKET liefert noch keine Termindaten.", "SAP purchasing data including EKPO loaded; EKET does not return schedule data yet.");
+        if (message.Contains("EKKO ist live geladen", StringComparison.OrdinalIgnoreCase))
+            return T("EKKO ist live geladen; EKPO/EKET liefern aktuell noch keine Positionsdaten.", "EKKO is loaded live; EKPO/EKET currently do not return item data.");
+        if (message.Contains("Noch kein Einkauf Full Load ausgefuehrt", StringComparison.OrdinalIgnoreCase))
+            return T("Noch kein Einkauf Full Load ausgefuehrt.", "No purchasing full load has been run yet.");
+        if (message.StartsWith("Full Load gestartet", StringComparison.OrdinalIgnoreCase))
+            return T("Full Load gestartet.", "Full load started.");
+        if (message.StartsWith("Delta gestartet", StringComparison.OrdinalIgnoreCase))
+            return T("Delta gestartet.", "Delta started.");
+        if (message.StartsWith("Full Load abgeschlossen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Full Load abgeschlossen", T("Full Load abgeschlossen", "Full load completed"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Delta abgeschlossen", StringComparison.OrdinalIgnoreCase))
+            return message
+                .Replace("Delta abgeschlossen", T("Delta abgeschlossen", "Delta completed"), StringComparison.OrdinalIgnoreCase)
+                .Replace("geaenderte Belege", T("geaenderte Belege", "changed documents"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Einkauf Cache geladen fuer", StringComparison.OrdinalIgnoreCase))
+            return message
+                .Replace("Einkauf Cache geladen fuer", T("Einkauf Cache geladen fuer", "Purchasing cache loaded for"), StringComparison.OrdinalIgnoreCase)
+                .Replace(" bis ", $" {T("bis", "to")} ", StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("SAP Einkauf konnte nicht geladen werden", T("SAP Einkauf konnte nicht geladen werden", "SAP purchasing could not be loaded"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Full Load fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Full Load fehlgeschlagen", T("Full Load fehlgeschlagen", "Full load failed"), StringComparison.OrdinalIgnoreCase);
+        if (message.StartsWith("Delta fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("Delta fehlgeschlagen", T("Delta fehlgeschlagen", "Delta failed"), StringComparison.OrdinalIgnoreCase);
+
+        return message;
+    }
+
+    private string FormatLatestOrderDate()
+        => _liveState.LatestOrderDate.HasValue
+            ? $"{T("Letztes EKKO-Datum", "Latest EKKO date")}: {_liveState.LatestOrderDate.Value:yyyy-MM-dd}."
+            : string.Empty;
+
+    private static string FormatRefreshDate(DateTime? value)
+        => value.HasValue ? value.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) : "-";
+
+    private Color ResolveRefreshStatusColor()
+        => _refreshStatus.Status switch
+        {
+            "Success" => Color.Success,
+            "Running" => Color.Info,
+            "Error" => Color.Error,
+            _ => Color.Warning
+        };
+
+    private async Task RunPurchasingFullLoadAsync()
+    {
+        _refreshBusy = true;
+        try
+        {
+            _refreshStatus = await PurchasingDataRefreshService.RunFullLoadAsync();
+            _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        }
+        finally
+        {
+            _refreshBusy = false;
+        }
+    }
+
+    private async Task RunPurchasingDeltaAsync()
+    {
+        _refreshBusy = true;
+        try
+        {
+            _refreshStatus = await PurchasingDataRefreshService.RunDeltaAsync();
+            _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        }
+        finally
+        {
+            _refreshBusy = false;
+        }
+    }
+
+    private string BuildReadinessDonutStyle()
+    {
+        var live = DataReadinessPercent;
+        return $"background:conic-gradient(#2e7d32 0 {live.ToString("0", CultureInfo.InvariantCulture)}%, rgba(255,255,255,.2) {live.ToString("0", CultureInfo.InvariantCulture)}% 100%)";
+    }
+
+    private string BuildOverviewDonutStyle()
+    {
+        var live = DataReadinessPercent;
+        var simulationStart = Math.Min(100, live + 24);
+        return $"background:conic-gradient(#2e7d32 0 {live.ToString("0", CultureInfo.InvariantCulture)}%, #f9a825 {live.ToString("0", CultureInfo.InvariantCulture)}% {simulationStart.ToString("0", CultureInfo.InvariantCulture)}%, #cfd8dc {simulationStart.ToString("0", CultureInfo.InvariantCulture)}% 100%)";
+    }
+
+    private IReadOnlyList<PurchasingSectionChartRow> BuildPurchasingChartRows(Func<Purchasing3dBaseRow, double> selector, Func<double, string> formatter)
+    {
+        var rows = Purchasing3dBaseRows
+            .Where(row => row.Year == 2026)
+            .Select((row, index) => new { row.Axis, Value = selector(row), Color = PurchasingPalette[index % PurchasingPalette.Length] })
+            .OrderByDescending(row => row.Value)
+            .Take(6)
+            .ToList();
+        var max = rows.Count == 0 ? 0d : rows.Max(row => row.Value);
+        return rows
+            .Select(row => new PurchasingSectionChartRow(row.Axis, formatter(row.Value), max <= 0 ? 0 : row.Value / max * 100d, row.Color))
+            .ToList();
+    }
+
+    private IReadOnlyList<PurchasingSectionChartRow> BuildLiveChartRows(IReadOnlyList<PurchasingLiveChartPoint> rows, Func<decimal, string> formatter)
+    {
+        var max = rows.Count == 0 ? 0m : rows.Max(row => row.Value);
+        return rows
+            .Select((row, index) => new PurchasingSectionChartRow(
+                row.Label,
+                formatter(row.Value),
+                max <= 0 ? 0 : (double)(row.Value / max * 100m),
+                PurchasingPalette[index % PurchasingPalette.Length]))
+            .ToList();
+    }
+
+    private IReadOnlyList<PurchasingSectionChartRow> BuildOpenOrderLiveChartRows()
+    {
+        var simulatedRows = BuildPurchasingChartRows(x => x.OpenValue, FormatChf).ToList();
+        if (_liveState.EketLoaded && _liveState.OpenValueChartRows.Count > 0)
+            simulatedRows = BuildLiveChartRows(_liveState.OpenValueChartRows, FormatChf).ToList();
+        simulatedRows.Insert(0, new PurchasingSectionChartRow(T("EKKO Bestellungen live", "EKKO orders live"), _liveState.PurchaseOrderCount.ToString("N0"), 100d, "#2e7d32"));
+        simulatedRows.Insert(1, new PurchasingSectionChartRow(T("Lieferanten live", "Suppliers live"), _liveState.SupplierCount.ToString("N0"), _liveState.PurchaseOrderCount <= 0 ? 0 : Math.Min(100d, _liveState.SupplierCount / (double)_liveState.PurchaseOrderCount * 100d), "#1565c0"));
+        return simulatedRows.Take(6).ToList();
+    }
+
+    private PurchasingSectionStatusRow BuildStatus(string labelDe, string labelEn, bool ok, string value)
+        => new(labelDe, labelEn, value, ok ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Pending, ok ? Color.Success : Color.Warning);
+
+    private string BuildTopLabel(Func<Purchasing3dBaseRow, double> selector, Func<double, string> formatter, string? requiredPrefix = null)
+    {
+        var query = Purchasing3dBaseRows.Where(row => row.Year == 2026);
+        if (!string.IsNullOrWhiteSpace(requiredPrefix))
+            query = query.Where(row => row.Axis.StartsWith(requiredPrefix, StringComparison.OrdinalIgnoreCase));
+
+        var row = query.OrderByDescending(selector).FirstOrDefault();
+        return row is null ? "-" : $"{row.Axis}: {formatter(selector(row))}";
+    }
+
+    private static readonly string[] PurchasingPalette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457"];
+
+    private async Task SetPurchasing3dIndicator(string value)
+    {
+        _purchasing3dIndicator = value;
+        await RenderPurchasing3dAsync();
+    }
+
+    private async Task SetPurchasing3dChartType(string value)
+    {
+        _purchasing3dChartType = value;
+        await RenderPurchasing3dAsync();
+    }
+
+    private async Task SetPurchasing3dFactor(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _purchasing3dFactor = Math.Clamp(value, 0.5d, 1.5d);
+            await JsRuntime.InvokeVoidAsync("trafagFinance3d.updateFactor", _purchasing3dCanvas, ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d);
+        }
+    }
+
+    private async Task SetPurchasing3dFactorPreset(double value)
+    {
+        _purchasing3dFactor = Math.Clamp(value, 0.5d, 1.5d);
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.updateFactor", _purchasing3dCanvas, ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d);
+    }
+
+    private async Task SetPurchasing3dLabelScale(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _purchasing3dLabelScale = Math.Clamp(value, 0.8d, 2.5d);
+            await RenderPurchasing3dAsync();
+        }
+    }
+
+    private async Task RenderPurchasing3dAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _purchasing3dCanvas, BuildPurchasing3dRows(), new
+        {
+            indicator = _purchasing3dIndicator,
+            title = ResolvePurchasing3dIndicatorLabel(),
+            chartType = _purchasing3dChartType,
+            xAxis = T("X: Lieferant / Warengruppe / Artikel", "X: supplier / material group / article"),
+            yAxis = T("Y: Wert / Menge / Score", "Y: value / quantity / score"),
+            zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
+            pieAxis = T("Kreis: Anteil am aktuellen Indikator", "Pie: share of current indicator"),
+            labelScale = _purchasing3dLabelScale,
+            scenarioFactor = ScenarioAffectsPurchasingValue ? _purchasing3dFactor : 1d
+        });
+    }
+
+    private IReadOnlyList<object> BuildPurchasing3dRows()
+    {
+        var liveRows = ResolvePurchasing3dLiveRows();
+        if (liveRows.Count > 0)
+        {
+            var year = _liveState.PeriodTo?.Year ?? DateTime.Today.Year;
+            return liveRows
+                .Select(row => new
+                {
+                    country = row.Label,
+                    year,
+                    value = (double)row.Value
+                })
+                .Cast<object>()
+                .ToList();
+        }
+
+        return Purchasing3dBaseRows
+            .Select(row => new
+            {
+                country = row.Axis,
+                year = row.Year,
+                value = ResolvePurchasing3dValue(row)
+            })
+            .Cast<object>()
+            .ToList();
+    }
+
+    private IReadOnlyList<PurchasingLiveChartPoint> ResolvePurchasing3dLiveRows() => _purchasing3dIndicator switch
+    {
+        "spend" => _liveState.SpendChartRows,
+        "openValue" => _liveState.OpenValueChartRows,
+        "contractValue" => _liveState.ContractChartRows,
+        "deliveryRisk" => _liveState.DeliveryRiskChartRows,
+        "priceVariance" => _liveState.PriceVarianceChartRows,
+        "spendConcentration" => _liveState.SpendConcentrationChartRows,
+        "dataQuality" => _liveState.DataQualityChartRows,
+        _ => []
+    };
+
+    private double ResolvePurchasing3dValue(Purchasing3dBaseRow row) => _purchasing3dIndicator switch
+    {
+        "openValue" => row.OpenValue,
+        "openQuantity" => row.OpenQuantity,
+        "contractValue" => row.ContractValue,
+        "supplierScore" => row.SupplierScore,
+        _ => row.Spend
+    };
+
+    private bool ScenarioAffectsPurchasingValue => _purchasing3dIndicator is "spend" or "openValue" or "contractValue" or "deliveryRisk" or "priceVariance" or "spendConcentration";
+
+    private string ResolvePurchasing3dIndicatorLabel()
+        => T(
+            Purchasing3dIndicators.FirstOrDefault(x => x.Key == _purchasing3dIndicator)?.TitleDe ?? "Spend CHF",
+            Purchasing3dIndicators.FirstOrDefault(x => x.Key == _purchasing3dIndicator)?.TitleEn ?? "Spend CHF");
+
+    private string FormatScenarioDelta()
+    {
+        if (!ScenarioAffectsPurchasingValue)
+            return T("nicht auf diesen Indikator angewendet", "not applied to this indicator");
+
+        var liveRows = ResolvePurchasing3dLiveRows();
+        var baseTotal = liveRows.Count > 0
+            ? (double)liveRows.Sum(row => row.Value)
+            : Purchasing3dBaseRows.Sum(ResolvePurchasing3dValue);
+        var delta = baseTotal * _purchasing3dFactor - baseTotal;
+        return $"{delta:N0} {Purchasing3dIndicators.First(x => x.Key == _purchasing3dIndicator).Unit}";
+    }
+
+    private sealed record PurchasingKpiCard(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, Color Color);
+    private sealed record PurchasingAxis(string LabelDe, string LabelEn, string Field, string UsageDe, string UsageEn);
+    private sealed record PurchasingSource(string Name, string Description);
+    private sealed record PurchasingPipelineStep(string TitleDe, string TitleEn, string Value, string DetailDe, string DetailEn, string Icon, bool IsReady, Color Color);
+    private sealed record PowerBiPageInfo(string Page, string Visuals, string Measure, string Dimensions);
+    private sealed record PurchasingIdea(string TitleDe, string TitleEn, string DescriptionDe, string DescriptionEn, string RequiredData, string ValueDe, string ValueEn, string StatusDe, string StatusEn, string Icon, Color Color);
+    private sealed record PurchasingIdeaPriority(string TitleDe, string TitleEn, string DetailDe, string DetailEn, string Icon, Color Color);
+    private sealed record PurchasingImplementationStep(string TitleDe, string TitleEn, string DetailDe, string DetailEn);
+    private sealed record PurchasingImplementationPackage(string Key, string TitleDe, string TitleEn, string SubtitleDe, string SubtitleEn, string TargetDe, string TargetEn, string DataBasis, string KpisDe, string KpisEn, string TechnicalDe, string TechnicalEn, string NextStepDe, string NextStepEn, string StatusDe, string StatusEn, string Icon, Color Color, IReadOnlyList<PurchasingImplementationStep> Steps);
+    private sealed record PurchasingIdeaWorkPackage(string TitleDe, string TitleEn, string ShortDe, string ShortEn, string GoalDe, string GoalEn, string DataBasis, string KpisDe, string KpisEn, string LogicDe, string LogicEn, string VisualDe, string VisualEn, string NextStepDe, string NextStepEn, string StatusDe, string StatusEn, string Icon, Color Color);
+    private sealed record PurchasingIdeaKpi(string AnalysisDe, string AnalysisEn, string KpiDe, string KpiEn, string Dimension, string Source, string StatusDe, string StatusEn, Color Color);
+    private sealed record Purchasing3dIndicator(string Key, string TitleDe, string TitleEn, string Unit);
+    private sealed record Purchasing3dBaseRow(string Axis, int Year, double Spend, double OpenValue, double OpenQuantity, double ContractValue, double SupplierScore);
+}
+
+<style>
+    .purchasing-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 22px;
+        align-items: stretch;
+        padding: 24px;
+        color: #f7fbff;
+        background:
+            linear-gradient(135deg, rgba(11, 31, 51, .98), rgba(21, 101, 192, .86)),
+            linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .purchasing-hero-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .purchasing-hero-title {
+        max-width: 980px;
+        line-height: 1.08;
+    }
+
+    .purchasing-hero-text {
+        max-width: 860px;
+        color: rgba(255,255,255,.82);
+    }
+
+    .purchasing-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .purchasing-hero-metrics {
+        display: grid;
+        grid-template-columns: 128px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 8px;
+    }
+
+    .purchasing-radar,
+    .purchasing-mini-donut {
+        position: relative;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+    }
+
+    .purchasing-radar {
+        width: 128px;
+        height: 128px;
+    }
+
+    .purchasing-radar::after,
+    .purchasing-mini-donut::after {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        background: #102235;
+    }
+
+    .purchasing-radar > div,
+    .purchasing-mini-donut > strong {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .purchasing-radar strong {
+        display: block;
+        font-size: 1.75rem;
+        line-height: 1;
+    }
+
+    .purchasing-radar span {
+        color: rgba(255,255,255,.72);
+        font-size: .8rem;
+    }
+
+    .purchasing-hero-note {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .purchasing-hero-note strong {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0;
+    }
+
+    .purchasing-hero-note span {
+        color: rgba(255,255,255,.76);
+        font-size: .9rem;
+    }
+
+    .purchasing-kpi {
+        min-height: 104px;
+        border-left: 4px solid var(--mud-palette-primary);
+        transition: transform .16s ease, box-shadow .16s ease;
+    }
+
+    .purchasing-kpi:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+
+    .purchasing-kpi-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: rgba(21, 101, 192, .1);
+        flex: 0 0 auto;
+    }
+
+    .purchasing-overview-panel {
+        min-height: 100%;
+    }
+
+    .purchasing-pipeline {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .purchasing-pipeline-step {
+        display: grid;
+        grid-template-rows: auto minmax(96px, 1fr) auto;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 8px;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-pipeline-step.is-ready {
+        border-top: 5px solid #2e7d32;
+    }
+
+    .purchasing-pipeline-step.is-waiting {
+        border-top: 5px solid #f9a825;
+    }
+
+    .purchasing-pipeline-step strong,
+    .purchasing-axis-card strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .purchasing-pipeline-step span,
+    .purchasing-axis-card span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .86rem;
+    }
+
+    .purchasing-insights {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-insight {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-insight:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-mini-donut-wrap {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-mini-donut {
+        width: 118px;
+        height: 118px;
+    }
+
+    .purchasing-mini-donut::after {
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-mini-donut strong {
+        font-size: 1.35rem;
+    }
+
+    .purchasing-mini-legend {
+        display: grid;
+        gap: 8px;
+        color: var(--mud-palette-text-secondary);
+        font-size: .86rem;
+    }
+
+    .purchasing-mini-legend span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .purchasing-mini-legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .purchasing-mini-legend .ready {
+        background: #2e7d32;
+    }
+
+    .purchasing-mini-legend .waiting {
+        background: #cfd8dc;
+    }
+
+    .purchasing-mini-legend .simulation {
+        background: #f9a825;
+    }
+
+    .purchasing-axis-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .purchasing-axis-card {
+        min-height: 130px;
+        padding: 14px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-background);
+    }
+
+    .purchasing-axis-card code {
+        display: inline-block;
+        margin-bottom: 8px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .purchasing-idea-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .purchasing-idea-card {
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-surface);
+        min-height: 170px;
+    }
+
+    .purchasing-idea-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: rgba(21,101,192,.1);
+    }
+
+    .purchasing-idea-content {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        min-width: 0;
+    }
+
+    .purchasing-idea-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 10px;
+    }
+
+    .purchasing-idea-content > span,
+    .purchasing-idea-meta span,
+    .purchasing-priority-row span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .88rem;
+    }
+
+    .purchasing-idea-meta {
+        display: grid;
+        gap: 6px;
+        margin-top: auto;
+    }
+
+    .purchasing-idea-meta code {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .purchasing-priority-stack {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-priority-row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-priority-row:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-priority-row strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .purchasing-idea-expansion {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-idea-panel-title {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .purchasing-idea-panel-title strong {
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .purchasing-idea-panel-title span,
+    .purchasing-idea-detail-block span,
+    .purchasing-idea-next-step span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .9rem;
+    }
+
+    .purchasing-idea-detail-block {
+        min-height: 126px;
+        padding: 14px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-background);
+    }
+
+    .purchasing-idea-detail-block code {
+        display: inline-block;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .purchasing-idea-next-step {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 13px 14px;
+        border-radius: 8px;
+        background: rgba(46,125,50,.08);
+        border: 1px solid rgba(46,125,50,.22);
+    }
+
+    .purchasing-source-row {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-source-row:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-3d-surface {
+        height: calc(100vh - 300px);
+        min-height: 620px;
+        overflow: hidden;
+    }
+
+    @@media (max-width: 1250px) {
+        .purchasing-hero,
+        .purchasing-pipeline,
+        .purchasing-axis-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .purchasing-hero,
+        .purchasing-hero-metrics,
+        .purchasing-pipeline,
+        .purchasing-axis-grid,
+        .purchasing-idea-grid,
+        .purchasing-idea-panel-title,
+        .purchasing-mini-donut-wrap {
+            grid-template-columns: 1fr;
+        }
+
+        .purchasing-hero {
+            padding: 18px;
+        }
+    }
+</style>

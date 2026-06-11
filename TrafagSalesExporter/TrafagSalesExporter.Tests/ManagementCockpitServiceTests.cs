@@ -1,0 +1,625 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
+using TrafagSalesExporter.Services;
+
+namespace TrafagSalesExporter.Tests;
+
+public class ManagementCockpitServiceTests : IDisposable
+{
+    private readonly SqliteConnection _connection;
+    private readonly TestDbContextFactory _dbFactory;
+    private readonly ManagementCockpitService _service;
+
+    public ManagementCockpitServiceTests()
+    {
+        _connection = new SqliteConnection("DataSource=:memory:");
+        _connection.Open();
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(_connection)
+            .Options;
+
+        using (var db = new AppDbContext(options))
+        {
+            db.Database.EnsureCreated();
+            if (!db.Sites.Any())
+            {
+                db.Sites.Add(new Site
+                {
+                    Id = 1,
+                    HanaServerId = null,
+                    Schema = "test",
+                    TSC = "TEST",
+                    Land = "Testland",
+                    SourceSystem = "SAP",
+                    IsActive = true
+                });
+                db.SaveChanges();
+            }
+        }
+
+        _dbFactory = new TestDbContextFactory(options);
+        _service = new ManagementCockpitService(_dbFactory);
+    }
+
+    public void Dispose()
+    {
+        _connection.Dispose();
+    }
+
+    [Fact]
+    public async Task GetAvailableCentralYearsAsync_Returns_Distinct_Ordered_Years()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "CH", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("SAP", "CH", "TRCH", "INV-2", "CHF", 200m, new DateTime(2026, 2, 10)),
+            CreateRow("SAP", "CH", "TRCH", "INV-3", "CHF", 300m, null, new DateTime(2026, 3, 5)));
+
+        var years = await _service.GetAvailableCentralYearsAsync();
+
+        Assert.Equal([2025, 2026], years);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Uses_InvoiceDate_Or_ExtractionDate_And_Builds_Monthly_Daily_And_Source_Totals()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-2", "EUR", 50m, new DateTime(2025, 1, 11)),
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-3", "EUR", 25m, null, new DateTime(2025, 1, 12)),
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-4", "CHF", 70m, new DateTime(2026, 2, 5)));
+
+        var result = await _service.AnalyzeCentralAsync(2025, 1);
+
+        Assert.Equal(2025, result.Filter.Year);
+        Assert.Equal(1, result.Filter.Month);
+        Assert.Equal(3, result.Summary.RowCount);
+        Assert.Equal(3, result.Summary.InvoiceCount);
+        Assert.Equal(2, result.Summary.SiteCount);
+        Assert.Equal(2, result.Summary.CountryCount);
+        Assert.Equal(2, result.Summary.CurrencyCount);
+        Assert.Equal(new DateTime(2025, 1, 10), result.Summary.PeriodStart);
+        Assert.Equal(new DateTime(2025, 1, 12), result.Summary.PeriodEnd);
+
+        var yearly2025Chf = Assert.Single(result.YearlyTotals, x => x.Year == 2025 && x.Currency == "CHF");
+        Assert.Equal(100m, yearly2025Chf.SalesValue);
+
+        var yearly2025Eur = Assert.Single(result.YearlyTotals, x => x.Year == 2025 && x.Currency == "EUR");
+        Assert.Equal(75m, yearly2025Eur.SalesValue);
+
+        var januaryChf = Assert.Single(result.MonthlyTotals, x => x.Label == "2025-01" && x.Currency == "CHF");
+        Assert.Equal(100m, januaryChf.SalesValue);
+
+        var januaryEur = Assert.Single(result.MonthlyTotals, x => x.Label == "2025-01" && x.Currency == "EUR");
+        Assert.Equal(75m, januaryEur.SalesValue);
+
+        Assert.Equal(3, result.DailyTotals.Count);
+        Assert.Contains(result.DailyTotals, x => x.Label == "2025-01-12" && x.Currency == "EUR" && x.SalesValue == 25m);
+
+        var sapTotal = Assert.Single(result.SourceSystemTotals, x => x.Label == "SAP" && x.Currency == "CHF");
+        Assert.Equal(100m, sapTotal.SalesValue);
+
+        var manualTotal = Assert.Single(result.SourceSystemTotals, x => x.Label == "MANUAL_EXCEL" && x.Currency == "EUR");
+        Assert.Equal(50m, manualTotal.SalesValue);
+
+        var germanyEur = Assert.Single(result.CountryTotals, x => x.Label == "Deutschland" && x.Currency == "EUR");
+        Assert.Equal(75m, germanyEur.SalesValue);
+        Assert.Equal(2, germanyEur.InvoiceCount);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_With_Year_Only_Does_Not_Build_DailyTotals()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-2", "CHF", 150m, new DateTime(2025, 2, 10)));
+
+        var result = await _service.AnalyzeCentralAsync(2025, null);
+
+        Assert.Empty(result.DailyTotals);
+        Assert.Equal(2, result.MonthlyTotals.Count);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Can_Convert_Selected_Value_To_Eur()
+    {
+        await SeedRatesAsync(
+            CreateRate("EUR", "CHF", 2m),
+            CreateRate("EUR", "USD", 1.25m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("SAP", "USA", "TRUS", "INV-2", "USD", 100m, new DateTime(2025, 1, 11)),
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-3", "EUR", 100m, new DateTime(2025, 1, 12)));
+
+        var result = await _service.AnalyzeCentralAsync(2025, null, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal("EUR", result.Summary.DisplayCurrency);
+        Assert.Equal(230m, result.Summary.ValueTotal);
+        Assert.Equal(0, result.Summary.MissingExchangeRateCount);
+
+        Assert.All(result.CountryTotals, row => Assert.Equal("EUR", row.Currency));
+        Assert.Equal(50m, Assert.Single(result.CountryTotals, x => x.Label == "Schweiz").SalesValue);
+        Assert.Equal(80m, Assert.Single(result.CountryTotals, x => x.Label == "USA").SalesValue);
+        Assert.Equal(100m, Assert.Single(result.CountryTotals, x => x.Label == "Deutschland").SalesValue);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Caches_Exchange_Rates_Per_Currency_Target_And_Date()
+    {
+        var exchangeRates = new CountingCurrencyExchangeRateService();
+        var service = new ManagementCockpitService(_dbFactory, exchangeRates);
+
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "USA", "TRUS", "INV-1", "USD", 100m, new DateTime(2025, 1, 10), quantity: 2m, standardCost: 10m),
+            CreateRow("SAP", "USA", "TRUS", "INV-2", "USD", 50m, new DateTime(2025, 1, 10), quantity: 3m, standardCost: 20m));
+
+        var result = await service.AnalyzeCentralAsync(2025, 1, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            AdditionalValueFields = [ManagementCockpitValueFieldKeys.StandardCostTotal],
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal(300m, result.Summary.ValueTotal);
+        Assert.Equal(160m, Assert.Single(result.MonthlyTotals).AdditionalValues[ManagementCockpitValueFieldKeys.StandardCostTotal].Value);
+        Assert.Equal(1, exchangeRates.ResolveRateCallCount);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Uses_Configured_Exchange_Rate_Date_Field()
+    {
+        var exchangeRates = new CountingCurrencyExchangeRateService();
+        var service = new ManagementCockpitService(_dbFactory, exchangeRates);
+
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.ExportSettings.Add(new ExportSettings
+            {
+                DateFilter = "2025-01-01",
+                ExchangeRateDateField = ExchangeRateDateFields.InvoiceDate
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow(
+                "SAP",
+                "USA",
+                "TRUS",
+                "INV-1",
+                "USD",
+                100m,
+                new DateTime(2025, 2, 10),
+                postingDate: new DateTime(2025, 1, 10)));
+
+        var result = await service.AnalyzeCentralAsync(2025, 2, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal(ExchangeRateDateFields.InvoiceDate, result.Summary.ExchangeRateDateField);
+        Assert.Equal(new DateTime(2025, 2, 10), Assert.Single(exchangeRates.EffectiveDates));
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Can_Sum_Quantity_Without_Currency_Conversion()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10), quantity: 2m),
+            CreateRow("SAP", "USA", "TRUS", "INV-2", "USD", 100m, new DateTime(2025, 1, 11), quantity: 3m));
+
+        var result = await _service.AnalyzeCentralAsync(2025, null, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.Quantity,
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal(ManagementCockpitValueFieldKeys.Quantity, result.Summary.ValueFieldKey);
+        Assert.Equal("-", result.Summary.DisplayCurrency);
+        Assert.Equal(5m, result.Summary.ValueTotal);
+        Assert.Equal(0, result.Summary.MissingExchangeRateCount);
+        Assert.Equal(2m, Assert.Single(result.CountryTotals, x => x.Label == "Schweiz").SalesValue);
+        Assert.Equal(3m, Assert.Single(result.CountryTotals, x => x.Label == "USA").SalesValue);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Adds_Selected_Additional_Value_Fields_To_Time_Rows()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10), quantity: 2m, standardCost: 5m),
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-2", "EUR", 50m, new DateTime(2025, 2, 10), quantity: 3m, standardCost: 7m));
+
+        var result = await _service.AnalyzeCentralAsync(2025, null, new ManagementCockpitAnalysisOptions
+        {
+            ValueField = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            AdditionalValueFields =
+            [
+                ManagementCockpitValueFieldKeys.Quantity,
+                ManagementCockpitValueFieldKeys.StandardCostTotal
+            ],
+            TargetCurrency = ManagementCockpitCurrencyOptions.Eur
+        });
+
+        Assert.Equal(2, result.AdditionalValueFields.Count);
+
+        var yearly = Assert.Single(result.YearlyTotals);
+        Assert.Equal(150m, yearly.SalesValue);
+        Assert.Equal(5m, yearly.AdditionalValues[ManagementCockpitValueFieldKeys.Quantity].Value);
+        Assert.Equal("-", yearly.AdditionalValues[ManagementCockpitValueFieldKeys.Quantity].Currency);
+        Assert.Equal(31m, yearly.AdditionalValues[ManagementCockpitValueFieldKeys.StandardCostTotal].Value);
+        Assert.Equal("EUR", yearly.AdditionalValues[ManagementCockpitValueFieldKeys.StandardCostTotal].Currency);
+
+        Assert.Contains(result.MonthlyTotals, row =>
+            row.Label == "2025-01" &&
+            row.AdditionalValues[ManagementCockpitValueFieldKeys.Quantity].Value == 2m);
+        Assert.Contains(result.MonthlyTotals, row =>
+            row.Label == "2025-02" &&
+            row.AdditionalValues[ManagementCockpitValueFieldKeys.StandardCostTotal].Value == 21m);
+    }
+
+    [Fact]
+    public async Task AnalyzeCentralAsync_Throws_When_No_Rows_Exist_For_Selected_Period()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 1, 10)));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.AnalyzeCentralAsync(2026, 1));
+
+        Assert.Contains("gewählten Zeitraum", ex.Message);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Returns_Empty_Result_For_Filter_With_No_Rows()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2026, "DE", null);
+
+        Assert.Equal(2026, result.Filter.Year);
+        Assert.Equal("DE", result.Filter.CountryKey);
+        Assert.Empty(result.Rows);
+        Assert.Equal(0m, result.NetSalesActual);
+        Assert.Contains("keine Datensaetze", result.Notices[0]);
+        Assert.Contains(2025, result.YearOptions);
+        Assert.Contains("DE", result.CountryOptions);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Builds_Dashboard_Tab_Data()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(new Site
+            {
+                Id = 2,
+                HanaServerId = null,
+                Schema = "de",
+                TSC = "TRDE",
+                Land = "Deutschland",
+                SourceSystem = "MANUAL_EXCEL",
+                IsActive = true
+            });
+            db.FinanceReferences.RemoveRange(db.FinanceReferences);
+            db.FinanceReferences.Add(new FinanceReference
+            {
+                Key = "DE",
+                Label = "Trafag DE",
+                Year = 2025,
+                LocalCurrencyValue = 120m,
+                IsActive = true
+            });
+            db.ExportLogs.Add(new ExportLog
+            {
+                SiteId = 1,
+                Timestamp = new DateTime(2025, 1, 20, 10, 0, 0),
+                Land = "Deutschland",
+                TSC = "TRDE",
+                Status = "OK",
+                RowCount = 2,
+                FileName = "de.xlsx",
+                FilePath = "de.xlsx"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "GS-1", "EUR", -20m, new DateTime(2025, 1, 11), quantity: -1m),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-2", "EUR", 0m, new DateTime(2025, 1, 12)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        var country = Assert.Single(result.CountryRows);
+        Assert.Equal("DE", country.CountryKey);
+        Assert.Equal(80m, country.NetSalesActual);
+        Assert.Equal(120m, country.ReferenceValue);
+        Assert.Equal(-40m, country.Difference);
+        Assert.Equal("Pruefen", country.Status);
+
+        Assert.Single(result.DeviationRows);
+        Assert.Contains(result.DataStatusRows, row => row.Tsc == "TRDE" && row.RowCount == 3 && row.LatestExportStatus == "OK");
+        Assert.Contains(result.CreditCandidates, row => row.InvoiceNumber == "GS-1" && row.NetSalesActual == -20m);
+        Assert.Contains(result.DataQualityRows, row => row.Issue == "Nullwerte im Finance-Wert" && row.Count == 1);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.FinanceReferences.RemoveRange(db.FinanceReferences);
+            db.FinanceReferences.AddRange(
+                new FinanceReference
+                {
+                    Key = "DE",
+                    Label = "Trafag DE",
+                    Year = 2025,
+                    LocalCurrencyValue = 120m,
+                    IsActive = true
+                },
+                new FinanceReference
+                {
+                    Key = "IT",
+                    Label = "Trafag IT",
+                    Year = 2025,
+                    LocalCurrencyValue = 7669840m,
+                    IsActive = true
+                });
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var italy = Assert.Single(result.CountryRows, row => row.CountryKey == "IT");
+        Assert.Equal(7669840m, italy.ReferenceValue);
+        Assert.Equal(0m, italy.NetSalesActual);
+        Assert.Equal(0, italy.TotalRows);
+        Assert.Equal("Keine Daten", italy.Status);
+        Assert.Contains("IT", result.CountryOptions);
+
+        var filteredResult = await _service.AnalyzeFinanceSummaryAsync(2025, "IT", null);
+        var filteredItaly = Assert.Single(filteredResult.CountryRows);
+        Assert.Equal("IT", filteredItaly.CountryKey);
+        Assert.Equal(7669840m, filteredItaly.ReferenceValue);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Builds_Central_Product_Assignment_Tab_Data()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-1", "CHF", 100m, new DateTime(2025, 1, 10),
+                material: "000MAT-OK",
+                name: "Reference article",
+                productHierarchyCode: "0414",
+                productHierarchyText: "Industat innen",
+                productFamilyCode: "0004",
+                productFamilyText: "Industat",
+                productDivisionCode: "0001",
+                productDivisionText: "Thermostate",
+                productMappingAssigned: "X"),
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-2", "CHF", 10m, new DateTime(2025, 1, 10),
+                material: "MAT-UNASS",
+                productHierarchyCode: "0509",
+                productHierarchyText: "Multistat",
+                productDivisionCode: "UNASS",
+                productDivisionText: "Nicht zugeordnet",
+                productMappingAssigned: "false"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-1", "EUR", 80m, new DateTime(2025, 1, 11),
+                material: "MAT-OK",
+                name: "German article"),
+            CreateRow("MANUAL_EXCEL", "Italien", "TRIT", "IT-1", "EUR", 50m, new DateTime(2025, 1, 12),
+                material: "MAT-MISSING",
+                name: "Unknown article"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-2", "EUR", 20m, new DateTime(2025, 1, 13),
+                material: "MAT-UNASS",
+                name: "Unassigned article"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(5, result.ProductAssignmentSummary.DistinctMaterialCount);
+        Assert.Equal(2, result.ProductAssignmentSummary.MatchedMaterialCount);
+        Assert.Equal(2, result.ProductAssignmentSummary.UnassignedMaterialCount);
+        Assert.Equal(1, result.ProductAssignmentSummary.MissingReferenceMaterialCount);
+
+        var assigned = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-OK" && row.Tsc == "TRDE");
+        Assert.Equal("Zugeordnet", assigned.Status);
+        Assert.Equal("0414", assigned.ProductHierarchyCode);
+        Assert.Equal("0001", assigned.ProductDivisionCode);
+
+        var missing = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-MISSING" && row.Tsc == "TRIT");
+        Assert.Equal("Nicht im TR-AG-Stamm", missing.Status);
+
+        var unassigned = Assert.Single(result.ProductAssignmentRows, row => row.Material == "MAT-UNASS" && row.Tsc == "TRDE");
+        Assert.Equal("Nicht zugeordnet", unassigned.Status);
+        Assert.Equal("UNASS", unassigned.ProductDivisionCode);
+
+        Assert.Contains(result.ProductAssignmentCountryRows, row =>
+            row.CountryKey == "DE" &&
+            row.Tsc == "TRDE" &&
+            row.MatchedMaterialCount == 1 &&
+            row.UnassignedMaterialCount == 1);
+
+        Assert.Equal(260m, result.ProductFinanceSummary.TotalValue);
+        Assert.Equal(180m, result.ProductFinanceSummary.AssignedValue);
+        Assert.Equal(30m, result.ProductFinanceSummary.UnassignedValue);
+        Assert.Equal(50m, result.ProductFinanceSummary.MissingReferenceValue);
+        Assert.Equal(180m * 100m / 260m, result.ProductFinanceSummary.AssignedValuePercent);
+
+        Assert.Contains(result.ProductDivisionFinanceRows, row =>
+            row.ProductDivisionCode == "0001" &&
+            row.Currency == "EUR" &&
+            row.NetSalesActual == 80m &&
+            row.MaterialCount == 1 &&
+            row.Countries == "DE");
+        Assert.Contains(result.ProductDivisionFinanceRows, row =>
+            row.ProductDivisionCode == "0001" &&
+            row.Currency == "CHF" &&
+            row.NetSalesActual == 100m);
+
+        var deFinanceCoverage = Assert.Single(result.ProductFinanceCountryRows, row => row.CountryKey == "DE" && row.Tsc == "TRDE");
+        Assert.Equal(100m, deFinanceCoverage.TotalValue);
+        Assert.Equal(80m, deFinanceCoverage.AssignedValue);
+        Assert.Equal(20m, deFinanceCoverage.UnassignedValue);
+        Assert.Equal(80m, deFinanceCoverage.AssignedValuePercent);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_Warns_When_Product_Assignment_Coverage_Is_Implausibly_Low()
+    {
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-1", "CHF", 10m, new DateTime(2025, 1, 10),
+                material: "MAT-OK",
+                productHierarchyCode: "0414",
+                productFamilyCode: "0004",
+                productDivisionCode: "0001",
+                productDivisionText: "Thermostate",
+                productMappingAssigned: "X"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-1", "EUR", 90m, new DateTime(2025, 1, 11),
+                material: "MAT-MISSING"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(100m, result.ProductFinanceSummary.TotalValue);
+        Assert.Equal(90m, result.ProductFinanceSummary.MissingReferenceValue);
+        Assert.Contains(result.Notices, notice =>
+            notice.Contains("Spartenanalyse auffaellig", StringComparison.OrdinalIgnoreCase) &&
+            notice.Contains("90.0%", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Notices, notice =>
+            notice.Contains("ProductDivisionRefSet", StringComparison.OrdinalIgnoreCase) &&
+            notice.Contains("fuehrende Nullen", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.CentralSalesRecords.RemoveRange(db.CentralSalesRecords);
+        await db.SaveChangesAsync();
+        db.CentralSalesRecords.AddRange(rows);
+        await db.SaveChangesAsync();
+    }
+
+    private async Task SeedRatesAsync(params CurrencyExchangeRate[] rates)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.CurrencyExchangeRates.RemoveRange(db.CurrencyExchangeRates);
+        await db.SaveChangesAsync();
+        db.CurrencyExchangeRates.AddRange(rates);
+        await db.SaveChangesAsync();
+    }
+
+    private static CurrencyExchangeRate CreateRate(string fromCurrency, string toCurrency, decimal rate)
+        => new()
+        {
+            FromCurrency = fromCurrency,
+            ToCurrency = toCurrency,
+            Rate = rate,
+            ValidFrom = new DateTime(2024, 1, 1),
+            IsActive = true
+        };
+
+    private static CentralSalesRecord CreateRow(
+        string sourceSystem,
+        string land,
+        string tsc,
+        string invoiceNumber,
+        string currency,
+        decimal salesValue,
+        DateTime? invoiceDate,
+        DateTime? extractionDate = null,
+        decimal quantity = 1m,
+        decimal standardCost = 1m,
+        string material = "MAT",
+        string name = "Article",
+        string productHierarchyCode = "",
+        string productHierarchyText = "",
+        string productFamilyCode = "",
+        string productFamilyText = "",
+        string productDivisionCode = "",
+        string productDivisionText = "",
+        string productMappingAssigned = "",
+        DateTime? postingDate = null)
+    {
+        return new CentralSalesRecord
+        {
+            SiteId = 1,
+            StoredAtUtc = DateTime.UtcNow,
+            SourceSystem = sourceSystem,
+            ExtractionDate = extractionDate ?? invoiceDate ?? DateTime.UtcNow.Date,
+            Tsc = tsc,
+            InvoiceNumber = invoiceNumber,
+            PositionOnInvoice = 1,
+            Material = material,
+            Name = name,
+            ProductGroup = "PG",
+            ProductHierarchyCode = productHierarchyCode,
+            ProductHierarchyText = productHierarchyText,
+            ProductFamilyCode = productFamilyCode,
+            ProductFamilyText = productFamilyText,
+            ProductDivisionCode = productDivisionCode,
+            ProductDivisionText = productDivisionText,
+            ProductMappingAssigned = productMappingAssigned,
+            Quantity = quantity,
+            SupplierNumber = "SUP",
+            SupplierName = "Supplier",
+            SupplierCountry = "CH",
+            CustomerNumber = "CUS",
+            CustomerName = "Customer",
+            CustomerCountry = "CH",
+            CustomerIndustry = "Industry",
+            StandardCost = standardCost,
+            StandardCostCurrency = currency,
+            PurchaseOrderNumber = "PO",
+            SalesPriceValue = salesValue,
+            SalesCurrency = currency,
+            Incoterms2020 = "DAP",
+            SalesResponsibleEmployee = "Alice",
+            PostingDate = postingDate,
+            InvoiceDate = invoiceDate,
+            OrderDate = invoiceDate?.AddDays(-2),
+            Land = land,
+            DocumentType = "Invoice"
+        };
+    }
+
+    private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>
+    {
+        private readonly DbContextOptions<AppDbContext> _options;
+
+        public TestDbContextFactory(DbContextOptions<AppDbContext> options)
+        {
+            _options = options;
+        }
+
+        public AppDbContext CreateDbContext() => new(_options);
+
+        public Task<AppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new AppDbContext(_options));
+    }
+
+    private sealed class CountingCurrencyExchangeRateService : ICurrencyExchangeRateService
+    {
+        public int ResolveRateCallCount { get; private set; }
+        public List<DateTime?> EffectiveDates { get; } = [];
+
+        public decimal? ResolveRate(string fromCurrency, string toCurrency, DateTime? effectiveDate)
+        {
+            ResolveRateCallCount++;
+            EffectiveDates.Add(effectiveDate);
+            return 2m;
+        }
+
+        public string NormalizeCurrencyCode(string? currencyCode)
+            => string.IsNullOrWhiteSpace(currencyCode) ? string.Empty : currencyCode.Trim().ToUpperInvariant();
+    }
+}

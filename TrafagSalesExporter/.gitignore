@@ -1,0 +1,23 @@
+# Build artifacts
+bin/
+obj/
+verify_probe_out*/
+build_verify/
+output/
+
+# Visual Studio user/IDE files
+.vs/
+*.user
+*.suo
+
+# Local diagnostics and scratch artifacts
+.config/
+.tmp_tools/
+Tools/FinanceProbe/.tmp_tools/
+Tools/FinanceProbe/verify_probe_out*/
+*.out.log
+*.err.log
+mainapp*.log
+financeprobe*.log
+netsh
+11.15.0

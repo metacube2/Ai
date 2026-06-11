@@ -1,0 +1,275 @@
+@page "/finance-cockpit/schulung"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<PageTitle>@T("Finance Schulung", "Finance training")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">@T("Finance Schulung", "Finance training")</MudText>
+<MudText Typo="Typo.body1" Class="mb-4 training-lead">
+    Ausführliche Anwenderunterlage für Finance-Keyuser, CFO/Finance-Leitung und Administratoren. Die Schulung beschreibt den
+    produktiven Ablauf vom manuellen Import bis zur zentralen Excel-Datei, inklusive Finance Summary, Finance Details und Soll/Ist Vergleich.
+</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="7">
+            <img class="training-hero-image" src="training/finance_cockpit_preview.png" alt="Finance Cockpit Vorschau" />
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">
+                Verbindlich ist die Finance-Sicht: Finance Summary, Finance Details und Soll/Ist Vergleich müssen zusammen plausibel sein.
+            </MudAlert>
+            <MudSimpleTable Dense Hover>
+                <thead>
+                    <tr><th>Rolle</th><th>Aufgabe</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Finance Keyuser</td><td>Importe bereitstellen, Standorte exportieren, Summen prüfen</td></tr>
+                    <tr><td>CFO/Finance Leitung</td><td>Soll/Ist-Abgleich freigeben und Abweichungen entscheiden</td></tr>
+                    <tr><td>Admin</td><td>Standorte, Mapping, Regeln, Settings und SharePoint konfigurieren</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTabs Rounded Border>
+    <MudTabPanel Text="Prozess">
+        <TrainingSection Title="1. Ziel der Finance-Sicht">
+            <p>Das Finance Cockpit bereitet Sales- und Finance-Daten so auf, dass Länder, Systeme und unterschiedliche Spaltenlogiken in
+                einer zentralen Sicht vergleichbar werden. Die Rohdaten bleiben nachvollziehbar, die Finance-Spalten liefern die verbindliche
+                Abgrenzung für Summen und Soll/Ist-Vergleich.</p>
+            <ul>
+                <li><strong>Finance Summary</strong> zeigt die aggregierten Summen nach Jahr, Land und Währung.</li>
+                <li><strong>Finance Details</strong> zeigt die Detailzeilen, die zu diesen Summen führen.</li>
+                <li><strong>Sales</strong> enthält die breitere Rohdatensicht inklusive Finance-Spaltenblock.</li>
+                <li><strong>Soll/Ist Vergleich</strong> prüft die App-Daten gegen die gepflegten Referenzwerte.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="2. Bedienreihenfolge im Tagesgeschäft">
+            <div class="training-flow">
+                <div><span>1</span><strong>Dateien bereitstellen</strong><small>SharePoint, lokaler Pfad oder Quellsystem</small></div>
+                <div><span>2</span><strong>Standort exportieren</strong><small>CentralSalesRecords je Standort ersetzen</small></div>
+                <div><span>3</span><strong>Zentrale Excel erzeugen</strong><small>Sales, Summary und Details neu schreiben</small></div>
+                <div><span>4</span><strong>Summen prüfen</strong><small>Summary gegen Details aggregieren</small></div>
+                <div><span>5</span><strong>Soll/Ist freigeben</strong><small>Abweichungen dokumentieren</small></div>
+            </div>
+            <p>Nach jeder neuen Datei muss zuerst der betroffene Standort exportiert werden. Erst danach ist die zentrale Excel-Datei aktuell.</p>
+        </TrainingSection>
+
+        <TrainingSection Title="3. Prozessgrafik und Systembild">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <img class="training-doc-image" src="training/keyuser-prozess.svg" alt="Keyuser Prozess" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <img class="training-doc-image" src="training/systemarchitektur.svg" alt="Systemarchitektur" />
+                </MudItem>
+            </MudGrid>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Importe">
+        <TrainingSection Title="4. Manuelle Importe und Delta-Regeln">
+            <p>Manuelle Importe ersetzen beim Standortexport den aktuellen Datenstand dieses Standorts in <code>CentralSalesRecords</code>.
+                Deshalb darf eine Delta-Datei nur dann verwendet werden, wenn die App sie zusammen mit einer Basisdatei liest.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Land</th><th>Quelle</th><th>Lieferlogik</th><th>Konsequenz</th></tr></thead>
+                <tbody>
+                    <tr><td>UK / England</td><td>Sage Excel/CSV im Ordner UK_B1</td><td>Jahresdatei plus Deltas</td><td>Delta-fähig, weil Basis und Deltas zusammen gelesen werden</td></tr>
+                    <tr><td>Spanien</td><td>Sage CSV / Manual Excel</td><td>Vollfile erforderlich</td><td>Keine Delta-Dateien verwenden</td></tr>
+                    <tr><td>Deutschland</td><td>Alphaplan Excel</td><td>Vollfile/Jahresfile erforderlich</td><td>Keine Delta-Dateien verwenden</td></tr>
+                    <tr><td>CH/AT</td><td>SAP OData</td><td>Quellsystem wird neu gelesen</td><td>Kein manueller Delta-Prozess</td></tr>
+                    <tr><td>FR/IT/US/IN</td><td>HANA/SAP B1/Sage</td><td>direkte Quelle</td><td>Standortdaten werden aus Quelle aufgebaut</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">
+                Spanien und Deutschland müssen vollständige Dateien liefern. Eine einzelne Delta-Datei würde technisch den bisherigen Stand ersetzen und damit unvollständig werden.
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="5. Standortexport verstehen">
+            <p>Der Standortexport ist der Schritt, der Rohdaten aus der jeweiligen Quelle in die zentrale Datenbank schreibt. Er liest nicht nur
+                eine Datei, sondern wendet auch Mapping, Transformationen und Finance-Regeln an.</p>
+            <ul>
+                <li>Bei SAP/HANA wird die definierte Quelle abgefragt.</li>
+                <li>Bei manuellen Excel-/CSV-Importen wird die hinterlegte Datei oder der hinterlegte Ordner verwendet.</li>
+                <li>Bestehende Zeilen des Standorts werden ersetzt, damit keine veralteten Dubletten stehen bleiben.</li>
+                <li>Fehler stehen in den Logs und müssen vor der zentralen Excel-Erzeugung geklärt werden.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="6. Zentrale Excel-Datei">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Blatt</th><th>Zweck</th><th>Prüfung</th></tr></thead>
+                <tbody>
+                    <tr><td>Sales</td><td>Rohdaten plus normalisierte Spalten</td><td>Land, TSC, Beleg, Kunde, Wert, Währung</td></tr>
+                    <tr><td>Finance Summary</td><td>verbindliche Aggregation</td><td>Jahr, Land, Währung, Net Sales Actual</td></tr>
+                    <tr><td>Finance Details</td><td>Detailzeilen zur Summary</td><td>Summe je Land muss Summary ergeben</td></tr>
+                    <tr><td>Finance Filter Hilfe</td><td>Hinweise zur Excel-Prüfung</td><td>Filter und Pivot-Anleitung</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Abgleich">
+        <TrainingSection Title="7. Finance Summary lesen">
+            <p>Finance Summary ist die kompakte Sicht für Finance. Sie enthält nur Zeilen, die nach Finance-Regel eingeschlossen sind.
+                Entscheidend sind Finance-Jahr, Country Key, Währung und Net Sales Actual.</p>
+            <ul>
+                <li>Immer zuerst nach Jahr 2025 filtern, wenn der 2025-Abgleich geprüft wird.</li>
+                <li>Country Key ist die Finance-Länderlogik, nicht zwingend nur der sichtbare Rohdaten-Ländername.</li>
+                <li>Währung muss zum Referenzwert passen, zum Beispiel GBP für UK oder INR für Indien.</li>
+                <li>Included Rows zeigt, wie viele Detailzeilen in die Summe geflossen sind.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="8. Finance Details gegen Summary prüfen">
+            <p>Finance Details ist das Kontrollblatt für Rückfragen. Die Summe über <code>Net Sales Actual</code> in Finance Details muss
+                je Jahr, Land und Währung exakt mit Finance Summary übereinstimmen.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Prüfung</th><th>Vorgehen</th><th>Erwartung</th></tr></thead>
+                <tbody>
+                    <tr><td>Landessumme</td><td>Details nach Year, Country Key und Currency aggregieren</td><td>identisch zu Finance Summary</td></tr>
+                    <tr><td>Einzelbeleg</td><td>Invoice Number, Position und Document Entry suchen</td><td>Beleg nachvollziehbar</td></tr>
+                    <tr><td>Ausschluss</td><td>Sales-Blatt mit Finance Include vergleichen</td><td>Regelgrund sichtbar</td></tr>
+                    <tr><td>Dubletten</td><td>Belegkopfwerte und Positionen prüfen</td><td>B1-Kopflogik wird nicht doppelt gezählt</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="9. Soll/Ist Vergleich">
+            <p>Der Soll/Ist Vergleich nutzt dieselbe Finance-Reconciliation-Logik wie die zentrale Finance-Sicht. Er ist die Seite für
+                Freigabe, Abweichungsanalyse und Status je Land.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Status</th><th>Bedeutung</th><th>Aktion</th></tr></thead>
+                <tbody>
+                    <tr><td>OK</td><td>Istwert passt gegen Referenz innerhalb Toleranz</td><td>für Freigabe vormerken</td></tr>
+                    <tr><td>Prüfen</td><td>Differenz vorhanden oder Regel noch nicht final</td><td>Details und Länderregel prüfen</td></tr>
+                    <tr><td>Keine Daten</td><td>Kein aktueller Stand in CentralSalesRecords</td><td>Standortexport oder Import prüfen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="10. Länderlogik kompakt">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Land</th><th>Aktuelle Hauptlogik</th><th>Hinweis</th></tr></thead>
+                <tbody>
+                    <tr><td>DE</td><td>Alphaplan NettoPreisGesamtX, GS negativ, Finance-Ausschlüsse</td><td>Vollfile erforderlich</td></tr>
+                    <tr><td>ES</td><td>Sage ImporteNeto, REC/Credit negativ</td><td>Vollfile erforderlich</td></tr>
+                    <tr><td>IT</td><td>B1 Positions-Netto, Trafag Italia ausgeschlossen, Dublettenlogik</td><td>Detailprüfung wichtig</td></tr>
+                    <tr><td>UK</td><td>Sage Netto in GBP, Credit Notes negativ</td><td>Basis plus Deltas möglich</td></tr>
+                    <tr><td>FR/US</td><td>B1 Sales Price/Value bevorzugt</td><td>gegen CheckValue prüfen</td></tr>
+                    <tr><td>IN</td><td>Hauswährung INR</td><td>Referenz in Local Currency</td></tr>
+                    <tr><td>CH/AT</td><td>SAP OData NetwrHc</td><td>AT hat Referenz, CH aktuell ohne Sollwert</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Spartenanalyse">
+        <TrainingSection Title="11. Spartenanalyse oeffnen">
+            <p>Die Spartenanalyse liegt unter <strong>Management Analyse</strong>. Im linken Menue kann Management Analyse aufgeklappt werden.
+                Dort fuehren die Punkte <strong>Sparten-Finanzanalyse</strong> und <strong>Zentrale Spartenzuordnung</strong> direkt in die passende Sicht.</p>
+            <ul>
+                <li><strong>Sparten-Finanzanalyse</strong> zeigt Umsatz, Anteil, Materialien, Zeilen und Laender nach Produktspartenlogik.</li>
+                <li><strong>Zentrale Spartenzuordnung</strong> prueft lokale Materialnummern gegen die fuehrende TR-AG-Referenz.</li>
+                <li>Die lokalen ERP-Produktsparten werden fuer diese Fuehrungssicht nicht verwendet; massgebend ist die TR-AG-Referenz aus SAP.</li>
+            </ul>
+        </TrainingSection>
+
+        <TrainingSection Title="12. Gruppierung, Top 10 und Laender">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Funktion</th><th>Zweck</th><th>Pruefung</th></tr></thead>
+                <tbody>
+                    <tr><td>Gruppierung PAPH1 Detail</td><td>Feinste Sicht auf einzelne Produkt-Hierarchie-Codes</td><td>Geeignet fuer Detailanalyse und auffaellige Einzelgruppen</td></tr>
+                    <tr><td>Gruppierung Produktfamilie</td><td>Fasst mehrere PAPH1-Zeilen zusammen, z.B. Gas Density Monitor</td><td>Geeignet fuer Managementsicht und Portfolioanalyse</td></tr>
+                    <tr><td>Gruppierung Produktsparte</td><td>Verdichtet auf die oberste Spartenebene</td><td>Geeignet fuer schnelle Umsatzverteilung nach Sparten</td></tr>
+                    <tr><td>Top 10 anzeigen</td><td>Reduziert die Tabelle auf die groessten Umsatzbloecke</td><td>Hilft, die wichtigsten Sparten ohne lange Detailliste zu beurteilen</td></tr>
+                    <tr><td>Flaggen bei Laendern</td><td>Zeigt Landkuerzel optisch schneller erkennbar an</td><td>Bei mehreren Laendern werden die Laender kommasepariert angezeigt</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                Die Umsaetze und Anteile werden je Gruppierung neu aggregiert. Top 10 filtert nur die Anzeige, nicht die Berechnungsbasis.
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="13. Sparten-Icons lesen">
+            <p>Die Icons neben der Produktsparte sind eine visuelle Orientierung. Sie werden aus Sparten-, Familien- und PAPH1-Texten abgeleitet
+                und aendern keine Zahlen oder Zuordnung.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Textmuster</th><th>Icon</th><th>Bedeutung</th></tr></thead>
+                <tbody>
+                    <tr><td>Gas / Density</td><td>Sensors</td><td>Gas-Density-Produkte</td></tr>
+                    <tr><td>Pressure / Druck</td><td>Compress</td><td>Druckprodukte</td></tr>
+                    <tr><td>Temp / Thermostat</td><td>DeviceThermostat</td><td>Temperatur und Thermostate</td></tr>
+                    <tr><td>Switch / Schalter</td><td>ToggleOn</td><td>Schalterbasierte Produkte</td></tr>
+                    <tr><td>Access / Zubehoer</td><td>Extension</td><td>Zubehoer</td></tr>
+                    <tr><td>UNASS / Nicht zugeordnet</td><td>HelpOutline</td><td>TR-AG-Referenz vorhanden, aber ohne gueltige Sparte</td></tr>
+                    <tr><td>Sonstige Texte</td><td>Category</td><td>Keine spezifische Icon-Regel getroffen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="14. Interpretation fuer Finance">
+            <ul>
+                <li><strong>Zugeordnet</strong>: Material wurde im TR-AG-Stamm gefunden und hat eine verwertbare Sparteninformation.</li>
+                <li><strong>Nicht zugeordnet</strong>: Material wurde gefunden, aber die TR-AG-Referenz ist unassigned oder leer.</li>
+                <li><strong>Nicht im TR-AG-Stamm</strong>: Lokale Materialnummer konnte nicht gegen die TR-AG-Referenz gematcht werden.</li>
+                <li><strong>Material fehlt</strong>: In der Finance-Zeile fehlt die Materialnummer; diese Zeilen koennen nicht zugeordnet werden.</li>
+            </ul>
+            <p>Fuer Finanzfragen ist die wichtigste Sicht zuerst die aggregierte Produktfamilie oder Produktsparte. PAPH1 Detail wird genutzt,
+                wenn eine Abweichung oder ein auffaelliger Umsatzblock genauer erklaert werden muss.</p>
+        </TrainingSection>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Fehler & Freigabe">
+        <TrainingSection Title="15. Typische Fehler und Massnahmen">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Fehler</th><th>Ursache</th><th>Massnahme</th></tr></thead>
+                <tbody>
+                    <tr><td>Zentrale Datei konnte nicht erzeugt werden</td><td>Excel/SharePoint-Datei gesperrt oder Uploadfehler</td><td>Datei schliessen, Logs prüfen, ggf. Zeitstempeldatei verwenden</td></tr>
+                    <tr><td>Land fehlt in Summary</td><td>Standort nicht exportiert oder keine Finance Include Zeilen</td><td>Standortexport und Finance-Regeln prüfen</td></tr>
+                    <tr><td>Summe passt nicht zum Soll</td><td>falsche Datei, falsches Jahr, Länderregel offen</td><td>Finance Details aggregieren und Länderlogik prüfen</td></tr>
+                    <tr><td>Zu wenige Zeilen nach Import</td><td>Delta statt Vollfile verwendet</td><td>bei ES/DE vollständige Datei neu liefern lassen</td></tr>
+                    <tr><td>Keine Verbindung zur Quelle</td><td>Credentials, Netzwerk, HANA/SAP nicht erreichbar</td><td>Settings und Logs prüfen</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="16. Freigabe-Checkliste">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Nr.</th><th>Prüfpunkt</th><th>OK</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Alle relevanten Standorte wurden nach letzter Dateiänderung exportiert</td><td></td></tr>
+                    <tr><td>2</td><td>Zentrale Excel wurde danach neu erzeugt</td><td></td></tr>
+                    <tr><td>3</td><td>Finance Summary stimmt aggregiert mit Finance Details überein</td><td></td></tr>
+                    <tr><td>4</td><td>Soll/Ist Vergleich enthält keine unerwarteten Abweichungen</td><td></td></tr>
+                    <tr><td>5</td><td>ES und DE wurden als Vollfile geliefert</td><td></td></tr>
+                    <tr><td>6</td><td>Offene Länder- oder Regelentscheidungen sind dokumentiert</td><td></td></tr>
+                    <tr><td>7</td><td>SharePoint/Excel-Datei ist nicht mehr gesperrt</td><td></td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+    </MudTabPanel>
+</MudTabs>
+
+<style>
+    .training-lead { max-width: 980px; color: var(--mud-palette-text-secondary); }
+    .training-hero-image, .training-doc-image { width: 100%; border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; background: #fff; }
+    .training-doc-image { margin-bottom: 12px; }
+    .training-section { margin: 18px 0 28px; max-width: 1180px; }
+    .training-section p { margin-bottom: 12px; line-height: 1.55; }
+    .training-section ul { margin-top: 8px; }
+    .training-flow { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin: 12px 0 18px; }
+    .training-flow div { border: 1px solid var(--mud-palette-lines-default); border-radius: 6px; padding: 12px; background: var(--mud-palette-surface); }
+    .training-flow span { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); font-weight: 700; margin-bottom: 8px; }
+    .training-flow strong, .training-flow small { display: block; }
+    .training-flow small { color: var(--mud-palette-text-secondary); margin-top: 4px; }
+    @@media (max-width: 900px) { .training-flow { grid-template-columns: 1fr; } }
+</style>
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+}

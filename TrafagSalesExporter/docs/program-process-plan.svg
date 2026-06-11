@@ -1,0 +1,317 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1120" viewBox="0 0 1720 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Trafag Sales Exporter Prozessplan</title>
+  <desc id="desc">Swimlane-Prozessplan fuer Datenquellen, Konfiguration, Import, Konsolidierung, Finance-Abgleich und Betrieb.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f8fb; }
+      .title { font: 700 34px Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 400 17px Arial, sans-serif; fill: #536074; }
+      .lane { fill: #ffffff; stroke: #c7cfda; stroke-width: 1.2; }
+      .lane-alt { fill: #fbfcfe; stroke: #c7cfda; stroke-width: 1.2; }
+      .lane-head { fill: #e9eef5; stroke: #c7cfda; stroke-width: 1.2; }
+      .lane-title { font: 700 16px Arial, sans-serif; fill: #1d2b42; }
+      .box { fill: #ffffff; stroke: #b9c4d2; stroke-width: 1.3; }
+      .box-main { fill: #eef7f2; stroke: #2f7d59; stroke-width: 2; }
+      .box-warn { fill: #fff6e6; stroke: #c47b18; stroke-width: 1.7; }
+      .box-tech { fill: #edf3fb; stroke: #3b6ea8; stroke-width: 1.7; }
+      .box-title { font: 700 14.5px Arial, sans-serif; fill: #172033; }
+      .box-text { font: 400 12.5px Arial, sans-serif; fill: #3e4a5a; }
+      .step { fill: #23395d; }
+      .step-text { font: 700 13px Arial, sans-serif; fill: #ffffff; }
+      .arrow { stroke: #56657a; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .arrow-soft { stroke: #8a97a8; stroke-width: 1.7; fill: none; stroke-dasharray: 7 6; marker-end: url(#arrow-soft); }
+      .note { font: 400 13px Arial, sans-serif; fill: #536074; }
+      .small { font: 400 12px Arial, sans-serif; fill: #536074; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#56657a"/>
+    </marker>
+    <marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a97a8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1720" height="1120"/>
+  <text class="title" x="54" y="62">Trafag Sales Exporter - Prozessplan</text>
+  <text class="subtitle" x="54" y="92">Empfohlene Diagrammart: Swimlane-Prozessdiagramm. Es trennt Verantwortung und zeigt den Datenfluss vom Quellsystem bis zur Finance-Kontrolle.</text>
+
+  <g transform="translate(54,126)">
+    <rect class="lane-head" x="0" y="0" width="158" height="136"/>
+    <rect class="lane" x="158" y="0" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="55">Quellsysteme</text>
+    <text class="small" x="22" y="77">SAP, HANA,</text>
+    <text class="small" x="22" y="94">Excel/CSV</text>
+
+    <rect class="lane-head" x="0" y="136" width="158" height="136"/>
+    <rect class="lane-alt" x="158" y="136" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="191">Konfiguration</text>
+    <text class="small" x="22" y="213">Standorte,</text>
+    <text class="small" x="22" y="230">Mappings</text>
+
+    <rect class="lane-head" x="0" y="272" width="158" height="136"/>
+    <rect class="lane" x="158" y="272" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="327">Import</text>
+    <text class="small" x="22" y="349">Composer,</text>
+    <text class="small" x="22" y="366">Validierung</text>
+
+    <rect class="lane-head" x="0" y="408" width="158" height="136"/>
+    <rect class="lane-alt" x="158" y="408" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="463">Zentrale</text>
+    <text class="small" x="22" y="485">Persistenz</text>
+
+    <rect class="lane-head" x="0" y="544" width="158" height="136"/>
+    <rect class="lane" x="158" y="544" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="599">Finance</text>
+    <text class="small" x="22" y="621">Soll/Ist, IC,</text>
+    <text class="small" x="22" y="638">Budgetkurse</text>
+
+    <rect class="lane-head" x="0" y="680" width="158" height="136"/>
+    <rect class="lane-alt" x="158" y="680" width="1450" height="136"/>
+    <text class="lane-title" x="22" y="735">Output</text>
+    <text class="small" x="22" y="757">Export, Logs,</text>
+    <text class="small" x="22" y="774">Doku</text>
+
+    <g transform="translate(196,24)">
+      <rect class="box-tech" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">1</text>
+      <text class="box-title" x="48" y="25">SAP ZSCHWEIZ</text>
+      <text class="box-text" x="16" y="49">ABAP schreibt ZSCHWEIZ</text>
+      <text class="box-text" x="16" y="66">1100 CH, 1200 AT</text>
+    </g>
+    <g transform="translate(446,24)">
+      <rect class="box-tech" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">2</text>
+      <text class="box-title" x="48" y="25">SAP OData Gateway</text>
+      <text class="box-text" x="16" y="49">EntitySet ZSCHWEIZSet</text>
+      <text class="box-text" x="16" y="66">liefert Daten und Metadata</text>
+    </g>
+    <g transform="translate(696,24)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">3</text>
+      <text class="box-title" x="48" y="25">SAP HANA / BI1</text>
+      <text class="box-text" x="16" y="49">Direkte Tabellen/Views</text>
+      <text class="box-text" x="16" y="66">oder Legacy B1-Pfad</text>
+    </g>
+    <g transform="translate(946,24)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">4</text>
+      <text class="box-title" x="48" y="25">Manual Excel / CSV</text>
+      <text class="box-text" x="16" y="49">Deutschland, Spanien</text>
+      <text class="box-text" x="16" y="66">und manuelle Dateien</text>
+    </g>
+
+    <g transform="translate(196,160)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">5</text>
+      <text class="box-title" x="48" y="25">Standort pflegen</text>
+      <text class="box-text" x="16" y="49">TSC, Land, Quellsystem,</text>
+      <text class="box-text" x="16" y="66">URL Override, Aktiv</text>
+    </g>
+    <g transform="translate(446,160)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">6</text>
+      <text class="box-title" x="48" y="25">Quellen laden</text>
+      <text class="box-text" x="16" y="49">EntitySets/Felder oder</text>
+      <text class="box-text" x="16" y="66">HANA-Spalten einlesen</text>
+    </g>
+    <g transform="translate(696,160)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">7</text>
+      <text class="box-title" x="48" y="25">Grafisch mappen</text>
+      <text class="box-text" x="16" y="49">Quelle, Left Join, Feld</text>
+      <text class="box-text" x="16" y="66">nach SalesRecord</text>
+    </g>
+    <g transform="translate(946,160)">
+      <rect class="box-warn" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">8</text>
+      <text class="box-title" x="48" y="25">Finance-Regeln</text>
+      <text class="box-text" x="16" y="49">Referenzen, Budgetkurse,</text>
+      <text class="box-text" x="16" y="66">IC-Regeln aktuell DB/Seed</text>
+    </g>
+
+    <g transform="translate(196,296)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">9</text>
+      <text class="box-title" x="48" y="25">Export starten</text>
+      <text class="box-text" x="16" y="49">Ein Standort oder alle</text>
+      <text class="box-text" x="16" y="66">aktiven Standorte</text>
+    </g>
+    <g transform="translate(446,296)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">10</text>
+      <text class="box-title" x="48" y="25">Daten lesen</text>
+      <text class="box-text" x="16" y="49">OData, HANA oder</text>
+      <text class="box-text" x="16" y="66">Excel/CSV Adapter</text>
+    </g>
+    <g transform="translate(696,296)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">11</text>
+      <text class="box-title" x="48" y="25">Mapped Composer</text>
+      <text class="box-text" x="16" y="49">Gemeinsame Mapping-</text>
+      <text class="box-text" x="16" y="66">Engine fuer SAP/HANA</text>
+    </g>
+    <g transform="translate(946,296)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">12</text>
+      <text class="box-title" x="48" y="25">Normalisieren</text>
+      <text class="box-text" x="16" y="49">SalesRecord-Felder,</text>
+      <text class="box-text" x="16" y="66">Datum, Zahl, Waehrung</text>
+    </g>
+
+    <g transform="translate(446,432)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">13</text>
+      <text class="box-title" x="48" y="25">CentralSalesRecords</text>
+      <text class="box-text" x="16" y="49">Positionsdaten je Standort</text>
+      <text class="box-text" x="16" y="66">werden zentral gespeichert</text>
+    </g>
+    <g transform="translate(696,432)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">14</text>
+      <text class="box-title" x="48" y="25">Logs schreiben</text>
+      <text class="box-text" x="16" y="49">ExportLogs und</text>
+      <text class="box-text" x="16" y="66">AppEventLogs</text>
+    </g>
+
+    <g transform="translate(196,568)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">15</text>
+      <text class="box-title" x="48" y="25">Sollwerte laden</text>
+      <text class="box-text" x="16" y="49">FinanceReferences je</text>
+      <text class="box-text" x="16" y="66">Jahr und Land</text>
+    </g>
+    <g transform="translate(446,568)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">16</text>
+      <text class="box-title" x="48" y="25">Ist-Kandidaten bilden</text>
+      <text class="box-text" x="16" y="49">SalesPrice positionsweise,</text>
+      <text class="box-text" x="16" y="66">Belegwerte dedupliziert</text>
+    </g>
+    <g transform="translate(696,568)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">17</text>
+      <text class="box-title" x="48" y="25">IC/2nd-party markieren</text>
+      <text class="box-text" x="16" y="49">Regeln nach Nummer</text>
+      <text class="box-text" x="16" y="66">oder Kundentext</text>
+    </g>
+    <g transform="translate(946,568)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">18</text>
+      <text class="box-title" x="48" y="25">Ampel bilden</text>
+      <text class="box-text" x="16" y="49">OK, Pruefen oder</text>
+      <text class="box-text" x="16" y="66">keine Daten</text>
+    </g>
+
+    <g transform="translate(196,704)">
+      <rect class="box-main" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">19</text>
+      <text class="box-title" x="48" y="25">Excel-Dateien</text>
+      <text class="box-text" x="16" y="49">Standortdateien und</text>
+      <text class="box-text" x="16" y="66">zentrale Datei</text>
+    </g>
+    <g transform="translate(446,704)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">20</text>
+      <text class="box-title" x="48" y="25">Power BI / Weitergabe</text>
+      <text class="box-text" x="16" y="49">Konsolidierte Datei</text>
+      <text class="box-text" x="16" y="66">oder Folgeprozess</text>
+    </g>
+    <g transform="translate(696,704)">
+      <rect class="box" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">21</text>
+      <text class="box-title" x="48" y="25">Monitoring</text>
+      <text class="box-text" x="16" y="49">Dashboard, Logs,</text>
+      <text class="box-text" x="16" y="66">Fehler-Snackbar</text>
+    </g>
+    <g transform="translate(946,704)">
+      <rect class="box-warn" width="220" height="88" rx="6"/>
+      <circle class="step" cx="24" cy="24" r="14"/>
+      <text class="step-text" x="24" y="29" text-anchor="middle">22</text>
+      <text class="box-title" x="48" y="25">Config sichern</text>
+      <text class="box-text" x="16" y="49">Mappings, Finance-</text>
+      <text class="box-text" x="16" y="66">Regeln exportieren</text>
+    </g>
+
+    <path class="arrow" d="M416 68 H446"/>
+    <path class="arrow" d="M666 68 H696"/>
+    <path class="arrow-soft" d="M916 68 H946"/>
+
+    <path class="arrow" d="M306 112 V160"/>
+    <path class="arrow" d="M556 112 V160"/>
+    <path class="arrow-soft" d="M806 112 V160"/>
+    <path class="arrow-soft" d="M1056 112 V160"/>
+
+    <path class="arrow" d="M416 204 H446"/>
+    <path class="arrow" d="M666 204 H696"/>
+    <path class="arrow-soft" d="M916 204 H946"/>
+
+    <path class="arrow" d="M306 248 V296"/>
+    <path class="arrow" d="M556 248 V296"/>
+    <path class="arrow" d="M806 248 V296"/>
+
+    <path class="arrow" d="M416 340 H446"/>
+    <path class="arrow" d="M666 340 H696"/>
+    <path class="arrow" d="M916 340 H946"/>
+
+    <path class="arrow" d="M556 384 V432"/>
+    <path class="arrow-soft" d="M806 384 V432"/>
+
+    <path class="arrow" d="M556 520 V568"/>
+    <path class="arrow" d="M416 612 H446"/>
+    <path class="arrow" d="M666 612 H696"/>
+    <path class="arrow" d="M916 612 H946"/>
+
+    <path class="arrow" d="M556 656 C556 684 306 676 306 704"/>
+    <path class="arrow" d="M416 748 H446"/>
+    <path class="arrow-soft" d="M666 748 H696"/>
+    <path class="arrow-soft" d="M916 748 H946"/>
+
+    <g transform="translate(1200,160)">
+      <rect class="box-warn" width="310" height="146" rx="6"/>
+      <text class="box-title" x="18" y="30">Aktuelle bewusste Doppelspur</text>
+      <text class="box-text" x="18" y="56">HANA-B1-Legacy-Pfad bleibt aktiv,</text>
+      <text class="box-text" x="18" y="75">wenn fuer einen Standort kein</text>
+      <text class="box-text" x="18" y="94">grafisches Mapping gepflegt ist.</text>
+      <text class="box-text" x="18" y="123">Ziel: spaeter auf HANA-Mapping migrieren.</text>
+    </g>
+
+    <g transform="translate(1200,344)">
+      <rect class="box-tech" width="310" height="146" rx="6"/>
+      <text class="box-title" x="18" y="30">Technischer Kern</text>
+      <text class="box-text" x="18" y="56">MappedSalesRecordComposer</text>
+      <text class="box-text" x="18" y="75">fuehrt Quellzeilen, Left Joins,</text>
+      <text class="box-text" x="18" y="94">Expressionen und Zielfeldmapping</text>
+      <text class="box-text" x="18" y="113">fuer SAP OData und HANA zusammen.</text>
+    </g>
+
+    <g transform="translate(1200,568)">
+      <rect class="box-warn" width="310" height="146" rx="6"/>
+      <text class="box-title" x="18" y="30">Naechster Prozessausbau</text>
+      <text class="box-text" x="18" y="56">UI fuer FinanceReferences,</text>
+      <text class="box-text" x="18" y="75">Budgetkurse und IC-Regeln bauen.</text>
+      <text class="box-text" x="18" y="102">Manual Excel Header-Automatik</text>
+      <text class="box-text" x="18" y="121">mit Mapping-Engine vereinheitlichen.</text>
+    </g>
+  </g>
+</svg>

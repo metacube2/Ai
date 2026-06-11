@@ -1,0 +1,102 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseAppHost>false</UseAppHost>
+    <AssemblyName>BiDashboard</AssemblyName>
+    <RootNamespace>TrafagSalesExporter</RootNamespace>
+
+    <!--
+      Pfad zur SAP HANA Client DLL (wird mit dem SAP HANA Client installiert).
+      Standard-Pfad nach Installation: C:\Program Files\sap\hdbclient\dotnetcore\v2.1\
+      Kann bei Bedarf via MSBuild-Property überschrieben werden:
+        dotnet build /p:HanaClientDll="D:\pfad\zu\Sap.Data.Hana.Core.v2.1.dll"
+    -->
+    <HanaClientDll Condition="'$(HanaClientDll)' == ''">C:\Program Files\sap\hdbclient\dotnetcore\v2.1\Sap.Data.Hana.Core.v2.1.dll</HanaClientDll>
+    <HanaClientNativeDll Condition="'$(HanaClientNativeDll)' == ''">C:\Program Files\sap\hdbclient\dotnetcore\libadonetHDB.dll</HanaClientNativeDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="8.0.24" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Graph" Version="5.80.0" />
+    <PackageReference Include="MudBlazor" Version="7.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.Core.v2.1">
+      <HintPath>$(HanaClientDll)</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="trafag_exporter.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <Content Include="trafag_exporter.db-wal" Condition="Exists('trafag_exporter.db-wal')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <Content Include="trafag_exporter.db-shm" Condition="Exists('trafag_exporter.db-shm')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <Content Include="check.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="DE_Beispiel_Export_Daten.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="formeln.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="FINANZ_OFFENE_FRAGEN_ANDREAS.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="trafag.jpg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="Bild.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="erg.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="login.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="manometer.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="$(HanaClientNativeDll)" Link="libadonetHDB.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(HanaClientNativeDll)')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TrafagSalesExporter.Tests\**\*.cs" />
+    <Compile Remove="Tools\**\*.cs" />
+    <Compile Remove=".tmp_tools\**\*.cs" />
+    <Compile Remove=".tmp_sap_probe\**\*.cs" />
+    <Compile Remove="bin_verify\**\*.cs" />
+    <Compile Remove="build_verify\**\*.cs" />
+    <Compile Remove="SageSpainExportPackage\**\*.cs" />
+    <Compile Remove="SageSpainFinalExportPackage\**\*.cs" />
+    <Compile Remove="verify_probe_out*\**\*.cs" />
+    <Content Remove="TrafagSalesExporter.Tests\**\*" />
+    <Content Remove="Tools\**\*" />
+    <Content Remove=".tmp_tools\**\*" />
+    <Content Remove=".tmp_sap_probe\**\*" />
+    <Content Remove="bin_verify\**\*" />
+    <Content Remove="build_verify\**\*" />
+    <Content Remove="SageSpainExportPackage\**\*" />
+    <Content Remove="SageSpainFinalExportPackage\**\*" />
+    <Content Remove="verify_probe_out*\**\*" />
+    <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
+    <EmbeddedResource Remove="Tools\**\*" />
+    <EmbeddedResource Remove=".tmp_tools\**\*" />
+    <EmbeddedResource Remove=".tmp_sap_probe\**\*" />
+    <EmbeddedResource Remove="bin_verify\**\*" />
+    <EmbeddedResource Remove="build_verify\**\*" />
+    <EmbeddedResource Remove="SageSpainExportPackage\**\*" />
+    <EmbeddedResource Remove="SageSpainFinalExportPackage\**\*" />
+    <EmbeddedResource Remove="verify_probe_out*\**\*" />
+    <None Remove="TrafagSalesExporter.Tests\**\*" />
+    <None Remove="Tools\**\*" />
+    <None Remove=".tmp_tools\**\*" />
+    <None Remove=".tmp_sap_probe\**\*" />
+    <None Remove="bin_verify\**\*" />
+    <None Remove="build_verify\**\*" />
+    <None Remove="SageSpainExportPackage\**\*" />
+    <None Remove="SageSpainFinalExportPackage\**\*" />
+    <None Remove="verify_probe_out*\**\*" />
+  </ItemGroup>
+
+  <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">
+    <Warning Condition="!Exists('$(HanaClientDll)')"
+             Text="SAP HANA Client DLL nicht gefunden: $(HanaClientDll). Bitte SAP HANA Client installieren (https://tools.hana.ondemand.com) oder MSBuild-Property 'HanaClientDll' setzen." />
+    <Warning Condition="!Exists('$(HanaClientNativeDll)')"
+             Text="SAP HANA native DLL nicht gefunden: $(HanaClientNativeDll). Bitte SAP HANA Client installieren oder MSBuild-Property 'HanaClientNativeDll' setzen." />
+  </Target>
+</Project>

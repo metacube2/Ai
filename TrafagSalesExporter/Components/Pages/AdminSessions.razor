@@ -1,0 +1,104 @@
+@page "/admin/sessions"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
+@using TrafagSalesExporter.Services
+@inject IAccessSessionTracker SessionTracker
+@inject IAdminAccessService AdminAccess
+@inject ILandingPageSettingsService LandingSettings
+@inject IUiTextService UiText
+
+<PageTitle>@T("Aktive Logins", "Active logins")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Aktive Logins", "Active logins")</MudText>
+
+@if (!AdminAccess.IsUnlocked)
+{
+    <AdminAccessPanel OnUnlocked="Refresh" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row AlignItems="AlignItems.Center" Class="mb-4">
+            <div>
+                <MudText Typo="Typo.h6">@T("Startseite", "Landing page")</MudText>
+                <MudText Typo="Typo.caption">
+                    @T("Optionale Animation unter dem Willkommens-Text.", "Optional animation below the welcome text.")
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudSwitch T="bool" Value="LandingSettings.ShowWalkingLabFigure" ValueChanged="SetWalkingFigure"
+                       Color="Color.Primary"
+                       Label="@T("Strichmännchen anzeigen", "Show stick figure")" />
+        </MudStack>
+        <MudDivider Class="mb-4" />
+        <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
+            <div>
+                <MudText Typo="Typo.h6">@T("HR-/Finance-Cockpit Sessions", "HR/Finance cockpit sessions")</MudText>
+                <MudText Typo="Typo.caption">
+                    @T("Gezählt werden App-interne Entsperrungen seit dem letzten App-Start.", "Counts app-internal unlocks since the last app start.")
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Lock" OnClick="LockAdmin">
+                @T("Admin sperren", "Lock admin")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Refresh">
+                @T("Aktualisieren", "Refresh")
+            </MudButton>
+        </MudStack>
+
+        <MudTable Items="_sessions" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Bereich", "Area")</MudTh>
+                <MudTh>@T("Name", "Name")</MudTh>
+                <MudTh>@T("IP-Adresse", "IP address")</MudTh>
+                <MudTh>@T("Entsperrt seit", "Unlocked since")</MudTh>
+                <MudTh>@T("Zuletzt gesehen", "Last seen")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Area</MudTd>
+                <MudTd>@context.Username</MudTd>
+                <MudTd>@context.RemoteAddress</MudTd>
+                <MudTd>@FormatDate(context.StartedAt)</MudTd>
+                <MudTd>@FormatDate(context.LastSeenAt)</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.caption">@T("Keine aktiven HR-/Finance-Logins erfasst.", "No active HR/Finance logins recorded.")</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        @T("Hinweis: HR und Finance verwenden gemeinsame App-Logins. Diese Seite zeigt daher den verwendeten Login-Namen und die Session, nicht zwingend die echte Person.", "Note: HR and Finance use shared app logins. This page therefore shows the used login name and session, not necessarily the real person.")
+    </MudAlert>
+}
+
+@code {
+    private IReadOnlyList<AccessSessionSnapshot> _sessions = [];
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _sessions = SessionTracker.GetActiveSessions();
+    }
+
+    private void LockAdmin()
+    {
+        AdminAccess.Lock();
+        _sessions = [];
+    }
+
+    private void SetWalkingFigure(bool value)
+    {
+        LandingSettings.SetShowWalkingLabFigure(value);
+    }
+
+    private static string FormatDate(DateTimeOffset value)
+        => value.ToString("dd.MM.yyyy HH:mm:ss");
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
