@@ -123,13 +123,13 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
 
     public string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null)
     {
-        if (!string.IsNullOrWhiteSpace(settings.LocalAuditCsvFolder))
-            return settings.LocalAuditCsvFolder.Trim();
+        if (!string.IsNullOrWhiteSpace(fallbackOutputDirectory))
+            return fallbackOutputDirectory.Trim();
 
         if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
-            return Path.Combine(settings.LocalSiteExportFolder.Trim(), "audit-csv");
+            return settings.LocalSiteExportFolder.Trim();
 
-        return Path.Combine(AppContext.BaseDirectory, "output", "audit-csv");
+        return Path.Combine(AppContext.BaseDirectory, "output");
     }
 
     private static IEnumerable<string> BuildRow(Site site, string sourceSystem, SalesRecord record)

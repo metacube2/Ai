@@ -29,7 +29,8 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         var settings = new ExportSettings
         {
             AuditCsvEnabled = true,
-            LocalAuditCsvFolder = _tempDirectory
+            LocalSiteExportFolder = _tempDirectory,
+            LocalAuditCsvFolder = Path.Combine(_tempDirectory, "ignored")
         };
         var site = new Site { TSC = "TRCH", Land = "Schweiz" };
         var record = new SalesRecord
@@ -65,6 +66,7 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         var path = await service.WriteSiteAuditCsvAsync(site, settings, "SAP", _tempDirectory, [record]);
 
         Assert.True(File.Exists(path));
+        Assert.Equal(_tempDirectory, Path.GetDirectoryName(path));
         var records = await service.ReadLatestSiteAuditCsvRecordsAsync(settings);
         var roundtrip = Assert.Single(records);
         Assert.Equal("SAP", roundtrip.SourceSystem);
@@ -84,7 +86,12 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         var csvService = new ExportAuditCsvService();
         await csvService.WriteSiteAuditCsvAsync(
             new Site { TSC = "TRUK", Land = "England" },
-            new ExportSettings { AuditCsvEnabled = true, LocalAuditCsvFolder = _tempDirectory },
+            new ExportSettings
+            {
+                AuditCsvEnabled = true,
+                LocalSiteExportFolder = _tempDirectory,
+                LocalAuditCsvFolder = Path.Combine(_tempDirectory, "ignored")
+            },
             "MANUAL_EXCEL",
             _tempDirectory,
             [
@@ -112,7 +119,8 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
             db.ExportSettings.Add(new ExportSettings
             {
                 UseAuditCsvAsCentralSource = true,
-                LocalAuditCsvFolder = _tempDirectory
+                LocalSiteExportFolder = _tempDirectory,
+                LocalAuditCsvFolder = Path.Combine(_tempDirectory, "ignored")
             });
             db.Sites.Add(new Site
             {

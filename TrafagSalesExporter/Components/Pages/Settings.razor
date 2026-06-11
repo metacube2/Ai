@@ -284,18 +284,6 @@
                 Schreibt zusÃƒÂ¤tzliche technische Fortschrittsmeldungen fÃƒÂ¼r HANA- und SAP-LesevorgÃƒÂ¤nge ins Dashboard und in die Logs.
             </MudText>
         </MudItem>
-        <MudItem xs="12" md="4">
-            <MudSwitch @bind-Value="_exportSettings.AuditCsvEnabled" Label="Audit-CSV je Standort schreiben" Color="Color.Primary" />
-            <MudText Typo="Typo.caption">
-                Schreibt nach Mapping und Transformation eine lesbare CSV-Datei je Standort.
-            </MudText>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudSwitch @bind-Value="_exportSettings.UseAuditCsvAsCentralSource" Label="Zentrale Auswertung aus Audit-CSV" Color="Color.Warning" />
-            <MudText Typo="Typo.caption">
-                Zentrale Excel, Finance Summary und Management-Analyse lesen die neuesten Standort-CSV-Dateien statt CentralSalesRecords.
-            </MudText>
-        </MudItem>
         <MudItem xs="12" md="6">
             <MudTextField @bind-Value="_exportSettings.LocalSiteExportFolder" Label="Lokaler Standardpfad Standort-Dateien"
                           HelperText="Wenn leer, wird ./output unter dem Programmverzeichnis verwendet." />
@@ -304,9 +292,38 @@
             <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="Lokaler Pfad Zentrale Datei"
                           HelperText="Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet." />
         </MudItem>
-        <MudItem xs="12" md="6">
-            <MudTextField @bind-Value="_exportSettings.LocalAuditCsvFolder" Label="Lokaler Pfad Audit-CSV"
-                          HelperText="Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet." />
+        <MudItem xs="12">
+            <div class="audit-csv-settings">
+                <div class="audit-csv-header">
+                    <MudIcon Icon="@Icons.Material.Filled.RuleFolder" Color="Color.Info" Size="Size.Medium" />
+                    <div>
+                        <MudText Typo="Typo.h6">Audit-CSV / nachvollziehbarer Datenfluss</MudText>
+                        <MudText Typo="Typo.body2">
+                            Fuer Finance und Wirtschaftspruefung: lesbare Standort-CSV nach Mapping und Konvertierung, optional als Quelle fuer zentrale Auswertungen.
+                        </MudText>
+                    </div>
+                </div>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudSwitch @bind-Value="_exportSettings.AuditCsvEnabled" Label="Audit-CSV je Standort schreiben" Color="Color.Primary" />
+                        <MudText Typo="Typo.caption">
+                            Schreibt beim Laenderexport je Standort eine Sales_*.csv mit den transformierten Daten.
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSwitch @bind-Value="_exportSettings.UseAuditCsvAsCentralSource" Label="Zentrale Auswertung aus Audit-CSV" Color="Color.Warning" />
+                        <MudText Typo="Typo.caption">
+                            Dashboard, zentrale Excel-Datei und Finance-Auswertungen lesen die neuesten Standort-CSV-Dateien statt CentralSalesRecords.
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Filled">
+                            Audit-CSV wird immer im gleichen Ordner wie die lokalen Standort-Dateien abgelegt.
+                            Der Pfad wird oben bei <b>Lokaler Standardpfad Standort-Dateien</b> gesetzt.
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+            </div>
         </MudItem>
         <MudItem xs="12">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
@@ -328,6 +345,23 @@
         Beispiel: Sales_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).xlsx
     </MudText>
 </MudPaper>
+
+<style>
+    .audit-csv-settings {
+        background: #e8f3ff;
+        border: 1px solid #90caf9;
+        border-left: 6px solid #1976d2;
+        border-radius: 8px;
+        padding: 18px 20px;
+    }
+
+    .audit-csv-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+</style>
 
 @code {
     private SharePointConfig _spConfig = new();
