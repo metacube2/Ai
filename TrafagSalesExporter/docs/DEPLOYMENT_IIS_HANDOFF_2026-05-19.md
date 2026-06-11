@@ -1,6 +1,32 @@
 # Deployment / IIS Handoff 2026-05-19
 
-Letzter Nachtrag: 2026-06-10
+Letzter Nachtrag: 2026-06-11
+
+## Nachtrag 2026-06-11 Deploy Finance-Schulung und Dashboard-UI
+
+Deploy-Inhalt:
+
+- Commit `f751295 Update finance training and dashboard UI`.
+- Export Dashboard: VU-/Manometer-Grafik als fixes SVG mit Skala und Beschriftung, damit die Grafik nicht mehr nach unten in die Tabelle verschiebt.
+- Management/Finance-Cockpit: doppelte obere Tab-/Menubaender reduziert; Navigation bleibt ueber linke Reiter/Query-Parameter nutzbar.
+- Finance-Schulung aktualisiert:
+  - `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`
+  - `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`
+  - Prozessgrafiken fuer Exportfluss, Audit-CSV-Auswertungsquelle und Waehrungs-/Kursfluss.
+- Schulung enthaelt 4 Beispielzeilen je Land mit Mapping/Transformation, Merge-Wert, zentraler Summe und Dashboard-Fluss.
+
+Validierung:
+
+- Saubere Worktree-Kopie unter `C:\TMP\trafag-deploy-20260611115948`.
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`: `92/92` Tests gruen.
+- Publish:
+  - `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --no-restore`
+  - `app_offline.htm` vor Publish gesetzt und nach Publish entfernt.
+  - `BiDashboard.dll` Zeitstempel nach Deploy: `11.06.2026 12:04:53`.
+
+Hinweis:
+
+- Die im Entwicklungsarbeitsbaum offenen Loeschungen `Bild.png` und `erg.png` wurden fuer diesen Deploy nicht committed und nicht veraendert.
 
 ## Nachtrag 2026-06-10 Deploy Produktsparten-Fallback `ProductDivisionMapSet`
 
