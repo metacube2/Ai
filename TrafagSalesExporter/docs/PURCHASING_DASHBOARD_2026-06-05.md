@@ -57,9 +57,31 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
   - `PBIX Vorlage`: aus `x.pbix` uebernommene Seiten/Visuals.
   - `3D Simulation`: drehbare 3D-What-if-Analyse.
 - Unterpunkt `Einkauf > Datenquellen` fuer SAP/OData-Verbindung, Quellen, Join-Fluss und Zielmappings.
-- Die Seite ist als Cockpit-Struktur umgesetzt und zweisprachig ueber den vorhandenen UI-Sprachservice vorbereitet.
+- Die Seite ist als Cockpit-Struktur umgesetzt und ueber den vorhandenen UI-Sprachservice mehrsprachig vorbereitet.
 - EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
 - Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist.
+
+## Mehrsprachigkeit Stand 2026-06-11
+
+Commit `1dbaa66 Add purchasing translations` hat die fehlenden UI-Texte fuer den Einkaufsbereich im zentralen `UiTextService` nachgezogen.
+
+Abgedeckt:
+
+- Hauptnavigation: `Einkauf`, `Einkauf Dashboard`, `Einkauf Datenquellen`.
+- Einkaufsdashboard: Uebersicht, SAP-Datenfluss, Live-Status, Zeitraumfilter, KPI-Karten, Detailbereiche, Ideen, Kennzahlen-Katalog, PBIX-Vorlage und 3D-Simulation.
+- `Einkauf > Datenquellen`: Verbindung, Quellen, Join-Fluss, Mapping, aktuelle Basis, Buttons, Hilfstexte und Speicher-/Reset-Meldungen.
+- Sprachen: Spanisch, Italienisch und Hindi.
+
+Bewusst nicht uebersetzt:
+
+- Technische Namen und Feldnamen wie `EKKO`, `EKPO`, `EKET`, `EKKOSet`, `EKPOSet`, `eketSet`, SAP-Felder, Aliasnamen, TSC und Dateimuster.
+- Power-BI-Seitentitel aus der importierten PBIX-Vorlage bleiben als fachliche Referenz sichtbar.
+
+Deploy:
+
+- Publiziert am 2026-06-11 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- `BiDashboard.dll` Zeitstempel nach Deploy: `11.06.2026 12:30:27`.
+- Validierung vor Publish: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `92/92` Tests gruen.
 
 ## Navigation und Admin-Steuerung
 

@@ -8,16 +8,18 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
-- Neu deployed: Commit `f751295 Update finance training and dashboard UI` auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Deploy-Status 2026-06-11: `BiDashboard.dll` Zeitstempel `11.06.2026 12:04:53`; `app_offline.htm` wurde nach Publish entfernt.
+- Neu deployed: Commit `1dbaa66 Add purchasing translations` auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Deploy-Status 2026-06-11: `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`; `app_offline.htm` wurde nach Publish entfernt.
 - Validierung vor Deploy aus sauberer Worktree-Kopie: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
+- Neu lokal/deployed: Einkaufsdashboard, Einkaufs-Datenquellen und relevante Einkauf-Hilfstexte sind fuer Spanisch, Italienisch und Hindi im UI-Sprachservice nachgezogen; Audit-CSV-Hilfstext ist nicht mehr englisch im Spanisch-/Hindi-Modus.
+- Vorheriger Deploy 2026-06-11: Commit `f751295 Update finance training and dashboard UI`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:04:53`.
 - Neu lokal/deployed: Export-Dashboard-Manometer als fixes SVG mit Beschriftung; doppelte obere Tab-Baender im Management/Finance-Cockpit reduziert.
 - Neu lokal dokumentiert: aktuelle Finance-Schulung `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Export Dashboard, Audit-CSV-Auswertungsquelle und Waehrungs-/Kursfluss.
 - Neue Schulungsgrafiken: `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`, `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`, `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`.
 - Neu lokal umgesetzt: Standortexporte koennen nach Mapping und Transformation eine lesbare Audit-CSV je Standort schreiben; zentrale Excel, Finance Summary und Management-Analyse koennen per Setting wahlweise aus den neuesten Audit-CSV statt aus `CentralSalesRecords` lesen.
 - Letzter dokumentierter Code-Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN HANA-Route und Spanien-SharePoint-Pfad bleiben im Seed abgesichert.
 - Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
-- Letzter dokumentierter Deploy: 2026-06-11 Finance-Schulung/UI nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- Letzter dokumentierter Deploy: 2026-06-11 Einkaufs-Uebersetzungen nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Neu umgesetzt und deployed: `ZSCHWEIZ` nutzt zusaetzlich `M = ProductDivisionMapSet` und den Join `Z.Prodh = M.Paph1`; Produktfelder fallen per `FirstNonEmpty(P.*, M.*)` von Materialreferenz auf PAPH1-Mapping zurueck.
 - Server-DB am 2026-06-10 aktualisiert: CH/AT neu importiert, `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`; Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak`.
 - Deploy-Status 2026-06-10: `BiDashboard.dll` Zeitstempel `10.06.2026 16:09:44`; `app_offline.htm` wurde entfernt.

@@ -2,6 +2,43 @@
 
 Letzter Nachtrag: 2026-06-11
 
+## Nachtrag 2026-06-11 Deploy Einkaufs-Uebersetzungen
+
+Deploy-Inhalt:
+
+- Commit `1dbaa66 Add purchasing translations`.
+- `Services/UiTextService.cs` ergaenzt fuer den Bereich Einkauf:
+  - Hauptmenue `Einkauf` und `Einkauf Dashboard`.
+  - Einkaufsdashboard: Hero, Zeitraumfilter, KPI-Karten, Spend/offene Bestellungen/Kontrakte/Lieferanten, Ideenbereich, Kennzahlen-Katalog, PBIX-Vorlage und 3D-Simulation.
+  - `Einkauf > Datenquellen`: Verbindung, Quellen, Join-Fluss, Mapping, Basisstatus und Snackbar-Meldungen.
+  - Sprachen: Spanisch, Italienisch und Hindi.
+- Technische Namen und Feldnamen wie `EKKO`, `EKPO`, `EKET`, Entity-Sets, SAP-Felder, TSC und Dateimuster bleiben bewusst unveraendert.
+- Audit-CSV-Hilfstext ist im Spanisch-/Hindi-Modus nicht mehr englisch.
+
+Validierung:
+
+- Saubere Worktree-Kopie unter `C:\TMP\trafag-translation-test-20260611\TrafagSalesExporter`.
+- Lokaler Entwicklungs-Worktree baute wegen bereits vorher fehlender `Bild.png`/`erg.png` nicht vollstaendig; diese offenen lokalen Loeschungen wurden nicht veraendert.
+- Im sauberen Worktree wurde die Content-DB in den Projektordner kopiert, danach:
+  - `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+  - Ergebnis: `92/92` Tests gruen.
+
+Publish:
+
+- `app_offline.htm` vor Publish gesetzt und nach Publish entfernt.
+- Publish-Befehl:
+
+```powershell
+dotnet publish TrafagSalesExporter.csproj -c Release -o "\\trch-webapp-bidashboard.trafagch.local\BiDashboard$" --no-restore
+```
+
+- `BiDashboard.dll` Zeitstempel nach Deploy: `11.06.2026 12:30:27`.
+- Bekannte Warnungen bleiben unveraendert: CS0649 fuer Username-Felder und MudBlazor MUD0002 Analyzer-Warnungen.
+
+Hinweis:
+
+- Die im Entwicklungsarbeitsbaum offenen Loeschungen `Bild.png` und `erg.png` sowie untracked Arbeitsdateien wurden fuer diesen Deploy nicht committed und nicht veraendert.
+
 ## Nachtrag 2026-06-11 Deploy Finance-Schulung und Dashboard-UI
 
 Deploy-Inhalt:

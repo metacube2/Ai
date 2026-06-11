@@ -5,11 +5,12 @@ Stand: 2026-06-11
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
-- Letzter dokumentierter Deploy: 2026-06-11, Commit `f751295 Update finance training and dashboard UI`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:04:53`.
+- Letzter dokumentierter Deploy: 2026-06-11, Commit `1dbaa66 Add purchasing translations`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
+- Neu deployed: Einkaufsdashboard und `Einkauf > Datenquellen` haben erweiterte UI-Uebersetzungen fuer Spanisch, Italienisch und Hindi; technische Feldnamen wie SAP-Entity-Sets bleiben bewusst unveraendert.
 - Neu lokal: Audit-CSV-Modus fuer Finance/Revision. Standortexporte schreiben optional nach Mapping/Transformation je Standort `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`; zentrale Excel, Finance Summary, Soll/Ist und Management-Analyse koennen per Setting aus den neuesten Standort-CSV statt aus der internen DB lesen.
 - Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Exportfluss, Audit-CSV-Auswertungsquelle und Waehrungsumrechnung.
-- UI-Delta 2026-06-11: Export-Dashboard-Manometer als fixes SVG mit Beschriftung; doppelte obere Finance-/Management-Tabbaender reduziert.
+- Vorheriges UI-Delta 2026-06-11: Export-Dashboard-Manometer als fixes SVG mit Beschriftung; doppelte obere Finance-/Management-Tabbaender reduziert.
 - Letzter dokumentierter Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
 - Vorheriger Deploy: 2026-06-10 Produktsparten-Fallback auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Produktsparten CH/AT: `ProductDivisionRefSet` bleibt materialbasiert fuehrend; Fallback `ProductDivisionMapSet` joined `Z.Prodh = M.Paph1`. Server-Import: 40'292 CH/AT-Datensaetze, 36'953 assigned, 0 `UnassignedWithReference`.

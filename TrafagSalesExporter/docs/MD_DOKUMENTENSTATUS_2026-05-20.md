@@ -19,6 +19,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `entscheide.md` | Kurzfassung der Finance-Fachentscheide | Aktuell als Kurzfassung |
 | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` | Technischer Finance-Datenfluss | Aktuell fuer End-to-end-Datenfluss |
 | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` | Aktuelle Finance-Schulung fuer Anwender, Keyuser und Revision | Fuehrend fuer Schulung; ersetzt den alten Word-Inhalt fachlich |
+| `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Einkaufsdashboard, PBIX-Bezug, SAP/OData-Quellen, Cache/Refresh und UI-Sprachen | Aktuell fuer Einkauf |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping fuer Group Sales Report | Aktuell fuehrend fuer neues Produktmapping-Thema |
 | `docs/HR_KPI_NACHDOKU_2026-05-13.md` | HR-KPI technische/fachliche Nachdoku | Aktualisiert um 2026-05-20 Erweiterungen |
 | `docs/PROGRAMM_DIAGRAMME.md` | Uebersicht Diagramme und technische Einordnung | Aktualisiert um neue Anwenderdokus |
@@ -77,6 +78,7 @@ Bereinigung 2026-06-09:
 - Die Alphaplan-Konzept- und Anleitungsdateien vom 2026-06-08 wurden bewusst nicht veraendert.
 - Delta 2026-06-10: Produktsparten-Fallback `ProductDivisionMapSet`, India/SAGE-HANA-Deploy und Server-DB-Seeds wurden in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
 - Delta 2026-06-11: Finance-Schulung, Audit-CSV-Prozessfluss, zentrale Auswertungsquelle und Kursfluss wurden in `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` und den neuen SVG-Grafiken dokumentiert.
+- Delta 2026-06-11: Einkaufs-Uebersetzungen fuer Spanisch, Italienisch und Hindi sowie der zugehoerige Deploy `1dbaa66` wurden in `docs/PURCHASING_DASHBOARD_2026-06-05.md`, `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
 
 Weiterhin gilt:
 
