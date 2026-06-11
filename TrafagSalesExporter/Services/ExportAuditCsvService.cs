@@ -21,6 +21,8 @@ public interface IExportAuditCsvService
 public sealed class ExportAuditCsvService : IExportAuditCsvService
 {
     private const char Delimiter = ';';
+    private const string ProcessedMergeInputFilePrefix = "Sales_ProcessedMergeInput_";
+    private const string LegacyFilePrefix = "Sales_";
 
     private static readonly string[] Headers =
     [
@@ -84,7 +86,7 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         Directory.CreateDirectory(directory);
 
         var tsc = string.IsNullOrWhiteSpace(site.TSC) ? "UNKNOWN" : site.TSC.Trim();
-        var fileName = $"Sales_{SanitizeFileNamePart(tsc)}_{DateTime.UtcNow:yyyy-MM-dd}.csv";
+        var fileName = $"{ProcessedMergeInputFilePrefix}{SanitizeFileNamePart(tsc)}_{DateTime.UtcNow:yyyy-MM-dd}.csv";
         var path = Path.Combine(directory, fileName);
 
         await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -105,12 +107,16 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         if (!Directory.Exists(directory))
             return [];
 
-        var latestFiles = Directory.EnumerateFiles(directory, "Sales_*.csv", SearchOption.TopDirectoryOnly)
-            .GroupBy(ResolveTscFromFileName, StringComparer.OrdinalIgnoreCase)
+        var latestFiles = EnumerateAuditCsvFiles(directory)
+            .Select(path => new { Path = path, Tsc = ResolveTscFromFileName(path) })
+            .Where(file => !string.IsNullOrWhiteSpace(file.Tsc))
+            .GroupBy(file => file.Tsc, StringComparer.OrdinalIgnoreCase)
             .Select(group => group
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .ThenByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
-                .First())
+                .OrderByDescending(file => File.GetLastWriteTimeUtc(file.Path))
+                .ThenByDescending(file => IsProcessedMergeInputFile(file.Path))
+                .ThenByDescending(file => Path.GetFileName(file.Path), StringComparer.OrdinalIgnoreCase)
+                .First()
+                .Path)
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -257,13 +263,28 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
     private static string ResolveTscFromFileName(string path)
     {
         var name = Path.GetFileNameWithoutExtension(path);
-        if (!name.StartsWith("Sales_", StringComparison.OrdinalIgnoreCase))
-            return name;
+        if (name.StartsWith(ProcessedMergeInputFilePrefix, StringComparison.OrdinalIgnoreCase))
+            return ResolveTscFromSuffix(name[ProcessedMergeInputFilePrefix.Length..]);
 
-        var withoutPrefix = name["Sales_".Length..];
-        var lastUnderscore = withoutPrefix.LastIndexOf('_');
-        return lastUnderscore <= 0 ? withoutPrefix : withoutPrefix[..lastUnderscore];
+        if (name.StartsWith(LegacyFilePrefix, StringComparison.OrdinalIgnoreCase))
+            return ResolveTscFromSuffix(name[LegacyFilePrefix.Length..]);
+
+        return string.Empty;
     }
+
+    private static string ResolveTscFromSuffix(string suffix)
+    {
+        var lastUnderscore = suffix.LastIndexOf('_');
+        return lastUnderscore <= 0 ? suffix : suffix[..lastUnderscore];
+    }
+
+    private static IEnumerable<string> EnumerateAuditCsvFiles(string directory)
+        => Directory.EnumerateFiles(directory, $"{ProcessedMergeInputFilePrefix}*.csv", SearchOption.TopDirectoryOnly)
+            .Concat(Directory.EnumerateFiles(directory, $"{LegacyFilePrefix}*.csv", SearchOption.TopDirectoryOnly)
+                .Where(path => !IsProcessedMergeInputFile(path)));
+
+    private static bool IsProcessedMergeInputFile(string path)
+        => Path.GetFileName(path).StartsWith(ProcessedMergeInputFilePrefix, StringComparison.OrdinalIgnoreCase);
 
     private static string SanitizeFileNamePart(string value)
     {

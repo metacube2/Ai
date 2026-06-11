@@ -101,7 +101,7 @@ public sealed class SiteExportServiceTests : IDisposable
 
         Assert.NotNull(result.FilePath);
         Assert.True(File.Exists(result.FilePath));
-        var auditCsv = Directory.GetFiles(_tempDirectory, "Sales_TRSE_*.csv").Single();
+        var auditCsv = Directory.GetFiles(_tempDirectory, "Sales_ProcessedMergeInput_TRSE_*.csv").Single();
         Assert.True(File.Exists(auditCsv));
 
         Assert.Equal(2, sharePoint.Uploads.Count);

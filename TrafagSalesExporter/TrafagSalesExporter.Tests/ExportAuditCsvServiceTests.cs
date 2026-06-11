@@ -67,6 +67,7 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
 
         Assert.True(File.Exists(path));
         Assert.Equal(_tempDirectory, Path.GetDirectoryName(path));
+        Assert.StartsWith("Sales_ProcessedMergeInput_TRCH_", Path.GetFileName(path), StringComparison.OrdinalIgnoreCase);
         var records = await service.ReadLatestSiteAuditCsvRecordsAsync(settings);
         var roundtrip = Assert.Single(records);
         Assert.Equal("SAP", roundtrip.SourceSystem);
@@ -78,6 +79,62 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         Assert.Equal("CHF", roundtrip.SalesCurrency);
         Assert.Equal(new DateTime(2026, 6, 10), roundtrip.PostingDate);
         Assert.Equal(new DateTime(2026, 6, 11), roundtrip.InvoiceDate);
+    }
+
+    [Fact]
+    public async Task ReadLatestSiteAuditCsvRecordsAsync_Reads_New_Name_Before_Legacy_Name()
+    {
+        var service = new ExportAuditCsvService();
+        var settings = new ExportSettings
+        {
+            AuditCsvEnabled = true,
+            LocalSiteExportFolder = _tempDirectory
+        };
+        var site = new Site { TSC = "TRSE", Land = "Spanien" };
+
+        var legacyPath = await service.WriteSiteAuditCsvAsync(
+            site,
+            settings,
+            "MANUAL_EXCEL",
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "MANUAL_EXCEL",
+                    ExtractionDate = new DateTime(2026, 6, 10),
+                    Tsc = "TRSE",
+                    Land = "Spanien",
+                    InvoiceNumber = "NEW",
+                    SalesPriceValue = 20m
+                }
+            ]);
+        var oldPath = Path.Combine(_tempDirectory, "Sales_TRSE_2026-06-10.csv");
+        File.Move(legacyPath!, oldPath);
+        File.SetLastWriteTimeUtc(oldPath, new DateTime(2026, 6, 10, 8, 0, 0, DateTimeKind.Utc));
+
+        var newPath = await service.WriteSiteAuditCsvAsync(
+            site,
+            settings,
+            "MANUAL_EXCEL",
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "MANUAL_EXCEL",
+                    ExtractionDate = new DateTime(2026, 6, 11),
+                    Tsc = "TRSE",
+                    Land = "Spanien",
+                    InvoiceNumber = "PROCESSED",
+                    SalesPriceValue = 30m
+                }
+            ]);
+        File.SetLastWriteTimeUtc(newPath!, new DateTime(2026, 6, 11, 8, 0, 0, DateTimeKind.Utc));
+
+        var records = await service.ReadLatestSiteAuditCsvRecordsAsync(settings);
+
+        var record = Assert.Single(records);
+        Assert.Equal("PROCESSED", record.InvoiceNumber);
+        Assert.Equal(30m, record.SalesPriceValue);
     }
 
     [Fact]

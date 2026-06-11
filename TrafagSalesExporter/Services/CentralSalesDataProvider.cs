@@ -38,7 +38,7 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
         {
             var directory = _auditCsvService.ResolveAuditCsvDirectory(settings);
             throw new InvalidOperationException(
-                $"Audit-CSV ist als zentrale Quelle aktiv, aber im Ordner '{directory}' wurden keine Sales_*.csv-Dateien gefunden.");
+                $"Audit-CSV ist als zentrale Quelle aktiv, aber im Ordner '{directory}' wurden keine Sales_ProcessedMergeInput_*.csv-Dateien gefunden.");
         }
 
         return records

@@ -313,8 +313,8 @@
                     <MudItem xs="12" md="4">
                         <MudSwitch @bind-Value="_exportSettings.AuditCsvEnabled" Label="@T("Audit-CSV je Standort schreiben", "Write audit CSV per site")" Color="Color.Primary" />
                         <MudText Typo="Typo.caption">
-                            @T("Schreibt beim Laenderexport je Standort eine Sales_*.csv mit den transformierten Daten.",
-                               "Writes one Sales_*.csv per site during country export with the transformed data.")
+                            @T("Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten.",
+                               "Writes one Sales_ProcessedMergeInput_*.csv per site during country export with the transformed data.")
                         </MudText>
                     </MudItem>
                     <MudItem xs="12" md="4">
@@ -351,6 +351,7 @@
     </MudText>
     <MudText Typo="Typo.caption" Class="mt-1">
         @T("Beispiel:", "Example:") Sales_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).xlsx
+        / Sales_ProcessedMergeInput_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).csv
     </MudText>
 </MudPaper>
 

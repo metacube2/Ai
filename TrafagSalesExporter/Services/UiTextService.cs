@@ -254,7 +254,8 @@ public sealed class UiTextService : IUiTextService
                 ["Transformer Ansicht"] = "Vista de transformaciones",
                 ["Transformationscode"] = "Código de transformación",
                 ["Keine Beschreibung."] = "Sin descripción.",
-                ["Optionales Argument."] = "Argumento opcional."
+                ["Optionales Argument."] = "Argumento opcional.",
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Escribe una Sales_ProcessedMergeInput_*.csv por sitio durante la exportacion de paises con los datos transformados."
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -487,7 +488,8 @@ public sealed class UiTextService : IUiTextService
                 ["Transformer Ansicht"] = "Vista trasformazioni",
                 ["Transformationscode"] = "Codice trasformazione",
                 ["Keine Beschreibung."] = "Nessuna descrizione.",
-                ["Optionales Argument."] = "Argomento opzionale."
+                ["Optionales Argument."] = "Argomento opzionale.",
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Scrive una Sales_ProcessedMergeInput_*.csv per sito durante l'esportazione dei Paesi con i dati trasformati."
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -720,7 +722,8 @@ public sealed class UiTextService : IUiTextService
                 ["Transformer Ansicht"] = "रूपांतरण दृश्य",
                 ["Transformationscode"] = "रूपांतरण कोड",
                 ["Keine Beschreibung."] = "कोई विवरण नहीं.",
-                ["Optionales Argument."] = "वैकल्पिक तर्क."
+                ["Optionales Argument."] = "वैकल्पिक तर्क.",
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Writes one Sales_ProcessedMergeInput_*.csv per site during country export with the transformed data."
             }
         };
 
