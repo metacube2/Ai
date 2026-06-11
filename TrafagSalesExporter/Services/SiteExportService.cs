@@ -14,6 +14,7 @@ public class SiteExportService : ISiteExportService
     private readonly ISharePointUploadService _sharePointService;
     private readonly IRecordTransformationService _transformationService;
     private readonly ICentralSalesRecordService _centralSalesRecordService;
+    private readonly IExportAuditCsvService _auditCsvService;
     private readonly IAppEventLogService _appEventLogService;
     private readonly ILogger<SiteExportService> _logger;
 
@@ -24,6 +25,7 @@ public class SiteExportService : ISiteExportService
         ISharePointUploadService sharePointService,
         IRecordTransformationService transformationService,
         ICentralSalesRecordService centralSalesRecordService,
+        IExportAuditCsvService auditCsvService,
         IAppEventLogService appEventLogService,
         ILogger<SiteExportService> logger)
     {
@@ -33,6 +35,7 @@ public class SiteExportService : ISiteExportService
         _sharePointService = sharePointService;
         _transformationService = transformationService;
         _centralSalesRecordService = centralSalesRecordService;
+        _auditCsvService = auditCsvService;
         _appEventLogService = appEventLogService;
         _logger = logger;
     }
@@ -75,6 +78,15 @@ public class SiteExportService : ISiteExportService
                 siteId: site.Id, land: site.Land,
                 details: $"Records vor Transformation={records.Count}");
             _transformationService.Apply(records, rules);
+
+            var auditCsvPath = await _auditCsvService.WriteSiteAuditCsvAsync(
+                site, settings, sourceSystem, outputDir, records);
+            if (!string.IsNullOrWhiteSpace(auditCsvPath))
+            {
+                await _appEventLogService.WriteAsync("Export", "Audit-CSV geschrieben",
+                    siteId: site.Id, land: site.Land,
+                    details: auditCsvPath);
+            }
 
             var filePath = fetchResult.ReferenceFilePath;
             if (string.IsNullOrWhiteSpace(filePath))

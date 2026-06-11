@@ -9,16 +9,26 @@ public class ManagementCockpitService : IManagementCockpitService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICurrencyExchangeRateService _exchangeRateService;
+    private readonly ICentralSalesDataProvider? _centralSalesDataProvider;
 
     public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory)
-        : this(dbFactory, new CurrencyExchangeRateService(dbFactory))
+        : this(dbFactory, new CurrencyExchangeRateService(dbFactory), null)
     {
     }
 
     public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory, ICurrencyExchangeRateService exchangeRateService)
+        : this(dbFactory, exchangeRateService, null)
+    {
+    }
+
+    public ManagementCockpitService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ICurrencyExchangeRateService exchangeRateService,
+        ICentralSalesDataProvider? centralSalesDataProvider)
     {
         _dbFactory = dbFactory;
         _exchangeRateService = exchangeRateService;
+        _centralSalesDataProvider = centralSalesDataProvider;
     }
 
     private static readonly List<ValueFieldDefinition> ValueFieldDefinitions =
@@ -166,12 +176,12 @@ public class ManagementCockpitService : IManagementCockpitService
 
     public async Task<List<int>> GetAvailableCentralYearsAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var years = await db.CentralSalesRecords
+        var records = await LoadCentralRecordsAsync();
+        var years = records
             .Select(r => r.InvoiceDate.HasValue ? r.InvoiceDate.Value.Year : r.ExtractionDate.Year)
             .Distinct()
             .OrderBy(x => x)
-            .ToListAsync();
+            .ToList();
 
         return years;
     }
@@ -186,7 +196,8 @@ public class ManagementCockpitService : IManagementCockpitService
         using var db = await _dbFactory.CreateDbContextAsync();
         var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
         var exchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
-        var baseRows = await db.CentralSalesRecords
+        var centralRecords = await LoadCentralRecordsAsync();
+        var baseRows = centralRecords
             .Select(r => new CentralCockpitRow
             {
                 SourceSystem = r.SourceSystem,
@@ -204,7 +215,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 PeriodDate = r.InvoiceDate ?? r.ExtractionDate,
                 ExchangeRateDate = r.ExtractionDate
             })
-            .ToListAsync();
+            .ToList();
 
         foreach (var row in baseRows)
             row.ExchangeRateDate = ResolveExchangeRateDate(exchangeRateDateField, row.PostingDate, row.InvoiceDate, row.ExtractionDate);
@@ -318,6 +329,7 @@ public class ManagementCockpitService : IManagementCockpitService
     public async Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
         var financeRules = await db.FinanceRules
             .AsNoTracking()
             .Where(rule => rule.IsActive)
@@ -332,40 +344,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .Where(rule => rule.IsActive)
             .ToListAsync();
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
-        var records = await db.CentralSalesRecords
-            .AsNoTracking()
-            .Select(r => new SalesRecord
-            {
-                SourceSystem = r.SourceSystem,
-                Land = r.Land,
-                Tsc = r.Tsc,
-                DocumentEntry = r.DocumentEntry,
-                InvoiceNumber = r.InvoiceNumber,
-                PositionOnInvoice = r.PositionOnInvoice,
-                Material = r.Material,
-                Name = r.Name,
-                ProductGroup = r.ProductGroup,
-                ProductHierarchyCode = r.ProductHierarchyCode,
-                ProductHierarchyText = r.ProductHierarchyText,
-                ProductFamilyCode = r.ProductFamilyCode,
-                ProductFamilyText = r.ProductFamilyText,
-                ProductDivisionCode = r.ProductDivisionCode,
-                ProductDivisionText = r.ProductDivisionText,
-                ProductMappingAssigned = r.ProductMappingAssigned,
-                Quantity = r.Quantity,
-                SupplierCountry = r.SupplierCountry,
-                CustomerNumber = r.CustomerNumber,
-                CustomerName = r.CustomerName,
-                SalesCurrency = r.SalesCurrency,
-                DocumentCurrency = r.DocumentCurrency,
-                CompanyCurrency = r.CompanyCurrency,
-                SalesPriceValue = r.SalesPriceValue,
-                DocumentType = r.DocumentType,
-                PostingDate = r.PostingDate,
-                InvoiceDate = r.InvoiceDate,
-                ExtractionDate = r.ExtractionDate
-            })
-            .ToListAsync();
+        var records = await LoadCentralRecordsAsync();
 
         if (records.Count == 0)
             throw new InvalidOperationException("Die zentrale Tabelle enthaelt noch keine Datensaetze.");
@@ -484,7 +463,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 group => group.Select(reference => reference.CheckValue ?? reference.LocalCurrencyValue).FirstOrDefault(value => value.HasValue),
                 StringComparer.OrdinalIgnoreCase);
 
-        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db);
+        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings.UseAuditCsvAsCentralSource);
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
@@ -536,24 +515,38 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
-    private static async Task<List<ManagementFinanceDataStatusRow>> BuildFinanceDataStatusRowsAsync(AppDbContext db)
+    private static async Task<List<ManagementFinanceDataStatusRow>> BuildFinanceDataStatusRowsAsync(
+        AppDbContext db,
+        IReadOnlyCollection<SalesRecord> centralRecords,
+        bool useAuditCsv)
     {
         var sites = await db.Sites
             .AsNoTracking()
             .OrderBy(site => site.Land)
             .ThenBy(site => site.TSC)
             .ToListAsync();
-        var records = await db.CentralSalesRecords
-            .AsNoTracking()
-            .GroupBy(record => record.Tsc)
-            .Select(group => new
-            {
-                Tsc = group.Key,
-                RowCount = group.Count(),
-                LatestStoredAtUtc = group.Max(record => record.StoredAtUtc),
-                LatestExtractionDate = group.Max(record => record.ExtractionDate)
-            })
-            .ToListAsync();
+        var records = useAuditCsv
+            ? centralRecords
+                .GroupBy(record => record.Tsc)
+                .Select(group => new
+                {
+                    Tsc = group.Key,
+                    RowCount = group.Count(),
+                    LatestStoredAtUtc = (DateTime?)null,
+                    LatestExtractionDate = group.Max(record => record.ExtractionDate)
+                })
+                .ToList()
+            : await db.CentralSalesRecords
+                .AsNoTracking()
+                .GroupBy(record => record.Tsc)
+                .Select(group => new
+                {
+                    Tsc = group.Key,
+                    RowCount = group.Count(),
+                    LatestStoredAtUtc = (DateTime?)group.Max(record => record.StoredAtUtc),
+                    LatestExtractionDate = group.Max(record => record.ExtractionDate)
+                })
+                .ToListAsync();
         var logs = await db.ExportLogs
             .AsNoTracking()
             .GroupBy(log => log.TSC)
@@ -582,7 +575,7 @@ public class ManagementCockpitService : IManagementCockpitService
             {
                 Land = site.Land,
                 Tsc = site.TSC,
-                SourceSystem = site.SourceSystem,
+                SourceSystem = useAuditCsv ? $"{site.SourceSystem} / Audit-CSV" : site.SourceSystem,
                 IsActive = site.IsActive,
                 RowCount = record?.RowCount ?? 0,
                 LatestStoredAtUtc = record?.LatestStoredAtUtc,
@@ -593,6 +586,63 @@ public class ManagementCockpitService : IManagementCockpitService
                 ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc
             };
         }).ToList();
+    }
+
+    private async Task<List<SalesRecord>> LoadCentralRecordsAsync()
+    {
+        if (_centralSalesDataProvider is not null)
+            return await _centralSalesDataProvider.GetRecordsAsync();
+
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.CentralSalesRecords
+            .AsNoTracking()
+            .Select(r => new SalesRecord
+            {
+                SourceSystem = r.SourceSystem,
+                Land = r.Land,
+                Tsc = r.Tsc,
+                DocumentEntry = r.DocumentEntry,
+                InvoiceNumber = r.InvoiceNumber,
+                PositionOnInvoice = r.PositionOnInvoice,
+                Material = r.Material,
+                Name = r.Name,
+                ProductGroup = r.ProductGroup,
+                ProductHierarchyCode = r.ProductHierarchyCode,
+                ProductHierarchyText = r.ProductHierarchyText,
+                ProductFamilyCode = r.ProductFamilyCode,
+                ProductFamilyText = r.ProductFamilyText,
+                ProductDivisionCode = r.ProductDivisionCode,
+                ProductDivisionText = r.ProductDivisionText,
+                ProductMappingAssigned = r.ProductMappingAssigned,
+                Quantity = r.Quantity,
+                SupplierNumber = r.SupplierNumber,
+                SupplierName = r.SupplierName,
+                SupplierCountry = r.SupplierCountry,
+                CustomerNumber = r.CustomerNumber,
+                CustomerName = r.CustomerName,
+                CustomerCountry = r.CustomerCountry,
+                CustomerIndustry = r.CustomerIndustry,
+                StandardCost = r.StandardCost,
+                StandardCostCurrency = r.StandardCostCurrency,
+                PurchaseOrderNumber = r.PurchaseOrderNumber,
+                SalesPriceValue = r.SalesPriceValue,
+                SalesCurrency = r.SalesCurrency,
+                DocumentCurrency = r.DocumentCurrency,
+                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
+                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
+                VatSumForeignCurrency = r.VatSumForeignCurrency,
+                VatSumLocalCurrency = r.VatSumLocalCurrency,
+                DocumentRate = r.DocumentRate,
+                CompanyCurrency = r.CompanyCurrency,
+                Incoterms2020 = r.Incoterms2020,
+                SalesResponsibleEmployee = r.SalesResponsibleEmployee,
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                OrderDate = r.OrderDate,
+                ExtractionDate = r.ExtractionDate,
+                DocumentType = r.DocumentType
+            })
+            .ToListAsync();
     }
 
     private static List<ManagementFinanceCountryStatusRow> BuildFinanceCountryStatusRows(

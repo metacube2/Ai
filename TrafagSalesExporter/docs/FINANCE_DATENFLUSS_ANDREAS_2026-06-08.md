@@ -9,6 +9,7 @@ Fokus nur Wechselkurs/Kursanwendung: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
 ## Kurzfazit
 
 - Finance Summary, Management Analyse und Spartenanalyse lesen nicht aus dem SharePoint-Excel, sondern direkt aus der App-Datenbank `CentralSalesRecords`.
+- Nachtrag 2026-06-11: Fuer Finance/Revision gibt es lokal einen Audit-CSV-Modus. Standortexporte koennen nach Mapping und Transformation je Standort eine CSV schreiben; per Setting koennen zentrale Excel, Finance Summary und Management-Analyse aus den neuesten Audit-CSV statt aus `CentralSalesRecords` lesen.
 - Das SharePoint-Excel `Sales_All_*.xlsx` ist ein Export-/Ablageergebnis, nicht die Live-Quelle der Cockpit-Anzeige.
 - Jeder Standortexport ersetzt in `CentralSalesRecords` nur die Daten dieses Standorts.
 - Die zentrale Excel wird danach aus dem aktuellen Stand von `CentralSalesRecords` erzeugt.

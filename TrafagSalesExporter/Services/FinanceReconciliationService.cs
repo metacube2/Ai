@@ -12,10 +12,19 @@ public interface IFinanceReconciliationService
 public sealed class FinanceReconciliationService : IFinanceReconciliationService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ICentralSalesDataProvider? _centralSalesDataProvider;
 
     public FinanceReconciliationService(IDbContextFactory<AppDbContext> dbFactory)
+        : this(dbFactory, null)
+    {
+    }
+
+    public FinanceReconciliationService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ICentralSalesDataProvider? centralSalesDataProvider)
     {
         _dbFactory = dbFactory;
+        _centralSalesDataProvider = centralSalesDataProvider;
     }
 
     public async Task<List<NetSalesReferenceRow>> BuildNetSalesReferenceRowsAsync(int year = 2025)
@@ -41,35 +50,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
             financeRules = FinanceRuleEngine.CreateDefaultRules().ToList();
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
 
-        var centralRecords = await db.CentralSalesRecords
-            .AsNoTracking()
-            .Select(r => new SalesRecord
-            {
-                Land = r.Land,
-                Tsc = r.Tsc,
-                DocumentEntry = r.DocumentEntry,
-                InvoiceNumber = r.InvoiceNumber,
-                PositionOnInvoice = r.PositionOnInvoice,
-                Material = r.Material,
-                Name = r.Name,
-                Quantity = r.Quantity,
-                DocumentType = r.DocumentType,
-                PostingDate = r.PostingDate,
-                InvoiceDate = r.InvoiceDate,
-                ExtractionDate = r.ExtractionDate,
-                CustomerNumber = r.CustomerNumber,
-                CustomerName = r.CustomerName,
-                SupplierCountry = r.SupplierCountry,
-                SalesCurrency = r.SalesCurrency,
-                DocumentCurrency = r.DocumentCurrency,
-                CompanyCurrency = r.CompanyCurrency,
-                SalesPriceValue = r.SalesPriceValue,
-                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
-                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
-                VatSumForeignCurrency = r.VatSumForeignCurrency,
-                VatSumLocalCurrency = r.VatSumLocalCurrency
-            })
-            .ToListAsync();
+        var centralRecords = await LoadCentralRecordsAsync(db);
 
         var centralRows = centralRecords
             .Select(record => ApplyFinanceRules(record, year, financeRuleEngine))
@@ -163,6 +144,42 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         }
 
         return result;
+    }
+
+    private async Task<List<SalesRecord>> LoadCentralRecordsAsync(AppDbContext db)
+    {
+        if (_centralSalesDataProvider is not null)
+            return await _centralSalesDataProvider.GetRecordsAsync();
+
+        return await db.CentralSalesRecords
+            .AsNoTracking()
+            .Select(r => new SalesRecord
+            {
+                Land = r.Land,
+                Tsc = r.Tsc,
+                DocumentEntry = r.DocumentEntry,
+                InvoiceNumber = r.InvoiceNumber,
+                PositionOnInvoice = r.PositionOnInvoice,
+                Material = r.Material,
+                Name = r.Name,
+                Quantity = r.Quantity,
+                DocumentType = r.DocumentType,
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                ExtractionDate = r.ExtractionDate,
+                CustomerNumber = r.CustomerNumber,
+                CustomerName = r.CustomerName,
+                SupplierCountry = r.SupplierCountry,
+                SalesCurrency = r.SalesCurrency,
+                DocumentCurrency = r.DocumentCurrency,
+                CompanyCurrency = r.CompanyCurrency,
+                SalesPriceValue = r.SalesPriceValue,
+                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
+                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
+                VatSumForeignCurrency = r.VatSumForeignCurrency,
+                VatSumLocalCurrency = r.VatSumLocalCurrency
+            })
+            .ToListAsync();
     }
 
     private static NetSalesActualSourceRow? ApplyFinanceRules(SalesRecord record, int year, FinanceRuleEngine financeRuleEngine)

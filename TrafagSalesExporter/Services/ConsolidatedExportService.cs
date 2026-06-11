@@ -7,25 +7,25 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
-    private readonly ICentralSalesRecordService _centralSalesRecordService;
+    private readonly ICentralSalesDataProvider _centralSalesDataProvider;
     private readonly IExcelExportService _excelService;
     private readonly ISharePointUploadService _sharePointService;
 
     public ConsolidatedExportService(
         IDbContextFactory<AppDbContext> dbFactory,
-        ICentralSalesRecordService centralSalesRecordService,
+        ICentralSalesDataProvider centralSalesDataProvider,
         IExcelExportService excelService,
         ISharePointUploadService sharePointService)
     {
         _dbFactory = dbFactory;
-        _centralSalesRecordService = centralSalesRecordService;
+        _centralSalesDataProvider = centralSalesDataProvider;
         _excelService = excelService;
         _sharePointService = sharePointService;
     }
 
     public async Task<string?> ExportAsync()
     {
-        var consolidatedRecords = await _centralSalesRecordService.GetAllAsync();
+        var consolidatedRecords = await _centralSalesDataProvider.GetRecordsAsync();
         if (consolidatedRecords.Count == 0)
             return null;
 

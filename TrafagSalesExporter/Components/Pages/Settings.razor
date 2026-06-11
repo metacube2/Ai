@@ -284,12 +284,28 @@
                 Schreibt zusÃƒÂ¤tzliche technische Fortschrittsmeldungen fÃƒÂ¼r HANA- und SAP-LesevorgÃƒÂ¤nge ins Dashboard und in die Logs.
             </MudText>
         </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.AuditCsvEnabled" Label="Audit-CSV je Standort schreiben" Color="Color.Primary" />
+            <MudText Typo="Typo.caption">
+                Schreibt nach Mapping und Transformation eine lesbare CSV-Datei je Standort.
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.UseAuditCsvAsCentralSource" Label="Zentrale Auswertung aus Audit-CSV" Color="Color.Warning" />
+            <MudText Typo="Typo.caption">
+                Zentrale Excel, Finance Summary und Management-Analyse lesen die neuesten Standort-CSV-Dateien statt CentralSalesRecords.
+            </MudText>
+        </MudItem>
         <MudItem xs="12" md="6">
             <MudTextField @bind-Value="_exportSettings.LocalSiteExportFolder" Label="Lokaler Standardpfad Standort-Dateien"
                           HelperText="Wenn leer, wird ./output unter dem Programmverzeichnis verwendet." />
         </MudItem>
         <MudItem xs="12" md="6">
             <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="Lokaler Pfad Zentrale Datei"
+                          HelperText="Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet." />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_exportSettings.LocalAuditCsvFolder" Label="Lokaler Pfad Audit-CSV"
                           HelperText="Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet." />
         </MudItem>
         <MudItem xs="12">

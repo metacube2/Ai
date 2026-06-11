@@ -28,6 +28,9 @@ CREATE TABLE ExportSettings (
     DebugLoggingEnabled INTEGER NOT NULL DEFAULT 0,
     LocalSiteExportFolder TEXT NOT NULL DEFAULT '',
     LocalConsolidatedExportFolder TEXT NOT NULL DEFAULT '',
+    AuditCsvEnabled INTEGER NOT NULL DEFAULT 1,
+    UseAuditCsvAsCentralSource INTEGER NOT NULL DEFAULT 0,
+    LocalAuditCsvFolder TEXT NOT NULL DEFAULT '',
     ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate'
 );";
 

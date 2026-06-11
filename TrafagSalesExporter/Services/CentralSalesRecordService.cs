@@ -62,6 +62,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
             .ThenBy(r => r.Tsc)
             .Select(r => new SalesRecord
             {
+                SourceSystem = r.SourceSystem,
                 ExtractionDate = r.ExtractionDate,
                 Tsc = r.Tsc,
                 DocumentEntry = r.DocumentEntry,

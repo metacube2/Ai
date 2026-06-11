@@ -71,6 +71,9 @@ public class ConfigTransferService : IConfigTransferService
                 DebugLoggingEnabled = exportSettings.DebugLoggingEnabled,
                 LocalSiteExportFolder = exportSettings.LocalSiteExportFolder,
                 LocalConsolidatedExportFolder = exportSettings.LocalConsolidatedExportFolder,
+                AuditCsvEnabled = exportSettings.AuditCsvEnabled,
+                UseAuditCsvAsCentralSource = exportSettings.UseAuditCsvAsCentralSource,
+                LocalAuditCsvFolder = exportSettings.LocalAuditCsvFolder,
                 ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(exportSettings.ExchangeRateDateField)
             },
             SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
@@ -285,6 +288,9 @@ public class ConfigTransferService : IConfigTransferService
             DebugLoggingEnabled = importedSettings.DebugLoggingEnabled,
             LocalSiteExportFolder = importedSettings.LocalSiteExportFolder,
             LocalConsolidatedExportFolder = importedSettings.LocalConsolidatedExportFolder,
+            AuditCsvEnabled = importedSettings.AuditCsvEnabled,
+            UseAuditCsvAsCentralSource = importedSettings.UseAuditCsvAsCentralSource,
+            LocalAuditCsvFolder = importedSettings.LocalAuditCsvFolder,
             ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(importedSettings.ExchangeRateDateField)
         });
 

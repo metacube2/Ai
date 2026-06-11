@@ -108,6 +108,9 @@ public sealed class SettingsPageService : ISettingsPageService
             existing.DebugLoggingEnabled = settings.DebugLoggingEnabled;
             existing.LocalSiteExportFolder = settings.LocalSiteExportFolder;
             existing.LocalConsolidatedExportFolder = settings.LocalConsolidatedExportFolder;
+            existing.AuditCsvEnabled = settings.AuditCsvEnabled;
+            existing.UseAuditCsvAsCentralSource = settings.UseAuditCsvAsCentralSource;
+            existing.LocalAuditCsvFolder = settings.LocalAuditCsvFolder;
             existing.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
         }
 

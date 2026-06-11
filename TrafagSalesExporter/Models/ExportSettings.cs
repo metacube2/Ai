@@ -10,6 +10,9 @@ public class ExportSettings
     public bool DebugLoggingEnabled { get; set; }
     public string LocalSiteExportFolder { get; set; } = string.Empty;
     public string LocalConsolidatedExportFolder { get; set; } = string.Empty;
+    public bool AuditCsvEnabled { get; set; } = true;
+    public bool UseAuditCsvAsCentralSource { get; set; }
+    public string LocalAuditCsvFolder { get; set; } = string.Empty;
     public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
 }
 
