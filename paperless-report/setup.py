@@ -29,6 +29,8 @@ setup(
         'paperless_client',
         'extractor',
         'report_generator',
+        'amount_extractor',
+        'web_app',
     ],
 
     include_package_data=True,
@@ -44,6 +46,8 @@ setup(
         'python-dateutil>=2.8.2',
         'tabulate>=0.9.0',
         'tqdm>=4.66.1',
+        'flask>=3.0.0',
+        'gunicorn>=22.0.0',
     ],
 
     extras_require={

@@ -1,0 +1,26 @@
+services:
+  paperless-finance:
+    build: .
+    container_name: paperless-finance
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      PAPERLESS_URL: "http://paperlessngx-webserver-1:8000"
+      PAPERLESS_HOST_HEADER: "paperless.aiscom.ch"
+      PAPERLESS_TOKEN: "${PAPERLESS_TOKEN}"
+      PAPERLESS_REPORT_CONFIG: "/app/config.docker.yaml"
+      FINANCE_SECRET_KEY: "${FINANCE_SECRET_KEY}"
+      FINANCE_ADMIN_USER: "${FINANCE_ADMIN_USER:-metacube}"
+      FINANCE_ADMIN_PASSWORD: "${FINANCE_ADMIN_PASSWORD}"
+    volumes:
+      - ./output:/app/output
+      - ./.cache:/app/.cache
+    networks:
+      - default
+      - paperless
+
+networks:
+  paperless:
+    external: true
+    name: paperlessngx_default
