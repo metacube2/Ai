@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3efe8;
+      --surface: #fffdf9;
+      --text: #191612;
+      --muted: #6e665c;
+      --line: rgba(25, 22, 18, 0.12);
+      --accent: #c84d44;
+      --shadow: 0 18px 48px rgba(25, 22, 18, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(200, 77, 68, 0.08), transparent 26%),
+        linear-gradient(180deg, #faf7f2, var(--bg));
+      color: var(--text);
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+    }
+
+    p.lead {
+      max-width: 58ch;
+      margin: 0 0 32px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    a.card {
+      display: block;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      transition: transform 160ms ease, border-color 160ms ease;
+    }
+
+    a.card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(200, 77, 68, 0.36);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+    }
+
+    .card p:last-child {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Portal</p>
+    <h1>Webseiten und Tools auf diesem Host.</h1>
+    <p class="lead">MacYaesu ist jetzt als eigene Unterseite integriert. Die bestehenden Bereiche bleiben direkt erreichbar und werden nur ueber eine einfache Startseite zusammengefuehrt.</p>
+
+    <div class="grid">
+      <a class="card" href="/macyaesu/">
+        <p class="eyebrow">Neu</p>
+        <h2>MacYaesu</h2>
+        <p>Marketing-Seite fuer die macOS-Remote-App rund um FT-991A, CAT-Steuerung, Logging und Audio-Routing.</p>
+      </a>
+
+      <a class="card" href="/aiscanner/">
+        <p class="eyebrow">Bestehend</p>
+        <h2>AI Scanner</h2>
+        <p>Vorhandener Bereich unter <code>/aiscanner/</code>.</p>
+      </a>
+
+      <a class="card" href="/synth/">
+        <p class="eyebrow">Bestehend</p>
+        <h2>Synth</h2>
+        <p>Vorhandener Bereich unter <code>/synth/</code> mit den bisherigen PHP-Dateien.</p>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

@@ -4,9 +4,9 @@
  * Receives push events from GitHub and triggers sync
  */
 
-require_once '../src/ConfigManager.php';
-require_once '../src/Logger.php';
-require_once '../src/GitHandler.php';
+require_once __DIR__ . '/../src/ConfigManager.php';
+require_once __DIR__ . '/../src/Logger.php';
+require_once __DIR__ . '/../src/GitHandler.php';
 
 // Set JSON response header
 header('Content-Type: application/json');
