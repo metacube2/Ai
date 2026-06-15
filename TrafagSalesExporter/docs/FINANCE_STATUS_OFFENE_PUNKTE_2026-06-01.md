@@ -1,6 +1,6 @@
 # Finance Dashboard - Stand und offene Punkte
 
-Stand: 2026-06-01
+Stand: 2026-06-12
 
 Zweck: Argumentationshilfe fuer den heutigen Austausch mit Finance. Dieses Dokument trennt den aktuellen belastbaren Stand von fachlich noch offenen Punkten.
 
@@ -230,7 +230,7 @@ Kosten sollten nicht direkt in die aktuelle Umsatzfreigabe gemischt werden. Sinn
 | Land | Stand | Offener Punkt |
 | --- | --- | --- |
 | CH / AT | SAP OData `ZSCHWEIZ`; Trennung ueber Buchungskreis / Reporting-Land | Pruefen, ob `FKDAT` fachlich als Buchungsdatum akzeptiert ist |
-| DE | Alphaplan Excel; `NettoPreisGesamtX`; finaler 2025-File liegt technisch vor | Finance muss bestaetigen, welche Kundenlaender / Filter zum offiziellen DE-Ist gehoeren |
+| DE | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv`; Full + `delta`; `NettoPreisGesamt`; CreditNote/GS negativ | Finance muss bestaetigen, welche Kundenlaender / Filter zum offiziellen DE-Ist gehoeren und ob `ArtikelNummer` zu TR-AG-/SAP-`MATNR` gemappt werden muss |
 | ES | Sage CSV; `ImporteNeto`; Credit Notes / REC negativ; Ist `3'082'320.18 EUR` fachlich bestaetigt | Bisheriger Sollwert `3'102'333.61 EUR` ist falsch bzw. Excel-/Referenzfehler |
 | FR | SAP B1/HANA; Positions-Netto passt praktisch gegen Soll | Kein grosser offener Punkt dokumentiert |
 | IN | Hauswaehrung INR; Vergleich in INR | Keine CHF-Tageskurslogik fuer Standardvergleich verwenden |

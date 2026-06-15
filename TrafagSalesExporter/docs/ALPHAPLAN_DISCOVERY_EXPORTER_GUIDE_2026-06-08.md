@@ -1,15 +1,25 @@
 # Alphaplan Discovery Exporter Guide
 
-Stand: 2026-06-08
+Stand: 2026-06-12
 
 Zweck: Diese Anleitung dokumentiert das Phase-1-Paket fuer Deutschland/Alphaplan. Das Paket soll auf dem deutschen Alphaplan-/SQL-Server laufen, relevante SQL-Datenbanken, Tabellen und Views finden, CSV-Dateien erzeugen und diese optional per `rclone` nach SharePoint laden.
+
+## Nachtrag 2026-06-12
+
+- Discovery/Rohdatenanalyse ist fuer den App-Import nicht mehr der aktive Pfad.
+- Der finale Alphaplan-Export liegt als `invoice_headers.csv` und `invoice_lines.csv` vor.
+- Vollbestand liegt im Alphaplan-Ordner; der 7-Tage-Rueckblick liegt im Unterordner `delta` mit denselben Dateinamen.
+- BiDashboard liest passende Header-/Line-Paare rekursiv, verbindet sie ueber `BelegeID` und dedupliziert nach `BelegePositionenID`.
+- `NettoPreisGesamt` ist der Positions-Finance-Wert; Credit Notes/Gutschriften werden negativ gerechnet.
+- `ArtikelNummer` wird als lokale Alphaplan-Materialnummer importiert und ist nicht automatisch eine TR-AG-/SAP-`MATNR`.
+- Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
 
 ## Status
 
 - Paket erstellt: `AlphaplanExportPackage`.
 - ZIP erstellt: `AlphaplanExportPackage.zip`.
-- Phase: Discovery / Rohdatenanalyse.
-- BiDashboard-Import wird dadurch noch nicht angepasst.
+- Phase: Discovery / Rohdatenanalyse, historisch.
+- BiDashboard-Import ist fuer das finale CSV-Paarformat umgesetzt.
 - BiDashboard-App-Code wird fuer diesen Exporter nicht benoetigt.
 - PowerShell-Syntax des Scripts wurde lokal geprueft.
 
@@ -219,14 +229,14 @@ SQL-Rechte:
 
 ## Abgrenzung zum finalen Import
 
-Phase 1 erzeugt noch kein finales Finance-Format. Ziel ist nur:
+Phase 1 erzeugt noch kein finales Finance-Format. Ziel war nur:
 
 - richtige Datenbanken finden
 - relevante Tabellen/Views finden
 - Feldnamen und Beziehungen erkennen
 - Beispiele fuer Andreas/DE IT bereitstellen
 
-Der spaetere Import kann danach auf eine finale SQL-View oder ein gemapptes CSV umgestellt werden. Empfohlene finale View:
+Der spaetere Import wurde auf ein gemapptes CSV-Paar umgestellt. Empfohlene finale View fuer einen moeglichen naechsten Ausbau bleibt:
 
 ```text
 vw_BiDashboard_FinanceSales_DE
@@ -266,5 +276,4 @@ Nach dem ersten Discovery-Lauf bitte pruefen:
 3. `candidate_objects.csv` pruefen.
 4. Discovery mit Upload ausfuehren.
 5. Andreas/DE IT markiert die relevanten Alphaplan-Objekte.
-6. Danach wird der finale Alphaplan-Finance-Export oder die Importanpassung definiert.
-
+6. Finale Paar-CSV `invoice_headers.csv`/`invoice_lines.csv` liefern; Vollbestand plus `delta` werden von BiDashboard gelesen.

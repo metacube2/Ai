@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic.FileIO;
@@ -105,7 +106,12 @@ public class ManualExcelImportService : IManualExcelImportService
     private static List<SalesRecord> ReadSalesRecords(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
     {
         if (string.Equals(Path.GetExtension(filePath), ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryResolveAlphaplanInvoicePair(filePath, site, out var headerPath, out var linePath))
+                return ReadAlphaplanInvoicePair(headerPath, linePath, site);
+
             return ReadCsvSalesRecords(filePath, site, mappings);
+        }
 
         using var workbook = new XLWorkbook(filePath);
         var worksheet = workbook.Worksheets.FirstOrDefault()
@@ -123,6 +129,158 @@ public class ManualExcelImportService : IManualExcelImportService
         return activeMappings.Count > 0
             ? ReadMappedRows(usedRange, headerRow, site, activeMappings)
             : ReadDefaultRows(usedRange, headerRow, site);
+    }
+
+    private static bool TryResolveAlphaplanInvoicePair(
+        string filePath,
+        Site site,
+        out string headerPath,
+        out string linePath)
+    {
+        headerPath = string.Empty;
+        linePath = string.Empty;
+
+        if (!IsGermanyAlphaplanSite(site))
+            return false;
+
+        if (!string.Equals(Path.GetFileName(filePath), "invoice_lines.csv", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(filePath));
+        if (string.IsNullOrWhiteSpace(directory))
+            return false;
+
+        var candidateHeaderPath = Path.Combine(directory, "invoice_headers.csv");
+        if (!File.Exists(candidateHeaderPath))
+            return false;
+
+        headerPath = candidateHeaderPath;
+        linePath = filePath;
+        return true;
+    }
+
+    private static List<SalesRecord> ReadAlphaplanInvoicePair(string headerPath, string linePath, Site site)
+    {
+        var headers = ReadAlphaplanInvoiceHeaders(headerPath);
+        var rows = new List<SalesRecord>();
+        var extractionDate = DateTime.UtcNow;
+
+        using var parser = new TextFieldParser(linePath)
+        {
+            TextFieldType = FieldType.Delimited,
+            HasFieldsEnclosedInQuotes = true,
+            TrimWhiteSpace = false
+        };
+        parser.SetDelimiters(";");
+
+        var lineHeader = parser.ReadFields()
+            ?? throw new InvalidOperationException("Die Alphaplan-Positionsdatei enthaelt keine Kopfzeile.");
+        var lineIndexes = BuildRawHeaderIndexMap(lineHeader);
+        RequireRawHeader(lineIndexes, "BelegeID", "Alphaplan-Positionsdatei");
+        RequireRawHeader(lineIndexes, "BelegePositionenID", "Alphaplan-Positionsdatei");
+        RequireRawHeader(lineIndexes, "NettoPreisGesamt", "Alphaplan-Positionsdatei");
+
+        while (!parser.EndOfData)
+        {
+            var fields = parser.ReadFields();
+            if (fields is null || IsCsvRowEmpty(fields))
+                continue;
+
+            var documentEntry = ReadRawInt(lineIndexes, fields, "BelegeID");
+            var alphaplanHeader = headers.TryGetValue(documentEntry, out var foundHeader)
+                ? foundHeader
+                : AlphaplanInvoiceHeader.FromLine(documentEntry, ReadRawString(lineIndexes, fields, "DocumentType"), ReadRawString(lineIndexes, fields, "Belegnummer"), ReadRawDate(lineIndexes, fields, "BelegDatum"));
+
+            var rawDocumentType = FirstNonEmpty(ReadRawString(lineIndexes, fields, "DocumentType"), alphaplanHeader.DocumentType);
+            var invoiceNumber = FirstNonEmpty(ReadRawString(lineIndexes, fields, "Belegnummer"), alphaplanHeader.InvoiceNumber);
+            var isCreditNote = IsAlphaplanCreditNote(rawDocumentType, invoiceNumber);
+            var salesValue = ApplyCreditSign(ReadRawDecimal(lineIndexes, fields, "NettoPreisGesamt"), isCreditNote);
+            var documentNetValue = ApplyCreditSign(alphaplanHeader.NetAmount, isCreditNote);
+            var documentGrossValue = ApplyCreditSign(alphaplanHeader.GrossAmount, isCreditNote);
+            var documentVatValue = documentGrossValue - documentNetValue;
+            var positionId = ReadRawString(lineIndexes, fields, "BelegePositionenID");
+            var material = ReadRawString(lineIndexes, fields, "ArtikelNummer");
+            var quantity = ReadRawDecimal(lineIndexes, fields, "BEAnzahl");
+            var postingDate = alphaplanHeader.DocumentDate ?? ReadRawDate(lineIndexes, fields, "BelegDatum");
+
+            var record = new SalesRecord
+            {
+                ExtractionDate = extractionDate,
+                Tsc = FirstNonEmpty(site.TSC, "TRDE"),
+                Land = FirstNonEmpty(site.Land, "Deutschland"),
+                SourceLineId = BuildAlphaplanSourceLineId(positionId, documentEntry, invoiceNumber, ReadRawInt(lineIndexes, fields, "ZeilenPosition"), material),
+                DocumentEntry = documentEntry,
+                InvoiceNumber = invoiceNumber,
+                PositionOnInvoice = ReadRawInt(lineIndexes, fields, "ZeilenPosition"),
+                Material = material,
+                Name = NormalizeAlphaplanText(ReadRawString(lineIndexes, fields, "ArtikelBezeichnung")),
+                Quantity = quantity,
+                CustomerNumber = alphaplanHeader.CustomerNumber,
+                PurchaseOrderNumber = FirstNonEmpty(alphaplanHeader.PurchaseOrderNumber, alphaplanHeader.CustomerOrderText),
+                SalesPriceValue = salesValue,
+                SalesCurrency = alphaplanHeader.CurrencyCode,
+                DocumentCurrency = alphaplanHeader.CurrencyCode,
+                DocumentTotalForeignCurrency = documentNetValue,
+                DocumentTotalLocalCurrency = documentNetValue,
+                VatSumForeignCurrency = documentVatValue,
+                VatSumLocalCurrency = documentVatValue,
+                CompanyCurrency = alphaplanHeader.CurrencyCode,
+                PostingDate = postingDate,
+                InvoiceDate = postingDate,
+                DocumentType = isCreditNote ? "Alphaplan CreditNote" : "Alphaplan Invoice"
+            };
+
+            if (!IsMeaningfulAlphaplanRecord(record))
+                continue;
+
+            rows.Add(record);
+        }
+
+        return rows;
+    }
+
+    private static Dictionary<int, AlphaplanInvoiceHeader> ReadAlphaplanInvoiceHeaders(string headerPath)
+    {
+        using var parser = new TextFieldParser(headerPath)
+        {
+            TextFieldType = FieldType.Delimited,
+            HasFieldsEnclosedInQuotes = true,
+            TrimWhiteSpace = false
+        };
+        parser.SetDelimiters(";");
+
+        var header = parser.ReadFields()
+            ?? throw new InvalidOperationException("Die Alphaplan-Kopfdatei enthaelt keine Kopfzeile.");
+        var headerIndexes = BuildRawHeaderIndexMap(header);
+        RequireRawHeader(headerIndexes, "BelegeID", "Alphaplan-Kopfdatei");
+
+        var rows = new Dictionary<int, AlphaplanInvoiceHeader>();
+        while (!parser.EndOfData)
+        {
+            var fields = parser.ReadFields();
+            if (fields is null || IsCsvRowEmpty(fields))
+                continue;
+
+            var documentEntry = ReadRawInt(headerIndexes, fields, "BelegeID");
+            if (documentEntry == 0)
+                continue;
+
+            rows[documentEntry] = new AlphaplanInvoiceHeader
+            {
+                DocumentEntry = documentEntry,
+                DocumentType = ReadRawString(headerIndexes, fields, "DocumentType"),
+                InvoiceNumber = ReadRawString(headerIndexes, fields, "Belegnummer"),
+                DocumentDate = ReadRawDate(headerIndexes, fields, "Datum"),
+                CustomerNumber = ReadRawString(headerIndexes, fields, "RechnungsAdressenID"),
+                CurrencyCode = ResolveAlphaplanCurrencyCode(ReadRawString(headerIndexes, fields, "WaehrungenID")),
+                NetAmount = ReadRawDecimal(headerIndexes, fields, "NettoPreisEndSumme"),
+                GrossAmount = ReadRawDecimal(headerIndexes, fields, "BruttoPreisEndSumme"),
+                PurchaseOrderNumber = ReadRawString(headerIndexes, fields, "BestellNummer"),
+                CustomerOrderText = ReadRawString(headerIndexes, fields, "IhrAuftrag")
+            };
+        }
+
+        return rows;
     }
 
     private static List<SalesRecord> ReadCsvSalesRecords(string filePath, Site site, IReadOnlyList<ManualExcelColumnMapping> mappings)
@@ -743,6 +901,115 @@ public class ManualExcelImportService : IManualExcelImportService
            record.SalesPriceValue != 0m ||
            !string.IsNullOrWhiteSpace(record.Material);
 
+    private static bool IsMeaningfulAlphaplanRecord(SalesRecord record)
+        => record.Quantity != 0m ||
+           record.SalesPriceValue != 0m ||
+           !string.IsNullOrWhiteSpace(record.Material);
+
+    private static void RequireRawHeader(Dictionary<string, int> headerIndexes, string header, string fileDescription)
+    {
+        if (!TryResolveHeaderIndex(headerIndexes, header, out _))
+            throw new InvalidOperationException($"{fileDescription}: Pflichtspalte '{header}' fehlt.");
+    }
+
+    private static string ReadRawString(Dictionary<string, int> headerIndexes, string[] fields, string header, string fallback = "")
+    {
+        if (!TryResolveHeaderIndex(headerIndexes, header, out var index) || index >= fields.Length)
+            return fallback;
+
+        var value = fields[index].Trim();
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private static decimal ReadRawDecimal(Dictionary<string, int> headerIndexes, string[] fields, string header)
+        => ParseDecimal(ReadRawString(headerIndexes, fields, header));
+
+    private static int ReadRawInt(Dictionary<string, int> headerIndexes, string[] fields, string header)
+        => (int)Math.Round(ReadRawDecimal(headerIndexes, fields, header));
+
+    private static DateTime? ReadRawDate(Dictionary<string, int> headerIndexes, string[] fields, string header)
+        => ParseDate(ReadRawString(headerIndexes, fields, header));
+
+    private static decimal ApplyCreditSign(decimal value, bool isCreditNote)
+        => isCreditNote ? -Math.Abs(value) : value;
+
+    private static string BuildAlphaplanSourceLineId(
+        string positionId,
+        int documentEntry,
+        string invoiceNumber,
+        int positionOnInvoice,
+        string material)
+    {
+        if (!string.IsNullOrWhiteSpace(positionId))
+            return $"Alphaplan:{positionId.Trim()}";
+
+        return string.Join("|",
+            "Alphaplan",
+            documentEntry.ToString(CultureInfo.InvariantCulture),
+            invoiceNumber.Trim(),
+            positionOnInvoice.ToString(CultureInfo.InvariantCulture),
+            material.Trim());
+    }
+
+    private static bool IsGermanyAlphaplanSite(Site site)
+        => string.Equals(site.TSC, "TRDE", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(site.Land, "Deutschland", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(site.Land, "Germany", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAlphaplanCreditNote(string documentType, string invoiceNumber)
+    {
+        var normalizedType = NormalizeFinanceToken(documentType);
+        var normalizedInvoiceNumber = NormalizeFinanceToken(invoiceNumber);
+        return normalizedType.Contains("CREDITNOTE", StringComparison.OrdinalIgnoreCase) ||
+               normalizedType.Contains("GUTSCHRIFT", StringComparison.OrdinalIgnoreCase) ||
+               normalizedInvoiceNumber.StartsWith("GS", StringComparison.OrdinalIgnoreCase) ||
+               normalizedInvoiceNumber.StartsWith("G", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ResolveAlphaplanCurrencyCode(string currencyId)
+    {
+        var normalized = currencyId.Trim();
+        return normalized switch
+        {
+            "" => "EUR",
+            "4" => "EUR",
+            _ => "EUR"
+        };
+    }
+
+    private static string NormalizeAlphaplanText(string value)
+    {
+        var text = value.Trim();
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        if (text.StartsWith(@"{\rtf", StringComparison.OrdinalIgnoreCase))
+        {
+            text = Regex.Replace(text, @"\\'(?<hex>[0-9a-fA-F]{2})", match =>
+            {
+                var code = Convert.ToInt32(match.Groups["hex"].Value, 16);
+                return ((char)code).ToString();
+            });
+            text = Regex.Replace(text, @"\\par[d]?", " ", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\[a-zA-Z]+\d* ?", " ");
+            text = text.Replace("{", " ").Replace("}", " ");
+        }
+
+        return Regex.Replace(text, @"\s+", " ").Trim();
+    }
+
+    private static string FirstNonEmpty(params string[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
+
+    private static string NormalizeFinanceToken(string value)
+    {
+        var chars = value
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToUpperInvariant)
+            .ToArray();
+        return new string(chars);
+    }
+
     private static string NormalizeHeader(string value)
     {
         var chars = value
@@ -750,5 +1017,33 @@ public class ManualExcelImportService : IManualExcelImportService
             .Select(char.ToLowerInvariant)
             .ToArray();
         return new string(chars);
+    }
+
+    private sealed class AlphaplanInvoiceHeader
+    {
+        public int DocumentEntry { get; init; }
+        public string DocumentType { get; init; } = string.Empty;
+        public string InvoiceNumber { get; init; } = string.Empty;
+        public DateTime? DocumentDate { get; init; }
+        public string CustomerNumber { get; init; } = string.Empty;
+        public string CurrencyCode { get; init; } = "EUR";
+        public decimal NetAmount { get; init; }
+        public decimal GrossAmount { get; init; }
+        public string PurchaseOrderNumber { get; init; } = string.Empty;
+        public string CustomerOrderText { get; init; } = string.Empty;
+
+        public static AlphaplanInvoiceHeader FromLine(
+            int documentEntry,
+            string documentType,
+            string invoiceNumber,
+            DateTime? documentDate)
+            => new()
+            {
+                DocumentEntry = documentEntry,
+                DocumentType = documentType,
+                InvoiceNumber = invoiceNumber,
+                DocumentDate = documentDate,
+                CurrencyCode = "EUR"
+            };
     }
 }

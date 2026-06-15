@@ -1,6 +1,11 @@
 # Finance-Entscheide fuer Net Sales Actuals
 
-Stand: 2026-06-01
+Stand: 2026-06-12
+
+## Nachtrag 2026-06-12 Alphaplan DE
+
+- DE/Alphaplan liegt jetzt als CSV-Paar `invoice_headers.csv`/`invoice_lines.csv` mit Full + `delta` vor.
+- Aktiver Importwert ist `NettoPreisGesamt`; `ArtikelNummer` muss bei Bedarf gegen TR-AG-/SAP-`MATNR` gemappt werden.
 
 ## Nachtrag 2026-06-01 Finance-Sitzung
 
@@ -66,7 +71,7 @@ Die Logik darf nicht auf einzelne Testzahlen optimiert werden. Sie muss je Jahr 
 | IT | Hauswaehrung verwenden. Intercompany separat ausweisen und weiter fachlich abgrenzen. |
 | UK | Sage/Manual-Excel. Hauswaehrung `GBP` verwenden. Netto ohne VAT; Credit Notes muessen negativ in die Summe laufen. |
 | CH / AT | SAP-ZSCHWEIZ liefert Schweiz und Oesterreich aus gleichem System; Trennung ueber Buchungskreis bzw. Reporting-Land. |
-| DE | Alphaplan-Excel; finaler Jahresfile `docs/2025_DataExport_DE.xlsx` liegt vor. Provisorisches Mapping nutzt `NettoPreisGesamtX` als SalesPriceValue. Fachlich offen bleibt, welche Kundenlaender fuer den Sollwert eingeschlossen werden. |
+| DE | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv`; Vollbestand plus `delta` werden zusammen gelesen und dedupliziert. Mapping nutzt `NettoPreisGesamt` als SalesPriceValue. Fachlich offen bleibt, welche Kundenlaender fuer den Sollwert eingeschlossen werden und ob `ArtikelNummer` zu TR-AG-/SAP-`MATNR` gemappt werden muss. |
 | ES | Sage-CSV. `ImporteNeto` als Nettozeile ohne VAT verwenden; Credit Notes/REC negativ; Datumsbasis ist `FechaFactura`, solange Finance nichts anderes vorgibt. |
 
 ## Intercompany / 2nd Party
@@ -105,7 +110,7 @@ Ergebnis im Reporting:
 - IN: Anzeige muss fachlich `INR` zeigen, auch wenn Quellzeilen verschiedene Belegwaehrungen enthalten.
 - IT: IC-Kundenliste final bestaetigen.
 - CH / AT: echtes SAP-Buchungsdatum pruefen, falls `ZSCHWEIZ` aktuell nur Fakturadatum liefert.
-- DE: finaler Alphaplan-Jahresfile liegt vor und ist technisch mappbar. Rohsumme `NettoPreisGesamtX` komplett ist `4'154'690.05 EUR`; nur `Land Kunde = Deutschland` ist `3'455'276.64 EUR`; Sollwert ist `3'635'923.00 EUR`. Offene Fachfrage: welche Kundenlaender/Abgrenzungen gehoeren offiziell zu DE?
+- DE: finaler Alphaplan-CSV-Export liegt als Header-/Line-Paar mit Full + `delta` vor und ist technisch mappbar. Historischer Excel-Befund: Rohsumme `NettoPreisGesamtX` komplett war `4'154'690.05 EUR`; nur `Land Kunde = Deutschland` war `3'455'276.64 EUR`; Sollwert ist `3'635'923.00 EUR`. Offene Fachfrage: welche Kundenlaender/Abgrenzungen gehoeren offiziell zu DE und wie werden lokale Alphaplan-Artikelnummern gegen TR-AG-/SAP-`MATNR` abgeglichen?
 - ES: `3'082'320.18 EUR` ist laut Sitzung fachlich plausibel und entspricht der korrigierten Referenz. CSV nutzt `ImporteNeto`; Credit Notes/REC sind negativ. Der fruehere Sollwert `3'102'333.61` war ein Referenz-/Excel-Fehler.
 
 ## Pruefstand 2026-05-11

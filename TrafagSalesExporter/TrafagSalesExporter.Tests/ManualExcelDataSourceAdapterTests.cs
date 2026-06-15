@@ -111,6 +111,36 @@ public class ManualExcelDataSourceAdapterTests
         }
     }
 
+    [Fact]
+    public async Task FetchAsync_Reads_Local_Alphaplan_Full_And_Delta_Folder()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var deltaFolder = Path.Combine(folder, "delta");
+        Directory.CreateDirectory(deltaFolder);
+        try
+        {
+            WriteAlphaplanPair(folder, "RE2610696", 401613, 1464626, 100m, new DateTime(2026, 6, 8));
+            WriteAlphaplanPair(deltaFolder, "RE2610696", 401613, 1464626, 125m, new DateTime(2026, 6, 9));
+            WriteAlphaplanPair(deltaFolder, "RE2610697", 401614, 1464627, 50m, new DateTime(2026, 6, 9), append: true);
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "invoice_lines.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder, "TRDE", "Deutschland"));
+
+            Assert.Equal(2, result.Records.Count);
+            Assert.Equal(125m, Assert.Single(result.Records, r => r.InvoiceNumber == "RE2610696").SalesPriceValue);
+            Assert.Equal(50m, Assert.Single(result.Records, r => r.InvoiceNumber == "RE2610697").SalesPriceValue);
+            Assert.Equal(folder, result.LocalOutputDirectoryOverride);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static DataSourceFetchContext CreateContext(string manualImportPath, string tsc = "TRES", string land = "Spanien") => new()
     {
         Site = new Site
@@ -151,6 +181,36 @@ public class ManualExcelDataSourceAdapterTests
             }.Concat(rows.Select(row =>
                 $"\"TRES\";\"Spanien\";\"{row.SourceLineId}\";\"{row.InvoiceNumber}\";\"{row.Position}\";\"52871\";\"ECL1.0AP\";\"TRANS\";\"1.000000\";\"302208\";\"INTRONIK AUTOMATIZACION E INST. SL\";\"ESPANA\";\"160.760000\";\"EUR\";\"PC240330\";\"{row.SalesPriceValue.ToString(System.Globalization.CultureInfo.InvariantCulture)}\";\"EUR\";\"EUR\";\"EUR\";\"EXW\";\"1\";\"2025-01-02 00:00:00\";\"Invoice\"")));
         File.WriteAllText(filePath, csv);
+    }
+
+    private static void WriteAlphaplanPair(
+        string folder,
+        string invoiceNumber,
+        int documentEntry,
+        int positionId,
+        decimal value,
+        DateTime date,
+        bool append = false)
+    {
+        var headerPath = Path.Combine(folder, "invoice_headers.csv");
+        var linePath = Path.Combine(folder, "invoice_lines.csv");
+        var dateText = date.ToString("yyyy-MM-dd HH:mm:ss.000", System.Globalization.CultureInfo.InvariantCulture);
+        var headerLine = $"Invoice;{documentEntry};5;{invoiceNumber};{dateText};419;4;13;{value.ToString(System.Globalization.CultureInfo.InvariantCulture)};{(value * 1.19m).ToString(System.Globalization.CultureInfo.InvariantCulture)};0;0;;PO-{invoiceNumber};;;;";
+        var line = $"Invoice;{invoiceNumber};{dateText};{documentEntry};{positionId};10;0;324;MAT-{invoiceNumber};;Alphaplan Material;1.0;1.0;{value.ToString(System.Globalization.CultureInfo.InvariantCulture)};{value.ToString(System.Globalization.CultureInfo.InvariantCulture)};{value.ToString(System.Globalization.CultureInfo.InvariantCulture)};{(value * 1.19m).ToString(System.Globalization.CultureInfo.InvariantCulture)};19.0;{(value * 0.19m).ToString(System.Globalization.CultureInfo.InvariantCulture)};0;;;{dateText};0";
+
+        if (!append || !File.Exists(headerPath))
+        {
+            File.WriteAllText(headerPath, string.Join(Environment.NewLine,
+                "DocumentType;BelegeID;BelegTyp;Belegnummer;Datum;RechnungsAdressenID;WaehrungenID;ZahlungsBedingungenID;NettoPreisEndSumme;BruttoPreisEndSumme;IstStorniert;IstArchiviert;ExterneBelegNummer;BestellNummer;IhrAuftrag;KostenStelle;KostenTraeger;UUID",
+                headerLine));
+            File.WriteAllText(linePath, string.Join(Environment.NewLine,
+                "DocumentType;Belegnummer;BelegDatum;BelegeID;BelegePositionenID;ZeilenPosition;PositionsTyp;ArtikelID;ArtikelNummer;KundenArtikelNummer;ArtikelBezeichnung;BEAnzahl;PEAnzahl;PENettoPreis;NettoPreisEinzel;NettoPreisGesamt;BruttoPreisGesamt;MehrwertSteuerSatz;MehrwertSteuer;RohertragGesamt;KostenStelle;KostenTraeger;LieferDatum;NichtDrucken",
+                line));
+            return;
+        }
+
+        File.AppendAllText(headerPath, Environment.NewLine + headerLine);
+        File.AppendAllText(linePath, Environment.NewLine + line);
     }
 
     private sealed class FakeSharePointUploadService : ISharePointUploadService

@@ -1,6 +1,11 @@
 # Finance Berechnungsformeln pro Land
 
-Stand: 2026-06-11
+Stand: 2026-06-12
+
+Nachtrag 2026-06-12:
+
+- DE/Alphaplan nutzt jetzt das CSV-Paar `invoice_headers.csv`/`invoice_lines.csv` mit Full + `delta`; aktiver Positionswert ist `NettoPreisGesamt`.
+- Alphaplan `ArtikelNummer` bleibt lokale Artikelnummer und ist nicht automatisch TR-AG-/SAP-`MATNR`.
 
 Nachtrag 2026-06-11:
 
@@ -160,10 +165,10 @@ Aktuelle Quelle:
 
 ```text
 SourceSystem = MANUAL_EXCEL
-Fachlich = Alphaplan Excel
+Fachlich = Alphaplan CSV-Paar
 TSC = TRDE
 Land = Deutschland
-Aktueller Datei-/Teststand = docs/2025_DataExport_DE.xlsx
+Aktueller Datei-/Teststand = invoice_headers.csv + invoice_lines.csv, optional delta\invoice_headers.csv + delta\invoice_lines.csv
 ```
 
 Aktueller Referenzwert:
@@ -173,42 +178,35 @@ FinanceReference.DE.LocalCurrencyValue = 3'635'923
 Hauswaehrung = EUR
 ```
 
-Provisorisches Import-Mapping:
+Aktuelles Import-Mapping:
 
 ```text
-SalesPriceValue = NettoPreisGesamtX
+SalesPriceValue = invoice_lines.NettoPreisGesamt
+DocumentTotal... = invoice_headers.NettoPreisEndSumme
+VatSum... = invoice_headers.BruttoPreisEndSumme - NettoPreisEndSumme
 InvoiceNumber = Belegnummer
-PositionOnInvoice = Position
+PositionOnInvoice = ZeilenPosition
 Material = ArtikelNummer
 Name = ArtikelBezeichnung
-ProductGroup = Warengruppen-Bezeichnung
-Quantity = Anz. VE
-SupplierNumber = Lieferanten Nummer
-SupplierName = Name Lieferant
-SupplierCountry = Land Lieferant
-CustomerNumber = AdressNummer-Kunde
-CustomerName = Name Kunde
-CustomerCountry = Land Kunde
-CustomerIndustry = Branche
-StandardCost = EinstandsPreis
-SalesCurrency / DocumentCurrency / CompanyCurrency = Waehrung
-Incoterms2020 = Versandbedingung
-SalesResponsibleEmployee = AdressNummer_V
-PostingDate / InvoiceDate = Belegdatum-Rechnung
-OrderDate = BelegDatum Auftrag
-DocumentType = Alphaplan Excel
+Quantity = BEAnzahl
+CustomerNumber = RechnungsAdressenID
+PurchaseOrderNumber = BestellNummer oder IhrAuftrag
+SalesCurrency / DocumentCurrency / CompanyCurrency = EUR
+PostingDate / InvoiceDate = Datum oder BelegDatum
+SourceLineId = Alphaplan:<BelegePositionenID>
+DocumentType = Alphaplan Invoice oder Alphaplan CreditNote
 ```
 
 Technischer Ablauf:
 
 ```text
-DE wird als manueller Excel-Standort vorbereitet.
-Nach Upload/Pfad setzen und Aktivieren wird die Alphaplan-Datei beim Standortexport gelesen.
-Die gelesenen Zeilen werden in CentralSalesRecords gespeichert.
+DE ist als manueller CSV-/SharePoint-Standort vorbereitet.
+Nach Upload/Pfad setzen und Aktivieren werden Vollbestand und delta-Unterordner gelesen.
+Die gelesenen Zeilen werden nach SourceLineId dedupliziert und in CentralSalesRecords gespeichert.
 Die zentrale Excel enthaelt danach DE-Zeilen mit Finance | Country Key = DE.
 ```
 
-Erster Befund aus `docs/2025_DataExport_DE.xlsx`:
+Historischer Befund aus `docs/2025_DataExport_DE.xlsx`:
 
 ```text
 Zeilen: 6'198 Datenzeilen
@@ -221,6 +219,7 @@ Sollwert DE: 3'635'923.00 EUR
 Offen:
 
 - Finance muss bestaetigen, welche Kundenlaender fuer DE zum offiziellen Ist gehoeren.
+- Alphaplan `ArtikelNummer` ist eine lokale Artikelnummer und nicht automatisch eine TR-AG-/SAP-`MATNR`; bei schlechter Spartenabdeckung braucht es eine Mapping-/Nummernlogik.
 - Manager-Input nennt Warengruppen-Codes und Versandbedingungs-Codes, im Excel sind aktuell primär Bezeichnungen/Texte sichtbar.
 - Falls nach Codes gefiltert werden soll, braucht der Export eigene Code-Spalten oder eine eindeutige Mapping-Tabelle Text -> Code.
 

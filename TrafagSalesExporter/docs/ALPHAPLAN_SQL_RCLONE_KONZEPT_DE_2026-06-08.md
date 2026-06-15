@@ -1,8 +1,19 @@
 # Alphaplan SQL/rclone Konzept Deutschland
 
-Stand: 2026-06-08
+Stand: 2026-06-12
 
-Ziel: Auf dem deutschen Alphaplan-Server sollen SQL-Tabellen oder Views direkt als CSV exportiert und anschliessend mit `rclone` nach SharePoint hochgeladen werden. Der BiDashboard-/Finance-Import wird danach separat angepasst. Es werden in diesem Konzept keine Programmcode-Aenderungen am BiDashboard beschrieben.
+Ziel: Auf dem deutschen Alphaplan-Server sollen SQL-Tabellen oder Views direkt als CSV exportiert und anschliessend mit `rclone` nach SharePoint hochgeladen werden. Der BiDashboard-/Finance-Import ist fuer das finale Alphaplan-Paarformat umgesetzt.
+
+## Nachtrag 2026-06-12
+
+- Finaler Alphaplan-Export liegt als CSV-Paar vor: `invoice_headers.csv` und `invoice_lines.csv`.
+- Vollbestand liegt im Alphaplan-Ordner; der 7-Tage-Rueckblick liegt im Unterordner `delta` mit denselben Dateinamen.
+- Der BiDashboard-Import liest lokal und in SharePoint rekursiv passende Header-/Line-Paare.
+- Header und Positionen werden ueber `BelegeID` verbunden.
+- Dedupe erfolgt primaer ueber `BelegePositionenID` als `SourceLineId = Alphaplan:<id>`; bei gleicher Zeile gewinnt das Delta gegen den Vollbestand.
+- Finance-Wert ist `invoice_lines.NettoPreisGesamt`; Belegkopfwert ist `invoice_headers.NettoPreisEndSumme`; Credit Notes/Gutschriften werden negativ gerechnet.
+- `ArtikelNummer` wird als lokale Alphaplan-Materialnummer importiert. Sie ist nicht automatisch identisch mit TR-AG-/SAP-`MATNR`; bei schlechter Spartenabdeckung braucht es eine fachliche Materialnummernzuordnung.
+- Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
 
 ## Umsetzungsstand 2026-06-08
 
@@ -12,7 +23,7 @@ Ziel: Auf dem deutschen Alphaplan-Server sollen SQL-Tabellen oder Views direkt a
 - Kurzanleitung im Paket: `AlphaplanExportPackage/README.txt`.
 - Detailanleitung: `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`.
 - Status: PowerShell-Syntax lokal geprueft; noch kein Lauf auf dem deutschen Alphaplan-Server.
-- Abgrenzung: Noch keine BiDashboard-Importanpassung und kein produktiver Deutschland-Import aus Alphaplan-Rohdaten.
+- Abgrenzung: Der Discovery-Teil bleibt historisch dokumentiert; die App liest inzwischen das finale Header-/Line-Paarformat.
 
 ## Kurzfazit
 
@@ -37,7 +48,7 @@ Ziel: Auf dem deutschen Alphaplan-Server sollen SQL-Tabellen oder Views direkt a
 4. Das Script erstellt eine Summary-Datei mit Server, Datenbank, exportierten Objekten, Zeilenanzahl und Fehlern.
 5. `rclone` prueft oder erstellt den SharePoint-Zielordner.
 6. `rclone` laedt CSV und Summary nach SharePoint hoch.
-7. Der BiDashboard-Import wird spaeter auf diese SharePoint-Dateien angepasst.
+7. Der BiDashboard-Import liest das finale Paarformat aus SharePoint bzw. aus dem lokalen Alphaplan-Ordner.
 
 ## SharePoint-Ziel
 
@@ -51,7 +62,7 @@ Begruendung:
 - Rohdaten-CSV aus Tabellen/Views haben noch nicht zwingend das finale Finance-Spaltenformat.
 - Wenn der Import spaeter fertig ist, kann das Ziel entweder direkt weiterverwendet oder auf `Import/Finance/Deutschland` umgestellt werden.
 
-Fuer einen spaeteren finalen Finance-CSV-Export waere passend:
+Fuer den finalen Finance-CSV-Export ist passend:
 
 `trafag-bi:Import/Finance/Deutschland`
 
@@ -92,7 +103,16 @@ Die Dateien muessen noch nicht dem Finance-Importformat entsprechen. Wichtig ist
 
 ### Phase 3: Finaler Finance-Export
 
-Ziel: Sobald die Tabellenbeziehungen klar sind, wird eine stabile SQL-View oder ein finaler Query definiert, der direkt Finance-taugliche Spalten liefert.
+Status 2026-06-12: Fuer Finance wird ein finales Paarformat gelesen:
+
+- `invoice_headers.csv`
+- `invoice_lines.csv`
+- optional `delta\invoice_headers.csv`
+- optional `delta\invoice_lines.csv`
+
+Die Dateien sind semikolonsepariert. Pro Rechnungsposition entsteht ein `SalesRecord`.
+
+Historisches Ziel: Sobald die Tabellenbeziehungen klar sind, wird eine stabile SQL-View oder ein finaler Query definiert, der direkt Finance-taugliche Spalten liefert.
 
 Empfohlen ist eine read-only View, z. B.:
 
@@ -126,7 +146,7 @@ Fuer den spaeteren Import reichen als Startpunkt:
 | `SourceSystem` | `Alphaplan` |
 | `InvoiceNumber` | Rechnungsnummer |
 | `PositionOnInvoice` | Positionsnummer |
-| `Material` | Artikel-/Materialnummer |
+| `Material` | `ArtikelNummer`, lokale Alphaplan-Artikelnummer, nicht garantiert TR-AG-/SAP-`MATNR` |
 | `Name` | Artikeltext |
 | `Quantity` | Menge |
 | `CustomerNumber` | Kundennummer |
@@ -142,7 +162,14 @@ Weitere Felder wie Warengruppe, Lieferant, Incoterms, Auftrag, Branche und Koste
 
 ## Delta oder Vollfile
 
-Fuer den Anfang ist ein Vollfile pro Jahr am einfachsten:
+Aktueller Stand 2026-06-12:
+
+- Vollbestand plus 7-Tage-Delta werden zusammen gelesen.
+- Das Delta liegt in einem Unterordner `delta`.
+- Der Import ersetzt den Standortbestand in `CentralSalesRecords` mit dem zusammengesetzten, deduplizierten Ergebnis.
+- Ein einzelnes Delta darf nicht isoliert als Standortbestand importiert werden.
+
+Fuer den Anfang war ein Vollfile pro Jahr am einfachsten:
 
 - weniger Risiko bei geaenderten oder stornierten Belegen
 - einfacher Abgleich gegen Alphaplan

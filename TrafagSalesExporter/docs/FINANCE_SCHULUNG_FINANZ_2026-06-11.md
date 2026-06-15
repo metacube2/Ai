@@ -1,6 +1,6 @@
 # Finance Schulung fuer Finance-Anwender
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Zweck: Diese Schulungsunterlage beschreibt den aktuellen Finance-Prozess vom Standortexport bis zu Dashboard, zentraler Excel und Soll/Ist-Vergleich. Sie ist fuer Finance, Finance Keyuser und Wirtschaftspruefung gedacht.
 
@@ -22,6 +22,8 @@ Die folgenden Grafiken zeigen die wichtigsten Zusammenhaenge vor den Detailkapit
 - Die Audit-CSV heisst `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv` und ist das verarbeitete Merge-Eingangsfile, nicht das originale Standortfile.
 - Per Einstellung kann die zentrale Auswertung von `CentralSalesRecords` auf die neuesten Audit-CSV je Standort umgeschaltet werden.
 - Waehrungsumrechnung passiert nicht still im Standard-Ist. Sie passiert nur in klaren Analyse-/Transformationsfaellen.
+- Deutschland/Alphaplan liest jetzt `invoice_headers.csv` + `invoice_lines.csv`; Full und `delta` werden zusammengesetzt und dedupliziert.
+- Alphaplan `ArtikelNummer` ist eine lokale Artikelnummer und nicht automatisch eine TR-AG-/SAP-`MATNR`.
 
 ## Rollen
 
@@ -216,7 +218,7 @@ Wenn im Expertenmodus Varianten angezeigt werden, muss der Sollwert weiterhin si
 | Land | Quelle / Logik |
 | --- | --- |
 | CH / AT | SAP Gateway/OData `ZSCHWEIZ`, `NetwrHc`, Spartenreferenz aus `ProductDivisionRefSet` |
-| DE | Alphaplan Excel, `NettoPreisGesamtX`, Finance-Regeln fuer Ausschluesse und GS negativ |
+| DE | Alphaplan CSV-Paar, Full + `delta`, `NettoPreisGesamt`, CreditNote/GS negativ |
 | ES | Sage CSV, Basis plus Range-/Delta-Dateien, `ImporteNeto`, REC/Abono/Credit negativ |
 | FR | SAP B1/HANA, Rechnungen und Gutschriften als Positions-Netto |
 | IN | SAGE/HANA `TRIN`, Hauswaehrung INR |
@@ -278,10 +280,10 @@ Summe AT im zentralen Excel: `910 EUR`.
 
 | Sample | Quellwert | Mapping / Transformation | Wert fuer Merge | Finance-Beitrag |
 | --- | ---: | --- | ---: | ---: |
-| DE-1 Rechnung | `NettoPreisGesamtX = 1'500 EUR` | Alphaplan-Spalte -> `SalesPriceValue` | `1'500 EUR` | `1'500 EUR` |
-| DE-2 GS-Gutschrift | `NettoPreisGesamtX = 200 EUR`, `InvoiceNumber = GS...` | Finance-Regel rechnet GS negativ | `200 EUR` | `-200 EUR` |
-| DE-3 Trafag AG | `500 EUR`, Kunde `Trafag AG` | Finance-Regel schliesst aus | `500 EUR` | `0 EUR` |
-| DE-4 Magnetic Sense | `120 EUR`, Kunde enthaelt `Magnetic Sense` | Finance-Regel schliesst aus | `120 EUR` | `0 EUR` |
+| DE-1 Rechnung | `NettoPreisGesamt = 1'500 EUR` | `invoice_lines.NettoPreisGesamt -> SalesPriceValue` | `1'500 EUR` | `1'500 EUR` |
+| DE-2 CreditNote | `NettoPreisGesamt = 200 EUR`, `DocumentType = CreditNote` | Import setzt Gutschrift negativ | `-200 EUR` | `-200 EUR` |
+| DE-3 Delta-Korrektur | gleiche `BelegePositionenID` wie im Vollbestand | Dedupe nimmt Delta-Zeile | `500 EUR` | `500 EUR` |
+| DE-4 lokale Artikelnummer | `ArtikelNummer = AP-123` | Material wird als lokale Alphaplan-Nummer importiert | `120 EUR` | `120 EUR`; Spartenmatch offen |
 
 Summe DE im zentralen Excel: `1'300 EUR`.
 

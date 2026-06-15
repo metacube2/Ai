@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
@@ -18,7 +18,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Aktueller Stand | Projektstatus, letzte Aenderungen, offene Punkte | `docs/rag/PROJECT.md` |
 | Finance Cockpit | Soll/Ist, Finance Summary, Regeln, Laenderlogik | `docs/rag/FINANCE.md` |
 | Finance Spezialfaelle | IT, UK, ES, Abweichungen | `docs/rag/FINANCE.md` |
-| Manual Import | UK-Deltas, Spanien Basis+Range, DE Vollfile, Importprozess | `docs/rag/MANUAL_IMPORT.md` |
+| Manual Import | UK-Deltas, Spanien Basis+Range, DE Alphaplan Full+Delta, Importprozess | `docs/rag/MANUAL_IMPORT.md` |
 | HR KPI | HR Dashboard, Formeln, Datenqualitaet, Anwenderstand | `docs/rag/HR_KPI.md` |
 | Deployment/IIS | Publish, Server, BiDashboard, TLS, lokaler Uebergang | `docs/rag/DEPLOYMENT.md` |
 | Admin/Startseite | Admin Login, Sessions, Landing Page | `docs/rag/ADMIN.md` |
@@ -52,7 +52,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `Schulung`, `Training`, `Audit-CSV`, `Sales_ProcessedMergeInput`, `Auswertungsquelle`, `Wirtschaftspruefung` | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` |
 | `Wechselkurs`, `Umrechnungskurs`, `CurrencyExchangeRates`, `DocumentRate`, `ConvertCurrency`, `Anzeige-Waehrung` | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` |
 | `TRUK`, `UK_B1`, `Delta`, `Manual Excel` | Manual Import / Finance Spezialfaelle |
-| `TRDE`, `Alphaplan`, `NettoPreisGesamtX` | Finance Cockpit / Manual Import |
+| `TRDE`, `Alphaplan`, `invoice_headers`, `invoice_lines`, `BelegePositionenID`, `NettoPreisGesamt`, `ArtikelNummer`, `MATNR` | Finance Cockpit / Manual Import |
 | `TRSE`, `Spain`, `Sage`, `ImporteNeto` | Finance Spezialfaelle |
 | `TRIN`, `Indien`, `India`, `SAGE`, `20.197.20.60`, `TRAFAGCONTROLS` | Deployment/IIS oder Finance Spezialfaelle |
 | `Spain rclone`, `Spanien SharePoint`, `Run-SpainRangeExportAndUpload-AllInOne`, `trafag-bi` | `docs/SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md` |

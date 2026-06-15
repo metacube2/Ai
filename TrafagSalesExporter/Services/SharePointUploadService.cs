@@ -114,6 +114,7 @@ public class SharePointUploadService : ISharePointUploadService
         var normalizedReference = Normalize(folderReference);
         var normalizedTsc = Normalize(siteTsc).ToUpperInvariant();
         var isSpainImport = IsSpainManualImport(normalizedTsc, normalizedReference);
+        var isAlphaplanImport = IsAlphaplanManualImport(normalizedTsc, normalizedReference);
 
         if (string.IsNullOrWhiteSpace(normalizedReference))
             throw new InvalidOperationException("SharePoint-Ordnerreferenz fehlt.");
@@ -134,6 +135,13 @@ public class SharePointUploadService : ISharePointUploadService
 
         var folderPath = ResolveRemotePath(normalizedReference, siteUri);
         var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
+        if (isAlphaplanImport)
+        {
+            var alphaplanReferences = await ResolveAlphaplanManualImportFilesAsync(graphClient, drive.Id, folderPath);
+            if (alphaplanReferences.Count > 0)
+                return alphaplanReferences;
+        }
+
         var allCandidates = children?.Value?
             .Where(item => item.File is not null)
             .Where(item => IsSupportedManualImportFile(item.Name))
@@ -346,6 +354,88 @@ public class SharePointUploadService : ISharePointUploadService
            string.Equals(normalizedTsc, "TRSE", StringComparison.OrdinalIgnoreCase) ||
            folderReference.Contains("Spanien", StringComparison.OrdinalIgnoreCase) ||
            folderReference.Contains("Spain", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAlphaplanManualImport(string normalizedTsc, string folderReference)
+        => string.Equals(normalizedTsc, "TRDE", StringComparison.OrdinalIgnoreCase) ||
+           folderReference.Contains("Alphaplan", StringComparison.OrdinalIgnoreCase) ||
+           folderReference.Contains("Deutschland", StringComparison.OrdinalIgnoreCase) ||
+           folderReference.Contains("Germany", StringComparison.OrdinalIgnoreCase);
+
+    private static async Task<IReadOnlyList<SharePointFileReference>> ResolveAlphaplanManualImportFilesAsync(
+        GraphServiceClient graphClient,
+        string driveId,
+        string folderPath)
+    {
+        var folders = await ResolveFolderTreeAsync(graphClient, driveId, folderPath.Trim('/'), maxDepth: 3);
+        var references = new List<(SharePointFileReference Reference, string SortKey)>();
+
+        foreach (var folder in folders)
+        {
+            var children = await graphClient.Drives[driveId].Root.ItemWithPath(folder).Children.GetAsync();
+            var files = children?.Value?
+                .Where(item => item.File is not null)
+                .Where(item => IsAlphaplanInvoiceFile(item.Name))
+                .ToDictionary(item => item.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase) ?? [];
+
+            if (!files.TryGetValue("invoice_headers.csv", out var header) ||
+                !files.TryGetValue("invoice_lines.csv", out var line))
+                continue;
+
+            var sortKey = BuildAlphaplanFolderSortKey(folderPath, folder);
+            references.Add((new SharePointFileReference(BuildRemotePath(folder, header.Name), header.LastModifiedDateTime), $"{sortKey}|0"));
+            references.Add((new SharePointFileReference(BuildRemotePath(folder, line.Name), line.LastModifiedDateTime), $"{sortKey}|1"));
+        }
+
+        return references
+            .OrderBy(x => x.SortKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Reference.FileReference, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.Reference)
+            .ToList();
+    }
+
+    private static async Task<List<string>> ResolveFolderTreeAsync(
+        GraphServiceClient graphClient,
+        string driveId,
+        string rootFolderPath,
+        int maxDepth)
+    {
+        var result = new List<string> { rootFolderPath };
+        if (maxDepth <= 0)
+            return result;
+
+        var children = await graphClient.Drives[driveId].Root.ItemWithPath(rootFolderPath).Children.GetAsync();
+        foreach (var folder in children?.Value?.Where(item => item.Folder is not null) ?? [])
+        {
+            var childPath = BuildRemotePath(rootFolderPath, folder.Name);
+            result.AddRange(await ResolveFolderTreeAsync(graphClient, driveId, childPath, maxDepth - 1));
+        }
+
+        return result;
+    }
+
+    private static bool IsAlphaplanInvoiceFile(string? fileName)
+    {
+        var name = Path.GetFileName(fileName ?? string.Empty);
+        return name.Equals("invoice_headers.csv", StringComparison.OrdinalIgnoreCase) ||
+               name.Equals("invoice_lines.csv", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildAlphaplanFolderSortKey(string rootFolderPath, string folderPath)
+    {
+        var relative = folderPath.Trim('/');
+        var root = rootFolderPath.Trim('/');
+        if (relative.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            relative = relative[root.Length..].Trim('/');
+
+        return string.IsNullOrWhiteSpace(relative)
+            ? "0_full"
+            : relative.Replace('\\', '/').Contains("delta", StringComparison.OrdinalIgnoreCase)
+                ? $"1_{relative}"
+                : $"2_{relative}";
+    }
+
+    private static string BuildRemotePath(string folderPath, string? fileName)
+        => string.Join("/", folderPath.Trim('/'), (fileName ?? string.Empty).Trim('/')).Trim('/');
 
     private static bool IsSpainSalesFile(string? fileName)
         => Path.GetFileName(fileName ?? string.Empty).StartsWith("Spain_Sales", StringComparison.OrdinalIgnoreCase) &&

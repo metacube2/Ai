@@ -1,6 +1,6 @@
 # Finance Datenfluss fuer Andreas
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Zweck: Diese Notiz beschreibt den tatsaechlichen technischen Datenfluss im Finance Cockpit: wo Daten geholt werden, wann Felder veraendert werden, wann Wechselkurse wirken, wie die zentrale Excel entsteht und welche Quelle die Sparteninformationen liefert.
 
@@ -187,15 +187,17 @@ Betroffen:
 | --- | --- | --- |
 | UK | `TRUK` | SharePoint-Ordner `Import/Finance/UK_B1`, fachlich Sage |
 | Spanien | `TRES` / lokal auch `TRSE` in alten Daten | Sage CSV / SharePoint `Import/Finance/Spanien` |
-| Deutschland | `TRDE` | Alphaplan Excel |
+| Deutschland | `TRDE` | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv`, Full + `delta` |
 
 Ablauf:
 
 - Datei wird lokal, per UNC oder aus SharePoint geladen.
 - Bei SharePoint-Ordnern wird die passende neueste Datei bzw. bei Spanien alle `Spain_Sales*.csv` gelesen.
+- Bei Deutschland/Alphaplan werden `invoice_headers.csv` und `invoice_lines.csv` als Paar gelesen; Vollbestand plus `delta` werden dedupliziert zusammengefuehrt.
 - Spalten werden ueber manuelle Mappings oder Headernamen auf `SalesRecord` gemappt.
 - UK nutzt `SageNetSales([Sales Price/Value], [Quantity], [Document Type], ...)`.
 - Spanien-Deltas werden nach `SourceLineId`, sonst `TSC + InvoiceNumber + PositionOnInvoice + Material`, dedupliziert.
+- Alphaplan-Deltas werden primaer nach `SourceLineId = Alphaplan:<BelegePositionenID>` dedupliziert; `ArtikelNummer` bleibt lokale Alphaplan-Artikelnummer und ist nicht automatisch TR-AG-/SAP-`MATNR`.
 
 Manuelle Dateien koennen Spartenfelder enthalten, wenn sie passende Spalten liefern. Im aktuellen fachlichen Zielbild sind lokale ERP-Sparten aber nicht fuehrend; die Spartenanalyse matched gegen TR-AG/SAP-Referenz.
 
@@ -310,7 +312,7 @@ sonst ExtractionDate
 
 Ausnahme:
 
-- DE kann per Finance-Regel auf Jahr 2025 gezwungen werden, weil Alphaplan als Jahresfile geliefert wird.
+- DE kann per Finance-Regel auf Jahr 2025 gezwungen werden; der neue Alphaplan-Import liest trotzdem Full + `delta` und filtert danach ueber die Export-/Finance-Datumslogik.
 
 Include/Exclude:
 
@@ -321,11 +323,10 @@ Include/Exclude:
 Aktuelle Default-/Fachregeln:
 
 - DE:
-  - Jahresfile 2025.
-  - `Trafag AG` ausschliessen.
-  - `Magnetic Sense` ausschliessen.
-  - `GS2510095` ausschliessen.
-  - Gutschriften mit `GS...` negativ.
+  - Alphaplan Full + `delta`.
+  - Positionswert aus `NettoPreisGesamt`.
+  - `CreditNote`/GS/Gutschriften negativ.
+  - `ArtikelNummer` ist lokale Materialnummer; Spartenmatch gegen TR-AG muss fachlich plausibilisiert werden.
 - IT:
   - `CustomerName` enthaelt `Trafag Italia` ausschliessen.
   - IT-Zeilen mit leerem Supplier Country deduplizieren.

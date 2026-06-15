@@ -410,11 +410,16 @@ public sealed class StandortePageService : IStandortePageService
         if (string.IsNullOrWhiteSpace(trimmedPath))
             throw new InvalidOperationException("Bitte zuerst einen Dateipfad eintragen.");
         var isSharePointReference = LooksLikeSharePointReference(trimmedPath);
-        if (!isSharePointReference && !IsSupportedManualImportFile(trimmedPath))
+        if (!isSharePointReference && !IsSupportedManualImportFile(trimmedPath) && !Directory.Exists(trimmedPath))
             throw new InvalidOperationException("Bitte eine Excel- oder CSV-Datei mit Endung .xlsx oder .csv angeben.");
 
         if (File.Exists(trimmedPath))
             return File.GetLastWriteTimeUtc(trimmedPath);
+        if (Directory.Exists(trimmedPath))
+        {
+            var newestFile = ResolveLocalManualImportFileFromFolder(trimmedPath);
+            return File.GetLastWriteTimeUtc(newestFile);
+        }
 
         if (!isSharePointReference)
             throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {trimmedPath}");
@@ -476,6 +481,8 @@ public sealed class StandortePageService : IStandortePageService
 
         if (File.Exists(trimmedPath))
             return trimmedPath;
+        if (Directory.Exists(trimmedPath))
+            return ResolveLocalManualImportFileFromFolder(trimmedPath);
 
         if (!LooksLikeSharePointReference(trimmedPath))
             throw new InvalidOperationException($"Datei nicht gefunden oder nicht erreichbar: {trimmedPath}");
@@ -560,6 +567,29 @@ public sealed class StandortePageService : IStandortePageService
     private static bool IsSupportedManualImportFile(string path)
         => string.Equals(Path.GetExtension(path), ".xlsx", StringComparison.OrdinalIgnoreCase) ||
            string.Equals(Path.GetExtension(path), ".csv", StringComparison.OrdinalIgnoreCase);
+
+    private static string ResolveLocalManualImportFileFromFolder(string folderPath)
+    {
+        var alphaplanLines = Directory.EnumerateFiles(folderPath, "invoice_lines.csv", System.IO.SearchOption.AllDirectories)
+            .Where(path =>
+            {
+                var folder = Path.GetDirectoryName(path);
+                return !string.IsNullOrWhiteSpace(folder) &&
+                       File.Exists(Path.Combine(folder, "invoice_headers.csv"));
+            })
+            .OrderBy(path => path.Contains($"{Path.DirectorySeparatorChar}delta{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(alphaplanLines))
+            return alphaplanLines;
+
+        return Directory.EnumerateFiles(folderPath)
+            .Where(IsSupportedManualImportFile)
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException($"Im Ordner '{folderPath}' wurde keine Excel-/CSV-Datei gefunden.");
+    }
 
     private static List<string> LoadExcelHeaders(string filePath)
     {

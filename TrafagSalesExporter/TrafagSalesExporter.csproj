@@ -47,8 +47,8 @@
     <Content Include="formeln.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="FINANZ_OFFENE_FRAGEN_ANDREAS.docx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="trafag.jpg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <Content Include="Bild.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
-    <Content Include="erg.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="Bild.png" Condition="Exists('Bild.png')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="erg.png" Condition="Exists('erg.png')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="login.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="manometer.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="$(HanaClientNativeDll)" Link="libadonetHDB.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(HanaClientNativeDll)')" />

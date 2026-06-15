@@ -1,6 +1,6 @@
 # Finance Kurs-Workflow
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Zweck: Diese Doku beschreibt isoliert den Weg eines Umrechnungskurses vom einzelnen Land bis zur Analyse eines zentralen Dashboard-Wertes. Sie ersetzt nicht die allgemeine Finance-Datenflussdoku, sondern schneidet nur das Thema Kurs/Waehrung heraus.
 Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
@@ -80,7 +80,7 @@ Jedes Land liefert zuerst einen Nettowert und die dazugehoerige Waehrungsinforma
 | IN `TRIN` | HANA/Sage-Quelle | Hauswaehrungswert in INR | Finance-Hauswaehrung `INR` | ggf. Quellkurs, nicht fuehrend fuer Soll/Ist |
 | UK `TRUK` | Sage/Manual Excel | `[Sales Price/Value] * [Quantity]` | `GBP` | kein App-Kurs beim Import |
 | ES `TRES` | Sage CSV | `ImporteNeto`, REC/Credit negativ | `EUR` | kein App-Kurs beim Import |
-| DE `TRDE` | Alphaplan Excel | `NettoPreisGesamtX` | `Waehrung` / aktuell fachlich `EUR` | kein App-Kurs beim Import |
+| DE `TRDE` | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv` | `NettoPreisGesamt` | aktuell fachlich `EUR` | kein App-Kurs beim Import |
 
 Wichtig: Ein vorhandener ERP-Belegkurs erklaert die Beziehung zwischen Belegwaehrung und lokaler Hauswaehrung im Quellsystem. Die App nutzt fuer die zentrale Anzeigeumrechnung trotzdem die eigene Kurstabelle, sobald eine Zielwaehrung gewaehlt wird.
 

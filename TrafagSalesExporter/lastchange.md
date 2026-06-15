@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,6 +8,11 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
+- Neu lokal umgesetzt/dokumentiert: Deutschland/Alphaplan liest das finale CSV-Paar `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen.
+- Alphaplan-Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`; Delta-Zeilen gewinnen gegen Vollbestand.
+- DE-Financewert: `invoice_lines.NettoPreisGesamt`; Kopfwerte aus `invoice_headers.NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet; Waehrung aktuell EUR.
+- Wichtig fuer Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert gleiche TR-AG-/SAP-`MATNR`; bei schlechter DE-Spartenabdeckung braucht es eine eigene Nummern-/Mappingklaerung.
+- Validierung lokal 2026-06-12: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
 - Neu lokal dokumentiert/umgesetzt: Komponenten-Fallback fuer Produktsparten im ABAP-Provider `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`; Komponenten aus `ZPOWERBI_VC_TXT` sollen ueber eindeutige Kopfmaterial-Produktsparte in `ProductDivisionRefSet` erscheinen.
 - Aktueller Prod-Check 2026-06-11 gegen `travp762`: `ProductDivisionRefSet`, `ProductDivisionMapSet`, `FinanzdataSchweizOeSet` sind in Metadata vorhanden; `ProductDivisionRefSet` liefert 42'486 Zeilen, aber 804 Materialien aus `spartenlogic/nicht_im_stamm_TRCH_alle_jahre.csv` bleiben ohne Treffer. Naechster SAP-Pruefpunkt: direkter Lauf `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` / `Z_PRODSPARTE_ALL` mit `E01758`, `E01752`, `E00613`, `R85012`.
 - Neu deployed: Commit `1dbaa66 Add purchasing translations` auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
@@ -85,6 +90,74 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu umgesetzt: `Einkauf > Datenquellen` als grafische SAP/OData-Quellenpflege analog Finance/Standorte; vorbefuellt mit `EKKOSet`, `EKPOSet`, `eketSet`, Lieferanten- und Warengruppen-Mapping, Joins und Zielmappings.
 - Neu umgesetzt: `Einkauf Dashboard > 3D Simulation` mit festen Canvas-Abmessungen, Achsenbeschriftung, Diagrammarten, Labelgroesse und Szenario-Slider fuer Preis-/Wechselkurswirkung.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `83/83` Tests gruen; Test prueft auch Einkaufs-SAP-Seed mit Quellen/Joins/Mappings.
+
+## Nachtrag 2026-06-12 Alphaplan Full/Delta Import Deutschland
+
+Ausgangslage:
+
+- Deutschland liefert Alphaplan nicht mehr als altes Excel-Jahresfile, sondern als CSV-Paar.
+- Vollbestand liegt im Alphaplan-Ordner.
+- Delta der letzten sieben Tage liegt im Unterordner `delta` mit denselben Dateinamen.
+- User-Hinweis: Alphaplan-Materialnummern koennen von den Materialnummern anderer Systeme abweichen.
+
+Quelldateien:
+
+- `invoice_headers.csv`
+- `invoice_lines.csv`
+- `delta/invoice_headers.csv`
+- `delta/invoice_lines.csv`
+
+Umgesetzt:
+
+- `ManualExcelImportService` erkennt Alphaplan `invoice_lines.csv`, wenn daneben ein passendes `invoice_headers.csv` liegt.
+- Header und Positionen werden ueber `BelegeID` verbunden.
+- `BelegePositionenID` wird als stabile `SourceLineId = Alphaplan:<id>` gesetzt.
+- `ManualExcelDataSourceAdapter` liest fuer `TRDE` lokale Ordner und SharePoint-Ordner rekursiv, sortiert Vollbestand vor `delta` und dedupliziert danach.
+- `SharePointUploadService` findet Alphaplan-Paare bis Tiefe 3 und erwartet nicht mehr zwingend `TRDE` im Dateinamen.
+- `StandortePageService` akzeptiert lokale Ordner fuer Manual-Import-Pfade und waehlt bei Alphaplan das gepaarte `invoice_lines.csv`.
+- `TrafagSalesExporter.csproj` kopiert `Bild.png`/`erg.png` nur noch, wenn die Dateien existieren; die Dateien waren im Worktree bereits geloescht.
+
+Mapping:
+
+- `SalesPriceValue = invoice_lines.NettoPreisGesamt`.
+- `DocumentTotal... = invoice_headers.NettoPreisEndSumme`.
+- `VatSum... = BruttoPreisEndSumme - NettoPreisEndSumme`.
+- `Quantity = BEAnzahl`.
+- `Material = ArtikelNummer`.
+- `CustomerNumber = RechnungsAdressenID`.
+- `PurchaseOrderNumber = BestellNummer` oder `IhrAuftrag`.
+- `SalesCurrency`, `DocumentCurrency`, `CompanyCurrency` aktuell `EUR`.
+- `CreditNote` bzw. Gutschriften (`GS`/`G...`) werden negativ gerechnet.
+
+Wichtig:
+
+- `ArtikelNummer` ist lokale Alphaplan-Artikelnummer und nicht automatisch TR-AG-/SAP-`MATNR`.
+- Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten; fuer DE-Soll-/Ist-Abgrenzung bleibt die Finance-Fachklaerung noetig.
+
+Validierung:
+
+```text
+dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj --verbosity minimal --filter ManualExcel
+```
+
+Ergebnis: `14/14` Manual-Excel/CSV-Tests gruen.
+
+```text
+dotnet test TrafagSalesExporter.sln --verbosity minimal
+```
+
+Ergebnis: `94/94` Tests gruen.
+
+Dokumentiert:
+
+- `docs/rag/PROJECT.md`
+- `docs/rag/MANUAL_IMPORT.md`
+- `docs/rag/FINANCE.md`
+- `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md`
+- `docs/ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`
+- `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
+- `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`
+- weitere Finance-Detaildocs und `docs/RAG_ROUTER.md`
 
 ## Nachtrag 2026-06-10 India / SAGE HANA / Deploy
 

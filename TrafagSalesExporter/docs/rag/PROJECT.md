@@ -1,10 +1,13 @@
 # RAG Project
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
+- Neu lokal umgesetzt: Deutschland/Alphaplan liest das finale CSV-Paar `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen und per Alphaplan-Zeilen-ID dedupliziert.
+- Validierung lokal 2026-06-12: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
+- Wichtig DE/Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert identische TR-AG-/SAP-`MATNR` normalisiert. Nicht gematchte Nummern erscheinen weiterhin als `Nicht im TR-AG-Stamm`.
 - Letzter dokumentierter Deploy: 2026-06-11, Commit `1dbaa66 Add purchasing translations`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
 - Neu deployed: Einkaufsdashboard und `Einkauf > Datenquellen` haben erweiterte UI-Uebersetzungen fuer Spanisch, Italienisch und Hindi; technische Feldnamen wie SAP-Entity-Sets bleiben bewusst unveraendert.

@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 ## Kurzstand
 
@@ -27,6 +27,8 @@ Stand: 2026-06-11
 - Budgetkurse wurden als Finance-Kurse behandelt; CHF-Sicht bleibt getrennte Reporting-/Kontrollsicht, nicht stiller Ersatz fuer Hauswaehrungsabgleich.
 - Fokusdoku zum isolierten Kursfluss: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
 - India/TRIN: produktive Route nach Fix/Deploy 2026-06-10 ist `SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`; Standort-Override nutzt `TRAFAGCONTROLS`.
+- DE/Alphaplan lokal umgesetzt: `invoice_headers.csv` und `invoice_lines.csv` werden als Paar gelesen; Vollbestand plus `delta`-Unterordner werden vor dem Speichern dedupliziert.
+- DE-Spartenhinweis: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantierte TR-AG-/SAP-`MATNR`.
 - Browser-Hinweis: 3D-Ansicht wurde in Chrome als korrekt bestaetigt; Firefox zeigte auf dem Client Interaktions-/Zoomprobleme.
 
 ## Wichtige Regeln
@@ -100,7 +102,7 @@ Stand: 2026-06-11
 | Land | Kurzregel |
 | --- | --- |
 | CH/AT | SAP OData `ZSCHWEIZ`, Trennung ueber Buchungskreis/Reporting-Land |
-| DE | Alphaplan Excel, `NettoPreisGesamtX`, 2025-Zwang |
+| DE | Alphaplan CSV-Paar `invoice_headers.csv`/`invoice_lines.csv`, Full + `delta`, `NettoPreisGesamt`, CreditNote/GS negativ, EUR |
 | ES | Sage CSV, `ImporteNeto`, REC/Credit negativ; Referenz 2025 korrigiert auf `3'082'320.18 EUR` |
 | IT | Hauswaehrung, `Trafag Italia` ausgeschlossen, Duplikatlogik fuer leeres Supplier country |
 | UK | Sage/Manual Excel, GBP, `[Sales Price/Value] * [Quantity]`, Credit Notes negativ |

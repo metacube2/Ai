@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 ## Kurzstand
 
@@ -9,7 +9,9 @@ Stand: 2026-06-11
 - UK liest Jahresdatei plus spaetere Deltas.
 - ES/Spanien liest im Ordner alle `Spain_Sales*.csv`, also Basisdatei plus taegliche `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv`.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.
-- DE muss weiterhin Vollfiles liefern.
+- DE/Alphaplan liest `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen.
+- DE-Dedupe: primaer `BelegePositionenID` als `SourceLineId`, Fallback Invoice/Position/Material; Delta gewinnt gegen Vollbestand.
+- DE-Material: `ArtikelNummer` bleibt lokale Alphaplan-Artikelnummer und ist nicht automatisch eine TR-AG-/SAP-`MATNR`.
 - Wenn Audit-CSV aktiv ist, schreibt der Standortexport nach Mapping/Transformation zusaetzlich `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv` in den Standort-Exportordner.
 - Zentrale Auswertungen koennen per Setting aus den neuesten Audit-CSV je TSC statt direkt aus `CentralSalesRecords` lesen.
 
@@ -19,7 +21,7 @@ Stand: 2026-06-11
 | --- | --- | --- | --- |
 | UK / `TRUK` | SharePoint `Import/Finance/UK_B1`, Sage Excel | ja | `[Sales Price/Value] * [Quantity]`, Credit Notes negativ, GBP |
 | ES / `TRSE`/`TRES` | Sage CSV `Spain_Sales*.csv` | ja, wenn Ordner mit Basis + Deltas | `SalesPriceValue`/`ImporteNeto`, REC/Credit negativ, EUR |
-| DE / `TRDE` | Alphaplan Excel | nein | `NettoPreisGesamtX`, GS negativ, Ausschlussregeln |
+| DE / `TRDE` | Alphaplan CSV-Paar `invoice_headers.csv` + `invoice_lines.csv` | ja, Full + `delta`-Unterordner | `NettoPreisGesamt`, CreditNote/GS negativ, EUR |
 
 ## Bedienreihenfolge
 
@@ -43,6 +45,18 @@ Stand: 2026-06-11
   - primaer `SourceLineId`.
   - Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`.
 - Danach ersetzt die App den Spanien-Stand in `CentralSalesRecords` mit diesem deduplizierten Gesamtstand.
+
+## Deutschland Alphaplan Full/Delta
+
+- Erwartetes Paar je Ordner: `invoice_headers.csv` und `invoice_lines.csv`.
+- Vollbestand liegt im Standortordner; 7-Tage-Rueckblick liegt im Unterordner `delta`.
+- Lokal und in SharePoint werden passende Paare rekursiv gesucht.
+- Header und Positionen werden ueber `BelegeID` verbunden.
+- Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, sonst Invoice/Position/Material; Delta-Zeilen gewinnen.
+- `SalesPriceValue = NettoPreisGesamt`; `DocumentTotal... = NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet.
+- `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten.
+- `Material = ArtikelNummer`; diese lokale Alphaplan-Nummer ist nicht garantiert identisch mit TR-AG-/SAP-`MATNR`.
+- Das alte Alphaplan-Excel-Mapping bleibt technisch vorhanden, ist aber nicht mehr der bevorzugte DE-Pfad.
 
 ## Rohquellen Nur Bei Bedarf
 

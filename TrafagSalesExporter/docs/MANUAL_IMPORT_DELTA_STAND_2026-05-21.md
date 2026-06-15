@@ -1,6 +1,6 @@
 # Manual-Import und Delta-Stand
 
-Stand: 2026-06-11
+Stand: 2026-06-12
 
 Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden und wie neue Eintraege bzw. Delta-Dateien verarbeitet werden.
 
@@ -10,7 +10,7 @@ Diese Datei beschreibt, wie manuelle Excel-/CSV-Importe aktuell behandelt werden
 | --- | --- | --- | --- | --- | --- | --- |
 | UK / England `TRUK` | SharePoint-Ordner `Import/Finance/UK_B1` | Sage Excel `.xlsx` | Delta-faehig | Bei Jahreslauf: Jahresdatei fuer `TRUK` plus spaetere datierte Dateien `ddMMyy_TRUK.xlsx` oder `.csv` | Alle gefundenen Dateien werden gelesen und zusammen in `CentralSalesRecords` fuer `TRUK` ersetzt | `Sales Price/Value * Quantity`, Credit Notes negativ, GBP |
 | Spanien `TRSE` / `TRES` | SharePoint-Ordner `Import/Finance/Spanien` / Sage CSV | `.csv` | Delta-faehig mit Basis + `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv` | Wenn Ordner: alle `Spain_Sales*.csv`, Basis zuerst, danach Range-Dateien nach Datum | Alle Dateien werden gelesen, nach `SourceLineId` bzw. Invoice/Position/Material dedupliziert, danach ersetzen die deduplizierten Spanien-Zeilen den bisherigen Spanien-Stand | Sage `SalesPriceValue`/`ImporteNeto`, REC/Abono/Credit negativ, EUR |
-| Deutschland `TRDE` | Alphaplan Excel | `.xlsx` | Vollfile/Jahresfile erforderlich, keine Deltas | Pfad/Datei am Standort hinterlegt | Datei wird gelesen, DE-Zeilen ersetzen bisherigen DE-Stand | `NettoPreisGesamtX`, Finance-Regeln: Ausschluesse, GS negativ, 2025-Zwang |
+| Deutschland `TRDE` | Alphaplan CSV-Paar | `.csv` | Vollbestand plus 7-Tage-Delta im Unterordner `delta` | Ordner/SharePoint-Pfad enthaelt `invoice_headers.csv` und `invoice_lines.csv`; passende Paare werden rekursiv gefunden | Vollbestand und Delta werden gelesen, nach Alphaplan-Zeilen-ID dedupliziert, danach ersetzen die deduplizierten DE-Zeilen den bisherigen DE-Stand | `NettoPreisGesamt`, CreditNote/GS negativ, EUR |
 | CH/AT `ZSCHWEIZ` | SAP OData | OData | Kein manueller Delta-Excel-Prozess | App liest SAP-Service | ZSCHWEIZ-Zeilen ersetzen bisherigen Stand | `NetwrHc`, CHF/EUR nach Land |
 | FR / IT / US | HANA / SAP B1 | direkte DB | Kein manueller Delta-Excel-Prozess | App liest HANA nach Datum/Schema | Standortdaten werden neu aus HANA aufgebaut | B1 Positions-Netto, Credit Notes negativ |
 | IN | HANA / Sage | direkte DB | Kein manueller Delta-Excel-Prozess | App liest HANA/Sage | Standortdaten werden neu aus Quelle aufgebaut | Hauswaehrung INR |
@@ -63,31 +63,36 @@ Finance-Logik:
 
 ## Deutschland
 
-Deutschland nutzt Alphaplan Excel.
+Deutschland nutzt Alphaplan CSV-Paare aus `invoice_headers.csv` und `invoice_lines.csv`.
 
 Aktueller Implementierungsstand:
 
 - Standort `TRDE` ist als `MANUAL_EXCEL` vorbereitet.
-- Quelle ist ein Jahres-/Vollfile, aktuell fuer 2025.
-- Finance-Regeln erzwingen DE fachlich auf 2025.
-- Deutschland muss immer den kompletten relevanten Datenstand liefern.
-- Delta-Dateien sind fuer Deutschland nicht vorgesehen.
-- Beim Standortexport ersetzt die App den bisherigen Deutschland-Stand in `CentralSalesRecords`.
-- Wenn versehentlich nur eine Delta-Datei als Pfad hinterlegt wird, wuerde die App technisch nur dieses Delta lesen und damit den bisherigen Deutschland-Stand ersetzen.
-- Es gibt aktuell keine explizite Sperre, die eine Deutschland-Delta-Datei erkennt und ablehnt.
+- Der Vollbestand liegt direkt im Alphaplan-Ordner.
+- Der 7-Tage-Rueckblick liegt im Unterordner `delta` mit denselben Dateinamen.
+- Die App sucht lokal und in SharePoint rekursiv nach Paaren aus `invoice_headers.csv` und `invoice_lines.csv`.
+- Header und Positionen werden ueber `BelegeID` verbunden.
+- Reihenfolge: Vollbestand zuerst, danach Delta.
+- Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, sonst `TSC + InvoiceNumber + PositionOnInvoice + Material`.
+- Delta-Zeilen gewinnen gegen Zeilen aus dem Vollbestand.
+- Beim Standortexport ersetzt die App den bisherigen Deutschland-Stand in `CentralSalesRecords` mit dem zusammengesetzten, deduplizierten Gesamtstand.
+- Der Datumsfilter kommt aus den Export-Einstellungen; Default ist ab `2025-01-01`.
+- Das alte Alphaplan-Excel-Mapping bleibt technisch vorhanden, ist aber nicht der bevorzugte DE-Pfad.
 
 Finance-Logik:
 
-- `SalesPriceValue = NettoPreisGesamtX`
-- Ausschluesse gemaess Finance-Regeln:
-  - `CustomerName = Trafag AG`
-  - `CustomerName contains Magnetic Sense`
-  - `InvoiceNumber = GS2510095`
-- `InvoiceNumber starts with GS` wird negativ gerechnet.
+- `SalesPriceValue = NettoPreisGesamt` aus `invoice_lines.csv`.
+- `DocumentTotal... = NettoPreisEndSumme` aus `invoice_headers.csv`.
+- `VatSum... = BruttoPreisEndSumme - NettoPreisEndSumme`.
+- `CreditNote` bzw. Gutschriften (`GS`/`G...`) werden negativ gerechnet.
+- Waehrung ist fachlich aktuell EUR.
+- `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten.
+- `Material = ArtikelNummer`. Das ist eine lokale Alphaplan-Artikelnummer, nicht automatisch eine TR-AG-/SAP-`MATNR`.
 
 Offen:
 
 - Finance/Munir muss bestaetigen, welche Kundenlaender und Filter fuer den offiziellen DE-Istwert gelten.
+- Falls die Spartenanalyse fuer DE hohe Werte bei `Nicht im TR-AG-Stamm` zeigt, muss die Alphaplan-Artikelnummernlogik gegen TR-AG-/SAP-Materialnummern fachlich geklaert werden.
 
 ## Praktische Bedienreihenfolge
 
@@ -107,5 +112,5 @@ Aktueller Stand:
 
 - UK: Basis plus Delta-Dateien.
 - Spanien: Basis plus `Spain_Sales_range_*.csv`, wenn ein Ordner hinterlegt ist.
-- Deutschland: weiterhin Vollfile/Jahresfile, keine Delta-Logik.
+- Deutschland: Alphaplan Vollbestand plus `delta`-Unterordner, dedupliziert nach Alphaplan-Zeilen-ID.
 - Audit-CSV ist ein zusaetzliches verarbeitetes Prueffile; es ersetzt nicht die originalen Standortdateien.

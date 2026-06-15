@@ -452,6 +452,57 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Reads_Alphaplan_Header_Line_Pair()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteAlphaplanPair(folder,
+                [
+                    "DocumentType;BelegeID;BelegTyp;Belegnummer;Datum;RechnungsAdressenID;WaehrungenID;ZahlungsBedingungenID;NettoPreisEndSumme;BruttoPreisEndSumme;IstStorniert;IstArchiviert;ExterneBelegNummer;BestellNummer;IhrAuftrag;KostenStelle;KostenTraeger;UUID",
+                    "Invoice   ;401613;5;RE2610696;2026-06-08 10:15:10.000;419;4;13;2128.48;2532.8912;0;0;;1261692;;;;header-uuid",
+                    "CreditNote;401700;6;GS2610001;2026-06-09 08:00:00.000;420;4;13;120.00;142.80;0;0;;PO-CREDIT;;;;credit-uuid"
+                ],
+                [
+                    "DocumentType;Belegnummer;BelegDatum;BelegeID;BelegePositionenID;ZeilenPosition;PositionsTyp;ArtikelID;ArtikelNummer;KundenArtikelNummer;ArtikelBezeichnung;BEAnzahl;PEAnzahl;PENettoPreis;NettoPreisEinzel;NettoPreisGesamt;BruttoPreisGesamt;MehrwertSteuerSatz;MehrwertSteuer;RohertragGesamt;KostenStelle;KostenTraeger;LieferDatum;NichtDrucken",
+                    "Invoice   ;RE2610696;2026-06-08 10:15:10.000;401613;1464625;1;2;0;;;{\\rtf1\\ansi\\pard\\i Textzeile\\par};0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;;;1900-01-01 00:00:00.000;0",
+                    "Invoice   ;RE2610696;2026-06-08 10:15:10.000;401613;1464626;2;0;324;PK250;PK250;{\\rtf1\\ansi\\pard Kolben-Pressostat\\par};5.0;5.0;621.14962962959999;621.14962962959999;2096.38;2494.6922;19.0;398.3122;1218.38;;;2026-06-05 00:00:00.000;0",
+                    "CreditNote;GS2610001;2026-06-09 08:00:00.000;401700;1465000;10;0;325;MAT-GS;;Gutschrift Position;1.0;1.0;120.0;120.0;120.0;142.8;19.0;22.8;10.0;;;2026-06-06 00:00:00.000;0"
+                ]);
+
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(Path.Combine(folder, "invoice_lines.csv"), new Site
+            {
+                TSC = "TRDE",
+                Land = "Deutschland"
+            });
+
+            Assert.Equal(2, rows.Count);
+            var invoice = Assert.Single(rows, row => row.InvoiceNumber == "RE2610696");
+            Assert.Equal("PK250", invoice.Material);
+            Assert.Equal("Kolben-Pressostat", invoice.Name);
+            Assert.Equal(5m, invoice.Quantity);
+            Assert.Equal(2096.38m, invoice.SalesPriceValue);
+            Assert.Equal("EUR", invoice.SalesCurrency);
+            Assert.Equal("419", invoice.CustomerNumber);
+            Assert.Equal("1261692", invoice.PurchaseOrderNumber);
+            Assert.Equal("Alphaplan Invoice", invoice.DocumentType);
+            Assert.Equal(new DateTime(2026, 6, 8, 10, 15, 10), invoice.PostingDate);
+
+            var credit = Assert.Single(rows, row => row.InvoiceNumber == "GS2610001");
+            Assert.Equal(-120m, credit.SalesPriceValue);
+            Assert.Equal(-120m, credit.DocumentTotalForeignCurrency);
+            Assert.Equal("Alphaplan CreditNote", credit.DocumentType);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static string CreateWorkbook(Action<XLWorkbook> fillWorkbook)
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
@@ -515,4 +566,11 @@ public class ManualExcelImportServiceTests
             SourceHeader = sourceHeader,
             IsActive = true
         };
+
+    private static void WriteAlphaplanPair(string folder, string[] headers, string[] lines)
+    {
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "invoice_headers.csv"), string.Join(Environment.NewLine, headers));
+        File.WriteAllText(Path.Combine(folder, "invoice_lines.csv"), string.Join(Environment.NewLine, lines));
+    }
 }
