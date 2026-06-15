@@ -231,6 +231,7 @@ public class ManagementProductAssignmentSummary
 {
     public int DistinctMaterialCount { get; set; }
     public int MatchedMaterialCount { get; set; }
+    public int MiscMaterialCount { get; set; }
     public int UnassignedMaterialCount { get; set; }
     public int MissingReferenceMaterialCount { get; set; }
     public int MissingMaterialNumberCount { get; set; }
@@ -241,10 +242,12 @@ public class ManagementProductFinanceSummary
 {
     public decimal TotalValue { get; set; }
     public decimal AssignedValue { get; set; }
+    public decimal MiscValue { get; set; }
     public decimal UnassignedValue { get; set; }
     public decimal MissingReferenceValue { get; set; }
     public decimal MissingMaterialValue { get; set; }
     public decimal AssignedValuePercent { get; set; }
+    public decimal MiscValuePercent { get; set; }
     public decimal UnassignedValuePercent { get; set; }
     public decimal MissingReferenceValuePercent { get; set; }
     public string DisplayCurrency { get; set; } = string.Empty;
@@ -273,6 +276,7 @@ public class ManagementProductFinanceCountryRow
     public string Currency { get; set; } = string.Empty;
     public decimal TotalValue { get; set; }
     public decimal AssignedValue { get; set; }
+    public decimal MiscValue { get; set; }
     public decimal UnassignedValue { get; set; }
     public decimal MissingReferenceValue { get; set; }
     public decimal MissingMaterialValue { get; set; }
@@ -285,6 +289,7 @@ public class ManagementProductAssignmentCountryRow
     public string Tsc { get; set; } = string.Empty;
     public int DistinctMaterialCount { get; set; }
     public int MatchedMaterialCount { get; set; }
+    public int MiscMaterialCount { get; set; }
     public int UnassignedMaterialCount { get; set; }
     public int MissingReferenceMaterialCount { get; set; }
     public int MissingMaterialNumberCount { get; set; }

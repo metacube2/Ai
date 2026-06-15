@@ -1004,7 +1004,7 @@ public class DatabaseSeedService : IDatabaseSeedService
                 Alias = "M",
                 EntitySet = "ProductDivisionMapSet",
                 IsPrimary = false,
-                IsActive = true,
+                IsActive = false,
                 SortOrder = 2
             });
             changed = true;
@@ -1023,9 +1023,9 @@ public class DatabaseSeedService : IDatabaseSeedService
                 changed = true;
             }
 
-            if (!productMapSource.IsActive)
+            if (productMapSource.IsActive)
             {
-                productMapSource.IsActive = true;
+                productMapSource.IsActive = false;
                 changed = true;
             }
 
@@ -1108,7 +1108,7 @@ public class DatabaseSeedService : IDatabaseSeedService
                 LeftKeys = "Prodh",
                 RightKeys = "Paph1",
                 JoinType = "Left",
-                IsActive = true,
+                IsActive = false,
                 SortOrder = 2
             });
             changed = true;
@@ -1133,9 +1133,9 @@ public class DatabaseSeedService : IDatabaseSeedService
                 changed = true;
             }
 
-            if (!productMapJoin.IsActive)
+            if (productMapJoin.IsActive)
             {
-                productMapJoin.IsActive = true;
+                productMapJoin.IsActive = false;
                 changed = true;
             }
 
@@ -1158,13 +1158,13 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.Material), "Z.Matnr", false),
             (nameof(SalesRecord.Name), "Z.Arktx", false),
             (nameof(SalesRecord.ProductGroup), "Z.Prodh", false),
-            (nameof(SalesRecord.ProductHierarchyCode), "FirstNonEmpty(P.Paph1, M.Paph1)", false),
-            (nameof(SalesRecord.ProductHierarchyText), "FirstNonEmpty(P.Paph1Text, M.Paph1Text)", false),
-            (nameof(SalesRecord.ProductFamilyCode), "FirstNonEmpty(P.Wwpfa, M.Wwpfa)", false),
-            (nameof(SalesRecord.ProductFamilyText), "FirstNonEmpty(P.WwpfaText, M.WwpfaText)", false),
-            (nameof(SalesRecord.ProductDivisionCode), "FirstNonEmpty(P.Wwpsp, M.Wwpsp)", false),
-            (nameof(SalesRecord.ProductDivisionText), "FirstNonEmpty(P.WwpspText, M.WwpspText)", false),
-            (nameof(SalesRecord.ProductMappingAssigned), "FirstNonEmpty(P.IsAssigned, M.IsAssigned)", false),
+            (nameof(SalesRecord.ProductHierarchyCode), "P.Paph1", false),
+            (nameof(SalesRecord.ProductHierarchyText), "P.Paph1Text", false),
+            (nameof(SalesRecord.ProductFamilyCode), "P.Wwpfa", false),
+            (nameof(SalesRecord.ProductFamilyText), "P.WwpfaText", false),
+            (nameof(SalesRecord.ProductDivisionCode), "P.Wwpsp", false),
+            (nameof(SalesRecord.ProductDivisionText), "P.WwpspText", false),
+            (nameof(SalesRecord.ProductMappingAssigned), "P.IsAssigned", false),
             (nameof(SalesRecord.Quantity), "Z.Fkimg", false),
             (nameof(SalesRecord.CustomerNumber), "Z.Kunnr", false),
             (nameof(SalesRecord.CustomerName), "Z.Name1", false),

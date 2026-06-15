@@ -110,6 +110,18 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == purchasing.Id && x.Alias == "EKET" && x.EntitySet == "eketSet");
         Assert.Contains(db.SapJoinDefinitions, x => x.SiteId == purchasing.Id && x.LeftAlias == "EKKO" && x.RightAlias == "EKPO");
         Assert.Contains(db.SapFieldMappings, x => x.SiteId == purchasing.Id && x.TargetField == "NetValueChf" && x.SourceExpression == "EKPO.NetwrChf");
+
+        var dach = Assert.Single(db.Sites, x => x.TSC == "ZSCHWEIZ");
+        Assert.Equal("SAP", dach.SourceSystem);
+        Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == dach.Id && x.Alias == "P" && x.EntitySet == "ProductDivisionRefSet" && x.IsActive && !x.IsPrimary);
+        Assert.Contains(db.SapSourceDefinitions, x => x.SiteId == dach.Id && x.Alias == "M" && x.EntitySet == "ProductDivisionMapSet" && !x.IsActive && !x.IsPrimary);
+        Assert.Contains(db.SapJoinDefinitions, x => x.SiteId == dach.Id && x.LeftAlias == "Z" && x.RightAlias == "P" && x.LeftKeys == "Matnr" && x.RightKeys == "Matnr" && x.IsActive);
+        Assert.Contains(db.SapJoinDefinitions, x => x.SiteId == dach.Id && x.LeftAlias == "Z" && x.RightAlias == "M" && x.LeftKeys == "Prodh" && x.RightKeys == "Paph1" && !x.IsActive);
+        Assert.Contains(db.SapFieldMappings, x => x.SiteId == dach.Id && x.TargetField == nameof(SalesRecord.ProductHierarchyCode) && x.SourceExpression == "P.Paph1" && x.IsActive);
+        Assert.Contains(db.SapFieldMappings, x => x.SiteId == dach.Id && x.TargetField == nameof(SalesRecord.ProductFamilyCode) && x.SourceExpression == "P.Wwpfa" && x.IsActive);
+        Assert.Contains(db.SapFieldMappings, x => x.SiteId == dach.Id && x.TargetField == nameof(SalesRecord.ProductDivisionCode) && x.SourceExpression == "P.Wwpsp" && x.IsActive);
+        Assert.Contains(db.SapFieldMappings, x => x.SiteId == dach.Id && x.TargetField == nameof(SalesRecord.ProductMappingAssigned) && x.SourceExpression == "P.IsAssigned" && x.IsActive);
+        Assert.DoesNotContain(db.SapFieldMappings, x => x.SiteId == dach.Id && x.SourceExpression.Contains("FirstNonEmpty", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

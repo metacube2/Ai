@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-06-12
+Stand: 2026-06-15
 
 ## Kurzstand
 
@@ -17,6 +17,9 @@ Stand: 2026-06-12
 - Neu: `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
 - Sparten-Finanzanalyse nutzt die TR-AG-/SAP-Referenz, nicht lokale ERP-Sparten anderer Laender.
 - Sparten-Finanzanalyse bietet Gruppierung nach `PAPH1 Detail`, `Produktfamilie`, `Produktsparte`, optional `Top 10`, Laenderflaggen und visuelle Sparten-Icons.
+- Spartenmapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet: `ProductDivisionRefSet` fuehrend, `ProductDivisionMapSet` im Seed inaktiv, Produktfelder direkt aus `P.*`.
+- `Übrige` (`ProductDivisionCode = 0008`) ist eigene gueltige Kategorie und wird getrennt von `Nicht zugeordnet` und `Nicht im TR-AG-Stamm` angezeigt.
+- Der OData-Import-Join normalisiert `Matnr` beidseitig, damit SAP-18-stellig mit fuehrenden Nullen gegen lokale Nummern ohne fuehrende Nullen matcht.
 - Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
@@ -86,6 +89,7 @@ Stand: 2026-06-12
 
 - Statuswerte:
   - `Zugeordnet`: Material im TR-AG-Stamm gefunden und Sparte verwertbar.
+  - `Übrige`: Material im TR-AG-Stamm gefunden, `ProductDivisionCode = 0008`; gueltige Sammel-Sparte, kein Fehler.
   - `Nicht zugeordnet`: TR-AG-Referenz vorhanden, aber `UNASS`/leer.
   - `Nicht im TR-AG-Stamm`: lokale Materialnummer hat keinen TR-AG-Treffer.
   - `Material fehlt`: Finance-Zeile ohne Materialnummer.

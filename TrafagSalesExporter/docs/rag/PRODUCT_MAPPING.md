@@ -1,6 +1,6 @@
 # RAG Product Mapping
 
-Stand: 2026-06-11
+Stand: 2026-06-15
 
 ## Kurzstand
 
@@ -9,7 +9,10 @@ Stand: 2026-06-11
 - SAP TR AG bleibt Quelle der Wahrheit.
 - Dashboard soll KEDR-/KE30-Ableitung nicht in C# nachbauen.
 - ABAP/Gateway soll eine flache Referenz liefern: `MATNR -> PAPH1 -> WWPFA -> WWPSP`.
-- Nicht gefundene oder nicht eindeutig ableitbare Materialnummern laufen unter `Nicht zugeordnet`.
+- Neuer SAP-OData-Referenzservice ist fachlich vollstaendig und eindeutig; das Dashboard uebernimmt die Felder direkt aus `ProductDivisionRefSet`.
+- `ProductDivisionMapSet`/PAPH1-Fallback bleibt als inaktive Rueckfallkonfiguration im Seed, wird aber nicht mehr gejoint.
+- Nicht gefundene Materialnummern laufen unter `Nicht im TR-AG-Stamm`; gefundene, aber nicht ableitbare Referenzen laufen unter `Nicht zugeordnet`.
+- `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`, nicht Fehler und nicht mit `Nicht zugeordnet` zusammenwerfen.
 - Web produktiv: `Management Analyse` enthaelt `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
 - Sparten-Finanzanalyse kann nach `PAPH1 Detail`, `Produktfamilie` oder `Produktsparte` gruppieren und optional `Top 10` anzeigen.
 - Laender werden mit Flaggen angezeigt; Produktsparte erhaelt visuelle Icons nach Textmuster.
@@ -27,8 +30,9 @@ Stand: 2026-06-11
   - `ProductMappingAssigned`
 - `CentralSalesRecords` wird per Schema-Maintenance um diese Spalten erweitert.
 - Excel-Export fuehrt die neuen Produktfelder im Blatt `Sales` direkt nach `Product Group`.
-- SAP-Seed-Mapping nutzt aktuell `Z.Matnr` -> `Material` und `Z.Prodh` -> `ProductGroup`.
-- Zu klaeren: Ist `Z.Prodh` fachlich die Produkthierarchie?
+- SAP-Seed-Mapping nutzt `Z.Matnr` -> `Material`, `Z.Prodh` -> `ProductGroup` und Produktfelder direkt aus `P = ProductDivisionRefSet`.
+- `M = ProductDivisionMapSet` und Join `Z.Prodh = M.Paph1` sind im Seed inaktiv.
+- Der Import-Join `Z.Matnr = P.Matnr` normalisiert Materialnummern auf beiden Seiten wie die Analyse: Trim, Grossschreibung, Whitespace entfernen, fuehrende Nullen entfernen.
 
 ## ABAP-Arbeitsstand
 
@@ -58,7 +62,9 @@ Stand: 2026-06-11
 - Lokale App-Konfiguration fuer Standort `ZSCHWEIZ`:
   - Quelle `Z`: bestehender Sales-EntitySet.
   - Quelle `P`: `ProductDivisionRefSet`.
+  - Quelle `M`: `ProductDivisionMapSet`, seit 2026-06-15 inaktiv.
   - Join: `Z.Matnr = P.Matnr`.
+  - Alter Join `Z.Prodh = M.Paph1`: inaktiv.
   - Mappings: `P.Paph1`, `P.Paph1Text`, `P.Wwpfa`, `P.WwpfaText`, `P.Wwpsp`, `P.WwpspText`, `P.IsAssigned`.
 - Lokale App wurde neu gestartet; `http://localhost:55416/` antwortet mit HTTP 200.
 - Validierung: `79/79` Tests gruen mit separatem Artefaktpfad.
@@ -70,6 +76,7 @@ Stand: 2026-06-11
 - Lokale ERP-Produktzuordnungen anderer Laender sind nicht fuehrend.
 - Statuslogik:
   - Treffer mit zugeordneter TR-AG-Sparte: `Zugeordnet`.
+  - Treffer mit `ProductDivisionCode = 0008`: `Übrige`, gueltige Sammel-Sparte.
   - Treffer mit `UNASS`/nicht zugeordnet: `Nicht zugeordnet`.
   - Kein Treffer im TR-AG-Stamm: `Nicht im TR-AG-Stamm`.
   - Leere Materialnummer: `Material fehlt`.
@@ -87,7 +94,7 @@ Stand: 2026-06-11
   - `Finanzanalyse`
   - `Zentrale Zuordnung`
 - `Finanzanalyse`:
-  - Kennzahlen Gesamt/Zugeordnet/Nicht zugeordnet/Nicht im Stamm.
+  - Kennzahlen Gesamt/Zugeordnet/Übrige/Nicht zugeordnet/Nicht im Stamm.
   - Umsatz nach Produktsparte mit Gruppierung `PAPH1 Detail`, `Produktfamilie`, `Produktsparte`.
   - `Top 10 anzeigen` filtert nur die Anzeige.
   - Laender werden mit Flagge dargestellt.
@@ -98,6 +105,7 @@ Stand: 2026-06-11
     - Switch/Schalter -> `ToggleOn`
     - Access/Zubehoer -> `Extension`
     - UNASS -> `HelpOutline`
+    - Übrige/0008 -> `Category`
     - sonst -> `Category`
 - Finance-Schulung hat einen neuen Tab `Spartenanalyse`.
 
@@ -144,6 +152,16 @@ Stand: 2026-06-11
 - Schutzregel: automatisch nur uebernehmen, wenn alle Kopfmaterialien dieselbe `WWPSP` ergeben.
 - Prod `travp762` liefert `ProductDivisionRefSet`, `ProductDivisionMapSet`, `FinanzdataSchweizOeSet`; aktueller Check: 42'486 Ref-Zeilen, 804 CSV-Materialien, 0 Treffer. Fallback in OData noch nicht wirksam.
 - Treffer-/Fehlerquote im Reiter `Zentrale Spartenzuordnung` pruefen.
+
+## Neuer Referenzservice 2026-06-15
+
+- SAP hat die Produktsparten-Zuordnung KEDR-regelbasiert neu aufgebaut und gegen Finance verifiziert.
+- Web-Anpassung: `ProductDivisionRefSet` bleibt Alias `P`, aber die Service-URL kann auf den neuen SAP-Service zeigen; kein Aliaswechsel im Dashboard.
+- `ProductDivisionMapSet` bleibt als Alias `M` vorhanden, ist aber inaktiv. Dadurch kann bei Bedarf zurueckgeschaltet werden, ohne die Konfiguration neu zu erfinden.
+- Produktfelder werden direkt aus `P` gemappt; kein `FirstNonEmpty(P.*, M.*)` mehr.
+- `Wwpfa` darf bei `Übrige` leer sein, wenn `WwpfaText = Übrige`, `Wwpsp = 0008`, `WwpspText = Übrige`, `IsAssigned = true`.
+- Lokale Systeme wie Alphaplan koennen andere Materialnummern haben; nicht matchende lokale Nummern bleiben fachlich `Nicht im TR-AG-Stamm`.
+- Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `95/95` Tests gruen.
 
 ## Rohquelle Nur Bei Bedarf
 

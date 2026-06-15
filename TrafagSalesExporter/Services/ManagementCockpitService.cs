@@ -66,10 +66,13 @@ public class ManagementCockpitService : IManagementCockpitService
     private static class ProductAssignmentStatuses
     {
         public const string Assigned = "Zugeordnet";
+        public const string Misc = "Übrige";
         public const string Unassigned = "Nicht zugeordnet";
         public const string NoReference = "Nicht im TR-AG-Stamm";
         public const string MissingMaterial = "Material fehlt";
     }
+
+    private const string DivisionMiscCode = "0008";
 
     public async Task<List<ManagementCockpitFileOption>> GetAvailableFilesAsync()
     {
@@ -837,6 +840,7 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             DistinctMaterialCount = rows.Count,
             MatchedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Assigned),
+            MiscMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Misc),
             UnassignedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
             MissingReferenceMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
             MissingMaterialNumberCount = rows.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
@@ -853,6 +857,7 @@ public class ManagementCockpitService : IManagementCockpitService
     {
         var total = rows.Sum(row => row.NetSalesActual);
         var assigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+        var misc = rows.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual);
         var unassigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual);
         var missingReference = rows.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual);
         var missingMaterial = rows.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual);
@@ -861,10 +866,12 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             TotalValue = total,
             AssignedValue = assigned,
+            MiscValue = misc,
             UnassignedValue = unassigned,
             MissingReferenceValue = missingReference,
             MissingMaterialValue = missingMaterial,
             AssignedValuePercent = PercentOf(assigned, total),
+            MiscValuePercent = PercentOf(misc, total),
             UnassignedValuePercent = PercentOf(unassigned, total),
             MissingReferenceValuePercent = PercentOf(missingReference, total),
             DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
@@ -874,7 +881,7 @@ public class ManagementCockpitService : IManagementCockpitService
     private static List<ManagementProductDivisionFinanceRow> BuildProductDivisionFinanceRows(IEnumerable<ManagementProductAssignmentRow> rows)
     {
         var assignedRows = rows
-            .Where(row => row.Status == ProductAssignmentStatuses.Assigned)
+            .Where(row => row.Status is ProductAssignmentStatuses.Assigned or ProductAssignmentStatuses.Misc)
             .ToList();
         var totalsByCurrency = assignedRows
             .GroupBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
@@ -931,6 +938,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     Currency = group.Key.Currency,
                     TotalValue = total,
                     AssignedValue = assigned,
+                    MiscValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual),
                     UnassignedValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual),
                     MissingReferenceValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual),
                     MissingMaterialValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual),
@@ -958,6 +966,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     Tsc = group.Key.Tsc,
                     DistinctMaterialCount = rowList.Count,
                     MatchedMaterialCount = matched,
+                    MiscMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.Misc),
                     UnassignedMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
                     MissingReferenceMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
                     MissingMaterialNumberCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
@@ -972,6 +981,8 @@ public class ManagementCockpitService : IManagementCockpitService
             return ProductAssignmentStatuses.MissingMaterial;
         if (reference is null)
             return ProductAssignmentStatuses.NoReference;
+        if (IsMiscProductDivision(reference))
+            return ProductAssignmentStatuses.Misc;
         return IsAssignedProductReference(reference)
             ? ProductAssignmentStatuses.Assigned
             : ProductAssignmentStatuses.Unassigned;
@@ -988,6 +999,9 @@ public class ManagementCockpitService : IManagementCockpitService
            !string.IsNullOrWhiteSpace(row.ProductDivisionCode) &&
            !string.Equals(row.ProductDivisionCode, "UNASS", StringComparison.OrdinalIgnoreCase);
 
+    private static bool IsMiscProductDivision(FinanceAggregationRow row)
+        => string.Equals(row.ProductDivisionCode?.Trim(), DivisionMiscCode, StringComparison.OrdinalIgnoreCase);
+
     private static bool IsTruthy(string value)
         => value.Equals("X", StringComparison.OrdinalIgnoreCase) ||
            value.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
@@ -999,23 +1013,12 @@ public class ManagementCockpitService : IManagementCockpitService
         ProductAssignmentStatuses.NoReference => 0,
         ProductAssignmentStatuses.Unassigned => 1,
         ProductAssignmentStatuses.MissingMaterial => 2,
-        _ => 3
+        ProductAssignmentStatuses.Misc => 3,
+        _ => 4
     };
 
     private static string NormalizeMaterialKey(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
-        var normalized = new string(value
-            .Trim()
-            .ToUpperInvariant()
-            .Where(ch => !char.IsWhiteSpace(ch))
-            .ToArray());
-
-        var withoutLeadingZeros = normalized.TrimStart('0');
-        return string.IsNullOrWhiteSpace(withoutLeadingZeros) ? "0" : withoutLeadingZeros;
-    }
+        => MaterialKeyNormalizer.Normalize(value);
 
     private static IEnumerable<string> BuildProductAssignmentNotices(
         IReadOnlyCollection<ManagementProductAssignmentRow> rows,

@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-12
+Stand: 2026-06-15
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -12,6 +12,11 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Alphaplan-Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`; Delta-Zeilen gewinnen gegen Vollbestand.
 - DE-Financewert: `invoice_lines.NettoPreisGesamt`; Kopfwerte aus `invoice_headers.NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet; Waehrung aktuell EUR.
 - Wichtig fuer Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert gleiche TR-AG-/SAP-`MATNR`; bei schlechter DE-Spartenabdeckung braucht es eine eigene Nummern-/Mappingklaerung.
+- Neu lokal umgesetzt: Produktsparten-Mapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet. `P = ProductDivisionRefSet` bleibt fuehrend; `M = ProductDivisionMapSet` und der alte Join `Z.Prodh = M.Paph1` bleiben als Rueckfallkonfiguration vorhanden, sind im Seed aber inaktiv.
+- Neu lokal umgesetzt: ZSCHWEIZ-Produktfelder werden direkt aus `P.Paph1`, `P.Wwpfa`, `P.Wwpsp` usw. uebernommen; kein `FirstNonEmpty(P.*, M.*)` mehr.
+- Neu lokal umgesetzt: Der SAP-OData-Import-Join normalisiert `Matnr` auf beiden Seiten wie die Analyse: Trim, Grossschreibung, Whitespace entfernen, fuehrende Nullen entfernen. Damit matcht z.B. SAP `000000000000000006` gegen Umsatzmaterial `6`.
+- Neu lokal umgesetzt: Status `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`; wird in Summary, Laenderabdeckung, Spartentabelle und Statuschips getrennt von `Nicht zugeordnet` und `Nicht im TR-AG-Stamm` angezeigt.
+- Validierung lokal 2026-06-15: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `95/95` Tests gruen.
 - Validierung lokal 2026-06-12: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
 - Neu lokal dokumentiert/umgesetzt: Komponenten-Fallback fuer Produktsparten im ABAP-Provider `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`; Komponenten aus `ZPOWERBI_VC_TXT` sollen ueber eindeutige Kopfmaterial-Produktsparte in `ProductDivisionRefSet` erscheinen.
 - Aktueller Prod-Check 2026-06-11 gegen `travp762`: `ProductDivisionRefSet`, `ProductDivisionMapSet`, `FinanzdataSchweizOeSet` sind in Metadata vorhanden; `ProductDivisionRefSet` liefert 42'486 Zeilen, aber 804 Materialien aus `spartenlogic/nicht_im_stamm_TRCH_alle_jahre.csv` bleiben ohne Treffer. Naechster SAP-Pruefpunkt: direkter Lauf `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` / `Z_PRODSPARTE_ALL` mit `E01758`, `E01752`, `E00613`, `R85012`.
@@ -24,10 +29,10 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu lokal dokumentiert: aktuelle Finance-Schulung `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Export Dashboard, Audit-CSV-Auswertungsquelle und Waehrungs-/Kursfluss.
 - Neue Schulungsgrafiken: `docs/FINANCE_PROZESS_EXPORT_DASHBOARD_2026-06-11.svg`, `docs/FINANCE_AUDIT_CSV_QUELLE_2026-06-11.svg`, `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg`.
 - Neu lokal umgesetzt: Standortexporte koennen nach Mapping und Transformation eine lesbare Audit-CSV je Standort schreiben; zentrale Excel, Finance Summary und Management-Analyse koennen per Setting wahlweise aus den neuesten Audit-CSV statt aus `CentralSalesRecords` lesen.
-- Letzter dokumentierter Code-Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` deployed; India/TRIN HANA-Route und Spanien-SharePoint-Pfad bleiben im Seed abgesichert.
+- Aktueller lokaler Code-Stand: Neuer vollstaendiger Produktsparten-Referenzservice ueber `ProductDivisionRefSet`; `ProductDivisionMapSet`-Fallback im Seed deaktiviert. India/TRIN HANA-Route und Spanien-SharePoint-Pfad bleiben im Seed abgesichert.
 - Letzte dokumentierte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
 - Letzter dokumentierter Deploy: 2026-06-11 Einkaufs-Uebersetzungen nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Neu umgesetzt und deployed: `ZSCHWEIZ` nutzt zusaetzlich `M = ProductDivisionMapSet` und den Join `Z.Prodh = M.Paph1`; Produktfelder fallen per `FirstNonEmpty(P.*, M.*)` von Materialreferenz auf PAPH1-Mapping zurueck.
+- Vorheriger Deploy 2026-06-10: `ZSCHWEIZ` nutzte zusaetzlich `M = ProductDivisionMapSet` und `FirstNonEmpty(P.*, M.*)`. Dieser Stand ist lokal durch den neuen direkten `ProductDivisionRefSet`-Stand abgeloest und muss beim naechsten Deploy/Refresh importiert werden.
 - Server-DB am 2026-06-10 aktualisiert: CH/AT neu importiert, `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`; Backup: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak`.
 - Deploy-Status 2026-06-10: `BiDashboard.dll` Zeitstempel `10.06.2026 16:09:44`; `app_offline.htm` wurde entfernt.
 - Neu umgesetzt und deployed: `TRIN`/Indien wird beim Seed auf `SourceSystem=SAGE`, Schema `TRAFAG_LIVE` und zentralen SAGE-HANA-Server `20.197.20.60:30015` repariert; Standort-User-/Passwort-Override bleibt erhalten.

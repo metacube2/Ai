@@ -135,11 +135,21 @@ Aktive OData-Quellen:
 | `Z` | `FinanzdataSchweizOeSet` | Verkaufs-/Finance-Zeilen CH/AT |
 | `P` | `ProductDivisionRefSet` | zentrale TR-AG-Spartenreferenz |
 
-Join:
+Inaktive Reservequelle im Seed:
+
+| Alias | EntitySet | Status |
+| --- | --- | --- |
+| `M` | `ProductDivisionMapSet` | inaktiv; alter PAPH1-Fallback bleibt nur als Rueckfallkonfiguration erhalten |
+
+Aktiver Join:
 
 ```text
 Z.Matnr = P.Matnr
 ```
+
+Beim OData-Import-Join wird `Matnr` auf beiden Seiten gleich normalisiert: trimmen, Grossschreibung, Whitespace entfernen, fuehrende Nullen entfernen. Dadurch matcht SAP `000000000000000006` gegen Umsatzmaterial `6`.
+
+Der alte Join `Z.Prodh = M.Paph1` ist inaktiv.
 
 Wichtige Feldbelegung:
 
@@ -426,9 +436,12 @@ Materialnummern werden normalisiert:
 | Status | Bedeutung |
 | --- | --- |
 | `Zugeordnet` | Material in TR-AG-Referenz gefunden und `ProductMappingAssigned` ist wahr, Produktsparte ist nicht leer und nicht `UNASS`. |
+| `Übrige` | Material in TR-AG-Referenz gefunden und `ProductDivisionCode = 0008`. Das ist eine gueltige Sammel-Sparte, kein Fehler. |
 | `Nicht zugeordnet` | Material in TR-AG-Referenz gefunden, aber Spartenwert leer/`UNASS`/nicht assigned. |
 | `Nicht im TR-AG-Stamm` | Materialnummer aus lokalem Finance-Umsatz hat keinen Treffer in der TR-AG-Referenz. |
 | `Material fehlt` | Finance-Zeile hat keine Materialnummer. |
+
+Bei `Übrige` ist `ProductFamilyCode`/`Wwpfa` leer erlaubt; `ProductFamilyText`, `ProductDivisionText` und `ProductDivisionCode=0008` tragen die gueltige Sammelkategorie.
 
 ### Warum aktuell viele `Nicht im Stamm` entstehen koennen
 

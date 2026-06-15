@@ -415,6 +415,13 @@ public class ManagementCockpitServiceTests : IDisposable
                 productDivisionCode: "UNASS",
                 productDivisionText: "Nicht zugeordnet",
                 productMappingAssigned: "false"),
+            CreateRow("SAP", "Schweiz", "ZSCHWEIZ", "CH-3", "CHF", 40m, new DateTime(2025, 1, 10),
+                material: "000000000000000006",
+                name: "Misc article",
+                productFamilyText: "Übrige",
+                productDivisionCode: "0008",
+                productDivisionText: "Übrige",
+                productMappingAssigned: "true"),
             CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "DE-1", "EUR", 80m, new DateTime(2025, 1, 11),
                 material: "MAT-OK",
                 name: "German article"),
@@ -427,8 +434,9 @@ public class ManagementCockpitServiceTests : IDisposable
 
         var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
 
-        Assert.Equal(5, result.ProductAssignmentSummary.DistinctMaterialCount);
+        Assert.Equal(6, result.ProductAssignmentSummary.DistinctMaterialCount);
         Assert.Equal(2, result.ProductAssignmentSummary.MatchedMaterialCount);
+        Assert.Equal(1, result.ProductAssignmentSummary.MiscMaterialCount);
         Assert.Equal(2, result.ProductAssignmentSummary.UnassignedMaterialCount);
         Assert.Equal(1, result.ProductAssignmentSummary.MissingReferenceMaterialCount);
 
@@ -444,17 +452,32 @@ public class ManagementCockpitServiceTests : IDisposable
         Assert.Equal("Nicht zugeordnet", unassigned.Status);
         Assert.Equal("UNASS", unassigned.ProductDivisionCode);
 
+        var misc = Assert.Single(result.ProductAssignmentRows, row => row.Material == "000000000000000006" && row.Tsc == "ZSCHWEIZ");
+        Assert.Equal("Übrige", misc.Status);
+        Assert.Equal("", misc.ProductFamilyCode);
+        Assert.Equal("Übrige", misc.ProductFamilyText);
+        Assert.Equal("0008", misc.ProductDivisionCode);
+        Assert.Equal("Übrige", misc.ProductDivisionText);
+
         Assert.Contains(result.ProductAssignmentCountryRows, row =>
             row.CountryKey == "DE" &&
             row.Tsc == "TRDE" &&
             row.MatchedMaterialCount == 1 &&
             row.UnassignedMaterialCount == 1);
+        Assert.Contains(result.ProductAssignmentCountryRows, row =>
+            row.CountryKey == "CH" &&
+            row.Tsc == "ZSCHWEIZ" &&
+            row.MatchedMaterialCount == 1 &&
+            row.MiscMaterialCount == 1 &&
+            row.UnassignedMaterialCount == 1);
 
-        Assert.Equal(260m, result.ProductFinanceSummary.TotalValue);
+        Assert.Equal(300m, result.ProductFinanceSummary.TotalValue);
         Assert.Equal(180m, result.ProductFinanceSummary.AssignedValue);
+        Assert.Equal(40m, result.ProductFinanceSummary.MiscValue);
         Assert.Equal(30m, result.ProductFinanceSummary.UnassignedValue);
         Assert.Equal(50m, result.ProductFinanceSummary.MissingReferenceValue);
-        Assert.Equal(180m * 100m / 260m, result.ProductFinanceSummary.AssignedValuePercent);
+        Assert.Equal(180m * 100m / 300m, result.ProductFinanceSummary.AssignedValuePercent);
+        Assert.Equal(40m * 100m / 300m, result.ProductFinanceSummary.MiscValuePercent);
 
         Assert.Contains(result.ProductDivisionFinanceRows, row =>
             row.ProductDivisionCode == "0001" &&
@@ -466,12 +489,26 @@ public class ManagementCockpitServiceTests : IDisposable
             row.ProductDivisionCode == "0001" &&
             row.Currency == "CHF" &&
             row.NetSalesActual == 100m);
+        Assert.Contains(result.ProductDivisionFinanceRows, row =>
+            row.ProductDivisionCode == "0008" &&
+            row.ProductDivisionText == "Übrige" &&
+            row.ProductFamilyCode == "" &&
+            row.ProductFamilyText == "Übrige" &&
+            row.Currency == "CHF" &&
+            row.NetSalesActual == 40m &&
+            row.MaterialCount == 1);
 
         var deFinanceCoverage = Assert.Single(result.ProductFinanceCountryRows, row => row.CountryKey == "DE" && row.Tsc == "TRDE");
         Assert.Equal(100m, deFinanceCoverage.TotalValue);
         Assert.Equal(80m, deFinanceCoverage.AssignedValue);
         Assert.Equal(20m, deFinanceCoverage.UnassignedValue);
         Assert.Equal(80m, deFinanceCoverage.AssignedValuePercent);
+
+        var chFinanceCoverage = Assert.Single(result.ProductFinanceCountryRows, row => row.CountryKey == "CH" && row.Tsc == "ZSCHWEIZ");
+        Assert.Equal(150m, chFinanceCoverage.TotalValue);
+        Assert.Equal(100m, chFinanceCoverage.AssignedValue);
+        Assert.Equal(40m, chFinanceCoverage.MiscValue);
+        Assert.Equal(10m, chFinanceCoverage.UnassignedValue);
     }
 
     [Fact]

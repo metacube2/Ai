@@ -109,6 +109,69 @@ public class MappedSalesRecordComposerTests
     }
 
     [Fact]
+    public void Compose_NormalizesMatnrForProductReferenceLeftJoin()
+    {
+        var composer = new MappedSalesRecordComposer();
+        var site = new Site { TSC = "TRCH", Land = "Schweiz" };
+        var sources = new[]
+        {
+            new SapSourceDefinition { Alias = "Z", EntitySet = "Sales", IsPrimary = true, IsActive = true },
+            new SapSourceDefinition { Alias = "P", EntitySet = "ProductDivisionRefSet", IsActive = true, SortOrder = 1 }
+        };
+        var joins = new[]
+        {
+            new SapJoinDefinition { LeftAlias = "Z", RightAlias = "P", LeftKeys = "Matnr", RightKeys = "Matnr", IsActive = true, SortOrder = 1 }
+        };
+        var mappings = new[]
+        {
+            Mapping(nameof(SalesRecord.Material), "Z.Matnr"),
+            Mapping(nameof(SalesRecord.ProductHierarchyCode), "P.Paph1"),
+            Mapping(nameof(SalesRecord.ProductHierarchyText), "P.Paph1Text"),
+            Mapping(nameof(SalesRecord.ProductFamilyCode), "P.Wwpfa"),
+            Mapping(nameof(SalesRecord.ProductFamilyText), "P.WwpfaText"),
+            Mapping(nameof(SalesRecord.ProductDivisionCode), "P.Wwpsp"),
+            Mapping(nameof(SalesRecord.ProductDivisionText), "P.WwpspText"),
+            Mapping(nameof(SalesRecord.ProductMappingAssigned), "P.IsAssigned")
+        };
+        var rows = new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Z"] =
+            [
+                new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Matnr"] = "6"
+                }
+            ],
+            ["P"] =
+            [
+                new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Matnr"] = "000000000000000006",
+                    ["Paph1"] = "0414",
+                    ["Paph1Text"] = "Industat innen",
+                    ["Wwpfa"] = "0004",
+                    ["WwpfaText"] = "Industat",
+                    ["Wwpsp"] = "0001",
+                    ["WwpspText"] = "Thermostate",
+                    ["IsAssigned"] = true
+                }
+            ]
+        };
+
+        var result = composer.Compose(site, sources, joins, mappings, rows, "SAP");
+
+        Assert.Single(result);
+        Assert.Equal("6", result[0].Material);
+        Assert.Equal("0414", result[0].ProductHierarchyCode);
+        Assert.Equal("Industat innen", result[0].ProductHierarchyText);
+        Assert.Equal("0004", result[0].ProductFamilyCode);
+        Assert.Equal("Industat", result[0].ProductFamilyText);
+        Assert.Equal("0001", result[0].ProductDivisionCode);
+        Assert.Equal("Thermostate", result[0].ProductDivisionText);
+        Assert.Equal("True", result[0].ProductMappingAssigned);
+    }
+
+    [Fact]
     public void Compose_UsesFirstNonEmptyFallbackWhenPrimaryProductReferenceIsMissing()
     {
         var composer = new MappedSalesRecordComposer();

@@ -297,16 +297,22 @@ public sealed class MappedSalesRecordComposer : IMappedSalesRecordComposer
     }
 
     private static string BuildKey(Dictionary<string, object?> row, IReadOnlyList<string> keys)
-        => string.Join("||", keys.Select(k => NormalizeKeyValue(row.TryGetValue(k, out var value) ? value : null)));
+        => string.Join("||", keys.Select(k => NormalizeKeyValue(k, row.TryGetValue(k, out var value) ? value : null)));
 
     private static string BuildKey(Dictionary<string, object?> row, string alias, IReadOnlyList<string> keys)
         => string.Join("||", keys.Select(k =>
         {
             row.TryGetValue($"{alias}.{k}", out var value);
-            return NormalizeKeyValue(value);
+            return NormalizeKeyValue(k, value);
         }));
 
-    private static string NormalizeKeyValue(object? value) => value?.ToString()?.Trim() ?? string.Empty;
+    private static string NormalizeKeyValue(string keyName, object? value)
+        => IsMaterialKey(keyName)
+            ? MaterialKeyNormalizer.Normalize(value?.ToString())
+            : value?.ToString()?.Trim() ?? string.Empty;
+
+    private static bool IsMaterialKey(string keyName)
+        => string.Equals(keyName.Trim(), "Matnr", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> SplitKeys(string keys)
         => keys.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();

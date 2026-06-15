@@ -404,27 +404,34 @@
             <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeDivisionTabIndex">
                 <MudTabPanel Text="@T("Finanzanalyse", "Finance analysis")" Icon="@Icons.Material.Filled.PieChart">
             <MudGrid Class="mb-4">
-                <MudItem xs="12" sm="6" md="3">
+                <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Gesamtumsatz", "Total sales")</MudText>
                         <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.TotalValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="6" md="3">
+                <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Zugeordneter Umsatz", "Assigned sales")</MudText>
                         <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.AssignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
                         <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.AssignedValuePercent)</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="6" md="3">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Übrige", "Miscellaneous")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.MiscValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.MiscValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Nicht zugeordnet", "Unassigned")</MudText>
                         <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.UnassignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
                         <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.UnassignedValuePercent)</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="6" md="3">
+                <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Nicht im Stamm", "Not in master")</MudText>
                         <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.MissingReferenceValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
@@ -502,7 +509,7 @@
                         <MudTd>@FormatCountriesWithFlags(context.Countries)</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
-                        <MudText Typo="Typo.body2">@T("Keine zugeordneten Spartenumsaetze fuer diese Filter.", "No assigned division sales for these filters.")</MudText>
+                        <MudText Typo="Typo.body2">@T("Keine Spartenumsaetze fuer diese Filter.", "No division sales for these filters.")</MudText>
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
@@ -546,6 +553,7 @@
                         <MudTh>TSC</MudTh>
                         <MudTh>@T("Gesamt", "Total")</MudTh>
                         <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Übrige", "Miscellaneous")</MudTh>
                         <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
                         <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
                         <MudTh>@T("Material fehlt", "Material missing")</MudTh>
@@ -556,6 +564,7 @@
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MiscValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.UnassignedValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.MissingMaterialValue, context.Currency)</MudTd>
@@ -579,6 +588,12 @@
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Zugeordnet", "Assigned")</MudText>
                         <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MatchedMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Übrige", "Miscellaneous")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MiscMaterialCount.ToString("N0")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="2">
@@ -620,6 +635,7 @@
                         <MudTh>TSC</MudTh>
                         <MudTh>@T("Materialien", "Materials")</MudTh>
                         <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Übrige", "Miscellaneous")</MudTh>
                         <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
                         <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
                         <MudTh>@T("Material fehlt", "Material missing")</MudTh>
@@ -630,6 +646,7 @@
                         <MudTd>@context.Tsc</MudTd>
                         <MudTd>@context.DistinctMaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.MatchedMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MiscMaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.UnassignedMaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.MissingReferenceMaterialCount.ToString("N0")</MudTd>
                         <MudTd>@context.MissingMaterialNumberCount.ToString("N0")</MudTd>
@@ -1793,6 +1810,7 @@
     private static Color ProductAssignmentColor(string status) => status switch
     {
         "Zugeordnet" => Color.Success,
+        "Übrige" => Color.Info,
         "Nicht zugeordnet" => Color.Warning,
         "Nicht im TR-AG-Stamm" => Color.Error,
         "Material fehlt" => Color.Default,
@@ -1820,6 +1838,13 @@
             combinedText.Contains("UNASS", StringComparison.OrdinalIgnoreCase))
         {
             return Icons.Material.Filled.HelpOutline;
+        }
+
+        if (string.Equals(productDivisionCode, "0008", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("ÜBRIGE", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("UEBRIGE", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Category;
         }
 
         if (combinedText.Contains("GAS", StringComparison.OrdinalIgnoreCase) ||
