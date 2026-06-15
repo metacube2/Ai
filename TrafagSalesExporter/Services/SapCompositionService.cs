@@ -47,6 +47,7 @@ public class SapCompositionService : ISapCompositionService
                 $"Alias={source.Alias} | EntitySet={source.EntitySet}");
             var filter = BuildODataYearFilter(source.EntitySet, preferredYear);
             var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, filter, cancellationToken);
+            ValidateSourceRows(site, source, rows);
             sourceRows[source.Alias] = rows;
             await _appEventLogService.WriteDebugAsync("SAP", "Quelle gelesen", site.Id, site.Land,
                 $"Alias={source.Alias} | EntitySet={source.EntitySet} | Zeilen={rows.Count}");
@@ -69,4 +70,44 @@ public class SapCompositionService : ISapCompositionService
             ? $"Gjahr eq '{preferredYear.Value}'"
             : null;
     }
+
+    private static void ValidateSourceRows(Site site, SapSourceDefinition source, IReadOnlyCollection<Dictionary<string, object?>> rows)
+    {
+        if (!string.Equals(source.EntitySet, "ProductDivisionRefSet", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (rows.Count < 100)
+            return;
+
+        var assigned = rows.Count(IsAssignedProductDivisionReference);
+        if (assigned > 0)
+            return;
+
+        var misc = rows.Count(row => IsProductDivisionCode(row, "0008"));
+        var unassigned = rows.Count(row => IsProductDivisionCode(row, "UNASS"));
+        throw new InvalidOperationException(
+            $"SAP ProductDivisionRefSet fuer Standort '{site.TSC}' liefert {rows.Count:N0} Referenzzeilen, aber keine zugeordneten Sparten. " +
+            $"UNASS={unassigned:N0}, Uebrige(0008)={misc:N0}. Import abgebrochen, damit das Dashboard nicht mit 'Nicht zugeordnet' ueberschrieben wird. " +
+            "Bitte SAP-Service-URL bzw. neuen Produktsparten-OData-Service pruefen.");
+    }
+
+    private static bool IsAssignedProductDivisionReference(Dictionary<string, object?> row)
+    {
+        var divisionCode = ReadString(row, "Wwpsp");
+        return IsTruthy(ReadString(row, "IsAssigned")) &&
+               !string.IsNullOrWhiteSpace(divisionCode) &&
+               !string.Equals(divisionCode.Trim(), "UNASS", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProductDivisionCode(Dictionary<string, object?> row, string expectedCode)
+        => string.Equals(ReadString(row, "Wwpsp").Trim(), expectedCode, StringComparison.OrdinalIgnoreCase);
+
+    private static string ReadString(Dictionary<string, object?> row, string key)
+        => row.TryGetValue(key, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
+
+    private static bool IsTruthy(string value)
+        => value.Equals("X", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("JA", StringComparison.OrdinalIgnoreCase);
 }

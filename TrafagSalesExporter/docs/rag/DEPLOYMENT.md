@@ -12,7 +12,9 @@ Stand: 2026-06-15
 - Deploy-Ablauf: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --no-restore`, danach `app_offline.htm` entfernt.
 - Vorheriger Deploy 2026-06-11: Finance-Schulung/Dashboard-UI, Commit `f751295`, `BiDashboard.dll` `11.06.2026 12:04:53`.
 - Naechster lokaler Deploy-Kandidat: neues Produktsparten-Mapping fuer den vollstaendigen SAP-OData-Referenzservice. Seed-Ziel: `ZSCHWEIZ` Quellen `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet` aktiv, `M:ProductDivisionMapSet` inaktiv; aktiver Join nur `Z.Matnr=P.Matnr`, mit beidseitiger Matnr-Normalisierung im Import.
-- Nach Deploy dieses Stands muss `ZSCHWEIZ` neu exportiert/importiert werden, damit `CentralSalesRecords` die neuen direkten `P.*`-Produktfelder und Status `Übrige` erhaelt.
+- Nicht ohne URL-Pruefung refreshen: Live-Check 2026-06-15 gegen die aktuell konfigurierte alte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` ergab 42'501 Zeilen, alle `UNASS`, 0 `0008`. Erst neue SAP-Service-URL setzen/verifizieren.
+- Nach Deploy dieses Stands und nach korrekter SAP-Service-URL muss `ZSCHWEIZ` neu exportiert/importiert werden, damit `CentralSalesRecords` die neuen direkten `P.*`-Produktfelder und Status `Übrige` erhaelt.
+- Schutz im Code: SAP-Import bricht ab, wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert oder wenn ein SAP-Standort 0 Umsatzzeilen liefert; bestehende Dashboard-Daten werden dann nicht ueberschrieben.
 - CH/AT-Import nach Deploy: `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`.
 - DB-Backup vor Produktsparten-Seed/Import: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db.before-productdivision-map-20260610-161022.bak`.
 - Produktive India-DB-Konfiguration nach Seed: `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.

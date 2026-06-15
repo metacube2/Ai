@@ -8,7 +8,9 @@ Stand: 2026-06-15
 - Neu lokal umgesetzt: Deutschland/Alphaplan liest das finale CSV-Paar `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen und per Alphaplan-Zeilen-ID dedupliziert.
 - Neu lokal umgesetzt: Produktsparten-Mapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet. `ProductDivisionRefSet` bleibt fuehrend, `ProductDivisionMapSet` ist im Seed inaktiv, Produktfelder kommen direkt aus `P.*`, und `Übrige`/Code `0008` ist eigene gueltige Kategorie.
 - Neu lokal umgesetzt: OData-Import-Join normalisiert `Matnr` beidseitig wie die Analyse, inkl. Entfernen fuehrender Nullen.
-- Validierung lokal 2026-06-15: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `95/95` Tests gruen.
+- Kritischer Live-Check 2026-06-15: Die aktuell konfigurierte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` ist noch nicht der neue vollstaendige Referenzservice. Sie liefert 42'501 Zeilen, aber `Assigned=0`, `UNASS=42'501`, `0008=0`.
+- Neu lokal umgesetzt: Guardrail im SAP-Import bricht ab, wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert; so werden Dashboard-Daten nicht mit `Nicht zugeordnet` ueberschrieben. SAP-Gateway-Timeout ist 5 Minuten.
+- Validierung lokal 2026-06-15: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen.
 - Wichtig DE/Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert identische TR-AG-/SAP-`MATNR` normalisiert. Nicht gematchte Nummern erscheinen weiterhin als `Nicht im TR-AG-Stamm`.
 - Letzter dokumentierter Deploy: 2026-06-11, Commit `1dbaa66 Add purchasing translations`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`.
 - Letzte Validierung: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `92/92` Tests gruen.
@@ -17,7 +19,7 @@ Stand: 2026-06-15
 - Aktuelle Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` mit Prozessgrafiken fuer Exportfluss, Audit-CSV-Auswertungsquelle und Waehrungsumrechnung.
 - Produktsparten-Komponentenfallback 2026-06-11: `ZCL_PRODSPARTE_PROVIDER=>GET_DATA` soll Komponenten aus `ZPOWERBI_VC_TXT` ueber eindeutige Kopfmaterial-Produktsparte zusaetzlich in `ProductDivisionRefSet` liefern; Prod `travp762` liefert die EntitySets, aber der CSV-Abgleich zeigt noch 804/804 Komponenten ohne Treffer, daher direkter SAP-Provider-Lauf als naechster Pruefpunkt.
 - Vorheriges UI-Delta 2026-06-11: Export-Dashboard-Manometer als fixes SVG mit Beschriftung; doppelte obere Finance-/Management-Tabbaender reduziert.
-- Aktueller lokaler Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` ist abgeloest und inaktiv; India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
+- Aktueller lokaler Stand: CH/AT-Produktsparten-Fallback ueber `ProductDivisionMapSet` ist abgeloest und inaktiv; vor Produktiv-Refresh muss aber die neue SAP-Service-URL gesetzt/verifiziert werden. India/TRIN SAGE-HANA-Fix und Spanien-SharePoint-Pfad bleiben abgesichert.
 - Vorheriger Deploy: 2026-06-10 Produktsparten-Fallback auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Vorheriger Produktsparten-Server-Import: 40'292 CH/AT-Datensaetze, 36'953 assigned, 0 `UnassignedWithReference`; nach Deploy des neuen lokalen Stands muss `ZSCHWEIZ` neu exportiert/importiert werden.
 - India/TRIN: produktive Server-DB steht auf `TRIN -> SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`, User-Override `TRAFAGCONTROLS`.

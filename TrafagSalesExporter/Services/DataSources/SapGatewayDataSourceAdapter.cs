@@ -51,6 +51,13 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
         var records = await _sapCompositionService.BuildSalesRecordsAsync(
             effectiveSite, sapSources, sapJoins, sapMappings,
             credentials.Username, credentials.Password, context.PreferredImportYear);
+        if (records.Count == 0)
+        {
+            var yearText = context.PreferredImportYear?.ToString() ?? "ohne Jahresfilter";
+            throw new InvalidOperationException(
+                $"SAP-OData fuer Standort '{site.TSC}' lieferte 0 Umsatzzeilen ({yearText}). " +
+                "Import abgebrochen, damit bestehende Dashboard-Daten nicht leer ueberschrieben werden.");
+        }
 
         return new DataSourceFetchResult { Records = records };
     }

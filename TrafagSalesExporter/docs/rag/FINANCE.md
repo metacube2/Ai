@@ -20,6 +20,8 @@ Stand: 2026-06-15
 - Spartenmapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet: `ProductDivisionRefSet` fuehrend, `ProductDivisionMapSet` im Seed inaktiv, Produktfelder direkt aus `P.*`.
 - `Übrige` (`ProductDivisionCode = 0008`) ist eigene gueltige Kategorie und wird getrennt von `Nicht zugeordnet` und `Nicht im TR-AG-Stamm` angezeigt.
 - Der OData-Import-Join normalisiert `Matnr` beidseitig, damit SAP-18-stellig mit fuehrenden Nullen gegen lokale Nummern ohne fuehrende Nullen matcht.
+- Live-Warnung 2026-06-15: Die aktuell konfigurierte alte SAP-URL liefert `ProductDivisionRefSet` komplett als `UNASS` (`42'501/42'501`). Vor ZSCHWEIZ-Refresh muss die neue vollstaendige SAP-Service-URL gesetzt und gezaehlt werden.
+- Import-Guardrail verhindert jetzt, dass ein solcher komplett unzugeordneter Referenzlauf bestehende Dashboard-Daten ueberschreibt.
 - Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
@@ -50,6 +52,7 @@ Stand: 2026-06-15
 - IT: Nach neuem IT-Export pruefen, ob die vollstaendige `Trafag Italia`-Summe sichtbar wird.
 - UK: Sage-Restdifferenz ueber Exportvollstaendigkeit, Discounts, Freight/Charges und 2nd-party klaeren.
 - Spartenanalyse: Falls weiterhin >90% nicht zugeordnet, TR-AG-Referenz/Join/Materialnummern pruefen.
+- Produktsparten-OData: neue Service-URL klaeren; alte `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` nicht fuer den neuen Refresh verwenden, solange sie komplett `UNASS` liefert.
 
 ## Management-Analyse-Reiter
 

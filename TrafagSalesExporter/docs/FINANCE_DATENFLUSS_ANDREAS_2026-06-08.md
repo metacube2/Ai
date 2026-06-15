@@ -128,6 +128,8 @@ Betroffen:
 | --- | --- | --- |
 | CH / AT | `ZSCHWEIZ` | SAP OData `ZPOWERBI_EINKAUF_SRV` |
 
+Warnstand 2026-06-15: Diese aktuell konfigurierte alte Service-URL liefert fuer `ProductDivisionRefSet` auf `travp762` 42'501 Zeilen, aber alle mit `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Fuer den neuen vollstaendigen Referenzservice muss die Dashboard-Konfiguration auf die korrekte neue SAP-Service-URL zeigen. Der Import bricht bei einem solchen komplett unzugeordneten Referenzlauf ab, damit bestehende Dashboard-Daten nicht ueberschrieben werden.
+
 Aktive OData-Quellen:
 
 | Alias | EntitySet | Zweck |

@@ -9,6 +9,7 @@ public class SapGatewayService : ISapGatewayService
 {
     private static readonly XNamespace AppNs = "http://www.w3.org/2007/app";
     private static readonly XNamespace EdmNs = "http://docs.oasis-open.org/odata/ns/edm";
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromMinutes(5);
     private readonly IAppEventLogService _appEventLogService;
 
     public SapGatewayService(IAppEventLogService appEventLogService)
@@ -132,7 +133,7 @@ public class SapGatewayService : ISapGatewayService
     private static HttpClient CreateClient(string username, string password)
     {
         var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(15);
+        client.Timeout = RequestTimeout;
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/atomsvc+xml"));
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));

@@ -9,7 +9,8 @@ Stand: 2026-06-15
 - SAP TR AG bleibt Quelle der Wahrheit.
 - Dashboard soll KEDR-/KE30-Ableitung nicht in C# nachbauen.
 - ABAP/Gateway soll eine flache Referenz liefern: `MATNR -> PAPH1 -> WWPFA -> WWPSP`.
-- Neuer SAP-OData-Referenzservice ist fachlich vollstaendig und eindeutig; das Dashboard uebernimmt die Felder direkt aus `ProductDivisionRefSet`.
+- Dashboard-Code ist auf den neuen fachlich vollstaendigen SAP-OData-Referenzservice vorbereitet und uebernimmt die Felder direkt aus `ProductDivisionRefSet`.
+- Live-Check 2026-06-15: Die aktuell konfigurierte alte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert 42'501 Zeilen, aber alle `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Diese URL nicht fuer den neuen Refresh verwenden.
 - `ProductDivisionMapSet`/PAPH1-Fallback bleibt als inaktive Rueckfallkonfiguration im Seed, wird aber nicht mehr gejoint.
 - Nicht gefundene Materialnummern laufen unter `Nicht im TR-AG-Stamm`; gefundene, aber nicht ableitbare Referenzen laufen unter `Nicht zugeordnet`.
 - `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`, nicht Fehler und nicht mit `Nicht zugeordnet` zusammenwerfen.
@@ -156,12 +157,13 @@ Stand: 2026-06-15
 ## Neuer Referenzservice 2026-06-15
 
 - SAP hat die Produktsparten-Zuordnung KEDR-regelbasiert neu aufgebaut und gegen Finance verifiziert.
-- Web-Anpassung: `ProductDivisionRefSet` bleibt Alias `P`, aber die Service-URL kann auf den neuen SAP-Service zeigen; kein Aliaswechsel im Dashboard.
+- Web-Anpassung: `ProductDivisionRefSet` bleibt Alias `P`, aber die Service-URL muss auf den neuen SAP-Service zeigen; kein Aliaswechsel im Dashboard.
 - `ProductDivisionMapSet` bleibt als Alias `M` vorhanden, ist aber inaktiv. Dadurch kann bei Bedarf zurueckgeschaltet werden, ohne die Konfiguration neu zu erfinden.
 - Produktfelder werden direkt aus `P` gemappt; kein `FirstNonEmpty(P.*, M.*)` mehr.
 - `Wwpfa` darf bei `Übrige` leer sein, wenn `WwpfaText = Übrige`, `Wwpsp = 0008`, `WwpspText = Übrige`, `IsAssigned = true`.
 - Lokale Systeme wie Alphaplan koennen andere Materialnummern haben; nicht matchende lokale Nummern bleiben fachlich `Nicht im TR-AG-Stamm`.
-- Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `95/95` Tests gruen.
+- Guardrail: Wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert, bricht der Import ab. Das verhindert ein Ueberschreiben der Dashboard-Daten mit `Nicht zugeordnet`.
+- Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen.
 
 ## Rohquelle Nur Bei Bedarf
 
