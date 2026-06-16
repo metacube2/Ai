@@ -1,6 +1,6 @@
 # RAG Product Mapping
 
-Stand: 2026-06-15
+Stand: 2026-06-16
 
 ## Kurzstand
 
@@ -10,7 +10,9 @@ Stand: 2026-06-15
 - Dashboard soll KEDR-/KE30-Ableitung nicht in C# nachbauen.
 - ABAP/Gateway soll eine flache Referenz liefern: `MATNR -> PAPH1 -> WWPFA -> WWPSP`.
 - Dashboard-Code ist auf den neuen fachlich vollstaendigen SAP-OData-Referenzservice vorbereitet und uebernimmt die Felder direkt aus `ProductDivisionRefSet`.
-- Live-Check 2026-06-15: Die aktuell konfigurierte alte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert 42'501 Zeilen, aber alle `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Diese URL nicht fuer den neuen Refresh verwenden.
+- Live-Check nach SAP-Fix 2026-06-15: `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige (`Wwpsp=0008`), `2` UNASS und `0` leere `Wwpsp`. Der vorherige Totalausfall durch falsche SAP-Methode ist nicht mehr aktuell.
+- Feldcheck P: `Matnr`, `Wwpsp`, `WwpspText`, `IsAssigned` sind voll gefuellt. Leere `Wwpfa` sitzt praktisch bei `0008`/Uebrige; nur zwei echte `UNASS`-Zeilen bleiben offen (`16618`, `24432`, beide `8950 DRUCKTRANSMITTER ECOTRANS`).
+- Finance-Sales-EntitySet nach SAP-Fix: `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025; 2026 liefert aktuell `0`. Refresh wurde nach Pruefung noch nicht gestartet.
 - `ProductDivisionMapSet`/PAPH1-Fallback bleibt als inaktive Rueckfallkonfiguration im Seed, wird aber nicht mehr gejoint.
 - Nicht gefundene Materialnummern laufen unter `Nicht im TR-AG-Stamm`; gefundene, aber nicht ableitbare Referenzen laufen unter `Nicht zugeordnet`.
 - `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`, nicht Fehler und nicht mit `Nicht zugeordnet` zusammenwerfen.

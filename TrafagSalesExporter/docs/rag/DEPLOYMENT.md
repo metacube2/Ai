@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-06-15
+Stand: 2026-06-16
 
 ## Kurzstand
 
@@ -12,7 +12,7 @@ Stand: 2026-06-15
 - Deploy-Ablauf: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --no-restore`, danach `app_offline.htm` entfernt.
 - Vorheriger Deploy 2026-06-11: Finance-Schulung/Dashboard-UI, Commit `f751295`, `BiDashboard.dll` `11.06.2026 12:04:53`.
 - Naechster lokaler Deploy-Kandidat: neues Produktsparten-Mapping fuer den vollstaendigen SAP-OData-Referenzservice. Seed-Ziel: `ZSCHWEIZ` Quellen `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet` aktiv, `M:ProductDivisionMapSet` inaktiv; aktiver Join nur `Z.Matnr=P.Matnr`, mit beidseitiger Matnr-Normalisierung im Import.
-- Nicht ohne URL-Pruefung refreshen: Live-Check 2026-06-15 gegen die aktuell konfigurierte alte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` ergab 42'501 Zeilen, alle `UNASS`, 0 `0008`. Erst neue SAP-Service-URL setzen/verifizieren.
+- OData nach SAP-Fix geprueft: `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige/`0008`, `2` UNASS. `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025 und `0` fuer 2026.
 - Nach Deploy dieses Stands und nach korrekter SAP-Service-URL muss `ZSCHWEIZ` neu exportiert/importiert werden, damit `CentralSalesRecords` die neuen direkten `P.*`-Produktfelder und Status `Übrige` erhaelt.
 - Schutz im Code: SAP-Import bricht ab, wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert oder wenn ein SAP-Standort 0 Umsatzzeilen liefert; bestehende Dashboard-Daten werden dann nicht ueberschrieben.
 - CH/AT-Import nach Deploy: `FetchedRecords=40'292`, `Assigned=36'953`, `UnassignedWithReference=0`.

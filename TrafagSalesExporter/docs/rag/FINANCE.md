@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-06-15
+Stand: 2026-06-16
 
 ## Kurzstand
 
@@ -20,8 +20,9 @@ Stand: 2026-06-15
 - Spartenmapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet: `ProductDivisionRefSet` fuehrend, `ProductDivisionMapSet` im Seed inaktiv, Produktfelder direkt aus `P.*`.
 - `Übrige` (`ProductDivisionCode = 0008`) ist eigene gueltige Kategorie und wird getrennt von `Nicht zugeordnet` und `Nicht im TR-AG-Stamm` angezeigt.
 - Der OData-Import-Join normalisiert `Matnr` beidseitig, damit SAP-18-stellig mit fuehrenden Nullen gegen lokale Nummern ohne fuehrende Nullen matcht.
-- Live-Warnung 2026-06-15: Die aktuell konfigurierte alte SAP-URL liefert `ProductDivisionRefSet` komplett als `UNASS` (`42'501/42'501`). Vor ZSCHWEIZ-Refresh muss die neue vollstaendige SAP-Service-URL gesetzt und gezaehlt werden.
-- Import-Guardrail verhindert jetzt, dass ein solcher komplett unzugeordneter Referenzlauf bestehende Dashboard-Daten ueberschreibt.
+- Live-Check nach SAP-Fix 2026-06-15: `travp762/.../ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` liefert `48'897` Referenzzeilen, `48'895` assigned, `8'715` Uebrige (`0008`), `2` UNASS. Der vorherige Totalausfall durch falsche SAP-Methode ist nicht mehr aktuell.
+- Finance-OData nach SAP-Fix: `FinanzdataSchweizOeSet/$count` liefert `30'642`; `Gjahr eq '2025'` ebenfalls `30'642`; `Gjahr eq '2026'` `0`. Refresh wurde danach noch nicht gestartet.
+- Import-Guardrail verhindert weiter, dass ein komplett unzugeordneter Referenzlauf oder eine leere Umsatzquelle bestehende Dashboard-Daten ueberschreibt.
 - Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
@@ -30,6 +31,8 @@ Stand: 2026-06-15
 - Wechselkurs-Anwendungsdatum ist in Settings konfigurierbar und wird in der Rohdaten-Diagnose angezeigt.
 - Spartenanalyse war mit >90% nicht zugeordnet fachlich unplausibel; Materialabgleich normalisiert fuehrende Nullen und warnt bei >=90% ungeklaerter Abdeckung.
 - Budgetkurse wurden als Finance-Kurse behandelt; CHF-Sicht bleibt getrennte Reporting-/Kontrollsicht, nicht stiller Ersatz fuer Hauswaehrungsabgleich.
+- Budget-CHF ist nachdokumentiert: `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` enthaelt nur offene Finance-Fragen; `docs/FINANCE_BUDGET_CHF_MULTIPLE_CHOICE_2026-06-16.docx` ist der Multiple-Choice-Entscheidungsbogen fuer den Finanzchef.
+- Wechselkurs-Audit: zentrale Finance Summary und zentrales Excel bleiben Local Currency; fuer eine kuenftige Budget-CHF-Spalte muss explizit `Notes = Budget <Jahr>` genutzt werden, weil offene ECB-Kurse sonst Budgetkurse uebersteuern koennen.
 - Fokusdoku zum isolierten Kursfluss: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`.
 - India/TRIN: produktive Route nach Fix/Deploy 2026-06-10 ist `SAGE -> 20.197.20.60:30015`, Schema `TRAFAG_LIVE`; Standort-Override nutzt `TRAFAGCONTROLS`.
 - DE/Alphaplan lokal umgesetzt: `invoice_headers.csv` und `invoice_lines.csv` werden als Paar gelesen; Vollbestand plus `delta`-Unterordner werden vor dem Speichern dedupliziert.
@@ -52,7 +55,8 @@ Stand: 2026-06-15
 - IT: Nach neuem IT-Export pruefen, ob die vollstaendige `Trafag Italia`-Summe sichtbar wird.
 - UK: Sage-Restdifferenz ueber Exportvollstaendigkeit, Discounts, Freight/Charges und 2nd-party klaeren.
 - Spartenanalyse: Falls weiterhin >90% nicht zugeordnet, TR-AG-Referenz/Join/Materialnummern pruefen.
-- Produktsparten-OData: neue Service-URL klaeren; alte `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` nicht fuer den neuen Refresh verwenden, solange sie komplett `UNASS` liefert.
+- Produktsparten-OData: nach SAP-Fix plausibel; vor/bei Refresh trotzdem Guardrail und Ergebniszahlen pruefen. Naechster Schritt ist Deploy/App-Start mit Seed fuer direkte `P.*`-Mappings und danach ZSCHWEIZ-Refresh.
+- Budget-CHF: Finanzchef muss Budgetkurse/Freigabe, Pflegeprozess, Spaltenumfang, Fehlkursverhalten, Rundung, Anzeigeort, DE-2026-Umschaltung und Kontrollnachweis entscheiden.
 
 ## Management-Analyse-Reiter
 

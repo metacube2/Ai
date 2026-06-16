@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-15
+Stand: 2026-06-16
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -8,6 +8,14 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
+- Naechster Chat: zuerst `docs/HANDOFF_2026-06-16.md` laden, dann diese Datei, dann je nach Thema `docs/rag/FINANCE.md` oder `docs/rag/PRODUCT_MAPPING.md`.
+- Letzte Commits: `821f5a4 Add Budget CHF multiple choice questionnaire`, `e0d89b7 Document open Budget CHF finance questions`, `9f4db97 Guard product division OData refresh`, `918969e Prepare product division reference mapping`, `09afce2 Document OData dashboard context`.
+- Produktsparten-OData nach SAP-Fix geprueft: `travp762/.../ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet?$format=json` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige (`Wwpsp=0008`), `2` UNASS, `0` leere `Wwpsp`.
+- Finance-OData nach SAP-Fix geprueft: `FinanzdataSchweizOeSet/$count` liefert `30'642`; mit `Gjahr eq '2025'` ebenfalls `30'642`; mit `Gjahr eq '2026'` `0`. JSON-Zeilenabfrage liefert fuer 2025 ebenfalls `30'642` Zeilen.
+- Import/Refresh wurde nach diesen Live-Checks noch nicht gestartet. Guardrails bleiben aktiv und verhindern stille Ueberschreibung bei leerer Umsatzquelle oder komplett unzugeordneter grosser Produktreferenz.
+- Finance Budget-CHF nachdokumentiert: `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` enthaelt nur noch offene Fragen; `docs/FINANCE_BUDGET_CHF_MULTIPLE_CHOICE_2026-06-16.docx` ist der Multiple-Choice-Entscheidungsbogen.
+- Wechselkurs-Audit lokal: zentrale Finance Summary und `Sales_All_2026-06-11.xlsx` bleiben in Local Currency/Hauswaehrung; keine stille Kursumrechnung. Budget-CHF muss explizit `Notes = Budget <Jahr>` verwenden, weil offene ECB-Kurse sonst Budgetkurse uebersteuern koennen.
+- DE/Alphaplan Finance-Hinweis: aktuelle Finance-Regel zwingt DE weiter auf Finance-Jahr 2025. Fuer Budget-CHF wuerde DE dadurch Budget 2025 verwenden, bis Finance DE 2026 fachlich freigibt.
 - Neu lokal umgesetzt/dokumentiert: Deutschland/Alphaplan liest das finale CSV-Paar `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen.
 - Alphaplan-Dedupe: primaer `SourceLineId = Alphaplan:<BelegePositionenID>`, Fallback `TSC + InvoiceNumber + PositionOnInvoice + Material`; Delta-Zeilen gewinnen gegen Vollbestand.
 - DE-Financewert: `invoice_lines.NettoPreisGesamt`; Kopfwerte aus `invoice_headers.NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet; Waehrung aktuell EUR.
@@ -16,9 +24,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Neu lokal umgesetzt: ZSCHWEIZ-Produktfelder werden direkt aus `P.Paph1`, `P.Wwpfa`, `P.Wwpsp` usw. uebernommen; kein `FirstNonEmpty(P.*, M.*)` mehr.
 - Neu lokal umgesetzt: Der SAP-OData-Import-Join normalisiert `Matnr` auf beiden Seiten wie die Analyse: Trim, Grossschreibung, Whitespace entfernen, fuehrende Nullen entfernen. Damit matcht z.B. SAP `000000000000000006` gegen Umsatzmaterial `6`.
 - Neu lokal umgesetzt: Status `Übrige` ist eigene gueltige Kategorie fuer `ProductDivisionCode = 0008`; wird in Summary, Laenderabdeckung, Spartentabelle und Statuschips getrennt von `Nicht zugeordnet` und `Nicht im TR-AG-Stamm` angezeigt.
-- Kritischer Live-Check 2026-06-15: Die aktuell konfigurierte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert 42'501 Referenzzeilen, aber alle mit `Wwpsp=UNASS`, `IsAssigned=false`, `0008=0`. Diese URL ist NICHT der neue vollstaendige Referenzservice.
-- Neu lokal umgesetzt: SAP-Import-Guardrail bricht `ProductDivisionRefSet`-Importe ab, wenn eine grosse Referenz 0 zugeordnete Sparten liefert; so wird das Dashboard nicht mit `Nicht zugeordnet` ueberschrieben. SAP-Gateway-Timeout von 15 Sekunden auf 5 Minuten erhoeht.
-- Operativer Blocker vor Deploy/Refresh: korrekte neue SAP-Service-URL fuer den vollstaendigen Produktspartenservice in der Dashboard-Konfiguration setzen und danach `ProductDivisionRefSet` erneut zaehlen.
+- Live-Check nach SAP-Fix 2026-06-15: Die aktuell konfigurierte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert nun plausible Referenzdaten (`48'897` Zeilen, `48'895` assigned, `8'715` Uebrige, `2` UNASS). Der vorherige Totalausfall durch falsche SAP-Methode ist nicht mehr aktuell.
+- Neu lokal umgesetzt: SAP-Import-Guardrail bricht `ProductDivisionRefSet`-Importe ab, wenn eine grosse Referenz 0 zugeordnete Sparten liefert; so wird das Dashboard nicht mit `Nicht zugeordnet` ueberschrieben. SAP-Gateway-Timeout von 15 Sekunden auf 5 Minuten erhoeht. Dieser Guard bleibt aktiv.
+- Operativer naechster Schritt vor Refresh/Deploy: aktuelle Commits deployen bzw. App starten, damit der Seed die direkte `P.*`-Konfiguration setzt; dann ZSCHWEIZ-Refresh starten und danach Spartenabdeckung im Dashboard pruefen.
 - Validierung lokal 2026-06-15: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen.
 - Validierung lokal 2026-06-12: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `94/94` Tests gruen.
 - Neu lokal dokumentiert/umgesetzt: Komponenten-Fallback fuer Produktsparten im ABAP-Provider `ZCL_PRODSPARTE_PROVIDER=>GET_DATA`; Komponenten aus `ZPOWERBI_VC_TXT` sollen ueber eindeutige Kopfmaterial-Produktsparte in `ProductDivisionRefSet` erscheinen.

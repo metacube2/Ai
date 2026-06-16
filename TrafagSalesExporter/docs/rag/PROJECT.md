@@ -1,15 +1,17 @@
 # RAG Project
 
-Stand: 2026-06-15
+Stand: 2026-06-16
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
+- Nahtloser Einstieg nach Chatwechsel: `docs/HANDOFF_2026-06-16.md` laden.
 - Neu lokal umgesetzt: Deutschland/Alphaplan liest das finale CSV-Paar `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen und per Alphaplan-Zeilen-ID dedupliziert.
 - Neu lokal umgesetzt: Produktsparten-Mapping ist auf den neuen vollstaendigen SAP-OData-Referenzservice vorbereitet. `ProductDivisionRefSet` bleibt fuehrend, `ProductDivisionMapSet` ist im Seed inaktiv, Produktfelder kommen direkt aus `P.*`, und `Übrige`/Code `0008` ist eigene gueltige Kategorie.
 - Neu lokal umgesetzt: OData-Import-Join normalisiert `Matnr` beidseitig wie die Analyse, inkl. Entfernen fuehrender Nullen.
-- Kritischer Live-Check 2026-06-15: Die aktuell konfigurierte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` ist noch nicht der neue vollstaendige Referenzservice. Sie liefert 42'501 Zeilen, aber `Assigned=0`, `UNASS=42'501`, `0008=0`.
+- Live-Check nach SAP-Fix 2026-06-15: Die konfigurierte URL `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert nun `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige/`0008`, `2` UNASS. `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025 und `0` fuer 2026. Refresh wurde danach noch nicht gestartet.
 - Neu lokal umgesetzt: Guardrail im SAP-Import bricht ab, wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert; so werden Dashboard-Daten nicht mit `Nicht zugeordnet` ueberschrieben. SAP-Gateway-Timeout ist 5 Minuten.
+- Neu dokumentiert: Budget-CHF-Fragenkatalog `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` und Multiple-Choice-Word `docs/FINANCE_BUDGET_CHF_MULTIPLE_CHOICE_2026-06-16.docx`.
 - Validierung lokal 2026-06-15: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen.
 - Wichtig DE/Sparten: Alphaplan `ArtikelNummer` wird als lokale Materialnummer importiert, aber nicht als garantiert identische TR-AG-/SAP-`MATNR` normalisiert. Nicht gematchte Nummern erscheinen weiterhin als `Nicht im TR-AG-Stamm`.
 - Letzter dokumentierter Deploy: 2026-06-11, Commit `1dbaa66 Add purchasing translations`, `BiDashboard.dll` Zeitstempel `11.06.2026 12:30:27`.
