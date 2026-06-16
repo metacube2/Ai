@@ -58,6 +58,8 @@
       createLineChart(THREE, root, rows, layout, scalables);
     } else if (chartType === "surface") {
       createSurfaceChart(THREE, root, rows, layout, scalables);
+    } else if (chartType === "divisionpie") {
+      createDivisionPieChart(THREE, root, rows, layout, scalables, labelScale);
     } else if (chartType === "pie") {
       createPieChart(THREE, root, rows, layout, scalables, labelScale);
     } else {
@@ -113,7 +115,7 @@
 
   function normalizeChartType(value) {
     const text = String(value || "bar").toLowerCase();
-    return ["bar", "line", "surface", "pie"].includes(text) ? text : "bar";
+    return ["bar", "line", "surface", "pie", "divisionpie"].includes(text) ? text : "bar";
   }
 
   function normalizeLabelScale(value) {
@@ -123,7 +125,7 @@
   }
 
   function addAxisGuides(scene, THREE, layout, options, chartType, labelScale) {
-    if (chartType === "pie") {
+    if (chartType === "pie" || chartType === "divisionpie") {
       addCanvasLabel(scene, THREE, options.pieAxis || "Pie: country shares", -8.4, 8.2, -7.6, 0.85 * labelScale);
       addCanvasLabel(scene, THREE, options.yAxis || "Y: value / indicator", 6.2, 1.4, 6.8, 0.62 * labelScale);
       return;
@@ -296,6 +298,95 @@
     });
   }
 
+  function createDivisionPieChart(THREE, root, rows, layout, scalables, labelScale) {
+    const rowsByCountry = rows.reduce((map, row) => {
+      const country = String(row.country || "-");
+      if (!map.has(country)) map.set(country, []);
+      map.get(country).push(row);
+      return map;
+    }, new Map());
+    const countryTotals = [...rowsByCountry.entries()]
+      .map(([country, countryRows]) => ({
+        country,
+        rows: countryRows
+          .filter(row => Math.abs(Number(row.value || 0)) > 0)
+          .sort((a, b) => Math.abs(Number(b.value || 0)) - Math.abs(Number(a.value || 0))),
+        total: countryRows.reduce((sum, row) => sum + Math.abs(Number(row.value || 0)), 0)
+      }))
+      .filter(group => group.total > 0)
+      .sort((a, b) => a.country.localeCompare(b.country));
+
+    if (countryTotals.length === 0) return;
+
+    const maxCountryTotal = countryTotals.reduce((max, group) => Math.max(max, group.total), 0) || 1;
+    const columns = Math.ceil(Math.sqrt(countryTotals.length));
+    const spacingX = 6.4;
+    const spacingZ = 6.2;
+    const startX = -(Math.max(1, columns - 1) * spacingX) / 2;
+    const startZ = -(Math.max(1, Math.ceil(countryTotals.length / columns) - 1) * spacingZ) / 2;
+
+    countryTotals.forEach((group, countryIndex) => {
+      const column = countryIndex % columns;
+      const rowIndex = Math.floor(countryIndex / columns);
+      const centerX = startX + column * spacingX;
+      const centerZ = startZ + rowIndex * spacingZ;
+      const radius = 1.25 + Math.sqrt(group.total / maxCountryTotal) * 1.15;
+      const depth = 0.28 + Math.sqrt(group.total / maxCountryTotal) * 0.42;
+
+      addCanvasLabel(root, THREE, group.country, centerX, 0.35, centerZ - radius - 0.8, 0.48 * labelScale);
+
+      let start = -Math.PI / 2;
+      const slices = group.rows.slice(0, 10);
+      const otherValue = group.rows.slice(10).reduce((sum, item) => sum + Math.abs(Number(item.value || 0)), 0);
+      if (otherValue > 0) {
+        slices.push({ series: "Weitere", seriesCode: "OTHER", value: otherValue });
+      }
+
+      slices.forEach((item, sliceIndex) => {
+        const value = Math.abs(Number(item.value || 0));
+        const angle = value / group.total * Math.PI * 2;
+        if (angle <= 0) return;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(0, 0);
+        const steps = Math.max(8, Math.ceil(angle / (Math.PI / 22)));
+        for (let i = 0; i <= steps; i++) {
+          const a = start + angle * i / steps;
+          shape.lineTo(Math.cos(a) * radius, Math.sin(a) * radius);
+        }
+        shape.lineTo(0, 0);
+
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+        const material = new THREE.MeshStandardMaterial({
+          color: colorForProductDivision(item.seriesCode || item.series || sliceIndex, sliceIndex),
+          roughness: 0.56,
+          metalness: 0.04
+        });
+        const slice = new THREE.Mesh(geometry, material);
+        slice.rotation.x = -Math.PI / 2;
+        slice.position.set(centerX, 0.04, centerZ);
+        slice.userData.baseHeight = depth;
+        scalables.push({ type: "pie", object: slice });
+        root.add(slice);
+
+        if (sliceIndex < 4 && angle > Math.PI / 10) {
+          const labelAngle = start + angle / 2;
+          const label = compactDivisionLabel(item.series || item.seriesCode || "-");
+          addCanvasLabel(
+            root,
+            THREE,
+            label,
+            centerX + Math.cos(labelAngle) * (radius + 0.8),
+            0.42,
+            centerZ + Math.sin(labelAngle) * (radius + 0.8),
+            0.32 * labelScale);
+        }
+
+        start += angle;
+      });
+    });
+  }
+
   function groupRowsByCountry(rows, layout) {
     const groups = new Map();
     rows.forEach(row => {
@@ -381,6 +472,26 @@
   function colorForSeries(index) {
     const colors = [0x2f6f9f, 0xc45a42, 0x6b8f3a, 0x8b6bb1, 0xd09b2c, 0x4d908e, 0x9d4edd, 0x577590];
     return colors[index % colors.length];
+  }
+
+  function colorForProductDivision(value, fallbackIndex) {
+    const text = String(value || "").toUpperCase();
+    if (text.includes("UNASS") || text.includes("NICHT")) return 0x8a949e;
+    if (text.includes("0008") || text.includes("UEBRIGE") || text.includes("ÜBRIGE")) return 0xd09b2c;
+    if (text.includes("GAS") || text.includes("DENS")) return 0x4d908e;
+    if (text.includes("PRESS") || text.includes("DRUCK")) return 0x2f6f9f;
+    if (text.includes("TEMP") || text.includes("THERM")) return 0xc45a42;
+    if (text.includes("SWITCH") || text.includes("SCHALT")) return 0x6b8f3a;
+    if (text.includes("ACCESS") || text.includes("ZUBEH")) return 0x8b6bb1;
+    return colorForSeries(fallbackIndex);
+  }
+
+  function compactDivisionLabel(value) {
+    const text = String(value || "-").replace(/\s+/g, " ").trim();
+    if (text.length <= 18) return text;
+    const codeMatch = text.match(/^([A-Z0-9]{2,8})\s*-/i);
+    if (codeMatch) return codeMatch[1].toUpperCase();
+    return text.slice(0, 17) + "...";
   }
 
   function attachInteraction(canvas, state) {

@@ -12,6 +12,11 @@ Stand: 2026-06-16
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
 - Neuer Expertenpunkt: `3D Datenanalyse` fuer interaktive visuelle Analyse und Simulation.
+- `3D Datenanalyse` hat zusaetzlich `Sparten-Kreis je Land`: je Land werden Produktsparte-Sektoren aus der zentralen Spartenzuordnung dargestellt.
+- Neuer Expertenpunkt: `Gruppenmarge` als MVP-/Pruefsicht fuer Gruppenmarge je Land, Sparte und Detailzeile.
+- Gruppenmarge-Doku: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`; Multiple-Choice-Entscheidungsbogen: `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-16.docx`.
+- Gruppenmarge zeigt `Umsatz` und `Bekannte Kostenbasis`; `Marge` und `%` werden `-`, wenn die Kostenbasis offen ist (`Standardpreis fehlt` oder `Lieferant unklar`).
+- Aktueller Gruppenmargen-Datenbefund: AT/TRAT und CH/TRCH haben in den geprueften 2025-Zentraldaten `StandardCost=0` und leere Supplier-Felder. Keine 100%-Marge interpretieren; Status bleibt offen.
 - `Management Analyse` hat zusaetzliche Finance-Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
 - `Management Analyse` ist links aufklappbar; direkte Navigationspunkte springen in die einzelnen Reiter.
 - Neu: `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
@@ -46,6 +51,7 @@ Stand: 2026-06-16
 - Jahresabgrenzung ueber `PostingDate`, Fallback `InvoiceDate`, danach `ExtractionDate`.
 - Gutschriften/Storno laufen als negative Beleg-/Positionszeilen.
 - Budget-CHF ist Kontroll-/Reporting-Kandidat, nicht Standardabgleich.
+- Gruppenmarge ist bis zur Fachfreigabe nur Pruefsicht, nicht fuehrender Finance-Abschlusswert.
 - `DocumentRate` aus dem ERP ist ein gespeichertes Quellfeld; die App-Kurstabelle wird nur bei Anzeige-Waehrung, expliziter `ConvertCurrency`-Transformation oder Budget-CHF-Kandidat verwendet.
 - Schalter fuer Finance/Revision: `Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss`.
 
@@ -57,6 +63,7 @@ Stand: 2026-06-16
 - Spartenanalyse: Falls weiterhin >90% nicht zugeordnet, TR-AG-Referenz/Join/Materialnummern pruefen.
 - Produktsparten-OData: nach SAP-Fix plausibel; vor/bei Refresh trotzdem Guardrail und Ergebniszahlen pruefen. Naechster Schritt ist Deploy/App-Start mit Seed fuer direkte `P.*`-Mappings und danach ZSCHWEIZ-Refresh.
 - Budget-CHF: Finanzchef muss Budgetkurse/Freigabe, Pflegeprozess, Spaltenumfang, Fehlkursverhalten, Rundung, Anzeigeort, DE-2026-Umschaltung und Kontrollnachweis entscheiden.
+- Gruppenmarge: Andreas/Finance muss per Multiple Choice Lieferantenerkennung, externe/interne Kostenbasis, MBEW-STPRS-Fallback, Kettenlogik, Waehrung und Fehlkostenverhalten entscheiden.
 
 ## Management-Analyse-Reiter
 
@@ -68,6 +75,7 @@ Stand: 2026-06-16
 - `Datenqualitaet`: fehlende Materialnummern, ProductGroup, Waehrung, Kunde, Datum, Nullwerte und ausgeschlossene Zeilen.
 - `Spartenanalyse > Finanzanalyse`: Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 auf Basis der TR-AG-Referenz.
 - `Spartenanalyse > Zentrale Zuordnung`: Materialnummern aller Laender gegen TR-AG-Stamm pruefen.
+- `Gruppenmarge`: Pruefsicht fuer Umsatz, bekannte Kostenbasis, offene Kostenbasis und belastbare Marge je Land/Sparte/Detail.
 - `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf die zentrale Auswertungsquelle.
 
 ## Audit-CSV / Auswertungsquelle
@@ -87,6 +95,7 @@ Stand: 2026-06-16
   - Achsenbeschriftung fuer Zeit/Wert/Indikator.
   - Auswahl sinnvoller Finance-Indikatoren.
   - Diagrammarten wie Balken/Linien/weitere Analyseformen.
+  - Sparten-Kreis je Land fuer Produktsparte-Anteile pro Land.
   - einstellbare Labelgroesse.
   - Schieberegler fuer Szenarien, u. a. Wechselkursveraenderungen.
   - Realtime-Neuberechnung bei Szenarioaenderungen.

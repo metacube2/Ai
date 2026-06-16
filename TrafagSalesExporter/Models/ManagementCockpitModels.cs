@@ -317,6 +317,65 @@ public class ManagementProductAssignmentRow
     public string Currency { get; set; } = string.Empty;
 }
 
+public class ManagementGroupMarginSummary
+{
+    public decimal SalesValue { get; set; }
+    public decimal CostBasisValue { get; set; }
+    public decimal MarginValue { get; set; }
+    public decimal MarginPercent { get; set; }
+    public int RowCount { get; set; }
+    public int InternalSupplierRows { get; set; }
+    public int ExternalSupplierRows { get; set; }
+    public int MissingCostRows { get; set; }
+    public int UnclearSupplierRows { get; set; }
+    public decimal CleanCostBasisPercent { get; set; }
+    public string DisplayCurrency { get; set; } = string.Empty;
+}
+
+public class ManagementGroupMarginCountryRow
+{
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal SalesValue { get; set; }
+    public decimal CostBasisValue { get; set; }
+    public decimal MarginValue { get; set; }
+    public decimal MarginPercent { get; set; }
+    public int RowCount { get; set; }
+    public int InternalSupplierRows { get; set; }
+    public int MissingCostRows { get; set; }
+}
+
+public class ManagementGroupMarginDivisionRow : ManagementGroupMarginCountryRow
+{
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+}
+
+public class ManagementGroupMarginDetailRow
+{
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string Material { get; set; } = string.Empty;
+    public string ArticleName { get; set; } = string.Empty;
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+    public string SupplierNumber { get; set; } = string.Empty;
+    public string SupplierName { get; set; } = string.Empty;
+    public string SupplierCountry { get; set; } = string.Empty;
+    public string SupplierType { get; set; } = string.Empty;
+    public string CostSource { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public decimal UnitCost { get; set; }
+    public decimal SalesValue { get; set; }
+    public decimal CostBasisValue { get; set; }
+    public decimal MarginValue { get; set; }
+    public decimal MarginPercent { get; set; }
+}
+
 public class ManagementFinanceSummaryResult
 {
     public ManagementFinanceSummaryFilter Filter { get; set; } = new();
@@ -344,4 +403,8 @@ public class ManagementFinanceSummaryResult
     public ManagementProductAssignmentSummary ProductAssignmentSummary { get; set; } = new();
     public List<ManagementProductAssignmentCountryRow> ProductAssignmentCountryRows { get; set; } = [];
     public List<ManagementProductAssignmentRow> ProductAssignmentRows { get; set; } = [];
+    public ManagementGroupMarginSummary GroupMarginSummary { get; set; } = new();
+    public List<ManagementGroupMarginCountryRow> GroupMarginCountryRows { get; set; } = [];
+    public List<ManagementGroupMarginDivisionRow> GroupMarginDivisionRows { get; set; } = [];
+    public List<ManagementGroupMarginDetailRow> GroupMarginDetailRows { get; set; } = [];
 }

@@ -5,11 +5,11 @@ Stand: 2026-06-16
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-11 Einkaufs-Uebersetzungen, Commit `1dbaa66 Add purchasing translations`.
+- Letzter dokumentierter Deploy: 2026-06-16 HR-Admin, Finance-3D-Spartenkreis und Gruppenmarge.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzter Deploy-Zeitstempel: `BiDashboard.dll` am `11.06.2026 12:30:27`.
-- Letzte Validierung vor Deploy: sauberer Worktree `C:\TMP\trafag-translation-test-20260611\TrafagSalesExporter`, `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `92/92` Tests gruen.
-- Deploy-Ablauf: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --no-restore`, danach `app_offline.htm` entfernt.
+- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `97/97` Tests gruen.
+- Deploy-Ablauf 2026-06-16: `BiDashboard.dll` war durch IIS gesperrt; `app_offline.htm` gesetzt, kurz gewartet, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$`, danach `app_offline.htm` entfernt.
+- Servercheck nach Deploy: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
 - Vorheriger Deploy 2026-06-11: Finance-Schulung/Dashboard-UI, Commit `f751295`, `BiDashboard.dll` `11.06.2026 12:04:53`.
 - Naechster lokaler Deploy-Kandidat: neues Produktsparten-Mapping fuer den vollstaendigen SAP-OData-Referenzservice. Seed-Ziel: `ZSCHWEIZ` Quellen `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet` aktiv, `M:ProductDivisionMapSet` inaktiv; aktiver Join nur `Z.Matnr=P.Matnr`, mit beidseitiger Matnr-Normalisierung im Import.
 - OData nach SAP-Fix geprueft: `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige/`0008`, `2` UNASS. `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025 und `0` fuer 2026.

@@ -385,6 +385,11 @@ public class ManagementCockpitService : IManagementCockpitService
                     ProductDivisionCode = record.ProductDivisionCode,
                     ProductDivisionText = record.ProductDivisionText,
                     ProductMappingAssigned = record.ProductMappingAssigned,
+                    SupplierNumber = record.SupplierNumber,
+                    SupplierName = record.SupplierName,
+                    SupplierCountry = record.SupplierCountry,
+                    StandardCost = record.StandardCost,
+                    StandardCostCurrency = record.StandardCostCurrency,
                     CustomerName = record.CustomerName,
                     PostingDate = record.PostingDate,
                     InvoiceDate = record.InvoiceDate,
@@ -489,7 +494,9 @@ public class ManagementCockpitService : IManagementCockpitService
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey, year, countryFilter, currencyFilter);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
+        notices.Add("Gruppenmarge ist ein MVP: externe Lieferanten verwenden Kosten aus der Verkaufszeile; interne Trafag-Lieferanten verwenden die vorhandene Standardkostenbasis. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
 
         return new ManagementFinanceSummaryResult
         {
@@ -534,7 +541,11 @@ public class ManagementCockpitService : IManagementCockpitService
             ProductFinanceCountryRows = BuildProductFinanceCountryRows(productAssignmentRows),
             ProductAssignmentSummary = BuildProductAssignmentSummary(productAssignmentRows),
             ProductAssignmentCountryRows = BuildProductAssignmentCountryRows(productAssignmentRows),
-            ProductAssignmentRows = productAssignmentRows
+            ProductAssignmentRows = productAssignmentRows,
+            GroupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies),
+            GroupMarginCountryRows = BuildGroupMarginCountryRows(groupMarginRows),
+            GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
+            GroupMarginDetailRows = groupMarginRows.Take(1000).ToList()
         };
     }
 
@@ -974,6 +985,193 @@ public class ManagementCockpitService : IManagementCockpitService
                 };
             })
             .ToList();
+
+    private static List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var supplierType = ResolveSupplierType(row);
+                var costBasis = ResolveGroupMarginCostBasis(row);
+                var status = ResolveGroupMarginStatus(row, supplierType, costBasis);
+                var margin = row.Value - costBasis;
+                return new ManagementGroupMarginDetailRow
+                {
+                    CountryKey = row.CountryKey,
+                    Tsc = row.Tsc,
+                    InvoiceNumber = row.InvoiceNumber,
+                    Material = row.Material,
+                    ArticleName = row.ArticleName,
+                    ProductDivisionCode = row.ProductDivisionCode,
+                    ProductDivisionText = row.ProductDivisionText,
+                    SupplierNumber = row.SupplierNumber,
+                    SupplierName = row.SupplierName,
+                    SupplierCountry = row.SupplierCountry,
+                    SupplierType = supplierType,
+                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    Status = status,
+                    Currency = row.Currency,
+                    Quantity = row.Quantity,
+                    UnitCost = row.StandardCost,
+                    SalesValue = row.Value,
+                    CostBasisValue = costBasis,
+                    MarginValue = margin,
+                    MarginPercent = PercentOf(margin, row.Value)
+                };
+            })
+            .OrderBy(row => GroupMarginStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.MarginValue))
+            .ToList();
+
+    private static ManagementGroupMarginSummary BuildGroupMarginSummary(
+        IReadOnlyCollection<ManagementGroupMarginDetailRow> rows,
+        IReadOnlyCollection<string> currencies)
+    {
+        var sales = rows.Sum(row => row.SalesValue);
+        var cost = rows.Sum(row => row.CostBasisValue);
+        var margin = sales - cost;
+        var cleanRows = rows.Count(row => row.Status == "OK");
+
+        return new ManagementGroupMarginSummary
+        {
+            SalesValue = sales,
+            CostBasisValue = cost,
+            MarginValue = margin,
+            MarginPercent = PercentOf(margin, sales),
+            RowCount = rows.Count,
+            InternalSupplierRows = rows.Count(row => row.SupplierType == "Intern"),
+            ExternalSupplierRows = rows.Count(row => row.SupplierType == "Extern"),
+            MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
+            UnclearSupplierRows = rows.Count(row => row.Status == "Lieferant unklar"),
+            CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
+            DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
+        };
+    }
+
+    private static List<ManagementGroupMarginCountryRow> BuildGroupMarginCountryRows(IEnumerable<ManagementGroupMarginDetailRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.Currency })
+            .Select(group => BuildGroupMarginCountryRow(group.Key.CountryKey, group.Key.Tsc, group.Key.Currency, group))
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static List<ManagementGroupMarginDivisionRow> BuildGroupMarginDivisionRows(IEnumerable<ManagementGroupMarginDetailRow> rows)
+        => rows
+            .GroupBy(row => new
+            {
+                row.CountryKey,
+                row.Tsc,
+                row.Currency,
+                row.ProductDivisionCode,
+                row.ProductDivisionText
+            })
+            .Select(group =>
+            {
+                var baseRow = BuildGroupMarginCountryRow(group.Key.CountryKey, group.Key.Tsc, group.Key.Currency, group);
+                return new ManagementGroupMarginDivisionRow
+                {
+                    CountryKey = baseRow.CountryKey,
+                    Tsc = baseRow.Tsc,
+                    Currency = baseRow.Currency,
+                    SalesValue = baseRow.SalesValue,
+                    CostBasisValue = baseRow.CostBasisValue,
+                    MarginValue = baseRow.MarginValue,
+                    MarginPercent = baseRow.MarginPercent,
+                    RowCount = baseRow.RowCount,
+                    InternalSupplierRows = baseRow.InternalSupplierRows,
+                    MissingCostRows = baseRow.MissingCostRows,
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText
+                };
+            })
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.MarginValue))
+            .ToList();
+
+    private static ManagementGroupMarginCountryRow BuildGroupMarginCountryRow(
+        string countryKey,
+        string tsc,
+        string currency,
+        IEnumerable<ManagementGroupMarginDetailRow> rows)
+    {
+        var rowList = rows.ToList();
+        var sales = rowList.Sum(row => row.SalesValue);
+        var cost = rowList.Sum(row => row.CostBasisValue);
+        var margin = sales - cost;
+        return new ManagementGroupMarginCountryRow
+        {
+            CountryKey = countryKey,
+            Tsc = tsc,
+            Currency = currency,
+            SalesValue = sales,
+            CostBasisValue = cost,
+            MarginValue = margin,
+            MarginPercent = PercentOf(margin, sales),
+            RowCount = rowList.Count,
+            InternalSupplierRows = rowList.Count(row => row.SupplierType == "Intern"),
+            MissingCostRows = rowList.Count(HasOpenGroupMarginCostBasis)
+        };
+    }
+
+    private static bool HasOpenGroupMarginCostBasis(ManagementGroupMarginDetailRow row)
+        => row.Status is "Standardpreis fehlt" or "Lieferant unklar";
+
+    private static string ResolveSupplierType(FinanceAggregationRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.SupplierNumber) &&
+            string.IsNullOrWhiteSpace(row.SupplierName) &&
+            string.IsNullOrWhiteSpace(row.SupplierCountry))
+        {
+            return "Unklar";
+        }
+
+        var supplierText = string.Join(' ', row.SupplierNumber, row.SupplierName, row.SupplierCountry).ToUpperInvariant();
+        if (supplierText.Contains("TRAFAG", StringComparison.OrdinalIgnoreCase) ||
+            supplierText.Contains("TR AG", StringComparison.OrdinalIgnoreCase) ||
+            supplierText.Contains("TR-AG", StringComparison.OrdinalIgnoreCase) ||
+            supplierText.Contains("TRIN", StringComparison.OrdinalIgnoreCase) ||
+            supplierText.Contains("TRIT", StringComparison.OrdinalIgnoreCase) ||
+            supplierText.Contains("TRCH", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Intern";
+        }
+
+        return "Extern";
+    }
+
+    private static decimal ResolveGroupMarginCostBasis(FinanceAggregationRow row)
+        => row.Quantity != 0m ? Math.Abs(row.Quantity) * Math.Abs(row.StandardCost) : Math.Abs(row.StandardCost);
+
+    private static string ResolveGroupMarginCostSource(string supplierType)
+        => supplierType switch
+        {
+            "Intern" => "Interner Standardpreis",
+            "Extern" => "Kosten aus Verkaufszeile",
+            _ => "Lieferant unklar"
+        };
+
+    private static string ResolveGroupMarginStatus(FinanceAggregationRow row, string supplierType, decimal costBasis)
+    {
+        if (supplierType == "Unklar")
+            return "Lieferant unklar";
+        if (costBasis == 0m)
+            return "Standardpreis fehlt";
+        if (row.Value == 0m)
+            return "Umsatz fehlt";
+        return "OK";
+    }
+
+    private static int GroupMarginStatusSort(string status)
+        => status switch
+        {
+            "Standardpreis fehlt" => 0,
+            "Lieferant unklar" => 1,
+            "Umsatz fehlt" => 2,
+            _ => 3
+        };
 
     private static string BuildProductAssignmentStatus(string material, FinanceAggregationRow? reference)
     {
@@ -1844,6 +2042,11 @@ public class ManagementCockpitService : IManagementCockpitService
         public string ProductDivisionCode { get; set; } = string.Empty;
         public string ProductDivisionText { get; set; } = string.Empty;
         public string ProductMappingAssigned { get; set; } = string.Empty;
+        public string SupplierNumber { get; set; } = string.Empty;
+        public string SupplierName { get; set; } = string.Empty;
+        public string SupplierCountry { get; set; } = string.Empty;
+        public decimal StandardCost { get; set; }
+        public string StandardCostCurrency { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public DateTime? PostingDate { get; set; }
         public DateTime? InvoiceDate { get; set; }

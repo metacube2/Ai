@@ -84,6 +84,21 @@
                 </MudItem>
             </MudGrid>
 
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.StackedLineChart"
+                               Href="management-cockpit?section=groupmargin">
+                        @T("Gruppenmarge", "Group margin")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.ViewInAr"
+                               Href="management-cockpit?section=3d">
+                        @T("3D Datenanalyse", "3D data analysis")
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
                     <MudPaper Class="pa-4 mb-4" Elevation="1">
                         <MudText Typo="Typo.h6" Class="mb-2">@T("Finance-Freigabe je Land", "Finance approval by country")</MudText>
                         <MudTable Items="_financeResult.CountryRows" Dense Hover Striped>
@@ -699,6 +714,154 @@
                 </MudTabPanel>
             </MudTabs>
         </MudTabPanel>
+        <MudTabPanel Text="@T("Gruppenmarge", "Group margin")" Icon="@Icons.Material.Filled.StackedLineChart">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Umsatz", "Sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.GroupMarginSummary.SalesValue, _financeResult.GroupMarginSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Kostenbasis", "Cost basis")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.GroupMarginSummary.CostBasisValue, _financeResult.GroupMarginSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Gruppenmarge", "Group margin")</MudText>
+                        <MudText Typo="Typo.h6">@FormatGroupMarginSummaryValue()</MudText>
+                        <MudText Typo="Typo.caption">@FormatGroupMarginSummaryPercent()</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Interne Zeilen", "Internal rows")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.GroupMarginSummary.InternalSupplierRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">@T("Extern", "External"): @_financeResult.GroupMarginSummary.ExternalSupplierRows.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Fehlende Kosten", "Missing costs")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.GroupMarginSummary.MissingCostRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">@T("Lieferant unklar", "Supplier unclear"): @_financeResult.GroupMarginSummary.UnclearSupplierRows.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Saubere Kostenbasis", "Clean cost basis")</MudText>
+                        <MudText Typo="Typo.h6">@FormatPercent(_financeResult.GroupMarginSummary.CleanCostBasisPercent)</MudText>
+                        <MudText Typo="Typo.caption">@_financeResult.GroupMarginSummary.RowCount.ToString("N0") @T("Zeilen", "rows")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-4">
+                @T("MVP-Regel: Externer Lieferant = Kosten aus Verkaufszeile. Interner Trafag-Lieferant = vorhandene Standardkostenbasis als Proxy fuer SAP MBEW-STPRS. Interne Kette stoppt nach einer Ebene. Fehlende Standardkosten werden markiert und nicht geschaetzt.",
+                    "MVP rule: external supplier = cost from sales line. Internal Trafag supplier = existing standard-cost basis as proxy for SAP MBEW-STPRS. Internal chain stops after one level. Missing standard costs are flagged and not estimated.")
+            </MudAlert>
+
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Gruppenmarge nach Land", "Group margin by country")</MudText>
+                        <MudTable Items="_financeResult.GroupMarginCountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                                <MudTh>@T("Bekannte Kostenbasis", "Known cost basis")</MudTh>
+                                <MudTh>@T("Marge", "Margin")</MudTh>
+                                <MudTh>%</MudTh>
+                                <MudTh>@T("Intern", "Internal")</MudTh>
+                                <MudTh>@T("Offen", "Open")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.CostBasisValue, context.Currency)</MudTd>
+                                <MudTd>@FormatGroupMarginValue(context)</MudTd>
+                                <MudTd>@FormatGroupMarginPercent(context)</MudTd>
+                                <MudTd>@context.InternalSupplierRows.ToString("N0")</MudTd>
+                                <MudTd>@context.MissingCostRows.ToString("N0")</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">@T("Keine Gruppenmargendaten fuer diese Filter.", "No group-margin data for these filters.")</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Gruppenmarge nach Land und Sparte", "Group margin by country and division")</MudText>
+                        <MudTable Items="_financeResult.GroupMarginDivisionRows.Take(30)" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Sparte", "Division")</MudTh>
+                                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                                <MudTh>@T("Marge", "Margin")</MudTh>
+                                <MudTh>%</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                                <MudTd>@FormatGroupMarginValue(context)</MudTd>
+                                <MudTd>@FormatGroupMarginPercent(context)</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">@T("Keine Spartenmargen fuer diese Filter.", "No division margins for these filters.")</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Detailpruefung Kostenbasis", "Cost-basis detail check")</MudText>
+                <MudTable Items="_financeResult.GroupMarginDetailRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>@T("Rechnung", "Invoice")</MudTh>
+                        <MudTh>@T("Material", "Material")</MudTh>
+                        <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                        <MudTh>@T("Typ", "Type")</MudTh>
+                        <MudTh>@T("Kostenquelle", "Cost source")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Kostenbasis", "Cost basis")</MudTh>
+                        <MudTh>@T("Marge", "Margin")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@GroupMarginStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.InvoiceNumber</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.Material</MudText>
+                            <MudText Typo="Typo.caption">@context.ArticleName</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@BuildSupplierLabel(context)</MudText>
+                            <MudText Typo="Typo.caption">@context.SupplierCountry</MudText>
+                        </MudTd>
+                        <MudTd>@context.SupplierType</MudTd>
+                        <MudTd>@context.CostSource</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.CostBasisValue, context.Currency)</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@FormatGroupMarginDetailValue(context)</MudText>
+                            <MudText Typo="Typo.caption">@FormatGroupMarginDetailPercent(context)</MudText>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Detailzeilen fuer diese Filter.", "No detail rows for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
         <MudTabPanel Text="@T("3D Datenanalyse", "3D data analysis")" Icon="@Icons.Material.Filled.ViewInAr">
             <MudPaper Class="pa-4 mb-4" Elevation="1">
                 <MudGrid>
@@ -767,8 +930,8 @@
                     </MudItem>
                     <MudItem xs="12" md="1">
                         <MudText Typo="Typo.body2">
-                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. Balken/Linie/Flaeche zeigen Land-Jahr-Verlauf, Kreis zeigt Laenderanteile.",
-                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. Bar/line/surface show country-year trend, pie shows country shares.")
+                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. Balken/Linie/Flaeche zeigen Land-Jahr-Verlauf, Kreis zeigt Laenderanteile, Sparten-Kreis zeigt je Land die Spartenanteile.",
+                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. Bar/line/surface show country-year trend, pie shows country shares, division pie shows product-division shares per country.")
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -1174,7 +1337,8 @@
         new(Finance3dChartTypes.Bar, "Balken", "Bar"),
         new(Finance3dChartTypes.Line, "Linie", "Line"),
         new(Finance3dChartTypes.Surface, "Flaeche", "Surface"),
-        new(Finance3dChartTypes.Pie, "Kreis / Anteil", "Pie / share")
+        new(Finance3dChartTypes.Pie, "Kreis / Anteil", "Pie / share"),
+        new(Finance3dChartTypes.DivisionPie, "Sparten-Kreis je Land", "Division pie by country")
     ];
     private string? _selectedFilePath;
     private ManagementCockpitResult? _result;
@@ -1248,6 +1412,7 @@
                 "credits" => ManagementFinanceTabIndexes.Credits,
                 "quality" => ManagementFinanceTabIndexes.Quality,
                 "3d" => ManagementFinanceTabIndexes.ThreeD,
+                "groupmargin" => ManagementFinanceTabIndexes.GroupMargin,
                 "raw" => ManagementFinanceTabIndexes.Raw,
                 _ => ManagementFinanceTabIndexes.Summary
             };
@@ -1442,7 +1607,9 @@
             xAxis = T("X: Land", "X: country"),
             yAxis = T("Y: Wert / Indikator", "Y: value / indicator"),
             zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
-            pieAxis = T("Kreis: Laenderanteile", "Pie: country shares"),
+            pieAxis = _finance3dChartType == Finance3dChartTypes.DivisionPie
+                ? T("Sparten-Kreis: je Land Sektoren nach Produktsparte", "Division pie: sectors by product division per country")
+                : T("Kreis: Laenderanteile", "Pie: country shares"),
             labelScale = _finance3dLabelScale,
             scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
         });
@@ -1460,6 +1627,9 @@
     {
         if (_financeResult is null)
             return [];
+
+        if (_finance3dChartType == Finance3dChartTypes.DivisionPie)
+            return BuildFinance3dProductDivisionRows();
 
         if (IsFinance3dReferenceYearIndicator(_finance3dIndicator))
         {
@@ -1507,6 +1677,43 @@
                     value
                 };
             })
+            .Cast<object>()
+            .ToList();
+    }
+
+    private IReadOnlyList<object> BuildFinance3dProductDivisionRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.ProductAssignmentRows
+            .Where(row => row.Status is "Zugeordnet" or "Ãœbrige")
+            .GroupBy(row => new
+            {
+                Country = string.IsNullOrWhiteSpace(row.CountryKey) ? "-" : row.CountryKey,
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var value = Math.Abs(group.Sum(row => row.NetSalesActual));
+                var label = BuildCodeText(group.Key.ProductDivisionCode, group.Key.ProductDivisionText);
+                return new
+                {
+                    country = group.Key.Country,
+                    year = _selectedFinanceYear,
+                    currency = group.Key.Currency,
+                    value,
+                    series = string.IsNullOrWhiteSpace(label) ? "-" : label,
+                    seriesCode = group.Key.ProductDivisionCode,
+                    rows = group.Sum(row => row.RowCount),
+                    materials = group.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                };
+            })
+            .Where(row => row.value > 0m)
+            .OrderBy(row => row.country, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => row.value)
             .Cast<object>()
             .ToList();
     }
@@ -1737,6 +1944,44 @@
     private static string FormatPercent(decimal? value)
         => value.HasValue ? $"{value.Value:N1}%" : "-";
 
+    private string FormatGroupMarginSummaryValue()
+    {
+        if (_financeResult is null)
+            return "-";
+
+        return _financeResult.GroupMarginSummary.MissingCostRows > 0 ||
+               _financeResult.GroupMarginSummary.UnclearSupplierRows > 0
+            ? "-"
+            : FormatValue(_financeResult.GroupMarginSummary.MarginValue, _financeResult.GroupMarginSummary.DisplayCurrency);
+    }
+
+    private string FormatGroupMarginSummaryPercent()
+    {
+        if (_financeResult is null)
+            return "-";
+
+        return _financeResult.GroupMarginSummary.MissingCostRows > 0 ||
+               _financeResult.GroupMarginSummary.UnclearSupplierRows > 0
+            ? "-"
+            : FormatPercent(_financeResult.GroupMarginSummary.MarginPercent);
+    }
+
+    private static string FormatGroupMarginValue(ManagementGroupMarginCountryRow row)
+        => row.MissingCostRows > 0 ? "-" : FormatValue(row.MarginValue, row.Currency);
+
+    private static string FormatGroupMarginPercent(ManagementGroupMarginCountryRow row)
+        => row.MissingCostRows > 0 ? "-" : FormatPercent(row.MarginPercent);
+
+    private static string FormatGroupMarginDetailValue(ManagementGroupMarginDetailRow row)
+        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+            ? FormatValue(row.MarginValue, row.Currency)
+            : "-";
+
+    private static string FormatGroupMarginDetailPercent(ManagementGroupMarginDetailRow row)
+        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+            ? FormatPercent(row.MarginPercent)
+            : "-";
+
     private static decimal PercentOf(decimal value, decimal total)
         => total == 0m ? 0m : value * 100m / total;
 
@@ -1810,12 +2055,31 @@
     private static Color ProductAssignmentColor(string status) => status switch
     {
         "Zugeordnet" => Color.Success,
-        "Übrige" => Color.Info,
+        "Ãœbrige" => Color.Info,
         "Nicht zugeordnet" => Color.Warning,
         "Nicht im TR-AG-Stamm" => Color.Error,
         "Material fehlt" => Color.Default,
         _ => Color.Info
     };
+
+    private static Color GroupMarginStatusColor(string status) => status switch
+    {
+        "OK" => Color.Success,
+        "Standardpreis fehlt" => Color.Warning,
+        "Lieferant unklar" => Color.Warning,
+        "Umsatz fehlt" => Color.Default,
+        _ => Color.Info
+    };
+
+    private static string BuildSupplierLabel(ManagementGroupMarginDetailRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.SupplierNumber))
+            return string.IsNullOrWhiteSpace(row.SupplierName) ? "-" : row.SupplierName;
+
+        return string.IsNullOrWhiteSpace(row.SupplierName)
+            ? row.SupplierNumber
+            : $"{row.SupplierNumber} - {row.SupplierName}";
+    }
 
     private static string BuildCodeText(string code, string text)
     {
@@ -1947,8 +2211,9 @@
         public const int Credits = 4;
         public const int Quality = 5;
         public const int Division = 6;
-        public const int ThreeD = 7;
-        public const int Raw = 8;
+        public const int GroupMargin = 7;
+        public const int ThreeD = 8;
+        public const int Raw = 9;
     }
 
     private static class Finance3dIndicators
@@ -1976,6 +2241,7 @@
         public const string Line = "line";
         public const string Surface = "surface";
         public const string Pie = "pie";
+        public const string DivisionPie = "divisionPie";
     }
 
     private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);

@@ -9,6 +9,13 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
 - Naechster Chat: zuerst `docs/HANDOFF_2026-06-16.md` laden, dann diese Datei, dann je nach Thema `docs/rag/FINANCE.md` oder `docs/rag/PRODUCT_MAPPING.md`.
+- Neu umgesetzt und deployed am 2026-06-16: HR KPI unterstuetzt zusaetzliche Admin-User ueber `HrKpiAccess.AdminUsers`; alter HR-User `hr` wurde nicht geaendert. Aktueller Zusatzuser: `hradmin`, Passwort separat kommuniziert, nur Hash in `appsettings.json`.
+- Neu umgesetzt und deployed am 2026-06-16: Finance-3D-Datenanalyse hat neue Diagrammart `Sparten-Kreis je Land`; je Land werden Produktsparte-Sektoren aus der zentralen Spartenzuordnung dargestellt.
+- Neu umgesetzt und deployed am 2026-06-16: Neuer Finance-Reiter `Gruppenmarge` unter `Management Analyse > Experten` plus Schnelluebersicht-Link und Navigationseintrag.
+- Gruppenmarge ist ein MVP/Pruefsicht, kein finaler Finance-Wert: Umsatz und bekannte Kostenbasis werden gezeigt; Marge und Prozent werden `-`, sobald Kostenbasis offen ist (`Standardpreis fehlt` oder `Lieferant unklar`).
+- Gruppenmarge-Doku: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Multiple-Choice-Entscheidungsbogen: `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-16.docx`.
+- Aktueller Datenbefund Gruppenmarge: AT/TRAT und CH/TRCH haben in den geprueften 2025-Zentraldaten `StandardCost=0` und leere Supplier-Felder; die Marge bleibt daher offen und darf nicht als 100%-Marge interpretiert werden.
+- Deploy-Validierung 2026-06-16: mehrfach `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen; Publish auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` erfolgreich; `app_offline.htm` entfernt; `Test-NetConnection ... -Port 443` erfolgreich.
 - Letzte Commits: `821f5a4 Add Budget CHF multiple choice questionnaire`, `e0d89b7 Document open Budget CHF finance questions`, `9f4db97 Guard product division OData refresh`, `918969e Prepare product division reference mapping`, `09afce2 Document OData dashboard context`.
 - Produktsparten-OData nach SAP-Fix geprueft: `travp762/.../ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet?$format=json` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige (`Wwpsp=0008`), `2` UNASS, `0` leere `Wwpsp`.
 - Finance-OData nach SAP-Fix geprueft: `FinanzdataSchweizOeSet/$count` liefert `30'642`; mit `Gjahr eq '2025'` ebenfalls `30'642`; mit `Gjahr eq '2026'` `0`. JSON-Zeilenabfrage liefert fuer 2025 ebenfalls `30'642` Zeilen.

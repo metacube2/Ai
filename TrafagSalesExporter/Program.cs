@@ -176,8 +176,24 @@ app.MapPost("/access/hr", async (HttpContext httpContext, IOptions<HrKpiAccessOp
     var settings = options.Value;
     var username = form["username"].ToString();
     var password = form["password"].ToString();
-    if (MatchesAccess(settings.Enabled, settings.Username, settings.PasswordHash, settings.Password, username, password))
-        AccessUnlockCookie.SetUnlocked(httpContext, AccessUnlockCookie.HrCookieName, settings.PasswordHash);
+    if (TryGetHrAccessPasswordHash(settings, username, password, out var passwordHash, out var matchedUserKind))
+    {
+        AccessUnlockCookie.SetUnlocked(httpContext, AccessUnlockCookie.HrCookieName, passwordHash);
+        app.Logger.LogInformation(
+            "HR KPI access unlocked via {UserKind}. Username={Username}",
+            matchedUserKind,
+            username.Trim());
+    }
+    else
+    {
+        app.Logger.LogWarning(
+            "HR KPI access rejected. Username={Username}, Enabled={Enabled}, PrimaryConfigured={PrimaryConfigured}, AdminUsers={AdminUserCount}",
+            username.Trim(),
+            settings.Enabled,
+            !string.IsNullOrWhiteSpace(settings.Username) &&
+                (!string.IsNullOrWhiteSpace(settings.PasswordHash) || !string.IsNullOrEmpty(settings.Password)),
+            settings.AdminUsers.Count);
+    }
 
     return Results.Redirect(ResolveReturnUrl(httpContext, form["returnUrl"].ToString()));
 }).DisableAntiforgery();
@@ -202,6 +218,42 @@ static bool MatchesAccess(bool enabled, string configuredUsername, string config
     return !string.IsNullOrWhiteSpace(configuredHash)
         ? string.Equals(AccessPasswordSettingsWriter.HashPassword(password), configuredHash.Trim(), StringComparison.Ordinal)
         : string.Equals(password, configuredPassword, StringComparison.Ordinal);
+}
+
+static bool TryGetHrAccessPasswordHash(
+    HrKpiAccessOptions settings,
+    string username,
+    string password,
+    out string passwordHash,
+    out string matchedUserKind)
+{
+    passwordHash = string.Empty;
+    matchedUserKind = string.Empty;
+
+    if (!settings.Enabled)
+    {
+        matchedUserKind = "DisabledByConfiguration";
+        return true;
+    }
+
+    if (MatchesAccess(settings.Enabled, settings.Username, settings.PasswordHash, settings.Password, username, password))
+    {
+        passwordHash = settings.PasswordHash;
+        matchedUserKind = "Primary";
+        return !string.IsNullOrWhiteSpace(passwordHash);
+    }
+
+    foreach (var user in settings.AdminUsers)
+    {
+        if (MatchesAccess(settings.Enabled, user.Username, user.PasswordHash, user.Password, username, password))
+        {
+            passwordHash = user.PasswordHash;
+            matchedUserKind = "AdminUser";
+            return !string.IsNullOrWhiteSpace(passwordHash);
+        }
+    }
+
+    return false;
 }
 
 static string ResolveReturnUrl(HttpContext httpContext, string returnUrl)

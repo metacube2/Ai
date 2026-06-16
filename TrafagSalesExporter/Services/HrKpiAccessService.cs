@@ -39,15 +39,12 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 
     public bool IsConfigured =>
         !IsEnabled ||
-        !string.IsNullOrWhiteSpace(_options.Username) &&
-        (!string.IsNullOrWhiteSpace(_options.PasswordHash) || !string.IsNullOrEmpty(_options.Password));
+        IsPrimaryUserConfigured ||
+        _options.AdminUsers.Any(IsUserConfigured);
 
     public bool IsUnlocked =>
         _isUnlocked ||
-        AccessUnlockCookie.IsUnlocked(
-            _httpContextAccessor.HttpContext,
-            AccessUnlockCookie.HrCookieName,
-            _options.PasswordHash);
+        IsCookieUnlocked();
 
     private bool _isUnlocked;
 
@@ -61,15 +58,13 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 
         if (!IsConfigured ||
             string.IsNullOrWhiteSpace(username) ||
-            string.IsNullOrEmpty(password) ||
-            !FixedEquals(username.Trim(), _options.Username.Trim()))
+            string.IsNullOrEmpty(password))
         {
             return false;
         }
 
-        var valid = !string.IsNullOrWhiteSpace(_options.PasswordHash)
-            ? VerifyPasswordHash(password, _options.PasswordHash)
-            : FixedEquals(password, _options.Password);
+        var valid = MatchesPrimaryUser(username, password) ||
+            _options.AdminUsers.Any(user => MatchesUser(user, username, password));
 
         _isUnlocked = valid;
         if (valid)
@@ -89,7 +84,7 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
             !IsConfigured ||
             string.IsNullOrWhiteSpace(newPassword) ||
             newPassword.Length < 8 ||
-            !TryUnlock(username, currentPassword))
+            !MatchesPrimaryUser(username, currentPassword))
         {
             return false;
         }
@@ -110,6 +105,40 @@ public sealed class HrKpiAccessService : IHrKpiAccessService, IDisposable
 
     private string? GetRemoteAddress()
         => _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+    private bool IsCookieUnlocked()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (AccessUnlockCookie.IsUnlocked(httpContext, AccessUnlockCookie.HrCookieName, _options.PasswordHash))
+            return true;
+
+        return _options.AdminUsers
+            .Where(user => !string.IsNullOrWhiteSpace(user.PasswordHash))
+            .Any(user => AccessUnlockCookie.IsUnlocked(httpContext, AccessUnlockCookie.HrCookieName, user.PasswordHash));
+    }
+
+    private bool IsPrimaryUserConfigured =>
+        !string.IsNullOrWhiteSpace(_options.Username) &&
+        (!string.IsNullOrWhiteSpace(_options.PasswordHash) || !string.IsNullOrEmpty(_options.Password));
+
+    private static bool IsUserConfigured(HrKpiAccessUserOptions user)
+        => !string.IsNullOrWhiteSpace(user.Username) &&
+            (!string.IsNullOrWhiteSpace(user.PasswordHash) || !string.IsNullOrEmpty(user.Password));
+
+    private bool MatchesPrimaryUser(string username, string password)
+        => IsPrimaryUserConfigured &&
+            FixedEquals(username.Trim(), _options.Username.Trim()) &&
+            MatchesPassword(password, _options.PasswordHash, _options.Password);
+
+    private static bool MatchesUser(HrKpiAccessUserOptions user, string username, string password)
+        => IsUserConfigured(user) &&
+            FixedEquals(username.Trim(), user.Username.Trim()) &&
+            MatchesPassword(password, user.PasswordHash, user.Password);
+
+    private static bool MatchesPassword(string password, string configuredHash, string configuredPassword)
+        => !string.IsNullOrWhiteSpace(configuredHash)
+            ? VerifyPasswordHash(password, configuredHash)
+            : FixedEquals(password, configuredPassword);
 
     private static bool VerifyPasswordHash(string password, string configuredHash)
     {
