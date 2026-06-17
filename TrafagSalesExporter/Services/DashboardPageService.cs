@@ -80,7 +80,7 @@ public sealed class DashboardPageService : IDashboardPageService
             };
         }).ToList();
 
-        var consolidatedRows = BuildConsolidatedRows(settings);
+        var consolidatedRows = BuildConsolidatedRows(settings, sharePointConfig);
         var latestSuccessfulSiteRun = logs
             .Where(log => log.Status == "OK")
             .Select(log => (DateTime?)log.Timestamp)
@@ -431,7 +431,7 @@ LIMIT 1000;
         return string.IsNullOrWhiteSpace(site.SourceSystem) ? "-" : site.SourceSystem;
     }
 
-    private static List<ConsolidatedDashboardRow> BuildConsolidatedRows(ExportSettings settings)
+    private static List<ConsolidatedDashboardRow> BuildConsolidatedRows(ExportSettings settings, SharePointConfig? sharePointConfig)
     {
         var outputDirectory = ResolveConsolidatedOutputDirectory(settings);
         if (!Directory.Exists(outputDirectory))
@@ -448,15 +448,19 @@ LIMIT 1000;
 
         return new[]
         {
-            BuildConsolidatedRow("Konsolidierter Export", "Consolidated export", consolidated),
-            BuildConsolidatedRow("Dashboard Nachweis", "Dashboard proof", proof)
+            BuildConsolidatedRow("Konsolidierter Export", "Consolidated export", consolidated, sharePointConfig),
+            BuildConsolidatedRow("Dashboard Nachweis", "Dashboard proof", proof, sharePointConfig)
         }
             .Where(row => row is not null)
             .Select(row => row!)
             .ToList();
     }
 
-    private static ConsolidatedDashboardRow? BuildConsolidatedRow(string label, string labelEnglish, FileInfo? file)
+    private static ConsolidatedDashboardRow? BuildConsolidatedRow(
+        string label,
+        string labelEnglish,
+        FileInfo? file,
+        SharePointConfig? sharePointConfig)
         => file is null
             ? null
             : new ConsolidatedDashboardRow
@@ -464,9 +468,20 @@ LIMIT 1000;
                 Label = label,
                 LabelEnglish = labelEnglish,
                 FilePath = file.FullName,
-                DisplayPath = file.FullName,
+                DisplayPath = ResolveConsolidatedDisplayPath(file, sharePointConfig),
                 LastModified = file.LastWriteTime
             };
+
+    private static string ResolveConsolidatedDisplayPath(FileInfo file, SharePointConfig? sharePointConfig)
+    {
+        if (!HasCompleteSharePointConfig(sharePointConfig))
+            return file.FullName;
+
+        var folder = ResolveCentralSharePointFolder(sharePointConfig!);
+        var relativePath = string.Join("/", folder.Trim('/'), file.Name).Trim('/');
+        var siteUrl = sharePointConfig!.SiteUrl.TrimEnd('/');
+        return $"{siteUrl}/{relativePath}";
+    }
 
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
     {
@@ -477,6 +492,27 @@ LIMIT 1000;
             return settings.LocalSiteExportFolder.Trim();
 
         return Path.Combine(AppContext.BaseDirectory, "output");
+    }
+
+    private static string ResolveCentralSharePointFolder(SharePointConfig config)
+    {
+        var configuredFolder = !string.IsNullOrWhiteSpace(config.CentralExportFolder)
+            ? config.CentralExportFolder
+            : IsLegacyExportFolder(config.ExportFolder)
+                ? "/Import/Finance"
+                : config.ExportFolder;
+
+        var normalizedFolder = configuredFolder.Trim().TrimEnd('/', '\\');
+        return normalizedFolder.EndsWith("/Alle", StringComparison.OrdinalIgnoreCase) ||
+               normalizedFolder.EndsWith("\\Alle", StringComparison.OrdinalIgnoreCase)
+            ? normalizedFolder.Replace('\\', '/')
+            : string.Join("/", configuredFolder.Trim('/'), "Alle").Trim('/');
+    }
+
+    private static bool IsLegacyExportFolder(string folder)
+    {
+        var normalized = folder.Trim().TrimEnd('/', '\\');
+        return normalized.Equals("/Shared Documents/Exports", StringComparison.OrdinalIgnoreCase);
     }
 }
 
