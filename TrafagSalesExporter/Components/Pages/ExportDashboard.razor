@@ -386,7 +386,7 @@
                 if (!string.IsNullOrWhiteSpace(filePath))
                 {
                     await InvokeAsync(() =>
-                        Snackbar.Add(string.Format(T("Zentrale Datei erzeugt: {0}", "Consolidated file created: {0}"), filePath), Severity.Success));
+                        Snackbar.Add(string.Format(T("Zentrale Datei und Dashboard-Nachweis erzeugt im gewaehlten Ordner: {0}", "Consolidated file and dashboard proof created in the selected folder: {0}"), filePath), Severity.Success));
                 }
                 else
                 {

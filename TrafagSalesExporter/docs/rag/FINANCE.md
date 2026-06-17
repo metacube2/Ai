@@ -9,6 +9,7 @@ Stand: 2026-06-16
 - `Finance Summary`, zentrale Excel, Soll/Ist und Management-Analyse koennen wahlweise aus Audit-CSV statt direkt aus `CentralSalesRecords` lesen. Die Audit-CSV werden nach Mapping und Transformation geschrieben und dienen der Nachvollziehbarkeit fuer Finance/Revision.
 - Audit-CSV-Dateiname: `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv`; liegt im gleichen Ordner wie das Standort-Excel und wird beim Standortexport in denselben SharePoint-Landesordner hochgeladen.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
+- Nachweis fuer Excel-Fans: `Zentrale Datei neu erzeugen` erstellt zusaetzlich `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` im waehlbaren zentralen Exportordner. Die Datei enthaelt Formel-Summaries (`SUMIFS`, `COUNTIFS`, `IF`) und Detailblaetter fuer Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet. Doku: `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md`.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
 - Neuer Expertenpunkt: `3D Datenanalyse` fuer interaktive visuelle Analyse und Simulation.

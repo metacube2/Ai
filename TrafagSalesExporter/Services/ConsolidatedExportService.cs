@@ -43,6 +43,17 @@ public class ConsolidatedExportService : IConsolidatedExportService
                 .ThenBy(r => r.InvoiceNumber)
                 .ThenBy(r => r.PositionOnInvoice)
                 .ToList());
+        var proofPath = _excelService.CreateDashboardProofExcelFile(
+            outputDir,
+            DateTime.UtcNow.Date,
+            consolidatedRecords
+                .OrderBy(r => r.Land)
+                .ThenBy(r => r.Tsc)
+                .ThenByDescending(r => r.InvoiceDate ?? DateTime.MinValue)
+                .ThenBy(r => r.InvoiceNumber)
+                .ThenBy(r => r.PositionOnInvoice)
+                .ToList(),
+            settings.UseAuditCsvAsCentralSource);
 
         if (spConfig is not null &&
             !string.IsNullOrWhiteSpace(spConfig.TenantId) &&
@@ -58,6 +69,10 @@ public class ConsolidatedExportService : IConsolidatedExportService
             await _sharePointService.UploadAsync(
                 spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
                 spConfig.SiteUrl, sharePointFolder, landSubfolder, consolidatedPath,
+                uploadTimestampedCopyIfLocked: true);
+            await _sharePointService.UploadAsync(
+                spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
+                spConfig.SiteUrl, sharePointFolder, landSubfolder, proofPath,
                 uploadTimestampedCopyIfLocked: true);
         }
 

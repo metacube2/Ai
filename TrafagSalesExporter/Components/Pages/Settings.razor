@@ -294,8 +294,8 @@
                           HelperText="@T("Wenn leer, wird ./output unter dem Programmverzeichnis verwendet.", "If empty, ./output under the application directory is used.")" />
         </MudItem>
         <MudItem xs="12" md="6">
-            <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="@T("Lokaler Pfad Zentrale Datei", "Local path for central file")"
-                          HelperText="@T("Optional. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet.", "Optional. If empty, the default path for site files is used.")" />
+            <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="@T("Lokaler Pfad Zentrale Datei und Nachweis", "Local path for central and proof files")"
+                          HelperText="@T("Optional. Zentrale Excel und Dashboard-Nachweis werden hier abgelegt. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet.", "Optional. Central Excel and dashboard proof file are written here. If empty, the default path for site files is used.")" />
         </MudItem>
         <MudItem xs="12">
             <div class="audit-csv-settings">

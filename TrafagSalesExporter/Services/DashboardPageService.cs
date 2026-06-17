@@ -206,19 +206,31 @@ LIMIT 1000;
         if (!Directory.Exists(outputDirectory))
             return [];
 
-        return Directory.GetFiles(outputDirectory, "Sales_All_*.xlsx")
+        var consolidated = Directory.GetFiles(outputDirectory, "Sales_All_*.xlsx")
             .Select(path => new FileInfo(path))
             .OrderByDescending(file => file.LastWriteTime)
-            .Take(1)
-            .Select(file => new ConsolidatedDashboardRow
+            .FirstOrDefault();
+        var proof = Directory.GetFiles(outputDirectory, "Finance_Dashboard_Nachweis_*.xlsx")
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTime)
+            .FirstOrDefault();
+
+        return new[] { BuildConsolidatedRow("Konsolidierter Export", consolidated), BuildConsolidatedRow("Dashboard Nachweis", proof) }
+            .Where(row => row is not null)
+            .Select(row => row!)
+            .ToList();
+    }
+
+    private static ConsolidatedDashboardRow? BuildConsolidatedRow(string label, FileInfo? file)
+        => file is null
+            ? null
+            : new ConsolidatedDashboardRow
             {
-                Label = "Konsolidierter Export",
+                Label = label,
                 FilePath = file.FullName,
                 DisplayPath = file.FullName,
                 LastModified = file.LastWriteTime
-            })
-            .ToList();
-    }
+            };
 
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
     {
