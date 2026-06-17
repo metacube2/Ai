@@ -408,3 +408,24 @@ public class ManagementFinanceSummaryResult
     public List<ManagementGroupMarginDivisionRow> GroupMarginDivisionRows { get; set; } = [];
     public List<ManagementGroupMarginDetailRow> GroupMarginDetailRows { get; set; } = [];
 }
+
+public sealed class ManagementDecisionResult
+{
+    public List<ManagementDecisionItem> Items { get; set; } = [];
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+}
+
+public sealed class ManagementDecisionItem
+{
+    public string Area { get; set; } = string.Empty;
+    public string Topic { get; set; } = string.Empty;
+    public string Severity { get; set; } = "Info";
+    public int Score { get; set; }
+    public string Impact { get; set; } = string.Empty;
+    public string Recommendation { get; set; } = string.Empty;
+    public string Decision { get; set; } = string.Empty;
+    public string Owner { get; set; } = string.Empty;
+    public string Source { get; set; } = string.Empty;
+    public string Link { get; set; } = string.Empty;
+    public string Metric { get; set; } = string.Empty;
+}

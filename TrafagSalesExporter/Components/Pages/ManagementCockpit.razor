@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 @inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
 
 <PageTitle>@T("Management Analyse", "Management analysis")</PageTitle>
 
@@ -51,7 +52,8 @@
 
 @if (_financeResult is not null)
 {
-    <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeOverviewTabIndex">
+    <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0"
+             ActivePanelIndex="_activeOverviewTabIndex" ActivePanelIndexChanged="OnOverviewTabChanged">
         <MudTabPanel Text="@T("Schnelluebersicht", "Quick overview")" Icon="@Icons.Material.Filled.Speed">
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
@@ -87,6 +89,11 @@
             <MudPaper Class="pa-4 mb-4" Elevation="1">
                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Rule"
+                               Href="management-cockpit?section=decisions">
+                        @T("Management Entscheidungen", "Management decisions")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.StackedLineChart"
                                Href="management-cockpit?section=groupmargin">
                         @T("Gruppenmarge", "Group margin")
@@ -95,6 +102,11 @@
                                StartIcon="@Icons.Material.Filled.ViewInAr"
                                Href="management-cockpit?section=3d">
                         @T("3D Datenanalyse", "3D data analysis")
+                    </MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Home"
+                               OnClick="NavigateHome">
+                        @T("Home", "Home")
                     </MudButton>
                 </MudStack>
             </MudPaper>
@@ -171,6 +183,89 @@
                             </RowTemplate>
                         </MudTable>
                     </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Management Entscheidungen", "Management decisions")" Icon="@Icons.Material.Filled.Rule">
+            @if (_decisionResult is null || _decisionResult.Items.Count == 0)
+            {
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">@T("Keine offenen Management-Entscheidungen", "No open management decisions")</MudText>
+                    <MudText Typo="Typo.body2">@T("Die aktuellen Finance-, Einkaufs- und HR-Signale erzeugen keine priorisierten Entscheidungspunkte.", "The current finance, purchasing and HR signals do not create prioritized decision items.")</MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Offene Entscheidungen", "Open decisions")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Count.ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("aus Finance, Einkauf und HR", "from finance, purchasing and HR")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Hohe Prioritaet", "High priority")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Count(item => IsHighDecision(item.Severity)).ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("Managemententscheid noetig", "management decision needed")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Bereiche", "Areas")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Select(item => item.Area).Distinct(StringComparer.OrdinalIgnoreCase).Count().ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("betroffene Funktionen", "affected functions")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Stand", "As of")</MudText>
+                            <MudText Typo="Typo.h6">@FormatDateTime(_decisionResult.CreatedAt)</MudText>
+                            <MudText Typo="Typo.body2">@T("aggregiert, ohne HR-Personendaten", "aggregated, no HR personal data")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <MudPaper Class="pa-4 mb-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Entscheidungsradar", "Decision radar")</MudText>
+                    <MudTable Items="_decisionResult.Items" Dense Hover Striped>
+                        <HeaderContent>
+                            <MudTh>@T("Prioritaet", "Priority")</MudTh>
+                            <MudTh>@T("Bereich", "Area")</MudTh>
+                            <MudTh>@T("Thema", "Topic")</MudTh>
+                            <MudTh>@T("Kennzahl", "Metric")</MudTh>
+                            <MudTh>@T("Auswirkung", "Impact")</MudTh>
+                            <MudTh>@T("Empfehlung", "Recommendation")</MudTh>
+                            <MudTh>@T("Entscheidung", "Decision")</MudTh>
+                            <MudTh>@T("Owner", "Owner")</MudTh>
+                            <MudTh>@T("Aktion", "Action")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@DecisionSeverityColor(context.Severity)" Variant="Variant.Filled">
+                                    @($"{context.Severity} / {context.Score}")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.Area</MudTd>
+                            <MudTd>
+                                <MudText Typo="Typo.body2">@context.Topic</MudText>
+                                <MudText Typo="Typo.caption">@context.Source</MudText>
+                            </MudTd>
+                            <MudTd>@context.Metric</MudTd>
+                            <MudTd>@context.Impact</MudTd>
+                            <MudTd>@context.Recommendation</MudTd>
+                            <MudTd>@context.Decision</MudTd>
+                            <MudTd>@context.Owner</MudTd>
+                            <MudTd>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                           Href="@context.Link" StartIcon="@Icons.Material.Filled.OpenInNew">
+                                    @T("Details", "Details")
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            }
         </MudTabPanel>
 
         <MudTabPanel Text="@T("Experten", "Experts")" Icon="@Icons.Material.Filled.Tune">
@@ -1277,6 +1372,14 @@
         </MudTabPanel>
     </MudTabs>
         </MudTabPanel>
+        <MudTabPanel Text="@T("Home", "Home")" Icon="@Icons.Material.Filled.Home">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6">@T("Zurueck zum Hauptfenster", "Back to main window")</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Home" OnClick="NavigateHome">
+                    @T("Home oeffnen", "Open home")
+                </MudButton>
+            </MudPaper>
+        </MudTabPanel>
     </MudTabs>
 }
 
@@ -1344,6 +1447,7 @@
     private ManagementCockpitResult? _result;
     private ManagementCockpitCentralResult? _centralResult;
     private ManagementFinanceSummaryResult? _financeResult;
+    private ManagementDecisionResult? _decisionResult;
     private int _selectedFinanceYear;
     private string? _selectedFinanceCountryKey;
     private string? _selectedFinanceCurrency;
@@ -1390,7 +1494,7 @@
 
     protected override void OnParametersSet()
     {
-        _activeOverviewTabIndex = string.IsNullOrWhiteSpace(Section) ? 0 : 1;
+        _activeOverviewTabIndex = ResolveOverviewTabIndex(Section);
 
         if (string.Equals(Section, "division", StringComparison.OrdinalIgnoreCase))
         {
@@ -1528,6 +1632,7 @@
             _financeCountryOptions = _financeResult.CountryOptions;
             _financeCurrencyOptions = _financeResult.CurrencyOptions;
             _selectedFinanceYear = _financeResult.Filter.Year;
+            _decisionResult = await CockpitPageService.BuildManagementDecisionsAsync(_financeResult);
             _finance3dNeedsRender = true;
         }
         catch (Exception ex)
@@ -1545,6 +1650,20 @@
         _centralLandFilter = null;
         _centralTscFilter = null;
     }
+
+    private void OnOverviewTabChanged(int index)
+    {
+        if (index == ManagementOverviewTabIndexes.Home)
+        {
+            NavigateHome();
+            return;
+        }
+
+        _activeOverviewTabIndex = index;
+    }
+
+    private void NavigateHome()
+        => Navigation.NavigateTo("https://trch-webapp-bidashboard.trafagch.local/BiDashboard", forceLoad: true);
 
     private void ToggleProductFinanceTop10()
     {
@@ -2052,6 +2171,18 @@
         _ => Color.Info
     };
 
+    private static Color DecisionSeverityColor(string severity) => severity.ToUpperInvariant() switch
+    {
+        "HIGH" or "ERROR" or "ROT" => Color.Error,
+        "MEDIUM" or "WARNING" or "GELB" => Color.Warning,
+        _ => Color.Info
+    };
+
+    private static bool IsHighDecision(string severity)
+        => severity.Equals("High", StringComparison.OrdinalIgnoreCase) ||
+           severity.Equals("Error", StringComparison.OrdinalIgnoreCase) ||
+           severity.Equals("Rot", StringComparison.OrdinalIgnoreCase);
+
     private static Color ProductAssignmentColor(string status) => status switch
     {
         "Zugeordnet" => Color.Success,
@@ -2194,6 +2325,24 @@
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private static int ResolveOverviewTabIndex(string? section)
+        => string.IsNullOrWhiteSpace(section)
+            ? ManagementOverviewTabIndexes.Quick
+            : section.ToLowerInvariant() switch
+            {
+                "decisions" => ManagementOverviewTabIndexes.Decisions,
+                "home" => ManagementOverviewTabIndexes.Home,
+                _ => ManagementOverviewTabIndexes.Experts
+            };
+
+    private static class ManagementOverviewTabIndexes
+    {
+        public const int Quick = 0;
+        public const int Decisions = 1;
+        public const int Experts = 2;
+        public const int Home = 3;
+    }
 
     private static class ProductFinanceGroupLevels
     {
