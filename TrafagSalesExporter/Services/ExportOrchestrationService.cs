@@ -153,7 +153,7 @@ public class ExportOrchestrationService
                 return null;
 
             _consolidatedExportRunning = true;
-            _consolidatedExportStatus = "Zentrale Datei erzeugen...";
+            _consolidatedExportStatus = "Neueste Laenderdateien pruefen...";
         }
         NotifyChanged();
 

@@ -279,6 +279,95 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         Assert.Equal(10m, record.SalesPriceValue);
     }
 
+    [Fact]
+    public async Task CentralSalesDataProvider_LatestRecords_Uses_Newest_Source_Per_Tsc()
+    {
+        var csvService = new ExportAuditCsvService();
+        var settings = new ExportSettings
+        {
+            AuditCsvEnabled = true,
+            LocalSiteExportFolder = _tempDirectory
+        };
+        var chCsvPath = await csvService.WriteSiteAuditCsvAsync(
+            new Site { TSC = "TRCH", Land = "Schweiz" },
+            settings,
+            "SAP",
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "SAP",
+                    ExtractionDate = new DateTime(2026, 6, 9),
+                    Tsc = "TRCH",
+                    Land = "Schweiz",
+                    InvoiceNumber = "CH-CSV",
+                    SalesPriceValue = 10m
+                }
+            ]);
+        var ukCsvPath = await csvService.WriteSiteAuditCsvAsync(
+            new Site { TSC = "TRUK", Land = "England" },
+            settings,
+            "MANUAL_EXCEL",
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "MANUAL_EXCEL",
+                    ExtractionDate = new DateTime(2026, 6, 11),
+                    Tsc = "TRUK",
+                    Land = "England",
+                    InvoiceNumber = "UK-CSV",
+                    SalesPriceValue = 20m
+                }
+            ]);
+        File.SetLastWriteTimeUtc(chCsvPath!, new DateTime(2026, 6, 10, 8, 0, 0, DateTimeKind.Utc));
+        File.SetLastWriteTimeUtc(ukCsvPath!, new DateTime(2026, 6, 12, 8, 0, 0, DateTimeKind.Utc));
+
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using (var db = new AppDbContext(options))
+        {
+            await db.Database.EnsureCreatedAsync();
+            db.ExportSettings.Add(settings);
+            db.Sites.Add(new Site
+            {
+                Id = 1,
+                Schema = "SAP",
+                TSC = "TRCH",
+                Land = "Schweiz",
+                SourceSystem = "SAP",
+                IsActive = true
+            });
+            db.CentralSalesRecords.Add(new CentralSalesRecord
+            {
+                StoredAtUtc = new DateTime(2026, 6, 11, 8, 0, 0, DateTimeKind.Utc),
+                SiteId = 1,
+                SourceSystem = "SAP",
+                ExtractionDate = new DateTime(2026, 6, 11),
+                Tsc = "TRCH",
+                InvoiceNumber = "CH-DB",
+                Land = "Schweiz",
+                SalesPriceValue = 30m,
+                DocumentType = "INV"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var dbFactory = new TestDbContextFactory(options);
+        var centralService = new CentralSalesRecordService(dbFactory, new NullAppEventLogService());
+        var provider = new CentralSalesDataProvider(dbFactory, centralService, csvService);
+
+        var records = await provider.GetLatestRecordsBySiteAsync();
+
+        Assert.Equal(2, records.Count);
+        Assert.Contains(records, record => record.Tsc == "TRCH" && record.InvoiceNumber == "CH-DB");
+        Assert.Contains(records, record => record.Tsc == "TRUK" && record.InvoiceNumber == "UK-CSV");
+        Assert.DoesNotContain(records, record => record.InvoiceNumber == "CH-CSV");
+    }
+
     private sealed class NullAppEventLogService : IAppEventLogService
     {
         public Task WriteAsync(string category, string message, string level = "Info", int? siteId = null, string? land = null, string? details = null)

@@ -21,8 +21,16 @@ public interface IExportAuditCsvService
 
     Task<List<SalesRecord>> ReadLatestSiteAuditCsvRecordsAsync(ExportSettings settings);
 
+    Task<IReadOnlyList<AuditCsvSnapshot>> ReadLatestSiteAuditCsvSnapshotsAsync(ExportSettings settings);
+
     string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null);
 }
+
+public sealed record AuditCsvSnapshot(
+    string Tsc,
+    string Path,
+    DateTime LastWriteTimeUtc,
+    List<SalesRecord> Records);
 
 public sealed class ExportAuditCsvService : IExportAuditCsvService
 {
@@ -138,6 +146,11 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
     }
 
     public async Task<List<SalesRecord>> ReadLatestSiteAuditCsvRecordsAsync(ExportSettings settings)
+        => (await ReadLatestSiteAuditCsvSnapshotsAsync(settings))
+            .SelectMany(snapshot => snapshot.Records)
+            .ToList();
+
+    public async Task<IReadOnlyList<AuditCsvSnapshot>> ReadLatestSiteAuditCsvSnapshotsAsync(ExportSettings settings)
     {
         var directory = ResolveAuditCsvDirectory(settings);
         if (!Directory.Exists(directory))
@@ -152,15 +165,21 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
                 .ThenByDescending(file => IsProcessedMergeInputFile(file.Path))
                 .ThenByDescending(file => Path.GetFileName(file.Path), StringComparer.OrdinalIgnoreCase)
                 .First()
-                .Path)
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            )
+            .OrderBy(file => file.Tsc, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var records = new List<SalesRecord>();
+        var snapshots = new List<AuditCsvSnapshot>();
         foreach (var file in latestFiles)
-            records.AddRange(await ReadFileAsync(file));
+        {
+            snapshots.Add(new AuditCsvSnapshot(
+                file.Tsc,
+                file.Path,
+                File.GetLastWriteTimeUtc(file.Path),
+                await ReadFileAsync(file.Path)));
+        }
 
-        return records;
+        return snapshots;
     }
 
     public string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null)

@@ -30,13 +30,22 @@ public class ConsolidatedExportService : IConsolidatedExportService
 
     public async Task<string?> ExportAsync()
     {
-        var consolidatedRecords = await _centralSalesDataProvider.GetRecordsAsync();
-        if (consolidatedRecords.Count == 0)
-            return null;
-
         using var db = await _dbFactory.CreateDbContextAsync();
         var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
         var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+        var sites = await db.Sites
+            .AsNoTracking()
+            .Where(site => site.IsActive)
+            .OrderBy(site => site.Land)
+            .ThenBy(site => site.TSC)
+            .ToListAsync();
+
+        await SyncLatestProcessedMergeInputFilesAsync(sites, settings, spConfig);
+
+        var consolidatedRecords = await _centralSalesDataProvider.GetLatestRecordsBySiteAsync();
+        if (consolidatedRecords.Count == 0)
+            return null;
+
         var outputDir = ResolveConsolidatedOutputDirectory(settings);
         var fileDate = DateTime.UtcNow.Date;
         var sortedRecords = consolidatedRecords
@@ -88,6 +97,84 @@ public class ConsolidatedExportService : IConsolidatedExportService
         return consolidatedPath;
     }
 
+    private async Task SyncLatestProcessedMergeInputFilesAsync(
+        IReadOnlyCollection<Site> sites,
+        ExportSettings settings,
+        SharePointConfig? spConfig)
+    {
+        if (!HasCompleteSharePointConfig(spConfig))
+            return;
+
+        var auditDirectory = _auditCsvService.ResolveAuditCsvDirectory(settings);
+        Directory.CreateDirectory(auditDirectory);
+
+        foreach (var site in sites)
+        {
+            var latest = await ResolveLatestSharePointProcessedMergeInputFileAsync(site, spConfig!);
+            if (latest?.LastModifiedUtc is null)
+                continue;
+
+            var fileName = ResolveFileName(latest.FileReference);
+            if (string.IsNullOrWhiteSpace(fileName))
+                continue;
+
+            var targetPath = Path.Combine(auditDirectory, fileName);
+            var remoteLastWriteUtc = latest.LastModifiedUtc.Value.UtcDateTime;
+            if (File.Exists(targetPath) && File.GetLastWriteTimeUtc(targetPath) >= remoteLastWriteUtc.AddSeconds(-1))
+                continue;
+
+            var tempPath = await _sharePointService.DownloadToTempFileAsync(
+                spConfig!.TenantId,
+                spConfig.ClientId,
+                spConfig.ClientSecret,
+                spConfig.SiteUrl,
+                latest.FileReference);
+
+            try
+            {
+                File.Copy(tempPath, targetPath, overwrite: true);
+                File.SetLastWriteTimeUtc(targetPath, remoteLastWriteUtc);
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                    File.Delete(tempPath);
+            }
+        }
+    }
+
+    private async Task<SharePointFileReference?> ResolveLatestSharePointProcessedMergeInputFileAsync(
+        Site site,
+        SharePointConfig spConfig)
+    {
+        SharePointFileReference? latest = null;
+        foreach (var folder in ResolveSharePointProcessedMergeInputFolders(site, spConfig))
+        {
+            try
+            {
+                var candidate = await _sharePointService.ResolveLatestProcessedMergeInputFileAsync(
+                    spConfig.TenantId,
+                    spConfig.ClientId,
+                    spConfig.ClientSecret,
+                    spConfig.SiteUrl,
+                    folder,
+                    site.TSC);
+
+                if (candidate?.LastModifiedUtc is null)
+                    continue;
+
+                if (latest?.LastModifiedUtc is null || candidate.LastModifiedUtc.Value > latest.LastModifiedUtc.Value)
+                    latest = candidate;
+            }
+            catch
+            {
+                // A status/sync probe must not block central export when another source is still usable.
+            }
+        }
+
+        return latest;
+    }
+
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
     {
         if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
@@ -119,4 +206,31 @@ public class ConsolidatedExportService : IConsolidatedExportService
         var normalized = folder.Trim().TrimEnd('/', '\\');
         return normalized.Equals("/Shared Documents/Exports", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool HasCompleteSharePointConfig(SharePointConfig? config)
+        => config is not null &&
+           !string.IsNullOrWhiteSpace(config.TenantId) &&
+           !string.IsNullOrWhiteSpace(config.ClientId) &&
+           !string.IsNullOrWhiteSpace(config.ClientSecret) &&
+           !string.IsNullOrWhiteSpace(config.SiteUrl);
+
+    private static IEnumerable<string> ResolveSharePointProcessedMergeInputFolders(Site site, SharePointConfig sharePointConfig)
+    {
+        if (LooksLikeSharePointReference(site.ManualImportFilePath))
+            yield return site.ManualImportFilePath.Trim();
+
+        if (!string.IsNullOrWhiteSpace(sharePointConfig.ExportFolder))
+            yield return string.Join("/", sharePointConfig.ExportFolder.Trim('/'), site.Land.Trim('/')).Trim('/');
+    }
+
+    private static bool LooksLikeSharePointReference(string path)
+        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+           path.Contains("sharepoint.com", StringComparison.OrdinalIgnoreCase);
+
+    private static string ResolveFileName(string fileReference)
+        => fileReference
+            .Split('/', '\\')
+            .LastOrDefault(segment => !string.IsNullOrWhiteSpace(segment))
+            ?.Trim() ?? string.Empty;
 }
