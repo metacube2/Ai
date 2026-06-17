@@ -138,6 +138,71 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task WriteConsolidatedAuditCsvAsync_Writes_All_File_Without_Becoming_Central_Input()
+    {
+        var service = new ExportAuditCsvService();
+        var settings = new ExportSettings
+        {
+            AuditCsvEnabled = true,
+            LocalSiteExportFolder = _tempDirectory,
+            LocalConsolidatedExportFolder = _tempDirectory
+        };
+
+        var sitePath = await service.WriteSiteAuditCsvAsync(
+            new Site { TSC = "TRCH", Land = "Schweiz" },
+            settings,
+            "SAP",
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "SAP",
+                    Tsc = "TRCH",
+                    Land = "Schweiz",
+                    InvoiceNumber = "CH-1",
+                    ProductDivisionCode = "0005",
+                    ProductDivisionText = "Transmitters"
+                }
+            ]);
+        var allPath = await service.WriteConsolidatedAuditCsvAsync(
+            settings,
+            new DateTime(2026, 6, 17),
+            _tempDirectory,
+            [
+                new SalesRecord
+                {
+                    SourceSystem = "SAP",
+                    Tsc = "TRCH",
+                    Land = "Schweiz",
+                    InvoiceNumber = "CH-1",
+                    ProductDivisionCode = "0005",
+                    ProductDivisionText = "Transmitters"
+                },
+                new SalesRecord
+                {
+                    SourceSystem = "SAP",
+                    Tsc = "TRUS",
+                    Land = "USA",
+                    InvoiceNumber = "US-1",
+                    ProductDivisionCode = "0008",
+                    ProductDivisionText = "Others"
+                }
+            ]);
+
+        Assert.True(File.Exists(sitePath));
+        Assert.True(File.Exists(allPath));
+        Assert.Equal("Finance_Dashboard_Audit_All_2026-06-17.csv", Path.GetFileName(allPath));
+        var csv = await File.ReadAllTextAsync(allPath!);
+        Assert.Contains("ProductDivisionCode", csv);
+        Assert.Contains("0008", csv);
+
+        var centralInputRecords = await service.ReadLatestSiteAuditCsvRecordsAsync(settings);
+
+        var record = Assert.Single(centralInputRecords);
+        Assert.Equal("CH-1", record.InvoiceNumber);
+    }
+
+    [Fact]
     public async Task CentralSalesDataProvider_Uses_AuditCsv_When_Configured()
     {
         var csvService = new ExportAuditCsvService();

@@ -13,6 +13,12 @@ public interface IExportAuditCsvService
         string fallbackOutputDirectory,
         IReadOnlyList<SalesRecord> records);
 
+    Task<string?> WriteConsolidatedAuditCsvAsync(
+        ExportSettings settings,
+        DateTime fileDate,
+        string fallbackOutputDirectory,
+        IReadOnlyList<SalesRecord> records);
+
     Task<List<SalesRecord>> ReadLatestSiteAuditCsvRecordsAsync(ExportSettings settings);
 
     string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null);
@@ -101,6 +107,36 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         return path;
     }
 
+    public async Task<string?> WriteConsolidatedAuditCsvAsync(
+        ExportSettings settings,
+        DateTime fileDate,
+        string fallbackOutputDirectory,
+        IReadOnlyList<SalesRecord> records)
+    {
+        if (!settings.AuditCsvEnabled)
+            return null;
+
+        var directory = string.IsNullOrWhiteSpace(fallbackOutputDirectory)
+            ? ResolveConsolidatedAuditCsvDirectory(settings)
+            : fallbackOutputDirectory.Trim();
+        Directory.CreateDirectory(directory);
+
+        var fileName = $"Finance_Dashboard_Audit_All_{fileDate:yyyy-MM-dd}.csv";
+        var path = Path.Combine(directory, fileName);
+
+        await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+        await using var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+
+        await writer.WriteLineAsync(string.Join(Delimiter, Headers.Select(Escape)));
+        foreach (var record in records)
+        {
+            var site = new Site { TSC = record.Tsc, Land = record.Land };
+            await writer.WriteLineAsync(string.Join(Delimiter, BuildRow(site, record.SourceSystem, record).Select(Escape)));
+        }
+
+        return path;
+    }
+
     public async Task<List<SalesRecord>> ReadLatestSiteAuditCsvRecordsAsync(ExportSettings settings)
     {
         var directory = ResolveAuditCsvDirectory(settings);
@@ -131,6 +167,17 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
     {
         if (!string.IsNullOrWhiteSpace(fallbackOutputDirectory))
             return fallbackOutputDirectory.Trim();
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
+            return settings.LocalSiteExportFolder.Trim();
+
+        return Path.Combine(AppContext.BaseDirectory, "output");
+    }
+
+    private static string ResolveConsolidatedAuditCsvDirectory(ExportSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
+            return settings.LocalConsolidatedExportFolder.Trim();
 
         if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
             return settings.LocalSiteExportFolder.Trim();

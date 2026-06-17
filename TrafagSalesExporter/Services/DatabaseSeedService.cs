@@ -8,10 +8,12 @@ namespace TrafagSalesExporter.Services;
 public class DatabaseSeedService : IDatabaseSeedService
 {
     private const string SpainSharePointFolder = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien";
+    private const string FinanceImportRootFolder = "/Import/Finance";
 
     public void SeedDefaults(AppDbContext db)
     {
         SeedIfEmpty(db);
+        EnsureFinanceCentralSharePointFolder(db);
         EnsureRecommendedTransformationRules(db);
         EnsureSourceSystemDefinitions(db);
         EnsureIndiaSageHanaConfiguration(db);
@@ -49,7 +51,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         {
             SiteUrl = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform",
             ExportFolder = "/Shared Documents/Exports/",
-            CentralExportFolder = "",
+            CentralExportFolder = FinanceImportRootFolder,
             TenantId = "",
             ClientId = "",
             ClientSecret = ""
@@ -67,6 +69,16 @@ public class DatabaseSeedService : IDatabaseSeedService
             ExchangeRateDateField = ExchangeRateDateFields.PostingDate
         });
 
+        db.SaveChanges();
+    }
+
+    private static void EnsureFinanceCentralSharePointFolder(AppDbContext db)
+    {
+        var config = db.SharePointConfigs.OrderBy(x => x.Id).FirstOrDefault();
+        if (config is null || !string.IsNullOrWhiteSpace(config.CentralExportFolder))
+            return;
+
+        config.CentralExportFolder = FinanceImportRootFolder;
         db.SaveChanges();
     }
 
