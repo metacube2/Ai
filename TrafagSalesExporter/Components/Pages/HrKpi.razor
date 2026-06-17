@@ -88,7 +88,7 @@ else
                 </MudButton>
             </MudItem>
             <MudItem xs="6" md="2">
-                <MudSelect T="int?" @bind-Value="_year" Label="@T("Austrittsjahr", "Leaver year")" Dense Clearable>
+                <MudSelect T="int?" @bind-Value="_year" Label="@T("Fluktuationsjahr", "Turnover year")" HelperText="@T("Steuert Monat, Quartal, Hochrechnung Jahr und Effektiv Jahr.", "Controls month, quarter, annual forecast and effective year.")" Dense Clearable>
                     @foreach (var option in _result?.ExitYearOptions ?? [])
                     {
                         <MudSelectItem Value="@((int?)option)">@option</MudSelectItem>
@@ -341,6 +341,26 @@ else
                 SearchText = _searchText,
                 ManagementView = _managementView
             });
+            if (!_year.HasValue && _result.ExitYearOptions.Count > 0)
+            {
+                _year = _result.ExitYearOptions[0];
+                _result = await HrKpiService.BuildAsync(new HrKpiOptions
+                {
+                    DataFolder = _dataFolder,
+                    Year = _year,
+                    FromDate = _fromDate,
+                    ToDate = _toDate,
+                    EntryYear = _entryYear,
+                    Organisationseinheit = _organisation,
+                    KostenstelleText = _kostenstelle,
+                    Mitarbeitertyp = _mitarbeitertyp,
+                    FluktuationFilter = _fluktuationFilter,
+                    GlzAmpel = _glzAmpel,
+                    RestferienAmpel = _restferienAmpel,
+                    SearchText = _searchText,
+                    ManagementView = _managementView
+                });
+            }
             _selectionStore.LastSelection = CreateSelectionState();
             await WriteSelectionStoreAsync();
         }

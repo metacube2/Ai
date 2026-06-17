@@ -501,12 +501,12 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Austritte Arbeitnehmerkuendigung", Value = employeeResignationCount.ToString("N0"), Detail = "AN-/MA-Kuendigungen", Severity = "Normal" },
             new() { Label = "Austritte Fluktuationsrelevant", Value = relevantLeaverCount.ToString("N0"), Detail = "Nach HR-Definition", Severity = "Normal" },
             new() { Label = "Austritte Nicht relevant", Value = nonRelevantLeaverCount.ToString("N0"), Detail = "Ausgeschlossen oder unklar", Severity = nonRelevantLeaverCount > relevantLeaverCount ? "Warning" : "Normal" },
+            new() { Label = "Fluktuation Filterauswahl %", Value = selectionRate.ToString("P1"), Detail = "Aktuelle Auswahl / Headcount, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal" },
             new() { Label = "Ausschlussgrund Anzahl", Value = totalLeavers.ToString("N0"), Detail = "Basis fuer Ausschlussgrund-Tabelle", Severity = "Normal" }
         };
 
         if (!period.ShowPeriodMetrics || !period.BreakdownYear.HasValue)
         {
-            metrics.Insert(5, new HrKpiMetric { Label = "Fluktuation Auswahl %", Value = selectionRate.ToString("P1"), Detail = "Auswahl / Headcount, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal" });
             return metrics;
         }
 
@@ -992,7 +992,7 @@ internal sealed class HrKpiDashboardBuilder
 
         int? breakdownYear = null;
         var showPeriodMetrics = false;
-        if (!hasRange && options.Year.HasValue)
+        if (options.Year.HasValue)
         {
             breakdownYear = options.Year.Value;
             showPeriodMetrics = true;

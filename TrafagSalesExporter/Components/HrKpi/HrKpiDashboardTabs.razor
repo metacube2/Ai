@@ -224,7 +224,7 @@
         if (Result.Options.FromDate.HasValue || Result.Options.ToDate.HasValue)
             parts.Add($"{T("Zeitraum", "Period")}: {FormatDate(Result.Options.FromDate)} - {FormatDate(Result.Options.ToDate)}");
         if (Result.Options.Year.HasValue)
-            parts.Add($"{T("Austrittsjahr", "Leaver year")}: {Result.Options.Year.Value}");
+            parts.Add($"{T("Fluktuationsjahr", "Turnover year")}: {Result.Options.Year.Value}");
         parts.Add($"{T("Organisation", "Organisation")}: {BlankAsAll(Result.Options.Organisationseinheit)}");
         parts.Add($"{T("Mitarbeitertyp", "Employee type")}: {BlankAsAll(Result.Options.Mitarbeitertyp)}");
         if (!string.IsNullOrWhiteSpace(Result.Options.KostenstelleText))
