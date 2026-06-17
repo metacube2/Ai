@@ -33,6 +33,9 @@
         </svg>
         <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
         <div class="home-subtitle">@T("Automatisch angebundene Laenderabfragen mit taeglichem Refresh", "Automatically connected country queries with daily refresh")</div>
+        <img class="home-connectivity-image"
+             src="mainimage.png"
+             alt="@T("Trafag Global BI Cockpit mit automatisch angebundenen Laenderstandorten", "Trafag Global BI Cockpit with automatically connected country sites")" />
         @if (LandingSettings.ShowWalkingLabFigure)
         {
             <div class="walking-stage" aria-label="Walking lab figure">
@@ -57,18 +60,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
+        background: #f7f6f7;
     }
 
     .home-content {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 18px;
+        gap: 12px;
     }
 
     .home-manometer {
-        width: min(336px, 58vw);
+        width: min(170px, 34vw);
         height: auto;
         display: block;
     }
@@ -89,6 +92,14 @@
         line-height: 1.4;
         text-align: center;
         letter-spacing: 0;
+    }
+
+    .home-connectivity-image {
+        width: min(1060px, 95vw);
+        max-height: min(54vh, 590px);
+        height: auto;
+        display: block;
+        object-fit: contain;
     }
 
     .walking-stage {
@@ -255,6 +266,21 @@
         72% { transform: rotate(24deg); }
         86% { transform: rotate(56deg); }
         100% { transform: rotate(-58deg); }
+    }
+
+    @@media (max-width: 700px) {
+        .home-content {
+            gap: 10px;
+        }
+
+        .home-manometer {
+            width: min(128px, 32vw);
+        }
+
+        .home-connectivity-image {
+            width: min(96vw, 720px);
+            max-height: 48vh;
+        }
     }
 </style>
 
