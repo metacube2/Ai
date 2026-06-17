@@ -147,7 +147,7 @@
         var result = await DialogService.ShowMessageBox(
             T("Alte Logs loeschen", "Delete old logs"),
             string.Format(
-                T("Logs aelter als {0} loeschen?", "Delete logs older than {0}?"),
+                T("Export- und technische Logs aelter als {0} loeschen?", "Delete export and technical logs older than {0}?"),
                 FormatRetention(_deleteOlderThanDays)),
             yesText: T("Loeschen", "Delete"), cancelText: T("Abbrechen", "Cancel"));
 
@@ -155,7 +155,7 @@
 
         var deletedCount = await LogsPageActions.DeleteOldLogsAsync(_deleteOlderThanDays);
         await LoadLogsAsync();
-        Snackbar.Add(string.Format(T("{0} alte Logs geloescht", "{0} old logs deleted"), deletedCount), Severity.Info);
+        Snackbar.Add(string.Format(T("{0} alte Export-/Technik-Logs geloescht", "{0} old export/technical logs deleted"), deletedCount), Severity.Info);
     }
 
     private string FormatRetention(int days)

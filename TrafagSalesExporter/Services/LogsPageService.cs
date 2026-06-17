@@ -55,9 +55,11 @@ public sealed class LogsPageService : ILogsPageService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var cutoff = DateTime.Now.AddDays(-olderThanDays);
         var oldLogs = await db.ExportLogs.Where(l => l.Timestamp < cutoff).ToListAsync();
+        var oldAppLogs = await db.AppEventLogs.Where(l => l.Timestamp < cutoff).ToListAsync();
         db.ExportLogs.RemoveRange(oldLogs);
+        db.AppEventLogs.RemoveRange(oldAppLogs);
         await db.SaveChangesAsync();
-        return oldLogs.Count;
+        return oldLogs.Count + oldAppLogs.Count;
     }
 }
 
