@@ -4,7 +4,7 @@
 @inject IUiTextService UiText
 @inject ILandingPageSettingsService LandingSettings
 
-<PageTitle>@T("Trafag Cockpit", "Trafag Cockpit")</PageTitle>
+<PageTitle>@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</PageTitle>
 
 <div class="home-shell">
     <div class="home-content">
@@ -31,7 +31,8 @@
             </g>
             <circle cx="300" cy="260" r="28" fill="#050505" />
         </svg>
-        <div class="home-welcome">@T("Willkommen im Trafag Analyse Dashboard", "Welcome to the Trafag Analytical Dashboard")</div>
+        <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
+        <div class="home-subtitle">@T("Automatisch angebundene Laenderabfragen mit taeglichem Refresh", "Automatically connected country queries with daily refresh")</div>
         @if (LandingSettings.ShowWalkingLabFigure)
         {
             <div class="walking-stage" aria-label="Walking lab figure">
@@ -76,6 +77,16 @@
         color: #050505;
         font-size: 24px;
         font-weight: 700;
+        text-align: center;
+        letter-spacing: 0;
+    }
+
+    .home-subtitle {
+        max-width: 620px;
+        color: #424242;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.4;
         text-align: center;
         letter-spacing: 0;
     }

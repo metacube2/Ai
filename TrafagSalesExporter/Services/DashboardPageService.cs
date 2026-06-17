@@ -215,18 +215,23 @@ LIMIT 1000;
             .OrderByDescending(file => file.LastWriteTime)
             .FirstOrDefault();
 
-        return new[] { BuildConsolidatedRow("Konsolidierter Export", consolidated), BuildConsolidatedRow("Dashboard Nachweis", proof) }
+        return new[]
+        {
+            BuildConsolidatedRow("Konsolidierter Export", "Consolidated export", consolidated),
+            BuildConsolidatedRow("Dashboard Nachweis", "Dashboard proof", proof)
+        }
             .Where(row => row is not null)
             .Select(row => row!)
             .ToList();
     }
 
-    private static ConsolidatedDashboardRow? BuildConsolidatedRow(string label, FileInfo? file)
+    private static ConsolidatedDashboardRow? BuildConsolidatedRow(string label, string labelEnglish, FileInfo? file)
         => file is null
             ? null
             : new ConsolidatedDashboardRow
             {
                 Label = label,
+                LabelEnglish = labelEnglish,
                 FilePath = file.FullName,
                 DisplayPath = file.FullName,
                 LastModified = file.LastWriteTime
@@ -276,6 +281,7 @@ public sealed class DashboardRow
 public sealed class ConsolidatedDashboardRow
 {
     public string Label { get; set; } = string.Empty;
+    public string LabelEnglish { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
     public string DisplayPath { get; set; } = string.Empty;
     public DateTime? LastModified { get; set; }

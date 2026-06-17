@@ -175,7 +175,7 @@
             <MudTh>@T("Aktion", "Action")</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd>@context.Label</MudTd>
+            <MudTd>@T(context.Label, context.LabelEnglish)</MudTd>
             <MudTd>@context.DisplayPath</MudTd>
             <MudTd>@(context.LastModified.HasValue ? context.LastModified.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
             <MudTd>

@@ -26,6 +26,8 @@ public sealed class UiTextService : IUiTextService
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Trafag Finance/Sales Management Cockpit"] = "Trafag Cockpit de finanzas y ventas",
+                ["Trafag Global BI Cockpit"] = "Trafag Cockpit BI global",
+                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Consultas de paises conectadas automaticamente con actualizacion diaria",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Bienvenido al panel analítico de Trafag",
                 ["Finance Cockpit"] = "Cockpit financiero",
                 ["Finance Cockpit ist geschuetzt. Bitte separat anmelden."] = "El cockpit financiero está protegido. Inicie sesión por separado.",
@@ -349,11 +351,30 @@ public sealed class UiTextService : IUiTextService
                 ["Primaer"] = "Primario",
                 ["Einkaufsdatenquellen gespeichert."] = "Fuentes de datos de compras guardadas.",
                 ["Einkaufsdatenquellen auf Defaults gesetzt."] = "Fuentes de datos de compras restauradas a valores predeterminados.",
-                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Escribe una Sales_ProcessedMergeInput_*.csv por sitio durante la exportacion de paises con los datos transformados."
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Escribe una Sales_ProcessedMergeInput_*.csv por sitio durante la exportacion de paises con los datos transformados.",
+                ["Schnelluebersicht"] = "Resumen rapido",
+                ["Experten"] = "Expertos",
+                ["Laender Diagnose"] = "Diagnostico por pais",
+                ["Abweichungen"] = "Desviaciones",
+                ["Gutschriften"] = "Notas de credito",
+                ["Sparten-Finanzanalyse"] = "Analisis financiero por division",
+                ["Zentrale Spartenzuordnung"] = "Asignacion central de divisiones",
+                ["Gruppenmarge"] = "Margen de grupo",
+                ["3D Datenanalyse"] = "Analisis de datos 3D",
+                ["Konsolidierter Export"] = "Exportacion consolidada",
+                ["Dashboard Nachweis"] = "Comprobante del dashboard",
+                ["Zentrale Datei"] = "Archivo central",
+                ["Excel oeffnen"] = "Abrir Excel",
+                ["Keine zentrale Excel-Datei gefunden."] = "No se encontro ningun archivo Excel central.",
+                ["Zentrale Datei und Dashboard-Nachweis erzeugt im gewaehlten Ordner: {0}"] = "Archivo central y comprobante del dashboard creados en la carpeta seleccionada: {0}",
+                ["Lokaler Pfad Zentrale Datei und Nachweis"] = "Ruta local para archivo central y comprobante",
+                ["Optional. Zentrale Excel und Dashboard-Nachweis werden hier abgelegt. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet."] = "Opcional. El Excel central y el comprobante del dashboard se guardan aqui. Si esta vacio, se usa la ruta estandar de los archivos de sitio."
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Trafag Finance/Sales Management Cockpit"] = "Cockpit Trafag finanza e vendite",
+                ["Trafag Global BI Cockpit"] = "Cockpit BI globale Trafag",
+                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Query Paese collegate automaticamente con refresh giornaliero",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Benvenuto nel dashboard analitico Trafag",
                 ["Finance Cockpit"] = "Cockpit finance",
                 ["Finance Cockpit ist geschuetzt. Bitte separat anmelden."] = "Il cockpit finance è protetto. Effettuare un accesso separato.",
@@ -677,7 +698,24 @@ public sealed class UiTextService : IUiTextService
                 ["Primaer"] = "Primario",
                 ["Einkaufsdatenquellen gespeichert."] = "Fonti dati acquisti salvate.",
                 ["Einkaufsdatenquellen auf Defaults gesetzt."] = "Fonti dati acquisti ripristinate ai default.",
-                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Scrive una Sales_ProcessedMergeInput_*.csv per sito durante l'esportazione dei Paesi con i dati trasformati."
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Scrive una Sales_ProcessedMergeInput_*.csv per sito durante l'esportazione dei Paesi con i dati trasformati.",
+                ["Schnelluebersicht"] = "Panoramica rapida",
+                ["Experten"] = "Esperti",
+                ["Laender Diagnose"] = "Diagnosi per Paese",
+                ["Abweichungen"] = "Scostamenti",
+                ["Gutschriften"] = "Note di credito",
+                ["Sparten-Finanzanalyse"] = "Analisi finanziaria per divisione",
+                ["Zentrale Spartenzuordnung"] = "Assegnazione centrale divisioni",
+                ["Gruppenmarge"] = "Margine di gruppo",
+                ["3D Datenanalyse"] = "Analisi dati 3D",
+                ["Konsolidierter Export"] = "Export consolidato",
+                ["Dashboard Nachweis"] = "Prova dashboard",
+                ["Zentrale Datei"] = "File centrale",
+                ["Excel oeffnen"] = "Apri Excel",
+                ["Keine zentrale Excel-Datei gefunden."] = "Nessun file Excel centrale trovato.",
+                ["Zentrale Datei und Dashboard-Nachweis erzeugt im gewaehlten Ordner: {0}"] = "File centrale e prova dashboard creati nella cartella selezionata: {0}",
+                ["Lokaler Pfad Zentrale Datei und Nachweis"] = "Percorso locale per file centrale e prova",
+                ["Optional. Zentrale Excel und Dashboard-Nachweis werden hier abgelegt. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet."] = "Opzionale. Excel centrale e prova dashboard vengono salvati qui. Se vuoto, viene usato il percorso standard dei file sede."
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -1005,7 +1043,26 @@ public sealed class UiTextService : IUiTextService
                 ["Primaer"] = "Primary",
                 ["Einkaufsdatenquellen gespeichert."] = "Purchasing data sources saved.",
                 ["Einkaufsdatenquellen auf Defaults gesetzt."] = "Purchasing data sources restored to defaults.",
-                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Country export ke dauran har site ke liye transformed data wali Sales_ProcessedMergeInput_*.csv likhta hai."
+                ["Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten."] = "Country export ke dauran har site ke liye transformed data wali Sales_ProcessedMergeInput_*.csv likhta hai.",
+                ["Trafag Global BI Cockpit"] = "Trafag ग्लोबल BI कॉकपिट",
+                ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "दैनिक रीफ्रेश के साथ स्वचालित रूप से जुड़ी देश क्वेरी",
+                ["Schnelluebersicht"] = "त्वरित अवलोकन",
+                ["Experten"] = "विशेषज्ञ",
+                ["Laender Diagnose"] = "देश निदान",
+                ["Abweichungen"] = "अंतर",
+                ["Gutschriften"] = "क्रेडिट नोट",
+                ["Sparten-Finanzanalyse"] = "विभाग वित्त विश्लेषण",
+                ["Zentrale Spartenzuordnung"] = "केंद्रीय विभाग मैपिंग",
+                ["Gruppenmarge"] = "समूह मार्जिन",
+                ["3D Datenanalyse"] = "3D डेटा विश्लेषण",
+                ["Konsolidierter Export"] = "समेकित निर्यात",
+                ["Dashboard Nachweis"] = "डैशबोर्ड प्रमाण",
+                ["Zentrale Datei"] = "केंद्रीय फ़ाइल",
+                ["Excel oeffnen"] = "Excel खोलें",
+                ["Keine zentrale Excel-Datei gefunden."] = "कोई केंद्रीय Excel फ़ाइल नहीं मिली.",
+                ["Zentrale Datei und Dashboard-Nachweis erzeugt im gewaehlten Ordner: {0}"] = "केंद्रीय फ़ाइल और डैशबोर्ड प्रमाण चुने गए फ़ोल्डर में बनाए गए: {0}",
+                ["Lokaler Pfad Zentrale Datei und Nachweis"] = "केंद्रीय फ़ाइल और प्रमाण का स्थानीय पथ",
+                ["Optional. Zentrale Excel und Dashboard-Nachweis werden hier abgelegt. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet."] = "वैकल्पिक. केंद्रीय Excel और डैशबोर्ड प्रमाण यहां रखे जाते हैं. खाली होने पर साइट फ़ाइलों का मानक पथ उपयोग होगा."
             }
         };
 
