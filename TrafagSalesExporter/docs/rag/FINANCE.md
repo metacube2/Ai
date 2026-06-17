@@ -30,7 +30,7 @@ Stand: 2026-06-17
 - Live-Check nach SAP-Fix 2026-06-15: `travp762/.../ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` liefert `48'897` Referenzzeilen, `48'895` assigned, `8'715` Uebrige (`0008`), `2` UNASS. Der vorherige Totalausfall durch falsche SAP-Methode ist nicht mehr aktuell.
 - Finance-OData nach SAP-Fix: `FinanzdataSchweizOeSet/$count` liefert `30'642`; `Gjahr eq '2025'` ebenfalls `30'642`; `Gjahr eq '2026'` `0`. Refresh wurde danach noch nicht gestartet.
 - Import-Guardrail verhindert weiter, dass ein komplett unzugeordneter Referenzlauf oder eine leere Umsatzquelle bestehende Dashboard-Daten ueberschreibt.
-- Finance-Schulung dokumentiert die neuen Spartenfunktionen im Tab `Spartenanalyse`.
+- Finance-Schulung `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` ist auf Stand 2026-06-17 nachgezogen: Nachweis-Excel, zentrale Audit-CSV, SharePoint `Import/Finance/Alle`, Gruppenmarge und 3D-Sparten-Kreis je Land.
 - Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
 - Standard-Ist bleibt inklusive Positionen; Intercompany/2nd-party wird separat ausgewiesen.
 - Nach Sitzung 2026-06-01: ES-Referenz 2025 ist auf `3'082'320.18 EUR` korrigiert; alter Sollwert `3'102'333.61 EUR` war Referenz-/Excel-Fehler.

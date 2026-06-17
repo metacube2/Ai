@@ -1,6 +1,6 @@
 # Finance Schulung fuer Finance-Anwender
 
-Stand: 2026-06-12
+Stand: 2026-06-17
 
 Zweck: Diese Schulungsunterlage beschreibt den aktuellen Finance-Prozess vom Standortexport bis zu Dashboard, zentraler Excel und Soll/Ist-Vergleich. Sie ist fuer Finance, Finance Keyuser und Wirtschaftspruefung gedacht.
 
@@ -21,6 +21,9 @@ Die folgenden Grafiken zeigen die wichtigsten Zusammenhaenge vor den Detailkapit
 - Standortexporte schreiben optional eine nachvollziehbare Audit-CSV nach Mapping und Transformation.
 - Die Audit-CSV heisst `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv` und ist das verarbeitete Merge-Eingangsfile, nicht das originale Standortfile.
 - Per Einstellung kann die zentrale Auswertung von `CentralSalesRecords` auf die neuesten Audit-CSV je Standort umgeschaltet werden.
+- `Zentrale Datei neu erzeugen` schreibt neben `Sales_All_<Datum>.xlsx` auch `Finance_Dashboard_Nachweis_<Datum>.xlsx` und `Finance_Dashboard_Audit_All_<Datum>.csv`.
+- Die zentralen Finance-Dateien werden nach SharePoint `Import/Finance/Alle` hochgeladen; Standortdateien bleiben in den jeweiligen Laenderordnern.
+- `Management Analyse > Experten` enthaelt zusaetzlich `Gruppenmarge` und in der `3D Datenanalyse` die Diagrammart `Sparten-Kreis je Land`.
 - Waehrungsumrechnung passiert nicht still im Standard-Ist. Sie passiert nur in klaren Analyse-/Transformationsfaellen.
 - Deutschland/Alphaplan liest jetzt `invoice_headers.csv` + `invoice_lines.csv`; Full und `delta` werden zusammengesetzt und dedupliziert.
 - Alphaplan `ArtikelNummer` ist eine lokale Artikelnummer und nicht automatisch eine TR-AG-/SAP-`MATNR`.
@@ -68,6 +71,8 @@ Zentrale Auswertungsquelle
         +-- Finance Summary / Management Analyse
         +-- Soll/Ist-Vergleich
         +-- Zentrale Excel Sales_All_<Datum>.xlsx
+        +-- Dashboard-Nachweis Finance_Dashboard_Nachweis_<Datum>.xlsx
+        +-- Zentrale Audit-CSV Finance_Dashboard_Audit_All_<Datum>.csv
 ```
 
 Wichtig fuer Finance: Der Standortexport schreibt zuerst die verarbeiteten Daten. Danach entscheidet die Einstellung `Zentrale Auswertung aus Audit-CSV`, ob Dashboard und zentrale Excel aus der internen DB oder aus den neuesten verarbeiteten CSV-Dateien lesen.
@@ -96,8 +101,12 @@ Es gibt keinen separaten sichtbaren Audit-CSV-Pfad. Die Audit-CSV liegt bewusst 
 | `Sales_<TSC>_<yyyy-MM-dd>.xlsx` | Standort-Excel fuer Menschen und Ablage. |
 | `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv` | Verarbeitetes Standortfile nach Mapping und Transformation; Eingang fuer Merge/zentrale Auswertung, auditierbar. |
 | `Sales_All_<yyyy-MM-dd>.xlsx` | Zentrale Excel mit Finance Summary, Finance Details und Sales-Blatt. |
+| `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` | Nachweis-Excel fuer Finance/Andreas mit Formel-Summaries und Detailblaettern. |
+| `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv` | Zentrale Audit-/Nachweis-CSV aller Laender mit aufbereiteten Merge-Feldern inkl. Produktsparte. |
 
 Die Audit-CSV ist nicht das originale Standortfile aus Sage, Alphaplan, HANA oder SAP. Sie ist das bereits verarbeitete File, das fachlich erklaert, welche Zeilen in den zentralen Merge gehen.
+
+Wichtig: Die zentrale Datei `Finance_Dashboard_Audit_All_<Datum>.csv` nutzt bewusst kein `Sales_*`-Praefix. Dadurch wird sie nicht erneut als TSC-/Laender-Input fuer die zentrale Auswertung eingelesen.
 
 ## Zentrale Auswertungsquelle
 
@@ -188,7 +197,15 @@ Die zentrale Excel wird ueber das Export Dashboard erzeugt:
 Export Dashboard > Zentrale Datei neu erzeugen
 ```
 
-Sie enthaelt typischerweise:
+Dabei entstehen typischerweise drei zentrale Dateien:
+
+| Datei | Zweck |
+| --- | --- |
+| `Sales_All_<Datum>.xlsx` | operative zentrale Excel aus dem aktuellen Datenbestand |
+| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Formeln und Detailblaettern |
+| `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale Audit-CSV aller Laender mit Sparten-/Merge-Feldern |
+
+`Sales_All_<Datum>.xlsx` enthaelt typischerweise:
 
 | Blatt | Zweck |
 | --- | --- |
@@ -198,6 +215,10 @@ Sie enthaelt typischerweise:
 | `Finance Filter Hilfe` | Hinweise fuer Excel-Filter |
 
 Wenn die zentrale Auswertungsquelle auf Audit-CSV steht, wird die zentrale Excel aus den neuesten Audit-CSV gebildet. Wenn die Auswertungsquelle auf DB steht, wird sie aus `CentralSalesRecords` gebildet.
+
+Das Nachweis-Excel `Finance_Dashboard_Nachweis_<Datum>.xlsx` enthaelt Formel-Summaries wie `SUMIFS`, `COUNTIFS` und `IF`. Finance kann damit nachvollziehen, wie Summen aus Detailzeilen entstehen. Enthalten sind u. a. Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet.
+
+Wenn SharePoint konfiguriert ist, landen die zentralen Dateien in `Import/Finance/Alle`. Die Standortdateien `Sales_<TSC>_*` und `Sales_ProcessedMergeInput_<TSC>_*` bleiben je Standort im jeweiligen Laenderordner.
 
 ## Soll/Ist-Vergleich
 
@@ -212,6 +233,46 @@ Der Soll/Ist-Vergleich nutzt dieselbe Finance-Logik wie Finance Summary und zent
 | `IC` | Intercompany-/2nd-party-Diagnose, nicht stiller Abzug |
 
 Wenn im Expertenmodus Varianten angezeigt werden, muss der Sollwert weiterhin sichtbar bleiben, weil Finance die Differenz nur mit Referenzwert beurteilen kann.
+
+## Management Analyse und Experten
+
+Die Management Analyse ist eine Diagnose- und Plausibilitaetssicht. Sie ist nicht die fuehrende Abschlusszahl; fuer Soll/Ist bleibt `Finance Summary` bzw. der Soll/Ist-Vergleich fuehrend.
+
+Aktuelle Expertenbereiche:
+
+| Bereich | Zweck |
+| --- | --- |
+| `Finance Summary` | KPI-Karten und Summen wie im zentralen Excel |
+| `Laender` | Ist, IC/2nd-party, Ist ohne IC, Soll, Differenz, Status und Quelle je Land |
+| `Datenstatus` | Standortbestand, letzte Speicherung, letzter Export und Importhinweise |
+| `Abweichungen` | groesste Soll/Ist-Abweichungen |
+| `Gutschriften` | technische Kandidaten ueber negative Werte und Belegtypen |
+| `Datenqualitaet` | fehlende Materialnummern, Produktgruppen, Waehrungen, Kunden, Datum, Nullwerte |
+| `Spartenanalyse > Finanzanalyse` | Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 |
+| `Spartenanalyse > Zentrale Zuordnung` | Materialnummern aller Laender gegen TR-AG-/SAP-Stamm |
+| `Gruppenmarge` | Pruefsicht fuer Umsatz, bekannte Kostenbasis, offene Kostenbasis und Marge |
+| `3D Datenanalyse` | interaktive Analyse; inkl. `Sparten-Kreis je Land` als Tortendiagramm je Land |
+
+## Gruppenmarge
+
+`Gruppenmarge` ist aktuell eine Pruefsicht, kein final freigegebener Finance-Abschlusswert.
+
+Die Sicht zeigt:
+
+| Feld | Bedeutung |
+| --- | --- |
+| Umsatz | aktueller Umsatz aus der zentralen Finance-Datenbasis |
+| Bekannte Kostenbasis | Kostenanteil, der aus Standardpreis/interner Kostenlogik ermittelt werden kann |
+| Offen | Zeilen mit fehlendem Standardpreis oder unklarer Lieferanten-/Kostenbasis |
+| Marge / % | wird nur belastbar angezeigt, wenn keine offenen Kostenzeilen vorhanden sind |
+
+Wichtig: Eine leere oder fehlende Kostenbasis darf nicht als 100%-Marge interpretiert werden. Wenn offene Kostenbasis vorhanden ist, zeigt die App Marge und Prozent bewusst als `-`.
+
+Offene Fachentscheide fuer Andreas/Finance sind im Multiple-Choice-Dokument dokumentiert:
+
+```text
+docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-16.docx
+```
 
 ## Laenderlogik kurz
 
@@ -358,11 +419,13 @@ Summe US im zentralen Excel: `2'250 USD`.
 | Schritt | Sichtbares Ergebnis |
 | --- | --- |
 | Standortexport | pro Land entsteht ein verarbeiteter Stand in Audit-CSV und/oder `CentralSalesRecords` |
-| `Zentrale Datei neu erzeugen` | `Finance Summary` summiert die Finance-Beitraege je Jahr, Land und Waehrung |
+| `Zentrale Datei neu erzeugen` | zentrale Excel, Nachweis-Excel und zentrale Audit-CSV werden erzeugt |
 | `Finance Details` | zeigt die einzelnen eingeschlossenen Detailzeilen hinter der Summe |
 | Dashboard `Finance Summary` | zeigt dieselben Summen wie das zentrale Excel |
 | Soll/Ist | vergleicht die Summe gegen `FinanceReference` / `check.xlsx` |
 | Management Analyse mit Zielwaehrung | rechnet nur fuer die Anzeige ueber `CurrencyExchangeRates` um |
+| Gruppenmarge | zeigt Umsatz, bekannte Kostenbasis, offene Kostenbasis und belastbare Marge nur bei vollstaendiger Kostenbasis |
+| 3D-Datenanalyse | zeigt Kennzahlen interaktiv; `Sparten-Kreis je Land` visualisiert Produktsparte-Sektoren je Land |
 
 ## Pruefung fuer Finance/Revision
 
@@ -374,8 +437,9 @@ Summe US im zentralen Excel: `2'250 USD`.
 4. Optional `Zentrale Auswertung aus Audit-CSV` aktivieren.
 5. `Zentrale Datei neu erzeugen`.
 6. In der zentralen Excel `Finance Summary` und `Finance Details` pruefen.
-7. Soll/Ist-Vergleich gegen Referenzwerte pruefen.
-8. Bei Abweichungen zuerst Audit-CSV und Finance Details nach TSC, Land, Jahr, Waehrung und Belegnummer filtern.
+7. Im Nachweis-Excel Formel-Summaries gegen Detailblaetter pruefen.
+8. Soll/Ist-Vergleich gegen Referenzwerte pruefen.
+9. Bei Abweichungen zuerst Audit-CSV und Finance Details nach TSC, Land, Jahr, Waehrung und Belegnummer filtern.
 
 ## Typische Fehlerbilder
 
@@ -384,6 +448,9 @@ Summe US im zentralen Excel: `2'250 USD`.
 | Audit-Modus aktiv, aber Dashboard leer/Fehler | keine `Sales_ProcessedMergeInput_*.csv` im Exportordner | Standortexport erneut starten, Pfad pruefen |
 | CSV fehlt im SharePoint-Landesordner | Standortexport lief vor Audit-CSV-Upload-Stand oder SharePoint-Upload fehlgeschlagen | aktuellen Export erneut starten, Log pruefen |
 | zentrale Excel wirkt alt | nach Standortexport nicht neu erzeugt oder falsche zentrale Quelle aktiv | Export Dashboard und Settings pruefen |
+| Nachweis-Excel fehlt | zentrale Datei wurde vor dem Nachweis-Stand erzeugt oder lokaler zentraler Exportordner ist falsch | `Zentrale Datei neu erzeugen`, Pfad `Lokaler Pfad Zentrale Datei und Nachweis` pruefen |
+| zentrale Audit-CSV wird als Land/TSC erwartet | `Finance_Dashboard_Audit_All_*` ist Nachweisartefakt, kein Inputfile | nur `Sales_ProcessedMergeInput_<TSC>_*` als Audit-Input verwenden |
+| Gruppenmarge zeigt `-` statt Prozent | offene Kostenbasis vorhanden | Detailpruefung Kostenbasis / Status `Standardpreis fehlt` oder `Lieferant unklar` pruefen |
 | `Mixed` bei Waehrung | mehrere native Waehrungen im Filter | Land/Waehrung filtern oder Zielwaehrung in Analyse waehlen |
 | fehlende Kurse | kein aktiver gueltiger Kurs in `CurrencyExchangeRates` | Kurs, Gueltigkeit und `Wechselkurse anwenden auf` pruefen |
 
@@ -395,10 +462,13 @@ Summe US im zentralen Excel: `2'250 USD`.
 | 2 | Audit-CSV je Standort vorhanden, falls Revision/Finance den CSV-Fluss prueft |
 | 3 | Zentrale Auswertungsquelle bewusst gewaehlt: DB oder Audit-CSV |
 | 4 | Zentrale Excel nach den Standortexporten neu erzeugt |
-| 5 | `Finance Summary` und `Finance Details` stimmen je Jahr/Land/Waehrung zusammen |
-| 6 | Soll/Ist zeigt keine unerwarteten Abweichungen |
-| 7 | Wechselkursfragen getrennt vom lokalen Hauswaehrungsvergleich beurteilt |
-| 8 | offene Laenderpunkte dokumentiert |
+| 5 | Nachweis-Excel und zentrale Audit-CSV im zentralen Exportordner bzw. SharePoint `Import/Finance/Alle` vorhanden |
+| 6 | `Finance Summary` und `Finance Details` stimmen je Jahr/Land/Waehrung zusammen |
+| 7 | Formel-Summaries im Nachweis-Excel stimmen mit Detailblaettern zusammen |
+| 8 | Soll/Ist zeigt keine unerwarteten Abweichungen |
+| 9 | Gruppenmarge nur als Pruefsicht beurteilt; offene Kostenbasis nicht als 100%-Marge interpretieren |
+| 10 | Wechselkursfragen getrennt vom lokalen Hauswaehrungsvergleich beurteilt |
+| 11 | offene Laenderpunkte dokumentiert |
 
 ## Abgleich gegen alte Schulungsaussagen
 
@@ -410,3 +480,4 @@ Diese Punkte waren in aelteren Schulungsunterlagen veraltet und sind mit Stand 2
 - Die Audit-CSV hat den neuen Namen `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`.
 - Die Wechselkurstabelle wird nicht still fuer Standard-Finance-Soll/Ist angewendet.
 - Die aktuellen Management-Reiter sind links erreichbar; doppelte obere Reiterbaender wurden reduziert.
+- Die Schulung enthaelt seit 2026-06-17 Nachweis-Excel, zentrale Audit-CSV, SharePoint `Import/Finance/Alle`, Gruppenmarge und 3D-Sparten-Kreis je Land.
