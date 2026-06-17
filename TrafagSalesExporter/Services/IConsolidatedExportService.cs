@@ -2,5 +2,5 @@ namespace TrafagSalesExporter.Services;
 
 public interface IConsolidatedExportService
 {
-    Task<string?> ExportAsync();
+    Task<string?> ExportAsync(Action<string>? updateStatus = null);
 }

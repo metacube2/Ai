@@ -129,6 +129,15 @@ public class ExportOrchestrationService
         NotifyChanged();
     }
 
+    private void UpdateConsolidatedStatus(string status)
+    {
+        lock (_lock)
+        {
+            _consolidatedExportStatus = status;
+        }
+        NotifyChanged();
+    }
+
     private void NotifyChanged()
     {
         OnExportStatusChanged?.Invoke();
@@ -159,7 +168,7 @@ public class ExportOrchestrationService
 
         try
         {
-            return await _consolidatedExportService.ExportAsync();
+            return await _consolidatedExportService.ExportAsync(UpdateConsolidatedStatus);
         }
         catch (Exception ex)
         {

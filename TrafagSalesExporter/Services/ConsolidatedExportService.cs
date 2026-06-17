@@ -7,28 +7,34 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private const string FinanceImportRootFolder = "/Import/Finance";
+    private static readonly TimeSpan SharePointProbeTimeout = TimeSpan.FromSeconds(25);
+    private static readonly TimeSpan SharePointDownloadTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan SharePointUploadTimeout = TimeSpan.FromMinutes(5);
 
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICentralSalesDataProvider _centralSalesDataProvider;
     private readonly IExcelExportService _excelService;
     private readonly IExportAuditCsvService _auditCsvService;
     private readonly ISharePointUploadService _sharePointService;
+    private readonly IAppEventLogService _appEventLogService;
 
     public ConsolidatedExportService(
         IDbContextFactory<AppDbContext> dbFactory,
         ICentralSalesDataProvider centralSalesDataProvider,
         IExcelExportService excelService,
         IExportAuditCsvService auditCsvService,
-        ISharePointUploadService sharePointService)
+        ISharePointUploadService sharePointService,
+        IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _centralSalesDataProvider = centralSalesDataProvider;
         _excelService = excelService;
         _auditCsvService = auditCsvService;
         _sharePointService = sharePointService;
+        _appEventLogService = appEventLogService;
     }
 
-    public async Task<string?> ExportAsync()
+    public async Task<string?> ExportAsync(Action<string>? updateStatus = null)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var spConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
@@ -40,8 +46,10 @@ public class ConsolidatedExportService : IConsolidatedExportService
             .ThenBy(site => site.TSC)
             .ToListAsync();
 
+        updateStatus?.Invoke("Neueste Laenderdateien pruefen...");
         await SyncLatestProcessedMergeInputFilesAsync(sites, settings, spConfig);
 
+        updateStatus?.Invoke("Zentrale Daten aus DB/CSV zusammenstellen...");
         var consolidatedRecords = await _centralSalesDataProvider.GetLatestRecordsBySiteAsync();
         if (consolidatedRecords.Count == 0)
             return null;
@@ -55,43 +63,48 @@ public class ConsolidatedExportService : IConsolidatedExportService
             .ThenBy(r => r.InvoiceNumber)
             .ThenBy(r => r.PositionOnInvoice)
             .ToList();
+
+        var hasSharePointUpload = HasCompleteSharePointConfig(spConfig);
+        var uploadTarget = hasSharePointUpload
+            ? ResolveCentralSharePointUploadTarget(spConfig!)
+            : (Folder: string.Empty, LandSubfolder: string.Empty);
+
+        updateStatus?.Invoke("Sales_All Excel erzeugen...");
         var consolidatedPath = _excelService.CreateConsolidatedExcelFile(
             outputDir,
             fileDate,
             sortedRecords);
-        var proofPath = _excelService.CreateDashboardProofExcelFile(
-            outputDir,
-            fileDate,
-            sortedRecords,
-            settings.UseAuditCsvAsCentralSource);
+
+        if (hasSharePointUpload)
+        {
+            updateStatus?.Invoke("Sales_All nach SharePoint laden...");
+            await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, consolidatedPath);
+        }
+
+        updateStatus?.Invoke("Zentrale Audit-CSV erzeugen...");
         var auditCsvPath = await _auditCsvService.WriteConsolidatedAuditCsvAsync(
             settings,
             fileDate,
             outputDir,
             sortedRecords);
 
-        if (spConfig is not null &&
-            !string.IsNullOrWhiteSpace(spConfig.TenantId) &&
-            !string.IsNullOrWhiteSpace(spConfig.ClientId) &&
-            !string.IsNullOrWhiteSpace(spConfig.ClientSecret))
+        if (hasSharePointUpload && !string.IsNullOrWhiteSpace(auditCsvPath))
         {
-            var (sharePointFolder, landSubfolder) = ResolveCentralSharePointUploadTarget(spConfig);
+            updateStatus?.Invoke("Audit-CSV nach SharePoint laden...");
+            await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, auditCsvPath);
+        }
 
-            await _sharePointService.UploadAsync(
-                spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                spConfig.SiteUrl, sharePointFolder, landSubfolder, consolidatedPath,
-                uploadTimestampedCopyIfLocked: true);
-            await _sharePointService.UploadAsync(
-                spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                spConfig.SiteUrl, sharePointFolder, landSubfolder, proofPath,
-                uploadTimestampedCopyIfLocked: true);
-            if (!string.IsNullOrWhiteSpace(auditCsvPath))
-            {
-                await _sharePointService.UploadAsync(
-                    spConfig.TenantId, spConfig.ClientId, spConfig.ClientSecret,
-                    spConfig.SiteUrl, sharePointFolder, landSubfolder, auditCsvPath,
-                    uploadTimestampedCopyIfLocked: true);
-            }
+        updateStatus?.Invoke("Nachweis-Excel erzeugen...");
+        var proofPath = _excelService.CreateDashboardProofExcelFile(
+            outputDir,
+            fileDate,
+            sortedRecords,
+            settings.UseAuditCsvAsCentralSource);
+
+        if (hasSharePointUpload)
+        {
+            updateStatus?.Invoke("Nachweis-Excel nach SharePoint laden...");
+            await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, proofPath);
         }
 
         return consolidatedPath;
@@ -128,12 +141,18 @@ public class ConsolidatedExportService : IConsolidatedExportService
                 spConfig.ClientId,
                 spConfig.ClientSecret,
                 spConfig.SiteUrl,
-                latest.FileReference);
+                latest.FileReference).WaitAsync(SharePointDownloadTimeout);
 
             try
             {
                 File.Copy(tempPath, targetPath, overwrite: true);
                 File.SetLastWriteTimeUtc(targetPath, remoteLastWriteUtc);
+                await _appEventLogService.WriteDebugAsync(
+                    "Export",
+                    "Neueste SharePoint-Audit-CSV lokal synchronisiert",
+                    site.Id,
+                    site.Land,
+                    $"TSC={site.TSC}; Datei={fileName}; GeaendertUtc={remoteLastWriteUtc:O}");
             }
             finally
             {
@@ -158,7 +177,7 @@ public class ConsolidatedExportService : IConsolidatedExportService
                     spConfig.ClientSecret,
                     spConfig.SiteUrl,
                     folder,
-                    site.TSC);
+                    site.TSC).WaitAsync(SharePointProbeTimeout);
 
                 if (candidate?.LastModifiedUtc is null)
                     continue;
@@ -166,13 +185,47 @@ public class ConsolidatedExportService : IConsolidatedExportService
                 if (latest?.LastModifiedUtc is null || candidate.LastModifiedUtc.Value > latest.LastModifiedUtc.Value)
                     latest = candidate;
             }
-            catch
+            catch (Exception ex)
             {
                 // A status/sync probe must not block central export when another source is still usable.
+                await _appEventLogService.WriteDebugAsync(
+                    "Export",
+                    "SharePoint-Audit-CSV Probe uebersprungen",
+                    site.Id,
+                    site.Land,
+                    $"TSC={site.TSC}; Ordner={folder}; Fehler={ex.Message}");
             }
         }
 
         return latest;
+    }
+
+    private async Task UploadCentralFileAsync(
+        SharePointConfig spConfig,
+        string sharePointFolder,
+        string landSubfolder,
+        string localFilePath)
+    {
+        var fileName = Path.GetFileName(localFilePath);
+        await _appEventLogService.WriteAsync(
+            "Export",
+            "Zentrale Datei SharePoint Upload gestartet",
+            details: $"Datei={fileName}; Ziel={sharePointFolder}/{landSubfolder}".TrimEnd('/'));
+
+        await _sharePointService.UploadAsync(
+            spConfig.TenantId,
+            spConfig.ClientId,
+            spConfig.ClientSecret,
+            spConfig.SiteUrl,
+            sharePointFolder,
+            landSubfolder,
+            localFilePath,
+            uploadTimestampedCopyIfLocked: true).WaitAsync(SharePointUploadTimeout);
+
+        await _appEventLogService.WriteAsync(
+            "Export",
+            "Zentrale Datei SharePoint Upload abgeschlossen",
+            details: $"Datei={fileName}; Ziel={sharePointFolder}/{landSubfolder}".TrimEnd('/'));
     }
 
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
