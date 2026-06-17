@@ -28,6 +28,12 @@
             @T("Filtern", "Filter")
         </MudButton>
         <MudSpacer />
+        <MudSelect T="int" @bind-Value="_deleteOlderThanDays" Label="@T("Aufbewahrung", "Retention")" Dense Style="max-width:160px;">
+            <MudSelectItem T="int" Value="1">@T("1 Tag", "1 day")</MudSelectItem>
+            <MudSelectItem T="int" Value="30">@T("30 Tage", "30 days")</MudSelectItem>
+            <MudSelectItem T="int" Value="90">@T("90 Tage", "90 days")</MudSelectItem>
+            <MudSelectItem T="int" Value="180">@T("180 Tage", "180 days")</MudSelectItem>
+        </MudSelect>
         <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteOldLogs"
                    StartIcon="@Icons.Material.Filled.DeleteSweep">
             @T("Alte Logs loeschen", "Delete old logs")
@@ -113,6 +119,7 @@
     private string? _filterLand;
     private string? _filterStatus;
     private DateTime? _filterDate;
+    private int _deleteOlderThanDays = 90;
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -139,14 +146,24 @@
     {
         var result = await DialogService.ShowMessageBox(
             T("Alte Logs loeschen", "Delete old logs"),
-            T("Logs aelter als 90 Tage loeschen?", "Delete logs older than 90 days?"),
+            string.Format(
+                T("Logs aelter als {0} loeschen?", "Delete logs older than {0}?"),
+                FormatRetention(_deleteOlderThanDays)),
             yesText: T("Loeschen", "Delete"), cancelText: T("Abbrechen", "Cancel"));
 
         if (result != true) return;
 
-        var deletedCount = await LogsPageActions.DeleteOldLogsAsync(90);
+        var deletedCount = await LogsPageActions.DeleteOldLogsAsync(_deleteOlderThanDays);
         await LoadLogsAsync();
         Snackbar.Add(string.Format(T("{0} alte Logs geloescht", "{0} old logs deleted"), deletedCount), Severity.Info);
+    }
+
+    private string FormatRetention(int days)
+    {
+        if (days == 1)
+            return T("1 Tag", "1 day");
+
+        return string.Format(T("{0} Tage", "{0} days"), days);
     }
 }
 
