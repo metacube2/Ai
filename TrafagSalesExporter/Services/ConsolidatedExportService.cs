@@ -7,7 +7,8 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private const string FinanceImportRootFolder = "/Import/Finance";
-    private const int MaxInlineProofWorkbookRows = 50000;
+    private const int MaxSingleProofWorkbookRows = 50000;
+    private const int MaxPartitionedProofWorkbookRows = 25000;
     private static readonly TimeSpan SharePointProbeTimeout = TimeSpan.FromSeconds(25);
     private static readonly TimeSpan SharePointDownloadTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan SharePointUploadTimeout = TimeSpan.FromMinutes(5);
@@ -95,31 +96,91 @@ public class ConsolidatedExportService : IConsolidatedExportService
             await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, auditCsvPath);
         }
 
-        if (sortedRecords.Count > MaxInlineProofWorkbookRows)
-        {
-            updateStatus?.Invoke("Nachweis-Excel wegen Datenmenge uebersprungen.");
-            await _appEventLogService.WriteAsync(
-                "Export",
-                "Zentrales Nachweis-Excel wegen Datenmenge uebersprungen",
-                "Warning",
-                details: $"Zeilen={sortedRecords.Count}; Grenze={MaxInlineProofWorkbookRows}; Vollstaendiger Detailnachweis liegt in {Path.GetFileName(auditCsvPath)}.");
-            return consolidatedPath;
-        }
+        if (sortedRecords.Count > MaxSingleProofWorkbookRows)
+            await CreateAndUploadPartitionedProofWorkbooksAsync(
+                outputDir,
+                fileDate,
+                sortedRecords,
+                settings.UseAuditCsvAsCentralSource,
+                spConfig,
+                hasSharePointUpload,
+                uploadTarget.Folder,
+                uploadTarget.LandSubfolder,
+                updateStatus);
+        else
+            await CreateAndUploadSingleProofWorkbookAsync(
+                outputDir,
+                fileDate,
+                sortedRecords,
+                settings.UseAuditCsvAsCentralSource,
+                spConfig,
+                hasSharePointUpload,
+                uploadTarget.Folder,
+                uploadTarget.LandSubfolder,
+                updateStatus);
 
+        return consolidatedPath;
+    }
+
+    private async Task CreateAndUploadSingleProofWorkbookAsync(
+        string outputDir,
+        DateTime fileDate,
+        List<SalesRecord> sortedRecords,
+        bool useAuditCsvAsCentralSource,
+        SharePointConfig? spConfig,
+        bool hasSharePointUpload,
+        string sharePointFolder,
+        string landSubfolder,
+        Action<string>? updateStatus)
+    {
         updateStatus?.Invoke("Nachweis-Excel erzeugen...");
         var proofPath = _excelService.CreateDashboardProofExcelFile(
             outputDir,
             fileDate,
             sortedRecords,
-            settings.UseAuditCsvAsCentralSource);
+            useAuditCsvAsCentralSource);
 
         if (hasSharePointUpload)
         {
             updateStatus?.Invoke("Nachweis-Excel nach SharePoint laden...");
-            await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, proofPath);
+            await UploadCentralFileAsync(spConfig!, sharePointFolder, landSubfolder, proofPath);
         }
+    }
 
-        return consolidatedPath;
+    private async Task CreateAndUploadPartitionedProofWorkbooksAsync(
+        string outputDir,
+        DateTime fileDate,
+        List<SalesRecord> sortedRecords,
+        bool useAuditCsvAsCentralSource,
+        SharePointConfig? spConfig,
+        bool hasSharePointUpload,
+        string sharePointFolder,
+        string landSubfolder,
+        Action<string>? updateStatus)
+    {
+        var partitions = BuildProofWorkbookPartitions(sortedRecords).ToList();
+        await _appEventLogService.WriteAsync(
+            "Export",
+            "Zentrale Nachweis-Excel werden partitioniert erzeugt",
+            details: $"Zeilen={sortedRecords.Count}; Dateien={partitions.Count}; MaxZeilenProDatei={MaxPartitionedProofWorkbookRows}.");
+
+        for (var i = 0; i < partitions.Count; i++)
+        {
+            var partition = partitions[i];
+            updateStatus?.Invoke($"Nachweis-Excel {i + 1}/{partitions.Count} erzeugen: {partition.Scope}...");
+            var proofPath = _excelService.CreateDashboardProofExcelFile(
+                outputDir,
+                fileDate,
+                partition.Records,
+                useAuditCsvAsCentralSource,
+                partition.Scope);
+
+            if (hasSharePointUpload)
+            {
+                updateStatus?.Invoke($"Nachweis-Excel {i + 1}/{partitions.Count} nach SharePoint laden...");
+                await UploadCentralFileAsync(spConfig!, sharePointFolder, landSubfolder, proofPath);
+            }
+        }
     }
 
     private async Task SyncLatestProcessedMergeInputFilesAsync(
@@ -240,6 +301,46 @@ public class ConsolidatedExportService : IConsolidatedExportService
             details: $"Datei={fileName}; Ziel={sharePointFolder}/{landSubfolder}".TrimEnd('/'));
     }
 
+    private static IEnumerable<ProofWorkbookPartition> BuildProofWorkbookPartitions(List<SalesRecord> sortedRecords)
+    {
+        foreach (var group in sortedRecords
+            .GroupBy(record => new
+            {
+                Tsc = string.IsNullOrWhiteSpace(record.Tsc) ? "UNKNOWN" : record.Tsc.Trim(),
+                Land = string.IsNullOrWhiteSpace(record.Land) ? "Unknown" : record.Land.Trim()
+            })
+            .OrderBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Land, StringComparer.OrdinalIgnoreCase))
+        {
+            var records = group.ToList();
+            var baseScope = BuildProofWorkbookScope(group.Key.Tsc, group.Key.Land);
+            if (records.Count <= MaxPartitionedProofWorkbookRows)
+            {
+                yield return new ProofWorkbookPartition(baseScope, records);
+                continue;
+            }
+
+            var partCount = (int)Math.Ceiling(records.Count / (double)MaxPartitionedProofWorkbookRows);
+            for (var partIndex = 0; partIndex < partCount; partIndex++)
+            {
+                var partRecords = records
+                    .Skip(partIndex * MaxPartitionedProofWorkbookRows)
+                    .Take(MaxPartitionedProofWorkbookRows)
+                    .ToList();
+                yield return new ProofWorkbookPartition($"{baseScope}_Teil{partIndex + 1:00}", partRecords);
+            }
+        }
+    }
+
+    private static string BuildProofWorkbookScope(string tsc, string land)
+    {
+        var normalizedTsc = string.IsNullOrWhiteSpace(tsc) ? "UNKNOWN" : tsc.Trim();
+        var normalizedLand = string.IsNullOrWhiteSpace(land) ? "Unknown" : land.Trim();
+        return string.Equals(normalizedTsc, normalizedLand, StringComparison.OrdinalIgnoreCase)
+            ? normalizedTsc
+            : $"{normalizedTsc}_{normalizedLand}";
+    }
+
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)
     {
         if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
@@ -298,4 +399,6 @@ public class ConsolidatedExportService : IConsolidatedExportService
             .Split('/', '\\')
             .LastOrDefault(segment => !string.IsNullOrWhiteSpace(segment))
             ?.Trim() ?? string.Empty;
+
+    private sealed record ProofWorkbookPartition(string Scope, List<SalesRecord> Records);
 }

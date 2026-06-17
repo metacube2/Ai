@@ -21,7 +21,7 @@ Die folgenden Grafiken zeigen die wichtigsten Zusammenhaenge vor den Detailkapit
 - Standortexporte schreiben optional eine nachvollziehbare Audit-CSV nach Mapping und Transformation.
 - Die Audit-CSV heisst `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv` und ist das verarbeitete Merge-Eingangsfile, nicht das originale Standortfile.
 - Per Einstellung kann die zentrale Auswertung von `CentralSalesRecords` auf die neuesten Audit-CSV je Standort umgeschaltet werden.
-- `Zentrale Datei neu erzeugen` schreibt neben `Sales_All_<Datum>.xlsx` auch `Finance_Dashboard_Nachweis_<Datum>.xlsx` und `Finance_Dashboard_Audit_All_<Datum>.csv`.
+- `Zentrale Datei neu erzeugen` schreibt neben `Sales_All_<Datum>.xlsx` auch `Finance_Dashboard_Audit_All_<Datum>.csv` und Nachweis-Excel. Bei kleinen Datenmengen ist das `Finance_Dashboard_Nachweis_<Datum>.xlsx`; bei grossen Datenmengen werden mehrere kleine `Finance_Dashboard_Nachweis_<TSC>_<Land>_<Datum>.xlsx` bzw. `_TeilNN` erzeugt.
 - Die zentralen Finance-Dateien werden nach SharePoint `Import/Finance/Alle` hochgeladen; Standortdateien bleiben in den jeweiligen Laenderordnern.
 - `Management Analyse > Experten` enthaelt zusaetzlich `Gruppenmarge` und in der `3D Datenanalyse` die Diagrammart `Sparten-Kreis je Land`.
 - Waehrungsumrechnung passiert nicht still im Standard-Ist. Sie passiert nur in klaren Analyse-/Transformationsfaellen.
@@ -101,7 +101,7 @@ Es gibt keinen separaten sichtbaren Audit-CSV-Pfad. Die Audit-CSV liegt bewusst 
 | `Sales_<TSC>_<yyyy-MM-dd>.xlsx` | Standort-Excel fuer Menschen und Ablage. |
 | `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv` | Verarbeitetes Standortfile nach Mapping und Transformation; Eingang fuer Merge/zentrale Auswertung, auditierbar. |
 | `Sales_All_<yyyy-MM-dd>.xlsx` | Zentrale Excel mit Finance Summary, Finance Details und Sales-Blatt. |
-| `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` | Nachweis-Excel fuer Finance/Andreas mit Formel-Summaries und Detailblaettern. |
+| `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` oder `Finance_Dashboard_Nachweis_<TSC>_<Land>_<yyyy-MM-dd>.xlsx` | Nachweis-Excel fuer Finance/Andreas mit Formel-Summaries und Detailblaettern. Bei grossen Datenmengen wird pro TSC/Land und ggf. pro Teil erzeugt. |
 | `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv` | Zentrale Audit-/Nachweis-CSV aller Laender mit aufbereiteten Merge-Feldern inkl. Produktsparte. |
 
 Die Audit-CSV ist nicht das originale Standortfile aus Sage, Alphaplan, HANA oder SAP. Sie ist das bereits verarbeitete File, das fachlich erklaert, welche Zeilen in den zentralen Merge gehen.
@@ -202,7 +202,7 @@ Dabei entstehen typischerweise drei zentrale Dateien:
 | Datei | Zweck |
 | --- | --- |
 | `Sales_All_<Datum>.xlsx` | operative zentrale Excel aus dem aktuellen Datenbestand |
-| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Formeln, `Sparten Details` und `Sparten Summary` |
+| `Finance_Dashboard_Nachweis_<Datum>.xlsx` / `Finance_Dashboard_Nachweis_<TSC>_<Land>_<Datum>.xlsx` | Excel-Nachweis mit Formeln, `Sparten Details` und `Sparten Summary`; bei grossen Datenmengen mehrere kleine Dateien |
 | `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale Audit-CSV aller Laender mit Sparten-/Merge-Feldern |
 
 `Sales_All_<Datum>.xlsx` enthaelt typischerweise:
@@ -216,7 +216,7 @@ Dabei entstehen typischerweise drei zentrale Dateien:
 
 Vor dem Erzeugen prueft der Server pro Land/TSC die neuesten `Sales_ProcessedMergeInput_*`-CSV im SharePoint-/Auditpfad und vergleicht sie mit dem DB-Stand in `CentralSalesRecords`. Fuer die zentrale Datei wird pro Land der neueste Stand verwendet.
 
-Das Nachweis-Excel `Finance_Dashboard_Nachweis_<Datum>.xlsx` enthaelt Formel-Summaries wie `SUMIFS`, `COUNTIFS` und `IF`. Finance kann damit nachvollziehen, wie Summen aus Detailzeilen entstehen. Enthalten sind u. a. Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet.
+Das Nachweis-Excel `Finance_Dashboard_Nachweis_<Datum>.xlsx` enthaelt Formel-Summaries wie `SUMIFS`, `COUNTIFS` und `IF`. Finance kann damit nachvollziehen, wie Summen aus Detailzeilen entstehen. Enthalten sind u. a. Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet. Bei grossen zentralen Datenmengen wird der Nachweis automatisch in mehrere kleine Dateien pro TSC/Land aufgeteilt, damit Excel handhabbar bleibt.
 
 Wenn SharePoint konfiguriert ist, landen die zentralen Dateien in `/Import/Finance/Alle`. Die Standortdateien `Sales_<TSC>_*` und `Sales_ProcessedMergeInput_<TSC>_*` bleiben je Standort im jeweiligen Laenderordner.
 

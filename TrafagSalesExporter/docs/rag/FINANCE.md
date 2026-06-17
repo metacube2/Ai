@@ -11,7 +11,7 @@ Stand: 2026-06-17
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - Nachweis fuer Excel-Fans: `Zentrale Datei neu erzeugen` erstellt zusaetzlich `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` im waehlbaren zentralen Exportordner. Die Datei enthaelt Formel-Summaries (`SUMIFS`, `COUNTIFS`, `IF`) und Detailblaetter fuer Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet. Doku: `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md`.
 - Zentraler Finance-Export laedt nach SharePoint `Import/Finance/Alle`: `Sales_All_<yyyy-MM-dd>.xlsx`, `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` und `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv`. Die zentrale Audit-CSV enthaelt die aufbereiteten Audit-/Merge-Felder inkl. Produktsparte und nutzt bewusst kein `Sales_*`-Praefix, damit sie nicht als zusaetzlicher Audit-Input wieder eingelesen wird.
-- Zentraler Export laedt progressiv: zuerst `Sales_All`, danach `Finance_Dashboard_Audit_All`, danach optional das schwere Nachweis-Excel. Bei mehr als `50'000` Zentralzeilen wird das Nachweis-Excel im Buttonlauf uebersprungen; die Audit-CSV ist dann der vollstaendige Detailnachweis.
+- Zentraler Export laedt progressiv: zuerst `Sales_All`, danach `Finance_Dashboard_Audit_All`, danach Nachweis-Excel. Bei mehr als `50'000` Zentralzeilen wird der Nachweis als mehrere kleine Dateien pro TSC/Land erzeugt; pro Datei maximal ca. `25'000` Zeilen, bei Bedarf mit `_Teil01`, `_Teil02` usw.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
 - Neuer Expertenpunkt: `3D Datenanalyse` fuer interaktive visuelle Analyse und Simulation.

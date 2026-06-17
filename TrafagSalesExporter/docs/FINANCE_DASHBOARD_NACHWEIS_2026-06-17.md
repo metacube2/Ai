@@ -12,6 +12,14 @@ Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx
 
 Die bestehende Datei `Sales_All_<yyyy-MM-dd>.xlsx` bleibt unveraendert.
 
+Bei grossen zentralen Datenmengen wird der Nachweis nicht als eine grosse Datei, sondern als mehrere kleinere Excel-Dateien erzeugt:
+
+```text
+Finance_Dashboard_Nachweis_<TSC>_<Land>_<yyyy-MM-dd>.xlsx
+Finance_Dashboard_Nachweis_<TSC>_<Land>_Teil01_<yyyy-MM-dd>.xlsx
+Finance_Dashboard_Nachweis_<TSC>_<Land>_Teil02_<yyyy-MM-dd>.xlsx
+```
+
 Seit 2026-06-17 wird zusaetzlich eine zentrale Audit-CSV fuer Finance erzeugt:
 
 ```text
@@ -72,16 +80,20 @@ Seit 2026-06-17 wird der zentrale SharePoint-Upload progressiv ausgefuehrt:
 1. Neueste Laenderdateien pruefen und lokal synchronisieren.
 2. `Sales_All_<Datum>.xlsx` erzeugen und sofort nach SharePoint `Import/Finance/Alle` laden.
 3. `Finance_Dashboard_Audit_All_<Datum>.csv` erzeugen und nach SharePoint laden.
-4. Optional `Finance_Dashboard_Nachweis_<Datum>.xlsx` erzeugen und nach SharePoint laden.
+4. `Finance_Dashboard_Nachweis_<Datum>.xlsx` oder mehrere kleinere `Finance_Dashboard_Nachweis_<TSC>_<Land>_<Datum>.xlsx` erzeugen und nach SharePoint laden.
 
-Der Grund ist die Dateigroesse: Das Nachweis-Excel enthaelt mehrere grosse Detailblaetter mit Formeln und kann bei sehr grossen Zentraldaten sehr lange laufen. Damit der produktive zentrale Export nicht blockiert, wird das Nachweis-Excel im gleichen Buttonlauf nur bis `50'000` Zentralzeilen erzeugt. Bei groesseren Datenmengen wird es uebersprungen und als Warnung in den App-Logs dokumentiert.
+Der Grund ist die Dateigroesse und Workbook-Komplexitaet: Das Nachweis-Excel enthaelt mehrere grosse Detailblaetter mit Formeln und kann bei sehr grossen Zentraldaten sehr lange laufen. Damit Finance trotzdem Excel-Dateien erhaelt, wird ab mehr als `50'000` Zentralzeilen automatisch partitioniert:
 
-In diesem Fall ist `Finance_Dashboard_Audit_All_<Datum>.csv` der vollstaendige Detailnachweis fuer Finance. Sie enthaelt alle zentralen Audit-/Merge-Zeilen inkl. Sparten- und Kostenbasisfeldern und ist fuer grosse Datenmengen belastbarer als ein formelbasiertes Excel-Workbook.
+- Gruppierung primaer pro `TSC` und `Land`.
+- Maximal ca. `25'000` Detailzeilen pro Nachweis-Workbook.
+- Falls ein Land/TSC groesser ist, entstehen mehrere Dateien mit `_Teil01`, `_Teil02` usw.
+
+Die zentrale `Finance_Dashboard_Audit_All_<Datum>.csv` bleibt weiterhin der vollstaendige Detailnachweis ueber alle Laender. Die kleinen Excel-Nachweise sind fuer die gezielte Finance-Pruefung pro Land/TSC gedacht.
 
 ## Technische Stellen
 
-- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, zentrale Audit-CSV und optional Nachweis im gleichen Output-Ordner und laedt die Dateien progressiv nach SharePoint hoch. Das Nachweis-Excel wird bei mehr als `50'000` Zentralzeilen im Inline-Lauf uebersprungen.
+- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, zentrale Audit-CSV und Nachweis-Excel im gleichen Output-Ordner und laedt die Dateien progressiv nach SharePoint hoch. Das Nachweis-Excel wird bei mehr als `50'000` Zentralzeilen in kleine Dateien pro TSC/Land mit maximal ca. `25'000` Zeilen partitioniert.
 - `Services/ExportAuditCsvService.cs`: schreibt Standort-Audit-CSV fuer `Sales_ProcessedMergeInput_*` und zentrale Nachweis-CSV `Finance_Dashboard_Audit_All_*`.
-- `Services/ExcelExportService.cs`: baut die Nachweis-Workbook-Struktur und Formeln.
+- `Services/ExcelExportService.cs`: baut die Nachweis-Workbook-Struktur, Formeln und optionale Scope-Dateinamen.
 - `Services/DashboardPageService.cs`: zeigt die letzte zentrale Datei und den letzten Dashboard-Nachweis im Export-Dashboard.
 - `Components/Pages/Settings.razor`: UI-Text fuer den gemeinsamen waehlbaren Ordner.

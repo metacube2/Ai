@@ -441,16 +441,22 @@ LIMIT 1000;
             .Select(path => new FileInfo(path))
             .OrderByDescending(file => file.LastWriteTime)
             .FirstOrDefault();
-        var proof = Directory.GetFiles(outputDirectory, "Finance_Dashboard_Nachweis_*.xlsx")
+        var proofFiles = Directory.GetFiles(outputDirectory, "Finance_Dashboard_Nachweis_*.xlsx")
             .Select(path => new FileInfo(path))
             .OrderByDescending(file => file.LastWriteTime)
-            .FirstOrDefault();
+            .Take(50)
+            .ToList();
 
-        return new[]
-        {
-            BuildConsolidatedRow("Konsolidierter Export", "Consolidated export", consolidated, sharePointConfig),
-            BuildConsolidatedRow("Dashboard Nachweis", "Dashboard proof", proof, sharePointConfig)
-        }
+        var rows = new List<ConsolidatedDashboardRow?>();
+        rows.Add(BuildConsolidatedRow("Konsolidierter Export", "Consolidated export", consolidated, sharePointConfig));
+        rows.AddRange(proofFiles.Select(file =>
+            BuildConsolidatedRow(
+                BuildProofDisplayLabel(file),
+                BuildProofDisplayLabelEnglish(file),
+                file,
+                sharePointConfig)));
+
+        return rows
             .Where(row => row is not null)
             .Select(row => row!)
             .ToList();
@@ -481,6 +487,39 @@ LIMIT 1000;
         var relativePath = string.Join("/", folder.Trim('/'), file.Name).Trim('/');
         var siteUrl = sharePointConfig!.SiteUrl.TrimEnd('/');
         return $"{siteUrl}/{relativePath}";
+    }
+
+    private static string BuildProofDisplayLabel(FileInfo file)
+    {
+        var scope = ResolveProofFileScope(file);
+        return string.IsNullOrWhiteSpace(scope)
+            ? "Dashboard Nachweis"
+            : $"Dashboard Nachweis {scope}";
+    }
+
+    private static string BuildProofDisplayLabelEnglish(FileInfo file)
+    {
+        var scope = ResolveProofFileScope(file);
+        return string.IsNullOrWhiteSpace(scope)
+            ? "Dashboard proof"
+            : $"Dashboard proof {scope}";
+    }
+
+    private static string ResolveProofFileScope(FileInfo file)
+    {
+        var name = Path.GetFileNameWithoutExtension(file.Name);
+        const string prefix = "Finance_Dashboard_Nachweis_";
+        if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        var scope = name[prefix.Length..];
+        var dateSuffixIndex = scope.LastIndexOf('_');
+        if (dateSuffixIndex >= 0 && DateTime.TryParse(scope[(dateSuffixIndex + 1)..], out _))
+            scope = scope[..dateSuffixIndex];
+        else if (DateTime.TryParse(scope, out _))
+            return string.Empty;
+
+        return scope.Replace('_', ' ').Trim();
     }
 
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)

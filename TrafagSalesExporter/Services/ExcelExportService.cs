@@ -36,10 +36,13 @@ public class ExcelExportService : IExcelExportService
         return fullPath;
     }
 
-    public string CreateDashboardProofExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records, bool useAuditCsvAsCentralSource)
+    public string CreateDashboardProofExcelFile(string outputDirectory, DateTime fileDate, List<SalesRecord> records, bool useAuditCsvAsCentralSource, string? fileScope = null)
     {
         Directory.CreateDirectory(outputDirectory);
-        var fileName = $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx";
+        var scopePart = BuildSafeFileScope(fileScope);
+        var fileName = string.IsNullOrWhiteSpace(scopePart)
+            ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
+            : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
         WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences());
         return fullPath;
@@ -89,6 +92,18 @@ public class ExcelExportService : IExcelExportService
             .OrderBy(reference => reference.Year)
             .ThenBy(reference => reference.Key)
             .ToList();
+    }
+
+    private static string BuildSafeFileScope(string? fileScope)
+    {
+        if (string.IsNullOrWhiteSpace(fileScope))
+            return string.Empty;
+
+        var safe = new string(fileScope
+            .Trim()
+            .Select(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_' ? ch : '_')
+            .ToArray());
+        return safe.Trim('_');
     }
 
     private static void WriteDashboardProofWorkbook(

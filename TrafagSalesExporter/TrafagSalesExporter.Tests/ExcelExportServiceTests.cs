@@ -7,6 +7,31 @@ namespace TrafagSalesExporter.Tests;
 public class ExcelExportServiceTests
 {
     [Fact]
+    public void CreateDashboardProofExcelFile_WithScope_Uses_Scoped_FileName()
+    {
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-proof-scope-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+
+        try
+        {
+            var path = service.CreateDashboardProofExcelFile(
+                outputDirectory,
+                new DateTime(2026, 6, 17),
+                [],
+                useAuditCsvAsCentralSource: true,
+                fileScope: "TRCH Schweiz/CH");
+
+            Assert.Equal(Path.Combine(outputDirectory, "Finance_Dashboard_Nachweis_TRCH_Schweiz_CH_2026-06-17.xlsx"), path);
+            Assert.True(File.Exists(path));
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CreateDashboardProofExcelFile_Creates_Formula_Based_Proof_Workbook()
     {
         var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-proof-{Guid.NewGuid():N}");
