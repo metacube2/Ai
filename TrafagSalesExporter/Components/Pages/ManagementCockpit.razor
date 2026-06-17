@@ -52,7 +52,7 @@
 
 @if (_financeResult is not null)
 {
-    <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0"
+    <MudTabs Class="management-top-tabs" Elevation="1" Rounded="false" PanelClass="pt-4"
              ActivePanelIndex="_activeOverviewTabIndex" ActivePanelIndexChanged="OnOverviewTabChanged">
         <MudTabPanel Text="@T("Schnelluebersicht", "Quick overview")" Icon="@Icons.Material.Filled.Speed">
             <MudGrid Class="mb-4">
@@ -1384,6 +1384,10 @@
 }
 
 <style>
+    .management-top-tabs > .mud-tabs-toolbar {
+        margin-bottom: 1rem;
+    }
+
     .management-side-nav-tabs .mud-tabs-toolbar {
         display: none;
     }
