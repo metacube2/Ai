@@ -59,6 +59,10 @@ Wenn ein SharePoint-Ziel fuer zentrale Exporte konfiguriert ist, werden die zent
 
 Produktiv ist `SharePointConfigs.CentralExportFolder` auf `/Import/Finance/Alle` gesetzt. Damit landen die konsolidierten Dateien im zentralen Finance-Ordner `Import/Finance/Alle`, waehrend die Standortexporte weiterhin in den jeweiligen Laenderordnern bleiben.
 
+Vor dem zentralen Export prueft die App pro aktivem Standort die neueste `Sales_ProcessedMergeInput_*`-CSV im SharePoint-/Auditpfad und vergleicht sie mit dem DB-Stand in `CentralSalesRecords`. Fuer `Sales_All_*`, `Finance_Dashboard_Nachweis_*` und `Finance_Dashboard_Audit_All_*` wird pro Land/TSC der jeweils neueste Stand verwendet.
+
+Die Spalte `Letzte Aenderung` im Export Dashboard > `Zentrale Datei` kommt vom lokalen Datei-Zeitstempel des erzeugten Server-Files (`FileInfo.LastWriteTime`). Sie ist nicht der SharePoint-Modified-Zeitstempel.
+
 Die zentrale Audit-CSV nutzt bewusst kein `Sales_*`-Praefix. Grund: `Sales_ProcessedMergeInput_*` und historische `Sales_*`-CSV werden als zentrale Audit-Input-Dateien erkannt. Die neue `Finance_Dashboard_Audit_All_*`-Datei ist ein Nachweis-/Exportartefakt und darf nicht als weiteres TSC/Land erneut eingelesen werden.
 
 ## Technische Stellen

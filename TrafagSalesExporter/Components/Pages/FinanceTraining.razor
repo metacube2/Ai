@@ -175,6 +175,23 @@
                 <li><strong>Soll/Ist OK:</strong> CFO-/Finance-Freigabe kann auf Basis der Finance-Sicht erfolgen.</li>
             </ul>
         </TrainingSection>
+
+        <TrainingSection Title="Zentrale Dateien und SharePoint-Ablage">
+            <p>Der Button <strong>Zentrale Datei neu erzeugen</strong> erstellt die zentralen Finance-Dateien lokal auf dem Server und laedt sie
+                danach in den zentralen SharePoint-Ordner <code>/Import/Finance/Alle</code> hoch.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Datei</th><th>Inhalt</th><th>SharePoint-Ziel</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Sales_All_&lt;Datum&gt;.xlsx</code></td><td>Konsolidierter Export mit Sales, Finance Summary und Finance Details.</td><td><code>/Import/Finance/Alle</code></td></tr>
+                    <tr><td><code>Finance_Dashboard_Nachweis_&lt;Datum&gt;.xlsx</code></td><td>Nachweis-Excel mit Formeln, <strong>Sparten Details</strong> und <strong>Sparten Summary</strong>.</td><td><code>/Import/Finance/Alle</code></td></tr>
+                    <tr><td><code>Finance_Dashboard_Audit_All_&lt;Datum&gt;.csv</code></td><td>Zentrale Audit-CSV aller Laender mit aufbereiteten Merge- und Spartenfeldern.</td><td><code>/Import/Finance/Alle</code></td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                Die Spalte <strong>Letzte Aenderung</strong> in der Tabelle <strong>Zentrale Datei</strong> zeigt den lokalen Datei-Zeitstempel auf dem Server.
+                Sie ist nicht der SharePoint-Modified-Zeitstempel.
+            </MudAlert>
+        </TrainingSection>
     </MudTabPanel>
 
     <MudTabPanel Text="Importe">

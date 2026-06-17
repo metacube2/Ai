@@ -202,7 +202,7 @@ Dabei entstehen typischerweise drei zentrale Dateien:
 | Datei | Zweck |
 | --- | --- |
 | `Sales_All_<Datum>.xlsx` | operative zentrale Excel aus dem aktuellen Datenbestand |
-| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Formeln und Detailblaettern |
+| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Formeln, `Sparten Details` und `Sparten Summary` |
 | `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale Audit-CSV aller Laender mit Sparten-/Merge-Feldern |
 
 `Sales_All_<Datum>.xlsx` enthaelt typischerweise:
@@ -214,11 +214,13 @@ Dabei entstehen typischerweise drei zentrale Dateien:
 | `Sales` | vollstaendige verarbeitete Exportdaten |
 | `Finance Filter Hilfe` | Hinweise fuer Excel-Filter |
 
-Wenn die zentrale Auswertungsquelle auf Audit-CSV steht, wird die zentrale Excel aus den neuesten Audit-CSV gebildet. Wenn die Auswertungsquelle auf DB steht, wird sie aus `CentralSalesRecords` gebildet.
+Vor dem Erzeugen prueft der Server pro Land/TSC die neuesten `Sales_ProcessedMergeInput_*`-CSV im SharePoint-/Auditpfad und vergleicht sie mit dem DB-Stand in `CentralSalesRecords`. Fuer die zentrale Datei wird pro Land der neueste Stand verwendet.
 
 Das Nachweis-Excel `Finance_Dashboard_Nachweis_<Datum>.xlsx` enthaelt Formel-Summaries wie `SUMIFS`, `COUNTIFS` und `IF`. Finance kann damit nachvollziehen, wie Summen aus Detailzeilen entstehen. Enthalten sind u. a. Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet.
 
-Wenn SharePoint konfiguriert ist, landen die zentralen Dateien in `Import/Finance/Alle`. Die Standortdateien `Sales_<TSC>_*` und `Sales_ProcessedMergeInput_<TSC>_*` bleiben je Standort im jeweiligen Laenderordner.
+Wenn SharePoint konfiguriert ist, landen die zentralen Dateien in `/Import/Finance/Alle`. Die Standortdateien `Sales_<TSC>_*` und `Sales_ProcessedMergeInput_<TSC>_*` bleiben je Standort im jeweiligen Laenderordner.
+
+Die Spalte `Letzte Aenderung` im Export Dashboard > `Zentrale Datei` zeigt den lokalen Datei-Zeitstempel auf dem Server. Sie ist nicht der SharePoint-Modified-Zeitstempel.
 
 ## Soll/Ist-Vergleich
 
