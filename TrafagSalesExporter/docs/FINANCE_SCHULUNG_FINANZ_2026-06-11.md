@@ -443,6 +443,8 @@ Summe US im zentralen Excel: `2'250 USD`.
 8. Soll/Ist-Vergleich gegen Referenzwerte pruefen.
 9. Bei Abweichungen zuerst Audit-CSV und Finance Details nach TSC, Land, Jahr, Waehrung und Belegnummer filtern.
 
+Aktueller Pruefstand 2026-06-17: Die produktiv erzeugten `Finance_Dashboard_Nachweis_*_2026-06-17.xlsx` wurden gegen `Finance_Dashboard_Audit_All_2026-06-17.csv` abgeglichen. Audit-CSV und Nachweis-Excel enthalten jeweils `112'749` Detailzeilen; je TSC ist das Delta `0`. Auch `Finance_Dashboard_Nachweis_TRUS_USA_2026-06-17.xlsx` ist enthalten und stimmt mit `1'344` Zeilen gegen Audit ueberein. Die Excel-Filterbarkeit entspricht dem Dashboard ueber `Year`, `Country Key`, `Currency` sowie TSC/Sparte in den Detail- und Summary-Blaettern.
+
 ## Typische Fehlerbilder
 
 | Symptom | Wahrscheinliche Ursache | Pruefung |

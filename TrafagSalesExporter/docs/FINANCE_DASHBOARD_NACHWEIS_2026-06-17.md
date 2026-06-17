@@ -90,6 +90,50 @@ Der Grund ist die Dateigroesse und Workbook-Komplexitaet: Das Nachweis-Excel ent
 
 Die zentrale `Finance_Dashboard_Audit_All_<Datum>.csv` bleibt weiterhin der vollstaendige Detailnachweis ueber alle Laender. Die kleinen Excel-Nachweise sind fuer die gezielte Finance-Pruefung pro Land/TSC gedacht.
 
+## Pruefstand 2026-06-17
+
+Nach abgeschlossener Server-Generierung wurden die erzeugten Nachweis-Excel-Dateien im produktiven Output-Ordner gegen die zentrale Audit-CSV geprueft:
+
+- Audit-Datei: `Finance_Dashboard_Audit_All_2026-06-17.csv`
+- Nachweis-Dateien: `Finance_Dashboard_Nachweis_*_2026-06-17.xlsx`
+- Audit-Gesamtzeilen: `112'749`
+- Nachweis-Gesamtzeilen ueber alle Excel-Dateien: `112'749`
+- Ergebnis: je TSC `delta=0`, keine Scope-Fehler bei TSC/Land.
+
+Gepruefte Zeilen je Nachweis-Datei:
+
+| Datei | Detailzeilen | Finance Include TRUE | TSC-Pruefung | Land-Pruefung |
+| --- | ---: | ---: | --- | --- |
+| `Finance_Dashboard_Nachweis_TRAT_AT_2026-06-17.xlsx` | `2'562` | `2'557` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRCH_CH_Teil01_2026-06-17.xlsx` | `25'000` | `23'828` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRCH_CH_Teil02_2026-06-17.xlsx` | `25'000` | `23'384` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRCH_CH_Teil03_2026-06-17.xlsx` | `18'372` | `15'995` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRDE_Deutschland_2026-06-17.xlsx` | `4'534` | `4'145` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRES_Spanien_2026-06-17.xlsx` | `9'254` | `7'952` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRFR_Frankreich_2026-06-17.xlsx` | `2'399` | `2'322` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRIN_Indien_2026-06-17.xlsx` | `6'384` | `6'384` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRIT_Italien_2026-06-17.xlsx` | `17'896` | `17'159` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRUK_England_2026-06-17.xlsx` | `4` | `4` | OK | OK |
+| `Finance_Dashboard_Nachweis_TRUS_USA_2026-06-17.xlsx` | `1'344` | `1'327` | OK | OK |
+
+Vergleich je TSC gegen die Audit-CSV:
+
+| TSC | Audit-CSV | Nachweis-Excel | Delta |
+| --- | ---: | ---: | ---: |
+| TRAT | `2'562` | `2'562` | `0` |
+| TRCH | `68'372` | `68'372` | `0` |
+| TRDE | `4'534` | `4'534` | `0` |
+| TRES | `9'254` | `9'254` | `0` |
+| TRFR | `2'399` | `2'399` | `0` |
+| TRIN | `6'384` | `6'384` | `0` |
+| TRIT | `17'896` | `17'896` | `0` |
+| TRUK | `4` | `4` | `0` |
+| TRUS | `1'344` | `1'344` | `0` |
+
+Die Workbook-Struktur wurde ebenfalls geprueft: `Datenherkunft`, `Finance Summary`, `Finance Details`, `Soll Ist`, `Sparten Summary`, `Sparten Details`, `Gruppenmarge Summary`, `Gruppenmarge Details`, `Datenqualitaet` und `Formel Hilfe` sind vorhanden. Die Kernformeln in `Finance Summary`, `Sparten Summary` und `Gruppenmarge Summary` verweisen per `SUMIFS`/`COUNTIFS` auf die jeweiligen Detailblaetter.
+
+Filterbezug zum Dashboard: Die Nachweis-Dateien enthalten in den Detail- und Summary-Blaettern `Year`, `Country Key`, `Currency` und je nach Blatt `TSC` sowie Sparte. Damit kann Finance dieselbe Sicht wie im Dashboard nachstellen, indem im Excel nach Jahr, Land/Country Key und Waehrung gefiltert wird.
+
 ## Technische Stellen
 
 - `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, zentrale Audit-CSV und Nachweis-Excel im gleichen Output-Ordner und laedt die Dateien progressiv nach SharePoint hoch. Das Nachweis-Excel wird bei mehr als `50'000` Zentralzeilen in kleine Dateien pro TSC/Land mit maximal ca. `25'000` Zeilen partitioniert.
