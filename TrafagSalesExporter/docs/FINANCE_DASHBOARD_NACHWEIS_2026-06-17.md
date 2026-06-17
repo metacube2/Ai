@@ -65,9 +65,22 @@ Die Spalte `Letzte Aenderung` im Export Dashboard > `Zentrale Datei` kommt vom l
 
 Die zentrale Audit-CSV nutzt bewusst kein `Sales_*`-Praefix. Grund: `Sales_ProcessedMergeInput_*` und historische `Sales_*`-CSV werden als zentrale Audit-Input-Dateien erkannt. Die neue `Finance_Dashboard_Audit_All_*`-Datei ist ein Nachweis-/Exportartefakt und darf nicht als weiteres TSC/Land erneut eingelesen werden.
 
+## Laufzeitverhalten bei grossen Datenmengen
+
+Seit 2026-06-17 wird der zentrale SharePoint-Upload progressiv ausgefuehrt:
+
+1. Neueste Laenderdateien pruefen und lokal synchronisieren.
+2. `Sales_All_<Datum>.xlsx` erzeugen und sofort nach SharePoint `Import/Finance/Alle` laden.
+3. `Finance_Dashboard_Audit_All_<Datum>.csv` erzeugen und nach SharePoint laden.
+4. Optional `Finance_Dashboard_Nachweis_<Datum>.xlsx` erzeugen und nach SharePoint laden.
+
+Der Grund ist die Dateigroesse: Das Nachweis-Excel enthaelt mehrere grosse Detailblaetter mit Formeln und kann bei sehr grossen Zentraldaten sehr lange laufen. Damit der produktive zentrale Export nicht blockiert, wird das Nachweis-Excel im gleichen Buttonlauf nur bis `50'000` Zentralzeilen erzeugt. Bei groesseren Datenmengen wird es uebersprungen und als Warnung in den App-Logs dokumentiert.
+
+In diesem Fall ist `Finance_Dashboard_Audit_All_<Datum>.csv` der vollstaendige Detailnachweis fuer Finance. Sie enthaelt alle zentralen Audit-/Merge-Zeilen inkl. Sparten- und Kostenbasisfeldern und ist fuer grosse Datenmengen belastbarer als ein formelbasiertes Excel-Workbook.
+
 ## Technische Stellen
 
-- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, Nachweis und zentrale Audit-CSV im gleichen Output-Ordner und laedt sie nach SharePoint hoch.
+- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, zentrale Audit-CSV und optional Nachweis im gleichen Output-Ordner und laedt die Dateien progressiv nach SharePoint hoch. Das Nachweis-Excel wird bei mehr als `50'000` Zentralzeilen im Inline-Lauf uebersprungen.
 - `Services/ExportAuditCsvService.cs`: schreibt Standort-Audit-CSV fuer `Sales_ProcessedMergeInput_*` und zentrale Nachweis-CSV `Finance_Dashboard_Audit_All_*`.
 - `Services/ExcelExportService.cs`: baut die Nachweis-Workbook-Struktur und Formeln.
 - `Services/DashboardPageService.cs`: zeigt die letzte zentrale Datei und den letzten Dashboard-Nachweis im Export-Dashboard.

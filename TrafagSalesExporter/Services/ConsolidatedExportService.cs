@@ -7,6 +7,7 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private const string FinanceImportRootFolder = "/Import/Finance";
+    private const int MaxInlineProofWorkbookRows = 50000;
     private static readonly TimeSpan SharePointProbeTimeout = TimeSpan.FromSeconds(25);
     private static readonly TimeSpan SharePointDownloadTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan SharePointUploadTimeout = TimeSpan.FromMinutes(5);
@@ -92,6 +93,17 @@ public class ConsolidatedExportService : IConsolidatedExportService
         {
             updateStatus?.Invoke("Audit-CSV nach SharePoint laden...");
             await UploadCentralFileAsync(spConfig!, uploadTarget.Folder, uploadTarget.LandSubfolder, auditCsvPath);
+        }
+
+        if (sortedRecords.Count > MaxInlineProofWorkbookRows)
+        {
+            updateStatus?.Invoke("Nachweis-Excel wegen Datenmenge uebersprungen.");
+            await _appEventLogService.WriteAsync(
+                "Export",
+                "Zentrales Nachweis-Excel wegen Datenmenge uebersprungen",
+                "Warning",
+                details: $"Zeilen={sortedRecords.Count}; Grenze={MaxInlineProofWorkbookRows}; Vollstaendiger Detailnachweis liegt in {Path.GetFileName(auditCsvPath)}.");
+            return consolidatedPath;
         }
 
         updateStatus?.Invoke("Nachweis-Excel erzeugen...");
