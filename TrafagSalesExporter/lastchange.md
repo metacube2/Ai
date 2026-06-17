@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-16
+Stand: 2026-06-17
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -15,6 +15,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Gruppenmarge ist ein MVP/Pruefsicht, kein finaler Finance-Wert: Umsatz und bekannte Kostenbasis werden gezeigt; Marge und Prozent werden `-`, sobald Kostenbasis offen ist (`Standardpreis fehlt` oder `Lieferant unklar`).
 - Gruppenmarge-Doku: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Multiple-Choice-Entscheidungsbogen: `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-16.docx`.
 - Neu umgesetzt, getestet und deployed am 2026-06-17: `Zentrale Datei neu erzeugen` erstellt zusaetzlich `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` im waehlbaren zentralen Exportordner. Die Datei enthaelt Formel-Summaries (`SUMIFS`, `COUNTIFS`, `IF`) und Detailblaetter fuer Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet. Doku: `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md`.
+- Neu umgesetzt, getestet und deployed am 2026-06-17: Der zentrale Export laedt neben `Sales_All_<yyyy-MM-dd>.xlsx` und `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` auch `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv` nach SharePoint `Import/Finance/Alle`. Diese CSV enthaelt die aufbereiteten Audit-/Merge-Felder inkl. Produktsparte, nutzt bewusst kein `Sales_*`-Praefix und wird dadurch nicht erneut als zentrale Input-CSV eingelesen.
+- Server-DB-Check 2026-06-17: `SharePointConfigs.ExportFolder=/Import/Finance/`, `CentralExportFolder=/Import/Finance/Alle`; Laenderexporte bleiben in ihren Laenderordnern.
+- Deploy-Validierung 2026-06-17 zentraler Audit-Export: `dotnet test TrafagSalesExporter.sln --configuration Release --verbosity minimal` mit `99/99` Tests gruen; Publish auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` erfolgreich; `app_offline.htm` entfernt; `BiDashboard.dll` Zeitstempel `17.06.2026 09:47:58`; `Test-NetConnection ... -Port 443` erfolgreich. Commit: `65f2ded Upload central finance audit exports`.
 - Deploy-Validierung 2026-06-17: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `98/98` Tests gruen; Publish auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` erfolgreich; `app_offline.htm` entfernt; `Test-NetConnection ... -Port 443` erfolgreich.
 - Aktueller Datenbefund Gruppenmarge: AT/TRAT und CH/TRCH haben in den geprueften 2025-Zentraldaten `StandardCost=0` und leere Supplier-Felder; die Marge bleibt daher offen und darf nicht als 100%-Marge interpretiert werden.
 - Deploy-Validierung 2026-06-16: mehrfach `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen; Publish auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` erfolgreich; `app_offline.htm` entfernt; `Test-NetConnection ... -Port 443` erfolgreich.

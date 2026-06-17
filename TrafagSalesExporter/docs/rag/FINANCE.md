@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-06-16
+Stand: 2026-06-17
 
 ## Kurzstand
 
@@ -10,6 +10,7 @@ Stand: 2026-06-16
 - Audit-CSV-Dateiname: `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv`; liegt im gleichen Ordner wie das Standort-Excel und wird beim Standortexport in denselben SharePoint-Landesordner hochgeladen.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
 - Nachweis fuer Excel-Fans: `Zentrale Datei neu erzeugen` erstellt zusaetzlich `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` im waehlbaren zentralen Exportordner. Die Datei enthaelt Formel-Summaries (`SUMIFS`, `COUNTIFS`, `IF`) und Detailblaetter fuer Finance, Soll/Ist, Sparten, Gruppenmarge und Datenqualitaet. Doku: `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md`.
+- Zentraler Finance-Export laedt nach SharePoint `Import/Finance/Alle`: `Sales_All_<yyyy-MM-dd>.xlsx`, `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx` und `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv`. Die zentrale Audit-CSV enthaelt die aufbereiteten Audit-/Merge-Felder inkl. Produktsparte und nutzt bewusst kein `Sales_*`-Praefix, damit sie nicht als zusaetzlicher Audit-Input wieder eingelesen wird.
 - `Management Analyse` bleibt Diagnose-/Plausibilitaetssicht, nicht fuehrende Finance-Zahl.
 - Nach UX-Vereinfachung gibt es links eine schnellere Finance-Uebersicht; tiefe Diagnosefunktionen sind unter `Experten` gebuendelt.
 - Neuer Expertenpunkt: `3D Datenanalyse` fuer interaktive visuelle Analyse und Simulation.

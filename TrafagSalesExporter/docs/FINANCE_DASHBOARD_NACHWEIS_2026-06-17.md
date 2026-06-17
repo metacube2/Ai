@@ -12,6 +12,14 @@ Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx
 
 Die bestehende Datei `Sales_All_<yyyy-MM-dd>.xlsx` bleibt unveraendert.
 
+Seit 2026-06-17 wird zusaetzlich eine zentrale Audit-CSV fuer Finance erzeugt:
+
+```text
+Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv
+```
+
+Diese Datei enthaelt die aufbereiteten Audit-/Merge-Felder inkl. Produktsparte, Produktfamilie, Produktmapping-Status, Umsatz, Waehrungen und Kostenbasis-Felder.
+
 ## Ablage
 
 Beide Dateien werden in denselben waehlbaren lokalen Ordner geschrieben:
@@ -43,14 +51,20 @@ Die Gruppenmarge bleibt bewusst leer, wenn offene Kostenbasis vorhanden ist. In 
 
 ## SharePoint
 
-Wenn ein SharePoint-Ziel fuer zentrale Exporte konfiguriert ist, werden beide Dateien hochgeladen:
+Wenn ein SharePoint-Ziel fuer zentrale Exporte konfiguriert ist, werden die zentralen Dateien hochgeladen:
 
 - `Sales_All_<yyyy-MM-dd>.xlsx`
 - `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx`
+- `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv`
+
+Produktiv ist `SharePointConfigs.CentralExportFolder` auf `/Import/Finance/Alle` gesetzt. Damit landen die konsolidierten Dateien im zentralen Finance-Ordner `Import/Finance/Alle`, waehrend die Standortexporte weiterhin in den jeweiligen Laenderordnern bleiben.
+
+Die zentrale Audit-CSV nutzt bewusst kein `Sales_*`-Praefix. Grund: `Sales_ProcessedMergeInput_*` und historische `Sales_*`-CSV werden als zentrale Audit-Input-Dateien erkannt. Die neue `Finance_Dashboard_Audit_All_*`-Datei ist ein Nachweis-/Exportartefakt und darf nicht als weiteres TSC/Land erneut eingelesen werden.
 
 ## Technische Stellen
 
-- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei und Nachweis im gleichen Output-Ordner.
+- `Services/ConsolidatedExportService.cs`: erzeugt zentrale Datei, Nachweis und zentrale Audit-CSV im gleichen Output-Ordner und laedt sie nach SharePoint hoch.
+- `Services/ExportAuditCsvService.cs`: schreibt Standort-Audit-CSV fuer `Sales_ProcessedMergeInput_*` und zentrale Nachweis-CSV `Finance_Dashboard_Audit_All_*`.
 - `Services/ExcelExportService.cs`: baut die Nachweis-Workbook-Struktur und Formeln.
 - `Services/DashboardPageService.cs`: zeigt die letzte zentrale Datei und den letzten Dashboard-Nachweis im Export-Dashboard.
 - `Components/Pages/Settings.razor`: UI-Text fuer den gemeinsamen waehlbaren Ordner.
