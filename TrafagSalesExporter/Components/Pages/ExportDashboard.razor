@@ -90,7 +90,7 @@
         <MudTh>@T("Status", "Status")</MudTh>
         <MudTh>@T("Live-Status", "Live status")</MudTh>
         <MudTh>@T("Zeilen", "Rows")</MudTh>
-        <MudTh>@T("Letzter Lauf", "Last run")</MudTh>
+        <MudTh>@T("Datenstand", "Data status")</MudTh>
         <MudTh>@T("Dauer", "Duration")</MudTh>
         <MudTh>@T("Aktion", "Action")</MudTh>
     </HeaderContent>
@@ -143,7 +143,31 @@
             }
         </MudTd>
         <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
-        <MudTd>@(context.LastRun.HasValue ? context.LastRun.Value.ToString("dd.MM.yyyy HH:mm:ss") : "-")</MudTd>
+        <MudTd>
+            @if (context.LastRun.HasValue)
+            {
+                <MudTooltip Text="@BuildDataFreshnessTooltip(context)">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.caption">@context.LastRun.Value.ToString("dd.MM.yyyy HH:mm:ss")</MudText>
+                        <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                            <MudChip T="string" Size="Size.Small" Color="@GetDataFreshnessColor(context)" Variant="Variant.Outlined">
+                                @context.DataFreshnessSource
+                            </MudChip>
+                            @if (context.IsCsvNewerThanDatabase)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">
+                                    @T("CSV neuer als DB", "CSV newer than DB")
+                                </MudChip>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudTooltip>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
         <MudTd>@(context.DurationSeconds > 0 ? $"{context.DurationSeconds:F1}s" : "-")</MudTd>
         <MudTd>
             <MudStack Row Spacing="1">
@@ -602,6 +626,26 @@
 
         return Color.Default;
     }
+
+    private string BuildDataFreshnessTooltip(DashboardRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.DataFreshnessDetails))
+            return T("Kein Datenstand gefunden.", "No data status found.");
+
+        return row.IsCsvNewerThanDatabase
+            ? $"{row.DataFreshnessDetails} | {T("CSV ist neuer als CentralSalesRecords.", "CSV is newer than CentralSalesRecords.")}"
+            : row.DataFreshnessDetails;
+    }
+
+    private static Color GetDataFreshnessColor(DashboardRow row)
+        => row.DataFreshnessSource switch
+        {
+            "DB" => Color.Success,
+            "SharePoint-CSV" => Color.Warning,
+            "Lokale CSV" => Color.Info,
+            "Export-Log" => Color.Default,
+            _ => Color.Default
+        };
 
 }
 

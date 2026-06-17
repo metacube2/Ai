@@ -13,10 +13,14 @@ public interface IDashboardPageService
 public sealed class DashboardPageService : IDashboardPageService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ISharePointUploadService _sharePointService;
 
-    public DashboardPageService(IDbContextFactory<AppDbContext> dbFactory)
+    public DashboardPageService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ISharePointUploadService sharePointService)
     {
         _dbFactory = dbFactory;
+        _sharePointService = sharePointService;
     }
 
     public async Task<DashboardPageState> LoadAsync()
@@ -25,15 +29,31 @@ public sealed class DashboardPageService : IDashboardPageService
 
         var sites = await db.Sites.Include(s => s.HanaServer).Where(s => s.IsActive).ToListAsync();
         var sourceSystems = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync();
+        var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new();
+        var sharePointConfig = await db.SharePointConfigs.FirstOrDefaultAsync();
         var logs = await db.ExportLogs
             .GroupBy(l => l.SiteId)
             .Select(g => g.OrderByDescending(l => l.Timestamp).First())
             .ToListAsync();
+        var centralDataStates = await db.CentralSalesRecords
+            .AsNoTracking()
+            .GroupBy(r => r.SiteId)
+            .Select(g => new CentralDataState
+            {
+                SiteId = g.Key,
+                RowCount = g.Count(),
+                LatestStoredAtUtc = g.Max(r => r.StoredAtUtc)
+            })
+            .ToListAsync();
         var latestAppLogsBySite = await LoadLatestAppLogsBySiteAsync(db);
+        var latestCsvBySite = await LoadLatestProcessedMergeInputFilesAsync(sites, settings, sharePointConfig);
 
         var rows = sites.Select(s =>
         {
             var log = logs.FirstOrDefault(l => l.SiteId == s.Id);
+            var centralDataState = centralDataStates.FirstOrDefault(x => x.SiteId == s.Id);
+            latestCsvBySite.TryGetValue(s.Id, out var latestCsv);
+            var dataFreshness = ResolveDataFreshness(centralDataState, latestCsv, log);
             latestAppLogsBySite.TryGetValue(s.Id, out var appLog);
             var sourceSystem = sourceSystems.FirstOrDefault(x => string.Equals(x.Code, s.SourceSystem, StringComparison.OrdinalIgnoreCase));
             return new DashboardRow
@@ -47,8 +67,11 @@ public sealed class DashboardPageService : IDashboardPageService
                     ? ResolveDashboardSapServiceUrl(s, sourceSystems)
                     : s.HanaServer?.Name ?? string.Empty,
                 LastStatus = log?.Status ?? string.Empty,
-                RowCount = log?.RowCount ?? 0,
-                LastRun = log?.Timestamp,
+                RowCount = centralDataState?.RowCount ?? log?.RowCount ?? 0,
+                LastRun = dataFreshness.DisplayAt,
+                DataFreshnessSource = dataFreshness.Source,
+                DataFreshnessDetails = dataFreshness.Details,
+                IsCsvNewerThanDatabase = dataFreshness.IsCsvNewerThanDatabase,
                 DurationSeconds = log?.DurationSeconds ?? 0,
                 ErrorMessage = log?.ErrorMessage ?? string.Empty,
                 FilePath = log?.FilePath ?? string.Empty,
@@ -57,7 +80,7 @@ public sealed class DashboardPageService : IDashboardPageService
             };
         }).ToList();
 
-        var consolidatedRows = BuildConsolidatedRows(await db.ExportSettings.FirstOrDefaultAsync() ?? new());
+        var consolidatedRows = BuildConsolidatedRows(settings);
         var latestSuccessfulSiteRun = logs
             .Where(log => log.Status == "OK")
             .Select(log => (DateTime?)log.Timestamp)
@@ -79,6 +102,214 @@ public sealed class DashboardPageService : IDashboardPageService
             LatestConsolidatedRun = latestConsolidatedRun
         };
     }
+
+    private async Task<Dictionary<int, ProcessedMergeInputState>> LoadLatestProcessedMergeInputFilesAsync(
+        IReadOnlyCollection<Site> sites,
+        ExportSettings settings,
+        SharePointConfig? sharePointConfig)
+    {
+        var result = new Dictionary<int, ProcessedMergeInputState>();
+
+        foreach (var site in sites)
+        {
+            var local = ResolveLatestLocalProcessedMergeInputFile(site, settings);
+            if (local is not null)
+                result[site.Id] = local;
+        }
+
+        if (!HasCompleteSharePointConfig(sharePointConfig))
+            return result;
+
+        var tasks = sites.Select(site => LoadLatestSharePointProcessedMergeInputFileAsync(site, sharePointConfig!)).ToList();
+        var remoteStates = await Task.WhenAll(tasks);
+        foreach (var remote in remoteStates.Where(x => x is not null).Select(x => x!))
+        {
+            if (!result.TryGetValue(remote.SiteId, out var existing) || remote.TimestampUtc > existing.TimestampUtc)
+                result[remote.SiteId] = remote;
+        }
+
+        return result;
+    }
+
+    private async Task<ProcessedMergeInputState?> LoadLatestSharePointProcessedMergeInputFileAsync(
+        Site site,
+        SharePointConfig sharePointConfig)
+    {
+        ProcessedMergeInputState? latestState = null;
+        foreach (var folder in ResolveSharePointProcessedMergeInputFolders(site, sharePointConfig))
+        {
+            try
+            {
+                var file = await _sharePointService.ResolveLatestProcessedMergeInputFileAsync(
+                    sharePointConfig.TenantId,
+                    sharePointConfig.ClientId,
+                    sharePointConfig.ClientSecret,
+                    sharePointConfig.SiteUrl,
+                    folder,
+                    site.TSC);
+
+                if (file?.LastModifiedUtc is null)
+                    continue;
+
+                var state = new ProcessedMergeInputState
+                {
+                    SiteId = site.Id,
+                    Source = "SharePoint-CSV",
+                    Path = file.FileReference,
+                    TimestampUtc = file.LastModifiedUtc.Value.UtcDateTime,
+                    DisplayAt = file.LastModifiedUtc.Value.LocalDateTime
+                };
+                if (latestState is null || state.TimestampUtc > latestState.TimestampUtc)
+                    latestState = state;
+            }
+            catch
+            {
+                // Dashboard status must not fail only because a SharePoint status probe is unavailable.
+            }
+        }
+
+        return latestState;
+    }
+
+    private static ProcessedMergeInputState? ResolveLatestLocalProcessedMergeInputFile(Site site, ExportSettings settings)
+    {
+        var candidates = ResolveLocalProcessedMergeInputDirectories(site, settings)
+            .Where(Directory.Exists)
+            .SelectMany(directory => Directory.EnumerateFiles(directory, "Sales_ProcessedMergeInput_*.csv", SearchOption.TopDirectoryOnly))
+            .Where(path => IsProcessedMergeInputForTsc(path, site.TSC))
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .ThenByDescending(file => file.Name, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return candidates is null
+            ? null
+            : new ProcessedMergeInputState
+            {
+                SiteId = site.Id,
+                Source = "Lokale CSV",
+                Path = candidates.FullName,
+                TimestampUtc = candidates.LastWriteTimeUtc,
+                DisplayAt = candidates.LastWriteTime
+            };
+    }
+
+    private static IEnumerable<string> ResolveLocalProcessedMergeInputDirectories(Site site, ExportSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(site.LocalExportFolderOverride))
+        {
+            yield return site.LocalExportFolderOverride.Trim();
+            yield return Path.Combine(site.LocalExportFolderOverride.Trim(), site.Land);
+        }
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
+        {
+            yield return settings.LocalSiteExportFolder.Trim();
+            yield return Path.Combine(settings.LocalSiteExportFolder.Trim(), site.Land);
+        }
+
+        var output = Path.Combine(AppContext.BaseDirectory, "output");
+        yield return output;
+        yield return Path.Combine(output, site.Land);
+    }
+
+    private static IEnumerable<string> ResolveSharePointProcessedMergeInputFolders(Site site, SharePointConfig sharePointConfig)
+    {
+        if (LooksLikeSharePointReference(site.ManualImportFilePath))
+            yield return site.ManualImportFilePath.Trim();
+
+        if (!string.IsNullOrWhiteSpace(sharePointConfig.ExportFolder))
+            yield return string.Join("/", sharePointConfig.ExportFolder.Trim('/'), site.Land.Trim('/')).Trim('/');
+    }
+
+    private static DataFreshnessState ResolveDataFreshness(
+        CentralDataState? central,
+        ProcessedMergeInputState? csv,
+        ExportLog? log)
+    {
+        var candidates = new List<DataFreshnessCandidate>();
+        if (central is not null)
+        {
+            var utc = EnsureUtc(central.LatestStoredAtUtc);
+            candidates.Add(new DataFreshnessCandidate(
+                utc,
+                utc.ToLocalTime(),
+                "DB",
+                $"CentralSalesRecords | Zeilen={central.RowCount:N0}",
+                false));
+        }
+
+        if (csv is not null)
+        {
+            candidates.Add(new DataFreshnessCandidate(
+                EnsureUtc(csv.TimestampUtc),
+                csv.DisplayAt,
+                csv.Source,
+                $"{csv.Source}: {csv.Path}",
+                true));
+        }
+
+        if (log is not null)
+        {
+            var utc = AssumeLocal(log.Timestamp).ToUniversalTime();
+            candidates.Add(new DataFreshnessCandidate(
+                utc,
+                log.Timestamp,
+                "Export-Log",
+                $"ExportLogs | Status={log.Status}",
+                false));
+        }
+
+        var selected = candidates
+            .OrderByDescending(candidate => candidate.TimestampUtc)
+            .FirstOrDefault();
+
+        var centralUtc = central is null ? (DateTime?)null : EnsureUtc(central.LatestStoredAtUtc);
+        var csvIsNewerThanDatabase = csv is not null &&
+            (centralUtc is null || EnsureUtc(csv.TimestampUtc) > centralUtc.Value.AddSeconds(1));
+
+        return selected is null
+            ? new DataFreshnessState(null, string.Empty, string.Empty, false)
+            : new DataFreshnessState(selected.DisplayAt, selected.Source, selected.Details, csvIsNewerThanDatabase);
+    }
+
+    private static bool HasCompleteSharePointConfig(SharePointConfig? config)
+        => config is not null &&
+           !string.IsNullOrWhiteSpace(config.TenantId) &&
+           !string.IsNullOrWhiteSpace(config.ClientId) &&
+           !string.IsNullOrWhiteSpace(config.ClientSecret) &&
+           !string.IsNullOrWhiteSpace(config.SiteUrl);
+
+    private static bool IsProcessedMergeInputForTsc(string path, string tsc)
+    {
+        var name = Path.GetFileNameWithoutExtension(path);
+        const string prefix = "Sales_ProcessedMergeInput_";
+        if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var suffix = name[prefix.Length..];
+        var lastUnderscore = suffix.LastIndexOf('_');
+        var fileTsc = lastUnderscore <= 0 ? suffix : suffix[..lastUnderscore];
+        return string.Equals(fileTsc, tsc, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeSharePointReference(string path)
+        => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+           path.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+           path.Contains("sharepoint.com", StringComparison.OrdinalIgnoreCase);
+
+    private static DateTime EnsureUtc(DateTime value)
+        => value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+
+    private static DateTime AssumeLocal(DateTime value)
+        => value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Local)
+            : value.ToLocalTime();
 
     private static async Task<Dictionary<int, AppEventLog>> LoadLatestAppLogsBySiteAsync(AppDbContext db)
     {
@@ -270,6 +501,9 @@ public sealed class DashboardRow
     public string LastStatus { get; set; } = string.Empty;
     public int RowCount { get; set; }
     public DateTime? LastRun { get; set; }
+    public string DataFreshnessSource { get; set; } = string.Empty;
+    public string DataFreshnessDetails { get; set; } = string.Empty;
+    public bool IsCsvNewerThanDatabase { get; set; }
     public double DurationSeconds { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
@@ -287,3 +521,32 @@ public sealed class ConsolidatedDashboardRow
     public DateTime? LastModified { get; set; }
     public bool HasOpenableFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
 }
+
+internal sealed class CentralDataState
+{
+    public int SiteId { get; set; }
+    public int RowCount { get; set; }
+    public DateTime LatestStoredAtUtc { get; set; }
+}
+
+internal sealed class ProcessedMergeInputState
+{
+    public int SiteId { get; set; }
+    public string Source { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public DateTime TimestampUtc { get; set; }
+    public DateTime DisplayAt { get; set; }
+}
+
+internal sealed record DataFreshnessState(
+    DateTime? DisplayAt,
+    string Source,
+    string Details,
+    bool IsCsvNewerThanDatabase);
+
+internal sealed record DataFreshnessCandidate(
+    DateTime TimestampUtc,
+    DateTime DisplayAt,
+    string Source,
+    string Details,
+    bool IsCsv);

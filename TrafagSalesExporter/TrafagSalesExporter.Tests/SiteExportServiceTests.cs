@@ -195,6 +195,9 @@ public sealed class SiteExportServiceTests : IDisposable
         public Task<IReadOnlyList<SharePointFileReference>> ResolveManualImportFilesInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc, int? preferredYear = null)
             => throw new NotSupportedException();
 
+        public Task<SharePointFileReference?> ResolveLatestProcessedMergeInputFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc)
+            => Task.FromResult<SharePointFileReference?>(null);
+
         public Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)
             => Task.CompletedTask;
     }

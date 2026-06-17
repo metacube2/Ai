@@ -6,6 +6,7 @@ public interface ISharePointUploadService
     Task<string> DownloadToTempFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string fileReference);
     Task<SharePointFileReference> ResolveLatestFileInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc, int? preferredYear = null);
     Task<IReadOnlyList<SharePointFileReference>> ResolveManualImportFilesInFolderAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc, int? preferredYear = null);
+    Task<SharePointFileReference?> ResolveLatestProcessedMergeInputFileAsync(string tenantId, string clientId, string clientSecret, string siteUrl, string folderReference, string siteTsc);
     Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl);
 }
 

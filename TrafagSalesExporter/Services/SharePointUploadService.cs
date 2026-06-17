@@ -232,6 +232,53 @@ public class SharePointUploadService : ISharePointUploadService
         ];
     }
 
+    public async Task<SharePointFileReference?> ResolveLatestProcessedMergeInputFileAsync(
+        string tenantId,
+        string clientId,
+        string clientSecret,
+        string siteUrl,
+        string folderReference,
+        string siteTsc)
+    {
+        var normalizedTenantId = Normalize(tenantId);
+        var normalizedClientId = Normalize(clientId);
+        var normalizedClientSecret = Normalize(clientSecret);
+        var normalizedSiteUrl = Normalize(siteUrl);
+        var normalizedReference = Normalize(folderReference);
+        var normalizedTsc = Normalize(siteTsc).ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(normalizedReference))
+            return null;
+
+        var credential = new ClientSecretCredential(normalizedTenantId, normalizedClientId, normalizedClientSecret);
+        var graphClient = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
+
+        var siteUri = new Uri(normalizedSiteUrl);
+        var sitePath = siteUri.AbsolutePath.TrimEnd('/');
+        var site = await graphClient.Sites[$"{siteUri.Host}:{sitePath}"].GetAsync();
+
+        if (site?.Id is null)
+            throw new InvalidOperationException("SharePoint Site konnte nicht gefunden werden.");
+
+        var drive = await graphClient.Sites[site.Id].Drive.GetAsync();
+        if (drive?.Id is null)
+            throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
+
+        var folderPath = ResolveRemotePath(normalizedReference, siteUri);
+        var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
+        var latest = children?.Value?
+            .Where(item => item.File is not null)
+            .Where(item => IsProcessedMergeInputFile(item.Name))
+            .Where(item => MatchesProcessedMergeInputTsc(item.Name, normalizedTsc))
+            .OrderByDescending(item => item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+            .ThenByDescending(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return latest is null
+            ? null
+            : new SharePointFileReference(BuildRemotePath(folderPath, latest.Name), latest.LastModifiedDateTime);
+    }
+
     public async Task TestConnectionAsync(string tenantId, string clientId, string clientSecret, string siteUrl)
     {
         var normalizedTenantId = Normalize(tenantId);
@@ -347,6 +394,26 @@ public class SharePointUploadService : ISharePointUploadService
         var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
         return nameWithoutExtension.EndsWith($"_{normalizedTsc}", StringComparison.OrdinalIgnoreCase) ||
                Regex.IsMatch(nameWithoutExtension, $@"(^|[^A-Z0-9]){Regex.Escape(normalizedTsc)}([^A-Z0-9]|$)", RegexOptions.IgnoreCase);
+    }
+
+    private static bool IsProcessedMergeInputFile(string? fileName)
+        => Path.GetFileName(fileName ?? string.Empty).StartsWith("Sales_ProcessedMergeInput_", StringComparison.OrdinalIgnoreCase) &&
+           Path.GetExtension(fileName ?? string.Empty).Equals(".csv", StringComparison.OrdinalIgnoreCase);
+
+    private static bool MatchesProcessedMergeInputTsc(string? fileName, string normalizedTsc)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedTsc))
+            return true;
+
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+        const string prefix = "Sales_ProcessedMergeInput_";
+        if (!nameWithoutExtension.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var suffix = nameWithoutExtension[prefix.Length..];
+        var lastUnderscore = suffix.LastIndexOf('_');
+        var tsc = lastUnderscore <= 0 ? suffix : suffix[..lastUnderscore];
+        return string.Equals(tsc, normalizedTsc, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsSpainManualImport(string normalizedTsc, string folderReference)
