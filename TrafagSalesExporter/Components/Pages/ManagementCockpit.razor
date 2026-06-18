@@ -103,11 +103,6 @@
                                Href="management-cockpit?section=3d">
                         @T("3D Datenanalyse", "3D data analysis")
                     </MudButton>
-                    <MudButton Variant="Variant.Text" Color="Color.Secondary"
-                               StartIcon="@Icons.Material.Filled.Home"
-                               OnClick="NavigateHome">
-                        @T("Home", "Home")
-                    </MudButton>
                 </MudStack>
             </MudPaper>
 
@@ -1372,14 +1367,6 @@
         </MudTabPanel>
     </MudTabs>
         </MudTabPanel>
-        <MudTabPanel Text="@T("Home", "Home")" Icon="@Icons.Material.Filled.Home">
-            <MudPaper Class="pa-4" Elevation="1">
-                <MudText Typo="Typo.h6">@T("Zurueck zum Hauptfenster", "Back to main window")</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Home" OnClick="NavigateHome">
-                    @T("Home oeffnen", "Open home")
-                </MudButton>
-            </MudPaper>
-        </MudTabPanel>
     </MudTabs>
 }
 
@@ -1657,17 +1644,8 @@
 
     private void OnOverviewTabChanged(int index)
     {
-        if (index == ManagementOverviewTabIndexes.Home)
-        {
-            NavigateHome();
-            return;
-        }
-
         _activeOverviewTabIndex = index;
     }
-
-    private void NavigateHome()
-        => Navigation.NavigateTo("https://trch-webapp-bidashboard.trafagch.local/BiDashboard", forceLoad: true);
 
     private void ToggleProductFinanceTop10()
     {
@@ -2336,7 +2314,7 @@
             : section.ToLowerInvariant() switch
             {
                 "decisions" => ManagementOverviewTabIndexes.Decisions,
-                "home" => ManagementOverviewTabIndexes.Home,
+                "home" => ManagementOverviewTabIndexes.Quick,
                 _ => ManagementOverviewTabIndexes.Experts
             };
 
@@ -2345,7 +2323,6 @@
         public const int Quick = 0;
         public const int Decisions = 1;
         public const int Experts = 2;
-        public const int Home = 3;
     }
 
     private static class ProductFinanceGroupLevels

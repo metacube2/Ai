@@ -163,6 +163,14 @@ public class DatabaseSeedService : IDatabaseSeedService
                 existing.Icon = item.Icon;
                 existing.IsExpanded = item.IsExpanded;
             }
+            if (existing.Key == "management-home")
+            {
+                existing.ParentKey = item.ParentKey;
+                existing.SortOrder = item.SortOrder;
+                existing.Href = item.Href;
+                existing.Match = item.Match;
+                existing.Icon = item.Icon;
+            }
             existing.IsSystem = true;
             changed = true;
         }
@@ -173,12 +181,12 @@ public class DatabaseSeedService : IDatabaseSeedService
 
     private static List<NavigationMenuItem> BuildDefaultNavigationMenuItems() =>
     [
+        Link("management-home", null, "Home", "Home", "Home", string.Empty, 0, "All"),
         Group("finance", null, "Finance Cockpit", "Finance Cockpit", "Analytics", 10, expanded: true),
         Link("export-dashboard", "finance", "Export Dashboard", "Export dashboard", "Dashboard", "export-dashboard", 10),
         Group("management-analysis", "finance", "Management Analyse", "Management analysis", "QueryStats", 20),
         Link("management-quick", "management-analysis", "Schnelluebersicht", "Quick overview", "Speed", "management-cockpit", 10, "All"),
         Link("management-decisions", "management-analysis", "Management Entscheidungen", "Management decisions", "Rule", "management-cockpit?section=decisions", 20, "All"),
-        Link("management-home", "management-analysis", "Home", "Home", "Home", "https://trch-webapp-bidashboard.trafagch.local/BiDashboard", 30, "All"),
         Group("experts", "management-analysis", "Experten", "Experts", "Tune", 40),
         Link("finance-summary", "experts", "Finance Summary", "Finance summary", "Dashboard", "management-cockpit?section=summary", 10, "All"),
         Link("country-diagnostics", "experts", "Laender Diagnose", "Country diagnostics", "Public", "management-cockpit?section=countries", 20, "All"),
