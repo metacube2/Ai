@@ -1,6 +1,41 @@
 # Deployment / IIS Handoff 2026-05-19
 
-Letzter Nachtrag: 2026-06-11
+Letzter Nachtrag: 2026-06-18
+
+## Nachtrag 2026-06-18 Deploy Einkaufs-Monatsfilter und Finance-Nachweis-Datumsordner
+
+Deploy-Inhalt:
+
+- Commits `39dedf7` und `569595c`.
+
+Einkaufs-Dashboard Monatsfilter:
+
+- `Components/Pages/PurchasingDashboard.razor`: `FixDay="1"` auf beiden `MudDatePicker`-Instanzen.
+  - Ohne `FixDay` musste der Nutzer nach der Monatsauswahl zusaetzlich noch einen Tag anklicken, bevor `DateChanged` feuerte; der Zeitraumfilter wurde dadurch nie angewendet.
+  - Mit `FixDay="1"` schliesst der Picker direkt nach dem Monatsklick und der Filter wird sofort angewendet.
+- Explizite `StateHasChanged()`-Aufrufe in `ApplyPurchasingFilterAsync` vor und nach dem `await LoadAsync(...)`, damit Lade-Zustand und neue KPI-Werte zuverlaessig neu gerendert werden.
+- `Services/PurchasingDashboardService.cs`: `PurchaseOrderCount`- und `PositionSampleCount`-Abfragen joinen jetzt EKPO und wenden `activeItemFilter` (Loeschkennzeichen) an; daher ist der Loesch-Checkbox-Filter jetzt auf alle sichtbaren KPIs wirksam.
+
+Finance Dashboard Nachweis-Datumsordner:
+
+- `Services/ConsolidatedExportService.cs`: `Finance_Dashboard_Nachweis_*`-Dateien werden in einen Datums-Unterordner abgelegt (`Import/Finance/Alle/yyyy_MM_dd/`). `Sales_All_*` und `Finance_Dashboard_Audit_All_*` bleiben flach in `Import/Finance/Alle`. Der Unterordner wird vom Microsoft Graph API beim ersten Upload automatisch angelegt.
+- `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md` aktualisiert.
+
+Validierung:
+
+- Sauberer Build ohne neue Fehler (bekannte CS0649- und MUD0002-Warnungen bleiben unveraendert).
+
+Publish:
+
+- `app_offline.htm` vor Publish gesetzt und nach Publish entfernt.
+- Publish-Befehl:
+
+```powershell
+dotnet publish TrafagSalesExporter.csproj -c Release -o "\\trch-webapp-bidashboard.trafagch.local\BiDashboard$" --no-restore
+```
+
+- `BiDashboard.dll` Zeitstempel nach erstem Deploy: `18.06.2026 11:53:58`.
+- `BiDashboard.dll` Zeitstempel nach Picker-Fix-Deploy: `18.06.2026 12:04:20`.
 
 ## Nachtrag 2026-06-11 Deploy Einkaufs-Uebersetzungen
 
