@@ -78,6 +78,7 @@
                        Label="@T("Von Monat", "From month")"
                        DateFormat="MM.yyyy"
                        OpenTo="OpenTo.Month"
+                       FixDay="1"
                        MinDate="@(new DateTime(2020, 1, 1))"
                        MaxDate="@DateTime.Today"
                        Variant="Variant.Outlined"
@@ -88,6 +89,7 @@
                        Label="@T("Bis Monat", "To month")"
                        DateFormat="MM.yyyy"
                        OpenTo="OpenTo.Month"
+                       FixDay="1"
                        MinDate="@(new DateTime(2020, 1, 1))"
                        MaxDate="@DateTime.Today"
                        Variant="Variant.Outlined"
@@ -1548,8 +1550,10 @@
     private async Task ApplyPurchasingFilterAsync()
     {
         _liveLoading = true;
+        StateHasChanged();
         _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
         _liveLoading = false;
+        StateHasChanged();
         if (CurrentPurchasingPage == "3d")
             await RenderPurchasing3dAsync();
     }
