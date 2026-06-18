@@ -1,5 +1,7 @@
 # Einkaufsdashboard 2026-06-05
 
+Nachtrag 2026-06-18: Das Einkaufsdashboard wurde fuer die Management-/Einkaufssicht nachgezogen und deployed. Schwerpunkt war die Excel-aehnliche Lieferant/Jahr-Kaskadierung analog Referenzbild `einkauf.png`, Zeitraum 2020 bis aktuelles Jahr, Spend aktuelles Jahr je Lieferant, offene Bestellungen/Zulauf, Filter fuer Loeschkennzeichen und MARA-MSTAE sowie echte Lieferantennamen statt Platzhalter.
+
 ## Ziel
 
 Der neue Bereich `Einkauf` soll die vorhandene Power-BI-Vorlage `x.pbix` aufnehmen und um weitere SAP-Einkaufsanalysen ergaenzen.
@@ -60,6 +62,12 @@ Das Dashboard wurde fachlich um diese Bereiche erweitert:
 - Die Seite ist als Cockpit-Struktur umgesetzt und ueber den vorhandenen UI-Sprachservice mehrsprachig vorbereitet.
 - EKKO, EKPO und EKET werden per SAP/OData in lokale Cache-Tabellen geladen.
 - Das Cockpit liest zuerst den Cache und nutzt nur noch als Fallback eine begrenzte Live-Probe, falls noch kein Cache vorhanden ist.
+- Seit 2026-06-18 ist der Zeitraumfilter standardmaessig auf 2020 bis aktuelles Jahr ausgerichtet.
+- Seit 2026-06-18 gibt es eine Excel-aehnliche Kaskadierungstabelle Lieferant x Jahr mit Jahresspalten, Gesamtsumme und Top-down-Sortierung.
+- Spend im aktuellen Jahr wird pro Lieferant separat analysiert.
+- Bereits beschafft/gebucht und offene Bestellungen/Zulauf werden getrennt visualisiert.
+- Geloeschte Positionen (`LOEKZ`) und Materialstatus (`MARA-MSTAE`) sind als Filterdimensionen vorgesehen; `MSTAE` wirkt, sobald das Feld im Cache gefuellt ist.
+- Aktive Lieferanten werden aus echten Einkaufsbewegungen abgeleitet; generische Lieferantenplatzhalter werden nicht mehr erzeugt.
 
 ## Mehrsprachigkeit Stand 2026-06-11
 
@@ -177,9 +185,10 @@ Die Seite `/einkauf` zeigt nun echte Werte aus dem SAP-Cache:
 - Top-Lieferant, Top-Warengruppe und Top-Artikel werden aus EKPO gruppiert.
 - Top-Artikel zeigt nun Artikel, Lieferant und Bestellmonat, damit ein Wert wie `C42698: CHF 1` fachlich nachvollziehbar ist.
 - Die Verpflichtungs-/Kontraktseite zeigt Top-Restverpflichtungen nach Lieferant, Artikel und Faelligkeitsmonat, nicht nur den Monatsverlauf.
+- Offene Verpflichtungen werden nicht mehr primaer als reine Vergangenheits-Zeitreihe interpretiert; fuer Einkauf ist die Zukunfts-/Faelligkeitssicht nach Lieferant und Artikel fachlich aussagekraeftiger.
 - Spend-, Offenwert- und Kontrakt-Diagramme verwenden Cache-Gruppierungen, sofern der Cache gefuellt ist.
 - Ist der Cache leer oder nicht erreichbar, faellt das Dashboard auf eine begrenzte SAP-Live-Probe zurueck.
-- Der Standardzeitraum ist rollierend auf die letzten drei Kalenderjahre bis heute gesetzt. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`.
+- Der Standardzeitraum ist seit 2026-06-18 auf 2020 bis heute ausgerichtet. Die Datumsabgrenzung erfolgt im Dashboard ueber `Von Monat` und `Bis Monat`.
 
 ## PowerBI-Abgleich
 
@@ -202,9 +211,37 @@ Umgesetzt ist die gleiche Kernaggregation:
 Noch nicht final 1:1 ist die Namensauflösung:
 
 - PowerBI nutzt fuer Lieferanten- und Warengruppennamen `Data.Name`, `Data.Lieferant`, `Data (2).Warengruppe` und `Data (2).WG komplett`.
-- Der aktuelle SAP-OData-Service liefert produktiv `EKKOSet`, `EKPOSet` und `eketSet`.
+- Der aktuelle SAP-OData-Service liefert produktiv `EKKOSet`, `EKPOSet` und `eketSet`; die Cache-Tabellen sind seit 2026-06-18 um optionale Felder fuer `SupplierName` und `Mstae` erweitert.
 - Tests auf `Data`, `Data2`, `DataSet` und `Data2Set` liefern aktuell `404 Resource not found`.
-- Bis diese Mapping-Quelle angebunden ist, zeigt das Dashboard Lieferanten als `Lief. <Nummer> (Name fehlt)` und Warengruppen-Codes statt vollstaendiger Namen.
+- Bis diese Mapping-Quelle angebunden ist, verwendet das Dashboard vorhandene Lieferantennamen aus Payload bzw. Cache. Fehlt der Name, bleibt die Lieferantennummer sichtbar; es werden keine erfundenen Lieferantenlabels verwendet.
+
+## Nachtrag 2026-06-18 Excel-Matrix und Einkaufsfilter
+
+Umgesetzt:
+
+- Neue Matrix `Kaskadierung Lieferant / Jahr` in der Einkaufssicht.
+- Jahresachse aus den tatsaechlichen Spend-Jahren, im Standard 2020 bis aktuelles Jahr.
+- Lieferanten werden Top-down nach Gesamt-Spend sortiert.
+- Aktuelles Jahr: Spend pro Lieferant als separate Analyse.
+- Gebuchter/beschaffter Wert und offener Zulauf werden in der Uebersicht getrennt dargestellt.
+- Standardfilter fuer `LOEKZ` und vorbereiteter Filter fuer `MARA-MSTAE`.
+- Lieferantennamen werden aus dem echten Einkaufsdaten-Payload gelesen, sofern SAP/OData sie liefert.
+- Schema-Maintenance ergaenzt fehlende Cache-Spalten automatisch:
+  - `PurchasingEkkoCache.SupplierName`
+  - `PurchasingEkpoCache.Mstae`
+
+Validierung:
+
+- Testlauf: `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `101/101` Tests gruen.
+- Commit: `4f45805 Improve purchasing dashboard matrix`.
+
+Deploy:
+
+- Publiziert am 2026-06-18 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- `app_offline.htm` wurde fuer den Publish gesetzt und danach entfernt.
+- Produktive Datei: `BiDashboard.dll`, Zeitstempel `18.06.2026 09:29:11`.
+- Servercheck: Port 443 erreichbar, `app_offline.htm` nicht mehr vorhanden.
 
 ## Ideen und Kennzahlen-Katalog
 
@@ -256,7 +293,7 @@ Die Simulation nutzt feste Canvas-Groessen, sichtbare Achsen, waehlbare Diagramm
 
 Die technische Vollbasis ist geladen. Fuer fachlich finale Management-Sichten muessen noch diese Abgrenzungen abgestimmt werden:
 
-- Mapping-Quelle fuer Lieferantennamen, Region und Warengruppentexte bereitstellen oder als eigene Cache-Tabelle laden.
+- Mapping-Quelle fuer Lieferantennamen, Region und Warengruppentexte final bereitstellen oder als eigene Cache-Tabelle laden. Falls `SupplierName` und `Mstae` nicht im bestehenden OData-Payload kommen, muessen Data/LFA1/MARA-Quelle und EntitySet-Namen fachlich/technisch geklaert werden.
 - PowerBI-Zielwerte mit Marco/Finanzen anhand eines konkreten Monats und Lieferanten gegenpruefen.
 - Kontrakte und offene Verpflichtungen, inkl. fachlicher Abgrenzung von normalen Bestellungen und Umlagerungen.
 - Lieferantenbewertung / Performance, falls im SAP-System als OData- oder HANA-Quelle verfuegbar.
@@ -330,13 +367,17 @@ Empfehlung fuer kuenftige grosse Einkauf-Ladevorgaenge:
   - Admins koennen die Unterpunkte ueber die Menuestruktur ausblenden, sortieren oder umhaengen.
 - `Services/IPurchasingDashboardService.cs`
   - Live-State um Spend, offene Menge, offenen Wert, Kontraktwert und Live-Diagrammzeilen erweitert.
+  - Seit 2026-06-18: Live-State um Jahresachsen, Lieferant/Jahr-Matrix und Spend aktuelles Jahr je Lieferant erweitert.
 - `Services/PurchasingDashboardService.cs`
   - Liest EKKO, EKPO und EKET aus dem Einkauf-Cache und nutzt SAP-Live nur als Fallback.
   - Berechnet Spend aus EKPO.
   - Berechnet offene Mengen/Werte aus EKET minus Wareneingangsmenge, bewertet mit EKPO-Netto-Stueckwert.
   - Erstellt Top-Gruppierungen fuer Lieferant, Warengruppe und Artikel.
+  - Seit 2026-06-18: filtert geloeschte Positionen und optional Materialstatus, erzeugt die Lieferant/Jahr-Matrix und vermeidet kuenstliche Lieferanten-Platzhalter.
 - `Services/PurchasingDataRefreshService.cs`
   - Fuehrt Full Load und Delta-Refresh fuer EKKO/EKPO/EKET aus.
   - Beruecksichtigt das SAP-Seitenlimit von 1'000 Zeilen.
+  - Seit 2026-06-18: schreibt optionale Payload-Felder fuer Lieferantennamen und `Mstae`, falls SAP/OData sie liefert.
 - `Services/DatabaseInitializationService.SchemaSql.cs`
   - Erstellt `PurchasingEkkoCache`, `PurchasingEkpoCache`, `PurchasingEketCache` und `PurchasingSyncState`.
+  - Seit 2026-06-18: Schema kennt `SupplierName` in `PurchasingEkkoCache` und `Mstae` in `PurchasingEkpoCache`; bestehende Datenbanken werden ueber Schema-Maintenance ergaenzt.

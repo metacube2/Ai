@@ -1,6 +1,6 @@
 # Markdown-Dokumentenstatus
 
-Stand: 2026-06-11
+Stand: 2026-06-18
 
 RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
 
@@ -18,6 +18,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
 | `entscheide.md` | Kurzfassung der Finance-Fachentscheide | Aktuell als Kurzfassung |
 | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` | Technischer Finance-Datenfluss | Aktuell fuer End-to-end-Datenfluss |
+| `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | Editierbare Quelle fuer Ingos 180-Tage-Roadmap zu Analytics, BI, HR und Einkauf | Aktuell fuer Management-/Word-Doku |
 | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` | Aktuelle Finance-Schulung fuer Anwender, Keyuser und Revision | Fuehrend fuer Schulung; ersetzt den alten Word-Inhalt fachlich |
 | `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Einkaufsdashboard, PBIX-Bezug, SAP/OData-Quellen, Cache/Refresh und UI-Sprachen | Aktuell fuer Einkauf |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping fuer Group Sales Report | Aktuell fuehrend fuer neues Produktmapping-Thema |
@@ -58,6 +59,7 @@ Diese Dateien wurden am 2026-06-09 aus der aktiven Markdown-Struktur entfernt, w
 | --- | --- |
 | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` | Anwenderdoku fuer HR |
 | `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx` | Anwenderdoku fuer Finance |
+| `docs/INGO_TODOS_180_TAGE_2026-06-18.docx` | Word-Fassung der 180-Tage-Todos fuer Ingo: Sales/Data-Lake, HR Dashboard, Einkaufs Dashboard, Abhaengigkeiten, Risiken und naechste Schritte |
 | `docs/hr_kpi_cockpit_preview.png` | neutrale HR-Cockpit-Vorschaugrafik fuer DOCX |
 | `docs/finance_cockpit_preview.png` | neutrale Finance-Cockpit-Vorschaugrafik fuer DOCX |
 
@@ -79,6 +81,7 @@ Bereinigung 2026-06-09:
 - Delta 2026-06-10: Produktsparten-Fallback `ProductDivisionMapSet`, India/SAGE-HANA-Deploy und Server-DB-Seeds wurden in `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
 - Delta 2026-06-11: Finance-Schulung, Audit-CSV-Prozessfluss, zentrale Auswertungsquelle und Kursfluss wurden in `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` und den neuen SVG-Grafiken dokumentiert.
 - Delta 2026-06-11: Einkaufs-Uebersetzungen fuer Spanisch, Italienisch und Hindi sowie der zugehoerige Deploy `1dbaa66` wurden in `docs/PURCHASING_DASHBOARD_2026-06-05.md`, `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`, `docs/rag/DEPLOYMENT.md`, `docs/rag/PROJECT.md` und `lastchange.md` nachdokumentiert.
+- Delta 2026-06-18: Ingos 180-Tage-Roadmap wurde als Markdown-Quelle und Word-Dokument erstellt und in `lastchange.md`, `docs/RAG_ROUTER.md`, `docs/rag/PROJECT.md`, `docs/HANDOFF_2026-06-16.md` und dieser Statusdatei nachdokumentiert.
 
 Weiterhin gilt:
 

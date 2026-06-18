@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-06-16
+Stand: 2026-06-18
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
@@ -24,6 +24,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Admin/Startseite | Admin Login, Sessions, Landing Page | `docs/rag/ADMIN.md` |
 | Architektur | Systemuebersicht, Diagramme, technische Einordnung | `docs/rag/ARCHITECTURE.md` |
 | Produktmapping | Group Sales Report, Produkthierarchie, Produktfamilie, Produktsparte | `docs/rag/PRODUCT_MAPPING.md` |
+| 180-Tage-Roadmap Ingo | Management-Doku, Aufgaben Ingo, Sales/Data-Lake, HR/Einkauf, Abhaengigkeiten | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 
 ## Rohquellen Nur Bei Bedarf
 
@@ -40,6 +41,8 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` | isolierter Kurs-/Umrechnungsworkflow vom Land bis Dashboard |
 | `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` | offene Finance-Fragen fuer Budget-CHF-Spalten |
 | `docs/FINANCE_BUDGET_CHF_MULTIPLE_CHOICE_2026-06-16.docx` | Multiple-Choice-Entscheidungsbogen fuer Finanzchef |
+| `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | editierbare Quelle fuer die 180-Tage-Roadmap von Ingo |
+| `docs/INGO_TODOS_180_TAGE_2026-06-18.docx` | Word-Fassung der 180-Tage-Roadmap fuer Management-/IT-Dokumentation |
 | `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md` | Manual-Import-Details |
 | `docs/HR_KPI_NACHDOKU_2026-05-13.md` | HR-KPI-Details |
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Publish-Details |
@@ -55,6 +58,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `Schulung`, `Training`, `Audit-CSV`, `Sales_ProcessedMergeInput`, `Auswertungsquelle`, `Wirtschaftspruefung` | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` |
 | `Wechselkurs`, `Umrechnungskurs`, `CurrencyExchangeRates`, `DocumentRate`, `ConvertCurrency`, `Anzeige-Waehrung` | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` |
 | `Budget-CHF`, `Budgetkurs`, `Net Sales Actual CHF Budget`, `Finanzchef`, `Multiple Choice` | `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` / `docs/FINANCE_BUDGET_CHF_MULTIPLE_CHOICE_2026-06-16.docx` |
+| `180 Tage`, `Roadmap`, `Ingo`, `Sales Cockpit`, `Data-Lake`, `Einkaufs Dashboard`, `HR Dashboard`, `Management-Doku` | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 | `TRUK`, `UK_B1`, `Delta`, `Manual Excel` | Manual Import / Finance Spezialfaelle |
 | `TRDE`, `Alphaplan`, `invoice_headers`, `invoice_lines`, `BelegePositionenID`, `NettoPreisGesamt`, `ArtikelNummer`, `MATNR` | Finance Cockpit / Manual Import |
 | `TRSE`, `Spain`, `Sage`, `ImporteNeto` | Finance Spezialfaelle |

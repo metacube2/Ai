@@ -1,15 +1,19 @@
 # RAG Deployment
 
-Stand: 2026-06-16
+Stand: 2026-06-18
 
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-16 HR-Admin, Finance-3D-Spartenkreis und Gruppenmarge.
+- Letzter dokumentierter Deploy: 2026-06-18 Einkaufsdashboard-Matrix und Einkaufsfilter.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `97/97` Tests gruen.
-- Deploy-Ablauf 2026-06-16: `BiDashboard.dll` war durch IIS gesperrt; `app_offline.htm` gesetzt, kurz gewartet, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$`, danach `app_offline.htm` entfernt.
+- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `101/101` Tests gruen.
+- Deploy-Ablauf 2026-06-18: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.
 - Servercheck nach Deploy: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
+- Produktive DLL nach Deploy: `BiDashboard.dll`, Zeitstempel `18.06.2026 09:29:11`.
+- Commit: `4f45805 Improve purchasing dashboard matrix`.
+- Vorheriger Deploy 2026-06-17: zentraler Finance-Audit-/Nachweisexport, Commit `65f2ded Upload central finance audit exports`.
+- Vorheriger Deploy 2026-06-16: HR-Admin, Finance-3D-Spartenkreis und Gruppenmarge.
 - Vorheriger Deploy 2026-06-11: Finance-Schulung/Dashboard-UI, Commit `f751295`, `BiDashboard.dll` `11.06.2026 12:04:53`.
 - Naechster lokaler Deploy-Kandidat: neues Produktsparten-Mapping fuer den vollstaendigen SAP-OData-Referenzservice. Seed-Ziel: `ZSCHWEIZ` Quellen `Z:FinanzdataSchweizOeSet`, `P:ProductDivisionRefSet` aktiv, `M:ProductDivisionMapSet` inaktiv; aktiver Join nur `Z.Matnr=P.Matnr`, mit beidseitiger Matnr-Normalisierung im Import.
 - OData nach SAP-Fix geprueft: `ZPOWERBI_EINKAUF_SRV/ProductDivisionRefSet` auf `travp762` liefert `48'897` Zeilen, `48'895` assigned, `8'715` Uebrige/`0008`, `2` UNASS. `FinanzdataSchweizOeSet` liefert `30'642` Zeilen fuer 2025 und `0` fuer 2026.

@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-06-17
+Stand: 2026-06-18
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
@@ -9,6 +9,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
 - Naechster Chat: zuerst `docs/HANDOFF_2026-06-16.md` laden, dann diese Datei, dann je nach Thema `docs/rag/FINANCE.md` oder `docs/rag/PRODUCT_MAPPING.md`.
+- Neu dokumentiert am 2026-06-18: 180-Tage-Todos fuer Ingo als Word-Dokument `docs/INGO_TODOS_180_TAGE_2026-06-18.docx` und editierbare Quelle `docs/INGO_TODOS_180_TAGE_2026-06-18.md`. Inhalt: Sales Management Cockpit/Data-Lake als Prioritaet 1, HR Dashboard und Einkaufs Dashboard als Prioritaet 2/3, klare Abgrenzung zu Lucas/Alex/Ramon, Q3/Q4-Meilensteine, Abhaengigkeiten, Risiken und naechste 10 Schritte.
+- 180-Tage-Abgrenzung: S/4HANA Compatibility Check, RPC-/RFC-Abschaltungen und ca. 30 SAP-Applikationen bleiben bei Lucas; Infrastruktur-, Security-, Server- und Netzwerkprojekte bleiben bei Alex/Ramon/Upgreat. Ingo verantwortet Analytics, BI-Dashboards, Reporting-/Z-Funktionsbezug sowie .NET/ASP-Webseiten.
+- Einkaufsdashboard-Stand 2026-06-18: Excel-aehnliche Lieferant/Jahr-Kaskadierung, Zeitraum 2020 bis aktuelles Jahr, Spend aktuelles Jahr je Lieferant, offene Bestellungen/Zulauf, Loeschkennzeichen- und MARA-MSTAE-Filter, echte Lieferantennamen statt Platzhalter und plausiblere aktive Lieferanten sind umgesetzt, getestet, committed und deployed. Commit: `4f45805 Improve purchasing dashboard matrix`; Testlauf `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `101/101` gruen; Deploy nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`, `BiDashboard.dll` Zeitstempel `18.06.2026 09:29:11`, `app_offline.htm` entfernt, Port 443 erreichbar.
 - Neu umgesetzt und deployed am 2026-06-16: HR KPI unterstuetzt zusaetzliche Admin-User ueber `HrKpiAccess.AdminUsers`; alter HR-User `hr` wurde nicht geaendert. Aktueller Zusatzuser: `hradmin`, Passwort separat kommuniziert, nur Hash in `appsettings.json`.
 - Neu umgesetzt und deployed am 2026-06-16: Finance-3D-Datenanalyse hat neue Diagrammart `Sparten-Kreis je Land`; je Land werden Produktsparte-Sektoren aus der zentralen Spartenzuordnung dargestellt.
 - Neu umgesetzt und deployed am 2026-06-16: Neuer Finance-Reiter `Gruppenmarge` unter `Management Analyse > Experten` plus Schnelluebersicht-Link und Navigationseintrag.
