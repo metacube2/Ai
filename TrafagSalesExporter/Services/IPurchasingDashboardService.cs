@@ -1,3 +1,5 @@
+using TrafagSalesExporter.Models;
+
 namespace TrafagSalesExporter.Services;
 
 public interface IPurchasingDashboardService
@@ -5,7 +7,11 @@ public interface IPurchasingDashboardService
     Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default);
 }
 
-public sealed record PurchasingDashboardFilter(DateTime FromDate, DateTime ToDate)
+public sealed record PurchasingDashboardFilter(
+    DateTime FromDate,
+    DateTime ToDate,
+    bool ExcludeDeletedItems = true,
+    bool ExcludeBlockedMaterials = false)
 {
     public string Label => $"{FromDate:yyyy-MM-dd} bis {ToDate:yyyy-MM-dd}";
 }
@@ -34,6 +40,9 @@ public sealed class PurchasingDashboardLiveState
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;
     public string TopCommitmentLabel { get; set; } = string.Empty;
+    public List<int> SpendYears { get; set; } = [];
+    public List<PurchasingSupplierYearSpendRow> SupplierYearSpendRows { get; set; } = [];
+    public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> ContractChartRows { get; set; } = [];

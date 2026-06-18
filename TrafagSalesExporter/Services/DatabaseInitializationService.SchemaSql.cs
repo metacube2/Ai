@@ -243,6 +243,7 @@ CREATE TABLE PurchasingEkkoCache (
     Bedat TEXT NULL,
     Aedat TEXT NULL,
     Lifnr TEXT NOT NULL DEFAULT '',
+    SupplierName TEXT NOT NULL DEFAULT '',
     Bukrs TEXT NOT NULL DEFAULT '',
     Bsart TEXT NOT NULL DEFAULT '',
     RawJson TEXT NOT NULL DEFAULT '',
@@ -260,6 +261,7 @@ CREATE TABLE PurchasingEkpoCache (
     Meins TEXT NOT NULL DEFAULT '',
     Netwr TEXT NOT NULL DEFAULT '0',
     Loekz TEXT NOT NULL DEFAULT '',
+    Mstae TEXT NOT NULL DEFAULT '',
     RawJson TEXT NOT NULL DEFAULT '',
     LastLoadedAtUtc TEXT NOT NULL,
     PRIMARY KEY (Ebeln, Ebelp)

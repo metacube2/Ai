@@ -62,6 +62,43 @@
         </MudItem>
     </MudGrid>
 
+    @if (SpendMatrixRows.Count > 0 && SpendMatrixYears.Count > 0)
+    {
+        <MudPaper Class="pa-3 purchasing-section-panel mb-3" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Kaskadierung Lieferant / Jahr", "Supplier / year cascade")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <div class="purchasing-matrix-scroll">
+                <table class="purchasing-matrix">
+                    <thead>
+                        <tr>
+                            <th>@T("Lieferant", "Supplier")</th>
+                            @foreach (var year in SpendMatrixYears)
+                            {
+                                <th>@year</th>
+                            }
+                            <th>@T("Gesamt", "Total")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in SpendMatrixRows)
+                        {
+                            <tr>
+                                <td>@row.Supplier</td>
+                                @foreach (var year in SpendMatrixYears)
+                                {
+                                    <td>@FormatAmount(GetYearValue(row, year))</td>
+                                }
+                                <td><strong>@FormatAmount(row.Total)</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </MudPaper>
+    }
+
     <MudTable Items="@DetailRows" Dense="true" Hover="true" Striped="true">
         <HeaderContent>
             <MudTh>@T("Bereich", "Area")</MudTh>
@@ -93,10 +130,18 @@
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionChartRow> ChartRows { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionStatusRow> StatusRows { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionDetailRow> DetailRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
 
     private string T(string german, string english) => UiText.Text(german, english);
     private static string BuildWidth(double percent)
         => Math.Clamp(percent, 3d, 100d).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static decimal GetYearValue(PurchasingSupplierYearSpendRow row, int year)
+        => row.YearValues.TryGetValue(year, out var value) ? value : 0m;
+
+    private static string FormatAmount(decimal value)
+        => value == 0m ? "-" : value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
 
     private static Color ResolveSourceColor(string source)
         => source.Equals("SAP live", StringComparison.OrdinalIgnoreCase)
@@ -206,6 +251,40 @@
         min-width: 0;
         overflow-wrap: anywhere;
         line-height: 1.2;
+    }
+
+    .purchasing-matrix-scroll {
+        overflow-x: auto;
+    }
+
+    .purchasing-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .86rem;
+        min-width: 860px;
+    }
+
+    .purchasing-matrix th,
+    .purchasing-matrix td {
+        padding: 7px 9px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .purchasing-matrix th:first-child,
+    .purchasing-matrix td:first-child {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--mud-palette-surface);
+        min-width: 250px;
+    }
+
+    .purchasing-matrix thead th {
+        font-weight: 700;
+        background: rgba(21,101,192,.08);
     }
 
     @@media (max-width: 760px) {

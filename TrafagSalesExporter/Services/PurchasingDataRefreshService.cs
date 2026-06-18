@@ -204,8 +204,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, Bukrs, Bsart, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $Bukrs, $Bsart, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bsart, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -213,6 +213,7 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $Bukrs, $Bsart, $RawJson, $LastLoadedAtU
                 ["$Bedat"] = NormalizeSapDate(GetText(row, "Bedat")),
                 ["$Aedat"] = NormalizeSapDate(GetText(row, "Aedat")),
                 ["$Lifnr"] = GetText(row, "Lifnr"),
+                ["$SupplierName"] = FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name")),
                 ["$Bukrs"] = GetText(row, "Bukrs"),
                 ["$Bsart"] = GetText(row, "Bsart"),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
@@ -223,8 +224,8 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $Bukrs, $Bsart, $RawJson, $LastLoadedAtU
     private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, Mstae, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -237,6 +238,7 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
                 ["$Meins"] = GetText(row, "Meins"),
                 ["$Netwr"] = GetText(row, "Netwr"),
                 ["$Loekz"] = GetText(row, "Loekz"),
+                ["$Mstae"] = GetText(row, "Mstae"),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);
@@ -351,6 +353,9 @@ LIMIT 1;";
 
     private static string GetText(Dictionary<string, object?> row, string key)
         => row.TryGetValue(key, out var value) ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty : string.Empty;
+
+    private static string FirstNonEmpty(params string[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
 
     private static string TrimForLog(string value)
         => value.Length <= 1000 ? value : value[..1000] + "...";

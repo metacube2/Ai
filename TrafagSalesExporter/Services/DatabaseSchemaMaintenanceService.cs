@@ -321,6 +321,9 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             indexCommand.CommandText = indexSql;
             indexCommand.ExecuteNonQuery();
         }
+
+        AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "Mstae", "TEXT NOT NULL DEFAULT ''");
     }
 
     private static void EnsureSapSourceTable(AppDbContext db)

@@ -75,17 +75,19 @@
     <div class="purchasing-filter-grid">
         <label>
             <span>@T("Von Monat", "From month")</span>
-            <input type="month" value="@_filterFromMonth" @onchange="SetFilterFromMonth" />
+            <input type="month" min="2020-01" max="@MaxPurchasingMonth" value="@_filterFromMonth" @onchange="SetFilterFromMonth" />
         </label>
         <label>
             <span>@T("Bis Monat", "To month")</span>
-            <input type="month" value="@_filterToMonth" @onchange="SetFilterToMonth" />
+            <input type="month" min="2020-01" max="@MaxPurchasingMonth" value="@_filterToMonth" @onchange="SetFilterToMonth" />
         </label>
+        <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Löschkennzeichen raus", "Exclude deletion flag")" />
+        <MudCheckBox T="bool" @bind-Value="_excludeBlockedMaterials" Dense="true" Color="Color.Primary" Label="@T("MARA-MSTAE raus", "Exclude MARA-MSTAE")" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="ApplyPurchasingFilterAsync" Disabled="_liveLoading">
             @T("Anwenden", "Apply")
         </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Update" OnClick="SetLastThreeYearsAsync" Disabled="_liveLoading">
-            @T("Letzte 3 Jahre", "Last 3 years")
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Update" OnClick="SetPurchasingRangeAsync" Disabled="_liveLoading">
+            @T("2020 bis heute", "2020 to today")
         </MudButton>
     </div>
 </MudPaper>
@@ -115,14 +117,16 @@
     case "spend":
         <PurchasingSection TitleDe="Spend total vergangen"
                            TitleEn="Historic total spend"
-                           DescriptionDe="Beschaffungsvolumen in CHF nach Jahr, Lieferant, Warengruppe und Artikel. Spend-Werte brauchen EKPO; bis SAP Positionen liefert, ist die Ansicht als Simulation markiert."
-                           DescriptionEn="Purchasing volume in CHF by year, supplier, material group and article. Spend values need EKPO; until SAP provides item rows, this view is marked as simulation."
-                           ChartTitleDe="Spend-Verlauf nach Einkaufsdimension"
-                           ChartTitleEn="Spend trend by purchasing dimension"
+                           DescriptionDe="Beschaffungsvolumen in CHF nach Lieferant und Jahr, als Matrix wie in Excel/PowerBI. Gelöschte EKPO-Positionen werden standardmässig ausgeschlossen."
+                           DescriptionEn="Purchasing volume in CHF by supplier and year, as a matrix like Excel/Power BI. Deleted EKPO items are excluded by default."
+                           ChartTitleDe="Spend pro Lieferant im aktuellen Jahr"
+                           ChartTitleEn="Spend by supplier in the current year"
                            Kpis="@SpendKpis"
                            ChartRows="@SpendChartRows"
                            StatusRows="@SpendStatusRows"
-                           DetailRows="@SpendDetailRows" />
+                           DetailRows="@SpendDetailRows"
+                           SpendMatrixYears="@_liveState.SpendYears"
+                           SpendMatrixRows="@_liveState.SupplierYearSpendRows" />
         break;
     case "offene-bestellungen":
         <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
@@ -139,10 +143,10 @@
     case "kontrakte":
         <PurchasingSection TitleDe="Offene Verpflichtungen"
                            TitleEn="Open commitments"
-                           DescriptionDe="Restverpflichtungen werden aus EKET-Offenmenge und EKPO-Stueckwert berechnet und nach Lieferant, Artikel und Faelligkeitsmonat gezeigt."
-                           DescriptionEn="Remaining commitments are calculated from EKET open quantity and EKPO unit value and shown by supplier, article and due month."
-                           ChartTitleDe="Top Verpflichtungen nach Lieferant, Artikel und Faelligkeit"
-                           ChartTitleEn="Top commitments by supplier, article and due date"
+                           DescriptionDe="Restverpflichtungen werden aus EKET-Offenmenge und EKPO-Stueckwert berechnet. Die Hauptsicht priorisiert Lieferant und Artikel; Termine bleiben Detailinformation."
+                           DescriptionEn="Remaining commitments are calculated from EKET open quantity and EKPO unit value. The main view prioritises supplier and article; due dates remain detail information."
+                           ChartTitleDe="Top Verpflichtungen nach Lieferant und Artikel"
+                           ChartTitleEn="Top commitments by supplier and article"
                            Kpis="@ContractKpis"
                            ChartRows="@ContractChartRows"
                            StatusRows="@ContractStatusRows"
@@ -661,8 +665,11 @@
     private string _lastRendered3dUri = string.Empty;
     private string _filterFromMonth = BuildDefaultFromMonth();
     private string _filterToMonth = BuildDefaultToMonth();
+    private bool _excludeDeletedItems = true;
+    private bool _excludeBlockedMaterials;
 
     private string FilterLabel => $"{_filterFromMonth} - {_filterToMonth}";
+    private static string MaxPurchasingMonth => DateTime.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
 
     private string CurrentPurchasingPage
     {
@@ -687,7 +694,7 @@
         new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
         new("Offene Bestellungen", "Open orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? $"EKKO-Belege im Zeitraum {FilterLabel}" : "Noch nicht geladen", _liveState.EkkoLoaded ? $"EKKO orders in period {FilterLabel}" : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
         new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "nach Lieferant / Artikel / Faelligkeit" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "by supplier / article / due date" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
-        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "Lieferanten in EKKO-Liveprobe" : "Noch nicht geladen", _liveState.EkkoLoaded ? "Suppliers in EKKO live sample" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
+        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
     ];
 
     private readonly List<PurchasingAxis> AnalysisAxes =
@@ -757,7 +764,7 @@
     private IReadOnlyList<PurchasingSectionKpi> SpendKpis =>
     [
         new("Spend CHF", "Spend CHF", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), _liveState.EkpoLoaded ? "aus SAP Positionen" : "Simulation bis EKPO liefert", _liveState.EkpoLoaded ? "from SAP item rows" : "simulation until EKPO delivers"),
-        new("Jahre", "Years", "2024-2026", "aus PBIX-Struktur", "from PBIX structure"),
+        new("Jahre", "Years", _liveState.SpendYears.Count > 0 ? $"{_liveState.SpendYears.Min()}-{_liveState.SpendYears.Max()}" : "2020-2026", "Matrix wie Excel/PowerBI", "matrix like Excel/Power BI"),
         new("Dimensionen", "Dimensions", "4", "Jahr, Lieferant, Warengruppe, Artikel", "year, supplier, material group, article"),
         new("SAP Status", "SAP status", _liveState.EkpoLoaded ? "live" : "wartet", "EKPOSet fuer Spend notwendig", "EKPOSet required for spend")
     ];
@@ -765,7 +772,7 @@
     private IReadOnlyList<PurchasingSectionKpi> OpenOrderKpis =>
     [
         new("Bestellungen", "Orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", $"EKKO im Zeitraum {FilterLabel}", $"EKKO in period {FilterLabel}"),
-        new("Lieferanten", "Suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "aus EKKO-Liveprobe", "from EKKO live sample"),
+        new("Lieferanten", "Suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "mit nicht geloeschten Positionen", "with non-deleted items"),
         new("Offener Wert", "Open value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), _liveState.EketLoaded ? "aus SAP Terminen/Positionen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules/items" : "simulation until EKET delivers"),
         new("Offene Menge", "Open quantity", _liveState.EketLoaded ? _liveState.OpenQuantitySample.ToString("N0") : Purchasing3dBaseRows.Sum(x => x.OpenQuantity).ToString("N0"), _liveState.EketLoaded ? "aus SAP Terminen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers")
     ];
@@ -780,7 +787,7 @@
 
     private IReadOnlyList<PurchasingSectionKpi> SupplierKpis =>
     [
-        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", $"EKKO im Zeitraum {FilterLabel}", $"EKKO in period {FilterLabel}"),
+        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "mit nicht geloeschten EKPO-Positionen", "with non-deleted EKPO items"),
         new("Performance Score", "Performance score", $"{Purchasing3dBaseRows.Average(x => x.SupplierScore):N1}%", "Simulation bis Bewertungsdaten kommen", "simulation until rating data arrives"),
         new("Preisindikator", "Price indicator", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet", "Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
         new("Qualitaet", "Quality", "offen", "Reklamationsquelle noch nicht angebunden", "claim source not connected yet")
@@ -1185,12 +1192,12 @@
 
     private readonly List<Purchasing3dBaseRow> Purchasing3dBaseRows =
     [
-        new("Lieferant A", 2024, 1450000d, 260000d, 11800d, 420000d, 91d),
-        new("Lieferant A", 2025, 1680000d, 310000d, 13200d, 460000d, 93d),
-        new("Lieferant A", 2026, 1820000d, 335000d, 14100d, 490000d, 92d),
-        new("Lieferant B", 2024, 980000d, 190000d, 9300d, 260000d, 86d),
-        new("Lieferant B", 2025, 1120000d, 225000d, 10100d, 315000d, 88d),
-        new("Lieferant B", 2026, 1240000d, 250000d, 10800d, 350000d, 89d),
+        new("BEPRO AG", 2024, 1450000d, 260000d, 11800d, 420000d, 91d),
+        new("BEPRO AG", 2025, 1680000d, 310000d, 13200d, 460000d, 93d),
+        new("BEPRO AG", 2026, 1820000d, 335000d, 14100d, 490000d, 92d),
+        new("CPT Praezisionstechnik GmbH", 2024, 980000d, 190000d, 9300d, 260000d, 86d),
+        new("CPT Praezisionstechnik GmbH", 2025, 1120000d, 225000d, 10100d, 315000d, 88d),
+        new("CPT Praezisionstechnik GmbH", 2026, 1240000d, 250000d, 10800d, 350000d, 89d),
         new("Warengruppe Sensorik", 2024, 760000d, 120000d, 6400d, 210000d, 94d),
         new("Warengruppe Sensorik", 2025, 890000d, 145000d, 7100d, 230000d, 95d),
         new("Warengruppe Sensorik", 2026, 940000d, 155000d, 7400d, 245000d, 94d),
@@ -1200,8 +1207,10 @@
     ];
 
     private IReadOnlyList<PurchasingSectionChartRow> SpendChartRows
-        => _liveState.EkpoLoaded && _liveState.SpendChartRows.Count > 0
-            ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
+        => _liveState.EkpoLoaded && _liveState.CurrentYearSupplierSpendRows.Count > 0
+            ? BuildLiveChartRows(_liveState.CurrentYearSupplierSpendRows, FormatChf)
+            : _liveState.EkpoLoaded && _liveState.SpendChartRows.Count > 0
+                ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.Spend, FormatChf);
 
     private IReadOnlyList<PurchasingSectionChartRow> OpenOrderChartRows
@@ -1215,7 +1224,9 @@
             : BuildPurchasingChartRows(x => x.ContractValue, FormatChf);
 
     private IReadOnlyList<PurchasingSectionChartRow> SupplierChartRows
-        => BuildPurchasingChartRows(x => x.SupplierScore, value => $"{value:N1}%");
+        => _liveState.CurrentYearSupplierSpendRows.Count > 0
+            ? BuildLiveChartRows(_liveState.CurrentYearSupplierSpendRows, FormatChf)
+            : BuildPurchasingChartRows(x => x.SupplierScore, value => $"{value:N1}%");
 
     private IReadOnlyList<PurchasingIdeaAnalysisRow> SelectedIdeaRows => CurrentPurchasingPage switch
     {
@@ -1367,12 +1378,14 @@
     [
         BuildStatus("EKKO Bestellkoepfe", "EKKO purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-"),
         BuildStatus("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0"),
-        BuildStatus("Spend CHF", "Spend CHF", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "Simulation")
+        BuildStatus("Löschkennzeichen", "Deletion flag", _excludeDeletedItems, _excludeDeletedItems ? "ausgeschlossen" : "sichtbar"),
+        BuildStatus("MARA-MSTAE", "MARA-MSTAE", !_excludeBlockedMaterials || _liveState.EkpoLoaded, _excludeBlockedMaterials ? "Filter aktiv" : "sichtbar")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> OpenOrderStatusRows =>
     [
         BuildStatus("Bestellkoepfe", "Purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? "live" : "-"),
+        BuildStatus("Gebuchter Spend", "Booked spend", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet auf EKPO"),
         BuildStatus("Offene Werte", "Open values", _liveState.EketLoaded, _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "wartet auf EKET"),
         BuildStatus("Faelligkeiten", "Due dates", _liveState.EketLoaded, _liveState.EketLoaded ? "live" : "wartet auf EKET")
     ];
@@ -1394,7 +1407,8 @@
     private IReadOnlyList<PurchasingSectionDetailRow> SpendDetailRows =>
     [
         new("Spend nach Jahr", "Spend by year", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "EKKOSet.Bedat Jahr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "Data.Name / EKKOSet.Lifnr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Spend aktuelles Jahr", "Current-year spend", FormatChf(_liveState.CurrentYearSupplierSpendRows.Sum(x => x.Value)), "Lieferant / aktuelles Jahr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
+        new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "SupplierName / EKKOSet.Lifnr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
         new("Spend nach Warengruppe", "Spend by material group", TopMaterialGroupLabel, "Data (2).Warengruppe", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
         new("Spend nach Artikel", "Spend by article", TopArticleLabel, "Artikel / Lieferant / Monat", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP")
     ];
@@ -1402,22 +1416,22 @@
     private IReadOnlyList<PurchasingSectionDetailRow> OpenOrderDetailRows =>
     [
         new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", "EKKOSet.Bedat", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Lieferanten mit Bestellung", "Suppliers with order", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKOSet.Lifnr", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Bereits beschafft", "Already purchased", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "-", "EKPO.Netwr", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Offener Bestellwert", "Open order value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "EKPO/EKET", _liveState.EketLoaded ? "SAP live" : "Simulation"),
-        new("Faelligkeiten", "Due dates", _liveState.EketLoaded ? "SAP live" : "wartet auf EKET", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Disponierter Zulauf", "Inbound already planned", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "-", "offene EKET-Menge * EKPO-Stueckwert", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
     [
         new("Restverpflichtung", "Remaining commitment", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "EKET offen * EKPO Stueckwert", _liveState.EketLoaded ? "SAP live" : "Simulation"),
         new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Faelligkeitsverlauf", "Due-date trend", _liveState.OpenValueChartRows.Count > 0 ? $"{_liveState.OpenValueChartRows.Count:N0} Monate" : "-", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "Lifnr sichtbar, Name offen" : "wartet", "Data/LFA1 fehlt im OData", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Faelligkeit", "Due date", _liveState.OpenValueChartRows.Count > 0 ? "als Detail verfuegbar" : "-", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "SupplierName wenn geliefert" : "wartet", "SupplierName / Lifnr", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> SupplierDetailRows =>
     [
-        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKOSet.Lifnr", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKO + aktive EKPO", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Top Spend Lieferant", "Top spend supplier", TopSpendLabel, "Lieferant / Spend CHF", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
         new("Preisentwicklung", "Price trend", _liveState.EkpoLoaded ? "SAP live" : "wartet auf EKPO", "Netwr CHF/Stk", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Liefertermintreue", "Delivery reliability", _liveState.EketLoaded ? "SAP live" : "wartet auf EKET", "Termin / Rueckstand", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
@@ -1458,8 +1472,7 @@
     private static string FormatChf(decimal value) => $"CHF {value:N0}";
     private static string BuildDefaultFromMonth()
     {
-        var today = DateTime.Today;
-        return $"{today.Year - 2}-01";
+        return "2020-01";
     }
 
     private static string BuildDefaultToMonth()
@@ -1470,13 +1483,20 @@
         var from = ParseMonth(_filterFromMonth, new DateTime(DateTime.Today.Year - 2, 1, 1));
         var toMonth = ParseMonth(_filterToMonth, DateTime.Today);
         var to = new DateTime(toMonth.Year, toMonth.Month, DateTime.DaysInMonth(toMonth.Year, toMonth.Month));
+        var minFrom = new DateTime(2020, 1, 1);
+        if (from < minFrom)
+            from = minFrom;
+
         if (to < from)
             from = new DateTime(to.Year, 1, 1);
 
         if (to > DateTime.Today)
             to = DateTime.Today;
 
-        return new PurchasingDashboardFilter(from, to);
+        if (to.Year > 2026)
+            to = new DateTime(2026, 12, 31);
+
+        return new PurchasingDashboardFilter(from, to, _excludeDeletedItems, _excludeBlockedMaterials);
     }
 
     private static DateTime ParseMonth(string value, DateTime fallback)
@@ -1485,10 +1505,22 @@
             : fallback;
 
     private void SetFilterFromMonth(ChangeEventArgs args)
-        => _filterFromMonth = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterFromMonth;
+        => _filterFromMonth = ClampMonth(Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterFromMonth);
 
     private void SetFilterToMonth(ChangeEventArgs args)
-        => _filterToMonth = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterToMonth;
+        => _filterToMonth = ClampMonth(Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterToMonth);
+
+    private static string ClampMonth(string value)
+    {
+        var parsed = ParseMonth(value, DateTime.Today);
+        if (parsed < new DateTime(2020, 1, 1))
+            parsed = new DateTime(2020, 1, 1);
+        if (parsed > DateTime.Today)
+            parsed = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        if (parsed.Year > 2026)
+            parsed = new DateTime(2026, 12, 1);
+        return parsed.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+    }
 
     private async Task ApplyPurchasingFilterAsync()
     {
@@ -1499,7 +1531,7 @@
             await RenderPurchasing3dAsync();
     }
 
-    private async Task SetLastThreeYearsAsync()
+    private async Task SetPurchasingRangeAsync()
     {
         _filterFromMonth = BuildDefaultFromMonth();
         _filterToMonth = BuildDefaultToMonth();
@@ -1681,12 +1713,19 @@
 
     private IReadOnlyList<PurchasingSectionChartRow> BuildOpenOrderLiveChartRows()
     {
-        var simulatedRows = BuildPurchasingChartRows(x => x.OpenValue, FormatChf).ToList();
-        if (_liveState.EketLoaded && _liveState.OpenValueChartRows.Count > 0)
-            simulatedRows = BuildLiveChartRows(_liveState.OpenValueChartRows, FormatChf).ToList();
-        simulatedRows.Insert(0, new PurchasingSectionChartRow(T("EKKO Bestellungen live", "EKKO orders live"), _liveState.PurchaseOrderCount.ToString("N0"), 100d, "#2e7d32"));
-        simulatedRows.Insert(1, new PurchasingSectionChartRow(T("Lieferanten live", "Suppliers live"), _liveState.SupplierCount.ToString("N0"), _liveState.PurchaseOrderCount <= 0 ? 0 : Math.Min(100d, _liveState.SupplierCount / (double)_liveState.PurchaseOrderCount * 100d), "#1565c0"));
-        return simulatedRows.Take(6).ToList();
+        var booked = _liveState.SpendChfSample;
+        var open = _liveState.OpenValueSample;
+        var max = Math.Max(booked, open);
+        if (max <= 0)
+            return BuildPurchasingChartRows(x => x.OpenValue, FormatChf);
+
+        return
+        [
+            new PurchasingSectionChartRow(T("Bereits beschafft / gebucht", "Already purchased / booked"), FormatChf(booked), (double)(booked / max * 100m), "#1565c0"),
+            new PurchasingSectionChartRow(T("Noch offen im Zulauf", "Still open inbound"), FormatChf(open), (double)(open / max * 100m), "#ef6c00"),
+            new PurchasingSectionChartRow(T("Bestellungen im Zeitraum", "Orders in period"), _liveState.PurchaseOrderCount.ToString("N0"), 100d, "#2e7d32"),
+            new PurchasingSectionChartRow(T("Aktive Lieferanten", "Active suppliers"), _liveState.SupplierCount.ToString("N0"), _liveState.PurchaseOrderCount <= 0 ? 0 : Math.Min(100d, _liveState.SupplierCount / (double)_liveState.PurchaseOrderCount * 100d), "#00838f")
+        ];
     }
 
     private PurchasingSectionStatusRow BuildStatus(string labelDe, string labelEn, bool ok, string value)
@@ -1962,6 +2001,30 @@
     .purchasing-kpi:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+
+    .purchasing-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(170px, 220px)) repeat(2, minmax(150px, 1fr)) auto auto;
+        gap: 12px;
+        align-items: end;
+        margin-top: 14px;
+    }
+
+    .purchasing-filter-grid label {
+        display: grid;
+        gap: 5px;
+        color: var(--mud-palette-text-secondary);
+        font-size: .82rem;
+    }
+
+    .purchasing-filter-grid input[type="month"] {
+        height: 38px;
+        padding: 0 10px;
+        border: 1px solid var(--mud-palette-lines-inputs);
+        border-radius: 6px;
+        background: var(--mud-palette-surface);
+        color: var(--mud-palette-text-primary);
     }
 
     .purchasing-kpi-icon {
@@ -2280,6 +2343,10 @@
 
         .purchasing-hero {
             padding: 18px;
+        }
+
+        .purchasing-filter-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>

@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
@@ -20,14 +21,25 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     private static PurchasingDashboardFilter BuildDefaultFilter()
     {
         var today = DateTime.Today;
-        return new PurchasingDashboardFilter(new DateTime(today.Year - 2, 1, 1), today);
+        return new PurchasingDashboardFilter(new DateTime(Math.Max(2020, today.Year - 6), 1, 1), today);
     }
 
-    private static string SupplierLabelSql(string lifnrExpression)
+    private static string SupplierLabelSql(string lifnrExpression, string supplierNameExpression = "''")
         => $@"CASE
+            WHEN COALESCE(NULLIF({supplierNameExpression}, ''), '') <> '' THEN {supplierNameExpression}
             WHEN COALESCE(NULLIF({lifnrExpression}, ''), '') = '' THEN 'ohne Lieferant'
-            ELSE 'Lief. ' || {lifnrExpression} || ' (Name fehlt)'
+            ELSE {lifnrExpression}
         END";
+
+    private static string ActiveItemFilterSql(PurchasingDashboardFilter filter, string itemAlias)
+    {
+        var parts = new List<string>();
+        if (filter.ExcludeDeletedItems)
+            parts.Add($"COALESCE({itemAlias}.Loekz, '') = ''");
+        if (filter.ExcludeBlockedMaterials)
+            parts.Add($"COALESCE({itemAlias}.Mstae, '') = ''");
+        return parts.Count == 0 ? "1 = 1" : string.Join(" AND ", parts);
+    }
 
     public async Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default)
     {
@@ -35,6 +47,9 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         filter ??= BuildDefaultFilter();
         state.PeriodFrom = filter.FromDate;
         state.PeriodTo = filter.ToDate;
+        state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= 2020 && year <= 2026)
+            .ToList();
 
         try
         {
@@ -134,6 +149,10 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         var ekkoPeriod = $"Bedat >= '{from}' AND Bedat <= '{to}'";
         var joinedEkkoPeriod = $"k.Bedat >= '{from}' AND k.Bedat <= '{to}'";
         var eketPeriod = $"e.Eindt >= '{from}' AND e.Eindt <= '{to}'";
+        var activeItemFilter = ActiveItemFilterSql(filter, "p");
+        state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= 2020 && year <= 2026)
+            .ToList();
 
         var cacheEkkoRows = await ExecuteScalarIntAsync(conn, "SELECT COUNT(1) FROM PurchasingEkkoCache;", cancellationToken);
         var cacheEkpoRows = await ExecuteScalarIntAsync(conn, "SELECT COUNT(1) FROM PurchasingEkpoCache;", cancellationToken);
@@ -154,79 +173,91 @@ FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE {joinedEkkoPeriod};", cancellationToken);
         state.ScheduleSampleCount = await ExecuteScalarIntAsync(conn, $"SELECT COUNT(1) FROM PurchasingEketCache e WHERE {eketPeriod};", cancellationToken);
-        state.SupplierCount = await ExecuteScalarIntAsync(conn, $"SELECT COUNT(DISTINCT Lifnr) FROM PurchasingEkkoCache WHERE Lifnr <> '' AND {ekkoPeriod};", cancellationToken);
+        state.SupplierCount = await ExecuteScalarIntAsync(conn, $@"
+SELECT COUNT(DISTINCT k.Lifnr)
+FROM PurchasingEkkoCache k
+JOIN PurchasingEkpoCache p ON p.Ebeln = k.Ebeln
+WHERE k.Lifnr <> '' AND {joinedEkkoPeriod} AND {activeItemFilter} AND CAST(p.Netwr AS REAL) <> 0;", cancellationToken);
         state.LatestOrderDate = await ExecuteScalarDateAsync(conn, $"SELECT MAX(Bedat) FROM PurchasingEkkoCache WHERE {ekkoPeriod};", cancellationToken);
         state.SpendChfSample = await ExecuteScalarDecimalAsync(conn, $@"
 SELECT COALESCE(SUM(CAST(p.Netwr AS REAL)), 0)
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND {joinedEkkoPeriod};", cancellationToken);
+WHERE {activeItemFilter} AND {joinedEkkoPeriod};", cancellationToken);
         state.OpenQuantitySample = await ExecuteScalarDecimalAsync(conn, $"SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0) FROM PurchasingEketCache e WHERE {eketPeriod};", cancellationToken);
         state.OpenValueSample = await ExecuteScalarDecimalAsync(conn, @"
 SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
     CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END), 0)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
-WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + ";", cancellationToken);
+WHERE " + activeItemFilter + " AND " + eketPeriod + ";", cancellationToken);
         state.ContractValueSample = state.OpenValueSample;
         state.TopSupplierLabel = await ExecuteTopLabelAsync(conn, @"
-SELECT " + SupplierLabelSql("k.Lifnr") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(k.Lifnr, 'ohne Lieferant')
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
 ORDER BY Value DESC
 LIMIT 1;", "Lieferant", cancellationToken);
         state.TopMaterialGroupLabel = await ExecuteTopLabelAsync(conn, @"
 SELECT COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe') AS Label, SUM(CAST(Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
 ORDER BY Value DESC
 LIMIT 1;", "Warengruppe", cancellationToken);
         state.TopArticleLabel = await ExecuteTopLabelAsync(conn, @"
 SELECT
     COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') || ' | ' ||
-    " + SupplierLabelSql("k.Lifnr") + @" || ' | Monat ' ||
+    " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' | Monat ' ||
     COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum') AS Label,
     SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), COALESCE(k.Lifnr, 'ohne Lieferant'), COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum')
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum')
 ORDER BY Value DESC
 LIMIT 1;", "Artikel", cancellationToken);
         state.SpendChartRows = await ExecuteChartRowsAsync(conn, @"
-SELECT " + SupplierLabelSql("k.Lifnr") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant')
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
+        state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, activeItemFilter, cancellationToken);
+        state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + activeItemFilter + " AND k.Bedat >= '" + DateTime.Today.Year.ToString(CultureInfo.InvariantCulture) + @"-01-01' AND k.Bedat <= '" + DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + @"'
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 10;", cancellationToken);
         state.OpenValueChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
        SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
            CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS Value
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
-WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @"
+WHERE " + activeItemFilter + " AND " + eketPeriod + @"
 GROUP BY COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
 ORDER BY Label
 LIMIT 6;", cancellationToken);
         state.CommitmentDetailChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT
-    " + SupplierLabelSql("k.Lifnr") + @" || ' | ' ||
-    COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') || ' | faellig ' ||
-    COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
+    " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' | ' ||
+    COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
     SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
         CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS Value
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
-GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant'), COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
+WHERE " + activeItemFilter + " AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
         state.ContractChartRows = state.CommitmentDetailChartRows.Count > 0
@@ -235,14 +266,14 @@ LIMIT 6;", cancellationToken);
         state.TopCommitmentLabel = state.CommitmentDetailChartRows.Count > 0
             ? $"{state.CommitmentDetailChartRows[0].Label}: CHF {state.CommitmentDetailChartRows[0].Value:N0}"
             : string.Empty;
-        await ApplyIdeaAnalyticsAsync(conn, state, joinedEkkoPeriod, eketPeriod, cancellationToken);
+        await ApplyIdeaAnalyticsAsync(conn, state, joinedEkkoPeriod, eketPeriod, activeItemFilter, cancellationToken);
         state.CacheStatus = latestStatus.Status;
         state.CacheCompletedAtUtc = latestStatus.CompletedAtUtc;
         state.Message = $"Einkauf Cache geladen fuer {filter.Label}: EKKO={state.PurchaseOrderCount:N0}, EKPO={state.PositionSampleCount:N0}, EKET={state.ScheduleSampleCount:N0}. {latestStatus.Message}";
         return true;
     }
 
-    private static async Task ApplyIdeaAnalyticsAsync(SqliteConnection conn, PurchasingDashboardLiveState state, string joinedEkkoPeriod, string eketPeriod, CancellationToken cancellationToken)
+    private static async Task ApplyIdeaAnalyticsAsync(SqliteConnection conn, PurchasingDashboardLiveState state, string joinedEkkoPeriod, string eketPeriod, string activeItemFilter, CancellationToken cancellationToken)
     {
         state.DeliveryRiskChartRows = await ExecuteChartRowsAsync(conn, @"
 WITH open_rows AS (
@@ -257,7 +288,7 @@ WITH open_rows AS (
             CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END AS OpenValue
     FROM PurchasingEketCache e
     LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
-    WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+    WHERE " + activeItemFilter + " AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
 )
 SELECT Label, SUM(OpenValue) AS Value
 FROM open_rows
@@ -265,7 +296,7 @@ GROUP BY Label
 ORDER BY CASE Label WHEN 'Ueberfaellig' THEN 1 WHEN '0-7 Tage' THEN 2 WHEN '8-30 Tage' THEN 3 ELSE 4 END;", cancellationToken);
         state.DeliveryRiskRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
-    COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') || ' / ' || COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
+    " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' / ' || COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
     'CHF ' || printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
         CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END)) AS Value,
     'Faellig ' || COALESCE(MIN(e.Eindt), 'ohne Termin') AS Detail,
@@ -273,8 +304,8 @@ SELECT
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
-GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant'), COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
+WHERE " + activeItemFilter + " AND " + eketPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
     CASE WHEN CAST(p.Menge AS REAL) = 0 THEN 0 ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) DESC
 LIMIT 10;", cancellationToken);
@@ -282,13 +313,13 @@ LIMIT 10;", cancellationToken);
         state.PriceVarianceRows = await ExecuteAnalysisRowsAsync(conn, @"
 WITH priced AS (
     SELECT
-        COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Supplier,
+        " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
         COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
         substr(k.Bedat, 1, 4) AS Year,
         MIN(CASE WHEN CAST(p.Menge AS REAL) = 0 THEN NULL ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS UnitPrice
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    WHERE COALESCE(p.Loekz, '') = '' AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+    WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
     GROUP BY Supplier, Article, Year
 )
 SELECT
@@ -310,7 +341,7 @@ WITH priced AS (
         MIN(CASE WHEN CAST(p.Menge AS REAL) = 0 THEN NULL ELSE CAST(p.Netwr AS REAL) / CAST(p.Menge AS REAL) END) AS UnitPrice
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    WHERE COALESCE(p.Loekz, '') = '' AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+    WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
     GROUP BY Year, Article
 )
 SELECT Year, MIN(UnitPrice) AS Value
@@ -321,17 +352,17 @@ ORDER BY Year;", cancellationToken);
         state.PriceTrendChartRows = state.PriceVarianceChartRows.ToList();
 
         state.SpendConcentrationChartRows = await ExecuteChartRowsAsync(conn, @"
-SELECT 'Lieferant ' || COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(CAST(p.Netwr AS REAL)) AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant')
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
 ORDER BY Value DESC
 LIMIT 10;", cancellationToken);
         var totalSpend = state.SpendChfSample <= 0 ? 1 : state.SpendChfSample;
         var concentrationRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
-    COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant') AS Label,
+    " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label,
     'CHF ' || printf('%,.0f', SUM(CAST(p.Netwr AS REAL))) AS Value,
     COUNT(DISTINCT COALESCE(NULLIF(p.Matkl, ''), 'ohne Warengruppe')) || ' Warengruppen' AS Detail,
     CASE WHEN SUM(CAST(p.Netwr AS REAL)) > 1000000 THEN 'High'
@@ -339,8 +370,8 @@ SELECT
          ELSE 'Low' END AS Severity
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE COALESCE(p.Loekz, '') = '' AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(k.Lifnr, ''), 'ohne Lieferant')
+WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
 ORDER BY SUM(CAST(p.Netwr AS REAL)) DESC
 LIMIT 10;", cancellationToken);
         state.SpendConcentrationRows = concentrationRows
@@ -602,6 +633,61 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
         return rows;
     }
 
+    private static async Task<List<PurchasingSupplierYearSpendRow>> ExecuteSupplierYearSpendRowsAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string activeItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= 2020 && year <= 2026)
+            .ToList();
+        if (years.Count == 0)
+            return [];
+
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var rowsBySupplier = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM(CAST(p.Netwr AS REAL)) AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + activeItemFilter + @"
+  AND k.Bedat >= '" + from + @"'
+  AND k.Bedat <= '" + to + @"'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN 2020 AND 2026
+GROUP BY Supplier, Year
+ORDER BY Supplier, Year;";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
+            var year = Convert.ToInt32(reader.GetValue(1), CultureInfo.InvariantCulture);
+            var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+            if (!rowsBySupplier.TryGetValue(supplier, out var values))
+            {
+                values = [];
+                rowsBySupplier[supplier] = values;
+            }
+
+            values[year] = value;
+        }
+
+        return rowsBySupplier
+            .Select(row => new PurchasingSupplierYearSpendRow(
+                row.Key,
+                years.ToDictionary(year => year, year => row.Value.TryGetValue(year, out var value) ? value : 0m),
+                row.Value.Values.Sum()))
+            .OrderByDescending(row => row.Total)
+            .Take(40)
+            .ToList();
+    }
+
     private static async Task<List<PurchasingIdeaAnalysisRow>> ExecuteAnalysisRowsAsync(SqliteConnection conn, string sql, CancellationToken cancellationToken)
     {
         var rows = new List<PurchasingIdeaAnalysisRow>();
@@ -671,7 +757,7 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
     private static string FormatSupplierLabel(string supplierNumber)
         => string.IsNullOrWhiteSpace(supplierNumber)
             ? "ohne Lieferant"
-            : $"Lief. {supplierNumber} (Name fehlt)";
+            : supplierNumber;
 
     private static string BuildTopLabel<T>(IEnumerable<IGrouping<string, T>> groups, Func<T, decimal> selector, string fallback)
     {
