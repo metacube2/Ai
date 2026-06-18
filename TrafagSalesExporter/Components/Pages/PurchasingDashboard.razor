@@ -73,14 +73,26 @@
         <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@FilterLabel</MudChip>
     </MudStack>
     <div class="purchasing-filter-grid">
-        <label>
-            <span>@T("Von Monat", "From month")</span>
-            <input type="month" min="2020-01" max="@MaxPurchasingMonth" value="@_filterFromMonth" @onchange="SetFilterFromMonth" />
-        </label>
-        <label>
-            <span>@T("Bis Monat", "To month")</span>
-            <input type="month" min="2020-01" max="@MaxPurchasingMonth" value="@_filterToMonth" @onchange="SetFilterToMonth" />
-        </label>
+        <MudDatePicker Date="@GetFilterFromDate()"
+                       DateChanged="@OnFilterFromDateChangedAsync"
+                       Label="@T("Von Monat", "From month")"
+                       DateFormat="MM.yyyy"
+                       OpenTo="OpenTo.Month"
+                       MinDate="@(new DateTime(2020, 1, 1))"
+                       MaxDate="@DateTime.Today"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Disabled="_liveLoading" />
+        <MudDatePicker Date="@GetFilterToDate()"
+                       DateChanged="@OnFilterToDateChangedAsync"
+                       Label="@T("Bis Monat", "To month")"
+                       DateFormat="MM.yyyy"
+                       OpenTo="OpenTo.Month"
+                       MinDate="@(new DateTime(2020, 1, 1))"
+                       MaxDate="@DateTime.Today"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Disabled="_liveLoading" />
         <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Löschkennzeichen raus", "Exclude deletion flag")" />
         <MudCheckBox T="bool" @bind-Value="_excludeBlockedMaterials" Dense="true" Color="Color.Primary" Label="@T("MARA-MSTAE raus", "Exclude MARA-MSTAE")" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="ApplyPurchasingFilterAsync" Disabled="_liveLoading">
@@ -1504,11 +1516,22 @@
             ? new DateTime(parsed.Year, parsed.Month, 1)
             : fallback;
 
-    private void SetFilterFromMonth(ChangeEventArgs args)
-        => _filterFromMonth = ClampMonth(Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterFromMonth);
+    private DateTime? GetFilterFromDate() => ParseMonth(_filterFromMonth, new DateTime(2020, 1, 1));
+    private DateTime? GetFilterToDate() => ParseMonth(_filterToMonth, DateTime.Today);
 
-    private void SetFilterToMonth(ChangeEventArgs args)
-        => _filterToMonth = ClampMonth(Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? _filterToMonth);
+    private async Task OnFilterFromDateChangedAsync(DateTime? date)
+    {
+        if (date.HasValue)
+            _filterFromMonth = date.Value.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        await ApplyPurchasingFilterAsync();
+    }
+
+    private async Task OnFilterToDateChangedAsync(DateTime? date)
+    {
+        if (date.HasValue)
+            _filterToMonth = date.Value.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        await ApplyPurchasingFilterAsync();
+    }
 
     private static string ClampMonth(string value)
     {
@@ -2011,20 +2034,8 @@
         margin-top: 14px;
     }
 
-    .purchasing-filter-grid label {
-        display: grid;
-        gap: 5px;
-        color: var(--mud-palette-text-secondary);
-        font-size: .82rem;
-    }
-
-    .purchasing-filter-grid input[type="month"] {
-        height: 38px;
-        padding: 0 10px;
-        border: 1px solid var(--mud-palette-lines-inputs);
-        border-radius: 6px;
-        background: var(--mud-palette-surface);
-        color: var(--mud-palette-text-primary);
+    .purchasing-filter-grid .mud-picker {
+        min-width: 150px;
     }
 
     .purchasing-kpi-icon {

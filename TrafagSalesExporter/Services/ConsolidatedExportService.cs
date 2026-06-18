@@ -143,7 +143,8 @@ public class ConsolidatedExportService : IConsolidatedExportService
         if (hasSharePointUpload)
         {
             updateStatus?.Invoke("Nachweis-Excel nach SharePoint laden...");
-            await UploadCentralFileAsync(spConfig!, sharePointFolder, landSubfolder, proofPath);
+            var dateFolderSubfolder = BuildProofDateSubfolder(sharePointFolder, landSubfolder, fileDate);
+            await UploadCentralFileAsync(spConfig!, sharePointFolder, dateFolderSubfolder, proofPath);
         }
     }
 
@@ -178,7 +179,8 @@ public class ConsolidatedExportService : IConsolidatedExportService
             if (hasSharePointUpload)
             {
                 updateStatus?.Invoke($"Nachweis-Excel {i + 1}/{partitions.Count} nach SharePoint laden...");
-                await UploadCentralFileAsync(spConfig!, sharePointFolder, landSubfolder, proofPath);
+                var dateFolderSubfolder = BuildProofDateSubfolder(sharePointFolder, landSubfolder, fileDate);
+                await UploadCentralFileAsync(spConfig!, sharePointFolder, dateFolderSubfolder, proofPath);
             }
         }
     }
@@ -339,6 +341,14 @@ public class ConsolidatedExportService : IConsolidatedExportService
         return string.Equals(normalizedTsc, normalizedLand, StringComparison.OrdinalIgnoreCase)
             ? normalizedTsc
             : $"{normalizedTsc}_{normalizedLand}";
+    }
+
+    private static string BuildProofDateSubfolder(string sharePointFolder, string landSubfolder, DateTime fileDate)
+    {
+        var dateSegment = fileDate.ToString("yyyy_MM_dd", System.Globalization.CultureInfo.InvariantCulture);
+        return string.IsNullOrWhiteSpace(landSubfolder)
+            ? dateSegment
+            : $"{landSubfolder.Trim('/')}/{dateSegment}";
     }
 
     private static string ResolveConsolidatedOutputDirectory(ExportSettings settings)

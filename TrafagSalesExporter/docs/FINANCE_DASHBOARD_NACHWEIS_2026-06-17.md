@@ -65,7 +65,15 @@ Wenn ein SharePoint-Ziel fuer zentrale Exporte konfiguriert ist, werden die zent
 - `Finance_Dashboard_Nachweis_<yyyy-MM-dd>.xlsx`
 - `Finance_Dashboard_Audit_All_<yyyy-MM-dd>.csv`
 
-Produktiv ist `SharePointConfigs.CentralExportFolder` auf `/Import/Finance/Alle` gesetzt. Damit landen die konsolidierten Dateien im zentralen Finance-Ordner `Import/Finance/Alle`, waehrend die Standortexporte weiterhin in den jeweiligen Laenderordnern bleiben.
+Produktiv ist `SharePointConfigs.CentralExportFolder` auf `/Import/Finance/Alle` gesetzt. Damit landen die konsolidierten Dateien im zentralen Finance-Ordner, waehrend die Standortexporte weiterhin in den jeweiligen Laenderordnern bleiben.
+
+Ab 2026-06-18 werden die `Finance_Dashboard_Nachweis_*`-Dateien in einen Datums-Unterordner abgelegt:
+
+```
+Import/Finance/Alle/2026_06_18/Finance_Dashboard_Nachweis_*.xlsx
+```
+
+`Sales_All_*` und `Finance_Dashboard_Audit_All_*` bleiben weiterhin direkt in `Import/Finance/Alle`. Der Unterordner wird automatisch nach dem Export-Datum benannt (`yyyy_MM_dd`) und vom Microsoft Graph API beim ersten Upload angelegt.
 
 Vor dem zentralen Export prueft die App pro aktivem Standort die neueste `Sales_ProcessedMergeInput_*`-CSV im SharePoint-/Auditpfad und vergleicht sie mit dem DB-Stand in `CentralSalesRecords`. Fuer `Sales_All_*`, `Finance_Dashboard_Nachweis_*` und `Finance_Dashboard_Audit_All_*` wird pro Land/TSC der jeweils neueste Stand verwendet.
 

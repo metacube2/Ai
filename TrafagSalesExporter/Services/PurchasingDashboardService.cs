@@ -166,12 +166,16 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         state.EkkoLoaded = true;
         state.EkpoLoaded = true;
         state.EketLoaded = true;
-        state.PurchaseOrderCount = await ExecuteScalarIntAsync(conn, $"SELECT COUNT(1) FROM PurchasingEkkoCache WHERE {ekkoPeriod};", cancellationToken);
+        state.PurchaseOrderCount = await ExecuteScalarIntAsync(conn, $@"
+SELECT COUNT(DISTINCT k.Ebeln)
+FROM PurchasingEkkoCache k
+JOIN PurchasingEkpoCache p ON p.Ebeln = k.Ebeln
+WHERE {joinedEkkoPeriod} AND {activeItemFilter};", cancellationToken);
         state.PositionSampleCount = await ExecuteScalarIntAsync(conn, $@"
 SELECT COUNT(1)
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE {joinedEkkoPeriod};", cancellationToken);
+WHERE {joinedEkkoPeriod} AND {activeItemFilter};", cancellationToken);
         state.ScheduleSampleCount = await ExecuteScalarIntAsync(conn, $"SELECT COUNT(1) FROM PurchasingEketCache e WHERE {eketPeriod};", cancellationToken);
         state.SupplierCount = await ExecuteScalarIntAsync(conn, $@"
 SELECT COUNT(DISTINCT k.Lifnr)
