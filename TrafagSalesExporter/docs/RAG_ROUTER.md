@@ -24,6 +24,8 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Admin/Startseite | Admin Login, Sessions, Landing Page | `docs/rag/ADMIN.md` |
 | Architektur | Systemuebersicht, Diagramme, technische Einordnung | `docs/rag/ARCHITECTURE.md` |
 | Produktmapping | Group Sales Report, Produkthierarchie, Produktfamilie, Produktsparte | `docs/rag/PRODUCT_MAPPING.md` |
+| Code erweitern/aendern | Neues Feature, neue KPI/Seite/Visual, Refactoring, „wie baue ich X“ | `llm/LLM_REPO_SUMMARY.md` |
+| Code korrigieren/Bugfix | Falsche Berechnung/Filter/Export/Text, Fehlersuche, Korrektur-Vorgehen | `llm/LLM_KORREKTUR_BEISPIELE.md` (+ `llm/LLM_REPO_SUMMARY.md`) |
 | 180-Tage-Roadmap Ingo | Management-Doku, Aufgaben Ingo, Sales/Data-Lake, HR/Einkauf, Abhaengigkeiten | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 
 ## Rohquellen Nur Bei Bedarf
@@ -54,6 +56,8 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 
 | Suchwort | Thema |
 | --- | --- |
+| `Feature`, `erweitern`, `neue KPI`, `neue Seite`, `Visual`, `Gauge`, `Service`, `DI`, `Page-Service`, `Komponente`, `wie baue ich` | `llm/LLM_REPO_SUMMARY.md` |
+| `Bugfix`, `Korrektur`, `falsch berechnet`, `Filter greift nicht`, `Fehler`, `Test schlaegt fehl`, `Migration/Spalte` | `llm/LLM_KORREKTUR_BEISPIELE.md` |
 | `Finance Summary`, `Soll/Ist`, `check.xlsx`, `FinanceRuleEngine` | Finance Cockpit |
 | `Schulung`, `Training`, `Audit-CSV`, `Sales_ProcessedMergeInput`, `Auswertungsquelle`, `Wirtschaftspruefung` | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` |
 | `Wechselkurs`, `Umrechnungskurs`, `CurrencyExchangeRates`, `DocumentRate`, `ConvertCurrency`, `Anzeige-Waehrung` | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` |
