@@ -17,6 +17,11 @@ konkrete Logik, ueber Katalog 6c die genaue Methode/Datei anfordern, statt zu
 raten. Gilt fuer alle Bereiche: Einkauf, Finance, HR, Export, Import,
 Transformationen, Navigation, Admin/Security.
 
+> **Begleitdatei:** `LLM_KORREKTUR_BEISPIELE.md` enthaelt durchgespielte
+> Korrektur-/Bugfix-Muster (Symptom → Diagnose → Code anfordern → Fix → Test)
+> fuer Finance, Einkauf, Transformation, Export, Navigation, Texte und
+> Datenmodell. Bei Korrekturaufgaben zuerst dort das passende Muster ansehen.
+
 ---
 
 ## 1. Was die App ist
