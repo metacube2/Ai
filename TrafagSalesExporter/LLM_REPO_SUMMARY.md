@@ -1,13 +1,21 @@
 # TrafagSalesExporter / BiDashboard — Kompakt-Kontext fuer LLM
 
-Stand: 2026-06-19. Zweck: Diese **eine** Datei reicht aus, damit eine LLM neue
-Features (z. B. einen datengetriebenen Gauge-Controller im Einkaufs- oder
-Finance-Dashboard) bauen kann, ohne das ganze Repo zu kennen. Enthalten:
-Architektur + Konventionen, **echter Schluessel-Code** (Abschnitt 6b) und ein
-**RAG-komprimierter Signaturen-Katalog** des restlichen Codes (Abschnitt 6c).
-Keine Geheimnisse, keine Rohdaten. Volle Implementierungen sind bewusst NICHT
-enthalten — die LLM fordert sie ueber den Katalog gezielt nach
-(„brauche `Service.MethodeXy`“).
+Stand: 2026-06-19. Zweck: Diese **eine** Datei reicht aus, damit eine LLM
+**jede** Aufgabe an dieser App einordnen kann — neue Features, Erweiterungen,
+Korrekturen/Bugfixes, Refactorings oder einfach Verstaendnisfragen — ohne das
+ganze Repo zu kennen. Der Gauge/Manometer ist nur **ein Beispiel** von vielen
+(Abschnitt 6). Enthalten: Architektur + Konventionen, ein
+**Erweiterungs-/Korrektur-Playbook** (Abschnitt 5b: „welche Aufgabe fasst welche
+Datei an“), **echter Schluessel-Code** (6b) und ein **RAG-komprimierter
+Signaturen-Katalog** des restlichen Codes (6c). Keine Geheimnisse, keine
+Rohdaten. Volle Implementierungen sind bewusst NICHT enthalten — die LLM fordert
+sie ueber den Katalog gezielt nach („brauche `Service.MethodeXy`“).
+
+**Arbeitsweise fuer die LLM:** 1) Aufgabentyp in Abschnitt 5b nachschlagen →
+betroffene Dateien/Services. 2) Konventionen (Abschnitt 3) einhalten. 3) Fehlt
+konkrete Logik, ueber Katalog 6c die genaue Methode/Datei anfordern, statt zu
+raten. Gilt fuer alle Bereiche: Einkauf, Finance, HR, Export, Import,
+Transformationen, Navigation, Admin/Security.
 
 ---
 
@@ -150,7 +158,41 @@ Entity gefuehrt, sondern per roher `SqliteConnection` gelesen/geschrieben
 
 ---
 
-## 6. Der bestehende „Manometer“-Gauge & Rezept fuer einen Gauge-Controller
+## 5b. Erweiterungs- & Korrektur-Playbook (fuer JEDE Aufgabe)
+
+Aufgabentyp → wo anfassen. Immer Konventionen aus Abschnitt 3 einhalten
+(Interface+Impl, Lifetime, `IDbContextFactory`, Page-Service-Pattern,
+`T(de,en)`, `CancellationToken`). Fehlt Detaillogik → ueber Katalog 6c die
+genaue Methode anfordern.
+
+| Aufgabe | Anfassen / Vorgehen |
+| --- | --- |
+| **Neue Kennzahl/KPI oder Chart** in einem Dashboard | Feld in `…LiveState`/Result-Klasse ergaenzen → im zugehoerigen Scoped-Service (`…DashboardService`/`…PageService`) in `LoadAsync` berechnen → in der `.razor` als `MudPaper`/`MudIcon`-KPI-Card oder `MudTable`/Chart anzeigen. **Nie** im Razor rechnen. |
+| **Neues Visual/Widget** (Gauge, Ampel, Tile…) | Wiederverwendbare Komponente unter `Components/Shared/`; Wert kommt aus Page-Service. Beispiel-Rezept = Abschnitt 6. |
+| **Neue Seite / Unterbereich** | `.razor` mit `@page "/route"` in `Components/Pages/` → passenden Scoped Page-Service + Interface anlegen → in `Program.cs` `AddScoped` → Menue-Eintrag (`NavigationMenuItem`-Seed in `DatabaseSeedService`, sonst nur per URL). |
+| **Menue/Navigation aendern** | `NavigationMenuItems` (DB) via `INavigationMenuService`; UI `Admin > Menuestruktur`. Icons via `NavigationIconResolver`. |
+| **Neue Datenquelle anbinden** | `IDataSourceAdapter`-Impl in `Services/DataSources/` (Strategy je `ConnectionKind`) → in `DataSourceAdapterResolver` + `Program.cs` registrieren. SAP-OData: `ISapGatewayService`; HANA: `IHanaQueryService`; Excel: `IManualExcelImportService`. |
+| **Feld-Mapping / Transformation** | Regel = `FieldTransformationRule`; Strategie = `ITransformationStrategy`-Impl (in `Program.cs` registrieren), Katalog in `TransformationCatalog`. Anwendung via `IRecordTransformationService.Apply`. |
+| **Finance-Berechnung korrigieren** | `FinanceRuleEngine` + `IFinanceReconciliationService` (Soll/Ist); Laenderformeln siehe `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`. Waehrung: `ICurrencyExchangeRateService.ResolveRate`. |
+| **Export (Excel/CSV) anpassen** | `IExcelExportService` (ClosedXML), `IConsolidatedExportService`, Audit-CSV `IExportAuditCsvService`, Orchestrierung `ExportOrchestrationService` / `SiteExportService`. |
+| **Einkauf-Datenstand/Refresh** | `IPurchasingDataRefreshService` (Full/Delta, roher SQLite-Cache EKKO/EKPO/EKET); Auswertung `IPurchasingDashboardService`. |
+| **DB-Feld/Tabelle hinzufuegen** | EF-Entity in `Models/` + DbSet in `AppDbContext` → Schema in `DatabaseInitializationService(.SchemaSql).cs` (kein klassisches Migrations-Setup; Schema wird beim Start sichergestellt via `DatabaseSchemaMaintenanceService.EnsureSchema`) → Seed in `DatabaseSeedService`. |
+| **Bug/Korrektur in bestehendem Verhalten** | Symptom → Dashboard/Service in Abschnitt 5/6c lokalisieren → genaue Methode ueber Katalog anfordern → Fix + Test im `TrafagSalesExporter.Tests`-Projekt (es gibt pro Service meist eine `…Tests.cs`). |
+| **Uebersetzung/Text** | `T("de","en")` in der `.razor`; zentrale Texte via `IUiTextService`. Technische SAP-Feldnamen NICHT uebersetzen. |
+| **Zugriff/Login/Security** | `Security/*Options.cs` + `SecurityPolicyFactory`; Unlock-Endpoints `/access/{finance,admin,hr}` in `Program.cs`; Sessions `IAccessSessionTracker`. |
+| **Logging/Diagnose** | `IAppEventLogService.WriteAsync(...)`; Anzeige `Logs.razor` / `InteractiveDiagnostics.razor`. |
+| **Hintergrund-/Timer-Job** | `TimerBackgroundService` (HostedService) + `ExportOrchestrationService` (Singleton, geteilter Status). |
+
+Wenn die Aufgabe nicht in die Tabelle passt: Bereich grob zuordnen
+(Einkauf/Finance/HR/Export/Import/Infra), dann im Katalog 6c den passenden
+Service suchen und dessen Methode anfordern.
+
+---
+
+## 6. Beispiel-Rezept: datengetriebener Gauge-Controller (eines von vielen)
+
+> Dies ist ein **konkretes Muster-Beispiel** fuer „neues Visual + Wert aus
+> Page-Service“. Dieselbe Mechanik gilt fuer jedes andere Widget/KPI.
 
 **Heutiger Stand:** Auf `ExportDashboard.razor` gibt es ein rein dekoratives
 Manometer als statisches Inline-**SVG** mit CSS-Keyframe-Animation
