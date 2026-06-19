@@ -1,11 +1,12 @@
 # Last Change
 
-Stand: 2026-06-18
+Stand: 2026-06-19
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- Neu lokal umgesetzt und getestet am 2026-06-19 (noch nicht deployed): Einkaufs-Cockpit-Loeschkennzeichen wertet jetzt zusaetzlich `MARA-MSTAE in (98, 99)` aus. MARA ist ueber das OData-EntitySet `MARA001Set` (`Matnr,Mstae`) verfuegbar; `PurchasingDataRefreshService` laedt es bei Full Load und Delta und schreibt den Status ueber den normalisierten Join `EKPO.Matnr -> MARA.Matnr` in `PurchasingEkpoCache.Mstae` (Matnr-Normalisierung: Whitespace raus, Upper, fuehrende Nullen entfernt). Der Filter `ExcludeDeletedItems` schliesst nun `EKPO.Loekz <> ''` ODER `Mstae in ('98','99')` aus; der bisher wirkungslose separate Schalter `ExcludeBlockedMaterials` wurde zusammengelegt und entfernt (Record, Filter-SQL und Razor-UI). MARA-Quelle/Join/Mapping in `DatabaseSeedService` und `PurchasingDataSourcePageService` ergaenzt (greift nur bei frischer Quellenliste, produktive DB unveraendert). Test `PurchasingDashboardServiceTests` deckt Filter aktiv/inaktiv ab. `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `103/103` gruen. Wichtig: Damit `Mstae` real gefuellt wird, muss nach dem Deploy ein Einkauf-Full-Load oder Delta laufen.
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.
 - Naechster Chat: zuerst `docs/HANDOFF_2026-06-16.md` laden, dann diese Datei, dann je nach Thema `docs/rag/FINANCE.md` oder `docs/rag/PRODUCT_MAPPING.md`.

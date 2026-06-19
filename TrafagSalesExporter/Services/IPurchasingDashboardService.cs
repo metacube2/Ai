@@ -10,8 +10,7 @@ public interface IPurchasingDashboardService
 public sealed record PurchasingDashboardFilter(
     DateTime FromDate,
     DateTime ToDate,
-    bool ExcludeDeletedItems = true,
-    bool ExcludeBlockedMaterials = false)
+    bool ExcludeDeletedItems = true)
 {
     public string Label => $"{FromDate:yyyy-MM-dd} bis {ToDate:yyyy-MM-dd}";
 }

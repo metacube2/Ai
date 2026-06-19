@@ -1301,7 +1301,8 @@ public class DatabaseSeedService : IDatabaseSeedService
                 new SapSourceDefinition { SiteId = site.Id, Alias = "EKPO", EntitySet = "EKPOSet", IsPrimary = false, IsActive = true, SortOrder = 20 },
                 new SapSourceDefinition { SiteId = site.Id, Alias = "EKET", EntitySet = "eketSet", IsPrimary = false, IsActive = true, SortOrder = 30 },
                 new SapSourceDefinition { SiteId = site.Id, Alias = "LIEF", EntitySet = "Data", IsPrimary = false, IsActive = true, SortOrder = 40 },
-                new SapSourceDefinition { SiteId = site.Id, Alias = "WG", EntitySet = "Data2", IsPrimary = false, IsActive = true, SortOrder = 50 });
+                new SapSourceDefinition { SiteId = site.Id, Alias = "WG", EntitySet = "Data2", IsPrimary = false, IsActive = true, SortOrder = 50 },
+                new SapSourceDefinition { SiteId = site.Id, Alias = "MARA", EntitySet = "MARA001Set", IsPrimary = false, IsActive = true, SortOrder = 60 });
             changed = true;
         }
 
@@ -1311,7 +1312,8 @@ public class DatabaseSeedService : IDatabaseSeedService
                 new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKKO", RightAlias = "EKPO", LeftKeys = "Ebeln", RightKeys = "Ebeln", JoinType = "Left", IsActive = true, SortOrder = 10 },
                 new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "EKET", LeftKeys = "Ebeln,Ebelp", RightKeys = "Ebeln,Ebelp", JoinType = "Left", IsActive = true, SortOrder = 20 },
                 new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKKO", RightAlias = "LIEF", LeftKeys = "Lifnr", RightKeys = "Lifnr", JoinType = "Left", IsActive = true, SortOrder = 30 },
-                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "WG", LeftKeys = "Matkl", RightKeys = "Matkl", JoinType = "Left", IsActive = true, SortOrder = 40 });
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "WG", LeftKeys = "Matkl", RightKeys = "Matkl", JoinType = "Left", IsActive = true, SortOrder = 40 },
+                new SapJoinDefinition { SiteId = site.Id, LeftAlias = "EKPO", RightAlias = "MARA", LeftKeys = "Matnr", RightKeys = "Matnr", JoinType = "Left", IsActive = true, SortOrder = 50 });
             changed = true;
         }
 
@@ -1331,7 +1333,8 @@ public class DatabaseSeedService : IDatabaseSeedService
                 new SapFieldMapping { SiteId = site.Id, TargetField = "NetValueChfPerPiece", SourceExpression = "EKPO.NetwrChfStk", IsRequired = false, IsActive = true, SortOrder = 110 },
                 new SapFieldMapping { SiteId = site.Id, TargetField = "OrderQuantity", SourceExpression = "EKPO.Menge", IsRequired = false, IsActive = true, SortOrder = 120 },
                 new SapFieldMapping { SiteId = site.Id, TargetField = "ScheduleDate", SourceExpression = "EKET.Eindt", IsRequired = false, IsActive = true, SortOrder = 130 },
-                new SapFieldMapping { SiteId = site.Id, TargetField = "ScheduleQuantity", SourceExpression = "EKET.Menge", IsRequired = false, IsActive = true, SortOrder = 140 });
+                new SapFieldMapping { SiteId = site.Id, TargetField = "ScheduleQuantity", SourceExpression = "EKET.Menge", IsRequired = false, IsActive = true, SortOrder = 140 },
+                new SapFieldMapping { SiteId = site.Id, TargetField = "MaterialStatus", SourceExpression = "MARA.Mstae", IsRequired = false, IsActive = true, SortOrder = 150 });
             changed = true;
         }
 

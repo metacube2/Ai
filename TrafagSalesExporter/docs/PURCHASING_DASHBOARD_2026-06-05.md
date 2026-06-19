@@ -243,6 +243,34 @@ Deploy:
 - Produktive Datei: `BiDashboard.dll`, Zeitstempel `18.06.2026 09:29:11`.
 - Servercheck: Port 443 erreichbar, `app_offline.htm` nicht mehr vorhanden.
 
+## Nachtrag 2026-06-19 MARA-MSTAE Loeschkennzeichen
+
+Ausgangslage:
+
+- Das Loeschkennzeichen sollte fuer das Einkaufs-Cockpit ueber `MARA-MSTAE = 98` oder `99` ausgewertet werden.
+- Frueher war `MARA-MSTAE` ueber OData nicht erreichbar (`Data/Data2/DataSet/Data2Set -> 404`); der Schalter `MARA-MSTAE raus` war daher wirkungslos.
+- Neu: MARA ist ueber das OData-EntitySet `MARA001Set` verfuegbar (Felder `Matnr`, `Mstae`).
+
+Umgesetzt:
+
+- `PurchasingDataRefreshService` laedt `MARA001Set` (`Matnr,Mstae`) bei Full Load und Delta in eine Status-Map.
+- Beim EKPO-Upsert wird `Mstae` ueber den normalisierten Join `EKPO.Matnr -> MARA.Matnr` aufgeloest und in `PurchasingEkpoCache.Mstae` geschrieben.
+- Matnr-Normalisierung: Whitespace entfernen, `ToUpperInvariant`, fuehrende Nullen entfernen. Damit matcht SAP-18-stellig mit fuehrenden Nullen gegen lokale Nummern.
+- Filterlogik in `PurchasingDashboardService.ActiveItemFilterSql`: `ExcludeDeletedItems` schliesst jetzt `EKPO.Loekz <> ''` ODER `Mstae in ('98','99')` aus.
+- Der bisher separate, wirkungslose Schalter `ExcludeBlockedMaterials` wurde mit dem Loeschkennzeichen zusammengelegt und aus `PurchasingDashboardFilter`, Filter-SQL und Razor-UI entfernt.
+- UI: eine Checkbox `Loeschkennzeichen raus (inkl. MARA-MSTAE 98/99)`; Statuszeile entsprechend angepasst.
+- Datenquellen-Pflege ergaenzt um Quelle `MARA -> MARA001Set`, Join `EKPO.Matnr = MARA.Matnr` und Mapping `MaterialStatus -> MARA.Mstae` in `DatabaseSeedService` und `PurchasingDataSourcePageService`.
+
+Wichtig:
+
+- Die Quellen-Defaults werden nur fuer eine leere Quellenliste geseedet; die produktive DB behaelt ihre bestehenden Quellen. Der Filter funktioniert trotzdem, weil der Refresh-Service `MARA001Set` fest laedt.
+- Damit `Mstae` real gefuellt ist, muss nach dem Deploy ein Einkauf-Full-Load oder Delta laufen.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `103/103` Tests gruen, inkl. neuem `PurchasingDashboardServiceTests` (Filter aktiv/inaktiv).
+
 ## Ideen und Kennzahlen-Katalog
 
 Der Ideenbereich wurde fuer den Einkauf erweitert:

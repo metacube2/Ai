@@ -95,8 +95,7 @@
                        Variant="Variant.Outlined"
                        Margin="Margin.Dense"
                        Disabled="_liveLoading" />
-        <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Löschkennzeichen raus", "Exclude deletion flag")" />
-        <MudCheckBox T="bool" @bind-Value="_excludeBlockedMaterials" Dense="true" Color="Color.Primary" Label="@T("MARA-MSTAE raus", "Exclude MARA-MSTAE")" />
+        <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Löschkennzeichen raus (inkl. MARA-MSTAE 98/99)", "Exclude deletion flag (incl. MARA-MSTAE 98/99)")" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="ApplyPurchasingFilterAsync" Disabled="_liveLoading">
             @T("Anwenden", "Apply")
         </MudButton>
@@ -680,7 +679,6 @@
     private string _filterFromMonth = BuildDefaultFromMonth();
     private string _filterToMonth = BuildDefaultToMonth();
     private bool _excludeDeletedItems = true;
-    private bool _excludeBlockedMaterials;
 
     private string FilterLabel => $"{_filterFromMonth} - {_filterToMonth}";
     private static string MaxPurchasingMonth => DateTime.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
@@ -1392,8 +1390,7 @@
     [
         BuildStatus("EKKO Bestellkoepfe", "EKKO purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-"),
         BuildStatus("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0"),
-        BuildStatus("Löschkennzeichen", "Deletion flag", _excludeDeletedItems, _excludeDeletedItems ? "ausgeschlossen" : "sichtbar"),
-        BuildStatus("MARA-MSTAE", "MARA-MSTAE", !_excludeBlockedMaterials || _liveState.EkpoLoaded, _excludeBlockedMaterials ? "Filter aktiv" : "sichtbar")
+        BuildStatus("Löschkennzeichen (inkl. MARA-MSTAE 98/99)", "Deletion flag (incl. MARA-MSTAE 98/99)", _excludeDeletedItems, _excludeDeletedItems ? "ausgeschlossen" : "sichtbar")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> OpenOrderStatusRows =>
@@ -1510,7 +1507,7 @@
         if (to.Year > 2026)
             to = new DateTime(2026, 12, 31);
 
-        return new PurchasingDashboardFilter(from, to, _excludeDeletedItems, _excludeBlockedMaterials);
+        return new PurchasingDashboardFilter(from, to, _excludeDeletedItems);
     }
 
     private static DateTime ParseMonth(string value, DateTime fallback)

@@ -51,6 +51,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var ekkoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Konnr,Waers,Wkurs", ekkoFilter, "Ebeln", cancellationToken);
             var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
             var eketRows = await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", string.Empty, "Ebeln,Ebelp,Etenr", cancellationToken);
+            var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -62,12 +63,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEkpoCache;", cancellationToken);
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEketCache;", cancellationToken);
             await UpsertEkkoAsync(conn, transaction, ekkoRows, nowText, cancellationToken);
-            await UpsertEkpoAsync(conn, transaction, ekpoRows, nowText, cancellationToken);
+            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}.";
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}.";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -108,6 +109,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", $"Ebeln eq '{ebeln}'", "Ebelp,Etenr", cancellationToken));
             }
 
+            var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open)
@@ -116,7 +119,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var nowText = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             await using var transaction = (SqliteTransaction)await conn.BeginTransactionAsync(cancellationToken);
             await UpsertEkkoAsync(conn, transaction, changedEkko, nowText, cancellationToken);
-            await UpsertEkpoAsync(conn, transaction, ekpoRows, nowText, cancellationToken);
+            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -221,7 +224,7 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $RawJson,
             }, cancellationToken);
     }
 
-    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, string loadedAtUtc, CancellationToken cancellationToken)
+    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> materialStatusMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
 INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, Mstae, RawJson, LastLoadedAtUtc)
@@ -238,10 +241,42 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
                 ["$Meins"] = GetText(row, "Meins"),
                 ["$Netwr"] = GetText(row, "Netwr"),
                 ["$Loekz"] = GetText(row, "Loekz"),
-                ["$Mstae"] = GetText(row, "Mstae"),
+                ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, GetText(row, "Matnr")),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);
+    }
+
+    private async Task<Dictionary<string, string>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        // MARA-MSTAE (Materialstatus) liefert das Loeschkennzeichen je Material.
+        // Wird ueber EKPO.Matnr -> MARA.Matnr in PurchasingEkpoCache.Mstae uebernommen.
+        var rows = await ReadAllRowsAsync(client, baseUrl, "MARA001Set", "Matnr,Mstae", string.Empty, "Matnr", cancellationToken);
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            var key = NormalizeMatnr(GetText(row, "Matnr"));
+            if (key.Length == 0)
+                continue;
+            map[key] = GetText(row, "Mstae");
+        }
+
+        return map;
+    }
+
+    private static string ResolveMaterialStatus(IReadOnlyDictionary<string, string> materialStatusMap, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && materialStatusMap.TryGetValue(key, out var status) ? status : string.Empty;
+    }
+
+    private static string NormalizeMatnr(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+        var normalized = new string(value.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        var trimmed = normalized.TrimStart('0');
+        return trimmed.Length == 0 ? normalized : trimmed;
     }
 
     private static async Task UpsertEketAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, string loadedAtUtc, CancellationToken cancellationToken)

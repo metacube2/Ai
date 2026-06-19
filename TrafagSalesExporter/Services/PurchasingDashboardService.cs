@@ -31,15 +31,21 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
             ELSE {lifnrExpression}
         END";
 
+    // MARA-MSTAE-Werte, die ein Material als zur Loeschung vorgemerkt / gesperrt kennzeichnen.
+    private static readonly string[] DeletedMaterialStatusCodes = ["98", "99"];
+
     private static string ActiveItemFilterSql(PurchasingDashboardFilter filter, string itemAlias)
     {
-        var parts = new List<string>();
-        if (filter.ExcludeDeletedItems)
-            parts.Add($"COALESCE({itemAlias}.Loekz, '') = ''");
-        if (filter.ExcludeBlockedMaterials)
-            parts.Add($"COALESCE({itemAlias}.Mstae, '') = ''");
-        return parts.Count == 0 ? "1 = 1" : string.Join(" AND ", parts);
+        // Loeschkennzeichen im Einkaufs-Cockpit: EKPO.Loekz gesetzt ODER Material-Status
+        // MARA-MSTAE in (98, 99). Mstae wird beim Full Load/Delta aus MARA001Set ueber
+        // EKPO.Matnr -> MARA.Matnr in PurchasingEkpoCache.Mstae uebernommen.
+        if (!filter.ExcludeDeletedItems)
+            return "1 = 1";
+
+        var statusList = string.Join(", ", DeletedMaterialStatusCodes.Select(code => $"'{code}'"));
+        return $"COALESCE({itemAlias}.Loekz, '') = '' AND COALESCE({itemAlias}.Mstae, '') NOT IN ({statusList})";
     }
+
 
     public async Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default)
     {
