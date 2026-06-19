@@ -2,9 +2,12 @@
 
 Stand: 2026-06-19. Zweck: Diese **eine** Datei reicht aus, damit eine LLM neue
 Features (z. B. einen datengetriebenen Gauge-Controller im Einkaufs- oder
-Finance-Dashboard) bauen kann, ohne das ganze Repo zu kennen. Keine
-Geheimnisse, keine Rohdaten, keine Redundanz — nur Architektur, Konventionen
-und konkrete Erweiterungs-Rezepte.
+Finance-Dashboard) bauen kann, ohne das ganze Repo zu kennen. Enthalten:
+Architektur + Konventionen, **echter Schluessel-Code** (Abschnitt 6b) und ein
+**RAG-komprimierter Signaturen-Katalog** des restlichen Codes (Abschnitt 6c).
+Keine Geheimnisse, keine Rohdaten. Volle Implementierungen sind bewusst NICHT
+enthalten — die LLM fordert sie ueber den Katalog gezielt nach
+(„brauche `Service.MethodeXy`“).
 
 ---
 
@@ -190,6 +193,146 @@ konsistent zu den Konventionen oben:
 
 Damit ist der Gauge wiederverwendbar (Einkauf, Finance, HR) und respektiert die
 Trennung UI ↔ Page-Service.
+
+---
+
+## 6b. Schluessel-Code (echt, eingedampft)
+
+Diese Snippets sind echter Code aus dem Repo (gekuerzt), als Vorlage zum
+Mitbauen. Der restliche Code ist **nicht** hier — siehe Katalog in Abschnitt 6c
+und fordere gezielt einzelne Methoden/Dateien nach.
+
+### 6b.1 Bestehender Manometer (statisch, `ExportDashboard.razor`)
+Vorlage fuer den neuen Gauge. Nadel = `.manometer-needle`, Drehpunkt
+`transform-origin: 105px 98px`. Heute fest per CSS-Keyframe animiert (nicht
+datengebunden):
+```razor
+<svg class="manometer-svg" viewBox="0 0 210 118" role="img" aria-label="Export activity manometer">
+  <path class="manometer-outer" d="M25 98 A80 80 0 0 1 185 98" />
+  <path class="manometer-inner" d="M47 98 A58 58 0 0 1 163 98" />
+  <!-- 5 Ticks + 5 Labels 0/25/50/75/100, hier gekuerzt -->
+  <text class="manometer-caption" x="105" y="113">EXPORT</text>
+  <g class="manometer-needle"><line class="needle-line" x1="105" y1="98" x2="105" y2="38" /></g>
+  <circle class="manometer-hub" cx="105" cy="98" r="11" />
+</svg>
+```
+```css
+.manometer-needle { transform-box: view-box; transform-origin: 105px 98px;
+  animation: manometer-sweep 5.8s infinite cubic-bezier(.45,0,.25,1); }
+@keyframes manometer-sweep { 0%{transform:rotate(-52deg);} 11%{transform:rotate(18deg);} 100%{transform:rotate(...);} }
+```
+**Fuer den datengebundenen Gauge:** `animation` weglassen, stattdessen
+`style="transform: rotate(@(_angle)deg)"` auf `.manometer-needle`, mit
+`_angle = -90 + Math.Clamp((Value-Min)/(Max-Min),0,1) * 180`.
+
+### 6b.2 Dashboard-Service-Muster (`PurchasingDashboardService.cs`, gekuerzt)
+Zeigt: DbContext **nur** via Factory, Cache-First, `…LiveState` zurueckgeben,
+roher SQLite-Zugriff fuer die Einkauf-Cache-Tabellen.
+```csharp
+public sealed class PurchasingDashboardService : IPurchasingDashboardService
+{
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    public PurchasingDashboardService(IDbContextFactory<AppDbContext> dbFactory) => _dbFactory = dbFactory;
+
+    public async Task<PurchasingDashboardLiveState> LoadAsync(
+        PurchasingDashboardFilter? filter = null, CancellationToken ct = default)
+    {
+        var state = new PurchasingDashboardLiveState();
+        filter ??= BuildDefaultFilter();            // 2020-01-01 .. heute
+        state.PeriodFrom = filter.FromDate; state.PeriodTo = filter.ToDate;
+
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        if (await TryLoadCacheStateAsync(db, state, filter, ct)) return state; // Cache-First
+        // Fallback: SAP-Quelle aus SourceSystemDefinitions/Sites lesen, sonst Message setzen
+        return state;
+    }
+    // Helper bauen SQL dynamisch, z.B. Loekz/Mstae-Ausschluss:
+    // ActiveItemFilterSql(filter, "p") -> "COALESCE(p.Loekz,'')='' AND COALESCE(p.Mstae,'')=''"
+}
+```
+> Eigene Gauge-Kennzahl: neues `double`-Feld in `PurchasingDashboardLiveState`
+> ergaenzen und in `LoadAsync` aus dem Cache berechnen (z. B. Auslastung =
+> Spend_lfd_Jahr / Jahresbudget).
+
+### 6b.3 DI-Registrierung (immer noetig fuer neue Services, `Program.cs`)
+```csharp
+builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>(); // Page/UI = Scoped
+builder.Services.AddSingleton<ISapGatewayService, SapGatewayService>();                // stateless = Singleton
+```
+
+---
+
+## 6c. RAG-Code-Katalog (Signaturen-Index — „ich brauche Methode xy“)
+
+Der restliche Quellcode ist hier nur als **Signatur-Index** komprimiert. Wenn
+du eine Implementierung brauchst, nenne **Service + Methode** (z. B. „brauche
+`SiteExportService.ExportAsync`“) und fordere genau diese Datei/Methode an.
+
+**Daten/SAP/Export**
+- `IHanaQueryService`: `GetSalesRecordsAsync(server,schema,tsc,land,dateFilter,ct)`,
+  `GetMappedSalesRecordsAsync(...sources,joins,mappings...)`,
+  `GetAvailableSchemasAsync`/`…TablesAsync`/`GetTableFieldNamesAsync`,
+  `TestConnectionDetailedAsync`.
+- `ISapGatewayService`: `GetEntitySetsAsync`, `GetEntityFieldNamesAsync`,
+  `GetEntityRowsAsync(serviceUrl,entitySet,user,pw,filter?,ct)`, `TestConnectionAsync`.
+- `ISapCompositionService`: `BuildSalesRecordsAsync(...)` (Join SAP-Sources→SalesRecord).
+- `IMappedSalesRecordComposer`: SalesRecord aus Feld-Mappings zusammensetzen.
+- `IManualExcelImportService`: `ReadSalesRecordsAsync(filePath, site)`.
+- `ISharePointUploadService`: `UploadAsync(...)`, `DownloadToTempFileAsync(...)`,
+  `ResolveLatestFileInFolderAsync(...)`, `ResolveManualImportFilesInFolderAsync(...)`.
+- `IExcelExportService`: `CreateExcelFile`, `CreateConsolidatedExcelFile`,
+  `CreateDashboardProofExcelFile`, `CreateGenericExcelFile` (ClosedXML).
+- `IExportAuditCsvService`: Audit-CSV `Sales_ProcessedMergeInput_<TSC>_<Datum>.csv`.
+- `ISiteExportService`: `ExportAsync(site, updateStatus?, preferredImportYear?)`.
+- `IConsolidatedExportService`: `ExportAsync(updateStatus?)` (zentrale Excel).
+- `ExportOrchestrationService` (Singleton) + `TimerBackgroundService` (HostedService): geplante Laeufe.
+
+**Transformation/Waehrung**
+- `IRecordTransformationService`: `Apply(records, rules)`.
+- `ITransformationStrategy` / `IRecordTransformationStrategy`: Strategie-Impls
+  (Copy, Uppercase, Lowercase, Prefix, Suffix, Replace, Constant,
+  NormalizeCurrencyCode, FirstNonEmpty, ConvertCurrency).
+- `ITransformationCatalog`: `TransformationCatalogItem{Key,RuleScope,Description,TypeName,SourceFile,CodeSnippet}`.
+- `ICurrencyExchangeRateService`: `ResolveRate(from,to,date?)`, `NormalizeCurrencyCode(code?)`.
+- `IExchangeRateImportService`: `RefreshEcbRatesAsync(ct)` → `ExchangeRateImportResult`.
+
+**Zentral/Finance/HR/Management**
+- `ICentralSalesRecordService`: `ReplaceForSiteAsync(site,records,update?)`, `GetAllAsync()`.
+- `ICentralSalesDataProvider`: zentrale Lese-Quelle fuer Auswertungen.
+- `IFinanceReconciliationService`: Soll/Ist-Abgleich (FinanceRuleEngine).
+- `FinanceRuleEngine` (Klasse): Regelauswertung Finance/Excel.
+- `IManagementCockpitService`: `GetAvailableFilesAsync`, `AnalyzeAsync(filePath,options?)`,
+  `AnalyzeCentralAsync(year,month?,options?)`, `AnalyzeFinanceSummaryAsync(year,countryKey?,currency?)`.
+- `IHrKpiService` + `HrKpiDashboardBuilder`: HR-KPI-Auswertung (Rexx-Quelle).
+- `IPurchasingDashboardService` / `IPurchasingDataRefreshService` /
+  `IPurchasingDataSourcePageService`: siehe Abschnitt 5 + IPurchasingDashboardService.cs.
+
+**Infrastruktur/Navigation/Logs/DB**
+- `INavigationMenuService`: `GetItemsAsync`, `SaveItemsAsync(items)`, `ResetToDefaultsAsync`.
+- `IAppEventLogService`: `WriteAsync(category,message,level,siteId?,land?,details?)`, `WriteDebugAsync(...)`.
+- `IExportLogService`: `WriteAsync(ExportLog)`.
+- `IUiTextService`: Liefert `T(de,en)`-Texte/Sprachzustand.
+- `IConfigTransferService`: `ExportJsonAsync(includeSecrets)`, `ImportJsonAsync(json)`.
+- `IDatabaseInitializationService` / `…SchemaMaintenanceService(EnsureSchema)` /
+  `…SeedService(SeedDefaults)`: DB-Anlage/Seed (Schema-SQL inkl. Purchasing-Cache).
+- Zugriff/Access: `IAccessSessionTracker`, `ILandingPageSettingsService`,
+  `IHrKpiAccessService`, `IFinanceCockpitAccessService`, `IAdminAccessService`.
+
+**Page-Services (Scoped, je `.razor`)** — Interface liegt jeweils in derselben
+Impl-Datei, Muster `LoadAsync()` → State, `SaveAsync(state)`:
+`SettingsPageService`, `StandortePageService`, `StandorteSapEditorService`,
+`DashboardPageService`, `LogsPageService`, `TransformationsPageService`,
+`FinanceRulesPageService`, `ManagementCockpitPageService`,
+`PurchasingDataSourcePageService`.
+
+**Models (EF-Entities + UI-Records)** — Felder bei Bedarf anfordern:
+`CentralSalesRecord` (zentrale Fakten), `SalesRecord`, `Site`, `HanaServer`,
+`SourceSystemDefinition`, `SapSourceDefinition`/`SapJoinDefinition`/`SapFieldMapping`,
+`ManualExcelColumnMapping`, `CurrencyExchangeRate`, `FinanceReference`,
+`FinanceRule`/`FinanceIntercompanyRule`, `ExportSettings`/`ExportLog`,
+`AppEventLog`, `FieldTransformationRule`, `NavigationMenuItem`, `SharePointConfig`,
+`PurchasingAnalysisRow`/`PurchasingSectionModels`, `ManagementCockpitModels`,
+`HrKpiModels`, `ConfigTransferPackage`.
 
 ---
 
