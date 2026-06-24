@@ -1,11 +1,15 @@
 # RAG Project
 
-Stand: 2026-06-19
+Stand: 2026-06-24
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
 - Nahtloser Einstieg nach Chatwechsel: `docs/HANDOFF_2026-06-16.md` laden.
+- Neu committed 2026-06-24: Alphaplan-Delta-Export-Skript korrigiert. Rootursache war, dass `runAlphaplanDailyDelta.ps1` das `PSCredential`-Objekt via `& powershell.exe -File ... -SqlCredential $cred` an einen neuen Prozess uebergeben hat — was nicht funktioniert, da PSCredential nicht ueber eine Prozessgrenze serialisierbar ist. Fix: Delta-Script wird jetzt im selben Prozess aufgerufen (`& $DeltaScript -SqlCredential $cred -NoZip`). Zusaetzlich: ZIP-Name jetzt datumsstempeliert (`AlphaplanDeltaExport_yyyyMMdd.zip`) damit Uploads nicht ueberschrieben werden, Pfade relativ zu `$PSScriptRoot` statt `C:\temp`. Einrichtungsanleitung: `AlphaplanExportPackage/scripte/ANLEITUNG_KORREKTUR_2026-06-24.md`. DPAPI-Hinweis: `alphaplan-sql-cred.xml` muss auf dem DE-Server als der Task-Scheduler-User neu erstellt werden.
+- Neu committed 2026-06-24: Blazor-`NotFound`-Handler in `Components/Routes.razor` ergaenzt via `Components/HomeRedirect.razor`. Unbekannte URLs leiten jetzt auf die Startseite weiter statt leere Seite zu zeigen.
+- Neu committed 2026-06-24: `persona.md` um Kostenkontroll-Block (ccusage) erweitert — Nutzer kann KOSTENLIMIT_AKTIV, KOSTENLIMIT_WERT_TOKEN/USD, WARNSCHWELLE_PROZENT setzen; KI prueft beim Sitzungsstart. Installationsanleitung: `docs/CCUSAGE_INSTALL_ANLEITUNG.md`.
+- Pending Deploy: HomeRedirect/Routes-Aenderung, MARA-MSTAE-Filter (103/103 Tests) — beide noch nicht auf Produktion deployed.
 - Neu lokal umgesetzt und getestet am 2026-06-19 (noch nicht deployed): Einkaufs-Cockpit-Loeschkennzeichen wertet zusaetzlich `MARA-MSTAE in (98, 99)` aus. MARA kommt ueber OData-EntitySet `MARA001Set` (`Matnr,Mstae`); `PurchasingDataRefreshService` laedt es bei Full Load/Delta und fuellt `PurchasingEkpoCache.Mstae` ueber den normalisierten Join `EKPO.Matnr -> MARA.Matnr`. Filter `ExcludeDeletedItems` schliesst `Loekz <> ''` ODER `Mstae in ('98','99')` aus; separater `ExcludeBlockedMaterials`-Schalter entfernt. `103/103` Tests gruen. Nach Deploy Einkauf-Full-Load/Delta noetig, damit `Mstae` gefuellt ist. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 - Management-/Roadmap-Doku neu: `docs/INGO_TODOS_180_TAGE_2026-06-18.docx`, Quelle `docs/INGO_TODOS_180_TAGE_2026-06-18.md`. Sie beschreibt Ingos 180-Tage-Fokus: Sales Management Cockpit/Data-Lake als Prioritaet 1, HR Dashboard und Einkaufs Dashboard als Prioritaet 2/3, Q3/Q4-Meilensteine, Abhaengigkeiten, Risiken und naechste Schritte.
 - Abgrenzung fuer 180 Tage: S/4HANA Compatibility Check/RPC-/RFC-Themen bleiben bei Lucas; Infrastruktur/Security/Server/Netzwerk bleiben bei Alex/Ramon/Upgreat. Ingo bleibt bei Analytics, BI, Reporting-/Z-Funktionsbezug und .NET/ASP-Webseiten.

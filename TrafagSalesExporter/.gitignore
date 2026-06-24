@@ -21,3 +21,6 @@ mainapp*.log
 financeprobe*.log
 netsh
 11.15.0
+
+# Alphaplan DPAPI credential (machine+user bound, never commit)
+AlphaplanExportPackage/scripte/alphaplan-sql-cred.xml
