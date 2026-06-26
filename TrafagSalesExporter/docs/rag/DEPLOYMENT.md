@@ -1,17 +1,18 @@
 # RAG Deployment
 
-Stand: 2026-06-18
+Stand: 2026-06-26
 
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-18 Einkaufsdashboard-Matrix und Einkaufsfilter.
+- Letzter dokumentierter Deploy: 2026-06-26, Commits `6943a66`–`3d5a23d`.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `101/101` Tests gruen.
-- Deploy-Ablauf 2026-06-18: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.
+- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `103/103` Tests gruen.
+- Deploy-Ablauf 2026-06-26: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.
 - Servercheck nach Deploy: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
-- Produktive DLL nach Deploy: `BiDashboard.dll`, Zeitstempel `18.06.2026 09:29:11`.
-- Commit: `4f45805 Improve purchasing dashboard matrix`.
+- Produktive DLL nach Deploy: `BiDashboard.dll`, Zeitstempel `26.06.2026 07:47:25`.
+- Deployede Aenderungen: Einkauf MARA-MSTAE-Loeschkennzeichen; Alphaplan-PSCredential-Fix + datierte ZIPs; HomeRedirect NotFound-Handler; Schnellübersicht Sparten-Abdeckung (inkl. Uebrige) + Datenstand-Zeitzonen-Fix.
+- Vorheriger Deploy: 2026-06-18 Einkaufsdashboard-Matrix und Einkaufsfilter, Commit `4f45805`, DLL `18.06.2026 09:29:11`.
 - Vorheriger Deploy 2026-06-17: zentraler Finance-Audit-/Nachweisexport, Commit `65f2ded Upload central finance audit exports`.
 - Vorheriger Deploy 2026-06-16: HR-Admin, Finance-3D-Spartenkreis und Gruppenmarge.
 - Vorheriger Deploy 2026-06-11: Finance-Schulung/Dashboard-UI, Commit `f751295`, `BiDashboard.dll` `11.06.2026 12:04:53`.
