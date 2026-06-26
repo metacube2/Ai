@@ -2101,9 +2101,24 @@
     private static string FormatDateTime(DateTime? value)
         => value.HasValue ? value.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "-";
 
+    // Normalize each source to UTC before comparing: StoredAtUtc is UTC, ExtractionDate
+    // and ExportAt are local time (matches DashboardPageService.ResolveDataFreshness).
+    // Returns a Kind=Utc DateTime so FormatDateTime's ToLocalTime() displays correctly.
+    private static DateTime? ToUtcFreshness(DateTime? value, DateTimeKind sourceKind)
+        => value.HasValue
+            ? (sourceKind == DateTimeKind.Utc
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                : DateTime.SpecifyKind(value.Value, DateTimeKind.Local).ToUniversalTime())
+            : null;
+
     private static DateTime? BestDataFreshness(ManagementFinanceDataStatusRow row)
     {
-        var candidates = new[] { row.LatestExtractionDate, row.LatestStoredAtUtc, row.LatestExportAt }
+        var candidates = new[]
+        {
+            ToUtcFreshness(row.LatestExtractionDate, DateTimeKind.Local),
+            ToUtcFreshness(row.LatestStoredAtUtc, DateTimeKind.Utc),
+            ToUtcFreshness(row.LatestExportAt, DateTimeKind.Local)
+        }
             .Where(d => d.HasValue)
             .Select(d => d!.Value)
             .ToList();
@@ -2114,11 +2129,11 @@
     {
         var parts = new List<string>();
         if (row.LatestExtractionDate.HasValue)
-            parts.Add($"{T("Extraktionsdatum", "Extraction date")}: {FormatDateTime(row.LatestExtractionDate)}");
+            parts.Add($"{T("Extraktionsdatum", "Extraction date")}: {FormatDateTime(ToUtcFreshness(row.LatestExtractionDate, DateTimeKind.Local))}");
         if (row.LatestStoredAtUtc.HasValue)
-            parts.Add($"{T("DB-Import", "DB import")}: {FormatDateTime(row.LatestStoredAtUtc)}");
+            parts.Add($"{T("DB-Import", "DB import")}: {FormatDateTime(ToUtcFreshness(row.LatestStoredAtUtc, DateTimeKind.Utc))}");
         if (row.LatestExportAt.HasValue)
-            parts.Add($"{T("Letzter Export", "Last export")}: {FormatDateTime(row.LatestExportAt)}");
+            parts.Add($"{T("Letzter Export", "Last export")}: {FormatDateTime(ToUtcFreshness(row.LatestExportAt, DateTimeKind.Local))}");
         return parts.Count > 0 ? string.Join(" | ", parts) : T("Kein Datenstand verfügbar", "No data freshness available");
     }
 
