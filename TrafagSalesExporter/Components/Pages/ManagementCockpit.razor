@@ -138,7 +138,7 @@
                                 <MudTh>TSC</MudTh>
                                 <MudTh>@T("Quelle", "Source")</MudTh>
                                 <MudTh>@T("Zentrale Zeilen", "Central rows")</MudTh>
-                                <MudTh>@T("Letzter Export", "Latest export")</MudTh>
+                                <MudTh>@T("Datenstand", "Data freshness")</MudTh>
                                 <MudTh>@T("Status", "Status")</MudTh>
                                 <MudTh>@T("Manual Import", "Manual import")</MudTh>
                             </HeaderContent>
@@ -151,7 +151,11 @@
                                 <MudTd>@context.Tsc</MudTd>
                                 <MudTd>@context.SourceSystem</MudTd>
                                 <MudTd>@context.RowCount.ToString("N0")</MudTd>
-                                <MudTd>@FormatDateTime(context.LatestExportAt)</MudTd>
+                                <MudTd>
+                                    <MudTooltip Text="@BuildDataStatusTooltip(context)">
+                                        @FormatDateTime(BestDataFreshness(context))
+                                    </MudTooltip>
+                                </MudTd>
                                 <MudTd>@(string.IsNullOrWhiteSpace(context.LatestExportStatus) ? "-" : context.LatestExportStatus)</MudTd>
                                 <MudTd>@FormatManualImportStatus(context)</MudTd>
                             </RowTemplate>
@@ -166,7 +170,11 @@
                                 <MudTh>@T("Gesamtumsatz", "Total sales")</MudTh>
                                 <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
                                 <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
-                                <MudTh>@T("Abdeckung", "Coverage")</MudTh>
+                                <MudTh>
+                                    <MudTooltip Text="@T("Zugeordnet + Übrige (beides gültige Sparten)", "Assigned + Misc (both valid divisions)")">
+                                        @T("Abdeckung", "Coverage")
+                                    </MudTooltip>
+                                </MudTh>
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
@@ -174,7 +182,7 @@
                                 <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
                                 <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
                                 <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
-                                <MudTd>@FormatPercent(context.AssignedValuePercent)</MudTd>
+                                <MudTd>@FormatPercent(context.CoveredValuePercent)</MudTd>
                             </RowTemplate>
                         </MudTable>
                     </MudPaper>
@@ -662,7 +670,11 @@
                         <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
                         <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
                         <MudTh>@T("Material fehlt", "Material missing")</MudTh>
-                        <MudTh>@T("Abdeckung", "Coverage")</MudTh>
+                        <MudTh>
+                            <MudTooltip Text="@T("Zugeordnet + Übrige (beides gültige Sparten)", "Assigned + Misc (both valid divisions)")">
+                                @T("Abdeckung", "Coverage")
+                            </MudTooltip>
+                        </MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
@@ -673,7 +685,7 @@
                         <MudTd>@FormatValue(context.UnassignedValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
                         <MudTd>@FormatValue(context.MissingMaterialValue, context.Currency)</MudTd>
-                        <MudTd>@FormatPercent(context.AssignedValuePercent)</MudTd>
+                        <MudTd>@FormatPercent(context.CoveredValuePercent)</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body2">@T("Keine Umsatzabdeckung fuer diese Filter.", "No sales coverage for these filters.")</MudText>
@@ -2088,6 +2100,27 @@
 
     private static string FormatDateTime(DateTime? value)
         => value.HasValue ? value.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "-";
+
+    private static DateTime? BestDataFreshness(ManagementFinanceDataStatusRow row)
+    {
+        var candidates = new[] { row.LatestExtractionDate, row.LatestStoredAtUtc, row.LatestExportAt }
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .ToList();
+        return candidates.Count > 0 ? candidates.Max() : null;
+    }
+
+    private string BuildDataStatusTooltip(ManagementFinanceDataStatusRow row)
+    {
+        var parts = new List<string>();
+        if (row.LatestExtractionDate.HasValue)
+            parts.Add($"{T("Extraktionsdatum", "Extraction date")}: {FormatDateTime(row.LatestExtractionDate)}");
+        if (row.LatestStoredAtUtc.HasValue)
+            parts.Add($"{T("DB-Import", "DB import")}: {FormatDateTime(row.LatestStoredAtUtc)}");
+        if (row.LatestExportAt.HasValue)
+            parts.Add($"{T("Letzter Export", "Last export")}: {FormatDateTime(row.LatestExportAt)}");
+        return parts.Count > 0 ? string.Join(" | ", parts) : T("Kein Datenstand verfügbar", "No data freshness available");
+    }
 
     private static string FormatManualImportStatus(ManagementFinanceDataStatusRow row)
     {

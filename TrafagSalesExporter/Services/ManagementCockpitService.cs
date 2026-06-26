@@ -942,6 +942,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 var rowList = group.ToList();
                 var total = rowList.Sum(row => row.NetSalesActual);
                 var assigned = rowList.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+                var misc = rowList.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual);
                 return new ManagementProductFinanceCountryRow
                 {
                     CountryKey = group.Key.CountryKey,
@@ -949,11 +950,12 @@ public class ManagementCockpitService : IManagementCockpitService
                     Currency = group.Key.Currency,
                     TotalValue = total,
                     AssignedValue = assigned,
-                    MiscValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual),
+                    MiscValue = misc,
                     UnassignedValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual),
                     MissingReferenceValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual),
                     MissingMaterialValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual),
-                    AssignedValuePercent = PercentOf(assigned, total)
+                    AssignedValuePercent = PercentOf(assigned, total),
+                    CoveredValuePercent = PercentOf(assigned + misc, total)
                 };
             })
             .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)

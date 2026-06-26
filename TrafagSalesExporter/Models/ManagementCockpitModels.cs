@@ -281,6 +281,7 @@ public class ManagementProductFinanceCountryRow
     public decimal MissingReferenceValue { get; set; }
     public decimal MissingMaterialValue { get; set; }
     public decimal AssignedValuePercent { get; set; }
+    public decimal CoveredValuePercent { get; set; }
 }
 
 public class ManagementProductAssignmentCountryRow
