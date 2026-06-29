@@ -1,11 +1,13 @@
 # RAG Project
 
-Stand: 2026-06-26
+Stand: 2026-06-29
 
 ## Kurzstand
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
 - Nahtloser Einstieg nach Chatwechsel: `docs/HANDOFF_2026-06-16.md` laden.
+- DEPLOYED 2026-06-29 (Commits `4805317`–`6856a62`, DLL `29.06.2026 11:36:03`, `124/124` Tests, zu origin gepusht): Umsetzung der finalen Andreas-Finance-Entscheide aus a.docx (Budget-CHF) + b.docx (Gruppenmarge) plus zwei Cockpit-Features. (1) Gruppenmarge: interner/Intercompany-Lieferant = Name oder Nummer enthaelt „Trafag"; Logik zentral in `Services/GroupMarginSupplierClassifier.cs`. (2) DE-Finance-Jahr folgt dem Fakturierungsdatum (InvoiceDate) statt erzwungenem 2025 — DE-`ForceYear`-Regel aus `CreateDefaultRules` entfernt und bestehende im Seed deaktiviert (reversibel im Admin). (3) Group-Currency-(CHF)-Umschalter im Management-Cockpit: lokale Waehrung bleibt fuehrend, CHF als additiver Schalter (Ist + Soll mit Jahreskurs umgerechnet), `AnalyzeFinanceSummaryAsync(..., useGroupCurrency)`. (4) Per-Reiter „Export to Excel"-Buttons (in-memory `.xlsx` ueber `IExcelExportService.CreateWorkbookBytes` + JS `trafagDownload.saveBytes`). Details: `docs/rag/FINANCE.md`. NACHSORGE: DE-Daten neu importieren (2026er DE-Rechnungen wandern dann ins Jahr 2026); Group-Currency nutzt vorhandene Jahreskurse (Budgetkurse) — Kursbasis ggf. final mit Finance bestaetigen.
+- NOCH OFFEN (Finance, eigene Features): echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS / SAP B1) fuer korrekte Gruppenmarge gemaess `Mappe1.xlsx`; Budget-CHF-Spaltenumfang (a.docx Q3).
 - Neu committed 2026-06-24: Alphaplan-Delta-Export-Skript korrigiert. Rootursache war, dass `runAlphaplanDailyDelta.ps1` das `PSCredential`-Objekt via `& powershell.exe -File ... -SqlCredential $cred` an einen neuen Prozess uebergeben hat — was nicht funktioniert, da PSCredential nicht ueber eine Prozessgrenze serialisierbar ist. Fix: Delta-Script wird jetzt im selben Prozess aufgerufen (`& $DeltaScript -SqlCredential $cred -NoZip`). Zusaetzlich: ZIP-Name jetzt datumsstempeliert (`AlphaplanDeltaExport_yyyyMMdd.zip`) damit Uploads nicht ueberschrieben werden, Pfade relativ zu `$PSScriptRoot` statt `C:\temp`. Einrichtungsanleitung: `AlphaplanExportPackage/scripte/ANLEITUNG_KORREKTUR_2026-06-24.md`. DPAPI-Hinweis: `alphaplan-sql-cred.xml` muss auf dem DE-Server als der Task-Scheduler-User neu erstellt werden.
 - Neu committed 2026-06-24: Blazor-`NotFound`-Handler in `Components/Routes.razor` ergaenzt via `Components/HomeRedirect.razor`. Unbekannte URLs leiten jetzt auf die Startseite weiter statt leere Seite zu zeigen.
 - Neu committed 2026-06-24: `persona.md` um Kostenkontroll-Block (ccusage) erweitert — Nutzer kann KOSTENLIMIT_AKTIV, KOSTENLIMIT_WERT_TOKEN/USD, WARNSCHWELLE_PROZENT setzen; KI prueft beim Sitzungsstart. Installationsanleitung: `docs/CCUSAGE_INSTALL_ANLEITUNG.md`.
