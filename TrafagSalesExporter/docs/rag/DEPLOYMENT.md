@@ -1,17 +1,19 @@
 # RAG Deployment
 
-Stand: 2026-06-26
+Stand: 2026-06-29
 
 ## Kurzstand
 
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-26, Commits `6943a66`–`3d5a23d`.
+- Letzter dokumentierter Deploy: 2026-06-29, Commits `4805317`–`6856a62`.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
-- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `103/103` Tests gruen.
-- Deploy-Ablauf 2026-06-26: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.
+- Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `124/124` Tests gruen.
+- Deploy-Ablauf 2026-06-29: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.
 - Servercheck nach Deploy: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
-- Produktive DLL nach Deploy: `BiDashboard.dll`, Zeitstempel `26.06.2026 07:47:25`.
-- Deployede Aenderungen: Einkauf MARA-MSTAE-Loeschkennzeichen; Alphaplan-PSCredential-Fix + datierte ZIPs; HomeRedirect NotFound-Handler; Schnellübersicht Sparten-Abdeckung (inkl. Uebrige) + Datenstand-Zeitzonen-Fix.
+- Produktive DLL nach Deploy: `BiDashboard.dll`, Zeitstempel `29.06.2026 11:36:03`.
+- Deployede Aenderungen (Andreas-Entscheide + heutige Arbeit): Gruppenmarge interner Lieferant = Name/Nummer enthaelt „Trafag"; DE-Finance-Jahr folgt Fakturierungsdatum (DE-ForceYear-2025-Regel deaktiviert); Group-Currency-(CHF)-Umschalter im Management-Cockpit; per-Reiter „Export to Excel"-Buttons; Schnellübersicht Sparten-Abdeckung inkl. Uebrige + Datenstand-Zeitzonen-Fix; Alphaplan-PSCredential-Fix; HomeRedirect.
+- WICHTIG nach diesem Deploy: DE-Daten neu importieren, damit 2026er DE-Rechnungen ins Finance-Jahr 2026 wandern (vorher auf 2025 gezwungen). Group-Currency nutzt vorhandene Jahreskurse (Budgetkurse); Kursbasis ggf. final mit Finance bestaetigen.
+- Vorheriger Deploy: 2026-06-26, Commits `6943a66`–`3d5a23d`, DLL `26.06.2026 07:47:25` (Schnellübersicht-Fixes, Alphaplan, HomeRedirect, MARA-MSTAE).
 - Vorheriger Deploy: 2026-06-18 Einkaufsdashboard-Matrix und Einkaufsfilter, Commit `4f45805`, DLL `18.06.2026 09:29:11`.
 - Vorheriger Deploy 2026-06-17: zentraler Finance-Audit-/Nachweisexport, Commit `65f2ded Upload central finance audit exports`.
 - Vorheriger Deploy 2026-06-16: HR-Admin, Finance-3D-Spartenkreis und Gruppenmarge.
