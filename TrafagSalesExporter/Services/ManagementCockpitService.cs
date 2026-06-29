@@ -496,7 +496,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
-        notices.Add("Gruppenmarge ist ein MVP: externe Lieferanten verwenden Kosten aus der Verkaufszeile; interne Trafag-Lieferanten verwenden die vorhandene Standardkostenbasis. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
+        notices.Add("Gruppenmarge ist ein MVP: als intern gelten nur Trafag AG, Trafag Italy und Trafag India; alle anderen Lieferanten (inkl. weiterer Intercompany-Gesellschaften) werden als 3rd Party behandelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
 
         return new ManagementFinanceSummaryResult
         {
@@ -1122,27 +1122,7 @@ public class ManagementCockpitService : IManagementCockpitService
         => row.Status is "Standardpreis fehlt" or "Lieferant unklar";
 
     private static string ResolveSupplierType(FinanceAggregationRow row)
-    {
-        if (string.IsNullOrWhiteSpace(row.SupplierNumber) &&
-            string.IsNullOrWhiteSpace(row.SupplierName) &&
-            string.IsNullOrWhiteSpace(row.SupplierCountry))
-        {
-            return "Unklar";
-        }
-
-        var supplierText = string.Join(' ', row.SupplierNumber, row.SupplierName, row.SupplierCountry).ToUpperInvariant();
-        if (supplierText.Contains("TRAFAG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TR AG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TR-AG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRIN", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRIT", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRCH", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Intern";
-        }
-
-        return "Extern";
-    }
+        => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry);
 
     private static decimal ResolveGroupMarginCostBasis(FinanceAggregationRow row)
         => row.Quantity != 0m ? Math.Abs(row.Quantity) * Math.Abs(row.StandardCost) : Math.Abs(row.StandardCost);

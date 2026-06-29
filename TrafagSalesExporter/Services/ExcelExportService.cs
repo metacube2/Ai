@@ -734,27 +734,7 @@ public class ExcelExportService : IExcelExportService
     }
 
     private static string ResolveSupplierType(SalesRecord record)
-    {
-        if (string.IsNullOrWhiteSpace(record.SupplierNumber) &&
-            string.IsNullOrWhiteSpace(record.SupplierName) &&
-            string.IsNullOrWhiteSpace(record.SupplierCountry))
-        {
-            return "Unklar";
-        }
-
-        var supplierText = string.Join(' ', record.SupplierNumber, record.SupplierName, record.SupplierCountry).ToUpperInvariant();
-        if (supplierText.Contains("TRAFAG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TR AG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TR-AG", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRIN", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRIT", StringComparison.OrdinalIgnoreCase) ||
-            supplierText.Contains("TRCH", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Intern";
-        }
-
-        return "Extern";
-    }
+        => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry);
 
     private static decimal ResolveGroupMarginCostBasis(SalesRecord record)
         => record.Quantity != 0m ? Math.Abs(record.Quantity) * Math.Abs(record.StandardCost) : Math.Abs(record.StandardCost);
