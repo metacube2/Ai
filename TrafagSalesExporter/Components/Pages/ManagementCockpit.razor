@@ -43,6 +43,11 @@
                 }
             </MudSelect>
         </MudItem>
+        <MudItem xs="12" md="3" Class="d-flex align-center">
+            <MudSwitch T="bool" Value="_useGroupCurrency" ValueChanged="OnGroupCurrencyToggled"
+                       Color="Color.Primary"
+                       Label="@T("Group-Waehrung (CHF)", "Group currency (CHF)")" />
+        </MudItem>
         <MudItem xs="12" md="3">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AnalyzeFinanceSummary"
                        StartIcon="@Icons.Material.Filled.FactCheck" Disabled="_analyzingFinance" FullWidth>
@@ -50,6 +55,13 @@
             </MudButton>
         </MudItem>
     </MudGrid>
+    @if (_useGroupCurrency)
+    {
+        <MudText Typo="Typo.caption" Class="mt-2">
+            @T("Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.",
+               "Values converted to CHF using the yearly rate. The local currency stays the leading view.")
+        </MudText>
+    }
 </MudPaper>
 
 @if (_financeResult is not null)
@@ -1497,6 +1509,7 @@
     private int _selectedFinanceYear;
     private string? _selectedFinanceCountryKey;
     private string? _selectedFinanceCurrency;
+    private bool _useGroupCurrency;
     private int _selectedCentralYear;
     private int? _selectedCentralMonth;
     private string? _centralLandFilter;
@@ -1672,7 +1685,8 @@
             _financeResult = await CockpitPageService.AnalyzeFinanceSummaryAsync(
                 _selectedFinanceYear,
                 _selectedFinanceCountryKey,
-                _selectedFinanceCurrency);
+                _selectedFinanceCurrency,
+                _useGroupCurrency);
 
             _financeYearOptions = _financeResult.YearOptions;
             _financeCountryOptions = _financeResult.CountryOptions;
@@ -1689,6 +1703,12 @@
         {
             _analyzingFinance = false;
         }
+    }
+
+    private async Task OnGroupCurrencyToggled(bool value)
+    {
+        _useGroupCurrency = value;
+        await AnalyzeFinanceSummary();
     }
 
     private void ClearCentralScope()

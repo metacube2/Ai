@@ -329,7 +329,7 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
-    public async Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency)
+    public async Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency, bool useGroupCurrency = false)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
@@ -436,8 +436,72 @@ public class ManagementCockpitService : IManagementCockpitService
                     .FirstOrDefault(reference => reference.Value.HasValue),
                 StringComparer.OrdinalIgnoreCase);
 
+        // Optional group-currency (CHF) view: leading view stays local; this only converts
+        // the displayed values to CHF using the yearly rate so cross-country totals add up.
+        if (useGroupCurrency)
+        {
+            const string groupCurrency = "CHF";
+            var rateDate = new DateTime(year, 12, 31);
+            var rateCache = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+            decimal? RateToChf(string? fromCurrency)
+            {
+                var code = string.IsNullOrWhiteSpace(fromCurrency) ? groupCurrency : fromCurrency.Trim();
+                if (!rateCache.TryGetValue(code, out var rate))
+                {
+                    rate = _exchangeRateService.ResolveRate(code, groupCurrency, rateDate);
+                    rateCache[code] = rate;
+                }
+                return rate;
+            }
+
+            // Capture each country's local currency before converting (needed for references).
+            var localCurrencyByKey = allRows
+                .GroupBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(row => row.Currency).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? groupCurrency,
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in allRows)
+            {
+                var valueRate = RateToChf(row.Currency);
+                if (valueRate.HasValue)
+                {
+                    row.Value *= valueRate.Value;
+                    row.RawSalesValue *= valueRate.Value;
+                    row.Currency = groupCurrency;
+                }
+
+                if (!string.IsNullOrWhiteSpace(row.StandardCostCurrency))
+                {
+                    var costRate = RateToChf(row.StandardCostCurrency);
+                    if (costRate.HasValue)
+                    {
+                        row.StandardCost *= costRate.Value;
+                        row.StandardCostCurrency = groupCurrency;
+                    }
+                }
+            }
+
+            referenceByKey = referenceByKey.ToDictionary(
+                entry => entry.Key,
+                entry =>
+                {
+                    var reference = entry.Value;
+                    if (reference?.Value is null)
+                        return reference;
+                    localCurrencyByKey.TryGetValue(entry.Key, out var localCurrency);
+                    var rate = RateToChf(localCurrency);
+                    return rate.HasValue
+                        ? reference with { Value = reference.Value.Value * rate.Value }
+                        : reference;
+                },
+                StringComparer.OrdinalIgnoreCase);
+        }
+
         var countryFilter = NormalizeOptionalFilter(countryKey);
-        var currencyFilter = NormalizeOptionalFilter(currency);
+        // When viewing in group currency everything is CHF, so a stale local-currency filter would empty the view.
+        var currencyFilter = useGroupCurrency ? null : NormalizeOptionalFilter(currency);
         var scopedRows = allRows
             .Where(row => row.Year == year)
             .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
@@ -481,13 +545,17 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             "Diese Sicht verwendet dieselbe FinanceRuleEngine wie das zentrale Excel-Blatt Finance Summary.",
             "Jahr, Land und Waehrung werden auf das Endergebnis angewendet.",
-            "Finance-Jahr basiert auf PostingDate, danach InvoiceDate, danach ExtractionDate; DE-Regeln koennen das Jahr erzwingen.",
+            "Finance-Jahr basiert auf PostingDate, danach InvoiceDate, danach ExtractionDate (DE: Fakturierungsdatum).",
             "Include/Exclude, Gutschriften-Negierung und IT-Deduplizierung folgen den gepflegten Finance Regeln.",
             "Intercompany / 2nd-party wird als Diagnosebetrag ausgewiesen; der Standard-Ist bleibt inklusive dieser Positionen."
         };
         if (scopedRows.Count == 0)
         {
             notices.Insert(0, "Fuer die gewaehlten Finance-Filter gibt es keine Datensaetze im aktuellen Zentraldatenbestand.");
+        }
+        if (useGroupCurrency)
+        {
+            notices.Insert(0, "Group-Currency-Ansicht: Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.");
         }
 
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings.UseAuditCsvAsCentralSource);

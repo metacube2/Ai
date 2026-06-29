@@ -351,6 +351,27 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_GroupCurrency_ConvertsValuesToChf()
+    {
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-CH", "CHF", 100m, new DateTime(2025, 6, 1)),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE", "EUR", 200m, new DateTime(2025, 6, 1)));
+
+        var local = await _service.AnalyzeFinanceSummaryAsync(2025, null, null, useGroupCurrency: false);
+        var group = await _service.AnalyzeFinanceSummaryAsync(2025, null, null, useGroupCurrency: true);
+
+        // Local view keeps both currencies.
+        Assert.Contains(local.Rows, row => row.Currency == "EUR");
+        Assert.Contains(local.Rows, row => row.Currency == "CHF");
+
+        // Group view converts everything to CHF: 100 CHF + 200 EUR * 0.95 = 290 CHF.
+        Assert.Equal("CHF", group.DisplayCurrency);
+        Assert.All(group.Rows, row => Assert.Equal("CHF", row.Currency));
+        Assert.Equal(290m, group.NetSalesActual);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
