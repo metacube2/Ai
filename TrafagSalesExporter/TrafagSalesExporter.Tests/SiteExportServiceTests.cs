@@ -174,6 +174,9 @@ public sealed class SiteExportServiceTests : IDisposable
 
         public string CreateGenericExcelFile(string outputDirectory, string filePrefix, DateTime fileDate, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
             => throw new NotSupportedException();
+
+        public byte[] CreateWorkbookBytes(IReadOnlyList<ExcelSheetData> sheets)
+            => throw new NotSupportedException();
     }
 
     private sealed class RecordingSharePointUploadService : ISharePointUploadService

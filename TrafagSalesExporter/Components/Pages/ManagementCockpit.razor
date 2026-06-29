@@ -1,11 +1,13 @@
 @page "/management-cockpit"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using System.Globalization
+@using System.Reflection
 @using Microsoft.AspNetCore.Components
 @using Microsoft.JSInterop
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject IManagementCockpitPageService CockpitPageService
+@inject IExcelExportService ExcelExport
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 @inject IJSRuntime JsRuntime
@@ -102,6 +104,11 @@
                                StartIcon="@Icons.Material.Filled.ViewInAr"
                                Href="management-cockpit?section=3d">
                         @T("3D Datenanalyse", "3D data analysis")
+                    </MudButton>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportSchnelluebersicht">
+                        @T("Export to Excel", "Export to Excel")
                     </MudButton>
                 </MudStack>
             </MudPaper>
@@ -274,6 +281,10 @@
         <MudTabPanel Text="@T("Experten", "Experts")" Icon="@Icons.Material.Filled.Tune">
     <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeFinanceTabIndex">
         <MudTabPanel Text="@T("Finance Summary", "Finance summary")" Icon="@Icons.Material.Filled.Dashboard">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinanceSummary">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -366,6 +377,10 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Laender", "Countries")" Icon="@Icons.Material.Filled.Public">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportLaender">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Finance-Status nach Land", "Finance status by country")</MudText>
                 <MudTable Items="_financeResult.CountryRows" Dense Hover Striped>
@@ -402,6 +417,10 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenstatus">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Datenbestand nach Standort", "Data inventory by site")</MudText>
                 <MudTable Items="_financeResult.DataStatusRows" Dense Hover Striped>
@@ -434,6 +453,10 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Abweichungen", "Deviations")" Icon="@Icons.Material.Filled.WarningAmber">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportAbweichungen">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Soll/Ist-Abweichungen", "Actual/reference deviations")</MudText>
                 <MudTable Items="_financeResult.DeviationRows" Dense Hover Striped>
@@ -462,6 +485,10 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Gutschriften", "Credit notes")" Icon="@Icons.Material.Filled.AssignmentReturn">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGutschriften">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Gutschriften-Kandidaten", "Credit-note candidates")</MudText>
                 <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
@@ -494,6 +521,10 @@
             </MudPaper>
         </MudTabPanel>
         <MudTabPanel Text="@T("Datenqualitaet", "Data quality")" Icon="@Icons.Material.Filled.Rule">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenqualitaet">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Pruefpunkte", "Checkpoints")</MudText>
                 <MudTable Items="_financeResult.DataQualityRows" Dense Hover Striped>
@@ -516,6 +547,10 @@
         <MudTabPanel Text="@T("Spartenanalyse", "Division analysis")" Icon="@Icons.Material.Filled.AccountTree">
             <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeDivisionTabIndex">
                 <MudTabPanel Text="@T("Finanzanalyse", "Finance analysis")" Icon="@Icons.Material.Filled.PieChart">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinanzanalyse">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -694,6 +729,10 @@
             </MudPaper>
                 </MudTabPanel>
                 <MudTabPanel Text="@T("Zentrale Zuordnung", "Central mapping")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportZentraleZuordnung">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -817,6 +856,10 @@
             </MudTabs>
         </MudTabPanel>
         <MudTabPanel Text="@T("Gruppenmarge", "Group margin")" Icon="@Icons.Material.Filled.StackedLineChart">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGruppenmarge">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -1657,6 +1700,118 @@
     private void OnOverviewTabChanged(int index)
     {
         _activeOverviewTabIndex = index;
+    }
+
+    // --- Export to Excel (per tab) -------------------------------------------------
+    // Each handler builds one workbook (one sheet per table on the tab) and streams it
+    // to the browser via trafagDownload.saveBytes. Columns come from the row model
+    // properties via reflection, so they stay in sync with the displayed data.
+
+    private Task ExportSchnelluebersicht()
+        => DownloadExcel("Schnelluebersicht",
+        [
+            new ExcelSheetData(T("Finance-Freigabe je Land", "Finance approval by country"), BuildRows(_financeResult!.CountryRows)),
+            new ExcelSheetData(T("Datenstand je Standort", "Data status by site"), BuildRows(_financeResult!.DataStatusRows)),
+            new ExcelSheetData(T("Sparten-Abdeckung", "Division coverage"), BuildRows(_financeResult!.ProductFinanceCountryRows))
+        ]);
+
+    private Task ExportFinanceSummary()
+        => DownloadExcel("Finance_Summary",
+        [
+            new ExcelSheetData(T("Finance Summary", "Finance summary"), BuildRows(_financeResult!.Rows)),
+            new ExcelSheetData(T("Jahresvergleich", "Year comparison"), BuildRows(_financeResult!.YearRows))
+        ]);
+
+    private Task ExportLaender()
+        => DownloadExcel("Laender",
+        [
+            new ExcelSheetData(T("Laender", "Countries"), BuildRows(_financeResult!.CountryRows))
+        ]);
+
+    private Task ExportDatenstatus()
+        => DownloadExcel("Datenstatus",
+        [
+            new ExcelSheetData(T("Datenstatus", "Data status"), BuildRows(_financeResult!.DataStatusRows))
+        ]);
+
+    private Task ExportAbweichungen()
+        => DownloadExcel("Abweichungen",
+        [
+            new ExcelSheetData(T("Abweichungen", "Deviations"), BuildRows(_financeResult!.DeviationRows))
+        ]);
+
+    private Task ExportGutschriften()
+        => DownloadExcel("Gutschriften",
+        [
+            new ExcelSheetData(T("Gutschriften", "Credit notes"), BuildRows(_financeResult!.CreditCandidates))
+        ]);
+
+    private Task ExportDatenqualitaet()
+        => DownloadExcel("Datenqualitaet",
+        [
+            new ExcelSheetData(T("Datenqualitaet", "Data quality"), BuildRows(_financeResult!.DataQualityRows))
+        ]);
+
+    private Task ExportFinanzanalyse()
+        => DownloadExcel("Spartenanalyse",
+        [
+            new ExcelSheetData(T("Umsatz nach Sparte", "Sales by division"), BuildRows(_financeResult!.ProductDivisionFinanceRows)),
+            new ExcelSheetData(T("Abdeckung nach Land", "Coverage by country"), BuildRows(_financeResult!.ProductFinanceCountryRows))
+        ]);
+
+    private Task ExportZentraleZuordnung()
+        => DownloadExcel("Zentrale_Zuordnung",
+        [
+            new ExcelSheetData(T("Material je Land", "Materials by country"), BuildRows(_financeResult!.ProductAssignmentCountryRows)),
+            new ExcelSheetData(T("Material Pruefung", "Material check"), BuildRows(_financeResult!.ProductAssignmentRows))
+        ]);
+
+    private Task ExportGruppenmarge()
+        => DownloadExcel("Gruppenmarge",
+        [
+            new ExcelSheetData(T("Gruppenmarge Land", "Group margin country"), BuildRows(_financeResult!.GroupMarginCountryRows)),
+            new ExcelSheetData(T("Gruppenmarge Sparte", "Group margin division"), BuildRows(_financeResult!.GroupMarginDivisionRows)),
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
+        ]);
+
+    private async Task DownloadExcel(string fileLabel, IReadOnlyList<ExcelSheetData> sheets)
+    {
+        if (_financeResult is null)
+        {
+            Snackbar.Add(T("Bitte zuerst Finance Summary laden.", "Please load the finance summary first."), Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var bytes = ExcelExport.CreateWorkbookBytes(sheets);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"{fileLabel}_{_selectedFinanceYear}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", fileName, base64,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Excel-Export fehlgeschlagen: {0}", "Excel export failed: {0}"), ex.Message), Severity.Error);
+        }
+    }
+
+    private static IReadOnlyList<IReadOnlyDictionary<string, object?>> BuildRows<T>(IEnumerable<T> items)
+    {
+        var properties = typeof(T)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            .ToList();
+
+        return items
+            .Select(item =>
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (var property in properties)
+                    dict[property.Name] = property.GetValue(item);
+                return (IReadOnlyDictionary<string, object?>)dict;
+            })
+            .ToList();
     }
 
     private void ToggleProductFinanceTop10()

@@ -25,6 +25,7 @@ Stand: 2026-06-29
 - Gruppenmarge zeigt `Umsatz` und `Bekannte Kostenbasis`; `Marge` und `%` werden `-`, wenn die Kostenbasis offen ist (`Standardpreis fehlt` oder `Lieferant unklar`).
 - Aktueller Gruppenmargen-Datenbefund: AT/TRAT und CH/TRCH haben in den geprueften 2025-Zentraldaten `StandardCost=0` und leere Supplier-Felder. Keine 100%-Marge interpretieren; Status bleibt offen.
 - `Management Analyse` hat zusaetzliche Finance-Reiter fuer Laender, Datenstatus, Abweichungen, Gutschriften-Kandidaten und Datenqualitaet.
+- Andreas-Wunsch 2026-06-29 umgesetzt: Jeder Datenreiter im Management-Cockpit hat einen `Export to Excel`-Button (Schnelluebersicht, Finance Summary, Laender, Datenstatus, Abweichungen, Gutschriften, Datenqualitaet, Spartenanalyse/Finanzanalyse, Zentrale Zuordnung, Gruppenmarge). Der Button baut die sichtbaren Tabellen des Reiters als mehrblaettrige `.xlsx` in-memory und laedt sie direkt im Browser herunter (kein Server-Schreiben). Technik: `IExcelExportService.CreateWorkbookBytes(IReadOnlyList<ExcelSheetData>)` + JS `trafagDownload.saveBytes` (Base64-Blob). Spalten kommen per Reflection aus den Zeilenmodellen, Zahlen/Datum bleiben typisiert (summier-/sortierbar). `120/120` Tests gruen.
 - `Management Analyse` ist links aufklappbar; direkte Navigationspunkte springen in die einzelnen Reiter.
 - Neu: `Spartenanalyse` mit Unterreitern `Finanzanalyse` und `Zentrale Zuordnung`.
 - Sparten-Finanzanalyse nutzt die TR-AG-/SAP-Referenz, nicht lokale ERP-Sparten anderer Laender.

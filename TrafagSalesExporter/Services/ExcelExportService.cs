@@ -58,6 +58,25 @@ public class ExcelExportService : IExcelExportService
         return fullPath;
     }
 
+    public byte[] CreateWorkbookBytes(IReadOnlyList<ExcelSheetData> sheets)
+    {
+        using var workbook = new XLWorkbook();
+        var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (sheets.Count == 0)
+        {
+            AddDataWorksheet(workbook, "Export", [], usedNames);
+        }
+        else
+        {
+            foreach (var sheet in sheets)
+                AddDataWorksheet(workbook, sheet.SheetName, sheet.Rows, usedNames);
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
     private static void WriteWorkbook(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
@@ -1233,8 +1252,20 @@ public class ExcelExportService : IExcelExportService
     private static void WriteGenericWorkbook(string fullPath, string worksheetName, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows)
     {
         using var workbook = new XLWorkbook();
-        var sheetName = string.IsNullOrWhiteSpace(worksheetName) ? "Export" : worksheetName.Trim();
-        var ws = workbook.Worksheets.Add(sheetName.Length > 31 ? sheetName[..31] : sheetName);
+        AddDataWorksheet(workbook, worksheetName, rows, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        workbook.SaveAs(fullPath);
+    }
+
+    // Adds one worksheet built from generic key/value rows. Numbers, dates and bools are
+    // written as typed cells (so Finance can sum/sort), everything else as text. Sheet names
+    // are truncated to Excel's 31-char limit and de-duplicated.
+    private static void AddDataWorksheet(
+        XLWorkbook workbook,
+        string worksheetName,
+        IReadOnlyList<IReadOnlyDictionary<string, object?>> rows,
+        HashSet<string> usedNames)
+    {
+        var ws = workbook.Worksheets.Add(BuildUniqueSheetName(worksheetName, usedNames));
 
         var headers = rows
             .SelectMany(r => r.Keys)
@@ -1253,11 +1284,47 @@ public class ExcelExportService : IExcelExportService
             for (var colIndex = 0; colIndex < headers.Count; colIndex++)
             {
                 row.TryGetValue(headers[colIndex], out var value);
-                ws.Cell(rowIndex + 2, colIndex + 1).Value = value?.ToString() ?? string.Empty;
+                var cell = ws.Cell(rowIndex + 2, colIndex + 1);
+                switch (value)
+                {
+                    case null:
+                        break;
+                    case decimal d: cell.Value = d; break;
+                    case double db: cell.Value = db; break;
+                    case float f: cell.Value = f; break;
+                    case int i: cell.Value = i; break;
+                    case long l: cell.Value = l; break;
+                    case bool b: cell.Value = b; break;
+                    case DateTime dt: cell.Value = dt; break;
+                    default: cell.Value = value.ToString(); break;
+                }
             }
         }
 
-        ws.Columns().AdjustToContents();
-        workbook.SaveAs(fullPath);
+        if (headers.Count > 0)
+            ws.Columns().AdjustToContents();
+    }
+
+    private static string BuildUniqueSheetName(string worksheetName, HashSet<string> usedNames)
+    {
+        var baseName = string.IsNullOrWhiteSpace(worksheetName) ? "Export" : worksheetName.Trim();
+        // Excel forbids these characters in sheet names and caps length at 31.
+        foreach (var invalid in new[] { '\\', '/', '*', '[', ']', ':', '?' })
+            baseName = baseName.Replace(invalid, ' ');
+        if (baseName.Length > 31)
+            baseName = baseName[..31];
+
+        var candidate = baseName;
+        var suffix = 2;
+        while (!usedNames.Add(candidate))
+        {
+            var tail = $" {suffix}";
+            candidate = baseName.Length + tail.Length > 31
+                ? baseName[..(31 - tail.Length)] + tail
+                : baseName + tail;
+            suffix++;
+        }
+
+        return candidate;
     }
 }
