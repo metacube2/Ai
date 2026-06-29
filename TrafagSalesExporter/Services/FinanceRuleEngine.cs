@@ -93,15 +93,8 @@ public sealed class FinanceRuleEngine
     public static IReadOnlyList<FinanceRule> CreateDefaultRules()
         =>
         [
-            new FinanceRule
-            {
-                ScopeKey = "DE",
-                Year = 2025,
-                RuleType = FinanceRuleTypes.ForceYear,
-                MatchType = FinanceRuleMatchTypes.Always,
-                Notes = "DE Alphaplan Jahresfile 2025",
-                SortOrder = 100
-            },
+            // DE finance year follows the invoice date (Fakturierungsdatum); no forced year.
+            // (Removed the former "DE Alphaplan Jahresfile 2025" ForceYear rule on 2026-06-29.)
             new FinanceRule
             {
                 ScopeKey = "DE",

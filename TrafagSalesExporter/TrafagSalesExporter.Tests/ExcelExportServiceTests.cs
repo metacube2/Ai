@@ -179,6 +179,8 @@ public class ExcelExportServiceTests
         => new()
         {
             ExtractionDate = new DateTime(2026, 5, 20),
+            // DE finance year now follows the invoice date (Fakturierungsdatum), not a forced year.
+            InvoiceDate = new DateTime(2025, 6, 1),
             Tsc = "TRDE",
             Land = "Deutschland",
             InvoiceNumber = invoiceNumber,

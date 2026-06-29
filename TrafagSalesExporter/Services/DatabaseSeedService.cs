@@ -1519,6 +1519,20 @@ public class DatabaseSeedService : IDatabaseSeedService
             changed = true;
         }
 
+        // DE finance year now follows the invoice date (Fakturierungsdatum). Deactivate any
+        // previously seeded DE ForceYear rule so existing databases stop pinning DE to 2025.
+        // Kept (not deleted) so the change stays visible and reversible in the admin UI.
+        var deForceYearRules = db.FinanceRules
+            .Where(rule => rule.ScopeKey == "DE"
+                && rule.RuleType == FinanceRuleTypes.ForceYear
+                && rule.IsActive)
+            .ToList();
+        foreach (var rule in deForceYearRules)
+        {
+            rule.IsActive = false;
+            changed = true;
+        }
+
         if (changed)
             db.SaveChanges();
     }
