@@ -4,14 +4,15 @@ namespace TrafagSalesExporter.Services;
 /// Classifies a sales-line supplier as internal (intercompany), external (3rd party)
 /// or unclear for the group-margin (Gruppenmarge) calculation.
 ///
-/// Finance decision (Andreas, Gruppenmarge-Entscheidungsbogen 2026-06): exactly THREE
-/// Trafag entities count as internal — Trafag AG (CH), Trafag Italy and Trafag India.
-/// Every other supplier — including other Trafag/intercompany entities such as Magnetic
-/// Sense — is treated as 3rd party (external) for the cost basis.
+/// Finance decision (Andreas, 2026-06-29): a supplier counts as internal/intercompany
+/// whenever its name or number contains "TRAFAG" — "because we are Trafag", every Trafag
+/// company is an intercompany partner. Known short entity codes (TR-AG, TRCH, TRIT, TRIN)
+/// are also treated as internal so code-only supplier references are caught.
 ///
-/// Open follow-up (Gruppenmarge Q1, not yet decided): whether to drive this from SAP
-/// master data / a dedicated intercompany table (Entity + Partner number) instead of
-/// name/number matching. Until that is decided, this fixed whitelist is the agreed rule.
+/// Note: detecting a supplier as internal is separate from the COST BASIS. We only have
+/// real group standard costs for the entities that report them (TR AG via MBEW-STPRS,
+/// TR IN via SAP B1, TR IT); for internal suppliers without a group cost source the basis
+/// falls back like 3rd party. That group-cost sourcing is a separate feature (see Mappe1).
 /// </summary>
 public static class GroupMarginSupplierClassifier
 {
@@ -19,13 +20,11 @@ public static class GroupMarginSupplierClassifier
     public const string External = "Extern";
     public const string Unclear = "Unklar";
 
-    // Markers identifying the three internal Trafag entities. Kept specific on purpose:
-    // a bare "TRAFAG" match would wrongly classify every Trafag company as internal.
+    // "TRAFAG" is the leading marker (covers Trafag AG, Trafag Italy, Trafag India, Trafag
+    // GmbH, ...). The short codes catch supplier references that only use the entity code.
     private static readonly string[] InternalMarkers =
     {
-        "TRCH", "TR-AG", "TRAFAG AG",   // Trafag AG (Switzerland)
-        "TRIT", "TRAFAG ITAL",          // Trafag Italy (Italy / Italia)
-        "TRIN", "TRAFAG INDIA"          // Trafag India
+        "TRAFAG", "TR-AG", "TRCH", "TRIT", "TRIN"
     };
 
     public static string Resolve(string? supplierNumber, string? supplierName, string? supplierCountry)

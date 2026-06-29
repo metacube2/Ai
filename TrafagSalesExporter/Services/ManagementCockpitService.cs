@@ -496,7 +496,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
-        notices.Add("Gruppenmarge ist ein MVP: als intern gelten nur Trafag AG, Trafag Italy und Trafag India; alle anderen Lieferanten (inkl. weiterer Intercompany-Gesellschaften) werden als 3rd Party behandelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
+        notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
 
         return new ManagementFinanceSummaryResult
         {

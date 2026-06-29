@@ -13,7 +13,9 @@ public class GroupMarginSupplierClassifierTests
     [InlineData("TRIT", "")]
     [InlineData("Trafag India Private Limited", "IN")]
     [InlineData("TRIN", "")]
-    public void Resolve_ReturnsInternal_ForTheThreeTrafagEntities(string supplierName, string supplierCountry)
+    [InlineData("Trafag GmbH", "DE")]            // any Trafag company is intercompany
+    [InlineData("Trafag France", "FR")]
+    public void Resolve_ReturnsInternal_WhenNameOrCodeContainsTrafag(string supplierName, string supplierCountry)
     {
         var result = GroupMarginSupplierClassifier.Resolve(null, supplierName, supplierCountry);
 
@@ -21,15 +23,22 @@ public class GroupMarginSupplierClassifierTests
     }
 
     [Theory]
-    [InlineData("Trafag GmbH", "DE")]            // other Trafag entity -> 3rd party
-    [InlineData("Magnetic Sense GmbH", "DE")]    // intercompany but not one of the three
-    [InlineData("Bosch Sensortec", "DE")]        // genuine 3rd party
+    [InlineData("Magnetic Sense GmbH", "DE")]    // not a "Trafag" name -> 3rd party here
+    [InlineData("Bosch Sensortec", "DE")]
     [InlineData("External Supplier", "DE")]
-    public void Resolve_ReturnsExternal_ForEveryOtherSupplier(string supplierName, string supplierCountry)
+    public void Resolve_ReturnsExternal_ForNonTrafagSuppliers(string supplierName, string supplierCountry)
     {
         var result = GroupMarginSupplierClassifier.Resolve(null, supplierName, supplierCountry);
 
         Assert.Equal(GroupMarginSupplierClassifier.External, result);
+    }
+
+    [Fact]
+    public void Resolve_MatchesTrafagViaSupplierNumber()
+    {
+        var result = GroupMarginSupplierClassifier.Resolve("TRAFAG-IND-001", null, null);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
     }
 
     [Fact]
@@ -38,15 +47,5 @@ public class GroupMarginSupplierClassifierTests
         var result = GroupMarginSupplierClassifier.Resolve(null, "", "   ");
 
         Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
-    }
-
-    [Fact]
-    public void Resolve_DoesNotClassifyBareTrafagWithoutEntityMarker_AsInternal()
-    {
-        // A plain "Trafag" reference that does not match one of the three entity markers
-        // must be treated as 3rd party per the Gruppenmarge decision.
-        var result = GroupMarginSupplierClassifier.Resolve(null, "Trafag France", "FR");
-
-        Assert.Equal(GroupMarginSupplierClassifier.External, result);
     }
 }
