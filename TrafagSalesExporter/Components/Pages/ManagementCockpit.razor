@@ -1,0 +1,2945 @@
+@page "/management-cockpit"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using System.Globalization
+@using System.Reflection
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IManagementCockpitPageService CockpitPageService
+@inject IExcelExportService ExcelExport
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>@T("Management Analyse", "Management analysis")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Management Analyse", "Management analysis")</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="3">
+            <MudSelect T="int" @bind-Value="_selectedFinanceYear" Label="@T("Finance-Jahr", "Finance year")" Dense>
+                @foreach (var year in _financeYearOptions)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFinanceCountryKey" Label="@T("Land", "Country")" Dense Clearable>
+                @foreach (var option in _financeCountryOptions)
+                {
+                    <MudSelectItem Value="@option">@option</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFinanceCurrency" Label="@T("Waehrung", "Currency")" Dense Clearable>
+                @foreach (var option in _financeCurrencyOptions)
+                {
+                    <MudSelectItem Value="@option">@option</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3" Class="d-flex align-center">
+            <MudSwitch T="bool" Value="_useGroupCurrency" ValueChanged="OnGroupCurrencyToggled"
+                       Color="Color.Primary"
+                       Label="@T("Group-Waehrung (CHF)", "Group currency (CHF)")" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AnalyzeFinanceSummary"
+                       StartIcon="@Icons.Material.Filled.FactCheck" Disabled="_analyzingFinance" FullWidth>
+                @(_analyzingFinance ? T("Lade...", "Loading...") : T("Finance Summary laden", "Load finance summary"))
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+    @if (_useGroupCurrency)
+    {
+        <MudText Typo="Typo.caption" Class="mt-2">
+            @T("Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.",
+               "Values converted to CHF using the yearly rate. The local currency stays the leading view.")
+        </MudText>
+    }
+</MudPaper>
+
+@if (_financeResult is not null)
+{
+    <MudTabs Class="management-top-tabs" Elevation="1" Rounded="false" PanelClass="pt-4"
+             ActivePanelIndex="_activeOverviewTabIndex" ActivePanelIndexChanged="OnOverviewTabChanged">
+        <MudTabPanel Text="@T("Schnelluebersicht", "Quick overview")" Icon="@Icons.Material.Filled.Speed">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Net Sales Actual", "Net sales actual")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.NetSalesActual, _financeResult.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.body2">@($"{_financeResult.Filter.Year}")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Laender OK", "Countries OK")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "OK").ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Soll/Ist ohne Abweichung", "Actual/reference without deviation")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zu pruefen", "To check")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "Pruefen").ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Abweichung oder offene Regel", "Deviation or open rule")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Datenstandorte", "Data sites")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.DataStatusRows.Count(row => row.IsActive).ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("aktive Quellen", "active sources")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Rule"
+                               Href="management-cockpit?section=decisions">
+                        @T("Management Entscheidungen", "Management decisions")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.StackedLineChart"
+                               Href="management-cockpit?section=groupmargin">
+                        @T("Gruppenmarge", "Group margin")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.FactCheck"
+                               Href="management-cockpit?section=ledger">
+                        @T("Finance Pruefbuch", "Finance audit ledger")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.ViewInAr"
+                               Href="management-cockpit?section=3d">
+                        @T("3D Datenanalyse", "3D data analysis")
+                    </MudButton>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportSchnelluebersicht">
+                        @T("Export to Excel", "Export to Excel")
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
+                    <MudPaper Class="pa-4 mb-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Finance-Freigabe je Land", "Finance approval by country")</MudText>
+                        <MudTable Items="_financeResult.CountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Status", "Status")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Ist", "Actual")</MudTh>
+                                <MudTh>@T("Soll", "Reference")</MudTh>
+                                <MudTh>@T("Differenz", "Difference")</MudTh>
+                                <MudTh>@T("Datenstand", "Data status")</MudTh>
+                                <MudTh>@T("Hinweis", "Note")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Filled">@context.Status</MudChip></MudTd>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                                <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
+                                <MudTd>@FormatNullableValue(context.Difference, context.Currency)</MudTd>
+                                <MudTd>@BuildDataStatusText(context)</MudTd>
+                                <MudTd>@BuildQuickFinanceNote(context)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                    <MudPaper Class="pa-4 mb-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Letzter Datenstand je Standort", "Latest data status by site")</MudText>
+                        <MudTable Items="_financeResult.DataStatusRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Aktiv", "Active")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Quelle", "Source")</MudTh>
+                                <MudTh>@T("Zentrale Zeilen", "Central rows")</MudTh>
+                                <MudTh>@T("Datenstand", "Data freshness")</MudTh>
+                                <MudTh>@T("Status", "Status")</MudTh>
+                                <MudTh>@T("Manual Import", "Manual import")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <MudIcon Icon="@(context.IsActive ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                             Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" />
+                                </MudTd>
+                                <MudTd>@context.Land</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@context.SourceSystem</MudTd>
+                                <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                                <MudTd>
+                                    <MudTooltip Text="@BuildDataStatusTooltip(context)">
+                                        <div>@FormatDateTime(context.DataFreshnessAt)</div>
+                                        @if (!string.IsNullOrWhiteSpace(context.DataFreshnessSource))
+                                        {
+                                            <MudText Typo="Typo.caption">
+                                                @context.DataFreshnessSource@(context.IsCsvNewerThanDatabase ? $" · {T("CSV neuer als DB", "CSV newer than DB")}" : "")
+                                            </MudText>
+                                        }
+                                    </MudTooltip>
+                                </MudTd>
+                                <MudTd>@(string.IsNullOrWhiteSpace(context.LatestExportStatus) ? "-" : context.LatestExportStatus)</MudTd>
+                                <MudTd>@FormatManualImportStatus(context)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Sparten-Abdeckung nach Land", "Division coverage by country")</MudText>
+                        <MudTable Items="_financeResult.ProductFinanceCountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Gesamtumsatz", "Total sales")</MudTh>
+                                <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                                <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                                <MudTh>
+                                    <MudTooltip Text="@T("Zugeordnet + Übrige (beides gültige Sparten)", "Assigned + Misc (both valid divisions)")">
+                                        @T("Abdeckung", "Coverage")
+                                    </MudTooltip>
+                                </MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
+                                <MudTd>@FormatPercent(context.CoveredValuePercent)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Management Entscheidungen", "Management decisions")" Icon="@Icons.Material.Filled.Rule">
+            @if (_decisionResult is null || _decisionResult.Items.Count == 0)
+            {
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">@T("Keine offenen Management-Entscheidungen", "No open management decisions")</MudText>
+                    <MudText Typo="Typo.body2">@T("Die aktuellen Finance-, Einkaufs- und HR-Signale erzeugen keine priorisierten Entscheidungspunkte.", "The current finance, purchasing and HR signals do not create prioritized decision items.")</MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Offene Entscheidungen", "Open decisions")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Count.ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("aus Finance, Einkauf und HR", "from finance, purchasing and HR")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Hohe Prioritaet", "High priority")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Count(item => IsHighDecision(item.Severity)).ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("Managemententscheid noetig", "management decision needed")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Bereiche", "Areas")</MudText>
+                            <MudText Typo="Typo.h5">@_decisionResult.Items.Select(item => item.Area).Distinct(StringComparer.OrdinalIgnoreCase).Count().ToString("N0")</MudText>
+                            <MudText Typo="Typo.body2">@T("betroffene Funktionen", "affected functions")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudText Typo="Typo.caption">@T("Stand", "As of")</MudText>
+                            <MudText Typo="Typo.h6">@FormatDateTime(_decisionResult.CreatedAt)</MudText>
+                            <MudText Typo="Typo.body2">@T("aggregiert, ohne HR-Personendaten", "aggregated, no HR personal data")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <MudPaper Class="pa-4 mb-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">@T("Entscheidungsradar", "Decision radar")</MudText>
+                    <MudTable Items="_decisionResult.Items" Dense Hover Striped>
+                        <HeaderContent>
+                            <MudTh>@T("Prioritaet", "Priority")</MudTh>
+                            <MudTh>@T("Bereich", "Area")</MudTh>
+                            <MudTh>@T("Thema", "Topic")</MudTh>
+                            <MudTh>@T("Kennzahl", "Metric")</MudTh>
+                            <MudTh>@T("Auswirkung", "Impact")</MudTh>
+                            <MudTh>@T("Empfehlung", "Recommendation")</MudTh>
+                            <MudTh>@T("Entscheidung", "Decision")</MudTh>
+                            <MudTh>@T("Owner", "Owner")</MudTh>
+                            <MudTh>@T("Aktion", "Action")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@DecisionSeverityColor(context.Severity)" Variant="Variant.Filled">
+                                    @($"{context.Severity} / {context.Score}")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.Area</MudTd>
+                            <MudTd>
+                                <MudText Typo="Typo.body2">@context.Topic</MudText>
+                                <MudText Typo="Typo.caption">@context.Source</MudText>
+                            </MudTd>
+                            <MudTd>@context.Metric</MudTd>
+                            <MudTd>@context.Impact</MudTd>
+                            <MudTd>@context.Recommendation</MudTd>
+                            <MudTd>@context.Decision</MudTd>
+                            <MudTd>@context.Owner</MudTd>
+                            <MudTd>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                           Href="@context.Link" StartIcon="@Icons.Material.Filled.OpenInNew">
+                                    @T("Details", "Details")
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Experten", "Experts")" Icon="@Icons.Material.Filled.Tune">
+    <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeFinanceTabIndex">
+        <MudTabPanel Text="@T("Finance Summary", "Finance summary")" Icon="@Icons.Material.Filled.Dashboard">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinanceSummary">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Net Sales Actual", "Net sales actual")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.NetSalesActual, _financeResult.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.body2">@T("gefiltertes Endergebnis", "filtered final result")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Enthaltene Zeilen", "Included rows")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.IncludedRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance Include = TRUE", "Finance Include = TRUE")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Ausgeschlossen", "Excluded")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.ExcludedRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance-Regeln", "Finance rules")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Laender / Waehrungen", "Countries / currencies")</MudText>
+                        <MudText Typo="Typo.h5">@($"{_financeResult.CountryCount:N0} / {_financeResult.CurrencyCount:N0}")</MudText>
+                        <MudText Typo="Typo.body2">@($"{_financeResult.Filter.Year}")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" md="8">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Summen wie im Excel-Blatt Finance Summary", "Totals matching the Finance Summary Excel sheet")</MudText>
+                        <MudTable Items="_financeResult.Rows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Jahr", "Year")</MudTh>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Waehrung", "Currency")</MudTh>
+                                <MudTh>@T("Net Sales Actual", "Net sales actual")</MudTh>
+                                <MudTh>@T("Enthalten", "Included")</MudTh>
+                                <MudTh>@T("Ausgeschlossen", "Excluded")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Year</MudTd>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@context.Currency</MudTd>
+                                <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                                <MudTd>@context.IncludedRows.ToString("N0")</MudTd>
+                                <MudTd>@context.ExcludedRows.ToString("N0")</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">
+                                    @T("Keine Finance-Summary-Daten fuer diese Filter.", "No finance summary data for these filters.")
+                                </MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
+                        @foreach (var notice in _financeResult.Notices)
+                        {
+                            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-2">@notice</MudAlert>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahresvergleich mit aktuellem Filter", "Year comparison with current filter")</MudText>
+                <MudTable Items="_financeResult.YearRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Jahr", "Year")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Net Sales Actual", "Net sales actual")</MudTh>
+                        <MudTh>@T("Enthalten", "Included")</MudTh>
+                        <MudTh>@T("Ausgeschlossen", "Excluded")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@context.IncludedRows.ToString("N0")</MudTd>
+                        <MudTd>@context.ExcludedRows.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Finance Pivot", "Finance pivot")" Icon="@Icons.Material.Filled.TableChart">
+            <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePivot">
+                    @T("Export to Excel", "Export to Excel")
+                </MudButton>
+                <MudSelect T="int" @bind-Value="_financePivotMonth" Label="@T("MTD Monat", "MTD month")" Dense Style="width:160px;">
+                    @foreach (var month in _financeResult.FinancePivot.MonthOptions)
+                    {
+                        <MudSelectItem Value="@month">@month</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudText Typo="Typo.caption">
+                    @T("Nachgebaut nach Andreas' Excel-Blatt piv: Net Sales in CHF nach Jahr/Monat/TSC und Tagesvergleich fuer den gewaehlten Monat.",
+                        "Rebuilt from Andreas' Excel sheet piv: net sales in CHF by year/month/TSC and daily comparison for the selected month.")
+                </MudText>
+            </MudStack>
+
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("YTD Umsatz", "YTD sales")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.FinancePivot.YtdSalesChf, "CHF")</MudText>
+                        <MudText Typo="Typo.body2">@_selectedFinanceYear</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("MTD Umsatz", "MTD sales")</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(CalculateFinancePivotMtd(), "CHF")</MudText>
+                        <MudText Typo="Typo.body2">@($"{_selectedFinanceYear} / {_financePivotMonth}")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">TSC</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.FinancePivot.TscColumns.Count.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Pivot-Spalten", "Pivot columns")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zeilenbasis", "Row basis")</MudText>
+                        <MudText Typo="Typo.h5">@_financeResult.FinancePivot.RowCount.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance Include in CHF", "Finance Include in CHF")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1" Style="overflow-x:auto;">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Monate nach TSC", "Months by TSC")</MudText>
+                <MudTable Items="_financeResult.FinancePivot.MonthlyRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>YYYY</MudTh>
+                        <MudTh>MM</MudTh>
+                        @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
+                        {
+                            <MudTh>@tsc</MudTh>
+                        }
+                        <MudTh>@T("Gesamtergebnis", "Grand total")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatFinancePivotYearCell(context)</MudTd>
+                        <MudTd>@(context.Month?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)</MudTd>
+                        @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
+                        {
+                            <MudTd>@FormatNullableValue(GetFinancePivotValue(context, tsc), "CHF")</MudTd>
+                        }
+                        <MudTd>@FormatValue(context.Total, "CHF")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1" Style="overflow-x:auto;">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Tage im gewaehlten Monat", "Days in selected month")</MudText>
+                <MudTable Items="BuildFinancePivotDailyRows()" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>MM</MudTh>
+                        <MudTh>D</MudTh>
+                        @foreach (var year in _financeResult.FinancePivot.DailyYearColumns)
+                        {
+                            <MudTh>@year</MudTh>
+                        }
+                        <MudTh>@T("Gesamtergebnis", "Grand total")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Month</MudTd>
+                        <MudTd>@context.Day</MudTd>
+                        @foreach (var year in _financeResult.FinancePivot.DailyYearColumns)
+                        {
+                            <MudTd>@FormatNullableValue(GetFinancePivotValue(context, year), "CHF")</MudTd>
+                        }
+                        <MudTd>@FormatValue(context.Total, "CHF")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Tagesdaten fuer den gewaehlten Monat.", "No daily data for the selected month.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Laender", "Countries")" Icon="@Icons.Material.Filled.Public">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportLaender">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Finance-Status nach Land", "Finance status by country")</MudText>
+                <MudTable Items="_financeResult.CountryRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Quelle", "Source")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Ist", "Actual")</MudTh>
+                        <MudTh>@T("IC/2nd-party", "IC/2nd-party")</MudTh>
+                        <MudTh>@T("Ist ohne IC", "Actual excl. IC")</MudTh>
+                        <MudTh>@T("Soll", "Reference")</MudTh>
+                        <MudTh>@T("Differenz", "Difference")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tscs</MudTd>
+                        <MudTd>@context.SourceSystems</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.IntercompanyValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActualExcludingIntercompany, context.Currency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.Difference, context.Currency)</MudTd>
+                        <MudTd>@context.IncludedRows.ToString("N0") / @context.ExcludedRows.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Laenderdaten fuer diese Filter.", "No country data for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Datenstatus", "Data status")" Icon="@Icons.Material.Filled.FactCheck">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenstatus">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Datenbestand nach Standort", "Data inventory by site")</MudText>
+                <MudTable Items="_financeResult.DataStatusRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Aktiv", "Active")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Quelle", "Source")</MudTh>
+                        <MudTh>@T("Zentrale Zeilen", "Central rows")</MudTh>
+                        <MudTh>@T("Letzter Export", "Latest export")</MudTh>
+                        <MudTh>@T("Exportstatus", "Export status")</MudTh>
+                        <MudTh>@T("Letzte Speicherung", "Latest stored")</MudTh>
+                        <MudTh>@T("Manual Import", "Manual import")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudIcon Icon="@(context.IsActive ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                     Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" />
+                        </MudTd>
+                        <MudTd>@context.Land</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.SourceSystem</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatDateTime(context.LatestExportAt)</MudTd>
+                        <MudTd>@(string.IsNullOrWhiteSpace(context.LatestExportStatus) ? "-" : context.LatestExportStatus)</MudTd>
+                        <MudTd>@FormatDateTime(context.LatestStoredAtUtc)</MudTd>
+                        <MudTd>@FormatManualImportStatus(context)</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Abweichungen", "Deviations")" Icon="@Icons.Material.Filled.WarningAmber">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportAbweichungen">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Soll/Ist-Abweichungen", "Actual/reference deviations")</MudText>
+                <MudTable Items="_financeResult.DeviationRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@T("Ist", "Actual")</MudTh>
+                        <MudTh>@T("Soll", "Reference")</MudTh>
+                        <MudTh>@T("Differenz", "Difference")</MudTh>
+                        <MudTh>%</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.ReferenceValue, context.Currency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.Difference, context.Currency)</MudTd>
+                        <MudTd>@FormatPercent(context.DifferencePercent)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Sollwerte oder keine Abweichungen fuer diese Filter.", "No reference values or deviations for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Gutschriften", "Credit notes")" Icon="@Icons.Material.Filled.AssignmentReturn">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGutschriften">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Gutschriften-Kandidaten", "Credit-note candidates")</MudText>
+                <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+                    @T("Diese Sicht zeigt technische Kandidaten anhand negativer Werte und erkennbarer Belegtypen/-nummern. Sie ersetzt keine landesspezifische Fachfreigabe.",
+                        "This view shows technical candidates based on negative values and recognizable document types/numbers. It does not replace country-specific business approval.")
+                </MudAlert>
+                <MudTable Items="_financeResult.CreditCandidates" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Rechnung", "Invoice")</MudTh>
+                        <MudTh>@T("Typ", "Type")</MudTh>
+                        <MudTh>@T("Wert", "Value")</MudTh>
+                        <MudTh>@T("Menge", "Quantity")</MudTh>
+                        <MudTh>@T("Grund", "Reason")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.InvoiceNumber</MudTd>
+                        <MudTd>@context.DocumentType</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@context.Quantity.ToString("N2")</MudTd>
+                        <MudTd>@context.Reason</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Gutschriften-Kandidaten fuer diese Filter.", "No credit-note candidates for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Datenqualitaet", "Data quality")" Icon="@Icons.Material.Filled.Rule">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenqualitaet">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Pruefpunkte", "Checkpoints")</MudText>
+                <MudTable Items="_financeResult.DataQualityRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Pruefpunkt", "Checkpoint")</MudTh>
+                        <MudTh>@T("Anzahl", "Count")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@SeverityColor(context.Severity)" Variant="Variant.Outlined">@context.Severity</MudChip></MudTd>
+                        <MudTd>@context.Issue</MudTd>
+                        <MudTd>@context.Count.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Datenqualitaetsauffaelligkeiten fuer diese Filter.", "No data-quality findings for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Finance Pruefbuch", "Finance audit ledger")" Icon="@Icons.Material.Filled.FactCheck">
+            <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePruefbuch">
+                    @T("Export to Excel", "Export to Excel")
+                </MudButton>
+                <MudText Typo="Typo.caption">
+                    @T("Zeilenbasierte Excel-Sicht: Originalwaehrung, CHF-Kurs, CHF-Betrag, Lieferant, Standardkosten und Gruppenmargen-Pruefstatus.",
+                        "Row-level Excel view: original currency, CHF rate, CHF amount, supplier, standard costs and group-margin check status.")
+                </MudText>
+            </MudStack>
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+                @T("Diese Sicht ist bewusst keine Zusammenfassung. Sie zeigt die pruefbaren Detailzeilen fuer Finance; der Excel-Export enthaelt dieselben Spalten fuer die Nachrechnung.",
+                    "This view is deliberately not a summary. It shows the verifiable detail rows for Finance; the Excel export contains the same columns for recalculation.")
+            </MudAlert>
+            <MudPaper Class="pa-4" Elevation="1" Style="overflow-x:auto;">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Originalwaehrung, CHF-Umrechnung und Kostenbasis", "Original currency, CHF conversion and cost basis")</MudText>
+                <MudTable Items="BuildFinanceAuditLedgerRows()" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Status)">@T("Status", "Status")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditStatusFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CountryKey)">@T("Land", "Country")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCountryFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Tsc)">TSC</MudTableSortLabel><MudTextField @bind-Value="_financeAuditTscFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Year)">@T("Jahr", "Year")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditYearFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.InvoiceNumber)">@T("Rechnung", "Invoice")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditInvoiceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.PositionOnInvoice)">@T("Pos.", "Line")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditPositionFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CustomerName)">@T("Kunde", "Customer")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCustomerFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Material)">@T("Material", "Material")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditMaterialFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.OriginalAmount)">@T("Originalbetrag", "Original amount")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditOriginalAmountFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.OriginalCurrency)">@T("Originalwaehrung", "Original currency")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditOriginalCurrencyFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.ChfRate ?? 0m)">@T("Kurs nach CHF", "Rate to CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditChfRateFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.ChfAmount ?? 0m)">@T("Betrag CHF", "Amount CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditChfAmountFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.RateSource)">@T("Kursquelle", "Rate source")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditRateSourceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.SupplierName)">@T("Lieferant", "Supplier")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditSupplierFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.SupplierType)">@T("Typ", "Type")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditSupplierTypeFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.StandardCost)">@T("Standardkosten", "Standard cost")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditStandardCostFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CostBasisChf ?? 0m)">@T("Kostenbasis CHF", "Cost basis CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCostBasisFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.MarginChf ?? 0m)">@T("Marge CHF", "Margin CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditMarginFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.DataSource)">@T("Quelle", "Source")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditDataSourceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@GroupMarginStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.InvoiceNumber</MudTd>
+                        <MudTd>@context.PositionOnInvoice</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.CustomerName</MudText>
+                            <MudText Typo="Typo.caption">@context.CustomerNumber</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.Material</MudText>
+                            <MudText Typo="Typo.caption">@context.ArticleName</MudText>
+                        </MudTd>
+                        <MudTd>@FormatValue(context.OriginalAmount, context.OriginalCurrency)</MudTd>
+                        <MudTd>@context.OriginalCurrency</MudTd>
+                        <MudTd>@FormatNullableDecimal(context.ChfRate)</MudTd>
+                        <MudTd>@FormatNullableValue(context.ChfAmount, "CHF")</MudTd>
+                        <MudTd>@($"{context.RateSource} {context.RateYear}")</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@BuildFinanceAuditSupplierLabel(context)</MudText>
+                            <MudText Typo="Typo.caption">@context.SupplierCountry</MudText>
+                        </MudTd>
+                        <MudTd>@context.SupplierType</MudTd>
+                        <MudTd>@FormatValue(context.StandardCost, context.StandardCostCurrency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.CostBasisChf, "CHF")</MudTd>
+                        <MudTd>@FormatNullableValue(context.MarginChf, "CHF")</MudTd>
+                        <MudTd>@context.DataSource</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Pruefbuch-Zeilen fuer diese Filter.", "No audit-ledger rows for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Spartenanalyse", "Division analysis")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudTabs Class="management-side-nav-tabs" Elevation="0" Rounded="false" PanelClass="pt-0" @bind-ActivePanelIndex="_activeDivisionTabIndex">
+                <MudTabPanel Text="@T("Finanzanalyse", "Finance analysis")" Icon="@Icons.Material.Filled.PieChart">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinanzanalyse">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Gesamtumsatz", "Total sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.TotalValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zugeordneter Umsatz", "Assigned sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.AssignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.AssignedValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Übrige", "Miscellaneous")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.MiscValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.MiscValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht zugeordnet", "Unassigned")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.UnassignedValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.UnassignedValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht im Stamm", "Not in master")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.ProductFinanceSummary.MissingReferenceValue, _financeResult.ProductFinanceSummary.DisplayCurrency)</MudText>
+                        <MudText Typo="Typo.caption">@FormatPercent(_financeResult.ProductFinanceSummary.MissingReferenceValuePercent)</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            @if (IsProductFinanceMixedCurrency)
+            {
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-4">
+                    @T("Diese Sparten-Finanzanalyse enthaelt mehrere Waehrungen. Die Summary-Karten mit `Mixed` addieren lokale Werte numerisch; fuer belastbare Prozentwerte bitte eine einzelne Waehrung oder ein einzelnes Land filtern.",
+                        "This division finance analysis contains multiple currencies. Summary cards marked `Mixed` add local values numerically; filter to one currency or one country for reliable percentages.")
+                </MudAlert>
+            }
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudGrid Class="mb-2">
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.h6">@T("Umsatz nach Produktsparte", "Sales by product division")</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="_productFinanceGroupLevel" Label="@T("Gruppierung", "Grouping")" Dense>
+                            @foreach (var option in _productFinanceGroupingOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudButton Variant="@(_limitProductFinanceTop10 ? Variant.Filled : Variant.Outlined)"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.FilterAlt"
+                                   OnClick="ToggleProductFinanceTop10"
+                                   FullWidth>
+                            @T("Top 10 anzeigen", "Show top 10")
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+                <MudTable Items="BuildProductFinanceRows()" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Produktsparte", "Product division")</MudTh>
+                        @if (ShowProductFamilyColumn)
+                        {
+                            <MudTh>@T("Produktfamilie", "Product family")</MudTh>
+                        }
+                        @if (ShowProductHierarchyColumn)
+                        {
+                            <MudTh>PAPH1</MudTh>
+                        }
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Anteil", "Share")</MudTh>
+                        <MudTh>@T("Materialien", "Materials")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                        <MudTh>@T("Laender", "Countries")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudIcon Icon="@ResolveProductDivisionIcon(context.ProductDivisionCode, context.ProductDivisionText, context.ProductFamilyText, context.ProductHierarchyText)"
+                                     Size="Size.Small" Class="mr-1" />
+                            @BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)
+                        </MudTd>
+                        @if (ShowProductFamilyColumn)
+                        {
+                            <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
+                        }
+                        @if (ShowProductHierarchyColumn)
+                        {
+                            <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        }
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@FormatPercent(context.SharePercent)</MudTd>
+                        <MudTd>@context.MaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatCountriesWithFlags(context.Countries)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Spartenumsaetze fuer diese Filter.", "No division sales for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Groesste Treiber: Nicht im Stamm", "Top drivers: not in master")</MudText>
+                <MudTable Items="BuildMissingReferenceDriverRows()" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Material", "Material")</MudTh>
+                        <MudTh>@T("Text", "Text")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Material</MudTd>
+                        <MudTd>
+                            <MudTooltip Text="@context.ArticleName">
+                                <MudText Typo="Typo.caption" Style="max-width:520px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">
+                                    @context.ArticleName
+                                </MudText>
+                            </MudTooltip>
+                        </MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine fehlenden TR-AG-Referenzen fuer diese Filter.", "No missing TR AG references for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Umsatzabdeckung nach Land", "Sales coverage by country")</MudText>
+                <MudTable Items="_financeResult.ProductFinanceCountryRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Gesamt", "Total")</MudTh>
+                        <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Übrige", "Miscellaneous")</MudTh>
+                        <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
+                        <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                        <MudTh>@T("Material fehlt", "Material missing")</MudTh>
+                        <MudTh>
+                            <MudTooltip Text="@T("Zugeordnet + Übrige (beides gültige Sparten)", "Assigned + Misc (both valid divisions)")">
+                                @T("Abdeckung", "Coverage")
+                            </MudTooltip>
+                        </MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@FormatValue(context.TotalValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.AssignedValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MiscValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.UnassignedValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MissingReferenceValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.MissingMaterialValue, context.Currency)</MudTd>
+                        <MudTd>@FormatPercent(context.CoveredValuePercent)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Umsatzabdeckung fuer diese Filter.", "No sales coverage for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+                </MudTabPanel>
+                <MudTabPanel Text="@T("Zentrale Zuordnung", "Central mapping")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportZentraleZuordnung">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Materialien", "Materials")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.DistinctMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Zugeordnet", "Assigned")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MatchedMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Übrige", "Miscellaneous")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MiscMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht zugeordnet", "Unassigned")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.UnassignedMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht im Stamm", "Not in master")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MissingReferenceMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Material fehlt", "Material missing")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.MissingMaterialNumberCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("TR-AG Referenz", "TR AG reference")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.ReferenceMaterialCount.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-4">
+                @T("Diese Sicht prueft Materialnummern aller gefilterten Laender gegen die fuehrende TR-AG-Referenz aus `ProductDivisionRefSet`. Die Produktsparten der lokalen ERPs werden nicht verwendet.",
+                    "This view checks material numbers from all filtered countries against the leading TR AG reference from `ProductDivisionRefSet`. Local ERP product divisions are not used.")
+            </MudAlert>
+
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Abdeckung nach Land", "Coverage by country")</MudText>
+                <MudTable Items="_financeResult.ProductAssignmentCountryRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Materialien", "Materials")</MudTh>
+                        <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
+                        <MudTh>@T("Übrige", "Miscellaneous")</MudTh>
+                        <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
+                        <MudTh>@T("Nicht im Stamm", "Not in master")</MudTh>
+                        <MudTh>@T("Material fehlt", "Material missing")</MudTh>
+                        <MudTh>@T("Trefferquote", "Match rate")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.DistinctMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MatchedMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MiscMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.UnassignedMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MissingReferenceMaterialCount.ToString("N0")</MudTd>
+                        <MudTd>@context.MissingMaterialNumberCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatPercent(context.MatchPercent)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Materialdaten fuer diese Filter.", "No material data for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Materialpruefung gegen TR-AG-Referenz", "Material check against TR AG reference")</MudText>
+                <MudTable Items="_financeResult.ProductAssignmentRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Land-Material", "Local material")</MudTh>
+                        <MudTh>@T("Land-Text", "Local text")</MudTh>
+                        <MudTh>@T("TR-AG-MATNR", "TR AG MATNR")</MudTh>
+                        <MudTh>PAPH1</MudTh>
+                        <MudTh>@T("Produktfamilie", "Product family")</MudTh>
+                        <MudTh>@T("Produktsparte", "Product division")</MudTh>
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                        <MudTh>@T("Finance-Wert", "Finance value")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@ProductAssignmentColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Material</MudTd>
+                        <MudTd>@context.ArticleName</MudTd>
+                        <MudTd>@context.ReferenceMaterial</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductHierarchyCode, context.ProductHierarchyText)</MudTd>
+                        <MudTd>@BuildCodeText(context.ProductFamilyCode, context.ProductFamilyText)</MudTd>
+                        <MudTd>
+                            <MudIcon Icon="@ResolveProductDivisionIcon(context.ProductDivisionCode, context.ProductDivisionText, context.ProductFamilyText, context.ProductHierarchyText)"
+                                     Size="Size.Small" Class="mr-1" />
+                            @BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)
+                        </MudTd>
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                        <MudTd>@FormatValue(context.NetSalesActual, context.Currency)</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Materialpruefung fuer diese Filter.", "No material check for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+                </MudTabPanel>
+            </MudTabs>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Gruppenmarge", "Group margin")" Icon="@Icons.Material.Filled.StackedLineChart">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" Class="mb-3"
+                       StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGruppenmarge">
+                @T("Export to Excel", "Export to Excel")
+            </MudButton>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Umsatz", "Sales")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.GroupMarginSummary.SalesValue, _financeResult.GroupMarginSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Kostenbasis", "Cost basis")</MudText>
+                        <MudText Typo="Typo.h6">@FormatValue(_financeResult.GroupMarginSummary.CostBasisValue, _financeResult.GroupMarginSummary.DisplayCurrency)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Gruppenmarge", "Group margin")</MudText>
+                        <MudText Typo="Typo.h6">@FormatGroupMarginSummaryValue()</MudText>
+                        <MudText Typo="Typo.caption">@FormatGroupMarginSummaryPercent()</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Interne Zeilen", "Internal rows")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.GroupMarginSummary.InternalSupplierRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">@T("Extern", "External"): @_financeResult.GroupMarginSummary.ExternalSupplierRows.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Fehlende Kosten", "Missing costs")</MudText>
+                        <MudText Typo="Typo.h6">@_financeResult.GroupMarginSummary.MissingCostRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">@T("Lieferant unklar", "Supplier unclear"): @_financeResult.GroupMarginSummary.UnclearSupplierRows.ToString("N0")</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Saubere Kostenbasis", "Clean cost basis")</MudText>
+                        <MudText Typo="Typo.h6">@FormatPercent(_financeResult.GroupMarginSummary.CleanCostBasisPercent)</MudText>
+                        <MudText Typo="Typo.caption">@_financeResult.GroupMarginSummary.RowCount.ToString("N0") @T("Zeilen", "rows")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-4">
+                @T("MVP-Regel: Externer Lieferant = Kosten aus Verkaufszeile. Interner Trafag-Lieferant = vorhandene Standardkostenbasis als Proxy fuer SAP MBEW-STPRS. Interne Kette stoppt nach einer Ebene. Fehlende Standardkosten werden markiert und nicht geschaetzt.",
+                    "MVP rule: external supplier = cost from sales line. Internal Trafag supplier = existing standard-cost basis as proxy for SAP MBEW-STPRS. Internal chain stops after one level. Missing standard costs are flagged and not estimated.")
+            </MudAlert>
+
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Gruppenmarge nach Land", "Group margin by country")</MudText>
+                        <MudTable Items="_financeResult.GroupMarginCountryRows" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>TSC</MudTh>
+                                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                                <MudTh>@T("Bekannte Kostenbasis", "Known cost basis")</MudTh>
+                                <MudTh>@T("Marge", "Margin")</MudTh>
+                                <MudTh>%</MudTh>
+                                <MudTh>@T("Intern", "Internal")</MudTh>
+                                <MudTh>@T("Offen", "Open")</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@context.Tsc</MudTd>
+                                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                                <MudTd>@FormatValue(context.CostBasisValue, context.Currency)</MudTd>
+                                <MudTd>@FormatGroupMarginValue(context)</MudTd>
+                                <MudTd>@FormatGroupMarginPercent(context)</MudTd>
+                                <MudTd>@context.InternalSupplierRows.ToString("N0")</MudTd>
+                                <MudTd>@context.MissingCostRows.ToString("N0")</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">@T("Keine Gruppenmargendaten fuer diese Filter.", "No group-margin data for these filters.")</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">@T("Gruppenmarge nach Land und Sparte", "Group margin by country and division")</MudText>
+                        <MudTable Items="_financeResult.GroupMarginDivisionRows.Take(30)" Dense Hover Striped>
+                            <HeaderContent>
+                                <MudTh>@T("Land", "Country")</MudTh>
+                                <MudTh>@T("Sparte", "Division")</MudTh>
+                                <MudTh>@T("Umsatz", "Sales")</MudTh>
+                                <MudTh>@T("Marge", "Margin")</MudTh>
+                                <MudTh>%</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                                <MudTd>@BuildCodeText(context.ProductDivisionCode, context.ProductDivisionText)</MudTd>
+                                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                                <MudTd>@FormatGroupMarginValue(context)</MudTd>
+                                <MudTd>@FormatGroupMarginPercent(context)</MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2">@T("Keine Spartenmargen fuer diese Filter.", "No division margins for these filters.")</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Detailpruefung Kostenbasis", "Cost-basis detail check")</MudText>
+                <MudTable Items="_financeResult.GroupMarginDetailRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>@T("Rechnung", "Invoice")</MudTh>
+                        <MudTh>@T("Material", "Material")</MudTh>
+                        <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                        <MudTh>@T("Typ", "Type")</MudTh>
+                        <MudTh>@T("Kostenquelle", "Cost source")</MudTh>
+                        <MudTh>@T("Umsatz", "Sales")</MudTh>
+                        <MudTh>@T("Kostenbasis", "Cost basis")</MudTh>
+                        <MudTh>@T("Marge", "Margin")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@GroupMarginStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.InvoiceNumber</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.Material</MudText>
+                            <MudText Typo="Typo.caption">@context.ArticleName</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@BuildSupplierLabel(context)</MudText>
+                            <MudText Typo="Typo.caption">@context.SupplierCountry</MudText>
+                        </MudTd>
+                        <MudTd>@context.SupplierType</MudTd>
+                        <MudTd>@context.CostSource</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        <MudTd>@FormatValue(context.CostBasisValue, context.Currency)</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@FormatGroupMarginDetailValue(context)</MudText>
+                            <MudText Typo="Typo.caption">@FormatGroupMarginDetailPercent(context)</MudText>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Detailzeilen fuer diese Filter.", "No detail rows for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("3D Datenanalyse", "3D data analysis")" Icon="@Icons.Material.Filled.ViewInAr">
+            <MudPaper Class="pa-4 mb-4" Elevation="1">
+                <MudGrid>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string" Value="_finance3dIndicator" ValueChanged="SetFinance3dIndicator" Label="@T("Indikator", "Indicator")" Dense>
+                            @foreach (var option in _finance3dIndicatorOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudSelect T="string" Value="_finance3dChartType" ValueChanged="SetFinance3dChartType" Label="@T("Grafik", "Chart")" Dense>
+                            @foreach (var option in _finance3dChartTypeOptions)
+                            {
+                                <MudSelectItem Value="@option.Key">@T(option.GermanLabel, option.EnglishLabel)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.caption">@T("Szenario-Faktor / Wechselkurs", "Scenario factor / exchange rate")</MudText>
+                        <div class="finance-3d-range-row">
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetFinance3dScenarioFactorPreset(0.9d))">-10%</MudButton>
+                            <input class="finance-3d-range"
+                                   type="range"
+                                   min="0.5"
+                                   max="1.5"
+                                   step="0.01"
+                                   value="@_finance3dScenarioFactor.ToString("0.00", CultureInfo.InvariantCulture)"
+                                   @oninput="SetFinance3dScenarioFactor" />
+                            <MudText Typo="Typo.body2" Class="finance-3d-factor">@_finance3dScenarioFactor.ToString("0.00", CultureInfo.InvariantCulture)x</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
+                                           Size="Size.Small"
+                                           Color="Color.Default"
+                                           OnClick="ResetFinance3dScenarioFactor" />
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetFinance3dScenarioFactorPreset(1.1d))">+10%</MudButton>
+                        </div>
+                        @if (Finance3dScenarioAffectsValue)
+                        {
+                            <MudText Typo="Typo.caption">
+                                @T("Basis", "Base"): @FormatFinance3dValue(Finance3dBaseTotal) |
+                                @T("Szenario", "Scenario"): @FormatFinance3dValue(Finance3dScenarioTotal) |
+                                @T("Delta", "Delta"): @FormatFinance3dValue(Finance3dScenarioDelta)
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption">
+                                @T("Der Faktor wirkt nur auf Wertindikatoren, nicht auf Zeilenanzahlen.",
+                                    "The factor only affects value indicators, not row counts.")
+                            </MudText>
+                        }
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudText Typo="Typo.caption">@T("Beschriftung", "Labels")</MudText>
+                        <div class="finance-3d-range-row">
+                            <input class="finance-3d-range"
+                                   type="range"
+                                   min="0.8"
+                                   max="2.5"
+                                   step="0.1"
+                                   value="@_finance3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)"
+                                   @oninput="SetFinance3dLabelScale" />
+                            <MudText Typo="Typo.body2" Class="finance-3d-factor">@_finance3dLabelScale.ToString("0.0", CultureInfo.InvariantCulture)x</MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="1">
+                        <MudText Typo="Typo.body2">
+                            @T("Linke Maustaste drehen, Mausrad zoomen, Shift+Ziehen oder rechte Maustaste verschieben. Balken/Linie/Flaeche zeigen Land-Jahr-Verlauf, Kreis zeigt Laenderanteile, Sparten-Kreis zeigt je Land die Spartenanteile.",
+                                "Left mouse button rotates, mouse wheel zooms, Shift+drag or right mouse button pans. Bar/line/surface show country-year trend, pie shows country shares, division pie shows product-division shares per country.")
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            <MudPaper Class="pa-0 finance-3d-surface" Elevation="1" Style="width:100%;height:calc(100vh - 260px);min-height:680px;overflow:hidden;background:#f7f9fb;">
+                <canvas @ref="_finance3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_selectedFilePath" Label="@T("Vorhandene Excel-Datei", "Available Excel file")" Dense>
+                @foreach (var file in _files)
+                {
+                    <MudSelectItem Value="@file.Path">@file.DisplayName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFileValueField" Label="@T("Summenfeld", "Value field")" Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedFileTargetCurrency" Label="@T("Anzeige-Waehrung", "Display currency")" Dense>
+                @foreach (var option in _currencyOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadFiles"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loadingFiles">
+                    @T("Dateien laden", "Load files")
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Analyze"
+                           StartIcon="@Icons.Material.Filled.Analytics" Disabled="_analyzing || string.IsNullOrWhiteSpace(_selectedFilePath)">
+                    @(_analyzing ? T("Analysiere...", "Analyzing...") : T("Cockpit erzeugen", "Build cockpit"))
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudText Typo="Typo.h6" Class="mb-3">@T("Zentrale Roh-Auswertung", "Central raw analysis")</MudText>
+    <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+        @T("Diese Sicht arbeitet auf der aktuell konfigurierten zentralen Datenquelle (DB oder Audit-CSV). Summenfeld und Anzeige-Waehrung koennen gewaehlt werden; fachliche Filter wie Intercompany, Budget und Spartenlogik sind weiterhin nicht enthalten.", "This view works on the currently configured central data source (DB or audit CSV). Value field and display currency can be selected; business filters such as intercompany, budget and divisional logic are still not included.")
+    </MudAlert>
+    <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-3">
+        @T("Diese Analyse ist eine Plausibilitaets- und Rohdatensicht. Fuer den verbindlichen Finance-Abgleich bitte `Soll/Ist Vergleich` oder im Endexcel die `Finance | ...`-Spalten verwenden.",
+            "This analysis is a plausibility/raw-data view. For the authoritative finance reconciliation, use `Actual/reference comparison` or the `Finance | ...` columns in the final Excel.")
+    </MudAlert>
+    <MudGrid>
+        <MudItem xs="12" md="2">
+            <MudSelect T="int" @bind-Value="_selectedCentralYear" Label='@T("Jahr", "Year")' Dense>
+                @foreach (var year in _centralYears)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField @bind-Value="_centralLandFilter" Label="@T("Landfilter", "Country filter")" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField @bind-Value="_centralTscFilter" Label="TSC" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudSelect T="int?" @bind-Value="_selectedCentralMonth" Label='@T("Monat (optional)", "Month (optional)")' Dense Clearable>
+                @foreach (var month in Enumerable.Range(1, 12))
+                {
+                    <MudSelectItem Value="@((int?)month)">@($"{month:D2}")</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_selectedCentralValueField" Label="@T("Summenfeld", "Value field")" Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string"
+                       SelectedValues="_selectedCentralAdditionalValueFields"
+                       SelectedValuesChanged="SetSelectedCentralAdditionalValueFields"
+                       MultiSelection="true"
+                       Label="@T("Weitere Summenfelder", "Additional value fields")"
+                       Dense>
+                @foreach (var option in _valueFieldOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudSelect T="string" @bind-Value="_selectedCentralTargetCurrency" Label="@T("Anzeige-Waehrung", "Display currency")" Dense>
+                @foreach (var option in _currencyOptions)
+                {
+                    <MudSelectItem Value="@option.Key">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AnalyzeCentral"
+                           StartIcon="@Icons.Material.Filled.QueryStats" Disabled="_analyzingCentral || _selectedCentralYear == 0">
+                    @(_analyzingCentral ? T("Analysiere...", "Analyzing...") : T("Zentrale Auswertung laden", "Load central analysis"))
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearCentralScope"
+                           StartIcon="@Icons.Material.Filled.FilterAltOff">
+                    @T("Global", "Global")
+                </MudButton>
+                @if (!string.IsNullOrWhiteSpace(_centralLandFilter) || !string.IsNullOrWhiteSpace(_centralTscFilter))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                        @T("Gefiltert", "Filtered"): @($"{(_centralLandFilter ?? "-")} / {(_centralTscFilter ?? "-")}")
+                    </MudChip>
+                }
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_result is not null)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Land", "Country")</MudText><MudText Typo="Typo.h6">@_result.Summary.Land</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">TSC</MudText><MudText Typo="Typo.h6">@_result.Summary.Tsc</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@_result.Summary.ValueFieldLabel</MudText><MudText Typo="Typo.h6">@FormatValue(_result.Summary.AggregatedValueTotal, _result.Summary.DisplayCurrency)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="3"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Nicht umgerechnet", "Not converted")</MudText><MudText Typo="Typo.h6">@_result.Summary.MissingExchangeRateCount.ToString("N0")</MudText></MudPaper></MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Management Aussagen", "Management statements")</MudText>
+        @foreach (var finding in _result.Findings)
+        {
+            <MudAlert Severity="@MapSeverity(finding.Severity)" Dense Variant="Variant.Outlined" Class="mb-2">
+                <b>@finding.Title:</b> @finding.Detail
+            </MudAlert>
+        }
+    </MudPaper>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Kunden", "Top customers")</MudText>
+                @foreach (var item in _result.TopCustomers)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Produktgruppen", "Top product groups")</MudText>
+                @foreach (var item in _result.TopProductGroups)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Top Sales Owner", "Top sales owner")</MudText>
+                @foreach (var item in _result.TopSalesEmployees)
+                {
+                    <MudText Typo="Typo.body2">@($"{item.Label}: {FormatValue(item.Value, _result.Summary.DisplayCurrency)} ({item.SharePercent:F1}%)")</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Datenqualitaet", "Data quality")</MudText>
+        @foreach (var entry in _result.DataQualityCounts.OrderByDescending(x => x.Value))
+        {
+            <MudText Typo="Typo.body2">@($"{entry.Key}: {entry.Value}")</MudText>
+        }
+    </MudPaper>
+}
+
+@if (_centralResult is not null)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Zeilen", "Rows")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.RowCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Rechnungen", "Invoices")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.InvoiceCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Standorte", "Sites")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.SiteCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Laender", "Countries")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.CountryCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@_centralResult.Summary.ValueFieldLabel</MudText><MudText Typo="Typo.h6">@FormatValue(_centralResult.Summary.ValueTotal, _centralResult.Summary.DisplayCurrency)</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Nicht umgerechnet", "Not converted")</MudText><MudText Typo="Typo.h6">@_centralResult.Summary.MissingExchangeRateCount.ToString("N0")</MudText></MudPaper></MudItem>
+        <MudItem xs="12" md="2"><MudPaper Class="pa-4"><MudText Typo="Typo.caption">@T("Kursdatum", "Rate date")</MudText><MudText Typo="Typo.body2">@_centralResult.Summary.ExchangeRateDateLabel</MudText></MudPaper></MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Hinweise", "Notes")</MudText>
+        @foreach (var notice in _centralResult.Notices)
+        {
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-2">@notice</MudAlert>
+        }
+    </MudPaper>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Jahreswerte", "Yearly values")</MudText>
+                <MudTable Items="_centralResult.YearlyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Jahr", "Year")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Monatswerte", "Monthly values")</MudText>
+                <MudTable Items="_centralResult.MonthlyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Monat", "Month")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Tageswerte im ausgewaehlten Monat", "Daily values in selected month")</MudText>
+                <MudTable Items="_centralResult.DailyTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Tag", "Day")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTh>@field.Label</MudTh>
+                        }
+                        <MudTh>@T("Zeilen", "Rows")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        @foreach (var field in _centralResult.AdditionalValueFields)
+                        {
+                            <MudTd>@FormatAdditionalValue(context, field.Key)</MudTd>
+                        }
+                        <MudTd>@context.RowCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.caption">@T("Fuer die Tagessicht bitte zusaetzlich einen Monat waehlen.", "Please select a month as well for the daily view.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Werte nach Quelle", "Values by source")</MudText>
+                <MudTable Items="_centralResult.SourceSystemTotals" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Quelle", "Source")</MudTh>
+                        <MudTh>@T("Waehrung", "Currency")</MudTh>
+                        <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                        <MudTh>@T("Rechnungen", "Invoices")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Label</MudTd>
+                        <MudTd>@context.Currency</MudTd>
+                        <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                        <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">@T("Werte nach Land", "Values by country")</MudText>
+        <MudTable Items="_centralResult.CountryTotals" Dense Hover Striped>
+            <HeaderContent>
+                <MudTh>@T("Land", "Country")</MudTh>
+                <MudTh>@T("Waehrung", "Currency")</MudTh>
+                <MudTh>@_centralResult.Summary.ValueFieldLabel</MudTh>
+                <MudTh>@T("Rechnungen", "Invoices")</MudTh>
+                <MudTh>@T("Zeilen", "Rows")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Label</MudTd>
+                <MudTd>@context.Currency</MudTd>
+                <MudTd>@FormatValue(context.SalesValue, context.Currency)</MudTd>
+                <MudTd>@context.InvoiceCount.ToString("N0")</MudTd>
+                <MudTd>@context.RowCount.ToString("N0")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+        </MudTabPanel>
+    </MudTabs>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+<style>
+    .management-top-tabs > .mud-tabs-toolbar {
+        margin-bottom: 1rem;
+    }
+
+    .management-side-nav-tabs .mud-tabs-toolbar {
+        display: none;
+    }
+</style>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "section")]
+    public string? Section { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "division")]
+    public string? Division { get; set; }
+
+    private List<ManagementCockpitFileOption> _files = [];
+    private List<int> _centralYears = [];
+    private List<int> _financeYearOptions = [];
+    private List<string> _financeCountryOptions = [];
+    private List<string> _financeCurrencyOptions = [];
+    private List<ManagementCockpitValueFieldOption> _valueFieldOptions = [];
+    private readonly List<CurrencySelectOption> _currencyOptions =
+    [
+        new(ManagementCockpitCurrencyOptions.Chf, "CHF"),
+        new(ManagementCockpitCurrencyOptions.Eur, "EUR"),
+        new(ManagementCockpitCurrencyOptions.Usd, "USD"),
+        new(ManagementCockpitCurrencyOptions.Native, "Original")
+    ];
+    private readonly List<ProductFinanceGroupingOption> _productFinanceGroupingOptions =
+    [
+        new(ProductFinanceGroupLevels.Division, "Produktsparte", "Product division"),
+        new(ProductFinanceGroupLevels.Family, "Produktfamilie", "Product family"),
+        new(ProductFinanceGroupLevels.Hierarchy, "PAPH1 Detail", "PAPH1 detail")
+    ];
+    private readonly List<Finance3dIndicatorOption> _finance3dIndicatorOptions =
+    [
+        new(Finance3dIndicators.Actual, "Ist Umsatz inkl. IC", "Actual sales incl. IC"),
+        new(Finance3dIndicators.ActualExcludingIntercompany, "Ist Umsatz ohne IC", "Actual sales excl. IC"),
+        new(Finance3dIndicators.IntercompanyValue, "Intercompany Wert", "Intercompany value"),
+        new(Finance3dIndicators.IntercompanyShare, "Intercompany Anteil %", "Intercompany share %"),
+        new(Finance3dIndicators.Quantity, "Menge", "Quantity"),
+        new(Finance3dIndicators.CreditValue, "Gutschriften Wert", "Credit-note value"),
+        new(Finance3dIndicators.CreditRows, "Gutschriften Zeilen", "Credit-note rows"),
+        new(Finance3dIndicators.TotalRows, "Alle Zeilen", "All rows"),
+        new(Finance3dIndicators.IncludedRows, "Enthaltene Zeilen", "Included rows"),
+        new(Finance3dIndicators.ExcludedRows, "Ausgeschlossene Zeilen", "Excluded rows"),
+        new(Finance3dIndicators.IncludeRate, "Include Quote %", "Include rate %"),
+        new(Finance3dIndicators.ExcludeRate, "Exclude Quote %", "Exclude rate %"),
+        new(Finance3dIndicators.ReferenceValue, "Sollwert Filterjahr", "Reference value filter year"),
+        new(Finance3dIndicators.Deviation, "Soll/Ist Differenz Filterjahr", "Actual/reference difference filter year"),
+        new(Finance3dIndicators.DeviationPercent, "Soll/Ist Abweichung % Filterjahr", "Actual/reference deviation % filter year")
+    ];
+    private readonly List<Finance3dChartTypeOption> _finance3dChartTypeOptions =
+    [
+        new(Finance3dChartTypes.Bar, "Balken", "Bar"),
+        new(Finance3dChartTypes.Line, "Linie", "Line"),
+        new(Finance3dChartTypes.Surface, "Flaeche", "Surface"),
+        new(Finance3dChartTypes.Pie, "Kreis / Anteil", "Pie / share"),
+        new(Finance3dChartTypes.DivisionPie, "Sparten-Kreis je Land", "Division pie by country")
+    ];
+    private string? _selectedFilePath;
+    private ManagementCockpitResult? _result;
+    private ManagementCockpitCentralResult? _centralResult;
+    private ManagementFinanceSummaryResult? _financeResult;
+    private ManagementDecisionResult? _decisionResult;
+    private int _selectedFinanceYear;
+    private string? _selectedFinanceCountryKey;
+    private string? _selectedFinanceCurrency;
+    private bool _useGroupCurrency;
+    private int _selectedCentralYear;
+    private int? _selectedCentralMonth;
+    private string? _centralLandFilter;
+    private string? _centralTscFilter;
+    private string _selectedFileValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
+    private string _selectedCentralValueField = ManagementCockpitValueFieldKeys.SalesPriceValue;
+    private IEnumerable<string> _selectedCentralAdditionalValueFields = [];
+    private string _selectedFileTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
+    private string _selectedCentralTargetCurrency = ManagementCockpitCurrencyOptions.Native;
+    private bool _loadingFiles;
+    private bool _analyzing;
+    private bool _analyzingCentral;
+    private bool _analyzingFinance;
+    private int _activeOverviewTabIndex;
+    private int _activeFinanceTabIndex;
+    private int _activeDivisionTabIndex;
+    private string _productFinanceGroupLevel = ProductFinanceGroupLevels.Division;
+    private bool _limitProductFinanceTop10;
+    private string _finance3dIndicator = Finance3dIndicators.Actual;
+    private string _finance3dChartType = Finance3dChartTypes.Bar;
+    private double _finance3dScenarioFactor = 1d;
+    private double _finance3dLabelScale = 1.4d;
+    private ElementReference _finance3dCanvas;
+    private bool _finance3dNeedsRender;
+    private int _financePivotMonth;
+    private string? _financeAuditStatusFilter;
+    private string? _financeAuditCountryFilter;
+    private string? _financeAuditTscFilter;
+    private string? _financeAuditYearFilter;
+    private string? _financeAuditInvoiceFilter;
+    private string? _financeAuditPositionFilter;
+    private string? _financeAuditCustomerFilter;
+    private string? _financeAuditMaterialFilter;
+    private string? _financeAuditOriginalAmountFilter;
+    private string? _financeAuditOriginalCurrencyFilter;
+    private string? _financeAuditChfRateFilter;
+    private string? _financeAuditChfAmountFilter;
+    private string? _financeAuditRateSourceFilter;
+    private string? _financeAuditSupplierFilter;
+    private string? _financeAuditSupplierTypeFilter;
+    private string? _financeAuditStandardCostFilter;
+    private string? _financeAuditCostBasisFilter;
+    private string? _financeAuditMarginFilter;
+    private string? _financeAuditDataSourceFilter;
+
+    private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
+    private bool Finance3dScenarioAffectsValue => _finance3dIndicator is
+        Finance3dIndicators.Actual or
+        Finance3dIndicators.ActualExcludingIntercompany or
+        Finance3dIndicators.IntercompanyValue or
+        Finance3dIndicators.CreditValue or
+        Finance3dIndicators.ReferenceValue or
+        Finance3dIndicators.Deviation;
+    private decimal Finance3dBaseTotal => CalculateFinance3dBaseTotal();
+    private decimal Finance3dScenarioTotal => Finance3dScenarioAffectsValue
+        ? Finance3dBaseTotal * (decimal)_finance3dScenarioFactor
+        : Finance3dBaseTotal;
+    private decimal Finance3dScenarioDelta => Finance3dScenarioTotal - Finance3dBaseTotal;
+
+    private bool ShowProductHierarchyColumn => _productFinanceGroupLevel == ProductFinanceGroupLevels.Hierarchy;
+
+    protected override void OnParametersSet()
+    {
+        _activeOverviewTabIndex = ResolveOverviewTabIndex(Section);
+
+        if (string.Equals(Section, "division", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeFinanceTabIndex = ManagementFinanceTabIndexes.Division;
+            _activeDivisionTabIndex = string.Equals(Division, "central", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        }
+        else if (string.IsNullOrWhiteSpace(Section))
+        {
+            _activeFinanceTabIndex = ManagementFinanceTabIndexes.Summary;
+            _activeDivisionTabIndex = 0;
+        }
+        else
+        {
+            _activeFinanceTabIndex = Section.ToLowerInvariant() switch
+            {
+                "countries" => ManagementFinanceTabIndexes.Countries,
+                "status" => ManagementFinanceTabIndexes.Status,
+                "deviations" => ManagementFinanceTabIndexes.Deviations,
+                "credits" => ManagementFinanceTabIndexes.Credits,
+                "quality" => ManagementFinanceTabIndexes.Quality,
+                "pivot" => ManagementFinanceTabIndexes.Pivot,
+                "ledger" => ManagementFinanceTabIndexes.Ledger,
+                "audit" => ManagementFinanceTabIndexes.Ledger,
+                "3d" => ManagementFinanceTabIndexes.ThreeD,
+                "groupmargin" => ManagementFinanceTabIndexes.GroupMargin,
+                "raw" => ManagementFinanceTabIndexes.Raw,
+                _ => ManagementFinanceTabIndexes.Summary
+            };
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await CockpitPageService.InitializeAsync(_selectedFilePath, _selectedCentralYear);
+        _files = state.Files;
+        _valueFieldOptions = state.ValueFieldOptions;
+        _centralYears = state.CentralYears;
+        _selectedFilePath = state.SelectedFilePath;
+        _selectedCentralYear = state.SelectedCentralYear;
+        _selectedFinanceYear = _selectedCentralYear;
+        await AnalyzeFinanceSummary();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_finance3dNeedsRender && _financeResult is not null)
+        {
+            _finance3dNeedsRender = false;
+            await RenderFinance3dAsync();
+        }
+    }
+
+    private async Task ReloadFiles()
+    {
+        _loadingFiles = true;
+        try
+        {
+            _files = await CockpitPageService.LoadFilesAsync();
+            _selectedFilePath ??= _files.FirstOrDefault()?.Path;
+        }
+        finally
+        {
+            _loadingFiles = false;
+        }
+    }
+
+    private async Task ReloadCentralYears()
+    {
+        _centralYears = await CockpitPageService.LoadCentralYearsAsync();
+        if (_selectedCentralYear == 0)
+            _selectedCentralYear = _centralYears.LastOrDefault();
+    }
+
+    private async Task Analyze()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedFilePath))
+            return;
+
+        _analyzing = true;
+        try
+        {
+            _result = await CockpitPageService.AnalyzeAsync(_selectedFilePath, new ManagementCockpitAnalysisOptions
+            {
+                ValueField = _selectedFileValueField,
+                TargetCurrency = _selectedFileTargetCurrency
+            });
+            _centralLandFilter = _result.Summary.Land;
+            _centralTscFilter = _result.Summary.Tsc;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Cockpit konnte nicht erzeugt werden: {0}", "Could not build cockpit: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _analyzing = false;
+        }
+    }
+
+    private async Task AnalyzeCentral()
+    {
+        if (_selectedCentralYear == 0)
+            return;
+
+        _analyzingCentral = true;
+        try
+        {
+            _centralResult = await CockpitPageService.AnalyzeCentralAsync(_selectedCentralYear, _selectedCentralMonth, new ManagementCockpitAnalysisOptions
+            {
+                ValueField = _selectedCentralValueField,
+                AdditionalValueFields = _selectedCentralAdditionalValueFields.ToList(),
+                TargetCurrency = _selectedCentralTargetCurrency,
+                LandFilter = _centralLandFilter,
+                TscFilter = _centralTscFilter
+            });
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Zentrale Auswertung konnte nicht erzeugt werden: {0}", "Could not build central analysis: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _analyzingCentral = false;
+        }
+    }
+
+    private async Task AnalyzeFinanceSummary()
+    {
+        _analyzingFinance = true;
+        try
+        {
+            _financeResult = await CockpitPageService.AnalyzeFinanceSummaryAsync(
+                _selectedFinanceYear,
+                _selectedFinanceCountryKey,
+                _selectedFinanceCurrency,
+                _useGroupCurrency);
+
+            _financeYearOptions = _financeResult.YearOptions;
+            _financeCountryOptions = _financeResult.CountryOptions;
+            _financeCurrencyOptions = _financeResult.CurrencyOptions;
+            _selectedFinanceYear = _financeResult.Filter.Year;
+            if (_financePivotMonth == 0 || !_financeResult.FinancePivot.MonthOptions.Contains(_financePivotMonth))
+                _financePivotMonth = _financeResult.FinancePivot.DefaultMonth;
+            _decisionResult = await CockpitPageService.BuildManagementDecisionsAsync(_financeResult);
+            _finance3dNeedsRender = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Finance Summary konnte nicht erzeugt werden: {0}", "Could not build finance summary: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _analyzingFinance = false;
+        }
+    }
+
+    private async Task OnGroupCurrencyToggled(bool value)
+    {
+        _useGroupCurrency = value;
+        await AnalyzeFinanceSummary();
+    }
+
+    private void ClearCentralScope()
+    {
+        _centralLandFilter = null;
+        _centralTscFilter = null;
+    }
+
+    private void OnOverviewTabChanged(int index)
+    {
+        _activeOverviewTabIndex = index;
+    }
+
+    // --- Export to Excel (per tab) -------------------------------------------------
+    // Each handler builds one workbook (one sheet per table on the tab) and streams it
+    // to the browser via trafagDownload.saveBytes. Columns come from the row model
+    // properties via reflection, so they stay in sync with the displayed data.
+
+    private Task ExportSchnelluebersicht()
+        => DownloadExcel("Schnelluebersicht",
+        [
+            new ExcelSheetData(T("Finance-Freigabe je Land", "Finance approval by country"), BuildRows(_financeResult!.CountryRows)),
+            new ExcelSheetData(T("Datenstand je Standort", "Data status by site"), BuildRows(_financeResult!.DataStatusRows)),
+            new ExcelSheetData(T("Sparten-Abdeckung", "Division coverage"), BuildRows(_financeResult!.ProductFinanceCountryRows))
+        ]);
+
+    private Task ExportFinanceSummary()
+        => DownloadExcel("Finance_Summary",
+        [
+            new ExcelSheetData(T("Finance Summary", "Finance summary"), BuildRows(_financeResult!.Rows)),
+            new ExcelSheetData(T("Jahresvergleich", "Year comparison"), BuildRows(_financeResult!.YearRows))
+        ]);
+
+    private Task ExportFinancePivot()
+        => DownloadExcel("Finance_Pivot",
+        [
+            new ExcelSheetData(T("Monate nach TSC", "Months by TSC"), BuildFinancePivotExportRows(_financeResult!.FinancePivot.MonthlyRows)),
+            new ExcelSheetData(T("Tage nach Jahr", "Days by year"), BuildFinancePivotExportRows(BuildFinancePivotDailyRows(), _financeResult!.FinancePivot.DailyYearColumns))
+        ]);
+
+    private Task ExportLaender()
+        => DownloadExcel("Laender",
+        [
+            new ExcelSheetData(T("Laender", "Countries"), BuildRows(_financeResult!.CountryRows))
+        ]);
+
+    private Task ExportDatenstatus()
+        => DownloadExcel("Datenstatus",
+        [
+            new ExcelSheetData(T("Datenstatus", "Data status"), BuildRows(_financeResult!.DataStatusRows))
+        ]);
+
+    private Task ExportAbweichungen()
+        => DownloadExcel("Abweichungen",
+        [
+            new ExcelSheetData(T("Abweichungen", "Deviations"), BuildRows(_financeResult!.DeviationRows))
+        ]);
+
+    private Task ExportGutschriften()
+        => DownloadExcel("Gutschriften",
+        [
+            new ExcelSheetData(T("Gutschriften", "Credit notes"), BuildRows(_financeResult!.CreditCandidates))
+        ]);
+
+    private Task ExportDatenqualitaet()
+        => DownloadExcel("Datenqualitaet",
+        [
+            new ExcelSheetData(T("Datenqualitaet", "Data quality"), BuildRows(_financeResult!.DataQualityRows))
+        ]);
+
+    private Task ExportFinancePruefbuch()
+        => DownloadExcel("Finance_Pruefbuch",
+        [
+            new ExcelSheetData(T("Finance Pruefbuch", "Finance audit ledger"), BuildRows(BuildFinanceAuditLedgerRows())),
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
+        ]);
+
+    private Task ExportFinanzanalyse()
+        => DownloadExcel("Spartenanalyse",
+        [
+            new ExcelSheetData(T("Umsatz nach Sparte", "Sales by division"), BuildRows(_financeResult!.ProductDivisionFinanceRows)),
+            new ExcelSheetData(T("Abdeckung nach Land", "Coverage by country"), BuildRows(_financeResult!.ProductFinanceCountryRows))
+        ]);
+
+    private Task ExportZentraleZuordnung()
+        => DownloadExcel("Zentrale_Zuordnung",
+        [
+            new ExcelSheetData(T("Material je Land", "Materials by country"), BuildRows(_financeResult!.ProductAssignmentCountryRows)),
+            new ExcelSheetData(T("Material Pruefung", "Material check"), BuildRows(_financeResult!.ProductAssignmentRows))
+        ]);
+
+    private Task ExportGruppenmarge()
+        => DownloadExcel("Gruppenmarge",
+        [
+            new ExcelSheetData(T("Gruppenmarge Land", "Group margin country"), BuildRows(_financeResult!.GroupMarginCountryRows)),
+            new ExcelSheetData(T("Gruppenmarge Sparte", "Group margin division"), BuildRows(_financeResult!.GroupMarginDivisionRows)),
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
+        ]);
+
+    private async Task DownloadExcel(string fileLabel, IReadOnlyList<ExcelSheetData> sheets)
+    {
+        if (_financeResult is null)
+        {
+            Snackbar.Add(T("Bitte zuerst Finance Summary laden.", "Please load the finance summary first."), Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var bytes = ExcelExport.CreateWorkbookBytes(sheets);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"{fileLabel}_{_selectedFinanceYear}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", fileName, base64,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Excel-Export fehlgeschlagen: {0}", "Excel export failed: {0}"), ex.Message), Severity.Error);
+        }
+    }
+
+    private static IReadOnlyList<IReadOnlyDictionary<string, object?>> BuildRows<T>(IEnumerable<T> items)
+    {
+        var properties = typeof(T)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            .ToList();
+
+        return items
+            .Select(item =>
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (var property in properties)
+                    dict[property.Name] = property.GetValue(item);
+                return (IReadOnlyDictionary<string, object?>)dict;
+            })
+            .ToList();
+    }
+
+    private void ToggleProductFinanceTop10()
+    {
+        _limitProductFinanceTop10 = !_limitProductFinanceTop10;
+    }
+
+    private async Task SetFinance3dIndicator(string value)
+    {
+        _finance3dIndicator = string.IsNullOrWhiteSpace(value) ? Finance3dIndicators.Actual : value;
+        await RenderFinance3dAsync();
+    }
+
+    private async Task SetFinance3dChartType(string value)
+    {
+        _finance3dChartType = string.IsNullOrWhiteSpace(value) ? Finance3dChartTypes.Bar : value;
+        await RenderFinance3dAsync();
+    }
+
+    private async Task SetFinance3dScenarioFactor(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
+            await UpdateFinance3dScenarioFactorAsync();
+        }
+    }
+
+    private async Task ResetFinance3dScenarioFactor()
+    {
+        _finance3dScenarioFactor = 1d;
+        await UpdateFinance3dScenarioFactorAsync();
+    }
+
+    private async Task SetFinance3dScenarioFactorPreset(double value)
+    {
+        _finance3dScenarioFactor = Math.Clamp(value, 0.5d, 1.5d);
+        await UpdateFinance3dScenarioFactorAsync();
+    }
+
+    private async Task SetFinance3dLabelScale(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        {
+            _finance3dLabelScale = Math.Clamp(value, 0.8d, 2.5d);
+            await RenderFinance3dAsync();
+        }
+    }
+
+    private async Task RenderFinance3dAsync()
+    {
+        if (_financeResult is null)
+            return;
+
+        var rows = BuildFinance3dRows();
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _finance3dCanvas, rows, new
+        {
+            indicator = _finance3dIndicator,
+            title = ResolveFinance3dIndicatorLabel(_finance3dIndicator),
+            chartType = _finance3dChartType,
+            xAxis = T("X: Land", "X: country"),
+            yAxis = T("Y: Wert / Indikator", "Y: value / indicator"),
+            zAxis = T("Z: Jahr / Zeit", "Z: year / time"),
+            pieAxis = _finance3dChartType == Finance3dChartTypes.DivisionPie
+                ? T("Sparten-Kreis: je Land Sektoren nach Produktsparte", "Division pie: sectors by product division per country")
+                : T("Kreis: Laenderanteile", "Pie: country shares"),
+            labelScale = _finance3dLabelScale,
+            scenarioFactor = Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d
+        });
+    }
+
+    private async Task UpdateFinance3dScenarioFactorAsync()
+    {
+        await JsRuntime.InvokeVoidAsync(
+            "trafagFinance3d.updateFactor",
+            _finance3dCanvas,
+            Finance3dScenarioAffectsValue ? _finance3dScenarioFactor : 1d);
+    }
+
+    private IReadOnlyList<object> BuildFinance3dRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        if (_finance3dChartType == Finance3dChartTypes.DivisionPie)
+            return BuildFinance3dProductDivisionRows();
+
+        if (IsFinance3dReferenceYearIndicator(_finance3dIndicator))
+        {
+            return _financeResult.CountryRows
+                .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+                .Select(group =>
+                {
+                    var rows = group.ToList();
+                    var first = rows[0];
+                    return new
+                    {
+                        country = first.CountryKey,
+                        year = first.Year,
+                        currency = BuildDisplayCurrencyLabel(rows.Select(row => row.Currency).Where(value => value != "-")),
+                        value = ResolveFinance3dCountryValue(rows)
+                    };
+                })
+                .OrderBy(row => row.country, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(row => row.year)
+                .Cast<object>()
+                .ToList();
+        }
+
+        var countryRowsByKey = _financeResult.CountryRows
+            .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.ToList(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var sourceRows = _financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows;
+
+        return sourceRows
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Year)
+            .Select(row =>
+            {
+                countryRowsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var countryRows);
+                var value = ResolveFinance3dRowValue(row, countryRows);
+                return new
+                {
+                    country = row.CountryKey,
+                    year = row.Year,
+                    currency = row.Currency,
+                    value
+                };
+            })
+            .Cast<object>()
+            .ToList();
+    }
+
+    private IReadOnlyList<object> BuildFinance3dProductDivisionRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.ProductAssignmentRows
+            .Where(row => row.Status is "Zugeordnet" or "Ãœbrige")
+            .GroupBy(row => new
+            {
+                Country = string.IsNullOrWhiteSpace(row.CountryKey) ? "-" : row.CountryKey,
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var value = Math.Abs(group.Sum(row => row.NetSalesActual));
+                var label = BuildCodeText(group.Key.ProductDivisionCode, group.Key.ProductDivisionText);
+                return new
+                {
+                    country = group.Key.Country,
+                    year = _selectedFinanceYear,
+                    currency = group.Key.Currency,
+                    value,
+                    series = string.IsNullOrWhiteSpace(label) ? "-" : label,
+                    seriesCode = group.Key.ProductDivisionCode,
+                    rows = group.Sum(row => row.RowCount),
+                    materials = group.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                };
+            })
+            .Where(row => row.value > 0m)
+            .OrderBy(row => row.country, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => row.value)
+            .Cast<object>()
+            .ToList();
+    }
+
+    private decimal CalculateFinance3dBaseTotal()
+    {
+        if (_financeResult is null)
+            return 0m;
+
+        if (IsFinance3dReferenceYearIndicator(_finance3dIndicator))
+        {
+            var referenceValues = _financeResult.CountryRows
+                .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+                .Select(group => ResolveFinance3dCountryValue(group.ToList()))
+                .ToList();
+
+            if (IsFinance3dPercentIndicator(_finance3dIndicator))
+            {
+                var nonZeroValues = referenceValues.Where(value => value != 0m).ToList();
+                return nonZeroValues.Count == 0 ? 0m : nonZeroValues.Average();
+            }
+
+            return referenceValues.Sum();
+        }
+
+        var countryRowsByKey = _financeResult.CountryRows
+            .GroupBy(row => $"{row.Year}|{row.CountryKey}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.ToList(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var sourceRows = _financeResult.YearCountryRows.Count > 0 ? _financeResult.YearCountryRows : _financeResult.Rows;
+
+        var values = sourceRows
+            .Select(row =>
+            {
+                countryRowsByKey.TryGetValue($"{row.Year}|{row.CountryKey}", out var countryRows);
+                return ResolveFinance3dRowValue(row, countryRows);
+            })
+            .ToList();
+
+        if (IsFinance3dPercentIndicator(_finance3dIndicator))
+        {
+            var nonZeroValues = values.Where(value => value != 0m).ToList();
+            return nonZeroValues.Count == 0 ? 0m : nonZeroValues.Average();
+        }
+
+        return values.Sum();
+    }
+
+    private decimal ResolveFinance3dRowValue(ManagementFinanceSummaryRow row, IReadOnlyCollection<ManagementFinanceCountryStatusRow>? countryRows)
+        => _finance3dIndicator switch
+        {
+            Finance3dIndicators.ActualExcludingIntercompany => Math.Abs(row.NetSalesActualExcludingIntercompany),
+            Finance3dIndicators.IntercompanyValue => Math.Abs(row.IntercompanyValue),
+            Finance3dIndicators.IntercompanyShare => Math.Abs(row.IntercompanySharePercent),
+            Finance3dIndicators.Quantity => Math.Abs(row.Quantity),
+            Finance3dIndicators.CreditValue => Math.Abs(row.CreditValue),
+            Finance3dIndicators.CreditRows => row.CreditRows,
+            Finance3dIndicators.TotalRows => row.TotalRows,
+            Finance3dIndicators.IncludedRows => row.IncludedRows,
+            Finance3dIndicators.ExcludedRows => row.ExcludedRows,
+            Finance3dIndicators.IncludeRate => row.IncludeRatePercent,
+            Finance3dIndicators.ExcludeRate => row.ExcludeRatePercent,
+            Finance3dIndicators.ReferenceValue => Math.Abs(countryRows?.Sum(item => item.ReferenceValue ?? 0m) ?? 0m),
+            Finance3dIndicators.Deviation => Math.Abs(countryRows?.Where(item => item.Difference.HasValue).Sum(item => item.Difference!.Value) ?? 0m),
+            Finance3dIndicators.DeviationPercent => Math.Abs(AverageNullablePercent(countryRows?.Select(item => item.DifferencePercent))),
+            _ => Math.Abs(row.NetSalesActual)
+        };
+
+    private decimal ResolveFinance3dCountryValue(IReadOnlyCollection<ManagementFinanceCountryStatusRow> rows)
+        => _finance3dIndicator switch
+        {
+            Finance3dIndicators.ReferenceValue => Math.Abs(rows.Select(row => row.ReferenceValue).FirstOrDefault(value => value.HasValue) ?? 0m),
+            Finance3dIndicators.Deviation => Math.Abs(rows.Where(row => row.Difference.HasValue).Sum(row => row.Difference!.Value)),
+            Finance3dIndicators.DeviationPercent => Math.Abs(AverageNullablePercent(rows.Select(row => row.DifferencePercent))),
+            _ => 0m
+        };
+
+    private static bool IsFinance3dReferenceYearIndicator(string indicator)
+        => indicator is Finance3dIndicators.ReferenceValue or Finance3dIndicators.Deviation or Finance3dIndicators.DeviationPercent;
+
+    private static bool IsFinance3dPercentIndicator(string indicator)
+        => indicator is Finance3dIndicators.IntercompanyShare or Finance3dIndicators.IncludeRate or Finance3dIndicators.ExcludeRate or Finance3dIndicators.DeviationPercent;
+
+    private static decimal AverageNullablePercent(IEnumerable<decimal?>? values)
+    {
+        if (values is null)
+            return 0m;
+
+        var actualValues = values.Where(value => value.HasValue).Select(value => value!.Value).ToList();
+        return actualValues.Count == 0 ? 0m : actualValues.Average();
+    }
+
+    private string FormatFinance3dValue(decimal value)
+        => value.ToString("N0", CultureInfo.CurrentCulture);
+
+    private string ResolveFinance3dIndicatorLabel(string key)
+        => _finance3dIndicatorOptions.FirstOrDefault(option => option.Key == key) is { } option
+            ? T(option.GermanLabel, option.EnglishLabel)
+            : T("Net Sales Actual", "Net sales actual");
+
+    private bool IsProductFinanceMixedCurrency
+        => string.Equals(_financeResult?.ProductFinanceSummary.DisplayCurrency, "Mixed", StringComparison.OrdinalIgnoreCase);
+
+    private IReadOnlyList<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.FinanceAuditLedgerRows
+            .Where(row =>
+                MatchesFilter(row.Status, _financeAuditStatusFilter) &&
+                MatchesFilter(row.CountryKey, _financeAuditCountryFilter) &&
+                MatchesFilter(row.Tsc, _financeAuditTscFilter) &&
+                MatchesFilter(row.Year, _financeAuditYearFilter) &&
+                MatchesFilter(row.InvoiceNumber, _financeAuditInvoiceFilter) &&
+                MatchesFilter(row.PositionOnInvoice, _financeAuditPositionFilter) &&
+                MatchesFilter(string.Join(' ', row.CustomerNumber, row.CustomerName), _financeAuditCustomerFilter) &&
+                MatchesFilter(string.Join(' ', row.Material, row.ArticleName), _financeAuditMaterialFilter) &&
+                MatchesFilter(row.OriginalAmount, _financeAuditOriginalAmountFilter) &&
+                MatchesFilter(row.OriginalCurrency, _financeAuditOriginalCurrencyFilter) &&
+                MatchesFilter(row.ChfRate, _financeAuditChfRateFilter) &&
+                MatchesFilter(row.ChfAmount, _financeAuditChfAmountFilter) &&
+                MatchesFilter(string.Join(' ', row.RateSource, row.RateYear), _financeAuditRateSourceFilter) &&
+                MatchesFilter(string.Join(' ', row.SupplierNumber, row.SupplierName, row.SupplierCountry), _financeAuditSupplierFilter) &&
+                MatchesFilter(row.SupplierType, _financeAuditSupplierTypeFilter) &&
+                MatchesFilter(string.Join(' ', FormatInvariant(row.StandardCost), row.StandardCostCurrency), _financeAuditStandardCostFilter) &&
+                MatchesFilter(row.CostBasisChf, _financeAuditCostBasisFilter) &&
+                MatchesFilter(row.MarginChf, _financeAuditMarginFilter) &&
+                MatchesFilter(row.DataSource, _financeAuditDataSourceFilter))
+            .ToList();
+    }
+
+    private IReadOnlyList<ManagementFinancePivotMatrixRow> BuildFinancePivotDailyRows()
+    {
+        if (_financeResult is null || _financePivotMonth == 0)
+            return [];
+
+        return _financeResult.FinancePivot.DailyYearRows
+            .Where(row => row.Month == _financePivotMonth)
+            .ToList();
+    }
+
+    private decimal CalculateFinancePivotMtd()
+        => BuildFinancePivotDailyRows()
+            .Sum(row => GetFinancePivotValue(row, _selectedFinanceYear.ToString(CultureInfo.InvariantCulture)) ?? 0m);
+
+    private static decimal? GetFinancePivotValue(ManagementFinancePivotMatrixRow row, string tsc)
+        => row.ValuesByTsc.TryGetValue(tsc, out var value) && value != 0m ? value : null;
+
+    private static string FormatFinancePivotYearCell(ManagementFinancePivotMatrixRow row)
+    {
+        if (!string.IsNullOrWhiteSpace(row.Label))
+            return row.Label;
+
+        return row.Year == 0
+            ? string.Empty
+            : row.Year.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private IReadOnlyList<IReadOnlyDictionary<string, object?>> BuildFinancePivotExportRows(
+        IEnumerable<ManagementFinancePivotMatrixRow> rows,
+        IReadOnlyList<string>? valueColumns = null)
+    {
+        var columns = valueColumns ?? _financeResult?.FinancePivot.TscColumns ?? [];
+        return rows
+            .Select(row =>
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["YYYY"] = FormatFinancePivotYearCell(row),
+                    ["MM"] = row.Month,
+                    ["D"] = row.Day
+                };
+
+                foreach (var column in columns)
+                    dict[column] = GetFinancePivotValue(row, column);
+
+                dict[T("Gesamtergebnis", "Grand total")] = row.Total;
+                return (IReadOnlyDictionary<string, object?>)dict;
+            })
+            .ToList();
+    }
+
+    private static bool MatchesFilter(object? value, string? filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return true;
+
+        var text = value switch
+        {
+            null => string.Empty,
+            decimal decimalValue => FormatInvariant(decimalValue),
+            int intValue => intValue.ToString(CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+
+        return text.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatInvariant(decimal value)
+        => value.ToString("0.#############################", CultureInfo.InvariantCulture);
+
+    private IReadOnlyList<ManagementProductAssignmentRow> BuildMissingReferenceDriverRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.ProductAssignmentRows
+            .Where(row => string.Equals(row.Status, "Nicht im TR-AG-Stamm", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Material, StringComparer.OrdinalIgnoreCase)
+            .Take(15)
+            .ToList();
+    }
+
+    private IReadOnlyList<ManagementProductDivisionFinanceRow> BuildProductFinanceRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        var sourceRows = _financeResult.ProductDivisionFinanceRows;
+        var totalsByCurrency = sourceRows
+            .GroupBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(row => row.NetSalesActual), StringComparer.OrdinalIgnoreCase);
+
+        var rows = sourceRows
+            .GroupBy(row => BuildProductFinanceGroupKey(row))
+            .Select(group =>
+            {
+                var value = group.Sum(row => row.NetSalesActual);
+                totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+
+                return new ManagementProductDivisionFinanceRow
+                {
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText,
+                    ProductFamilyCode = group.Key.ProductFamilyCode,
+                    ProductFamilyText = group.Key.ProductFamilyText,
+                    ProductHierarchyCode = group.Key.ProductHierarchyCode,
+                    ProductHierarchyText = group.Key.ProductHierarchyText,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = value,
+                    SharePercent = PercentOf(value, total),
+                    MaterialCount = group.Sum(row => row.MaterialCount),
+                    RowCount = group.Sum(row => row.RowCount),
+                    Countries = JoinCountries(group.Select(row => row.Countries))
+                };
+            })
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.ProductDivisionCode, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.ProductFamilyCode, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.ProductHierarchyCode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return _limitProductFinanceTop10 ? rows.Take(10).ToList() : rows;
+    }
+
+    private ProductFinanceGroupKey BuildProductFinanceGroupKey(ManagementProductDivisionFinanceRow row)
+    {
+        return _productFinanceGroupLevel switch
+        {
+            ProductFinanceGroupLevels.Division => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                row.Currency),
+            ProductFinanceGroupLevels.Family => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                string.Empty,
+                string.Empty,
+                row.Currency),
+            _ => new ProductFinanceGroupKey(
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                row.ProductHierarchyCode,
+                row.ProductHierarchyText,
+                row.Currency)
+        };
+    }
+
+    private static Severity MapSeverity(string severity) => severity switch
+    {
+        "Warning" => Severity.Warning,
+        "Error" => Severity.Error,
+        _ => Severity.Info
+    };
+
+    private static string BuildPeriodLabel(ManagementCockpitCentralResult result)
+    {
+        if (result.Summary.PeriodStart is null || result.Summary.PeriodEnd is null)
+            return "-";
+
+        return $"{result.Summary.PeriodStart.Value:dd.MM.yyyy} - {result.Summary.PeriodEnd.Value:dd.MM.yyyy}";
+    }
+
+    private static string FormatValue(decimal value, string currency)
+        => string.IsNullOrWhiteSpace(currency) || currency == "-"
+            ? value.ToString("N2")
+            : $"{value:N2} {currency}";
+
+    private static string BuildDisplayCurrencyLabel(IEnumerable<string> currencies)
+    {
+        var distinct = currencies
+            .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != "-")
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(currency => currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinct.Count == 0 ? "-" : string.Join("/", distinct);
+    }
+
+    private static string FormatNullableValue(decimal? value, string currency)
+        => value.HasValue ? FormatValue(value.Value, currency) : "-";
+
+    private static string FormatNullableDecimal(decimal? value)
+        => value.HasValue ? value.Value.ToString("N6") : "-";
+
+    private static string FormatPercent(decimal? value)
+        => value.HasValue ? $"{value.Value:N1}%" : "-";
+
+    private string FormatGroupMarginSummaryValue()
+    {
+        if (_financeResult is null)
+            return "-";
+
+        return _financeResult.GroupMarginSummary.MissingCostRows > 0 ||
+               _financeResult.GroupMarginSummary.UnclearSupplierRows > 0
+            ? "-"
+            : FormatValue(_financeResult.GroupMarginSummary.MarginValue, _financeResult.GroupMarginSummary.DisplayCurrency);
+    }
+
+    private string FormatGroupMarginSummaryPercent()
+    {
+        if (_financeResult is null)
+            return "-";
+
+        return _financeResult.GroupMarginSummary.MissingCostRows > 0 ||
+               _financeResult.GroupMarginSummary.UnclearSupplierRows > 0
+            ? "-"
+            : FormatPercent(_financeResult.GroupMarginSummary.MarginPercent);
+    }
+
+    private static string FormatGroupMarginValue(ManagementGroupMarginCountryRow row)
+        => row.MissingCostRows > 0 ? "-" : FormatValue(row.MarginValue, row.Currency);
+
+    private static string FormatGroupMarginPercent(ManagementGroupMarginCountryRow row)
+        => row.MissingCostRows > 0 ? "-" : FormatPercent(row.MarginPercent);
+
+    private static string FormatGroupMarginDetailValue(ManagementGroupMarginDetailRow row)
+        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+            ? FormatValue(row.MarginValue, row.Currency)
+            : "-";
+
+    private static string FormatGroupMarginDetailPercent(ManagementGroupMarginDetailRow row)
+        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+            ? FormatPercent(row.MarginPercent)
+            : "-";
+
+    private static decimal PercentOf(decimal value, decimal total)
+        => total == 0m ? 0m : value * 100m / total;
+
+    private static string FormatDateTime(DateTime? value)
+        => value.HasValue ? value.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "-";
+
+    // Normalize each source to UTC before comparing: StoredAtUtc is UTC, ExtractionDate
+    // and ExportAt are local time (matches DashboardPageService.ResolveDataFreshness).
+    // Returns a Kind=Utc DateTime so FormatDateTime's ToLocalTime() displays correctly.
+    private static DateTime? ToUtcFreshness(DateTime? value, DateTimeKind sourceKind)
+        => value.HasValue
+            ? (sourceKind == DateTimeKind.Utc
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                : DateTime.SpecifyKind(value.Value, DateTimeKind.Local).ToUniversalTime())
+            : null;
+
+    private string BuildDataStatusTooltip(ManagementFinanceDataStatusRow row)
+    {
+        var parts = new List<string>();
+        if (row.LatestExtractionDate.HasValue)
+            parts.Add($"{T("Extraktionsdatum", "Extraction date")}: {FormatDateTime(ToUtcFreshness(row.LatestExtractionDate, DateTimeKind.Local))}");
+        if (row.LatestStoredAtUtc.HasValue)
+            parts.Add($"{T("DB-Import", "DB import")}: {FormatDateTime(ToUtcFreshness(row.LatestStoredAtUtc, DateTimeKind.Utc))}");
+        if (row.LatestExportAt.HasValue)
+            parts.Add($"{T("Letzter Export", "Last export")}: {FormatDateTime(ToUtcFreshness(row.LatestExportAt, DateTimeKind.Local))}");
+        if (!string.IsNullOrWhiteSpace(row.DataFreshnessDetails))
+            parts.Add(row.DataFreshnessDetails);
+        return parts.Count > 0 ? string.Join(" | ", parts) : T("Kein Datenstand verfügbar", "No data freshness available");
+    }
+
+    private static string FormatManualImportStatus(ManagementFinanceDataStatusRow row)
+    {
+        if (!string.Equals(row.SourceSystem, "MANUAL_EXCEL", StringComparison.OrdinalIgnoreCase))
+            return "-";
+
+        if (!string.IsNullOrWhiteSpace(row.ManualImportFilePath))
+            return row.ManualImportLastUploadedAtUtc.HasValue
+                ? $"{System.IO.Path.GetFileName(row.ManualImportFilePath)} / {FormatDateTime(row.ManualImportLastUploadedAtUtc)}"
+                : System.IO.Path.GetFileName(row.ManualImportFilePath);
+
+        return "kein Pfad";
+    }
+
+    private string BuildDataStatusText(ManagementFinanceCountryStatusRow countryRow)
+    {
+        if (_financeResult is null)
+            return "-";
+
+        var tscs = countryRow.Tscs
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var matchingRows = _financeResult.DataStatusRows
+            .Where(row => row.Land.Equals(countryRow.CountryKey, StringComparison.OrdinalIgnoreCase) ||
+                          tscs.Contains(row.Tsc))
+            .OrderByDescending(row => row.DataFreshnessAt ?? DateTime.MinValue)
+            .ToList();
+
+        var latest = matchingRows.FirstOrDefault();
+        if (latest is null)
+            return "-";
+
+        // Use the same freshness as the Export Dashboard (DB vs. local CSV vs. export log) so the
+        // quick overview agrees with the Export Dashboard, including the "CSV neuer als DB" flag.
+        var source = string.IsNullOrWhiteSpace(latest.DataFreshnessSource) ? latest.SourceSystem : latest.DataFreshnessSource;
+        var text = $"{source} / {FormatDateTime(latest.DataFreshnessAt)}";
+        if (latest.IsCsvNewerThanDatabase)
+            text += $" / {T("CSV neuer als DB", "CSV newer than DB")}";
+        return text;
+    }
+
+    private string BuildQuickFinanceNote(ManagementFinanceCountryStatusRow row)
+    {
+        if (!row.ReferenceValue.HasValue)
+            return T("Kein Sollwert gepflegt.", "No reference value maintained.");
+        if (row.TotalRows == 0)
+            return T("Sollwert gepflegt, aber kein Ist im aktuellen Filter.", "Reference maintained, but no actuals in the current filter.");
+        if (row.Status == "OK")
+            return T("Freigabefaehig.", "Ready for approval.");
+        if (row.Difference.HasValue)
+            return T("Abweichung pruefen.", "Check deviation.");
+
+        return T("Pruefen.", "Check.");
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "OK" => Color.Success,
+        "Pruefen" => Color.Warning,
+        _ => Color.Default
+    };
+
+    private static Color SeverityColor(string severity) => severity switch
+    {
+        "Warning" => Color.Warning,
+        "Error" => Color.Error,
+        _ => Color.Info
+    };
+
+    private static Color DecisionSeverityColor(string severity) => severity.ToUpperInvariant() switch
+    {
+        "HIGH" or "ERROR" or "ROT" => Color.Error,
+        "MEDIUM" or "WARNING" or "GELB" => Color.Warning,
+        _ => Color.Info
+    };
+
+    private static bool IsHighDecision(string severity)
+        => severity.Equals("High", StringComparison.OrdinalIgnoreCase) ||
+           severity.Equals("Error", StringComparison.OrdinalIgnoreCase) ||
+           severity.Equals("Rot", StringComparison.OrdinalIgnoreCase);
+
+    private static Color ProductAssignmentColor(string status) => status switch
+    {
+        "Zugeordnet" => Color.Success,
+        "Ãœbrige" => Color.Info,
+        "Nicht zugeordnet" => Color.Warning,
+        "Nicht im TR-AG-Stamm" => Color.Error,
+        "Material fehlt" => Color.Default,
+        _ => Color.Info
+    };
+
+    private static Color GroupMarginStatusColor(string status) => status switch
+    {
+        "OK" => Color.Success,
+        "Standardpreis fehlt" => Color.Warning,
+        "Lieferant unklar" => Color.Warning,
+        "Umsatz fehlt" => Color.Default,
+        _ => Color.Info
+    };
+
+    private static string BuildSupplierLabel(ManagementGroupMarginDetailRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.SupplierNumber))
+            return string.IsNullOrWhiteSpace(row.SupplierName) ? "-" : row.SupplierName;
+
+        return string.IsNullOrWhiteSpace(row.SupplierName)
+            ? row.SupplierNumber
+            : $"{row.SupplierNumber} - {row.SupplierName}";
+    }
+
+    private static string BuildFinanceAuditSupplierLabel(ManagementFinanceAuditLedgerRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.SupplierNumber))
+            return string.IsNullOrWhiteSpace(row.SupplierName) ? "-" : row.SupplierName;
+
+        return string.IsNullOrWhiteSpace(row.SupplierName)
+            ? row.SupplierNumber
+            : $"{row.SupplierNumber} - {row.SupplierName}";
+    }
+
+    private static string BuildCodeText(string code, string text)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return string.IsNullOrWhiteSpace(text) ? "-" : text;
+
+        return string.IsNullOrWhiteSpace(text) ? code : $"{code} - {text}";
+    }
+
+    private static string ResolveProductDivisionIcon(
+        string productDivisionCode,
+        string productDivisionText,
+        string productFamilyText,
+        string productHierarchyText)
+    {
+        var combinedText = string.Join(' ', productDivisionText, productFamilyText, productHierarchyText).ToUpperInvariant();
+
+        if (string.Equals(productDivisionCode, "UNASS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("NICHT ZUGEORDNET", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("UNASS", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.HelpOutline;
+        }
+
+        if (string.Equals(productDivisionCode, "0008", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("ÜBRIGE", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("UEBRIGE", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Category;
+        }
+
+        if (combinedText.Contains("GAS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("DENSITY", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Sensors;
+        }
+
+        if (combinedText.Contains("PRESSURE", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("DRUCK", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Compress;
+        }
+
+        if (combinedText.Contains("TEMP", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("THERMOSTAT", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.DeviceThermostat;
+        }
+
+        if (combinedText.Contains("SWITCH", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("SCHALTER", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.ToggleOn;
+        }
+
+        if (combinedText.Contains("ACCESS", StringComparison.OrdinalIgnoreCase) ||
+            combinedText.Contains("ZUBEH", StringComparison.OrdinalIgnoreCase))
+        {
+            return Icons.Material.Filled.Extension;
+        }
+
+        return Icons.Material.Filled.Category;
+    }
+
+    private static string JoinCountries(IEnumerable<string> countryValues)
+    {
+        var countries = countryValues
+            .SelectMany(value => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .Select(FormatCountryWithFlag);
+
+        return string.Join(", ", countries);
+    }
+
+    private static string FormatCountriesWithFlags(string countries)
+        => string.IsNullOrWhiteSpace(countries)
+            ? "-"
+            : JoinCountries([countries]);
+
+    private static string FormatCountryWithFlag(string country)
+    {
+        if (string.IsNullOrWhiteSpace(country))
+            return "-";
+
+        var normalized = country.Trim().ToUpperInvariant();
+        if (normalized.Length != 2 || normalized.Any(character => character is < 'A' or > 'Z'))
+            return country;
+
+        var flag = string.Concat(normalized.Select(character => char.ConvertFromUtf32(0x1F1E6 + character - 'A')));
+        return $"{flag} {normalized}";
+    }
+
+    private void SetSelectedCentralAdditionalValueFields(IEnumerable<string> values)
+    {
+        _selectedCentralAdditionalValueFields = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string FormatAdditionalValue(ManagementCockpitTimeValueRow row, string fieldKey)
+    {
+        if (!row.AdditionalValues.TryGetValue(fieldKey, out var value))
+            return "-";
+
+        var formattedValue = FormatValue(value.Value, value.Currency);
+        return value.MissingExchangeRateCount == 0
+            ? formattedValue
+            : $"{formattedValue} / {value.MissingExchangeRateCount} ohne Kurs";
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private static int ResolveOverviewTabIndex(string? section)
+        => string.IsNullOrWhiteSpace(section)
+            ? ManagementOverviewTabIndexes.Quick
+            : section.ToLowerInvariant() switch
+            {
+                "decisions" => ManagementOverviewTabIndexes.Decisions,
+                "home" => ManagementOverviewTabIndexes.Quick,
+                _ => ManagementOverviewTabIndexes.Experts
+            };
+
+    private static class ManagementOverviewTabIndexes
+    {
+        public const int Quick = 0;
+        public const int Decisions = 1;
+        public const int Experts = 2;
+    }
+
+    private static class ProductFinanceGroupLevels
+    {
+        public const string Hierarchy = "hierarchy";
+        public const string Family = "family";
+        public const string Division = "division";
+    }
+
+    private static class ManagementFinanceTabIndexes
+    {
+        public const int Summary = 0;
+        public const int Pivot = 1;
+        public const int Countries = 2;
+        public const int Status = 3;
+        public const int Deviations = 4;
+        public const int Credits = 5;
+        public const int Quality = 6;
+        public const int Ledger = 7;
+        public const int Division = 8;
+        public const int GroupMargin = 9;
+        public const int ThreeD = 10;
+        public const int Raw = 11;
+    }
+
+    private static class Finance3dIndicators
+    {
+        public const string Actual = "actual";
+        public const string ActualExcludingIntercompany = "actualExcludingIntercompany";
+        public const string IntercompanyValue = "intercompanyValue";
+        public const string IntercompanyShare = "intercompanyShare";
+        public const string Quantity = "quantity";
+        public const string CreditValue = "creditValue";
+        public const string CreditRows = "creditRows";
+        public const string TotalRows = "totalRows";
+        public const string IncludedRows = "includedRows";
+        public const string ExcludedRows = "excludedRows";
+        public const string IncludeRate = "includeRate";
+        public const string ExcludeRate = "excludeRate";
+        public const string ReferenceValue = "referenceValue";
+        public const string Deviation = "deviation";
+        public const string DeviationPercent = "deviationPercent";
+    }
+
+    private static class Finance3dChartTypes
+    {
+        public const string Bar = "bar";
+        public const string Line = "line";
+        public const string Surface = "surface";
+        public const string Pie = "pie";
+        public const string DivisionPie = "divisionPie";
+    }
+
+    private sealed record ProductFinanceGroupingOption(string Key, string GermanLabel, string EnglishLabel);
+    private sealed record Finance3dIndicatorOption(string Key, string GermanLabel, string EnglishLabel);
+    private sealed record Finance3dChartTypeOption(string Key, string GermanLabel, string EnglishLabel);
+
+    private sealed record ProductFinanceGroupKey(
+        string ProductDivisionCode,
+        string ProductDivisionText,
+        string ProductFamilyCode,
+        string ProductFamilyText,
+        string ProductHierarchyCode,
+        string ProductHierarchyText,
+        string Currency);
+
+    private sealed record CurrencySelectOption(string Key, string Label);
+}

@@ -1,0 +1,304 @@
+let
+    // ===== REXX #757 LADEN =====
+    Src757 = Excel.Workbook(File.Contents("C:\temp\Saldiperstichdatum.xlsx"), null, true),
+    Data757 = Src757{0}[Data],
+    Head757 = Table.PromoteHeaders(Data757, [PromoteAllScalars = true]),
+
+    Ren757 = Table.RenameColumns(Head757, {
+        {"Personalnummer", "Personalnummer"},
+        {"Kürzel", "Kuerzel"},
+        {"Nachname, Vorname (Link Personal)", "Name_Rexx"},
+        {"Stelle", "Stelle_Rexx"},
+        {"Organisation", "Organisation_Text"},
+        {"Kostenstelle", "Kostenstelle_Rexx"},
+        {"Leitung j/n", "Leitung"},
+        {"Eintrittsdatum", "Eintrittsdatum_Raw"},
+        {"Personal Status", "Personal_Status"},
+        {"Anstellungsverhältnis", "Anstellungsverhaeltnis"},
+        {"Stunden Saldo", "Stunden_Saldo_Raw"},
+        {"Urlaubsanspruch", "Urlaubsanspruch_Raw"},
+        {"Urlaub Rest", "Urlaub_Rest_Raw"},
+        {"Ferien ausstehend (Tage)", "Ferien_Ausstehend_Raw"},
+        {"Lohnart", "Lohnart"},
+        {"Lohn", "Lohn_Raw"},
+        {"Lohn Währung", "Lohn_Waehrung"}
+    }),
+
+    TypePernr = Table.TransformColumnTypes(Ren757, {{"Personalnummer", Int64.Type}}),
+
+    AddKey = Table.AddColumn(TypePernr, "PERNR_Key", each Text.From([Personalnummer]), type text),
+
+    // Name_Voll früh erzeugen für Name-Join mit #732
+    AddNameVollEarly = Table.AddColumn(AddKey, "Name_Voll", each
+        Text.From(if [Name_Rexx] = null then "" else [Name_Rexx]), type text),
+
+    // ===== REXX #732 LADEN (Geburtsdatum + AZ-Modell) =====
+    // Hat keine Personalnummer → Join über Name
+    Tbl732 = try
+        let
+            S = Excel.Workbook(File.Contents("C:\temp\Exportkommengehen.xlsx"), null, true),
+            D = S{0}[Data],
+            H = Table.PromoteHeaders(D, [PromoteAllScalars = true]),
+            Sel = Table.SelectColumns(H, {
+                "Nachname, Vorname (Link Personal)",
+                "Geburtsdatum",
+                "Arbeitszeitmodell",
+                "Ø tägliche Sollarbeitszeit (Woche)"
+            }, MissingField.UseNull),
+            Ren = Table.RenameColumns(Sel, {
+                {"Nachname, Vorname (Link Personal)", "Name_732"},
+                {"Geburtsdatum", "Geburtsdatum_Raw"},
+                {"Arbeitszeitmodell", "Arbeitszeitmodell"},
+                {"Ø tägliche Sollarbeitszeit (Woche)", "Avg_Sollzeit_Tag_Raw"}
+            })
+        in Ren
+    otherwise null,
+
+    // Merge #757 + #732 ueber Name
+    Merged732 = if Tbl732 <> null then
+        let
+            M = Table.NestedJoin(AddNameVollEarly, {"Name_Voll"}, Tbl732, {"Name_732"}, "R732", JoinKind.LeftOuter),
+            E = Table.ExpandTableColumn(M, "R732", {"Geburtsdatum_Raw", "Arbeitszeitmodell", "Avg_Sollzeit_Tag_Raw"})
+        in E
+    else
+        let
+            A1 = Table.AddColumn(AddNameVollEarly, "Geburtsdatum_Raw", each null),
+            A2 = Table.AddColumn(A1, "Arbeitszeitmodell", each null, type text),
+            A3 = Table.AddColumn(A2, "Avg_Sollzeit_Tag_Raw", each null)
+        in A3,
+
+    // ===== SAP LADEN (HR_KPI_Export.xlsx) =====
+    TblSAP = try
+        let
+            S = Excel.Workbook(File.Contents("C:\temp\HR_KPI_Export.xlsx"), null, true),
+            D = S{0}[Data],
+            H = Table.PromoteHeaders(D, [PromoteAllScalars = true]),
+            Sel = Table.SelectColumns(H, {
+                "Personalnummer", "Buchungskreis", "Personalbereich", "Personalteilbereich",
+                "Mitarbeitergruppe", "Mitarbeiterkreis", "Teilzeitkraft",
+                "Beschäftigungsgrad %", "Geschlecht", "Planstelle", "Stellenschlüssel",
+                "Nichtberufsunfall Tage", "Berufsunfall Tage",
+                "Abrechnungskreis"
+            }, MissingField.UseNull),
+            Ren = Table.RenameColumns(Sel, {
+                {"Personalnummer", "PERNR_SAP"},
+                {"Teilzeitkraft", "Teilzeitkennzeichen"},
+                {"Beschäftigungsgrad %", "Beschaeftigungsgrad_Prozent"},
+                {"Stellenschlüssel", "Soll_Stelle"},
+                {"Nichtberufsunfall Tage", "NBU_Tage"},
+                {"Berufsunfall Tage", "BU_Tage"}
+            }, MissingField.Ignore),
+            // PERNR-Key normalisiert (entfernt fuehrende Nullen)
+            AddK = Table.AddColumn(Ren, "PERNR_SAP_Key", each
+                try Text.From(Number.FromText(Text.Trim(Text.From([PERNR_SAP])))) otherwise null,
+                type text)
+        in AddK
+    otherwise null,
+
+    // Merge + SAP
+    MergedSAP = if TblSAP <> null then
+        let
+            M = Table.NestedJoin(Merged732, {"PERNR_Key"}, TblSAP, {"PERNR_SAP_Key"}, "SAP", JoinKind.LeftOuter),
+            E = Table.ExpandTableColumn(M, "SAP", {
+                "Buchungskreis", "Personalbereich", "Personalteilbereich",
+                "Mitarbeitergruppe", "Mitarbeiterkreis", "Teilzeitkennzeichen",
+                "Beschaeftigungsgrad_Prozent", "Geschlecht", "Planstelle", "Soll_Stelle",
+                "NBU_Tage", "BU_Tage",
+                "Abrechnungskreis"
+            })
+        in E
+    else
+        let
+            A1 = Table.AddColumn(Merged732, "Buchungskreis", each null),
+            A2 = Table.AddColumn(A1, "Personalbereich", each null),
+            A3 = Table.AddColumn(A2, "Personalteilbereich", each null),
+            A4 = Table.AddColumn(A3, "Mitarbeitergruppe", each null),
+            A5 = Table.AddColumn(A4, "Mitarbeiterkreis", each null),
+            A6 = Table.AddColumn(A5, "Teilzeitkennzeichen", each null, type text),
+            A7 = Table.AddColumn(A6, "Beschaeftigungsgrad_Prozent", each null),
+            A8 = Table.AddColumn(A7, "Geschlecht", each null),
+            A9 = Table.AddColumn(A8, "Planstelle", each null),
+            A10 = Table.AddColumn(A9, "Soll_Stelle", each null, type text),
+            A11 = Table.AddColumn(A10, "NBU_Tage", each null),
+            A12 = Table.AddColumn(A11, "BU_Tage", each null),
+            A13 = Table.AddColumn(A12, "Abrechnungskreis", each null, type text)
+        in A13,
+
+    // ===== BERECHNETE SPALTEN =====
+
+    // Eintrittsdatum
+    AddEintritt = Table.AddColumn(MergedSAP, "Eintrittsdatum", each
+        let raw = [Eintrittsdatum_Raw] in
+        if raw = null then null
+        else if raw is date then raw
+        else if raw is datetime then Date.From(raw)
+        else try Date.FromText(Text.From(raw), [Format = "dd.MM.yyyy"]) otherwise null,
+        type date),
+
+    // Geburtsdatum
+    AddGebdat = Table.AddColumn(AddEintritt, "Geburtsdatum", each
+        let raw = [Geburtsdatum_Raw] in
+        if raw = null then null
+        else if raw is date then raw
+        else if raw is datetime then Date.From(raw)
+        else try Date.FromText(Text.From(raw), [Format = "dd.MM.yyyy"]) otherwise null,
+        type date),
+
+    // Numerische Konvertierungen
+    AddNum = Table.TransformColumnTypes(AddGebdat, {
+        {"Urlaubsanspruch_Raw", type number},
+        {"Urlaub_Rest_Raw", type number},
+        {"Ferien_Ausstehend_Raw", type number},
+        {"Lohn_Raw", type number},
+        {"Avg_Sollzeit_Tag_Raw", type number},
+        {"Beschaeftigungsgrad_Prozent", type number},
+        {"Geschlecht", Int64.Type},
+        {"NBU_Tage", type number},
+        {"BU_Tage", type number}
+    }),
+
+    RenNum = Table.RenameColumns(AddNum, {
+        {"Urlaubsanspruch_Raw", "Urlaubsanspruch"},
+        {"Urlaub_Rest_Raw", "Urlaub_Rest"},
+        {"Ferien_Ausstehend_Raw", "Ferien_Ausstehend"},
+        {"Lohn_Raw", "Bruttolohn"},
+        {"Avg_Sollzeit_Tag_Raw", "Avg_Sollzeit_Tag"}
+    }),
+
+    // Abrechnungskreis als Text sicherstellen (fuehrende Null bleibt erhalten)
+    TypAbkrs = Table.TransformColumnTypes(RenNum, {{"Abrechnungskreis", type text}}),
+
+    // Name splitten
+    AddNachname = Table.AddColumn(TypAbkrs, "Nachname", each
+        let n = Text.From(if [Name_Rexx] = null then "" else [Name_Rexx]) in
+        Text.Trim(Text.Split(n, ","){0}), type text),
+    AddVorname = Table.AddColumn(AddNachname, "Vorname", each
+        let n = Text.From(if [Name_Rexx] = null then "" else [Name_Rexx]),
+            p = Text.Split(n, ",") in
+        if List.Count(p) > 1 then Text.Trim(p{1}) else "", type text),
+
+    // Stunden_Saldo parsen: "58:10" → 58.17, "-6:12" → -6.20
+    AddSaldo = Table.AddColumn(AddVorname, "Stunden_Saldo", each
+        let
+            raw = Text.Trim(Text.From(if [Stunden_Saldo_Raw] = null then "0:00" else [Stunden_Saldo_Raw])),
+            isNeg = Text.StartsWith(raw, "-"),
+            cleaned = Text.Replace(raw, "-", ""),
+            parts = Text.Split(cleaned, ":"),
+            h = try Number.FromText(parts{0}) otherwise 0,
+            m = if List.Count(parts) > 1 then (try Number.FromText(parts{1}) otherwise 0) else 0,
+            dec = h + m / 60
+        in if isNeg then -dec else dec,
+        type number),
+
+    // FTE
+    AddFTE = Table.AddColumn(AddSaldo, "FTE", each
+        if [Beschaeftigungsgrad_Prozent] <> null and [Beschaeftigungsgrad_Prozent] > 0
+        then [Beschaeftigungsgrad_Prozent] / 100
+        else if [Arbeitszeitmodell] = "Vollzeit" then 1 else 0.5,
+        type number),
+
+    // Alter
+    AddAlter = Table.AddColumn(AddFTE, "Alter_Jahre", each
+        if [Geburtsdatum] = null then null
+        else Number.RoundDown(Duration.TotalDays(Date.From(DateTime.LocalNow()) - [Geburtsdatum]) / 365.25),
+        Int64.Type),
+
+    // Altersgruppe
+    AddAG = Table.AddColumn(AddAlter, "Altersgruppe", each
+        if [Alter_Jahre] = null then "Unbekannt"
+        else if [Alter_Jahre] < 30 then "< 30"
+        else if [Alter_Jahre] < 40 then "30-39"
+        else if [Alter_Jahre] < 50 then "40-49"
+        else if [Alter_Jahre] < 60 then "50-59"
+        else "60+", type text),
+
+    // Geschlecht Text
+    AddGT = Table.AddColumn(AddAG, "Geschlecht_Text", each
+        if [Geschlecht] = 1 then "Maennlich"
+        else if [Geschlecht] = 2 then "Weiblich"
+        else "Unbekannt", type text),
+
+    // Ist Teilzeit
+    AddTZ = Table.AddColumn(AddGT, "Ist_Teilzeit", each
+        if [Beschaeftigungsgrad_Prozent] <> null and [Beschaeftigungsgrad_Prozent] > 0
+        then [Beschaeftigungsgrad_Prozent] < 100
+        else if [Arbeitszeitmodell] <> null then [Arbeitszeitmodell] = "Teilzeit"
+        else false, type logical),
+
+    // Dienstjahre
+    AddDJ = Table.AddColumn(AddTZ, "Dienstjahre", each
+        if [Eintrittsdatum] = null then null
+        else Number.RoundDown(Duration.TotalDays(Date.From(DateTime.LocalNow()) - [Eintrittsdatum]) / 365.25),
+        Int64.Type),
+
+    // Ist Aktiv
+    AddAktiv = Table.AddColumn(AddDJ, "Ist_Aktiv", each [Personal_Status] = "Aktiv", type logical),
+
+    // Periode
+    AddPeriode = Table.AddColumn(AddAktiv, "Periode", each Date.StartOfMonth(Date.From(DateTime.LocalNow())), type date),
+    AddJahr = Table.AddColumn(AddPeriode, "Jahr", each Date.Year([Periode]), Int64.Type),
+    AddMonat = Table.AddColumn(AddJahr, "Monat", each Date.Month([Periode]), Int64.Type),
+    AddPT = Table.AddColumn(AddMonat, "Periode_Text", each
+        Text.From([Jahr]) & "-" & Text.PadStart(Text.From([Monat]), 2, "0"), type text),
+
+    // Sollarbeitstage
+    AddSAT = Table.AddColumn(AddPT, "Sollarbeitstage", each 21, Int64.Type),
+
+    // Ferien bezogen
+    AddFB = Table.AddColumn(AddSAT, "Ferien_Bezogen", each
+        let a = if [Urlaubsanspruch] = null then 0 else [Urlaubsanspruch],
+            r = if [Urlaub_Rest] = null then 0 else [Urlaub_Rest],
+            au = if [Ferien_Ausstehend] = null then 0 else [Ferien_Ausstehend]
+        in a - r - au, type number),
+    AddFT = Table.AddColumn(AddFB, "Ferientage", each
+        let fb = [Ferien_Bezogen] in if fb = null or fb < 0 then 0 else fb, type number),
+
+    // GLZ Ampel
+    AddGLZ = Table.AddColumn(AddFT, "GLZ_Ampel", each
+        let abs = Number.Abs([Stunden_Saldo]) in
+        if abs <= 50 then "Gruen" else if abs <= 100 then "Gelb" else "Rot", type text),
+    AddGLZS = Table.AddColumn(AddGLZ, "GLZ_Ampel_Sort", each
+        if [GLZ_Ampel] = "Gruen" then 1 else if [GLZ_Ampel] = "Gelb" then 2 else 3, Int64.Type),
+
+    // Restferien Ampel
+    AddRA = Table.AddColumn(AddGLZS, "Restferien_Ampel", each
+        if [Urlaub_Rest] = null or [Urlaub_Rest] <= 5 then "Gruen" else "Rot", type text),
+
+    // Mitarbeitertyp
+    AddMT = Table.AddColumn(AddRA, "Mitarbeitertyp", each
+        let s = Text.Lower(Text.From(if [Stelle_Rexx] = null then "" else [Stelle_Rexx])) in
+        if Text.Contains(s, "praktik") then "Praktikant"
+        else if Text.Contains(s, "werkstudent") then "Werkstudent"
+        else if Text.Contains(s, "aushilfe") then "Aushilfe"
+        else if Text.Contains(s, "lehrling") then "Lehrling"
+        else "Festangestellt", type text),
+
+    // Kostenstelle
+    AddKNr = Table.AddColumn(AddMT, "Kostenstelle", each
+        let raw = Text.From(if [Kostenstelle_Rexx] = null then "" else [Kostenstelle_Rexx]),
+            parts = Text.Split(raw, "/"),
+            num = Text.Trim(parts{0})
+        in try Number.FromText(num) otherwise null, Int64.Type),
+    AddKTxt = Table.AddColumn(AddKNr, "Kostenstelle_Text", each
+        if [Kostenstelle_Rexx] = null then "" else Text.From([Kostenstelle_Rexx]), type text),
+
+    // Organisation + Stelle Klartext
+    AddOrg = Table.AddColumn(AddKTxt, "Organisationseinheit", each
+        if [Organisation_Text] = null then "" else Text.From([Organisation_Text]), type text),
+    AddSt = Table.AddColumn(AddOrg, "Stelle", each
+        if [Stelle_Rexx] = null then "" else Text.From([Stelle_Rexx]), type text),
+
+    // Nur aktive MA
+    FilterAktiv = Table.SelectRows(AddSt, each [Personal_Status] = "Aktiv"),
+
+    // Hilfsspalten entfernen
+    Clean = Table.RemoveColumns(FilterAktiv, {
+        "Name_Rexx", "Stelle_Rexx", "Organisation_Text",
+        "Kostenstelle_Rexx", "Eintrittsdatum_Raw", "Geburtsdatum_Raw",
+        "Stunden_Saldo_Raw", "Personal_Status", "PERNR_Key"
+    }),
+
+    // Sortieren
+    Sorted = Table.Sort(Clean, {{"Personalnummer", Order.Ascending}})
+in
+    Sorted

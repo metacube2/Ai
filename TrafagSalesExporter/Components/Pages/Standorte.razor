@@ -1,0 +1,1299 @@
+﻿@page "/standorte"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+@using System.Reflection
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IStandortePageService StandortePageService
+@inject IStandorteSapEditorService SapEditorService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Standorte</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Standorte</MudText>
+
+<MudText Typo="Typo.h5" Class="mb-2">Zentrale HANA-Technik</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+        Hier erscheinen nur Quellsysteme mit Anschlussart HANA. SAP wird zentral unter Settings -> Quellsysteme gepflegt.
+        Standorte mit `BI1` oder `SAGE` verwenden diese technischen HANA-Werte automatisch. Im Standort selbst bleiben nur Schema, TSC, Land und optionale Username-/Password-Overrides.
+    </MudAlert>
+    <MudText Typo="Typo.body2" Class="mb-3">
+        Neue HANA-Zeilen entstehen aus den zentral gepflegten Quellsystemen. Falls hier etwas fehlt, lege das Quellsystem in Settings -> Quellsysteme mit Anschlussart `HANA` an.
+    </MudText>
+
+    <MudTable Items="_servers" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Quellsystem</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Host</MudTh>
+            <MudTh>Port</MudTh>
+            <MudTh>Verbindungsstatus</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.SourceSystem</MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Host</MudTd>
+            <MudTd>@context.Port</MudTd>
+            <MudTd>
+                @if (_connectionStatus.TryGetValue(context.Id, out var status))
+                {
+                    <MudTooltip Text="@BuildStatusTooltip(status)">
+                        <MudChip T="string" Color="@(status.Success ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Small">
+                            @(status.Success ? "OK" : "Fehler") - @status.Stage
+                        </MudChip>
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Nicht getestet</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditServer(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck" Size="Size.Small" Color="Color.Info"
+                               OnClick="() => TestServerConnection(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteServer(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+<MudText Typo="Typo.h5" Class="mb-2">Standorte (Sites)</MudText>
+<MudPaper Class="pa-4" Elevation="1">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="AddSite" Class="mb-3">
+        Neuen Standort hinzufÃ¼gen
+    </MudButton>
+
+    <MudTable Items="_sites" Dense Hover Striped>
+        <HeaderContent>
+            <MudTh>Land</MudTh>
+            <MudTh>TSC</MudTh>
+            <MudTh>Schema</MudTh>
+            <MudTh>Quellsystem</MudTh>
+            <MudTh>Quelle</MudTh>
+            <MudTh>Aktiv</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Land</MudTd>
+            <MudTd>@context.TSC</MudTd>
+            <MudTd>@context.Schema</MudTd>
+            <MudTd>
+                <MudTooltip Text="@GetConnectionKindTooltip(context)">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetConnectionKindColor(context)"
+                             Icon="@GetConnectionKindIcon(context)">
+                        @context.SourceSystem
+                    </MudChip>
+                </MudTooltip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                    <MudTooltip Text="@GetConnectionKindTooltip(context)">
+                        <MudIcon Icon="@GetConnectionKindIcon(context)" Color="@GetConnectionKindColor(context)" Size="Size.Small" />
+                    </MudTooltip>
+                    <span>@GetConnectionTarget(context)</span>
+                </MudStack>
+            </MudTd>
+            <MudTd>
+                @if (context.IsActive)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" />
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                               OnClick="() => EditSite(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="() => DeleteSite(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+<MudDialog @bind-Visible="_serverDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Zentrale HANA-Technik bearbeiten</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Value="_editingServer.SourceSystem" Label="Quellsystem" ReadOnly />
+        <MudTextField @bind-Value="_editingServer.Name" Label="Name" Required />
+        <MudTextField @bind-Value="_editingServer.Host" Label="Host" Required
+                      HelperText="IP oder Hostname (ohne Protokoll)" />
+        <MudNumericField @bind-Value="_editingServer.Port" Label="Port"
+                         HelperText="Typisch 30015 (Tenant), 30013 (SystemDB), 3xx15 fÃ¼r Instanz xx" />
+        <MudTextField @bind-Value="_editingServer.DatabaseName" Label="Database Name (MDC)"
+                      HelperText="Nur bei Multi-Tenant Setup angeben, sonst leer lassen" />
+        <MudSwitch @bind-Value="_editingServer.UseSsl" Label="SSL/TLS verwenden (encrypt=true)" Color="Color.Primary" />
+        <MudSwitch @bind-Value="_editingServer.ValidateCertificate" Label="SSL-Zertifikat validieren" Color="Color.Primary"
+                   Disabled="!_editingServer.UseSsl" />
+        <MudTextField @bind-Value="_editingServer.AdditionalParams" Label="ZusÃ¤tzliche Parameter"
+                      HelperText="Optional, z.B. sslCryptoProvider=openssl;communicationTimeout=0" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseServerDialog">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveServer" Disabled="_savingServer">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="_siteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingSite.Id == 0 ? "Standort hinzufÃ¼gen" : "Standort bearbeiten")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editingSite.Schema" Label="Schema" Required />
+        @if (UsesHanaConnection())
+        {
+            <MudStack Row Spacing="2" Class="mb-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="LoadAvailableSchemasAsync"
+                           Disabled="_loadingSchemas">
+                    @if (_loadingSchemas)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade Schemas...")
+                    }
+                    else
+                    {
+                        @("Schemas laden")
+                    }
+                </MudButton>
+                @if (_availableSchemas.Count > 0)
+                {
+                    <MudSelect T="string" Value="_editingSite.Schema"
+                               ValueChanged="OnSchemaSelected"
+                               Label="Gefundene Schemas"
+                               Dense
+                               Style="min-width: 260px;">
+                        @foreach (var schema in _availableSchemas)
+                        {
+                            <MudSelectItem Value="@schema">@schema</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Die Liste wird aus der zentralen HANA-Verbindung des Quellsystems gelesen und auf typische B1-Schemas eingeschraenkt.
+            </MudText>
+        }
+        <MudTextField @bind-Value="_editingSite.TSC" Label="TSC" Required />
+        <MudTextField @bind-Value="_editingSite.Land" Label="Land" Required />
+        <MudSelect T="string" Value="_editingSite.SourceSystem" ValueChanged="OnSourceSystemChanged" Label="Quellsystem" Required>
+            @foreach (var system in GetAvailableSourceSystems())
+            {
+                <MudSelectItem Value="@system.Code">@GetSourceSystemLabel(system)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_editingSite.UsernameOverride" Label="Username Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Username des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.PasswordOverride" Label="Password Override" InputType="InputType.Password"
+                      HelperText="Optional. Wenn leer, wird das zentrale Passwort des Quellsystems verwendet." />
+        <MudTextField @bind-Value="_editingSite.LocalExportFolderOverride" Label="Lokaler Exportpfad Override"
+                      HelperText="Optional. Wenn leer, wird der zentrale Standardpfad fÃ¼r Standort-Dateien verwendet." />
+        <MudCheckBox @bind-Value="_editingSite.IsActive" Label="Aktiv" />
+
+        <MudDivider Class="my-4" />
+
+        @if (IsMappedSourceSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">@GetMappingSectionTitle()</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Quellen und Feldmappings werden grafisch gepflegt. Bei SAP OData sind Quellen Entity Sets; bei HANA sind Quellen Tabellen oder Views im gewaehlten Schema.
+            </MudAlert>
+            @if (IsSapSite())
+            {
+                <MudText Typo="Typo.body2">Zentrale SAP Service URL: @GetCentralSapServiceUrlSummary(_editingSite.SourceSystem)</MudText>
+                <MudTextField @bind-Value="_editingSite.SapServiceUrl" Label="SAP Service URL Override"
+                              HelperText="Optional. Wenn leer, wird die zentrale SAP Service URL des Quellsystems verwendet." />
+            }
+            else
+            {
+                <MudText Typo="Typo.body2">Zentrale HANA-Verbindung: @GetCentralHanaSummary(_editingSite.SourceSystem)</MudText>
+            }
+            <MudStack Row Spacing="2" Class="mb-3">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshSapEntitySets"
+                           StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingSapEntitySets">
+                    @if (_refreshingSapEntitySets)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @("Lade...")
+                    }
+                    else
+                    {
+                        @(IsSapSite() ? "Entity Sets refreshen" : "Tabellen/Views refreshen")
+                    }
+                </MudButton>
+                @if (_editingSite.SapEntitySetsRefreshedAtUtc.HasValue)
+                {
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        Letzter Refresh: @_editingSite.SapEntitySetsRefreshedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                    </MudText>
+                }
+            </MudStack>
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Quellen</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapSource">Quelle hinzufÃ¼gen</MudButton>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Pro Quelle Alias und Entity Set bzw. HANA Tabelle/View definieren. Joins verwenden links/rechts kommagetrennte Schluesselfelder wie `VBELN,POSNR`. Feldmappings erwarten `Alias.Feldname` oder Konstanten wie `=SAP` / `=HANA`.
+            </MudText>
+            <MudTable Items="_sapSources" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Alias</MudTh>
+                    <MudTh>@(IsSapSite() ? "Entity Set" : "Tabelle/View")</MudTh>
+                    <MudTh>PrimÃ¤r</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.Alias" Dense /></MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.EntitySet" Dense>
+                            @foreach (var entitySet in _sapEntitySetsCache)
+                            {
+                                <MudSelectItem Value="@entitySet">@entitySet</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsPrimary" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapSource(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">SAP Joins</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="AutoMatchSapJoins">
+                        Auto-Match
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapJoin">Join hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudTable Items="_sapJoins" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Links</MudTh>
+                    <MudTh>Left Keys</MudTh>
+                    <MudTh>Rechts</MudTh>
+                    <MudTh>Right Keys</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.LeftAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.LeftKeys)"
+                                   SelectedValuesChanged="@(values => context.LeftKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.LeftAlias, context.LeftKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.RightAlias" Dense>
+                            @foreach (var alias in GetSapAliases())
+                            {
+                                <MudSelectItem Value="@alias">@alias</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string"
+                                   SelectedValues="GetSelectedJoinKeys(context.RightKeys)"
+                                   SelectedValuesChanged="@(values => context.RightKeys = string.Join(',', values))"
+                                   MultiSelection="true"
+                                   Dense>
+                            @foreach (var field in GetAvailableJoinFields(context.RightAlias, context.RightKeys))
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.JoinType" Dense>
+                            <MudSelectItem Value="@("Left")">Left</MudSelectItem>
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapJoin(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Feldmappings ins zentrale Schema</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Schema"
+                               OnClick="RefreshSapSourceFields" Disabled="_refreshingSapSourceFields">
+                        @if (_refreshingSapSourceFields)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                            @("Lade Felder...")
+                        }
+                        else
+                        {
+                            @("Felder aus Quellen laden")
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSapMapping">Mapping hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Source Expressions werden aus den hinzugefuegten Quellen als `Alias.Feldname` gelesen. Vorhandene manuelle Werte bleiben auswaehlbar.
+            </MudText>
+            <MudTable Items="_sapMappings" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Zielfeld</MudTh>
+                    <MudTh>Source Expression</MudTh>
+                    <MudTh>Pflicht</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.TargetField" Dense>
+                            @foreach (var field in _salesRecordFields)
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="context.SourceExpression" Dense>
+                            @foreach (var expression in GetAvailableSourceExpressions(context.SourceExpression))
+                            {
+                                <MudSelectItem Value="@expression">@expression</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSapMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else if (IsManualExcelSite())
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">Manueller Excel-/CSV-Import</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                FÃ¼r diesen Standort wird keine SAP- oder HANA-Verbindung verwendet. Es wird die hier hinterlegte Excel-/CSV-Datei gelesen und in `CentralSalesRecords` Ã¼bernommen.
+            </MudAlert>
+            <MudTextField @bind-Value="_editingSite.ManualImportFilePath" Label="Excel-/CSV-Dateipfad"
+                          HelperText="Unterstuetzt lokale Pfade, UNC-Pfade, SharePoint-Dateien und SharePoint-Ordner. Bei Ordnern wird die neueste passende Excel-/CSV-Datei geladen."
+                          Class="mb-2" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateManualImportPathAsync"
+                       Disabled="_uploadingManualImport" Class="mb-3">
+                Pfad pruefen
+            </MudButton>
+            <InputFile OnChange="UploadManualImportFileAsync" accept=".xlsx,.csv" />
+            @if (_uploadingManualImport)
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Datei wird hochgeladen...</MudText>
+            }
+            @if (!string.IsNullOrWhiteSpace(_editingSite.ManualImportFilePath))
+            {
+                <MudPaper Class="pa-3 mt-3" Elevation="0">
+                    <MudText Typo="Typo.body2">Datei: @_editingSite.ManualImportFilePath</MudText>
+                    <MudText Typo="Typo.caption">
+                        Letzter Upload: @(_editingSite.ManualImportLastUploadedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
+                    </MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="mt-2">Noch keine Datei hinterlegt.</MudText>
+            }
+
+            <MudDivider Class="my-4" />
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Excel-Spaltenmapping</MudText>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Schema"
+                               OnClick="LoadManualExcelHeadersAsync" Disabled="_loadingManualExcelHeaders">
+                        @if (_loadingManualExcelHeaders)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                            @("Lade Spalten...")
+                        }
+                        else
+                        {
+                            @("Spalten aus Excel laden")
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="AutoMatchManualExcelMappings">
+                        Auto-Match
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddManualExcelMapping">Mapping hinzufÃ¼gen</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudText Typo="Typo.caption" Class="mb-2">
+                Wenn hier Mappings gepflegt sind, werden diese vor dem Standardformat verwendet. Konstanten sind mit `=Wert` moeglich, z. B. `=Manual Excel`.
+            </MudText>
+            <MudTable Items="_manualExcelMappings" Dense Hover Striped>
+                <HeaderContent>
+                    <MudTh>Zielfeld</MudTh>
+                    <MudTh>Excel-Spalte / Konstante</MudTh>
+                    <MudTh>Pflicht</MudTh>
+                    <MudTh>Aktiv</MudTh>
+                    <MudTh>Aktionen</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect @bind-Value="context.TargetField" Dense>
+                            @foreach (var field in _salesRecordFields)
+                            {
+                                <MudSelectItem Value="@field">@field</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="context.SourceHeader" Dense>
+                            @foreach (var header in GetAvailableManualExcelHeaders(context.SourceHeader))
+                            {
+                                <MudSelectItem Value="@header">@header</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveManualExcelMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">HANA-Verbindung</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Die technische HANA-Verbindung kommt aus der zentralen HANA-Konfiguration des Quellsystems. Im Standort selbst pflegst du nur fachliche Standortdaten und optionale Username-/Password-Overrides.
+            </MudAlert>
+            <MudText Typo="Typo.body2">Aktive Zentralverbindung: @GetCentralHanaSummary(_editingSite.SourceSystem)</MudText>
+            <MudText Typo="Typo.caption" Class="mt-2">
+                Host, Port, SSL und technische Parameter bearbeitest du oben in der zentralen HANA-Konfiguration.
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseSiteDialog" Disabled="_savingSite || _uploadingManualImport || _loadingManualExcelHeaders">Abbrechen</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSite" Disabled="_savingSite || _refreshingSapEntitySets || _uploadingManualImport || _loadingManualExcelHeaders">Speichern</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private readonly Dictionary<int, ConnectionTestResult> _connectionStatus = new();
+    private List<HanaServer> _servers = new();
+    private List<Site> _sites = new();
+    private List<SourceSystemDefinition> _sourceSystemDefinitions = new();
+    private List<string> _sapEntitySetsCache = [];
+    private List<string> _availableSchemas = [];
+    private List<string> _sapAvailableSourceExpressions = [];
+    private Dictionary<string, List<string>> _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
+    private List<SapSourceDefinition> _sapSources = [];
+    private List<SapJoinDefinition> _sapJoins = [];
+    private List<SapFieldMapping> _sapMappings = [];
+    private List<ManualExcelColumnMapping> _manualExcelMappings = [];
+    private List<string> _manualExcelHeaders = [];
+    private readonly string[] _salesRecordFields = typeof(SalesRecord)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Select(p => p.Name)
+        .ToArray();
+    private HanaServer _editingServer = new();
+    private Site _editingSite = new();
+    private bool _serverDialogVisible;
+    private bool _siteDialogVisible;
+    private bool _refreshingSapEntitySets;
+    private bool _refreshingSapSourceFields;
+    private bool _savingServer;
+    private bool _savingSite;
+    private bool _loadingSchemas;
+    private bool _uploadingManualImport;
+    private bool _loadingManualExcelHeaders;
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var state = await StandortePageService.LoadAsync();
+        _sourceSystemDefinitions = state.SourceSystems;
+        _servers = state.Servers;
+        _sites = state.Sites;
+    }
+
+    private void EditServer(HanaServer server)
+    {
+        _editingServer = CloneServer(server);
+        _serverDialogVisible = true;
+    }
+
+    private async Task SaveServer()
+    {
+        if (_savingServer)
+            return;
+
+        _savingServer = true;
+        try
+        {
+            await StandortePageService.SaveServerAsync(_editingServer, GetHanaSourceSystemCodes());
+            _serverDialogVisible = false;
+            await LoadDataAsync();
+            Snackbar.Add("Server gespeichert", Severity.Success);
+        }
+        finally
+        {
+            _savingServer = false;
+        }
+    }
+
+    private async Task DeleteServer(HanaServer server)
+    {
+        if (IsHanaSourceSystem(server.SourceSystem))
+        {
+            Snackbar.Add($"Die zentrale HANA-Konfiguration fuer {server.SourceSystem} kann nicht geloescht werden.", Severity.Warning);
+            return;
+        }
+
+        var result = await DialogService.ShowMessageBox(
+            "Server lÃ¶schen",
+            $"Server '{server.Name}' wirklich lÃ¶schen?",
+            yesText: "LÃ¶schen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        try
+        {
+            await StandortePageService.DeleteServerAsync(server);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Server konnte nicht gelÃ¶scht werden: {ex.Message}", Severity.Error);
+            return;
+        }
+
+        await LoadDataAsync();
+        Snackbar.Add("Server gelÃ¶scht", Severity.Info);
+    }
+
+    private async Task TestServerConnection(HanaServer server)
+    {
+        try
+        {
+            var result = await StandortePageService.TestServerConnectionAsync(server);
+            _connectionStatus[server.Id] = result;
+            Snackbar.Add(
+                result.Success
+                    ? $"Verbindung zu '{server.Name}' erfolgreich."
+                    : $"{server.Name}: {result.ExceptionType} - {result.ErrorMessage}",
+                result.Success ? Severity.Success : Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private static string BuildStatusTooltip(ConnectionTestResult status)
+    {
+        var stamp = status.TestedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        if (status.Success)
+            return $"Letzter Test: {stamp}\nStage: {status.Stage}\n{status.ConnectionStringPreview}";
+
+        return $"Letzter Test: {stamp}\nStage: {status.Stage}\nFehler: {status.ErrorMessage}\n{status.ConnectionStringPreview}";
+    }
+
+    private void AddSite()
+    {
+        _editingSite = new Site
+        {
+            IsActive = true,
+            SourceSystem = GetAvailableSourceSystems().FirstOrDefault()?.Code ?? "SAP",
+            HanaServerId = null,
+            ManualImportFilePath = string.Empty
+        };
+        _availableSchemas = [];
+        _sapEntitySetsCache = [];
+        _sapAvailableSourceExpressions = [];
+        _sapSourceFieldMap = new(StringComparer.OrdinalIgnoreCase);
+        _sapSources = [];
+        _sapJoins = [];
+        _sapMappings = [];
+        _manualExcelMappings = [];
+        _manualExcelHeaders = [];
+        _siteDialogVisible = true;
+    }
+
+    private void EditSite(Site site)
+    {
+        _ = EditSiteAsync(site);
+    }
+
+    private async Task EditSiteAsync(Site site)
+    {
+        var editorState = await StandortePageService.LoadSiteEditorAsync(site, GetAvailableSourceSystems());
+        _editingSite = editorState.Site;
+        _availableSchemas = [];
+        _sapEntitySetsCache = editorState.SapEntitySets;
+        _sapSources = editorState.SapSources;
+        _sapJoins = editorState.SapJoins;
+        _sapMappings = editorState.SapMappings;
+        _manualExcelMappings = editorState.ManualExcelMappings;
+        _manualExcelHeaders = BuildHeadersFromManualExcelMappings();
+        _sapAvailableSourceExpressions = BuildSourceExpressionsFromMappings();
+        _sapSourceFieldMap = BuildSourceFieldMapFromJoins();
+        _siteDialogVisible = true;
+    }
+
+    private async Task SaveSite()
+    {
+        if (_savingSite)
+            return;
+
+        _savingSite = true;
+        try
+        {
+            await StandortePageService.SaveSiteAsync(_editingSite, UsesHanaConnection(), IsMappedSourceSite(), IsManualExcelSite(), _sapSources, _sapJoins, _sapMappings, _manualExcelMappings, _sapEntitySetsCache);
+            _siteDialogVisible = false;
+            await LoadDataAsync();
+            Snackbar.Add("Standort gespeichert", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Speichern fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _savingSite = false;
+        }
+    }
+
+    private async Task DeleteSite(Site site)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Standort lÃ¶schen",
+            $"Standort '{site.Land}' wirklich lÃ¶schen?",
+            yesText: "LÃ¶schen", cancelText: "Abbrechen");
+
+        if (result != true) return;
+
+        try
+        {
+            await StandortePageService.DeleteSiteAsync(site);
+            await LoadDataAsync();
+            Snackbar.Add("Standort geloescht", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Standort konnte nicht geloescht werden: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static string GetServerNode(HanaServer? server)
+    {
+        if (server is null || string.IsNullOrWhiteSpace(server.Host))
+            return "-";
+
+        return server.Host.Contains(':', StringComparison.Ordinal) ? server.Host : $"{server.Host}:{server.Port}";
+    }
+
+    private static HanaServer CloneServer(HanaServer server)
+    {
+        return new HanaServer
+        {
+            Id = server.Id,
+            SourceSystem = server.SourceSystem,
+            Name = server.Name,
+            Host = server.Host,
+            Port = server.Port,
+            Username = string.Empty,
+            Password = string.Empty,
+            DatabaseName = server.DatabaseName,
+            UseSsl = server.UseSsl,
+            ValidateCertificate = server.ValidateCertificate,
+            AdditionalParams = server.AdditionalParams
+        };
+    }
+
+    private Task OnSchemaSelected(string schema)
+    {
+        _editingSite.Schema = schema;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSourceSystemChanged(string value)
+    {
+        _editingSite.SourceSystem = value;
+        _availableSchemas = [];
+        return Task.CompletedTask;
+    }
+
+    private IEnumerable<SourceSystemDefinition> GetAvailableSourceSystems()
+        => _sourceSystemDefinitions
+            .Where(x => x.IsActive || string.Equals(x.Code, _editingSite.SourceSystem, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.DisplayName)
+            .ThenBy(x => x.Code);
+
+    private List<string> GetHanaSourceSystemCodes()
+        => _sourceSystemDefinitions
+            .Where(x => string.Equals(x.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Code)
+            .OrderBy(x => x)
+            .ToList();
+
+    private string GetSourceSystemConnectionKind(string? sourceSystem)
+        => _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase))
+            ?.ConnectionKind
+            ?? SourceSystemConnectionKinds.SapGateway;
+
+    private bool IsHanaSourceSystem(string? sourceSystem)
+        => string.Equals(GetSourceSystemConnectionKind(sourceSystem), SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsSapSite()
+        => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsMappedSourceSite()
+        => IsSapSite() || UsesHanaConnection();
+
+    private bool IsManualExcelSite()
+        => string.Equals(GetSourceSystemConnectionKind(_editingSite.SourceSystem), SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase);
+
+    private bool UsesHanaConnection() => IsHanaSourceSystem(_editingSite.SourceSystem);
+
+    private string GetMappingSectionTitle()
+        => IsSapSite() ? "SAP OData Mapping" : "HANA Quellen und Feldmapping";
+
+    private string GetSourceSystemLabel(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.DisplayName) ? definition.Code : $"{definition.DisplayName} ({definition.Code})";
+
+    private string GetConnectionTarget(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return GetEffectiveSapServiceUrl(site);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(site.ManualImportFilePath) ? "-" : Path.GetFileName(site.ManualImportFilePath);
+
+        return GetServerNode(site.HanaServer);
+    }
+
+    private string GetConnectionKindIcon(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.UploadFile;
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return Icons.Material.Filled.CloudSync;
+
+        return Icons.Material.Filled.Storage;
+    }
+
+    private Color GetConnectionKindColor(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return Color.Info;
+
+        return Color.Primary;
+    }
+
+    private string GetConnectionKindTooltip(Site site)
+    {
+        var connectionKind = GetSourceSystemConnectionKind(site.SourceSystem);
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase))
+            return "Manual Excel / CSV";
+        if (string.Equals(connectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return "SAP OData Server";
+
+        return "HANA / Server";
+    }
+
+    private string GetEffectiveSapServiceUrl(Site site)
+    {
+        if (!string.IsNullOrWhiteSpace(site.SapServiceUrl))
+            return site.SapServiceUrl;
+
+        var sourceDefinition = _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
+
+        return string.IsNullOrWhiteSpace(sourceDefinition?.CentralServiceUrl) ? "-" : sourceDefinition.CentralServiceUrl;
+    }
+
+    private string GetCentralSapServiceUrlSummary(string sourceSystem)
+    {
+        var sourceDefinition = _sourceSystemDefinitions
+            .FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase));
+
+        return string.IsNullOrWhiteSpace(sourceDefinition?.CentralServiceUrl) ? "-" : sourceDefinition.CentralServiceUrl;
+    }
+
+    private string GetCentralHanaSummary(string sourceSystem)
+    {
+        var normalizedSourceSystem = string.IsNullOrWhiteSpace(sourceSystem) ? string.Empty : sourceSystem.Trim().ToUpperInvariant();
+        var centralServer = _servers.FirstOrDefault(x => x.SourceSystem == normalizedSourceSystem);
+        if (centralServer is null || string.IsNullOrWhiteSpace(centralServer.Host))
+            return $"keine zentrale HANA-Konfiguration fuer {normalizedSourceSystem}";
+
+        return $"{centralServer.Name} | {GetServerNode(centralServer)}";
+    }
+
+    private async Task LoadAvailableSchemasAsync()
+    {
+        if (_loadingSchemas)
+            return;
+
+        _loadingSchemas = true;
+        try
+        {
+            _availableSchemas = await StandortePageService.LoadAvailableSchemasAsync(_editingSite);
+
+            if (_availableSchemas.Count == 0)
+            {
+                Snackbar.Add("Keine passenden Schemas gefunden.", Severity.Info);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_editingSite.Schema) ||
+                !_availableSchemas.Contains(_editingSite.Schema, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.Schema = _availableSchemas[0];
+            }
+
+            Snackbar.Add($"{_availableSchemas.Count} Schemas geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Schemas laden fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingSchemas = false;
+        }
+    }
+
+    private async Task RefreshSapEntitySets()
+    {
+        if (_refreshingSapEntitySets)
+            return;
+
+        _refreshingSapEntitySets = true;
+        try
+        {
+            var result = await StandortePageService.RefreshSapEntitySetsAsync(_editingSite);
+            _sapEntitySetsCache = result.EntitySets;
+            _editingSite.SapEntitySetsCache = SerializeSapEntitySets(result.EntitySets);
+            _editingSite.SapEntitySetsRefreshedAtUtc = result.RefreshedAtUtc;
+
+            if (!string.IsNullOrWhiteSpace(_editingSite.SapEntitySet) &&
+                !_sapEntitySetsCache.Contains(_editingSite.SapEntitySet, StringComparer.OrdinalIgnoreCase))
+            {
+                _editingSite.SapEntitySet = string.Empty;
+            }
+
+            Snackbar.Add($"{result.EntitySets.Count} SAP Entity Sets geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshingSapEntitySets = false;
+        }
+    }
+
+    private void CloseServerDialog()
+    {
+        if (_savingServer)
+            return;
+
+        _serverDialogVisible = false;
+    }
+
+    private void CloseSiteDialog()
+    {
+        if (_savingSite || _refreshingSapEntitySets || _uploadingManualImport || _loadingManualExcelHeaders)
+            return;
+
+        _siteDialogVisible = false;
+    }
+
+    private async Task UploadManualImportFileAsync(InputFileChangeEventArgs args)
+    {
+        if (_uploadingManualImport)
+            return;
+
+        var file = args.File;
+        if (file is null)
+            return;
+
+        _uploadingManualImport = true;
+        try
+        {
+            var extension = Path.GetExtension(file.Name);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(extension, ".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Bitte eine Excel- oder CSV-Datei mit Endung .xlsx oder .csv auswaehlen.");
+            }
+
+            var uploadDirectory = Path.Combine(AppContext.BaseDirectory, "manual-imports");
+            Directory.CreateDirectory(uploadDirectory);
+
+            var safeBaseName = string.Concat(Path.GetFileNameWithoutExtension(file.Name).Select(ch =>
+                char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' ? ch : '_'));
+            if (string.IsNullOrWhiteSpace(safeBaseName))
+                safeBaseName = "manual_import";
+
+            var targetPath = Path.Combine(uploadDirectory, $"{safeBaseName}_{Guid.NewGuid():N}{extension}");
+
+            await using (var sourceStream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024))
+            await using (var targetStream = File.Create(targetPath))
+            {
+                await sourceStream.CopyToAsync(targetStream);
+            }
+
+            _editingSite.ManualImportFilePath = targetPath;
+            _editingSite.ManualImportLastUploadedAtUtc = DateTime.UtcNow;
+            Snackbar.Add("Excel-Datei hochgeladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _uploadingManualImport = false;
+        }
+    }
+
+    private async Task ValidateManualImportPathAsync()
+    {
+        try
+        {
+            _editingSite.ManualImportLastUploadedAtUtc = await StandortePageService.ValidateManualImportPathAsync(_editingSite.ManualImportFilePath);
+            Snackbar.Add("Dateipfad ist gueltig und die Excel-Datei ist erreichbar.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Pfadpruefung fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadManualExcelHeadersAsync()
+    {
+        if (_loadingManualExcelHeaders)
+            return;
+
+        _loadingManualExcelHeaders = true;
+        try
+        {
+            _manualExcelHeaders = await StandortePageService.LoadManualExcelHeadersAsync(_editingSite.ManualImportFilePath);
+            Snackbar.Add($"{_manualExcelHeaders.Count} Excel-Spalten geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Spalten laden fehlgeschlagen: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingManualExcelHeaders = false;
+        }
+    }
+
+    private void AddManualExcelMapping()
+    {
+        _manualExcelMappings.Add(new ManualExcelColumnMapping
+        {
+            TargetField = _salesRecordFields.First(),
+            SourceHeader = GetAvailableManualExcelHeaders(null).FirstOrDefault() ?? string.Empty,
+            IsActive = true,
+            SortOrder = _manualExcelMappings.Count
+        });
+    }
+
+    private void RemoveManualExcelMapping(ManualExcelColumnMapping mapping)
+        => _manualExcelMappings.Remove(mapping);
+
+    private void AutoMatchManualExcelMappings()
+    {
+        if (_manualExcelHeaders.Count == 0)
+        {
+            Snackbar.Add("Bitte zuerst 'Spalten aus Excel laden' ausfuehren.", Severity.Warning);
+            return;
+        }
+
+        var suggestions = BuildManualExcelAutoMatchSuggestions();
+        var addedOrUpdated = 0;
+        foreach (var (targetField, sourceHeader) in suggestions)
+        {
+            var existing = _manualExcelMappings.FirstOrDefault(m =>
+                string.Equals(m.TargetField, targetField, StringComparison.OrdinalIgnoreCase));
+
+            if (existing is null)
+            {
+                _manualExcelMappings.Add(new ManualExcelColumnMapping
+                {
+                    TargetField = targetField,
+                    SourceHeader = sourceHeader,
+                    IsActive = true,
+                    IsRequired = IsImportantManualExcelField(targetField),
+                    SortOrder = _manualExcelMappings.Count
+                });
+            }
+            else
+            {
+                existing.SourceHeader = sourceHeader;
+                existing.IsActive = true;
+            }
+
+            addedOrUpdated++;
+        }
+
+        Snackbar.Add(
+            addedOrUpdated == 0 ? "Keine passenden Spalten gefunden." : $"{addedOrUpdated} Mapping-Vorschlaege gesetzt.",
+            addedOrUpdated == 0 ? Severity.Info : Severity.Success);
+    }
+
+    private List<(string TargetField, string SourceHeader)> BuildManualExcelAutoMatchSuggestions()
+    {
+        var headerByNormalized = _manualExcelHeaders
+            .GroupBy(NormalizeHeader, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var aliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(SalesRecord.ExtractionDate)] = ["Export-Datum", "Extraction Date"],
+            [nameof(SalesRecord.InvoiceNumber)] = ["Belegnummer", "Invoice Number"],
+            [nameof(SalesRecord.PositionOnInvoice)] = ["Position", "Position on invoice"],
+            [nameof(SalesRecord.Material)] = ["ArtikelNummer", "Material", "Groesse"],
+            [nameof(SalesRecord.Name)] = ["ArtikelBezeichnung", "Name"],
+            [nameof(SalesRecord.ProductGroup)] = ["Warengruppen-Bezeichnung", "Product Group"],
+            [nameof(SalesRecord.ProductHierarchyCode)] = ["Product Hierarchy Code", "Produkthierarchie Code", "PAPH1"],
+            [nameof(SalesRecord.ProductHierarchyText)] = ["Product Hierarchy Text", "Produkthierarchie Text", "PAPH1_TEXT"],
+            [nameof(SalesRecord.ProductFamilyCode)] = ["Product Family Code", "Produktfamilie Code", "WWPFA"],
+            [nameof(SalesRecord.ProductFamilyText)] = ["Product Family Text", "Produktfamilie Text", "WWPFA_TEXT"],
+            [nameof(SalesRecord.ProductDivisionCode)] = ["Product Division Code", "Produktsparte Code", "WWPSP"],
+            [nameof(SalesRecord.ProductDivisionText)] = ["Product Division Text", "Produktsparte Text", "WWPSP_TEXT"],
+            [nameof(SalesRecord.ProductMappingAssigned)] = ["Product Mapping Assigned", "Produktmapping Zugeordnet", "IS_ASSIGNED"],
+            [nameof(SalesRecord.Quantity)] = ["Anz. VE", "Quantity"],
+            [nameof(SalesRecord.SupplierNumber)] = ["Lieferanten Nummer", "Supplier number"],
+            [nameof(SalesRecord.SupplierName)] = ["Name Lieferant", "Supplier name"],
+            [nameof(SalesRecord.SupplierCountry)] = ["Land Lieferant", "Supplier country"],
+            [nameof(SalesRecord.CustomerNumber)] = ["AdressNummer-Kunde", "Customer number"],
+            [nameof(SalesRecord.CustomerName)] = ["Name Kunde", "Customer name"],
+            [nameof(SalesRecord.CustomerCountry)] = ["Land Kunde", "Customer country"],
+            [nameof(SalesRecord.CustomerIndustry)] = ["Branche", "Customer Industry"],
+            [nameof(SalesRecord.StandardCost)] = ["EinstandsPreis", "Standard cost"],
+            [nameof(SalesRecord.StandardCostCurrency)] = ["Währung", "Waehrung", "Standard Cost Currency"],
+            [nameof(SalesRecord.PurchaseOrderNumber)] = ["BestellNummer", "Purchase Order number"],
+            [nameof(SalesRecord.SalesPriceValue)] = ["NettoPreisGesamtX", "Sales Price/Value"],
+            [nameof(SalesRecord.SalesCurrency)] = ["Währung", "Waehrung", "Sales Currency"],
+            [nameof(SalesRecord.DocumentCurrency)] = ["Währung", "Waehrung", "Document Currency"],
+            [nameof(SalesRecord.CompanyCurrency)] = ["Währung", "Waehrung", "Company Currency"],
+            [nameof(SalesRecord.Incoterms2020)] = ["Versandbedingung", "Incoterms 2020"],
+            [nameof(SalesRecord.SalesResponsibleEmployee)] = ["AdressNummer_V", "Sales responsible employee"],
+            [nameof(SalesRecord.InvoiceDate)] = ["Belegdatum-Rechnung", "invoice date"],
+            [nameof(SalesRecord.OrderDate)] = ["BelegDatum Auftrag", "order date"]
+        };
+
+        var result = new List<(string TargetField, string SourceHeader)>();
+        foreach (var (targetField, sourceAliases) in aliases)
+        {
+            foreach (var alias in sourceAliases)
+            {
+                if (headerByNormalized.TryGetValue(NormalizeHeader(alias), out var actualHeader))
+                {
+                    result.Add((targetField, actualHeader));
+                    break;
+                }
+            }
+        }
+
+        result.Add((nameof(SalesRecord.DocumentType), "=Manual Excel"));
+        return result;
+    }
+
+    private IEnumerable<string> GetAvailableManualExcelHeaders(string? currentValue)
+    {
+        var values = new List<string>(_manualExcelHeaders);
+        values.Add("=Manual Excel");
+        if (!string.IsNullOrWhiteSpace(currentValue) && !values.Contains(currentValue, StringComparer.OrdinalIgnoreCase))
+            values.Insert(0, currentValue);
+
+        return values
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x.StartsWith('=') ? 1 : 0)
+            .ThenBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private List<string> BuildHeadersFromManualExcelMappings()
+        => _manualExcelMappings
+            .Select(m => m.SourceHeader)
+            .Where(x => !string.IsNullOrWhiteSpace(x) && !x.Trim().StartsWith('='))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static bool IsImportantManualExcelField(string targetField)
+        => targetField is nameof(SalesRecord.InvoiceNumber) or
+                          nameof(SalesRecord.SalesPriceValue) or
+                          nameof(SalesRecord.InvoiceDate);
+
+    private static string NormalizeHeader(string value)
+    {
+        var chars = value
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray();
+        return new string(chars);
+    }
+
+    private static List<string> ParseSapEntitySets(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return [];
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string SerializeSapEntitySets(List<string> entitySets)
+        => JsonSerializer.Serialize(entitySets);
+
+    private void AddSapSource()
+    {
+        SapEditorService.AddSapSource(_sapSources, _sapEntitySetsCache);
+    }
+
+    private void RemoveSapSource(SapSourceDefinition source)
+    {
+        SapEditorService.RemoveSapSource(_sapSources, source);
+    }
+
+    private void AddSapJoin()
+    {
+        SapEditorService.AddSapJoin(_sapJoins);
+    }
+
+    private void AutoMatchSapJoins()
+    {
+        var result = SapEditorService.AutoMatchSapJoins(_sapSources, _sapJoins, _sapSourceFieldMap);
+        SapEditorService.NormalizeSapConfigCollections(_sapSources, _sapJoins, _sapMappings);
+        Snackbar.Add(result.Message, result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Info);
+    }
+
+    private void RemoveSapJoin(SapJoinDefinition join)
+    {
+        SapEditorService.RemoveSapJoin(_sapJoins, join);
+    }
+
+    private void AddSapMapping()
+    {
+        SapEditorService.AddSapMapping(_sapMappings, _salesRecordFields, _sapAvailableSourceExpressions);
+    }
+
+    private void RemoveSapMapping(SapFieldMapping mapping)
+    {
+        SapEditorService.RemoveSapMapping(_sapMappings, mapping);
+    }
+
+    private IEnumerable<string> GetSapAliases()
+        => SapEditorService.GetSapAliases(_sapSources);
+
+    private void NormalizeSapConfigCollections()
+        => SapEditorService.NormalizeSapConfigCollections(_sapSources, _sapJoins, _sapMappings);
+
+    private async Task RefreshSapSourceFields()
+    {
+        if (_refreshingSapSourceFields)
+            return;
+
+        _refreshingSapSourceFields = true;
+        try
+        {
+            var activeSources = _sapSources
+                .Where(s => s.IsActive && !string.IsNullOrWhiteSpace(s.Alias) && !string.IsNullOrWhiteSpace(s.EntitySet))
+                .OrderBy(s => s.SortOrder)
+                .ThenBy(s => s.Id)
+                .ToList();
+
+            if (activeSources.Count == 0)
+                throw new InvalidOperationException("Es gibt keine aktiven Quellen mit Alias und Entity Set/Tabelle.");
+
+            var result = await StandortePageService.RefreshSapSourceFieldsAsync(_editingSite, activeSources, _sapMappings);
+            _sapAvailableSourceExpressions = result.SourceExpressions;
+            _sapSourceFieldMap = result.SourceFieldMap;
+
+            Snackbar.Add($"{_sapAvailableSourceExpressions.Count} Source Expressions geladen.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshingSapSourceFields = false;
+        }
+    }
+
+    private IEnumerable<string> GetAvailableSourceExpressions(string? currentValue)
+        => SapEditorService.GetAvailableSourceExpressions(_sapAvailableSourceExpressions, currentValue);
+
+    private List<string> BuildSourceExpressionsFromMappings()
+        => SapEditorService.BuildSourceExpressionsFromMappings(_sapMappings);
+
+    private Dictionary<string, List<string>> BuildSourceFieldMapFromJoins()
+        => SapEditorService.BuildSourceFieldMapFromJoins(_sapJoins);
+
+    private IEnumerable<string> GetAvailableJoinFields(string? alias, string? currentKeys)
+        => SapEditorService.GetAvailableJoinFields(_sapSourceFieldMap, alias, currentKeys);
+
+    private static HashSet<string> GetSelectedJoinKeys(string? keys)
+        => keys?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ?? [];
+}
+
+

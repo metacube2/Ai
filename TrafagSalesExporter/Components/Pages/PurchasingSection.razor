@@ -1,0 +1,302 @@
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+@using TrafagSalesExporter.Models
+
+<MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T(TitleDe, TitleEn)</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-section-muted">@T(DescriptionDe, DescriptionEn)</MudText>
+        </div>
+        <MudChip T="string" Color="@ResolveSectionColor()" Variant="Variant.Outlined" Size="Size.Small">@ResolveSectionStatus()</MudChip>
+    </div>
+
+    <MudGrid Spacing="2" Class="mb-3">
+        @foreach (var kpi in Kpis)
+        {
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="pa-3 purchasing-section-kpi" Outlined="true">
+                    <MudText Typo="Typo.caption" Class="purchasing-section-muted">@T(kpi.LabelDe, kpi.LabelEn)</MudText>
+                    <MudText Typo="Typo.h6">@kpi.Value</MudText>
+                    <MudText Typo="Typo.caption">@T(kpi.DetailDe, kpi.DetailEn)</MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudGrid Spacing="2" Class="mb-3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 purchasing-section-panel" Outlined="true">
+                <div class="purchasing-section-panel-head">
+                    <MudText Typo="Typo.subtitle1">@T(ChartTitleDe, ChartTitleEn)</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.StackedBarChart" Color="Color.Info" Size="Size.Small" />
+                </div>
+                <div class="purchasing-bars">
+                    @foreach (var item in ChartRows)
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@item.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{BuildWidth(item.Percent)}%; background:{item.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@item.Value</div>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 purchasing-section-panel" Outlined="true">
+                <div class="purchasing-section-panel-head">
+                    <MudText Typo="Typo.subtitle1">@T("Datenstatus", "Data status")</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Route" Color="Color.Info" Size="Size.Small" />
+                </div>
+                @foreach (var status in StatusRows)
+                {
+                    <div class="purchasing-status-row">
+                        <MudIcon Icon="@status.Icon" Color="@status.Color" Size="Size.Small" />
+                        <span>@T(status.LabelDe, status.LabelEn)</span>
+                        <strong>@status.Value</strong>
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @if (SpendMatrixRows.Count > 0 && SpendMatrixYears.Count > 0)
+    {
+        <MudPaper Class="pa-3 purchasing-section-panel mb-3" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Kaskadierung Lieferant / Jahr", "Supplier / year cascade")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <div class="purchasing-matrix-scroll">
+                <table class="purchasing-matrix">
+                    <thead>
+                        <tr>
+                            <th>@T("Lieferant", "Supplier")</th>
+                            @foreach (var year in SpendMatrixYears)
+                            {
+                                <th>@year</th>
+                            }
+                            <th>@T("Gesamt", "Total")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in SpendMatrixRows)
+                        {
+                            <tr>
+                                <td>@row.Supplier</td>
+                                @foreach (var year in SpendMatrixYears)
+                                {
+                                    <td>@FormatAmount(GetYearValue(row, year))</td>
+                                }
+                                <td><strong>@FormatAmount(row.Total)</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </MudPaper>
+    }
+
+    <MudTable Items="@DetailRows" Dense="true" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>@T("Bereich", "Area")</MudTh>
+            <MudTh>@T("Wert", "Value")</MudTh>
+            <MudTh>@T("Dimension", "Dimension")</MudTh>
+            <MudTh>@T("Quelle", "Source")</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@T(context.LabelDe, context.LabelEn)</MudTd>
+            <MudTd><strong>@context.Value</strong></MudTd>
+            <MudTd>@context.Dimension</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@ResolveSourceColor(context.Source)">
+                    @context.Source
+                </MudChip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string TitleDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string TitleEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DescriptionDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DescriptionEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ChartTitleDe { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ChartTitleEn { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionKpi> Kpis { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionChartRow> ChartRows { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionStatusRow> StatusRows { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionDetailRow> DetailRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
+
+    private string T(string german, string english) => UiText.Text(german, english);
+    private static string BuildWidth(double percent)
+        => Math.Clamp(percent, 3d, 100d).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static decimal GetYearValue(PurchasingSupplierYearSpendRow row, int year)
+        => row.YearValues.TryGetValue(year, out var value) ? value : 0m;
+
+    private static string FormatAmount(decimal value)
+        => value == 0m ? "-" : value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+
+    private static Color ResolveSourceColor(string source)
+        => source.Equals("SAP live", StringComparison.OrdinalIgnoreCase)
+            ? Color.Success
+            : source.Equals("Wartet auf SAP", StringComparison.OrdinalIgnoreCase)
+                ? Color.Warning
+                : Color.Primary;
+
+    private Color ResolveSectionColor()
+        => DetailRows.Any(row => row.Source.Equals("SAP live", StringComparison.OrdinalIgnoreCase))
+            ? Color.Success
+            : DetailRows.Any(row => row.Source.Equals("Simulation", StringComparison.OrdinalIgnoreCase))
+                ? Color.Info
+                : Color.Warning;
+
+    private string ResolveSectionStatus()
+        => DetailRows.Any(row => row.Source.Equals("SAP live", StringComparison.OrdinalIgnoreCase))
+            ? T("Live + Analyse", "Live + analysis")
+            : DetailRows.Any(row => row.Source.Equals("Simulation", StringComparison.OrdinalIgnoreCase))
+                ? T("Simulation aktiv", "Simulation active")
+                : T("Wartet auf SAP", "Waiting for SAP");
+}
+
+<style>
+    .purchasing-section-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-section-shell {
+        border-radius: 8px;
+        background:
+            linear-gradient(180deg, rgba(21,101,192,.045), rgba(21,101,192,0) 210px),
+            var(--mud-palette-surface);
+    }
+
+    .purchasing-section-head,
+    .purchasing-section-panel-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .purchasing-section-head {
+        margin-bottom: 14px;
+    }
+
+    .purchasing-section-panel-head {
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .purchasing-section-kpi {
+        min-height: 104px;
+        border-top: 4px solid var(--mud-palette-primary);
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-section-panel {
+        min-height: 240px;
+        background: rgba(255,255,255,.02);
+    }
+
+    .purchasing-bars {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-bar-row,
+    .purchasing-status-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) 2fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .purchasing-status-row {
+        grid-template-columns: 28px minmax(120px, 1fr) auto;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-status-row:last-child {
+        border-bottom: 0;
+    }
+
+    .purchasing-bar-track {
+        height: 24px;
+        background: rgba(0,0,0,.08);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .purchasing-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        min-width: 26px;
+        box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .purchasing-bar-value {
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .purchasing-bar-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        line-height: 1.2;
+    }
+
+    .purchasing-matrix-scroll {
+        overflow-x: auto;
+    }
+
+    .purchasing-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .86rem;
+        min-width: 860px;
+    }
+
+    .purchasing-matrix th,
+    .purchasing-matrix td {
+        padding: 7px 9px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .purchasing-matrix th:first-child,
+    .purchasing-matrix td:first-child {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--mud-palette-surface);
+        min-width: 250px;
+    }
+
+    .purchasing-matrix thead th {
+        font-weight: 700;
+        background: rgba(21,101,192,.08);
+    }
+
+    @@media (max-width: 760px) {
+        .purchasing-bar-row,
+        .purchasing-status-row,
+        .purchasing-section-head {
+            grid-template-columns: 1fr;
+        }
+
+        .purchasing-section-head,
+        .purchasing-section-panel-head {
+            display: grid;
+        }
+    }
+</style>

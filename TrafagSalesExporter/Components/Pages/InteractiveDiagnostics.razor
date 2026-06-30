@@ -1,0 +1,60 @@
+@page "/diagnostics/interactive"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@inject ILogger<InteractiveDiagnostics> Logger
+@inject NavigationManager Navigation
+
+<PageTitle>Interaktivitaet Diagnose</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Interaktivitaet Diagnose</MudText>
+
+<MudPaper Class="pa-4" Elevation="1" Style="max-width:760px;">
+    <MudStack Spacing="3">
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+            HTML wurde vom Server gerendert.
+        </MudAlert>
+
+        <MudText>Adresse: @Navigation.Uri</MudText>
+        <MudText>Blazor interaktiv verbunden: @(_interactive ? "JA" : "NEIN")</MudText>
+        <MudText>Server-Klicks angekommen: @_clickCount</MudText>
+        <MudText>JavaScript Diagnose: <span id="js-diagnostic-status">nicht ausgefuehrt</span></MudText>
+        <MudText>Blazor Objekt im Browser: <span id="blazor-diagnostic-status">unbekannt</span></MudText>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RegisterClick">
+            Server-Klick testen
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+<script>
+    (function () {
+        var jsStatus = document.getElementById('js-diagnostic-status');
+        var blazorStatus = document.getElementById('blazor-diagnostic-status');
+        if (jsStatus) {
+            jsStatus.textContent = 'ausgefuehrt';
+        }
+        if (blazorStatus) {
+            blazorStatus.textContent = window.Blazor ? 'vorhanden' : 'fehlt';
+        }
+    })();
+</script>
+
+@code {
+    private bool _interactive;
+    private int _clickCount;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _interactive = true;
+        Logger.LogInformation("Interactive diagnostics became interactive for {Uri}", Navigation.Uri);
+        StateHasChanged();
+    }
+
+    private void RegisterClick()
+    {
+        _clickCount++;
+        Logger.LogInformation("Interactive diagnostics server click received. Count={ClickCount}", _clickCount);
+    }
+}

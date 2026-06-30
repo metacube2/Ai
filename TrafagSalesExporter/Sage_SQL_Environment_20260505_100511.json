@@ -1,0 +1,134 @@
+﻿{
+    "CapturedAt":  "2026-05-05T10:05:13.9281781+02:00",
+    "ComputerName":  "WIN-4BJQJ9S1PVJ",
+    "UserName":  "WIN-4BJQJ9S1PVJ\\Administrador",
+    "Windows":  {
+                    "Caption":  "Microsoft Windows Server 2019 Standard",
+                    "Version":  "10.0.17763",
+                    "BuildNumber":  "17763",
+                    "InstallDate":  "\/Date(1601446676000)\/"
+                },
+    "SageUninstallEntries":  [
+                                 {
+                                     "DisplayName":  "JRE 2.5",
+                                     "DisplayVersion":  null,
+                                     "Publisher":  "Sage Logic Control",
+                                     "InstallDate":  null,
+                                     "InstallLocation":  null,
+                                     "UninstallString":  "\"C:\\Windows\\unins000.exe\"",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\JRE_is1"
+                                 },
+                                 {
+                                     "DisplayName":  "Sage 200c",
+                                     "DisplayVersion":  "2026.56.000",
+                                     "Publisher":  "Sage Spain",
+                                     "InstallDate":  null,
+                                     "InstallLocation":  null,
+                                     "UninstallString":  "C:\\Program Files (x86)\\Sage\\Sage 200c\\Setup\\Uninstall\\Sage.Uninstall.exe",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Sage 200c"
+                                 },
+                                 {
+                                     "DisplayName":  "Sage Renta Componentes",
+                                     "DisplayVersion":  "1.00.0000",
+                                     "Publisher":  "Sage Spain",
+                                     "InstallDate":  "20201021",
+                                     "InstallLocation":  "C:\\Windows\\SysWOW64\\",
+                                     "UninstallString":  "MsiExec.exe /X{0ADD979C-205B-4264-B903-6F953F362917}",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{0ADD979C-205B-4264-B903-6F953F362917}"
+                                 },
+                                 {
+                                     "DisplayName":  "Sage SGE Runtime",
+                                     "DisplayVersion":  "1.00.0000",
+                                     "Publisher":  "Sage Spain",
+                                     "InstallDate":  "20201021",
+                                     "InstallLocation":  "C:\\Windows\\SysWOW64\\",
+                                     "UninstallString":  "MsiExec.exe /X{1FFF90A6-3F93-4123-9C3B-54EBBDD22757}",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{1FFF90A6-3F93-4123-9C3B-54EBBDD22757}"
+                                 },
+                                 {
+                                     "DisplayName":  "Sage Live Update Service",
+                                     "DisplayVersion":  "1.0.8.0",
+                                     "Publisher":  "Sage",
+                                     "InstallDate":  "20230314",
+                                     "InstallLocation":  "",
+                                     "UninstallString":  "MsiExec.exe /I{6D538240-299A-47CC-8782-2062AD2F2189}",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{6D538240-299A-47CC-8782-2062AD2F2189}"
+                                 },
+                                 {
+                                     "DisplayName":  "Sage API OnPremise Service",
+                                     "DisplayVersion":  "1.2.8.0",
+                                     "Publisher":  "Sage",
+                                     "InstallDate":  "20201021",
+                                     "InstallLocation":  "",
+                                     "UninstallString":  "MsiExec.exe /I{9881C355-CB1B-4007-AB3A-B12F222318DB}",
+                                     "PSPath":  "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{9881C355-CB1B-4007-AB3A-B12F222318DB}"
+                                 }
+                             ],
+    "SageFileVersions":  [
+
+                         ],
+    "SqlRegistryInstances":  [
+                                 {
+                                     "InstanceName":  "MSSQLSERVER",
+                                     "InstanceId":  "MSSQL15.MSSQLSERVER",
+                                     "Edition":  "Standard Edition",
+                                     "Version":  "15.0.2000.5",
+                                     "PatchLevel":  "15.0.2155.2",
+                                     "ProductCode":  "{A60B3D8E-5311-4BF1-AF7A-D1AC15F9152E}",
+                                     "SQLPath":  "C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL",
+                                     "SetupPath":  "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\Setup"
+                                 }
+                             ],
+    "SqlServices":  [
+                        {
+                            "Name":  "MSSQLFDLauncher",
+                            "DisplayName":  "SQL Full-text Filter Daemon Launcher (MSSQLSERVER)",
+                            "State":  "Running",
+                            "StartMode":  "Manual",
+                            "PathName":  "\"C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL\\Binn\\fdlauncher.exe\" -s MSSQL15.MSSQLSERVER"
+                        },
+                        {
+                            "Name":  "MSSQLSERVER",
+                            "DisplayName":  "SQL Server (MSSQLSERVER)",
+                            "State":  "Running",
+                            "StartMode":  "Auto",
+                            "PathName":  "\"C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL\\Binn\\sqlservr.exe\" -sMSSQLSERVER"
+                        },
+                        {
+                            "Name":  "SQLBrowser",
+                            "DisplayName":  "SQL Server Browser",
+                            "State":  "Stopped",
+                            "StartMode":  "Disabled",
+                            "PathName":  "\"C:\\Program Files (x86)\\Microsoft SQL Server\\90\\Shared\\sqlbrowser.exe\""
+                        },
+                        {
+                            "Name":  "SQLSERVERAGENT",
+                            "DisplayName":  "Agente SQL Server (MSSQLSERVER)",
+                            "State":  "Running",
+                            "StartMode":  "Auto",
+                            "PathName":  "\"C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL\\Binn\\SQLAGENT.EXE\" -i MSSQLSERVER"
+                        },
+                        {
+                            "Name":  "SQLTELEMETRY",
+                            "DisplayName":  "Servicio CEIP de SQL Server (MSSQLSERVER)",
+                            "State":  "Running",
+                            "StartMode":  "Auto",
+                            "PathName":  "\"C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL\\Binn\\sqlceip.exe\" -Service "
+                        },
+                        {
+                            "Name":  "SQLWriter",
+                            "DisplayName":  "SQL Server VSS Writer",
+                            "State":  "Running",
+                            "StartMode":  "Auto",
+                            "PathName":  "\"C:\\Program Files\\Microsoft SQL Server\\90\\Shared\\sqlwriter.exe\""
+                        }
+                    ],
+    "SqlcmdPath":  "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE",
+    "SqlQueryResults":  [
+                            {
+                                "Instance":  "localhost",
+                                "Success":  true,
+                                "Output":  "FullVersion|ProductVersion|ProductLevel|Edition|EngineEdition|MachineName|ServerName|InstanceName|Collation\r\n-----------|--------------|------------|-------|-------------|-----------|----------|------------|---------\r\nMicrosoft SQL Server 2019 (RTM-GDR) (KB5068405) - 15.0.2155.2 (X64) \r\n\tOct  7 2025 21:11:52 \r\n\tCopyright (C) 2019 Microsoft Corporation\r\n\tStandard Edition (64-bit) on Windows Server 2019 Standard 10.0 \u003cX64\u003e (Build 17763: ) (Hypervisor)\r\n|15.0.2155.2|RTM|Standard Edition (64-bit)|2|WIN-4BJQJ9S1PVJ|WIN-4BJQJ9S1PVJ|NULL|Latin1_General_CI_AI"
+                            }
+                        ]
+}

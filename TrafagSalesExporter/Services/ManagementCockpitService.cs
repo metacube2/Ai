@@ -1,0 +1,2498 @@
+using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using TrafagSalesExporter.Data;
+using TrafagSalesExporter.Models;
+
+namespace TrafagSalesExporter.Services;
+
+public class ManagementCockpitService : IManagementCockpitService
+{
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ICurrencyExchangeRateService _exchangeRateService;
+    private readonly ICentralSalesDataProvider? _centralSalesDataProvider;
+
+    public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory)
+        : this(dbFactory, new CurrencyExchangeRateService(dbFactory), null)
+    {
+    }
+
+    public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory, ICurrencyExchangeRateService exchangeRateService)
+        : this(dbFactory, exchangeRateService, null)
+    {
+    }
+
+    public ManagementCockpitService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ICurrencyExchangeRateService exchangeRateService,
+        ICentralSalesDataProvider? centralSalesDataProvider)
+    {
+        _dbFactory = dbFactory;
+        _exchangeRateService = exchangeRateService;
+        _centralSalesDataProvider = centralSalesDataProvider;
+    }
+
+    private static readonly List<ValueFieldDefinition> ValueFieldDefinitions =
+    [
+        new()
+        {
+            Key = ManagementCockpitValueFieldKeys.SalesPriceValue,
+            Label = "Sales Price/Value",
+            IsCurrencyAmount = true,
+            CurrencySource = ValueCurrencySource.Sales
+        },
+        new()
+        {
+            Key = ManagementCockpitValueFieldKeys.StandardCostTotal,
+            Label = "Quantity * Standard cost",
+            IsCurrencyAmount = true,
+            CurrencySource = ValueCurrencySource.StandardCost
+        },
+        new()
+        {
+            Key = ManagementCockpitValueFieldKeys.StandardCost,
+            Label = "Standard cost",
+            IsCurrencyAmount = true,
+            CurrencySource = ValueCurrencySource.StandardCost
+        },
+        new()
+        {
+            Key = ManagementCockpitValueFieldKeys.Quantity,
+            Label = "Quantity",
+            IsCurrencyAmount = false,
+            CurrencySource = ValueCurrencySource.None
+        }
+    ];
+
+    private static class ProductAssignmentStatuses
+    {
+        public const string Assigned = "Zugeordnet";
+        public const string Misc = "Übrige";
+        public const string Unassigned = "Nicht zugeordnet";
+        public const string NoReference = "Nicht im TR-AG-Stamm";
+        public const string MissingMaterial = "Material fehlt";
+    }
+
+    private const string DivisionMiscCode = "0008";
+
+    public async Task<List<ManagementCockpitFileOption>> GetAvailableFilesAsync()
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.FirstOrDefaultAsync() ?? new ExportSettings();
+        var exportLogs = await db.ExportLogs
+            .Where(x => x.Status == "OK" && !string.IsNullOrWhiteSpace(x.FilePath))
+            .OrderByDescending(x => x.Timestamp)
+            .Take(200)
+            .ToListAsync();
+
+        var files = new Dictionary<string, ManagementCockpitFileOption>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var log in exportLogs)
+        {
+            if (!File.Exists(log.FilePath))
+                continue;
+
+            files[log.FilePath] = new ManagementCockpitFileOption
+            {
+                Path = log.FilePath,
+                DisplayName = $"{log.Land} | {log.TSC} | {Path.GetFileName(log.FilePath)}",
+                LastModified = File.GetLastWriteTime(log.FilePath)
+            };
+        }
+
+        foreach (var directory in GetCandidateDirectories(settings))
+        {
+            if (!Directory.Exists(directory))
+                continue;
+
+            foreach (var file in Directory.EnumerateFiles(directory, "*.xlsx", SearchOption.TopDirectoryOnly))
+            {
+                if (files.ContainsKey(file))
+                    continue;
+
+                var fileName = Path.GetFileName(file);
+                files[file] = new ManagementCockpitFileOption
+                {
+                    Path = file,
+                    DisplayName = fileName,
+                    LastModified = File.GetLastWriteTime(file)
+                };
+            }
+        }
+
+        return files.Values
+            .OrderByDescending(x => x.LastModified)
+            .ThenBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public IReadOnlyList<ManagementCockpitValueFieldOption> GetValueFieldOptions()
+        => ValueFieldDefinitions
+            .Select(ToValueFieldOption)
+            .ToList();
+
+    public Task<ManagementCockpitResult> AnalyzeAsync(string filePath)
+        => AnalyzeAsync(filePath, null);
+
+    public Task<ManagementCockpitResult> AnalyzeAsync(string filePath, ManagementCockpitAnalysisOptions? options)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            throw new InvalidOperationException("Die ausgewählte Excel-Datei wurde nicht gefunden.");
+
+        var aggregation = ResolveAggregation(options);
+        using var workbook = new XLWorkbook(filePath);
+        var worksheet = workbook.Worksheets.First();
+        var usedRange = worksheet.RangeUsed() ?? throw new InvalidOperationException("Die Excel-Datei enthält keine Daten.");
+
+        var headerRow = usedRange.FirstRow();
+        var headers = headerRow.Cells()
+            .Select((cell, index) => new { Index = index + 1, Header = NormalizeHeader(cell.GetString()) })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Header))
+            .ToDictionary(x => x.Header, x => x.Index, StringComparer.OrdinalIgnoreCase);
+
+        var rows = new List<CockpitRow>();
+        foreach (var row in usedRange.RowsUsed().Skip(1))
+        {
+            if (row.CellsUsed().All(c => string.IsNullOrWhiteSpace(c.GetString())))
+                continue;
+
+            rows.Add(ReadRow(row, headers));
+        }
+
+        if (rows.Count == 0)
+            throw new InvalidOperationException("Die Excel-Datei enthält keine auswertbaren Datenzeilen.");
+
+        ApplyAggregation(rows, aggregation);
+
+        var result = new ManagementCockpitResult
+        {
+            FilePath = filePath,
+            Summary = BuildSummary(rows, aggregation),
+            Findings = BuildFindings(rows, aggregation),
+            TopCustomers = BuildTopItems(rows, x => x.CustomerName, x => x.AggregatedValue),
+            TopProductGroups = BuildTopItems(rows, x => x.ProductGroup, x => x.AggregatedValue),
+            TopSalesEmployees = BuildTopItems(rows, x => x.SalesResponsibleEmployee, x => x.AggregatedValue),
+            DataQualityCounts = BuildDataQualityCounts(rows)
+        };
+
+        return Task.FromResult(result);
+    }
+
+    public async Task<List<int>> GetAvailableCentralYearsAsync()
+    {
+        var records = await LoadCentralRecordsAsync();
+        var years = records
+            .Select(r => r.InvoiceDate.HasValue ? r.InvoiceDate.Value.Year : r.ExtractionDate.Year)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+
+        return years;
+    }
+
+    public Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month)
+        => AnalyzeCentralAsync(year, month, null);
+
+    public async Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month, ManagementCockpitAnalysisOptions? options)
+    {
+        var aggregation = ResolveAggregation(options);
+
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
+        var exchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
+        var centralRecords = await LoadCentralRecordsAsync();
+        var baseRows = centralRecords
+            .Select(r => new CentralCockpitRow
+            {
+                SourceSystem = r.SourceSystem,
+                Land = r.Land,
+                Tsc = r.Tsc,
+                InvoiceNumber = r.InvoiceNumber,
+                SalesCurrency = string.IsNullOrWhiteSpace(r.SalesCurrency) ? "-" : r.SalesCurrency,
+                StandardCostCurrency = string.IsNullOrWhiteSpace(r.StandardCostCurrency) ? "-" : r.StandardCostCurrency,
+                Quantity = r.Quantity,
+                StandardCost = r.StandardCost,
+                SalesValue = r.SalesPriceValue,
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                ExtractionDate = r.ExtractionDate,
+                PeriodDate = r.InvoiceDate ?? r.ExtractionDate,
+                ExchangeRateDate = r.ExtractionDate
+            })
+            .ToList();
+
+        foreach (var row in baseRows)
+            row.ExchangeRateDate = ResolveExchangeRateDate(exchangeRateDateField, row.PostingDate, row.InvoiceDate, row.ExtractionDate);
+
+        if (baseRows.Count == 0)
+            throw new InvalidOperationException("Die zentrale Tabelle enthält noch keine Datensätze.");
+
+        var aggregatedRows = baseRows
+            .Select(row => BuildCentralAggregationRow(row, aggregation))
+            .ToList();
+
+        var scopedRows = ApplyCentralDimensionFilters(aggregatedRows, options)
+            .ToList();
+
+        var selectedRows = scopedRows
+            .Where(r => r.PeriodDate.Year == year && (!month.HasValue || r.PeriodDate.Month == month.Value))
+            .ToList();
+
+        if (selectedRows.Count == 0)
+            throw new InvalidOperationException("Für den gewählten Zeitraum gibt es keine Datensätze in der zentralen Tabelle.");
+
+        var yearlyRows = scopedRows;
+
+        var dailyBaseRows = selectedRows
+            .Where(r => month.HasValue)
+            .ToList();
+
+        return new ManagementCockpitCentralResult
+        {
+            Filter = new ManagementCockpitCentralFilter
+            {
+                Year = year,
+                Month = month,
+                ValueField = aggregation.ValueField.Key,
+                TargetCurrency = aggregation.TargetCurrency,
+                Land = NormalizeOptionalFilter(options?.LandFilter),
+                Tsc = NormalizeOptionalFilter(options?.TscFilter)
+            },
+            Summary = new ManagementCockpitCentralSummary
+            {
+                RowCount = selectedRows.Count,
+                InvoiceCount = selectedRows.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                SiteCount = selectedRows.Select(x => x.Tsc).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                CountryCount = selectedRows.Select(x => x.Land).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                CurrencyCount = selectedRows.Select(x => x.DisplayCurrency).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                ValueFieldKey = aggregation.ValueField.Key,
+                ValueFieldLabel = aggregation.ValueField.Label,
+                DisplayCurrency = BuildDisplayCurrencyLabel(selectedRows.Select(x => x.DisplayCurrency)),
+                ValueTotal = selectedRows.Sum(x => x.Value),
+                MissingExchangeRateCount = selectedRows.Count(x => x.MissingExchangeRate),
+                ExchangeRateDateField = exchangeRateDateField,
+                ExchangeRateDateLabel = BuildExchangeRateDateLabel(exchangeRateDateField),
+                PeriodStart = selectedRows.Min(x => x.PeriodDate),
+                PeriodEnd = selectedRows.Max(x => x.PeriodDate)
+            },
+            AdditionalValueFields = aggregation.AdditionalValueFields
+                .Select(ToValueFieldOption)
+                .ToList(),
+            Notices = BuildCentralNotices(aggregation, selectedRows.Count(x => x.MissingExchangeRate), options, exchangeRateDateField),
+            YearlyTotals = yearlyRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.DisplayCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.DisplayCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => BuildTimeValueRow(g, aggregation, g.Key.Year.ToString(), g.Key.Year, null, null, g.Key.DisplayCurrency))
+                .ToList(),
+            MonthlyTotals = selectedRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.PeriodDate.Month, x.DisplayCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .ThenBy(g => g.Key.DisplayCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => BuildTimeValueRow(g, aggregation, $"{g.Key.Year:D4}-{g.Key.Month:D2}", g.Key.Year, g.Key.Month, null, g.Key.DisplayCurrency))
+                .ToList(),
+            DailyTotals = dailyBaseRows
+                .GroupBy(x => new { x.PeriodDate.Year, x.PeriodDate.Month, x.PeriodDate.Day, x.DisplayCurrency })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .ThenBy(g => g.Key.Day)
+                .ThenBy(g => g.Key.DisplayCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => BuildTimeValueRow(g, aggregation, $"{g.Key.Year:D4}-{g.Key.Month:D2}-{g.Key.Day:D2}", g.Key.Year, g.Key.Month, g.Key.Day, g.Key.DisplayCurrency))
+                .ToList(),
+            SourceSystemTotals = selectedRows
+                .GroupBy(x => new { x.SourceSystem, x.DisplayCurrency })
+                .OrderBy(g => g.Key.SourceSystem, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(g => g.Key.DisplayCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitDimensionValueRow
+                {
+                    Label = g.Key.SourceSystem,
+                    Currency = g.Key.DisplayCurrency,
+                    SalesValue = g.Sum(x => x.Value),
+                    RowCount = g.Count(),
+                    InvoiceCount = g.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                })
+                .ToList(),
+            CountryTotals = selectedRows
+                .GroupBy(x => new { x.Land, x.DisplayCurrency })
+                .OrderByDescending(g => g.Sum(x => x.Value))
+                .ThenBy(g => g.Key.Land, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(g => g.Key.DisplayCurrency, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new ManagementCockpitDimensionValueRow
+                {
+                    Label = g.Key.Land,
+                    Currency = g.Key.DisplayCurrency,
+                    SalesValue = g.Sum(x => x.Value),
+                    RowCount = g.Count(),
+                    InvoiceCount = g.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                })
+                .ToList()
+        };
+    }
+
+    public async Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency, bool useGroupCurrency = false)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
+        var financeRules = await db.FinanceRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .OrderBy(rule => rule.SortOrder)
+            .ThenBy(rule => rule.Id)
+            .ToListAsync();
+        if (financeRules.Count == 0)
+            financeRules = FinanceRuleEngine.CreateDefaultRules().ToList();
+
+        var intercompanyRules = await db.FinanceIntercompanyRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .ToListAsync();
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
+        var records = await LoadCentralRecordsAsync();
+
+        if (records.Count == 0)
+            throw new InvalidOperationException("Die zentrale Tabelle enthaelt noch keine Datensaetze.");
+
+        var allRows = records
+            .Select(record =>
+            {
+                var resolvedCountryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+                var financeDate = financeRuleEngine.ResolveFinanceDate(record, resolvedCountryKey);
+                var rawInclude = financeRuleEngine.ShouldInclude(record, resolvedCountryKey);
+                var value = financeRuleEngine.ResolveNetSalesActual(record, resolvedCountryKey, rawInclude);
+                var include = rawInclude && value != 0m;
+                return new FinanceAggregationRow
+                {
+                    Year = financeDate.Year,
+                    CountryKey = resolvedCountryKey,
+                    Land = record.Land,
+                    Tsc = record.Tsc,
+                    SourceSystem = string.IsNullOrWhiteSpace(record.SourceSystem) ? "-" : record.SourceSystem,
+                    Currency = ResolveFinanceCurrency(record),
+                    Include = include,
+                    Value = value,
+                    RawSalesValue = record.SalesPriceValue,
+                    IsIntercompany = IsIntercompanyCustomer(record, intercompanyRules),
+                    Quantity = record.Quantity,
+                    InvoiceNumber = record.InvoiceNumber,
+                    PositionOnInvoice = record.PositionOnInvoice,
+                    DocumentType = record.DocumentType,
+                    Material = record.Material,
+                    ArticleName = record.Name,
+                    ProductGroup = record.ProductGroup,
+                    ProductHierarchyCode = record.ProductHierarchyCode,
+                    ProductHierarchyText = record.ProductHierarchyText,
+                    ProductFamilyCode = record.ProductFamilyCode,
+                    ProductFamilyText = record.ProductFamilyText,
+                    ProductDivisionCode = record.ProductDivisionCode,
+                    ProductDivisionText = record.ProductDivisionText,
+                    ProductMappingAssigned = record.ProductMappingAssigned,
+                    SupplierNumber = record.SupplierNumber,
+                    SupplierName = record.SupplierName,
+                    SupplierCountry = record.SupplierCountry,
+                    StandardCost = record.StandardCost,
+                    StandardCostCurrency = record.StandardCostCurrency,
+                    CustomerNumber = record.CustomerNumber,
+                    CustomerName = record.CustomerName,
+                    FinanceDate = financeDate,
+                    PostingDate = record.PostingDate,
+                    InvoiceDate = record.InvoiceDate,
+                    ExtractionDate = record.ExtractionDate
+                };
+            })
+            .ToList();
+        var originalRows = CloneFinanceAggregationRows(allRows);
+
+        var references = await db.FinanceReferences
+            .AsNoTracking()
+            .Where(reference => reference.IsActive)
+            .ToListAsync();
+        var referenceByKey = references
+            .Where(reference => reference.Year == year)
+            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(reference => new FinanceReferenceValue(
+                        reference.Key,
+                        reference.Label,
+                        reference.CheckValue ?? reference.LocalCurrencyValue))
+                    .FirstOrDefault(reference => reference.Value.HasValue),
+                StringComparer.OrdinalIgnoreCase);
+
+        var yearOptions = allRows
+            .Select(row => row.Year)
+            .Concat(references.Select(reference => reference.Year))
+            .Distinct()
+            .OrderBy(yearValue => yearValue)
+            .ToList();
+        if (year == 0)
+            year = yearOptions.LastOrDefault();
+        referenceByKey = references
+            .Where(reference => reference.Year == year)
+            .GroupBy(reference => reference.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(reference => new FinanceReferenceValue(
+                        reference.Key,
+                        reference.Label,
+                        reference.CheckValue ?? reference.LocalCurrencyValue))
+                    .FirstOrDefault(reference => reference.Value.HasValue),
+                StringComparer.OrdinalIgnoreCase);
+
+        // Optional group-currency (CHF) view: leading view stays local; this only converts
+        // the displayed values to CHF using the yearly rate so cross-country totals add up.
+        if (useGroupCurrency)
+        {
+            const string groupCurrency = "CHF";
+            var rateDate = new DateTime(year, 12, 31);
+            var rateCache = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+            decimal? RateToChf(string? fromCurrency)
+            {
+                var code = string.IsNullOrWhiteSpace(fromCurrency) ? groupCurrency : fromCurrency.Trim();
+                if (!rateCache.TryGetValue(code, out var rate))
+                {
+                    rate = _exchangeRateService.ResolveRate(code, groupCurrency, rateDate);
+                    rateCache[code] = rate;
+                }
+                return rate;
+            }
+
+            // Capture each country's local currency before converting (needed for references).
+            var localCurrencyByKey = allRows
+                .GroupBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(row => row.Currency).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? groupCurrency,
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in allRows)
+            {
+                var valueRate = RateToChf(row.Currency);
+                if (valueRate.HasValue)
+                {
+                    row.Value *= valueRate.Value;
+                    row.RawSalesValue *= valueRate.Value;
+                    row.Currency = groupCurrency;
+                }
+
+                if (!string.IsNullOrWhiteSpace(row.StandardCostCurrency))
+                {
+                    var costRate = RateToChf(row.StandardCostCurrency);
+                    if (costRate.HasValue)
+                    {
+                        row.StandardCost *= costRate.Value;
+                        row.StandardCostCurrency = groupCurrency;
+                    }
+                }
+            }
+
+            referenceByKey = referenceByKey.ToDictionary(
+                entry => entry.Key,
+                entry =>
+                {
+                    var reference = entry.Value;
+                    if (reference?.Value is null)
+                        return reference;
+                    localCurrencyByKey.TryGetValue(entry.Key, out var localCurrency);
+                    var rate = RateToChf(localCurrency);
+                    return rate.HasValue
+                        ? reference with { Value = reference.Value.Value * rate.Value }
+                        : reference;
+                },
+                StringComparer.OrdinalIgnoreCase);
+        }
+
+        var countryFilter = NormalizeOptionalFilter(countryKey);
+        // When viewing in group currency everything is CHF, so a stale local-currency filter would empty the view.
+        var currencyFilter = useGroupCurrency ? null : NormalizeOptionalFilter(currency);
+        var scopedRows = allRows
+            .Where(row => row.Year == year)
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var auditSourceRows = originalRows
+            .Where(row => row.Year == year)
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var summaryRows = scopedRows
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group => BuildFinanceSummaryRow(group.Key.Year, group.Key.CountryKey, group.Key.Currency, group))
+            .ToList();
+
+        var yearRows = allRows
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(row => new { row.Year, row.Currency })
+            .OrderBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group => BuildFinanceSummaryRow(group.Key.Year, "Alle", group.Key.Currency, group))
+            .ToList();
+
+        var yearCountryRows = allRows
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(group => BuildFinanceSummaryRow(group.Key.Year, group.Key.CountryKey, group.Key.Currency, group))
+            .ToList();
+
+        var includedRows = scopedRows.Count(row => row.Include);
+        var excludedRows = scopedRows.Count(row => !row.Include);
+        var resultCurrencies = summaryRows
+            .Select(row => row.Currency)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var notices = new List<string>
+        {
+            "Diese Sicht verwendet dieselbe FinanceRuleEngine wie das zentrale Excel-Blatt Finance Summary.",
+            "Jahr, Land und Waehrung werden auf das Endergebnis angewendet.",
+            "Finance-Jahr basiert auf PostingDate, danach InvoiceDate, danach ExtractionDate (DE: Fakturierungsdatum).",
+            "Include/Exclude, Gutschriften-Negierung und IT-Deduplizierung folgen den gepflegten Finance Regeln.",
+            "Intercompany / 2nd-party wird als Diagnosebetrag ausgewiesen; der Standard-Ist bleibt inklusive dieser Positionen."
+        };
+        if (scopedRows.Count == 0)
+        {
+            notices.Insert(0, "Fuer die gewaehlten Finance-Filter gibt es keine Datensaetze im aktuellen Zentraldatenbestand.");
+        }
+        if (useGroupCurrency)
+        {
+            notices.Insert(0, "Group-Currency-Ansicht: Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.");
+        }
+
+        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
+        var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey, year, countryFilter, currencyFilter);
+        var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
+        var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource);
+        var financePivot = BuildFinancePivotResult(allRows, year);
+        notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
+        notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
+
+        return new ManagementFinanceSummaryResult
+        {
+            Filter = new ManagementFinanceSummaryFilter
+            {
+                Year = year,
+                CountryKey = countryFilter,
+                Currency = currencyFilter
+            },
+            YearOptions = yearOptions,
+            CountryOptions = allRows
+                .Select(row => row.CountryKey)
+                .Concat(references.Where(reference => reference.Year == year).Select(reference => reference.Key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            CurrencyOptions = allRows
+                .Select(row => row.Currency)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            Rows = summaryRows,
+            YearRows = yearRows,
+            YearCountryRows = yearCountryRows,
+            IncludedRows = includedRows,
+            ExcludedRows = excludedRows,
+            CountryCount = summaryRows.Select(row => row.CountryKey).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            CurrencyCount = resultCurrencies.Count,
+            NetSalesActual = summaryRows.Sum(row => row.NetSalesActual),
+            DisplayCurrency = BuildDisplayCurrencyLabel(resultCurrencies),
+            Notices = notices,
+            CountryRows = countryRows,
+            DeviationRows = countryRows
+                .Where(row => row.Difference.HasValue)
+                .OrderByDescending(row => Math.Abs(row.Difference!.Value))
+                .ToList(),
+            DataStatusRows = dataStatusRows,
+            CreditCandidates = BuildFinanceCreditCandidates(scopedRows),
+            DataQualityRows = BuildFinanceDataQualityRows(scopedRows),
+            ProductFinanceSummary = productFinanceSummary,
+            ProductDivisionFinanceRows = BuildProductDivisionFinanceRows(productAssignmentRows),
+            ProductFinanceCountryRows = BuildProductFinanceCountryRows(productAssignmentRows),
+            ProductAssignmentSummary = BuildProductAssignmentSummary(productAssignmentRows),
+            ProductAssignmentCountryRows = BuildProductAssignmentCountryRows(productAssignmentRows),
+            ProductAssignmentRows = productAssignmentRows,
+            GroupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies),
+            GroupMarginCountryRows = BuildGroupMarginCountryRows(groupMarginRows),
+            GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
+            GroupMarginDetailRows = groupMarginRows.Take(1000).ToList(),
+            FinanceAuditLedgerRows = auditLedgerRows.Take(1000).ToList(),
+            FinancePivot = financePivot
+        };
+    }
+
+    private static List<FinanceAggregationRow> CloneFinanceAggregationRows(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Select(row => new FinanceAggregationRow
+            {
+                Year = row.Year,
+                CountryKey = row.CountryKey,
+                Land = row.Land,
+                Tsc = row.Tsc,
+                SourceSystem = row.SourceSystem,
+                Currency = row.Currency,
+                Include = row.Include,
+                Value = row.Value,
+                RawSalesValue = row.RawSalesValue,
+                IsIntercompany = row.IsIntercompany,
+                Quantity = row.Quantity,
+                InvoiceNumber = row.InvoiceNumber,
+                PositionOnInvoice = row.PositionOnInvoice,
+                DocumentType = row.DocumentType,
+                Material = row.Material,
+                ArticleName = row.ArticleName,
+                ProductGroup = row.ProductGroup,
+                ProductHierarchyCode = row.ProductHierarchyCode,
+                ProductHierarchyText = row.ProductHierarchyText,
+                ProductFamilyCode = row.ProductFamilyCode,
+                ProductFamilyText = row.ProductFamilyText,
+                ProductDivisionCode = row.ProductDivisionCode,
+                ProductDivisionText = row.ProductDivisionText,
+                ProductMappingAssigned = row.ProductMappingAssigned,
+                SupplierNumber = row.SupplierNumber,
+                SupplierName = row.SupplierName,
+                SupplierCountry = row.SupplierCountry,
+                StandardCost = row.StandardCost,
+                StandardCostCurrency = row.StandardCostCurrency,
+                CustomerNumber = row.CustomerNumber,
+                CustomerName = row.CustomerName,
+                FinanceDate = row.FinanceDate,
+                PostingDate = row.PostingDate,
+                InvoiceDate = row.InvoiceDate,
+                ExtractionDate = row.ExtractionDate
+            })
+            .ToList();
+
+    private static async Task<List<ManagementFinanceDataStatusRow>> BuildFinanceDataStatusRowsAsync(
+        AppDbContext db,
+        IReadOnlyCollection<SalesRecord> centralRecords,
+        ExportSettings settings,
+        bool useAuditCsv)
+    {
+        var sites = await db.Sites
+            .AsNoTracking()
+            .OrderBy(site => site.Land)
+            .ThenBy(site => site.TSC)
+            .ToListAsync();
+        var records = useAuditCsv
+            ? centralRecords
+                .GroupBy(record => record.Tsc)
+                .Select(group => new
+                {
+                    Tsc = group.Key,
+                    RowCount = group.Count(),
+                    LatestStoredAtUtc = (DateTime?)null,
+                    LatestExtractionDate = group.Max(record => record.ExtractionDate)
+                })
+                .ToList()
+            : await db.CentralSalesRecords
+                .AsNoTracking()
+                .GroupBy(record => record.Tsc)
+                .Select(group => new
+                {
+                    Tsc = group.Key,
+                    RowCount = group.Count(),
+                    LatestStoredAtUtc = (DateTime?)group.Max(record => record.StoredAtUtc),
+                    LatestExtractionDate = group.Max(record => record.ExtractionDate)
+                })
+                .ToListAsync();
+        var logs = await db.ExportLogs
+            .AsNoTracking()
+            .GroupBy(log => log.TSC)
+            .Select(group => new
+            {
+                Tsc = group.Key,
+                LatestTimestamp = group.Max(log => log.Timestamp)
+            })
+            .ToListAsync();
+        var latestLogTimes = logs.ToDictionary(x => x.Tsc, x => x.LatestTimestamp, StringComparer.OrdinalIgnoreCase);
+        var latestLogs = await db.ExportLogs
+            .AsNoTracking()
+            .Where(log => logs.Select(x => x.LatestTimestamp).Contains(log.Timestamp))
+            .ToListAsync();
+        var recordByTsc = records.ToDictionary(x => x.Tsc, StringComparer.OrdinalIgnoreCase);
+        var logByTsc = latestLogs
+            .Where(log => latestLogTimes.TryGetValue(log.TSC, out var timestamp) && log.Timestamp == timestamp)
+            .GroupBy(log => log.TSC, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(log => log.Id).First(), StringComparer.OrdinalIgnoreCase);
+
+        return sites.Select(site =>
+        {
+            recordByTsc.TryGetValue(site.TSC, out var record);
+            logByTsc.TryGetValue(site.TSC, out var log);
+
+            // Reuse the Export Dashboard freshness logic so the management view agrees with the
+            // Export Dashboard: it compares the central DB against the local Sales_ProcessedMergeInput
+            // CSV (and the export log) and flags "CSV neuer als DB".
+            var csv = DashboardPageService.ResolveLatestLocalProcessedMergeInputFile(site, settings);
+            var central = record?.LatestStoredAtUtc is { } storedAtUtc
+                ? new CentralDataState { SiteId = site.Id, RowCount = record.RowCount, LatestStoredAtUtc = storedAtUtc }
+                : null;
+            var freshness = DashboardPageService.ResolveDataFreshness(central, csv, log);
+
+            return new ManagementFinanceDataStatusRow
+            {
+                Land = site.Land,
+                Tsc = site.TSC,
+                SourceSystem = useAuditCsv ? $"{site.SourceSystem} / Audit-CSV" : site.SourceSystem,
+                IsActive = site.IsActive,
+                RowCount = record?.RowCount ?? 0,
+                LatestStoredAtUtc = record?.LatestStoredAtUtc,
+                LatestExtractionDate = record?.LatestExtractionDate,
+                LatestExportAt = log?.Timestamp,
+                LatestExportStatus = log?.Status ?? string.Empty,
+                ManualImportFilePath = site.ManualImportFilePath,
+                ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
+                DataFreshnessAt = freshness.DisplayAt,
+                DataFreshnessSource = freshness.Source,
+                DataFreshnessDetails = freshness.Details,
+                IsCsvNewerThanDatabase = freshness.IsCsvNewerThanDatabase
+            };
+        }).ToList();
+    }
+
+    private async Task<List<SalesRecord>> LoadCentralRecordsAsync()
+    {
+        if (_centralSalesDataProvider is not null)
+            return await _centralSalesDataProvider.GetRecordsAsync();
+
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.CentralSalesRecords
+            .AsNoTracking()
+            .Select(r => new SalesRecord
+            {
+                SourceSystem = r.SourceSystem,
+                Land = r.Land,
+                Tsc = r.Tsc,
+                DocumentEntry = r.DocumentEntry,
+                InvoiceNumber = r.InvoiceNumber,
+                PositionOnInvoice = r.PositionOnInvoice,
+                Material = r.Material,
+                Name = r.Name,
+                ProductGroup = r.ProductGroup,
+                ProductHierarchyCode = r.ProductHierarchyCode,
+                ProductHierarchyText = r.ProductHierarchyText,
+                ProductFamilyCode = r.ProductFamilyCode,
+                ProductFamilyText = r.ProductFamilyText,
+                ProductDivisionCode = r.ProductDivisionCode,
+                ProductDivisionText = r.ProductDivisionText,
+                ProductMappingAssigned = r.ProductMappingAssigned,
+                Quantity = r.Quantity,
+                SupplierNumber = r.SupplierNumber,
+                SupplierName = r.SupplierName,
+                SupplierCountry = r.SupplierCountry,
+                CustomerNumber = r.CustomerNumber,
+                CustomerName = r.CustomerName,
+                CustomerCountry = r.CustomerCountry,
+                CustomerIndustry = r.CustomerIndustry,
+                StandardCost = r.StandardCost,
+                StandardCostCurrency = r.StandardCostCurrency,
+                PurchaseOrderNumber = r.PurchaseOrderNumber,
+                SalesPriceValue = r.SalesPriceValue,
+                SalesCurrency = r.SalesCurrency,
+                DocumentCurrency = r.DocumentCurrency,
+                DocumentTotalForeignCurrency = r.DocumentTotalForeignCurrency,
+                DocumentTotalLocalCurrency = r.DocumentTotalLocalCurrency,
+                VatSumForeignCurrency = r.VatSumForeignCurrency,
+                VatSumLocalCurrency = r.VatSumLocalCurrency,
+                DocumentRate = r.DocumentRate,
+                CompanyCurrency = r.CompanyCurrency,
+                Incoterms2020 = r.Incoterms2020,
+                SalesResponsibleEmployee = r.SalesResponsibleEmployee,
+                PostingDate = r.PostingDate,
+                InvoiceDate = r.InvoiceDate,
+                OrderDate = r.OrderDate,
+                ExtractionDate = r.ExtractionDate,
+                DocumentType = r.DocumentType
+            })
+            .ToListAsync();
+    }
+
+    private static List<ManagementFinanceCountryStatusRow> BuildFinanceCountryStatusRows(
+        IReadOnlyCollection<FinanceAggregationRow> rows,
+        IReadOnlyDictionary<string, FinanceReferenceValue?> referenceByKey,
+        int year,
+        string? countryFilter,
+        string? currencyFilter)
+    {
+        var actualRows = rows
+            .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                referenceByKey.TryGetValue(group.Key.CountryKey, out var reference);
+                var referenceValue = reference?.Value;
+                var actual = rowList.Sum(row => row.Value);
+                var intercompanyValue = rowList.Where(row => row.IsIntercompany).Sum(row => row.Value);
+                var difference = referenceValue.HasValue ? actual - referenceValue.Value : (decimal?)null;
+                return new ManagementFinanceCountryStatusRow
+                {
+                    Year = group.Key.Year,
+                    CountryKey = group.Key.CountryKey,
+                    Currency = group.Key.Currency,
+                    IncludedRows = rowList.Count(row => row.Include),
+                    ExcludedRows = rowList.Count(row => !row.Include),
+                    NetSalesActual = actual,
+                    IntercompanyValue = intercompanyValue,
+                    NetSalesActualExcludingIntercompany = actual - intercompanyValue,
+                    SourceSystems = JoinDistinct(rowList.Select(row => row.SourceSystem)),
+                    Tscs = JoinDistinct(rowList.Select(row => row.Tsc)),
+                    ReferenceValue = referenceValue,
+                    Difference = difference,
+                    DifferencePercent = referenceValue is > 0m && difference.HasValue ? difference.Value / referenceValue.Value * 100m : null,
+                    Status = BuildFinanceStatus(referenceValue, rowList.Count, difference)
+                };
+            })
+            .ToList();
+
+        var actualCountryKeys = actualRows
+            .Select(row => row.CountryKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var referenceOnlyRows = currencyFilter is null
+            ? referenceByKey.Values
+                .Where(reference => reference?.Value.HasValue == true)
+                .Select(reference => reference!)
+                .Where(reference => countryFilter is null || reference.Key.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+                .Where(reference => !actualCountryKeys.Contains(reference.Key))
+                .Select(reference => new ManagementFinanceCountryStatusRow
+                {
+                    Year = year,
+                    CountryKey = reference.Key,
+                    Currency = "-",
+                    ReferenceValue = reference.Value,
+                    Status = BuildFinanceStatus(reference.Value, 0, null)
+                })
+                .ToList()
+            : [];
+
+        return actualRows
+            .Concat(referenceOnlyRows)
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<ManagementFinanceCreditCandidateRow> BuildFinanceCreditCandidates(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Where(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber))
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.InvoiceNumber, row.DocumentType, row.Currency })
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                return new ManagementFinanceCreditCandidateRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    InvoiceNumber = group.Key.InvoiceNumber,
+                    DocumentType = group.Key.DocumentType,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = rowList.Sum(row => row.Value),
+                    Quantity = rowList.Sum(row => row.Quantity),
+                    Reason = BuildCreditReason(rowList)
+                };
+            })
+            .OrderBy(row => row.NetSalesActual)
+            .Take(100)
+            .ToList();
+
+    private static List<ManagementFinanceDataQualityRow> BuildFinanceDataQualityRows(IReadOnlyCollection<FinanceAggregationRow> rows)
+    {
+        var rowCount = rows.Count;
+        return new List<ManagementFinanceDataQualityRow>
+        {
+            BuildQualityRow("Fehlende Materialnummer", rows.Count(row => string.IsNullOrWhiteSpace(row.Material)), rowCount),
+            BuildQualityRow("Fehlende ProductGroup", rows.Count(row => string.IsNullOrWhiteSpace(row.ProductGroup)), rowCount),
+            BuildQualityRow("Fehlende Waehrung", rows.Count(row => string.IsNullOrWhiteSpace(row.Currency) || row.Currency == "-"), rowCount),
+            BuildQualityRow("Fehlender Kunde", rows.Count(row => string.IsNullOrWhiteSpace(row.CustomerName)), rowCount),
+            BuildQualityRow("Fehlendes Rechnungsdatum", rows.Count(row => !row.InvoiceDate.HasValue), rowCount),
+            BuildQualityRow("Fehlendes Buchungsdatum", rows.Count(row => !row.PostingDate.HasValue), rowCount),
+            BuildQualityRow("Nullwerte im Finance-Wert", rows.Count(row => row.Value == 0m), rowCount),
+            BuildQualityRow("Ausgeschlossene Zeilen", rows.Count(row => !row.Include), rowCount)
+        }
+        .Where(row => row.Count > 0)
+        .OrderByDescending(row => row.Count)
+        .ThenBy(row => row.Issue, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+    }
+
+    private static List<ManagementProductAssignmentRow> BuildProductAssignmentRows(
+        IReadOnlyCollection<FinanceAggregationRow> scopedRows,
+        IReadOnlyCollection<FinanceAggregationRow> allRows)
+    {
+        var referenceByMaterial = allRows
+            .Where(row => !string.IsNullOrWhiteSpace(row.Material))
+            .Where(row => HasProductReference(row))
+            .GroupBy(row => NormalizeMaterialKey(row.Material), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(row => IsAssignedProductReference(row))
+                    .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+                    .First(),
+                StringComparer.OrdinalIgnoreCase);
+
+        return scopedRows
+            .GroupBy(row => new
+            {
+                MaterialKey = NormalizeMaterialKey(row.Material),
+                row.Material,
+                row.ArticleName,
+                row.CountryKey,
+                row.Tsc,
+                row.SourceSystem,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var material = group.Key.Material?.Trim() ?? string.Empty;
+                referenceByMaterial.TryGetValue(group.Key.MaterialKey, out var reference);
+                var status = BuildProductAssignmentStatus(material, reference);
+                return new ManagementProductAssignmentRow
+                {
+                    Status = status,
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    SourceSystem = group.Key.SourceSystem,
+                    Material = material,
+                    ArticleName = group.Key.ArticleName,
+                    ReferenceMaterial = reference?.Material ?? string.Empty,
+                    ProductHierarchyCode = reference?.ProductHierarchyCode ?? string.Empty,
+                    ProductHierarchyText = reference?.ProductHierarchyText ?? string.Empty,
+                    ProductFamilyCode = reference?.ProductFamilyCode ?? string.Empty,
+                    ProductFamilyText = reference?.ProductFamilyText ?? string.Empty,
+                    ProductDivisionCode = reference?.ProductDivisionCode ?? string.Empty,
+                    ProductDivisionText = reference?.ProductDivisionText ?? string.Empty,
+                    ProductMappingAssigned = reference?.ProductMappingAssigned ?? string.Empty,
+                    RowCount = group.Count(),
+                    NetSalesActual = group.Sum(row => row.Value),
+                    Currency = group.Key.Currency
+                };
+            })
+            .OrderBy(row => ProductAssignmentStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.Material, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static ManagementProductAssignmentSummary BuildProductAssignmentSummary(IReadOnlyCollection<ManagementProductAssignmentRow> rows)
+        => new()
+        {
+            DistinctMaterialCount = rows.Count,
+            MatchedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Assigned),
+            MiscMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Misc),
+            UnassignedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
+            MissingReferenceMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
+            MissingMaterialNumberCount = rows.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
+            ReferenceMaterialCount = rows
+                .Where(row => !string.IsNullOrWhiteSpace(row.ReferenceMaterial))
+                .Select(row => row.ReferenceMaterial)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count()
+        };
+
+    private static ManagementProductFinanceSummary BuildProductFinanceSummary(
+        IReadOnlyCollection<ManagementProductAssignmentRow> rows,
+        IReadOnlyCollection<string> currencies)
+    {
+        var total = rows.Sum(row => row.NetSalesActual);
+        var assigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+        var misc = rows.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual);
+        var unassigned = rows.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual);
+        var missingReference = rows.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual);
+        var missingMaterial = rows.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual);
+
+        return new ManagementProductFinanceSummary
+        {
+            TotalValue = total,
+            AssignedValue = assigned,
+            MiscValue = misc,
+            UnassignedValue = unassigned,
+            MissingReferenceValue = missingReference,
+            MissingMaterialValue = missingMaterial,
+            AssignedValuePercent = PercentOf(assigned, total),
+            MiscValuePercent = PercentOf(misc, total),
+            UnassignedValuePercent = PercentOf(unassigned, total),
+            MissingReferenceValuePercent = PercentOf(missingReference, total),
+            DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
+        };
+    }
+
+    private static List<ManagementProductDivisionFinanceRow> BuildProductDivisionFinanceRows(IEnumerable<ManagementProductAssignmentRow> rows)
+    {
+        var assignedRows = rows
+            .Where(row => row.Status is ProductAssignmentStatuses.Assigned or ProductAssignmentStatuses.Misc)
+            .ToList();
+        var totalsByCurrency = assignedRows
+            .GroupBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(row => row.NetSalesActual), StringComparer.OrdinalIgnoreCase);
+
+        return assignedRows
+            .GroupBy(row => new
+            {
+                row.ProductDivisionCode,
+                row.ProductDivisionText,
+                row.ProductFamilyCode,
+                row.ProductFamilyText,
+                row.ProductHierarchyCode,
+                row.ProductHierarchyText,
+                row.Currency
+            })
+            .Select(group =>
+            {
+                var value = group.Sum(row => row.NetSalesActual);
+                totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+                return new ManagementProductDivisionFinanceRow
+                {
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText,
+                    ProductFamilyCode = group.Key.ProductFamilyCode,
+                    ProductFamilyText = group.Key.ProductFamilyText,
+                    ProductHierarchyCode = group.Key.ProductHierarchyCode,
+                    ProductHierarchyText = group.Key.ProductHierarchyText,
+                    Currency = group.Key.Currency,
+                    NetSalesActual = value,
+                    SharePercent = PercentOf(value, total),
+                    MaterialCount = group.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    RowCount = group.Sum(row => row.RowCount),
+                    Countries = JoinDistinct(group.Select(row => row.CountryKey))
+                };
+            })
+            .OrderByDescending(row => Math.Abs(row.NetSalesActual))
+            .ThenBy(row => row.ProductDivisionCode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<ManagementProductFinanceCountryRow> BuildProductFinanceCountryRows(IEnumerable<ManagementProductAssignmentRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.Currency })
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                var total = rowList.Sum(row => row.NetSalesActual);
+                var assigned = rowList.Where(row => row.Status == ProductAssignmentStatuses.Assigned).Sum(row => row.NetSalesActual);
+                var misc = rowList.Where(row => row.Status == ProductAssignmentStatuses.Misc).Sum(row => row.NetSalesActual);
+                return new ManagementProductFinanceCountryRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    Currency = group.Key.Currency,
+                    TotalValue = total,
+                    AssignedValue = assigned,
+                    MiscValue = misc,
+                    UnassignedValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.Unassigned).Sum(row => row.NetSalesActual),
+                    MissingReferenceValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.NoReference).Sum(row => row.NetSalesActual),
+                    MissingMaterialValue = rowList.Where(row => row.Status == ProductAssignmentStatuses.MissingMaterial).Sum(row => row.NetSalesActual),
+                    AssignedValuePercent = PercentOf(assigned, total),
+                    CoveredValuePercent = PercentOf(assigned + misc, total)
+                };
+            })
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static List<ManagementProductAssignmentCountryRow> BuildProductAssignmentCountryRows(IEnumerable<ManagementProductAssignmentRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc })
+            .OrderBy(group => group.Key.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                var matched = rowList.Count(row => row.Status == ProductAssignmentStatuses.Assigned);
+                var relevant = rowList.Count(row => row.Status != ProductAssignmentStatuses.MissingMaterial);
+                return new ManagementProductAssignmentCountryRow
+                {
+                    CountryKey = group.Key.CountryKey,
+                    Tsc = group.Key.Tsc,
+                    DistinctMaterialCount = rowList.Count,
+                    MatchedMaterialCount = matched,
+                    MiscMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.Misc),
+                    UnassignedMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
+                    MissingReferenceMaterialCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.NoReference),
+                    MissingMaterialNumberCount = rowList.Count(row => row.Status == ProductAssignmentStatuses.MissingMaterial),
+                    MatchPercent = relevant == 0 ? 0m : matched * 100m / relevant
+                };
+            })
+            .ToList();
+
+    private static List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var supplierType = ResolveSupplierType(row);
+                var costBasis = ResolveGroupMarginCostBasis(row);
+                var status = ResolveGroupMarginStatus(row, supplierType, costBasis);
+                var margin = row.Value - costBasis;
+                return new ManagementGroupMarginDetailRow
+                {
+                    CountryKey = row.CountryKey,
+                    Tsc = row.Tsc,
+                    InvoiceNumber = row.InvoiceNumber,
+                    Material = row.Material,
+                    ArticleName = row.ArticleName,
+                    ProductDivisionCode = row.ProductDivisionCode,
+                    ProductDivisionText = row.ProductDivisionText,
+                    SupplierNumber = row.SupplierNumber,
+                    SupplierName = row.SupplierName,
+                    SupplierCountry = row.SupplierCountry,
+                    SupplierType = supplierType,
+                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    Status = status,
+                    Currency = row.Currency,
+                    Quantity = row.Quantity,
+                    UnitCost = row.StandardCost,
+                    SalesValue = row.Value,
+                    CostBasisValue = costBasis,
+                    MarginValue = margin,
+                    MarginPercent = PercentOf(margin, row.Value)
+                };
+            })
+            .OrderBy(row => GroupMarginStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.MarginValue))
+            .ToList();
+
+    private static ManagementGroupMarginSummary BuildGroupMarginSummary(
+        IReadOnlyCollection<ManagementGroupMarginDetailRow> rows,
+        IReadOnlyCollection<string> currencies)
+    {
+        var sales = rows.Sum(row => row.SalesValue);
+        var cost = rows.Sum(row => row.CostBasisValue);
+        var margin = sales - cost;
+        var cleanRows = rows.Count(row => row.Status == "OK");
+
+        return new ManagementGroupMarginSummary
+        {
+            SalesValue = sales,
+            CostBasisValue = cost,
+            MarginValue = margin,
+            MarginPercent = PercentOf(margin, sales),
+            RowCount = rows.Count,
+            InternalSupplierRows = rows.Count(row => row.SupplierType == "Intern"),
+            ExternalSupplierRows = rows.Count(row => row.SupplierType == "Extern"),
+            MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
+            UnclearSupplierRows = rows.Count(row => row.Status == "Lieferant unklar"),
+            CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
+            DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
+        };
+    }
+
+    private static List<ManagementGroupMarginCountryRow> BuildGroupMarginCountryRows(IEnumerable<ManagementGroupMarginDetailRow> rows)
+        => rows
+            .GroupBy(row => new { row.CountryKey, row.Tsc, row.Currency })
+            .Select(group => BuildGroupMarginCountryRow(group.Key.CountryKey, group.Key.Tsc, group.Key.Currency, group))
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Currency, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private static List<ManagementGroupMarginDivisionRow> BuildGroupMarginDivisionRows(IEnumerable<ManagementGroupMarginDetailRow> rows)
+        => rows
+            .GroupBy(row => new
+            {
+                row.CountryKey,
+                row.Tsc,
+                row.Currency,
+                row.ProductDivisionCode,
+                row.ProductDivisionText
+            })
+            .Select(group =>
+            {
+                var baseRow = BuildGroupMarginCountryRow(group.Key.CountryKey, group.Key.Tsc, group.Key.Currency, group);
+                return new ManagementGroupMarginDivisionRow
+                {
+                    CountryKey = baseRow.CountryKey,
+                    Tsc = baseRow.Tsc,
+                    Currency = baseRow.Currency,
+                    SalesValue = baseRow.SalesValue,
+                    CostBasisValue = baseRow.CostBasisValue,
+                    MarginValue = baseRow.MarginValue,
+                    MarginPercent = baseRow.MarginPercent,
+                    RowCount = baseRow.RowCount,
+                    InternalSupplierRows = baseRow.InternalSupplierRows,
+                    MissingCostRows = baseRow.MissingCostRows,
+                    ProductDivisionCode = group.Key.ProductDivisionCode,
+                    ProductDivisionText = group.Key.ProductDivisionText
+                };
+            })
+            .OrderBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(row => Math.Abs(row.MarginValue))
+            .ToList();
+
+    private static ManagementGroupMarginCountryRow BuildGroupMarginCountryRow(
+        string countryKey,
+        string tsc,
+        string currency,
+        IEnumerable<ManagementGroupMarginDetailRow> rows)
+    {
+        var rowList = rows.ToList();
+        var sales = rowList.Sum(row => row.SalesValue);
+        var cost = rowList.Sum(row => row.CostBasisValue);
+        var margin = sales - cost;
+        return new ManagementGroupMarginCountryRow
+        {
+            CountryKey = countryKey,
+            Tsc = tsc,
+            Currency = currency,
+            SalesValue = sales,
+            CostBasisValue = cost,
+            MarginValue = margin,
+            MarginPercent = PercentOf(margin, sales),
+            RowCount = rowList.Count,
+            InternalSupplierRows = rowList.Count(row => row.SupplierType == "Intern"),
+            MissingCostRows = rowList.Count(HasOpenGroupMarginCostBasis)
+        };
+    }
+
+    private static bool HasOpenGroupMarginCostBasis(ManagementGroupMarginDetailRow row)
+        => row.Status is "Standardpreis fehlt" or "Lieferant unklar";
+
+    private static string ResolveSupplierType(FinanceAggregationRow row)
+        => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry);
+
+    private static decimal ResolveGroupMarginCostBasis(FinanceAggregationRow row)
+    {
+        var magnitude = row.Quantity != 0m
+            ? Math.Abs(row.Quantity) * Math.Abs(row.StandardCost)
+            : Math.Abs(row.StandardCost);
+
+        // Gutschriften/Retouren tragen einen negativen Netto-Umsatz (row.Value < 0, entweder
+        // natuerlich negativ oder via NegateAmount-Regel). Die Kostenbasis muss mit umkehren,
+        // sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100, Kosten +60 -> -160
+        // statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
+        var isReversal = row.Value < 0m || (row.Value == 0m && row.Quantity < 0m);
+        return isReversal ? -magnitude : magnitude;
+    }
+
+    private static string ResolveGroupMarginCostSource(string supplierType)
+        => supplierType switch
+        {
+            "Intern" => "Interner Standardpreis",
+            "Extern" => "Kosten aus Verkaufszeile",
+            _ => "Lieferant unklar"
+        };
+
+    private static string ResolveGroupMarginStatus(FinanceAggregationRow row, string supplierType, decimal costBasis)
+    {
+        if (supplierType == "Unklar")
+            return "Lieferant unklar";
+        if (costBasis == 0m)
+            return "Standardpreis fehlt";
+        if (row.Value == 0m)
+            return "Umsatz fehlt";
+        return "OK";
+    }
+
+    private static int GroupMarginStatusSort(string status)
+        => status switch
+        {
+            "Standardpreis fehlt" => 0,
+            "Lieferant unklar" => 1,
+            "Umsatz fehlt" => 2,
+            _ => 3
+        };
+
+    private List<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows(
+        IEnumerable<FinanceAggregationRow> rows,
+        bool useAuditCsvAsCentralSource)
+        => rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var rateDate = new DateTime(row.Year, 12, 31);
+                var originalCurrency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
+                var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
+                var supplierType = ResolveSupplierType(row);
+                var costBasis = ResolveGroupMarginCostBasis(row);
+                var margin = row.Value - costBasis;
+                var status = ResolveAuditLedgerStatus(row, supplierType, costBasis, chfRate);
+                var standardCostCurrency = string.IsNullOrWhiteSpace(row.StandardCostCurrency)
+                    ? originalCurrency
+                    : row.StandardCostCurrency.Trim();
+                var standardCostRate = _exchangeRateService.ResolveRate(standardCostCurrency, "CHF", rateDate);
+
+                return new ManagementFinanceAuditLedgerRow
+                {
+                    Status = status,
+                    CountryKey = row.CountryKey,
+                    Tsc = row.Tsc,
+                    Year = row.Year,
+                    PostingDate = row.PostingDate,
+                    InvoiceDate = row.InvoiceDate,
+                    ExtractionDate = row.ExtractionDate,
+                    SourceSystem = row.SourceSystem,
+                    InvoiceNumber = row.InvoiceNumber,
+                    PositionOnInvoice = row.PositionOnInvoice,
+                    DocumentType = row.DocumentType,
+                    CustomerNumber = row.CustomerNumber,
+                    CustomerName = row.CustomerName,
+                    Material = row.Material,
+                    ArticleName = row.ArticleName,
+                    ProductDivisionCode = row.ProductDivisionCode,
+                    ProductDivisionText = row.ProductDivisionText,
+                    Quantity = row.Quantity,
+                    OriginalAmount = row.Value,
+                    OriginalCurrency = originalCurrency,
+                    ChfRate = chfRate,
+                    ChfAmount = chfRate.HasValue ? row.Value * chfRate.Value : null,
+                    RateSource = chfRate.HasValue ? "CurrencyExchangeRates / Jahreskurs" : "Kurs fehlt",
+                    RateYear = row.Year,
+                    RateDate = rateDate,
+                    SupplierNumber = row.SupplierNumber,
+                    SupplierName = row.SupplierName,
+                    SupplierCountry = row.SupplierCountry,
+                    SupplierType = supplierType,
+                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    StandardCost = row.StandardCost,
+                    StandardCostCurrency = standardCostCurrency,
+                    StandardCostChfRate = standardCostRate,
+                    StandardCostChf = standardCostRate.HasValue ? row.StandardCost * standardCostRate.Value : null,
+                    CostBasisOriginal = costBasis,
+                    CostBasisCurrency = standardCostCurrency,
+                    CostBasisChf = standardCostRate.HasValue ? costBasis * standardCostRate.Value : null,
+                    MarginOriginal = margin,
+                    MarginChf = chfRate.HasValue && standardCostRate.HasValue
+                        ? row.Value * chfRate.Value - costBasis * standardCostRate.Value
+                        : null,
+                    MarginPercent = PercentOf(margin, row.Value),
+                    DataSource = useAuditCsvAsCentralSource ? "Audit-CSV Sales_ProcessedMergeInput" : "CentralSalesRecords"
+                };
+            })
+            .OrderBy(row => AuditLedgerStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.InvoiceNumber, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.PositionOnInvoice)
+            .ToList();
+
+    private ManagementFinancePivotResult BuildFinancePivotResult(
+        IEnumerable<FinanceAggregationRow> rows,
+        int selectedYear)
+    {
+        var pivotRows = rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var financeDate = row.FinanceDate == default
+                    ? row.InvoiceDate ?? row.PostingDate ?? row.ExtractionDate
+                    : row.FinanceDate;
+                var currency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
+                var rate = _exchangeRateService.ResolveRate(currency, "CHF", new DateTime(row.Year, 12, 31));
+                return new FinancePivotValue(
+                    row.Tsc,
+                    financeDate.Year,
+                    financeDate.Month,
+                    financeDate.Day,
+                    rate.HasValue ? row.Value * rate.Value : 0m,
+                    rate.HasValue);
+            })
+            .Where(row => row.HasRate && !string.IsNullOrWhiteSpace(row.Tsc))
+            .ToList();
+
+        var tscColumns = pivotRows
+            .Select(row => row.Tsc)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var dailyYearColumns = pivotRows
+            .Select(row => row.Year.ToString(CultureInfo.InvariantCulture))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var monthOptions = pivotRows
+            .Where(row => row.Year == selectedYear)
+            .Select(row => row.Month)
+            .Distinct()
+            .OrderBy(month => month)
+            .ToList();
+        if (monthOptions.Count == 0)
+        {
+            monthOptions = pivotRows
+                .Select(row => row.Month)
+                .Distinct()
+                .OrderBy(month => month)
+                .ToList();
+        }
+
+        var defaultMonth = monthOptions.LastOrDefault();
+        var latestYear = selectedYear == 0
+            ? pivotRows.Select(row => row.Year).DefaultIfEmpty(DateTime.Now.Year).Max()
+            : selectedYear;
+
+        return new ManagementFinancePivotResult
+        {
+            TscColumns = tscColumns,
+            MonthOptions = monthOptions,
+            DefaultMonth = defaultMonth,
+            RowCount = pivotRows.Count,
+            YtdSalesChf = pivotRows.Where(row => row.Year == latestYear).Sum(row => row.ValueChf),
+            MtdSalesChf = defaultMonth == 0
+                ? 0m
+                : pivotRows.Where(row => row.Year == latestYear && row.Month == defaultMonth).Sum(row => row.ValueChf),
+            MonthlyRows = BuildFinancePivotMonthlyRows(pivotRows, tscColumns),
+            DailyYearColumns = dailyYearColumns,
+            DailyYearRows = BuildFinancePivotDailyYearRows(pivotRows, dailyYearColumns)
+        };
+    }
+
+    private static List<ManagementFinancePivotMatrixRow> BuildFinancePivotMonthlyRows(
+        IReadOnlyCollection<FinancePivotValue> values,
+        IReadOnlyList<string> tscColumns)
+    {
+        var result = new List<ManagementFinancePivotMatrixRow>();
+
+        foreach (var yearGroup in values.GroupBy(row => row.Year).OrderBy(group => group.Key))
+        {
+            foreach (var monthGroup in yearGroup.GroupBy(row => row.Month).OrderBy(group => group.Key))
+            {
+                result.Add(BuildFinancePivotMatrixRow(
+                    yearGroup.Key,
+                    monthGroup.Key,
+                    null,
+                    false,
+                    false,
+                    string.Empty,
+                    monthGroup,
+                    tscColumns));
+            }
+
+            result.Add(BuildFinancePivotMatrixRow(
+                yearGroup.Key,
+                null,
+                null,
+                true,
+                false,
+                $"{yearGroup.Key} Ergebnis",
+                yearGroup,
+                tscColumns));
+        }
+
+        result.Add(BuildFinancePivotMatrixRow(
+            0,
+            null,
+            null,
+            false,
+            true,
+            "Gesamtergebnis",
+            values,
+            tscColumns));
+
+        return result;
+    }
+
+    private static List<ManagementFinancePivotMatrixRow> BuildFinancePivotDailyYearRows(
+        IReadOnlyCollection<FinancePivotValue> values,
+        IReadOnlyList<string> yearColumns)
+    {
+        var result = values
+            .GroupBy(row => new { row.Month, row.Day })
+            .OrderBy(group => group.Key.Month)
+            .ThenBy(group => group.Key.Day)
+            .Select(group =>
+            {
+                var valueList = group.ToList();
+                var byYear = yearColumns.ToDictionary(
+                    year => year,
+                    year => valueList
+                        .Where(row => string.Equals(row.Year.ToString(CultureInfo.InvariantCulture), year, StringComparison.OrdinalIgnoreCase))
+                        .Sum(row => row.ValueChf),
+                    StringComparer.OrdinalIgnoreCase);
+
+                return new ManagementFinancePivotMatrixRow
+                {
+                    Month = group.Key.Month,
+                    Day = group.Key.Day,
+                    ValuesByTsc = byYear,
+                    Total = byYear.Values.Sum()
+                };
+            })
+            .ToList();
+
+        return result;
+    }
+
+    private static ManagementFinancePivotMatrixRow BuildFinancePivotMatrixRow(
+        int year,
+        int? month,
+        int? day,
+        bool isSubtotal,
+        bool isGrandTotal,
+        string label,
+        IEnumerable<FinancePivotValue> values,
+        IReadOnlyList<string> tscColumns)
+    {
+        var valueList = values.ToList();
+        var byTsc = tscColumns.ToDictionary(
+            tsc => tsc,
+            tsc => valueList
+                .Where(row => string.Equals(row.Tsc, tsc, StringComparison.OrdinalIgnoreCase))
+                .Sum(row => row.ValueChf),
+            StringComparer.OrdinalIgnoreCase);
+
+        return new ManagementFinancePivotMatrixRow
+        {
+            Year = year,
+            Month = month,
+            Day = day,
+            IsSubtotal = isSubtotal,
+            IsGrandTotal = isGrandTotal,
+            Label = label,
+            ValuesByTsc = byTsc,
+            Total = byTsc.Values.Sum()
+        };
+    }
+
+    private static string ResolveAuditLedgerStatus(FinanceAggregationRow row, string supplierType, decimal costBasis, decimal? chfRate)
+    {
+        if (!chfRate.HasValue)
+            return "Kurs fehlt";
+        if (supplierType == "Unklar")
+            return "Lieferant unklar";
+        if (costBasis == 0m)
+            return "Standardpreis fehlt";
+        if (row.Value == 0m)
+            return "Umsatz fehlt";
+        return "OK";
+    }
+
+    private static int AuditLedgerStatusSort(string status)
+        => status switch
+        {
+            "Kurs fehlt" => 0,
+            "Standardpreis fehlt" => 1,
+            "Lieferant unklar" => 2,
+            "Umsatz fehlt" => 3,
+            _ => 4
+        };
+
+    private static string BuildProductAssignmentStatus(string material, FinanceAggregationRow? reference)
+    {
+        if (string.IsNullOrWhiteSpace(material))
+            return ProductAssignmentStatuses.MissingMaterial;
+        if (reference is null)
+            return ProductAssignmentStatuses.NoReference;
+        if (IsMiscProductDivision(reference))
+            return ProductAssignmentStatuses.Misc;
+        return IsAssignedProductReference(reference)
+            ? ProductAssignmentStatuses.Assigned
+            : ProductAssignmentStatuses.Unassigned;
+    }
+
+    private static bool HasProductReference(FinanceAggregationRow row)
+        => !string.IsNullOrWhiteSpace(row.ProductHierarchyCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductFamilyCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductDivisionCode) ||
+           !string.IsNullOrWhiteSpace(row.ProductMappingAssigned);
+
+    private static bool IsAssignedProductReference(FinanceAggregationRow row)
+        => IsTruthy(row.ProductMappingAssigned) &&
+           !string.IsNullOrWhiteSpace(row.ProductDivisionCode) &&
+           !string.Equals(row.ProductDivisionCode, "UNASS", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsMiscProductDivision(FinanceAggregationRow row)
+        => string.Equals(row.ProductDivisionCode?.Trim(), DivisionMiscCode, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTruthy(string value)
+        => value.Equals("X", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+           value.Equals("JA", StringComparison.OrdinalIgnoreCase);
+
+    private static int ProductAssignmentStatusSort(string status) => status switch
+    {
+        ProductAssignmentStatuses.NoReference => 0,
+        ProductAssignmentStatuses.Unassigned => 1,
+        ProductAssignmentStatuses.MissingMaterial => 2,
+        ProductAssignmentStatuses.Misc => 3,
+        _ => 4
+    };
+
+    private static string NormalizeMaterialKey(string value)
+        => MaterialKeyNormalizer.Normalize(value);
+
+    private static IEnumerable<string> BuildProductAssignmentNotices(
+        IReadOnlyCollection<ManagementProductAssignmentRow> rows,
+        ManagementProductFinanceSummary summary)
+    {
+        if (rows.Count == 0 || summary.TotalValue == 0m)
+            yield break;
+
+        var unresolvedValuePercent = summary.UnassignedValuePercent + summary.MissingReferenceValuePercent;
+        if (unresolvedValuePercent >= 90m)
+        {
+            yield return $"Spartenanalyse auffaellig: {unresolvedValuePercent:N1}% des Umsatzes sind nicht zugeordnet oder nicht im TR-AG-Stamm. Das ist fachlich unplausibel und weist auf Mapping-/Referenzprobleme hin.";
+            yield return "Pruefpunkte Spartenmapping: ProductDivisionRefSet-Fuellung, Join Z.Matnr = P.Matnr, fuehrende Nullen in Materialnummern, lokale Artikelnummern und letzter ZSCHWEIZ-Export.";
+        }
+    }
+
+    private static decimal PercentOf(decimal value, decimal total)
+        => total == 0m ? 0m : value * 100m / total;
+
+    private static ManagementFinanceDataQualityRow BuildQualityRow(string issue, int count, int totalRows)
+    {
+        var share = totalRows == 0 ? 0m : count / (decimal)totalRows;
+        return new ManagementFinanceDataQualityRow
+        {
+            Issue = issue,
+            Count = count,
+            Severity = count == 0 ? "Info" : share >= 0.2m ? "Warning" : "Info"
+        };
+    }
+
+    private static string BuildFinanceStatus(decimal? referenceValue, int actualRowCount, decimal? difference)
+    {
+        if (!referenceValue.HasValue)
+            return "Kein Sollwert";
+        if (actualRowCount == 0)
+            return "Keine Daten";
+        if (!difference.HasValue)
+            return "Pruefen";
+
+        return Math.Abs(difference.Value) <= 1m ? "OK" : "Pruefen";
+    }
+
+    private static bool LooksLikeCreditDocument(string documentType, string invoiceNumber)
+    {
+        var text = $"{documentType} {invoiceNumber}".Trim();
+        return text.Contains("credit", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("gutsch", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("storno", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("abono", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("rec", StringComparison.OrdinalIgnoreCase) ||
+               invoiceNumber.StartsWith("GS", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildCreditReason(IEnumerable<FinanceAggregationRow> rows)
+    {
+        var rowList = rows.ToList();
+        var reasons = new List<string>();
+        if (rowList.Any(row => row.Value < 0m))
+            reasons.Add("negativer Finance-Wert");
+        if (rowList.Any(row => row.RawSalesValue < 0m))
+            reasons.Add("negativer Rohwert");
+        if (rowList.Any(row => LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber)))
+            reasons.Add("Belegtyp/-nummer");
+        return string.Join(", ", reasons.Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static bool IsIntercompanyCustomer(SalesRecord record, IReadOnlyList<FinanceIntercompanyRule> rules)
+    {
+        var customerNumber = record.CustomerNumber?.Trim() ?? string.Empty;
+        var customerName = record.CustomerName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(customerNumber) && string.IsNullOrWhiteSpace(customerName))
+            return false;
+
+        var normalizedCustomerName = NormalizeRuleText(customerName);
+        var referenceKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+
+        foreach (var rule in rules)
+        {
+            if (!string.IsNullOrWhiteSpace(rule.ScopeKey) &&
+                !rule.ScopeKey.Equals(referenceKey, StringComparison.OrdinalIgnoreCase) &&
+                !rule.ScopeKey.Equals(record.Tsc, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(rule.CustomerNumber) &&
+                customerNumber.Equals(rule.CustomerNumber.Trim(), StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(rule.CustomerNameContains) &&
+                normalizedCustomerName.Contains(NormalizeRuleText(rule.CustomerNameContains), StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeRuleText(string value)
+        => (value ?? string.Empty)
+            .Replace("\u00e4", "ae", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00f6", "oe", StringComparison.OrdinalIgnoreCase)
+            .Replace("\u00fc", "ue", StringComparison.OrdinalIgnoreCase)
+            .Trim()
+            .ToUpperInvariant();
+
+    private static string JoinDistinct(IEnumerable<string> values)
+    {
+        var distinct = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return distinct.Count == 0 ? "-" : string.Join(", ", distinct);
+    }
+
+    private static IEnumerable<CentralAggregationRow> ApplyCentralDimensionFilters(
+        IEnumerable<CentralAggregationRow> rows,
+        ManagementCockpitAnalysisOptions? options)
+    {
+        var landFilter = NormalizeOptionalFilter(options?.LandFilter);
+        var tscFilter = NormalizeOptionalFilter(options?.TscFilter);
+
+        return rows.Where(row =>
+            (landFilter is null || string.Equals(row.Land, landFilter, StringComparison.OrdinalIgnoreCase)) &&
+            (tscFilter is null || string.Equals(row.Tsc, tscFilter, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static ManagementFinanceSummaryRow BuildFinanceSummaryRow(
+        int year,
+        string countryKey,
+        string currency,
+        IEnumerable<FinanceAggregationRow> rows)
+    {
+        var rowList = rows.ToList();
+        var includedRows = rowList.Count(row => row.Include);
+        var excludedRows = rowList.Count(row => !row.Include);
+        var actual = rowList.Sum(row => row.Value);
+        var intercompanyValue = rowList.Where(row => row.IsIntercompany).Sum(row => row.Value);
+        var creditRows = rowList.Count(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber));
+        var creditValue = rowList
+            .Where(row => row.Value < 0m || row.RawSalesValue < 0m || LooksLikeCreditDocument(row.DocumentType, row.InvoiceNumber))
+            .Sum(row => Math.Abs(row.Value));
+        return new ManagementFinanceSummaryRow
+        {
+            Year = year,
+            CountryKey = countryKey,
+            Currency = currency,
+            IncludedRows = includedRows,
+            ExcludedRows = excludedRows,
+            TotalRows = rowList.Count,
+            NetSalesActual = actual,
+            NetSalesActualExcludingIntercompany = actual - intercompanyValue,
+            IntercompanyValue = intercompanyValue,
+            IntercompanySharePercent = actual == 0m ? 0m : intercompanyValue / actual * 100m,
+            Quantity = rowList.Sum(row => row.Quantity),
+            CreditValue = creditValue,
+            CreditRows = creditRows,
+            IncludeRatePercent = rowList.Count == 0 ? 0m : includedRows * 100m / rowList.Count,
+            ExcludeRatePercent = rowList.Count == 0 ? 0m : excludedRows * 100m / rowList.Count
+        };
+    }
+
+    private static string ResolveFinanceCurrency(SalesRecord record)
+        => ResolveFinanceCountryKey(record.Land, record.Tsc) switch
+        {
+            "CH" => "CHF",
+            "AT" => "EUR",
+            "DE" => "EUR",
+            "ES" => "EUR",
+            "FR" => "EUR",
+            "IN" => "INR",
+            "IT" => "EUR",
+            "UK" => "GBP",
+            "US" => "USD",
+            _ => string.IsNullOrWhiteSpace(record.CompanyCurrency) ? record.SalesCurrency : record.CompanyCurrency
+        };
+
+    private static string ResolveFinanceCountryKey(string land, string tsc)
+    {
+        var normalizedLand = (land ?? string.Empty).Trim().ToUpperInvariant();
+        var normalizedTsc = (tsc ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (normalizedLand is "AT" or "AUT" || normalizedLand.Contains("OESTER") || normalizedLand.Contains("OSTER") || normalizedLand.Contains("AUSTRIA")) return "AT";
+        if (normalizedLand is "CH" or "CHE" || normalizedLand.Contains("SCHWE") || normalizedLand.Contains("SWITZER")) return "CH";
+        if (normalizedLand.Contains("FRANK") || normalizedTsc.Contains("FR")) return "FR";
+        if (normalizedLand.Contains("IND") || normalizedTsc.Contains("IN")) return "IN";
+        if (normalizedLand.Contains("ITAL") || normalizedTsc.Contains("IT")) return "IT";
+        if (normalizedLand.Contains("ENGL") || normalizedLand.Contains("KINGDOM") || normalizedTsc.Contains("UK") || normalizedTsc.Contains("GB")) return "UK";
+        if (normalizedLand.Contains("USA") || normalizedLand.Contains("UNITED STATES") || normalizedTsc.Contains("US")) return "US";
+        if (normalizedLand.Contains("DEUT") || normalizedTsc.Contains("DE")) return "DE";
+        if (normalizedLand.Contains("SPAN") || normalizedTsc is "SE" or "ES") return "ES";
+
+        return normalizedTsc.Replace("TR", string.Empty);
+    }
+
+    private static IEnumerable<string> GetCandidateDirectories(ExportSettings settings)
+    {
+        yield return Path.Combine(AppContext.BaseDirectory, "output");
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalSiteExportFolder))
+            yield return settings.LocalSiteExportFolder.Trim();
+
+        if (!string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder))
+            yield return settings.LocalConsolidatedExportFolder.Trim();
+    }
+
+    private AggregationSelection ResolveAggregation(ManagementCockpitAnalysisOptions? options)
+    {
+        var selectedField = ValueFieldDefinitions.FirstOrDefault(x =>
+                string.Equals(x.Key, options?.ValueField, StringComparison.OrdinalIgnoreCase))
+            ?? ValueFieldDefinitions.First(x => x.Key == ManagementCockpitValueFieldKeys.SalesPriceValue);
+
+        var additionalFields = (options?.AdditionalValueFields ?? [])
+            .Select(key => ValueFieldDefinitions.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase)))
+            .Where(x => x is not null && !string.Equals(x.Key, selectedField.Key, StringComparison.OrdinalIgnoreCase))
+            .Cast<ValueFieldDefinition>()
+            .GroupBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+
+        var targetCurrency = (options?.TargetCurrency ?? ManagementCockpitCurrencyOptions.Native).Trim().ToUpperInvariant();
+        if (targetCurrency is not ManagementCockpitCurrencyOptions.Chf and not ManagementCockpitCurrencyOptions.Eur and not ManagementCockpitCurrencyOptions.Usd)
+            targetCurrency = ManagementCockpitCurrencyOptions.Native;
+
+        return new AggregationSelection(
+            selectedField,
+            additionalFields,
+            targetCurrency,
+            new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private void ApplyAggregation(List<CockpitRow> rows, AggregationSelection aggregation)
+    {
+        foreach (var row in rows)
+        {
+            var value = ResolveValue(row, aggregation.ValueField);
+            var currency = ResolveCurrency(row, aggregation.ValueField);
+            var converted = ConvertValue(value, currency, aggregation.ValueField, aggregation, row.InvoiceDate ?? row.OrderDate ?? row.ExtractionDate);
+
+            row.AggregatedValue = converted.Value;
+            row.AggregatedCurrency = converted.DisplayCurrency;
+            row.MissingExchangeRate = converted.MissingExchangeRate;
+        }
+    }
+
+    private CentralAggregationRow BuildCentralAggregationRow(CentralCockpitRow row, AggregationSelection aggregation)
+    {
+        var value = ResolveValue(row, aggregation.ValueField);
+        var currency = ResolveCurrency(row, aggregation.ValueField);
+        var converted = ConvertValue(value, currency, aggregation.ValueField, aggregation, row.ExchangeRateDate);
+        var additionalValues = aggregation.AdditionalValueFields.ToDictionary(
+            field => field.Key,
+            field =>
+            {
+                var additionalValue = ResolveValue(row, field);
+                var additionalCurrency = ResolveCurrency(row, field);
+                return ConvertValue(additionalValue, additionalCurrency, field, aggregation, row.ExchangeRateDate);
+            },
+            StringComparer.OrdinalIgnoreCase);
+
+        return new CentralAggregationRow
+        {
+            SourceSystem = row.SourceSystem,
+            Land = row.Land,
+            Tsc = row.Tsc,
+            InvoiceNumber = row.InvoiceNumber,
+            PeriodDate = row.PeriodDate,
+            Value = converted.Value,
+            DisplayCurrency = converted.DisplayCurrency,
+            MissingExchangeRate = converted.MissingExchangeRate,
+            AdditionalValues = additionalValues
+        };
+    }
+
+    private ConvertedValue ConvertValue(decimal value, string sourceCurrency, ValueFieldDefinition field, AggregationSelection aggregation, DateTime? effectiveDate)
+    {
+        if (!field.IsCurrencyAmount)
+            return new ConvertedValue(value, "-", false);
+
+        var normalizedSource = _exchangeRateService.NormalizeCurrencyCode(sourceCurrency);
+        if (string.IsNullOrWhiteSpace(normalizedSource) || normalizedSource == "-")
+        {
+            normalizedSource = "-";
+            if (aggregation.TargetCurrency != ManagementCockpitCurrencyOptions.Native)
+                return new ConvertedValue(0m, aggregation.TargetCurrency, true);
+        }
+
+        if (aggregation.TargetCurrency == ManagementCockpitCurrencyOptions.Native)
+            return new ConvertedValue(value, normalizedSource, false);
+
+        if (string.Equals(normalizedSource, aggregation.TargetCurrency, StringComparison.OrdinalIgnoreCase))
+            return new ConvertedValue(value, aggregation.TargetCurrency, false);
+
+        var rateDate = (effectiveDate ?? DateTime.UtcNow).Date;
+        var cacheKey = BuildRateCacheKey(normalizedSource, aggregation.TargetCurrency, rateDate);
+        if (!aggregation.RateCache.TryGetValue(cacheKey, out var rate))
+        {
+            rate = _exchangeRateService.ResolveRate(normalizedSource, aggregation.TargetCurrency, rateDate);
+            aggregation.RateCache[cacheKey] = rate;
+        }
+
+        if (!rate.HasValue)
+            return new ConvertedValue(0m, aggregation.TargetCurrency, true);
+
+        return new ConvertedValue(value * rate.Value, aggregation.TargetCurrency, false);
+    }
+
+    private static string BuildRateCacheKey(string fromCurrency, string toCurrency, DateTime date)
+        => $"{fromCurrency}|{toCurrency}|{date:yyyy-MM-dd}";
+
+    private static DateTime ResolveExchangeRateDate(string exchangeRateDateField, DateTime? postingDate, DateTime? invoiceDate, DateTime extractionDate)
+        => exchangeRateDateField switch
+        {
+            ExchangeRateDateFields.InvoiceDate => invoiceDate ?? postingDate ?? extractionDate,
+            ExchangeRateDateFields.ExtractionDate => extractionDate,
+            _ => postingDate ?? invoiceDate ?? extractionDate
+        };
+
+    private static string BuildExchangeRateDateLabel(string exchangeRateDateField)
+        => exchangeRateDateField switch
+        {
+            ExchangeRateDateFields.InvoiceDate => "InvoiceDate / Rechnungsdatum",
+            ExchangeRateDateFields.ExtractionDate => "ExtractionDate / Extraktionsdatum",
+            _ => "PostingDate / Buchungsdatum"
+        };
+
+    private static decimal ResolveValue(CockpitRow row, ValueFieldDefinition field)
+        => field.Key switch
+        {
+            ManagementCockpitValueFieldKeys.Quantity => row.Quantity,
+            ManagementCockpitValueFieldKeys.StandardCost => row.StandardCost,
+            ManagementCockpitValueFieldKeys.StandardCostTotal => row.EstimatedCostTotal,
+            _ => row.SalesValueTotal
+        };
+
+    private static decimal ResolveValue(CentralCockpitRow row, ValueFieldDefinition field)
+        => field.Key switch
+        {
+            ManagementCockpitValueFieldKeys.Quantity => row.Quantity,
+            ManagementCockpitValueFieldKeys.StandardCost => row.StandardCost,
+            ManagementCockpitValueFieldKeys.StandardCostTotal => row.Quantity != 0m ? row.Quantity * row.StandardCost : row.StandardCost,
+            _ => row.SalesValue
+        };
+
+    private static string ResolveCurrency(CockpitRow row, ValueFieldDefinition field)
+        => field.CurrencySource switch
+        {
+            ValueCurrencySource.StandardCost => row.StandardCostCurrency,
+            ValueCurrencySource.Sales => row.SalesCurrency,
+            _ => "-"
+        };
+
+    private static string ResolveCurrency(CentralCockpitRow row, ValueFieldDefinition field)
+        => field.CurrencySource switch
+        {
+            ValueCurrencySource.StandardCost => row.StandardCostCurrency,
+            ValueCurrencySource.Sales => row.SalesCurrency,
+            _ => "-"
+        };
+
+    private static string BuildDisplayCurrencyLabel(IEnumerable<string> currencies)
+    {
+        var distinct = currencies
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinct.Count switch
+        {
+            0 => "-",
+            1 => distinct[0],
+            _ => "Mixed"
+        };
+    }
+
+    private static List<string> BuildCentralNotices(
+        AggregationSelection aggregation,
+        int missingExchangeRateCount,
+        ManagementCockpitAnalysisOptions? options,
+        string exchangeRateDateField)
+    {
+        var notices = new List<string>
+        {
+            "Roh-Auswertung aus CentralSalesRecords.",
+            $"Summenfeld: {aggregation.ValueField.Label}.",
+            "Keine Intercompany-Bereinigung angewendet.",
+            "Kein Budget- und kein Spartemapping angewendet.",
+            "Periodenlogik basiert auf Invoice Date, falls vorhanden, sonst auf Extraction Date.",
+            $"Wechselkurse werden auf {BuildExchangeRateDateLabel(exchangeRateDateField)} angewendet."
+        };
+
+        var landFilter = NormalizeOptionalFilter(options?.LandFilter);
+        var tscFilter = NormalizeOptionalFilter(options?.TscFilter);
+        if (landFilter is not null || tscFilter is not null)
+        {
+            notices.Add($"Filter aus Auswahl: Land {(landFilter ?? "alle")}, TSC {(tscFilter ?? "alle")}.");
+        }
+
+        if (aggregation.AdditionalValueFields.Count > 0)
+            notices.Add($"Weitere Summenfelder: {string.Join(", ", aggregation.AdditionalValueFields.Select(x => x.Label))}.");
+
+        if (!aggregation.ValueField.IsCurrencyAmount)
+        {
+            notices.Add("Das gewaehlte Summenfeld ist kein Waehrungsbetrag; die Anzeige-Waehrung wird ignoriert.");
+        }
+        else if (aggregation.TargetCurrency == ManagementCockpitCurrencyOptions.Native)
+        {
+            notices.Add("Keine Waehrungsumrechnung angewendet; Werte bleiben in der jeweiligen Quellwaehrung.");
+        }
+        else
+        {
+            notices.Add($"Betragswerte werden in {aggregation.TargetCurrency} angezeigt.");
+            if (missingExchangeRateCount > 0)
+                notices.Add($"{missingExchangeRateCount} Zeilen hatten keinen passenden Wechselkurs und sind in den Summen mit 0 enthalten.");
+        }
+
+        return notices;
+    }
+
+    private static string? NormalizeOptionalFilter(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ManagementCockpitTimeValueRow BuildTimeValueRow(
+        IEnumerable<CentralAggregationRow> groupRows,
+        AggregationSelection aggregation,
+        string label,
+        int? year,
+        int? month,
+        int? day,
+        string currency)
+    {
+        var rows = groupRows.ToList();
+        return new ManagementCockpitTimeValueRow
+        {
+            Label = label,
+            Year = year,
+            Month = month,
+            Day = day,
+            Currency = currency,
+            SalesValue = rows.Sum(x => x.Value),
+            AdditionalValues = BuildAdditionalValues(rows, aggregation),
+            RowCount = rows.Count
+        };
+    }
+
+    private static Dictionary<string, ManagementCockpitAggregatedFieldValue> BuildAdditionalValues(
+        IReadOnlyCollection<CentralAggregationRow> rows,
+        AggregationSelection aggregation)
+    {
+        var result = new Dictionary<string, ManagementCockpitAggregatedFieldValue>(StringComparer.OrdinalIgnoreCase);
+        foreach (var field in aggregation.AdditionalValueFields)
+        {
+            var values = rows
+                .Select(row => row.AdditionalValues.TryGetValue(field.Key, out var value) ? value : new ConvertedValue(0m, "-", false))
+                .ToList();
+
+            result[field.Key] = new ManagementCockpitAggregatedFieldValue
+            {
+                FieldKey = field.Key,
+                Label = field.Label,
+                Currency = BuildDisplayCurrencyLabel(values.Select(x => x.DisplayCurrency)),
+                Value = values.Sum(x => x.Value),
+                MissingExchangeRateCount = values.Count(x => x.MissingExchangeRate)
+            };
+        }
+
+        return result;
+    }
+
+    private static ManagementCockpitValueFieldOption ToValueFieldOption(ValueFieldDefinition field)
+        => new()
+        {
+            Key = field.Key,
+            Label = field.Label,
+            IsCurrencyAmount = field.IsCurrencyAmount
+        };
+
+    private static CockpitRow ReadRow(IXLRangeRow row, IReadOnlyDictionary<string, int> headers)
+    {
+        var quantity = GetDecimal(row, headers, "quantity");
+        var standardCost = GetDecimal(row, headers, "standardcost");
+        var salesValue = GetDecimal(row, headers, "salespricevalue");
+        var estimatedCostTotal = quantity != 0m ? quantity * standardCost : standardCost;
+
+        return new CockpitRow
+        {
+            ExtractionDate = GetDate(row, headers, "extractiondate"),
+            Tsc = GetText(row, headers, "tsc"),
+            InvoiceNumber = GetText(row, headers, "invoicenumber"),
+            PositionOnInvoice = GetText(row, headers, "positiononinvoice"),
+            Material = GetText(row, headers, "material"),
+            Name = GetText(row, headers, "name"),
+            ProductGroup = GetText(row, headers, "productgroup"),
+            Quantity = quantity,
+            SupplierNumber = GetText(row, headers, "suppliernumber"),
+            SupplierName = GetText(row, headers, "suppliername"),
+            SupplierCountry = GetText(row, headers, "suppliercountry"),
+            CustomerNumber = GetText(row, headers, "customernumber"),
+            CustomerName = GetText(row, headers, "customername"),
+            CustomerCountry = GetText(row, headers, "customercountry"),
+            CustomerIndustry = GetText(row, headers, "customerindustry"),
+            StandardCost = standardCost,
+            StandardCostCurrency = GetText(row, headers, "standardcostcurrency"),
+            SalesValueTotal = salesValue,
+            SalesCurrency = GetText(row, headers, "salescurrency"),
+            Incoterms2020 = GetText(row, headers, "incoterms2020"),
+            SalesResponsibleEmployee = GetText(row, headers, "salesresponsibleemployee"),
+            InvoiceDate = GetDate(row, headers, "invoicedate"),
+            OrderDate = GetDate(row, headers, "orderdate"),
+            Land = GetText(row, headers, "land"),
+            EstimatedCostTotal = estimatedCostTotal,
+            EstimatedMarginTotal = salesValue - estimatedCostTotal
+        };
+    }
+
+    private static ManagementCockpitSummary BuildSummary(List<CockpitRow> rows, AggregationSelection aggregation)
+    {
+        var aggregatedTotal = rows.Sum(x => x.AggregatedValue);
+        var salesTotal = rows.Sum(x => x.SalesValueTotal);
+        var costTotal = rows.Sum(x => x.EstimatedCostTotal);
+        var marginTotal = rows.Sum(x => x.EstimatedMarginTotal);
+        var serviceRows = rows.Where(x =>
+            x.ProductGroup.Contains("service", StringComparison.OrdinalIgnoreCase) ||
+            x.Name.Contains("port", StringComparison.OrdinalIgnoreCase) ||
+            x.Name.Contains("zeugnis", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        return new ManagementCockpitSummary
+        {
+            Land = rows.Select(x => x.Land).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "-",
+            Tsc = rows.Select(x => x.Tsc).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "-",
+            ExtractionDate = rows.Select(x => x.ExtractionDate).FirstOrDefault(x => x.HasValue),
+            RowCount = rows.Count,
+            InvoiceCount = rows.Select(x => x.InvoiceNumber).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            CustomerCount = rows.Select(x => x.CustomerName).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            ValueFieldKey = aggregation.ValueField.Key,
+            ValueFieldLabel = aggregation.ValueField.Label,
+            DisplayCurrency = BuildDisplayCurrencyLabel(rows.Select(x => x.AggregatedCurrency)),
+            MissingExchangeRateCount = rows.Count(x => x.MissingExchangeRate),
+            AggregatedValueTotal = aggregatedTotal,
+            SalesValueTotal = aggregatedTotal,
+            EstimatedCostTotal = costTotal,
+            EstimatedMarginTotal = marginTotal,
+            EstimatedMarginPercent = salesTotal == 0 ? 0 : marginTotal / salesTotal * 100m,
+            ServiceSharePercent = salesTotal == 0 ? 0 : serviceRows.Sum(x => x.SalesValueTotal) / salesTotal * 100m,
+            MissingOrderDatePercent = rows.Count == 0 ? 0 : rows.Count(x => !x.OrderDate.HasValue) * 100m / rows.Count,
+            MissingSupplierPercent = rows.Count == 0 ? 0 : rows.Count(x => string.IsNullOrWhiteSpace(x.SupplierName) && string.IsNullOrWhiteSpace(x.SupplierNumber)) * 100m / rows.Count
+        };
+    }
+
+    private static List<ManagementCockpitFinding> BuildFindings(List<CockpitRow> rows, AggregationSelection aggregation)
+    {
+        var findings = new List<ManagementCockpitFinding>();
+        var salesTotal = rows.Sum(x => x.AggregatedValue);
+        var topCustomer = rows
+            .Where(x => !string.IsNullOrWhiteSpace(x.CustomerName))
+            .GroupBy(x => x.CustomerName, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new { Customer = g.Key, Sales = g.Sum(x => x.AggregatedValue) })
+            .OrderByDescending(x => x.Sales)
+            .FirstOrDefault();
+
+        if (topCustomer is not null && salesTotal > 0)
+        {
+            var share = topCustomer.Sales / salesTotal * 100m;
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = share >= 50 ? "Warning" : "Info",
+                Title = "Kundenkonzentration",
+                Detail = $"{topCustomer.Customer} trägt {share:F1}% des Umsatzes."
+            });
+        }
+
+        var missingExchangeRateRows = rows.Count(x => x.MissingExchangeRate);
+        if (missingExchangeRateRows > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = "Warning",
+                Title = "Fehlende Wechselkurse",
+                Detail = $"{missingExchangeRateRows} Zeilen konnten nicht in die gewaehlte Anzeige-Waehrung umgerechnet werden."
+            });
+        }
+
+        var zeroValueRows = rows.Where(x => x.SalesValueTotal == 0 || x.StandardCost == 0).ToList();
+        if (zeroValueRows.Count > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = zeroValueRows.Count >= Math.Max(3, rows.Count / 10) ? "Warning" : "Info",
+                Title = "Nullwerte in Kosten oder Umsatz",
+                Detail = $"{zeroValueRows.Count} Zeilen haben 0 in Umsatz oder Standard Cost und sollten fachlich geprüft werden."
+            });
+        }
+
+        var missingOrderDates = rows.Count(x => !x.OrderDate.HasValue);
+        if (missingOrderDates > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = missingOrderDates > rows.Count / 2 ? "Warning" : "Info",
+                Title = "Fehlende Durchlaufzeit",
+                Detail = $"{missingOrderDates} von {rows.Count} Zeilen haben kein Order Date. Time-to-Invoice ist nur eingeschränkt beurteilbar."
+            });
+        }
+
+        var orderLeadTimes = rows
+            .Where(x => x.OrderDate.HasValue && x.InvoiceDate.HasValue)
+            .Select(x => (x.InvoiceDate!.Value - x.OrderDate!.Value).TotalDays)
+            .Where(x => x >= 0)
+            .ToList();
+        if (orderLeadTimes.Count > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = orderLeadTimes.Average() > 120 ? "Warning" : "Info",
+                Title = "Durchschnittliche Fakturierungszeit",
+                Detail = $"Zwischen Order Date und Invoice Date liegen im Schnitt {orderLeadTimes.Average():F0} Tage."
+            });
+        }
+
+        var missingIndustries = rows.Count(x => string.IsNullOrWhiteSpace(x.CustomerIndustry));
+        if (missingIndustries > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = missingIndustries > rows.Count / 2 ? "Warning" : "Info",
+                Title = "Stammdatenlücke Customer Industry",
+                Detail = $"{missingIndustries} Zeilen haben keine Customer Industry. Marktsegment-Analysen sind dadurch unvollständig."
+            });
+        }
+
+        var missingIncoterms = rows.Count(x => string.IsNullOrWhiteSpace(x.Incoterms2020));
+        if (missingIncoterms > 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = missingIncoterms > rows.Count / 2 ? "Info" : "Info",
+                Title = "Incoterms unvollständig",
+                Detail = $"{missingIncoterms} Zeilen haben keine Incoterms-Angabe."
+            });
+        }
+
+        if (findings.Count == 0)
+        {
+            findings.Add(new ManagementCockpitFinding
+            {
+                Severity = "Info",
+                Title = "Keine auffälligen Datenqualitätsprobleme",
+                Detail = "Die Datei ist für eine erste Standortbeurteilung konsistent genug."
+            });
+        }
+
+        return findings;
+    }
+
+    private static List<ManagementCockpitTopItem> BuildTopItems(
+        List<CockpitRow> rows,
+        Func<CockpitRow, string> keySelector,
+        Func<CockpitRow, decimal> valueSelector)
+    {
+        var total = rows.Sum(valueSelector);
+        return rows
+            .Select(x => new { Label = keySelector(x), Value = valueSelector(x) })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Label))
+            .GroupBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new ManagementCockpitTopItem
+            {
+                Label = g.Key,
+                Value = g.Sum(x => x.Value),
+                SharePercent = total == 0 ? 0 : g.Sum(x => x.Value) / total * 100m
+            })
+            .OrderByDescending(x => x.Value)
+            .Take(5)
+            .ToList();
+    }
+
+    private static Dictionary<string, int> BuildDataQualityCounts(List<CockpitRow> rows)
+    {
+        return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Fehlende Supplier"] = rows.Count(x => string.IsNullOrWhiteSpace(x.SupplierName) && string.IsNullOrWhiteSpace(x.SupplierNumber)),
+            ["Fehlende Customer Industry"] = rows.Count(x => string.IsNullOrWhiteSpace(x.CustomerIndustry)),
+            ["Fehlende Order Date"] = rows.Count(x => !x.OrderDate.HasValue),
+            ["Fehlende Invoice Date"] = rows.Count(x => !x.InvoiceDate.HasValue),
+            ["Null Umsatz/Kosten"] = rows.Count(x => x.SalesValueTotal == 0 || x.StandardCost == 0)
+        };
+    }
+
+    private static string NormalizeHeader(string value)
+    {
+        var chars = value
+            .ToLowerInvariant()
+            .Where(char.IsLetterOrDigit)
+            .ToArray();
+        return new string(chars);
+    }
+
+    private static string GetText(IXLRangeRow row, IReadOnlyDictionary<string, int> headers, string key)
+        => headers.TryGetValue(key, out var index) ? row.Cell(index).GetString().Trim() : string.Empty;
+
+    private static decimal GetDecimal(IXLRangeRow row, IReadOnlyDictionary<string, int> headers, string key)
+    {
+        if (!headers.TryGetValue(key, out var index))
+            return 0m;
+
+        var text = row.Cell(index).GetFormattedString().Trim();
+        if (decimal.TryParse(text, out var direct))
+            return direct;
+        if (decimal.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var invariant))
+            return invariant;
+        if (decimal.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("de-CH"), out var local))
+            return local;
+        return 0m;
+    }
+
+    private static DateTime? GetDate(IXLRangeRow row, IReadOnlyDictionary<string, int> headers, string key)
+    {
+        if (!headers.TryGetValue(key, out var index))
+            return null;
+
+        var cell = row.Cell(index);
+        if (cell.DataType == XLDataType.DateTime)
+            return cell.GetDateTime();
+
+        var text = cell.GetString().Trim();
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        if (DateTime.TryParse(text, out var direct))
+            return direct;
+        if (DateTime.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var invariant))
+            return invariant;
+        if (DateTime.TryParse(text, System.Globalization.CultureInfo.GetCultureInfo("de-CH"), System.Globalization.DateTimeStyles.AssumeLocal, out var local))
+            return local;
+        return null;
+    }
+
+    private class CockpitRow
+    {
+        public DateTime? ExtractionDate { get; set; }
+        public string Tsc { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string PositionOnInvoice { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string ProductGroup { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public string SupplierNumber { get; set; } = string.Empty;
+        public string SupplierName { get; set; } = string.Empty;
+        public string SupplierCountry { get; set; } = string.Empty;
+        public string CustomerNumber { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerCountry { get; set; } = string.Empty;
+        public string CustomerIndustry { get; set; } = string.Empty;
+        public decimal StandardCost { get; set; }
+        public string StandardCostCurrency { get; set; } = string.Empty;
+        public decimal SalesValueTotal { get; set; }
+        public string SalesCurrency { get; set; } = string.Empty;
+        public string Incoterms2020 { get; set; } = string.Empty;
+        public string SalesResponsibleEmployee { get; set; } = string.Empty;
+        public DateTime? InvoiceDate { get; set; }
+        public DateTime? OrderDate { get; set; }
+        public string Land { get; set; } = string.Empty;
+        public decimal EstimatedCostTotal { get; set; }
+        public decimal EstimatedMarginTotal { get; set; }
+        public decimal AggregatedValue { get; set; }
+        public string AggregatedCurrency { get; set; } = string.Empty;
+        public bool MissingExchangeRate { get; set; }
+    }
+
+    private class CentralCockpitRow
+    {
+        public string SourceSystem { get; set; } = string.Empty;
+        public string Land { get; set; } = string.Empty;
+        public string Tsc { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string SalesCurrency { get; set; } = string.Empty;
+        public string StandardCostCurrency { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public decimal StandardCost { get; set; }
+        public decimal SalesValue { get; set; }
+        public DateTime? PostingDate { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public DateTime ExtractionDate { get; set; }
+        public DateTime PeriodDate { get; set; }
+        public DateTime ExchangeRateDate { get; set; }
+    }
+
+    private class CentralAggregationRow
+    {
+        public string SourceSystem { get; set; } = string.Empty;
+        public string Land { get; set; } = string.Empty;
+        public string Tsc { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public DateTime PeriodDate { get; set; }
+        public decimal Value { get; set; }
+        public string DisplayCurrency { get; set; } = string.Empty;
+        public bool MissingExchangeRate { get; set; }
+        public Dictionary<string, ConvertedValue> AdditionalValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private class FinanceAggregationRow
+    {
+        public int Year { get; set; }
+        public string CountryKey { get; set; } = string.Empty;
+        public string Land { get; set; } = string.Empty;
+        public string Tsc { get; set; } = string.Empty;
+        public string SourceSystem { get; set; } = string.Empty;
+        public string Currency { get; set; } = string.Empty;
+        public bool Include { get; set; }
+        public decimal Value { get; set; }
+        public decimal RawSalesValue { get; set; }
+        public bool IsIntercompany { get; set; }
+        public decimal Quantity { get; set; }
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public int PositionOnInvoice { get; set; }
+        public string DocumentType { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string ArticleName { get; set; } = string.Empty;
+        public string ProductGroup { get; set; } = string.Empty;
+        public string ProductHierarchyCode { get; set; } = string.Empty;
+        public string ProductHierarchyText { get; set; } = string.Empty;
+        public string ProductFamilyCode { get; set; } = string.Empty;
+        public string ProductFamilyText { get; set; } = string.Empty;
+        public string ProductDivisionCode { get; set; } = string.Empty;
+        public string ProductDivisionText { get; set; } = string.Empty;
+        public string ProductMappingAssigned { get; set; } = string.Empty;
+        public string SupplierNumber { get; set; } = string.Empty;
+        public string SupplierName { get; set; } = string.Empty;
+        public string SupplierCountry { get; set; } = string.Empty;
+        public decimal StandardCost { get; set; }
+        public string StandardCostCurrency { get; set; } = string.Empty;
+        public string CustomerNumber { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime FinanceDate { get; set; }
+        public DateTime? PostingDate { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public DateTime ExtractionDate { get; set; }
+    }
+
+    private sealed record FinanceReferenceValue(string Key, string Label, decimal? Value);
+
+    private sealed record FinancePivotValue(
+        string Tsc,
+        int Year,
+        int Month,
+        int Day,
+        decimal ValueChf,
+        bool HasRate);
+
+    private sealed record AggregationSelection(
+        ValueFieldDefinition ValueField,
+        IReadOnlyList<ValueFieldDefinition> AdditionalValueFields,
+        string TargetCurrency,
+        Dictionary<string, decimal?> RateCache);
+
+    private sealed record ConvertedValue(decimal Value, string DisplayCurrency, bool MissingExchangeRate);
+
+    private sealed class ValueFieldDefinition
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public bool IsCurrencyAmount { get; set; }
+        public ValueCurrencySource CurrencySource { get; set; }
+    }
+
+    private enum ValueCurrencySource
+    {
+        None,
+        Sales,
+        StandardCost
+    }
+}

@@ -1,0 +1,217 @@
+@page "/finance-cockpit/vergleich"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IFinanceReconciliationService FinanceReconciliationService
+@inject IUiTextService UiText
+
+<PageTitle>@T("Soll/Ist Vergleich", "Actual/reference comparison")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Soll/Ist Vergleich", "Actual/reference comparison")</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
+        <div>
+            <MudText Typo="Typo.h6">@T("Net Sales Actuals 2025 Referenz", "Net sales actuals 2025 reference")</MudText>
+            <MudText Typo="Typo.caption">@T("Verbindliche Finance-Sicht aus der aktuellen zentralen Datenquelle", "Authoritative finance view from the current central data source")</MudText>
+        </div>
+        <MudSpacer />
+        <MudButton Variant="@(_hideRowsWithoutActual ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.FilterAlt"
+                   OnClick="ToggleActualFilter">
+            @T("Ohne Ist", "Without empty actuals")
+        </MudButton>
+        <MudText Typo="Typo.caption">
+            @string.Format(T("{0:N0}/{1:N0} Zeilen", "{0:N0}/{1:N0} rows"), FilteredNetSalesReferenceRows.Count, _netSalesReferenceRows.Count)
+        </MudText>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="LoadAsync" Disabled="_loading">
+            @(_loading ? T("Lade...", "Loading...") : T("Aktualisieren", "Refresh"))
+        </MudButton>
+    </MudStack>
+
+    <MudTable Items="FilteredNetSalesReferenceRows" Dense Hover Striped Loading="_loading">
+        <HeaderContent>
+            <MudTh>@T("Ampel", "Status")</MudTh>
+            <MudTh>@T("Land", "Country")</MudTh>
+            <MudTh>@T("Ist 2025", "Actual 2025")</MudTh>
+            <MudTh>@T("Referenz", "Reference")</MudTh>
+            <MudTh>@T("Differenz", "Difference")</MudTh>
+            <MudTh>@T("Waehrung", "Currency")</MudTh>
+            <MudTh>@T("Berechnung", "Calculation")</MudTh>
+            <MudTh>@T("Zeilen", "Rows")</MudTh>
+            <MudTh>@T("Varianten", "Variants")</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Filled">
+                    @StatusText(context.Status)
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">@context.Label</MudText>
+                <MudText Typo="Typo.caption">@context.Key</MudText>
+            </MudTd>
+            <MudTd>@FormatAmount(context.ActualValue)</MudTd>
+            <MudTd>@FormatAmount(context.ReferenceValue)</MudTd>
+            <MudTd>@FormatAmount(context.Difference)</MudTd>
+            <MudTd>@FormatCurrency(context)</MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(context.ValueField) ? "-" : context.ValueField)</MudText>
+                <MudText Typo="Typo.caption">@BuildCalculationHint(context)</MudText>
+            </MudTd>
+            <MudTd>@(context.RowCount > 0 ? context.RowCount.ToString("N0") : "-")</MudTd>
+            <MudTd>
+                @if (context.Candidates.Count > 0)
+                {
+                    <details>
+                        <summary>@context.Candidates.Count @T("Varianten anzeigen", "show variants")</summary>
+                        <table class="finance-variant-table">
+                            <thead>
+                                <tr>
+                                    <th>@T("Abgrenzung", "Scope")</th>
+                                    <th>@T("Waehrung", "Currency")</th>
+                                    <th>@T("Wert", "Value")</th>
+                                    <th>@T("Diff.", "Diff.")</th>
+                                    <th>@T("IC", "IC")</th>
+                                    <th>@T("Diff ohne IC", "Diff excl. IC")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var candidate in context.Candidates)
+                                {
+                                    <tr class="@(candidate.IsPreferred ? "preferred-variant" : string.Empty)">
+                                        <td>@candidate.Label</td>
+                                        <td>@candidate.Currency</td>
+                                        <td class="num">@FormatAmount(candidate.Value)</td>
+                                        <td class="num">@FormatAmount(candidate.Difference)</td>
+                                        <td class="num">@FormatAmount(candidate.IntercompanyValue)</td>
+                                        <td class="num">@FormatAmount(candidate.DifferenceExcludingIntercompany)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </details>
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.caption">@T("Keine Referenzdaten fuer aktive Standorte gefunden.", "No reference data found for active sites.")</MudText>
+        </NoRecordsContent>
+    </MudTable>
+
+    <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mt-3">
+        @T("Diese Seite nutzt dieselbe FinanceReconciliationService-Logik wie das lokale Testprogramm. Vergleich: Jahr 2025 aus Buchungsdatum, sonst Invoice Date, sonst Extraction Date. Das Summenfeld wird automatisch aus Sales Price/Value, DocTotalFC - VatSumFC oder DocTotal - VatSum gewaehlt; Belegkopfwerte werden pro DocEntry nur einmal gezaehlt. IC-Abzug ist eine Diagnose fuer den aktuellen Abgleich und veraendert die Originaldaten nicht.", "This page uses the same FinanceReconciliationService logic as the local test program. Comparison: year 2025 from posting date, otherwise invoice date, otherwise extraction date. The value field is selected automatically from Sales Price/Value, DocTotalFC - VatSumFC, or DocTotal - VatSum; document header values are counted only once per DocEntry. IC deduction is a diagnostic value for the current reconciliation and does not change the original data.")
+    </MudAlert>
+</MudPaper>
+
+<style>
+    .finance-variant-table {
+        border-collapse: collapse;
+        margin-top: 8px;
+        min-width: 720px;
+        font-size: 0.82rem;
+    }
+
+    .finance-variant-table th,
+    .finance-variant-table td {
+        border: 1px solid var(--mud-palette-lines-default);
+        padding: 4px 6px;
+        vertical-align: top;
+    }
+
+    .finance-variant-table th {
+        background: var(--mud-palette-background-grey);
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .finance-variant-table .num {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .preferred-variant {
+        background: rgba(33, 150, 243, 0.08);
+    }
+</style>
+
+@code {
+    private List<NetSalesReferenceRow> _netSalesReferenceRows = new();
+    private bool _hideRowsWithoutActual = true;
+    private bool _loading = true;
+
+    private List<NetSalesReferenceRow> FilteredNetSalesReferenceRows
+        => _hideRowsWithoutActual
+            ? _netSalesReferenceRows.Where(row => row.ActualValue.HasValue).ToList()
+            : _netSalesReferenceRows;
+
+    private void ToggleActualFilter()
+    {
+        _hideRowsWithoutActual = !_hideRowsWithoutActual;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _netSalesReferenceRows = await FinanceReconciliationService.BuildNetSalesReferenceRowsAsync(2025);
+        _loading = false;
+    }
+
+    private static string FormatAmount(decimal? value)
+        => value.HasValue ? value.Value.ToString("N2") : "-";
+
+    private static string FormatCurrency(NetSalesReferenceRow row)
+    {
+        if (!string.IsNullOrWhiteSpace(row.ActualCurrency))
+            return row.ReferenceCurrency == "LC"
+                ? $"{row.ActualCurrency} / Soll LC"
+                : row.ActualCurrency;
+
+        return string.IsNullOrWhiteSpace(row.Currencies) ? "-" : row.Currencies;
+    }
+
+    private string BuildCalculationHint(NetSalesReferenceRow row)
+    {
+        if (row.Key.Equals("UK", StringComparison.OrdinalIgnoreCase))
+            return T("Sage Netto in GBP; Credit Notes negativ; Soll ist Local Currency.", "Sage net in GBP; credit notes negative; reference is local currency.");
+        if (row.Key.Equals("ES", StringComparison.OrdinalIgnoreCase))
+            return T("Sage ImporteNeto; REC/Credit Notes negativ; Zuschlaege/Nebenkosten noch pruefen.", "Sage ImporteNeto; REC/credit notes negative; surcharges/charges still to check.");
+        if (row.Key.Equals("IT", StringComparison.OrdinalIgnoreCase))
+            return T("Bestaetigte IT-Regel: Trafag Italia ausgeschlossen; doppelte Zeilen ohne Supplier country nur einmal.", "Confirmed IT rule: Trafag Italia excluded; duplicate rows without supplier country counted once.");
+        if (row.Key.Equals("DE", StringComparison.OrdinalIgnoreCase))
+            return T("Alphaplan Excel; Finance-Regeln gemäss Deutschland-Rueckmeldung: Weiterberechnungen ausgeschlossen, GS negativ, GS2510095 2024.", "Alphaplan Excel; finance rules per Germany response: recharges excluded, credit notes negative, GS2510095 in 2024.");
+        if (row.Key.Equals("FR", StringComparison.OrdinalIgnoreCase) ||
+            row.Key.Equals("IN", StringComparison.OrdinalIgnoreCase) ||
+            row.Key.Equals("US", StringComparison.OrdinalIgnoreCase))
+            return T("Passt gegen Soll; Sales Price/Value ist bevorzugte Variante.", "Matches reference; Sales Price/Value is the preferred variant.");
+
+        return row.ReferenceCurrency == "LC"
+            ? T("Vergleich gegen Local Currency Referenz.", "Compared against local currency reference.")
+            : T("Vergleich gegen Check-/Sollwert.", "Compared against check/reference value.");
+    }
+
+    private Color StatusColor(string status)
+        => status == "OK" ? Color.Success
+            : status == "Pruefen" ? Color.Warning
+            : Color.Default;
+
+    private string StatusText(string status)
+        => status == "OK" ? "OK"
+            : status == "Pruefen" ? T("Pruefen", "Check")
+            : T("Keine Daten", "No data");
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

@@ -1,0 +1,96 @@
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Security
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject IUiTextService UiText
+@inject IFinanceCockpitAccessService FinanceAccess
+@inject INavigationMenuService NavigationMenuService
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthorizationService AuthorizationService
+
+<MudNavMenu>
+    @foreach (var item in RootItems)
+    {
+        <NavMenuNode Item="item"
+                     Items="_visibleItems"
+                     HiddenKeys="_hiddenKeys"
+                     OnAction="HandleMenuActionAsync" />
+    }
+</MudNavMenu>
+
+@code {
+    private List<NavigationMenuItem> _visibleItems = [];
+    private readonly HashSet<string> _hiddenKeys = [];
+
+    private bool ShowFinanceComparison => Configuration.GetValue("Navigation:ShowFinanceComparison", true);
+
+    private IEnumerable<NavigationMenuItem> RootItems => _visibleItems
+        .Where(x => string.IsNullOrWhiteSpace(x.ParentKey))
+        .Where(x => !_hiddenKeys.Contains(x.Key))
+        .OrderBy(x => x.SortOrder)
+        .ThenBy(x => x.TitleDe);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UiText.Changed += HandleLanguageChanged;
+        await LoadMenuAsync();
+    }
+
+    private async Task LoadMenuAsync()
+    {
+        var items = await NavigationMenuService.GetItemsAsync();
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+        var filtered = new List<NavigationMenuItem>();
+
+        foreach (var item in items.Where(x => x.IsVisible))
+        {
+            if (!await IsAuthorizedAsync(user, item))
+                continue;
+
+            filtered.Add(item);
+        }
+
+        _hiddenKeys.Clear();
+        if (!ShowFinanceComparison)
+            _hiddenKeys.Add("finance-comparison");
+        if (!FinanceAccess.IsEnabled || !FinanceAccess.IsUnlocked)
+            _hiddenKeys.Add("finance-lock");
+
+        _visibleItems = filtered;
+    }
+
+    private async Task<bool> IsAuthorizedAsync(System.Security.Claims.ClaimsPrincipal user, NavigationMenuItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.RequiredPolicy))
+            return true;
+
+        var result = await AuthorizationService.AuthorizeAsync(user, item.RequiredPolicy);
+        return result.Succeeded;
+    }
+
+    private Task HandleMenuActionAsync(string key)
+    {
+        if (key == "finance-lock")
+        {
+            FinanceAccess.Lock();
+            Navigation.NavigateTo(string.Empty);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UiText.Changed -= HandleLanguageChanged;
+    }
+}

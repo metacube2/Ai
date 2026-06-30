@@ -1,0 +1,5 @@
+Datenbeschaffung:
+
+SAP Daten kommen von Programm Z_HR_KPI_CONS
+
+Rexx Daten aus Rexx export mit Exportprofil  SAP_EXPORT(#711)   exporieren nach Excel  erstell  sapexport.xlss

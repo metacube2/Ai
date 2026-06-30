@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="de" data-lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromoMaster - Produkt-Promotion-Tool | Product Promotion Tool</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Erstellen Sie automatisch professionelle Produktwerbung in Deutsch und Englisch. Generate professional product promotions in German and English.">
+    <meta name="keywords" content="Produktwerbung, Product Promotion, Marketing, Werbung, Advertising, Social Media, SEO, Product Launch">
+    <meta name="author" content="PromoMaster">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PromoMaster - Automatische Produktwerbung">
+    <meta property="og:description" content="Erstellen Sie automatisch professionelle Produktwerbung in Deutsch und Englisch.">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:locale:alternate" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PromoMaster - Product Promotion Tool">
+    <meta name="twitter:description" content="Generate professional product promotions in German and English automatically.">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PromoMaster",
+        "description": "Automatisches Produkt-Promotion-Tool in Deutsch und Englisch",
+        "applicationCategory": "Marketing",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+        }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Language Toggle -->
+    <div class="lang-toggle">
+        <button id="btn-de" class="lang-btn active" onclick="setLanguage('de')">DE</button>
+        <button id="btn-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <h1 class="hero-title">
+                <span class="hero-icon">&#9889;</span>
+                PromoMaster
+            </h1>
+            <p class="hero-subtitle" data-de="Dein Produkt. Weltweit bekannt. Vollautomatisch." data-en="Your Product. Worldwide Fame. Fully Automatic.">Dein Produkt. Weltweit bekannt. Vollautomatisch.</p>
+        </div>
+    </header>
+
+    <!-- Main App -->
+    <main class="container">
+        <!-- Step 1: Product Input -->
+        <section class="card step-card" id="step1">
+            <div class="step-header">
+                <span class="step-number">1</span>
+                <h2 data-de="Produkt-Informationen" data-en="Product Information"></h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="productName" data-de="Produktname *" data-en="Product Name *"></label>
+                    <input type="text" id="productName" data-de-placeholder="z.B. SuperWidget Pro" data-en-placeholder="e.g. SuperWidget Pro">
+                </div>
+                <div class="form-group">
+                    <label for="productCategory" data-de="Kategorie" data-en="Category"></label>
+                    <select id="productCategory">
+                        <option value="tech" data-de="Technologie" data-en="Technology"></option>
+                        <option value="fashion" data-de="Mode & Bekleidung" data-en="Fashion & Apparel"></option>
+                        <option value="food" data-de="Lebensmittel & Getr&auml;nke" data-en="Food & Beverages"></option>
+                        <option value="health" data-de="Gesundheit & Wellness" data-en="Health & Wellness"></option>
+                        <option value="home" data-de="Haus & Garten" data-en="Home & Garden"></option>
+                        <option value="sport" data-de="Sport & Fitness" data-en="Sports & Fitness"></option>
+                        <option value="beauty" data-de="Sch&ouml;nheit & Pflege" data-en="Beauty & Care"></option>
+                        <option value="education" data-de="Bildung & Kurse" data-en="Education & Courses"></option>
+                        <option value="software" data-de="Software & Apps" data-en="Software & Apps"></option>
+                        <option value="other" data-de="Sonstiges" data-en="Other"></option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="productDescription" data-de="Kurzbeschreibung *" data-en="Short Description *"></label>
+                    <textarea id="productDescription" rows="3" data-de-placeholder="Was macht dein Produkt besonders? (max. 200 Zeichen)" data-en-placeholder="What makes your product special? (max. 200 characters)" maxlength="200"></textarea>
+                    <span class="char-count"><span id="charCount">0</span>/200</span>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice" data-de="Preis (optional)" data-en="Price (optional)"></label>
+                    <input type="text" id="productPrice" data-de-placeholder="z.B. 29,99 EUR" data-en-placeholder="e.g. $29.99">
+                </div>
+                <div class="form-group">
+                    <label for="productUrl" data-de="Website / Link (optional)" data-en="Website / Link (optional)"></label>
+                    <input type="url" id="productUrl" data-de-placeholder="https://dein-produkt.de" data-en-placeholder="https://your-product.com">
+                </div>
+                <div class="form-group full-width">
+                    <label for="productFeatures" data-de="Top-Features (kommagetrennt)" data-en="Top Features (comma-separated)"></label>
+                    <input type="text" id="productFeatures" data-de-placeholder="z.B. Schnell, Zuverl&auml;ssig, Einfach zu bedienen" data-en-placeholder="e.g. Fast, Reliable, Easy to use">
+                </div>
+                <div class="form-group full-width">
+                    <label for="targetAudience" data-de="Zielgruppe" data-en="Target Audience"></label>
+                    <input type="text" id="targetAudience" data-de-placeholder="z.B. Unternehmer, Studenten, Eltern" data-en-placeholder="e.g. Entrepreneurs, Students, Parents">
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Promotion Style -->
+        <section class="card step-card" id="step2">
+            <div class="step-header">
+                <span class="step-number">2</span>
+                <h2 data-de="Werbestil w&auml;hlen" data-en="Choose Promotion Style"></h2>
+            </div>
+            <div class="style-grid">
+                <div class="style-option selected" data-style="professional" onclick="selectStyle(this)">
+                    <span class="style-icon">&#128188;</span>
+                    <span class="style-label" data-de="Professionell" data-en="Professional"></span>
+                </div>
+                <div class="style-option" data-style="casual" onclick="selectStyle(this)">
+                    <span class="style-icon">&#128075;</span>
+                    <span class="style-label" data-de="Locker & Freundlich" data-en="Casual & Friendly"></span>
+                </div>
+                <div class="style-option" data-style="urgent" onclick="selectStyle(this)">
+                    <span class="style-icon">&#9889;</span>
+                    <span class="style-label" data-de="Dringend & FOMO" data-en="Urgent & FOMO"></span>
+                </div>
+                <div class="style-option" data-style="luxury" onclick="selectStyle(this)">
+                    <span class="style-icon">&#10024;</span>
+                    <span class="style-label" data-de="Premium & Luxus" data-en="Premium & Luxury"></span>
+                </div>
+                <div class="style-option" data-style="fun" onclick="selectStyle(this)">
+                    <span class="style-icon">&#127881;</span>
+                    <span class="style-label" data-de="Spa&szlig;ig & Kreativ" data-en="Fun & Creative"></span>
+                </div>
+                <div class="style-option" data-style="minimal" onclick="selectStyle(this)">
+                    <span class="style-icon">&#9711;</span>
+                    <span class="style-label" data-de="Minimalistisch" data-en="Minimalist"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generate Button -->
+        <div class="generate-section">
+            <button class="btn-generate" onclick="generateAll()" id="generateBtn">
+                <span class="btn-icon">&#9889;</span>
+                <span data-de="Alle Werbematerialien generieren" data-en="Generate All Promotion Materials"></span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <section id="results" class="results-section hidden">
+            <!-- Social Media Posts -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#128241; Social Media Posts" data-en="&#128241; Social Media Posts"></h3>
+                    <button class="btn-copy-all" onclick="copyAll('social')" data-de="Alle kopieren" data-en="Copy All"></button>
+                </div>
+
+                <div class="result-tabs">
+                    <button class="tab-btn active" onclick="switchTab(this, 'twitter')">Twitter/X</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'instagram')">Instagram</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'facebook')">Facebook</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'linkedin')">LinkedIn</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'tiktok')">TikTok</button>
+                </div>
+
+                <div class="tab-content" id="tab-twitter">
+                    <div class="lang-results">
+                        <div class="lang-result">
+                            <span class="lang-badge">DE</span>
+                            <div class="result-text" id="twitter-de"></div>
+                            <button class="btn-copy" onclick="copyText('twitter-de')">&#128203;</button>
+                        </div>
+                        <div class="lang-result">
+                            <span class="lang-badge en">EN</span>
+                            <div class="result-text" id="twitter-en"></div>
+                            <button class="btn-copy" onclick="copyText('twitter-en')">&#128203;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="tab-instagram">
+                    <div class="lang-results">
+                        <div class="lang-result">
+                            <span class="lang-badge">DE</span>
+                            <div class="result-text" id="instagram-de"></div>
+                            <button class="btn-copy" onclick="copyText('instagram-de')">&#128203;</button>
+                        </div>
+                        <div class="lang-result">
+                            <span class="lang-badge en">EN</span>
+                            <div class="result-text" id="instagram-en"></div>
+                            <button class="btn-copy" onclick="copyText('instagram-en')">&#128203;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="tab-facebook">
+                    <div class="lang-results">
+                        <div class="lang-result">
+                            <span class="lang-badge">DE</span>
+                            <div class="result-text" id="facebook-de"></div>
+                            <button class="btn-copy" onclick="copyText('facebook-de')">&#128203;</button>
+                        </div>
+                        <div class="lang-result">
+                            <span class="lang-badge en">EN</span>
+                            <div class="result-text" id="facebook-en"></div>
+                            <button class="btn-copy" onclick="copyText('facebook-en')">&#128203;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="tab-linkedin">
+                    <div class="lang-results">
+                        <div class="lang-result">
+                            <span class="lang-badge">DE</span>
+                            <div class="result-text" id="linkedin-de"></div>
+                            <button class="btn-copy" onclick="copyText('linkedin-de')">&#128203;</button>
+                        </div>
+                        <div class="lang-result">
+                            <span class="lang-badge en">EN</span>
+                            <div class="result-text" id="linkedin-en"></div>
+                            <button class="btn-copy" onclick="copyText('linkedin-en')">&#128203;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="tab-tiktok">
+                    <div class="lang-results">
+                        <div class="lang-result">
+                            <span class="lang-badge">DE</span>
+                            <div class="result-text" id="tiktok-de"></div>
+                            <button class="btn-copy" onclick="copyText('tiktok-de')">&#128203;</button>
+                        </div>
+                        <div class="lang-result">
+                            <span class="lang-badge en">EN</span>
+                            <div class="result-text" id="tiktok-en"></div>
+                            <button class="btn-copy" onclick="copyText('tiktok-en')">&#128203;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Marketing -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#9993; E-Mail Marketing" data-en="&#9993; Email Marketing"></h3>
+                    <button class="btn-copy-all" onclick="copyAll('email')" data-de="Alle kopieren" data-en="Copy All"></button>
+                </div>
+                <div class="lang-results">
+                    <div class="lang-result">
+                        <span class="lang-badge">DE</span>
+                        <div class="result-text" id="email-de"></div>
+                        <button class="btn-copy" onclick="copyText('email-de')">&#128203;</button>
+                    </div>
+                    <div class="lang-result">
+                        <span class="lang-badge en">EN</span>
+                        <div class="result-text" id="email-en"></div>
+                        <button class="btn-copy" onclick="copyText('email-en')">&#128203;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Texts -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#128270; SEO-Texte & Metadaten" data-en="&#128270; SEO Texts & Metadata"></h3>
+                    <button class="btn-copy-all" onclick="copyAll('seo')" data-de="Alle kopieren" data-en="Copy All"></button>
+                </div>
+                <div class="lang-results">
+                    <div class="lang-result">
+                        <span class="lang-badge">DE</span>
+                        <div class="result-text" id="seo-de"></div>
+                        <button class="btn-copy" onclick="copyText('seo-de')">&#128203;</button>
+                    </div>
+                    <div class="lang-result">
+                        <span class="lang-badge en">EN</span>
+                        <div class="result-text" id="seo-en"></div>
+                        <button class="btn-copy" onclick="copyText('seo-en')">&#128203;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Press Release -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#128240; Pressemitteilung" data-en="&#128240; Press Release"></h3>
+                    <button class="btn-copy-all" onclick="copyAll('press')" data-de="Alle kopieren" data-en="Copy All"></button>
+                </div>
+                <div class="lang-results">
+                    <div class="lang-result">
+                        <span class="lang-badge">DE</span>
+                        <div class="result-text" id="press-de"></div>
+                        <button class="btn-copy" onclick="copyText('press-de')">&#128203;</button>
+                    </div>
+                    <div class="lang-result">
+                        <span class="lang-badge en">EN</span>
+                        <div class="result-text" id="press-en"></div>
+                        <button class="btn-copy" onclick="copyText('press-en')">&#128203;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slogan Generator -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#128161; Slogans & Taglines" data-en="&#128161; Slogans & Taglines"></h3>
+                </div>
+                <div class="slogan-grid" id="sloganGrid"></div>
+            </div>
+
+            <!-- Hashtag Cloud -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="# Hashtag-Wolke" data-en="# Hashtag Cloud"></h3>
+                    <button class="btn-copy-all" onclick="copyHashtags()" data-de="Alle kopieren" data-en="Copy All"></button>
+                </div>
+                <div class="hashtag-cloud" id="hashtagCloud"></div>
+            </div>
+
+            <!-- Landing Page Preview -->
+            <div class="card result-card">
+                <div class="result-header">
+                    <h3 data-de="&#127760; Landing Page HTML" data-en="&#127760; Landing Page HTML"></h3>
+                    <button class="btn-copy-all" onclick="copyText('landing-code')" data-de="HTML kopieren" data-en="Copy HTML"></button>
+                </div>
+                <div class="landing-preview-container">
+                    <div class="preview-toggle">
+                        <button class="preview-btn active" onclick="togglePreview('preview')" data-de="Vorschau" data-en="Preview"></button>
+                        <button class="preview-btn" onclick="togglePreview('code')" data-de="HTML-Code" data-en="HTML Code"></button>
+                    </div>
+                    <div id="landing-preview" class="landing-preview"></div>
+                    <pre id="landing-code" class="landing-code hidden"></pre>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="card result-card export-card">
+                <div class="result-header">
+                    <h3 data-de="&#128229; Alles exportieren" data-en="&#128229; Export Everything"></h3>
+                </div>
+                <div class="export-grid">
+                    <button class="btn-export" onclick="exportAs('txt')">
+                        <span class="export-icon">&#128196;</span>
+                        <span>TXT</span>
+                    </button>
+                    <button class="btn-export" onclick="exportAs('html')">
+                        <span class="export-icon">&#127760;</span>
+                        <span>HTML</span>
+                    </button>
+                    <button class="btn-export" onclick="exportAs('json')">
+                        <span class="export-icon">&#128218;</span>
+                        <span>JSON</span>
+                    </button>
+                    <button class="btn-export" onclick="exportAs('csv')">
+                        <span class="export-icon">&#128202;</span>
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="toast"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p data-de="PromoMaster - Vollautomatisches Produkt-Promotion-Tool" data-en="PromoMaster - Fully Automatic Product Promotion Tool"></p>
+    </footer>
+
+    <script src="promo.js"></script>
+</body>
+</html>

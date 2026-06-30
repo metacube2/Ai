@@ -1,0 +1,289 @@
+@page "/einkauf/verbindungen"
+@using TrafagSalesExporter.Services
+@inject IPurchasingDataSourcePageService DataSourceService
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+@inject ISnackbar Snackbar
+
+<PageTitle>@T("Einkauf Datenquellen", "Purchasing data sources")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Einkauf Datenquellen", "Purchasing data sources")</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 purchasing-muted">
+    @T("Grafische SAP/OData-Anbindung fuer das Einkaufsdashboard, analog zur Finance-Quellenpflege.",
+       "Graphical SAP/OData connection for the purchasing dashboard, following the finance source configuration pattern.")
+</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudGrid Spacing="2" Class="mb-4">
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-3">@T("Verbindung", "Connection")</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Value="_state.Site.TSC" Label="TSC" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Value="_state.Site.SourceSystem" Label="@T("Quellsystem", "Source system")" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_state.Site.SapServiceUrl"
+                                      Label="SAP Service URL Override"
+                                      HelperText="@T("Leer lassen = zentrale SAP OData URL aus Settings verwenden.", "Leave empty = use central SAP OData URL from settings.")" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_state.Site.UsernameOverride"
+                                      Label="Username Override"
+                                      HelperText="@T("Leer lassen = zentraler SAP User.", "Leave empty = central SAP user.")" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_state.Site.PasswordOverride"
+                                      Label="Password Override"
+                                      InputType="InputType.Password"
+                                      HelperText="@T("Leer lassen = zentrales SAP Passwort.", "Leave empty = central SAP password.")" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudCheckBox @bind-Value="_state.Site.IsActive"
+                                     Label="@T("Einkaufsquelle fuer Import aktivieren", "Activate purchasing source for import")" />
+                    </MudItem>
+                </MudGrid>
+                <MudStack Row="true" Spacing="2" Class="mt-3">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_busy">
+                        @T("Speichern", "Save")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.NetworkCheck" OnClick="TestConnectionAsync" Disabled="_busy">
+                        @T("Verbindung testen", "Test connection")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Restore" OnClick="ResetDefaultsAsync" Disabled="_busy">
+                        @T("Defaults wiederherstellen", "Restore defaults")
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Aktuelle Basis", "Current basis")</MudText>
+                <div class="purchasing-source-row">
+                    <MudIcon Icon="@Icons.Material.Filled.CloudQueue" Size="Size.Small" />
+                    <span>@T("Zentrale URL", "Central URL"): <code>@Display(_state.SourceSystem?.CentralServiceUrl)</code></span>
+                </div>
+                <div class="purchasing-source-row">
+                    <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Small" />
+                    <span>@T("Quellen", "Sources"): @_state.Sources.Count(x => x.IsActive)</span>
+                </div>
+                <div class="purchasing-source-row">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Small" />
+                    <span>@T("Joins", "Joins"): @_state.Joins.Count(x => x.IsActive)</span>
+                </div>
+                <div class="purchasing-source-row">
+                    <MudIcon Icon="@Icons.Material.Filled.Schema" Size="Size.Small" />
+                    <span>@T("Mappings", "Mappings"): @_state.Mappings.Count(x => x.IsActive)</span>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
+        <MudTabPanel Text="@T("Quellen", "Sources")" Icon="@Icons.Material.Filled.Hub">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">@T("OData Entity Sets", "OData entity sets")</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSource">@T("Quelle", "Source")</MudButton>
+            </MudStack>
+            <MudTable Items="_state.Sources" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Alias</MudTh>
+                    <MudTh>Entity Set</MudTh>
+                    <MudTh>@T("Primaer", "Primary")</MudTh>
+                    <MudTh>@T("Aktiv", "Active")</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.Alias" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.EntitySet" Dense="true" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsPrimary" Dense="true" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense="true" /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSource(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Join-Fluss", "Join flow")" Icon="@Icons.Material.Filled.AccountTree">
+            <MudGrid Spacing="2" Class="mb-3">
+                @foreach (var join in _state.Joins.Where(x => x.IsActive))
+                {
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Class="pa-3 purchasing-flow" Outlined="true">
+                            <MudText Typo="Typo.subtitle2">@join.LeftAlias -> @join.RightAlias</MudText>
+                            <MudText Typo="Typo.caption">@join.LeftKeys = @join.RightKeys</MudText>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">@T("Joins", "Joins")</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddJoin">@T("Join", "Join")</MudButton>
+            </MudStack>
+            <MudTable Items="_state.Joins" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>@T("Links", "Left")</MudTh>
+                    <MudTh>Left Keys</MudTh>
+                    <MudTh>@T("Rechts", "Right")</MudTh>
+                    <MudTh>Right Keys</MudTh>
+                    <MudTh>@T("Typ", "Type")</MudTh>
+                    <MudTh>@T("Aktiv", "Active")</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.LeftAlias" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.LeftKeys" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.RightAlias" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.RightKeys" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.JoinType" Dense="true" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense="true" /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveJoin(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@T("Mapping", "Mapping")" Icon="@Icons.Material.Filled.Schema">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">@T("Zielfelder", "Target fields")</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddMapping">@T("Mapping", "Mapping")</MudButton>
+            </MudStack>
+            <MudTable Items="_state.Mappings" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>@T("Ziel", "Target")</MudTh>
+                    <MudTh>@T("Quelle", "Source")</MudTh>
+                    <MudTh>@T("Pflicht", "Required")</MudTh>
+                    <MudTh>@T("Aktiv", "Active")</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.TargetField" Dense="true" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.SourceExpression" Dense="true" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsRequired" Dense="true" /></MudTd>
+                    <MudTd><MudCheckBox @bind-Value="context.IsActive" Dense="true" /></MudTd>
+                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveMapping(context)" /></MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    private PurchasingDataSourceState _state = new();
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _state = await DataSourceService.LoadAsync();
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        await RunAsync(async () =>
+        {
+            _state = await DataSourceService.SaveAsync(_state);
+            Snackbar.Add(T("Einkaufsdatenquellen gespeichert.", "Purchasing data sources saved."), Severity.Success);
+        });
+    }
+
+    private async Task ResetDefaultsAsync()
+    {
+        await RunAsync(async () =>
+        {
+            _state = await DataSourceService.ResetDefaultsAsync();
+            Snackbar.Add(T("Einkaufsdatenquellen auf Defaults gesetzt.", "Purchasing data sources restored to defaults."), Severity.Info);
+        });
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        await RunAsync(async () =>
+        {
+            var result = await DataSourceService.TestConnectionAsync(_state);
+            Snackbar.Add(TranslateConnectionMessage(result.Message), result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Error);
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void AddSource()
+        => _state.Sources.Add(new SapSourceDefinition { Alias = "NEW", EntitySet = "NewEntitySet", IsActive = true, SortOrder = (_state.Sources.Count + 1) * 10 });
+
+    private void AddJoin()
+        => _state.Joins.Add(new SapJoinDefinition { LeftAlias = "EKKO", RightAlias = "NEW", LeftKeys = "Key", RightKeys = "Key", JoinType = "Left", IsActive = true, SortOrder = (_state.Joins.Count + 1) * 10 });
+
+    private void AddMapping()
+        => _state.Mappings.Add(new SapFieldMapping { TargetField = "NewField", SourceExpression = "Alias.Field", IsActive = true, SortOrder = (_state.Mappings.Count + 1) * 10 });
+
+    private void RemoveSource(SapSourceDefinition source) => _state.Sources.Remove(source);
+    private void RemoveJoin(SapJoinDefinition join) => _state.Joins.Remove(join);
+    private void RemoveMapping(SapFieldMapping mapping) => _state.Mappings.Remove(mapping);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+    private static string Display(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+    private string TranslateConnectionMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return string.Empty;
+
+        if (message.Contains("Keine SAP Service URL gepflegt", StringComparison.OrdinalIgnoreCase))
+            return T("Keine SAP Service URL gepflegt.", "No SAP service URL maintained.");
+        if (message.Contains("Keine SAP Gateway Zugangsdaten gepflegt", StringComparison.OrdinalIgnoreCase))
+            return T("Keine SAP Gateway Zugangsdaten gepflegt.", "No SAP Gateway credentials maintained.");
+        if (message.Contains("SAP OData Verbindung erfolgreich", StringComparison.OrdinalIgnoreCase))
+            return T("SAP OData Verbindung erfolgreich.", "SAP OData connection successful.");
+        if (message.StartsWith("SAP OData Verbindung fehlgeschlagen", StringComparison.OrdinalIgnoreCase))
+            return message.Replace("SAP OData Verbindung fehlgeschlagen", T("SAP OData Verbindung fehlgeschlagen", "SAP OData connection failed"), StringComparison.OrdinalIgnoreCase);
+
+        return message;
+    }
+}
+
+<style>
+    .purchasing-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-flow {
+        min-height: 86px;
+    }
+
+    .purchasing-source-row {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+    }
+
+    .purchasing-source-row:last-child {
+        border-bottom: 0;
+    }
+</style>

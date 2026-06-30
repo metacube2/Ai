@@ -1,0 +1,289 @@
+@page "/"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+@inject ILandingPageSettingsService LandingSettings
+
+<PageTitle>@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</PageTitle>
+
+<div class="home-shell">
+    <div class="home-content">
+        <svg class="home-manometer" viewBox="0 0 600 340" role="img" aria-label="Trafag cockpit manometer">
+            <rect x="0" y="0" width="600" height="340" fill="#fff" />
+            <path d="M70 260 A230 230 0 0 1 530 260" class="gauge-outer" />
+            <path d="M115 260 A185 185 0 0 1 485 260" class="gauge-inner" />
+
+            <line x1="126" y1="260" x2="95" y2="260" class="gauge-tick" />
+            <line x1="177" y1="137" x2="155" y2="115" class="gauge-tick" />
+            <line x1="300" y1="86" x2="300" y2="55" class="gauge-tick" />
+            <line x1="423" y1="137" x2="445" y2="115" class="gauge-tick" />
+            <line x1="474" y1="260" x2="505" y2="260" class="gauge-tick" />
+
+            <text x="150" y="230" class="gauge-label">0</text>
+            <text x="205" y="154" class="gauge-label">25</text>
+            <text x="300" y="126" class="gauge-label">50</text>
+            <text x="395" y="154" class="gauge-label">75</text>
+            <text x="450" y="230" class="gauge-label">100</text>
+            <text x="300" y="222" class="gauge-brand">TRAFAG</text>
+
+            <g class="gauge-needle">
+                <line x1="300" y1="260" x2="300" y2="96" class="needle-line" />
+            </g>
+            <circle cx="300" cy="260" r="28" fill="#050505" />
+        </svg>
+        <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
+        <div class="home-subtitle">@T("Automatisch angebundene Laenderabfragen mit taeglichem Refresh", "Automatically connected country queries with daily refresh")</div>
+        <img class="home-connectivity-image"
+             src="mainimage.png"
+             alt="@T("Trafag Global BI Cockpit mit automatisch angebundenen Laenderstandorten", "Trafag Global BI Cockpit with automatically connected country sites")" />
+        @if (LandingSettings.ShowWalkingLabFigure)
+        {
+            <div class="walking-stage" aria-label="Walking lab figure">
+                <div class="walking-person">
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="coat coat-left"></span>
+                    <span class="coat coat-right"></span>
+                    <span class="arm arm-left"></span>
+                    <span class="arm arm-right"></span>
+                    <span class="leg leg-left"></span>
+                    <span class="leg leg-right"></span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .home-shell {
+        min-height: calc(100vh - 112px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f7f6f7;
+    }
+
+    .home-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .home-manometer {
+        width: min(170px, 34vw);
+        height: auto;
+        display: block;
+    }
+
+    .home-welcome {
+        color: #050505;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0;
+    }
+
+    .home-subtitle {
+        max-width: 620px;
+        color: #424242;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.4;
+        text-align: center;
+        letter-spacing: 0;
+    }
+
+    .home-connectivity-image {
+        width: min(1060px, 95vw);
+        max-height: min(54vh, 590px);
+        height: auto;
+        display: block;
+        object-fit: contain;
+    }
+
+    .walking-stage {
+        width: min(360px, 70vw);
+        height: 96px;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        border-bottom: 2px solid #050505;
+    }
+
+    .walking-person {
+        position: absolute;
+        left: 0;
+        bottom: 4px;
+        width: 48px;
+        height: 82px;
+        animation: lab-walk-path 7s linear infinite;
+    }
+
+    .walking-person span {
+        position: absolute;
+        display: block;
+        background: #050505;
+    }
+
+    .walking-person .head {
+        left: 15px;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 3px solid #050505;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .walking-person .body {
+        left: 22px;
+        top: 22px;
+        width: 4px;
+        height: 34px;
+    }
+
+    .walking-person .coat {
+        top: 25px;
+        width: 17px;
+        height: 36px;
+        border: 3px solid #050505;
+        background: #fff;
+    }
+
+    .walking-person .coat-left {
+        left: 8px;
+        transform: skewY(10deg);
+        border-right: 0;
+    }
+
+    .walking-person .coat-right {
+        left: 23px;
+        transform: skewY(-10deg);
+        border-left: 0;
+    }
+
+    .walking-person .arm,
+    .walking-person .leg {
+        width: 4px;
+        border-radius: 4px;
+        transform-origin: 50% 0;
+    }
+
+    .walking-person .arm {
+        top: 28px;
+        height: 28px;
+        animation: limb-swing 0.72s ease-in-out infinite alternate;
+    }
+
+    .walking-person .arm-left {
+        left: 13px;
+    }
+
+    .walking-person .arm-right {
+        left: 31px;
+        animation-direction: alternate-reverse;
+    }
+
+    .walking-person .leg {
+        top: 56px;
+        height: 28px;
+        animation: limb-swing 0.72s ease-in-out infinite alternate-reverse;
+    }
+
+    .walking-person .leg-left {
+        left: 20px;
+    }
+
+    .walking-person .leg-right {
+        left: 27px;
+        animation-direction: alternate;
+    }
+
+    @@keyframes lab-walk-path {
+        0% { transform: translateX(-54px); }
+        100% { transform: translateX(calc(min(360px, 70vw) + 54px)); }
+    }
+
+    @@keyframes limb-swing {
+        0% { transform: rotate(-24deg); }
+        100% { transform: rotate(24deg); }
+    }
+
+    .gauge-outer,
+    .gauge-inner,
+    .gauge-tick,
+    .needle-line {
+        fill: none;
+        stroke: #050505;
+        stroke-linecap: round;
+    }
+
+    .gauge-outer {
+        stroke-width: 16;
+    }
+
+    .gauge-inner {
+        stroke-width: 4;
+    }
+
+    .gauge-tick {
+        stroke-width: 7;
+    }
+
+    .gauge-label {
+        fill: #050505;
+        font-size: 24px;
+        font-weight: 800;
+        text-anchor: middle;
+        dominant-baseline: middle;
+    }
+
+    .gauge-brand {
+        fill: #050505;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        text-anchor: middle;
+    }
+
+    .needle-line {
+        stroke-width: 9;
+    }
+
+    .gauge-needle {
+        transform-origin: 300px 260px;
+        animation: home-gauge-sweep 6.2s infinite cubic-bezier(.42, 0, .2, 1);
+    }
+
+    @@keyframes home-gauge-sweep {
+        0% { transform: rotate(-58deg); }
+        9% { transform: rotate(-12deg); }
+        18% { transform: rotate(43deg); }
+        31% { transform: rotate(8deg); }
+        44% { transform: rotate(68deg); }
+        58% { transform: rotate(-35deg); }
+        72% { transform: rotate(24deg); }
+        86% { transform: rotate(56deg); }
+        100% { transform: rotate(-58deg); }
+    }
+
+    @@media (max-width: 700px) {
+        .home-content {
+            gap: 10px;
+        }
+
+        .home-manometer {
+            width: min(128px, 32vw);
+        }
+
+        .home-connectivity-image {
+            width: min(96vw, 720px);
+            max-height: 48vh;
+        }
+    }
+</style>
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+}

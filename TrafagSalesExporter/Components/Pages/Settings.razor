@@ -1,0 +1,674 @@
+﻿@page "/settings"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@attribute [Authorize(Policy = TrafagSalesExporter.Security.SecurityPolicies.AdminOnly)]
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject ISettingsPageService SettingsPageActions
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("Einstellungen", "Settings")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Einstellungen", "Settings")</MudText>
+
+<MudText Typo="Typo.h5" Class="mb-2">@T("Konfiguration Import/Export", "Import/export configuration")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCheckBox @bind-Value="_includeSecretsInExport" Label="@T("Mit Secrets exportieren", "Export with secrets")" />
+            <MudText Typo="Typo.caption">
+                @T("Wenn deaktiviert, bleiben Passwoerter und Secrets beim Export leer. Beim Import ohne Secrets werden bestehende Secrets auf dem Zielsystem beibehalten.",
+                   "If disabled, passwords and secrets remain empty during export. When importing without secrets, existing secrets on the target system are kept.")
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportConfiguration"
+                           StartIcon="@Icons.Material.Filled.Download" Disabled="_exportingConfig">
+                    @(_exportingConfig ? T("Exportiere...", "Exporting...") : T("Konfiguration exportieren", "Export configuration"))
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" HtmlTag="label"
+                           StartIcon="@Icons.Material.Filled.UploadFile" Disabled="_importingConfig">
+                    @(_importingConfig ? T("Importiere...", "Importing...") : T("Konfiguration importieren", "Import configuration"))
+                    <InputFile OnChange="ImportConfiguration" accept=".json,application/json" style="display:none" />
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* SharePoint Config *@
+<MudText Typo="Typo.h5" Class="mb-2">@T("SharePoint Konfiguration", "SharePoint configuration")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.SiteUrl" Label="Site URL" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.ExportFolder" Label="Export Folder" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_spConfig.CentralExportFolder"
+                          Label="Central Export Folder"
+                          HelperText="@T("Optional. Wenn leer, wird weiterhin Export Folder/Alle verwendet.", "Optional. If empty, Export Folder/All is still used.")" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.TenantId" Label="Tenant ID" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.ClientId" Label="Client ID" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_spConfig.ClientSecret" Label="Client Secret" InputType="InputType.Password" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSharePoint"
+                           StartIcon="@Icons.Material.Filled.Save">
+                    @T("Speichern", "Save")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="TestSharePoint"
+                           StartIcon="@Icons.Material.Filled.NetworkCheck" Disabled="_testingSp">
+                    @if (_testingSp)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                        @T("Teste...", "Testing...")
+                    }
+                    else
+                    {
+                        @T("SharePoint Verbindung testen", "Test SharePoint connection")
+                    }
+                </MudButton>
+            </MudStack>
+        </MudItem>
+        @if (!string.IsNullOrWhiteSpace(_sharePointTestPreview))
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mt-3">
+                    <div><b>@T("Testvorschau", "Test preview")</b></div>
+                    <div style="white-space: pre-wrap">@_sharePointTestPreview</div>
+                </MudAlert>
+            </MudItem>
+        }
+    </MudGrid>
+</MudPaper>
+
+<MudText Typo="Typo.h5" Class="mb-2">@T("Quellsysteme", "Source systems")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
+                @T("Diese Zugangsdaten werden pro Quellsystem als Standard verwendet. Ein Standort kann sie bei Bedarf mit eigenen Overrides ueberschreiben.",
+                   "These credentials are used as defaults per source system. A site can override them if needed.")
+            </MudAlert>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddSourceSystem"
+                       StartIcon="@Icons.Material.Filled.Add" Class="mb-3">
+                @T("Quellsystem hinzufuegen", "Add source system")
+            </MudButton>
+            <MudTable Items="_sourceSystems" Dense Hover Striped Breakpoint="Breakpoint.Md">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>@T("Name", "Name")</MudTh>
+                    <MudTh>@T("Anschlussart", "Connection type")</MudTh>
+                    <MudTh>@T("Zentrale URL", "Central URL")</MudTh>
+                    <MudTh>User</MudTh>
+                    <MudTh>@T("Aktiv", "Active")</MudTh>
+                    <MudTh>@T("Test", "Test")</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Code</MudTd>
+                    <MudTd>@context.DisplayName</MudTd>
+                    <MudTd>@GetConnectionKindLabel(context.ConnectionKind)</MudTd>
+                    <MudTd>@GetServiceUrlSummary(context)</MudTd>
+                    <MudTd>@GetUsernameSummary(context)</MudTd>
+                    <MudTd>
+                        @if (context.IsActive)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" />
+                        }
+                    </MudTd>
+                    <MudTd>
+                        @if (!UsesManualImport(context))
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                                       OnClick='@(() => TestCentralCredentials(context.Code))'
+                                       Disabled='@_testingSystems.Contains(context.Code)'>
+                                @(_testingSystems.Contains(context.Code) ? T("Teste...", "Testing...") : T("Testen", "Test"))
+                            </MudButton>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="() => EditSourceSystem(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="() => RemoveSourceSystem(context)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSourceSystems"
+                       StartIcon="@Icons.Material.Filled.Save">
+                @T("Quellsysteme speichern", "Save source systems")
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudDialog @bind-Visible="_sourceSystemDialogVisible" Options="_sourceSystemDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_editingSourceSystem.Id == 0 ? T("Quellsystem hinzufuegen", "Add source system") : T("Quellsystem bearbeiten", "Edit source system"))</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editingSourceSystem.Code" Label="Code" Required />
+        <MudTextField @bind-Value="_editingSourceSystem.DisplayName" Label="@T("Name", "Name")" Required />
+        <MudSelect T="string" @bind-Value="_editingSourceSystem.ConnectionKind" Label="@T("Anschlussart", "Connection type")" Required>
+            @foreach (var kind in SourceSystemConnectionKinds.All)
+            {
+                <MudSelectItem Value="@kind">@GetConnectionKindLabel(kind)</MudSelectItem>
+            }
+        </MudSelect>
+        @if (UsesSapGateway(_editingSourceSystem))
+        {
+            <MudTextField @bind-Value="_editingSourceSystem.CentralServiceUrl" Label="Zentrale SAP Service URL"
+                          HelperText="@T("Zentrale Standard-URL fuer SAP Gateway. Ein Standort darf sie nur bei Bedarf ueberschreiben.", "Central default URL for SAP Gateway. A site may override it only if needed.")" />
+        }
+        <MudTextField @bind-Value="_editingSourceSystem.CentralUsername" Label="@T("Zentraler Username", "Central username")" />
+        <MudTextField @bind-Value="_editingSourceSystem.CentralPassword" Label="@T("Zentrales Passwort", "Central password")" InputType="InputType.Password" />
+        <MudCheckBox @bind-Value="_editingSourceSystem.IsActive" Label="@T("Aktiv", "Active")" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseSourceSystemDialog">@T("Abbrechen", "Cancel")</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSourceSystemEdit">@T("Uebernehmen", "Apply")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudText Typo="Typo.h5" Class="mb-2">@T("Wechselkurse", "Exchange rates")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudText Typo="Typo.body2" Class="mb-3">
+        @((MarkupString)T("Diese Kurstabelle wird von der Transformation <b>ConvertCurrency</b> verwendet. Gleiche Waehrung rechnet automatisch mit Faktor 1.",
+                         "This rate table is used by the <b>ConvertCurrency</b> transformation. Same-currency conversion automatically uses factor 1."))
+    </MudText>
+    <MudStack Row Spacing="2" Class="mb-3">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddExchangeRate"
+                   StartIcon="@Icons.Material.Filled.Add">
+            @T("Kurs hinzufuegen", "Add rate")
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RefreshEcbRates"
+                   StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshingExchangeRates">
+            @(_refreshingExchangeRates ? T("Aktualisiere ECB-Kurse...", "Refreshing ECB rates...") : T("Refresh Kurse", "Refresh rates"))
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExchangeRates"
+                   StartIcon="@Icons.Material.Filled.Save">
+            @T("Kurse speichern", "Save rates")
+        </MudButton>
+    </MudStack>
+    <MudTable Items="_exchangeRates" Hover="true" Breakpoint="Breakpoint.Md">
+        <HeaderContent>
+            <MudTh>@T("Von", "From")</MudTh>
+            <MudTh>@T("Nach", "To")</MudTh>
+            <MudTh>@T("Kurs", "Rate")</MudTh>
+            <MudTh>@T("Gueltig ab", "Valid from")</MudTh>
+            <MudTh>@T("Gueltig bis", "Valid to")</MudTh>
+            <MudTh>@T("Notiz", "Note")</MudTh>
+            <MudTh>@T("Aktiv", "Active")</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudTextField @bind-Value="context.FromCurrency" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.ToCurrency" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudNumericField T="decimal" @bind-Value="context.Rate" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudDatePicker Date="context.ValidFrom"
+                               DateChanged="@(value => context.ValidFrom = value ?? context.ValidFrom)"
+                               Editable="true" />
+            </MudTd>
+            <MudTd>
+                <MudDatePicker Date="context.ValidTo"
+                               DateChanged="@(value => context.ValidTo = value)"
+                               Editable="true"
+                               Clearable="true" />
+            </MudTd>
+            <MudTd>
+                <MudTextField @bind-Value="context.Notes" Immediate="true" />
+            </MudTd>
+            <MudTd>
+                <MudCheckBox @bind-Value="context.IsActive" />
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveExchangeRate(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@* Export Settings *@
+<MudText Typo="Typo.h5" Class="mb-2">@T("Export Einstellungen", "Export settings")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_exportSettings.DateFilter" Label="@T("Datum-Filter (ab)", "Date filter from")"
+                          HelperText="@T("Format: yyyy-MM-dd", "Format: yyyy-MM-dd")" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudNumericField @bind-Value="_exportSettings.TimerHour" Label="@T("Timer Stunde", "Timer hour")" Min="0" Max="23" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudNumericField @bind-Value="_exportSettings.TimerMinute" Label="@T("Timer Minute", "Timer minute")" Min="0" Max="59" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.TimerEnabled" Label="@T("Timer aktiviert", "Timer enabled")" Color="Color.Primary" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="_exportSettings.ExchangeRateDateField"
+                       Label="@T("Wechselkurse anwenden auf", "Apply exchange rates to")"
+                       HelperText="@T("Datumsfeld fuer Kursgueltigkeit in Management-Analysen.", "Date field for rate validity in management analyses.")">
+                <MudSelectItem Value="@ExchangeRateDateFields.PostingDate">@T("PostingDate / Buchungsdatum", "PostingDate / posting date")</MudSelectItem>
+                <MudSelectItem Value="@ExchangeRateDateFields.InvoiceDate">@T("InvoiceDate / Rechnungsdatum", "InvoiceDate / invoice date")</MudSelectItem>
+                <MudSelectItem Value="@ExchangeRateDateFields.ExtractionDate">@T("ExtractionDate / Extraktionsdatum", "ExtractionDate / extraction date")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="@T("Debug Live-Logging", "Debug live logging")" Color="Color.Warning" />
+            <MudText Typo="Typo.caption">
+                @T("Schreibt zusaetzliche technische Fortschrittsmeldungen fuer HANA- und SAP-Lesevorgaenge ins Dashboard und in die Logs.",
+                   "Writes additional technical progress messages for HANA and SAP reads to the dashboard and logs.")
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_exportSettings.LocalSiteExportFolder" Label="@T("Lokaler Standardpfad Standort-Dateien", "Local default path for site files")"
+                          HelperText="@T("Wenn leer, wird ./output unter dem Programmverzeichnis verwendet.", "If empty, ./output under the application directory is used.")" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_exportSettings.LocalConsolidatedExportFolder" Label="@T("Lokaler Pfad Zentrale Datei und Nachweis", "Local path for central and proof files")"
+                          HelperText="@T("Optional. Zentrale Excel und Dashboard-Nachweis werden hier abgelegt. Wenn leer, wird der Standardpfad der Standort-Dateien verwendet.", "Optional. Central Excel and dashboard proof file are written here. If empty, the default path for site files is used.")" />
+        </MudItem>
+        <MudItem xs="12">
+            <div class="audit-csv-settings">
+                <div class="audit-csv-header">
+                    <MudIcon Icon="@Icons.Material.Filled.RuleFolder" Color="Color.Info" Size="Size.Medium" />
+                    <div>
+                        <MudText Typo="Typo.h6">@T("Audit-CSV / nachvollziehbarer Datenfluss", "Audit CSV / traceable data flow")</MudText>
+                        <MudText Typo="Typo.body2">
+                            @T("Fuer Finance und Wirtschaftspruefung: lesbare Standort-CSV nach Mapping und Konvertierung, optional als Quelle fuer zentrale Auswertungen.",
+                               "For finance and auditors: readable site CSV after mapping and conversion, optionally as the source for central analyses.")
+                        </MudText>
+                    </div>
+                </div>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudSwitch @bind-Value="_exportSettings.AuditCsvEnabled" Label="@T("Audit-CSV je Standort schreiben", "Write audit CSV per site")" Color="Color.Primary" />
+                        <MudText Typo="Typo.caption">
+                            @T("Schreibt beim Laenderexport je Standort eine Sales_ProcessedMergeInput_*.csv mit den transformierten Daten.",
+                               "Writes one Sales_ProcessedMergeInput_*.csv per site during country export with the transformed data.")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSwitch @bind-Value="_exportSettings.UseAuditCsvAsCentralSource" Label="@T("Zentrale Auswertung aus Audit-CSV", "Central analysis from audit CSV")" Color="Color.Warning" />
+                        <MudText Typo="Typo.caption">
+                            @T("Dashboard, zentrale Excel-Datei und Finance-Auswertungen lesen die neuesten Standort-CSV-Dateien statt CentralSalesRecords.",
+                               "Dashboard, central Excel file and finance analyses read the latest site CSV files instead of CentralSalesRecords.")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Filled">
+                            @((MarkupString)T("Audit-CSV wird immer im gleichen Ordner wie die lokalen Standort-Dateien abgelegt. Der Pfad wird oben bei <b>Lokaler Standardpfad Standort-Dateien</b> gesetzt.",
+                                             "Audit CSV is always stored in the same folder as the local site files. The path is set above under <b>Local default path for site files</b>."))
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+            </div>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveExportSettings"
+                       StartIcon="@Icons.Material.Filled.Save">
+                @T("Speichern", "Save")
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* Filename Preview *@
+<MudText Typo="Typo.h5" Class="mb-2">@T("Dateiname Vorschau", "Filename preview")</MudText>
+<MudPaper Class="pa-4" Elevation="1">
+    <MudText Typo="Typo.body1">
+        <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" Class="mr-1" />
+        Sales_{"{TSC}"}_{DateTime.Now:yyyy-MM-dd}.xlsx
+    </MudText>
+    <MudText Typo="Typo.caption" Class="mt-1">
+        @T("Beispiel:", "Example:") Sales_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).xlsx
+        / Sales_ProcessedMergeInput_TRFR_@(DateTime.Now.ToString("yyyy-MM-dd")).csv
+    </MudText>
+</MudPaper>
+
+<style>
+    .audit-csv-settings {
+        background: #e8f3ff;
+        border: 1px solid #90caf9;
+        border-left: 6px solid #1976d2;
+        border-radius: 8px;
+        padding: 18px 20px;
+    }
+
+    .audit-csv-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+</style>
+
+@code {
+    private SharePointConfig _spConfig = new();
+    private ExportSettings _exportSettings = new();
+    private List<SourceSystemDefinition> _sourceSystems = [];
+    private SourceSystemDefinition _editingSourceSystem = new();
+    private bool _testingSp;
+    private bool _includeSecretsInExport;
+    private bool _exportingConfig;
+    private bool _importingConfig;
+    private bool _refreshingExchangeRates;
+    private string _sharePointTestPreview = string.Empty;
+    private List<CurrencyExchangeRate> _exchangeRates = [];
+    private readonly HashSet<string> _testingSystems = [];
+    private bool _sourceSystemDialogVisible;
+    private readonly DialogOptions _sourceSystemDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await SettingsPageActions.LoadAsync();
+        _spConfig = state.SharePointConfig;
+        _exportSettings = state.ExportSettings;
+        _sourceSystems = state.SourceSystems;
+        _exchangeRates = state.ExchangeRates;
+    }
+
+    private async Task SaveSharePoint()
+    {
+        await SettingsPageActions.SaveSharePointAsync(_spConfig);
+        Snackbar.Add(T("SharePoint Konfiguration gespeichert", "SharePoint configuration saved"), Severity.Success);
+    }
+
+    private async Task TestSharePoint()
+    {
+        _testingSp = true;
+        try
+        {
+            _sharePointTestPreview = await SettingsPageActions.BuildSharePointTestPreviewAsync(_spConfig);
+            Snackbar.Add(T("SharePoint Verbindung erfolgreich!", "SharePoint connection successful!"), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Verbindung fehlgeschlagen", "Connection failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _testingSp = false;
+        }
+    }
+
+    private async Task SaveExportSettings()
+    {
+        await SettingsPageActions.SaveExportSettingsAsync(_exportSettings);
+        Snackbar.Add(T("Export Einstellungen gespeichert", "Export settings saved"), Severity.Success);
+    }
+
+    private void AddSourceSystem()
+    {
+        _editingSourceSystem = new SourceSystemDefinition
+        {
+            Code = string.Empty,
+            DisplayName = string.Empty,
+            ConnectionKind = SourceSystemConnectionKinds.Hana,
+            IsActive = true
+        };
+        _sourceSystemDialogVisible = true;
+    }
+
+    private void EditSourceSystem(SourceSystemDefinition definition)
+    {
+        _editingSourceSystem = new SourceSystemDefinition
+        {
+            Id = definition.Id,
+            Code = definition.Code,
+            DisplayName = definition.DisplayName,
+            ConnectionKind = definition.ConnectionKind,
+            IsActive = definition.IsActive,
+            CentralServiceUrl = definition.CentralServiceUrl,
+            CentralUsername = definition.CentralUsername,
+            CentralPassword = definition.CentralPassword
+        };
+        _sourceSystemDialogVisible = true;
+    }
+
+    private void SaveSourceSystemEdit()
+    {
+        _editingSourceSystem.Code = NormalizeSourceSystemCode(_editingSourceSystem.Code);
+        _editingSourceSystem.DisplayName = NormalizeConfigValue(_editingSourceSystem.DisplayName);
+        _editingSourceSystem.ConnectionKind = NormalizeConnectionKind(_editingSourceSystem.ConnectionKind);
+        _editingSourceSystem.CentralServiceUrl = NormalizeConfigValue(_editingSourceSystem.CentralServiceUrl);
+        _editingSourceSystem.CentralUsername = NormalizeConfigValue(_editingSourceSystem.CentralUsername);
+        _editingSourceSystem.CentralPassword = _editingSourceSystem.CentralPassword ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_editingSourceSystem.Code) || string.IsNullOrWhiteSpace(_editingSourceSystem.DisplayName))
+        {
+            Snackbar.Add(T("Code und Name fuer das Quellsystem sind Pflicht.", "Code and name are required for the source system."), Severity.Warning);
+            return;
+        }
+
+        if (_sourceSystems.Any(x => x.Id != _editingSourceSystem.Id && x.Code == _editingSourceSystem.Code))
+        {
+            Snackbar.Add($"{T("Quellsystem-Code doppelt vorhanden", "Duplicate source-system code")}: {_editingSourceSystem.Code}", Severity.Warning);
+            return;
+        }
+
+        if (_editingSourceSystem.Id == 0)
+        {
+            _sourceSystems.Add(_editingSourceSystem);
+        }
+        else
+        {
+            var existing = _sourceSystems.FirstOrDefault(x => x.Id == _editingSourceSystem.Id);
+            if (existing is not null)
+            {
+                existing.Code = _editingSourceSystem.Code;
+                existing.DisplayName = _editingSourceSystem.DisplayName;
+                existing.ConnectionKind = _editingSourceSystem.ConnectionKind;
+                existing.IsActive = _editingSourceSystem.IsActive;
+                existing.CentralServiceUrl = _editingSourceSystem.CentralServiceUrl;
+                existing.CentralUsername = _editingSourceSystem.CentralUsername;
+                existing.CentralPassword = _editingSourceSystem.CentralPassword;
+            }
+        }
+
+        _sourceSystems = _sourceSystems.OrderBy(x => x.Code).ToList();
+        _sourceSystemDialogVisible = false;
+    }
+
+    private void CloseSourceSystemDialog()
+    {
+        _sourceSystemDialogVisible = false;
+    }
+
+    private void RemoveSourceSystem(SourceSystemDefinition definition)
+    {
+        _sourceSystems.Remove(definition);
+    }
+
+    private async Task SaveSourceSystems()
+    {
+        try
+        {
+            _sourceSystems = await SettingsPageActions.SaveSourceSystemsAsync(_sourceSystems);
+            Snackbar.Add(T("Quellsysteme gespeichert", "Source systems saved"), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private void AddExchangeRate()
+    {
+        _exchangeRates.Add(new CurrencyExchangeRate
+        {
+            FromCurrency = "USD",
+            ToCurrency = "EUR",
+            Rate = 1m,
+            ValidFrom = DateTime.Today,
+            IsActive = true
+        });
+    }
+
+    private void RemoveExchangeRate(CurrencyExchangeRate rate)
+    {
+        _exchangeRates.Remove(rate);
+    }
+
+    private async Task SaveExchangeRates()
+    {
+        _exchangeRates = await SettingsPageActions.SaveExchangeRatesAsync(_exchangeRates);
+        Snackbar.Add(T("Wechselkurse gespeichert", "Exchange rates saved"), Severity.Success);
+    }
+
+    private async Task RefreshEcbRates()
+    {
+        if (_refreshingExchangeRates)
+            return;
+
+        _refreshingExchangeRates = true;
+        try
+        {
+            var result = await SettingsPageActions.RefreshEcbRatesAsync();
+            _exchangeRates = result.ExchangeRates;
+            Snackbar.Add($"{T("ECB-Kurse aktualisiert", "ECB rates refreshed")}: {result.ImportedCount} {T("Kurse vom", "rates from")} {result.RateDate:yyyy-MM-dd}.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("ECB-Kursimport fehlgeschlagen", "ECB rate import failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _refreshingExchangeRates = false;
+        }
+    }
+
+    private async Task ExportConfiguration()
+    {
+        if (_exportingConfig)
+            return;
+
+        _exportingConfig = true;
+        try
+        {
+            var json = await SettingsPageActions.ExportConfigurationAsync(_includeSecretsInExport);
+            var suffix = _includeSecretsInExport ? "with-secrets" : "without-secrets";
+            var fileName = $"trafag-config-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{suffix}.json";
+            await JS.InvokeVoidAsync("trafagDownload.saveTextFile", fileName, json, "application/json;charset=utf-8");
+            Snackbar.Add(T("Konfiguration exportiert", "Configuration exported"), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Export fehlgeschlagen", "Export failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _exportingConfig = false;
+        }
+    }
+
+    private async Task ImportConfiguration(InputFileChangeEventArgs args)
+    {
+        if (_importingConfig)
+            return;
+
+        _importingConfig = true;
+        try
+        {
+            var file = args.File;
+            await using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            var state = await SettingsPageActions.ImportConfigurationAsync(json);
+            _spConfig = state.SharePointConfig;
+            _exportSettings = state.ExportSettings;
+            _sourceSystems = state.SourceSystems;
+            _exchangeRates = state.ExchangeRates;
+            Snackbar.Add(T("Konfiguration importiert", "Configuration imported"), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{T("Import fehlgeschlagen", "Import failed")}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _importingConfig = false;
+        }
+    }
+
+    private async Task TestCentralCredentials(string sourceSystem)
+    {
+        var definition = _sourceSystems.FirstOrDefault(x => string.Equals(x.Code, sourceSystem, StringComparison.OrdinalIgnoreCase));
+        if (definition is null)
+        {
+            Snackbar.Add($"{T("Quellsystem nicht gefunden", "Source system not found")}: {sourceSystem}", Severity.Warning);
+            return;
+        }
+
+        if (!_testingSystems.Add(sourceSystem))
+            return;
+
+        try
+        {
+            var result = await SettingsPageActions.TestCentralCredentialsAsync(definition);
+            Snackbar.Add(result.Message, result.Success ? Severity.Success : result.Warning ? Severity.Warning : Severity.Error);
+        }
+        finally
+        {
+            _testingSystems.Remove(sourceSystem);
+        }
+    }
+
+    private static string NormalizeSourceSystemCode(string? code) => Services.SettingsPageService.NormalizeSourceSystemCode(code);
+
+    private static string NormalizeConnectionKind(string? connectionKind) => Services.SettingsPageService.NormalizeConnectionKind(connectionKind);
+
+    private static string GetConnectionKindLabel(string connectionKind) => connectionKind switch
+    {
+        SourceSystemConnectionKinds.Hana => "HANA",
+        SourceSystemConnectionKinds.SapGateway => "SAP Gateway",
+        SourceSystemConnectionKinds.ManualExcel => "Manual Excel",
+        _ => connectionKind
+    };
+
+    private static bool UsesManualImport(SourceSystemDefinition definition)
+        => string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.ManualExcel, StringComparison.OrdinalIgnoreCase);
+
+    private static bool UsesSapGateway(SourceSystemDefinition definition)
+        => string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase);
+
+    private static string GetServiceUrlSummary(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.CentralServiceUrl) ? "-" : definition.CentralServiceUrl;
+
+    private static string GetUsernameSummary(SourceSystemDefinition definition)
+        => string.IsNullOrWhiteSpace(definition.CentralUsername) ? "-" : definition.CentralUsername;
+
+    private static string NormalizeConfigValue(string? value) => Services.SettingsPageService.NormalizeConfigValue(value);
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}
+
