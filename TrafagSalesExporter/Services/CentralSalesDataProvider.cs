@@ -36,10 +36,13 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
 
         var records = await _auditCsvService.ReadLatestSiteAuditCsvRecordsAsync(settings);
         if (records.Count == 0)
+            records = await _auditCsvService.ReadLatestConsolidatedAuditCsvRecordsAsync(settings);
+
+        if (records.Count == 0)
         {
             var directory = _auditCsvService.ResolveAuditCsvDirectory(settings);
             throw new InvalidOperationException(
-                $"Audit-CSV ist als zentrale Quelle aktiv, aber im Ordner '{directory}' wurden keine Sales_ProcessedMergeInput_*.csv-Dateien gefunden.");
+                $"Audit-CSV ist als zentrale Quelle aktiv, aber im Ordner '{directory}' wurden keine Sales_ProcessedMergeInput_*.csv- oder Finance_Dashboard_Audit_All_*.csv-Dateien gefunden.");
         }
 
         return records

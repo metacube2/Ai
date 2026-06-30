@@ -23,6 +23,8 @@ public interface IExportAuditCsvService
 
     Task<IReadOnlyList<AuditCsvSnapshot>> ReadLatestSiteAuditCsvSnapshotsAsync(ExportSettings settings);
 
+    Task<List<SalesRecord>> ReadLatestConsolidatedAuditCsvRecordsAsync(ExportSettings settings);
+
     string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null);
 }
 
@@ -36,6 +38,7 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
 {
     private const char Delimiter = ';';
     private const string ProcessedMergeInputFilePrefix = "Sales_ProcessedMergeInput_";
+    private const string ConsolidatedAuditFilePrefix = "Finance_Dashboard_Audit_All_";
     private const string LegacyFilePrefix = "Sales_";
 
     private static readonly string[] Headers =
@@ -180,6 +183,24 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         }
 
         return snapshots;
+    }
+
+    public async Task<List<SalesRecord>> ReadLatestConsolidatedAuditCsvRecordsAsync(ExportSettings settings)
+    {
+        var directory = ResolveConsolidatedAuditCsvDirectory(settings);
+        if (!Directory.Exists(directory))
+            return [];
+
+        var latestFile = Directory
+            .EnumerateFiles(directory, $"{ConsolidatedAuditFilePrefix}*.csv", SearchOption.TopDirectoryOnly)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .ThenByDescending(file => file.Name, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return latestFile is null
+            ? []
+            : await ReadFileAsync(latestFile.FullName);
     }
 
     public string ResolveAuditCsvDirectory(ExportSettings settings, string? fallbackOutputDirectory = null)
