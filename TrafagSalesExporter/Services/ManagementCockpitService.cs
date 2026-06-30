@@ -1264,7 +1264,18 @@ public class ManagementCockpitService : IManagementCockpitService
         => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry);
 
     private static decimal ResolveGroupMarginCostBasis(FinanceAggregationRow row)
-        => row.Quantity != 0m ? Math.Abs(row.Quantity) * Math.Abs(row.StandardCost) : Math.Abs(row.StandardCost);
+    {
+        var magnitude = row.Quantity != 0m
+            ? Math.Abs(row.Quantity) * Math.Abs(row.StandardCost)
+            : Math.Abs(row.StandardCost);
+
+        // Gutschriften/Retouren tragen einen negativen Netto-Umsatz (row.Value < 0, entweder
+        // natuerlich negativ oder via NegateAmount-Regel). Die Kostenbasis muss mit umkehren,
+        // sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100, Kosten +60 -> -160
+        // statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
+        var isReversal = row.Value < 0m || (row.Value == 0m && row.Quantity < 0m);
+        return isReversal ? -magnitude : magnitude;
+    }
 
     private static string ResolveGroupMarginCostSource(string supplierType)
         => supplierType switch

@@ -293,6 +293,19 @@ Marge %
 = Marge Original / Originalbetrag
 ```
 
+Gutschriften und Retouren (negativer Netto-Umsatz):
+
+```text
+Kostenbasis kehrt mit dem Vorzeichen des Umsatzes um
+Umsatz -100, Stueckkosten 60 -> Kostenbasis -60 -> Marge -40
+```
+
+Korrigiert am 30.06.2026: Frueher wurde die Kostenbasis immer positiv gerechnet
+(`Abs(Menge) * Abs(Standardkosten)`). Bei einer Gutschrift ergab das faelschlich
+`-100 - (+60) = -160` statt korrekt `-40`. Jetzt folgt die Kostenbasis dem Vorzeichen
+des Netto-Umsatzes (bei Umsatz 0 dem Mengenvorzeichen), sodass sich Verkauf und
+Gutschrift zur Netto-Marge ausgleichen. Betrifft `Finance Pruefbuch` und `Gruppenmarge`.
+
 Wenn fuer eine Originalwaehrung kein CHF-Kurs gefunden wird, wird die Zeile nicht still falsch berechnet. Der Status zeigt dann `Kurs fehlt`.
 
 Wenn Lieferant oder Standardkostenbasis fachlich nicht sauber bestimmbar sind, wird dies ebenfalls im Status sichtbar, zum Beispiel `Lieferant unklar` oder `Standardpreis fehlt`.
@@ -303,6 +316,11 @@ Wichtig fuer die fachliche Pruefung:
 - Es verwendet die gepflegte Kurstabelle `CurrencyExchangeRates`.
 - Fuer die CHF-Umrechnung wird aktuell ein Jahreskurs per `31.12.<Jahr>` verwendet, kein Tageskurs.
 - Die Berechnungen sind technisch getestet; die fachliche Abnahme der Kurse, Kostenbasis und Lieferantenlogik muss Finance/Andreas anhand von Stichproben bestaetigen.
+
+Bekannte, noch offene Punkte (kein Fehler in `Marge CHF`, aber zu beachten):
+
+- `Marge Original` und `Marge %` rechnen Umsatz und Kostenbasis in ihren jeweiligen Originalwaehrungen. Wenn Verkaufswaehrung und Standardkostenwaehrung abweichen, mischen diese beiden Spalten zwei Waehrungen. `Marge CHF` ist korrekt, weil dort beide Seiten getrennt nach CHF umgerechnet werden.
+- Der `Finance Pivot` rechnet bei aktivem Schalter `Group-Waehrung (CHF)` historische Jahre mit dem Kurs des gewaehlten Jahres statt mit dem jeweiligen Jahreskurs. Ohne Group-Schalter (Normalfall) ist der Pivot korrekt mit dem eigenen Jahreskurs je Zeile.
 
 ## 7. Finance Pivot nach Andreas' Excel `sta.xlsx`
 

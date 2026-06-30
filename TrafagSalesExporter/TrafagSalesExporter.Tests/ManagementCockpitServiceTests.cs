@@ -372,6 +372,39 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CreditNote_ReversesCostBasisInMargin()
+    {
+        // CHF -> CHF keeps the rate at 1, so original and CHF amounts are identical and the
+        // arithmetic is easy to verify. One normal sale and one credit note for the same article.
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-1", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m),
+            CreateRow("SAP", "Schweiz", "TRCH", "GS-1", "CHF", -100m, new DateTime(2025, 3, 2),
+                quantity: -1m, standardCost: 60m));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var normal = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-1");
+        Assert.Equal(60m, normal.CostBasisValue);
+        Assert.Equal(40m, normal.MarginValue);
+
+        var credit = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "GS-1");
+        // Cost basis must reverse with the negative sale: -100 - (-60) = -40 (not -160).
+        Assert.Equal(-60m, credit.CostBasisValue);
+        Assert.Equal(-40m, credit.MarginValue);
+
+        // Net of sale + credit cancels out for both sales and cost basis.
+        Assert.Equal(0m, result.GroupMarginSummary.SalesValue);
+        Assert.Equal(0m, result.GroupMarginSummary.CostBasisValue);
+        Assert.Equal(0m, result.GroupMarginSummary.MarginValue);
+
+        // The Finance Pruefbuch (audit ledger) uses the same cost basis for its CHF margin.
+        var creditLedger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "GS-1");
+        Assert.Equal(-60m, creditLedger.CostBasisChf!.Value);
+        Assert.Equal(-40m, creditLedger.MarginChf!.Value);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
