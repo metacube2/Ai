@@ -196,7 +196,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("data-quality", "experts", "Datenqualitaet", "Data quality", "Rule", "management-cockpit?section=quality", 60, "All"),
         Link("division-finance", "experts", "Sparten-Finanzanalyse", "Division finance", "PieChart", "management-cockpit?section=division&division=finance", 70, "All"),
         Link("division-central", "experts", "Zentrale Spartenzuordnung", "Central division mapping", "AccountTree", "management-cockpit?section=division&division=central", 80, "All"),
-        Link("finance-audit-ledger", "experts", "Finance Pruefbuch", "Finance audit ledger", "TableView", "management-cockpit?section=ledger", 90, "All"),
+        Link("finance-audit-ledger", "experts", "Finance Pruefbuch", "Finance audit ledger", "FactCheck", "management-cockpit?section=ledger", 90, "All"),
         Link("group-margin", "experts", "Gruppenmarge", "Group margin", "StackedLineChart", "management-cockpit?section=groupmargin", 100, "All"),
         Link("finance-3d", "experts", "3D Datenanalyse", "3D data analysis", "ViewInAr", "management-cockpit?section=3d", 110, "All"),
         Link("raw-diagnostics", "experts", "Rohdaten Diagnose", "Raw-data diagnostics", "QueryStats", "management-cockpit?section=raw", 120, "All"),

@@ -113,7 +113,7 @@
                         @T("Gruppenmarge", "Group margin")
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.TableView"
+                               StartIcon="@Icons.Material.Filled.FactCheck"
                                Href="management-cockpit?section=ledger">
                         @T("Finance Pruefbuch", "Finance audit ledger")
                     </MudButton>
@@ -567,7 +567,7 @@
                 </MudTable>
             </MudPaper>
         </MudTabPanel>
-        <MudTabPanel Text="@T("Finance Pruefbuch", "Finance audit ledger")" Icon="@Icons.Material.Filled.TableView">
+        <MudTabPanel Text="@T("Finance Pruefbuch", "Finance audit ledger")" Icon="@Icons.Material.Filled.FactCheck">
             <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                 <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePruefbuch">
@@ -584,27 +584,27 @@
             </MudAlert>
             <MudPaper Class="pa-4" Elevation="1" Style="overflow-x:auto;">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Originalwaehrung, CHF-Umrechnung und Kostenbasis", "Original currency, CHF conversion and cost basis")</MudText>
-                <MudTable Items="_financeResult.FinanceAuditLedgerRows" Dense Hover Striped>
+                <MudTable Items="BuildFinanceAuditLedgerRows()" Dense Hover Striped>
                     <HeaderContent>
-                        <MudTh>@T("Status", "Status")</MudTh>
-                        <MudTh>@T("Land", "Country")</MudTh>
-                        <MudTh>TSC</MudTh>
-                        <MudTh>@T("Jahr", "Year")</MudTh>
-                        <MudTh>@T("Rechnung", "Invoice")</MudTh>
-                        <MudTh>@T("Pos.", "Line")</MudTh>
-                        <MudTh>@T("Kunde", "Customer")</MudTh>
-                        <MudTh>@T("Material", "Material")</MudTh>
-                        <MudTh>@T("Originalbetrag", "Original amount")</MudTh>
-                        <MudTh>@T("Originalwaehrung", "Original currency")</MudTh>
-                        <MudTh>@T("Kurs nach CHF", "Rate to CHF")</MudTh>
-                        <MudTh>@T("Betrag CHF", "Amount CHF")</MudTh>
-                        <MudTh>@T("Kursquelle", "Rate source")</MudTh>
-                        <MudTh>@T("Lieferant", "Supplier")</MudTh>
-                        <MudTh>@T("Typ", "Type")</MudTh>
-                        <MudTh>@T("Standardkosten", "Standard cost")</MudTh>
-                        <MudTh>@T("Kostenbasis CHF", "Cost basis CHF")</MudTh>
-                        <MudTh>@T("Marge CHF", "Margin CHF")</MudTh>
-                        <MudTh>@T("Quelle", "Source")</MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Status)">@T("Status", "Status")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditStatusFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CountryKey)">@T("Land", "Country")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCountryFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Tsc)">TSC</MudTableSortLabel><MudTextField @bind-Value="_financeAuditTscFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Year)">@T("Jahr", "Year")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditYearFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.InvoiceNumber)">@T("Rechnung", "Invoice")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditInvoiceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.PositionOnInvoice)">@T("Pos.", "Line")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditPositionFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CustomerName)">@T("Kunde", "Customer")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCustomerFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.Material)">@T("Material", "Material")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditMaterialFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.OriginalAmount)">@T("Originalbetrag", "Original amount")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditOriginalAmountFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.OriginalCurrency)">@T("Originalwaehrung", "Original currency")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditOriginalCurrencyFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.ChfRate ?? 0m)">@T("Kurs nach CHF", "Rate to CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditChfRateFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.ChfAmount ?? 0m)">@T("Betrag CHF", "Amount CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditChfAmountFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.RateSource)">@T("Kursquelle", "Rate source")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditRateSourceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.SupplierName)">@T("Lieferant", "Supplier")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditSupplierFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.SupplierType)">@T("Typ", "Type")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditSupplierTypeFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.StandardCost)">@T("Standardkosten", "Standard cost")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditStandardCostFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.CostBasisChf ?? 0m)">@T("Kostenbasis CHF", "Cost basis CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditCostBasisFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.MarginChf ?? 0m)">@T("Marge CHF", "Margin CHF")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditMarginFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<ManagementFinanceAuditLedgerRow, object>(x => x.DataSource)">@T("Quelle", "Source")</MudTableSortLabel><MudTextField @bind-Value="_financeAuditDataSourceFilter" Placeholder="@T("Filter", "Filter")" Margin="Margin.Dense" Dense Clearable /></MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd><MudChip T="string" Size="Size.Small" Color="@GroupMarginStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
@@ -1620,6 +1620,25 @@
     private double _finance3dLabelScale = 1.4d;
     private ElementReference _finance3dCanvas;
     private bool _finance3dNeedsRender;
+    private string? _financeAuditStatusFilter;
+    private string? _financeAuditCountryFilter;
+    private string? _financeAuditTscFilter;
+    private string? _financeAuditYearFilter;
+    private string? _financeAuditInvoiceFilter;
+    private string? _financeAuditPositionFilter;
+    private string? _financeAuditCustomerFilter;
+    private string? _financeAuditMaterialFilter;
+    private string? _financeAuditOriginalAmountFilter;
+    private string? _financeAuditOriginalCurrencyFilter;
+    private string? _financeAuditChfRateFilter;
+    private string? _financeAuditChfAmountFilter;
+    private string? _financeAuditRateSourceFilter;
+    private string? _financeAuditSupplierFilter;
+    private string? _financeAuditSupplierTypeFilter;
+    private string? _financeAuditStandardCostFilter;
+    private string? _financeAuditCostBasisFilter;
+    private string? _financeAuditMarginFilter;
+    private string? _financeAuditDataSourceFilter;
 
     private bool ShowProductFamilyColumn => _productFinanceGroupLevel != ProductFinanceGroupLevels.Division;
     private bool Finance3dScenarioAffectsValue => _finance3dIndicator is
@@ -1863,7 +1882,7 @@
     private Task ExportFinancePruefbuch()
         => DownloadExcel("Finance_Pruefbuch",
         [
-            new ExcelSheetData(T("Finance Pruefbuch", "Finance audit ledger"), BuildRows(_financeResult!.FinanceAuditLedgerRows)),
+            new ExcelSheetData(T("Finance Pruefbuch", "Finance audit ledger"), BuildRows(BuildFinanceAuditLedgerRows())),
             new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
         ]);
 
@@ -2202,6 +2221,54 @@
 
     private bool IsProductFinanceMixedCurrency
         => string.Equals(_financeResult?.ProductFinanceSummary.DisplayCurrency, "Mixed", StringComparison.OrdinalIgnoreCase);
+
+    private IReadOnlyList<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return _financeResult.FinanceAuditLedgerRows
+            .Where(row =>
+                MatchesFilter(row.Status, _financeAuditStatusFilter) &&
+                MatchesFilter(row.CountryKey, _financeAuditCountryFilter) &&
+                MatchesFilter(row.Tsc, _financeAuditTscFilter) &&
+                MatchesFilter(row.Year, _financeAuditYearFilter) &&
+                MatchesFilter(row.InvoiceNumber, _financeAuditInvoiceFilter) &&
+                MatchesFilter(row.PositionOnInvoice, _financeAuditPositionFilter) &&
+                MatchesFilter(string.Join(' ', row.CustomerNumber, row.CustomerName), _financeAuditCustomerFilter) &&
+                MatchesFilter(string.Join(' ', row.Material, row.ArticleName), _financeAuditMaterialFilter) &&
+                MatchesFilter(row.OriginalAmount, _financeAuditOriginalAmountFilter) &&
+                MatchesFilter(row.OriginalCurrency, _financeAuditOriginalCurrencyFilter) &&
+                MatchesFilter(row.ChfRate, _financeAuditChfRateFilter) &&
+                MatchesFilter(row.ChfAmount, _financeAuditChfAmountFilter) &&
+                MatchesFilter(string.Join(' ', row.RateSource, row.RateYear), _financeAuditRateSourceFilter) &&
+                MatchesFilter(string.Join(' ', row.SupplierNumber, row.SupplierName, row.SupplierCountry), _financeAuditSupplierFilter) &&
+                MatchesFilter(row.SupplierType, _financeAuditSupplierTypeFilter) &&
+                MatchesFilter(string.Join(' ', FormatInvariant(row.StandardCost), row.StandardCostCurrency), _financeAuditStandardCostFilter) &&
+                MatchesFilter(row.CostBasisChf, _financeAuditCostBasisFilter) &&
+                MatchesFilter(row.MarginChf, _financeAuditMarginFilter) &&
+                MatchesFilter(row.DataSource, _financeAuditDataSourceFilter))
+            .ToList();
+    }
+
+    private static bool MatchesFilter(object? value, string? filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return true;
+
+        var text = value switch
+        {
+            null => string.Empty,
+            decimal decimalValue => FormatInvariant(decimalValue),
+            int intValue => intValue.ToString(CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+
+        return text.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatInvariant(decimal value)
+        => value.ToString("0.#############################", CultureInfo.InvariantCulture);
 
     private IReadOnlyList<ManagementProductAssignmentRow> BuildMissingReferenceDriverRows()
     {
