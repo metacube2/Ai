@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 
@@ -393,6 +394,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     StandardCostCurrency = record.StandardCostCurrency,
                     CustomerNumber = record.CustomerNumber,
                     CustomerName = record.CustomerName,
+                    FinanceDate = financeDate,
                     PostingDate = record.PostingDate,
                     InvoiceDate = record.InvoiceDate,
                     ExtractionDate = record.ExtractionDate
@@ -572,6 +574,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
         var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource);
+        var financePivot = BuildFinancePivotResult(allRows, year);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
         notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
 
@@ -623,7 +626,8 @@ public class ManagementCockpitService : IManagementCockpitService
             GroupMarginCountryRows = BuildGroupMarginCountryRows(groupMarginRows),
             GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
             GroupMarginDetailRows = groupMarginRows.Take(1000).ToList(),
-            FinanceAuditLedgerRows = auditLedgerRows.Take(1000).ToList()
+            FinanceAuditLedgerRows = auditLedgerRows.Take(1000).ToList(),
+            FinancePivot = financePivot
         };
     }
 
@@ -662,6 +666,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 StandardCostCurrency = row.StandardCostCurrency,
                 CustomerNumber = row.CustomerNumber,
                 CustomerName = row.CustomerName,
+                FinanceDate = row.FinanceDate,
                 PostingDate = row.PostingDate,
                 InvoiceDate = row.InvoiceDate,
                 ExtractionDate = row.ExtractionDate
@@ -1361,6 +1366,185 @@ public class ManagementCockpitService : IManagementCockpitService
             .ThenBy(row => row.InvoiceNumber, StringComparer.OrdinalIgnoreCase)
             .ThenBy(row => row.PositionOnInvoice)
             .ToList();
+
+    private ManagementFinancePivotResult BuildFinancePivotResult(
+        IEnumerable<FinanceAggregationRow> rows,
+        int selectedYear)
+    {
+        var pivotRows = rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var financeDate = row.FinanceDate == default
+                    ? row.InvoiceDate ?? row.PostingDate ?? row.ExtractionDate
+                    : row.FinanceDate;
+                var currency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
+                var rate = _exchangeRateService.ResolveRate(currency, "CHF", new DateTime(row.Year, 12, 31));
+                return new FinancePivotValue(
+                    row.Tsc,
+                    financeDate.Year,
+                    financeDate.Month,
+                    financeDate.Day,
+                    rate.HasValue ? row.Value * rate.Value : 0m,
+                    rate.HasValue);
+            })
+            .Where(row => row.HasRate && !string.IsNullOrWhiteSpace(row.Tsc))
+            .ToList();
+
+        var tscColumns = pivotRows
+            .Select(row => row.Tsc)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var dailyYearColumns = pivotRows
+            .Select(row => row.Year.ToString(CultureInfo.InvariantCulture))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var monthOptions = pivotRows
+            .Where(row => row.Year == selectedYear)
+            .Select(row => row.Month)
+            .Distinct()
+            .OrderBy(month => month)
+            .ToList();
+        if (monthOptions.Count == 0)
+        {
+            monthOptions = pivotRows
+                .Select(row => row.Month)
+                .Distinct()
+                .OrderBy(month => month)
+                .ToList();
+        }
+
+        var defaultMonth = monthOptions.LastOrDefault();
+        var latestYear = selectedYear == 0
+            ? pivotRows.Select(row => row.Year).DefaultIfEmpty(DateTime.Now.Year).Max()
+            : selectedYear;
+
+        return new ManagementFinancePivotResult
+        {
+            TscColumns = tscColumns,
+            MonthOptions = monthOptions,
+            DefaultMonth = defaultMonth,
+            RowCount = pivotRows.Count,
+            YtdSalesChf = pivotRows.Where(row => row.Year == latestYear).Sum(row => row.ValueChf),
+            MtdSalesChf = defaultMonth == 0
+                ? 0m
+                : pivotRows.Where(row => row.Year == latestYear && row.Month == defaultMonth).Sum(row => row.ValueChf),
+            MonthlyRows = BuildFinancePivotMonthlyRows(pivotRows, tscColumns),
+            DailyYearColumns = dailyYearColumns,
+            DailyYearRows = BuildFinancePivotDailyYearRows(pivotRows, dailyYearColumns)
+        };
+    }
+
+    private static List<ManagementFinancePivotMatrixRow> BuildFinancePivotMonthlyRows(
+        IReadOnlyCollection<FinancePivotValue> values,
+        IReadOnlyList<string> tscColumns)
+    {
+        var result = new List<ManagementFinancePivotMatrixRow>();
+
+        foreach (var yearGroup in values.GroupBy(row => row.Year).OrderBy(group => group.Key))
+        {
+            foreach (var monthGroup in yearGroup.GroupBy(row => row.Month).OrderBy(group => group.Key))
+            {
+                result.Add(BuildFinancePivotMatrixRow(
+                    yearGroup.Key,
+                    monthGroup.Key,
+                    null,
+                    false,
+                    false,
+                    string.Empty,
+                    monthGroup,
+                    tscColumns));
+            }
+
+            result.Add(BuildFinancePivotMatrixRow(
+                yearGroup.Key,
+                null,
+                null,
+                true,
+                false,
+                $"{yearGroup.Key} Ergebnis",
+                yearGroup,
+                tscColumns));
+        }
+
+        result.Add(BuildFinancePivotMatrixRow(
+            0,
+            null,
+            null,
+            false,
+            true,
+            "Gesamtergebnis",
+            values,
+            tscColumns));
+
+        return result;
+    }
+
+    private static List<ManagementFinancePivotMatrixRow> BuildFinancePivotDailyYearRows(
+        IReadOnlyCollection<FinancePivotValue> values,
+        IReadOnlyList<string> yearColumns)
+    {
+        var result = values
+            .GroupBy(row => new { row.Month, row.Day })
+            .OrderBy(group => group.Key.Month)
+            .ThenBy(group => group.Key.Day)
+            .Select(group =>
+            {
+                var valueList = group.ToList();
+                var byYear = yearColumns.ToDictionary(
+                    year => year,
+                    year => valueList
+                        .Where(row => string.Equals(row.Year.ToString(CultureInfo.InvariantCulture), year, StringComparison.OrdinalIgnoreCase))
+                        .Sum(row => row.ValueChf),
+                    StringComparer.OrdinalIgnoreCase);
+
+                return new ManagementFinancePivotMatrixRow
+                {
+                    Month = group.Key.Month,
+                    Day = group.Key.Day,
+                    ValuesByTsc = byYear,
+                    Total = byYear.Values.Sum()
+                };
+            })
+            .ToList();
+
+        return result;
+    }
+
+    private static ManagementFinancePivotMatrixRow BuildFinancePivotMatrixRow(
+        int year,
+        int? month,
+        int? day,
+        bool isSubtotal,
+        bool isGrandTotal,
+        string label,
+        IEnumerable<FinancePivotValue> values,
+        IReadOnlyList<string> tscColumns)
+    {
+        var valueList = values.ToList();
+        var byTsc = tscColumns.ToDictionary(
+            tsc => tsc,
+            tsc => valueList
+                .Where(row => string.Equals(row.Tsc, tsc, StringComparison.OrdinalIgnoreCase))
+                .Sum(row => row.ValueChf),
+            StringComparer.OrdinalIgnoreCase);
+
+        return new ManagementFinancePivotMatrixRow
+        {
+            Year = year,
+            Month = month,
+            Day = day,
+            IsSubtotal = isSubtotal,
+            IsGrandTotal = isGrandTotal,
+            Label = label,
+            ValuesByTsc = byTsc,
+            Total = byTsc.Values.Sum()
+        };
+    }
 
     private static string ResolveAuditLedgerStatus(FinanceAggregationRow row, string supplierType, decimal costBasis, decimal? chfRate)
     {
@@ -2262,12 +2446,21 @@ public class ManagementCockpitService : IManagementCockpitService
         public string StandardCostCurrency { get; set; } = string.Empty;
         public string CustomerNumber { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
+        public DateTime FinanceDate { get; set; }
         public DateTime? PostingDate { get; set; }
         public DateTime? InvoiceDate { get; set; }
         public DateTime ExtractionDate { get; set; }
     }
 
     private sealed record FinanceReferenceValue(string Key, string Label, decimal? Value);
+
+    private sealed record FinancePivotValue(
+        string Tsc,
+        int Year,
+        int Month,
+        int Day,
+        decimal ValueChf,
+        bool HasRate);
 
     private sealed record AggregationSelection(
         ValueFieldDefinition ValueField,

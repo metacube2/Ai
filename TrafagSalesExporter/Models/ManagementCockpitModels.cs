@@ -428,6 +428,31 @@ public class ManagementFinanceAuditLedgerRow
     public string DataSource { get; set; } = string.Empty;
 }
 
+public class ManagementFinancePivotResult
+{
+    public List<string> TscColumns { get; set; } = [];
+    public List<string> DailyYearColumns { get; set; } = [];
+    public List<int> MonthOptions { get; set; } = [];
+    public int DefaultMonth { get; set; }
+    public decimal YtdSalesChf { get; set; }
+    public decimal MtdSalesChf { get; set; }
+    public int RowCount { get; set; }
+    public List<ManagementFinancePivotMatrixRow> MonthlyRows { get; set; } = [];
+    public List<ManagementFinancePivotMatrixRow> DailyYearRows { get; set; } = [];
+}
+
+public class ManagementFinancePivotMatrixRow
+{
+    public int Year { get; set; }
+    public int? Month { get; set; }
+    public int? Day { get; set; }
+    public bool IsSubtotal { get; set; }
+    public bool IsGrandTotal { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public Dictionary<string, decimal> ValuesByTsc { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public decimal Total { get; set; }
+}
+
 public class ManagementFinanceSummaryResult
 {
     public ManagementFinanceSummaryFilter Filter { get; set; } = new();
@@ -460,6 +485,7 @@ public class ManagementFinanceSummaryResult
     public List<ManagementGroupMarginDivisionRow> GroupMarginDivisionRows { get; set; } = [];
     public List<ManagementGroupMarginDetailRow> GroupMarginDetailRows { get; set; } = [];
     public List<ManagementFinanceAuditLedgerRow> FinanceAuditLedgerRows { get; set; } = [];
+    public ManagementFinancePivotResult FinancePivot { get; set; } = new();
 }
 
 public sealed class ManagementDecisionResult
