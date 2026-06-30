@@ -34,6 +34,7 @@ public static class NavigationIconResolver
         "ShoppingCart" => Icons.Material.Filled.ShoppingCart,
         "Speed" => Icons.Material.Filled.Speed,
         "Storage" => Icons.Material.Filled.Storage,
+        "TableView" => Icons.Material.Filled.TableView,
         "Transform" => Icons.Material.Filled.Transform,
         "TrendingUp" => Icons.Material.Filled.TrendingUp,
         "Tune" => Icons.Material.Filled.Tune,
