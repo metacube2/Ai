@@ -4,11 +4,14 @@ Stand: 2026-06-30
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-06-30, Finance Pruefbuch / Audit-CSV-Quelle.
+- Letzter dokumentierter Deploy: 2026-06-30, Fallback auf zentrale `Finance_Dashboard_Audit_All_*.csv` fuer Finance Pruefbuch / Audit-CSV-Quelle.
+- Deploy-Fix 2026-06-30 nach Finance-Pruefbuch-Fehler: Ursache war aktive Audit-CSV-Quelle ohne sichtbare `Sales_ProcessedMergeInput_*.csv` im produktiven App-Output; vorhanden war `Finance_Dashboard_Audit_All_2026-06-18.csv`. Code-Fix: `CentralSalesDataProvider` liest zuerst Standort-CSV und faellt danach auf `ExportAuditCsvService.ReadLatestConsolidatedAuditCsvRecordsAsync()` zurueck. Commit `214989f Fallback to consolidated audit CSV`.
+- Produktive DB-Settings nach Fix 2026-06-30: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=''`. Damit nutzt die App ihren Content-Root-Output `C:\inetpub\wwwcust\BiDashboard\output`; externer Zugriff ueber `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`.
+- Produktive DLL nach Fix-Deploy 2026-06-30: `BiDashboard.dll`, Zeitstempel `30.06.2026 11:06:57`, Laenge `2'674'176`. Neues stdout-Log `stdout_20260630090804_7156.log`: App startet in Production, Content root `C:\inetpub\wwwcust\BiDashboard`; kein neuer Audit-CSV-Fehler im Log.
 - Deploy-Ablauf 2026-06-30: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt. Zweiter kurzer Publish fuer Navigation-Seed `finance-audit-ledger`.
 - Servercheck nach Deploy 2026-06-30: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
 - Produktive DLL nach Deploy 2026-06-30: `BiDashboard.dll`, Zeitstempel `30.06.2026 10:29:09`, Laenge `2'672'640`.
-- Produktive DB-Settings 2026-06-30: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`. Vorhandene Audit-CSV im Output-Ordner: TRDE, TRFR, TRIN, TRIT, TRSE, TRUK, TRUS, ZSCHWEIZ jeweils `Sales_ProcessedMergeInput_*_2026-06-17.csv`. App danach per `app_offline.htm` kurz neu gestartet.
+- Vorherige produktive DB-Settings am 2026-06-30 wurden kurzzeitig auf `LocalSiteExportFolder=\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output` gesetzt; das wurde nach dem Fehler wieder auf leer korrigiert, damit der IIS-Prozess seinen lokalen Output-Ordner verwendet.
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
 - Vorheriger dokumentierter Deploy: 2026-06-29, Commits `4805317`–`6856a62`.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.

@@ -11,7 +11,13 @@ Die operative Dashboard-Quelle ist entweder:
 - die zentrale Datenbank `CentralSalesRecords`, oder
 - bei aktiviertem Audit-Modus die neuesten `Sales_ProcessedMergeInput_*.csv` je Standort.
 
-Aktueller produktiver Stand: Die zentrale Auswertung ist auf Audit-CSV umgestellt. Das Dashboard, die Finance Summary, Management Analyse und das `Finance Pruefbuch` lesen aus den neuesten `Sales_ProcessedMergeInput_*.csv` je TSC.
+Aktueller produktiver Stand: Die zentrale Auswertung ist auf Audit-CSV umgestellt.
+
+Die Reihenfolge fuer Dashboard, Finance Summary, Management Analyse und `Finance Pruefbuch` ist:
+
+1. bevorzugt die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC,
+2. falls keine Standort-CSV vorhanden sind, die neueste zentrale `Finance_Dashboard_Audit_All_*.csv`,
+3. ohne Audit-CSV-Modus die zentrale Datenbank `CentralSalesRecords`.
 
 `Sales_All_*.xlsx` ist der zentrale Excel-Export/Nachweis fuer Finance, aber nicht die Live-Quelle der Dashboard-Reiter.
 
@@ -94,7 +100,13 @@ Sales_ProcessedMergeInput_ZSCHWEIZ_2026-06-17.csv
 
 Wenn die Einstellung `Zentrale Auswertung aus Audit-CSV` aktiv ist, liest das Dashboard die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC und setzt daraus intern die zentrale Sicht zusammen.
 
-Aktueller produktiver Pfad:
+Aktueller produktiver Serverpfad:
+
+```text
+C:\inetpub\wwwcust\BiDashboard\output
+```
+
+Von aussen ist derselbe Ordner ueber die Admin-Freigabe sichtbar:
 
 ```text
 \\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output
@@ -105,14 +117,16 @@ Aktuell aktiv:
 ```text
 Audit-CSV je Standort schreiben = ja
 Zentrale Auswertung aus Audit-CSV = ja
+LocalSiteExportFolder = leer
 ```
 
 Damit gilt:
 
 ```text
 Dashboard / Finance Summary / Management Analyse / Finance Pruefbuch
--> liest je Standort die neuesten Sales_ProcessedMergeInput_*.csv
--> konsolidiert diese intern fuer die Anzeige
+-> liest bevorzugt je Standort die neuesten Sales_ProcessedMergeInput_*.csv
+-> faellt bei fehlenden Standort-CSV auf Finance_Dashboard_Audit_All_*.csv zurueck
+-> konsolidiert die Daten intern fuer die Anzeige
 ```
 
 ## 4. Zentrales Excel fuer Finance
@@ -137,6 +151,18 @@ Beispiel:
 Sales_All_2026-06-18.xlsx
 ```
 
+Beim gleichen Lauf wird auch die zentrale Audit-CSV erzeugt:
+
+```text
+Finance_Dashboard_Audit_All_2026-06-18.csv
+```
+
+Beide Dateien liegen lokal im gleichen zentralen Output-Ordner und werden, wenn SharePoint korrekt konfiguriert ist, in denselben SharePoint-Ordner hochgeladen:
+
+```text
+Import/Finance/Alle
+```
+
 Wichtig:
 
 `Sales_All_*.xlsx` ist der zentrale Excel-Export und Nachweis der konsolidierten Daten. Die Dashboard-Anzeigen lesen jedoch nicht direkt aus diesem Excel.
@@ -151,6 +177,9 @@ Dashboard-Anzeige
 
 Sales_All_*.xlsx
 -> Excel-Export/Nachweis fuer Finance
+
+Finance_Dashboard_Audit_All_*.csv
+-> zentrale maschinenlesbare Detaildatei, Fallback-Quelle fuer Dashboard/Pruefbuch
 ```
 
 Der Vorteil dieser Trennung: Das Dashboard ist nicht davon abhaengig, ob jemand das zentrale Excel bereits neu erzeugt hat. Sobald die Standortdaten bzw. Audit-CSV aktualisiert sind, kann die zentrale Analyse daraus arbeiten.
@@ -185,7 +214,7 @@ Wichtig fuer Finance:
 
 `DocumentRate` aus SAP/B1 ist ein Quellfeld aus dem Landessystem. Es wird gespeichert, aber nicht automatisch fuer die Dashboard-CHF-Umrechnung verwendet. Die App-Umrechnung nutzt die gepflegte Kurstabelle `CurrencyExchangeRates`.
 
-## 6. Finance Pruefbuch
+## 6. Finance Pruefbuch und Nachweisdateien
 
 Fuer Andreas / Finance gibt es im Management Cockpit den Reiter:
 
@@ -240,6 +269,38 @@ Export to Excel
 
 Damit kann Andreas die sichtbare Prueflogik als Excel herunterladen und ausserhalb des Dashboards nachrechnen.
 
+Beim Button `Zentrale Datei neu erzeugen` entstehen mehrere zentrale Dateien im Ordner:
+
+```text
+Import/Finance/Alle
+```
+
+Die wichtigsten Dateien sind:
+
+| Datei | Zweck | Dashboard-Quelle |
+| --- | --- | --- |
+| `Sales_All_*.xlsx` | konsolidierter Excel-Export aller Standorte, zentraler Finance-Nachweis | Nein |
+| `Finance_Dashboard_Audit_All_*.csv` | maschinenlesbare Detaildatei aller Standorte | Ja, als Fallback wenn keine Standort-CSV vorhanden sind |
+| `Finance_Dashboard_Nachweis_*.xlsx` | Excel-Nachweisdateien fuer Finance/Andreas | Nein |
+
+Reihenfolge beim Button `Zentrale Datei neu erzeugen`:
+
+```text
+Neueste Laenderdateien pruefen
+-> zentrale Daten zusammenstellen
+-> Sales_All_*.xlsx erzeugen
+-> Sales_All_*.xlsx nach SharePoint laden
+-> Finance_Dashboard_Audit_All_*.csv erzeugen
+-> Finance_Dashboard_Audit_All_*.csv nach SharePoint laden
+-> Finance_Dashboard_Nachweis_*.xlsx erzeugen und hochladen
+```
+
+Wichtig:
+
+Die vielen `Finance_Dashboard_Nachweis_*.xlsx` Dateien sind nur fuer Finance/Andreas zum Pruefen und Herunterladen. Sie werden wegen der grossen Datenmenge pro TSC/Land bzw. in Teilen erzeugt.
+
+Das Dashboard und das `Finance Pruefbuch` lesen diese Nachweis-Excel-Dateien nicht direkt.
+
 ## 7. Rolle der wichtigsten Dateien
 
 | Datei | Bedeutung |
@@ -247,13 +308,15 @@ Damit kann Andreas die sichtbare Prueflogik als Excel herunterladen und ausserha
 | `Sales_TRFR_2026-04-16.xlsx` | Roh-/Standortdatei aus Land oder Quellsystem |
 | `Sales_ProcessedMergeInput_TRFR_2026-06-17.csv` | aufbereitete Audit-/Merge-Datei nach Mapping und Transformation |
 | `Sales_All_2026-06-18.xlsx` | zentraler Excel-Export/Nachweis aller Standorte |
-| `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale Audit-CSV fuer Nachweis und Pruefung |
-| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Detailblaettern und Formel-Summaries |
+| `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale maschinenlesbare Detaildatei, Fallback-Quelle fuer Dashboard/Pruefbuch |
+| `Finance_Dashboard_Nachweis_<TSC>_<Land>_<Datum>.xlsx` | Excel-Nachweis mit Detailblaettern und Formel-Summaries fuer Finance; bei grossen Datenmengen mehrere Dateien/Teile |
 
 ## 8. Merksatz
 
 ```text
 Die Standort-CSV sind die operative Dashboard-Quelle.
 Das Sales_All-Excel ist der zentrale Finance-Nachweis.
+Die Finance_Dashboard_Audit_All-CSV ist die zentrale maschinenlesbare Detailquelle und Fallback-Quelle.
+Die Finance_Dashboard_Nachweis-Excel sind nur Pruef- und Download-Dateien fuer Finance.
 Das Finance Pruefbuch macht die Dashboard-Logik zeilenweise in Excel-Form sichtbar.
 ```
