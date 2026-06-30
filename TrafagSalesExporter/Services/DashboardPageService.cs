@@ -171,7 +171,7 @@ public sealed class DashboardPageService : IDashboardPageService
         return latestState;
     }
 
-    private static ProcessedMergeInputState? ResolveLatestLocalProcessedMergeInputFile(Site site, ExportSettings settings)
+    internal static ProcessedMergeInputState? ResolveLatestLocalProcessedMergeInputFile(Site site, ExportSettings settings)
     {
         var candidates = ResolveLocalProcessedMergeInputDirectories(site, settings)
             .Where(Directory.Exists)
@@ -222,7 +222,7 @@ public sealed class DashboardPageService : IDashboardPageService
             yield return string.Join("/", sharePointConfig.ExportFolder.Trim('/'), site.Land.Trim('/')).Trim('/');
     }
 
-    private static DataFreshnessState ResolveDataFreshness(
+    internal static DataFreshnessState ResolveDataFreshness(
         CentralDataState? central,
         ProcessedMergeInputState? csv,
         ExportLog? log)

@@ -1,11 +1,14 @@
 # Last Change
 
-Stand: 2026-06-19
+Stand: 2026-06-30
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- Neu umgesetzt, getestet und deployed am 2026-06-30: `Management Analyse > Experten > Finance Pruefbuch` fuer Andreas/Finance als Excel-artige Detailpruefung. Der Reiter zeigt je Zeile Originalbetrag/-waehrung, CHF-Kurs, CHF-Betrag, Kursquelle/-jahr, Kunde, Material, Lieferant, intern/extern, Standardkosten, Kostenbasis CHF, Marge CHF, Pruefstatus und Datenquelle; eigener `Export to Excel` erzeugt `Finance_Pruefbuch` plus `Gruppenmarge Detail`. Navigation-Seed `finance-audit-ledger` ergaenzt, URL `management-cockpit?section=ledger`. `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `124/124` gruen. Deploy auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`, DLL `30.06.2026 10:29:09`, Port 443 erreichbar.
+- Produktiv am 2026-06-30 aktiviert: zentrale Auswertung aus Audit-CSV. Server-DB `ExportSettings`: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`. Gefunden werden TRDE, TRFR, TRIN, TRIT, TRSE, TRUK, TRUS, ZSCHWEIZ als `Sales_ProcessedMergeInput_*_2026-06-17.csv`. Dashboard, Finance Summary, Management Analyse und Finance Pruefbuch lesen damit die neuesten Audit-CSV je TSC; `Sales_All_*.xlsx` bleibt zentraler Excel-Export/Nachweis, nicht Live-Quelle.
+- Neue Prozessdoku fuer Finance-Dashboard-Ablauf und Andreas/Excel-Nachweis: `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`. Kernaussage: Standort-CSV sind operative Dashboard-Quelle, `Sales_All` ist Finance-Nachweis, `Finance Pruefbuch` macht Originalwaehrung/CHF/Kostenbasis zeilenweise pruefbar.
 - Neu lokal umgesetzt und getestet am 2026-06-19 (noch nicht deployed): Einkaufs-Cockpit-Loeschkennzeichen wertet jetzt zusaetzlich `MARA-MSTAE in (98, 99)` aus. MARA ist ueber das OData-EntitySet `MARA001Set` (`Matnr,Mstae`) verfuegbar; `PurchasingDataRefreshService` laedt es bei Full Load und Delta und schreibt den Status ueber den normalisierten Join `EKPO.Matnr -> MARA.Matnr` in `PurchasingEkpoCache.Mstae` (Matnr-Normalisierung: Whitespace raus, Upper, fuehrende Nullen entfernt). Der Filter `ExcludeDeletedItems` schliesst nun `EKPO.Loekz <> ''` ODER `Mstae in ('98','99')` aus; der bisher wirkungslose separate Schalter `ExcludeBlockedMaterials` wurde zusammengelegt und entfernt (Record, Filter-SQL und Razor-UI). MARA-Quelle/Join/Mapping in `DatabaseSeedService` und `PurchasingDataSourcePageService` ergaenzt (greift nur bei frischer Quellenliste, produktive DB unveraendert). Test `PurchasingDashboardServiceTests` deckt Filter aktiv/inaktiv ab. `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `103/103` gruen. Wichtig: Damit `Mstae` real gefuellt wird, muss nach dem Deploy ein Einkauf-Full-Load oder Delta laufen.
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
 - Themenrouter: `docs/RAG_ROUTER.md`.

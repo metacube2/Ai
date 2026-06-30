@@ -1,11 +1,16 @@
 # RAG Deployment
 
-Stand: 2026-06-29
+Stand: 2026-06-30
 
 ## Kurzstand
 
+- Letzter dokumentierter Deploy: 2026-06-30, Finance Pruefbuch / Audit-CSV-Quelle.
+- Deploy-Ablauf 2026-06-30: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt. Zweiter kurzer Publish fuer Navigation-Seed `finance-audit-ledger`.
+- Servercheck nach Deploy 2026-06-30: `Test-Path ...\app_offline.htm` -> `False`; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` -> `TcpTestSucceeded : True`.
+- Produktive DLL nach Deploy 2026-06-30: `BiDashboard.dll`, Zeitstempel `30.06.2026 10:29:09`, Laenge `2'672'640`.
+- Produktive DB-Settings 2026-06-30: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`. Vorhandene Audit-CSV im Output-Ordner: TRDE, TRFR, TRIN, TRIT, TRSE, TRUK, TRUS, ZSCHWEIZ jeweils `Sales_ProcessedMergeInput_*_2026-06-17.csv`. App danach per `app_offline.htm` kurz neu gestartet.
 - `TrafagSalesExporter` wird als ASP.NET/IIS-Webanwendung im bisherigen `BiDashboard`-Schema publiziert.
-- Letzter dokumentierter Deploy: 2026-06-29, Commits `4805317`–`6856a62`.
+- Vorheriger dokumentierter Deploy: 2026-06-29, Commits `4805317`–`6856a62`.
 - Publish-Ziel: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
 - Letzte Validierung vor Deploy: `dotnet test TrafagSalesExporter.sln --verbosity minimal`, Ergebnis `124/124` Tests gruen.
 - Deploy-Ablauf 2026-06-29: `app_offline.htm` gesetzt, `dotnet publish TrafagSalesExporter.csproj -c Release -o \\trch-webapp-bidashboard.trafagch.local\BiDashboard$ --verbosity minimal`, danach `app_offline.htm` entfernt.

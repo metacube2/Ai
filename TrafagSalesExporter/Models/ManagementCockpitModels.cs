@@ -206,6 +206,12 @@ public class ManagementFinanceDataStatusRow
     public string LatestExportStatus { get; set; } = string.Empty;
     public string ManualImportFilePath { get; set; } = string.Empty;
     public DateTime? ManualImportLastUploadedAtUtc { get; set; }
+
+    // Data freshness computed with the same logic as the Export Dashboard (DB vs. local CSV vs. export log).
+    public DateTime? DataFreshnessAt { get; set; }
+    public string DataFreshnessSource { get; set; } = string.Empty;
+    public string DataFreshnessDetails { get; set; } = string.Empty;
+    public bool IsCsvNewerThanDatabase { get; set; }
 }
 
 public class ManagementFinanceCreditCandidateRow
@@ -377,6 +383,51 @@ public class ManagementGroupMarginDetailRow
     public decimal MarginPercent { get; set; }
 }
 
+public class ManagementFinanceAuditLedgerRow
+{
+    public string Status { get; set; } = string.Empty;
+    public string CountryKey { get; set; } = string.Empty;
+    public string Tsc { get; set; } = string.Empty;
+    public int Year { get; set; }
+    public DateTime? PostingDate { get; set; }
+    public DateTime? InvoiceDate { get; set; }
+    public DateTime ExtractionDate { get; set; }
+    public string SourceSystem { get; set; } = string.Empty;
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public int PositionOnInvoice { get; set; }
+    public string DocumentType { get; set; } = string.Empty;
+    public string CustomerNumber { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string Material { get; set; } = string.Empty;
+    public string ArticleName { get; set; } = string.Empty;
+    public string ProductDivisionCode { get; set; } = string.Empty;
+    public string ProductDivisionText { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public decimal OriginalAmount { get; set; }
+    public string OriginalCurrency { get; set; } = string.Empty;
+    public decimal? ChfRate { get; set; }
+    public decimal? ChfAmount { get; set; }
+    public string RateSource { get; set; } = string.Empty;
+    public int RateYear { get; set; }
+    public DateTime RateDate { get; set; }
+    public string SupplierNumber { get; set; } = string.Empty;
+    public string SupplierName { get; set; } = string.Empty;
+    public string SupplierCountry { get; set; } = string.Empty;
+    public string SupplierType { get; set; } = string.Empty;
+    public string CostSource { get; set; } = string.Empty;
+    public decimal StandardCost { get; set; }
+    public string StandardCostCurrency { get; set; } = string.Empty;
+    public decimal? StandardCostChfRate { get; set; }
+    public decimal? StandardCostChf { get; set; }
+    public decimal CostBasisOriginal { get; set; }
+    public string CostBasisCurrency { get; set; } = string.Empty;
+    public decimal? CostBasisChf { get; set; }
+    public decimal MarginOriginal { get; set; }
+    public decimal? MarginChf { get; set; }
+    public decimal MarginPercent { get; set; }
+    public string DataSource { get; set; } = string.Empty;
+}
+
 public class ManagementFinanceSummaryResult
 {
     public ManagementFinanceSummaryFilter Filter { get; set; } = new();
@@ -408,6 +459,7 @@ public class ManagementFinanceSummaryResult
     public List<ManagementGroupMarginCountryRow> GroupMarginCountryRows { get; set; } = [];
     public List<ManagementGroupMarginDivisionRow> GroupMarginDivisionRows { get; set; } = [];
     public List<ManagementGroupMarginDetailRow> GroupMarginDetailRows { get; set; } = [];
+    public List<ManagementFinanceAuditLedgerRow> FinanceAuditLedgerRows { get; set; } = [];
 }
 
 public sealed class ManagementDecisionResult

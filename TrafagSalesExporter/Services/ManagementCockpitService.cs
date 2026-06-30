@@ -374,6 +374,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     IsIntercompany = IsIntercompanyCustomer(record, intercompanyRules),
                     Quantity = record.Quantity,
                     InvoiceNumber = record.InvoiceNumber,
+                    PositionOnInvoice = record.PositionOnInvoice,
                     DocumentType = record.DocumentType,
                     Material = record.Material,
                     ArticleName = record.Name,
@@ -390,6 +391,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     SupplierCountry = record.SupplierCountry,
                     StandardCost = record.StandardCost,
                     StandardCostCurrency = record.StandardCostCurrency,
+                    CustomerNumber = record.CustomerNumber,
                     CustomerName = record.CustomerName,
                     PostingDate = record.PostingDate,
                     InvoiceDate = record.InvoiceDate,
@@ -397,6 +399,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 };
             })
             .ToList();
+        var originalRows = CloneFinanceAggregationRows(allRows);
 
         var references = await db.FinanceReferences
             .AsNoTracking()
@@ -507,6 +510,11 @@ public class ManagementCockpitService : IManagementCockpitService
             .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
             .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
             .ToList();
+        var auditSourceRows = originalRows
+            .Where(row => row.Year == year)
+            .Where(row => countryFilter is null || row.CountryKey.Equals(countryFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(row => currencyFilter is null || row.Currency.Equals(currencyFilter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         var summaryRows = scopedRows
             .GroupBy(row => new { row.Year, row.CountryKey, row.Currency })
@@ -558,11 +566,12 @@ public class ManagementCockpitService : IManagementCockpitService
             notices.Insert(0, "Group-Currency-Ansicht: Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.");
         }
 
-        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings.UseAuditCsvAsCentralSource);
+        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey, year, countryFilter, currencyFilter);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
         notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
 
@@ -613,13 +622,56 @@ public class ManagementCockpitService : IManagementCockpitService
             GroupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies),
             GroupMarginCountryRows = BuildGroupMarginCountryRows(groupMarginRows),
             GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
-            GroupMarginDetailRows = groupMarginRows.Take(1000).ToList()
+            GroupMarginDetailRows = groupMarginRows.Take(1000).ToList(),
+            FinanceAuditLedgerRows = auditLedgerRows.Take(1000).ToList()
         };
     }
+
+    private static List<FinanceAggregationRow> CloneFinanceAggregationRows(IEnumerable<FinanceAggregationRow> rows)
+        => rows
+            .Select(row => new FinanceAggregationRow
+            {
+                Year = row.Year,
+                CountryKey = row.CountryKey,
+                Land = row.Land,
+                Tsc = row.Tsc,
+                SourceSystem = row.SourceSystem,
+                Currency = row.Currency,
+                Include = row.Include,
+                Value = row.Value,
+                RawSalesValue = row.RawSalesValue,
+                IsIntercompany = row.IsIntercompany,
+                Quantity = row.Quantity,
+                InvoiceNumber = row.InvoiceNumber,
+                PositionOnInvoice = row.PositionOnInvoice,
+                DocumentType = row.DocumentType,
+                Material = row.Material,
+                ArticleName = row.ArticleName,
+                ProductGroup = row.ProductGroup,
+                ProductHierarchyCode = row.ProductHierarchyCode,
+                ProductHierarchyText = row.ProductHierarchyText,
+                ProductFamilyCode = row.ProductFamilyCode,
+                ProductFamilyText = row.ProductFamilyText,
+                ProductDivisionCode = row.ProductDivisionCode,
+                ProductDivisionText = row.ProductDivisionText,
+                ProductMappingAssigned = row.ProductMappingAssigned,
+                SupplierNumber = row.SupplierNumber,
+                SupplierName = row.SupplierName,
+                SupplierCountry = row.SupplierCountry,
+                StandardCost = row.StandardCost,
+                StandardCostCurrency = row.StandardCostCurrency,
+                CustomerNumber = row.CustomerNumber,
+                CustomerName = row.CustomerName,
+                PostingDate = row.PostingDate,
+                InvoiceDate = row.InvoiceDate,
+                ExtractionDate = row.ExtractionDate
+            })
+            .ToList();
 
     private static async Task<List<ManagementFinanceDataStatusRow>> BuildFinanceDataStatusRowsAsync(
         AppDbContext db,
         IReadOnlyCollection<SalesRecord> centralRecords,
+        ExportSettings settings,
         bool useAuditCsv)
     {
         var sites = await db.Sites
@@ -673,6 +725,16 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             recordByTsc.TryGetValue(site.TSC, out var record);
             logByTsc.TryGetValue(site.TSC, out var log);
+
+            // Reuse the Export Dashboard freshness logic so the management view agrees with the
+            // Export Dashboard: it compares the central DB against the local Sales_ProcessedMergeInput
+            // CSV (and the export log) and flags "CSV neuer als DB".
+            var csv = DashboardPageService.ResolveLatestLocalProcessedMergeInputFile(site, settings);
+            var central = record?.LatestStoredAtUtc is { } storedAtUtc
+                ? new CentralDataState { SiteId = site.Id, RowCount = record.RowCount, LatestStoredAtUtc = storedAtUtc }
+                : null;
+            var freshness = DashboardPageService.ResolveDataFreshness(central, csv, log);
+
             return new ManagementFinanceDataStatusRow
             {
                 Land = site.Land,
@@ -685,7 +747,11 @@ public class ManagementCockpitService : IManagementCockpitService
                 LatestExportAt = log?.Timestamp,
                 LatestExportStatus = log?.Status ?? string.Empty,
                 ManualImportFilePath = site.ManualImportFilePath,
-                ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc
+                ManualImportLastUploadedAtUtc = site.ManualImportLastUploadedAtUtc,
+                DataFreshnessAt = freshness.DisplayAt,
+                DataFreshnessSource = freshness.Source,
+                DataFreshnessDetails = freshness.Details,
+                IsCsvNewerThanDatabase = freshness.IsCsvNewerThanDatabase
             };
         }).ToList();
     }
@@ -1221,6 +1287,102 @@ public class ManagementCockpitService : IManagementCockpitService
             "Lieferant unklar" => 1,
             "Umsatz fehlt" => 2,
             _ => 3
+        };
+
+    private List<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows(
+        IEnumerable<FinanceAggregationRow> rows,
+        bool useAuditCsvAsCentralSource)
+        => rows
+            .Where(row => row.Include)
+            .Select(row =>
+            {
+                var rateDate = new DateTime(row.Year, 12, 31);
+                var originalCurrency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
+                var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
+                var supplierType = ResolveSupplierType(row);
+                var costBasis = ResolveGroupMarginCostBasis(row);
+                var margin = row.Value - costBasis;
+                var status = ResolveAuditLedgerStatus(row, supplierType, costBasis, chfRate);
+                var standardCostCurrency = string.IsNullOrWhiteSpace(row.StandardCostCurrency)
+                    ? originalCurrency
+                    : row.StandardCostCurrency.Trim();
+                var standardCostRate = _exchangeRateService.ResolveRate(standardCostCurrency, "CHF", rateDate);
+
+                return new ManagementFinanceAuditLedgerRow
+                {
+                    Status = status,
+                    CountryKey = row.CountryKey,
+                    Tsc = row.Tsc,
+                    Year = row.Year,
+                    PostingDate = row.PostingDate,
+                    InvoiceDate = row.InvoiceDate,
+                    ExtractionDate = row.ExtractionDate,
+                    SourceSystem = row.SourceSystem,
+                    InvoiceNumber = row.InvoiceNumber,
+                    PositionOnInvoice = row.PositionOnInvoice,
+                    DocumentType = row.DocumentType,
+                    CustomerNumber = row.CustomerNumber,
+                    CustomerName = row.CustomerName,
+                    Material = row.Material,
+                    ArticleName = row.ArticleName,
+                    ProductDivisionCode = row.ProductDivisionCode,
+                    ProductDivisionText = row.ProductDivisionText,
+                    Quantity = row.Quantity,
+                    OriginalAmount = row.Value,
+                    OriginalCurrency = originalCurrency,
+                    ChfRate = chfRate,
+                    ChfAmount = chfRate.HasValue ? row.Value * chfRate.Value : null,
+                    RateSource = chfRate.HasValue ? "CurrencyExchangeRates / Jahreskurs" : "Kurs fehlt",
+                    RateYear = row.Year,
+                    RateDate = rateDate,
+                    SupplierNumber = row.SupplierNumber,
+                    SupplierName = row.SupplierName,
+                    SupplierCountry = row.SupplierCountry,
+                    SupplierType = supplierType,
+                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    StandardCost = row.StandardCost,
+                    StandardCostCurrency = standardCostCurrency,
+                    StandardCostChfRate = standardCostRate,
+                    StandardCostChf = standardCostRate.HasValue ? row.StandardCost * standardCostRate.Value : null,
+                    CostBasisOriginal = costBasis,
+                    CostBasisCurrency = standardCostCurrency,
+                    CostBasisChf = standardCostRate.HasValue ? costBasis * standardCostRate.Value : null,
+                    MarginOriginal = margin,
+                    MarginChf = chfRate.HasValue && standardCostRate.HasValue
+                        ? row.Value * chfRate.Value - costBasis * standardCostRate.Value
+                        : null,
+                    MarginPercent = PercentOf(margin, row.Value),
+                    DataSource = useAuditCsvAsCentralSource ? "Audit-CSV Sales_ProcessedMergeInput" : "CentralSalesRecords"
+                };
+            })
+            .OrderBy(row => AuditLedgerStatusSort(row.Status))
+            .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.InvoiceNumber, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.PositionOnInvoice)
+            .ToList();
+
+    private static string ResolveAuditLedgerStatus(FinanceAggregationRow row, string supplierType, decimal costBasis, decimal? chfRate)
+    {
+        if (!chfRate.HasValue)
+            return "Kurs fehlt";
+        if (supplierType == "Unklar")
+            return "Lieferant unklar";
+        if (costBasis == 0m)
+            return "Standardpreis fehlt";
+        if (row.Value == 0m)
+            return "Umsatz fehlt";
+        return "OK";
+    }
+
+    private static int AuditLedgerStatusSort(string status)
+        => status switch
+        {
+            "Kurs fehlt" => 0,
+            "Standardpreis fehlt" => 1,
+            "Lieferant unklar" => 2,
+            "Umsatz fehlt" => 3,
+            _ => 4
         };
 
     private static string BuildProductAssignmentStatus(string material, FinanceAggregationRow? reference)
@@ -2081,6 +2243,7 @@ public class ManagementCockpitService : IManagementCockpitService
         public bool IsIntercompany { get; set; }
         public decimal Quantity { get; set; }
         public string InvoiceNumber { get; set; } = string.Empty;
+        public int PositionOnInvoice { get; set; }
         public string DocumentType { get; set; } = string.Empty;
         public string Material { get; set; } = string.Empty;
         public string ArticleName { get; set; } = string.Empty;
@@ -2097,6 +2260,7 @@ public class ManagementCockpitService : IManagementCockpitService
         public string SupplierCountry { get; set; } = string.Empty;
         public decimal StandardCost { get; set; }
         public string StandardCostCurrency { get; set; } = string.Empty;
+        public string CustomerNumber { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public DateTime? PostingDate { get; set; }
         public DateTime? InvoiceDate { get; set; }

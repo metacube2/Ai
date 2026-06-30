@@ -113,6 +113,11 @@
                         @T("Gruppenmarge", "Group margin")
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.TableView"
+                               Href="management-cockpit?section=ledger">
+                        @T("Finance Pruefbuch", "Finance audit ledger")
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.ViewInAr"
                                Href="management-cockpit?section=3d">
                         @T("3D Datenanalyse", "3D data analysis")
@@ -172,7 +177,13 @@
                                 <MudTd>@context.RowCount.ToString("N0")</MudTd>
                                 <MudTd>
                                     <MudTooltip Text="@BuildDataStatusTooltip(context)">
-                                        @FormatDateTime(BestDataFreshness(context))
+                                        <div>@FormatDateTime(context.DataFreshnessAt)</div>
+                                        @if (!string.IsNullOrWhiteSpace(context.DataFreshnessSource))
+                                        {
+                                            <MudText Typo="Typo.caption">
+                                                @context.DataFreshnessSource@(context.IsCsvNewerThanDatabase ? $" · {T("CSV neuer als DB", "CSV newer than DB")}" : "")
+                                            </MudText>
+                                        }
                                     </MudTooltip>
                                 </MudTd>
                                 <MudTd>@(string.IsNullOrWhiteSpace(context.LatestExportStatus) ? "-" : context.LatestExportStatus)</MudTd>
@@ -552,6 +563,81 @@
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body2">@T("Keine Datenqualitaetsauffaelligkeiten fuer diese Filter.", "No data-quality findings for these filters.")</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="@T("Finance Pruefbuch", "Finance audit ledger")" Icon="@Icons.Material.Filled.TableView">
+            <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePruefbuch">
+                    @T("Export to Excel", "Export to Excel")
+                </MudButton>
+                <MudText Typo="Typo.caption">
+                    @T("Zeilenbasierte Excel-Sicht: Originalwaehrung, CHF-Kurs, CHF-Betrag, Lieferant, Standardkosten und Gruppenmargen-Pruefstatus.",
+                        "Row-level Excel view: original currency, CHF rate, CHF amount, supplier, standard costs and group-margin check status.")
+                </MudText>
+            </MudStack>
+            <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+                @T("Diese Sicht ist bewusst keine Zusammenfassung. Sie zeigt die pruefbaren Detailzeilen fuer Finance; der Excel-Export enthaelt dieselben Spalten fuer die Nachrechnung.",
+                    "This view is deliberately not a summary. It shows the verifiable detail rows for Finance; the Excel export contains the same columns for recalculation.")
+            </MudAlert>
+            <MudPaper Class="pa-4" Elevation="1" Style="overflow-x:auto;">
+                <MudText Typo="Typo.h6" Class="mb-2">@T("Originalwaehrung, CHF-Umrechnung und Kostenbasis", "Original currency, CHF conversion and cost basis")</MudText>
+                <MudTable Items="_financeResult.FinanceAuditLedgerRows" Dense Hover Striped>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Land", "Country")</MudTh>
+                        <MudTh>TSC</MudTh>
+                        <MudTh>@T("Jahr", "Year")</MudTh>
+                        <MudTh>@T("Rechnung", "Invoice")</MudTh>
+                        <MudTh>@T("Pos.", "Line")</MudTh>
+                        <MudTh>@T("Kunde", "Customer")</MudTh>
+                        <MudTh>@T("Material", "Material")</MudTh>
+                        <MudTh>@T("Originalbetrag", "Original amount")</MudTh>
+                        <MudTh>@T("Originalwaehrung", "Original currency")</MudTh>
+                        <MudTh>@T("Kurs nach CHF", "Rate to CHF")</MudTh>
+                        <MudTh>@T("Betrag CHF", "Amount CHF")</MudTh>
+                        <MudTh>@T("Kursquelle", "Rate source")</MudTh>
+                        <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                        <MudTh>@T("Typ", "Type")</MudTh>
+                        <MudTh>@T("Standardkosten", "Standard cost")</MudTh>
+                        <MudTh>@T("Kostenbasis CHF", "Cost basis CHF")</MudTh>
+                        <MudTh>@T("Marge CHF", "Margin CHF")</MudTh>
+                        <MudTh>@T("Quelle", "Source")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudChip T="string" Size="Size.Small" Color="@GroupMarginStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd>@FormatCountryWithFlag(context.CountryKey)</MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.Year</MudTd>
+                        <MudTd>@context.InvoiceNumber</MudTd>
+                        <MudTd>@context.PositionOnInvoice</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.CustomerName</MudText>
+                            <MudText Typo="Typo.caption">@context.CustomerNumber</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.Material</MudText>
+                            <MudText Typo="Typo.caption">@context.ArticleName</MudText>
+                        </MudTd>
+                        <MudTd>@FormatValue(context.OriginalAmount, context.OriginalCurrency)</MudTd>
+                        <MudTd>@context.OriginalCurrency</MudTd>
+                        <MudTd>@FormatNullableDecimal(context.ChfRate)</MudTd>
+                        <MudTd>@FormatNullableValue(context.ChfAmount, "CHF")</MudTd>
+                        <MudTd>@($"{context.RateSource} {context.RateYear}")</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@BuildFinanceAuditSupplierLabel(context)</MudText>
+                            <MudText Typo="Typo.caption">@context.SupplierCountry</MudText>
+                        </MudTd>
+                        <MudTd>@context.SupplierType</MudTd>
+                        <MudTd>@FormatValue(context.StandardCost, context.StandardCostCurrency)</MudTd>
+                        <MudTd>@FormatNullableValue(context.CostBasisChf, "CHF")</MudTd>
+                        <MudTd>@FormatNullableValue(context.MarginChf, "CHF")</MudTd>
+                        <MudTd>@context.DataSource</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2">@T("Keine Pruefbuch-Zeilen fuer diese Filter.", "No audit-ledger rows for these filters.")</MudText>
                     </NoRecordsContent>
                 </MudTable>
             </MudPaper>
@@ -1574,6 +1660,8 @@
                 "deviations" => ManagementFinanceTabIndexes.Deviations,
                 "credits" => ManagementFinanceTabIndexes.Credits,
                 "quality" => ManagementFinanceTabIndexes.Quality,
+                "ledger" => ManagementFinanceTabIndexes.Ledger,
+                "audit" => ManagementFinanceTabIndexes.Ledger,
                 "3d" => ManagementFinanceTabIndexes.ThreeD,
                 "groupmargin" => ManagementFinanceTabIndexes.GroupMargin,
                 "raw" => ManagementFinanceTabIndexes.Raw,
@@ -1770,6 +1858,13 @@
         => DownloadExcel("Datenqualitaet",
         [
             new ExcelSheetData(T("Datenqualitaet", "Data quality"), BuildRows(_financeResult!.DataQualityRows))
+        ]);
+
+    private Task ExportFinancePruefbuch()
+        => DownloadExcel("Finance_Pruefbuch",
+        [
+            new ExcelSheetData(T("Finance Pruefbuch", "Finance audit ledger"), BuildRows(_financeResult!.FinanceAuditLedgerRows)),
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
         ]);
 
     private Task ExportFinanzanalyse()
@@ -2229,6 +2324,9 @@
     private static string FormatNullableValue(decimal? value, string currency)
         => value.HasValue ? FormatValue(value.Value, currency) : "-";
 
+    private static string FormatNullableDecimal(decimal? value)
+        => value.HasValue ? value.Value.ToString("N6") : "-";
+
     private static string FormatPercent(decimal? value)
         => value.HasValue ? $"{value.Value:N1}%" : "-";
 
@@ -2286,20 +2384,6 @@
                 : DateTime.SpecifyKind(value.Value, DateTimeKind.Local).ToUniversalTime())
             : null;
 
-    private static DateTime? BestDataFreshness(ManagementFinanceDataStatusRow row)
-    {
-        var candidates = new[]
-        {
-            ToUtcFreshness(row.LatestExtractionDate, DateTimeKind.Local),
-            ToUtcFreshness(row.LatestStoredAtUtc, DateTimeKind.Utc),
-            ToUtcFreshness(row.LatestExportAt, DateTimeKind.Local)
-        }
-            .Where(d => d.HasValue)
-            .Select(d => d!.Value)
-            .ToList();
-        return candidates.Count > 0 ? candidates.Max() : null;
-    }
-
     private string BuildDataStatusTooltip(ManagementFinanceDataStatusRow row)
     {
         var parts = new List<string>();
@@ -2309,6 +2393,8 @@
             parts.Add($"{T("DB-Import", "DB import")}: {FormatDateTime(ToUtcFreshness(row.LatestStoredAtUtc, DateTimeKind.Utc))}");
         if (row.LatestExportAt.HasValue)
             parts.Add($"{T("Letzter Export", "Last export")}: {FormatDateTime(ToUtcFreshness(row.LatestExportAt, DateTimeKind.Local))}");
+        if (!string.IsNullOrWhiteSpace(row.DataFreshnessDetails))
+            parts.Add(row.DataFreshnessDetails);
         return parts.Count > 0 ? string.Join(" | ", parts) : T("Kein Datenstand verfügbar", "No data freshness available");
     }
 
@@ -2336,16 +2422,20 @@
         var matchingRows = _financeResult.DataStatusRows
             .Where(row => row.Land.Equals(countryRow.CountryKey, StringComparison.OrdinalIgnoreCase) ||
                           tscs.Contains(row.Tsc))
-            .OrderByDescending(row => row.LatestExportAt ?? row.LatestStoredAtUtc ?? DateTime.MinValue)
+            .OrderByDescending(row => row.DataFreshnessAt ?? DateTime.MinValue)
             .ToList();
 
         var latest = matchingRows.FirstOrDefault();
         if (latest is null)
             return "-";
 
-        var date = latest.LatestExportAt ?? latest.LatestStoredAtUtc;
-        var status = string.IsNullOrWhiteSpace(latest.LatestExportStatus) ? latest.SourceSystem : latest.LatestExportStatus;
-        return $"{status} / {FormatDateTime(date)}";
+        // Use the same freshness as the Export Dashboard (DB vs. local CSV vs. export log) so the
+        // quick overview agrees with the Export Dashboard, including the "CSV neuer als DB" flag.
+        var source = string.IsNullOrWhiteSpace(latest.DataFreshnessSource) ? latest.SourceSystem : latest.DataFreshnessSource;
+        var text = $"{source} / {FormatDateTime(latest.DataFreshnessAt)}";
+        if (latest.IsCsvNewerThanDatabase)
+            text += $" / {T("CSV neuer als DB", "CSV newer than DB")}";
+        return text;
     }
 
     private string BuildQuickFinanceNote(ManagementFinanceCountryStatusRow row)
@@ -2408,6 +2498,16 @@
     };
 
     private static string BuildSupplierLabel(ManagementGroupMarginDetailRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.SupplierNumber))
+            return string.IsNullOrWhiteSpace(row.SupplierName) ? "-" : row.SupplierName;
+
+        return string.IsNullOrWhiteSpace(row.SupplierName)
+            ? row.SupplierNumber
+            : $"{row.SupplierNumber} - {row.SupplierName}";
+    }
+
+    private static string BuildFinanceAuditSupplierLabel(ManagementFinanceAuditLedgerRow row)
     {
         if (string.IsNullOrWhiteSpace(row.SupplierNumber))
             return string.IsNullOrWhiteSpace(row.SupplierName) ? "-" : row.SupplierName;
@@ -2563,10 +2663,11 @@
         public const int Deviations = 3;
         public const int Credits = 4;
         public const int Quality = 5;
-        public const int Division = 6;
-        public const int GroupMargin = 7;
-        public const int ThreeD = 8;
-        public const int Raw = 9;
+        public const int Ledger = 6;
+        public const int Division = 7;
+        public const int GroupMargin = 8;
+        public const int ThreeD = 9;
+        public const int Raw = 10;
     }
 
     private static class Finance3dIndicators

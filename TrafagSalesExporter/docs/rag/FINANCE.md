@@ -1,11 +1,13 @@
 # RAG Finance
 
-Stand: 2026-06-29
+Stand: 2026-06-30
 
 ## Kurzstand
 
 - Fuehrende Sicht: `Finance Summary`.
 - Aktuelle Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
+- Neu deployed 2026-06-30: `Management Analyse > Experten > Finance Pruefbuch` als Excel-artige Detailpruefung fuer Andreas/Finance. Es ist keine Zusammenfassung, sondern zeigt je Finance-Zeile Originalbetrag/-waehrung, CHF-Kurs, CHF-Betrag, Kursquelle/-jahr, Kunde, Material, Lieferant, Lieferantentyp, Standardkosten, Kostenbasis CHF, Marge CHF, Pruefstatus und Datenquelle. Der Reiter hat einen eigenen `Export to Excel`; Export enthaelt das Blatt `Finance Pruefbuch` plus `Gruppenmarge Detail`. Navigation-Seed: `finance-audit-ledger`, URL `management-cockpit?section=ledger`.
+- Produktiv ist die zentrale Auswertung aktuell auf Audit-CSV gestellt: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`. Finance Summary, Management Analyse und Finance Pruefbuch lesen damit die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC. `Sales_All_*.xlsx` bleibt zentraler Excel-Export/Nachweis und ist nicht die Live-Quelle der Dashboard-Reiter. Prozessdoku: `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`.
 - `Finance Summary`, zentrale Excel, Soll/Ist und Management-Analyse koennen wahlweise aus Audit-CSV statt direkt aus `CentralSalesRecords` lesen. Die Audit-CSV werden nach Mapping und Transformation geschrieben und dienen der Nachvollziehbarkeit fuer Finance/Revision.
 - Audit-CSV-Dateiname: `Sales_ProcessedMergeInput_<TSC>_<yyyy-MM-dd>.csv`; liegt im gleichen Ordner wie das Standort-Excel und wird beim Standortexport in denselben SharePoint-Landesordner hochgeladen.
 - `Finance Summary` nutzt dieselbe `FinanceRuleEngine` wie das zentrale Excel.
@@ -87,6 +89,7 @@ Stand: 2026-06-29
 - `Spartenanalyse > Finanzanalyse`: Umsatzabdeckung und Umsatz nach Produktsparte/Familie/PAPH1 auf Basis der TR-AG-Referenz.
 - `Spartenanalyse > Zentrale Zuordnung`: Materialnummern aller Laender gegen TR-AG-Stamm pruefen.
 - `Gruppenmarge`: Pruefsicht fuer Umsatz, bekannte Kostenbasis, offene Kostenbasis und belastbare Marge je Land/Sparte/Detail.
+- `Finance Pruefbuch`: zeilenbasierte Excel-Pruefsicht fuer Originalwaehrung, CHF-Umrechnung, Lieferant, Standardkosten, Kostenbasis und Gruppenmargenstatus.
 - `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf die zentrale Auswertungsquelle.
 
 ## Audit-CSV / Auswertungsquelle

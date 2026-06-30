@@ -1,0 +1,259 @@
+# Prozessablauf Finance Dashboard
+
+Stand: 2026-06-30
+
+## Kurzfazit
+
+Das Finance Dashboard arbeitet nicht direkt aus dem zentralen Excel `Sales_All_*`.
+
+Die operative Dashboard-Quelle ist entweder:
+
+- die zentrale Datenbank `CentralSalesRecords`, oder
+- bei aktiviertem Audit-Modus die neuesten `Sales_ProcessedMergeInput_*.csv` je Standort.
+
+Aktueller produktiver Stand: Die zentrale Auswertung ist auf Audit-CSV umgestellt. Das Dashboard, die Finance Summary, Management Analyse und das `Finance Pruefbuch` lesen aus den neuesten `Sales_ProcessedMergeInput_*.csv` je TSC.
+
+`Sales_All_*.xlsx` ist der zentrale Excel-Export/Nachweis fuer Finance, aber nicht die Live-Quelle der Dashboard-Reiter.
+
+## 1. Rohdaten je Standort
+
+Die Standorte liefern ihre Finance-Daten nach SharePoint, zum Beispiel in den Ordner:
+
+```text
+Import/Finance/Frankreich
+```
+
+Die Daten kommen je nach Standort entweder:
+
+- per `rclone` vom Land,
+- per manuellem Upload,
+- automatisch aus SAP B1 / HANA / Sage / SAP OData,
+- oder aus einem lokalen bzw. SharePoint-basierten Importprozess.
+
+Beispiel fuer eine Standortdatei:
+
+```text
+Sales_TRFR_2026-04-16.xlsx
+```
+
+Beispiel-Link Frankreich:
+
+```text
+https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FWorldwideBIPlatform%2FShared%20Documents%2FImport%2FFinance%2FFrankreich&viewid=7a89b0d8%2D1a5e%2D41dc%2D8973%2Df58a849951f7&newTargetListUrl=%2Fsites%2FWorldwideBIPlatform%2FShared%20Documents&viewpath=%2Fsites%2FWorldwideBIPlatform%2FShared%20Documents%2FForms%2FAllItems%2Easpx
+```
+
+## 2. Standortexport / Aufbereitung je Land
+
+Im Export Dashboard gibt es neben jedem Land einen Export-Button.
+
+Dieser Export liest die Rohdaten des Standortes, wendet Mapping und Transformationen an und erzeugt daraus die aufbereitete Dashboard-Datei fuer den Standort.
+
+Normalerweise sollen alle Laender aktualisiert werden. Dafuer wird oben der Button:
+
+```text
+Alle exportieren
+```
+
+verwendet.
+
+Dabei passiert pro Standort:
+
+```text
+Rohdaten lesen
+-> Mapping auf Dashboard-Felder
+-> Transformationen anwenden
+-> Standort-Excel erzeugen
+-> Audit-CSV schreiben
+-> zentrale Standortdaten aktualisieren
+-> optional Upload nach SharePoint
+```
+
+Beispiel fuer die aufbereitete Audit-/Merge-Datei:
+
+```text
+Sales_ProcessedMergeInput_TRFR_2026-06-17.csv
+```
+
+Diese Datei ist fuer Finance wichtig, weil sie die verarbeiteten Daten nach Mapping und Transformation zeigt. Sie ist damit der lesbare Nachweis, welche Zeilen in die zentrale Auswertung eingehen.
+
+## 3. Zentrale Dashboard-Quelle
+
+Alle Standorte haben nach dem Export eine Datei nach folgendem Muster:
+
+```text
+Sales_ProcessedMergeInput_<TSC>_<Datum>.csv
+```
+
+Beispiele:
+
+```text
+Sales_ProcessedMergeInput_TRFR_2026-06-17.csv
+Sales_ProcessedMergeInput_TRDE_2026-06-17.csv
+Sales_ProcessedMergeInput_ZSCHWEIZ_2026-06-17.csv
+```
+
+Wenn die Einstellung `Zentrale Auswertung aus Audit-CSV` aktiv ist, liest das Dashboard die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC und setzt daraus intern die zentrale Sicht zusammen.
+
+Aktueller produktiver Pfad:
+
+```text
+\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output
+```
+
+Aktuell aktiv:
+
+```text
+Audit-CSV je Standort schreiben = ja
+Zentrale Auswertung aus Audit-CSV = ja
+```
+
+Damit gilt:
+
+```text
+Dashboard / Finance Summary / Management Analyse / Finance Pruefbuch
+-> liest je Standort die neuesten Sales_ProcessedMergeInput_*.csv
+-> konsolidiert diese intern fuer die Anzeige
+```
+
+## 4. Zentrales Excel fuer Finance
+
+Mit dem Button:
+
+```text
+Zentrale Datei neu erzeugen
+```
+
+wird das zentrale konsolidierte Excel aller Standorte erzeugt.
+
+Dieses File liegt in SharePoint unter:
+
+```text
+Import/Finance/Alle
+```
+
+Beispiel:
+
+```text
+Sales_All_2026-06-18.xlsx
+```
+
+Wichtig:
+
+`Sales_All_*.xlsx` ist der zentrale Excel-Export und Nachweis der konsolidierten Daten. Die Dashboard-Anzeigen lesen jedoch nicht direkt aus diesem Excel.
+
+Das zentrale Excel wird aus derselben zentralen Auswertungslogik erzeugt, ist aber nicht die Live-Quelle der Dashboard-Reiter.
+
+Richtig ist:
+
+```text
+Dashboard-Anzeige
+-> liest aus CentralSalesRecords oder Audit-CSV
+
+Sales_All_*.xlsx
+-> Excel-Export/Nachweis fuer Finance
+```
+
+Der Vorteil dieser Trennung: Das Dashboard ist nicht davon abhaengig, ob jemand das zentrale Excel bereits neu erzeugt hat. Sobald die Standortdaten bzw. Audit-CSV aktualisiert sind, kann die zentrale Analyse daraus arbeiten.
+
+## 5. Umrechnung in CHF
+
+Die Umrechnung in CHF passiert nicht automatisch beim Laenderexport und nicht automatisch beim Erzeugen von `Sales_All_*`.
+
+Standardmaessig bleiben die Werte in der jeweiligen Landes- bzw. Hauswaehrung.
+
+Beispiele:
+
+| Land | Standard-Waehrung |
+| --- | --- |
+| Schweiz | CHF |
+| Frankreich | EUR |
+| Deutschland | EUR |
+| Italien | EUR |
+| Spanien | EUR |
+| UK | GBP |
+| USA | USD |
+| Indien | INR |
+
+Eine CHF-Umrechnung erfolgt nur in speziellen Anzeige- oder Transformationspfaden:
+
+- im Management Cockpit mit dem Schalter `Group-Waehrung (CHF)`,
+- in Analyse-/Diagnose-Sichten mit Anzeige-Waehrung `CHF`,
+- wenn explizit eine `ConvertCurrency`-Transformation konfiguriert ist,
+- oder in separaten Budget-CHF-/Kontrollsichten, falls fachlich freigegeben.
+
+Wichtig fuer Finance:
+
+`DocumentRate` aus SAP/B1 ist ein Quellfeld aus dem Landessystem. Es wird gespeichert, aber nicht automatisch fuer die Dashboard-CHF-Umrechnung verwendet. Die App-Umrechnung nutzt die gepflegte Kurstabelle `CurrencyExchangeRates`.
+
+## 6. Finance Pruefbuch
+
+Fuer Andreas / Finance gibt es im Management Cockpit den Reiter:
+
+```text
+Management Analyse > Experten > Finance Pruefbuch
+```
+
+Dieser Reiter ist bewusst keine Zusammenfassung, sondern eine Excel-aehnliche Detailanzeige.
+
+Er zeigt zeilenbasiert:
+
+- Land,
+- TSC,
+- Jahr,
+- Beleg und Position,
+- Kunde,
+- Material,
+- Originalbetrag,
+- Originalwaehrung,
+- Kurs nach CHF,
+- Betrag CHF,
+- Kursquelle,
+- Lieferant,
+- Lieferantentyp intern/extern,
+- Standardkosten,
+- Kostenbasis CHF,
+- Marge CHF,
+- Pruefstatus,
+- Datenquelle.
+
+Damit kann Finance die Dashboard-Werte in Excel-Logik nachvollziehen:
+
+```text
+Originalbetrag
+* Kurs nach CHF
+= Betrag CHF
+```
+
+und fuer die Gruppenmarge:
+
+```text
+Umsatz
+- Kostenbasis
+= Gruppenmarge
+```
+
+Der Reiter hat einen eigenen Button:
+
+```text
+Export to Excel
+```
+
+Damit kann Andreas die sichtbare Prueflogik als Excel herunterladen und ausserhalb des Dashboards nachrechnen.
+
+## 7. Rolle der wichtigsten Dateien
+
+| Datei | Bedeutung |
+| --- | --- |
+| `Sales_TRFR_2026-04-16.xlsx` | Roh-/Standortdatei aus Land oder Quellsystem |
+| `Sales_ProcessedMergeInput_TRFR_2026-06-17.csv` | aufbereitete Audit-/Merge-Datei nach Mapping und Transformation |
+| `Sales_All_2026-06-18.xlsx` | zentraler Excel-Export/Nachweis aller Standorte |
+| `Finance_Dashboard_Audit_All_<Datum>.csv` | zentrale Audit-CSV fuer Nachweis und Pruefung |
+| `Finance_Dashboard_Nachweis_<Datum>.xlsx` | Excel-Nachweis mit Detailblaettern und Formel-Summaries |
+
+## 8. Merksatz
+
+```text
+Die Standort-CSV sind die operative Dashboard-Quelle.
+Das Sales_All-Excel ist der zentrale Finance-Nachweis.
+Das Finance Pruefbuch macht die Dashboard-Logik zeilenweise in Excel-Form sichtbar.
+```
