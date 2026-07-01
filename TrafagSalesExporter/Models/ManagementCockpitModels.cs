@@ -432,6 +432,7 @@ public class ManagementFinancePivotResult
 {
     public List<string> TscColumns { get; set; } = [];
     public List<string> DailyYearColumns { get; set; } = [];
+    public List<int> YearOptions { get; set; } = [];
     public List<int> MonthOptions { get; set; } = [];
     public int DefaultMonth { get; set; }
     public decimal YtdSalesChf { get; set; }
@@ -439,6 +440,7 @@ public class ManagementFinancePivotResult
     public int RowCount { get; set; }
     public List<ManagementFinancePivotMatrixRow> MonthlyRows { get; set; } = [];
     public List<ManagementFinancePivotMatrixRow> DailyYearRows { get; set; } = [];
+    public List<ManagementFinancePivotMatrixRow> DailyYearRowsByTsc { get; set; } = [];
 }
 
 public class ManagementFinancePivotMatrixRow
@@ -446,6 +448,7 @@ public class ManagementFinancePivotMatrixRow
     public int Year { get; set; }
     public int? Month { get; set; }
     public int? Day { get; set; }
+    public string Tsc { get; set; } = string.Empty;
     public bool IsSubtotal { get; set; }
     public bool IsGrandTotal { get; set; }
     public string Label { get; set; } = string.Empty;

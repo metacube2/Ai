@@ -405,10 +405,24 @@
                            StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePivot">
                     @T("Export to Excel", "Export to Excel")
                 </MudButton>
+                <MudSelect T="string" @bind-Value="_financePivotYearFilter" Label="@T("Jahr", "Year")" Dense Style="width:150px;">
+                    <MudSelectItem Value="@string.Empty">@T("Alle Jahre", "All years")</MudSelectItem>
+                    @foreach (var year in _financeResult.FinancePivot.YearOptions)
+                    {
+                        <MudSelectItem Value="@year.ToString(CultureInfo.InvariantCulture)">@year</MudSelectItem>
+                    }
+                </MudSelect>
                 <MudSelect T="int" @bind-Value="_financePivotMonth" Label="@T("MTD Monat", "MTD month")" Dense Style="width:160px;">
                     @foreach (var month in _financeResult.FinancePivot.MonthOptions)
                     {
                         <MudSelectItem Value="@month">@month</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudSelect T="string" @bind-Value="_financePivotTscFilter" Label="TSC" Dense Style="width:170px;">
+                    <MudSelectItem Value="@string.Empty">@T("Alle TSC", "All TSC")</MudSelectItem>
+                    @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
+                    {
+                        <MudSelectItem Value="@tsc">@tsc</MudSelectItem>
                     }
                 </MudSelect>
                 <MudText Typo="Typo.caption">
@@ -421,21 +435,21 @@
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("YTD Umsatz", "YTD sales")</MudText>
-                        <MudText Typo="Typo.h5">@FormatValue(_financeResult.FinancePivot.YtdSalesChf, "CHF")</MudText>
-                        <MudText Typo="Typo.body2">@_selectedFinanceYear</MudText>
+                        <MudText Typo="Typo.h5">@FormatValue(CalculateFinancePivotYtd(), "CHF")</MudText>
+                        <MudText Typo="Typo.body2">@BuildFinancePivotFilterLabel()</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("MTD Umsatz", "MTD sales")</MudText>
                         <MudText Typo="Typo.h5">@FormatValue(CalculateFinancePivotMtd(), "CHF")</MudText>
-                        <MudText Typo="Typo.body2">@($"{_selectedFinanceYear} / {_financePivotMonth}")</MudText>
+                        <MudText Typo="Typo.body2">@($"{ResolveFinancePivotYearForKpi()} / {_financePivotMonth}")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">TSC</MudText>
-                        <MudText Typo="Typo.h5">@_financeResult.FinancePivot.TscColumns.Count.ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5">@BuildFinancePivotTscColumns().Count.ToString("N0")</MudText>
                         <MudText Typo="Typo.body2">@T("Pivot-Spalten", "Pivot columns")</MudText>
                     </MudPaper>
                 </MudItem>
@@ -450,11 +464,11 @@
 
             <MudPaper Class="pa-4 mb-4" Elevation="1" Style="overflow-x:auto;">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Monate nach TSC", "Months by TSC")</MudText>
-                <MudTable Items="_financeResult.FinancePivot.MonthlyRows" Dense Hover Striped>
+                <MudTable Items="BuildFinancePivotMonthlyRows()" Dense Hover Striped>
                     <HeaderContent>
                         <MudTh>YYYY</MudTh>
                         <MudTh>MM</MudTh>
-                        @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
+                        @foreach (var tsc in BuildFinancePivotTscColumns())
                         {
                             <MudTh>@tsc</MudTh>
                         }
@@ -463,11 +477,11 @@
                     <RowTemplate>
                         <MudTd>@FormatFinancePivotYearCell(context)</MudTd>
                         <MudTd>@(context.Month?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)</MudTd>
-                        @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
+                        @foreach (var tsc in BuildFinancePivotTscColumns())
                         {
                             <MudTd>@FormatNullableValue(GetFinancePivotValue(context, tsc), "CHF")</MudTd>
                         }
-                        <MudTd>@FormatValue(context.Total, "CHF")</MudTd>
+                        <MudTd>@FormatValue(CalculateFinancePivotRowTotal(context, BuildFinancePivotTscColumns()), "CHF")</MudTd>
                     </RowTemplate>
                 </MudTable>
             </MudPaper>
@@ -478,7 +492,7 @@
                     <HeaderContent>
                         <MudTh>MM</MudTh>
                         <MudTh>D</MudTh>
-                        @foreach (var year in _financeResult.FinancePivot.DailyYearColumns)
+                        @foreach (var year in BuildFinancePivotDailyYearColumns())
                         {
                             <MudTh>@year</MudTh>
                         }
@@ -487,11 +501,11 @@
                     <RowTemplate>
                         <MudTd>@context.Month</MudTd>
                         <MudTd>@context.Day</MudTd>
-                        @foreach (var year in _financeResult.FinancePivot.DailyYearColumns)
+                        @foreach (var year in BuildFinancePivotDailyYearColumns())
                         {
                             <MudTd>@FormatNullableValue(GetFinancePivotValue(context, year), "CHF")</MudTd>
                         }
-                        <MudTd>@FormatValue(context.Total, "CHF")</MudTd>
+                        <MudTd>@FormatValue(CalculateFinancePivotRowTotal(context, BuildFinancePivotDailyYearColumns()), "CHF")</MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body2">@T("Keine Tagesdaten fuer den gewaehlten Monat.", "No daily data for the selected month.")</MudText>
@@ -1721,6 +1735,8 @@
     private ElementReference _finance3dCanvas;
     private bool _finance3dNeedsRender;
     private int _financePivotMonth;
+    private string _financePivotYearFilter = string.Empty;
+    private string _financePivotTscFilter = string.Empty;
     private string? _financeAuditStatusFilter;
     private string? _financeAuditCountryFilter;
     private string? _financeAuditTscFilter;
@@ -1956,8 +1972,8 @@
     private Task ExportFinancePivot()
         => DownloadExcel("Finance_Pivot",
         [
-            new ExcelSheetData(T("Monate nach TSC", "Months by TSC"), BuildFinancePivotExportRows(_financeResult!.FinancePivot.MonthlyRows)),
-            new ExcelSheetData(T("Tage nach Jahr", "Days by year"), BuildFinancePivotExportRows(BuildFinancePivotDailyRows(), _financeResult!.FinancePivot.DailyYearColumns))
+            new ExcelSheetData(T("Monate nach TSC", "Months by TSC"), BuildFinancePivotExportRows(BuildFinancePivotMonthlyRows(), BuildFinancePivotTscColumns())),
+            new ExcelSheetData(T("Tage nach Jahr", "Days by year"), BuildFinancePivotExportRows(BuildFinancePivotDailyRows(), BuildFinancePivotDailyYearColumns()))
         ]);
 
     private Task ExportLaender()
@@ -2362,22 +2378,96 @@
             .ToList();
     }
 
+    private IReadOnlyList<string> BuildFinancePivotTscColumns()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return string.IsNullOrWhiteSpace(_financePivotTscFilter)
+            ? _financeResult.FinancePivot.TscColumns
+            : _financeResult.FinancePivot.TscColumns
+                .Where(tsc => string.Equals(tsc, _financePivotTscFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+    }
+
+    private IReadOnlyList<string> BuildFinancePivotDailyYearColumns()
+    {
+        if (_financeResult is null)
+            return [];
+
+        return TryParseFinancePivotYearFilter(out var year)
+            ? [year.ToString(CultureInfo.InvariantCulture)]
+            : _financeResult.FinancePivot.DailyYearColumns;
+    }
+
+    private IReadOnlyList<ManagementFinancePivotMatrixRow> BuildFinancePivotMonthlyRows()
+    {
+        if (_financeResult is null)
+            return [];
+
+        var rows = _financeResult.FinancePivot.MonthlyRows.AsEnumerable();
+        if (TryParseFinancePivotYearFilter(out var year))
+            rows = rows.Where(row => row.Year == year && !row.IsGrandTotal);
+
+        return rows.ToList();
+    }
+
     private IReadOnlyList<ManagementFinancePivotMatrixRow> BuildFinancePivotDailyRows()
     {
         if (_financeResult is null || _financePivotMonth == 0)
             return [];
 
-        return _financeResult.FinancePivot.DailyYearRows
+        var sourceRows = string.IsNullOrWhiteSpace(_financePivotTscFilter)
+            ? _financeResult.FinancePivot.DailyYearRows
+            : _financeResult.FinancePivot.DailyYearRowsByTsc
+                .Where(row => string.Equals(row.Tsc, _financePivotTscFilter, StringComparison.OrdinalIgnoreCase));
+
+        return sourceRows
             .Where(row => row.Month == _financePivotMonth)
             .ToList();
     }
 
+    private decimal CalculateFinancePivotYtd()
+    {
+        var year = ResolveFinancePivotYearForKpi();
+        var columns = BuildFinancePivotTscColumns();
+        return BuildFinancePivotMonthlyRows()
+            .Where(row => row.Year == year && row.Month.HasValue)
+            .Sum(row => CalculateFinancePivotRowTotal(row, columns));
+    }
+
     private decimal CalculateFinancePivotMtd()
-        => BuildFinancePivotDailyRows()
-            .Sum(row => GetFinancePivotValue(row, _selectedFinanceYear.ToString(CultureInfo.InvariantCulture)) ?? 0m);
+    {
+        var year = ResolveFinancePivotYearForKpi();
+        var columns = BuildFinancePivotTscColumns();
+        return BuildFinancePivotMonthlyRows()
+            .Where(row => row.Year == year && row.Month == _financePivotMonth)
+            .Sum(row => CalculateFinancePivotRowTotal(row, columns));
+    }
+
+    private int ResolveFinancePivotYearForKpi()
+        => TryParseFinancePivotYearFilter(out var year) ? year : _selectedFinanceYear;
+
+    private bool TryParseFinancePivotYearFilter(out int year)
+        => int.TryParse(_financePivotYearFilter, NumberStyles.Integer, CultureInfo.InvariantCulture, out year);
+
+    private string BuildFinancePivotFilterLabel()
+    {
+        var yearLabel = TryParseFinancePivotYearFilter(out var year)
+            ? year.ToString(CultureInfo.InvariantCulture)
+            : T("Alle Jahre", "All years");
+        var tscLabel = string.IsNullOrWhiteSpace(_financePivotTscFilter)
+            ? T("Alle TSC", "All TSC")
+            : _financePivotTscFilter;
+
+        return $"{yearLabel} / {tscLabel}";
+    }
 
     private static decimal? GetFinancePivotValue(ManagementFinancePivotMatrixRow row, string tsc)
         => row.ValuesByTsc.TryGetValue(tsc, out var value) && value != 0m ? value : null;
+
+    private static decimal CalculateFinancePivotRowTotal(ManagementFinancePivotMatrixRow row, IReadOnlyList<string> columns)
+        => columns.Sum(column => row.ValuesByTsc.TryGetValue(column, out var value) ? value : 0m);
 
     private static string FormatFinancePivotYearCell(ManagementFinancePivotMatrixRow row)
     {
@@ -2407,7 +2497,7 @@
                 foreach (var column in columns)
                     dict[column] = GetFinancePivotValue(row, column);
 
-                dict[T("Gesamtergebnis", "Grand total")] = row.Total;
+                dict[T("Gesamtergebnis", "Grand total")] = CalculateFinancePivotRowTotal(row, columns);
                 return (IReadOnlyDictionary<string, object?>)dict;
             })
             .ToList();

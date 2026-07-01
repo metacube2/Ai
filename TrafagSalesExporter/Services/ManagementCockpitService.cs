@@ -1414,6 +1414,12 @@ public class ManagementCockpitService : IManagementCockpitService
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        var yearOptions = pivotRows
+            .Select(row => row.Year)
+            .Distinct()
+            .OrderBy(year => year)
+            .ToList();
+
         var monthOptions = pivotRows
             .Where(row => row.Year == selectedYear)
             .Select(row => row.Month)
@@ -1437,6 +1443,7 @@ public class ManagementCockpitService : IManagementCockpitService
         return new ManagementFinancePivotResult
         {
             TscColumns = tscColumns,
+            YearOptions = yearOptions,
             MonthOptions = monthOptions,
             DefaultMonth = defaultMonth,
             RowCount = pivotRows.Count,
@@ -1446,7 +1453,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 : pivotRows.Where(row => row.Year == latestYear && row.Month == defaultMonth).Sum(row => row.ValueChf),
             MonthlyRows = BuildFinancePivotMonthlyRows(pivotRows, tscColumns),
             DailyYearColumns = dailyYearColumns,
-            DailyYearRows = BuildFinancePivotDailyYearRows(pivotRows, dailyYearColumns)
+            DailyYearRows = BuildFinancePivotDailyYearRows(pivotRows, dailyYearColumns),
+            DailyYearRowsByTsc = BuildFinancePivotDailyYearRowsByTsc(pivotRows, dailyYearColumns)
         };
     }
 
@@ -1517,6 +1525,39 @@ public class ManagementCockpitService : IManagementCockpitService
                 {
                     Month = group.Key.Month,
                     Day = group.Key.Day,
+                    ValuesByTsc = byYear,
+                    Total = byYear.Values.Sum()
+                };
+            })
+            .ToList();
+
+        return result;
+    }
+
+    private static List<ManagementFinancePivotMatrixRow> BuildFinancePivotDailyYearRowsByTsc(
+        IReadOnlyCollection<FinancePivotValue> values,
+        IReadOnlyList<string> yearColumns)
+    {
+        var result = values
+            .GroupBy(row => new { row.Month, row.Day, Tsc = row.Tsc.Trim().ToUpperInvariant() })
+            .OrderBy(group => group.Key.Month)
+            .ThenBy(group => group.Key.Day)
+            .ThenBy(group => group.Key.Tsc, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var valueList = group.ToList();
+                var byYear = yearColumns.ToDictionary(
+                    year => year,
+                    year => valueList
+                        .Where(row => string.Equals(row.Year.ToString(CultureInfo.InvariantCulture), year, StringComparison.OrdinalIgnoreCase))
+                        .Sum(row => row.ValueChf),
+                    StringComparer.OrdinalIgnoreCase);
+
+                return new ManagementFinancePivotMatrixRow
+                {
+                    Month = group.Key.Month,
+                    Day = group.Key.Day,
+                    Tsc = group.Key.Tsc,
                     ValuesByTsc = byYear,
                     Total = byYear.Values.Sum()
                 };

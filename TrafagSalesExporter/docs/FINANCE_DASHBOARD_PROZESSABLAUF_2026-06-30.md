@@ -340,6 +340,7 @@ Er zeigt:
 - KPI `MTD Umsatz`,
 - Monatsmatrix nach `YYYY / MM / TSC`,
 - Tagesmatrix fuer den gewaehlten Monat nach `MM / D / Jahr`,
+- Excel-aehnliche Filter fuer Jahr, Monat und TSC,
 - Excel-Export `Finance_Pivot_*.xlsx`.
 
 Die Monatsmatrix entspricht fachlich:
@@ -371,6 +372,13 @@ Net Sales in CHF
 ```
 
 Es werden nur Finance-Zeilen mit `Include = true` und vorhandenem CHF-Kurs in die Pivot-Summen aufgenommen.
+
+Filterstand 01.07.2026:
+
+- `Jahr`: grenzt Monatsmatrix, Tages-Jahrspalten, YTD und MTD ein; `Alle Jahre` zeigt die komplette Pivot-Historie.
+- `MTD Monat`: waehlt den Monat fuer Tagesmatrix und MTD-KPI.
+- `TSC`: grenzt Monatsmatrix, Tagesmatrix, YTD, MTD und Export auf einen Standort ein; `Alle TSC` zeigt die Gesamtsicht.
+- Der Excel-Export verwendet denselben Filterzustand wie der sichtbare Reiter.
 
 Wichtig:
 
