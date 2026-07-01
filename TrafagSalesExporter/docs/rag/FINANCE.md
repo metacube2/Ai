@@ -1,11 +1,13 @@
 # RAG Finance
 
-Stand: 2026-06-30
+Stand: 2026-07-01
 
 ## Kurzstand
 
 - Fuehrende Sicht: `Finance Summary`.
 - Aktuelle Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
+- Neu deployed 2026-07-01: `Management Analyse > Experten > Finance Pivot` hat Excel-aehnliche Filter fuer `Jahr`, `MTD Monat` und `TSC`. Die Filter wirken auf Monatsmatrix, Tagesmatrix, YTD/MTD-Kacheln und den Export `Finance_Pivot_*.xlsx`. Fuer TSC wurde eine eigene Tagesaggregation je Standort ergaenzt, damit die Tagesmatrix bei TSC-Auswahl wirklich nur diesen Standort summiert. Commit `723a60c Add finance pivot filters`; `125/125` Tests gruen; Server-DLL `01.07.2026 07:07:36`.
+- `Finance Pivot` basiert auf Andreas' Excel `sta.xlsx`, Blatt `piv`: Monatsmatrix `YYYY/MM/TSC`, Tagesmatrix `MM/D/Jahr`, Wertbasis `Net Sales in CHF`. Es ist eine Summen-/Pivot-Kontrolle; Einzelzeilen, Kurse und Kostenbasis werden weiterhin im `Finance Pruefbuch` geprueft.
 - Neu deployed 2026-06-30: `Management Analyse > Experten > Finance Pruefbuch` als Excel-artige Detailpruefung fuer Andreas/Finance. Es ist keine Zusammenfassung, sondern zeigt je Finance-Zeile Originalbetrag/-waehrung, CHF-Kurs, CHF-Betrag, Kursquelle/-jahr, Kunde, Material, Lieferant, Lieferantentyp, Standardkosten, Kostenbasis CHF, Marge CHF, Pruefstatus und Datenquelle. Der Reiter hat einen eigenen `Export to Excel`; Export enthaelt das Blatt `Finance Pruefbuch` plus `Gruppenmarge Detail`. Navigation-Seed: `finance-audit-ledger`, URL `management-cockpit?section=ledger`.
 - Produktiv ist die zentrale Auswertung aktuell auf Audit-CSV gestellt: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=''`. Die App nutzt dadurch ihren lokalen Output-Ordner `C:\inetpub\wwwcust\BiDashboard\output` (von aussen: `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`). Finance Summary, Management Analyse und Finance Pruefbuch lesen bevorzugt die neuesten `Sales_ProcessedMergeInput_*.csv` je TSC; falls keine Standort-CSV vorhanden sind, faellt der Code auf die neueste zentrale `Finance_Dashboard_Audit_All_*.csv` zurueck. `Sales_All_*.xlsx` bleibt zentraler Excel-Export/Nachweis und ist nicht die Live-Quelle der Dashboard-Reiter. Prozessdoku: `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`.
 - `Finance Summary`, zentrale Excel, Soll/Ist und Management-Analyse koennen wahlweise aus Audit-CSV statt direkt aus `CentralSalesRecords` lesen. Die Audit-CSV werden nach Mapping und Transformation geschrieben und dienen der Nachvollziehbarkeit fuer Finance/Revision.
