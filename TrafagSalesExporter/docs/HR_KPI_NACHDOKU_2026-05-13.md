@@ -157,6 +157,7 @@ Nach der Architektur-/Formelpruefung wurde zusaetzlich korrigiert:
 - Nachtrag 2026-07-01: Die Fluktuations-Kacheln sind aussagekraeftiger beschriftet und thematisch farbig hinterlegt. Headcount-Kacheln sind blau, Austritts-Kacheln gelb, fluktuationsrelevante Austritte gruen, ausgeschlossene/nicht relevante Austritte grau, Fluktuationsraten rot und Prognose violett.
 - Die Kachel `Fluktuation YTD` zeigt die Fluktuation vom 01.01. des gewaehlten Jahres bis zum aktuellen Stichtag. Bei vergangenen Jahren ist der Stichtag 31.12.; beim laufenden Jahr ist es der heutige Tag bzw. der gewaehlte Bis-Stichtag. Formel: fluktuationsrelevante Austritte im Zeitraum / durchschnittlicher Headcount im bisherigen Jahr.
 - Nachtrag 2026-07-01: Die KPI-Kacheln haben Hover-Texte. Beim Ueberfahren der Kachel werden Formel und genaue Bedeutung angezeigt, z. B. fuer `Fluktuation YTD` die Abgrenzung 01.01. bis Stichtag und der verwendete Headcount-Nenner.
+- Deployed 2026-07-01: Commit `874a61c Add HR turnover metric tooltips`, Tests `125/125` gruen, produktive `BiDashboard.dll` Zeitstempel `01.07.2026 08:20:54`, `app_offline.htm` entfernt, Port 443 erreichbar.
 
 ## Fluktuationslogik
 
@@ -262,6 +263,8 @@ Bereits erstellt:
 - `20be752 Add HR KPI cockpit`
 - `1cd0ad9 Refactor HR KPI cockpit architecture`
 - `001e2a7 Commit pending finance and Power BI work`
+- `7aec787 Clarify HR turnover metric cards`
+- `874a61c Add HR turnover metric tooltips`
 
 Noch nicht committed zum Zeitpunkt dieser Nachdoku:
 

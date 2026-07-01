@@ -1,10 +1,15 @@
 # RAG Deployment
 
-Stand: 2026-06-30
+Stand: 2026-07-01
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-06-30, Fallback auf zentrale `Finance_Dashboard_Audit_All_*.csv` fuer Finance Pruefbuch / Audit-CSV-Quelle.
+- Letzter dokumentierter Deploy: 2026-07-01, HR-Fluktuations-Kachel-Hovertexte.
+- Deploy 2026-07-01: Commit `874a61c Add HR turnover metric tooltips`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `125/125` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; produktive `BiDashboard.dll` Zeitstempel `01.07.2026 08:20:54`, Laenge `2'741'760`; `app_offline.htm` entfernt; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` erfolgreich.
+- Vorheriger dokumentierter Deploy: 2026-07-01, Finance Pivot Filter und HR-Fluktuations-Kachelfarben.
+- Deploy 2026-07-01: Commit `7aec787 Clarify HR turnover metric cards`; HR-Fluktuations-Kacheln klarer beschriftet, thematisch farbig hinterlegt und `Fluktuation YTD` fachlich als 01.01. bis Stichtag abgegrenzt.
+- Deploy 2026-07-01: Commit `723a60c Add finance pivot filters`; Finance Pivot hat Excel-aehnliche Filter fuer `Jahr`, `MTD Monat` und `TSC`; produktive `BiDashboard.dll` Zeitstempel `01.07.2026 07:07:36`.
+- Deploy 2026-06-30, Fallback auf zentrale `Finance_Dashboard_Audit_All_*.csv` fuer Finance Pruefbuch / Audit-CSV-Quelle.
 - Deploy-Fix 2026-06-30 nach Finance-Pruefbuch-Fehler: Ursache war aktive Audit-CSV-Quelle ohne sichtbare `Sales_ProcessedMergeInput_*.csv` im produktiven App-Output; vorhanden war `Finance_Dashboard_Audit_All_2026-06-18.csv`. Code-Fix: `CentralSalesDataProvider` liest zuerst Standort-CSV und faellt danach auf `ExportAuditCsvService.ReadLatestConsolidatedAuditCsvRecordsAsync()` zurueck. Commit `214989f Fallback to consolidated audit CSV`.
 - Produktive DB-Settings nach Fix 2026-06-30: `AuditCsvEnabled=1`, `UseAuditCsvAsCentralSource=1`, `LocalSiteExportFolder=''`. Damit nutzt die App ihren Content-Root-Output `C:\inetpub\wwwcust\BiDashboard\output`; externer Zugriff ueber `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\output`.
 - Produktive DLL nach Fix-Deploy 2026-06-30: `BiDashboard.dll`, Zeitstempel `30.06.2026 11:06:57`, Laenge `2'674'176`. Neues stdout-Log `stdout_20260630090804_7156.log`: App startet in Production, Content root `C:\inetpub\wwwcust\BiDashboard`; kein neuer Audit-CSV-Fehler im Log.
