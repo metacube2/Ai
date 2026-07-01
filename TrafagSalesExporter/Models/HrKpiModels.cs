@@ -109,6 +109,7 @@ public sealed class HrKpiMetric
     public string Value { get; set; } = string.Empty;
     public string Detail { get; set; } = string.Empty;
     public string Severity { get; set; } = "Normal";
+    public string Theme { get; set; } = "Default";
 }
 
 public sealed class HrKpiGroupValue

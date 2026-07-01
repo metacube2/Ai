@@ -94,7 +94,7 @@ public sealed class HrKpiServiceTests : IDisposable
         var activeHeadcount = Assert.Single(result.Metrics, metric => metric.Label == "Headcount aktiv");
         Assert.Equal("1", activeHeadcount.Value);
 
-        var turnoverHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Headcount Festangestellt");
+        var turnoverHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "HC Basis YTD");
         Assert.Equal(3.0m.ToString("N1"), turnoverHeadcount.Value);
         Assert.Contains(result.Notices, notice => notice.Contains("nicht die Fluktuation", StringComparison.OrdinalIgnoreCase));
     }
@@ -119,12 +119,12 @@ public sealed class HrKpiServiceTests : IDisposable
             Year = 2025
         });
 
-        var avgYearHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Avg Headcount Jahr");
+        var avgYearHeadcount = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "HC Jahr bis Stichtag");
         Assert.Equal(3.5m.ToString("N1"), avgYearHeadcount.Value);
 
-        var yearRate = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Jahr Effektiv %");
+        var yearRate = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation YTD");
         Assert.Equal((1m / 3.5m).ToString("P1"), yearRate.Value);
-        Assert.Equal("Austritte Jahr / Avg HC Jahr", yearRate.Detail);
+        Assert.Equal("01.01.-31.12. / Avg HC YTD", yearRate.Detail);
     }
 
     [Fact]
@@ -205,8 +205,8 @@ public sealed class HrKpiServiceTests : IDisposable
             Year = 2025
         });
 
-        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte Arbeitnehmerkuendigung").Value);
-        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte Fluktuationsrelevant").Value);
+        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte AN-Kuendigung").Value);
+        Assert.Equal("1", Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Austritte relevant").Value);
         Assert.Contains(result.Leavers, row => row.Austrittsart == "Kündigung AG" && row.FluktuationAusschlussgrund == "Kuendigung durch Trafag");
         Assert.Contains(result.Leavers, row => row.Austrittsart == "Ruhestand" && row.FluktuationAusschlussgrund == "Pensionierung");
     }

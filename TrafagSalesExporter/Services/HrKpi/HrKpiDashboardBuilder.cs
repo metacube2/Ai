@@ -496,13 +496,13 @@ internal sealed class HrKpiDashboardBuilder
 
         var metrics = new List<HrKpiMetric>
         {
-            new() { Label = "Headcount Festangestellt", Value = FormatHeadcount(selectionHeadcount), Detail = period.ShowPeriodMetrics ? "Avg Headcount Jahr, nicht FTE" : "Aktueller Headcount, nicht FTE", Severity = "Normal" },
-            new() { Label = "Austritte Total Rexx", Value = totalLeavers.ToString("N0"), Detail = "Alle Austritte in Auswahl", Severity = "Normal" },
-            new() { Label = "Austritte Arbeitnehmerkuendigung", Value = employeeResignationCount.ToString("N0"), Detail = "AN-/MA-Kuendigungen", Severity = "Normal" },
-            new() { Label = "Austritte Fluktuationsrelevant", Value = relevantLeaverCount.ToString("N0"), Detail = "Nach HR-Definition", Severity = "Normal" },
-            new() { Label = "Austritte Nicht relevant", Value = nonRelevantLeaverCount.ToString("N0"), Detail = "Ausgeschlossen oder unklar", Severity = nonRelevantLeaverCount > relevantLeaverCount ? "Warning" : "Normal" },
-            new() { Label = "Fluktuation Filterauswahl %", Value = selectionRate.ToString("P1"), Detail = "Aktuelle Auswahl / Headcount, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal" },
-            new() { Label = "Ausschlussgrund Anzahl", Value = totalLeavers.ToString("N0"), Detail = "Basis fuer Ausschlussgrund-Tabelle", Severity = "Normal" }
+            new() { Label = "HC Basis", Value = FormatHeadcount(selectionHeadcount), Detail = period.ShowPeriodMetrics ? "Durchschnittlicher Headcount, nicht FTE" : "Aktueller Headcount, nicht FTE", Severity = "Normal", Theme = "Basis" },
+            new() { Label = "Austritte total", Value = totalLeavers.ToString("N0"), Detail = "Alle Austritte in Auswahl", Severity = "Normal", Theme = "Leavers" },
+            new() { Label = "Austritte AN-Kuendigung", Value = employeeResignationCount.ToString("N0"), Detail = "Arbeitnehmer-/Mitarbeiterkuendigungen", Severity = "Normal", Theme = "Leavers" },
+            new() { Label = "Austritte relevant", Value = relevantLeaverCount.ToString("N0"), Detail = "Zaehlt fuer Fluktuation", Severity = "Normal", Theme = "Relevant" },
+            new() { Label = "Austritte nicht relevant", Value = nonRelevantLeaverCount.ToString("N0"), Detail = "Ausgeschlossen oder unklar", Severity = nonRelevantLeaverCount > relevantLeaverCount ? "Warning" : "Normal", Theme = "Excluded" },
+            new() { Label = "Fluktuation Auswahl", Value = selectionRate.ToString("P1"), Detail = "Aktuelle Auswahl / HC, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal", Theme = "Rate" },
+            new() { Label = "Ausschlussgruende", Value = totalLeavers.ToString("N0"), Detail = "Basis fuer Ausschluss-Tabelle", Severity = "Normal", Theme = "Excluded" }
         };
 
         if (!period.ShowPeriodMetrics || !period.BreakdownYear.HasValue)
@@ -515,11 +515,15 @@ internal sealed class HrKpiDashboardBuilder
         var currentQuarter = ((currentMonth - 1) / 3) + 1;
         var monthHeadcount = CalculateMonthlyAverageFixedHeadcount(turnoverIntervals, year, currentMonth);
         var quarterHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, BuildQuarterMonths(currentQuarter).Select(month => (year, month)));
-        var yearHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, Enumerable.Range(1, 12).Select(month => (year, month)));
+        var yearMonths = Enumerable.Range(1, currentMonth).Select(month => (year, month)).ToList();
+        var yearHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, yearMonths);
+        var yearStart = new DateTime(year, 1, 1);
+        var yearEnd = period.AnchorDate.Date;
         var quarterLeavers = leavers
             .Where(x => x.IstFluktuationsrelevant &&
                         x.Austrittsdatum.HasValue &&
                         x.Austrittsdatum.Value.Year == year &&
+                        x.Austrittsdatum.Value.Date <= yearEnd &&
                         ((x.Austrittsdatum.Value.Month - 1) / 3) + 1 == currentQuarter)
             .Select(x => x.Personalnummer)
             .ToList();
@@ -527,11 +531,15 @@ internal sealed class HrKpiDashboardBuilder
             .Where(x => x.IstFluktuationsrelevant &&
                         x.Austrittsdatum.HasValue &&
                         x.Austrittsdatum.Value.Year == year &&
+                        x.Austrittsdatum.Value.Date <= yearEnd &&
                         x.Austrittsdatum.Value.Month == currentMonth)
             .Select(x => x.Personalnummer)
             .ToList();
         var yearLeavers = leavers
-            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == year)
+            .Where(x => x.IstFluktuationsrelevant &&
+                        x.Austrittsdatum.HasValue &&
+                        x.Austrittsdatum.Value.Date >= yearStart &&
+                        x.Austrittsdatum.Value.Date <= yearEnd)
             .Select(x => x.Personalnummer)
             .ToList();
         var quarterLeaverCount = CountDistinctPersons(quarterLeavers);
@@ -545,23 +553,24 @@ internal sealed class HrKpiDashboardBuilder
 
         metrics[0] = new HrKpiMetric
         {
-            Label = "Headcount Festangestellt",
+            Label = "HC Basis YTD",
             Value = FormatHeadcount(yearHeadcount),
-            Detail = "Avg Headcount Jahr, nicht FTE",
-            Severity = "Normal"
+            Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}, nicht FTE",
+            Severity = "Normal",
+            Theme = "Basis"
         };
 
         metrics.AddRange(
         [
-            new() { Label = "Headcount Monat", Value = FormatHeadcount(monthHeadcount), Detail = $"Monats-HC {currentMonth:N0}/{year}, nicht FTE", Severity = "Normal" },
-            new() { Label = "Fluktuation Monat %", Value = monthRate.ToString("P1"), Detail = $"{monthLeaverCount:N0} Austritte / HC {FormatHeadcount(monthHeadcount)}", Severity = monthRate > 0.03m ? "Warning" : "Normal" },
-            new() { Label = "Avg Headcount Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = "Durchschnitt Monats-HC, nicht FTE", Severity = "Normal" },
-            new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Quartal {currentQuarter}/{year}", Severity = "Normal" },
-            new() { Label = "Fluktuation Quartal %", Value = quarterRate.ToString("P1"), Detail = "Austritte Quartal / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal" },
-            new() { Label = "Fluktuation Hochrechnung Jahr %", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4", Severity = forecastRate > 0.12m ? "Warning" : "Normal" },
-            new() { Label = "Avg Headcount Jahr", Value = FormatHeadcount(yearHeadcount), Detail = "Durchschnitt Monats-HC, nicht FTE", Severity = "Normal" },
-            new() { Label = "Austritte Jahr", Value = yearLeaverCount.ToString("N0"), Detail = $"Fluktuationsrelevant {year}", Severity = "Normal" },
-            new() { Label = "Fluktuation Jahr Effektiv %", Value = yearRate.ToString("P1"), Detail = "Austritte Jahr / Avg HC Jahr", Severity = yearRate > 0.12m ? "Warning" : "Normal" }
+            new() { Label = "HC Monat", Value = FormatHeadcount(monthHeadcount), Detail = $"Avg HC {currentMonth:N0}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis" },
+            new() { Label = "Fluktuation Monat", Value = monthRate.ToString("P1"), Detail = $"{monthLeaverCount:N0} relevante Austritte / HC {FormatHeadcount(monthHeadcount)}", Severity = monthRate > 0.03m ? "Warning" : "Normal", Theme = "Rate" },
+            new() { Label = "HC Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = $"Avg HC Q{currentQuarter}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis" },
+            new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Relevant Q{currentQuarter}/{year}", Severity = "Normal", Theme = "Relevant" },
+            new() { Label = "Fluktuation Quartal", Value = quarterRate.ToString("P1"), Detail = "Relevante Austritte / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal", Theme = "Rate" },
+            new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4, nur Schaetzung", Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast" },
+            new() { Label = "HC Jahr bis Stichtag", Value = FormatHeadcount(yearHeadcount), Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Basis" },
+            new() { Label = "Austritte YTD", Value = yearLeaverCount.ToString("N0"), Detail = $"Relevant {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Relevant" },
+            new() { Label = "Fluktuation YTD", Value = yearRate.ToString("P1"), Detail = $"01.01.-{FormatDateShort(yearEnd)} / Avg HC YTD", Severity = yearRate > 0.12m ? "Warning" : "Normal", Theme = "Rate" }
         ]);
 
         return metrics;
@@ -661,7 +670,7 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyList<HrKpiMetric> timeVacationMetrics,
         ImportContext context)
     {
-        var turnover = FindMetric(turnoverMetrics, "Fluktuation Jahr Effektiv %") ?? FindMetric(overviewMetrics, "Fluktuation");
+        var turnover = FindMetric(turnoverMetrics, "Fluktuation YTD") ?? FindMetric(overviewMetrics, "Fluktuation");
         var absence = FindMetric(absenceMetrics, "Krankenquote");
         var glzRed = FindMetric(timeVacationMetrics, "GLZ Rot");
         var vacationRed = FindMetric(timeVacationMetrics, "Restferien Rot");
@@ -976,6 +985,9 @@ internal sealed class HrKpiDashboardBuilder
 
     private static string FormatHeadcount(decimal value)
         => decimal.Remainder(value, 1m) == 0 ? value.ToString("N0") : value.ToString("N1");
+
+    private static string FormatDateShort(DateTime value)
+        => value.ToString("dd.MM.", CultureInfo.GetCultureInfo("de-CH"));
 
     private static string? NormalizeFilter(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -151,9 +151,11 @@ Nach der Architektur-/Formelpruefung wurde zusaetzlich korrigiert:
 - Fluktuationsraten nutzen Headcount, nicht FTE.
 - `Headcount Monat` wird als Durchschnitt aus Monatsanfang und Monatsende berechnet.
 - `Avg Headcount Quartal` ist der Durchschnitt der Monats-Headcounts im Quartal.
-- `Avg Headcount Jahr` ist der Durchschnitt der Monats-Headcounts im Jahr.
+- `HC Jahr bis Stichtag` ist der Durchschnitt der Monats-Headcounts vom 01.01. bis zum Stichtag.
 - `Headcount nach Organisation` zaehlt Personalnummern distinct und ignoriert leere Personalnummern.
 - Krankenquote nutzt neu `Krankheitstage / (FTE * 21 Tage)` statt `Krankheitstage / (Headcount * 21 Tage)`.
+- Nachtrag 2026-07-01: Die Fluktuations-Kacheln sind aussagekraeftiger beschriftet und thematisch farbig hinterlegt. Headcount-Kacheln sind blau, Austritts-Kacheln gelb, fluktuationsrelevante Austritte gruen, ausgeschlossene/nicht relevante Austritte grau, Fluktuationsraten rot und Prognose violett.
+- Die Kachel `Fluktuation YTD` zeigt die Fluktuation vom 01.01. des gewaehlten Jahres bis zum aktuellen Stichtag. Bei vergangenen Jahren ist der Stichtag 31.12.; beim laufenden Jahr ist es der heutige Tag bzw. der gewaehlte Bis-Stichtag. Formel: fluktuationsrelevante Austritte im Zeitraum / durchschnittlicher Headcount im bisherigen Jahr.
 
 ## Fluktuationslogik
 
@@ -164,7 +166,7 @@ Grundlage gemaess `formeln.docx`:
 - Monat: Arbeitnehmerkuendigungen des jeweiligen Monats / Headcount des Monats.
 - Quartal: Arbeitnehmerkuendigungen des aktuellen Quartals / durchschnittlicher Headcount des Quartals.
 - Hochrechnung Jahr: aktuelle Quartals-Fluktuation x 4.
-- Effektiv Jahr: Arbeitnehmerkuendigungen des gesamten Jahres / durchschnittlicher Headcount des Jahres.
+- Fluktuation YTD: fluktuationsrelevante Arbeitnehmerkuendigungen seit 01.01. bis Stichtag / durchschnittlicher Headcount im bisherigen Jahr.
 - Nenner ist Headcount der Festangestellten, nicht FTE.
 
 Relevant ist ein Austritt, wenn:

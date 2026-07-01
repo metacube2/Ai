@@ -238,6 +238,18 @@
     private static Color MetricColor(string severity)
         => severity == "Warning" ? Color.Warning : Color.Default;
 
+    private static string MetricThemeClass(string theme)
+        => theme switch
+        {
+            "Basis" => "hr-metric-basis",
+            "Leavers" => "hr-metric-leavers",
+            "Relevant" => "hr-metric-relevant",
+            "Excluded" => "hr-metric-excluded",
+            "Rate" => "hr-metric-rate",
+            "Forecast" => "hr-metric-forecast",
+            _ => "hr-metric-default"
+        };
+
     private static Color TrafficLightColor(string value)
         => value switch
         {
@@ -266,7 +278,7 @@
         @foreach (var metric in metrics)
         {
             <MudItem xs="12" sm="6" md="3" lg="2">
-                <MudPaper Class="pa-4" Elevation="1">
+                <MudPaper Class="@($"pa-4 hr-metric-card {MetricThemeClass(metric.Theme)}")" Elevation="1">
                     <MudText Typo="Typo.caption">@metric.Label</MudText>
                     <MudText Typo="Typo.h5">@metric.Value</MudText>
                     <MudText Typo="Typo.body2" Color="@MetricColor(metric.Severity)">@metric.Detail</MudText>
@@ -690,6 +702,41 @@
 }
 
 <style>
+    .hr-metric-card {
+        min-height: 124px;
+        border-left: 5px solid var(--mud-palette-lines-default);
+    }
+
+    .hr-metric-basis {
+        background: #eef6fb;
+        border-left-color: #2f6f9f;
+    }
+
+    .hr-metric-leavers {
+        background: #fff7e6;
+        border-left-color: #b26a00;
+    }
+
+    .hr-metric-relevant {
+        background: #eef8ef;
+        border-left-color: #2e7d32;
+    }
+
+    .hr-metric-excluded {
+        background: #f3f4f6;
+        border-left-color: #6b7280;
+    }
+
+    .hr-metric-rate {
+        background: #fff0f1;
+        border-left-color: #c62828;
+    }
+
+    .hr-metric-forecast {
+        background: #f4f0fb;
+        border-left-color: #6a4fb3;
+    }
+
     .hr-viz-panel {
         min-height: 100%;
     }
