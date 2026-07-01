@@ -496,13 +496,13 @@ internal sealed class HrKpiDashboardBuilder
 
         var metrics = new List<HrKpiMetric>
         {
-            new() { Label = "HC Basis", Value = FormatHeadcount(selectionHeadcount), Detail = period.ShowPeriodMetrics ? "Durchschnittlicher Headcount, nicht FTE" : "Aktueller Headcount, nicht FTE", Severity = "Normal", Theme = "Basis" },
-            new() { Label = "Austritte total", Value = totalLeavers.ToString("N0"), Detail = "Alle Austritte in Auswahl", Severity = "Normal", Theme = "Leavers" },
-            new() { Label = "Austritte AN-Kuendigung", Value = employeeResignationCount.ToString("N0"), Detail = "Arbeitnehmer-/Mitarbeiterkuendigungen", Severity = "Normal", Theme = "Leavers" },
-            new() { Label = "Austritte relevant", Value = relevantLeaverCount.ToString("N0"), Detail = "Zaehlt fuer Fluktuation", Severity = "Normal", Theme = "Relevant" },
-            new() { Label = "Austritte nicht relevant", Value = nonRelevantLeaverCount.ToString("N0"), Detail = "Ausgeschlossen oder unklar", Severity = nonRelevantLeaverCount > relevantLeaverCount ? "Warning" : "Normal", Theme = "Excluded" },
-            new() { Label = "Fluktuation Auswahl", Value = selectionRate.ToString("P1"), Detail = "Aktuelle Auswahl / HC, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal", Theme = "Rate" },
-            new() { Label = "Ausschlussgruende", Value = totalLeavers.ToString("N0"), Detail = "Basis fuer Ausschluss-Tabelle", Severity = "Normal", Theme = "Excluded" }
+            new() { Label = "HC Basis", Value = FormatHeadcount(selectionHeadcount), Detail = period.ShowPeriodMetrics ? "Durchschnittlicher Headcount, nicht FTE" : "Aktueller Headcount, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = "Nenner fuer die Fluktuationsberechnung. Gezaehlt werden Festangestellte als Headcount, nicht FTE. Je nach Filter ist dies der aktuelle Headcount oder der Durchschnitt im Zeitraum." },
+            new() { Label = "Austritte total", Value = totalLeavers.ToString("N0"), Detail = "Alle Austritte in Auswahl", Severity = "Normal", Theme = "Leavers", HelpText = "Alle in Rexx gelieferten Austritte innerhalb der aktuellen Auswahl. Diese Zahl ist nicht automatisch fluktuationsrelevant." },
+            new() { Label = "Austritte AN-Kuendigung", Value = employeeResignationCount.ToString("N0"), Detail = "Arbeitnehmer-/Mitarbeiterkuendigungen", Severity = "Normal", Theme = "Leavers", HelpText = "Austritte, deren Austrittsart als Arbeitnehmer- bzw. Mitarbeiterkuendigung erkannt wurde. Das ist die fachliche Vorstufe zur fluktuationsrelevanten Menge." },
+            new() { Label = "Austritte relevant", Value = relevantLeaverCount.ToString("N0"), Detail = "Zaehlt fuer Fluktuation", Severity = "Normal", Theme = "Relevant", HelpText = "Zaehler fuer die Fluktuation. Gezaehlt werden nur fluktuationsrelevante Austritte nach HR-Definition, distinct nach Personalnummer." },
+            new() { Label = "Austritte nicht relevant", Value = nonRelevantLeaverCount.ToString("N0"), Detail = "Ausgeschlossen oder unklar", Severity = nonRelevantLeaverCount > relevantLeaverCount ? "Warning" : "Normal", Theme = "Excluded", HelpText = "Austritte, die nicht in die Fluktuationsrate eingehen, z. B. Pensionierung, Praktikant, befristet, Arbeitgeberkuendigung oder fachlich unklar." },
+            new() { Label = "Fluktuation Auswahl", Value = selectionRate.ToString("P1"), Detail = "Aktuelle Auswahl / HC, nicht annualisiert", Severity = selectionRate > 0.12m ? "Warning" : "Normal", Theme = "Rate", HelpText = "Formel: fluktuationsrelevante Austritte in der aktuellen Filterauswahl / Headcount-Basis. Dieser Wert ist nicht annualisiert und dient als direkte Auswahlquote." },
+            new() { Label = "Ausschlussgruende", Value = totalLeavers.ToString("N0"), Detail = "Basis fuer Ausschluss-Tabelle", Severity = "Normal", Theme = "Excluded", HelpText = "Gesamtbasis fuer die Tabelle der Ausschlussgruende. Sie zeigt, warum Austritte nicht fluktuationsrelevant sind." }
         };
 
         if (!period.ShowPeriodMetrics || !period.BreakdownYear.HasValue)
@@ -557,20 +557,21 @@ internal sealed class HrKpiDashboardBuilder
             Value = FormatHeadcount(yearHeadcount),
             Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}, nicht FTE",
             Severity = "Normal",
-            Theme = "Basis"
+            Theme = "Basis",
+            HelpText = $"Nenner fuer YTD. Durchschnittlicher Headcount der Festangestellten vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)}. Headcount, nicht FTE."
         };
 
         metrics.AddRange(
         [
-            new() { Label = "HC Monat", Value = FormatHeadcount(monthHeadcount), Detail = $"Avg HC {currentMonth:N0}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis" },
-            new() { Label = "Fluktuation Monat", Value = monthRate.ToString("P1"), Detail = $"{monthLeaverCount:N0} relevante Austritte / HC {FormatHeadcount(monthHeadcount)}", Severity = monthRate > 0.03m ? "Warning" : "Normal", Theme = "Rate" },
-            new() { Label = "HC Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = $"Avg HC Q{currentQuarter}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis" },
-            new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Relevant Q{currentQuarter}/{year}", Severity = "Normal", Theme = "Relevant" },
-            new() { Label = "Fluktuation Quartal", Value = quarterRate.ToString("P1"), Detail = "Relevante Austritte / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal", Theme = "Rate" },
-            new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4, nur Schaetzung", Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast" },
-            new() { Label = "HC Jahr bis Stichtag", Value = FormatHeadcount(yearHeadcount), Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Basis" },
-            new() { Label = "Austritte YTD", Value = yearLeaverCount.ToString("N0"), Detail = $"Relevant {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Relevant" },
-            new() { Label = "Fluktuation YTD", Value = yearRate.ToString("P1"), Detail = $"01.01.-{FormatDateShort(yearEnd)} / Avg HC YTD", Severity = yearRate > 0.12m ? "Warning" : "Normal", Theme = "Rate" }
+            new() { Label = "HC Monat", Value = FormatHeadcount(monthHeadcount), Detail = $"Avg HC {currentMonth:N0}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = $"Nenner fuer den Monat. Durchschnittlicher Headcount der Festangestellten im Monat {currentMonth:N0}/{year}: Monatsanfang plus Monatsende geteilt durch 2." },
+            new() { Label = "Fluktuation Monat", Value = monthRate.ToString("P1"), Detail = $"{monthLeaverCount:N0} relevante Austritte / HC {FormatHeadcount(monthHeadcount)}", Severity = monthRate > 0.03m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"Formel: fluktuationsrelevante Austritte im Monat {currentMonth:N0}/{year} / durchschnittlicher Monats-Headcount. Nicht annualisiert." },
+            new() { Label = "HC Quartal", Value = FormatHeadcount(quarterHeadcount), Detail = $"Avg HC Q{currentQuarter}/{year}, nicht FTE", Severity = "Normal", Theme = "Basis", HelpText = $"Nenner fuer Q{currentQuarter}/{year}. Durchschnitt der Monats-Headcounts im Quartal. Headcount, nicht FTE." },
+            new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Relevant Q{currentQuarter}/{year}", Severity = "Normal", Theme = "Relevant", HelpText = $"Fluktuationsrelevante Austritte in Q{currentQuarter}/{year}, distinct nach Personalnummer." },
+            new() { Label = "Fluktuation Quartal", Value = quarterRate.ToString("P1"), Detail = "Relevante Austritte / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"Formel: fluktuationsrelevante Austritte in Q{currentQuarter}/{year} / durchschnittlicher Quartals-Headcount. Nicht annualisiert." },
+            new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4, nur Schaetzung", Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = "Formel: aktuelle Quartalsfluktuation x 4. Das ist nur eine Hochrechnung, kein Ist-Wert." },
+            new() { Label = "HC Jahr bis Stichtag", Value = FormatHeadcount(yearHeadcount), Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Basis", HelpText = $"Durchschnittlicher Monats-Headcount der Festangestellten vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)}. Headcount, nicht FTE." },
+            new() { Label = "Austritte YTD", Value = yearLeaverCount.ToString("N0"), Detail = $"Relevant {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Relevant", HelpText = $"Fluktuationsrelevante Austritte vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)}, distinct nach Personalnummer." },
+            new() { Label = "Fluktuation YTD", Value = yearRate.ToString("P1"), Detail = $"01.01.-{FormatDateShort(yearEnd)} / Avg HC YTD", Severity = yearRate > 0.12m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"Formel: fluktuationsrelevante Austritte vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)} / durchschnittlicher Headcount im gleichen Zeitraum. Das ist die Kachel fuer 01.01. bis Stichtag." }
         ]);
 
         return metrics;

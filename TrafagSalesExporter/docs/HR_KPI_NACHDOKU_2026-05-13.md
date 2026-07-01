@@ -156,6 +156,7 @@ Nach der Architektur-/Formelpruefung wurde zusaetzlich korrigiert:
 - Krankenquote nutzt neu `Krankheitstage / (FTE * 21 Tage)` statt `Krankheitstage / (Headcount * 21 Tage)`.
 - Nachtrag 2026-07-01: Die Fluktuations-Kacheln sind aussagekraeftiger beschriftet und thematisch farbig hinterlegt. Headcount-Kacheln sind blau, Austritts-Kacheln gelb, fluktuationsrelevante Austritte gruen, ausgeschlossene/nicht relevante Austritte grau, Fluktuationsraten rot und Prognose violett.
 - Die Kachel `Fluktuation YTD` zeigt die Fluktuation vom 01.01. des gewaehlten Jahres bis zum aktuellen Stichtag. Bei vergangenen Jahren ist der Stichtag 31.12.; beim laufenden Jahr ist es der heutige Tag bzw. der gewaehlte Bis-Stichtag. Formel: fluktuationsrelevante Austritte im Zeitraum / durchschnittlicher Headcount im bisherigen Jahr.
+- Nachtrag 2026-07-01: Die KPI-Kacheln haben Hover-Texte. Beim Ueberfahren der Kachel werden Formel und genaue Bedeutung angezeigt, z. B. fuer `Fluktuation YTD` die Abgrenzung 01.01. bis Stichtag und der verwendete Headcount-Nenner.
 
 ## Fluktuationslogik
 
