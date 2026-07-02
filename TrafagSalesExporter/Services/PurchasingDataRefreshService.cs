@@ -52,6 +52,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
             var eketRows = await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", string.Empty, "Ebeln,Ebelp,Etenr", cancellationToken);
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -62,13 +63,13 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEkkoCache;", cancellationToken);
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEkpoCache;", cancellationToken);
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEketCache;", cancellationToken);
-            await UpsertEkkoAsync(conn, transaction, ekkoRows, nowText, cancellationToken);
+            await UpsertEkkoAsync(conn, transaction, ekkoRows, supplierNameMap, nowText, cancellationToken);
             await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}.";
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}.";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -110,6 +111,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             }
 
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -118,7 +120,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 
             var nowText = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             await using var transaction = (SqliteTransaction)await conn.BeginTransactionAsync(cancellationToken);
-            await UpsertEkkoAsync(conn, transaction, changedEkko, nowText, cancellationToken);
+            await UpsertEkkoAsync(conn, transaction, changedEkko, supplierNameMap, nowText, cancellationToken);
             await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -204,7 +206,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             .ToList();
     }
 
-    private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, string loadedAtUtc, CancellationToken cancellationToken)
+    private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> supplierNameMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
 INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bsart, RawJson, LastLoadedAtUtc)
@@ -216,7 +218,7 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $RawJson,
                 ["$Bedat"] = NormalizeSapDate(GetText(row, "Bedat")),
                 ["$Aedat"] = NormalizeSapDate(GetText(row, "Aedat")),
                 ["$Lifnr"] = GetText(row, "Lifnr"),
-                ["$SupplierName"] = FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name")),
+                ["$SupplierName"] = ResolveSupplierName(supplierNameMap, GetText(row, "Lifnr"), FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name"))),
                 ["$Bukrs"] = GetText(row, "Bukrs"),
                 ["$Bsart"] = GetText(row, "Bsart"),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
@@ -271,6 +273,40 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
     }
 
     private static string NormalizeMatnr(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+        var normalized = new string(value.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        var trimmed = normalized.TrimStart('0');
+        return trimmed.Length == 0 ? normalized : trimmed;
+    }
+
+    private async Task<Dictionary<string, string>> LoadSupplierNameMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        // LFA1 (Lieferantenstamm) liefert den Lieferantennamen je Lieferantennummer.
+        // Wird ueber EKKO.Lifnr -> LFA1.Lifnr in PurchasingEkkoCache.SupplierName uebernommen.
+        var rows = await ReadAllRowsAsync(client, baseUrl, "LFA1Set", "Lifnr,Name1", string.Empty, "Lifnr", cancellationToken);
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            var key = NormalizeLifnr(GetText(row, "Lifnr"));
+            if (key.Length == 0)
+                continue;
+            map[key] = GetText(row, "Name1");
+        }
+
+        return map;
+    }
+
+    private static string ResolveSupplierName(IReadOnlyDictionary<string, string> supplierNameMap, string lifnr, string fallback)
+    {
+        var key = NormalizeLifnr(lifnr);
+        return key.Length > 0 && supplierNameMap.TryGetValue(key, out var name) && !string.IsNullOrWhiteSpace(name)
+            ? name
+            : fallback;
+    }
+
+    private static string NormalizeLifnr(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return string.Empty;
