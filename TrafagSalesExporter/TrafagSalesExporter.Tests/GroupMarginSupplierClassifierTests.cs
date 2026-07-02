@@ -23,10 +23,30 @@ public class GroupMarginSupplierClassifierTests
     }
 
     [Theory]
-    [InlineData("Magnetic Sense GmbH", "DE")]    // not a "Trafag" name -> 3rd party here
+    [InlineData("GFS", "DE")]
+    [InlineData("GFS Sensorik", "DE")]
+    [InlineData("Gesellschaft fuer Sensorik", "DE")]
+    [InlineData("Gesellschaft fur Sensorik", "DE")]
+    public void Resolve_ReturnsInternal_WhenNameOrCodeContainsGfs(string supplierName, string supplierCountry)
+    {
+        var result = GroupMarginSupplierClassifier.Resolve(null, supplierName, supplierCountry);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_MatchesGfsViaSupplierNumber()
+    {
+        var result = GroupMarginSupplierClassifier.Resolve("GFS-001", null, null);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Theory]
+    [InlineData("Magnetic Sense GmbH", "DE")]    // not a Trafag/GFS name -> 3rd party here
     [InlineData("Bosch Sensortec", "DE")]
     [InlineData("External Supplier", "DE")]
-    public void Resolve_ReturnsExternal_ForNonTrafagSuppliers(string supplierName, string supplierCountry)
+    public void Resolve_ReturnsExternal_ForNonInternalSuppliers(string supplierName, string supplierCountry)
     {
         var result = GroupMarginSupplierClassifier.Resolve(null, supplierName, supplierCountry);
 
