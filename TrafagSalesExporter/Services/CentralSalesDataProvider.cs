@@ -34,9 +34,26 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
         if (!settings.UseAuditCsvAsCentralSource)
             return await _centralSalesRecordService.GetAllAsync();
 
-        var records = await _auditCsvService.ReadLatestSiteAuditCsvRecordsAsync(settings);
-        if (records.Count == 0)
+        var siteRecords = await _auditCsvService.ReadLatestSiteAuditCsvRecordsAsync(settings);
+        List<SalesRecord> records;
+        if (siteRecords.Count == 0)
+        {
+            // Keine Standort-CSV: komplett auf die konsolidierte Audit-CSV zurueckfallen.
             records = await _auditCsvService.ReadLatestConsolidatedAuditCsvRecordsAsync(settings);
+        }
+        else
+        {
+            // Standort-CSV liegen nur fuer einen Teil der TSC vor. Die uebrigen TSC duerfen nicht
+            // still verschwinden: fehlende TSC aus der konsolidierten Audit-CSV ergaenzen.
+            records = new List<SalesRecord>(siteRecords);
+            var coveredTsc = siteRecords
+                .Where(r => !string.IsNullOrWhiteSpace(r.Tsc))
+                .Select(r => r.Tsc.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var consolidated = await _auditCsvService.ReadLatestConsolidatedAuditCsvRecordsAsync(settings);
+            records.AddRange(consolidated
+                .Where(r => !string.IsNullOrWhiteSpace(r.Tsc) && !coveredTsc.Contains(r.Tsc.Trim())));
+        }
 
         if (records.Count == 0)
         {

@@ -53,6 +53,30 @@ public class GroupMarginSupplierClassifierTests
         Assert.Equal(GroupMarginSupplierClassifier.External, result);
     }
 
+    [Theory]
+    // Marker sind nur auf Wortgrenzen intern; diese Namen enthalten sie nur als Teilstring
+    // und muessen extern bleiben (sonst wandert ein 3rd party faelschlich in die Intercompany-Marge).
+    [InlineData("Triton S.r.l.", "IT")]          // enthaelt "TRIT"
+    [InlineData("Trinity Instruments", "GB")]    // enthaelt "TRIN"
+    [InlineData("Nutrition Systems", "US")]      // enthaelt "TRIT"
+    [InlineData("Patagonia AG", "AR")]           // enthaelt "TR-AG"? nein: "TAG" -> extern
+    public void Resolve_ReturnsExternal_WhenMarkerIsOnlyASubstring(string supplierName, string supplierCountry)
+    {
+        var result = GroupMarginSupplierClassifier.Resolve(null, supplierName, supplierCountry);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result);
+    }
+
+    [Theory]
+    [InlineData("AGFS-100")]                     // "GFS" nur als Teilstring einer Nummer
+    [InlineData("LOGFS 42")]                      // "GFS" mitten im Token
+    public void Resolve_ReturnsExternal_WhenGfsIsOnlyASubstringOfNumber(string supplierNumber)
+    {
+        var result = GroupMarginSupplierClassifier.Resolve(supplierNumber, null, null);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result);
+    }
+
     [Fact]
     public void Resolve_MatchesTrafagViaSupplierNumber()
     {

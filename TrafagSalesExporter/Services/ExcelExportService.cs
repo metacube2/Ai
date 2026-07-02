@@ -246,7 +246,7 @@ public class ExcelExportService : IExcelExportService
             .Select(row =>
             {
                 var supplierType = ResolveSupplierType(row.Record);
-                var costBasis = ResolveGroupMarginCostBasis(row.Record);
+                var costBasis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual);
                 var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, costBasis);
                 return new GroupMarginProofRow(
                     row.Year,
@@ -755,8 +755,18 @@ public class ExcelExportService : IExcelExportService
     private static string ResolveSupplierType(SalesRecord record)
         => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry);
 
-    private static decimal ResolveGroupMarginCostBasis(SalesRecord record)
-        => record.Quantity != 0m ? Math.Abs(record.Quantity) * Math.Abs(record.StandardCost) : Math.Abs(record.StandardCost);
+    private static decimal ResolveGroupMarginCostBasis(SalesRecord record, decimal netSalesValue)
+    {
+        var magnitude = record.Quantity != 0m
+            ? Math.Abs(record.Quantity) * Math.Abs(record.StandardCost)
+            : Math.Abs(record.StandardCost);
+
+        // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss mit
+        // umkehren, sonst rechnet die Excel-Formel Q-R die Marge falsch (Umsatz -100, Kosten
+        // +60 -> -160 statt korrekt -40). Spiegelt ManagementCockpitService.ResolveGroupMarginCostBasis.
+        var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
+        return isReversal ? -magnitude : magnitude;
+    }
 
     private static string ResolveGroupMarginCostSource(string supplierType)
         => supplierType switch

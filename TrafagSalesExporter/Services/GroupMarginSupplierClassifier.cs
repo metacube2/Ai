@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace TrafagSalesExporter.Services;
 
 /// <summary>
@@ -25,6 +27,11 @@ public static class GroupMarginSupplierClassifier
     // "TRAFAG" is the leading marker (covers Trafag AG, Trafag Italy, Trafag India, Trafag
     // GmbH, ...). The short codes catch supplier references that only use the entity code.
     // GFS catches Gesellschaft fuer Sensorik references that do not include Trafag.
+    //
+    // These markers are matched on WORD BOUNDARIES, not as raw substrings. Short codes like
+    // "TRIT"/"TRIN"/"GFS" would otherwise produce false positives inside unrelated supplier
+    // names (e.g. "Triton" -> TRIT, "Trinity" -> TRIN, "AGFS-100" -> GFS) and mark a 3rd
+    // party as internal/intercompany, which corrupts the group margin.
     private static readonly string[] InternalMarkers =
     {
         "TRAFAG",
@@ -37,6 +44,10 @@ public static class GroupMarginSupplierClassifier
         "GESELLSCHAFT FUR SENSORIK"
     };
 
+    private static readonly Regex InternalMarkerPattern = new(
+        @"\b(" + string.Join('|', InternalMarkers.Select(Regex.Escape)) + @")\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static string Resolve(string? supplierNumber, string? supplierName, string? supplierCountry)
     {
         if (string.IsNullOrWhiteSpace(supplierNumber) &&
@@ -46,13 +57,7 @@ public static class GroupMarginSupplierClassifier
             return Unclear;
         }
 
-        var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry).ToUpperInvariant();
-        foreach (var marker in InternalMarkers)
-        {
-            if (supplierText.Contains(marker, StringComparison.OrdinalIgnoreCase))
-                return Internal;
-        }
-
-        return External;
+        var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
+        return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
     }
 }

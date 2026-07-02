@@ -52,7 +52,12 @@ public class ConsolidatedExportService : IConsolidatedExportService
         await SyncLatestProcessedMergeInputFilesAsync(sites, settings, spConfig);
 
         updateStatus?.Invoke("Zentrale Daten aus DB/CSV zusammenstellen...");
-        var consolidatedRecords = await _centralSalesDataProvider.GetLatestRecordsBySiteAsync();
+        // Bei aktivem Audit-CSV-Schalter muss der zentrale Export dieselbe Quelle wie die
+        // Dashboards (Finance Summary / Pruefbuch) verwenden, sonst weichen Sales_All-Excel und
+        // Dashboard-Zahlen voneinander ab. Ohne Schalter bleibt der DB-/CSV-Zeitstempel-Merge.
+        var consolidatedRecords = settings.UseAuditCsvAsCentralSource
+            ? await _centralSalesDataProvider.GetRecordsAsync()
+            : await _centralSalesDataProvider.GetLatestRecordsBySiteAsync();
         if (consolidatedRecords.Count == 0)
             return null;
 

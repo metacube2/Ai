@@ -442,19 +442,23 @@ public class ManagementCockpitService : IManagementCockpitService
                 StringComparer.OrdinalIgnoreCase);
 
         // Optional group-currency (CHF) view: leading view stays local; this only converts
-        // the displayed values to CHF using the yearly rate so cross-country totals add up.
+        // the displayed values to CHF. Each row uses the rate of ITS OWN finance year so that
+        // multi-year and pivot views do not value historical years with the selected year's rate.
+        var groupCurrencyMissingRateCurrencies = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         if (useGroupCurrency)
         {
             const string groupCurrency = "CHF";
-            var rateDate = new DateTime(year, 12, 31);
+            // References are already filtered to the selected year, so they convert with that year.
+            var referenceRateDate = new DateTime(year, 12, 31);
             var rateCache = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
-            decimal? RateToChf(string? fromCurrency)
+            decimal? RateToChf(string? fromCurrency, DateTime rateDate)
             {
                 var code = string.IsNullOrWhiteSpace(fromCurrency) ? groupCurrency : fromCurrency.Trim();
-                if (!rateCache.TryGetValue(code, out var rate))
+                var cacheKey = string.Concat(code, "|", rateDate.Year.ToString(CultureInfo.InvariantCulture));
+                if (!rateCache.TryGetValue(cacheKey, out var rate))
                 {
                     rate = _exchangeRateService.ResolveRate(code, groupCurrency, rateDate);
-                    rateCache[code] = rate;
+                    rateCache[cacheKey] = rate;
                 }
                 return rate;
             }
@@ -469,17 +473,24 @@ public class ManagementCockpitService : IManagementCockpitService
 
             foreach (var row in allRows)
             {
-                var valueRate = RateToChf(row.Currency);
+                var rowRateDate = new DateTime(row.Year, 12, 31);
+                var valueRate = RateToChf(row.Currency, rowRateDate);
                 if (valueRate.HasValue)
                 {
                     row.Value *= valueRate.Value;
                     row.RawSalesValue *= valueRate.Value;
                     row.Currency = groupCurrency;
                 }
+                else if (!string.Equals(row.Currency?.Trim(), groupCurrency, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Kein Kurs vorhanden: Zeile bleibt in Lokalwaehrung und wuerde sonst still
+                    // mit CHF-Zeilen summiert. Fuer den Missing-Rate-Hinweis sammeln.
+                    groupCurrencyMissingRateCurrencies.Add($"{row.Currency!.Trim()} {row.Year}");
+                }
 
                 if (!string.IsNullOrWhiteSpace(row.StandardCostCurrency))
                 {
-                    var costRate = RateToChf(row.StandardCostCurrency);
+                    var costRate = RateToChf(row.StandardCostCurrency, rowRateDate);
                     if (costRate.HasValue)
                     {
                         row.StandardCost *= costRate.Value;
@@ -496,7 +507,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     if (reference?.Value is null)
                         return reference;
                     localCurrencyByKey.TryGetValue(entry.Key, out var localCurrency);
-                    var rate = RateToChf(localCurrency);
+                    var rate = RateToChf(localCurrency, referenceRateDate);
                     return rate.HasValue
                         ? reference with { Value = reference.Value.Value * rate.Value }
                         : reference;
@@ -565,7 +576,11 @@ public class ManagementCockpitService : IManagementCockpitService
         }
         if (useGroupCurrency)
         {
-            notices.Insert(0, "Group-Currency-Ansicht: Werte sind mit dem Jahreskurs nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.");
+            notices.Insert(0, "Group-Currency-Ansicht: Werte sind mit dem Kurs des jeweiligen Finance-Jahres nach CHF umgerechnet. Fuehrend bleibt die lokale Waehrung.");
+            if (groupCurrencyMissingRateCurrencies.Count > 0)
+            {
+                notices.Insert(1, "Achtung: Fuer folgende Waehrung/Jahr fehlt ein Kurs; diese Zeilen bleiben in Lokalwaehrung und sind NICHT in die CHF-Summe umgerechnet: " + string.Join(", ", groupCurrencyMissingRateCurrencies) + ".");
+            }
         }
 
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
