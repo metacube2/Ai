@@ -271,6 +271,51 @@ Validierung:
 - `dotnet test TrafagSalesExporter.sln --verbosity minimal`
 - Ergebnis: `103/103` Tests gruen, inkl. neuem `PurchasingDashboardServiceTests` (Filter aktiv/inaktiv).
 
+## Nachtrag 2026-07-02 Lieferantennamen aus LFA1
+
+Ausgangslage:
+
+- Der Spend-Reiter (und alle Einkauf-Tabs) zeigte nur Lieferantennummern (z.B. `66952`, `70369`), keine Namen.
+- Grund: `PurchasingEkkoCache.SupplierName` wurde nie befuellt. `EKKOSet` liefert nur `Lifnr`, keinen Namen; der fruehere Versuch `FirstNonEmpty(SupplierName, Name1, Name)` aus der EKKO-Zeile lief immer leer.
+- Es war keine Lieferantenstamm-Quelle (LFA1) angebunden. `SupplierLabelSql` faellt bei leerem Namen auf `Lifnr` zurueck, daher die Nummer.
+
+Metadaten-Befund `ZPOWERBI_EINKAUF_SRV/$metadata`:
+
+- EntitySet `LFA1Set` existiert und liefert Daten; Felder u.a. `Lifnr` und `Name1`.
+- Verifiziert: `LFA1Set('66952')` -> `Name1 = BEPRO AG`.
+- EKKO und LFA1 liefern `Lifnr` im selben Format (ohne fuehrende Nullen).
+- Kein SAP-/Gateway-Change noetig; der Service liefert die Namen bereits.
+
+Umgesetzt in `PurchasingDataRefreshService`:
+
+- Neue `LoadSupplierNameMapAsync` liest `LFA1Set` (`Lifnr,Name1`) bei Full Load und Delta in eine Namens-Map (analog zur bestehenden MARA-Status-Map).
+- `UpsertEkkoAsync` loest `SupplierName` ueber `ResolveSupplierName(map, Lifnr, fallback)` auf: LFA1-Name bevorzugt, Fallback auf einen etwaigen Zeilenwert (rueckwaertskompatibel).
+- Neue `NormalizeLifnr` (Whitespace entfernen, `ToUpperInvariant`, fuehrende Nullen entfernen) sichert den Join `EKKO.Lifnr -> LFA1.Lifnr`.
+- Die Full-Load-Statusmeldung zeigt zusaetzlich `LFA1-Namen=<Anzahl>`.
+
+Wichtig:
+
+- Keine Schema-Aenderung noetig; die Spalte `PurchasingEkkoCache.SupplierName` existierte bereits.
+- Die Anzeige (`SupplierLabelSql`) wurde nicht angefasst; Namen erscheinen automatisch, sobald `SupplierName` gefuellt ist. Das gilt fuer alle Einkauf-Tabs.
+- Damit die Namen real erscheinen, muss nach dem Deploy einmal ein Einkauf-Full-Load laufen (`Einkauf > Ideen > Einkauf-Datenservice`).
+
+Nebenbefund:
+
+- Der Service liefert auch `mbew` (MBEW-STPRS) und `KNA1`. `mbew` ist die noch fehlende Standardkosten-Quelle fuer die offene Gruppenmarge.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `130/130` Tests gruen.
+
+Deploy:
+
+- Publiziert am 2026-07-02 auf `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`.
+- `app_offline.htm` gesetzt und danach entfernt.
+- Produktive Datei: `BiDashboard.dll`, Zeitstempel `02.07.2026 09:24:51`, Laenge `2'748'928`.
+- Servercheck: Port 443 erreichbar.
+- Commit: `d5f329b Resolve purchasing supplier names from LFA1`.
+
 ## Ideen und Kennzahlen-Katalog
 
 Der Ideenbereich wurde fuer den Einkauf erweitert:

@@ -1,10 +1,12 @@
 # RAG Deployment
 
-Stand: 2026-07-01
+Stand: 2026-07-02
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-07-01, HR-Fluktuations-Kachel-Hovertexte.
+- Letzter dokumentierter Deploy: 2026-07-02, Einkaufs-Lieferantennamen aus LFA1.
+- Deploy 2026-07-02: Commit `d5f329b Resolve purchasing supplier names from LFA1`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `130/130` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; produktive `BiDashboard.dll` Zeitstempel `02.07.2026 09:24:51`, Laenge `2'748'928`; `app_offline.htm` gesetzt und wieder entfernt; `Test-NetConnection ... -Port 443` erfolgreich. `PurchasingDataRefreshService` liest jetzt `LFA1Set` (`Lifnr,Name1`) und fuellt `PurchasingEkkoCache.SupplierName`. NACHSORGE: einmal Einkauf-Full-Load noetig, damit `SupplierName` gefuellt wird.
+- Vorheriger dokumentierter Deploy: 2026-07-01, HR-Fluktuations-Kachel-Hovertexte.
 - Deploy 2026-07-01: Commit `874a61c Add HR turnover metric tooltips`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `125/125` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; produktive `BiDashboard.dll` Zeitstempel `01.07.2026 08:20:54`, Laenge `2'741'760`; `app_offline.htm` entfernt; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` erfolgreich.
 - Vorheriger dokumentierter Deploy: 2026-07-01, Finance Pivot Filter und HR-Fluktuations-Kachelfarben.
 - Deploy 2026-07-01: Commit `7aec787 Clarify HR turnover metric cards`; HR-Fluktuations-Kacheln klarer beschriftet, thematisch farbig hinterlegt und `Fluktuation YTD` fachlich als 01.01. bis Stichtag abgegrenzt.
