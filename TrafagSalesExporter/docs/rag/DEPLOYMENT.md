@@ -4,7 +4,9 @@ Stand: 2026-07-02
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-07-02, Einkaufs-Lieferantennamen aus LFA1.
+- Letzter dokumentierter Deploy: 2026-07-02, Finance-Logik-Korrekturen (Review).
+- Deploy 2026-07-02: Commit `5c9749c Fix finance dashboard correctness issues`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `136/136` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt und wieder entfernt; Port 443 erreichbar. Inhalt: Gutschriften-Vorzeichen im Excel-Nachweis, Classifier-Wortgrenzen, Audit-CSV-TSC-Fallback, Export-Quellenkonsistenz, Group-CHF pro Zeilenjahr + Missing-Rate-Hinweis. Offen/latent: Waehrungsmischung `Marge Original`/`%`.
+- Vorheriger Deploy: 2026-07-02, Einkaufs-Lieferantennamen aus LFA1.
 - Deploy 2026-07-02: Commit `d5f329b Resolve purchasing supplier names from LFA1`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `130/130` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; produktive `BiDashboard.dll` Zeitstempel `02.07.2026 09:24:51`, Laenge `2'748'928`; `app_offline.htm` gesetzt und wieder entfernt; `Test-NetConnection ... -Port 443` erfolgreich. `PurchasingDataRefreshService` liest jetzt `LFA1Set` (`Lifnr,Name1`) und fuellt `PurchasingEkkoCache.SupplierName`. NACHSORGE: einmal Einkauf-Full-Load noetig, damit `SupplierName` gefuellt wird.
 - Vorheriger dokumentierter Deploy: 2026-07-01, HR-Fluktuations-Kachel-Hovertexte.
 - Deploy 2026-07-01: Commit `874a61c Add HR turnover metric tooltips`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `125/125` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; produktive `BiDashboard.dll` Zeitstempel `01.07.2026 08:20:54`, Laenge `2'741'760`; `app_offline.htm` entfernt; `Test-NetConnection trch-webapp-bidashboard.trafagch.local -Port 443` erfolgreich.
