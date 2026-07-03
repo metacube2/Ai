@@ -168,7 +168,7 @@ public class ManualExcelImportService : IManualExcelImportService
         using var parser = new TextFieldParser(linePath)
         {
             TextFieldType = FieldType.Delimited,
-            HasFieldsEnclosedInQuotes = true,
+            HasFieldsEnclosedInQuotes = false,
             TrimWhiteSpace = false
         };
         parser.SetDelimiters(";");
@@ -244,7 +244,7 @@ public class ManualExcelImportService : IManualExcelImportService
         using var parser = new TextFieldParser(headerPath)
         {
             TextFieldType = FieldType.Delimited,
-            HasFieldsEnclosedInQuotes = true,
+            HasFieldsEnclosedInQuotes = false,
             TrimWhiteSpace = false
         };
         parser.SetDelimiters(";");

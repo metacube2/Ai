@@ -1,8 +1,21 @@
 # Alphaplan SQL/rclone Konzept Deutschland
 
-Stand: 2026-06-12
+Stand: 2026-07-03
 
 Ziel: Auf dem deutschen Alphaplan-Server sollen SQL-Tabellen oder Views direkt als CSV exportiert und anschliessend mit `rclone` nach SharePoint hochgeladen werden. Der BiDashboard-/Finance-Import ist fuer das finale Alphaplan-Paarformat umgesetzt.
+
+## Nachtrag 2026-07-03 Produktiver ZIP-Import
+
+- Produktiver SharePoint-Pfad fuer Deutschland: `Import/Finance/Deutschland/AlphaplanRaw`.
+- `TRDE.ManualImportFilePath` zeigt auf diesen SharePoint-Ordner.
+- Der BiDashboard-Import erkennt dort neben direkten CSV-Paaren auch `Alphaplan*.zip`.
+- ZIPs werden beim Import heruntergeladen, temporaer entpackt und rekursiv nach `invoice_headers.csv` und `invoice_lines.csv` durchsucht.
+- ZIP-Dateien mit `Delta` im Dateinamen werden wie ein Delta-Unterordner behandelt; bei gleicher `SourceLineId` gewinnt Delta gegen Vollbestand.
+- Der Vollbestand sollte weiterhin als `invoice_headers.csv` + `invoice_lines.csv` im Root des Ordners liegen. Einzelne Delta-ZIPs duerfen nicht als alleiniger Vollbestand verstanden werden, weil der Standortimport den DE-Bestand ersetzt.
+- Parser-Fix: Alphaplan-CSV wird ohne Quote-Sonderbehandlung gelesen, weil Artikeltexte unescaped doppelte Anfuehrungszeichen enthalten koennen; Semikolon bleibt Trennzeichen.
+- Produktivtest/Probe am 2026-07-03: SharePoint-Import lieferte `6'612` DE-Zeilen, davon `2025: 4'547` und `2026: 2'065`.
+- Deploy am 2026-07-03: `BiDashboard.dll` Zeitstempel `03.07.2026 10:57:28`; `dotnet test` mit `136/136` Tests gruen.
+- Betriebsregel: Der Alphaplan-Task auf dem DE-Server muss vor dem BiDashboard-Timer laufen. Beim Stand vom 2026-07-02 lag der ZIP-Upload ca. `13:10` Zuerich und damit nach dem BiDashboard-Timer `12:00`.
 
 ## Nachtrag 2026-06-12
 
@@ -228,3 +241,4 @@ Der technische Export gilt als bereit, wenn:
 - Deutschland/IT bestaetigt, welche Tabellen/Views fuer Finance korrekt sind.
 
 Der Finance-Import ist danach ein separater Schritt.
+

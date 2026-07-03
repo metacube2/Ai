@@ -444,13 +444,19 @@ public class SharePointUploadService : ISharePointUploadService
                 .Where(item => IsAlphaplanInvoiceFile(item.Name))
                 .ToDictionary(item => item.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase) ?? [];
 
-            if (!files.TryGetValue("invoice_headers.csv", out var header) ||
-                !files.TryGetValue("invoice_lines.csv", out var line))
-                continue;
-
             var sortKey = BuildAlphaplanFolderSortKey(folderPath, folder);
-            references.Add((new SharePointFileReference(BuildRemotePath(folder, header.Name), header.LastModifiedDateTime), $"{sortKey}|0"));
-            references.Add((new SharePointFileReference(BuildRemotePath(folder, line.Name), line.LastModifiedDateTime), $"{sortKey}|1"));
+            if (files.TryGetValue("invoice_headers.csv", out var header) &&
+                files.TryGetValue("invoice_lines.csv", out var line))
+            {
+                references.Add((new SharePointFileReference(BuildRemotePath(folder, header.Name), header.LastModifiedDateTime), $"{sortKey}|0"));
+                references.Add((new SharePointFileReference(BuildRemotePath(folder, line.Name), line.LastModifiedDateTime), $"{sortKey}|1"));
+            }
+
+            var zipReferences = children?.Value?
+                .Where(item => item.File is not null)
+                .Where(item => IsAlphaplanZipFile(item.Name))
+                .Select(item => (new SharePointFileReference(BuildRemotePath(folder, item.Name), item.LastModifiedDateTime), $"{sortKey}|2|{item.Name}")) ?? [];
+            references.AddRange(zipReferences);
         }
 
         return references
@@ -485,6 +491,14 @@ public class SharePointUploadService : ISharePointUploadService
         var name = Path.GetFileName(fileName ?? string.Empty);
         return name.Equals("invoice_headers.csv", StringComparison.OrdinalIgnoreCase) ||
                name.Equals("invoice_lines.csv", StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    private static bool IsAlphaplanZipFile(string? fileName)
+    {
+        var name = Path.GetFileName(fileName ?? string.Empty);
+        return name.StartsWith("Alphaplan", StringComparison.OrdinalIgnoreCase) &&
+               Path.GetExtension(name).Equals(".zip", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildAlphaplanFolderSortKey(string rootFolderPath, string folderPath)

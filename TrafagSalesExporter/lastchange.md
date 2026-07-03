@@ -1,11 +1,12 @@
 # Last Change
 
-Stand: 2026-06-30
+Stand: 2026-07-03
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- Neu umgesetzt, getestet und deployed am 2026-07-03: Deutschland/Alphaplan (`TRDE`) liest im SharePoint-Ordner `Import/Finance/Deutschland/AlphaplanRaw` jetzt auch `Alphaplan*.zip` automatisch. Die App laedt ZIPs herunter, entpackt sie temporaer und wertet enthaltene `invoice_headers.csv`/`invoice_lines.csv` wie normale Alphaplan-Paare aus; Dateinamen mit `Delta` werden als Delta behandelt. CSV-Paare im Root bleiben der Vollbestand, Delta/ZIP gewinnt bei Dedupe gegen Vollbestand. Parser-Fix: Alphaplan-CSV wird ohne Quote-Sonderbehandlung gelesen, weil Artikeltexte unescaped Quotes enthalten koennen. Produktiv gesetzt: `TRDE.ManualImportFilePath = https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Deutschland/AlphaplanRaw`; DB-Backup vor Umstellung: `trafag_exporter.db.before-trde-alphaplan-sharepoint-20260703-0835.bak`. Validierung: Probe aus SharePoint ergab `6'612` DE-Zeilen (`2025: 4'547`, `2026: 2'065`), `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `136/136` gruen; Deploy-DLL `03.07.2026 10:57:28`, Port 443 erreichbar. Betriebshinweis: Alphaplan-Upload muss vor dem BiDashboard-Timer laufen, sonst wird beim 12:00-Export noch der vorherige ZIP-Stand verwendet.
 - Am 2026-07-01 verstaendlicher formuliert: Die Hover-Texte der HR-Fluktuations-Kacheln (`HrKpiDashboardBuilder.cs`, `HelpText`) sind jetzt ausfuehrlicher und laienverstaendlich ohne Fachjargon, damit HR sie ohne HR-/IT-Vorwissen versteht. Ersetzt/erklaert: `Headcount`/`Nenner` -> "Personalzahl, durch die geteilt wird" bzw. "Koepfe, nicht Stellenprozente"; `FTE` -> Stellenprozente; `distinct nach Personalnummer` -> "jede Person nur einmal gezaehlt"; `annualisiert` -> "auf ein ganzes Jahr hochgerechnet"; `YTD` -> "seit Jahresbeginn bis Stichtag". Inhalt/Formeln unveraendert, nur Sprache. `dotnet test` `125/125` gruen. Doku: `docs/HR_KPI_NACHDOKU_2026-05-13.md`.
 - Neu umgesetzt, getestet, committed und deployed am 2026-07-01: HR-Fluktuations-Kacheln haben Hover-Texte mit Formel und genauer Bedeutung. Unter den Kacheln steht ein Hinweis, dass man mit der Maus auf der Kachel bleiben kann. `Fluktuation YTD` ist dokumentiert als fluktuationsrelevante Austritte vom 01.01. bis Stichtag / durchschnittlicher Headcount im gleichen Zeitraum. Kachelfarben: Basis/Headcount blau, Austritte gelb, relevante Austritte gruen, ausgeschlossene Austritte grau, Rate rot, Prognose violett. Commit `874a61c Add HR turnover metric tooltips`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `125/125` gruen; Deploy-DLL `01.07.2026 08:20:54`, Port 443 erreichbar. Details: `docs/rag/HR_KPI.md` und `docs/HR_KPI_NACHDOKU_2026-05-13.md`.
 - Neu umgesetzt am 2026-07-01: `Finance Pivot` hat jetzt Excel-aehnliche Filter fuer `Jahr`, `MTD Monat` und `TSC`. Monatsmatrix, Tagesmatrix, YTD/MTD-KPI und `Finance_Pivot`-Export verwenden denselben Filterzustand. Fuer TSC-Filter wurde zusaetzlich eine Tagesaggregation je TSC ergaenzt, damit die Tagesmatrix nicht trotz TSC-Filter alle Standorte summiert. `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `125/125` gruen.
@@ -856,3 +857,4 @@ Backups auf Server:
 - `trafag_exporter.db.before-purchasing-fullload-20260608-061149.bak`
 - `trafag_exporter.db-wal.before-cleanup-20260608-065012.bak`
 - `trafag_exporter.db-shm.before-cleanup-20260608-065012.bak`
+

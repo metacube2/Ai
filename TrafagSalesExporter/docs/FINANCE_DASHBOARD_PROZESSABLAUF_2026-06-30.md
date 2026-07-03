@@ -447,3 +447,22 @@ Die Finance_Dashboard_Nachweis-Excel sind nur Pruef- und Download-Dateien fuer F
 Das Finance Pruefbuch macht die Dashboard-Logik zeilenweise in Excel-Form sichtbar.
 Der Finance Pivot macht Andreas' Excel-Pivot als Dashboard-Reiter nachpruefbar.
 ```
+
+## 11. Deutschland Alphaplan ZIP-Import
+
+Stand 2026-07-03:
+
+- Deutschland (`TRDE`) ist produktiv auf SharePoint `Import/Finance/Deutschland/AlphaplanRaw` umgestellt.
+- Der Ordner kann direkte Alphaplan-CSV-Paare enthalten: `invoice_headers.csv` und `invoice_lines.csv`.
+- Zusaetzlich erkennt die App `Alphaplan*.zip`, entpackt sie temporaer und liest enthaltene Header-/Line-Paare automatisch.
+- ZIP-Dateien mit `Delta` im Namen werden als Delta behandelt; Delta-Zeilen gewinnen bei gleicher `SourceLineId` gegen den Vollbestand.
+- Der Root-Vollbestand muss erhalten bleiben, weil ein Standortexport den DE-Bestand ersetzt. Nur Delta-ZIPs ohne Vollbestand waeren fachlich kein vollstaendiger Deutschlandbestand.
+- Alphaplan-CSV wird mit Semikolon als Trennzeichen gelesen; doppelte Anfuehrungszeichen in Artikeltexten werden nicht als CSV-Quote-Syntax interpretiert.
+
+Betrieb:
+
+```text
+DE Alphaplan Task -> ZIP/CSV nach SharePoint AlphaplanRaw -> BiDashboard Timer/Standortexport -> Sales_ProcessedMergeInput_TRDE_<Datum>.csv -> zentrale Audit-CSV
+```
+
+Der DE-Upload muss vor dem BiDashboard-Timer abgeschlossen sein. Wenn der Alphaplan-Upload nach 12:00 Zuerich laeuft, verarbeitet der 12:00-BiDashboard-Export noch den vorherigen Stand.

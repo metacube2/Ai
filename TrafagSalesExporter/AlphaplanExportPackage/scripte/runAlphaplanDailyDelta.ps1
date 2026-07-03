@@ -107,6 +107,19 @@ try {
     & $RcloneExe @rcloneArgs
     if ($LASTEXITCODE -ne 0) { throw "rclone upload failed with exit code $LASTEXITCODE. See $rcloneLog" }
 
+    $deltaHeaderFile = Join-Path $OutputDirectory "invoice_headers.csv"
+    $deltaLinesFile  = Join-Path $OutputDirectory "invoice_lines.csv"
+    if ((Test-Path $deltaHeaderFile) -and (Test-Path $deltaLinesFile)) {
+        $deltaRemote = "$RcloneRemote/delta"
+        Write-Log "Uploading extracted CSV pair for BiDashboard import: $deltaRemote"
+        $headerArgs = @("copyto", $deltaHeaderFile, "$deltaRemote/invoice_headers.csv", "--log-file", $rcloneLog, "--log-level", "INFO")
+        $linesArgs  = @("copyto", $deltaLinesFile,  "$deltaRemote/invoice_lines.csv",  "--log-file", $rcloneLog, "--log-level", "INFO")
+        if ($NoCheckCertificate) { $headerArgs += "--no-check-certificate"; $linesArgs += "--no-check-certificate" }
+        & $RcloneExe @headerArgs
+        if ($LASTEXITCODE -ne 0) { throw "rclone delta header upload failed with exit code $LASTEXITCODE. See $rcloneLog" }
+        & $RcloneExe @linesArgs
+        if ($LASTEXITCODE -ne 0) { throw "rclone delta lines upload failed with exit code $LASTEXITCODE. See $rcloneLog" }
+    }
     Write-Log "Verifying upload (listing remote folder)"
     $lsArgs = @("lsf", $RcloneRemote, "-l")
     if ($NoCheckCertificate) { $lsArgs += "--no-check-certificate" }

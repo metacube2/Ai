@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Compression;
 using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services.DataSources;
@@ -102,8 +103,11 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                     }
                     else
                     {
-                        tempManualImportPaths.Add(PreserveSharePointDownloadPath(
-                            downloadedPath, tempManualImportRoot, manualImportPath, fileReference, spConfig.SiteUrl));
+                        var preservedPath = PreserveSharePointDownloadPath(
+                            downloadedPath, tempManualImportRoot, manualImportPath, fileReference, spConfig.SiteUrl);
+                        tempManualImportPaths.Add(preservedPath);
+                        if (IsAlphaplanGermanySite(site) && IsZipFile(preservedPath))
+                            tempManualImportPaths.AddRange(ExtractAlphaplanZipArchive(preservedPath, tempManualImportRoot, fileReference));
                     }
                 }
                 filePath = sharePointFileReference;
@@ -202,6 +206,34 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
             : pathList;
     }
 
+    private static List<string> ExtractAlphaplanZipArchive(string zipPath, string tempRoot, string fileReference)
+    {
+        var archiveName = Path.GetFileNameWithoutExtension(fileReference);
+        if (string.IsNullOrWhiteSpace(archiveName))
+            archiveName = Path.GetFileNameWithoutExtension(zipPath);
+
+        var baseFolder = IsAlphaplanDeltaZipFile(fileReference)
+            ? Path.Combine(tempRoot, "delta", archiveName)
+            : Path.Combine(tempRoot, archiveName);
+
+        Directory.CreateDirectory(baseFolder);
+        ZipFile.ExtractToDirectory(zipPath, baseFolder, overwriteFiles: true);
+        return Directory.EnumerateFiles(baseFolder, "*.*", SearchOption.AllDirectories)
+            .Where(IsSupportedManualImportFile)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static bool IsZipFile(string path)
+        => Path.GetExtension(path).Equals(".zip", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAlphaplanDeltaZipFile(string path)
+    {
+        var normalized = path.Replace('\\', '/');
+        var fileName = Path.GetFileName(path);
+        return normalized.Contains("/delta/", StringComparison.OrdinalIgnoreCase) ||
+               fileName.Contains("Delta", StringComparison.OrdinalIgnoreCase);
+    }
     private static List<string> ResolveAlphaplanInvoiceLineFilesInFolder(string folderPath)
     {
         var files = Directory.EnumerateFiles(folderPath, "invoice_lines.csv", SearchOption.AllDirectories)
