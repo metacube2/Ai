@@ -454,3 +454,55 @@ Empfehlung fuer kuenftige grosse Einkauf-Ladevorgaenge:
 - `Services/DatabaseInitializationService.SchemaSql.cs`
   - Erstellt `PurchasingEkkoCache`, `PurchasingEkpoCache`, `PurchasingEketCache` und `PurchasingSyncState`.
   - Seit 2026-06-18: Schema kennt `SupplierName` in `PurchasingEkkoCache` und `Mstae` in `PurchasingEkpoCache`; bestehende Datenbanken werden ueber Schema-Maintenance ergaenzt.
+
+## Nachtrag 2026-07-06 Formel-/Logik-Korrekturen (Review)
+
+Grundlage: Formel-Review in `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`. Umgesetzte
+Korrekturen (Prioritaet in Klammern):
+
+- K1 (kritisch) Waehrungsbewertung nach CHF: `EKPO.Netwr` ist Belegwaehrung, wurde bisher 1:1 als
+  CHF summiert. Neu werden `EKKO.Waers` und `EKKO.Wkurs` persistiert (Schema + Upsert + einmaliger
+  Backfill aus `RawJson`) und alle Spend-/Stueckwert-/Preis-Queries bewerten ueber einen zentralen
+  Ausdruck: CHF/leer unveraendert, Fremdwaehrung mit positivem Wkurs multipliziert, mit negativem
+  Wkurs dividiert (SAP-Konvention indirekte Notierung). **Offen/zu verifizieren:** die WKURS-Richtung
+  gegen echte Fremdwaehrungsbelege; solange alle Belege CHF sind, aendern sich die Zahlen nicht.
+- K2 (kritisch) Delta veraltete offene Werte: `EKKO.Aedat` ist Anlage-, kein Aenderungsdatum;
+  Wareneingaenge (nur `EKET.Wemng`) wurden nie nachgezogen. Das Delta laedt jetzt zusaetzlich alle
+  Belege mit offener Menge aus dem Cache nach. Zugleich Batching (`$filter=Ebeln eq 'A' or ...`,
+  20 Belege je Request) statt eines Requests je Beleg.
+- K3 (kritisch) Zukunfts-Zulauf: Der Zeitraumfilter (`Bis Monat`) schnitt zukuenftige EKET-Termine
+  ab; offener Wert/Menge und Liefertermin-Risiko zeigten nur den Rueckstand. Offene Positionen
+  verwenden jetzt eine eigene Periode mit nur Untergrenze (`Von`), ohne Obergrenze auf heute.
+  Damit fuellen sich auch die Risiko-Buckets `0-7 Tage` / `8-30 Tage` / `Spaeter`.
+- K4 (hoch) Kontrakt-Restwert war eine 1:1-Kopie des offenen Bestellwerts. Neu: `EKKO.Konnr` wird
+  persistiert und `ContractValueSample` zaehlt nur offene Positionen mit gesetztem `Konnr` (Abrufe
+  zu Rahmenkontrakten). **Hinweis:** ohne Konnr-Daten ist der Wert 0 (fachlich korrekt: keine
+  Kontrakte abgegrenzt); der offene Bestellwert bleibt separat sichtbar.
+- K5 (hoch) KPI-Karte `Offene Bestellungen` zaehlte alle Bestellungen im Zeitraum -> umbenannt zu
+  `Bestellungen im Zeitraum` (konsistent mit den uebrigen Anzeigen).
+- K6 (hoch) Jahresachse war hart auf `<= 2026` codiert und haette am 1.1.2027 das aktuelle Jahr
+  still verloren -> Obergrenze dynamisch (`max(heute, Bis-Jahr)`), Untergrenze 2020 bleibt.
+- M8 (mittel) `Offene Menge` hatte keinen Positionsfilter und war inkonsistent zum offenen Wert ->
+  gleiche Join-/Loeschkennzeichen-Struktur.
+- M9 (mittel) Preisentwicklungs-Chart zeigte das Minimum ueber alle Artikel (praktisch immer ein
+  Cent-Artikel) -> jetzt mengengewichteter Durchschnitts-Stueckpreis (CHF) je Jahr.
+- M10 (klein) `GetDecimal`-Fallback auf `CurrentCulture` entfernt (SAP/OData ist invariant).
+
+Nach Deploy noetig: einmal Einkauf-Full-Load laufen lassen, damit `Waers`/`Wkurs`/`Konnr` real
+gefuellt sind (Backfill deckt Bestandsdaten aus `RawJson` bereits ab).
+
+Noch offen (braucht SAP-Metadaten-Check, nicht ohne Live-Zugriff umsetzbar):
+
+- M7 Endlieferungskennzeichen `EKPO.Elikz`: endgelieferte Positionen mit `Wemng < Menge` zaehlen
+  weiter als offen. `Elikz` erst nach Pruefung in `$metadata`/`$top=1` in `$select` aufnehmen
+  (analog dem frueheren 400-Fehler bei `Bsart`/`Meins`).
+- K4-Zusatz: Belegart `EKKO.Bsart` (u.a. zur Abgrenzung von Umlagerungen) liefert der Service
+  aktuell nicht; Feld bleibt leer, bis SAP es bereitstellt.
+- PowerBI-Zielwerte weiterhin mit Marco/Finanzen an einem konkreten Monat + Lieferant gegenpruefen.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `139/139` Tests gruen, inkl. neuer Tests fuer CHF-Umrechnung, Zukunfts-Zulauf und
+  Kontrakt-Abgrenzung ueber `Konnr`.
+- Noch kein Deploy (Modellwechsel-Session); Deploy-Entscheid mit Ingo offen.

@@ -226,7 +226,7 @@ FROM Sites_old;";
             DatabaseSchemaTools.RebuildTable(conn, "Sites", DatabaseSchemaSql.GetSitesCreateSql());
     }
 
-    private static void AddColumnIfMissing(AppDbContext db, string table, string column, string type)
+    private static bool AddColumnIfMissing(AppDbContext db, string table, string column, string type)
     {
         var conn = db.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
@@ -253,6 +253,8 @@ FROM Sites_old;";
             alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {type}";
             alter.ExecuteNonQuery();
         }
+
+        return !exists;
     }
 
     private static void EnsureTransformationTable(AppDbContext db)
@@ -324,6 +326,42 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
 
         AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "PurchasingEkpoCache", "Mstae", "TEXT NOT NULL DEFAULT ''");
+
+        // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
+        // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.
+        var addedWaers = AddColumnIfMissing(db, "PurchasingEkkoCache", "Waers", "TEXT NOT NULL DEFAULT ''");
+        var addedWkurs = AddColumnIfMissing(db, "PurchasingEkkoCache", "Wkurs", "TEXT NOT NULL DEFAULT '0'");
+        var addedKonnr = AddColumnIfMissing(db, "PurchasingEkkoCache", "Konnr", "TEXT NOT NULL DEFAULT ''");
+        if (addedWaers || addedWkurs || addedKonnr)
+            BackfillEkkoHeaderFieldsFromRawJson(conn, addedWaers, addedWkurs, addedKonnr);
+    }
+
+    // Einmaliger Backfill neu ergaenzter EKKO-Spalten aus dem gespeicherten RawJson,
+    // damit Bestandsdaten ohne kompletten Neu-Load bewertbar sind.
+    private static void BackfillEkkoHeaderFieldsFromRawJson(System.Data.Common.DbConnection conn, bool waers, bool wkurs, bool konnr)
+    {
+        var assignments = new List<string>();
+        if (waers)
+            assignments.Add("Waers = COALESCE(json_extract(RawJson, '$.Waers'), '')");
+        if (wkurs)
+            assignments.Add("Wkurs = COALESCE(json_extract(RawJson, '$.Wkurs'), '0')");
+        if (konnr)
+            assignments.Add("Konnr = COALESCE(json_extract(RawJson, '$.Konnr'), '')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkkoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // JSON1 nicht verfuegbar oder RawJson unerwartet: Spalten bleiben auf Default,
+            // die CHF-Bewertung faellt dann auf den CHF-Zweig zurueck. Beim naechsten Full Load
+            // werden die Felder ohnehin korrekt geschrieben.
+        }
     }
 
     private static void EnsureSapSourceTable(AppDbContext db)

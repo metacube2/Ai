@@ -62,6 +62,67 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(1000m, state.SpendChfSample);
     }
 
+    [Fact]
+    public async Task LoadAsync_Converts_ForeignCurrency_Spend_To_Chf_Using_Wkurs()
+    {
+        // K1: CHF-Beleg bleibt unveraendert, EUR-Beleg wird mit Wkurs nach CHF bewertet.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Waers, Wkurs, LastLoadedAtUtc) VALUES ('C1', '2025-03-01', 'L1', 'CHF', '1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Waers, Wkurs, LastLoadedAtUtc) VALUES ('C2', '2025-04-01', 'L2', 'EUR', '0.95', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '10', 'M1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('C2', '10', 'M2', '1', '200', '2026-01-01');");
+        // Damit der Cache als gefuellt erkannt wird (EKET muss vorhanden sein).
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C1', '10', '1', '2025-03-15', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // 100 CHF + 200 EUR * 0.95 = 100 + 190 = 290.
+        Assert.Equal(290m, state.SpendChfSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Includes_Future_Schedules_In_OpenValue_Even_When_ToDate_Is_Earlier()
+    {
+        // K3: Zukuenftiger Zulauf darf nicht am ToDate abgeschnitten werden.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, LastLoadedAtUtc) VALUES ('F1', '2025-06-01', 'L1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('F1', '10', 'M1', '10', '100', '2026-01-01');");
+        // Eindt liegt nach ToDate (2027 vs. 2025) -> Stueckwert 100/10 = 10, offene Menge 10, offener Wert 100.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('F1', '10', '1', '2027-01-01', '10', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        Assert.Equal(10m, state.OpenQuantitySample);
+        Assert.Equal(100m, state.OpenValueSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ContractValue_Counts_Only_Positions_With_Konnr()
+    {
+        // K4: Kontrakt-Restwert nur fuer Abrufe zu Rahmenkontrakten (EKKO.Konnr gesetzt),
+        // nicht mehr eine blosse Kopie des offenen Bestellwerts.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Konnr, LastLoadedAtUtc) VALUES ('K1', '2025-06-01', 'L1', '', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Konnr, LastLoadedAtUtc) VALUES ('K2', '2025-06-01', 'L2', '4600000123', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('K1', '10', 'M1', '5', '500', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('K2', '10', 'M2', '5', '500', '2026-01-01');");
+        // Beide Belege haben offene Menge 5 -> Stueckwert 100, offener Wert je 500.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('K1', '10', '1', '2025-08-01', '5', '0', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('K2', '10', '1', '2025-08-01', '5', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // Offener Wert gesamt = 1000, aber nur der Kontrakt-Beleg K2 zaehlt zum Kontrakt-Restwert.
+        Assert.Equal(1000m, state.OpenValueSample);
+        Assert.Equal(500m, state.ContractValueSample);
+    }
+
     private async Task SeedAsync()
     {
         await ExecuteAsync(
@@ -92,6 +153,9 @@ CREATE TABLE PurchasingEkkoCache (
     SupplierName TEXT NOT NULL DEFAULT '',
     Bukrs TEXT NOT NULL DEFAULT '',
     Bsart TEXT NOT NULL DEFAULT '',
+    Konnr TEXT NOT NULL DEFAULT '',
+    Waers TEXT NOT NULL DEFAULT '',
+    Wkurs TEXT NOT NULL DEFAULT '0',
     RawJson TEXT NOT NULL DEFAULT '',
     LastLoadedAtUtc TEXT NOT NULL
 );");

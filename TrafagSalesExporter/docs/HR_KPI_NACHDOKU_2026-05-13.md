@@ -246,6 +246,48 @@ Kontrollwert aus `C:\temp\Personalausgeschieden.xlsx`:
 - Avg Headcount 2025 nach Intervalllogik: `211.3`
 - Fluktuation Jahr effektiv 2025: `15.6%`
 
+## Nachtrag 2026-07-07 Formel-/Logik-Korrekturen (Review)
+
+Grundlage: Review in `docs/HR_KPI_KORREKTUREN_2026-07-06.md`. Umgesetzte Korrekturen:
+
+- H1 (hoch, Bug) Vorjahresvergleich: `BuildPeriodComparisonMetrics` bekam bisher die bereits auf
+  das Austrittsjahr gefilterte Austrittsliste; das Vorjahr war dadurch immer 0 und `Delta
+  Fluktuation` entsprach der aktuellen Rate. Neu wird eine eigene, NUR struktur- (nicht datums-)
+  gefilterte Liste `comparisonLeavers` verwendet, aus der auch die Headcount-Intervalle gebaut
+  werden. `Austritte <Jahr>`/`Vorjahr` zaehlen jetzt distinct nach Personalnummer (behebt auch M4).
+- H2 (hoch) Krankenquote-Nenner: `ResolveAnalysisPeriod` kappt das Periodenende auf heute (beim
+  laufenden Jahr wurden vorher die Arbeitstage des ganzen Jahres als Nenner gezaehlt, die Quote
+  war dadurch ~Faktor 2 zu niedrig). Ohne Zeitraumfilter wird die Periode aus den Absenzdaten
+  (min/max Datum, auf heute gekappt) abgeleitet statt pauschal 21 Tage; nur bei fehlenden
+  Datumsfeldern bleibt die 1-Monats-Naeherung, jetzt klar so beschriftet.
+- M3 (mittel) Top-Absenzen: Absenzen werden vor der Anzeige pro Person aggregiert
+  (`AggregateAbsencesByPerson`), damit Ranglisten/Tabellen Personen statt Einzelereignisse zeigen.
+  Die Pro-Person-Quote nutzt jetzt die Arbeitstage der Auswertungsperiode statt fix 21 Tage.
+- M5 (mittel) Nenner-Konsistenz: `ResolveTurnoverDenominator` mittelt beim laufenden Jahr nur bis
+  zum Stichtagsmonat (YTD). Ueberblick-Kachel `Fluktuation <Jahr>`, `Fluktuation Auswahl` und
+  `Fluktuation YTD` nutzen damit denselben Nenner. Bei vergangenen Jahren unveraendert (12 Monate).
+- M6/M7 (mittel) Datenqualitaet: neue Hinweise `Doppelte SAP-Personalnummer` (bei Duplikaten
+  gewinnt die erste Zeile, BU/NBU der uebrigen gehen verloren) und `Rexx ohne Zeitdatei
+  (Name-Join)` (Trefferquote des fehleranfaelligen Namens-Joins zur Zeitdatei).
+- M8 (mittel) Anker: bei nur gesetztem `Von Austritt` (bis offen) ist der Stichtag jetzt heute,
+  nicht der Zeitraum-Anfang; Austrittsjahr hat Vorrang vor `Von`.
+- L9 (klein): `Ferien bezogen` wird aus den Summen gerechnet (nicht aus den pro Person auf 0
+  gekappten Einzelwerten); tote Variable entfernt; Hinweis, dass `CountWeekdays` keine CH-Feiertage
+  abzieht.
+
+Bewusst NICHT geaendert (kein Codefehler, fachliche Bestaetigung offen): 8.4h=1 Krankheitstag,
+Kurz-/Lang-Definition, FTE-Fallback 0.5, GLZ-/Restferien-Schwellen, Prognose = Quartalsrate x 4.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `141/141` Tests gruen, inkl. neuer Tests fuer Vorjahresvergleich (H1) und
+  Krankenquoten-Nenner beim laufenden Jahr (H2).
+- Kontrollwerte aus dieser Nachdoku (Austritte total 104, `Kündigung AN` 42, relevant 33,
+  Avg HC 2025 ≈ 211.3, Fluktuation 2025 ≈ 15.6 %) bleiben unveraendert; H1/H2 betreffen
+  Vorjahresvergleich und Krankenquote.
+- Noch kein Deploy (Modellwechsel-Session); Deploy-Entscheid mit Ingo offen.
+
 ## Offene fachliche Pruefpunkte
 
 Diese Punkte sind nicht automatisch geloest und muessen fachlich von HR bestaetigt werden:

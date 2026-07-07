@@ -246,6 +246,9 @@ CREATE TABLE PurchasingEkkoCache (
     SupplierName TEXT NOT NULL DEFAULT '',
     Bukrs TEXT NOT NULL DEFAULT '',
     Bsart TEXT NOT NULL DEFAULT '',
+    Konnr TEXT NOT NULL DEFAULT '',
+    Waers TEXT NOT NULL DEFAULT '',
+    Wkurs TEXT NOT NULL DEFAULT '0',
     RawJson TEXT NOT NULL DEFAULT '',
     LastLoadedAtUtc TEXT NOT NULL
 );";

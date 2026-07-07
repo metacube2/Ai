@@ -12,6 +12,8 @@ namespace TrafagSalesExporter.Services;
 public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 {
     private const int PageSize = 1000;
+    // Anzahl Belege je OData-Request beim Delta ($filter=Ebeln eq 'A' or ...), begrenzt die URL-Laenge.
+    private const int EbelnBatchSize = 20;
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IAppEventLogService _logService;
 
@@ -96,18 +98,27 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             using var client = CreateClient(connection.Username, connection.Password);
             var filter = $"Aedat ge '{deltaFrom:yyyy-MM-dd}'";
             var changedEkko = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Konnr,Waers,Wkurs", filter, "Ebeln", cancellationToken);
-            var ebelnKeys = changedEkko
+            var changedEbelns = changedEkko
                 .Select(row => GetText(row, "Ebeln"))
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            // Wareneingaenge aendern nur EKET.Wemng, nicht EKKO.Aedat. Ein reines Aedat-Delta
+            // wuerde offene Werte dauerhaft veralten lassen. Deshalb zusaetzlich alle Belege
+            // nachladen, die im Cache noch offene Mengen haben.
+            var openEbelns = await LoadOpenOrderEbelnsAsync(cancellationToken);
+            var ebelnKeys = changedEbelns
+                .Union(openEbelns, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
             var ekpoRows = new List<Dictionary<string, object?>>();
             var eketRows = new List<Dictionary<string, object?>>();
-            foreach (var ebeln in ebelnKeys)
+            foreach (var chunk in ebelnKeys.Chunk(EbelnBatchSize))
             {
-                ekpoRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", $"Ebeln eq '{ebeln}'", "Ebelp", cancellationToken));
-                eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", $"Ebeln eq '{ebeln}'", "Ebelp,Etenr", cancellationToken));
+                var ebelnFilter = string.Join(" or ", chunk.Select(ebeln => $"Ebeln eq '{ebeln}'"));
+                ekpoRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", ebelnFilter, "Ebeln,Ebelp", cancellationToken));
+                eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", ebelnFilter, "Ebeln,Ebelp,Etenr", cancellationToken));
             }
 
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
@@ -127,7 +138,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);
-            var message = $"Delta abgeschlossen: geaenderte Belege={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}.";
+            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}.";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -138,6 +149,31 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await _logService.WriteAsync("Purchasing", "Einkauf Delta fehlgeschlagen", "Error", details: ex.ToString());
             return await GetStatusAsync(cancellationToken);
         }
+    }
+
+    // Belege mit offener Menge im Cache (EKET.Menge > EKET.Wemng). Diese muessen im Delta
+    // erneut geladen werden, weil Wareneingaenge EKKO.Aedat nicht anfassen.
+    private async Task<List<string>> LoadOpenOrderEbelnsAsync(CancellationToken cancellationToken)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        var ebelns = new List<string>();
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT DISTINCT e.Ebeln
+FROM PurchasingEketCache e
+WHERE COALESCE(e.Ebeln, '') <> '' AND CAST(e.Menge AS REAL) > CAST(e.Wemng AS REAL);";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (!reader.IsDBNull(0))
+                ebelns.Add(reader.GetString(0));
+        }
+
+        return ebelns;
     }
 
     private async Task<PurchasingSapConnection> ResolveConnectionAsync(CancellationToken cancellationToken)
@@ -209,8 +245,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> supplierNameMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bsart, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bsart, Konnr, Waers, Wkurs, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $Konnr, $Waers, $Wkurs, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -221,6 +257,9 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $RawJson,
                 ["$SupplierName"] = ResolveSupplierName(supplierNameMap, GetText(row, "Lifnr"), FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name"))),
                 ["$Bukrs"] = GetText(row, "Bukrs"),
                 ["$Bsart"] = GetText(row, "Bsart"),
+                ["$Konnr"] = GetText(row, "Konnr"),
+                ["$Waers"] = GetText(row, "Waers"),
+                ["$Wkurs"] = GetText(row, "Wkurs"),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);

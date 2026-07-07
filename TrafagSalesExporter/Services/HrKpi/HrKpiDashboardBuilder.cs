@@ -46,7 +46,7 @@ internal sealed class HrKpiDashboardBuilder
         var context = new ImportContext(result, normalizedOptions.DataFolder);
 
         var timeRows = LoadTimeRows(context);
-        var sapRows = LoadSapRows(context);
+        var sapRows = LoadSapRows(context, out var duplicateSapNumbers);
         var employees = LoadEmployees(context, timeRows, sapRows);
         var absences = LoadAbsences(context);
         var leavers = LoadLeavers(context);
@@ -90,7 +90,10 @@ internal sealed class HrKpiDashboardBuilder
 
         var turnoverEmployees = ApplyTurnoverEmployeeFilters(employees, normalizedOptions).ToList();
         var turnoverHeadcountLeavers = ApplyTurnoverHeadcountLeaverFilters(leavers, normalizedOptions).ToList();
-        var analysisPeriod = ResolveAnalysisPeriod(normalizedOptions);
+        // Vorjahresvergleich braucht Austritte ALLER Jahre (nur Struktur-, kein Datumsfilter),
+        // sonst ist das Vorjahr per Definition leer und das Delta damit falsch.
+        var comparisonLeavers = ApplyComparisonLeaverFilters(leavers, normalizedOptions).ToList();
+        var analysisPeriod = ResolveAnalysisPeriod(normalizedOptions, absences);
         var filteredEmployees = ApplyEmployeeFilters(employees, normalizedOptions).ToList();
         var filteredEmployeeNumbers = filteredEmployees
             .Where(x => x.Personalnummer.HasValue)
@@ -98,8 +101,11 @@ internal sealed class HrKpiDashboardBuilder
             .ToHashSet();
 
         employees = filteredEmployees;
+        var nameJoinMisses = employees.Count(x => !timeRows.ContainsKey(NormalizeKey(x.NameVoll)));
         var absenceRowsWithoutDates = absences.Count(x => !x.VonDatum.HasValue && !x.BisDatum.HasValue);
         absences = ApplyAbsenceFilters(absences, normalizedOptions, filteredEmployeeNumbers).ToList();
+        // Absenzen pro Person zusammenfassen, damit Ranglisten/Tabellen Personen statt Einzelzeilen zeigen.
+        absences = AggregateAbsencesByPerson(absences, analysisPeriod.Workdays);
         leavers = ApplyLeaverFilters(leavers, normalizedOptions).ToList();
         var turnoverPeriod = ResolveTurnoverPeriodScope(normalizedOptions, leavers);
 
@@ -110,9 +116,9 @@ internal sealed class HrKpiDashboardBuilder
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
         result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees);
-        result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
+        result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, comparisonLeavers, turnoverPeriod);
         result.TrafficLights = BuildTrafficLights(result.Metrics, result.TurnoverMetrics, result.AbsenceMetrics, result.TimeVacationMetrics, context);
-        result.DataQualityIssues = BuildDataQualityIssues(employees, absences, leavers, sapRows, context);
+        result.DataQualityIssues = BuildDataQualityIssues(employees, absences, leavers, sapRows, duplicateSapNumbers, nameJoinMisses, context);
         result.LeaversByType = BuildLeaverTypeGroups(leavers);
         result.LeaversByOrganisation = BuildLeaverOrganisationGroups(leavers);
         result.AbsenceByOrganisation = BuildAbsenceOrganisationGroups(absences);
@@ -271,7 +277,7 @@ internal sealed class HrKpiDashboardBuilder
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     }
 
-    private Dictionary<string, SapRow> LoadSapRows(ImportContext context)
+    private Dictionary<string, SapRow> LoadSapRows(ImportContext context, out int duplicatePersonalNumbers)
     {
         var rows = context.ReadRows(_dataSources.SapFile, "SAP HR KPI", (row, headers) =>
         {
@@ -293,10 +299,13 @@ internal sealed class HrKpiDashboardBuilder
                 ReadString(row, headers, "Abrechnungskreis"));
         });
 
-        return rows
+        var grouped = rows
             .Where(x => !string.IsNullOrWhiteSpace(x.PersonalKey))
             .GroupBy(x => x.PersonalKey, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            .ToList();
+        // Bei Duplikaten gewinnt die erste Zeile (BU/NBU der uebrigen gehen verloren) - als Datenqualitaets-Hinweis melden.
+        duplicatePersonalNumbers = grouped.Count(g => g.Count() > 1);
+        return grouped.ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     }
 
     private List<HrAbsenceRow> LoadAbsences(ImportContext context)
@@ -417,6 +426,42 @@ internal sealed class HrKpiDashboardBuilder
                            MatchesAbsencePeriodFilter(x, options) &&
                            MatchesTextSearch(options.SearchText, x.Name, x.Personalnummer?.ToString(CultureInfo.InvariantCulture) ?? string.Empty));
 
+    // Fasst mehrere Absenzzeilen je Person zu einer Zeile zusammen (Summe Krankheitsstunden), damit
+    // Ranglisten und die Tabelle "Absenzen je Mitarbeiter" Personen statt Einzelereignisse zeigen.
+    // Die Pro-Person-Quote nutzt die Arbeitstage der Auswertungsperiode statt pauschal 21 Tage.
+    private static List<HrAbsenceRow> AggregateAbsencesByPerson(IReadOnlyCollection<HrAbsenceRow> rows, decimal workdays)
+    {
+        var denominator = workdays <= 0 ? 1m : workdays;
+        return rows
+            .GroupBy(x => x.Personalnummer.HasValue ? $"P:{x.Personalnummer.Value}" : $"N:{NormalizeKey(x.Name)}")
+            .Select(g =>
+            {
+                var first = g.First();
+                var kurz = g.Sum(x => x.KrankheitKurzStd);
+                var lang = g.Sum(x => x.KrankheitLangStd);
+                var gesamtStd = kurz + lang;
+                var tage = Math.Round(gesamtStd / 8.4m, 1);
+                return new HrAbsenceRow
+                {
+                    Personalnummer = first.Personalnummer,
+                    Name = first.Name,
+                    Organisationseinheit = first.Organisationseinheit,
+                    Stelle = first.Stelle,
+                    Status = first.Status,
+                    VonDatum = g.Where(x => x.VonDatum.HasValue).Select(x => x.VonDatum).Min(),
+                    BisDatum = g.Where(x => x.BisDatum.HasValue).Select(x => x.BisDatum).Max(),
+                    KrankheitKurzStd = kurz,
+                    KrankheitLangStd = lang,
+                    KrankheitGesamtStd = gesamtStd,
+                    KrankheitstageGesamt = tage,
+                    KrankheitstageKurz = Math.Round(kurz / 8.4m, 1),
+                    KrankheitstageLang = Math.Round(lang / 8.4m, 1),
+                    KrankenquoteMa = tage == 0 ? 0 : tage / denominator
+                };
+            })
+            .ToList();
+    }
+
     private static IEnumerable<HrLeaverRow> ApplyLeaverFilters(IEnumerable<HrLeaverRow> rows, HrKpiOptions options)
         => rows.Where(x => MatchesLeaverDateFilter(x, options) &&
                            MatchesFilter(x.Organisationseinheit, options.Organisationseinheit) &&
@@ -428,6 +473,14 @@ internal sealed class HrKpiDashboardBuilder
     private static IEnumerable<HrLeaverRow> ApplyTurnoverHeadcountLeaverFilters(IEnumerable<HrLeaverRow> rows, HrKpiOptions options)
         => rows.Where(x => MatchesLeaverEmploymentPeriodFilter(x, options) &&
                            MatchesFilter(x.Organisationseinheit, options.Organisationseinheit) &&
+                           MatchesFilter(x.Mitarbeitertyp, options.Mitarbeitertyp) &&
+                           (!options.EntryYear.HasValue || x.Eintrittsdatum?.Year == options.EntryYear.Value) &&
+                           MatchesTextSearch(options.SearchText, x.NameVoll, x.Personalnummer?.ToString(CultureInfo.InvariantCulture) ?? string.Empty));
+
+    // Fuer den Vorjahresvergleich: nur Struktur-Filter (Organisation/Typ/Eintrittsjahr/Suche),
+    // KEIN Datums-/Jahresfilter - sonst enthaelt die Liste nur das gewaehlte Jahr und das Vorjahr ist 0.
+    private static IEnumerable<HrLeaverRow> ApplyComparisonLeaverFilters(IEnumerable<HrLeaverRow> rows, HrKpiOptions options)
+        => rows.Where(x => MatchesFilter(x.Organisationseinheit, options.Organisationseinheit) &&
                            MatchesFilter(x.Mitarbeitertyp, options.Mitarbeitertyp) &&
                            (!options.EntryYear.HasValue || x.Eintrittsdatum?.Year == options.EntryYear.Value) &&
                            MatchesTextSearch(options.SearchText, x.NameVoll, x.Personalnummer?.ToString(CultureInfo.InvariantCulture) ?? string.Empty));
@@ -610,9 +663,11 @@ internal sealed class HrKpiDashboardBuilder
         var red = employees.Count(x => x.GlzAmpel == "Rot");
         var yellow = employees.Count(x => x.GlzAmpel == "Gelb");
         var vacationEntitlement = employees.Sum(x => x.Urlaubsanspruch);
-        var vacationUsed = employees.Sum(x => x.Ferientage);
         var vacationLeft = employees.Sum(x => x.UrlaubRest);
         var vacationOpen = employees.Sum(x => x.FerienAusstehend);
+        // Aus den Summen rechnen, nicht die pro Person auf 0 gekappten Einzelwerte aufaddieren
+        // (die Kappung wuerde die bezogenen Ferien in Summe leicht zu hoch ausweisen).
+        var vacationUsed = vacationEntitlement - vacationLeft - vacationOpen;
         var restVacationRed = employees.Count(x => x.RestferienAmpel == "Rot");
 
         return
@@ -630,30 +685,30 @@ internal sealed class HrKpiDashboardBuilder
 
     private static List<HrKpiMetric> BuildPeriodComparisonMetrics(
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
-        IReadOnlyCollection<HrLeaverRow> turnoverHeadcountLeavers,
-        IReadOnlyCollection<HrLeaverRow> leavers,
+        IReadOnlyCollection<HrLeaverRow> comparisonLeavers,
         TurnoverPeriodScope period)
     {
-        var selectedYear = period.BreakdownYear ?? leavers
+        // comparisonLeavers ist bewusst NICHT datumsgefiltert, damit das Vorjahr echte Werte hat.
+        var selectedYear = period.BreakdownYear ?? comparisonLeavers
             .Where(x => x.Austrittsjahr.HasValue)
             .Select(x => x.Austrittsjahr!.Value)
             .DefaultIfEmpty(DateTime.Today.Year)
             .Max();
         var previousYear = selectedYear - 1;
-        var intervals = BuildTurnoverIntervals(employees, turnoverHeadcountLeavers);
+        var intervals = BuildTurnoverIntervals(employees, comparisonLeavers);
         var selectedHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (selectedYear, month)));
         var previousHeadcount = CalculateAverageFixedHeadcount(intervals, Enumerable.Range(1, 12).Select(month => (previousYear, month)));
-        var selectedLeavers = CountDistinctPersons(leavers
+        var selectedLeaverCount = CountDistinctPersons(comparisonLeavers
             .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == selectedYear)
             .Select(x => x.Personalnummer));
-        var previousLeavers = CountDistinctPersons(leavers
+        var previousLeaverCount = CountDistinctPersons(comparisonLeavers
             .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == previousYear)
             .Select(x => x.Personalnummer));
-        var selectedRate = selectedHeadcount == 0 ? 0 : selectedLeavers / selectedHeadcount;
-        var previousRate = previousHeadcount == 0 ? 0 : previousLeavers / previousHeadcount;
+        var selectedRate = selectedHeadcount == 0 ? 0 : selectedLeaverCount / selectedHeadcount;
+        var previousRate = previousHeadcount == 0 ? 0 : previousLeaverCount / previousHeadcount;
         var deltaRate = selectedRate - previousRate;
-        var selectedAbs = leavers.Count(x => x.Austrittsjahr == selectedYear);
-        var previousAbs = leavers.Count(x => x.Austrittsjahr == previousYear);
+        var selectedAbs = CountDistinctPersons(comparisonLeavers.Where(x => x.Austrittsjahr == selectedYear).Select(x => x.Personalnummer));
+        var previousAbs = CountDistinctPersons(comparisonLeavers.Where(x => x.Austrittsjahr == previousYear).Select(x => x.Personalnummer));
 
         return
         [
@@ -698,6 +753,8 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<HrAbsenceRow> absences,
         IReadOnlyCollection<HrLeaverRow> leavers,
         IReadOnlyDictionary<string, SapRow> sapRows,
+        int duplicateSapNumbers,
+        int nameJoinMisses,
         ImportContext context)
     {
         var employeeNumbers = employees
@@ -721,6 +778,8 @@ internal sealed class HrKpiDashboardBuilder
             CreateQualityIssue("Warning", "Mitarbeitende", "Doppelte Personalnummer", duplicateEmployeeNumbers, "Mehrere aktive Zeilen mit gleicher Personalnummer."),
             CreateQualityIssue("Warning", "Rexx/SAP", "Rexx ohne SAP", employeeNumbers.Count(number => !sapNumbers.Contains(number)), "Aktive Mitarbeitende ohne passende SAP-Zusatzzeile."),
             CreateQualityIssue("Info", "Rexx/SAP", "SAP ohne Rexx", sapNumbers.Count(number => !employeeNumbers.Contains(number)), "SAP-Zeile ohne aktive Rexx-Mitarbeiterzeile."),
+            CreateQualityIssue("Warning", "Rexx/SAP", "Doppelte SAP-Personalnummer", duplicateSapNumbers, "Mehrere SAP-Zeilen je Personalnummer; nur die erste wird verwendet, BU/NBU der uebrigen gehen verloren."),
+            CreateQualityIssue("Warning", "Rexx/Zeit", "Rexx ohne Zeitdatei (Name-Join)", nameJoinMisses, "Aktive Mitarbeitende ohne Treffer im Namens-Join zur Zeitdatei; Geburtsdatum/Arbeitszeitmodell/FTE-Fallback bleiben leer."),
             CreateQualityIssue("Warning", "Mitarbeitende", "Fehlende Organisation", employees.Count(x => string.IsNullOrWhiteSpace(x.Organisationseinheit)), "Organisationseinheit fehlt."),
             CreateQualityIssue("Warning", "Mitarbeitende", "Fehlende Kostenstelle", employees.Count(x => string.IsNullOrWhiteSpace(x.KostenstelleText)), "Kostenstelle fehlt."),
             CreateQualityIssue("Warning", "Mitarbeitende", "Fehlender Beschaeftigungsgrad", employees.Count(x => !x.BeschaeftigungsgradProzent.HasValue), "FTE verwendet Rexx-Fallback."),
@@ -916,9 +975,14 @@ internal sealed class HrKpiDashboardBuilder
     {
         if (period.ShowPeriodMetrics && period.BreakdownYear.HasValue)
         {
+            // Beim laufenden Jahr nur bis zum Stichtagsmonat mitteln (YTD), damit dieser Nenner
+            // konsistent zur wichtigsten Kachel "Fluktuation YTD" ist und keine Restmonate einrechnet.
+            var monthCount = period.BreakdownYear.Value == period.AnchorDate.Year
+                ? period.AnchorDate.Month
+                : 12;
             return CalculateAverageFixedHeadcount(
                 intervals,
-                Enumerable.Range(1, 12).Select(month => (period.BreakdownYear.Value, month)));
+                Enumerable.Range(1, monthCount).Select(month => (period.BreakdownYear.Value, month)));
         }
 
         return CountCurrentFixedHeadcount(employees);
@@ -995,7 +1059,6 @@ internal sealed class HrKpiDashboardBuilder
 
     private static TurnoverPeriodScope ResolveTurnoverPeriodScope(HrKpiOptions options, IReadOnlyCollection<HrLeaverRow> leavers)
     {
-        var hasRange = options.FromDate.HasValue || options.ToDate.HasValue;
         var selectedYears = leavers
             .Where(x => x.Austrittsjahr.HasValue)
             .Select(x => x.Austrittsjahr!.Value)
@@ -1027,14 +1090,15 @@ internal sealed class HrKpiDashboardBuilder
     {
         if (options.ToDate.HasValue)
             return options.ToDate.Value.Date;
-        if (options.FromDate.HasValue)
-            return options.FromDate.Value.Date;
         if (breakdownYear.HasValue)
         {
             return breakdownYear.Value == DateTime.Today.Year
             ? DateTime.Today
             : new DateTime(breakdownYear.Value, 12, 31);
         }
+        // Nur "Von" gesetzt (bis offen): Stichtag ist heute, nicht der Zeitraum-Anfang.
+        if (options.FromDate.HasValue)
+            return DateTime.Today;
 
         return leavers
             .Where(x => x.Austrittsdatum.HasValue)
@@ -1121,19 +1185,45 @@ internal sealed class HrKpiDashboardBuilder
         return start <= end ? (start, end) : (end, start);
     }
 
-    private static AnalysisPeriod ResolveAnalysisPeriod(HrKpiOptions options)
+    private static AnalysisPeriod ResolveAnalysisPeriod(HrKpiOptions options, IReadOnlyCollection<HrAbsenceRow> absences)
     {
         var period = ResolveEmploymentPeriod(options);
-        if (!period.HasValue)
+        if (period.HasValue)
         {
-            return new AnalysisPeriod(null, null, 21m, "ohne Zeitraumfilter", false);
+            var start = period.Value.Start;
+            // Beim laufenden Jahr nur bis heute rechnen, sonst zaehlt der Nenner Arbeitstage,
+            // die noch gar nicht vergangen sind, und die Krankenquote wird zu niedrig.
+            var end = period.Value.End > DateTime.Today ? DateTime.Today : period.Value.End;
+            if (end < start)
+                end = start;
+            var workdays = CountWeekdays(start, end);
+            return new AnalysisPeriod(start, end, Math.Max(1, workdays), $"{start:dd.MM.yyyy} - {end:dd.MM.yyyy}", true);
         }
 
-        var workdays = CountWeekdays(period.Value.Start, period.Value.End);
-        var label = $"{period.Value.Start:dd.MM.yyyy} - {period.Value.End:dd.MM.yyyy}";
-        return new AnalysisPeriod(period.Value.Start, period.Value.End, Math.Max(1, workdays), label, true);
+        // Ohne Zeitraumfilter: Periode aus den Absenzdaten ableiten (auf heute gekappt),
+        // statt pauschal einen Monat (21 Arbeitstage) anzunehmen.
+        var dates = absences
+            .SelectMany(x => new[] { x.VonDatum, x.BisDatum })
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value.Date)
+            .ToList();
+        if (dates.Count > 0)
+        {
+            var start = dates.Min();
+            var end = dates.Max();
+            if (end > DateTime.Today)
+                end = DateTime.Today;
+            if (end < start)
+                end = start;
+            var workdays = CountWeekdays(start, end);
+            return new AnalysisPeriod(start, end, Math.Max(1, workdays), $"{start:dd.MM.yyyy} - {end:dd.MM.yyyy} (aus Absenzdaten)", true);
+        }
+
+        return new AnalysisPeriod(null, null, 21m, "Annahme 1 Monat (keine Datumsfelder)", false);
     }
 
+    // Zaehlt Mo-Fr im Zeitraum. Hinweis: CH-Feiertage werden nicht abgezogen, der Nenner der
+    // Krankenquote ist dadurch minimal zu gross. Fuer eine offizielle Quote ggf. Feiertage abziehen.
     private static int CountWeekdays(DateTime start, DateTime end)
     {
         if (end < start)

@@ -250,6 +250,40 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains(result.Notices, notice => notice.Contains("Testpersonen", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task BuildAsync_PeriodComparison_Shows_Real_PreviousYear_When_Year_Selected()
+    {
+        // H1: Vorjahresvergleich darf nicht 0 sein, wenn ein Austrittsjahr gewaehlt ist.
+        // Fixture enthaelt einen fluktuationsrelevanten Austritt 2024 (Fallback, Fiona) und 2025 (Alpha, Anna).
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        var leaverKpi = Assert.Single(result.PeriodComparisonMetrics, m => m.Label == "Austritte 2025");
+        Assert.Equal("Vorjahr 1", leaverKpi.Detail);
+
+        var rateKpi = Assert.Single(result.PeriodComparisonMetrics, m => m.Label == "Fluktuation 2025");
+        Assert.DoesNotContain("Vorjahr 0.0%", rateKpi.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Absence_Rate_Caps_Period_At_Today_For_Current_Year()
+    {
+        // H2: Beim laufenden Jahr endet der Nenner-Zeitraum heute, nicht am 31.12.
+        var currentYear = DateTime.Today.Year;
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = currentYear
+        });
+
+        var rate = Assert.Single(result.AbsenceMetrics, m => m.Label == "Krankenquote");
+        Assert.Contains(DateTime.Today.ToString("dd.MM.yyyy"), rate.Detail);
+        Assert.DoesNotContain($"31.12.{currentYear}", rate.Detail);
+    }
+
     private static void WriteFixtureFiles(string folder)
     {
         WriteWorkbook(Path.Combine(folder, "Saldiperstichdatum.xlsx"),
