@@ -143,8 +143,14 @@ enum CAT {
     /// Read ATU status
     static let readATU = CATCommand("AC", description: "Read ATU status")
 
-    /// Start ATU tune
-    static let startATUTune = CATCommand("AC001", description: "Start ATU tune", expectsResponse: false)
+    /// ATU on
+    static let atuOn = CATCommand("AC001", description: "ATU on", expectsResponse: false)
+
+    /// ATU off
+    static let atuOff = CATCommand("AC000", description: "ATU off", expectsResponse: false)
+
+    /// Start ATU tune (FT-991A: AC002; startet den Abstimmvorgang, AC001; schaltet nur ein)
+    static let startATUTune = CATCommand("AC002", description: "Start ATU tune", expectsResponse: false)
 
     /// Read Split status
     static let readSplit = CATCommand("FT", description: "Read Split status")
@@ -166,15 +172,18 @@ enum CAT {
     static let readSWRMeter = CATCommand("RM6", description: "Read SWR meter")
 
     // MARK: - PTT Commands
+    // FT-991A: TX0; = TX off, TX1; = TX on (CAT). Ein "RX;"-Befehl existiert
+    // bei Yaesu nicht (Kenwood-Syntax). Audio-Routing (MIC vs. DATA) bestimmt
+    // die gewählte Betriebsart, nicht der TX-Befehl.
 
-    /// Start transmitting (MIC)
-    static let txOn = CATCommand("TX0", description: "TX on (MIC)", expectsResponse: false)
+    /// Start transmitting (CAT PTT)
+    static let txOn = CATCommand("TX1", description: "TX on (CAT)", expectsResponse: false)
 
-    /// Start transmitting (DATA)
+    /// Start transmitting for digital modes (same CAT PTT, routing via mode)
     static let txOnData = CATCommand("TX1", description: "TX on (DATA)", expectsResponse: false)
 
     /// Stop transmitting
-    static let txOff = CATCommand("RX", description: "TX off", expectsResponse: false)
+    static let txOff = CATCommand("TX0", description: "TX off", expectsResponse: false)
 
     /// Read TX status
     static let readTXStatus = CATCommand("TX", description: "Read TX status")
@@ -241,6 +250,17 @@ struct CATResponse {
         // SM0XXX format - drop the "0" prefix
         let numericPart = value.dropFirst()
         return Int(numericPart)
+    }
+
+    /// Parse meter reading from RM response.
+    /// Format: RM P1 XXX; where P1 = meter number (1=Power, 6=SWR), XXX = 000-255.
+    /// The meter number must be stripped before parsing the value.
+    var meterReading: (meter: Int, value: Int)? {
+        guard command == "RM", value.count >= 2,
+              let first = value.first,
+              let meter = Int(String(first)),
+              let reading = Int(value.dropFirst()) else { return nil }
+        return (meter, reading)
     }
 
     /// Parse boolean status (0 or 1)

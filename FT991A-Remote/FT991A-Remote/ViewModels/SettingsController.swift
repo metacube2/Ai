@@ -125,10 +125,13 @@ class SettingsController: ObservableObject {
     }
 
     private func saveSettings() {
-        // Debounce saves to avoid excessive disk writes
+        // Debounce saves to avoid excessive disk writes.
+        // The timer closure is not MainActor-isolated, so hop back explicitly.
         saveDebounce?.invalidate()
         saveDebounce = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            self?.performSave()
+            Task { @MainActor in
+                self?.performSave()
+            }
         }
     }
 

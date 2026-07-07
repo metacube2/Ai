@@ -111,8 +111,9 @@ Die App verwendet das Yaesu CAT-Protokoll. Wichtige Befehle:
 | FA; | VFO-A Frequenz lesen |
 | FA014250000; | VFO-A auf 14.250 MHz setzen |
 | MD02; | Mode auf USB setzen |
-| TX0; | PTT ein (MIC) |
-| RX; | PTT aus |
+| TX1; | PTT ein (CAT) |
+| TX0; | PTT aus |
+| AC002; | ATU Tune starten |
 | SM0; | S-Meter lesen |
 
 ## Entwicklung

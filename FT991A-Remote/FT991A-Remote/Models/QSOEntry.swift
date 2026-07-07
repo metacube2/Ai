@@ -56,8 +56,11 @@ struct QSOEntry: Identifiable, Codable, Hashable {
     static let csvHeader = "Call,Date,Time,Frequency,Mode,RST_TX,RST_RX,Name,QTH,Locator,Power,Notes"
 
     var csvLine: String {
+        // Date and time must use the same time zone (UTC), otherwise QSOs
+        // around midnight round-trip with the wrong date on import.
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
         timeFormatter.timeZone = TimeZone(identifier: "UTC")
@@ -117,7 +120,8 @@ struct QSOEntry: Identifiable, Codable, Hashable {
         guard let date = dateFormatter.date(from: "\(fields[1]) \(fields[2])") else { return nil }
         guard let freqMHz = Double(fields[3]) else { return nil }
 
-        let frequency = Int(freqMHz * 1_000_000)
+        // Round to avoid off-by-one Hz from floating point (e.g. 14.250000 * 1e6 = 14249999.999...)
+        let frequency = Int((freqMHz * 1_000_000).rounded())
         let mode = OperatingMode.allCases.first { $0.rawValue == fields[4] } ?? .usb
 
         return QSOEntry(

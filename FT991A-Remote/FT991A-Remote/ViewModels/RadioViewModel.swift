@@ -189,6 +189,10 @@ class RadioViewModel: ObservableObject {
         serialManager.selectedPortPath = path
     }
 
+    func setAutoReconnect(_ enabled: Bool) {
+        serialManager.enableAutoReconnect(enabled)
+    }
+
     // MARK: - Frequency Control
 
     func setFrequency(_ frequency: Int) {

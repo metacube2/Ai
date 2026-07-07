@@ -289,13 +289,8 @@ class SerialPortManager: ObservableObject {
     }
 
     func disconnect() {
-        stopReading()
         stopReconnectTimer()
-
-        if fileDescriptor != -1 {
-            close(fileDescriptor)
-            fileDescriptor = -1
-        }
+        stopReading()
 
         connectionState = .disconnected
         onConnectionChanged?(false)
@@ -317,20 +312,29 @@ class SerialPortManager: ObservableObject {
         guard fileDescriptor != -1 else { return }
 
         isReading = true
+        let fd = fileDescriptor
 
-        readSource = DispatchSource.makeReadSource(fileDescriptor: fileDescriptor, queue: readQueue)
+        readSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: readQueue)
         readSource?.setEventHandler { [weak self] in
             self?.readAvailableData()
         }
         readSource?.setCancelHandler { [weak self] in
+            // The fd must be closed here, after the source is fully cancelled -
+            // closing it earlier races with the kernel event monitoring.
+            close(fd)
             self?.isReading = false
         }
         readSource?.resume()
     }
 
     private func stopReading() {
-        readSource?.cancel()
-        readSource = nil
+        if let source = readSource {
+            source.cancel()  // fd is closed in the cancel handler
+            readSource = nil
+        } else if fileDescriptor != -1 {
+            close(fileDescriptor)
+        }
+        fileDescriptor = -1
         isReading = false
     }
 
@@ -340,10 +344,20 @@ class SerialPortManager: ObservableObject {
         var buffer = [UInt8](repeating: 0, count: 256)
         let bytesRead = read(fileDescriptor, &buffer, buffer.count)
 
+        if bytesRead == 0 {
+            // EOF: USB device was unplugged. Without handling this the read
+            // source stays permanently readable and fires in a busy loop.
+            DispatchQueue.main.async {
+                self.handleConnectionLost("Gerät wurde getrennt")
+            }
+            return
+        }
+
         guard bytesRead > 0 else {
-            if bytesRead < 0 && errno != EAGAIN {
+            if errno != EAGAIN {
+                let message = String(cString: strerror(errno))
                 DispatchQueue.main.async {
-                    self.handleReadError()
+                    self.handleConnectionLost(message)
                 }
             }
             return
@@ -375,10 +389,16 @@ class SerialPortManager: ObservableObject {
         }
     }
 
-    private func handleReadError() {
-        let error = String(cString: strerror(errno))
-        connectionState = .error(error)
-        lastError = error
+    private func handleConnectionLost(_ message: String) {
+        // The read source keeps firing until cancelled - only handle the first loss
+        guard connectionState.isConnected else { return }
+
+        stopReading()
+
+        connectionState = .error(message)
+        lastError = message
+        onConnectionChanged?(false)
+        Logger.shared.log("Connection lost: \(message)", level: .error)
 
         if shouldReconnect {
             startReconnectTimer()
@@ -407,8 +427,9 @@ class SerialPortManager: ObservableObject {
                     Logger.shared.log("TX: \(command.trimmingCharacters(in: .whitespaces))", level: .debug)
                 }
             } else if written < 0 {
+                let message = String(cString: strerror(errno))
                 DispatchQueue.main.async {
-                    self.handleWriteError()
+                    self.handleConnectionLost(message)
                 }
             }
         }
@@ -422,12 +443,6 @@ class SerialPortManager: ObservableObject {
         if let data = string.data(using: .ascii) {
             send(data)
         }
-    }
-
-    private func handleWriteError() {
-        let error = String(cString: strerror(errno))
-        connectionState = .error(error)
-        lastError = error
     }
 
     // MARK: - Auto-Reconnect

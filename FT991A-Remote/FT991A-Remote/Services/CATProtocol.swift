@@ -27,6 +27,7 @@ class CATProtocol: ObservableObject {
     private let serialManager: SerialPortManager
     private var responseQueue: [CATResponse] = []
     private var pollingTimer: Timer?
+    private var slowPollTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
     private let commandQueue = DispatchQueue(label: "cat.command", qos: .userInitiated)
@@ -77,8 +78,10 @@ class CATProtocol: ObservableObject {
     }
 
     func sendRaw(_ command: String) {
-        let catCommand = CATCommand(command, description: "Manual: \(command)")
-        send(catCommand)
+        // CATCommand appends the trailing ";" itself - strip it here to avoid "FA;;"
+        let trimmed = command.trimmingCharacters(in: CharacterSet(charactersIn: "; \r\n"))
+        guard !trimmed.isEmpty else { return }
+        send(CATCommand(trimmed, description: "Manual: \(trimmed)"))
     }
 
     // MARK: - Response Handling
@@ -147,12 +150,12 @@ class CATProtocol: ObservableObject {
                     self.radioState.sMeter = meter
                 }
             case "RM":
-                // RM1 = power, RM6 = SWR
-                if let level = response.levelValue {
-                    if response.value.hasPrefix("1") {
-                        self.radioState.powerMeter = level
-                    } else if response.value.hasPrefix("6") {
-                        self.radioState.swrMeter = level
+                // RM1 = power, RM6 = SWR (meter number must be stripped from value)
+                if let reading = response.meterReading {
+                    switch reading.meter {
+                    case 1: self.radioState.powerMeter = reading.value
+                    case 6: self.radioState.swrMeter = reading.value
+                    default: break
                     }
                 }
             case "NB":
@@ -222,8 +225,8 @@ class CATProtocol: ObservableObject {
             self?.pollMeters()
         }
 
-        // Start slow polling for frequency/mode
-        Timer.scheduledTimer(withTimeInterval: slowPollInterval, repeats: true) { [weak self] _ in
+        // Slow polling for frequency/mode
+        slowPollTimer = Timer.scheduledTimer(withTimeInterval: slowPollInterval, repeats: true) { [weak self] _ in
             self?.pollStatus()
         }
     }
@@ -231,6 +234,8 @@ class CATProtocol: ObservableObject {
     func stopPolling() {
         pollingTimer?.invalidate()
         pollingTimer = nil
+        slowPollTimer?.invalidate()
+        slowPollTimer = nil
         isPolling = false
     }
 

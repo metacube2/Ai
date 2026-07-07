@@ -86,12 +86,19 @@ struct MainView: View {
         }
         .navigationTitle("FT-991A Remote")
         .onAppear {
-            setupKeyboardShortcuts()
+            // Sync persisted settings into the radio view model - the frequency
+            // step picker binds to settingsController, but incrementFrequency()
+            // reads radioViewModel.frequencyStep.
+            radioViewModel.frequencyStep = settingsController.frequencyStep
+            radioViewModel.baudRate = settingsController.defaultBaudRate
+            radioViewModel.setAutoReconnect(settingsController.autoReconnect)
         }
-    }
-
-    private func setupKeyboardShortcuts() {
-        // Keyboard shortcuts are handled in the App commands
+        .onChange(of: settingsController.frequencyStep) { _, newValue in
+            radioViewModel.frequencyStep = newValue
+        }
+        .onChange(of: settingsController.autoReconnect) { _, newValue in
+            radioViewModel.setAutoReconnect(newValue)
+        }
     }
 }
 

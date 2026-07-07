@@ -103,11 +103,12 @@ struct DebugPanel: View {
                         sendCommand()
                     }
 
+                // No .keyboardShortcut(.return) here - the TextField's onSubmit
+                // already handles Enter; both together would send the command twice.
                 Button("Senden") {
                     sendCommand()
                 }
                 .disabled(commandInput.isEmpty || !radioViewModel.isConnected)
-                .keyboardShortcut(.return, modifiers: [])
             }
             .padding(8)
             .background(Color.secondary.opacity(0.1))

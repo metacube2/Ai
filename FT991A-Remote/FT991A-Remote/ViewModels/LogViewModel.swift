@@ -141,6 +141,9 @@ class LogViewModel: ObservableObject {
 
         var entry = currentQSO
         entry.callsign = entry.callsign.uppercased()
+        // Stamp the save time - currentQSO.date holds the time the form was
+        // created, which can be hours old.
+        entry.date = Date()
 
         csvManager.addEntry(entry)
         resetCurrentQSO()
