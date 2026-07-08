@@ -466,3 +466,27 @@ DE Alphaplan Task -> ZIP/CSV nach SharePoint AlphaplanRaw -> BiDashboard Timer/S
 ```
 
 Der DE-Upload muss vor dem BiDashboard-Timer abgeschlossen sein. Wenn der Alphaplan-Upload nach 12:00 Zuerich laeuft, verarbeitet der 12:00-BiDashboard-Export noch den vorherigen Stand.
+
+## 12. Timer-Export: Prozess muss um 12:00 laufen
+
+Stand 2026-07-08:
+
+Der taegliche 12:00-Export wird vom In-Process-Timer `TimerBackgroundService` ausgeloest. Dieser feuert nur, solange der IIS-Backend-Prozess der App aktiv ist.
+
+Vorfall 07.07.2026: Nach einem Deploy um 07:00 wurde der Prozess beendet; bis 12:00 kam kein HTTP-Request, IIS startete den `dotnet`-Prozess nicht neu (Hosting war `outofprocess`, ohne AlwaysRunning/Preload). Der 12:00-Lauf fiel aus, der letzte Import blieb auf dem Vortag (`*_2026-07-06`).
+
+Massnahmen:
+
+- `TimerBackgroundService` holt einen verpassten Tages-Slot beim Prozessstart nach und merkt sich den letzten Lauf in `ExportSettings.LastTimerRunUtc`. Startet der Prozess nach 12:00 und lief heute noch nicht, wird der Export einmalig sofort nachgeholt.
+- `web.config` nutzt `hostingModel=inprocess`, damit App und Timer im IIS-Worker laufen.
+- Server-seitig muss der App-Pool auf Dauerbetrieb stehen, damit der Worker ohne HTTP-Request lebt:
+
+```powershell
+Import-Module WebAdministration
+$pool = (Get-WebApplication | ? { $_.PhysicalPath -like '*BiDashboard*' } | select -First 1).applicationPool
+Set-ItemProperty "IIS:\AppPools\$pool" -Name startMode -Value AlwaysRunning
+Set-ItemProperty "IIS:\AppPools\$pool" -Name processModel.idleTimeout -Value "00:00:00"
+Restart-WebAppPool $pool
+```
+
+Merksatz: Der Timer ist nur so zuverlaessig wie die Prozesslaufzeit. `AlwaysRunning` + `idleTimeout=0` halten den Worker dauerhaft aktiv; der Nachhol-Lauf ist die Absicherung fuer Recycles/Deploys rund um 12:00.

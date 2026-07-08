@@ -36,13 +36,16 @@ public class TimerBackgroundService : BackgroundService
             return;
         }
 
-        var now = DateTime.Now;
-        var todayRun = new DateTime(now.Year, now.Month, now.Day, settings.TimerHour, settings.TimerMinute, 0);
-        _nextRun = todayRun <= now ? todayRun.AddDays(1) : todayRun;
+        _nextRun = TimerSchedule.ComputeNextRun(DateTime.Now, settings.TimerHour, settings.TimerMinute);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Nachhol-Lauf beim Start: War der Prozess zur geplanten Zeit nicht aktiv (z.B. weil
+        // IIS den Worker nach einem Deploy erst beim ersten Request startet), fehlt der Tageslauf.
+        // Damit das taegliche Tracking lueckenlos bleibt, wird ein verpasster Slot hier einmalig
+        // nachgeholt, bevor der regulaere Warteloop beginnt.
+        await CatchUpMissedRunAsync();
         await RecalculateNextRunAsync();
 
         while (!stoppingToken.IsCancellationRequested)
@@ -51,19 +54,69 @@ public class TimerBackgroundService : BackgroundService
 
             if (DateTime.Now < _nextRun) continue;
 
-            _logger.LogInformation("Timer-Export gestartet um {Time}", DateTime.Now);
-
-            try
-            {
-                var orchestrator = _serviceProvider.GetRequiredService<ExportOrchestrationService>();
-                await orchestrator.ExportAllAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fehler beim Timer-Export");
-            }
-
+            await RunExportAsync("Timer-Export gestartet um {Time}");
             await RecalculateNextRunAsync();
+        }
+    }
+
+    private async Task CatchUpMissedRunAsync()
+    {
+        try
+        {
+            var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = await dbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings.OrderBy(x => x.Id).FirstOrDefaultAsync();
+            if (settings is null)
+                return;
+
+            var lastRunLocal = settings.LastTimerRunUtc?.ToLocalTime();
+            if (!TimerSchedule.IsCatchUpDue(DateTime.Now, settings.TimerHour, settings.TimerMinute, settings.TimerEnabled, lastRunLocal))
+                return;
+
+            await RunExportAsync("Timer-Export Nachhol-Lauf (verpasster Slot) um {Time}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler bei der Pruefung auf einen verpassten Timer-Export");
+        }
+    }
+
+    private async Task RunExportAsync(string logMessage)
+    {
+        _logger.LogInformation(logMessage, DateTime.Now);
+
+        try
+        {
+            var orchestrator = _serviceProvider.GetRequiredService<ExportOrchestrationService>();
+            await orchestrator.ExportAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler beim Timer-Export");
+        }
+
+        // Nach dem Versuch stempeln (auch bei Teilfehler): verhindert, dass ein erneuter
+        // Prozessstart am selben Tag den schweren Export wiederholt ausloest. Ein echter
+        // Fehlversuch wird regulaer am naechsten geplanten Slot erneut ausgefuehrt.
+        await StampLastRunAsync();
+    }
+
+    private async Task StampLastRunAsync()
+    {
+        try
+        {
+            var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = await dbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings.OrderBy(x => x.Id).FirstOrDefaultAsync();
+            if (settings is null)
+                return;
+
+            settings.LastTimerRunUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Letzter Timer-Lauf konnte nicht gespeichert werden");
         }
     }
 }

@@ -31,7 +31,8 @@ CREATE TABLE ExportSettings (
     AuditCsvEnabled INTEGER NOT NULL DEFAULT 1,
     UseAuditCsvAsCentralSource INTEGER NOT NULL DEFAULT 0,
     LocalAuditCsvFolder TEXT NOT NULL DEFAULT '',
-    ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate'
+    ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate',
+    LastTimerRunUtc TEXT NULL
 );";
 
     internal static string GetHanaServersCreateSql() => @"

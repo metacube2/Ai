@@ -64,6 +64,8 @@
     <Compile Remove="SageSpainExportPackage\**\*.cs" />
     <Compile Remove="SageSpainFinalExportPackage\**\*.cs" />
     <Compile Remove="verify_probe_out*\**\*.cs" />
+    <Compile Remove="whisper\**\*.cs" />
+    <Compile Remove="spartenlogic\**\*.cs" />
     <Content Remove="TrafagSalesExporter.Tests\**\*" />
     <Content Remove="Tools\**\*" />
     <Content Remove=".tmp_tools\**\*" />
@@ -73,6 +75,8 @@
     <Content Remove="SageSpainExportPackage\**\*" />
     <Content Remove="SageSpainFinalExportPackage\**\*" />
     <Content Remove="verify_probe_out*\**\*" />
+    <Content Remove="whisper\**\*" />
+    <Content Remove="spartenlogic\**\*" />
     <EmbeddedResource Remove="TrafagSalesExporter.Tests\**\*" />
     <EmbeddedResource Remove="Tools\**\*" />
     <EmbeddedResource Remove=".tmp_tools\**\*" />
@@ -82,6 +86,8 @@
     <EmbeddedResource Remove="SageSpainExportPackage\**\*" />
     <EmbeddedResource Remove="SageSpainFinalExportPackage\**\*" />
     <EmbeddedResource Remove="verify_probe_out*\**\*" />
+    <EmbeddedResource Remove="whisper\**\*" />
+    <EmbeddedResource Remove="spartenlogic\**\*" />
     <None Remove="TrafagSalesExporter.Tests\**\*" />
     <None Remove="Tools\**\*" />
     <None Remove=".tmp_tools\**\*" />
@@ -91,6 +97,8 @@
     <None Remove="SageSpainExportPackage\**\*" />
     <None Remove="SageSpainFinalExportPackage\**\*" />
     <None Remove="verify_probe_out*\**\*" />
+    <None Remove="whisper\**\*" />
+    <None Remove="spartenlogic\**\*" />
   </ItemGroup>
 
   <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">

@@ -14,6 +14,13 @@ public class ExportSettings
     public bool UseAuditCsvAsCentralSource { get; set; }
     public string LocalAuditCsvFolder { get; set; } = string.Empty;
     public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
+
+    /// <summary>
+    /// Zeitpunkt (UTC) des letzten automatischen Timer-Exports. Dient dem Nachhol-Lauf:
+    /// War der Prozess zur geplanten Zeit nicht aktiv, wird beim naechsten Start erkannt,
+    /// dass heute noch kein Lauf stattfand, und der Export einmalig nachgeholt.
+    /// </summary>
+    public DateTime? LastTimerRunUtc { get; set; }
 }
 
 public static class ExchangeRateDateFields

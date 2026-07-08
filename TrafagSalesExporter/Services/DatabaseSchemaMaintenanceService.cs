@@ -33,6 +33,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "UseAuditCsvAsCentralSource", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "ExportSettings", "LocalAuditCsvFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "ExchangeRateDateField", "TEXT NOT NULL DEFAULT 'PostingDate'");
+        AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
         AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
         EnsureTransformationTable(db);
