@@ -77,6 +77,18 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         return $"COALESCE({itemAlias}.Loekz, '') = '' AND COALESCE({itemAlias}.Mstae, '') NOT IN ({statusList})";
     }
 
+    // Belegtyp-Filter (Marcos Trennung): nur echte Bestellungen (EKKO.Bstyp='F') ohne Umlagerung
+    // (EKKO.Bsart='UB'); schliesst Anfragen (A) und Kontrakt-Belege (K) aus. Leerer Bstyp
+    // (z.B. Bestandsdaten vor dem naechsten Full Load) wird bewusst eingeschlossen, damit die
+    // Zahlen beim Modell-/Feld-Rollout nicht schlagartig auf 0 fallen. headerAlias = EKKO ('k').
+    private static string OrderTypeFilterSql(PurchasingDashboardFilter filter, string headerAlias)
+    {
+        if (!filter.OrdersOnly)
+            return "1 = 1";
+
+        return $"(COALESCE({headerAlias}.Bstyp, '') = '' OR ({headerAlias}.Bstyp = 'F' AND COALESCE({headerAlias}.Bsart, '') <> 'UB'))";
+    }
+
 
     public async Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default)
     {
@@ -188,8 +200,15 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         var eketPeriod = $"e.Eindt >= '{from}' AND e.Eindt <= '{to}'";
         // Offene Positionen: nur Untergrenze (Von-Filter). Keine Obergrenze auf heute, sonst faellt
         // der gesamte zukuenftige Zulauf aus offenem Wert/Menge und Liefertermin-Risiko heraus.
-        var eketOpenPeriod = $"e.Eindt >= '{from}'";
-        var activeItemFilter = ActiveItemFilterSql(filter, "p");
+        // Endgelieferte Positionen (EKPO.Elikz='X') zaehlen nicht mehr als offen (M7); da alle
+        // Offen-Queries EKPO als p joinen, ist der Ausschluss hier zentral eingehaengt.
+        var endDelivered = filter.ExcludeEndDelivered ? " AND COALESCE(p.Elikz, '') <> 'X'" : string.Empty;
+        var eketOpenPeriod = $"e.Eindt >= '{from}'{endDelivered}";
+        // Ueberfaellig: offene Einteilung, deren Liefertermin bereits in der Vergangenheit liegt.
+        var eketOverduePeriod = $"{eketOpenPeriod} AND date(e.Eindt) < date('now', 'localtime')";
+        // Aktiv-Filter (Loeschkennzeichen/Materialstatus auf p) plus Belegtyp-Trennung (auf k).
+        // Wird von allen Spend-/Offen-Queries genutzt; diese joinen sowohl EKPO (p) als auch EKKO (k).
+        var activeItemFilter = $"({ActiveItemFilterSql(filter, "p")}) AND ({OrderTypeFilterSql(filter, "k")})";
         state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
@@ -234,6 +253,7 @@ WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + ";", cancellationToken
 SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
 WHERE " + activeItemFilter + " AND " + eketOpenPeriod + ";", cancellationToken);
         state.OpenValueSample = await ExecuteScalarDecimalAsync(conn, @"
 SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
@@ -252,6 +272,46 @@ FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
 WHERE " + activeItemFilter + " AND " + eketOpenPeriod + " AND COALESCE(k.Konnr, '') <> '';", cancellationToken);
+        // Ueberfaelliger offener Wert/Menge und Anzahl ueberfaelliger Positionen. Gleiche Join-/
+        // Filterstruktur wie der offene Wert, zusaetzlich Liefertermin in der Vergangenheit.
+        state.OverdueValueSample = await ExecuteScalarDecimalAsync(conn, @"
+SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+    " + ChfUnitPriceSql() + @"), 0)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
+        state.OverdueQuantitySample = await ExecuteScalarDecimalAsync(conn, @"
+SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
+        state.OverduePositionCount = await ExecuteScalarIntAsync(conn, @"
+SELECT COUNT(DISTINCT e.Ebeln || '|' || e.Ebelp)
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
+        state.OverduePositionRows = await ExecuteAnalysisRowsAsync(conn, @"
+SELECT
+    " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' / ' || COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Label,
+    'CHF ' || printf('%,.0f', SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+        " + ChfUnitPrice + @")) AS Value,
+    'Faellig seit ' || COALESCE(MIN(e.Eindt), 'ohne Termin') AS Detail,
+    'High' AS Severity
+FROM PurchasingEketCache e
+LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
+WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+  AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
+ORDER BY SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
+    " + ChfUnitPrice + @") DESC
+LIMIT 10;", cancellationToken);
         state.TopSupplierLabel = await ExecuteTopLabelAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
@@ -408,6 +468,10 @@ WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT 
 GROUP BY Year
 ORDER BY Year;", cancellationToken);
         state.PriceTrendChartRows = state.PriceVarianceChartRows.ToList();
+        // Preisentwicklung je Artikel: Top-N-Artikel nach Spend, mengengewichteter Durchschnitts-
+        // Stueckpreis je Jahr, plus Trend gegenueber dem letzten Vorjahr mit Daten. Das entspricht
+        // der PBIX-Artikel-Achse und ist fachlich aussagekraeftiger als ein Minimum ueber alle Artikel.
+        state.ArticlePriceTrendRows = await ExecuteArticlePriceTrendRowsAsync(conn, joinedEkkoPeriod, activeItemFilter, cancellationToken);
 
         state.SpendConcentrationChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
@@ -744,6 +808,98 @@ ORDER BY Supplier, Year;";
                 row.Value.Values.Sum()))
             .OrderByDescending(row => row.Total)
             .Take(40)
+            .ToList();
+    }
+
+    // Preisentwicklung je Artikel: Top-N-Artikel nach CHF-Spend, danach mengengewichteter
+    // Durchschnitts-Stueckpreis (CHF) je Jahr. Der YoY-Trend vergleicht das letzte Jahr mit Daten
+    // gegen das davor liegende Jahr mit Daten (nicht zwingend das direkte Vorjahr).
+    private static async Task<List<PurchasingIdeaAnalysisRow>> ExecuteArticlePriceTrendRowsAsync(
+        SqliteConnection conn,
+        string joinedEkkoPeriod,
+        string activeItemFilter,
+        CancellationToken cancellationToken)
+    {
+        const int topArticleCount = 8;
+        var pricesByArticle = new Dictionary<string, SortedDictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+WITH article_spend AS (
+    SELECT COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
+           SUM(" + ChfNetValue + @") AS TotalSpend
+    FROM PurchasingEkpoCache p
+    LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+    WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+    GROUP BY Article
+    ORDER BY TotalSpend DESC
+    LIMIT " + topArticleCount.ToString(CultureInfo.InvariantCulture) + @"
+)
+SELECT COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       CASE WHEN SUM(CAST(p.Menge AS REAL)) = 0 THEN 0
+            ELSE SUM(" + ChfNetValue + @") / SUM(CAST(p.Menge AS REAL)) END AS Price
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+JOIN article_spend a ON a.Article = COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
+WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+GROUP BY Article, Year
+ORDER BY Article, Year;";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var article = reader.IsDBNull(0) ? "ohne Artikel" : reader.GetString(0);
+            var year = Convert.ToInt32(reader.GetValue(1), CultureInfo.InvariantCulture);
+            var price = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+            if (price <= 0)
+                continue;
+
+            if (!pricesByArticle.TryGetValue(article, out var byYear))
+            {
+                byYear = [];
+                pricesByArticle[article] = byYear;
+            }
+
+            byYear[year] = price;
+        }
+
+        var rows = new List<PurchasingIdeaAnalysisRow>();
+        foreach (var (article, byYear) in pricesByArticle)
+        {
+            if (byYear.Count == 0)
+                continue;
+
+            var years = byYear.Keys.ToList();
+            var currentYear = years[^1];
+            var currentPrice = byYear[currentYear];
+            var detail = $"Jahr {currentYear}";
+            var severity = "Medium";
+
+            if (years.Count >= 2)
+            {
+                var previousYear = years[^2];
+                var previousPrice = byYear[previousYear];
+                if (previousPrice > 0)
+                {
+                    var changePercent = (currentPrice - previousPrice) / previousPrice * 100m;
+                    var arrow = changePercent > 0 ? "+" : string.Empty;
+                    detail = $"{previousYear}: CHF {previousPrice:N2} -> {currentYear}: CHF {currentPrice:N2} | {arrow}{changePercent:N1}%";
+                    // High = Preis deutlich gestiegen (Kostenrisiko), Low = gesunken (Einsparung).
+                    severity = changePercent > 2m ? "High" : changePercent < -2m ? "Low" : "Medium";
+                }
+            }
+
+            rows.Add(new PurchasingIdeaAnalysisRow(
+                article,
+                $"CHF {currentPrice:N2}",
+                detail,
+                severity));
+        }
+
+        return rows
+            .OrderByDescending(row => row.Severity == "High")
+            .ThenBy(row => row.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 

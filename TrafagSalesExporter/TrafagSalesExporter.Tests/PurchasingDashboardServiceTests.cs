@@ -123,6 +123,113 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(500m, state.ContractValueSample);
     }
 
+    [Fact]
+    public async Task LoadAsync_Overdue_Counts_Only_Past_Due_Open_Positions()
+    {
+        // Phase 1.1: Ueberfaelliger Wert/Menge/Anzahl zaehlen nur offene Einteilungen, deren
+        // Liefertermin in der Vergangenheit liegt; zukuenftiger Zulauf zaehlt nicht.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, LastLoadedAtUtc) VALUES ('O1', '2020-06-01', 'L1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('O1', '10', 'M1', '10', '100', '2026-01-01');");
+        // Stueckwert 100/10 = 10. Ueberfaellig: offene Menge 10 -> Wert 100.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('O1', '10', '1', '2020-06-01', '10', '0', '2026-01-01');");
+        // Zukuenftige Einteilung derselben Position: offen, aber nicht ueberfaellig.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('O1', '10', '2', '2099-01-01', '5', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2019, 1, 1), new DateTime(2020, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        Assert.Equal(100m, state.OverdueValueSample);
+        Assert.Equal(10m, state.OverdueQuantitySample);
+        Assert.Equal(1, state.OverduePositionCount);
+        Assert.Single(state.OverduePositionRows);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ArticlePriceTrend_Computes_YoY_Trend_Per_Article()
+    {
+        // Phase 1.2: Preisentwicklung je Artikel = mengengewichteter Ø-Stueckpreis je Jahr mit
+        // YoY-Trend. M1 steigt von 10 (2023) auf 12 (2024) -> +20% -> Severity High.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, LastLoadedAtUtc) VALUES ('A1', '2023-05-01', 'L1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, LastLoadedAtUtc) VALUES ('A2', '2024-05-01', 'L1', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('A1', '10', 'M1', '10', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('A2', '10', 'M1', '10', '120', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('A1', '10', '1', '2023-05-15', '10', '10', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2020, 1, 1), new DateTime(2024, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        var row = Assert.Single(state.ArticlePriceTrendRows);
+        Assert.Equal("M1", row.Label);
+        Assert.Equal("High", row.Severity);
+        Assert.Contains("2023", row.Detail);
+        Assert.Contains("2024", row.Detail);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Spend_Counts_Only_Orders_Excluding_Inquiry_Contract_StockTransfer()
+    {
+        // Beleg-Mix-Trennung: nur echte Bestellungen (Bstyp F, Bsart <> UB) zaehlen zum Spend.
+        // Anfrage (A/AN), Kontrakt (K/MK) und Umlagerung (F/UB) werden ausgeschlossen.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O1', '2025-03-01', 'L1', 'F', 'NB', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O2', '2025-03-01', 'L1', 'A', 'AN', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O3', '2025-03-01', 'L1', 'K', 'MK', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O4', '2025-03-01', 'L1', 'F', 'UB', '2026-01-01');");
+        foreach (var ebeln in new[] { "O1", "O2", "O3", "O4" })
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('{ebeln}', '10', 'M1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('O1', '10', '1', '2025-03-15', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // Nur die echte Bestellung O1 (F/NB) zaehlt: 100.
+        Assert.Equal(100m, state.SpendChfSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Spend_Includes_All_DocTypes_When_OrdersOnly_Disabled()
+    {
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O1', '2025-03-01', 'L1', 'F', 'NB', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, Bsart, LastLoadedAtUtc) VALUES ('O2', '2025-03-01', 'L1', 'A', 'AN', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('O1', '10', 'M1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('O2', '10', 'M1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('O1', '10', '1', '2025-03-15', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31), OrdersOnly: false);
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // Ohne Belegtyp-Trennung zaehlen beide Belege: 200.
+        Assert.Equal(200m, state.SpendChfSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_OpenValue_Excludes_EndDelivered_Positions_Elikz_X()
+    {
+        // M7: endgelieferte Position (Elikz='X') zaehlt trotz offener EKET-Menge nicht als offen.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, LastLoadedAtUtc) VALUES ('F1', '2025-06-01', 'L1', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, Elikz, LastLoadedAtUtc) VALUES ('F1', '10', 'M1', '10', '100', '', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, Elikz, LastLoadedAtUtc) VALUES ('F1', '20', 'M2', '5', '100', 'X', '2026-01-01');");
+        // Beide Positionen haben offene Einteilungen; nur die nicht-endgelieferte (10) darf zaehlen.
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('F1', '10', '1', '2025-08-01', '10', '0', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('F1', '20', '1', '2025-08-01', '5', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // Position 10: offene Menge 10 * Stueckwert 10 = 100. Position 20 (Elikz X) ausgeschlossen.
+        Assert.Equal(100m, state.OpenValueSample);
+        Assert.Equal(10m, state.OpenQuantitySample);
+    }
+
     private async Task SeedAsync()
     {
         await ExecuteAsync(
@@ -152,6 +259,7 @@ CREATE TABLE PurchasingEkkoCache (
     Lifnr TEXT NOT NULL DEFAULT '',
     SupplierName TEXT NOT NULL DEFAULT '',
     Bukrs TEXT NOT NULL DEFAULT '',
+    Bstyp TEXT NOT NULL DEFAULT '',
     Bsart TEXT NOT NULL DEFAULT '',
     Konnr TEXT NOT NULL DEFAULT '',
     Waers TEXT NOT NULL DEFAULT '',
@@ -171,6 +279,8 @@ CREATE TABLE PurchasingEkpoCache (
     Netwr TEXT NOT NULL DEFAULT '0',
     Loekz TEXT NOT NULL DEFAULT '',
     Mstae TEXT NOT NULL DEFAULT '',
+    Elikz TEXT NOT NULL DEFAULT '',
+    Ktmng TEXT NOT NULL DEFAULT '0',
     RawJson TEXT NOT NULL DEFAULT '',
     LastLoadedAtUtc TEXT NOT NULL,
     PRIMARY KEY (Ebeln, Ebelp)

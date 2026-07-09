@@ -10,7 +10,12 @@ public interface IPurchasingDashboardService
 public sealed record PurchasingDashboardFilter(
     DateTime FromDate,
     DateTime ToDate,
-    bool ExcludeDeletedItems = true)
+    bool ExcludeDeletedItems = true,
+    // Nur echte Bestellungen (EKKO.Bstyp='F' ohne Umlagerung UB) in Spend/Offen-KPIs; schliesst
+    // Anfragen (A/AN), Kontrakte (K/MK) und Umlagerungen (UB) aus (Marcos Forderung nach Trennung).
+    bool OrdersOnly = true,
+    // Endgelieferte Positionen (EKPO.Elikz='X') nicht mehr als offen zaehlen (M7).
+    bool ExcludeEndDelivered = true)
 {
     public string Label => $"{FromDate:yyyy-MM-dd} bis {ToDate:yyyy-MM-dd}";
 }
@@ -35,6 +40,11 @@ public sealed class PurchasingDashboardLiveState
     public decimal OpenQuantitySample { get; set; }
     public decimal OpenValueSample { get; set; }
     public decimal ContractValueSample { get; set; }
+    // Ueberfaellige offene Positionen (EKET.Eindt < heute, offene Menge > 0). Eigene KPI fuer die
+    // Offene-Bestellungen-Sicht, damit Rueckstand getrennt vom disponierten Zulauf sichtbar ist.
+    public decimal OverdueValueSample { get; set; }
+    public decimal OverdueQuantitySample { get; set; }
+    public int OverduePositionCount { get; set; }
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;
@@ -52,7 +62,9 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> DataQualityChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> PriceTrendChartRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> DeliveryRiskRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> OverduePositionRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> PriceVarianceRows { get; set; } = [];
+    public List<PurchasingIdeaAnalysisRow> ArticlePriceTrendRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> SpendConcentrationRows { get; set; } = [];
     public List<PurchasingIdeaAnalysisRow> DataQualityRows { get; set; } = [];
     public string Message { get; set; } = string.Empty;

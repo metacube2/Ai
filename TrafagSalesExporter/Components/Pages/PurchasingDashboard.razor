@@ -156,8 +156,8 @@
     case "kontrakte":
         <PurchasingSection TitleDe="Offene Verpflichtungen"
                            TitleEn="Open commitments"
-                           DescriptionDe="Restverpflichtungen werden aus EKET-Offenmenge und EKPO-Stueckwert berechnet. Die Hauptsicht priorisiert Lieferant und Artikel; Termine bleiben Detailinformation."
-                           DescriptionEn="Remaining commitments are calculated from EKET open quantity and EKPO unit value. The main view prioritises supplier and article; due dates remain detail information."
+                           DescriptionDe="Naeherung: Restwert nur fuer Abrufe zu Rahmenkontrakten (EKKO.Konnr gesetzt), aus EKET-Offenmenge und EKPO-Stueckwert. Echte Mengenkontrakte mit Ablaufdatum brauchen noch Kontraktbelege aus SAP; bis dahin ist dieser Wert eine Annaeherung und 0, wenn keine Konnr-Daten vorliegen."
+                           DescriptionEn="Approximation: remaining value only for call-offs against outline agreements (EKKO.Konnr set), from EKET open quantity and EKPO unit value. True quantity contracts with expiry dates still need contract documents from SAP; until then this value is an approximation and 0 when no Konnr data is present."
                            ChartTitleDe="Top Verpflichtungen nach Lieferant und Artikel"
                            ChartTitleEn="Top commitments by supplier and article"
                            Kpis="@ContractKpis"
@@ -1243,7 +1243,7 @@
     private IReadOnlyList<PurchasingIdeaAnalysisRow> SelectedIdeaRows => CurrentPurchasingPage switch
     {
         "ideen/liefertermin-risiko" => _liveState.DeliveryRiskRows,
-        "ideen/preisabweichung" => _liveState.PriceVarianceRows,
+        "ideen/preisabweichung" => _liveState.ArticlePriceTrendRows,
         "ideen/spend-konzentration" => _liveState.SpendConcentrationRows,
         "ideen/datenqualitaet" => _liveState.DataQualityRows,
         _ => []
@@ -1269,8 +1269,8 @@
         ],
         "ideen/preisabweichung" =>
         [
-            new("Artikelpreise", "Article prices", _liveState.PriceVarianceRows.Count.ToString("N0"), "PowerBI Pivot", "Power BI pivot"),
-            new("Min Stueckpreis", "Min unit price", _liveState.PriceVarianceChartRows.Count > 0 ? FormatChf(_liveState.PriceVarianceChartRows.Min(x => x.Value)) : "-", "Netwr/Menge", "Netwr/quantity"),
+            new("Artikel im Trend", "Articles in trend", _liveState.ArticlePriceTrendRows.Count.ToString("N0"), "Top nach Spend", "top by spend"),
+            new("Preis gestiegen", "Price increased", _liveState.ArticlePriceTrendRows.Count(x => x.Severity == "High").ToString("N0"), "> +2% ggue. Vorjahr", "> +2% vs. prior year"),
             new("Jahre", "Years", _liveState.PriceVarianceChartRows.Count.ToString("N0"), "EKKO.Bedat", "EKKO.Bedat"),
             new("Datenbasis", "Data basis", _liveState.EkpoLoaded ? "EKPO + EKKO" : "-", "Min(Netwr CHF/Stk)", "Min(Netwr CHF/unit)")
         ],
@@ -1305,15 +1305,15 @@
         [
             new("Faelligkeits-Buckets", "Due-date buckets", $"{_liveState.DeliveryRiskChartRows.Count:N0}", "EKET.Eindt", "SAP live"),
             new("Offener Wert", "Open value", FormatChf(_liveState.OpenValueSample), "EKET/EKPO", "SAP live"),
-            new("Hotlist", "Hotlist", $"{_liveState.DeliveryRiskRows.Count:N0}", "Lieferant / Artikel", "SAP live"),
+            new("Ueberfaelliger Wert", "Overdue value", FormatChf(_liveState.OverdueValueSample), $"{_liveState.OverduePositionCount:N0} Positionen", "SAP live"),
             new("Berechnung", "Calculation", "Menge - WEMNG", "EKET", "SAP live")
         ],
         "ideen/preisabweichung" =>
         [
-            new("PowerBI Kennzahl", "Power BI measure", "Min(Netwr CHF/Stk)", "EKPO", "SAP live"),
-            new("Preis", "Price", "NETWR / MENGE", "EKPO", "SAP live"),
+            new("Kennzahl", "Measure", "Mengengew. Ø CHF/Stk", "EKPO/EKKO", "SAP live"),
+            new("Preis", "Price", "SUM(Netwr CHF) / SUM(Menge)", "EKPO", "SAP live"),
             new("Jahresspalten", "Year columns", $"{_liveState.PriceVarianceChartRows.Count:N0}", "EKKO.Bedat Jahr", "SAP live"),
-            new("Hotlist", "Hotlist", $"{_liveState.PriceVarianceRows.Count:N0}", "Artikel / Jahr", "SAP live")
+            new("Artikel im Trend", "Articles in trend", $"{_liveState.ArticlePriceTrendRows.Count:N0}", "Top nach Spend / YoY", "SAP live")
         ],
         "ideen/spend-konzentration" =>
         [
@@ -1429,12 +1429,14 @@
         new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", "EKKOSet.Bedat", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Bereits beschafft", "Already purchased", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "-", "EKPO.Netwr", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Offener Bestellwert", "Open order value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "EKPO/EKET", _liveState.EketLoaded ? "SAP live" : "Simulation"),
-        new("Disponierter Zulauf", "Inbound already planned", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "-", "offene EKET-Menge * EKPO-Stueckwert", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Disponierter Zulauf", "Inbound already planned", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "-", "offene EKET-Menge * EKPO-Stueckwert", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Ueberfaelliger Wert", "Overdue value", _liveState.EketLoaded ? FormatChf(_liveState.OverdueValueSample) : "-", "EKET.Eindt < heute, offen", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Ueberfaellige Positionen", "Overdue items", _liveState.EketLoaded ? _liveState.OverduePositionCount.ToString("N0") : "-", "EKET Einteilungen mit Rueckstand", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
     [
-        new("Restverpflichtung", "Remaining commitment", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "EKET offen * EKPO Stueckwert", _liveState.EketLoaded ? "SAP live" : "Simulation"),
+        new("Restverpflichtung (Naeherung)", "Remaining commitment (approx.)", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "nur Abrufe mit EKKO.Konnr", _liveState.EketLoaded ? "SAP live" : "Simulation"),
         new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Faelligkeit", "Due date", _liveState.OpenValueChartRows.Count > 0 ? "als Detail verfuegbar" : "-", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
         new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "SupplierName wenn geliefert" : "wartet", "SupplierName / Lifnr", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")

@@ -50,8 +50,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var nowText = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             var ekkoFilter = fromDate.HasValue ? $"Bedat ge '{fromDate.Value:yyyy-MM-dd}'" : string.Empty;
 
-            var ekkoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Konnr,Waers,Wkurs", ekkoFilter, "Ebeln", cancellationToken);
-            var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
+            var ekkoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Bstyp,Bsart,Konnr,Waers,Wkurs", ekkoFilter, "Ebeln", cancellationToken);
+            var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Elikz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
             var eketRows = await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", string.Empty, "Ebeln,Ebelp,Etenr", cancellationToken);
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
@@ -97,7 +97,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var connection = await ResolveConnectionAsync(cancellationToken);
             using var client = CreateClient(connection.Username, connection.Password);
             var filter = $"Aedat ge '{deltaFrom:yyyy-MM-dd}'";
-            var changedEkko = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Konnr,Waers,Wkurs", filter, "Ebeln", cancellationToken);
+            var changedEkko = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Bstyp,Bsart,Konnr,Waers,Wkurs", filter, "Ebeln", cancellationToken);
             var changedEbelns = changedEkko
                 .Select(row => GetText(row, "Ebeln"))
                 .Where(value => !string.IsNullOrWhiteSpace(value))
@@ -117,7 +117,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             foreach (var chunk in ebelnKeys.Chunk(EbelnBatchSize))
             {
                 var ebelnFilter = string.Join(" or ", chunk.Select(ebeln => $"Ebeln eq '{ebeln}'"));
-                ekpoRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Bukrs,Werks", ebelnFilter, "Ebeln,Ebelp", cancellationToken));
+                ekpoRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Elikz,Bukrs,Werks", ebelnFilter, "Ebeln,Ebelp", cancellationToken));
                 eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", ebelnFilter, "Ebeln,Ebelp,Etenr", cancellationToken));
             }
 
@@ -245,8 +245,8 @@ WHERE COALESCE(e.Ebeln, '') <> '' AND CAST(e.Menge AS REAL) > CAST(e.Wemng AS RE
     private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> supplierNameMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bsart, Konnr, Waers, Wkurs, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $Konnr, $Waers, $Wkurs, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bstyp, Bsart, Konnr, Waers, Wkurs, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bstyp, $Bsart, $Konnr, $Waers, $Wkurs, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -256,6 +256,7 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $Konnr, $
                 ["$Lifnr"] = GetText(row, "Lifnr"),
                 ["$SupplierName"] = ResolveSupplierName(supplierNameMap, GetText(row, "Lifnr"), FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name"))),
                 ["$Bukrs"] = GetText(row, "Bukrs"),
+                ["$Bstyp"] = GetText(row, "Bstyp"),
                 ["$Bsart"] = GetText(row, "Bsart"),
                 ["$Konnr"] = GetText(row, "Konnr"),
                 ["$Waers"] = GetText(row, "Waers"),
@@ -268,8 +269,8 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bsart, $Konnr, $
     private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> materialStatusMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, Mstae, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -283,6 +284,8 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
                 ["$Netwr"] = GetText(row, "Netwr"),
                 ["$Loekz"] = GetText(row, "Loekz"),
                 ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, GetText(row, "Matnr")),
+                ["$Elikz"] = GetText(row, "Elikz"),
+                ["$Ktmng"] = GetText(row, "Ktmng"),
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);

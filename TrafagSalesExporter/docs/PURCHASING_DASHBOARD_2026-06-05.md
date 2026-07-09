@@ -316,6 +316,181 @@ Deploy:
 - Servercheck: Port 443 erreichbar.
 - Commit: `d5f329b Resolve purchasing supplier names from LFA1`.
 
+## Nachtrag 2026-07-08 Review Einkauf mit Power BI
+
+Kontext: Ingo und ein Kollege aus dem Einkauf haben das neu gebaute Einkaufsdashboard gemeinsam gegen Power BI/SAP-Erwartungen geprueft. Ziel war Zugriff, Navigation, Inhalte, Zahlen und fehlende Auswertungen abzugleichen.
+
+Zugriff und Navigation:
+
+- Der Kollege konnte den Navigationspunkt `Einkauf` anfangs nicht zuverlaessig aufklappen; nach mehrmaligem Versuch ging es. Netz-/Screen-Sharing-Qualitaet war zeitweise schlecht.
+- Struktur wurde erklaert: `Einkauf > Dashboard`, `Spend`, `Offene Bestellungen`, `Lieferanten`, `Kontrakte/Verpflichtungen`.
+- Anfangs wirkte es so, als ob in den Registern immer dasselbe angezeigt wird; Ursache: die Kopfdaten/KPI-Karten sind gleich, der Aufriss unten unterscheidet sich je Register.
+- Datumsfilter war zunaechst nicht gesetzt bzw. nicht sauber abgegrenzt. Nach Live-Anpassung aenderten sich die Zahlen deutlich; die Auswertung muss fuer Abnahmen immer mit explizitem Zeitraum gelesen werden.
+
+Beobachtete Werte:
+
+- `Offene Bestellungen` bzw. offene nicht geloeste Positionen: offener Wert ca. `18 Mio.`; im Review von beiden bestaetigt. Dieser Wert ist ein Abgleichswert fuer die naechste SAP-Pruefung.
+
+Offene fachliche Klaerungen:
+
+- `Offene Verpflichtungen` / Kontrakte: aktuell ist fachlich zu klaeren, ob Mengen-Kontrakte, offene Bestellungen oder nur offene Kontrakte einfliessen sollen.
+- Gewuenschte Trennung: Bei offenen Bestellungen nur Bestellungen; bei Kontrakten nur offene Kontrakte. Keine Vermischung der Logiken.
+- Zentrale Klaerung durch Ingo: zugrundeliegende SAP-Tabelle und Belegart/Quelle fuer Kontrakte (EKPO vs. Kontrakt-Beleg, ggf. `ECCO`/passende Einkaufs-Transaktion). Ingo konnte das im Termin nicht aus dem Stegreif bestaetigen.
+- Der technische Stand nach dem Formel-Review trennt offene Bestellwerte und Kontrakt-Restwerte ueber `EKKO.Konnr`, aber die fachliche SAP-Definition muss mit Einkauf/SAP noch bestaetigt und gegen Sollwerte geprueft werden.
+
+Bekannter Bug / produktiver Pruefpunkt:
+
+- Im Lieferanten-Register wird weiterhin eine Zahl statt Lieferantenname gesehen. Technisch wurde die LFA1-Namensaufloesung bereits implementiert; wenn produktiv noch Nummern sichtbar sind, ist wahrscheinlich ein Full Load/Delta mit LFA1-Namensbefuellung oder ein weiterer Mapping-/Band-Fix noetig.
+- Ingo arbeitet weiter am Aufriss/Band fuer die Lieferantendimension.
+
+Lieferanten-Performance:
+
+- Performance Score ist vorhanden.
+- Offen ist, ob der Einkauf diese Kennzahl tatsaechlich braucht; Kollege prueft dies im Kontext eines Memos zur Lieferantenbewertung.
+
+Datenanbindung / Aktualisierung:
+
+- Analogie QM: Fuer Florian Waechters Power-BI-Dashboard wurden Daten aus SAP-QM per automatisiertem CSV-Export bereitgestellt.
+- Ingo bietet fuer Einkauf denselben pragmatischen Weg an: passende Einkaufs-Transaktion nennen, automatisierter Export, taegliche Aktualisierung des Dashboards.
+- Voraussetzung: Einkauf benennt die fachlich richtige Transaktion/Quelle und die Soll-Spalten.
+
+Naechste Schritte:
+
+- Einkauf/Kollege: Soll-Daten und erwartete Zahlen fuer Gegenpruefung definieren; fehlende benoetigte Auswertungen auflisten.
+- Ingo: Zahlen gegen SAP verifizieren, Review-Inputs einarbeiten, Lieferanten-Anzeige-Bug klaeren/fixen, Kontrakt-/Bestellungslogik fachlich und technisch abgrenzen.
+- Abnahme: 18-Mio.-Offenwert, Lieferantenname statt Nummer, Zeitraumfilter und getrennte Bestell-/Kontraktlogik als konkrete Pruefpunkte verwenden.
+## Nachtrag 2026-07-09 Ergebnisse Analyse-Report (Z_PURCHASING_ANALYSE)
+
+Ingo hat `sap_purchasing_analyse_report.abap` (T76/100, Einkauf ab 2020) laufen lassen. Die
+Datenprofilierung bestaetigt mehrere Review-Punkte mit echten Zahlen und deckt einen neuen,
+fachlich wichtigen Befund auf (Beleg-Mix).
+
+**K1 Waehrung — bestaetigt kritisch und Richtung verifiziert:**
+
+- Belegverteilung: EUR 30'746 (65%), CHF 14'130 (30%), USD 2'277, GBP 25, leer 47. Die Mehrheit
+  ist NICHT CHF; das fruehere ungeprueft-CHF-Summieren war real falsch, nicht nur theoretisch.
+- BUKRS quasi nur `1100` (CH, Hauswaehrung CHF), wenige `1200`.
+- WKURS fuer EUR = `1.10000` (positiv). Damit ist die implementierte Regel
+  `WKURS > 0 => multiplizieren` korrekt (1 EUR = 1.10 CHF). K1-Code gilt als validiert; die
+  EUR-Belege werden nach CHF hochbewertet.
+- Nuance: WKURS ist der Bestellkurs zum Belegdatum (historisch), nicht der Tages-/Stichtagskurs.
+  Fuer Spend-Bewertung zum Bestellwert fachlich richtig; beim Power-BI-Abgleich beachten, falls
+  dort mit Stichtags- oder Monatskursen gerechnet wurde.
+
+**Neuer Befund — Beleg-Mix (Bestellung/Anfrage/Kontrakt/Umlagerung vermischt):**
+
+- BSTYP: `F`=41'342 (Bestellung), `A`=3'117 (Anfrage), `K`=2'766 (Kontrakt).
+- BSART: `NB`=41'326, `AN`=3'117 (Anfrage), `MK`=2'766 (Mengenkontrakt), `UB`=16 (Umlagerung).
+- Spend/offene Werte mischen aktuell alle diese Belegarten. Anfragen (A/AN) sind keine echten
+  Bestellungen; Kontrakte (K/MK) und Umlagerungen (UB) gehoeren nicht in den Bestell-Spend.
+  Das ist genau Marcos Forderung nach Trennung. **Erfordert Persistenz von `Bstyp`/`Bsart`.**
+- `Konnr` gesetzt bei 19'514/47'225 (41%) -> Kontraktabruf-Abgrenzung (K4) ist substanziell.
+
+**M7 Elikz — Impact bestaetigt gross:**
+
+- Offene Einteilungen: 14'840 mit `Elikz=''`, 2'672 mit `Elikz='X'` (endgeliefert).
+- Offener Wert gesamt 18'422'518 (Belegwaehrung, roh) = deckt Marcos "~18 Mio" aus dem Review.
+  Davon ueberfaellig 17'386'311; davon auf `Elikz='X'` **7'463'886** (40% -> zaehlt faelschlich
+  als offen). Nach M7 (und K1) verschiebt sich der Offenwert deutlich -> Abnahme-Sollwert mit
+  Marco neu baselinen.
+
+**Sofort nutzbar (Daten vorhanden und sauber):**
+
+- Region: `LAND1` 730/730 gefuellt (27 Laender: CH 495, DE 152, IT 16, AT 12, CN 8, US 8...).
+  `REGIO` nur 24 -> Beschaffungsregion ueber Land, nicht Regio.
+- Warengruppen: nur 20 Codes, alle mit Text (T023T). Vollstaendig erfasst (Seed moeglich).
+- Disponenten: 3'682 Materialien mit `Dispo`; Gruppen u.a. `001 rot/Einkauf` (1568),
+  `003 mso/Einkauf` (1281), `004 Betriebsmat` (542).
+- MBEW: `STPRS` 3'725/3'727 gefuellt, `SALK3`>0 bei 2'762 -> Standardkosten + Bestand verfuegbar.
+- EKBE: 97'193 WE-Zeilen (BEWTP=E), WE-BUDAT vs. Plan-EINDT vergleichbar -> Termintreue rechenbar.
+
+**Wichtigste offene SAP-Aktion (Modell-Erweiterung, blockiert die korrekten Zahlen):**
+
+- Der OData-Service muss `EKKO-BSTYP`, `EKKO-BSART`, `EKPO-ELIKZ` (und moeglichst `EKPO-KTMNG`)
+  als Properties fuehren. `Waers`/`Wkurs`/`Konnr` sind bereits im Modell (kein 400). `Bsart`/`Meins`
+  warfen frueher 400 -> Modell (MPC) muss ergaenzt werden. Ohne diese Felder lassen sich
+  Anfragen/Kontrakte/Umlagerungen nicht ausschliessen (Beleg-Mix) und Elikz=X nicht abziehen.
+- Zusaetzlich einmal `ZPOWERBI_EINKAUF_SRV/$metadata` liefern, um die exakten Property-Namen der
+  bereits verfuegbaren Sets (MARC/MBEW/EKBE/LFA1/QM) fuer die Loader-`$select` zu kennen.
+
+## Nachtrag 2026-07-09 Beleg-Mix-Trennung + Elikz + neue Felder persistiert
+
+Nach dem Analyse-Report wurden EKKO um `Bstyp`/`Bsart` und EKPO um `Elikz` (und `Ktmng`) im
+OData-Modell auf P ergaenzt. Der Code zieht diese Felder nun durch und wertet sie aus.
+
+Umgesetzt:
+
+- **Persistenz:** Schema + Schema-Maintenance (mit RawJson-Backfill) fuer
+  `PurchasingEkkoCache.Bstyp`/`Bsart` und `PurchasingEkpoCache.Elikz`/`Ktmng`. Loader-`$select`
+  erweitert (`EKKOSet` + `Bstyp,Bsart`; `EKPOSet` + `Elikz`; `Ktmng` war bereits im Select, wird
+  jetzt geschrieben) und in beiden Upserts (Full + Delta) gefuellt.
+- **Beleg-Mix-Trennung (Marcos Forderung):** Neuer Filter `OrdersOnly` (Default an). Spend/offene
+  KPIs zaehlen nur echte Bestellungen (`Bstyp='F'` ohne `Bsart='UB'`); Anfragen (A/AN), Kontrakte
+  (K/MK) und Umlagerungen (UB) fallen raus. Zentral in `activeItemFilter` eingehaengt (wirkt auf
+  alle Spend-/Offen-Queries). Leerer `Bstyp` (Bestandsdaten vor Full Load) wird bewusst
+  eingeschlossen -> keine Null-Werte beim Rollout.
+- **M7 Elikz:** Neuer Filter `ExcludeEndDelivered` (Default an). Endgelieferte Positionen
+  (`Elikz='X'`) zaehlen nicht mehr als offen; zentral in `eketOpenPeriod` eingehaengt (wirkt auf
+  offenen Wert/Menge, Ueberfaellig, Zulauf, Kontrakt-Restwert, Liefertermin-Risiko).
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal` -> `155/155` gruen, inkl. neuer Tests:
+  Beleg-Mix (nur F/NB zaehlt; A/K/UB raus), `OrdersOnly=false` (alles zaehlt), Elikz-Ausschluss.
+- Kein Deploy. Offen bei Ingo: OData-Auth/Test auf travp762 (Basic-Auth gab 401), danach
+  URL-Wechsel travt762->travp762 und ein Einkauf-Full-Load, damit `Bstyp/Bsart/Elikz/Ktmng`
+  real gefuellt sind (Backfill deckt nur, was schon im RawJson liegt).
+- Offen fachlich: echte "offene Kontrakte" (Bstyp='K' mit Restzielmenge) vs. jetzige
+  Konnr-Abruf-Naeherung; Abrufquote ueber `Ktmng` (Feld jetzt vorhanden). UI-Schalter fuer
+  `OrdersOnly`/`ExcludeEndDelivered` noch nicht gebaut (Default an; spaeter fuer Transparenz).
+
+## Nachtrag 2026-07-09 Umsetzung Phase 1 (Ueberfaellig, Preisentwicklung je Artikel, Kontrakt-Label)
+
+Grundlage: `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`. Umgesetzt wurde der
+code-seitig ohne externe Inputs machbare Teil von Phase 1; alles Uebrige (Referenzlisten,
+SAP-Metadaten-Checks, neue SAP-Objekte) ist in
+`docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` als Vorbereitungsauftrag beschrieben.
+
+- **Phase 1.1 Ueberfaellige Lieferpositionen:** Neue KPIs `OverdueValueSample`,
+  `OverdueQuantitySample`, `OverduePositionCount` und Drilldown `OverduePositionRows` im
+  Cache-Pfad (EKET-Einteilung mit `date(Eindt) < heute` und offener Menge > 0, gleiche
+  Join-/Loeschkennzeichen-Struktur wie der offene Wert). Sichtbar in `Offene Bestellungen`
+  (Ueberfaelliger Wert + Anzahl) und `Ideen > Liefertermin-Risiko`.
+- **Phase 1.2 Preisentwicklung je Artikel:** `ExecuteArticlePriceTrendRowsAsync` liefert die
+  Top-8-Artikel nach Spend mit mengengewichtetem Ø-Stueckpreis (CHF) je Jahr und YoY-Trend
+  (Vergleich der beiden letzten Jahre mit Daten; Severity High = > +2%, Low = < -2%). Die
+  Idee-Seite `Preisabweichung` zeigt jetzt diesen Artikel-Trend statt des fachlich schwachen
+  Min-Stueckpreis-Rankings. Der mengengewichtete Jahres-Index-Chart bleibt.
+- **Phase 1.5 Kontrakt-KPI:** `Offene Verpflichtungen` und die Restverpflichtungs-Zeile sind als
+  Naeherung gekennzeichnet ("nur Abrufe mit EKKO.Konnr"), inkl. Hinweis, dass echte
+  Mengenkontrakte mit Ablaufdatum noch Kontraktbelege aus SAP brauchen.
+
+Validierung:
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`
+- Ergebnis: `152/152` Tests gruen, inkl. neuer Tests fuer Ueberfaellig-Abgrenzung und
+  Artikel-Preistrend (YoY).
+- Kein Deploy (Deploy-Entscheid inkl. Phase-0-Full-Load offen, siehe Vorbereitungs-MD).
+
+Noch offen / vorzubereiten (siehe `PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md`):
+
+- Phase 1.3/1.4: Warengruppen-Text-CSV (T023T) und Disponenten-CSV (ZC23) von Ingo.
+- Phase 2: OData-Proben LFA1-Adresse/Elikz/MBEW/Kontraktbelege.
+- Phase 3: EKBE (Termintreue), QM-Export (Reklamation), RESB/MARC (Lager).
+
+## Nachtrag 2026-07-09 Anforderungs-Mail Marco / Umsetzungsplan
+
+Marco (Einkauf) hat nach dem Review vom 2026-07-08 die Anforderungen der Hauptanspruchsgruppen
+schriftlich umrissen (Echtzeit-Uebersicht Einkaufstransaktionen, 7 Aufrisse, KPIs zu
+Beschaffungstransaktionen/Lager/Lieferantenperformance). Die Anforderungen wurden gegen den
+Code- und Datenstand gemappt und in einen Phasenplan uebersetzt:
+
+- Arbeitsauftrag: `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`
+- Kernaussage: Phase 0 = Deploy Korrektur-Stand + Full Load + Soll-Abgleich; Phase 1 = Ausbau
+  mit vorhandenen Daten (Ueberfaellige Positionen, Preisentwicklung je Artikel, Warengruppen-
+  und Disponenten-Referenzlisten); Phase 2/3 = gezielte SAP-Erweiterungen (LFA1-Adresse, Elikz,
+  MBEW, Kontraktbelege, MARC, EKBE, RESB, QM).
+
 ## Ideen und Kennzahlen-Katalog
 
 Der Ideenbereich wurde fuer den Einkauf erweitert:

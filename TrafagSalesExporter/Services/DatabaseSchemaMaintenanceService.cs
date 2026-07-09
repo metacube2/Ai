@@ -335,6 +335,65 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         var addedKonnr = AddColumnIfMissing(db, "PurchasingEkkoCache", "Konnr", "TEXT NOT NULL DEFAULT ''");
         if (addedWaers || addedWkurs || addedKonnr)
             BackfillEkkoHeaderFieldsFromRawJson(conn, addedWaers, addedWkurs, addedKonnr);
+
+        // Belegtyp/Belegart (Bstyp/Bsart) zur Trennung Bestellung/Anfrage/Kontrakt/Umlagerung
+        // und Endlieferungskennzeichen (Elikz) + Zielmenge (Ktmng) fuer Offen-/Abrufquoten-Logik.
+        var addedBstyp = AddColumnIfMissing(db, "PurchasingEkkoCache", "Bstyp", "TEXT NOT NULL DEFAULT ''");
+        var addedBsart = AddColumnIfMissing(db, "PurchasingEkkoCache", "Bsart", "TEXT NOT NULL DEFAULT ''");
+        if (addedBstyp || addedBsart)
+            BackfillEkkoDocTypeFromRawJson(conn, addedBstyp, addedBsart);
+
+        var addedElikz = AddColumnIfMissing(db, "PurchasingEkpoCache", "Elikz", "TEXT NOT NULL DEFAULT ''");
+        var addedKtmng = AddColumnIfMissing(db, "PurchasingEkpoCache", "Ktmng", "TEXT NOT NULL DEFAULT '0'");
+        if (addedElikz || addedKtmng)
+            BackfillEkpoItemFieldsFromRawJson(conn, addedElikz, addedKtmng);
+    }
+
+    // Einmaliger Backfill der EKKO-Belegtyp/-Belegart-Spalten aus RawJson (Bestandsdaten ohne Neu-Load).
+    private static void BackfillEkkoDocTypeFromRawJson(System.Data.Common.DbConnection conn, bool bstyp, bool bsart)
+    {
+        var assignments = new List<string>();
+        if (bstyp)
+            assignments.Add("Bstyp = COALESCE(json_extract(RawJson, '$.Bstyp'), '')");
+        if (bsart)
+            assignments.Add("Bsart = COALESCE(json_extract(RawJson, '$.Bsart'), '')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkkoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // RawJson kennt die Felder erst ab dem naechsten Full Load; bis dahin bleiben sie leer.
+            // Leerer Bstyp wird in der Auswertung bewusst als "einschliessen" behandelt (Rueckwaertskompatibel).
+        }
+    }
+
+    // Einmaliger Backfill der EKPO-Positionsfelder (Elikz/Ktmng) aus RawJson.
+    private static void BackfillEkpoItemFieldsFromRawJson(System.Data.Common.DbConnection conn, bool elikz, bool ktmng)
+    {
+        var assignments = new List<string>();
+        if (elikz)
+            assignments.Add("Elikz = COALESCE(json_extract(RawJson, '$.Elikz'), '')");
+        if (ktmng)
+            assignments.Add("Ktmng = COALESCE(json_extract(RawJson, '$.Ktmng'), '0')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkpoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // Siehe oben: Felder werden spaetestens beim naechsten Full Load korrekt geschrieben.
+        }
     }
 
     // Einmaliger Backfill neu ergaenzter EKKO-Spalten aus dem gespeicherten RawJson,
