@@ -4,7 +4,22 @@ Stand: 2026-07-02
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-07-07, Einkaufs- und HR-Dashboard-Formel-/Logik-Korrekturen (Review).
+- Letzter dokumentierter Deploy: 2026-07-10, Einkaufs-Korrekturen aus zwei Reviews (Marco) plus
+  neue Felder/Logik. Commit `335907c` (Spitze; enthaelt auch `6ed61e3` Beleg-Mix + `REQUIREMENTS.md`);
+  `dotnet test` `157/157` gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` Zeitstempel `10.07.2026 14:17:01`,
+  Laenge `2'782'208`; DB unveraendert; `Test-NetConnection ... -Port 443` -> True. Inhalt: Beleg-Mix-
+  Trennung (`Bstyp`/`Bsart`), Elikz-Ausschluss offener Werte, `Ktmng`/`Elikz`/`Bstyp`/`Bsart`
+  persistiert; Verpflichtungen/offene Werte zeitraumunabhaengig (Stand heute); Loeschkennzeichen-Split
+  (MSTAE 98/99 nur bei offenen Werten, nicht im historischen Spend); ueberfaellige Positionen;
+  Preisentwicklung je Artikel; Kachel-/Label-Fixes; Lieferanten-Register folgt Zeitraum.
+  **WICHTIG/RISIKO:** Der Loader-`$select` fordert jetzt `Bstyp`/`Bsart` (EKKO) und `Elikz` (EKPO).
+  Diese Properties fehlen auf **travp762** noch im OData-Modell (nur `Ktmng` vorhanden; per Probe
+  2026-07-10 bestaetigt). Ein Einkauf-Full-/Delta-Load gegen travp762 wuerde daher fehlschlagen bzw.
+  den Cache leeren -> **erst nach P-Modell-Rollout laden**; solange die zentrale SAP-URL auf dem
+  Test-Modell (mit Feldern) steht, ist der Load ok. Details: `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`,
+  `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` (A0).
+- Vorheriger dokumentierter Deploy: 2026-07-07, Einkaufs- und HR-Dashboard-Formel-/Logik-Korrekturen (Review).
 - Deploy 2026-07-07: Commit `1afac2f Fix purchasing and HR dashboard formula/logic issues`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `141/141` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt und wieder entfernt; produktive `BiDashboard.dll` Zeitstempel `07.07.2026 07:00:42`, Laenge `2'761'728`; `Test-NetConnection ... -Port 443` erfolgreich; produktive DB unveraendert vorhanden. Inhalt Einkauf: CHF-Bewertung via `EKKO.Waers/Wkurs`, Delta laedt Belege mit offener Menge nach (Wareneingaenge aendern `Aedat` nicht) + Batching, Zukunfts-Zulauf nicht mehr am Bis-Filter abgeschnitten, Kontrakt-Restwert via `Konnr` statt Kopie des offenen Werts, dynamische Jahresachse, gewichteter Preistrend, Label-/Filter-Fixes. Inhalt HR: Vorjahresvergleich aus ungefilterter Austrittsliste (war immer 0), Krankenquoten-Nenner auf heute gekappt bzw. aus Absenzdaten abgeleitet, Top-Absenzen pro Person aggregiert, YTD-konsistenter Fluktuations-Nenner, neue Datenqualitaets-Hinweise (SAP-Duplikate, Name-Join). NACHSORGE: einmal Einkauf-Full-Load noetig (`Einkauf > Ideen > Einkauf-Datenservice`), damit `Waers`/`Wkurs`/`Konnr` real gefuellt werden; Backfill deckt Bestandsdaten aus `RawJson` ab; HR braucht keinen Reload. Details: `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`, `docs/HR_KPI_KORREKTUREN_2026-07-06.md`.
 - Vorheriger dokumentierter Deploy: 2026-07-02, Finance-Logik-Korrekturen (Review).
 - Deploy 2026-07-02: Commit `5c9749c Fix finance dashboard correctness issues`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `136/136` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt und wieder entfernt; Port 443 erreichbar. Inhalt: Gutschriften-Vorzeichen im Excel-Nachweis, Classifier-Wortgrenzen, Audit-CSV-TSC-Fallback, Export-Quellenkonsistenz, Group-CHF pro Zeilenjahr + Missing-Rate-Hinweis. Offen/latent: Waehrungsmischung `Marge Original`/`%`.

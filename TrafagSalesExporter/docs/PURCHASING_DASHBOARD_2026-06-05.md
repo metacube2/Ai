@@ -359,6 +359,15 @@ Naechste Schritte:
 - Einkauf/Kollege: Soll-Daten und erwartete Zahlen fuer Gegenpruefung definieren; fehlende benoetigte Auswertungen auflisten.
 - Ingo: Zahlen gegen SAP verifizieren, Review-Inputs einarbeiten, Lieferanten-Anzeige-Bug klaeren/fixen, Kontrakt-/Bestellungslogik fachlich und technisch abgrenzen.
 - Abnahme: 18-Mio.-Offenwert, Lieferantenname statt Nummer, Zeitraumfilter und getrennte Bestell-/Kontraktlogik als konkrete Pruefpunkte verwenden.
+## Deploy 2026-07-10
+
+Alle Einkaufs-Aenderungen der Sessions 2026-07-09/10 (Beleg-Mix-Trennung, Elikz, neue Felder,
+Marco-Review-Korrekturen) wurden deployed. Commit `335907c`, `157/157` Tests gruen, produktive
+`BiDashboard.dll` `10.07.2026 14:17:01` (`2'782'208`), DB unveraendert, Port 443 erreichbar.
+RISIKO/NACHSORGE: Kein Einkauf-Full-/Delta-Load gegen travp762, solange `Bstyp`/`Bsart`/`Elikz`
+dort nicht im OData-Modell sind (sonst schlaegt der Loader-`$select` fehl / leert den Cache).
+Siehe `docs/rag/DEPLOYMENT.md` und `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` (A0).
+
 ## Nachtrag 2026-07-10 Review-Mail Marco und Sofort-Korrekturen
 
 Marco (Einkaufs-Koordinator) hat das produktive Cockpit durchgesehen; vollstaendiges Mapping in
