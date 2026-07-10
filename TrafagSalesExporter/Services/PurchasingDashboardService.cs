@@ -67,15 +67,23 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
 
     private static string ActiveItemFilterSql(PurchasingDashboardFilter filter, string itemAlias)
     {
-        // Loeschkennzeichen im Einkaufs-Cockpit: EKPO.Loekz gesetzt ODER Material-Status
-        // MARA-MSTAE in (98, 99). Mstae wird beim Full Load/Delta aus MARA001Set ueber
-        // EKPO.Matnr -> MARA.Matnr in PurchasingEkpoCache.Mstae uebernommen.
+        // Offen-Sichten: EKPO.Loekz gesetzt ODER Material-Status MARA-MSTAE in (98, 99).
+        // Mstae wird beim Full Load/Delta aus MARA001Set ueber EKPO.Matnr -> MARA.Matnr in
+        // PurchasingEkpoCache.Mstae uebernommen. Fuer den kuenftigen Zulauf ist ein heute
+        // auslaufendes/gesperrtes Material relevant und bleibt deshalb ausgeschlossen.
         if (!filter.ExcludeDeletedItems)
             return "1 = 1";
 
         var statusList = string.Join(", ", DeletedMaterialStatusCodes.Select(code => $"'{code}'"));
         return $"COALESCE({itemAlias}.Loekz, '') = '' AND COALESCE({itemAlias}.Mstae, '') NOT IN ({statusList})";
     }
+
+    // Spend-Sichten (Marco-Review 2026-07-10): Der heutige Materialstatus (MARA-MSTAE 98/99)
+    // darf den historischen Spend nicht filtern — ein 2023 eingekaufter Artikel behaelt seinen
+    // Spend-Anteil, auch wenn er heute Status 99 hat. Stornierte Positionen (EKPO.Loekz) bleiben
+    // ausgeschlossen, weil sie nie beschafft wurden.
+    private static string SpendItemFilterSql(PurchasingDashboardFilter filter, string itemAlias)
+        => filter.ExcludeDeletedItems ? $"COALESCE({itemAlias}.Loekz, '') = ''" : "1 = 1";
 
     // Belegtyp-Filter (Marcos Trennung): nur echte Bestellungen (EKKO.Bstyp='F') ohne Umlagerung
     // (EKKO.Bsart='UB'); schliesst Anfragen (A) und Kontrakt-Belege (K) aus. Leerer Bstyp
@@ -198,17 +206,21 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         var ekkoPeriod = $"Bedat >= '{from}' AND Bedat <= '{to}'";
         var joinedEkkoPeriod = $"k.Bedat >= '{from}' AND k.Bedat <= '{to}'";
         var eketPeriod = $"e.Eindt >= '{from}' AND e.Eindt <= '{to}'";
-        // Offene Positionen: nur Untergrenze (Von-Filter). Keine Obergrenze auf heute, sonst faellt
-        // der gesamte zukuenftige Zulauf aus offenem Wert/Menge und Liefertermin-Risiko heraus.
-        // Endgelieferte Positionen (EKPO.Elikz='X') zaehlen nicht mehr als offen (M7); da alle
+        // Offene Positionen sind eine Stand-heute-Sicht und bewusst ZEITRAUMUNABHAENGIG
+        // (Marco-Review 2026-07-10): weder Von- noch Bis-Filter schneiden offene Einteilungen ab.
+        // Keine Untergrenze, sonst verschwinden alte ueberfaellige Rueckstaende; keine Obergrenze,
+        // sonst faellt der zukuenftige Zulauf heraus (K3).
+        // Endgelieferte Positionen (EKPO.Elikz='X') zaehlen nicht als offen (M7); da alle
         // Offen-Queries EKPO als p joinen, ist der Ausschluss hier zentral eingehaengt.
         var endDelivered = filter.ExcludeEndDelivered ? " AND COALESCE(p.Elikz, '') <> 'X'" : string.Empty;
-        var eketOpenPeriod = $"e.Eindt >= '{from}'{endDelivered}";
+        var eketOpenPeriod = $"1 = 1{endDelivered}";
         // Ueberfaellig: offene Einteilung, deren Liefertermin bereits in der Vergangenheit liegt.
         var eketOverduePeriod = $"{eketOpenPeriod} AND date(e.Eindt) < date('now', 'localtime')";
-        // Aktiv-Filter (Loeschkennzeichen/Materialstatus auf p) plus Belegtyp-Trennung (auf k).
-        // Wird von allen Spend-/Offen-Queries genutzt; diese joinen sowohl EKPO (p) als auch EKKO (k).
-        var activeItemFilter = $"({ActiveItemFilterSql(filter, "p")}) AND ({OrderTypeFilterSql(filter, "k")})";
+        // Zwei Positionsfilter (beide inkl. Belegtyp-Trennung auf k):
+        // - Spend/Historie: nur stornierte Positionen (Loekz) raus, heutiger Materialstatus egal.
+        // - Offen/Zulauf: zusaetzlich MARA-MSTAE 98/99 raus.
+        var spendItemFilter = $"({SpendItemFilterSql(filter, "p")}) AND ({OrderTypeFilterSql(filter, "k")})";
+        var openItemFilter = $"({ActiveItemFilterSql(filter, "p")}) AND ({OrderTypeFilterSql(filter, "k")})";
         state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
@@ -229,24 +241,24 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
 SELECT COUNT(DISTINCT k.Ebeln)
 FROM PurchasingEkkoCache k
 JOIN PurchasingEkpoCache p ON p.Ebeln = k.Ebeln
-WHERE {joinedEkkoPeriod} AND {activeItemFilter};", cancellationToken);
+WHERE {joinedEkkoPeriod} AND {spendItemFilter};", cancellationToken);
         state.PositionSampleCount = await ExecuteScalarIntAsync(conn, $@"
 SELECT COUNT(1)
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE {joinedEkkoPeriod} AND {activeItemFilter};", cancellationToken);
+WHERE {joinedEkkoPeriod} AND {spendItemFilter};", cancellationToken);
         state.ScheduleSampleCount = await ExecuteScalarIntAsync(conn, $"SELECT COUNT(1) FROM PurchasingEketCache e WHERE {eketPeriod};", cancellationToken);
         state.SupplierCount = await ExecuteScalarIntAsync(conn, $@"
 SELECT COUNT(DISTINCT k.Lifnr)
 FROM PurchasingEkkoCache k
 JOIN PurchasingEkpoCache p ON p.Ebeln = k.Ebeln
-WHERE k.Lifnr <> '' AND {joinedEkkoPeriod} AND {activeItemFilter} AND CAST(p.Netwr AS REAL) <> 0;", cancellationToken);
+WHERE k.Lifnr <> '' AND {joinedEkkoPeriod} AND {spendItemFilter} AND CAST(p.Netwr AS REAL) <> 0;", cancellationToken);
         state.LatestOrderDate = await ExecuteScalarDateAsync(conn, $"SELECT MAX(Bedat) FROM PurchasingEkkoCache WHERE {ekkoPeriod};", cancellationToken);
         state.SpendChfSample = await ExecuteScalarDecimalAsync(conn, @"
 SELECT COALESCE(SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @"), 0)
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + ";", cancellationToken);
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + ";", cancellationToken);
         // Offene Menge: gleiche Join-/Filterstruktur wie offener Wert, damit Menge und Wert
         // konsistent dieselben (aktiven, nicht geloeschten) Positionen abbilden.
         state.OpenQuantitySample = await ExecuteScalarDecimalAsync(conn, @"
@@ -254,14 +266,14 @@ SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + ";", cancellationToken);
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + ";", cancellationToken);
         state.OpenValueSample = await ExecuteScalarDecimalAsync(conn, @"
 SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
     " + ChfUnitPriceSql() + @"), 0)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + ";", cancellationToken);
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + ";", cancellationToken);
         // Kontrakt-Restwert: offener Restwert nur fuer Abrufe zu Rahmenkontrakten (EKKO.Konnr gesetzt),
         // nicht mehr als blosse Kopie des offenen Bestellwerts. Ohne Konnr-Daten bleibt der Wert 0
         // und signalisiert fachlich korrekt, dass noch keine Kontrakte abgegrenzt sind.
@@ -271,7 +283,7 @@ SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + " AND COALESCE(k.Konnr, '') <> '';", cancellationToken);
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + " AND COALESCE(k.Konnr, '') <> '';", cancellationToken);
         // Ueberfaelliger offener Wert/Menge und Anzahl ueberfaelliger Positionen. Gleiche Join-/
         // Filterstruktur wie der offene Wert, zusaetzlich Liefertermin in der Vergangenheit.
         state.OverdueValueSample = await ExecuteScalarDecimalAsync(conn, @"
@@ -280,21 +292,21 @@ SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+WHERE " + openItemFilter + " AND " + eketOverduePeriod + @"
   AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
         state.OverdueQuantitySample = await ExecuteScalarDecimalAsync(conn, @"
 SELECT COALESCE(SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0)), 0)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+WHERE " + openItemFilter + " AND " + eketOverduePeriod + @"
   AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
         state.OverduePositionCount = await ExecuteScalarIntAsync(conn, @"
 SELECT COUNT(DISTINCT e.Ebeln || '|' || e.Ebelp)
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+WHERE " + openItemFilter + " AND " + eketOverduePeriod + @"
   AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0;", cancellationToken);
         state.OverduePositionRows = await ExecuteAnalysisRowsAsync(conn, @"
 SELECT
@@ -306,7 +318,7 @@ SELECT
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOverduePeriod + @"
+WHERE " + openItemFilter + " AND " + eketOverduePeriod + @"
   AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
 GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
@@ -316,7 +328,7 @@ LIMIT 10;", cancellationToken);
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 1;", "Lieferant", cancellationToken);
@@ -324,7 +336,7 @@ LIMIT 1;", "Lieferant", cancellationToken);
 SELECT COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe') AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
 ORDER BY Value DESC
 LIMIT 1;", "Warengruppe", cancellationToken);
@@ -336,7 +348,7 @@ SELECT
     SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel'), " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(substr(k.Bedat, 1, 7), 'ohne Datum')
 ORDER BY Value DESC
 LIMIT 1;", "Artikel", cancellationToken);
@@ -344,16 +356,16 @@ LIMIT 1;", "Artikel", cancellationToken);
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
-        state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, activeItemFilter, cancellationToken);
+        state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
         state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND k.Bedat >= '" + DateTime.Today.Year.ToString(CultureInfo.InvariantCulture) + @"-01-01' AND k.Bedat <= '" + DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + @"'
+WHERE " + spendItemFilter + " AND k.Bedat >= '" + DateTime.Today.Year.ToString(CultureInfo.InvariantCulture) + @"-01-01' AND k.Bedat <= '" + DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + @"'
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 10;", cancellationToken);
@@ -364,7 +376,7 @@ SELECT COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + @"
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + @"
 GROUP BY COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
 ORDER BY Label
 LIMIT 6;", cancellationToken);
@@ -377,7 +389,7 @@ SELECT
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
 GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
@@ -387,14 +399,14 @@ LIMIT 6;", cancellationToken);
         state.TopCommitmentLabel = state.CommitmentDetailChartRows.Count > 0
             ? $"{state.CommitmentDetailChartRows[0].Label}: CHF {state.CommitmentDetailChartRows[0].Value:N0}"
             : string.Empty;
-        await ApplyIdeaAnalyticsAsync(conn, state, joinedEkkoPeriod, eketOpenPeriod, activeItemFilter, cancellationToken);
+        await ApplyIdeaAnalyticsAsync(conn, state, joinedEkkoPeriod, eketOpenPeriod, spendItemFilter, openItemFilter, cancellationToken);
         state.CacheStatus = latestStatus.Status;
         state.CacheCompletedAtUtc = latestStatus.CompletedAtUtc;
         state.Message = $"Einkauf Cache geladen fuer {filter.Label}: EKKO={state.PurchaseOrderCount:N0}, EKPO={state.PositionSampleCount:N0}, EKET={state.ScheduleSampleCount:N0}. {latestStatus.Message}";
         return true;
     }
 
-    private static async Task ApplyIdeaAnalyticsAsync(SqliteConnection conn, PurchasingDashboardLiveState state, string joinedEkkoPeriod, string eketOpenPeriod, string activeItemFilter, CancellationToken cancellationToken)
+    private static async Task ApplyIdeaAnalyticsAsync(SqliteConnection conn, PurchasingDashboardLiveState state, string joinedEkkoPeriod, string eketOpenPeriod, string spendItemFilter, string openItemFilter, CancellationToken cancellationToken)
     {
         state.DeliveryRiskChartRows = await ExecuteChartRowsAsync(conn, @"
 WITH open_rows AS (
@@ -410,7 +422,7 @@ WITH open_rows AS (
     FROM PurchasingEketCache e
     LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-    WHERE " + activeItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+    WHERE " + openItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
 )
 SELECT Label, SUM(OpenValue) AS Value
 FROM open_rows
@@ -426,7 +438,7 @@ SELECT
 FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
-WHERE " + activeItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+WHERE " + openItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
 GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
     " + ChfUnitPrice + @") DESC
@@ -441,7 +453,7 @@ WITH priced AS (
         MIN(CASE WHEN CAST(p.Menge AS REAL) = 0 THEN NULL ELSE " + ChfNetValue + @" / CAST(p.Menge AS REAL) END) AS UnitPrice
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+    WHERE " + spendItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
     GROUP BY Supplier, Article, Year
 )
 SELECT
@@ -464,20 +476,20 @@ SELECT substr(k.Bedat, 1, 4) AS Year,
             ELSE SUM(" + ChfNetValue + @") / SUM(CAST(p.Menge AS REAL)) END AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
 GROUP BY Year
 ORDER BY Year;", cancellationToken);
         state.PriceTrendChartRows = state.PriceVarianceChartRows.ToList();
         // Preisentwicklung je Artikel: Top-N-Artikel nach Spend, mengengewichteter Durchschnitts-
         // Stueckpreis je Jahr, plus Trend gegenueber dem letzten Vorjahr mit Daten. Das entspricht
         // der PBIX-Artikel-Achse und ist fachlich aussagekraeftiger als ein Minimum ueber alle Artikel.
-        state.ArticlePriceTrendRows = await ExecuteArticlePriceTrendRowsAsync(conn, joinedEkkoPeriod, activeItemFilter, cancellationToken);
+        state.ArticlePriceTrendRows = await ExecuteArticlePriceTrendRowsAsync(conn, joinedEkkoPeriod, spendItemFilter, cancellationToken);
 
         state.SpendConcentrationChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 10;", cancellationToken);
@@ -492,7 +504,7 @@ SELECT
          ELSE 'Low' END AS Severity
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + " AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY SUM(" + ChfNetValue + @") DESC
 LIMIT 10;", cancellationToken);
@@ -758,7 +770,7 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
     private static async Task<List<PurchasingSupplierYearSpendRow>> ExecuteSupplierYearSpendRowsAsync(
         SqliteConnection conn,
         PurchasingDashboardFilter filter,
-        string activeItemFilter,
+        string spendItemFilter,
         CancellationToken cancellationToken)
     {
         var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
@@ -779,7 +791,7 @@ SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
        SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-WHERE " + activeItemFilter + @"
+WHERE " + spendItemFilter + @"
   AND k.Bedat >= '" + from + @"'
   AND k.Bedat <= '" + to + @"'
   AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
@@ -817,7 +829,7 @@ ORDER BY Supplier, Year;";
     private static async Task<List<PurchasingIdeaAnalysisRow>> ExecuteArticlePriceTrendRowsAsync(
         SqliteConnection conn,
         string joinedEkkoPeriod,
-        string activeItemFilter,
+        string spendItemFilter,
         CancellationToken cancellationToken)
     {
         const int topArticleCount = 8;
@@ -830,7 +842,7 @@ WITH article_spend AS (
            SUM(" + ChfNetValue + @") AS TotalSpend
     FROM PurchasingEkpoCache p
     LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
-    WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+    WHERE " + spendItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
     GROUP BY Article
     ORDER BY TotalSpend DESC
     LIMIT " + topArticleCount.ToString(CultureInfo.InvariantCulture) + @"
@@ -842,7 +854,7 @@ SELECT COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Art
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 JOIN article_spend a ON a.Article = COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
-WHERE " + activeItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
+WHERE " + spendItemFilter + " AND CAST(p.Menge AS REAL) > 0 AND k.Bedat IS NOT NULL AND k.Bedat <> '' AND " + joinedEkkoPeriod + @"
 GROUP BY Article, Year
 ORDER BY Article, Year;";
 

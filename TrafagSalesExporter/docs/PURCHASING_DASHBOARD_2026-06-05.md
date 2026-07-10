@@ -359,6 +359,29 @@ Naechste Schritte:
 - Einkauf/Kollege: Soll-Daten und erwartete Zahlen fuer Gegenpruefung definieren; fehlende benoetigte Auswertungen auflisten.
 - Ingo: Zahlen gegen SAP verifizieren, Review-Inputs einarbeiten, Lieferanten-Anzeige-Bug klaeren/fixen, Kontrakt-/Bestellungslogik fachlich und technisch abgrenzen.
 - Abnahme: 18-Mio.-Offenwert, Lieferantenname statt Nummer, Zeitraumfilter und getrennte Bestell-/Kontraktlogik als konkrete Pruefpunkte verwenden.
+## Nachtrag 2026-07-10 Review-Mail Marco und Sofort-Korrekturen
+
+Marco (Einkaufs-Koordinator) hat das produktive Cockpit durchgesehen; vollstaendiges Mapping in
+`docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`. Sofort umgesetzt (157/157 Tests gruen,
+kein Deploy):
+
+- **Verpflichtungen Stand heute:** Offene Positionen sind jetzt komplett zeitraumunabhaengig
+  (Von-Untergrenze entfernt); die Kachel `Verpflichtungen` zeigt den offenen
+  Bestell-/Abrufwert Stand heute (`OpenValueSample`) statt des Konnr-Restwerts im Zeitraum.
+- **Loeschkennzeichen-Split:** MARA-MSTAE 98/99 filtert den historischen Spend nicht mehr
+  (heutiger Status vs. 2023er Einkauf); Storno (`Loekz`) bleibt im Spend draussen. Offene
+  Werte/Zulauf schliessen weiterhin Loekz UND MSTAE 98/99 aus. Getrennte Filter
+  `SpendItemFilterSql` / `ActiveItemFilterSql`, Checkbox-Label praezisiert.
+- **Kachel-Beschriebe:** EKPO = "Anzahl Bestellpositionen im Zeitraum", EKET = "Anzahl
+  Termineinteilungen im Zeitraum".
+- **Lieferanten-Register:** Chart folgt jetzt dem gewaehlten Zeitraum (vorher hart aktuelles
+  Jahr — Ursache fuer "Zeitraum wirkt nicht").
+
+Geplant aus dem Review (siehe Mapping-Doku, Abschnitt C): Termintreue-Kachel via EKBE
+(Bewertungsformel von Marco noetig), Spend-Drilldown-Selektoren inkl. Disponenten-Produktgruppe
+(MARC), "Lieferdatum bis"-Filter fuer offene Bestellungen, echte Mengenkontrakte
+(`Bstyp='K'`, `Kdate` fehlt noch im P-Modell), Lieferanten-Factsheet und -Vergleich.
+
 ## Nachtrag 2026-07-09 Ergebnisse Analyse-Report (Z_PURCHASING_ANALYSE)
 
 Ingo hat `sap_purchasing_analyse_report.abap` (T76/100, Einkauf ab 2020) laufen lassen. Die

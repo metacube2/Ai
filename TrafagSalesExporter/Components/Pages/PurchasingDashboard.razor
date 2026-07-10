@@ -95,7 +95,7 @@
                        Variant="Variant.Outlined"
                        Margin="Margin.Dense"
                        Disabled="_liveLoading" />
-        <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Löschkennzeichen raus (inkl. MARA-MSTAE 98/99)", "Exclude deletion flag (incl. MARA-MSTAE 98/99)")" />
+        <MudCheckBox T="bool" @bind-Value="_excludeDeletedItems" Dense="true" Color="Color.Primary" Label="@T("Stornierte Positionen raus (Spend); MARA-MSTAE 98/99 nur bei offenen Werten", "Exclude cancelled items (spend); MARA-MSTAE 98/99 only for open values")" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="ApplyPurchasingFilterAsync" Disabled="_liveLoading">
             @T("Anwenden", "Apply")
         </MudButton>
@@ -170,8 +170,8 @@
                            TitleEn="Supplier rating and performance"
                            DescriptionDe="Lieferantenbasis kommt live aus EKKO. Bewertung, Termintreue und Preisentwicklung brauchen spaeter EKPO/EKET und Reklamationsdaten."
                            DescriptionEn="The supplier base comes live from EKKO. Rating, delivery reliability and price development later need EKPO/EKET and claim data."
-                           ChartTitleDe="Lieferantenbasis und Performance-Indikatoren"
-                           ChartTitleEn="Supplier base and performance indicators"
+                           ChartTitleDe="Top Lieferanten nach Spend im gewaehlten Zeitraum"
+                           ChartTitleEn="Top suppliers by spend in the selected period"
                            Kpis="@SupplierKpis"
                            ChartRows="@SupplierChartRows"
                            StatusRows="@SupplierStatusRows"
@@ -705,7 +705,7 @@
     [
         new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
         new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? $"EKKO-Belege im Zeitraum {FilterLabel}" : "Noch nicht geladen", _liveState.EkkoLoaded ? $"EKKO orders in period {FilterLabel}" : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
-        new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "nach Lieferant / Artikel / Faelligkeit" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "by supplier / article / due date" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
+        new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "offener Bestell-/Abrufwert Stand heute, zeitraumunabhaengig" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "open order/call-off value as of today, period-independent" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
         new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
     ];
 
@@ -754,8 +754,8 @@
     private IReadOnlyList<PurchasingPipelineStep> PipelineRows =>
     [
         new("EKKO Bestellkopf", "EKKO purchase header", _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-", _liveState.EkkoLoaded ? $"Bestellungen im Zeitraum {FilterLabel}" : "Bestellkopf wartet auf SAP", _liveState.EkkoLoaded ? $"Orders in period {FilterLabel}" : "Purchase header is waiting for SAP", Icons.Material.Filled.ReceiptLong, _liveState.EkkoLoaded, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
-        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? "Spend, Artikel und Warengruppen koennen echt berechnet werden" : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? "Spend, articles and material groups can be calculated real" : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
-        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? "Faelligkeiten und Terminstatus koennen echt berechnet werden" : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? "Due dates and schedule status can be calculated real" : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? $"Anzahl Bestellpositionen im Zeitraum {FilterLabel}" : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? $"Number of order items in period {FilterLabel}" : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? $"Anzahl Termineinteilungen im Zeitraum {FilterLabel}" : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? $"Number of schedule lines in period {FilterLabel}" : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Dashboard Layer", "Dashboard layer", _liveState.EkkoLoaded ? "aktiv" : "bereit", "Livewerte, Simulation und 3D-Analyse werden getrennt ausgewiesen", "Live values, simulation and 3D analysis are shown separately", Icons.Material.Filled.DashboardCustomize, true, Color.Info)
     ];
 
@@ -1235,9 +1235,11 @@
             ? BuildLiveChartRows(_liveState.ContractChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.ContractValue, FormatChf);
 
+    // Lieferanten-Register folgt dem gewaehlten Zeitraum (Marco-Review 2026-07-10); vorher wurde
+    // hart der Spend des aktuellen Jahres gezeigt und der Zeitraumfilter wirkte scheinbar nicht.
     private IReadOnlyList<PurchasingSectionChartRow> SupplierChartRows
-        => _liveState.CurrentYearSupplierSpendRows.Count > 0
-            ? BuildLiveChartRows(_liveState.CurrentYearSupplierSpendRows, FormatChf)
+        => _liveState.SpendChartRows.Count > 0
+            ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.SupplierScore, value => $"{value:N1}%");
 
     private IReadOnlyList<PurchasingIdeaAnalysisRow> SelectedIdeaRows => CurrentPurchasingPage switch
@@ -1390,7 +1392,7 @@
     [
         BuildStatus("EKKO Bestellkoepfe", "EKKO purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-"),
         BuildStatus("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0"),
-        BuildStatus("Löschkennzeichen (inkl. MARA-MSTAE 98/99)", "Deletion flag (incl. MARA-MSTAE 98/99)", _excludeDeletedItems, _excludeDeletedItems ? "ausgeschlossen" : "sichtbar")
+        BuildStatus("Storno (Spend) / MSTAE 98-99 (offen)", "Cancelled (spend) / MSTAE 98-99 (open)", _excludeDeletedItems, _excludeDeletedItems ? "ausgeschlossen" : "sichtbar")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> OpenOrderStatusRows =>

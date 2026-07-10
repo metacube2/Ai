@@ -29,7 +29,7 @@ public class PurchasingDashboardServiceTests : IDisposable
     public void Dispose() => _connection.Dispose();
 
     [Fact]
-    public async Task LoadAsync_Excludes_Loekz_And_MaraMstae_98_99_From_Spend_When_DeletionFlagFilterActive()
+    public async Task LoadAsync_Spend_Excludes_Only_Loekz_Not_MaraMstae_When_DeletionFlagFilterActive()
     {
         await SeedAsync();
 
@@ -41,8 +41,52 @@ public class PurchasingDashboardServiceTests : IDisposable
         var state = await _service.LoadAsync(filter);
 
         Assert.True(state.UsesCache);
-        // Nur die aktive Position (Loekz leer, Mstae leer) bleibt: Netwr 100.
-        Assert.Equal(100m, state.SpendChfSample);
+        // Marco-Review 2026-07-10: Der heutige Materialstatus (MSTAE 98/99) filtert den
+        // historischen Spend NICHT mehr — nur stornierte Positionen (Loekz) bleiben draussen.
+        // Aktiv 100 + Mstae-99 200 + Mstae-98 300 = 600; Loekz-Position 400 raus.
+        Assert.Equal(600m, state.SpendChfSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_OpenValue_Still_Excludes_MaraMstae_98_99()
+    {
+        // Offene Werte (Zulauf) schliessen MSTAE 98/99 weiterhin aus: fuer kuenftige Lieferungen
+        // ist ein heute auslaufendes/gesperrtes Material relevant.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, LastLoadedAtUtc) VALUES ('S1', '2025-06-01', 'L1', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, Mstae, LastLoadedAtUtc) VALUES ('S1', '10', 'M1', '10', '100', '', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, Mstae, LastLoadedAtUtc) VALUES ('S1', '20', 'M2', '10', '100', '99', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('S1', '10', '1', '2025-08-01', '10', '0', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('S1', '20', '1', '2025-08-01', '10', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        // Spend zaehlt beide (200), offen nur die aktive Position (10 * 10 = 100).
+        Assert.Equal(200m, state.SpendChfSample);
+        Assert.Equal(100m, state.OpenValueSample);
+    }
+
+    [Fact]
+    public async Task LoadAsync_OpenValue_Is_Period_Independent_Including_Before_FromDate()
+    {
+        // Marco-Review 2026-07-10: Verpflichtungen/offene Werte sind eine Stand-heute-Sicht und
+        // zeitraumunabhaengig — auch Einteilungen VOR dem Von-Datum zaehlen, solange sie offen sind.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, LastLoadedAtUtc) VALUES ('P1', '2020-06-01', 'L1', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('P1', '10', 'M1', '10', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('P1', '10', '1', '2020-07-01', '10', '0', '2026-01-01');");
+
+        // Von-Datum 2025 liegt weit nach der offenen Einteilung von 2020.
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        Assert.Equal(100m, state.OpenValueSample);
+        Assert.Equal(10m, state.OpenQuantitySample);
+        // Spend bleibt zeitraumbezogen: Bedat 2020 liegt ausserhalb 2025 -> 0.
+        Assert.Equal(0m, state.SpendChfSample);
     }
 
     [Fact]
