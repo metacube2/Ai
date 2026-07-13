@@ -669,6 +669,24 @@ public class ManagementCockpitService : IManagementCockpitService
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await LoadCentralRecordsAsync();
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
+        var windowStartTimestamp = rangeStart.ToDateTime(TimeOnly.MinValue);
+        var exportLogs = await db.ExportLogs
+            .AsNoTracking()
+            .Where(log => log.Timestamp >= windowStartTimestamp)
+            .Select(log => new { log.TSC, log.Timestamp, log.Status })
+            .ToListAsync();
+        var exportRunsByTsc = exportLogs
+            .Where(log => !string.IsNullOrWhiteSpace(log.TSC))
+            .GroupBy(log => log.TSC.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(log => new HeartbeatExportRunInput(
+                        DateOnly.FromDateTime(log.Timestamp.Date),
+                        string.Equals(log.Status, "OK", StringComparison.OrdinalIgnoreCase),
+                        log.Timestamp))
+                    .ToList(),
+                StringComparer.OrdinalIgnoreCase);
         var fallbackLastExtractionByTsc = records
             .Where(record => !string.IsNullOrWhiteSpace(record.Tsc))
             .GroupBy(record => record.Tsc.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -726,6 +744,8 @@ public class ManagementCockpitService : IManagementCockpitService
                         dayGroup.Sum(row => row.Value)))
                     .ToList();
                 var days = BuildDataHeartbeatDays(dailyInputs, lastUpdate, rangeStart, rangeEnd, today);
+                exportRunsByTsc.TryGetValue(group.Key, out var exportRuns);
+                ApplyHeartbeatExportRuns(days, exportRuns ?? [], today);
                 var gapCount = days.Count(day => day.Status == HeartbeatDayStatus.Gap);
                 var hasWarn = days.Any(day => day.Status == HeartbeatDayStatus.Warn);
                 return new ManagementDataHeartbeatCountryRow
@@ -734,8 +754,14 @@ public class ManagementCockpitService : IManagementCockpitService
                     Country = rowList.Select(row => row.Land).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? group.Key,
                     CurrencyHint = BuildDisplayCurrencyLabel(rowList.Select(row => row.Currency)),
                     LastUpdateUtc = lastUpdate,
+                    LastSuccessfulExportUtc = exportRuns?
+                        .Where(run => run.Success)
+                        .Select(run => (DateTime?)run.Timestamp)
+                        .Max(),
                     Days = days,
                     GapCount = gapCount,
+                    ExportMissedCount = days.Count(day => day.ExportRun == HeartbeatExportRunStatus.Missed),
+                    ExportErrorCount = days.Count(day => day.ExportRun == HeartbeatExportRunStatus.Error),
                     OverallStatus = gapCount > 0 ? "Gap" : hasWarn ? "Warn" : "Ok"
                 };
             })
@@ -775,7 +801,7 @@ public class ManagementCockpitService : IManagementCockpitService
         var staleUpdate = lastUpdateUtc.HasValue && DateOnly.FromDateTime(lastUpdateUtc.Value.ToLocalTime()).AddDays(2) < today;
         var missingFreshness = !lastUpdateUtc.HasValue;
 
-        return EnumerateDates(rangeStart, rangeEnd)
+        var days = EnumerateDates(rangeStart, rangeEnd)
             .Select(date =>
             {
                 byDate.TryGetValue(date, out var value);
@@ -791,6 +817,42 @@ public class ManagementCockpitService : IManagementCockpitService
                 };
             })
             .ToList();
+
+        var rollingSum = 0;
+        for (var index = 0; index < days.Count; index++)
+        {
+            rollingSum += days[index].RowCount;
+            if (index >= 7)
+                rollingSum -= days[index - 7].RowCount;
+            days[index].RollingRowCount7 = rollingSum;
+        }
+
+        return days;
+    }
+
+    public static void ApplyHeartbeatExportRuns(
+        List<ManagementDataHeartbeatDay> days,
+        IEnumerable<HeartbeatExportRunInput> exportRuns,
+        DateOnly today)
+    {
+        var runsByDate = exportRuns
+            .GroupBy(run => run.Date)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Any(run => run.Success));
+        if (runsByDate.Count == 0)
+            return;
+
+        var firstRunDate = runsByDate.Keys.Min();
+        foreach (var day in days)
+        {
+            if (day.Date > today || day.Date < firstRunDate)
+                continue;
+            if (runsByDate.TryGetValue(day.Date, out var hasOkRun))
+                day.ExportRun = hasOkRun ? HeartbeatExportRunStatus.Ok : HeartbeatExportRunStatus.Error;
+            else
+                day.ExportRun = HeartbeatExportRunStatus.Missed;
+        }
     }
 
     private static HeartbeatDayStatus ResolveHeartbeatDayStatus(
@@ -2696,6 +2758,8 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     public sealed record HeartbeatDailyInput(DateOnly Date, int RowCount, decimal Value);
+
+    public sealed record HeartbeatExportRunInput(DateOnly Date, bool Success, DateTime Timestamp);
     private sealed record FinanceReferenceValue(string Key, string Label, decimal? Value);
 
     private sealed record FinancePivotValue(

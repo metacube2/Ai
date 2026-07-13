@@ -675,6 +675,102 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public void BuildDataHeartbeatDays_Computes_Rolling_Seven_Day_Sum()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 1), 2, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 3), 5, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 9), 4, 100m)
+            ],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 1),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        Assert.Equal(2, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 1)).RollingRowCount7);
+        Assert.Equal(7, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 3)).RollingRowCount7);
+        // 7-Tage-Fenster 03.07.-09.07. enthaelt die 5 vom 03.07. und die 4 vom 09.07., die 2 vom 01.07. nicht mehr
+        Assert.Equal(9, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 9)).RollingRowCount7);
+        // Fenster 04.07.-10.07.: nur noch die 4 vom 09.07.
+        Assert.Equal(4, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 10)).RollingRowCount7);
+    }
+
+    [Fact]
+    public void ApplyHeartbeatExportRuns_Maps_Ok_Error_Missed_And_Unknown()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 8), 3, 100m)],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        ManagementCockpitService.ApplyHeartbeatExportRuns(
+            days,
+            [
+                new ManagementCockpitService.HeartbeatExportRunInput(new DateOnly(2026, 7, 7), true, new DateTime(2026, 7, 7, 12, 0, 0)),
+                new ManagementCockpitService.HeartbeatExportRunInput(new DateOnly(2026, 7, 8), false, new DateTime(2026, 7, 8, 12, 0, 0)),
+                new ManagementCockpitService.HeartbeatExportRunInput(new DateOnly(2026, 7, 8), true, new DateTime(2026, 7, 8, 14, 0, 0)),
+                new ManagementCockpitService.HeartbeatExportRunInput(new DateOnly(2026, 7, 9), false, new DateTime(2026, 7, 9, 12, 0, 0))
+            ],
+            new DateOnly(2026, 7, 10));
+
+        Assert.Equal(HeartbeatExportRunStatus.Unknown, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 6)).ExportRun);
+        Assert.Equal(HeartbeatExportRunStatus.Ok, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 7)).ExportRun);
+        Assert.Equal(HeartbeatExportRunStatus.Ok, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).ExportRun);
+        Assert.Equal(HeartbeatExportRunStatus.Error, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 9)).ExportRun);
+        Assert.Equal(HeartbeatExportRunStatus.Missed, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 10)).ExportRun);
+    }
+
+    [Fact]
+    public void ApplyHeartbeatExportRuns_Without_Runs_Leaves_All_Unknown()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 8), 3, 100m)],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        ManagementCockpitService.ApplyHeartbeatExportRuns(days, [], new DateOnly(2026, 7, 10));
+
+        Assert.All(days, day => Assert.Equal(HeartbeatExportRunStatus.Unknown, day.ExportRun));
+    }
+
+    [Fact]
+    public async Task AnalyzeDataHeartbeatAsync_Fills_Export_Run_Stripe_From_ExportLogs()
+    {
+        var financeDate = MostRecentWeekday(DateTime.Today.AddDays(-1));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-1", "EUR", 50m, financeDate, financeDate));
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.ExportLogs.RemoveRange(db.ExportLogs);
+            await db.SaveChangesAsync();
+            db.ExportLogs.Add(new ExportLog
+            {
+                SiteId = 1,
+                Timestamp = financeDate.AddHours(12),
+                Land = "Deutschland",
+                TSC = "TRDE",
+                Status = "OK",
+                RowCount = 1,
+                FileName = "de.xlsx",
+                FilePath = "de.xlsx"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var result = await _service.AnalyzeDataHeartbeatAsync(30);
+
+        var de = Assert.Single(result.Countries, row => row.Tsc == "TRDE");
+        Assert.NotNull(de.LastSuccessfulExportUtc);
+        Assert.Equal(HeartbeatExportRunStatus.Ok, Assert.Single(de.Days, day => day.Date == DateOnly.FromDateTime(financeDate)).ExportRun);
+        Assert.Contains(de.Days, day => day.Date < DateOnly.FromDateTime(financeDate) && day.ExportRun == HeartbeatExportRunStatus.Unknown);
+    }
+
+    [Fact]
     public async Task AnalyzeDataHeartbeatAsync_Uses_Posting_Invoice_Extraction_Date_Fallback()
     {
         var financeDate = MostRecentWeekday(DateTime.Today.AddDays(-1));

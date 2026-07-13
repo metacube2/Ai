@@ -505,7 +505,10 @@ public class ManagementDataHeartbeatCountryRow
     public string CurrencyHint { get; set; } = string.Empty;
     public List<ManagementDataHeartbeatDay> Days { get; set; } = [];
     public DateTime? LastUpdateUtc { get; set; }
+    public DateTime? LastSuccessfulExportUtc { get; set; }
     public int GapCount { get; set; }
+    public int ExportMissedCount { get; set; }
+    public int ExportErrorCount { get; set; }
     public string OverallStatus { get; set; } = "Ok";
 }
 
@@ -513,8 +516,10 @@ public class ManagementDataHeartbeatDay
 {
     public DateOnly Date { get; set; }
     public int RowCount { get; set; }
+    public int RollingRowCount7 { get; set; }
     public decimal Value { get; set; }
     public HeartbeatDayStatus Status { get; set; }
+    public HeartbeatExportRunStatus ExportRun { get; set; }
 }
 
 public enum HeartbeatDayStatus
@@ -524,6 +529,14 @@ public enum HeartbeatDayStatus
     Warn,
     Gap,
     Future
+}
+
+public enum HeartbeatExportRunStatus
+{
+    Unknown,
+    Ok,
+    Error,
+    Missed
 }
 public sealed class ManagementDecisionResult
 {
