@@ -591,6 +591,105 @@ public class ManagementCockpitServiceTests : IDisposable
             notice.Contains("fuehrende Nullen", StringComparison.OrdinalIgnoreCase));
     }
 
+
+    [Fact]
+    public void BuildDataHeartbeatDays_Marks_Weekday_Gap_And_Weekend_Neutral()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 6), 3, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 7), 3, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 9), 3, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 10), 3, 100m)
+            ],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 12),
+            new DateOnly(2026, 7, 12));
+
+        Assert.Equal(HeartbeatDayStatus.Gap, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
+        Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 11)).Status);
+        Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 12)).Status);
+    }
+
+    [Fact]
+    public void BuildDataHeartbeatDays_Uses_Warn_For_NonDaily_Country()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 6), 3, 100m)],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        Assert.Equal(HeartbeatDayStatus.Ok, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 6)).Status);
+        Assert.Equal(HeartbeatDayStatus.Warn, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 7)).Status);
+    }
+
+    [Fact]
+    public void BuildDataHeartbeatDays_Stale_LastUpdate_Forces_Gap()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 6), 3, 100m)],
+            new DateTime(2026, 7, 7),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        Assert.Equal(HeartbeatDayStatus.Gap, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 10)).Status);
+    }
+
+    [Fact]
+    public void BuildDataHeartbeatDays_Counts_MidWindow_Gaps()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 6), 2, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 7), 2, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 9), 2, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 10), 2, 100m)
+            ],
+            new DateTime(2026, 7, 10),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 10),
+            new DateOnly(2026, 7, 10));
+
+        Assert.Equal(HeartbeatDayStatus.Gap, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
+        Assert.Equal(1, days.Count(day => day.Status == HeartbeatDayStatus.Gap));
+    }
+
+    [Fact]
+    public void BuildDataHeartbeatDays_Only_Returns_Window_Dates()
+    {
+        var days = ManagementCockpitService.BuildDataHeartbeatDays(
+            [
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 5), 4, 100m),
+                new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 7), 4, 100m)
+            ],
+            new DateTime(2026, 7, 7),
+            new DateOnly(2026, 7, 6),
+            new DateOnly(2026, 7, 7),
+            new DateOnly(2026, 7, 7));
+
+        Assert.Equal([new DateOnly(2026, 7, 6), new DateOnly(2026, 7, 7)], days.Select(day => day.Date).ToList());
+    }
+
+    [Fact]
+    public async Task AnalyzeDataHeartbeatAsync_Uses_Posting_Invoice_Extraction_Date_Fallback()
+    {
+        var financeDate = MostRecentWeekday(DateTime.Today.AddDays(-1));
+        var extractionDate = financeDate.AddDays(-5);
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-POST", "CHF", 100m, financeDate.AddDays(-10), extractionDate, postingDate: financeDate),
+            CreateRow("SAP", "Deutschland", "TRDE", "INV-INV", "EUR", 50m, financeDate, extractionDate),
+            CreateRow("SAP", "Italien", "TRIT", "INV-EXT", "EUR", 70m, null, financeDate));
+
+        var result = await _service.AnalyzeDataHeartbeatAsync(30);
+
+        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRCH").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRDE").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRIT").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+    }
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -609,6 +708,14 @@ public class ManagementCockpitServiceTests : IDisposable
         await db.SaveChangesAsync();
     }
 
+
+    private static DateTime MostRecentWeekday(DateTime start)
+    {
+        var value = start.Date;
+        while (value.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            value = value.AddDays(-1);
+        return value;
+    }
     private static CurrencyExchangeRate CreateRate(string fromCurrency, string toCurrency, decimal rate)
         => new()
         {

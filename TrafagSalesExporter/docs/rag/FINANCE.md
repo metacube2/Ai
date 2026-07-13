@@ -1,9 +1,10 @@
 # RAG Finance
 
-Stand: 2026-07-02
+Stand: 2026-07-13
 
 ## Kurzstand
 
+- Neu lokal umgesetzt 2026-07-13: `Management Analyse > Experten > Daten-Heartbeat` (`management-cockpit?section=heartbeat`, Seed-Key `finance-heartbeat`) zeigt je TSC/Land die taegliche Finance-Datenkontinuitaet als Inline-SVG mit Linie/Flaeche und farbigem Heartbeat-Streifen. Datenquelle ist derselbe zentrale Provider-Pfad wie Finance Summary/Pivot (Audit-CSV bevorzugt, Fallback DB). Statuslogik: Zeilen > 0 = OK, Samstag/Sonntag ohne Zeilen = neutral, Werktags-Null = Luecke; Laender mit <40% Werktagsabdeckung werden als nicht-taeglich behandelt und einzelne Werktags-Nullen werden Warn statt Gap; ist das letzte Update aelter als 2 Kalendertage, werden fehlende Werktage als Gap markiert. Der Reiter hat 30/60/90 Tage und laufendes Jahr sowie `Export to Excel`.
 - Fuehrende Sicht: `Finance Summary`.
 - Aktuelle Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`.
 - KORREKTUREN 2026-07-02 (Finance-Logik-Review, `136/136` Tests gruen): (1) Gutschriften-Vorzeichen im Excel-Nachweis (`ExcelExportService.ResolveGroupMarginCostBasis`) jetzt vorzeichenbewusst wie das Dashboard (`ManagementCockpitService`); Excel und Dashboard stimmen bei Gutschriften ueberein (Umsatz -100 / Kosten 60 -> Marge -40 statt -160). (2) Interner-Lieferant-Erkennung (`GroupMarginSupplierClassifier`) matcht Marker nur noch auf WORTGRENZEN (Regex); vorher wurden „Triton" (TRIT), „Trinity" (TRIN), „AGFS" (GFS) faelschlich als intern/Intercompany klassifiziert. (3) Audit-CSV als zentrale Quelle: fehlende TSC werden jetzt aus der konsolidierten `Finance_Dashboard_Audit_All_*.csv` ERGAENZT (`CentralSalesDataProvider`), statt nur bei komplett leerem Ergebnis zu greifen; kein Standort verschwindet mehr still, wenn nur ein Teil der Standort-CSV vorliegt. (4) Zentraler Export (`ConsolidatedExportService`) nutzt bei aktivem `UseAuditCsvAsCentralSource` dieselbe Quelle wie die Dashboards (`GetRecordsAsync`); `Sales_All`/Pruefbuch und Finance Summary sind konsistent. (5) Group-Currency (CHF): jede Zeile wird mit dem Kurs IHRES EIGENEN Finance-Jahres nach CHF umgerechnet (vorher alle mit dem Kurs des gewaehlten Jahres) — Mehrjahres-Sichten und Finance Pivot bewerten historische Jahre korrekt. (6) Group-CHF: Zeilen ohne Kurs bleiben in Lokalwaehrung und werden per Notice ausgewiesen (Waehrung/Jahr), statt still mit CHF summiert zu werden.
@@ -95,6 +96,7 @@ Stand: 2026-07-02
 - `Gruppenmarge`: Pruefsicht fuer Umsatz, bekannte Kostenbasis, offene Kostenbasis und belastbare Marge je Land/Sparte/Detail.
 - `Finance Pruefbuch`: zeilenbasierte Excel-Pruefsicht fuer Originalwaehrung, CHF-Umrechnung, Lieferant, Standardkosten, Kostenbasis und Gruppenmargenstatus.
 - `Rohdaten Diagnose`: direkte Plausibilitaets-/Rohdatensicht auf die zentrale Auswertungsquelle.
+- `Daten-Heartbeat`: Datenkontinuitaet je TSC/Land mit Tageszeilen, neutralen Wochenenden, Warnung fuer nicht-taegliche Laender und roter Gap-Markierung bei fehlenden Werktagen bzw. altem Update.
 
 ## Audit-CSV / Auswertungsquelle
 

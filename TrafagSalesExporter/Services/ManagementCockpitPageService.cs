@@ -10,6 +10,7 @@ public interface IManagementCockpitPageService
     Task<ManagementCockpitResult> AnalyzeAsync(string filePath, ManagementCockpitAnalysisOptions options);
     Task<ManagementCockpitCentralResult> AnalyzeCentralAsync(int year, int? month, ManagementCockpitAnalysisOptions options);
     Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency, bool useGroupCurrency = false);
+    Task<ManagementDataHeartbeatResult> AnalyzeDataHeartbeatAsync(int windowDays);
     Task<ManagementDecisionResult> BuildManagementDecisionsAsync(ManagementFinanceSummaryResult financeResult);
 }
 
@@ -58,6 +59,9 @@ public sealed class ManagementCockpitPageService : IManagementCockpitPageService
 
     public Task<ManagementFinanceSummaryResult> AnalyzeFinanceSummaryAsync(int year, string? countryKey, string? currency, bool useGroupCurrency = false)
         => _cockpitService.AnalyzeFinanceSummaryAsync(year, countryKey, currency, useGroupCurrency);
+
+    public Task<ManagementDataHeartbeatResult> AnalyzeDataHeartbeatAsync(int windowDays)
+        => _cockpitService.AnalyzeDataHeartbeatAsync(windowDays);
 
     public async Task<ManagementDecisionResult> BuildManagementDecisionsAsync(ManagementFinanceSummaryResult financeResult)
     {

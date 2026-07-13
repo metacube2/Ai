@@ -74,6 +74,8 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     private const string DivisionMiscCode = "0008";
+    // Below this weekday coverage, a country is treated as not-daily and weekday zeroes become warnings.
+    private const decimal HeartbeatDailyCoverageThreshold = 0.40m;
 
     public async Task<List<ManagementCockpitFileOption>> GetAvailableFilesAsync()
     {
@@ -646,6 +648,171 @@ public class ManagementCockpitService : IManagementCockpitService
         };
     }
 
+    public async Task<ManagementDataHeartbeatResult> AnalyzeDataHeartbeatAsync(int windowDays)
+    {
+        windowDays = windowDays <= 0 ? 60 : windowDays;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var rangeStart = windowDays >= 365
+            ? new DateOnly(today.Year, 1, 1)
+            : today.AddDays(-(windowDays - 1));
+        var rangeEnd = today;
+
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
+        var financeRules = await db.FinanceRules
+            .AsNoTracking()
+            .Where(rule => rule.IsActive)
+            .OrderBy(rule => rule.SortOrder)
+            .ThenBy(rule => rule.Id)
+            .ToListAsync();
+        if (financeRules.Count == 0)
+            financeRules = FinanceRuleEngine.CreateDefaultRules().ToList();
+
+        var financeRuleEngine = new FinanceRuleEngine(financeRules);
+        var records = await LoadCentralRecordsAsync();
+        var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
+        var lastUpdateByTsc = dataStatusRows
+            .Where(row => !string.IsNullOrWhiteSpace(row.Tsc))
+            .ToDictionary(
+                row => row.Tsc,
+                row => row.LatestStoredAtUtc ?? row.LatestExtractionDate,
+                StringComparer.OrdinalIgnoreCase);
+
+        var rows = records
+            .Select(record =>
+            {
+                var countryKey = ResolveFinanceCountryKey(record.Land, record.Tsc);
+                var financeDate = financeRuleEngine.ResolveFinanceDate(record, countryKey);
+                var rawInclude = financeRuleEngine.ShouldInclude(record, countryKey);
+                var value = financeRuleEngine.ResolveNetSalesActual(record, countryKey, rawInclude);
+                return new FinanceAggregationRow
+                {
+                    Year = financeDate.Year,
+                    CountryKey = countryKey,
+                    Land = record.Land,
+                    Tsc = record.Tsc,
+                    SourceSystem = string.IsNullOrWhiteSpace(record.SourceSystem) ? "-" : record.SourceSystem,
+                    Currency = ResolveFinanceCurrency(record),
+                    Include = rawInclude && value != 0m,
+                    Value = value,
+                    RawSalesValue = record.SalesPriceValue,
+                    FinanceDate = financeDate,
+                    PostingDate = record.PostingDate,
+                    InvoiceDate = record.InvoiceDate,
+                    ExtractionDate = record.ExtractionDate
+                };
+            })
+            .Where(row => row.Include && !string.IsNullOrWhiteSpace(row.Tsc))
+            .ToList();
+
+        var countries = rows
+            .GroupBy(row => row.Tsc.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var rowList = group.ToList();
+                lastUpdateByTsc.TryGetValue(group.Key, out var lastUpdate);
+                var dailyInputs = rowList
+                    .GroupBy(row => DateOnly.FromDateTime(row.FinanceDate.Date))
+                    .Select(dayGroup => new HeartbeatDailyInput(
+                        dayGroup.Key,
+                        dayGroup.Count(),
+                        dayGroup.Sum(row => row.Value)))
+                    .ToList();
+                var days = BuildDataHeartbeatDays(dailyInputs, lastUpdate, rangeStart, rangeEnd, today);
+                var gapCount = days.Count(day => day.Status == HeartbeatDayStatus.Gap);
+                var hasWarn = days.Any(day => day.Status == HeartbeatDayStatus.Warn);
+                return new ManagementDataHeartbeatCountryRow
+                {
+                    Tsc = group.Key,
+                    Country = rowList.Select(row => row.Land).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? group.Key,
+                    CurrencyHint = BuildDisplayCurrencyLabel(rowList.Select(row => row.Currency)),
+                    LastUpdateUtc = lastUpdate,
+                    Days = days,
+                    GapCount = gapCount,
+                    OverallStatus = gapCount > 0 ? "Gap" : hasWarn ? "Warn" : "Ok"
+                };
+            })
+            .OrderByDescending(row => row.GapCount)
+            .ThenBy(row => row.Country, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Tsc, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new ManagementDataHeartbeatResult
+        {
+            Countries = countries,
+            RangeStart = rangeStart.ToDateTime(TimeOnly.MinValue),
+            RangeEnd = rangeEnd.ToDateTime(TimeOnly.MinValue)
+        };
+    }
+
+    public static List<ManagementDataHeartbeatDay> BuildDataHeartbeatDays(
+        IEnumerable<HeartbeatDailyInput> dailyInputs,
+        DateTime? lastUpdateUtc,
+        DateOnly rangeStart,
+        DateOnly rangeEnd,
+        DateOnly today)
+    {
+        var byDate = dailyInputs
+            .GroupBy(input => input.Date)
+            .ToDictionary(
+                group => group.Key,
+                group => new
+                {
+                    RowCount = group.Sum(input => input.RowCount),
+                    Value = group.Sum(input => input.Value)
+                });
+        var weekdays = EnumerateDates(rangeStart, rangeEnd)
+            .Where(date => date <= today && !IsWeekend(date))
+            .ToList();
+        var weekdayWithRows = weekdays.Count(date => byDate.TryGetValue(date, out var value) && value.RowCount > 0);
+        var weekdayCoverage = weekdays.Count == 0 ? 1m : (decimal)weekdayWithRows / weekdays.Count;
+        var isNonDailyCountry = weekdayCoverage < HeartbeatDailyCoverageThreshold;
+        var staleUpdate = lastUpdateUtc.HasValue && DateOnly.FromDateTime(lastUpdateUtc.Value.ToLocalTime()).AddDays(2) < today;
+
+        return EnumerateDates(rangeStart, rangeEnd)
+            .Select(date =>
+            {
+                byDate.TryGetValue(date, out var value);
+                var rowCount = value?.RowCount ?? 0;
+                var amount = value?.Value ?? 0m;
+                var status = ResolveHeartbeatDayStatus(date, rowCount, today, isNonDailyCountry, staleUpdate);
+                return new ManagementDataHeartbeatDay
+                {
+                    Date = date,
+                    RowCount = rowCount,
+                    Value = amount,
+                    Status = status
+                };
+            })
+            .ToList();
+    }
+
+    private static HeartbeatDayStatus ResolveHeartbeatDayStatus(
+        DateOnly date,
+        int rowCount,
+        DateOnly today,
+        bool isNonDailyCountry,
+        bool staleUpdate)
+    {
+        if (date > today)
+            return HeartbeatDayStatus.Future;
+        if (rowCount > 0)
+            return HeartbeatDayStatus.Ok;
+        if (IsWeekend(date))
+            return HeartbeatDayStatus.WeekendOrNoBusiness;
+        if (staleUpdate)
+            return HeartbeatDayStatus.Gap;
+        return isNonDailyCountry ? HeartbeatDayStatus.Warn : HeartbeatDayStatus.Gap;
+    }
+
+    private static IEnumerable<DateOnly> EnumerateDates(DateOnly start, DateOnly end)
+    {
+        for (var date = start; date <= end; date = date.AddDays(1))
+            yield return date;
+    }
+
+    private static bool IsWeekend(DateOnly date)
+        => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
     private static List<FinanceAggregationRow> CloneFinanceAggregationRows(IEnumerable<FinanceAggregationRow> rows)
         => rows
             .Select(row => new FinanceAggregationRow
@@ -2519,6 +2686,7 @@ public class ManagementCockpitService : IManagementCockpitService
         public DateTime ExtractionDate { get; set; }
     }
 
+    public sealed record HeartbeatDailyInput(DateOnly Date, int RowCount, decimal Value);
     private sealed record FinanceReferenceValue(string Key, string Label, decimal? Value);
 
     private sealed record FinancePivotValue(

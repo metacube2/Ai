@@ -201,6 +201,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("group-margin", "experts", "Gruppenmarge", "Group margin", "StackedLineChart", "management-cockpit?section=groupmargin", 110, "All"),
         Link("finance-3d", "experts", "3D Datenanalyse", "3D data analysis", "ViewInAr", "management-cockpit?section=3d", 120, "All"),
         Link("raw-diagnostics", "experts", "Rohdaten Diagnose", "Raw-data diagnostics", "QueryStats", "management-cockpit?section=raw", 130, "All"),
+        Link("finance-heartbeat", "experts", "Daten-Heartbeat", "Data heartbeat", "MonitorHeart", "management-cockpit?section=heartbeat", 140, "All"),
         Link("finance-comparison", "finance", "Soll/Ist Vergleich", "Actual/reference comparison", "CompareArrows", "finance-cockpit/vergleich", 30),
         Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
         Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),

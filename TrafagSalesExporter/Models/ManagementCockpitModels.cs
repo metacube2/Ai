@@ -491,6 +491,40 @@ public class ManagementFinanceSummaryResult
     public ManagementFinancePivotResult FinancePivot { get; set; } = new();
 }
 
+public class ManagementDataHeartbeatResult
+{
+    public List<ManagementDataHeartbeatCountryRow> Countries { get; set; } = [];
+    public DateTime RangeStart { get; set; }
+    public DateTime RangeEnd { get; set; }
+}
+
+public class ManagementDataHeartbeatCountryRow
+{
+    public string Tsc { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
+    public string CurrencyHint { get; set; } = string.Empty;
+    public List<ManagementDataHeartbeatDay> Days { get; set; } = [];
+    public DateTime? LastUpdateUtc { get; set; }
+    public int GapCount { get; set; }
+    public string OverallStatus { get; set; } = "Ok";
+}
+
+public class ManagementDataHeartbeatDay
+{
+    public DateOnly Date { get; set; }
+    public int RowCount { get; set; }
+    public decimal Value { get; set; }
+    public HeartbeatDayStatus Status { get; set; }
+}
+
+public enum HeartbeatDayStatus
+{
+    Ok,
+    WeekendOrNoBusiness,
+    Warn,
+    Gap,
+    Future
+}
 public sealed class ManagementDecisionResult
 {
     public List<ManagementDecisionItem> Items { get; set; } = [];
