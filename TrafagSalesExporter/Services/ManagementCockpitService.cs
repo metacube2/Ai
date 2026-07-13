@@ -74,8 +74,6 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     private const string DivisionMiscCode = "0008";
-    // Below this weekday coverage, a country is treated as not-daily and weekday zeroes become warnings.
-    private const decimal HeartbeatDailyCoverageThreshold = 0.40m;
 
     public async Task<List<ManagementCockpitFileOption>> GetAvailableFilesAsync()
     {
@@ -671,6 +669,13 @@ public class ManagementCockpitService : IManagementCockpitService
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await LoadCentralRecordsAsync();
         var dataStatusRows = await BuildFinanceDataStatusRowsAsync(db, records, settings, settings.UseAuditCsvAsCentralSource);
+        var fallbackLastExtractionByTsc = records
+            .Where(record => !string.IsNullOrWhiteSpace(record.Tsc))
+            .GroupBy(record => record.Tsc.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => (DateTime?)group.Max(record => record.ExtractionDate),
+                StringComparer.OrdinalIgnoreCase);
         var lastUpdateByTsc = dataStatusRows
             .Where(row => !string.IsNullOrWhiteSpace(row.Tsc))
             .ToDictionary(
@@ -711,6 +716,8 @@ public class ManagementCockpitService : IManagementCockpitService
             {
                 var rowList = group.ToList();
                 lastUpdateByTsc.TryGetValue(group.Key, out var lastUpdate);
+                if (!lastUpdate.HasValue && fallbackLastExtractionByTsc.TryGetValue(group.Key, out var fallbackLastExtraction))
+                    lastUpdate = fallbackLastExtraction;
                 var dailyInputs = rowList
                     .GroupBy(row => DateOnly.FromDateTime(row.FinanceDate.Date))
                     .Select(dayGroup => new HeartbeatDailyInput(
@@ -761,13 +768,12 @@ public class ManagementCockpitService : IManagementCockpitService
                     RowCount = group.Sum(input => input.RowCount),
                     Value = group.Sum(input => input.Value)
                 });
-        var weekdays = EnumerateDates(rangeStart, rangeEnd)
-            .Where(date => date <= today && !IsWeekend(date))
-            .ToList();
-        var weekdayWithRows = weekdays.Count(date => byDate.TryGetValue(date, out var value) && value.RowCount > 0);
-        var weekdayCoverage = weekdays.Count == 0 ? 1m : (decimal)weekdayWithRows / weekdays.Count;
-        var isNonDailyCountry = weekdayCoverage < HeartbeatDailyCoverageThreshold;
+        var latestDataDate = byDate
+            .Where(pair => pair.Value.RowCount > 0)
+            .Select(pair => (DateOnly?)pair.Key)
+            .Max() ?? rangeStart.AddDays(-1);
         var staleUpdate = lastUpdateUtc.HasValue && DateOnly.FromDateTime(lastUpdateUtc.Value.ToLocalTime()).AddDays(2) < today;
+        var missingFreshness = !lastUpdateUtc.HasValue;
 
         return EnumerateDates(rangeStart, rangeEnd)
             .Select(date =>
@@ -775,7 +781,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 byDate.TryGetValue(date, out var value);
                 var rowCount = value?.RowCount ?? 0;
                 var amount = value?.Value ?? 0m;
-                var status = ResolveHeartbeatDayStatus(date, rowCount, today, isNonDailyCountry, staleUpdate);
+                var status = ResolveHeartbeatDayStatus(date, rowCount, today, latestDataDate, staleUpdate, missingFreshness);
                 return new ManagementDataHeartbeatDay
                 {
                     Date = date,
@@ -791,8 +797,9 @@ public class ManagementCockpitService : IManagementCockpitService
         DateOnly date,
         int rowCount,
         DateOnly today,
-        bool isNonDailyCountry,
-        bool staleUpdate)
+        DateOnly latestDataDate,
+        bool staleUpdate,
+        bool missingFreshness)
     {
         if (date > today)
             return HeartbeatDayStatus.Future;
@@ -800,9 +807,11 @@ public class ManagementCockpitService : IManagementCockpitService
             return HeartbeatDayStatus.Ok;
         if (IsWeekend(date))
             return HeartbeatDayStatus.WeekendOrNoBusiness;
-        if (staleUpdate)
+        if (staleUpdate && date > latestDataDate)
             return HeartbeatDayStatus.Gap;
-        return isNonDailyCountry ? HeartbeatDayStatus.Warn : HeartbeatDayStatus.Gap;
+        if (missingFreshness && date > latestDataDate)
+            return HeartbeatDayStatus.Warn;
+        return HeartbeatDayStatus.WeekendOrNoBusiness;
     }
 
     private static IEnumerable<DateOnly> EnumerateDates(DateOnly start, DateOnly end)
@@ -2036,7 +2045,7 @@ public class ManagementCockpitService : IManagementCockpitService
         if (normalizedLand.Contains("ENGL") || normalizedLand.Contains("KINGDOM") || normalizedTsc.Contains("UK") || normalizedTsc.Contains("GB")) return "UK";
         if (normalizedLand.Contains("USA") || normalizedLand.Contains("UNITED STATES") || normalizedTsc.Contains("US")) return "US";
         if (normalizedLand.Contains("DEUT") || normalizedTsc.Contains("DE")) return "DE";
-        if (normalizedLand.Contains("SPAN") || normalizedTsc is "SE" or "ES") return "ES";
+        if (normalizedLand.Contains("SPAN") || normalizedTsc is "SE" or "ES" or "TRES" or "TRSE") return "ES";
 
         return normalizedTsc.Replace("TR", string.Empty);
     }

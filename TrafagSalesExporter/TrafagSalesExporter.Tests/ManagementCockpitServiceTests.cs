@@ -593,7 +593,7 @@ public class ManagementCockpitServiceTests : IDisposable
 
 
     [Fact]
-    public void BuildDataHeartbeatDays_Marks_Weekday_Gap_And_Weekend_Neutral()
+    public void BuildDataHeartbeatDays_Treats_Fresh_Weekday_Zero_As_NoBusiness()
     {
         var days = ManagementCockpitService.BuildDataHeartbeatDays(
             [
@@ -602,22 +602,22 @@ public class ManagementCockpitServiceTests : IDisposable
                 new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 9), 3, 100m),
                 new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 10), 3, 100m)
             ],
-            new DateTime(2026, 7, 10),
+            new DateTime(2026, 7, 12),
             new DateOnly(2026, 7, 6),
             new DateOnly(2026, 7, 12),
             new DateOnly(2026, 7, 12));
 
-        Assert.Equal(HeartbeatDayStatus.Gap, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
+        Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
         Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 11)).Status);
         Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 12)).Status);
     }
 
     [Fact]
-    public void BuildDataHeartbeatDays_Uses_Warn_For_NonDaily_Country()
+    public void BuildDataHeartbeatDays_Warns_When_Freshness_Is_Missing_After_Latest_Data()
     {
         var days = ManagementCockpitService.BuildDataHeartbeatDays(
             [new ManagementCockpitService.HeartbeatDailyInput(new DateOnly(2026, 7, 6), 3, 100m)],
-            new DateTime(2026, 7, 10),
+            null,
             new DateOnly(2026, 7, 6),
             new DateOnly(2026, 7, 10),
             new DateOnly(2026, 7, 10));
@@ -640,7 +640,7 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
-    public void BuildDataHeartbeatDays_Counts_MidWindow_Gaps()
+    public void BuildDataHeartbeatDays_Does_Not_Count_MidWindow_NoBusiness_As_Gap()
     {
         var days = ManagementCockpitService.BuildDataHeartbeatDays(
             [
@@ -654,8 +654,8 @@ public class ManagementCockpitServiceTests : IDisposable
             new DateOnly(2026, 7, 10),
             new DateOnly(2026, 7, 10));
 
-        Assert.Equal(HeartbeatDayStatus.Gap, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
-        Assert.Equal(1, days.Count(day => day.Status == HeartbeatDayStatus.Gap));
+        Assert.Equal(HeartbeatDayStatus.WeekendOrNoBusiness, Assert.Single(days, day => day.Date == new DateOnly(2026, 7, 8)).Status);
+        Assert.Equal(0, days.Count(day => day.Status == HeartbeatDayStatus.Gap));
     }
 
     [Fact]
@@ -686,9 +686,15 @@ public class ManagementCockpitServiceTests : IDisposable
 
         var result = await _service.AnalyzeDataHeartbeatAsync(30);
 
-        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRCH").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
-        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRDE").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
-        Assert.Contains(Assert.Single(result.Countries, row => row.Tsc == "TRIT").Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+        var ch = Assert.Single(result.Countries, row => row.Tsc == "TRCH");
+        var de = Assert.Single(result.Countries, row => row.Tsc == "TRDE");
+        var it = Assert.Single(result.Countries, row => row.Tsc == "TRIT");
+        Assert.NotNull(ch.LastUpdateUtc);
+        Assert.NotNull(de.LastUpdateUtc);
+        Assert.NotNull(it.LastUpdateUtc);
+        Assert.Contains(ch.Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+        Assert.Contains(de.Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
+        Assert.Contains(it.Days, day => day.Date == DateOnly.FromDateTime(financeDate) && day.RowCount == 1);
     }
     private async Task SeedCentralRowsAsync(params CentralSalesRecord[] rows)
     {
