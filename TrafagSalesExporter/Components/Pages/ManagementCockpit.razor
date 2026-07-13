@@ -1298,71 +1298,6 @@
                 <canvas @ref="_finance3dCanvas" class="finance-3d-canvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
             </MudPaper>
         </MudTabPanel>
-        <MudTabPanel Text="@T("Daten-Heartbeat", "Data heartbeat")" Icon="@Icons.Material.Filled.MonitorHeart">
-            <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
-                <MudSelect T="int" Value="_heartbeatWindowDays" ValueChanged="OnHeartbeatWindowChanged" Label="@T("Betrachtungsfenster", "Window")" Dense Style="width:220px;">
-                    <MudSelectItem Value="30">@T("30 Tage", "30 days")</MudSelectItem>
-                    <MudSelectItem Value="60">@T("60 Tage", "60 days")</MudSelectItem>
-                    <MudSelectItem Value="90">@T("90 Tage", "90 days")</MudSelectItem>
-                    <MudSelectItem Value="365">@T("Laufendes Jahr", "Year to date")</MudSelectItem>
-                </MudSelect>
-                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenHeartbeat">
-                    @T("Export to Excel", "Export to Excel")
-                </MudButton>
-                <MudText Typo="Typo.caption">
-                    @(_heartbeatResult is null ? string.Empty : $"{_heartbeatResult.RangeStart:dd.MM.yyyy} - {_heartbeatResult.RangeEnd:dd.MM.yyyy}")
-                </MudText>
-            </MudStack>
-            @if (_heartbeatResult is null || _heartbeatResult.Countries.Count == 0)
-            {
-                <MudPaper Class="pa-4" Elevation="1">
-                    <MudText Typo="Typo.body2">@T("Keine Heartbeat-Daten fuer die aktuelle zentrale Finance-Quelle.", "No heartbeat data for the current central finance source.")</MudText>
-                </MudPaper>
-            }
-            else
-            {
-                <MudGrid>
-                    @foreach (var country in _heartbeatResult.Countries)
-                    {
-                        <MudItem xs="12" lg="6">
-                            <MudPaper Class="pa-4" Elevation="1">
-                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
-                                    <MudText Typo="Typo.h6">@FormatCountryWithFlag(country.Country) / @country.Tsc</MudText>
-                                    <MudChip T="string" Size="Size.Small" Color="@HeartbeatOverallColor(country)" Variant="Variant.Filled">@BuildHeartbeatBadge(country)</MudChip>
-                                    <MudSpacer />
-                                    <MudText Typo="Typo.caption">@T("Letztes Update", "Last update"): @FormatDateTime(country.LastUpdateUtc)</MudText>
-                                </MudStack>
-                                <svg viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="@($"{country.Tsc} heartbeat")">
-                                    <line x1="44" y1="162" x2="700" y2="162" stroke="#cbd5e1" stroke-width="1" />
-                                    <line x1="44" y1="24" x2="44" y2="162" stroke="#cbd5e1" stroke-width="1" />
-                                    @foreach (var marker in BuildHeartbeatMonthMarkers(country))
-                                    {
-                                        <line x1="@marker.X.ToString(CultureInfo.InvariantCulture)" y1="24" x2="@marker.X.ToString(CultureInfo.InvariantCulture)" y2="178" stroke="#e5e7eb" stroke-width="1" />
-                                        <svg:text x="@marker.X.ToString(CultureInfo.InvariantCulture)" y="200" font-size="10" text-anchor="middle" fill="#64748b">@marker.Label</svg:text>
-                                    }
-                                    <path d="@BuildHeartbeatAreaPath(country)" fill="#dbeafe" opacity="0.75" />
-                                    <polyline points="@BuildHeartbeatPolylinePoints(country)" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
-                                    @foreach (var day in country.Days.Where(day => day.Status != HeartbeatDayStatus.Future))
-                                    {
-                                        var x = HeartbeatX(country, day.Date);
-                                        var y = HeartbeatY(country, day.RowCount);
-                                        <rect x="@(x - 2)" y="172" width="4" height="14" fill="@HeartbeatStatusColor(day.Status)">
-                                            <title>@BuildHeartbeatTooltip(day, country.CurrencyHint)</title>
-                                        </rect>
-                                        <circle cx="@x.ToString(CultureInfo.InvariantCulture)" cy="@y.ToString(CultureInfo.InvariantCulture)" r="2.2" fill="@HeartbeatStatusColor(day.Status)">
-                                            <title>@BuildHeartbeatTooltip(day, country.CurrencyHint)</title>
-                                        </circle>
-                                    }
-                                    <svg:text x="44" y="16" font-size="10" fill="#64748b">@country.Days.Max(day => day.RowCount).ToString("N0")</svg:text>
-                                    <svg:text x="44" y="176" font-size="10" fill="#64748b">0</svg:text>
-                                </svg>
-                            </MudPaper>
-                        </MudItem>
-                    }
-                </MudGrid>
-            }
-        </MudTabPanel>
         <MudTabPanel Text="@T("Rohdaten Diagnose", "Raw-data diagnostics")" Icon="@Icons.Material.Filled.QueryStats">
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -1697,6 +1632,71 @@
 }
 
         </MudTabPanel>
+        <MudTabPanel Text="@T("Daten-Heartbeat", "Data heartbeat")" Icon="@Icons.Material.Filled.MonitorHeart">
+            <MudStack Row AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                <MudSelect T="int" Value="_heartbeatWindowDays" ValueChanged="OnHeartbeatWindowChanged" Label="@T("Betrachtungsfenster", "Window")" Dense Style="width:220px;">
+                    <MudSelectItem Value="30">@T("30 Tage", "30 days")</MudSelectItem>
+                    <MudSelectItem Value="60">@T("60 Tage", "60 days")</MudSelectItem>
+                    <MudSelectItem Value="90">@T("90 Tage", "90 days")</MudSelectItem>
+                    <MudSelectItem Value="365">@T("Laufendes Jahr", "Year to date")</MudSelectItem>
+                </MudSelect>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportDatenHeartbeat">
+                    @T("Export to Excel", "Export to Excel")
+                </MudButton>
+                <MudText Typo="Typo.caption">
+                    @(_heartbeatResult is null ? string.Empty : $"{_heartbeatResult.RangeStart:dd.MM.yyyy} - {_heartbeatResult.RangeEnd:dd.MM.yyyy}")
+                </MudText>
+            </MudStack>
+            @if (_heartbeatResult is null || _heartbeatResult.Countries.Count == 0)
+            {
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.body2">@T("Keine Heartbeat-Daten fuer die aktuelle zentrale Finance-Quelle.", "No heartbeat data for the current central finance source.")</MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudGrid>
+                    @foreach (var country in _heartbeatResult.Countries)
+                    {
+                        <MudItem xs="12" lg="6">
+                            <MudPaper Class="pa-4" Elevation="1">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                                    <MudText Typo="Typo.h6">@FormatCountryWithFlag(country.Country) / @country.Tsc</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="@HeartbeatOverallColor(country)" Variant="Variant.Filled">@BuildHeartbeatBadge(country)</MudChip>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.caption">@T("Letztes Update", "Last update"): @FormatDateTime(country.LastUpdateUtc)</MudText>
+                                </MudStack>
+                                <svg viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="@($"{country.Tsc} heartbeat")">
+                                    <line x1="44" y1="162" x2="700" y2="162" stroke="#cbd5e1" stroke-width="1" />
+                                    <line x1="44" y1="24" x2="44" y2="162" stroke="#cbd5e1" stroke-width="1" />
+                                    @foreach (var marker in BuildHeartbeatMonthMarkers(country))
+                                    {
+                                        <line x1="@marker.X.ToString(CultureInfo.InvariantCulture)" y1="24" x2="@marker.X.ToString(CultureInfo.InvariantCulture)" y2="178" stroke="#e5e7eb" stroke-width="1" />
+                                        <svg:text x="@marker.X.ToString(CultureInfo.InvariantCulture)" y="200" font-size="10" text-anchor="middle" fill="#64748b">@marker.Label</svg:text>
+                                    }
+                                    <path d="@BuildHeartbeatAreaPath(country)" fill="#dbeafe" opacity="0.75" />
+                                    <polyline points="@BuildHeartbeatPolylinePoints(country)" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+                                    @foreach (var day in country.Days.Where(day => day.Status != HeartbeatDayStatus.Future))
+                                    {
+                                        var x = HeartbeatX(country, day.Date);
+                                        var y = HeartbeatY(country, day.RowCount);
+                                        <rect x="@(x - 2)" y="172" width="4" height="14" fill="@HeartbeatStatusColor(day.Status)">
+                                            <title>@BuildHeartbeatTooltip(day, country.CurrencyHint)</title>
+                                        </rect>
+                                        <circle cx="@x.ToString(CultureInfo.InvariantCulture)" cy="@y.ToString(CultureInfo.InvariantCulture)" r="2.2" fill="@HeartbeatStatusColor(day.Status)">
+                                            <title>@BuildHeartbeatTooltip(day, country.CurrencyHint)</title>
+                                        </circle>
+                                    }
+                                    <svg:text x="44" y="16" font-size="10" fill="#64748b">@country.Days.Max(day => day.RowCount).ToString("N0")</svg:text>
+                                    <svg:text x="44" y="176" font-size="10" fill="#64748b">0</svg:text>
+                                </svg>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
     </MudTabs>
         </MudTabPanel>
     </MudTabs>
@@ -1869,6 +1869,7 @@
                 "3d" => ManagementFinanceTabIndexes.ThreeD,
                 "groupmargin" => ManagementFinanceTabIndexes.GroupMargin,
                 "raw" => ManagementFinanceTabIndexes.Raw,
+                "heartbeat" => ManagementFinanceTabIndexes.Heartbeat,
                 _ => ManagementFinanceTabIndexes.Summary
             };
         }
@@ -3168,6 +3169,7 @@
         public const int GroupMargin = 9;
         public const int ThreeD = 10;
         public const int Raw = 11;
+        public const int Heartbeat = 12;
     }
 
     private static class Finance3dIndicators
