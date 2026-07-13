@@ -1,10 +1,11 @@
 # RAG Deployment
 
-Stand: 2026-07-02
+Stand: 2026-07-13
 
 ## Kurzstand
 
-- Letzter dokumentierter Deploy: 2026-07-10, Einkaufs-Korrekturen aus zwei Reviews (Marco) plus
+- Letzter dokumentierter Deploy: 2026-07-13, Daten-Heartbeat-Ausbau (Exportlauf-Streifen + 7-Tage-Glaettung) plus UK-Selbstfuetterungs-Fix. Commits `78d2772 Add export-run stripe and 7-day smoothing to data heartbeat`, `2a94395 Fix UK manual import reading its own export outputs`; `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `176/176` gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt und wieder entfernt; produktive `BiDashboard.dll` Zeitstempel `13.07.2026 21:03:09`, Laenge `2'836'992`; `Test-NetConnection ... -Port 443` erfolgreich; DB unveraendert (keine Migration). Inhalt: (1) Heartbeat zeigt zweiten Streifen `Exportlauf` aus `ExportLogs` je Tag/TSC (trennt Update-Ausfall von echter Geschaeftsflaute) plus Schalter `7-Tage-Summe`; (2) Rootcause fuer nahezu leeres UK behoben — Manual-Import las die eigene hochgeladene Audit-CSV/Excel als "neueste TRUK-Datei" und ersetzte den Bestand damit taeglich; `IsOwnExportOutputFile` schliesst eigene Ausgaben aus, Ordner-Import ohne Jahresangabe liest jetzt Basis+alle neueren Deltas statt nur der neuesten Datei. NACHSORGE: UK-Export einmal laufen lassen und Bestand/Wert der Rechnung 0000043747 fachlich pruefen; ZSCHWEIZ-2026-Daten fehlen weiterhin SAP-seitig komplett (separates Thema, kein Deploy-Fix). Details: `docs/rag/FINANCE.md`, `docs/rag/MANUAL_IMPORT.md`.
+- Vorheriger dokumentierter Deploy: 2026-07-10, Einkaufs-Korrekturen aus zwei Reviews (Marco) plus
   neue Felder/Logik. Commit `335907c` (Spitze; enthaelt auch `6ed61e3` Beleg-Mix + `REQUIREMENTS.md`);
   `dotnet test` `157/157` gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` Zeitstempel `10.07.2026 14:17:01`,
