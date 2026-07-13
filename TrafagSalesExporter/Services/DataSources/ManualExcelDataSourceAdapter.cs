@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO.Compression;
 using TrafagSalesExporter.Models;
 
@@ -134,10 +134,16 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                 records.AddRange(await _manualExcelImportService.ReadSalesRecordsAsync(readPath, site));
             if (IsSpainSite(site))
                 records = DeduplicateSpainSalesRecords(records);
-            if (IsAlphaplanGermanySite(site))
+            else if (IsAlphaplanGermanySite(site))
             {
                 records = FilterAlphaplanRecordsByDate(records, context);
-                records = DeduplicateAlphaplanSalesRecords(records);
+                records = DeduplicateManualSalesRecords(records);
+            }
+            else if (readPaths.Count > 1)
+            {
+                // Basis+Delta-Modell (UK): mehrere Dateien werden zusammengelesen,
+                // Delta-Zeilen gewinnen gegen aeltere Zeilen mit demselben Beleg-Schluessel.
+                records = DeduplicateManualSalesRecords(records);
             }
             return new DataSourceFetchResult
             {
@@ -182,8 +188,10 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                 return alphaplanFiles;
         }
 
+        var normalizedTsc = site.TSC?.Trim().ToUpperInvariant() ?? string.Empty;
         var files = Directory.EnumerateFiles(folderPath)
             .Where(IsSupportedManualImportFile)
+            .Where(path => !SharePointUploadService.IsOwnExportOutputFile(path, normalizedTsc))
             .Where(path => !IsSpainSite(site) || IsSpainSalesFile(path))
             .OrderBy(GetManualImportFileSortKey, StringComparer.OrdinalIgnoreCase)
             .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
@@ -341,7 +349,7 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
         return keyed.Values.Concat(unkeyed).ToList();
     }
 
-    private static List<SalesRecord> DeduplicateAlphaplanSalesRecords(IEnumerable<SalesRecord> records)
+    private static List<SalesRecord> DeduplicateManualSalesRecords(IEnumerable<SalesRecord> records)
     {
         var keyed = new Dictionary<string, SalesRecord>(StringComparer.OrdinalIgnoreCase);
         var unkeyed = new List<SalesRecord>();

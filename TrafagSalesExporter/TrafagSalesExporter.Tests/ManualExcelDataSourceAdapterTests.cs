@@ -141,6 +141,99 @@ public class ManualExcelDataSourceAdapterTests
         }
     }
 
+    [Theory]
+    [InlineData("Sales_ProcessedMergeInput_TRUK_2026-07-13.csv", "TRUK", true)]
+    [InlineData("Sales_TRUK_2026-07-13.xlsx", "TRUK", true)]
+    [InlineData("Sales_TRUK_2026-07-13.csv", "TRUK", true)]
+    [InlineData("070726_TRUK.xlsx", "TRUK", false)]
+    [InlineData("Sales_TRUK_2025.xlsx", "TRUK", false)]
+    [InlineData("Spain_Sales_range_20260528_to_20260603.csv", "TRES", false)]
+    public void IsOwnExportOutputFile_Detects_Own_Outputs(string fileName, string tsc, bool expected)
+        => Assert.Equal(expected, SharePointUploadService.IsOwnExportOutputFile(fileName, tsc));
+
+    [Fact]
+    public async Task FetchAsync_Local_Folder_Ignores_Own_Export_Outputs()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsv(Path.Combine(folder, "010726_TRUK.csv"),
+                ("uk-genuine", "43001", 10, 200m));
+            WriteSpainCsv(Path.Combine(folder, "Sales_ProcessedMergeInput_TRUK_2026-07-12.csv"),
+                ("uk-own-audit", "43747", 10, 130900m));
+            WriteSpainCsv(Path.Combine(folder, "Sales_TRUK_2026-07-12.csv"),
+                ("uk-own-export", "43747", 12, 0m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "010726_TRUK.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder, "TRUK", "England"));
+
+            Assert.Equal("uk-genuine", Assert.Single(result.Records).SourceLineId);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FetchAsync_Local_Folder_With_Only_Own_Outputs_Throws()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsv(Path.Combine(folder, "Sales_ProcessedMergeInput_TRUK_2026-07-12.csv"),
+                ("uk-own-audit", "43747", 10, 130900m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "Sales_ProcessedMergeInput_TRUK_2026-07-12.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => adapter.FetchAsync(CreateContext(folder, "TRUK", "England")));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FetchAsync_Local_Folder_Merges_Multiple_Uk_Files_With_Delta_Wins()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteSpainCsv(Path.Combine(folder, "010726_TRUK.csv"),
+                ("uk-line-a", "43001", 10, 100m));
+            WriteSpainCsv(Path.Combine(folder, "020726_TRUK.csv"),
+                ("uk-line-a", "43001", 10, 150m),
+                ("uk-line-b", "43002", 10, 75m));
+
+            var adapter = new ManualExcelDataSourceAdapter(
+                new FakeSharePointUploadService(Path.Combine(folder, "010726_TRUK.csv")),
+                new ManualExcelImportService(),
+                new NoopAppEventLogService());
+
+            var result = await adapter.FetchAsync(CreateContext(folder, "TRUK", "England"));
+
+            Assert.Equal(2, result.Records.Count);
+            Assert.Equal(150m, Assert.Single(result.Records, r => r.SourceLineId == "uk-line-a").SalesPriceValue);
+            Assert.Equal(75m, Assert.Single(result.Records, r => r.SourceLineId == "uk-line-b").SalesPriceValue);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static DataSourceFetchContext CreateContext(string manualImportPath, string tsc = "TRES", string land = "Spanien") => new()
     {
         Site = new Site

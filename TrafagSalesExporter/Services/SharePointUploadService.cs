@@ -145,6 +145,7 @@ public class SharePointUploadService : ISharePointUploadService
         var allCandidates = children?.Value?
             .Where(item => item.File is not null)
             .Where(item => IsSupportedManualImportFile(item.Name))
+            .Where(item => !IsOwnExportOutputFile(item.Name, normalizedTsc))
             .Where(item => isSpainImport ? IsSpainSalesFile(item.Name) : MatchesTsc(item.Name, normalizedTsc))
             .Select(item =>
             {
@@ -211,6 +212,48 @@ public class SharePointUploadService : ISharePointUploadService
             }
 
             return references;
+        }
+
+        // Ohne explizites Jahr gilt das Basis+Delta-Modell (UK): neueste Jahres-/Basisdatei
+        // plus alle neueren datierten Delta-Dateien zusammen lesen, damit ein Tageslauf
+        // nicht den ganzen Standortbestand durch das juengste Delta ersetzt.
+        var newestAnnual = allCandidates
+            .Where(x => x.AnnualYear is not null)
+            .OrderByDescending(x => x.AnnualYear)
+            .ThenByDescending(x => x.SnapshotDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+            .FirstOrDefault();
+
+        if (newestAnnual is not null)
+        {
+            var baseDate = newestAnnual.SnapshotDate
+                ?? newestAnnual.Item.LastModifiedDateTime?.UtcDateTime.Date
+                ?? new DateTime(newestAnnual.AnnualYear!.Value, 1, 1);
+
+            var annualReferences = new List<SharePointFileReference>
+            {
+                new(string.Join("/", folderPath.Trim('/'), newestAnnual.Item.Name).Trim('/'), newestAnnual.Item.LastModifiedDateTime)
+            };
+            annualReferences.AddRange(allCandidates
+                .Where(x => x.FileDate is not null)
+                .Where(x => x.FileDate!.Value.Date > baseDate.Date)
+                .OrderBy(x => x.FileDate)
+                .Select(x => new SharePointFileReference(
+                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
+                    x.Item.LastModifiedDateTime)));
+            return annualReferences;
+        }
+
+        var datedFiles = allCandidates
+            .Where(x => x.FileDate is not null)
+            .OrderBy(x => x.FileDate)
+            .ToList();
+        if (datedFiles.Count > 1)
+        {
+            return datedFiles
+                .Select(x => new SharePointFileReference(
+                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
+                    x.Item.LastModifiedDateTime))
+                .ToList();
         }
 
         var candidates = allCandidates
@@ -399,6 +442,25 @@ public class SharePointUploadService : ISharePointUploadService
     private static bool IsProcessedMergeInputFile(string? fileName)
         => Path.GetFileName(fileName ?? string.Empty).StartsWith("Sales_ProcessedMergeInput_", StringComparison.OrdinalIgnoreCase) &&
            Path.GetExtension(fileName ?? string.Empty).Equals(".csv", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Dateien, die der Standortexport selbst in den SharePoint-Landesordner hochlaedt
+    /// (Audit-CSV und Standort-Excel), duerfen nie wieder als Importquelle gelesen werden,
+    /// sonst fuettert sich der Manual-Import aus seiner eigenen Ausgabe (UK-Befund 2026-07-13).
+    /// </summary>
+    public static bool IsOwnExportOutputFile(string? fileName, string normalizedTsc)
+    {
+        var name = Path.GetFileName(fileName ?? string.Empty);
+        if (name.StartsWith("Sales_ProcessedMergeInput_", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(name);
+        var tscPattern = string.IsNullOrWhiteSpace(normalizedTsc) ? "[A-Z0-9]+" : Regex.Escape(normalizedTsc);
+        return Regex.IsMatch(
+            nameWithoutExtension,
+            $@"^Sales_{tscPattern}_\d{{4}}-\d{{2}}-\d{{2}}$",
+            RegexOptions.IgnoreCase);
+    }
 
     private static bool MatchesProcessedMergeInputTsc(string? fileName, string normalizedTsc)
     {
