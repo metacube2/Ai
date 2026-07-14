@@ -1,0 +1,159 @@
+@page "/finance-journal-import"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject IFinancialJournalRefreshService JournalService
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("B1 Journal Import", "B1 journal import")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("B1 Journal Import", "B1 journal import")</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+    @T("Erster Load der Hauptbuch-Buchungszeilen (OJDT/JDT1) je B1-Gesellschaft in die separate Tabelle FinancialJournalEntries — Grundlage fuer Konsolidierung und Analysen. Der Sales-Datenfluss (CentralSalesRecords) bleibt unberuehrt. Ein Lauf ersetzt den Journal-Bestand der Gesellschaft komplett; der Zeitraum folgt dem Datumsfilter aus den Export-Einstellungen.",
+       "First load of general-ledger journal lines (OJDT/JDT1) per B1 company into the separate FinancialJournalEntries table — basis for consolidation and analytics. The sales data flow (CentralSalesRecords) is untouched. A run fully replaces the company's journal data; the horizon follows the date filter from the export settings.")
+</MudAlert>
+
+<MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.CloudDownload"
+               OnClick="RefreshAllAsync" Disabled="_busy">
+        @T("Alle B1-Gesellschaften laden", "Load all B1 companies")
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.Refresh"
+               OnClick="LoadStatusAsync" Disabled="_busy">
+        @T("Status aktualisieren", "Refresh status")
+    </MudButton>
+    @if (_busy)
+    {
+        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+        <MudText Typo="Typo.caption">@_busyText</MudText>
+    }
+</MudStack>
+
+<MudTable Items="_rows" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>@T("Land", "Country")</MudTh>
+        <MudTh>TSC</MudTh>
+        <MudTh>@T("Schema", "Schema")</MudTh>
+        <MudTh>@T("Quellsystem", "Source system")</MudTh>
+        <MudTh Style="text-align:right">@T("Journalzeilen", "Journal rows")</MudTh>
+        <MudTh>@T("Buchungsdatum von/bis", "Posting date from/to")</MudTh>
+        <MudTh>@T("Letzter Load", "Last load")</MudTh>
+        <MudTh>@T("Aktion", "Action")</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Land</MudTd>
+        <MudTd>@context.Tsc</MudTd>
+        <MudTd>@context.Schema</MudTd>
+        <MudTd>@context.SourceSystem</MudTd>
+        <MudTd Style="text-align:right">@context.RowCount.ToString("N0")</MudTd>
+        <MudTd>
+            @(context.MinPostingDate is null ? "-" : $"{context.MinPostingDate:dd.MM.yyyy} - {context.MaxPostingDate:dd.MM.yyyy}")
+        </MudTd>
+        <MudTd>@(context.LastLoadedAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "-")</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.CloudDownload"
+                       OnClick="() => RefreshSiteAsync(context.SiteId, context.Land)" Disabled="_busy">
+                @T("Laden", "Load")
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText Typo="Typo.caption">
+            @T("Keine aktiven B1-/HANA-Gesellschaften gefunden (Quellsystem BI1).",
+               "No active B1/HANA companies found (source system BI1).")
+        </MudText>
+    </NoRecordsContent>
+</MudTable>
+
+<MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:#64748b;">
+    @T("Nicht enthalten: SAGE/Indien (kein OJDT/JDT1), CH/AT (SAP OData) und Manual-Excel-Laender (DE/UK/ES). Weitere ERP-Systeme folgen als eigene Konnektoren in dieselbe Tabelle.",
+       "Not included: SAGE/India (no OJDT/JDT1), CH/AT (SAP OData) and manual Excel countries (DE/UK/ES). Additional ERP systems will follow as separate connectors into the same table.")
+</MudText>
+
+@code {
+    private List<FinancialJournalSiteStatus> _rows = [];
+    private bool _loading;
+    private bool _busy;
+    private string _busyText = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await LoadStatusAsync();
+
+    private async Task LoadStatusAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = await JournalService.GetSiteStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Status konnte nicht geladen werden: {0}", "Could not load status: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshSiteAsync(int siteId, string land)
+    {
+        _busy = true;
+        _busyText = string.Format(T("Lade Journal fuer {0}...", "Loading journal for {0}..."), land);
+        StateHasChanged();
+        try
+        {
+            var result = await JournalService.RefreshSiteAsync(siteId);
+            Snackbar.Add(
+                string.Format(T("{0}: {1} Journalzeilen geladen (vorher {2}).", "{0}: {1} journal rows loaded (previously {2})."),
+                    result.Land, result.InsertedRows.ToString("N0"), result.DeletedRows.ToString("N0")),
+                result.InsertedRows > 0 ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Journal-Import fuer {0} fehlgeschlagen: {1}", "Journal import for {0} failed: {1}"), land, ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            _busyText = string.Empty;
+            await LoadStatusAsync();
+        }
+    }
+
+    private async Task RefreshAllAsync()
+    {
+        _busy = true;
+        try
+        {
+            foreach (var row in _rows)
+            {
+                _busyText = string.Format(T("Lade Journal fuer {0}...", "Loading journal for {0}..."), row.Land);
+                StateHasChanged();
+                try
+                {
+                    var result = await JournalService.RefreshSiteAsync(row.SiteId);
+                    Snackbar.Add(
+                        string.Format(T("{0}: {1} Journalzeilen geladen.", "{0}: {1} journal rows loaded."),
+                            result.Land, result.InsertedRows.ToString("N0")),
+                        result.InsertedRows > 0 ? Severity.Success : Severity.Warning);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add(string.Format(T("{0} fehlgeschlagen: {1}", "{0} failed: {1}"), row.Land, ex.Message), Severity.Error);
+                }
+            }
+        }
+        finally
+        {
+            _busy = false;
+            _busyText = string.Empty;
+            await LoadStatusAsync();
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

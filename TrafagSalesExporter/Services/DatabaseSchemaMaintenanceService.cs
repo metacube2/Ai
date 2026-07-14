@@ -51,6 +51,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureCentralSalesRecordTable(db);
         EnsureNavigationMenuItemTable(db);
         EnsurePurchasingCacheTables(db);
+        EnsureFinancialJournalEntriesTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -542,6 +543,32 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         using var cmd = conn.CreateCommand();
         cmd.CommandText = DatabaseSchemaSql.GetAppEventLogsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinancialJournalEntriesTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetFinancialJournalEntriesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_Tsc ON FinancialJournalEntries (Tsc);",
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_PostingDate ON FinancialJournalEntries (PostingDate);",
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_AccountCode ON FinancialJournalEntries (AccountCode);",
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_FinancialJournalEntries_Line ON FinancialJournalEntries (Tsc, JournalEntryId, JournalEntryLineId);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureSourceSystemDefinitionTable(AppDbContext db)

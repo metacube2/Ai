@@ -302,4 +302,35 @@ CREATE TABLE PurchasingSyncState (
     EketRows INTEGER NOT NULL DEFAULT 0,
     Message TEXT NOT NULL DEFAULT ''
 );";
+
+    internal static string GetFinancialJournalEntriesCreateSql() => @"
+CREATE TABLE FinancialJournalEntries (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    StoredAtUtc TEXT NOT NULL,
+    ExtractionDate TEXT NOT NULL,
+    Tsc TEXT NOT NULL DEFAULT '',
+    Land TEXT NOT NULL DEFAULT '',
+    CompanySchema TEXT NOT NULL DEFAULT '',
+    SourceSystem TEXT NOT NULL DEFAULT '',
+    JournalEntryId TEXT NOT NULL DEFAULT '',
+    JournalEntryLineId INTEGER NOT NULL DEFAULT 0,
+    PostingDate TEXT NULL,
+    FiscalYear INTEGER NOT NULL DEFAULT 0,
+    FiscalPeriod INTEGER NOT NULL DEFAULT 0,
+    AccountCode TEXT NOT NULL DEFAULT '',
+    AccountName TEXT NOT NULL DEFAULT '',
+    DebitAmount TEXT NOT NULL DEFAULT '0',
+    CreditAmount TEXT NOT NULL DEFAULT '0',
+    SignedAmountLocal TEXT NOT NULL DEFAULT '0',
+    LocalCurrency TEXT NOT NULL DEFAULT '',
+    TransactionCurrency TEXT NOT NULL DEFAULT '',
+    SignedAmountTransaction TEXT NOT NULL DEFAULT '0',
+    CostCenter TEXT NOT NULL DEFAULT '',
+    Dimension2 TEXT NOT NULL DEFAULT '',
+    LineMemo TEXT NOT NULL DEFAULT '',
+    TransactionType TEXT NOT NULL DEFAULT '',
+    SourceDocumentNumber TEXT NOT NULL DEFAULT '',
+    IsManual INTEGER NOT NULL DEFAULT 0,
+    IsReversal INTEGER NOT NULL DEFAULT 0
+);";
 }

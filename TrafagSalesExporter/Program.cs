@@ -87,6 +87,8 @@ builder.Services.AddSingleton<ICentralSalesRecordService, CentralSalesRecordServ
 builder.Services.AddSingleton<ICentralSalesDataProvider, CentralSalesDataProvider>();
 builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
 builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliationService>();
+builder.Services.AddSingleton<IFinancialJournalReader, HanaFinancialJournalReader>();
+builder.Services.AddSingleton<IFinancialJournalRefreshService, FinancialJournalRefreshService>();
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();

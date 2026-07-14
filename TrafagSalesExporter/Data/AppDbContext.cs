@@ -24,5 +24,6 @@ public class AppDbContext : DbContext
     public DbSet<SapFieldMapping> SapFieldMappings => Set<SapFieldMapping>();
     public DbSet<ManualExcelColumnMapping> ManualExcelColumnMappings => Set<ManualExcelColumnMapping>();
     public DbSet<CentralSalesRecord> CentralSalesRecords => Set<CentralSalesRecord>();
+    public DbSet<FinancialJournalEntry> FinancialJournalEntries => Set<FinancialJournalEntry>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
 }
