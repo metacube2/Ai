@@ -235,6 +235,32 @@
                 </tbody>
             </MudSimpleTable>
         </TrainingSection>
+
+        <TrainingSection Title="7. B1 Journal Import (Hauptbuch, neu)">
+            <p>Zusätzlich zum Verkaufs-/Umsatzimport gibt es einen eigenen Import der Hauptbuch-Buchungszeilen aus
+                SAP B1. Er ist bewusst vom Umsatzfluss getrennt: er schreibt <b>nicht</b> in <code>CentralSalesRecords</code>,
+                sondern in die separate Tabelle <code>FinancialJournalEntries</code>. Die Verkaufszahlen, Finance Summary
+                und der Soll/Ist-Abgleich ändern sich dadurch nicht. Zweck ist die Grundlage für Konsolidierung und
+                buchhalterische Analysen (Sachkonten, Soll/Haben, Kostenstellen).</p>
+            <p>Aufruf: <code>Finance Cockpit &gt; B1 Journal Import</code> (Seite <code>/finance-journal-import</code>).
+                Dort je Gesellschaft <b>Laden</b> oder <b>Alle B1-Gesellschaften laden</b>. Die Tabelle zeigt Zeilenanzahl,
+                Buchungsdatum von/bis und den letzten Load.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Punkt</th><th>Verhalten</th></tr></thead>
+                <tbody>
+                    <tr><td>Umfang</td><td>Nur klassische B1-Gesellschaften: Frankreich, Italien, USA (Quellsystem BI1). SAGE/Indien, CH/AT (SAP OData) und die Excel-Länder DE/UK/ES sind nicht enthalten.</td></tr>
+                    <tr><td>Quelle</td><td>Volles Hauptbuch aus OJDT/JDT1 (plus Kontoname und Hauswährung) — ohne den Umsatzkontenfilter der Sales-Strecke.</td></tr>
+                    <tr><td>Zeitraum</td><td>Folgt dem Datumsfilter aus den Export-Einstellungen (angewendet auf das Buchungsdatum).</td></tr>
+                    <tr><td>Ein Lauf</td><td>Ersetzt den Journalbestand der Gesellschaft komplett (Full Load). Liefert die Quelle 0 Zeilen, bleibt der bisherige Bestand erhalten (Warnung im Log).</td></tr>
+                    <tr><td>Felder</td><td>Journalnummer/-zeile, Buchungsdatum, Geschäftsjahr/-periode, Sachkonto + Bezeichnung, Soll/Haben, Betrag mit Vorzeichen, lokale + Transaktionswährung, Kostenstelle/Dimension, Buchungstext, Belegart, Quellbeleg, Kennzeichen manuell/Storno.</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                Der Journal-Import protokolliert in den App-Ereignissen (Kategorie „Journal"), nicht in den Export-Logs.
+                Der Daten-Heartbeat der Verkaufsstrecke wird dadurch bewusst nicht beeinflusst. Feld-Details:
+                <code>docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md</code>.
+            </MudAlert>
+        </TrainingSection>
     </MudTabPanel>
 
     <MudTabPanel Text="Abgleich">
