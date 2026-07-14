@@ -8,15 +8,18 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ISapCompositionService _sapCompositionService;
+    private readonly ISapGatewayStandardCostReader _standardCostReader;
     private readonly IAppEventLogService _appEventLogService;
 
     public SapGatewayDataSourceAdapter(
         IDbContextFactory<AppDbContext> dbFactory,
         ISapCompositionService sapCompositionService,
+        ISapGatewayStandardCostReader standardCostReader,
         IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _sapCompositionService = sapCompositionService;
+        _standardCostReader = standardCostReader;
         _appEventLogService = appEventLogService;
     }
 
@@ -59,7 +62,54 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
                 "Import abgebrochen, damit bestehende Dashboard-Daten nicht leer ueberschrieben werden.");
         }
 
+        await EnrichStandardCostsAsync(
+            records, sapServiceUrl, credentials.Username, credentials.Password, site, context);
+
         return new DataSourceFetchResult { Records = records };
+    }
+
+    /// <summary>
+    /// Holt die Standardpreise (MBEW) fuer die CH/AT-Gesellschaften nach und setzt die
+    /// Kostenbasis je Umsatzzeile. Scheitert das, bleibt der Umsatzimport gueltig — die
+    /// Kosten sind eine Anreicherung, kein Muss. Ein Ausfall wuerde sonst den taeglichen
+    /// Umsatzexport eines ganzen Landes verhindern.
+    /// </summary>
+    private async Task EnrichStandardCostsAsync(
+        List<SalesRecord> records,
+        string sapServiceUrl,
+        string username,
+        string password,
+        Site site,
+        DataSourceFetchContext context)
+    {
+        var valuationAreas = records
+            .Select(record => StandardCostEnricher.ResolveValuationArea(record.Land))
+            .Where(area => area is not null)
+            .Select(area => area!)
+            .Distinct()
+            .ToList();
+
+        if (valuationAreas.Count == 0)
+            return;
+
+        try
+        {
+            context.UpdateStatus?.Invoke("SAP Standardpreise laden...");
+            var standardCosts = await _standardCostReader.GetStandardCostsAsync(
+                sapServiceUrl, username, password, valuationAreas, site.Land);
+
+            var result = StandardCostEnricher.Apply(records, standardCosts);
+            await _appEventLogService.WriteAsync("Export", "Standardpreise zugeordnet",
+                siteId: site.Id, land: site.Land,
+                details: $"Materialpreise={standardCosts.Count} | Zeilen mit Kosten={result.Matched} " +
+                         $"({result.MatchedPercent} %) | ohne Kosten={result.Missing}");
+        }
+        catch (Exception ex)
+        {
+            await _appEventLogService.WriteAsync("Export", "Standardpreise nicht ermittelbar", "Warning",
+                siteId: site.Id, land: site.Land,
+                details: $"Umsatzimport laeuft ohne Kostenbasis weiter. Grund: {ex.Message}");
+        }
     }
 
     private static Site CloneSiteWithSapServiceUrl(Site site, string sapServiceUrl)

@@ -179,6 +179,8 @@ public class ManualExcelImportService : IManualExcelImportService
         RequireRawHeader(lineIndexes, "BelegeID", "Alphaplan-Positionsdatei");
         RequireRawHeader(lineIndexes, "BelegePositionenID", "Alphaplan-Positionsdatei");
         RequireRawHeader(lineIndexes, "NettoPreisGesamt", "Alphaplan-Positionsdatei");
+        // Optional: aeltere Exporte koennen den Rohertrag noch nicht enthalten.
+        var hasGrossProfit = lineIndexes.ContainsKey("RohertragGesamt");
 
         while (!parser.EndOfData)
         {
@@ -203,6 +205,16 @@ public class ManualExcelImportService : IManualExcelImportService
             var quantity = ReadRawDecimal(lineIndexes, fields, "BEAnzahl");
             var postingDate = alphaplanHeader.DocumentDate ?? ReadRawDate(lineIndexes, fields, "BelegDatum");
 
+            // Alphaplan liefert keinen Einstandspreis, aber den Rohertrag je Zeile.
+            // Einstandswert = Nettoumsatz - Rohertrag; geteilt durch die Menge ergibt
+            // den Stueckpreis, den die Margenlogik erwartet.
+            var unitCost = hasGrossProfit
+                ? DeriveAlphaplanUnitCost(
+                    ReadRawDecimal(lineIndexes, fields, "NettoPreisGesamt"),
+                    ReadRawDecimal(lineIndexes, fields, "RohertragGesamt"),
+                    quantity)
+                : 0m;
+
             var record = new SalesRecord
             {
                 ExtractionDate = extractionDate,
@@ -219,6 +231,8 @@ public class ManualExcelImportService : IManualExcelImportService
                 PurchaseOrderNumber = FirstNonEmpty(alphaplanHeader.PurchaseOrderNumber, alphaplanHeader.CustomerOrderText),
                 SalesPriceValue = salesValue,
                 SalesCurrency = alphaplanHeader.CurrencyCode,
+                StandardCost = unitCost,
+                StandardCostCurrency = unitCost != 0m ? alphaplanHeader.CurrencyCode : string.Empty,
                 DocumentCurrency = alphaplanHeader.CurrencyCode,
                 DocumentTotalForeignCurrency = documentNetValue,
                 DocumentTotalLocalCurrency = documentNetValue,
@@ -237,6 +251,31 @@ public class ManualExcelImportService : IManualExcelImportService
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// Leitet den Stueck-Einstandspreis einer Alphaplan-Zeile ab. Alphaplan exportiert
+    /// keinen Einstandspreis, wohl aber Nettoumsatz und Rohertrag je Zeile:
+    /// Einstandswert = Nettoumsatz - Rohertrag.
+    ///
+    /// Beide Werte sind ZEILENSUMMEN. `StandardCost` muss aber ein STUECKpreis sein,
+    /// weil die Margenlogik `Menge x StandardCost` rechnet — ohne die Division durch die
+    /// Menge wuerde die Menge ein zweites Mal einmultipliziert.
+    ///
+    /// Rueckgabe ist immer ein Betrag ohne Vorzeichen; Gutschriften dreht die
+    /// Margenlogik selbst um.
+    /// </summary>
+    public static decimal DeriveAlphaplanUnitCost(decimal netTotal, decimal grossProfitTotal, decimal quantity)
+    {
+        var costTotal = netTotal - grossProfitTotal;
+        if (costTotal == 0m)
+            return 0m;
+
+        var effectiveQuantity = Math.Abs(quantity);
+        if (effectiveQuantity == 0m)
+            return Math.Abs(costTotal);
+
+        return Math.Abs(costTotal) / effectiveQuantity;
     }
 
     private static Dictionary<int, AlphaplanInvoiceHeader> ReadAlphaplanInvoiceHeaders(string headerPath)
