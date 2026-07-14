@@ -1,11 +1,15 @@
-# Finance B1 Journal Import (Hauptbuch-Buchungszeilen)
+# Finance Journal Import (Hauptbuch-Buchungszeilen)
 
 Stand: 2026-07-14
 
-Zweck: Erster Load der SAP-B1-Hauptbuchdaten (Journal Entries) je Tochtergesellschaft in eine
+Zweck: Erster Load der Hauptbuchdaten (Journal Entries) je Tochtergesellschaft in eine
 **separate Tabelle** `FinancialJournalEntries` — Grundlage fuer Konsolidierung und Analysen gemaess
 der Prioliste von Andreas/Finance. Der bestehende Sales-Datenfluss (`CentralSalesRecords`,
 Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
+
+Der Import startete als reiner SAP-B1-Import (daher der Dateiname) und deckt inzwischen **zwei
+Quellsysteme in derselben Tabelle** ab: SAP B1 ueber HANA (FR, IT, US, Indien) und SAP ECC ueber
+OData (CH/AT). Die Spalte `SourceSystem` unterscheidet die Herkunft.
 
 ## Einordnung
 
@@ -36,12 +40,12 @@ Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
 
 ## Bedienung
 
-- Seite: `Finance Cockpit > B1 Journal Import` (`/finance-journal-import`, Seed-Key
+- Seite: `Finance Cockpit > Journal Import` (`/finance-journal-import`, Seed-Key
   `finance-journal-import`).
-- Je Gesellschaft `Laden` oder `Alle B1-Gesellschaften laden`; die Tabelle zeigt Zeilenanzahl,
+- Je Gesellschaft `Laden` oder `Alle Gesellschaften laden`; die Tabelle zeigt Zeilenanzahl,
   Buchungsdatum von/bis und letzten Load.
 - Zeithorizont = `ExportSettings.DateFilter` (gleicher Filter wie der Sales-Export), angewendet auf
-  `OJDT.RefDate`.
+  `OJDT.RefDate` (B1) bzw. auf `Budat` im OData-Filter (CH/AT).
 - Ein Lauf **ersetzt** den Journalbestand der Gesellschaft komplett (Full Load). Guardrail: liefert
   die Quelle 0 Zeilen, bleibt ein vorhandener Bestand unveraendert (Warnung im Eventlog).
 - Protokollierung ueber `AppEventLogs` (Kategorie `Journal`) — bewusst **nicht** ueber `ExportLogs`,
@@ -49,46 +53,55 @@ Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
 
 ## Feld-Mapping (Prioliste Andreas -> Tabelle `FinancialJournalEntries`)
 
-| Prioliste | Spalte | Quelle / Ableitung |
-| --- | --- | --- |
-| Gesellschaft / Company Code | `Tsc`, `Land`, `CompanySchema` | Standortstamm (`Sites`), B1-Schema z. B. `fr01_p` |
-| Quellsystem | `SourceSystem` | Quellsystem-Code, aktuell `BI1` |
-| Journal Entry ID | `JournalEntryId` | `OJDT.TransId` |
-| Journal Entry Line ID | `JournalEntryLineId` | `JDT1.Line_ID` |
-| Buchungsdatum | `PostingDate` | `OJDT.RefDate` |
-| Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` (B1-Gesellschaften = Kalenderjahr) |
-| Buchungsperiode | `FiscalPeriod` | Monat aus `RefDate` |
-| Lokales Sachkonto | `AccountCode` | `JDT1.Account` |
-| Kontobezeichnung | `AccountName` | `OACT.AcctName` |
-| Sollbetrag | `DebitAmount` | `JDT1.Debit` (lokale Waehrung) |
-| Habenbetrag | `CreditAmount` | `JDT1.Credit` (lokale Waehrung) |
-| Betrag mit Vorzeichen | `SignedAmountLocal` | `Debit - Credit` (Soll positiv, Haben negativ) |
-| Lokale Waehrung | `LocalCurrency` | `OADM.MainCurncy` |
-| Betrag in lokaler Waehrung | `SignedAmountLocal` | identisch mit Betrag mit Vorzeichen (dokumentiert) |
-| Transaktionswaehrung | `TransactionCurrency` | `JDT1.FCCurrency` (leer bei reinen LC-Buchungen) |
-| Betrag in Transaktionswaehrung | `SignedAmountTransaction` | `FCDebit - FCCredit` |
-| Kostenstelle / Dimension 1 | `CostCenter` | `JDT1.ProfitCode` |
-| Weitere Hauptdimension | `Dimension2` | `JDT1.OcrCode2` |
-| Buchungstext / Line Memo | `LineMemo` | `JDT1.LineMemo` |
-| Belegart / Source Transaction Type | `TransactionType` | `OJDT.TransType` (B1-ObjType, z. B. 13=AR-Rechnung, 30=manuelle Buchung) |
-| Quelldokumentnummer | `SourceDocumentNumber` | `OJDT.BaseRef` |
-| Manuell / automatisch | `IsManual` | `TransType = '30'` |
-| Storno-/Reversal-Kennzeichen | `IsReversal` | `OJDT.StornoToTr` gesetzt oder `AutoStorno = 'Y'` |
-| Extraktionszeitpunkt | `ExtractionDate` (+ `StoredAtUtc`) | `CURRENT_TIMESTAMP` der Quelle / Speicherzeitpunkt |
+Beide Quellsysteme schreiben in dieselben Spalten; nur die Herkunft unterscheidet sich.
+
+| Prioliste | Spalte | Quelle B1 (HANA, FR/IT/US/IN) | Quelle CH/AT (SAP ECC via OData) |
+| --- | --- | --- | --- |
+| Gesellschaft / Company Code | `Tsc`, `Land`, `CompanySchema`, `CompanyCode` | Standortstamm (`Sites`), B1-Schema z. B. `fr01_p`; `CompanyCode` leer | `CompanyCode` = `Bukrs` (Buchungskreis) — trennt CH von AT innerhalb von `ZSCHWEIZ` |
+| Quellsystem | `SourceSystem` | Quellsystem-Code (`BI1`, Indien historisch `SAGE`) | `ZSCHWEIZ` |
+| Journal Entry ID | `JournalEntryId` | `OJDT.TransId` | `Bukrs/Gjahr/Belnr` (Belegnummer erst mit Buchungskreis + Jahr eindeutig) |
+| Journal Entry Line ID | `JournalEntryLineId` | `JDT1.Line_ID` | `Buzei` (Belegzeile) |
+| Buchungsdatum | `PostingDate` | `OJDT.RefDate` | `Budat` |
+| Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` | `Gjahr` |
+| Buchungsperiode | `FiscalPeriod` | Monat aus `RefDate` | `Monat` (`BKPF.MONAT`) |
+| Lokales Sachkonto | `AccountCode` | `JDT1.Account` | `Hkont` (fuehrende Nullen entfernt) |
+| Kontobezeichnung | `AccountName` | `OACT.AcctName` | `HkontTxt` (aus `SKAT`) |
+| Sollbetrag | `DebitAmount` | `JDT1.Debit` (lokale Waehrung) | `Dmbtr`, wenn `Shkzg = 'S'` |
+| Habenbetrag | `CreditAmount` | `JDT1.Credit` (lokale Waehrung) | `Dmbtr`, wenn `Shkzg = 'H'` |
+| Betrag mit Vorzeichen | `SignedAmountLocal` | `Debit - Credit` (Soll positiv, Haben negativ) | `Dmbtr` mit Vorzeichen aus `Shkzg` (Soll positiv, Haben negativ) |
+| Lokale Waehrung | `LocalCurrency` | `OADM.MainCurncy` | `Hwaer` (Hauswaehrung des Buchungskreises) |
+| Betrag in lokaler Waehrung | `SignedAmountLocal` | identisch mit Betrag mit Vorzeichen (dokumentiert) | identisch mit Betrag mit Vorzeichen (dokumentiert) |
+| Transaktionswaehrung | `TransactionCurrency` | `JDT1.FCCurrency` (leer bei reinen LC-Buchungen) | `Waers`; leer, wenn `Waers = Hwaer` (keine echte Fremdwaehrung) |
+| Betrag in Transaktionswaehrung | `SignedAmountTransaction` | `FCDebit - FCCredit` | `Wrbtr` mit Vorzeichen aus `Shkzg` |
+| Kostenstelle / Dimension 1 | `CostCenter` | `JDT1.ProfitCode` | `Kostl` (fuehrende Nullen entfernt) |
+| Weitere Hauptdimension | `Dimension2` | `JDT1.OcrCode2` | `Prctr` (Profitcenter, fuehrende Nullen entfernt) |
+| Buchungstext / Line Memo | `LineMemo` | `JDT1.LineMemo` | `Sgtxt` (Positionstext) |
+| Belegart / Source Transaction Type | `TransactionType` | `OJDT.TransType` (B1-ObjType, z. B. 13=AR-Rechnung, 30=manuelle Buchung) | `Blart` (SAP-Belegart, z. B. `SA`, `RV`, `KR`) |
+| Quelldokumentnummer | `SourceDocumentNumber` | `OJDT.BaseRef` | `Xblnr` (Referenzbelegnummer) |
+| Manuell / automatisch | `IsManual` | `TransType = '30'` | `Blart = 'SA'` (**Annahme**, mit Andreas zu bestaetigen) |
+| Storno-/Reversal-Kennzeichen | `IsReversal` | `OJDT.StornoToTr` gesetzt oder `AutoStorno = 'Y'` | `Stblg` gesetzt (Stornobelegnummer) |
+| Extraktionszeitpunkt | `ExtractionDate` (+ `StoredAtUtc`) | `CURRENT_TIMESTAMP` der Quelle / Speicherzeitpunkt | Speicherzeitpunkt der App |
 
 ## Technik
 
 | Baustein | Ort |
 | --- | --- |
-| Entity/Tabelle | `Models/FinancialJournalEntry.cs`, Create-SQL in `DatabaseInitializationService.SchemaSql.cs`, `EnsureFinancialJournalEntriesTable` in `DatabaseSchemaMaintenanceService` (additiv, kein Migrationsrisiko) |
+| Entity/Tabelle | `Models/FinancialJournalEntry.cs`, Create-SQL in `DatabaseInitializationService.SchemaSql.cs`, `EnsureFinancialJournalEntriesTable` in `DatabaseSchemaMaintenanceService` (additiv, kein Migrationsrisiko; `CompanyCode` per `AddColumnIfMissing`) |
 | Indizes | `Tsc`, `PostingDate`, `AccountCode`; Unique `(Tsc, JournalEntryId, JournalEntryLineId)` |
-| B1-Leser | `Services/HanaFinancialJournalReader.cs` (`IFinancialJournalReader`); Query/Zeilenfabrik als pure statische Methoden mit Tests |
-| Orchestrierung | `Services/FinancialJournalRefreshService.cs` (`IFinancialJournalRefreshService`): B1-Standortauswahl (`IsB1JournalSite`), Server-/Credential-Aufloesung wie `HanaDataSourceAdapter`, transaktionales Ersetzen je TSC |
-| UI | `Components/Pages/FinanceJournalImport.razor` |
-| Tests | `TrafagSalesExporter.Tests/FinancialJournalTests.cs` (9 Tests: Vorzeichen/Periode/Manuell/Storno, Query-Aufbau, Standortauswahl, Ersetzen, 0-Zeilen-Guardrail, Nicht-B1-Ablehnung) |
+| B1-Leser (HANA) | `Services/HanaFinancialJournalReader.cs` (`IFinancialJournalReader`); Query/Zeilenfabrik als pure statische Methoden mit Tests; prueft vorab ueber `sys.tables`, ob `OJDT`/`JDT1` im Schema existieren |
+| CH/AT-Leser (SAP OData) | `Services/SapGatewayFinancialJournalReader.cs`: EntitySet `FinanzJournalSet`, Gateway-Paging (`$top`/`$skip`/`$orderby`, 1000er-Seiten), `$filter` auf `Budat`; prueft vorab die Service-Metadata und meldet klar, wenn das EntitySet fehlt; Zeilenabbildung `MapRow` pure/statisch mit Tests |
+| Orchestrierung | `Services/FinancialJournalRefreshService.cs` (`IFinancialJournalRefreshService`): Standortauswahl `IsJournalSite` (**HANA + Schema** ODER **SAP-Gateway + aufloesbare Service-URL**, bewusst NICHT ueber den Quellsystem-Code), Routing nach Anschlussart auf den passenden Leser, Server-/Credential-Aufloesung wie `HanaDataSourceAdapter`, transaktionales Ersetzen je TSC |
+| UI | `Components/Pages/FinanceJournalImport.razor`; Schulung: `Components/Pages/FinanceTraining.razor`, Abschnitt 7 |
+| Tests | `TrafagSalesExporter.Tests/FinancialJournalTests.cs` (Vorzeichen/Periode/Manuell/Storno, Query-Aufbau, Standortauswahl inkl. Indien/ZSCHWEIZ, Gateway-Routing, `MapRow` Composite-Key/Waehrung/fuehrende Nullen, Ersetzen, 0-Zeilen-Guardrail, Ablehnung Manual-Excel); Gesamtsuite `189/189` gruen |
 
 ## Offene Punkte / vor erstem Produktivlauf pruefen
 
+0. **CH/AT blockiert bis SAP liefert:** Das EntitySet `FinanzJournalSet` existiert auf `travp762`
+   noch nicht. Uebergabe an das SAP-/ABAP-Team: `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`
+   (Feldliste, ABAP-Skizze fuer `GET_ENTITYSET`, Paging-Anforderung, Abnahmekriterien). Bis dahin
+   meldet ein CH/AT-Ladeversuch klar "EntitySet fehlt"; alle anderen Gesellschaften laden normal.
+   Fachlich mit Andreas zu bestaetigen: `IsManual = Blart 'SA'` und Profitcenter als "weitere
+   Hauptdimension".
 1. Spaltenverfuegbarkeit live gegen `fr01_p` und `TRAFAG_LIVE` verifizieren (`JDT1.ProfitCode`,
    `OcrCode2`, `FCCurrency`, `OJDT.StornoToTr`, `AutoStorno`) — Namen entsprechen dem
    B1-Standardschema, wurden aber noch nicht gegen die produktiven Trafag-B1-Systeme geprobt.

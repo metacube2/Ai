@@ -1,9 +1,14 @@
 # RAG Project
 
-Stand: 2026-07-02
+Stand: 2026-07-14
 
 ## Kurzstand
 
+
+
+- Neu umgesetzt und deployed 2026-07-14: Journal-Import (Hauptbuch) als eigener Import in die separate Tabelle `FinancialJournalEntries` — Seite `Finance Cockpit > Journal Import` (`/finance-journal-import`, Seed `finance-journal-import`). Umfang: alle SAP-B1-Gesellschaften ueber HANA (FR, IT, US, Indien) plus CH/AT (`ZSCHWEIZ`) ueber SAP OData. Der Sales-Datenfluss bleibt unveraendert. Offene Abhaengigkeit: das OData-EntitySet `FinanzJournalSet` fuer CH/AT existiert auf SAP-Seite noch nicht (Spez fuer das SAP-Team: `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`). Details/Feldmapping: `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md`, Kurzstand: `docs/rag/FINANCE.md`.
+- Neu lokal umgesetzt 2026-07-13: Finance-Daten-Heartbeat im Management-Cockpit. Neuer Experten-Reiter `Daten-Heartbeat` / `Data heartbeat` unter `management-cockpit?section=heartbeat`, Navigation-Seed `finance-heartbeat`. Inline-SVG visualisiert Tageszeilen je TSC/Land und trennt echte Update-Luecken von Wochenenden/normalen Nicht-Buchungstagen; Excel-Export und Tests ergaenzt. Details: `docs/rag/FINANCE.md`.
+- Review Einkauf/Power BI 2026-07-08 dokumentiert: Navigation anfangs hakelig, Registerstruktur geklaert, Datumsfilter als Abnahme-kritisch, beobachteter Offenwert ca. 18 Mio. fuer offene nicht geloeste Positionen, offene Klaerung Bestellungen vs. Kontrakte/offene Verpflichtungen (Mengen-Kontrakte vs. offene Bestellungen, SAP-Quelle/Belegart/EKPO/ECCO), produktiver Pruefpunkt Lieferantenname statt Nummer trotz LFA1-Fix, Performance Score fachlich optional, moeglicher taeglicher SAP-/CSV-Export analog QM wenn Einkauf die passende Transaktion/Sollspalten nennt. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
 - Nahtloser Einstieg nach Chatwechsel: `docs/HANDOFF_2026-06-16.md` laden.
 - DEPLOYED 2026-07-02 (Commit `5c9749c`, `136/136` Tests): Sechs Korrekturen aus einem Finance-Logik-Review. (1) Gutschriften-Vorzeichen im Excel-Nachweis vorzeichenbewusst wie Dashboard (`ExcelExportService`). (2) `GroupMarginSupplierClassifier` matcht Marker nur auf Wortgrenzen (Regex) — „Triton"/„Trinity"/„AGFS" nicht mehr faelschlich intern. (3) `CentralSalesDataProvider` ergaenzt fehlende TSC aus der konsolidierten Audit-CSV statt nur bei leerem Ergebnis. (4) `ConsolidatedExportService` nutzt bei aktivem Audit-CSV-Schalter dieselbe Quelle wie die Dashboards. (5) Group-CHF rechnet je Zeile mit dem Kurs des eigenen Jahres um. (6) Group-CHF weist fehlende Kurse per Notice aus. OFFEN/latent: `Marge Original`/`%` mischen Waehrungen bei abweichender Standardkostenwaehrung (`Marge CHF` korrekt) — mit MBEW-STPRS-Feature zu klaeren. Details: `docs/rag/FINANCE.md`.
