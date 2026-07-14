@@ -171,6 +171,12 @@ public class DatabaseSeedService : IDatabaseSeedService
                 existing.Match = item.Match;
                 existing.Icon = item.Icon;
             }
+            if (existing.Key == "finance-journal-import")
+            {
+                // Titel-Korrektur 2026-07-14: umfasst neben B1 (FR/IT/US/IN) jetzt auch CH/AT via SAP OData.
+                existing.TitleDe = item.TitleDe;
+                existing.TitleEn = item.TitleEn;
+            }
             existing.IsSystem = true;
             changed = true;
         }
@@ -205,7 +211,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("finance-comparison", "finance", "Soll/Ist Vergleich", "Actual/reference comparison", "CompareArrows", "finance-cockpit/vergleich", 30),
         Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
         Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),
-        Link("finance-journal-import", "finance", "B1 Journal Import", "B1 journal import", "AccountBalance", "finance-journal-import", 55),
+        Link("finance-journal-import", "finance", "Journal Import", "Journal import", "AccountBalance", "finance-journal-import", 55),
         Group("finance-admin", "finance", "Admin", "Admin", "AdminPanelSettings", 60),
         Link("sites", "finance-admin", "Standorte", "Sites", "LocationOn", "standorte", 10, requiredPolicy: SecurityPolicies.AdminOnly),
         Link("transformations", "finance-admin", "Transformationen", "Transformations", "Transform", "transformations", 20, requiredPolicy: SecurityPolicies.AdminOnly),

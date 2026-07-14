@@ -557,6 +557,9 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
             cmd.ExecuteNonQuery();
         }
 
+        // Buchungskreis fuer SAP-ECC-Quellen (ZSCHWEIZ: trennt CH/AT); additiv fuer Bestandstabellen.
+        AddColumnIfMissing(db, "FinancialJournalEntries", "CompanyCode", "TEXT NOT NULL DEFAULT ''");
+
         foreach (var indexSql in new[]
         {
             "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_Tsc ON FinancialJournalEntries (Tsc);",

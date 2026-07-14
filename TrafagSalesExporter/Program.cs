@@ -88,6 +88,7 @@ builder.Services.AddSingleton<ICentralSalesDataProvider, CentralSalesDataProvide
 builder.Services.AddSingleton<IConfigTransferService, ConfigTransferService>();
 builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliationService>();
 builder.Services.AddSingleton<IFinancialJournalReader, HanaFinancialJournalReader>();
+builder.Services.AddSingleton<ISapGatewayFinancialJournalReader, SapGatewayFinancialJournalReader>();
 builder.Services.AddSingleton<IFinancialJournalRefreshService, FinancialJournalRefreshService>();
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();

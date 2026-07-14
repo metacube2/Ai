@@ -311,6 +311,7 @@ CREATE TABLE FinancialJournalEntries (
     Tsc TEXT NOT NULL DEFAULT '',
     Land TEXT NOT NULL DEFAULT '',
     CompanySchema TEXT NOT NULL DEFAULT '',
+    CompanyCode TEXT NOT NULL DEFAULT '',
     SourceSystem TEXT NOT NULL DEFAULT '',
     JournalEntryId TEXT NOT NULL DEFAULT '',
     JournalEntryLineId INTEGER NOT NULL DEFAULT 0,

@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
@@ -27,7 +27,7 @@ public class FinancialJournalTests : IDisposable
                 new SourceSystemDefinition { Code = "BI1", DisplayName = "SAP B1 HANA", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
                 // Indien ist fachlich SAP B1, in der Konfiguration aber historisch als SAGE angeschrieben.
                 new SourceSystemDefinition { Code = "SAGE", DisplayName = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
-                new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP OData", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+                new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP OData", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true, CentralServiceUrl = "http://travp762:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/", CentralUsername = "user", CentralPassword = "pass" },
                 new SourceSystemDefinition { Code = "MANUAL_EXCEL", DisplayName = "Manual Excel", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true });
             db.HanaServers.AddRange(
                 new HanaServer { SourceSystem = "BI1", Name = "Test B1", Host = "localhost", Port = 30015 },
@@ -114,13 +114,14 @@ public class FinancialJournalTests : IDisposable
         => Assert.Throws<InvalidOperationException>(() => HanaFinancialJournalReader.GetJournalQuery("fr01_p; DROP"));
 
     [Fact]
-    public void IsJournalSite_Selects_Active_Hana_Sites_Including_India()
+    public void IsJournalSite_Selects_Hana_Sites_And_Gateway_Sites_With_Url()
     {
         var sourceSystems = new List<SourceSystemDefinition>
         {
             new() { Code = "BI1", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new() { Code = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
-            new() { Code = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+            new() { Code = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true, CentralServiceUrl = "http://travp762:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/" },
+            new() { Code = "SAP_NO_URL", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
             new() { Code = "MANUAL_EXCEL", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true }
         };
 
@@ -129,9 +130,15 @@ public class FinancialJournalTests : IDisposable
         // Indien ist fachlich B1, laeuft aber unter dem irrefuehrenden Code SAGE.
         Assert.True(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "SAGE", Schema = "TRAFAG_LIVE", IsActive = true }, sourceSystems));
-        // CH/AT laeuft ueber SAP OData und hat kein OJDT/JDT1.
-        Assert.False(FinancialJournalRefreshService.IsJournalSite(
+        // CH/AT: SAP-Gateway-Standort mit aufloesbarer Service-URL ist Journalquelle (BKPF/BSEG via EntitySet).
+        Assert.True(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "SAP", Schema = "", IsActive = true }, sourceSystems));
+        // Gateway ohne zentrale URL und ohne Site-Override bleibt draussen.
+        Assert.False(FinancialJournalRefreshService.IsJournalSite(
+            new Site { SourceSystem = "SAP_NO_URL", Schema = "", IsActive = true }, sourceSystems));
+        // Site-Override der URL reicht auch ohne zentrale URL.
+        Assert.True(FinancialJournalRefreshService.IsJournalSite(
+            new Site { SourceSystem = "SAP_NO_URL", SapServiceUrl = "http://host/sap/opu/odata/sap/ZX_SRV/", Schema = "", IsActive = true }, sourceSystems));
         Assert.False(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "MANUAL_EXCEL", Schema = "x", IsActive = true }, sourceSystems));
         Assert.False(FinancialJournalRefreshService.IsJournalSite(
@@ -141,7 +148,88 @@ public class FinancialJournalTests : IDisposable
     }
 
     [Fact]
-    public async Task GetSiteStatusAsync_Lists_Hana_Sites_Including_India_With_Row_Stats()
+    public void MapRow_Maps_Bseg_Fields_With_Sign_And_Composite_Key()
+    {
+        var debitRow = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Bukrs"] = "0001",
+            ["Belnr"] = "0100000042",
+            ["Gjahr"] = "2026",
+            ["Buzei"] = "001",
+            ["Budat"] = "/Date(1767139200000)/", // 31.12.2025 UTC
+            ["Monat"] = "12",
+            ["Hkont"] = "0000470050",
+            ["HkontTxt"] = "Umsatzerloese Inland",
+            ["Shkzg"] = "S",
+            ["Dmbtr"] = "1250.50",
+            ["Wrbtr"] = "1300.00",
+            ["Hwaer"] = "CHF",
+            ["Waers"] = "EUR",
+            ["Kostl"] = "0000001200",
+            ["Prctr"] = "0000009100",
+            ["Sgtxt"] = "Rechnung 404110",
+            ["Blart"] = "RV",
+            ["Xblnr"] = "404110",
+            ["Stblg"] = ""
+        };
+
+        var entry = SapGatewayFinancialJournalReader.MapRow(debitRow, "ZSCHWEIZ", "Schweiz/Oesterreich", "SAP");
+
+        Assert.Equal("0001/2026/0100000042", entry.JournalEntryId);
+        Assert.Equal(1, entry.JournalEntryLineId);
+        Assert.Equal("0001", entry.CompanyCode);
+        Assert.Equal(2026, entry.FiscalYear);
+        Assert.Equal(12, entry.FiscalPeriod);
+        Assert.Equal("470050", entry.AccountCode);
+        Assert.Equal(1250.50m, entry.DebitAmount);
+        Assert.Equal(0m, entry.CreditAmount);
+        Assert.Equal(1250.50m, entry.SignedAmountLocal);
+        Assert.Equal("CHF", entry.LocalCurrency);
+        Assert.Equal("EUR", entry.TransactionCurrency);
+        Assert.Equal(1300.00m, entry.SignedAmountTransaction);
+        Assert.Equal("1200", entry.CostCenter);
+        Assert.Equal("9100", entry.Dimension2);
+        Assert.Equal(new DateTime(2025, 12, 31), entry.PostingDate);
+        Assert.False(entry.IsManual);
+        Assert.False(entry.IsReversal);
+    }
+
+    [Fact]
+    public void MapRow_Credit_Manual_And_Reversal_Flags()
+    {
+        var creditRow = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Bukrs"] = "0002",
+            ["Belnr"] = "0100000001",
+            ["Gjahr"] = "2026",
+            ["Buzei"] = "002",
+            ["Budat"] = "2026-01-15T00:00:00",
+            ["Monat"] = "1",
+            ["Hkont"] = "0000010100",
+            ["Shkzg"] = "H",
+            ["Dmbtr"] = "500",
+            ["Wrbtr"] = "500",
+            ["Hwaer"] = "EUR",
+            ["Waers"] = "EUR",
+            ["Blart"] = "SA",
+            ["Stblg"] = "0100000099"
+        };
+
+        var entry = SapGatewayFinancialJournalReader.MapRow(creditRow, "ZSCHWEIZ", "Schweiz/Oesterreich", "SAP");
+
+        Assert.Equal(0m, entry.DebitAmount);
+        Assert.Equal(500m, entry.CreditAmount);
+        Assert.Equal(-500m, entry.SignedAmountLocal);
+        Assert.Equal(-500m, entry.SignedAmountTransaction);
+        // Belegwaehrung = Hauswaehrung -> keine Transaktionswaehrung ausweisen.
+        Assert.Equal(string.Empty, entry.TransactionCurrency);
+        Assert.True(entry.IsManual);   // Belegart SA
+        Assert.True(entry.IsReversal); // Storno-Belegnummer gesetzt
+        Assert.Equal(new DateTime(2026, 1, 15), entry.PostingDate);
+    }
+
+    [Fact]
+    public async Task GetSiteStatusAsync_Lists_Hana_And_Gateway_Sites_With_Row_Stats()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
         {
@@ -151,10 +239,10 @@ public class FinancialJournalTests : IDisposable
             await db.SaveChangesAsync();
         }
 
-        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader([]), new NoopAppEventLogService());
+        var service = CreateService(new FakeJournalReader([]));
         var status = await service.GetSiteStatusAsync();
 
-        Assert.Equal(2, status.Count);
+        Assert.Equal(3, status.Count);
         var fr = Assert.Single(status, row => row.Tsc == "TRFR");
         Assert.Equal(2, fr.RowCount);
         Assert.Equal(new DateTime(2026, 1, 10), fr.MinPostingDate);
@@ -164,6 +252,47 @@ public class FinancialJournalTests : IDisposable
         Assert.Equal("TRAFAG_LIVE", india.Schema);
         Assert.Equal(0, india.RowCount);
         Assert.Null(india.LastLoadedAtUtc);
+
+        // CH/AT erscheint als Gateway-Journalquelle (Service-URL zentral konfiguriert).
+        var chat = Assert.Single(status, row => row.Tsc == "ZSCHWEIZ");
+        Assert.Equal(0, chat.RowCount);
+    }
+
+    [Fact]
+    public async Task RefreshSiteAsync_Loads_Zschweiz_Via_Gateway_Reader()
+    {
+        var gatewayEntries = new List<FinancialJournalEntry>
+        {
+            new()
+            {
+                StoredAtUtc = DateTime.UtcNow,
+                ExtractionDate = DateTime.UtcNow,
+                Tsc = "ZSCHWEIZ",
+                Land = "Schweiz/Oesterreich",
+                CompanyCode = "0001",
+                SourceSystem = "SAP",
+                JournalEntryId = "0001/2026/0100000042",
+                JournalEntryLineId = 1,
+                PostingDate = new DateTime(2026, 3, 5),
+                FiscalYear = 2026,
+                FiscalPeriod = 3,
+                AccountCode = "470050",
+                DebitAmount = 100m,
+                SignedAmountLocal = 100m,
+                LocalCurrency = "CHF"
+            }
+        };
+        var gatewayReader = new FakeGatewayJournalReader(gatewayEntries);
+        var service = CreateService(new FakeJournalReader([]), gatewayReader);
+
+        var result = await service.RefreshSiteAsync(4);
+
+        Assert.Equal("ZSCHWEIZ", result.Tsc);
+        Assert.Equal(1, result.InsertedRows);
+        Assert.Equal("http://travp762:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/", gatewayReader.LastServiceUrl);
+        await using var verify = await _dbFactory.CreateDbContextAsync();
+        var row = Assert.Single(await verify.FinancialJournalEntries.Where(e => e.Tsc == "ZSCHWEIZ").ToListAsync());
+        Assert.Equal("0001", row.CompanyCode);
     }
 
     [Fact]
@@ -173,7 +302,7 @@ public class FinancialJournalTests : IDisposable
         {
             CreateStoredEntry("TRIN", "900", 0, new DateTime(2026, 4, 2))
         };
-        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader(indiaEntries), new NoopAppEventLogService());
+        var service = CreateService(new FakeJournalReader(indiaEntries));
 
         var result = await service.RefreshSiteAsync(2);
 
@@ -197,7 +326,7 @@ public class FinancialJournalTests : IDisposable
             CreateStoredEntry("TRFR", "200", 0, new DateTime(2026, 6, 1)),
             CreateStoredEntry("TRFR", "200", 1, new DateTime(2026, 6, 1))
         };
-        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader(freshEntries), new NoopAppEventLogService());
+        var service = CreateService(new FakeJournalReader(freshEntries));
 
         var result = await service.RefreshSiteAsync(1);
 
@@ -218,7 +347,7 @@ public class FinancialJournalTests : IDisposable
             await db.SaveChangesAsync();
         }
 
-        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader([]), new NoopAppEventLogService());
+        var service = CreateService(new FakeJournalReader([]));
         var result = await service.RefreshSiteAsync(1);
 
         Assert.Equal(0, result.DeletedRows);
@@ -230,10 +359,9 @@ public class FinancialJournalTests : IDisposable
     [Fact]
     public async Task RefreshSiteAsync_Rejects_Non_Journal_Sites()
     {
-        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader([]), new NoopAppEventLogService());
-        // Manual-Excel (UK) und SAP OData (CH/AT) haben kein B1-Hauptbuch.
+        var service = CreateService(new FakeJournalReader([]));
+        // Manual-Excel (UK) hat keine Buchhaltungsquelle.
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(3));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(4));
     }
 
     private static FinancialJournalEntry CreateStoredEntry(string tsc, string journalEntryId, int lineId, DateTime postingDate)
@@ -258,12 +386,30 @@ public class FinancialJournalTests : IDisposable
             LocalCurrency = "EUR"
         };
 
+    private FinancialJournalRefreshService CreateService(
+        IFinancialJournalReader hanaReader,
+        ISapGatewayFinancialJournalReader? gatewayReader = null)
+        => new(_dbFactory, hanaReader, gatewayReader ?? new FakeGatewayJournalReader([]), new NoopAppEventLogService());
+
     private sealed class FakeJournalReader(List<FinancialJournalEntry> entries) : IFinancialJournalReader
     {
         public Task<List<FinancialJournalEntry>> GetJournalEntriesAsync(
             HanaServer server, string schema, string tsc, string land, string sourceSystem, string dateFilter,
             CancellationToken cancellationToken = default)
             => Task.FromResult(entries);
+    }
+
+    private sealed class FakeGatewayJournalReader(List<FinancialJournalEntry> entries) : ISapGatewayFinancialJournalReader
+    {
+        public string? LastServiceUrl { get; private set; }
+
+        public Task<List<FinancialJournalEntry>> GetJournalEntriesAsync(
+            string serviceUrl, string username, string password, string tsc, string land, string sourceSystem,
+            string dateFilter, CancellationToken cancellationToken = default)
+        {
+            LastServiceUrl = serviceUrl;
+            return Task.FromResult(entries);
+        }
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>

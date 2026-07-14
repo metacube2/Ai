@@ -44,15 +44,18 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IFinancialJournalReader _journalReader;
+    private readonly ISapGatewayFinancialJournalReader _sapJournalReader;
     private readonly IAppEventLogService _appEventLogService;
 
     public FinancialJournalRefreshService(
         IDbContextFactory<AppDbContext> dbFactory,
         IFinancialJournalReader journalReader,
+        ISapGatewayFinancialJournalReader sapJournalReader,
         IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _journalReader = journalReader;
+        _sapJournalReader = sapJournalReader;
         _appEventLogService = appEventLogService;
     }
 
@@ -102,22 +105,20 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
             ?? throw new InvalidOperationException($"Standort mit Id {siteId} wurde nicht gefunden.");
         var sourceSystems = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync(cancellationToken);
         if (!IsJournalSite(site, sourceSystems))
-            throw new InvalidOperationException($"Standort '{site.Land}' ({site.TSC}) ist keine B1-/HANA-Journalquelle.");
+            throw new InvalidOperationException($"Standort '{site.Land}' ({site.TSC}) ist keine Journalquelle (weder B1/HANA noch SAP-Gateway).");
 
         var sourceDefinition = sourceSystems.First(s =>
             string.Equals(s.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
         var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken) ?? new ExportSettings();
-        var server = await BuildEffectiveServerAsync(db, site, sourceDefinition, cancellationToken);
 
         await _appEventLogService.WriteAsync("Journal", "Journal-Import gestartet",
             siteId: site.Id, land: site.Land,
-            details: $"TSC={site.TSC} | Schema={site.Schema} | dateFilter={settings.DateFilter}");
+            details: $"TSC={site.TSC} | Anschluss={sourceDefinition.ConnectionKind} | dateFilter={settings.DateFilter}");
 
         List<FinancialJournalEntry> entries;
         try
         {
-            entries = await _journalReader.GetJournalEntriesAsync(
-                server, site.Schema, site.TSC, site.Land, sourceDefinition.Code, settings.DateFilter, cancellationToken);
+            entries = await ReadJournalEntriesAsync(db, site, sourceDefinition, settings, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -169,20 +170,17 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
     }
 
     /// <summary>
-    /// Journalquelle = aktiver Standort, der ueber den HANA-Konnektor mit eigenem
-    /// Datenbankschema laeuft. Das sind die SAP-B1-Gesellschaften: FR/IT/US und
-    /// Indien (Schema `TRAFAG_LIVE`, eigener HANA-Server).
+    /// Journalquelle = aktiver Standort mit einer Buchhaltungs-Datenbankquelle:
     ///
-    /// Bewusst NICHT ueber den Quellsystem-Code eingegrenzt, sondern ueber die
-    /// Anschlussart: Indien ist fachlich ebenfalls SAP B1, laeuft in der Konfiguration
-    /// aber historisch unter dem irrefuehrenden Code `SAGE`. Der Code sagt also nichts
-    /// darueber aus, ob das Zielsystem B1-Tabellen hat. Ob `OJDT`/`JDT1` im Schema
-    /// wirklich vorhanden sind, prueft der Reader vor dem Lesen (klare Fehlermeldung
-    /// statt SQL-Fehler).
+    /// 1. HANA-Anschluss mit eigenem Schema — die SAP-B1-Gesellschaften FR/IT/US und
+    ///    Indien (`TRAFAG_LIVE`; fachlich ebenfalls B1, in der Konfiguration aber
+    ///    historisch unter dem irrefuehrenden Code `SAGE`). Bewusst NICHT ueber den
+    ///    Quellsystem-Code eingegrenzt; ob `OJDT`/`JDT1` existieren, prueft der Reader.
+    /// 2. SAP-Gateway-Anschluss mit aufloesbarer Service-URL — ZSCHWEIZ (CH/AT).
+    ///    Das Hauptbuch kommt dort aus BKPF/BSEG ueber das EntitySet `FinanzJournalSet`;
+    ///    solange das EntitySet auf SAP-Seite fehlt, meldet der Reader das klar.
     ///
-    /// Aussen vor bleiben: CH/AT (SAP OData/Gateway - Hauptbuch liegt dort in
-    /// BKPF/BSEG bzw. ACDOCA und braucht einen eigenen Reader) sowie die
-    /// Manual-Excel-Laender DE/UK/ES (keine Buchhaltungsquelle).
+    /// Aussen vor bleiben die Manual-Excel-Laender DE/UK/ES (keine Buchhaltungsquelle).
     /// </summary>
     public static bool IsJournalSite(Site site, IReadOnlyCollection<SourceSystemDefinition> sourceSystems)
     {
@@ -191,10 +189,45 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
 
         var definition = sourceSystems.FirstOrDefault(s =>
             string.Equals(s.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
-        return definition is not null &&
-               definition.IsActive &&
-               string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase) &&
-               !string.IsNullOrWhiteSpace(site.Schema);
+        if (definition is null || !definition.IsActive)
+            return false;
+
+        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase))
+            return !string.IsNullOrWhiteSpace(site.Schema);
+
+        if (string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+            return !string.IsNullOrWhiteSpace(DataSourceCredentials.ResolveSapServiceUrl(site, definition));
+
+        return false;
+    }
+
+    private async Task<List<FinancialJournalEntry>> ReadJournalEntriesAsync(
+        AppDbContext db,
+        Site site,
+        SourceSystemDefinition sourceDefinition,
+        ExportSettings settings,
+        CancellationToken cancellationToken)
+    {
+        if (string.Equals(sourceDefinition.ConnectionKind, SourceSystemConnectionKinds.SapGateway, StringComparison.OrdinalIgnoreCase))
+        {
+            var serviceUrl = DataSourceCredentials.ResolveSapServiceUrl(site, sourceDefinition);
+            var credentials = DataSourceCredentials.Resolve(site, sourceDefinition);
+            if (string.IsNullOrWhiteSpace(serviceUrl) ||
+                string.IsNullOrWhiteSpace(credentials.Username) ||
+                string.IsNullOrWhiteSpace(credentials.Password))
+            {
+                throw new InvalidOperationException(
+                    $"Fuer Standort '{site.Land}' ({site.TSC}) fehlen SAP-Service-URL oder Zugangsdaten.");
+            }
+
+            return await _sapJournalReader.GetJournalEntriesAsync(
+                serviceUrl, credentials.Username, credentials.Password,
+                site.TSC, site.Land, sourceDefinition.Code, settings.DateFilter, cancellationToken);
+        }
+
+        var server = await BuildEffectiveServerAsync(db, site, sourceDefinition, cancellationToken);
+        return await _journalReader.GetJournalEntriesAsync(
+            server, site.Schema, site.TSC, site.Land, sourceDefinition.Code, settings.DateFilter, cancellationToken);
     }
 
     private static async Task<HanaServer> BuildEffectiveServerAsync(

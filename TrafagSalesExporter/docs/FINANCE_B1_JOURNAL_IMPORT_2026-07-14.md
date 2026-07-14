@@ -22,9 +22,15 @@ Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
   Quellsystem-Code** ein, sondern ueber die **Anschlussart HANA + vorhandenes Schema**
   (`FinancialJournalRefreshService.IsJournalSite`). Ob `OJDT`/`JDT1` im Schema wirklich existieren,
   prueft der Reader vor dem Lesen und meldet sonst klar statt mit rohem SQL-Fehler.
-- Nicht enthalten: **CH/AT** (SAP OData/Gateway — das Hauptbuch liegt dort in `BKPF`/`BSEG` bzw.
-  `ACDOCA`; braucht einen eigenen Reader **und** ein neues OData-EntitySet auf SAP-Seite, da der
-  aktuelle Service nur Umsatzdaten liefert) sowie die Manual-Excel-Laender DE/UK/ES.
+- **CH/AT (2026-07-14 ergaenzt, App-Seite fertig):** `ZSCHWEIZ` ist jetzt ebenfalls Journalquelle,
+  ueber einen eigenen SAP-OData-Reader (`SapGatewayFinancialJournalReader`). Das Hauptbuch kommt
+  aus `BKPF`/`BSEG` ueber das EntitySet `FinanzJournalSet`; der Buchungskreis (`Bukrs`) landet in
+  der neuen Spalte `CompanyCode` und trennt CH von AT. `JournalEntryId = Bukrs/Gjahr/Belnr`, weil
+  die Belegnummer erst mit Buchungskreis und Geschaeftsjahr eindeutig ist.
+  **Abhaengigkeit:** Das EntitySet muss zuerst auf SAP-Seite bereitgestellt werden — Felddefinition
+  und ABAP-Skizze in `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`. Bis dahin prueft der
+  Reader die Service-Metadata und meldet klar, dass das EntitySet fehlt (kein Datenschaden).
+- Nicht enthalten: die Manual-Excel-Laender DE/UK/ES (keine Buchhaltungsquelle).
   Weitere ERP-Systeme sollen spaeter als eigene Konnektoren **in dieselbe Tabelle** liefern
   (`SourceSystem`-Spalte unterscheidet die Herkunft).
 

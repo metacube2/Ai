@@ -18,25 +18,35 @@ public class FinancialJournalEntry
     public string Tsc { get; set; } = string.Empty;
     public string Land { get; set; } = string.Empty;
 
-    /// <summary>B1-Datenbankschema der Gesellschaft (z. B. fr01_p).</summary>
+    /// <summary>B1-Datenbankschema der Gesellschaft (z. B. fr01_p); leer bei SAP-OData-Quellen.</summary>
     public string CompanySchema { get; set; } = string.Empty;
 
-    /// <summary>Quellsystem-Code (aktuell BI1; spaeter weitere ERP-Systeme).</summary>
+    /// <summary>
+    /// Buchungskreis / Company Code (SAP ECC `BKPF-BUKRS`). Trennt bei ZSCHWEIZ die
+    /// Schweizer und die oesterreichische Gesellschaft; leer bei B1-Quellen (dort ist
+    /// die Gesellschaft ueber Tsc/CompanySchema eindeutig).
+    /// </summary>
+    public string CompanyCode { get; set; } = string.Empty;
+
+    /// <summary>Quellsystem-Code (BI1/SAGE fuer B1-HANA, SAP fuer OData/ECC).</summary>
     public string SourceSystem { get; set; } = string.Empty;
 
-    /// <summary>Journal Entry ID (OJDT.TransId).</summary>
+    /// <summary>
+    /// Journal Entry ID. B1: OJDT.TransId. SAP ECC: `BUKRS/GJAHR/BELNR`, weil die
+    /// Belegnummer erst zusammen mit Buchungskreis und Geschaeftsjahr eindeutig ist.
+    /// </summary>
     public string JournalEntryId { get; set; } = string.Empty;
 
-    /// <summary>Journal Entry Line ID (JDT1.Line_ID).</summary>
+    /// <summary>Journal Entry Line ID (B1: JDT1.Line_ID; SAP: BSEG-BUZEI).</summary>
     public int JournalEntryLineId { get; set; }
 
-    /// <summary>Buchungsdatum (OJDT.RefDate).</summary>
+    /// <summary>Buchungsdatum (B1: OJDT.RefDate; SAP: BKPF-BUDAT).</summary>
     public DateTime? PostingDate { get; set; }
 
-    /// <summary>Geschaeftsjahr; B1-Gesellschaften nutzen das Kalenderjahr des Buchungsdatums.</summary>
+    /// <summary>Geschaeftsjahr; B1 = Kalenderjahr des Buchungsdatums, SAP = BKPF-GJAHR.</summary>
     public int FiscalYear { get; set; }
 
-    /// <summary>Buchungsperiode = Monat des Buchungsdatums.</summary>
+    /// <summary>Buchungsperiode; B1 = Monat des Buchungsdatums, SAP = BKPF-MONAT.</summary>
     public int FiscalPeriod { get; set; }
 
     /// <summary>Lokales Sachkonto (JDT1.Account).</summary>

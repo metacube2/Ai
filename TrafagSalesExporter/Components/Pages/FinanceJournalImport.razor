@@ -5,13 +5,13 @@
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 
-<PageTitle>@T("B1 Journal Import", "B1 journal import")</PageTitle>
+<PageTitle>@T("Journal Import (Hauptbuch)", "Journal import (general ledger)")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("B1 Journal Import", "B1 journal import")</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">@T("Journal Import (Hauptbuch)", "Journal import (general ledger)")</MudText>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
-    @T("Erster Load der Hauptbuch-Buchungszeilen (OJDT/JDT1) je B1-Gesellschaft (FR, IT, US, IN) in die separate Tabelle FinancialJournalEntries — Grundlage fuer Konsolidierung und Analysen. Der Sales-Datenfluss (CentralSalesRecords) bleibt unberuehrt. Ein Lauf ersetzt den Journal-Bestand der Gesellschaft komplett; der Zeitraum folgt dem Datumsfilter aus den Export-Einstellungen.",
-       "First load of general-ledger journal lines (OJDT/JDT1) per B1 company (FR, IT, US, IN) into the separate FinancialJournalEntries table — basis for consolidation and analytics. The sales data flow (CentralSalesRecords) is untouched. A run fully replaces the company's journal data; the horizon follows the date filter from the export settings.")
+    @T("Erster Load der Hauptbuch-Buchungszeilen je Gesellschaft in die separate Tabelle FinancialJournalEntries — Grundlage fuer Konsolidierung und Analysen. B1-Gesellschaften (FR, IT, US, IN) lesen aus OJDT/JDT1; CH/AT liest aus SAP ECC (BKPF/BSEG) ueber das OData-EntitySet FinanzJournalSet. Der Sales-Datenfluss (CentralSalesRecords) bleibt unberuehrt. Ein Lauf ersetzt den Journal-Bestand der Gesellschaft komplett; der Zeitraum folgt dem Datumsfilter aus den Export-Einstellungen.",
+       "First load of general-ledger journal lines per company into the separate FinancialJournalEntries table — basis for consolidation and analytics. B1 companies (FR, IT, US, IN) read from OJDT/JDT1; CH/AT reads from SAP ECC (BKPF/BSEG) via the OData entity set FinanzJournalSet. The sales data flow (CentralSalesRecords) is untouched. A run fully replaces the company's journal data; the horizon follows the date filter from the export settings.")
 </MudAlert>
 
 <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
@@ -70,8 +70,8 @@
 </MudTable>
 
 <MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:#64748b;">
-    @T("Enthalten sind alle B1-Gesellschaften ueber HANA: Frankreich, Italien, USA und Indien. Indien ist fachlich ebenfalls SAP B1, in der Konfiguration aber historisch als Quellsystem 'SAGE' angeschrieben. Nicht enthalten: CH/AT (SAP OData, Hauptbuch liegt dort in BKPF/BSEG und braucht einen eigenen Konnektor) und die Manual-Excel-Laender DE/UK/ES.",
-       "Included are all B1 companies via HANA: France, Italy, USA and India. India is also SAP B1 in substance, but is historically labelled as source system 'SAGE' in the configuration. Not included: CH/AT (SAP OData — its general ledger lives in BKPF/BSEG and needs a separate connector) and the manual Excel countries DE/UK/ES.")
+    @T("Enthalten: die B1-Gesellschaften ueber HANA (Frankreich, Italien, USA, Indien — Indien ist fachlich SAP B1, historisch aber als Quellsystem 'SAGE' angeschrieben) sowie CH/AT ueber SAP OData. Wichtig fuer CH/AT: Der Load funktioniert erst, wenn das EntitySet 'FinanzJournalSet' auf SAP-Seite bereitgestellt ist (Felddefinition: docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md); bis dahin meldet der Lauf eine klare Fehlermeldung. Nicht enthalten: die Manual-Excel-Laender DE/UK/ES.",
+       "Included: the B1 companies via HANA (France, Italy, USA, India — India is SAP B1 in substance but historically labelled 'SAGE') plus CH/AT via SAP OData. Important for CH/AT: the load only works once the entity set 'FinanzJournalSet' is provided on the SAP side (field definition: docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md); until then the run reports a clear error. Not included: the manual Excel countries DE/UK/ES.")
 </MudText>
 
 @code {
