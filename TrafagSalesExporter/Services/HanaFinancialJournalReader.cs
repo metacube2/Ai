@@ -37,6 +37,7 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
 
         using var connection = new HanaConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureJournalTablesExistAsync(connection, schema, land, cancellationToken);
 
         using var command = new HanaCommand(query, connection);
         command.Parameters.Add(new HanaParameter(DateFilterParameterName, HanaDbType.Date) { Value = parsedDateFilter.Date });
@@ -178,6 +179,33 @@ CROSS JOIN {schemaPrefix}""OADM"" adm
 LEFT JOIN {schemaPrefix}""OACT"" a ON j.""Account"" = a.""AcctCode""
 WHERE h.""RefDate"" >= :{DateFilterParameterName}
 ORDER BY h.""RefDate"", j.""TransId"", j.""Line_ID""";
+    }
+
+    /// <summary>
+    /// Prueft vor dem Lesen, ob das Schema die B1-Journaltabellen hat. Ohne diesen Check
+    /// wuerde ein Nicht-B1-Schema mit einem rohen SQL-Fehler abbrechen; so bekommt der
+    /// Anwender eine klare fachliche Meldung.
+    /// </summary>
+    private async Task EnsureJournalTablesExistAsync(
+        HanaConnection connection, string schema, string land, CancellationToken cancellationToken)
+    {
+        const string query = """
+            SELECT COUNT(DISTINCT table_name) AS cnt
+            FROM sys.tables
+            WHERE schema_name = :schema AND table_name IN ('OJDT', 'JDT1')
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        command.Parameters.Add(new HanaParameter("schema", HanaDbType.NVarChar) { Value = schema.Trim().ToUpperInvariant() });
+        var found = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
+        if (found >= 2)
+            return;
+
+        await _appEventLogService.WriteAsync("HANA", "Journaltabellen fehlen", "Error", land: land,
+            details: $"Schema={schema} | gefundene B1-Journaltabellen={found} (erwartet OJDT und JDT1)");
+        throw new InvalidOperationException(
+            $"Im Schema '{schema}' wurden die SAP-B1-Journaltabellen 'OJDT'/'JDT1' nicht gefunden. " +
+            "Dieser Standort ist keine B1-Hauptbuchquelle oder das Schema ist falsch konfiguriert.");
     }
 
     private static DateTime ParseDateFilter(string dateFilter)

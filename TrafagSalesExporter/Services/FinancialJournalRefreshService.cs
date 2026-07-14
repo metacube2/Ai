@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services.DataSources;
@@ -36,15 +36,12 @@ public sealed class FinancialJournalRefreshResult
 
 /// <summary>
 /// Laedt Hauptbuch-Journalzeilen der B1-Gesellschaften in die separate Tabelle
-/// FinancialJournalEntries — bewusst getrennt von CentralSalesRecords und ohne
+/// FinancialJournalEntries - bewusst getrennt von CentralSalesRecords und ohne
 /// Eintraege in ExportLogs (die speisen den Daten-Heartbeat der Sales-Strecke).
 /// Ein Lauf ersetzt den Bestand der Gesellschaft komplett (Full Load mit DateFilter).
 /// </summary>
 public class FinancialJournalRefreshService : IFinancialJournalRefreshService
 {
-    /// <summary>Aktuell nur klassische SAP-B1-Gesellschaften; SAGE/India hat kein OJDT/JDT1.</summary>
-    public const string B1SourceSystemCode = "BI1";
-
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IFinancialJournalReader _journalReader;
     private readonly IAppEventLogService _appEventLogService;
@@ -78,7 +75,7 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
             .ToListAsync();
 
         return sites
-            .Where(site => IsB1JournalSite(site, sourceSystems))
+            .Where(site => IsJournalSite(site, sourceSystems))
             .Select(site =>
             {
                 var stats = journalStats.FirstOrDefault(s => string.Equals(s.Tsc, site.TSC, StringComparison.OrdinalIgnoreCase));
@@ -104,7 +101,7 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
         var site = await db.Sites.AsNoTracking().FirstOrDefaultAsync(s => s.Id == siteId, cancellationToken)
             ?? throw new InvalidOperationException($"Standort mit Id {siteId} wurde nicht gefunden.");
         var sourceSystems = await db.SourceSystemDefinitions.AsNoTracking().ToListAsync(cancellationToken);
-        if (!IsB1JournalSite(site, sourceSystems))
+        if (!IsJournalSite(site, sourceSystems))
             throw new InvalidOperationException($"Standort '{site.Land}' ({site.TSC}) ist keine B1-/HANA-Journalquelle.");
 
         var sourceDefinition = sourceSystems.First(s =>
@@ -172,11 +169,22 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
     }
 
     /// <summary>
-    /// B1-Journalquelle = aktiver Standort, dessen Quellsystem der klassische
-    /// B1-HANA-Konnektor ist (Code BI1, Anschlussart HANA). SAGE/India und
-    /// Manual-Excel-Laender liefern kein OJDT/JDT1 und bleiben aussen vor.
+    /// Journalquelle = aktiver Standort, der ueber den HANA-Konnektor mit eigenem
+    /// Datenbankschema laeuft. Das sind die SAP-B1-Gesellschaften: FR/IT/US und
+    /// Indien (Schema `TRAFAG_LIVE`, eigener HANA-Server).
+    ///
+    /// Bewusst NICHT ueber den Quellsystem-Code eingegrenzt, sondern ueber die
+    /// Anschlussart: Indien ist fachlich ebenfalls SAP B1, laeuft in der Konfiguration
+    /// aber historisch unter dem irrefuehrenden Code `SAGE`. Der Code sagt also nichts
+    /// darueber aus, ob das Zielsystem B1-Tabellen hat. Ob `OJDT`/`JDT1` im Schema
+    /// wirklich vorhanden sind, prueft der Reader vor dem Lesen (klare Fehlermeldung
+    /// statt SQL-Fehler).
+    ///
+    /// Aussen vor bleiben: CH/AT (SAP OData/Gateway - Hauptbuch liegt dort in
+    /// BKPF/BSEG bzw. ACDOCA und braucht einen eigenen Reader) sowie die
+    /// Manual-Excel-Laender DE/UK/ES (keine Buchhaltungsquelle).
     /// </summary>
-    public static bool IsB1JournalSite(Site site, IReadOnlyCollection<SourceSystemDefinition> sourceSystems)
+    public static bool IsJournalSite(Site site, IReadOnlyCollection<SourceSystemDefinition> sourceSystems)
     {
         if (site is null || !site.IsActive)
             return false;
@@ -185,7 +193,6 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
             string.Equals(s.Code, site.SourceSystem, StringComparison.OrdinalIgnoreCase));
         return definition is not null &&
                definition.IsActive &&
-               string.Equals(definition.Code, B1SourceSystemCode, StringComparison.OrdinalIgnoreCase) &&
                string.Equals(definition.ConnectionKind, SourceSystemConnectionKinds.Hana, StringComparison.OrdinalIgnoreCase) &&
                !string.IsNullOrWhiteSpace(site.Schema);
     }

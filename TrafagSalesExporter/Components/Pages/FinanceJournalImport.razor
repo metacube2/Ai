@@ -10,8 +10,8 @@
 <MudText Typo="Typo.h4" Class="mb-4">@T("B1 Journal Import", "B1 journal import")</MudText>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
-    @T("Erster Load der Hauptbuch-Buchungszeilen (OJDT/JDT1) je B1-Gesellschaft in die separate Tabelle FinancialJournalEntries — Grundlage fuer Konsolidierung und Analysen. Der Sales-Datenfluss (CentralSalesRecords) bleibt unberuehrt. Ein Lauf ersetzt den Journal-Bestand der Gesellschaft komplett; der Zeitraum folgt dem Datumsfilter aus den Export-Einstellungen.",
-       "First load of general-ledger journal lines (OJDT/JDT1) per B1 company into the separate FinancialJournalEntries table — basis for consolidation and analytics. The sales data flow (CentralSalesRecords) is untouched. A run fully replaces the company's journal data; the horizon follows the date filter from the export settings.")
+    @T("Erster Load der Hauptbuch-Buchungszeilen (OJDT/JDT1) je B1-Gesellschaft (FR, IT, US, IN) in die separate Tabelle FinancialJournalEntries — Grundlage fuer Konsolidierung und Analysen. Der Sales-Datenfluss (CentralSalesRecords) bleibt unberuehrt. Ein Lauf ersetzt den Journal-Bestand der Gesellschaft komplett; der Zeitraum folgt dem Datumsfilter aus den Export-Einstellungen.",
+       "First load of general-ledger journal lines (OJDT/JDT1) per B1 company (FR, IT, US, IN) into the separate FinancialJournalEntries table — basis for consolidation and analytics. The sales data flow (CentralSalesRecords) is untouched. A run fully replaces the company's journal data; the horizon follows the date filter from the export settings.")
 </MudAlert>
 
 <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
@@ -63,15 +63,15 @@
     </RowTemplate>
     <NoRecordsContent>
         <MudText Typo="Typo.caption">
-            @T("Keine aktiven B1-/HANA-Gesellschaften gefunden (Quellsystem BI1).",
-               "No active B1/HANA companies found (source system BI1).")
+            @T("Keine aktiven B1-/HANA-Gesellschaften gefunden.",
+               "No active B1/HANA companies found.")
         </MudText>
     </NoRecordsContent>
 </MudTable>
 
 <MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:#64748b;">
-    @T("Nicht enthalten: SAGE/Indien (kein OJDT/JDT1), CH/AT (SAP OData) und Manual-Excel-Laender (DE/UK/ES). Weitere ERP-Systeme folgen als eigene Konnektoren in dieselbe Tabelle.",
-       "Not included: SAGE/India (no OJDT/JDT1), CH/AT (SAP OData) and manual Excel countries (DE/UK/ES). Additional ERP systems will follow as separate connectors into the same table.")
+    @T("Enthalten sind alle B1-Gesellschaften ueber HANA: Frankreich, Italien, USA und Indien. Indien ist fachlich ebenfalls SAP B1, in der Konfiguration aber historisch als Quellsystem 'SAGE' angeschrieben. Nicht enthalten: CH/AT (SAP OData, Hauptbuch liegt dort in BKPF/BSEG und braucht einen eigenen Konnektor) und die Manual-Excel-Laender DE/UK/ES.",
+       "Included are all B1 companies via HANA: France, Italy, USA and India. India is also SAP B1 in substance, but is historically labelled as source system 'SAGE' in the configuration. Not included: CH/AT (SAP OData — its general ledger lives in BKPF/BSEG and needs a separate connector) and the manual Excel countries DE/UK/ES.")
 </MudText>
 
 @code {

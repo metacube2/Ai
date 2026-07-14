@@ -23,24 +23,20 @@ public class FinancialJournalTests : IDisposable
         using (var db = new AppDbContext(options))
         {
             db.Database.EnsureCreated();
-            db.SourceSystemDefinitions.Add(new SourceSystemDefinition
-            {
-                Code = "BI1",
-                DisplayName = "SAP B1 HANA",
-                ConnectionKind = SourceSystemConnectionKinds.Hana,
-                IsActive = true
-            });
-            db.HanaServers.Add(new HanaServer
-            {
-                SourceSystem = "BI1",
-                Name = "Test B1",
-                Host = "localhost",
-                Port = 30015
-            });
+            db.SourceSystemDefinitions.AddRange(
+                new SourceSystemDefinition { Code = "BI1", DisplayName = "SAP B1 HANA", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+                // Indien ist fachlich SAP B1, in der Konfiguration aber historisch als SAGE angeschrieben.
+                new SourceSystemDefinition { Code = "SAGE", DisplayName = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+                new SourceSystemDefinition { Code = "SAP", DisplayName = "SAP OData", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
+                new SourceSystemDefinition { Code = "MANUAL_EXCEL", DisplayName = "Manual Excel", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true });
+            db.HanaServers.AddRange(
+                new HanaServer { SourceSystem = "BI1", Name = "Test B1", Host = "localhost", Port = 30015 },
+                new HanaServer { SourceSystem = "SAGE", Name = "India", Host = "20.197.20.60", Port = 30015 });
             db.Sites.AddRange(
                 new Site { Id = 1, Schema = "fr01_p", TSC = "TRFR", Land = "Frankreich", SourceSystem = "BI1", IsActive = true },
                 new Site { Id = 2, Schema = "TRAFAG_LIVE", TSC = "TRIN", Land = "Indien", SourceSystem = "SAGE", IsActive = true },
-                new Site { Id = 3, Schema = string.Empty, TSC = "TRUK", Land = "England", SourceSystem = "MANUAL_EXCEL", IsActive = true });
+                new Site { Id = 3, Schema = string.Empty, TSC = "TRUK", Land = "England", SourceSystem = "MANUAL_EXCEL", IsActive = true },
+                new Site { Id = 4, Schema = string.Empty, TSC = "ZSCHWEIZ", Land = "Schweiz/Oesterreich", SourceSystem = "SAP", IsActive = true });
             db.ExportSettings.Add(new ExportSettings { DateFilter = "2025-01-01" });
             db.SaveChanges();
         }
@@ -118,29 +114,34 @@ public class FinancialJournalTests : IDisposable
         => Assert.Throws<InvalidOperationException>(() => HanaFinancialJournalReader.GetJournalQuery("fr01_p; DROP"));
 
     [Fact]
-    public void IsB1JournalSite_Selects_Only_Active_B1_Hana_Sites()
+    public void IsJournalSite_Selects_Active_Hana_Sites_Including_India()
     {
         var sourceSystems = new List<SourceSystemDefinition>
         {
             new() { Code = "BI1", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
             new() { Code = "SAGE", ConnectionKind = SourceSystemConnectionKinds.Hana, IsActive = true },
+            new() { Code = "SAP", ConnectionKind = SourceSystemConnectionKinds.SapGateway, IsActive = true },
             new() { Code = "MANUAL_EXCEL", ConnectionKind = SourceSystemConnectionKinds.ManualExcel, IsActive = true }
         };
 
-        Assert.True(FinancialJournalRefreshService.IsB1JournalSite(
+        Assert.True(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "BI1", Schema = "fr01_p", IsActive = true }, sourceSystems));
-        Assert.False(FinancialJournalRefreshService.IsB1JournalSite(
+        // Indien ist fachlich B1, laeuft aber unter dem irrefuehrenden Code SAGE.
+        Assert.True(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "SAGE", Schema = "TRAFAG_LIVE", IsActive = true }, sourceSystems));
-        Assert.False(FinancialJournalRefreshService.IsB1JournalSite(
+        // CH/AT laeuft ueber SAP OData und hat kein OJDT/JDT1.
+        Assert.False(FinancialJournalRefreshService.IsJournalSite(
+            new Site { SourceSystem = "SAP", Schema = "", IsActive = true }, sourceSystems));
+        Assert.False(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "MANUAL_EXCEL", Schema = "x", IsActive = true }, sourceSystems));
-        Assert.False(FinancialJournalRefreshService.IsB1JournalSite(
+        Assert.False(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "BI1", Schema = "fr01_p", IsActive = false }, sourceSystems));
-        Assert.False(FinancialJournalRefreshService.IsB1JournalSite(
+        Assert.False(FinancialJournalRefreshService.IsJournalSite(
             new Site { SourceSystem = "BI1", Schema = "", IsActive = true }, sourceSystems));
     }
 
     [Fact]
-    public async Task GetSiteStatusAsync_Lists_Only_B1_Sites_With_Row_Stats()
+    public async Task GetSiteStatusAsync_Lists_Hana_Sites_Including_India_With_Row_Stats()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
         {
@@ -153,11 +154,33 @@ public class FinancialJournalTests : IDisposable
         var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader([]), new NoopAppEventLogService());
         var status = await service.GetSiteStatusAsync();
 
-        var fr = Assert.Single(status);
-        Assert.Equal("TRFR", fr.Tsc);
+        Assert.Equal(2, status.Count);
+        var fr = Assert.Single(status, row => row.Tsc == "TRFR");
         Assert.Equal(2, fr.RowCount);
         Assert.Equal(new DateTime(2026, 1, 10), fr.MinPostingDate);
         Assert.Equal(new DateTime(2026, 2, 11), fr.MaxPostingDate);
+
+        var india = Assert.Single(status, row => row.Tsc == "TRIN");
+        Assert.Equal("TRAFAG_LIVE", india.Schema);
+        Assert.Equal(0, india.RowCount);
+        Assert.Null(india.LastLoadedAtUtc);
+    }
+
+    [Fact]
+    public async Task RefreshSiteAsync_Loads_India_As_B1_Journal_Site()
+    {
+        var indiaEntries = new List<FinancialJournalEntry>
+        {
+            CreateStoredEntry("TRIN", "900", 0, new DateTime(2026, 4, 2))
+        };
+        var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader(indiaEntries), new NoopAppEventLogService());
+
+        var result = await service.RefreshSiteAsync(2);
+
+        Assert.Equal("TRIN", result.Tsc);
+        Assert.Equal(1, result.InsertedRows);
+        await using var verify = await _dbFactory.CreateDbContextAsync();
+        Assert.Equal(1, await verify.FinancialJournalEntries.CountAsync(e => e.Tsc == "TRIN"));
     }
 
     [Fact]
@@ -205,11 +228,12 @@ public class FinancialJournalTests : IDisposable
     }
 
     [Fact]
-    public async Task RefreshSiteAsync_Rejects_Non_B1_Sites()
+    public async Task RefreshSiteAsync_Rejects_Non_Journal_Sites()
     {
         var service = new FinancialJournalRefreshService(_dbFactory, new FakeJournalReader([]), new NoopAppEventLogService());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(2));
+        // Manual-Excel (UK) und SAP OData (CH/AT) haben kein B1-Hauptbuch.
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(3));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(4));
     }
 
     private static FinancialJournalEntry CreateStoredEntry(string tsc, string journalEntryId, int lineId, DateTime postingDate)
@@ -218,9 +242,9 @@ public class FinancialJournalTests : IDisposable
             StoredAtUtc = DateTime.UtcNow,
             ExtractionDate = DateTime.UtcNow,
             Tsc = tsc,
-            Land = "Frankreich",
-            CompanySchema = "fr01_p",
-            SourceSystem = "BI1",
+            Land = tsc == "TRIN" ? "Indien" : "Frankreich",
+            CompanySchema = tsc == "TRIN" ? "TRAFAG_LIVE" : "fr01_p",
+            SourceSystem = tsc == "TRIN" ? "SAGE" : "BI1",
             JournalEntryId = journalEntryId,
             JournalEntryLineId = lineId,
             PostingDate = postingDate,

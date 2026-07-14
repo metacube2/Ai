@@ -14,8 +14,17 @@ Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
 - Quelltabellen in SAP B1: `OJDT` (Journalkopf) + `JDT1` (Journalzeilen), dazu `OACT`
   (Kontobezeichnung) und `OADM` (Hauswaehrung).
 - Bewusst **ohne** den IT-Umsatzkontenfilter der Sales-Strecke — das Journal ist das volle Hauptbuch.
-- Aktueller Umfang: nur klassische B1-Gesellschaften (Quellsystem `BI1`): FR/`fr01_p`, IT/`it01_p`,
-  US/`us01_p`. Nicht enthalten: SAGE/Indien (kein OJDT/JDT1), CH/AT (SAP OData), Manual-Excel-Laender.
+- Aktueller Umfang: **alle B1-Gesellschaften ueber HANA** — FR/`fr01_p`, IT/`it01_p`, US/`us01_p`
+  (Quellsystem `BI1`) und **Indien/`TRAFAG_LIVE`** (2026-07-14 ergaenzt).
+- **Wichtig zu Indien:** Indien ist fachlich ebenfalls SAP B1, ist in der Konfiguration aber
+  historisch unter dem irrefuehrenden Quellsystem-Code `SAGE` angeschrieben (eigener HANA-Server
+  `20.197.20.60:30015`). Die Standortauswahl grenzt deshalb bewusst **nicht ueber den
+  Quellsystem-Code** ein, sondern ueber die **Anschlussart HANA + vorhandenes Schema**
+  (`FinancialJournalRefreshService.IsJournalSite`). Ob `OJDT`/`JDT1` im Schema wirklich existieren,
+  prueft der Reader vor dem Lesen und meldet sonst klar statt mit rohem SQL-Fehler.
+- Nicht enthalten: **CH/AT** (SAP OData/Gateway — das Hauptbuch liegt dort in `BKPF`/`BSEG` bzw.
+  `ACDOCA`; braucht einen eigenen Reader **und** ein neues OData-EntitySet auf SAP-Seite, da der
+  aktuelle Service nur Umsatzdaten liefert) sowie die Manual-Excel-Laender DE/UK/ES.
   Weitere ERP-Systeme sollen spaeter als eigene Konnektoren **in dieselbe Tabelle** liefern
   (`SourceSystem`-Spalte unterscheidet die Herkunft).
 
@@ -74,9 +83,11 @@ Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
 
 ## Offene Punkte / vor erstem Produktivlauf pruefen
 
-1. Spaltenverfuegbarkeit live gegen `fr01_p` verifizieren (`JDT1.ProfitCode`, `OcrCode2`,
-   `FCCurrency`, `OJDT.StornoToTr`, `AutoStorno`) — Namen entsprechen dem B1-Standardschema,
-   wurden aber noch nicht gegen die produktiven Trafag-B1-Systeme geprobt.
+1. Spaltenverfuegbarkeit live gegen `fr01_p` und `TRAFAG_LIVE` verifizieren (`JDT1.ProfitCode`,
+   `OcrCode2`, `FCCurrency`, `OJDT.StornoToTr`, `AutoStorno`) — Namen entsprechen dem
+   B1-Standardschema, wurden aber noch nicht gegen die produktiven Trafag-B1-Systeme geprobt.
+   Fuer Indien zusaetzlich bestaetigen, dass `OJDT`/`JDT1` im Schema `TRAFAG_LIVE` vorhanden sind;
+   der Reader bricht sonst mit klarer Meldung ab (kein Datenschaden).
 2. Volumen: `JDT1` ist deutlich groesser als die Verkaufsbelege; der `DateFilter` begrenzt den
    Horizont. Falls Finance mehr Historie will, Datumsfilter bewusst setzen und Ladezeit beobachten.
 3. Fachlich mit Andreas abstimmen: reicht `OcrCode2` als "weitere Hauptdimension" oder braucht es
