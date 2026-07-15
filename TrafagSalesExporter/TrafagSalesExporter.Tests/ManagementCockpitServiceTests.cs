@@ -405,6 +405,54 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Masks_Margin_By_Default()
+    {
+        // Verkauf in CHF, Standardkosten in EUR: ohne Fachentscheid (Default Mask) bleibt die
+        // Marge in Originalwaehrung offen, statt CHF-Umsatz mit EUR-Kosten zu mischen.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-MIX", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "EUR"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var detail = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("Kostenwaehrung abweichend", detail.Status);
+        Assert.Equal(1, result.GroupMarginSummary.MissingCostRows);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("Kostenwaehrung abweichend", ledger.Status);
+        Assert.Null(ledger.MarginOriginal);
+        Assert.Null(ledger.MarginPercent);
+        // Marge CHF bleibt korrekt rechenbar: 100 CHF - 60 EUR * 0.95 = 43 CHF.
+        Assert.Equal(43m, ledger.MarginChf!.Value);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Converts_When_Switch_Active()
+    {
+        await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Convert);
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-MIX", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "EUR"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        // Kostenbasis 60 EUR wird mit dem Jahreskurs in die Verkaufswaehrung umgerechnet:
+        // 60 * 0.95 = 57 CHF -> Marge 43 CHF, Zeile bleibt belastbar (OK).
+        var detail = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("OK", detail.Status);
+        Assert.Equal(57m, detail.CostBasisValue);
+        Assert.Equal(43m, detail.MarginValue);
+        Assert.Equal(0, result.GroupMarginSummary.MissingCostRows);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("OK", ledger.Status);
+        Assert.Equal(43m, ledger.MarginOriginal!.Value);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
@@ -810,6 +858,15 @@ public class ManagementCockpitServiceTests : IDisposable
         await db.SaveChangesAsync();
     }
 
+    private async Task SeedExportSettingsAsync(string groupMarginCostCurrencyMode)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.ExportSettings.RemoveRange(db.ExportSettings);
+        await db.SaveChangesAsync();
+        db.ExportSettings.Add(new ExportSettings { GroupMarginCostCurrencyMode = groupMarginCostCurrencyMode });
+        await db.SaveChangesAsync();
+    }
+
 
     private static DateTime MostRecentWeekday(DateTime start)
     {
@@ -848,7 +905,8 @@ public class ManagementCockpitServiceTests : IDisposable
         string productDivisionCode = "",
         string productDivisionText = "",
         string productMappingAssigned = "",
-        DateTime? postingDate = null)
+        DateTime? postingDate = null,
+        string? standardCostCurrency = null)
     {
         return new CentralSalesRecord
         {
@@ -878,7 +936,7 @@ public class ManagementCockpitServiceTests : IDisposable
             CustomerCountry = "CH",
             CustomerIndustry = "Industry",
             StandardCost = standardCost,
-            StandardCostCurrency = currency,
+            StandardCostCurrency = standardCostCurrency ?? currency,
             PurchaseOrderNumber = "PO",
             SalesPriceValue = salesValue,
             SalesCurrency = currency,

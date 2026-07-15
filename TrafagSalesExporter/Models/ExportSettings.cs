@@ -16,6 +16,14 @@ public class ExportSettings
     public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
 
     /// <summary>
+    /// Verhalten der Gruppenmarge, wenn die Standardkostenwaehrung von der Verkaufswaehrung
+    /// abweicht: "Mask" zeigt Marge/% als offen ("-"), "Convert" rechnet die Kostenbasis mit
+    /// dem Jahreskurs in die Verkaufswaehrung um. Wirkt auf Dashboard, Pruefbuch, zentrale
+    /// Excel und Nachweis-Excel gleichermassen (Andreas-Fachentscheid D, bis dahin Default Mask).
+    /// </summary>
+    public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Mask;
+
+    /// <summary>
     /// Zeitpunkt (UTC) des letzten automatischen Timer-Exports. Dient dem Nachhol-Lauf:
     /// War der Prozess zur geplanten Zeit nicht aktiv, wird beim naechsten Start erkannt,
     /// dass heute noch kein Lauf stattfand, und der Export einmalig nachgeholt.
@@ -28,4 +36,10 @@ public static class ExchangeRateDateFields
     public const string PostingDate = nameof(PostingDate);
     public const string InvoiceDate = nameof(InvoiceDate);
     public const string ExtractionDate = nameof(ExtractionDate);
+}
+
+public static class GroupMarginCostCurrencyModes
+{
+    public const string Mask = nameof(Mask);
+    public const string Convert = nameof(Convert);
 }

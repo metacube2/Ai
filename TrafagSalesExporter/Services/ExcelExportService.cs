@@ -32,6 +32,24 @@ public class ExcelExportService : IExcelExportService
     private decimal? ResolveChfRate(string currency, int year)
         => _exchangeRateService?.ResolveRate(currency, "CHF", new DateTime(year, 12, 31));
 
+    /// <summary>Jahreskurs zwischen zwei Waehrungen (Kostenbasis -> Verkaufswaehrung), wie im Dashboard.</summary>
+    private decimal? ResolveCrossRate(string fromCurrency, string toCurrency, DateTime rateDate)
+        => _exchangeRateService?.ResolveRate(fromCurrency, toCurrency, rateDate);
+
+    /// <summary>
+    /// Schalter fuer Gruppenmarge bei abweichender Kostenwaehrung; gleiche Quelle wie das
+    /// Dashboard (ExportSettings), damit zentrale Excel/Nachweis identisch rechnen.
+    /// </summary>
+    private string LoadGroupMarginCostCurrencyMode()
+    {
+        if (_dbFactory is null)
+            return GroupMarginCostCurrencyModes.Mask;
+
+        using var db = _dbFactory.CreateDbContext();
+        var settings = db.ExportSettings.AsNoTracking().FirstOrDefault();
+        return GroupMarginCostCurrencyConverter.NormalizeMode(settings?.GroupMarginCostCurrencyMode);
+    }
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -58,7 +76,7 @@ public class ExcelExportService : IExcelExportService
             ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
             : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate);
+        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate);
         return fullPath;
     }
 
@@ -95,7 +113,7 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate);
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate);
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -146,12 +164,14 @@ public class ExcelExportService : IExcelExportService
         bool useAuditCsvAsCentralSource,
         IReadOnlyList<FinanceRule> financeRules,
         IReadOnlyList<FinanceReference> financeReferences,
-        Func<string, int, decimal?>? resolveChfRate = null)
+        Func<string, int, decimal?>? resolveChfRate = null,
+        string? groupMarginCostCurrencyMode = null,
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
-        var groupMarginRows = BuildGroupMarginProofRows(financeRows);
+        var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
@@ -256,7 +276,10 @@ public class ExcelExportService : IExcelExportService
             .ToList();
     }
 
-    private static List<GroupMarginProofRow> BuildGroupMarginProofRows(IEnumerable<FinanceProofRow> financeRows)
+    private static List<GroupMarginProofRow> BuildGroupMarginProofRows(
+        IEnumerable<FinanceProofRow> financeRows,
+        string? groupMarginCostCurrencyMode = null,
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
         => financeRows
             .Where(row => row.Include)
             .Select(row =>
@@ -264,6 +287,13 @@ public class ExcelExportService : IExcelExportService
                 var supplierType = ResolveSupplierType(row.Record);
                 var costBasis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual);
                 var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, costBasis);
+                // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
+                // offen markieren — gleiche Logik wie ManagementCockpitService/Dashboard.
+                var conversion = GroupMarginCostCurrencyConverter.Resolve(
+                    costBasis, row.Currency, row.Record.StandardCostCurrency, row.Year,
+                    groupMarginCostCurrencyMode, resolveCrossRate);
+                if (status == "OK" && conversion.IsMasked)
+                    status = GroupMarginCostCurrencyConverter.OpenStatus;
                 return new GroupMarginProofRow(
                     row.Year,
                     status,
@@ -282,7 +312,7 @@ public class ExcelExportService : IExcelExportService
                     row.Record.Quantity,
                     row.Record.StandardCost,
                     row.NetSalesActual,
-                    costBasis,
+                    conversion.CostBasis,
                     row.Record.ProductDivisionCode,
                     row.Record.ProductDivisionText);
             })
@@ -640,7 +670,7 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 4).Value = group.Key.Currency;
             ws.Cell(rowIndex, 5).FormulaA1 = $"SUMIFS('Gruppenmarge Details'!$Q:$Q,'Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex})";
             ws.Cell(rowIndex, 6).FormulaA1 = $"SUMIFS('Gruppenmarge Details'!$R:$R,'Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex})";
-            ws.Cell(rowIndex, 7).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")";
+            ws.Cell(rowIndex, 7).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")+COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$B:$B,\"{GroupMarginCostCurrencyConverter.OpenStatus}\")";
             ws.Cell(rowIndex, 8).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$M:$M,\"Intern\")";
             ws.Cell(rowIndex, 9).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$M:$M,\"Extern\")";
             ws.Cell(rowIndex, 10).FormulaA1 = $"IF(G{rowIndex}>0,\"\",E{rowIndex}-F{rowIndex})";
@@ -669,7 +699,7 @@ public class ExcelExportService : IExcelExportService
             ("StandardCost = 0", "COUNTIFS('Finance Details'!$AN:$AN,0,'Finance Details'!$E:$E,\"TRUE\")", "Erschwert Gruppenmarge."),
             ("Sparten nicht im TR-AG-Stamm", "COUNTIF('Sparten Details'!$B:$B,\"Nicht im TR-AG-Stamm\")", "Lokales Material ohne zentrale Referenz."),
             ("Sparten Material fehlt", "COUNTIF('Sparten Details'!$B:$B,\"Material fehlt\")", "Finance-Zeile ohne Materialnummer."),
-            ("Gruppenmarge offene Kostenbasis", "COUNTIF('Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")", "Marge ist fuer diese Zeilen nicht belastbar.")
+            ("Gruppenmarge offene Kostenbasis", $"COUNTIF('Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"{GroupMarginCostCurrencyConverter.OpenStatus}\")", "Marge ist fuer diese Zeilen nicht belastbar.")
         };
 
         for (var i = 0; i < rows.Length; i++)
@@ -822,8 +852,9 @@ public class ExcelExportService : IExcelExportService
         {
             "Standardpreis fehlt" => 0,
             "Lieferant unklar" => 1,
-            "Umsatz fehlt" => 2,
-            _ => 3
+            GroupMarginCostCurrencyConverter.OpenStatus => 2,
+            "Umsatz fehlt" => 3,
+            _ => 4
         };
 
     private sealed record FinanceProofRow(
@@ -881,7 +912,9 @@ public class ExcelExportService : IExcelExportService
         List<SalesRecord> records,
         bool includeFinanceHelpSheet,
         IReadOnlyList<FinanceRule> financeRules,
-        Func<string, int, decimal?>? resolveChfRate = null)
+        Func<string, int, decimal?>? resolveChfRate = null,
+        string? groupMarginCostCurrencyMode = null,
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1018,6 +1051,14 @@ public class ExcelExportService : IExcelExportService
         {
             AddFinanceSummarySheet(workbook, records, financeRules);
             AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate);
+            // Gruppenmarge auch im zentralen Sales_All (nicht nur im Nachweis), damit Andreas
+            // Umsatz, Kostenbasis und Marge in derselben Datei gegenpruefen kann.
+            var groupMarginRows = BuildGroupMarginProofRows(
+                BuildFinanceProofRows(records, financeRules),
+                groupMarginCostCurrencyMode,
+                resolveCrossRate);
+            AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
+            AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);
         }
 

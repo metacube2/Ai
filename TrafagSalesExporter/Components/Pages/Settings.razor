@@ -283,6 +283,14 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="_exportSettings.GroupMarginCostCurrencyMode"
+                       Label="@T("Gruppenmarge bei abweichender Kostenwaehrung", "Group margin on differing cost currency")"
+                       HelperText="@T("Wirkt auf Dashboard, Pruefbuch, zentrale Excel und Nachweis-Excel. Fachentscheid mit Finance/Andreas offen.", "Applies to dashboard, audit ledger, central Excel and proof Excel. Business decision with finance/Andreas pending.")">
+                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Mask">@T("Marge offen lassen ('-')", "Leave margin open ('-')")</MudSelectItem>
+                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Convert">@T("Kosten mit Jahreskurs in Verkaufswaehrung umrechnen", "Convert cost with yearly rate to sales currency")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
             <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="@T("Debug Live-Logging", "Debug live logging")" Color="Color.Warning" />
             <MudText Typo="Typo.caption">
                 @T("Schreibt zusaetzliche technische Fortschrittsmeldungen fuer HANA- und SAP-Lesevorgaenge ins Dashboard und in die Logs.",

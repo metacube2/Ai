@@ -58,6 +58,32 @@ Das Multiple-Choice-Formular `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-
 - Verhalten bei fehlenden Standardpreisen.
 - Freigabeumfang des MVP.
 
+## Nachtrag 2026-07-15: Schalter fuer abweichende Kostenwaehrung (Entscheid D)
+
+Umgesetzt und getestet (`226/226`), noch nicht deployed:
+
+- Neues Setting `ExportSettings.GroupMarginCostCurrencyMode` mit den Werten `Mask` (Default)
+  und `Convert`; UI unter `Einstellungen > Export Einstellungen > Gruppenmarge bei
+  abweichender Kostenwaehrung`.
+- `Mask`: Zeilen, deren Standardkostenwaehrung von der Verkaufswaehrung abweicht, erhalten
+  den Status `Kostenwaehrung abweichend`; `Marge`/`%` bleiben offen (`-` bzw. leer). Im
+  Pruefbuch sind `MarginOriginal`/`MarginPercent` dafuer nullable geworden.
+- `Convert`: Die Kostenbasis wird mit dem Jahreskurs (31.12. des Finance-Jahres der Zeile)
+  in die Verkaufswaehrung umgerechnet; ohne verfuegbaren Kurs faellt die Zeile auf `Mask`
+  zurueck. Der verwendete Kurs steht sichtbar im `CostSource`-Label.
+- Gemeinsame Logik: `Services/GroupMarginCostCurrencyConverter.cs`; verdrahtet in
+  `ManagementCockpitService` (Gruppenmarge-Tab + Finance Pruefbuch) UND
+  `ExcelExportService` (zentrales `Sales_All` + `Finance_Dashboard_Nachweis`), damit
+  Dashboard und Excel identisch rechnen.
+- Zentrale `Sales_All_*.xlsx` enthaelt seit 2026-07-15 zusaetzlich die Blaetter
+  `Gruppenmarge Summary` und `Gruppenmarge Details` (vorher nur im Nachweis-Excel).
+- Fachlich bleibt der Entscheid Mask vs. Convert bei Andreas; der Schalter erlaubt den
+  direkten Vergleich beider Varianten an echten Zahlen ohne Codeaenderung. `Marge CHF`
+  war und bleibt unabhaengig davon korrekt.
+- NICHT durch den Schalter erledigt: Fachfragen A (Kostenart lokal vs. Konzern-Herstellkosten)
+  und B (Preis der liefernden vs. verkaufenden Gesellschaft bei internen Lieferanten) —
+  beide brauchen eine neue Datenquelle (MBEW-STPRS je liefernder Gesellschaft).
+
 ## Naechste technische Schritte nach Fachfreigabe
 
 - Falls externe Lieferanten eine andere Kostenquelle als `StandardCost` brauchen, neues Feld oder Mapping in `CentralSalesRecords` ergaenzen.

@@ -422,9 +422,11 @@ public class ManagementFinanceAuditLedgerRow
     public decimal CostBasisOriginal { get; set; }
     public string CostBasisCurrency { get; set; } = string.Empty;
     public decimal? CostBasisChf { get; set; }
-    public decimal MarginOriginal { get; set; }
+    // Nullable: bleibt leer, wenn Kosten- und Verkaufswaehrung abweichen und der Schalter
+    // GroupMarginCostCurrencyMode auf Mask steht (bzw. der Umrechnungskurs fehlt).
+    public decimal? MarginOriginal { get; set; }
     public decimal? MarginChf { get; set; }
-    public decimal MarginPercent { get; set; }
+    public decimal? MarginPercent { get; set; }
     public string DataSource { get; set; } = string.Empty;
 }
 

@@ -587,11 +587,15 @@ public class ManagementCockpitService : IManagementCockpitService
         var countryRows = BuildFinanceCountryStatusRows(scopedRows, referenceByKey, year, countryFilter, currencyFilter);
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
-        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows);
-        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource);
+        var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode);
         var financePivot = BuildFinancePivotResult(allRows, year);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
         notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
+        notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
+            ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem Jahreskurs in die Verkaufswaehrung umgerechnet (Schalter in den Export-Einstellungen)."
+            : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'), bis der Fachentscheid vorliegt (Schalter in den Export-Einstellungen).");
 
         return new ManagementFinanceSummaryResult
         {
@@ -1380,7 +1384,9 @@ public class ManagementCockpitService : IManagementCockpitService
             })
             .ToList();
 
-    private static List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(IEnumerable<FinanceAggregationRow> rows)
+    private List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(
+        IEnumerable<FinanceAggregationRow> rows,
+        string groupMarginCostCurrencyMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
@@ -1388,7 +1394,12 @@ public class ManagementCockpitService : IManagementCockpitService
                 var supplierType = ResolveSupplierType(row);
                 var costBasis = ResolveGroupMarginCostBasis(row);
                 var status = ResolveGroupMarginStatus(row, supplierType, costBasis);
-                var margin = row.Value - costBasis;
+                var conversion = GroupMarginCostCurrencyConverter.Resolve(
+                    costBasis, row.Currency, row.StandardCostCurrency, row.Year,
+                    groupMarginCostCurrencyMode, ResolveCrossRate);
+                if (status == "OK" && conversion.IsMasked)
+                    status = GroupMarginCostCurrencyConverter.OpenStatus;
+                var margin = row.Value - conversion.CostBasis;
                 return new ManagementGroupMarginDetailRow
                 {
                     CountryKey = row.CountryKey,
@@ -1402,13 +1413,13 @@ public class ManagementCockpitService : IManagementCockpitService
                     SupplierName = row.SupplierName,
                     SupplierCountry = row.SupplierCountry,
                     SupplierType = supplierType,
-                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    CostSource = BuildGroupMarginCostSourceLabel(supplierType, row.StandardCostCurrency, row.Currency, conversion),
                     Status = status,
                     Currency = row.Currency,
                     Quantity = row.Quantity,
                     UnitCost = row.StandardCost,
+                    CostBasisValue = conversion.CostBasis,
                     SalesValue = row.Value,
-                    CostBasisValue = costBasis,
                     MarginValue = margin,
                     MarginPercent = PercentOf(margin, row.Value)
                 };
@@ -1511,7 +1522,25 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     private static bool HasOpenGroupMarginCostBasis(ManagementGroupMarginDetailRow row)
-        => row.Status is "Standardpreis fehlt" or "Lieferant unklar";
+        => row.Status is "Standardpreis fehlt" or "Lieferant unklar" or GroupMarginCostCurrencyConverter.OpenStatus;
+
+    /// <summary>Jahreskurs zwischen zwei beliebigen Waehrungen (fuer Kostenbasis -> Verkaufswaehrung).</summary>
+    private decimal? ResolveCrossRate(string fromCurrency, string toCurrency, DateTime rateDate)
+        => _exchangeRateService.ResolveRate(fromCurrency, toCurrency, rateDate);
+
+    private static string BuildGroupMarginCostSourceLabel(
+        string supplierType,
+        string? costCurrency,
+        string? salesCurrency,
+        GroupMarginCostCurrencyConverter.Result conversion)
+    {
+        var label = ResolveGroupMarginCostSource(supplierType);
+        if (!conversion.IsMismatch)
+            return label;
+        return conversion.IsMasked
+            ? $"{label} ({costCurrency?.Trim()} <> {salesCurrency?.Trim()}, Marge offen)"
+            : $"{label} (umgerechnet {costCurrency?.Trim()}->{salesCurrency?.Trim()} @ {conversion.AppliedRate:0.####})";
+    }
 
     private static string ResolveSupplierType(FinanceAggregationRow row)
         => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry);
@@ -1554,13 +1583,15 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             "Standardpreis fehlt" => 0,
             "Lieferant unklar" => 1,
-            "Umsatz fehlt" => 2,
-            _ => 3
+            GroupMarginCostCurrencyConverter.OpenStatus => 2,
+            "Umsatz fehlt" => 3,
+            _ => 4
         };
 
     private List<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows(
         IEnumerable<FinanceAggregationRow> rows,
-        bool useAuditCsvAsCentralSource)
+        bool useAuditCsvAsCentralSource,
+        string groupMarginCostCurrencyMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
@@ -1570,8 +1601,15 @@ public class ManagementCockpitService : IManagementCockpitService
                 var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
                 var supplierType = ResolveSupplierType(row);
                 var costBasis = ResolveGroupMarginCostBasis(row);
-                var margin = row.Value - costBasis;
+                var conversion = GroupMarginCostCurrencyConverter.Resolve(
+                    costBasis, originalCurrency, row.StandardCostCurrency, row.Year,
+                    groupMarginCostCurrencyMode, ResolveCrossRate);
+                // Marge in Originalwaehrung nur, wenn die Kostenbasis in Verkaufswaehrung
+                // belastbar ist; sonst bleibt sie leer (Schalter Mask bzw. fehlender Kurs).
+                decimal? margin = conversion.IsMasked ? null : row.Value - conversion.CostBasis;
                 var status = ResolveAuditLedgerStatus(row, supplierType, costBasis, chfRate);
+                if (status == "OK" && conversion.IsMasked)
+                    status = GroupMarginCostCurrencyConverter.OpenStatus;
                 var standardCostCurrency = string.IsNullOrWhiteSpace(row.StandardCostCurrency)
                     ? originalCurrency
                     : row.StandardCostCurrency.Trim();
@@ -1608,7 +1646,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     SupplierName = row.SupplierName,
                     SupplierCountry = row.SupplierCountry,
                     SupplierType = supplierType,
-                    CostSource = ResolveGroupMarginCostSource(supplierType),
+                    CostSource = BuildGroupMarginCostSourceLabel(supplierType, row.StandardCostCurrency, originalCurrency, conversion),
                     StandardCost = row.StandardCost,
                     StandardCostCurrency = standardCostCurrency,
                     StandardCostChfRate = standardCostRate,
@@ -1620,7 +1658,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     MarginChf = chfRate.HasValue && standardCostRate.HasValue
                         ? row.Value * chfRate.Value - costBasis * standardCostRate.Value
                         : null,
-                    MarginPercent = PercentOf(margin, row.Value),
+                    MarginPercent = margin.HasValue ? PercentOf(margin.Value, row.Value) : null,
                     DataSource = useAuditCsvAsCentralSource ? "Audit-CSV Sales_ProcessedMergeInput" : "CentralSalesRecords"
                 };
             })
@@ -1870,8 +1908,9 @@ public class ManagementCockpitService : IManagementCockpitService
             "Kurs fehlt" => 0,
             "Standardpreis fehlt" => 1,
             "Lieferant unklar" => 2,
-            "Umsatz fehlt" => 3,
-            _ => 4
+            GroupMarginCostCurrencyConverter.OpenStatus => 3,
+            "Umsatz fehlt" => 4,
+            _ => 5
         };
 
     private static string BuildProductAssignmentStatus(string material, FinanceAggregationRow? reference)

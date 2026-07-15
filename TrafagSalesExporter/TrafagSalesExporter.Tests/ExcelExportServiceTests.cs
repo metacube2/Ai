@@ -119,6 +119,104 @@ public class ExcelExportServiceTests
     }
 
     [Fact]
+    public void CreateConsolidatedExcelFile_Contains_GroupMargin_Sheets()
+    {
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-central-margin-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                ExtractionDate = new DateTime(2026, 7, 15),
+                PostingDate = new DateTime(2025, 12, 31),
+                Tsc = "TRCH",
+                Land = "CH",
+                InvoiceNumber = "INV-1",
+                PositionOnInvoice = 1,
+                Material = "123",
+                Name = "Pressure transmitter",
+                Quantity = 2m,
+                SupplierName = "External Supplier",
+                SupplierCountry = "DE",
+                CustomerName = "Customer AG",
+                CustomerCountry = "CH",
+                SalesPriceValue = 100m,
+                SalesCurrency = "CHF",
+                CompanyCurrency = "CHF",
+                StandardCost = 10m,
+                StandardCostCurrency = "CHF"
+            }
+        };
+
+        try
+        {
+            var path = service.CreateConsolidatedExcelFile(outputDirectory, new DateTime(2026, 7, 15), records);
+
+            using var workbook = new XLWorkbook(path);
+            Assert.Contains("Gruppenmarge Summary", workbook.Worksheets.Select(sheet => sheet.Name));
+            Assert.Contains("Gruppenmarge Details", workbook.Worksheets.Select(sheet => sheet.Name));
+
+            var details = workbook.Worksheet("Gruppenmarge Details");
+            Assert.Equal("OK", details.Cell(2, 2).GetString());
+            // Kostenbasis = Menge x Standardkosten (2 x 10), Marge per Excel-Formel Q-R.
+            Assert.Equal(20m, details.Cell(2, 18).GetValue<decimal>());
+            Assert.Equal("IF(B2=\"OK\",Q2-R2,\"\")", details.Cell(2, 19).FormulaA1);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void CreateConsolidatedExcelFile_Masks_GroupMargin_On_Cost_Currency_Mismatch()
+    {
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-central-mismatch-{Guid.NewGuid():N}");
+        var service = new ExcelExportService();
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                ExtractionDate = new DateTime(2026, 7, 15),
+                PostingDate = new DateTime(2025, 12, 31),
+                Tsc = "TRCH",
+                Land = "CH",
+                InvoiceNumber = "INV-MIX",
+                PositionOnInvoice = 1,
+                Material = "123",
+                Name = "Pressure transmitter",
+                Quantity = 1m,
+                SupplierName = "External Supplier",
+                SupplierCountry = "DE",
+                CustomerName = "Customer AG",
+                CustomerCountry = "CH",
+                SalesPriceValue = 100m,
+                SalesCurrency = "CHF",
+                CompanyCurrency = "CHF",
+                StandardCost = 60m,
+                StandardCostCurrency = "EUR"
+            }
+        };
+
+        try
+        {
+            // Ohne DB-Settings gilt der Default Mask: Status markiert die abweichende
+            // Kostenwaehrung, die Margen-Formel liefert dadurch leer.
+            var path = service.CreateConsolidatedExcelFile(outputDirectory, new DateTime(2026, 7, 15), records);
+
+            using var workbook = new XLWorkbook(path);
+            var details = workbook.Worksheet("Gruppenmarge Details");
+            Assert.Equal("Kostenwaehrung abweichend", details.Cell(2, 2).GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CreateConsolidatedExcelFile_Uses_Germany_Finance_Response_Rules()
     {
         var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-export-{Guid.NewGuid():N}");

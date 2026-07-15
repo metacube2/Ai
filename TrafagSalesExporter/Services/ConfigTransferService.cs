@@ -74,7 +74,8 @@ public class ConfigTransferService : IConfigTransferService
                 AuditCsvEnabled = exportSettings.AuditCsvEnabled,
                 UseAuditCsvAsCentralSource = exportSettings.UseAuditCsvAsCentralSource,
                 LocalAuditCsvFolder = exportSettings.LocalAuditCsvFolder,
-                ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(exportSettings.ExchangeRateDateField)
+                ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(exportSettings.ExchangeRateDateField),
+                GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(exportSettings.GroupMarginCostCurrencyMode)
             },
             SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
             {
@@ -291,7 +292,8 @@ public class ConfigTransferService : IConfigTransferService
             AuditCsvEnabled = importedSettings.AuditCsvEnabled,
             UseAuditCsvAsCentralSource = importedSettings.UseAuditCsvAsCentralSource,
             LocalAuditCsvFolder = importedSettings.LocalAuditCsvFolder,
-            ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(importedSettings.ExchangeRateDateField)
+            ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(importedSettings.ExchangeRateDateField),
+            GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(importedSettings.GroupMarginCostCurrencyMode)
         });
 
         foreach (var sourceSystem in importedSourceSystems)

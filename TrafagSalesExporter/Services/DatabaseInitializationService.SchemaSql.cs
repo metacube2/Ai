@@ -32,6 +32,7 @@ CREATE TABLE ExportSettings (
     UseAuditCsvAsCentralSource INTEGER NOT NULL DEFAULT 0,
     LocalAuditCsvFolder TEXT NOT NULL DEFAULT '',
     ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate',
+    GroupMarginCostCurrencyMode TEXT NOT NULL DEFAULT 'Mask',
     LastTimerRunUtc TEXT NULL
 );";
 

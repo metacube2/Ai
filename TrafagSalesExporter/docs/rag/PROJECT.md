@@ -1,9 +1,10 @@
 # RAG Project
 
-Stand: 2026-07-14
+Stand: 2026-07-15
 
 ## Kurzstand
 
+- Neu lokal umgesetzt 2026-07-15 (Tests `226/226`, noch nicht committed/deployed): (1) Schalter `GroupMarginCostCurrencyMode` (Mask/Convert) fuer Gruppenmarge bei abweichender Kostenwaehrung — wirkt identisch auf Dashboard/Pruefbuch und zentrale Excel/Nachweis-Excel; Fachentscheid D fuer Andreas damit per Vergleich beider Varianten entscheidbar. (2) Zentrales `Sales_All_*.xlsx` enthaelt neu die Blaetter `Gruppenmarge Summary`/`Gruppenmarge Details`. Details: `docs/rag/FINANCE.md`, Nachtrag in `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`.
 
 
 - Neu umgesetzt und deployed 2026-07-14: Journal-Import (Hauptbuch) als eigener Import in die separate Tabelle `FinancialJournalEntries` — Seite `Finance Cockpit > Journal Import` (`/finance-journal-import`, Seed `finance-journal-import`). Umfang: alle SAP-B1-Gesellschaften ueber HANA (FR, IT, US, Indien) plus CH/AT (`ZSCHWEIZ`) ueber SAP OData. Der Sales-Datenfluss bleibt unveraendert. Offene Abhaengigkeit: das OData-EntitySet `FinanzJournalSet` fuer CH/AT existiert auf SAP-Seite noch nicht (Spez fuer das SAP-Team: `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`). Details/Feldmapping: `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md`, Kurzstand: `docs/rag/FINANCE.md`.
