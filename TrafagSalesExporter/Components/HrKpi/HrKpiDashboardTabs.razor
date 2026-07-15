@@ -236,7 +236,7 @@
         => string.IsNullOrWhiteSpace(value) ? T("Alle", "All") : value;
 
     private static Color MetricColor(string severity)
-        => severity == "Warning" ? Color.Warning : Color.Default;
+        => severity == "Error" ? Color.Error : severity == "Warning" ? Color.Warning : Color.Default;
 
     private static string MetricThemeClass(string theme)
         => theme switch

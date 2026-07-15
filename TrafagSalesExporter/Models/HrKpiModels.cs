@@ -28,17 +28,26 @@ public sealed class HrKpiDataSourceOptions
     public string SapFile { get; set; } = "HR_KPI_Export.xlsx";
     public string AbsenceFile { get; set; } = "Abwesenheitinstunden.xlsx";
     public string LeaverFile { get; set; } = "Personalausgeschieden.xlsx";
+    public decimal AbsenceYellowThresholdPercent { get; set; } = 3m;
+    public decimal AbsenceRedThresholdPercent { get; set; } = 5m;
 
     public HrKpiDataSourceOptions Normalize()
-        => new()
+    {
+        var yellow = AbsenceYellowThresholdPercent <= 0 ? 3m : AbsenceYellowThresholdPercent;
+        var red = AbsenceRedThresholdPercent <= yellow ? 5m : AbsenceRedThresholdPercent;
+
+        return new()
         {
             DataFolder = NormalizeText(DataFolder, DefaultFolder),
             MainFile = NormalizeText(MainFile, "Saldiperstichdatum.xlsx"),
             TimeFile = NormalizeText(TimeFile, "Exportkommengehen.xlsx"),
             SapFile = NormalizeText(SapFile, "HR_KPI_Export.xlsx"),
             AbsenceFile = NormalizeText(AbsenceFile, "Abwesenheitinstunden.xlsx"),
-            LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx")
+            LeaverFile = NormalizeText(LeaverFile, "Personalausgeschieden.xlsx"),
+            AbsenceYellowThresholdPercent = yellow,
+            AbsenceRedThresholdPercent = red
         };
+    }
 
     private static string NormalizeText(string? value, string fallback)
         => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();

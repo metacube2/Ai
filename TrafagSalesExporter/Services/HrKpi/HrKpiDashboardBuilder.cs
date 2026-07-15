@@ -630,7 +630,7 @@ internal sealed class HrKpiDashboardBuilder
         return metrics;
     }
 
-    private static List<HrKpiMetric> BuildAbsenceMetrics(
+    private List<HrKpiMetric> BuildAbsenceMetrics(
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
         IReadOnlyCollection<HrAbsenceRow> absences,
         AnalysisPeriod analysisPeriod)
@@ -641,21 +641,33 @@ internal sealed class HrKpiDashboardBuilder
         var fte = employees.Sum(x => x.Fte);
         var denominator = fte * analysisPeriod.Workdays;
         var absenceRate = denominator <= 0 ? 0 : totalSick / denominator;
+        var absenceSeverity = ResolveAbsenceSeverity(absenceRate);
+        var absenceThresholdDetail = $"Ampel: Gruen < {_dataSources.AbsenceYellowThresholdPercent:N1}%, Gelb < {_dataSources.AbsenceRedThresholdPercent:N1}%, Rot ab {_dataSources.AbsenceRedThresholdPercent:N1}%";
         var bu = employees.Sum(x => x.BuTage);
         var nbu = employees.Sum(x => x.NbuTage);
 
         return
         [
-            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen", Severity = absenceRate > 0.05m ? "Warning" : "Normal" },
+            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen", Severity = absenceSeverity },
             new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = "Rexx kurz / 8.4h", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = "Rexx lang / 8.4h", Severity = longSick > shortSick ? "Warning" : "Normal" },
-            new() { Label = "Krankenquote", Value = absenceRate.ToString("P1"), Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage), {analysisPeriod.Label}", Severity = absenceRate > 0.05m ? "Warning" : "Normal" },
+            new() { Label = "Krankenquote", Value = absenceRate.ToString("P1"), Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage), {analysisPeriod.Label}. {absenceThresholdDetail}", Severity = absenceSeverity },
             new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "NBU-Tage", Value = nbu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "Unfalltage Total", Value = (bu + nbu).ToString("N1"), Detail = "BU + NBU", Severity = "Normal" }
         ];
     }
 
+
+    private string ResolveAbsenceSeverity(decimal rate)
+    {
+        var percent = rate * 100m;
+        if (percent >= _dataSources.AbsenceRedThresholdPercent)
+            return "Error";
+        if (percent >= _dataSources.AbsenceYellowThresholdPercent)
+            return "Warning";
+        return "Normal";
+    }
     private static List<HrKpiMetric> BuildTimeVacationMetrics(IReadOnlyCollection<HrKpiEmployeeRow> employees)
     {
         var headcount = employees.Count;
@@ -734,10 +746,10 @@ internal sealed class HrKpiDashboardBuilder
 
         return
         [
-            BuildTrafficLight("Fluktuation", turnover?.Value ?? "-", turnover?.Detail ?? string.Empty, turnover?.Severity == "Warning"),
-            BuildTrafficLight("Krankenquote", absence?.Value ?? "-", absence?.Detail ?? string.Empty, absence?.Severity == "Warning"),
-            BuildTrafficLight("GLZ-Saldi", glzRed?.Value ?? "0", glzRed?.Detail ?? string.Empty, ParseInt(glzRed?.Value) > 0),
-            BuildTrafficLight("Restferien", vacationRed?.Value ?? "0", vacationRed?.Detail ?? string.Empty, ParseInt(vacationRed?.Value) > 0),
+            BuildTrafficLight("Fluktuation", turnover?.Value ?? "-", turnover?.Detail ?? string.Empty, SeverityToTrafficLightStatus(turnover?.Severity)),
+            BuildTrafficLight("Krankenquote", absence?.Value ?? "-", absence?.Detail ?? string.Empty, SeverityToTrafficLightStatus(absence?.Severity)),
+            BuildTrafficLight("GLZ-Saldi", glzRed?.Value ?? "0", glzRed?.Detail ?? string.Empty, ParseInt(glzRed?.Value) > 0 ? "Rot" : "Gruen"),
+            BuildTrafficLight("Restferien", vacationRed?.Value ?? "0", vacationRed?.Detail ?? string.Empty, ParseInt(vacationRed?.Value) > 0 ? "Rot" : "Gruen"),
             new()
             {
                 Area = "Datenqualitaet",
@@ -828,14 +840,17 @@ internal sealed class HrKpiDashboardBuilder
     private static HrKpiMetric? FindMetric(IEnumerable<HrKpiMetric> metrics, string labelPart)
         => metrics.FirstOrDefault(x => x.Label.Contains(labelPart, StringComparison.OrdinalIgnoreCase));
 
-    private static HrKpiTrafficLight BuildTrafficLight(string area, string value, string detail, bool warning)
+    private static HrKpiTrafficLight BuildTrafficLight(string area, string value, string detail, string status)
         => new()
         {
             Area = area,
-            Status = warning ? "Gelb" : "Gruen",
+            Status = status,
             Value = value,
             Detail = detail
         };
+
+    private static string SeverityToTrafficLightStatus(string? severity)
+        => severity == "Error" ? "Rot" : severity == "Warning" ? "Gelb" : "Gruen";
 
     private static HrKpiDataQualityIssue CreateQualityIssue(string severity, string area, string issue, int count, string detail)
         => new()
@@ -1068,10 +1083,16 @@ internal sealed class HrKpiDashboardBuilder
 
         int? breakdownYear = null;
         var showPeriodMetrics = false;
+        var hasRange = options.FromDate.HasValue || options.ToDate.HasValue;
         if (options.Year.HasValue)
         {
             breakdownYear = options.Year.Value;
             showPeriodMetrics = true;
+        }
+        else if (hasRange)
+        {
+            breakdownYear = ResolveRangeBreakdownYear(options, selectedYears);
+            showPeriodMetrics = breakdownYear.HasValue;
         }
         else if (selectedYears.Count == 1)
         {
@@ -1086,6 +1107,15 @@ internal sealed class HrKpiDashboardBuilder
         return new TurnoverPeriodScope(breakdownYear, anchorDate, label, showPeriodMetrics);
     }
 
+
+    private static int? ResolveRangeBreakdownYear(HrKpiOptions options, IReadOnlyList<int> selectedYears)
+    {
+        if (options.ToDate.HasValue)
+            return options.ToDate.Value.Year;
+        if (options.FromDate.HasValue)
+            return options.FromDate.Value.Year;
+        return selectedYears.Count == 1 ? selectedYears[0] : null;
+    }
     private static DateTime ResolveTurnoverAnchorDate(HrKpiOptions options, int? breakdownYear, IReadOnlyCollection<HrLeaverRow> leavers)
     {
         if (options.ToDate.HasValue)

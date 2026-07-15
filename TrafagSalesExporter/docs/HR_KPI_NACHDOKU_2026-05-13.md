@@ -288,6 +288,20 @@ Validierung:
   Vorjahresvergleich und Krankenquote.
 - Noch kein Deploy (Modellwechsel-Session); Deploy-Entscheid mit Ingo offen.
 
+## Nachtrag 2026-07-08 Meeting Sonja: Fluktuationsprognose und Absenz-Ampel
+
+Umgesetzt nach Meetingnotiz HR-Dashboard:
+
+- Die bestehende aktuelle Fluktuationskachel bleibt unveraendert.
+- Die Prognosekachel `Fluktuation Prognose` rechnet weiterhin bewusst `aktuelle Quartals-Fluktuation x 4` und nicht vom 01.01. hoch.
+- Bei einer Von/Bis-Auswahl ohne explizites Austrittsjahr werden Monats-/Quartals-/YTD-/Prognosekacheln jetzt ebenfalls angezeigt, sofern aus dem Zeitraum ein eindeutiges Jahr ableitbar ist. Beispiel: `Bis Austritt = 30.06.2026` nutzt Q2/2026 als Prognosequartal.
+- Die Krankenquote-Ampel nutzt jetzt konfigurierbare Prozentgrenzen aus `HrKpi`: `AbsenceYellowThresholdPercent` und `AbsenceRedThresholdPercent`. Default bis zur fachlichen Bestaetigung: Gruen < 3.0 %, Gelb < 5.0 %, Rot ab 5.0 %.
+- Die verwendeten Krankenquote-Grenzen werden in der Kachelbeschreibung angezeigt, damit Sonja/HR die Ranges sichtbar pruefen koennen.
+
+Weiter fachlich offen:
+
+- Sonja muss die Absenzen weiterhin gegen Rexx abgleichen.
+- Die finalen Ranges/Farben fuer Kranken-/Absenzquote sind fachlich zu bestaetigen; die neuen Konfigurationswerte erlauben danach eine Anpassung ohne Codeaenderung.
 ## Offene fachliche Pruefpunkte
 
 Diese Punkte sind nicht automatisch geloest und muessen fachlich von HR bestaetigt werden:

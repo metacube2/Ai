@@ -284,6 +284,45 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.DoesNotContain($"31.12.{currentYear}", rate.Detail);
     }
 
+    [Fact]
+    public async Task BuildAsync_Date_Range_Shows_Quarter_Forecast_Without_Explicit_Year()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = null,
+            FromDate = new DateTime(2025, 3, 1),
+            ToDate = new DateTime(2025, 3, 31)
+        });
+
+        Assert.Contains(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Quartal");
+        var forecast = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Prognose");
+        Assert.Equal("Quartalsrate x 4, nur Schaetzung", forecast.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Uses_Configured_Absence_Thresholds_For_Status_Color()
+    {
+        var service = new HrKpiService(Options.Create(new HrKpiDataSourceOptions
+        {
+            DataFolder = _folder,
+            AbsenceYellowThresholdPercent = 0.1m,
+            AbsenceRedThresholdPercent = 50m
+        }));
+
+        var result = await service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2025
+        });
+
+        var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
+        Assert.Equal("Warning", absenceRate.Severity);
+        Assert.Contains("Gelb < 50.0%", absenceRate.Detail);
+
+        var absenceStatus = Assert.Single(result.TrafficLights, item => item.Area == "Krankenquote");
+        Assert.Equal("Gelb", absenceStatus.Status);
+    }
     private static void WriteFixtureFiles(string folder)
     {
         WriteWorkbook(Path.Combine(folder, "Saldiperstichdatum.xlsx"),
