@@ -8,6 +8,7 @@ namespace TrafagSalesExporter.Services;
 public class ExcelExportService : IExcelExportService
 {
     private readonly IDbContextFactory<AppDbContext>? _dbFactory;
+    private readonly ICurrencyExchangeRateService? _exchangeRateService;
 
     public ExcelExportService()
     {
@@ -17,6 +18,19 @@ public class ExcelExportService : IExcelExportService
     {
         _dbFactory = dbFactory;
     }
+
+    public ExcelExportService(IDbContextFactory<AppDbContext> dbFactory, ICurrencyExchangeRateService exchangeRateService)
+        : this(dbFactory)
+    {
+        _exchangeRateService = exchangeRateService;
+    }
+
+    /// <summary>
+    /// Jahreskurs nach CHF wie im Finance Pruefbuch: Stichtag 31.12. des Finance-Jahres
+    /// der Zeile, damit historische Jahre mit ihrem eigenen Kurs bewertet werden.
+    /// </summary>
+    private decimal? ResolveChfRate(string currency, int year)
+        => _exchangeRateService?.ResolveRate(currency, "CHF", new DateTime(year, 12, 31));
 
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
@@ -44,7 +58,7 @@ public class ExcelExportService : IExcelExportService
             ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
             : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences());
+        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate);
         return fullPath;
     }
 
@@ -81,7 +95,7 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules());
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate);
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -131,16 +145,18 @@ public class ExcelExportService : IExcelExportService
         DateTime fileDate,
         bool useAuditCsvAsCentralSource,
         IReadOnlyList<FinanceRule> financeRules,
-        IReadOnlyList<FinanceReference> financeReferences)
+        IReadOnlyList<FinanceReference> financeReferences,
+        Func<string, int, decimal?>? resolveChfRate = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
         var groupMarginRows = BuildGroupMarginProofRows(financeRows);
+        var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
         AddProofFinanceSummarySheet(workbook, financeRows);
-        AddProofFinanceDetailsSheet(workbook, financeRows);
+        AddProofFinanceDetailsSheet(workbook, financeRows, referenceByMaterial, resolveChfRate);
         AddProofReferenceSheet(workbook, financeReferences, financeRows);
         AddProofDivisionSummarySheet(workbook, divisionRows);
         AddProofDivisionDetailsSheet(workbook, divisionRows);
@@ -332,9 +348,14 @@ public class ExcelExportService : IExcelExportService
         FormatProofSheet(ws, rowIndex - 1, 5, autoFit: true);
     }
 
-    private static void AddProofFinanceDetailsSheet(XLWorkbook workbook, IReadOnlyList<FinanceProofRow> rows)
+    private static void AddProofFinanceDetailsSheet(
+        XLWorkbook workbook,
+        IReadOnlyList<FinanceProofRow> rows,
+        IReadOnlyDictionary<string, SalesRecord> referenceByMaterial,
+        Func<string, int, decimal?>? resolveChfRate)
     {
         var ws = workbook.Worksheets.Add("Finance Details");
+        var chfRateCache = new Dictionary<(string Currency, int Year), decimal?>();
         var headers = new[]
         {
             "Year", "Country Key", "Currency", "Finance Date", "Include", "Net Sales Actual", "Source Value Field",
@@ -344,7 +365,7 @@ public class ExcelExportService : IExcelExportService
             "Sales Price/Value", "Sales Currency", "Document Currency", "Document Total FC", "Document Total LC",
             "VAT Sum FC", "VAT Sum LC", "Company Currency", "Product Division Code", "Product Division Text",
             "Product Family Code", "Product Family Text", "Product Hierarchy Code", "Product Hierarchy Text",
-            "Standard Cost", "Standard Cost Currency"
+            "Standard Cost", "Standard Cost Currency", "CHF Rate", "Net Sales CHF"
         };
         WriteHeaders(ws, headers);
 
@@ -385,14 +406,29 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 31).Value = record.VatSumForeignCurrency;
             ws.Cell(rowIndex, 32).Value = record.VatSumLocalCurrency;
             ws.Cell(rowIndex, 33).Value = record.CompanyCurrency;
-            ws.Cell(rowIndex, 34).Value = record.ProductDivisionCode;
-            ws.Cell(rowIndex, 35).Value = record.ProductDivisionText;
-            ws.Cell(rowIndex, 36).Value = record.ProductFamilyCode;
-            ws.Cell(rowIndex, 37).Value = record.ProductFamilyText;
-            ws.Cell(rowIndex, 38).Value = record.ProductHierarchyCode;
-            ws.Cell(rowIndex, 39).Value = record.ProductHierarchyText;
+            var productReference = ProductReferenceEnricher.ResolveFallback(record, referenceByMaterial);
+            ws.Cell(rowIndex, 34).Value = FirstNonBlank(record.ProductDivisionCode, productReference?.ProductDivisionCode);
+            ws.Cell(rowIndex, 35).Value = FirstNonBlank(record.ProductDivisionText, productReference?.ProductDivisionText);
+            ws.Cell(rowIndex, 36).Value = FirstNonBlank(record.ProductFamilyCode, productReference?.ProductFamilyCode);
+            ws.Cell(rowIndex, 37).Value = FirstNonBlank(record.ProductFamilyText, productReference?.ProductFamilyText);
+            ws.Cell(rowIndex, 38).Value = FirstNonBlank(record.ProductHierarchyCode, productReference?.ProductHierarchyCode);
+            ws.Cell(rowIndex, 39).Value = FirstNonBlank(record.ProductHierarchyText, productReference?.ProductHierarchyText);
             ws.Cell(rowIndex, 40).Value = record.StandardCost;
             ws.Cell(rowIndex, 41).Value = record.StandardCostCurrency;
+
+            var rateKey = (row.Currency, row.Year);
+            if (!chfRateCache.TryGetValue(rateKey, out var chfRate))
+            {
+                chfRate = resolveChfRate?.Invoke(row.Currency, row.Year);
+                chfRateCache[rateKey] = chfRate;
+            }
+
+            if (chfRate.HasValue)
+            {
+                ws.Cell(rowIndex, 42).Value = chfRate.Value;
+                ws.Cell(rowIndex, 43).Value = row.NetSalesActual * chfRate.Value;
+            }
+
             rowIndex++;
         }
 
@@ -400,6 +436,8 @@ public class ExcelExportService : IExcelExportService
         ws.Columns(17, 17).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns(26, 32).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns(40, 40).Style.NumberFormat.Format = "#,##0.00";
+        ws.Columns(42, 42).Style.NumberFormat.Format = "#,##0.0000";
+        ws.Columns(43, 43).Style.NumberFormat.Format = "#,##0.00";
         FormatProofSheet(ws, Math.Max(1, rowIndex - 1), headers.Length);
     }
 
@@ -699,16 +737,14 @@ public class ExcelExportService : IExcelExportService
         }
     }
 
+    private static string FirstNonBlank(string? primary, string? fallback)
+        => !string.IsNullOrWhiteSpace(primary) ? primary : fallback ?? string.Empty;
+
     private static bool HasProductReference(SalesRecord record)
-        => !string.IsNullOrWhiteSpace(record.ProductHierarchyCode) ||
-           !string.IsNullOrWhiteSpace(record.ProductFamilyCode) ||
-           !string.IsNullOrWhiteSpace(record.ProductDivisionCode) ||
-           !string.IsNullOrWhiteSpace(record.ProductMappingAssigned);
+        => ProductReferenceEnricher.HasProductReference(record);
 
     private static bool IsAssignedProductReference(SalesRecord record)
-        => IsTruthy(record.ProductMappingAssigned) &&
-           !string.IsNullOrWhiteSpace(record.ProductDivisionCode) &&
-           !record.ProductDivisionCode.Equals("UNASS", StringComparison.OrdinalIgnoreCase);
+        => ProductReferenceEnricher.IsAssignedProductReference(record);
 
     private static bool IsMiscProductDivision(SalesRecord record)
         => record.ProductDivisionCode.Equals("0008", StringComparison.OrdinalIgnoreCase);
@@ -734,12 +770,6 @@ public class ExcelExportService : IExcelExportService
             "Zugeordnet" => 4,
             _ => 5
         };
-
-    private static bool IsTruthy(string value)
-    {
-        var normalized = (value ?? string.Empty).Trim().ToUpperInvariant();
-        return normalized is "X" or "TRUE" or "1" or "Y" or "YES";
-    }
 
     private static string NormalizeMaterialKey(string value)
     {
@@ -846,11 +876,19 @@ public class ExcelExportService : IExcelExportService
         string ProductDivisionCode,
         string ProductDivisionText);
 
-    private static void WriteWorkbook(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet, IReadOnlyList<FinanceRule> financeRules)
+    private static void WriteWorkbook(
+        string fullPath,
+        List<SalesRecord> records,
+        bool includeFinanceHelpSheet,
+        IReadOnlyList<FinanceRule> financeRules,
+        Func<string, int, decimal?>? resolveChfRate = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
+        // Sparten-Fallback wie in den Dashboards: Zeilen ohne eigene Produktreferenz
+        // erben sie ueber die Materialnummer (Pool = Zeilen mit Referenz, i.d.R. ZSCHWEIZ).
+        var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         var headers = new[]
         {
@@ -922,12 +960,15 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 6).Value = record.Material;
             ws.Cell(row, 7).Value = record.Name;
             ws.Cell(row, 8).Value = record.ProductGroup;
-            ws.Cell(row, 9).Value = record.ProductHierarchyCode;
-            ws.Cell(row, 10).Value = record.ProductHierarchyText;
-            ws.Cell(row, 11).Value = record.ProductFamilyCode;
-            ws.Cell(row, 12).Value = record.ProductFamilyText;
-            ws.Cell(row, 13).Value = record.ProductDivisionCode;
-            ws.Cell(row, 14).Value = record.ProductDivisionText;
+            // Eigene Referenz gewinnt; sonst erbt die Zeile die Sparte ueber das Material.
+            // "Product Mapping Assigned" bleibt roh — leer + gefuellte Sparte = geerbt.
+            var productReference = ProductReferenceEnricher.ResolveFallback(record, referenceByMaterial);
+            ws.Cell(row, 9).Value = FirstNonBlank(record.ProductHierarchyCode, productReference?.ProductHierarchyCode);
+            ws.Cell(row, 10).Value = FirstNonBlank(record.ProductHierarchyText, productReference?.ProductHierarchyText);
+            ws.Cell(row, 11).Value = FirstNonBlank(record.ProductFamilyCode, productReference?.ProductFamilyCode);
+            ws.Cell(row, 12).Value = FirstNonBlank(record.ProductFamilyText, productReference?.ProductFamilyText);
+            ws.Cell(row, 13).Value = FirstNonBlank(record.ProductDivisionCode, productReference?.ProductDivisionCode);
+            ws.Cell(row, 14).Value = FirstNonBlank(record.ProductDivisionText, productReference?.ProductDivisionText);
             ws.Cell(row, 15).Value = record.ProductMappingAssigned;
             ws.Cell(row, 16).Value = record.Quantity;
             ws.Cell(row, 17).Value = record.SupplierNumber;
@@ -976,7 +1017,7 @@ public class ExcelExportService : IExcelExportService
         if (includeFinanceHelpSheet)
         {
             AddFinanceSummarySheet(workbook, records, financeRules);
-            AddFinanceDetailsSheet(workbook, records, financeRules);
+            AddFinanceDetailsSheet(workbook, records, financeRules, referenceByMaterial, resolveChfRate);
             AddFinanceHelpSheet(workbook);
         }
 
@@ -1059,10 +1100,17 @@ public class ExcelExportService : IExcelExportService
         ws.Columns().AdjustToContents();
     }
 
-    private static void AddFinanceDetailsSheet(XLWorkbook workbook, List<SalesRecord> records, IReadOnlyList<FinanceRule> financeRules)
+    private static void AddFinanceDetailsSheet(
+        XLWorkbook workbook,
+        List<SalesRecord> records,
+        IReadOnlyList<FinanceRule> financeRules,
+        IReadOnlyDictionary<string, SalesRecord> referenceByMaterial,
+        Func<string, int, decimal?>? resolveChfRate)
     {
         var ws = workbook.Worksheets.Add("Finance Details");
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
+        // Kurse je (Waehrung, Jahr) cachen — ResolveRate fragt sonst pro Zeile die DB ab.
+        var chfRateCache = new Dictionary<(string Currency, int Year), decimal?>();
         ws.Position = 2;
 
         ws.Cell(1, 1).Value = "Finance Details";
@@ -1100,7 +1148,11 @@ public class ExcelExportService : IExcelExportService
             "Document Currency",
             "Document Total FC",
             "Document Total LC",
-            "Company Currency"
+            "Company Currency",
+            "Product Division Code",
+            "Product Division Text",
+            "CHF Rate",
+            "Net Sales CHF"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1150,6 +1202,25 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 27).Value = record.DocumentTotalForeignCurrency;
             ws.Cell(rowIndex, 28).Value = record.DocumentTotalLocalCurrency;
             ws.Cell(rowIndex, 29).Value = record.CompanyCurrency;
+
+            var productReference = ProductReferenceEnricher.ResolveFallback(record, referenceByMaterial);
+            ws.Cell(rowIndex, 30).Value = FirstNonBlank(record.ProductDivisionCode, productReference?.ProductDivisionCode);
+            ws.Cell(rowIndex, 31).Value = FirstNonBlank(record.ProductDivisionText, productReference?.ProductDivisionText);
+
+            var financeCurrency = ResolveFinanceCurrency(record);
+            var rateKey = (financeCurrency, financeDate.Year);
+            if (!chfRateCache.TryGetValue(rateKey, out var chfRate))
+            {
+                chfRate = resolveChfRate?.Invoke(financeCurrency, financeDate.Year);
+                chfRateCache[rateKey] = chfRate;
+            }
+
+            if (chfRate.HasValue)
+            {
+                ws.Cell(rowIndex, 32).Value = chfRate.Value;
+                ws.Cell(rowIndex, 33).Value = netSalesActual * chfRate.Value;
+            }
+
             rowIndex++;
         }
 
@@ -1157,6 +1228,8 @@ public class ExcelExportService : IExcelExportService
         ws.Column(24).Style.NumberFormat.Format = "#,##0.00";
         ws.Column(27).Style.NumberFormat.Format = "#,##0.00";
         ws.Column(28).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(32).Style.NumberFormat.Format = "#,##0.0000";
+        ws.Column(33).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns().AdjustToContents();
     }
 
