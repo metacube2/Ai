@@ -1,6 +1,6 @@
 # Markdown-Dokumentenstatus
 
-Stand: 2026-06-18
+Stand: 2026-07-15
 
 RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
 
@@ -25,6 +25,24 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `docs/HR_KPI_NACHDOKU_2026-05-13.md` | HR-KPI technische/fachliche Nachdoku | Aktualisiert um 2026-05-20 Erweiterungen |
 | `docs/PROGRAMM_DIAGRAMME.md` | Uebersicht Diagramme und technische Einordnung | Aktualisiert um neue Anwenderdokus |
 
+## Neu als Detail-/Spezialdoku seit 2026-06-18
+
+| Datei | Rolle | Status |
+| --- | --- | --- |
+| `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge-Fachlogik, Andreas-Entscheide, Kostenwaehrungsschalter | Aktuell fuehrend fuer Gruppenmarge |
+| `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md` | Aufbau/Formeln der zentralen Nachweis-Excel | Behalten |
+| `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` | Prozessablauf Finance Dashboard, Audit-CSV-Quelle, Finance Pruefbuch | Aktuell fuehrend fuer Prozessfluss |
+| `docs/CODEX_ANWEISUNG_FINANCE_DATEN_HEARTBEAT_2026-07-13.md` | Umsetzungsanweisung Daten-Heartbeat | Behalten |
+| `docs/FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md` | SAP-B1-Konnektoren-Uebersicht fuer Andreas | Behalten |
+| `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` | B1-Journal-Import Feldmapping | Behalten |
+| `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` | SAP-OData-Spez `FinanzJournalSet` fuer CH/AT | Aktuell, SAP-Rollout offen |
+| `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` | Standardkosten-/MBEW-STPRS-Anbindung CH/AT und DE | Aktuell fuehrend fuer Standardkosten |
+| `docs/HR_KPI_KORREKTUREN_2026-07-06.md` | HR-KPI-Formel-/Logik-Korrekturen 2026-07-06 | Behalten |
+| `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md` | Einkaufs-Formel-/Logik-Korrekturen 2026-07-06 | Behalten |
+| `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` | Vorbereitung Einkauf-Review durch Ingo | Behalten |
+| `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` | Umsetzungsplan aus Marcos Einkauf-Review | Behalten |
+| `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` | Marcos Einkauf-Review, inkl. travp762-Feldrisiko | Aktuell, Risiko vor P-Modell-Rollout beachten |
+
 ## Aktuell als Detail-/Spezialdoku
 
 | Datei | Rolle | Status |
@@ -41,7 +59,20 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 
 ## Archiviert / aus aktiver Doku entfernt
 
-Diese Dateien wurden am 2026-06-09 aus der aktiven Markdown-Struktur entfernt, weil sie nur noch historische Stubs oder durch neuere Dokus ersetzt waren. Fachinhalt bleibt erhalten:
+Delta 2026-07-15: Drei Finance-Sitzungs-/Memo-Dokumente von Anfang Juni waren im RAG-Router
+und in dieser Statusdatei bislang gar nicht referenziert (weder als fuehrend noch als
+archiviert). Inhaltlich sind sie durch spaetere Entscheide ueberholt (ES-Referenz korrigiert,
+DE-`ForceYear` entfernt, IC-Diagnose und Gruppenmarge laengst umgesetzt). Dateien bleiben
+liegen, werden aber nicht mehr fuer normale Arbeit geladen; Einordnung jetzt auch in
+`docs/RAG_ROUTER.md` Abschnitt „Ueberholt / nur noch als historischer Beleg":
+
+| Datei | Grund |
+| --- | --- |
+| `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` | Argumentationshilfe fuer Sitzung 2026-06-01; Punkte inzwischen in `docs/rag/FINANCE.md` „Offene Fachpunkte" gepflegt. |
+| `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` | Kurzmemo vor Sitzung 2026-06-01; ueberholt durch `docs/FINANCE_ENTSCHEIDE.md` und die spaeteren Andreas-Entscheide vom 2026-06-29. |
+| `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` | Sitzungszusammenfassung 2026-06-02; Inhalt in `docs/rag/FINANCE.md` und `docs/FINANCE_ENTSCHEIDE.md` aufgegangen. |
+
+Bereinigung 2026-06-09 (aeltere Delta-Eintraege): Diese Dateien wurden aus der aktiven Markdown-Struktur entfernt, weil sie nur noch historische Stubs oder durch neuere Dokus ersetzt waren. Fachinhalt bleibt erhalten:
 
 | Entfernte Datei | Grund |
 | --- | --- |

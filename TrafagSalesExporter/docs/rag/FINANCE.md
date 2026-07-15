@@ -87,7 +87,7 @@ Stand: 2026-07-15
 - Spartenanalyse: Falls weiterhin >90% nicht zugeordnet, TR-AG-Referenz/Join/Materialnummern pruefen.
 - Produktsparten-OData: nach SAP-Fix plausibel; vor/bei Refresh trotzdem Guardrail und Ergebniszahlen pruefen. Naechster Schritt ist Deploy/App-Start mit Seed fuer direkte `P.*`-Mappings und danach ZSCHWEIZ-Refresh.
 - Budget-CHF: Finanzchef muss Budgetkurse/Freigabe, Pflegeprozess, Spaltenumfang, Fehlkursverhalten, Rundung, Anzeigeort, DE-2026-Umschaltung und Kontrollnachweis entscheiden.
-- Gruppenmarge: Andreas/Finance muss per Multiple Choice Lieferantenerkennung, externe/interne Kostenbasis, MBEW-STPRS-Fallback, Kettenlogik, Waehrung und Fehlkostenverhalten entscheiden.
+- Gruppenmarge: Andreas/Finance muss per Multiple Choice Lieferantenerkennung, externe/interne Kostenbasis, MBEW-STPRS-Fallback, Kettenlogik, Waehrung und Fehlkostenverhalten entscheiden. Praezisierung 2026-07-15: Die seit 2026-07-14 gefuellte CH/AT-Kostenbasis ist die STPRS der VERKAUFENDEN Gesellschaft (Bewertungskreis aus dem Land der Zeile) — die STPRS der LIEFERNDEN Gesellschaft bei internen Zeilen ist weiterhin nicht angebunden (braucht Lieferant->Gesellschaft->Bewertungskreis-Mapping).
 
 ## Management-Analyse-Reiter
 

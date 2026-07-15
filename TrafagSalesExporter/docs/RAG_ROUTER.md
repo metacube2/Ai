@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-06-30
+Stand: 2026-07-15
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
@@ -25,6 +25,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Admin/Startseite | Admin Login, Sessions, Landing Page | `docs/rag/ADMIN.md` |
 | Architektur | Systemuebersicht, Diagramme, technische Einordnung | `docs/rag/ARCHITECTURE.md` |
 | Produktmapping | Group Sales Report, Produkthierarchie, Produktfamilie, Produktsparte | `docs/rag/PRODUCT_MAPPING.md` |
+| Einkauf | Einkaufsdashboard, EKKO/EKPO/EKET, Lieferanten, offene Bestellungen/Kontrakte, Spend | `docs/PURCHASING_DASHBOARD_2026-06-05.md` |
 | 180-Tage-Roadmap Ingo | Management-Doku, Aufgaben Ingo, Sales/Data-Lake, HR/Einkauf, Abhaengigkeiten | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 
 ## Rohquellen Nur Bei Bedarf
@@ -51,6 +52,29 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | lokaler Server im Detail |
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin-/Landing-Details |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping im Detail |
+| `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge-Fachlogik, Andreas-Entscheide, Kostenwaehrungsschalter (Entscheid D) im Detail |
+| `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` | Standardkosten-/MBEW-STPRS-Anbindung CH/AT und DE im Detail |
+| `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` | SAP-OData-Spezifikation `FinanzJournalSet` fuer CH/AT-Journal-Import |
+| `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` | B1-Journal-Import (Hauptbuch) Feldmapping im Detail |
+| `docs/FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md` | SAP-B1-Konnektoren-Uebersicht fuer Andreas |
+| `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md` | Aufbau/Formeln der `Finance_Dashboard_Nachweis_*.xlsx` im Detail |
+| `docs/CODEX_ANWEISUNG_FINANCE_DATEN_HEARTBEAT_2026-07-13.md` | Umsetzungsanweisung Daten-Heartbeat im Detail |
+| `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md` | Einkaufs-Formel-/Logik-Korrekturen 2026-07-06 im Detail |
+| `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` | Vorbereitung Einkauf-Review durch Ingo |
+| `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` | Umsetzungsplan aus Marcos Einkauf-Review |
+| `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` | Marcos Einkauf-Review im Detail, inkl. travp762-Feldrisiko |
+
+## Ueberholt / nur noch als historischer Beleg
+
+Diese Dateien sind durch spaetere Entscheide/Features inhaltlich ueberholt (ES-Referenz, DE-Jahr,
+IC-Diagnose, Gruppenmarge sind laengst umgesetzt) und werden fuer normale Arbeit NICHT mehr
+geladen. Aktueller Stand steht in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`.
+
+| Datei | Ersetzt durch |
+| --- | --- |
+| `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` | `docs/rag/FINANCE.md` „Offene Fachpunkte" |
+| `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` | `docs/rag/FINANCE.md`, `docs/FINANCE_ENTSCHEIDE.md` |
+| `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` | `docs/rag/FINANCE.md`, `docs/FINANCE_ENTSCHEIDE.md` |
 
 ## Suchwoerter
 
@@ -73,3 +97,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `Upgreat`, `Firewall`, `Freigabe`, `10.120.1.17`, `30015`, `8000` | Deployment/IIS |
 | `Admin Bereich`, `AdminAccess`, `LandingPage` | Admin/Startseite |
 | `Group Sales Report`, `Produkthierarchie`, `Produktfamilie`, `Produktsparte`, `Z.Prodh` | Produktmapping |
+| `Gruppenmarge`, `Standardkosten`, `STPRS`, `MBEW`, `Kostenwaehrung`, `GroupMarginCostCurrencyMode` | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` / `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` |
+| `Journal Import`, `Hauptbuch`, `BKPF`, `BSEG`, `OJDT`, `JDT1`, `FinancialJournalEntries`, `FinanzJournalSet` | `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` / `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` |
+| `Daten-Heartbeat`, `Heartbeat`, `ExportLogs`, `Datenkontinuitaet` | `docs/CODEX_ANWEISUNG_FINANCE_DATEN_HEARTBEAT_2026-07-13.md` / Finance Cockpit |
+| `EKKO`, `EKPO`, `EKET`, `Einkauf`, `Lieferanten`, `offene Bestellungen`, `Kontrakte`, `Spend` | Einkauf |
