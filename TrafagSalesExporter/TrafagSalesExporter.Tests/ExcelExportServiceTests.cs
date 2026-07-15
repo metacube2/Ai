@@ -1,4 +1,7 @@
 using ClosedXML.Excel;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services;
 
@@ -6,6 +9,86 @@ namespace TrafagSalesExporter.Tests;
 
 public class ExcelExportServiceTests
 {
+    [Fact]
+    public void CreateConsolidatedExcelFile_UsesGroupStandardCost_ForTrAgDeliveringSupplier()
+    {
+        // Spiegelt ManagementCockpitServiceTests: TR AG liefert (Mappe1.xlsx), Konzernkosten
+        // (30 CHF/Stk) ersetzen die lokale Verkaufszeilen-Kostenbasis (999) im zentralen Excel.
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using (var db = new AppDbContext(options))
+        {
+            db.Database.EnsureCreated();
+            db.GroupStandardCosts.Add(new GroupStandardCost
+            {
+                MaterialKey = MaterialKeyNormalizer.Normalize("MAT-TRAG"),
+                ValuationArea = "1100",
+                UnitCost = 30m,
+                Currency = "CHF",
+                RefreshedAtUtc = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
+        var dbFactory = new TestDbContextFactory(options);
+        var service = new ExcelExportService(dbFactory);
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-groupcost-{Guid.NewGuid():N}");
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                ExtractionDate = new DateTime(2026, 7, 15),
+                PostingDate = new DateTime(2025, 3, 1),
+                Tsc = "TRCH",
+                Land = "CH",
+                InvoiceNumber = "INV-TRAG",
+                PositionOnInvoice = 1,
+                Material = "MAT-TRAG",
+                Name = "Component",
+                Quantity = 2m,
+                SupplierName = "Trafag AG",
+                SupplierCountry = "CH",
+                CustomerName = "Customer AG",
+                CustomerCountry = "CH",
+                SalesPriceValue = 100m,
+                SalesCurrency = "CHF",
+                CompanyCurrency = "CHF",
+                StandardCost = 999m,
+                StandardCostCurrency = "CHF"
+            }
+        };
+
+        try
+        {
+            var path = service.CreateConsolidatedExcelFile(outputDirectory, new DateTime(2026, 7, 15), records);
+
+            using var workbook = new XLWorkbook(path);
+            var details = workbook.Worksheet("Gruppenmarge Details");
+            Assert.Equal("OK", details.Cell(2, 2).GetString());
+            Assert.Contains("Konzernkosten TR AG", details.Cell(2, 14).GetString());
+            // Kostenbasis = Menge x Konzernkosten (2 x 30 = 60), NICHT die lokale StandardCost (999).
+            Assert.Equal(60m, details.Cell(2, 18).GetValue<decimal>());
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>
+    {
+        private readonly DbContextOptions<AppDbContext> _options;
+
+        public TestDbContextFactory(DbContextOptions<AppDbContext> options) => _options = options;
+
+        public AppDbContext CreateDbContext() => new(_options);
+
+        public Task<AppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new AppDbContext(_options));
+    }
+
     [Fact]
     public void CreateDashboardProofExcelFile_WithScope_Uses_Scoped_FileName()
     {

@@ -92,4 +92,30 @@ public class GroupMarginSupplierClassifierTests
 
         Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
     }
+
+    [Theory]
+    [InlineData("Trafag AG", GroupStandardCostEntities.TrAg)]
+    [InlineData("Trafag Italia S.r.l.", GroupStandardCostEntities.TrIt)]
+    [InlineData("Trafag Italy S.r.l.", GroupStandardCostEntities.TrIt)]
+    [InlineData("Trafag Controls India Pvt. Ltd.", GroupStandardCostEntities.TrIn)]
+    [InlineData("Trafag India Private Limited", GroupStandardCostEntities.TrIn)]
+    public void ResolveDeliveringEntity_MatchesKnownEntities(string supplierName, string expectedEntity)
+    {
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(supplierName);
+
+        Assert.Equal(expectedEntity, result);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Gesellschaft fuer Sensorik")]  // intern, aber keine verifizierte Kostenquelle
+    [InlineData("Bosch Sensortec")]
+    [InlineData("Triton S.r.l.")]               // enthaelt "TRIT" als Substring, nicht "Trafag Italia"
+    public void ResolveDeliveringEntity_ReturnsNull_WhenNoKnownEntityMatches(string? supplierName)
+    {
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(supplierName);
+
+        Assert.Null(result);
+    }
 }

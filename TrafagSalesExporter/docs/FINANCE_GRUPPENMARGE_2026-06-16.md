@@ -84,6 +84,43 @@ Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 
   und B (Preis der liefernden vs. verkaufenden Gesellschaft bei internen Lieferanten) —
   beide brauchen eine neue Datenquelle (MBEW-STPRS je liefernder Gesellschaft).
 
+## Nachtrag 2026-07-15 (Teil 2): TR AG als liefernde Gesellschaft umgesetzt
+
+Umgesetzt und getestet (`240/240`), noch nicht deployed. Nach Live-Stichprobe (siehe
+`docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` "Offen" Punkt 1) wurde Frage B fuer TR AG
+konkret geloest:
+
+- **Lieferant -> Gesellschaft:** `GroupMarginSupplierClassifier.ResolveDeliveringEntity`
+  erkennt TR AG/TR IT/TR IN am Klartext von `SupplierName` (nicht `SupplierNumber` — die
+  ist je TSC unterschiedlich verschluesselt). Stichprobe auf Produktivdaten-Snapshot
+  (68'913 Zeilen, 8'995 intern): 0 Kollisionen.
+- **Neue Tabelle `GroupStandardCosts`:** MBEW-STPRS fuer Bewertungskreis 1100 (TR AG),
+  Waehrung CHF. Wird beim ohnehin laufenden CH/AT-SAP-Import zusaetzlich befuellt
+  (`SapGatewayDataSourceAdapter.PersistGroupStandardCostsAsync`) — kein neuer Trigger,
+  Full-Replace je Lauf.
+- **Kostenbasis-Ueberschreibung:** Ist der Lieferant TR AG UND liegt ein Treffer in
+  `GroupStandardCosts` vor, wird die echte Konzernkostenbasis verwendet (Label
+  "Konzernkosten TR AG (MBEW-STPRS)") — unabhaengig davon, welches Land/welche TSC
+  verkauft hat. Ohne Treffer (Material noch nicht erfasst, oder TR IN/TR IT) faellt die
+  Logik unveraendert auf die bisherige lokale Kostenbasis zurueck — keine Regression.
+  Umgesetzt in `ManagementCockpitService` (Gruppenmarge-Tab + Finance Pruefbuch) UND
+  `ExcelExportService` (zentrale Excel + Nachweis-Excel), gleiche Stelle wie der
+  Kostenwaehrungsschalter (Entscheid D).
+- **Zusammenspiel mit Entscheid D bestaetigt:** Verkauft z. B. TRDE (Finance-Waehrung EUR)
+  ein TR-AG-geliefertes Produkt, weichen Kosten- (CHF) und Verkaufswaehrung (EUR)
+  automatisch ab — der bestehende Schalter greift korrekt (Mask maskiert, Convert
+  rechnet mit Jahreskurs um).
+
+**TR IN/TR IT bleiben offen** (Frage B fuer diese beiden Gesellschaften): Live-Stichprobe
+2026-07-15 gegen TR ITs SAP-B1-Schema (`IT01_P`, erreichbar ueber BI1-HANA) zeigt, dass
+weder `OITM.PrdStdCst` noch `OITM/OITW.AvgPrice` bei aktiv gefuehrten Materialien befuellt
+sind (durchgaengig 0, trotz realem Lagerbestand) — nur `LastPurPrc` (Einkaufspreis
+zugekaufter Komponenten, nicht Herstellkosten). TR IT pflegt aktuell also gar keinen
+nutzbaren Standardkosten-Wert je Material in SAP B1. Das ist keine Codefrage mehr, sondern
+eine offene Frage an Andreas/TR-IT-Controlling: Wo (wenn ueberhaupt) wird die
+Herstellkosten-Kalkulation gefuehrt? TR IN war vom Entwicklungsrechner aus nicht
+erreichbar (Netzwerk/Firewall) und daher gar nicht pruefbar.
+
 ## Naechste technische Schritte nach Fachfreigabe
 
 - Falls externe Lieferanten eine andere Kostenquelle als `StandardCost` brauchen, neues Feld oder Mapping in `CentralSalesRecords` ergaenzen.

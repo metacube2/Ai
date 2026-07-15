@@ -103,6 +103,8 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
                 siteId: site.Id, land: site.Land,
                 details: $"Materialpreise={standardCosts.Count} | Zeilen mit Kosten={result.Matched} " +
                          $"({result.MatchedPercent} %) | ohne Kosten={result.Missing}");
+
+            await PersistGroupStandardCostsAsync(standardCosts);
         }
         catch (Exception ex)
         {
@@ -110,6 +112,39 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
                 siteId: site.Id, land: site.Land,
                 details: $"Umsatzimport laeuft ohne Kostenbasis weiter. Grund: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Persistiert die beim CH/AT-Import ohnehin geladenen MBEW-Standardpreise fuer TR AG
+    /// (Bewertungskreis 1100) in <see cref="GroupStandardCost"/>, damit andere TSC mit TR AG
+    /// als internem Lieferanten die echte Konzern-Kostenbasis nutzen koennen (Mappe1.xlsx).
+    /// Ersetzt den TR-AG-Bestand vollstaendig je Lauf (Full Replace, wie bei anderen
+    /// Standort-Importen), damit veraltete Materialien nicht stehen bleiben.
+    /// </summary>
+    private async Task PersistGroupStandardCostsAsync(
+        IReadOnlyDictionary<StandardCostKey, StandardCostEntry> standardCosts)
+    {
+        var trAgArea = GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrAg];
+        var trAgCurrency = GroupStandardCostAreas.CurrencyByEntity[GroupStandardCostEntities.TrAg];
+        var trAgCosts = standardCosts
+            .Where(entry => string.Equals(entry.Key.ValuationArea, trAgArea, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        if (trAgCosts.Count == 0)
+            return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var now = DateTime.UtcNow;
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM GroupStandardCosts WHERE ValuationArea = {trAgArea}");
+        db.GroupStandardCosts.AddRange(trAgCosts.Select(entry => new GroupStandardCost
+        {
+            MaterialKey = entry.Key.MaterialKey,
+            ValuationArea = entry.Key.ValuationArea,
+            UnitCost = entry.Value.UnitCost,
+            Currency = trAgCurrency,
+            RefreshedAtUtc = now
+        }));
+        await db.SaveChangesAsync();
     }
 
     private static Site CloneSiteWithSapServiceUrl(Site site, string sapServiceUrl)

@@ -53,6 +53,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureNavigationMenuItemTable(db);
         EnsurePurchasingCacheTables(db);
         EnsureFinancialJournalEntriesTable(db);
+        EnsureGroupStandardCostsTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -573,6 +574,24 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
             indexCommand.CommandText = indexSql;
             indexCommand.ExecuteNonQuery();
         }
+    }
+
+    private static void EnsureGroupStandardCostsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetGroupStandardCostsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupStandardCosts_Material_Area ON GroupStandardCosts (MaterialKey, ValuationArea);";
+        indexCommand.ExecuteNonQuery();
     }
 
     private static void EnsureSourceSystemDefinitionTable(AppDbContext db)

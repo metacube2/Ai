@@ -50,6 +50,17 @@ public class ExcelExportService : IExcelExportService
         return GroupMarginCostCurrencyConverter.NormalizeMode(settings?.GroupMarginCostCurrencyMode);
     }
 
+    /// <summary>Konzern-Standardkosten TR AG (MBEW-STPRS); gleiche Quelle wie das Dashboard.</summary>
+    private IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> LoadGroupStandardCosts()
+    {
+        if (_dbFactory is null)
+            return new Dictionary<(string, string), GroupStandardCost>();
+
+        using var db = _dbFactory.CreateDbContext();
+        return db.GroupStandardCosts.AsNoTracking().ToList()
+            .ToDictionary(r => (r.MaterialKey, r.ValuationArea));
+    }
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -76,7 +87,7 @@ public class ExcelExportService : IExcelExportService
             ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
             : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate);
+        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts());
         return fullPath;
     }
 
@@ -113,7 +124,7 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate);
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts());
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -166,12 +177,13 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyList<FinanceReference> financeReferences,
         Func<string, int, decimal?>? resolveChfRate = null,
         string? groupMarginCostCurrencyMode = null,
-        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
-        var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate);
+        var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate, groupStandardCosts);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
@@ -279,18 +291,21 @@ public class ExcelExportService : IExcelExportService
     private static List<GroupMarginProofRow> BuildGroupMarginProofRows(
         IEnumerable<FinanceProofRow> financeRows,
         string? groupMarginCostCurrencyMode = null,
-        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
-        => financeRows
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+    {
+        var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
+        return financeRows
             .Where(row => row.Include)
             .Select(row =>
             {
                 var supplierType = ResolveSupplierType(row.Record);
-                var costBasis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual);
-                var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, costBasis);
+                var basis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual, costs);
+                var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, basis.CostBasis);
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
                 // offen markieren — gleiche Logik wie ManagementCockpitService/Dashboard.
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
-                    costBasis, row.Currency, row.Record.StandardCostCurrency, row.Year,
+                    basis.CostBasis, row.Currency, basis.CostCurrency, row.Year,
                     groupMarginCostCurrencyMode, resolveCrossRate);
                 if (status == "OK" && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
@@ -308,7 +323,7 @@ public class ExcelExportService : IExcelExportService
                     row.Record.SupplierName,
                     row.Record.SupplierCountry,
                     supplierType,
-                    ResolveGroupMarginCostSource(supplierType),
+                    ResolveGroupMarginCostSource(supplierType, basis.IsGroupCost),
                     row.Record.Quantity,
                     row.Record.StandardCost,
                     row.NetSalesActual,
@@ -321,6 +336,7 @@ public class ExcelExportService : IExcelExportService
             .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
             .ThenByDescending(row => Math.Abs(row.SalesValue))
             .ToList();
+    }
 
     private static void AddProofDataLineageSheet(
         XLWorkbook workbook,
@@ -815,26 +831,53 @@ public class ExcelExportService : IExcelExportService
     private static string ResolveSupplierType(SalesRecord record)
         => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry);
 
-    private static decimal ResolveGroupMarginCostBasis(SalesRecord record, decimal netSalesValue)
+    private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
+
+    /// <summary>
+    /// Spiegelt ManagementCockpitService.ResolveGroupMarginCostBasis: ist der Lieferant TR AG
+    /// UND liegt fuer das Material ein Treffer in GroupStandardCosts vor (MBEW-STPRS,
+    /// siehe Mappe1.xlsx-Spezifikation), wird die echte Konzern-Kostenbasis verwendet;
+    /// sonst unveraendert die lokale Kostenbasis aus der Verkaufszeile.
+    /// </summary>
+    private static GroupMarginCostBasisResolution ResolveGroupMarginCostBasis(
+        SalesRecord record,
+        decimal netSalesValue,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
+        var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(record.SupplierName);
+        if (deliveringEntity is not null &&
+            GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
+            groupStandardCosts.TryGetValue((NormalizeMaterialKey(record.Material), area), out var groupCost) &&
+            groupCost.UnitCost > 0m)
+        {
+            var groupMagnitude = record.Quantity != 0m
+                ? Math.Abs(record.Quantity) * Math.Abs(groupCost.UnitCost)
+                : Math.Abs(groupCost.UnitCost);
+            return new GroupMarginCostBasisResolution(
+                isReversal ? -groupMagnitude : groupMagnitude, groupCost.Currency, true);
+        }
+
         var magnitude = record.Quantity != 0m
             ? Math.Abs(record.Quantity) * Math.Abs(record.StandardCost)
             : Math.Abs(record.StandardCost);
 
         // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss mit
         // umkehren, sonst rechnet die Excel-Formel Q-R die Marge falsch (Umsatz -100, Kosten
-        // +60 -> -160 statt korrekt -40). Spiegelt ManagementCockpitService.ResolveGroupMarginCostBasis.
-        var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
-        return isReversal ? -magnitude : magnitude;
+        // +60 -> -160 statt korrekt -40).
+        return new GroupMarginCostBasisResolution(
+            isReversal ? -magnitude : magnitude, record.StandardCostCurrency, false);
     }
 
-    private static string ResolveGroupMarginCostSource(string supplierType)
-        => supplierType switch
-        {
-            "Intern" => "Interner Standardpreis",
-            "Extern" => "Kosten aus Verkaufszeile",
-            _ => "Lieferant unklar"
-        };
+    private static string ResolveGroupMarginCostSource(string supplierType, bool isGroupCost = false)
+        => isGroupCost
+            ? "Konzernkosten TR AG (MBEW-STPRS)"
+            : supplierType switch
+            {
+                "Intern" => "Interner Standardpreis",
+                "Extern" => "Kosten aus Verkaufszeile",
+                _ => "Lieferant unklar"
+            };
 
     private static string ResolveGroupMarginStatus(decimal salesValue, string supplierType, decimal costBasis)
     {
@@ -914,7 +957,8 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyList<FinanceRule> financeRules,
         Func<string, int, decimal?>? resolveChfRate = null,
         string? groupMarginCostCurrencyMode = null,
-        Func<string, string, DateTime, decimal?>? resolveCrossRate = null)
+        Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1056,7 +1100,8 @@ public class ExcelExportService : IExcelExportService
             var groupMarginRows = BuildGroupMarginProofRows(
                 BuildFinanceProofRows(records, financeRules),
                 groupMarginCostCurrencyMode,
-                resolveCrossRate);
+                resolveCrossRate,
+                groupStandardCosts);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);

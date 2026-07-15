@@ -453,6 +453,74 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_UsesGroupStandardCost_ForTrAgDeliveringSupplier()
+    {
+        // TR AG liefert (Mappe1.xlsx): die Konzern-Kostenbasis (MBEW-STPRS, hier 30 CHF/Stk)
+        // ersetzt die lokale Verkaufszeilen-Kostenbasis (999). Verkauft in CH, damit Verkaufs-
+        // und Kostenwaehrung beide CHF sind (reiner Test der Override-Logik ohne Waehrungsthema).
+        await SeedGroupStandardCostAsync("MAT-TRAG", "1100", 30m, "CHF");
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-TRAG", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 2m, standardCost: 999m, standardCostCurrency: "CHF", material: "MAT-TRAG", supplierName: "Trafag AG"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        // Kostenbasis = Menge x Konzernkosten (2 x 30 = 60), NICHT die lokale StandardCost (999).
+        var detail = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG");
+        Assert.Equal("OK", detail.Status);
+        Assert.Equal(60m, detail.CostBasisValue);
+        Assert.Equal(40m, detail.MarginValue);
+        Assert.Contains("Konzernkosten TR AG", detail.CostSource);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-TRAG");
+        Assert.Equal(60m, ledger.CostBasisOriginal);
+        Assert.Contains("Konzernkosten TR AG", ledger.CostSource);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_FallsBackToLocalCost_WhenTrAgSupplierHasNoGroupStandardCostMatch()
+    {
+        // Kein GroupStandardCosts-Eintrag fuer dieses Material -> unveraendertes bisheriges
+        // Verhalten (lokale StandardCost), keine Regression fuer noch nicht erfasste Materialien.
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-NOMATCH", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 2m, standardCost: 20m, standardCostCurrency: "CHF", material: "MAT-UNKNOWN", supplierName: "Trafag AG"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var detail = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-NOMATCH");
+        Assert.Equal("OK", detail.Status);
+        Assert.Equal(40m, detail.CostBasisValue); // 2 x 20 (lokale StandardCost)
+        Assert.DoesNotContain("Konzernkosten", detail.CostSource);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_GroupStandardCost_CrossCountryCurrencyMismatch_MasksByDefault_ConvertsWhenSwitched()
+    {
+        // Realistischstes Szenario: TR AG liefert an eine DE-Verkaufszeile (Finance-Waehrung
+        // EUR), die Konzernkosten stehen aber in CHF (TR AGs Hauswaehrung) -> derselbe
+        // Kostenwaehrungsschalter greift wie bei jeder anderen Waehrungsabweichung.
+        await SeedRatesAsync(CreateRate("CHF", "EUR", 1.05m));
+        await SeedGroupStandardCostAsync("MAT-TRAG-DE", "1100", 30m, "CHF");
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-TRAG-DE", "EUR", 100m, new DateTime(2025, 3, 1),
+                quantity: 2m, standardCost: 999m, standardCostCurrency: "EUR", material: "MAT-TRAG-DE", supplierName: "Trafag AG"));
+
+        var maskResult = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+        var maskDetail = Assert.Single(maskResult.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG-DE");
+        Assert.Equal(GroupMarginCostCurrencyConverter.OpenStatus, maskDetail.Status);
+
+        await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Convert);
+        var convertResult = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+        var convertDetail = Assert.Single(convertResult.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG-DE");
+        // Konzernkosten 60 CHF (2 x 30) werden mit dem Jahreskurs CHF->EUR (1.05) umgerechnet: 63 EUR.
+        Assert.Equal("OK", convertDetail.Status);
+        Assert.Equal(63m, convertDetail.CostBasisValue);
+        Assert.Equal(37m, convertDetail.MarginValue);
+        Assert.Contains("Konzernkosten TR AG", convertDetail.CostSource);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_Keeps_Reference_Only_Countries_In_Expert_Mode()
     {
         await using (var db = await _dbFactory.CreateDbContextAsync())
@@ -867,6 +935,20 @@ public class ManagementCockpitServiceTests : IDisposable
         await db.SaveChangesAsync();
     }
 
+    private async Task SeedGroupStandardCostAsync(string material, string valuationArea, decimal unitCost, string currency)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.GroupStandardCosts.Add(new GroupStandardCost
+        {
+            MaterialKey = MaterialKeyNormalizer.Normalize(material),
+            ValuationArea = valuationArea,
+            UnitCost = unitCost,
+            Currency = currency,
+            RefreshedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
 
     private static DateTime MostRecentWeekday(DateTime start)
     {
@@ -906,7 +988,8 @@ public class ManagementCockpitServiceTests : IDisposable
         string productDivisionText = "",
         string productMappingAssigned = "",
         DateTime? postingDate = null,
-        string? standardCostCurrency = null)
+        string? standardCostCurrency = null,
+        string supplierName = "Supplier")
     {
         return new CentralSalesRecord
         {
@@ -929,7 +1012,7 @@ public class ManagementCockpitServiceTests : IDisposable
             ProductMappingAssigned = productMappingAssigned,
             Quantity = quantity,
             SupplierNumber = "SUP",
-            SupplierName = "Supplier",
+            SupplierName = supplierName,
             SupplierCountry = "CH",
             CustomerNumber = "CUS",
             CustomerName = "Customer",

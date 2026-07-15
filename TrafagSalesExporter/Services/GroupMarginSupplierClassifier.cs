@@ -60,4 +60,65 @@ public static class GroupMarginSupplierClassifier
         var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
         return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
     }
+
+    /// <summary>
+    /// Welche liefernde Trafag-Gesellschaft ein interner Lieferant konkret ist (fuer die
+    /// Konzern-Kostenbasis, siehe <see cref="GroupStandardCostEntities"/>). Basiert auf
+    /// <c>SupplierName</c>-Klartext, NICHT auf <c>SupplierNumber</c>: die Nummer ist je TSC
+    /// unterschiedlich verschluesselt (TR AG heisst bei TRIT z. B. "S_CH01_0065180", bei
+    /// TRDE "60000", bei TRIN "V0078"), waehrend der Name across TSCs stabil ist
+    /// (Stichprobe 2026-07-15 auf Produktivdaten-Snapshot: 8'995 interne Zeilen, 0
+    /// Kollisionen). Liefert null, wenn keine der bekannten Gesellschaften erkannt wird
+    /// (z. B. GFS/Gesellschaft fuer Sensorik — dafuer ist noch keine eigene Kostenquelle
+    /// verifiziert).
+    /// </summary>
+    public static string? ResolveDeliveringEntity(string? supplierName)
+    {
+        if (string.IsNullOrWhiteSpace(supplierName))
+            return null;
+
+        var name = supplierName.Trim();
+        if (name.Contains("Trafag AG", StringComparison.OrdinalIgnoreCase))
+            return GroupStandardCostEntities.TrAg;
+        if (name.Contains("Trafag Italia", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("Trafag Italy", StringComparison.OrdinalIgnoreCase))
+            return GroupStandardCostEntities.TrIt;
+        if (name.Contains("Trafag Controls India", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("Trafag India", StringComparison.OrdinalIgnoreCase))
+            return GroupStandardCostEntities.TrIn;
+        return null;
+    }
+}
+
+/// <summary>
+/// Bekannte liefernde Trafag-Gesellschaften fuer die Konzern-Kostenbasis (Mappe1.xlsx).
+/// Nur <see cref="TrAg"/> hat aktuell eine verifiziert befuellte Kostenquelle
+/// (MBEW-STPRS, Bewertungskreis 1100 -> <see cref="GroupStandardCost"/>). TR IN/TR IT
+/// sind als Konstanten vorhanden, damit der Lieferant korrekt beschriftet wird, liefern
+/// aber bewusst (noch) keine Kostenzahl (siehe docs/FINANCE_GRUPPENMARGE_2026-06-16.md
+/// Nachtrag 2026-07-15).
+/// </summary>
+public static class GroupStandardCostEntities
+{
+    public const string TrAg = "TR_AG";
+    public const string TrIt = "TR_IT";
+    public const string TrIn = "TR_IN";
+}
+
+/// <summary>
+/// Liefernde Gesellschaft -> MBEW-Bewertungskreis (nur fuer Gesellschaften mit
+/// verifizierter Kostenquelle). TR AG = Bewertungskreis 1100, Hauswaehrung CHF
+/// (siehe StandardCostEnricher.ValuationAreaByCountry / docs/FINANCE_STANDARDKOSTEN_2026-07-14.md).
+/// </summary>
+public static class GroupStandardCostAreas
+{
+    public static readonly IReadOnlyDictionary<string, string> ByEntity = new Dictionary<string, string>
+    {
+        [GroupStandardCostEntities.TrAg] = "1100"
+    };
+
+    public static readonly IReadOnlyDictionary<string, string> CurrencyByEntity = new Dictionary<string, string>
+    {
+        [GroupStandardCostEntities.TrAg] = "CHF"
+    };
 }

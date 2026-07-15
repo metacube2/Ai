@@ -2,6 +2,16 @@ namespace TrafagSalesExporter.Services;
 
 internal static class DatabaseSchemaSql
 {
+    internal static string GetGroupStandardCostsCreateSql() => @"
+CREATE TABLE GroupStandardCosts (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    MaterialKey TEXT NOT NULL,
+    ValuationArea TEXT NOT NULL,
+    UnitCost REAL NOT NULL DEFAULT 0,
+    Currency TEXT NOT NULL DEFAULT '',
+    RefreshedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetExportLogsCreateSql() => @"
 CREATE TABLE ExportLogs (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
