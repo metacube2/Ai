@@ -60,7 +60,7 @@ Das Multiple-Choice-Formular `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-
 
 ## Nachtrag 2026-07-15: Schalter fuer abweichende Kostenwaehrung (Entscheid D)
 
-Umgesetzt und getestet (`226/226`), noch nicht deployed:
+Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 08:53:47`):
 
 - Neues Setting `ExportSettings.GroupMarginCostCurrencyMode` mit den Werten `Mask` (Default)
   und `Convert`; UI unter `Einstellungen > Export Einstellungen > Gruppenmarge bei
