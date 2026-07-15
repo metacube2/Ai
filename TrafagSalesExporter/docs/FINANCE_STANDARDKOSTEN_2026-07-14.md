@@ -83,9 +83,11 @@ Umsatzexport eines ganzen Landes verhindern.
    bewusst, weil die Fachentscheidung dazu aussteht.
 2. **UK** liefert keine Kostenspalte im Sage-Export; **FR** hat bei 49 % der B1-Zeilen
    keinen `StockPrice` (Stammdatenfrage an FR).
-3. **Waehrungsmisch-Bug** (`Marge Original`) bleibt latent: Kosten- und Verkaufswaehrung
-   sind aktuell ueberall identisch. Sobald Konzernkosten in CHF gegen lokale Umsaetze
-   laufen, wird er scharf.
+3. **Waehrungsmisch-Bug** (`Marge Original`) — GEFIXT 2026-07-15: Schalter
+   `ExportSettings.GroupMarginCostCurrencyMode` (Mask/Convert) verhindert das stille
+   Mischen, siehe `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` Nachtrag 2026-07-15. Fuer
+   CH/AT bleibt der Fall aktuell neutral (Kosten- = Verkaufswaehrung); scharf wuerde er
+   erst mit Punkt 1 (STPRS der liefernden Gesellschaft, z. B. CH-Verkauf mit EUR-Kosten).
 4. **Drei Fachfragen an Andreas:** Welche Kostenart (lokaler Einstandswert vs.
    Konzern-Herstellkosten)? Bei internem Trafag-Lieferanten: Preis der liefernden oder der
    verkaufenden Gesellschaft? Lokal oder konzernweit rechnen?
