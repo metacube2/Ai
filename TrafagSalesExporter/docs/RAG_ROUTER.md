@@ -32,7 +32,6 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 
 | Datei | Nur laden fuer |
 | --- | --- |
-| `docs/HANDOFF_2026-06-16.md` | nahtlose Fortsetzung nach Chatwechsel, aktueller Arbeitsstand 2026-06-16 |
 | `docs/raw_md_archive/HISTORY_CANONICAL.md.raw` | kanonische Detailhistorie mit Quellenangaben |
 | `docs/raw_md_archive/original_history_raws.zip` | exakte Originaldateien nur zur Wiederherstellung, nicht fuer RAG laden |
 | `docs/MD_DOKUMENTENSTATUS_2026-05-20.md` | Einordnung alter Dokumente |
@@ -64,17 +63,23 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` | Umsetzungsplan aus Marcos Einkauf-Review |
 | `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` | Marcos Einkauf-Review im Detail, inkl. travp762-Feldrisiko |
 
-## Ueberholt / nur noch als historischer Beleg
+## Entfernt 2026-07-15 / nur noch im Raw-Archiv
 
-Diese Dateien sind durch spaetere Entscheide/Features inhaltlich ueberholt (ES-Referenz, DE-Jahr,
-IC-Diagnose, Gruppenmarge sind laengst umgesetzt) und werden fuer normale Arbeit NICHT mehr
-geladen. Aktueller Stand steht in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`.
+Acht Dateien wurden am 2026-07-15 aus der aktiven Struktur entfernt (reine Pointer-Stubs
+oder inhaltlich vollstaendig durch spaetere Entscheide/Features ersetzt: ES-Referenz,
+DE-Jahr, IC-Diagnose, Gruppenmarge sind laengst umgesetzt). Volltext liegt in
+`docs/raw_md_archive/HISTORY_CANONICAL.md.raw` (Bloecke H324-H331); aktueller Stand steht
+in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Details/Gruende:
+`docs/MD_DOKUMENTENSTATUS_2026-05-20.md` Abschnitt „Archiviert / aus aktiver Doku entfernt".
 
-| Datei | Ersetzt durch |
+| Entfernte Datei | Ersetzt durch |
 | --- | --- |
+| `HANDOFF_2026-04-15.md`, `NEXT_STEPS_2026-04-15.md`, `LLM_SYSTEM_GUIDE.md` (root) | diese Router-Datei selbst |
+| `entscheide.md` (root) | `docs/FINANCE_ENTSCHEIDE.md` |
 | `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` | `docs/rag/FINANCE.md` „Offene Fachpunkte" |
 | `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` | `docs/rag/FINANCE.md`, `docs/FINANCE_ENTSCHEIDE.md` |
 | `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` | `docs/rag/FINANCE.md`, `docs/FINANCE_ENTSCHEIDE.md` |
+| `docs/HANDOFF_2026-06-16.md` | `docs/rag/PROJECT.md` |
 
 ## Suchwoerter
 

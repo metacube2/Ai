@@ -8357,3 +8357,310 @@ Goal: clarify whether the difference of `-216,154.91 GBP` is caused by an incomp
 
 Thanks and best regards,
 
+
+## H324 - Handoff 2026-04-15 (root, komprimierter Pointer-Stub)
+
+# TrafagSalesExporter Handoff
+
+Stand: 2026-05-27
+
+Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+
+## Aktueller Kurzstand
+
+- Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
+- Architektur-Kurzkontext: `docs/rag/ARCHITECTURE.md`.
+- Themenrouter: `docs/RAG_ROUTER.md`.
+- Fuer normale Weiterarbeit zuerst Router und passende `docs/rag/*.md` laden.
+
+## Wichtige Bereiche
+
+- Finance-Regeln und Finance Summary: `docs/rag/FINANCE.md`
+- Manual-Importe und Deltas: `docs/rag/MANUAL_IMPORT.md`
+- HR KPI: `docs/rag/HR_KPI.md`
+- IIS/Deployment: `docs/rag/DEPLOYMENT.md`
+- Admin/Startseite: `docs/rag/ADMIN.md`
+
+Entfernt 2026-07-15: reiner Pointer-Stub ohne eigenen Inhalt, vollstaendig ersetzt durch `docs/RAG_ROUTER.md` selbst.
+
+## H325 - Next Steps 2026-04-15 (root, komprimierter Pointer-Stub)
+
+# Next Steps
+
+Stand: 2026-05-27
+
+Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+
+## Aktueller Kurzstand
+
+- Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
+- Themenrouter: `docs/RAG_ROUTER.md`.
+- Offene aktive Fachpunkte stehen in den jeweiligen Kurzdateien:
+  - Finance: `docs/rag/FINANCE.md`
+  - Manual Import: `docs/rag/MANUAL_IMPORT.md`
+  - HR KPI: `docs/rag/HR_KPI.md`
+  - Deployment: `docs/rag/DEPLOYMENT.md`
+  - Admin: `docs/rag/ADMIN.md`
+
+## Offene Hauptpunkte
+
+- DE Alphaplan-Fachabgrenzung muss durch Finance/Munir bestaetigt werden.
+- IIS/TLS Serverkonfiguration muss durch IT/Serveradmin korrigiert werden.
+- IT/ES/UK Finance-Spezialfaelle nur bei konkreter Nachfrage im Detail laden.
+
+Entfernt 2026-07-15: reiner Pointer-Stub; die "Offenen Hauptpunkte" sind laengst in
+`docs/rag/FINANCE.md` "Offene Fachpunkte" und `docs/rag/DEPLOYMENT.md` "Serverproblem"
+gepflegt.
+
+## H326 - LLM System Guide (root, komprimierter Pointer-Stub)
+
+# LLM System Guide
+
+Stand: 2026-05-27
+
+Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+
+## Kontext-Regel
+
+1. Zuerst `docs/RAG_ROUTER.md` laden.
+2. Danach genau eine passende Kurzdatei aus `docs/rag/` laden.
+3. Original-/Rohdokus nur bei Detail-, Audit- oder Fehleranalysebedarf laden.
+
+Entfernt 2026-07-15: reiner Pointer-Stub ohne eigenen Inhalt ueber die Kontext-Regel
+hinaus, die `docs/RAG_ROUTER.md` selbst traegt.
+
+## H327 - Finance-Entscheide fuer Net Sales Actuals (root, entscheide.md Kurzfassung)
+
+# Finance Entscheide Soll/Ist 2025
+
+Stand: 2026-05-20
+
+## Nachtrag 2026-05-20
+
+Diese Kurzfassung bleibt gueltig fuer die Finance-Fachentscheide. Fuer den aktuellen Cockpit-/Anwenderstand gelten zusaetzlich:
+
+- `Management Analyse` fuehrt jetzt mit dem Reiter `Finance Summary`.
+- `Finance Summary` verwendet dieselbe `FinanceRuleEngine` wie das zentrale Excel.
+- Filter fuer Jahr, Land und Waehrung wirken auf das Finance-Endergebnis.
+- DE 2026 wird wegen DE/Alphaplan-2025-Zwang als leerer Zustand mit Hinweis dargestellt.
+- Anwenderdoku: `docs/FINANCE_COCKPIT_ANLEITUNG_FINANZ_2026-05-20.docx`.
+- Dokumentenstatus: `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`.
+
+Dieses Dokument extrahiert die erkennbaren Fragen und Entscheide aus der Abstimmung. Es dient als Arbeitsgrundlage fuer die Umsetzung im Finance-Abgleich und fuer die naechste Klaerung mit Andreas/Finance.
+
+## Entscheide
+
+| Thema | Frage | Entscheid |
+| --- | --- | --- |
+| Fuehrende Waehrung je Land | Welche Waehrung ist im Landessystem je Land fuehrend: Belegwaehrung, Hauswaehrung oder etwas anderes? | Immer Hauswaehrung. Rechnungen werden in der Hauswaehrung ausgewertet. |
+| CHF-Umrechnung | Mit welchem Kurs wird nach CHF umgerechnet: Monatskurs, Tageskurs, Jahresdurchschnitt oder SNB-Tageskurs? | Budgetkurse verwenden. Keine SNB-Tageskurse fuer den Standardabgleich. |
+| Aggregation | Wird zuerst pro Beleg/Position summiert und danach umgerechnet, oder wird jede Zeile einzeln umgerechnet und danach summiert? | Pro Artikel bzw. Belegposition rechnen. |
+| Indien | In Indien kommen CHF, EUR, GBP, INR, JPY und USD vor. Muss vorher nach CHF umgerechnet oder nach Waehrung getrennt werden? | Indien immer in indischen Rupien auswerten. Fuehrend ist INR. |
+| Italien / Intercompany | Soll IT mit Intercompany-Abzug gerechnet werden? Falls ja, nach welchen Kunden/Kriterien? | Hauswaehrung verwenden. Intercompany wird separat abgegrenzt und ausgewiesen. |
+| Wertbasis | Welche Basis soll fuer Net Sales Actuals je Land verwendet werden? | Nettofakturawert. |
+| Jahresabgrenzung | Fuer das Jahr 2025: Nach welchem Datum wird abgegrenzt? | Buchungsdatum. |
+| Gutschriften / Storno | Wie werden Gutschriften und Storno behandelt? | Gutschriften separat ausweisen. Sie haben eigene Rechnungsnummern bzw. Rechnungspositionen. Behandlung immer ueber Artikelnummer/Positionslogik, da alles andere zu komplex wird. |
+| Intercompany / 2nd Party | Wie werden Intercompany-Kunden abgegrenzt? | Im zweiten Schritt als neues Auswahlfeld fuer Intercompany bzw. 2nd-party-Kunde. Regeln einmalig hinterlegen, weil sie sich kaum aendern. |
+
+## Intercompany-Regeln
+
+Intercompany bzw. 2nd-party soll ueber stabile Kundenmarker erkannt werden.
+
+Aktuell erkennbare Marker:
+
+- `MAGNETS SENSE`
+- `MAGNETIC SENSE`
+- `TRAFAG`
+- `GESELLSCHAFT FUER SENSORIK`
+- `GESELLSCHAFT FUR SENSORIK`
+
+Bewertung:
+
+- Treffer auf diese Marker gelten als Intercompany bzw. 2nd-party.
+- Alle anderen Kunden gelten standardmaessig als 3rd-party.
+- Weitere Uebersetzungen, lokale Schreibweisen oder Kundennummern muessen bei Bedarf ergaenzt werden.
+
+## Umsetzungsfolge
+
+1. Standard-Ist je Land in Hauswaehrung und auf Basis Nettofakturawert berechnen.
+2. Jahresfilter 2025 ueber Buchungsdatum anwenden.
+3. Werte pro Artikel bzw. Belegposition berechnen und danach summieren.
+4. Gutschriften separat sichtbar machen, aber positionsbasiert behandeln.
+5. Intercompany/2nd-party als eigenes Auswahlfeld bzw. eigene Sicht ergaenzen.
+6. CHF-Sicht nur mit Budgetkursen als separate Kontrollsicht aufbauen.
+
+## Offene Punkte
+
+| Punkt | Klaerung |
+| --- | --- |
+| Intercompany-Kundenliste | Finale Liste der Kundennummern, Namen und lokalen Schreibweisen je Land bestaetigen. |
+| Italien | Abgrenzung mit/ohne Intercompany fachlich gegen Rhino/check.xlsx pruefen. |
+| Budgetkurse | Quelle und Gueltigkeit der Budgetkurse je Jahr festlegen. |
+| Gutschriften | Sicherstellen, dass alle Quellsysteme Gutschriften mit eigener Rechnungsnummer/Position liefern oder sauber markierbar sind. |
+
+Entfernt 2026-07-15: vollstaendig deckungsgleich mit `docs/FINANCE_ENTSCHEIDE.md`
+(dessen Entscheide-Tabelle dieselben Punkte enthaelt, plus mehr Historie/Detail).
+
+## H328 - Finance Dashboard - Stand und offene Punkte (2026-06-01/06-12)
+
+# Finance Dashboard - Stand und offene Punkte
+
+Stand: 2026-06-12
+
+Zweck: Argumentationshilfe fuer den heutigen Austausch mit Finance. Dieses Dokument trennt den aktuellen belastbaren Stand von fachlich noch offenen Punkten.
+
+## Kurzfazit
+
+Das Finance Dashboard ist technisch produktiv nutzbar. Die fuehrende Sicht ist `Finance Summary`; `Management Analyse` dient als Diagnose- und Erklaerungsebene. Die zentralen Finance-Regeln sind im Code umgesetzt und mit Tests abgesichert.
+
+Offen sind nicht primaer technische Grundlagen, sondern fachliche Abgrenzungen je Land: Welche lokale Auswertung ist offiziell fuehrend, welche Filter gelten, und ob bestimmte Differenzen akzeptiert oder durch zusaetzliche Quell-/Filterlogik erklaert werden muessen.
+
+## Nachtrag Sitzung 2026-06-01
+
+Aus der Sitzung mit Finance / Andreas ergeben sich diese aktualisierten Punkte:
+
+1. Intercompany
+   - Frage aus Finance: Sind Intercompany-Umsaetze bereits in den Standortdaten herausgerechnet?
+   - Aktueller Eindruck aus der Sitzung: Anscheinend sind IC-Anteile in einzelnen Standortauswertungen bereits bereinigt, trotzdem bleiben Abweichungen.
+   - Umsetzung: `Management Analyse > Laender` zeigt jetzt IC/2nd-party und `Ist ohne IC` als Diagnosewerte.
+   - Wichtig fuer die App: Das Dashboard entfernt IC weiterhin nicht automatisch aus dem Standard-Ist.
+   - Folgeaktion: Pro Standort klaeren, ob die Quellzahl bereits netto ohne IC geliefert wird oder ob das Dashboard IC noch fachlich abziehen soll.
+
+2. Spanien
+   - Aussage Sitzung: Spanien hat fachlich keine echte Soll/Ist-Abweichung.
+   - Ist-Wert im Dashboard: `3'082'320.18 EUR`.
+   - Der bisherige Sollwert `3'102'333.61 EUR` ist falsch bzw. wahrscheinlich ein Excel-/Referenzfehler.
+   - Umsetzung: ES-FinanceReference 2025 wird auf `3'082'320.18 EUR` gesetzt; `FinanceProbe` nutzt denselben Referenzwert.
+   - Folgeaktion: Quelle der falschen Excel-/Referenzzahl weiterhin fachlich nachvollziehen, falls Audit gefragt ist.
+
+3. Wechselkurse 2025
+   - In den Settings / Kurstabellen fehlt ein Feld, auf welches Datum der Kurs angewendet wird.
+   - Zu klaeren: Anwendung auf `DocDate`, `PostingDate`, `InvoiceDate` oder ein anderes Periodendatum.
+   - Umsetzung: In `Settings > Export Einstellungen` ist `Wechselkurse anwenden auf` konfigurierbar.
+   - Umsetzung: `Management Analyse > Rohdaten Diagnose` zeigt das verwendete Kursdatum an.
+
+4. Sparten-Finanzanalyse
+   - Aktueller Befund: Mehr als 90% der Werte sind nicht zugeordnet.
+   - Aussage Andreas: Das kann fachlich nicht stimmen.
+   - Umsetzung: Sparten-Materialabgleich normalisiert fuehrende Nullen in Materialnummern.
+   - Umsetzung: Bei >=90% nicht zugeordnet / nicht im Stamm zeigt die Management-Analyse einen Warnhinweis mit Pruefpunkten.
+   - Folgeaktion: Zentrale Spartenzuordnung pruefen, insbesondere Mapping gegen TR-AG-/SAP-Referenz, Materialnummernformat, fuehrende Nullen, lokale Artikelnummern und Fuellung von `ProductDivisionRefSet`.
+
+(Vollstaendiger Volltext dieses Dokuments inkl. Laenderstand-Tabelle, Vorbesprechungen zu
+CHF-Kurslogik/Kostenoptionen und Klaerungsfragen: siehe Original-Commit-Historie von
+`docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` via `git log --follow`. Alle Kernpunkte
+sind Stand 2026-07-15 in `docs/rag/FINANCE.md` "Offene Fachpunkte" nachgefuehrt.)
+
+Entfernt 2026-07-15: Argumentationshilfe fuer eine einzelne Sitzung; alle noch relevanten
+offenen Punkte sind in `docs/rag/FINANCE.md` "Offene Fachpunkte" gepflegt, die uebrigen
+(ES-Referenz, IC-Diagnose, Kursdatum-Konfiguration) sind laengst umgesetzt.
+
+## H329 - Finance Dashboard - Kurzmemo fuer Andreas (2026-06-01)
+
+# Finance Dashboard - Kurzmemo fuer Andreas
+
+Stand: 2026-06-01
+
+## Aktueller Stand
+
+- `Finance Summary` ist die fuehrende Sicht fuer Soll/Ist.
+- `Management Analyse` ist die Diagnoseebene fuer Laender, Datenstatus, Abweichungen, Gutschriften, Datenqualitaet, Spartenanalyse und Rohdaten.
+- Das Dashboard ist technisch produktiv nutzbar.
+- Letzter dokumentierter Testlauf: `80/80` Tests gruen.
+- Standard-Ist bleibt inklusive aller Positionen.
+- Intercompany / 2nd-party wird separat ausgewiesen, aber nicht automatisch herausgerechnet.
+
+## Sitzungsergebnis 2026-06-01
+
+- Spanien hat laut Sitzung keine echte Ist-Abweichung.
+- ES-Ist `3'082'320.18 EUR` ist fachlich plausibel.
+- Der bisherige ES-Sollwert `3'102'333.61 EUR` war falsch bzw. wahrscheinlich ein Excel-/Referenzfehler.
+- ES-Referenz 2025 ist technisch auf `3'082'320.18 EUR` korrigiert.
+- Intercompany ist in einzelnen Standortzahlen anscheinend bereits bereinigt, muss aber pro Standort bestaetigt werden.
+- `Management Analyse > Laender` zeigt nun IC/2nd-party und `Ist ohne IC` als Diagnose.
+- Bei den 2025-Wechselkursen ist das Anwendungsdatum jetzt in den Settings konfigurierbar.
+- In der Sparten-Finanzanalyse sind mehr als 90% nicht zugeordnet; Andreas sagt, das kann fachlich nicht stimmen.
+- Der Materialabgleich normalisiert jetzt fuehrende Nullen und zeigt bei >=90% ungeklaerter Spartenabdeckung einen Warnhinweis.
+
+(Vollstaendiger Volltext inkl. Fuehrende Regeln, Laenderpunkte, Struktur-/Entscheidbedarf:
+siehe Original-Commit-Historie von `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` via
+`git log --follow`.)
+
+Entfernt 2026-07-15: Kurzmemo vor Sitzung 2026-06-01; alle Kernentscheide sind seither in
+`docs/FINANCE_ENTSCHEIDE.md` und `docs/rag/FINANCE.md` aufgegangen (ES-Referenz, IC-Diagnose,
+Kursdatum-Konfiguration laengst umgesetzt).
+
+## H330 - Finance Sitzungspunkte Andreas (2026-06-02)
+
+# Finance Sitzungspunkte Andreas
+
+Stand: 2026-06-02
+
+Zweck: Kompakte Zusammenfassung der letzten Finance-/Andreas-Punkte und was davon bereits umgesetzt bzw. noch offen ist.
+
+## Kurzfazit
+
+- Das Finance Dashboard bleibt technisch produktiv nutzbar.
+- Fuehrende Sicht fuer Soll/Ist bleibt `Finance Summary`.
+- `Management Analyse` bleibt Diagnose: Laender, IC/2nd-party, Rohdaten, Abweichungen, Spartenanalyse.
+- IC wird nicht automatisch aus dem Standard-Ist entfernt.
+- Budgetkurse 2026 sind im Programm und auf dem Server eingespielt.
+- Spanien-Sage-Serverexport kann jetzt Full oder Range exportieren.
+
+Budgetkurse 2026 (technische Ablage `CurrencyExchangeRates`, `Notes = Budget 2026`,
+`ValidFrom = 2026-01-01`, `ValidTo = 2026-12-31`):
+
+| Von | Nach | Rate |
+| --- | --- | ---: |
+| CHF | CHF | 1 |
+| USD | CHF | 0.80 |
+| EUR | CHF | 0.94 |
+| GBP | CHF | 1.09 |
+| CNY | CHF | 0.11764706 |
+| INR | CHF | 0.00909091 |
+| CZK | CHF | 0.03846154 |
+| PLN | CHF | 0.22 |
+| JPY | CHF | 0.00571429 |
+
+SAP-Objektnamen zur Spartenzuordnung (Stand 2026-06-02):
+
+| Objekt | Name |
+| --- | --- |
+| SAP Gateway Service | `ZPOWERBI_EINKAUF_SRV` |
+| Sales EntitySet | `FinanzdataSchweizOeSet` |
+| Sales Gateway-Methode | `FINANZDATASCHWEI_GET_ENTITYSET` |
+| Produktsparten EntitySet | `ProductDivisionRefSet` |
+| Produktsparten Gateway-Methode | `PRODUCTDIVISIONR_GET_ENTITYSET` |
+| Provider-Klasse | `ZCL_PRODSPARTE_PROVIDER` |
+| Mapping-Aufbau-Report | `Z_PRODSPARTE_MAP_BUILD` |
+| Test-/ALV-Report | `Z_PRODSPARTE_REPORT` |
+| Mapping-Tabelle | `ZPRODSPARTE_MAP` |
+| DDIC-Struktur | `ZSTR_PRODSPARTE_OUT` |
+
+(Vollstaendiger Volltext inkl. IC-Stand je Land, Spanien-Sage-Server-Export-Kommandos,
+Prozessfluss Produktmapping und Budget-2025-Zwischenstand: siehe Original-Commit-Historie
+von `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` via `git log --follow`. Die
+SAP-Objektnamen sind unveraendert gueltig und in `docs/abap/` sowie den ABAP-Analyse-Docs
+weiter nachvollziehbar.)
+
+Entfernt 2026-07-15: Sitzungszusammenfassung; alle noch relevanten Punkte sind in
+`docs/rag/FINANCE.md` und `docs/FINANCE_ENTSCHEIDE.md` aufgegangen.
+
+## H331 - Handoff 2026-06-16
+
+# Handoff 2026-06-16
+
+Zweck: Dieses Dokument zuerst laden, wenn der Chat neu gestartet wird. Es fasst den aktuellen Stand fuer TrafagSalesExporter / BiDashboard kompakt zusammen.
+
+(Dieser Handoff-Snapshot vom 2026-06-16 beschrieb den damaligen Stand von Einkaufsdashboard,
+HR-KPI-Zugang, Finance-3D-Sparten-Kreis, Gruppenmarge-MVP, Dashboard-Nachweis-Excel,
+Produktsparten-Mapping-Umstellung auf `ProductDivisionRefSet`, den SAP/OData-Live-Check von
+`ProductDivisionRefSet` und `FinanzdataSchweizOeSet`, Budget-CHF-Zwischenstand, Alphaplan/DE
+und einen dirty-worktree-Hinweis. Alle SAP-Live-Check-Zahlen dieses Snapshots sind Stand
+2026-07-15 in `docs/rag/FINANCE.md` als aktuellerer Stand nachgefuehrt (u.a.
+`FinanzdataSchweizOeSet/$count` fuer 2025/2026). Vollstaendiger Volltext: siehe
+Original-Commit-Historie von `docs/HANDOFF_2026-06-16.md` via `git log --follow`.)
+
+Entfernt 2026-07-15: einmonatiger Zwischenstand-Snapshot, seither durch ueber 20 weitere
+Deploys ueberholt; `docs/rag/PROJECT.md` Kurzstand ist jetzt der laufend gepflegte
+"nahtlose Einstieg" nach Chatwechsel.

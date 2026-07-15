@@ -11,12 +11,9 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | Datei | Rolle | Status |
 | --- | --- | --- |
 | `lastchange.md` | Laufende Aenderungshistorie | Fuehrend fuer Chronologie |
-| `NEXT_STEPS_2026-04-15.md` | Aktuelle offene Punkte und naechste Schritte | Weiter pflegen |
-| `HANDOFF_2026-04-15.md` | Technischer Handoff / Kontext fuer Weiterarbeit | Weiter pflegen |
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Server-Handoff | Aktuell fuer Deployment |
 | `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | Lokaler Uebergangsserver auf Entwicklungs-PC | Aktuell bis IIS-Fix |
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
-| `entscheide.md` | Kurzfassung der Finance-Fachentscheide | Aktuell als Kurzfassung |
 | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` | Technischer Finance-Datenfluss | Aktuell fuer End-to-end-Datenfluss |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | Editierbare Quelle fuer Ingos 180-Tage-Roadmap zu Analytics, BI, HR und Einkauf | Aktuell fuer Management-/Word-Doku |
 | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` | Aktuelle Finance-Schulung fuer Anwender, Keyuser und Revision | Fuehrend fuer Schulung; ersetzt den alten Word-Inhalt fachlich |
@@ -54,23 +51,26 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `docs/SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md` | Aktueller Spanien-rclone-All-in-one-Workflow | Ersetzt alte deutsche Anleitung vom 2026-06-03 |
 | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` | HR-KPI Formel-/Best-Practice-Pruefung | Behalten |
 | `SAGE_SPAIN_EXPORT_2026-05-05.md` | Sage Spanien Export | Behalten |
-| `LLM_SYSTEM_GUIDE.md` | Arbeits-/Systemkontext fuer LLM | Behalten |
 | `persona.md` | Nutzer-/Projektkontext | Behalten |
 
 ## Archiviert / aus aktiver Doku entfernt
 
-Delta 2026-07-15: Drei Finance-Sitzungs-/Memo-Dokumente von Anfang Juni waren im RAG-Router
-und in dieser Statusdatei bislang gar nicht referenziert (weder als fuehrend noch als
-archiviert). Inhaltlich sind sie durch spaetere Entscheide ueberholt (ES-Referenz korrigiert,
-DE-`ForceYear` entfernt, IC-Diagnose und Gruppenmarge laengst umgesetzt). Dateien bleiben
-liegen, werden aber nicht mehr fuer normale Arbeit geladen; Einordnung jetzt auch in
-`docs/RAG_ROUTER.md` Abschnitt „Ueberholt / nur noch als historischer Beleg":
+Bereinigung 2026-07-15: Acht Dateien wurden aus der aktiven Markdown-Struktur entfernt,
+weil sie entweder reine Pointer-Stubs ohne eigenen Inhalt waren, oder ihr Fachinhalt
+vollstaendig in aktuelleren Dokus aufgegangen ist. Volltext liegt in
+`docs/raw_md_archive/HISTORY_CANONICAL.md.raw` (Blöcke H324-H331); zusaetzlich bleibt
+jede Datei über `git log --follow` vollstaendig rekonstruierbar:
 
-| Datei | Grund |
+| Entfernte Datei | Grund |
 | --- | --- |
-| `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` | Argumentationshilfe fuer Sitzung 2026-06-01; Punkte inzwischen in `docs/rag/FINANCE.md` „Offene Fachpunkte" gepflegt. |
-| `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` | Kurzmemo vor Sitzung 2026-06-01; ueberholt durch `docs/FINANCE_ENTSCHEIDE.md` und die spaeteren Andreas-Entscheide vom 2026-06-29. |
-| `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` | Sitzungszusammenfassung 2026-06-02; Inhalt in `docs/rag/FINANCE.md` und `docs/FINANCE_ENTSCHEIDE.md` aufgegangen. |
+| `HANDOFF_2026-04-15.md` (root) | Reiner Pointer-Stub ohne eigenen Inhalt; ersetzt durch `docs/RAG_ROUTER.md`. |
+| `NEXT_STEPS_2026-04-15.md` (root) | Reiner Pointer-Stub; die "Offenen Hauptpunkte" sind in `docs/rag/FINANCE.md`/`docs/rag/DEPLOYMENT.md` gepflegt. |
+| `LLM_SYSTEM_GUIDE.md` (root) | Reiner Pointer-Stub; die Kontext-Regel steht in `docs/RAG_ROUTER.md` selbst. |
+| `entscheide.md` (root) | Kurzfassung, vollstaendig deckungsgleich mit `docs/FINANCE_ENTSCHEIDE.md`. |
+| `docs/FINANCE_STATUS_OFFENE_PUNKTE_2026-06-01.md` | Argumentationshilfe fuer Sitzung 2026-06-01; Punkte in `docs/rag/FINANCE.md` „Offene Fachpunkte" gepflegt. |
+| `docs/FINANCE_MEMO_ANDREAS_2026-06-01.md` | Kurzmemo vor Sitzung 2026-06-01; ueberholt durch `docs/FINANCE_ENTSCHEIDE.md` und die Andreas-Entscheide vom 2026-06-29. |
+| `docs/FINANCE_SITZUNGSPUNKTE_ANDREAS_2026-06-02.md` | Sitzungszusammenfassung 2026-06-02; Inhalt in `docs/rag/FINANCE.md`/`docs/FINANCE_ENTSCHEIDE.md` aufgegangen. |
+| `docs/HANDOFF_2026-06-16.md` | Einmonatiger Zwischenstand-Snapshot, seither durch ueber 20 weitere Deploys ueberholt; `docs/rag/PROJECT.md` ist jetzt der laufend gepflegte Einstieg. |
 
 Bereinigung 2026-06-09 (aeltere Delta-Eintraege): Diese Dateien wurden aus der aktiven Markdown-Struktur entfernt, weil sie nur noch historische Stubs oder durch neuere Dokus ersetzt waren. Fachinhalt bleibt erhalten:
 
@@ -116,6 +116,6 @@ Bereinigung 2026-06-09:
 
 Weiterhin gilt:
 
-- Aktuelle operative Orientierung ueber diese Statusdatei, `NEXT_STEPS_2026-04-15.md`, `HANDOFF_2026-04-15.md` und `lastchange.md`.
+- Aktuelle operative Orientierung ueber `docs/RAG_ROUTER.md`, diese Statusdatei und `lastchange.md`.
 - Historische Mail-/Terminnotizen nur im Raw-Archiv als Beleg lesen, nicht als aktuellen Produktstand.
 - Alte offene Punkte wurden dort aktualisiert, wo sie durch Finance Summary, HR KPI Cockpit oder die Word-Anleitungen ueberholt sind.

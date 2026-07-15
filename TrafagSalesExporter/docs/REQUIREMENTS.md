@@ -274,7 +274,7 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
 
 ## 9. Referenz-Detaildokumente
 
-- Einstieg/Kurzstand: `docs/rag/PROJECT.md`, Handoff `docs/HANDOFF_2026-06-16.md`
+- Einstieg/Kurzstand: `docs/rag/PROJECT.md`
 - Architektur: `docs/rag/ARCHITECTURE.md`, Diagramme `docs/PROGRAMM_DIAGRAMME.md`
 - Finance: `docs/rag/FINANCE.md`, Formeln `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`,
   Kurs-Workflow `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`, Gruppenmarge `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`

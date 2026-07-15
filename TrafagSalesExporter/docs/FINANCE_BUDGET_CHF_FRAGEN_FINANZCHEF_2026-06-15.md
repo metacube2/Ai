@@ -24,11 +24,11 @@ Noch offen ist vor allem:
 
 | Thema | Bisheriger Entscheid / Dokumentstand | Quelle |
 | --- | --- | --- |
-| Fuehrende Waehrung | Rechnungen werden in der Hauswaehrung / Local Currency des Landes ausgewertet. | `../entscheide.md`, `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
-| Standard-Soll/Ist | Standard-Ist je Land wird in Hauswaehrung auf Basis Nettofakturawert berechnet. | `../entscheide.md`, `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
-| CHF-Umrechnung | CHF-Sicht nur separat mit Budgetkursen; keine SNB-/Tageskurse fuer den Standardabgleich. | `../entscheide.md` |
+| Fuehrende Waehrung | Rechnungen werden in der Hauswaehrung / Local Currency des Landes ausgewertet. | `FINANCE_ENTSCHEIDE.md`, `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
+| Standard-Soll/Ist | Standard-Ist je Land wird in Hauswaehrung auf Basis Nettofakturawert berechnet. | `FINANCE_ENTSCHEIDE.md`, `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
+| CHF-Umrechnung | CHF-Sicht nur separat mit Budgetkursen; keine SNB-/Tageskurse fuer den Standardabgleich. | `FINANCE_ENTSCHEIDE.md` |
 | Budget-CHF-Rolle | Budget-CHF ist Kontroll-/Reporting-Kandidat und ersetzt nicht den Standardabgleich in Hauswaehrung. | `FINANCE_KURS_WORKFLOW_2026-06-09.md`, `rag/FINANCE.md` |
-| Indien | Indien wird in INR ausgewertet; CHF-Budgetwert ist nicht der Hauptvergleich. | `../entscheide.md`, `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
+| Indien | Indien wird in INR ausgewertet; CHF-Budgetwert ist nicht der Hauptvergleich. | `FINANCE_ENTSCHEIDE.md`, `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` |
 | Jahresabgrenzung | FinanceDate basiert auf PostingDate, sonst InvoiceDate, sonst ExtractionDate; DE kann per Finance-Regel auf 2025 gezwungen werden. | `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
 | Zentrales Excel | `Finance Summary` und `Finance Details` wenden keine UI-Zielwaehrung an; sie bleiben nach vorhandener Finance-Waehrung gruppiert. | `FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` |
 | ERP-Belegkurs | `DocumentRate` ist Quellinformation aus ERP/SAP/B1, aber nicht automatisch der Kurs fuer Dashboard-/Budget-CHF. | `FINANCE_KURS_WORKFLOW_2026-06-09.md` |

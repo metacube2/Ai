@@ -63,5 +63,4 @@ Stand: 2026-07-13
 ## Rohquellen Nur Bei Bedarf
 
 - Detailstand: `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md`
-- Workflow-Historie: `NEXT_STEPS_2026-04-15.md`
 

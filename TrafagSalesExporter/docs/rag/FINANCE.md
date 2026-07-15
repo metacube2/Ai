@@ -156,7 +156,7 @@ Stand: 2026-07-15
 
 ## Rohquellen Nur Bei Bedarf
 
-- Entscheide: `docs/FINANCE_ENTSCHEIDE.md`, `entscheide.md`
+- Entscheide: `docs/FINANCE_ENTSCHEIDE.md`
 - Finance-Schulung: `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md`
 - Formeln je Land: `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`
 - Isolierter Kurs-Workflow: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`
