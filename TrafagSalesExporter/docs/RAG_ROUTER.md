@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-07-15
+Stand: 2026-07-16
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
@@ -52,7 +52,8 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin-/Landing-Details |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping im Detail |
 | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge-Fachlogik, Andreas-Entscheide, Kostenwaehrungsschalter (Entscheid D) im Detail |
-| `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` | Standardkosten-/MBEW-STPRS-Anbindung CH/AT und DE im Detail |
+| `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` | Standardkosten-/MBEW-STPRS-Anbindung CH/AT und DE im Detail, inkl. Nachtrag 2026-07-16 (haengender mbewSet-Import, Kostenquoten-Verifikation) |
+| `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` | SAP-OData-Spezifikation `Wavwr`-Feld in `FinanzdataSchweizOeSet` (Ersatz fuer haengenden mbewSet-Scan, CH/AT-Kostenbasis) |
 | `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` | SAP-OData-Spezifikation `FinanzJournalSet` fuer CH/AT-Journal-Import |
 | `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` | B1-Journal-Import (Hauptbuch) Feldmapping im Detail |
 | `docs/FINANCE_SAP_B1_KONNEKTOREN_ANDREAS_2026-07-01.md` | SAP-B1-Konnektoren-Uebersicht fuer Andreas |
@@ -103,6 +104,7 @@ in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Details/
 | `Admin Bereich`, `AdminAccess`, `LandingPage` | Admin/Startseite |
 | `Group Sales Report`, `Produkthierarchie`, `Produktfamilie`, `Produktsparte`, `Z.Prodh` | Produktmapping |
 | `Gruppenmarge`, `Standardkosten`, `STPRS`, `MBEW`, `Kostenwaehrung`, `GroupMarginCostCurrencyMode` | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` / `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` |
+| `WAVWR`, `VBRP`, `mbewSet haengt`, `Standardpreis-Read`, `GroupStandardCosts` | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` / `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` Nachtrag 2026-07-16 |
 | `Journal Import`, `Hauptbuch`, `BKPF`, `BSEG`, `OJDT`, `JDT1`, `FinancialJournalEntries`, `FinanzJournalSet` | `docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` / `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` |
 | `Daten-Heartbeat`, `Heartbeat`, `ExportLogs`, `Datenkontinuitaet` | `docs/CODEX_ANWEISUNG_FINANCE_DATEN_HEARTBEAT_2026-07-13.md` / Finance Cockpit |
 | `EKKO`, `EKPO`, `EKET`, `Einkauf`, `Lieferanten`, `offene Bestellungen`, `Kontrakte`, `Spend` | Einkauf |

@@ -107,3 +107,93 @@ Umsatzexport eines ganzen Landes verhindern.
   (SAP-Messwert). Deutlich weniger deutet auf ein Material-Matching-Problem hin.
 - Gruppenmarge fuer CH/AT und DE fachlich mit Andreas plausibilisieren, bevor sie als
   belastbar kommuniziert wird.
+
+## Nachtrag 2026-07-16: mbewSet haengt reproduzierbar, Kostenquoten aller anderen Laender verifiziert, WAVWR-Weg eingeschlagen
+
+Zusammenfassung eines laengeren Live-Diagnose-Tages, damit der Stand auch nach einem
+Chat-Abbruch nachvollziehbar bleibt.
+
+### mbewSet haengt — 3 von 3 Versuchen, auch nach App-Neustart
+
+Der `ZSCHWEIZ`-Import wurde dreimal ueber die UI gestartet, alle drei Male blieb er
+exakt an derselben Stelle stehen (Log-Eintrag „Standardpreis-Read gestartet", danach
+**keine** weitere Zeile — kein Erfolg, kein Fehler, kein `ExportLogs`-Eintrag):
+
+1. 2026-07-15 12:01:48–12:02:08 Uhr (vor jedem Neustart)
+2. 2026-07-16 08:03:46–08:04:04 Uhr
+3. 2026-07-16 08:58:10–08:58:27 Uhr (**nach** einem sauberen App-Neustart via
+   `app_offline.htm` um ca. 08:15 Uhr — der Neustart hat das Problem NICHT geloest,
+   spricht gegen einen reinen App-Zustands-Fehler)
+
+Der konfigurierte HTTP-Timeout in `SapGatewayStandardCostReader.CreateClient` ist 5
+Minuten; in allen drei Faellen wurde dieser Timeout nicht sauber als Fehler geloggt,
+obwohl weit mehr als 5 Minuten vergingen. `GroupStandardCosts` blieb bei allen drei
+Versuchen bei `0` Zeilen (zuletzt per Live-SQL gegen die Produktiv-DB bestaetigt).
+
+### Manueller Browser-Test: mbewSet antwortet, aber langsam/moeglicherweise ungefiltert
+
+Der SAP-Entwickler hat die exakte App-URL manuell im Browser aufgerufen:
+```
+http://travt762.sap.trafag.com:8000/sap/opu/odata/sap/ZPOWERBI_EINKAUF_SRV/mbewSet?$format=json&$top=1000&$skip=0&$orderby=Bwkey,Matnr&$filter=Bwkey eq '1100' or Bwkey eq '1200'
+```
+Ergebnis: echte, valide STPRS-Daten kommen zurueck, aber die Antwort ist sehr gross und
+laedt ueber mehrere Sekunden beim Scrollen kontinuierlich nach — deutet darauf hin, dass
+`$top=1000` von diesem Z-Service moeglicherweise nicht serverseitig durchgesetzt wird
+und (fast) der gesamte Bestand (~68'000 Materialien) in einer Antwort zurueckkommt.
+**Nicht abschliessend geklaert**, aber als Arbeitshypothese fuer die Haenger-Ursache
+plausibel.
+
+### Kostenquoten aller anderen Laender heute verifiziert (Produktiv-DB, nach SQL-Bugfix)
+
+Erste Abfrage hatte einen Bug (Textvergleich `StandardCost <> 0` auf einer TEXT-Spalte
+zaehlte faelschlich fast alles als „gefuellt"). Korrigiert mit `CAST(StandardCost AS REAL)`:
+
+| TSC | Zeilen | Kosten gefuellt | Anteil | Vergleich zu 14.07. |
+| --- | ---: | ---: | ---: | --- |
+| TRDE | 6'901 | 4'726 | **68.5 %** | war 0 % -> **deutlich verbessert** (DE-Feature vom 14.07. wirkt produktiv) |
+| TRES | 5'249 | 4'249 | 80.9 % | war 81 % — stabil |
+| TRFR | 2'522 | 1'296 | 51.4 % | war 51 % — stabil (bekannte Luecke, fehlende FR-Stammdaten) |
+| TRIN | 6'810 | 6'771 | 99.4 % | war 99 % — stabil |
+| TRIT | 19'011 | 18'191 | 95.7 % | war 96 % — stabil |
+| TRUS | 1'428 | 1'318 | 92.3 % | war 92 % — stabil |
+| TRUK | 1'033 | 0 | 0 % | unveraendert (Sage liefert keine Kostenspalte) |
+| TRAT | 1'454 | 0 | 0 % | erwartet — ZSCHWEIZ-Import haengt seit 15.07. |
+| TRCH | 38'838 | 0 | 0 % | erwartet — ZSCHWEIZ-Import haengt seit 15.07. |
+
+**Keine Regression** durch die TR-AG-Aenderung vom 15.07. — alle unabhaengigen Laender
+sind stabil auf bekanntem Niveau, DE sogar verbessert.
+
+### Live-Bestaetigung: `Sales_All_2026-07-15.xlsx` enthaelt (noch) keine TR-AG-Konzernkosten
+
+Datei vom Server-Share heruntergeladen und per ClosedXML-Lesetool geprueft: Blatt
+„Gruppenmarge Details", 2'000 Zeilen durchsucht, davon 45 mit Lieferant „Trafag AG"
+(ueber TRFR/TRIN/TRIT) — **alle** zeigen noch `CostSource = Interner Standardpreis`,
+keine einzige `Konzernkosten TR AG`. Konsistent mit der leeren `GroupStandardCosts`-
+Tabelle. `sharedStrings.xml` der Datei enthaelt den Text „Konzernkosten" gar nicht.
+
+### Neuer Weg eingeschlagen: VBRP-WAVWR statt MBEW-STPRS fuer CH/AT
+
+Der SAP-Entwickler (im Chat bestaetigt: ist Teil des SAP-Teams) hat direkt in SE16N
+gegen `VBRP` geprueft: `WAVWR` ist real befuellt (siehe Stichprobe in der neuen
+Spezifikationsdatei). Live gegen `$metadata` von `ZPOWERBI_EINKAUF_SRV` verifiziert
+(Passwort aus der App-DB genutzt, nie ausgegeben): **`Wavwr` ist aktuell in KEINEM
+EntityType des Service exponiert**, auch nicht in `FinanzdataSchweizOe`.
+
+Voller Verlauf, Begruendung und die drei offenen technischen Fragen an den SAP-
+Entwickler (Zeilensumme vs. Stueckpreis, Waehrung, Vorzeichen bei Gutschriften):
+**`docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md`**. Das ist jetzt der bevorzugte Weg fuer
+die CH/AT-Kostenbasis — App-seitig noch NICHT umgesetzt, wartet auf SAP-Feld-Freigabe
+und Antworten auf die drei Fragen.
+
+### Aktueller Live-Zustand am Ende der Session (2026-07-16)
+
+- `ZSCHWEIZ`-Import: letzter Versuch (08:58 Uhr) haengt vermutlich weiterhin (kein
+  Abschluss beobachtet, Session endete waehrend des Wartens).
+- `GroupStandardCosts`: `0` Zeilen auf Produktiv.
+- Server-DLL: unveraendert seit Commit `5efeed7` (`15.07.2026 11:22:32`) — nur der
+  zwischenzeitliche `app_offline.htm`-Neustart am 16.07. hat keinen neuen Code gebracht.
+- Kein Code wurde heute (16.07.) geaendert — reine Diagnose, Doku und ein App-Neustart.
+- Naechster Schritt liegt beim SAP-Entwickler: `Wavwr` freischalten + drei Fragen aus
+  `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` beantworten. Optional in derselben
+  Abstimmung: `Sites.SapServiceUrl` fuer `ZSCHWEIZ` von `travt762` auf `travp762`
+  korrigieren (separates, bereits bekanntes Problem, reine Konfigurationsaenderung).
