@@ -365,3 +365,13 @@ Export-Pipeline nach `ZSCHWEIZ`):
   rueckbestaetigt werden, weil davon die Kostenwaehrung auf allen 38.5 % Fremdwaehrungs-
   zeilen abhaengt (falscher Tag wuerde die CHF-Umrechnung der Kostenbasis um den
   Kurs verzerren, 5-15 % je nach Waehrung).
+- **Deployed:** `app_offline.htm` gesetzt/entfernt, `dotnet publish -o
+  \\trch-webapp-bidashboard.trafagch.local\BiDashboard$`, `Test-NetConnection ...
+  -Port 443` -> `True`. Produktive `BiDashboard.dll` `16.07.2026 16:09:24`, Laenge
+  `2'949'120`; DB unangetastet (Schreibzeit vor dem Publish). **Wichtig:** Port 443
+  bzw. der Deploy selbst beweist NICHT, dass der Fix wirkt — die bestehenden
+  ~40'506 ZSCHWEIZ-Zeilen tragen weiterhin den alten, 100x zu kleinen `NetwrHc`-Wert,
+  bis TRCH/TRAT erneut importiert wird (reine Codeaenderung wirkt nur auf
+  zukuenftige Importlaeufe). NACHSORGE: TRCH/TRAT-Reimport anstossen, danach an
+  einer bekannten Fremdwaehrungszeile (z. B. `Vbeln=90356146`, USD, `NetwrDc=19000`,
+  `Kurrf=0.85`) pruefen, dass `SalesPriceValue` jetzt `~16150` statt `161.50` zeigt.
