@@ -289,9 +289,16 @@ CLASS lcl_export IMPLEMENTATION.
 *     2026-07-14. MBEW ist je Material UND Bewertungskreis
 *     verschluesselt - falscher Join wuerde CH-Zeilen den
 *     oesterreichischen Preis geben (und umgekehrt).
+*     BWTAR = space ist PFLICHT: bei getrennter Bewertung (Split
+*     Valuation) existieren mehrere MBEW-Saetze je Material/BWKEY
+*     (Kopfsatz + je Bewertungsart) - ohne diese Bedingung wuerden
+*     solche Fakturazeilen im Join VERVIELFACHT. Der Kopfsatz
+*     (BWTAR = space) traegt die fuehrende Bewertung; Materialien
+*     ohne Split Valuation haben ohnehin nur diesen einen Satz.
       LEFT OUTER JOIN mbew AS m
         ON m~matnr = i~matnr
        AND m~bwkey = h~bukrs
+       AND m~bwtar = @space
       WHERE h~bukrs IN @s_bukrs
         AND h~fkdat IN @mt_fkdat
         AND h~vbeln IN @s_vbeln
@@ -304,12 +311,24 @@ CLASS lcl_export IMPLEMENTATION.
 
   METHOD map_to_zschweiz.
     DATA: lv_timestamp TYPE timestampl,
-          lv_gjahr     TYPE gjahr.
+          lv_gjahr     TYPE gjahr,
+          lv_stprs_hc  TYPE p LENGTH 15 DECIMALS 4.
 
     GET TIME STAMP FIELD lv_timestamp.
 
     LOOP AT mt_billing ASSIGNING FIELD-SYMBOL(<ls_b>).
       DATA(lv_sign) = determine_sign( <ls_b> ).
+
+*     Stueckpreis-Division ueber explizit typisierte Variable (DEC 4):
+*     direkt im COND #-Ausdruck wuerde ABAP den Ergebnistyp aus STPRS
+*     (2 Dezimalen) ableiten und VOR der Zuweisung runden - bei
+*     PEINH=100 wuerde aus 20.63/100 dann 0.21 statt 0.2063. Genau die
+*     PEINH-Falle, gegen die die Division eingebaut ist.
+      IF <ls_b>-peinh > 0.
+        lv_stprs_hc = <ls_b>-stprs / <ls_b>-peinh.
+      ELSE.
+        lv_stprs_hc = <ls_b>-stprs.
+      ENDIF.
 
       DATA(lv_netwr_hc) = to_house_currency(
         iv_amount = <ls_b>-netwr
@@ -357,12 +376,11 @@ CLASS lcl_export IMPLEMENTATION.
         wavwr_dc      = <ls_b>-wavwr * lv_sign  " NEU 2026-07-16: gleiches Vorzeichen wie netwr_dc/tax_dc,
                                                  " sonst zeigt die Kostenbasis bei Gutschriften das falsche
                                                  " Vorzeichen, waehrend der Umsatz schon negativ ist.
-        stprs_hc      = COND #( WHEN <ls_b>-peinh > 0 THEN <ls_b>-stprs / <ls_b>-peinh ELSE <ls_b>-stprs )
-                                                 " NEU 2026-07-16 Teil 2: Stueckpreis, PEINH-Falle beachtet
-                                                 " (STPRS gilt je PEINH Stueck). BEWUSST OHNE lv_sign: das ist
-                                                 " ein aktueller Stueckpreis, keine Zeilensumme - Vorzeichen
-                                                 " bei Gutschriften wird App-seitig ueber Menge/Umsatz
-                                                 " hergeleitet, wie beim bisherigen MBEW-STPRS-Weg auch schon.
+        stprs_hc      = lv_stprs_hc              " NEU 2026-07-16 Teil 2: Stueckpreis (STPRS/PEINH, s. oben).
+                                                 " BEWUSST OHNE lv_sign: das ist ein aktueller Stueckpreis,
+                                                 " keine Zeilensumme - Vorzeichen bei Gutschriften wird
+                                                 " App-seitig ueber Menge/Umsatz hergeleitet, wie beim
+                                                 " bisherigen MBEW-STPRS-Weg auch schon.
         kurrf         = <ls_b>-kurrf
         is_credit     = COND #( WHEN lv_sign < 0 THEN abap_true ELSE abap_false )
         party_class   = classify_party( <ls_b>-name1 )
