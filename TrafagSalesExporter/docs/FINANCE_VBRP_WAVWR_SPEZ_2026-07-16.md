@@ -269,6 +269,54 @@ Export-Pipeline nach `ZSCHWEIZ`):
   TRCH/TRAT einmal neu importiert werden, damit die neue Kostenbasis in
   `CentralSalesRecords` und im naechsten zentralen Excel ankommt — die
   bestehenden 38'838/1'454 Zeilen aus dem alten Import bleiben sonst bei 0.
+## 13. Deploy + Reimport + Verifikation (2026-07-16, Abend)
+
+- **Deploy durchgefuehrt:** `app_offline.htm` gesetzt, `dotnet publish -o
+  \\trch-webapp-bidashboard.trafagch.local\BiDashboard$`, `app_offline.htm`
+  entfernt, `Test-NetConnection ... -Port 443` -> `True`. DB-Datei unangetastet
+  (Schreibzeit vor dem Publish). Mapping-Selfheal bestaetigt erst NACH einem
+  echten App-Start (reiner TCP-Connect reicht nicht) — verifiziert per
+  `SapFieldMappings` fuer ZSCHWEIZ: `StandardCost` -> `Z.ResolvedStandardCost`,
+  `StandardCostCurrency` -> `Z.ResolvedStandardCostCurrency`.
+- **Reimport durch Nutzer angestossen** (`Export gestartet | Quelle=SAP |
+  TSC=ZSCHWEIZ`, 15:08:35–15:09:16 Uhr). SAP-Fetch `FinanzdataSchweizOeSet`:
+  40'506 Zeilen (CH+AT kombiniert). `mbewSet`-Anreicherung weiterhin defekt
+  (`500 Internal Server Error`, wie erwartet) — Guardrail griff korrekt,
+  Import lief ohne Absturz weiter.
+- **Falscher Erstbefund korrigiert:** eine DB-Kopie waehrend des laufenden
+  Full-Replace zeigte kurzzeitig TRAT `0` Zeilen (sah nach Datenverlust aus).
+  Eine zweite Kopie nach Abschluss des Laufs zeigte den korrekten Endstand —
+  reine Momentaufnahme mitten im Loeschen/Neuschreiben, kein Bug.
+- **Endstand `StandardCost`-Fuellgrad nach Reimport:** TRCH `37'680/39'043`
+  (**96.5 %**), TRAT `1'462/1'463` (**99.9 %**). Die zentrale Excel-Datei
+  enthaelt die neue Kostenbasis damit ab dem naechsten Export.
+- **Plausibilitaets-Check WAVWR vs. STPRS (Live-Stichprobe travt762,
+  `Bukrs eq '1100' and Fkimg gt 5`):** fuer 7 verschiedene Materialien wurde
+  der WAVWR-Stueckpreis (auf CHF umgerechnet mit `Kurrf`) mit `StprsHc`
+  verglichen. Verhaeltnis durchgaengig `0.85x`–`1.5x` (WAVWR meist etwas
+  hoeher als der heutige STPRS) — plausible Preisentwicklung ueber Zeit,
+  keine Skalierungs-/Waehrungsverwechslung. Zusaetzlich bestaetigt: fuer
+  dasselbe Material (`55740`) ueber 4 verschiedene Rechnungen ergibt
+  `WavwrDc/Fkimg` exakt denselben Stueckpreis (`369.66`) — die Mengenteilung
+  ist stabil und korrekt.
+- **NEUER FUND, nicht Teil dieses Features, hohe Relevanz:** `NETWR_HC` (bei
+  uns `SalesPriceValue`, also der **Umsatz**) ist bei allen ZSCHWEIZ-Zeilen
+  mit `Waerk <> Hwaer` (Fremdwaehrungsbeleg) exakt **Faktor 100 zu klein**.
+  Systematisch bestaetigt an 15/15 Stichprobenzeilen:
+  `NetwrHc / NetwrDc = DocumentRate / 100` statt `= DocumentRate`
+  (z. B. `Kurrf=0.85` -> Verhaeltnis `0.0085` statt `0.85`). Bei
+  gleichwaehrigen Zeilen (`Waerk = Hwaer`, `Kurrf=1`) ist `NetwrHc = NetwrDc`
+  korrekt — der Fehler tritt nur bei der Fremdwaehrungsumrechnung auf.
+  Betroffen: **15'599 von 40'506** CH/AT-Zeilen (~38.5 %). Das erklaert die
+  vorher beobachteten, absurd hohen Kosten/Umsatz-Verhaeltnisse in Stichproben
+  (z. B. Kosten 50x Umsatz) — es ist ein **Umsatzfehler**, kein Kostenfehler;
+  die neue `WAVWR`/`STPRS`-Kostenbasis selbst ist nach dem obigen Plausibilitaets-
+  Check korrekt. Wahrscheinliche Ursache: Waehrungsumrechnung/Dezimalstellen-
+  Handling in `NETWR_HC` im ABAP-Export oder in der VBRK/VBRP-Quelle — noch
+  nicht untersucht, braucht den SAP-Entwickler. Betrifft NICHT `WAVWR_DC`/
+  `STPRS_HC` (beide separat live geprueft, korrekt). Empfehlung: als eigenes
+  Thema mit hoher Prioritaet an den SAP-Entwickler geben, unabhaengig von
+  diesem Feature.
 - **Weiterhin unveraendert offen:**
   - `PersistGroupStandardCostsAsync` (TR-AG-Konzernkosten fuer andere TSC, z. B.
     TR IN/TR IT als interne Abnehmer) haengt weiterhin am kaputten `mbewSet`-Read —
