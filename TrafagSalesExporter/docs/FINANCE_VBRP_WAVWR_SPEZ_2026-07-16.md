@@ -158,3 +158,48 @@ Scan ersetzt zu werden.
 - Loest NICHT das separate Problem „CH/AT sieht 2026 nicht" (`Sites.SapServiceUrl` zeigt
   auf `travt762` statt `travp762`) — das ist eine reine App-Konfigurationsaenderung,
   keine SAP-Aenderung, sollte aber in derselben Abstimmung mit adressiert werden.
+
+## 11. Umsetzungsfortschritt 2026-07-16 (SAP-Seite)
+
+Der SAP-Entwickler (Teil dieses Chats) hat direkt umgesetzt, schneller als der urspruengliche
+Plan (kein separates `VBRPSet` als App-Quelle, sondern Erweiterung der bestehenden
+Export-Pipeline nach `ZSCHWEIZ`):
+
+- **`VBRPSet` probeweise per SEGW angelegt** (separates EntitySet, nicht die App-Quelle) —
+  bestaetigt live: `Wavwr` funktioniert technisch, Wert stimmt exakt mit SE16N ueberein.
+  Wichtiger Nebenbefund dabei: **`$top` wird von diesem Service generell nicht
+  durchgesetzt** (`$top=1` lieferte 295'694'320 Zeichen / tausende Zeilen) — bestaetigt,
+  dass ein ungefiltertes `VBRPSet` als App-Quelle genauso haengen wuerde wie `mbewSet`.
+  Grund, warum der urspruengliche Plan (Feld in `FinanzdataSchweizOeSet`, das serverseitig
+  bereits gefiltert ist) weiterhin richtig ist.
+- **Report `Z_TRAFAG_SCHWEIZ_EXPORT`** (in ihrem System als `Z_TRAFAG_DACH_EXPORT`
+  eingebunden, liest `VBRK`/`VBRP`/`KNA1`/`T001`, UPSERT nach `ZSCHWEIZ`) um `WAVWR_DC`
+  erweitert und fuer Jahr 2026 gelaufen: **9'864 Zeilen verarbeitet.**
+- **Coverage-Befund (2026, frisch verarbeitet):** 8'649 von 9'864 Zeilen mit echtem
+  `WAVWR_DC`-Wert (~87.7 %), 1'215 mit `0`. Historischer Bestand (~30'642 Zeilen, andere
+  Jahre) zeigt erwartungsgemaess durchgaengig `0`, weil noch nicht neu verarbeitet
+  (Nachsorge-Rueckstand, kein Datenproblem).
+- **Root Cause der echten Nullen gefunden:** Stichprobe zeigte `WAVWR_DC = 0` bei einem
+  Material mit **gepflegtem** `STPRS` (`B53446`, `STPRS = 1.01`, `VPRSV = S`) — die
+  urspruengliche Hypothese „STPRS fehlt" ist damit widerlegt. Wahrscheinlicher Grund:
+  `WAVWR` wird nur bei **lieferbezogener Fakturierung** (echte Warenausgangsbuchung,
+  `VGTYP='J'` in `VBRP`) gesetzt; bei auftragsbezogener Fakturierung ohne Lieferbezug
+  gibt es keine Bestandsbuchung und damit keinen `WAVWR`-Wert, unabhaengig vom
+  gepflegten Standardpreis. Noch nicht abschliessend per `VGTYP`-Vergleich verifiziert,
+  aber mit den vorliegenden Daten (Materialien mit gepflegtem `STPRS`, trotzdem
+  `WAVWR=0`) die schluessigste Erklaerung.
+- **Konsequenz — Vorschlag SAP-Entwickler, umgesetzt:** `MBEW` zusaetzlich per direktem
+  ABAP-Join (nicht ueber `mbewSet`/OData) in denselben Report eingebaut. Neues Feld
+  **`STPRS_HC`** (Stueckpreis nach `PEINH`-Division, Hauswaehrung, aus `MBEW-STPRS`,
+  Join-Schluessel `MATNR`+`BWKEY=BUKRS`) ergaenzt `WAVWR_DC` — beide Felder nebeneinander
+  in `ZSCHWEIZ`. Das umgeht das `mbewSet`-Performance-Problem komplett (ABAP-seitiger
+  Join ueber Schluessel ist performant, kein Massen-Scan noetig) und gibt uns fuer die
+  ~12 % Zeilen ohne `WAVWR_DC` einen Fallback-Kandidaten. **`WAVWR_DC` bleibt die
+  fuehrende Kostenbasis fuer die Gruppenmarge** (siehe Abschnitt 4); `STPRS_HC` ist
+  zusaetzliches Feld, App-seitige Fallback-Logik noch nicht entschieden/umgesetzt.
+  Vollstaendiger, aktueller Report-Code: `docs/abap/Z_TRAFAG_SCHWEIZ_EXPORT.abap`.
+- **Offen:** Rueckwirkender Lauf fuer historische Jahre (2025 und frueher) noch nicht
+  gemacht — daher noch keine belastbare Gesamt-Coverage ueber den vollen CH/AT-Bestand.
+  `VGTYP`-Verifikation der Lieferbezug-Hypothese noch offen. SEGW-Ergaenzung von
+  `Wavwr_Dc`/`Stprs_Hc` auf `FinanzdataSchweizOe` (statt nur `VBRPSet`) noch zu
+  bestaetigen.
