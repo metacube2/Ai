@@ -50,7 +50,7 @@ public class SapCompositionService : ISapCompositionService
             var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, filter, cancellationToken);
             ValidateSourceRows(site, source, rows);
             if (string.Equals(source.EntitySet, "FinanzdataSchweizOeSet", StringComparison.OrdinalIgnoreCase))
-                ResolveZschweizStandardCostRows(rows);
+                NormalizeZschweizRows(rows);
             sourceRows[source.Alias] = rows;
             await _appEventLogService.WriteDebugAsync("SAP", "Quelle gelesen", site.Id, site.Land,
                 $"Alias={source.Alias} | EntitySet={source.EntitySet} | Zeilen={rows.Count}");
@@ -75,6 +75,20 @@ public class SapCompositionService : ISapCompositionService
     }
 
     /// <summary>
+    /// Zwei Rohdaten-Korrekturen fuer FinanzdataSchweizOeSet, bevor das generische
+    /// SapFieldMapping darauf zugreift: die WAVWR/STPRS-Kostenbasis (<see cref="ResolveStandardCost"/>)
+    /// und ein bekannter SAP-seitiger Waehrungsfehler in NETWR_HC (<see cref="CorrectHouseCurrencyScaling"/>).
+    /// </summary>
+    private static void NormalizeZschweizRows(List<Dictionary<string, object?>> rows)
+    {
+        foreach (var row in rows)
+        {
+            CorrectHouseCurrencyScaling(row);
+            ResolveStandardCost(row);
+        }
+    }
+
+    /// <summary>
     /// FinanzdataSchweizOeSet liefert keinen direkten Kostenwert; ZSCHWEIZ.WAVWR_DC (per
     /// ABAP-Report ergaenzt, siehe docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md) ist die
     /// zum Verkaufszeitpunkt eingefrorene Kostenzeilensumme in Belegwaehrung (Waerk).
@@ -85,30 +99,61 @@ public class SapCompositionService : ISapCompositionService
     /// bestehende SapFieldMapping (Z.ResolvedStandardCost/-Currency) sie direkt referenzieren
     /// kann, ohne die Mapping-Ausdruckssprache um Arithmetik erweitern zu muessen.
     /// </summary>
-    private static void ResolveZschweizStandardCostRows(List<Dictionary<string, object?>> rows)
+    private static void ResolveStandardCost(Dictionary<string, object?> row)
     {
-        foreach (var row in rows)
+        var wavwrDc = ParseDecimal(row, "WavwrDc");
+        var fkimg = ParseDecimal(row, "Fkimg");
+        if (wavwrDc != 0m && fkimg != 0m)
         {
-            var wavwrDc = ParseDecimal(row, "WavwrDc");
-            var fkimg = ParseDecimal(row, "Fkimg");
-            if (wavwrDc != 0m && fkimg != 0m)
-            {
-                row["ResolvedStandardCost"] = wavwrDc / fkimg;
-                row["ResolvedStandardCostCurrency"] = ReadString(row, "Waerk");
-                continue;
-            }
-
-            var stprsHc = ParseDecimal(row, "StprsHc");
-            if (stprsHc != 0m)
-            {
-                row["ResolvedStandardCost"] = stprsHc;
-                row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
-                continue;
-            }
-
-            row["ResolvedStandardCost"] = 0m;
-            row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
+            row["ResolvedStandardCost"] = wavwrDc / fkimg;
+            row["ResolvedStandardCostCurrency"] = ReadString(row, "Waerk");
+            return;
         }
+
+        var stprsHc = ParseDecimal(row, "StprsHc");
+        if (stprsHc != 0m)
+        {
+            row["ResolvedStandardCost"] = stprsHc;
+            row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
+            return;
+        }
+
+        row["ResolvedStandardCost"] = 0m;
+        row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
+    }
+
+    /// <summary>
+    /// Bekannter SAP-seitiger Bug (docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md Abschnitt 13):
+    /// ZSCHWEIZ.NETWR_HC (Umsatz Hauswaehrung, hier gemappt auf SalesPriceValue) kommt bei
+    /// Fremdwaehrungsbelegen (Waerk != Hwaer) exakt Faktor 100 zu klein aus dem ABAP-Export
+    /// (`to_house_currency` -&gt; CONVERT_TO_LOCAL_CURRENCY, vermutlich TCURR-Faktorproblem).
+    /// An allen produktiven Fremdwaehrungszeilen bestaetigt (EUR/USD, 2026-07-16); bei
+    /// gleicher Waehrung (Waerk = Hwaer) tritt der Fehler nicht auf.
+    ///
+    /// Die Korrektur ist bewusst SELBSTDEAKTIVIEREND statt eines blinden "*100": sie greift
+    /// nur, wenn das Hochskalieren den Wert naeher an den erwarteten Betrag (NetwrDc * Kurrf)
+    /// bringt als der unkorrigierte Rohwert. Sobald SAP die Ursache behebt (TCURR-Pflege oder
+    /// ABAP-Fix), verschwindet die Abweichung und diese Korrektur wird von selbst wirkungslos —
+    /// kein Risiko einer Doppelkorrektur, falls der Codeblock dann vergessen wird zu entfernen.
+    /// </summary>
+    private static void CorrectHouseCurrencyScaling(Dictionary<string, object?> row)
+    {
+        var waerk = ReadString(row, "Waerk");
+        var hwaer = ReadString(row, "Hwaer");
+        if (string.IsNullOrWhiteSpace(waerk) || string.IsNullOrWhiteSpace(hwaer) ||
+            string.Equals(waerk, hwaer, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var kurrf = ParseDecimal(row, "Kurrf");
+        if (kurrf == 0m)
+            return;
+
+        var netwrDc = ParseDecimal(row, "NetwrDc");
+        var expected = netwrDc * kurrf;
+        var raw = ParseDecimal(row, "NetwrHc");
+        var scaledUp = raw * 100m;
+        if (Math.Abs(scaledUp - expected) < Math.Abs(raw - expected))
+            row["NetwrHc"] = scaledUp;
     }
 
     private static decimal ParseDecimal(Dictionary<string, object?> row, string key)

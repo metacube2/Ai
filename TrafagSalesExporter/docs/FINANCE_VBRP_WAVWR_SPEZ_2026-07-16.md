@@ -269,6 +269,7 @@ Export-Pipeline nach `ZSCHWEIZ`):
   TRCH/TRAT einmal neu importiert werden, damit die neue Kostenbasis in
   `CentralSalesRecords` und im naechsten zentralen Excel ankommt — die
   bestehenden 38'838/1'454 Zeilen aus dem alten Import bleiben sonst bei 0.
+
 ## 13. Deploy + Reimport + Verifikation (2026-07-16, Abend)
 
 - **Deploy durchgefuehrt:** `app_offline.htm` gesetzt, `dotnet publish -o
@@ -327,3 +328,40 @@ Export-Pipeline nach `ZSCHWEIZ`):
   - Produktiv-Deploy dieser App-Aenderung steht noch aus (bisher nur gegen
     `travt762` verifiziert, siehe `Sites.SapServiceUrl`-Altproblem in
     `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`).
+
+## 14. C#-seitiger Fix fuer den NETWR_HC-Skalierungsfehler (2026-07-16, spaeter Abend)
+
+- ABAP-Ursache identifiziert und dem Nutzer vollstaendig gezeigt: `to_house_currency`
+  (Zeile 436-468 in `docs/abap/Z_TRAFAG_SCHWEIZ_EXPORT.abap`) ruft
+  `CONVERT_TO_LOCAL_CURRENCY` mit explizitem `rate` auf; bei Fremdwaehrung liefert der
+  Baustein trotzdem exakt Faktor 100 zu wenig zurueck — vermutlich zusaetzliche
+  TCURR-Verhaeltnisfaktoren (FF/TF), die den schon korrekten `rate`-Parameter erneut
+  skalieren. Zwei moegliche SAP-seitige Fixes genannt: TCURR-Pflege pruefen (`OB08`),
+  oder Baustein mit `USA = 'X'` aufrufen bzw. direkt `iv_amount * iv_kurrf` verwenden.
+- **Auf Nutzerwunsch zusaetzlich C#-seitig kompensiert**, da der ABAP-Fix ausserhalb
+  unseres Zugriffs liegt (SAP-Entwickler/TCURR-Stammdaten). Neue Methode
+  `SapCompositionService.CorrectHouseCurrencyScaling` (aufgerufen aus
+  `NormalizeZschweizRows`, vormals `ResolveZschweizStandardCostRows`): korrigiert
+  `NetwrHc` nur, wenn `Waerk != Hwaer` UND das Hochskalieren (`*100`) den Wert naeher an
+  den erwarteten Betrag (`NetwrDc * Kurrf`) bringt als der unkorrigierte Rohwert.
+  **Bewusst selbstdeaktivierend statt eines blinden `*100`**, damit die Korrektur
+  automatisch wirkungslos wird, sobald SAP die Ursache behebt — kein Risiko einer
+  Doppelkorrektur, falls dieser Codeblock danach vergessen wird zu entfernen.
+  `TaxHc` bewusst NICHT korrigiert (auf `=0` gemappt, in der App ungenutzt).
+- Vor dem Fix mit `prod_check4.db` verifiziert: beide vorkommenden Fremdwaehrungen
+  (EUR 14'519 Zeilen, USD 364 Zeilen) zeigen exakt denselben Faktor 100
+  (`avg_hc_dc_ratio` = `avg_rate/100` fuer beide) — keine Currency-spezifische
+  Ausnahme, die den Fix falsch machen wuerde.
+- 3 neue Tests (`SapCompositionServiceTests.cs`): Korrektur greift bei verzerrtem Wert,
+  bleibt inaktiv bei bereits korrektem Wert (simuliert SAP-Fix), bleibt inaktiv bei
+  gleicher Waehrung. Gesamtstand: `246/246` Tests gruen.
+- **Offener Punkt, noch NICHT abschliessend bestaetigt:** `StandardCostCurrency = Waerk`
+  fuer den WAVWR-Pfad stuetzte sich bisher auch auf einen Kosten/Umsatz-Verhaeltnis-Check
+  gegen `NetwrHc` — der ist durch den gerade gefundenen NETWR_HC-Bug entwertet (mit
+  korrigiertem `NetwrHc` ergibt sich ein ebenso plausibles Verhaeltnis, unterscheidet
+  also nicht mehr zwischen Waerk/Hwaer). Die einzige verbliebene, tragende Quelle fuer
+  „WAVWR liegt in Belegwaehrung" ist Abschnitt 4 (direkte Aussage des SAP-Entwicklers,
+  nicht aus Daten abgeleitet) — sollte trotzdem nochmal explizit beim SAP-Entwickler
+  rueckbestaetigt werden, weil davon die Kostenwaehrung auf allen 38.5 % Fremdwaehrungs-
+  zeilen abhaengt (falscher Tag wuerde die CHF-Umrechnung der Kostenbasis um den
+  Kurs verzerren, 5-15 % je nach Waehrung).

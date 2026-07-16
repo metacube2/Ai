@@ -150,6 +150,84 @@ public class SapCompositionServiceTests
         Assert.Equal("CHF", record.StandardCostCurrency);
     }
 
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Corrects_Scaled_HouseCurrency_Netwr()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("Waerk", "USD"),
+                    ("Hwaer", "CHF"),
+                    ("Kurrf", "0.85"),
+                    ("NetwrDc", "19000.00"),
+                    ("NetwrHc", "161.50"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(),
+            [], [Mapping(nameof(SalesRecord.Material), "Z.Matnr"), Mapping(nameof(SalesRecord.SalesPriceValue), "Z.NetwrHc")],
+            "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(16150.00m, record.SalesPriceValue);
+    }
+
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Leaves_Correct_HouseCurrency_Netwr_Unchanged()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("Waerk", "USD"),
+                    ("Hwaer", "CHF"),
+                    ("Kurrf", "0.85"),
+                    ("NetwrDc", "19000.00"),
+                    ("NetwrHc", "16150.00"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(),
+            [], [Mapping(nameof(SalesRecord.Material), "Z.Matnr"), Mapping(nameof(SalesRecord.SalesPriceValue), "Z.NetwrHc")],
+            "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(16150.00m, record.SalesPriceValue);
+    }
+
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Leaves_SameCurrency_Netwr_Unchanged()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("Waerk", "CHF"),
+                    ("Hwaer", "CHF"),
+                    ("Kurrf", "1.0"),
+                    ("NetwrDc", "315.20"),
+                    ("NetwrHc", "315.20"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(),
+            [], [Mapping(nameof(SalesRecord.Material), "Z.Matnr"), Mapping(nameof(SalesRecord.SalesPriceValue), "Z.NetwrHc")],
+            "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(315.20m, record.SalesPriceValue);
+    }
+
     private static List<SapSourceDefinition> CreateStandardCostSources()
         => [new() { Id = 1, Alias = "Z", EntitySet = "FinanzdataSchweizOeSet", IsPrimary = true, IsActive = true, SortOrder = 0 }];
 
