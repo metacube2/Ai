@@ -257,6 +257,18 @@ Export-Pipeline nach `ZSCHWEIZ`):
   "EinstandsPreis") koennte eine Gutschriftszeile dadurch negativ erscheinen, waehrend
   eine STPRS-Fallback-Zeile immer positiv bleibt — inkonsistent, aber kein
   Rechenfehler. Nicht weiter verfolgt, da ausserhalb des aktuellen Scopes.
+- **Produktiv-Check vor Deploy (2026-07-16):** Kopie der produktiven
+  `trafag_exporter.db` gezogen und `StandardCost`-Fuellgrad je TSC geprueft
+  (`CentralSalesRecords`, `CAST(StandardCost AS REAL) > 0`):
+  TRCH `0/38'838` (0 %), TRAT `0/1'454` (0 %) — bestaetigt, dass die alte
+  `=0`-Mappingzeile in Produktion noch aktiv ist (Fix zu diesem Zeitpunkt nur
+  committed, noch nicht deployed/importiert). Andere TSC unveraendert wie
+  zuvor bekannt (TRDE 68.5 %, TRES 80.9 %, TRFR 51.4 %, TRIN 99.4 %,
+  TRIT 95.7 %, TRUS 92.3 %, TRUK 0 % — TRUK ist ein separates, bereits
+  bekanntes offenes Thema, nicht Teil dieses Features). Nach Deploy muss
+  TRCH/TRAT einmal neu importiert werden, damit die neue Kostenbasis in
+  `CentralSalesRecords` und im naechsten zentralen Excel ankommt — die
+  bestehenden 38'838/1'454 Zeilen aus dem alten Import bleiben sonst bei 0.
 - **Weiterhin unveraendert offen:**
   - `PersistGroupStandardCostsAsync` (TR-AG-Konzernkosten fuer andere TSC, z. B.
     TR IN/TR IT als interne Abnehmer) haengt weiterhin am kaputten `mbewSet`-Read —
