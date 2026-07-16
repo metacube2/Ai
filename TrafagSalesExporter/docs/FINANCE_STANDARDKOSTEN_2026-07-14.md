@@ -77,10 +77,15 @@ Umsatzexport eines ganzen Landes verhindern.
 
 ## Offen
 
-1. **Interner Lieferant ist weiterhin eine Attrappe:** Die Gruppenmarge beschriftet solche
-   Zeilen mit "Interner Standardpreis", rechnet aber identisch zu externen. Ein echter
-   Konzern-Standardpreis (MBEW-STPRS der liefernden Gesellschaft) ist nicht angebunden —
-   bewusst, weil die Fachentscheidung dazu aussteht.
+1. **Interner Lieferant war eine Attrappe — fuer TR AG seit 2026-07-15 umgesetzt, aber
+   produktiv noch nicht wirksam.** TR AG als liefernde Gesellschaft nutzt jetzt echte
+   MBEW-STPRS-Konzernkosten statt lokaler Verkaufszeilen-Kosten, siehe
+   `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` Nachtrag 2026-07-15 Teil 2. Live-Pruefung
+   2026-07-16: `GroupStandardCosts` ist auf dem Server weiterhin leer, weil der
+   ZSCHWEIZ-Standardpreis-Read seit dem Deploy zweimal fehlschlug (500-Fehler bzw.
+   Haenger) — vermutlich wegen der falschen Test-Server-URL `travt762` statt `travp762`
+   (Punkt 5 unten). TR IN/TR IT weiterhin ohne Konzernkostenquelle (TR IT live geprueft:
+   SAP B1 pflegt keinen Standardkosten-Wert je Material).
 2. **UK** liefert keine Kostenspalte im Sage-Export; **FR** hat bei 49 % der B1-Zeilen
    keinen `StockPrice` (Stammdatenfrage an FR).
 3. **Waehrungsmisch-Bug** (`Marge Original`) — GEFIXT 2026-07-15: Schalter
@@ -91,6 +96,10 @@ Umsatzexport eines ganzen Landes verhindern.
 4. **Drei Fachfragen an Andreas:** Welche Kostenart (lokaler Einstandswert vs.
    Konzern-Herstellkosten)? Bei internem Trafag-Lieferanten: Preis der liefernden oder der
    verkaufenden Gesellschaft? Lokal oder konzernweit rechnen?
+5. **NEU 2026-07-16: `Sites.SapServiceUrl` fuer ZSCHWEIZ zeigt auf den Test-Server
+   `travt762` statt `travp762` (Prod).** Bereits als Ursache fuer „CH/AT sieht 2026 nicht"
+   bekannt (siehe `docs/rag/FINANCE.md`); vermutlich auch Ursache fuer den fehlgeschlagenen
+   MBEW-Read (Punkt 1). Fix ist eine Konfigurationsaenderung, kein Codechange.
 
 ## Nachsorge nach dem naechsten Export
 

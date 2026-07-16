@@ -86,7 +86,9 @@ Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 
 
 ## Nachtrag 2026-07-15 (Teil 2): TR AG als liefernde Gesellschaft umgesetzt
 
-Umgesetzt und getestet (`240/240`), noch nicht deployed. Nach Live-Stichprobe (siehe
+Umgesetzt, getestet (`240/240`) und deployed (Commit `5efeed7`, DLL `15.07.2026 11:22:32`).
+Live-Pruefung 2026-07-16 zeigt: produktiv noch NICHT wirksam, siehe Nachtrag unten. Nach
+Live-Stichprobe (siehe
 `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` "Offen" Punkt 1) wurde Frage B fuer TR AG
 konkret geloest:
 
@@ -120,6 +122,37 @@ nutzbaren Standardkosten-Wert je Material in SAP B1. Das ist keine Codefrage meh
 eine offene Frage an Andreas/TR-IT-Controlling: Wo (wenn ueberhaupt) wird die
 Herstellkosten-Kalkulation gefuehrt? TR IN war vom Entwicklungsrechner aus nicht
 erreichbar (Netzwerk/Firewall) und daher gar nicht pruefbar.
+
+### Nachtrag 2026-07-16: Produktiv noch nicht wirksam — Root Cause gefunden
+
+Ein Tag nach Deploy live geprueft: `GroupStandardCosts` hat auf dem Produktivserver
+weiterhin `0` Zeilen. Stichprobe in `Sales_All_2026-07-15.xlsx` (Gruppenmarge Details,
+per ClosedXML-Lesetool ausgewertet): 45 gefundene Trafag-AG-Lieferant-Zeilen (TRFR/TRIN/
+TRIT) zeigen durchgaengig `CostSource = Interner Standardpreis` / `Status = Standardpreis
+fehlt` — keine einzige `Konzernkosten TR AG`. Die neue Logik greift also noch nicht.
+
+Root Cause laut `AppEventLogs`/`ExportLogs`: Der ZSCHWEIZ-Import lief seit dem Deploy
+zweimal, beide Male ohne erfolgreichen Standardpreis-Read:
+
+1. **2026-07-15 07:29 Uhr** (vor dem Deploy): Umsatzimport OK (`40'292` Zeilen), aber
+   `mbewSet`-Read schlug mit `500 Internal Server Error` fehl. Guardrail griff korrekt
+   (Umsatzimport lief trotzdem durch, `StandardCost` blieb 0 fuer die betroffenen Zeilen).
+2. **2026-07-15 12:01-12:02 Uhr** (nach dem Deploy): „Standardpreis-Read gestartet"
+   geloggt, danach bricht die Log-Kette komplett ab — kein Abschluss-, kein Fehler-Log,
+   nicht mal ein `ExportLogs`-Eintrag fuer diesen Lauf ueberhaupt. Der Prozess blieb
+   offenbar mitten in der SAP-Abfrage haengen oder wurde unterbrochen.
+
+Beide Aufrufe gingen an `travt762.sap.trafag.com` (TEST-Server) statt `travp762` (Prod) —
+deckt sich mit dem bereits bekannten, separaten Problem „CH/AT sieht das laufende Jahr
+nicht" (`Sites.SapServiceUrl` zeigt fuer ZSCHWEIZ auf den Testserver). Das ist sehr
+wahrscheinlich auch die Ursache fuer den 500-Fehler bzw. den Haenger beim `mbewSet`-Read —
+beide Probleme (2026 fehlt, Standardpreise leer) haben denselben wahrscheinlichen Fix.
+
+**Naechster Schritt:** `Sites.SapServiceUrl` fuer `ZSCHWEIZ` auf `travp762` korrigieren,
+danach ZSCHWEIZ-Import erneut anstossen und `GroupStandardCosts`/eine neu erzeugte
+`Sales_All`- bzw. Nachweis-Datei erneut pruefen (gleiche Stichprobenmethode: Filter auf
+`SupplierName LIKE '%Trafag AG%'` im Blatt „Gruppenmarge Details", `CostSource` muss
+`Konzernkosten TR AG (MBEW-STPRS)` zeigen).
 
 ## Naechste technische Schritte nach Fachfreigabe
 
