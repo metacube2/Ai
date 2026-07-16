@@ -3,7 +3,8 @@
 Stand: 2026-07-16
 Zielgruppe: SAP-/ABAP-Team (Service-Owner von `ZPOWERBI_EINKAUF_SRV`)
 App-Seite: noch nicht umgesetzt — bewusst zurueckgestellt, bis das Feld live ist und die
-drei offenen technischen Fragen in Abschnitt 4 beantwortet sind.
+verbliebenen technischen Fragen in Abschnitt 5 beantwortet sind. Fachlich ist die Wahl
+WAVWR (statt STPRS) bereits geklaert, siehe Abschnitt 4 — keine offene Andreas-Frage mehr.
 
 ## 1. Zweck
 
@@ -46,9 +47,39 @@ zu viele/irrelevante Materialien und haengt seit 2026-07-15 reproduzierbar):
   `Fkdat`/`Kunnr`/`Matnr`/`Fkimg` zu liefern), ist `Wavwr` ein zusaetzliches Feld auf
   derselben Struktur — kein neuer Datenbankzugriff.
 
-## 4. Offene technische Fragen (SAP-Entwickler zu bestaetigen)
+## 4. Fachliche Klaerung: WAVWR vs. STPRS (2026-07-16, mit SAP-Entwickler geklaert)
 
-1. **Zeilensumme oder Stueckpreis?** Aus der SE16N-Stichprobe (Abschnitt 5) folgt: bei
+**Vorab wichtig, damit hier keine falsche Aequivalenz entsteht:** `VBRP-WAVWR` ist
+**nicht** dasselbe Konzept wie `MBEW-STPRS`, auch nicht naeherungsweise.
+
+- `WAVWR` ist der **zum Zeitpunkt der Warenausgangsbuchung eingefrorene** Kostenwert —
+  "was hat uns dieser Verkauf gekostet". Aendert sich nicht rueckwirkend.
+- `STPRS` ist der **aktuelle** Standardpreis im Materialstamm — "was wuerde uns dieses
+  Produkt heute kosten". Aendert sich bei jeder Preisaenderung (`MR21`/`CK24`); eine
+  Neuberechnung derselben historischen Rechnung mit `STPRS` wuerde je nach Abfragezeit-
+  punkt unterschiedliche Margen liefern.
+- `WAVWR = Menge x (STPRS/PEINH)` gilt nur bei Preissteuerung `S` UND wenn seit dem
+  Warenausgang keine Preisaenderung stattfand. Bei Preissteuerung `V` (gleitender
+  Durchschnittspreis) entspricht `WAVWR` stattdessen `VERPR` zum Buchungszeitpunkt.
+  Relevanz fuer uns gering: Bewertungskreis 1100 (CH) ist laut ABAP-Bericht vom 14.07.
+  zu 100 % `VPRSV = S`; fuer 1200 (AT) noch nicht explizit erneut bestaetigt.
+- `WAVWR` liegt in **Belegwaehrung** (`Waerk`), nicht in Hauswaehrung (`Hwaer`) — das
+  beantwortet die fruehere Frage 2 (Waehrung) direkt.
+
+**Damit ist auch geklaert, welcher Wert fuer UNSER Feature richtig ist — keine offene
+Fachfrage an Andreas mehr:** Die Gruppenmarge/Finance Pruefbuch ist durchgehend eine
+"Was hat uns dieser Verkauf gekostet"-Anwendung (Margenanalyse je Beleg, Nachweis-/
+Audit-Sicht auf tatsaechlich gebuchte Transaktionen) — keine Preisfindungs- oder
+Sortimentsanalyse. Fuer diesen Zweck ist `WAVWR` fachlich der korrekte Wert, nicht
+`STPRS`. Das Ergebnis aendert sich bei einer spaeteren Neuberechnung nicht rueckwirkend,
+was fuer ein Audit-/Pruefbuch-Feature sogar ein Vorteil ist (reproduzierbare historische
+Margen). Falls jemals ein separates Pricing-/Sortiments-Feature entstehen sollte, waere
+dort `STPRS` (weiterhin ueber `mbewSet`, mit dem bekannten Performance-Thema) die
+richtige Wahl — betrifft aber nicht die Gruppenmarge.
+
+## 5. Offene rein technische Fragen (SAP-Entwickler zu bestaetigen)
+
+1. **Zeilensumme oder Stueckpreis?** Aus der SE16N-Stichprobe (Abschnitt 6, unten) folgt: bei
    `FKIMG=100` und `WAVWR=24'398.33` gegen `NETWR=47'125.00` (~52 % Kosten/Umsatz-
    Verhaeltnis) ist `WAVWR` eine **Zeilensumme**, kein Stueckpreis — waere es ein
    Stueckpreis, laege der Kostenwert absurd ueber dem Umsatz. **Zu bestaetigen.** Falls
@@ -56,13 +87,14 @@ zu viele/irrelevante Materialien und haengt seit 2026-07-15 reproduzierbar):
    (z. B. DE: `NettoPreisGesamt - RohertragGesamt` / Menge) als Stueckpreis zu
    normalisieren — sonst liegt die Marge um den Mengenfaktor daneben (derselbe
    `PEINH`-Fallstrick wie bei MBEW-STPRS).
-2. **Welche Waehrung?** Hauswaehrung (analog `Hwaer`/`NetwrHc`) oder Belegwaehrung
-   (analog `Waerk`/`NetwrDc`)? Wird fuer `StandardCostCurrency` benoetigt.
-3. **Vorzeichen bei Gutschriften/Retouren:** Kommt `WAVWR` bei einem Gutschriftsbeleg
+2. **Vorzeichen bei Gutschriften/Retouren:** Kommt `WAVWR` bei einem Gutschriftsbeleg
    schon negativ zurueck (analog `NETWR`), oder ist es immer positiv und die App muesste
    das Vorzeichen selbst ueber `IsCredit`/Belegart herleiten?
+3. **AT/Bewertungskreis 1200:** Ist dort `VPRSV` ueberwiegend ebenfalls `S`, oder gibt es
+   nennenswerten `V`-Anteil? (Nur zur Einordnung, aendert nichts an der Grundsatzwahl
+   WAVWR — siehe Abschnitt 4.)
 
-## 5. SE16N-Referenzdaten (2026-07-16, vom SAP-Entwickler geliefert)
+## 6. SE16N-Referenzdaten (2026-07-16, vom SAP-Entwickler geliefert)
 
 22 Datensaetze direkt aus `VBRP` (Tabelle, nicht OData) bestaetigen: `WAVWR` ist real
 befuellt mit plausiblen Werten, z. B.:
@@ -80,12 +112,12 @@ Wichtig: Dieser Auszug bestaetigt nur, dass `WAVWR` in der **Tabelle** `VBRP` ge
 (SE16N liest die DB-Tabelle direkt). Er sagt nichts darueber aus, ob das Feld im
 **OData-Service** exponiert ist — das ist laut Abschnitt 2 aktuell nicht der Fall.
 
-## 6. Was die App daraus machen wuerde (sobald Abschnitt 4 geklaert ist)
+## 7. Was die App daraus machen wuerde (sobald Abschnitt 5 geklaert ist)
 
 | Zielfeld | Ableitung (Entwurf, noch nicht umgesetzt) |
 | --- | --- |
 | `StandardCost` | `Z.Wavwr / Z.Fkimg` (falls Zeilensumme, siehe Frage 1) |
-| `StandardCostCurrency` | `Z.Hwaer` oder `Z.Waerk`, je nach Antwort auf Frage 2 |
+| `StandardCostCurrency` | `Z.Waerk` (Belegwaehrung, siehe Abschnitt 4) |
 
 Der bestehende `mbewSet`-CH/AT-Scan (`SapGatewayStandardCostReader` +
 `StandardCostEnricher.ValuationAreaByCountry`) wuerde dadurch fuer die **lokale**
@@ -95,7 +127,7 @@ hinweg) — die bleibt ein separater, zusaetzlicher Mechanismus und wird durch `
 nicht ersetzt. `Wavwr` loest „CH/AT braucht ueberhaupt eine Kostenbasis"; die
 TR-AG-Logik loest „interner Lieferant TR AG braucht Konzernkosten statt lokaler Kosten".
 
-## 7. Warum das das Performance-Problem strukturell loest
+## 8. Warum das das Performance-Problem strukturell loest
 
 `FinanzdataSchweizOeSet` liefert fuer `ZSCHWEIZ` zuverlaessig **40'292 Zeilen**
 (mehrfach bestaetigt, zuletzt 46.0s Laufzeit). `mbewSet` filtert nur nach Bewertungskreis
@@ -107,7 +139,7 @@ zuverlaessig laeuft. Der komplette `mbewSet`-Aufruf (der seit 2026-07-15 haengt)
 dadurch fuer die CH/AT-Kostenbasis komplett entfallen, statt durch einen gleich grossen
 Scan ersetzt zu werden.
 
-## 8. Abnahme (sobald Feld live ist)
+## 9. Abnahme (sobald Feld live ist)
 
 1. `GET .../FinanzdataSchweizOeSet?$format=json&$top=5` liefert Zeilen mit `Wavwr`.
 2. Stichprobe: `Wavwr` gegen `NETWR`/`FKIMG` derselben Belegzeile in SE16N plausibilisiert
@@ -118,7 +150,7 @@ Scan ersetzt zu werden.
    `SupplierName LIKE '%Trafag AG%'` bzw. allgemeine CH/AT-Kostenquote gegen die
    erwarteten ~92-96 % pruefen).
 
-## 9. Zusammenhang mit offenen Punkten
+## 10. Zusammenhang mit offenen Punkten
 
 - Loest NICHT die Fragen A/B an Andreas (Kostenart, liefernde vs. verkaufende
   Gesellschaft) — das bleibt ein fachlicher Entscheid, siehe
