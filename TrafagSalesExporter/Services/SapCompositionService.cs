@@ -1,3 +1,4 @@
+using System.Globalization;
 using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
@@ -48,6 +49,8 @@ public class SapCompositionService : ISapCompositionService
             var filter = BuildODataYearFilter(source.EntitySet, preferredYear);
             var rows = await _sapGatewayService.GetEntityRowsAsync(site.SapServiceUrl, source.EntitySet, username, password, filter, cancellationToken);
             ValidateSourceRows(site, source, rows);
+            if (string.Equals(source.EntitySet, "FinanzdataSchweizOeSet", StringComparison.OrdinalIgnoreCase))
+                ResolveZschweizStandardCostRows(rows);
             sourceRows[source.Alias] = rows;
             await _appEventLogService.WriteDebugAsync("SAP", "Quelle gelesen", site.Id, site.Land,
                 $"Alias={source.Alias} | EntitySet={source.EntitySet} | Zeilen={rows.Count}");
@@ -70,6 +73,49 @@ public class SapCompositionService : ISapCompositionService
             ? $"Gjahr eq '{preferredYear.Value}'"
             : null;
     }
+
+    /// <summary>
+    /// FinanzdataSchweizOeSet liefert keinen direkten Kostenwert; ZSCHWEIZ.WAVWR_DC (per
+    /// ABAP-Report ergaenzt, siehe docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md) ist die
+    /// zum Verkaufszeitpunkt eingefrorene Kostenzeilensumme in Belegwaehrung (Waerk).
+    /// StandardCost ist downstream ein STUECKpreis (Menge x StandardCost), deshalb hier
+    /// durch Fkimg geteilt. ZSCHWEIZ.STPRS_HC (aktueller MBEW-Stueckpreis, Hauswaehrung)
+    /// ist der Fallback fuer die ~12 % Zeilen ohne Lieferbezug (kein WAVWR gebucht).
+    /// Ergebnis wird als synthetische Felder in die Rohzeile geschrieben, damit das
+    /// bestehende SapFieldMapping (Z.ResolvedStandardCost/-Currency) sie direkt referenzieren
+    /// kann, ohne die Mapping-Ausdruckssprache um Arithmetik erweitern zu muessen.
+    /// </summary>
+    private static void ResolveZschweizStandardCostRows(List<Dictionary<string, object?>> rows)
+    {
+        foreach (var row in rows)
+        {
+            var wavwrDc = ParseDecimal(row, "WavwrDc");
+            var fkimg = ParseDecimal(row, "Fkimg");
+            if (wavwrDc != 0m && fkimg != 0m)
+            {
+                row["ResolvedStandardCost"] = wavwrDc / fkimg;
+                row["ResolvedStandardCostCurrency"] = ReadString(row, "Waerk");
+                continue;
+            }
+
+            var stprsHc = ParseDecimal(row, "StprsHc");
+            if (stprsHc != 0m)
+            {
+                row["ResolvedStandardCost"] = stprsHc;
+                row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
+                continue;
+            }
+
+            row["ResolvedStandardCost"] = 0m;
+            row["ResolvedStandardCostCurrency"] = ReadString(row, "Hwaer");
+        }
+    }
+
+    private static decimal ParseDecimal(Dictionary<string, object?> row, string key)
+        => row.TryGetValue(key, out var value) &&
+           decimal.TryParse(value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : 0m;
 
     private static void ValidateSourceRows(Site site, SapSourceDefinition source, IReadOnlyCollection<Dictionary<string, object?>> rows)
     {

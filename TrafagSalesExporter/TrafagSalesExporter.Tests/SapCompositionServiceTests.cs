@@ -75,6 +75,92 @@ public class SapCompositionServiceTests
         Assert.Equal("True", record.ProductMappingAssigned);
     }
 
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Uses_Wavwr_DividedByQuantity_As_StandardCost()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("WavwrDc", "24398.33"),
+                    ("Fkimg", "100"),
+                    ("Waerk", "CHF"),
+                    ("StprsHc", "1.01"),
+                    ("Hwaer", "CHF"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(), [], CreateStandardCostMappings(), "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(243.9833m, record.StandardCost);
+        Assert.Equal("CHF", record.StandardCostCurrency);
+    }
+
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Falls_Back_To_Stprs_When_Wavwr_Is_Zero()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("WavwrDc", "0"),
+                    ("Fkimg", "10"),
+                    ("Waerk", "CHF"),
+                    ("StprsHc", "1.01"),
+                    ("Hwaer", "CHF"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(), [], CreateStandardCostMappings(), "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(1.01m, record.StandardCost);
+        Assert.Equal("CHF", record.StandardCostCurrency);
+    }
+
+    [Fact]
+    public async Task BuildSalesRecordsAsync_Zschweiz_Zero_When_Neither_Wavwr_Nor_Stprs_Available()
+    {
+        var service = CreateService(new Dictionary<string, List<Dictionary<string, object?>>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FinanzdataSchweizOeSet"] =
+            [
+                Row(
+                    ("Matnr", "6"),
+                    ("WavwrDc", "0"),
+                    ("Fkimg", "10"),
+                    ("Waerk", "CHF"),
+                    ("StprsHc", "0"),
+                    ("Hwaer", "CHF"))
+            ]
+        });
+
+        var result = await service.BuildSalesRecordsAsync(
+            CreateSite(), CreateStandardCostSources(), [], CreateStandardCostMappings(), "user", "password");
+
+        var record = Assert.Single(result);
+        Assert.Equal(0m, record.StandardCost);
+        Assert.Equal("CHF", record.StandardCostCurrency);
+    }
+
+    private static List<SapSourceDefinition> CreateStandardCostSources()
+        => [new() { Id = 1, Alias = "Z", EntitySet = "FinanzdataSchweizOeSet", IsPrimary = true, IsActive = true, SortOrder = 0 }];
+
+    private static List<SapFieldMapping> CreateStandardCostMappings()
+        =>
+        [
+            Mapping(nameof(SalesRecord.Material), "Z.Matnr"),
+            Mapping(nameof(SalesRecord.StandardCost), "Z.ResolvedStandardCost"),
+            Mapping(nameof(SalesRecord.StandardCostCurrency), "Z.ResolvedStandardCostCurrency")
+        ];
+
     private static SapCompositionService CreateService(IReadOnlyDictionary<string, List<Dictionary<string, object?>>> rowsByEntitySet)
         => new(
             new FakeSapGatewayService(rowsByEntitySet),

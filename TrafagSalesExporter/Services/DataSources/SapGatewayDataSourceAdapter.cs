@@ -98,7 +98,14 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
             var standardCosts = await _standardCostReader.GetStandardCostsAsync(
                 sapServiceUrl, username, password, valuationAreas, site.Land);
 
-            var result = StandardCostEnricher.Apply(records, standardCosts);
+            // Fuer ZSCHWEIZ (CH/AT) liefert die Mapping-Stufe bereits eine Kostenbasis aus
+            // VBRP-WAVWR/MBEW-STPRS (siehe SapCompositionService.ResolveZschweizStandardCostRows,
+            // docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md). WAVWR bleibt fuehrend, weil zum
+            // Verkaufszeitpunkt eingefroren; MBEW-STPRS hier ist der AKTUELLE Preis und wuerde
+            // das sonst rueckwirkungsfrei ueberschreiben. Nur Zeilen ohne bereits aufgeloeste
+            // Kostenbasis bekommen diesen (aelteren) Fallback.
+            var recordsWithoutCostBasis = records.Where(r => r.StandardCost == 0m).ToList();
+            var result = StandardCostEnricher.Apply(recordsWithoutCostBasis, standardCosts);
             await _appEventLogService.WriteAsync("Export", "Standardpreise zugeordnet",
                 siteId: site.Id, land: site.Land,
                 details: $"Materialpreise={standardCosts.Count} | Zeilen mit Kosten={result.Matched} " +

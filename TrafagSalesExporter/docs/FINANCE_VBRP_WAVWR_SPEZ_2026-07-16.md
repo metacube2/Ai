@@ -2,9 +2,11 @@
 
 Stand: 2026-07-16
 Zielgruppe: SAP-/ABAP-Team (Service-Owner von `ZPOWERBI_EINKAUF_SRV`)
-App-Seite: noch nicht umgesetzt — bewusst zurueckgestellt, bis das Feld live ist und die
-verbliebenen technischen Fragen in Abschnitt 5 beantwortet sind. Fachlich ist die Wahl
-WAVWR (statt STPRS) bereits geklaert, siehe Abschnitt 4 — keine offene Andreas-Frage mehr.
+App-Seite: umgesetzt (2026-07-16, siehe Abschnitt 12) — `WavwrDc`/`StprsHc` live in
+`FinanzdataSchweizOeSet` verifiziert, App-Mapping auf `travt762` fertig, 243/243 Tests
+gruen. Rueckwirkender ABAP-Lauf bisher nur bis 2025, Produktiv-Deploy steht noch aus.
+Fachlich ist die Wahl WAVWR (statt STPRS) geklaert, siehe Abschnitt 4 — keine offene
+Andreas-Frage mehr.
 
 ## 1. Zweck
 
@@ -203,3 +205,65 @@ Export-Pipeline nach `ZSCHWEIZ`):
   `VGTYP`-Verifikation der Lieferbezug-Hypothese noch offen. SEGW-Ergaenzung von
   `Wavwr_Dc`/`Stprs_Hc` auf `FinanzdataSchweizOe` (statt nur `VBRPSet`) noch zu
   bestaetigen.
+
+## 12. Rueckwirkender Lauf 2025 + SEGW-Ergaenzung + App-Anbindung (2026-07-16, Teil 2)
+
+- **Rueckwirkender ABAP-Lauf:** `s_gjahr` auf 2025-2026 erweitert und erneut gestartet
+  (UPSERT, `MODIFY zschweiz FROM TABLE lt_chunk` — bestehende Zeilen werden komplett
+  neu geschrieben, kein Loeschen der Tabelle noetig).
+- **GET_ENTITYSET-Review (`finanzdataschwei_get_entityset`, vom SAP-Entwickler
+  bereitgestellt):** macht ein generisches `SELECT * FROM zschweiz INTO TABLE
+  @et_entityset` ohne feste Feldliste. Bei `@`-Inline-Syntax mit abweichendem
+  Zielstrukturtyp erfolgt eine namensbasierte Zuordnung (wie `MOVE-CORRESPONDING`) —
+  **keine Codeaenderung noetig**, sobald die Properties in SEGW mit demselben
+  ABAP-Feldnamen wie in `ZSCHWEIZ` angelegt sind.
+- **SEGW-Ergaenzung durchgefuehrt:** `WavwrDc`/`StprsHc` als Properties auf
+  `FinanzdataSchweizOe` angelegt und generiert (auf `travt762`).
+- **Live-Verifikation gegen `travt762` (`FinanzdataSchweizOeSet`):**
+  - Metadata enthaelt jetzt `WavwrDc : Edm.Decimal` und `StprsHc : Edm.Decimal` —
+    Bestaetigung ohne GET_ENTITYSET-Aenderung.
+  - Sample `Vbeln=90356144/Posnr=000010` (Fkimg=1, Waerk=Hwaer=CHF):
+    `WavwrDc=0.30`, `StprsHc=0.23` — echte Werte, kein Null/0-Rueckfall.
+  - Nicht-entarteter Sample `Vbeln=90356146/Posnr=000040`: `Fkimg=50`,
+    `WavwrDc=9870.85`, `Waerk=USD ≠ Hwaer=CHF` — bestaetigt sowohl die Mengenteilung
+    (9870.85/50 = 197.417 Stueckkosten) als auch den Fall abweichender Kostenwaehrung.
+- **App-seitiges Mapping umgesetzt** (`Services/SapCompositionService.cs`,
+  `ResolveZschweizStandardCostRows`): pro Zeile wird `WavwrDc/Fkimg` (Waehrung `Waerk`)
+  berechnet; ist `WavwrDc` 0 (kein Lieferbezug, ~12 % der Zeilen), Fallback auf
+  `StprsHc` (Waehrung `Hwaer`). Ergebnis liegt als synthetische Felder
+  `ResolvedStandardCost`/`ResolvedStandardCostCurrency` vor, damit das bestehende
+  `SapFieldMapping` (`Services/DatabaseSeedService.cs`, Ziel `StandardCost`/
+  `StandardCostCurrency`) sie ohne Erweiterung der Mapping-Ausdruckssprache direkt
+  referenzieren kann. Ersetzt die bisherige feste `=0`-Mappingzeile.
+  - Downstream-Pruefung (`ManagementCockpitService.cs:494`,
+    `ExcelExportService.cs`-Pendant): die CHF-Umrechnung schlaegt bereits pro Zeile
+    an `record.StandardCostCurrency` nach — die neue, zeilenabhaengige Waehrung
+    (`Waerk` bzw. `Hwaer`) wird also korrekt aufgeloest, keine Anpassung dort noetig.
+  - `Services/DataSources/SapGatewayDataSourceAdapter.cs`: die (weiterhin haengende)
+    `mbewSet`-Anreicherung (`StandardCostEnricher.Apply`) wird jetzt nur noch auf
+    Zeilen ohne bereits aufgeloeste Kostenbasis (`StandardCost == 0`) angewendet,
+    damit ein spaeter wieder funktionierender `mbewSet`-Call den aktuellen
+    (nicht historisch eingefrorenen) `STPRS`-Wert nicht stillschweigend ueber die
+    fuehrende `WAVWR_DC`-Basis schreibt.
+  - Tests: 3 neue Faelle in `SapCompositionServiceTests.cs` (Normalfall,
+    STPRS-Fallback, beide leer). Gesamtstand: 243/243 gruen.
+- **Bekannte Einschraenkung, nicht behoben:** `WAVWR_DC` traegt (wie `NETWR_DC`) das
+  Vorzeichen der Gutschrift/Retoure aus dem ABAP-Report, `STPRS_HC` ist immer
+  unsigned. Fuer die Gruppenmarge selbst ist das folgenlos, weil
+  `ResolveGroupMarginCostBasis` (`ManagementCockpitService.cs`/
+  `ExcelExportService.cs`) den Betrag ohnehin per `Math.Abs(...)` normalisiert und
+  das Vorzeichen explizit aus dem Umsatzvorzeichen (`isReversal`) neu setzt. Fuer
+  rohe `StandardCost`-Anzeigen ausserhalb der Gruppenmarge (z. B. Export-Spalte
+  "EinstandsPreis") koennte eine Gutschriftszeile dadurch negativ erscheinen, waehrend
+  eine STPRS-Fallback-Zeile immer positiv bleibt — inkonsistent, aber kein
+  Rechenfehler. Nicht weiter verfolgt, da ausserhalb des aktuellen Scopes.
+- **Weiterhin unveraendert offen:**
+  - `PersistGroupStandardCostsAsync` (TR-AG-Konzernkosten fuer andere TSC, z. B.
+    TR IN/TR IT als interne Abnehmer) haengt weiterhin am kaputten `mbewSet`-Read —
+    durch den heutigen Wechsel weder geloest noch verschlechtert, bleibt offen.
+  - Rueckwirkender Lauf nur bis 2025 gemacht, nicht fuer die komplette Historie.
+  - `VGTYP`-Verifikation der Lieferbezug-Hypothese weiterhin nicht abschliessend
+    verifiziert.
+  - Produktiv-Deploy dieser App-Aenderung steht noch aus (bisher nur gegen
+    `travt762` verifiziert, siehe `Sites.SapServiceUrl`-Altproblem in
+    `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`).
