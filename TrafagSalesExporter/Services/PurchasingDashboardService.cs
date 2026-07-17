@@ -798,29 +798,105 @@ WHERE " + spendItemFilter + @"
 GROUP BY Supplier, Year
 ORDER BY Supplier, Year;";
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
-            var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
-            var year = Convert.ToInt32(reader.GetValue(1), CultureInfo.InvariantCulture);
-            var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
-            if (!rowsBySupplier.TryGetValue(supplier, out var values))
+            while (await reader.ReadAsync(cancellationToken))
             {
-                values = [];
-                rowsBySupplier[supplier] = values;
-            }
+                var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
+                var year = Convert.ToInt32(reader.GetValue(1), CultureInfo.InvariantCulture);
+                var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+                if (!rowsBySupplier.TryGetValue(supplier, out var values))
+                {
+                    values = [];
+                    rowsBySupplier[supplier] = values;
+                }
 
-            values[year] = value;
+                values[year] = value;
+            }
         }
+
+        var groupsBySupplier = await ExecuteSupplierGroupYearRowsAsync(conn, filter, spendItemFilter, years, cancellationToken);
 
         return rowsBySupplier
             .Select(row => new PurchasingSupplierYearSpendRow(
                 row.Key,
                 years.ToDictionary(year => year, year => row.Value.TryGetValue(year, out var value) ? value : 0m),
-                row.Value.Values.Sum()))
+                row.Value.Values.Sum())
+            {
+                MaterialGroups = groupsBySupplier.TryGetValue(row.Key, out var groups) ? groups : []
+            })
             .OrderByDescending(row => row.Total)
             .Take(40)
             .ToList();
+    }
+
+    /// <summary>
+    /// Drilldown-Ebene der Spend-Matrix (Marco/Armin 2026-07-17): Spend je Lieferant nach
+    /// Warengruppe und Jahr. Warengruppe = aktuelle Materialstamm-Gruppe (MaraMatkl), Fallback
+    /// Beleg-Warengruppe (EKPO.Matkl), solange SAP MARA-MATKL noch nicht im Service liefert.
+    /// </summary>
+    private static async Task<Dictionary<string, List<PurchasingSpendGroupYearRow>>> ExecuteSupplierGroupYearRowsAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        IReadOnlyList<int> years,
+        CancellationToken cancellationToken)
+    {
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var maxSpendYear = MaxSpendYear(filter);
+        var valuesBySupplierGroup = new Dictionary<string, Dictionary<string, Dictionary<int, decimal>>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
+       COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + @"
+  AND k.Bedat >= '" + from + @"'
+  AND k.Bedat <= '" + to + @"'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
+GROUP BY Supplier, MaterialGroup, Year
+ORDER BY Supplier, MaterialGroup, Year;";
+
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
+                var materialGroup = reader.IsDBNull(1) ? "ohne Warengruppe" : reader.GetString(1);
+                var year = Convert.ToInt32(reader.GetValue(2), CultureInfo.InvariantCulture);
+                var value = Convert.ToDecimal(reader.GetValue(3), CultureInfo.InvariantCulture);
+
+                if (!valuesBySupplierGroup.TryGetValue(supplier, out var groups))
+                {
+                    groups = new Dictionary<string, Dictionary<int, decimal>>(StringComparer.OrdinalIgnoreCase);
+                    valuesBySupplierGroup[supplier] = groups;
+                }
+
+                if (!groups.TryGetValue(materialGroup, out var values))
+                {
+                    values = [];
+                    groups[materialGroup] = values;
+                }
+
+                values[year] = value;
+            }
+        }
+
+        return valuesBySupplierGroup.ToDictionary(
+            supplier => supplier.Key,
+            supplier => supplier.Value
+                .Select(group => new PurchasingSpendGroupYearRow(
+                    group.Key,
+                    years.ToDictionary(year => year, year => group.Value.TryGetValue(year, out var value) ? value : 0m),
+                    group.Value.Values.Sum()))
+                .OrderByDescending(group => group.Total)
+                .ToList(),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     // Preisentwicklung je Artikel: Top-N-Artikel nach CHF-Spend, danach mengengewichteter

@@ -266,11 +266,11 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bstyp, $Bsart, $
             }, cancellationToken);
     }
 
-    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> materialStatusMap, string loadedAtUtc, CancellationToken cancellationToken)
+    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -279,6 +279,9 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
                 ["$Matnr"] = GetText(row, "Matnr"),
                 ["$Txz01"] = GetText(row, "Txz01"),
                 ["$Matkl"] = GetText(row, "Matkl"),
+                // Aktuelle Warengruppe aus dem Materialstamm (Marco: Beleg-Matkl ist in alten
+                // Belegen nur die Dummy-Gruppe). Bleibt leer, bis SAP Matkl im maracalcSet liefert.
+                ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, GetText(row, "Matnr")),
                 ["$Menge"] = GetText(row, "Menge"),
                 ["$Meins"] = GetText(row, "Meins"),
                 ["$Netwr"] = GetText(row, "Netwr"),
@@ -291,27 +294,53 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $Menge, $Meins, $Netwr, $Loekz, 
             }, cancellationToken);
     }
 
-    private async Task<Dictionary<string, string>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
     {
         // MARA-MSTAE (Materialstatus) liefert das Loeschkennzeichen je Material.
         // Wird ueber EKPO.Matnr -> MARA.Matnr in PurchasingEkpoCache.Mstae uebernommen.
-        var rows = await ReadAllRowsAsync(client, baseUrl, "MARA001Set", "Matnr,Mstae", string.Empty, "Matnr", cancellationToken);
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        //
+        // SAP-Umbau (festgestellt 2026-07-17): Das bisherige MARA001Set (EntityType MARA)
+        // exponiert Mstae NICHT mehr ($select=Mstae -> 404); Ersatzquelle ist das neue
+        // maracalcSet. Dieses Set ignoriert $top/$skip (gleiches Verhalten wie mbewSet),
+        // deshalb bewusst EIN ungepagter Request statt ReadAllRowsAsync — das Paging wuerde
+        // sonst bei jedem "Blatt" den vollen Bestand (~68'000 Zeilen) erneut laden.
+        //
+        // Matkl (aktuelle Warengruppe aus dem Materialstamm, Wunsch Marco) ist aktuell in
+        // KEINEM MARA-EntityType vorhanden — sobald SAP das Feld ergaenzt, hier nur das
+        // $select um ",Matkl" erweitern; Write-Pfad und Cache-Spalte (MaraMatkl) stehen schon.
+        var url = $"{baseUrl}maracalcSet?$format=json&$select={Uri.EscapeDataString("Matnr,Mstae")}";
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"SAP OData maracalcSet fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) URL={url} Antwort={TrimForLog(error)}");
+        }
+
+        var rows = ParseRows(await response.Content.ReadAsStringAsync(cancellationToken));
+        var map = new Dictionary<string, MaterialMasterInfo>(StringComparer.Ordinal);
         foreach (var row in rows)
         {
             var key = NormalizeMatnr(GetText(row, "Matnr"));
             if (key.Length == 0)
                 continue;
-            map[key] = GetText(row, "Mstae");
+            map[key] = new MaterialMasterInfo(GetText(row, "Mstae"), GetText(row, "Matkl"));
         }
 
         return map;
     }
 
-    private static string ResolveMaterialStatus(IReadOnlyDictionary<string, string> materialStatusMap, string matnr)
+    internal sealed record MaterialMasterInfo(string Mstae, string Matkl);
+
+    private static string ResolveMaterialStatus(IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string matnr)
     {
         var key = NormalizeMatnr(matnr);
-        return key.Length > 0 && materialStatusMap.TryGetValue(key, out var status) ? status : string.Empty;
+        return key.Length > 0 && materialStatusMap.TryGetValue(key, out var info) ? info.Mstae : string.Empty;
+    }
+
+    private static string ResolveMaterialGroup(IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && materialStatusMap.TryGetValue(key, out var info) ? info.Matkl : string.Empty;
     }
 
     private static string NormalizeMatnr(string value)

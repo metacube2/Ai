@@ -55,7 +55,7 @@ LFA1-Adressfelder (`Land1`, `Regio`, `Ort01`), MARC-Felder (`Dispo`, `Eisbe`), E
 | 4 | Kreditor | **vorhanden** | `Lifnr` + LFA1-`Name1` (produktiv Full Load noetig, siehe Phase 0) |
 | 5 | Beschaffungsregion | **fehlt — SAP-Check** | LFA1-Adresse: pruefen ob `LFA1Set` `Land1`/`Regio`/`Ort01` liefert. Falls ja: Spalten in EKKO-Cache bzw. Lieferanten-Map ergaenzen. Region = Land, spaeter gruppierbar (EU/Asien/...). |
 | 6 | Materialnummer | **vorhanden** | `Matnr` + `Txz01` |
-| 7 | ABC-/XYZ | **parken** | Marco sieht selbst noch keinen Zweck. Nicht bauen; als Idee im Ideen-Katalog fuehren. |
+| 7 | ABC-/XYZ | **Weg geklaert, spaeter** | Update Feedback-Runde 2026-07-17: ABC-Kennzeichen = `MARC-MAABC` (Sicht O2); XYZ liegt in separater Tabelle; vorhandener SAP-Report kann beides extrahieren. Umsetzung erst nach Abnahme Spend-Reiter (Marcos Ein-Punkt-nach-dem-anderen-Regel). |
 
 ## Anforderungs-Mapping: Kennzahlen Beschaffungstransaktionen (Disponenten 001-005)
 
@@ -160,7 +160,8 @@ Reihenfolge nach Nutzen/Aufwand:
 | SAP-Service-Erweiterung: Kontraktfelder, MARC, EKBE, RESB | SAP-Team (Anfrage durch Ingo) | Phase 2.4/2.5, Phase 3 |
 | QM-Transaktion + Soll-Spalten fuer Reklamationsquote | Marco/Einkauf | Phase 3.2 |
 | Braucht der Einkauf den bestehenden Performance Score? | Marco (Memo) | — |
-| ABC-/XYZ-Analyse: Zweck unklar | Marco | geparkt |
+| ABC-/XYZ-Analyse | Ingo (nach Spend-Abnahme) | Weg klar seit 2026-07-17: MARC-MAABC (O2) + XYZ-Tabelle via vorhandenem Report |
+| SAP-Erweiterung: `Matkl` in `maracalc` aufnehmen (MARA-MATKL fuer Spend-Drilldown) | SAP-Team (Anfrage durch Ingo) | Warengruppen-Drilldown zeigt bis dahin Beleg-Matkl |
 | WKURS-Richtung an echtem Fremdwaehrungsbeleg | Ingo (SAP-Zugriff) | Phase 0.4 |
 
 ---

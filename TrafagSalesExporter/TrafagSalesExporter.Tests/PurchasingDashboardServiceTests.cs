@@ -293,6 +293,64 @@ public class PurchasingDashboardServiceTests : IDisposable
             "INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('E1', '10', '1', '2025-06-15', '1', '0', '2026-01-01');");
     }
 
+    [Fact]
+    public async Task LoadAsync_SupplierYearSpendRows_Contain_MaterialGroup_Drilldown()
+    {
+        // Marco/Armin-Review 2026-07-17: Lieferant aufklappen zeigt Spend je Warengruppe.
+        // MaraMatkl (aktueller Materialstamm) gewinnt gegen die Beleg-Warengruppe (Matkl);
+        // ohne beide faellt die Zeile in 'ohne Warengruppe'.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '10', 'M1', 'ALT1', 'NEU1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '20', 'M2', 'ALT2', '', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '30', 'M3', '', '', '1', '300', '2026-01-01');");
+        // Cache-Pfad verlangt Zeilen in allen drei Tabellen (TryLoadCacheStateAsync).
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('D1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Lieferant Eins"));
+        Assert.Equal(600m, supplierRow.Total);
+        Assert.Equal(3, supplierRow.MaterialGroups.Count);
+
+        // MaraMatkl gewinnt: Position 10 landet unter NEU1, nicht unter ALT1.
+        var currentGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "NEU1");
+        Assert.Equal(100m, currentGroup.Total);
+        Assert.Equal(100m, currentGroup.YearValues[2025]);
+
+        var documentGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "ALT2");
+        Assert.Equal(200m, documentGroup.Total);
+
+        var withoutGroup = Assert.Single(supplierRow.MaterialGroups, group => group.MaterialGroup == "ohne Warengruppe");
+        Assert.Equal(300m, withoutGroup.Total);
+
+        // Drilldown-Summe muss exakt der Lieferantenzeile entsprechen (Pivot-Eigenschaft).
+        Assert.Equal(supplierRow.Total, supplierRow.MaterialGroups.Sum(group => group.Total));
+    }
+
+    [Fact]
+    public async Task LoadAsync_MaterialGroup_Drilldown_Respects_SpendPeriodFilter()
+    {
+        // Zeitraumfilter wirkt auf beide Ebenen: Beleg ausserhalb des Zeitraums fehlt auch im Drilldown.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('F1', '2024-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('F2', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('F1', '10', 'M1', 'WG1', '1', '111', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('F2', '10', 'M1', 'WG1', '1', '222', '2026-01-01');");
+        // Cache-Pfad verlangt Zeilen in allen drei Tabellen (TryLoadCacheStateAsync).
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('F2', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Lieferant Eins"));
+        var group = Assert.Single(supplierRow.MaterialGroups);
+        Assert.Equal("WG1", group.MaterialGroup);
+        Assert.Equal(222m, group.Total);
+        Assert.False(group.YearValues.ContainsKey(2024));
+    }
+
     private void CreatePurchasingCacheTables()
     {
         ExecuteSync(@"
@@ -318,6 +376,7 @@ CREATE TABLE PurchasingEkpoCache (
     Matnr TEXT NOT NULL DEFAULT '',
     Txz01 TEXT NOT NULL DEFAULT '',
     Matkl TEXT NOT NULL DEFAULT '',
+    MaraMatkl TEXT NOT NULL DEFAULT '',
     Menge TEXT NOT NULL DEFAULT '0',
     Meins TEXT NOT NULL DEFAULT '',
     Netwr TEXT NOT NULL DEFAULT '0',

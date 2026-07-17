@@ -332,6 +332,9 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
 
         AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "PurchasingEkpoCache", "Mstae", "TEXT NOT NULL DEFAULT ''");
+        // Aktuelle Warengruppe aus dem Materialstamm (MARA-MATKL) — getrennt vom Beleg-Matkl,
+        // weil alte Belege nur die Dummy-Warengruppe tragen. Quelle folgt per SAP-Erweiterung.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraMatkl", "TEXT NOT NULL DEFAULT ''");
 
         // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
         // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.

@@ -69,6 +69,10 @@
                 <MudText Typo="Typo.subtitle1">@T("Kaskadierung Lieferant / Jahr", "Supplier / year cascade")</MudText>
                 <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="Color.Info" Size="Size.Small" />
             </div>
+            <MudText Typo="Typo.caption" Class="purchasing-section-muted mb-2">
+                @T("Lieferant aufklappen zeigt den Spend nach Warengruppe. Warengruppe aktuell aus dem Bestellbeleg; Umstellung auf die aktuelle Materialstamm-Warengruppe (MARA-MATKL) folgt, sobald SAP das Feld liefert.",
+                   "Expanding a supplier shows spend by material group. Material group currently comes from the order document; switch to the current material-master group (MARA-MATKL) follows once SAP provides the field.")
+            </MudText>
             <div class="purchasing-matrix-scroll">
                 <table class="purchasing-matrix">
                     <thead>
@@ -84,14 +88,38 @@
                     <tbody>
                         @foreach (var row in SpendMatrixRows)
                         {
+                            var isExpanded = _expandedSuppliers.Contains(row.Supplier);
                             <tr>
-                                <td>@row.Supplier</td>
+                                <td>
+                                    @if (row.MaterialGroups.Count > 0)
+                                    {
+                                        <button type="button" class="purchasing-matrix-toggle" @onclick="() => ToggleSupplier(row.Supplier)"
+                                                title="@T("Warengruppen auf-/zuklappen", "Expand/collapse material groups")">
+                                            @(isExpanded ? "▾" : "▸")
+                                        </button>
+                                    }
+                                    @row.Supplier
+                                </td>
                                 @foreach (var year in SpendMatrixYears)
                                 {
                                     <td>@FormatAmount(GetYearValue(row, year))</td>
                                 }
                                 <td><strong>@FormatAmount(row.Total)</strong></td>
                             </tr>
+                            @if (isExpanded)
+                            {
+                                @foreach (var group in row.MaterialGroups)
+                                {
+                                    <tr class="purchasing-matrix-drill">
+                                        <td>@group.MaterialGroup</td>
+                                        @foreach (var year in SpendMatrixYears)
+                                        {
+                                            <td>@FormatAmount(GetGroupYearValue(group, year))</td>
+                                        }
+                                        <td>@FormatAmount(group.Total)</td>
+                                    </tr>
+                                }
+                            }
                         }
                     </tbody>
                 </table>
@@ -133,11 +161,22 @@
     [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
 
+    private readonly HashSet<string> _expandedSuppliers = new(StringComparer.OrdinalIgnoreCase);
+
+    private void ToggleSupplier(string supplier)
+    {
+        if (!_expandedSuppliers.Remove(supplier))
+            _expandedSuppliers.Add(supplier);
+    }
+
     private string T(string german, string english) => UiText.Text(german, english);
     private static string BuildWidth(double percent)
         => Math.Clamp(percent, 3d, 100d).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
     private static decimal GetYearValue(PurchasingSupplierYearSpendRow row, int year)
+        => row.YearValues.TryGetValue(year, out var value) ? value : 0m;
+
+    private static decimal GetGroupYearValue(PurchasingSpendGroupYearRow row, int year)
         => row.YearValues.TryGetValue(year, out var value) ? value : 0m;
 
     private static string FormatAmount(decimal value)
@@ -285,6 +324,26 @@
     .purchasing-matrix thead th {
         font-weight: 700;
         background: rgba(21,101,192,.08);
+    }
+
+    .purchasing-matrix-toggle {
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-size: .95rem;
+        padding: 0 6px 0 0;
+        color: var(--mud-palette-primary);
+    }
+
+    .purchasing-matrix-drill td {
+        background: rgba(21,101,192,.04);
+        font-size: .82rem;
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-matrix-drill td:first-child {
+        padding-left: 34px;
+        background: var(--mud-palette-surface);
     }
 
     @@media (max-width: 760px) {

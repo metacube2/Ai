@@ -713,3 +713,60 @@ Validierung:
 - Ergebnis: `139/139` Tests gruen, inkl. neuer Tests fuer CHF-Umrechnung, Zukunfts-Zulauf und
   Kontrakt-Abgrenzung ueber `Konnr`.
 - Noch kein Deploy (Modellwechsel-Session); Deploy-Entscheid mit Ingo offen.
+
+## Nachtrag 2026-07-17 Feedback-Runde Marco/Armin: Spend-Drilldown + MARA-Umbau-Befund
+
+Feedback-Runde zum Purchasing-Dashboard (Marco/Armin). Kernwunsch: nicht nur Gesamtuebersicht
+(Spend pro Lieferant ab 2020), sondern Aufriss/Drilldown ueber mehrere Stufen — konzeptuell wie
+ein Pivot mit Auf-/Zuklappen. Marcos Leitplanke bestaetigt: **ein Punkt nach dem anderen fertig
+machen** — zuerst der Reiter `Spend`, erst nach dessen Abnahme der naechste Reiter.
+
+### Umgesetzt: Drilldown Lieferant -> Warengruppe im Spend-Reiter
+
+- Die Matrix `Kaskadierung Lieferant / Jahr` (Reiter `Spend`) hat jetzt eine zweite Ebene:
+  Lieferant aufklappen (Pfeil-Button) zeigt den Spend des Lieferanten je **Warengruppe** und
+  Jahr; die Drilldown-Summen entsprechen exakt der Lieferantenzeile (Pivot-Eigenschaft, per
+  Test abgesichert). Zeitraumfilter wirkt unveraendert auf beide Ebenen.
+- Datenbasis: neue Aggregation `ExecuteSupplierGroupYearRowsAsync` in
+  `PurchasingDashboardService` (`GROUP BY Supplier, MaterialGroup, Year`), Modell
+  `PurchasingSpendGroupYearRow`, UI in `PurchasingSection.razor` (Toggle je Lieferant,
+  eingerueckte Drill-Zeilen).
+- **Warengruppen-Quelle nach Marcos Vorgabe:** massgeblich ist die AKTUELLE Warengruppe aus dem
+  Materialstamm (`MARA-MATKL`), nicht der Vergangenheitswert aus dem Beleg (alte Belege tragen
+  nur die Dummy-Warengruppe). Dafuer neue additive Cache-Spalte
+  `PurchasingEkpoCache.MaraMatkl`; der Drilldown nutzt
+  `COALESCE(MaraMatkl, Matkl, 'ohne Warengruppe')` — solange SAP `Matkl` im Materialstamm-Set
+  noch nicht liefert (siehe unten), faellt die Anzeige transparent auf die Beleg-Warengruppe
+  zurueck; ein UI-Hinweis kennzeichnet das.
+
+### Wichtiger Nebenbefund: SAP hat das MARA-EntitySet umgebaut (Prod-Fix noetig)
+
+Live-Probe gegen `travp762` (Tool `.tmp_tools/ProbePurchasingMara`):
+
+- `MARA001Set` (EntityType `MARA`) exponiert **`Mstae` NICHT mehr** — der bisherige produktive
+  Read `MARA001Set?$select=Matnr,Mstae` antwortet mit `404 Resource not found for the segment
+  'Mstae'`. Der bestehende Full Load/Delta waere damit beim naechsten Lauf FEHLGESCHLAGEN.
+- Ersatzquelle: neues EntitySet **`maracalcSet`** (EntityType `maracalc`) enthaelt `Mstae`
+  (verifiziert: 68'094 Zeilen, 33'242 mit Status, u.a. 27'929 x `99`, 1'609 x `98`).
+- FIX umgesetzt: `LoadMaterialStatusMapAsync` liest jetzt `maracalcSet`. Achtung: das Set
+  ignoriert `$top`/`$skip` (gleiches Verhalten wie `mbewSet`) und liefert immer den vollen
+  Bestand — deshalb bewusst EIN ungepagter Request statt des Paging-Helpers, sonst wuerde jede
+  "Seite" erneut ~68'000 Zeilen laden.
+- `Matkl` ist in KEINEM MARA-EntityType des Service vorhanden -> **SAP-Erweiterungsanfrage:
+  `Matkl` in `maracalc` aufnehmen.** App-Seite ist fertig vorbereitet (Cache-Spalte, Map,
+  Write-Pfad); nach der SAP-Erweiterung ist nur das `$select` um `,Matkl` zu ergaenzen.
+
+### ABC/XYZ: von "geparkt" zu konkretem Weg (spaeterer Punkt, nicht jetzt)
+
+Neue Info aus der Feedback-Runde: ABC-Kennzeichen = `MARC-MAABC` (Sicht O2); XYZ liegt in einer
+separaten Tabelle; ein vorhandener SAP-Report kann beides bereits extrahieren. Damit ist der
+Weg klar (MARC-Anbindung oder Report-Export als Referenzliste) — wird aber gemaess "ein Punkt
+nach dem anderen" erst nach Abnahme des Spend-Reiters angegangen.
+
+### Validierung
+
+- `dotnet test TrafagSalesExporter.sln --verbosity minimal`: `257/257` Tests gruen
+  (2 neue Drilldown-Tests: Warengruppen-Aufriss inkl. MaraMatkl-Vorrang und
+  Zeitraumfilter-Wirkung auf die Drill-Ebene).
+- Noch nicht deployed. NACH Deploy: Einkauf Full Load laufen lassen (fuellt `Mstae` wieder aus
+  `maracalcSet`; `MaraMatkl` bleibt leer bis zur SAP-Erweiterung).
