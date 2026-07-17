@@ -92,7 +92,7 @@ LFA1-Adressfelder (`Land1`, `Regio`, `Ort01`), MARC-Felder (`Dispo`, `Eisbe`), E
 ### Phase 0 — Fundament sichern (vor allem Neuen; sofort)
 
 1. **Deploy des Korrektur-Stands** (K1-K6, M8-M10; 139/139 gruen) nach Freigabe durch Ingo.
-2. **Einkauf-Full-Load** danach zwingend (fuellt `Waers`/`Wkurs`/`Konnr` + LFA1-Namen real).
+2. **Einkauf-Full-Load** danach zwingend (fuellt `Waers`/`Wkurs`/`Konnr` + LFA1-Namen real). ERLEDIGT 2026-07-17: Load lief erfolgreich (nach Fix des zwischenzeitlich am `MARA001Set`-404 gescheiterten Loads vom 02.07.), `SupplierName` zu 99.99 % gefuellt, Stichprobe verifiziert.
    Grosse Loads lokal gegen DB-Kopie fahren, dann DB auf Server (siehe Hauptdoku, Abschnitt
    Server-Restore; WAL/SHM-Sidecars beachten).
 3. **Abnahme-Checks aus dem Review 2026-07-08:** 18-Mio-Offenwert gegen SAP verifizieren,

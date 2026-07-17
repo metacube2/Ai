@@ -316,6 +316,17 @@ Deploy:
 - Servercheck: Port 443 erreichbar.
 - Commit: `d5f329b Resolve purchasing supplier names from LFA1`.
 
+**Nachtrag 2026-07-17: Fix erst jetzt produktiv wirksam geworden.** Der Full Load direkt nach
+diesem Deploy (02.07., siehe `PurchasingSyncState` Id 4/5) scheiterte am `MARA001Set`-404
+(SAP hatte das MARA-Set umgebaut, siehe Nachtrag 2026-07-17 im Hauptdokument) — der Lauf brach
+ab, BEVOR er ueberhaupt LFA1 laden konnte. Zwischen 02.07. und 17.07. blieb dadurch der Stand
+vom letzten erfolgreichen Load (07.06., vor diesem Fix) aktiv: `SupplierName` war produktiv
+0/172'874 gefuellt, die Spend-Matrix zeigte nur Lieferantennummern. Nach dem `maracalcSet`-Fix
+lief der Full Load am 17.07. erfolgreich durch: `SupplierName` jetzt 172'898/172'914 (99.99 %)
+gefuellt, verifiziert u.a. `66952 -> BEPRO AG`, `70369 -> CPT Praezisionstechnik GmbH`,
+`66715 -> GFS`, `65058 -> HEITZ GMBH`. Der urspruengliche Code-Fix war also die ganze Zeit
+korrekt, konnte aber wegen des unabhaengigen SAP-Umbaus nie zum Zug kommen.
+
 ## Nachtrag 2026-07-08 Review Einkauf mit Power BI
 
 Kontext: Ingo und ein Kollege aus dem Einkauf haben das neu gebaute Einkaufsdashboard gemeinsam gegen Power BI/SAP-Erwartungen geprueft. Ziel war Zugriff, Navigation, Inhalte, Zahlen und fehlende Auswertungen abzugleichen.
