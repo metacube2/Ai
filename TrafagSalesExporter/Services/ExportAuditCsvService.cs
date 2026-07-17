@@ -86,7 +86,10 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         "InvoiceDate",
         "OrderDate",
         "Land",
-        "DocumentType"
+        "DocumentType",
+        // Additive Spalten am Ende, damit aeltere Audit-CSV weiter lesbar bleiben.
+        "StandardCostVariable",
+        "StandardCostFixed"
     ];
 
     public async Task<string?> WriteSiteAuditCsvAsync(
@@ -271,6 +274,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         yield return FormatNullableDate(record.OrderDate);
         yield return string.IsNullOrWhiteSpace(record.Land) ? site.Land : record.Land;
         yield return record.DocumentType;
+        yield return FormatNullableDecimal(record.StandardCostVariable);
+        yield return FormatNullableDecimal(record.StandardCostFixed);
     }
 
     private static async Task<List<SalesRecord>> ReadFileAsync(string path)
@@ -340,7 +345,9 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
                 InvoiceDate = GetDate(values, headers, "InvoiceDate"),
                 OrderDate = GetDate(values, headers, "OrderDate"),
                 Land = GetText(values, headers, "Land"),
-                DocumentType = GetText(values, headers, "DocumentType")
+                DocumentType = GetText(values, headers, "DocumentType"),
+                StandardCostVariable = GetNullableDecimal(values, headers, "StandardCostVariable"),
+                StandardCostFixed = GetNullableDecimal(values, headers, "StandardCostFixed")
             });
         }
 
@@ -473,8 +480,26 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
     private static string FormatInt(int value)
         => value.ToString(CultureInfo.InvariantCulture);
 
+    private static decimal? GetNullableDecimal(IReadOnlyList<string> values, IReadOnlyDictionary<string, int> headers, string header)
+    {
+        var text = GetText(values, headers, header);
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var invariant))
+            return invariant;
+
+        if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.GetCultureInfo("de-CH"), out var swiss))
+            return swiss;
+
+        return null;
+    }
+
     private static string FormatDecimal(decimal value)
         => value.ToString(CultureInfo.InvariantCulture);
+
+    private static string FormatNullableDecimal(decimal? value)
+        => value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
 
     private static string FormatDate(DateTime value)
         => value.ToString("O", CultureInfo.InvariantCulture);

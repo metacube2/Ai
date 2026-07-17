@@ -29,6 +29,10 @@ public class SalesRecord
     public string CustomerIndustry { get; set; } = string.Empty;
     public decimal StandardCost { get; set; }
     public string StandardCostCurrency { get; set; } = string.Empty;
+    // Fix/variabel-Split des Standardpreises (Stueckpreis, gleiche Waehrung wie StandardCost).
+    // Null = Quelle liefert keinen Split; nur dann bleibt der Deckungsbeitrag offen.
+    public decimal? StandardCostVariable { get; set; }
+    public decimal? StandardCostFixed { get; set; }
     public string PurchaseOrderNumber { get; set; } = string.Empty;
     public decimal SalesPriceValue { get; set; }
     public string SalesCurrency { get; set; } = string.Empty;

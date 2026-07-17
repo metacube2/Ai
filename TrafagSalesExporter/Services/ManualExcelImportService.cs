@@ -43,6 +43,8 @@ public class ManualExcelImportService : IManualExcelImportService
         ["customerindustry"] = nameof(SalesRecord.CustomerIndustry),
         ["standardcost"] = nameof(SalesRecord.StandardCost),
         ["standardcostcurrency"] = nameof(SalesRecord.StandardCostCurrency),
+        ["standardcostvariable"] = nameof(SalesRecord.StandardCostVariable),
+        ["standardcostfixed"] = nameof(SalesRecord.StandardCostFixed),
         ["purchaseordernumber"] = nameof(SalesRecord.PurchaseOrderNumber),
         ["salespricevalue"] = nameof(SalesRecord.SalesPriceValue),
         ["salescurrency"] = nameof(SalesRecord.SalesCurrency),
@@ -877,6 +879,13 @@ public class ManualExcelImportService : IManualExcelImportService
             if (property.PropertyType == typeof(decimal))
             {
                 property.SetValue(record, ParseDecimal(text));
+                return;
+            }
+
+            if (property.PropertyType == typeof(decimal?))
+            {
+                // Leer bleibt null (kein Split geliefert) statt stillschweigend 0.
+                property.SetValue(record, string.IsNullOrWhiteSpace(text) ? null : ParseDecimal(text));
                 return;
             }
 

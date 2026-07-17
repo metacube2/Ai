@@ -376,6 +376,99 @@
         </TrainingSection>
     </MudTabPanel>
 
+    <MudTabPanel Text="Standardkosten & Marge">
+        <TrainingSection Title="Prozessgrafik: Standardkosten und Gruppenmarge">
+            <p>Die Grafik zeigt den gesamten Ablauf: aus welcher Quelle die Standardkosten je Land kommen, wie daraus die Kostenbasis
+                und die Marge berechnet werden, welchen Status Zeilen mit fehlenden Feldern bekommen und wo das Ergebnis im Dashboard
+                und im zentralen Excel erscheint.</p>
+            <img class="training-doc-image" src="training/standardkosten-margenfluss.svg" alt="Standardkosten- und Margenfluss" />
+        </TrainingSection>
+
+        <TrainingSection Title="Woher die Standardkosten kommen">
+            <p>Die Gruppenmarge rechnet je Verkaufszeile <strong>Umsatz minus Kostenbasis</strong>. Die Kostenbasis stammt aus dem Feld
+                <code>StandardCost</code> (immer ein <strong>Stückpreis</strong>) und wird je Land aus einer anderen Quelle gefüllt:</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Land</th><th>Quelle der Standardkosten</th><th>Währung</th></tr></thead>
+                <tbody>
+                    <tr><td>CH/AT</td><td>SAP-Verkaufsbeleg: <code>VBRP-WAVWR</code> (Verrechneter Wareneinsatz) geteilt durch die Menge; ohne Lieferbezug Rückfall auf den Materialstamm-Standardpreis <code>MBEW-STPRS</code>.</td><td>Belegwährung bzw. Hauswährung</td></tr>
+                    <tr><td>DE</td><td>Abgeleitet aus dem Alphaplan-Export: <code>NettoPreisGesamt − RohertragGesamt</code>, geteilt durch die Menge.</td><td>EUR</td></tr>
+                    <tr><td>FR / IT / US / IN</td><td>SAP B1 Positionsfeld <code>StockPrice</code> (Lagerpreis der Verkaufszeile).</td><td>Hauswährung der Gesellschaft</td></tr>
+                    <tr><td>ES</td><td>Kostenspalte aus dem Sage-Export, sofern geliefert.</td><td>EUR</td></tr>
+                    <tr><td>UK</td><td>Aktuell keine Kostenquelle im Export — Kostenbasis fehlt durchgängig (offener Punkt).</td><td>—</td></tr>
+                    <tr><td>Von TR AG gelieferte Artikel</td><td>Zusätzlich: echte Konzern-Herstellkosten aus <code>MBEW-STPRS</code> der Trafag AG (Tabelle <code>GroupStandardCosts</code>) — ersetzen die lokale Kostenbasis, egal welches Land verkauft.</td><td>CHF</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                Faustregel: Die Standardkosten sind der im Quellsystem hinterlegte Bewertungspreis pro Stück — kein Einkaufspreis des
+                einzelnen Belegs und keine Nachkalkulation.
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="Wie gerechnet wird">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Größe</th><th>Formel</th><th>Hinweis</th></tr></thead>
+                <tbody>
+                    <tr><td>Kostenbasis</td><td>Menge × Standardkosten (Stückpreis)</td><td>Bei Gutschriften/Retouren folgt das Vorzeichen dem Umsatz: Umsatz −100 und Kosten 60 ergeben Marge −40, nicht −160.</td></tr>
+                    <tr><td>Marge</td><td>Umsatz − Kostenbasis</td><td>Nur wenn die Kostenbasis der Zeile vollständig geklärt ist; sonst bleibt die Marge offen (<code>-</code>).</td></tr>
+                    <tr><td>Marge %</td><td>Marge ÷ Umsatz</td><td>Gleiche Bedingung wie Marge.</td></tr>
+                    <tr><td>Marge CHF</td><td>Umsatz CHF − Kostenbasis CHF, jeweils mit dem Jahreskurs (31.12. des Finance-Jahres) umgerechnet</td><td>Jede Zeile nutzt den Kurs ihres eigenen Finance-Jahres.</td></tr>
+                    <tr><td>Abweichende Kostenwährung</td><td>Schalter <em>Einstellungen &gt; Export Einstellungen &gt; Gruppenmarge bei abweichender Kostenwährung</em></td><td><strong>Mask</strong> (Standard): Marge bleibt offen mit Status „Kostenwährung abweichend". <strong>Convert</strong>: Kostenbasis wird mit dem Jahreskurs in die Verkaufswährung umgerechnet.</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="Was passiert, wenn Felder fehlen">
+            <p>Grundregel (mit Finance abgestimmt): <strong>Fehlende Daten werden nie geschätzt.</strong> Die Zeile bekommt einen Status,
+                und Marge/% bleiben offen, bis die Ursache geklärt ist. Enthält ein Land oder eine Sparte auch nur eine offene Zeile,
+                zeigt die Aggregation ebenfalls <code>-</code>.</p>
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Status</th><th>Ursache</th><th>Bedeutung für Finance</th></tr></thead>
+                <tbody>
+                    <tr><td>Standardpreis fehlt</td><td>Kostenbasis der Zeile ist 0 — Quellsystem hat keinen Standardpreis geliefert.</td><td>Zeile trägt Umsatz bei, aber keine belastbare Marge. Keinesfalls als 100%-Marge interpretieren.</td></tr>
+                    <tr><td>Lieferant unklar</td><td>Lieferantennummer, -name und -land sind alle drei leer — der interne/externe Lieferantentyp kann nicht erkannt werden.</td><td>Marge bleibt offen, auch wenn Standardkosten vorhanden sind. Betrifft strukturell CH/AT, UK und ES, weil deren Quellsysteme kein Lieferantenfeld liefern (Befund 2026-07-17, fachliche Regelung offen).</td></tr>
+                    <tr><td>Kostenwährung abweichend</td><td>Standardkostenwährung ≠ Verkaufswährung und der Schalter steht auf Mask.</td><td>Verhindert das Mischen von Währungen in einer Zahl. Mit Convert wird stattdessen umgerechnet.</td></tr>
+                    <tr><td>Kurs fehlt</td><td>Für Jahr/Währung ist kein CHF-Kurs gepflegt.</td><td>Zeile bleibt in Lokalwährung und wird per Hinweis ausgewiesen, statt still falsch summiert zu werden.</td></tr>
+                    <tr><td>Umsatz fehlt</td><td>Zeile hat Wert 0.</td><td>Diagnosefall, z. B. reine Mengen-/Korrekturzeile.</td></tr>
+                </tbody>
+            </MudSimpleTable>
+        </TrainingSection>
+
+        <TrainingSection Title="Wo es im Dashboard und im zentralen Excel steht">
+            <MudSimpleTable Dense Hover>
+                <thead><tr><th>Ort</th><th>Inhalt</th></tr></thead>
+                <tbody>
+                    <tr><td>Management Analyse &gt; Experten &gt; Gruppenmarge</td><td>Umsatz, bekannte Kostenbasis, Marge und offene Zeilen je Land, Sparte und Detailzeile.</td></tr>
+                    <tr><td>Management Analyse &gt; Experten &gt; Finance Prüfbuch</td><td>Zeilenweise Prüfsicht: Originalbetrag, CHF-Kurs, Lieferant, Standardkosten, Kostenbasis, Marge, Prüfstatus. Eigener Excel-Export mit den Blättern <em>Finance Prüfbuch</em> und <em>Gruppenmarge Detail</em>.</td></tr>
+                    <tr><td>Zentrale Datei <code>Sales_All_&lt;Datum&gt;.xlsx</code></td><td>Enthält zusätzlich die Blätter <strong>Gruppenmarge Summary</strong> und <strong>Gruppenmarge Details</strong> — gleiche Berechnung wie das Dashboard, damit Finance alles in einer Datei gegenprüfen kann.</td></tr>
+                    <tr><td>Nachweis-Excel <code>Finance_Dashboard_Nachweis_*.xlsx</code></td><td>Formelbasierte Summaries (<code>SUMIFS</code>/<code>COUNTIFS</code>) und Detailblätter inkl. Gruppenmarge für die Excel-Gegenprobe.</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">
+                Dashboard und zentrales Excel rechnen bewusst mit derselben Logik. Weicht eine Zahl ab, ist die erste Frage immer:
+                Wurde nach dem letzten Standortexport die zentrale Datei neu erzeugt?
+            </MudAlert>
+        </TrainingSection>
+
+        <TrainingSection Title="Fachlicher Hintergrund: Deckungsbeitrag (Input Finance/Andreas)">
+            <p>Einordnung aus Finance-Sicht: Interessant ist der <strong>Deckungsbeitrag im zweiten Schritt</strong> — was bleibt nach Abzug
+                aller <em>variablen</em> Kosten? Die Trennung fix/variabel ist entscheidend: Fixkosten bleiben bestehen bzw. werden bei
+                Wegfall eines Artikels auf andere Produkte umgelegt, variable Kosten entfallen tatsächlich. Positiv: Die in SAP gefundene
+                Kostenstruktur enthält Fix- und Variabelanteile getrennt (bis hin zum Planpreis fix/variabel).</p>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">
+                <strong>Stand heute:</strong> Die App ist dafür <strong>vorbereitet</strong>: Der Gruppenmarge-Reiter und das zentrale
+                Excel (Blätter <em>Gruppenmarge Details/Summary</em>) haben zusätzliche DB-Spalten (Variable Kosten, Deckungsbeitrag,
+                DB %). Sie bleiben <strong>leer</strong>, solange die Quellsysteme den fix/variabel-Split nicht liefern — es wird
+                nichts geschätzt. Die bestehende „Marge" bleibt unverändert eine Bruttomarge auf Basis der vollen Standardkosten.
+            </MudAlert>
+            <ul>
+                <li><strong>Was fehlt noch:</strong> Die Quellsysteme müssen den Variabelanteil liefern (neue Felder <code>StandardCostVariable</code>/<code>StandardCostFixed</code>; bei CH/AT wäre das eine SAP-Erweiterung analog WAVWR/STPRS, z. B. aus der Plankalkulation). Sobald eine Zeile den Split hat, erscheinen DB und DB % automatisch — je Zeile, je Land und in der Summe.</li>
+                <li>DB-Regeln entsprechen der Marge: Vorzeichen folgt dem Umsatz bei Gutschriften; abweichende Kostenwährung folgt dem Mask/Convert-Schalter; Summen werden nur über Zeilen mit Split gebildet (Anzahl wird ausgewiesen).</li>
+                <li>Bis der Split geliefert wird, gilt: Aussagen über „was entfällt, wenn ein Artikel wegfällt" sind mit der Bruttomarge nur eingeschränkt möglich, weil der Fixkostenanteil mit abgezogen wird.</li>
+                <li>Datenquelle, Freigabe und Interpretation liegen bei Finance/Andreas.</li>
+            </ul>
+        </TrainingSection>
+    </MudTabPanel>
+
     <MudTabPanel Text="Fehler & Freigabe">
         <TrainingSection Title="15. Typische Fehler und Massnahmen">
             <MudSimpleTable Dense Hover>

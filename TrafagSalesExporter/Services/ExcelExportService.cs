@@ -309,6 +309,11 @@ public class ExcelExportService : IExcelExportService
                     groupMarginCostCurrencyMode, resolveCrossRate);
                 if (status == "OK" && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
+                // Deckungsbeitrag (additiv): gleiche gemeinsame Logik wie das Dashboard.
+                var contribution = ContributionMarginCalculator.Resolve(
+                    row.Record.Quantity, row.NetSalesActual, row.Record.StandardCostVariable,
+                    row.Currency, row.Record.StandardCostCurrency, row.Year,
+                    groupMarginCostCurrencyMode, resolveCrossRate);
                 return new GroupMarginProofRow(
                     row.Year,
                     status,
@@ -329,7 +334,11 @@ public class ExcelExportService : IExcelExportService
                     row.NetSalesActual,
                     conversion.CostBasis,
                     row.Record.ProductDivisionCode,
-                    row.Record.ProductDivisionText);
+                    row.Record.ProductDivisionText,
+                    row.Record.StandardCostVariable,
+                    contribution.VariableCostBasis,
+                    contribution.ContributionMargin,
+                    contribution.ContributionMarginPercent);
             })
             .OrderBy(row => GroupMarginStatusSort(row.Status))
             .ThenBy(row => row.Year)
@@ -624,7 +633,9 @@ public class ExcelExportService : IExcelExportService
             "Year", "Status", "Country Key", "TSC", "Currency", "Invoice Number", "Position", "Material", "Name",
             "Supplier Number", "Supplier Name", "Supplier Country", "Supplier Type", "Cost Source", "Quantity",
             "Unit Cost", "Sales Value", "Known Cost Basis", "Margin Value", "Margin %", "Product Division Code",
-            "Product Division Text"
+            "Product Division Text",
+            // Additive DB-Spalten am Ende, damit bestehende Spalten/Formeln unveraendert bleiben.
+            "Variable Unit Cost", "Variable Cost Basis", "Deckungsbeitrag (DB)", "DB %"
         };
         WriteHeaders(ws, headers);
 
@@ -653,11 +664,22 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 20).FormulaA1 = $"IF(B{rowIndex}=\"OK\",IF(Q{rowIndex}=0,\"\",S{rowIndex}/Q{rowIndex}),\"\")";
             ws.Cell(rowIndex, 21).Value = row.ProductDivisionCode;
             ws.Cell(rowIndex, 22).Value = row.ProductDivisionText;
+            // DB bleibt leer, solange die Quelle keinen fix/variabel-Split liefert.
+            if (row.VariableUnitCost.HasValue)
+                ws.Cell(rowIndex, 23).Value = row.VariableUnitCost.Value;
+            if (row.VariableCostBasisValue.HasValue)
+                ws.Cell(rowIndex, 24).Value = row.VariableCostBasisValue.Value;
+            if (row.ContributionMarginValue.HasValue)
+                ws.Cell(rowIndex, 25).Value = row.ContributionMarginValue.Value;
+            if (row.ContributionMarginPercent.HasValue)
+                ws.Cell(rowIndex, 26).Value = row.ContributionMarginPercent.Value / 100m;
             rowIndex++;
         }
 
         ws.Columns(15, 19).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns(20, 20).Style.NumberFormat.Format = "0.0%";
+        ws.Columns(23, 25).Style.NumberFormat.Format = "#,##0.00";
+        ws.Columns(26, 26).Style.NumberFormat.Format = "0.0%";
         FormatProofSheet(ws, Math.Max(1, rowIndex - 1), headers.Length);
     }
 
@@ -667,7 +689,9 @@ public class ExcelExportService : IExcelExportService
         var headers = new[]
         {
             "Year", "Country Key", "TSC", "Currency", "Sales Value", "Known Cost Basis", "Open Cost Rows",
-            "Internal Rows", "External Rows", "Margin Value", "Margin %"
+            "Internal Rows", "External Rows", "Margin Value", "Margin %",
+            // Additive DB-Spalten: Summe nur ueber Zeilen mit geliefertem fix/variabel-Split.
+            "Deckungsbeitrag (DB)", "DB Zeilen"
         };
         WriteHeaders(ws, headers);
         var summaryRows = rows
@@ -691,12 +715,16 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 9).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$M:$M,\"Extern\")";
             ws.Cell(rowIndex, 10).FormulaA1 = $"IF(G{rowIndex}>0,\"\",E{rowIndex}-F{rowIndex})";
             ws.Cell(rowIndex, 11).FormulaA1 = $"IF(G{rowIndex}>0,\"\",IF(E{rowIndex}=0,\"\",J{rowIndex}/E{rowIndex}))";
+            // DB nur, wenn mindestens eine Zeile der Gruppe einen fix/variabel-Split hat (Spalte Y der Details).
+            ws.Cell(rowIndex, 12).FormulaA1 = $"IF(M{rowIndex}=0,\"\",SUMIFS('Gruppenmarge Details'!$Y:$Y,'Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex}))";
+            ws.Cell(rowIndex, 13).FormulaA1 = $"COUNTIFS('Gruppenmarge Details'!$A:$A,A{rowIndex},'Gruppenmarge Details'!$C:$C,B{rowIndex},'Gruppenmarge Details'!$D:$D,C{rowIndex},'Gruppenmarge Details'!$E:$E,D{rowIndex},'Gruppenmarge Details'!$Y:$Y,\"<>\")";
             rowIndex++;
         }
 
         ws.Columns(5, 6).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns(10, 10).Style.NumberFormat.Format = "#,##0.00";
         ws.Columns(11, 11).Style.NumberFormat.Format = "0.0%";
+        ws.Columns(12, 12).Style.NumberFormat.Format = "#,##0.00";
         FormatProofSheet(ws, Math.Max(1, rowIndex - 1), headers.Length, autoFit: true);
     }
 
@@ -948,7 +976,12 @@ public class ExcelExportService : IExcelExportService
         decimal SalesValue,
         decimal CostBasisValue,
         string ProductDivisionCode,
-        string ProductDivisionText);
+        string ProductDivisionText,
+        // Deckungsbeitrag (additiv): null solange die Quelle keinen fix/variabel-Split liefert.
+        decimal? VariableUnitCost,
+        decimal? VariableCostBasisValue,
+        decimal? ContributionMarginValue,
+        decimal? ContributionMarginPercent);
 
     private static void WriteWorkbook(
         string fullPath,
@@ -1382,7 +1415,98 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(startRow + 1 + i, 1).Value = financeColumns[i];
         }
 
+        // Wo-finde-ich-was fuer Andreas: Standardkosten stehen in mehreren Blaettern mit
+        // unterschiedlicher Bedeutung (Rohwert vs. berechnete Kostenbasis/Marge/DB).
+        var whereStart = startRow + financeColumns.Length + 3;
+        ws.Cell(whereStart, 1).Value = "Wo finde ich die Standardkosten in dieser Datei?";
+        ws.Cell(whereStart, 1).Style.Font.Bold = true;
+        ws.Cell(whereStart, 1).Style.Font.FontSize = 12;
+
+        var whereRows = new (string Sheet, string Where, string Meaning)[]
+        {
+            ("Sales", "Spalte X 'Standard cost' / Y 'Standard Cost Currency'", "Rohwert je Zeile, so wie er aus der Quelle importiert wurde (Stueckpreis). Reine Anzeige, keine Berechnung."),
+            ("Finance Details", "-", "Enthaelt KEINE Standardkosten-Spalte, nur den Finance-Nettowert bis 'Net Sales CHF'. Fuer den Soll/Ist-Abgleich irrelevant."),
+            ("Gruppenmarge Details", "Spalte P 'Unit Cost' bis T 'Margin %', neu W-Z fuer den Deckungsbeitrag", "Hier steht die eigentliche Rechnung: Stueckpreis, daraus abgeleitete Kostenbasis (Menge x Preis, vorzeichenbewusst), Marge/% und der vorbereitete Deckungsbeitrag."),
+            ("Gruppenmarge Summary", "Spalte E 'Known Cost Basis' ff.", "Aggregiert die Kostenbasis/Marge aus Gruppenmarge Details je Jahr/Land/TSC/Waehrung."),
+            ("Finance Filter Hilfe", "dieses Blatt", "Erklaert Bedeutung und Berechnung jeder Spalte in Textform (Abschnitte unten).")
+        };
+
+        ws.Cell(whereStart + 2, 1).Value = "Blatt";
+        ws.Cell(whereStart + 2, 2).Value = "Spalte(n)";
+        ws.Cell(whereStart + 2, 3).Value = "Bedeutung";
+        ws.Range(whereStart + 2, 1, whereStart + 2, 3).Style.Font.Bold = true;
+        for (var i = 0; i < whereRows.Length; i++)
+        {
+            ws.Cell(whereStart + 3 + i, 1).Value = whereRows[i].Sheet;
+            ws.Cell(whereStart + 3 + i, 2).Value = whereRows[i].Where;
+            ws.Cell(whereStart + 3 + i, 3).Value = whereRows[i].Meaning;
+        }
+
+        // Felddoku fuer Finance/Andreas: was bedeutet welches Feld, wie wird gerechnet,
+        // woher kommen die Standardkosten — damit keine Rueckfragen je Spalte noetig sind.
+        var fieldDocStart = whereStart + 3 + whereRows.Length + 3;
+        ws.Cell(fieldDocStart, 1).Value = "Felddokumentation Gruppenmarge / Kosten (Blaetter Gruppenmarge Details + Summary)";
+        ws.Cell(fieldDocStart, 1).Style.Font.Bold = true;
+        ws.Cell(fieldDocStart, 1).Style.Font.FontSize = 12;
+
+        var fieldDocs = new (string Field, string Meaning)[]
+        {
+            ("Quantity", "Fakturierte Menge der Verkaufszeile (negativ bei Gutschrift/Retoure)."),
+            ("Unit Cost", "Standardkosten PRO STUECK aus dem Quellsystem (Herkunft je Land siehe Abschnitt unten). Kein Einkaufspreis des Belegs, keine Nachkalkulation."),
+            ("Sales Value", "Finance-Nettowert der Zeile (Finance | Net Sales Actual); Gutschriften negativ."),
+            ("Known Cost Basis", "Berechnet: Menge x Unit Cost. Vorzeichen folgt dem Umsatz (Gutschrift: Umsatz -100, Kosten 60 -> Basis -60), sonst wuerde die Marge doppelt belastet. Bei Lieferant Trafag AG mit Materialtreffer wird stattdessen die echte Konzernkostenbasis (MBEW-STPRS TR AG, CHF) verwendet - erkennbar an Cost Source."),
+            ("Margin Value", "Formel im Blatt: Sales Value - Known Cost Basis, NUR wenn Status = OK. Sonst leer - offene Kostenbasis darf nicht als Marge gelesen werden. Dies ist eine BRUTTOMARGE auf Basis der vollen Standardkosten."),
+            ("Margin %", "Formel im Blatt: Margin Value / Sales Value, nur bei Status OK."),
+            ("Supplier Type", "Intern = Trafag/GFS im Lieferantentext erkannt; Extern = anderer Lieferant; Unklar = alle drei Lieferantenfelder leer (Quelle liefert keinen Lieferanten, z. B. CH/AT, UK, ES)."),
+            ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (extern), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit Jahreskurs oder maskiert."),
+            ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
+            ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),
+            ("Variable Cost Basis", "Berechnet: Menge x Variable Unit Cost, gleiche Vorzeichen- und Waehrungsregel wie Known Cost Basis. Leer ohne Split."),
+            ("Deckungsbeitrag (DB)", "Berechnet: Sales Value - Variable Cost Basis. Fachidee (Finance): was bleibt nach Abzug NUR der variablen Kosten - Fixkosten bleiben bei Artikelwegfall bestehen. Leer, solange kein fix/variabel-Split geliefert wird; wird nie geschaetzt."),
+            ("DB %", "Berechnet: Deckungsbeitrag / Sales Value. Leer ohne Split oder bei Umsatz 0."),
+            ("Summary: Margin Value/%", "Formeln (SUMIFS/COUNTIFS) ueber Gruppenmarge Details je Jahr/Land/TSC/Waehrung; leer, sobald die Gruppe offene Kostenzeilen hat (Open Cost Rows > 0)."),
+            ("Summary: Deckungsbeitrag (DB)", "SUMIFS ueber die DB-Spalte der Details - Summe NUR ueber Zeilen mit fix/variabel-Split; 'DB Zeilen' zeigt, wie viele Zeilen abgedeckt sind. Nicht mit der Marge vergleichen, wenn DB Zeilen deutlich kleiner als die Zeilenzahl ist.")
+        };
+
+        ws.Cell(fieldDocStart + 2, 1).Value = "Feld";
+        ws.Cell(fieldDocStart + 2, 2).Value = "Bedeutung / Berechnung";
+        ws.Range(fieldDocStart + 2, 1, fieldDocStart + 2, 2).Style.Font.Bold = true;
+        for (var i = 0; i < fieldDocs.Length; i++)
+        {
+            ws.Cell(fieldDocStart + 3 + i, 1).Value = fieldDocs[i].Field;
+            ws.Cell(fieldDocStart + 3 + i, 2).Value = fieldDocs[i].Meaning;
+        }
+
+        var costSourceStart = fieldDocStart + 3 + fieldDocs.Length + 2;
+        ws.Cell(costSourceStart, 1).Value = "Woher die Standardkosten (Unit Cost) je Land kommen";
+        ws.Cell(costSourceStart, 1).Style.Font.Bold = true;
+        ws.Cell(costSourceStart, 1).Style.Font.FontSize = 12;
+
+        var costSources = new (string Country, string Source)[]
+        {
+            ("CH/AT (SAP)", "VBRP-WAVWR (Wareneinsatz der Verkaufszeile) geteilt durch Menge; ohne Lieferbezug Rueckfall auf Materialstamm-Standardpreis MBEW-STPRS. Waehrung: Beleg- bzw. Hauswaehrung."),
+            ("DE (Alphaplan)", "Abgeleitet beim Import: (NettoPreisGesamt - RohertragGesamt) / Menge. Waehrung EUR."),
+            ("FR/IT/US/IN (SAP B1)", "Positionsfeld StockPrice der Verkaufszeile. Waehrung: Hauswaehrung der Gesellschaft."),
+            ("ES (Sage)", "Kostenspalte aus dem Sage-Export, sofern geliefert."),
+            ("UK", "Aktuell KEINE Kostenquelle im Export - Kostenbasis fehlt durchgaengig (offener Punkt)."),
+            ("TR-AG-geliefert", "Unabhaengig vom Verkaufsland: echte Konzern-Herstellkosten MBEW-STPRS der Trafag AG (CHF) aus GroupStandardCosts, wenn der Lieferant als Trafag AG erkannt wird und ein Materialtreffer vorliegt.")
+        };
+
+        ws.Cell(costSourceStart + 2, 1).Value = "Land";
+        ws.Cell(costSourceStart + 2, 2).Value = "Quelle der Standardkosten";
+        ws.Range(costSourceStart + 2, 1, costSourceStart + 2, 2).Style.Font.Bold = true;
+        for (var i = 0; i < costSources.Length; i++)
+        {
+            ws.Cell(costSourceStart + 3 + i, 1).Value = costSources[i].Country;
+            ws.Cell(costSourceStart + 3 + i, 2).Value = costSources[i].Source;
+        }
+
         ws.Columns().AdjustToContents();
+        // Lange Erklaerungstexte: Spalten B/C begrenzen und umbrechen, sonst wird das Blatt kilometerbreit.
+        ws.Column(2).Width = 120;
+        ws.Column(2).Style.Alignment.WrapText = true;
+        ws.Column(3).Width = 120;
+        ws.Column(3).Style.Alignment.WrapText = true;
     }
 
     private static string ResolveFinanceCurrency(SalesRecord record)

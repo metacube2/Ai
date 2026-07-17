@@ -60,7 +60,9 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
             PostingDate = new DateTime(2026, 6, 10),
             InvoiceDate = new DateTime(2026, 6, 11),
             Land = "Schweiz",
-            DocumentType = "INV"
+            DocumentType = "INV",
+            StandardCostVariable = 12.34m,
+            StandardCostFixed = 5.66m
         };
 
         var path = await service.WriteSiteAuditCsvAsync(site, settings, "SAP", _tempDirectory, [record]);
@@ -79,6 +81,37 @@ public sealed class ExportAuditCsvServiceTests : IDisposable
         Assert.Equal("CHF", roundtrip.SalesCurrency);
         Assert.Equal(new DateTime(2026, 6, 10), roundtrip.PostingDate);
         Assert.Equal(new DateTime(2026, 6, 11), roundtrip.InvoiceDate);
+        Assert.Equal(12.34m, roundtrip.StandardCostVariable);
+        Assert.Equal(5.66m, roundtrip.StandardCostFixed);
+    }
+
+    [Fact]
+    public async Task WriteSiteAuditCsvAsync_Roundtrips_Missing_CostSplit_As_Null()
+    {
+        var service = new ExportAuditCsvService();
+        var settings = new ExportSettings
+        {
+            AuditCsvEnabled = true,
+            LocalSiteExportFolder = _tempDirectory
+        };
+        var site = new Site { TSC = "TRCH", Land = "Schweiz" };
+        var record = new SalesRecord
+        {
+            SourceSystem = "SAP",
+            ExtractionDate = DateTime.UtcNow,
+            Tsc = "TRCH",
+            InvoiceNumber = "INV-2",
+            Quantity = 1m,
+            SalesPriceValue = 100m,
+            Land = "Schweiz"
+        };
+
+        await service.WriteSiteAuditCsvAsync(site, settings, "SAP", _tempDirectory, [record]);
+
+        var roundtrip = Assert.Single(await service.ReadLatestSiteAuditCsvRecordsAsync(settings));
+        // Kein fix/variabel-Split geliefert -> bleibt null (nicht 0), damit der DB offen bleibt.
+        Assert.Null(roundtrip.StandardCostVariable);
+        Assert.Null(roundtrip.StandardCostFixed);
     }
 
     [Fact]

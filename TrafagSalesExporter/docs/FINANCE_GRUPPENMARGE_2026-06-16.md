@@ -154,6 +154,40 @@ danach ZSCHWEIZ-Import erneut anstossen und `GroupStandardCosts`/eine neu erzeug
 `SupplierName LIKE '%Trafag AG%'` im Blatt „Gruppenmarge Details", `CostSource` muss
 `Konzernkosten TR AG (MBEW-STPRS)` zeigen).
 
+## Nachtrag 2026-07-17: Supplier-Felder sind quellensystemisch strukturell leer (globales Problem)
+
+Anlass: Stichprobe aus `Sales_All`-Export (TRAT-Zeilen) zeigte durchgaengig leere
+`Supplier number`/`Supplier name`/`Supplier country`. Codepruefung ergab: das ist **kein
+Datenfehler und kein Einzelfall**, sondern betrifft je nach Quelle unterschiedliche,
+strukturelle Gruende:
+
+| Quelle | Supplier-Felder | Grund |
+| --- | --- | --- |
+| CH/AT (`ZSCHWEIZ`, SAP OData) | immer leer | Im Seed-Mapping (`DatabaseSeedService.EnsureSapODataDachMapping`) gibt es fuer `SupplierNumber/Name/Country` gar kein Mapping — `FinanzdataSchweizOeSet` (VBRK/VBRP) exponiert kein Lieferantenfeld. |
+| UK (Manual Excel) | immer leer | `EnsureUkManualExcelMapping` enthaelt keine Supplier-Spalten. |
+| DE (Alphaplan) | leer je nach Exportspalten | Mapping erwartet `Lieferanten Nummer`/`Name Lieferant`/`Land Lieferant`; nur gefuellt, wenn Alphaplan diese Spalten liefert. |
+| ES (Sage CSV) | leer | Kein Supplier-Mapping im Spanien-Import vorhanden. |
+| FR/IT/US/IN (SAP B1/HANA) | teilweise gefuellt | Supplier = `OITM.CardCode`, der **Standardlieferant im Artikelstamm** (`HanaQueryService`), nicht der Beleglieferant — leer, wenn im Artikel kein Default-Lieferant gepflegt ist. |
+
+**Fachliche Konsequenz, die ueber reine Datenluecken hinausgeht:** Sind alle drei
+Supplier-Felder leer, liefert `GroupMarginSupplierClassifier.Resolve` `Unklar`, und
+`ResolveGroupMarginStatus` setzt dadurch **unabhaengig von der Kostenbasis** immer
+`Lieferant unklar` (siehe Konstante `Unclear` und die Statuslogik). Status `Lieferant
+unklar` zaehlt als offene Kostenbasis (`HasOpenGroupMarginCostBasis`), also bleiben
+`Marge`/`%` `-`.
+
+Damit greift die am 2026-07-16 gefuellte CH/AT-Kostenbasis (WAVWR/STPRS, Fuellgrad TRCH
+96,5 %/TRAT 99,9 %) **in der Gruppenmarge-Sicht aktuell gar nicht**: Jede ZSCHWEIZ-Zeile
+bleibt mangels Supplier-Feldern auf `Lieferant unklar` maskiert, obwohl die Kostenbasis
+selbst jetzt vorhanden waere. Gleiches gilt strukturell fuer UK und ES.
+
+**Offene Fachfrage an Andreas (neu, noch nicht auf dem Multiple-Choice-Bogen):** Soll
+CH/AT (verkauft als Trafag AG selbst) ueber eine Regel automatisch als eigene
+Lieferkategorie gelten (statt ueber die leeren Supplier-Textfelder erkannt zu werden),
+damit die WAVWR-Kostenbasis in der Marge wirksam wird? Betrifft nur die
+Klassifikationsregel (`GroupMarginSupplierClassifier`), keine Kostenberechnung. Noch
+NICHT umgesetzt — reine Dokumentation des Befunds, Entscheidung liegt bei Andreas/Finance.
+
 ## Naechste technische Schritte nach Fachfreigabe
 
 - Falls externe Lieferanten eine andere Kostenquelle als `StandardCost` brauchen, neues Feld oder Mapping in `CentralSalesRecords` ergaenzen.

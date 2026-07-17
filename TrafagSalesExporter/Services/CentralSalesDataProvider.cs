@@ -165,6 +165,8 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
             CustomerIndustry = r.CustomerIndustry,
             StandardCost = r.StandardCost,
             StandardCostCurrency = r.StandardCostCurrency,
+            StandardCostVariable = r.StandardCostVariable,
+            StandardCostFixed = r.StandardCostFixed,
             PurchaseOrderNumber = r.PurchaseOrderNumber,
             SalesPriceValue = r.SalesPriceValue,
             SalesCurrency = r.SalesCurrency,

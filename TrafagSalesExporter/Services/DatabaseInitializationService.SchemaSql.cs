@@ -124,6 +124,8 @@ CREATE TABLE CentralSalesRecords (
     CustomerIndustry TEXT NOT NULL,
     StandardCost TEXT NOT NULL,
     StandardCostCurrency TEXT NOT NULL,
+    StandardCostVariable TEXT NULL,
+    StandardCostFixed TEXT NULL,
     PurchaseOrderNumber TEXT NOT NULL,
     SalesPriceValue TEXT NOT NULL,
     SalesCurrency TEXT NOT NULL,

@@ -393,6 +393,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     SupplierCountry = record.SupplierCountry,
                     StandardCost = record.StandardCost,
                     StandardCostCurrency = record.StandardCostCurrency,
+                    StandardCostVariable = record.StandardCostVariable,
                     CustomerNumber = record.CustomerNumber,
                     CustomerName = record.CustomerName,
                     FinanceDate = financeDate,
@@ -922,6 +923,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 SupplierCountry = row.SupplierCountry,
                 StandardCost = row.StandardCost,
                 StandardCostCurrency = row.StandardCostCurrency,
+                StandardCostVariable = row.StandardCostVariable,
                 CustomerNumber = row.CustomerNumber,
                 CustomerName = row.CustomerName,
                 FinanceDate = row.FinanceDate,
@@ -1055,6 +1057,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 CustomerIndustry = r.CustomerIndustry,
                 StandardCost = r.StandardCost,
                 StandardCostCurrency = r.StandardCostCurrency,
+                StandardCostVariable = r.StandardCostVariable,
+                StandardCostFixed = r.StandardCostFixed,
                 PurchaseOrderNumber = r.PurchaseOrderNumber,
                 SalesPriceValue = r.SalesPriceValue,
                 SalesCurrency = r.SalesCurrency,
@@ -1402,6 +1406,11 @@ public class ManagementCockpitService : IManagementCockpitService
                 if (status == "OK" && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
                 var margin = row.Value - conversion.CostBasis;
+                // Deckungsbeitrag (additiv): nur wenn die Quelle einen fix/variabel-Split liefert.
+                var contribution = ContributionMarginCalculator.Resolve(
+                    row.Quantity, row.Value, row.StandardCostVariable,
+                    row.Currency, row.StandardCostCurrency, row.Year,
+                    groupMarginCostCurrencyMode, ResolveCrossRate);
                 return new ManagementGroupMarginDetailRow
                 {
                     CountryKey = row.CountryKey,
@@ -1423,7 +1432,11 @@ public class ManagementCockpitService : IManagementCockpitService
                     CostBasisValue = conversion.CostBasis,
                     SalesValue = row.Value,
                     MarginValue = margin,
-                    MarginPercent = PercentOf(margin, row.Value)
+                    MarginPercent = PercentOf(margin, row.Value),
+                    VariableUnitCost = row.StandardCostVariable,
+                    VariableCostBasisValue = contribution.VariableCostBasis,
+                    ContributionMarginValue = contribution.ContributionMargin,
+                    ContributionMarginPercent = contribution.ContributionMarginPercent
                 };
             })
             .OrderBy(row => GroupMarginStatusSort(row.Status))
@@ -1452,8 +1465,17 @@ public class ManagementCockpitService : IManagementCockpitService
             MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
             UnclearSupplierRows = rows.Count(row => row.Status == "Lieferant unklar"),
             CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
-            DisplayCurrency = BuildDisplayCurrencyLabel(currencies)
+            DisplayCurrency = BuildDisplayCurrencyLabel(currencies),
+            ContributionMarginValue = SumContributionMargin(rows),
+            ContributionMarginRows = rows.Count(row => row.ContributionMarginValue.HasValue)
         };
+    }
+
+    /// <summary>DB-Summe nur ueber Zeilen mit geliefertem fix/variabel-Split; null wenn keine Zeile abgedeckt ist.</summary>
+    private static decimal? SumContributionMargin(IEnumerable<ManagementGroupMarginDetailRow> rows)
+    {
+        var covered = rows.Where(row => row.ContributionMarginValue.HasValue).ToList();
+        return covered.Count == 0 ? null : covered.Sum(row => row.ContributionMarginValue!.Value);
     }
 
     private static List<ManagementGroupMarginCountryRow> BuildGroupMarginCountryRows(IEnumerable<ManagementGroupMarginDetailRow> rows)
@@ -1490,6 +1512,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     RowCount = baseRow.RowCount,
                     InternalSupplierRows = baseRow.InternalSupplierRows,
                     MissingCostRows = baseRow.MissingCostRows,
+                    ContributionMarginValue = baseRow.ContributionMarginValue,
+                    ContributionMarginRows = baseRow.ContributionMarginRows,
                     ProductDivisionCode = group.Key.ProductDivisionCode,
                     ProductDivisionText = group.Key.ProductDivisionText
                 };
@@ -1519,7 +1543,9 @@ public class ManagementCockpitService : IManagementCockpitService
             MarginPercent = PercentOf(margin, sales),
             RowCount = rowList.Count,
             InternalSupplierRows = rowList.Count(row => row.SupplierType == "Intern"),
-            MissingCostRows = rowList.Count(HasOpenGroupMarginCostBasis)
+            MissingCostRows = rowList.Count(HasOpenGroupMarginCostBasis),
+            ContributionMarginValue = SumContributionMargin(rowList),
+            ContributionMarginRows = rowList.Count(row => row.ContributionMarginValue.HasValue)
         };
     }
 
@@ -2824,6 +2850,7 @@ public class ManagementCockpitService : IManagementCockpitService
         public string SupplierCountry { get; set; } = string.Empty;
         public decimal StandardCost { get; set; }
         public string StandardCostCurrency { get; set; } = string.Empty;
+        public decimal? StandardCostVariable { get; set; }
         public string CustomerNumber { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public DateTime FinanceDate { get; set; }

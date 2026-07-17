@@ -70,6 +70,8 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "CentralSalesRecords", "ProductDivisionText", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "ProductMappingAssigned", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "PostingDate", "TEXT NULL");
+        AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostVariable", "TEXT NULL");
+        AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostFixed", "TEXT NULL");
         EnsureAppEventLogTable(db);
     }
 

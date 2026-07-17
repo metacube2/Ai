@@ -337,6 +337,9 @@ public class ManagementGroupMarginSummary
     public int UnclearSupplierRows { get; set; }
     public decimal CleanCostBasisPercent { get; set; }
     public string DisplayCurrency { get; set; } = string.Empty;
+    // Deckungsbeitrag (additiv): nur ueber Zeilen mit geliefertem fix/variabel-Split summiert.
+    public decimal? ContributionMarginValue { get; set; }
+    public int ContributionMarginRows { get; set; }
 }
 
 public class ManagementGroupMarginCountryRow
@@ -351,6 +354,9 @@ public class ManagementGroupMarginCountryRow
     public int RowCount { get; set; }
     public int InternalSupplierRows { get; set; }
     public int MissingCostRows { get; set; }
+    // Deckungsbeitrag (additiv): nur ueber Zeilen mit geliefertem fix/variabel-Split summiert.
+    public decimal? ContributionMarginValue { get; set; }
+    public int ContributionMarginRows { get; set; }
 }
 
 public class ManagementGroupMarginDivisionRow : ManagementGroupMarginCountryRow
@@ -381,6 +387,11 @@ public class ManagementGroupMarginDetailRow
     public decimal CostBasisValue { get; set; }
     public decimal MarginValue { get; set; }
     public decimal MarginPercent { get; set; }
+    // Deckungsbeitrag (additiv): null solange die Quelle keinen fix/variabel-Split liefert.
+    public decimal? VariableUnitCost { get; set; }
+    public decimal? VariableCostBasisValue { get; set; }
+    public decimal? ContributionMarginValue { get; set; }
+    public decimal? ContributionMarginPercent { get; set; }
 }
 
 public class ManagementFinanceAuditLedgerRow

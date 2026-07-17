@@ -205,6 +205,14 @@ public sealed class MappedSalesRecordComposer : IMappedSalesRecordComposer
                 return;
             }
 
+            if (property.PropertyType == typeof(decimal?))
+            {
+                // Leere Quelle bleibt null (kein fix/variabel-Split geliefert) statt 0.
+                if (value is not null && !string.IsNullOrWhiteSpace(value.ToString()) && TryConvertDecimal(value, out var nullableValue))
+                    property.SetValue(record, nullableValue);
+                return;
+            }
+
             if (property.PropertyType == typeof(DateTime?) || property.PropertyType == typeof(DateTime))
             {
                 if (TryConvertDate(value, out var date))
