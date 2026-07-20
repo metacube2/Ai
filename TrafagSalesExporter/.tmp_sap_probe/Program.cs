@@ -298,6 +298,12 @@ namespace SapProbe
             }
 
             var metadata = destination.Repository.GetFunctionMetadata(functionName.ToUpperInvariant());
+            // CreateFunction() baut nur ein lokales Container-Objekt aus der bereits geladenen
+            // Metadata - das macht KEINEN weiteren SAP-Aufruf. Wird hier nur genutzt, um bei
+            // TABLE/STRUCTURE-Parametern an die verschachtelten Feldnamen zu kommen (fuer
+            // rfc-call --table/--struct CSV-Header), ohne einen zweiten table-fields-Aufruf zu brauchen.
+            var function = metadata.CreateFunction();
+
             Console.WriteLine("Function: " + functionName.ToUpperInvariant());
             Console.WriteLine();
             Console.WriteLine("Direction  Name                              Type       Length  Decimals  Default");
@@ -313,6 +319,24 @@ namespace SapProbe
                     parameter.NucLength.ToString().PadLeft(6) + "  " +
                     parameter.Decimals.ToString().PadLeft(8) + "  " +
                     (parameter.DefaultValue ?? string.Empty));
+
+                if (parameter.DataType == RfcDataType.TABLE)
+                {
+                    PrintNestedFieldNames(function.GetTable(parameter.Name).Metadata.LineType);
+                }
+                else if (parameter.DataType == RfcDataType.STRUCTURE)
+                {
+                    PrintNestedFieldNames(function.GetStructure(parameter.Name).Metadata);
+                }
+            }
+        }
+
+        private static void PrintNestedFieldNames(RfcStructureMetadata lineType)
+        {
+            for (var j = 0; j < lineType.FieldCount; j++)
+            {
+                Console.WriteLine("             -> " + lineType[j].Name + " (" + lineType[j].DataType + ", " +
+                    lineType[j].NucLength + (lineType[j].Decimals > 0 ? "." + lineType[j].Decimals : string.Empty) + ")");
             }
         }
 
@@ -339,6 +363,15 @@ namespace SapProbe
                 throw new ArgumentException("Missing function name. Example: SapProbe.exe rfc-call STFC_CONNECTION --set REQUTEXT=hello");
             }
 
+            var writesTablesOrStructs = options.TableFiles.Count > 0 || options.StructFiles.Count > 0;
+            if (writesTablesOrStructs && !options.DryRun && !options.ConfirmWrite)
+            {
+                throw new InvalidOperationException(
+                    "rfc-call with --table/--struct is blocked unless --confirm-write or --dry-run is provided. " +
+                    "Function modules that take table/structure parameters (e.g. DDIF_STRU_PUT, DDIF_TABL_PUT) " +
+                    "typically write to the SAP repository - this mirrors the abap-write safety rail.");
+            }
+
             var functionName = options.FunctionName.ToUpperInvariant();
             var metadata = destination.Repository.GetFunctionMetadata(functionName);
             var function = metadata.CreateFunction();
@@ -348,11 +381,178 @@ namespace SapProbe
                 function.SetValue(pair.Key.ToUpperInvariant(), pair.Value);
             }
 
-            function.Invoke(destination);
+            foreach (var pair in options.StructFiles)
+            {
+                FillStructureFromCsvFile(function.GetStructure(pair.Key.ToUpperInvariant()), pair.Value);
+            }
+
+            foreach (var pair in options.TableFiles)
+            {
+                FillTableFromCsvFile(function.GetTable(pair.Key.ToUpperInvariant()), pair.Value);
+            }
 
             Console.WriteLine("Function: " + functionName);
+
+            if (writesTablesOrStructs)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Scalar params : " + options.SetValues.Count);
+                foreach (var pair in options.StructFiles)
+                {
+                    Console.WriteLine("Struct param  : " + pair.Key.ToUpperInvariant() + " <- " + Path.GetFullPath(pair.Value));
+                }
+
+                foreach (var pair in options.TableFiles)
+                {
+                    var rowCount = function.GetTable(pair.Key.ToUpperInvariant()).RowCount;
+                    Console.WriteLine("Table param   : " + pair.Key.ToUpperInvariant() + " <- " + Path.GetFullPath(pair.Value) + " (" + rowCount + " Zeilen)");
+                }
+            }
+
+            if (options.DryRun)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Dry run       : RFC wurde NICHT aufgerufen. Kein Wert wurde nach SAP geschrieben.");
+                return;
+            }
+
+            function.Invoke(destination);
+
             Console.WriteLine();
             DumpFunctionResult(function, metadata, options);
+        }
+
+        // ---------------------------------------------------------------
+        // Generisches CSV-Befuellen von RFC-Tabellen-/Strukturparametern.
+        //
+        // Format (beide gleich, Komma-getrennt, UTF-8, Anfuehrungszeichen fuer
+        // Werte mit Komma):
+        //   Zeile 1  = Header = Feldnamen der Ziel-Struktur (Reihenfolge egal,
+        //              Gross-/Kleinschreibung egal)
+        //   --table  = beliebig viele Datenzeilen (eine Zeile = eine Tabellenzeile)
+        //   --struct = GENAU EINE Datenzeile (eine Struktur hat nur einen Satz Werte)
+        //
+        // Feldnamen, die die Struktur/Tabelle nicht kennt, fuehren zu einer klaren
+        // Fehlermeldung statt eines rohen NCo-Fehlers - so sieht man sofort, ob
+        // die vermutete Parameter-Signatur (z.B. DD03P-Spaltennamen) falsch war.
+        // ---------------------------------------------------------------
+        private static void FillTableFromCsvFile(IRfcTable table, string path)
+        {
+            var fullPath = Path.GetFullPath(path);
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException("Table CSV file was not found.", fullPath);
+            }
+
+            var lines = File.ReadAllLines(fullPath, Encoding.UTF8).Where(l => l.Length > 0).ToList();
+            if (lines.Count == 0)
+            {
+                throw new ArgumentException("Table CSV file is empty: " + fullPath);
+            }
+
+            var headers = SplitCsvLine(lines[0]);
+            for (var i = 1; i < lines.Count; i++)
+            {
+                var values = SplitCsvLine(lines[i]);
+                table.Append();
+                FillRowFromHeaders(table.CurrentRow, headers, values, fullPath, i + 1);
+            }
+        }
+
+        private static void FillStructureFromCsvFile(IRfcStructure structure, string path)
+        {
+            var fullPath = Path.GetFullPath(path);
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException("Structure CSV file was not found.", fullPath);
+            }
+
+            var lines = File.ReadAllLines(fullPath, Encoding.UTF8).Where(l => l.Length > 0).ToList();
+            if (lines.Count != 2)
+            {
+                throw new ArgumentException(
+                    "Structure CSV file must have exactly one header row and one data row (a structure holds a single value set): " + fullPath);
+            }
+
+            var headers = SplitCsvLine(lines[0]);
+            var values = SplitCsvLine(lines[1]);
+            FillRowFromHeaders(structure, headers, values, fullPath, 2);
+        }
+
+        private static void FillRowFromHeaders(IRfcDataContainer container, IList<string> headers, IList<string> values, string fullPath, int lineNumber)
+        {
+            for (var c = 0; c < headers.Count; c++)
+            {
+                var fieldName = headers[c].Trim();
+                if (fieldName.Length == 0)
+                {
+                    continue;
+                }
+
+                var value = c < values.Count ? values[c] : string.Empty;
+
+                try
+                {
+                    container.SetValue(fieldName, value);
+                }
+                catch (Exception ex)
+                {
+                    throw new ArgumentException(
+                        "Field '" + fieldName + "' (CSV line " + lineNumber + " in " + fullPath + ") could not be set - " +
+                        "check with 'function-info <FUNCTION>' whether that field name really exists on this parameter: " + ex.Message,
+                        ex);
+                }
+            }
+        }
+
+        private static string[] SplitCsvLine(string line)
+        {
+            var result = new List<string>();
+            var current = new StringBuilder();
+            var inQuotes = false;
+
+            for (var i = 0; i < line.Length; i++)
+            {
+                var c = line[i];
+                if (inQuotes)
+                {
+                    if (c == '"')
+                    {
+                        if (i + 1 < line.Length && line[i + 1] == '"')
+                        {
+                            current.Append('"');
+                            i++;
+                        }
+                        else
+                        {
+                            inQuotes = false;
+                        }
+                    }
+                    else
+                    {
+                        current.Append(c);
+                    }
+                }
+                else
+                {
+                    if (c == '"')
+                    {
+                        inQuotes = true;
+                    }
+                    else if (c == ',')
+                    {
+                        result.Add(current.ToString());
+                        current.Clear();
+                    }
+                    else
+                    {
+                        current.Append(c);
+                    }
+                }
+            }
+
+            result.Add(current.ToString());
+            return result.Select(s => s.Trim()).ToArray();
         }
 
         private static void RunAbapRead(RfcDestination destination, CliOptions options)
@@ -1160,9 +1360,36 @@ namespace SapProbe
             Console.WriteLine();
             Console.WriteLine("rfc-call options:");
             Console.WriteLine("  --set NAME=VALUE                    Scalar import/changing value; can be repeated.");
+            Console.WriteLine("  --table NAME=file.csv                Fill a TABLE parameter from CSV (header row = field names,");
+            Console.WriteLine("                                        any number of data rows). Can be repeated for multiple params.");
+            Console.WriteLine("  --struct NAME=file.csv                Fill a STRUCTURE parameter from CSV (header row + EXACTLY one");
+            Console.WriteLine("                                        data row). Can be repeated for multiple params.");
+            Console.WriteLine("  --confirm-write                      Required together with --table/--struct unless --dry-run is set");
+            Console.WriteLine("                                        (these usually call repository-writing function modules).");
+            Console.WriteLine("  --dry-run                            Parse/build the request but do not invoke the RFC.");
             Console.WriteLine("  --dump-imports                      Include import parameters in output.");
             Console.WriteLine("  --max-table-rows <n>                Max rows printed for table parameters. Default: 20.");
             Console.WriteLine("  --format table|csv|json             Format for table outputs. Default: table.");
+            Console.WriteLine();
+            Console.WriteLine("Creating/activating DDIC objects (structures, tables) via rfc-call:");
+            Console.WriteLine("  SapProbe does NOT hardcode a 'create table' command - the exact interface of function");
+            Console.WriteLine("  modules like DDIF_STRU_PUT/DDIF_STRU_ACTIVATE or DDIF_TABL_PUT/DDIF_TABL_ACTIVATE must be");
+            Console.WriteLine("  confirmed first (SAP versions vary). Workflow:");
+            Console.WriteLine("    1) SapProbe.exe function-search DDIF*STRU*      (confirm the FM is RFC-enabled at all)");
+            Console.WriteLine("    2) SapProbe.exe function-info DDIF_STRU_PUT     (shows exact param names + nested field names)");
+            Console.WriteLine("    3) Build CSV file(s) matching those nested field names, e.g.:");
+            Console.WriteLine("         header.csv   ->  TABNAME,DDLANGUAGE,TABCLASS,DDTEXT");
+            Console.WriteLine("                          ZSTR_LZCODE_USAGE,D,INTTAB,Material usage rows");
+            Console.WriteLine("         fields.csv   ->  FIELDNAME,POSITION,KEYFLAG,ROLLNAME,DATATYPE,LENG,DECIMALS");
+            Console.WriteLine("                          RICHTUNG,1,,,CHAR,10,0");
+            Console.WriteLine("                          VKNR,2,,MATNR,,,");
+            Console.WriteLine("                          ... (one row per component)");
+            Console.WriteLine("    4) SapProbe.exe rfc-call DDIF_STRU_PUT --set NAME=ZSTR_LZCODE_USAGE \\");
+            Console.WriteLine("         --struct DD02V_WA=header.csv --table DD03P_TAB=fields.csv --dry-run");
+            Console.WriteLine("       (parameter names DD02V_WA/DD03P_TAB are an EXAMPLE - verify with function-info first)");
+            Console.WriteLine("    5) Repeat without --dry-run, with --confirm-write, once the dry run looks right.");
+            Console.WriteLine("    6) SapProbe.exe rfc-call DDIF_STRU_ACTIVATE --set NAME=ZSTR_LZCODE_USAGE --confirm-write");
+            Console.WriteLine("  Test first with a throwaway object name, then check it in SE11 before using the real name.");
             Console.WriteLine();
             Console.WriteLine("ABAP source options:");
             Console.WriteLine("  --out <path>                        Write abap-read output to a local file.");
@@ -1259,6 +1486,11 @@ namespace SapProbe
         public string FunctionName { get; private set; }
         public string SearchPattern { get; private set; }
         public Dictionary<string, string> SetValues { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // --table/--struct: NAME=pfad.csv fuer rfc-call. Ermoeglicht generische RFC-Aufrufe mit
+        // Tabellen-/Strukturparametern (z.B. DDIF_STRU_PUT DD03P_TAB), ohne einzelne DDIC-Bausteine
+        // fest zu verdrahten - die exakte Parameter-Signatur wird vorher per function-info geprueft.
+        public Dictionary<string, string> TableFiles { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> StructFiles { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public bool DumpImports { get; private set; }
         public int MaxTableRows { get; private set; } = 20;
         public string ProgramName { get; private set; }
@@ -1351,6 +1583,12 @@ namespace SapProbe
                     case "--set":
                     case "--param":
                         AddSetValue(options, RequireValue(args, ref i, arg));
+                        break;
+                    case "--table":
+                        AddNamedFileValue(options.TableFiles, RequireValue(args, ref i, arg), arg);
+                        break;
+                    case "--struct":
+                        AddNamedFileValue(options.StructFiles, RequireValue(args, ref i, arg), arg);
                         break;
                     case "--dump-imports":
                         options.DumpImports = true;
@@ -1603,6 +1841,24 @@ namespace SapProbe
             }
 
             options.SetValues[key] = value;
+        }
+
+        private static void AddNamedFileValue(Dictionary<string, string> target, string expression, string option)
+        {
+            var separator = expression.IndexOf('=');
+            if (separator < 1)
+            {
+                throw new ArgumentException(option + " expects PARAMNAME=path\\to\\file.csv.");
+            }
+
+            var key = expression.Substring(0, separator).Trim();
+            var value = expression.Substring(separator + 1).Trim();
+            if (key.Length == 0 || value.Length == 0)
+            {
+                throw new ArgumentException(option + " expects PARAMNAME=path\\to\\file.csv.");
+            }
+
+            target[key] = value;
         }
 
         public CliOptions CloneForActiveWrite()
