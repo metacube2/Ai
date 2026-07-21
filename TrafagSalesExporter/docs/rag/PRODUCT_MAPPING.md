@@ -167,6 +167,14 @@ Stand: 2026-06-16
 - Guardrail: Wenn `ProductDivisionRefSet` eine grosse Referenz mit 0 zugeordneten Sparten liefert, bricht der Import ab. Das verhindert ein Ueberschreiben der Dashboard-Daten mit `Nicht zugeordnet`.
 - Validierung lokal: `dotnet test TrafagSalesExporter.sln --verbosity minimal` mit `97/97` Tests gruen.
 
+## Verwandtes Thema: ZLO03/ZAT_VC (2026-07-21)
+
+`ZPOWERBI_VC_TXT-KOMPNR/MATNR` (Komponenten-Fallback oben, Stand 2026-06-11) und `ZAT_VC`
+(Quelle des Reports `ZM_LZCODE20_OPT`/`zlo03.txt`) sind vermutlich dieselbe bzw. eng verwandte
+Stuecklisten-Komponententabelle. Ein Webservice-Entwurf fuer `ZAT_VC` (inkl. Live-Verifikation
+gegen `travt762`) liegt in `docs/abap/README_LZCODE_WEBSERVICE.md`. Bei weiterer Arbeit an
+diesem Fallback dort nachsehen, ob sich Datenquelle/Feldsemantik ueberschneiden.
+
 ## Rohquelle Nur Bei Bedarf
 
 - Detaildoku: `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md`

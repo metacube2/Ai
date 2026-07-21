@@ -1,10 +1,58 @@
 # Last Change
 
-Stand: 2026-07-17
+Stand: 2026-07-21
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- ENTWURF + LIVE-VERIFIKATION 2026-07-21, EINKAUF/PRODUKTMAPPING (kein Deploy, Code noch NICHT
+  committet, ausser SapProbe): Ingo bat darum, den Report `ZM_LZCODE20_OPT`/`zlo03.txt`
+  (Top-Down/Bottom-Up-Stuecklistenanalyse) wie andere SAP-Tabellen per Webservice ansprechbar zu
+  machen. Ergebnis ist ein Entwurfspaket fuer Lucas/SAP-Team (bewusst nicht produktiv, technische
+  SAP-Anlage bleibt gemaess Abgrenzung in `docs/INGO_TODOS_180_TAGE_2026-06-18.md` beim SAP-Team):
+  (1) Spezifikation `docs/abap/README_LZCODE_WEBSERVICE.md` mit normalisiertem Zeilenmodell
+  `MaterialUsageSet`/`MaterialParentSet` (statt der dynamischen Pivot-Matrix des Reports) fuer den
+  bestehenden Gateway-Service `ZPOWERBI_EINKAUF_SRV`. (2) Zwei ABAP-Klassenentwuerfe
+  `ZCL_LZCODE_PROVIDER.abap` (mit privaten Hilfsmethoden) und `ZCL_LZCODE_PROVIDER_INLINE.abap`
+  (gleiche Logik komplett in `GET_DATA` inline, falls nur eine DPC-Methode redefiniert werden
+  soll) — behebt dabei den in den Ingo-Todos genannten Nichtdeterminismus (`FORM
+  get_elternmaterial` haengt eine `HASHED TABLE` ohne `SORT` durch, Reihenfolge nicht definiert).
+  (3) C#-Konsument `Services/MaterialUsageDataRefreshService.cs` + Schema
+  (`MaterialUsageCache`/`MaterialParentCache`/`MaterialUsageSyncState`) + 2 Tests, analog
+  `PurchasingDataRefreshService` — prueft EntitySet-Existenz vor dem Laden und meldet fachlich
+  klar, wenn die SAP-Seite noch fehlt (kein Absturz). NACHTRAG spaeter am 2026-07-21: SAP-Seite
+  ist inzwischen KOMPLETT angelegt (beide SE11-Strukturen feldweise verifiziert, beide
+  DPC_EXT-Methoden `ZSTR_LZCODE_USAG/PARE_GET_ENTITYSET` fehlerfrei aktiviert — Variante 3 ohne
+  eigene Klasse, Methodenruempfe in `docs/abap/ZSTR_LZCODE_*_GET_ENTITYSET.abap`). C#-Seite
+  daran angepasst: EntitySet-Namen werden dynamisch aufgeloest (`ResolveEntitySetName`, SEGW hat
+  nach Strukturnamen benannt), Property-Keys unterstrich-tolerant, Full Load schickt
+  Guard-konforme Filter (`Vknr gt ''` Catch-all bzw. optionale Materialliste). UI seit
+  2026-07-21 (Entscheid Ingo): neuer Root-Reiter LOGISTIK (Icon LocalShipping) mit Unterpunkt
+  STUECKLISTENANALYSE (`Components/Pages/BomAnalysis.razor`, `/logistik/stuecklistenanalyse`,
+  Seed `logistics`/`logistics-bom-analysis`) — SAP-Load mit Richtungs-Schalter und
+  Materialfilter, Statusanzeige, durchsuchbare Cache-Vorschau. Daten sollen spaeter auch im
+  Einkauf nutzbar sein, starten aber als eigener Reiter. `260/260` Tests gruen. NOCH NICHT
+  deployed/committet; Ende-zu-Ende gegen TEST liefert erwartungsgemaess 0 Zeilen (ZAT_VC dort
+  leer), echter Datentest erst nach travt/travp-Umstellung. (4) LIVE-VERIFIKATION gegen `T76`/`travt762` (TEST) per `SapProbe`
+  bestaetigt alle offenen Fachannahmen: `ZAT_VC-KOM_MSTAE` ist trotz irrefuehrenden Namens ein
+  MATNR-Feld (Elternmaterial-Mapping korrekt), `MARA-ZZLZCOD`/`ZZLZCODSORT` haben echte
+  Datenelemente (`CHAR 4`, keine PAPH1-Falle), `ZAT_VC`/`ZMD04_CALC` existieren und sind lesbar
+  (Feldlisten passen zum Provider). (5) DDIC-ANLAGE PER TOOL GEPRUEFT UND VERWORFEN: `SapProbe`
+  kann die noetigen SE11-Strukturen (`ZSTR_LZCODE_USAGE`/`ZSTR_LZCODE_PARENT`) NICHT selbst
+  anlegen — `DDIF_STRU_PUT` existiert nicht (korrekt: `DDIF_TABL_PUT`/`DDIF_TABL_ACTIVATE`), und
+  diese sind auf T76 nicht RFC-freigegeben (Invoke-Test: „ist nicht 'remote' aufrufbar",
+  SAP-Community bestaetigt DDIF*-Bausteine generell als nicht remote-enabled). Empfehlung:
+  Strukturen manuell in SE11 anlegen, Feldliste ist verifiziert und in
+  `.tmp_sap_probe/ddic_lzcode/` als Kopiervorlage abgelegt.
+- WERKZEUG-ERWEITERUNG 2026-07-20/21, COMMIT `346bea3` (SapProbe, `.tmp_sap_probe/`): Der
+  RFC/NCo-Direktzugriff auf SAP (unabhaengig von der OData-Strecke der App, siehe
+  `docs/RAG_ROUTER.md` Abschnitt „Werkzeug: SAP-Direktzugriff") kann jetzt `rfc-call --table
+  NAME=datei.csv`/`--struct NAME=datei.csv`, um beliebige RFC-faehige Bausteine mit Tabellen-/
+  Strukturparametern aus CSV zu fuellen, gesperrt hinter `--confirm-write`/`--dry-run` wie
+  `abap-write`. `function-info` zeigt bei TABLE/STRUCTURE-Parametern jetzt auch die
+  verschachtelten Feldnamen mit. Grenzen empirisch geklaert (s. Punkt oben): fuer DDIC-Anlage
+  nicht nutzbar, weil die dafuer noetigen Bausteine auf T76 nicht RFC-freigegeben sind.
 
 - PRODUKTIVDATEN 2026-07-17 EINKAUF (kein Code-Deploy, reiner Datenlauf gegen die Server-DB): Einkauf-Full-Load nach dem heutigen `maracalcSet`-Fix erfolgreich durchgelaufen (`EKKO=172'914, EKPO=234'083, EKET=242'734, MARA-Status=67'665, LFA1-Namen=6'747`). Verifiziert: `SupplierName` in `PurchasingEkkoCache` jetzt zu 99.99 % gefuellt (172'898/172'914), vorher 0/172'874 (letzter erfolgreicher Load war vom 07.06., vor dem LFA1-Namens-Fix; der einzige Load danach am 02.07. war am `MARA001Set`-404 gescheitert, bevor LFA1 ueberhaupt geladen wurde). Stichprobe bestaetigt echte Namen statt Nummern: `66952 -> BEPRO AG`, `70369 -> CPT Praezisionstechnik GmbH`, `66715 -> GFS`, `65058 -> HEITZ GMBH`. Der Spend-Reiter (Matrix `Kaskadierung Lieferant / Jahr`) zeigt damit ab sofort Lieferantennamen statt nur Nummern. OFFENER PUNKT (nicht angefasst, gehoert mit Marco/Andreas abgestimmt): Die zentrale SAP-Quelle fuer Einkauf zeigt weiterhin auf `travt762` (Test-Server), nicht `travp762` (Prod) — gleiches Grundthema wie das bekannte ZSCHWEIZ/2026-Problem.
 - DEPLOYED 2026-07-17 (Commit `c34e593 Rename "Export all" button to clarify it reloads from source, not just DB`, `257/257` Tests gruen, DLL `17.07.2026 10:41:31`, Laenge `3'006'976`, Port 443 erreichbar, DB unveraendert): UI-TEXT (Export Dashboard, alle 5 Sprachen mitgezogen): Button „Alle exportieren"/„Export all" umbenannt in „Alle Standorte laden"/„Reload all sites" (ES „Recargar todos los sitios", IT „Ricarica tutte le sedi", HI „सभी साइटें लोड करें"). Anlass: Ingo empfand „Alle exportieren" als irrefuehrend, weil der Button nicht nur bereits geladene Daten exportiert, sondern je aktivem Standort frisch von der Quelle (SAP/HANA/manuelle Datei) liest und die DB neu befuellt — Verwechslungsgefahr mit dem daneben liegenden „Zentrale Datei neu erzeugen" (das NUR mit der DB arbeitet, nichts neu laedt). Reine Beschriftungsaenderung, keine Logikaenderung. `Services/UiTextService.cs` Uebersetzungs-Dictionary-Keys aktualisiert (Key = deutscher String), damit ES/IT/HI nicht auf Englisch zurueckfallen. `257/257` Tests gruen.

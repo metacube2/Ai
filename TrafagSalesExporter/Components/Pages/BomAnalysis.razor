@@ -1,0 +1,188 @@
+@page "/logistik/stuecklistenanalyse"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject IMaterialUsageDataRefreshService UsageService
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("Stuecklistenanalyse (ZLO03)", "BOM analysis (ZLO03)")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Stuecklistenanalyse (ZLO03)", "BOM analysis (ZLO03)")</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+    @T("Laedt die Stuecklistenanalyse des SAP-Reports ZM_LZCODE20_OPT (ZAT_VC/ZMD04_CALC) ueber den Gateway-Service ZPOWERBI_EINKAUF_SRV in den lokalen Cache (MaterialUsageCache). Eine Zeile je Kopfmaterial/Komponente-Paar inkl. Bestand, Stueckkosten und Exklusivitaet. SAP erzwingt einen Materialfilter — ohne Eingabe wird bewusst ALLES geladen (Catch-all). Gegen den Test-Server travt762 sind 0 Zeilen erwartet, weil ZAT_VC dort leer ist; echte Daten liegen auf travp762 (Prod).",
+       "Loads the BOM analysis of SAP report ZM_LZCODE20_OPT (ZAT_VC/ZMD04_CALC) via gateway service ZPOWERBI_EINKAUF_SRV into the local cache (MaterialUsageCache). One row per header-material/component pair incl. stock, unit cost and exclusivity. SAP enforces a material filter — with no input, EVERYTHING is loaded deliberately (catch-all). Against test server travt762, 0 rows are expected because ZAT_VC is empty there; real data lives on travp762 (prod).")
+</MudAlert>
+
+<MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
+    <MudTextField @bind-Value="_materialFilter" Label="@T("Materialnummern (kommagetrennt, leer = alle)", "Material numbers (comma-separated, empty = all)")"
+                  Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 340px;" />
+    <MudSwitch T="bool" @bind-Value="_topDown" Color="Color.Primary"
+               Label="@(_topDown ? T("Top-Down (Kopfmaterial -> Komponenten)", "Top-down (header -> components)") : T("Bottom-Up (Komponente -> Verwendungen)", "Bottom-up (component -> usages)"))" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.CloudDownload"
+               OnClick="RunLoadAsync" Disabled="_busy">
+        @T("Von SAP laden", "Load from SAP")
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.Refresh"
+               OnClick="ReloadAsync" Disabled="_busy">
+        @T("Status aktualisieren", "Refresh status")
+    </MudButton>
+    @if (_busy)
+    {
+        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+        <MudText Typo="Typo.caption">@T("SAP-Load laeuft...", "SAP load running...")</MudText>
+    }
+</MudStack>
+
+@if (_status is not null)
+{
+    <MudAlert Severity="@StatusSeverity" Variant="Variant.Outlined" Dense Class="mb-4">
+        <b>@T("Letzter Lauf", "Last run"):</b> @(_status.Status)
+        @if (_status.CompletedAtUtc is not null)
+        {
+            <text> (@_status.CompletedAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</text>
+        }
+        — @T("Zeilen", "rows"): @_status.UsageRows.ToString("N0") / @T("Eltern", "parents"): @_status.ParentRows.ToString("N0")
+        <br />
+        <MudText Typo="Typo.caption">@_status.Message</MudText>
+    </MudAlert>
+}
+
+<MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+    <MudTextField @bind-Value="_previewFilter" Label="@T("Cache durchsuchen (Vknr/Kompnr)", "Search cache (Vknr/Kompnr)")"
+                  Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 280px;"
+                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                  OnAdornmentClick="LoadPreviewAsync" />
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="LoadPreviewAsync" Disabled="_loading">
+        @T("Suchen", "Search")
+    </MudButton>
+</MudStack>
+
+<MudTable Items="_rows" Dense Hover Striped Loading="_loading">
+    <HeaderContent>
+        <MudTh>@T("Richtung", "Direction")</MudTh>
+        <MudTh>Vknr</MudTh>
+        <MudTh>@T("Komponente", "Component")</MudTh>
+        <MudTh>@T("Bezeichnung", "Description")</MudTh>
+        <MudTh>ME</MudTh>
+        <MudTh Style="text-align:right">@T("Menge", "Quantity")</MudTh>
+        <MudTh>@T("Exklusiv", "Exclusive")</MudTh>
+        <MudTh Style="text-align:right">@T("Bestand", "Stock")</MudTh>
+        <MudTh Style="text-align:right">@T("Endbestand", "Final stock")</MudTh>
+        <MudTh Style="text-align:right">@T("Stueckkosten", "Unit cost")</MudTh>
+        <MudTh Style="text-align:right">@T("Wert Endbestand", "Final stock value")</MudTh>
+        <MudTh>@T("Matstatus", "Mat. status")</MudTh>
+        <MudTh>@T("LZ-Code", "LC code")</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Richtung</MudTd>
+        <MudTd>@context.Vknr</MudTd>
+        <MudTd>@context.Kompnr</MudTd>
+        <MudTd>@context.KompnrMaktx</MudTd>
+        <MudTd>@context.KompnrMeins</MudTd>
+        <MudTd Style="text-align:right">@context.Menge</MudTd>
+        <MudTd>
+            @if (context.Exklusiv)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Success" />
+            }
+        </MudTd>
+        <MudTd Style="text-align:right">@context.Labst</MudTd>
+        <MudTd Style="text-align:right">@context.Endbestand</MudTd>
+        <MudTd Style="text-align:right">@context.Stueckkosten</MudTd>
+        <MudTd Style="text-align:right">@context.WertEndbestand</MudTd>
+        <MudTd>@context.Mstae</MudTd>
+        <MudTd>@context.Zzlzcod</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText Typo="Typo.caption">
+            @T("Noch keine Daten im Cache — zuerst 'Von SAP laden' ausfuehren. Gegen travt762 (TEST) bleibt der Cache leer, weil ZAT_VC dort keine Daten hat.",
+               "No cached data yet — run 'Load from SAP' first. Against travt762 (TEST) the cache stays empty because ZAT_VC has no data there.")
+        </MudText>
+    </NoRecordsContent>
+</MudTable>
+
+<MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:#64748b;">
+    @T("Anzeige zeigt maximal 200 Zeilen aus dem Cache; die Suche filtert per Teilstring auf Vknr/Kompnr. Fachliche Basis: docs/abap/README_LZCODE_WEBSERVICE.md. Diese Daten sind perspektivisch auch fuer den Einkauf nutzbar (Exklusivitaet/Bestaende je Komponente), starten aber bewusst als eigener Logistik-Reiter.",
+       "Display shows at most 200 cached rows; search filters by substring on Vknr/Kompnr. Functional basis: docs/abap/README_LZCODE_WEBSERVICE.md. This data can later also serve purchasing (exclusivity/stock per component) but deliberately starts as its own logistics tab.")
+</MudText>
+
+@code {
+    private MaterialUsageRefreshStatus? _status;
+    private List<MaterialUsagePreviewRow> _rows = [];
+    private string _materialFilter = string.Empty;
+    private string _previewFilter = string.Empty;
+    private bool _topDown = true;
+    private bool _busy;
+    private bool _loading;
+
+    private Severity StatusSeverity => _status?.Status switch
+    {
+        "Success" => Severity.Success,
+        "Error" => Severity.Error,
+        "Running" => Severity.Warning,
+        _ => Severity.Info
+    };
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        await LoadStatusAsync();
+        await LoadPreviewAsync();
+    }
+
+    private async Task LoadStatusAsync()
+    {
+        try
+        {
+            _status = await UsageService.GetStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Status konnte nicht geladen werden: {0}", "Could not load status: {0}"), ex.Message), Severity.Error);
+        }
+    }
+
+    private async Task LoadPreviewAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = await UsageService.GetCachedUsageRowsAsync(_previewFilter);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Cache konnte nicht gelesen werden: {0}", "Could not read cache: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RunLoadAsync()
+    {
+        _busy = true;
+        StateHasChanged();
+        try
+        {
+            var result = await UsageService.RunFullLoadAsync(_topDown, _materialFilter);
+            Snackbar.Add(result.Message, result.IsComplete ? Severity.Success : Severity.Error);
+            _status = result;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Load fehlgeschlagen: {0}", "Load failed: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            await ReloadAsync();
+        }
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

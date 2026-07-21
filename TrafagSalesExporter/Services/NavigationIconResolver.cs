@@ -20,6 +20,7 @@ public static class NavigationIconResolver
         "InsertChart" => Icons.Material.Filled.InsertChart,
         "Lightbulb" => Icons.Material.Filled.Lightbulb,
         "List" => Icons.Material.Filled.List,
+        "LocalShipping" => Icons.Material.Filled.LocalShipping,
         "LocationOn" => Icons.Material.Filled.LocationOn,
         "Lock" => Icons.Material.Filled.Lock,
         "Payments" => Icons.Material.Filled.Payments,

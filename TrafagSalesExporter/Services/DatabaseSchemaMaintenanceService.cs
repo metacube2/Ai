@@ -52,6 +52,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureCentralSalesRecordTable(db);
         EnsureNavigationMenuItemTable(db);
         EnsurePurchasingCacheTables(db);
+        EnsureMaterialUsageCacheTables(db);
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
@@ -355,6 +356,36 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         var addedKtmng = AddColumnIfMissing(db, "PurchasingEkpoCache", "Ktmng", "TEXT NOT NULL DEFAULT '0'");
         if (addedElikz || addedKtmng)
             BackfillEkpoItemFieldsFromRawJson(conn, addedElikz, addedKtmng);
+    }
+
+    private static void EnsureMaterialUsageCacheTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        foreach (var createSql in new[]
+        {
+            DatabaseSchemaSql.GetMaterialUsageCacheCreateSql(),
+            DatabaseSchemaSql.GetMaterialParentCacheCreateSql(),
+            DatabaseSchemaSql.GetMaterialUsageSyncStateCreateSql()
+        })
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = createSql.Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_Vknr ON MaterialUsageCache (Richtung, Vknr);",
+            "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_Kompnr ON MaterialUsageCache (Richtung, Kompnr);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
     }
 
     // Einmaliger Backfill der EKKO-Belegtyp/-Belegart-Spalten aus RawJson (Bestandsdaten ohne Neu-Load).

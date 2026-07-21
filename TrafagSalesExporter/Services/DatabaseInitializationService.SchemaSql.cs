@@ -317,6 +317,73 @@ CREATE TABLE PurchasingSyncState (
     Message TEXT NOT NULL DEFAULT ''
 );";
 
+    // MaterialUsageSet/MaterialParentSet - siehe docs/abap/README_LZCODE_WEBSERVICE.md.
+    // SAP-seitiges EntitySet existiert noch nicht (Entwurf fuer Lucas), Tabellen bleiben
+    // additiv leer, bis MaterialUsageDataRefreshService erfolgreich laden kann.
+    internal static string GetMaterialUsageCacheCreateSql() => @"
+CREATE TABLE MaterialUsageCache (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Richtung TEXT NOT NULL DEFAULT '',
+    Vknr TEXT NOT NULL DEFAULT '',
+    VknrMstae TEXT NOT NULL DEFAULT '',
+    VknrVerbrauch TEXT NOT NULL DEFAULT '0',
+    Kompnr TEXT NOT NULL DEFAULT '',
+    KompnrMaktx TEXT NOT NULL DEFAULT '',
+    KompnrMeins TEXT NOT NULL DEFAULT '',
+    Menge TEXT NOT NULL DEFAULT '0',
+    Exklusiv INTEGER NOT NULL DEFAULT 0,
+    Verbrauch TEXT NOT NULL DEFAULT '0',
+    Labst TEXT NOT NULL DEFAULT '0',
+    FesteZugang TEXT NOT NULL DEFAULT '0',
+    GeplZugang TEXT NOT NULL DEFAULT '0',
+    FesteAbgang TEXT NOT NULL DEFAULT '0',
+    GeplAbgang TEXT NOT NULL DEFAULT '0',
+    Endbestand TEXT NOT NULL DEFAULT '0',
+    Omeng TEXT NOT NULL DEFAULT '0',
+    Mkmng TEXT NOT NULL DEFAULT '0',
+    Stueckkosten TEXT NOT NULL DEFAULT '0',
+    WertFesteZug TEXT NOT NULL DEFAULT '0',
+    WertGeplZug TEXT NOT NULL DEFAULT '0',
+    WertFesteAbg TEXT NOT NULL DEFAULT '0',
+    WertGeplAbg TEXT NOT NULL DEFAULT '0',
+    WertEndbestand TEXT NOT NULL DEFAULT '0',
+    Owert TEXT NOT NULL DEFAULT '0',
+    Omkwr TEXT NOT NULL DEFAULT '0',
+    Dismm TEXT NOT NULL DEFAULT '',
+    Minbe TEXT NOT NULL DEFAULT '0',
+    Disls TEXT NOT NULL DEFAULT '',
+    Bstfe TEXT NOT NULL DEFAULT '0',
+    Eisbe TEXT NOT NULL DEFAULT '0',
+    Mstae TEXT NOT NULL DEFAULT '',
+    Mstav TEXT NOT NULL DEFAULT '',
+    Beskz TEXT NOT NULL DEFAULT '',
+    Zzlzcod TEXT NOT NULL DEFAULT '',
+    Zzlzcodsort TEXT NOT NULL DEFAULT '',
+    Baugruppe INTEGER NOT NULL DEFAULT 0,
+    Waers TEXT NOT NULL DEFAULT '',
+    RawJson TEXT NOT NULL DEFAULT '',
+    LastLoadedAtUtc TEXT NOT NULL
+);";
+
+    internal static string GetMaterialParentCacheCreateSql() => @"
+CREATE TABLE MaterialParentCache (
+    Kompnr TEXT NOT NULL,
+    ElternMatnr TEXT NOT NULL,
+    LastLoadedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (Kompnr, ElternMatnr)
+);";
+
+    internal static string GetMaterialUsageSyncStateCreateSql() => @"
+CREATE TABLE MaterialUsageSyncState (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Status TEXT NOT NULL DEFAULT '',
+    StartedAtUtc TEXT NULL,
+    CompletedAtUtc TEXT NULL,
+    UsageRows INTEGER NOT NULL DEFAULT 0,
+    ParentRows INTEGER NOT NULL DEFAULT 0,
+    Message TEXT NOT NULL DEFAULT ''
+);";
+
     internal static string GetFinancialJournalEntriesCreateSql() => @"
 CREATE TABLE FinancialJournalEntries (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

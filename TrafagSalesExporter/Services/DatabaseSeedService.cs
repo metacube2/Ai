@@ -240,6 +240,11 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-pbix", "purchasing", "PBIX Vorlage", "PBIX template", "InsertChart", "einkauf/pbix", 80, "All"),
         Link("purchasing-3d", "purchasing", "3D Simulation", "3D simulation", "ViewInAr", "einkauf/3d", 90, "All"),
         Link("purchasing-data-sources", "purchasing", "Datenquellen", "Data sources", "Hub", "einkauf/verbindungen", 100, "All"),
+        // Logistik 2026-07-21 (Wunsch Ingo): eigener Root-Reiter; die Stuecklistendaten (ZLO03/
+        // ZAT_VC via MaterialUsageDataRefreshService) koennen spaeter auch im Einkauf verwendet
+        // werden, starten aber bewusst als eigenes Thema.
+        Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
+        Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
         Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
     ];
 

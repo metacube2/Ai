@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-07-17
+Stand: 2026-07-21
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
@@ -11,6 +11,9 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 3. Thema bestimmen; die passende Kurzdatei aus `docs/rag/` laden.
 4. Rohquellen nur laden, wenn Details, alte Zahlen, Codepfade, Mailtexte oder Audit gefragt sind.
 5. Arbeitsregeln/Grenzen (Tests, Doku-Pflicht, fachliche Verantwortung): `persona.md` (Repo-Root).
+6. SAP-Fakten (Feldnamen, Datenelemente, Tabelleninhalte, ABAP-Quelltexte) NICHT raten und nicht
+   nur aus alter Doku uebernehmen: mit dem Werkzeug `SapProbe` direkt am System pruefen, siehe
+   Abschnitt „Werkzeug: SAP-Direktzugriff (SapProbe)".
 
 ## Themen
 
@@ -27,6 +30,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | Architektur | Systemuebersicht, Diagramme, technische Einordnung | `docs/rag/ARCHITECTURE.md` |
 | Produktmapping | Group Sales Report, Produkthierarchie, Produktfamilie, Produktsparte | `docs/rag/PRODUCT_MAPPING.md` |
 | Einkauf | Einkaufsdashboard, EKKO/EKPO/EKET, Lieferanten, offene Bestellungen/Kontrakte, Spend, Drilldown | `docs/rag/PURCHASING.md` |
+| ZLO03/Stuecklistenanalyse-Webservice | ZM_LZCODE20_OPT, MaterialUsageSet/MaterialParentSet, ZCL_LZCODE_PROVIDER, SE11-Strukturen, SapProbe-Live-Verifikation | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | 180-Tage-Roadmap Ingo | Management-Doku, Aufgaben Ingo, Sales/Data-Lake, HR/Einkauf, Abhaengigkeiten | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 
 ## Rohquellen Nur Bei Bedarf
@@ -65,6 +69,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` | Vorbereitung Einkauf-Review durch Ingo |
 | `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` | Umsetzungsplan aus Marcos Einkauf-Review |
 | `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` | Marcos Einkauf-Review im Detail, inkl. travp762-Feldrisiko |
+| `docs/abap/README_LZCODE_WEBSERVICE.md` | ZLO03/ZM_LZCODE20_OPT als Webservice (Entwurf fuer Lucas): EntityStruktur, Determinismus-Fix, Gateway-Anlage; C#-Seite in `Services/MaterialUsageDataRefreshService.cs` |
 | `docs/FINANCE_STANDARDKOSTEN_ARBEITSNOTIZ_2026-07-17.md` | Arbeitsnotiz Standardkosten/Margenreporting mit Andreas (Stichproben, fix/variabel-Frage) |
 | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` | IT/Italien-Finance-Vorgehen im Detail |
 | `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` | UK-Quellkorrektur (Sage) im Detail |
@@ -84,6 +89,83 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` | Tooling (ccusage), nicht projektfachlich |
 | `docs/raw_md_archive/LASTCHANGE_ARCHIV_bis_2026-07-12.md` | archivierte `lastchange.md`-Eintraege bis 2026-07-12 (verbatim) |
 | `docs/raw_md_archive/RAG_KURZDATEIEN_ARCHIV_ueberholte_eintraege.md` | archivierte, durch neuere ersetzte Kurzstand-Eintraege aus FINANCE/PROJECT/DEPLOYMENT (verbatim) |
+
+## Werkzeug: SAP-Direktzugriff (SapProbe)
+
+Stand: 2026-07-20
+
+Ort: `.tmp_sap_probe/` (Repo-Wurzel `TrafagSalesExporter`). Quellcode ist in Git
+(`Program.cs`, `SapProbe.csproj`, `RunSapProbeInteractive.ps1`), die **kompilierte EXE nicht** —
+nach frischem Clone erst bauen (Ziel `bin\x86\Release\net48\SapProbe.exe`).
+
+Zweck: Direkter SAP-Zugriff per **RFC/NCo** (SAP .NET Connector) — unabhaengig von der
+OData-Strecke der App. Damit lassen sich SAP-Fakten pruefen, statt sie zu vermuten.
+
+**Wann nutzen:** Immer wenn eine Aussage ueber SAP getroffen werden soll, die man sonst raten
+wuerde — existiert ein Feld, wie heisst das Datenelement, was steht wirklich in einer Z-Tabelle,
+wie sieht der aktuelle ABAP-Quelltext aus. Die Ergebnisse gehoeren danach in die betroffene
+Doku (z. B. offene Punkte in `docs/abap/README_LZCODE_WEBSERVICE.md`).
+
+| Befehl | Zweck |
+| --- | --- |
+| `system-info` | Ping + Systeminfo (Default-Befehl) |
+| `table-read <tab> --fields A,B --where "..." --rowcount n` | Tabelleninhalte lesen (`RFC_READ_TABLE`) |
+| `table-fields <tab> [feld]` | DDIC-Metadaten inkl. Spalte `ROLLNAME` = Datenelementname (`DDIF_FIELDINFO_GET`) |
+| `field-exists <tab> <feld>` | Existiert ein Feld? |
+| `function-info` / `function-search` / `rfc-call` | RFC-Bausteine inspizieren/aufrufen; `function-info` zeigt bei TABLE/STRUCTURE-Parametern auch die verschachtelten Feldnamen |
+| `rfc-call ... --table NAME=datei.csv` / `--struct NAME=datei.csv` | Generische Tabellen-/Strukturparameter aus CSV befuellen (2026-07-20 ergaenzt) |
+| `abap-read <prog> [--out datei]` | ABAP-Quelltext aus dem System lesen (`RPY_PROGRAM_READ`) |
+| `abap-check <prog> [--source-file ...]` | Syntaxpruefung im System |
+| `abap-write` / `abap-activate` | Schreiben/Aktivieren, gesperrt hinter `--confirm-write` |
+
+Ziel-Default: `travt762.sap.trafag.com` (SID `T76`, Client 100, User `KOI`) — das ist der
+**TEST**-Server, derselbe, auf den `PURCHASING_SAP` zeigt. Lesezugriffe dort sind risikoarm.
+Prod waere `travp762` (`--ashost` ueberschreiben, vorher abstimmen).
+
+### Was das Tool kann und was nicht (Stand 2026-07-21, am Live-System T76 geprueft)
+
+| Aufgabe | Automatisch per SapProbe? | Von Hand noetig | Womit / Bemerkung |
+| --- | --- | --- | --- |
+| SAP pingen, Systeminfo | Ja | — | `system-info` |
+| Tabelleninhalte lesen | Ja | — | `table-read` (`RFC_READ_TABLE`) |
+| DDIC-Feldmetadaten lesen (Datenelement, Laenge, Typ) | Ja | — | `table-fields`/`field-exists` (`DDIF_FIELDINFO_GET`) |
+| RFC-Bausteine inspizieren/suchen | Ja | — | `function-info`/`function-search` |
+| Beliebigen **RFC-faehigen** Baustein aufrufen (Skalare, Tabellen, Strukturen) | Ja | — | `rfc-call` (+ `--table`/`--struct` aus CSV, seit 2026-07-20) |
+| ABAP-Quelltext eines Reports lesen | Ja | — | `abap-read` (`RPY_PROGRAM_READ`) |
+| ABAP-Syntax im System pruefen | Ja | — | `abap-check` |
+| ABAP-**Programm**/Report/Include schreiben + aktivieren | Ja | — | `abap-write`/`abap-activate` (`RPY_PROGRAM_INSERT`), gesperrt hinter `--confirm-write` |
+| DDIC-Struktur/Tabelle anlegen (SE11) | **Nein** | **Ja, SE11** | `DDIF_TABL_PUT`/`DDIF_TABL_ACTIVATE` existieren, sind aber auf T76 **nicht RFC-freigegeben** (Invoke-Test: „ist nicht 'remote' aufrufbar", 2026-07-21 verifiziert). `DDIF_STRU_PUT` existiert entgegen erster Annahme gar nicht. |
+| Globale Klasse anlegen (z. B. `ZCL_LZCODE_PROVIDER`) | **Nein** | **Ja, SE24/ADT** | `RPY_PROGRAM_INSERT` legt nur Programme an, keine `SEOCLASS`/`SEOCOMPO`-Metadaten - das kennt SE24 sonst nicht als Klasse. |
+| Gateway-Service/EntityType/EntitySet anlegen, aktivieren (SEGW) | **Nein** | **Ja, SEGW** | Kein RFC-Baustein dafuer bekannt/geprueft; Modellaenderung + Codegenerierung laeuft nur ueber die SEGW-UI. |
+| Metadaten-Cache am Gateway leeren | Nicht geprueft | Vermutlich ja | z. B. `/IWFND/CACHE_CLEANUP` o.ae. - noch nicht verifiziert. |
+| SAP-Passwort eingeben | — | Immer der Mensch | Interaktiv maskiert oder `SAP_NCO_PASSWORD`/`SAP_T76_PASSWORD` als Env-Var - eine Claude-Session kann den interaktiven Prompt nicht bedienen. |
+
+**Fuer `ZSTR_LZCODE_USAGE`/`ZSTR_LZCODE_PARENT` konkret:** Struktur-Anlage (SE11) und
+Klassen-Anlage (SE24) bleiben manuell durch Lucas/Ingo. Die Feldliste dafuer ist 2026-07-21 am
+Live-System verifiziert (Datenelemente `ZZLZCOD`/`ZZLZCODSORT` existieren als CHAR 4,
+`KOM_MSTAE` ist ein MATNR-Feld, `ZAT_VC`/`ZMD04_CALC` lesbar) - siehe
+`docs/abap/README_LZCODE_WEBSERVICE.md`, Abschnitt „Live-Verifikation 2026-07-21", und
+`.tmp_sap_probe/ddic_lzcode/` als Abtippvorlage.
+
+### Ausfuehrung (wichtig fuer Chat-Sessions)
+
+Das Passwort wird maskiert **interaktiv** abgefragt (alternativ `SAP_NCO_PASSWORD` bzw.
+`SAP_T76_PASSWORD` als Umgebungsvariable), und das PS1 wartet am Ende auf Enter. Eine
+Claude-Session kann diese Prompts nicht bedienen — Ingo muss die Befehle selbst mit
+`!`-Praefix starten, dann landet die Ausgabe im Chat:
+
+```text
+! powershell -NoProfile -ExecutionPolicy Bypass -File .\.tmp_sap_probe\RunSapProbeInteractive.ps1 table-fields MARA ZZLZCOD
+! powershell -NoProfile -ExecutionPolicy Bypass -File .\.tmp_sap_probe\RunSapProbeInteractive.ps1 table-read ZAT_VC --fields KOMPNR,MATNR,KOM_MSTAE --rowcount 10
+```
+
+Diese Proben wurden 2026-07-21 bereits ausgefuehrt (Ergebnisse in
+`docs/abap/README_LZCODE_WEBSERVICE.md`, Abschnitt „Live-Verifikation 2026-07-21"). Alternativ
+liest die Env-Variablen-Variante das Passwort aus `SAP_NCO_PASSWORD` (dann `--no-password-prompt`),
+dann kann auch die Claude-Session die reinen Lese-Befehle selbst fahren, ohne interaktiven Prompt.
+
+Ergaenzend liegen dort zwei reine OData-Probe-Skripte (kein NCo, ohne Build nutzbar):
+`probe_travp762_odata.ps1` und `probe_travp762_stprs.ps1`.
 
 ## Entfernt 2026-07-15 / nur noch im Raw-Archiv
 
@@ -134,3 +216,4 @@ in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Details/
 | `NETWR_HC`, `Kurrf`, `Faktor 100`, `CorrectHouseCurrencyScaling` | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` |
 | `Supplier-Felder leer`, `Lieferant unklar`, `GroupMarginSupplierClassifier` | Finance Cockpit / `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | `travt762`, `travp762`, `Test-Server`, `SapServiceUrl` | Finance Cockpit + Einkauf (offener Punkt in beiden) |
+| `ZLO03`, `ZM_LZCODE20_OPT`, `MaterialUsageSet`, `MaterialParentSet`, `ZCL_LZCODE_PROVIDER`, `Stuecklistenanalyse` | `docs/abap/README_LZCODE_WEBSERVICE.md` |
