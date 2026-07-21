@@ -6,6 +6,29 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DEPLOYED 2026-07-21 (Commit `a314881 Add ZLO03 BOM-analysis webservice: SAP entity methods,
+  C# loader, Logistik tab`, `260/260` Tests gruen, DLL `21.07.2026 15:04:46`, Laenge
+  `3'075'072`, Port 443 erreichbar, DB unveraendert `14:50:23`): NEUER ROOT-REITER **LOGISTIK**
+  (Icon LocalShipping) mit Unterpunkt **Stuecklistenanalyse** (`Components/Pages/BomAnalysis.razor`,
+  `/logistik/stuecklistenanalyse`, Seed-Keys `logistics`/`logistics-bom-analysis`) — macht den
+  SAP-Report `ZM_LZCODE20_OPT` (Top-Down/Bottom-Up-Stuecklistenanalyse, bisher nur als
+  Excel-Download) per Webservice ansprechbar. SAP-Seite: zwei neue OData-EntitySets am
+  bestehenden Gateway-Service `ZPOWERBI_EINKAUF_SRV`, angelegt als DPC_EXT-Methodenruempfe
+  OHNE eigene Klasse (`ZSTR_LZCODE_USAG_GET_ENTITYSET`/`ZSTR_LZCODE_PARE_GET_ENTITYSET`, beide
+  am 2026-07-21 in SEGW fehlerfrei aktiviert) auf zwei neuen, feldweise verifizierten
+  DDIC-Strukturen (`ZSTR_LZCODE_USAGE`/`ZSTR_LZCODE_PARENT`) — normalisiertes Zeilenmodell statt
+  der dynamischen Pivot-Matrix des Reports, behebt dabei den in
+  `docs/INGO_TODOS_180_TAGE_2026-06-18.md` genannten Nichtdeterminismus (HASHED-TABLE-Reihenfolge
+  ohne SORT in `FORM get_elternmaterial`). C#-Seite (`MaterialUsageDataRefreshService`) loest die
+  EntitySet-Namen dynamisch auf (SEGW hat nach den Strukturen benannt, nicht wie urspruenglich
+  vorgeschlagen `MaterialUsageSet`) und schickt SAP-seitig erzwungene Materialfilter (Catch-all
+  oder gezielte Liste aus der neuen UI). Live-Verifikation gegen T76/travt762 per SapProbe (RFC)
+  bestaetigte vorab alle offenen Fachannahmen (`KOM_MSTAE` ist ein MATNR-Feld, `ZZLZCOD`/
+  `ZZLZCODSORT` haben echte Datenelemente, `ZAT_VC`/`ZMD04_CALC` lesbar). GEGEN TEST SIND 0
+  ZEILEN ERWARTET (ZAT_VC auf travt762 leer, echte Daten liegen auf travp762/PROD — bekannter
+  travt/travp-Punkt aus `docs/rag/PURCHASING.md`, hier nicht angefasst). Perspektivisch auch fuer
+  den Einkauf nutzbar (Exklusivitaet/Bestaende je Komponente), startet aber bewusst als eigener
+  Reiter. Details: `docs/abap/README_LZCODE_WEBSERVICE.md`.
 - ENTWURF + LIVE-VERIFIKATION 2026-07-21, EINKAUF/PRODUKTMAPPING (kein Deploy, Code noch NICHT
   committet, ausser SapProbe): Ingo bat darum, den Report `ZM_LZCODE20_OPT`/`zlo03.txt`
   (Top-Down/Bottom-Up-Stuecklistenanalyse) wie andere SAP-Tabellen per Webservice ansprechbar zu
@@ -32,9 +55,10 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   STUECKLISTENANALYSE (`Components/Pages/BomAnalysis.razor`, `/logistik/stuecklistenanalyse`,
   Seed `logistics`/`logistics-bom-analysis`) — SAP-Load mit Richtungs-Schalter und
   Materialfilter, Statusanzeige, durchsuchbare Cache-Vorschau. Daten sollen spaeter auch im
-  Einkauf nutzbar sein, starten aber als eigener Reiter. `260/260` Tests gruen. NOCH NICHT
-  deployed/committet; Ende-zu-Ende gegen TEST liefert erwartungsgemaess 0 Zeilen (ZAT_VC dort
-  leer), echter Datentest erst nach travt/travp-Umstellung. (4) LIVE-VERIFIKATION gegen `T76`/`travt762` (TEST) per `SapProbe`
+  Einkauf nutzbar sein, starten aber als eigener Reiter. `260/260` Tests gruen. INZWISCHEN
+  committet und deployed, siehe Eintrag ganz oben (Commit `a314881`, 2026-07-21). Ende-zu-Ende
+  gegen TEST liefert erwartungsgemaess 0 Zeilen (ZAT_VC dort leer), echter Datentest erst nach
+  travt/travp-Umstellung. (4) LIVE-VERIFIKATION gegen `T76`/`travt762` (TEST) per `SapProbe`
   bestaetigt alle offenen Fachannahmen: `ZAT_VC-KOM_MSTAE` ist trotz irrefuehrenden Namens ein
   MATNR-Feld (Elternmaterial-Mapping korrekt), `MARA-ZZLZCOD`/`ZZLZCODSORT` haben echte
   Datenelemente (`CHAR 4`, keine PAPH1-Falle), `ZAT_VC`/`ZMD04_CALC` existieren und sind lesbar
