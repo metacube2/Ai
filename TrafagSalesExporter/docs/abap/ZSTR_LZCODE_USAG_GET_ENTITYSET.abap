@@ -210,15 +210,24 @@ METHOD zstr_lzcode_usag_get_entityset.
           READ TABLE ls_filter-select_options INTO DATA(ls_so_r) INDEX 1.
           IF sy-subrc = 0.
             DATA(lv_richtung_raw) = to_upper( ls_so_r-low ).
+            CONDENSE lv_richtung_raw NO-GAPS.
             " "ALLE"-Suffix (Befund 2026-07-22, Wunsch Ingo, ohne DDIC-
             " Aenderung transportiert): bezieht auch loeschvorgemerkte
             " Kopf-/Filtermaterialien mit ein, analog Report-Checkbox
             " p_lvorm. Werte: TOPDOWN, TOPDOWNALLE, BOTTOMUP, BOTTOMUPALLE.
+            " Robust gegen Laengen-Truncation (RICHTUNG ist im DDIC
+            " CHAR10, "TOPDOWNALLE" hat 11 Zeichen): JEDER Suffix hinter
+            " dem reinen Richtungswort aktiviert die Option - auch ein
+            " ggf. auf "TOPDOWNALL"/"BOTTOMUPAL" gekappter Wert.
             IF lv_richtung_raw CP 'BOTTOMUP*'.
               lv_topdown = abap_false.
-            ENDIF.
-            IF lv_richtung_raw CP '*ALLE'.
-              lv_include_deleted = abap_true.
+              IF lv_richtung_raw <> 'BOTTOMUP'.
+                lv_include_deleted = abap_true.
+              ENDIF.
+            ELSEIF lv_richtung_raw CP 'TOPDOWN*'.
+              IF lv_richtung_raw <> 'TOPDOWN'.
+                lv_include_deleted = abap_true.
+              ENDIF.
             ENDIF.
           ENDIF.
         WHEN 'VKNR' OR 'KOMPNR'.
