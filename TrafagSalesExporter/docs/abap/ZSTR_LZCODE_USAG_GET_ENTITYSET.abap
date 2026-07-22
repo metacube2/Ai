@@ -2,6 +2,29 @@
 *& METHODENRUMPF fuer die redefinierte DPC_EXT-Methode
 *& ZSTR_LZCODE_USAG_GET_ENTITYSET  (Gateway-Service ZPOWERBI_EINKAUF_SRV)
 *&
+*& VERSION 2026-07-22d - optionale Einbeziehung loeschvorgemerkter
+*& Materialien (Wunsch Ingo). Nach dem ALPHA-Fix (Version c) lieferte
+*& Top-Down fuer alte, numerische Vknr wie "2217" weiterhin 0 Zeilen,
+*& obwohl Bottom-Up mit derselben Komponente (Kompnr=C34882) diese
+*& Vknr korrekt als echten Treffer zurueckgab UND Top-Down fuer ein
+*& "normales" Material (z.B. D15019) einwandfrei funktionierte -
+*& eingegrenzt auf Schritt 1 (Materialselektion gegen MARA), die per
+*& Default nur nicht-loeschvorgemerkte Materialien (`LVORM = ' '`)
+*& zulaesst, genau wie der Original-Report per Default (`p_lvorm = ' '`).
+*& Analog zur Report-Checkbox `p_lvorm` akzeptiert die Methode jetzt
+*& einen Suffix "ALLE" am Richtung-Wert (`TOPDOWNALLE`/`BOTTOMUPALLE`)
+*& - ohne DDIC-/SEGW-Aenderung, nur ueber den bestehenden String-Wert
+*& transportiert. Das ausgegebene `Richtung`-Feld bleibt normalisiert
+*& (`TOPDOWN`/`BOTTOMUP`, ohne Suffix).
+*&
+*& VERSION 2026-07-22c - siehe ALPHA-Konvertierung im Schritt-0-Block
+*& unten (Vknr/Kompnr-Filterwerte). Bestaetigter Befund: Kurzform
+*& ("2217") fand in Schritt 1 keinen MARA-Treffer, 18-stellige Form
+*& ("000000000000002217") schon - MARA/ZPOWERBI_VC_TXT speichern
+*& intern padded, eine selbstgeschriebene GET_ENTITYSET-Methode bekommt
+*& Filterwerte aber roh. Ab dieser Version werden beide Schreibweisen
+*& akzeptiert.
+*&
 *& VERSION 2026-07-22b - Zeilen-Drop bei fehlendem MAKTX entfernt.
 *& Befund (Full Load gegen travp762, identischer $filter wie ein
 *& interaktiver Browser-Test): App-Full-Load lieferte 0 Zeilen fuer
@@ -175,7 +198,8 @@ METHOD zstr_lzcode_usag_get_entityset.
           lt_out            TYPE STANDARD TABLE OF zstr_lzcode_usage,
           ls_out            TYPE zstr_lzcode_usage,
           lt_r_matnr        TYPE RANGE OF matnr,
-          lv_topdown        TYPE abap_bool VALUE abap_true.
+          lv_topdown        TYPE abap_bool VALUE abap_true,
+          lv_include_deleted TYPE abap_bool VALUE abap_false.
 
     " ===================================================================
     " Schritt 0 (gateway-spezifisch): OData-$filter auslesen.
@@ -184,8 +208,18 @@ METHOD zstr_lzcode_usag_get_entityset.
       CASE to_upper( ls_filter-property ).
         WHEN 'RICHTUNG'.
           READ TABLE ls_filter-select_options INTO DATA(ls_so_r) INDEX 1.
-          IF sy-subrc = 0 AND to_upper( ls_so_r-low ) = 'BOTTOMUP'.
-            lv_topdown = abap_false.
+          IF sy-subrc = 0.
+            DATA(lv_richtung_raw) = to_upper( ls_so_r-low ).
+            " "ALLE"-Suffix (Befund 2026-07-22, Wunsch Ingo, ohne DDIC-
+            " Aenderung transportiert): bezieht auch loeschvorgemerkte
+            " Kopf-/Filtermaterialien mit ein, analog Report-Checkbox
+            " p_lvorm. Werte: TOPDOWN, TOPDOWNALLE, BOTTOMUP, BOTTOMUPALLE.
+            IF lv_richtung_raw CP 'BOTTOMUP*'.
+              lv_topdown = abap_false.
+            ENDIF.
+            IF lv_richtung_raw CP '*ALLE'.
+              lv_include_deleted = abap_true.
+            ENDIF.
           ENDIF.
         WHEN 'VKNR' OR 'KOMPNR'.
           LOOP AT ls_filter-select_options INTO DATA(ls_so).
@@ -234,12 +268,23 @@ METHOD zstr_lzcode_usag_get_entityset.
     " -----------------------------------------------------------
     " Schritt 1: Materialselektion (process_main Schritt 1).
     " Kein MTART-'FERT'-Filter (im Report 2.3.26 deaktiviert).
-    " LVORM-Default wie p_lvorm = ' ': nur nicht-loeschvorgemerkte.
+    " LVORM-Default wie p_lvorm = ' ': nur nicht-loeschvorgemerkte -
+    " AUSSER lv_include_deleted (Richtung-Suffix "ALLE", siehe oben).
+    " Befund 2026-07-22: alte, numerische Vknr (z.B. "2217") sind
+    " loeschvorgemerkt und lieferten ohne diese Option 0 Zeilen, obwohl
+    " die Verwendung in ZPOWERBI_VC_TXT noch vorhanden ist (per
+    " Bottom-Up bestaetigt).
     " -----------------------------------------------------------
-    SELECT matnr FROM mara
-      INTO TABLE @lt_mara_sel
-      WHERE matnr IN @lt_r_matnr
-        AND lvorm = @space.
+    IF lv_include_deleted = abap_true.
+      SELECT matnr FROM mara
+        INTO TABLE @lt_mara_sel
+        WHERE matnr IN @lt_r_matnr.
+    ELSE.
+      SELECT matnr FROM mara
+        INTO TABLE @lt_mara_sel
+        WHERE matnr IN @lt_r_matnr
+          AND lvorm = @space.
+    ENDIF.
 
     IF lt_mara_sel IS INITIAL.
       RETURN.
@@ -401,13 +446,14 @@ METHOD zstr_lzcode_usag_get_entityset.
         ENDIF.
       ELSE.
         " Bottom-Up (Report): Kopfmaterial ohne Stammsatz oder mit
-        " Loeschvormerkung ueberspringen (p_lvorm-Default ' ').
+        " Loeschvormerkung ueberspringen (p_lvorm-Default ' '), AUSSER
+        " lv_include_deleted ist gesetzt (Richtung-Suffix "ALLE").
         READ TABLE lt_stamm INTO DATA(ls_stamm_bu)
           WITH TABLE KEY matnr = ls_pair_raw-vknr.
         IF sy-subrc <> 0.
           CONTINUE.
         ENDIF.
-        IF ls_stamm_bu-lvorm IS NOT INITIAL.
+        IF ls_stamm_bu-lvorm IS NOT INITIAL AND lv_include_deleted = abap_false.
           CONTINUE.
         ENDIF.
       ENDIF.

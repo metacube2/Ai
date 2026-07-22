@@ -4,7 +4,16 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-21, neuer Root-Reiter Logistik > Stuecklistenanalyse (ZLO03-Webservice).
+- Letzter Deploy: 2026-07-22, Bereichs-Syntax `35-40` im Materialfeld der Stuecklistenanalyse.
+  Commit `7d061d9 Support material number ranges (35-40) in BOM analysis material filter`;
+  `265/265` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `22.07.2026 13:22:34`, Laenge
+  `3'075'584`; `Test-NetConnection ... -Port 443` -> True; DB unveraendert. Reine App-Aenderung
+  (C#-seitige `$filter`-Konstruktion); die parallel gefundenen ABAP-Fixes (ALPHA-Konvertierung
+  fuer Vknr/Kompnr, Quelltabelle ZPOWERBI_VC_TXT statt ZAT_VC) sind NICHT Teil dieses Deploys und
+  muessen weiterhin manuell in SE80 auf travt762 UND travp762 nachgezogen werden. Details:
+  `lastchange.md`, `docs/abap/README_LZCODE_WEBSERVICE.md`.
+- Vorheriger Deploy: 2026-07-21, neuer Root-Reiter Logistik > Stuecklistenanalyse (ZLO03-Webservice).
   Commit `a314881 Add ZLO03 BOM-analysis webservice: SAP entity methods, C# loader, Logistik tab`;
   `260/260` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`
   via `dotnet publish -c Release -p:PublishProfile=FolderProfile`; `app_offline.htm` gesetzt/

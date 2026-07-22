@@ -127,6 +127,23 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
+    public void BuildRichtungValue_Ohne_IncludeDeleted_Liefert_Reinen_Wert()
+    {
+        Assert.Equal("TOPDOWN", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: false));
+        Assert.Equal("BOTTOMUP", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: false, includeDeleted: false));
+    }
+
+    [Fact]
+    public void BuildRichtungValue_Mit_IncludeDeleted_Haengt_Alle_An()
+    {
+        // Loeschvorgemerkte Materialien einbeziehen (Wunsch Ingo 2026-07-22, Befund: alte
+        // numerische Vknr wie "2217" wurden sonst durch den MARA-LVORM-Filter aus Schritt 1
+        // ausgeblendet, obwohl die Verwendung in ZPOWERBI_VC_TXT noch vorhanden war).
+        Assert.Equal("TOPDOWNALLE", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: true));
+        Assert.Equal("BOTTOMUPALLE", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: false, includeDeleted: true));
+    }
+
+    [Fact]
     public async Task GetStatusAsync_Returns_Empty_Before_Any_Load()
     {
         var service = new MaterialUsageDataRefreshService(_dbFactory, new FakeSapGatewayService([]), new NoopAppEventLogService());

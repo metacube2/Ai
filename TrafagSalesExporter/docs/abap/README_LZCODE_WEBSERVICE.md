@@ -57,6 +57,41 @@ betroffen und bleibt bestehen.
 auf travt762 UND travp762 einfuegen, Klasse aktivieren,
 `/IWFND/CACHE_CLEANUP`.
 
+## Nachtrag 2026-07-22d: loeschvorgemerkte Materialien optional einbeziehen
+
+Nach dem ALPHA-Fix (Version c) lieferte Top-Down fuer alte, numerische
+Vknr-Werte (z.B. "2217") weiterhin 0 Zeilen. Live-Diagnose (direkte OData-Calls
+mit denselben Service-Credentials wie die App) hat die Ursache eingegrenzt:
+
+- Top-Down mit einem "normalen" Material (`D15019`) funktioniert einwandfrei.
+- Bottom-Up mit `Kompnr=C34882` liefert sofort viele Treffer, DARUNTER auch
+  `Vknr=2217` mit echten Daten (Bestand, Stueckkosten 0.55 usw.) - die
+  Verwendung ist in `ZPOWERBI_VC_TXT` also nachweislich vorhanden.
+- Top-Down mit `Vknr=2217` (Kurz- UND Langform) liefert weiterhin 0 Zeilen.
+
+Grund: Schritt 1 (Materialselektion gegen `MARA`) laesst per Default nur
+nicht-loeschvorgemerkte Materialien zu (`LVORM = ' '`) - exakt wie der
+Original-Report per Default (`p_lvorm = ' '`). Die getesteten Nummern sind
+offenbar alte, loeschvorgemerkte Kopfmaterialien (kurzes numerisches
+Altschema); sie werden deshalb in Top-Down NICHT als gueltiges
+Selektionsmaterial gefunden, obwohl ihre Verwendung als `Vknr`-Wert in
+`ZPOWERBI_VC_TXT` weiterhin existiert.
+
+**FIX (Wunsch Ingo):** Analog zur Report-Checkbox `p_lvorm` akzeptiert die
+Methode jetzt einen Suffix `ALLE` am `Richtung`-Wert
+(`TOPDOWNALLE`/`BOTTOMUPALLE`) - bewusst OHNE DDIC-/SEGW-Aenderung, nur ueber
+den bestehenden String-Wert transportiert (weniger SAP-Nacharbeit als ein
+neues Strukturfeld). Damit werden loeschvorgemerkte Materialien in Schritt 1
+UND im Bottom-Up-Skip (zweiter LVORM-Check weiter unten) mit einbezogen. Das
+ausgegebene `Richtung`-Feld bleibt normalisiert (`TOPDOWN`/`BOTTOMUP`, ohne
+Suffix) - der Suffix ist reine Eingangssteuerung.
+
+C#-Seite: `Components/Pages/BomAnalysis.razor` hat eine neue Checkbox "Auch
+geloeschte Materialien"; `MaterialUsageDataRefreshService.RunFullLoadAsync`
+hat einen neuen Parameter `includeDeleted`, `BuildRichtungValue` baut den
+Suffix (2 neue Tests). Nacharbeit SAP wie gehabt: Methodenrumpf erneut auf
+travt762 UND travp762 einfuegen, Klasse aktivieren, `/IWFND/CACHE_CLEANUP`.
+
 ## Nachtrag 2026-07-22: Bereichsfilter ("35-40") im Materialfeld
 
 Auf Wunsch von Ingo unterstuetzt das Eingabefeld "Materialnummern" in

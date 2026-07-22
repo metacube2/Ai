@@ -20,6 +20,8 @@
                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 340px;" />
     <MudSwitch T="bool" @bind-Value="_topDown" Color="Color.Primary"
                Label="@(_topDown ? T("Top-Down (Kopfmaterial -> Komponenten)", "Top-down (header -> components)") : T("Bottom-Up (Komponente -> Verwendungen)", "Bottom-up (component -> usages)"))" />
+    <MudCheckBox T="bool" @bind-Value="_includeDeleted" Color="Color.Primary" Dense
+                 Label="@T("Auch geloeschte Materialien", "Include deleted materials")" />
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
                StartIcon="@Icons.Material.Filled.CloudDownload"
                OnClick="RunLoadAsync" Disabled="_busy">
@@ -116,6 +118,7 @@
     private string _materialFilter = string.Empty;
     private string _previewFilter = string.Empty;
     private bool _topDown = true;
+    private bool _includeDeleted;
     private bool _busy;
     private bool _loading;
 
@@ -170,7 +173,7 @@
         StateHasChanged();
         try
         {
-            var result = await UsageService.RunFullLoadAsync(_topDown, _materialFilter);
+            var result = await UsageService.RunFullLoadAsync(_topDown, _materialFilter, _includeDeleted);
             Snackbar.Add(result.Message, result.IsComplete ? Severity.Success : Severity.Error);
             _status = result;
         }

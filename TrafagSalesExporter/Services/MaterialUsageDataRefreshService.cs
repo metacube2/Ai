@@ -45,12 +45,13 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
         return await ReadLatestStatusAsync(conn, cancellationToken);
     }
 
-    public async Task<MaterialUsageRefreshStatus> RunFullLoadAsync(bool topDown = true, string? materialFilter = null, CancellationToken cancellationToken = default)
+    public async Task<MaterialUsageRefreshStatus> RunFullLoadAsync(bool topDown = true, string? materialFilter = null, bool includeDeleted = false, CancellationToken cancellationToken = default)
     {
         var started = DateTime.UtcNow;
         await WriteStatusAsync("Running", started, null, 0, 0, "Full Load gestartet.", cancellationToken);
         await _logService.WriteAsync("MaterialUsage", "Stuecklistenanalyse Full Load gestartet",
             details: (topDown ? "Richtung=TOPDOWN" : "Richtung=BOTTOMUP") +
+                     (includeDeleted ? " | InklGeloescht=true" : string.Empty) +
                      (string.IsNullOrWhiteSpace(materialFilter) ? string.Empty : $" | Materialfilter={materialFilter}"));
 
         try
@@ -81,7 +82,8 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
             // Catch-all "gt ''" mit - das ist die explizite "ja, wirklich alles"-Ansage.
             var materialProperty = topDown ? "Vknr" : "Kompnr";
             var materialClause = BuildMaterialClause(materialProperty, materialFilter);
-            var usageFilter = $"Richtung eq '{(topDown ? "TOPDOWN" : "BOTTOMUP")}' and {materialClause}";
+            var sapRichtung = BuildRichtungValue(topDown, includeDeleted);
+            var usageFilter = $"Richtung eq '{sapRichtung}' and {materialClause}";
 
             using var client = CreateClient(connection.Username, connection.Password);
             var usageRows = await ReadAllRowsAsync(client, connection.BaseUrl, usageSetName, usageFilter, cancellationToken);
@@ -108,9 +110,10 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
 
             var completed = DateTime.UtcNow;
             var message = $"Full Load abgeschlossen: {usageSetName}={usageRows.Count:N0}, {parentSetName}={parentRows.Count:N0}.";
-            if (usageRows.Count == 0 && parentRows.Count == 0)
-                message += " Hinweis: 0 Zeilen ist gegen travt762 (TEST) erwartet - ZAT_VC ist dort leer " +
-                           "(live verifiziert 2026-07-21), echte Daten liegen auf travp762 (PROD).";
+            if (topDown && usageRows.Count == 0 && !string.IsNullOrWhiteSpace(materialFilter) && !includeDeleted)
+                message += " Hinweis: 0 Zeilen bei Top-Down kann bedeuten, dass das eingegebene Kopfmaterial " +
+                            "loeschvorgemerkt ist (MARA-LVORM) - dann hilft 'Auch geloeschte Materialien' " +
+                            "oder eine Suche ueber Bottom-Up (Komponente statt Kopfmaterial).";
             await WriteStatusAsync("Success", started, completed, usageRows.Count, parentRows.Count, message, cancellationToken);
             await _logService.WriteAsync("MaterialUsage", "Stuecklistenanalyse Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -267,6 +270,18 @@ LIMIT $Limit;";
     }
 
     private static string EscapeODataLiteral(string value) => value.Replace("'", "''");
+
+    /// <summary>
+    /// Baut den Richtung-Wert fuer den $filter. "ALLE"-Suffix (ohne DDIC-Aenderung
+    /// transportiert, siehe docs/abap/README_LZCODE_WEBSERVICE.md) bezieht auch
+    /// loeschvorgemerkte Kopf-/Filtermaterialien (MARA-LVORM) mit ein, analog
+    /// Report-Checkbox p_lvorm. Ohne diese Option liefert Top-Down fuer alte, numerische
+    /// Vknr wie "2217" 0 Zeilen, obwohl die Verwendung in ZPOWERBI_VC_TXT noch vorhanden
+    /// ist (Befund 2026-07-22). Das von SAP zurueckgegebene Richtung-Feld bleibt normalisiert
+    /// ("TOPDOWN"/"BOTTOMUP", ohne Suffix).
+    /// </summary>
+    public static string BuildRichtungValue(bool topDown, bool includeDeleted)
+        => (topDown ? "TOPDOWN" : "BOTTOMUP") + (includeDeleted ? "ALLE" : string.Empty);
 
     private static List<Dictionary<string, object?>> ParseRows(string json)
     {

@@ -5,11 +5,20 @@ public interface IMaterialUsageDataRefreshService
     Task<MaterialUsageRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 
     /// <param name="materialFilter">
-    /// Optional: kommagetrennte Materialnummern; werden als Vknr- (Top-Down) bzw. Kompnr-Filter
-    /// (Bottom-Up) an SAP durchgereicht. Leer = Catch-all ("Vknr gt ''"), weil die SAP-Seite
-    /// einen Materialfilter erzwingt (Guard gegen versehentliche Vollselektion).
+    /// Optional: kommagetrennte Materialnummern, auch als Bereich "35-40"; werden als Vknr-
+    /// (Top-Down) bzw. Kompnr-Filter (Bottom-Up) an SAP durchgereicht. Leer = Catch-all
+    /// ("Vknr gt ''"), weil die SAP-Seite einen Materialfilter erzwingt (Guard gegen
+    /// versehentliche Vollselektion).
     /// </param>
-    Task<MaterialUsageRefreshStatus> RunFullLoadAsync(bool topDown = true, string? materialFilter = null, CancellationToken cancellationToken = default);
+    /// <param name="includeDeleted">
+    /// Analog Report-Checkbox p_lvorm: bezieht auch loeschvorgemerkte Kopf-/Filtermaterialien
+    /// (MARA-LVORM gesetzt) mit ein. Ohne diese Option liefert Top-Down fuer solche Materialien
+    /// 0 Zeilen, obwohl die Verwendung in ZPOWERBI_VC_TXT noch vorhanden ist (befund 2026-07-22:
+    /// alte, numerische Vknr wie "2217" sind nur ueber Bottom-Up auffindbar). Wird ohne DDIC-
+    /// Aenderung ueber den Richtung-Wert transportiert ("TOPDOWNALLE"/"BOTTOMUPALLE"), siehe
+    /// docs/abap/README_LZCODE_WEBSERVICE.md.
+    /// </param>
+    Task<MaterialUsageRefreshStatus> RunFullLoadAsync(bool topDown = true, string? materialFilter = null, bool includeDeleted = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Liest gecachte Zeilen aus MaterialUsageCache fuer die Anzeige auf der

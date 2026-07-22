@@ -6,7 +6,30 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- APP-AENDERUNG 2026-07-22, `265/265` Tests gruen (noch NICHT deployed/committet): Neue
+- APP-AENDERUNG 2026-07-22, `267/267` Tests gruen (noch NICHT deployed): Loeschvorgemerkte
+  Materialien optional einbeziehbar (Wunsch Ingo, nach Live-Diagnose mit den Test-Nummern `1689,
+  2163, 2217, 2286, 2366, 2367, 2434, 2537`). Live-Diagnose mit denselben Service-Credentials wie
+  die App zeigte: Top-Down fuer "normales" Material (`D15019`) funktioniert, Bottom-Up fuer
+  `Kompnr=C34882` findet `Vknr=2217` mit echten Daten, aber Top-Down fuer `Vknr=2217` (Kurz- UND
+  Langform) liefert weiterhin 0 Zeilen - Ursache: Schritt 1 (MARA-Selektion) laesst per Default
+  nur `LVORM = ' '` zu (wie Report-Default `p_lvorm=' '`), die Testnummern sind offenbar alte,
+  loeschvorgemerkte Kopfmaterialien. FIX: `Richtung`-Wert akzeptiert jetzt Suffix `ALLE`
+  (`TOPDOWNALLE`/`BOTTOMUPALLE`, ohne DDIC-Aenderung), neue Checkbox "Auch geloeschte Materialien"
+  in `Components/Pages/BomAnalysis.razor`, neuer Parameter `includeDeleted` in
+  `MaterialUsageDataRefreshService.RunFullLoadAsync`, 2 neue Tests fuer `BuildRichtungValue`.
+  NACHARBEIT SAP (wie gehabt): Methodenrumpf `ZSTR_LZCODE_USAG_GET_ENTITYSET.abap` erneut auf
+  travt762 UND travp762 einfuegen, aktivieren, `/IWFND/CACHE_CLEANUP`. Details:
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-22d.
+- DEPLOYED 2026-07-22 (Commit `7d061d9 Support material number ranges (35-40) in BOM analysis
+  material filter`, `265/265` Tests gruen, DLL `22.07.2026 13:22:34`, Laenge `3'075'584`, Port 443
+  erreichbar, DB unveraendert): Bereichs-Syntax `35-40` im Materialfeld der Stuecklistenanalyse
+  (siehe Eintrag direkt darunter fuer Details) ist live. Publish nach
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` via `dotnet publish -c Release
+  -p:PublishProfile=FolderProfile`, `app_offline.htm` gesetzt/entfernt. NICHT Teil dieses Deploys:
+  die ABAP-Fixes (ALPHA-Konvertierung, ZPOWERBI_VC_TXT-Quelltabelle) - die liegen als
+  Methodenruempfe in `docs/abap/` bereit und muessen weiterhin manuell in SE80 auf travt762 UND
+  travp762 eingefuegt/aktiviert werden (siehe zwei Eintraege unten).
+- APP-AENDERUNG 2026-07-22, `265/265` Tests gruen (JETZT deployed, siehe Eintrag oben): Neue
   Bereichs-Syntax im Materialfeld der Stuecklistenanalyse (`Components/Pages/BomAnalysis.razor`,
   Wunsch Ingo): `35-40` neben kommagetrennten Einzelwerten. Rein C#-seitig in neuer, public
   static Methode `MaterialUsageDataRefreshService.BuildMaterialClause` (5 neue Tests) -
