@@ -89,6 +89,44 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
+    public void BuildMaterialClause_Ohne_Wert_Liefert_Catchall()
+    {
+        Assert.Equal("Vknr gt ''", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", null));
+        Assert.Equal("Vknr gt ''", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "  "));
+    }
+
+    [Fact]
+    public void BuildMaterialClause_Einzelwerte_Werden_Mit_Eq_Verknuepft()
+    {
+        Assert.Equal("(Vknr eq '2217')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217"));
+        Assert.Equal("(Vknr eq '2217' or Vknr eq 'C34882')",
+            MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, C34882"));
+    }
+
+    [Fact]
+    public void BuildMaterialClause_Bereich_Wird_Als_Ge_Le_Gebaut()
+    {
+        // Range-Syntax "35-40" (Ingo-Anforderung 2026-07-22): das SAP-Gateway-Framework fasst
+        // "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu
+        // einer klassischen Select-Options-Bereichszeile zusammen.
+        Assert.Equal("((Kompnr ge '35' and Kompnr le '40'))",
+            MaterialUsageDataRefreshService.BuildMaterialClause("Kompnr", "35-40"));
+    }
+
+    [Fact]
+    public void BuildMaterialClause_Mischt_Einzelwerte_Und_Bereiche()
+    {
+        Assert.Equal("(Vknr eq '2217' or (Vknr ge '35' and Vknr le '40') or Vknr eq 'C34882')",
+            MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, 35-40, C34882"));
+    }
+
+    [Fact]
+    public void BuildMaterialClause_Escaped_Hochkomma_Im_Wert()
+    {
+        Assert.Equal("(Vknr eq 'A''B')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "A'B"));
+    }
+
+    [Fact]
     public async Task GetStatusAsync_Returns_Empty_Before_Any_Load()
     {
         var service = new MaterialUsageDataRefreshService(_dbFactory, new FakeSapGatewayService([]), new NoopAppEventLogService());

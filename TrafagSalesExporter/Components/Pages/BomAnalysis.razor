@@ -10,12 +10,13 @@
 <MudText Typo="Typo.h4" Class="mb-4">@T("Stuecklistenanalyse (ZLO03)", "BOM analysis (ZLO03)")</MudText>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
-    @T("Laedt die Stuecklistenanalyse des SAP-Reports ZM_LZCODE20_OPT (ZAT_VC/ZMD04_CALC) ueber den Gateway-Service ZPOWERBI_EINKAUF_SRV in den lokalen Cache (MaterialUsageCache). Eine Zeile je Kopfmaterial/Komponente-Paar inkl. Bestand, Stueckkosten und Exklusivitaet. SAP erzwingt einen Materialfilter — ohne Eingabe wird bewusst ALLES geladen (Catch-all). Gegen den Test-Server travt762 sind 0 Zeilen erwartet, weil ZAT_VC dort leer ist; echte Daten liegen auf travp762 (Prod).",
-       "Loads the BOM analysis of SAP report ZM_LZCODE20_OPT (ZAT_VC/ZMD04_CALC) via gateway service ZPOWERBI_EINKAUF_SRV into the local cache (MaterialUsageCache). One row per header-material/component pair incl. stock, unit cost and exclusivity. SAP enforces a material filter — with no input, EVERYTHING is loaded deliberately (catch-all). Against test server travt762, 0 rows are expected because ZAT_VC is empty there; real data lives on travp762 (prod).")
+    @T("Laedt die Stuecklistenanalyse des SAP-Reports ZM_LZCODE20_OPT (ZPOWERBI_VC_TXT/ZMD04_CALC) ueber den Gateway-Service ZPOWERBI_EINKAUF_SRV in den lokalen Cache (MaterialUsageCache). Eine Zeile je Kopfmaterial/Komponente-Paar inkl. Bestand, Stueckkosten und Exklusivitaet. SAP erzwingt einen Materialfilter — ohne Eingabe wird bewusst ALLES geladen (Catch-all).",
+       "Loads the BOM analysis of SAP report ZM_LZCODE20_OPT (ZPOWERBI_VC_TXT/ZMD04_CALC) via gateway service ZPOWERBI_EINKAUF_SRV into the local cache (MaterialUsageCache). One row per header-material/component pair incl. stock, unit cost and exclusivity. SAP enforces a material filter — with no input, EVERYTHING is loaded deliberately (catch-all).")
 </MudAlert>
 
 <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
     <MudTextField @bind-Value="_materialFilter" Label="@T("Materialnummern (kommagetrennt, leer = alle)", "Material numbers (comma-separated, empty = all)")"
+                  HelperText="@T("Auch Bereiche moeglich, z.B. 35-40", "Ranges also supported, e.g. 35-40")"
                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 340px;" />
     <MudSwitch T="bool" @bind-Value="_topDown" Color="Color.Primary"
                Label="@(_topDown ? T("Top-Down (Kopfmaterial -> Komponenten)", "Top-down (header -> components)") : T("Bottom-Up (Komponente -> Verwendungen)", "Bottom-up (component -> usages)"))" />

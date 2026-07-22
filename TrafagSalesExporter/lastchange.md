@@ -1,11 +1,83 @@
 # Last Change
 
-Stand: 2026-07-21
+Stand: 2026-07-22
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- APP-AENDERUNG 2026-07-22, `265/265` Tests gruen (noch NICHT deployed/committet): Neue
+  Bereichs-Syntax im Materialfeld der Stuecklistenanalyse (`Components/Pages/BomAnalysis.razor`,
+  Wunsch Ingo): `35-40` neben kommagetrennten Einzelwerten. Rein C#-seitig in neuer, public
+  static Methode `MaterialUsageDataRefreshService.BuildMaterialClause` (5 neue Tests) -
+  Bereichs-Token werden zu `(Vknr ge 'X' and Vknr le 'Y')`, gemischt mit Einzelwerten per `or`
+  verknuepft. Keine ABAP-Aenderung noetig, siehe `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag.
+- ROOTCAUSE + ABAP-FIX 2026-07-22c (kein App-Deploy; SAP-Nacharbeit durch Ingo/Lucas noetig,
+  BESTAETIGTE Ursache): Zweiter Full-Load-Test gegen travp762 (nach dem ZPOWERBI_VC_TXT-Fix,
+  siehe Eintrag darunter) lief technisch durch, lieferte aber fuer `Vknr=2217`/TOPDOWN 0 Zeilen.
+  Ingo hat die Ursache selbst durch einen direkten Browser-Vergleichstest zweifelsfrei belegt:
+  `$filter=... Vknr eq '2217'` (Kurzform) = 0 Treffer, `$filter=... Vknr eq
+  '000000000000002217'` (18-stellig) = echte Treffer. Grund: `MARA`/`ZPOWERBI_VC_TXT` speichern
+  Materialnummern intern padded; eine SELBSTGESCHRIEBENE GET_ENTITYSET-Methode bekommt
+  `it_filter_select_options` aber ROH, die sonst automatische externe->interne
+  ALPHA-Konvertierung des Gateway-Frameworks greift bei eigenem Code nicht. Produktionslog
+  bestaetigte zusaetzlich: der App-Full-Load hatte exakt denselben unpadded Wert wie der erste
+  fehlgeschlagene manuelle Test verwendet - kein Padding-Bug im C#-Code (der reicht Werte
+  unveraendert durch, das ist korrekt so). FIX: Beide Methoden
+  (`docs/abap/ZSTR_LZCODE_USAG_GET_ENTITYSET.abap`, `docs/abap/ZSTR_LZCODE_PARE_GET_ENTITYSET.abap`)
+  konvertieren Low/High-Werte der Vknr/Kompnr-Filter jetzt per `CONVERSION_EXIT_ALPHA_INPUT`, bevor
+  sie in die RANGE-Tabellen wandern - damit funktionieren Kurz- UND Langform gleichermassen.
+  ZUSAETZLICHE HAERTUNG (Version 2026-07-22b, unabhaengiger Befund, weiterhin gueltig): der aus
+  dem Report uebernommene Zeilen-Drop bei fehlendem MAKTX (`DELETE gt_ktab WHERE maktx IS
+  INITIAL`) ist entfernt, weil die MAKT-Textsuche sprachabhaengig (`sy-langu`) ist und fuer einen
+  Webservice keine Zeilen mit echten Bestandsdaten wegen einer fehlenden Uebersetzung verschwinden
+  sollten (die urspruengliche Vermutung, DAS sei die Ursache des 0-Zeilen-Symptoms, war falsch und
+  ist durch den ALPHA-Befund widerlegt - die Haertung bleibt trotzdem sinnvoll). NACHARBEIT SAP
+  (wie beim vorigen Fix): Methodenruempfe erneut auf travt762 UND travp762 einfuegen, Klasse
+  aktivieren, `/IWFND/CACHE_CLEANUP`. Details: `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag
+  2026-07-22c.
+- ROOTCAUSE + ABAP-FIX 2026-07-22 (kein App-Deploy; SAP-Nacharbeit durch Ingo/Lucas noetig):
+  Nach dem travp762-Wechsel brachen ALLE EntitySets von `ZPOWERBI_EINKAUF_SRV` auf PROD mit
+  `SYNTAX_ERROR` ab (Logistik-Full-Load UND Einkauf-Full-Load `EKKOSet`; Einkauf-Cache blieb dank
+  Guardrail unveraendert auf dem Stand 2026-07-17). URSACHE (von Ingo identifiziert): Die
+  DPC_EXT-Methodenruempfe vom 2026-07-21 basierten auf einer ALTEN ZLO03-Fassung und lasen aus
+  `ZAT_VC` — diese Tabelle existiert auf travp762 nicht, dadurch kompilierte die komplette
+  DPC_EXT-Klasse nicht und riss den ganzen Service mit (deshalb auch EKKOSet betroffen). Die
+  aktuelle Reportfassung liegt seit 2026-07-22 als `docs/abap/originalzlo03.txt` vor und liest aus
+  `ZPOWERBI_VC_TXT`. FIX: Beide Methodenruempfe (`docs/abap/ZSTR_LZCODE_USAG_GET_ENTITYSET.abap`,
+  `docs/abap/ZSTR_LZCODE_PARE_GET_ENTITYSET.abap`) auf die neue Fassung umgeschrieben —
+  Quelltabelle `ZPOWERBI_VC_TXT`, plus Report-FIXES uebernommen: FIX 1 (keine Mengen-Rundung auf
+  0 Dezimalen mehr), FIX 2 (Mehrfachverwendungen summieren statt deduplizieren, deterministisch
+  ueber SORTED TABLE), FIX 4 (Textpositionen `postyp='T'` und Zeilen ohne MAKTX im Default raus),
+  neue Baugruppen-Logik (`(VC-Baugruppe ODER MAST) UND beskz<>'F'`), Stammdaten-JOIN ohne
+  LVORM-Filter. DDIC-Strukturen und C#-Seite unveraendert. NACHARBEIT (manuell): Ruempfe auf
+  travt762 UND travp762 einfuegen, Klasse aktivieren, `/IWFND/CACHE_CLEANUP`; erst danach sind
+  Einkauf- und Logistik-Loads gegen P wieder moeglich. Details:
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-22.
+- KONFIGURATION GEAENDERT 2026-07-22 (kein Deploy, reine DB-Konfiguration): Zentrale SAP-URL
+  (`SourceSystemDefinitions.CentralServiceUrl`, Code `SAP`) von `travt762` (TEST) auf `travp762`
+  (PROD) umgestellt — Anlass: Ingo wollte die neue Logistik/Stuecklistenanalyse (ZLO03-Webservice,
+  siehe Eintrag darunter) mit echten Daten pruefen, `ZAT_VC` ist auf travt762 leer. Vor der
+  Aenderung per Live-Query verifiziert (nicht wie in `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md`
+  A0 angenommen "wirkt fuer alle SAP-Bereiche"): `Sites` fuer `ZSCHWEIZ` hat einen EIGENEN, bereits
+  explizit gesetzten Override (`SapServiceUrl` = travt762) und ist von der zentralen Aenderung
+  NICHT betroffen — Finance CH/AT bleibt unveraendert auf travt762 (TEST). Betroffen ist NUR die
+  Site `PURCHASING_SAP` (kein eigener Override), die sowohl vom Einkauf-Dashboard als auch von der
+  neuen Logistik/Stuecklistenanalyse gemeinsam genutzt wird — beide zeigen ab sofort auf travp762
+  (PROD). Aenderung gezielt nur auf `SourceSystemDefinitions WHERE Code='SAP'` beschraenkt (kein
+  Touch von `Sites`), per kleinem C#/Microsoft.Data.Sqlite-Skript direkt gegen die Produktions-DB
+  (`\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db`), analog dem
+  bestehenden `spartenlogic/.tmp_update_sap_url`-Muster. Vorher Backup gezogen:
+  `trafag_exporter.db.before-travp762-purchasing-switch-20260722.bak` (gleiche Konvention wie die
+  bestehenden `.before-*`-Sicherungen). NACHSORGE/OFFENE RISIKEN (aus
+  `docs/rag/PURCHASING.md` bereits bekannt, jetzt wirksam): (1) Einkauf-Cache enthaelt noch
+  Testdaten -> Full Load noetig, sonst alte Zahlen im Spend-Reiter waehrend Marcos laufender
+  18-Mio-Abnahme — mit Marco/Andreas abstimmen, bevor der naechste Full Load gefahren wird. (2)
+  Direkter Basic-Auth-Test gegen travp762 gab zuletzt `HTTP 401` (Stand 2026-07-09, Status seither
+  nicht erneut geprueft) — falls das weiterhin besteht, schlagen jetzt Einkauf- UND
+  Logistik-Loads fehl. (3) `Bstyp`/`Bsart`/`Elikz` fehlten auf travp762 zuletzt im OData-Modell
+  (Probe 2026-07-10) — betrifft die Stuecklistenanalyse nicht direkt (anderes EntitySet), verzerrt
+  aber ggf. Einkauf-Zahlen (Beleg-Mix-Trennung), bis SAP das P-Modell nachzieht.
 - DEPLOYED 2026-07-21 (Commit `a314881 Add ZLO03 BOM-analysis webservice: SAP entity methods,
   C# loader, Logistik tab`, `260/260` Tests gruen, DLL `21.07.2026 15:04:46`, Laenge
   `3'075'072`, Port 443 erreichbar, DB unveraendert `14:50:23`): NEUER ROOT-REITER **LOGISTIK**

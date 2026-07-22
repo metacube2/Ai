@@ -1,12 +1,28 @@
 # RAG Einkauf
 
-Stand: 2026-07-17
+Stand: 2026-07-22
 
 Kurzdatei fuer das Einkaufs-Dashboard (Spend, offene Bestellungen, Kontrakte, Lieferanten).
 Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit Nachtraegen).
 
 ## Kurzstand
 
+- KONFIGURATION GEAENDERT 2026-07-22: Zentrale SAP-URL (`SourceSystemDefinitions.CentralServiceUrl`,
+  Code `SAP`) von `travt762` (TEST) auf `travp762` (PROD) umgestellt (Anlass: Logistik/
+  Stuecklistenanalyse brauchte echte Daten). Betrifft Einkauf (Site `PURCHASING_SAP`, kein eigener
+  Override) — Finance CH/AT (`ZSCHWEIZ`) hat einen eigenen Site-Override und bleibt auf travt762.
+  Details/Backup-Pfad: `lastchange.md`. VOR DEM NAECHSTEN EINKAUF-FULL-LOAD: mit Marco/Andreas
+  abstimmen (laufende 18-Mio-Abnahme, Datenbestand wechselt), 401-Auth-Status gegen travp762 neu
+  pruefen (zuletzt 2026-07-09 fehlgeschlagen), `Bstyp`/`Bsart`/`Elikz`-Verfuegbarkeit auf P
+  gegenchecken (zuletzt 2026-07-10 gefehlt).
+- BLOCKER GEFUNDEN 2026-07-22: Erster Full-Load-Versuch gegen travp762 brach fuer ALLE EntitySets
+  (auch `EKKOSet`) mit `SYNTAX_ERROR` ab — Ursache NICHT Auth/Feldmodell, sondern die
+  ZLO03-DPC_EXT-Methoden vom 2026-07-21, die aus der auf P nicht existierenden Tabelle `ZAT_VC`
+  lasen und damit die ganze DPC_EXT-Klasse des Service unkompilierbar machten. Einkauf-Cache blieb
+  dank Guardrail unveraendert (Stand 2026-07-17). Korrigierte Methodenruempfe (Quelle jetzt
+  `ZPOWERBI_VC_TXT`) liegen bereit; erst nach manuellem Einfuegen/Aktivieren auf P (+
+  `/IWFND/CACHE_CLEANUP`) sind Loads gegen P wieder moeglich. Details:
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-22.
 - Arbeitsweise (Marco, Feedback-Runde 2026-07-17): EIN Punkt nach dem anderen fertig machen — aktuell Reiter `Spend`; naechster Reiter erst nach Marcos Abnahme.
 - DEPLOYED 2026-07-17 (Commit `3a4efb5`, `257/257` Tests): Spend-Drilldown Lieferant -> Warengruppe/Jahr in der Matrix `Kaskadierung Lieferant / Jahr` (Pivot-artig aufklappbar, Drill-Summen exakt = Lieferantenzeile, Zeitraumfilter wirkt auf beide Ebenen). Warengruppe nach Marcos Vorgabe aus dem MATERIALSTAMM (`MARA-MATKL`, neue additive Cache-Spalte `PurchasingEkpoCache.MaraMatkl`), Fallback Beleg-Warengruppe mit UI-Hinweis — `Matkl` ist aktuell in KEINEM MARA-EntityType des SAP-Service; SAP-Erweiterungsanfrage: `maracalc` um `Matkl` ergaenzen, danach app-seitig nur `$select` erweitern.
 - PRODUKTIONSKRITISCHER FIX 2026-07-17 (gleicher Deploy): SAP hat das MARA-Set umgebaut — `MARA001Set` exponiert `Mstae` nicht mehr (`$select` -> 404); der Einkauf-Full-Load/Delta waere beim naechsten Lauf komplett fehlgeschlagen (so geschah es am 02.07., unbemerkt). `LoadMaterialStatusMapAsync` liest jetzt das neue `maracalcSet`; Achtung: das Set ignoriert `$top`/`$skip` (wie `mbewSet`) — bewusst EIN ungepagter Request.
@@ -15,7 +31,7 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Offene Punkte
 
-- Zentrale SAP-Quelle Einkauf zeigt auf `travt762` (TEST) statt `travp762` (Prod) — Umstellung mit Marco/Andreas abstimmen (Datenbestand aendert sich mitten in der 18-Mio-Abnahme), nicht eigenmaechtig. Zusatzrisiko travp762: `Bstyp`/`Bsart`/`Elikz` fehlen dort noch im OData-Modell (Probe 2026-07-10) — vor einem Wechsel P-Modell-Rollout abwarten.
+- ERLEDIGT 2026-07-22: Zentrale SAP-Quelle Einkauf zeigt jetzt auf `travp762` (Prod) statt `travt762` (Test) — siehe Kurzstand oben. Full Load mit Marco/Andreas abstimmen, bevor er gefahren wird. Zusatzrisiko travp762 weiterhin offen: `Bstyp`/`Bsart`/`Elikz` fehlten dort zuletzt im OData-Modell (Probe 2026-07-10), 401-Auth-Status zuletzt 2026-07-09 ungeklaert — beides vor dem naechsten Full Load neu pruefen.
 - SAP-Erweiterung: `Matkl` in `maracalc` aufnehmen (fuer echte Materialstamm-Warengruppe im Drilldown).
 - Abnahme-Checks Marco: 18-Mio-Offenwert gegen SAP, WKURS-Richtung an echtem Fremdwaehrungsbeleg.
 - ABC/XYZ: Weg seit 2026-07-17 klar (ABC = `MARC-MAABC`, Sicht O2; XYZ separate Tabelle; vorhandener SAP-Report extrahiert beides) — Umsetzung erst nach Spend-Abnahme.

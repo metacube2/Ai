@@ -80,12 +80,7 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
             // Ein Full Load ohne konkrete Materialliste schickt deshalb bewusst den
             // Catch-all "gt ''" mit - das ist die explizite "ja, wirklich alles"-Ansage.
             var materialProperty = topDown ? "Vknr" : "Kompnr";
-            var materialValues = (materialFilter ?? string.Empty)
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-            var materialClause = materialValues.Count == 0
-                ? $"{materialProperty} gt ''"
-                : "(" + string.Join(" or ", materialValues.Select(value => $"{materialProperty} eq '{value}'")) + ")";
+            var materialClause = BuildMaterialClause(materialProperty, materialFilter);
             var usageFilter = $"Richtung eq '{(topDown ? "TOPDOWN" : "BOTTOMUP")}' and {materialClause}";
 
             using var client = CreateClient(connection.Username, connection.Password);
@@ -239,6 +234,39 @@ LIMIT $Limit;";
 
         return null;
     }
+
+    /// <summary>
+    /// Baut die $filter-Teilbedingung fuer Vknr/Kompnr aus der Benutzereingabe. Kommagetrennte
+    /// Werte werden als Einzeltreffer (eq) behandelt; ein Token mit genau einem Bindestrich und
+    /// nicht-leeren Seiten (z.B. "35-40") wird als Bereich (ge/le) interpretiert. Materialnummern
+    /// selbst enthalten laut bisherigen Beispielen keine Bindestriche, daher ist der Split
+    /// eindeutig. SAP-seitig ist kein Zusatzaufwand noetig: das Gateway-Framework fasst
+    /// "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu einer
+    /// klassischen Select-Options-Bereichszeile zusammen, die der bestehende ABAP-Code (LOOP ueber
+    /// select_options, generische RANGE-Tabelle) bereits unveraendert verarbeitet.
+    /// </summary>
+    public static string BuildMaterialClause(string materialProperty, string? materialFilter)
+    {
+        var tokens = (materialFilter ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        if (tokens.Count == 0)
+            return $"{materialProperty} gt ''";
+
+        var clauses = tokens.Select(token =>
+        {
+            var rangeParts = token.Split('-', StringSplitOptions.TrimEntries);
+            if (rangeParts.Length == 2 && rangeParts[0].Length > 0 && rangeParts[1].Length > 0)
+                return $"({materialProperty} ge '{EscapeODataLiteral(rangeParts[0])}' and {materialProperty} le '{EscapeODataLiteral(rangeParts[1])}')";
+
+            return $"{materialProperty} eq '{EscapeODataLiteral(token)}'";
+        });
+
+        return "(" + string.Join(" or ", clauses) + ")";
+    }
+
+    private static string EscapeODataLiteral(string value) => value.Replace("'", "''");
 
     private static List<Dictionary<string, object?>> ParseRows(string json)
     {

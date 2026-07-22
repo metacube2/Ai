@@ -2,25 +2,57 @@
 *& METHODENRUMPF fuer die redefinierte DPC_EXT-Methode
 *& ZSTR_LZCODE_USAG_GET_ENTITYSET  (Gateway-Service ZPOWERBI_EINKAUF_SRV)
 *&
+*& VERSION 2026-07-22b - Zeilen-Drop bei fehlendem MAKTX entfernt.
+*& Befund (Full Load gegen travp762, identischer $filter wie ein
+*& interaktiver Browser-Test): App-Full-Load lieferte 0 Zeilen fuer
+*& Vknr=2217/TOPDOWN, der Browser-Test mit demselben Filter lieferte
+*& eine echte Zeile (Kompnr=C34882). Ursache: Version 2026-07-22a
+*& uebernahm FIX 4 des Reports 1:1 und verwarf Zeilen ohne MAKTX
+*& (Materialkurztext aus MAKT, gejoint ueber t~spras = sy-langu) - der
+*& technische Service-User (Basic-Auth) kann eine andere SAP-
+*& Anmeldesprache haben als ein interaktiver User, wodurch der Text
+*& fehlt, obwohl Menge/Kosten/Bestand real sind. Fuer eine Excel-
+*& Ausgabe ist das Wegfiltern sinnvoll (siehe Report), fuer einen
+*& maschinell konsumierten Webservice nicht: die Zeile wird jetzt
+*& IMMER ausgegeben, `KompnrMaktx` bleibt im Zweifel leer statt die
+*& Zeile zu killen.
+*&
+*& VERSION 2026-07-22a - an die NEUE Reportfassung angepasst
+*& (Quelle: docs/abap/originalzlo03.txt, Report ZM_LZCODE20_OPT mit
+*& FIXES 1/2/4/5). Die Vorfassung 2026-07-21 las noch aus ZAT_VC -
+*& diese Tabelle existiert auf travp762 (PROD) nicht, wodurch die
+*& komplette DPC_EXT-Klasse nicht kompilierte und JEDES EntitySet des
+*& Service (auch EKKOSet) mit SYNTAX_ERROR abbrach (Befund 2026-07-22).
+*& Aenderungen gegenueber 2026-07-21:
+*&   - Quelltabelle ZAT_VC -> ZPOWERBI_VC_TXT (matnr=VKNR, kompnr,
+*&     menge, mengeneinheit, baugruppe, postyp, kom_mstae)
+*&   - FIX 1: Rundung der Menge auf dec=0 ENTFERNT (0.070 M wurde 0)
+*&   - FIX 2: kein DELETE ADJACENT DUPLICATES mehr - Mehrfach-
+*&     verwendungen derselben Komponente werden SUMMIERT (COLLECT-
+*&     Semantik des Reports), deterministisch ueber SORTED TABLE
+*&   - FIX 4: Textpositionen (postyp = 'T') im Default ausgeschlossen
+*&     (Report-Default p_txtpo = ' '); Zeilen-Drop bei fehlendem MAKTX
+*&     in Version 2026-07-22b wieder entfernt (siehe oben)
+*&   - Baugruppen-Kennzeichen wie fill_ktab: (VC-Baugruppe ODER
+*&     Stueckliste in MAST) UND beskz <> 'F'
+*&   - Stammdaten-JOIN ohne LVORM-Filter (Report laedt alle; LVORM
+*&     wirkt nur auf die Materialselektion, Default p_lvorm = ' ')
+*&
 *& EINFUEGEN (wichtig, Fehlerquelle 2026-07-21 beim Parent-Set): Den
 *& KOMPLETTEN Block unten INKLUSIVE "METHOD ..." und "ENDMETHOD." nehmen
-*& und damit den generierten Stub 1:1 ersetzen - im Editor alles von
-*& "method zstr_lzcode_usag_get_entityset." bis zum zugehoerigen
-*& "endmethod." markieren und ueberschreiben. Landet der Rumpf ausserhalb
-*& des METHOD-Rahmens, meldet der Syntaxcheck je Zeile "Zwischen CLASS
-*& ... IMPLEMENTATION und ENDCLASS duerfen nur Methoden definiert werden".
-*& KEINE CLASS-Statements, alles lokale TYPES/DATA. Ersetzt die Varianten
-*& mit separater Klasse ZCL_LZCODE_PROVIDER (die dann NICHT angelegt
-*& werden muss). Fachliche Logik identisch mit
-*& docs/abap/ZCL_LZCODE_PROVIDER_INLINE.abap (alle Fixes v2 enthalten).
+*& und damit den bestehenden Methodenrumpf 1:1 ersetzen - im Editor
+*& alles von "method zstr_lzcode_usag_get_entityset." bis zum
+*& zugehoerigen "endmethod." markieren und ueberschreiben. KEINE
+*& CLASS-Statements, alles lokale TYPES/DATA.
 *&
-*& DRAFT 2026-07-21 - Syntaxcheck im System offen. NEU und UNVERIFIZIERT
-*& gegenueber der INLINE-Variante ist ausschliesslich der Filter-Teil am
-*& Anfang (it_filter_select_options auslesen) und die Uebergabe nach
-*& et_entityset am Ende - der Rest ist der mehrfach gegengepruefte Kern.
+*& NACH DEM ERSETZEN: Klasse aktivieren; danach Metadaten-Cache leeren
+*& (/IWFND/CACHE_CLEANUP), sonst bleiben alte Laufzeitobjekte aktiv.
+*& AUF BEIDEN SYSTEMEN NACHZIEHEN, auf denen die Methoden angelegt
+*& wurden (travt762 UND travp762) - der SYNTAX_ERROR auf P verschwindet
+*& erst, wenn dort kein ZAT_VC-Bezug mehr in der Klasse steht.
 *&
 *& OData-Nutzung:
-*&   .../ZSTR_LZCODE_USAGE?$filter=Richtung eq 'TOPDOWN' and Vknr eq 'E01758'
+*&   .../ZSTR_LZCODE_USAGESet?$filter=Richtung eq 'TOPDOWN' and Vknr eq 'E01758'
 *&   - Richtung: 'TOPDOWN' (Default) oder 'BOTTOMUP'
 *&   - Vknr/Kompnr: schraenken die Materialselektion ein (entspricht
 *&     S_MATNR im Report; bei TOPDOWN fachlich Vknr filtern, bei
@@ -34,7 +66,7 @@
 METHOD zstr_lzcode_usag_get_entityset.
 
     " ===================================================================
-    " Lokale Typen (identisch zur INLINE-Variante)
+    " Lokale Typen
     " ===================================================================
     CONSTANTS lc_werks TYPE werks_d VALUE '1100'.
 
@@ -103,22 +135,36 @@ METHOD zstr_lzcode_usag_get_entityset.
            END OF ty_md04.
     TYPES tt_md04 TYPE HASHED TABLE OF ty_md04 WITH UNIQUE KEY matnr.
 
-    " FIX 2: menge/meins bleiben Charfelder wie in ZAT_VC (kein
-    " CONVT_NO_NUMBER-Dump beim SELECT; Konvertierung unten per TRY/CATCH).
+    " Rohzeilen aus ZPOWERBI_VC_TXT: menge/meins bleiben Charfelder wie
+    " in der Tabelle (kein CONVT_NO_NUMBER-Dump beim SELECT;
+    " Konvertierung unten per TRY/CATCH).
+    TYPES: BEGIN OF ty_pair_raw,
+             vknr      TYPE matnr,
+             kompnr    TYPE matnr,
+             menge     TYPE zpowerbi_vc_txt-menge,
+             meins     TYPE zpowerbi_vc_txt-mengeneinheit,
+             baugruppe TYPE zpowerbi_vc_txt-baugruppe,
+             postyp    TYPE zpowerbi_vc_txt-postyp,
+           END OF ty_pair_raw.
+    TYPES tt_pair_raw TYPE STANDARD TABLE OF ty_pair_raw WITH DEFAULT KEY.
+
+    " Aggregierte Paare (FIX 2: Mengen je vknr/kompnr SUMMIERT statt
+    " dedupliziert; SORTED TABLE => deterministische Ausgabereihenfolge)
     TYPES: BEGIN OF ty_pair,
-             vknr   TYPE matnr,
-             kompnr TYPE matnr,
-             menge  TYPE zat_vc-menge,
-             meins  TYPE zat_vc-mengeneinheit,
+             vknr      TYPE matnr,
+             kompnr    TYPE matnr,
+             menge     TYPE menge_d,
+             baugruppe TYPE abap_bool,
            END OF ty_pair.
-    TYPES tt_pair TYPE STANDARD TABLE OF ty_pair WITH DEFAULT KEY.
+    TYPES tt_pair TYPE SORTED TABLE OF ty_pair WITH UNIQUE KEY vknr kompnr.
 
     " ===================================================================
     " Arbeitsvariablen
     " ===================================================================
     DATA: lt_mara_sel       TYPE STANDARD TABLE OF matnr,
-          lt_pairs_raw      TYPE tt_pair,
+          lt_pairs_raw      TYPE tt_pair_raw,
           lt_pairs          TYPE tt_pair,
+          ls_pair_agg       TYPE ty_pair,
           lt_all_matnr      TYPE tt_matnr_list,
           ls_matnr_line     TYPE ty_matnr_line,
           lt_stamm          TYPE tt_stamm,
@@ -132,9 +178,7 @@ METHOD zstr_lzcode_usag_get_entityset.
           lv_topdown        TYPE abap_bool VALUE abap_true.
 
     " ===================================================================
-    " Schritt 0 (NEU, gateway-spezifisch): OData-$filter auslesen.
-    " it_filter_select_options: eine Zeile je gefiltertem Property,
-    " select_options ist eine Range-Tabelle (SIGN/OPTION/LOW/HIGH).
+    " Schritt 0 (gateway-spezifisch): OData-$filter auslesen.
     " ===================================================================
     LOOP AT it_filter_select_options INTO DATA(ls_filter).
       CASE to_upper( ls_filter-property ).
@@ -145,10 +189,33 @@ METHOD zstr_lzcode_usag_get_entityset.
           ENDIF.
         WHEN 'VKNR' OR 'KOMPNR'.
           LOOP AT ls_filter-select_options INTO DATA(ls_so).
+            " ALPHA-Konvertierung (FIX, Befund 2026-07-22c): eine
+            " selbstgeschriebene GET_ENTITYSET-Methode bekommt
+            " it_filter_select_options ROH, d.h. OHNE die sonst
+            " automatische externe->interne MATNR-Konvertierung. MARA/
+            " ZPOWERBI_VC_TXT speichern intern 18-stellig mit
+            " fuehrenden Nullen; ein Aufruf mit der Kurzform (z.B.
+            " "2217") fand in Schritt 1 (SELECT matnr FROM mara) sonst
+            " NICHTS und brach mit 0 Zeilen ab, waehrend dieselbe Suche
+            " mit der 18-stelligen Form funktionierte. Ab hier werden
+            " beide Schreibweisen akzeptiert.
+            DATA lv_low  TYPE matnr.
+            DATA lv_high TYPE matnr.
+            CLEAR: lv_low, lv_high.
+            IF ls_so-low IS NOT INITIAL.
+              CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+                EXPORTING input  = ls_so-low
+                IMPORTING output = lv_low.
+            ENDIF.
+            IF ls_so-high IS NOT INITIAL.
+              CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+                EXPORTING input  = ls_so-high
+                IMPORTING output = lv_high.
+            ENDIF.
             APPEND VALUE #( sign   = ls_so-sign
                             option = ls_so-option
-                            low    = ls_so-low
-                            high   = ls_so-high ) TO lt_r_matnr.
+                            low    = lv_low
+                            high   = lv_high ) TO lt_r_matnr.
           ENDLOOP.
       ENDCASE.
     ENDLOOP.
@@ -165,8 +232,9 @@ METHOD zstr_lzcode_usag_get_entityset.
     ENDIF.
 
     " -----------------------------------------------------------
-    " Schritt 1: Materialselektion (mirrort zlo03.txt process_main).
-    " Kein MTART-'FERT'-Filter - im Report am 2.3.26 deaktiviert.
+    " Schritt 1: Materialselektion (process_main Schritt 1).
+    " Kein MTART-'FERT'-Filter (im Report 2.3.26 deaktiviert).
+    " LVORM-Default wie p_lvorm = ' ': nur nicht-loeschvorgemerkte.
     " -----------------------------------------------------------
     SELECT matnr FROM mara
       INTO TABLE @lt_mara_sel
@@ -178,19 +246,22 @@ METHOD zstr_lzcode_usag_get_entityset.
     ENDIF.
 
     " -----------------------------------------------------------
-    " Schritt 2: ZAT_VC lesen (Rollen je Richtung getauscht)
+    " Schritt 2: ZPOWERBI_VC_TXT lesen (Rollen je Richtung getauscht;
+    " matnr = VKNR/Kopfmaterial, kompnr = Komponente)
     " -----------------------------------------------------------
     IF lv_topdown = abap_true.
-      SELECT matnr AS vknr, kompnr, menge, mengeneinheit AS meins
-        FROM zat_vc
+      SELECT matnr AS vknr, kompnr, menge, mengeneinheit AS meins,
+             baugruppe, postyp
+        FROM zpowerbi_vc_txt
         INTO CORRESPONDING FIELDS OF TABLE @lt_pairs_raw
         FOR ALL ENTRIES IN @lt_mara_sel
         WHERE matnr = @lt_mara_sel-table_line
           AND menge <> @space
           AND mengeneinheit <> @space.
     ELSE.
-      SELECT matnr AS vknr, kompnr, menge, mengeneinheit AS meins
-        FROM zat_vc
+      SELECT matnr AS vknr, kompnr, menge, mengeneinheit AS meins,
+             baugruppe, postyp
+        FROM zpowerbi_vc_txt
         INTO CORRESPONDING FIELDS OF TABLE @lt_pairs_raw
         FOR ALL ENTRIES IN @lt_mara_sel
         WHERE kompnr = @lt_mara_sel-table_line
@@ -202,15 +273,10 @@ METHOD zstr_lzcode_usag_get_entityset.
       RETURN.
     ENDIF.
 
-    " FIX 6: Deterministisches Dedup
-    SORT lt_pairs_raw BY vknr kompnr menge DESCENDING.
-    DELETE ADJACENT DUPLICATES FROM lt_pairs_raw COMPARING vknr kompnr.
-    lt_pairs = lt_pairs_raw.
-
     " -----------------------------------------------------------
     " Schritt 3: Alle beteiligten Materialnummern sammeln
     " -----------------------------------------------------------
-    LOOP AT lt_pairs INTO DATA(ls_pair_collect).
+    LOOP AT lt_pairs_raw INTO DATA(ls_pair_collect).
       INSERT ls_pair_collect-vknr INTO TABLE lt_all_matnr_temp.
       INSERT ls_pair_collect-kompnr INTO TABLE lt_all_matnr_temp.
     ENDLOOP.
@@ -222,7 +288,9 @@ METHOD zstr_lzcode_usag_get_entityset.
     SORT lt_all_matnr BY matnr.
 
     " ===================================================================
-    " Schritt 4: Stammdaten bulk laden (FAE auf Liste, FIX 3)
+    " Schritt 4: Stammdaten bulk laden (load_stammdaten_cache).
+    " OHNE LVORM-Filter - der Report laedt alle Stammsaetze und prueft
+    " LVORM nur im Bottom-Up-Zweig.
     " ===================================================================
     IF lt_all_matnr IS NOT INITIAL.
       DATA lt_stamm_raw TYPE STANDARD TABLE OF ty_stamm_raw.
@@ -239,8 +307,7 @@ METHOD zstr_lzcode_usag_get_entityset.
                            AND b~bwtar = @space
         INTO CORRESPONDING FIELDS OF TABLE @lt_stamm_raw
         FOR ALL ENTRIES IN @lt_all_matnr
-        WHERE m~matnr = @lt_all_matnr-matnr
-          AND m~lvorm = @space.
+        WHERE m~matnr = @lt_all_matnr-matnr.
 
       SELECT matnr FROM mast
         INTO TABLE @lt_bom
@@ -318,8 +385,127 @@ METHOD zstr_lzcode_usag_get_entityset.
       ENDLOOP.
     ENDIF.
 
+    " ===================================================================
+    " Schritt 6: Rohzeilen konvertieren und je vknr/kompnr AGGREGIEREN
+    " (FIX 2: COLLECT-Semantik des Reports - Mengen summieren).
+    " Mengenkonvertierung je Rohzeile VOR der Summierung (wie im Report:
+    " convert_menge je lt_powerbi-Zeile, dann COLLECT).
+    " ===================================================================
+    LOOP AT lt_pairs_raw INTO DATA(ls_pair_raw).
+
+      IF lv_topdown = abap_true.
+        " FIX 4 (Report-Default p_txtpo = ' '): Textpositionen nicht
+        " in die Bedarfsrechnung aufnehmen.
+        IF ls_pair_raw-postyp = 'T'.
+          CONTINUE.
+        ENDIF.
+      ELSE.
+        " Bottom-Up (Report): Kopfmaterial ohne Stammsatz oder mit
+        " Loeschvormerkung ueberspringen (p_lvorm-Default ' ').
+        READ TABLE lt_stamm INTO DATA(ls_stamm_bu)
+          WITH TABLE KEY matnr = ls_pair_raw-vknr.
+        IF sy-subrc <> 0.
+          CONTINUE.
+        ENDIF.
+        IF ls_stamm_bu-lvorm IS NOT INITIAL.
+          CONTINUE.
+        ENDIF.
+      ENDIF.
+
+      " Ziel-Mengeneinheit = Einheit der Komponente (Fallback: Quelle)
+      DATA lv_meins_komp TYPE meins.
+      CLEAR lv_meins_komp.
+      READ TABLE lt_stamm INTO DATA(ls_stamm_k)
+        WITH TABLE KEY matnr = ls_pair_raw-kompnr.
+      IF sy-subrc = 0.
+        lv_meins_komp = ls_stamm_k-meins.
+      ELSE.
+        lv_meins_komp = ls_pair_raw-meins.
+      ENDIF.
+
+      " ---- Mengenkonvertierung (convert_menge; FIX 1: KEINE Rundung,
+      "      FIX 5: leere Einheiten abgefangen; kein RETURN!) ----
+      DATA lv_conv_str       TYPE string.
+      DATA lv_conv_menge_in  TYPE menge_d.
+      DATA lv_conv_menge_out TYPE menge_d.
+      DATA lv_conv_ok        TYPE abap_bool.
+      DATA lv_menge          TYPE menge_d.
+
+      CLEAR: lv_conv_str, lv_conv_menge_in, lv_conv_menge_out, lv_menge.
+      lv_conv_ok = abap_true.
+
+      lv_conv_str = ls_pair_raw-menge.
+      CONDENSE lv_conv_str NO-GAPS.
+
+      IF lv_conv_str IS NOT INITIAL.
+        TRY.
+            lv_conv_menge_in = lv_conv_str.
+          CATCH cx_sy_conversion_error.
+            lv_conv_ok = abap_false.
+        ENDTRY.
+
+        IF lv_conv_ok = abap_true.
+          IF lv_meins_komp <> ls_pair_raw-meins
+             AND lv_meins_komp IS NOT INITIAL
+             AND ls_pair_raw-meins IS NOT INITIAL.
+            CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
+              EXPORTING
+                input                = lv_conv_menge_in
+                unit_in              = ls_pair_raw-meins
+                unit_out             = lv_meins_komp
+              IMPORTING
+                output               = lv_conv_menge_out
+              EXCEPTIONS
+                conversion_not_found = 1
+                division_by_zero     = 2
+                input_invalid        = 3
+                output_invalid       = 4
+                overflow             = 5
+                type_invalid         = 6
+                units_missing        = 7
+                unit_in_not_found    = 8
+                unit_out_not_found   = 9
+                OTHERS               = 10.
+            lv_menge = COND #( WHEN sy-subrc = 0 THEN lv_conv_menge_out
+                               ELSE lv_conv_menge_in ).
+          ELSE.
+            lv_menge = lv_conv_menge_in.
+          ENDIF.
+          " FIX 1: Rundung auf dec=0 ENTFERNT (0.070 M wurde zu 0)
+        ENDIF.
+      ENDIF.
+      " ---- Ende Mengenkonvertierung ----
+
+      " Aggregieren: Menge summieren, Baugruppen-Flag ODER-verknuepfen
+      " (Baugruppe aus der VC-Zeile nur Top-Down, wie fill_ktab-Aufruf)
+      READ TABLE lt_pairs INTO ls_pair_agg
+        WITH TABLE KEY vknr   = ls_pair_raw-vknr
+                       kompnr = ls_pair_raw-kompnr.
+      IF sy-subrc = 0.
+        ls_pair_agg-menge = ls_pair_agg-menge + lv_menge.
+        IF lv_topdown = abap_true AND ls_pair_raw-baugruppe = 'X'.
+          ls_pair_agg-baugruppe = abap_true.
+        ENDIF.
+        MODIFY TABLE lt_pairs FROM ls_pair_agg.
+      ELSE.
+        ls_pair_agg = VALUE ty_pair(
+          vknr      = ls_pair_raw-vknr
+          kompnr    = ls_pair_raw-kompnr
+          menge     = lv_menge
+          baugruppe = COND #( WHEN lv_topdown = abap_true
+                                   AND ls_pair_raw-baugruppe = 'X'
+                              THEN abap_true ELSE abap_false ) ).
+        INSERT ls_pair_agg INTO TABLE lt_pairs.
+      ENDIF.
+
+    ENDLOOP.
+
+    IF lt_pairs IS INITIAL.
+      RETURN.
+    ENDIF.
+
     " -----------------------------------------------------------
-    " Schritt 6: Kopfmaterial-Zusatzfelder je Vknr (VTAB im Report)
+    " Schritt 7: Kopfmaterial-Zusatzfelder je Vknr (VTAB im Report)
     " -----------------------------------------------------------
     TYPES: BEGIN OF ty_vknr_info,
              vknr  TYPE matnr,
@@ -348,7 +534,8 @@ METHOD zstr_lzcode_usag_get_entityset.
     ENDLOOP.
 
     " -----------------------------------------------------------
-    " Schritt 7: Exklusivitaet - nur Top-Down fachlich belegt
+    " Schritt 8: Exklusivitaet - nur Top-Down fachlich belegt
+    " (load_exclusivity_topdown; Quelle ZPOWERBI_VC_TXT)
     " -----------------------------------------------------------
     DATA lt_exklusiv TYPE HASHED TABLE OF matnr WITH UNIQUE KEY table_line.
 
@@ -369,7 +556,6 @@ METHOD zstr_lzcode_usag_get_entityset.
         INSERT ls_pair_v-vknr INTO TABLE lt_sel_vknr.
       ENDLOOP.
 
-      " FIX 7: SORTED TABLE -> LOOP WHERE optimiert
       TYPES: BEGIN OF ty_usage,
                kompnr TYPE matnr,
                vknr   TYPE matnr,
@@ -379,7 +565,7 @@ METHOD zstr_lzcode_usag_get_entityset.
                           WITH NON-UNIQUE KEY kompnr vknr.
 
       SELECT kompnr, matnr AS vknr
-        FROM zat_vc
+        FROM zpowerbi_vc_txt
         INTO CORRESPONDING FIELDS OF TABLE @lt_usage_raw
         FOR ALL ENTRIES IN @lt_kompnr_list
         WHERE kompnr = @lt_kompnr_list-matnr.
@@ -435,26 +621,31 @@ METHOD zstr_lzcode_usag_get_entityset.
     ENDIF.
 
     " ===================================================================
-    " Schritt 8: Ausgabezeilen bauen. Mengenkonvertierung inline OHNE
-    " RETURN (wuerde sonst die ganze Methode abbrechen).
+    " Schritt 9: Ausgabezeilen aus den aggregierten Paaren bauen
     " ===================================================================
     LOOP AT lt_pairs INTO DATA(ls_pair).
 
-      " FIX 5: Bottom-Up ohne gueltigen Stammsatz ueberspringen
-      IF lv_topdown = abap_false.
-        READ TABLE lt_stamm TRANSPORTING NO FIELDS
-          WITH TABLE KEY matnr = ls_pair-vknr.
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-      ENDIF.
+      " NICHT uebernommen aus dem Report: FIX 4 loescht dort
+      " Excel-Zeilen ohne MAKTX (Report: DELETE gt_ktab WHERE maktx IS
+      " INITIAL), weil eine Excel-Zeile ohne erkennbaren Materialtext
+      " fuer einen Leser wertlos ist. Fuer diesen Webservice waere das
+      " FALSCH: die MAKT-Textsuche joint ueber t~spras = sy-langu, also
+      " sprachabhaengig vom aufrufenden User. Der technische Service-
+      " User kann eine andere SAP-Anmeldesprache haben als ein
+      " interaktiver Tester - dann fehlt der Text zwar, aber Menge/
+      " Kosten/Bestand sind trotzdem echt und duerfen nicht durch einen
+      " reinen Sprachzufall verschwinden (Befund 2026-07-22: identischer
+      " $filter lieferte im Full Load 0 Zeilen, im interaktiven Browser-
+      " Test mit demselben Vknr/Kompnr eine echte Zeile). KompnrMaktx
+      " bleibt in diesem Fall einfach leer statt die Zeile zu killen.
 
       " WAERS fest 'CHF' (Werk 1100 = Trafag AG/CH/CHF) - Referenzfeld
       " der CURR-Felder OWERT/OMKWR.
       ls_out = VALUE zstr_lzcode_usage( richtung = lv_richtung
                                         vknr     = ls_pair-vknr
                                         kompnr   = ls_pair-kompnr
-                                        waers    = 'CHF' ).
+                                        waers    = 'CHF'
+                                        menge    = ls_pair-menge ).
 
       READ TABLE lt_vknr_info INTO DATA(ls_vi)
         WITH TABLE KEY vknr = ls_pair-vknr.
@@ -463,12 +654,9 @@ METHOD zstr_lzcode_usag_get_entityset.
         ls_out-vknr_verbrauch = ls_vi-verbr.
       ENDIF.
 
-      DATA lv_meins_komp TYPE meins.
-      CLEAR lv_meins_komp.
       READ TABLE lt_stamm INTO DATA(ls_stamm2)
         WITH TABLE KEY matnr = ls_pair-kompnr.
       IF sy-subrc = 0.
-        lv_meins_komp        = ls_stamm2-meins.
         ls_out-kompnr_maktx  = ls_stamm2-maktx.
         ls_out-kompnr_meins  = ls_stamm2-meins.
         ls_out-dismm         = ls_stamm2-dismm.
@@ -482,62 +670,16 @@ METHOD zstr_lzcode_usag_get_entityset.
         ls_out-zzlzcod       = ls_stamm2-zzlzcod.
         ls_out-zzlzcodsort   = ls_stamm2-zzlzcodsort.
         ls_out-stueckkosten  = ls_stamm2-stueckkosten.
-        ls_out-baugruppe     = ls_stamm2-has_bom.
-      ELSE.
-        lv_meins_komp = ls_pair-meins.
-      ENDIF.
 
-      " ---- Mengenkonvertierung inline (kein RETURN!) ----
-      DATA lv_conv_str       TYPE string.
-      DATA lv_conv_menge_in  TYPE menge_d.
-      DATA lv_conv_menge_out TYPE menge_d.
-      DATA lv_conv_ok        TYPE abap_bool.
-
-      CLEAR: lv_conv_str, lv_conv_menge_in, lv_conv_menge_out.
-      lv_conv_ok = abap_true.
-      ls_out-menge = 0.
-
-      lv_conv_str = ls_pair-menge.
-      CONDENSE lv_conv_str NO-GAPS.
-
-      IF lv_conv_str IS NOT INITIAL.
-        TRY.
-            lv_conv_menge_in = lv_conv_str.
-          CATCH cx_sy_conversion_error.
-            lv_conv_ok = abap_false.
-        ENDTRY.
-
-        IF lv_conv_ok = abap_true.
-          IF lv_meins_komp <> ls_pair-meins
-             AND lv_meins_komp IS NOT INITIAL
-             AND ls_pair-meins IS NOT INITIAL.
-            CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
-              EXPORTING
-                input                = lv_conv_menge_in
-                unit_in              = ls_pair-meins
-                unit_out             = lv_meins_komp
-              IMPORTING
-                output               = lv_conv_menge_out
-              EXCEPTIONS
-                conversion_not_found = 1
-                division_by_zero     = 2
-                input_invalid        = 3
-                output_invalid       = 4
-                overflow             = 5
-                type_invalid         = 6
-                units_missing        = 7
-                unit_in_not_found    = 8
-                unit_out_not_found   = 9
-                OTHERS               = 10.
-            ls_out-menge = COND #( WHEN sy-subrc = 0 THEN lv_conv_menge_out
-                                   ELSE lv_conv_menge_in ).
-          ELSE.
-            ls_out-menge = lv_conv_menge_in.
-          ENDIF.
-          ls_out-menge = round( val = ls_out-menge dec = 0 ).
+        " Baugruppen-Kennzeichen wie fill_ktab (neue Fassung):
+        " (VC-Baugruppe ODER Stueckliste vorhanden) UND beskz <> 'F'
+        IF ( ls_pair-baugruppe = abap_true OR ls_stamm2-has_bom = abap_true )
+           AND ls_stamm2-beskz <> 'F'.
+          ls_out-baugruppe = abap_true.
+        ELSE.
+          ls_out-baugruppe = abap_false.
         ENDIF.
       ENDIF.
-      " ---- Ende Mengenkonvertierung ----
 
       READ TABLE lt_exklusiv TRANSPORTING NO FIELDS
         WITH TABLE KEY table_line = ls_pair-kompnr.
@@ -572,7 +714,7 @@ METHOD zstr_lzcode_usag_get_entityset.
     ENDLOOP.
 
     " ===================================================================
-    " Schritt 9 (NEU, gateway-spezifisch): $skip/$top anwenden und in
+    " Schritt 10 (gateway-spezifisch): $skip/$top anwenden und in
     " et_entityset uebertragen. MOVE-CORRESPONDING, weil der generierte
     " Entity-Zeilentyp dieselben Feldnamen wie ZSTR_LZCODE_USAGE hat.
     " ===================================================================

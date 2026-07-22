@@ -1,6 +1,126 @@
 # ABAP Webservice fuer ZLO03 (ZM_LZCODE20_OPT)
 
-Stand: 2026-07-21 (Feldliste am Live-System T76 verifiziert)
+Stand: 2026-07-22c (ALPHA-Konvertierung fuer Vknr/Kompnr-Filter ergaenzt,
+bestaetigte Root Cause fuer 0-Zeilen-Symptom)
+
+## WICHTIG - Nachtrag 2026-07-22c: Filterwerte brauchen ALPHA-Konvertierung (bestaetigte Ursache)
+
+Nach dem Fix auf `ZPOWERBI_VC_TXT` (unten) lief der Full Load gegen `travp762`
+technisch durch, lieferte aber fuer `Vknr=2217`/`TOPDOWN` **0 Zeilen**. Ingo
+hat das direkt am Browser nachgestellt und damit die Ursache zweifelsfrei
+belegt: derselbe `$filter=Richtung eq 'TOPDOWN' and Vknr eq '2217'`
+(Kurzform) lieferte 0 Treffer, `$filter=... and Vknr eq
+'000000000000002217'` (18-stellig, fuehrende Nullen) lieferte die echte
+Zeile (`Kompnr=C34882`, `KompnrMaktx=SCHALTHEBEL BEARBEITET`). Aus dem
+Produktionslog (`AppEventLogs`, Kategorie `MaterialUsage`) zusaetzlich
+bestaetigt: Der App-Full-Load hatte exakt denselben, unpadded Wert `2217`
+verwendet wie der erste (fehlgeschlagene) manuelle Test - **kein**
+Padding-Problem im C#-Code (`MaterialUsageDataRefreshService.cs` reicht den
+Eingabewert unveraendert in den `$filter` durch, das ist korrekt so).
+
+**Ursache (bestaetigt):** `MARA`/`ZPOWERBI_VC_TXT` speichern Materialnummern
+intern 18-stellig mit fuehrenden Nullen (Standard-MATNR-Domaene). Eine
+selbstgeschriebene/redefinierte `GET_ENTITYSET`-Methode bekommt
+`it_filter_select_options` jedoch ROH - die sonst fuer generisch generierte
+Services automatische externe->interne ALPHA-Konvertierung des Gateway-
+Frameworks greift bei eigenem Code NICHT automatisch. Schritt 1
+(`SELECT matnr FROM mara WHERE matnr IN lt_r_matnr`) fand die Kurzform daher
+nicht, `lt_mara_sel` blieb leer, Methode brach mit 0 Zeilen ab - obwohl die
+JSON-Ausgabe der Property selbst wieder in Kurzform erscheint (das ist reine
+Output-Formatierung des generierten Strukturfelds, unabhaengig vom
+Filter-Handling).
+
+(Fruehere Vermutung in einer Zwischenversion dieses Dokuments, ein
+sprachabhaengiger `MAKTX`-Join sei die Ursache, war eine unbestaetigte
+Vermutung und ist durch diesen Befund widerlegt bzw. gegenstandslos - siehe
+trotzdem den entfernten `MAKTX`-Zeilen-Drop unten als separate,
+unabhaengig sinnvolle Haertung.)
+
+**FIX (Version 2026-07-22c):** Beide Methoden konvertieren Low/High-Werte der
+`Vknr`/`Kompnr`-Filter jetzt per `CONVERSION_EXIT_ALPHA_INPUT`, bevor sie in
+die `RANGE OF matnr`-Tabellen wandern. Damit funktionieren Kurzform ("2217")
+und 18-stellige Form gleichermassen - Nutzer/Client muessen sich um das
+Format nicht kuemmern.
+
+**Zusaetzliche Haertung (Version 2026-07-22b, unabhaengig von obigem Fix,
+weiterhin gueltig):** `FIX 4` des Reports (`DELETE gt_ktab WHERE maktx IS
+INITIAL`) wurde NICHT uebernommen. Die `MAKT`-Textsuche joint ueber
+`t~spras = sy-langu`, also abhaengig von der SAP-Anmeldesprache des
+aufrufenden Users; fuer eine Excel-Ausgabe ist das Wegfiltern leerer
+Textzeilen sinnvoll, fuer einen maschinell konsumierten Webservice waere es
+riskant (eine fehlende Uebersetzung koennte sonst echte Bestandsdaten
+verstecken). Die Zeile wird deshalb immer ausgegeben, `KompnrMaktx` bleibt im
+Zweifel leer. Der Textpositions-Ausschluss (`postyp = 'T'`) ist davon nicht
+betroffen und bleibt bestehen.
+
+**Nacharbeit SAP-Seite (wie bei den vorigen Fixes):** Methodenruempfe erneut
+auf travt762 UND travp762 einfuegen, Klasse aktivieren,
+`/IWFND/CACHE_CLEANUP`.
+
+## Nachtrag 2026-07-22: Bereichsfilter ("35-40") im Materialfeld
+
+Auf Wunsch von Ingo unterstuetzt das Eingabefeld "Materialnummern" in
+`Components/Pages/BomAnalysis.razor` jetzt neben kommagetrennten Einzelwerten
+auch Bereiche in der Form `35-40`. Umgesetzt rein C#-seitig in
+`MaterialUsageDataRefreshService.BuildMaterialClause` (5 neue Tests): ein
+Token mit genau einem Bindestrich und nicht-leeren Seiten wird zu
+`(Vknr ge 'X' and Vknr le 'Y')`, gemischt mit `Vknr eq 'Z'` fuer Einzelwerte,
+alles per `or` verknuepft. KEINE ABAP-Aenderung noetig: das Gateway-Framework
+fasst `ge`/`le` auf demselben Property beim Parsen von
+`it_filter_select_options` bereits zu einer klassischen
+Select-Options-Bereichszeile zusammen, die die bestehende generische
+RANGE-Verarbeitung (inkl. der neuen ALPHA-Konvertierung aus 2026-07-22c)
+unveraendert mitnimmt. Materialnummern selbst enthalten laut bisherigen
+Beispielen keine Bindestriche, der Split ist daher eindeutig.
+
+## WICHTIG - Nachtrag 2026-07-22: falsche Quelltabelle ZAT_VC, SYNTAX_ERROR auf PROD
+
+Die Methodenruempfe vom 2026-07-21 basierten auf einer ALTEN Fassung des
+Reports und lasen aus `ZAT_VC`. Die aktuelle Reportfassung (Referenz:
+`docs/abap/originalzlo03.txt`, inkl. FIXES 1/2/4/5) liest aus
+**`ZPOWERBI_VC_TXT`**. Auf `travp762` (PROD) existiert `ZAT_VC` nicht -
+dadurch kompilierte die komplette DPC_EXT-Klasse nicht und **JEDES**
+EntitySet des Service `ZPOWERBI_EINKAUF_SRV` (auch `EKKOSet`) brach mit
+`SYNTAX_ERROR` ab (Befund 2026-07-22 nach dem travt/travp-URL-Wechsel;
+auch der Einkauf-Full-Load war dadurch blockiert, Cache blieb dank
+Guardrail unveraendert).
+
+Beide Methodenruempfe (`ZSTR_LZCODE_USAG_GET_ENTITYSET.abap`,
+`ZSTR_LZCODE_PARE_GET_ENTITYSET.abap`) sind am 2026-07-22 auf die neue
+Reportfassung umgestellt worden:
+
+- Quelltabelle `ZAT_VC` -> `ZPOWERBI_VC_TXT` (matnr=VKNR, kompnr, menge,
+  mengeneinheit, baugruppe, postyp, kom_mstae).
+- FIX 1 uebernommen: Rundung der Menge auf 0 Dezimalen ENTFERNT
+  (0.070 M wurde vorher zu 0 gerundet und verschwand).
+- FIX 2 uebernommen: kein Dedup je Vknr/Kompnr mehr - Mehrfachverwendungen
+  derselben Komponente (verschiedene Pfade in derselben VKNR) werden
+  SUMMIERT (COLLECT-Semantik des Reports); weiterhin deterministisch,
+  weil ueber SORTED TABLE aggregiert wird.
+- FIX 4 uebernommen: Textpositionen (`postyp = 'T'`) und Zeilen ohne
+  `MAKTX` im Default ausgeschlossen (Report-Default `p_txtpo = ' '`).
+- Baugruppen-Kennzeichen wie neue `fill_ktab`-Fassung:
+  `(VC-Baugruppe ODER MAST-Stueckliste) UND beskz <> 'F'`.
+- Stammdaten-JOIN ohne LVORM-Filter (Report laedt alle Stammsaetze;
+  LVORM wirkt nur auf die Materialselektion bzw. den Bottom-Up-Skip,
+  Default `p_lvorm = ' '`).
+
+**Nacharbeit SAP-Seite (manuell, SE80/SEGW):** Beide Methodenruempfe auf
+**beiden** Systemen (`travt762` UND `travp762`) neu einfuegen, Klasse
+aktivieren, danach `/IWFND/CACHE_CLEANUP`. Der `SYNTAX_ERROR` auf P
+verschwindet erst, wenn dort kein `ZAT_VC`-Bezug mehr in der Klasse
+steht. Die DDIC-Strukturen `ZSTR_LZCODE_USAGE`/`ZSTR_LZCODE_PARENT`
+bleiben unveraendert (kein SE11-Nacharbeitsbedarf); die C#-Seite
+(`MaterialUsageDataRefreshService`) ist von der Umstellung nicht
+betroffen (gleiche EntitySets, gleiche Felder).
+
+Hinweis zu Feldherkunfts-Angaben weiter unten in diesem Dokument:
+aeltere Abschnitte nennen noch `ZAT_VC` als Quelle - fachlich gelten
+dieselben Spalten, nur aus `ZPOWERBI_VC_TXT`. Die Live-Verifikation
+2026-07-21 (Feldliste/Datenelemente) wurde gegen `ZAT_VC` auf T76
+gefahren; `ZZLZCOD`/`ZZLZCODSORT`/`KOM_MSTAE`-Aussagen zu MARA bleiben
+gueltig, die ZAT_VC-Leere-Aussage ("0 Zeilen gegen TEST erwartet") ist
+fuer `ZPOWERBI_VC_TXT` NEU ZU PRUEFEN.
 
 Status: **Entwurf fuer Lucas / SAP-Team.** Nichts hier ist in SAP angelegt,
 kompiliert oder getestet. Ingo liefert den fachlichen Bedarf und einen
