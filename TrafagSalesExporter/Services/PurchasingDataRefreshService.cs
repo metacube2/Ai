@@ -280,7 +280,10 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Net
                 ["$Txz01"] = GetText(row, "Txz01"),
                 ["$Matkl"] = GetText(row, "Matkl"),
                 // Aktuelle Warengruppe aus dem Materialstamm (Marco: Beleg-Matkl ist in alten
-                // Belegen nur die Dummy-Gruppe). Bleibt leer, bis SAP Matkl im maracalcSet liefert.
+                // Belegen nur die Dummy-Gruppe "01"). Quelle MARA001Set.Matkl (seit 2026-07-23),
+                // ueber Matnr gejoint. Im Materialstamm ist Matkl allerdings zu ~65 % leer und
+                // ~24 % "01" - wo leer, greift im Dashboard der COALESCE-Fallback auf die
+                // Beleg-Warengruppe.
                 ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, GetText(row, "Matnr")),
                 ["$Menge"] = GetText(row, "Menge"),
                 ["$Meins"] = GetText(row, "Meins"),
@@ -296,24 +299,27 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Net
 
     private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
     {
-        // MARA-MSTAE (Materialstatus) liefert das Loeschkennzeichen je Material.
-        // Wird ueber EKPO.Matnr -> MARA.Matnr in PurchasingEkpoCache.Mstae uebernommen.
+        // Materialstamm-Attribute je Material, ueber EKPO.Matnr -> MARA.Matnr in den EKPO-Cache
+        // uebernommen: Mstae (Materialstatus, fuer MSTAE-98/99-Filter) und Matkl (aktuelle
+        // Warengruppe aus dem Materialstamm, Wunsch Marco - Beleg-Matkl ist in alten Belegen nur
+        // die Dummy-Gruppe "01").
         //
-        // SAP-Umbau (festgestellt 2026-07-17): Das bisherige MARA001Set (EntityType MARA)
-        // exponiert Mstae NICHT mehr ($select=Mstae -> 404); Ersatzquelle ist das neue
-        // maracalcSet. Dieses Set ignoriert $top/$skip (gleiches Verhalten wie mbewSet),
-        // deshalb bewusst EIN ungepagter Request statt ReadAllRowsAsync — das Paging wuerde
-        // sonst bei jedem "Blatt" den vollen Bestand (~68'000 Zeilen) erneut laden.
-        //
-        // Matkl (aktuelle Warengruppe aus dem Materialstamm, Wunsch Marco) ist aktuell in
-        // KEINEM MARA-EntityType vorhanden — sobald SAP das Feld ergaenzt, hier nur das
-        // $select um ",Matkl" erweitern; Write-Pfad und Cache-Spalte (MaraMatkl) stehen schon.
-        var url = $"{baseUrl}maracalcSet?$format=json&$select={Uri.EscapeDataString("Matnr,Mstae")}";
+        // HISTORIE der Quelle:
+        //  - bis 2026-07-17: MARA001Set (hatte Mstae).
+        //  - 2026-07-17: SAP hatte Mstae aus MARA001Set entfernt ($select=Mstae -> 404),
+        //    deshalb Umstellung auf maracalcSet (hatte Mstae, aber kein Matkl).
+        //  - 2026-07-23: SAP hat MARA001Set um Matkl UND Mstae erweitert (Ingo). MARA001Set hat
+        //    jetzt beide Felder in einem Set -> zurueck auf MARA001Set, maracalcSet nicht mehr
+        //    noetig. Live verifiziert: MARA001Set ignoriert $top/$skip/$filter (liefert immer alle
+        //    ~68'125 Zeilen, gleiches Verhalten wie maracalcSet/mbewSet), deshalb bewusst EIN
+        //    ungepagter Request statt ReadAllRowsAsync — Paging wuerde sonst bei jedem "Blatt" den
+        //    vollen Bestand erneut laden.
+        var url = $"{baseUrl}MARA001Set?$format=json&$select={Uri.EscapeDataString("Matnr,Mstae,Matkl")}";
         using var response = await client.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"SAP OData maracalcSet fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) URL={url} Antwort={TrimForLog(error)}");
+            throw new HttpRequestException($"SAP OData MARA001Set fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) URL={url} Antwort={TrimForLog(error)}");
         }
 
         var rows = ParseRows(await response.Content.ReadAsStringAsync(cancellationToken));

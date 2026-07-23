@@ -39,12 +39,15 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Offene Punkte
 
-- WG-DATENLAGE 2026-07-23 (an Prod-Cache gemessen, Stand Load 17.07.): Warengruppe im
-  Einkauf-Cache faktisch unbrauchbar bis zur SAP-Erweiterung. `MaraMatkl` zu 0 % gefuellt
-  (0/234'083), `Matkl` (Beleg-WG) zwar 99,98 % gefuellt, ABER 233'048/234'046 (99,6 %) in der
-  Sammelgruppe `01`. Das neue "Volumen nach Warengruppe"-Diagramm (siehe Kurzstand) zeigt daher
-  aktuell fast nur eine Saeule; strukturell korrekt, aussagekraeftig erst nach `Matkl` im
-  `maracalcSet`. Verstaerkt den bestehenden offenen Punkt "Matkl in maracalc aufnehmen".
+- SAP-ERWEITERUNG ERLEDIGT 2026-07-23: `Matkl` (Materialstamm-WG) UND `Mstae` sind jetzt beide im
+  `MARA001Set` (Ingo). Loader zurueck von `maracalcSet` auf `MARA001Set` umgestellt (ein Set, ein
+  ungepagter Request; MARA001Set ignoriert $top/$skip/$filter, live verifiziert). `MaraMatkl` wird
+  ab dem naechsten Einkauf-Full-Load aus `MARA001Set.Matkl` gefuellt. DATENLAGE Materialstamm-WG
+  (an travp762 gemessen, 68'125 Materialien): 65 % leer, 24 % Dummy `01`, ~10 % echte Gruppen
+  (61 distinct, z.B. TS_AUTO, 20.01.01). Wo leer, greift im Dashboard der COALESCE-Fallback auf die
+  Beleg-WG (die zu 99,6 % `01` ist). Also besser als vorher (echte Gruppen erstmals sichtbar), aber
+  die hohe Leerquote im Materialstamm bleibt ein SAP-Stammdaten-Thema. VOR-DEPLOY-STAND Cache:
+  MaraMatkl noch 0 % (Load 17.07.), wird erst mit dem naechsten Full Load gefuellt.
 - ERLEDIGT 2026-07-22: Zentrale SAP-Quelle Einkauf zeigt jetzt auf `travp762` (Prod) statt `travt762` (Test) — siehe Kurzstand oben. Full Load mit Marco/Andreas abstimmen, bevor er gefahren wird. Zusatzrisiko travp762 weiterhin offen: `Bstyp`/`Bsart`/`Elikz` fehlten dort zuletzt im OData-Modell (Probe 2026-07-10), 401-Auth-Status zuletzt 2026-07-09 ungeklaert — beides vor dem naechsten Full Load neu pruefen.
 - SAP-Erweiterung: `Matkl` in `maracalc` aufnehmen (fuer echte Materialstamm-Warengruppe im Drilldown).
 - Abnahme-Checks Marco: 18-Mio-Offenwert gegen SAP, WKURS-Richtung an echtem Fremdwaehrungsbeleg.

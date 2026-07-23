@@ -6,7 +6,22 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- APP-AENDERUNG 2026-07-23, `268/268` Tests gruen (noch NICHT deployed): Einkauf-Reiter `Spend`
+- SAP-ERWEITERUNG + LOADER-UMSTELLUNG 2026-07-23, `268/268` Tests gruen: Ingo hat `Matkl`
+  (Materialstamm-Warengruppe) UND `Mstae` beide ins `MARA001Set` aufgenommen. Damit hat EIN Set
+  wieder alle vom Einkauf-Loader benoetigten Materialstamm-Felder (Matnr+Mstae+Matkl); der Loader
+  (`PurchasingDataRefreshService.LoadMaterialStatusMapAsync`) ist von `maracalcSet` zurueck auf
+  `MARA001Set` umgestellt (`$select=Matnr,Mstae,Matkl`, ein ungepagter Request - MARA001Set
+  ignoriert $top/$skip/$filter, liefert immer alle 68'125 Zeilen, live verifiziert). Vorgeschichte:
+  bis 17.07. MARA001Set (hatte Mstae), 17.07. auf maracalcSet gewechselt (MARA001Set hatte Mstae
+  verloren, aber kein Matkl), jetzt beide Felder in MARA001Set -> zurueck. LIVE VERIFIZIERT gegen
+  travp762: MARA001Set `$select=Matnr,Mstae,Matkl` -> 200; Mstae 48,8 % mit Status (41 % `99`,
+  2,4 % `98`) - MSTAE-98/99-Filter wirkt weiter; Matkl 35 % gefuellt, davon viel `01`, ~10 % echte
+  Gruppen (65 % leer -> COALESCE-Fallback auf Beleg-WG). EKKO/EKPO-Loaderfelder
+  (Bstyp/Bsart/Konnr/Elikz/Matkl) auf travp762 ebenfalls vorhanden -> Full Load laeuft durch (der
+  2026-07-10-Blocker ist weg). NACHSORGE: `MaraMatkl` im Cache ist noch 0 % (Load-Stand 17.07.);
+  wird erst mit dem naechsten Einkauf-Full-Load gefuellt - der ist mit Marco/Andreas abzustimmen
+  (laufende 18-Mio-Abnahme, Datenbestand wechselt auf travp762). Details: `docs/rag/PURCHASING.md`.
+- APP-AENDERUNG 2026-07-23, `268/268` Tests gruen (JETZT deployed, siehe Deploy-Eintrag): Einkauf-Reiter `Spend`
   hat ein zweites Balkendiagramm "Volumen nach Warengruppe" (PowerBI-Seite "Diagramm Vol./WG").
   Anlass: Ingo-Analyse der `li.pbix`/`x.pbix` (beide identisch, 7 Seiten) - das WG-Diagramm war in
   der App nicht als echtes Visual vorhanden, WG lebte nur als Drilldown-Ebene der Spend-Matrix.
