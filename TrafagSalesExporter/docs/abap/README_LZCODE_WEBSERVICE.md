@@ -247,6 +247,7 @@ Eine Zeile je Kombination aus Kopfmaterial (`Vknr`) und Komponente (`Kompnr`).
 | `Vknr` | `ZAT_VC-MATNR` (Top-Down) / `ZAT_VC-KOMPNR` (Bottom-Up) | Kopfmaterial bzw. Verwendungsmaterial |
 | `VknrMstae` | `VTAB-MSTAE` | nur Top-Down gefuellt |
 | `VknrVerbrauch` | `VTAB-VERBR` | nur Top-Down gefuellt |
+| `VknrDispo` (neu 2026-07-23b) | `MARC-DISPO` des Vknr (Werk 1100) | Disponent des Kopfmaterials; Schluessel fuer den Produktgruppen-Aufriss (Disponent -> Produktgruppe via ZC23-Referenzliste). DDIC: Feld `VKNR_DISPO`, Datenelement `DISPO`. Live verifiziert: FERT-Endprodukte haben DISPO gefuellt (z.B. `019`). |
 | `Kompnr` | `ZAT_VC-KOMPNR` (Top-Down) / `ZAT_VC-MATNR` (Bottom-Up) | Komponente |
 | `KompnrMaktx`, `KompnrMeins` | `KTAB-MAKTX`/`MEINS` | aus `MAKT`/`MARA` |
 | `Menge` | `MTAB-MENGE` | bereits mengeneinheiten-konvertiert (`UNIT_CONVERSION_SIMPLE`) und gerundet, wie `convert_menge` |

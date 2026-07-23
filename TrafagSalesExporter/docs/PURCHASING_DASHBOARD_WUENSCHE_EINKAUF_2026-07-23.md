@@ -57,6 +57,21 @@ Zwei diskutierte Loesungswege:
 Einordnung: nutzt direkt den heute fertiggestellten ZLO03-Webservice, ist aber die
 aufwendigste Dimension (Mehrfachverwendung, Zurechnungslogik). Bewusst NICHT als erstes.
 
+### ZLO03-Feld fuer die Produktgruppe (2026-07-23b, an travp762 verifiziert)
+
+Fuer den Produktgruppen-Aufriss braucht der ZLO03-Webservice GENAU EIN neues Feld:
+**`VKNR_DISPO`** = Disponent des Kopfmaterials (`MARC-DISPO`, Werk 1100). Der ABAP-Rumpf
+`docs/abap/ZSTR_LZCODE_USAG_GET_ENTITYSET.abap` ist bereits angepasst (DISPO im MARC-SELECT,
+in `lt_stamm`, `VknrDispo` in Schritt 7/9 gesetzt). SAP-seitig noch noetig: DDIC-Struktur
+`ZSTR_LZCODE_USAGE` in SE11 um Feld `VKNR_DISPO` (Datenelement `DISPO`) erweitern, dann Rumpf
+einfuegen. Live verifiziert: die Bottom-Up-VKNRs einer Komponente sind FERT-Endprodukte und
+haben MARC-DISPO gefuellt (Beispiel Disponent `019`).
+
+Das Feld allein macht die Produktgruppe NICHT fertig - es fehlt weiterhin:
+1. Referenzliste **Disponent -> Produktgruppe** (ZC23) als lesbare Daten (Client-/Job-seitig).
+2. Zurechnungsregel fuer Komponenten, die in mehreren Produktgruppen verbaut sind
+   (Marco: „wird nicht ganz einfach sein mit der Abgrenzung").
+
 ## Visualisierung (Wunsch)
 
 - **Kuchendiagramm** je Materialgruppe/Warengruppe -> Anteil je **Beschaffungsregion/Land**

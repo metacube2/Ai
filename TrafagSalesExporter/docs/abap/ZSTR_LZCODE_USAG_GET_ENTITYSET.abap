@@ -2,6 +2,21 @@
 *& METHODENRUMPF fuer die redefinierte DPC_EXT-Methode
 *& ZSTR_LZCODE_USAG_GET_ENTITYSET  (Gateway-Service ZPOWERBI_EINKAUF_SRV)
 *&
+*& VERSION 2026-07-23b - neues Feld VknrDispo (Disponent des Kopfmaterials,
+*& MARC-DISPO Werk 1100) fuer den geplanten Produktgruppen-Aufriss im
+*& Einkaufsdashboard. Die Produktgruppe haengt im Trafag-Modell am
+*& Disponenten des FERT-Endprodukts (nicht der Komponente); dieses Feld
+*& liefert je (Vknr,Kompnr)-Zeile den Disponenten des Vknr. Live gegen
+*& travp762 verifiziert: die Bottom-Up-VKNRs einer Komponente sind FERT
+*& und haben MARC-DISPO gefuellt (z.B. Disponent "019").
+*&   WICHTIG (DDIC): Die Struktur ZSTR_LZCODE_USAGE muss in SE11 zuerst um
+*&   ein Feld VKNR_DISPO (Datenelement DISPO) erweitert werden, sonst
+*&   Syntaxfehler bei "ls_out-vknr_dispo". Danach diesen Rumpf einfuegen.
+*&   Das Feld allein macht die Produktgruppe NICHT fertig: es fehlt weiter
+*&   die Referenzliste Disponent -> Produktgruppe (ZC23) als lesbare Daten,
+*&   und die Zurechnung des Spends bei Komponenten, die in mehreren
+*&   Produktgruppen verbaut sind, ist fachlich noch offen.
+*&
 *& VERSION 2026-07-23 - numerische Materialnummern werden gefunden.
 *& Befund (SapProbe/RFC gegen travp762 + OData-Testbatterie): Top-Down
 *& fuer rein NUMERISCHE Vknr (z.B. "2217") lieferte IMMER 0 Zeilen -
@@ -127,6 +142,7 @@ METHOD zstr_lzcode_usag_get_entityset.
              zzlzcod      TYPE mara-zzlzcod,
              zzlzcodsort  TYPE mara-zzlzcodsort,
              dismm        TYPE dismm,
+             dispo        TYPE dispo,
              minbe        TYPE minbe,
              disls        TYPE disls,
              bstfe        TYPE bstfe,
@@ -151,6 +167,7 @@ METHOD zstr_lzcode_usag_get_entityset.
              zzlzcod     TYPE mara-zzlzcod,
              zzlzcodsort TYPE mara-zzlzcodsort,
              dismm       TYPE dismm,
+             dispo       TYPE dispo,
              minbe       TYPE minbe,
              disls       TYPE disls,
              bstfe       TYPE bstfe,
@@ -400,7 +417,7 @@ METHOD zstr_lzcode_usag_get_entityset.
 
       SELECT m~matnr, t~maktx, m~meins, m~mstae, m~mstav, m~lvorm,
              m~zzlzcod, m~zzlzcodsort,
-             c~dismm, c~minbe, c~disls, c~bstfe, c~eisbe, c~beskz,
+             c~dismm, c~dispo, c~minbe, c~disls, c~bstfe, c~eisbe, c~beskz,
              b~verpr, b~stprs, b~peinh, b~vprsv
         FROM mara AS m
         LEFT JOIN makt AS t ON t~matnr = m~matnr AND t~spras = @sy-langu
@@ -431,6 +448,7 @@ METHOD zstr_lzcode_usag_get_entityset.
           zzlzcod     = ls_stamm_raw-zzlzcod
           zzlzcodsort = ls_stamm_raw-zzlzcodsort
           dismm       = ls_stamm_raw-dismm
+          dispo       = ls_stamm_raw-dispo
           minbe       = ls_stamm_raw-minbe
           disls       = ls_stamm_raw-disls
           bstfe       = ls_stamm_raw-bstfe
@@ -610,9 +628,15 @@ METHOD zstr_lzcode_usag_get_entityset.
     " -----------------------------------------------------------
     " Schritt 7: Kopfmaterial-Zusatzfelder je Vknr (VTAB im Report)
     " -----------------------------------------------------------
+    " VknrDispo (Disponent des Kopfmaterials, MARC-DISPO Werk 1100) - Schluessel fuer die
+    " Produktgruppen-Zuordnung (Disponent -> Produktgruppe ueber ZC23-Referenzliste). Nur
+    " Top-Down fachlich belegt (Vknr ist dann das FERT-Kopfmaterial); bei Bottom-Up ist Vknr
+    " das Verwendungsmaterial, dessen Disponent hier ebenfalls durchgereicht wird (Client
+    " entscheidet, ob er ihn nutzt).
     TYPES: BEGIN OF ty_vknr_info,
              vknr  TYPE matnr,
              mstae TYPE mstae,
+             dispo TYPE dispo,
              verbr TYPE menge_d,
            END OF ty_vknr_info.
     DATA lt_vknr_info TYPE HASHED TABLE OF ty_vknr_info WITH UNIQUE KEY vknr.
@@ -626,6 +650,7 @@ METHOD zstr_lzcode_usag_get_entityset.
           WITH TABLE KEY matnr = ls_pair_vknr-vknr.
         IF sy-subrc = 0.
           ls_vknr_info-mstae = ls_stamm_v-mstae.
+          ls_vknr_info-dispo = ls_stamm_v-dispo.
         ENDIF.
         READ TABLE lt_md04 INTO DATA(ls_md04_v)
           WITH TABLE KEY matnr = ls_pair_vknr-vknr.
@@ -755,6 +780,7 @@ METHOD zstr_lzcode_usag_get_entityset.
       IF sy-subrc = 0.
         ls_out-vknr_mstae     = ls_vi-mstae.
         ls_out-vknr_verbrauch = ls_vi-verbr.
+        ls_out-vknr_dispo     = ls_vi-dispo.
       ENDIF.
 
       READ TABLE lt_stamm INTO DATA(ls_stamm2)
