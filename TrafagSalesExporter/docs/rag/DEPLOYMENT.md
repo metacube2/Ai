@@ -4,7 +4,15 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-23 (dritter Deploy des Tages), Loader zurueck auf MARA001Set fuer
+- Letzter Deploy: 2026-07-23 (vierter Deploy des Tages), Einkauf-Loader liest Land/ABC/XYZ.
+  Commit `4d08da6 Load supplier country, ABC and XYZ classification into purchasing cache`;
+  `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 13:50:06`, Laenge
+  `3'088'896`; Port 443 -> True; DB unveraendert (neue Cache-Spalten `SupplierCountry`/`MaraAbc`/
+  `MaraXyz` additiv beim App-Start). Neue SAP-Felder (LFA1.Land1, MARC.Maabc, ZSTR_MAT_XYZSet)
+  werden in den Einkauf-Cache geladen; fuellen sich erst mit dem naechsten Full Load. Kein UI.
+  Details: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
+- Vorheriger Deploy: 2026-07-23 (dritter Deploy des Tages), Loader zurueck auf MARA001Set fuer
   Matkl+Mstae. Commit `83eb149 Switch purchasing material-master loader back to MARA001Set for
   Matkl+Mstae`; `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 10:51:46`, Laenge
