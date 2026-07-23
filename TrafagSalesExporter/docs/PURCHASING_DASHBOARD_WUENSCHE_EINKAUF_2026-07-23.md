@@ -31,7 +31,7 @@ tiefere Kaskadierung und dieselbe Mechanik auch fuer andere Einstiegsdimensionen
 | Beschaffungsregion / Land | Land des Lieferanten (LFA1) | **fehlt** (LFA1 laedt nur Name1, nicht Land1; kein Feld im Cache) | Wunsch: Kuchendiagramm je Materialgruppe/Warengruppe -> Anteil je Region/Land. Braucht LFA1.Land1 im Loader + Cache-Spalte. |
 | Produktgruppe | ueber Disponenten-Gruppe (CC23/ZC23) bzw. ZLO03-Verwendungsnachweis | **offen, komplex** | siehe eigener Abschnitt unten |
 | Materialnummer / Artikel | EKPO.Matnr/Txz01 | **live** (unterste Aufriss-Stufe) | |
-| ABC / XYZ | ABC = MARC-MAABC (Sicht/Werk O2, Feldname `MAABC`); XYZ = separate Tabelle (`ITSCH…MAT_ABC_XYZ` o.ae.) | **offen** | Marco hat dazu bereits einen eigenen Report, der beides extrahiert. Konkreter Dashboard-Nutzen noch unklar (Anteile anzeigen). War schon offener Punkt in `docs/rag/PURCHASING.md`. |
+| ABC / XYZ | ABC = `MARC-MAABC`; XYZ = eigene Tabelle `ZCA_MAT_ABC_XYZ`, Feld `/ITS/CA_M_MAXYZ` | **Quellen 2026-07-23 live gefunden** | siehe eigener Abschnitt unten |
 
 ## Produktgruppe — der schwierige Punkt
 
@@ -71,6 +71,26 @@ Das Feld allein macht die Produktgruppe NICHT fertig - es fehlt weiterhin:
 1. Referenzliste **Disponent -> Produktgruppe** (ZC23) als lesbare Daten (Client-/Job-seitig).
 2. Zurechnungsregel fuer Komponenten, die in mehreren Produktgruppen verbaut sind
    (Marco: „wird nicht ganz einfach sein mit der Abgrenzung").
+
+## ABC/XYZ — Quellen (2026-07-23 am Live-System travp762 verifiziert)
+
+- **ABC = SAP-Standard**: `MARC-MAABC` (ABC-Kennzeichen, werkabhaengig). Ingo hat `Maabc` in ein
+  MARC-EntitySet (`MARCSet`) aufgenommen - kommt mit dem naechsten Transport auf P (aktuell noch
+  404 auf `Maabc`, wie erwartet).
+- **XYZ = NICHT SAP-Standard**, sondern ein Add-on im `/ITS/`-Namensraum. Standard-SAP hat KEIN
+  XYZ-Feld - Internet-/Standarddoku hilft hier nicht. Live gefundene Quelle:
+  - **Tabelle `ZCA_MAT_ABC_XYZ`** (transparent, TRANSP), Schluessel `MANDT, MATNR, WERKS`.
+  - **XYZ-Kennzeichen: Feld `/ITS/CA_M_MAXYZ`** (CHAR 1, Datenelement `/ITS/CA_MAT_ABC_MAXYZ_D`).
+    Stichprobe Werk 1100: gefuellt mit `Y`/`Z` (und `X`). Zusaetzlich fuehrt die Tabelle die
+    Analyse-Zeitraeume (Von/Bis Monat+Jahr) je ABC und XYZ.
+  - Das ist Marcos „ITSCH-MAT-ABC-XYZ" aus der Sitzung (die `/ITS/CA_MAT_ABC_XYZ_*`-Objekte sind
+    nur Strukturen/ALV; die Daten liegen in `ZCA_MAT_ABC_XYZ`). Marcos bestehender Report nutzt
+    dieselbe Tabelle.
+- **Fuer die App exponieren**: XYZ ist noch in KEINEM EntitySet. Zwei Wege - entweder ein eigenes
+  Set auf `ZCA_MAT_ABC_XYZ` (Key MATNR+WERKS, Feld `/ITS/CA_M_MAXYZ` als Property z.B. `Maxyz`),
+  oder das Feld per Read in das MARC-Set dazuholen (gleicher Key MATNR+WERKS). ABC (`Maabc`) liegt
+  schon im MARC-Set - am konsistentesten waere, XYZ im selben Materialklassifizierungs-Set
+  danebenzulegen.
 
 ## Visualisierung (Wunsch)
 
