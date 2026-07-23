@@ -96,27 +96,30 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
-    public void BuildMaterialClause_Einzelwerte_Werden_Mit_Eq_Verknuepft()
+    public void BuildMaterialClause_Einzelwerte_Werden_Mit_Eq_Verknuepft_Und_Numerisch_Gepaddet()
     {
-        Assert.Equal("(Vknr eq '2217')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217"));
-        Assert.Equal("(Vknr eq '2217' or Vknr eq 'C34882')",
+        // Numerische Nummern werden auf 18 Stellen gepaddet (Befund 2026-07-23: SAP speichert
+        // MARA/ZPOWERBI_VC_TXT zero-padded, die Kurzform fand sonst keinen Treffer).
+        Assert.Equal("(Vknr eq '000000000000002217')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217"));
+        // Alphanumerische Nummern (C34882) bleiben unveraendert.
+        Assert.Equal("(Vknr eq '000000000000002217' or Vknr eq 'C34882')",
             MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, C34882"));
     }
 
     [Fact]
-    public void BuildMaterialClause_Bereich_Wird_Als_Ge_Le_Gebaut()
+    public void BuildMaterialClause_Bereich_Wird_Als_Ge_Le_Gebaut_Und_Gepaddet()
     {
         // Range-Syntax "35-40" (Ingo-Anforderung 2026-07-22): das SAP-Gateway-Framework fasst
         // "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu
-        // einer klassischen Select-Options-Bereichszeile zusammen.
-        Assert.Equal("((Kompnr ge '35' and Kompnr le '40'))",
+        // einer klassischen Select-Options-Bereichszeile zusammen. Beide Grenzen numerisch -> padden.
+        Assert.Equal("((Kompnr ge '000000000000000035' and Kompnr le '000000000000000040'))",
             MaterialUsageDataRefreshService.BuildMaterialClause("Kompnr", "35-40"));
     }
 
     [Fact]
     public void BuildMaterialClause_Mischt_Einzelwerte_Und_Bereiche()
     {
-        Assert.Equal("(Vknr eq '2217' or (Vknr ge '35' and Vknr le '40') or Vknr eq 'C34882')",
+        Assert.Equal("(Vknr eq '000000000000002217' or (Vknr ge '000000000000000035' and Vknr le '000000000000000040') or Vknr eq 'C34882')",
             MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, 35-40, C34882"));
     }
 
@@ -127,6 +130,20 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
+    public void NormalizeMaterialToken_Paddet_Nur_Numerische_Kurzformen()
+    {
+        Assert.Equal("000000000000002217", MaterialUsageDataRefreshService.NormalizeMaterialToken("2217"));
+        Assert.Equal("000000000000000035", MaterialUsageDataRefreshService.NormalizeMaterialToken("35"));
+        // Alphanumerisch bleibt unveraendert (MARA speichert linksbuendig).
+        Assert.Equal("D15019", MaterialUsageDataRefreshService.NormalizeMaterialToken("D15019"));
+        Assert.Equal("C34882", MaterialUsageDataRefreshService.NormalizeMaterialToken("C34882"));
+        // Bereits 18-stellig (oder laenger) bleibt unveraendert.
+        Assert.Equal("000000000000002217", MaterialUsageDataRefreshService.NormalizeMaterialToken("000000000000002217"));
+        // Leer bleibt leer.
+        Assert.Equal("", MaterialUsageDataRefreshService.NormalizeMaterialToken(""));
+    }
+
+    [Fact]
     public void BuildRichtungValue_Ohne_IncludeDeleted_Liefert_Reinen_Wert()
     {
         Assert.Equal("TOPDOWN", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: false));
@@ -134,13 +151,19 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
-    public void BuildRichtungValue_Mit_IncludeDeleted_Haengt_Alle_An()
+    public void BuildRichtungValue_Mit_IncludeDeleted_Haengt_Ein_Zeichen_An()
     {
         // Loeschvorgemerkte Materialien einbeziehen (Wunsch Ingo 2026-07-22, Befund: alte
         // numerische Vknr wie "2217" wurden sonst durch den MARA-LVORM-Filter aus Schritt 1
         // ausgeblendet, obwohl die Verwendung in ZPOWERBI_VC_TXT noch vorhanden war).
-        Assert.Equal("TOPDOWNALLE", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: true));
-        Assert.Equal("BOTTOMUPALLE", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: false, includeDeleted: true));
+        // NUR EIN ZEICHEN ("D"), nicht "ALLE": das EDM-Property Richtung ist CHAR10-typisiert,
+        // "TOPDOWNALLE" (11 Zeichen) wurde vom Gateway-Framework mit HTTP 400 "violates facet
+        // information 'maxlength=10'" abgelehnt, noch bevor der ABAP-Code lief (live verifiziert
+        // 2026-07-22, zweiter Anlauf). "TOPDOWND"/"BOTTOMUPD" (8/9 Zeichen) passen sicher.
+        Assert.Equal("TOPDOWND", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: true));
+        Assert.Equal("BOTTOMUPD", MaterialUsageDataRefreshService.BuildRichtungValue(topDown: false, includeDeleted: true));
+        Assert.True(MaterialUsageDataRefreshService.BuildRichtungValue(topDown: true, includeDeleted: true).Length <= 10);
+        Assert.True(MaterialUsageDataRefreshService.BuildRichtungValue(topDown: false, includeDeleted: true).Length <= 10);
     }
 
     [Fact]

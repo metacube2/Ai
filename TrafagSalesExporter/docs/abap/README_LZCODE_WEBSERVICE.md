@@ -1,7 +1,56 @@
 # ABAP Webservice fuer ZLO03 (ZM_LZCODE20_OPT)
 
-Stand: 2026-07-22c (ALPHA-Konvertierung fuer Vknr/Kompnr-Filter ergaenzt,
-bestaetigte Root Cause fuer 0-Zeilen-Symptom)
+Stand: 2026-07-23 (numerische Materialnummern: Rohwert + MATN1 statt ALPHA)
+
+## WICHTIG - Nachtrag 2026-07-23: numerische Materialnummern wurden nie gefunden (ALPHA war der Fehler)
+
+Symptom: Top-Down fuer eine rein NUMERISCHE Materialnummer (z.B. `2217`)
+lieferte IMMER 0 Zeilen - auch mit der 18-stelligen Form
+`000000000000002217` und auch mit `include_deleted` (LVORM-Filter aus).
+Alphanumerische Nummern (z.B. `D15019`) funktionierten einwandfrei.
+
+Direkt am System verifiziert (SapProbe/RFC gegen travp762, plus
+OData-Testbatterie mit den echten Service-Credentials):
+
+- `MARA` hat `000000000000002217` mit **leerem** `LVORM` - also NICHT
+  loeschvorgemerkt. Die 22d-Theorie (Loeschvormerkung) war damit falsch.
+- `ZPOWERBI_VC_TXT` hat die Zeilen zu `000000000000002217` mit gefuellter
+  `MENGE`/`MENGENEINHEIT` (z.B. Kompnr `D15072`, Menge 1.000, ME ST).
+- `SELECT ... WHERE matnr = '000000000000002217'` matcht in beiden
+  Tabellen (direkter RFC-Read).
+- Trotzdem: OData Top-Down `Vknr eq '000000000000002217'` -> 0 Zeilen.
+
+Da `include_deleted` (kein LVORM-Filter) ebenfalls 0 lieferte, MUSS
+Schritt 1 (`SELECT matnr FROM mara`) leer zurueckkommen - der Wert in der
+RANGE `lt_r_matnr` matcht MARA nicht. Ursache: `CONVERSION_EXIT_ALPHA_INPUT`
+(Version 22c) brachte den numerischen Wert NICHT zuverlaessig auf die
+zero-padded interne Form - es zerstoerte sogar die bereits gepaddete
+Eingabe (live verifiziert: auch `000000000000002217` -> 0). Alphanumerische
+Nummern waren nie betroffen, weil MARA sie linksbuendig speichert (keine
+Konvertierung noetig).
+
+**FIX (Version 2026-07-23), doppelt abgesichert:**
+1. **C#-Seite** (`MaterialUsageDataRefreshService.NormalizeMaterialToken`,
+   bereits deployt): rein numerische Materialnummern werden vor dem
+   `$filter`-Bau mit fuehrenden Nullen auf 18 Stellen gebracht
+   (`2217` -> `000000000000002217`, `35-40` -> beide Grenzen gepaddet).
+   Alphanumerische bleiben unveraendert.
+2. **ABAP-Seite** (beide Methodenruempfe): die ALPHA-Konvertierung ist
+   entfernt. Stattdessen wird (a) der ROHWERT immer in die RANGE
+   aufgenommen (die App schickt jetzt bereits gepaddet -> sicherer
+   Treffer, voellig unabhaengig von jeder Konvertierung), und (b)
+   zusaetzlich die `CONVERSION_EXIT_MATN1_INPUT`-Form fuer kurze manuelle
+   Eingaben (MATN1 ist die materialnummern-spezifische Konvertierung, die
+   das Materialnummern-Customizing respektiert - nicht die generische
+   ALPHA).
+
+**Nacharbeit SAP (letzter Transport dieser Serie, hoffentlich):** beide
+Methodenruempfe erneut auf travt762 UND travp762 einfuegen, Klasse
+aktivieren, `/IWFND/CACHE_CLEANUP`. Die C#-Seite ist bereits deployt.
+
+## Frueherer Nachtrag 2026-07-22c: Filterwerte brauchen Konvertierung (Ursache erkannt, Fix ersetzt)
+
+Nach dem Fix auf `ZPOWERBI_VC_TXT` (unten) lief der Full Load gegen `travp762`
 
 ## WICHTIG - Nachtrag 2026-07-22c: Filterwerte brauchen ALPHA-Konvertierung (bestaetigte Ursache)
 

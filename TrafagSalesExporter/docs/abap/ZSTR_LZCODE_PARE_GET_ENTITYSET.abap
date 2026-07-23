@@ -5,16 +5,16 @@
 *& vermutlich ZSTR_LZCODE_PARE_GET_ENTITYSET (30-Zeichen-Limit, analog
 *& ZSTR_LZCODE_USAG_GET_ENTITYSET) - bitte am generierten Stub pruefen.
 *&
-*& VERSION 2026-07-22c - ALPHA-Konvertierung fuer Kompnr-Filter ergaenzt.
-*& Bestaetigter Befund (Vergleichstest gleicher Materialnummer): $filter
-*& mit Kurzform ("2217") lieferte 0 Zeilen, dieselbe Nummer in
-*& 18-stelliger Form ("000000000000002217") lieferte echte Daten. Eine
-*& selbstgeschriebene GET_ENTITYSET-Methode bekommt
-*& it_filter_select_options ROH (ohne die sonst automatische externe->
-*& interne MATNR-Konvertierung); MARA/ZPOWERBI_VC_TXT speichern intern
-*& padded. Ab dieser Version werden Low/High-Werte fuer Kompnr per
-*& CONVERSION_EXIT_ALPHA_INPUT konvertiert, damit beide Schreibweisen
-*& funktionieren.
+*& VERSION 2026-07-23 - MATNR-Konvertierung robust gemacht (Rohwert +
+*& MATN1 statt ALPHA). ALPHA paddete rein numerische Nummern hier NICHT
+*& zuverlaessig (Befund am Usage-Set gegen travp762, siehe dessen
+*& Header). Rohwert wird jetzt IMMER aufgenommen (App schickt bereits
+*& 18-stellig gepaddet), MATN1 zusaetzlich fuer kurze manuelle Eingaben.
+*&
+*& VERSION 2026-07-22c - ALPHA-Konvertierung fuer Kompnr-Filter ergaenzt
+*& (durch 2026-07-23 ersetzt): $filter mit Kurzform ("2217") lieferte 0
+*& Zeilen, 18-stellige Form lieferte Daten. Eine selbstgeschriebene
+*& GET_ENTITYSET-Methode bekommt it_filter_select_options ROH.
 *&
 *& VERSION 2026-07-22a - an die NEUE Reportfassung angepasst
 *& (Quelle: docs/abap/originalzlo03.txt, Report ZM_LZCODE20_OPT).
@@ -56,29 +56,54 @@ METHOD zstr_lzcode_pare_get_entityset.
           lt_r_kompnr TYPE RANGE OF matnr.
 
     " OData-$filter auslesen: nur Kompnr wird unterstuetzt.
-    " ALPHA-Konvertierung (Befund 2026-07-22c, siehe Header): roh
-    " uebergebene Kurzform ("2217") matcht sonst nicht gegen die
-    " intern padded gespeicherten Werte in ZPOWERBI_VC_TXT.
+    " MATNR-Konvertierung (Befund 2026-07-23, siehe Header von
+    " ZSTR_LZCODE_USAG_GET_ENTITYSET): roh uebergebene rein numerische
+    " Kurzform ("2217") matcht sonst nicht gegen die intern zero-padded
+    " gespeicherten Werte in ZPOWERBI_VC_TXT. Wie im Usage-Set:
+    " (1) Rohwert IMMER aufnehmen (App schickt bereits 18-stellig
+    " gepaddet -> sicherer Treffer), (2) zusaetzlich MATN1-Form fuer
+    " kurze manuelle Eingaben (CONVERSION_EXIT_MATN1_INPUT, nicht ALPHA -
+    " das paddete hier nicht zuverlaessig).
     LOOP AT it_filter_select_options INTO DATA(ls_filter).
       IF to_upper( ls_filter-property ) = 'KOMPNR'.
         LOOP AT ls_filter-select_options INTO DATA(ls_so).
-          DATA lv_low  TYPE matnr.
-          DATA lv_high TYPE matnr.
-          CLEAR: lv_low, lv_high.
-          IF ls_so-low IS NOT INITIAL.
-            CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
-              EXPORTING input  = ls_so-low
-              IMPORTING output = lv_low.
-          ENDIF.
-          IF ls_so-high IS NOT INITIAL.
-            CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
-              EXPORTING input  = ls_so-high
-              IMPORTING output = lv_high.
-          ENDIF.
+          DATA lv_m1_low  TYPE matnr.
+          DATA lv_m1_high TYPE matnr.
+
+          " (1) Rohwert immer aufnehmen
           APPEND VALUE #( sign   = ls_so-sign
                           option = ls_so-option
-                          low    = lv_low
-                          high   = lv_high ) TO lt_r_kompnr.
+                          low    = ls_so-low
+                          high   = ls_so-high ) TO lt_r_kompnr.
+
+          " (2) MATN1-Form zusaetzlich, wenn sie sich unterscheidet
+          CLEAR: lv_m1_low, lv_m1_high.
+          IF ls_so-low IS NOT INITIAL.
+            CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+              EXPORTING input        = ls_so-low
+              IMPORTING output       = lv_m1_low
+              EXCEPTIONS length_error = 1
+                         OTHERS       = 2.
+            IF sy-subrc <> 0.
+              lv_m1_low = ls_so-low.
+            ENDIF.
+          ENDIF.
+          IF ls_so-high IS NOT INITIAL.
+            CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+              EXPORTING input        = ls_so-high
+              IMPORTING output       = lv_m1_high
+              EXCEPTIONS length_error = 1
+                         OTHERS       = 2.
+            IF sy-subrc <> 0.
+              lv_m1_high = ls_so-high.
+            ENDIF.
+          ENDIF.
+          IF lv_m1_low <> ls_so-low OR lv_m1_high <> ls_so-high.
+            APPEND VALUE #( sign   = ls_so-sign
+                            option = ls_so-option
+                            low    = lv_m1_low
+                            high   = lv_m1_high ) TO lt_r_kompnr.
+          ENDIF.
         ENDLOOP.
       ENDIF.
     ENDLOOP.

@@ -6,7 +6,33 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- APP-AENDERUNG 2026-07-22, `267/267` Tests gruen (noch NICHT deployed): Loeschvorgemerkte
+- ROOTCAUSE + FIX 2026-07-23, `268/268` Tests gruen: Numerische Materialnummern (z.B. `2217`)
+  lieferten in der Stuecklistenanalyse IMMER 0 Zeilen, alphanumerische (`D15019`) gingen. Per
+  SapProbe/RFC gegen travp762 (mit Ingos Prod-Passwort) + OData-Testbatterie eingegrenzt: MARA hat
+  `000000000000002217` mit LEEREM LVORM (die 22d-Loeschvormerkungs-Theorie WAR FALSCH),
+  ZPOWERBI_VC_TXT hat die Zeilen mit gefuellter Menge. Auch include_deleted (LVORM-Filter aus) gab
+  0 -> Schritt 1 (SELECT FROM mara) fand die numerische Nummer nicht, weil
+  CONVERSION_EXIT_ALPHA_INPUT (22c) sie NICHT zuverlaessig zero-paddete (zerstoerte sogar die
+  bereits gepaddete Eingabe). FIX doppelt abgesichert: (1) C#
+  (`MaterialUsageDataRefreshService.NormalizeMaterialToken`) paddet rein numerische Nummern vor dem
+  $filter auf 18 Stellen; (2) ABAP (beide Methodenruempfe) nimmt den Rohwert IMMER in die RANGE auf
+  (App schickt gepaddet -> sicherer Treffer) plus zusaetzlich die MATN1-Form fuer kurze manuelle
+  Eingaben (CONVERSION_EXIT_MATN1_INPUT statt ALPHA). C#-Seite deployt (siehe Deploy-Eintrag
+  unten); ABAP muss erneut auf travt762 UND travp762 eingefuegt/aktiviert werden. Details:
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-23. NEBENBEFUND: MAKTX kommt beim
+  Service-User (POWERBI) leer zurueck (sprachabhaengiger MAKT-Join) - Zeile wird trotzdem
+  ausgegeben (22b-Haertung greift), nur der Text fehlt; fachlich unkritisch, spaeter ggf.
+  sy-langu-unabhaengig lesen.
+- DEPLOYED 2026-07-22 (Commit `bacc614 Add option to include deletion-flagged materials in BOM
+  analysis`, `267/267` Tests gruen, DLL `22.07.2026 14:26:01`, Laenge `3'076'096`, Port 443
+  erreichbar, DB unveraendert): Loeschvorgemerkte Materialien optional einbeziehbar ist live
+  (siehe Eintrag direkt darunter fuer Details). Publish nach
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\` via `dotnet publish -c Release
+  -p:PublishProfile=FolderProfile`, `app_offline.htm` gesetzt/entfernt. NICHT Teil dieses Deploys:
+  der ABAP-Fix (Richtung-Suffix ALLE, LVORM-Bypass) - Methodenrumpf liegt bereit und muss
+  weiterhin manuell in SE80 auf travt762 UND travp762 eingefuegt/aktiviert werden.
+- APP-AENDERUNG 2026-07-22, `267/267` Tests gruen (JETZT deployed, siehe Eintrag oben):
+  Loeschvorgemerkte
   Materialien optional einbeziehbar (Wunsch Ingo, nach Live-Diagnose mit den Test-Nummern `1689,
   2163, 2217, 2286, 2366, 2367, 2434, 2537`). Live-Diagnose mit denselben Service-Credentials wie
   die App zeigte: Top-Down fuer "normales" Material (`D15019`) funktioniert, Bottom-Up fuer

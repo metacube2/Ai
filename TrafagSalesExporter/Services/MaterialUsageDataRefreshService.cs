@@ -239,6 +239,12 @@ LIMIT $Limit;";
     }
 
     /// <summary>
+    /// Laenge einer SAP-Materialnummer (MATNR CHAR18 auf travp762, per SapProbe 2026-07-23
+    /// verifiziert: MARA speichert "000000000000002217").
+    /// </summary>
+    private const int MatnrLength = 18;
+
+    /// <summary>
     /// Baut die $filter-Teilbedingung fuer Vknr/Kompnr aus der Benutzereingabe. Kommagetrennte
     /// Werte werden als Einzeltreffer (eq) behandelt; ein Token mit genau einem Bindestrich und
     /// nicht-leeren Seiten (z.B. "35-40") wird als Bereich (ge/le) interpretiert. Materialnummern
@@ -247,6 +253,14 @@ LIMIT $Limit;";
     /// "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu einer
     /// klassischen Select-Options-Bereichszeile zusammen, die der bestehende ABAP-Code (LOOP ueber
     /// select_options, generische RANGE-Tabelle) bereits unveraendert verarbeitet.
+    ///
+    /// Rein numerische Materialnummern werden hier mit fuehrenden Nullen auf 18 Stellen gebracht
+    /// (NormalizeMaterialToken). Grund (Befund 2026-07-23, an travp762 verifiziert): das /IWBEP-
+    /// Gateway liefert Filterwerte ROH an die selbstgeschriebene GET_ENTITYSET-Methode, also OHNE
+    /// die MATNR-Konvertierung. MARA/ZPOWERBI_VC_TXT speichern intern aber zero-padded
+    /// ("000000000000002217"), sodass die Kurzform "2217" in Schritt 1 (SELECT FROM mara) keinen
+    /// Treffer fand und die Methode mit 0 Zeilen abbrach. Alphanumerische Nummern (z.B. "D15019",
+    /// "C34882") bleiben unveraendert - die speichert MARA linksbuendig, nicht zero-padded.
     /// </summary>
     public static string BuildMaterialClause(string materialProperty, string? materialFilter)
     {
@@ -261,27 +275,47 @@ LIMIT $Limit;";
         {
             var rangeParts = token.Split('-', StringSplitOptions.TrimEntries);
             if (rangeParts.Length == 2 && rangeParts[0].Length > 0 && rangeParts[1].Length > 0)
-                return $"({materialProperty} ge '{EscapeODataLiteral(rangeParts[0])}' and {materialProperty} le '{EscapeODataLiteral(rangeParts[1])}')";
+                return $"({materialProperty} ge '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[0]))}' and {materialProperty} le '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[1]))}')";
 
-            return $"{materialProperty} eq '{EscapeODataLiteral(token)}'";
+            return $"{materialProperty} eq '{EscapeODataLiteral(NormalizeMaterialToken(token))}'";
         });
 
         return "(" + string.Join(" or ", clauses) + ")";
     }
 
+    /// <summary>
+    /// Bringt eine rein numerische Materialnummer auf die interne SAP-Darstellung (18 Stellen,
+    /// fuehrende Nullen). Alphanumerische Werte (mind. ein Nicht-Ziffer-Zeichen) und bereits
+    /// >= 18 Zeichen lange Werte bleiben unveraendert.
+    /// </summary>
+    public static string NormalizeMaterialToken(string token)
+    {
+        if (string.IsNullOrEmpty(token))
+            return token;
+        if (token.Length >= MatnrLength)
+            return token;
+        if (!token.All(char.IsDigit))
+            return token;
+        return token.PadLeft(MatnrLength, '0');
+    }
+
     private static string EscapeODataLiteral(string value) => value.Replace("'", "''");
 
     /// <summary>
-    /// Baut den Richtung-Wert fuer den $filter. "ALLE"-Suffix (ohne DDIC-Aenderung
+    /// Baut den Richtung-Wert fuer den $filter. Ein Suffix "D" (ohne DDIC-Aenderung
     /// transportiert, siehe docs/abap/README_LZCODE_WEBSERVICE.md) bezieht auch
     /// loeschvorgemerkte Kopf-/Filtermaterialien (MARA-LVORM) mit ein, analog
     /// Report-Checkbox p_lvorm. Ohne diese Option liefert Top-Down fuer alte, numerische
     /// Vknr wie "2217" 0 Zeilen, obwohl die Verwendung in ZPOWERBI_VC_TXT noch vorhanden
-    /// ist (Befund 2026-07-22). Das von SAP zurueckgegebene Richtung-Feld bleibt normalisiert
-    /// ("TOPDOWN"/"BOTTOMUP", ohne Suffix).
+    /// ist (Befund 2026-07-22). BEWUSST NUR EIN ZEICHEN: das EDM-Property Richtung ist
+    /// CHAR10-typisiert (facet maxlength=10) und wird vom Gateway-Framework VOR dem
+    /// ABAP-Methodenaufruf validiert - "TOPDOWNALLE" (11 Zeichen) wurde mit HTTP 400
+    /// abgelehnt, bevor der eigene Code ueberhaupt lief (live verifiziert 2026-07-22,
+    /// zweiter Anlauf). "TOPDOWND"/"BOTTOMUPD" (8/9 Zeichen) passen sicher. Das von SAP
+    /// zurueckgegebene Richtung-Feld bleibt normalisiert ("TOPDOWN"/"BOTTOMUP", ohne Suffix).
     /// </summary>
     public static string BuildRichtungValue(bool topDown, bool includeDeleted)
-        => (topDown ? "TOPDOWN" : "BOTTOMUP") + (includeDeleted ? "ALLE" : string.Empty);
+        => (topDown ? "TOPDOWN" : "BOTTOMUP") + (includeDeleted ? "D" : string.Empty);
 
     private static List<Dictionary<string, object?>> ParseRows(string json)
     {

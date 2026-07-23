@@ -2,6 +2,25 @@
 *& METHODENRUMPF fuer die redefinierte DPC_EXT-Methode
 *& ZSTR_LZCODE_USAG_GET_ENTITYSET  (Gateway-Service ZPOWERBI_EINKAUF_SRV)
 *&
+*& VERSION 2026-07-23 - numerische Materialnummern werden gefunden.
+*& Befund (SapProbe/RFC gegen travp762 + OData-Testbatterie): Top-Down
+*& fuer rein NUMERISCHE Vknr (z.B. "2217") lieferte IMMER 0 Zeilen -
+*& auch mit der 18-stelligen Form und auch mit include_deleted (LVORM-
+*& Filter aus). Alphanumerische Vknr (z.B. "D15019") funktionierten.
+*& Direkt verifiziert: MARA hat "000000000000002217" mit LEEREM LVORM
+*& (also NICHT loeschvorgemerkt - die 22d-Theorie war falsch), und
+*& ZPOWERBI_VC_TXT hat die Zeilen mit gefuellter Menge/Einheit. Ursache:
+*& Schritt 1 (SELECT matnr FROM mara) fand die numerische Nummer nicht,
+*& weil CONVERSION_EXIT_ALPHA_INPUT (Version c) den Wert NICHT
+*& zuverlaessig auf "000000000000002217" brachte - es zerstoerte sogar
+*& die bereits gepaddete Eingabe. FIX: (1) den Rohwert IMMER in die
+*& RANGE aufnehmen (die App schickt jetzt bereits 18-stellig gepaddet,
+*& siehe MaterialUsageDataRefreshService.NormalizeMaterialToken -> immer
+*& ein Treffer), (2) zusaetzlich die MATN1-konvertierte Form fuer kurze
+*& manuelle Eingaben (CONVERSION_EXIT_MATN1_INPUT statt ALPHA - die
+*& materialnummern-spezifische Konvertierung). Alphanumerische Nummern
+*& bleiben unveraendert.
+*&
 *& VERSION 2026-07-22d - optionale Einbeziehung loeschvorgemerkter
 *& Materialien (Wunsch Ingo). Nach dem ALPHA-Fix (Version c) lieferte
 *& Top-Down fuer alte, numerische Vknr wie "2217" weiterhin 0 Zeilen,
@@ -232,33 +251,62 @@ METHOD zstr_lzcode_usag_get_entityset.
           ENDIF.
         WHEN 'VKNR' OR 'KOMPNR'.
           LOOP AT ls_filter-select_options INTO DATA(ls_so).
-            " ALPHA-Konvertierung (FIX, Befund 2026-07-22c): eine
-            " selbstgeschriebene GET_ENTITYSET-Methode bekommt
-            " it_filter_select_options ROH, d.h. OHNE die sonst
-            " automatische externe->interne MATNR-Konvertierung. MARA/
-            " ZPOWERBI_VC_TXT speichern intern 18-stellig mit
-            " fuehrenden Nullen; ein Aufruf mit der Kurzform (z.B.
-            " "2217") fand in Schritt 1 (SELECT matnr FROM mara) sonst
-            " NICHTS und brach mit 0 Zeilen ab, waehrend dieselbe Suche
-            " mit der 18-stelligen Form funktionierte. Ab hier werden
-            " beide Schreibweisen akzeptiert.
-            DATA lv_low  TYPE matnr.
-            DATA lv_high TYPE matnr.
-            CLEAR: lv_low, lv_high.
-            IF ls_so-low IS NOT INITIAL.
-              CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
-                EXPORTING input  = ls_so-low
-                IMPORTING output = lv_low.
-            ENDIF.
-            IF ls_so-high IS NOT INITIAL.
-              CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
-                EXPORTING input  = ls_so-high
-                IMPORTING output = lv_high.
-            ENDIF.
+            " MATNR-Konvertierung (FIX, Befund 2026-07-23 an travp762):
+            " Eine selbstgeschriebene GET_ENTITYSET-Methode bekommt
+            " it_filter_select_options ROH, d.h. OHNE die MATNR-
+            " Konvertierung. MARA/ZPOWERBI_VC_TXT speichern intern
+            " 18-stellig mit fuehrenden Nullen ("000000000000002217").
+            " Eine rein numerische Kurzform ("2217") fand in Schritt 1
+            " (SELECT matnr FROM mara) sonst NICHTS und brach mit 0
+            " Zeilen ab (alphanumerische Nummern wie "D15019" gehen, weil
+            " MARA sie linksbuendig speichert). Die Vorversion nutzte
+            " CONVERSION_EXIT_ALPHA_INPUT - das hat hier NICHT zuverlaessig
+            " zero-gepaddet (auch die bereits gepaddete Eingabe wurde
+            " zerstoert, live verifiziert). Deshalb jetzt:
+            "  (1) den ROHWERT immer aufnehmen (deckt die von der App
+            "      bereits 18-stellig gepaddete Eingabe ab -> sicherer
+            "      Treffer, unabhaengig von jeder Konvertierung), UND
+            "  (2) zusaetzlich die MATN1-konvertierte Form fuer kurze
+            "      manuelle Eingaben. MATN1 ist die materialnummern-
+            "      spezifische Konvertierung (respektiert das Material-
+            "      nummern-Customizing), nicht die generische ALPHA.
+            DATA lv_m1_low  TYPE matnr.
+            DATA lv_m1_high TYPE matnr.
+
+            " (1) Rohwert immer aufnehmen
             APPEND VALUE #( sign   = ls_so-sign
                             option = ls_so-option
-                            low    = lv_low
-                            high   = lv_high ) TO lt_r_matnr.
+                            low    = ls_so-low
+                            high   = ls_so-high ) TO lt_r_matnr.
+
+            " (2) MATN1-Form zusaetzlich, wenn sie sich unterscheidet
+            CLEAR: lv_m1_low, lv_m1_high.
+            IF ls_so-low IS NOT INITIAL.
+              CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+                EXPORTING input        = ls_so-low
+                IMPORTING output       = lv_m1_low
+                EXCEPTIONS length_error = 1
+                           OTHERS       = 2.
+              IF sy-subrc <> 0.
+                lv_m1_low = ls_so-low.
+              ENDIF.
+            ENDIF.
+            IF ls_so-high IS NOT INITIAL.
+              CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+                EXPORTING input        = ls_so-high
+                IMPORTING output       = lv_m1_high
+                EXCEPTIONS length_error = 1
+                           OTHERS       = 2.
+              IF sy-subrc <> 0.
+                lv_m1_high = ls_so-high.
+              ENDIF.
+            ENDIF.
+            IF lv_m1_low <> ls_so-low OR lv_m1_high <> ls_so-high.
+              APPEND VALUE #( sign   = ls_so-sign
+                              option = ls_so-option
+                              low    = lv_m1_low
+                              high   = lv_m1_high ) TO lt_r_matnr.
+            ENDIF.
           ENDLOOP.
       ENDCASE.
     ENDLOOP.
