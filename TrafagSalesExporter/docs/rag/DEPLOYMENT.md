@@ -4,7 +4,14 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-23, Fix numerische Materialnummern in der Stuecklistenanalyse (C#-Seite).
+- Letzter Deploy: 2026-07-23 (zweiter Deploy des Tages), Balkendiagramm "Volumen nach Warengruppe"
+  im Einkauf-Reiter Spend. Commit `bd47e63 Add "volume by material group" bar chart to purchasing
+  Spend tab`; `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 10:17:40`, Laenge
+  `3'081'728`; Port 443 -> True; DB unveraendert. Reine C#/Razor-Aenderung. WG-Datenlage bleibt
+  offener Punkt (MARA-MATKL 0 %, Beleg-Matkl 99,6 % Sammelgruppe "01"). Details:
+  `docs/rag/PURCHASING.md`.
+- Vorheriger Deploy: 2026-07-23 (erster Deploy des Tages), Fix numerische Materialnummern in der Stuecklistenanalyse (C#-Seite).
   Commit `431f339 Fix numeric material numbers returning zero rows in BOM analysis`; `268/268`
   Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm`
   gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 08:36:28`, Laenge `3'076'608`; Port 443
