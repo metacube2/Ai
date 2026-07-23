@@ -4,7 +4,24 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-22, Bereichs-Syntax `35-40` im Materialfeld der Stuecklistenanalyse.
+- Letzter Deploy: 2026-07-23, Fix numerische Materialnummern in der Stuecklistenanalyse (C#-Seite).
+  Commit `431f339 Fix numeric material numbers returning zero rows in BOM analysis`; `268/268`
+  Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm`
+  gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 08:36:28`, Laenge `3'076'608`; Port 443
+  -> True; DB unveraendert. C# paddet numerische Materialnummern jetzt auf 18 Stellen
+  (`NormalizeMaterialToken`). ABAP-Teil des Fixes (Rohwert+MATN1 statt ALPHA) ist NICHT Teil dieses
+  Deploys und muss erneut auf travt762 UND travp762 nachgezogen werden. Details:
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-23.
+- Vorheriger Deploy: 2026-07-22 (zweiter Deploy des Tages), Option "Auch geloeschte Materialien" in
+  der Stuecklistenanalyse. Commit `bacc614 Add option to include deletion-flagged materials in
+  BOM analysis`; `267/267` Tests gruen; Publish nach
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt/entfernt;
+  produktive `BiDashboard.dll` `22.07.2026 14:26:01`, Laenge `3'076'096`; `Test-NetConnection ...
+  -Port 443` -> True; DB unveraendert. Reine App-Aenderung; der zugehoerige ABAP-Fix (Richtung-
+  Suffix `ALLE`, LVORM-Bypass in Schritt 1) ist NICHT Teil dieses Deploys und muss weiterhin
+  manuell in SE80 auf travt762 UND travp762 nachgezogen werden. Details: `lastchange.md`,
+  `docs/abap/README_LZCODE_WEBSERVICE.md` Nachtrag 2026-07-22d.
+- Vorheriger Deploy: 2026-07-22 (erster Deploy des Tages), Bereichs-Syntax `35-40` im Materialfeld der Stuecklistenanalyse.
   Commit `7d061d9 Support material number ranges (35-40) in BOM analysis material filter`;
   `265/265` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `22.07.2026 13:22:34`, Laenge
