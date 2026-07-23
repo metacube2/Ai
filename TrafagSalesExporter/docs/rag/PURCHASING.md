@@ -61,3 +61,4 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 - Formel-Korrekturen K1-K6/M7-M10: `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`
 - Marco-Review im Detail: `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`
 - Review-Vorbereitung Ingo: `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md`
+- Wuensche Einkaufssitzung 2026-07-23 (Aufriss/Drilldown, Produktgruppe via ZLO03, Region, ABC/XYZ): `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`

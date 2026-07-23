@@ -1,0 +1,81 @@
+# Einkaufs-Dashboard — Wuensche aus der Einkaufssitzung 2026-07-23
+
+Quelle: Whisper-Transkript einer Einkaufssitzung (Ingo, Marco, Armin), Modell `medium`,
+Audio `…/einka/Data/audio.wav`. Diskussionsstand, KEINE finalisierte Spezifikation.
+Leitplanke Marco: **eine Sicht nach der anderen fertig machen, nicht verzetteln** — zuerst
+der Reiter Spend.
+
+## Grundkonzept: Perspektiven vs. Aufriss (Drilldown/Kaskadierung)
+
+Marco trennt zwei Dinge sauber:
+
+- **Perspektive** = der Standpunkt, von dem aus man auf die Zahlen schaut (Lieferant,
+  Warengruppe, Produktgruppe, Region, Artikel, ABC/XYZ). Das sind die verschiedenen
+  Register/Sichten.
+- **Aufriss / Drilldown / Kaskadierung** = innerhalb einer Sicht Detaildaten stufenweise
+  aufklappen. Beispiel aus der Sitzung: alle Lieferanten sehen -> auf CPT filtern/aufklappen
+  -> innerhalb CPT den Spend nach Produktgruppe X aggregiert sehen -> ggf. noch eine Stufe
+  tiefer. Also mehrstufig aufklappbar (Pivot-artig), wieder zuklappbar.
+
+Heutiger Stand in der App: Der Reiter Spend hat die Matrix „Kaskadierung Lieferant / Jahr"
+mit EINER Aufklapp-Ebene (Lieferant -> Warengruppe). Der Wunsch ist eine flexiblere,
+tiefere Kaskadierung und dieselbe Mechanik auch fuer andere Einstiegsdimensionen.
+
+## Dimensionen fuer den Aufriss (mit Status/Quelle)
+
+| Dimension | Quelle laut Sitzung | Status in der App | Bemerkung |
+| --- | --- | --- | --- |
+| Zeit / Periode | EKKO.Bedat | **funktioniert** (Zeitschalter bestaetigt) | Basis-Filter, wirkt auf alle Ebenen |
+| Lieferant / Kreditor | Beleg (EKKO.Lifnr) + LFA1-Name | **live** | aus Beleg korrekt; Material kann bei mehreren Kreditoren laufen, aber wenn man auf den Kreditor aufreisst, interessiert nur dessen Anteil |
+| Warengruppe / Materialgruppe (MATKL) | **Materialstamm** MARA-MATKL, NICHT Beleg | **2026-07-23 umgesetzt** (Loader liest MARA001Set.Matkl) | Marco bestaetigt exakt diesen Weg: „im Materialstamm abfragen und nicht auf dem Beleg", weil alte Belege nur die Dummy-Warengruppe haben. ACHTUNG Datenlage: MARA-MATKL ist im Stamm zu ~65 % leer + ~24 % `01`; nur ~10 % echte Gruppen. Fuellung ist ein SAP-Stammdaten-Thema. |
+| Beschaffungsregion / Land | Land des Lieferanten (LFA1) | **fehlt** (LFA1 laedt nur Name1, nicht Land1; kein Feld im Cache) | Wunsch: Kuchendiagramm je Materialgruppe/Warengruppe -> Anteil je Region/Land. Braucht LFA1.Land1 im Loader + Cache-Spalte. |
+| Produktgruppe | ueber Disponenten-Gruppe (CC23/ZC23) bzw. ZLO03-Verwendungsnachweis | **offen, komplex** | siehe eigener Abschnitt unten |
+| Materialnummer / Artikel | EKPO.Matnr/Txz01 | **live** (unterste Aufriss-Stufe) | |
+| ABC / XYZ | ABC = MARC-MAABC (Sicht/Werk O2, Feldname `MAABC`); XYZ = separate Tabelle (`ITSCH…MAT_ABC_XYZ` o.ae.) | **offen** | Marco hat dazu bereits einen eigenen Report, der beides extrahiert. Konkreter Dashboard-Nutzen noch unklar (Anteile anzeigen). War schon offener Punkt in `docs/rag/PURCHASING.md`. |
+
+## Produktgruppe — der schwierige Punkt
+
+Kernproblem: Auf **Komponenten-/Einkaufsteil-Stufe** gibt es keine direkte
+Produktgruppen-Zuordnung. Die Produktgruppe haengt im Trafag-Modell am **Disponenten**
+(gepflegt in CC23/ZC23), aber Einkaufskomponenten tragen den Disponenten nicht als
+Produktgruppe.
+
+Zwei diskutierte Loesungswege:
+
+1. **Ueber die Stuecklisten-Verwendung (ZLO03).** Eine Komponente wird in Stuecklisten
+   bestimmter Produkte/Produktgruppen verwendet. Ueber den ZLO03-Bottom-Up-Verwendungs-
+   nachweis (der gerade als Webservice `ZSTR_LZCODE_USAGE`/`_PARENT` gebaut wurde!) laesst
+   sich eine Komponente den Produktgruppen zuordnen, in deren Stuecklisten sie vorkommt.
+   FALLE: Komponenten wie Schrauben/Schieber kommen in vielen Produkten/Gruppen vor ->
+   Abgrenzung/Zurechnung des Spends ist nicht eindeutig (aufwendige Analyse noetig).
+2. **Referenzliste im Hintergrund.** Ein z.B. woechentlich laufender Job loest die
+   Stuecklisten auf und schreibt je Komponente ein Kennzeichen/eine Referenzliste
+   (Komponente -> Disponent/Produktgruppe). Das Dashboard liest dann nur die fertige Liste
+   (unkritisch fuer die Ladezeit). Marcos Idee, um den teuren ZLO03-Lauf aus dem
+   Online-Pfad herauszuhalten.
+
+Einordnung: nutzt direkt den heute fertiggestellten ZLO03-Webservice, ist aber die
+aufwendigste Dimension (Mehrfachverwendung, Zurechnungslogik). Bewusst NICHT als erstes.
+
+## Visualisierung (Wunsch)
+
+- **Kuchendiagramm** je Materialgruppe/Warengruppe -> Anteil je **Beschaffungsregion/Land**
+  (setzt LFA1.Land1 voraus).
+- Bestehende Balken/Matrix bleiben; der Aufriss ist die Hauptneuerung.
+
+## Vorgeschlagene Reihenfolge (zur Abstimmung mit Marco/Ingo)
+
+1. **Warengruppen-Aufriss scharf schalten**: MARA-MATKL ist geladen (heute), sobald ein
+   Einkauf-Full-Load gegen travp762 gelaufen ist. Danach zeigt das neue „Volumen nach
+   Warengruppe"-Diagramm + die Matrix-Drilldown echte Stamm-Warengruppen. Zuerst diese eine
+   Sicht mit Marco abnehmen (seine Leitplanke).
+2. **Beschaffungsregion**: LFA1.Land1 in Loader + Cache aufnehmen, dann Kuchendiagramm
+   Region je Warengruppe. Kleiner, klar abgegrenzter Ausbau.
+3. **Mehrstufiger Aufriss**: Spend-Matrix von einer auf zwei aufklappbare Ebenen erweitern
+   (z.B. Lieferant -> Warengruppe -> Artikel), plus Einstieg auch ueber andere Dimension.
+4. **ABC/XYZ**: MARC-MAABC (Sicht O2) + XYZ-Tabelle anbinden (Marcos Report als Vorlage).
+5. **Produktgruppe** (aufwendigste): ZLO03-Verwendungsnachweis + Referenzliste
+   (Komponente -> Produktgruppe), moeglichst als Hintergrund-Job.
+
+Offene Zuarbeit Einkauf (aus der Sitzung): Disponenten-/Produktgruppen-Zuordnung aus
+CC23/ZC23 als Referenzliste; Klaerung, welcher konkrete Dashboard-Nutzen ABC/XYZ haben soll.

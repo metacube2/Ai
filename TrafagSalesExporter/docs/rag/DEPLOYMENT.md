@@ -4,7 +4,15 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-23 (zweiter Deploy des Tages), Balkendiagramm "Volumen nach Warengruppe"
+- Letzter Deploy: 2026-07-23 (dritter Deploy des Tages), Loader zurueck auf MARA001Set fuer
+  Matkl+Mstae. Commit `83eb149 Switch purchasing material-master loader back to MARA001Set for
+  Matkl+Mstae`; `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 10:51:46`, Laenge
+  `3'081'728`; Port 443 -> True; DB unveraendert. SAP hat MARA001Set um Matkl+Mstae erweitert;
+  Loader liest jetzt beide daraus (ein ungepagter Request). NACHSORGE: Einkauf-Full-Load noetig,
+  damit MaraMatkl im Cache gefuellt wird (mit Marco/Andreas abstimmen). Details:
+  `docs/rag/PURCHASING.md`.
+- Vorheriger Deploy: 2026-07-23 (zweiter Deploy des Tages), Balkendiagramm "Volumen nach Warengruppe"
   im Einkauf-Reiter Spend. Commit `bd47e63 Add "volume by material group" bar chart to purchasing
   Spend tab`; `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 10:17:40`, Laenge
