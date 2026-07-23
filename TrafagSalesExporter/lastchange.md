@@ -6,6 +6,16 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- UI 2026-07-23, `268/268` Tests gruen: Erste neue Einkauf-Sicht gebaut - Balkenblock "Volumen
+  nach Beschaffungsregion" (Lieferantenland LFA1.Land1 -> EKKO.SupplierCountry) im Spend-Reiter,
+  neben "Volumen nach Warengruppe". Der Zusatz-Chart-Bereich von `PurchasingSection` ist von einem
+  einzelnen Zweitchart auf eine generische Liste `ExtraCharts` (Model `PurchasingSectionExtraChart`)
+  umgestellt, damit ABC/XYZ als weitere Bloecke sauber danebenpassen (Marcos "eine Sicht nach der
+  anderen"). Neue Aggregation `RegionSpendRows` im `PurchasingDashboardService` (gleicher Filter/
+  Zeitraum wie WG/Lieferant). Region-Werte fuellen sich erst mit dem naechsten Einkauf-Full-Load
+  (SupplierCountry-Spalte noch leer). VknrDispo jetzt live bestaetigt (SEGW-Property angelegt +
+  generiert, liefert `019`) - Datenvoraussetzung fuer den Produktgruppen-Aufriss steht, ZC23-
+  Zuordnung noch offen. Details: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
 - SAP-FELDER + C#-LADESTRECKE 2026-07-23, `268/268` Tests gruen: Ingo hat weitere SAP-Felder
   transportiert (LFA1.Land1, MARC.Maabc, neues Set ZSTR_MAT_XYZSet fuer XYZ), alle live gegen
   travp762 verifiziert. C#-Ladestrecke (`PurchasingDataRefreshService`) angepasst: liest jetzt

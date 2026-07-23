@@ -6,6 +6,18 @@ public sealed record PurchasingSectionKpi(string LabelDe, string LabelEn, string
 
 public sealed record PurchasingSectionChartRow(string Label, string Value, double Percent, string Color);
 
+/// <summary>
+/// Zusaetzlicher Balkenblock unter dem Hauptdiagramm einer Section (z.B. Volumen nach
+/// Warengruppe / Region / ABC / XYZ). Wird nur gerendert, wenn Rows befuellt ist. Optionaler
+/// Hinweistext fuer Datenlage-Vorbehalte (z.B. MARA-MATKL-Fuellgrad).
+/// </summary>
+public sealed record PurchasingSectionExtraChart(
+    string TitleDe,
+    string TitleEn,
+    string HintDe,
+    string HintEn,
+    IReadOnlyList<PurchasingSectionChartRow> Rows);
+
 public sealed record PurchasingSectionStatusRow(string LabelDe, string LabelEn, string Value, string Icon, Color Color);
 
 public sealed record PurchasingSectionDetailRow(string LabelDe, string LabelEn, string Value, string Dimension, string Source);

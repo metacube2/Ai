@@ -54,6 +54,8 @@ public sealed class PurchasingDashboardLiveState
     // Volumen (CHF) je Warengruppe im Zeitraum, absteigend (PowerBI "Diagramm Vol./WG").
     // Warengruppe = COALESCE(MaraMatkl, Matkl, 'ohne Warengruppe') wie in der Spend-Matrix.
     public List<PurchasingLiveChartPoint> MaterialGroupSpendRows { get; set; } = [];
+    // Volumen (CHF) je Beschaffungsregion (Lieferantenland), absteigend (PowerBI "Vol/Region").
+    public List<PurchasingLiveChartPoint> RegionSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];

@@ -140,11 +140,7 @@
                            DetailRows="@SpendDetailRows"
                            SpendMatrixYears="@_liveState.SpendYears"
                            SpendMatrixRows="@_liveState.SupplierYearSpendRows"
-                           SecondChartTitleDe="Volumen nach Warengruppe"
-                           SecondChartTitleEn="Volume by material group"
-                           SecondChartHintDe="@MaterialGroupChartHintDe"
-                           SecondChartHintEn="@MaterialGroupChartHintEn"
-                           SecondChartRows="@SpendByMaterialGroupChartRows" />
+                           ExtraCharts="@SpendExtraCharts" />
         break;
     case "offene-bestellungen":
         <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
@@ -1230,11 +1226,33 @@
                 ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.Spend, FormatChf);
 
-    // Volumen nach Warengruppe (PowerBI "Diagramm Vol./WG"), nur wenn EKPO live geladen ist.
-    private IReadOnlyList<PurchasingSectionChartRow> SpendByMaterialGroupChartRows
-        => _liveState.EkpoLoaded && _liveState.MaterialGroupSpendRows.Count > 0
-            ? BuildLiveChartRows(_liveState.MaterialGroupSpendRows, FormatChf)
-            : [];
+    // Zusatz-Balkenbloecke im Spend-Reiter: Volumen nach Warengruppe und nach Beschaffungsregion
+    // (weitere Sichten wie ABC/XYZ folgen in Marcos Reihenfolge, eine nach der anderen).
+    private IReadOnlyList<PurchasingSectionExtraChart> SpendExtraCharts
+    {
+        get
+        {
+            var charts = new List<PurchasingSectionExtraChart>();
+            if (_liveState.EkpoLoaded && _liveState.MaterialGroupSpendRows.Count > 0)
+                charts.Add(new PurchasingSectionExtraChart(
+                    "Volumen nach Warengruppe", "Volume by material group",
+                    MaterialGroupChartHintDe, MaterialGroupChartHintEn,
+                    BuildLiveChartRows(_liveState.MaterialGroupSpendRows, FormatChf)));
+            if (_liveState.EkpoLoaded && _liveState.RegionSpendRows.Count > 0)
+                charts.Add(new PurchasingSectionExtraChart(
+                    "Volumen nach Beschaffungsregion", "Volume by procurement region",
+                    RegionChartHintDe, RegionChartHintEn,
+                    BuildLiveChartRows(_liveState.RegionSpendRows, FormatChf)));
+            return charts;
+        }
+    }
+
+    private string RegionChartHintDe
+        => "Beschaffungsregion = Land des Lieferanten (LFA1-Land1), ueber den Bestellbeleg zugeordnet. "
+         + "Zeigt den CHF-Spend je Lieferantenland im gewaehlten Zeitraum.";
+    private string RegionChartHintEn
+        => "Procurement region = supplier country (LFA1 Land1), assigned via the purchase order. "
+         + "Shows CHF spend by supplier country in the selected period.";
 
     // Ehrlicher Datenhinweis: die Materialstamm-Warengruppe (MARA-MATKL) wird von SAP noch nicht
     // geliefert, daher faellt die Auswertung auf die Beleg-Warengruppe zurueck - fast der gesamte

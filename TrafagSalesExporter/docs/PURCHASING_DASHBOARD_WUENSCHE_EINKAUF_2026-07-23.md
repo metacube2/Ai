@@ -10,18 +10,20 @@ Alle neuen SAP-Felder am 2026-07-23 live gegen travp762 verifiziert:
 | Warengruppe Stamm | `MARA001Set.Matkl` | OK (schon 07-23 frueh) | -> `MaraMatkl` | 65 % leer, 24 % `01`, ~10 % echt |
 | ABC | `MARCSet.Maabc` | OK | -> `MaraAbc` | 86 % leer; A=438/B=742/C=8136 |
 | XYZ | `ZSTR_MAT_XYZSet.Maxyz` (eigenes Set, mein Rumpf) | OK | -> `MaraXyz` | Set hat 4'388 Materialien, davon 99 % klassifiziert (Z 69/Y 16/X 14) |
-| Disponent Kopfmaterial | `ZSTR_LZCODE_USAGE.VknrDispo` | **FEHLT** | noch nicht | Struktur-Feld `VKNR_DISPO` in SE11 noch nicht angelegt |
+| Disponent Kopfmaterial | `ZSTR_LZCODE_USAGE.VknrDispo` | **OK** (Property in SEGW angelegt + generiert, liefert z.B. `019`) | ZLO03-Set liefert es; Produktgruppen-Zuordnung (Disponent->Produktgruppe via ZC23) und Spend-Zurechnung noch offen | — |
 
 - C#-Ladestrecke (`PurchasingDataRefreshService`) liest Land1 (LFA1), ABC (MARCSet, ungepaged +
   client-seitiger Werk-1100-Filter, weil MARCSet $top/$skip/$filter ignoriert) und XYZ (eigenes
   Set, paged). Neue additive Cache-Spalten `SupplierCountry`, `MaraAbc`, `MaraXyz`. Die Felder
   FUELLEN sich erst mit dem naechsten Einkauf-Full-Load (mit Marco/Andreas abstimmen).
-- UI/Visuals (Region-Kuchen, ABC/XYZ-Sichten, mehrstufiger Aufriss) sind noch NICHT gebaut -
-  bewusst, weil Marco eine Sicht nach der anderen abnehmen will und die Daten erst nach dem Full
-  Load da sind.
-- **VknrDispo bleibt offen**: SE11-Struktur `ZSTR_LZCODE_USAGE` braucht das Feld `VKNR_DISPO`
-  (Datenelement `DISPO`), dann den ZLO03-USAG-Methodenrumpf (Version 22b, hat die vknr_dispo-Zeile
-  schon) erneut aktivieren. Erst danach traegt der Produktgruppen-Aufriss.
+- UI/Visuals: **Region ist als erste Sicht gebaut** (2026-07-23) - Balkenblock "Volumen nach
+  Beschaffungsregion" im Spend-Reiter, neben "Volumen nach Warengruppe". Der Chart-Bereich der
+  Section ist auf eine generische Liste (`ExtraCharts`) umgestellt, sodass ABC/XYZ als weitere
+  Bloecke sauber danebenpassen (Marcos "eine Sicht nach der anderen"). Die Region-Werte fuellen
+  sich erst mit dem naechsten Einkauf-Full-Load (SupplierCountry-Spalte).
+- **VknrDispo ist jetzt OK** (SEGW-Property angelegt + generiert, liefert `019`). Damit ist die
+  Datenvoraussetzung fuer den Produktgruppen-Aufriss da; es fehlt noch die Zuordnung
+  Disponent->Produktgruppe (ZC23-Referenzliste) und die Spend-Zurechnung bei Mehrfachverwendung.
 
 
 Quelle: Whisper-Transkript einer Einkaufssitzung (Ingo, Marco, Armin), Modell `medium`,

@@ -374,6 +374,17 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
+        // Volumen je Beschaffungsregion (Lieferantenland LFA1.Land1 -> EKKO.SupplierCountry).
+        // PowerBI "Eink.Vol. CHF / Region". Gleicher Filter/Zeitraum wie oben.
+        state.RegionSpendRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(NULLIF(k.SupplierCountry, ''), 'ohne Land') AS Label,
+       SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 12;", cancellationToken);
         state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
         state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
