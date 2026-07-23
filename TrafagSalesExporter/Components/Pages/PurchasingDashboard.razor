@@ -139,7 +139,12 @@
                            StatusRows="@SpendStatusRows"
                            DetailRows="@SpendDetailRows"
                            SpendMatrixYears="@_liveState.SpendYears"
-                           SpendMatrixRows="@_liveState.SupplierYearSpendRows" />
+                           SpendMatrixRows="@_liveState.SupplierYearSpendRows"
+                           SecondChartTitleDe="Volumen nach Warengruppe"
+                           SecondChartTitleEn="Volume by material group"
+                           SecondChartHintDe="@MaterialGroupChartHintDe"
+                           SecondChartHintEn="@MaterialGroupChartHintEn"
+                           SecondChartRows="@SpendByMaterialGroupChartRows" />
         break;
     case "offene-bestellungen":
         <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
@@ -1224,6 +1229,25 @@
             : _liveState.EkpoLoaded && _liveState.SpendChartRows.Count > 0
                 ? BuildLiveChartRows(_liveState.SpendChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.Spend, FormatChf);
+
+    // Volumen nach Warengruppe (PowerBI "Diagramm Vol./WG"), nur wenn EKPO live geladen ist.
+    private IReadOnlyList<PurchasingSectionChartRow> SpendByMaterialGroupChartRows
+        => _liveState.EkpoLoaded && _liveState.MaterialGroupSpendRows.Count > 0
+            ? BuildLiveChartRows(_liveState.MaterialGroupSpendRows, FormatChf)
+            : [];
+
+    // Ehrlicher Datenhinweis: die Materialstamm-Warengruppe (MARA-MATKL) wird von SAP noch nicht
+    // geliefert, daher faellt die Auswertung auf die Beleg-Warengruppe zurueck - fast der gesamte
+    // Spend landet dann in der Sammelgruppe "01". Erst nach der SAP-Erweiterung (Matkl im
+    // maracalcSet) wird das Diagramm fachlich aussagekraeftig.
+    private string MaterialGroupChartHintDe
+        => "Warengruppe aus dem Bestellbeleg (EKPO.Matkl). Die aktuelle Materialstamm-Warengruppe "
+         + "(MARA-MATKL) liefert SAP noch nicht, daher landet fast der gesamte Spend in der "
+         + "Beleg-Sammelgruppe. Aussagekraeftig erst nach der SAP-Erweiterung (Matkl im maracalcSet).";
+    private string MaterialGroupChartHintEn
+        => "Material group from the purchase-order document (EKPO.Matkl). SAP does not yet deliver "
+         + "the current material-master group (MARA-MATKL), so almost all spend falls into the "
+         + "document catch-all group. Meaningful only after the SAP extension (Matkl in maracalcSet).";
 
     private IReadOnlyList<PurchasingSectionChartRow> OpenOrderChartRows
         => _liveState.EkkoLoaded

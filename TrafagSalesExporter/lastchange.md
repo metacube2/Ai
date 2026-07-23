@@ -6,6 +6,21 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- APP-AENDERUNG 2026-07-23, `268/268` Tests gruen (noch NICHT deployed): Einkauf-Reiter `Spend`
+  hat ein zweites Balkendiagramm "Volumen nach Warengruppe" (PowerBI-Seite "Diagramm Vol./WG").
+  Anlass: Ingo-Analyse der `li.pbix`/`x.pbix` (beide identisch, 7 Seiten) - das WG-Diagramm war in
+  der App nicht als echtes Visual vorhanden, WG lebte nur als Drilldown-Ebene der Spend-Matrix.
+  Bewusst im Spend-Reiter platziert (Volumenanalyse), nicht bei Lieferanten (Bewertung). Umsetzung
+  rein C#/Razor: neue Aggregation `MaterialGroupSpendRows` in `PurchasingDashboardService`
+  (COALESCE(MaraMatkl,Matkl,'ohne WG'), gleicher Filter/Zeitraum wie Lieferant-Matrix), zweiter
+  optionaler Chart-Block in `PurchasingSection.razor`, verdrahtet im Spend-case von
+  `PurchasingDashboard.razor` mit ehrlichem Datenhinweis. WICHTIGER BEFUND (an Prod-Cache
+  gemessen, Load-Stand 17.07.): WG faktisch unbrauchbar bis SAP-Erweiterung - `MaraMatkl` 0 %
+  gefuellt, `Matkl` zu 99,6 % in Sammelgruppe `01`; Diagramm zeigt daher aktuell fast nur eine
+  Saeule (strukturell korrekt, aussagekraeftig erst nach `Matkl` im `maracalcSet`). BEWUSST NICHT
+  nachgebaut aus PowerBI: Kuchen Lieferant (durch Top-Lieferanten-Balken abgedeckt), Kuchen Region
+  (Lieferantenland fehlt im Cache - LFA1 laedt nur Name1, nicht Land1). Details:
+  `docs/rag/PURCHASING.md`.
 - ROOTCAUSE + FIX 2026-07-23, `268/268` Tests gruen: Numerische Materialnummern (z.B. `2217`)
   lieferten in der Stuecklistenanalyse IMMER 0 Zeilen, alphanumerische (`D15019`) gingen. Per
   SapProbe/RFC gegen travp762 (mit Ingos Prod-Passwort) + OData-Testbatterie eingegrenzt: MARA hat

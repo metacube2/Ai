@@ -51,6 +51,9 @@ public sealed class PurchasingDashboardLiveState
     public string TopCommitmentLabel { get; set; } = string.Empty;
     public List<int> SpendYears { get; set; } = [];
     public List<PurchasingSupplierYearSpendRow> SupplierYearSpendRows { get; set; } = [];
+    // Volumen (CHF) je Warengruppe im Zeitraum, absteigend (PowerBI "Diagramm Vol./WG").
+    // Warengruppe = COALESCE(MaraMatkl, Matkl, 'ohne Warengruppe') wie in der Spend-Matrix.
+    public List<PurchasingLiveChartPoint> MaterialGroupSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];

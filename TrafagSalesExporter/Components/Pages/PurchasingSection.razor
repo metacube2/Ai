@@ -62,6 +62,32 @@
         </MudItem>
     </MudGrid>
 
+    @if (SecondChartRows.Count > 0)
+    {
+        <MudPaper Class="pa-3 purchasing-section-panel mb-3" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T(SecondChartTitleDe, SecondChartTitleEn)</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            @if (!string.IsNullOrEmpty(SecondChartHintDe) || !string.IsNullOrEmpty(SecondChartHintEn))
+            {
+                <MudText Typo="Typo.caption" Class="purchasing-section-muted mb-2">@T(SecondChartHintDe, SecondChartHintEn)</MudText>
+            }
+            <div class="purchasing-bars">
+                @foreach (var item in SecondChartRows)
+                {
+                    <div class="purchasing-bar-row">
+                        <div class="purchasing-bar-label">@item.Label</div>
+                        <div class="purchasing-bar-track">
+                            <div class="purchasing-bar-fill" style="@($"width:{BuildWidth(item.Percent)}%; background:{item.Color}")"></div>
+                        </div>
+                        <div class="purchasing-bar-value">@item.Value</div>
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    }
+
     @if (SpendMatrixRows.Count > 0 && SpendMatrixYears.Count > 0)
     {
         <MudPaper Class="pa-3 purchasing-section-panel mb-3" Outlined="true">
@@ -160,6 +186,13 @@
     [Parameter, EditorRequired] public IReadOnlyList<PurchasingSectionDetailRow> DetailRows { get; set; } = [];
     [Parameter] public IReadOnlyList<int> SpendMatrixYears { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSupplierYearSpendRow> SpendMatrixRows { get; set; } = [];
+    // Optionaler zweiter Balkenblock (z.B. Volumen nach Warengruppe). Wird nur gerendert, wenn
+    // SecondChartRows befuellt ist.
+    [Parameter] public string SecondChartTitleDe { get; set; } = string.Empty;
+    [Parameter] public string SecondChartTitleEn { get; set; } = string.Empty;
+    [Parameter] public string SecondChartHintDe { get; set; } = string.Empty;
+    [Parameter] public string SecondChartHintEn { get; set; } = string.Empty;
+    [Parameter] public IReadOnlyList<PurchasingSectionChartRow> SecondChartRows { get; set; } = [];
 
     private readonly HashSet<string> _expandedSuppliers = new(StringComparer.OrdinalIgnoreCase);
 

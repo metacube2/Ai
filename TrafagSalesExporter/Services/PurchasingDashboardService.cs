@@ -360,6 +360,20 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
+        // Volumen je Warengruppe (PowerBI "Diagramm Vol./WG"). Gleiche COALESCE-Logik und
+        // gleicher spendItemFilter/Zeitraum wie die Lieferant-Spend-Matrix, damit die Summen
+        // konsistent sind. Warengruppe kommt bewusst aus MaraMatkl (Materialstamm), Fallback
+        // Beleg-Matkl - solange SAP MaraMatkl nicht liefert, landet fast alles in der
+        // Beleg-Sammelgruppe (UI-Hinweis im Spend-Reiter).
+        state.MaterialGroupSpendRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS Label,
+       SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 12;", cancellationToken);
         state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
         state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value

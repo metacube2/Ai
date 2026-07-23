@@ -7,6 +7,14 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Kurzstand
 
+- NEU 2026-07-23: Reiter `Spend` hat jetzt ein zweites Balkendiagramm "Volumen nach Warengruppe"
+  (PowerBI-Seite "Diagramm Vol./WG"). Bewusst im Spend-Reiter (Volumenanalyse), nicht bei
+  Lieferanten (Bewertung/Performance). Gleiche COALESCE-WG-Logik und gleicher Zeitraum-/
+  Spend-Filter wie die bestehende Lieferant-Matrix. Mit ehrlichem UI-Hinweis zur Datenlage (WG
+  aktuell aus Beleg, MARA-MATKL fehlt noch, siehe offener Punkt). Rein C#/Razor, kein SAP-
+  Roundtrip. Power-BI-Gegenstuecke, die bewusst NICHT nachgebaut wurden: Kuchen Lieferant (durch
+  Top-Lieferanten-Balken abgedeckt), Kuchen Region (Lieferantenland fehlt im Cache - LFA1 laedt
+  nur Name1, nicht Land1; waere ein eigener SAP-/Cache-Ausbau).
 - KONFIGURATION GEAENDERT 2026-07-22: Zentrale SAP-URL (`SourceSystemDefinitions.CentralServiceUrl`,
   Code `SAP`) von `travt762` (TEST) auf `travp762` (PROD) umgestellt (Anlass: Logistik/
   Stuecklistenanalyse brauchte echte Daten). Betrifft Einkauf (Site `PURCHASING_SAP`, kein eigener
@@ -31,6 +39,12 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Offene Punkte
 
+- WG-DATENLAGE 2026-07-23 (an Prod-Cache gemessen, Stand Load 17.07.): Warengruppe im
+  Einkauf-Cache faktisch unbrauchbar bis zur SAP-Erweiterung. `MaraMatkl` zu 0 % gefuellt
+  (0/234'083), `Matkl` (Beleg-WG) zwar 99,98 % gefuellt, ABER 233'048/234'046 (99,6 %) in der
+  Sammelgruppe `01`. Das neue "Volumen nach Warengruppe"-Diagramm (siehe Kurzstand) zeigt daher
+  aktuell fast nur eine Saeule; strukturell korrekt, aussagekraeftig erst nach `Matkl` im
+  `maracalcSet`. Verstaerkt den bestehenden offenen Punkt "Matkl in maracalc aufnehmen".
 - ERLEDIGT 2026-07-22: Zentrale SAP-Quelle Einkauf zeigt jetzt auf `travp762` (Prod) statt `travt762` (Test) — siehe Kurzstand oben. Full Load mit Marco/Andreas abstimmen, bevor er gefahren wird. Zusatzrisiko travp762 weiterhin offen: `Bstyp`/`Bsart`/`Elikz` fehlten dort zuletzt im OData-Modell (Probe 2026-07-10), 401-Auth-Status zuletzt 2026-07-09 ungeklaert — beides vor dem naechsten Full Load neu pruefen.
 - SAP-Erweiterung: `Matkl` in `maracalc` aufnehmen (fuer echte Materialstamm-Warengruppe im Drilldown).
 - Abnahme-Checks Marco: 18-Mio-Offenwert gegen SAP, WKURS-Richtung an echtem Fremdwaehrungsbeleg.
