@@ -6,6 +6,21 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- SAP-FELDER + C#-LADESTRECKE 2026-07-23, `268/268` Tests gruen: Ingo hat weitere SAP-Felder
+  transportiert (LFA1.Land1, MARC.Maabc, neues Set ZSTR_MAT_XYZSet fuer XYZ), alle live gegen
+  travp762 verifiziert. C#-Ladestrecke (`PurchasingDataRefreshService`) angepasst: liest jetzt
+  Lieferantenland (LFA1.Land1 -> neue Cache-Spalte `SupplierCountry`), ABC (MARCSet.Maabc ->
+  `MaraAbc`) und XYZ (`ZSTR_MAT_XYZSet.Maxyz` -> `MaraXyz`). WICHTIG MARCSet: ignoriert
+  $top/$skip/$filter (wie maracalc), deshalb EIN ungepagter Request + client-seitiger
+  Werk-1100-Filter; XYZ-Set (eigener Methodenrumpf `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.abap`,
+  von mir gebaut) pagt korrekt. XYZ-Quelle war Marcos „ITSCH-MAT-ABC-XYZ" = Tabelle
+  `ZCA_MAT_ABC_XYZ`, Feld `/ITS/CA_M_MAXYZ` (XYZ ist KEIN SAP-Standard, nur ABC). Datenlage Werk
+  1100: Land gefuellt; ABC 86 % leer (A/B/C echt vorhanden); XYZ-Set 4'388 Materialien, 99 %
+  klassifiziert. Neue Cache-Spalten additiv; FUELLEN sich erst mit dem naechsten Einkauf-Full-Load
+  (mit Marco/Andreas abstimmen). UI/Visuals bewusst noch NICHT gebaut (Marco: Sicht fuer Sicht).
+  OFFEN: `VknrDispo` (Produktgruppen-Aufriss) - SE11-Struktur `ZSTR_LZCODE_USAGE` braucht noch das
+  Feld `VKNR_DISPO` (DE `DISPO`), dann ZLO03-USAG-Rumpf erneut aktivieren. Details:
+  `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
 - SAP-ERWEITERUNG + LOADER-UMSTELLUNG 2026-07-23, `268/268` Tests gruen: Ingo hat `Matkl`
   (Materialstamm-Warengruppe) UND `Mstae` beide ins `MARA001Set` aufgenommen. Damit hat EIN Set
   wieder alle vom Einkauf-Loader benoetigten Materialstamm-Felder (Matnr+Mstae+Matkl); der Loader

@@ -332,10 +332,18 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         }
 
         AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
+        // Lieferantenland (LFA1-LAND1, seit SAP-Erweiterung 2026-07-23) fuer die Region-/
+        // Beschaffungsregion-Sicht. Ueber EKKO.Lifnr -> LFA1.Lifnr.
+        AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierCountry", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "PurchasingEkpoCache", "Mstae", "TEXT NOT NULL DEFAULT ''");
         // Aktuelle Warengruppe aus dem Materialstamm (MARA-MATKL) — getrennt vom Beleg-Matkl,
-        // weil alte Belege nur die Dummy-Warengruppe tragen. Quelle folgt per SAP-Erweiterung.
+        // weil alte Belege nur die Dummy-Warengruppe tragen. Quelle MARA001Set.Matkl.
         AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraMatkl", "TEXT NOT NULL DEFAULT ''");
+        // ABC-Klassifizierung (MARC-MAABC, Werk 1100) und XYZ-Klassifizierung
+        // (ZCA_MAT_ABC_XYZ./ITS/CA_M_MAXYZ) je Material, ueber EKPO.Matnr gejoint. Beides
+        // SAP-Erweiterung 2026-07-23. ABC ist SAP-Standard, XYZ ist ein /ITS/-Add-on.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraAbc", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraXyz", "TEXT NOT NULL DEFAULT ''");
 
         // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
         // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.

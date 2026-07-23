@@ -54,6 +54,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Elikz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
             var eketRows = await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", string.Empty, "Ebeln,Ebelp,Etenr", cancellationToken);
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -66,12 +67,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEkpoCache;", cancellationToken);
             await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingEketCache;", cancellationToken);
             await UpsertEkkoAsync(conn, transaction, ekkoRows, supplierNameMap, nowText, cancellationToken);
-            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
+            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, classificationMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}.";
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}.";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -122,6 +123,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             }
 
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
@@ -132,7 +134,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var nowText = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             await using var transaction = (SqliteTransaction)await conn.BeginTransactionAsync(cancellationToken);
             await UpsertEkkoAsync(conn, transaction, changedEkko, supplierNameMap, nowText, cancellationToken);
-            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, nowText, cancellationToken);
+            await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, classificationMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -242,11 +244,11 @@ WHERE COALESCE(e.Ebeln, '') <> '' AND CAST(e.Menge AS REAL) > CAST(e.Wemng AS RE
             .ToList();
     }
 
-    private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, string> supplierNameMap, string loadedAtUtc, CancellationToken cancellationToken)
+    private static async Task UpsertEkkoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, SupplierInfo> supplierNameMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, Bukrs, Bstyp, Bsart, Konnr, Waers, Wkurs, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bstyp, $Bsart, $Konnr, $Waers, $Wkurs, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkkoCache (Ebeln, Bedat, Aedat, Lifnr, SupplierName, SupplierCountry, Bukrs, Bstyp, Bsart, Konnr, Waers, Wkurs, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $SupplierCountry, $Bukrs, $Bstyp, $Bsart, $Konnr, $Waers, $Wkurs, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -255,6 +257,8 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bstyp, $Bsart, $
                 ["$Aedat"] = NormalizeSapDate(GetText(row, "Aedat")),
                 ["$Lifnr"] = GetText(row, "Lifnr"),
                 ["$SupplierName"] = ResolveSupplierName(supplierNameMap, GetText(row, "Lifnr"), FirstNonEmpty(GetText(row, "SupplierName"), GetText(row, "Name1"), GetText(row, "Name"))),
+                // Lieferantenland aus LFA1.Land1 (Region-Sicht). Leer, wenn LFA1 kein Land liefert.
+                ["$SupplierCountry"] = ResolveSupplierCountry(supplierNameMap, GetText(row, "Lifnr")),
                 ["$Bukrs"] = GetText(row, "Bukrs"),
                 ["$Bstyp"] = GetText(row, "Bstyp"),
                 ["$Bsart"] = GetText(row, "Bsart"),
@@ -266,11 +270,11 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $Bukrs, $Bstyp, $Bsart, $
             }, cancellationToken);
     }
 
-    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string loadedAtUtc, CancellationToken cancellationToken)
+    private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, IReadOnlyDictionary<string, MaterialClassification> classificationMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, MaraAbc, MaraXyz, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -285,6 +289,10 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Net
                 // ~24 % "01" - wo leer, greift im Dashboard der COALESCE-Fallback auf die
                 // Beleg-Warengruppe.
                 ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, GetText(row, "Matnr")),
+                // ABC (MARC-MAABC, Werk 1100) und XYZ (ZCA_MAT_ABC_XYZ) je Material, ueber Matnr
+                // gejoint. Leer, wo nicht klassifiziert.
+                ["$MaraAbc"] = ResolveAbc(classificationMap, GetText(row, "Matnr")),
+                ["$MaraXyz"] = ResolveXyz(classificationMap, GetText(row, "Matnr")),
                 ["$Menge"] = GetText(row, "Menge"),
                 ["$Meins"] = GetText(row, "Meins"),
                 ["$Netwr"] = GetText(row, "Netwr"),
@@ -358,29 +366,105 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $Menge, $Meins, $Net
         return trimmed.Length == 0 ? normalized : trimmed;
     }
 
-    private async Task<Dictionary<string, string>> LoadSupplierNameMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, SupplierInfo>> LoadSupplierNameMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
     {
-        // LFA1 (Lieferantenstamm) liefert den Lieferantennamen je Lieferantennummer.
-        // Wird ueber EKKO.Lifnr -> LFA1.Lifnr in PurchasingEkkoCache.SupplierName uebernommen.
-        var rows = await ReadAllRowsAsync(client, baseUrl, "LFA1Set", "Lifnr,Name1", string.Empty, "Lifnr", cancellationToken);
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        // LFA1 (Lieferantenstamm) liefert Lieferantenname UND Lieferantenland je Lieferanten-
+        // nummer. Wird ueber EKKO.Lifnr -> LFA1.Lifnr in PurchasingEkkoCache.SupplierName /
+        // SupplierCountry uebernommen. Land1 seit SAP-Erweiterung 2026-07-23 (fuer Region-Sicht).
+        var rows = await ReadAllRowsAsync(client, baseUrl, "LFA1Set", "Lifnr,Name1,Land1", string.Empty, "Lifnr", cancellationToken);
+        var map = new Dictionary<string, SupplierInfo>(StringComparer.Ordinal);
         foreach (var row in rows)
         {
             var key = NormalizeLifnr(GetText(row, "Lifnr"));
             if (key.Length == 0)
                 continue;
-            map[key] = GetText(row, "Name1");
+            map[key] = new SupplierInfo(GetText(row, "Name1"), GetText(row, "Land1"));
         }
 
         return map;
     }
 
-    private static string ResolveSupplierName(IReadOnlyDictionary<string, string> supplierNameMap, string lifnr, string fallback)
+    internal sealed record SupplierInfo(string Name, string Country);
+
+    private static string ResolveSupplierName(IReadOnlyDictionary<string, SupplierInfo> supplierNameMap, string lifnr, string fallback)
     {
         var key = NormalizeLifnr(lifnr);
-        return key.Length > 0 && supplierNameMap.TryGetValue(key, out var name) && !string.IsNullOrWhiteSpace(name)
-            ? name
+        return key.Length > 0 && supplierNameMap.TryGetValue(key, out var info) && !string.IsNullOrWhiteSpace(info.Name)
+            ? info.Name
             : fallback;
+    }
+
+    private static string ResolveSupplierCountry(IReadOnlyDictionary<string, SupplierInfo> supplierNameMap, string lifnr)
+    {
+        var key = NormalizeLifnr(lifnr);
+        return key.Length > 0 && supplierNameMap.TryGetValue(key, out var info) ? info.Country : string.Empty;
+    }
+
+    /// <summary>
+    /// Laedt je Material die ABC- (MARC-MAABC, Werk 1100) und XYZ-Klassifizierung
+    /// (ZSTR_MAT_XYZSet -> ZCA_MAT_ABC_XYZ./ITS/CA_M_MAXYZ). Beides SAP-Erweiterung 2026-07-23.
+    /// ABC ist SAP-Standard, XYZ ein /ITS/-Add-on. Schluessel ist die normalisierte Materialnummer.
+    /// MARCSet liefert alle Werke -> auf 1100 filtern (dort sind die Trafag-AG-Werte gepflegt).
+    /// Das XYZ-Set enthaelt nur die klassifizierten Materialien (kuratierte Teilmenge).
+    /// </summary>
+    private async Task<Dictionary<string, MaterialClassification>> LoadMaterialClassificationMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        var map = new Dictionary<string, MaterialClassification>(StringComparer.Ordinal);
+
+        // ABC aus MARCSet. ACHTUNG: MARCSet ignoriert $top/$skip (liefert immer alle ~68'559
+        // Zeilen, live verifiziert 2026-07-23) - deshalb EIN ungepagter Request statt
+        // ReadAllRowsAsync (das wuerde endlos paging-loopen). Werk 1100 wird client-seitig
+        // gefiltert, weil das Set den serverseitigen $filter nicht zuverlaessig anwendet.
+        var abcUrl = $"{baseUrl}MARCSet?$format=json&$select={Uri.EscapeDataString("Matnr,Werks,Maabc")}";
+        using (var abcResponse = await client.GetAsync(abcUrl, cancellationToken))
+        {
+            if (!abcResponse.IsSuccessStatusCode)
+            {
+                var error = await abcResponse.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException($"SAP OData MARCSet fehlgeschlagen ({(int)abcResponse.StatusCode} {abcResponse.ReasonPhrase}) URL={abcUrl} Antwort={TrimForLog(error)}");
+            }
+
+            foreach (var row in ParseRows(await abcResponse.Content.ReadAsStringAsync(cancellationToken)))
+            {
+                if (GetText(row, "Werks") != "1100")
+                    continue;
+                var key = NormalizeMatnr(GetText(row, "Matnr"));
+                if (key.Length == 0)
+                    continue;
+                map[key] = map.TryGetValue(key, out var existing)
+                    ? existing with { Abc = GetText(row, "Maabc") }
+                    : new MaterialClassification(GetText(row, "Maabc"), string.Empty);
+            }
+        }
+
+        // XYZ aus dem eigenen Set (Methodenrumpf ZSTR_MAT_XYZ, honoriert $top/$skip/$filter) -
+        // ReadAllRowsAsync ist hier korrekt.
+        var xyzRows = await ReadAllRowsAsync(client, baseUrl, "ZSTR_MAT_XYZSet", "Matnr,Werks,Maxyz", "Werks eq '1100'", "Matnr", cancellationToken);
+        foreach (var row in xyzRows)
+        {
+            var key = NormalizeMatnr(GetText(row, "Matnr"));
+            if (key.Length == 0)
+                continue;
+            map[key] = map.TryGetValue(key, out var existing)
+                ? existing with { Xyz = GetText(row, "Maxyz") }
+                : new MaterialClassification(string.Empty, GetText(row, "Maxyz"));
+        }
+
+        return map;
+    }
+
+    internal sealed record MaterialClassification(string Abc, string Xyz);
+
+    private static string ResolveAbc(IReadOnlyDictionary<string, MaterialClassification> map, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && map.TryGetValue(key, out var c) ? c.Abc : string.Empty;
+    }
+
+    private static string ResolveXyz(IReadOnlyDictionary<string, MaterialClassification> map, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && map.TryGetValue(key, out var c) ? c.Xyz : string.Empty;
     }
 
     private static string NormalizeLifnr(string value)

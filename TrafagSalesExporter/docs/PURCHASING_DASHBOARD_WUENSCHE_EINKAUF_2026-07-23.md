@@ -1,5 +1,29 @@
 # Einkaufs-Dashboard — Wuensche aus der Einkaufssitzung 2026-07-23
 
+## Umsetzungsstand 2026-07-23 (SAP-Erweiterung transportiert, C#-Ladestrecke angepasst)
+
+Alle neuen SAP-Felder am 2026-07-23 live gegen travp762 verifiziert:
+
+| Feld | OData | Live-Status | C#-Ladestrecke | Datenlage Werk 1100 |
+| --- | --- | --- | --- | --- |
+| Lieferantenland | `LFA1Set.Land1` | OK (z.B. CH) | -> `PurchasingEkkoCache.SupplierCountry` | gefuellt |
+| Warengruppe Stamm | `MARA001Set.Matkl` | OK (schon 07-23 frueh) | -> `MaraMatkl` | 65 % leer, 24 % `01`, ~10 % echt |
+| ABC | `MARCSet.Maabc` | OK | -> `MaraAbc` | 86 % leer; A=438/B=742/C=8136 |
+| XYZ | `ZSTR_MAT_XYZSet.Maxyz` (eigenes Set, mein Rumpf) | OK | -> `MaraXyz` | Set hat 4'388 Materialien, davon 99 % klassifiziert (Z 69/Y 16/X 14) |
+| Disponent Kopfmaterial | `ZSTR_LZCODE_USAGE.VknrDispo` | **FEHLT** | noch nicht | Struktur-Feld `VKNR_DISPO` in SE11 noch nicht angelegt |
+
+- C#-Ladestrecke (`PurchasingDataRefreshService`) liest Land1 (LFA1), ABC (MARCSet, ungepaged +
+  client-seitiger Werk-1100-Filter, weil MARCSet $top/$skip/$filter ignoriert) und XYZ (eigenes
+  Set, paged). Neue additive Cache-Spalten `SupplierCountry`, `MaraAbc`, `MaraXyz`. Die Felder
+  FUELLEN sich erst mit dem naechsten Einkauf-Full-Load (mit Marco/Andreas abstimmen).
+- UI/Visuals (Region-Kuchen, ABC/XYZ-Sichten, mehrstufiger Aufriss) sind noch NICHT gebaut -
+  bewusst, weil Marco eine Sicht nach der anderen abnehmen will und die Daten erst nach dem Full
+  Load da sind.
+- **VknrDispo bleibt offen**: SE11-Struktur `ZSTR_LZCODE_USAGE` braucht das Feld `VKNR_DISPO`
+  (Datenelement `DISPO`), dann den ZLO03-USAG-Methodenrumpf (Version 22b, hat die vknr_dispo-Zeile
+  schon) erneut aktivieren. Erst danach traegt der Produktgruppen-Aufriss.
+
+
 Quelle: Whisper-Transkript einer Einkaufssitzung (Ingo, Marco, Armin), Modell `medium`,
 Audio `…/einka/Data/audio.wav`. Diskussionsstand, KEINE finalisierte Spezifikation.
 Leitplanke Marco: **eine Sicht nach der anderen fertig machen, nicht verzetteln** — zuerst
