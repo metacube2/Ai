@@ -86,11 +86,14 @@ Das Feld allein macht die Produktgruppe NICHT fertig - es fehlt weiterhin:
   - Das ist Marcos „ITSCH-MAT-ABC-XYZ" aus der Sitzung (die `/ITS/CA_MAT_ABC_XYZ_*`-Objekte sind
     nur Strukturen/ALV; die Daten liegen in `ZCA_MAT_ABC_XYZ`). Marcos bestehender Report nutzt
     dieselbe Tabelle.
-- **Fuer die App exponieren**: XYZ ist noch in KEINEM EntitySet. Zwei Wege - entweder ein eigenes
-  Set auf `ZCA_MAT_ABC_XYZ` (Key MATNR+WERKS, Feld `/ITS/CA_M_MAXYZ` als Property z.B. `Maxyz`),
-  oder das Feld per Read in das MARC-Set dazuholen (gleicher Key MATNR+WERKS). ABC (`Maabc`) liegt
-  schon im MARC-Set - am konsistentesten waere, XYZ im selben Materialklassifizierungs-Set
-  danebenzulegen.
+- **Fuer die App exponieren - EMPFEHLUNG: eigenes, schlankes XYZ-Set** (nicht ins MARC-Set). Grund:
+  MARCSet liest die Standardtabelle MARC automatisch; XYZ liegt in einer ANDEREN Tabelle
+  (`ZCA_MAT_ABC_XYZ`). Es ins MARC-Set zu holen wuerde dessen Auto-Read ueberschreiben und das
+  bereits funktionierende `Maabc` gefaehrden. Ein eigenes Set ist risikofrei; die C#-Seite fuehrt
+  ABC (MARCSet.Maabc) und XYZ (eigenes Set) ueber die Materialnummer zusammen (gleiches Muster wie
+  die MARA001Set-Statusmap). Fertiger Methodenrumpf + SE11-/SEGW-Anleitung:
+  `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.abap`. Struktur `ZSTR_MAT_XYZ` (Matnr/Werks/Maxyz), Set-
+  Name loest die C#-Seite dynamisch auf.
 
 ## Visualisierung (Wunsch)
 
