@@ -12,6 +12,15 @@ public class ManagementCockpitService : IManagementCockpitService
     private readonly ICurrencyExchangeRateService _exchangeRateService;
     private readonly ICentralSalesDataProvider? _centralSalesDataProvider;
 
+    // Dieser Service ist Singleton (Program.cs) und LoadCentralRecordsAsync wird pro
+    // Cockpit-Seitenaufruf 2-4x unabhaengig voneinander aufgerufen (Init, Central-Tab,
+    // Finance-Tab, Heartbeat-Tab) - ohne Cache liest jeder Aufruf die komplette,
+    // stetig wachsende CentralSalesRecords-Tabelle neu ein. Kurze TTL haelt die Werte
+    // dashboard-tauglich frisch, spart aber die redundanten Mehrfachladungen pro Aufruf.
+    private static readonly TimeSpan CentralRecordsCacheTtl = TimeSpan.FromSeconds(10);
+    private List<SalesRecord>? _centralRecordsCache;
+    private DateTime _centralRecordsCacheAtUtc = DateTime.MinValue;
+
     public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory)
         : this(dbFactory, new CurrencyExchangeRateService(dbFactory), null)
     {
@@ -1022,6 +1031,17 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     private async Task<List<SalesRecord>> LoadCentralRecordsAsync()
+    {
+        if (_centralRecordsCache is not null && DateTime.UtcNow - _centralRecordsCacheAtUtc < CentralRecordsCacheTtl)
+            return _centralRecordsCache;
+
+        var records = await LoadCentralRecordsUncachedAsync();
+        _centralRecordsCache = records;
+        _centralRecordsCacheAtUtc = DateTime.UtcNow;
+        return records;
+    }
+
+    private async Task<List<SalesRecord>> LoadCentralRecordsUncachedAsync()
     {
         if (_centralSalesDataProvider is not null)
             return await _centralSalesDataProvider.GetRecordsAsync();

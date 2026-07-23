@@ -55,6 +55,10 @@ public class TimerBackgroundService : BackgroundService
             if (DateTime.Now < _nextRun) continue;
 
             await RunExportAsync("Timer-Export gestartet um {Time}");
+            // Einkauf-Delta laeuft NUR im planmaessigen Slot, nicht im Nachhol-Lauf: ein
+            // verpasster Slot (z.B. Deploy nach 03:00) darf nicht bei einem beliebigen
+            // Tages-Restart einen SAP-Lauf gegen travp762 ausloesen.
+            await RunPurchasingDeltaAsync();
             await RecalculateNextRunAsync();
         }
     }
@@ -99,6 +103,31 @@ public class TimerBackgroundService : BackgroundService
         // Prozessstart am selben Tag den schweren Export wiederholt ausloest. Ein echter
         // Fehlversuch wird regulaer am naechsten geplanten Slot erneut ausgefuehrt.
         await StampLastRunAsync();
+    }
+
+    private async Task RunPurchasingDeltaAsync()
+    {
+        try
+        {
+            var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = await dbFactory.CreateDbContextAsync();
+            var purchasingActive = await db.Sites
+                .AnyAsync(s => s.TSC == PurchasingDataSourcePageService.PurchasingTsc && s.IsActive);
+            if (!purchasingActive)
+                return;
+
+            _logger.LogInformation("Einkauf-Delta (naechtlich) gestartet um {Time}", DateTime.Now);
+
+            // IPurchasingDataRefreshService ist Scoped -> eigener Scope statt Aufloesung
+            // aus dem Singleton-Root (sonst Scope-Validation-Fehler).
+            using var scope = _serviceProvider.CreateScope();
+            var refresh = scope.ServiceProvider.GetRequiredService<IPurchasingDataRefreshService>();
+            await refresh.RunDeltaAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler beim naechtlichen Einkauf-Delta");
+        }
     }
 
     private async Task StampLastRunAsync()

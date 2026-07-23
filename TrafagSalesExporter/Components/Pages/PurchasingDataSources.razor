@@ -1,6 +1,7 @@
 @page "/einkauf/verbindungen"
 @using TrafagSalesExporter.Services
 @inject IPurchasingDataSourcePageService DataSourceService
+@inject IPurchasingDataRefreshService RefreshService
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject ISnackbar Snackbar
 
@@ -85,6 +86,37 @@ else
             </MudPaper>
         </MudItem>
     </MudGrid>
+
+    <MudPaper Class="pa-3 mb-4" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-1">@T("Datenladung", "Data load")</MudText>
+        <MudText Typo="Typo.body2" Class="mb-3 purchasing-muted">
+            @T("Full Load = kompletter Neuaufbau des Einkaufs-Caches (schwer, mit Marco/Andreas abstimmen). Delta = nur neue/geaenderte Belege seit dem letzten Lauf. Nachts laeuft automatisch ein Delta, sofern die Einkaufsquelle aktiv ist.",
+               "Full load = complete rebuild of the purchasing cache (heavy, coordinate with Marco/Andreas). Delta = only new/changed documents since the last run. A delta runs automatically each night while the purchasing source is active.")
+        </MudText>
+        @if (_refreshBusy)
+        {
+            <MudProgressLinear Indeterminate="true" Class="mb-2" />
+        }
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" OnClick="RunFullLoadAsync" Disabled="_refreshBusy || _busy">
+                @T("Full Load starten", "Start full load")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Sync" OnClick="RunDeltaAsync" Disabled="_refreshBusy || _busy">
+                @T("Delta aktualisieren", "Refresh delta")
+            </MudButton>
+            @if (_refreshStatus is not null)
+            {
+                <MudText Typo="Typo.caption" Class="purchasing-muted">
+                    @_refreshStatus.Mode: @_refreshStatus.Status
+                    @if (_refreshStatus.CompletedAtUtc.HasValue)
+                    {
+                        <span> (@_refreshStatus.CompletedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</span>
+                    }
+                    &mdash; EKKO @_refreshStatus.EkkoRows / EKPO @_refreshStatus.EkpoRows / EKET @_refreshStatus.EketRows
+                </MudText>
+            }
+        </MudStack>
+    </MudPaper>
 
     <MudTabs Elevation="1" Rounded="false" PanelClass="pt-4">
         <MudTabPanel Text="@T("Quellen", "Sources")" Icon="@Icons.Material.Filled.Hub">
@@ -177,11 +209,50 @@ else
     private PurchasingDataSourceState _state = new();
     private bool _loading = true;
     private bool _busy;
+    private bool _refreshBusy;
+    private PurchasingDataRefreshStatus? _refreshStatus;
 
     protected override async Task OnInitializedAsync()
     {
         _state = await DataSourceService.LoadAsync();
+        _refreshStatus = await RefreshService.GetStatusAsync();
         _loading = false;
+    }
+
+    private async Task RunFullLoadAsync()
+    {
+        await RunRefreshAsync(
+            () => RefreshService.RunFullLoadAsync(),
+            T("Full Load abgeschlossen.", "Full load completed."));
+    }
+
+    private async Task RunDeltaAsync()
+    {
+        await RunRefreshAsync(
+            () => RefreshService.RunDeltaAsync(),
+            T("Delta aktualisiert.", "Delta refreshed."));
+    }
+
+    private async Task RunRefreshAsync(Func<Task<PurchasingDataRefreshStatus>> action, string successMessage)
+    {
+        if (_refreshBusy || _busy)
+            return;
+
+        _refreshBusy = true;
+        try
+        {
+            _refreshStatus = await action();
+            var ok = _refreshStatus.IsComplete;
+            Snackbar.Add(ok ? successMessage : _refreshStatus.Message, ok ? Severity.Success : Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _refreshBusy = false;
+        }
     }
 
     private async Task SaveAsync()

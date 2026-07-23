@@ -6,6 +6,35 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- PERFORMANCE-BEFUND COCKPIT 2026-07-23, `268/268` Tests gruen, DEPLOYED (DLL 15:30): Auf "die
+  ganze Webanwendung wird immer ein wenig langsamer" gemessen statt geraten: DB-Datei 305 MB,
+  `CentralSalesRecords` 84'298 Zeilen (kein Index), `FinancialJournalEntries` 187'589 (indiziert),
+  Purchasing-Caches 172-242k (indiziert). Konkreter Befund: `ManagementCockpitService` ist
+  Singleton; `LoadCentralRecordsAsync()` (kompletter, ungefilterter Read von `CentralSalesRecords`
+  inkl. Materialisierung in 40-Feld-Objekte) wird bei JEDEM Cockpit-Seitenaufruf 2-4x unabhaengig
+  neu aufgerufen (Init, Central-Tab, Finance-Tab, Heartbeat-Tab) - Kosten wachsen mit der
+  taeglich wachsenden Tabelle. FIX: 10s-TTL-Cache um `LoadCentralRecordsAsync()` (nur die Rohliste,
+  nicht die Analyseergebnisse) - faengt alle Mehrfachaufrufe eines Seitenbesuchs ab, 10s haelt das
+  Korrektheitsrisiko nach Full Load/Export minimal. Vor dem Ship verifiziert: alle 4 Aufrufer +
+  `BuildFinanceDataStatusRowsAsync` behandeln die Liste rein lesend (nur Select/GroupBy/Where in
+  neue Objekte), keine In-Place-Mutation der geteilten `SalesRecord`-Elemente - Singleton-Cache
+  ist damit nebenlaeufig sicher. WICHTIG: das ist eine bestaetigte, konkrete Ineffizienz, aber NICHT
+  bestaetigt als alleinige Ursache der App-weiten Verlangsamung - der Nutzer konnte die
+  Unterscheidungsfrage "wird es nach einem Neustart kurz schneller und dann wieder langsamer" nicht
+  beantworten. Falls das Muster spaeter beobachtet wird: das deutet auf IIS-Worker-Alterung
+  (App-Pool-Recycling, Betriebsthema) hin, nicht auf Code. Log-Tabellen (`AppEventLogs` 3'149,
+  `ExportLogs` 173) sind zu klein, um relevant zu sein - kein Fix noetig.
+- EINKAUF-NACHTLAUF + LADE-BUTTONS 2026-07-23, `268/268` Tests gruen, DEPLOYED (DLL 14:49):
+  Auf der Einkauf-Datenquellen-Seite (`/einkauf/verbindungen`) neuer Bereich "Datenladung" mit
+  Buttons "Full Load starten" und "Delta aktualisieren" (+ Fortschrittsbalken/Statuszeile), damit
+  der Lauf auch von der Settings-Seite ausgeloest werden kann (nicht nur ueber `/einkauf`).
+  Naechtlicher Automatik-Lauf: `TimerBackgroundService` ruft im PLANMAESSIGEN 03:00-Slot zusaetzlich
+  `RunPurchasingDeltaAsync()` (nur Delta, leicht) - gegated auf Site `PURCHASING_SAP` IsActive,
+  eigener DI-Scope (Refresh-Service ist Scoped), eigener try/catch (Einkauf-Fehler bricht den
+  Finance-Stempel nicht). BEWUSST NICHT im Nachhol-Lauf (`CatchUpMissedRunAsync`): sonst wuerde ein
+  Deploy-Restart nach 03:00 einen SAP-Lauf gegen travp762 ausloesen. Full Load bleibt manuell
+  (kompletter Cache-Neuaufbau, 18-Mio-Last - mit Marco/Andreas abstimmen), Ingo-Entscheid:
+  "Delta nachts, Full auf Knopf". Haengt am selben `TimerEnabled`-Schalter wie Finance.
 - UI 2026-07-23, `268/268` Tests gruen: Erste neue Einkauf-Sicht gebaut - Balkenblock "Volumen
   nach Beschaffungsregion" (Lieferantenland LFA1.Land1 -> EKKO.SupplierCountry) im Spend-Reiter,
   neben "Volumen nach Warengruppe". Der Zusatz-Chart-Bereich von `PurchasingSection` ist von einem

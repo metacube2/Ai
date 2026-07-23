@@ -7,6 +7,13 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Kurzstand
 
+- NEU 2026-07-23 (deployed): Nächtlicher Automatik-Lauf Einkauf = DELTA im planmässigen 03:00-Slot
+  (`TimerBackgroundService.RunPurchasingDeltaAsync`, gegated auf Site `PURCHASING_SAP` IsActive,
+  eigener Scope/try-catch). BEWUSST nicht im Nachhol-/Catch-up-Pfad (kein SAP-Lauf bei Deploy-
+  Restart nach 03:00). Full Load bleibt MANUELL (Cache-Neuaufbau, mit Marco/Andreas abstimmen).
+  Buttons "Full Load starten" + "Delta aktualisieren" jetzt auch auf `/einkauf/verbindungen`
+  (Bereich "Datenladung"), zusaetzlich zum Button auf `/einkauf`. Ingo-Entscheid: "Delta nachts,
+  Full auf Knopf". Haengt am selben `TimerEnabled`-Schalter wie der Finance-Nachtlauf.
 - NEU 2026-07-23: Reiter `Spend` hat jetzt ein zweites Balkendiagramm "Volumen nach Warengruppe"
   (PowerBI-Seite "Diagramm Vol./WG"). Bewusst im Spend-Reiter (Volumenanalyse), nicht bei
   Lieferanten (Bewertung/Performance). Gleiche COALESCE-WG-Logik und gleicher Zeitraum-/
