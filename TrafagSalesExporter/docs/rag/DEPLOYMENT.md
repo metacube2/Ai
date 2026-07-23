@@ -4,7 +4,14 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-23 (vierter Deploy des Tages), Einkauf-Loader liest Land/ABC/XYZ.
+- Letzter Deploy: 2026-07-23 (fuenfter Deploy des Tages), Region-Balkendiagramm im Einkauf-Spend.
+  Commit `c17b573 Add "volume by procurement region" chart to purchasing Spend tab`; `268/268`
+  Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 14:27:40`, Laenge
+  `3'092'480`; Port 443 -> True; DB unveraendert. Erste neue Einkauf-Sicht (Volumen nach
+  Beschaffungsregion); Werte fuellen sich erst mit dem naechsten Full Load. VknrDispo live
+  bestaetigt. Details: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
+- Vorheriger Deploy: 2026-07-23 (vierter Deploy des Tages), Einkauf-Loader liest Land/ABC/XYZ.
   Commit `4d08da6 Load supplier country, ABC and XYZ classification into purchasing cache`;
   `268/268` Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 13:50:06`, Laenge
