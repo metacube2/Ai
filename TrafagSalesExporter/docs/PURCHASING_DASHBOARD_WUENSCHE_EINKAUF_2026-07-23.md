@@ -1,6 +1,6 @@
 # Einkaufs-Dashboard — Wuensche aus der Einkaufssitzung 2026-07-23
 
-## Umsetzungsstand 2026-07-24 (Reiter „Spend-Aufriss" gebaut)
+## Umsetzungsstand 2026-07-24 (Reiter „Spend-Aufriss" gebaut + deployed, DLL 10:47, Commit 4e7861d)
 
 Neuer, eigener Reiter `/einkauf/aufriss` „Spend-Aufriss" (Komponente `PurchasingSpendExplorer.razor`),
 bewusst getrennt vom abzunehmenden `Spend`-Reiter. Ingo-Entscheid „bau alle 3":

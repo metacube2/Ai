@@ -6,7 +6,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- SPEND-AUFRISS (NEUER REITER) 2026-07-24, `272/272` Tests gruen: Neuer Einkauf-Reiter
+- SPEND-AUFRISS (NEUER REITER) 2026-07-24, `272/272` Tests gruen, DEPLOYED (DLL 24.07.2026 10:47,
+  Port 443 offen, HTTP 401 = App oben/Auth-Challenge; Commit `4e7861d`): Neuer Einkauf-Reiter
   `/einkauf/aufriss` „Spend-Aufriss" (Nav-Link `purchasing-breakdown`, Sort 55, zwischen Lieferanten
   und Ideen) - bewusst EIGENER Reiter, damit der von Marco abzunehmende `Spend`-Reiter unangetastet
   bleibt (Ingo: „in neuem Reiter wenn noetig"; Ingo-Entscheid: „bau alle 3"). Umgesetzt sind die drei
@@ -25,7 +26,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `PurchasingSection` nicht rendert). NICHT umgesetzt (bewusst): flexible Einstiegsdimension
   (Question 2 unbeantwortet - klare Lesart genommen) und Produktgruppen-Aufriss (ZC23-Mapping fehlt,
   siehe `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`). 4 neue Tests (Kaskade-Pivot,
-  Artikel-Deckelung+Rest, Region-Slices, ABC/XYZ). NOCH NICHT DEPLOYED.
+  Artikel-Deckelung+Rest, Region-Slices, ABC/XYZ). DEPLOYED 2026-07-24 (siehe Kopf des Eintrags).
+  ERINNERUNG: Region/ABC/XYZ bleiben leer, bis der naechste Einkauf-Full-Load (mit Marco/Andreas
+  abgestimmt) SupplierCountry/MaraAbc/MaraXyz befuellt.
 - PERFORMANCE-BEFUND COCKPIT 2026-07-23, `268/268` Tests gruen, DEPLOYED (DLL 15:30): Auf "die
   ganze Webanwendung wird immer ein wenig langsamer" gemessen statt geraten: DB-Datei 305 MB,
   `CentralSalesRecords` 84'298 Zeilen (kein Index), `FinancialJournalEntries` 187'589 (indiziert),

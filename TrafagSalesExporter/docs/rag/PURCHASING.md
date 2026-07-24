@@ -7,7 +7,7 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Kurzstand
 
-- NEU 2026-07-24 (noch nicht deployed): Neuer Reiter `/einkauf/aufriss` „Spend-Aufriss" (eigene
+- NEU 2026-07-24 (DEPLOYED, DLL 10:47, Commit `4e7861d`): Neuer Reiter `/einkauf/aufriss` „Spend-Aufriss" (eigene
   Komponente `PurchasingSpendExplorer.razor`, Nav `purchasing-breakdown`), damit der abzunehmende
   `Spend`-Reiter unangetastet bleibt. Drei Sichten: (1) mehrstufige Kaskade Lieferant -> Warengruppe
   -> Artikel (aufklappbar, je Ebene gedeckelt `[40,15,10]` + „uebrige"-Restzeile, Elternsumme =
