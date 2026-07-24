@@ -1,5 +1,20 @@
 # Einkaufs-Dashboard — Wuensche aus der Einkaufssitzung 2026-07-23
 
+## Umsetzungsstand 2026-07-24, zweiter Nachtrag (Full Load durch + Warengruppen-Text, DLL 12:37, Commit c44ae28)
+
+Einkauf-Full-Load ist gelaufen; live an einer Kopie der Prod-DB geprueft (danach geloescht):
+`SupplierCountry` 100% gefuellt, `MaraAbc` 78%, `MaraXyz` 65%, `MaraMatkl` 80,7%. Damit zeigen
+Region-Kuchen, ABC und XYZ im Reiter „Spend-Aufriss" jetzt echte Daten statt der „fuellt sich
+nach Full-Load"-Hinweise (die Hinweise sind datengetrieben und verschwinden automatisch, kein
+Code-Fix noetig).
+
+Zusaetzlich: Ingo hat den T023T-Export (Warengruppen-Texte, Sprache DE, ~72 Codes) direkt als
+Listenausgabe geliefert. Neue Klasse `PurchasingMaterialGroupTextCatalog` (statisches Dictionary)
+loest jeden angezeigten Matkl/MaraMatkl-Code auf „Code - Text" auf (z.B. „20.05.00 - Baelge"),
+unbekannte/kuenftige Codes bleiben roher Code. Betrifft alle 6 Stellen mit sichtbarem WG-Code:
+Volumen-nach-Warengruppe-Chart, Top-Warengruppe-KPI, Lieferant/WG/Jahr-Drilldown, Kaskade +
+Region-Kuchen im Spend-Aufriss, Live-Vorschau ohne Cache. `277/277` Tests gruen.
+
 ## Umsetzungsstand 2026-07-24 (Reiter „Spend-Aufriss" gebaut + deployed, DLL 10:47, Commit 4e7861d)
 
 Neuer, eigener Reiter `/einkauf/aufriss` „Spend-Aufriss" (Komponente `PurchasingSpendExplorer.razor`),

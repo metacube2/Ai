@@ -6,6 +6,18 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- WARENGRUPPEN-TEXT (T023T) 2026-07-24, `277/277` Tests gruen, DEPLOYED (DLL 24.07.2026 12:37,
+  Port 443 offen, HTTP 401 = App oben/Auth-Challenge; Commit `c44ae28`): Ingo hat den SAP-Export
+  T023T (Sprache DE, ~72 Codes, WGBEZ auf 20 Zeichen abgeschnitten) direkt als Liste geliefert -
+  neue Klasse `PurchasingMaterialGroupTextCatalog` (statisches Dictionary, kein DB-Upload noetig)
+  loest Matkl/MaraMatkl-Codes auf "Code - Text" auf (z.B. "20.05.00 - Baelge"), unbekannte/
+  kuenftige Codes bleiben roher Code (kein Verschwinden). Verdrahtet an allen 6 Stellen, die einen
+  WG-Code anzeigen: Volumen-nach-Warengruppe-Chart, Top-Warengruppe-KPI, Lieferant/WG/Jahr-
+  Drilldown, Kaskade + Region-Kuchen im Spend-Aufriss, Live-Vorschau ohne Cache. Stale UI-Hinweis
+  ("MARA-MATKL liefert SAP noch nicht") korrigiert - Full Load vom 24.07. fuellt MaraMatkl zu
+  80,7%. Full Load ausserdem live geprueft: SupplierCountry 100%, MaraAbc 78%, MaraXyz 65% gefuellt
+  -> Region/ABC/XYZ im Spend-Aufriss zeigen jetzt echte Daten statt Leer-Hinweis (Warnungen sind
+  datengetrieben, kein Codeaenderung noetig). Details: `docs/rag/PURCHASING.md`.
 - SPEND-AUFRISS (NEUER REITER) 2026-07-24, `272/272` Tests gruen, DEPLOYED (DLL 24.07.2026 10:47,
   Port 443 offen, HTTP 401 = App oben/Auth-Challenge; Commit `4e7861d`): Neuer Einkauf-Reiter
   `/einkauf/aufriss` „Spend-Aufriss" (Nav-Link `purchasing-breakdown`, Sort 55, zwischen Lieferanten

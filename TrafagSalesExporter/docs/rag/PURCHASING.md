@@ -7,6 +7,26 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Kurzstand
 
+- NEU 2026-07-24 (DEPLOYED, DLL 12:37, Commit `c44ae28`): Warengruppen-**Texte** (T023T) ergaenzt.
+  Ingo hat den SAP-Export direkt als Listenausgabe geliefert (Sprache DE, ~72 Codes, `WGBEZ` SAP-
+  seitig auf 20 Zeichen abgeschnitten, `WGBEZ60` leer). Neue Klasse
+  `Services/PurchasingMaterialGroupTextCatalog.cs` (statisches Dictionary, KEIN DB-Upload/Schema-
+  Aenderung, da nur ich diese Liste pflege) loest Matkl/MaraMatkl-Codes ueberall dort auf, wo sie
+  als Chart-/KPI-/Kaskaden-Label erscheinen, auf "Code - Text" auf (z.B. "20.05.00 - Baelge").
+  Unbekannte/kuenftige Codes bleiben roher Code - verschwinden nie, neue Zeilen einfach an die
+  Liste anhaengen sobald Ingo weitere `Matkl;Wgbez`-Werte liefert. Verdrahtet an 6 Stellen:
+  `MaterialGroupSpendRows`-Chart, `TopMaterialGroupLabel`-KPI, Lieferant/WG/Jahr-Drilldown
+  (`ExecuteSupplierGroupYearRowsAsync`), Kaskade + Region-Kuchen im Spend-Aufriss
+  (`ExecuteSpendCascadeRowsAsync`/`ExecuteRegionByMaterialGroupRowsAsync`), Live-Vorschau ohne
+  Cache (`ApplyEkpoMetrics`). Der alte UI-Hinweis "MARA-MATKL liefert SAP noch nicht" in
+  `PurchasingDashboard.razor` war seit dem Full Load vom 24.07. falsch (MaraMatkl 80,7% gefuellt)
+  und wurde korrigiert. `277/277` Tests gruen.
+- VOLLLADUNG 24.07.2026 LIVE GEPRUEFT (Kopie der Prod-DB, danach geloescht): `SupplierCountry`
+  100% gefuellt (175'355/175'355), `MaraAbc` 78% klassifiziert (A 54'423/B 43'424/C 87'241),
+  `MaraXyz` 65% (X 67'495/Y 32'472/Z 54'561), `MaraMatkl` 80,7% (191'356/237'217, davon nur noch
+  ~15% Sammelgruppe `01`). Reiter Spend-Aufriss (Region-Kuchen, ABC, XYZ) zeigt damit jetzt echte
+  Daten statt Leer-Hinweis - die Warnungen dort sind datengetrieben (`if Rows leer/unbekannt`),
+  verschwinden also automatisch, kein Code-Fix noetig.
 - NEU 2026-07-24 (DEPLOYED, DLL 10:47, Commit `4e7861d`): Neuer Reiter `/einkauf/aufriss` „Spend-Aufriss" (eigene
   Komponente `PurchasingSpendExplorer.razor`, Nav `purchasing-breakdown`), damit der abzunehmende
   `Spend`-Reiter unangetastet bleibt. Drei Sichten: (1) mehrstufige Kaskade Lieferant -> Warengruppe
@@ -69,7 +89,8 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 - SAP-Erweiterung: `Matkl` in `maracalc` aufnehmen (fuer echte Materialstamm-Warengruppe im Drilldown).
 - Abnahme-Checks Marco: 18-Mio-Offenwert gegen SAP, WKURS-Richtung an echtem Fremdwaehrungsbeleg.
 - ABC/XYZ: Weg seit 2026-07-17 klar (ABC = `MARC-MAABC`, Sicht O2; XYZ separate Tabelle; vorhandener SAP-Report extrahiert beides) — Umsetzung erst nach Spend-Abnahme.
-- Referenzlisten von Ingo: Warengruppen-Texte (T023T-Export) und ZC23-Disponentengruppen (fuer Aufriss Verwendung/Disponenten 001-005).
+- ERLEDIGT 2026-07-24: Warengruppen-Texte (T023T-Export) von Ingo geliefert und eingebaut, siehe
+  Kurzstand oben. Offen bleibt: ZC23-Disponentengruppen (fuer Aufriss Verwendung/Disponenten 001-005).
 
 ## Rohquellen Nur Bei Bedarf
 
