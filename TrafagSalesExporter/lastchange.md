@@ -6,6 +6,22 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- IIS-HOSTING ZURUECK AUF INPROCESS 2026-07-24, DEPLOYED (DLL 24.07.2026 13:20, Port 443 offen,
+  HTTP 401 auf `/einkauf/spend` UND `/diag.txt` = App oben; Commit `4d2c6d3`): Ingo meldete, dass
+  die Seite beim Wechsel zwischen Reitern haengt ("Attempting to reconnect to the server X of 8"),
+  ueberall in der App, nicht nur Einkauf. Ursache im Git-Verlauf gefunden: `web.config` stand seit
+  20.05.2026 auf `hostingModel="outofprocess"` - das war laut damaligem Commit NUR eine
+  Diagnose-Massnahme fuer einen IIS-500-Startfehler beim allerersten Deploy, wurde aber nie
+  zurueckgestellt. `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` ging faelschlich davon aus,
+  die App liefe bereits auf `inprocess`. Outofprocess bedeutet ein zusaetzlicher Reverse-Proxy-Hop
+  IIS -> separater `dotnet.exe`-Prozess fuer jeden Request inkl. der SignalR-WebSocket-Verbindung
+  des Blazor-Circuits - deutlich instabiler fuer Dauerverbindungen, passt zum gemeldeten Symptom.
+  Haengt vermutlich auch mit dem Vorfall vom 07.07.2026 zusammen (killed `dotnet`-Prozess startete
+  nicht automatisch neu, kein AlwaysRunning). Fix: `web.config` zurueck auf `hostingModel="inprocess"`
+  (Ursprungszustand vom 19.05.2026). ROLLBACK falls noetig: Zeile zurueck auf `outofprocess`,
+  redeployen (2 Minuten, keine DB-/Codeaenderung). Nach Deploy verifiziert: stdout-Log des alten
+  Out-of-Process-Workers zeigt sauberen Shutdown, kein Absturz; kein 500.30/502.5 (typisches
+  In-Process-Ladeversagen), stattdessen sauberes 401 wie gewohnt.
 - WARENGRUPPEN-TEXT (T023T) 2026-07-24, `277/277` Tests gruen, DEPLOYED (DLL 24.07.2026 12:37,
   Port 443 offen, HTTP 401 = App oben/Auth-Challenge; Commit `c44ae28`): Ingo hat den SAP-Export
   T023T (Sprache DE, ~72 Codes, WGBEZ auf 20 Zeichen abgeschnitten) direkt als Liste geliefert -

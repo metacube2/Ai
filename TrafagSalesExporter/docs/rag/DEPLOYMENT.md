@@ -4,7 +4,14 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-23 (fuenfter Deploy des Tages), Region-Balkendiagramm im Einkauf-Spend.
+- Letzter Deploy: 2026-07-24, IIS-Hosting zurueck auf `inprocess` (war seit 20.05.2026 faelschlich
+  `outofprocess` stehen geblieben - siehe `lastchange.md`). Commit `4d2c6d3`; Publish nach
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt/entfernt;
+  produktive `BiDashboard.dll` `24.07.2026 13:20:07`; Port 443 -> True; HTTP 401 auf
+  `/einkauf/spend` und `/diag.txt` (kein 500.30/502.5); DB unveraendert. Anlass: Ingo meldete
+  haengende Seite/"Attempting to reconnect" beim Reiterwechsel, ueberall in der App. ROLLBACK:
+  `web.config` Zeile zurueck auf `hostingModel="outofprocess"`, redeployen.
+- Vorheriger Deploy: 2026-07-23 (fuenfter Deploy des Tages), Region-Balkendiagramm im Einkauf-Spend.
   Commit `c17b573 Add "volume by procurement region" chart to purchasing Spend tab`; `268/268`
   Tests gruen; Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
   `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `23.07.2026 14:27:40`, Laenge
