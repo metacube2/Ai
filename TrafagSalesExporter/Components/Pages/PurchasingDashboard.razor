@@ -63,6 +63,10 @@
 </MudPaper>
 
 <MudPaper Class="pa-3 mb-4 purchasing-filter-panel" Outlined="true">
+    @if (_liveLoading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
         <div>
             <MudText Typo="Typo.subtitle1">@T("Zeitraum", "Period")</MudText>
@@ -103,6 +107,13 @@
         <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Update" OnClick="SetPurchasingRangeAsync" Disabled="_liveLoading">
             @T("2020 bis heute", "2020 to today")
         </MudButton>
+        @if (_liveLoading)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="purchasing-filter-loading">
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Primary">@T("Laedt...", "Loading...")</MudText>
+            </MudStack>
+        }
     </div>
 </MudPaper>
 
