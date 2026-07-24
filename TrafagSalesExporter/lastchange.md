@@ -6,6 +6,26 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- SPEND-AUFRISS (NEUER REITER) 2026-07-24, `272/272` Tests gruen: Neuer Einkauf-Reiter
+  `/einkauf/aufriss` „Spend-Aufriss" (Nav-Link `purchasing-breakdown`, Sort 55, zwischen Lieferanten
+  und Ideen) - bewusst EIGENER Reiter, damit der von Marco abzunehmende `Spend`-Reiter unangetastet
+  bleibt (Ingo: „in neuem Reiter wenn noetig"; Ingo-Entscheid: „bau alle 3"). Umgesetzt sind die drei
+  offenen Spend-Wuensche aus der Einkaufssitzung: (1) MEHRSTUFIGE KASKADE Lieferant -> Warengruppe
+  -> Artikel (aufklappbar, je Ebene Top-N gedeckelt `[40,15,10]` mit „uebrige (n)"-Restzeile, sodass
+  Elternsumme = Summe der Kinder bleibt - wichtig, weil Blazor Server den Baum serverseitig rendert;
+  nutzt VORHANDENE Cache-Daten Beleg-WG/Matnr, zeigt also SOFORT echte Zahlen). (2) REGION-KUCHEN je
+  Warengruppe (conic-gradient-Donut je Top-Warengruppe -> Anteil je Lieferantenland). (3) VOLUMEN
+  NACH ABC / XYZ (Balken aus `MaraAbc`/`MaraXyz`). WICHTIGER VORBEHALT: Region, ABC und XYZ sind bis
+  zum naechsten Einkauf-Full-Load (SupplierCountry/MaraAbc/MaraXyz noch leer bzw. 0 %) faktisch LEER
+  und zeigen ehrliche UI-Hinweise; nur die Kaskade hat heute echte Daten. Umsetzung: neue
+  State-Felder + Aggregationen (`ExecuteSpendCascadeRowsAsync`, `ExecuteRegionByMaterialGroupRowsAsync`,
+  ABC/XYZ-Charts) in `PurchasingDashboardService` (laufen NUR beim Datenladen, nicht pro Render);
+  neue Models `PurchasingSpendCascadeNode`/`PurchasingRegionPieGroup`; eigene, selbsttragende
+  Komponente `PurchasingSpendExplorer.razor` (Basis-CSS bewusst dupliziert, da der `aufriss`-Case
+  `PurchasingSection` nicht rendert). NICHT umgesetzt (bewusst): flexible Einstiegsdimension
+  (Question 2 unbeantwortet - klare Lesart genommen) und Produktgruppen-Aufriss (ZC23-Mapping fehlt,
+  siehe `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`). 4 neue Tests (Kaskade-Pivot,
+  Artikel-Deckelung+Rest, Region-Slices, ABC/XYZ). NOCH NICHT DEPLOYED.
 - PERFORMANCE-BEFUND COCKPIT 2026-07-23, `268/268` Tests gruen, DEPLOYED (DLL 15:30): Auf "die
   ganze Webanwendung wird immer ein wenig langsamer" gemessen statt geraten: DB-Datei 305 MB,
   `CentralSalesRecords` 84'298 Zeilen (kein Index), `FinancialJournalEntries` 187'589 (indiziert),

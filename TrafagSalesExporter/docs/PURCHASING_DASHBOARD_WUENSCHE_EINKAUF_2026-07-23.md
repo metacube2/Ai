@@ -1,5 +1,22 @@
 # Einkaufs-Dashboard — Wuensche aus der Einkaufssitzung 2026-07-23
 
+## Umsetzungsstand 2026-07-24 (Reiter „Spend-Aufriss" gebaut)
+
+Neuer, eigener Reiter `/einkauf/aufriss` „Spend-Aufriss" (Komponente `PurchasingSpendExplorer.razor`),
+bewusst getrennt vom abzunehmenden `Spend`-Reiter. Ingo-Entscheid „bau alle 3":
+
+| Wunsch | Stand 2026-07-24 | Bemerkung |
+| --- | --- | --- |
+| Mehrstufiger Aufriss (Kaskadierung) | **gebaut** | feste Kaskade Lieferant -> Warengruppe -> Artikel, aufklappbar; je Ebene Top-N gedeckelt `[40,15,10]` + „uebrige (n)"-Restzeile (Elternsumme = Summe Kinder). Nutzt vorhandene Cache-Daten (Beleg-WG/Matnr) -> zeigt SOFORT echte Zahlen. |
+| Region-Kuchen je Warengruppe | **gebaut, Daten offen** | conic-gradient-Donut je Top-Warengruppe -> Anteil je Lieferantenland. Leer bis zum naechsten Full-Load (SupplierCountry noch 0 %). |
+| ABC / XYZ | **gebaut, Daten offen** | Balken „Volumen nach ABC/XYZ" aus `MaraAbc`/`MaraXyz`. Leer bis zum naechsten Full-Load. |
+| Flexible Einstiegsdimension | **bewusst NICHT** | Question 2 der Rueckfrage unbeantwortet -> klare Lesart (feste Kaskade) genommen; sauberer Folgeschritt. |
+| Produktgruppen-Aufriss | **offen** | ZC23-Mapping Disponent->Produktgruppe + Spend-Zurechnung fehlen weiterhin (siehe unten). |
+
+Tests: `272/272` gruen (4 neue: Kaskade-Pivot, Artikel-Deckelung+Rest, Region-Slices, ABC/XYZ).
+WICHTIG: Region/ABC/XYZ fuellen sich erst mit dem naechsten Einkauf-Full-Load; bis dahin zeigen die
+Kacheln ehrliche „fuellt sich nach Full-Load"-Hinweise. Nur die Kaskade hat heute echte Daten.
+
 ## Umsetzungsstand 2026-07-23 (SAP-Erweiterung transportiert, C#-Ladestrecke angepasst)
 
 Alle neuen SAP-Felder am 2026-07-23 live gegen travp762 verifiziert:

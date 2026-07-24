@@ -229,6 +229,7 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-open-orders", "purchasing", "Offene Bestellungen", "Open orders", "PendingActions", "einkauf/offene-bestellungen", 30, "All"),
         Link("purchasing-contracts", "purchasing", "Kontrakte", "Contracts", "Assignment", "einkauf/kontrakte", 40, "All"),
         Link("purchasing-suppliers", "purchasing", "Lieferanten", "Suppliers", "Verified", "einkauf/lieferanten", 50, "All"),
+        Link("purchasing-breakdown", "purchasing", "Spend-Aufriss", "Spend breakdown", "AccountTree", "einkauf/aufriss", 55, "All"),
         Group("purchasing-ideas", "purchasing", "Ideen", "Ideas", "Lightbulb", 60, expanded: true),
         Link("purchasing-ideas-overview", "purchasing-ideas", "Uebersicht", "Overview", "Lightbulb", "einkauf/ideen", 10, "All"),
         Link("purchasing-idea-data-service", "purchasing-ideas", "Einkauf-Datenservice", "Purchasing data service", "Storage", "einkauf/ideen/datenservice", 20, "All"),

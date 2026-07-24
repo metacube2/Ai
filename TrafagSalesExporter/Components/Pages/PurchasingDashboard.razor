@@ -3,6 +3,7 @@
 @page "/einkauf/offene-bestellungen"
 @page "/einkauf/kontrakte"
 @page "/einkauf/lieferanten"
+@page "/einkauf/aufriss"
 @page "/einkauf/ideen"
 @page "/einkauf/ideen/datenservice"
 @page "/einkauf/ideen/liefertermin-risiko"
@@ -177,6 +178,13 @@
                            ChartRows="@SupplierChartRows"
                            StatusRows="@SupplierStatusRows"
                            DetailRows="@SupplierDetailRows" />
+        break;
+    case "aufriss":
+        <PurchasingSpendExplorer SpendYears="@_liveState.SpendYears"
+                                 CascadeRows="@_liveState.SpendCascadeRows"
+                                 RegionGroups="@_liveState.RegionByMaterialGroupRows"
+                                 AbcRows="@_liveState.AbcSpendRows"
+                                 XyzRows="@_liveState.XyzSpendRows" />
         break;
     case "ideen":
         <MudGrid Spacing="2">

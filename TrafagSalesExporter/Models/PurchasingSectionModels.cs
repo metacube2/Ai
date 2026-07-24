@@ -1,4 +1,5 @@
 using MudBlazor;
+using TrafagSalesExporter.Services;
 
 namespace TrafagSalesExporter.Models;
 
@@ -34,3 +35,28 @@ public sealed record PurchasingSupplierYearSpendRow(string Supplier, IReadOnlyDi
 }
 
 public sealed record PurchasingSpendGroupYearRow(string MaterialGroup, IReadOnlyDictionary<int, decimal> YearValues, decimal Total);
+
+/// <summary>
+/// Rekursiver Knoten fuer den mehrstufigen Spend-Aufriss (Reiter „Spend-Aufriss" 2026-07-24):
+/// feste Kaskade Lieferant -> Warengruppe -> Artikel. Jede Ebene traegt Jahreswerte + Gesamt;
+/// <see cref="Children"/> ist die naechste Aufriss-Stufe (leer auf der Artikel-/Blattebene).
+/// Jede Ebene ist auf Top-N gekappt, der Rest steckt in einer „uebrige (n)"-Zeile, damit
+/// Elternsumme = Summe der Kinder bleibt (Pivot-Eigenschaft) und der Baum bei &gt;170k
+/// Positionen nicht explodiert (Blazor Server rendert den Baum serverseitig).
+/// </summary>
+public sealed record PurchasingSpendCascadeNode(
+    string Label,
+    IReadOnlyDictionary<int, decimal> YearValues,
+    decimal Total,
+    IReadOnlyList<PurchasingSpendCascadeNode> Children);
+
+/// <summary>
+/// Region-Anteil je Warengruppe fuer die Kuchendiagramme im Spend-Aufriss (Marco-Wunsch:
+/// „Kuchendiagramm je Warengruppe -> Anteil je Beschaffungsregion/Land"). <see cref="Slices"/>
+/// sind die Regionen absteigend nach CHF-Anteil. Fuellt sich erst mit dem naechsten
+/// Einkauf-Full-Load (Lieferantenland <c>SupplierCountry</c>).
+/// </summary>
+public sealed record PurchasingRegionPieGroup(
+    string MaterialGroup,
+    decimal Total,
+    IReadOnlyList<PurchasingLiveChartPoint> Slices);

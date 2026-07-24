@@ -56,6 +56,16 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> MaterialGroupSpendRows { get; set; } = [];
     // Volumen (CHF) je Beschaffungsregion (Lieferantenland), absteigend (PowerBI "Vol/Region").
     public List<PurchasingLiveChartPoint> RegionSpendRows { get; set; } = [];
+    // Reiter „Spend-Aufriss" 2026-07-24: mehrstufige Kaskade Lieferant -> Warengruppe -> Artikel
+    // (gedeckelt je Ebene, Rest in „uebrige"-Zeile). Nutzt vorhandene Cache-Daten (Beleg-WG/Matnr).
+    public List<PurchasingSpendCascadeNode> SpendCascadeRows { get; set; } = [];
+    // Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme. Fuellt sich erst mit dem
+    // naechsten Einkauf-Full-Load (SupplierCountry).
+    public List<PurchasingRegionPieGroup> RegionByMaterialGroupRows { get; set; } = [];
+    // Volumen (CHF) je ABC-Klasse (MARC-MAABC -> MaraAbc). Fuellt sich erst nach dem Full-Load.
+    public List<PurchasingLiveChartPoint> AbcSpendRows { get; set; } = [];
+    // Volumen (CHF) je XYZ-Klasse (ZCA_MAT_ABC_XYZ -> MaraXyz). Fuellt sich erst nach dem Full-Load.
+    public List<PurchasingLiveChartPoint> XyzSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];

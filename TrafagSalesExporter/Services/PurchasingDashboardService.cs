@@ -386,6 +386,28 @@ GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
         state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
+        // Reiter „Spend-Aufriss": mehrstufige Kaskade + Region-Kuchen + ABC/XYZ. Die Kaskade nutzt
+        // vorhandene Cache-Daten (Beleg-WG/Matnr); Region/ABC/XYZ fuellen sich erst nach dem
+        // naechsten Einkauf-Full-Load. Alle laufen nur beim Datenladen (OnInitialized/Filter),
+        // nicht pro Render.
+        state.SpendCascadeRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, cancellationToken);
+        state.RegionByMaterialGroupRows = await ExecuteRegionByMaterialGroupRowsAsync(conn, joinedEkkoPeriod, spendItemFilter, cancellationToken);
+        state.AbcSpendRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(NULLIF(p.MaraAbc, ''), 'ohne ABC') AS Label, SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 12;", cancellationToken);
+        state.XyzSpendRows = await ExecuteChartRowsAsync(conn, @"
+SELECT COALESCE(NULLIF(p.MaraXyz, ''), 'ohne XYZ') AS Label, SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Label
+ORDER BY Value DESC
+LIMIT 12;", cancellationToken);
         state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
@@ -922,6 +944,190 @@ ORDER BY Supplier, MaterialGroup, Year;";
                 .OrderByDescending(group => group.Total)
                 .ToList(),
             StringComparer.OrdinalIgnoreCase);
+    }
+
+    // Deckelung je Aufriss-Ebene (Lieferant, Warengruppe, Artikel). Bewusst eng auf der Artikel-
+    // Blattebene, damit der serverseitig gerenderte Baum bei >170k Positionen nicht explodiert.
+    private static readonly int[] CascadeCaps = [40, 15, 10];
+
+    private readonly record struct CascadeRow(string Supplier, string MaterialGroup, string Article, int Year, decimal Value);
+
+    /// <summary>
+    /// Mehrstufiger Spend-Aufriss (Reiter „Spend-Aufriss" 2026-07-24): feste Kaskade
+    /// Lieferant -> Warengruppe -> Artikel, je Ebene auf Top-N gekappt mit „uebrige (n)"-Restzeile,
+    /// sodass Elternsumme = Summe der Kinder bleibt. Ein SQL-Grouping, Baumaufbau in C#.
+    /// Warengruppe wie in der Spend-Matrix: MaraMatkl, Fallback Beleg-Matkl.
+    /// </summary>
+    private static async Task<List<PurchasingSpendCascadeNode>> ExecuteSpendCascadeRowsAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
+            .ToList();
+        if (years.Count == 0)
+            return [];
+
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var maxSpendYear = MaxSpendYear(filter);
+        var rows = new List<CascadeRow>();
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
+       COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
+       COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + @"
+  AND k.Bedat >= '" + from + @"'
+  AND k.Bedat <= '" + to + @"'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
+GROUP BY Supplier, MaterialGroup, Article, Year;";
+
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new CascadeRow(
+                    reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0),
+                    reader.IsDBNull(1) ? "ohne Warengruppe" : reader.GetString(1),
+                    reader.IsDBNull(2) ? "ohne Artikel" : reader.GetString(2),
+                    Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture),
+                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        return BuildCascadeLevel(rows, 0, years);
+    }
+
+    private static List<PurchasingSpendCascadeNode> BuildCascadeLevel(
+        IReadOnlyList<CascadeRow> rows,
+        int depth,
+        IReadOnlyList<int> years)
+    {
+        var cap = CascadeCaps[depth];
+        var isLeaf = depth == CascadeCaps.Length - 1;
+        var groups = rows
+            .GroupBy(row => KeyAt(row, depth))
+            .Select(group => new
+            {
+                Label = group.Key,
+                Total = group.Sum(row => row.Value),
+                YearValues = years.ToDictionary(year => year, year => group.Where(row => row.Year == year).Sum(row => row.Value)),
+                Rows = (IReadOnlyList<CascadeRow>)group.ToList()
+            })
+            .OrderByDescending(group => group.Total)
+            .ToList();
+
+        var nodes = new List<PurchasingSpendCascadeNode>();
+        foreach (var group in groups.Take(cap))
+        {
+            var children = isLeaf
+                ? (IReadOnlyList<PurchasingSpendCascadeNode>)[]
+                : BuildCascadeLevel(group.Rows, depth + 1, years);
+            nodes.Add(new PurchasingSpendCascadeNode(group.Label, group.YearValues, group.Total, children));
+        }
+
+        // Rest ueber die Deckelung hinaus in EINER „uebrige"-Zeile buendeln (ohne weitere Kinder),
+        // damit die Elternsumme exakt erhalten bleibt.
+        if (groups.Count > cap)
+        {
+            var rest = groups.Skip(cap).ToList();
+            var restYear = years.ToDictionary(year => year, year => rest.Sum(group => group.YearValues[year]));
+            var restTotal = rest.Sum(group => group.Total);
+            nodes.Add(new PurchasingSpendCascadeNode($"uebrige ({rest.Count})", restYear, restTotal, []));
+        }
+
+        return nodes;
+    }
+
+    private static string KeyAt(CascadeRow row, int depth)
+        => depth switch
+        {
+            0 => row.Supplier,
+            1 => row.MaterialGroup,
+            _ => row.Article
+        };
+
+    /// <summary>
+    /// Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme im Spend-Aufriss. Ein
+    /// SQL-Grouping (Warengruppe x Region), dann Top-Warengruppen und je Gruppe Top-Regionen mit
+    /// „uebrige"-Rest, sodass die Summe der Slices = Gruppensumme bleibt. Region = Lieferantenland
+    /// (SupplierCountry); fuellt sich erst mit dem naechsten Einkauf-Full-Load.
+    /// </summary>
+    private static async Task<List<PurchasingRegionPieGroup>> ExecuteRegionByMaterialGroupRowsAsync(
+        SqliteConnection conn,
+        string joinedEkkoPeriod,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        const int topGroupCount = 6;
+        const int topRegionCount = 8;
+        var valuesByGroup = new Dictionary<string, Dictionary<string, decimal>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
+       COALESCE(NULLIF(k.SupplierCountry, ''), 'ohne Land') AS Region,
+       SUM(" + ChfNetValue + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY MaterialGroup, Region;";
+
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var group = reader.IsDBNull(0) ? "ohne Warengruppe" : reader.GetString(0);
+                var region = reader.IsDBNull(1) ? "ohne Land" : reader.GetString(1);
+                var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+                if (!valuesByGroup.TryGetValue(group, out var regions))
+                {
+                    regions = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+                    valuesByGroup[group] = regions;
+                }
+
+                regions[region] = regions.TryGetValue(region, out var existing) ? existing + value : value;
+            }
+        }
+
+        return valuesByGroup
+            .Select(group => new
+            {
+                group.Key,
+                Total = group.Value.Values.Sum(),
+                Regions = group.Value
+            })
+            .Where(group => group.Total > 0m)
+            .OrderByDescending(group => group.Total)
+            .Take(topGroupCount)
+            .Select(group => new PurchasingRegionPieGroup(
+                group.Key,
+                group.Total,
+                BuildRegionSlices(group.Regions, topRegionCount)))
+            .ToList();
+    }
+
+    private static List<PurchasingLiveChartPoint> BuildRegionSlices(IReadOnlyDictionary<string, decimal> regions, int topRegionCount)
+    {
+        var ordered = regions
+            .Select(region => new PurchasingLiveChartPoint(region.Key, region.Value))
+            .OrderByDescending(region => region.Value)
+            .ToList();
+        if (ordered.Count <= topRegionCount)
+            return ordered;
+
+        var slices = ordered.Take(topRegionCount).ToList();
+        var rest = ordered.Skip(topRegionCount).ToList();
+        slices.Add(new PurchasingLiveChartPoint($"uebrige ({rest.Count})", rest.Sum(region => region.Value)));
+        return slices;
     }
 
     // Preisentwicklung je Artikel: Top-N-Artikel nach CHF-Spend, danach mengengewichteter

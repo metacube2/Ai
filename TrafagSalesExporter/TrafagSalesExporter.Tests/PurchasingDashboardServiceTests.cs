@@ -351,6 +351,107 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.False(group.YearValues.ContainsKey(2024));
     }
 
+    [Fact]
+    public async Task LoadAsync_SpendCascade_Builds_Supplier_Group_Article_Levels_With_PivotTotals()
+    {
+        // Reiter „Spend-Aufriss": Lieferant -> Warengruppe -> Artikel. MaraMatkl gewinnt gegen die
+        // Beleg-Warengruppe; Elternsumme = Summe der Kinder auf jeder Ebene (Pivot-Eigenschaft).
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '10', 'ART-A', 'ALT1', 'NEU1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Matkl, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '20', 'ART-B', 'ALT1', 'NEU1', '1', '150', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '30', 'ART-C', 'WG2', '1', '250', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplier = Assert.Single(state.SpendCascadeRows, node => node.Label.Contains("Lieferant Eins"));
+        Assert.Equal(500m, supplier.Total);
+        Assert.Equal(500m, supplier.Children.Sum(child => child.Total));
+
+        var groupNeu1 = Assert.Single(supplier.Children, child => child.Label == "NEU1");
+        Assert.Equal(250m, groupNeu1.Total);
+        Assert.Equal(2, groupNeu1.Children.Count);
+        Assert.Equal(250m, groupNeu1.Children.Sum(child => child.Total));
+        Assert.Contains(groupNeu1.Children, article => article.Label == "ART-A" && article.Total == 100m);
+        Assert.Contains(groupNeu1.Children, article => article.Label == "ART-B" && article.Total == 150m);
+
+        var groupWg2 = Assert.Single(supplier.Children, child => child.Label == "WG2");
+        var articleC = Assert.Single(groupWg2.Children);
+        Assert.Equal("ART-C", articleC.Label);
+        Assert.Equal(250m, articleC.Total);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SpendCascade_Caps_Article_Level_With_Remainder_Row()
+    {
+        // Artikelebene ist auf 10 gedeckelt: 12 Artikel -> 10 einzeln + 1 „uebrige (2)"-Zeile,
+        // Pivot-Summe bleibt trotz Deckelung exakt erhalten.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C2', '2025-03-01', 'L1', 'Lieferant Zwei', 'F', '2026-01-01');");
+        for (var i = 1; i <= 12; i++)
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C2', '{i:00}', 'ART-{i:00}', 'WG', '1', '{i * 10}', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C2', '01', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplier = Assert.Single(state.SpendCascadeRows, node => node.Label.Contains("Lieferant Zwei"));
+        var group = Assert.Single(supplier.Children);
+        Assert.Equal(11, group.Children.Count);
+
+        var expectedTotal = (decimal)Enumerable.Range(1, 12).Sum(i => i * 10);
+        Assert.Equal(expectedTotal, group.Total);
+        Assert.Equal(group.Total, group.Children.Sum(child => child.Total));
+
+        var remainder = Assert.Single(group.Children, child => child.Label == "uebrige (2)");
+        Assert.Empty(remainder.Children);
+        Assert.Equal(30m, remainder.Total);
+    }
+
+    [Fact]
+    public async Task LoadAsync_RegionByMaterialGroup_Splits_Group_By_SupplierCountry()
+    {
+        // Kuchen je Warengruppe: Anteil je Lieferantenland. Slices summieren zur Gruppensumme.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, SupplierCountry, Bstyp, LastLoadedAtUtc) VALUES ('R1', '2025-03-01', 'L1', 'Lief CH', 'CH', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, SupplierCountry, Bstyp, LastLoadedAtUtc) VALUES ('R2', '2025-03-01', 'L2', 'Lief DE', 'DE', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('R1', '10', 'M1', 'WG1', '1', '300', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('R2', '10', 'M2', 'WG1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('R1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var group = Assert.Single(state.RegionByMaterialGroupRows, row => row.MaterialGroup == "WG1");
+        Assert.Equal(400m, group.Total);
+        Assert.Equal(400m, group.Slices.Sum(slice => slice.Value));
+        Assert.Contains(group.Slices, slice => slice.Label == "CH" && slice.Value == 300m);
+        Assert.Contains(group.Slices, slice => slice.Label == "DE" && slice.Value == 100m);
+    }
+
+    [Fact]
+    public async Task LoadAsync_AbcXyz_Aggregate_Spend_By_MaraAbc_And_MaraXyz()
+    {
+        // ABC (MARC-MAABC -> MaraAbc) und XYZ (ZCA_MAT_ABC_XYZ -> MaraXyz); leere Klasse faellt in
+        // 'ohne ABC' / 'ohne XYZ'.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, LastLoadedAtUtc) VALUES ('A1', '2025-03-01', 'L1', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraAbc, MaraXyz, Menge, Netwr, LastLoadedAtUtc) VALUES ('A1', '10', 'M1', 'A', 'X', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraAbc, MaraXyz, Menge, Netwr, LastLoadedAtUtc) VALUES ('A1', '20', 'M2', 'A', 'Y', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraAbc, MaraXyz, Menge, Netwr, LastLoadedAtUtc) VALUES ('A1', '30', 'M3', 'B', '', '1', '70', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('A1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.Equal(150m, Assert.Single(state.AbcSpendRows, row => row.Label == "A").Value);
+        Assert.Equal(70m, Assert.Single(state.AbcSpendRows, row => row.Label == "B").Value);
+        Assert.Equal(100m, Assert.Single(state.XyzSpendRows, row => row.Label == "X").Value);
+        Assert.Equal(70m, Assert.Single(state.XyzSpendRows, row => row.Label == "ohne XYZ").Value);
+    }
+
     private void CreatePurchasingCacheTables()
     {
         ExecuteSync(@"

@@ -7,6 +7,16 @@ Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit
 
 ## Kurzstand
 
+- NEU 2026-07-24 (noch nicht deployed): Neuer Reiter `/einkauf/aufriss` „Spend-Aufriss" (eigene
+  Komponente `PurchasingSpendExplorer.razor`, Nav `purchasing-breakdown`), damit der abzunehmende
+  `Spend`-Reiter unangetastet bleibt. Drei Sichten: (1) mehrstufige Kaskade Lieferant -> Warengruppe
+  -> Artikel (aufklappbar, je Ebene gedeckelt `[40,15,10]` + „uebrige"-Restzeile, Elternsumme =
+  Summe Kinder; nutzt vorhandene Cache-Daten -> zeigt SOFORT echte Zahlen); (2) Region-Kuchen je
+  Warengruppe; (3) Volumen nach ABC/XYZ. Region/ABC/XYZ sind bis zum naechsten Full-Load leer
+  (SupplierCountry/MaraAbc/MaraXyz noch 0 %), mit ehrlichen UI-Hinweisen. Aggregationen in
+  `PurchasingDashboardService` (`ExecuteSpendCascadeRowsAsync`, `ExecuteRegionByMaterialGroupRowsAsync`,
+  ABC/XYZ-Charts), laufen nur beim Datenladen. NICHT umgesetzt: flexible Einstiegsdimension,
+  Produktgruppen-Aufriss (ZC23-Mapping fehlt). `272/272` Tests gruen.
 - NEU 2026-07-23 (deployed): Nächtlicher Automatik-Lauf Einkauf = DELTA im planmässigen 03:00-Slot
   (`TimerBackgroundService.RunPurchasingDeltaAsync`, gegated auf Site `PURCHASING_SAP` IsActive,
   eigener Scope/try-catch). BEWUSST nicht im Nachhol-/Catch-up-Pfad (kein SAP-Lauf bei Deploy-
