@@ -6,6 +6,21 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- IIS-HOSTING ROLLBACK AUF OUTOFPROCESS 2026-07-24, DEPLOYED (DLL 24.07.2026 14:39, Port 443
+  offen, HTTP 401 = App oben; Commit `410cf70`, gleicher Deploy enthaelt auch den Ladebalken-
+  Commit `f7ef248`): Ca. 1 Stunde nach dem Wechsel auf `inprocess` (Commit `4d2c6d3`) meldete Ingo
+  "schleichend immer langsamer ueberall" (nicht nur Einkauf - auch Finance/HR). "Schleichend"
+  (graduell, keine Stufenaenderung) spricht eher fuer aufgebaute Ressourcen-/Speicherlast (z.B.
+  angesammelte getrennte SignalR-Circuits durch die zuvor haeufigen Reconnects) als fuer eine reine
+  Konfigurationsregression - eine "inprocess ist grundsaetzlich schneller"-Annahme widerspricht
+  einer echten Verlangsamung durch den Hosting-Wechsel selbst. Vorsichtshalber zurueck auf
+  `outofprocess` (der vorher ueber Wochen stabile Zustand) - das erzwingt gleichzeitig einen
+  sauberen Prozessneustart, der angesammelten Druck so oder so beseitigt. URSACHE DER
+  SCHLEICHENDEN VERLANGSAMUNG NOCH NICHT ABSCHLIESSEND GEKLAERT - falls es nach diesem Neustart
+  wieder auftritt (unabhaengig vom Hosting-Modus), ist es kein Hosting-Problem, sondern ein
+  echter Leak/Ressourcenaufbau im Applikationscode oder in Blazor-Circuit-Handling - dann genauer
+  untersuchen (z.B. Circuit-Retention-Einstellungen, SQLite-WAL-Wachstum, GC-Metriken).
+  NACHBEOBACHTEN: Ingo soll melden, ob die Verlangsamung nach diesem Neustart weg ist/wiederkehrt.
 - IIS-HOSTING ZURUECK AUF INPROCESS 2026-07-24, DEPLOYED (DLL 24.07.2026 13:20, Port 443 offen,
   HTTP 401 auf `/einkauf/spend` UND `/diag.txt` = App oben; Commit `4d2c6d3`): Ingo meldete, dass
   die Seite beim Wechsel zwischen Reitern haengt ("Attempting to reconnect to the server X of 8"),

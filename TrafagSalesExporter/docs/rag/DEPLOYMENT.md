@@ -4,7 +4,14 @@ Stand: 2026-07-21
 
 ## Kurzstand
 
-- Letzter Deploy: 2026-07-24, IIS-Hosting zurueck auf `inprocess` (war seit 20.05.2026 faelschlich
+- Letzter Deploy: 2026-07-24, IIS-Hosting ROLLBACK zurueck auf `outofprocess` (ca. 1h nach dem
+  Wechsel auf `inprocess` meldete Ingo schleichend zunehmende Verlangsamung ueberall, nicht nur
+  Einkauf - siehe `lastchange.md`). Commit `410cf70` (gleicher Deploy: Ladebalken-Commit `f7ef248`
+  im Einkauf-Filterbereich). Publish nach `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`;
+  `app_offline.htm` gesetzt/entfernt; produktive `BiDashboard.dll` `24.07.2026 14:39:20`; Port 443
+  -> True; HTTP 401 auf `/einkauf/spend`. Ursache der Verlangsamung noch offen - Ingo soll melden,
+  ob Neustart genuegt oder es wiederkehrt.
+- Vorheriger Deploy: 2026-07-24, IIS-Hosting zurueck auf `inprocess` (war seit 20.05.2026 faelschlich
   `outofprocess` stehen geblieben - siehe `lastchange.md`). Commit `4d2c6d3`; Publish nach
   `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\`; `app_offline.htm` gesetzt/entfernt;
   produktive `BiDashboard.dll` `24.07.2026 13:20:07`; Port 443 -> True; HTTP 401 auf
