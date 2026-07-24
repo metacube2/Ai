@@ -1262,18 +1262,18 @@
         => "Procurement region = supplier country (LFA1 Land1), assigned via the purchase order. "
          + "Shows CHF spend by supplier country in the selected period.";
 
-    // Ehrlicher Datenhinweis: die Materialstamm-Warengruppe (MARA-MATKL) wird von SAP noch nicht
-    // geliefert, daher faellt die Auswertung auf die Beleg-Warengruppe zurueck - fast der gesamte
-    // Spend landet dann in der Sammelgruppe "01". Erst nach der SAP-Erweiterung (Matkl im
-    // maracalcSet) wird das Diagramm fachlich aussagekraeftig.
+    // Stand 24.07.2026: MaraMatkl liefert SAP jetzt (Full Load, 80,7% gefuellt), Fallback bleibt
+    // die Beleg-Warengruppe. Texte kommen aus PurchasingMaterialGroupTextCatalog (T023T-Export
+    // von Ingo, 24.07.2026); Codes ohne Text (noch nicht nachgereicht) zeigen weiterhin den
+    // reinen Code. "01" bleibt die SAP-Sammelgruppe "Dummy" fuer unklassifizierte Altbestaende.
     private string MaterialGroupChartHintDe
-        => "Warengruppe aus dem Bestellbeleg (EKPO.Matkl). Die aktuelle Materialstamm-Warengruppe "
-         + "(MARA-MATKL) liefert SAP noch nicht, daher landet fast der gesamte Spend in der "
-         + "Beleg-Sammelgruppe. Aussagekraeftig erst nach der SAP-Erweiterung (Matkl im maracalcSet).";
+        => "Warengruppe aus dem Materialstamm (MARA-MATKL), Fallback Beleg-Warengruppe (EKPO.Matkl). "
+         + "Texte aus dem SAP-Export T023T; unbekannte Codes zeigen den reinen Code. "
+         + "\"01\" ist die SAP-Sammelgruppe \"Dummy\" fuer unklassifizierte Altbestaende.";
     private string MaterialGroupChartHintEn
-        => "Material group from the purchase-order document (EKPO.Matkl). SAP does not yet deliver "
-         + "the current material-master group (MARA-MATKL), so almost all spend falls into the "
-         + "document catch-all group. Meaningful only after the SAP extension (Matkl in maracalcSet).";
+        => "Material group from the material master (MARA-MATKL), fallback to the document material "
+         + "group (EKPO.Matkl). Texts from the SAP export T023T; unknown codes show the bare code. "
+         + "\"01\" is SAP's catch-all group \"Dummy\" for unclassified legacy stock.";
 
     private IReadOnlyList<PurchasingSectionChartRow> OpenOrderChartRows
         => _liveState.EkkoLoaded

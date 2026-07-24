@@ -330,6 +330,29 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_MaterialGroupSpendRows_Enriches_Known_Codes_With_T023T_Text()
+    {
+        // Ingo-Lieferung 2026-07-24 (T023T-Export): bekannte Codes zeigen "Code - Text",
+        // unbekannte/noch nicht nachgereichte Codes bleiben roher Code (PurchasingMaterialGroupTextCatalog).
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, Bstyp, LastLoadedAtUtc) VALUES ('G1', '2025-03-01', 'L1', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('G1', '10', 'M1', '20.05.00', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('G1', '20', 'M2', 'ZZ_NEU', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('G1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var known = Assert.Single(state.MaterialGroupSpendRows, row => row.Label.StartsWith("20.05.00"));
+        Assert.Equal("20.05.00 – Bälge", known.Label);
+        Assert.Equal(100m, known.Value);
+
+        // Noch nicht in der Referenzliste -> bleibt roher Code, verschwindet nicht.
+        var unknown = Assert.Single(state.MaterialGroupSpendRows, row => row.Label == "ZZ_NEU");
+        Assert.Equal(200m, unknown.Value);
+    }
+
+    [Fact]
     public async Task LoadAsync_MaterialGroup_Drilldown_Respects_SpendPeriodFilter()
     {
         // Zeitraumfilter wirkt auf beide Ebenen: Beleg ausserhalb des Zeitraums fehlt auch im Drilldown.

@@ -339,7 +339,7 @@ LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
 ORDER BY Value DESC
-LIMIT 1;", "Warengruppe", cancellationToken);
+LIMIT 1;", "Warengruppe", cancellationToken, PurchasingMaterialGroupTextCatalog.Resolve);
         state.TopArticleLabel = await ExecuteTopLabelAsync(conn, @"
 SELECT
     COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') || ' | ' ||
@@ -363,9 +363,9 @@ LIMIT 6;", cancellationToken);
         // Volumen je Warengruppe (PowerBI "Diagramm Vol./WG"). Gleiche COALESCE-Logik und
         // gleicher spendItemFilter/Zeitraum wie die Lieferant-Spend-Matrix, damit die Summen
         // konsistent sind. Warengruppe kommt bewusst aus MaraMatkl (Materialstamm), Fallback
-        // Beleg-Matkl - solange SAP MaraMatkl nicht liefert, landet fast alles in der
-        // Beleg-Sammelgruppe (UI-Hinweis im Spend-Reiter).
-        state.MaterialGroupSpendRows = await ExecuteChartRowsAsync(conn, @"
+        // Beleg-Matkl. Label wird per PurchasingMaterialGroupTextCatalog (T023T-Text von Ingo,
+        // 24.07.2026) auf "Code - Text" angereichert; unbekannte Codes bleiben roher Code.
+        state.MaterialGroupSpendRows = (await ExecuteChartRowsAsync(conn, @"
 SELECT COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS Label,
        SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
@@ -373,7 +373,9 @@ LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
-LIMIT 12;", cancellationToken);
+LIMIT 12;", cancellationToken))
+            .Select(row => row with { Label = PurchasingMaterialGroupTextCatalog.Resolve(row.Label) })
+            .ToList();
         // Volumen je Beschaffungsregion (Lieferantenland LFA1.Land1 -> EKKO.SupplierCountry).
         // PowerBI "Eink.Vol. CHF / Region". Gleicher Filter/Zeitraum wie oben.
         state.RegionSpendRows = await ExecuteChartRowsAsync(conn, @"
@@ -614,7 +616,7 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
                     Supplier = string.IsNullOrWhiteSpace(supplier) ? "ohne Lieferant" : supplier,
                     Month = string.IsNullOrWhiteSpace(month) ? "ohne Datum" : month,
                     Material = FirstNonEmpty(GetText(row, "Matnr"), GetText(row, "Txz01"), "ohne Artikel"),
-                    MaterialGroup = FirstNonEmpty(GetText(row, "Matkl"), "ohne Warengruppe"),
+                    MaterialGroup = PurchasingMaterialGroupTextCatalog.Resolve(FirstNonEmpty(GetText(row, "Matkl"), "ohne Warengruppe")),
                     NetValue = netwr,
                     Quantity = quantity
                 };
@@ -785,7 +787,7 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
         return string.IsNullOrWhiteSpace(value) ? null : TryParseSapDate(value);
     }
 
-    private static async Task<string> ExecuteTopLabelAsync(SqliteConnection conn, string sql, string fallback, CancellationToken cancellationToken)
+    private static async Task<string> ExecuteTopLabelAsync(SqliteConnection conn, string sql, string fallback, CancellationToken cancellationToken, Func<string, string>? transformLabel = null)
     {
         await using var command = conn.CreateCommand();
         command.CommandText = sql;
@@ -794,6 +796,8 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
             return fallback;
 
         var label = reader.GetString(0);
+        if (transformLabel is not null)
+            label = transformLabel(label);
         var value = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
         return $"{label}: CHF {value:N0}";
     }
@@ -914,7 +918,7 @@ ORDER BY Supplier, MaterialGroup, Year;";
             while (await reader.ReadAsync(cancellationToken))
             {
                 var supplier = reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0);
-                var materialGroup = reader.IsDBNull(1) ? "ohne Warengruppe" : reader.GetString(1);
+                var materialGroup = reader.IsDBNull(1) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1));
                 var year = Convert.ToInt32(reader.GetValue(2), CultureInfo.InvariantCulture);
                 var value = Convert.ToDecimal(reader.GetValue(3), CultureInfo.InvariantCulture);
 
@@ -996,7 +1000,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
             {
                 rows.Add(new CascadeRow(
                     reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0),
-                    reader.IsDBNull(1) ? "ohne Warengruppe" : reader.GetString(1),
+                    reader.IsDBNull(1) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)),
                     reader.IsDBNull(2) ? "ohne Artikel" : reader.GetString(2),
                     Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture),
                     Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
@@ -1085,7 +1089,7 @@ GROUP BY MaterialGroup, Region;";
         {
             while (await reader.ReadAsync(cancellationToken))
             {
-                var group = reader.IsDBNull(0) ? "ohne Warengruppe" : reader.GetString(0);
+                var group = reader.IsDBNull(0) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(0));
                 var region = reader.IsDBNull(1) ? "ohne Land" : reader.GetString(1);
                 var value = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
                 if (!valuesByGroup.TryGetValue(group, out var regions))
