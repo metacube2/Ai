@@ -80,6 +80,18 @@ public class TransformationCatalog : ITransformationCatalog
                         : input?.ToUpperInvariant();
                 }
                 """,
+            ("Value", "NormalizeCountryCode") => """
+                public object? Transform(object? sourceValue, string? argument)
+                {
+                    var input = sourceValue?.ToString()?.Trim() ?? "";
+                    // Vergleich ohne Diakritika: ESPANA und ESPANA treffen denselben Alias.
+                    if (aliases.TryGetValue(StripDiacritics(input), out var mapped))
+                        return mapped;
+                    if (input.Length == 2 && input.All(char.IsLetter))
+                        return input.ToUpperInvariant();
+                    return input; // unbekannter Klartext bleibt sichtbar stehen
+                }
+                """,
             ("Record", "FirstNonEmpty") => """
                 public void Transform(SalesRecord record, FieldTransformationRule rule)
                 {

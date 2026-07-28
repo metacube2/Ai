@@ -62,6 +62,64 @@ public class TransformationStrategiesTests
         Assert.Equal("CHF", normalizedCustom);
     }
 
+    [Theory]
+    // Spanische Klartextnamen aus den TRES-Produktivdaten (Stand 2026-07-27)
+    [InlineData("ESPAÑA", "ES")]
+    [InlineData("ESPANA", "ES")]          // ohne Diakritikum -> gleiches Ergebnis
+    [InlineData("BRASIL", "BR")]
+    [InlineData("PERÚ", "PE")]
+    [InlineData("MÉXICO", "MX")]
+    [InlineData("ALEMANIA", "DE")]
+    [InlineData("FRANCIA", "FR")]
+    [InlineData("ESTADOS UNIDOS DE AMÉRICA", "US")]
+    [InlineData("REPÚBLICA DOMINICANA", "DO")]
+    [InlineData("ECUADOR (Inc.GALAPAGOS)", "EC")]
+    [InlineData("EL SALVADOR", "SV")]
+    public void NormalizeCountryCodeStrategy_Maps_Spanish_Country_Names_To_IsoCodes(string input, string expected)
+    {
+        var strategy = new NormalizeCountryCodeTransformationStrategy();
+
+        Assert.Equal(expected, strategy.Transform(input, null));
+    }
+
+    [Theory]
+    [InlineData("ES", "ES")]
+    [InlineData("de", "DE")]              // vorhandener Code wird nur gross geschrieben
+    [InlineData("  ch  ", "CH")]
+    public void NormalizeCountryCodeStrategy_Keeps_Existing_IsoCodes(string input, string expected)
+    {
+        var strategy = new NormalizeCountryCodeTransformationStrategy();
+
+        Assert.Equal(expected, strategy.Transform(input, null));
+    }
+
+    [Fact]
+    public void NormalizeCountryCodeStrategy_Leaves_Unknown_Text_Unchanged_So_Gaps_Stay_Visible()
+    {
+        var strategy = new NormalizeCountryCodeTransformationStrategy();
+
+        // Bewusst NICHT geraten und NICHT geleert - ein unbekannter Klartext muss auffallen,
+        // damit das Mapping ergaenzt werden kann, statt still einen falschen Code zu erzeugen.
+        Assert.Equal("KIRIBATI", strategy.Transform("KIRIBATI", null));
+    }
+
+    [Fact]
+    public void NormalizeCountryCodeStrategy_Returns_Empty_For_Empty_Input()
+    {
+        var strategy = new NormalizeCountryCodeTransformationStrategy();
+
+        Assert.Equal(string.Empty, strategy.Transform("   ", null));
+        Assert.Equal(string.Empty, strategy.Transform(null, null));
+    }
+
+    [Fact]
+    public void NormalizeCountryCodeStrategy_Supports_Custom_Aliases_From_Argument()
+    {
+        var strategy = new NormalizeCountryCodeTransformationStrategy();
+
+        Assert.Equal("KI", strategy.Transform("KIRIBATI", "KIRIBATI=>KI"));
+    }
+
     [Fact]
     public void ConvertCurrencyRecordStrategy_Converts_Amount_And_Updates_Target_Currency()
     {

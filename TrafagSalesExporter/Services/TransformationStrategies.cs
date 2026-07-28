@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
@@ -107,6 +109,124 @@ public sealed class NormalizeCurrencyCodeTransformationStrategy : ITransformatio
             yield break;
 
         var mappings = argument.Split(['|', ';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var mapping in mappings)
+        {
+            var parts = mapping.Split("=>", 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                yield return new KeyValuePair<string, string>(parts[0], parts[1].ToUpperInvariant());
+        }
+    }
+}
+
+/// <summary>
+/// Normalisiert Laendernamen auf ISO-3166-Alpha-2-Codes. Anlass: Andreas' Issue-Log
+/// 2026-07-28 „Customer Country code is not standardized" — Spanien (TRES) liefert
+/// spanische Klartextnamen (`ESPANA`, `BRASIL`, `PERU`, `ALEMANIA`, ...) statt Codes,
+/// alle anderen Gesellschaften liefern korrekte 2-Buchstaben-Codes. Befund/Zahlen:
+/// docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md.
+///
+/// Bewusste Entscheidung: Nicht zuordenbare Werte bleiben UNVERAENDERT stehen (nur
+/// getrimmt), statt geraten oder geleert zu werden. So bleibt eine Luecke im Mapping
+/// sichtbar und kann ergaenzt werden, anstatt still falsche Codes zu erzeugen.
+/// Diakritika werden beim Vergleich ignoriert, damit `PERU`/`PERU` und `ESPANA`/`ESPANA`
+/// gleich behandelt werden.
+/// </summary>
+public sealed class NormalizeCountryCodeTransformationStrategy : ITransformationStrategy
+{
+    // Schluessel bewusst OHNE Diakritika hinterlegt - der Vergleich strippt sie ebenfalls.
+    private static readonly Dictionary<string, string> BuiltInAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Spanisch (aus Produktivdaten TRES, Stand 2026-07-27)
+        ["ESPANA"] = "ES",
+        ["BRASIL"] = "BR",
+        ["PORTUGAL"] = "PT",
+        ["PERU"] = "PE",
+        ["MEXICO"] = "MX",
+        ["ARGENTINA"] = "AR",
+        ["COLOMBIA"] = "CO",
+        ["CHILE"] = "CL",
+        ["GUATEMALA"] = "GT",
+        ["ECUADOR"] = "EC",
+        ["ECUADOR (INC.GALAPAGOS)"] = "EC",
+        ["PARAGUAY"] = "PY",
+        ["EL SALVADOR"] = "SV",
+        ["ALEMANIA"] = "DE",
+        ["ESTADOS UNIDOS DE AMERICA"] = "US",
+        ["COSTA RICA"] = "CR",
+        ["FRANCIA"] = "FR",
+        ["REPUBLICA DOMINICANA"] = "DO",
+        ["PANAMA"] = "PA",
+        ["INDIA"] = "IN",
+        ["CHINA"] = "CN",
+        ["AUSTRIA"] = "AT",
+        ["BOLIVIA"] = "BO",
+        ["ITALIA"] = "IT",
+        ["SUIZA"] = "CH",
+        ["REINO UNIDO"] = "GB",
+        // Englisch/Deutsch als Robustheitsreserve, falls andere Quellen Klartext liefern
+        ["SPAIN"] = "ES",
+        ["SPANIEN"] = "ES",
+        ["GERMANY"] = "DE",
+        ["DEUTSCHLAND"] = "DE",
+        ["SWITZERLAND"] = "CH",
+        ["SCHWEIZ"] = "CH",
+        ["FRANCE"] = "FR",
+        ["FRANKREICH"] = "FR",
+        ["ITALY"] = "IT",
+        ["ITALIEN"] = "IT",
+        ["UNITED KINGDOM"] = "GB",
+        ["GREAT BRITAIN"] = "GB",
+        ["GROSSBRITANNIEN"] = "GB",
+        ["UNITED STATES"] = "US",
+        ["UNITED STATES OF AMERICA"] = "US",
+        ["USA"] = "US",
+        ["OESTERREICH"] = "AT"
+    };
+
+    public string TransformationType => "NormalizeCountryCode";
+
+    public string Description => "Normalisiert Laendernamen auf ISO-2-Codes (z.B. ESPANA -> ES, ALEMANIA -> DE). Bereits gueltige 2-Buchstaben-Codes werden nur gross geschrieben; unbekannte Werte bleiben unveraendert. Optionale Aliase im Argument mit alt=>neu|alt2=>neu2.";
+
+    public object? Transform(object? sourceValue, string? argument)
+    {
+        var input = sourceValue?.ToString()?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        var aliases = new Dictionary<string, string>(BuiltInAliases, StringComparer.OrdinalIgnoreCase);
+        foreach (var mapping in ParseMappings(argument))
+            aliases[StripDiacritics(mapping.Key)] = mapping.Value;
+
+        if (aliases.TryGetValue(StripDiacritics(input), out var mapped))
+            return mapped;
+
+        // Schon ein Code? Dann nur normalisieren, nicht anfassen.
+        if (input.Length == 2 && input.All(char.IsLetter))
+            return input.ToUpperInvariant();
+
+        // Unbekannter Klartext: bewusst unveraendert lassen, damit die Luecke sichtbar bleibt.
+        return input;
+    }
+
+    private static string StripDiacritics(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+        foreach (var ch in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+                builder.Append(ch);
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> ParseMappings(string? argument)
+    {
+        if (string.IsNullOrWhiteSpace(argument))
+            yield break;
+
+        var mappings = argument.Split(['|', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         foreach (var mapping in mappings)
         {
             var parts = mapping.Split("=>", 2, StringSplitOptions.TrimEntries);

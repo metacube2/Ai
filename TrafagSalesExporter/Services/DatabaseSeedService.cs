@@ -107,6 +107,35 @@ public class DatabaseSeedService : IDatabaseSeedService
                 Argument = "$=>USD",
                 SortOrder = 110,
                 IsActive = true
+            },
+            // Andreas' Issue-Log 2026-07-28: „Customer Country code is not standardized".
+            // Spanien liefert spanische Klartextnamen (ESPANA/BRASIL/PERU/ALEMANIA/...),
+            // alle anderen Gesellschaften ISO-2-Codes. Die Strategie mappt die bekannten
+            // Namen und laesst unbekannte Werte unveraendert stehen, damit Luecken sichtbar
+            // bleiben. Betrifft MANUAL_EXCEL (dort haengt Spanien) und ist fuer die anderen
+            // MANUAL_EXCEL-Laender wirkungslos, weil dort bereits Codes ankommen.
+            // Befund/Zahlen: docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md
+            new FieldTransformationRule
+            {
+                SourceSystem = "MANUAL_EXCEL",
+                SourceField = nameof(SalesRecord.CustomerCountry),
+                TargetField = nameof(SalesRecord.CustomerCountry),
+                TransformationType = "NormalizeCountryCode",
+                RuleScope = "Value",
+                Argument = string.Empty,
+                SortOrder = 120,
+                IsActive = true
+            },
+            new FieldTransformationRule
+            {
+                SourceSystem = "MANUAL_EXCEL",
+                SourceField = nameof(SalesRecord.SupplierCountry),
+                TargetField = nameof(SalesRecord.SupplierCountry),
+                TransformationType = "NormalizeCountryCode",
+                RuleScope = "Value",
+                Argument = string.Empty,
+                SortOrder = 130,
+                IsActive = true
             }
         };
 

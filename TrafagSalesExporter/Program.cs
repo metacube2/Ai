@@ -70,6 +70,7 @@ builder.Services.AddSingleton<ITransformationStrategy, SuffixTransformationStrat
 builder.Services.AddSingleton<ITransformationStrategy, ReplaceTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, ConstantTransformationStrategy>();
 builder.Services.AddSingleton<ITransformationStrategy, NormalizeCurrencyCodeTransformationStrategy>();
+builder.Services.AddSingleton<ITransformationStrategy, NormalizeCountryCodeTransformationStrategy>();
 builder.Services.AddSingleton<ICurrencyExchangeRateService, CurrencyExchangeRateService>();
 builder.Services.AddSingleton<IExchangeRateImportService, ExchangeRateImportService>();
 builder.Services.AddSingleton<IRecordTransformationStrategy, FirstNonEmptyRecordTransformationStrategy>();

@@ -101,7 +101,21 @@ public class DatabaseInitializationServiceTests : IDisposable
             x.SiteId == germany.Id &&
             x.TargetField == nameof(SalesRecord.DocumentType) &&
             x.SourceHeader == "=Alphaplan Excel");
-        Assert.Equal(2, db.FieldTransformationRules.Count(x => x.SourceSystem == "MANUAL_EXCEL"));
+        // 2 Waehrungsregeln ($=>USD) + 2 Laendercode-Normalisierungen (Andreas' Issue-Log
+        // 2026-07-28: Spanien liefert Klartextnamen statt ISO-Codes).
+        Assert.Equal(4, db.FieldTransformationRules.Count(x => x.SourceSystem == "MANUAL_EXCEL"));
+        Assert.Contains(db.FieldTransformationRules, x =>
+            x.SourceSystem == "MANUAL_EXCEL" &&
+            x.TransformationType == "NormalizeCountryCode" &&
+            x.SourceField == nameof(SalesRecord.CustomerCountry) &&
+            x.TargetField == nameof(SalesRecord.CustomerCountry) &&
+            x.IsActive);
+        Assert.Contains(db.FieldTransformationRules, x =>
+            x.SourceSystem == "MANUAL_EXCEL" &&
+            x.TransformationType == "NormalizeCountryCode" &&
+            x.SourceField == nameof(SalesRecord.SupplierCountry) &&
+            x.TargetField == nameof(SalesRecord.SupplierCountry) &&
+            x.IsActive);
 
         var purchasing = Assert.Single(db.Sites, x => x.TSC == PurchasingDataSourcePageService.PurchasingTsc);
         Assert.Equal("SAP", purchasing.SourceSystem);
