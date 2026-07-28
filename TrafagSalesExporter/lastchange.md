@@ -71,6 +71,32 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   existiert nicht (der alte `3'749'865` gilt laut Doku nicht mehr fuer UK) — Groessenordnung mit
   Andreas/UK gegenpruefen, die Datei kann selbst schon ein Teilstand gewesen sein. Details:
   `docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md`.
+- MBEW-ENDLOSSCHLEIFE GEFUNDEN UND BEHOBEN 2026-07-28 (Commit `a35c6d6`, deployed 18:04,
+  `306/306` Tests): Ursache dafuer, dass `GroupStandardCosts` seit dem 2026-07-15 leer blieb.
+  Die Doku sprach von einem „haengenden mbewSet-Read", die eigentliche Ursache war aber nie
+  untersucht. AM PRODUKTIVSYSTEM GEMESSEN: `mbewSet` ignoriert `$top`, `$skip` UND `$orderby`
+  gleichermassen — JEDE Anfrage liefert den vollen Bestand von `68'543` Zeilen / `124 MB` in
+  ~28 s, unabhaengig von den Paginierungsparametern (fuenf Varianten getestet, alle identisch).
+  Die Leseschleife brach erst ab, wenn eine Seite weniger als 1000 Zeilen hatte — bei 68'543
+  Zeilen pro „Seite" konnte das NIE eintreten. Sie lief endlos und uebertrug in jeder Runde
+  erneut 124 MB. Deshalb kehrte die Anreicherung nie zurueck und
+  `PersistGroupStandardCostsAsync` wurde nie erreicht. FIX: eine einzige Anfrage ohne
+  Paginierung (der Service liefert ohnehin alles), plus Abgleich der Zeilenzahl gegen `$count`
+  mit Warn-Log bei Abweichung — sollte der Service kuenftig doch paginieren, bekaemen wir sonst
+  stillschweigend nur einen Ausschnitt, genau die Fehlerart, die hier schon zweimal unbemerkt
+  blieb. NACHSORGE: ZSCHWEIZ-Import anstossen, danach muss `GroupStandardCosts` gefuellt sein
+  und in `Sales_All` (Blatt „Gruppenmarge Details") muessen TR-AG-Lieferantenzeilen
+  `CostSource = Konzernkosten TR AG (MBEW-STPRS)` zeigen statt `Interner Standardpreis`.
+- CH/AT-QUELLE AUF PRODUKTION UMGESTELLT 2026-07-28 18:06: `Sites.SapServiceUrl` fuer
+  `ZSCHWEIZ` von `travt762` (TEST) auf `travp762` (PROD) gesetzt, im Wartungsfenster bei
+  gestoppter App, mit vorheriger Sicherung
+  (`trafag_exporter.db.before-travp762-switch-20260728.bak`, 313.9 MB) und Gegenprobe aus der
+  Datenbank. Datenseitig vorher abgesichert: P76 liefert nach Ingos Report-Laeufen
+  `Gjahr2025 = 30'642` (identisch zu T76) und `Gjahr2026 = 18'290` (gegen `9'864` auf T76,
+  weil die Testdaten Mitte April enden), und `WAVWR_DC` ist auf P76 auch fuer 2025 gefuellt.
+  ROLLBACK falls noetig: `SapServiceUrl` zurueck auf `travt762`, oder Sicherung einspielen.
+  ACHTUNG: Der naechste ZSCHWEIZ-Import ersetzt die CH/AT-Zahlen mit dem Produktivstand —
+  Mai bis Juli 2026 kommen dazu, bestehende Zahlen koennen sich aendern.
 - ISSUE-LOG ANDREAS 2026-07-28 ABGEARBEITET, `294/294` Tests gruen, NOCH NICHT DEPLOYED:
   Alle sieben Punkte auf Produktivdaten geprueft — keiner ist ein Rechen-/Logikfehler.
   BEHOBEN IM CODE: „Customer Country code is not standardized". Befund war praeziser als der
