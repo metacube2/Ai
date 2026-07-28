@@ -38,7 +38,6 @@ public class SapGatewayStandardCostReader : ISapGatewayStandardCostReader
     /// <summary>Materialbewertung (MBEW). Existiert im Service ZPOWERBI_EINKAUF_SRV bereits.</summary>
     public const string StandardCostEntitySet = "mbewSet";
 
-    private const int PageSize = 1000;
     private readonly ISapGatewayService _sapGatewayService;
     private readonly IAppEventLogService _appEventLogService;
 
@@ -76,38 +75,54 @@ public class SapGatewayStandardCostReader : ISapGatewayStandardCostReader
             details: $"{baseUrl}{StandardCostEntitySet} | Filter={filter}");
 
         using var client = CreateClient(username, password);
-        for (var skip = 0; ; skip += PageSize)
+
+        // BEWUSST OHNE PAGINIERUNG, ein einziger Aufruf.
+        //
+        // `mbewSet` ignoriert `$top`, `$skip` UND `$orderby` und liefert bei jeder Anfrage den
+        // vollen Bestand (am Produktivsystem gemessen 2026-07-28: 68'543 Zeilen / 124 MB /
+        // ~28 s je Anfrage, unabhaengig von den Paginierungsparametern).
+        //
+        // Die fruehere Schleife brach erst ab, wenn eine Seite weniger als 1000 Zeilen
+        // hatte. Bei 68'543 Zeilen pro "Seite" konnte das nie eintreten - sie lief endlos und
+        // uebertrug in jeder Runde erneut 124 MB. Das ist die Ursache des als "haengend"
+        // dokumentierten Standardpreis-Reads und der Grund, warum `GroupStandardCosts` seit
+        // dem 2026-07-15 leer blieb (siehe docs/FINANCE_GRUPPENMARGE_2026-06-16.md).
+        var url = $"{baseUrl}{StandardCostEntitySet}?$format=json&$filter={Uri.EscapeDataString(filter)}";
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
         {
-            var url = $"{baseUrl}{StandardCostEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
-                      $"&$orderby={Uri.EscapeDataString("Bwkey,Matnr")}" +
-                      $"&$filter={Uri.EscapeDataString(filter)}";
-            using var response = await client.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new HttpRequestException(
-                    $"SAP OData {StandardCostEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
-                    $"URL={url} Antwort={TrimForLog(error)}");
-            }
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"SAP OData {StandardCostEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
+                $"URL={url} Antwort={TrimForLog(error)}");
+        }
 
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
-            var page = ParseRows(json);
-            foreach (var row in page)
-            {
-                var mapped = MapRow(row);
-                if (mapped is null)
-                    continue;
-                // Doppelte Schluessel koennen durch Bewertungstypen (BWTAR) entstehen;
-                // der erste Satz je Material/Bewertungskreis gewinnt.
-                result.TryAdd(mapped.Value.Key, mapped.Value.Entry);
-            }
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        var rows = ParseRows(json);
+        foreach (var row in rows)
+        {
+            var mapped = MapRow(row);
+            if (mapped is null)
+                continue;
+            // Doppelte Schluessel koennen durch Bewertungstypen (BWTAR) entstehen;
+            // der erste Satz je Material/Bewertungskreis gewinnt.
+            result.TryAdd(mapped.Value.Key, mapped.Value.Entry);
+        }
 
-            if (page.Count < PageSize)
-                break;
+        // Vollstaendigkeit gegen `$count` pruefen. Sollte der Service kuenftig doch
+        // paginieren, bekaemen wir sonst stillschweigend nur einen Ausschnitt - genau die
+        // Art Fehler, die hier schon zweimal unbemerkt blieb.
+        var expectedRows = await TryGetRowCountAsync(client, baseUrl, filter, cancellationToken);
+        if (expectedRows is not null && rows.Count < expectedRows.Value)
+        {
+            await _appEventLogService.WriteAsync("SAP", "Standardpreis-Read unvollstaendig", "Warning", land: land,
+                details: $"{baseUrl}{StandardCostEntitySet} | erwartet={expectedRows.Value} | gelesen={rows.Count} | " +
+                         "Der Service liefert offenbar nicht mehr den vollen Bestand - Paginierung pruefen.");
         }
 
         await _appEventLogService.WriteAsync("SAP", "Standardpreis-Read beendet", land: land,
-            details: $"{baseUrl}{StandardCostEntitySet} | Materialien={result.Count}");
+            details: $"{baseUrl}{StandardCostEntitySet} | Zeilen={rows.Count} | Materialien={result.Count}" +
+                     (expectedRows is not null ? $" | laut $count={expectedRows.Value}" : ""));
         return result;
     }
 
@@ -150,6 +165,29 @@ public class SapGatewayStandardCostReader : ISapGatewayStandardCostReader
         throw new InvalidOperationException(
             $"Der SAP-Service enthaelt das EntitySet '{StandardCostEntitySet}' nicht. " +
             "Ohne Materialbewertung kann fuer CH/AT keine Kostenbasis ermittelt werden.");
+    }
+
+    /// <summary>
+    /// Erwartete Zeilenzahl ueber <c>$count</c>. Nur zur Plausibilisierung - schlaegt der
+    /// Aufruf fehl, ist das kein Grund, den Import scheitern zu lassen.
+    /// </summary>
+    private static async Task<int?> TryGetRowCountAsync(
+        HttpClient client, string baseUrl, string filter, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var url = $"{baseUrl}{StandardCostEntitySet}/$count?$filter={Uri.EscapeDataString(filter)}";
+            using var response = await client.GetAsync(url, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var text = (await response.Content.ReadAsStringAsync(cancellationToken)).Trim();
+            return int.TryParse(text, out var count) ? count : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static HttpClient CreateClient(string username, string password)
