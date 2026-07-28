@@ -142,8 +142,49 @@ public class SharePointUploadService : ISharePointUploadService
                 return alphaplanReferences;
         }
 
-        var allCandidates = children?.Value?
+        var graphItems = children?.Value?
             .Where(item => item.File is not null)
+            .ToList() ?? [];
+
+        var selectedNames = SelectManualImportFileNames(
+            graphItems.Select(item => new ManualImportCandidate(item.Name ?? string.Empty, item.LastModifiedDateTime)),
+            normalizedTsc,
+            isSpainImport,
+            preferredYear,
+            folderPath);
+
+        var lastModifiedByName = new Dictionary<string, DateTimeOffset?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in graphItems)
+        {
+            if (!string.IsNullOrEmpty(item.Name))
+                lastModifiedByName[item.Name] = item.LastModifiedDateTime;
+        }
+
+        return selectedNames
+            .Select(name => new SharePointFileReference(
+                string.Join("/", folderPath.Trim('/'), name).Trim('/'),
+                lastModifiedByName.TryGetValue(name, out var modified) ? modified : null))
+            .ToList();
+    }
+
+    /// <summary>Ein Kandidat aus dem SharePoint-Ordner, reduziert auf das fuer die Auswahl Noetige.</summary>
+    public sealed record ManualImportCandidate(string Name, DateTimeOffset? LastModified);
+
+    /// <summary>
+    /// Entscheidet, welche Dateien eines Manual-Import-Ordners in welcher Reihenfolge gelesen
+    /// werden. Bewusst als reine Funktion herausgezogen: Diese Auswahl ist die fehleranfaellige
+    /// Stelle des Manual-Imports (siehe Selbstfuetterungs-Bug 2026-07-13 und der uebergangene
+    /// Jahres-Backfill 2026-07-28), war aber bislang nur ueber einen Graph-Aufruf erreichbar und
+    /// damit praktisch untestbar.
+    /// </summary>
+    public static IReadOnlyList<string> SelectManualImportFileNames(
+        IEnumerable<ManualImportCandidate> candidates,
+        string normalizedTsc,
+        bool isSpainImport,
+        int? preferredYear,
+        string folderPath = "")
+    {
+        var allCandidates = candidates
             .Where(item => IsSupportedManualImportFile(item.Name))
             .Where(item => !IsOwnExportOutputFile(item.Name, normalizedTsc))
             .Where(item => isSpainImport ? IsSpainSalesFile(item.Name) : MatchesTsc(item.Name, normalizedTsc))
@@ -160,7 +201,7 @@ public class SharePointUploadService : ISharePointUploadService
                     SnapshotDate = TryParseSnapshotDate(item.Name, out var snapshotDate) ? snapshotDate : (DateTime?)null
                 };
             })
-            .ToList() ?? [];
+            .ToList();
 
         if (isSpainImport)
         {
@@ -174,31 +215,24 @@ public class SharePointUploadService : ISharePointUploadService
             if (spainCandidates.Count == 0)
                 throw new InvalidOperationException($"Im SharePoint-Ordner '{folderPath}' wurde keine Spain_Sales*.csv gefunden.");
 
-            return spainCandidates
-                .Select(x => new SharePointFileReference(
-                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
-                    x.Item.LastModifiedDateTime))
-                .ToList();
+            return spainCandidates.Select(x => x.Item.Name).ToList();
         }
 
         if (preferredYear is not null)
         {
             var annual = allCandidates
                 .Where(x => x.AnnualYear == preferredYear.Value)
-                .OrderByDescending(x => x.SnapshotDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+                .OrderByDescending(x => x.SnapshotDate ?? x.Item.LastModified?.UtcDateTime ?? DateTime.MinValue)
                 .FirstOrDefault()
                 ?? throw new InvalidOperationException(
                     $"Im SharePoint-Ordner '{folderPath}' wurde keine Jahresdatei fuer '{normalizedTsc}' und Jahr {preferredYear.Value} gefunden.");
 
-            var references = new List<SharePointFileReference>
-            {
-                new(string.Join("/", folderPath.Trim('/'), annual.Item.Name).Trim('/'), annual.Item.LastModifiedDateTime)
-            };
+            var references = new List<string> { annual.Item.Name };
 
             if (preferredYear.Value >= DateTime.Today.Year)
             {
                 var baseDate = annual.SnapshotDate
-                    ?? annual.Item.LastModifiedDateTime?.UtcDateTime.Date
+                    ?? annual.Item.LastModified?.UtcDateTime.Date
                     ?? new DateTime(preferredYear.Value, 1, 1);
 
                 references.AddRange(allCandidates
@@ -206,40 +240,53 @@ public class SharePointUploadService : ISharePointUploadService
                     .Where(x => x.FileDate!.Value.Year == preferredYear.Value)
                     .Where(x => x.FileDate!.Value.Date > baseDate.Date)
                     .OrderBy(x => x.FileDate)
-                    .Select(x => new SharePointFileReference(
-                        string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
-                        x.Item.LastModifiedDateTime)));
+                    .Select(x => x.Item.Name));
             }
 
             return references;
         }
 
-        // Ohne explizites Jahr gilt das Basis+Delta-Modell (UK): neueste Jahres-/Basisdatei
-        // plus alle neueren datierten Delta-Dateien zusammen lesen, damit ein Tageslauf
-        // nicht den ganzen Standortbestand durch das juengste Delta ersetzt.
-        var newestAnnual = allCandidates
+        // Ohne explizites Jahr gilt das Basis+Delta-Modell (UK): Jahres-/Basisdateien plus
+        // alle neueren datierten Delta-Dateien zusammen lesen, damit ein Tageslauf nicht den
+        // ganzen Standortbestand durch das juengste Delta ersetzt.
+        //
+        // Seit 2026-07-28 werden ALLE Jahresdateien gelesen, nicht nur die des hoechsten
+        // Jahres. Vorher fiel eine Historiendatei stillschweigend heraus, sobald eine Datei
+        // mit hoeherem Jahr im Ordner lag: Ein UK-2025-Backfill (`TRUK_2025.xlsx`) wurde nie
+        // eingelesen, weil `110326_TRUK_2026YTD.xlsx` als Jahr 2026 gewann. Damit konnte UK
+        // strukturell nie mehrere Jahre gleichzeitig fuehren. Spanien liest seine Dateien
+        // ohnehin schon vollstaendig (Basis + alle Ranges) - dieser Zweig zieht nach.
+        //
+        // Je Jahr wird bewusst nur die neueste Datei genommen: Liegen mehrere Staende
+        // desselben Jahres im Ordner (Neu-Upload, Korrekturlauf), soll der aktuelle gelten
+        // und nicht beide zusammen eingelesen werden.
+        var annualPerYear = allCandidates
             .Where(x => x.AnnualYear is not null)
-            .OrderByDescending(x => x.AnnualYear)
-            .ThenByDescending(x => x.SnapshotDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
-            .FirstOrDefault();
+            .GroupBy(x => x.AnnualYear!.Value)
+            .Select(group => group
+                .OrderByDescending(x => x.SnapshotDate ?? x.Item.LastModified?.UtcDateTime ?? DateTime.MinValue)
+                .First())
+            .OrderBy(x => x.AnnualYear)
+            .ToList();
 
-        if (newestAnnual is not null)
+        if (annualPerYear.Count > 0)
         {
+            // Deltas ergaenzen den juengsten Jahresstand, deshalb bestimmt dieser das
+            // Stichdatum - nicht etwa die aelteste Historiendatei.
+            var newestAnnual = annualPerYear[^1];
             var baseDate = newestAnnual.SnapshotDate
-                ?? newestAnnual.Item.LastModifiedDateTime?.UtcDateTime.Date
+                ?? newestAnnual.Item.LastModified?.UtcDateTime.Date
                 ?? new DateTime(newestAnnual.AnnualYear!.Value, 1, 1);
 
-            var annualReferences = new List<SharePointFileReference>
-            {
-                new(string.Join("/", folderPath.Trim('/'), newestAnnual.Item.Name).Trim('/'), newestAnnual.Item.LastModifiedDateTime)
-            };
+            // Aufsteigend nach Jahr, damit bei gleichem Belegschluessel der neuere Jahrgang
+            // gewinnt (die Deduplizierung laesst die spaeter gelesene Zeile gewinnen).
+            var annualReferences = annualPerYear.Select(x => x.Item.Name).ToList();
+
             annualReferences.AddRange(allCandidates
                 .Where(x => x.FileDate is not null)
                 .Where(x => x.FileDate!.Value.Date > baseDate.Date)
                 .OrderBy(x => x.FileDate)
-                .Select(x => new SharePointFileReference(
-                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
-                    x.Item.LastModifiedDateTime)));
+                .Select(x => x.Item.Name));
             return annualReferences;
         }
 
@@ -248,31 +295,20 @@ public class SharePointUploadService : ISharePointUploadService
             .OrderBy(x => x.FileDate)
             .ToList();
         if (datedFiles.Count > 1)
-        {
-            return datedFiles
-                .Select(x => new SharePointFileReference(
-                    string.Join("/", folderPath.Trim('/'), x.Item.Name).Trim('/'),
-                    x.Item.LastModifiedDateTime))
-                .ToList();
-        }
+            return datedFiles.Select(x => x.Item.Name).ToList();
 
-        var candidates = allCandidates
-            .OrderByDescending(x => x.FileDate ?? x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
-            .ThenByDescending(x => x.Item.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue)
+        var fallbackCandidates = allCandidates
+            .OrderByDescending(x => x.FileDate ?? x.Item.LastModified?.UtcDateTime ?? DateTime.MinValue)
+            .ThenByDescending(x => x.Item.LastModified?.UtcDateTime ?? DateTime.MinValue)
             .ToList();
 
-        var selected = candidates.FirstOrDefault()
+        var selected = fallbackCandidates.FirstOrDefault()
             ?? throw new InvalidOperationException(
                 string.IsNullOrWhiteSpace(normalizedTsc)
                     ? $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei gefunden."
                     : $"Im SharePoint-Ordner '{folderPath}' wurde keine Excel-/CSV-Datei fuer '{normalizedTsc}' gefunden.");
 
-        return
-        [
-            new SharePointFileReference(
-                string.Join("/", folderPath.Trim('/'), selected.Item.Name).Trim('/'),
-                selected.Item.LastModifiedDateTime)
-        ];
+        return [selected.Item.Name];
     }
 
     public async Task<SharePointFileReference?> ResolveLatestProcessedMergeInputFileAsync(
