@@ -6,6 +6,9 @@ Stand: 2026-06-16
 
 Die neue Sicht `Management Analyse > Experten > Gruppenmarge` ist eine fachliche Pruefsicht fuer Gruppenmarge je Land, Sparte und Detailzeile. Sie ist noch kein final freigegebener Finance-Abschlusswert.
 
+**Prozessfluss-Diagramm (Filterkette pro Verkaufszeile, fuer Nicht-Finanzler):**
+`docs/FINANCE_GRUPPENMARGE_PROZESSFLUSS_2026-07-27.svg`
+
 Ausloeser war `kosten.xlsx`, Blatt `Tabelle2`: Dort wurde die Frage erkennbar, ob die Marge nicht mit den lokalen Verkaufszeilenkosten, sondern aus Gruppensicht mit der richtigen Lieferanten-/Standardkostenbasis gerechnet werden muss.
 
 ## Fachliche Arbeitshypothese
@@ -187,6 +190,40 @@ Lieferkategorie gelten (statt ueber die leeren Supplier-Textfelder erkannt zu we
 damit die WAVWR-Kostenbasis in der Marge wirksam wird? Betrifft nur die
 Klassifikationsregel (`GroupMarginSupplierClassifier`), keine Kostenberechnung. Noch
 NICHT umgesetzt — reine Dokumentation des Befunds, Entscheidung liegt bei Andreas/Finance.
+
+## Nachtrag 2026-07-27: Sitzung Andreas — 3-Tabellen-Architektur bestaetigt, Supplier-Widerspruch offen
+
+Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`. Kurz:
+
+- **Bestaetigt final:** Genau 3 Konzern-Standardkosten-Tabellen (Trafag AG, Trafag
+  Italien, Trafag Indien) — deckt sich mit `GroupStandardCostEntities.TrAg/TrIt/TrIn`
+  im Code. Magnetic Sense/GFS bewusst NICHT als vierte Tabelle. Verlinkungslogik
+  bestaetigt: TR-AG/IT/IN -> jeweilige Konzerntabelle, sonst -> Standardkosten der
+  verkaufenden Landesgesellschaft (unveraendert).
+- **Noch offen:** Technischer Anbindungsweg TR-IT/TR-IN (Live-SAP-B1-Zugriff vs.
+  monatlicher Andreas-Export mit nur letztem Stand je Material).
+- **Widerspruch zum Nachtrag 2026-07-17 (oben):** Andreas beobachtete am 2026-07-27
+  live, dass `SupplierCountry` "meistens gefuellt" ist — steht im Gegensatz zum
+  dokumentierten Befund "CH/AT/UK/ES strukturell immer leer". Noch NICHT verifiziert,
+  welche Aussage/welcher Datenstand zutrifft. Separat davon: neuer Verdachtsbefund,
+  dass `SupplierNumber` bei sehr vielen Zeilen (60-79 Tsd., Zaehlung im Gespraech nicht
+  eindeutig) fehlt — Ursache ungeklaert, Analyse von Ingo und Andreas zugesagt.
+- Aktionspunkte/Deadlines: siehe Sitzungsmitschrift Abschnitt 5 (Sync-Termin Ende der
+  Woche 2026-07-27-Woche).
+- **WICHTIG — korrigiert den Nachtrag 2026-07-15 (Teil 2) oben:** Live-Read gegen `it01_p`
+  am 2026-07-27 bestaetigt zwar die Zahlen (`OITM.PrdStdCst` = 0 bei allen 40'478 Artikeln,
+  `OITW.AvgPrice` = 0 bei allen 1.9 Mio. Lagerzeilen), aber die **Schlussfolgerung „TR IT
+  pflegt keine Standardkosten" war falsch**: 97.8 % der Artikel nutzen
+  **Serien-/Chargenbewertung** (`OITM.EvalSystem = 'B'`), und dabei legt SAP B1 die Kosten
+  bewusst nicht im Artikelstamm ab. Die Felder werden sich also nie fuellen — ein monatlicher
+  Export daraus liefert dauerhaft Nullen. Die Kosten liegen auf **Belegebene**:
+  `INV1.StockPrice` ist fuer 2'019 der 2'082 in 2026 verkauften Materialien (97.0 %)
+  gefuellt. Damit ist TR ITs eigene Verkaufszeile die tragfaehige Konzernkostenquelle —
+  gleiches Prinzip wie `VBRP-WAVWR` bei CH/AT, ohne neue Datenlieferung. Details inkl.
+  Zahlen und offener Fachfragen: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`
+  Abschnitt 5b Befund 6. Hinweis: Der Kommentar in `Models/GroupStandardCost.cs` (Zeile
+  12-16) transportiert noch die alte, irrefuehrende Schlussfolgerung und sollte
+  nachgezogen werden.
 
 ## Naechste technische Schritte nach Fachfreigabe
 

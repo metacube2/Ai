@@ -21,6 +21,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | --- | --- | --- |
 | Aktueller Stand | Projektstatus, letzte Aenderungen, offene Punkte | `docs/rag/PROJECT.md` |
 | Finance Cockpit | Soll/Ist, Finance Summary, Regeln, Laenderlogik | `docs/rag/FINANCE.md` |
+| Finance Formeln/Mechanik | Wie rechnet was: Waehrungsumrechnung, Marge/Standardkosten, Land-Formeln, Trafag/Magnetic-Sense/GFS-Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess / Excel-Nachweis | Dashboard-Datenfluss, Audit-CSV, Sales_All, Finance Pruefbuch, Andreas-Nachvollziehbarkeit | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
 | Finance Spezialfaelle | IT, UK, ES, Abweichungen | `docs/rag/FINANCE.md` |
 | Manual Import | UK-Deltas, Spanien Basis+Range, DE Alphaplan Full+Delta, Importprozess | `docs/rag/MANUAL_IMPORT.md` |
@@ -57,6 +58,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` | Admin-/Landing-Details |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping im Detail |
 | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge-Fachlogik, Andreas-Entscheide, Kostenwaehrungsschalter (Entscheid D) im Detail |
+| `docs/FINANCE_GRUPPENMARGE_PROZESSFLUSS_2026-07-27.svg` | Visuelles Prozessfluss-/Filterdiagramm zur Gruppenmarge-Logik (Lieferant-Filter, Kostenbasis-Herkunft, Status, Aggregation) fuer Nicht-Finanzler |
 | `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` | Standardkosten-/MBEW-STPRS-Anbindung CH/AT und DE im Detail, inkl. Nachtrag 2026-07-16 (haengender mbewSet-Import, Kostenquoten-Verifikation) |
 | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` | SAP-OData-Spezifikation `Wavwr`-Feld in `FinanzdataSchweizOeSet` (Ersatz fuer haengenden mbewSet-Scan, CH/AT-Kostenbasis) |
 | `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md` | SAP-OData-Spezifikation `FinanzJournalSet` fuer CH/AT-Journal-Import |
@@ -71,6 +73,12 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` | Marcos Einkauf-Review im Detail, inkl. travp762-Feldrisiko |
 | `docs/abap/README_LZCODE_WEBSERVICE.md` | ZLO03/ZM_LZCODE20_OPT als Webservice (Entwurf fuer Lucas): EntityStruktur, Determinismus-Fix, Gateway-Anlage; C#-Seite in `Services/MaterialUsageDataRefreshService.cs` |
 | `docs/FINANCE_STANDARDKOSTEN_ARBEITSNOTIZ_2026-07-17.md` | Arbeitsnotiz Standardkosten/Margenreporting mit Andreas (Stichproben, fix/variabel-Frage) |
+| `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` | Sitzungsmitschrift Andreas: 3-Tabellen-Architektur TR AG/IT/IN bestaetigt, Supplier-Country-Widerspruch, SupplierNumber-Luecke, Aktionspunkte/Deadlines |
+| `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` | Supplier-Luecke auf PRODUKTIVdaten quantifiziert: 69'919 von 84'788 Zeilen ohne Lieferant, 63'008 Zeilen mit Kosten aber maskierter Marge, Aufschluesselung je TSC |
+| `docs/FINANCE_DATENLUECKEN_ANDREAS_2026-07-28.md` | Andreas' rote Pivot-Markierungen geprueft: CH/AT liest vom TEST-Server travt762 (Datenschnitt Mitte April 2026), ES-Range-Export erst ab 28.05.2026, UK ohne 2025 |
+| `docs/FINANCE_CHAT_2026_LUECKE_ROOTCAUSE_2026-07-28.md` | Root Cause CH/AT-2026-Luecke: Report `Z_TRAFAG_DACH_EXPORT` nie auf P76 fuer 2026 gelaufen; Beweiskette T76/P76, Fix-Reihenfolge, Namensfalle Z_TRAFAG_SCHWEIZ_EXPORT |
+| `docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md` | Andreas' Issue-Log mit Status/Owner/Nachweis je Punkt; Detailbefund Laendercodes (Spanien Klartextnamen, TRDE leer) und PostingDate-Luecke TR ES |
+| `docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md` | Backfill UK-2025 aus App-eigenem Export: bewiesene Verdopplungsfalle (`SageNetSales` vs. Exportspalte), Namensregeln fuer Basisdateien, warum die Spanien-Datei redundant ist |
 | `docs/FINANCE_IT_VORGEHEN_2026-05-18.md` | IT/Italien-Finance-Vorgehen im Detail |
 | `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` | UK-Quellkorrektur (Sage) im Detail |
 | `SAGE_SPAIN_EXPORT_2026-05-05.md` (Repo-Root) | Spanien-Sage-Export im Detail |
@@ -167,6 +175,60 @@ dann kann auch die Claude-Session die reinen Lese-Befehle selbst fahren, ohne in
 Ergaenzend liegen dort zwei reine OData-Probe-Skripte (kein NCo, ohne Build nutzbar):
 `probe_travp762_odata.ps1` und `probe_travp762_stprs.ps1`.
 
+## Werkzeug: HANA-/SAP-B1-Direktzugriff (HanaQ)
+
+Stand: 2026-07-28 (neu)
+
+Ort: `.tmp_tools/HanaQ/` (`Program.cs`, `HanaQ.csproj`). Build mit `dotnet build`; braucht den
+SAP-HANA-.NET-Client unter `C:\Program Files\sap\hdbclient\dotnetcore\v2.1\`.
+
+Zweck: Ad-hoc **read-only** SQL gegen die B1-/HANA-Quellsysteme der Tochtergesellschaften —
+um SAP-B1-Fakten (Feldinhalte, Fuellgrade, Bewertungsmethoden) direkt am System zu pruefen,
+statt sie aus alter Doku zu uebernehmen. Ergaenzt `SapProbe` (das nur SAP ERP per RFC kann).
+
+**Wann nutzen:** Immer wenn eine Aussage ueber B1-Daten getroffen werden soll — existiert ein
+Feld, wie hoch ist der Fuellgrad, welche Bewertungsmethode laeuft, stimmt eine Zahl aus einem
+alten Doku-Eintrag noch. Ergebnisse gehoeren danach in die betroffene Doku.
+
+Aufruf:
+
+```text
+.tmp_tools/HanaQ/bin/Debug/net8.0/HanaQ.exe <TSC> <sqlFile> [dbPath]
+```
+
+- `<TSC>` z. B. `TRIT`, `TRFR`, `TRUS`, `TRIN` — Verbindung, Schema, Credentials werden aus dem
+  lokalen SQLite-Snapshot aufgeloest (`Sites` + `SourceSystemDefinitions` + `HanaServers`),
+  genau wie die App es tut. Kein Passwort im Klartext noetig.
+- `<sqlFile>` Textdatei mit mehreren Statements, getrennt durch eine Zeile die mit `;;` beginnt.
+  Platzhalter `{schema}` (Original, z. B. `it01_p`) und `{SCHEMA}` (uppercase, fuer
+  `SYS.TABLE_COLUMNS`-Abfragen) werden ersetzt.
+- Guardrail: alles was nicht mit `SELECT` oder `WITH` beginnt, wird uebersprungen —
+  Schreibzugriffe sind nicht moeglich. Fehler je Statement werden abgefangen, der Rest laeuft
+  weiter.
+
+| Aufgabe | Beispiel |
+| --- | --- |
+| Existierende Spalten finden | `SELECT TABLE_NAME, COLUMN_NAME FROM SYS.TABLE_COLUMNS WHERE SCHEMA_NAME='{SCHEMA}' AND TABLE_NAME='OITM'` |
+| Fuellgrad messen | `SELECT COUNT(*), SUM(CASE WHEN "AvgPrice">0 THEN 1 ELSE 0 END) FROM {schema}."OITM"` |
+| Beleg gegen Stammdaten vergleichen | Join `{schema}."INV1"` / `{schema}."OINV"` / `{schema}."OITM"` |
+
+**Wichtige Lehren aus dem ersten Einsatz (2026-07-27/28, TR IT):**
+- **Grundgesamtheit immer mitfiltern.** `OITM` enthaelt auch Nicht-Lagerartikel und inaktive
+  Artikel. Fuer fachliche Prozentzahlen `WHERE "InvntItem"='Y' AND "validFor"='Y'` setzen —
+  ohne diesen Filter waren zwei Aussagen verzerrt (97.8 % statt 99.1 %, 40 % statt 75.7 %).
+- **Zahlen schwanken** zwischen zwei Abfragen um wenige Stueck (Produktivsystem, laufende
+  Artikelanlage) — in Aussagen runden bzw. „ca." schreiben.
+- **B1-Kosten liegen auf zwei Ebenen**, nicht verwechseln: `INV1.StockPrice` (Belegposition,
+  gefuellt) vs. `OITM.AvgPrice`/`PrdStdCst`/`OITW.AvgPrice` (Artikelstamm, bei
+  Chargenbewertung strukturell leer).
+- **Indien (`TRIN`, `20.197.20.60:30015`) ist vom Entwicklungsrechner nicht erreichbar**
+  (Timeout `rc=10060`, verifiziert 2026-07-15 und 2026-07-28) — dafuer braucht es
+  VPN-/Firewall-Freigabe. Der Produktivserver erreicht die Quelle dagegen taeglich.
+
+Genutzte SQL-Dateien liegen im Scratchpad der jeweiligen Session, nicht im Repo — die
+Ergebnisse sind in `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitt 5b
+festgehalten.
+
 ## Entfernt 2026-07-15 / nur noch im Raw-Archiv
 
 Acht Dateien wurden am 2026-07-15 aus der aktiven Struktur entfernt (reine Pointer-Stubs
@@ -215,5 +277,7 @@ in `docs/rag/FINANCE.md` und `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`. Details/
 | `Deckungsbeitrag`, `DB %`, `StandardCostVariable`, `StandardCostFixed`, `fix/variabel`, `ContributionMarginCalculator` | Finance Cockpit / `docs/FINANCE_STANDARDKOSTEN_ARBEITSNOTIZ_2026-07-17.md` |
 | `NETWR_HC`, `Kurrf`, `Faktor 100`, `CorrectHouseCurrencyScaling` | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` |
 | `Supplier-Felder leer`, `Lieferant unklar`, `GroupMarginSupplierClassifier` | Finance Cockpit / `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
+| `Formel`, `Kostenbasis-Formel`, `Umrechnungsformel`, `Wie rechnet`, `Magnetic Sense`, `GFS`, `Wortgrenze`, `FinanceIntercompanyRule`, `ResolveRate` | `docs/rag/FINANCE_FORMELN.md` |
 | `travt762`, `travp762`, `Test-Server`, `SapServiceUrl` | Finance Cockpit + Einkauf (offener Punkt in beiden) |
+| `Sitzung Andreas`, `3-Tabellen-Architektur`, `SupplierNumber-Luecke`, `Trafag Italien Tabelle`, `Trafag Indien Tabelle` | `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` |
 | `ZLO03`, `ZM_LZCODE20_OPT`, `MaterialUsageSet`, `MaterialParentSet`, `ZCL_LZCODE_PROVIDER`, `Stuecklistenanalyse` | `docs/abap/README_LZCODE_WEBSERVICE.md` |

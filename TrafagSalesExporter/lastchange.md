@@ -1,10 +1,306 @@
 # Last Change
 
-Stand: 2026-07-22
+Stand: 2026-07-28
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- BUCHUNGSDATUM SPANIEN GEFUNDEN 2026-07-28 (loest Andreas' Issue 6): Sage Spanien HAT ein
+  Buchungsdatum — `FacturasTB.FechaAsiento` („asiento" = Buchungssatz), in der Stichprobe zu
+  **100 % gefuellt** (3'788/3'788 Zeilen, 318 verschiedene Werte) und ein eigenstaendiges Datum,
+  kein Duplikat von `FechaFactura` (233 Werte, andere Verteilung). Es fehlt im Dashboard, weil
+  der Spanien-Export die **Lieferschein**-Tabellen liest (`CabeceraAlbaranCliente` +
+  `LineasAlbaranCliente`, dort gibt es nur `FechaAlbaran`/`FechaFactura`/`FechaCreacion`/
+  `FechaRegistro`) und die **Rechnungs**-Tabelle `FacturasTB` gar nicht joint. LOESUNG:
+  `FacturasTB` im Skript `Export-SageSpainSalesCsv.ps1` joinen und `FechaAsiento` als Spalte
+  ausgeben, danach im Spanien-Mapping auf `SalesRecord.PostingDate` mappen — Aenderung auf dem
+  spanischen Sage-Server, nicht in der App. Offen: ueber welchen Schluessel gejoint wird
+  (Rechnungsnummer/-serie/-jahr) und wie Gutschriften laufen. GUENSTIGER MOMENT, weil Santi
+  den fehlenden Zeitraum ohnehin gerade manuell exportiert. Details:
+  `docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md` §1.
+- SPANIEN-EXPORTBEFEHL FUER SANTI 2026-07-28 (fehlender Zeitraum 2026-01 bis 2026-05):
+  `.\Export-SageSpainSalesCsv.ps1 -ExportMode Range -FromDate "2026-01-01" -ToDate "2026-06-01"`.
+  **`ToDate` ist EXKLUSIV** (README) — fuer „bis einschliesslich 31.05." muss `2026-06-01`
+  stehen, sonst fehlt der 31. Mai. **Kein `-DateFilter` angeben**: ohne den Parameter filtert
+  das Skript auf `FechaFactura` (richtig fuer historischen Nachtrag);
+  `-DateFilter LineRegistrationDate` ist laut README nur fuer TAEGLICHE DELTAS gedacht und
+  wuerde beim Backfill die falschen Zeilen liefern. Mit rclone in einem Schritt:
+  `.\Run-SpainRangeExportAndUpload-AllInOne.ps1 -FromDate "2026-01-01" -ToDate "2026-06-01"`.
+  Dateiname entsteht automatisch als `Spain_Sales_range_20260101_to_20260601.csv` und matcht
+  damit `IsSpainSalesFile`. Quelle: `SageSpainExportPackage/SageSpainFinalExportPackage/README.txt`.
+- SPANIEN LAENDERCODE-FIX VOLLSTAENDIG VERIFIZIERT 2026-07-28: Die Quelldatei hat 21
+  verschiedene Laenderwerte, **alle 21 sind im neuen `NormalizeCountryCode`-Mapping abgedeckt**
+  (ESPAÑA, BRASIL, MÉXICO, CHILE, PORTUGAL, PERÚ, COLOMBIA, ARGENTINA, GUATEMALA,
+  ECUADOR (Inc.GALAPAGOS), EL SALVADOR, PARAGUAY, ESTADOS UNIDOS DE AMÉRICA, COSTA RICA,
+  FRANCIA, REPÚBLICA DOMINICANA, ALEMANIA, INDIA, PANAMÁ, BOLIVIA, CHINA). Gegengeprueft:
+  die Quelle hat zwar eine Spalte `CustomerCountryCode`, die enthaelt aber **numerische
+  Sage-interne IDs** (108, 342, 303, 123, ...), KEINE ISO-Codes — ein Umschwenken auf diese
+  Spalte waere also keine Alternative, das Namens-Mapping ist der richtige Weg. Encoding
+  gegengeprueft: die CSV ist gueltiges UTF-8 (`ESPAÑA` = Bytes `C3 91` fuer Ñ), die
+  Diakritika-Behandlung im Fix greift.
+- BACKFILL UK/SPANIEN 2026-07-28 VORBEREITET (Datei gebaut, Upload+Import noch offen): Ziel ist,
+  dass alle Laender ab 2025 Daten haben; fuer die Fruehphase existieren nur APP-EIGENE
+  Exportdateien, weil die Standorte damals noch nichts geliefert haben. Zwei Dateien geprueft:
+  `Sales_TRUK_2026-05-11.xlsx` und `Sales_TRSE_2026-05-20.xlsx`. ERGEBNIS: **UK ist echter
+  Backfill, Spanien ist redundant.** UK: 1'868 eindeutige Belegschluessel, davon **0 in der DB,
+  1'868 fehlen** (`invoice date` 2025 bei 1'881 von 1'882 Zeilen) — das sind die verlorenen
+  UK-2025-Daten. Spanien: 4'315 Schluessel, davon **ALLE 4'315 bereits in der DB** — die Datei
+  enthaelt nur 2025 (komplett vorhanden), die echte Luecke ist 2026 Jan-Mai und wird davon NICHT
+  abgedeckt; Import waere wirkungslos. ZWEI FALLEN, die einen naiven „Datei in den Ordner
+  legen"-Ansatz still scheitern lassen wuerden: (1) beide Dateinamen matchen
+  `IsOwnExportOutputFile` (`^Sales_<TSC>_\d{4}-\d{2}-\d{2}$`, Selbstfuetterungs-Schutz vom
+  2026-07-13) und werden vom Import IGNORIERT; (2) die Spanien-xlsx faellt zusaetzlich durch
+  `IsSpainSalesFile` (verlangt `Spain_Sales*` + `.csv`). DRITTE, GEFAEHRLICHSTE FALLE BEWIESEN:
+  das UK-Mapping rechnet `SageNetSales = amount * quantity`, aber die Exportspalte
+  `Sales Price/Value` enthaelt den BEREITS berechneten Zeilenwert — nachgewiesen daran, dass sie
+  in der Spanien-Datei bei allen 4'341 Zeilen identisch mit `Finance | Net Sales Actual` ist. Ein
+  unveraenderter Reimport haette also ein zweites Mal mit der Menge multipliziert (faellt nicht
+  auf, weil die Zahlen plausibel aussehen, nur zu hoch sind). LOESUNG: `.tmp_tools/BuildUkBaseFile`
+  rechnet die Spalte auf den Stueckpreis zurueck (Zeilenwert/Menge, Menge bleibt unveraendert),
+  Kontrollrechnung inkl. Gutschriften-Vorzeichenlogik stimmt EXAKT (395'605.82 vor und nach der
+  Reimport-Simulation, Differenz 0.0000; 1 Zeile mit Menge 0 und Wert 0 belassen; 0 Zeilen mit
+  Vorzeichenrisiko). Ergebnis: `C:\Users\koi\Downloads\UK_Backfill\TRUK_2025.xlsx`. DER NAME IST
+  BEWUSST GEWAEHLT: `TRUK_2025` matcht den Selbstfuetterungs-Schutz nicht, wird aber von
+  `TryParseAnnualSiteFileName` als Jahres-/Basisdatei erkannt (TSC-Token + Jahreszahl) und ist
+  kein datiertes Delta (`ddMMyy_TRUK`). DAUERHAFTIGKEIT: ein direkter DB-Schreibvorgang waere beim
+  naechsten UK-Standortexport weg (Manual-Import ersetzt je TSC); mit der Datei im Quellordner
+  greift das Basis+Delta-Modell und 2025 ist bei JEDEM Lauf wieder dabei. ZU TUN: Datei nach
+  SharePoint `Import/Finance/UK_B1` hochladen und dort liegen lassen, TRUK-Standortexport fahren.
+  PLAUSIBILITAET OFFEN: 395'605.82 GBP fuer ein Jahr wirkt niedrig, ein belastbarer UK-2025-Sollwert
+  existiert nicht (der alte `3'749'865` gilt laut Doku nicht mehr fuer UK) — Groessenordnung mit
+  Andreas/UK gegenpruefen, die Datei kann selbst schon ein Teilstand gewesen sein. Details:
+  `docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md`.
+- ISSUE-LOG ANDREAS 2026-07-28 ABGEARBEITET, `294/294` Tests gruen, NOCH NICHT DEPLOYED:
+  Alle sieben Punkte auf Produktivdaten geprueft — keiner ist ein Rechen-/Logikfehler.
+  BEHOBEN IM CODE: „Customer Country code is not standardized". Befund war praeziser als der
+  Titel: alle Nicht-ES-Gesellschaften liefern saubere ISO-2-Codes (65 verschiedene, keine
+  Case-/Ziffernprobleme); die Inkonsistenz kommt AUSSCHLIESSLICH aus Spanien, das spanische
+  Klartextnamen schreibt (`ESPAÑA` 3'815, `BRASIL` 227, `PORTUGAL` 215, `PERÚ` 202,
+  `MÉXICO` 194, `ALEMANIA`, `FRANCIA`, `ESTADOS UNIDOS DE AMÉRICA`, ... 22 Werte). Fix: neue
+  Value-Transformation `NormalizeCountryCode` analog zur vorhandenen `NormalizeCurrencyCode`
+  (`Services/TransformationStrategies.cs`), DI in `Program.cs`, Beschreibung in
+  `TransformationCatalog.cs`, zwei Seed-Defaults fuer `MANUAL_EXCEL` (CustomerCountry +
+  SupplierCountry) in `DatabaseSeedService.cs`, Tests in `TransformationStrategiesTests.cs` +
+  `DatabaseInitializationServiceTests.cs`. Vergleich ohne Diakritika (`PERÚ` = `PERU`).
+  DESIGN-ENTSCHEID: unbekannte Klartextwerte bleiben UNVERAENDERT stehen statt geraten/geleert
+  zu werden, damit Mapping-Luecken sichtbar bleiben. WIRKSAM ERST NACH DEPLOY + ES-REIMPORT
+  (Transformation greift beim Import, schreibt bestehende Zeilen nicht rueckwirkend um).
+  NEU GEFUNDEN, nicht von Andreas gemeldet: TRDE hat `CustomerCountry` bei ALLEN 7'167 Zeilen
+  leer (Mapping-, kein Normalisierungsproblem) — passt zum DE-Supplier-Befund (dort ebenfalls
+  0 von 7'167); Alphaplan-Exportspalten gemeinsam klaeren. PRAEZISIERT: Issue „Posting Date
+  fehlt bei TR ES" betrifft **5'478 von 5'478** ES-Zeilen (100 %), nicht nur einige; die
+  Fallback-Kette `PostingDate`->`InvoiceDate` rettet die Jahreszuordnung, der echte Defekt
+  sind **229 Zeilen ohne jedes Datum**, die aus allen Auswertungen herausfallen. BEWUSST NICHT
+  gefixt: `PostingDate = InvoiceDate` waere eine fachliche Annahme (Buchungs- vs.
+  Fakturadatum) und wuerde die 229 Zeilen ohnehin nicht retten. Ausgefuelltes Log mit Owner/
+  Naechster-Schritt je Punkt: `docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md`.
+- P76-REPORT GELAUFEN 2026-07-28, EIN SCHRITT FEHLT NOCH: Ingo hat `Z_TRAFAG_DACH_EXPORT` auf
+  P76 fuer Jahre ab 2026 ausgefuehrt. Ergebnis live gemessen — die Produktion ist jetzt die
+  BESSERE Quelle: OData Gesamt P76 `48'932` vs T76 `40'506`, **Gjahr2026 P76 `18'290` vs T76
+  `9'864`** (T76 endet Mitte April, P76 reicht bis zum aktuellen Tag, Stichprobe
+  `FKDAT = 20260728`). `NETWR_DC`/`WAVWR_DC` in den 2026er P76-Zeilen korrekt gefuellt.
+  RESTBEFUND: **2025 hat auf P76 keine Kostenbasis** — `WAVWR_DC` = 0.00 in ALLEN 2025er
+  Zeilen, waehrend T76 fuer dieselben Belege Werte hat (9'870.85 / 1'081.48 / 4'540.30).
+  Ursache genau wie im Report-Kopfkommentar beschrieben: die 2025er P76-Zeilen stammen aus
+  einem aelteren Lauf vor Einfuehrung von `WAVWR_DC`, und der UPSERT ergaenzt neue Felder nur
+  bei erneutem Lauf ueber dieselben Zeilen. Der Lauf „ab 2026" hat 2025 nicht angefasst.
+  NOCH ZU TUN: Report auf P76 fuer `s_gjahr = 2025` laufen lassen (BUKRS 1100 + 1200) — erst
+  danach ist die URL-Umstellung unbedenklich, sonst waere 2026 gut, aber die Gruppenmarge im
+  Referenzjahr 2025 ohne Kostenbasis. WIE WEIT ZURUECK? NICHT bis 2022: `ExportSettings.DateFilter`
+  = `2025-01-01`, die App importiert nichts vor 2025, und `CentralSalesRecords` enthaelt nur
+  2025 (58'353) und 2026 (26'200). Ein Lauf 2022-2024 wuerde ~100k Zeilen schreiben, die nie
+  gelesen werden, und nur Laufzeit auf Produktiv-SAP kosten. Nebenbefund bestaetigt: der
+  NETWR_HC-Faktor-100-Bug lebt auf BEIDEN Systemen weiter (`NETWR_DC 19'000.00` vs
+  `NETWR_HC 161.50`), C#-Kompensation greift, SAP-Fix weiter offen. Details:
+  `docs/FINANCE_CHAT_2026_LUECKE_ROOTCAUSE_2026-07-28.md`.
+- ESKALATION AUS ITALIEN 2026-07-28: Nach Paolas Antwort kam eine Mail von uebergeordneter
+  Stelle (Bezug auf VARONE als B1-Partner, Paolas Arbeitslast, Area Sales Manager) mit der
+  Bitte, die Moving-Average-Umstellung fuer Trafag Italia **erst ab 2027** zu starten. Fuenf
+  Vorbehalte: (1) VARONE-Implementierungskosten nicht budgetiert, (2) Arbeitslast Paola /
+  moegliche manuelle Importe, (3) Verifikation des neuen Bestandswerts, (4) Auswirkung auf die
+  TRIT-Marge quantifizieren, (5) neue interne Prozesse mit Area Sales Manager definieren.
+  WICHTIG — DAS BLOCKIERT DAS REPORTING NICHT: der von Andreas freigegebene Weg
+  (`INV1.StockPrice`, Belegebene) funktioniert unabhaengig von der Bewertungsmethode (97 %
+  Fuellgrad unter heutiger Chargenbewertung). Andreas kann 2027 zustimmen, ohne im Reporting
+  etwas zu verlieren; die MA-Umstellung bleibt ein Bilanzierungs-/Governance-Thema. Zu deren
+  Punkt 4 koennen wir beitragen (wir haben die tatsaechlichen Chargenkosten je Material) —
+  dabei aber Bestandsbewertung/bilanzielle COGS klar von der Reporting-Marge trennen, sonst
+  reden beide Seiten von verschiedenen Zahlen. Terminentscheid liegt bei Andreas/HQ, kein
+  neuer Aktionspunkt fuer Ingo. Details:
+  `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitt 5e.
+- ROOT CAUSE CH/AT-2026-LUECKE GEFUNDEN 2026-07-28: Der SAP-Report **`Z_TRAFAG_DACH_EXPORT`**
+  wurde in der PRODUKTION (P76) **nie fuer 2026 ausgefuehrt**. Beweiskette (alles live,
+  read-only): (a) OData-`$count` mit den App-Credentials (`POWERBI`): T76 liefert Gesamt
+  `40'506` / Gjahr2025 `30'642` / **Gjahr2026 `9'864`**, P76 liefert Gesamt `30'642` /
+  Gjahr2025 `30'642` / **Gjahr2026 `0`** — das TESTsystem hat mehr Daten als die Produktion.
+  (b) RFC-Read der Z-Tabelle: `ZSCHWEIZ` hat auf P76 2025er Zeilen, aber KEINE 2026er; auf T76
+  beide. Der Report schreibt per UPSERT dorthin (Zeile 494 `MODIFY zschweiz`), OData liest
+  daraus. (c) KEIN fehlender Transport: der Quelltext ist auf T76 und P76 **byte-identisch**
+  (577 Zeilen, `diff` leer; P76 zuletzt geaendert KOI 2026-07-22, T76 2026-07-16) — die
+  Produktion hat also den vollen WAVWR/STPRS-Funktionsumfang, er wurde dort nur nicht
+  ausgefuehrt. NAMENSFALLE: das Programm heisst im System `Z_TRAFAG_DACH_EXPORT`; der Name
+  `Z_TRAFAG_SCHWEIZ_EXPORT` (lokale Datei `docs/abap/` und `REPORT`-Kopf) existiert in KEINEM
+  der beiden Systeme. FIX: Report auf P76 fuer **2025 UND 2026** laufen lassen (BUKRS 1100 +
+  1200) — 2025 mit, weil laut Kopfkommentar `WAVWR_DC` bei bestehenden Zeilen aus aelteren
+  Laeufen sonst 0 bleibt (UPSERT ergaenzt neue Felder nur bei erneutem Lauf). Sicher, weil der
+  Report NUR `MODIFY` macht, kein `DELETE` auf `ZSCHWEIZ`, und wiederholbar ist. Vorher in SE11
+  pruefen, dass `WAVWR_DC`/`STPRS_HC` existieren. ERST DANACH darf `Sites.SapServiceUrl` auf
+  `travp762` umgestellt werden — vorher wuerde die Umstellung die vorhandenen 9'864 2026er
+  Zeilen ENTFERNEN. ZURUECKGEZOGEN: die tags zuvor hier notierte Empfehlung „URL-Wechsel behebt
+  zwei Probleme" ist widerlegt; ebenso war die „Korrektur" des 2026-07-14-Eintrags falsch —
+  dessen Aussage (`Gjahr eq '2026'` liefert nichts) trifft fuer P76 weiterhin exakt zu.
+  `GroupStandardCosts` (0 Zeilen) bleibt ein SEPARATES Problem (haengender `mbewSet`-Read).
+  Details: `docs/FINANCE_CHAT_2026_LUECKE_ROOTCAUSE_2026-07-28.md`.
+- ANDREAS' ROTE MARKIERUNGEN GEPRUEFT 2026-07-28 (`docs/Bild.png`, Pivot TSC/Jahr/Monat) — alle
+  vier bestaetigt, KEINER ist ein Rechen-/Logikfehler, alle sind Datenherkunft/-vollstaendigkeit:
+  (1) CH/AT 2026 ab Mai fast leer (TRCH: Jan 2'662, Feb 2'616, Mrz 2'643, Apr 1'409, **Mai 47,
+  Jun 43, Jul 87**; TRAT analog) — URSACHE IN DER PRODUKTIV-DB NACHGEWIESEN: `Sites.SapServiceUrl`
+  fuer `ZSCHWEIZ` = `http://travt762.sap.trafag.com:8000/...`, also das TEST-System T76 statt
+  `travp762`/Prod. Testdaten enden Mitte April 2026, daher der Schnitt. WICHTIGE KORREKTUR: Der
+  Eintrag vom 2026-07-14 („CH/AT sieht das laufende Jahr nicht, `Gjahr eq '2026'` liefert
+  nichts, Dashboard zeigt 0") ist UEBERHOLT — 2026er Daten kommen durch, Jan bis Mitte Apr sind
+  vollstaendig; es ist kein `Gjahr`-Filterproblem, sondern ein Testsystem-Datenstandsproblem.
+  EIN FIX BEHEBT ZWEI PROBLEME: `SapServiceUrl` auf `travp762` umstellen holt die fehlenden
+  CH/AT-Monate UND befuellt endlich `GroupStandardCosts` (dessen Root Cause am 2026-07-16
+  dieselbe war). VORSICHT: veraendert produktive Finance-Zahlen rueckwirkend, vorher mit
+  Andreas/Marco abstimmen und DB sichern. (2) ES 2026 Jan-Apr = 0 Zeilen, Mai nur 35 — der
+  Spanien-Range-Export beginnt erst am 28.05.2026, Jan-Apr wurde nie exportiert (kein Bug,
+  fehlender Export). (3) UK 2025 = 0 Zeilen, UK hat nur 2026-01 bis 2026-07 (1'088) — fehlende
+  Lieferung; Achtung, frueher dokumentierte UK-2025-Analysen (Restdifferenz -5'261.91 GBP)
+  beruhen auf Daten, die aktuell NICHT in der DB sind. (4) Nebenbefunde: 229 ES-Zeilen und 6
+  UK-Zeilen ohne Datum fallen aus jeder Jahres-/Monatsauswertung; TRCH hat je 1 Zeile mit
+  Belegmonat 2026-09 und 2026-10 (zukunftsdatiert, Testsystem-Artefakt). Details:
+  `docs/FINANCE_DATENLUECKEN_ANDREAS_2026-07-28.md`.
+- PRIORITAETSUMKEHR 2026-07-28 (zwei Produktivbefunde, wichtig fuer die Wochenplanung):
+  (1) `GroupStandardCosts` hat produktiv WEITERHIN `0` Zeilen — das am 2026-07-15 gebaute und
+  deployte TR-AG-Konzernkostenfeature ist 12 Tage spaeter unveraendert wirkungslos (Root Cause
+  vom 2026-07-16 nie behoben: `Sites.SapServiceUrl` fuer ZSCHWEIZ auf `travt762`/Test statt
+  `travp762`/Prod + haengender `mbewSet`-Read). Folge: TR-AG-gelieferte TRIT-Zeilen nutzen
+  weiter den IC-Verrechnungspreis als Kostenbasis und sind wegen vorhandener Supplier-Felder
+  NICHT maskiert — sie zeigen also eine Marge auf fachlich falscher Basis, was schlechter ist
+  als ein sichtbares „-". (2) Die fuer diese Woche zugesagte TR-IT/TR-IN-Verlinkung betrifft
+  nur `443` von `84'788` Zeilen (TR IT 129 = 0.15 %, TR IN 314 = 0.37 %). Hebelvergleich:
+  Supplier-Regel entscheiden = 63'008 Zeilen (74 %), `GroupStandardCosts` reparieren = 7'163
+  Zeilen (8.4 %), TR-IT/TR-IN bauen = 443 Zeilen (0.5 %). EMPFEHLUNG: erst Andreas-Entscheid
+  zur Supplier-Regel einholen, dann das bereits gebaute TR-AG-Feature aktivieren, dann
+  DE-Supplier-Spalten pruefen — die TR-IT/TR-IN-Anbindung ist fachlich richtig, aber der
+  kleinste Hebel und sollte gegenueber Andreas ggf. neu terminiert werden. Details:
+  `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitte 7-8.
+- SUPPLIER-LUECKE AUF PRODUKTIVDATEN QUANTIFIZIERT 2026-07-28 (Andreas' Zahl bestaetigt,
+  groesster Hebel im Gruppenmarge-Thema): Ausgewertet wurde die PRODUKTIVE
+  `trafag_exporter.db` vom Server (Stand 2026-07-27 13:16, read-only Kopie, WAL war 0 Bytes).
+  `69'919` von `84'788` Zeilen (82.5 %) haben ALLE DREI Supplier-Felder leer — Andreas'
+  „60-79 Tsd." trifft also zu, kein Zaehlfehler. KERNBEFUND: die drei Felder sind ausnahmslos
+  GEMEINSAM leer (je TSC gilt `no_number` = `no_name` = `no_country` = `all_three_empty`, keine
+  einzige Zeile mit nur einem fehlenden Feld) -> es ist ein Mapping-/Quellenproblem, kein
+  Pflegeproblem. Strukturell 100 % leer: CH (39'043), DE (7'167), ES (5'478), AT (1'463),
+  UK (1'088). Teilweise gefuellt nur die B1-Laender: IT 71 % gefuellt (13'921 Zeilen),
+  IN 12 %, FR 5 %, US 0.4 %. DER PREIS DER REGEL: `63'008` Zeilen (74 % aller Zeilen) haben
+  eine verwertbare Kostenbasis, zeigen aber wegen `Lieferant unklar` keine Marge — davon
+  TRCH 37'680 und TRAT 1'462, d. h. die am 2026-07-16 hergestellte CH/AT-Kostenbasis
+  (Fuellgrad 96.5 %/99.9 %) wirkt sich auf KEINER EINZIGEN Zeile aus. Damit ist die offene
+  Fachfrage an Andreas vom 2026-07-17 (CH/AT per Regel als eigene Lieferkategorie werten?)
+  bezifferbar und hat deutlich mehr Hebel als die TR-IT-/TR-IN-Kostenanbindung. NEUE OFFENE
+  FRAGE: TRDE hat produktiv 0 von 7'167 Zeilen mit Lieferant, in einer Dev-Momentaufnahme vom
+  2026-07-02 waren es 1'764 mit `Trafag AG` — liefert der Alphaplan-Export die Spalten
+  `Lieferanten Nummer`/`Name Lieferant`/`Land Lieferant` noch? (Dev-Datei ist kein frueherer
+  Produktivstand, daher NICHT als Rueckschritt belegt.) Details:
+  `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md`.
+- TR IN AUF PRODUKTIVDATEN BELEGT 2026-07-28: Der fuer TR IT freigegebene Belegebenen-Weg
+  traegt fuer Indien nachweislich: `6'934` von `6'973` Zeilen mit Kosten (99.4 %) und
+  `1'430` von `1'434` Materialien (99.7 %). Ein Artikelstamm-/Bewertungsmethoden-Check ist
+  fuer die UMSETZUNG damit nicht noetig. Die Bewertungsmethode in Indiens B1 bleibt aber
+  ungeprueft: `20.197.20.60:30015` ist vom Entwicklungsrechner nicht erreichbar, und eine
+  Remote-Ausfuehrung auf dem Produktivserver war nicht moeglich (Berechtigungsebene blockierte
+  `Invoke-Command`; Share ist lesbar, enthaelt aber nur die App-DB, keine B1-Stammdaten).
+  Nachholen nur noetig, falls TR IN analog zu Paola/TR IT auf Moving Average angesprochen
+  werden soll. WICHTIG ZUR BEGRIFFSKLARHEIT: Indien ist fachlich SAP B1 und laeuft nur
+  historisch unter dem irrefuehrenden Quellsystem-Code `SAGE` — die B1-Tabellen
+  (`OITM`/`OITW`/`OADM`) existieren dort also.
+- TERMINWARNUNG B1-UPGRADE 2026-08-03 (gemeldet 2026-07-28 von Paola/TR IT, war vorher NICHT
+  angekuendigt): Go-Live eines B1-Upgrades ueber ALLE Tochtergesellschaften, Final Tests
+  2026-08-02. Betrifft direkt die taegliche Finance-Datenstrecke: `HanaQueryService` liest fuer
+  FR (`fr01_p`), IT (`it01_p`), US (`us01_p`) und ueber denselben Adapter IN (`TRAFAG_LIVE`) aus
+  `OINV`/`INV1`/`ORIN`/`RIN1` + `OADM`/`OITM`/`OITB`/`OCRD`/`CRD1`/`OOND`/`OSLP`/`ORDR`.
+  Risiken: (1) Downtime am Wochenende -> Importfehler + Heartbeat-Luecken (dann
+  erwartungskonform, kein Datenverlust); (2) Schema-/Feldaenderungen der neuen B1-Version,
+  besonders kritisch `INV1.StockPrice`, weil das ab jetzt die TR-IT-Konzernkostenquelle ist,
+  ausserdem `OITM.EvalSystem` und `OADM.MainCurncy`; (3) alle `EvalSystem`-Zahlen unten sind ein
+  Stand VOR dem Upgrade. NACHSORGE ab 2026-08-03: Importlaeufe FR/IT/US/IN pruefen
+  (`ExportLogs`/`AppEventLogs`, Daten-Heartbeat), `StandardCost`-Fuellgrad je TSC gegenpruefen,
+  `EvalSystem`-Verteilung fuer `it01_p` neu erheben (Werkzeug `.tmp_tools/HanaQ`).
+- TR-IT-KONZERNKOSTEN GEKLAERT 2026-07-27/28 (Analyse + Fachentscheid, Umsetzung noch OFFEN):
+  Der seit 2026-07-15 dokumentierte Befund "TR IT hat in SAP B1 keine Standardkosten" war in der
+  SCHLUSSFOLGERUNG falsch. Live-Read gegen `it01_p` bestaetigt die Zahlen (`OITM.PrdStdCst` = 0
+  bei allen ~40'478 Artikeln, `OITW.AvgPrice` = 0 bei allen 1'902'456 Lagerzeilen), aber die
+  Ursache ist die Bewertungsmethode: bei aktiven Lagerartikeln laufen 31'600 von 31'902
+  (99.1 %) auf Chargen-/Seriennummernbewertung (`OITM.EvalSystem='B'`, empirisch bestaetigt ueber
+  100 % Korrelation mit `ManBtchNum`), nur 296 (0.9 %) auf Moving Average. Dabei fuehrt B1 die
+  Kosten je Charge, nicht im Artikelstamm - die Felder werden sich NIE fuellen, ein monatlicher
+  Export daraus liefert dauerhaft Nullen. GEGENBEFUND: auf Belegebene ist `INV1.StockPrice` fuer
+  2'019 von 2'082 in 2026 verkauften Materialien gefuellt (97.0 %). Andreas hat am 2026-07-27
+  freigegeben, diesen Belegebenen-Weg als TR-IT-Kostenbasis zu nutzen (gleiches Prinzip wie
+  `VBRP-WAVWR` bei CH/AT), keine kalkulierte Groesse noetig, keine monatliche Datenlieferung.
+  TECHNISCH NOCH NICHT UMGESETZT: `GroupStandardCostAreas.ByEntity` enthaelt weiterhin nur
+  `TrAg`; TR IT/TR IN fallen dadurch still auf die lokale Kostenbasis zurueck. Ausserdem
+  transportiert der Kommentar in `Models/GroupStandardCost.cs` Zeile 12-16 noch die alte,
+  ueberholte Schlussfolgerung. Details: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`.
+- MOVING-AVERAGE-UMSTELLUNG TR IT: WARTET AUF PAOLA BIS ENDE AUGUST 2026 (Stand 2026-07-28):
+  Paola/TR IT bestaetigt, dass die Umstellung Charge -> Moving Average fuer die ~31'600 Artikel
+  als Massenupdate technisch machbar ist. OFFEN bleibt genau Andreas' Cost-Run-Frage: rechnet SAP
+  den Durchschnittspreis nach der Umstellung automatisch fort, oder braucht der Bestand eine
+  einmalige manuelle Bewertungsaktion? Das klaert sie mit ihrem SAP-Technikteam. Zeitplan: B1-
+  Upgrade Go-Live 2026-08-03, danach ca. 2026-08-03 bis 2026-08-17 Ferien, Beurteilung Ende
+  August. Sie haelt eine Analyse parallel zum Upgrade fuer nicht ratsam und fragt zurueck, ob
+  Ende August fuer Andreas passt (ANTWORT AN PAOLA STEHT NOCH AUS). Unkritisch fuer die
+  Gruppenmarge: der freigegebene Belegebenen-Weg funktioniert unabhaengig von der
+  Bewertungsmethode; die MA-Umstellung ist Konzern-Richtlinienkonformitaet, kein Blocker.
+- MAGNETIC SENSE ENDGUELTIG GEKLAERT 2026-07-27: Keine vierte Konzern-Standardkosten-Tabelle
+  noetig. Datenbefund: `SupplierName LIKE '%MAGNET%'` -> 0 Zeilen, `CustomerName LIKE '%MAGNET%'`
+  -> 101 Zeilen (alle TRDE). Magnetic Sense ist ausschliesslich Kunde, nie Lieferant. Andreas
+  bestaetigt: "Fuer Magnetic Sense benoetigen wir aus meiner Sicht keine Daten." Es bleibt bei
+  den drei Gesellschaften TR AG / TR Italien / TR Indien. Achtung Begriffsfalle: auf der
+  KUNDENseite ist Magnetic Sense weiterhin ein IC-Marker (`FinanceIntercompanyRule`) und wird
+  fuer DE per `FinanceRuleEngine` ausgeschlossen - das ist ein anderer Mechanismus als die
+  Lieferantenklassifikation der Gruppenmarge.
+- TR IN LIVE-CHECK WEITER BLOCKIERT 2026-07-28: Zugriff auf die Indien-Quelle
+  (`20.197.20.60:30015`, Schema `TRAFAG_LIVE`) scheitert vom Entwicklungsrechner erneut mit
+  Timeout (`rc=10060`), wie schon am 2026-07-15 - kein Netzwerkzugang. Aus dem lokalen Snapshot
+  ist aber bekannt: TRIN-Zeilen haben zu 99.5 % (6'349/6'384) einen Kostenwert, interne
+  "Trafag AG"-Lieferantenzeilen zu 99.2 % - der Belegebenen-Weg ist dort also aussichtsreich und
+  braucht fuer die Umsetzung KEINEN Artikelstamm-Check. Ein `EvalSystem`-Check fuer Indien waere
+  nur fuer eine Paola-analoge Anfrage an TR IN noetig und braucht dann VPN-/Firewall-Freigabe.
+- NEUE DOKU/WERKZEUGE 2026-07-27/28: (1) `docs/rag/FINANCE_FORMELN.md` - kompakte, code-
+  verifizierte Referenz WIE gerechnet wird (Datenfluss, Formel je Land, drei getrennte
+  Waehrungskonzepte, Marge/Standardkosten, und die DREI verschiedenen
+  Trafag/Magnetic-Sense/GFS-Filtermechanismen, die man leicht verwechselt). (2)
+  `docs/FINANCE_GRUPPENMARGE_PROZESSFLUSS_2026-07-27.svg` - Filterkette pro Verkaufszeile als
+  Entscheidungsfluss fuer Nicht-Finanzler. (3) `docs/TRIT_B1_VALUATION_EXPLAINED_2026-07-28.svg`
+  - englische Erklaergrafik fuer Paola/TR IT. (4) `.tmp_tools/HanaQ` - generischer read-only
+  HANA-Abfrager, siehe `docs/RAG_ROUTER.md` Abschnitt "Werkzeug: HANA-Direktzugriff (HanaQ)".
+- ZZPRDAT/PP-THEMA - ALTLOESUNG IST TOT 2026-07-27 (SAP, eigenes Thema, nicht Dashboard):
+  Quelltext-Read per SapProbe zeigt, dass die Schreiblogik des `PPCO0012`-Exits (CMOD `ZPP00012`,
+  Transport `T76K911110`) KOMPLETT AUSKOMMENTIERT ist - `ZXCO1U11` und `ZXCO1U12` Zeile fuer
+  Zeile mit `"`, `ZXCO1O01` leerer Rumpf, `ZXCO1I01` nur ein No-op
+  (`MOVE-CORRESPONDING ci_aufk TO ci_aufk`). Es gibt also KEINEN aktiven Code-Pfad, der
+  `AUFK-ZZPRDAT` schreibt - das Feld bleibt nicht "manchmal", sondern IMMER leer. Ein Live-Test
+  mit Testauftrag war dadurch unnoetig. Folge: der Altcode taugt NICHT als Referenz fuer die
+  BAdI-Neuimplementierung (`WORKORDER_UPDATE`), diese muss komplett aus den Anforderungen
+  abgeleitet werden. Ausserdem widerlegt: Marcos Referenzfall `1214608` zeigt live in P76
+  `ZZPRDAT = 00000000` (nicht 20.11.2025) bei `GLTRP = 08.01.2026`; `CDPOS` liefert fuer das Feld
+  weder in T76 noch P76 Aenderungsbelege. Wahrscheinlichere Quelle einmalig gefuellter Werte:
+  Adils Kopierprogramm (§10). Details: `saptasks/zzprdat-kontext.md`.
+- DOKU-LEHRE 2026-07-28 (Arbeitsweise, gilt allgemein): Zwei Fehler dieser Session sind
+  dokumentiert, weil sie sich wiederholen koennen. (1) Ein Nullwert ohne notierte Ursache ist
+  kein Befund, sondern eine offene Frage - der 2026-07-15-Eintrag "TR IT hat keine Kosten" wurde
+  dreimal zitiert (Doku, `Models/GroupStandardCost.cs`, `FinanceStdCostTodoExcel`), stammte aber
+  aus EINER unbelegten Quelle ohne Materialnummern/Zeilenzahlen und fuehrte zur falschen
+  Schlussfolgerung. (2) Prozentzahlen brauchen eine genannte Grundgesamtheit - eine erste
+  Auswertung nannte "97.8 % Chargenbewertung" und "nur 40 % der MA-Artikel haben AvgPrice"; beide
+  Zahlen waren durch Nicht-Lagerartikel verzerrt, korrekt sind 99.1 % bzw. 75.7 % auf Basis
+  aktiver Lagerartikel. Die zweite Korrektur entzog einer geplanten Aussage gegenueber TR IT die
+  Grundlage - rechtzeitig gemerkt, bevor sie rausging.
 
 - IIS-HOSTING ROLLBACK AUF OUTOFPROCESS 2026-07-24, DEPLOYED (DLL 24.07.2026 14:39, Port 443
   offen, HTTP 401 = App oben; Commit `410cf70`, gleicher Deploy enthaelt auch den Ladebalken-
