@@ -158,6 +158,57 @@ widerspricht der Anforderung, dass die Daten einen Reload ueberstehen muessen.
 Grund seit jeher stillschweigend uebergangen werden. Das Log zeigt nur die ausgewaehlten
 Dateien, nicht die verworfenen.
 
+### Umgesetzt: Weg C (Commit `d77b5b4`, deployed 2026-07-28 17:30)
+
+Die Auswahl liest jetzt alle Jahresdateien (je Jahr die neueste, aufsteigend nach Jahr).
+Zusaetzlich wurde die Logik als reine Funktion
+`SharePointUploadService.SelectManualImportFileNames` herausgezogen und mit 12 Tests
+abgedeckt — sie war vorher nur ueber einen Graph-Aufruf erreichbar und damit ungetestet,
+weshalb beide Produktionsfehler dieser Stelle (Selbstfuetterung 2026-07-13, uebergangener
+Backfill 2026-07-28) unbemerkt blieben.
+
+### Ergebnis nach dem zweiten Import
+
+TRUK hat jetzt **1'867 Zeilen fuer 2025** (Summe `394'439.16 GBP`) neben 1'082 fuer 2026.
+Der Backfill ist angekommen.
+
+**Abweichung zur Vorabschaetzung geklaert (`395'605.82` vs. `394'439.16`, Differenz
+`1'166.66`):** Die Quelldatei enthaelt **14 echte Dubletten** — je zwei Zeilen mit
+identischer Rechnung, Position, Material UND identischem Wert (z. B.
+`0000042957|1|PVF6` mit 283.91 / 283.91). Die Deduplizierung verwirft genau diese 14 Zeilen
+im Wert von `1'166.66`. Das ist korrektes Verhalten; der importierte Wert ist der
+richtigere, meine Vorabsumme enthielt Doppelzaehlungen. Dass die UK-Quelle Dubletten
+enthaelt, ist ein eigener Datenqualitaetspunkt fuer UK.
+
+### FEHLER MEINERSEITS: Legendenzeile als Datensatz importiert
+
+Der App-Export schreibt unter die Kopfzeile eine **Legendenzeile** mit Feldbeschreibungen:
+
+```text
+Zeile 1: extraction date | TSC  | Document Entry | Invoice Number | ...
+Zeile 2: 11.05.2026      | Subsidiary abbreviation / company identifier | 0 | Unique invoice document number in local ERP | ...
+Zeile 3: 11.05.2026      | TRUK | 0 | 0000042051 | ...
+```
+
+Mein Konvertierungswerkzeug hat sie unveraendert durchgereicht, der Import hat sie als
+Datensatz uebernommen. Folge: ein Datensatz mit
+`TSC = "Subsidiary abbreviation / company identifier"`, Land England, Menge 0, Wert 0 —
+sichtbar als eigener „Standort" in jeder TSC-Gruppierung.
+
+Wertmaessig harmlos (0.00), aber es verfaelscht Gruppierungen und sieht in Auswertungen
+nach einem Datenfehler aus.
+
+**Behoben in `.tmp_tools/BuildUkBaseFile`:** Zeilen, deren `TSC`-Feld nicht dem erwarteten
+Standortcode entspricht, werden verworfen und die Datei neu erzeugt (1'881 Datenzeilen
+statt 1'882, Kontrollrechnung unveraendert `395'605.82` = `395'605.82`).
+
+**Zu tun:** `TRUK_2025.xlsx` erneut hochladen (ersetzt die alte) und den UK-Standortexport
+nochmal ausfuehren. Da der Manual-Import den TSC-Bestand komplett ersetzt, verschwindet die
+Legendenzeile damit automatisch.
+
+**Lehre:** Wer einen App-Export als Importquelle wiederverwendet, muss die Legendenzeile
+entfernen. Das betrifft jeden kuenftigen Backfill nach diesem Muster.
+
 **Plausibilitaet noch offen:** `395'605.82 GBP` fuer ein ganzes Jahr wirkt niedrig. Der
 frueher genannte UK-Vergleichswert `3'749'865` gilt laut
 `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md` ausdruecklich **nicht mehr** fuer UK, ein
