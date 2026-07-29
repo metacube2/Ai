@@ -94,6 +94,28 @@ public class GroupMarginSupplierClassifierTests
     }
 
     [Theory]
+    [InlineData("TRCH")]
+    [InlineData("TRAT")]
+    [InlineData("trch")]                          // TSC-Vergleich ist case-insensitive
+    public void Resolve_ReturnsInternal_ForChAtEvenWithoutSupplierFields(string tsc)
+    {
+        // CH/AT (FinanzdataSchweizOeSet) hat kein Lieferantenfeld - die Zeile ist trotzdem
+        // per Definition intercompany, weil CH/AT immer als Trafag AG selbst verkauft.
+        var result = GroupMarginSupplierClassifier.Resolve(null, "", "", tsc);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_ReturnsUnclear_ForOtherTscWithEmptySupplierFields()
+    {
+        // Die neue TSC-Regel darf nur CH/AT betreffen - DE/ES bleiben unveraendert "Unklar".
+        var result = GroupMarginSupplierClassifier.Resolve(null, "", "", "TRDE");
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
+    }
+
+    [Theory]
     [InlineData("Trafag AG", GroupStandardCostEntities.TrAg)]
     [InlineData("Trafag Italia S.r.l.", GroupStandardCostEntities.TrIt)]
     [InlineData("Trafag Italy S.r.l.", GroupStandardCostEntities.TrIt)]
@@ -115,6 +137,24 @@ public class GroupMarginSupplierClassifierTests
     public void ResolveDeliveringEntity_ReturnsNull_WhenNoKnownEntityMatches(string? supplierName)
     {
         var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(supplierName);
+
+        Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData("TRCH")]
+    [InlineData("TRAT")]
+    public void ResolveDeliveringEntity_ReturnsTrAg_ForChAtEvenWithoutSupplierName(string tsc)
+    {
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, tsc);
+
+        Assert.Equal(GroupStandardCostEntities.TrAg, result);
+    }
+
+    [Fact]
+    public void ResolveDeliveringEntity_ReturnsNull_ForOtherTscWithoutSupplierName()
+    {
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, "TRDE");
 
         Assert.Null(result);
     }

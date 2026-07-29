@@ -67,6 +67,22 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   die in jeder monatsbasierten Auswertung unsichtbar sind. TRUK 6 Zeilen ohne beides. UK
   mappt `PostingDate` bewusst auf `invoice date`, weil die Spalte `posting date` in der
   Quelldatei zu 0 % gefuellt ist.
+- CH/AT ZAEHLT JETZT PER REGEL ALS TR AG 2026-07-29 (Entscheid Ingo, loest den groessten
+  Hebel aus der Supplier-Luecken-Analyse): `GroupMarginSupplierClassifier.Resolve`/
+  `ResolveDeliveringEntity` bekommen einen optionalen `tsc`-Parameter; TSC `TRCH`/`TRAT`
+  gilt automatisch als `Internal`/`TR_AG`, unabhaengig von den (strukturell leeren)
+  Supplier-Feldern. Grund fest verifiziert, nicht nur vermutet: alle 60 EntitySets von
+  `ZPOWERBI_EINKAUF_SRV` live durchsucht (`travp762`) — `EKKOSet`/`LFA1Set`/`MSEGSet`/
+  `stpoSet` haben zwar ein `Lifnr`-Feld, das ist aber der EINKAUFS-Lieferant (von wem
+  Trafag AG Rohmaterial bezieht), nicht die liefernde Konzerngesellschaft; `FinanzdataSchweizOeSet`
+  selbst hat kein Lieferantenfeld und wird nie eines haben (VBRP ist ein Faktura-, kein
+  Einkaufsbeleg). Betrifft 39'142 von 63'008 maskierten Zeilen (`docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md`
+  Abschnitt 3). Zwei neue Aufrufer-Stellen angepasst (`ManagementCockpitService.
+  ResolveSupplierType`/`ResolveGroupMarginCostBasis`, `ExcelExportService` Pendants),
+  6 neue Tests in `GroupMarginSupplierClassifierTests.cs`, `324/324` gruen. Setzt voraus,
+  dass `GroupStandardCosts` befuellt ist (siehe TR-AG-Konzernkosten-Eintrag oben) — sonst
+  greift die Regel zwar (Status wechselt von „Lieferant unklar" auf „Interner Standardpreis"),
+  aber ohne Konzern-Kostentreffer bleibt die lokale CH/AT-Kostenbasis (WAVWR/STPRS) als Basis.
 
 - BUCHUNGSDATUM SPANIEN GEFUNDEN 2026-07-28 (loest Andreas' Issue 6): Sage Spanien HAT ein
   Buchungsdatum — `FacturasTB.FechaAsiento` („asiento" = Buchungssatz), in der Stichprobe zu

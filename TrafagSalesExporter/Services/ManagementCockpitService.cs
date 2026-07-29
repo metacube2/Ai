@@ -1592,7 +1592,7 @@ public class ManagementCockpitService : IManagementCockpitService
     }
 
     private static string ResolveSupplierType(FinanceAggregationRow row)
-        => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry);
+        => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry, row.Tsc);
 
     private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
 
@@ -1616,7 +1616,7 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = row.Value < 0m || (row.Value == 0m && row.Quantity < 0m);
-        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(row.SupplierName);
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(row.SupplierName, row.Tsc);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
             groupStandardCosts.TryGetValue((NormalizeMaterialKey(row.Material), area), out var groupCost) &&

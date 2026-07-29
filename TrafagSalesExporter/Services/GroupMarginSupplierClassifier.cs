@@ -24,6 +24,20 @@ public static class GroupMarginSupplierClassifier
     public const string External = "Extern";
     public const string Unclear = "Unklar";
 
+    // Entscheid Ingo, 2026-07-29: CH/AT (Site "ZSCHWEIZ", TSC TRCH/TRAT) verkauft immer als
+    // Trafag AG selbst - eine Zeile mit dieser TSC ist damit per Definition intercompany/TR AG,
+    // unabhaengig von den Supplier-Feldern. Die SAP-OData-Quelle (FinanzdataSchweizOeSet, siehe
+    // docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md) hat kein Lieferantenfeld - eine Faktura hat
+    // einen Kunden, keinen Vorlieferanten - und wird auch nie eines haben, weil VBRP kein
+    // Einkaufsbeleg ist. Ohne diese Regel bleiben alle CH/AT-Zeilen trotz vorhandener
+    // Kostenbasis (WAVWR/STPRS) auf "Lieferant unklar" stehen (siehe
+    // docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md Abschnitt 3).
+    private static readonly string[] IntercompanySellingTsc = { "TRCH", "TRAT" };
+
+    private static bool IsIntercompanySellingTsc(string? tsc)
+        => !string.IsNullOrWhiteSpace(tsc) &&
+           IntercompanySellingTsc.Contains(tsc.Trim(), StringComparer.OrdinalIgnoreCase);
+
     // "TRAFAG" is the leading marker (covers Trafag AG, Trafag Italy, Trafag India, Trafag
     // GmbH, ...). The short codes catch supplier references that only use the entity code.
     // GFS catches Gesellschaft fuer Sensorik references that do not include Trafag.
@@ -48,8 +62,11 @@ public static class GroupMarginSupplierClassifier
         @"\b(" + string.Join('|', InternalMarkers.Select(Regex.Escape)) + @")\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-    public static string Resolve(string? supplierNumber, string? supplierName, string? supplierCountry)
+    public static string Resolve(string? supplierNumber, string? supplierName, string? supplierCountry, string? tsc = null)
     {
+        if (IsIntercompanySellingTsc(tsc))
+            return Internal;
+
         if (string.IsNullOrWhiteSpace(supplierNumber) &&
             string.IsNullOrWhiteSpace(supplierName) &&
             string.IsNullOrWhiteSpace(supplierCountry))
@@ -72,8 +89,11 @@ public static class GroupMarginSupplierClassifier
     /// (z. B. GFS/Gesellschaft fuer Sensorik — dafuer ist noch keine eigene Kostenquelle
     /// verifiziert).
     /// </summary>
-    public static string? ResolveDeliveringEntity(string? supplierName)
+    public static string? ResolveDeliveringEntity(string? supplierName, string? tsc = null)
     {
+        if (IsIntercompanySellingTsc(tsc))
+            return GroupStandardCostEntities.TrAg;
+
         if (string.IsNullOrWhiteSpace(supplierName))
             return null;
 

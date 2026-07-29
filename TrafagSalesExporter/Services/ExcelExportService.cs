@@ -857,7 +857,7 @@ public class ExcelExportService : IExcelExportService
     }
 
     private static string ResolveSupplierType(SalesRecord record)
-        => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry);
+        => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry, record.Tsc);
 
     private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
 
@@ -873,7 +873,7 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
-        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(record.SupplierName);
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(record.SupplierName, record.Tsc);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
             groupStandardCosts.TryGetValue((NormalizeMaterialKey(record.Material), area), out var groupCost) &&
