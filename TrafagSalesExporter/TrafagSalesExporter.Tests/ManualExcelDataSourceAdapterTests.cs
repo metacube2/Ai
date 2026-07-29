@@ -6,6 +6,34 @@ namespace TrafagSalesExporter.Tests;
 
 public class ManualExcelDataSourceAdapterTests
 {
+    /// <summary>
+    /// Die Standort-Vorlagen schreiben teils eine Legendenzeile als erste Datenzeile. Am
+    /// 2026-07-28 landete sie mit dem UK-Backfill als Umsatzsatz in `CentralSalesRecords`
+    /// (`Tsc = "Subsidiary abbreviation / company identifier"`, `Land = England`). Sie steckt
+    /// weiterhin in `TRUK_2025.xlsx` und kaeme ohne Filter bei jedem Reimport zurueck.
+    /// </summary>
+    [Theory]
+    // Legendentexte aus Sales_TRUK_2026-05-11.xlsx
+    [InlineData("Subsidiary abbreviation / company identifier", true)]
+    [InlineData("Local company / subsidiary code", true)]
+    // Echte Werte - duerfen NIE verworfen werden
+    [InlineData("TRUK", false)]
+    [InlineData("TRES", false)]
+    [InlineData("TRSE", false)]
+    [InlineData("ZSCHWEIZ", false)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    // Grenzfaelle: lang, aber ohne Leerzeichen -> kein Satz, also behalten
+    [InlineData("TRUK-LONGCODE-01", false)]
+    // kurz mit Leerzeichen -> ebenfalls behalten, die Laengenschwelle greift
+    [InlineData("TR UK", false)]
+    public void IsTemplateDescriptionRow_Detects_Legend_Rows(string tsc, bool expected)
+    {
+        var record = new SalesRecord { Tsc = tsc };
+
+        Assert.Equal(expected, ManualExcelDataSourceAdapter.IsTemplateDescriptionRow(record));
+    }
+
     [Fact]
     public async Task FetchAsync_Uses_Local_File_Directory_As_OutputDirectory()
     {

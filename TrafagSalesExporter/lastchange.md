@@ -40,11 +40,28 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Konsolidierung rechnet ueber `RateToChf(row.StandardCostCurrency, ...)` um. Erwartung nach
   Deploy + UK-Reimport: ~94 % Kostendeckung und 2'955 Zeilen mit erkanntem internem
   Lieferanten TR AG. Tests `307/307` gruen.
-- LEGENDENZEILE VERSCHWINDET VON SELBST 2026-07-29: Die Zeile
-  `Tsc = "Subsidiary abbreviation / company identifier"` (Id 2'841'937) gehoert zu
-  `SiteId = 5` (TRUK), und `CentralSalesRecordService.ReplaceForSiteAsync` loescht nach
-  `site.Id`, nicht nach dem `Tsc`-Text. Der naechste UK-Import raeumt sie mit weg — kein
-  Einzel-Delete noetig.
+- UK-REIMPORT NUR OHNE JAHRESFILTER 2026-07-29 (WICHTIG): Der Ordner `UK_B1` hat 116 Dateien.
+  Auswahl ohne Jahresvorgabe = **67 Dateien inkl. `TRUK_2025.xlsx`**; mit `2025` = **nur**
+  `TRUK_2025.xlsx`; mit `2026` = alle 2026er **ohne** `TRUK_2025.xlsx`. Weil
+  `ReplaceForSiteAsync` vorher ALLE Zeilen des Standorts loescht, vernichtet ein Import mit
+  Jahresvorgabe das jeweils andere Jahr (heute 1'867 Zeilen 2025 + 1'082 Zeilen 2026 = 2'955).
+  Kontrolle nach dem Reimport: UK-Zeilenzahl muss >= 2'955 sein.
+- LEGENDENZEILE WAERE ZURUECKGEKOMMEN, JETZT GEFILTERT 2026-07-29: `ReplaceForSiteAsync`
+  loescht zwar nach `site.Id` (nicht nach dem `Tsc`-Text), die Zeile
+  `Tsc = "Subsidiary abbreviation / company identifier"` steckt aber weiterhin als erste
+  Datenzeile in `TRUK_2025.xlsx` — und `ManualExcelDataSourceAdapter` hatte keinen Filter.
+  Sie waere bei jedem Reimport neu angelegt worden. Neu:
+  `RemoveTemplateDescriptionRowsAsync` verwirft sie und loggt „Legendenzeile verworfen".
+  Erkennung am TSC-Feld (laenger als 12 Zeichen UND mit Leerzeichen = ganzer Satz).
+  BEWUSST NICHT gegen `site.TSC` verglichen: Spanien heisst in `Sites` `TRSE`, in den Daten
+  aber `TRES` — ein Gleichheitstest wuerde dort alle Zeilen verwerfen.
+- UK `Standard cost` IST EIN STUECKPREIS 2026-07-29 (vor dem Deploy gegengeprueft, weil die
+  Margenlogik `Menge x StandardCost` rechnet): ueber 1'650 auswertbare Zeilen sind 1'643 als
+  Stueckpreis plausibel (Margen 12–55 %) gegen 1'253 als Zeilensumme (86–99 %). ACHTUNG bei
+  eigenen Nachrechnungen: `Sales Price/Value` ist EBENFALLS ein Stueckpreis — das UK-Mapping
+  fuehrt ihn durch `=SageNetSales(...)`, und die Funktion rechnet `amount * quantity`
+  (`ManualExcelImportService.TryEvaluateSageNetSalesExpression`). Der Zeilenumsatz ist also
+  `Menge x Sales Price/Value`, nicht `Sales Price/Value`.
 - DATUMSLUECKEN 2026-07-29: TRES **5'504 von 5'504 Zeilen ohne Buchungsdatum** (im
   Spanien-Mapping existiert kein `PostingDate`-Eintrag) plus 231 Zeilen ohne Rechnungsdatum,
   die in jeder monatsbasierten Auswertung unsichtbar sind. TRUK 6 Zeilen ohne beides. UK

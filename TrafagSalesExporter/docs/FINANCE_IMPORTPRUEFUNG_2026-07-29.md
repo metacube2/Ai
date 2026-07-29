@@ -128,12 +128,58 @@ der Konzernkostentabelle ausserhalb Italiens.
 `Customer Industry` ist in der Datei ebenfalls zu 100 % gefuellt und ebenfalls nicht
 gemappt. Bewusst nicht mitgeaendert, weil es kein Margenfeld ist — bei Bedarf eine Zeile.
 
-## 6. Legendenzeile: verschwindet von selbst
+## 5a. Gegenprobe: `Standard cost` ist ein STUECKpreis
 
-Die Zeile `Tsc = "Subsidiary abbreviation / company identifier"` (Id 2'841'937) steht noch
-in `CentralSalesRecords`. Sie gehoert zu `SiteId = 5` (TRUK), und
-`CentralSalesRecordService.ReplaceForSiteAsync` loescht **nach `site.Id`**, nicht nach dem
-`Tsc`-Text. Der naechste UK-Import raeumt sie also mit weg; ein Einzel-Delete ist nicht noetig.
+Die Margenlogik rechnet `Menge x StandardCost`. Waere die Spalte eine Zeilensumme, waere die
+UK-Marge um den Faktor Menge daneben — deshalb vor dem Deploy geprueft.
+
+Zu beachten: `Sales Price/Value` ist ebenfalls ein Stueckpreis. Das UK-Mapping fuehrt ihn
+durch `=SageNetSales([Sales Price/Value], [Quantity], ...)`, und die Funktion rechnet
+`amount * quantity` (`ManualExcelImportService.TryEvaluateSageNetSalesExpression`). Der
+Zeilenumsatz ist also `Menge x Sales Price/Value`.
+
+Ueber 1'650 auswertbare Zeilen (grober Kurs CHF→GBP 0.88, nur fuer die Groessenordnung):
+
+| Annahme                | plausible Zeilen |
+|------------------------|------------------|
+| Stueckpreis            | **1'643**        |
+| Zeilensumme            | 1'253            |
+
+Als Stueckpreis gelesen liegen die Margen bei 12–55 %, als Zeilensumme bei 86–99 %. Die
+Spalte ist ein Stueckpreis, das Mapping oben ist damit richtig.
+
+## 6. Legendenzeile: kam bei jedem Reimport zurueck — jetzt gefiltert
+
+Die Zeile `Tsc = "Subsidiary abbreviation / company identifier"` (Id 2'841'937) steht noch in
+`CentralSalesRecords`, `SiteId = 5` (TRUK).
+
+`CentralSalesRecordService.ReplaceForSiteAsync` loescht zwar nach `site.Id` und nicht nach dem
+`Tsc`-Text — die Zeile waere also verschwunden. Sie steckt aber weiterhin als erste Datenzeile
+in `TRUK_2025.xlsx`, und `ManualExcelDataSourceAdapter` hatte **keinen** Filter dafuer. Beim
+naechsten Import waere sie damit sofort wieder angelegt worden.
+
+Neu: `RemoveTemplateDescriptionRowsAsync` verwirft solche Zeilen vor der Deduplizierung und
+protokolliert das als „Legendenzeile verworfen". Erkannt wird am TSC-Feld — echte Werte sind
+kurze Codes ohne Leerzeichen, die Legende traegt dort einen ganzen Satz. **Bewusst nicht**
+gegen `site.TSC` verglichen: der Spanien-Standort heisst in `Sites` `TRSE`, liefert in den
+Daten aber `TRES`; ein Gleichheitstest wuerde dort saemtliche Zeilen verwerfen.
+
+## 6a. WARNUNG zum UK-Reimport: ohne Jahresfilter starten
+
+Der Ordner `UK_B1` enthaelt 116 Dateien. Die Auswahl liefert je nach Jahresvorgabe:
+
+| `PreferredImportYear` | gelesene Dateien                                  |
+|-----------------------|---------------------------------------------------|
+| **keins**             | 67 — `TRUK_2025.xlsx` **und** alle 2026er Dateien  |
+| 2025                  | nur `TRUK_2025.xlsx`                              |
+| 2026                  | alle 2026er, **ohne** `TRUK_2025.xlsx`            |
+
+Weil `ReplaceForSiteAsync` vorher **alle** Zeilen des Standorts loescht, wuerde ein Import mit
+Jahresvorgabe das jeweils andere Jahr vernichten: mit `2025` blieben von heute 2'955 Zeilen
+nur die 1'867 aus 2025 uebrig, mit `2026` nur die 1'082 aus 2026.
+
+**Der UK-Reimport ist also ohne Jahresfilter zu starten.** Kontrolle danach: die UK-Zeilenzahl
+muss ≥ 2'955 sein, nicht ~1'082 oder ~1'867.
 
 ## 7. Datumsluecken
 

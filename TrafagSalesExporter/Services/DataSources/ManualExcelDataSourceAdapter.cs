@@ -132,6 +132,7 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
             var readPaths = SelectManualImportReadPaths(candidateReadPaths, site);
             foreach (var readPath in readPaths)
                 records.AddRange(await _manualExcelImportService.ReadSalesRecordsAsync(readPath, site));
+            records = await RemoveTemplateDescriptionRowsAsync(records, site, context);
             if (IsSpainSite(site))
                 records = DeduplicateSpainSalesRecords(records);
             else if (IsAlphaplanGermanySite(site))
@@ -167,6 +168,46 @@ public sealed class ManualExcelDataSourceAdapter : IDataSourceAdapter
                 Directory.Delete(tempManualImportRoot, recursive: true);
             }
         }
+    }
+
+    /// <summary>
+    /// Entfernt die Legendenzeile, die manche Standort-Vorlagen als ERSTE Datenzeile unter
+    /// die Kopfzeile schreiben (`TSC = "Subsidiary abbreviation / company identifier"`,
+    /// `Invoice Number = "Unique invoice document number in local ERP"`, ...).
+    ///
+    /// Sie stammt aus der Vorlage der Standorte, nicht aus dieser App, und wurde am
+    /// 2026-07-28 mit dem UK-Backfill als echter Umsatzsatz importiert (Id 2'841'937,
+    /// `Land = England`). Ohne diesen Filter kaeme sie bei jedem Reimport zurueck, weil
+    /// <see cref="ICentralSalesRecordService.ReplaceForSiteAsync"/> zwar alles zum Standort
+    /// loescht, die Datei aber unveraendert bleibt.
+    /// </summary>
+    private async Task<List<SalesRecord>> RemoveTemplateDescriptionRowsAsync(
+        List<SalesRecord> records, Site site, DataSourceFetchContext context)
+    {
+        var cleaned = records.Where(record => !IsTemplateDescriptionRow(record)).ToList();
+        var removed = records.Count - cleaned.Count;
+        if (removed > 0)
+        {
+            context.UpdateStatus?.Invoke($"Legendenzeilen entfernt: {removed}");
+            await _appEventLogService.WriteAsync("Export", "Legendenzeile verworfen",
+                siteId: site.Id, land: site.Land,
+                details: $"Zeilen={removed} | Beschreibungszeile der Standort-Vorlage, kein Umsatzsatz.");
+        }
+
+        return cleaned;
+    }
+
+    /// <summary>
+    /// Erkennt die Beschreibungszeile am TSC-Feld. Echte Werte sind kurze Codes ohne
+    /// Leerzeichen (`TRUK`, `TRES`, `TRDE`); die Legende traegt dort einen ganzen Satz.
+    /// BEWUSST NICHT gegen <c>site.TSC</c> verglichen: der Spanien-Standort heisst in
+    /// <c>Sites</c> `TRSE`, liefert in den Daten aber `TRES` — ein Gleichheitstest wuerde
+    /// dort saemtliche Zeilen verwerfen.
+    /// </summary>
+    public static bool IsTemplateDescriptionRow(SalesRecord record)
+    {
+        var tsc = record.Tsc?.Trim() ?? string.Empty;
+        return tsc.Length > 12 && tsc.Any(char.IsWhiteSpace);
     }
 
     private static bool LooksLikeSharePointReference(string path)
