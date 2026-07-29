@@ -748,9 +748,25 @@ public class DatabaseSeedService : IDatabaseSeedService
             (nameof(SalesRecord.Name), "Name", false),
             (nameof(SalesRecord.ProductGroup), "Product Group", false),
             (nameof(SalesRecord.Quantity), "Quantity", true),
+            // Lieferant und Kostenbasis: die Spalten sind in der UK-Datei seit jeher
+            // vorhanden und gefuellt (Messung 2026-07-29 an Sales_TRUK_2026-05-11.xlsx:
+            // Lieferantenfelder 1881/1881, `Standard cost` 1773/1881 = 94.3 %, Waehrung CHF),
+            // waren aber nie gemappt. Folge: alle 2'955 UK-Zeilen kamen ohne Kostenbasis und
+            // ohne Lieferant in die zentrale Tabelle, die UK-Gruppenmarge war damit nicht
+            // berechenbar und `SupplierName = "Trafag AG"` konnte nicht als interner
+            // Lieferant erkannt werden (GroupMarginSupplierClassifier.ResolveDeliveringEntity).
+            (nameof(SalesRecord.SupplierNumber), "Supplier number", false),
+            (nameof(SalesRecord.SupplierName), "Supplier name", false),
+            (nameof(SalesRecord.SupplierCountry), "Supplier country", false),
             (nameof(SalesRecord.CustomerNumber), "Customer number", false),
             (nameof(SalesRecord.CustomerName), "Customer name", false),
             (nameof(SalesRecord.CustomerCountry), "Customer country", false),
+            // Kosten stehen in CHF, Umsatz in GBP. Die Konsolidierung rechnet die Kostenbasis
+            // ueber ihre EIGENE Waehrung um (ManagementCockpitService.RateToChf), deshalb muss
+            // die Waehrungsspalte zwingend mitgemappt sein - ohne sie waere der CHF-Betrag
+            // stillschweigend als GBP interpretiert worden.
+            (nameof(SalesRecord.StandardCost), "Standard cost", false),
+            (nameof(SalesRecord.StandardCostCurrency), "Standard Cost Currency", false),
             (nameof(SalesRecord.SalesPriceValue), "=SageNetSales([Sales Price/Value], [Quantity], [Document Type], [DocumentType], [Type])", true),
             (nameof(SalesRecord.SalesCurrency), "=GBP", false),
             (nameof(SalesRecord.DocumentCurrency), "=GBP", false),

@@ -1,10 +1,55 @@
 # Last Change
 
-Stand: 2026-07-28
+Stand: 2026-07-29
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- IMPORTPRUEFUNG CH/AT + INDIEN 2026-07-29 (Details: `docs/FINANCE_IMPORTPRUEFUNG_2026-07-29.md`):
+  Beide Fixes vom 2026-07-28 wirken. Standardpreis-Read laeuft in **21 s** durch,
+  `Zeilen=68543 | laut $count=68543` (Gegenprobe stimmt, keine Unvollstaendig-Warnung),
+  `GroupStandardCosts` = **63'494 Zeilen** (Bewertungskreis 1100, `RefreshedAtUtc`
+  2026-07-29 06:21). Log-URL zeigt `travp762`. **ZIEL ERREICHT: alle Laender haben Daten ab
+  2025-01**, monatsweise geprueft fuer TRCH/TRAT/TRIN keine Luecke bis 2026-07. Indien
+  fehlerfrei (6'970 Invoice + 20 Credit = 6'990 Zeilen, 7.6 s, 99.4 % Kostendeckung).
+  Dass nur Bewertungskreis 1100 in `GroupStandardCosts` steht, ist Absicht
+  (`PersistGroupStandardCostsAsync` filtert auf TR AG). NICHT belegt und darum nicht
+  behauptet: ob der OData-`$filter` ausgewertet wird — `1100 or 1200` liefert exakt dieselben
+  68'543 Zeilen wie `1100` allein.
+- STANDARDPREIS-FALLBACK 1.1 % IST UNAUFFAELLIG 2026-07-29: Der Logeintrag „Zeilen mit
+  Kosten=18 (1.1 %)" hat als Nenner **nicht** alle CH/AT-Zeilen, sondern nur die 1'600 ohne
+  VBRP-WAVWR-Kostenbasis. Die 1'582 danach unbepreisten Zeilen sind Sammel-/
+  Dienstleistungsnummern ohne Materialstamm (RS99999 923x, V99999 554x, RS99998 29x, MGK*
+  Kalibration 44x, SCS-Z/TRCH-Z Zertifikate 10x) — dafuer gibt es in MBEW zu Recht keinen
+  Standardpreis. `MaterialKeyNormalizer` arbeitet korrekt.
+- KONZERNKOSTEN WERDEN KAUM GENUTZT 2026-07-29 (wichtigste Erkenntnis): `GroupStandardCosts`
+  greift nur, wenn `SupplierName` im Klartext „Trafag AG" enthaelt
+  (`GroupMarginSupplierClassifier.ResolveDeliveringEntity`). Gemessen ueber alle 95'168
+  Zeilen: TRIT 6'448, TRIN 677, TRFR 40, TRUS 2 — **TRCH, TRAT, TRDE, TRES, TRUK je 0**.
+  Nur **7'167 von 95'168 Zeilen (7.5 %)** koennen die reparierte Tabelle verwenden. Die
+  Lieferantenluecke ist damit nicht Nebenthema, sondern der Engpass des Standardkosten-Fixes.
+- UK-MAPPING WAR UNVOLLSTAENDIG, GEFIXT 2026-07-29: `Sales_TRUK_*.xlsx` **enthaelt** die
+  Spalten `Supplier number` (100 %, `TR08`), `Supplier name` (100 %, `Trafag AG`),
+  `Supplier country` (100 %, `CH`), `Standard cost` (94.3 %) und `Standard Cost Currency`
+  (100 %, `CHF`) — sie waren nur nie gemappt (UK hatte 18 aktive Mappings, DE 29, ES 25).
+  Daher 0 % Kostendeckung ueber alle 2'955 UK-Zeilen. Ergaenzt in
+  `DatabaseSeedService.EnsureUkManualExcelMapping`; der Seed ist idempotent und legt die
+  Mappings beim App-Start an, kein Schreibzugriff auf die Produktiv-DB noetig.
+  Waehrungsspalte ist ZWINGEND: UK fuehrt Kosten in CHF, Umsatz in GBP, und die
+  Konsolidierung rechnet ueber `RateToChf(row.StandardCostCurrency, ...)` um. Erwartung nach
+  Deploy + UK-Reimport: ~94 % Kostendeckung und 2'955 Zeilen mit erkanntem internem
+  Lieferanten TR AG. Tests `307/307` gruen.
+- LEGENDENZEILE VERSCHWINDET VON SELBST 2026-07-29: Die Zeile
+  `Tsc = "Subsidiary abbreviation / company identifier"` (Id 2'841'937) gehoert zu
+  `SiteId = 5` (TRUK), und `CentralSalesRecordService.ReplaceForSiteAsync` loescht nach
+  `site.Id`, nicht nach dem `Tsc`-Text. Der naechste UK-Import raeumt sie mit weg — kein
+  Einzel-Delete noetig.
+- DATUMSLUECKEN 2026-07-29: TRES **5'504 von 5'504 Zeilen ohne Buchungsdatum** (im
+  Spanien-Mapping existiert kein `PostingDate`-Eintrag) plus 231 Zeilen ohne Rechnungsdatum,
+  die in jeder monatsbasierten Auswertung unsichtbar sind. TRUK 6 Zeilen ohne beides. UK
+  mappt `PostingDate` bewusst auf `invoice date`, weil die Spalte `posting date` in der
+  Quelldatei zu 0 % gefuellt ist.
 
 - BUCHUNGSDATUM SPANIEN GEFUNDEN 2026-07-28 (loest Andreas' Issue 6): Sage Spanien HAT ein
   Buchungsdatum — `FacturasTB.FechaAsiento` („asiento" = Buchungssatz), in der Stichprobe zu

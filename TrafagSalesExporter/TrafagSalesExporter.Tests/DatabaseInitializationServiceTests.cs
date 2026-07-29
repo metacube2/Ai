@@ -55,6 +55,52 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.Equal(new DateTime(2026, 4, 17, 8, 0, 0, DateTimeKind.Utc), site.SapEntitySetsRefreshedAtUtc?.ToUniversalTime());
     }
 
+    /// <summary>
+    /// Regression: die UK-Datei enthaelt Lieferanten- und Kostenspalten (Messung 2026-07-29:
+    /// Lieferantenfelder 100 %, `Standard cost` 94.3 % in CHF), sie waren aber nie gemappt.
+    /// Dadurch kamen alle UK-Zeilen ohne Kostenbasis und ohne Lieferant in die zentrale
+    /// Tabelle - die UK-Gruppenmarge war nicht berechenbar. Die Waehrungsspalte gehoert
+    /// zwingend dazu, weil die Kosten in CHF, der Umsatz aber in GBP gefuehrt wird.
+    /// </summary>
+    [Fact]
+    public async Task InitializeAsync_Maps_Uk_Supplier_And_Cost_Columns()
+    {
+        await using (var seed = await _dbFactory.CreateDbContextAsync())
+        {
+            seed.Sites.Add(new Site
+            {
+                TSC = "TRUK",
+                Land = "England",
+                SourceSystem = "MANUAL_EXCEL",
+                IsActive = true
+            });
+            await seed.SaveChangesAsync();
+        }
+
+        await CreateService().InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var uk = await db.Sites.SingleAsync(x => x.TSC == "TRUK");
+
+        var expected = new (string Target, string Source)[]
+        {
+            (nameof(SalesRecord.SupplierNumber), "Supplier number"),
+            (nameof(SalesRecord.SupplierName), "Supplier name"),
+            (nameof(SalesRecord.SupplierCountry), "Supplier country"),
+            (nameof(SalesRecord.StandardCost), "Standard cost"),
+            (nameof(SalesRecord.StandardCostCurrency), "Standard Cost Currency")
+        };
+
+        foreach (var (target, source) in expected)
+        {
+            Assert.Contains(db.ManualExcelColumnMappings, x =>
+                x.SiteId == uk.Id &&
+                x.TargetField == target &&
+                x.SourceHeader == source &&
+                x.IsActive);
+        }
+    }
+
     [Fact]
     public async Task InitializeAsync_Repairs_Sites_ForeignKey_To_HanaServersRepairOld()
     {
