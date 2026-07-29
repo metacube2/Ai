@@ -1583,18 +1583,22 @@
     private DateTime? GetFilterFromDate() => ParseMonth(_filterFromMonth, new DateTime(2020, 1, 1));
     private DateTime? GetFilterToDate() => ParseMonth(_filterToMonth, DateTime.Today);
 
-    private async Task OnFilterFromDateChangedAsync(DateTime? date)
+    private Task OnFilterFromDateChangedAsync(DateTime? date)
     {
         if (date.HasValue)
             _filterFromMonth = date.Value.ToString("yyyy-MM", CultureInfo.InvariantCulture);
-        await ApplyPurchasingFilterAsync();
+
+        // MudDatePicker feuert beim Navigieren/Setzen eines Monats. Das Cockpit aggregiert
+        // dabei den gesamten Einkaufs-Cache; die Auswahl darf deshalb noch keinen Ladevorgang
+        // ausloesen. Beide Monate koennen zuerst gesetzt und danach bewusst angewendet werden.
+        return Task.CompletedTask;
     }
 
-    private async Task OnFilterToDateChangedAsync(DateTime? date)
+    private Task OnFilterToDateChangedAsync(DateTime? date)
     {
         if (date.HasValue)
             _filterToMonth = date.Value.ToString("yyyy-MM", CultureInfo.InvariantCulture);
-        await ApplyPurchasingFilterAsync();
+        return Task.CompletedTask;
     }
 
     private static string ClampMonth(string value)
