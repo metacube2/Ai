@@ -35,6 +35,10 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   (eigenes Kennzeichen oder Pruefung auf vorhandene Credentials) - eng begrenzt, laesst den
   Sales-Export unberuehrt. Empfehlung B. Bis das entschieden ist, wirkt auch der neue
   Nachklassifizierungs-Fix nicht, weil er im Delta haengt.
+- DEPLOYED 2026-07-30, zweiter Publish mit dem Delta-Fix (Commit `66a34da`): `BiDashboard.dll`
+  **`30.07.2026 14:51:54`**. Die Dateigroesse ist zufaellig identisch mit dem ersten Publish
+  (`3'223'552` Bytes) - deshalb per SHA256 gegengeprueft statt angenommen: lokaler Release-Build und
+  Share-Datei sind bitgleich (`D4DCE624...E067`). Erreichbarkeit `200`, Produktiv-DB unangetastet.
 - DEPLOYED 2026-07-30 (Commits `112f51a`, `e0ccb48`, `346/346` Tests gruen, Release-Build 0 Fehler /
   42 bekannte Warnungen): Einkaufssitzung vom 30.07. komplett. `BiDashboard.dll` vorher
   `30.07.2026 07:59:38` / `3'172'864` Bytes, nachher **`30.07.2026 14:32:29` / `3'223'552` Bytes**.
