@@ -228,3 +228,135 @@ welche Formel am betreffenden Arbeitsplatz hängt. Das ist auch der Grund, warum
 
 Passwort über `SAP_NCO_PASSWORD` setzen oder maskiert eingeben – das Werkzeug nimmt es
 grundsätzlich nicht als Kommandozeilenargument.
+
+## 8. Folgesitzung: "In der Kalkulation sehe ich nicht, welche Zeile Rüsten ist"
+
+**Quelle:** Whisper-Transkript (`large-v3`, `…/rus/Data/audio.wav`), zweite Sitzung zum Thema.
+**Achtung Datenlage:** Die ersten **2:24** enthalten kein Audio, sondern den durchgeschlagenen
+Whisper-Prompt ("Keep English sentences in English…") in Endlosschleife. Genau dort stellen sich
+Teilnehmer üblicherweise vor – **wer was gesagt hat, ist deshalb nicht sicher zuzuordnen.** Erkennbar
+sind zwei Rollen: eine Person teilt den SAP-Bildschirm und kennt das Losgrössenproblem, die andere
+kennt die Kalkulationstransaktion nicht und will beim zuständigen Kollegen nachfragen ("wenn der da
+ist" – Adil ist abwesend). Andreas ist in diesem Ausschnitt **nicht** belegt.
+
+### 8.1 Die Beobachtung
+
+Im Kalkulations-Einzelnachweis (alle Positionen eingeblendet) erscheinen die Leistungsarten **100**
+und **200** – aber jede **zweimal**. Laut Auskunft der Fachseite ist eine der beiden Positionen die
+**Rüstzeit** und die andere die **Bearbeitungszeit**. Im Nachweis selbst ist das nicht erkennbar:
+
+> "Die Positionen sind alle gleich… Es ist alles gleich, alles eins zu eins. Da gibt es keine
+> Differenzierung." – auch der Text ist identisch, und Anklicken liefert keine Zusatzinformation.
+
+Am Arbeitsplatz (`CR03`, Beispiel `EL604`) ist die Struktur dagegen sauber sichtbar: "Rüstzeit,
+Maschinenzeit, Personalzeit… Bedarf Rüsten, Bedarf Maschine, Formel" – dort passt alles zusammen.
+
+Gesuchte Antwort in der Sitzung: **Gibt es ein weiteres Feld, einen "Sub-Key" innerhalb der
+Leistungsart 100/200, das die Unterscheidung trägt – womöglich ein verstecktes Feld?**
+
+### 8.2 Antwort: Es gibt keinen Sub-Key, und der Grund steht bereits in Abschnitt 7.3
+
+Die Information fehlt nicht in der Anzeige – sie ist **eine Ebene früher verloren gegangen**. Die am
+2026-07-30 aus `CRCO` gelesene Zuordnung (Abschnitt 7.3) zeigt es unmittelbar:
+
+| Slot | Bedeutung | Formel | Skaliert mit Menge? | **Leistungsart** |
+|---|---|---|---|---|
+| 0001 | Rüsten | `SAP005` | nein | **200** |
+| 0002 | Maschine | `SAP006` | ja | **200** |
+| 0003 | Lohn / Personal | `SAP007` | ja | **100** |
+| 0004 | Z-Vorgabewert | `ZAP005` | nein | **100** |
+
+**Rüsten und Maschine posten auf dieselbe Leistungsart 200, Lohn und der Z-Vorgabewert auf dieselbe
+Leistungsart 100.** Genau deshalb stehen im Einzelnachweis zwei Zeilen je Leistungsart, die sich in
+keinem Schlüsselfeld unterscheiden: der Kalkulationssatz wird über
+**Vorgang + Kostenstelle + Leistungsart** identifiziert, und wenn zwei Vorgabewert-Slots auf
+dieselbe Leistungsart zeigen, fallen sie in diesem Schlüssel zusammen. Was sie unterscheidet, ist
+der **Vorgabewert-Slot**, und der hängt am **Arbeitsplatz** (`CRCO`), nicht am Kalkulationssatz.
+
+Ein verstecktes Feld, das man nur einblenden müsste, gibt es also nicht. Die Suche danach kann man
+einstellen.
+
+**Ein Punkt ist damit noch nicht bewiesen und in einem Blick prüfbar:** Meine Erklärung setzt voraus,
+dass die beiden 200er-Zeilen zum **selben Vorgang** gehören. Gehören sie zu zwei verschiedenen
+Vorgängen, ist es kein Slot-Zusammenfall, sondern einfach zwei Arbeitsschritte – dann ist die
+Erklärung eine andere. Also im Einzelnachweis die Spalte **Vorgangsnummer** einblenden: gleiche
+Vorgangsnummer → Slot-Zusammenfall wie oben; verschiedene → harmlos.
+
+### 8.3 Die Erwartung "201 = Rüsten, 200 = Bearbeitung" ist richtig – und die übliche Lösung
+
+In der Sitzung wurde vermutet, andere Unternehmen lösten das anders, etwa "201 dann Rüstzeiten und
+200 Bearbeitungszeit". **Das ist die gängige Praxis und der saubere Weg.** Rüsten und Bearbeiten
+werden getrennten Leistungsarten zugeordnet, weil sie betriebswirtschaftlich unterschiedlich sind:
+Rüsten ist (im Normalfall) losgrössenunabhängig, Bearbeiten nicht, und sie können unterschiedliche
+Tarife haben.
+
+Umfang der Änderung: eigene Leistungsart(en) für Rüsten anlegen, Tarif in `KP26` pflegen und die
+Zuordnung am Arbeitsplatz je Slot umstellen (`CRCO`). Das ist **Customizing plus Stammdatenpflege,
+keine Entwicklung** – aber es wirkt auf alle künftigen Kalkulationen und auf die Kostenstellen-/
+Leistungsartenrechnung, ist also mit dem Controlling abzustimmen und nicht nebenbei zu machen.
+Altkalkulationen bleiben unverändert.
+
+### 8.4 Das Losgrössenproblem – warum es auftritt
+
+Die Aussage aus der Sitzung war eindeutig:
+
+> "Solange ich die Losgrösse gleich lasse, ist okay, aber ändere ich die Losgrösse, dann ist es
+> vorbei." / "Bei der Standardlosgrösse ist alles korrekt."
+
+Das passt genau zum Befund: Beim Wechsel der Losgrösse bewegt sich die Maschinenzeile (`SAP006`
+enthält `MGVRG`), die Rüstzeile nicht (`SAP005` enthält keinen Mengenterm). Weil beide auf
+Leistungsart 200 liegen, **sieht man nur die Summe sich verschieben und kann sie nicht zuordnen**.
+Das ist kein Rechenfehler in SAP, sondern die fehlende Trennung aus 8.2.
+
+Praktischer Behelf ohne SAP-Änderung, in der Sitzung selbst schon angedacht ("nur durch die Änderung
+der Losgrösse würde ich ableiten können, wie sich die Zeiten verändern"): zwei Kalkulationen mit
+unterschiedlicher Losgrösse rechnen – die Zeile, deren **Gesamtwert** konstant bleibt, ist die
+Rüstzeile. Dazu die beiden Fallstricke aus Abschnitt 3 beachten (Gesamtwerte statt "pro Einheit"
+anzeigen, und beide Losgrössen im selben Losgrössenintervall halten).
+
+**Wichtiger Vorbehalt, der diesen Behelf an ~45 Arbeitsplätzen aushebelt:** Dort liegt auf dem
+Rüst-Slot `ZAP008` und die Rüstzeit **skaliert mit der Menge** (Abschnitt 7.4). Die Regel "die Zeile,
+die sich nicht ändert, ist Rüsten" führt dort in die Irre – es ändern sich beide. Vor dem Test also
+prüfen, welche Formel am betreffenden Arbeitsplatz hängt.
+
+### 8.5 Nicht verwechseln: "losgrössenunabhängig" ist nicht "fix" im SAP-Sinn
+
+Naheliegend, aber falsch, wäre die Antwort "nimm die Fix-/Variabel-Aufteilung, die trägt die
+Unterscheidung". Das sind **zwei verschiedene Mechanismen**:
+
+- **Losgrössenabhängigkeit** entsteht aus der **Formel** am Arbeitsplatz (steht `MGVRG` drin oder
+  nicht) – das ist Andreas' ursprüngliche Frage.
+- **Fix/variabel** in der Kalkulation kommt aus dem **Tarifsplit der Leistungsart** (`KP26` erlaubt
+  einen fixen und einen variablen Tarifanteil) – eine Bewertungs-, keine Mengeneigenschaft.
+
+In gut konfigurierten Systemen laufen beide parallel (Rüsten mit fixem Tarifanteil). Verlassen darf
+man sich darauf nicht, und **für Trafag ist der Tarifsplit ungeprüft** – die Tarife habe ich bisher
+nicht angeschaut (offener Punkt aus Abschnitt 5, unverändert).
+
+### 8.6 Anschluss an das Finanz-Dashboard
+
+Aus der Sitzung: "Kalkulation war bisher auch nicht in den Finanzen drin, aber ich glaube, das ist
+auch ein Thema." Falls das kommt, ist die passende Lücke auf unserer Seite bereits bekannt und
+beziffert: `StandardCostVariable` und `StandardCostFixed` existieren in `SalesRecord` und im
+Audit-Export, sind aber bei **allen neun Gesellschaften zu 0 % gefüllt**, und **kein Importer
+schreibt sie** – sie werden nur aus dem Audit-CSV zurückgelesen
+(`Services/ExportAuditCsvService.cs:349`, Befund 2026-07-30, siehe
+`docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 2). Eine Fix-/Variabel-Sicht im
+Dashboard wäre also nicht "Feld anzeigen", sondern erst eine Ladestrecke bauen.
+
+### 8.7 Was offen bleibt
+
+1. **Vorgangsnummer im Einzelnachweis prüfen** (8.2) – entscheidet, ob die Erklärung greift. Ein
+   Blick, kein Projekt.
+2. **Tarife (`KP26`) inklusive Fix-/Variabel-Split** – unverändert offen, siehe 8.5.
+3. **Entscheid getrennte Leistungsarten für Rüsten** (8.3) – fachlicher Entscheid Controlling, nicht
+   IT.
+4. **Was der vierte Vorgabewert (`ZAP005`, Leistungsart 100) betriebswirtschaftlich abbildet** –
+   unverändert die Frage an Adil. Er ist der zweite Grund, warum Leistungsart 100 doppelt erscheint,
+   und ohne seine Bedeutung ist auch die 100er-Doppelung nicht sauber erklärbar.
+
+**Angebot, das ich ohne weitere Rückfrage bauen kann, sobald SAP-Zugang wieder eingerichtet ist:**
+eine Liste **Arbeitsplatz → Slot → Formel → Leistungsart → skaliert ja/nein** über alle
+Arbeitsplätze aus `CRCO` + `TC25`. Damit lässt sich jede Kalkulationszeile zuordnen, ohne auf die
+Losgrössen-Probe auszuweichen – und man sieht sofort, welche Arbeitsplätze die `ZAP008`-Ausnahme
+haben.
