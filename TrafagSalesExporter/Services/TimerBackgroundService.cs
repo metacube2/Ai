@@ -105,16 +105,46 @@ public class TimerBackgroundService : BackgroundService
         await StampLastRunAsync();
     }
 
+    /// <summary>
+    /// Naechtliches Einkauf-Delta.
+    ///
+    /// BEFUND 2026-07-30: Dieses Delta war nie gelaufen. Die Bedingung war vorher
+    /// <c>Sites.IsActive</c> fuer <see cref="PurchasingDataSourcePageService.PurchasingTsc"/>, und
+    /// dieses Flag steht produktiv auf <c>0</c> - die Methode stieg also jede Nacht STILL aus, ohne
+    /// Log-Eintrag und ohne Status in <c>PurchasingSyncState</c> (dort standen ausschliesslich
+    /// <c>Full</c>-Eintraege, der letzte vom 2026-07-24). Der Einkaufs-Cache war damit seit dem
+    /// letzten manuellen Full Load eingefroren, was zu <c>MAX(EKKO.Bedat) = 2026-07-24</c> passte.
+    /// Die manuellen Full Loads aus der UI haben diese Pruefung nicht und liefen weiter - dadurch
+    /// blieb der Ausfall unbemerkt.
+    ///
+    /// <c>Sites.IsActive</c> ist als Bedingung ausserdem falsch belegt: <see
+    /// cref="ExportOrchestrationService.ExportAllAsync"/> iteriert ueber ALLE aktiven Sites, und
+    /// <c>PURCHASING_SAP</c> ist eine Einkaufs-Datenquelle ohne Sales-Strecke. Das Flag auf 1 zu
+    /// setzen wuerde den Sales-Export dazu bringen, sie als Verkaufsstandort zu exportieren.
+    /// Deshalb haengt das Delta jetzt nur noch daran, DASS die Einkaufsquelle konfiguriert ist
+    /// (Entscheid Ingo, 2026-07-30) - <c>IsActive</c> bleibt unberuehrt und der Sales-Export
+    /// unveraendert.
+    ///
+    /// Wichtig am neuen Verhalten: Ueberspringen wird geloggt. Ein stiller Aussteiger war der
+    /// eigentliche Grund, warum der Ausfall sechs Tage unentdeckt blieb. Fehlende Zugangsdaten
+    /// meldet <c>RunDeltaAsync</c> selbst als <c>Error</c>-Status samt Meldung, statt hier
+    /// vorab geprueft zu werden - dann ist die Ursache im Refresh-Status sichtbar.
+    /// </summary>
     private async Task RunPurchasingDeltaAsync()
     {
         try
         {
             var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
             using var db = await dbFactory.CreateDbContextAsync();
-            var purchasingActive = await db.Sites
-                .AnyAsync(s => s.TSC == PurchasingDataSourcePageService.PurchasingTsc && s.IsActive);
-            if (!purchasingActive)
+            var purchasingConfigured = await db.Sites
+                .AnyAsync(s => s.TSC == PurchasingDataSourcePageService.PurchasingTsc);
+            if (!purchasingConfigured)
+            {
+                _logger.LogWarning(
+                    "Einkauf-Delta uebersprungen: Site {Tsc} fehlt in der Konfiguration.",
+                    PurchasingDataSourcePageService.PurchasingTsc);
                 return;
+            }
 
             _logger.LogInformation("Einkauf-Delta (naechtlich) gestartet um {Time}", DateTime.Now);
 

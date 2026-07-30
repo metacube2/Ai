@@ -6,7 +6,18 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- ROOTCAUSE 2026-07-30, NOCH NICHT GEFIXT: **Das naechtliche Einkauf-Delta ist nie gelaufen.**
+- GEFIXT 2026-07-30 (Entscheid Ingo, Variante B): Das naechtliche Einkauf-Delta haengt nicht mehr an
+  `Sites.IsActive`, sondern nur noch daran, DASS die Site `PURCHASING_SAP` konfiguriert ist. Damit
+  bleibt `IsActive = 0` und der Sales-Export unveraendert - die Variante mit dem Ausfiltern in
+  `ExportAllAsync` wurde bewusst NICHT genommen, weil sie die Strecke anfasst, die Andreas'
+  Finanzzahlen fuettert. Zusaetzlich wird das Ueberspringen jetzt als `Warning` geloggt: der stille
+  Aussteiger war der eigentliche Grund, warum der Ausfall sechs Tage unentdeckt blieb. Fehlende
+  Zugangsdaten meldet `RunDeltaAsync` selbst als `Error`-Status, statt vorab geprueft zu werden -
+  dann ist die Ursache im Refresh-Status sichtbar statt unsichtbar. NACHSORGE: Delta-Button im
+  Einkaufs-Dashboard einmal druecken, damit nicht bis zum Nachtlauf gewartet werden muss; danach
+  muss in `PurchasingSyncState` ein `Delta`-Eintrag stehen und die Meldung die Zahl der
+  nachklassifizierten Cachezeilen nennen.
+- ROOTCAUSE 2026-07-30 (Ursachenbeschreibung zum Fix oben): **Das naechtliche Einkauf-Delta war nie gelaufen.**
   `PurchasingSyncState` enthaelt ausschliesslich `Full`-Eintraege, keinen einzigen `Delta` - der
   letzte Lauf ist der Full Load vom 2026-07-24 09:23 UTC. Passt exakt zu `MAX(EKKO.Bedat)` =
   `2026-07-24`: der Einkaufs-Cache ist seit dem Full Load eingefroren, `237'218` EKPO-Zeilen
