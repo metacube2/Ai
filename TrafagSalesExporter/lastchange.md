@@ -6,6 +6,32 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- ROOTCAUSE 2026-07-30, NOCH NICHT GEFIXT: **Das naechtliche Einkauf-Delta ist nie gelaufen.**
+  `PurchasingSyncState` enthaelt ausschliesslich `Full`-Eintraege, keinen einzigen `Delta` - der
+  letzte Lauf ist der Full Load vom 2026-07-24 09:23 UTC. Passt exakt zu `MAX(EKKO.Bedat)` =
+  `2026-07-24`: der Einkaufs-Cache ist seit dem Full Load eingefroren, `237'218` EKPO-Zeilen
+  unveraendert. URSACHE: `Sites.IsActive = 0` fuer `PURCHASING_SAP` (`SapServiceUrl` ist leer, das
+  ist unkritisch - `ResolveConnectionAsync` faellt auf `sap.CentralServiceUrl` zurueck, die Full
+  Loads liefen damit). `TimerBackgroundService.RunPurchasingDeltaAsync` prueft genau dieses Flag und
+  steigt STILL aus (`if (!purchasingActive) return;`, ohne Log-Eintrag) - deshalb war nie etwas zu
+  sehen. Die manuellen Full Loads aus der UI haben diese Pruefung nicht.
+  ACHTUNG, der naheliegende Fix ist gefaehrlich: `IsActive = 1` allein reicht NICHT, weil
+  `ExportOrchestrationService.ExportAllAsync` (Zeile 71) ueber ALLE aktiven Sites iteriert und
+  `PURCHASING_SAP` nicht ausfiltert - der naechtliche Sales-Export wuerde dann versuchen, die
+  Einkaufs-Pseudo-Site als Verkaufsstandort zu exportieren. Zwei Wege, Entscheid offen:
+  (A) `PURCHASING_SAP` in `ExportAllAsync` ausfiltern, dann `IsActive = 1` - saubereres Modell,
+  aendert aber die Sales-Export-Strecke; (B) die Delta-Aktivierung von `Sites.IsActive` loesen
+  (eigenes Kennzeichen oder Pruefung auf vorhandene Credentials) - eng begrenzt, laesst den
+  Sales-Export unberuehrt. Empfehlung B. Bis das entschieden ist, wirkt auch der neue
+  Nachklassifizierungs-Fix nicht, weil er im Delta haengt.
+- DEPLOYED 2026-07-30 (Commits `112f51a`, `e0ccb48`, `346/346` Tests gruen, Release-Build 0 Fehler /
+  42 bekannte Warnungen): Einkaufssitzung vom 30.07. komplett. `BiDashboard.dll` vorher
+  `30.07.2026 07:59:38` / `3'172'864` Bytes, nachher **`30.07.2026 14:32:29` / `3'223'552` Bytes**.
+  `app_offline.htm` vor dem Publish gesetzt und danach entfernt. Produktiv-DB unangetastet
+  (`trafag_exporter.db`, `30.07.2026 12:28:49`, vor und nach dem Publish identisch). Erreichbarkeit
+  geprueft: Port 443 offen, unauthentifiziert `401` (erwartete Windows-Auth-Challenge), mit
+  Anmeldedaten `200` und Titel `Trafag Finanze/Sales Management Cockpit` - die App laeuft also
+  wirklich und nicht nur IIS.
 - EINKAUFSSITZUNG 2026-07-30 KOMPLETT UMGESETZT, `346/346` Tests gruen (Details:
   `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md`). Reiter `Spend` ist fachlich
   abgenommen (Marco hat live gegen P76 gerechnet: 21 Mio. total, 11 Mio. im Zeitraum, Top-WG
