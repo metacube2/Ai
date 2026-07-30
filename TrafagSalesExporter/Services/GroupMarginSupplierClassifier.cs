@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TrafagSalesExporter.Models;
 
 namespace TrafagSalesExporter.Services;
 
@@ -62,7 +63,13 @@ public static class GroupMarginSupplierClassifier
         @"\b(" + string.Join('|', InternalMarkers.Select(Regex.Escape)) + @")\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-    public static string Resolve(string? supplierNumber, string? supplierName, string? supplierCountry, string? tsc = null)
+    public static string Resolve(
+        string? supplierNumber,
+        string? supplierName,
+        string? supplierCountry,
+        string? tsc = null,
+        string? normalizedMaterialKey = null,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return Internal;
@@ -71,11 +78,37 @@ public static class GroupMarginSupplierClassifier
             string.IsNullOrWhiteSpace(supplierName) &&
             string.IsNullOrWhiteSpace(supplierCountry))
         {
-            return Unclear;
+            return HasGroupCostMatch(normalizedMaterialKey, groupStandardCosts) ? Internal : Unclear;
         }
 
         var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
         return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
+    }
+
+    // Uebergangsregel (Andreas/Ingo, Meeting 2026-07-30): solange die B1-Lieferantenfelder
+    // (CardCode) bei den meisten Gesellschaften nicht gepflegt sind, wird ein Material OHNE
+    // jegliche Supplier-Angabe als intern gewertet, wenn es in der Konzern-Kostentabelle
+    // (GroupStandardCosts, siehe Models/GroupStandardCost.cs) einer bekannten liefernden
+    // Gesellschaft vorkommt. AUSDRUECKLICH ALS PROVISORIUM markiert: beide im Meeting einig,
+    // dass das "nicht wasserdicht" ist - die Tabelle kann falsch positive Eintraege enthalten
+    // (Beispiel aus dem Meeting: ein "Thermostat"-Artikel in der TR-AG/CH-Tabelle, der dort
+    // nicht hingehoert), was ein tatsaechlich extern beschafftes Material bei einer anderen
+    // Gesellschaft faelschlich als intern klassifizieren wuerde. Nur ein Fallback fuer den
+    // Unklar-Fall - ueberschreibt nie ein bereits per Supplier-Text/TSC ermitteltes Extern.
+    private static bool HasGroupCostMatch(
+        string? normalizedMaterialKey,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedMaterialKey) || groupStandardCosts is null || groupStandardCosts.Count == 0)
+            return false;
+
+        foreach (var area in GroupStandardCostAreas.ByEntity.Values)
+        {
+            if (groupStandardCosts.ContainsKey((normalizedMaterialKey, area)))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -89,23 +122,42 @@ public static class GroupMarginSupplierClassifier
     /// (z. B. GFS/Gesellschaft fuer Sensorik — dafuer ist noch keine eigene Kostenquelle
     /// verifiziert).
     /// </summary>
-    public static string? ResolveDeliveringEntity(string? supplierName, string? tsc = null)
+    public static string? ResolveDeliveringEntity(
+        string? supplierName,
+        string? tsc = null,
+        string? normalizedMaterialKey = null,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return GroupStandardCostEntities.TrAg;
 
-        if (string.IsNullOrWhiteSpace(supplierName))
+        if (!string.IsNullOrWhiteSpace(supplierName))
+        {
+            var name = supplierName.Trim();
+            if (name.Contains("Trafag AG", StringComparison.OrdinalIgnoreCase))
+                return GroupStandardCostEntities.TrAg;
+            if (name.Contains("Trafag Italia", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("Trafag Italy", StringComparison.OrdinalIgnoreCase))
+                return GroupStandardCostEntities.TrIt;
+            if (name.Contains("Trafag Controls India", StringComparison.OrdinalIgnoreCase) ||
+                name.Contains("Trafag India", StringComparison.OrdinalIgnoreCase))
+                return GroupStandardCostEntities.TrIn;
+            return null;
+        }
+
+        // Gleiches Uebergangs-Provisorium wie in Resolve(): ohne jegliche Supplier-Angabe
+        // wird die liefernde Gesellschaft ueber die Konzern-Kostentabelle geraten, nicht ueber
+        // den (leeren) Supplier-Text. Nur relevant, wenn Resolve() bereits "Intern" geliefert
+        // haette (HasGroupCostMatch) - siehe dortigen Kommentar zum Thermostat-Vorbehalt.
+        if (string.IsNullOrWhiteSpace(normalizedMaterialKey) || groupStandardCosts is null || groupStandardCosts.Count == 0)
             return null;
 
-        var name = supplierName.Trim();
-        if (name.Contains("Trafag AG", StringComparison.OrdinalIgnoreCase))
-            return GroupStandardCostEntities.TrAg;
-        if (name.Contains("Trafag Italia", StringComparison.OrdinalIgnoreCase) ||
-            name.Contains("Trafag Italy", StringComparison.OrdinalIgnoreCase))
-            return GroupStandardCostEntities.TrIt;
-        if (name.Contains("Trafag Controls India", StringComparison.OrdinalIgnoreCase) ||
-            name.Contains("Trafag India", StringComparison.OrdinalIgnoreCase))
-            return GroupStandardCostEntities.TrIn;
+        foreach (var (entity, area) in GroupStandardCostAreas.ByEntity)
+        {
+            if (groupStandardCosts.ContainsKey((normalizedMaterialKey, area)))
+                return entity;
+        }
+
         return null;
     }
 }

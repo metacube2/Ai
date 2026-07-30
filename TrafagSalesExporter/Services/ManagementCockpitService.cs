@@ -1417,7 +1417,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .Where(row => row.Include)
             .Select(row =>
             {
-                var supplierType = ResolveSupplierType(row);
+                var supplierType = ResolveSupplierType(row, groupStandardCosts);
                 var basis = ResolveGroupMarginCostBasis(row, groupStandardCosts);
                 var status = ResolveGroupMarginStatus(row, supplierType, basis.CostBasis);
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -1591,8 +1591,12 @@ public class ManagementCockpitService : IManagementCockpitService
             : $"{label} (umgerechnet {costCurrency?.Trim()}->{salesCurrency?.Trim()} @ {conversion.AppliedRate:0.####})";
     }
 
-    private static string ResolveSupplierType(FinanceAggregationRow row)
-        => GroupMarginSupplierClassifier.Resolve(row.SupplierNumber, row.SupplierName, row.SupplierCountry, row.Tsc);
+    private static string ResolveSupplierType(
+        FinanceAggregationRow row,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
+        => GroupMarginSupplierClassifier.Resolve(
+            row.SupplierNumber, row.SupplierName, row.SupplierCountry, row.Tsc,
+            NormalizeMaterialKey(row.Material), groupStandardCosts);
 
     private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
 
@@ -1616,10 +1620,12 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = row.Value < 0m || (row.Value == 0m && row.Quantity < 0m);
-        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(row.SupplierName, row.Tsc);
+        var normalizedMaterialKey = NormalizeMaterialKey(row.Material);
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            row.SupplierName, row.Tsc, normalizedMaterialKey, groupStandardCosts);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
-            groupStandardCosts.TryGetValue((NormalizeMaterialKey(row.Material), area), out var groupCost) &&
+            groupStandardCosts.TryGetValue((normalizedMaterialKey, area), out var groupCost) &&
             groupCost.UnitCost > 0m)
         {
             var groupMagnitude = row.Quantity != 0m
@@ -1681,7 +1687,7 @@ public class ManagementCockpitService : IManagementCockpitService
                 var rateDate = new DateTime(row.Year, 12, 31);
                 var originalCurrency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
                 var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
-                var supplierType = ResolveSupplierType(row);
+                var supplierType = ResolveSupplierType(row, groupStandardCosts);
                 var basis = ResolveGroupMarginCostBasis(row, groupStandardCosts);
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency, row.Year,

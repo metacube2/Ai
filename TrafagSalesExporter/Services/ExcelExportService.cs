@@ -299,7 +299,7 @@ public class ExcelExportService : IExcelExportService
             .Where(row => row.Include)
             .Select(row =>
             {
-                var supplierType = ResolveSupplierType(row.Record);
+                var supplierType = ResolveSupplierType(row.Record, costs);
                 var basis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual, costs);
                 var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, basis.CostBasis);
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
@@ -856,8 +856,12 @@ public class ExcelExportService : IExcelExportService
         return string.IsNullOrWhiteSpace(withoutLeadingZeros) ? normalized : withoutLeadingZeros;
     }
 
-    private static string ResolveSupplierType(SalesRecord record)
-        => GroupMarginSupplierClassifier.Resolve(record.SupplierNumber, record.SupplierName, record.SupplierCountry, record.Tsc);
+    private static string ResolveSupplierType(
+        SalesRecord record,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
+        => GroupMarginSupplierClassifier.Resolve(
+            record.SupplierNumber, record.SupplierName, record.SupplierCountry, record.Tsc,
+            NormalizeMaterialKey(record.Material), groupStandardCosts);
 
     private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
 
@@ -873,10 +877,12 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
-        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(record.SupplierName, record.Tsc);
+        var normalizedMaterialKey = NormalizeMaterialKey(record.Material);
+        var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            record.SupplierName, record.Tsc, normalizedMaterialKey, groupStandardCosts);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
-            groupStandardCosts.TryGetValue((NormalizeMaterialKey(record.Material), area), out var groupCost) &&
+            groupStandardCosts.TryGetValue((normalizedMaterialKey, area), out var groupCost) &&
             groupCost.UnitCost > 0m)
         {
             var groupMagnitude = record.Quantity != 0m

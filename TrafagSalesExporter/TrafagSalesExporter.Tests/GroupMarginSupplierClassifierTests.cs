@@ -1,3 +1,4 @@
+using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services;
 
 namespace TrafagSalesExporter.Tests;
@@ -155,6 +156,82 @@ public class GroupMarginSupplierClassifierTests
     public void ResolveDeliveringEntity_ReturnsNull_ForOtherTscWithoutSupplierName()
     {
         var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, "TRDE");
+
+        Assert.Null(result);
+    }
+
+    // Uebergangsregel Meeting 2026-07-30: Material ohne jede Supplier-Angabe, aber mit
+    // Treffer in der Konzern-Kostentabelle (GroupStandardCosts) -> intern, statt "Unklar".
+
+    private static IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> GroupCostsWith(
+        string materialKey, string valuationArea = "1100")
+        => new Dictionary<(string, string), GroupStandardCost>
+        {
+            [(materialKey, valuationArea)] = new GroupStandardCost
+            {
+                MaterialKey = materialKey,
+                ValuationArea = valuationArea,
+                UnitCost = 12.5m,
+                Currency = "CHF"
+            }
+        };
+
+    [Fact]
+    public void Resolve_ReturnsInternal_WhenMaterialKeyMatchesGroupCostTable_AndSupplierFieldsEmpty()
+    {
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.Resolve(null, "", "", "TRDE", "ART123", costs);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_ReturnsUnclear_WhenMaterialKeyDoesNotMatchGroupCostTable()
+    {
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.Resolve(null, "", "", "TRDE", "OTHER-ART", costs);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
+    }
+
+    [Fact]
+    public void Resolve_ReturnsUnclear_WhenGroupCostTableIsEmptyOrMissing()
+    {
+        var result = GroupMarginSupplierClassifier.Resolve(null, "", "", "TRDE", "ART123", null);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
+    }
+
+    [Fact]
+    public void Resolve_DoesNotOverrideExplicitExternalClassification_WithGroupCostMatch()
+    {
+        // Die Kostentabellen-Regel ist nur ein Fallback fuer den Unklar-Fall - eine per
+        // Supplier-Text bereits als extern erkannte Zeile darf nicht ueberschrieben werden.
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.Resolve("V-001", "Bosch Sensortec", "DE", "TRDE", "ART123", costs);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result);
+    }
+
+    [Fact]
+    public void ResolveDeliveringEntity_ReturnsMatchedEntity_ViaGroupCostTable_WhenSupplierNameEmpty()
+    {
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, "TRDE", "ART123", costs);
+
+        Assert.Equal(GroupStandardCostEntities.TrAg, result);
+    }
+
+    [Fact]
+    public void ResolveDeliveringEntity_ReturnsNull_WhenMaterialKeyNotInGroupCostTable()
+    {
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, "TRDE", "OTHER-ART", costs);
 
         Assert.Null(result);
     }
