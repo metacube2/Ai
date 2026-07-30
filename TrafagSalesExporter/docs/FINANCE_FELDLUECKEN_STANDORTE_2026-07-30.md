@@ -126,10 +126,48 @@ Zwei Präzisierungen:
   würde nicht matchen (`GroupMarginSupplierClassifier.cs:118`). Eine gepflegte Nummer ohne
   gepflegten Namen bringt also nichts.
 
-## 5. Mailtext an die Standorte
+## 5. Empfänger
+
+Stand 2026-07-30, von Ingo recherchiert. Vorher war in keinem Dokument dieses Repos eine
+Mailadresse hinterlegt — deshalb hier festgehalten, damit die Zuordnung beim nächsten
+Durchgang nicht erneut rekonstruiert werden muss.
+
+| Standort | Empfänger | Adresse | Anmerkung |
+| --- | --- | --- | --- |
+| **TRES** Spanien | Santi Gomez | `Santi.Gomez@trafag.es` | — |
+| **TRDE** Deutschland | Rohail Munir | `Rohail.Munir@trafag.de` | Abschnitt nennt „your Alphaplan/BI contact" — falls Rohail das nicht selbst ist, bitte weiterleiten lassen |
+| **TRIT** Italien | Paola Castagna | `Paola.Castagna@trafag.com` | **Achtung, zwei Vorgänge** — siehe unten |
+| **TRIN** Indien | RanVijay Kumar | `RanVijay.Kumar@trafag.com` | Trafag-intern, primärer Adressat |
+| **TRIN** Indien | Anurag Gupta | `agupta@tasc.co.in` | **externe Domain** — siehe unten |
+| **TRIN** Indien | Chandra Pratap Singh | `chandra.s@tasc.co.in` | **externe Domain** — siehe unten |
+| **TRFR** Frankreich | *offen* | — | Abschnitt steht, Empfänger fehlt |
+| **TRUS** USA | *offen* | — | Abschnitt steht, Empfänger fehlt |
+| **TRUK** UK | *offen* | — | nur „no action required", Versand optional |
+| **TRCH / TRAT** | *entfällt* | — | keine Standortbitte |
+
+**Paola Castagna läuft doppelt.** Sie ist bereits Adressatin des Standardkosten-/Bewertungs-
+themas aus der Sitzung mit Andreas (`FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`,
+Abschnitte 5c/5d) mit Zusage **Ende August 2026**. Die Bitte hier ist eine andere: *Preferred
+Vendor* am Artikelstamm, Stammdatenpflege, nicht Bewertungsmethode. Beides in einer Mail zu
+mischen kostet den klaren Termin des Bewertungsthemas — **getrennt verschicken**. Zeitlich
+kommt hinzu: B1-Upgrade Go-Live 2026-08-03, danach zwei Wochen Ferien; eine Antwort auf die
+Stammdatenbitte ist vor Ende August unrealistisch.
+
+**`tasc.co.in` ist keine Trafag-Domain.** Zwei der drei indischen Adressen liegen bei einem
+externen Dienstleister. Der Mailtext selbst ist unkritisch (Feldnamen, Zeilenzahlen), aber im
+Text steht das Angebot „we can send the item list" — **1'271 Artikelnummern des TRIN-Stamms**.
+Vor dem Versand einer solchen Liste an eine Fremddomain kurz klären, ob das gedeckt ist;
+im Zweifel nur an `RanVijay.Kumar@trafag.com` und von dort intern weiterverteilen lassen.
+
+**Noch zu beschaffen: FR und US.** Beide haben eine echte Bitte im Mailtext (FR 374 von 433,
+US 518 von 521 Artikeln) — FR ist sogar der kleinste Aufwand aller Standorte. Ohne Empfänger
+bleiben genau die zwei Abschnitte liegen, die am schnellsten zu schliessen wären.
+
+## 6. Mailtext an die Standorte
 
 Aufgebaut für **einen Sammelversand an alle Standorte**. Die Abschnitte lassen sich ohne
-Anpassung einzeln herausschneiden, falls stattdessen pro Standort verschickt werden soll.
+Anpassung einzeln herausschneiden, falls stattdessen pro Standort verschickt werden soll —
+was wegen des Paola-Doppelvorgangs (Abschnitt 5) ohnehin der sicherere Weg ist.
 
 > **Subject:** BI Dashboard — missing data fields per site
 >
@@ -255,7 +293,7 @@ Anpassung einzeln herausschneiden, falls stattdessen pro Standort verschickt wer
 > Best regards
 > Ingo
 
-## 6. Reproduzierbar
+## 7. Reproduzierbar
 
 ```powershell
 $rows = Import-Csv -Path 'Finance_Dashboard_Audit_All_2026-07-29.csv' -Delimiter ';' -Encoding UTF8 |

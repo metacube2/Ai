@@ -155,6 +155,13 @@ Moving Average halten") als die unmittelbare Gruppenmarge-Luecke.
 
 ## 5d. Antwort Paola (TR IT) per Mail, 2026-07-28
 
+**Kontakt und Abgrenzung (ergaenzt 2026-07-30):** Paola Castagna, `Paola.Castagna@trafag.com`.
+Sie ist ab 2026-07-30 zusaetzlich Adressatin einer ZWEITEN, unabhaengigen Bitte — *Preferred
+Vendor* am Artikelstamm (`OITM.CardCode`), 939 von 3'280 TR-IT-Artikeln, siehe
+`FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 5/6. Die beiden Vorgaenge NICHT in
+einer Mail mischen: hier geht es um die Bewertungsmethode mit Zusage Ende August, dort um
+Stammdatenpflege. Eine gemischte Mail gefaehrdet den klaren Termin dieses Vorgangs.
+
 ### Inhaltliche Rueckmeldung
 
 - **Unsere Analyse wurde bestaetigt** („Thank you for the detailed background, it's very

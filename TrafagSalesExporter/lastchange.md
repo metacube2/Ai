@@ -6,6 +6,26 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DOKU 2026-07-30, Empfaenger fuer die Standort-Mail (kein Code): `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`
+  hat einen neuen Abschnitt 5 `Empfaenger` (alter Abschnitt 5 Mailtext -> 6, Reproduzierbar -> 7).
+  Anlass: In KEINEM `.md` des Repos stand vorher eine Mailadresse (Regex ueber alle Markdown-Dateien:
+  null Treffer) - benannt war als einziger Standortkontakt Paola (TR IT), und zwar nur fuer das
+  Bewertungsthema. Von Ingo recherchiert und jetzt festgehalten: ES `Santi.Gomez@trafag.es`,
+  DE `Rohail.Munir@trafag.de`, IT `Paola.Castagna@trafag.com`, IN `RanVijay.Kumar@trafag.com` plus
+  `agupta@tasc.co.in` und `chandra.s@tasc.co.in`. DREI PUNKTE, die beim Versand zaehlen:
+  (1) **FR und US fehlen weiterhin** - genau die zwei Standorte mit einer echten Bitte im Text
+  (FR 374 von 433, US 518 von 521 Artikeln ohne `OITM.CardCode`), FR ist sogar der kleinste Aufwand
+  aller Standorte. (2) **Paola laeuft doppelt**: sie ist bereits Adressatin des Standardkosten-/
+  Bewertungsthemas mit Zusage Ende August (B1-Go-Live 2026-08-03 + 2 Wochen Ferien) - die Bitte hier
+  ist Stammdatenpflege und ein anderer Vorgang; getrennt verschicken, sonst kostet es den klaren
+  Termin des Bewertungsthemas. Querverweis dazu jetzt auch in
+  `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitt 5d. (3) **`tasc.co.in` ist
+  keine Trafag-Domain** - zwei der drei indischen Adressen liegen bei einem externen Dienstleister.
+  Der Mailtext selbst ist unkritisch, aber er enthaelt das Angebot "we can send the item list"
+  (1'271 Artikelnummern des TRIN-Stamms); vor dem Versand einer solchen Liste an eine Fremddomain
+  klaeren, ob das gedeckt ist, im Zweifel nur an die Trafag-Adresse und von dort weiterverteilen.
+  Nicht verwechseln: `Hugo Cuesta` in Abschnitt 3 ist ein Artikeltext aus den Spanien-Daten
+  (`- Entregado por Hugo Cuesta`, 377 Zeilen), kein Ansprechpartner.
 - GEFIXT 2026-07-30 (Entscheid Ingo, Variante B): Das naechtliche Einkauf-Delta haengt nicht mehr an
   `Sites.IsActive`, sondern nur noch daran, DASS die Site `PURCHASING_SAP` konfiguriert ist. Damit
   bleibt `IsActive = 0` und der Sales-Export unveraendert - die Variante mit dem Ausfiltern in
