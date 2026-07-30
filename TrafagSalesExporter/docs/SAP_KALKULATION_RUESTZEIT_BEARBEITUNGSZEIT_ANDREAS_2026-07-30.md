@@ -5,11 +5,11 @@ die Frage nicht direkt am System geklärt werden). Andreas' Beobachtung: Rüstze
 pro Auftrag und ändern sich nicht mit der Losgrösse; Bearbeitungszeiten skalieren mit der Menge.
 Offen war, **an welchem SAP-Attribut/Feld** diese Unterscheidung hängt.
 
-**Status dieses Dokuments:** Analyse auf Basis von allgemeinem SAP-PP-Kalkulationswissen, **nicht**
-gegen das Trafag-SAP-System live verifiziert (kein Zugriff auf ein SAP-System aus dieser Umgebung
-heraus). Die genannten Transaktionen und Tabellen sind gegen die SAP-Dokumentation geprüft
-(siehe Abschnitt 6). Bitte mit Adil nach seinem Urlaub gegenprüfen, insbesondere ob Trafag eigene
-Z-Formeln statt der SAP-Standardformeln nutzt.
+**Status dieses Dokuments:** Die Grundlogik ist **am Produktivsystem P76 verifiziert**
+(RFC-Lesezugriff, 2026-07-30, siehe Abschnitt 7). Die beiden vorher offenen Punkte sind damit
+beantwortet: Trafag nutzt eigene Z-Formeln, und es gibt Arbeitsplätze, an denen die Rüstzeit
+**nicht** losgrössenunabhängig ist. Die Transaktions- und Tabellenreferenzen sind gegen die
+SAP-Dokumentation geprüft (Abschnitt 6).
 
 **Fassung an Andreas:** `docs/SAP_Kalkulation_Ruestzeit_Bearbeitungszeit_Andreas_2026-07-30.docx`
 (gekürzt, ohne Tabellennamen und ohne den Automatisierungs-Ausblick).
@@ -28,9 +28,11 @@ entsteht aus dem Zusammenspiel von drei Stellen:
    Terminierung anders verrechnet werden als in der Kalkulation.
    - Die Rüstzeit-Formel verwendet den Vorgabewert **konstant**, unabhängig von der Menge.
    - Die Maschinen-/Bearbeitungszeit-Formel multipliziert ihn mit
-     **Vorgangsmenge ÷ Basismenge** – deshalb skaliert sie mit der Menge. SAP-Standardformel
-     `SAP002` = Vorgangsmenge × Maschinenzeit ÷ Basismenge ÷ Anzahl Splits (der Split-Divisor
-     bedeutet: bei parallelen Arbeitsplätzen skaliert es nicht exakt linear).
+     **Vorgangsmenge ÷ Basismenge** – deshalb skaliert sie mit der Menge.
+   - **Achtung, nicht mit den SAP-Auslieferungsformeln verwechseln:** in der Literatur wird
+     meist `SAP002` = `SAP_02 * SAP_09 / SAP_08 / SAP_11` genannt. Trafag verwendet diese
+     Formel **nicht** – im Einsatz sind `SAP005`/`SAP006`/`SAP007` (ohne Split-Divisor) sowie
+     Z-Formeln. Siehe Abschnitt 7 für die tatsächliche Konfiguration.
 3. **Leistungsart + Tarif (KP26)** – die Formel liefert nur die **Menge** (Stunden), nicht den
    Betrag. Die Kosten entstehen erst durch Bewertung mit dem Tarif der zugeordneten Leistungsart:
    `Kosten = Tarif/Einheit × Menge aus Formel`. Zwei Arbeitsplätze mit identischen Zeiten können
@@ -102,10 +104,15 @@ Fünf-Minuten-Job.
 
 ## 5. Offene Punkte
 
-- Nicht verifiziert: ob Trafag Standard-SAP-Formeln oder kundeneigene Z-Formeln im Einsatz hat.
-- Nicht verifiziert: ob alle Arbeitsplätze dieselbe Formellogik verwenden, oder ob es
-  Ausnahmen gibt (z. B. bei manuell/extern gefertigten Vorgängen). Siehe Steuerschlüssel-Hinweis
-  in Abschnitt 1.
+Die beiden ursprünglich offenen Punkte sind durch die Produktivprüfung in Abschnitt 7 beantwortet
+(Z-Formeln: ja, im Einsatz; Ausnahmen: ja, `ZAP008` an ca. 45 Arbeitsplätzen). Verbleibend:
+
+- Fachlich zu klären (Adil/AVOR): warum `ZAP005` (Slot 4, Leistungsart 100) an praktisch
+  **jedem** Arbeitsplatz hängt und was dieser vierte Vorgabewert betriebswirtschaftlich abbildet.
+- Nicht geprüft: die Kalkulationsrelevanz je Steuerschlüssel (`T430`) und die konkrete
+  Bewertung fremdbearbeiteter Vorgänge in unserem System.
+- Nicht geprüft: die Tarife je Leistungsart (100/200) in `KP26` – ohne die sagt die Menge allein
+  nichts über die Kosten.
 
 ## 6. Geprüfte Referenzen und korrigierte Fehler
 
@@ -136,3 +143,88 @@ Gegen die SAP-Dokumentation geprüft (Transaktionen/Tabellen, nicht die Trafag-K
   ergibt eine Leistungsmenge; der Betrag entsteht erst über den Tarif (siehe Abschnitt 1.3).
 - Rüstzeit-fix / Bearbeitungszeit-mengenabhängig wurde als absolute Regel formuliert – korrekt ist
   "in der üblichen Standardkonfiguration", weil Z-Formeln abweichen können.
+
+## 7. Produktivprüfung am System P76 (2026-07-30)
+
+Read-only per RFC (`RFC_READ_TABLE`, Werkzeug `.tmp_sap_probe`), Ziel
+`travp762.sap.trafag.com` / Mandant 100 → SAP-System-ID **P76**, DB HDB, Kernel 793.
+Gelesene Tabellen: `TC20`, `TC21`, `TC25`, `CRCO`, `CRHD`. Keine Schreibzugriffe.
+
+### 7.1 Die Grundlogik ist bestätigt
+
+- `CRCO.FORML` heisst im DDIC wörtlich **"Formelschlüssel Kalkulation"** – die Formelzuordnung
+  hängt tatsächlich am Arbeitsplatz je Leistungsart, nicht am Arbeitsplan-Zeitwert.
+- `TC25` hat getrennte Kennzeichen `VKALK` (für Kalkulation erlaubt), `VTERM` (Terminierung),
+  `VKAPA` (Kapazitätsbedarf) – die Trennung der Formeln je Anwendung ist damit belegt.
+- `TC21` Schlüsselfeld ist `VGWTS` = Vorgabewertschlüssel; `TC20` ist die Parametertabelle.
+
+### 7.2 Parameter, die Trafag tatsächlich verwendet (`TC20`)
+
+| Parameter | Herkunft | DDIC-Feld | Einheit | Bedeutung |
+|---|---|---|---|---|
+| `SAP_01` | Vorgabewert | – | MIN | Rüstzeit aus dem Arbeitsplan |
+| `SAP_02` | Vorgabewert | – | MIN | Maschinenzeit aus dem Arbeitsplan |
+| `SAP_03` | Vorgabewert | – | MIN | Personal-/Lohnzeit aus dem Arbeitsplan |
+| `ZAP_01` | Vorgabewert | – | MIN | eigener (Z-)Vorgabewert |
+| `SAP_08` | Feld | `BMSCH` | – | Basismenge |
+| `SAP_09` | Feld | `MGVRG` | – | Vorgangsmenge |
+| `SAP_11` | Feld | `SPLIM` | – | Anzahl Splits |
+| `ZBELAD` | Konstante | – | **ST** | eigener Parameter "Beladung" (Stück je Charge/Ladung) |
+
+### 7.3 Die real zugeordneten Formeln (`CRCO` + `TC25`)
+
+Muster an praktisch **jedem** Arbeitsplatz (`ENDDA = 99991231`, Objekttyp A):
+
+| Slot | Formel | Definition | Skaliert mit Menge? | Leistungsart |
+|---|---|---|---|---|
+| 0001 Rüsten | `SAP005` | `SAP_01 * SAP_11` | **nein** | 200 |
+| 0002 Maschine | `SAP006` | `SAP_02 * MGVRG / BMSCH` | **ja** | 200 |
+| 0003 Lohn | `SAP007` | `SAP_03 * MGVRG / BMSCH` | **ja** | 100 |
+| 0004 (Z) | `ZAP005` | `ZAP_01 * SAP_11` | nein | 100 |
+
+**Damit ist Andreas' Beobachtung am System bestätigt:** Rüsten enthält keinen Mengenterm,
+Maschine und Lohn schon.
+
+**Zwei Präzisierungen gegenüber der Literatur:**
+
+1. Trafag nutzt **nicht** `SAP001`/`SAP002`/`SAP003`, sondern `SAP005`/`SAP006`/`SAP007`.
+   Unterschied: bei Maschine/Lohn fehlt der Split-Divisor `/ SAP_11`, und beim Rüsten wird
+   **mit** `SAP_11` multipliziert. Eine Aussage wie "SAP002 ist die Standardformel" trifft auf
+   unser System nicht zu.
+2. `SAP005`/`SAP006`/`SAP007` haben `VTERM` leer – sie sind **nur für die Kalkulation** zugelassen.
+   Die Terminierung läuft über andere Formeln. Zeitwerte in der Kalkulation und in der
+   Terminierung sind also nicht automatisch dieselben.
+
+### 7.4 Wichtige Ausnahme: Rüstzeit, die doch mit der Menge skaliert
+
+An ca. **45 Arbeitsplätzen** (67 `CRCO`-Sätze inkl. historischer Zeitscheiben) liegt auf dem
+**Rüst-Slot 0001** nicht `SAP005`, sondern:
+
+`ZAP008` = `SAP_01 * SAP_09 / ZBELAD / SAP_08` = Rüstzeit × Vorgangsmenge ÷ Beladung ÷ Basismenge
+
+Das heisst: dort wächst die **Rüstzeit mit der Menge**, geteilt durch die Beladung (Stück je
+Ladung) – klassisches Verhalten für chargen-/ladungsweise Prozesse (Ofen, Anlage, Bad), wo je
+Ladung neu gerüstet wird und die Gesamtrüstzeit von der Anzahl Ladungen abhängt.
+
+Betroffene Kostenstellen (Auszug): 409, 454, 455, 467, 483, 495, 499, 519, 523, 526, 540, 572,
+618, 648, 659, 663, 666, 668, 691, 700, 711, 728, 729, 731, 740, 741, 745, 746.
+
+**Konsequenz:** Die pauschale Regel "Rüstzeit ist losgrössenunabhängig" gilt bei Trafag **nicht
+flächendeckend**. Wer Rüstkosten je Stück über die Losgrösse interpretiert, muss vorher prüfen,
+welche Formel am betreffenden Arbeitsplatz hängt. Das ist auch der Grund, warum ein einzelner
+`CK11N`-Test nicht auf andere Arbeitsplätze verallgemeinert werden darf.
+
+### 7.5 Reproduktion
+
+```
+.tmp_sap_probe\bin\x86\Release\net48\SapProbe.exe table-read TC25 \
+  --ashost travp762.sap.trafag.com --user KOI \
+  --fields IDENT,FTEXT,VKALK,VTERM --where "VKALK = 'X'" --rowcount 100
+
+.tmp_sap_probe\bin\x86\Release\net48\SapProbe.exe table-read CRCO \
+  --ashost travp762.sap.trafag.com --user KOI \
+  --fields OBJID,LANUM,KOSTL,LSTAR,FORML --where "FORML = 'ZAP008'" --rowcount 150
+```
+
+Passwort über `SAP_NCO_PASSWORD` setzen oder maskiert eingeben – das Werkzeug nimmt es
+grundsätzlich nicht als Kommandozeilenargument.
