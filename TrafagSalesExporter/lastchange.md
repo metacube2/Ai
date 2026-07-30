@@ -1,10 +1,58 @@
 # Last Change
 
-Stand: 2026-07-29
+Stand: 2026-07-30
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- EINKAUFSSITZUNG 2026-07-30 KOMPLETT UMGESETZT, `346/346` Tests gruen (Details:
+  `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md`). Reiter `Spend` ist fachlich
+  abgenommen (Marco hat live gegen P76 gerechnet: 21 Mio. total, 11 Mio. im Zeitraum, Top-WG
+  3.7 Mio.). Umgesetzt:
+  (1) **Spend-Matrix dritte Ebene**: Warengruppenzeile ist jetzt selbst aufklappbar und zeigt die
+  Materialnummern (`PurchasingSpendGroupYearRow.Articles`, Deckelung 25 je WG + `uebrige (n)`, auch
+  je Jahr summiert). Entscheid Marco gegen den Verweis auf den Reiter Spend-Aufriss. Zweck ist die
+  Dummy-Suche unter `01 - Dummy`.
+  (2) **Volumen nach Waehrung** als Balkenblock im Spend-Reiter (`CurrencySpendRows`), CHF-bewertet
+  plus Originalsumme in Belegwaehrung. Kein SAP-Feld/Full Load noetig, `Waers`/`Wkurs` sind im
+  EKKO-Cache. Abgrenzung im Hinweistext: NICHT die Beschaffungsregion (BIPRO = Region CH, fakturiert
+  in EUR).
+  (3) **Waehlbare Einstiegsdimension** im Reiter Spend-Aufriss - die am 24.07. bewusst offen
+  gelassene Rueckfrage, von Marco jetzt selbst beantwortet. Vier Perspektiven (Lieferant /
+  Beschaffungsregion / Warengruppe / Waehrung), Kaskade generisch parametriert
+  (`SpendPerspective`/`SpendDimension`), alle beim Laden vorberechnet, Anzeige wickelt den Baum in
+  C# flach ab (`BuildVisibleRows`), weil die Perspektiven 3 bzw. 4 Ebenen tief sind.
+  (4) **Delta klassifiziert den ganzen Cache** (`ApplyMaterialMasterToWholeCacheAsync`) - der
+  wichtigste Punkt, siehe eigener Eintrag unten.
+  (5) **ZLO03 Excel-Paste**: Komma/Semikolon/Leerzeichen/Tab/Zeilenumbruch gleichwertig, Duplikate
+  raus, Feld mehrzeilig mit Nummernzaehler; Suchfeld akzeptiert dieselben Trennzeichen.
+  (6) **ZLO03 Mehrfachabfrage-Bug** als Bypass: eine SAP-Anfrage JE Nummer statt einer gemeinsamen
+  OR-Gruppe (`BuildMaterialClauses`), Dedupe ueber `(Richtung, Vknr, Kompnr)` weil der Cache per
+  INSERT gefuellt wird. Nebeneffekt: Trefferzahl je Nummer, und Nummern ohne Verwendung werden
+  namentlich gemeldet - fuer die TR5-Aufgabe (1'563 Komponenten, welche werden nirgends verbaut?)
+  ist genau das das Ergebnis. Ausserdem: 0 Zeilen zeigt jetzt Warnung statt gruen, und der
+  0-Zeilen-Hinweis gibt es auch fuer Bottom-Up (vorher nur Top-Down - genau Marcos Fall).
+  NACHSORGE: (a) Refresh-Status pruefen, ob das naechtliche Delta ueberhaupt greift (`MAX(Bedat)`
+  produktiv = 2026-07-24 = Tag des Full Loads); (b) Laufzeit der Nachklassifizierung im Log ansehen
+  (ungemessen); (c) ZLO03 mit mehreren Nummern gegen P76 laufen lassen - die ABAP-Ursache ist NICHT
+  verifiziert, der Bypass umgeht sie nur.
+- BEFUND EINKAUF-DELTA 2026-07-30: Auf Marcos Frage, ob im SAP-Materialstamm nachgepflegte
+  Warengruppen im Dashboard ankommen, wurde in der Sitzung "ja, dynamisch" geantwortet. Das war nur
+  zur Haelfte richtig. Naechtlich laeuft `RunDeltaAsync` (kein Full Load), und das Delta holt nur
+  geaenderte (`Aedat`) und noch offene Belege - `UpsertEkpoAsync` wendet die Stammdaten also nur auf
+  DIESE Zeilen an. Ein Material, das ausschliesslich auf alten, abgeschlossenen Bestellungen liegt,
+  behielt damit dauerhaft seine alte Warengruppe. Genau das ist der Dummy-Fall: produktiv sind
+  `45'861` Positionen ohne und `36'295` mit Warengruppe `01`, zusammen **34.6 % von 237'217**.
+  GEFIXT: `ApplyMaterialMasterToWholeCacheAsync` schreibt Warengruppe/Status/ABC/XYZ auf alle
+  Cachezeilen, ueber eine temporaere Staging-Tabelle und EIN `UPDATE`. Kein zusaetzlicher SAP-Read,
+  weil beide Maps im Delta ohnehin vollstaendig geladen werden. Zwei Schutzmechanismen: bei leeren
+  Maps wird nichts angefasst (sonst wuerde ein fehlgeschlagener Stammdaten-Read die Warengruppen
+  flaechendeckend leerschreiben), und nur wirklich geaenderte Zeilen werden geschrieben. Die
+  Staging-Werte kommen aus denselben `Resolve*`-Funktionen wie der Upsert - `NormalizeMatnr` entfernt
+  fuehrende Nullen, der Cache haelt aber die zero-padded Form, ein in SQL nachgebauter Join haette
+  nichts gefunden und die Warengruppe leergeschrieben (von einem Test aufgedeckt). 6 neue Tests in
+  `PurchasingDeltaReclassificationTests`; dafuer `InternalsVisibleTo` fuer das Testprojekt ergaenzt.
 
 - IMPORTPRUEFUNG CH/AT + INDIEN 2026-07-29 (Details: `docs/FINANCE_IMPORTPRUEFUNG_2026-07-29.md`):
   Beide Fixes vom 2026-07-28 wirken. Standardpreis-Read laeuft in **21 s** durch,

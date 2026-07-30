@@ -89,44 +89,118 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
     }
 
     [Fact]
-    public void BuildMaterialClause_Ohne_Wert_Liefert_Catchall()
+    public void BuildMaterialClauses_Ohne_Wert_Liefert_Genau_Eine_Catchall_Abfrage()
     {
-        Assert.Equal("Vknr gt ''", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", null));
-        Assert.Equal("Vknr gt ''", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "  "));
+        foreach (var input in new[] { (string?)null, "  " })
+        {
+            var clauses = MaterialUsageDataRefreshService.BuildMaterialClauses("Vknr", input);
+            var single = Assert.Single(clauses);
+            Assert.Equal("Vknr gt ''", single.Clause);
+            // Leeres Token: der Catch-all darf nie als "Nummer ohne Treffer" gemeldet werden.
+            Assert.Equal(string.Empty, single.Token);
+        }
     }
 
     [Fact]
-    public void BuildMaterialClause_Einzelwerte_Werden_Mit_Eq_Verknuepft_Und_Numerisch_Gepaddet()
+    public void BuildMaterialClauses_Liefert_Eine_Abfrage_Je_Nummer()
     {
-        // Numerische Nummern werden auf 18 Stellen gepaddet (Befund 2026-07-23: SAP speichert
-        // MARA/ZPOWERBI_VC_TXT zero-padded, die Kurzform fand sonst keinen Treffer).
-        Assert.Equal("(Vknr eq '000000000000002217')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217"));
-        // Alphanumerische Nummern (C34882) bleiben unveraendert.
-        Assert.Equal("(Vknr eq '000000000000002217' or Vknr eq 'C34882')",
-            MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, C34882"));
+        // Kernaenderung 2026-07-30: nicht mehr eine gemeinsame OR-Gruppe, sondern eine eigene
+        // Bedingung je Nummer. Die OR-Gruppe lieferte bei Mehrfacheingabe reproduzierbar 0 Zeilen,
+        // waehrend dieselben Nummern einzeln Treffer hatten (Sitzung mit Marco und Armin).
+        var clauses = MaterialUsageDataRefreshService.BuildMaterialClauses("Vknr", "2217, C34882");
+
+        Assert.Collection(clauses,
+            // Numerische Nummern werden auf 18 Stellen gepaddet (Befund 2026-07-23: SAP speichert
+            // MARA/ZPOWERBI_VC_TXT zero-padded, die Kurzform fand sonst keinen Treffer).
+            first =>
+            {
+                Assert.Equal("2217", first.Token);
+                Assert.Equal("Vknr eq '000000000000002217'", first.Clause);
+            },
+            // Alphanumerische Nummern (C34882) bleiben unveraendert.
+            second =>
+            {
+                Assert.Equal("C34882", second.Token);
+                Assert.Equal("Vknr eq 'C34882'", second.Clause);
+            });
     }
 
     [Fact]
-    public void BuildMaterialClause_Bereich_Wird_Als_Ge_Le_Gebaut_Und_Gepaddet()
+    public void BuildMaterialClauses_Bereich_Wird_Als_Ge_Le_Gebaut_Und_Gepaddet()
     {
         // Range-Syntax "35-40" (Ingo-Anforderung 2026-07-22): das SAP-Gateway-Framework fasst
         // "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu
         // einer klassischen Select-Options-Bereichszeile zusammen. Beide Grenzen numerisch -> padden.
-        Assert.Equal("((Kompnr ge '000000000000000035' and Kompnr le '000000000000000040'))",
-            MaterialUsageDataRefreshService.BuildMaterialClause("Kompnr", "35-40"));
+        var single = Assert.Single(MaterialUsageDataRefreshService.BuildMaterialClauses("Kompnr", "35-40"));
+        Assert.Equal("(Kompnr ge '000000000000000035' and Kompnr le '000000000000000040')", single.Clause);
+        Assert.Equal("35-40", single.Token);
     }
 
     [Fact]
-    public void BuildMaterialClause_Mischt_Einzelwerte_Und_Bereiche()
+    public void BuildMaterialClauses_Mischt_Einzelwerte_Und_Bereiche()
     {
-        Assert.Equal("(Vknr eq '000000000000002217' or (Vknr ge '000000000000000035' and Vknr le '000000000000000040') or Vknr eq 'C34882')",
-            MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "2217, 35-40, C34882"));
+        var clauses = MaterialUsageDataRefreshService.BuildMaterialClauses("Vknr", "2217, 35-40, C34882");
+
+        Assert.Equal(
+            [
+                "Vknr eq '000000000000002217'",
+                "(Vknr ge '000000000000000035' and Vknr le '000000000000000040')",
+                "Vknr eq 'C34882'"
+            ],
+            clauses.Select(c => c.Clause));
     }
 
     [Fact]
-    public void BuildMaterialClause_Escaped_Hochkomma_Im_Wert()
+    public void BuildMaterialClauses_Escaped_Hochkomma_Im_Wert()
     {
-        Assert.Equal("(Vknr eq 'A''B')", MaterialUsageDataRefreshService.BuildMaterialClause("Vknr", "A'B"));
+        var single = Assert.Single(MaterialUsageDataRefreshService.BuildMaterialClauses("Vknr", "A'B"));
+        Assert.Equal("Vknr eq 'A''B'", single.Clause);
+    }
+
+    [Fact]
+    public void ParseMaterialTokens_Akzeptiert_Excel_Spalte_Mit_Zeilenumbruechen()
+    {
+        // Wunsch Marco 2026-07-30: eine Spalte aus Excel direkt einfuegen koennen, statt pro
+        // Nummer manuell ein Komma zu setzen. Excel liefert beim Kopieren Zeilenumbrueche
+        // (\r\n) bzw. Tabs zwischen Spalten.
+        Assert.Equal(
+            ["2217", "C34882", "D15019"],
+            MaterialUsageDataRefreshService.ParseMaterialTokens("2217\r\nC34882\r\nD15019"));
+
+        Assert.Equal(
+            ["2217", "C34882"],
+            MaterialUsageDataRefreshService.ParseMaterialTokens("2217\tC34882"));
+    }
+
+    [Fact]
+    public void ParseMaterialTokens_Behandelt_Komma_Semikolon_Und_Leerzeichen_Gleichwertig()
+    {
+        var expected = new[] { "2217", "C34882", "D15019" };
+
+        Assert.Equal(expected, MaterialUsageDataRefreshService.ParseMaterialTokens("2217,C34882,D15019"));
+        Assert.Equal(expected, MaterialUsageDataRefreshService.ParseMaterialTokens("2217; C34882; D15019"));
+        Assert.Equal(expected, MaterialUsageDataRefreshService.ParseMaterialTokens("2217 C34882 D15019"));
+        // Gemischt und mit ueberzaehligen Trennzeichen - so sieht eine echte Copy-Paste-Eingabe aus.
+        Assert.Equal(expected, MaterialUsageDataRefreshService.ParseMaterialTokens("  2217,,  C34882 ;\r\n D15019  "));
+    }
+
+    [Fact]
+    public void ParseMaterialTokens_Entfernt_Duplikate()
+    {
+        // In der Sitzung genau so passiert ("Hast du mehrmals das gleiche kopiert?"). Jedes
+        // Duplikat waere eine zusaetzliche SAP-Anfrage ohne neue Zeilen.
+        Assert.Equal(
+            ["2217", "C34882"],
+            MaterialUsageDataRefreshService.ParseMaterialTokens("2217, C34882, 2217, c34882"));
+    }
+
+    [Fact]
+    public void ParseMaterialTokens_Laesst_Bereichsschreibweise_Zusammen()
+    {
+        // "35-40" darf durch den neuen Whitespace-Split nicht zerfallen, sonst waere die
+        // Bereichsabfrage kaputt.
+        Assert.Equal(["35-40"], MaterialUsageDataRefreshService.ParseMaterialTokens("35-40"));
+        Assert.Equal(["2217", "35-40"], MaterialUsageDataRefreshService.ParseMaterialTokens("2217\n35-40"));
     }
 
     [Fact]

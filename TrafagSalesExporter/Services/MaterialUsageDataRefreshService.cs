@@ -81,12 +81,33 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
             // Ein Full Load ohne konkrete Materialliste schickt deshalb bewusst den
             // Catch-all "gt ''" mit - das ist die explizite "ja, wirklich alles"-Ansage.
             var materialProperty = topDown ? "Vknr" : "Kompnr";
-            var materialClause = BuildMaterialClause(materialProperty, materialFilter);
+            var selections = BuildMaterialClauses(materialProperty, materialFilter);
             var sapRichtung = BuildRichtungValue(topDown, includeDeleted);
-            var usageFilter = $"Richtung eq '{sapRichtung}' and {materialClause}";
 
             using var client = CreateClient(connection.Username, connection.Password);
-            var usageRows = await ReadAllRowsAsync(client, connection.BaseUrl, usageSetName, usageFilter, cancellationToken);
+
+            // Eine Anfrage JE Materialnummer - Begruendung in BuildMaterialClauses (die frueher
+            // gebaute gemeinsame OR-Gruppe lieferte bei Mehrfacheingabe 0 Zeilen). Deduplizierung
+            // ueber (Richtung, Vknr, Kompnr), weil sich zwei Bereichsangaben ueberlappen koennen
+            // und MaterialUsageCache per INSERT (nicht UPSERT) gefuellt wird - ohne das waere
+            // dieselbe Zeile mehrfach im Cache.
+            var usageRows = new List<Dictionary<string, object?>>();
+            var seenUsageKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var tokensWithoutHit = new List<string>();
+            foreach (var selection in selections)
+            {
+                var usageFilter = $"Richtung eq '{sapRichtung}' and {selection.Clause}";
+                var tokenRows = await ReadAllRowsAsync(client, connection.BaseUrl, usageSetName, usageFilter, cancellationToken);
+                foreach (var row in tokenRows)
+                {
+                    if (seenUsageKeys.Add(string.Join('|', GetText(row, "Richtung"), GetText(row, "Vknr"), GetText(row, "Kompnr"))))
+                        usageRows.Add(row);
+                }
+
+                if (tokenRows.Count == 0 && !string.IsNullOrEmpty(selection.Token))
+                    tokensWithoutHit.Add(selection.Token);
+            }
+
             var parentRows = topDown
                 ? await ReadAllRowsAsync(client, connection.BaseUrl, parentSetName, "Kompnr gt ''", cancellationToken)
                 : [];
@@ -110,10 +131,26 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
 
             var completed = DateTime.UtcNow;
             var message = $"Full Load abgeschlossen: {usageSetName}={usageRows.Count:N0}, {parentSetName}={parentRows.Count:N0}.";
-            if (topDown && usageRows.Count == 0 && !string.IsNullOrWhiteSpace(materialFilter) && !includeDeleted)
-                message += " Hinweis: 0 Zeilen bei Top-Down kann bedeuten, dass das eingegebene Kopfmaterial " +
-                            "loeschvorgemerkt ist (MARA-LVORM) - dann hilft 'Auch geloeschte Materialien' " +
-                            "oder eine Suche ueber Bottom-Up (Komponente statt Kopfmaterial).";
+            if (selections.Count > 1)
+                message += $" Einzeln abgefragt: {selections.Count:N0} Materialnummern.";
+
+            // Rueckmeldung, WELCHE Nummern leer geblieben sind. In der Sitzung 2026-07-30 war
+            // genau das das Problem: "Full Load abgeschlossen" sah nach Erfolg aus, obwohl keine
+            // einzige Zeile kam, und es war nicht erkennbar, ob das an einer Nummer oder an allen
+            // lag. Fuer die TR5-Aufgabe (welche Komponenten werden nirgends verbaut?) ist diese
+            // Liste sogar das eigentliche Ergebnis.
+            if (tokensWithoutHit.Count > 0)
+                message += $" Ohne Treffer ({tokensWithoutHit.Count:N0}): {FormatTokenList(tokensWithoutHit)}.";
+
+            if (usageRows.Count == 0 && !string.IsNullOrWhiteSpace(materialFilter) && !includeDeleted)
+                message += topDown
+                    ? " Hinweis: 0 Zeilen bei Top-Down kann bedeuten, dass das eingegebene Kopfmaterial " +
+                      "loeschvorgemerkt ist (MARA-LVORM) - dann hilft 'Auch geloeschte Materialien' " +
+                      "oder eine Suche ueber Bottom-Up (Komponente statt Kopfmaterial)."
+                    : " Hinweis: 0 Zeilen bei Bottom-Up heisst, dass zu keiner der angegebenen Komponenten " +
+                      "eine Verwendung gefunden wurde. Vor dem Schluss 'wird nirgends verbaut' bitte mit " +
+                      "'Auch geloeschte Materialien' gegenpruefen - loeschvorgemerkte Kopfmaterialien " +
+                      "werden sonst ausgeblendet.";
             await WriteStatusAsync("Success", started, completed, usageRows.Count, parentRows.Count, message, cancellationToken);
             await _logService.WriteAsync("MaterialUsage", "Stuecklistenanalyse Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -134,17 +171,24 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync(cancellationToken);
 
-        var hasFilter = !string.IsNullOrWhiteSpace(materialFilter);
+        // Suchfeld akzeptiert dieselben Trennzeichen wie die Ladeeingabe, damit man die eben
+        // geladene Excel-Spalte auch zum Filtern wiederverwenden kann statt Nummer fuer Nummer
+        // zu suchen. Je Token ein LIKE-Paar auf Vknr/Kompnr, mit OR verknuepft.
+        var tokens = ParseMaterialTokens(materialFilter);
+        var whereClause = tokens.Count == 0
+            ? string.Empty
+            : "WHERE " + string.Join(" OR ", tokens.Select((_, i) => $"Vknr LIKE $Filter{i} OR Kompnr LIKE $Filter{i}"));
+
         await using var command = conn.CreateCommand();
         command.CommandText = $@"
 SELECT Richtung, Vknr, Kompnr, KompnrMaktx, KompnrMeins, Menge, Exklusiv,
        Labst, Endbestand, Stueckkosten, WertEndbestand, Mstae, Zzlzcod
 FROM MaterialUsageCache
-{(hasFilter ? "WHERE Vknr LIKE $Filter OR Kompnr LIKE $Filter" : string.Empty)}
+{whereClause}
 ORDER BY Vknr, Kompnr
 LIMIT $Limit;";
-        if (hasFilter)
-            command.Parameters.AddWithValue("$Filter", "%" + materialFilter!.Trim() + "%");
+        for (var i = 0; i < tokens.Count; i++)
+            command.Parameters.AddWithValue($"$Filter{i}", "%" + tokens[i] + "%");
         command.Parameters.AddWithValue("$Limit", limit);
 
         var rows = new List<MaterialUsagePreviewRow>();
@@ -245,42 +289,80 @@ LIMIT $Limit;";
     private const int MatnrLength = 18;
 
     /// <summary>
-    /// Baut die $filter-Teilbedingung fuer Vknr/Kompnr aus der Benutzereingabe. Kommagetrennte
-    /// Werte werden als Einzeltreffer (eq) behandelt; ein Token mit genau einem Bindestrich und
-    /// nicht-leeren Seiten (z.B. "35-40") wird als Bereich (ge/le) interpretiert. Materialnummern
-    /// selbst enthalten laut bisherigen Beispielen keine Bindestriche, daher ist der Split
-    /// eindeutig. SAP-seitig ist kein Zusatzaufwand noetig: das Gateway-Framework fasst
-    /// "ge X and le Y" auf demselben Property beim Parsen von it_filter_select_options zu einer
-    /// klassischen Select-Options-Bereichszeile zusammen, die der bestehende ABAP-Code (LOOP ueber
-    /// select_options, generische RANGE-Tabelle) bereits unveraendert verarbeitet.
+    /// Trennzeichen der Materialnummern-Eingabe: Komma, Semikolon und jede Art von Whitespace
+    /// (Leerzeichen, Tab, Zeilenumbruch). Damit laesst sich eine Excel-Spalte direkt einfuegen -
+    /// Wunsch Marco aus der Sitzung 2026-07-30: "Mit SAP kannst du die so reinkopieren, und dann
+    /// tut es sich untereinander", waehrend hier bisher pro Nummer ein Komma noetig war.
+    /// Der Whitespace-Split ist eindeutig, weil Materialnummern selbst keine Leerzeichen
+    /// enthalten (Ingo in derselben Sitzung: "da hast du eh immer zusammenhaengende Nummern").
+    /// Die Bereichsschreibweise "35-40" bleibt unberuehrt, weil sie kein Trennzeichen enthaelt;
+    /// "35 - 40" mit Leerzeichen wuerde dagegen in drei Tokens zerfallen - bewusst nicht
+    /// unterstuetzt, weil ein Bindestrich als eigenes Token ohnehin unbrauchbar waere.
+    /// </summary>
+    private static readonly char[] MaterialTokenSeparators = [',', ';', ' ', '\t', '\r', '\n'];
+
+    /// <summary>
+    /// Zerlegt die Benutzereingabe in einzelne Materialnummern-Tokens. Duplikate werden
+    /// entfernt: beim Einfuegen aus Excel landet leicht derselbe Block zweimal in der Maske
+    /// (in der Sitzung 2026-07-30 genau so passiert - "Hast du mehrmals das gleiche kopiert?"),
+    /// und jedes Duplikat waere eine zusaetzliche SAP-Anfrage ohne neue Zeilen.
+    /// </summary>
+    public static List<string> ParseMaterialTokens(string? materialFilter) =>
+        (materialFilter ?? string.Empty)
+            .Split(MaterialTokenSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>
+    /// Baut je Eingabe-Token EINE eigene $filter-Teilbedingung fuer Vknr/Kompnr. Ein Token mit
+    /// genau einem Bindestrich und nicht-leeren Seiten (z.B. "35-40") wird als Bereich (ge/le)
+    /// interpretiert, alles andere als Einzeltreffer (eq). SAP-seitig ist fuer den Bereich kein
+    /// Zusatzaufwand noetig: das Gateway-Framework fasst "ge X and le Y" auf demselben Property
+    /// beim Parsen von it_filter_select_options zu einer klassischen Select-Options-Bereichszeile
+    /// zusammen, die der bestehende ABAP-Code (LOOP ueber select_options, generische
+    /// RANGE-Tabelle) unveraendert verarbeitet.
     ///
-    /// Rein numerische Materialnummern werden hier mit fuehrenden Nullen auf 18 Stellen gebracht
+    /// WARUM EINE BEDINGUNG JE TOKEN und nicht mehr eine gemeinsame OR-Gruppe
+    /// "(Kompnr eq 'A' or Kompnr eq 'B')": In der Sitzung 2026-07-30 wurde live reproduziert,
+    /// dass eine Mehrfacheingabe (Bottom-Up, mehrere kommagetrennte Nummern) zwar
+    /// "Full Load abgeschlossen" meldet, aber 0 Zeilen liefert, waehrend dieselben Nummern
+    /// einzeln Treffer haben. Der Aufrufer stellt deshalb je Token eine eigene Anfrage und
+    /// fuehrt die Ergebnisse zusammen. Das umgeht die Umwandlung der gemischten
+    /// and/or-Filterstruktur in Select-Options im Gateway vollstaendig - unabhaengig davon,
+    /// wo genau sie schiefgeht (ABAP-seitig NICHT verifiziert, siehe
+    /// docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md Abschnitt 5b) - und liefert als
+    /// Nebeneffekt die Trefferzahl JE Nummer, was fuer die TR5-Aufgabe (welche Komponenten haben
+    /// ueberhaupt keine Verwendung?) genau die gesuchte Information ist.
+    ///
+    /// Rein numerische Materialnummern werden mit fuehrenden Nullen auf 18 Stellen gebracht
     /// (NormalizeMaterialToken). Grund (Befund 2026-07-23, an travp762 verifiziert): das /IWBEP-
     /// Gateway liefert Filterwerte ROH an die selbstgeschriebene GET_ENTITYSET-Methode, also OHNE
     /// die MATNR-Konvertierung. MARA/ZPOWERBI_VC_TXT speichern intern aber zero-padded
     /// ("000000000000002217"), sodass die Kurzform "2217" in Schritt 1 (SELECT FROM mara) keinen
     /// Treffer fand und die Methode mit 0 Zeilen abbrach. Alphanumerische Nummern (z.B. "D15019",
     /// "C34882") bleiben unveraendert - die speichert MARA linksbuendig, nicht zero-padded.
+    ///
+    /// Ohne Eingabe bleibt es bei genau einer Anfrage mit dem Catch-all "gt ''" - die explizite
+    /// "ja, wirklich alles"-Ansage gegen den SAP-seitigen Pflichtfilter.
     /// </summary>
-    public static string BuildMaterialClause(string materialProperty, string? materialFilter)
+    public static List<MaterialSelectionClause> BuildMaterialClauses(string materialProperty, string? materialFilter)
     {
-        var tokens = (materialFilter ?? string.Empty)
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
-
+        var tokens = ParseMaterialTokens(materialFilter);
         if (tokens.Count == 0)
-            return $"{materialProperty} gt ''";
+            return [new MaterialSelectionClause(string.Empty, $"{materialProperty} gt ''")];
 
-        var clauses = tokens.Select(token =>
+        return tokens.Select(token =>
         {
             var rangeParts = token.Split('-', StringSplitOptions.TrimEntries);
             if (rangeParts.Length == 2 && rangeParts[0].Length > 0 && rangeParts[1].Length > 0)
-                return $"({materialProperty} ge '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[0]))}' and {materialProperty} le '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[1]))}')";
+                return new MaterialSelectionClause(
+                    token,
+                    $"({materialProperty} ge '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[0]))}' and {materialProperty} le '{EscapeODataLiteral(NormalizeMaterialToken(rangeParts[1]))}')");
 
-            return $"{materialProperty} eq '{EscapeODataLiteral(NormalizeMaterialToken(token))}'";
-        });
-
-        return "(" + string.Join(" or ", clauses) + ")";
+            return new MaterialSelectionClause(
+                token,
+                $"{materialProperty} eq '{EscapeODataLiteral(NormalizeMaterialToken(token))}'");
+        }).ToList();
     }
 
     /// <summary>
@@ -300,6 +382,22 @@ LIMIT $Limit;";
     }
 
     private static string EscapeODataLiteral(string value) => value.Replace("'", "''");
+
+    /// <summary>
+    /// Nummern fuer die Statusmeldung aufzaehlen, aber gedeckelt: bei einer eingefuegten
+    /// Excel-Spalte koennen hunderte Nummern ohne Treffer sein, und die Meldung landet in
+    /// AppEventLog und in einer MudAlert - beides soll lesbar bleiben.
+    /// </summary>
+    private const int MaxListedTokens = 20;
+
+    private static string FormatTokenList(IReadOnlyList<string> tokens)
+    {
+        if (tokens.Count <= MaxListedTokens)
+            return string.Join(", ", tokens);
+
+        return string.Join(", ", tokens.Take(MaxListedTokens)) +
+               $" ... (+{tokens.Count - MaxListedTokens:N0} weitere)";
+    }
 
     /// <summary>
     /// Baut den Richtung-Wert fuer den $filter. Ein Suffix "D" (ohne DDIC-Aenderung

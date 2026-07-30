@@ -5,23 +5,44 @@
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 
 @* Reiter „Spend-Aufriss" (2026-07-24): baut auf dem abgenommenen Spend-Reiter auf, laesst ihn aber
-   unangetastet. Drei Sichten: (1) mehrstufige Kaskade Lieferant -> Warengruppe -> Artikel,
-   (2) Region-Kuchen je Warengruppe, (3) Volumen nach ABC / XYZ. Region/ABC/XYZ fuellen sich erst
-   mit dem naechsten Einkauf-Full-Load. *@
+   unangetastet. Drei Sichten: (1) mehrstufige Kaskade mit WAEHLBARER Einstiegsdimension
+   (2026-07-30), (2) Region-Kuchen je Warengruppe, (3) Volumen nach ABC / XYZ. *@
 
 <MudPaper Class="pa-3 purchasing-section-shell mb-3" Outlined="true">
     <div class="purchasing-section-head">
         <div>
             <MudText Typo="Typo.h6">@T("Spend-Aufriss (mehrstufig)", "Spend breakdown (multi-level)")</MudText>
             <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
-                @T("Kaskadierung wie in der Sitzung gewuenscht: Lieferant aufklappen zeigt seine Warengruppen, Warengruppe aufklappen zeigt die Artikel. Je Ebene sind die groessten Positionen einzeln, der Rest steckt in einer 'uebrige'-Zeile. Warengruppe aus Materialstamm (MARA-MATKL), Fallback Bestellbeleg.",
-                   "Cascade as requested in the meeting: expanding a supplier shows its material groups, expanding a group shows the articles. Each level lists the largest positions individually, the rest is bundled into a 'remaining' row. Material group from material master (MARA-MATKL), fallback purchase document.")
+                @T("Perspektive waehlen, dann stufenweise aufklappen. Je Ebene sind die groessten Positionen einzeln, der Rest steckt in einer 'uebrige'-Zeile - die Elternsumme bleibt dadurch die Summe ihrer Kinder. Warengruppe aus Materialstamm (MARA-MATKL), Fallback Bestellbeleg.",
+                   "Choose a perspective, then expand level by level. Each level lists the largest positions individually, the rest is bundled into a 'remaining' row - so a parent total always equals the sum of its children. Material group from material master (MARA-MATKL), fallback purchase document.")
             </MudText>
         </div>
         <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@T("Live aus Einkauf-Cache", "Live from purchasing cache")</MudChip>
     </div>
 
-    @if (CascadeRows.Count == 0 || SpendYears.Count == 0)
+    @* Perspektivenwahl (Marco 2026-07-30). Alle Perspektiven sind serverseitig vorberechnet, das
+       Umschalten kostet also keine DB-Runde. *@
+    @if (Perspectives.Count > 1)
+    {
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mt-2 mb-1" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted">@T("Einstieg:", "Entry point:")</MudText>
+            @foreach (var perspective in Perspectives)
+            {
+                var isActive = perspective.Key == ActivePerspectiveKey;
+                <MudButton Size="Size.Small"
+                           Variant="@(isActive ? Variant.Filled : Variant.Outlined)"
+                           Color="@(isActive ? Color.Primary : Color.Default)"
+                           OnClick="() => SelectPerspective(perspective.Key)">
+                    @T(perspective.LabelDe, perspective.LabelEn)
+                </MudButton>
+            }
+        </MudStack>
+        <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mb-2">
+            @T("Ebenen", "Levels"): @ActiveLevelPath
+        </MudText>
+    }
+
+    @if (ActiveRows.Count == 0 || SpendYears.Count == 0)
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
             @T("Noch keine Spend-Daten im gewaehlten Zeitraum. Einkauf-Full-Load ausfuehren oder Zeitraum anpassen.",
@@ -34,7 +55,7 @@
             <table class="purchasing-matrix">
                 <thead>
                     <tr>
-                        <th>@T("Aufriss", "Breakdown")</th>
+                        <th>@ActiveLevelPath</th>
                         @foreach (var year in SpendYears)
                         {
                             <th>@year</th>
@@ -43,72 +64,52 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var supplier in CascadeRows)
+                    @* Der Baum wird in C# zu einer flachen Zeilenliste abgewickelt (BuildVisibleRows),
+                       statt die Ebenen im Markup zu verschachteln: die Perspektiven sind
+                       unterschiedlich tief (Lieferant 3 Ebenen, Beschaffungsregion und Waehrung 4),
+                       eine feste Verschachtelung wuerde das nicht abbilden. *@
+                    @foreach (var row in BuildVisibleRows(ActiveRows, string.Empty, 1))
                     {
-                        var supplierKey = $"1|{supplier.Label}";
-                        var supplierExpanded = _expanded.Contains(supplierKey);
-                        <tr class="purchasing-cascade-l1">
+                        <tr class="@CascadeRowClass(row.Depth, row.IsRemainder)">
                             <td>
-                                @if (supplier.Children.Count > 0)
+                                @if (row.HasChildren)
                                 {
-                                    <button type="button" class="purchasing-matrix-toggle" @onclick="() => Toggle(supplierKey)"
-                                            title="@T("Warengruppen auf-/zuklappen", "Expand/collapse material groups")">
-                                        @(supplierExpanded ? "▾" : "▸")
+                                    <button type="button" class="purchasing-matrix-toggle" @onclick="() => Toggle(row.Key)"
+                                            title="@T("Naechste Ebene auf-/zuklappen", "Expand/collapse next level")">
+                                        @(_expanded.Contains(row.Key) ? "▾" : "▸")
                                     </button>
                                 }
-                                <strong>@supplier.Label</strong>
+                                @if (row.Depth == 1)
+                                {
+                                    <strong>@row.Node.Label</strong>
+                                }
+                                else
+                                {
+                                    @row.Node.Label
+                                }
                             </td>
                             @foreach (var year in SpendYears)
                             {
-                                <td>@FormatAmount(GetYear(supplier, year))</td>
+                                <td>@FormatAmount(GetYear(row.Node, year))</td>
                             }
-                            <td><strong>@FormatAmount(supplier.Total)</strong></td>
-                        </tr>
-                        @if (supplierExpanded)
-                        {
-                            @foreach (var group in supplier.Children)
-                            {
-                                var groupKey = $"{supplierKey}|2|{group.Label}";
-                                var groupExpanded = _expanded.Contains(groupKey);
-                                <tr class="purchasing-cascade-l2">
-                                    <td>
-                                        @if (group.Children.Count > 0)
-                                        {
-                                            <button type="button" class="purchasing-matrix-toggle" @onclick="() => Toggle(groupKey)"
-                                                    title="@T("Artikel auf-/zuklappen", "Expand/collapse articles")">
-                                                @(groupExpanded ? "▾" : "▸")
-                                            </button>
-                                        }
-                                        @group.Label
-                                    </td>
-                                    @foreach (var year in SpendYears)
-                                    {
-                                        <td>@FormatAmount(GetYear(group, year))</td>
-                                    }
-                                    <td>@FormatAmount(group.Total)</td>
-                                </tr>
-                                @if (groupExpanded)
+                            <td>
+                                @if (row.Depth == 1)
                                 {
-                                    @foreach (var article in group.Children)
-                                    {
-                                        <tr class="purchasing-cascade-l3">
-                                            <td>@article.Label</td>
-                                            @foreach (var year in SpendYears)
-                                            {
-                                                <td>@FormatAmount(GetYear(article, year))</td>
-                                            }
-                                            <td>@FormatAmount(article.Total)</td>
-                                        </tr>
-                                    }
+                                    <strong>@FormatAmount(row.Node.Total)</strong>
                                 }
-                            }
-                        }
+                                else
+                                {
+                                    @FormatAmount(row.Node.Total)
+                                }
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
         </div>
     }
 </MudPaper>
+
 
 <MudPaper Class="pa-3 purchasing-section-shell mb-3" Outlined="true">
     <div class="purchasing-section-head">
@@ -228,6 +229,9 @@
 
 @code {
     [Parameter] public IReadOnlyList<int> SpendYears { get; set; } = [];
+    // Waehlbare Einstiegsperspektiven (2026-07-30). CascadeRows bleibt als Rueckfallebene fuer den
+    // Fall, dass keine Perspektiven geliefert werden (aeltere Aufrufer / leerer Cache).
+    [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> Perspectives { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSpendCascadeNode> CascadeRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
@@ -235,11 +239,109 @@
 
     private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24"];
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
+    private string? _activePerspectiveKey;
+
+    private string ActivePerspectiveKey
+        => _activePerspectiveKey is not null && Perspectives.Any(p => p.Key == _activePerspectiveKey)
+            ? _activePerspectiveKey
+            : Perspectives.FirstOrDefault()?.Key ?? string.Empty;
+
+    private PurchasingSpendPerspectiveResult? ActivePerspective
+        => Perspectives.FirstOrDefault(p => p.Key == ActivePerspectiveKey);
+
+    private IReadOnlyList<PurchasingSpendCascadeNode> ActiveRows
+        => ActivePerspective?.Rows ?? CascadeRows;
+
+    /// <summary>
+    /// Ebenenfolge als Pfad, z.B. „Beschaffungsregion > Lieferant > Warengruppe > Material".
+    /// Steht im Spaltenkopf, damit beim Umschalten sofort klar ist, was man gerade aufreisst.
+    /// </summary>
+    private string ActiveLevelPath
+    {
+        get
+        {
+            var perspective = ActivePerspective;
+            if (perspective is null)
+                return T("Aufriss", "Breakdown");
+
+            // Ebenenbeschriftungen kommen als zwei parallele Listen; T() erwartet einzelne Strings,
+            // deshalb hier paarweise durchgeben statt eine Liste vorzuwaehlen.
+            return string.Join(" > ", perspective.LevelLabelsDe
+                .Select((labelDe, index) => T(
+                    labelDe,
+                    index < perspective.LevelLabelsEn.Count ? perspective.LevelLabelsEn[index] : labelDe)));
+        }
+    }
+
+    // Beim Perspektivenwechsel den Aufklappzustand verwerfen: die Schluessel enthalten den Pfad der
+    // alten Dimensionsfolge und wuerden in der neuen Perspektive nichts oeffnen, aber Speicher und
+    // Verwirrung mitschleppen.
+    private void SelectPerspective(string key)
+    {
+        if (_activePerspectiveKey == key)
+            return;
+
+        _activePerspectiveKey = key;
+        _expanded.Clear();
+    }
 
     private void Toggle(string key)
     {
         if (!_expanded.Remove(key))
             _expanded.Add(key);
+    }
+
+    /// <summary>
+    /// Eine sichtbare Zeile des Aufrisses. Der Baum wird anhand des Aufklappzustands zu einer
+    /// flachen Liste abgewickelt, weil die Perspektiven unterschiedlich tief sind und eine feste
+    /// Verschachtelung im Markup das nicht abbilden kann.
+    /// </summary>
+    private readonly record struct CascadeDisplayRow(
+        PurchasingSpendCascadeNode Node,
+        int Depth,
+        string Key,
+        bool HasChildren,
+        bool IsRemainder);
+
+    private List<CascadeDisplayRow> BuildVisibleRows(
+        IReadOnlyList<PurchasingSpendCascadeNode> nodes,
+        string parentKey,
+        int depth)
+    {
+        var rows = new List<CascadeDisplayRow>();
+        foreach (var node in nodes)
+        {
+            // Der Schluessel traegt den ganzen Pfad, damit gleichnamige Knoten unter verschiedenen
+            // Eltern (z.B. Warengruppe "01 - Dummy" bei mehreren Lieferanten) unabhaengig auf- und
+            // zuklappen und nicht alle gleichzeitig aufgehen.
+            var key = $"{parentKey}|{depth}|{node.Label}";
+            rows.Add(new CascadeDisplayRow(
+                node,
+                depth,
+                key,
+                node.Children.Count > 0,
+                node.Label.StartsWith("uebrige", StringComparison.OrdinalIgnoreCase)));
+
+            if (node.Children.Count > 0 && _expanded.Contains(key))
+                rows.AddRange(BuildVisibleRows(node.Children, key, depth + 1));
+        }
+
+        return rows;
+    }
+
+    // Ebenen 1-3 haben eigene Klassen (bestehendes Styling); ab Ebene 4 wird die tiefste
+    // Einrueckung wiederverwendet, damit die Waehrungs-/Regionsperspektive nicht ungestylt bleibt.
+    private static string CascadeRowClass(int depth, bool isRemainder)
+    {
+        var level = depth switch
+        {
+            1 => "purchasing-cascade-l1",
+            2 => "purchasing-cascade-l2",
+            3 => "purchasing-cascade-l3",
+            _ => "purchasing-cascade-l4"
+        };
+
+        return isRemainder ? level + " purchasing-cascade-remainder" : level;
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
@@ -435,6 +537,24 @@
         font-size: .82rem;
         color: var(--mud-palette-text-secondary);
         background: rgba(21,101,192,.02);
+    }
+
+    /* Vierte Ebene, ab 2026-07-30 erreichbar (Perspektiven Beschaffungsregion und Waehrung haben
+       vier Stufen). Gleiches Schriftbild wie Ebene 3, nur weiter eingerueckt. */
+    .purchasing-cascade-l4 td:first-child {
+        padding-left: 82px;
+    }
+
+    .purchasing-cascade-l4 td {
+        font-size: .78rem;
+        color: var(--mud-palette-text-secondary);
+        background: rgba(21,101,192,.06);
+    }
+
+    /* Sammelzeile "uebrige (n)": keine echte Entitaet, deshalb kursiv und blasser. */
+    .purchasing-cascade-remainder td {
+        font-style: italic;
+        opacity: .75;
     }
 
     .purchasing-pie-grid {

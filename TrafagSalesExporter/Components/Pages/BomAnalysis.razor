@@ -15,9 +15,18 @@
 </MudAlert>
 
 <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
-    <MudTextField @bind-Value="_materialFilter" Label="@T("Materialnummern (kommagetrennt, leer = alle)", "Material numbers (comma-separated, empty = all)")"
-                  HelperText="@T("Auch Bereiche moeglich, z.B. 35-40", "Ranges also supported, e.g. 35-40")"
+    @* Mehrzeilig, damit eine aus Excel kopierte Spalte sichtbar hineinpasst (Wunsch Marco
+       2026-07-30). Trennzeichen sind Komma, Semikolon und Whitespace inkl. Zeilenumbruch. *@
+    <MudTextField @bind-Value="_materialFilter" Label="@T("Materialnummern (leer = alle)", "Material numbers (empty = all)")"
+                  HelperText="@T("Aus Excel einfuegen moeglich: Komma, Semikolon, Leerzeichen oder Zeilenumbruch. Auch Bereiche, z.B. 35-40.", "Paste from Excel supported: comma, semicolon, space or line break. Ranges too, e.g. 35-40.")"
+                  Lines="3" AutoGrow MaxLines="8"
                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 340px;" />
+    @if (_materialTokenCount > 0)
+    {
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+            @string.Format(T("{0} Nummern", "{0} numbers"), _materialTokenCount)
+        </MudChip>
+    }
     <MudSwitch T="bool" @bind-Value="_topDown" Color="Color.Primary"
                Label="@(_topDown ? T("Top-Down (Kopfmaterial -> Komponenten)", "Top-down (header -> components)") : T("Bottom-Up (Komponente -> Verwendungen)", "Bottom-up (component -> usages)"))" />
     <MudCheckBox T="bool" @bind-Value="_includeDeleted" Color="Color.Primary" Dense
@@ -122,13 +131,26 @@
     private bool _busy;
     private bool _loading;
 
+    // Zaehlt die erkannten Nummern live mit, damit man nach einem Excel-Einfuegen sofort sieht,
+    // ob die Eingabe richtig zerlegt wurde (und ob Duplikate wegfielen).
+    private int _materialTokenCount => MaterialUsageDataRefreshService.ParseMaterialTokens(_materialFilter).Count;
+
+    // Ein durchgelaufener Lauf ohne eine einzige Zeile ist KEIN Erfolg im fachlichen Sinn - genau
+    // diese Verwechslung ("Full Load abgeschlossen", aber leer) war der Befund aus der Sitzung
+    // 2026-07-30. Deshalb Warnung statt gruen, sobald der Lauf ok ist aber nichts gefunden hat.
     private Severity StatusSeverity => _status?.Status switch
     {
+        "Success" when _status.UsageRows == 0 => Severity.Warning,
         "Success" => Severity.Success,
         "Error" => Severity.Error,
         "Running" => Severity.Warning,
         _ => Severity.Info
     };
+
+    private static Severity ResultSeverity(MaterialUsageRefreshStatus result) =>
+        !result.IsComplete ? Severity.Error
+        : result.UsageRows == 0 ? Severity.Warning
+        : Severity.Success;
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
@@ -174,7 +196,7 @@
         try
         {
             var result = await UsageService.RunFullLoadAsync(_topDown, _materialFilter, _includeDeleted);
-            Snackbar.Add(result.Message, result.IsComplete ? Severity.Success : Severity.Error);
+            Snackbar.Add(result.Message, ResultSeverity(result));
             _status = result;
         }
         catch (Exception ex)

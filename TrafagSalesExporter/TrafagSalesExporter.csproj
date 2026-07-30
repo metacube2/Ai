@@ -101,6 +101,16 @@
     <None Remove="spartenlogic\**\*" />
   </ItemGroup>
 
+  <!-- Damit Tests interne Bausteine ansprechen koennen, die nicht Teil der oeffentlichen
+       Oberflaeche sind. Konkreter Anlass (2026-07-30): die Stammdaten-Nachklassifizierung im
+       Einkauf-Delta (PurchasingDataRefreshService.ApplyMaterialMasterToWholeCacheAsync) arbeitet
+       mit internen Map-Typen und ist sonst nur ueber einen echten SAP-Aufruf erreichbar. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>TrafagSalesExporter.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <Target Name="CheckHanaClient" BeforeTargets="ResolveAssemblyReferences">
     <Warning Condition="!Exists('$(HanaClientDll)')"
              Text="SAP HANA Client DLL nicht gefunden: $(HanaClientDll). Bitte SAP HANA Client installieren (https://tools.hana.ondemand.com) oder MSBuild-Property 'HanaClientDll' setzen." />

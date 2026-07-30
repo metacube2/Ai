@@ -434,6 +434,128 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_CurrencySpend_Valued_In_Chf_And_Original_Currency()
+    {
+        // Marco-Wunsch 2026-07-30: Volumen je Belegwaehrung. Der CHF-Wert nutzt den Belegkurs
+        // (Wkurs), die Originalsumme bleibt in der Belegwaehrung. Abgrenzung zur Beschaffungsregion:
+        // derselbe Schweizer Lieferant fakturiert hier in EUR (Fall BIPRO aus der Sitzung).
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Waers, Wkurs, SupplierCountry, LastLoadedAtUtc) VALUES ('W1', '2025-03-01', 'L1', 'Bipro AG', 'F', 'EUR', '2', 'CH', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Waers, Wkurs, SupplierCountry, LastLoadedAtUtc) VALUES ('W2', '2025-03-01', 'L2', 'Inland AG', 'F', 'CHF', '1', 'CH', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('W1', '10', 'M1', 'WG1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('W2', '10', 'M2', 'WG1', '1', '300', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('W1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var eur = Assert.Single(state.CurrencySpendRows, row => row.Currency == "EUR");
+        Assert.Equal(200m, eur.ChfValue);      // 100 EUR * Kurs 2
+        Assert.Equal(100m, eur.OriginalValue); // Originalsumme bleibt in EUR
+
+        var chf = Assert.Single(state.CurrencySpendRows, row => row.Currency == "CHF");
+        Assert.Equal(300m, chf.ChfValue);
+        Assert.Equal(300m, chf.OriginalValue);
+
+        // Die Region trennt nicht nach Waehrung: beide Belege liegen in der Region CH.
+        var region = Assert.Single(state.RegionSpendRows, row => row.Label == "CH");
+        Assert.Equal(500m, region.Value);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SpendMatrix_Drills_Down_To_Material_Under_MaterialGroup()
+    {
+        // Entscheid Marco 2026-07-30: in der Matrix „Kaskadierung Lieferant / Jahr" muss die
+        // Warengruppe selbst weiter aufklappbar sein, damit man unter "01 - Dummy" die einzelnen
+        // Materialnummern sieht. Summe der Materialien = Warengruppensumme.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D1', '2025-03-01', 'L1', 'Bepro AG', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '10', 'MAT-123', '01', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '20', 'MAT-2322', '01', '1', '400', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D1', '30', 'MAT-999', 'WG2', '1', '250', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('D1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var supplier = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Bepro AG"));
+        var dummyGroup = Assert.Single(supplier.MaterialGroups, group => group.MaterialGroup.StartsWith("01"));
+
+        Assert.Equal(500m, dummyGroup.Total);
+        Assert.Equal(2, dummyGroup.Articles.Count);
+        Assert.Equal(dummyGroup.Total, dummyGroup.Articles.Sum(article => article.Total));
+        // Absteigend nach Betrag, damit der groesste Brocken beim Aufklappen oben steht.
+        Assert.Equal("MAT-2322", dummyGroup.Articles[0].Article);
+        Assert.Equal(400m, dummyGroup.Articles[0].Total);
+        Assert.Equal(2025, Assert.Single(dummyGroup.Articles[0].YearValues.Keys));
+
+        // Andere Warengruppe desselben Lieferanten bleibt getrennt.
+        var otherGroup = Assert.Single(supplier.MaterialGroups, group => group.MaterialGroup == "WG2");
+        Assert.Equal("MAT-999", Assert.Single(otherGroup.Articles).Article);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SpendMatrix_Caps_Material_Level_With_Remainder_Row()
+    {
+        // Deckelung 25 Materialien je Warengruppe: 27 -> 25 einzeln + „uebrige (2)". Die Jahresspalten
+        // muessen auch mit Restzeile aufgehen, nicht nur die Gesamtspalte.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D2', '2025-03-01', 'L9', 'Viel AG', 'F', '2026-01-01');");
+        for (var i = 1; i <= 27; i++)
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D2', '{i:00}', 'ART-{i:00}', 'WG', '1', '{i * 10}', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('D2', '01', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        var supplier = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Viel AG"));
+        var group = Assert.Single(supplier.MaterialGroups);
+
+        Assert.Equal(26, group.Articles.Count);
+        Assert.Equal(group.Total, group.Articles.Sum(article => article.Total));
+        Assert.Equal(group.YearValues[2025], group.Articles.Sum(article => article.YearValues[2025]));
+
+        var remainder = Assert.Single(group.Articles, article => article.IsRemainder);
+        Assert.Equal("uebrige (2)", remainder.Article);
+        Assert.Equal(30m, remainder.Total); // ART-01 (10) + ART-02 (20)
+    }
+
+    [Fact]
+    public async Task LoadAsync_SpendPerspectives_Offer_Selectable_Entry_Dimensions()
+    {
+        // Marco-Wunsch 2026-07-30 (die am 24.07. offen gelassene Rueckfrage): Einstiegsdimension
+        // waehlbar. Sein Beispiel war „nach Beschaffungsregion, dann Lieferant, dann Warengruppen
+        // und wieder Material".
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Waers, Wkurs, SupplierCountry, LastLoadedAtUtc) VALUES ('P1', '2025-03-01', 'L1', 'Lieferant Eins', 'F', 'EUR', '1', 'DE', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, Waers, Wkurs, SupplierCountry, LastLoadedAtUtc) VALUES ('P2', '2025-03-01', 'L2', 'Lieferant Zwei', 'F', 'CHF', '1', 'CH', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('P1', '10', 'M1', 'WG1', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('P2', '10', 'M2', 'WG2', '1', '400', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('P1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
+
+        Assert.Equal(
+            ["supplier", "region", "materialgroup", "currency"],
+            state.SpendPerspectiveRows.Select(perspective => perspective.Key));
+
+        // Region-Perspektive steigt beim Lieferantenland ein und geht vier Ebenen tief.
+        var region = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "region");
+        Assert.Equal(
+            ["Beschaffungsregion", "Lieferant", "Warengruppe", "Material"],
+            region.LevelLabelsDe);
+        var germany = Assert.Single(region.Rows, node => node.Label == "DE");
+        Assert.Equal(100m, germany.Total);
+        var supplierUnderGermany = Assert.Single(germany.Children);
+        Assert.Contains("Lieferant Eins", supplierUnderGermany.Label);
+        Assert.Equal("WG1", Assert.Single(supplierUnderGermany.Children).Label);
+        Assert.Equal("M1", Assert.Single(Assert.Single(supplierUnderGermany.Children).Children).Label);
+
+        // Waehrungs-Perspektive steigt bei der Belegwaehrung ein.
+        var currency = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "currency");
+        Assert.Equal(400m, Assert.Single(currency.Rows, node => node.Label == "CHF").Total);
+
+        // Die Lieferanten-Perspektive bleibt der Standardeinstieg und speist die bisherige Anzeige.
+        var supplierPerspective = Assert.Single(state.SpendPerspectiveRows, perspective => perspective.Key == "supplier");
+        Assert.Equal(
+            supplierPerspective.Rows.Select(node => node.Label),
+            state.SpendCascadeRows.Select(node => node.Label));
+    }
+
+    [Fact]
     public async Task LoadAsync_RegionByMaterialGroup_Splits_Group_By_SupplierCountry()
     {
         // Kuchen je Warengruppe: Anteil je Lieferantenland. Slices summieren zur Gruppensumme.

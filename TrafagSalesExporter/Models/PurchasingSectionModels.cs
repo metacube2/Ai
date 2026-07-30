@@ -34,7 +34,30 @@ public sealed record PurchasingSupplierYearSpendRow(string Supplier, IReadOnlyDi
     public IReadOnlyList<PurchasingSpendGroupYearRow> MaterialGroups { get; init; } = [];
 }
 
-public sealed record PurchasingSpendGroupYearRow(string MaterialGroup, IReadOnlyDictionary<int, decimal> YearValues, decimal Total);
+public sealed record PurchasingSpendGroupYearRow(string MaterialGroup, IReadOnlyDictionary<int, decimal> YearValues, decimal Total)
+{
+    /// <summary>
+    /// Dritte Aufriss-Ebene der Spend-Matrix (Entscheid Marco, Sitzung 2026-07-30): unter der
+    /// Warengruppe die einzelnen Materialnummern. Marcos Zweck ist das Aufspueren der
+    /// Dummy-Zuordnungen - "wenn im Drilldown die Materialnummer drin ist, dann findest du einen".
+    /// Genau deshalb ist diese Ebene unter der Warengruppe "01 - Dummy" die eigentlich
+    /// interessante. Auf <see cref="PurchasingSpendArticleYearRow"/> gedeckelt, Rest in einer
+    /// "uebrige (n)"-Zeile.
+    /// </summary>
+    public IReadOnlyList<PurchasingSpendArticleYearRow> Articles { get; init; } = [];
+}
+
+/// <summary>
+/// Blattebene der Spend-Matrix: Materialnummer (Fallback Kurztext, dann "ohne Artikel") mit
+/// Jahreswerten. <see cref="IsRemainder"/> markiert die Sammelzeile "uebrige (n)", damit die UI
+/// sie unaufklappbar und optisch ruhiger darstellen kann und damit klar bleibt, dass die Summe
+/// der Kinder weiterhin der Warengruppensumme entspricht.
+/// </summary>
+public sealed record PurchasingSpendArticleYearRow(
+    string Article,
+    IReadOnlyDictionary<int, decimal> YearValues,
+    decimal Total,
+    bool IsRemainder = false);
 
 /// <summary>
 /// Rekursiver Knoten fuer den mehrstufigen Spend-Aufriss (Reiter „Spend-Aufriss" 2026-07-24):
@@ -49,6 +72,22 @@ public sealed record PurchasingSpendCascadeNode(
     IReadOnlyDictionary<int, decimal> YearValues,
     decimal Total,
     IReadOnlyList<PurchasingSpendCascadeNode> Children);
+
+/// <summary>
+/// Ergebnis einer Aufriss-Perspektive fuer die UI (Reiter „Spend-Aufriss", waehlbare
+/// Einstiegsdimension seit 2026-07-30). <see cref="Key"/> identifiziert die Perspektive im
+/// Umschalter, <see cref="LevelLabelsDe"/>/<see cref="LevelLabelsEn"/> beschreiben die Ebenenfolge
+/// (z.B. „Beschaffungsregion > Lieferant > Warengruppe > Material") fuer Spaltenkopf und Hinweis.
+/// Die SQL-Definition der Dimensionen bleibt absichtlich im Service - die UI braucht nur die
+/// Beschriftungen.
+/// </summary>
+public sealed record PurchasingSpendPerspectiveResult(
+    string Key,
+    string LabelDe,
+    string LabelEn,
+    IReadOnlyList<string> LevelLabelsDe,
+    IReadOnlyList<string> LevelLabelsEn,
+    IReadOnlyList<PurchasingSpendCascadeNode> Rows);
 
 /// <summary>
 /// Region-Anteil je Warengruppe fuer die Kuchendiagramme im Spend-Aufriss (Marco-Wunsch:

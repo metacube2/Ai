@@ -192,6 +192,7 @@
         break;
     case "aufriss":
         <PurchasingSpendExplorer SpendYears="@_liveState.SpendYears"
+                                 Perspectives="@_liveState.SpendPerspectiveRows"
                                  CascadeRows="@_liveState.SpendCascadeRows"
                                  RegionGroups="@_liveState.RegionByMaterialGroupRows"
                                  AbcRows="@_liveState.AbcSpendRows"
@@ -1262,9 +1263,51 @@
                     "Volumen nach Beschaffungsregion", "Volume by procurement region",
                     RegionChartHintDe, RegionChartHintEn,
                     BuildLiveChartRows(_liveState.RegionSpendRows, FormatChf)));
+            if (_liveState.EkpoLoaded && _liveState.CurrencySpendRows.Count > 0)
+                charts.Add(new PurchasingSectionExtraChart(
+                    "Volumen nach Waehrung", "Volume by currency",
+                    CurrencyChartHintDe, CurrencyChartHintEn,
+                    BuildCurrencyChartRows(_liveState.CurrencySpendRows)));
             return charts;
         }
     }
+
+    // Marco-Wunsch 2026-07-30. Der Hinweis nennt bewusst die Abgrenzung zur Beschaffungsregion,
+    // weil genau die in der Sitzung fuer Verwirrung sorgte: BIPRO ist Beschaffungsregion Schweiz,
+    // fakturiert aber in EUR.
+    private string CurrencyChartHintDe
+        => "Waehrung des Bestellbelegs (EKKO-Waers). Balken und erster Betrag sind nach CHF bewertet, "
+         + "damit die Waehrungen vergleichbar sind; in Klammern die Summe in der Belegwaehrung selbst "
+         + "(das tatsaechliche Waehrungsexposure). NICHT die Beschaffungsregion: ein Schweizer "
+         + "Lieferant kann in EUR fakturieren.";
+    private string CurrencyChartHintEn
+        => "Currency of the purchase order (EKKO Waers). Bars and the first amount are valued in CHF "
+         + "so the currencies are comparable; in brackets the sum in the document currency itself "
+         + "(the actual currency exposure). NOT the procurement region: a Swiss supplier can invoice "
+         + "in EUR.";
+
+    /// <summary>
+    /// Balken je Waehrung. Anzeige "1'234'567 CHF (1'150'000 EUR)"; bei CHF-Belegen waere die
+    /// Klammer eine Wiederholung und entfaellt, ebenso bei Belegen ohne Waehrungskennzeichen.
+    /// </summary>
+    private IReadOnlyList<PurchasingSectionChartRow> BuildCurrencyChartRows(IReadOnlyList<PurchasingCurrencySpendRow> rows)
+    {
+        var max = rows.Count == 0 ? 0m : rows.Max(row => row.ChfValue);
+        return rows
+            .Select((row, index) => new PurchasingSectionChartRow(
+                row.Currency,
+                string.Equals(row.Currency, "CHF", StringComparison.OrdinalIgnoreCase) || !IsCurrencyCode(row.Currency)
+                    ? FormatChf(row.ChfValue)
+                    : $"{FormatChf(row.ChfValue)} ({row.OriginalValue:N0} {row.Currency})",
+                max <= 0 ? 0 : (double)(row.ChfValue / max * 100m),
+                PurchasingPalette[index % PurchasingPalette.Length]))
+            .ToList();
+    }
+
+    // "ohne Waehrung" ist ein Platzhaltertext, kein ISO-Code - dahinter darf keine Originalsumme
+    // mit Waehrungsbezeichnung stehen.
+    private static bool IsCurrencyCode(string value)
+        => value.Length == 3 && value.All(char.IsLetter);
 
     private string RegionChartHintDe
         => "Beschaffungsregion = Land des Lieferanten (LFA1-Land1), ueber den Bestellbeleg zugeordnet. "

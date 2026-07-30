@@ -136,11 +136,16 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await UpsertEkkoAsync(conn, transaction, changedEkko, supplierNameMap, nowText, cancellationToken);
             await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, classificationMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
+            // Stammdaten auf den GANZEN Cache anwenden, nicht nur auf die geholten Belege - sonst
+            // wirkt eine im SAP nachgepflegte Warengruppe nie auf alte, abgeschlossene Bestellungen.
+            // Begruendung ausfuehrlich in ApplyMaterialMasterToWholeCacheAsync.
+            var reclassifiedRows = await ApplyMaterialMasterToWholeCacheAsync(
+                conn, transaction, materialStatusMap, classificationMap, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);
-            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}.";
+            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen.";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -303,6 +308,102 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, 
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Schreibt die Materialstamm-Attribute (Warengruppe, Materialstatus, ABC, XYZ) auf ALLE Zeilen
+    /// im EKPO-Cache, nicht nur auf die im Delta geholten Belege. Liefert die Zahl der tatsaechlich
+    /// geaenderten Zeilen.
+    ///
+    /// WARUM (Befund 2026-07-30): Das naechtliche Delta laedt nur geaenderte (<c>Aedat</c>) und noch
+    /// offene Belege. Ein Material, das ausschliesslich auf alten, abgeschlossenen Bestellungen
+    /// liegt, behielt damit dauerhaft seine alte Warengruppe - auch nachdem der Einkauf sie im
+    /// SAP-Materialstamm nachgepflegt hatte. Genau das ist aber der Dummy-Fall (Warengruppe "01"
+    /// oder leer, produktiv 34.6 % aller Bestellpositionen), und Marco wurde in der Sitzung vom
+    /// 2026-07-30 zugesagt, dass sich Nachpflege im Dashboard auswirkt ("es wird sich auch immer
+    /// aktualisieren, also das ist dann dynamisch"). Ohne diesen Schritt haette es dafuer jedes Mal
+    /// einen Full Load gebraucht. Details:
+    /// docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md Abschnitt 2.
+    ///
+    /// Kein zusaetzlicher SAP-Read: Beide Maps werden im Delta ohnehin vollstaendig geladen
+    /// (<see cref="LoadMaterialStatusMapAsync"/> und <see cref="LoadMaterialClassificationMapAsync"/>
+    /// nehmen keine Materialliste als Parameter, es sind dieselben Aufrufe wie im Full Load).
+    ///
+    /// Umgesetzt ueber eine temporaere Staging-Tabelle und EIN UPDATE statt eines Statements je
+    /// Zeile. Die Staging-Tabelle wird bewusst aus den im Cache VORHANDENEN Materialnummern
+    /// gebaut (nicht aus den ~68'000 Map-Eintraegen) und die Zielwerte mit denselben
+    /// Resolve-Funktionen wie beim Upsert ermittelt - damit ist die Matnr-Normalisierung
+    /// garantiert identisch und muss nicht in SQL nachgebaut werden. Die WHERE-Klausel
+    /// aktualisiert nur Zeilen, bei denen sich wirklich etwas aendert, sonst wuerden bei jedem
+    /// Nachtlauf alle Cachezeilen umgeschrieben.
+    /// </summary>
+    internal static async Task<int> ApplyMaterialMasterToWholeCacheAsync(
+        SqliteConnection conn,
+        SqliteTransaction transaction,
+        IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap,
+        IReadOnlyDictionary<string, MaterialClassification> classificationMap,
+        CancellationToken cancellationToken)
+    {
+        // Ohne Stammdaten nichts tun. Sonst wuerde ein fehlgeschlagener/leerer Stammdaten-Read
+        // die bereits vorhandenen Warengruppen im Cache flaechendeckend leerschreiben.
+        if (materialStatusMap.Count == 0 && classificationMap.Count == 0)
+            return 0;
+
+        var cachedMaterials = new List<string>();
+        await using (var readCommand = conn.CreateCommand())
+        {
+            readCommand.Transaction = transaction;
+            readCommand.CommandText = "SELECT DISTINCT Matnr FROM PurchasingEkpoCache WHERE COALESCE(Matnr, '') <> '';";
+            await using var reader = await readCommand.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (!reader.IsDBNull(0))
+                    cachedMaterials.Add(reader.GetString(0));
+            }
+        }
+
+        if (cachedMaterials.Count == 0)
+            return 0;
+
+        await ExecuteAsync(conn, transaction, @"
+CREATE TEMP TABLE IF NOT EXISTS PurchasingMaterialStaging (
+    Matnr TEXT PRIMARY KEY,
+    MaraMatkl TEXT NOT NULL DEFAULT '',
+    MaraAbc TEXT NOT NULL DEFAULT '',
+    MaraXyz TEXT NOT NULL DEFAULT '',
+    Mstae TEXT NOT NULL DEFAULT ''
+);", cancellationToken);
+        await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingMaterialStaging;", cancellationToken);
+
+        const string insertSql = @"
+INSERT OR REPLACE INTO PurchasingMaterialStaging (Matnr, MaraMatkl, MaraAbc, MaraXyz, Mstae)
+VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Mstae);";
+        foreach (var matnr in cachedMaterials)
+            await ExecuteWithParametersAsync(conn, transaction, insertSql, new()
+            {
+                ["$Matnr"] = matnr,
+                ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, matnr),
+                ["$MaraAbc"] = ResolveAbc(classificationMap, matnr),
+                ["$MaraXyz"] = ResolveXyz(classificationMap, matnr),
+                ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, matnr)
+            }, cancellationToken);
+
+        await using var updateCommand = conn.CreateCommand();
+        updateCommand.Transaction = transaction;
+        updateCommand.CommandText = @"
+UPDATE PurchasingEkpoCache
+SET MaraMatkl = (SELECT s.MaraMatkl FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    MaraAbc   = (SELECT s.MaraAbc   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    Mstae     = (SELECT s.Mstae     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)
+WHERE EXISTS (
+    SELECT 1 FROM PurchasingMaterialStaging s
+    WHERE s.Matnr = PurchasingEkpoCache.Matnr
+      AND (s.MaraMatkl <> COALESCE(PurchasingEkpoCache.MaraMatkl, '')
+        OR s.MaraAbc   <> COALESCE(PurchasingEkpoCache.MaraAbc, '')
+        OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')
+        OR s.Mstae     <> COALESCE(PurchasingEkpoCache.Mstae, '')));";
+        return await updateCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)

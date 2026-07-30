@@ -5,8 +5,11 @@ public interface IMaterialUsageDataRefreshService
     Task<MaterialUsageRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 
     /// <param name="materialFilter">
-    /// Optional: kommagetrennte Materialnummern, auch als Bereich "35-40"; werden als Vknr-
-    /// (Top-Down) bzw. Kompnr-Filter (Bottom-Up) an SAP durchgereicht. Leer = Catch-all
+    /// Optional: Materialnummern, getrennt durch Komma, Semikolon, Leerzeichen, Tab oder
+    /// Zeilenumbruch (eine Excel-Spalte kann also direkt eingefuegt werden), auch als Bereich
+    /// "35-40"; werden als Vknr- (Top-Down) bzw. Kompnr-Filter (Bottom-Up) an SAP durchgereicht.
+    /// Je Nummer wird eine EIGENE SAP-Anfrage gestellt, siehe
+    /// <see cref="MaterialUsageDataRefreshService.BuildMaterialClauses"/>. Leer = Catch-all
     /// ("Vknr gt ''"), weil die SAP-Seite einen Materialfilter erzwingt (Guard gegen
     /// versehentliche Vollselektion).
     /// </param>
@@ -26,6 +29,13 @@ public interface IMaterialUsageDataRefreshService
     /// </summary>
     Task<List<MaterialUsagePreviewRow>> GetCachedUsageRowsAsync(string? materialFilter = null, int limit = 200, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Eine Selektionsbedingung fuer genau EIN Eingabe-Token. <see cref="Token"/> ist die
+/// Nutzereingabe (leer beim Catch-all) und wird nur fuer die Rueckmeldung "diese Nummern haben
+/// keine Treffer" gebraucht; <see cref="Clause"/> ist die fertige OData-$filter-Teilbedingung.
+/// </summary>
+public sealed record MaterialSelectionClause(string Token, string Clause);
 
 public sealed record MaterialUsagePreviewRow(
     string Richtung,

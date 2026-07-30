@@ -4,6 +4,30 @@ Quelle: Whisper-Transkript (Modell `large-v3`, Audio `…/einka/Data/audio.wav`)
 Ingo, Marco, Armin. Nachfolgesitzung zu `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
 Diskussionsstand, keine finalisierte Spezifikation.
 
+## Umsetzungsstand 2026-07-30 (alles umgesetzt, `346/346` Tests gruen)
+
+| Punkt | Stand | Bemerkung |
+| --- | --- | --- |
+| Dritte Ebene in der Spend-Matrix (Warengruppe -> Material) | **gebaut** | Entscheid Marco gegen den Verweis auf den Reiter Spend-Aufriss, siehe Abschnitt 1a |
+| Volumen nach Waehrung | **gebaut** | eigener Balkenblock im Spend-Reiter, CHF-bewertet + Originalsumme |
+| Waehlbare Einstiegsdimension (Perspektiven) | **gebaut** | 4 Perspektiven im Reiter Spend-Aufriss, siehe Abschnitt 4 |
+| Delta klassifiziert den ganzen Cache | **gebaut** | Nachpflege wirkt jetzt ohne Full Load, siehe Abschnitt 2 |
+| ZLO03: Excel-Paste (Trennzeichen) | **gebaut** | Komma, Semikolon, Leerzeichen, Tab, Zeilenumbruch; Duplikate raus |
+| ZLO03: Mehrfachabfrage-Bug | **gebaut (Bypass)** | eine SAP-Anfrage je Nummer statt OR-Gruppe, siehe Abschnitt 5b |
+| Refresh-Status pruefen (Nebenbefund) | **offen, nicht Code** | Handgriff im Dashboard, siehe Abschnitt 6 |
+| Produktgruppen-Aufriss (ZC23) | **offen** | unveraendert aus der Vorsitzung, groesster Restposten |
+
+Zwei Dinge sind bewusst NICHT gemessen und sollten beim ersten Nachtlauf beobachtet werden:
+
+- **Laufzeit der Nachklassifizierung** ueber den ganzen Cache. Die Staging-Tabelle wird je
+  *Material* gefuellt (nicht je Bestellposition), danach laeuft EIN `UPDATE` - der Aufwand haengt
+  also an der Zahl der verschiedenen Materialnummern, nicht an den `237'217` Positionen. Trotzdem
+  ungemessen: die Meldung des Delta-Laufs nennt jetzt die Zahl der geaenderten Cachezeilen, daran
+  laesst sich das im Log ablesen.
+- **Ob der Mehrfachabfrage-Bypass am SAP wirklich Treffer liefert.** Die Ursache im ABAP ist nicht
+  verifiziert (kein SAP-Zugriff waehrend der Umsetzung); der Bypass umgeht sie, aber der Beweis ist
+  ein Lauf mit mehreren Nummern gegen P76.
+
 ## Kurzfazit
 
 Der Reiter **Spend** ist fachlich abgenommen. Marco hat live am **Produktivsystem** (nicht Test)
@@ -54,13 +78,29 @@ Warengruppen anzeigen, was in einer Dummy-Suche fatal wäre. **Ist nicht so:**
 Formulierung in der 07-24-Doku bezog sich auf die damalige Datenlage, nicht auf das SQL. Beide
 Sichten sind konsistent.
 
-**Entscheid nötig, bevor Code angefasst wird:**
+### 1a. Entscheid Marco: dritte Ebene direkt in die Spend-Matrix (umgesetzt)
 
-1. Marco den Reiter Spend-Aufriss zeigen — dann ist der Wunsch ohne eine Zeile Code erledigt, oder
-2. die dritte Ebene zusätzlich in die Spend-Matrix hängen (Redundanz, aber Marco bleibt in
-   einer Sicht).
+Zur Wahl standen: (1) Marco den Reiter Spend-Aufriss zeigen, damit ohne Code fertig, oder (2) die
+dritte Ebene zusätzlich in die Spend-Matrix des Spend-Reiters hängen. **Marco hat Variante 2
+entschieden** und dabei das Zielbild genau beschrieben: „BEPRO AG" aufklappen → `01 - Dummy`,
+diese Zeile wieder aufklappen → `MAT-123`, `MAT-2322`, dann die nächste Warengruppe.
 
-Empfehlung: erst zeigen, dann entscheiden. Variante 1 kostet fünf Minuten.
+Umgesetzt:
+
+- `PurchasingSpendGroupYearRow.Articles` (`Models/PurchasingSectionModels.cs`) trägt die
+  Materialebene, gefüllt aus `ExecuteSupplierGroupArticleYearRowsAsync`.
+- Deckelung **25 Materialien je Warengruppe** plus `uebrige (n)`-Restzeile. Bewusst höher als die
+  10 der Aufriss-Kaskade: hier wird gezielt eine Warengruppe geöffnet, nicht der ganze Baum, und
+  für die Dummy-Suche soll die Liste nicht nach zehn Zeilen abbrechen. Die Restzeile summiert auch
+  **je Jahr**, damit die Jahresspalten aufgehen und nicht nur die Gesamtspalte.
+- Aufklapp-Schlüssel enthält den Lieferanten, sonst würde `01 - Dummy` bei allen Lieferanten
+  gleichzeitig aufgehen.
+- Gegengeprüft: gleiche Warengruppen- und Artikellogik wie die Aufriss-Kaskade, beide Sichten
+  zeigen also dieselben Zahlen.
+
+Nebenbefund dabei behoben: Der Hinweistext über der Matrix behauptete noch „Warengruppe aktuell aus
+dem Bestellbeleg; Umstellung auf MARA-MATKL folgt, sobald SAP das Feld liefert". SAP liefert es seit
+dem Full Load vom 24.07.; der Text war überholt und für Marco direkt irreführend.
 
 ## 2. Wichtigster Punkt: Nachpflegen wirkt erst nach einem Full Load
 
@@ -87,25 +127,60 @@ behält seine bisherige Warengruppe im Cache — auch nach Pflege im Materialsta
 solche Materialien sind der Dummy-Fall, um den es Marco geht.
 
 Sonst pflegt der Einkauf, schaut nach, sieht keine Änderung und schliesst fälschlich, das
-Dashboard sei falsch. Zwei Optionen:
+Dashboard sei falsch.
 
-- kurzfristig: nach einer Pflegewelle Full Load manuell anstossen (Button ist da,
-  `PurchasingDashboard.razor:1745`), und Marco das so kommunizieren;
-- saubere Lösung: die Klassifizierungs-Map im Delta auf den **gesamten** Cache anwenden, nicht
-  nur auf die geholten Zeilen. **Gegengeprüft:** `LoadMaterialClassificationMapAsync(client,
-  baseUrl, ct)` nimmt keine Materialliste als Parameter und ist im Delta (Zeile 126) derselbe
-  Aufruf wie im Full Load (Zeile 57) — die Map liegt im Delta also bereits vollständig vor.
-  Der Fix ist damit ein zusätzliches UPDATE, kein zusätzlicher SAP-Read.
+### Umgesetzt: das Delta klassifiziert jetzt den ganzen Cache
 
-Letzteres würde die Sitzungsaussage nachträglich wahr machen und ist deshalb der bessere Weg.
-**Nicht gemessen** ist die Laufzeit eines nächtlichen Klassifizierungs-Updates über den ganzen
-Cache (produktiv `237'217` EKPO-Zeilen, SQLite) — vor der Umsetzung einmal messen, nicht
-ungeprüft als „billig" einplanen.
+`ApplyMaterialMasterToWholeCacheAsync` schreibt Warengruppe, Materialstatus, ABC und XYZ auf **alle**
+EKPO-Cachezeilen, nicht nur auf die geholten Belege. Damit ist die Sitzungsaussage nachträglich wahr:
+nachgepflegte Warengruppen kommen über Nacht an, ohne Full Load.
+
+Wichtig war die Feststellung, dass **kein zusätzlicher SAP-Read** entsteht: `LoadMaterialStatusMapAsync`
+und `LoadMaterialClassificationMapAsync` nehmen keine Materialliste als Parameter und sind im Delta
+dieselben Aufrufe wie im Full Load — beide Maps liegen also schon vollständig vor. (Die Warengruppe
+kommt übrigens aus der Status-Map, nicht aus der Klassifizierungs-Map; letztere trägt nur ABC/XYZ.)
+
+Umsetzungsdetails, die beim Nachlesen zählen:
+
+- Über eine temporäre Staging-Tabelle und **ein** `UPDATE`, nicht ein Statement je Zeile. Die Staging
+  wird aus den im Cache **vorhandenen** Materialnummern gebaut, nicht aus den ~68'000 Map-Einträgen,
+  und die Zielwerte mit denselben `Resolve*`-Funktionen wie der Upsert ermittelt. Letzteres ist keine
+  Kosmetik: `NormalizeMatnr` entfernt führende Nullen, der Cache hält aber die zero-padded Form
+  (`000000000000002217`) — ein in SQL nachgebauter Join hätte nichts gefunden und die Warengruppe
+  sogar leergeschrieben. Genau das hat ein Test aufgedeckt.
+- Die `WHERE`-Klausel aktualisiert nur Zeilen, bei denen sich wirklich etwas ändert, sonst würden
+  jede Nacht alle Cachezeilen umgeschrieben. Der Delta-Statustext nennt jetzt die Zahl der
+  geänderten Zeilen.
+- Schutz gegen den teuren Fehlerfall: sind **beide** Maps leer (fehlgeschlagener Stammdaten-Read),
+  wird nichts angefasst — sonst würde ein Leselehler die vorhandenen Warengruppen flächendeckend
+  leerschreiben.
+- Ist die Map befüllt, das Material aber nicht enthalten, gilt der Stamm als führend und die
+  Stammgruppe wird geleert, damit im Dashboard der `COALESCE`-Fallback auf die Beleg-Warengruppe
+  greift statt eine veraltete Stammgruppe zu zeigen.
+- Positionen ohne Materialnummer (gekontierte Bestellungen — eine der beiden Dummy-Ursachen aus
+  Abschnitt 6) werden nicht angefasst.
+
+**Nicht gemessen:** die Laufzeit im Nachtlauf. Der Aufwand hängt an der Zahl der verschiedenen
+Materialnummern, nicht an den `237'217` Positionen, und das `UPDATE` ist eines statt vieler — aber
+gemessen ist es nicht. Beim ersten Nachtlauf die Delta-Meldung im Log ansehen.
+
+Der manuelle Full-Load-Button (`PurchasingDashboard.razor:1745`) bleibt als schnellerer Weg, wenn
+Marco nicht bis zum Nachtlauf warten will.
 
 ## 3. Zugesagt: Spend nach Währung
 
 Marco (03:44–03:55): „Sollen wir noch eins machen mit nach Währung? … wieviel Umsatz machen
 wir in welcher Währung", und 18:47: „das ist auch für die Finanzen dann interessant".
+
+**Umgesetzt** als Balkenblock „Volumen nach Waehrung" im Spend-Reiter, neben Warengruppe und
+Beschaffungsregion. Anzeige: CHF-bewerteter Betrag (Balkenlänge und erste Zahl), dahinter in Klammern
+die Summe in der Belegwährung selbst — also das tatsächliche Währungsexposure. Bei CHF-Belegen
+entfällt die Klammer, weil sie eine Wiederholung wäre. Belege ohne Währungskennzeichen laufen unter
+„ohne Waehrung" und werden **nicht** stillschweigend zu CHF gezählt, sonst wäre eine Datenlücke als
+Schweizer Volumen getarnt.
+
+Der Hinweistext unter dem Block nennt ausdrücklich die Abgrenzung zur Beschaffungsregion, weil genau
+die in der Sitzung für Verwirrung sorgte.
 
 Auslöser war eine Präzisierung, die ins Doku gehört, weil sie leicht falsch gelesen wird:
 **Beschaffungsregion ≠ Währung.** BIPRO ist Beschaffungsregion Schweiz, wird aber in EUR
@@ -144,14 +219,35 @@ Das deckt sich exakt mit der Perspektiven/Aufriss-Trennung, die in der Vorsitzun
 festgehalten wurde (Vorgänger-Doku, Abschnitt „Grundkonzept"). Zusage in der Sitzung: „Nein,
 das kann ich noch einbauen, das ist kein Problem."
 
-Technische Einordnung aus der Sitzung: Das Web-Control kann die oberste Stufe nicht frei
-wählbar machen („das Kontrollen vom Web unterstützt das nicht"), deshalb der diskutierte Weg —
-je Perspektive ein eigener Kaskadenblock, untereinander scrollbar, notfalls ohne Grafik
-(21:44, 23:20). Marco ist damit einverstanden: „es wäre auch easy ohne Grafik".
+**Umgesetzt — und billiger als der in der Sitzung diskutierte Weg.** Diskutiert war, je Perspektive
+einen eigenen, untereinander scrollbaren Kaskadenblock zu bauen („das Kontrollen vom Web unterstützt
+das nicht", 21:44/23:20). Nötig war das nicht: die Kaskade ist generisch parametriert, es gibt
+weiterhin **eine** Tabelle plus einen Umschalter.
 
-Anmerkung: Da die Kaskade bereits generisch als `PurchasingSpendCascadeNode` modelliert ist,
-ist eine parametrisierte Einstiegsdimension vermutlich billiger als vier duplizierte Blöcke.
-Vor dem Bauen prüfen.
+| Perspektive | Ebenenfolge | Deckelung je Ebene |
+| --- | --- | --- |
+| Lieferant (Standard) | Lieferant → Warengruppe → Material | 40 / 15 / 10 |
+| Beschaffungsregion | Region → Lieferant → Warengruppe → Material | 12 / 15 / 10 / 8 |
+| Warengruppe | Warengruppe → Lieferant → Material | 20 / 15 / 10 |
+| Währung | Währung → Lieferant → Warengruppe → Material | 8 / 15 / 10 / 8 |
+
+Die Region-Kette ist genau Marcos Beispiel („nach Beschaffungsregion, dann Lieferant, dann
+Warengruppen und wieder Material"). Umsetzungsdetails:
+
+- `SpendPerspective`/`SpendDimension` in `PurchasingDashboardService` halten SQL-Ausdruck,
+  Beschriftung und Deckelung je Ebene; die SQL-Definition bleibt bewusst im Service, die UI bekommt
+  über `PurchasingSpendPerspectiveResult` nur Schlüssel, Beschriftungen und Baum.
+- Deckelungen sind je Perspektive eigen: bei wenigen Einstiegswerten (Währung, Region) darf die
+  erste Ebene klein und die Tiefe grosszügiger sein, bei vielen (Lieferant) umgekehrt.
+- Alle Perspektiven werden **beim Datenladen vorberechnet**, das Umschalten kostet also keine
+  DB-Runde. Preis: vier SQL-Groupings statt einem pro Laden.
+- Die Anzeige wickelt den Baum in C# zu einer flachen Zeilenliste ab (`BuildVisibleRows`), statt die
+  Ebenen im Markup zu verschachteln — die Perspektiven sind unterschiedlich tief (3 bzw. 4 Ebenen),
+  eine feste Verschachtelung könnte das nicht abbilden.
+- Beim Perspektivenwechsel wird der Aufklappzustand verworfen: die Schlüssel tragen den Pfad der
+  alten Dimensionsfolge.
+- Der Spaltenkopf zeigt die Ebenenfolge („Beschaffungsregion > Lieferant > Warengruppe > Material"),
+  damit nach dem Umschalten klar ist, was man aufreisst.
 
 ## 5. ZLO03-Web — drei separate Punkte
 
@@ -163,10 +259,19 @@ Marco (10:28): „Du kommst jetzt aus dem Excel mit 50 Verkaufsnummern. Kannst d
 kopieren, oder musst du wie manuell nach jedem ein Komma machen?" Aktuell: Komma nötig. In SAP
 kann man eine Spalte direkt einfügen.
 
-Zusage: „Ich kann jetzt die Logik ändern. Dann kannst du es einfach schön reinkopieren vom
-Excel." Umsetzung: Trennzeichen **Komma, Semikolon, Leerzeichen, Tab und Zeilenumbruch**
-gleichwertig akzeptieren. Ingos Argument dafür ist tragfähig: „da hast du eh immer
+**Umgesetzt** (`MaterialUsageDataRefreshService.ParseMaterialTokens`): Trennzeichen **Komma,
+Semikolon, Leerzeichen, Tab und Zeilenumbruch** gleichwertig, Duplikate entfernt (in der Sitzung
+genau passiert — „Hast du mehrmals das gleiche kopiert?"; jedes Duplikat wäre sonst eine SAP-Anfrage
+ohne neue Zeilen). Das Argument für den Whitespace-Split ist tragfähig: „da hast du eh immer
 zusammenhängende Nummern" — Materialnummern enthalten keine Leerzeichen.
+
+Das Eingabefeld ist jetzt mehrzeilig (3 Zeilen, wächst mit) und zeigt daneben, wie viele Nummern
+erkannt wurden — nach einem Excel-Einfügen sieht man damit sofort, ob richtig zerlegt wurde.
+Die Bereichsschreibweise `35-40` bleibt unberührt; `35 - 40` mit Leerzeichen zerfällt dagegen in drei
+Tokens, das ist bewusst nicht unterstützt.
+
+Auch das Suchfeld über dem Cache akzeptiert jetzt dieselben Trennzeichen, damit man die gerade
+geladene Spalte zum Filtern wiederverwenden kann statt Nummer für Nummer zu suchen.
 
 ### 5b. Bug: Mehrfachabfrage liefert kein Ergebnis
 
@@ -175,13 +280,38 @@ Enter, Laden → Meldung „Full-Node abgeschlossen", danach Status aktualisiere
 nur gelesen", kein Ergebnis. Ingos Einschätzung: „In diesem Fall hat es Probleme, wenn man
 mehrere nicht tut" → „dann lasse ich das anschauen".
 
-**Das ist der wichtigste ZLO03-Punkt**, denn er blockiert 5a: eine bequemere Eingabe nützt
-nichts, wenn die Mehrfachabfrage danach nichts liefert. Zuerst 5b, dann 5a.
+**Umgesetzt als Bypass, nicht als Ursachenbehebung** — und das ist eine bewusste Entscheidung, die
+man kennen muss.
 
-Zu prüfen: Verhält sich Einzel- vs. Mehrfacheingabe unterschiedlich im Request an
-`ZSTR_LZCODE_USAGE`/`_PARENT`? Läuft die Abfrage in einen Timeout, dessen Statusmeldung wie ein
-Erfolg aussieht? Die Meldung „Full-Node abgeschlossen" bei leerem Ergebnis ist selbst schon ein
-Defekt — ein leeres Resultat darf nicht wie ein abgeschlossener Lauf aussehen.
+Bisher baute `BuildMaterialClause` aus mehreren Nummern EINE gemeinsame OR-Gruppe:
+`Richtung eq 'BOTTOMUP' and (Kompnr eq 'A' or Kompnr eq 'B')`. Bei einer Nummer entsteht die
+einfache Form ohne Klammer — und die funktioniert. Die naheliegende Vermutung ist, dass die gemischte
+`and`/`or`-Struktur bei der Umwandlung in Select-Options im Gateway nicht ankommt und der
+selbstgeschriebene `GET_ENTITYSET` mit einer leeren Range-Tabelle arbeitet. **Verifiziert ist das
+nicht** — für einen Gegentest am ABAP fehlte während der Umsetzung der SAP-Zugriff.
+
+Statt auf die Ursache zu setzen, stellt der Aufrufer jetzt **eine eigene Anfrage je Nummer**
+(`BuildMaterialClauses`) und führt die Ergebnisse zusammen. Das umgeht die Umwandlung vollständig,
+unabhängig davon, wo sie schiefgeht. Zwei Nebeneffekte, die es ohnehin rechtfertigen:
+
+- **Trefferzahl je Nummer.** Nummern ohne Verwendung werden namentlich in der Statusmeldung genannt
+  (gedeckelt auf 20 plus „+n weitere"). Für die TR5-Aufgabe aus Abschnitt 10 — welche Komponenten
+  werden nirgends verbaut? — ist genau diese Liste das eigentliche Ergebnis, nicht ein Nebenprodukt.
+- **Keine URL-Längengrenze.** 50 Nummern à 18 Stellen in einem `$filter` wären ~1'500 Zeichen; das
+  Gateway kann dabei eigene Grenzen haben.
+
+Deduplizierung über `(Richtung, Vknr, Kompnr)`, weil sich zwei Bereichsangaben überlappen können und
+`MaterialUsageCache` per `INSERT` (nicht `UPSERT`) gefüllt wird — ohne das läge dieselbe Zeile
+mehrfach im Cache.
+
+Ebenfalls behoben: **die falsche Erfolgsmeldung.** „Full Load abgeschlossen" bei 0 Zeilen sah nach
+Erfolg aus. Jetzt zeigen Alert und Snackbar in diesem Fall **Warnung statt grün**, und der bisher nur
+für Top-Down vorhandene 0-Zeilen-Hinweis gibt es auch für Bottom-Up — genau Marcos Fall in der
+Sitzung. Der Bottom-Up-Text weist ausdrücklich darauf hin, vor dem Schluss „wird nirgends verbaut"
+mit „Auch gelöschte Materialien" gegenzuprüfen.
+
+**Offen bleibt der Beweis:** ein Lauf mit mehreren Nummern gegen P76. Falls er weiterhin leer
+bleibt, liegt es nicht an der Filterstruktur und die Ursache ist im ABAP zu suchen.
 
 ### 5c. Plausibilisierung Bottom-Up (Zweifel von Marco)
 
@@ -330,19 +460,18 @@ verifizierten `VknrDispo`-Feld aus der Vorsitzung.
 
 ## 11. Priorisierung (Vorschlag zur Abstimmung mit Marco)
 
+Die Code-Punkte sind umgesetzt (siehe Umsetzungsstand oben). Was noch offen ist, in dieser
+Reihenfolge:
+
 | # | Punkt | Aufwand | Begründung |
 | --- | --- | --- | --- |
-| 0 | Refresh-Status prüfen: läuft das nächtliche Delta? (Abschnitt 6) | Minuten | wenn nein, sind alle Zahlen auf dem Stand 24.07. — schlägt alles andere |
-| 1 | Reiter „Spend-Aufriss" zeigen (Abschnitt 1) | Minuten | Wunsch evtl. schon erfüllt; entscheidet, ob überhaupt gebaut wird |
-| 2 | Marco die Full-Load-Bedingung sagen (Abschnitt 2) | Minuten | verhindert eine ins Leere laufende Pflegewelle |
-| 3 | ZLO03 Mehrfachabfrage-Bug (5b) | klein–mittel | blockiert die laufende TR5-Aufgabe (Abschnitt 10) |
-| 4 | Spend nach Währung (Abschnitt 3) | klein | Felder im Cache vorhanden, kein Full Load nötig |
-| 5 | ZLO03 Copy-Paste-Trennzeichen (5a) | klein | erst nach 3 sinnvoll |
-| 6 | Delta wendet Klassifizierung auf ganzen Cache an (Abschnitt 2) | klein–mittel | macht die Pflegeschleife über Nacht wirksam |
-| 7 | Flexible Einstiegsdimension / Perspektiven (Abschnitt 4) | mittel–gross | die am 24.07. offen gelassene Frage ist jetzt beantwortet |
-| 8 | ZLO03-Plausibilisierung abschliessen (5c) | mittel | Vergleich SAP vs. Web ist begonnen, nicht beendet |
-| 9 | Wareneingangsdatum klären (Abschnitt 7) | gross | erst Bedarf bestätigen, neue SAP-Quelle nötig |
-| 10 | Power-BI-Basisliste (Abschnitt 9) | offen | nur auf Marcos Zuruf |
+| 1 | **Refresh-Status prüfen: läuft das nächtliche Delta?** (Abschnitt 6) | Minuten | `MAX(Bedat)` = Tag des Full Loads. Wenn das Delta nicht greift, sind alle Zahlen auf dem Stand 24.07. — schlägt alles andere |
+| 2 | Delta-Meldung im Log ansehen: Laufzeit und Zahl der nachklassifizierten Zeilen | Minuten | die eine ungemessene Grösse am Delta-Fix |
+| 3 | ZLO03 mit mehreren Nummern gegen P76 laufen lassen | Minuten | Beweis, dass der Bypass aus 5b greift |
+| 4 | ZLO03-Plausibilisierung abschliessen (5c) | mittel | Vergleich SAP vs. Web ist begonnen, nicht beendet — solange Marco zweifelt, nutzt er das Werkzeug nicht |
+| 5 | Wareneingangsdatum klären (Abschnitt 7) | gross | erst Bedarf bestätigen, neue SAP-Quelle (`EKBE`/`MSEG`) nötig |
+| 6 | Produktgruppen-Aufriss (ZC23-Referenzliste + Zurechnungsregel) | gross | unverändert aus der Vorsitzung, grösster Restposten |
+| 7 | Power-BI-Basisliste (Abschnitt 9) | offen | nur auf Marcos Zuruf |
 
 Unverändert offen aus der Vorsitzung, in dieser Sitzung nicht berührt: **Produktgruppen-Aufriss**
 (Referenzliste Disponent → Produktgruppe aus ZC23, Zurechnungsregel bei Mehrfachverwendung) und

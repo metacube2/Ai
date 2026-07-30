@@ -56,9 +56,18 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> MaterialGroupSpendRows { get; set; } = [];
     // Volumen (CHF) je Beschaffungsregion (Lieferantenland), absteigend (PowerBI "Vol/Region").
     public List<PurchasingLiveChartPoint> RegionSpendRows { get; set; } = [];
+    // Volumen je Belegwaehrung (EKKO.Waers), CHF-bewertet plus Originalsumme. Braucht kein
+    // SAP-Feld und keinen Full Load - Waers/Wkurs liegen im EKKO-Cache und werden ohnehin fuer
+    // die CHF-Bewertung genutzt. Siehe PurchasingCurrencySpendRow zur Abgrenzung gegen die Region.
+    public List<PurchasingCurrencySpendRow> CurrencySpendRows { get; set; } = [];
     // Reiter „Spend-Aufriss" 2026-07-24: mehrstufige Kaskade Lieferant -> Warengruppe -> Artikel
     // (gedeckelt je Ebene, Rest in „uebrige"-Zeile). Nutzt vorhandene Cache-Daten (Beleg-WG/Matnr).
     public List<PurchasingSpendCascadeNode> SpendCascadeRows { get; set; } = [];
+    // Waehlbare Einstiegsperspektiven (Lieferant / Beschaffungsregion / Warengruppe / Waehrung),
+    // Marco-Wunsch 2026-07-30 - die am 24.07. bewusst offen gelassene Rueckfrage. Alle Perspektiven
+    // werden beim Datenladen vorberechnet, damit das Umschalten in der UI ohne DB-Runde geht.
+    // SpendCascadeRows bleibt die Lieferanten-Perspektive (Standardeinstieg).
+    public List<PurchasingSpendPerspectiveResult> SpendPerspectiveRows { get; set; } = [];
     // Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme. Fuellt sich erst mit dem
     // naechsten Einkauf-Full-Load (SupplierCountry).
     public List<PurchasingRegionPieGroup> RegionByMaterialGroupRows { get; set; } = [];
@@ -86,4 +95,18 @@ public sealed class PurchasingDashboardLiveState
 }
 
 public sealed record PurchasingLiveChartPoint(string Label, decimal Value);
+
+/// <summary>
+/// Einkaufsvolumen je Belegwaehrung (Marco-Wunsch aus der Sitzung 2026-07-30: „wieviel Umsatz
+/// machen wir in welcher Waehrung", ausdruecklich auch fuer die Finanzen interessant).
+/// <see cref="ChfValue"/> ist der nach CHF bewertete Betrag - damit sind die Waehrungen
+/// untereinander und mit allen anderen Bloecken vergleichbar. <see cref="OriginalValue"/> ist die
+/// Summe in der Belegwaehrung selbst, also das tatsaechliche Waehrungsexposure.
+///
+/// Wichtige Abgrenzung, die in der Sitzung ausdruecklich geklaert wurde: Diese Sicht ist NICHT die
+/// Beschaffungsregion. BIPRO liegt in der Beschaffungsregion Schweiz, fakturiert aber in EUR
+/// (Marco: „das hat nichts mit nach Waehrung zu tun") - Region kommt aus dem Lieferantenland
+/// (LFA1.Land1), die Waehrung aus dem Bestellkopf (EKKO.Waers).
+/// </summary>
+public sealed record PurchasingCurrencySpendRow(string Currency, decimal ChfValue, decimal OriginalValue);
 public sealed record PurchasingIdeaAnalysisRow(string Label, string Value, string Detail, string Severity);

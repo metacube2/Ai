@@ -387,12 +387,21 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
+        // Volumen je Belegwaehrung (Marco-Wunsch 2026-07-30). Gleicher Filter/Zeitraum wie die
+        // Bloecke oben, damit die Summen konsistent bleiben; zusaetzlich die Originalsumme in der
+        // Belegwaehrung selbst. Kein SAP-Feld und kein Full Load noetig - Waers/Wkurs sind im
+        // EKKO-Cache und werden ohnehin fuer ChfNetValue gebraucht.
+        state.CurrencySpendRows = await ExecuteCurrencySpendRowsAsync(conn, joinedEkkoPeriod, spendItemFilter, cancellationToken);
         state.SupplierYearSpendRows = await ExecuteSupplierYearSpendRowsAsync(conn, filter, spendItemFilter, cancellationToken);
         // Reiter „Spend-Aufriss": mehrstufige Kaskade + Region-Kuchen + ABC/XYZ. Die Kaskade nutzt
         // vorhandene Cache-Daten (Beleg-WG/Matnr); Region/ABC/XYZ fuellen sich erst nach dem
         // naechsten Einkauf-Full-Load. Alle laufen nur beim Datenladen (OnInitialized/Filter),
         // nicht pro Render.
-        state.SpendCascadeRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, cancellationToken);
+        state.SpendPerspectiveRows = await ExecuteSpendPerspectivesAsync(conn, filter, spendItemFilter, cancellationToken);
+        // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
+        // bisherige, nicht umschaltbare Kaskadenanzeige.
+        state.SpendCascadeRows = state.SpendPerspectiveRows
+            .FirstOrDefault(perspective => perspective.Key == "supplier")?.Rows.ToList() ?? [];
         state.RegionByMaterialGroupRows = await ExecuteRegionByMaterialGroupRowsAsync(conn, joinedEkkoPeriod, spendItemFilter, cancellationToken);
         state.AbcSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT COALESCE(NULLIF(p.MaraAbc, ''), 'ohne ABC') AS Label, SUM(" + ChfNetValue + @") AS Value
@@ -818,6 +827,42 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
         return rows;
     }
 
+    /// <summary>
+    /// Volumen je Belegwaehrung (<c>EKKO.Waers</c>), CHF-bewertet plus Summe in der Belegwaehrung
+    /// selbst. Belege ohne Waehrungskennzeichen laufen unter „ohne Waehrung" und werden nicht
+    /// stillschweigend zu CHF - sonst waere eine Datenluecke als Schweizer Volumen getarnt.
+    /// Siehe <see cref="PurchasingCurrencySpendRow"/> zur Abgrenzung gegen die Beschaffungsregion.
+    /// </summary>
+    private static async Task<List<PurchasingCurrencySpendRow>> ExecuteCurrencySpendRowsAsync(
+        SqliteConnection conn,
+        string joinedEkkoPeriod,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var rows = new List<PurchasingCurrencySpendRow>();
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT COALESCE(NULLIF(k.Waers, ''), 'ohne Waehrung') AS Currency,
+       SUM(" + ChfNetValue + @") AS ChfValue,
+       SUM(CAST(p.Netwr AS REAL)) AS OriginalValue
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Currency
+ORDER BY ChfValue DESC
+LIMIT 12;";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(new PurchasingCurrencySpendRow(
+                reader.GetString(0),
+                Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture),
+                Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture)));
+        }
+
+        return rows;
+    }
+
     private static async Task<List<PurchasingSupplierYearSpendRow>> ExecuteSupplierYearSpendRowsAsync(
         SqliteConnection conn,
         PurchasingDashboardFilter filter,
@@ -938,46 +983,50 @@ ORDER BY Supplier, MaterialGroup, Year;";
             }
         }
 
+        var articlesBySupplierGroup = await ExecuteSupplierGroupArticleYearRowsAsync(conn, filter, spendItemFilter, years, cancellationToken);
+
         return valuesBySupplierGroup.ToDictionary(
             supplier => supplier.Key,
             supplier => supplier.Value
                 .Select(group => new PurchasingSpendGroupYearRow(
                     group.Key,
                     years.ToDictionary(year => year, year => group.Value.TryGetValue(year, out var value) ? value : 0m),
-                    group.Value.Values.Sum()))
+                    group.Value.Values.Sum())
+                {
+                    Articles = articlesBySupplierGroup.TryGetValue((supplier.Key, group.Key), out var articles) ? articles : []
+                })
                 .OrderByDescending(group => group.Total)
                 .ToList(),
             StringComparer.OrdinalIgnoreCase);
     }
 
-    // Deckelung je Aufriss-Ebene (Lieferant, Warengruppe, Artikel). Bewusst eng auf der Artikel-
-    // Blattebene, damit der serverseitig gerenderte Baum bei >170k Positionen nicht explodiert.
-    private static readonly int[] CascadeCaps = [40, 15, 10];
-
-    private readonly record struct CascadeRow(string Supplier, string MaterialGroup, string Article, int Year, decimal Value);
+    /// <summary>
+    /// Deckelung der Artikel je (Lieferant, Warengruppe) in der Spend-Matrix. Bewusst hoeher als
+    /// die 10 der Aufriss-Kaskade: hier wird gezielt EINE Warengruppe eines Lieferanten geoeffnet,
+    /// nicht der ganze Baum, und fuer die Dummy-Suche will Marco die Liste sehen und nicht nach
+    /// zehn Zeilen abgeschnitten bekommen. Der Rest landet in einer "uebrige (n)"-Zeile, damit
+    /// Warengruppensumme = Summe der Artikelzeilen bleibt (Pivot-Eigenschaft).
+    /// </summary>
+    private const int SpendMatrixArticleCap = 25;
 
     /// <summary>
-    /// Mehrstufiger Spend-Aufriss (Reiter „Spend-Aufriss" 2026-07-24): feste Kaskade
-    /// Lieferant -> Warengruppe -> Artikel, je Ebene auf Top-N gekappt mit „uebrige (n)"-Restzeile,
-    /// sodass Elternsumme = Summe der Kinder bleibt. Ein SQL-Grouping, Baumaufbau in C#.
-    /// Warengruppe wie in der Spend-Matrix: MaraMatkl, Fallback Beleg-Matkl.
+    /// Dritte Ebene der Spend-Matrix: Spend je Lieferant/Warengruppe/Materialnummer und Jahr
+    /// (Entscheid Marco, Sitzung 2026-07-30). Dieselbe Warengruppen- und Artikellogik wie die
+    /// Aufriss-Kaskade (<see cref="ExecuteSpendCascadeRowsAsync"/>), damit beide Sichten
+    /// dieselben Zahlen zeigen: Warengruppe aus dem Materialstamm mit Fallback auf die
+    /// Beleg-Warengruppe, Artikel = Matnr mit Fallback auf den Bestelltext.
     /// </summary>
-    private static async Task<List<PurchasingSpendCascadeNode>> ExecuteSpendCascadeRowsAsync(
+    private static async Task<Dictionary<(string Supplier, string MaterialGroup), List<PurchasingSpendArticleYearRow>>> ExecuteSupplierGroupArticleYearRowsAsync(
         SqliteConnection conn,
         PurchasingDashboardFilter filter,
         string spendItemFilter,
+        IReadOnlyList<int> years,
         CancellationToken cancellationToken)
     {
-        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
-            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
-            .ToList();
-        if (years.Count == 0)
-            return [];
-
         var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
-        var rows = new List<CascadeRow>();
+        var values = new Dictionary<(string, string, string), Dictionary<int, decimal>>();
 
         await using var command = conn.CreateCommand();
         command.CommandText = @"
@@ -998,27 +1047,250 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         {
             while (await reader.ReadAsync(cancellationToken))
             {
-                rows.Add(new CascadeRow(
+                var key = (
                     reader.IsDBNull(0) ? "ohne Lieferant" : reader.GetString(0),
                     reader.IsDBNull(1) ? "ohne Warengruppe" : PurchasingMaterialGroupTextCatalog.Resolve(reader.GetString(1)),
-                    reader.IsDBNull(2) ? "ohne Artikel" : reader.GetString(2),
-                    Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture),
-                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+                    reader.IsDBNull(2) ? "ohne Artikel" : reader.GetString(2));
+
+                if (!values.TryGetValue(key, out var yearValues))
+                {
+                    yearValues = [];
+                    values[key] = yearValues;
+                }
+
+                yearValues[Convert.ToInt32(reader.GetValue(3), CultureInfo.InvariantCulture)] =
+                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture);
             }
         }
 
-        return BuildCascadeLevel(rows, 0, years);
+        return values
+            .GroupBy(entry => (entry.Key.Item1, entry.Key.Item2))
+            .ToDictionary(
+                group => group.Key,
+                group => CapArticles(group.Select(entry => new PurchasingSpendArticleYearRow(
+                        entry.Key.Item3,
+                        years.ToDictionary(year => year, year => entry.Value.TryGetValue(year, out var value) ? value : 0m),
+                        entry.Value.Values.Sum()))
+                    .OrderByDescending(article => article.Total)
+                    .ToList(),
+                    years));
+    }
+
+    /// <summary>
+    /// Kappt die Artikelliste auf <see cref="SpendMatrixArticleCap"/> und fasst den Rest zu einer
+    /// "uebrige (n)"-Zeile zusammen - je Jahr aufsummiert, damit die Jahresspalten weiterhin
+    /// aufgehen und nicht nur die Gesamtspalte.
+    /// </summary>
+    private static List<PurchasingSpendArticleYearRow> CapArticles(
+        List<PurchasingSpendArticleYearRow> articles,
+        IReadOnlyList<int> years)
+    {
+        if (articles.Count <= SpendMatrixArticleCap)
+            return articles;
+
+        var kept = articles.Take(SpendMatrixArticleCap).ToList();
+        var rest = articles.Skip(SpendMatrixArticleCap).ToList();
+        kept.Add(new PurchasingSpendArticleYearRow(
+            $"uebrige ({rest.Count:N0})",
+            years.ToDictionary(year => year, year => rest.Sum(article => article.YearValues.TryGetValue(year, out var value) ? value : 0m)),
+            rest.Sum(article => article.Total),
+            IsRemainder: true));
+        return kept;
+    }
+
+    /// <summary>
+    /// Eine Aufriss-Dimension: <see cref="Sql"/> ist der SELECT-Ausdruck, der das Label liefert
+    /// (die Query joint <c>PurchasingEkpoCache p</c> mit <c>PurchasingEkkoCache k</c>).
+    /// <see cref="ResolveMaterialGroupText"/> schaltet die Textauflösung „Code - Text" ueber
+    /// <see cref="PurchasingMaterialGroupTextCatalog"/> zu, die nur fuer Warengruppen gilt.
+    /// </summary>
+    private sealed record SpendDimension(
+        string Key,
+        string LabelDe,
+        string LabelEn,
+        string Sql,
+        bool ResolveMaterialGroupText = false);
+
+    /// <summary>
+    /// Eine Perspektive = Einstiegsdimension plus die Reihenfolge, in der weiter aufgerissen wird.
+    /// <see cref="Caps"/> deckelt jede Ebene auf Top-N; der Rest landet in einer
+    /// „uebrige (n)"-Zeile, damit Elternsumme = Summe der Kinder bleibt.
+    /// </summary>
+    private sealed record SpendPerspective(
+        string Key,
+        string LabelDe,
+        string LabelEn,
+        IReadOnlyList<SpendDimension> Levels,
+        IReadOnlyList<int> Caps);
+
+    private static readonly SpendDimension SupplierDimension =
+        new("supplier", "Lieferant", "Supplier", SupplierLabelSql("k.Lifnr", "k.SupplierName"));
+
+    private static readonly SpendDimension MaterialGroupDimension =
+        new("materialgroup", "Warengruppe", "Material group",
+            "COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe')",
+            ResolveMaterialGroupText: true);
+
+    private static readonly SpendDimension ArticleDimension =
+        new("article", "Material", "Material",
+            "COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')");
+
+    private static readonly SpendDimension RegionDimension =
+        new("region", "Beschaffungsregion", "Procurement region",
+            "COALESCE(NULLIF(k.SupplierCountry, ''), 'ohne Land')");
+
+    private static readonly SpendDimension CurrencyDimension =
+        new("currency", "Waehrung", "Currency",
+            "COALESCE(NULLIF(k.Waers, ''), 'ohne Waehrung')");
+
+    /// <summary>
+    /// Die waehlbaren Einstiegsperspektiven im Reiter „Spend-Aufriss".
+    ///
+    /// Diese Liste ist die Antwort auf die am 2026-07-24 bewusst offen gelassene Rueckfrage
+    /// („flexible Einstiegsdimension - Question 2 unbeantwortet"). Marco hat sie in der Sitzung
+    /// 2026-07-30 selbst beantwortet: „dass ich wie quasi den hierarchischen Aufriss waehlen kann",
+    /// mit den Perspektiven Lieferant, Beschaffungsregion, Warengruppe und Waehrung, und als
+    /// Beispielkette ausdruecklich „nach Beschaffungsregion, dann Lieferant, dann Warengruppen und
+    /// wieder Material".
+    ///
+    /// Die Deckelungen sind je Perspektive eigen: bei wenigen Einstiegswerten (Region, Waehrung)
+    /// darf die erste Ebene klein sein und die Tiefe grosszuegiger, bei vielen (Lieferant) ist es
+    /// umgekehrt. Insgesamt bleibt das Produkt der Deckelungen in derselben Groessenordnung, damit
+    /// der serverseitig gerenderte Baum bei &gt;230k Positionen nicht explodiert.
+    /// </summary>
+    private static readonly IReadOnlyList<SpendPerspective> SpendPerspectives =
+    [
+        new("supplier", "Lieferant", "Supplier",
+            [SupplierDimension, MaterialGroupDimension, ArticleDimension],
+            [40, 15, 10]),
+        new("region", "Beschaffungsregion", "Procurement region",
+            [RegionDimension, SupplierDimension, MaterialGroupDimension, ArticleDimension],
+            [12, 15, 10, 8]),
+        new("materialgroup", "Warengruppe", "Material group",
+            [MaterialGroupDimension, SupplierDimension, ArticleDimension],
+            [20, 15, 10]),
+        new("currency", "Waehrung", "Currency",
+            [CurrencyDimension, SupplierDimension, MaterialGroupDimension, ArticleDimension],
+            [8, 15, 10, 8])
+    ];
+
+    /// <summary>
+    /// Eine Zeile des Aufriss-Groupings. <see cref="Keys"/> traegt die Labels der Ebenen in der
+    /// Reihenfolge der gewaehlten Perspektive - dadurch ist der Baumaufbau von der konkreten
+    /// Dimensionsfolge unabhaengig.
+    /// </summary>
+    private readonly record struct CascadeRow(string[] Keys, int Year, decimal Value);
+
+    /// <summary>
+    /// Baut alle Perspektiven des Reiters „Spend-Aufriss". Je Perspektive ein SQL-Grouping,
+    /// Baumaufbau in C#. Alle Perspektiven werden beim Datenladen vorberechnet, damit das
+    /// Umschalten in der UI ohne Reload und ohne erneute DB-Runde funktioniert.
+    /// </summary>
+    private static async Task<List<PurchasingSpendPerspectiveResult>> ExecuteSpendPerspectivesAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<PurchasingSpendPerspectiveResult>();
+        foreach (var perspective in SpendPerspectives)
+        {
+            var rows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, perspective, cancellationToken);
+            results.Add(new PurchasingSpendPerspectiveResult(
+                perspective.Key,
+                perspective.LabelDe,
+                perspective.LabelEn,
+                perspective.Levels.Select(level => level.LabelDe).ToList(),
+                perspective.Levels.Select(level => level.LabelEn).ToList(),
+                rows));
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Mehrstufiger Spend-Aufriss fuer EINE Perspektive (Reiter „Spend-Aufriss", Einstiegsdimension
+    /// waehlbar seit 2026-07-30), je Ebene auf Top-N gekappt mit „uebrige (n)"-Restzeile, sodass
+    /// Elternsumme = Summe der Kinder bleibt. Ein SQL-Grouping, Baumaufbau in C#. Warengruppe wie
+    /// in der Spend-Matrix: MaraMatkl, Fallback Beleg-Matkl.
+    /// </summary>
+    private static async Task<List<PurchasingSpendCascadeNode>> ExecuteSpendCascadeRowsAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        SpendPerspective perspective,
+        CancellationToken cancellationToken)
+    {
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
+            .ToList();
+        if (years.Count == 0)
+            return [];
+
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var maxSpendYear = MaxSpendYear(filter);
+        var rows = new List<CascadeRow>();
+
+        // Ein Label-Ausdruck je Ebene, in der Reihenfolge der Perspektive. Die Aliasnamen sind
+        // positionsbasiert (Level0..LevelN), damit derselbe Ausdruck (z.B. Lieferant) in mehreren
+        // Perspektiven auf unterschiedlicher Ebene stehen kann.
+        var levelAliases = perspective.Levels.Select((_, index) => $"Level{index}").ToList();
+        var selectList = string.Join(",\n       ", perspective.Levels
+            .Select((level, index) => $"{level.Sql} AS {levelAliases[index]}"));
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT " + selectList + @",
+       CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+       SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + @"
+  AND k.Bedat >= '" + from + @"'
+  AND k.Bedat <= '" + to + @"'
+  AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN " + MinSpendYear + " AND " + maxSpendYear + @"
+GROUP BY " + string.Join(", ", levelAliases) + @", Year;";
+
+        var levelCount = perspective.Levels.Count;
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var keys = new string[levelCount];
+                for (var index = 0; index < levelCount; index++)
+                {
+                    var raw = reader.IsDBNull(index) ? string.Empty : reader.GetString(index);
+                    // Die COALESCE-Ausdruecke setzen bereits sprechende Platzhalter; NULL kann nur
+                    // noch aus dem LEFT JOIN auf den Bestellkopf kommen (Position ohne Kopf im
+                    // Cache). Dann lieber "ohne <Dimension>" als eine leere Zeile im Baum.
+                    if (string.IsNullOrWhiteSpace(raw))
+                        raw = "ohne " + perspective.Levels[index].LabelDe;
+                    keys[index] = perspective.Levels[index].ResolveMaterialGroupText
+                        ? PurchasingMaterialGroupTextCatalog.Resolve(raw)
+                        : raw;
+                }
+
+                rows.Add(new CascadeRow(
+                    keys,
+                    Convert.ToInt32(reader.GetValue(levelCount), CultureInfo.InvariantCulture),
+                    Convert.ToDecimal(reader.GetValue(levelCount + 1), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        return BuildCascadeLevel(rows, 0, years, perspective.Caps);
     }
 
     private static List<PurchasingSpendCascadeNode> BuildCascadeLevel(
         IReadOnlyList<CascadeRow> rows,
         int depth,
-        IReadOnlyList<int> years)
+        IReadOnlyList<int> years,
+        IReadOnlyList<int> caps)
     {
-        var cap = CascadeCaps[depth];
-        var isLeaf = depth == CascadeCaps.Length - 1;
+        var cap = caps[depth];
+        var isLeaf = depth == caps.Count - 1;
         var groups = rows
-            .GroupBy(row => KeyAt(row, depth))
+            .GroupBy(row => row.Keys[depth])
             .Select(group => new
             {
                 Label = group.Key,
@@ -1034,7 +1306,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         {
             var children = isLeaf
                 ? (IReadOnlyList<PurchasingSpendCascadeNode>)[]
-                : BuildCascadeLevel(group.Rows, depth + 1, years);
+                : BuildCascadeLevel(group.Rows, depth + 1, years, caps);
             nodes.Add(new PurchasingSpendCascadeNode(group.Label, group.YearValues, group.Total, children));
         }
 
@@ -1050,14 +1322,6 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
 
         return nodes;
     }
-
-    private static string KeyAt(CascadeRow row, int depth)
-        => depth switch
-        {
-            0 => row.Supplier,
-            1 => row.MaterialGroup,
-            _ => row.Article
-        };
 
     /// <summary>
     /// Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme im Spend-Aufriss. Ein
