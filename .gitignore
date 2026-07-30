@@ -9,3 +9,5 @@ TrafagSalesExporter/*.db
 TrafagSalesExporter/*.db-shm
 TrafagSalesExporter/*.db-wal
 Trafag/
+TeamsTextGrabber/bin/
+TeamsTextGrabber/obj/
