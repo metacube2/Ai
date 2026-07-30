@@ -114,7 +114,14 @@ internal sealed class HrKpiDashboardBuilder
         result.Leavers = leavers;
         result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod);
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
-        result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod);
+        // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile (die "(Zeitraum)"-Spalten
+        // markieren nur das juengste Ereignis, die "(Stunden Ind.)"-Summen sind kumulativ - siehe
+        // HR_KPI_KORREKTUREN_2026-07-06.md H2). Ist trotzdem ein Zeitraumfilter
+        // Zeitraum schrumpft - die Quote wird dadurch massiv ueberhoeht (Praxisfall: 20% statt 3-4%
+        // fuer Juni 2026, weil "Adil" seine 48h aus Maerz stammten, aber die Datei keine Zeile
+        // ausschliessen konnte). Deshalb Periodenwert klar als nicht verlaesslich kennzeichnen.
+        var periodScopingUnreliable = analysisPeriod.HasPeriod && absenceRowsWithoutDates > 0;
+        result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod, periodScopingUnreliable);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees);
         result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, comparisonLeavers, turnoverPeriod);
         result.TrafficLights = BuildTrafficLights(result.Metrics, result.TurnoverMetrics, result.AbsenceMetrics, result.TimeVacationMetrics, context);
@@ -633,7 +640,8 @@ internal sealed class HrKpiDashboardBuilder
     private List<HrKpiMetric> BuildAbsenceMetrics(
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
         IReadOnlyCollection<HrAbsenceRow> absences,
-        AnalysisPeriod analysisPeriod)
+        AnalysisPeriod analysisPeriod,
+        bool periodScopingUnreliable)
     {
         var totalSick = absences.Sum(x => x.KrankheitstageGesamt);
         var shortSick = absences.Sum(x => x.KrankheitstageKurz);
@@ -646,12 +654,22 @@ internal sealed class HrKpiDashboardBuilder
         var bu = employees.Sum(x => x.BuTage);
         var nbu = employees.Sum(x => x.NbuTage);
 
+        // Rexx liefert je Absenzzeile kein Datum, das den gewaehlten Zeitraum ({analysisPeriod.Label})
+        // zuverlaessig eingrenzt - der Zaehler (Krankheitsstunden) kann deshalb aus einem ganz anderen
+        // Zeitraum stammen als der Nenner (Arbeitstage NUR im gewaehlten Zeitraum). Statt eine falsch
+        // praezise wirkende Prozentzahl zu zeigen, wird das hier klar als nicht verlaesslich markiert.
+        var scopingWarning = periodScopingUnreliable
+            ? $" ACHTUNG: Rexx liefert keine Datumsfelder je Absenzzeile - die Krankheitsstunden koennen aus einem anderen Zeitraum stammen als {analysisPeriod.Label} und sind NICHT zuverlaessig darauf eingegrenzt. Rein rechnerisch waere die Quote {absenceRate:P1}, aber dieser Wert sollte nicht als Monats-/Quartalswert verwendet werden."
+            : string.Empty;
+        var absenceValueSeverity = periodScopingUnreliable && absenceSeverity == "Normal" ? "Warning" : absenceSeverity;
+        var absenceRateValue = periodScopingUnreliable ? "Zeitraum nicht bestimmbar" : absenceRate.ToString("P1");
+
         return
         [
-            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen", Severity = absenceSeverity },
+            new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = "Rexx kurz / 8.4h", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = "Rexx lang / 8.4h", Severity = longSick > shortSick ? "Warning" : "Normal" },
-            new() { Label = "Krankenquote", Value = absenceRate.ToString("P1"), Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage), {analysisPeriod.Label}. {absenceThresholdDetail}", Severity = absenceSeverity },
+            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage), {analysisPeriod.Label}. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "NBU-Tage", Value = nbu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "Unfalltage Total", Value = (bu + nbu).ToString("N1"), Detail = "BU + NBU", Severity = "Normal" }

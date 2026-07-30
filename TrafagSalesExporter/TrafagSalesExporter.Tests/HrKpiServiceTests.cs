@@ -323,6 +323,49 @@ public sealed class HrKpiServiceTests : IDisposable
         var absenceStatus = Assert.Single(result.TrafficLights, item => item.Area == "Krankenquote");
         Assert.Equal("Gelb", absenceStatus.Status);
     }
+
+    [Fact]
+    public async Task BuildAsync_Flags_Krankenquote_As_Unreliable_When_Period_Filter_Set_But_Absences_Have_No_Dates()
+    {
+        // Praxisfall 2026-07-29: Rexx-Export "Abwesenheitinstunden.xlsx" hat keine Datumsfelder je
+        // Zeile (die "(Zeitraum)"-Spalten sind Marker des juengsten Ereignisses, keine
+        // Aggregationsfenster - Stunden sind kumulativ). Waehlt man dennoch einen engen Zeitraum
+        // (z.B. Juni), bleibt der Zaehler ungefiltert, waehrend der Nenner schrumpft - die Quote
+        // wird dadurch massiv ueberhoeht (Praxisfall: 20% statt 3-4%, weil ein Mitarbeiter seine
+        // Stunden aus Maerz zeigte, obwohl Juni gewaehlt war). Die Kachel muss das klar kennzeichnen
+        // statt eine falsch praezise Prozentzahl zu zeigen.
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            FromDate = new DateTime(2025, 6, 1),
+            ToDate = new DateTime(2025, 6, 30)
+        });
+
+        var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
+        Assert.Equal("Zeitraum nicht bestimmbar", absenceRate.Value);
+        Assert.Equal("Warning", absenceRate.Severity);
+        Assert.Contains("ACHTUNG", absenceRate.Detail);
+
+        var totalDays = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankheitstage Gesamt");
+        Assert.Equal("Warning", totalDays.Severity);
+        Assert.Contains("ACHTUNG", totalDays.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Shows_Real_Krankenquote_When_No_Period_Filter_Is_Set()
+    {
+        // Ohne Zeitraumfilter besteht das Zaehler/Nenner-Mismatch-Problem nicht in derselben Form -
+        // die Kachel soll weiterhin eine normale Prozentzahl zeigen, nicht die Warnung.
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder
+        });
+
+        var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
+        Assert.NotEqual("Zeitraum nicht bestimmbar", absenceRate.Value);
+        Assert.EndsWith("%", absenceRate.Value);
+    }
+
     private static void WriteFixtureFiles(string folder)
     {
         WriteWorkbook(Path.Combine(folder, "Saldiperstichdatum.xlsx"),
