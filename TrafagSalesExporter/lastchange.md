@@ -6,6 +6,23 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DOKU 2026-07-31, versandfertige Einzelmails je Standort (kein Code):
+  `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`. Der Sammeltext aus
+  `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 6 ist in SIEBEN Einzelmails aufgeteilt,
+  jede mit To/Subject/Anrede; Zahlen unveraendert (Messung 29.07.2026, 95'168 Zeilen). Aenderungen
+  an Zahlen kuenftig ZUERST im Sammeltext, dann uebernehmen. UK-EMPFAENGER NACHGETRAGEN:
+  `Cornell.Williams@trafag.com` (von Ingo geliefert) - damit sind 5 von 7 versandfertig.
+  NOCH BLOCKIERT: TRFR und TRUS, es fehlt AUSSCHLIESSLICH die Adresse, die Mails stehen.
+  Drei bewusste Textentscheide: (1) Italien-Mail beginnt mit der ausdruecklichen Abgrenzung
+  „a separate topic from the inventory valuation discussion ... no deadline attached", sonst liest
+  Paola sie als Erinnerung an ihre Zusage Ende August; Verweis auf B1-Upgrade 03.08. (2) Indien geht
+  per To NUR an RanVijay, `tasc.co.in` bleibt Cc-Option nach Klaerung, und das Listenangebot ist auf
+  „I can send you the list directly" umformuliert, damit die 1'271 Artikelnummern nicht in einen
+  Fremddomain-Cc laufen. (3) Spanien-Mail zieht den Range-Export von Punkt 3 auf Punkt 1 vor (das ist
+  die sichtbare 2026-Luecke) und verweist auf den bereits dokumentierten Befehl in
+  `FINANCE_BACKFILL_UK_ES_2026-07-28.md`. UK-Mail ohne den „was wir nicht brauchen"-Vorspann, weil
+  reine Rueckfrage nach 2025. Am Dateiende eine Versandtabelle - ohne die ist spaeter nicht
+  unterscheidbar, ob ein Standort nicht geantwortet oder nie eine Mail bekommen hat.
 - DOKU 2026-07-31, zentrales Ansprechpartner-Register angelegt (kein Code): `docs/ANSPRECHPARTNER.md`,
   im `RAG_ROUTER.md` als eigenes Thema und ueber Suchwoerter verlinkt. Anlass: Kontaktangaben lagen
   in DREI Dokumenten verstreut - Rollen in der Ticket-Beteiligtenliste `saptasks/zzprdat-kontext.md:189`,

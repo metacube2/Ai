@@ -142,7 +142,7 @@ Durchgang nicht erneut rekonstruiert werden muss.
 | **TRIN** Indien | Chandra Pratap Singh | `chandra.s@tasc.co.in` | **externe Domain** — siehe unten |
 | **TRFR** Frankreich | *offen* | — | Abschnitt steht, Empfänger fehlt |
 | **TRUS** USA | *offen* | — | Abschnitt steht, Empfänger fehlt |
-| **TRUK** UK | *offen* | — | nur „no action required", Versand optional |
+| **TRUK** UK | Cornell Williams | `Cornell.Williams@trafag.com` | Nachtrag 2026-07-31; nur „no action required" plus Frage nach 2025 |
 | **TRCH / TRAT** | *entfällt* | — | keine Standortbitte |
 
 **Paola Castagna läuft doppelt.** Sie ist bereits Adressatin des Standardkosten-/Bewertungs-
@@ -168,6 +168,11 @@ bleiben genau die zwei Abschnitte liegen, die am schnellsten zu schliessen wäre
 Aufgebaut für **einen Sammelversand an alle Standorte**. Die Abschnitte lassen sich ohne
 Anpassung einzeln herausschneiden, falls stattdessen pro Standort verschickt werden soll —
 was wegen des Paola-Doppelvorgangs (Abschnitt 5) ohnehin der sicherere Weg ist.
+
+**Nachtrag 2026-07-31:** Genau das ist geschehen. Die versandfertigen Einzelmails mit Empfänger,
+Subject und angepasster Anrede stehen in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`, samt
+Versandtabelle für Rückmeldungen. Der Sammeltext hier bleibt als Quelle der Formulierungen und
+Zahlen stehen — Änderungen an Zahlen zuerst hier, dann in die Einzelmails übernehmen.
 
 > **Subject:** BI Dashboard — missing data fields per site
 >

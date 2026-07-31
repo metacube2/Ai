@@ -36,7 +36,7 @@ Stammdatenpflege). Vollständiger fachlicher Kontext samt Zeilenzahlen und Mailt
 | `TRIN` | Indien | Chandra Pratap Singh | `chandra.s@tasc.co.in` | Feldlücken, **externe Domain** | bestätigt, Versand eingeschränkt (Abschnitt 4) |
 | `TRFR` | Frankreich | *offen* | *offen* | Feldlücken: 374 von 433 Artikeln ohne Preferred Vendor | **fehlt** — kleinster Aufwand aller Standorte, liegt nur am Empfänger |
 | `TRUS` | USA | *offen* | *offen* | Feldlücken: 518 von 521 Artikeln | **fehlt** |
-| `TRUK` | UK | *offen* | *offen* | nur „no action required" | fehlt, Versand optional |
+| `TRUK` | UK | Cornell Williams | `Cornell.Williams@trafag.com` | nur „no action required"; offene Frage 2025-Export | bestätigt (Nachtrag 2026-07-31) |
 | `TRCH` / `TRAT` | Schweiz / Österreich | — | — | keine Standortbitte, läuft über SAP und das Schweizer Team | entfällt |
 
 Quelle der bestätigten Adressen: von Ingo am 2026-07-30 recherchiert und in
@@ -140,6 +140,8 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
    Das ist die praktisch wichtigste Lücke.
 2. **Nachnamen** von Andreas, Sonja, Alex, Ramon.
 3. **Empfänger TRFR und TRUS** — beide haben eine echte, offene Bitte im Standort-Mailtext.
+   Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`),
+   es fehlt ausschliesslich die Adresse.
 4. **Owner von BLP** (Abschnitt 4).
 5. **Absender der italienischen Eskalation vom 2026-07-28** (Abschnitt 1).
 6. **Kontakte bei Upgreat, NTT, ANG, VARONE** für den Eskalationsweg.
