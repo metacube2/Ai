@@ -49,6 +49,21 @@ Skriptschwäche und lässt sich ohne Änderung an der Sicherheitsrichtlinie nich
 `-Mode Docx` (Word-COM auf die Vorschau) **hängt** auf diesem Rechner ebenfalls — wer ein Word-
 Dokument braucht, öffnet die Vorschau-HTML von Hand in Word und speichert als `.docx`.
 
+**Zweiter Befund, wichtig für jede Prüfung per Skript: der Outlook Object Model Guard ist aktiv.**
+Nach dem Anlegen lassen sich die Entwürfe **nicht programmatisch verifizieren** — `MailItem.To`
+und `MailItem.HTMLBody` kommen beim *Lesen* leer zurück (Länge 0), und `Folder.GetTable()` bricht
+beim `Columns.Add` mit demselben `E_ABORT` ab. Das ist dieselbe Schutzschicht wie bei `SaveAs`:
+Adressen und Nachrichtentexte dürfen nicht ausgelesen werden. **Konsequenz:** dass der Text
+angekommen ist, lässt sich nur indirekt über `MailItem.Size` belegen (6.9–9.8 KB je Entwurf,
+skaliert exakt mit der Textlänge — ein leerer Entwurf wäre rund 1 KB). Der **Empfänger muss in
+Outlook mit dem Auge geprüft werden**, dafür gibt es keinen Skriptweg auf diesem Arbeitsplatz.
+
+**Falle beim Wiederholen:** Ein Lauf, der mitten in der Schleife scheitert, hinterlässt für die
+bereits erzeugten Mails **Waisen-Entwürfe** — Outlook speichert ein freigegebenes, nicht
+gespeichertes `MailItem` selbst in *Entwürfe*. Nach einem Fehlversuch also erst die Entwürfe
+aufräumen, sonst liegen Dubletten im Postfach. Am 2026-07-31 waren das ein doppelter
+Frankreich-Entwurf aus dem gescheiterten `SaveAs`-Lauf und ein Testentwurf; beide entfernt.
+
 **Welche Grafiken drin sind:**
 
 | Element | Wo | Was es zeigt |
@@ -350,12 +365,15 @@ gibt nichts zu tun, an dem sich jemand verausgaben könnte.
 Hier festhalten, was wann rausgegangen ist und was zurückkommt — sonst ist beim nächsten
 Durchgang nicht unterscheidbar, ob ein Standort nicht geantwortet oder nie eine Mail bekommen hat.
 
-| Standort | Versandt am | Antwort | Ergebnis |
-| --- | --- | --- | --- |
-| TRFR | — | — | Adresse fehlt |
-| TRIT | — | — | — |
-| TRIN | — | — | — |
-| TRUS | — | — | Adresse fehlt |
-| TRDE | — | — | — |
-| TRES | — | — | — |
-| TRUK | — | — | — |
+Alle sieben liegen seit 2026-07-31, 09:20 als **Entwürfe** in Outlook (`\\Ingo.Kohler@trafag.com\Entwürfe`),
+Grafik enthalten, nichts gesendet.
+
+| Standort | Entwurf | Versandt am | Antwort | Ergebnis |
+| --- | --- | --- | --- | --- |
+| TRFR | liegt, **An leer** | — | — | Adresse fehlt |
+| TRIT | liegt | — | — | — |
+| TRIN | liegt | — | — | — |
+| TRUS | liegt, **An leer** | — | — | Adresse fehlt |
+| TRDE | liegt | — | — | — |
+| TRES | liegt | — | — | — |
+| TRUK | liegt | — | — | — |
