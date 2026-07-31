@@ -68,7 +68,7 @@ public class UiTextServiceTests
         // Dynamic cards and records commonly store their German/English text as
         // adjacent constructor arguments before passing the pair to T(...).
         var adjacentMatches = Regex.Matches(source,
-            @"""((?:[^""\\]|\\.)*)""\s*,\s*""((?:[^""\\]|\\.)*)""",
+            @"""((?:[^""\r\n\\]|\\.)*)""\s*,\s*""((?:[^""\r\n\\]|\\.)*)""",
             RegexOptions.Singleline);
         foreach (Match match in adjacentMatches)
             expected.TryAdd(Regex.Unescape(match.Groups[1].Value), Regex.Unescape(match.Groups[2].Value));
