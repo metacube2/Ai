@@ -1,8 +1,19 @@
 # RAG Project
 
-Stand: 2026-07-17
+Stand: 2026-07-31
+
+Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
+und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
+Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 ## Kurzstand
+
+- LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
+  `GroupStandardCosts` ist mit 63'506 TR-AG-Werten gefuellt; Supplier bleibt bei
+  CH/AT/DE/ES komplett leer. Einkauf-Delta-Fix ist deployed, aber zum
+  Pruefzeitpunkt gab es noch keinen produktiven Delta-Lauf nach dem Deploy.
+  Details und genaue Vorrangregel:
+  `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 - DEPLOYED 2026-07-17 (Commit `3a4efb5`, `257/257` Tests gruen, DLL `17.07.2026 10:05:07`, Laenge `3'006'464`, Port 443 erreichbar): EINKAUF/Spend-Reiter hat einen Drilldown Lieferant -> Warengruppe/Jahr bekommen (Feedback-Runde Marco/Armin, Leitplanke "ein Punkt nach dem anderen"). Warengruppe folgt Marcos Vorgabe aus dem Materialstamm (`MaraMatkl`, neue additive Spalte), Fallback auf die Beleg-Warengruppe solange SAP `Matkl` im MARA-Set nicht liefert. WICHTIGER NEBENBEFUND, produktionskritisch behoben: SAP hat das MARA-Set umgebaut, `MARA001Set` liefert `Mstae` nicht mehr (404) — der naechste Einkauf-Full-Load/Delta waere sonst fehlgeschlagen; Fix liest jetzt `maracalcSet` (ungepagt, wie `mbewSet` ignoriert es `$top`/`$skip`). ABC/XYZ-Weg geklaert (MARC-MAABC + XYZ-Tabelle + vorhandener Report), Umsetzung bewusst erst nach Spend-Abnahme. NACHSORGE: Einkauf Full Load einmal laufen lassen, damit `Mstae` wieder gefuellt wird. Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-07-17, `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`.
 - DEPLOYED 2026-07-15 (Teil 2, Commit `5efeed7`, `240/240` Tests, DLL `15.07.2026 11:22:32`, Laenge `2'947'584`, Port 443 erreichbar): TR AG als liefernde Gesellschaft fuer die Gruppenmarge angebunden (neue Tabelle `GroupStandardCosts`, MBEW-STPRS Bewertungskreis 1100, befuellt beim CH/AT-SAP-Import; Lieferant->Gesellschaft ueber `SupplierName`-Klartext). TR-AG-gelieferte Zeilen nutzen jetzt die echte Konzernkostenbasis statt lokaler Verkaufszeilen-Kosten, egal welches Land verkauft. DB unveraendert (neue Tabelle additiv beim App-Start). TR IN/TR IT bleiben offen (TR IT live geprueft: SAP B1 pflegt keinen Standardkosten-Wert je Material; TR IN vom Entwicklungsrechner nicht erreichbar). Details: `docs/rag/FINANCE.md`, `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`.

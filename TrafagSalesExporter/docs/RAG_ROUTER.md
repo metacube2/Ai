@@ -1,17 +1,18 @@
 # RAG Router
 
-Stand: 2026-07-21
+Stand: 2026-07-31
 
 Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themenblock laden.
 
 ## Lade-Regel
 
 1. Immer nur diese Router-Datei zuerst lesen.
-2. `lastchange.md` (Repo-Root) laden: letzte ~7 Tage + offene Punkte, bewusst kompakt.
-3. Thema bestimmen; die passende Kurzdatei aus `docs/rag/` laden.
-4. Rohquellen nur laden, wenn Details, alte Zahlen, Codepfade, Mailtexte oder Audit gefragt sind.
-5. Arbeitsregeln/Grenzen (Tests, Doku-Pflicht, fachliche Verantwortung): `persona.md` (Repo-Root).
-6. SAP-Fakten (Feldnamen, Datenelemente, Tabelleninhalte, ABAP-Quelltexte) NICHT raten und nicht
+2. Bei aktuellem Produktivstand, UK-2025, Supplier-Feldern, Konzern-Standardkosten oder Einkauf-Delta zuerst `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` laden.
+3. Diese Live-Datei hat fuer diese Streitpunkte Vorrang vor aelteren Arbeitsnotizen.
+4. Danach `lastchange.md` und die passende Kurzdatei aus `docs/rag/` laden.
+5. Rohquellen nur laden, wenn Details, alte Zahlen, Codepfade, Mailtexte oder Audit gefragt sind.
+6. Arbeitsregeln/Grenzen (Tests, Doku-Pflicht, fachliche Verantwortung): `persona.md` (Repo-Root).
+7. SAP-Fakten (Feldnamen, Datenelemente, Tabelleninhalte, ABAP-Quelltexte) NICHT raten und nicht
    nur aus alter Doku uebernehmen: mit dem Werkzeug `SapProbe` direkt am System pruefen, siehe
    Abschnitt „Werkzeug: SAP-Direktzugriff (SapProbe)".
 
@@ -19,7 +20,8 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 
 | Thema | Wann laden | Standard laden |
 | --- | --- | --- |
-| Aktueller Stand | Projektstatus, letzte Aenderungen, offene Punkte | `docs/rag/PROJECT.md` |
+| Aktueller Livedaten-Stand | UK-2025, Supplier-Fuellung, GroupStandardCosts, Einkauf-Delta, widerspruechliche alte Aussagen | `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` |
+| Aktueller Stand | Projektstatus, letzte Aenderungen, offene Punkte | `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, danach `docs/rag/PROJECT.md` |
 | Finance Cockpit | Soll/Ist, Finance Summary, Regeln, Laenderlogik | `docs/rag/FINANCE.md` |
 | Finance Formeln/Mechanik | Wie rechnet was: Waehrungsumrechnung, Marge/Standardkosten, Land-Formeln, Trafag/Magnetic-Sense/GFS-Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess / Excel-Nachweis | Dashboard-Datenfluss, Audit-CSV, Sales_All, Finance Pruefbuch, Andreas-Nachvollziehbarkeit | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |

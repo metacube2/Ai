@@ -1,11 +1,24 @@
 # RAG Einkauf
 
-Stand: 2026-07-22
+Stand: 2026-07-31
+
+Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
+`docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat der dort
+direkt gepruefte Produktivstand Vorrang vor den chronologischen Eintraegen
+dieser Kurzdatei.
 
 Kurzdatei fuer das Einkaufs-Dashboard (Spend, offene Bestellungen, Kontrakte, Lieferanten).
 Detail-/Historien-Doku: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (Hauptdoku mit Nachtraegen).
 
 ## Kurzstand
+
+- LIVE-PRUEFUNG 2026-07-31 10:21 MESZ: Der Delta-Fix `66a34da` ist deployed und
+  nicht mehr an `Sites.IsActive` gebunden. Produktiv ist aber noch kein
+  `PurchasingSyncState.Mode = Delta` vorhanden; der Cache endet weiter am
+  2026-07-24. Der erste planmaessige Timerlauf nach dem Deploy war zum
+  Pruefzeitpunkt noch nicht faellig. Korrekte Aussage bis zum Nachweis:
+  **Fix deployed, Live-Wirkung offen.** Die waehbare Einstiegsdimension im
+  Spend-Aufriss ist umgesetzt und deployed.
 
 - NEU 2026-07-24 (DEPLOYED, DLL 12:37, Commit `c44ae28`): Warengruppen-**Texte** (T023T) ergaenzt.
   Ingo hat den SAP-Export direkt als Listenausgabe geliefert (Sprache DE, ~72 Codes, `WGBEZ` SAP-

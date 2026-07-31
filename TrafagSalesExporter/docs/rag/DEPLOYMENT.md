@@ -1,8 +1,15 @@
 # RAG Deployment
 
-Stand: 2026-07-21
+Stand: 2026-07-31
 
 ## Kurzstand
+
+- Letzter produktiv verifizierter Code-Deploy: 2026-07-30, Commit `66a34da`,
+  `BiDashboard.dll` `30.07.2026 14:51:54`, `3'223'552` Bytes. Inhalt:
+  Einkauf-Delta von `Sites.IsActive` entkoppelt. Live-Abgleich am 2026-07-31
+  10:21 MESZ: Fix ausgeliefert, aber noch kein produktiver Delta-Status nach dem
+  Deploy vorhanden; Details:
+  `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 - Letzter Deploy: 2026-07-24, IIS-Hosting ROLLBACK zurueck auf `outofprocess` (ca. 1h nach dem
   Wechsel auf `inprocess` meldete Ingo schleichend zunehmende Verlangsamung ueberall, nicht nur

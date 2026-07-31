@@ -319,8 +319,8 @@ Zahlen stehen — Änderungen an Zahlen zuerst hier, dann in die Einzelmails üb
 > **United Kingdom (TRUK) — 2,955 lines — no action required**
 >
 > Supplier information is now complete and the data looks good. Thank you. One open point,
-> and only if 2025 is needed for group reporting: the data we hold starts in January 2026, so
-> 2025 is absent. Let us know and we will request that export separately.
+> The UK data now covers both 2025 and 2026. The 2025 backfill is present, supplier information
+> is complete, and no additional export is needed from your side.
 >
 > ---
 >

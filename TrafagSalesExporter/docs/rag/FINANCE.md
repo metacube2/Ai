@@ -1,11 +1,21 @@
 # RAG Finance
 
-Stand: 2026-07-17
+Stand: 2026-07-31
+
+Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
+`GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
+Dessen Live-Zahlen haben Vorrang vor den chronologischen Zwischenstaenden unten.
 
 Formeln/Mechanik (Waehrungsumrechnung, Marge/Standardkosten, Land-Formeln,
 Trafag/Magnetic-Sense/GFS-Filter): `docs/rag/FINANCE_FORMELN.md`.
 
 ## Kurzstand
+
+- LIVE-PRUEFUNG 2026-07-31: TRUK enthaelt 1'867 Zeilen fuer 2025 und 1'090 fuer
+  2026; UK ist in allen drei Supplier-Feldern vollstaendig. Insgesamt sind
+  77'466 von 95'396 Verkaufszeilen in allen drei Supplier-Feldern leer.
+  `GroupStandardCosts` enthaelt 63'506 Werte fuer Bewertungskreis 1100/CHF.
+  Details: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 - QUANTIFIZIERT 2026-07-28 auf PRODUKTIVdaten (Server-DB Stand 2026-07-27, read-only Kopie): Die Supplier-Luecke betrifft `69'919` von `84'788` Zeilen (82.5 %), Andreas' „60-79 Tsd." ist bestaetigt. Die drei Supplier-Felder sind ausnahmslos GEMEINSAM leer (kein Fall mit nur einem fehlenden Feld) -> Mapping-/Quellenproblem, kein Pflegeproblem. 100 % leer: CH/DE/ES/AT/UK; teilweise gefuellt nur B1: IT 71 %, IN 12 %, FR 5 %, US 0.4 %. ENTSCHEIDUNGSRELEVANT: `63'008` Zeilen (74 %) haben Kosten, zeigen aber wegen `Lieferant unklar` keine Marge — darunter TRCH 37'680 + TRAT 1'462, d. h. die CH/AT-WAVWR-Kostenbasis wirkt sich auf KEINER Zeile aus. Damit hat die offene Fachfrage vom 2026-07-17 eine Zahl und mehr Hebel als die TR-IT/TR-IN-Anbindung. Neue offene Frage: TRDE hat produktiv 0 von 7'167 Zeilen mit Lieferant (Alphaplan-Spalten pruefen). Details: `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md`.
 - ACHTUNG TERMIN 2026-08-03: **B1-Upgrade Go-Live ueber ALLE Tochtergesellschaften** (Final Tests 2026-08-02), von Paola/TR IT am 2026-07-28 gemeldet — war vorher nicht angekuendigt. Betrifft direkt den Finance-Import: `HanaQueryService` liest fuer FR (`fr01_p`), IT (`it01_p`), US (`us01_p`) und ueber denselben Adapter IN (`TRAFAG_LIVE`) aus `OINV`/`INV1`/`ORIN`/`RIN1` + `OADM`/`OITM`/`OITB`/`OCRD`/`CRD1`/`OOND`/`OSLP`/`ORDR`. Risiken: Downtime am Wochenende (Importfehler + Heartbeat-Luecken, erwartungskonform), Schema-/Feldaenderungen (besonders `INV1.StockPrice` = neue TR-IT-Kostenquelle, `OITM.EvalSystem`, `OADM.MainCurncy`), und die `EvalSystem`-Zahlen aus dem 2026-07-27-Befund sind ein Stand VOR dem Upgrade. NACHSORGE ab 2026-08-03: Importlaeufe FR/IT/US/IN pruefen, `StandardCost`-Fuellgrad je TSC und `EvalSystem`-Verteilung neu erheben (Werkzeug `.tmp_tools/HanaQ`). Details: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitt 5d.

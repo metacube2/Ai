@@ -115,7 +115,7 @@ Frankreich-Entwurf aus dem gescheiterten `SaveAs`-Lauf und ein Testentwurf; beid
 | Vorher/Nachher-Kasten | DE | „what we receive" gegen „what we need" am RTF-Beispiel |
 | Monatsstreifen 2026 | ES | Jan–Apr rot, Mai teilweise, Jun–Jul vorhanden, Aug–Dez offen |
 | Standortvergleich | UK | UK 100 % gegen IT 71 %, IN 12 %, Rest 0–5 % |
-| Jahresstreifen | UK | 2025 nicht vorhanden, 2026 komplett |
+| Jahresstreifen | UK | 2025 vorhanden (1'867 Zeilen), 2026 vorhanden; kein Datenabruf noetig |
 
 **Zwei bewusste Festlegungen in der Grafik**, beide relevant, falls jemand die Zahlen nachrechnet:
 
