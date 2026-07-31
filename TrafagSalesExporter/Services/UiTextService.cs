@@ -1137,7 +1137,7 @@ public sealed class UiTextService : IUiTextService
         // New languages use the complete generated catalogue first. The older
         // languages retain their manually reviewed wording and only fill gaps
         // from the generated catalogue below.
-        if (_currentLanguage is "sq" or "tr" or "tlh" &&
+        if (_currentLanguage is "tlh" &&
             UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completeTranslations) &&
             completeTranslations.TryGetValue(german, out var completeTranslation))
             return completeTranslation;
