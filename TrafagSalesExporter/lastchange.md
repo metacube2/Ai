@@ -6,6 +6,19 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- WERKZEUG 2026-07-31, grafische Mailfassung: `docs/mails/Build-StandortMails.ps1` baut die sieben
+  Standortmails mit Outlook-taugliche Grafiken (Balken Artikelstamm/Rechnungszeilen, Feld-Schema
+  `Purchasing Data` -> `Preferred Vendor`, Statustabelle DE, Vorher/Nachher-Kasten zum RTF-Muell,
+  Monatsstreifen ES 2026, Standort- und Jahresvergleich UK). `-Mode Preview` (Default) schreibt
+  `.tmp_standort_mails/Vorschau_Standortmails.html`, `-Mode Draft` legt Outlook-Entwuerfe an
+  (schreibt ins Postfach, sendet nichts). Ausgabeordner ist gitignored - enthaelt Empfaengeradressen.
+  BEFUND, WICHTIG FUER KUENFTIGE VERSUCHE: `MailItem.SaveAs` ist auf diesem Arbeitsplatz GESPERRT -
+  `.msg`, `.oft` und `.txt`, jeder Zielordner, immer `E_ABORT` (0x80004004). Endpoint-Security/DLP,
+  kein Skriptfehler; `MailItem.Save()` in Entwuerfe geht. `Word.Application`-COM haengt ebenfalls,
+  daher kein automatisches .docx - Vorschau-HTML von Hand in Word oeffnen. Zwei Darstellungsregeln:
+  Artikelbalken mit EXAKTEN Stueckzahlen, Zeilenbalken NUR in Prozent (die Zeilenzahlen je Kategorie
+  waeren aus gerundeten Prozenten abgeleitet und wuerden Scheingenauigkeit erzeugen); keine Bilder,
+  nur Tabellen mit `bgcolor`, weil Outlook externe Bilder beim Empfaenger blockiert.
 - DOKU 2026-07-31, versandfertige Einzelmails je Standort (kein Code):
   `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`. Der Sammeltext aus
   `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 6 ist in SIEBEN Einzelmails aufgeteilt,

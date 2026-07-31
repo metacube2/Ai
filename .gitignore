@@ -11,3 +11,7 @@ TrafagSalesExporter/*.db-wal
 Trafag/
 TeamsTextGrabber/bin/
 TeamsTextGrabber/obj/
+
+# Generierte Mail-Ausgaben: enthalten Empfaengeradressen, gehoeren nicht ins Repo.
+# Erzeugt aus docs/mails/Build-StandortMails.ps1, jederzeit reproduzierbar.
+TrafagSalesExporter/.tmp_standort_mails/

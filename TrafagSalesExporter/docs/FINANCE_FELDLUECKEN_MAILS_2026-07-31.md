@@ -26,6 +26,54 @@ dass jemand Zeit in Produktsparten, Kurse oder Frachtkosten steckt.
 
 ---
 
+## Grafische Fassung und Erzeugung
+
+Die Mails oben sind die **Textfassung**. Zusätzlich gibt es eine grafisch aufbereitete Fassung,
+damit der Empfänger die Lücke sieht statt sie aus Zahlen zu rekonstruieren. Erzeugt von
+`docs/mails/Build-StandortMails.ps1`:
+
+```text
+! powershell -NoProfile -ExecutionPolicy Bypass -File .\docs\mails\Build-StandortMails.ps1 -Mode Preview
+! powershell -NoProfile -ExecutionPolicy Bypass -File .\docs\mails\Build-StandortMails.ps1 -Mode Draft
+```
+
+`Preview` schreibt `.tmp_standort_mails/Vorschau_Standortmails.html` (alle sieben Mails
+untereinander, im Browser prüfbar, ändert nichts). `Draft` legt sie als Entwürfe in Outlook an —
+schreibt ins Postfach, **sendet nichts**, Entwürfe sind einzeln löschbar.
+
+**Warum keine `.msg`-Dateien:** `MailItem.SaveAs` ist auf diesem Arbeitsplatz gesperrt. Jedes
+Format (`.msg`, `.oft`, `.txt`) und jeder Zielordner liefern `E_ABORT` (`0x80004004`), verifiziert
+2026-07-31 — eine Endpoint-Security-/DLP-Regel, die Outlook das Schreiben von Nachrichtendateien
+auf Platte verbietet. `MailItem.Save()` in den Entwürfe-Ordner funktioniert dagegen. Das ist keine
+Skriptschwäche und lässt sich ohne Änderung an der Sicherheitsrichtlinie nicht umgehen.
+`-Mode Docx` (Word-COM auf die Vorschau) **hängt** auf diesem Rechner ebenfalls — wer ein Word-
+Dokument braucht, öffnet die Vorschau-HTML von Hand in Word und speichert als `.docx`.
+
+**Welche Grafiken drin sind:**
+
+| Element | Wo | Was es zeigt |
+| --- | --- | --- |
+| Zwei-Segment-Balken Artikelstamm | FR, IT, IN, US | gepflegte gegen fehlende Artikelnummern, exakte Stückzahlen |
+| Zwei-Segment-Balken Rechnungszeilen | FR, IT, IN, US | Anteil zuordenbarer Zeilen, **nur Prozente** |
+| Feld-Schema Artikelstamm | FR, IT, IN, US | Reiter *Purchasing Data* mit leerem Feld *Preferred Vendor* und Verweis auf `OITM.CardCode` |
+| Statustabelle Exportfelder | DE | fünf Feldgruppen mit Farbpunkt: komplett, leer, unbrauchbar |
+| Vorher/Nachher-Kasten | DE | „what we receive" gegen „what we need" am RTF-Beispiel |
+| Monatsstreifen 2026 | ES | Jan–Apr rot, Mai teilweise, Jun–Jul vorhanden, Aug–Dez offen |
+| Standortvergleich | UK | UK 100 % gegen IT 71 %, IN 12 %, Rest 0–5 % |
+| Jahresstreifen | UK | 2025 nicht vorhanden, 2026 komplett |
+
+**Zwei bewusste Festlegungen in der Grafik**, beide relevant, falls jemand die Zahlen nachrechnet:
+
+- **Artikelbalken zeigen exakte Stückzahlen, Zeilenbalken nur Prozente.** Die Zeilenzahlen je
+  Kategorie wären aus gerundeten Prozentwerten abgeleitet (12 % von 6'990) und würden eine
+  Genauigkeit vortäuschen, die die Messung nicht hat. Die Gesamtzahl steht jeweils als Fussnote.
+- **Keine Bilder, nur Tabellen mit `bgcolor`.** Outlook blockiert externe Bilder beim Empfänger
+  standardmässig, und eingebettete Bilder erscheinen zusätzlich als Dateianhang. Tabellenzellen
+  rendern in jeder Outlook-Version. Deshalb auch kein `flex`, kein `grid`, keine `border-radius`
+  und Balkenbreiten in Pixel statt Prozent.
+
+---
+
 ## 1. Frankreich (TRFR) — Adresse fehlt
 
 **To:** *offen — Empfänger noch zu beschaffen*
