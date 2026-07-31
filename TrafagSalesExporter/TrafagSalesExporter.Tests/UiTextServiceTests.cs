@@ -57,13 +57,18 @@ public class UiTextServiceTests
                 German = Regex.Unescape(match.Groups[1].Value),
                 English = Regex.Unescape(match.Groups[2].Value)
             })
+            .Where(x => !string.IsNullOrWhiteSpace(x.German))
             .GroupBy(x => x.German, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(x => x.Key, x => x.First().English, StringComparer.OrdinalIgnoreCase);
         var attributeMatches = Regex.Matches(source,
             @"(?<prefix>[A-Za-z]+)De=""((?:[^""\\]|\\.)*)"".*?\k<prefix>En=""((?:[^""\\]|\\.)*)""",
             RegexOptions.Singleline);
         foreach (Match match in attributeMatches)
-            expected.TryAdd(Regex.Unescape(match.Groups[2].Value), Regex.Unescape(match.Groups[3].Value));
+        {
+            var german = Regex.Unescape(match.Groups[2].Value);
+            if (!string.IsNullOrWhiteSpace(german))
+                expected.TryAdd(german, Regex.Unescape(match.Groups[3].Value));
+        }
 
         // Dynamic cards and records commonly store their German/English text as
         // adjacent constructor arguments before passing the pair to T(...).
@@ -71,7 +76,11 @@ public class UiTextServiceTests
             @"""((?:[^""\r\n\\]|\\.)*)""\s*,\s*""((?:[^""\r\n\\]|\\.)*)""",
             RegexOptions.Singleline);
         foreach (Match match in adjacentMatches)
-            expected.TryAdd(Regex.Unescape(match.Groups[1].Value), Regex.Unescape(match.Groups[2].Value));
+        {
+            var german = Regex.Unescape(match.Groups[1].Value);
+            if (!string.IsNullOrWhiteSpace(german))
+                expected.TryAdd(german, Regex.Unescape(match.Groups[2].Value));
+        }
 
         expected["Projekte"] = "Projects";
 
