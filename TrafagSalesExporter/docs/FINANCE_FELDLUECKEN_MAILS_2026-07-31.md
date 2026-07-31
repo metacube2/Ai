@@ -17,7 +17,7 @@ dass jemand Zeit in Produktsparten, Kurse oder Frachtkosten steckt.
 | --- | --- | --- | --- |
 | 1 | Frankreich | *offen* | **blockiert**, nur Adresse fehlt — kleinster Aufwand aller Standorte |
 | 2 | Italien | Paola Castagna | versandfertig, siehe Hinweis zum Timing |
-| 3 | Indien | RanVijay Kumar | versandfertig; `tasc.co.in` im Cc ist eine offene Entscheidung |
+| 3 | Indien | RanVijay Kumar | **gesendet 2026-07-31 09:56**, nur an die Trafag-Adresse |
 | 4 | USA | *offen* | **blockiert**, nur Adresse fehlt |
 | 5 | Deutschland | Rohail Munir | versandfertig |
 | 6 | Spanien | Santi Gomez | versandfertig |
@@ -46,6 +46,7 @@ Entwürfe stimmen, einer enthielt eine falsche Aussage.**
 | UK Lieferant auf allen 2'955 Zeilen | 2'955 mit Nummer **und** Name | stimmt |
 | UK Kostendeckung 93 % | 2'762 von 2'955 = 93.5 % | stimmt |
 | **UK „2025 fehlt, Daten beginnen im Januar 2026"** | **2025: 1'867 Zeilen, 2026: 1'082** | **FALSCH, ersetzt** |
+| **IT „you are the best-performing site on supplier data"** | **TRUK 100 %**, TRIT 71 % | **FALSCH, auf „of our SAP Business One sites" eingeschränkt** |
 
 Nebenbefund zur Trafag-Erkennung, geprüft mit demselben Regex wie im Code:
 
@@ -107,7 +108,8 @@ Frankreich-Entwurf aus dem gescheiterten `SaveAs`-Lauf und ein Testentwurf; beid
 | Element | Wo | Was es zeigt |
 | --- | --- | --- |
 | Zwei-Segment-Balken Artikelstamm | FR, IT, IN, US | gepflegte gegen fehlende Artikelnummern, exakte Stückzahlen |
-| Zwei-Segment-Balken Rechnungszeilen | FR, IT, IN, US | Anteil zuordenbarer Zeilen, **nur Prozente** |
+| Zwei-Segment-Balken Rechnungszeilen | FR, IN, US | Anteil zuordenbarer Zeilen, **nur Prozente** |
+| Standortvergleich | IT | UK 100 %, IT 71 %, IN 12 %, FR 5 %, US unter 1 % — ersetzt bei IT den zweiten Balken, der dort mit dem Artikelbalken zusammenfiel |
 | Feld-Schema Artikelstamm | FR, IT, IN, US | Reiter *Purchasing Data* mit leerem Feld *Preferred Vendor* und Verweis auf `OITM.CardCode` |
 | Statustabelle Exportfelder | DE | fünf Feldgruppen mit Farbpunkt: komplett, leer, unbrauchbar |
 | Vorher/Nachher-Kasten | DE | „what we receive" gegen „what we need" am RTF-Beispiel |
@@ -180,8 +182,9 @@ diesen Satz liest sich die Mail wie eine Erinnerung an die Zusage von Ende Augus
 > the B1 upgrade on 3 August, please look at it whenever it suits you afterwards.
 >
 > We have completed a field-by-field check of the sales data that feeds the group BI Dashboard,
-> measured on the consolidated extract of 29 July 2026. You are the best-performing site on
-> supplier data, thank you: 71% of your 19,534 invoice lines carry the supplier.
+> measured on the consolidated extract of 29 July 2026. Of our SAP Business One sites you are by
+> some distance the best maintained, thank you: 71% of your 19,534 invoice lines carry the
+> supplier — 13,925 of 19,534; 5,609 cannot be attributed.
 >
 > **The remaining gap: 939 of your 3,280 item codes** have no *Preferred Vendor* maintained on
 > the item master (`OITM.CardCode`, Purchasing Data tab). We read the supplier from exactly that
@@ -415,7 +418,7 @@ enthalten, nichts gesendet. Nach der Korrektur der UK-Mail am 2026-07-31 komplet
 | --- | --- | --- | --- | --- |
 | TRFR | liegt, **An leer** | — | — | Adresse fehlt |
 | TRIT | liegt | — | — | — |
-| TRIN | liegt | — | — | — |
+| TRIN | **gesendet** | 2026-07-31 09:56 | offen | Betreff vor Versand ergänzt auf „… (Trafag India) -> Supplier Name"; ging nur an `RanVijay.Kumar@trafag.com`, nicht an `tasc.co.in` |
 | TRUS | liegt, **An leer** | — | — | Adresse fehlt |
 | TRDE | liegt | — | — | — |
 | TRES | liegt | — | — | — |

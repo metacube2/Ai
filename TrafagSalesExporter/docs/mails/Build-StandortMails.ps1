@@ -147,13 +147,38 @@ $mails += [pscustomobject]@{
 <p>a separate topic from the inventory valuation discussion &mdash; this one is master data only,
 it has no bearing on the moving-average question and there is no deadline attached to it. Given
 the B1 upgrade on 3 August, please look at it whenever it suits you afterwards.</p>
-<p>$intro You are the best-performing site on supplier data, thank you.</p>
+<p>$intro Of our SAP Business One sites you are by some distance the best maintained, thank you.</p>
 $(Caption 'Item codes with a Preferred Vendor maintained')
 $(Bar 71 '2,341 item codes maintained' '939 item codes missing')
-$(Caption 'Invoice lines we can attribute to a supplier')
-$(Bar 71 'supplier known' 'supplier unknown')
-<p style="margin:4px 0 0 0;font:8.5pt Calibri;color:#707070">3,280 item codes and 19,534 invoice
-lines in total &mdash; the highest share of all sites.</p>
+<p style="margin:4px 0 0 0;font:8.5pt Calibri;color:#707070">3,280 item codes in total. On invoice
+lines this comes out the same way: 13,925 of 19,534 lines can be attributed to a supplier, 5,609
+cannot.</p>
+$(Caption 'Share of invoice lines with a supplier, by site')
+<table cellpadding="0" cellspacing="0" border="0" width="$W" style="border-collapse:collapse;font:9.5pt Calibri">
+<tr>
+<td width="130" style="padding:3px 8px 3px 0;color:#707070">United Kingdom</td>
+<td><table cellpadding="0" cellspacing="0" border="0" width="300" style="border-collapse:collapse"><tr><td bgcolor="$GREY" height="16" width="300" style="font:8.5pt Calibri;color:#FFFFFF;text-align:center">100%</td></tr></table></td>
+</tr>
+<tr>
+<td style="padding:3px 8px 3px 0"><b>Italy</b></td>
+<td><table cellpadding="0" cellspacing="0" border="0" width="300" style="border-collapse:collapse"><tr><td bgcolor="$GREEN" height="16" width="213" style="font:bold 8.5pt Calibri;color:#FFFFFF;text-align:center">71%</td><td width="87">&nbsp;</td></tr></table></td>
+</tr>
+<tr>
+<td style="padding:3px 8px 3px 0;color:#707070">India</td>
+<td><table cellpadding="0" cellspacing="0" border="0" width="300" style="border-collapse:collapse"><tr><td bgcolor="$GREY" height="16" width="36" style="font-size:1px">&nbsp;</td><td width="264" style="padding-left:6px;font:8.5pt Calibri;color:#707070">12%</td></tr></table></td>
+</tr>
+<tr>
+<td style="padding:3px 8px 3px 0;color:#707070">France</td>
+<td><table cellpadding="0" cellspacing="0" border="0" width="300" style="border-collapse:collapse"><tr><td bgcolor="$GREY" height="16" width="15" style="font-size:1px">&nbsp;</td><td width="285" style="padding-left:6px;font:8.5pt Calibri;color:#707070">5%</td></tr></table></td>
+</tr>
+<tr>
+<td style="padding:3px 8px 3px 0;color:#707070">USA</td>
+<td><table cellpadding="0" cellspacing="0" border="0" width="300" style="border-collapse:collapse"><tr><td bgcolor="$GREY" height="16" width="3" style="font-size:1px">&nbsp;</td><td width="297" style="padding-left:6px;font:8.5pt Calibri;color:#707070">under 1%</td></tr></table></td>
+</tr>
+</table>
+<p style="margin:4px 0 0 0;font:8.5pt Calibri;color:#707070">The UK is ahead only because its data
+reaches us through a different route, where the supplier is resolved outside the item master.
+Among the B1 sites the gap to you is large.</p>
 $(Caption 'Where the field sits')
 $(FieldSchematic 'empty on 939 of your 3,280 items')
 <p>We read the supplier from exactly that field, so an item without it produces invoice lines we
