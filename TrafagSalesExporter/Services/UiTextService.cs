@@ -17,7 +17,10 @@ public sealed class UiTextService : IUiTextService
         "en",
         "es",
         "it",
-        "hi"
+        "hi",
+        "sq",
+        "tr",
+        "tlh"
     };
 
     private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Translations =
@@ -1093,6 +1096,20 @@ public sealed class UiTextService : IUiTextService
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Aktiv"] = "सक्रिय", ["Land"] = "देश", ["Jahr"] = "वर्ष", ["Regeltyp"] = "नियम प्रकार", ["Feld"] = "फ़ील्ड", ["Vergleich"] = "तुलना", ["Wert"] = "मान", ["Sort"] = "क्रम", ["Notiz"] = "टिप्पणी", ["Interaktivitaet Diagnose"] = "इंटरैक्टिविटी निदान", ["HTML wurde vom Server gerendert."] = "HTML सर्वर द्वारा रेंडर किया गया।", ["Adresse:"] = "पता:", ["Blazor interaktiv verbunden:"] = "Blazor इंटरैक्टिव रूप से जुड़ा:", ["Server-Klicks angekommen:"] = "सर्वर क्लिक प्राप्त हुए:", ["JavaScript Diagnose:"] = "JavaScript निदान:", ["Blazor Objekt im Browser:"] = "ब्राउज़र में Blazor ऑब्जेक्ट:", ["Server-Klick testen"] = "सर्वर क्लिक जांचें", ["Pfad"] = "पथ", ["Letzte Änderung"] = "अंतिम परिवर्तन", ["Level"] = "स्तर", ["Details"] = "विवरण", ["Alias"] = "उपनाम", ["Entity Set"] = "एंटिटी सेट", ["Left Keys"] = "बाएं कुंजी", ["Right Keys"] = "दाएं कुंजी", ["System"] = "सिस्टम", ["Scope"] = "दायरा", ["Source"] = "स्रोत", ["Target"] = "लक्ष्य", ["Typ / Klasse"] = "प्रकार / क्लास", ["Argument"] = "आर्गुमेंट", ["Info"] = "जानकारी", ["Aktionen"] = "कार्रवाइयां", ["Klasse:"] = "क्लास:", ["Snippet"] = "स्निपेट", ["Aktuelle Regel"] = "वर्तमान नियम", ["Argument:"] = "आर्गुमेंट:"
+            },
+            ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Trafag Global BI Cockpit"] = "Cockpit-i global BI i Trafag",
+                ["Finance Cockpit"] = "Cockpit-i financiar", ["Export Dashboard"] = "Paneli i eksportit", ["Management Analyse"] = "Analiza e menaxhimit",
+                ["Manuelle Importe"] = "Importet manuale", ["Admin"] = "Administrimi", ["Standorte"] = "Lokacionet", ["Transformationen"] = "Transformimet", ["Finance Regeln"] = "Rregullat financiare", ["Settings"] = "Cilësimet", ["Logs"] = "Regjistrat", ["Name"] = "Emri", ["Passwort"] = "Fjalëkalimi", ["Land"] = "Shteti", ["Status"] = "Statusi", ["Datum"] = "Data", ["Filtern"] = "Filtro", ["Aufbewahrung"] = "Ruajtja", ["Zeilen"] = "Rreshta", ["Dauer"] = "Kohëzgjatja", ["Dateiname"] = "Emri i skedarit", ["Fehler"] = "Gabim", ["Aktiv"] = "Aktiv", ["Jahr"] = "Viti", ["Regeltyp"] = "Lloji i rregullit", ["Feld"] = "Fusha", ["Vergleich"] = "Krahasimi", ["Wert"] = "Vlera", ["Notiz"] = "Shënim", ["Pfad"] = "Shtegu", ["Letzte Änderung"] = "Ndryshimi i fundit", ["Level"] = "Niveli", ["Details"] = "Detajet", ["Alias"] = "Pseudonimi", ["System"] = "Sistemi", ["Source"] = "Burimi", ["Target"] = "Destinacioni", ["Argument"] = "Argumenti", ["Aktionen"] = "Veprimet", ["Interaktivitaet Diagnose"] = "Diagnostikimi i interaktivitetit", ["Server-Klick testen"] = "Testo klikimin e serverit"
+            },
+            ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Trafag Global BI Cockpit"] = "Trafag Global BI Kokpiti", ["Finance Cockpit"] = "Finans Kokpiti", ["Export Dashboard"] = "Dışa aktarma panosu", ["Management Analyse"] = "Yönetim analizi", ["Manuelle Importe"] = "Manuel içe aktarmalar", ["Admin"] = "Yönetim", ["Standorte"] = "Lokasyonlar", ["Transformationen"] = "Dönüşümler", ["Finance Regeln"] = "Finans kuralları", ["Settings"] = "Ayarlar", ["Logs"] = "Günlükler", ["Name"] = "Ad", ["Passwort"] = "Parola", ["Land"] = "Ülke", ["Status"] = "Durum", ["Datum"] = "Tarih", ["Filtern"] = "Filtrele", ["Aufbewahrung"] = "Saklama", ["Zeilen"] = "Satırlar", ["Dauer"] = "Süre", ["Dateiname"] = "Dosya adı", ["Fehler"] = "Hata", ["Aktiv"] = "Etkin", ["Jahr"] = "Yıl", ["Regeltyp"] = "Kural türü", ["Feld"] = "Alan", ["Vergleich"] = "Eşleşme", ["Wert"] = "Değer", ["Notiz"] = "Not", ["Pfad"] = "Yol", ["Letzte Änderung"] = "Son değişiklik", ["Level"] = "Seviye", ["Details"] = "Ayrıntılar", ["Alias"] = "Takma ad", ["System"] = "Sistem", ["Source"] = "Kaynak", ["Target"] = "Hedef", ["Argument"] = "Argüman", ["Aktionen"] = "İşlemler", ["Interaktivitaet Diagnose"] = "Etkileşim tanılaması", ["Server-Klick testen"] = "Sunucu tıklamasını test et"
+            },
+            ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Trafag Global BI Cockpit"] = "Trafag BI naQta'", ["Finance Cockpit"] = "Huch qach", ["Export Dashboard"] = "tlha' Segh", ["Management Analyse"] = "vo' Qong yaj", ["Manuelle Importe"] = "ghItlh yuv", ["Admin"] = "pIn'a'", ["Standorte"] = "Daqmey", ["Transformationen"] = "choHmey", ["Finance Regeln"] = "Huch chutmey", ["Settings"] = "rIch", ["Logs"] = "taq", ["Name"] = "pong", ["Passwort"] = "pe'vIl mI'", ["Land"] = "Sep", ["Status"] = "Dot", ["Datum"] = "po", ["Filtern"] = "nej", ["Aufbewahrung"] = "pol", ["Zeilen"] = "tlheghmey", ["Dauer"] = "poH", ["Dateiname"] = "nav pong", ["Fehler"] = "Qagh", ["Aktiv"] = "vang", ["Jahr"] = "DIS", ["Regeltyp"] = "chut Segh", ["Feld"] = "yotlh", ["Vergleich"] = "rap", ["Wert"] = "potlh", ["Notiz"] = "QIn", ["Pfad"] = "magh", ["Letzte Änderung"] = "choH Qav", ["Level"] = "patlh", ["Details"] = "le'", ["Alias"] = "pIm pong", ["System"] = "pat", ["Source"] = "来源", ["Target"] = "Do", ["Argument"] = "mIw", ["Aktionen"] = "vangmey", ["Interaktivitaet Diagnose"] = "vanglaH Dot", ["Server-Klick testen"] = "QapwI' tI'"
             }
         };
 
@@ -1131,6 +1148,12 @@ public sealed class UiTextService : IUiTextService
         var normalized = (language ?? string.Empty).Trim().ToLowerInvariant();
         if (normalized is "in" or "ind" or "india" or "hindi")
             normalized = "hi";
+        if (normalized is "al" or "alb" or "albanian" or "shqip")
+            normalized = "sq";
+        if (normalized is "tr" or "tur" or "turkish" or "türkçe")
+            normalized = "tr";
+        if (normalized is "klingon" or "tlhingan" or "tlhingan hol")
+            normalized = "tlh";
         return SupportedLanguages.Contains(normalized) ? normalized : "de";
     }
 }

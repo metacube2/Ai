@@ -23,5 +23,17 @@ public class UiTextServiceTests
         service.SetLanguage("hi");
         Assert.Equal("साइटें", service.Text("Standorte", "Sites"));
         Assert.Equal("Untranslated English", service.Text("Nicht uebersetzt", "Untranslated English"));
+
+        service.SetLanguage("sq");
+        Assert.Equal("Lokacionet", service.Text("Standorte", "Sites"));
+
+        service.SetLanguage("tr");
+        Assert.Equal("Lokasyonlar", service.Text("Standorte", "Sites"));
+
+        service.SetLanguage("tlh");
+        Assert.Equal("Daqmey", service.Text("Standorte", "Sites"));
+
+        service.SetLanguage("klingon");
+        Assert.Equal("tlh", service.CurrentLanguage);
     }
 }
