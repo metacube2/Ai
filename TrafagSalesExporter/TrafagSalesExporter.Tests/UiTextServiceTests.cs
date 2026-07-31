@@ -49,7 +49,7 @@ public class UiTextServiceTests
         var source = string.Join('\n', Directory.GetFiles(componentRoot, "*.razor", SearchOption.AllDirectories)
             .Select(File.ReadAllText));
         var matches = Regex.Matches(source,
-            """(?:\bT|UiText\.Text)\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"""",
+            @"(?:\bT|UiText\.Text)\(\s*""((?:[^""\\]|\\.)*)""\s*,\s*""((?:[^""\\]|\\.)*)""",
             RegexOptions.Singleline);
         var expected = matches
             .Select(match => new
