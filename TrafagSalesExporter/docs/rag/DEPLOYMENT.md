@@ -4,6 +4,14 @@ Stand: 2026-07-31
 
 ## Kurzstand
 
+- Letzter produktiv verifizierter Deploy: 2026-07-31, Commit `f740eb9`
+  (Spend-Matrix-Nachbesserung: fett und rund 2 pt groesser), `346/346` Tests
+  gruen. `BiDashboard.dll` `31.07.2026 11:39:12`, `3'226'112` Bytes, SHA256
+  `0B5ABE3A5B3F38886A242F9B60B6A25B789436A5B1AF5B5B8DCB0FEF5F0942B9`;
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt/entfernt,
+  Produktiv-DB unveraendert, Port 443 offen, authentifizierter HTTPS-Aufruf
+  `200` mit Titel `Trafag Finanze/Sales Management Cockpit`.
+
 - Letzter produktiv verifizierter Deploy: 2026-07-31, Commit `4a3271b`
   (Spend-Matrix-Kontrast), Doku-Commit `c71885b`, `346/346` Tests gruen.
   `BiDashboard.dll` `31.07.2026 11:29:08`, `3'226'112` Bytes, SHA256

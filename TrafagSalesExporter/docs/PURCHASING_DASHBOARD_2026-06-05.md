@@ -8,6 +8,11 @@ und Materialzeilen verwenden dunklen Primaertext, groessere Schrift und
 deutlichere Ebenenhintergruende; die Hierarchie bleibt ueber Einrueckung und
 unterschiedliche Blautoene sichtbar.
 
+Nachbesserung 2026-07-31: Schrift der aufgeklappten Warengruppen und
+Materialzeilen fuer die Praesentationsdarstellung fett (`700`) und gegenueber
+dem vorherigen Stand rund 2 pt groesser gesetzt (`1.05rem`/`1rem`) und mit
+Commit `f740eb9` produktiv veroeffentlicht.
+
 ## Ziel
 
 Der neue Bereich `Einkauf` soll die vorhandene Power-BI-Vorlage `x.pbix` aufnehmen und um weitere SAP-Einkaufsanalysen ergaenzen.

@@ -6,6 +6,16 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DEPLOYED 2026-07-31, Nachbesserung Spend-Matrix-Schrift (Commit `f740eb9`,
+  `346/346` Tests gruen): Aufgeklappte Warengruppen stehen jetzt mit
+  `font-weight: 700` und `1.05rem`, Materialzeilen mit `1rem`; gegenueber dem
+  vorherigen Stand entspricht das rund 2 pt mehr. Publish mit
+  `app_offline.htm`; produktive `BiDashboard.dll` `31.07.2026 11:39:12`,
+  `3'226'112` Bytes, SHA256 `0B5ABE3A...F0942B9`; lokaler Release und Server
+  bitgleich. Produktiv-DB unveraendert (`338'206'720` Bytes, Zeitstempel
+  unveraendert), Port 443 offen, authentifizierter HTTPS-Aufruf `200`, Titel
+  `Trafag Finanze/Sales Management Cockpit`.
+
 - DEPLOYED 2026-07-31, Spend-Matrix-Kontrast fuer Praesentationen/Snipping
   (Commit `4a3271b`, Doku-Commit davor `c71885b`, `346/346` Tests gruen):
   Aufgeklappte Warengruppen- und Materialzeilen verwenden jetzt
