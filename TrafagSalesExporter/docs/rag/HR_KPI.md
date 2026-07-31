@@ -1,6 +1,6 @@
 # RAG HR KPI
 
-Stand: 2026-07-01
+Stand: 2026-07-31
 
 ## Kurzstand
 
@@ -14,7 +14,11 @@ Stand: 2026-07-01
 - Wichtigste YTD-Kachel: `Fluktuation YTD` = fluktuationsrelevante Austritte vom 01.01. des gewaehlten Jahres bis Stichtag / durchschnittlicher Headcount im gleichen Zeitraum. Bei vergangenen Jahren ist der Stichtag 31.12.; beim laufenden Jahr heutiger Tag bzw. gewaehlter Bis-Stichtag.
 - Farblogik Fluktuations-Kacheln: Headcount/Basis blau, Austritte gelb, fluktuationsrelevante Austritte gruen, nicht relevante/ausgeschlossene Austritte grau, Fluktuationsraten rot, Prognose violett.
 - Validierung/Deploy: Commit `874a61c Add HR turnover metric tooltips`, Tests `125/125` gruen, produktive DLL `01.07.2026 08:20:54`, Port 443 erreichbar.
-- Nachtrag 2026-07-07 (Review, noch nicht deployed): Vorjahresvergleich zeigte bei gewaehltem Austrittsjahr immer 0 (behoben, eigene ungefilterte Vergleichsliste); Krankenquote-Nenner kappt jetzt beim laufenden Jahr auf heute und leitet ohne Filter die Periode aus den Absenzdaten ab; Top-Absenzen pro Person aggregiert; Fluktuations-Nenner YTD-konsistent; neue Datenqualitaets-Hinweise (SAP-Duplikate, Name-Join-Trefferquote). Tests `141/141` gruen. Details: `docs/HR_KPI_KORREKTUREN_2026-07-06.md` und Nachtrag in `docs/HR_KPI_NACHDOKU_2026-05-13.md`.
+- Review-Korrekturen vom 2026-07-07 sind seit den nachfolgenden produktiven
+  Builds enthalten (Commit `1afac2f`): korrekter Vorjahresvergleich,
+  YTD-konsistente Krankenquote/Fluktuation, aggregierte Top-Absenzen und neue
+  Datenqualitaets-Hinweise. Details:
+  `docs/HR_KPI_KORREKTUREN_2026-07-06.md`.
 
 ## Datenquellen
 

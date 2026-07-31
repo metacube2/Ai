@@ -1,6 +1,6 @@
 # Markdown-Dokumentenstatus
 
-Stand: 2026-07-15
+Stand: 2026-07-31
 
 RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
 
@@ -10,9 +10,8 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 
 | Datei | Rolle | Status |
 | --- | --- | --- |
-| `lastchange.md` | Laufende Aenderungshistorie | Fuehrend fuer Chronologie |
+| `lastchange.md` | Kompakter aktueller Aenderungsstand | Fuehrend fuer den laufenden Kurzstand; aeltere Chronologie liegt unter `docs/raw_md_archive/` |
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Server-Handoff | Aktuell fuer Deployment |
-| `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | Lokaler Uebergangsserver auf Entwicklungs-PC | Aktuell bis IIS-Fix |
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
 | `docs/FINANCE_DATENFLUSS_ANDREAS_2026-06-08.md` | Technischer Finance-Datenfluss | Aktuell fuer End-to-end-Datenfluss |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | Editierbare Quelle fuer Ingos 180-Tage-Roadmap zu Analytics, BI, HR und Einkauf | Aktuell fuer Management-/Word-Doku |
@@ -52,6 +51,7 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` | HR-KPI Formel-/Best-Practice-Pruefung | Behalten |
 | `SAGE_SPAIN_EXPORT_2026-05-05.md` | Sage Spanien Export | Behalten |
 | `persona.md` | Nutzer-/Projektkontext | Behalten |
+| `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md` | Lokaler Uebergangsserver auf Entwicklungs-PC | Historischer Notbetrieb; nicht als aktuellen Produktionsweg verwenden |
 
 ## Archiviert / aus aktiver Doku entfernt
 
@@ -103,6 +103,22 @@ Bereinigung 2026-06-09 (aeltere Delta-Eintraege): Diese Dateien wurden aus der a
 | `docs/FINANCE_WAEHRUNG_KURSFLUSS_2026-06-11.svg` | Wo die App-Kurstabelle wirkt und wo nicht |
 
 ## Bereinigung
+
+Bereinigung 2026-07-31:
+
+- `lastchange.md` auf den aktuellen Kurzstand reduziert; Eintraege 2026-07-13
+  bis 2026-07-30 verbatim nach
+  `docs/raw_md_archive/LASTCHANGE_ARCHIV_2026-07-13_bis_2026-07-30.md`
+  verschoben.
+- `docs/rag/DEPLOYMENT.md` fuehrt nur noch den aktuell verifizierten Deploy;
+  ersetzte Deploy-Zwischenstaende wurden aus der aktiven RAG-Datei entfernt.
+- `docs/rag/PROJECT.md`, `docs/rag/FINANCE.md` und `docs/rag/PURCHASING.md`
+  wurden von veralteten Zwischenstaenden und erledigten offenen Punkten
+  bereinigt. Direkt gepruefte Live-Fakten bleiben ueber
+  `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` kanonisch.
+- Die drei aufeinanderfolgenden Spend-Matrix-Design-Deploys wurden in
+  `lastchange.md`, der Einkaufs-Hauptdoku und der Deployment-Kurzdatei auf den
+  finalen Stand konsolidiert.
 
 Bereinigung 2026-06-09:
 

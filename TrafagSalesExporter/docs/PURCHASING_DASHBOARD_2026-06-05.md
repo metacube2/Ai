@@ -2,21 +2,11 @@
 
 Nachtrag 2026-06-18: Das Einkaufsdashboard wurde fuer die Management-/Einkaufssicht nachgezogen und deployed. Schwerpunkt war die Excel-aehnliche Lieferant/Jahr-Kaskadierung analog Referenzbild `einkauf.png`, Zeitraum 2020 bis aktuelles Jahr, Spend aktuelles Jahr je Lieferant, offene Bestellungen/Zulauf, Filter fuer Loeschkennzeichen und MARA-MSTAE sowie echte Lieferantennamen statt Platzhalter.
 
-Nachtrag 2026-07-31: Kontrast der aufgeklappten Spend-Matrix fuer
-Praesentations-Screenshots erhoeht und deployed (Commit `4a3271b`). Warengruppen
-und Materialzeilen verwenden dunklen Primaertext, groessere Schrift und
-deutlichere Ebenenhintergruende; die Hierarchie bleibt ueber Einrueckung und
-unterschiedliche Blautoene sichtbar.
-
-Nachbesserung 2026-07-31: Schrift der aufgeklappten Warengruppen und
-Materialzeilen fuer die Praesentationsdarstellung fett (`700`) und gegenueber
-dem vorherigen Stand rund 2 pt groesser gesetzt (`1.05rem`/`1rem`) und mit
-Commit `f740eb9` produktiv veroeffentlicht.
-
-Zweite Nachbesserung 2026-07-31: Der Abgleich mit `eric.png` zeigte die noch
-normal gewichteten Lieferantenzeilen. Mit Commit `4498bd4` verwenden nun auch
-Lieferantenname sowie Jahres- und Gesamtwerte der Lieferantenebene explizit
-`font-weight: 700` und `1.05rem`; produktiv veroeffentlicht und verifiziert.
+Nachtrag 2026-07-31, finaler Praesentationsstand der Spend-Matrix (Commits
+`4a3271b`, `f740eb9`, `4498bd4`): dunkler Primaertext und deutlichere
+Ebenenhintergruende; Tabellenkopf, Lieferanten, Warengruppen und Materialien
+fett (`700`); Lieferanten/Warengruppen `1.05rem`, Materialien `1rem`.
+Produktiv veroeffentlicht und verifiziert.
 
 ## Ziel
 
@@ -762,33 +752,19 @@ machen** — zuerst der Reiter `Spend`, erst nach dessen Abnahme der naechste Re
   Materialstamm (`MARA-MATKL`), nicht der Vergangenheitswert aus dem Beleg (alte Belege tragen
   nur die Dummy-Warengruppe). Dafuer neue additive Cache-Spalte
   `PurchasingEkpoCache.MaraMatkl`; der Drilldown nutzt
-  `COALESCE(MaraMatkl, Matkl, 'ohne Warengruppe')` — solange SAP `Matkl` im Materialstamm-Set
-  noch nicht liefert (siehe unten), faellt die Anzeige transparent auf die Beleg-Warengruppe
-  zurueck; ein UI-Hinweis kennzeichnet das.
+  `COALESCE(MaraMatkl, Matkl, 'ohne Warengruppe')`. Seit dem verifizierten
+  Full Load vom 24.07. ist `MaraMatkl` zu 80,7 % gefuellt; fuer den Rest bleibt
+  der transparente Fallback auf die Beleg-Warengruppe.
 
-### Wichtiger Nebenbefund: SAP hat das MARA-EntitySet umgebaut (Prod-Fix noetig)
+### Erledigter Zwischenstand vom 17.07
 
-Live-Probe gegen `travp762` (Tool `.tmp_tools/ProbePurchasingMara`):
-
-- `MARA001Set` (EntityType `MARA`) exponiert **`Mstae` NICHT mehr** — der bisherige produktive
-  Read `MARA001Set?$select=Matnr,Mstae` antwortet mit `404 Resource not found for the segment
-  'Mstae'`. Der bestehende Full Load/Delta waere damit beim naechsten Lauf FEHLGESCHLAGEN.
-- Ersatzquelle: neues EntitySet **`maracalcSet`** (EntityType `maracalc`) enthaelt `Mstae`
-  (verifiziert: 68'094 Zeilen, 33'242 mit Status, u.a. 27'929 x `99`, 1'609 x `98`).
-- FIX umgesetzt: `LoadMaterialStatusMapAsync` liest jetzt `maracalcSet`. Achtung: das Set
-  ignoriert `$top`/`$skip` (gleiches Verhalten wie `mbewSet`) und liefert immer den vollen
-  Bestand — deshalb bewusst EIN ungepagter Request statt des Paging-Helpers, sonst wuerde jede
-  "Seite" erneut ~68'000 Zeilen laden.
-- `Matkl` ist in KEINEM MARA-EntityType des Service vorhanden -> **SAP-Erweiterungsanfrage:
-  `Matkl` in `maracalc` aufnehmen.** App-Seite ist fertig vorbereitet (Cache-Spalte, Map,
-  Write-Pfad); nach der SAP-Erweiterung ist nur das `$select` um `,Matkl` zu ergaenzen.
-
-### ABC/XYZ: von "geparkt" zu konkretem Weg (spaeterer Punkt, nicht jetzt)
-
-Neue Info aus der Feedback-Runde: ABC-Kennzeichen = `MARC-MAABC` (Sicht O2); XYZ liegt in einer
-separaten Tabelle; ein vorhandener SAP-Report kann beides bereits extrahieren. Damit ist der
-Weg klar (MARC-Anbindung oder Report-Export als Referenzliste) — wird aber gemaess "ein Punkt
-nach dem anderen" erst nach Abnahme des Spend-Reiters angegangen.
+Der damalige Umbau des SAP-MARA-EntitySets und die voruebergehend fehlenden
+Felder `Mstae`/`Matkl` sind nicht mehr aktuell: Seit 23./24.07. liefert
+`MARA001Set` beide Felder, der Loader verwendet wieder dieses Set und der Full
+Load ist produktiv verifiziert. ABC/XYZ ist im separaten Spend-Aufriss
+umgesetzt und seit dem Full Load mit echten Daten gefuellt. Der damalige
+Fehler-/Blockertext wurde entfernt, damit er nicht mehr als aktueller Auftrag
+gelesen wird.
 
 ### Validierung
 

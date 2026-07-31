@@ -99,6 +99,7 @@ Zweck: Diese Datei zuerst laden. Danach nur die Dateien aus dem passenden Themen
 | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` | Uebergabe-Doku Produktsparten-Zuordnung (Analyse-Historie) |
 | `docs/CCUSAGE_INSTALL_ANLEITUNG.md` | Tooling (ccusage), nicht projektfachlich |
 | `docs/raw_md_archive/LASTCHANGE_ARCHIV_bis_2026-07-12.md` | archivierte `lastchange.md`-Eintraege bis 2026-07-12 (verbatim) |
+| `docs/raw_md_archive/LASTCHANGE_ARCHIV_2026-07-13_bis_2026-07-30.md` | archivierte `lastchange.md`-Eintraege 2026-07-13 bis 2026-07-30 (verbatim) |
 | `docs/raw_md_archive/RAG_KURZDATEIEN_ARCHIV_ueberholte_eintraege.md` | archivierte, durch neuere ersetzte Kurzstand-Eintraege aus FINANCE/PROJECT/DEPLOYMENT (verbatim) |
 
 ## Werkzeug: SAP-Direktzugriff (SapProbe)
