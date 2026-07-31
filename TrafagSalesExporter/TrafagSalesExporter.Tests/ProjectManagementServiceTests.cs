@@ -52,4 +52,13 @@ public sealed class ProjectManagementServiceTests : IDisposable
     }
 
     public void Dispose() => _connection.Dispose();
+
+    private sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>
+    {
+        private readonly DbContextOptions<AppDbContext> _options;
+
+        public TestDbContextFactory(DbContextOptions<AppDbContext> options) => _options = options;
+
+        public AppDbContext CreateDbContext() => new(_options);
+    }
 }
