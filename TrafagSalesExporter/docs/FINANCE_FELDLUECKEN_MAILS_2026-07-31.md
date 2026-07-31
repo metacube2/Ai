@@ -405,6 +405,50 @@ Vorspann „was wir nicht brauchen", weil es nichts zu tun gibt.
 
 ---
 
+## Stand bei Chatende 2026-07-31, 10:05
+
+Wer hier weiterarbeitet, findet folgende Lage vor.
+
+**In Outlook (`\\Ingo.Kohler@trafag.com\Entwürfe`):**
+
+| Entwurf | Grösse | Erzeugt | Zustand |
+| --- | --- | --- | --- |
+| Trafag France | 8'538 B | 09:47 | **An leer** — Adresse fehlt |
+| Trafag USA | 8'443 B | 09:47 | **An leer** — Adresse fehlt |
+| Trafag GmbH (Alphaplan) | 8'633 B | 09:47 | versandfertig |
+| Trafag Iberica | 9'757 B | 09:47 | versandfertig |
+| UK | 6'941 B | 09:47 | korrigierte Fassung, versandfertig |
+| Trafag Italia | 10'345 B | 10:00 | korrigierte Fassung, versandfertig |
+
+**Gesendet:** Indien, 2026-07-31 09:56, Betreff vor Versand ergänzt auf
+„… (Trafag India) -> Supplier Name", nur an `RanVijay.Kumar@trafag.com`.
+
+**Ebenfalls in Entwürfe, aber NICHT von diesem Vorgang** — bewusst nicht angefasst:
+„Missing supplier information in sales export data" (30.07., 48'708 B) ist die überholte
+Sammelmail-Fassung vor der Aufteilung und enthält noch die falsche UK-Aussage. Kandidat zum
+Löschen, gehört aber Ingo. Dazu „(kein Betreff)" (30.07.) und „Debug Trafag Writeback" (30.07.).
+
+**Zwei Fehler wurden in diesem Durchgang gefunden und behoben**, beide in der Kategorie
+„übernommene Behauptung statt Messung":
+
+1. UK-Mail behauptete, 2025 fehle — tatsächlich 1'867 Zeilen für 2025 vorhanden.
+2. Italien-Mail nannte TR IT den besten Standort — tatsächlich UK mit 100 % gegen 71 %.
+
+**Offen, in dieser Reihenfolge:**
+
+1. **Adressen für TRFR und TRUS beschaffen.** Beide Entwürfe stehen fertig, es fehlt nur die
+   Empfängerzeile. FR ist mit 374 von 433 Artikeln der kleinste Aufwand aller Standorte.
+2. **DE, ES, UK, IT versenden.** Bei IT bewusst getrennt vom Bewertungsthema halten, siehe
+   Abschnitt 2 und `FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` §5d.
+3. **Antworten in der Versandtabelle unten nachtragen.** Ohne das ist später nicht
+   unterscheidbar, ob ein Standort nicht geantwortet oder nie eine Mail bekommen hat.
+4. **Widerspruch klären, falls er wieder auftaucht:** eine Fremdauswertung zeigte für TRUK
+   `0` Lieferanten. Aus dem Audit-CSV ist das nicht reproduzierbar (2'955 von 2'955, Nummer und
+   Name). Falls jene Zahl aus einer Live-Abfrage gegen die Produktiv-DB stammt und dort wirklich
+   `0` steht, wäre das eine Regression nach dem 2026-07-29 und wäre zu untersuchen.
+5. **Signatur:** in allen Entwürfen fehlt sie (`Signaturlaenge=0`). Die Mails enden bei
+   „Best regards / Ingo".
+
 ## Nach dem Versand
 
 Hier festhalten, was wann rausgegangen ist und was zurückkommt — sonst ist beim nächsten

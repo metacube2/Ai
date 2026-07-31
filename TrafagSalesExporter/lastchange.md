@@ -6,6 +6,19 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- VERSAND 2026-07-31, Stand bei Chatende (Detail: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`
+  Abschnitt „Stand bei Chatende"): INDIEN IST RAUS - gesendet 09:56 an `RanVijay.Kumar@trafag.com`,
+  Betreff von Ingo ergaenzt auf „... (Trafag India) -> Supplier Name", NICHT an `tasc.co.in`, damit
+  ist die Fremddomain-Frage fuer diesen Versand erledigt. In Entwuerfen liegen sechs: DE, ES, UK, IT
+  versandfertig, FR und US mit LEERER An-Zeile. ZWEITE KORREKTUR an der Italien-Mail: sie nannte
+  TR IT „the best-performing site on supplier data" - FALSCH, TRUK hat 100 % gegen TRIT 71 %.
+  Eingeschraenkt auf „of our SAP Business One sites" und der zweite Balken ersetzt, weil Artikel-
+  und Zeilenebene bei IT beide auf 71 % fielen und zwei identische Balken wie ein Copy-Paste-Fehler
+  aussahen; jetzt Standortvergleich UK/IT/IN/FR/US. MUSTER HINTER BEIDEN FEHLERN (UK-2025 und
+  IT-Superlativ): eine Behauptung war aus aelterer Doku uebernommen statt gemessen. Vor jedem
+  Mailversand die Zahlen gegen das Audit-CSV nachrechnen, auch die scheinbar harmlosen Nebensaetze.
+  NICHT ANGEFASST: Ingos eigener Entwurf „Missing supplier information in sales export data"
+  (30.07., 48'708 B) - ueberholte Sammelfassung mit der falschen UK-Aussage, Loeschkandidat.
 - PRUEFUNG 2026-07-31, alle sieben Standort-Entwuerfe gegen `Finance_Dashboard_Audit_All_2026-07-29.csv`
   nachgemessen. SECHS stimmen, EINER war falsch: die UK-Mail behauptete „the UK data we hold starts
   in January 2026, so 2025 is absent". FALSCH - TRUK hat **1'867 Zeilen fuer 2025** und 1'082 fuer
