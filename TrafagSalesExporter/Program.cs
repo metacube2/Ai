@@ -128,6 +128,7 @@ builder.Services.AddScoped<IMaterialUsageDataRefreshService, MaterialUsageDataRe
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
+builder.Services.AddScoped<IProjectManagementService, ProjectManagementService>();
 
 var app = builder.Build();
 var pathBase = app.Configuration["ASPNETCORE_PATHBASE"];

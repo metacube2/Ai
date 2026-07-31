@@ -27,4 +27,5 @@ public class AppDbContext : DbContext
     public DbSet<FinancialJournalEntry> FinancialJournalEntries => Set<FinancialJournalEntry>();
     public DbSet<GroupStandardCost> GroupStandardCosts => Set<GroupStandardCost>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
+    public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();
 }

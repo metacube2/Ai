@@ -51,6 +51,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureManualExcelColumnMappingTable(db);
         EnsureCentralSalesRecordTable(db);
         EnsureNavigationMenuItemTable(db);
+        EnsureProjectItemsTable(db);
         EnsurePurchasingCacheTables(db);
         EnsureMaterialUsageCacheTables(db);
         EnsureFinancialJournalEntriesTable(db);
@@ -294,6 +295,17 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = DatabaseSchemaSql.GetNavigationMenuItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureProjectItemsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetProjectItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
         cmd.ExecuteNonQuery();
     }
 

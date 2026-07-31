@@ -1134,12 +1134,23 @@ public sealed class UiTextService : IUiTextService
         if (string.Equals(_currentLanguage, "en", StringComparison.OrdinalIgnoreCase))
             return english;
 
+        // New languages use the complete generated catalogue first. The older
+        // languages retain their manually reviewed wording and only fill gaps
+        // from the generated catalogue below.
+        if (_currentLanguage is "sq" or "tr" or "tlh" &&
+            UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completeTranslations) &&
+            completeTranslations.TryGetValue(german, out var completeTranslation))
+            return completeTranslation;
+
         if (Translations.TryGetValue(_currentLanguage, out var languageTranslations) &&
             languageTranslations.TryGetValue(german, out var translated))
             return translated;
-        return AdditionalTranslations.TryGetValue(_currentLanguage, out var additions) &&
-               additions.TryGetValue(german, out var additional)
-            ? additional
+        if (AdditionalTranslations.TryGetValue(_currentLanguage, out var additions) &&
+            additions.TryGetValue(german, out var additional))
+            return additional;
+        return UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var generated) &&
+               generated.TryGetValue(german, out var generatedTranslation)
+            ? generatedTranslation
             : english;
     }
 

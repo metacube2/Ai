@@ -1,4 +1,6 @@
 using TrafagSalesExporter.Services;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace TrafagSalesExporter.Tests;
 
@@ -36,4 +38,61 @@ public class UiTextServiceTests
         service.SetLanguage("klingon");
         Assert.Equal("tlh", service.CurrentLanguage);
     }
+
+    [Fact]
+    public void Generated_Translations_Cover_Every_Literal_Ui_Key_And_Preserve_Placeholders()
+    {
+        var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var componentRoot = Path.Combine(projectRoot, "Components");
+        Assert.True(Directory.Exists(componentRoot), $"Component directory not found: {componentRoot}");
+
+        var source = string.Join('\n', Directory.GetFiles(componentRoot, "*.razor", SearchOption.AllDirectories)
+            .Select(File.ReadAllText));
+        var matches = Regex.Matches(source,
+            """(?:\bT|UiText\.Text)\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"""",
+            RegexOptions.Singleline);
+        var expected = matches
+            .Select(match => new
+            {
+                German = Regex.Unescape(match.Groups[1].Value),
+                English = Regex.Unescape(match.Groups[2].Value)
+            })
+            .GroupBy(x => x.German, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(x => x.Key, x => x.First().English, StringComparer.OrdinalIgnoreCase);
+        expected["Projekte"] = "Projects";
+
+        foreach (var language in new[] { "es", "it", "hi", "sq", "tr", "tlh" })
+        {
+            var translations = UiTextGeneratedTranslations.All[language];
+            var missing = expected.Keys.Where(key => !translations.ContainsKey(key)).ToArray();
+            Assert.True(missing.Length == 0, $"{language} is missing: {string.Join(" | ", missing)}");
+
+            foreach (var pair in expected)
+            {
+                var translated = translations[pair.Key];
+                Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.Key} is empty");
+                Assert.Equal(Placeholders(pair.Value), Placeholders(translated));
+            }
+        }
+    }
+
+    [Fact]
+    public void Klingon_Catalogue_Uses_Latin_Script_Only()
+    {
+        var invalid = UiTextGeneratedTranslations.All["tlh"]
+            .Where(pair => pair.Value.Any(character => character > 127 &&
+                CharUnicodeInfo.GetUnicodeCategory(character) is UnicodeCategory.UppercaseLetter
+                    or UnicodeCategory.LowercaseLetter
+                    or UnicodeCategory.TitlecaseLetter
+                    or UnicodeCategory.OtherLetter))
+            .Select(pair => pair.Key)
+            .ToArray();
+
+        Assert.True(invalid.Length == 0, $"Non-Latin Klingon entries: {string.Join(" | ", invalid)}");
+    }
+
+    private static string[] Placeholders(string value) => Regex.Matches(value, "\\{[^{}]+\\}")
+        .Select(match => match.Value)
+        .OrderBy(value => value, StringComparer.Ordinal)
+        .ToArray();
 }

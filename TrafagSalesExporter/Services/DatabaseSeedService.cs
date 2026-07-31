@@ -275,6 +275,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         // werden, starten aber bewusst als eigenes Thema.
         Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
         Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
+        Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
+        Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
         Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
     ];
 

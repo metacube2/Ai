@@ -251,6 +251,23 @@ CREATE TABLE NavigationMenuItems (
     SortOrder INTEGER NOT NULL DEFAULT 0
 );";
 
+    internal static string GetProjectItemsCreateSql() => @"
+CREATE TABLE ProjectItems (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Title TEXT NOT NULL DEFAULT '',
+    Description TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT 'Idea',
+    Priority TEXT NOT NULL DEFAULT 'Normal',
+    Owner TEXT NOT NULL DEFAULT '',
+    StartDate TEXT NULL,
+    DueDate TEXT NULL,
+    ProgressPercent INTEGER NOT NULL DEFAULT 0,
+    Notes TEXT NOT NULL DEFAULT '',
+    IsArchived INTEGER NOT NULL DEFAULT 0,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetPurchasingEkkoCacheCreateSql() => @"
 CREATE TABLE PurchasingEkkoCache (
     Ebeln TEXT NOT NULL PRIMARY KEY,

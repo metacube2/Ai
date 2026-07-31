@@ -1,0 +1,173 @@
+@page "/projekte"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IProjectManagementService Projects
+@inject IUiTextService UiText
+@inject ISnackbar Snackbar
+
+<PageTitle>@T("Poor Man's Project Management Suite", "Poor Man's Project Management Suite")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">@T("Poor Man's Project Management Suite", "Poor Man's Project Management Suite")</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+    @T("Einfache Projektverwaltung fuer Status, Verantwortung, Termine und Fortschritt.", "Simple project management for status, ownership, dates and progress.")
+</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Aktive Projekte", "Active projects")</MudText><MudText Typo="Typo.h5">@ActiveCount</MudText></MudPaper></MudItem>
+    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("In Arbeit", "In progress")</MudText><MudText Typo="Typo.h5">@Count(ProjectStatuses.InProgress)</MudText></MudPaper></MudItem>
+    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Blockiert", "Blocked")</MudText><MudText Typo="Typo.h5" Color="Color.Error">@Count(ProjectStatuses.Blocked)</MudText></MudPaper></MudItem>
+    <MudItem xs="12" sm="6" md="3"><MudPaper Class="pa-3"><MudText Typo="Typo.caption">@T("Abgeschlossen", "Completed")</MudText><MudText Typo="Typo.h5" Color="Color.Success">@Count(ProjectStatuses.Completed)</MudText></MudPaper></MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudText Typo="Typo.h6" Class="mb-3">@(_editing.Id == 0 ? T("Neues Projekt", "New project") : T("Projekt bearbeiten", "Edit project"))</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="_editing.Title" Label="@T("Projekttitel", "Project title")" Required /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField @bind-Value="_editing.Owner" Label="@T("Verantwortlich", "Owner")" /></MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_editing.Status" Label="@T("Status", "Status")">
+                @foreach (var status in ProjectStatuses.All)
+                {
+                    <MudSelectItem Value="@status">@StatusLabel(status)</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_editing.Priority" Label="@T("Prioritaet", "Priority")">
+                @foreach (var priority in ProjectPriorities.All)
+                {
+                    <MudSelectItem Value="@priority">@PriorityLabel(priority)</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3"><MudDatePicker @bind-Date="_editing.StartDate" Label="@T("Startdatum", "Start date")" Clearable /></MudItem>
+        <MudItem xs="12" md="3"><MudDatePicker @bind-Date="_editing.DueDate" Label="@T("Faellig am", "Due date")" Clearable /></MudItem>
+        <MudItem xs="12" md="3"><MudNumericField T="int" @bind-Value="_editing.ProgressPercent" Label="@T("Fortschritt in Prozent", "Progress in percent")" Min="0" Max="100" /></MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="_editing.Description" Label="@T("Beschreibung", "Description")" Lines="2" /></MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="_editing.Notes" Label="@T("Notizen", "Notes")" Lines="2" /></MudItem>
+    </MudGrid>
+    <MudStack Row Spacing="2" Class="mt-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="@_saving">@T("Projekt speichern", "Save project")</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="ResetEditor">@T("Abbrechen", "Cancel")</MudButton>
+    </MudStack>
+</MudPaper>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
+        <MudText Typo="Typo.h6">@T("Projektuebersicht", "Project overview")</MudText>
+        <MudSpacer />
+        <MudCheckBox @bind-Value="_showArchived" Label="@T("Archivierte anzeigen", "Show archived")" ValueChanged="LoadAsync" />
+    </MudStack>
+
+    <MudTable Items="_items" Dense Hover Striped Loading="_loading" Breakpoint="Breakpoint.Md">
+        <HeaderContent>
+            <MudTh>@T("Projekt", "Project")</MudTh>
+            <MudTh>@T("Status", "Status")</MudTh>
+            <MudTh>@T("Prioritaet", "Priority")</MudTh>
+            <MudTh>@T("Verantwortlich", "Owner")</MudTh>
+            <MudTh>@T("Faellig am", "Due date")</MudTh>
+            <MudTh>@T("Fortschritt", "Progress")</MudTh>
+            <MudTh>@T("Aktionen", "Actions")</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="@T("Projekt", "Project")"><strong>@context.Title</strong><br /><small>@context.Description</small></MudTd>
+            <MudTd DataLabel="@T("Status", "Status")"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@StatusLabel(context.Status)</MudChip></MudTd>
+            <MudTd DataLabel="@T("Prioritaet", "Priority")">@PriorityLabel(context.Priority)</MudTd>
+            <MudTd DataLabel="@T("Verantwortlich", "Owner")">@(string.IsNullOrWhiteSpace(context.Owner) ? "-" : context.Owner)</MudTd>
+            <MudTd DataLabel="@T("Faellig am", "Due date")">@(context.DueDate?.ToString("dd.MM.yyyy") ?? "-")</MudTd>
+            <MudTd DataLabel="@T("Fortschritt", "Progress")" Style="min-width:130px"><MudProgressLinear Value="@context.ProgressPercent" Color="Color.Primary" /><small>@context.ProgressPercent%</small></MudTd>
+            <MudTd DataLabel="@T("Aktionen", "Actions")">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => Edit(context))" />
+                @if (!context.IsArchived)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Archive" Color="Color.Warning" Size="Size.Small" OnClick="@(() => ArchiveAsync(context))" />
+                }
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent><MudText Typo="Typo.body2">@T("Noch keine Projekte vorhanden.", "No projects yet.")</MudText></NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<ProjectItem> _items = [];
+    private ProjectItem _editing = NewProject();
+    private bool _loading = true;
+    private bool _saving;
+    private bool _showArchived;
+
+    private int ActiveCount => _items.Count(x => !x.IsArchived && x.Status != ProjectStatuses.Completed);
+    private int Count(string status) => _items.Count(x => !x.IsArchived && x.Status == status);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _items = await Projects.GetProjectsAsync(_showArchived);
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editing.Title))
+        {
+            Snackbar.Add(T("Bitte einen Projekttitel eingeben.", "Please enter a project title."), Severity.Warning);
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            await Projects.SaveAsync(_editing);
+            Snackbar.Add(T("Projekt gespeichert.", "Project saved."), Severity.Success);
+            ResetEditor();
+            await LoadAsync();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Edit(ProjectItem project)
+    {
+        _editing = new ProjectItem
+        {
+            Id = project.Id, Title = project.Title, Description = project.Description, Status = project.Status,
+            Priority = project.Priority, Owner = project.Owner, StartDate = project.StartDate, DueDate = project.DueDate,
+            ProgressPercent = project.ProgressPercent, Notes = project.Notes, IsArchived = project.IsArchived,
+            CreatedAtUtc = project.CreatedAtUtc, UpdatedAtUtc = project.UpdatedAtUtc
+        };
+    }
+
+    private async Task ArchiveAsync(ProjectItem project)
+    {
+        await Projects.ArchiveAsync(project.Id);
+        Snackbar.Add(T("Projekt archiviert.", "Project archived."), Severity.Info);
+        await LoadAsync();
+    }
+
+    private void ResetEditor() => _editing = NewProject();
+    private static ProjectItem NewProject() => new() { Status = ProjectStatuses.Idea, Priority = ProjectPriorities.Normal };
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private string StatusLabel(string status) => status switch
+    {
+        ProjectStatuses.Idea => T("Idee", "Idea"), ProjectStatuses.Planned => T("Geplant", "Planned"),
+        ProjectStatuses.InProgress => T("In Arbeit", "In progress"), ProjectStatuses.Blocked => T("Blockiert", "Blocked"),
+        ProjectStatuses.Completed => T("Abgeschlossen", "Completed"), _ => status
+    };
+
+    private string PriorityLabel(string priority) => priority switch
+    {
+        ProjectPriorities.Low => T("Niedrig", "Low"), ProjectPriorities.Normal => T("Normal", "Normal"),
+        ProjectPriorities.High => T("Hoch", "High"), ProjectPriorities.Critical => T("Kritisch", "Critical"), _ => priority
+    };
+
+    private static Color StatusColor(string status) => status switch
+    {
+        ProjectStatuses.InProgress => Color.Info, ProjectStatuses.Blocked => Color.Error,
+        ProjectStatuses.Completed => Color.Success, ProjectStatuses.Planned => Color.Primary, _ => Color.Default
+    };
+}
