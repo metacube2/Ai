@@ -13,6 +13,11 @@ Materialzeilen fuer die Praesentationsdarstellung fett (`700`) und gegenueber
 dem vorherigen Stand rund 2 pt groesser gesetzt (`1.05rem`/`1rem`) und mit
 Commit `f740eb9` produktiv veroeffentlicht.
 
+Zweite Nachbesserung 2026-07-31: Der Abgleich mit `eric.png` zeigte die noch
+normal gewichteten Lieferantenzeilen. Mit Commit `4498bd4` verwenden nun auch
+Lieferantenname sowie Jahres- und Gesamtwerte der Lieferantenebene explizit
+`font-weight: 700` und `1.05rem`; produktiv veroeffentlicht und verifiziert.
+
 ## Ziel
 
 Der neue Bereich `Einkauf` soll die vorhandene Power-BI-Vorlage `x.pbix` aufnehmen und um weitere SAP-Einkaufsanalysen ergaenzen.

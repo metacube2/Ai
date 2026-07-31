@@ -6,6 +6,15 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DEPLOYED 2026-07-31, Spend-Matrix-Lieferantenebene nachgezogen (Commit
+  `4498bd4`, `346/346` Tests gruen): `eric.png` zeigte, dass bisher nur
+  Warengruppen und Materialien fett waren. Lieferantenname sowie alle
+  Lieferanten-Jahres-/Gesamtwerte verwenden jetzt ebenfalls explizit
+  `font-weight: 700` und `1.05rem`. Produktive `BiDashboard.dll`
+  `31.07.2026 11:43:06`, `3'226'624` Bytes, SHA256 `E64BF043...F24A247`;
+  lokaler Release und Server bitgleich. Produktiv-DB unveraendert, Port 443
+  offen, authentifizierter HTTPS-Aufruf `200`.
+
 - DEPLOYED 2026-07-31, Nachbesserung Spend-Matrix-Schrift (Commit `f740eb9`,
   `346/346` Tests gruen): Aufgeklappte Warengruppen stehen jetzt mit
   `font-weight: 700` und `1.05rem`, Materialzeilen mit `1rem`; gegenueber dem
