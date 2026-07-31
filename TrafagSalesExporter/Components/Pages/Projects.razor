@@ -2,7 +2,7 @@
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
-@inject IProjectManagementService Projects
+@inject IProjectManagementService ProjectManagement
 @inject IUiTextService UiText
 @inject ISnackbar Snackbar
 
@@ -57,7 +57,7 @@
     <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
         <MudText Typo="Typo.h6">@T("Projektuebersicht", "Project overview")</MudText>
         <MudSpacer />
-        <MudCheckBox @bind-Value="_showArchived" Label="@T("Archivierte anzeigen", "Show archived")" ValueChanged="LoadAsync" />
+        <MudCheckBox T="bool" Value="_showArchived" ValueChanged="ShowArchivedChangedAsync" Label="@T("Archivierte anzeigen", "Show archived")" />
     </MudStack>
 
     <MudTable Items="_items" Dense Hover Striped Loading="_loading" Breakpoint="Breakpoint.Md">
@@ -104,7 +104,7 @@
     private async Task LoadAsync()
     {
         _loading = true;
-        _items = await Projects.GetProjectsAsync(_showArchived);
+        _items = await ProjectManagement.GetProjectsAsync(_showArchived);
         _loading = false;
     }
 
@@ -119,7 +119,7 @@
         _saving = true;
         try
         {
-            await Projects.SaveAsync(_editing);
+            await ProjectManagement.SaveAsync(_editing);
             Snackbar.Add(T("Projekt gespeichert.", "Project saved."), Severity.Success);
             ResetEditor();
             await LoadAsync();
@@ -143,12 +143,18 @@
 
     private async Task ArchiveAsync(ProjectItem project)
     {
-        await Projects.ArchiveAsync(project.Id);
+        await ProjectManagement.ArchiveAsync(project.Id);
         Snackbar.Add(T("Projekt archiviert.", "Project archived."), Severity.Info);
         await LoadAsync();
     }
 
     private void ResetEditor() => _editing = NewProject();
+    private async Task ShowArchivedChangedAsync(bool value)
+    {
+        _showArchived = value;
+        await LoadAsync();
+    }
+
     private static ProjectItem NewProject() => new() { Status = ProjectStatuses.Idea, Priority = ProjectPriorities.Normal };
     private string T(string german, string english) => UiText.Text(german, english);
 
