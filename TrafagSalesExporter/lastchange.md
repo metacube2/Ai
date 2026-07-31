@@ -1,11 +1,24 @@
 # Last Change
 
-Stand: 2026-07-30
+Stand: 2026-07-31
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DOKU 2026-07-31, zentrales Ansprechpartner-Register angelegt (kein Code): `docs/ANSPRECHPARTNER.md`,
+  im `RAG_ROUTER.md` als eigenes Thema und ueber Suchwoerter verlinkt. Anlass: Kontaktangaben lagen
+  in DREI Dokumenten verstreut - Rollen in der Ticket-Beteiligtenliste `saptasks/zzprdat-kontext.md:189`,
+  Domaenenzustaendigkeiten in `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25`/`:159-166`, Adressen nur
+  in `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md:137`. Beim BLP-Vorfall 2026-07-30 war dadurch
+  klar WER zustaendig ist, aber nicht wie er zu erreichen ist. Inhalt: Standortempfaenger (Abschnitt 1),
+  interne Rollen (2), externe Partner (3), Eskalationspfad plus Paola-Doppelvorgang und
+  `tasc.co.in`-Einschraenkung (4), Verwechslungsgefahren (5), offene Luecken (6).
+  REGEL DER DATEI: keine aus Namensmustern abgeleiteten Adressen - was nicht belegt ist, steht als
+  `offen`. GROESSTE LUECKE: fuer KEINEN internen Ansprechpartner (Lucas, Adil, Fabio, Andreas, Sonja,
+  Alex, Ramon) ist eine Adresse dokumentiert, und Andreas/Sonja/Alex/Ramon haben nicht einmal einen
+  belegten Nachnamen. Neu festgehaltene Verwechslungsgefahr: ZWEI Marcos - Marco Di Menco (Etiketten/PP)
+  vs. Marco Widmer (Einkauf, Autor `PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`).
 - DOKU 2026-07-30, Empfaenger fuer die Standort-Mail (kein Code): `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`
   hat einen neuen Abschnitt 5 `Empfaenger` (alter Abschnitt 5 Mailtext -> 6, Reproduzierbar -> 7).
   Anlass: In KEINEM `.md` des Repos stand vorher eine Mailadresse (Regex ueber alle Markdown-Dateien:
