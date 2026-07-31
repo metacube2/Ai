@@ -117,7 +117,7 @@
                         @foreach (var row in SpendMatrixRows)
                         {
                             var isExpanded = _expandedSuppliers.Contains(row.Supplier);
-                            <tr>
+                            <tr class="purchasing-matrix-supplier">
                                 <td>
                                     @if (row.MaterialGroups.Count > 0)
                                     {
@@ -401,6 +401,11 @@
     .purchasing-matrix thead th {
         font-weight: 700;
         background: rgba(21,101,192,.08);
+    }
+
+    .purchasing-matrix-supplier td {
+        font-size: 1.05rem;
+        font-weight: 700;
     }
 
     .purchasing-matrix-toggle {
