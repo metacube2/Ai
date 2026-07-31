@@ -87,11 +87,11 @@
 <MudTable Items="_appLogs" Dense Hover Striped Loading="_loading">
     <HeaderContent>
         <MudTh>@T("Zeitpunkt", "Timestamp")</MudTh>
-        <MudTh>Level</MudTh>
+        <MudTh>@T("Level", "Level")</MudTh>
         <MudTh>@T("Kategorie", "Category")</MudTh>
         <MudTh>@T("Land", "Country")</MudTh>
         <MudTh>@T("Meldung", "Message")</MudTh>
-        <MudTh>Details</MudTh>
+        <MudTh>@T("Details", "Details")</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Timestamp.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>

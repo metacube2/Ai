@@ -30,16 +30,16 @@
 
     <MudTable Items="_rules" Dense Hover Striped>
         <HeaderContent>
-            <MudTh>Aktiv</MudTh>
-            <MudTh>System</MudTh>
-            <MudTh>Scope</MudTh>
-            <MudTh>Source</MudTh>
-            <MudTh>Target</MudTh>
-            <MudTh>Typ / Klasse</MudTh>
-            <MudTh>Argument</MudTh>
-            <MudTh>Sort</MudTh>
-            <MudTh>Info</MudTh>
-            <MudTh>Aktionen</MudTh>
+            <MudTh>@T("Aktiv", "Active")</MudTh>
+            <MudTh>@T("System", "System")</MudTh>
+            <MudTh>@T("Scope", "Scope")</MudTh>
+            <MudTh>@T("Source", "Source")</MudTh>
+            <MudTh>@T("Target", "Target")</MudTh>
+            <MudTh>@T("Typ / Klasse", "Type / class")</MudTh>
+            <MudTh>@T("Argument", "Argument")</MudTh>
+            <MudTh>@T("Sort", "Sort")</MudTh>
+            <MudTh>@T("Info", "Info")</MudTh>
+            <MudTh>@T("Aktionen", "Actions")</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd><MudCheckBox @bind-Value="context.IsActive" /></MudTd>
@@ -143,7 +143,7 @@
             <MudStack Spacing="2">
                 <MudText Typo="Typo.subtitle2">@_selectedCatalogItem.Key (@_selectedCatalogItem.RuleScope)</MudText>
                 <MudText Typo="Typo.body2">@_selectedCatalogItem.Description</MudText>
-                <MudText Typo="Typo.caption">Klasse: @_selectedCatalogItem.TypeName</MudText>
+                <MudText Typo="Typo.caption">@T("Klasse:", "Class:") @_selectedCatalogItem.TypeName</MudText>
                 <MudText Typo="Typo.caption">
                     Datei:
                     <MudLink Href="@GetSourceViewerUrl(_selectedCatalogItem.SourceFile, _selectedCatalogItem.TypeName)" Target="_blank">
@@ -151,20 +151,20 @@
                     </MudLink>
                 </MudText>
                 <MudPaper Class="pa-3">
-                    <MudText Typo="Typo.caption">Snippet</MudText>
+                    <MudText Typo="Typo.caption">@T("Snippet", "Snippet")</MudText>
                     <pre style="margin:0; white-space:pre-wrap;">@_selectedCatalogItem.CodeSnippet</pre>
                 </MudPaper>
                 @if (_selectedRule is not null)
                 {
                     <MudPaper Class="pa-3">
-                        <MudText Typo="Typo.caption">Aktuelle Regel</MudText>
-                        <MudText Typo="Typo.body2">System: @_selectedRule.SourceSystem</MudText>
-                        <MudText Typo="Typo.body2">Target: @_selectedRule.TargetField</MudText>
+                        <MudText Typo="Typo.caption">@T("Aktuelle Regel", "Current rule")</MudText>
+                        <MudText Typo="Typo.body2">@T("System", "System"): @_selectedRule.SourceSystem</MudText>
+                        <MudText Typo="Typo.body2">@T("Target", "Target"): @_selectedRule.TargetField</MudText>
                         @if (!string.IsNullOrWhiteSpace(_selectedRule.SourceField))
                         {
-                            <MudText Typo="Typo.body2">Source: @_selectedRule.SourceField</MudText>
+                            <MudText Typo="Typo.body2">@T("Source", "Source"): @_selectedRule.SourceField</MudText>
                         }
-                        <MudText Typo="Typo.body2">Argument: @(string.IsNullOrWhiteSpace(_selectedRule.Argument) ? "-" : _selectedRule.Argument)</MudText>
+                        <MudText Typo="Typo.body2">@T("Argument:", "Argument:") @(string.IsNullOrWhiteSpace(_selectedRule.Argument) ? "-" : _selectedRule.Argument)</MudText>
                     </MudPaper>
                 }
             </MudStack>

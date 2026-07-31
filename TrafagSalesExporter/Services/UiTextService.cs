@@ -1066,6 +1066,36 @@ public sealed class UiTextService : IUiTextService
             }
         };
 
+    // Keep newly added labels in one small overlay so all supported languages
+    // can be completed without duplicating the large legacy dictionaries.
+    private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> AdditionalTranslations =
+        new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Aktiv"] = "Activo", ["Land"] = "País", ["Jahr"] = "Año", ["Regeltyp"] = "Tipo de regla",
+                ["Feld"] = "Campo", ["Vergleich"] = "Comparación", ["Wert"] = "Valor", ["Sort"] = "Orden",
+                ["Notiz"] = "Nota", ["Interaktivitaet Diagnose"] = "Diagnóstico de interactividad",
+                ["HTML wurde vom Server gerendert."] = "HTML se ha renderizado en el servidor.", ["Adresse:"] = "Dirección:",
+                ["Blazor interaktiv verbunden:"] = "Blazor conectado interactivamente:", ["Server-Klicks angekommen:"] = "Clics del servidor recibidos:",
+                ["JavaScript Diagnose:"] = "Diagnóstico de JavaScript:", ["Blazor Objekt im Browser:"] = "Objeto Blazor en el navegador:",
+                ["Server-Klick testen"] = "Probar clic del servidor", ["Pfad"] = "Ruta", ["Letzte Änderung"] = "Última modificación",
+                ["Level"] = "Nivel", ["Details"] = "Detalles", ["Alias"] = "Alias", ["Entity Set"] = "Conjunto de entidades",
+                ["Left Keys"] = "Claves izquierdas", ["Right Keys"] = "Claves derechas", ["System"] = "Sistema",
+                ["Scope"] = "Ámbito", ["Source"] = "Origen", ["Target"] = "Destino", ["Typ / Klasse"] = "Tipo / clase",
+                ["Argument"] = "Argumento", ["Info"] = "Información", ["Aktionen"] = "Acciones", ["Klasse:"] = "Clase:",
+                ["Snippet"] = "Fragmento", ["Aktuelle Regel"] = "Regla actual", ["Argument:"] = "Argumento:"
+            },
+            ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Aktiv"] = "Attivo", ["Land"] = "Paese", ["Jahr"] = "Anno", ["Regeltyp"] = "Tipo di regola", ["Feld"] = "Campo", ["Vergleich"] = "Confronto", ["Wert"] = "Valore", ["Sort"] = "Ordine", ["Notiz"] = "Nota", ["Interaktivitaet Diagnose"] = "Diagnosi interattività", ["HTML wurde vom Server gerendert."] = "HTML è stato renderizzato dal server.", ["Adresse:"] = "Indirizzo:", ["Blazor interaktiv verbunden:"] = "Blazor connesso interattivamente:", ["Server-Klicks angekommen:"] = "Clic del server ricevuti:", ["JavaScript Diagnose:"] = "Diagnosi JavaScript:", ["Blazor Objekt im Browser:"] = "Oggetto Blazor nel browser:", ["Server-Klick testen"] = "Testa clic del server", ["Pfad"] = "Percorso", ["Letzte Änderung"] = "Ultima modifica", ["Level"] = "Livello", ["Details"] = "Dettagli", ["Alias"] = "Alias", ["Entity Set"] = "Entity set", ["Left Keys"] = "Chiavi sinistre", ["Right Keys"] = "Chiavi destre", ["System"] = "Sistema", ["Scope"] = "Ambito", ["Source"] = "Origine", ["Target"] = "Destinazione", ["Typ / Klasse"] = "Tipo / classe", ["Argument"] = "Argomento", ["Info"] = "Info", ["Aktionen"] = "Azioni", ["Klasse:"] = "Classe:", ["Snippet"] = "Snippet", ["Aktuelle Regel"] = "Regola attuale", ["Argument:"] = "Argomento:"
+            },
+            ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Aktiv"] = "सक्रिय", ["Land"] = "देश", ["Jahr"] = "वर्ष", ["Regeltyp"] = "नियम प्रकार", ["Feld"] = "फ़ील्ड", ["Vergleich"] = "तुलना", ["Wert"] = "मान", ["Sort"] = "क्रम", ["Notiz"] = "टिप्पणी", ["Interaktivitaet Diagnose"] = "इंटरैक्टिविटी निदान", ["HTML wurde vom Server gerendert."] = "HTML सर्वर द्वारा रेंडर किया गया।", ["Adresse:"] = "पता:", ["Blazor interaktiv verbunden:"] = "Blazor इंटरैक्टिव रूप से जुड़ा:", ["Server-Klicks angekommen:"] = "सर्वर क्लिक प्राप्त हुए:", ["JavaScript Diagnose:"] = "JavaScript निदान:", ["Blazor Objekt im Browser:"] = "ब्राउज़र में Blazor ऑब्जेक्ट:", ["Server-Klick testen"] = "सर्वर क्लिक जांचें", ["Pfad"] = "पथ", ["Letzte Änderung"] = "अंतिम परिवर्तन", ["Level"] = "स्तर", ["Details"] = "विवरण", ["Alias"] = "उपनाम", ["Entity Set"] = "एंटिटी सेट", ["Left Keys"] = "बाएं कुंजी", ["Right Keys"] = "दाएं कुंजी", ["System"] = "सिस्टम", ["Scope"] = "दायरा", ["Source"] = "स्रोत", ["Target"] = "लक्ष्य", ["Typ / Klasse"] = "प्रकार / क्लास", ["Argument"] = "आर्गुमेंट", ["Info"] = "जानकारी", ["Aktionen"] = "कार्रवाइयां", ["Klasse:"] = "क्लास:", ["Snippet"] = "स्निपेट", ["Aktuelle Regel"] = "वर्तमान नियम", ["Argument:"] = "आर्गुमेंट:"
+            }
+        };
+
     public string CurrentLanguage => _currentLanguage;
 
     public event Action? Changed;
@@ -1087,9 +1117,12 @@ public sealed class UiTextService : IUiTextService
         if (string.Equals(_currentLanguage, "en", StringComparison.OrdinalIgnoreCase))
             return english;
 
-        return Translations.TryGetValue(_currentLanguage, out var languageTranslations) &&
-               languageTranslations.TryGetValue(german, out var translated)
-            ? translated
+        if (Translations.TryGetValue(_currentLanguage, out var languageTranslations) &&
+            languageTranslations.TryGetValue(german, out var translated))
+            return translated;
+        return AdditionalTranslations.TryGetValue(_currentLanguage, out var additions) &&
+               additions.TryGetValue(german, out var additional)
+            ? additional
             : english;
     }
 
