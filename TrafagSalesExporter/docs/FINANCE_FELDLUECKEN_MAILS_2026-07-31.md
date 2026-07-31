@@ -407,8 +407,9 @@ Vorspann „was wir nicht brauchen", weil es nichts zu tun gibt.
 Hier festhalten, was wann rausgegangen ist und was zurückkommt — sonst ist beim nächsten
 Durchgang nicht unterscheidbar, ob ein Standort nicht geantwortet oder nie eine Mail bekommen hat.
 
-Alle sieben liegen seit 2026-07-31, 09:20 als **Entwürfe** in Outlook (`\\Ingo.Kohler@trafag.com\Entwürfe`),
-Grafik enthalten, nichts gesendet.
+Alle sieben liegen als **Entwürfe** in Outlook (`\\Ingo.Kohler@trafag.com\Entwürfe`), Grafik
+enthalten, nichts gesendet. Nach der Korrektur der UK-Mail am 2026-07-31 komplett neu erzeugt
+(09:47), damit kein Entwurf aus einem älteren Lauf übrigbleibt.
 
 | Standort | Entwurf | Versandt am | Antwort | Ergebnis |
 | --- | --- | --- | --- | --- |
