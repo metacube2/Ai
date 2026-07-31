@@ -4,6 +4,14 @@ Stand: 2026-07-31
 
 ## Kurzstand
 
+- Letzter produktiv verifizierter Deploy: 2026-07-31, Commit `4a3271b`
+  (Spend-Matrix-Kontrast), Doku-Commit `c71885b`, `346/346` Tests gruen.
+  `BiDashboard.dll` `31.07.2026 11:29:08`, `3'226'112` Bytes, SHA256
+  `FE63A2970CAB1CAC400E8B178244686C75B4BE0293560A0417346CAC389B791E`;
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt/entfernt,
+  Produktiv-DB unveraendert, Port 443 offen, authentifizierter HTTPS-Aufruf
+  `200` mit Titel `Trafag Finanze/Sales Management Cockpit`.
+
 - Letzter produktiv verifizierter Code-Deploy: 2026-07-30, Commit `66a34da`,
   `BiDashboard.dll` `30.07.2026 14:51:54`, `3'223'552` Bytes. Inhalt:
   Einkauf-Delta von `Sites.IsActive` entkoppelt. Live-Abgleich am 2026-07-31

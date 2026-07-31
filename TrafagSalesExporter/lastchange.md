@@ -6,6 +6,18 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DEPLOYED 2026-07-31, Spend-Matrix-Kontrast fuer Praesentationen/Snipping
+  (Commit `4a3271b`, Doku-Commit davor `c71885b`, `346/346` Tests gruen):
+  Aufgeklappte Warengruppen- und Materialzeilen verwenden jetzt
+  `text-primary` statt `text-secondary`, groessere Schrift (`.88rem` bzw.
+  `.84rem`), Gewicht 500 und deutlichere blaue Ebenenhintergruende
+  (`rgba(...,.10/.14)`). Die Sammelzeile `uebrige` bleibt kursiv, ist mit
+  `opacity .88` aber besser lesbar. Publish mit `app_offline.htm`;
+  produktive `BiDashboard.dll` `31.07.2026 11:29:08`, `3'226'112` Bytes,
+  SHA256 `FE63A297...B791E`; lokaler Release und Server bitgleich. Produktiv-DB
+  unveraendert (`338'206'720` Bytes, Zeitstempel unveraendert), Port 443 offen,
+  authentifizierter HTTPS-Aufruf `200`, Titel `Trafag Finanze/Sales Management Cockpit`.
+
 - VERSAND 2026-07-31, Stand bei Chatende (Detail: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`
   Abschnitt „Stand bei Chatende"): INDIEN IST RAUS - gesendet 09:56 an `RanVijay.Kumar@trafag.com`,
   Betreff von Ingo ergaenzt auf „... (Trafag India) -> Supplier Name", NICHT an `tasc.co.in`, damit

@@ -2,6 +2,12 @@
 
 Nachtrag 2026-06-18: Das Einkaufsdashboard wurde fuer die Management-/Einkaufssicht nachgezogen und deployed. Schwerpunkt war die Excel-aehnliche Lieferant/Jahr-Kaskadierung analog Referenzbild `einkauf.png`, Zeitraum 2020 bis aktuelles Jahr, Spend aktuelles Jahr je Lieferant, offene Bestellungen/Zulauf, Filter fuer Loeschkennzeichen und MARA-MSTAE sowie echte Lieferantennamen statt Platzhalter.
 
+Nachtrag 2026-07-31: Kontrast der aufgeklappten Spend-Matrix fuer
+Praesentations-Screenshots erhoeht und deployed (Commit `4a3271b`). Warengruppen
+und Materialzeilen verwenden dunklen Primaertext, groessere Schrift und
+deutlichere Ebenenhintergruende; die Hierarchie bleibt ueber Einrueckung und
+unterschiedliche Blautoene sichtbar.
+
 ## Ziel
 
 Der neue Bereich `Einkauf` soll die vorhandene Power-BI-Vorlage `x.pbix` aufnehmen und um weitere SAP-Einkaufsanalysen ergaenzen.
