@@ -13,7 +13,10 @@
 
 param(
   [ValidateSet('Preview', 'Docx', 'Draft')]
-  [string]$Mode = 'Preview'
+  [string]$Mode = 'Preview',
+
+  # Nur einen Standort erzeugen, z. B. -Only TRUK. Leer = alle sieben.
+  [string]$Only = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -318,7 +321,7 @@ $notNeeded
 $mails += [pscustomobject]@{
   File    = '7_TRUK_UK_Cornell.msg'
   To      = 'Cornell.Williams@trafag.com'
-  Subject = 'BI Dashboard - UK data is complete, one question about 2025'
+  Subject = 'BI Dashboard - UK data is complete, nothing needed from your side'
   Html    = @"
 <p>Dear Cornell,</p>
 <p>short and positive one. $intro</p>
@@ -346,16 +349,16 @@ $(Caption 'How the UK compares on supplier data')
 invoice lines &mdash; you are the only site where that field is fully maintained &mdash; and cost
 coverage is at 93%, which is normal given freight and service lines carry no item cost. Thank
 you.</p>
-$(Caption 'Years available for group reporting')
+$(Caption 'Years we hold for group reporting')
 <table cellpadding="0" cellspacing="0" border="0" width="$W" style="border-collapse:collapse;border:1px solid #909090">
 <tr>
-<td bgcolor="#F0F0F0" width="230" height="22" style="font:bold 9.5pt Calibri;color:#909090;text-align:center;border-right:1px solid #909090">2025 &mdash; not held</td>
-<td bgcolor="$GREEN" width="229" height="22" style="font:bold 9.5pt Calibri;color:#FFFFFF;text-align:center">2026 &mdash; complete</td>
+<td bgcolor="$GREEN" width="230" height="22" style="font:bold 9.5pt Calibri;color:#FFFFFF;text-align:center;border-right:1px solid #FFFFFF">2025 &mdash; 1,867 lines</td>
+<td bgcolor="$GREEN" width="229" height="22" style="font:bold 9.5pt Calibri;color:#FFFFFF;text-align:center">2026 to date &mdash; 1,082 lines</td>
 </tr>
 </table>
-<p style="margin:6px 0 0 0;font:9.5pt Calibri">One open point, and only if it is needed: the UK
-data we hold starts in January 2026. Is a 2025 export available from your side? If group reporting
-asks for the prior year, I would come back to you for it &mdash; no action needed now.</p>
+<p style="margin:6px 0 0 0;font:9.5pt Calibri">Both years are in, so the prior-year comparison
+works for the UK &mdash; that is not the case for every site. Nothing needed from your side; this
+is just so you know where the UK stands when group figures come up.</p>
 <p>Best regards<br>Ingo</p>
 "@
 }
@@ -375,6 +378,12 @@ asks for the prior year, I would come back to you for it &mdash; no action neede
 
 $wrapOpen  = '<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1F1F1F;max-width:620px">'
 $wrapClose = '</div>'
+
+if ($Only) {
+  $mails = @($mails | Where-Object { $_.File -like "*$Only*" })
+  if (-not $mails) { throw "Kein Standort passt auf -Only '$Only'." }
+  "Gefiltert auf: " + ($mails.File -join ', ')
+}
 
 switch ($Mode) {
 

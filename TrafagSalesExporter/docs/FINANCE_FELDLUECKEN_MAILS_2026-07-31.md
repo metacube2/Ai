@@ -21,8 +21,46 @@ dass jemand Zeit in Produktsparten, Kurse oder Frachtkosten steckt.
 | 4 | USA | *offen* | **blockiert**, nur Adresse fehlt |
 | 5 | Deutschland | Rohail Munir | versandfertig |
 | 6 | Spanien | Santi Gomez | versandfertig |
-| 7 | UK | Cornell Williams | versandfertig, reine Rückfrage |
+| 7 | UK | Cornell Williams | versandfertig, reine Bestätigung — **2026-07-31 korrigiert**, siehe unten |
 | — | CH / AT | entfällt | kein Standortversand, SAP-intern |
+
+---
+
+## Prüfung aller Entwürfe gegen die Rohdaten, 2026-07-31
+
+Jede Zahl in allen sieben Entwürfen gegen `Finance_Dashboard_Audit_All_2026-07-29.csv`
+nachgemessen, nachdem eine fremde Auswertung für TRUK `0` Lieferanten zeigte. Ergebnis: **sechs
+Entwürfe stimmen, einer enthielt eine falsche Aussage.**
+
+| Behauptung im Entwurf | Gemessen | Urteil |
+| --- | --- | --- |
+| FR 374 von 433 Artikeln, 5 % der 2'577 Zeilen | 374/433, 134 Zeilen = 5.2 % | stimmt |
+| IT 939 von 3'280 Artikeln, 71 % der 19'534 Zeilen | 939/3'280, 13'925 = 71.3 % | stimmt |
+| IN 1'271 von 1'437 Artikeln, 12 %, 677 als TR AG erkannt | 1'271/1'437, 809 = 11.6 %, 677 intern | stimmt |
+| IN „rund 6'100 Zeilen würden zuordenbar" | 6'181 Zeilen ohne Lieferant | stimmt (rund) |
+| US 518 von 521 Artikeln, 6 von 1'504 Zeilen | 518/521, 6 Zeilen, 1'498 ohne | stimmt |
+| DE Lieferant 0, Kundenname 0, Kundenland 0, Kundennummer 7'171 | exakt so | stimmt |
+| DE 2'903 von 7'171 Beschreibungen mit RTF-Müll | 2'903 | stimmt |
+| ES 231 Zeilen ohne jedes Datum | 231 | stimmt |
+| ES „01.01. bis 27.05.2026 nie geliefert" | 2026: Mai 35 (ab 28.05.), Juni 542, Juli 381, **Jan–Apr 0** | stimmt |
+| UK Lieferant auf allen 2'955 Zeilen | 2'955 mit Nummer **und** Name | stimmt |
+| UK Kostendeckung 93 % | 2'762 von 2'955 = 93.5 % | stimmt |
+| **UK „2025 fehlt, Daten beginnen im Januar 2026"** | **2025: 1'867 Zeilen, 2026: 1'082** | **FALSCH, ersetzt** |
+
+Nebenbefund zur Trafag-Erkennung, geprüft mit demselben Regex wie im Code:
+
+| TSC | mit Lieferant | intern erkannt | extern | ohne Lieferant |
+| --- | --- | --- | --- | --- |
+| TRFR | 134 | 83 | 51 | 2'443 |
+| TRIN | 809 | 677 | 132 | 6'181 |
+| TRIT | 13'925 | 6'848 | 7'077 | 5'609 |
+| TRUK | 2'955 | 2'803 | 152 | 0 |
+| TRUS | 6 | 2 | 4 | 1'498 |
+
+Häufigste interne Werte: `TRUK / TR08 / Trafag AG / CH` (2'609), `TRIN / V0078 / Trafag AG / CH`
+(677), `TRUK / TR09 / Trafag Controls India Pvt Limited / IN` (101), `TRFR / S_CH01_0070540 /
+Trafag Italia S.r.l. / IT` (43). Der Filter greift also überall dort, wo überhaupt ein Lieferant
+steht — er ist nicht der Engpass, das fehlende Feld ist es.
 
 ---
 
@@ -337,10 +375,14 @@ Verweis darauf steht im Text, damit er nicht neu suchen muss.
 ## 7. UK (TRUK)
 
 **To:** `Cornell.Williams@trafag.com`
-**Subject:** BI Dashboard — UK data is complete, one question about 2025
+**Subject:** BI Dashboard — UK data is complete, nothing needed from your side
 
-Reine Rückfrage, keine Bitte. Der Vorspann „was wir nicht brauchen" ist hier weggelassen — es
-gibt nichts zu tun, an dem sich jemand verausgaben könnte.
+**Korrigiert 2026-07-31.** Die erste Fassung fragte nach einem 2025-Export, weil die Quelltabelle
+„2025 fehlt komplett" behauptete. **Das war falsch** — im Audit-CSV liegen 1'867 UK-Zeilen für
+2025, der Backfill ist längst gelaufen. Der Entwurf mit dieser Frage wurde gelöscht und ersetzt;
+Details der Fehlerkette in `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`, Abschnitt „UK ist
+erledigt". Damit ist für TRUK **nichts** offen und die Mail eine reine Bestätigung — ohne den
+Vorspann „was wir nicht brauchen", weil es nichts zu tun gibt.
 
 > Dear Cornell,
 >
@@ -351,9 +393,9 @@ gibt nichts zu tun, an dem sich jemand verausgaben könnte.
 > lines — you are the only site where that field is fully maintained — and cost coverage is at
 > 93%, which is normal given freight and service lines carry no item cost. Thank you.
 >
-> One open point, and only if it is needed: the UK data we hold starts in January 2026, so 2025
-> is absent from group reporting. Is a 2025 export available from your side? If group reporting
-> asks for the prior year, I would come back to you for it — no action needed now.
+> Both 2025 (1,867 lines) and 2026 to date (1,082 lines) are in, so the prior-year comparison
+> works for the UK — that is not the case for every site. Nothing needed from your side; this is
+> just so you know where the UK stands when group figures come up.
 >
 > Best regards
 > Ingo

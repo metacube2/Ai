@@ -6,6 +6,22 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- PRUEFUNG 2026-07-31, alle sieben Standort-Entwuerfe gegen `Finance_Dashboard_Audit_All_2026-07-29.csv`
+  nachgemessen. SECHS stimmen, EINER war falsch: die UK-Mail behauptete „the UK data we hold starts
+  in January 2026, so 2025 is absent". FALSCH - TRUK hat **1'867 Zeilen fuer 2025** und 1'082 fuer
+  2026 bis 27.07., der UK-2025-Backfill ist gelaufen. Fehlerkette: die Spalte „weitere
+  Auffaelligkeit" in `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 1 ist die EINZIGE
+  Spalte, die nicht aus dem Reproduktionsskript stammt - dort war „2025 fehlt komplett" aus der
+  ueberholten 28.07.-Analyse uebernommen und nie nachgemessen. Der Entwurf mit der Falschaussage
+  ist geloescht und ersetzt (`-Only TRUK` am Skript ergaenzt), fuer TRUK ist damit NICHTS offen.
+  ZWEITER BEFUND, gegen eine Fremdauswertung die fuer TRUK `0` Lieferanten zeigte: es gibt in dieser
+  Quelle KEINEN Fall „SupplierNumber gepflegt, SupplierName leer" - beide Felder sind immer
+  gemeinsam gefuellt (TRUK 2'955/2'955, TRIT 13'925/13'925, TRIN 809/809, TRFR 134/134, TRUS 6/6,
+  CH/AT/DE/ES 0/0). Jene Tabelle stimmt in JEDER anderen Zelle mit dem Audit-CSV ueberein, nur die
+  UK-Zeile weicht ab und traegt noch den alten Statustext „Mapping jetzt da - braucht noch den
+  Reimport": mutmasslich eine unveraendert uebernommene Zeile, keine Messung. Trafag-Erkennung
+  gegengeprueft: TRFR 83 intern / 51 extern, TRIN 677/132, TRIT 6'848/7'077, TRUK 2'803/152,
+  TRUS 2/4 - der Regex greift ueberall, wo ein Lieferant steht; das fehlende Feld ist der Engpass.
 - WERKZEUG 2026-07-31, grafische Mailfassung: `docs/mails/Build-StandortMails.ps1` baut die sieben
   Standortmails mit Outlook-taugliche Grafiken (Balken Artikelstamm/Rechnungszeilen, Feld-Schema
   `Purchasing Data` -> `Preferred Vendor`, Statustabelle DE, Vorher/Nachher-Kasten zum RTF-Muell,

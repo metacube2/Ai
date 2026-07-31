@@ -19,7 +19,7 @@ Kostenfüllgrad-Tabelle darin ist irreführend (siehe Abschnitt 3).
 | TRFR | 2'577 | 5 % | 52 % | 100 % | 98 % | — |
 | TRIN | 6'990 | 12 % | 99 % | 100 % | 99 % | — |
 | TRIT | 19'534 | **71 %** | 96 % | 100 % | 99 % | bester B1-Standort |
-| TRUK | 2'955 | **100 %** | 93 % | 100 % | 100 % | 2025 fehlt komplett |
+| TRUK | 2'955 | **100 %** | 93 % | 100 % | 100 % | ~~2025 fehlt komplett~~ **falsch, siehe Korrektur unten** |
 | TRUS | 1'504 | 0.4 % | 90 % | 100 % | 99 % | — |
 
 `Lieferant` = mindestens `SupplierNumber` oder `SupplierName` gefüllt. `Kosten` =
@@ -31,6 +31,46 @@ siehe Abschnitt 3.
 Am 2026-07-27 war TRUK bei `0 %` Lieferant und `0 %` Kosten (1'088 Zeilen). Im Audit vom
 2026-07-29 sind es **2'955 Zeilen, 100 % Lieferant, 93 % Kosten**. Der Reimport ist gelaufen,
 das UK-Mapping wirkt. Ältere Tabellen mit „UK: braucht noch den Reimport" sind überholt.
+
+**KORREKTUR 2026-07-31 — „2025 fehlt komplett" war falsch.** Die Notiz in der Tabelle oben war
+aus der überholten Analyse vom 2026-07-28 übernommen und beim Erstellen dieser Datei nicht am
+Audit-CSV nachgemessen. Tatsächlich enthält dasselbe CSV für TRUK:
+
+| Jahr | Zeilen |
+| --- | --- |
+| 2025 | **1'867** |
+| 2026 bis 27.07. | 1'082 |
+| ohne `InvoiceDate` | 6 |
+
+Der UK-2025-Backfill (`FINANCE_BACKFILL_UK_ES_2026-07-28.md`) ist also gelaufen und drin. **Für
+TRUK ist damit gar nichts offen** — nicht Lieferant, nicht Kosten, nicht 2025. Der erste
+UK-Mailentwurf enthielt deshalb eine falsche Aussage („the UK data we hold starts in January
+2026") und wurde am 2026-07-31 ersetzt.
+
+**Lehre:** übernommene Auffälligkeiten aus einer älteren Datei sind keine Messung. Die Spalte
+„weitere Auffälligkeit" ist die einzige Spalte dieser Tabelle, die nicht aus dem
+Reproduktionsskript in Abschnitt 7 stammt — und genau dort steckte der Fehler.
+
+### Lieferant: Nummer und Name laufen immer gemeinsam
+
+Am 2026-07-31 getrennt gemessen, weil eine andere Auswertung für TRUK `0` Lieferanten zeigte:
+
+| TSC | Zeilen | mit `SupplierNumber` | mit `SupplierName` |
+| --- | --- | --- | --- |
+| TRCH, TRAT, TRDE, TRES | 61'607 | 0 | 0 |
+| TRFR | 2'577 | 134 | 134 |
+| TRIN | 6'990 | 809 | 809 |
+| TRIT | 19'534 | 13'925 | 13'925 |
+| TRUK | 2'955 | **2'955** | **2'955** |
+| TRUS | 1'504 | 6 | 6 |
+
+**Es gibt keinen Fall „Nummer gepflegt, Name leer".** Die beiden Felder sind in dieser Quelle
+immer gemeinsam gefüllt oder gemeinsam leer. Eine Auswertung, die für TRUK `0` zeigt, kann das
+also nicht aus diesem CSV haben — dort sind Zeilenzahl und Lieferantenzahl aller anderen
+Standorte deckungsgleich, nur die UK-Zeile weicht ab. Verdacht: in jener Tabelle ist die
+UK-Zeile inklusive Statustext („Mapping jetzt da — braucht noch den Reimport") unverändert aus
+der Analyse vom 2026-07-28 übernommen und nicht neu gemessen worden. Wer eine solche Tabelle
+gegen dieses Dokument stellt, sollte zuerst die Quelle jener UK-Zeile prüfen.
 
 ### Lieferantenlücke in der richtigen Mengeneinheit
 
