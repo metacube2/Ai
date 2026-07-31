@@ -6,6 +6,13 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- DOKU 2026-07-31, RAG-Inhaltsverzeichnis konsolidiert: `docs/RAG_ROUTER.md`
+  von 289 auf 51 Zeilen reduziert und auf Vorrangregeln/Themenrouting
+  beschraenkt. Detailquellen, Live-Werkzeuge und Suchbegriffe stehen jetzt in
+  `docs/RAG_DETAIL_INDEX.md`. Der vorherige Router ist vollstaendig und
+  zeilengleich in
+  `docs/raw_md_archive/RAG_ROUTER_ARCHIV_2026-07-31.md` erhalten.
+
 - DEPLOYED 2026-07-31, finaler Stand der Spend-Matrix fuer
   Praesentations-Screenshots (Code-Commits `4a3271b`, `f740eb9`, `4498bd4`):
   dunkler Primaertext und deutlichere Ebenenhintergruende; Tabellenkopf,

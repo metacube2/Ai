@@ -2,7 +2,9 @@
 
 Stand: 2026-07-31
 
-RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden. Standardmaessig nur die Kurzdateien unter `docs/rag/` laden; diese Datei und andere Original-MDs nur bei Detail-/Auditbedarf.
+RAG-Hinweis: Fuer tokenarme Kontextauswahl zuerst `docs/RAG_ROUTER.md` laden.
+Detailquellen, Werkzeuge und Suchbegriffe nur bei Bedarf ueber
+`docs/RAG_DETAIL_INDEX.md` aufloesen.
 
 Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsnotizen nicht mit dem aktuellen Produktstand zu verwechseln.
 
@@ -10,6 +12,8 @@ Diese Datei ordnet die vorhandenen Markdown-Dateien ein. Ziel ist, alte Arbeitsn
 
 | Datei | Rolle | Status |
 | --- | --- | --- |
+| `docs/RAG_ROUTER.md` | Kompaktes RAG-Inhaltsverzeichnis | Fuehrender Einstieg; enthaelt nur Vorrangregeln und Themenrouting |
+| `docs/RAG_DETAIL_INDEX.md` | Zweite Navigationsebene | Detailquellen, Live-Werkzeuge, Suchindex und Archivpfade |
 | `lastchange.md` | Kompakter aktueller Aenderungsstand | Fuehrend fuer den laufenden Kurzstand; aeltere Chronologie liegt unter `docs/raw_md_archive/` |
 | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` | IIS-/Server-Handoff | Aktuell fuer Deployment |
 | `docs/FINANCE_ENTSCHEIDE.md` | Finance-Regeln und Kontrollpunkte | Aktuell fuehrend fuer Finance-Logik |
@@ -119,6 +123,10 @@ Bereinigung 2026-07-31:
 - Die drei aufeinanderfolgenden Spend-Matrix-Design-Deploys wurden in
   `lastchange.md`, der Einkaufs-Hauptdoku und der Deployment-Kurzdatei auf den
   finalen Stand konsolidiert.
+- `docs/RAG_ROUTER.md` wurde von 289 auf 51 Zeilen reduziert. Detailquellen,
+  Werkzeugregeln und Suchbegriffe liegen jetzt in `docs/RAG_DETAIL_INDEX.md`;
+  der komplette vorherige Router ist zeilengleich unter
+  `docs/raw_md_archive/RAG_ROUTER_ARCHIV_2026-07-31.md` erhalten.
 
 Bereinigung 2026-06-09:
 
