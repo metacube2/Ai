@@ -1,5 +1,6 @@
 @page "/einkauf/verbindungen"
 @using TrafagSalesExporter.Services
+@implements IDisposable
 @inject IPurchasingDataSourcePageService DataSourceService
 @inject IPurchasingDataRefreshService RefreshService
 @inject TrafagSalesExporter.Services.IUiTextService UiText
@@ -214,6 +215,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        UiText.Changed += HandleLanguageChanged;
         _state = await DataSourceService.LoadAsync();
         _refreshStatus = await RefreshService.GetStatusAsync();
         _loading = false;
@@ -317,6 +319,16 @@ else
 
     private string T(string german, string english) => UiText.Text(german, english);
     private static string Display(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UiText.Changed -= HandleLanguageChanged;
+    }
 
     private string TranslateConnectionMessage(string message)
     {

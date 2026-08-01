@@ -87,12 +87,17 @@ public class UiTextServiceTests
         foreach (var language in new[] { "es", "it", "hi", "sq", "tr", "tlh" })
         {
             var translations = UiTextGeneratedTranslations.All[language];
-            var missing = expected.Keys.Where(key => !translations.ContainsKey(key)).ToArray();
+            var purchasingTranslations = PurchasingUiTextGeneratedTranslations.All[language];
+            var missing = expected.Keys
+                .Where(key => !translations.ContainsKey(key) && !purchasingTranslations.ContainsKey(key))
+                .ToArray();
             Assert.True(missing.Length == 0, $"{language} is missing: {string.Join(" | ", missing)}");
 
             foreach (var pair in expected)
             {
-                var translated = translations[pair.Key];
+                var translated = translations.TryGetValue(pair.Key, out var generalTranslation)
+                    ? generalTranslation
+                    : purchasingTranslations[pair.Key];
                 Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.Key} is empty");
                 Assert.Equal(Placeholders(pair.Value), Placeholders(translated));
             }
@@ -100,9 +105,65 @@ public class UiTextServiceTests
     }
 
     [Fact]
+    public void Purchasing_Translations_Cover_Every_Dynamic_Key_In_Every_Language()
+    {
+        Assert.Equal(
+            PurchasingUiTextCatalog.All.Count,
+            PurchasingUiTextCatalog.All.Select(pair => pair.German).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        foreach (var language in new[] { "es", "it", "hi", "sq", "tr", "tlh" })
+        {
+            var service = new UiTextService();
+            service.SetLanguage(language);
+            var translations = PurchasingUiTextGeneratedTranslations.All[language];
+
+            foreach (var pair in PurchasingUiTextCatalog.All)
+            {
+                Assert.True(translations.TryGetValue(pair.German, out var translated),
+                    $"{language} is missing dynamic purchasing text: {pair.German}");
+                Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.German} is empty");
+                Assert.Equal(Placeholders(pair.English), Placeholders(translated));
+
+                var resolved = service.Text(pair.German, pair.English);
+                Assert.False(string.IsNullOrWhiteSpace(resolved));
+                if (language == "tlh")
+                    Assert.Equal(PurchasingKlingonOverrides.All[pair.German], resolved);
+            }
+
+            Assert.NotEqual("Purchasing analysis", service.Text("Einkauf Analyse", "Purchasing analysis"));
+        }
+
+        var albanian = new UiTextService();
+        albanian.SetLanguage("sq");
+        Assert.NotEqual("purchasing cache full values", albanian.Text("Einkauf Cache Vollwerte", "purchasing cache full values"));
+        Assert.NotEqual("Purchasing analysis", albanian.Text("Einkauf Analyse", "Purchasing analysis"));
+    }
+
+    [Fact]
+    public void Purchasing_Pages_React_To_Language_Changes_And_Language_Is_Scoped()
+    {
+        var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var program = File.ReadAllText(Path.Combine(projectRoot, "Program.cs"));
+        Assert.Contains("AddScoped<IUiTextService, UiTextService>()", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddSingleton<IUiTextService, UiTextService>()", program, StringComparison.Ordinal);
+
+        foreach (var relativePath in new[]
+                 {
+                     Path.Combine("Components", "Pages", "PurchasingDashboard.razor"),
+                     Path.Combine("Components", "Pages", "PurchasingDataSources.razor")
+                 })
+        {
+            var source = File.ReadAllText(Path.Combine(projectRoot, relativePath));
+            Assert.Contains("UiText.Changed += HandleLanguageChanged", source, StringComparison.Ordinal);
+            Assert.Contains("UiText.Changed -= HandleLanguageChanged", source, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public void Klingon_Catalogue_Uses_Latin_Script_Only()
     {
         var invalid = UiTextGeneratedTranslations.All["tlh"]
+            .Concat(PurchasingKlingonOverrides.All)
             .Where(pair => pair.Value.Any(character => character > 127 &&
                 CharUnicodeInfo.GetUnicodeCategory(character) is UnicodeCategory.UppercaseLetter
                     or UnicodeCategory.LowercaseLetter
@@ -112,6 +173,17 @@ public class UiTextServiceTests
             .ToArray();
 
         Assert.True(invalid.Length == 0, $"Non-Latin Klingon entries: {string.Join(" | ", invalid)}");
+
+        var englishBusinessWords = new Regex(
+            @"\b(cache|live|position|value|period|sample|schedule|spend|performance|supplier|item|row|simulation|until|matrix|deleted|latest|known|rating|unit|detail|due|short|open|quantities|top|net|fields|headers|productive|actual|quality|issue|procurement|fallback|stock|invoice|material|currency|purchase|order|country|selected)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var klingonFallbacks = PurchasingKlingonOverrides.All
+            .Where(pair => englishBusinessWords.IsMatch(pair.Value))
+            .Select(pair => pair.Key)
+            .ToArray();
+
+        Assert.True(klingonFallbacks.Length == 0,
+            $"English business words remain in Klingon purchasing text: {string.Join(" | ", klingonFallbacks)}");
     }
 
     private static string[] Placeholders(string value) => Regex.Matches(value, "\\{[^{}]+\\}")

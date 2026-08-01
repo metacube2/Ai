@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-07-31
+Stand: 2026-08-01
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -11,6 +11,11 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- Seit 2026-08-01 rendern Einkaufsdashboard und Einkaufs-Datenquellen nach
+  einem Sprachwechsel sofort neu. Die Sprache ist pro Benutzersitzung getrennt.
+  Ein expliziter Katalog deckt 77 dynamische Einkaufstexte in `es`, `it`, `hi`,
+  `sq`, `tr` und `tlh` ab. Details und Testgrenzen:
+  `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md`.
 - Delta-Fix `66a34da` ist deployed und nicht mehr an `Sites.IsActive`
   gebunden. Beim Live-Check 2026-07-31 10:21 MESZ lag noch kein produktiver
   Delta-Lauf nach dem Deploy vor; korrekte Aussage bis zum Nachweis:

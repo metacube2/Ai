@@ -95,7 +95,9 @@ builder.Services.AddSingleton<IFinancialJournalRefreshService, FinancialJournalR
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
 builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializationService>();
-builder.Services.AddSingleton<IUiTextService, UiTextService>();
+// UI language belongs to one Blazor circuit/user. A singleton leaked language
+// changes into every active session and made language switching unpredictable.
+builder.Services.AddScoped<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
 builder.Services.AddSingleton<ILandingPageSettingsService, LandingPageSettingsService>();
 builder.Services.AddSingleton<INavigationMenuService, NavigationMenuService>();

@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-07-31
+Stand: 2026-08-01
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber
@@ -31,6 +31,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |
 | HR KPI | `docs/rag/HR_KPI.md` |
 | Einkauf, Spend, Drilldown, Bestellungen, Kontrakte | `docs/rag/PURCHASING.md` |
+| Oberflaechensprachen, Einkauf-Lokalisierung, Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | Deployment/IIS | `docs/rag/DEPLOYMENT.md` |
 | Admin/Startseite | `docs/rag/ADMIN.md` |
 | Architektur | `docs/rag/ARCHITECTURE.md` |

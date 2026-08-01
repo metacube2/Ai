@@ -725,7 +725,7 @@
     private IReadOnlyList<PurchasingKpiCard> KpiCards =>
     [
         new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
-        new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? $"EKKO-Belege im Zeitraum {FilterLabel}" : "Noch nicht geladen", _liveState.EkkoLoaded ? $"EKKO orders in period {FilterLabel}" : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
+        new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Noch nicht geladen", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
         new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "offener Bestell-/Abrufwert Stand heute, zeitraumunabhaengig" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "open order/call-off value as of today, period-independent" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
         new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
     ];
@@ -774,16 +774,16 @@
 
     private IReadOnlyList<PurchasingPipelineStep> PipelineRows =>
     [
-        new("EKKO Bestellkopf", "EKKO purchase header", _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-", _liveState.EkkoLoaded ? $"Bestellungen im Zeitraum {FilterLabel}" : "Bestellkopf wartet auf SAP", _liveState.EkkoLoaded ? $"Orders in period {FilterLabel}" : "Purchase header is waiting for SAP", Icons.Material.Filled.ReceiptLong, _liveState.EkkoLoaded, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
-        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? $"Anzahl Bestellpositionen im Zeitraum {FilterLabel}" : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? $"Number of order items in period {FilterLabel}" : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
-        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? $"Anzahl Termineinteilungen im Zeitraum {FilterLabel}" : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? $"Number of schedule lines in period {FilterLabel}" : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("EKKO Bestellkopf", "EKKO purchase header", _liveState.EkkoLoaded ? $"{_liveState.PurchaseOrderCount:N0}" : "-", _liveState.EkkoLoaded ? WithFilter("Bestellungen im Zeitraum", "Orders in period") : "Bestellkopf wartet auf SAP", _liveState.EkkoLoaded ? WithFilter("Bestellungen im Zeitraum", "Orders in period") : "Purchase header is waiting for SAP", Icons.Material.Filled.ReceiptLong, _liveState.EkkoLoaded, _liveState.EkkoLoaded ? Color.Success : Color.Warning),
+        new("EKPO Positionen", "EKPO item rows", _liveState.EkpoLoaded ? $"{_liveState.PositionSampleCount:N0}" : "0", _liveState.EkpoLoaded ? WithFilter("Anzahl Bestellpositionen im Zeitraum", "Number of order items in period") : "Spend und offene Werte bleiben Simulation", _liveState.EkpoLoaded ? WithFilter("Anzahl Bestellpositionen im Zeitraum", "Number of order items in period") : "Spend and open values remain simulation", Icons.Material.Filled.Inventory2, _liveState.EkpoLoaded, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
+        new("EKET Termine", "EKET schedules", _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0", _liveState.EketLoaded ? WithFilter("Anzahl Termineinteilungen im Zeitraum", "Number of schedule lines in period") : "Faelligkeiten und Kontrakte warten auf SAP", _liveState.EketLoaded ? WithFilter("Anzahl Termineinteilungen im Zeitraum", "Number of schedule lines in period") : "Due dates and contracts wait for SAP", Icons.Material.Filled.EventAvailable, _liveState.EketLoaded, _liveState.EketLoaded ? Color.Success : Color.Warning),
         new("Dashboard Layer", "Dashboard layer", _liveState.EkkoLoaded ? "aktiv" : "bereit", "Livewerte, Simulation und 3D-Analyse werden getrennt ausgewiesen", "Live values, simulation and 3D analysis are shown separately", Icons.Material.Filled.DashboardCustomize, true, Color.Info)
     ];
 
     private IReadOnlyList<string> ManagementInsights =>
     [
         _liveState.EkkoLoaded
-            ? T($"{_liveState.PurchaseOrderCount:N0} Einkaufsbelege sind im Zeitraum {FilterLabel} im Cockpit.", $"{_liveState.PurchaseOrderCount:N0} purchase orders are in the cockpit for {FilterLabel}.")
+            ? $"{_liveState.PurchaseOrderCount:N0} {T("Einkaufsbelege sind im Zeitraum", "purchase orders are in the cockpit for")} {FilterLabel}."
             : T("EKKO wird geladen; danach erscheinen Bestellungen und Lieferanten live.", "EKKO is loading; orders and suppliers appear live afterwards."),
         _liveState.EkpoLoaded
             ? T("Spend, Artikel und Warengruppen koennen nun aus SAP-Positionen kommen.", "Spend, articles and material groups can now come from SAP item rows.")
@@ -804,7 +804,7 @@
 
     private IReadOnlyList<PurchasingSectionKpi> OpenOrderKpis =>
     [
-        new("Bestellungen", "Orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", $"EKKO im Zeitraum {FilterLabel}", $"EKKO in period {FilterLabel}"),
+        new("Bestellungen", "Orders", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", WithFilter("EKKO im Zeitraum", "EKKO in period"), WithFilter("EKKO im Zeitraum", "EKKO in period")),
         new("Lieferanten", "Suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "mit nicht geloeschten Positionen", "with non-deleted items"),
         new("Offener Wert", "Open value", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), _liveState.EketLoaded ? "aus SAP Terminen/Positionen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules/items" : "simulation until EKET delivers"),
         new("Offene Menge", "Open quantity", _liveState.EketLoaded ? _liveState.OpenQuantitySample.ToString("N0") : Purchasing3dBaseRows.Sum(x => x.OpenQuantity).ToString("N0"), _liveState.EketLoaded ? "aus SAP Terminen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers")
@@ -1559,6 +1559,7 @@
     protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += HandleLocationChanged;
+        UiText.Changed += HandleLanguageChanged;
         _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
         _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
         _liveLoading = false;
@@ -1581,12 +1582,19 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         Navigation.LocationChanged -= HandleLocationChanged;
+        UiText.Changed -= HandleLanguageChanged;
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
+    private string WithFilter(string german, string english) => $"{T(german, english)} {FilterLabel}";
     private static string FormatChf(double value) => $"CHF {value:N0}";
     private static string FormatChf(decimal value) => $"CHF {value:N0}";
     private static string BuildDefaultFromMonth()

@@ -1,6 +1,6 @@
 # RAG Detailindex
 
-Stand: 2026-07-31
+Stand: 2026-08-01
 
 Diese Datei ist die zweite Navigationsebene hinter `docs/RAG_ROUTER.md`.
 Detailquellen nur laden, wenn die jeweilige Kurzdatei nicht ausreicht oder ein
@@ -48,6 +48,7 @@ Stand verwenden.
 | Marco-Umsetzungsplan | `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` |
 | Marco-Review | `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` |
 | Einkaufssitzung/Wuensche | `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md` |
+| Einkauf-Lokalisierung und Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | ZLO03/Materialverwendung | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | Manual-Import-Details | `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md` |
 | Spanien-rclone | `docs/SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md` |
@@ -117,6 +118,7 @@ verifizieren, ersetzt diese Entwicklungsoberflaechen aber nicht.
 | TRDE, Alphaplan | `docs/rag/MANUAL_IMPORT.md` |
 | Einkauf, EKKO/EKPO/EKET, Spend | `docs/rag/PURCHASING.md` |
 | Drilldown, Warengruppe, MARA, ABC/XYZ | `docs/rag/PURCHASING.md` |
+| Albanisch, Tuerkisch, Klingonisch, Sprache, Projekte | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | HR KPI, Rexx, Austritte, Absenzen | `docs/rag/HR_KPI.md` |
 | IIS, Publish, BiDashboard, Firewall | `docs/rag/DEPLOYMENT.md` |
 | ZLO03, MaterialUsageSet, Stuecklistenanalyse | `docs/abap/README_LZCODE_WEBSERVICE.md` |

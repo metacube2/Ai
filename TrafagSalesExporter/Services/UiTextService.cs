@@ -1138,9 +1138,16 @@ public sealed class UiTextService : IUiTextService
         // languages retain their manually reviewed wording and only fill gaps
         // from the generated catalogue below.
         if (_currentLanguage is "tlh" &&
+            PurchasingKlingonOverrides.All.TryGetValue(german, out var reviewedKlingon))
+            return reviewedKlingon;
+        if (_currentLanguage is "tlh" &&
             UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completeTranslations) &&
             completeTranslations.TryGetValue(german, out var completeTranslation))
             return completeTranslation;
+        if (_currentLanguage is "tlh" &&
+            PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completePurchasingTranslations) &&
+            completePurchasingTranslations.TryGetValue(german, out var completePurchasingTranslation))
+            return completePurchasingTranslation;
 
         if (Translations.TryGetValue(_currentLanguage, out var languageTranslations) &&
             languageTranslations.TryGetValue(german, out var translated))
@@ -1148,9 +1155,12 @@ public sealed class UiTextService : IUiTextService
         if (AdditionalTranslations.TryGetValue(_currentLanguage, out var additions) &&
             additions.TryGetValue(german, out var additional))
             return additional;
-        return UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var generated) &&
-               generated.TryGetValue(german, out var generatedTranslation)
-            ? generatedTranslation
+        if (UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var generated) &&
+            generated.TryGetValue(german, out var generatedTranslation))
+            return generatedTranslation;
+        return PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var purchasingGenerated) &&
+               purchasingGenerated.TryGetValue(german, out var purchasingGeneratedTranslation)
+            ? purchasingGeneratedTranslation
             : english;
     }
 

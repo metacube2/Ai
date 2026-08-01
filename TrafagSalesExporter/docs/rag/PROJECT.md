@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-07-31
+Stand: 2026-08-01
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -16,6 +16,11 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
   `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 - Fuehrende App: `TrafagSalesExporter`, publiziert als `BiDashboard`.
+- Die einfache Projektverwaltung ist als unterster Hauptnavigationseintrag
+  `Projekte` unter `/projekte` eingebaut. Sie verwaltet Status, Prioritaet,
+  Verantwortung, Termine, Fortschritt, Notizen und Archivierung in SQLite.
+  Aktueller Funktions- und Lokalisierungsstand:
+  `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md`.
 - Aktuelle fachliche Detailstaende und offene Punkte stehen ausschliesslich in
   den Themen-Kurzdateien und im kanonischen Live-Abgleich; alte Deploy-Nachweise
   stehen in `lastchange.md` beziehungsweise `docs/raw_md_archive/`.
