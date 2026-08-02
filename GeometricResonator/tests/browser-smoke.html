@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Geometric Resonator - Rauchprobe</title>
+</head>
+<body>
+<!--
+  Rauchprobe im echten Browser.
+
+  Die node-Tests decken Eigenloeser und DSP ab, koennen aber drei Dinge
+  nicht pruefen, die nur der Browser hat: das Laden als ES-Modul, den
+  Modul-Worker und den AudioWorklet. Genau die pruefen wir hier.
+
+  Aufruf headless:
+    chrome --headless --virtual-time-budget=20000 --dump-dom \
+           http://127.0.0.1:PORT/../tests/browser-smoke.html
+  Bequemer ueber tests/browser-smoke.mjs.
+-->
+<pre id="out">läuft…</pre>
+<script type="module">
+const lines = [];
+let failures = 0;
+const out = document.getElementById("out");
+
+function report(name, ok, detail) {
+  if (!ok) failures += 1;
+  lines.push(`${ok ? "  ok  " : " FAIL "} ${name}${detail ? `\n         ${detail}` : ""}`);
+}
+
+function finish() {
+  out.textContent = `${lines.join("\n")}\n\nERGEBNIS ${failures === 0 ? "BESTANDEN" : "FEHLGESCHLAGEN"} (${lines.length - failures}/${lines.length})`;
+  document.title = failures === 0 ? "SMOKE-OK" : "SMOKE-FAIL";
+  // Ergebnis an den Runner melden; beim Aufruf von Hand schlaegt das
+  // stillschweigend fehl und die Anzeige oben genuegt.
+  fetch("/__result", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lines, failures }),
+  }).catch(() => {});
+}
+
+window.addEventListener("error", (event) => {
+  report("unerwarteter Fehler", false, event.message);
+});
+
+const OBJECTS = [
+  { id: 1, type: "rect", x: 60, y: 60, w: 200, h: 140 },
+  { id: 2, type: "ellipse", x: 260, y: 60, w: 160, h: 140 },
+];
+
+try {
+  // 1. Module laden im Browser
+  const geometry = await import("../web/geometry.js");
+  const physics = await import("../web/physics.js");
+  report("ES-Module laden im Browser", typeof geometry.analyzeGeometry === "function"
+    && typeof physics.modalModel === "function");
+
+  // 2. Beruehrende Teile verschmelzen
+  const merged = geometry.analyzeGeometry(OBJECTS, 30);
+  report("Beruehrende Teile ergeben einen Koerper", merged.parts.length === 1,
+    `${merged.parts.length} Komponente(n)`);
+
+  // 3. Modul-Worker rechnet die Eigenmoden
+  const worker = new Worker("../web/modes-worker.js", { type: "module" });
+  const solved = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Worker antwortet nicht")), 15000);
+    worker.onmessage = (event) => { clearTimeout(timer); resolve(event.data); };
+    worker.onerror = (event) => { clearTimeout(timer); reject(new Error(event.message || "Worker-Fehler")); };
+    worker.postMessage({
+      token: 1, objects: OBJECTS, resolution: 30,
+      settings: { material: "wood", damping: 0.4, brightness: 0.6 },
+      excite: { x: 140, y: 120 }, pickup: { x: 320, y: 140 },
+    });
+  });
+  report("Modul-Worker liefert Moden",
+    !solved.error && Array.isArray(solved.modes) && solved.modes.length >= 6,
+    solved.error ? solved.error : `${solved.modes.length} Moden, Grundton ${solved.modes[0].frequency.toFixed(1)} Hz, ${solved.diagnostics.milliseconds} ms`);
+  report("Worker liefert Schwingungsformen fuer die Anzeige",
+    !!solved.shapes && solved.shapes.used > 0 && solved.labels instanceof Int32Array,
+    solved.shapes ? `${solved.shapes.used} Formen ueber ${solved.shapes.nodes} Knoten` : "keine");
+
+  // 4. AudioWorklet rendert offline mit denselben Moden
+  const wav = await import("../web/wav.js");
+  const measure = (data) => {
+    let peak = 0;
+    let sum = 0;
+    let finite = true;
+    let firstSound = -1;
+    for (let i = 0; i < data.length; i += 1) {
+      if (!Number.isFinite(data[i])) finite = false;
+      const value = Math.abs(data[i]);
+      if (firstSound < 0 && value > 1e-4) firstSound = i;
+      peak = Math.max(peak, value);
+      sum += data[i] * data[i];
+    }
+    return { peak, rms: Math.sqrt(sum / data.length), finite, firstSound };
+  };
+
+  let buffer = null;
+  for (const instrument of ["violin", "mallet"]) {
+    const rendered = await wav.renderOffline({
+      instrument, pitch: 220, excitation: 0.6, volume: 0.4, modes: solved.modes,
+    }, 1.0, 44100);
+    if (instrument === "mallet") buffer = rendered;
+    const data = rendered.getChannelData(0);
+    const stats = measure(data);
+    report(`AudioWorklet rendert offline hoerbares Audio (${instrument})`,
+      stats.finite && stats.peak > 0.005 && stats.peak <= 1 && stats.rms > 1e-4,
+      `Spitze ${stats.peak.toFixed(4)}, Effektivwert ${stats.rms.toExponential(2)}, erster Ton bei Abtastwert ${stats.firstSound}`);
+  }
+
+  // 5. WAV-Kodierung
+  const blob = wav.encodeWav(buffer);
+  report("WAV-Kodierung erzeugt eine plausible Datei",
+    blob.size === 44 + buffer.length * 2 && blob.type === "audio/wav",
+    `${blob.size} Bytes`);
+
+  // 6. Die Hauptseite laedt ohne Fehler und verdrahtet sich
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "width:1200px;height:800px;border:0";
+  const loaded = new Promise((resolve) => { frame.onload = resolve; });
+  frame.src = "../web/index.html";
+  document.body.append(frame);
+  await loaded;
+  await new Promise((resolve) => setTimeout(resolve, 2500));
+  const inner = frame.contentDocument;
+  const materialOptions = inner.getElementById("material")?.options.length ?? 0;
+  report("Hauptseite initialisiert die Bedienelemente",
+    materialOptions >= 4,
+    `${materialOptions} Materialien im Auswahlfeld`);
+  report("Hauptseite zeigt einen Zustand an",
+    (inner.getElementById("analysis")?.textContent || "").trim().length > 0,
+    (inner.getElementById("analysis")?.textContent || "").trim().slice(0, 90));
+} catch (error) {
+  report("Ablauf ohne Ausnahme", false, error && error.stack ? error.stack.split("\n")[0] : String(error));
+}
+
+finish();
+</script>
+</body>
+</html>

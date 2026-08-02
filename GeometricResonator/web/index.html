@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Geometric Resonator Studio</title>
+  <style>
+    :root { color-scheme:dark; --bg:#061018; --panel:#0e1d28; --panel2:#132733; --line:#244555; --text:#e8f8ff; --muted:#89a8b8; --cyan:#55e4ff; --pink:#ff5fbd; --yellow:#ffd166; --green:#7effa8; --orange:#ff9f45; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 25% 0,#123345 0,var(--bg) 45%); color:var(--text); font:14px system-ui,-apple-system,sans-serif; }
+    header { display:flex; align-items:end; justify-content:space-between; gap:20px; padding:20px 3vw 12px; }
+    h1 { margin:0; letter-spacing:.13em; font-size:clamp(20px,2.6vw,34px); }
+    header p { margin:5px 0 0; color:var(--muted); }
+    main { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(320px,.7fr); gap:18px; padding:10px 3vw 3vw; height:calc(100vh - 98px); min-height:660px; }
+    .workspace,.panel { border:1px solid #1b3948; border-radius:18px; background:rgba(11,27,37,.94); box-shadow:0 22px 70px #0007; overflow:hidden; }
+    .workspace { display:grid; grid-template-rows:auto 1fr auto; min-width:0; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:7px; padding:10px; border-bottom:1px solid #1d3b49; background:#0d1b24; }
+    button,select,input { font:inherit; color:var(--text); }
+    button,select,input[type=number] { border:1px solid #2a4a59; border-radius:9px; background:var(--panel2); padding:9px 11px; }
+    button { cursor:pointer; font-weight:650; transition:.14s ease; }
+    button:hover:not(:disabled) { border-color:var(--cyan); transform:translateY(-1px); }
+    button:disabled { opacity:.5; cursor:default; }
+    button.active { color:#061018; background:var(--cyan); border-color:var(--cyan); }
+    button.danger:hover { border-color:#ff6b6b; }
+    .divider { width:1px; margin:2px 4px; background:#294451; }
+    .canvas-wrap { position:relative; min-height:0; overflow:hidden; background:#071119; touch-action:none; }
+    canvas { display:block; width:100%; height:100%; }
+    .canvas-help { position:absolute; left:15px; bottom:12px; color:var(--muted); pointer-events:none; background:#071119cc; padding:7px 10px; border-radius:7px; line-height:1.5; }
+    .canvas-help b { color:var(--green); font-weight:600; }
+    .object-bar { display:grid; grid-template-columns:1fr auto auto auto auto; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid #1d3b49; background:#0d1b24; }
+    .object-bar label { color:var(--muted); }
+    .object-bar input { width:78px; }
+    .status { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); }
+    .panel { padding:18px; display:flex; flex-direction:column; gap:13px; overflow:auto; }
+    .panel h2 { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:5px 0 0; }
+    .control { display:grid; gap:5px; }
+    .control label { display:flex; justify-content:space-between; color:var(--muted); }
+    .control label span { color:var(--text); font-variant-numeric:tabular-nums; }
+    input[type=range] { width:100%; accent-color:var(--cyan); }
+    .audio-buttons { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    #render { background:linear-gradient(120deg,#18526a,#6d2955); padding:12px; }
+    .readout { padding:11px 12px; border:1px solid #1f3d4c; border-radius:10px; color:var(--muted); line-height:1.6; background:#0a1821; }
+    .readout strong { color:var(--text); }
+    .modes { display:flex; flex-direction:column; gap:3px; font-variant-numeric:tabular-nums; }
+    .mode-row { display:grid; grid-template-columns:20px 62px 1fr 52px; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
+    .mode-index { color:#4d6d7e; }
+    .mode-frequency { color:var(--text); text-align:right; }
+    .mode-bar { height:6px; border-radius:3px; background:#122e3c; overflow:hidden; }
+    .mode-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--cyan),var(--pink)); }
+    .mode-q { text-align:right; font-size:11px; }
+    .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+    .legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+    .note { font-size:12px; line-height:1.6; color:#7593a4; }
+    @media (max-width:900px) { main { grid-template-columns:1fr; height:auto; } .workspace { height:66vh; } .object-bar { grid-template-columns:1fr auto auto; } .object-bar .secondary { display:none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>GEOMETRIC RESONATOR STUDIO</h1>
+      <p>Zeichnen · berühren lassen · die Eigenmoden hören</p>
+    </div>
+    <div id="audioState">Audio bereit</div>
+  </header>
+  <main>
+    <section class="workspace">
+      <div class="toolbar" id="toolbar">
+        <button data-tool="select" class="active">↖ Auswählen</button>
+        <button data-tool="rect">▭ Rechteck</button>
+        <button data-tool="ellipse">◯ Ellipse</button>
+        <button data-tool="triangle">△ Dreieck</button>
+        <div class="divider"></div>
+        <button id="snapToggle" class="active">⇥ Einrasten an</button>
+        <button id="duplicate">Duplizieren</button>
+        <button id="remove" class="danger">Löschen</button>
+        <button id="clear" class="danger">Alles leeren</button>
+        <button id="example">Beispiel laden</button>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div class="canvas-help">
+          Teile, die sich <b>berühren</b>, werden automatisch ein Klangkörper — kein Verbinden nötig.<br>
+          Anregungs- und Abnahmepunkt lassen sich verschieben.
+        </div>
+      </div>
+      <div class="object-bar">
+        <div class="status" id="selectionStatus">Kein Teil ausgewählt</div>
+        <label>Breite <input id="objectWidth" type="number" min="10" max="1400" disabled></label>
+        <label>Höhe <input id="objectHeight" type="number" min="10" max="1000" disabled></label>
+        <label class="secondary">X <input id="objectX" type="number" disabled></label>
+        <label class="secondary">Y <input id="objectY" type="number" disabled></label>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>Klangkörper</h2>
+      <div class="control">
+        <label for="material">Material</label>
+        <select id="material"></select>
+      </div>
+      <div class="control">
+        <label for="damping">Materialdämpfung <span id="dampingOut">0.45</span></label>
+        <input id="damping" type="range" min="0" max="1" step="0.01" value="0.45">
+      </div>
+      <div class="control">
+        <label for="brightness">Oberfläche / Helligkeit <span id="brightnessOut">0.55</span></label>
+        <input id="brightness" type="range" min="0" max="1" step="0.01" value="0.55">
+      </div>
+
+      <h2>Anregung</h2>
+      <div class="control">
+        <label for="instrument">Modell</label>
+        <select id="instrument">
+          <option value="violin">Bogen · Streichanregung</option>
+          <option value="flute">Luftstrom · Jet</option>
+          <option value="mallet">Anschlag · Schlegel</option>
+        </select>
+      </div>
+      <div class="control" id="pitchControl">
+        <label for="pitch">Anregungstonhöhe <span id="pitchOut">220 Hz</span></label>
+        <input id="pitch" type="range" min="55" max="880" value="220">
+      </div>
+      <div class="control">
+        <label for="excitation">Bogendruck / Luftstrom <span id="excitationOut">0.55</span></label>
+        <input id="excitation" type="range" min="0.05" max="1" step="0.01" value="0.55">
+      </div>
+      <div class="control">
+        <label for="volume">Lautstärke <span id="volumeOut">0.32</span></label>
+        <input id="volume" type="range" min="0" max="0.75" step="0.01" value="0.32">
+      </div>
+
+      <div class="audio-buttons">
+        <button id="render">▶ Klang rendern</button>
+        <button id="stop">■ Stop</button>
+      </div>
+      <button id="wav">WAV rendern (5 s)</button>
+
+      <h2>Simulation</h2>
+      <div class="readout" id="analysis">Zeichne mindestens ein Teil.</div>
+      <div class="modes" id="modeList"></div>
+      <div class="legend">
+        <span><i style="background:var(--orange)"></i>Anregung</span>
+        <span><i style="background:var(--green)"></i>Abnahme</span>
+        <span><i style="background:var(--pink)"></i>Auslenkung +</span>
+        <span><i style="background:var(--cyan)"></i>Auslenkung −</span>
+      </div>
+      <p class="note">
+        Die Resonanzen werden aus der gezeichneten Fläche gerechnet: gelöst wird
+        das Eigenwertproblem der 2D-Membran auf dem gerasterten Umriss
+        (Finite Differenzen). Die Lautstärke jeder Mode folgt aus ihrer
+        Schwingungsform an Anregungs- und Abnahmepunkt — eine Mode mit einem
+        Knoten am Anregungspunkt bleibt stumm.
+      </p>
+    </aside>
+  </main>
+  <script type="module" src="modeler.js"></script>
+</body>
+</html>

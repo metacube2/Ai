@@ -35,6 +35,7 @@ class ModalBank {
     this.beforePrevious = 0;
     this.normalizer = 1;
     this.targetNormalizer = 1;
+    this.strikeCompensation = 1;
     this.fresh = true;
     this.count = 0;
   }
@@ -62,12 +63,35 @@ class ModalBank {
         this.a1[used] = this.targetA1[used];
         this.a2[used] = this.targetA2[used];
       }
+      // Beim allerersten Modenpaket gibt es nichts zu ueberblenden. Wuerde
+      // auch die Lautstaerke erst einschwingen, verschluckte die Bank einen
+      // sofort folgenden Anschlag.
+      if (this.fresh) this.gain[used] = this.targetGain[used];
       energy += mode.gain * mode.gain;
       used += 1;
     }
     for (let i = used; i < this.size; i += 1) this.targetGain[i] = 0;
     this.count = used;
     this.targetNormalizer = energy > 0 ? 1 / Math.sqrt(energy) : 1;
+
+    // Ein kurzer Impuls regt einen schmalbandigen Resonator viel schwaecher
+    // an als eine Dauererregung: die Antwort faellt mit (1 - r^2), also mit
+    // 1/Guete. Ohne Ausgleich waere der Anschlag bei Holz rund 30 dB leiser
+    // als Bogen oder Luftstrom - und bei Metall noch einmal deutlich mehr.
+    // Der Ausgleich haelt die Anschlagslautstaerke ueber alle Materialien
+    // und Groessen hinweg vergleichbar.
+    let weighted = 0;
+    let weight = 0;
+    for (let i = 0; i < used; i += 1) {
+      const scale = (1 + this.targetA2[i]) / 2; // entspricht (1 - r^2) / 2
+      const amount = Math.abs(this.targetGain[i]) / Math.max(1e-9, scale);
+      weighted += scale * amount;
+      weight += amount;
+    }
+    const mean = weight > 0 ? weighted / weight : 1;
+    // Der Zahlenwert ist eingemessen: er bringt den Anschlag auf denselben
+    // Pegel wie Bogen und Luftstrom.
+    this.strikeCompensation = Math.min(4000, Math.max(1, 0.12 / Math.max(mean, 1e-7)));
     if (this.fresh) {
       this.normalizer = this.targetNormalizer;
       this.fresh = false;
@@ -121,8 +145,8 @@ function polyBlep(phase, increment) {
 }
 
 class GeometricSynthProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
+  constructor(options) {
+    super(options);
     this.params = {
       instrument: "violin",
       pitch: 220,
@@ -143,14 +167,21 @@ class GeometricSynthProcessor extends AudioWorkletProcessor {
     this.levelCount = 0;
     this.smoothedPitch = 220;
 
-    this.port.onmessage = (event) => {
-      const data = event.data || {};
+    this.apply = (data) => {
+      if (!data) return;
       if (Array.isArray(data.modes)) this.bank.setModes(data.modes, sampleRate);
       for (const key of ["instrument", "pitch", "excitation", "volume", "gate"]) {
         if (data[key] !== undefined) this.params[key] = data[key];
       }
+      if (data.pitch !== undefined) this.smoothedPitch = data.pitch;
       if (data.panic) this.bank.reset();
     };
+
+    // Beim Offline-Rendering ist nicht garantiert, dass eine vor dem Start
+    // gesendete Nachricht den Prozessor noch vor dem ersten Block erreicht.
+    // processorOptions kommt dagegen schon beim Konstruieren an.
+    this.apply(options && options.processorOptions);
+    this.port.onmessage = (event) => this.apply(event.data);
   }
 
   /**
@@ -220,13 +251,23 @@ class GeometricSynthProcessor extends AudioWorkletProcessor {
       this.sourceEnvelope += (target - this.sourceEnvelope) * sourceCoefficient;
       this.outputEnvelope += (target - this.outputEnvelope) * outputCoefficient;
 
-      const excitation = this.source(this.smoothedPitch) * this.sourceEnvelope;
-      const body = this.bank.process(excitation);
+      // Der Anschlag traegt seine Huellkurve selbst und ist kuerzer als die
+      // Einschwingzeit der Dauermodelle; ihn zusaetzlich einzublenden
+      // wuerde ihn fast vollstaendig ausloeschen.
+      const struck = p.instrument === "mallet";
+      const raw = this.source(this.smoothedPitch) * (struck ? 1 : this.sourceEnvelope);
+      // Der Ausgleich gilt nur fuer den Weg in den Koerper. Der hoerbare
+      // Kontaktanteil bleibt unverstaerkt, sonst waere er ein Knall.
+      const body = this.bank.process(struck ? raw * this.bank.strikeCompensation : raw);
       // Ein kleiner Direktanteil haelt die Tonhoehe deutlich; den Klang
       // selbst traegt der Koerper. Zu viel Direktanteil war einer der
       // Gruende, warum frueher jede Form gleich klang.
-      let value = 0.88 * body + 0.12 * excitation;
-      value = Math.tanh(value * 1.6) * this.outputEnvelope * p.volume;
+      const direct = struck ? 0.05 : 0.12;
+      let value = (1 - direct) * body + direct * raw;
+      // Die Saettigung gibt Bogen und Luftstrom ihre Rauheit. Beim Anschlag
+      // ist sie unerwuenscht: sie wuerde nur den Kontakttransienten
+      // verzerren, der bauartbedingt der lauteste Moment ist.
+      value = Math.tanh(value * (struck ? 1.0 : 1.6)) * this.outputEnvelope * p.volume;
       output[index] = Number.isFinite(value) ? value : 0;
       this.levelSum += value * value;
       this.levelCount += 1;
