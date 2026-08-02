@@ -1,0 +1,10 @@
+{
+  "name": "geometric-resonator",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "2D-Membran-Eigenmodensimulation gezeichneter Klangkoerper mit Echtzeitsynthese im Browser",
+  "scripts": {
+    "test": "node tests/eigen.test.mjs"
+  }
+}
