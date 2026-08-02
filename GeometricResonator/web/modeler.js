@@ -381,11 +381,15 @@ function renderReadout(data) {
   }
   const d = data.diagnostics;
   const material = MATERIALS[controls.material.value] ?? MATERIALS[DEFAULT_MATERIAL];
-  const partsNote = d.parts > 1
-    ? `${d.parts} getrennte Koerper · nur der markierte klingt`
-    : "ein zusammenhaengender Koerper";
+  const drawn = state.objects.length;
+  // Interessant ist nicht die Zahl der gezeichneten Teile allein, sondern
+  // wie viele Koerper daraus geworden sind: genau das steuert der Nutzer,
+  // indem er Teile aneinanderschiebt.
+  const bodies = d.parts === 1
+    ? "ein zusammenhängender Klangkörper"
+    : `${d.parts} getrennte Klangkörper · es klingt der mit dem Anregungspunkt`;
   readout.innerHTML = `
-    <strong>${d.parts} Teil${d.parts > 1 ? "e" : ""}</strong> — ${partsNote}<br>
+    <strong>${drawn} Teil${drawn === 1 ? "" : "e"} → ${bodies}</strong><br>
     Material: ${material.label} · Grundton ${d.fundamental.toFixed(1)} Hz<br>
     Gitter: ${d.activeCells} Zellen à ${d.spacing.toFixed(1)} px · ${d.kept} Moden<br>
     Rechenzeit: ${d.milliseconds} ms`;

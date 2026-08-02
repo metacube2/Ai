@@ -71,8 +71,9 @@ Kontext, reines HTTP über die LAN-IP kann die Audioerzeugung blockieren.
 ## Tests
 
 ```bash
-npm test                       # alle drei Suiten
+npm test                       # alle vier Suiten
 node tests/eigen.test.mjs      # Eigenlöser gegen analytische Lösungen
+node tests/editor.test.mjs     # Einrasten und Treffertest
 node tests/synth.test.mjs      # Synthese und Kette Geometrie -> Klang
 node tests/browser-smoke.mjs   # Modul-Worker und AudioWorklet in Chrome
 python3 -m unittest -v         # Desktop-App

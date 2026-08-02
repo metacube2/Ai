@@ -12,10 +12,10 @@
   nicht pruefen, die nur der Browser hat: das Laden als ES-Modul, den
   Modul-Worker und den AudioWorklet. Genau die pruefen wir hier.
 
-  Aufruf headless:
-    chrome --headless --virtual-time-budget=20000 --dump-dom \
-           http://127.0.0.1:PORT/../tests/browser-smoke.html
-  Bequemer ueber tests/browser-smoke.mjs.
+  Ausgefuehrt wird sie ueber tests/browser-smoke.mjs. Das Ergebnis geht per
+  POST an den Runner zurueck; ein blosses --dump-dom greift zu frueh, und
+  --virtual-time-budget laesst Zeitgeber vor der echten Rechenarbeit des
+  Workers ablaufen und verfaelscht damit jede Messung.
 -->
 <pre id="out">läuft…</pre>
 <script type="module">
@@ -116,22 +116,45 @@ try {
     blob.size === 44 + buffer.length * 2 && blob.type === "audio/wav",
     `${blob.size} Bytes`);
 
-  // 6. Die Hauptseite laedt ohne Fehler und verdrahtet sich
+  // 6. Die Hauptseite laedt einen Entwurf und rechnet ihn wirklich durch.
+  //    Gleiche Herkunft, also teilt der Rahmen den localStorage.
+  localStorage.setItem("geometric-resonator-design-v2", JSON.stringify({
+    objects: OBJECTS,
+    nextId: 3,
+    excite: { x: 140, y: 120 },
+    pickup: { x: 320, y: 140 },
+    values: {
+      instrument: "violin", material: "metal", pitch: "220",
+      excitation: "0.55", damping: "0.4", brightness: "0.6", volume: "0.32",
+    },
+  }));
+
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:1200px;height:800px;border:0";
   const loaded = new Promise((resolve) => { frame.onload = resolve; });
   frame.src = "../web/index.html";
   document.body.append(frame);
   await loaded;
-  await new Promise((resolve) => setTimeout(resolve, 2500));
+
   const inner = frame.contentDocument;
+  const readout = () => (inner.getElementById("analysis")?.textContent || "").trim();
+  for (let attempt = 0; attempt < 60 && !readout().includes("Grundton"); attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
   const materialOptions = inner.getElementById("material")?.options.length ?? 0;
   report("Hauptseite initialisiert die Bedienelemente",
     materialOptions >= 4,
     `${materialOptions} Materialien im Auswahlfeld`);
-  report("Hauptseite zeigt einen Zustand an",
-    (inner.getElementById("analysis")?.textContent || "").trim().length > 0,
-    (inner.getElementById("analysis")?.textContent || "").trim().slice(0, 90));
+  report("Hauptseite uebernimmt das gespeicherte Material",
+    inner.getElementById("material")?.value === "metal",
+    `Material im Auswahlfeld: ${inner.getElementById("material")?.value}`);
+  report("Hauptseite rechnet den geladenen Entwurf durch",
+    readout().includes("Grundton") && readout().includes("2 Teile") && readout().includes("ein zusammenhängender Klangkörper"),
+    readout().replace(/\s+/g, " ").slice(0, 130));
+  report("Hauptseite listet die berechneten Moden auf",
+    (inner.getElementById("modeList")?.children.length ?? 0) >= 6,
+    `${inner.getElementById("modeList")?.children.length ?? 0} Zeilen in der Modenliste`);
 } catch (error) {
   report("Ablauf ohne Ausnahme", false, error && error.stack ? error.stack.split("\n")[0] : String(error));
 }

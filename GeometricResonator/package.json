@@ -5,8 +5,9 @@
   "type": "module",
   "description": "2D-Membran-Eigenmodensimulation gezeichneter Klangkoerper mit Echtzeitsynthese im Browser",
   "scripts": {
-    "test": "node tests/eigen.test.mjs && node tests/synth.test.mjs && node tests/browser-smoke.mjs",
+    "test": "node tests/eigen.test.mjs && node tests/editor.test.mjs && node tests/synth.test.mjs && node tests/browser-smoke.mjs",
     "test:eigen": "node tests/eigen.test.mjs",
+    "test:editor": "node tests/editor.test.mjs",
     "test:synth": "node tests/synth.test.mjs",
     "test:browser": "node tests/browser-smoke.mjs",
     "start": "python3 web_app.py"

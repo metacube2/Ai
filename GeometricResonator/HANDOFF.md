@@ -219,13 +219,14 @@ Nachricht: Automationen sind abtastgenau, Nachrichtenzustellung nicht.
 
 ```bash
 npm test                       # alle drei Suiten
-node tests/eigen.test.mjs      # 15 Prüfungen
-node tests/synth.test.mjs      # 15 Prüfungen
-node tests/browser-smoke.mjs   # 9 Prüfungen
-python3 -m unittest -v         # 4 Prüfungen der Desktop-App
+node tests/eigen.test.mjs      # 15 Prüfungen: Löser gegen Analytik
+node tests/editor.test.mjs     #  8 Prüfungen: Einrasten und Treffertest
+node tests/synth.test.mjs      # 15 Prüfungen: DSP und Kette bis zum Klang
+node tests/browser-smoke.mjs   # 11 Prüfungen: Worker, Worklet, Live-Seite
+python3 -m unittest -v         #  4 Prüfungen der Desktop-App
 ```
 
-Letzter Stand: 15/15, 15/15, 9/9, 4/4.
+Letzter Stand: 15/15, 8/8, 15/15, 11/11, 4/4.
 
 `tests/synth.test.mjs` lädt die **echte** Datei `web/synth-processor.js` mit
 einem Schim für `AudioWorkletProcessor` und `registerProcessor`. Es gibt
