@@ -1,463 +1,306 @@
-# Geometric Resonator Studio - vollstaendige Projektuebergabe
+# Geometric Resonator Studio — vollständige Projektübergabe
 
-Stand: 2. August 2026  
+Stand: 2. August 2026
 Projektpfad: `/Users/metacube/Projects/Git/Ai/GeometricResonator`
 
-## Auftrag und Zielbild
+## Auftrag
 
-Die Anwendung soll geometrische Klangkoerper konstruierbar und unmittelbar
-hoerbar machen. Die urspruengliche Idee war eine sichtbare Form, die durch eine
-simulierte Violine oder einen Floeten-Luftstrom angeregt wird. Danach wurde das
-Ziel konkretisiert:
+Die Anwendung soll geometrische Klangkörper konstruierbar und unmittelbar
+hörbar machen: Formen wie in einem Zeichenprogramm aufziehen, zusammenfügen,
+und aus der Gesamtgeometrie den Klang ableiten.
 
-- nicht nur eine fertige Form auswaehlen;
-- Formen wie in einem einfachen Paint-/CAD-Programm aufziehen;
-- Breite, Hoehe und Position bearbeiten;
-- mehrere Teile zusammenfuegen;
-- aus der gesamten Geometrie Resonanzmoden ableiten;
-- den Klang in Echtzeit im Webbrowser hoeren;
-- das Ergebnis als WAV rendern.
+Die Rückmeldung zur Vorversion war: **der Klang ist immer gleich.** Das war
+zutreffend und hatte vier konkrete Ursachen im Code, die alle behoben sind.
 
-Die Web-App ist inzwischen der primaere Produktpfad. Eine eigenstaendige
-Tkinter-Desktopversion ist ebenfalls vorhanden und funktionsfaehig, besitzt
-aber noch den aelteren Einzelform-Workflow.
+## Was vorher falsch war
 
-## Aktueller Funktionsumfang der Web-App
+Die Vorversion hat nicht simuliert, sondern nachgeschlagen.
 
-### Modellierung
+1. **Tabelle statt Rechnung.** `geometryAnalysis()` schlug feste
+   Modenverhältnisse nach — `rect:[1,1.41,2,2.24,2.83]`,
+   `ellipse:[1,1.59,…]` — und skalierte sie. Für ein einzelnes Objekt war
+   der Skalenfaktor `sqrt(totalArea/area)` exakt 1, die Verhältnisse also
+   konstant.
+2. **Der Korpus folgte der Tonhöhe.** `bodySample()` trieb die Moden mit
+   `frequency * ratio` an. Ein realer Klangkörper hat feste Eigenfrequenzen;
+   dieser hier transponierte mit. Damit gab es überhaupt keine Formanten.
+3. **Feste spektrale Hüllkurve.** Die Amplitude jeder Mode war
+   `exp(-index * decay)` — abhängig vom *Index*, nicht von der Mode. Egal
+   welche Frequenzen herauskamen, das Spektrum sah gleich aus.
+4. **Der Korpus war 20–28 % des Signals.** Den Rest bestritt ein fester
+   Oberton-Oszillator ganz ohne Geometriebezug.
 
-- Auswahlwerkzeug
-- Rechteck aufziehen
-- Ellipse aufziehen
-- Dreieck aufziehen
-- Objekte anklicken und verschieben
-- Mehrfachauswahl mit Shift-Klick
-- Breite, Hoehe, X und Y numerisch bearbeiten
-- Objekte duplizieren
-- Objekte loeschen
-- gesamte Zeichenflaeche leeren
-- mehrere ausgewaehlte Teile als gekoppelten Klangkoerper verbinden
-- Verbindung ausgewaehlter Teile wieder loesen
-- Beispielkonstruktion laden
-- automatische Speicherung des Entwurfs in `localStorage`
+Zusätzlich verwarf eine Bereinigung mit Toleranz 0,035 gerade die entarteten
+Modenpaare, die einen Körper lebendig klingen lassen, und stellte jeder
+Modenliste eine literale `1` voran.
 
-### Klang
+## Was jetzt gerechnet wird
 
-- Echtzeitwiedergabe direkt im Browser ueber Web Audio und AudioWorklet
-- zwei Anregungsmodelle:
-  - `Violine`: harmonische Saite, nichtlineare Bogenanregung, Bogenrauschen
-  - `Floete`: Rohrharmonische, Atemrauschen, Vibrato und Ueberblasen
-- Referenzton einstellbar
-- Bogenstaerke bzw. Luftstrom einstellbar
-- Materialdaempfung einstellbar
-- Oberflaechenhelligkeit/Klanghelligkeit einstellbar
-- Lautstaerke einstellbar
-- berechnete Resonanzmoden werden angezeigt
-- Klang kann gestartet und gestoppt werden
-- fuenf Sekunden Klang koennen im Browser als PCM-WAV heruntergeladen werden
-
-### Darstellung
-
-- dunkle responsive Studio-Oberflaeche
-- Zeichenraster
-- Markierung ausgewaehlter Objekte
-- verbundene Objekte werden gestrichelt/tuerkis dargestellt
-- sichtbare Eckmarken fuer ausgewaehlte Objekte
-- animierter Resonanzrahmen waehrend der Wiedergabe
-
-## Wichtige Klarstellung zu `Verbinden`
-
-`Verbinden` ist aktuell **keine echte geometrische boolesche Vereinigung**.
-Die Objekte behalten ihre eigenen Primitive und erhalten dieselbe Gruppen-ID.
-Die Gruppe wird bei der Klanganalyse als gekoppelter Resonator behandelt und
-visuell zusammengehoerig dargestellt.
-
-Eine spaetere Version kann echte CSG-/Union-Operationen ergaenzen. Dafuer ist
-eine Polygonbibliothek wie Clipper oder eine eigene Konturberechnung sinnvoll.
-
-## Bedienung der Web-App
-
-1. Python-Webserver starten.
-2. Rechteck, Ellipse oder Dreieck in der Werkzeugleiste waehlen.
-3. Form mit der Maus auf der Zeichenflaeche aufziehen.
-4. Mit `Auswaehlen` ein Objekt verschieben oder seine Masse unten numerisch
-   bearbeiten.
-5. Mit Shift-Klick mehrere Teile auswaehlen.
-6. `Verbinden` anklicken, um daraus einen gekoppelten Klangkoerper zu machen.
-7. Anregungsmodell und Klangparameter rechts einstellen.
-8. `Klang rendern` anklicken.
-9. Mit `WAV rendern` eine fuenfsekündige Datei herunterladen.
-
-Der Browser darf Audio erst nach einer Benutzeraktion starten. Der erste Klick
-auf `Klang rendern` aktiviert deshalb gleichzeitig den AudioContext.
-
-## Start
-
-### Primaer: Web-App
-
-```bash
-cd /Users/metacube/Projects/Git/Ai/GeometricResonator
-python3 web_app.py
-```
-
-URL:
+Gelöst wird das Eigenwertproblem der 2D-Membran auf der gezeichneten Fläche:
 
 ```text
-http://localhost:8765/
+-Δφ = λφ    im Gebiet,     φ = 0    am Rand (Dirichlet)
 ```
 
-Ohne automatisches Browserfenster:
+- **Diskretisierung:** finite Differenzen, Fünf-Punkte-Stern, regelmäßiges
+  Raster. Kein FEM-Netz, aber dieselbe Differentialgleichung.
+- **Verfahren:** blockweise inverse Iteration mit Rayleigh-Ritz-Projektion.
+  Die Systemlösung erfolgt exakt über eine Band-Cholesky-Zerlegung statt
+  iterativ, weil die Bandbreite bei zeilenweiser Knotennummerierung durch
+  die Rasterbreite beschränkt bleibt. Für die kleine dichte Projektion
+  dient ein zyklisches Jacobi-Verfahren.
+- **Frequenz:** `f_i = c · √λ_i / 2π`, mit 1 px = 1 mm und `c` aus dem
+  Material. Absolut, unabhängig vom Tonhöhenregler.
+- **Lautstärke einer Mode:** `g_i = φ_i(Anregung) · φ_i(Abnahme)`. Eine Mode
+  mit einem Knoten am Anregungspunkt bleibt stumm. Das ist der Punkt, an dem
+  die Form tatsächlich hörbar wird.
+- **Güte:** `Q_i = Q₀ · (f_i/f₁)^(−α) · Dämpfung`, mit `Q₀` und `α` aus dem
+  Material.
 
-```bash
-python3 web_app.py --no-browser
-```
+Die Anregung erzeugt nur noch das Spektrum, das der Körper filtert. Daraus
+folgt der Test, an dem sich das Modell messen lässt:
 
-LAN-Bindung:
+| Aktion | Erwartung |
+|---|---|
+| Tonhöhenregler bewegen | Grundton wandert, Resonanzen bleiben stehen |
+| Form ändern | Resonanzen wandern, Grundton bleibt |
 
-```bash
-python3 web_app.py --host 0.0.0.0
-```
+Beides ist in `tests/synth.test.mjs` als Prüfung hinterlegt.
 
-Wichtig: `AudioWorklet` wird von Browsern ausserhalb von `localhost` meist nur
-in einem sicheren HTTPS-Kontext freigegeben. Die reine LAN-IP ueber HTTP kann
-deshalb zwar die Seite anzeigen, aber die AudioWorklet-Erzeugung blockieren.
-Fuer einen echten Netzbetrieb sollte HTTPS oder ein lokaler Reverse Proxy
-verwendet werden.
+## Genauigkeit
 
-### Sekundaer: Tkinter-Desktop-App
+Gemessen in `tests/eigen.test.mjs` gegen geschlossene Lösungen:
 
-```bash
-cd /Users/metacube/Projects/Git/Ai/GeometricResonator
-python3 -m pip install -r requirements.txt
-python3 app.py
-```
+| Prüfung | Ergebnis |
+|---|---|
+| Quadrat, Verhältnisse gegen `√((m²+n²)/2)` | max. 0,33 % Fehler |
+| Kreis, Verhältnisse gegen Besselnullstellen | max. 0,28 % Fehler |
+| Entartetes Paar (1,2)/(2,1) | beide vorhanden, 0,00 % Abstand |
+| Rechteck 2:1 | max. 2,61 % Fehler |
+| Verfeinerung 32 → 44 Zellen | Drift unter 0,5 % |
+| Vierfache Kantenlänge | Frequenz exakt auf ein Viertel |
 
-Die Desktop-App bietet Kreis, Dreieck, Quadrat und Sechseck als einzelne
-Resonatoren, Echtzeitklang und WAV-Export. Der Paint-/Modellierworkflow wurde
-bisher nur fuer die Web-App umgesetzt.
+Der **absolute** Grundeigenwert liegt rund 9 % unter dem analytischen Wert.
+Das ist erwartbar: der Dirichlet-Rand sitzt eine halbe Zelle außerhalb der
+wahren Kontur, das Gebiet ist also effektiv etwas zu groß. Die Verhältnisse
+— und damit die Klangfarbe — sind davon fast nicht betroffen, und die
+absolute Lage wird ohnehin über die Materialkonstante `c` eingestellt.
+
+## Grenzen, die ehrlich benannt gehören
+
+- Es ist ein **2D-Membranmodell**, keine 3D-Simulation eines
+  Instrumentenkorpus mit Decke, Boden und eingeschlossenem Luftvolumen.
+- Die Materialwerte sind so gewählt, dass typische Zeichnungen musikalisch
+  brauchbar klingen. Sie stammen nicht aus Werkstoffdatenblättern. Wandstärke
+  und Dichte gibt es nicht.
+- Anregungsmodelle sind Signalmodelle, keine Wellenleiter: der Bogen ist ein
+  bandbegrenzter Sägezahn mit Bogenrauschen, der Luftstrom gefiltertes
+  Rauschen mit schwachem Rohrton, der Anschlag ein kurzer Impuls. Physikalisch
+  simuliert ist der **Körper**, nicht die Anregung.
+- Eine reine Eckberührung überträgt auf einer echten Membran nichts, erzeugt
+  im Raster aber eine Brücke von einer Zellbreite. Bewusst so belassen und in
+  `tests/eigen.test.mjs` als Toleranz festgehalten.
+- Die Rasterauflösung begrenzt, wie fein Konturen wirken. Bei 38 Zellen auf
+  der längsten Seite ist der Umriss sichtbar treppig — das entspricht dem,
+  was tatsächlich gerechnet wird.
 
 ## Dateistruktur
 
 ```text
 GeometricResonator/
-├── HANDOFF.md               # diese vollstaendige Uebergabe
-├── README.md                # kompakte Benutzeranleitung
-├── requirements.txt         # NumPy und sounddevice fuer Desktop
-├── web_app.py               # statischer Python-HTTP-Server
-├── app.py                   # Tkinter-Desktopoberflaeche
-├── synth.py                 # Python-Synthese und WAV-Export
-├── test_synth.py            # Python-Unittests
-└── web/
-    ├── index.html           # Weblayout und Bedienelemente
-    ├── modeler.js           # 2D-Editor, Analyse, Audio- und WAV-Steuerung
-    └── synth-processor.js   # Echtzeitsynthese im AudioWorklet
+├── HANDOFF.md              # diese Übergabe
+├── README.md               # kurze Anleitung
+├── package.json            # type: module, Testskripte
+├── web_app.py              # statischer Python-Server
+├── app.py, synth.py        # Tkinter-Desktop-App (unverändert, alte Synthese)
+├── test_synth.py           # Python-Tests der Desktop-App
+├── web/
+│   ├── index.html          # Oberfläche
+│   ├── eigen.js            # Eigenlöser: Jacobi, Band-Cholesky, inverse Iteration
+│   ├── geometry.js         # Rasterung, Zusammenhangskomponenten
+│   ├── physics.js          # Eigenwerte -> Frequenz, Güte, Modenverstärkung
+│   ├── modes-worker.js     # Modul-Worker um geometry + physics
+│   ├── editor.js           # Treffertests, Einrasten, Darstellung
+│   ├── modeler.js          # Zustand, Eingabe, Audio, Verdrahtung
+│   ├── synth-processor.js  # AudioWorklet: Anregung + Modalresonatorbank
+│   └── wav.js              # Offline-Rendering und WAV-Kodierung
+└── tests/
+    ├── eigen.test.mjs      # Löser gegen analytische Lösungen
+    ├── synth.test.mjs      # DSP und Kette Geometrie -> Klang
+    ├── browser-smoke.html  # Probe, die im Browser läuft
+    └── browser-smoke.mjs   # Runner mit eigenem Server und Chrome
 ```
 
-`__pycache__/` ist ein generiertes Python-Artefakt und kein Quellcode.
+`eigen.js`, `geometry.js` und `physics.js` sind reine ES-Module ohne DOM- und
+ohne Worklet-Abhängigkeit. Deshalb laufen sie unter node und sind gegen
+geschlossene Lösungen prüfbar — das war die Voraussetzung dafür, der
+Physik überhaupt trauen zu können.
 
 ## Architektur
 
 ```text
-Python web_app.py
-       |
-       | liefert statische Dateien
-       v
-index.html + modeler.js
-       |
-       | customModes + Klangparameter per MessagePort
-       v
-AudioWorklet synth-processor.js
-       |
-       v
-Browser-Audioausgang
+modeler.js  ──Objekte, Material──▶  modes-worker.js
+    ▲                                    │
+    │                             geometry.js (Rasterung, Komponenten)
+    │                             eigen.js    (Eigenlöser)
+    │                             physics.js  (Frequenz, Güte, Verstärkung)
+    │                                    │
+    └────Moden + Schwingungsformen───────┘
+    │
+    ├──▶ editor.js          zeichnet Komponenten und Schwingung
+    ├──▶ synth-processor.js Echtzeit im AudioWorklet
+    └──▶ wav.js             derselbe Worklet im OfflineAudioContext
 ```
 
-Python liegt beim Webbetrieb nicht im Audiopfad. Das ist beabsichtigt: Maus,
-Parameter und Audio bleiben im Browser und benoetigen keinen Netzwerk-Rundweg.
-Dadurch ist die Echtzeitreaktion deutlich stabiler als serverseitiges
-Audio-Streaming.
+Python liegt nicht im Audiopfad und nicht im Rechenpfad. Es liefert nur
+Dateien aus.
 
-## Datenmodell des 2D-Editors
+Der Worker rechnet während des Ziehens grob (24 Zellen) und nach dem
+Loslassen fein (38). Eine feine Lösung braucht im Browser rund 50 ms.
 
-Jedes Objekt in `modeler.js` besitzt sinngemaess:
+## Verbinden
 
-```javascript
-{
-  id: 1,
-  type: "rect",       // rect, ellipse oder triangle
-  x: 100,
-  y: 120,
-  w: 240,
-  h: 160,
-  group: 1            // null oder gemeinsame Gruppen-ID
-}
-```
+Verbunden ist, was sich berührt. Es gibt keinen Verbinden-Knopf und keine
+Gruppen-ID mehr.
 
-Weitere zentrale Zustaende:
+Die Rasterung prüft je Zelle neun Teilproben gegen die **Vereinigung** aller
+Objekte und markiert die Zelle bei Mehrheit als belegt. Zwei Teile mit
+gemeinsamer Kante belegen dadurch zuverlässig benachbarte Zellen. Die
+Zerlegung in Zusammenhangskomponenten läuft mit Vier-Nachbarschaft.
 
-- `objects`: alle Primitive
-- `selected`: Set der ausgewaehlten Objekt-IDs
-- `tool`: `select`, `rect`, `ellipse` oder `triangle`
-- `operation`: aktueller Draw-/Move-Vorgang
-- `nextId`: naechste Objekt-ID
-- `nextGroup`: naechste Gruppen-ID
+Damit ist Verbundenheit keine Metadaten-Eigenschaft mehr, sondern eine
+geometrische Tatsache, die unmittelbar in die Physik eingeht: der
+zusammengesetzte Körper hat einen tieferen Grundton und neue Moden.
 
-Persistenzschluessel im Browser:
+Beim Verschieben rasten Kanten mit 9 px Toleranz ein; Kontaktkanten haben
+Vorrang vor bloßer Ausrichtung. Ohne das müsste man pixelgenau zielen.
 
-```text
-geometric-resonator-design
-```
+Entwürfe der Vorversion enthalten ein Feld `group`. Sie laden weiterhin, das
+Feld wird ignoriert. Der Speicherschlüssel ist neu:
+`geometric-resonator-design-v2`.
 
-Gespeichert werden Objekte, ID-Zaehler und Klangregler. Es existiert noch kein
-Dateiformat fuer Projekt-Import/-Export.
+## Echtzeitsynthese
 
-## Geometrie-zu-Klang-Modell
+`web/synth-processor.js`, Prozessorname `geometric-synth`.
 
-Die Berechnung ist physikalisch inspiriert, aber keine exakte
-Finite-Elemente-Simulation.
+Signalweg: Anregung → Modalresonatorbank → weiche Begrenzung → Ausgang.
 
-### Primitive Moden
+Jede Mode ist ein Zweipolresonator mit Nullstellen bei ±1 und
+Spitzenverstärkung etwa 1, im Zustand durchgehend `Float64` — mit `Float32`
+werden hochgütige tiefe Resonatoren instabil.
 
-Grundverhaeltnisse:
+Bei einer Geometrieänderung gleiten die Koeffizienten über etwa 20 ms auf die
+neuen Werte, statt zu springen. Ein noch stummer Resonator bekommt seine Pole
+sofort, damit er nicht hörbar von einer alten Frequenz auf die neue wandert.
 
-```text
-Rechteck:  1.00, 1.41, 2.00, 2.24, 2.83
-Ellipse:   1.00, 1.59, 2.14, 2.65, 3.16
-Dreieck:   1.00, 1.67, 2.33, 2.81, 3.42
-```
+Bemerkenswert am Anschlag: ein kurzer Impuls regt einen schmalbandigen
+Resonator um etwa `1/Q` schwächer an als eine Dauererregung. Ohne Ausgleich
+wäre der Anschlag bei Holz rund 30 dB leiser als Bogen und Luftstrom. Der
+Ausgleich in `ModalBank.setModes` ist gütengewichtet und hält die
+Anschlagslautstärke über alle Materialien vergleichbar; der hörbare
+Kontaktanteil bleibt davon unberührt.
 
-### Einfluss der Geometrie
+Parameter kommen beim Erzeugen über `processorOptions`, nicht nur per
+Nachricht. Im `OfflineAudioContext` erreicht eine vor `startRendering()`
+gesendete Nachricht den Prozessor nicht zuverlässig vor dem ersten Block —
+das äußerte sich als vollständig stille WAV-Dateien.
 
-- Flaeche beeinflusst die relative Skalierung eines Teilkoerpers.
-- Das Seitenverhaeltnis beeinflusst hoehere Moden.
-- Kleinere Teile erzeugen tendenziell hoehere Resonanzanteile.
-- Gruppen erzeugen zusaetzliche Kopplungsmoden.
-- Die Gesamtbreite/-hoehe des Modells beeinflusst den Klanggrundton.
-- Maximal zwoelf bereinigte Moden werden an den AudioWorklet gesendet.
+## WAV-Export
 
-Die zentrale Berechnung liegt in `geometryAnalysis()` in `web/modeler.js`.
+`web/wav.js` rendert fünf Sekunden in einem `OfflineAudioContext` mit
+demselben Worklet wie die Echtzeitwiedergabe. Der frühere zweite,
+getrennt gepflegte Synthesepfad ist entfallen; damit kann er auch nicht mehr
+auseinanderlaufen.
 
-## Echtzeit-Synthese
+Der Ausklang wird über eine Verstärkungsautomation gesteuert, nicht über eine
+Nachricht: Automationen sind abtastgenau, Nachrichtenzustellung nicht.
 
-`web/synth-processor.js` registriert den AudioWorklet-Prozessor:
-
-```text
-geometric-synth
-```
-
-Die Weboberflaeche sendet laufend:
-
-```javascript
-{
-  instrument,
-  pitch,
-  size,
-  excitation,
-  damping,
-  brightness,
-  volume,
-  customModes,
-  gate
-}
-```
-
-Der Worklet haelt Oszillatorphasen und die Lautstaerkehuellkurve zwischen den
-Audiobloecken. Die Modenanzahl kann dynamisch bis zur gelieferten Liste
-wachsen. Ein RMS-aehnlicher Pegel wird periodisch an die Oberflaeche
-zurueckgemeldet und treibt die Animation an.
-
-## WAV-Rendering
-
-Der Browser rendert fuenf Sekunden offline in `modeler.js`:
-
-1. Geometrie und aktuelle Parameter lesen.
-2. Mono-Float-Audio mit 44.100 Hz berechnen.
-3. Attack und Release anwenden.
-4. In 16-Bit-PCM wandeln.
-5. RIFF/WAV-Header schreiben.
-6. Datei als `geometric-resonator.wav` herunterladen.
-
-Das Offline-Modell ist musikalisch sehr aehnlich, aber nicht samplegenau
-identisch mit dem AudioWorklet.
-
-## Desktop-Synthese
-
-`synth.py` verwendet:
-
-- NumPy fuer Blockberechnung;
-- `sounddevice.OutputStream` fuer Echtzeitaudio;
-- Standardbibliothek `wave` fuer PCM-WAV;
-- getrennte Violin- und Floetenmodelle;
-- modale Koerperresonanzen fuer vier feste Formen.
-
-Die Desktop-App ist nicht fuer den Webserver erforderlich.
-
-## Tests und bisherige Verifikation
-
-Python-Tests:
+## Tests
 
 ```bash
-cd /Users/metacube/Projects/Git/Ai/GeometricResonator
-python3 -m unittest -v
+npm test                       # alle drei Suiten
+node tests/eigen.test.mjs      # 15 Prüfungen
+node tests/synth.test.mjs      # 15 Prüfungen
+node tests/browser-smoke.mjs   # 9 Prüfungen
+python3 -m unittest -v         # 4 Prüfungen der Desktop-App
 ```
 
-Aktuell vier Tests:
+Letzter Stand: 15/15, 15/15, 9/9, 4/4.
 
-- Frequenz veraendert sich mit der Objektgroesse.
-- Violine und Floete rendern endliches, nicht leeres Audio.
-- unterschiedliche Formen erzeugen unterschiedliche Signale.
-- WAV-Export erzeugt eine gueltig grosse Datei.
+`tests/synth.test.mjs` lädt die **echte** Datei `web/synth-processor.js` mit
+einem Schim für `AudioWorkletProcessor` und `registerProcessor`. Es gibt
+keinen zweiten Nachbau der Synthese im Testcode.
 
-Letzter Stand: alle vier Tests erfolgreich.
+`tests/browser-smoke.mjs` bringt einen eigenen Server mit, startet Chrome
+headless und nimmt das Ergebnis per POST entgegen. Ein bloßes `--dump-dom`
+genügt nicht, weil die Ergebnisse asynchron entstehen, und
+`--virtual-time-budget` verfälscht jede Zeitmessung im Worker. Ohne Chrome
+überspringt sich die Probe.
 
-Python-Syntax:
+Worauf bei neuen Tests zu achten ist: „unterschiedliche Formen erzeugen
+unterschiedliche Signale" ist **keine** brauchbare Prüfung — das erfüllt
+schon reines Rauschen. Geprüft werden muss, dass die Resonanzen dort liegen,
+wo die Rechnung sie vorhersagt, und dass sie sich nicht mit der Tonhöhe
+verschieben.
 
-```bash
-python3 -m py_compile app.py synth.py web_app.py
-```
+Ebenso taugt der Abstand benachbarter Abtastwerte nicht als Knacktest: die
+Anregung enthält Rauschen mit von Natur aus großen Sprüngen. Ein Knacken
+zeigt sich als Ausschlag über den bisherigen Spitzenwert hinaus.
 
-JavaScript-Syntax:
-
-```bash
-node --check web/modeler.js
-node --check web/synth-processor.js
-```
-
-Letzter Stand: beide JavaScript-Dateien ohne Syntaxfehler.
-
-Serverpruefung:
-
-```bash
-curl -fsS http://127.0.0.1:8765/
-curl -fsSI http://127.0.0.1:8765/synth-processor.js
-```
-
-Die HTML-Seite und der Worklet wurden mit HTTP 200 ausgeliefert.
-
-## Entwicklungsumgebung beim letzten Test
-
-- macOS
-- Python `3.14.3`
-- Tkinter vorhanden
-- NumPy `2.4.4`
-- sounddevice `0.5.5`
-- Node vorhanden fuer JavaScript-Syntaxpruefung
-- Webserver-Port `8765`
-
-Der Server wurde in der letzten Sitzung unter `http://localhost:8765/`
-gestartet. Ein neues Modell darf nicht voraussetzen, dass dieser Prozess nach
-einem Sitzungswechsel noch laeuft.
-
-## Bekannte Grenzen und offene Fehlerklassen
+## Offene Punkte
 
 ### Editor
 
-- Eckmarken werden gezeichnet, sind aber noch keine ziehbaren Resize-Handles.
-  Groesse wird momentan numerisch oder beim ersten Aufziehen geaendert.
-- Hit-Testing verwendet die Bounding Box; bei Ellipse und Dreieck ist es nicht
-  pixelgenau.
-- Keine Rotationsfunktion.
-- Kein Freihand-/Bezier-/Polygonwerkzeug.
-- Keine Auswahlbox durch Aufziehen.
-- Kein Undo/Redo.
-- Keine Ebenenansicht und keine Z-Reihenfolge-Befehle.
-- Keine Projektdatei fuer Import/Export.
-- `Verbinden` ist Gruppierung/Kopplung, keine boolesche Flaechenunion.
+- Eckmarken sind sichtbar, aber keine ziehbaren Griffe; Größe ändert man
+  numerisch oder beim ersten Aufziehen.
+- Kein Undo/Redo, keine Rotation, kein Auswahlrahmen, keine Polygone.
+- Kein Projektformat für Import und Export.
+- Treffertests laufen über die Bounding Box, bei Ellipse und Dreieck also
+  nicht pixelgenau.
 
-### Akustik
+### Physik
 
-- Keine FEM-, BEM- oder Waveguide-Netzsimulation einer frei gezeichneten
-  Kontur.
-- Keine Materialdaten wie Dichte, Elastizitaetsmodul oder Wandstaerke.
-- Kein frei platzierbarer Anregungs- und Abnahmepunkt.
-- Ueberlappung und reale Kontaktflaeche verbundener Teile werden noch nicht
-  physikalisch ausgewertet.
-- Parameter werden im Worklet direkt aktualisiert; grosse Aenderungen koennen
-  leichte Klicks erzeugen. Parameter-Smoothing/Crossfade ist offen.
-- Echtzeit- und WAV-Renderer verwenden zwei aehnliche, aber getrennte
-  Implementierungen.
+- Wandstärke und Dichte fehlen; nur eine effektive Ausbreitungs-
+  geschwindigkeit je Material.
+- Kein Plattenmodell (Biegesteifigkeit) als Alternative zur Membran. Für
+  Metall wäre das der nächste sinnvolle Schritt, weil eine Platte eine andere
+  Dispersionsrelation hat als eine Membran.
+- Die Anregung koppelt einseitig in den Körper; es gibt keine Rückwirkung des
+  Körpers auf die Anregung. Eine echte Streichsimulation bräuchte einen
+  Wellenleiter mit Reibungskennlinie.
+- Nur der Körper unter dem Anregungspunkt klingt. Mehrere gleichzeitig
+  angeregte Körper wären möglich, sind aber nicht umgesetzt.
 
-### Web und Qualitaet
+### Werkzeug
 
-- Keine automatisierten Browser-/Interaktionstests.
-- Kein Playwright-/Selenium-Test fuer Zeichnen, Gruppieren und AudioContext.
-- Audio muss auf realen Browsern noch breit getestet werden, insbesondere
-  Safari, Chrome und Firefox.
-- HTTP-Zugriff ueber eine LAN-IP kann am Secure-Context-Erfordernis von
-  AudioWorklet scheitern.
-- Keine PWA, kein Offline-Cache, keine installierbare Web-App.
-- `modeler.js` ist funktional, aber stark kompakt formatiert. Vor groesseren
-  Erweiterungen sollte es in Module aufgeteilt und lesbarer formatiert werden.
+- Nur die Chrome-Rauchprobe; Safari und Firefox sind ungetestet.
+- Kein Test der Mausbedienung selbst (Zeichnen, Einrasten, Punkte ziehen).
+- Die Desktop-App hat die neue Physik nicht. Das wäre ein eigenes Stück
+  Arbeit, weil der Eigenlöser dafür in Python vorliegen müsste.
 
-## Empfohlene naechste Schritte
+## Hinweise für das nächste Modell
 
-### Prioritaet 1: Editor wirklich Paint-/CAD-artig machen
+- Vor Änderungen `README.md` und diese Datei lesen, dann `npm test`.
+- Die Physik lebt in `eigen.js`, `geometry.js` und `physics.js` — bewusst ohne
+  Browserabhängigkeit. Diese Trennung nicht aufgeben; sie ist der Grund,
+  warum die Rechnung überprüfbar ist.
+- Wer die Geometrieanalyse ändert, prüft `tests/eigen.test.mjs` gegen die
+  analytischen Lösungen, bevor er dem Klang traut.
+- Keine exakte physikalische Simulation eines Instruments behaupten. Es ist
+  eine 2D-Membranrechnung der gezeichneten Fläche — das ist echt, aber
+  begrenzt.
+- Beim Anfassen der Anregungsmodelle daran denken, dass sie breitbandig
+  bleiben müssen. Eine Anregung ohne Anteil oberhalb weniger Kilohertz lässt
+  die hohen Körpermoden stumm, und dann klingt wieder alles gleich.
 
-1. Eck- und Kantenhandles zum direkten Skalieren implementieren.
-2. Auswahlrahmen fuer mehrere Objekte implementieren.
-3. Undo/Redo mit Command-Stack ergaenzen.
-4. Rotation und exakte Winkeleingabe ergaenzen.
-5. Projekt als JSON importieren und exportieren.
+## Kurzfassung für einen neuen Chat
 
-### Prioritaet 2: Zusammenfuegen verbessern
-
-1. Ueberlappung und Beruehrung von Objekten erkennen.
-2. Verbundene Komponenten statt nur Gruppen-ID berechnen.
-3. Optional echte Polygon-Union einfuehren.
-4. Kontaktflaeche als Kopplungsstaerke in die Resonanzanalyse aufnehmen.
-
-### Prioritaet 3: Klangmodell vertiefen
-
-1. Materialauswahl: Holz, Metall, Glas, Kunststoff.
-2. Wandstaerke und Dichte ergaenzen.
-3. Anregungspunkt und Abnahmepunkt im Editor platzieren.
-4. Moden aus Raster-/Konturanalyse statt nur Primitive-Verhaeltnissen
-   approximieren.
-5. Floete als Rohr-/Jet-Waveguide und Violine als Bowed-String-Waveguide
-   ausbauen.
-6. Echtzeit- und Offline-Renderer auf einen gemeinsamen DSP-Kern bringen.
-
-### Prioritaet 4: Produktqualitaet
-
-1. JavaScript in `editor.js`, `geometry.js`, `audio.js` und `wav.js` teilen.
-2. Playwright-Tests hinzufuegen.
-3. HTTPS-Entwicklungsserver oder Reverse-Proxy dokumentieren.
-4. Responsive Bedienung und Touch-Gesten pruefen.
-5. Barrierefreiheit und Tastaturbedienung ergaenzen.
-
-## Abnahmekriterien fuer die naechste sinnvolle Version
-
-- Ein Objekt kann durch Ziehen an sichtbaren Handles skaliert werden.
-- Mehrere Objekte koennen mit Auswahlrahmen markiert werden.
-- Verbinden erkennt reale Kontakte oder Ueberlappungen.
-- Ein Projekt kann als JSON gespeichert und wieder geladen werden.
-- Klangparameter wechseln ohne Klickartefakte.
-- Echtzeitklang funktioniert in Safari und Chrome auf macOS.
-- Ein automatisierter Browser-Test zeichnet zwei Formen, verbindet sie,
-  prueft die Modenliste und startet den AudioContext.
-
-## Hinweise fuer das naechste Modell
-
-- Primaer an der Web-App weiterarbeiten; die Tkinter-App nicht ungefragt
-  entfernen.
-- Vor Aenderungen `README.md` und diese Datei vollstaendig lesen.
-- Bestehende Nutzerentwuerfe in `localStorage` moeglichst kompatibel halten.
-- `customModes` ist die Schnittstelle zwischen Geometrie und Echtzeit-DSP.
-- Bei einer Aenderung der Geometrieanalyse auch den WAV-Renderer pruefen.
-- Nach jeder Aenderung mindestens Python-Tests, `node --check` und einen
-  HTTP-Aufruf ausfuehren.
-- Keine exakte physikalische Simulation behaupten, solange keine echte
-  Kontur-/Materialsimulation implementiert ist.
-
-## Kurzfassung fuer einen neuen Chat
-
-> Arbeite im Projekt
-> `/Users/metacube/Projects/Git/Ai/GeometricResonator`. Lies zuerst
-> `HANDOFF.md` und `README.md`. Die primaere Anwendung ist eine lokale
-> Web-App, in der Rechteck, Ellipse und Dreieck wie in Paint gezeichnet,
-> dimensioniert und akustisch gekoppelt werden. `modeler.js` berechnet aus
-> Flaeche, Seitenverhaeltnis und Gruppen Resonanzmoden; diese werden als
-> `customModes` an `synth-processor.js` gesendet. Violin- und
-> Floetenanregung sind in Echtzeit hoerbar, WAV-Export ist vorhanden. Der
-> wichtigste naechste Schritt sind echte Resize-Handles, Undo/Redo und eine
-> bessere geometrische Verbindung statt blosser Gruppen-ID.
+> Arbeite im Projekt `/Users/metacube/Projects/Git/Ai/GeometricResonator`.
+> Lies zuerst `HANDOFF.md` und `README.md`, dann `npm test`. Die Web-App
+> löst das Eigenwertproblem der 2D-Membran auf der gezeichneten Fläche
+> (finite Differenzen, `web/eigen.js`) und macht die Eigenmoden über eine
+> Modalresonatorbank im AudioWorklet hörbar. Frequenzen sind absolut,
+> Modenlautstärken kommen aus den Eigenvektoren an Anregungs- und
+> Abnahmepunkt. Berührende Teile sind automatisch ein Körper. Nächste
+> sinnvolle Schritte: ziehbare Skaliergriffe, Undo/Redo, ein Plattenmodell
+> als Alternative zur Membran.
