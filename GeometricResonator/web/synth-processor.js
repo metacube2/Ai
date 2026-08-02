@@ -89,10 +89,21 @@ class ModalBank {
       weight += amount;
     }
     const mean = weight > 0 ? weighted / weight : 1;
-    // Der Zahlenwert ist eingemessen: er bringt den Anschlag auf denselben
-    // Pegel wie Bogen und Luftstrom.
-    this.strikeCompensation = Math.min(4000, Math.max(1, 0.12 / Math.max(mean, 1e-7)));
-    if (this.fresh) {
+    // Der Zahlenwert ist eingemessen: er bringt den Anschlag auf die
+    // Groessenordnung von Bogen und Luftstrom. Die obere Schranke greift bei
+    // den ueblichen Zeichnungen nicht und ist nur eine Absicherung fuer sehr
+    // grosse Flaechen aus Metall.
+    //
+    // Restliche Groessenabhaengigkeit ist bekannt: bei tiefem Grundton passt
+    // der kurze Anschlag in einen Bruchteil einer Periode, die Moden addieren
+    // sich dann kohaerent auf, und sehr grosse Koerper werden im Anschlag
+    // von der Ausgangsbegrenzung leicht komprimiert.
+    this.strikeCompensation = Math.min(40000, Math.max(1, 0.06 / Math.max(mean, 1e-8)));
+    // Eine leere Modenliste darf das Erstbelegungs-Kennzeichen nicht
+    // verbrauchen: sonst gleiten die Verstaerkungen beim ersten echten
+    // Modenpaket doch von null hoch und verschlucken einen sofort
+    // folgenden Anschlag.
+    if (this.fresh && used > 0) {
       this.normalizer = this.targetNormalizer;
       this.fresh = false;
     }

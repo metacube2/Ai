@@ -156,7 +156,9 @@ Python liegt nicht im Audiopfad und nicht im Rechenpfad. Es liefert nur
 Dateien aus.
 
 Der Worker rechnet während des Ziehens grob (24 Zellen) und nach dem
-Loslassen fein (38). Eine feine Lösung braucht im Browser rund 50 ms.
+Loslassen fein (38). Gemessen im Browser: 48 ms bei 24 Zellen, 77 ms für
+520 Knoten bei 38 Zellen. Große, gefüllte Flächen haben ein Vielfaches
+dieser Knotenzahl; die feine Lösung bleibt aber unter etwa 200 ms.
 
 ## Verbinden
 
@@ -199,6 +201,15 @@ wäre der Anschlag bei Holz rund 30 dB leiser als Bogen und Luftstrom. Der
 Ausgleich in `ModalBank.setModes` ist gütengewichtet und hält die
 Anschlagslautstärke über alle Materialien vergleichbar; der hörbare
 Kontaktanteil bleibt davon unberührt.
+
+Über Materialien hinweg ist der Pegel damit ausgeglichen (nachgemessen:
+`Kompensation × größte Modenverstärkung` ist konstant), über **Größen**
+hinweg nicht vollständig. Bei tiefem Grundton passt der 2,2 ms lange
+Anschlag in einen Bruchteil einer Schwingungsperiode, die Moden addieren
+sich kohärent auf, und eine bildschirmfüllende Fläche wird im Anschlag von
+der Ausgangsbegrenzung leicht komprimiert. Kleine Körper klingen im Anschlag
+entsprechend leiser. Wer daran arbeitet: die Anschlagsdauer an die Periode
+der Grundmode zu koppeln wäre der physikalisch naheliegende nächste Schritt.
 
 Parameter kommen beim Erzeugen über `processorOptions`, nicht nur per
 Nachricht. Im `OfflineAudioContext` erreicht eine vor `startRendering()`

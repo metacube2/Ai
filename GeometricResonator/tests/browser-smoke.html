@@ -155,6 +155,27 @@ try {
   report("Hauptseite listet die berechneten Moden auf",
     (inner.getElementById("modeList")?.children.length ?? 0) >= 6,
     `${inner.getElementById("modeList")?.children.length ?? 0} Zeilen in der Modenliste`);
+
+  // 7. Der Weg, den der Nutzer tatsaechlich geht.
+  //    Alle Audiopruefungen oben laufen ueber den OfflineAudioContext. Der
+  //    Klang-rendern-Knopf nimmt einen anderen Weg: echter AudioContext,
+  //    addModule, Knoten mit processorOptions, resume, gate. Die Synthese
+  //    darin ist geprueft, die Verdrahtung war es nicht.
+  inner.getElementById("render").click();
+  const audioState = () => (inner.getElementById("audioState")?.textContent || "").trim();
+  for (let attempt = 0; attempt < 40 && audioState() === "Audio bereit"; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  report("Klang rendern startet den echten AudioContext ohne Fehler",
+    audioState() === "Audio aktiv",
+    audioState());
+
+  // Ein Fehler in process() wuerde sich erst nach einigen Bloecken zeigen.
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  report("Echtzeitsynthese laeuft weiter ohne Worklet-Fehler",
+    audioState() === "Audio aktiv",
+    `Zustand nach 1,2 s Wiedergabe: ${audioState()}`);
+  inner.getElementById("stop").click();
 } catch (error) {
   report("Ablauf ohne Ausnahme", false, error && error.stack ? error.stack.split("\n")[0] : String(error));
 }
