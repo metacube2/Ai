@@ -107,3 +107,21 @@ SAP-Load aendern.
 
 Die technische SAP-/Gateway-Basis und deren noch offene Betriebsfragen stehen
 in `docs/abap/README_LZCODE_WEBSERVICE.md`.
+
+## Commit und produktiver Deploy
+
+- Feature-Commit: `9e28086 Add logistics BOM dashboard`.
+- Produktiv veroeffentlicht am 2026-08-03 auf
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$`.
+- Release-Pruefung: 353 von 353 Tests bestanden.
+- Produktive `BiDashboard.dll`: `4'024'832` Bytes, Zeitstempel
+  `03.08.2026 06:59:38`, SHA256
+  `8D5586E5536C83A9EDB409472C332D190488898C3FE8E8DB2097C3131779B554`.
+- Lokales Release und Server-DLL sind bitgleich.
+- Die Produktivdatenbank blieb in Laenge (`338'419'712` Bytes), Schreibzeit
+  (`01.08.2026 12:25:11`) und SHA256
+  (`B23249F54F4667332FAE7A9A270EE7E10765656D2DEFA184DA9F015C2B87BE94`)
+  unveraendert.
+- `app_offline.htm` ist entfernt, Port 443 ist erreichbar und der
+  authentifizierte Aufruf von
+  `/BiDashboard/logistik/stuecklistenanalyse` liefert HTTP `200`.

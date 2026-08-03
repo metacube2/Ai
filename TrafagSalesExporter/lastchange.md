@@ -1,12 +1,12 @@
 # Last Change
 
-Stand: 2026-08-01
+Stand: 2026-08-03
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- IMPLEMENTIERT 2026-08-01, Logistik > Stuecklistenanalyse: neues
+- DEPLOYED 2026-08-03, Commit `9e28086`: Logistik > Stuecklistenanalyse hat ein neues
   richtungsabhaengiges Dashboard fuer Top-Down und Bottom-Up mit vier
   Kennzahlen, Top-12-Verwendungsbreite, Bestandsklassen und LZ-Code-Verteilung.
   Die Aggregate verwenden den gesamten gefilterten Cache; nur die bestehende
@@ -15,7 +15,12 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Bestandswerte nicht ueber Stuecklisten summiert. Alle acht UI-Sprachen sind
   abgedeckt. Live-Cache-Snapshot und fachliche Grenzen:
   `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md`. Release-Test:
-  353/353 bestanden. In diesem Arbeitsschritt noch nicht deployed.
+  353/353 bestanden. Produktive `BiDashboard.dll` `03.08.2026 06:59:38`,
+  `4'024'832` Bytes, SHA256
+  `8D5586E5536C83A9EDB409472C332D190488898C3FE8E8DB2097C3131779B554`;
+  Release und Server bitgleich. Produktiv-DB in Laenge, Schreibzeit und SHA256
+  unveraendert, `app_offline.htm` entfernt, Port 443 offen und authentifizierter
+  Aufruf von `/BiDashboard/logistik/stuecklistenanalyse` mit HTTP `200`.
 
 - DOKU 2026-07-31, RAG-Inhaltsverzeichnis konsolidiert: `docs/RAG_ROUTER.md`
   von 289 auf 51 Zeilen reduziert und auf Vorrangregeln/Themenrouting

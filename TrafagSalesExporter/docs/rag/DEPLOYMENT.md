@@ -1,16 +1,17 @@
 # RAG Deployment
 
-Stand: 2026-07-31
+Stand: 2026-08-03
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: 2026-07-31, Commit `4498bd4`
-  (auch Lieferantenzeilen der Spend-Matrix fett und `1.05rem`), `346/346`
-  Tests gruen. `BiDashboard.dll` `31.07.2026 11:43:06`, `3'226'624` Bytes,
-  SHA256 `E64BF04327D3FD7668D424C0FA52EC78A00F076E9118E253D57601730F24A247`;
-  Release-Build und Server bitgleich. Produktiv-DB unveraendert,
-  `app_offline.htm` entfernt, Port 443 offen, authentifizierter HTTPS-Aufruf
-  `200`.
+- Letzter produktiv verifizierter Deploy: 2026-08-03, Commit `9e28086`
+  (`Logistik > Stuecklistenanalyse`: Top-Down-/Bottom-Up-Dashboard), `353/353`
+  Tests gruen. `BiDashboard.dll` `03.08.2026 06:59:38`, `4'024'832` Bytes,
+  SHA256 `8D5586E5536C83A9EDB409472C332D190488898C3FE8E8DB2097C3131779B554`;
+  Release-Build und Server bitgleich. Produktiv-DB in Laenge, Schreibzeit und
+  SHA256 unveraendert, `app_offline.htm` entfernt, Port 443 offen und der
+  authentifizierte Aufruf von `/BiDashboard/logistik/stuecklistenanalyse`
+  liefert HTTP `200`.
 
 ## Deployment-Historie
 
