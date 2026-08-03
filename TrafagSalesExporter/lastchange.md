@@ -1,10 +1,21 @@
 # Last Change
 
-Stand: 2026-07-31
+Stand: 2026-08-01
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- IMPLEMENTIERT 2026-08-01, Logistik > Stuecklistenanalyse: neues
+  richtungsabhaengiges Dashboard fuer Top-Down und Bottom-Up mit vier
+  Kennzahlen, Top-12-Verwendungsbreite, Bestandsklassen und LZ-Code-Verteilung.
+  Die Aggregate verwenden den gesamten gefilterten Cache; nur die bestehende
+  Rohdatentabelle bleibt auf 200 Zeilen begrenzt. Gemeinsam verwendete
+  Komponenten werden bei der Bestandslage genau einmal klassifiziert und
+  Bestandswerte nicht ueber Stuecklisten summiert. Alle acht UI-Sprachen sind
+  abgedeckt. Live-Cache-Snapshot und fachliche Grenzen:
+  `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md`. Release-Test:
+  353/353 bestanden. In diesem Arbeitsschritt noch nicht deployed.
 
 - DOKU 2026-07-31, RAG-Inhaltsverzeichnis konsolidiert: `docs/RAG_ROUTER.md`
   von 289 auf 51 Zeilen reduziert und auf Vorrangregeln/Themenrouting

@@ -27,7 +27,13 @@ public interface IMaterialUsageDataRefreshService
     /// Liest gecachte Zeilen aus MaterialUsageCache fuer die Anzeige auf der
     /// Stuecklistenanalyse-Seite. materialFilter matcht per LIKE auf Vknr/Kompnr.
     /// </summary>
-    Task<List<MaterialUsagePreviewRow>> GetCachedUsageRowsAsync(string? materialFilter = null, int limit = 200, CancellationToken cancellationToken = default);
+    Task<List<MaterialUsagePreviewRow>> GetCachedUsageRowsAsync(string? materialFilter = null, int limit = 200, bool? topDown = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Aggregiert den gesamten gefilterten Cache fuer die Logistik-Darstellung.
+    /// Anders als die Rohdatentabelle ist diese Auswertung nicht auf 200 Zeilen begrenzt.
+    /// </summary>
+    Task<MaterialUsageAnalysisResult> GetCachedAnalysisAsync(bool topDown, string? materialFilter = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -51,6 +57,35 @@ public sealed record MaterialUsagePreviewRow(
     string WertEndbestand,
     string Mstae,
     string Zzlzcod);
+
+public sealed record MaterialUsageAnalysisGroup(
+    string Key,
+    string Description,
+    int RelationCount,
+    int CounterpartCount,
+    int NegativeStockComponentCount,
+    int ExclusiveComponentCount);
+
+public sealed record MaterialUsageCodeDistribution(string Code, int ComponentCount);
+
+public sealed record MaterialUsageAnalysisResult(
+    bool IsTopDown,
+    int RelationCount,
+    int HeaderCount,
+    int ComponentCount,
+    int ExclusiveComponentCount,
+    int ReusedComponentCount,
+    int SingleUseComponentCount,
+    int PositiveStockComponentCount,
+    int ZeroStockComponentCount,
+    int NegativeStockComponentCount,
+    int MissingStockComponentCount,
+    IReadOnlyList<MaterialUsageAnalysisGroup> Groups,
+    IReadOnlyList<MaterialUsageCodeDistribution> LzCodes)
+{
+    public static MaterialUsageAnalysisResult Empty(bool topDown) =>
+        new(topDown, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [], []);
+}
 
 public sealed class MaterialUsageRefreshStatus
 {

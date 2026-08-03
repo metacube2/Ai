@@ -250,6 +250,54 @@ public class MaterialUsageDataRefreshServiceTests : IDisposable
         Assert.Equal("Empty", status.Status);
     }
 
+    [Fact]
+    public async Task GetCachedAnalysisAsync_Aggregates_TopDown_And_BottomUp_Without_Preview_Limit()
+    {
+        await using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = @"
+INSERT INTO MaterialUsageCache (Richtung, Vknr, Kompnr, KompnrMaktx, Exklusiv, Endbestand, Zzlzcod, LastLoadedAtUtc)
+VALUES
+('TOPDOWN', 'H1', 'C1', 'Component 1', 1, '5', 'A0T0', '2026-08-01T00:00:00Z'),
+('TOPDOWN', 'H1', 'C2', 'Component 2', 0, '-2', 'N0X0', '2026-08-01T00:00:00Z'),
+('TOPDOWN', 'H2', 'C1', 'Component 1', 1, '5', 'A0T0', '2026-08-01T00:00:00Z'),
+('BOTTOMUP', 'H1', 'C3', 'Component 3', 0, '0', 'N0X0', '2026-08-01T00:00:00Z'),
+('BOTTOMUP', 'H2', 'C3', 'Component 3', 0, '0', 'N0X0', '2026-08-01T00:00:00Z');";
+            await command.ExecuteNonQueryAsync();
+        }
+
+        var service = new MaterialUsageDataRefreshService(_dbFactory, new FakeSapGatewayService([]), new NoopAppEventLogService());
+
+        var topDown = await service.GetCachedAnalysisAsync(topDown: true);
+        Assert.Equal(3, topDown.RelationCount);
+        Assert.Equal(2, topDown.HeaderCount);
+        Assert.Equal(2, topDown.ComponentCount);
+        Assert.Equal(1, topDown.ExclusiveComponentCount);
+        Assert.Equal(1, topDown.ReusedComponentCount);
+        Assert.Equal(1, topDown.SingleUseComponentCount);
+        Assert.Equal(1, topDown.PositiveStockComponentCount);
+        Assert.Equal(1, topDown.NegativeStockComponentCount);
+        Assert.Equal("H1", topDown.Groups[0].Key);
+        Assert.Equal(2, topDown.Groups[0].CounterpartCount);
+        Assert.Equal(1, topDown.LzCodes.First(x => x.Code == "A0T0").ComponentCount);
+
+        var filtered = await service.GetCachedAnalysisAsync(topDown: true, materialFilter: "C2");
+        Assert.Equal(1, filtered.RelationCount);
+        Assert.Equal(1, filtered.ComponentCount);
+        Assert.Equal(1, filtered.NegativeStockComponentCount);
+
+        var bottomUp = await service.GetCachedAnalysisAsync(topDown: false);
+        Assert.Equal(2, bottomUp.RelationCount);
+        Assert.Equal(2, bottomUp.HeaderCount);
+        Assert.Equal(1, bottomUp.ComponentCount);
+        Assert.Equal(1, bottomUp.ReusedComponentCount);
+        Assert.Equal(1, bottomUp.ZeroStockComponentCount);
+
+        var preview = await service.GetCachedUsageRowsAsync(topDown: false);
+        Assert.Equal(2, preview.Count);
+        Assert.All(preview, row => Assert.Equal("BOTTOMUP", row.Richtung));
+    }
+
     private sealed class FakeSapGatewayService(List<string> entitySets) : ISapGatewayService
     {
         public Task TestConnectionAsync(string serviceUrl, string username, string password, CancellationToken cancellationToken = default)

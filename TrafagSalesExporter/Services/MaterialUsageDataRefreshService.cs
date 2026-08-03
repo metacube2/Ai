@@ -164,7 +164,7 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
         }
     }
 
-    public async Task<List<MaterialUsagePreviewRow>> GetCachedUsageRowsAsync(string? materialFilter = null, int limit = 200, CancellationToken cancellationToken = default)
+    public async Task<List<MaterialUsagePreviewRow>> GetCachedUsageRowsAsync(string? materialFilter = null, int limit = 200, bool? topDown = null, CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -175,9 +175,12 @@ public sealed class MaterialUsageDataRefreshService : IMaterialUsageDataRefreshS
         // geladene Excel-Spalte auch zum Filtern wiederverwenden kann statt Nummer fuer Nummer
         // zu suchen. Je Token ein LIKE-Paar auf Vknr/Kompnr, mit OR verknuepft.
         var tokens = ParseMaterialTokens(materialFilter);
-        var whereClause = tokens.Count == 0
-            ? string.Empty
-            : "WHERE " + string.Join(" OR ", tokens.Select((_, i) => $"Vknr LIKE $Filter{i} OR Kompnr LIKE $Filter{i}"));
+        var conditions = new List<string>();
+        if (topDown.HasValue)
+            conditions.Add("Richtung = $Direction");
+        if (tokens.Count > 0)
+            conditions.Add("(" + string.Join(" OR ", tokens.Select((_, i) => $"Vknr LIKE $Filter{i} OR Kompnr LIKE $Filter{i}")) + ")");
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
 
         await using var command = conn.CreateCommand();
         command.CommandText = $@"
@@ -189,6 +192,8 @@ ORDER BY Vknr, Kompnr
 LIMIT $Limit;";
         for (var i = 0; i < tokens.Count; i++)
             command.Parameters.AddWithValue($"$Filter{i}", "%" + tokens[i] + "%");
+        if (topDown.HasValue)
+            command.Parameters.AddWithValue("$Direction", topDown.Value ? "TOPDOWN" : "BOTTOMUP");
         command.Parameters.AddWithValue("$Limit", limit);
 
         var rows = new List<MaterialUsagePreviewRow>();
@@ -212,6 +217,140 @@ LIMIT $Limit;";
         }
 
         return rows;
+    }
+
+    public async Task<MaterialUsageAnalysisResult> GetCachedAnalysisAsync(
+        bool topDown,
+        string? materialFilter = null,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        var tokens = ParseMaterialTokens(materialFilter);
+        var tokenFilter = tokens.Count == 0
+            ? string.Empty
+            : " AND (" + string.Join(" OR ", tokens.Select((_, i) => $"Vknr LIKE $Filter{i} OR Kompnr LIKE $Filter{i}")) + ")";
+        var direction = topDown ? "TOPDOWN" : "BOTTOMUP";
+
+        void AddParameters(SqliteCommand command)
+        {
+            command.Parameters.AddWithValue("$Direction", direction);
+            for (var i = 0; i < tokens.Count; i++)
+                command.Parameters.AddWithValue($"$Filter{i}", "%" + tokens[i] + "%");
+        }
+
+        // Endbestand is supplied by SAP as text. Empty values must stay "unknown" and must not
+        // silently become zero; only non-empty values are converted for the stock-risk buckets.
+        var numericEndStock = "CAST(REPLACE(REPLACE(Endbestand, ',', '.'), '''', '') AS REAL)";
+        await using var summaryCommand = conn.CreateCommand();
+        summaryCommand.CommandText = $@"
+WITH filtered AS (
+    SELECT * FROM MaterialUsageCache
+    WHERE Richtung = $Direction{tokenFilter}
+), component_use AS (
+    SELECT Kompnr,
+           COUNT(DISTINCT Vknr) AS ParentCount,
+           MAX(CASE WHEN TRIM(Endbestand) <> '' THEN 1 ELSE 0 END) AS HasStock,
+           MIN(CASE WHEN TRIM(Endbestand) <> '' THEN {numericEndStock} END) AS EndStock
+    FROM filtered
+    GROUP BY Kompnr
+)
+SELECT
+    (SELECT COUNT(*) FROM filtered),
+    (SELECT COUNT(DISTINCT Vknr) FROM filtered),
+    (SELECT COUNT(DISTINCT Kompnr) FROM filtered),
+    (SELECT COUNT(DISTINCT CASE WHEN Exklusiv <> 0 THEN Kompnr END) FROM filtered),
+    (SELECT COUNT(*) FROM component_use WHERE ParentCount > 1),
+    (SELECT COUNT(*) FROM component_use WHERE ParentCount = 1),
+    (SELECT COUNT(*) FROM component_use WHERE HasStock = 1 AND EndStock > 0),
+    (SELECT COUNT(*) FROM component_use WHERE HasStock = 1 AND EndStock = 0),
+    (SELECT COUNT(*) FROM component_use WHERE HasStock = 1 AND EndStock < 0),
+    (SELECT COUNT(*) FROM component_use WHERE HasStock = 0);";
+        AddParameters(summaryCommand);
+
+        await using var summaryReader = await summaryCommand.ExecuteReaderAsync(cancellationToken);
+        if (!await summaryReader.ReadAsync(cancellationToken))
+            return MaterialUsageAnalysisResult.Empty(topDown);
+
+        static int CountAt(SqliteDataReader reader, int ordinal) =>
+            reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetInt64(ordinal), CultureInfo.InvariantCulture);
+
+        var relationCount = CountAt(summaryReader, 0);
+        var headerCount = CountAt(summaryReader, 1);
+        var componentCount = CountAt(summaryReader, 2);
+        var exclusiveCount = CountAt(summaryReader, 3);
+        var reusedCount = CountAt(summaryReader, 4);
+        var singleUseCount = CountAt(summaryReader, 5);
+        var positiveStockCount = CountAt(summaryReader, 6);
+        var zeroStockCount = CountAt(summaryReader, 7);
+        var negativeStockCount = CountAt(summaryReader, 8);
+        var missingStockCount = CountAt(summaryReader, 9);
+        await summaryReader.DisposeAsync();
+
+        var groupKey = topDown ? "Vknr" : "Kompnr";
+        var counterpart = topDown ? "Kompnr" : "Vknr";
+        var description = topDown ? "''" : "MAX(KompnrMaktx)";
+        await using var groupsCommand = conn.CreateCommand();
+        groupsCommand.CommandText = $@"
+SELECT {groupKey}, {description}, COUNT(*), COUNT(DISTINCT {counterpart}),
+       COUNT(DISTINCT CASE WHEN TRIM(Endbestand) <> '' AND {numericEndStock} < 0 THEN Kompnr END),
+       COUNT(DISTINCT CASE WHEN Exklusiv <> 0 THEN Kompnr END)
+FROM MaterialUsageCache
+WHERE Richtung = $Direction{tokenFilter}
+GROUP BY {groupKey}
+ORDER BY COUNT(DISTINCT {counterpart}) DESC, COUNT(*) DESC, {groupKey}
+LIMIT 12;";
+        AddParameters(groupsCommand);
+
+        var groups = new List<MaterialUsageAnalysisGroup>();
+        await using (var reader = await groupsCommand.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                groups.Add(new MaterialUsageAnalysisGroup(
+                    reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                    reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    CountAt(reader, 2),
+                    CountAt(reader, 3),
+                    CountAt(reader, 4),
+                    CountAt(reader, 5)));
+            }
+        }
+
+        await using var lzCommand = conn.CreateCommand();
+        lzCommand.CommandText = $@"
+SELECT COALESCE(NULLIF(TRIM(Zzlzcod), ''), '-'), COUNT(DISTINCT Kompnr)
+FROM MaterialUsageCache
+WHERE Richtung = $Direction{tokenFilter}
+GROUP BY COALESCE(NULLIF(TRIM(Zzlzcod), ''), '-')
+ORDER BY COUNT(DISTINCT Kompnr) DESC, Zzlzcod
+LIMIT 8;";
+        AddParameters(lzCommand);
+
+        var lzCodes = new List<MaterialUsageCodeDistribution>();
+        await using (var reader = await lzCommand.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+                lzCodes.Add(new MaterialUsageCodeDistribution(reader.GetString(0), CountAt(reader, 1)));
+        }
+
+        return new MaterialUsageAnalysisResult(
+            topDown,
+            relationCount,
+            headerCount,
+            componentCount,
+            exclusiveCount,
+            reusedCount,
+            singleUseCount,
+            positiveStockCount,
+            zeroStockCount,
+            negativeStockCount,
+            missingStockCount,
+            groups,
+            lzCodes);
     }
 
     private async Task<MaterialUsageSapConnection> ResolveConnectionAsync(CancellationToken cancellationToken)

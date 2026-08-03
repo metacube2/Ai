@@ -1,6 +1,7 @@
 @page "/logistik/stuecklistenanalyse"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
+@implements IDisposable
 @inject IMaterialUsageDataRefreshService UsageService
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
@@ -8,6 +9,21 @@
 <PageTitle>@T("Stuecklistenanalyse (ZLO03)", "BOM analysis (ZLO03)")</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">@T("Stuecklistenanalyse (ZLO03)", "BOM analysis (ZLO03)")</MudText>
+
+<MudPaper Class="bom-hero mb-4" Elevation="0">
+    <div>
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
+            @(_topDown ? T("Top-Down Sicht", "Top-down view") : T("Bottom-Up Sicht", "Bottom-up view"))
+        </MudChip>
+        <MudText Typo="Typo.h5" Class="mt-2 bom-hero-title">@AnalysisTitle</MudText>
+        <MudText Typo="Typo.body2" Class="bom-hero-text">@AnalysisDescription</MudText>
+    </div>
+    <div class="bom-flow" aria-label="@T("Stuecklistenfluss", "BOM flow")">
+        <span>@(_topDown ? T("Kopfmaterial", "Header material") : T("Komponente", "Component"))</span>
+        <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Color="Color.Inherit" />
+        <span>@(_topDown ? T("Komponenten", "Components") : T("Verwendungen", "Usages"))</span>
+    </div>
+</MudPaper>
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
     @T("Laedt die Stuecklistenanalyse des SAP-Reports ZM_LZCODE20_OPT (ZPOWERBI_VC_TXT/ZMD04_CALC) ueber den Gateway-Service ZPOWERBI_EINKAUF_SRV in den lokalen Cache (MaterialUsageCache). Eine Zeile je Kopfmaterial/Komponente-Paar inkl. Bestand, Stueckkosten und Exklusivitaet. SAP erzwingt einen Materialfilter — ohne Eingabe wird bewusst ALLES geladen (Catch-all).",
@@ -27,7 +43,7 @@
             @string.Format(T("{0} Nummern", "{0} numbers"), _materialTokenCount)
         </MudChip>
     }
-    <MudSwitch T="bool" @bind-Value="_topDown" Color="Color.Primary"
+    <MudSwitch T="bool" Value="_topDown" ValueChanged="OnDirectionChangedAsync" Color="Color.Primary"
                Label="@(_topDown ? T("Top-Down (Kopfmaterial -> Komponenten)", "Top-down (header -> components)") : T("Bottom-Up (Komponente -> Verwendungen)", "Bottom-up (component -> usages)"))" />
     <MudCheckBox T="bool" @bind-Value="_includeDeleted" Color="Color.Primary" Dense
                  Label="@T("Auch geloeschte Materialien", "Include deleted materials")" />
@@ -59,6 +75,113 @@
         — @T("Zeilen", "rows"): @_status.UsageRows.ToString("N0") / @T("Eltern", "parents"): @_status.ParentRows.ToString("N0")
         <br />
         <MudText Typo="Typo.caption">@_status.Message</MudText>
+    </MudAlert>
+}
+
+@if (_analysis.RelationCount > 0)
+{
+    <MudGrid Class="mb-4" Spacing="2">
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="pa-3 bom-kpi" Outlined>
+                <MudText Typo="Typo.caption" Class="bom-muted">@(_topDown ? T("Kopfmaterialien", "Header materials") : T("Geladene Komponenten", "Loaded components"))</MudText>
+                <MudText Typo="Typo.h5">@((_topDown ? _analysis.HeaderCount : _analysis.ComponentCount).ToString("N0"))</MudText>
+                <MudText Typo="Typo.caption">@T("im gefilterten Cache", "in the filtered cache")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="pa-3 bom-kpi" Outlined>
+                <MudText Typo="Typo.caption" Class="bom-muted">@(_topDown ? T("Unterschiedliche Komponenten", "Distinct components") : T("Gefundene Elternmaterialien", "Parent materials found"))</MudText>
+                <MudText Typo="Typo.h5">@((_topDown ? _analysis.ComponentCount : _analysis.HeaderCount).ToString("N0"))</MudText>
+                <MudText Typo="Typo.caption">@(_topDown ? T("Bauteile in den Stuecklisten", "parts in the BOMs") : T("Verwendungen der Komponenten", "component usages"))</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="pa-3 bom-kpi" Outlined>
+                <MudText Typo="Typo.caption" Class="bom-muted">@(_topDown ? T("Kopf-Komponenten-Beziehungen", "Header-component relations") : T("Mehrfach verwendete Komponenten", "Reused components"))</MudText>
+                <MudText Typo="Typo.h5">@((_topDown ? _analysis.RelationCount : _analysis.ReusedComponentCount).ToString("N0"))</MudText>
+                <MudText Typo="Typo.caption">@(_topDown ? T("aufgeloeste Zeilen", "exploded rows") : T("in mehr als einem Elternmaterial", "in more than one parent material"))</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <MudPaper Class="pa-3 bom-kpi bom-kpi-risk" Outlined>
+                <MudText Typo="Typo.caption" Class="bom-muted">@(_topDown ? T("Exklusive Komponenten", "Exclusive components") : T("Nur einmal verwendete Komponenten", "Single-use components"))</MudText>
+                <MudText Typo="Typo.h5">@((_topDown ? _analysis.ExclusiveComponentCount : _analysis.SingleUseComponentCount).ToString("N0"))</MudText>
+                <MudText Typo="Typo.caption">@T("Abhaengigkeit im geladenen Datenstand", "dependency in the loaded data")</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mb-4" Spacing="2">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 bom-panel" Outlined>
+                <div class="bom-panel-head">
+                    <div>
+                        <MudText Typo="Typo.h6">@(_topDown ? T("Komponentenbreite je Kopfmaterial", "Component breadth by header material") : T("Verwendungsbreite je Komponente", "Usage breadth by component"))</MudText>
+                        <MudText Typo="Typo.caption" Class="bom-muted">@(_topDown ? T("Top 12 nach Anzahl unterschiedlicher Komponenten", "Top 12 by distinct component count") : T("Top 12 nach Anzahl unterschiedlicher Elternmaterialien", "Top 12 by distinct parent-material count"))</MudText>
+                    </div>
+                    <MudIcon Icon="@(_topDown ? Icons.Material.Filled.AccountTree : Icons.Material.Filled.Hub)" Color="Color.Info" />
+                </div>
+                <div class="bom-bars mt-3">
+                    @foreach (var group in _analysis.Groups)
+                    {
+                        <div class="bom-bar-row">
+                            <div class="bom-bar-label">
+                                <strong>@group.Key</strong>
+                                @if (!string.IsNullOrWhiteSpace(group.Description))
+                                {
+                                    <span>@group.Description</span>
+                                }
+                            </div>
+                            <div class="bom-bar-track">
+                                <div class="bom-bar-fill" style="@($"width:{GroupBarWidth(group.CounterpartCount)}%")"></div>
+                            </div>
+                            <div class="bom-bar-value">@group.CounterpartCount.ToString("N0")</div>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 bom-panel mb-3" Outlined>
+                <div class="bom-panel-head">
+                    <MudText Typo="Typo.h6">@T("Bestandslage der Komponenten", "Component stock position")</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Info" />
+                </div>
+                <div class="bom-stock-grid mt-3">
+                    <div class="positive"><strong>@_analysis.PositiveStockComponentCount.ToString("N0")</strong><span>@T("positiver Endbestand", "positive final stock")</span></div>
+                    <div class="zero"><strong>@_analysis.ZeroStockComponentCount.ToString("N0")</strong><span>@T("Endbestand null", "zero final stock")</span></div>
+                    <div class="negative"><strong>@_analysis.NegativeStockComponentCount.ToString("N0")</strong><span>@T("negativer Endbestand", "negative final stock")</span></div>
+                    <div class="missing"><strong>@_analysis.MissingStockComponentCount.ToString("N0")</strong><span>@T("Bestand nicht geliefert", "stock not supplied")</span></div>
+                </div>
+            </MudPaper>
+            <MudPaper Class="pa-3 bom-panel" Outlined>
+                <div class="bom-panel-head">
+                    <div>
+                        <MudText Typo="Typo.h6">@T("LZ-Code Verteilung", "LC-code distribution")</MudText>
+                        <MudText Typo="Typo.caption" Class="bom-muted">@T("Unterschiedliche Komponenten je Code", "Distinct components per code")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.Category" Color="Color.Info" />
+                </div>
+                <div class="bom-code-list mt-3">
+                    @foreach (var distribution in _analysis.LzCodes)
+                    {
+                        <div><code>@(distribution.Code == "-" ? T("ohne Code", "without code") : distribution.Code)</code><strong>@distribution.ComponentCount.ToString("N0")</strong></div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+        @AnalysisInterpretation
+    </MudAlert>
+}
+else if (!_loading)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense Class="mb-4">
+        @(_topDown
+            ? T("Keine Top-Down-Beziehungen im aktuellen Filter. Kopfmaterial oder Filter pruefen und bei alten Materialien gegebenenfalls 'Auch geloeschte Materialien' aktivieren.", "No top-down relations in the current filter. Check the header material or filter and, for old materials, enable 'Include deleted materials' if needed.")
+            : T("Keine Bottom-Up-Verwendungen im aktuellen Filter. Vor dem Schluss 'wird nirgends verbaut' auch geloeschte Materialien gegenpruefen.", "No bottom-up usages in the current filter. Before concluding that a component is unused, also check deleted materials."))
     </MudAlert>
 }
 
@@ -124,6 +247,7 @@
 @code {
     private MaterialUsageRefreshStatus? _status;
     private List<MaterialUsagePreviewRow> _rows = [];
+    private MaterialUsageAnalysisResult _analysis = MaterialUsageAnalysisResult.Empty(topDown: true);
     private string _materialFilter = string.Empty;
     private string _previewFilter = string.Empty;
     private bool _topDown = true;
@@ -152,7 +276,27 @@
         : result.UsageRows == 0 ? Severity.Warning
         : Severity.Success;
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    private string AnalysisTitle => _topDown
+        ? T("Vom Kopfmaterial bis zum Bestandsrisiko", "From header material to stock risk")
+        : T("Von der Komponente zu allen Elternmaterialien", "From component to all parent materials");
+
+    private string AnalysisDescription => _topDown
+        ? T("Zeigt, wie breit eine Stueckliste aufgeloest ist, welche Komponenten exklusiv sind und wo der Endbestand kritisch wird.", "Shows how broadly a BOM is exploded, which components are exclusive and where final stock becomes critical.")
+        : T("Zeigt Wiederverwendung, Abhaengigkeit und Reichweite einer Komponente ueber alle gefundenen Elternmaterialien.", "Shows reuse, dependency and reach of a component across all parent materials found.");
+
+    private string AnalysisInterpretation => _topDown
+        ? string.Format(
+            T("Lesart Top-Down: {0} Kopfmaterialien enthalten {1} unterschiedliche Komponenten. Exklusivitaet und negativer Endbestand markieren die zuerst zu pruefenden Bauteile; Bestandswerte werden nicht ueber Stuecklisten summiert, damit gemeinsam verwendete Komponenten nicht doppelt bewertet werden.", "Top-down reading: {0} header materials contain {1} distinct components. Exclusivity and negative final stock identify the parts to check first; stock values are not summed across BOMs so shared components are not valued twice."),
+            _analysis.HeaderCount.ToString("N0"), _analysis.ComponentCount.ToString("N0"))
+        : string.Format(
+            T("Lesart Bottom-Up: {0} Komponenten fuehren zu {1} Elternmaterialien. Hohe Balken zeigen grosse Wiederverwendung und damit breite Auswirkung bei Aenderung oder Ausfall; eine Einzelverwendung zeigt dagegen konzentrierte Abhaengigkeit.", "Bottom-up reading: {0} components lead to {1} parent materials. High bars show broad reuse and therefore wide impact from a change or failure; single use instead indicates concentrated dependency."),
+            _analysis.ComponentCount.ToString("N0"), _analysis.HeaderCount.ToString("N0"));
+
+    protected override async Task OnInitializedAsync()
+    {
+        UiText.Changed += HandleLanguageChanged;
+        await ReloadAsync();
+    }
 
     private async Task ReloadAsync()
     {
@@ -177,7 +321,11 @@
         _loading = true;
         try
         {
-            _rows = await UsageService.GetCachedUsageRowsAsync(_previewFilter);
+            var rowsTask = UsageService.GetCachedUsageRowsAsync(_previewFilter, topDown: _topDown);
+            var analysisTask = UsageService.GetCachedAnalysisAsync(_topDown, _previewFilter);
+            await Task.WhenAll(rowsTask, analysisTask);
+            _rows = await rowsTask;
+            _analysis = await analysisTask;
         }
         catch (Exception ex)
         {
@@ -187,6 +335,19 @@
         {
             _loading = false;
         }
+    }
+
+    private async Task OnDirectionChangedAsync(bool topDown)
+    {
+        _topDown = topDown;
+        _analysis = MaterialUsageAnalysisResult.Empty(topDown);
+        await LoadPreviewAsync();
+    }
+
+    private double GroupBarWidth(int value)
+    {
+        var max = _analysis.Groups.Count == 0 ? 0 : _analysis.Groups.Max(group => group.CounterpartCount);
+        return max <= 0 ? 0 : Math.Clamp(value / (double)max * 100d, 4d, 100d);
     }
 
     private async Task RunLoadAsync()
@@ -211,4 +372,197 @@
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
+
+    private void HandleLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        UiText.Changed -= HandleLanguageChanged;
+    }
 }
+
+<style>
+    .bom-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: center;
+        padding: 22px 24px;
+        color: #f8fafc;
+        background: linear-gradient(135deg, #102235, #1565c0);
+        border-radius: 8px;
+    }
+
+    .bom-hero-title {
+        font-weight: 700;
+    }
+
+    .bom-hero-text {
+        max-width: 850px;
+        color: rgba(255, 255, 255, .82);
+    }
+
+    .bom-flow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, .22);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, .1);
+        font-weight: 700;
+    }
+
+    .bom-kpi {
+        min-height: 112px;
+        border-left: 4px solid var(--mud-palette-info);
+        background: linear-gradient(180deg, rgba(21, 101, 192, .055), transparent);
+    }
+
+    .bom-kpi-risk {
+        border-left-color: var(--mud-palette-warning);
+    }
+
+    .bom-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .bom-panel {
+        border-radius: 8px;
+    }
+
+    .bom-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .bom-bars {
+        display: grid;
+        gap: 12px;
+    }
+
+    .bom-bar-row {
+        display: grid;
+        grid-template-columns: minmax(180px, 1.2fr) 2fr 52px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .bom-bar-label {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bom-bar-label strong,
+    .bom-bar-label span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bom-bar-label span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .78rem;
+    }
+
+    .bom-bar-track {
+        height: 25px;
+        overflow: hidden;
+        border-radius: 4px;
+        background: rgba(15, 23, 42, .1);
+    }
+
+    .bom-bar-fill {
+        height: 100%;
+        min-width: 5px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #1565c0, #42a5f5);
+        box-shadow: inset 0 -7px 13px rgba(0, 0, 0, .12);
+    }
+
+    .bom-bar-value {
+        text-align: right;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .bom-stock-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .bom-stock-grid > div {
+        display: flex;
+        flex-direction: column;
+        min-height: 78px;
+        padding: 12px;
+        border-left: 4px solid #64748b;
+        border-radius: 6px;
+        background: rgba(100, 116, 139, .08);
+    }
+
+    .bom-stock-grid strong {
+        font-size: 1.35rem;
+    }
+
+    .bom-stock-grid span {
+        color: var(--mud-palette-text-secondary);
+        font-size: .78rem;
+    }
+
+    .bom-stock-grid .positive { border-left-color: #2e7d32; }
+    .bom-stock-grid .zero { border-left-color: #ef6c00; }
+    .bom-stock-grid .negative { border-left-color: #c62828; }
+    .bom-stock-grid .missing { border-left-color: #64748b; }
+
+    .bom-code-list {
+        display: grid;
+        gap: 7px;
+    }
+
+    .bom-code-list > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: rgba(21, 101, 192, .06);
+    }
+
+    @@media (max-width: 900px) {
+        .bom-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .bom-flow {
+            justify-self: start;
+        }
+
+        .bom-bar-row {
+            grid-template-columns: minmax(120px, 1fr) 1.5fr 44px;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .bom-hero {
+            padding: 18px;
+        }
+
+        .bom-flow {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .bom-bar-row {
+            grid-template-columns: 1fr 42px;
+        }
+
+        .bom-bar-label {
+            grid-column: 1 / -1;
+        }
+    }
+</style>

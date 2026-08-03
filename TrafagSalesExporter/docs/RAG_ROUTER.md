@@ -36,7 +36,8 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Admin/Startseite | `docs/rag/ADMIN.md` |
 | Architektur | `docs/rag/ARCHITECTURE.md` |
 | Produktmapping/Group Sales Report | `docs/rag/PRODUCT_MAPPING.md` |
-| ZLO03/Stuecklistenanalyse-Webservice | `docs/abap/README_LZCODE_WEBSERVICE.md` |
+| Logistik-Stuecklisten-Dashboard, Top-Down/Bottom-Up | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
+| ZLO03/Stuecklistenanalyse-Webservice/ABAP | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
 | 180-Tage-Roadmap | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 | Live-Pruefung SAP ERP oder SAP B1/HANA | `docs/RAG_DETAIL_INDEX.md`, Abschnitt `Live-Werkzeuge` |

@@ -1141,6 +1141,9 @@ public sealed class UiTextService : IUiTextService
             PurchasingKlingonOverrides.All.TryGetValue(german, out var reviewedKlingon))
             return reviewedKlingon;
         if (_currentLanguage is "tlh" &&
+            LogisticsKlingonOverrides.All.TryGetValue(german, out var reviewedLogisticsKlingon))
+            return reviewedLogisticsKlingon;
+        if (_currentLanguage is "tlh" &&
             UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completeTranslations) &&
             completeTranslations.TryGetValue(german, out var completeTranslation))
             return completeTranslation;
@@ -1158,9 +1161,12 @@ public sealed class UiTextService : IUiTextService
         if (UiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var generated) &&
             generated.TryGetValue(german, out var generatedTranslation))
             return generatedTranslation;
-        return PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var purchasingGenerated) &&
-               purchasingGenerated.TryGetValue(german, out var purchasingGeneratedTranslation)
-            ? purchasingGeneratedTranslation
+        if (PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var purchasingGenerated) &&
+            purchasingGenerated.TryGetValue(german, out var purchasingGeneratedTranslation))
+            return purchasingGeneratedTranslation;
+        return LogisticsUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var logisticsGenerated) &&
+               logisticsGenerated.TryGetValue(german, out var logisticsGeneratedTranslation)
+            ? logisticsGeneratedTranslation
             : english;
     }
 

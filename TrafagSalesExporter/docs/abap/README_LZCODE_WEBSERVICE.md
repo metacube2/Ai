@@ -552,12 +552,16 @@ Anpassungen 2026-07-21 nach der SEGW-Aktivierung:
 
 Wichtig, bevor das als "fertig" gilt:
 
-- **UI vorhanden seit 2026-07-21** (Entscheid Ingo): neuer Root-Navigationsreiter **Logistik**
+- **UI vorhanden seit 2026-07-21, Dashboard erweitert am 2026-08-01** (Entscheid Ingo): neuer Root-Navigationsreiter **Logistik**
   (Icon LocalShipping) mit Unterpunkt **Stuecklistenanalyse**
   (`Components/Pages/BomAnalysis.razor`, Route `/logistik/stuecklistenanalyse`, Seed-Keys
   `logistics`/`logistics-bom-analysis`). Die Seite bietet: SAP-Load (Richtung Top-Down/Bottom-Up,
-  optionaler kommagetrennter Materialfilter), Statusanzeige des letzten Laufs und eine
-  durchsuchbare Cache-Vorschau (max. 200 Zeilen, `GetCachedUsageRowsAsync`). Die Daten sollen
+  optionaler kommagetrennter Materialfilter), Statusanzeige des letzten Laufs,
+  richtungsabhaengige Kennzahlen, Top-12-Verwendungsbreite, Bestandslage und
+  LZ-Code-Verteilung sowie eine durchsuchbare Cache-Vorschau (max. 200 Zeilen,
+  `GetCachedUsageRowsAsync`). Die Dashboard-Aggregate werten dagegen den gesamten
+  gefilterten Cache aus (`GetCachedAnalysisAsync`). Details und fachliche Grenzen:
+  `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md`. Die Daten sollen
   spaeter auch im Einkauf nutzbar sein (Exklusivitaet/Bestaende je Komponente), starten aber
   bewusst als eigener Logistik-Reiter.
 - **Performance-Vorbehalt beim Catch-all-Full-Load**: Die DPC-Methode berechnet je `$skip`-Seite

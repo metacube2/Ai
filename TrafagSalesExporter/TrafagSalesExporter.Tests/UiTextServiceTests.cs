@@ -88,8 +88,11 @@ public class UiTextServiceTests
         {
             var translations = UiTextGeneratedTranslations.All[language];
             var purchasingTranslations = PurchasingUiTextGeneratedTranslations.All[language];
+            var logisticsTranslations = LogisticsUiTextGeneratedTranslations.All[language];
             var missing = expected.Keys
-                .Where(key => !translations.ContainsKey(key) && !purchasingTranslations.ContainsKey(key))
+                .Where(key => !translations.ContainsKey(key) &&
+                              !purchasingTranslations.ContainsKey(key) &&
+                              !logisticsTranslations.ContainsKey(key))
                 .ToArray();
             Assert.True(missing.Length == 0, $"{language} is missing: {string.Join(" | ", missing)}");
 
@@ -97,10 +100,43 @@ public class UiTextServiceTests
             {
                 var translated = translations.TryGetValue(pair.Key, out var generalTranslation)
                     ? generalTranslation
-                    : purchasingTranslations[pair.Key];
+                    : purchasingTranslations.TryGetValue(pair.Key, out var purchasingTranslation)
+                        ? purchasingTranslation
+                        : logisticsTranslations[pair.Key];
                 Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.Key} is empty");
                 Assert.Equal(Placeholders(pair.Value), Placeholders(translated));
             }
+        }
+    }
+
+    [Fact]
+    public void Logistics_Translations_Cover_Every_Dashboard_Key_In_Every_Language()
+    {
+        Assert.Equal(
+            LogisticsUiTextCatalog.All.Count,
+            LogisticsUiTextCatalog.All.Select(pair => pair.German).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        foreach (var language in new[] { "es", "it", "hi", "sq", "tr", "tlh" })
+        {
+            var service = new UiTextService();
+            service.SetLanguage(language);
+            var translations = LogisticsUiTextGeneratedTranslations.All[language];
+
+            foreach (var pair in LogisticsUiTextCatalog.All)
+            {
+                Assert.True(translations.TryGetValue(pair.German, out var translated),
+                    $"{language} is missing logistics text: {pair.German}");
+                Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.German} is empty");
+                Assert.Equal(Placeholders(pair.English), Placeholders(translated));
+
+                var resolved = service.Text(pair.German, pair.English);
+                Assert.False(string.IsNullOrWhiteSpace(resolved));
+                if (language == "tlh")
+                    Assert.Equal(LogisticsKlingonOverrides.All[pair.German], resolved);
+            }
+
+            Assert.NotEqual("From component to all parent materials",
+                service.Text("Von der Komponente zu allen Elternmaterialien", "From component to all parent materials"));
         }
     }
 
@@ -164,6 +200,7 @@ public class UiTextServiceTests
     {
         var invalid = UiTextGeneratedTranslations.All["tlh"]
             .Concat(PurchasingKlingonOverrides.All)
+            .Concat(LogisticsKlingonOverrides.All)
             .Where(pair => pair.Value.Any(character => character > 127 &&
                 CharUnicodeInfo.GetUnicodeCategory(character) is UnicodeCategory.UppercaseLetter
                     or UnicodeCategory.LowercaseLetter
@@ -178,6 +215,7 @@ public class UiTextServiceTests
             @"\b(cache|live|position|value|period|sample|schedule|spend|performance|supplier|item|row|simulation|until|matrix|deleted|latest|known|rating|unit|detail|due|short|open|quantities|top|net|fields|headers|productive|actual|quality|issue|procurement|fallback|stock|invoice|material|currency|purchase|order|country|selected)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var klingonFallbacks = PurchasingKlingonOverrides.All
+            .Concat(LogisticsKlingonOverrides.All)
             .Where(pair => englishBusinessWords.IsMatch(pair.Value))
             .Select(pair => pair.Key)
             .ToArray();
