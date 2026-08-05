@@ -140,11 +140,16 @@ nichts — und **66 haben weder das eine noch das andere**. Nur diese 66 sind ei
 
 ### 3b. Was Indien wirklich noch tun muss
 
-| Fall | Artikel | Zeilen | Bitte | blockiert die Marge |
+| Fall | Artikel | Zeilen | Bitte | blockiert |
 | --- | ---: | ---: | --- | --- |
-| weder Sales Type noch Lieferant | **66** | 113 | Sales Type pflegen | **ja** |
-| `FFM` **mit** Lieferant | **10** | 78 | bestaetigen, welches Feld stimmt (7× Trafag AG, 3× Cenlub Systems) | **ja, Fehlklassifikation moeglich** |
+| weder Sales Type noch Lieferant | **66** | 113 | Sales Type pflegen | **die Klassifikation** |
+| `FFM` **mit** Lieferant | **10** | 78 | bestaetigen, welches Feld stimmt (7× Trafag AG, 3× Cenlub Systems) | **Fehlklassifikation moeglich** |
+| `LRD` ohne Trafag-Materialnummer (`DM000083`, `DM000084`, `H90101`) | **3** | 139 | `Material No` pflegen — siehe Abschnitt 6b | **die Kostenbasis** |
 | `CM` ohne Lieferant (`IC15415`, `IC15037`) | 2 | 23 | **nichts** — siehe Abschnitt 2a | nein |
+
+Der dritte Fall ist erst durch die Bruecken-Messung in Abschnitt 6b sichtbar geworden: bei
+diesen drei Artikeln fehlt die Trafag-Sachnummer, ohne die die Schweizer Kostenbasis nicht
+gefunden wird. `DM000083` allein sind 108 Zeilen — die groesste Einzelluecke bei TRIN.
 
 Der `CM`-Fall ist **kein** Pflegefall: Indien fertigt diese Artikel selbst im Auftrag von
 Trafag AG, es gibt keinen Vorlieferanten. Ihn trotzdem einzufordern waere derselbe Fehler wie
@@ -332,16 +337,52 @@ Trafag AG finden nur **34** (185 von 687 Zeilen, 27 %) ueber die Artikelnummer e
 `GroupStandardCosts`. Ursache: die indischen Nummern (`PT000003`, `DM000001`) sind
 TASC-Eigennummern, keine Trafag-MATNR.
 
-**Kandidat fuer die fehlende Bruecke, gemessen in Runde 4:** das UDF `U_TASC_OMN`
-(„Material No") ist bei **121 von 123** `LRD`-Artikeln gefuellt, `U_TASC_OC` („Ordering Code")
-bei 119. Sind das Trafag-Materialnummern, laesst sich der Konzernkostenweg darueber schliessen.
-Zu pruefen anhand `docs/analyse/ergebnisse/TRIN__04_matnr_bruecke.txt` gegen
-`GroupStandardCosts` — **offen, siehe Abschnitt 10**.
+### 6b. Die Bruecke ist gefunden: `U_TASC_OMN` ist die Trafag-Materialnummer
 
-Bis dahin gilt: **fuer `LRD`-Zeilen ohne Konzernkostentreffer darf NICHT auf den lokalen Wert
-zurueckgefallen werden.** Das ergaebe eine Marge, die auf dem IC-Preis beruht — plausibel
-aussehend und falsch, also schlechter als ein offenes „-". Derselbe Fehler ist fuer TRIT-Zeilen
-in `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a beschrieben.
+Geprueft am 2026-08-05 gegen die produktive `GroupStandardCosts`. Das UDF `U_TASC_OMN`
+(„Material No", FieldID 1) enthaelt die Trafag-Sachnummer — sie steckt bei vielen Artikeln auch
+in der Bezeichnung, z. B. `PT000003` = „EPR10.0A(**57291**)-8283" mit `U_TASC_OMN` = `57291`.
+`U_TASC_OC` daneben ist der Trafag-Typencode (`8283.78.2511.05.0000.0000.19.58`).
+
+Stichprobe: alle acht geprueften Nummern stehen mit CHF-Stueckkosten in `GroupStandardCosts`
+(`57291` -> 29.07 CHF, `54859` -> 34.33, `62641` -> 28.56, `59831` -> 84.12, `3759` -> 60.52,
+`54273` -> 25.49, `57289` -> 29.11, `54355` -> 28.44). Auch das Schluesselformat passt: 37'392
+der Konzernkosten-Schluessel sind fuenfstellig.
+
+Vollmessung ueber alle 123 `LRD`-Artikel (710 Rechnungszeilen):
+
+| Weg | Artikel mit Treffer | Zeilen mit Treffer |
+| --- | ---: | ---: |
+| ueber die indische Artikelnummer (`ItemCode`) | 34 von 135 | 27 % |
+| **ueber `U_TASC_OMN`** | **118 von 123 (95.9 %)** | **569 von 710 (80.1 %)** |
+
+**Von den 118 Artikeln, die eine echte Materialnummer tragen, treffen 118 — also 100 %.** Die
+fuenf Ausfaelle sind genau die fuenf Artikel ohne Nummer:
+
+| Artikel | `U_TASC_OMN` | Zeilen | Bemerkung |
+| --- | --- | ---: | --- |
+| `DM000083` | Platzhalter | **108** | groesste Einzelluecke, hat auch keinen Lieferanten |
+| `DM000084` | Platzhalter | 27 | |
+| `H90101` | Platzhalter | 4 | Loetstab, Hilfsmaterial |
+| `FA000028` | leer | 1 | Anlagegut, kein Produkt |
+| `FA000029` | leer | 1 | Anlagegut, kein Produkt |
+
+Damit ist die Kostenlogik entscheidbar: **fuer `LRD`-Zeilen wird die Konzernkostenbasis ueber
+`U_TASC_OMN` gesucht**, nicht ueber die indische Artikelnummer. Fuer die restlichen 141 Zeilen
+bleibt die Kostenbasis offen — und **es wird NICHT auf den lokalen Wert zurueckgefallen**, weil
+das eine Marge auf dem IC-Preis ergaebe: plausibel aussehend und falsch, also schlechter als ein
+offenes „-". Derselbe Fehler ist fuer TRIT-Zeilen in
+`docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a beschrieben.
+
+**Folge fuer den Export:** es sind **zwei** neue Felder zu lesen, nicht eines —
+`itm."U_Tasc_ST"` (Sales Type) und `itm."U_TASC_OMN"` (Trafag-Materialnummer). Beide kommen aus
+dem bereits gejointen `OITM`, brauchen also keinen neuen Join. Der Konzernkosten-Lookup im
+Klassifikator muss fuer TRIN den Trafag-Schluessel verwenden statt `Material`.
+
+Moeglicher Zusatznutzen, noch nicht geprueft: das Produktsparten-Mapping ist bei **allen**
+B1-Standorten bei 0 % gefuellt (nur TRCH 100 % und TRAT 89.9 %). Wenn es auf die
+Trafag-Materialnummer abbildet, koennte `U_TASC_OMN` auch dort greifen. Das ist eine Vermutung,
+keine Messung — separat zu pruefen, nicht Teil dieses Themas.
 
 Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
 `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 8); Entscheid in
@@ -351,10 +392,12 @@ Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
 
 **Die B1-Query gehoert uns** (Vorrangregel 7 im `RAG_ROUTER.md`):
 
-- `Services/HanaQueryService.cs`: `itm."U_Tasc_ST"` in die Select-Liste. `OITM` ist als
+- `Services/HanaQueryService.cs`: **zwei** Felder in die Select-Liste — `itm."U_Tasc_ST"`
+  (Sales Type) und `itm."U_TASC_OMN"` (Trafag-Materialnummer, siehe 6b). `OITM` ist als
   `LEFT JOIN {schema}"OITM" itm ON p."ItemCode" = itm."ItemCode"` bereits gejoint — **kein
   neuer Join**. Die Query steht **zweimal** (Rechnungen `OINV`/`INV1`, Gutschriften
-  `ORIN`/`RIN1`); Aenderung an beiden Stellen, sonst fehlt das Feld auf Gutschriftzeilen.
+  `ORIN`/`RIN1`); Aenderung an beiden Stellen, sonst fehlen die Felder auf Gutschriftzeilen.
+  Der Platzhalterwert aus zwei Bindestrichen ist beim Einlesen wie leer zu behandeln.
 - Neues Feld auf `Models/CentralSalesRecord.cs` und `Models/SalesRecord.cs`, Schema in
   `Services/DatabaseInitializationService.SchemaSql.cs`, additive Migration per
   `AddColumnIfMissing` in `Services/DatabaseSchemaMaintenanceService.cs`. **Rohwert
@@ -363,6 +406,10 @@ Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
 - Durchreichen in `Services/CentralSalesRecordService.cs`,
   `Services/CentralSalesDataProvider.cs`, `Services/ExportAuditCsvService.cs`,
   `Services/ExcelExportService.cs`.
+- Der Konzernkosten-Lookup muss fuer TRIN auf die **Trafag-Materialnummer** gehen, nicht auf
+  `Material` (`HasGroupCostMatch` und `ResolveDeliveringEntity` in
+  `Services/GroupMarginSupplierClassifier.cs` bekommen den Schluessel heute aus
+  `NormalizeMaterialKey(record.Material)`, siehe `Services/ExcelExportService.cs`).
 - `Services/GroupMarginSupplierClassifier.cs` wertet das Feld aus (Tabelle in Abschnitt 6).
   Vorhandene Analogie: `IntercompanySellingTsc` fuer CH/AT loest denselben Fall. Eine
   pauschale TSC-Regel ist fuer TRIN **unzulaessig** — `CM` und indische Fremdlieferanten sind

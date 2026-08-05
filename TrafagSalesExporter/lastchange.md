@@ -85,12 +85,23 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   (Bewertungskreis 1100, CHF, 63'506 Zeilen). GEMESSEN greift der Weg aber kaum: nur 34 von 135
   TRIN-Artikeln mit Lieferant Trafag AG (185 von 687 Zeilen, 27 %) finden ueber die
   Artikelnummer einen Treffer — die indischen Nummern sind TASC-Eigennummern, keine Trafag-MATNR.
-  KANDIDAT fuer die Bruecke (Runde 4 gemessen): UDF `U_TASC_OMN` („Material No") ist bei 121 von
-  123 LRD-Artikeln gefuellt, `U_TASC_OC` bei 119. REGEL BIS DAHIN: bei LRD-Zeilen ohne
-  Konzernkostentreffer NICHT auf den lokalen Wert zurueckfallen — das ergaebe eine plausibel
-  aussehende, falsche Marge (derselbe Fehler wie bei TRIT, siehe
-  `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a). Die Kostenlogik im
-  Klassifikator erst nach dieser Pruefung schreiben, sonst wird sie zweimal gebaut.
+  BRUECKE GEFUNDEN UND GEMESSEN: das UDF **`U_TASC_OMN` („Material No") IST die
+  Trafag-Sachnummer** — sie steckt bei vielen Artikeln auch in der Bezeichnung (`PT000003` =
+  „EPR10.0A(**57291**)-8283", `U_TASC_OMN` = `57291`), und alle acht Stichproben stehen mit
+  CHF-Stueckkosten in `GroupStandardCosts`; das Schluesselformat passt (37'392 der Schluessel
+  sind fuenfstellig). VOLLMESSUNG ueber alle 123 LRD-Artikel: ueber `ItemCode` 34 Artikel /
+  27 % der Zeilen, ueber `U_TASC_OMN` **118 von 123 Artikeln (95.9 %) und 569 von 710 Zeilen
+  (80.1 %)** — von den 118 Artikeln MIT echter Nummer treffen 118, also 100 %. Die fuenf
+  Ausfaelle sind genau die ohne Nummer: `DM000083` (108 Zeilen, groesste Einzelluecke),
+  `DM000084` (27), `H90101` (4), `FA000028`/`FA000029` (je 1, Anlagegueter). FOLGE FUER DEN
+  EXPORT: ZWEI neue Felder lesen, nicht eines — `U_Tasc_ST` und `U_TASC_OMN`; der
+  Konzernkosten-Lookup muss fuer TRIN auf den Trafag-Schluessel gehen statt auf `Material`
+  (heute `NormalizeMaterialKey(record.Material)`). Der Platzhalter aus zwei Bindestrichen ist
+  wie leer zu behandeln. REGEL: bei LRD-Zeilen ohne Konzernkostentreffer NICHT auf den lokalen
+  Wert zurueckfallen — das ergaebe eine plausibel aussehende, falsche Marge (derselbe Fehler wie
+  bei TRIT, siehe `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a). NEUE
+  BITTE AN INDIEN dadurch: 3 LRD-Artikel brauchen die `Material No` (139 Zeilen) — das blockiert
+  die Kostenbasis, nicht die Klassifikation.
 
 - OFFENE FRAGE AN ANDREAS 2026-08-05, INNENUMSATZ IST GRUPPENWEIT NICHT AUSGESCHLOSSEN (beim
   CM-Nachgraben aufgefallen, deutlich groesser als das Indien-Thema): Zeilen mit einer
