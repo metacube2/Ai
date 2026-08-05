@@ -4,8 +4,18 @@ Stand: 2026-08-05
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-05, Server-Analyse**, Commit `cc72e6d`
-  auf Branch `feature/server-analyse-trin-salestype`
+- Letzter produktiv verifizierter Deploy: **2026-08-05 15:48, Sales Type und
+  Trafag-Sachnummer im Export** (`SalesType`/`GroupMaterialNumber` aus dem Artikelstamm,
+  Klassifikation und Konzernkostenschluessel darauf umgestellt), `406/406` Tests gruen.
+  `BiDashboard.dll` `05.08.2026 15:48:20`, `4'045'824` Bytes, SHA256
+  `0C65C9971460EE47A9C1999FB328E43BEBC63AB71AE7EFCD6D07010588A4E5EF`; Release-Build und
+  Server bitgleich. `app_offline.htm` gesetzt und entfernt, HTTP `200`. Additive Migration
+  wirksam: `CentralSalesRecords.SalesType` und `.GroupMaterialNumber` sind produktiv als
+  `TEXT NOT NULL DEFAULT ''` vorhanden. **Gefuellt werden sie erst mit dem naechsten
+  TRIN-Export** (Timer 12:00). Details:
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+
+- Deploy davor: 2026-08-05 10:59, **Server-Analyse**, Commit `cc72e6d`
   (`ServerAnalysisBackgroundService`: lesende Diagnoseabfragen gegen Standort-B1,
   ausgeloest ueber eine Triggerdatei in `_analysis`), `385/385` Tests gruen.
   `BiDashboard.dll` `05.08.2026 10:59:50`, `4'037'632` Bytes, SHA256

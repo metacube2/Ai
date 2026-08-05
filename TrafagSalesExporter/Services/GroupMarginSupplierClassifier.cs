@@ -69,20 +69,67 @@ public static class GroupMarginSupplierClassifier
         string? supplierCountry,
         string? tsc = null,
         string? normalizedMaterialKey = null,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
+        string? salesType = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return Internal;
 
-        if (string.IsNullOrWhiteSpace(supplierNumber) &&
-            string.IsNullOrWhiteSpace(supplierName) &&
-            string.IsNullOrWhiteSpace(supplierCountry))
+        // Ein vorhandener Lieferantentext geht vor: er ist die ausdruecklich gepflegte Angabe
+        // zur konkreten Zeile, der Sales Type dagegen eine Eigenschaft des Artikels. Beides
+        // widerspricht sich produktiv bei 10 TRIN-Artikeln (Sales Type FFM, aber Lieferant
+        // gepflegt); welches Feld dort gilt, ist mit Indien noch zu klaeren. Bis dahin bleibt
+        // das Verhalten dieser Zeilen unveraendert, statt es auf eine Vermutung umzustellen.
+        // Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 3b.
+        if (!string.IsNullOrWhiteSpace(supplierNumber) ||
+            !string.IsNullOrWhiteSpace(supplierName) ||
+            !string.IsNullOrWhiteSpace(supplierCountry))
         {
-            return HasGroupCostMatch(normalizedMaterialKey, groupStandardCosts) ? Internal : Unclear;
+            var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
+            return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
         }
 
-        var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
-        return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
+        // Ohne Lieferantentext entscheidet der Sales Type, falls die Quelle ihn fuehrt. Alle
+        // drei Werte bezeichnen eine Konzernrolle, keinen Fremdbezug: FFM und CM fertigt der
+        // Standort selbst (bei CM im Auftrag von Trafag AG), LRD bezieht von Trafag AG.
+        var role = ResolveSalesTypeRole(salesType);
+        if (role is not null)
+            return Internal;
+
+        return HasGroupCostMatch(normalizedMaterialKey, groupStandardCosts) ? Internal : Unclear;
+    }
+
+    /// <summary>
+    /// Verrechnungspreisliche Rolle aus dem Rohwert des Artikelstammfeldes „Sales Type"
+    /// (Indien: <c>OITM.U_Tasc_ST</c>) auf die liefernde Gesellschaft abgebildet.
+    ///
+    /// <list type="bullet">
+    /// <item><c>FFM</c> - Full Fledged Manufacturing: der Standort fertigt auf eigene Rechnung.</item>
+    /// <item><c>CM</c> - Contract Manufacturing: der Standort fertigt im Auftrag von Trafag AG
+    /// und fakturiert an sie. Liefernde Gesellschaft ist trotzdem der Standort, denn dort
+    /// entstehen die Herstellkosten (belegt 2026-08-05: Kunde beider CM-Artikel ist
+    /// ausschliesslich Trafag AG, Aufschlag 31.2 % und 31.7 %, Zeichnungsnummer vorhanden,
+    /// kein Vorlieferant).</item>
+    /// <item><c>LRD</c> - Limited Risk Distributor: Ware ist in der Schweiz hergestellt und wird
+    /// von Trafag AG bezogen. Belegt 2026-08-05: alle 93 LRD-Artikel mit gepflegtem Lieferanten
+    /// zeigen auf V0078 = Trafag AG, ohne Ausnahme.</item>
+    /// </list>
+    ///
+    /// Liefert null bei leerem oder unbekanntem Wert - dann wird nicht geraten.
+    /// </summary>
+    public static string? ResolveSalesTypeRole(string? salesType)
+    {
+        var value = salesType?.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return value.ToUpperInvariant() switch
+        {
+            "FFM" => SalesTypeRoles.OwnManufacturing,
+            "CM" => SalesTypeRoles.ContractManufacturing,
+            "LRD" => SalesTypeRoles.GroupDistribution,
+            _ => null
+        };
     }
 
     // Uebergangsregel (Andreas/Ingo, Meeting 2026-07-30): solange die B1-Lieferantenfelder
@@ -126,7 +173,8 @@ public static class GroupMarginSupplierClassifier
         string? supplierName,
         string? tsc = null,
         string? normalizedMaterialKey = null,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
+        string? salesType = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return GroupStandardCostEntities.TrAg;
@@ -145,6 +193,19 @@ public static class GroupMarginSupplierClassifier
             return null;
         }
 
+        // Ohne Lieferantentext entscheidet der Sales Type, wo die Quelle ihn fuehrt. FFM und CM
+        // fertigt der Standort selbst - liefernde Gesellschaft ist damit der Standort; LRD kommt
+        // von Trafag AG.
+        var role = ResolveSalesTypeRole(salesType);
+        if (role is not null)
+        {
+            return role switch
+            {
+                SalesTypeRoles.GroupDistribution => GroupStandardCostEntities.TrAg,
+                _ => ResolveSiteEntity(tsc)
+            };
+        }
+
         // Gleiches Uebergangs-Provisorium wie in Resolve(): ohne jegliche Supplier-Angabe
         // wird die liefernde Gesellschaft ueber die Konzern-Kostentabelle geraten, nicht ueber
         // den (leeren) Supplier-Text. Nur relevant, wenn Resolve() bereits "Intern" geliefert
@@ -160,6 +221,35 @@ public static class GroupMarginSupplierClassifier
 
         return null;
     }
+
+    /// <summary>
+    /// Fertigt der Standort selbst, ist er selbst die liefernde Gesellschaft. Nur Standorte mit
+    /// einer bekannten Konstante werden zurueckgegeben - sonst null statt geraten.
+    /// </summary>
+    private static string? ResolveSiteEntity(string? tsc)
+        => tsc?.Trim().ToUpperInvariant() switch
+        {
+            "TRIN" => GroupStandardCostEntities.TrIn,
+            "TRIT" => GroupStandardCostEntities.TrIt,
+            _ => null
+        };
+}
+
+/// <summary>
+/// Verrechnungspreisliche Rollen aus dem Artikelstammfeld „Sales Type". Beschreiben, welche
+/// Rolle der VERKAUFENDE Standort in diesem Geschaeft einnimmt - nicht, woher die Ware kommt.
+/// Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 2.
+/// </summary>
+public static class SalesTypeRoles
+{
+    /// <summary>Full Fledged Manufacturing: Fertigung und Verkauf auf eigene Rechnung.</summary>
+    public const string OwnManufacturing = "FFM";
+
+    /// <summary>Contract Manufacturing: Fertigung im Auftrag von Trafag AG, Fakturierung an sie.</summary>
+    public const string ContractManufacturing = "CM";
+
+    /// <summary>Limited Risk Distributor: Bezug von Trafag AG, Weiterverkauf im eigenen Markt.</summary>
+    public const string GroupDistribution = "LRD";
 }
 
 /// <summary>

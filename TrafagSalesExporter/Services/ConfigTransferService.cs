@@ -449,6 +449,8 @@ public class ConfigTransferService : IConfigTransferService
                     SupplierNumber = record.SupplierNumber,
                     SupplierName = record.SupplierName,
                     SupplierCountry = record.SupplierCountry,
+                    SalesType = record.SalesType,
+                    GroupMaterialNumber = record.GroupMaterialNumber,
                     CustomerNumber = record.CustomerNumber,
                     CustomerName = record.CustomerName,
                     CustomerCountry = record.CustomerCountry,

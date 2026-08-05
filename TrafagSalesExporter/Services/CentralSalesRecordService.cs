@@ -82,6 +82,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 SupplierNumber = r.SupplierNumber,
                 SupplierName = r.SupplierName,
                 SupplierCountry = r.SupplierCountry,
+                SalesType = r.SalesType,
+                GroupMaterialNumber = r.GroupMaterialNumber,
                 CustomerNumber = r.CustomerNumber,
                 CustomerName = r.CustomerName,
                 CustomerCountry = r.CustomerCountry,
@@ -176,6 +178,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 StoredAtUtc, SiteId, SourceSystem, ExtractionDate, Tsc, DocumentEntry, InvoiceNumber, PositionOnInvoice,
                 Material, Name, ProductGroup, ProductHierarchyCode, ProductHierarchyText, ProductFamilyCode, ProductFamilyText,
                 ProductDivisionCode, ProductDivisionText, ProductMappingAssigned, Quantity, SupplierNumber, SupplierName, SupplierCountry,
+                SalesType, GroupMaterialNumber,
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, StandardCostVariable, StandardCostFixed, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
                 DocumentCurrency, DocumentTotalForeignCurrency, DocumentTotalLocalCurrency, VatSumForeignCurrency,
@@ -185,6 +188,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $documentEntry, $invoiceNumber, $positionOnInvoice,
                 $material, $name, $productGroup, $productHierarchyCode, $productHierarchyText, $productFamilyCode, $productFamilyText,
                 $productDivisionCode, $productDivisionText, $productMappingAssigned, $quantity, $supplierNumber, $supplierName, $supplierCountry,
+                $salesType, $groupMaterialNumber,
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $standardCostVariable, $standardCostFixed, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
                 $documentCurrency, $documentTotalForeignCurrency, $documentTotalLocalCurrency, $vatSumForeignCurrency,
@@ -214,6 +218,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$supplierNumber", SqliteType.Text);
         command.Parameters.Add("$supplierName", SqliteType.Text);
         command.Parameters.Add("$supplierCountry", SqliteType.Text);
+        command.Parameters.Add("$salesType", SqliteType.Text);
+        command.Parameters.Add("$groupMaterialNumber", SqliteType.Text);
         command.Parameters.Add("$customerNumber", SqliteType.Text);
         command.Parameters.Add("$customerName", SqliteType.Text);
         command.Parameters.Add("$customerCountry", SqliteType.Text);
@@ -267,6 +273,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$supplierNumber"].Value = record.SupplierNumber ?? string.Empty;
         command.Parameters["$supplierName"].Value = record.SupplierName ?? string.Empty;
         command.Parameters["$supplierCountry"].Value = record.SupplierCountry ?? string.Empty;
+        command.Parameters["$salesType"].Value = record.SalesType ?? string.Empty;
+        command.Parameters["$groupMaterialNumber"].Value = record.GroupMaterialNumber ?? string.Empty;
         command.Parameters["$customerNumber"].Value = record.CustomerNumber ?? string.Empty;
         command.Parameters["$customerName"].Value = record.CustomerName ?? string.Empty;
         command.Parameters["$customerCountry"].Value = record.CustomerCountry ?? string.Empty;

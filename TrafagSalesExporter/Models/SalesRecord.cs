@@ -23,6 +23,16 @@ public class SalesRecord
     public string SupplierNumber { get; set; } = string.Empty;
     public string SupplierName { get; set; } = string.Empty;
     public string SupplierCountry { get; set; } = string.Empty;
+    // Verrechnungspreisliche Rolle des Standorts fuer diesen Artikel, Rohwert aus der Quelle
+    // (Indiens SAP B1: OITM."U_Tasc_ST" - FFM/LRD/CM). Bewusst der Rohwert und nicht die
+    // Auslegung, damit im Audit-CSV nachvollziehbar bleibt, woher eine Klassifikation kommt.
+    // Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md.
+    public string SalesType { get; set; } = string.Empty;
+    // Trafag-Sachnummer, falls die Quelle neben ihrer eigenen Artikelnummer auch die
+    // Konzernnummer fuehrt (Indien: OITM."U_TASC_OMN"). Schluessel fuer die
+    // Konzern-Standardkosten; ohne sie findet ein Standort mit eigener Nummerierung die
+    // Konzernkosten nicht.
+    public string GroupMaterialNumber { get; set; } = string.Empty;
     public string CustomerNumber { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerCountry { get; set; } = string.Empty;

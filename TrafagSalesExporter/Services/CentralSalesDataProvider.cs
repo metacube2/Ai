@@ -159,6 +159,8 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
             SupplierNumber = r.SupplierNumber,
             SupplierName = r.SupplierName,
             SupplierCountry = r.SupplierCountry,
+            SalesType = r.SalesType,
+            GroupMaterialNumber = r.GroupMaterialNumber,
             CustomerNumber = r.CustomerNumber,
             CustomerName = r.CustomerName,
             CustomerCountry = r.CustomerCountry,

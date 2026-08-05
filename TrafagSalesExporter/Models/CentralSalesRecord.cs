@@ -31,6 +31,11 @@ public class CentralSalesRecord
     public string SupplierNumber { get; set; } = string.Empty;
     public string SupplierName { get; set; } = string.Empty;
     public string SupplierCountry { get; set; } = string.Empty;
+    // Rohwert der verrechnungspreislichen Rolle aus der Quelle (Indien: FFM/LRD/CM) und die
+    // Trafag-Sachnummer als Schluessel zu den Konzern-Standardkosten. Siehe SalesRecord und
+    // docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md.
+    public string SalesType { get; set; } = string.Empty;
+    public string GroupMaterialNumber { get; set; } = string.Empty;
     public string CustomerNumber { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerCountry { get; set; } = string.Empty;

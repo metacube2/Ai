@@ -118,6 +118,8 @@ CREATE TABLE CentralSalesRecords (
     SupplierNumber TEXT NOT NULL,
     SupplierName TEXT NOT NULL,
     SupplierCountry TEXT NOT NULL,
+    SalesType TEXT NOT NULL DEFAULT '',
+    GroupMaterialNumber TEXT NOT NULL DEFAULT '',
     CustomerNumber TEXT NOT NULL,
     CustomerName TEXT NOT NULL,
     CustomerCountry TEXT NOT NULL,

@@ -400,6 +400,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     SupplierNumber = record.SupplierNumber,
                     SupplierName = record.SupplierName,
                     SupplierCountry = record.SupplierCountry,
+                    SalesType = record.SalesType,
+                    GroupMaterialNumber = record.GroupMaterialNumber,
                     StandardCost = record.StandardCost,
                     StandardCostCurrency = record.StandardCostCurrency,
                     StandardCostVariable = record.StandardCostVariable,
@@ -930,6 +932,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 SupplierNumber = row.SupplierNumber,
                 SupplierName = row.SupplierName,
                 SupplierCountry = row.SupplierCountry,
+                SalesType = row.SalesType,
+                GroupMaterialNumber = row.GroupMaterialNumber,
                 StandardCost = row.StandardCost,
                 StandardCostCurrency = row.StandardCostCurrency,
                 StandardCostVariable = row.StandardCostVariable,
@@ -1071,6 +1075,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 SupplierNumber = r.SupplierNumber,
                 SupplierName = r.SupplierName,
                 SupplierCountry = r.SupplierCountry,
+                SalesType = r.SalesType,
+                GroupMaterialNumber = r.GroupMaterialNumber,
                 CustomerNumber = r.CustomerNumber,
                 CustomerName = r.CustomerName,
                 CustomerCountry = r.CustomerCountry,
@@ -1596,9 +1602,13 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
         => GroupMarginSupplierClassifier.Resolve(
             row.SupplierNumber, row.SupplierName, row.SupplierCountry, row.Tsc,
-            NormalizeMaterialKey(row.Material), groupStandardCosts);
+            ResolveGroupCostKey(row), groupStandardCosts, row.SalesType);
 
-    private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
+    private readonly record struct GroupMarginCostBasisResolution(
+        decimal CostBasis,
+        string CostCurrency,
+        bool IsGroupCost,
+        bool IsGroupCostMissing = false);
 
     private async Task<IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>> LoadGroupStandardCostsAsync(AppDbContext db)
     {
@@ -1620,9 +1630,9 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = row.Value < 0m || (row.Value == 0m && row.Quantity < 0m);
-        var normalizedMaterialKey = NormalizeMaterialKey(row.Material);
+        var normalizedMaterialKey = ResolveGroupCostKey(row);
         var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
-            row.SupplierName, row.Tsc, normalizedMaterialKey, groupStandardCosts);
+            row.SupplierName, row.Tsc, normalizedMaterialKey, groupStandardCosts, row.SalesType);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
             groupStandardCosts.TryGetValue((normalizedMaterialKey, area), out var groupCost) &&
@@ -1635,6 +1645,14 @@ public class ManagementCockpitService : IManagementCockpitService
                 isReversal ? -groupMagnitude : groupMagnitude, groupCost.Currency, true);
         }
 
+        // Konzernvertrieb (Sales Type LRD): die Ware ist in der Schweiz hergestellt, der lokale
+        // Standardpreis ist der IC-Einkaufspreis. Ohne Konzernkostentreffer bleibt die
+        // Kostenbasis offen - ein Rueckfall auf den lokalen Wert ergaebe eine Marge auf dem
+        // Verrechnungspreis. Gleiche Regel wie in ExcelExportService, siehe
+        // docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 6a.
+        if (GroupMarginSupplierClassifier.ResolveSalesTypeRole(row.SalesType) == SalesTypeRoles.GroupDistribution)
+            return new GroupMarginCostBasisResolution(0m, row.StandardCostCurrency, false, true);
+
         // Gutschriften/Retouren tragen einen negativen Netto-Umsatz (row.Value < 0, entweder
         // natuerlich negativ oder via NegateAmount-Regel). Die Kostenbasis muss mit umkehren,
         // sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100, Kosten +60 -> -160
@@ -1646,18 +1664,38 @@ public class ManagementCockpitService : IManagementCockpitService
             isReversal ? -magnitude : magnitude, row.StandardCostCurrency, false);
     }
 
-    private static string ResolveGroupMarginCostSource(string supplierType)
-        => supplierType switch
+    /// <summary>
+    /// Wie <c>ExcelExportService.ResolveGroupCostKey</c>: fuehrt die Quelle die Trafag-Sachnummer,
+    /// ist sie der Schluessel zu den Konzernkosten - die lokale Artikelnummer findet sie bei
+    /// Standorten mit eigener Nummerierung nicht.
+    /// </summary>
+    private static string ResolveGroupCostKey(FinanceAggregationRow row)
+        => NormalizeMaterialKey(string.IsNullOrWhiteSpace(row.GroupMaterialNumber)
+            ? row.Material
+            : row.GroupMaterialNumber);
+
+    private static string ResolveGroupMarginCostSource(string supplierType, bool isGroupCostMissing = false)
+    {
+        if (isGroupCostMissing)
+            return GroupMarginStatuses.GroupCostMissingSource;
+
+        return supplierType switch
         {
             "Intern" => "Interner Standardpreis",
             "Extern" => "Kosten aus Verkaufszeile",
             _ => "Lieferant unklar"
         };
+    }
 
-    private static string ResolveGroupMarginStatus(FinanceAggregationRow row, string supplierType, decimal costBasis)
+    private static string ResolveGroupMarginStatus(
+        FinanceAggregationRow row, string supplierType, decimal costBasis, bool isGroupCostMissing = false)
     {
         if (supplierType == "Unklar")
             return "Lieferant unklar";
+        // Vor "Standardpreis fehlt": ein Standardpreis ist vorhanden, taugt aber nicht als
+        // Herstellkostenbasis.
+        if (isGroupCostMissing)
+            return GroupMarginStatuses.GroupCostMissing;
         if (costBasis == 0m)
             return "Standardpreis fehlt";
         if (row.Value == 0m)
@@ -2874,6 +2912,10 @@ public class ManagementCockpitService : IManagementCockpitService
         public string SupplierNumber { get; set; } = string.Empty;
         public string SupplierName { get; set; } = string.Empty;
         public string SupplierCountry { get; set; } = string.Empty;
+        // Rohwerte aus dem Artikelstamm der Quelle: verrechnungspreisliche Rolle und
+        // Trafag-Sachnummer (Indien: OITM."U_Tasc_ST" / "U_TASC_OMN").
+        public string SalesType { get; set; } = string.Empty;
+        public string GroupMaterialNumber { get; set; } = string.Empty;
         public decimal StandardCost { get; set; }
         public string StandardCostCurrency { get; set; } = string.Empty;
         public decimal? StandardCostVariable { get; set; }

@@ -301,7 +301,8 @@ public class ExcelExportService : IExcelExportService
             {
                 var supplierType = ResolveSupplierType(row.Record, costs);
                 var basis = ResolveGroupMarginCostBasis(row.Record, row.NetSalesActual, costs);
-                var status = ResolveGroupMarginStatus(row.NetSalesActual, supplierType, basis.CostBasis);
+                var status = ResolveGroupMarginStatus(
+                    row.NetSalesActual, supplierType, basis.CostBasis, basis.IsGroupCostMissing);
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
                 // offen markieren — gleiche Logik wie ManagementCockpitService/Dashboard.
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -328,7 +329,7 @@ public class ExcelExportService : IExcelExportService
                     row.Record.SupplierName,
                     row.Record.SupplierCountry,
                     supplierType,
-                    ResolveGroupMarginCostSource(supplierType, basis.IsGroupCost),
+                    ResolveGroupMarginCostSource(supplierType, basis.IsGroupCost, basis.IsGroupCostMissing),
                     row.Record.Quantity,
                     row.Record.StandardCost,
                     row.NetSalesActual,
@@ -743,7 +744,7 @@ public class ExcelExportService : IExcelExportService
             ("StandardCost = 0", "COUNTIFS('Finance Details'!$AN:$AN,0,'Finance Details'!$E:$E,\"TRUE\")", "Erschwert Gruppenmarge."),
             ("Sparten nicht im TR-AG-Stamm", "COUNTIF('Sparten Details'!$B:$B,\"Nicht im TR-AG-Stamm\")", "Lokales Material ohne zentrale Referenz."),
             ("Sparten Material fehlt", "COUNTIF('Sparten Details'!$B:$B,\"Material fehlt\")", "Finance-Zeile ohne Materialnummer."),
-            ("Gruppenmarge offene Kostenbasis", $"COUNTIF('Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"{GroupMarginCostCurrencyConverter.OpenStatus}\")", "Marge ist fuer diese Zeilen nicht belastbar.")
+            ("Gruppenmarge offene Kostenbasis", $"COUNTIF('Gruppenmarge Details'!$B:$B,\"Standardpreis fehlt\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"Lieferant unklar\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"{GroupMarginCostCurrencyConverter.OpenStatus}\")+COUNTIF('Gruppenmarge Details'!$B:$B,\"{GroupMarginStatuses.GroupCostMissing}\")", "Marge ist fuer diese Zeilen nicht belastbar.")
         };
 
         for (var i = 0; i < rows.Length; i++)
@@ -861,9 +862,25 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
         => GroupMarginSupplierClassifier.Resolve(
             record.SupplierNumber, record.SupplierName, record.SupplierCountry, record.Tsc,
-            NormalizeMaterialKey(record.Material), groupStandardCosts);
+            ResolveGroupCostKey(record), groupStandardCosts, record.SalesType);
 
-    private readonly record struct GroupMarginCostBasisResolution(decimal CostBasis, string CostCurrency, bool IsGroupCost);
+    /// <summary>
+    /// Schluessel fuer die Konzern-Standardkosten. Fuehrt die Quelle neben ihrer eigenen
+    /// Artikelnummer die Trafag-Sachnummer (Indien: <c>OITM.U_TASC_OMN</c>), gilt diese - die
+    /// lokale Nummer ist dort eine Eigennummerierung und findet die Konzernkosten nicht.
+    /// Gemessen 2026-08-05 auf TRIN: ueber die lokale Nummer treffen 34 von 135 Artikeln, ueber
+    /// die Trafag-Sachnummer 118 von 123 (alle, die eine gepflegte Nummer haben).
+    /// </summary>
+    private static string ResolveGroupCostKey(SalesRecord record)
+        => NormalizeMaterialKey(string.IsNullOrWhiteSpace(record.GroupMaterialNumber)
+            ? record.Material
+            : record.GroupMaterialNumber);
+
+    private readonly record struct GroupMarginCostBasisResolution(
+        decimal CostBasis,
+        string CostCurrency,
+        bool IsGroupCost,
+        bool IsGroupCostMissing = false);
 
     /// <summary>
     /// Spiegelt ManagementCockpitService.ResolveGroupMarginCostBasis: ist der Lieferant TR AG
@@ -877,9 +894,9 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
     {
         var isReversal = netSalesValue < 0m || (netSalesValue == 0m && record.Quantity < 0m);
-        var normalizedMaterialKey = NormalizeMaterialKey(record.Material);
+        var normalizedMaterialKey = ResolveGroupCostKey(record);
         var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
-            record.SupplierName, record.Tsc, normalizedMaterialKey, groupStandardCosts);
+            record.SupplierName, record.Tsc, normalizedMaterialKey, groupStandardCosts, record.SalesType);
         if (deliveringEntity is not null &&
             GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) &&
             groupStandardCosts.TryGetValue((normalizedMaterialKey, area), out var groupCost) &&
@@ -892,6 +909,15 @@ public class ExcelExportService : IExcelExportService
                 isReversal ? -groupMagnitude : groupMagnitude, groupCost.Currency, true);
         }
 
+        // Bei Konzernvertrieb (Sales Type LRD) ist die Ware in der Schweiz hergestellt und der
+        // lokale Standardpreis der IC-Einkaufspreis - also genau der Wert, den die Gruppenmarge
+        // ersetzen soll. Ohne Konzernkostentreffer bleibt die Kostenbasis deshalb OFFEN. Ein
+        // Rueckfall auf den lokalen Wert ergaebe eine Marge auf dem Verrechnungspreis: plausibel
+        // aussehend und falsch, und damit schlechter als eine als offen erkennbare Zeile.
+        // Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 6a.
+        if (GroupMarginSupplierClassifier.ResolveSalesTypeRole(record.SalesType) == SalesTypeRoles.GroupDistribution)
+            return new GroupMarginCostBasisResolution(0m, record.StandardCostCurrency, false, true);
+
         var magnitude = record.Quantity != 0m
             ? Math.Abs(record.Quantity) * Math.Abs(record.StandardCost)
             : Math.Abs(record.StandardCost);
@@ -903,20 +929,32 @@ public class ExcelExportService : IExcelExportService
             isReversal ? -magnitude : magnitude, record.StandardCostCurrency, false);
     }
 
-    private static string ResolveGroupMarginCostSource(string supplierType, bool isGroupCost = false)
-        => isGroupCost
-            ? "Konzernkosten TR AG (MBEW-STPRS)"
-            : supplierType switch
-            {
-                "Intern" => "Interner Standardpreis",
-                "Extern" => "Kosten aus Verkaufszeile",
-                _ => "Lieferant unklar"
-            };
+    private static string ResolveGroupMarginCostSource(
+        string supplierType, bool isGroupCost = false, bool isGroupCostMissing = false)
+    {
+        if (isGroupCost)
+            return "Konzernkosten TR AG (MBEW-STPRS)";
+        if (isGroupCostMissing)
+            return GroupMarginStatuses.GroupCostMissingSource;
 
-    private static string ResolveGroupMarginStatus(decimal salesValue, string supplierType, decimal costBasis)
+        return supplierType switch
+        {
+            "Intern" => "Interner Standardpreis",
+            "Extern" => "Kosten aus Verkaufszeile",
+            _ => "Lieferant unklar"
+        };
+    }
+
+    private static string ResolveGroupMarginStatus(
+        decimal salesValue, string supplierType, decimal costBasis, bool isGroupCostMissing = false)
     {
         if (supplierType == "Unklar")
             return "Lieferant unklar";
+        // Vor "Standardpreis fehlt" pruefen: ein Standardpreis IST vorhanden, er ist nur der
+        // IC-Einkaufspreis und darf nicht als Herstellkostenbasis gelten. Ein gemeinsames Label
+        // fuer beide Faelle wuerde die Ursache verdecken.
+        if (isGroupCostMissing)
+            return GroupMarginStatuses.GroupCostMissing;
         if (costBasis == 0m)
             return "Standardpreis fehlt";
         if (salesValue == 0m)
@@ -930,8 +968,9 @@ public class ExcelExportService : IExcelExportService
             "Standardpreis fehlt" => 0,
             "Lieferant unklar" => 1,
             GroupMarginCostCurrencyConverter.OpenStatus => 2,
-            "Umsatz fehlt" => 3,
-            _ => 4
+            GroupMarginStatuses.GroupCostMissing => 3,
+            "Umsatz fehlt" => 4,
+            _ => 5
         };
 
     private sealed record FinanceProofRow(
@@ -1465,7 +1504,7 @@ public class ExcelExportService : IExcelExportService
             ("Margin %", "Formel im Blatt: Margin Value / Sales Value, nur bei Status OK."),
             ("Supplier Type", "Intern = Trafag/GFS im Lieferantentext erkannt; Extern = anderer Lieferant; Unklar = alle drei Lieferantenfelder leer (Quelle liefert keinen Lieferanten, z. B. CH/AT, UK, ES)."),
             ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (extern), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit Jahreskurs oder maskiert."),
-            ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
+            ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. '" + GroupMarginStatuses.GroupCostMissing + "' = Standort verkauft Konzernware (Sales Type LRD), Konzernkosten zum Material aber nicht auffindbar; der lokale Standardpreis ist dort der IC-Einkaufspreis und wird bewusst nicht verwendet. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
             ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),
             ("Variable Cost Basis", "Berechnet: Menge x Variable Unit Cost, gleiche Vorzeichen- und Waehrungsregel wie Known Cost Basis. Leer ohne Split."),
             ("Deckungsbeitrag (DB)", "Berechnet: Sales Value - Variable Cost Basis. Fachidee (Finance): was bleibt nach Abzug NUR der variablen Kosten - Fixkosten bleiben bei Artikelwegfall bestehen. Leer, solange kein fix/variabel-Split geliefert wird; wird nie geschaetzt."),

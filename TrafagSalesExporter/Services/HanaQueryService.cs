@@ -34,8 +34,17 @@ public class HanaQueryService : IHanaQueryService
             await _appEventLogService.WriteAsync("HANA", "Verbindung erfolgreich", land: land,
                 details: $"Schema={schema} | TSC={tsc}");
 
-            var invoiceQuery = GetInvoiceQuery(schema);
-            var creditNoteQuery = GetCreditNoteQuery(schema);
+            // Die UDFs des Artikelstamms heissen je Gesellschaft anders und teils gemischt
+            // geschrieben; gesucht wird schreibweisenunabhaengig, selektiert mit dem tatsaechlich
+            // gefundenen Namen (siehe ResolveColumnNameAsync).
+            var salesTypeColumn = await ResolveColumnNameAsync(connection, schema, "OITM", "U_Tasc_ST", cancellationToken);
+            var groupMaterialColumn = await ResolveColumnNameAsync(connection, schema, "OITM", "U_TASC_OMN", cancellationToken);
+
+            await _appEventLogService.WriteAsync("HANA", "Artikelstamm-Zusatzfelder geprueft", land: land,
+                details: $"Schema={schema} | sales_type={salesTypeColumn ?? "(nicht vorhanden)"} | group_material_number={groupMaterialColumn ?? "(nicht vorhanden)"}");
+
+            var invoiceQuery = GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn);
+            var creditNoteQuery = GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn);
             var parsedDateFilter = ParseDateFilter(dateFilter);
 
             await _appEventLogService.WriteAsync("HANA", "Invoice-Query gestartet", land: land,
@@ -334,6 +343,8 @@ public class HanaQueryService : IHanaQueryService
                 SupplierNumber = reader["supplier_number"]?.ToString() ?? string.Empty,
                 SupplierName = reader["supplier_name"]?.ToString() ?? string.Empty,
                 SupplierCountry = reader["supplier_country"]?.ToString() ?? string.Empty,
+                SalesType = NormalizeItemMasterValue(reader["sales_type"]?.ToString()),
+                GroupMaterialNumber = NormalizeItemMasterValue(reader["group_material_number"]?.ToString()),
                 CustomerNumber = reader["customer_number"]?.ToString() ?? string.Empty,
                 CustomerName = reader["customer_name"]?.ToString() ?? string.Empty,
                 CustomerCountry = reader["customer_country"]?.ToString() ?? string.Empty,
@@ -422,10 +433,76 @@ public class HanaQueryService : IHanaQueryService
         return Convert.ToInt32(count) > 0;
     }
 
-    private static string GetInvoiceQuery(string schema)
+    /// <summary>
+    /// Sucht eine Spalte unabhaengig von der Schreibweise und liefert ihren TATSAECHLICHEN Namen
+    /// zurueck, sonst null.
+    ///
+    /// Warum nicht <see cref="HasColumnAsync"/>: das schreibt Schema-, Tabellen- und Spaltenname
+    /// gross und vergleicht exakt. Die UDFs im indischen Artikelstamm sind aber gemischt
+    /// geschrieben - gemessen am 2026-08-05: <c>U_Tasc_ST</c> (Position 361) neben
+    /// <c>U_TASC_OMN</c> (Position 348). Eine Gross-Schreibung haette <c>U_TASC_ST</c> gesucht,
+    /// nichts gefunden und das Feld fuer Indien still nie selektiert - die Auswertung waere
+    /// wirkungslos geblieben, ohne Fehlermeldung. Weil HANA in Anfuehrungszeichen gesetzte
+    /// Bezeichner case-sensitiv behandelt, wird der gefundene Name auch fuer das SELECT
+    /// verwendet und nicht der gesuchte.
+    ///
+    /// <see cref="HasColumnAsync"/> bleibt unveraendert: es steuert die FKDAT-Datumsfilterung der
+    /// gemappten Quellen, und eine Verhaltensaenderung dort gehoert nicht in diese Aenderung.
+    /// </summary>
+    private static async Task<string?> ResolveColumnNameAsync(
+        HanaConnection connection, string schema, string tableName, string columnName, CancellationToken cancellationToken)
+    {
+        const string query = """
+            SELECT COLUMN_NAME
+            FROM SYS.TABLE_COLUMNS
+            WHERE UPPER(SCHEMA_NAME) = :schema AND UPPER(TABLE_NAME) = :table AND UPPER(COLUMN_NAME) = :column
+            """;
+
+        using var command = new HanaCommand(query, connection);
+        command.Parameters.Add(new HanaParameter("schema", HanaDbType.NVarChar) { Value = schema.Trim().ToUpperInvariant() });
+        command.Parameters.Add(new HanaParameter("table", HanaDbType.NVarChar) { Value = tableName.Trim().ToUpperInvariant() });
+        command.Parameters.Add(new HanaParameter("column", HanaDbType.NVarChar) { Value = columnName.Trim().ToUpperInvariant() });
+
+        var found = await command.ExecuteScalarAsync(cancellationToken);
+        var name = found?.ToString()?.Trim();
+        return string.IsNullOrWhiteSpace(name) ? null : name;
+    }
+
+    /// <summary>
+    /// Werte aus benutzerdefinierten Artikelstammfeldern koennen einen Platzhalter enthalten,
+    /// der "nicht gepflegt" bedeutet: im indischen Stamm sind das zwei Bindestriche (gemessen
+    /// 2026-08-05, u. a. auf DM000083). Ein solcher Wert darf nicht als Inhalt gelten, sonst
+    /// wuerde er als gueltiger Sales Type oder als Materialnummer weiterverarbeitet.
+    /// </summary>
+    private static string NormalizeItemMasterValue(string? value)
+    {
+        var text = value?.Trim() ?? string.Empty;
+        return text.Length > 0 && text.All(ch => ch == '-') ? string.Empty : text;
+    }
+
+    /// <summary>
+    /// Liefert den Select-Ausdruck fuer ein benutzerdefiniertes Artikelstammfeld, das nur in
+    /// manchen Standortschemata existiert.
+    ///
+    /// Notwendig, weil diese Query von ALLEN SAP-B1-Standorten geteilt wird, die UDFs aber je
+    /// Gesellschaft anders heissen: Indien hat <c>U_Tasc_ST</c>/<c>U_TASC_OMN</c> (TASC-Eigenbau),
+    /// Italien dagegen <c>U_ND_*</c> (geprueft 2026-08-05: in <c>it01_p</c> existiert keine der
+    /// beiden indischen Spalten). Ein festes Selektieren wuerde den Italien-Export mit
+    /// "invalid column name" abbrechen. Fehlt die Spalte, wird stattdessen ein leerer Wert
+    /// selektiert - damit bleibt die Ergebnisform fuer alle Standorte gleich und das Auslesen
+    /// braucht keine Sonderfaelle.
+    /// </summary>
+    private static string OptionalItemColumn(string? actualColumnName, string alias)
+        => actualColumnName is null
+            ? $@"'' AS {alias}"
+            : $@"COALESCE(itm.""{actualColumnName}"", '') AS {alias}";
+
+    private static string GetInvoiceQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
+        var salesTypeColumn = OptionalItemColumn(salesTypeColumnName, "sales_type");
+        var groupMaterialColumn = OptionalItemColumn(groupMaterialColumnName, "group_material_number");
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
@@ -442,6 +519,8 @@ SELECT
     COALESCE(itm.""CardCode"", '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
     COALESCE(sup_adr.""Country"", '') AS supplier_country,
+    {salesTypeColumn},
+    {groupMaterialColumn},
     h.""CardCode"" AS customer_number,
     h.""CardName"" AS customer_name,
     COALESCE(cust_adr.""Country"", '') AS customer_country,
@@ -485,10 +564,12 @@ WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{reven
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
 
-    private static string GetCreditNoteQuery(string schema)
+    private static string GetCreditNoteQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
+        var salesTypeColumn = OptionalItemColumn(salesTypeColumnName, "sales_type");
+        var groupMaterialColumn = OptionalItemColumn(groupMaterialColumnName, "group_material_number");
         return $@"
 SELECT
     CURRENT_TIMESTAMP AS extraction_date,
@@ -505,6 +586,8 @@ SELECT
     COALESCE(itm.""CardCode"", '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
     COALESCE(sup_adr.""Country"", '') AS supplier_country,
+    {salesTypeColumn},
+    {groupMaterialColumn},
     h.""CardCode"" AS customer_number,
     h.""CardName"" AS customer_name,
     COALESCE(cust_adr.""Country"", '') AS customer_country,

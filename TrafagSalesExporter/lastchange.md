@@ -63,6 +63,28 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `CentralSalesRecord` per `AddColumnIfMissing`, Auswertung im
   `GroupMarginSupplierClassifier`). Details: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
+- DEPLOY 2026-08-05 15:48, SALES TYPE UND TRAFAG-SACHNUMMER IM EXPORT UMGESETZT: `SalesType` und
+  `GroupMaterialNumber` werden aus dem Artikelstamm gelesen, gespeichert, im Audit-CSV
+  ausgewiesen und in der Gruppenmarge ausgewertet. `FFM`/`CM` -> intern mit liefernder
+  Gesellschaft TR IN und lokaler Kostenbasis, `LRD` -> intern TR AG mit Konzernkosten ueber die
+  Trafag-Sachnummer. NEUER STATUS `Konzernkosten fehlen`: LRD-Zeilen ohne Konzernkostentreffer
+  zeigen KEINE Marge mehr (vorher eine Marge auf dem IC-Einkaufspreis — plausibel aussehend und
+  falsch); als Konstante in `Services/GroupMarginStatuses.cs`, weil Excel, Cockpit und
+  Pruefsummenformel denselben Text brauchen. WIRKUNG erst mit dem naechsten TRIN-Export
+  (Timer 12:00): dann wechseln rund 5'830 Zeilen von „Lieferant unklar" auf intern, und 569
+  statt 185 LRD-Zeilen bekommen eine Schweizer Kostenbasis. Spalten sind produktiv angelegt.
+  406/406 Tests gruen, `BiDashboard.dll` 4'045'824 Bytes / SHA256 `0C65C997…`, bitgleich.
+  DREI FEHLER, die erst durch Tests und Messung sichtbar wurden: (1) die B1-Query ist von ALLEN
+  Standorten geteilt — ein festes `itm."U_Tasc_ST"` haette den ITALIEN-EXPORT mit „invalid
+  column name" abgebrochen, jetzt Spaltensuche mit `'' AS sales_type` als Rueckfall; (2) das
+  vorhandene `HasColumnAsync` schreibt Spaltennamen GROSS, Indiens Spalte heisst aber gemischt
+  `U_Tasc_ST` — die Suche nach `U_TASC_ST` liefert produktiv 0 Treffer, das Feld waere fuer
+  Indien STILL nie selektiert worden; jetzt `ResolveColumnNameAsync`, schreibweisenunabhaengig
+  und mit dem GEFUNDENEN Namen im SELECT (HANA quotet case-sensitiv); (3) der Schreibweg ist ein
+  Bulk-INSERT mit ausdruecklicher Spaltenliste — ein Feld am Modell genuegt nicht, aufgefallen
+  durch `NOT NULL constraint failed`. Details:
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 7.
+
 - BEFUND 2026-08-05, WAS `CM` IST — OHNE RUECKFRAGE BEI INDIEN ERSCHLOSSEN, UND MEINE ERSTE
   EINORDNUNG WAR FALSCH: `Sales Type` beschreibt NICHT die Herkunft, sondern die
   verrechnungspreisliche ROLLE von TR IN. `FFM` = voll risikotragender Hersteller (produziert

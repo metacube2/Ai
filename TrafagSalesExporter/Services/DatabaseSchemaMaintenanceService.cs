@@ -74,6 +74,10 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "CentralSalesRecords", "PostingDate", "TEXT NULL");
         AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostVariable", "TEXT NULL");
         AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostFixed", "TEXT NULL");
+        // Verrechnungspreisliche Rolle und Trafag-Sachnummer aus dem Artikelstamm der Quelle
+        // (Indien: OITM."U_Tasc_ST" / "U_TASC_OMN"), additiv nachgezogen.
+        AddColumnIfMissing(db, "CentralSalesRecords", "SalesType", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "GroupMaterialNumber", "TEXT NOT NULL DEFAULT ''");
         EnsureAppEventLogTable(db);
     }
 

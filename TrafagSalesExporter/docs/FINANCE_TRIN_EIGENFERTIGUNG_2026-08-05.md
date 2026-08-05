@@ -388,7 +388,62 @@ Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
 `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 8); Entscheid in
 `docs/FINANCE_ENTSCHEIDE.md` nachtragen.
 
-## 7. Umsetzung im Export (offen)
+## 7. Umsetzung im Export — UMGESETZT UND DEPLOYED (2026-08-05 15:48)
+
+Deployed, `406/406` Tests gruen, Nachweis in `docs/rag/DEPLOYMENT.md`. **Gefuellt werden die
+Felder erst mit dem naechsten TRIN-Export** (Timer 12:00); die Spalten sind produktiv vorhanden
+und leer.
+
+Was gebaut wurde:
+
+| Stelle | Aenderung |
+| --- | --- |
+| `Models/SalesRecord.cs`, `Models/CentralSalesRecord.cs` | Felder `SalesType` und `GroupMaterialNumber` (Rohwerte, keine Auslegung) |
+| `Services/DatabaseInitializationService.SchemaSql.cs`, `Services/DatabaseSchemaMaintenanceService.cs` | Spalten im Create und additiv per `AddColumnIfMissing` |
+| `Services/HanaQueryService.cs` | beide Felder in **beiden** Queries (`OINV`/`INV1` und `ORIN`/`RIN1`), Spaltensuche, Platzhalterbehandlung |
+| `Services/CentralSalesRecordService.cs` | Bulk-`INSERT`: Spaltenliste, `VALUES`, Parameter und Wertzuweisung |
+| `Services/CentralSalesDataProvider.cs`, `Services/ConfigTransferService.cs`, `Services/ManagementCockpitService.cs` | Durchreichen, inkl. Klonfunktion der Finanzzeilen |
+| `Services/ExportAuditCsvService.cs` | zwei neue Spalten im Audit-CSV, schreibend und lesend |
+| `Services/GroupMarginSupplierClassifier.cs` | `ResolveSalesTypeRole`, Auswertung in `Resolve` und `ResolveDeliveringEntity`, neue Klasse `SalesTypeRoles` |
+| `Services/ExcelExportService.cs`, `Services/ManagementCockpitService.cs` | Konzernkostenschluessel ueber die Trafag-Sachnummer, LRD-Regel ohne lokalen Rueckfall |
+| `Services/GroupMarginStatuses.cs` (neu) | Status `Konzernkosten fehlen` als Konstante fuer Excel, Cockpit und Pruefsummenformel |
+| Tests | `GroupMarginSalesTypeTests`, `CentralSalesRecordSalesTypeTests` |
+
+### 7a. Drei Fehler, die erst durch Tests und Messung sichtbar wurden
+
+1. **Die Query wird von allen B1-Standorten geteilt.** Ein festes `itm."U_Tasc_ST"` haette den
+   **Italien-Export mit „invalid column name" abgebrochen** — Italiens UDFs heissen `U_ND_*`.
+   Geloest ueber eine Spaltensuche; fehlt die Spalte, wird `'' AS sales_type` selektiert, womit
+   die Ergebnisform fuer alle Standorte gleich bleibt. Geprueft: in `it01_p` existiert keine der
+   beiden Spalten.
+2. **Schreibweise.** Das vorhandene `HasColumnAsync` schreibt den Spaltennamen gross und
+   vergleicht exakt. Indiens Spalten sind gemischt geschrieben — `U_Tasc_ST` (Position 361)
+   neben `U_TASC_OMN` (Position 348). Die Suche nach `U_TASC_ST` liefert produktiv **0 Treffer**
+   (gemessen, Runde 5). Das Feld waere fuer Indien **still nie selektiert** worden, ohne
+   Fehlermeldung — die ganze Auswertung wirkungslos. Jetzt sucht
+   `ResolveColumnNameAsync` schreibweisenunabhaengig und selektiert mit dem **gefundenen** Namen,
+   weil HANA gequotete Bezeichner case-sensitiv behandelt. `HasColumnAsync` bleibt unveraendert,
+   es steuert die FKDAT-Filterung.
+3. **Der Schreibweg ist ein Bulk-`INSERT` mit ausdruecklicher Spaltenliste.** Ein neues Feld am
+   Modell genuegt dort nicht. Aufgefallen durch einen bestehenden Test
+   (`NOT NULL constraint failed: CentralSalesRecords.SalesType`); jetzt zusaetzlich durch
+   `CentralSalesRecordSalesTypeTests` abgesichert, der auch prueft, dass Standorte ohne diese
+   Felder leere Werte und nicht `NULL` schreiben.
+
+### 7b. Was sich fachlich aendert, sobald der Export gelaufen ist
+
+- Rund **5'830 TRIN-Zeilen** (`FFM` ohne Lieferant) wechseln von „Lieferant unklar" auf
+  „intern, liefernde Gesellschaft TR IN" mit lokaler Kostenbasis.
+- `LRD`-Zeilen suchen die Konzernkosten ueber die Trafag-Sachnummer statt ueber die indische
+  Artikelnummer: **569 statt 185 Zeilen** bekommen damit eine Schweizer Kostenbasis.
+- `LRD`-Zeilen **ohne** Konzernkostentreffer erhalten den neuen Status **`Konzernkosten fehlen`**
+  und **keine** Marge. Vorher zeigten sie eine Marge auf dem IC-Einkaufspreis — plausibel
+  aussehend und falsch. Diese Zeilen zaehlen in der Pruefsumme „Gruppenmarge offene
+  Kostenbasis".
+- Ein vorhandener Lieferantentext geht weiterhin vor dem Sales Type. Damit bleibt das Verhalten
+  der 10 widerspruechlichen Artikel unveraendert, bis Indien geantwortet hat.
+
+## 7c. Frueherer Umsetzungsplan (erledigt, zur Nachvollziehbarkeit)
 
 **Die B1-Query gehoert uns** (Vorrangregel 7 im `RAG_ROUTER.md`):
 

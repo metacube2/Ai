@@ -64,6 +64,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         "SupplierNumber",
         "SupplierName",
         "SupplierCountry",
+        "SalesType",
+        "GroupMaterialNumber",
         "CustomerNumber",
         "CustomerName",
         "CustomerCountry",
@@ -251,6 +253,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         yield return record.SupplierNumber;
         yield return record.SupplierName;
         yield return record.SupplierCountry;
+        yield return record.SalesType;
+        yield return record.GroupMaterialNumber;
         yield return record.CustomerNumber;
         yield return record.CustomerName;
         yield return record.CustomerCountry;
@@ -323,6 +327,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
                 SupplierNumber = GetText(values, headers, "SupplierNumber"),
                 SupplierName = GetText(values, headers, "SupplierName"),
                 SupplierCountry = GetText(values, headers, "SupplierCountry"),
+                SalesType = GetText(values, headers, "SalesType"),
+                GroupMaterialNumber = GetText(values, headers, "GroupMaterialNumber"),
                 CustomerNumber = GetText(values, headers, "CustomerNumber"),
                 CustomerName = GetText(values, headers, "CustomerName"),
                 CustomerCountry = GetText(values, headers, "CustomerCountry"),
