@@ -4,7 +4,8 @@ Stand: 2026-08-05
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-05, Server-Analyse**
+- Letzter produktiv verifizierter Deploy: **2026-08-05, Server-Analyse**, Commit `cc72e6d`
+  auf Branch `feature/server-analyse-trin-salestype`
   (`ServerAnalysisBackgroundService`: lesende Diagnoseabfragen gegen Standort-B1,
   ausgeloest ueber eine Triggerdatei in `_analysis`), `385/385` Tests gruen.
   `BiDashboard.dll` `05.08.2026 10:59:50`, `4'037'632` Bytes, SHA256
