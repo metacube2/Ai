@@ -18,7 +18,19 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
    `docs/RAG_DETAIL_INDEX.md` nachladen.
 6. SAP-/HANA-Fakten nicht aus Erinnerung oder alten Messungen ableiten:
    Live-Werkzeuge gemaess Detailindex verwenden und Ergebnis nachdokumentieren.
-7. Arbeitsregeln, Tests und fachliche Grenzen: `persona.md`.
+7. Bei einem fehlenden Feld in DE oder ES ZUERST pruefen, ob unsere eigene Export-SQL es
+   ueberhaupt liest, bevor der Standort gefragt wird — die Queries in
+   `AlphaplanExportPackage/` und `SageSpainExportPackage/` sind unsere. Sonst wird eine
+   Bitte an die falsche Stelle gerichtet (passiert 2026-08-03 bei DE).
+8. **Bevor ein Standort um Stammdatenpflege gebeten wird: pruefen, ob die Quelle die
+   Information anderswo schon liefert.** Zweimal in einer Woche war die Bitte gegenstandslos —
+   2026-08-03 bei DE (unsere Query las die Spalte nicht) und 2026-08-05 bei IN (das Feld
+   `OITM."U_Tasc_ST"` beantwortet die Frage fuer 93 % der Artikel). Ein Standort, der
+   ueberfluessige Pflege geliefert bekommt, nimmt die naechste Bitte nicht mehr ernst.
+9. Bei Indien/TRIN, Eigenfertigung, Supplier oder „Sales Type" gilt
+   `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` vor den Feldluecken-Dateien vom Juli.
+   Abschnitt 3 in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` ist ueberholt.
+10. Arbeitsregeln, Tests und fachliche Grenzen: `persona.md`.
 
 ## Themenverzeichnis
 
@@ -29,6 +41,11 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Finance Formeln, Waehrung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |
+| **Export-SQL DE/ES gehoert UNS** (Feld fehlt = Query liest es nicht) | `docs/rag/MANUAL_IMPORT.md` Abschnitt „Skripthoheit" |
+| Spanien Buchungsdatum/PostingDate | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |
+| **Indien: Sales Type, Eigenfertigung, Supplier/Preferred Vendor TRIN** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` |
+| **Abfrage auf einem Standortsystem, das nur der Server erreicht** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 5, Skript `docs/analyse/Run-ServerAnalysis.ps1` |
+| **Innenumsatz / Konzerngesellschaft als Kunde / Doppelzaehlung** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a (offene Frage an Andreas) |
 | HR KPI | `docs/rag/HR_KPI.md` |
 | Einkauf, Spend, Drilldown, Bestellungen, Kontrakte | `docs/rag/PURCHASING.md` |
 | Oberflaechensprachen, Einkauf-Lokalisierung, Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |

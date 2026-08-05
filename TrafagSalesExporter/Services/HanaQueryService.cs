@@ -1,3 +1,4 @@
+using System.Globalization;
 using Sap.Data.Hana;
 using TrafagSalesExporter.Models;
 
@@ -207,6 +208,63 @@ public class HanaQueryService : IHanaQueryService
         }
 
         return fields;
+    }
+
+    public async Task<HanaTextQueryResult> RunReadOnlySelectAsync(
+        HanaServer server,
+        string sql,
+        int maxRows = 500,
+        CancellationToken cancellationToken = default)
+    {
+        var rejection = ReadOnlySqlGuard.Validate(sql);
+        if (rejection is not null)
+            throw new InvalidOperationException($"Statement abgelehnt: {rejection}");
+
+        var result = new HanaTextQueryResult();
+
+        using var connection = new HanaConnection(server.BuildConnectionString());
+        await connection.OpenAsync(cancellationToken);
+
+        using var command = new HanaCommand(sql, connection);
+        command.CommandTimeout = 300;
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        for (var i = 0; i < reader.FieldCount; i++)
+            result.ColumnNames.Add(reader.GetName(i));
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (result.Rows.Count >= maxRows)
+            {
+                result.Truncated = true;
+                break;
+            }
+
+            var row = new string[reader.FieldCount];
+            for (var i = 0; i < reader.FieldCount; i++)
+                row[i] = reader.IsDBNull(i) ? "NULL" : FormatCell(reader.GetValue(i));
+
+            result.Rows.Add(row);
+        }
+
+        return result;
+    }
+
+    // Kultur-invariant und ohne Zeilenumbrueche: die Werte landen zeilenweise in einer
+    // Textdatei, ein Umbruch im Wert wuerde die Zeilenstruktur zerstoeren.
+    private static string FormatCell(object value)
+    {
+        var text = value switch
+        {
+            decimal d => d.ToString("0.####", CultureInfo.InvariantCulture),
+            double d => d.ToString("0.####", CultureInfo.InvariantCulture),
+            float f => f.ToString("0.####", CultureInfo.InvariantCulture),
+            DateTime dt => dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+
+        text = text.Replace("\r", " ", StringComparison.Ordinal).Replace("\n", " ", StringComparison.Ordinal);
+        return text.Length > 2000 ? text[..2000] + "…" : text;
     }
 
     public async Task<List<SalesRecord>> GetMappedSalesRecordsAsync(
@@ -558,4 +616,15 @@ public class ConnectionTestResult
     public string ErrorMessage { get; set; } = string.Empty;
     public string ExceptionType { get; set; } = string.Empty;
     public string ConnectionStringPreview { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Ergebnis einer Diagnoseabfrage als Text: Spaltennamen, Zeilen als Zeichenketten und die
+/// Angabe, ob am Zeilenlimit abgeschnitten wurde.
+/// </summary>
+public class HanaTextQueryResult
+{
+    public List<string> ColumnNames { get; } = new();
+    public List<string[]> Rows { get; } = new();
+    public bool Truncated { get; set; }
 }

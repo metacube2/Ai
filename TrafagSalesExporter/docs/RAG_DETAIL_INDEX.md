@@ -53,6 +53,10 @@ Stand verwenden.
 | ZLO03/Materialverwendung | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | Manual-Import-Details | `docs/MANUAL_IMPORT_DELTA_STAND_2026-05-21.md` |
 | Spanien-rclone | `docs/SAGE_SPAIN_RCLONE_UPLOAD_GUIDE_2026-06-03.md` |
+| Spanien Buchungsdatum/`PostingDate` fehlt | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |
+| Export-SQL DE (unsere Query, Alphaplan) | `AlphaplanExportPackage/scripte/alphaplanExport.ps1`, `alphaplandeltaexport.ps1`; Einrichtung `AlphaplanExportPackage/scripte/ANLEITUNG_KORREKTUR_2026-06-24.md` |
+| Export-SQL ES (unsere Query, Sage) | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` und `Run-SpainRangeExportAndUpload-AllInOne.ps1` (Query steht ZWEIMAL) |
+| Schema-Discovery Standort-DBs | `AlphaplanExportPackage/Run-AlphaplanDiscoveryAndUpload.ps1`, `AlphaplanExportPackage/scripte/alphaplan.ps1`; Sage-Auszug `obj/candidate_objects.csv` (bei 80 Objekten abgeschnitten) |
 | Alphaplan Discovery | `docs/ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md` |
 | Alphaplan SQL/rclone | `docs/ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md` |
 | HR-KPI-Nachdoku | `docs/HR_KPI_NACHDOKU_2026-05-13.md` |
@@ -103,6 +107,32 @@ verifizieren, ersetzt diese Entwicklungsoberflaechen aber nicht.
 - Guardrail: nur `SELECT`/`WITH`; Platzhalter `{schema}` bzw. `{SCHEMA}`.
 - Prozent-/Fuellgradmessungen immer auf die fachliche Grundgesamtheit filtern,
   z. B. aktive Lagerartikel statt blind alle `OITM`-Zeilen.
+- `LIKE 'U_%'` matcht wegen des Platzhalter-Unterstrichs auch `UserSign`/`UserText`:
+  fuer UDF-Spalten `LIKE 'U\_%' ESCAPE '\'` schreiben. Schemavergleiche in
+  `SYS.TABLE_COLUMNS` case-insensitiv (`UPPER(...) = UPPER(...)`), weil Schemanamen je
+  Standort unterschiedlich geschrieben sind (`TRAFAG_LIVE` vs. `it01_p`).
+
+### Standorte, die nur der Server erreicht: Server-Analyse
+
+- Zweck: lesende Abfragen gegen Standortsysteme, die der Entwicklungsrechner nicht
+  erreicht (Indiens HANA `20.197.20.60:30015`).
+- **Ausgefuehrt wird von der laufenden Anwendung**, nicht von einem Werkzeug auf dem
+  Server: `Services/ServerAnalysisBackgroundService.cs` prueft alle 20 Sekunden, ob
+  im Anwendungsordner `_analysis/run.trigger` liegt, arbeitet dann
+  `_analysis/sql/*.sql` ab und schreibt nach `_analysis/results`. Grund: auf
+  `tragvapp401` sind `Invoke-Command`, `schtasks` und `C$` gesperrt und es gibt
+  keinen RDP-Zugang; der Share ist aber beschreibbar. Der DNS-Name
+  `trch-webapp-bidashboard` ist ein CNAME auf `tragvapp401` — mit dem Aliasnamen
+  scheitert schon Kerberos.
+- Fernbedienung dazu: **`docs/analyse/Run-ServerAnalysis.ps1`** `-Action Run | Fetch | Clean`
+  (versioniert, nicht unter `.tmp_tools/`). Abfragen in `docs/analyse/sql/`, Belege der
+  bisherigen Laeufe in `docs/analyse/ergebnisse/`.
+- Regeln fuer SQL-Dateien: Dateiname beginnt mit dem TSC (`TRIN__01_...` ->
+  `TRIN`), Statementtrenner ist eine Zeile ab `;;`, nur `SELECT`/`WITH`
+  (`Services/ReadOnlySqlGuard.cs`), Platzhalter `{schema}`/`{SCHEMA}`, maximal 500
+  Zeilen je Statement. **Zwei Bindestriche als Zeichenkettenliteral sind nicht
+  moeglich** — sie gelten als Kommentar und der Guardrail lehnt ab.
+- Hintergrund und Befunde: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
 ## Suchindex
 

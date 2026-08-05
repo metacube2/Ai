@@ -1,10 +1,207 @@
 # Last Change
 
-Stand: 2026-08-03
+Stand: 2026-08-05
+
+WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
+`docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
+seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
+`docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
+
+- CALL 2026-08-05, INDIEN: DAS FELD HEISST „SALES TYPE", PREFERRED-VENDOR-BITTE IST UEBERHOLT.
+  RanVijay hatte eingewandt, dass viele Artikel bei TR IN lokal gefertigt werden — bei
+  Eigenfertigung gibt es keinen Vorlieferanten, `OITM.CardCode` waere dort sachlich falsch
+  gepflegt. Ergebnis des Calls: im indischen Artikelstamm gibt es das Feld „Sales Type" mit
+  „full-fledged manufacturing" (Produktion im indischen Werk) und „LRD" (Import von Trafag
+  Schweiz, Weiterverkauf; dort sind Lieferant Schweiz und Einkaufspreis laut RanVijay bereits
+  gepflegt). Er erwartet, dass die 1'271 offenen Artikel damit auf „maybe 50 60" schrumpfen, und
+  pflegt den Rest sofort selbst. PRODUKTIVDATEN STUETZEN DAS: `PT0` (laut Call LRD) hat 319
+  Zeilen, davon nur 37 ohne Lieferant; `PS0`/`DM0`/`TS0` (2'469/2'223/1'590 Zeilen) sind fast
+  durchgaengig ohne. TRIN gesamt: 6'236 Zeilen ohne Lieferant (1'278 Artikel, 1'057'121'097
+  INR), ALLE mit Kostenbasis — es fehlt nur die Klassifikation. Die exportierte Artikelgruppe
+  ersetzt das Feld NICHT (trennt nach Materialart, nicht nach Fertigungsort). OFFEN ist nur der
+  technische Spaltenname; er wird ERMITTELT, nicht geraten. ENTSCHEID INGO: Eigenfertigung gilt
+  als intern mit liefernder Gesellschaft TR IN, lokale Kostenbasis = Gruppenkostenbasis (kein
+  IC-Aufschlag, gleiche Logik wie CH/AT). Umsetzung landet in UNSERER Query
+  `Services/HanaQueryService.cs` (OITM bereits gejoint, Query steht ZWEIMAL: OINV/INV1 und
+  ORIN/RIN1) und in `Services/GroupMarginSupplierClassifier.cs`; pauschale TSC-Regel wie CH/AT
+  ist bei TRIN unzulaessig, 141 Zeilen sind echte indische Fremdlieferanten. Der Entwurf
+  `docs/mails/Build-RanVijayFollowup.ps1` darf nicht mehr raus. Details:
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+
+- BEFUND 2026-08-05, FELD GEFUNDEN UND AUSGEWERTET: Das Feld heisst **`OITM."U_Tasc_ST"`**
+  (UDF `Tasc_ST`, FieldID 14, Beschriftung „Sales Type"), ermittelt aus `CUFD`/`UFD1` — nicht
+  geraten. Werte laut `UFD1`: `FFM` Full Fledged Manufacturing, `LRD` Limited Risk Distributor,
+  `CM` Contract Manufacturing, `--` ungepflegt. **`CM` kam im Call nicht vor** und ist echt
+  extern (Fremdfertigung). VERTEILUNG auf Artikeln mit Rechnungszeilen ab 2025 (1'449 Artikel,
+  7'018 Zeilen): `FFM` ohne Vendor **1'184 Artikel / 5'830 Zeilen** (korrekt so, brauchen keinen
+  Lieferanten), `LRD` mit Vendor 93/454 (fertig), `LRD` ohne Vendor 30/256 + `CM` ohne Vendor
+  2/23, Sales Type ungepflegt 130 Artikel/377 Zeilen (zweite, neu entdeckte Baustelle), `FFM`
+  MIT Vendor 10/78 (Widerspruch). HEBEL: rund 5'830 der 6'236 maskierten TRIN-Zeilen (93 %)
+  werden allein durch das Lesen des Feldes klassifizierbar, ohne jede Stammdatenpflege in
+  Indien. **ENTSCHEIDENDE ZUSATZPRUEFUNG (Runde 3):** ALLE 93 `LRD`-Artikel mit Vendor zeigen
+  auf `V0078` = Trafag AG/CH, ohne Ausnahme. `LRD` bestimmt die liefernde Gesellschaft damit
+  ALLEIN — die 30 `LRD`-Artikel ohne Vendor brauchen KEINE Pflege. Ebenso haben 64 der 130
+  Artikel ohne Sales Type schon einen Vendor und sind dadurch klassifiziert. **RESTLISTE damit
+  nicht 32, sondern: 66 Artikel Sales Type pflegen (Blocker), 10 Artikel `FFM`-mit-Vendor
+  bestaetigen (Fehlklassifikationsrisiko), 2 `CM`-Artikel (IC15415, IC15037) nur „waere schoen"
+  — `CM` heisst schon extern, fuer die Marge fehlt dort nichts.** Dazu zwei Fragen ohne
+  Datenbezug: bedeutet `LRD` IMMER Trafag Schweiz (heute 93/93, aber Messung ist keine Regel),
+  und soll der Sales Type bei neuen Artikeln Pflicht werden (im Gesamtstamm 2'838 von 5'337
+  ohne Wert). Ohne diese Pruefung waere Indien um Pflege gebeten worden, die unser
+  eigenes Feld schon leistet — derselbe Fehlertyp wie die ueberholte Preferred-Vendor-Bitte.
+  GEGENPROBE bestanden: `PT000003`/`PT000010` = `LRD` mit `V0078`, `DM000001` = `FFM`;
+  `DM000083` ist `LRD` OHNE Vendor und widerlegt die Heuristik „kein Lieferant =
+  Eigenfertigung". KONSISTENZ artikelgenau: unsere DB zaehlt 167 TRIN-Artikel MIT Lieferant,
+  B1 ergibt 93+64+10 = exakt 167; ohne Lieferant 1'278 vs. 1'282 (Differenz = nur auf
+  Gutschriften). Liefergegenstand: `output/TRIN_Sales_Type_Offen_2026-08-05.xlsx` (4 Blaetter)
+  via `.tmp_tools/BuildTrinSalesTypeExcel`. NOCH OFFEN: Mail an RanVijay, Export-Umsetzung
+  (`U_Tasc_ST` in `Services/HanaQueryService.cs`, ZWEIMAL — OINV/INV1 und ORIN/RIN1 —, Feld auf
+  `CentralSalesRecord` per `AddColumnIfMissing`, Auswertung im
+  `GroupMarginSupplierClassifier`). Details: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+
+- BEFUND 2026-08-05, WAS `CM` IST — OHNE RUECKFRAGE BEI INDIEN ERSCHLOSSEN, UND MEINE ERSTE
+  EINORDNUNG WAR FALSCH: `Sales Type` beschreibt NICHT die Herkunft, sondern die
+  verrechnungspreisliche ROLLE von TR IN. `FFM` = voll risikotragender Hersteller (produziert
+  und verkauft auf eigene Rechnung), `LRD` = Vertrieb mit begrenztem Risiko (bezieht Fertigware
+  aus CH, verkauft lokal weiter), `CM` = Auftragsfertiger fuer den Prinzipal. Ich hatte `CM` als
+  „Fremdfertigung durch Dritte, also extern" eingeordnet — falsch. FUENF unabhaengige Belege:
+  (1) Kunde der beiden CM-Artikel `IC15415`/`IC15037` ist AUSSCHLIESSLICH Trafag AG/CH (23
+  Zeilen, 53'842'559 INR); (2) Marge 31.2 % und 31.7 % — nahezu identischer Aufschlag auf zwei
+  verschiedenen Artikeln = Kostenaufschlag, keine Marktpreisbildung; (3) Artikelgruppe
+  `Sub Assemblies`; (4) beide MIT `Drawing No`, aber OHNE `Material No` und OHNE `Ordering Code`
+  — nach Zeichnung des Prinzipals gebaut; (5) kein Preferred Vendor, konsistent mit
+  Eigenfertigung. FOLGE: `CM` ist intern mit liefernder Gesellschaft TR IN und lokaler
+  Kostenbasis wie `FFM`, der Preferred Vendor ist UNNOETIG. Die Bitte an Indien schrumpft damit
+  auf 66 Artikel (Sales Type) + 10 Bestaetigungen; kein Vendor-Pflegefall mehr.
+
+- BEFUND 2026-08-05, BEI `LRD` IST DER LOKALE WERT DIE FALSCHE KOSTENBASIS: Weil LRD-Artikel in
+  CH hergestellt und von Trafag AG bezogen werden (Bestaetigung Ingo), ist `INV1.StockPrice`
+  dort der IC-EINKAUFSPREIS, nicht die Herstellkostenbasis — genau der Wert, den die
+  Gruppenmarge laut `Mappe1.xlsx` ersetzen soll. Richtige Basis waere `GroupStandardCosts`
+  (Bewertungskreis 1100, CHF, 63'506 Zeilen). GEMESSEN greift der Weg aber kaum: nur 34 von 135
+  TRIN-Artikeln mit Lieferant Trafag AG (185 von 687 Zeilen, 27 %) finden ueber die
+  Artikelnummer einen Treffer — die indischen Nummern sind TASC-Eigennummern, keine Trafag-MATNR.
+  KANDIDAT fuer die Bruecke (Runde 4 gemessen): UDF `U_TASC_OMN` („Material No") ist bei 121 von
+  123 LRD-Artikeln gefuellt, `U_TASC_OC` bei 119. REGEL BIS DAHIN: bei LRD-Zeilen ohne
+  Konzernkostentreffer NICHT auf den lokalen Wert zurueckfallen — das ergaebe eine plausibel
+  aussehende, falsche Marge (derselbe Fehler wie bei TRIT, siehe
+  `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a). Die Kostenlogik im
+  Klassifikator erst nach dieser Pruefung schreiben, sonst wird sie zweimal gebaut.
+
+- OFFENE FRAGE AN ANDREAS 2026-08-05, INNENUMSATZ IST GRUPPENWEIT NICHT AUSGESCHLOSSEN (beim
+  CM-Nachgraben aufgefallen, deutlich groesser als das Indien-Thema): Zeilen mit einer
+  Trafag-Gesellschaft als KUNDE — TRCH 11'034 von 47'142 (23.4 %, 16'347'706 CHF), TRIN 737
+  (10.4 %, 145'181'191 INR), TRIT 657 (3.3 %, 576'130 EUR), Rest je unter 15 Zeilen. In
+  `FinanceRules` gibt es dazu nur ZWEI von Hand angelegte Kundenausschluesse: Id 2 (DE,
+  `CustomerName` = `Trafag AG`) und Id 6 (IT, enthaelt `Trafag Italia`). Die IT-Regel greift nur
+  fuer Trafag Italia, die uebrigen 657 TRIT-Zeilen bleiben drin; fuer TRCH und TRIN existiert
+  keine Regel. Verkauft TR IN an Trafag Italia und Italia danach an den Endkunden, stehen beide
+  Umsaetze im Dashboard — fuer eine KONZERN-Umsatzzahl ist derselbe Warenwert doppelt enthalten.
+  KEINE Empfehlung von mir: ob die Umsatzzahl brutto oder konsolidiert gemeint ist, ist eine
+  Finanzentscheidung. Zu klaeren, bevor die Gruppenmarge als belastbar bezeichnet wird.
+
+- DEPLOY 2026-08-05, SERVER-ANALYSE PRODUKTIV: `Services/ServerAnalysisBackgroundService.cs`
+  fuehrt lesende Diagnoseabfragen gegen Standort-B1 aus — auf dem Server, weil einzelne
+  Standortsysteme nur von dort erreichbar sind. ZUGRIFFSLAGE GEMESSEN: Share = FullControl,
+  aber `Invoke-Command`/`schtasks`/`C$` auf `tragvapp401` = Zugriff verweigert, KEIN RDP
+  vorhanden; der DNS-Name `trch-webapp-bidashboard` ist ein CNAME auf `tragvapp401`, mit dem
+  Aliasnamen scheitert schon Kerberos. Deshalb ist die LAUFENDE ANWENDUNG der einzige Weg,
+  Code auf dem Server auszufuehren: alle 20 s Pruefung auf `_analysis/run.trigger`, dann
+  `_analysis/sql/*.sql` -> `_analysis/results`. Guardrail `Services/ReadOnlySqlGuard.cs` (nur
+  SELECT/WITH, Positivliste), Zugangsdaten ueber den neuen gemeinsamen
+  `Services/DataSources/HanaServerResolver.cs` — dieselbe Aufloesung wie der Export.
+  Fernbedienung `docs/analyse/Run-ServerAnalysis.ps1 -Action Run|Fetch|Clean` (VERSIONIERT,
+  bewusst nicht unter `.tmp_tools/` — das ist gitignoriert, und die Abfragen sind der Nachweis
+  fuer eine fachliche Entscheidung; Abfragen in `docs/analyse/sql/`, Belege in
+  `docs/analyse/ergebnisse/`).
+  385/385 Tests gruen, `BiDashboard.dll` 4'037'632 Bytes / SHA256 `56AFD5AF…`, bitgleich mit
+  dem Release-Build, Produktiv-DB unveraendert, HTTP 200. FALLE: zwei Bindestriche koennen
+  nicht als Zeichenkettenliteral in einer Analyseabfrage stehen (gelten als Kommentar).
+  Vor dem Deploy lokal gegen Italien verifiziert (`.tmp_tools/ServerAnalysisLocalTest`) und
+  dabei zwei SQL-Fehler gefunden: `LIKE 'U_%'` matcht wegen des Platzhalter-Unterstrichs auch
+  `UserSign`/`UserText` (jetzt `ESCAPE '\'`), und `SCHEMA_NAME = '{SCHEMA}'` findet klein
+  geschriebene Schemata nicht (jetzt `UPPER(...)`). NEBENBEFUND, betraf auch den naechsten
+  Produktivdeploy: `dotnet publish` des Hauptprojekts brach ab, weil die csproj drei im Working
+  Tree geloeschte Content-Dateien einbindet (`DE_Beispiel_Export_Daten.xlsx`, `login.png`,
+  `manometer.png`); behoben mit `Condition="Exists('...')"` nach dem vorhandenen Muster.
+
+- BEFUND 2026-08-03, SPANIEN HAT KEIN BUCHUNGSDATUM (Prio von Andreas): `PostingDate` ist auf
+  ALLEN 5'504 TRES-Zeilen leer — Spanien ist der einzige Standort ohne Buchungsdatum, alle
+  anderen haben es zu 100 % gefuellt (TRUK 6 Ausnahmen). Die bisherige Doku und der
+  Mailentwurf an Santi nannten nur „231 Zeilen ohne jedes Datum" — das ist die TEILMENGE, in
+  der zusaetzlich das Rechnungsdatum fehlt, nicht das Problem. Folge: alle 5'504 Zeilen fallen
+  auf `InvoiceDate` zurueck (Rechnungsdatum ist nicht Buchungsdatum -> ueber einen Jahreswechsel
+  still falsche Periode), 231 Zeilen eine Stufe weiter auf `ExtractionDate` und zaehlen damit
+  pauschal im Exportjahr — 140'598.19 EUR. KEIN akuter Jahresfehler, weil alle 231 ein
+  `OrderDate` in 2026 haben und der Export 2026 lief; `OrderDate` ist gefuellt, wird von der
+  Fallback-Kette aber nicht genutzt. URSACHE WIE BEI DE: unsere eigene Query.
+  `Export-SageSpainSalesCsv.ps1` Z. 184-186 selektiert `FechaFactura`/`FechaAlbaran`/
+  `FechaRegistro`, aber kein Buchungsdatum, und liest `CabeceraAlbaranCliente` +
+  `LineasAlbaranCliente`, nicht die Buchhaltungstabellen. Query steht ZWEIMAL (auch in
+  `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-235) — Aenderungen immer an beiden
+  Stellen. KANDIDAT, NICHT BELEGT: `FacturasTB.FechaAsiento` ist der einzige brauchbare Treffer
+  im Schema-Auszug, aber die Tabelle hat `NumeroFacturaInicial_`/`NumeroFacturaFinal_` (riecht
+  nach Sammelbuchung ueber Nummernbereich), `CabeceraFacturaCliente` fehlt im Auszug ganz, und
+  der Auszug ist bei 80 Objekten abgeschnitten — gemeinsame Spalten mit dem Lieferscheinkopf
+  sind nur `CodigoEmpresa` und `FechaFactura`, der Join ist also NICHT ableitbar. Erst live
+  pruefen. Sofort additiv moeglich ohne neuen Join: `SerieFactura`, `NumeroFactura`,
+  `EjercicioFactura`, `StatusContabilizado` liegen schon in der gelesenen Tabelle. Offen
+  fuer Finance: darf `OrderDate` Fallback-Stufe werden, reicht `EjercicioFactura` als
+  Jahresanker. Details: `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`.
+
+- DOKU 2026-08-03, RAG-Luecke geschlossen, die den DE-Fehlgriff ueberhaupt ermoeglicht hat: Die
+  Export-Pakete `AlphaplanExportPackage/` und `SageSpainExportPackage/` standen in NEUN bzw.
+  SIEBEN Markdown-Dateien, aber in KEINER auf dem RAG-Einstiegspfad — nicht im
+  `RAG_ROUTER.md`, nicht im `RAG_DETAIL_INDEX.md`, nicht in `docs/rag/MANUAL_IMPORT.md`. Wer
+  ueber Router -> `lastchange.md` -> Kurzdatei einstieg, lernte „DE liefert kein Supplier-Feld"
+  und schloss daraus „Standort fragen", ohne je zu erfahren, dass die Query uns gehoert. Jetzt
+  ergaenzt: neue Vorrangregel 7 im Router („bei fehlendem Feld in DE/ES ZUERST die eigene
+  Export-SQL pruefen"), zwei Themenzeilen im Router, drei Zeilen im Detailindex (Export-SQL DE,
+  Export-SQL ES, Schema-Discovery) und ein neuer Abschnitt „Skripthoheit" in
+  `docs/rag/MANUAL_IMPORT.md` mit Skript, gelesenen Tabellen und Konsequenz je Standort.
+
+- BEFUND + MAIL 2026-08-03, DE/Alphaplan war die falsche Bitte an die falsche Stelle: Die alte
+  DE-Mail bat Rohail um drei Export-Erweiterungen (Lieferant, Kundenname/-land, RTF-Muell).
+  FALSCH — die Export-SQL ist UNSERE: `AlphaplanExportPackage/scripte/alphaplanExport.ps1`
+  Zeilen 143-202 und `alphaplandeltaexport.ps1` mit identischer Query, geschrieben in diesem
+  Repo, lesen nur `dbo.Belege` + `dbo.BelegePositionen`. Drei der vier DE-Luecken sind Spalten,
+  die unsere Query nicht liest; `RechnungsAdressenID` wird sogar selektiert, aber nie auf einen
+  Namen aufgeloest. Nur `ArtikelNummer` vs. TR-AG-/SAP-`MATNR` ist eine echte Fachfrage an DE
+  (offen seit 2026-06-01) — und die ist heikel, weil der Standard-Vorspann aller Standortmails
+  „Produktsparte ist egal, solange die Materialnummer passt" behauptet, was fuer DE gerade
+  unbelegt ist; die DE-Mail hat deshalb eine eigene Kastenfassung ohne diesen Satz. ECHTER
+  BLOCKER ist das fehlende Alphaplan-Schema fuer `ApDaten`: `candidate_objects.csv` im Repo-Root
+  ist nur eine Kopfzeile, `obj/candidate_objects.csv` ist Sage Spanien, die DB liegt auf
+  `localhost\SQL2012` des DE-Servers hinter DPAPI-Credential. DESHALB KEINE TABELLENNAMEN RATEN —
+  ein erfundenes `JOIN dbo.Adressen` im ausgelieferten Skript waere derselbe Fehlertyp wie
+  UK-2025 und das IT-Superlativ. Neue DE-Mail bittet nur noch um einen read-only
+  `INFORMATION_SCHEMA.COLUMNS`-Auszug und stellt die `ArtikelNummer`-Frage. Sie ist als EINZIGE
+  der sieben Standortmails auf DEUTSCH (Rohail sitzt bei der Trafag GmbH), Betreff
+  „BI Dashboard - Alphaplan-Export: eine Schemaliste und eine Frage zu den Artikelnummern";
+  alle englischen DE-Entwuerfe in Outlook sind Loeschkandidaten. FALLE dabei:
+  `Build-StandortMails.ps1` ist reines ASCII ohne BOM, PowerShell 5.1 liest so eine Datei als
+  Windows-1252 — echte Umlaute wuerden als Mojibake in der Mail landen, deshalb stehen alle
+  Umlaute als HTML-Entities (`&uuml;` etc.). Alle vier DE-Zahlen
+  am 2026-08-03 neu gemessen und exakt bestaetigt: 7'171 Zeilen, Supplier 7'171 leer,
+  CustomerName/-Country 7'171 leer bei 7'171 gefuellter CustomerNumber, 2'903 Bezeichnungen mit
+  Font-Muell, Material 0 leer. Details:
+  `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt „Korrektur Deutschland, 2026-08-03".
+
+- VERSAND 2026-08-03, Indien-Nachfassung: RanVijay hat auf die Mail vom 31.07. geantwortet, dass
+  er die Frage nicht versteht, und um einen Teams-Call gebeten. Ursache mutmasslich die
+  Doppelbenennung — SAP nennt das Feld UI-seitig `Preferred Vendor` (Reiter `Purchasing Data`),
+  unser Datenmodell nennt dasselbe Feld `Supplier`/`OITM.CardCode`. Antwortentwurf liegt in
+  Outlook (an RanVijay, Cc Andreas), erklaert die Gleichsetzung in einem Satz und haengt die
+  konkrete Artikelliste an: `output/TRIN_Fehlende_Preferred_Vendor_2026-08-03.xlsx`, erzeugt von
+  `.tmp_tools/BuildTrinSupplierGapExcel` aus `Finance_Dashboard_Audit_All_2026-07-29.csv` mit der
+  in `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 7 dokumentierten Gruppierung —
+  1'271 von 1'437 Artikeln, 6'154 betroffene Zeilen, deckungsgleich mit der bereits gesendeten
+  Zahl. Skript fuer die Mail: `docs/mails/Build-RanVijayFollowup.ps1` (`-Mode Preview` aendert
+  nichts, `-Mode Draft` legt den Entwurf an, sendet nie).
 
 - DEPLOYED 2026-08-03, Commit `9e28086`: Logistik > Stuecklistenanalyse hat ein neues
   richtungsabhaengiges Dashboard fuer Top-Down und Bottom-Up mit vier

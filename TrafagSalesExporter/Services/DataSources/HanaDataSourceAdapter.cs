@@ -28,7 +28,7 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
         var sourceDefinition = context.SourceDefinition;
 
         using var db = await _dbFactory.CreateDbContextAsync();
-        var exportServer = await BuildEffectiveServerAsync(db, site, sourceDefinition);
+        var exportServer = await HanaServerResolver.BuildEffectiveServerAsync(db, site, sourceDefinition);
         var sourceMappings = await db.SapSourceDefinitions
             .Where(s => s.SiteId == site.Id)
             .OrderBy(s => s.SortOrder)
@@ -57,33 +57,5 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
                 exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter);
 
         return new DataSourceFetchResult { Records = records };
-    }
-
-    private static async Task<HanaServer> BuildEffectiveServerAsync(
-        AppDbContext db, Site site, SourceSystemDefinition sourceDefinition)
-    {
-        var centralServer = await db.HanaServers
-            .AsNoTracking()
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync(x => x.SourceSystem == sourceDefinition.Code)
-            ?? throw new InvalidOperationException(
-                $"Fuer Quellsystem '{sourceDefinition.Code}' ist keine zentrale HANA-Konfiguration vorhanden.");
-
-        var credentials = DataSourceCredentials.Resolve(site, sourceDefinition);
-
-        return new HanaServer
-        {
-            Id = centralServer.Id,
-            SourceSystem = centralServer.SourceSystem,
-            Name = centralServer.Name,
-            Host = centralServer.Host,
-            Port = centralServer.Port,
-            Username = credentials.Username,
-            Password = credentials.Password,
-            DatabaseName = centralServer.DatabaseName,
-            UseSsl = centralServer.UseSsl,
-            ValidateCertificate = centralServer.ValidateCertificate,
-            AdditionalParams = centralServer.AdditionalParams
-        };
     }
 }

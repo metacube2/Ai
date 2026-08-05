@@ -114,6 +114,11 @@ builder.Services.AddSingleton<ExportOrchestrationService>();
 builder.Services.AddSingleton<TimerBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundService>());
 
+// Lesende Server-Analyse: laeuft nur, wenn im Ordner _analysis eine Triggerdatei liegt.
+// Notwendig, weil einzelne Standortsysteme (Indiens HANA) nur der Server erreicht und dort
+// weder Remoteausfuehrung noch RDP zur Verfuegung steht.
+builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
+
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();
 builder.Services.AddScoped<IStandortePageService, StandortePageService>();

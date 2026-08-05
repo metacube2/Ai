@@ -19,10 +19,64 @@ dass jemand Zeit in Produktsparten, Kurse oder Frachtkosten steckt.
 | 2 | Italien | Paola Castagna | versandfertig, siehe Hinweis zum Timing |
 | 3 | Indien | RanVijay Kumar | **gesendet 2026-07-31 09:56**, nur an die Trafag-Adresse |
 | 4 | USA | *offen* | **blockiert**, nur Adresse fehlt |
-| 5 | Deutschland | Rohail Munir | versandfertig |
+| 5 | Deutschland | Rohail Munir | versandfertig — **2026-08-03 komplett neu geschrieben**, alte Fassung war falsch adressiert, siehe unten |
 | 6 | Spanien | Santi Gomez | versandfertig |
 | 7 | UK | Cornell Williams | versandfertig, reine Bestätigung — **2026-07-31 korrigiert**, siehe unten |
 | — | CH / AT | entfällt | kein Standortversand, SAP-intern |
+
+---
+
+## Korrektur Deutschland, 2026-08-03: die Bitte war an die falsche Stelle gerichtet
+
+Die alte DE-Mail bat Rohail um drei Export-Erweiterungen (Lieferant, Kundenname/-land,
+RTF-Müll in der Bezeichnung). **Das war falsch: die Export-SQL ist unsere, nicht seine.**
+
+`AlphaplanExportPackage/scripte/alphaplanExport.ps1` Zeilen 143-202 und
+`alphaplandeltaexport.ps1` (identische Query) sind in diesem Repo geschrieben und lesen
+ausschliesslich `dbo.Belege` und `dbo.BelegePositionen`. Drei der vier DE-Lücken sind
+Spalten, die **unsere eigene Query nicht liest** — nicht Felder, die Deutschland nicht
+liefern könnte. Besonders deutlich bei der Kundenadresse: `RechnungsAdressenID` wird
+selektiert, aber nie auf einen Namen aufgelöst.
+
+| Lücke | gemessen | Eigentümer |
+| --- | --- | --- |
+| Lieferant (Nummer/Name/Land) | 7'171 von 7'171 leer | **uns** — Query liest keine Lieferantenspalte |
+| Kundenname und -land | 7'171 leer, Kundennummer 7'171 gefüllt | **uns** — `RechnungsAdressenID` nie aufgelöst |
+| Artikelbezeichnung | 2'903 von 7'171 mit Font-Müll | **uns** — Rich-Text-Feld der Belegposition gelesen |
+| `ArtikelNummer` = TR-AG-/SAP-`MATNR`? | 0 leer, aber Gleichheit unbelegt seit 2026-06-01 | **Deutschland** — echte Fachfrage |
+
+**Was den Fortschritt wirklich blockiert, ist das Alphaplan-Schema.** Wir haben keine
+Tabellen-/Spaltenliste für `ApDaten`: `candidate_objects.csv` im Repo-Root ist nur eine
+Kopfzeile, `obj/candidate_objects.csv` ist Sage Spanien, und die DB liegt auf
+`localhost\SQL2012` des DE-Servers hinter einem DPAPI-gebundenen Credential. **Deshalb
+keine Tabellennamen erfinden** — ein geratenes `JOIN dbo.Adressen` im ausgelieferten
+Skript wäre derselbe Fehler wie UK-2025 und das IT-Superlativ, nur mit längerer Zündschnur.
+
+Die neue Mail bittet daher nur noch um einen `INFORMATION_SCHEMA.COLUMNS`-Auszug
+(read-only, in SSMS einzufügen, gefiltert auf `%Adress%`/`%Artikel%`/`%Liefer%`/`%Kunde%`)
+und stellt die `ArtikelNummer`-Frage. Danach erweitern wir die Query selbst.
+
+Drei bewusste Entscheide in der Neufassung: (1) Der allgemeine
+„was wir *nicht* brauchen"-Kasten ist für DE **nicht** verwendbar — er sagt
+„Produktsparte ist egal, solange die Materialnummer zum TR-AG-Stamm passt", und genau das
+ist bei DE der ungeklärte Punkt 4; es gibt deshalb eine DE-Fassung ohne diesen Satz.
+(2) Alle vier Zahlen wurden am 2026-08-03 erneut gegen
+`Finance_Dashboard_Audit_All_2026-07-29.csv` nachgerechnet und stimmen exakt.
+(3) **Diese Mail ist die einzige der sieben auf Deutsch** (Rohail sitzt bei der Trafag GmbH),
+Anrede „Hallo Rohail" mit Sie-Form.
+
+**Technische Falle bei der deutschen Fassung:** `docs/mails/Build-StandortMails.ps1` ist reines
+ASCII ohne BOM. PowerShell 5.1 liest eine BOM-lose Datei als Windows-1252 — echte Umlaute im
+Skript landen deshalb als Mojibake in der Mail. Alle Umlaute stehen darum als HTML-Entities
+(`&uuml;`, `&auml;`, `&ouml;`, `&szlig;`), passend zu den schon vorhandenen `&mdash;`/`&nbsp;`.
+Wer den Text bearbeitet, muss das beibehalten; Prüfung: das `.ps1` darf nach der Änderung
+kein Zeichen ausserhalb `\x00-\x7F` enthalten, und die Vorschau-HTML keine `Ã`/`Â`-Folgen.
+
+Offen als Folgearbeit, sobald das Schema da ist: Query um Kundenname/-land und
+Lieferantenquelle erweitern, saubere Bezeichnung aus dem Artikelstamm statt RTF-Feld.
+Ob Alphaplan überhaupt einen Lieferanten auf der **Verkaufs**zeile führt oder nur einen
+Hauptlieferanten im Artikelstamm (das Gegenstück zu `OITM.CardCode`), ist ebenfalls offen —
+in der Spanien-Mail steht dieselbe Frage bereits, Formulierung dort übernehmen.
 
 ---
 
@@ -207,7 +261,21 @@ diesen Satz liest sich die Mail wie eine Erinnerung an die Zusage von Ende Augus
 
 ---
 
-## 3. Indien (TRIN)
+## 3. Indien (TRIN) — ÜBERHOLT AM 2026-08-05, NICHT MEHR VERSENDEN
+
+> **STOP.** Der folgende Abschnitt und der Entwurf `docs/mails/Build-RanVijayFollowup.ps1`
+> sind **fachlich falsch** und dürfen nicht verschickt werden. Sie bitten Indien, auf 1'271
+> Artikeln den *Preferred Vendor* nachzupflegen. Nach dem Call mit RanVijay Kumar vom
+> 2026-08-05 und drei Live-Analysen auf Indiens B1 ist belegt: **1'184 dieser Artikel sind
+> Eigenfertigung und brauchen überhaupt keinen Lieferanten**, weitere 94 sind über das Feld
+> `OITM."U_Tasc_ST"` („Sales Type") bereits eindeutig. Zu pflegen bleiben **66** Artikel
+> (Sales Type) plus **10** zu bestätigende Widersprüche.
+>
+> Gültiger Stand, Zahlen und Mailinhalt: **`docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`**.
+> Versandfertiger Anhang: `output/TRIN_Sales_Type_Offen_2026-08-05.xlsx`.
+>
+> Der Abschnitt bleibt als Historie stehen, weil die gesendete Mail vom 2026-07-31 belegt ist
+> und RanVijays Antwort sich darauf bezieht.
 
 **To:** `RanVijay.Kumar@trafag.com`
 **Cc:** *`agupta@tasc.co.in`, `chandra.s@tasc.co.in` — nur nach Klärung, siehe unten*

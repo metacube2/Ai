@@ -1,10 +1,22 @@
 # RAG Deployment
 
-Stand: 2026-08-03
+Stand: 2026-08-05
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: 2026-08-03, Commit `9e28086`
+- Letzter produktiv verifizierter Deploy: **2026-08-05, Server-Analyse**
+  (`ServerAnalysisBackgroundService`: lesende Diagnoseabfragen gegen Standort-B1,
+  ausgeloest ueber eine Triggerdatei in `_analysis`), `385/385` Tests gruen.
+  `BiDashboard.dll` `05.08.2026 10:59:50`, `4'037'632` Bytes, SHA256
+  `56AFD5AF156CD496A0EF42DFC5CF2E1FA724299BB632F3202FE0132131161B41`;
+  Release-Build und Server bitgleich. Produktiv-DB in Laenge und Schreibzeit
+  unveraendert (`338'472'960` Bytes, `03.08.2026 12:26:05`), `app_offline.htm`
+  gesetzt und wieder entfernt, `https://…/BiDashboard/` liefert HTTP `200`
+  (64'755 Bytes). Wirknachweis: Triggerlauf 11:13 und 11:20 haben Ergebnisdateien
+  erzeugt, Protokollkategorie `Server-Analyse` zeigt Start/Ende ohne Fehler.
+  Details: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+
+- Deploy davor: 2026-08-03, Commit `9e28086`
   (`Logistik > Stuecklistenanalyse`: Top-Down-/Bottom-Up-Dashboard), `353/353`
   Tests gruen. `BiDashboard.dll` `03.08.2026 06:59:38`, `4'024'832` Bytes,
   SHA256 `8D5586E5536C83A9EDB409472C332D190488898C3FE8E8DB2097C3131779B554`;
