@@ -4,7 +4,24 @@ Stand: 2026-08-06
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 09:41, Gruppenmarge in einer Klasse**,
+- Letzter produktiv verifizierter Deploy: **2026-08-06 11:06, Finance-Anzeige durchgesehen**,
+  Commit `d9d9a4f`, `433/433` Tests gruen. `BiDashboard.dll` `06.08.2026 11:06:26`,
+  `4'057'600` Bytes, SHA256
+  `E6CCF3C4AC6484DC8605338004A949835184DF67B9C9AEDFA6E13103C86FAF7E`. `app_offline.htm`
+  gesetzt und wieder entfernt, `https://…/BiDashboard/` liefert HTTP `200` (64'720 Bytes),
+  Produktiv-DB in Laenge und Schreibzeit unveraendert (`339'140'608` Bytes,
+  `06.08.2026 09:17:59`). Wirknachweis im Deploy-Artefakt: `IsCostBasisKnown` und
+  `CostBasisUnknown` sind in der ausgelieferten DLL enthalten (zur SHA-Pruefung siehe
+  den Hinweis weiter unten).
+  **Behebt einen produktiven Anzeigefehler:** das Finance-Pruefbuch liess die Marge nur bei
+  der Waehrungsmaske leer. Eine fehlende Kostenbasis laeuft als 0 durch, also wies die Spalte
+  `Marge CHF` den vollen Umsatz und 100 % aus — neben einem Status, der „Lieferant unklar"
+  bzw. „Konzernkosten fehlen" sagte. Naeherungsweise ~71'900 von 96'059 Zeilen betroffen
+  (Tabelle im Cockpit und Excel-Export `Finance_Pruefbuch`; der zentrale Excel-Nachweis war
+  korrekt, dort steht die Marge als Blattformel mit `WENN(Status=OK)`).
+  Details: `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md`.
+
+- Deploy davor: **2026-08-06 09:41, Gruppenmarge in einer Klasse**,
   Commit `515ab9d` (`GroupMarginCalculator`: Lieferantentyp, Kostenbasis, Kostenquelle und Status
   fuer Excel-Nachweis UND Cockpit aus einer Hand; Kostenbasisregeln als geordnete Kette),
   `431/431` Tests gruen. `BiDashboard.dll` `06.08.2026 09:41:56`, `4'054'528` Bytes, SHA256

@@ -11,7 +11,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS (noch nicht deployed):
+- 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS — DEPLOYED UND VERIFIZIERT
+  (Deploy 11:06, `BiDashboard.dll` `4'057'600` Bytes, SHA256 `E6CCF3C4…`, HTTP 200,
+  `IsCostBasisKnown` in der ausgelieferten DLL belegt, Produktiv-DB unveraendert):
   beim Durchgehen der Finance-Anzeige gefunden. `BuildFinanceAuditLedgerRows` liess die Marge
   nur bei der Waehrungsmaske leer. Eine FEHLENDE Kostenbasis laeuft aber als 0 durch, also
   ergab „Umsatz minus Kosten" den vollen Umsatz — Spalte `Marge CHF` und `MarginPercent`
@@ -25,7 +27,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `IsOpen` dafuer zu grob ist: bei „Kostenwaehrung abweichend" IST die Kostenbasis bekannt,
   nur in anderer Waehrung — die CHF-Marge bleibt dort korrekt rechenbar und wird weiter
   gezeigt (durch einen bestehenden Test gepinnt).
-- 2026-08-06, ANZEIGE NACHGEZOGEN (noch nicht deployed): die Statusfarbe im Cockpit stand als
+- 2026-08-06, ANZEIGE NACHGEZOGEN (im Deploy 11:06 enthalten): die Statusfarbe im Cockpit stand als
   eigene Aufzaehlung neben `GroupMarginStatuses.Open` und kannte „Kostenwaehrung abweichend"
   nicht — der Status wurde blau statt orange gezeigt, obwohl die Kennzahl „offene Kostenbasis"
   ihn mitzaehlt. Die Farbe folgt jetzt `IsOpen`, also der Statusdefinition selbst. Die
@@ -45,7 +47,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   KEIN Standort einen fix/variabel-Split liefert (0 von 96'059 Zeilen gemessen) — korrekt
   angezeigt, das Feature ist heute aber wirkungslos. `EstimatedMarginTotal` im aelteren
   Cockpit-Teil rechnet Umsatz minus geschaetzte Kosten, wird aber nirgends angezeigt oder
-  exportiert (toter Code).
+  exportiert (toter Code). Vollstaendiges Pruefprotokoll:
+  `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md`.
 - 2026-08-06, DAS FELD IST PRODUKTIV ANGEKOMMEN: der TRIN-Export 06:54 fuellt Sales Type auf
   **6'664 von 7'094 Zeilen (93,9 %)** (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430), Trafag-
   Sachnummer auf 3'625. **5'868** `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.
