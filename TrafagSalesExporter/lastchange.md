@@ -33,8 +33,19 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   obwohl der Status seit heute 137 indische Zeilen betrifft; die Tabelle fuehrt ihn jetzt
   mit der Abgrenzung zu „Standardpreis fehlt". Der Hinweistext im Gruppenmarge-Tab beschrieb
   noch die MVP-Regel von vor dem Konzernkosten-Umbau und ist jetzt die tatsaechliche
-  Regelkette. Kachel „Kostenbasis" heisst wie die Tabellenspalte „Bekannte Kostenbasis" —
+  Regelkette; derselbe veraltete Stand stand als Hinweis im Finance-Ergebnis
+  („echte Konzern-Standardkosten sind noch nicht angebunden" — seit 2026-08-05 falsch).
+  Kachel „Kostenbasis" heisst wie die Tabellenspalte „Bekannte Kostenbasis" —
   die Summe enthaelt offene Zeilen mit 0. `433/433` Tests gruen.
+- 2026-08-06, DURCHGESEHEN UND IN ORDNUNG (Finance): Laenderstatus und die Kacheln
+  „Laender OK"/„Zu pruefen" (Literale passen zum Erzeuger `BuildFinanceStatus`), Datenqualitaet,
+  Gutschriftkandidaten, Sparten-/Produktfinanzen, Finance-Pivot (keine Kostenlogik enthalten),
+  `BuildFinanceSummaryRow` (ausgeschlossene Zeilen tragen Wert 0, Summe ueber alle Zeilen ist
+  daher gleich der Summe ueber die eingeschlossenen). Deckungsbeitrag ist ueberall „-", weil
+  KEIN Standort einen fix/variabel-Split liefert (0 von 96'059 Zeilen gemessen) — korrekt
+  angezeigt, das Feature ist heute aber wirkungslos. `EstimatedMarginTotal` im aelteren
+  Cockpit-Teil rechnet Umsatz minus geschaetzte Kosten, wird aber nirgends angezeigt oder
+  exportiert (toter Code).
 - 2026-08-06, DAS FELD IST PRODUKTIV ANGEKOMMEN: der TRIN-Export 06:54 fuellt Sales Type auf
   **6'664 von 7'094 Zeilen (93,9 %)** (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430), Trafag-
   Sachnummer auf 3'625. **5'868** `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.

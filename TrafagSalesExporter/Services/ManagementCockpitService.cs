@@ -605,7 +605,9 @@ public class ManagementCockpitService : IManagementCockpitService
         var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts);
         var financePivot = BuildFinancePivotResult(allRows, year);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
-        notices.Add("Gruppenmarge ist ein MVP: als intern/Intercompany gilt jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Externe Lieferanten verwenden Kosten aus der Verkaufszeile, interne die vorhandene Standardkostenbasis. Echte Konzern-Standardkosten je Liefergesellschaft (MBEW-STPRS bzw. SAP B1) sind noch nicht angebunden. Fehlende Standardkosten werden markiert, nicht geschaetzt.");
+        // Dieser Hinweis stand bis 2026-08-06 auf dem Stand vor dem Konzernkosten-Umbau und sagte,
+        // die echten Konzern-Standardkosten seien noch nicht angebunden - seit 2026-08-05 sind sie es.
+        notices.Add("Gruppenmarge: Kostenbasis sind die Konzern-Standardkosten TR AG (SAP MBEW-STPRS, CHF), sobald die Trafag-Sachnummer der Zeile dort gefunden wird. Verkauft ein Standort Ware einer anderen Konzerngesellschaft (Sales Type LRD) ohne solchen Treffer, bleibt die Zeile offen, weil der lokale Preis dort der IC-Einkaufspreis ist. Sonst gilt der lokale Standardpreis; als intern gilt zusaetzlich jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Den Sales Type liefert bisher nur TRIN. Fehlende Werte werden markiert, nicht geschaetzt.");
         notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
             ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem Jahreskurs in die Verkaufswaehrung umgerechnet (Schalter in den Export-Einstellungen)."
             : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'), bis der Fachentscheid vorliegt (Schalter in den Export-Einstellungen).");
