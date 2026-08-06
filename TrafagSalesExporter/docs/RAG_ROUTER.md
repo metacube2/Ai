@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-08-01
+Stand: 2026-08-06
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber
@@ -31,6 +31,11 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
    `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` vor den Feldluecken-Dateien vom Juli.
    Abschnitt 3 in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` ist ueberholt.
 10. Arbeitsregeln, Tests und fachliche Grenzen: `persona.md`.
+11. **Bevor ein Gruppenmargen-Statustext geaendert oder ein neuer eingefuehrt wird:**
+    `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` Abschnitt 5a lesen. Der Statustext `"OK"`
+    steht zusaetzlich als Zeichenkette in der Excel-Formel des Nachweises; eine Umbenennung
+    laesst dort STILL alle Margen leer — kein Compiler, kein Test schlaegt an. Statuswerte
+    selbst gehoeren ausschliesslich in `Services/GroupMarginStatuses.cs`.
 
 ## Themenverzeichnis
 
@@ -40,6 +45,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Finance Cockpit, Soll/Ist, Regeln, Laender | `docs/rag/FINANCE.md` |
 | Finance Formeln, Waehrung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
+| **Stimmt eine Finance-Anzeige? Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen zentrales Excel** | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |
 | **Export-SQL DE/ES gehoert UNS** (Feld fehlt = Query liest es nicht) | `docs/rag/MANUAL_IMPORT.md` Abschnitt „Skripthoheit" |
 | Spanien Buchungsdatum/PostingDate | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |

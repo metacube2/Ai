@@ -9,6 +9,21 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
+## Offene Punkte (nicht erledigt)
+
+- **Statustext `"OK"` steht als Zeichenkette in der Excel-Formel** des Nachweises
+  (`Services/ExcelExportService.cs`, Blatt „Gruppenmarge Details", Spalten 19 und 20:
+  `IF(B{Zeile}="OK",Q-R,"")`). Eine Umbenennung von `GroupMarginStatuses.Ok` liesse dort
+  STILL alle Margen leer — der Compiler sieht nur einen String, und die Tests werten
+  Formeln nicht aus. Kein aktueller Defekt, aber eine Falle fuer die naechste Umbenennung.
+  Fix, Nachweisidee und Begruendung: `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md`
+  Abschnitt 5a. Soll mit dem naechsten Deploy mitgehen.
+- Waehrungsmaskierung (`status == OK && conversion.IsMasked`) steht an drei Aufrufstellen
+  einzeln statt im Rechner — letzte gespiegelte Stelle der Rechnung.
+- Mail an RanVijay (Cc Andreas) zu den offenen TRIN-Artikeln: Artikel-Liste vor dem Versand
+  gegen den Datenstand 2026-08-06 neu ableiten, nicht die Datei vom 2026-08-05 wiederverwenden.
+- Innenumsatz-Frage an Andreas: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a.
+
 ## Aktueller Kurzstand
 
 - 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS — DEPLOYED UND VERIFIZIERT

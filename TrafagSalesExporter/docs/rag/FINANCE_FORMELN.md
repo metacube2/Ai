@@ -1,6 +1,6 @@
 # RAG Finance-Formeln (Zeilenverarbeitung/Mechanik)
 
-Stand: 2026-07-27
+Stand: 2026-08-06
 
 Zweck: Kompakte, code-verifizierte Referenz WIE Waehrungsumrechnung, Marge/Standardkosten
 und Land-Formeln rechnen — nicht Deploy-Historie (die steht in `docs/rag/FINANCE.md`).
@@ -82,6 +82,18 @@ Marge %              = Marge / Umsatz
 ```
 `Marge`/`%` werden zu `-`, sobald die Kostenbasis fuer eine Zeile (und damit fuer die
 ganze Land/Sparte-Gruppe) nicht vollstaendig geklaert ist.
+
+**Gerechnet wird das genau einmal:** `Services/GroupMarginCalculator.cs` (Lieferantentyp,
+Kostenbasis als geordnete Regelkette, Kostenquelle, Status) — gemeinsam fuer Excel-Nachweis
+UND Cockpit, gepinnt durch `GroupMarginConsistencyTests` ueber beide Einstiegspunkte.
+Statuswerte, die Definition von „offen" und die Sortierung stehen ausschliesslich in
+`Services/GroupMarginStatuses.cs`. Zwei Pruefungen dort NICHT verwechseln:
+`IsOpen` (Kostenbasis nicht belastbar, inkl. Waehrungsabweichung) und `IsCostBasisKnown`
+(Kostenbasis ueberhaupt vorhanden). Wer eine Marge rechnet, braucht `IsCostBasisKnown` —
+bei „Kostenwaehrung abweichend" IST die Kostenbasis bekannt, nur in anderer Waehrung.
+Genau diese Verwechslung liess das Pruefbuch bis 2026-08-06 den vollen Umsatz als Marge
+ausweisen. Hintergrund und OFFENER PUNKT (Statustext `"OK"` als Zeichenkette in der
+Excel-Formel): `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md`.
 
 **Kostenbasis-Herkunft:**
 - Externer Lieferant: lokale Kostenzeile aus der Quelle (DE: `NettoPreisGesamt -

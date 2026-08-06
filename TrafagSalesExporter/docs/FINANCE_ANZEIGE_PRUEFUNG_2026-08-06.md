@@ -108,9 +108,50 @@ deren Quellsysteme kein Lieferantenfeld liefern (siehe
 
 ## 5. Offen
 
+### 5a. Statustext `"OK"` steht als Zeichenkette in der Excel-Formel (nicht behoben)
+
+**Wo:** `Services/ExcelExportService.cs`, Blatt „Gruppenmarge Details", die beiden
+Formelzuweisungen fuer Marge und Marge-%:
+
+```csharp
+ws.Cell(rowIndex, 19).FormulaA1 = $"IF(B{rowIndex}=\"OK\",Q{rowIndex}-R{rowIndex},\"\")";
+ws.Cell(rowIndex, 20).FormulaA1 = $"IF(B{rowIndex}=\"OK\",IF(Q{rowIndex}=0,\"\",S{rowIndex}/Q{rowIndex}),\"\")";
+```
+
+**Das Problem:** die Formel vergleicht gegen das Literal `"OK"`, nicht gegen
+`GroupMarginStatuses.Ok`. Wird der Statustext dort je umbenannt, trifft die Bedingung nie mehr
+zu und **saemtliche Margen im zentralen Excel-Nachweis bleiben still leer**. Es gibt keine
+Warnung dafuer:
+
+- der Compiler sieht nur einen String,
+- die Tests lesen Zellwerte, und ClosedXML wertet Formeln nicht aus — die Formel wird also
+  geschrieben, aber nie gerechnet,
+- `GroupMarginConsistencyTests` vergleicht Status, Lieferantentyp, Kostenquelle und
+  Kostenbasis, NICHT die Marge (die stimmt bisher als Folge dieser vier ueberein).
+
+Es ist dieselbe Fehlerklasse wie die Statusfarbe und die doppelte Statusliste, nur in einem
+Formelstring, wo kein Werkzeug sie findet.
+
+**Fix (klein):** die Konstante in die Formel interpolieren, z. B.
+
+```csharp
+$"IF(B{rowIndex}=\"{GroupMarginStatuses.Ok}\",Q{rowIndex}-R{rowIndex},\"\")"
+```
+
+**Nachweis danach:** einen Test ergaenzen, der die Zelle nicht auswertet, sondern ihren
+`FormulaA1`-Text liest und prueft, dass `GroupMarginStatuses.Ok` darin vorkommt. Damit ist die
+letzte Stelle abgedeckt, an der ein Statustext ausserhalb von `GroupMarginStatuses` steht.
+
+**Warum nicht sofort erledigt:** der Deploy vom 2026-08-06 11:06 war zu diesem Zeitpunkt schon
+draussen; die Aenderung soll mit dem naechsten Deploy mitgehen, nicht einen eigenen ausloesen.
+Bis dahin besteht KEIN akutes Fehlverhalten — der Statustext heisst `OK`, die Formel stimmt.
+Es ist eine Falle fuer die naechste Umbenennung, kein aktueller Defekt.
+
+### 5b. Weitere offene Punkte
+
 - Die Maskierung bei abweichender Kostenwaehrung (`status == OK && conversion.IsMasked`) steht
   weiterhin an drei Aufrufstellen einzeln statt im Rechner. Alle drei tun dasselbe (geprueft),
-  aber es ist die letzte gespiegelte Stelle.
+  aber es ist die letzte gespiegelte Stelle in der Rechnung.
 - Geprueft wurde der Finance-Bereich. Einkauf, Logistik und Stammdaten sind nicht Teil dieser
   Durchsicht.
 
