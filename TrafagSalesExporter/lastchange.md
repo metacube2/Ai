@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-05
+Stand: 2026-08-06
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -11,6 +11,30 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, GRUPPENMARGE JETZT IN EINER KLASSE — COMMITTET (`515ab9d`), ABER NICHT DEPLOYED
+  UND NICHT GEPUSHT (`dotnet publish` und `git push` wurden vom Berechtigungsfilter abgelehnt;
+  auf dem Server laeuft weiter `9cb9c37` vom 2026-08-05 15:48). Die Kostenlogik stand doppelt da
+  — `ExcelExportService` auf `SalesRecord`, `ManagementCockpitService` auf
+  `FinanceAggregationRow`, 48 von rund 95 Zeilen identisch — und war beim Einbau von
+  „Konzernkosten fehlen" bereits AUSEINANDERGELAUFEN: das Cockpit rief die Statusfunktion ohne
+  das neue Kennzeichen auf und zeigte fuer dieselbe Zeile „Standardpreis fehlt", der Audit-Ledger
+  kannte den Status gar nicht, Sortierung, Offen-Zaehler und Statusfarbe uebergingen ihn, und die
+  Excel-Formel je Land widersprach der Gesamtsumme im selben Nachweis. Jetzt rechnet nur noch
+  `Services/GroupMarginCalculator.cs`; beide Dienste bilden ihre Zeile auf `GroupMarginLine` ab.
+  Die drei Abweichungen zur Kostenbasis sind benannte Regeln in einer geordneten Kette
+  (`GroupStandardCost` → `GroupDistributionWithoutGroupCost` → `LocalStandardCost`), die
+  Reihenfolge ist die Fachregel und wird getestet. Statuswerte, Offen-Definition und Sortierung
+  stehen vollstaendig in `GroupMarginStatuses`, die Excel-Formeln werden daraus erzeugt.
+  `GroupMarginConsistencyTests` schickt dieselbe Zeile durch BEIDE oeffentlichen Einstiegspunkte
+  und verlangt gleiche Ergebnisse — ein reiner Test der Rechenklasse waere gruen geblieben,
+  waehrend die Aufrufstelle das Ergebnis wegwirft. `431/431` Tests gruen (vorher `406`), Saldo
+  −298/+158 Zeilen in den beiden Diensten. Details:
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 7d.
+- 2026-08-06, DEUTSCHLAND-MAIL WAR FALSCH ADRESSIERT (`0f15b1e`): die Alphaplan-Export-SQL ist
+  UNSERE (`AlphaplanExportPackage/scripte/alphaplanExport.ps1`), Lieferant und Kundenname fehlen,
+  weil unsere Query sie nicht liest. Einzige echte Bitte an Rohail ist ein Schemaauszug. Gilt
+  genauso fuer Spanien (`PostingDate` auf allen 5'504 Zeilen leer). Siehe `docs/rag/MANUAL_IMPORT.md`
+  Abschnitt „Skripthoheit".
 - CALL 2026-08-05, INDIEN: DAS FELD HEISST „SALES TYPE", PREFERRED-VENDOR-BITTE IST UEBERHOLT.
   RanVijay hatte eingewandt, dass viele Artikel bei TR IN lokal gefertigt werden — bei
   Eigenfertigung gibt es keinen Vorlieferanten, `OITM.CardCode` waere dort sachlich falsch

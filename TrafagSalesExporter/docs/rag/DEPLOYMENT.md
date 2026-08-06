@@ -1,6 +1,20 @@
 # RAG Deployment
 
-Stand: 2026-08-05
+Stand: 2026-08-06
+
+## Offen: committet, aber NICHT deployed
+
+- Commit `515ab9d` (**Gruppenmarge in einer Klasse**, `GroupMarginCalculator`), `431/431` Tests
+  gruen, Release-Build lokal erfolgreich. **Weder deployed noch gepusht** — beides wurde in der
+  Sitzung vom Berechtigungsfilter abgelehnt (`dotnet publish` auf die Freigabe und `git push`).
+  Auf dem Server laeuft weiterhin der Stand vom 2026-08-05 15:48 (`9cb9c37`). Der Deploy behebt
+  eine bereits produktive Abweichung: das Cockpit zeigt fuer LRD-Zeilen ohne Konzernkostentreffer
+  „Standardpreis fehlt", der Excel-Nachweis „Konzernkosten fehlen", und die Kennzahl „offene
+  Kostenbasis" zaehlt diese Zeilen im Cockpit nicht mit. Details:
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 7d.
+- Ebenfalls noch nicht geprueft: ob der TRIN-Export `SalesType`/`GroupMaterialNumber` inzwischen
+  gefuellt hat. Die Produktiv-DB ist am 2026-08-06 gewachsen (`339'140'608` Bytes, `09:17:59`),
+  die lesende Abfrage wurde aber ebenfalls abgelehnt.
 
 ## Kurzstand
 
