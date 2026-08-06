@@ -26,8 +26,12 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- 2026-08-06, NEUE EINKAUF-/LOGISTIK-REITER LOKAL UMGESETZT, NOCH NICHT
-  COMMITTED ODER DEPLOYED: fuenf getrennte additive Routen fuer
+- 2026-08-06, NEUE EINKAUF-/LOGISTIK-REITER DEPLOYED UND VERIFIZIERT
+  (15:11 MESZ, Commit `01af1b8`, `446/446` Tests vor dem Commit nachgerechnet;
+  `BiDashboard.dll` `4'291'072` Bytes, SHA256 `29B9DFC6…`; Startseite und alle
+  fuenf neuen Routen liefern HTTPS `200` mit Inhalt; Typen
+  `SupplyChainAnalysisService`/`SupplyChainAnalysisKind` in der ausgelieferten
+  DLL belegt; der Dienst ist rein lesend): fuenf getrennte additive Routen fuer
   Materialdisposition/Fehlteile, Bestellbedarf/Deckung, Materialabhaengigkeit,
   Dispositionspruefung und Lieferperformance-Datenstatus. Bestehende Spend-,
   Bestell-, Lieferanten- und Stuecklistenreiter sowie deren Berechnungen wurden

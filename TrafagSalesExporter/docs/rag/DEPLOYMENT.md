@@ -4,7 +4,29 @@ Stand: 2026-08-06
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 14:24, HR-ZH-Feiertage
+- Letzter produktiv verifizierter Deploy: **2026-08-06 15:11, fuenf neue Supply-Chain-Reiter
+  (Einkauf/Logistik)**, Funktionscommit `01af1b8`, `446/446` Tests gruen (vor dem Commit
+  nachgerechnet, nicht uebernommen). `BiDashboard.dll` `06.08.2026 15:11:34`, `4'291'072`
+  Bytes, SHA256 `29B9DFC6F46F74840431966E82040066F7B66FDD3AC8F12F73B4DF8F04761A61`.
+  `app_offline.htm` gesetzt und wieder entfernt. Startseite und **alle fuenf neuen Routen**
+  liefern HTTPS `200` mit Inhalt: `/logistik/materialdisposition` (81'078 Bytes),
+  `/logistik/dispositionspruefung` (82'156), `/einkauf/bestellbedarf` (92'149),
+  `/einkauf/materialabhaengigkeit` (102'922), `/einkauf/lieferperformance` (110'214).
+  Wirknachweis in der DLL: `SupplyChainAnalysisService`, `SupplyChainAnalysisKind`,
+  `SupplyChainUiTextCatalog`, `DeliveryPerformance`.
+  Die Aenderung ist additiv: `Program.cs` +1 Zeile (DI), `DatabaseSeedService`,
+  `NavigationIconResolver` und `UiTextService` zusammen +17 Zeilen; bestehende Einkaufs-,
+  Spend-, Lieferanten- und Stuecklisten-Reiter unveraendert. Der Dienst ist rein lesend
+  (kein `INSERT`/`UPDATE`/`DELETE`).
+  **Bewusst keine OTIF-Kennzahl:** das Ist-Wareneingangsdatum aus EKBE/MSEG/MATDOC fehlt,
+  deshalb weist die Lieferperformance nur das Plantermin-Risiko aus EKET aus und benennt
+  die Luecke, statt eine Zahl zu schaetzen.
+  Produktiv-DB: `339'210'240` Bytes / `06.08.2026 15:11:04` gegenueber `339'197'952` /
+  `12:40:26` davor — die Aenderung stammt aus dem laufenden Betrieb bzw. dem WAL-Flush beim
+  Herunterfahren, nicht aus dem Publish (keine Migration in diesem Stand).
+  Details: `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md`.
+
+- Deploy davor: **2026-08-06 14:24, HR-ZH-Feiertage
   und Filtervertrag**, Funktionscommit `9435a5d`, `438/438` Tests gruen.
   `BiDashboard.dll` `06.08.2026 14:24:10`, `4'137'472` Bytes, SHA256
   `B8391FBFC69DBB6B45F93D1D6AF3D8FC621C34FD11405C14A0E52BF98397B7B0`.
