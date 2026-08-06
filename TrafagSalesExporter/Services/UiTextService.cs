@@ -1151,6 +1151,10 @@ public sealed class UiTextService : IUiTextService
             PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completePurchasingTranslations) &&
             completePurchasingTranslations.TryGetValue(german, out var completePurchasingTranslation))
             return completePurchasingTranslation;
+        if (_currentLanguage is "tlh" &&
+            SupplyChainUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var completeSupplyChainTranslations) &&
+            completeSupplyChainTranslations.TryGetValue(german, out var completeSupplyChainTranslation))
+            return completeSupplyChainTranslation;
 
         if (Translations.TryGetValue(_currentLanguage, out var languageTranslations) &&
             languageTranslations.TryGetValue(german, out var translated))
@@ -1164,6 +1168,9 @@ public sealed class UiTextService : IUiTextService
         if (PurchasingUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var purchasingGenerated) &&
             purchasingGenerated.TryGetValue(german, out var purchasingGeneratedTranslation))
             return purchasingGeneratedTranslation;
+        if (SupplyChainUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var supplyChainGenerated) &&
+            supplyChainGenerated.TryGetValue(german, out var supplyChainGeneratedTranslation))
+            return supplyChainGeneratedTranslation;
         return LogisticsUiTextGeneratedTranslations.All.TryGetValue(_currentLanguage, out var logisticsGenerated) &&
                logisticsGenerated.TryGetValue(german, out var logisticsGeneratedTranslation)
             ? logisticsGeneratedTranslation

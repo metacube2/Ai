@@ -132,6 +132,7 @@ builder.Services.AddScoped<IPurchasingDataSourcePageService, PurchasingDataSourc
 builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>();
 builder.Services.AddScoped<IPurchasingDataRefreshService, PurchasingDataRefreshService>();
 builder.Services.AddScoped<IMaterialUsageDataRefreshService, MaterialUsageDataRefreshService>();
+builder.Services.AddScoped<ISupplyChainAnalysisService, SupplyChainAnalysisService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();
 builder.Services.AddScoped<IFinanceCockpitAccessService, FinanceCockpitAccessService>();
 builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();

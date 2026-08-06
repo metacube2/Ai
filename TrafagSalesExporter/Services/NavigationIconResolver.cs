@@ -18,6 +18,7 @@ public static class NavigationIconResolver
         "Groups" => Icons.Material.Filled.Groups,
         "Hub" => Icons.Material.Filled.Hub,
         "InsertChart" => Icons.Material.Filled.InsertChart,
+        "Inventory" => Icons.Material.Filled.Inventory,
         "Lightbulb" => Icons.Material.Filled.Lightbulb,
         "List" => Icons.Material.Filled.List,
         "LocalShipping" => Icons.Material.Filled.LocalShipping,
@@ -26,6 +27,7 @@ public static class NavigationIconResolver
         "Payments" => Icons.Material.Filled.Payments,
         "PeopleAlt" => Icons.Material.Filled.PeopleAlt,
         "PendingActions" => Icons.Material.Filled.PendingActions,
+        "PlaylistAddCheck" => Icons.Material.Filled.PlaylistAddCheck,
         "PieChart" => Icons.Material.Filled.PieChart,
         "Public" => Icons.Material.Filled.Public,
         "QueryStats" => Icons.Material.Filled.QueryStats,
@@ -42,6 +44,7 @@ public static class NavigationIconResolver
         "Tune" => Icons.Material.Filled.Tune,
         "UploadFile" => Icons.Material.Filled.UploadFile,
         "Verified" => Icons.Material.Filled.Verified,
+        "EventAvailable" => Icons.Material.Filled.EventAvailable,
         "ViewInAr" => Icons.Material.Filled.ViewInAr,
         "WarningAmber" => Icons.Material.Filled.WarningAmber,
         _ => Icons.Material.Filled.Circle

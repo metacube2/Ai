@@ -89,10 +89,12 @@ public class UiTextServiceTests
             var translations = UiTextGeneratedTranslations.All[language];
             var purchasingTranslations = PurchasingUiTextGeneratedTranslations.All[language];
             var logisticsTranslations = LogisticsUiTextGeneratedTranslations.All[language];
+            var supplyChainTranslations = SupplyChainUiTextGeneratedTranslations.All[language];
             var missing = expected.Keys
                 .Where(key => !translations.ContainsKey(key) &&
                               !purchasingTranslations.ContainsKey(key) &&
-                              !logisticsTranslations.ContainsKey(key))
+                              !logisticsTranslations.ContainsKey(key) &&
+                              !supplyChainTranslations.ContainsKey(key))
                 .ToArray();
             Assert.True(missing.Length == 0, $"{language} is missing: {string.Join(" | ", missing)}");
 
@@ -102,7 +104,9 @@ public class UiTextServiceTests
                     ? generalTranslation
                     : purchasingTranslations.TryGetValue(pair.Key, out var purchasingTranslation)
                         ? purchasingTranslation
-                        : logisticsTranslations[pair.Key];
+                        : logisticsTranslations.TryGetValue(pair.Key, out var logisticsTranslation)
+                            ? logisticsTranslation
+                            : supplyChainTranslations[pair.Key];
                 Assert.False(string.IsNullOrWhiteSpace(translated), $"{language}/{pair.Key} is empty");
                 Assert.Equal(Placeholders(pair.Value), Placeholders(translated));
             }
@@ -176,6 +180,31 @@ public class UiTextServiceTests
     }
 
     [Fact]
+    public void SupplyChain_Translations_Cover_Every_New_Tab_Key_In_Every_Language()
+    {
+        Assert.Equal(
+            SupplyChainUiTextCatalog.All.Count,
+            SupplyChainUiTextCatalog.All.Select(pair => pair.German).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        foreach (var language in new[] { "es", "it", "hi", "sq", "tr", "tlh" })
+        {
+            var service = new UiTextService();
+            service.SetLanguage(language);
+            var translations = SupplyChainUiTextGeneratedTranslations.All[language];
+            foreach (var pair in SupplyChainUiTextCatalog.All)
+            {
+                Assert.True(translations.TryGetValue(pair.German, out var translated),
+                    $"{language} is missing supply-chain text: {pair.German}");
+                Assert.False(string.IsNullOrWhiteSpace(translated));
+                Assert.Equal(Placeholders(pair.English), Placeholders(translated));
+            }
+
+            Assert.NotEqual("Material planning & shortages",
+                service.Text("Materialdisposition & Fehlteile", "Material planning & shortages"));
+        }
+    }
+
+    [Fact]
     public void Purchasing_Pages_React_To_Language_Changes_And_Language_Is_Scoped()
     {
         var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
@@ -201,6 +230,7 @@ public class UiTextServiceTests
         var invalid = UiTextGeneratedTranslations.All["tlh"]
             .Concat(PurchasingKlingonOverrides.All)
             .Concat(LogisticsKlingonOverrides.All)
+            .Concat(SupplyChainUiTextGeneratedTranslations.All["tlh"])
             .Where(pair => pair.Value.Any(character => character > 127 &&
                 CharUnicodeInfo.GetUnicodeCategory(character) is UnicodeCategory.UppercaseLetter
                     or UnicodeCategory.LowercaseLetter

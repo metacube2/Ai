@@ -259,6 +259,11 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("purchasing-contracts", "purchasing", "Kontrakte", "Contracts", "Assignment", "einkauf/kontrakte", 40, "All"),
         Link("purchasing-suppliers", "purchasing", "Lieferanten", "Suppliers", "Verified", "einkauf/lieferanten", 50, "All"),
         Link("purchasing-breakdown", "purchasing", "Spend-Aufriss", "Spend breakdown", "AccountTree", "einkauf/aufriss", 55, "All"),
+        // Additive Supply-Chain-Reiter 2026-08-06. Eigene Routen und eigener Read-only-Service;
+        // keine bestehende Einkaufsseite oder Berechnung wird ersetzt.
+        Link("purchasing-coverage", "purchasing", "Bestellbedarf & Deckung", "Purchase demand & coverage", "PlaylistAddCheck", "einkauf/bestellbedarf", 56, "All"),
+        Link("purchasing-material-dependency", "purchasing", "Materialabhaengigkeit", "Material dependency", "Hub", "einkauf/materialabhaengigkeit", 57, "All"),
+        Link("purchasing-delivery-performance", "purchasing", "Lieferperformance", "Delivery performance", "EventAvailable", "einkauf/lieferperformance", 58, "All"),
         Group("purchasing-ideas", "purchasing", "Ideen", "Ideas", "Lightbulb", 60, expanded: true),
         Link("purchasing-ideas-overview", "purchasing-ideas", "Uebersicht", "Overview", "Lightbulb", "einkauf/ideen", 10, "All"),
         Link("purchasing-idea-data-service", "purchasing-ideas", "Einkauf-Datenservice", "Purchasing data service", "Storage", "einkauf/ideen/datenservice", 20, "All"),
@@ -275,6 +280,8 @@ public class DatabaseSeedService : IDatabaseSeedService
         // werden, starten aber bewusst als eigenes Thema.
         Group("logistics", null, "Logistik", "Logistics", "LocalShipping", 35),
         Link("logistics-bom-analysis", "logistics", "Stuecklistenanalyse", "BOM analysis", "AccountTree", "logistik/stuecklistenanalyse", 10, "All"),
+        Link("logistics-material-disposition", "logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Inventory", "logistik/materialdisposition", 20, "All"),
+        Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
         Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)

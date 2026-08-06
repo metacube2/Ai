@@ -2,6 +2,11 @@
 
 Stand: 2026-08-01
 
+Ergaenzung 2026-08-06: Die bestehende Stuecklistenanalyse bleibt unveraendert.
+Zwei getrennte, additive Logistik-Reiter fuer `Materialdisposition & Fehlteile`
+und `Dispositionspruefung` verwenden denselben Cache nur lesend. Details:
+`docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md`.
+
 ## Zweck und aktueller Umfang
 
 Die Seite `Logistik > Stuecklistenanalyse` stellt den zuletzt geladenen

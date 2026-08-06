@@ -26,6 +26,16 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, NEUE EINKAUF-/LOGISTIK-REITER LOKAL UMGESETZT, NOCH NICHT
+  COMMITTED ODER DEPLOYED: fuenf getrennte additive Routen fuer
+  Materialdisposition/Fehlteile, Bestellbedarf/Deckung, Materialabhaengigkeit,
+  Dispositionspruefung und Lieferperformance-Datenstatus. Bestehende Spend-,
+  Bestell-, Lieferanten- und Stuecklistenreiter sowie deren Berechnungen wurden
+  nicht ersetzt. Filter wirken vor Kennzahlen, Prioritaetsbalken und Details.
+  Echte OTIF bleibt wegen fehlendem Ist-Wareneingangsdatum sichtbar als
+  Datenluecke. Details:
+  `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md`.
+
 - 2026-08-06, HR-KRANKENQUOTE UND FILTERVERTRAG DEPLOYED UND VERIFIZIERT
   (14:24 MESZ, Commit `9435a5d`, `438/438` Tests): Der
   Arbeitstage-Nenner zieht neu die neun gesetzlichen Feiertage des Kantons

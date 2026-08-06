@@ -11,6 +11,12 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- Lokal umgesetzt am 2026-08-06, noch nicht deployed: fuenf additive
+  Einkauf-/Logistik-Reiter fuer Materialdisposition, Bestellbedarf/Deckung,
+  Materialabhaengigkeit, Dispositionspruefung und Lieferperformance-Datenstatus.
+  Bestehende Reiter und Berechnungen bleiben unveraendert. Echte OTIF wird
+  mangels Ist-Wareneingangsdatum bewusst nicht gerechnet. Details:
+  `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md`.
 - ZDISPO-Ergaenzung produktiv deployt und verifiziert am 2026-08-06 13:57
   MESZ, Commit `0a8a4c9`, `435/435` Tests. Startseite und direkter
   Spend-Aufriss liefern HTTPS `200`. Produktiv stehen `45` ZDISPO-Zuordnungen
