@@ -349,6 +349,13 @@ public sealed class HrKpiServiceTests : IDisposable
         var totalDays = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankheitstage Gesamt");
         Assert.Equal("Warning", totalDays.Severity);
         Assert.Contains("ACHTUNG", totalDays.Detail);
+
+        var overviewDays = Assert.Single(result.Metrics, metric => metric.Label == "Krankheitstage");
+        Assert.Equal("Absenzquote: Zeitraum nicht bestimmbar", overviewDays.Detail);
+        Assert.Equal("Warning", overviewDays.Severity);
+
+        var trafficLight = Assert.Single(result.TrafficLights, item => item.Area == "Krankenquote");
+        Assert.Equal("Gelb", trafficLight.Status);
     }
 
     [Fact]
@@ -364,6 +371,144 @@ public sealed class HrKpiServiceTests : IDisposable
         var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
         Assert.NotEqual("Zeitraum nicht bestimmbar", absenceRate.Value);
         Assert.EndsWith("%", absenceRate.Value);
+    }
+
+    [Fact]
+    public void ZurichWorkdayCalendar_Subtracts_All_Nine_Statutory_Holidays()
+    {
+        var holidays2026 = ZurichWorkdayCalendar.GetPublicHolidays(2026);
+
+        Assert.Equal(9, holidays2026.Count);
+        Assert.Contains(new DateTime(2026, 1, 1), holidays2026);
+        Assert.Contains(new DateTime(2026, 4, 3), holidays2026);  // Karfreitag
+        Assert.Contains(new DateTime(2026, 4, 6), holidays2026);  // Ostermontag
+        Assert.Contains(new DateTime(2026, 5, 1), holidays2026);
+        Assert.Contains(new DateTime(2026, 5, 14), holidays2026); // Auffahrt
+        Assert.Contains(new DateTime(2026, 5, 25), holidays2026); // Pfingstmontag
+        Assert.Contains(new DateTime(2026, 8, 1), holidays2026);
+        Assert.Contains(new DateTime(2026, 12, 25), holidays2026);
+        Assert.Contains(new DateTime(2026, 12, 26), holidays2026);
+
+        // Mi 01.04. bis Di 07.04. hat fuenf Wochentage; Karfreitag und Ostermontag
+        // sind gesetzliche ZH-Feiertage, also bleiben drei Arbeitstage.
+        Assert.Equal(3, ZurichWorkdayCalendar.CountWorkdays(
+            new DateTime(2026, 4, 1),
+            new DateTime(2026, 4, 7)));
+    }
+
+    [Fact]
+    public async Task BuildAsync_All_128_Global_Filter_Combinations_Keep_Every_Visible_Block_Consistent()
+    {
+        var baseline = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+        const int filterCount = 7;
+
+        for (var mask = 0; mask < (1 << filterCount); mask++)
+        {
+            var options = new HrKpiOptions { DataFolder = _folder };
+            if ((mask & (1 << 0)) != 0) options.Organisationseinheit = "Org A";
+            if ((mask & (1 << 1)) != 0) options.KostenstelleText = "100 / Org A";
+            if ((mask & (1 << 2)) != 0) options.Mitarbeitertyp = "Festangestellt";
+            if ((mask & (1 << 3)) != 0) options.EntryYear = 2020;
+            if ((mask & (1 << 4)) != 0) options.GlzAmpel = "Rot";
+            if ((mask & (1 << 5)) != 0) options.RestferienAmpel = "Rot";
+            if ((mask & (1 << 6)) != 0) options.SearchText = "Alpha";
+
+            var result = await _service.BuildAsync(options);
+            var expectedEmployees = baseline.Employees.Where(row =>
+                    (options.Organisationseinheit is null || row.Organisationseinheit == options.Organisationseinheit) &&
+                    (options.KostenstelleText is null || row.KostenstelleText == options.KostenstelleText) &&
+                    (options.Mitarbeitertyp is null || row.Mitarbeitertyp == options.Mitarbeitertyp) &&
+                    (!options.EntryYear.HasValue || row.Eintrittsdatum?.Year == options.EntryYear) &&
+                    (options.GlzAmpel is null || row.GlzAmpel == options.GlzAmpel) &&
+                    (options.RestferienAmpel is null || row.RestferienAmpel == options.RestferienAmpel) &&
+                    (options.SearchText is null || row.NameVoll.Contains(options.SearchText, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+            var expectedEmployeeNumbers = expectedEmployees
+                .Where(row => row.Personalnummer.HasValue)
+                .Select(row => row.Personalnummer!.Value)
+                .ToHashSet();
+
+            // Kostenstelle/GLZ/Restferien existieren nicht stabil in der Austrittsdatei und
+            // duerfen deshalb den Fluktuations-Nenner/-Zaehler nicht still verzerren.
+            var expectedLeavers = baseline.Leavers.Where(row =>
+                    (options.Organisationseinheit is null || row.Organisationseinheit == options.Organisationseinheit) &&
+                    (options.Mitarbeitertyp is null || row.Mitarbeitertyp == options.Mitarbeitertyp) &&
+                    (!options.EntryYear.HasValue || row.Eintrittsdatum?.Year == options.EntryYear) &&
+                    (options.SearchText is null || row.NameVoll.Contains(options.SearchText, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            Assert.Equal(
+                expectedEmployees.Select(row => row.NameVoll).OrderBy(value => value),
+                result.Employees.Select(row => row.NameVoll).OrderBy(value => value));
+            Assert.Equal(
+                baseline.Absences.Where(row => row.Personalnummer.HasValue && expectedEmployeeNumbers.Contains(row.Personalnummer.Value))
+                    .Select(row => row.Personalnummer).OrderBy(value => value),
+                result.Absences.Select(row => row.Personalnummer).OrderBy(value => value));
+            Assert.Equal(
+                expectedLeavers.Select(row => row.NameVoll).OrderBy(value => value),
+                result.Leavers.Select(row => row.NameVoll).OrderBy(value => value));
+
+            AssertEveryVisibleBlockIsConsistent(result, $"Filtermaske {mask}");
+        }
+    }
+
+    [Fact]
+    public async Task BuildAsync_Combined_Period_Turnover_And_Person_Filters_Keep_All_Visible_Blocks_Consistent()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions
+        {
+            DataFolder = _folder,
+            Year = 2024, // Von/Bis hat gemaess UI-Vertrag Vorrang.
+            FromDate = new DateTime(2025, 1, 1),
+            ToDate = new DateTime(2025, 12, 31),
+            EntryYear = 2020,
+            Organisationseinheit = "Org A",
+            KostenstelleText = "100 / Org A",
+            Mitarbeitertyp = "Festangestellt",
+            FluktuationFilter = "Fluktuationsrelevant",
+            GlzAmpel = "Rot",
+            RestferienAmpel = "Rot",
+            SearchText = "Alpha"
+        });
+
+        Assert.Equal("Alpha, Anna", Assert.Single(result.Employees).NameVoll);
+        Assert.Equal("Alpha, Anna", Assert.Single(result.Absences).Name);
+        Assert.Equal("Alpha, Anna", Assert.Single(result.Leavers).NameVoll);
+        Assert.Contains(result.TurnoverMetrics, metric => metric.Label == "Fluktuation YTD");
+        AssertEveryVisibleBlockIsConsistent(result, "kombinierte Filter");
+    }
+
+    private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
+    {
+        var employeeNumbers = result.Employees
+            .Where(row => row.Personalnummer.HasValue)
+            .Select(row => row.Personalnummer!.Value)
+            .ToHashSet();
+        var employeeNames = result.Employees.Select(row => row.NameVoll).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var leaverNumbers = result.Leavers
+            .Where(row => row.Personalnummer.HasValue)
+            .Select(row => row.Personalnummer!.Value)
+            .ToHashSet();
+
+        Assert.Equal(6, result.Metrics.Count);
+        Assert.True(result.TurnoverMetrics.Count >= 6, because);
+        Assert.Equal(7, result.AbsenceMetrics.Count);
+        Assert.Equal(8, result.TimeVacationMetrics.Count);
+        Assert.Equal(4, result.PeriodComparisonMetrics.Count);
+        Assert.Equal(5, result.TrafficLights.Count);
+        Assert.Equal(5, result.FileStatuses.Count);
+
+        Assert.Equal(employeeNumbers.Count, result.HeadcountByOrganisation.Sum(row => row.Count));
+        Assert.All(result.CriticalTimeBalances, row => Assert.Contains(row.NameVoll, employeeNames));
+        Assert.All(result.CriticalAbsences, row => Assert.Contains(row.NameVoll, employeeNames));
+        Assert.Equal(result.Absences.Sum(row => row.KrankheitstageGesamt), result.AbsenceByOrganisation.Sum(row => row.Value));
+        Assert.All(result.FluctuationRelevantLeavers, row => Assert.Contains(row.Personalnummer!.Value, leaverNumbers));
+
+        var funnelTotal = Assert.Single(result.TurnoverVisuals.FunnelSteps, row => row.Label == "Austritte Total");
+        Assert.Equal(leaverNumbers.Count, funnelTotal.Count);
+        Assert.Equal(
+            leaverNumbers.Count,
+            result.LeaversByOrganisation.Sum(row => row.Count));
     }
 
     private static void WriteFixtureFiles(string folder)

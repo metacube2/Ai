@@ -4,6 +4,13 @@ Stand: 2026-07-31
 
 ## Kurzstand
 
+- Seit 2026-08-06 zieht die Krankenquote bei den Arbeitstagen die neun
+  gesetzlichen Feiertage des Kantons Zuerich ab. Ein automatischer
+  Filtervertrag prueft 128 Kombinationen der sieben personenbezogenen Filter
+  ueber alle sichtbaren HR-Ergebnisbloecke sowie eine Vollkombination mit
+  Zeitraum und Fluktuation. Die Uebersicht zeigt bei nicht datierbaren
+  Rexx-Absenzen ebenfalls keine scheinbar genaue Quote mehr. Details:
+  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 - HR KPI Cockpit wurde um produktive Cockpit-Funktionen erweitert.
 - Enthalten sind Anleitung, Datenordner, Dateifrische, Datenstatus, Ampeln, Periodenvergleich, Datenqualitaet, Austritte, Absenzen, Managementsicht und Drucken/PDF.
 - Managementsicht anonymisiert Personennamen in Detailtabellen.
@@ -30,4 +37,5 @@ Stand: 2026-07-31
 
 - Nachdoku: `docs/HR_KPI_NACHDOKU_2026-05-13.md`
 - Fachpruefung: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
+- Feiertage/Filtervertrag: `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`
 - Anwenderdoku: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`

@@ -108,11 +108,14 @@ internal sealed class HrKpiDashboardBuilder
         absences = AggregateAbsencesByPerson(absences, analysisPeriod.Workdays);
         leavers = ApplyLeaverFilters(leavers, normalizedOptions).ToList();
         var turnoverPeriod = ResolveTurnoverPeriodScope(normalizedOptions, leavers);
+        // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile. Bei einem Zeitraumfilter
+        // darf deshalb nirgends eine scheinpraezise Quote aus kumuliertem Zaehler und engem Nenner stehen.
+        var periodScopingUnreliable = analysisPeriod.HasPeriod && absenceRowsWithoutDates > 0;
 
         result.Employees = employees;
         result.Absences = absences;
         result.Leavers = leavers;
-        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod);
+        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable);
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
         // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile (die "(Zeitraum)"-Spalten
         // markieren nur das juengste Ereignis, die "(Stunden Ind.)"-Summen sind kumulativ - siehe
@@ -120,7 +123,6 @@ internal sealed class HrKpiDashboardBuilder
         // Zeitraum schrumpft - die Quote wird dadurch massiv ueberhoeht (Praxisfall: 20% statt 3-4%
         // fuer Juni 2026, weil "Adil" seine 48h aus Maerz stammten, aber die Datei keine Zeile
         // ausschliessen konnte). Deshalb Periodenwert klar als nicht verlaesslich kennzeichnen.
-        var periodScopingUnreliable = analysisPeriod.HasPeriod && absenceRowsWithoutDates > 0;
         result.AbsenceMetrics = BuildAbsenceMetrics(employees, absences, analysisPeriod, periodScopingUnreliable);
         result.TimeVacationMetrics = BuildTimeVacationMetrics(employees);
         result.PeriodComparisonMetrics = BuildPeriodComparisonMetrics(turnoverEmployees, comparisonLeavers, turnoverPeriod);
@@ -499,7 +501,8 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<HrLeaverRow> turnoverHeadcountLeavers,
         IReadOnlyCollection<HrLeaverRow> leavers,
         TurnoverPeriodScope period,
-        AnalysisPeriod analysisPeriod)
+        AnalysisPeriod analysisPeriod,
+        bool periodScopingUnreliable)
     {
         var activeCount = CountDistinctPersons(employees.Select(x => x.Personalnummer));
         var activeFixedCount = CountDistinctPersons(employees
@@ -521,7 +524,13 @@ internal sealed class HrKpiDashboardBuilder
         [
             new() { Label = "Headcount aktiv", Value = activeCount.ToString("N0"), Detail = $"{activeFixedCount:N0} festangestellt", Severity = "Normal" },
             new() { Label = "FTE", Value = fte.ToString("N1"), Detail = "Summe Beschaeftigungsgrad", Severity = "Normal" },
-            new() { Label = "Krankheitstage", Value = sickDays.ToString("N1"), Detail = $"Absenzquote FTE {absenceRate:P1}", Severity = absenceRate > 0.05m ? "Warning" : "Normal" },
+            new()
+            {
+                Label = "Krankheitstage",
+                Value = sickDays.ToString("N1"),
+                Detail = periodScopingUnreliable ? "Absenzquote: Zeitraum nicht bestimmbar" : $"Absenzquote FTE {absenceRate:P1}",
+                Severity = periodScopingUnreliable || absenceRate > 0.05m ? "Warning" : "Normal"
+            },
             new() { Label = period.ShowPeriodMetrics ? $"Fluktuation {period.Label}" : "Fluktuation Auswahl", Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC", Severity = turnover > 0.12m ? "Warning" : "Normal" },
             new() { Label = "GLZ Schnitt", Value = avgBalance.ToString("N1"), Detail = $"{redBalance:N0} Personen > 100h absolut", Severity = redBalance > 0 ? "Warning" : "Normal" },
             new() { Label = "Unfalltage", Value = employees.Sum(x => x.BuTage + x.NbuTage).ToString("N1"), Detail = $"BU {employees.Sum(x => x.BuTage):N1} / NBU {employees.Sum(x => x.NbuTage):N1}", Severity = "Normal" }
@@ -661,7 +670,8 @@ internal sealed class HrKpiDashboardBuilder
         var scopingWarning = periodScopingUnreliable
             ? $" ACHTUNG: Rexx liefert keine Datumsfelder je Absenzzeile - die Krankheitsstunden koennen aus einem anderen Zeitraum stammen als {analysisPeriod.Label} und sind NICHT zuverlaessig darauf eingegrenzt. Rein rechnerisch waere die Quote {absenceRate:P1}, aber dieser Wert sollte nicht als Monats-/Quartalswert verwendet werden."
             : string.Empty;
-        var absenceValueSeverity = periodScopingUnreliable && absenceSeverity == "Normal" ? "Warning" : absenceSeverity;
+        // Keine rote/gruene Bewertung aus einer nicht belastbar eingegrenzten Quote ableiten.
+        var absenceValueSeverity = periodScopingUnreliable ? "Warning" : absenceSeverity;
         var absenceRateValue = periodScopingUnreliable ? "Zeitraum nicht bestimmbar" : absenceRate.ToString("P1");
 
         return
@@ -669,7 +679,7 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = "Rexx kurz / 8.4h", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = "Rexx lang / 8.4h", Severity = longSick > shortSick ? "Warning" : "Normal" },
-            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage), {analysisPeriod.Label}. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
+            new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage ZH), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "NBU-Tage", Value = nbu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "Unfalltage Total", Value = (bu + nbu).ToString("N1"), Detail = "BU + NBU", Severity = "Normal" }
@@ -1244,7 +1254,7 @@ internal sealed class HrKpiDashboardBuilder
             var end = period.Value.End > DateTime.Today ? DateTime.Today : period.Value.End;
             if (end < start)
                 end = start;
-            var workdays = CountWeekdays(start, end);
+            var workdays = ZurichWorkdayCalendar.CountWorkdays(start, end);
             return new AnalysisPeriod(start, end, Math.Max(1, workdays), $"{start:dd.MM.yyyy} - {end:dd.MM.yyyy}", true);
         }
 
@@ -1263,28 +1273,11 @@ internal sealed class HrKpiDashboardBuilder
                 end = DateTime.Today;
             if (end < start)
                 end = start;
-            var workdays = CountWeekdays(start, end);
+            var workdays = ZurichWorkdayCalendar.CountWorkdays(start, end);
             return new AnalysisPeriod(start, end, Math.Max(1, workdays), $"{start:dd.MM.yyyy} - {end:dd.MM.yyyy} (aus Absenzdaten)", true);
         }
 
         return new AnalysisPeriod(null, null, 21m, "Annahme 1 Monat (keine Datumsfelder)", false);
-    }
-
-    // Zaehlt Mo-Fr im Zeitraum. Hinweis: CH-Feiertage werden nicht abgezogen, der Nenner der
-    // Krankenquote ist dadurch minimal zu gross. Fuer eine offizielle Quote ggf. Feiertage abziehen.
-    private static int CountWeekdays(DateTime start, DateTime end)
-    {
-        if (end < start)
-            (start, end) = (end, start);
-
-        var days = 0;
-        for (var date = start.Date; date <= end.Date; date = date.AddDays(1))
-        {
-            if (date.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
-                days++;
-        }
-
-        return days;
     }
 
     private static int CountDistinctPersons(IEnumerable<int?> personalNumbers)

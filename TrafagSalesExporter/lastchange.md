@@ -26,6 +26,18 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, HR-KRANKENQUOTE UND FILTERVERTRAG LOKAL UMGESETZT: Der
+  Arbeitstage-Nenner zieht neu die neun gesetzlichen Feiertage des Kantons
+  Zuerich ab (inkl. dynamischem Ostertermin; lokale/nicht gesetzliche Tage
+  bewusst nicht). Bei nicht periodengenau eingrenzbaren Rexx-Absenzen zeigt
+  jetzt auch die Uebersicht keine scheinbar genaue Absenzquote mehr; die Ampel
+  bleibt gelb statt aus einem unzuverlaessigen Wert Rot/Gruen abzuleiten. Neuer
+  Regressionstest prueft 128 Kombinationen aus Organisation, Kostenstelle,
+  Mitarbeitertyp, Eintrittsjahr, GLZ, Restferien und Suche ueber alle sichtbaren
+  HR-Ergebnisbloecke; ein weiterer Test kombiniert Zeitraum, Jahr,
+  Fluktuationsfilter und alle Personenfilter. Details:
+  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+
 - 2026-08-06, ZDISPO NUR IM EINKAUF-SPEND-AUFRISS ERGAENZT, DEPLOYED UND
   VERIFIZIERT (13:57 MESZ, Commit `0a8a4c9`): `zdispo_grp.xlsx` ordnet
   Disponenten/-muster den DISPO-Gruppen zu, `zdispo_spart.xlsx` liefert die

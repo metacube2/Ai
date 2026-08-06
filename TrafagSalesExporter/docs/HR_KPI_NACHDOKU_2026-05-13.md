@@ -272,8 +272,9 @@ Grundlage: Review in `docs/HR_KPI_KORREKTUREN_2026-07-06.md`. Umgesetzte Korrekt
 - M8 (mittel) Anker: bei nur gesetztem `Von Austritt` (bis offen) ist der Stichtag jetzt heute,
   nicht der Zeitraum-Anfang; Austrittsjahr hat Vorrang vor `Von`.
 - L9 (klein): `Ferien bezogen` wird aus den Summen gerechnet (nicht aus den pro Person auf 0
-  gekappten Einzelwerten); tote Variable entfernt; Hinweis, dass `CountWeekdays` keine CH-Feiertage
-  abzieht.
+  gekappten Einzelwerten); tote Variable entfernt. Nachtrag 2026-08-06:
+  `ZurichWorkdayCalendar` zieht inzwischen die neun gesetzlichen Feiertage des
+  Kantons Zuerich ab.
 
 Bewusst NICHT geaendert (kein Codefehler, fachliche Bestaetigung offen): 8.4h=1 Krankheitstag,
 Kurz-/Lang-Definition, FTE-Fallback 0.5, GLZ-/Restferien-Schwellen, Prognose = Quartalsrate x 4.
