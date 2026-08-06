@@ -429,6 +429,27 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_AuditLedger_LeavesMarginOpen_WhenCostBasisIsMissing()
+    {
+        // Ohne Standardpreis ist die Kostenbasis 0. "Umsatz minus 0" ergaebe genau den vollen
+        // Umsatz als Marge und 100 % — die Fehlinterpretation, die der Status verhindern soll.
+        // Das Pruefbuch hat sie bis 2026-08-06 ausgewiesen, direkt neben dem Status.
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-NOCOST", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 0m, standardCostCurrency: "CHF"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-NOCOST");
+        Assert.Equal(GroupMarginStatuses.StandardCostMissing, ledger.Status);
+        Assert.Null(ledger.MarginOriginal);
+        Assert.Null(ledger.MarginPercent);
+        Assert.Null(ledger.MarginChf);
+        // Der Umsatz selbst bleibt sichtbar — offen ist die Marge, nicht die Zeile.
+        Assert.Equal(100m, ledger.OriginalAmount);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Converts_When_Switch_Active()
     {
         await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Convert);

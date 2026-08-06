@@ -259,4 +259,31 @@ public class GroupMarginCalculatorTests
             GroupMarginCalculator.ResolveGroupCostKey(Line(material: "000")));
         Assert.Equal("MAT1", GroupMarginCalculator.ResolveGroupCostKey(Line(material: " mat1 ")));
     }
+
+    [Fact]
+    public void Fehlende_Kostenbasis_und_abweichende_Kostenwaehrung_sind_nicht_dasselbe()
+    {
+        // Beide Faelle sind „offen", aber nur bei den ersten dreien fehlt die Kostenbasis. Wer
+        // eine Marge rechnet, darf deshalb nicht IsOpen als Pruefung nehmen: bei abweichender
+        // Kostenwaehrung ist die Kostenbasis bekannt, die CHF-Marge bleibt rechenbar.
+        Assert.False(GroupMarginStatuses.IsCostBasisKnown(GroupMarginStatuses.StandardCostMissing));
+        Assert.False(GroupMarginStatuses.IsCostBasisKnown(GroupMarginStatuses.SupplierUnclear));
+        Assert.False(GroupMarginStatuses.IsCostBasisKnown(GroupMarginStatuses.GroupCostMissing));
+
+        Assert.True(GroupMarginStatuses.IsCostBasisKnown(GroupMarginCostCurrencyConverter.OpenStatus));
+        Assert.True(GroupMarginStatuses.IsCostBasisKnown(GroupMarginStatuses.Ok));
+        Assert.True(GroupMarginStatuses.IsCostBasisKnown(GroupMarginStatuses.SalesMissing));
+
+        // Jeder Status ohne Kostenbasis gilt zugleich als offen — sonst zaehlte die Kennzahl
+        // „offene Kostenbasis" eine Zeile nicht mit, deren Marge leer bleibt.
+        foreach (var status in new[]
+                 {
+                     GroupMarginStatuses.StandardCostMissing,
+                     GroupMarginStatuses.SupplierUnclear,
+                     GroupMarginStatuses.GroupCostMissing
+                 })
+        {
+            Assert.True(GroupMarginStatuses.IsOpen(status), status);
+        }
+    }
 }

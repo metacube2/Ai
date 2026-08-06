@@ -1081,7 +1081,9 @@
                 </MudItem>
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
-                        <MudText Typo="Typo.caption">@T("Kostenbasis", "Cost basis")</MudText>
+                        @* Wie in der Landestabelle: die Summe enthaelt nur Zeilen mit Kostenbasis,
+                           offene Zeilen stehen mit 0 drin. "Bekannte" sagt das, "Kostenbasis" nicht. *@
+                        <MudText Typo="Typo.caption">@T("Bekannte Kostenbasis", "Known cost basis")</MudText>
                         <MudText Typo="Typo.h6">@FormatValue(_financeResult.GroupMarginSummary.CostBasisValue, _financeResult.GroupMarginSummary.DisplayCurrency)</MudText>
                     </MudPaper>
                 </MudItem>
@@ -1123,8 +1125,8 @@
             </MudGrid>
 
             <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-4">
-                @T("MVP-Regel: Externer Lieferant = Kosten aus Verkaufszeile. Interner Trafag-Lieferant = vorhandene Standardkostenbasis als Proxy fuer SAP MBEW-STPRS. Interne Kette stoppt nach einer Ebene. Fehlende Standardkosten werden markiert und nicht geschaetzt.",
-                    "MVP rule: external supplier = cost from sales line. Internal Trafag supplier = existing standard-cost basis as proxy for SAP MBEW-STPRS. Internal chain stops after one level. Missing standard costs are flagged and not estimated.")
+                @T("Kostenbasis in dieser Reihenfolge: 1. Konzern-Standardkosten TR AG (SAP MBEW-STPRS, CHF) ueber die Trafag-Sachnummer. 2. Eine Vertriebszeile ohne solchen Treffer (Sales Type LRD) bleibt offen, weil der lokale Preis dort der IC-Einkaufspreis ist. 3. Sonst der lokale Standardpreis. Fehlende Werte werden markiert und nie geschaetzt.",
+                    "Cost basis in this order: 1. Group standard costs TR AG (SAP MBEW-STPRS, CHF) via the Trafag material number. 2. A distribution line without such a match (sales type LRD) stays open, because the local price there is the intercompany purchase price. 3. Otherwise the local standard price. Missing values are flagged and never estimated.")
             </MudAlert>
 
             <MudGrid Class="mb-4">
@@ -2934,13 +2936,16 @@
     private static string FormatGroupMarginPercent(ManagementGroupMarginCountryRow row)
         => row.MissingCostRows > 0 ? "-" : FormatPercent(row.MarginPercent);
 
+    // Strenger als GroupMarginStatuses.IsCostBasisKnown: die Detailzeile zeigt Marge und Prozent
+    // in Verkaufswaehrung. Bei „Kostenwaehrung abweichend" liegt die Kostenbasis zwar vor, aber in
+    // einer anderen Waehrung - eine Differenz daraus waere gemischt. Deshalb hier nur bei OK.
     private static string FormatGroupMarginDetailValue(ManagementGroupMarginDetailRow row)
-        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+        => string.Equals(row.Status, GroupMarginStatuses.Ok, StringComparison.Ordinal)
             ? FormatValue(row.MarginValue, row.Currency)
             : "-";
 
     private static string FormatGroupMarginDetailPercent(ManagementGroupMarginDetailRow row)
-        => string.Equals(row.Status, "OK", StringComparison.OrdinalIgnoreCase)
+        => string.Equals(row.Status, GroupMarginStatuses.Ok, StringComparison.Ordinal)
             ? FormatPercent(row.MarginPercent)
             : "-";
 

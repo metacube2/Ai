@@ -71,6 +71,27 @@ public static class GroupMarginStatuses
     public static bool IsOpen(string? status)
         => status is not null && Open.Contains(status, StringComparer.Ordinal);
 
+    /// <summary>
+    /// Stati OHNE Kostenbasis: die Zeile traegt Kosten 0, „Umsatz minus Kosten" waere also der
+    /// volle Umsatz als Marge. Wer eine Marge rechnet, muss diese Zeilen leer lassen.
+    ///
+    /// Bewusst NICHT dabei ist <see cref="GroupMarginCostCurrencyConverter.OpenStatus"/>: dort ist
+    /// die Kostenbasis bekannt, nur in einer anderen Waehrung als der Umsatz. Die Marge in
+    /// Originalwaehrung bleibt offen (man wuerde Waehrungen mischen), die CHF-Marge ist aber
+    /// rechenbar, weil beide Seiten einzeln nach CHF umgerechnet werden. Deshalb reicht
+    /// <see cref="IsOpen"/> als Pruefung fuer eine Marge nicht aus.
+    /// </summary>
+    private static readonly string[] CostBasisUnknown =
+    {
+        StandardCostMissing,
+        SupplierUnclear,
+        GroupCostMissing
+    };
+
+    /// <summary>Liegt fuer diese Zeile ueberhaupt eine Kostenbasis vor? Siehe <see cref="CostBasisUnknown"/>.</summary>
+    public static bool IsCostBasisKnown(string? status)
+        => status is null || !CostBasisUnknown.Contains(status, StringComparer.Ordinal);
+
     /// <summary>Sortierschluessel der Gruppenmargen-Detailliste. OK und Unbekanntes sortiert nach hinten.</summary>
     public static int Sort(string? status) => IndexOrLast(SortOrder, status);
 

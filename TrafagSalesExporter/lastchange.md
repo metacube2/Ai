@@ -11,13 +11,30 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS (noch nicht deployed):
+  beim Durchgehen der Finance-Anzeige gefunden. `BuildFinanceAuditLedgerRows` liess die Marge
+  nur bei der Waehrungsmaske leer. Eine FEHLENDE Kostenbasis laeuft aber als 0 durch, also
+  ergab „Umsatz minus Kosten" den vollen Umsatz — Spalte `Marge CHF` und `MarginPercent`
+  zeigten 100 %, direkt neben dem Status, der „Lieferant unklar" bzw. „Konzernkosten fehlen"
+  sagte. Betroffen sind die Pruefbuch-Tabelle im Cockpit UND der Excel-Export
+  `Finance_Pruefbuch`. Der zentrale Excel-Nachweis war NICHT betroffen: dort steht die Marge
+  als Blattformel mit `WENN(Status=OK)`. Naeherung ueber alle Jahre und ohne den
+  `Include`-Filter (in SQL nicht nachbildbar): rund **71'900 von 96'059 Zeilen (~75 %)** haben
+  keine belastbare Kostenbasis, im Wesentlichen `Lieferant unklar` bei TRCH/TRDE/TRES/TRAT.
+  Neu entscheidet `GroupMarginStatuses.IsCostBasisKnown`. Die Unterscheidung ist noetig, weil
+  `IsOpen` dafuer zu grob ist: bei „Kostenwaehrung abweichend" IST die Kostenbasis bekannt,
+  nur in anderer Waehrung — die CHF-Marge bleibt dort korrekt rechenbar und wird weiter
+  gezeigt (durch einen bestehenden Test gepinnt).
 - 2026-08-06, ANZEIGE NACHGEZOGEN (noch nicht deployed): die Statusfarbe im Cockpit stand als
   eigene Aufzaehlung neben `GroupMarginStatuses.Open` und kannte „Kostenwaehrung abweichend"
   nicht — der Status wurde blau statt orange gezeigt, obwohl die Kennzahl „offene Kostenbasis"
   ihn mitzaehlt. Die Farbe folgt jetzt `IsOpen`, also der Statusdefinition selbst. Die
   Schulungsseite `Finance > Grundlagen` erklaerte „Konzernkosten fehlen" ueberhaupt nicht,
   obwohl der Status seit heute 137 indische Zeilen betrifft; die Tabelle fuehrt ihn jetzt
-  mit der Abgrenzung zu „Standardpreis fehlt". `431/431` Tests gruen.
+  mit der Abgrenzung zu „Standardpreis fehlt". Der Hinweistext im Gruppenmarge-Tab beschrieb
+  noch die MVP-Regel von vor dem Konzernkosten-Umbau und ist jetzt die tatsaechliche
+  Regelkette. Kachel „Kostenbasis" heisst wie die Tabellenspalte „Bekannte Kostenbasis" —
+  die Summe enthaelt offene Zeilen mit 0. `433/433` Tests gruen.
 - 2026-08-06, DAS FELD IST PRODUKTIV ANGEKOMMEN: der TRIN-Export 06:54 fuellt Sales Type auf
   **6'664 von 7'094 Zeilen (93,9 %)** (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430), Trafag-
   Sachnummer auf 3'625. **5'868** `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.

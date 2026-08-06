@@ -1634,12 +1634,19 @@ public class ManagementCockpitService : IManagementCockpitService
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency, row.Year,
                     groupMarginCostCurrencyMode, ResolveCrossRate);
-                // Marge in Originalwaehrung nur, wenn die Kostenbasis in Verkaufswaehrung
-                // belastbar ist; sonst bleibt sie leer (Schalter Mask bzw. fehlender Kurs).
-                decimal? margin = conversion.IsMasked ? null : row.Value - conversion.CostBasis;
                 var status = basis.Status;
                 if (status == GroupMarginStatuses.Ok && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
+                // Ohne Kostenbasis bleibt die Marge leer. Frueher stand hier nur die Pruefung auf
+                // die Waehrungsmaske, und weil eine fehlende Kostenbasis als 0 durchlaeuft, wies
+                // das Pruefbuch fuer genau die Zeilen, deren Status „Kosten fehlen" sagt, den
+                // vollen Umsatz als Marge und 100 % aus.
+                var costBasisKnown = GroupMarginStatuses.IsCostBasisKnown(status);
+                // Marge in Originalwaehrung zusaetzlich nur, wenn die Kostenbasis in
+                // Verkaufswaehrung vorliegt (Schalter Mask liefert sie in Fremdwaehrung).
+                decimal? margin = costBasisKnown && !conversion.IsMasked
+                    ? row.Value - conversion.CostBasis
+                    : null;
                 var standardCostCurrency = string.IsNullOrWhiteSpace(basis.CostCurrency)
                     ? originalCurrency
                     : basis.CostCurrency.Trim();
@@ -1686,7 +1693,10 @@ public class ManagementCockpitService : IManagementCockpitService
                     CostBasisCurrency = standardCostCurrency,
                     CostBasisChf = standardCostRate.HasValue ? basis.CostBasis * standardCostRate.Value : null,
                     MarginOriginal = margin,
-                    MarginChf = chfRate.HasValue && standardCostRate.HasValue
+                    // Anders als die Marge in Originalwaehrung ueberlebt die CHF-Marge die
+                    // Waehrungsmaske: beide Seiten werden einzeln nach CHF umgerechnet, gemischt
+                    // wird nichts. Eine fehlende Kostenbasis schliesst sie dagegen genauso aus.
+                    MarginChf = costBasisKnown && chfRate.HasValue && standardCostRate.HasValue
                         ? row.Value * chfRate.Value - basis.CostBasis * standardCostRate.Value
                         : null,
                     MarginPercent = margin.HasValue ? PercentOf(margin.Value, row.Value) : null,
