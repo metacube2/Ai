@@ -398,6 +398,13 @@ LIMIT 12;", cancellationToken);
         // naechsten Einkauf-Full-Load. Alle laufen nur beim Datenladen (OnInitialized/Filter),
         // nicht pro Render.
         state.SpendPerspectiveRows = await ExecuteSpendPerspectivesAsync(conn, filter, spendItemFilter, cancellationToken);
+        var productGroupResult = await ExecuteProductGroupPerspectiveAsync(conn, filter, spendItemFilter, cancellationToken);
+        // Produktgruppe ist eine eigene, summenerhaltend allokierte Perspektive und kann deshalb
+        // nicht durch das einfache SQL-Grouping der vier direkten Einkaufsdimensionen laufen.
+        state.SpendPerspectiveRows.Insert(
+            Math.Min(3, state.SpendPerspectiveRows.Count),
+            productGroupResult.Perspective);
+        state.ProductGroupAllocation = productGroupResult.Summary;
         // Lieferanten-Perspektive bleibt der Standardeinstieg und damit die Quelle fuer die
         // bisherige, nicht umschaltbare Kaskadenanzeige.
         state.SpendCascadeRows = state.SpendPerspectiveRows
@@ -419,6 +426,11 @@ WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 12;", cancellationToken);
+        state.AbcXyzActionRows = await ExecuteAbcXyzActionRowsAsync(
+            conn,
+            joinedEkkoPeriod,
+            spendItemFilter,
+            cancellationToken);
         state.CurrentYearSupplierSpendRows = await ExecuteChartRowsAsync(conn, @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
@@ -1206,6 +1218,329 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         }
 
         return results;
+    }
+
+    private sealed record ProductGroupPerspectiveBuildResult(
+        PurchasingSpendPerspectiveResult Perspective,
+        PurchasingProductGroupAllocationSummary Summary);
+
+    /// <summary>
+    /// Produktgruppen-Aufriss ueber die belegte Kette Einkaufsmaterial (EKPO-MATNR) ->
+    /// ZLO03-Komponente (KOMPNR) -> Disponent des verwendenden Kopfmaterials (VKNR_DISPO) ->
+    /// optionale ZC23-Bezeichnung in PurchasingProductGroupMap.
+    ///
+    /// Eine Komponente kann in Kopfmaterialien mehrerer Produktgruppen vorkommen. Sie wird dann
+    /// zu gleichen Teilen auf die UNTERSCHIEDLICHEN Gruppen verteilt. Das ist bewusst keine
+    /// Verbrauchsschaetzung: ohne freigegebenen Zurechnungsschluessel ist 1/n die einzige
+    /// neutrale Regel, die keine Gruppe bevorzugt und den Gesamtspend exakt erhaelt.
+    /// </summary>
+    private static async Task<ProductGroupPerspectiveBuildResult> ExecuteProductGroupPerspectiveAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var levelsDe = (IReadOnlyList<string>)["Produktgruppe", "Lieferant", "Material"];
+        var levelsEn = (IReadOnlyList<string>)["Product group", "Supplier", "Material"];
+        var years = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
+            .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
+            .ToList();
+        var emptyPerspective = new PurchasingSpendPerspectiveResult(
+            "productgroup", "Produktgruppe", "Product group", levelsDe, levelsEn, []);
+        if (years.Count == 0)
+            return new ProductGroupPerspectiveBuildResult(emptyPerspective, PurchasingProductGroupAllocationSummary.Empty);
+
+        var usageReady = await TableExistsAsync(conn, "MaterialUsageCache", cancellationToken) &&
+                         await ColumnExistsAsync(conn, "MaterialUsageCache", "VknrDispo", cancellationToken);
+        if (!usageReady)
+        {
+            // Der Einkauf bleibt voll sichtbar, auch wenn der ZLO03-Cache noch nicht migriert oder
+            // geladen ist. Keine Zeile wird still verworfen oder einer erfundenen Gruppe gegeben.
+            var fallback = new SpendPerspective(
+                "productgroup", "Produktgruppe", "Product group",
+                [new SpendDimension("productgroup", "Produktgruppe", "Product group", "'ohne Produktgruppe'"), SupplierDimension, ArticleDimension],
+                [20, 15, 10]);
+            var fallbackRows = await ExecuteSpendCascadeRowsAsync(conn, filter, spendItemFilter, fallback, cancellationToken);
+            var fallbackUnassignedSpend = fallbackRows.Sum(row => row.Total);
+            var fallbackUnassignedMaterials = await CountSpendMaterialsAsync(conn, filter, spendItemFilter, cancellationToken);
+            return new ProductGroupPerspectiveBuildResult(
+                emptyPerspective with { Rows = fallbackRows },
+                new PurchasingProductGroupAllocationSummary(0m, fallbackUnassignedSpend, 0m, 0, fallbackUnassignedMaterials, 0, 0, 0));
+        }
+
+        var hasZc23Map = await TableExistsAsync(conn, "PurchasingProductGroupMap", cancellationToken);
+        var mapJoin = hasZc23Map
+            ? "LEFT JOIN PurchasingProductGroupMap z ON trim(z.Disponent) = trim(u.VknrDispo)"
+            : string.Empty;
+        var mappedCode = hasZc23Map ? "COALESCE(NULLIF(trim(z.ProductGroup), ''), '')" : "''";
+        var mappedText = hasZc23Map ? "COALESCE(NULLIF(trim(z.ProductGroupText), ''), '')" : "''";
+        var productGroupLabel = $@"CASE
+            WHEN {mappedCode} <> '' AND {mappedText} <> '' THEN {mappedCode} || ' - ' || {mappedText}
+            WHEN {mappedCode} <> '' THEN {mappedCode}
+            ELSE 'Disponent ' || trim(u.VknrDispo)
+        END";
+        var usageMaterialKey = NormalizeMaterialKeySql("u.Kompnr");
+        var purchasingMaterialKey = NormalizeMaterialKeySql("p.Matnr");
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var maxSpendYear = MaxSpendYear(filter);
+        var usageGroupsCte = $@"
+UsageGroups AS (
+    SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
+           {productGroupLabel} AS ProductGroup
+    FROM MaterialUsageCache u
+    {mapJoin}
+    WHERE COALESCE(trim(u.Kompnr), '') <> ''
+      AND COALESCE(trim(u.VknrDispo), '') <> ''
+),
+GroupCounts AS (
+    SELECT MaterialKey, COUNT(*) AS GroupCount
+    FROM UsageGroups
+    GROUP BY MaterialKey
+)";
+
+        var rows = new List<CascadeRow>();
+        await using (var command = conn.CreateCommand())
+        {
+            command.CommandText = $@"
+WITH {usageGroupsCte},
+AllocatedPositions AS (
+    SELECT COALESCE(ug.ProductGroup, 'ohne Produktgruppe') AS ProductGroup,
+           {SupplierLabelSql("k.Lifnr", "k.SupplierName")} AS Supplier,
+           {ArticleDimension.Sql} AS Article,
+           CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
+           {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} /
+               CASE WHEN COALESCE(gc.GroupCount, 0) > 0 THEN gc.GroupCount ELSE 1 END AS AllocatedValue
+    FROM PurchasingEkpoCache p
+    LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+    LEFT JOIN UsageGroups ug ON ug.MaterialKey = {purchasingMaterialKey}
+    LEFT JOIN GroupCounts gc ON gc.MaterialKey = {purchasingMaterialKey}
+    WHERE {spendItemFilter}
+      AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
+      AND CAST(substr(k.Bedat, 1, 4) AS INTEGER) BETWEEN {MinSpendYear} AND {maxSpendYear}
+)
+SELECT ProductGroup, Supplier, Article, Year, SUM(AllocatedValue) AS Value
+FROM AllocatedPositions
+GROUP BY ProductGroup, Supplier, Article, Year;";
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new CascadeRow(
+                    [reader.GetString(0), reader.GetString(1), reader.GetString(2)],
+                    reader.GetInt32(3),
+                    Convert.ToDecimal(reader.GetValue(4), CultureInfo.InvariantCulture)));
+            }
+        }
+
+        decimal assignedSpend;
+        decimal unassignedSpend;
+        decimal multiGroupSpend;
+        int assignedMaterials;
+        int unassignedMaterials;
+        int multiGroupMaterials;
+        await using (var summaryCommand = conn.CreateCommand())
+        {
+            summaryCommand.CommandText = $@"
+WITH {usageGroupsCte},
+PositionFacts AS (
+    SELECT {purchasingMaterialKey} AS MaterialKey,
+           {ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs")} AS Value,
+           COALESCE(gc.GroupCount, 0) AS GroupCount
+    FROM PurchasingEkpoCache p
+    LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+    LEFT JOIN GroupCounts gc ON gc.MaterialKey = {purchasingMaterialKey}
+    WHERE {spendItemFilter}
+      AND k.Bedat >= '{from}' AND k.Bedat <= '{to}'
+)
+SELECT
+    COALESCE(SUM(CASE WHEN GroupCount > 0 THEN Value ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN GroupCount = 0 THEN Value ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN GroupCount > 1 THEN Value ELSE 0 END), 0),
+    COUNT(DISTINCT CASE WHEN GroupCount > 0 THEN MaterialKey END),
+    COUNT(DISTINCT CASE WHEN GroupCount = 0 THEN MaterialKey END),
+    COUNT(DISTINCT CASE WHEN GroupCount > 1 THEN MaterialKey END)
+FROM PositionFacts;";
+            await using var reader = await summaryCommand.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken);
+            assignedSpend = Convert.ToDecimal(reader.GetValue(0), CultureInfo.InvariantCulture);
+            unassignedSpend = Convert.ToDecimal(reader.GetValue(1), CultureInfo.InvariantCulture);
+            multiGroupSpend = Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture);
+            assignedMaterials = reader.GetInt32(3);
+            unassignedMaterials = reader.GetInt32(4);
+            multiGroupMaterials = reader.GetInt32(5);
+        }
+
+        var mappedDispatchers = 0;
+        var unmappedDispatchers = 0;
+        await using (var mappingCommand = conn.CreateCommand())
+        {
+            mappingCommand.CommandText = hasZc23Map
+                ? @"
+SELECT
+    COUNT(DISTINCT CASE WHEN COALESCE(trim(z.ProductGroup), '') <> '' THEN trim(u.VknrDispo) END),
+    COUNT(DISTINCT CASE WHEN COALESCE(trim(z.ProductGroup), '') = '' THEN trim(u.VknrDispo) END)
+FROM MaterialUsageCache u
+LEFT JOIN PurchasingProductGroupMap z ON trim(z.Disponent) = trim(u.VknrDispo)
+WHERE COALESCE(trim(u.VknrDispo), '') <> '';"
+                : @"
+SELECT 0, COUNT(DISTINCT trim(VknrDispo))
+FROM MaterialUsageCache
+WHERE COALESCE(trim(VknrDispo), '') <> '';";
+            await using var reader = await mappingCommand.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken);
+            mappedDispatchers = reader.GetInt32(0);
+            unmappedDispatchers = reader.GetInt32(1);
+        }
+
+        var perspectiveRows = BuildCascadeLevel(rows, 0, years, [20, 15, 10]);
+        return new ProductGroupPerspectiveBuildResult(
+            emptyPerspective with { Rows = perspectiveRows },
+            new PurchasingProductGroupAllocationSummary(
+                assignedSpend,
+                unassignedSpend,
+                multiGroupSpend,
+                assignedMaterials,
+                unassignedMaterials,
+                multiGroupMaterials,
+                mappedDispatchers,
+                unmappedDispatchers));
+    }
+
+    private static string NormalizeMaterialKeySql(string expression)
+        => $@"CASE
+            WHEN COALESCE(trim({expression}), '') = '' THEN ''
+            WHEN ltrim(upper(trim({expression})), '0') = '' THEN '0'
+            ELSE ltrim(upper(trim({expression})), '0')
+        END";
+
+    private static async Task<int> CountSpendMaterialsAsync(
+        SqliteConnection conn,
+        PurchasingDashboardFilter filter,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var from = filter.FromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        return await ExecuteScalarIntAsync(conn, $@"
+SELECT COUNT(DISTINCT {NormalizeMaterialKeySql("p.Matnr")})
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE {spendItemFilter} AND k.Bedat >= '{from}' AND k.Bedat <= '{to}';", cancellationToken);
+    }
+
+    private static async Task<bool> TableExistsAsync(SqliteConnection conn, string tableName, CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name=$Name;";
+        command.Parameters.AddWithValue("$Name", tableName);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
+    }
+
+    private static async Task<bool> ColumnExistsAsync(
+        SqliteConnection conn,
+        string tableName,
+        string columnName,
+        CancellationToken cancellationToken)
+    {
+        await using var command = conn.CreateCommand();
+        command.CommandText = $"PRAGMA table_info(\"{tableName.Replace("\"", "\"\"")}\");";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Verbindet die beiden bisher isolierten Klassifikationen zu einer Einkaufs-Massnahmenmatrix:
+    /// ABC beschreibt die Wertbedeutung, XYZ die Regelmaessigkeit/Planbarkeit des Bedarfs. Die
+    /// Empfehlungen sind bewusst operative Pruefauftraege, keine automatische Disposition.
+    /// </summary>
+    private static async Task<List<PurchasingAbcXyzActionRow>> ExecuteAbcXyzActionRowsAsync(
+        SqliteConnection conn,
+        string joinedEkkoPeriod,
+        string spendItemFilter,
+        CancellationToken cancellationToken)
+    {
+        var rows = new List<PurchasingAbcXyzActionRow>();
+        await using var command = conn.CreateCommand();
+        command.CommandText = @"
+SELECT UPPER(COALESCE(NULLIF(trim(p.MaraAbc), ''), '-')) AS Abc,
+       UPPER(COALESCE(NULLIF(trim(p.MaraXyz), ''), '-')) AS Xyz,
+       SUM(" + ChfNetValue + @") AS SpendChf,
+       COUNT(DISTINCT COALESCE(NULLIF(trim(p.Matnr), ''), NULLIF(trim(p.Txz01), ''), 'ohne Material')) AS MaterialCount,
+       COUNT(DISTINCT COALESCE(NULLIF(trim(k.Lifnr), ''), 'ohne Lieferant')) AS SupplierCount
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
+GROUP BY Abc, Xyz
+ORDER BY SpendChf DESC;";
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var abc = reader.GetString(0);
+            var xyz = reader.GetString(1);
+            var recommendation = ResolveAbcXyzRecommendation(abc, xyz);
+            rows.Add(new PurchasingAbcXyzActionRow(
+                abc == "-" || xyz == "-" ? $"{abc}/{xyz} (unvollstaendig)" : $"{abc}{xyz}",
+                abc,
+                xyz,
+                Convert.ToDecimal(reader.GetValue(2), CultureInfo.InvariantCulture),
+                reader.GetInt32(3),
+                reader.GetInt32(4),
+                recommendation.ActionDe,
+                recommendation.ActionEn,
+                recommendation.Severity));
+        }
+
+        return rows;
+    }
+
+    private static (string ActionDe, string ActionEn, string Severity) ResolveAbcXyzRecommendation(string abc, string xyz)
+    {
+        if (abc == "-" || xyz == "-")
+        {
+            return (
+                "Stammdaten nachpflegen; ohne beide Klassen ist keine belastbare Beschaffungsstrategie ableitbar.",
+                "Complete master data; without both classes no reliable procurement strategy can be derived.",
+                "Warning");
+        }
+
+        return (abc, xyz) switch
+        {
+            ("A", "X") => (
+                "Strategisch absichern: Rahmenvertrag, Lieferfaehigkeit und automatische Disposition pruefen.",
+                "Secure strategically: review framework agreement, supply capability and automated planning.",
+                "High"),
+            ("A", "Y") or ("A", "Z") => (
+                "Versorgungsrisiko priorisieren: Forecast, Sicherheitsbestand und Zweitquelle pruefen.",
+                "Prioritize supply risk: review forecast, safety stock and a second source.",
+                "High"),
+            ("B", "X") => (
+                "Standardisieren und Mengen buendeln; Bestellrhythmus und Konditionen optimieren.",
+                "Standardize and bundle volumes; optimize order cadence and terms.",
+                "Medium"),
+            ("B", "Y") or ("B", "Z") => (
+                "Losgroessen, Mindestmengen und schwankende Bedarfsursachen mit dem Disponenten pruefen.",
+                "Review lot sizes, minimum quantities and volatile demand drivers with the planner.",
+                "Medium"),
+            ("C", "X") => (
+                "Prozesskosten senken: Katalog, Automatisierung und Sammelbestellungen pruefen.",
+                "Reduce process cost: review catalog, automation and consolidated orders.",
+                "Info"),
+            ("C", "Y") or ("C", "Z") => (
+                "Tail Spend reduzieren: buendeln, auslisten oder auf Standardalternativen umstellen.",
+                "Reduce tail spend: bundle, phase out or switch to standard alternatives.",
+                "Info"),
+            _ => (
+                "Klassifikation fachlich pruefen und anschliessend einer Beschaffungsstrategie zuordnen.",
+                "Validate the classification and then assign a procurement strategy.",
+                "Warning")
+        };
     }
 
     /// <summary>

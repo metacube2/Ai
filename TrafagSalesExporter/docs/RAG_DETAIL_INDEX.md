@@ -49,6 +49,8 @@ Stand verwenden.
 | Marco-Umsetzungsplan | `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` |
 | Marco-Review | `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` |
 | Einkaufssitzung/Wuensche | `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md` |
+| Einkaufssitzung 2026-07-30 | `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md` |
+| Produktgruppen ZC23/Disponent, Mehrfachverwendung und ABC/XYZ-Entscheid | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Einkauf-Lokalisierung und Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | Logistik-Stuecklisten-Dashboard | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
 | ZLO03/Materialverwendung | `docs/abap/README_LZCODE_WEBSERVICE.md` |

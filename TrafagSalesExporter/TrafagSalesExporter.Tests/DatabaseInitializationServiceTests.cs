@@ -34,6 +34,20 @@ public class DatabaseInitializationServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task InitializeAsync_Creates_ProductGroup_Map_And_Usage_Disponent_Column()
+    {
+        await CreateService().InitializeAsync();
+
+        await using var tableCommand = _connection.CreateCommand();
+        tableCommand.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='PurchasingProductGroupMap';";
+        Assert.Equal(1L, Convert.ToInt64(await tableCommand.ExecuteScalarAsync()));
+
+        await using var columnCommand = _connection.CreateCommand();
+        columnCommand.CommandText = "SELECT COUNT(1) FROM pragma_table_info('MaterialUsageCache') WHERE name='VknrDispo';";
+        Assert.Equal(1L, Convert.ToInt64(await columnCommand.ExecuteScalarAsync()));
+    }
+
+    [Fact]
     public async Task InitializeAsync_Migrates_Sites_Without_Shifting_Columns()
     {
         await PrepareLegacySitesTableAsync();

@@ -54,6 +54,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | **Innenumsatz / Konzerngesellschaft als Kunde / Doppelzaehlung** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a (offene Frage an Andreas) |
 | HR KPI | `docs/rag/HR_KPI.md` |
 | Einkauf, Spend, Drilldown, Bestellungen, Kontrakte | `docs/rag/PURCHASING.md` |
+| **Einkauf Produktgruppen, ZC23/Disponent, Mehrfachverwendung, ABC/XYZ-Nutzen** | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Oberflaechensprachen, Einkauf-Lokalisierung, Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | Deployment/IIS | `docs/rag/DEPLOYMENT.md` |
 | Admin/Startseite | `docs/rag/ADMIN.md` |

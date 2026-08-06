@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-08-01
+Stand: 2026-08-06
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -11,6 +11,17 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- Seit 2026-08-06 bietet der Spend-Aufriss die Perspektive
+  `Produktgruppe -> Lieferant -> Material`. Die Zuordnung folgt
+  `EKPO-MATNR -> ZLO03 -> VknrDispo -> ZC23`. Mehrfach verwendete Komponenten
+  werden summenerhaltend gleichmaessig `1/n` auf unterschiedliche
+  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar. Die echten
+  ZC23-Texte sind noch einzuspielen, bis dahin wird `Disponent <Code>` gezeigt.
+  Details: `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+- ABC und XYZ werden seit 2026-08-06 zusaetzlich als gemeinsame
+  Massnahmenmatrix mit Spend, Material-/Lieferantenzahl und konkretem
+  Pruefauftrag je Klasse ausgewertet. Es erfolgt keine automatische
+  Dispositionsaenderung.
 - Seit 2026-08-01 rendern Einkaufsdashboard und Einkaufs-Datenquellen nach
   einem Sprachwechsel sofort neu. Die Sprache ist pro Benutzersitzung getrennt.
   Ein expliziter Katalog deckt 77 dynamische Einkaufstexte in `es`, `it`, `hi`,
@@ -47,8 +58,8 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   = Delta`, aktualisiertes Cache-Enddatum und Nachklassifizierungszahl).
 - Marco-Abnahme: Offenwert gegen SAP und WKURS-Richtung an einem echten
   Fremdwaehrungsbeleg pruefen.
-- ZC23-Disponentengruppen fuer den Aufriss Verwendung/Disponenten 001-005
-  fehlen weiterhin.
+- Echte ZC23-Referenzliste in `PurchasingProductGroupMap` einspielen, danach
+  ZLO03-Full-Load und fachliche Summenabnahme an einem Mehrfachverwendungsfall.
 
 ## Rohquellen Nur Bei Bedarf
 
@@ -57,3 +68,6 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 - Formel-Korrekturen: `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`
 - Marco-Review: `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`
 - Wuensche Einkaufssitzung: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`
+- Nachfolgesitzung 2026-07-30: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md`
+- Produktgruppen-/ABC-XYZ-Entscheid 2026-08-06:
+  `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`

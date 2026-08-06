@@ -42,6 +42,28 @@
         </MudText>
     }
 
+    @if (ActivePerspectiveKey == "productgroup")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> ZC23-Produktgruppe. Wird eine Komponente in mehreren unterschiedlichen Produktgruppen verwendet, wird ihr Spend gleichmaessig 1/n verteilt. Dadurch bleibt die Summe exakt erhalten. Fehlende ZC23-Texte erscheinen ehrlich als 'Disponent <Code>'.",
+               "Allocation: purchasing material -> ZLO03 component -> planner of the using header material -> ZC23 product group. If a component is used by several different product groups, its spend is split evenly 1/n. This preserves the exact total. Missing ZC23 texts are shown honestly as 'Planner <code>'.")
+        </MudAlert>
+        <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-2">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
+                @T("Zugeordnet", "Assigned"): @FormatChf(ProductGroupAllocation.AssignedSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnassignedSpendChf > 0 ? Color.Warning : Color.Success)">
+                @T("Ohne Produktgruppe", "Without product group"): @FormatChf(ProductGroupAllocation.UnassignedSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
+                @T("Mehrfachverwendung", "Multiple use"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
+                ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")
+            </MudChip>
+        </MudStack>
+    }
+
     @if (ActiveRows.Count == 0 || SpendYears.Count == 0)
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
@@ -227,15 +249,69 @@
     </MudItem>
 </MudGrid>
 
+<MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T("ABC/XYZ-Massnahmenmatrix", "ABC/XYZ action matrix")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
+                @T("ABC priorisiert die Wertbedeutung, XYZ die Regelmaessigkeit des Bedarfs. Die Kombination uebersetzt den Spend in einen konkreten Pruefauftrag; sie aendert keine Disposition automatisch.",
+                   "ABC prioritizes value significance, XYZ demand regularity. Their combination translates spend into a concrete review action; it does not change planning automatically.")
+            </MudText>
+        </div>
+    </div>
+    @if (AbcXyzActionRows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true">
+            @T("Keine ABC/XYZ-Daten im gewaehlten Zeitraum.", "No ABC/XYZ data in the selected period.")
+        </MudAlert>
+    }
+    else
+    {
+        <div class="purchasing-matrix-scroll">
+            <table class="purchasing-action-matrix">
+                <thead>
+                    <tr>
+                        <th>@T("Klasse", "Class")</th>
+                        <th>@T("Spend CHF", "Spend CHF")</th>
+                        <th>@T("Materialien", "Materials")</th>
+                        <th>@T("Lieferanten", "Suppliers")</th>
+                        <th>@T("Empfohlener Pruefauftrag", "Recommended review action")</th>
+                        <th>@T("Prioritaet", "Priority")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in AbcXyzActionRows)
+                    {
+                        <tr>
+                            <td><strong>@row.Classification</strong></td>
+                            <td>@FormatChf(row.SpendChf)</td>
+                            <td>@row.MaterialCount.ToString("N0", CultureInfo.CurrentCulture)</td>
+                            <td>@row.SupplierCount.ToString("N0", CultureInfo.CurrentCulture)</td>
+                            <td>@T(row.ActionDe, row.ActionEn)</td>
+                            <td>
+                                <MudChip T="string" Size="Size.Small" Color="@ActionColor(row.Severity)" Variant="Variant.Outlined">
+                                    @T(ActionPriorityDe(row.Severity), ActionPriorityEn(row.Severity))
+                                </MudChip>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</MudPaper>
+
 @code {
     [Parameter] public IReadOnlyList<int> SpendYears { get; set; } = [];
     // Waehlbare Einstiegsperspektiven (2026-07-30). CascadeRows bleibt als Rueckfallebene fuer den
     // Fall, dass keine Perspektiven geliefert werden (aeltere Aufrufer / leerer Cache).
     [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> Perspectives { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingSpendCascadeNode> CascadeRows { get; set; } = [];
+    [Parameter] public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
     [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
     [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
 
     private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24"];
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
@@ -409,6 +485,33 @@
 
     private static string FormatPercent(double percent)
         => percent.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static Color ActionColor(string severity)
+        => severity switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Warning" => Color.Warning,
+            _ => Color.Info
+        };
+
+    private static string ActionPriorityDe(string severity)
+        => severity switch
+        {
+            "High" => "hoch",
+            "Medium" => "mittel",
+            "Warning" => "Datenpflege",
+            _ => "optimieren"
+        };
+
+    private static string ActionPriorityEn(string severity)
+        => severity switch
+        {
+            "High" => "high",
+            "Medium" => "medium",
+            "Warning" => "data maintenance",
+            _ => "optimize"
+        };
 }
 
 <style>
@@ -625,5 +728,32 @@
     .purchasing-explorer-bars {
         display: grid;
         gap: 10px;
+    }
+
+    .purchasing-action-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 960px;
+        font-size: .84rem;
+    }
+
+    .purchasing-action-matrix th,
+    .purchasing-action-matrix td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .purchasing-action-matrix th {
+        font-weight: 700;
+        background: rgba(21,101,192,.08);
+    }
+
+    .purchasing-action-matrix td:nth-child(2),
+    .purchasing-action-matrix td:nth-child(3),
+    .purchasing-action-matrix td:nth-child(4) {
+        text-align: right;
+        white-space: nowrap;
     }
 </style>

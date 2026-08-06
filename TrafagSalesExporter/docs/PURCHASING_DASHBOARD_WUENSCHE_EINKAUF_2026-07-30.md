@@ -4,18 +4,35 @@ Quelle: Whisper-Transkript (Modell `large-v3`, Audio `…/einka/Data/audio.wav`)
 Ingo, Marco, Armin. Nachfolgesitzung zu `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`.
 Diskussionsstand, keine finalisierte Spezifikation.
 
+## Nachtrag 2026-08-06
+
+Die drei am 2026-07-30 noch offenen fachlichen Punkte sind im Code umgesetzt:
+
+- Produktgruppen-Aufriss als neue Perspektive
+  `Produktgruppe -> Lieferant -> Material` ueber ZLO03-Disponent und optionalen
+  ZC23-Referenztext;
+- summenerhaltende `1/n`-Allokation bei Komponenten, die mehreren
+  unterschiedlichen Produktgruppen dienen;
+- gemeinsame ABC/XYZ-Massnahmenmatrix mit konkretem Pruefauftrag je Klasse.
+
+Wichtig: Die echten ZC23-Referenztexte liegen noch nicht im Repository. Die GUI
+zeigt bis zum Einspielen `Disponent <Code>` und weist fehlende Zuordnungen offen
+aus; sie erfindet keine Produktgruppen. Vollstaendige Entscheidung, Regeln und
+Abnahmegrenzen:
+`docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+
 ## Umsetzungsstand 2026-07-30 (alles umgesetzt, `346/346` Tests gruen)
 
 | Punkt | Stand | Bemerkung |
 | --- | --- | --- |
 | Dritte Ebene in der Spend-Matrix (Warengruppe -> Material) | **gebaut** | Entscheid Marco gegen den Verweis auf den Reiter Spend-Aufriss, siehe Abschnitt 1a |
 | Volumen nach Waehrung | **gebaut** | eigener Balkenblock im Spend-Reiter, CHF-bewertet + Originalsumme |
-| Waehlbare Einstiegsdimension (Perspektiven) | **gebaut** | 4 Perspektiven im Reiter Spend-Aufriss, siehe Abschnitt 4 |
+| Waehlbare Einstiegsdimension (Perspektiven) | **gebaut** | 5 Perspektiven im Reiter Spend-Aufriss, inklusive Produktgruppe seit 2026-08-06 |
 | Delta klassifiziert den ganzen Cache | **gebaut** | Nachpflege wirkt jetzt ohne Full Load, siehe Abschnitt 2 |
 | ZLO03: Excel-Paste (Trennzeichen) | **gebaut** | Komma, Semikolon, Leerzeichen, Tab, Zeilenumbruch; Duplikate raus |
 | ZLO03: Mehrfachabfrage-Bug | **gebaut (Bypass)** | eine SAP-Anfrage je Nummer statt OR-Gruppe, siehe Abschnitt 5b |
 | Refresh-Status pruefen (Nebenbefund) | **offen, nicht Code** | Handgriff im Dashboard, siehe Abschnitt 6 |
-| Produktgruppen-Aufriss (ZC23) | **offen** | unveraendert aus der Vorsitzung, groesster Restposten |
+| Produktgruppen-Aufriss (ZC23) | **Code gebaut, Referenzdaten offen** | ZLO03/Disponent, 1/n-Allokation und GUI gebaut; echte ZC23-Texte noch einspielen |
 
 Zwei Dinge sind bewusst NICHT gemessen und sollten beim ersten Nachtlauf beobachtet werden:
 
@@ -476,3 +493,8 @@ Reihenfolge:
 Unverändert offen aus der Vorsitzung, in dieser Sitzung nicht berührt: **Produktgruppen-Aufriss**
 (Referenzliste Disponent → Produktgruppe aus ZC23, Zurechnungsregel bei Mehrfachverwendung) und
 die Klärung, welchen konkreten Dashboard-Nutzen ABC/XYZ haben sollen.
+
+Der vorstehende Abschnitt dokumentiert die Priorisierung **zum Sitzungsende
+2026-07-30**. Der aktuelle Umsetzungsentscheid vom 2026-08-06 steht im Nachtrag
+am Dateianfang und in
+`docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.

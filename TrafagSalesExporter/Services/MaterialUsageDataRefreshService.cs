@@ -580,13 +580,13 @@ LIMIT 8;";
     {
         const string sql = @"
 INSERT INTO MaterialUsageCache (
-    Richtung, Vknr, VknrMstae, VknrVerbrauch, Kompnr, KompnrMaktx, KompnrMeins, Menge, Exklusiv,
+    Richtung, Vknr, VknrMstae, VknrDispo, VknrVerbrauch, Kompnr, KompnrMaktx, KompnrMeins, Menge, Exklusiv,
     Verbrauch, Labst, FesteZugang, GeplZugang, FesteAbgang, GeplAbgang, Endbestand, Omeng, Mkmng,
     Stueckkosten, WertFesteZug, WertGeplZug, WertFesteAbg, WertGeplAbg, WertEndbestand, Owert, Omkwr,
     Dismm, Minbe, Disls, Bstfe, Eisbe, Mstae, Mstav, Beskz, Zzlzcod, Zzlzcodsort, Baugruppe, Waers,
     RawJson, LastLoadedAtUtc)
 VALUES (
-    $Richtung, $Vknr, $VknrMstae, $VknrVerbrauch, $Kompnr, $KompnrMaktx, $KompnrMeins, $Menge, $Exklusiv,
+    $Richtung, $Vknr, $VknrMstae, $VknrDispo, $VknrVerbrauch, $Kompnr, $KompnrMaktx, $KompnrMeins, $Menge, $Exklusiv,
     $Verbrauch, $Labst, $FesteZugang, $GeplZugang, $FesteAbgang, $GeplAbgang, $Endbestand, $Omeng, $Mkmng,
     $Stueckkosten, $WertFesteZug, $WertGeplZug, $WertFesteAbg, $WertGeplAbg, $WertEndbestand, $Owert, $Omkwr,
     $Dismm, $Minbe, $Disls, $Bstfe, $Eisbe, $Mstae, $Mstav, $Beskz, $Zzlzcod, $Zzlzcodsort, $Baugruppe, $Waers,
@@ -598,6 +598,7 @@ VALUES (
                 ["$Richtung"] = GetText(row, "Richtung"),
                 ["$Vknr"] = GetText(row, "Vknr"),
                 ["$VknrMstae"] = GetText(row, "VknrMstae"),
+                ["$VknrDispo"] = GetText(row, "VknrDispo"),
                 ["$VknrVerbrauch"] = GetText(row, "VknrVerbrauch"),
                 ["$Kompnr"] = GetText(row, "Kompnr"),
                 ["$KompnrMaktx"] = GetText(row, "KompnrMaktx"),

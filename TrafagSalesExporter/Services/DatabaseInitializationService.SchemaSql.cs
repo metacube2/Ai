@@ -345,6 +345,7 @@ CREATE TABLE MaterialUsageCache (
     Richtung TEXT NOT NULL DEFAULT '',
     Vknr TEXT NOT NULL DEFAULT '',
     VknrMstae TEXT NOT NULL DEFAULT '',
+    VknrDispo TEXT NOT NULL DEFAULT '',
     VknrVerbrauch TEXT NOT NULL DEFAULT '0',
     Kompnr TEXT NOT NULL DEFAULT '',
     KompnrMaktx TEXT NOT NULL DEFAULT '',
@@ -382,6 +383,19 @@ CREATE TABLE MaterialUsageCache (
     Waers TEXT NOT NULL DEFAULT '',
     RawJson TEXT NOT NULL DEFAULT '',
     LastLoadedAtUtc TEXT NOT NULL
+);";
+
+    // Optionale ZC23-Referenzliste. Solange ein Disponent hier nicht gepflegt ist, zeigt der
+    // Produktgruppen-Aufriss ehrlich "Disponent <Code>" statt eine Produktgruppe zu erfinden.
+    // Die Tabelle ist bewusst getrennt vom ZLO03-Cache: ZLO03 liefert den Disponenten je
+    // Kopfmaterial, ZC23 liefert dessen fachliche Produktgruppen-Bezeichnung.
+    internal static string GetPurchasingProductGroupMapCreateSql() => @"
+CREATE TABLE PurchasingProductGroupMap (
+    Disponent TEXT NOT NULL PRIMARY KEY,
+    ProductGroup TEXT NOT NULL DEFAULT '',
+    ProductGroupText TEXT NOT NULL DEFAULT '',
+    Source TEXT NOT NULL DEFAULT 'ZC23',
+    UpdatedAtUtc TEXT NOT NULL DEFAULT ''
 );";
 
     internal static string GetMaterialParentCacheCreateSql() => @"

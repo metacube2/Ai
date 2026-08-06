@@ -194,9 +194,11 @@
         <PurchasingSpendExplorer SpendYears="@_liveState.SpendYears"
                                  Perspectives="@_liveState.SpendPerspectiveRows"
                                  CascadeRows="@_liveState.SpendCascadeRows"
+                                 ProductGroupAllocation="@_liveState.ProductGroupAllocation"
                                  RegionGroups="@_liveState.RegionByMaterialGroupRows"
                                  AbcRows="@_liveState.AbcSpendRows"
-                                 XyzRows="@_liveState.XyzSpendRows" />
+                                 XyzRows="@_liveState.XyzSpendRows"
+                                 AbcXyzActionRows="@_liveState.AbcXyzActionRows" />
         break;
     case "ideen":
         <MudGrid Spacing="2">

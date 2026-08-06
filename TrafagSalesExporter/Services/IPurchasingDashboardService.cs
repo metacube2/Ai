@@ -68,6 +68,11 @@ public sealed class PurchasingDashboardLiveState
     // werden beim Datenladen vorberechnet, damit das Umschalten in der UI ohne DB-Runde geht.
     // SpendCascadeRows bleibt die Lieferanten-Perspektive (Standardeinstieg).
     public List<PurchasingSpendPerspectiveResult> SpendPerspectiveRows { get; set; } = [];
+    // Produktgruppen-Zurechnung aus ZLO03-Komponente -> Kopfmaterial-Disponent -> optionaler
+    // ZC23-Map. Mehrfachverwendungen werden gleichmaessig auf unterschiedliche Gruppen verteilt,
+    // damit der zugerechnete Spend die Einkaufs-Gesamtsumme nicht vervielfacht.
+    public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } =
+        PurchasingProductGroupAllocationSummary.Empty;
     // Region-Anteil je (Top-)Warengruppe fuer die Kuchendiagramme. Fuellt sich erst mit dem
     // naechsten Einkauf-Full-Load (SupplierCountry).
     public List<PurchasingRegionPieGroup> RegionByMaterialGroupRows { get; set; } = [];
@@ -75,6 +80,9 @@ public sealed class PurchasingDashboardLiveState
     public List<PurchasingLiveChartPoint> AbcSpendRows { get; set; } = [];
     // Volumen (CHF) je XYZ-Klasse (ZCA_MAT_ABC_XYZ -> MaraXyz). Fuellt sich erst nach dem Full-Load.
     public List<PurchasingLiveChartPoint> XyzSpendRows { get; set; } = [];
+    // Konkrete Handlungsableitung aus der Kombination ABC (Wertbedeutung) und XYZ
+    // (Bedarfsregelmaessigkeit), statt zwei isolierter Balkendiagramme ohne Aussage.
+    public List<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];
@@ -109,4 +117,30 @@ public sealed record PurchasingLiveChartPoint(string Label, decimal Value);
 /// (LFA1.Land1), die Waehrung aus dem Bestellkopf (EKKO.Waers).
 /// </summary>
 public sealed record PurchasingCurrencySpendRow(string Currency, decimal ChfValue, decimal OriginalValue);
+
+public sealed record PurchasingProductGroupAllocationSummary(
+    decimal AssignedSpendChf,
+    decimal UnassignedSpendChf,
+    decimal MultiGroupSpendChf,
+    int AssignedMaterialCount,
+    int UnassignedMaterialCount,
+    int MultiGroupMaterialCount,
+    int MappedDispatcherCount,
+    int UnmappedDispatcherCount)
+{
+    public static PurchasingProductGroupAllocationSummary Empty { get; } =
+        new(0m, 0m, 0m, 0, 0, 0, 0, 0);
+}
+
+public sealed record PurchasingAbcXyzActionRow(
+    string Classification,
+    string Abc,
+    string Xyz,
+    decimal SpendChf,
+    int MaterialCount,
+    int SupplierCount,
+    string ActionDe,
+    string ActionEn,
+    string Severity);
+
 public sealed record PurchasingIdeaAnalysisRow(string Label, string Value, string Detail, string Severity);

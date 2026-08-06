@@ -31,7 +31,7 @@ neu gewaehlten Sprache erneut.
 ## Vollstaendigkeit im Einkauf
 
 Der allgemeine Uebersetzungskatalog deckt direkte `T(de, en)`-Aufrufe ab. Der
-zusaetzliche `PurchasingUiTextCatalog` inventarisiert 77 dynamisch gewaehlte
+zusaetzliche `PurchasingUiTextCatalog` inventarisiert seit 2026-08-06 85 dynamisch gewaehlte
 Textpaare, die ein reiner Quelltext-Regulaerausdruck nicht sicher erkennen kann.
 Dazu gehoeren:
 
@@ -56,7 +56,7 @@ Uebersetzer.
 
 Der Release-Test umfasst 351 Tests. Die Lokalisierungstests pruefen insbesondere:
 
-- jeden der 77 dynamischen Einkaufsschluessel in `es`, `it`, `hi`, `sq`, `tr`
+- jeden der 85 dynamischen Einkaufsschluessel in `es`, `it`, `hi`, `sq`, `tr`
   und `tlh`;
 - nicht leere Uebersetzungen und unveraenderte Formatplatzhalter;
 - die sitzungsbezogene Registrierung des Sprachdienstes;

@@ -392,7 +392,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         {
             DatabaseSchemaSql.GetMaterialUsageCacheCreateSql(),
             DatabaseSchemaSql.GetMaterialParentCacheCreateSql(),
-            DatabaseSchemaSql.GetMaterialUsageSyncStateCreateSql()
+            DatabaseSchemaSql.GetMaterialUsageSyncStateCreateSql(),
+            DatabaseSchemaSql.GetPurchasingProductGroupMapCreateSql()
         })
         {
             using var cmd = conn.CreateCommand();
@@ -410,6 +411,34 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             indexCommand.CommandText = indexSql;
             indexCommand.ExecuteNonQuery();
         }
+
+        // Seit 2026-07-23 liefert das ZLO03-EntitySet den Disponenten des Kopfmaterials. Das
+        // Feld war bisher nur im RawJson vorhanden und ging beim Schreiben des Caches verloren.
+        var addedVknrDispo = AddColumnIfMissing(db, "MaterialUsageCache", "VknrDispo", "TEXT NOT NULL DEFAULT ''");
+        if (addedVknrDispo)
+        {
+            try
+            {
+                using var backfill = conn.CreateCommand();
+                backfill.CommandText = @"
+UPDATE MaterialUsageCache
+SET VknrDispo = COALESCE(
+    NULLIF(json_extract(RawJson, '$.VknrDispo'), ''),
+    NULLIF(json_extract(RawJson, '$.VKNR_DISPO'), ''),
+    '')
+WHERE RawJson <> '';";
+                backfill.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Alte/ungueltige RawJson-Zeilen duerfen die additive Migration nicht blockieren.
+                // Der naechste ZLO03-Load schreibt VknrDispo regulaer in die neue Spalte.
+            }
+        }
+
+        using var dispoIndex = conn.CreateCommand();
+        dispoIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_KompnrDispo ON MaterialUsageCache (Kompnr, VknrDispo);";
+        dispoIndex.ExecuteNonQuery();
     }
 
     // Einmaliger Backfill der EKKO-Belegtyp/-Belegart-Spalten aus RawJson (Bestandsdaten ohne Neu-Load).

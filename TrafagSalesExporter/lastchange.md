@@ -26,6 +26,20 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, EINKAUF PRODUKTGRUPPEN UND ABC/XYZ IM CODE UMGESETZT, NOCH NICHT
+  DEPLOYED: Spend-Aufriss hat neu die Perspektive `Produktgruppe -> Lieferant ->
+  Material`. `VknrDispo` wird aus ZLO03 persistiert; eine optionale
+  `PurchasingProductGroupMap` bildet Disponent auf ZC23-Code/-Text ab. Fehlt die
+  Referenz, zeigt die GUI ehrlich `Disponent <Code>`, unzugeordneter Spend bleibt
+  als `ohne Produktgruppe` sichtbar. Mehrfach verwendete Komponenten werden
+  gleichmaessig `1/n` auf unterschiedliche Gruppen verteilt, sodass die Summe
+  erhalten bleibt. ABC/XYZ ist nun eine gemeinsame Massnahmenmatrix mit
+  konkreten Pruefauftraegen, Spend, Materialien und Lieferanten. Gesamte Suite
+  `435/435` gruen (darin `47/47` Einkauf/Schema und `6/6` Lokalisierung). Vor der fachlichen
+  Produktivabnahme fehlen die echte ZC23-Referenzliste, ZLO03-Full-Load nach
+  Deploy und Gegenprobe eines Mehrfachverwendungsfalls. Details:
+  `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+
 - 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS — DEPLOYED UND VERIFIZIERT
   (Deploy 11:06, `BiDashboard.dll` `4'057'600` Bytes, SHA256 `E6CCF3C4…`, HTTP 200,
   `IsCostBasisKnown` in der ausgelieferten DLL belegt, Produktiv-DB unveraendert):
