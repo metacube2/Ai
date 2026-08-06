@@ -443,6 +443,57 @@ Was gebaut wurde:
 - Ein vorhandener Lieferantentext geht weiterhin vor dem Sales Type. Damit bleibt das Verhalten
   der 10 widerspruechlichen Artikel unveraendert, bis Indien geantwortet hat.
 
+### 7d. Nachtrag 2026-08-06: die Rechnung stand zweimal da — und war bereits auseinandergelaufen
+
+Die Kostenlogik existierte gespiegelt in `ExcelExportService` (auf `SalesRecord`) und
+`ManagementCockpitService` (auf `FinanceAggregationRow`) — 48 von 92 bzw. 101 Zeilen nach
+Trimmen identisch, nur der Zeilentyp unterschied sich. Die Doku verlangte „im Gleichschritt
+aendern". **Beim Einbau von 7b ist genau das misslungen.** Gemessen am 2026-08-06, alles VOR
+der Zusammenfuehrung:
+
+| Stelle | Befund |
+| --- | --- |
+| `BuildGroupMarginDetailRows` | rief die Statusfunktion ohne das neue Kennzeichen auf → dieselbe Zeile stand im Cockpit auf „Standardpreis fehlt", im Excel-Nachweis auf „Konzernkosten fehlen" |
+| dieselbe Stelle, Kostenquelle | zeigte „Lieferant unklar" statt „Konzernkosten fehlen (lokaler Wert ist IC-Preis)" |
+| `ResolveAuditLedgerStatus` | kannte den neuen Status ueberhaupt nicht |
+| `GroupMarginStatusSort` (Cockpit) | ohne Eintrag → der Status sortierte zu den unauffaelligen ans Ende |
+| `HasOpenGroupMarginCostBasis` | zaehlte ihn nicht als offen → Kennzahl „offene Kostenbasis" meldete zu wenig |
+| Excel, Formel je Land (Spalte G) | zaehlte ihn nicht mit, waehrend die Gesamtsumme im Blatt `Datenqualitaet` es tat — zwei Zahlen im selben Nachweis widersprachen sich |
+| `ManagementCockpit.razor` | keine Statusfarbe → als einziger offener Status nicht auf `Warning` |
+| `NormalizeMaterialKey` (Excel) | eigene Kopie, die bei einer Materialnummer aus lauter Nullen `"000"` lieferte, wo das Cockpit `"0"` bildete |
+
+**Zusammengefuehrt in `Services/GroupMarginCalculator.cs`.** Beide Dienste bilden ihre Zeile auf
+`GroupMarginLine` ab und rufen `Evaluate` — Lieferantentyp, Kostenbasis, Kostenquelle und Status
+kommen aus einer Hand. Die drei Abweichungen zur Kostenbasis sind benannte Regeln in einer
+geordneten Kette (`GroupMarginCostRules`): `GroupStandardCost` → `GroupDistributionWithoutGroupCost`
+→ `LocalStandardCost`. **Die Reihenfolge ist die Fachregel** und wird als solche getestet; eine
+neue Abweichung wird als Regel an der fachlich richtigen Stelle eingesetzt statt als vierter
+if-Block in zwei Dateien. Statuswerte, die Definition von „offen" und die Sortierung stehen
+vollstaendig in `GroupMarginStatuses` — die Excel-Formeln werden daraus erzeugt statt von Hand
+aufgezaehlt. Saldo: −298/+158 Zeilen in den beiden Diensten.
+
+Verhaltensaenderungen (gewollt, alle zugunsten des Excel-Nachweises, der bereits richtig lag):
+
+1. Cockpit-Zeilen wechseln von „Standardpreis fehlt" auf „Konzernkosten fehlen".
+2. Die Cockpit-Sortierung verschiebt sich, weil der neue Status seinen Platz bekommt.
+3. Der Audit-Ledger kennt den Status jetzt.
+4. Die Kennzahl „offene Kostenbasis" und die Excel-Formel je Land zaehlen ihn mit.
+5. Der Materialschluessel im Excel-Nachweis folgt `MaterialKeyNormalizer` — bei einer Nummer aus
+   lauter Nullen `"0"` statt `"000"`. Einziger Punkt, der eine Wahl war und keine Fehlerkorrektur;
+   die Richtung folgt dem Cockpit, damit beide denselben Schluessel bilden.
+
+**Asymmetrie, die dabei sichtbar wurde und bewusst NICHT vereinheitlicht ist:** liegen
+Lieferantentext und Sales Type beide vor, gewinnt fuer die *Klassifikation* der Lieferantentext
+(Zeile gilt als extern), fuer die *Kostenbasis* aber der Sales Type (`LRD` laesst sie offen). Das
+war schon vorher so. Betroffen sind die 10 widerspruechlichen Artikel aus 3b. Ein Test haelt das
+Verhalten fest, damit es nicht unbemerkt kippt — aufloesen kann es nur Indiens Antwort.
+
+Abgesichert durch `GroupMarginConsistencyTests`: dieselbe Zeile laeuft durch **beide**
+oeffentlichen Einstiegspunkte (Excel-Nachweis und `AnalyzeFinanceSummaryAsync`), Status,
+Kostenquelle und Kostenbasis muessen uebereinstimmen. Ein reiner Test der Rechenklasse haette
+den Fehler nicht gefunden — er waere gruen geblieben, waehrend die Aufrufstelle das Ergebnis
+wegwirft. `431/431` Tests gruen (vorher `406`).
+
 ## 7c. Frueherer Umsetzungsplan (erledigt, zur Nachvollziehbarkeit)
 
 **Die B1-Query gehoert uns** (Vorrangregel 7 im `RAG_ROUTER.md`):

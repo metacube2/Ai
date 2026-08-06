@@ -3081,12 +3081,16 @@
         _ => Color.Info
     };
 
+    // Konstanten statt Literale: ein Tippfehler wuerde hier nicht auffallen, die Zeile bekaeme
+    // nur still die falsche Farbe. "Konzernkosten fehlen" fehlte hier und stand deshalb als
+    // einziger offener Status nicht auf Warning.
     private static Color GroupMarginStatusColor(string status) => status switch
     {
-        "OK" => Color.Success,
-        "Standardpreis fehlt" => Color.Warning,
-        "Lieferant unklar" => Color.Warning,
-        "Umsatz fehlt" => Color.Default,
+        GroupMarginStatuses.Ok => Color.Success,
+        GroupMarginStatuses.StandardCostMissing => Color.Warning,
+        GroupMarginStatuses.SupplierUnclear => Color.Warning,
+        GroupMarginStatuses.GroupCostMissing => Color.Warning,
+        GroupMarginStatuses.SalesMissing => Color.Default,
         _ => Color.Info
     };
 
