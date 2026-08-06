@@ -15,15 +15,17 @@ Die drei am 2026-07-30 noch offenen fachlichen Punkte sind im Code umgesetzt:
   unterschiedlichen Produktgruppen dienen;
 - gemeinsame ABC/XYZ-Massnahmenmatrix mit konkretem Pruefauftrag je Klasse.
 
-Wichtig: Die echten ZC23-Referenztexte liegen noch nicht im Repository. Die GUI
-zeigt bis zum Einspielen `Disponent <Code>` und weist fehlende Zuordnungen offen
-aus; sie erfindet keine Produktgruppen. Vollstaendige Entscheidung, Regeln und
-Abnahmegrenzen:
+Nachtrag 13:57 MESZ: `zdispo_grp.xlsx` und `zdispo_spart.xlsx` sind als
+separate Zusatzquelle eingebunden. Bestehende manuelle ZC23-Zuordnungen bleiben
+fuehrend und werden nicht ueberschrieben. Die Zusatzquelle wirkt nur im
+Spend-Aufriss; ohne Treffer zeigt die GUI weiterhin `Disponent <Code>`.
+Vollstaendige Entscheidung, Regeln und Abnahmegrenzen:
 `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 
-Produktivstand: deployed und technisch verifiziert am **2026-08-06 12:31
-MESZ**, Funktionscommit `bb009bf`, `435/435` Tests. Die echte ZC23-Map bleibt
-die offene fachliche Datenlieferung.
+Produktivstand: deployed und technisch verifiziert am **2026-08-06 13:57
+MESZ**, Funktionscommit `0a8a4c9`, `435/435` Tests. Produktiv wurden `45`
+ZDISPO-Zuordnungen aus `42` Mustern geladen; `D5` besitzt in der gelieferten
+Textdatei noch keine Beschreibung.
 
 ## Umsetzungsstand 2026-07-30 (alles umgesetzt, `346/346` Tests gruen)
 
@@ -36,7 +38,7 @@ die offene fachliche Datenlieferung.
 | ZLO03: Excel-Paste (Trennzeichen) | **gebaut** | Komma, Semikolon, Leerzeichen, Tab, Zeilenumbruch; Duplikate raus |
 | ZLO03: Mehrfachabfrage-Bug | **gebaut (Bypass)** | eine SAP-Anfrage je Nummer statt OR-Gruppe, siehe Abschnitt 5b |
 | Refresh-Status pruefen (Nebenbefund) | **offen, nicht Code** | Handgriff im Dashboard, siehe Abschnitt 6 |
-| Produktgruppen-Aufriss (ZC23) | **Code gebaut, Referenzdaten offen** | ZLO03/Disponent, 1/n-Allokation und GUI gebaut; echte ZC23-Texte noch einspielen |
+| Produktgruppen-Aufriss (ZDISPO/ZC23) | **gebaut und Zusatzdaten geladen** | ZLO03/Disponent, manuelle Map vor ZDISPO-Fallback, 1/n-Allokation; `D5`-Text fachlich offen |
 
 Zwei Dinge sind bewusst NICHT gemessen und sollten beim ersten Nachtlauf beobachtet werden:
 

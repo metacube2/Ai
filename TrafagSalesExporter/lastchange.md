@@ -26,6 +26,23 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, ZDISPO NUR IM EINKAUF-SPEND-AUFRISS ERGAENZT, DEPLOYED UND
+  VERIFIZIERT (13:57 MESZ, Commit `0a8a4c9`): `zdispo_grp.xlsx` ordnet
+  Disponenten/-muster den DISPO-Gruppen zu, `zdispo_spart.xlsx` liefert die
+  Produktnamen. Die Daten landen in der separaten Tabelle
+  `PurchasingSpendDisponentRule`; die bestehende manuelle
+  `PurchasingProductGroupMap` wird weder geloescht noch ueberschrieben und hat
+  bei Treffern Vorrang. Exakte Regeln gewinnen vor Sternmustern. Doppelte
+  Zuordnungen (`016`, `DS1`, `DS2`) bleiben getrennt und laufen in dieselbe
+  summenerhaltende `1/n`-Allokation. Aenderung wirkt ausschliesslich in
+  `Einkauf > Spend-Aufriss > Produktgruppe`, nicht in anderen Einkaufs- oder
+  Finance-Sichten. Produktiv: `45` Regeln aus `42` Mustern, manuelle Map weiter
+  `0`, `105` ZLO03-Zeilen mit Disponent; `D5` hat in der gelieferten Textdatei
+  keinen Namen und erscheint deshalb als Code. `435/435` Tests, Startseite und
+  direkter Aufriss HTTPS `200`; DLL `4'136'448` Bytes, SHA256
+  `0F1CB29F6F766C8CB71903D45B78DB48B3AB94FE58638837F5376E9D2A9B01C1`.
+  Details: `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+
 - 2026-08-06, EINKAUF PRODUKTGRUPPEN UND ABC/XYZ DEPLOYED UND VERIFIZIERT
   (12:31 MESZ, Funktionscommit `bb009bf`): Spend-Aufriss hat neu die Perspektive `Produktgruppe -> Lieferant ->
   Material`. `VknrDispo` wird aus ZLO03 persistiert; eine optionale
@@ -40,9 +57,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `B5C72496A7A4E11AC38675D840A5DF9DBABA6999517DD70FE3D7C0CE07BAEC3C`;
   Startseite und `/einkauf/aufriss` HTTP `200`, `app_offline.htm` nicht aktiv.
   Produktivschema: `VknrDispo` und `PurchasingProductGroupMap` vorhanden,
-  `105` ZLO03-Zeilen mit Disponent, ZC23-Map noch `0` Zeilen. Vor der fachlichen
-  Abnahme fehlen daher die echte ZC23-Referenzliste, anschliessender ZLO03-Full-
-  Load und Gegenprobe eines Mehrfachverwendungsfalls. Details:
+  `105` ZLO03-Zeilen mit Disponent, manuelle ZC23-Map noch `0` Zeilen. Dieser
+  Grundstand wurde um 13:57 durch die separate ZDISPO-Zusatzquelle ergaenzt;
+  aktueller Stand siehe Eintrag direkt darueber. Details:
   `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 
 - 2026-08-06, FINANCE-PRUEFBUCH WIES DEN VOLLEN UMSATZ ALS MARGE AUS — DEPLOYED UND VERIFIZIERT

@@ -11,17 +11,19 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
-- Produktiv deployt und verifiziert am 2026-08-06 12:31 MESZ, Commit
-  `bb009bf`, `435/435` Tests. Startseite und direkter Spend-Aufriss liefern
-  HTTP `200`; `VknrDispo` und `PurchasingProductGroupMap` sind produktiv
-  vorhanden. `105` ZLO03-Zeilen tragen einen Disponenten, die echte ZC23-Map
-  hat noch `0` Eintraege.
+- ZDISPO-Ergaenzung produktiv deployt und verifiziert am 2026-08-06 13:57
+  MESZ, Commit `0a8a4c9`, `435/435` Tests. Startseite und direkter
+  Spend-Aufriss liefern HTTPS `200`. Produktiv stehen `45` ZDISPO-Zuordnungen
+  aus `42` Mustern; die bestehende manuelle ZC23-Tabelle blieb unveraendert bei
+  `0` Eintraegen. `105` ZLO03-Zeilen tragen einen Disponenten.
 - Seit 2026-08-06 bietet der Spend-Aufriss die Perspektive
   `Produktgruppe -> Lieferant -> Material`. Die Zuordnung folgt
-  `EKPO-MATNR -> ZLO03 -> VknrDispo -> ZC23`. Mehrfach verwendete Komponenten
+  `EKPO-MATNR -> ZLO03 -> VknrDispo -> Produktname`. Manuelle ZC23-Zuordnungen
+  bleiben fuehrend; nur fehlende Namen werden ueber `zdispo_grp.xlsx` und
+  `zdispo_spart.xlsx` ergaenzt. Das gilt ausschliesslich fuer den Spend-Aufriss.
+  Mehrfach verwendete Komponenten
   werden summenerhaltend gleichmaessig `1/n` auf unterschiedliche
-  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar. Die echten
-  ZC23-Texte sind noch einzuspielen, bis dahin wird `Disponent <Code>` gezeigt.
+  Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar.
   Details: `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 - ABC und XYZ werden seit 2026-08-06 zusaetzlich als gemeinsame
   Massnahmenmatrix mit Spend, Material-/Lieferantenzahl und konkretem
@@ -63,8 +65,8 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   = Delta`, aktualisiertes Cache-Enddatum und Nachklassifizierungszahl).
 - Marco-Abnahme: Offenwert gegen SAP und WKURS-Richtung an einem echten
   Fremdwaehrungsbeleg pruefen.
-- Echte ZC23-Referenzliste in `PurchasingProductGroupMap` einspielen, danach
-  ZLO03-Full-Load und fachliche Summenabnahme an einem Mehrfachverwendungsfall.
+- ZLO03-Full-Load und fachliche Summenabnahme an einem echten
+  Mehrfachverwendungsfall; fehlenden Produktnamen fuer `DISPO D5` klaeren.
 
 ## Rohquellen Nur Bei Bedarf
 

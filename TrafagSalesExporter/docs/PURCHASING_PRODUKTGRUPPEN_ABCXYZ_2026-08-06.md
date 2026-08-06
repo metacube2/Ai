@@ -2,11 +2,12 @@
 
 Stand: 2026-08-06
 
-Status: **produktiv deployed und technisch verifiziert am 2026-08-06, 12:31 MESZ**
-(Funktionscommit `bb009bf`). Die fachlichen
-ZC23-Bezeichnungen sind im Repository nicht vorhanden und werden deshalb nicht
-erfunden. Bis die Referenzliste eingespielt ist, zeigt die Anwendung den
-belegten Disponenten-Code.
+Status: **ZDISPO-Ergaenzung produktiv deployed und technisch verifiziert am
+2026-08-06, 13:57 MESZ** (Funktionscommit `0a8a4c9`; Grundfunktion
+`bb009bf`). Die beiden gelieferten Referenzdateien `zdispo_grp.xlsx` und
+`zdispo_spart.xlsx` sind eingebunden. Sie ergaenzen ausschliesslich den
+Produktgruppen-Aufriss; bestehende manuelle Zuordnungen bleiben fuehrend und
+werden nicht ueberschrieben.
 
 ## Entscheidung 1: Produktgruppen-Aufriss
 
@@ -17,13 +18,28 @@ Der Reiter `Einkauf > Spend-Aufriss` bietet neu die Einstiegsperspektive
 
 Die Zuordnung verwendet die vorhandene Datenkette:
 
-`EKPO-MATNR -> ZLO03-Komponente -> verwendendes Kopfmaterial -> VknrDispo -> ZC23-Produktgruppe`
+`EKPO-MATNR -> ZLO03-Komponente -> verwendendes Kopfmaterial -> VknrDispo -> Produktname`
 
 `VknrDispo` wird beim ZLO03-Load neu als eigene Cache-Spalte gespeichert. Die
 optionale Tabelle `PurchasingProductGroupMap` enthaelt die Referenz
 `Disponent -> ProductGroup / ProductGroupText` mit Quelle `ZC23`.
 
-Solange ein Disponent keinen ZC23-Eintrag hat, lautet die sichtbare Gruppe
+Ergaenzend wird beim App-Start nur die separate Tabelle
+`PurchasingSpendDisponentRule` aus den beiden ZDISPO-Dateien aktualisiert:
+
+- `zdispo_grp.xlsx`: `DISPO_KZ` (Disponent oder Muster) -> `DISPO`;
+- `zdispo_spart.xlsx`: `DISPO` -> lesbarer `DESCR`-Produktname;
+- exakter Disponent gewinnt vor einem Sternmuster; bei mehreren Mustern gewinnt
+  das laengste passende Muster;
+- Prioritaet: manuelle `PurchasingProductGroupMap` vor ZDISPO vor
+  `Disponent <Code>`.
+
+Der Import schreibt keine Zeile der bestehenden manuellen Tabelle und ist nur
+in der Perspektive `Produktgruppe` des Reiters `Spend-Aufriss` verdrahtet. Die
+anderen Einkaufs- und Finance-Sichten bleiben unveraendert.
+
+Solange ein Disponent weder einen manuellen noch einen ZDISPO-Treffer hat,
+lautet die sichtbare Gruppe
 `Disponent <Code>`. Materialien ohne ZLO03-/Disponenten-Zuordnung bleiben als
 `ohne Produktgruppe` sichtbar. Es gibt keinen stillen Ausschluss.
 
@@ -36,6 +52,8 @@ verbindliche Regel ist eine gleichmaessige, summenerhaltende Allokation:
 - zwei unterschiedliche Produktgruppen: je 50 Prozent;
 - `n` unterschiedliche Produktgruppen: je `1/n`;
 - mehrere Disponenten derselben Produktgruppe zaehlen nur als eine Gruppe;
+- mehrere ZDISPO-Zeilen fuer dasselbe Muster bleiben als getrennte Gruppen
+  erhalten und werden ebenfalls `1/n` verteilt;
 - ohne Zuordnung: 100 Prozent auf `ohne Produktgruppe`.
 
 Damit gilt immer:
@@ -68,10 +86,11 @@ von Disposition, Sicherheitsbestand oder Lieferant.
 
 ## Noch offen vor fachlicher Produktivabnahme
 
-- ZC23-Referenzliste mit den echten Bezeichnungen in
-  `PurchasingProductGroupMap` einspielen und Eigentuemmer der Pflege festlegen.
 - Einen bekannten Mehrfachverwendungsfall mit Einkauf und Disposition gegen
-  ZC23 pruefen.
+  ZDISPO pruefen.
+- Fuer `DISPO D5` fehlt in `zdispo_spart.xlsx` ein `DESCR`; die GUI zeigt
+  deshalb ehrlich den Code `D5`. Fachlich klaeren, ob ein Name nachzuliefern ist.
+- Eigentuemmer und Aktualisierungsweg der beiden ZDISPO-Dateien festlegen.
 - Nach Deploy den ZLO03-Full-Load ausfuehren, damit `VknrDispo` im Cache gefuellt
   ist.
 - Summe des Produktgruppen-Aufrisses gegen den unverteilten Gesamt-Spend eines
@@ -83,16 +102,17 @@ von Disposition, Sicherheitsbestand oder Lieferant.
 - Gezielte Einkaufs-/Schema-Tests: `47/47` erfolgreich.
 - Lokalisierungstests: `6/6` erfolgreich.
 - Gesamte Regression: `435/435` Tests erfolgreich.
-- Produktivartefakt `BiDashboard.dll`: `4'120'064` Bytes, Zeitstempel
-  `06.08.2026 12:31:27`, SHA256
-  `B5C72496A7A4E11AC38675D840A5DF9DBABA6999517DD70FE3D7C0CE07BAEC3C`.
+- Produktivartefakt `BiDashboard.dll`: `4'136'448` Bytes, Zeitstempel
+  `06.08.2026 13:57:11`, SHA256
+  `0F1CB29F6F766C8CB71903D45B78DB48B3AB94FE58638837F5376E9D2A9B01C1`.
 - `app_offline.htm` wurde fuer den Publish gesetzt und danach aus dem aktiven
-  Namen entfernt. Startseite HTTP `200` (`64'755` Bytes); direkter Aufruf
-  `/BiDashboard/einkauf/aufriss` HTTP `200` (`133'577` Bytes, warm `8.43 s`).
+  Namen entfernt. Startseite HTTPS `200` (`64'770` Bytes); direkter Aufruf
+  `/BiDashboard/einkauf/aufriss` HTTPS `200` (`133'542` Bytes, warm `10.15 s`).
 - Produktivschema lesend verifiziert: Spalte `MaterialUsageCache.VknrDispo`
-  vorhanden, Tabelle `PurchasingProductGroupMap` vorhanden. Aktuell tragen
-  `105` ZLO03-Cachezeilen einen Disponenten; die ZC23-Mappingtabelle enthaelt
-  noch `0` Zeilen. Das ist die verbleibende fachliche Datenluecke.
+  vorhanden, Tabellen `PurchasingProductGroupMap` und
+  `PurchasingSpendDisponentRule` vorhanden. Aktuell tragen `105`
+  ZLO03-Cachezeilen einen Disponenten. Die manuelle ZC23-Tabelle blieb bei `0`
+  Zeilen; separat wurden `45` ZDISPO-Zuordnungen aus `42` Mustern geladen.
 - Regressionstest belegt: Material M1 mit CHF 120 und zwei Produktgruppen wird
   CHF 60 / CHF 60 verteilt; gemeinsam mit zugeordnetem und unzugeordnetem Spend
   bleibt die Gesamtsumme CHF 250.

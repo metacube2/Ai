@@ -4,6 +4,19 @@ Stand: 2026-08-06
 
 ## Kurzstand
 
+- Letzter produktiv verifizierter Deploy: **2026-08-06 13:57, ZDISPO-Zusatz
+  nur fuer den Einkauf Spend-Aufriss**, Funktionscommit `0a8a4c9`, `435/435`
+  Tests gruen. `BiDashboard.dll` `06.08.2026 13:57:11`, `4'136'448` Bytes,
+  SHA256 `0F1CB29F6F766C8CB71903D45B78DB48B3AB94FE58638837F5376E9D2A9B01C1`.
+  `app_offline.htm` gesetzt und danach aus dem aktiven Namen entfernt;
+  Startseite HTTPS `200` (`64'770` Bytes),
+  `/BiDashboard/einkauf/aufriss` HTTPS `200` (`133'542` Bytes, warm `10.15 s`).
+  Produktiv lesend belegt: `45` Zeilen in `PurchasingSpendDisponentRule` aus
+  `42` Mustern, `0` Zeilen in der unveraenderten manuellen
+  `PurchasingProductGroupMap`, `105` ZLO03-Zeilen mit Disponent. Beide
+  ZDISPO-XLSX-Dateien liegen im Publish-Verzeichnis. Details:
+  `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+
 - Letzter produktiv verifizierter Deploy: **2026-08-06 12:31, Einkauf
   Produktgruppen und ABC/XYZ**, Funktionscommit `bb009bf`, `435/435` Tests
   gruen. `BiDashboard.dll` `06.08.2026 12:31:27`, `4'120'064` Bytes, SHA256
