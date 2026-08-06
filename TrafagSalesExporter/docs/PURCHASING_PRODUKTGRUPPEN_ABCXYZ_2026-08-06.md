@@ -2,7 +2,8 @@
 
 Stand: 2026-08-06
 
-Status: **im Code umgesetzt und getestet, noch nicht deployed**. Die fachlichen
+Status: **produktiv deployed und technisch verifiziert am 2026-08-06, 12:31 MESZ**
+(Funktionscommit `bb009bf`). Die fachlichen
 ZC23-Bezeichnungen sind im Repository nicht vorhanden und werden deshalb nicht
 erfunden. Bis die Referenzliste eingespielt ist, zeigt die Anwendung den
 belegten Disponenten-Code.
@@ -82,6 +83,16 @@ von Disposition, Sicherheitsbestand oder Lieferant.
 - Gezielte Einkaufs-/Schema-Tests: `47/47` erfolgreich.
 - Lokalisierungstests: `6/6` erfolgreich.
 - Gesamte Regression: `435/435` Tests erfolgreich.
+- Produktivartefakt `BiDashboard.dll`: `4'120'064` Bytes, Zeitstempel
+  `06.08.2026 12:31:27`, SHA256
+  `B5C72496A7A4E11AC38675D840A5DF9DBABA6999517DD70FE3D7C0CE07BAEC3C`.
+- `app_offline.htm` wurde fuer den Publish gesetzt und danach aus dem aktiven
+  Namen entfernt. Startseite HTTP `200` (`64'755` Bytes); direkter Aufruf
+  `/BiDashboard/einkauf/aufriss` HTTP `200` (`133'577` Bytes, warm `8.43 s`).
+- Produktivschema lesend verifiziert: Spalte `MaterialUsageCache.VknrDispo`
+  vorhanden, Tabelle `PurchasingProductGroupMap` vorhanden. Aktuell tragen
+  `105` ZLO03-Cachezeilen einen Disponenten; die ZC23-Mappingtabelle enthaelt
+  noch `0` Zeilen. Das ist die verbleibende fachliche Datenluecke.
 - Regressionstest belegt: Material M1 mit CHF 120 und zwei Produktgruppen wird
   CHF 60 / CHF 60 verteilt; gemeinsam mit zugeordnetem und unzugeordnetem Spend
   bleibt die Gesamtsumme CHF 250.

@@ -11,6 +11,11 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- Produktiv deployt und verifiziert am 2026-08-06 12:31 MESZ, Commit
+  `bb009bf`, `435/435` Tests. Startseite und direkter Spend-Aufriss liefern
+  HTTP `200`; `VknrDispo` und `PurchasingProductGroupMap` sind produktiv
+  vorhanden. `105` ZLO03-Zeilen tragen einen Disponenten, die echte ZC23-Map
+  hat noch `0` Eintraege.
 - Seit 2026-08-06 bietet der Spend-Aufriss die Perspektive
   `Produktgruppe -> Lieferant -> Material`. Die Zuordnung folgt
   `EKPO-MATNR -> ZLO03 -> VknrDispo -> ZC23`. Mehrfach verwendete Komponenten

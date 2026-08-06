@@ -4,7 +4,23 @@ Stand: 2026-08-06
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 11:06, Finance-Anzeige durchgesehen**,
+- Letzter produktiv verifizierter Deploy: **2026-08-06 12:31, Einkauf
+  Produktgruppen und ABC/XYZ**, Funktionscommit `bb009bf`, `435/435` Tests
+  gruen. `BiDashboard.dll` `06.08.2026 12:31:27`, `4'120'064` Bytes, SHA256
+  `B5C72496A7A4E11AC38675D840A5DF9DBABA6999517DD70FE3D7C0CE07BAEC3C`.
+  `app_offline.htm` gesetzt und danach aus dem aktiven Namen entfernt;
+  Startseite HTTP `200` (`64'755` Bytes),
+  `/BiDashboard/einkauf/aufriss` HTTP `200` (`133'577` Bytes, warm `8.43 s`).
+  Additive Produktivmigration lesend belegt: `MaterialUsageCache.VknrDispo`
+  und `PurchasingProductGroupMap` vorhanden; `105` Usage-Zeilen mit Disponent,
+  ZC23-Map noch leer. Wirknachweis in der DLL: Typen
+  `PurchasingProductGroupAllocationSummary`, `PurchasingAbcXyzActionRow` und
+  `PurchasingProductGroupMap` enthalten. Die produktive Haupt-DB blieb beim
+  Publish bei `339'185'664` Bytes / `06.08.2026 12:27:49`; die additive
+  Migration liegt im aktiven WAL. Details:
+  `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
+
+- Deploy davor: **2026-08-06 11:06, Finance-Anzeige durchgesehen**,
   Commit `d9d9a4f`, `433/433` Tests gruen. `BiDashboard.dll` `06.08.2026 11:06:26`,
   `4'057'600` Bytes, SHA256
   `E6CCF3C4AC6484DC8605338004A949835184DF67B9C9AEDFA6E13103C86FAF7E`. `app_offline.htm`

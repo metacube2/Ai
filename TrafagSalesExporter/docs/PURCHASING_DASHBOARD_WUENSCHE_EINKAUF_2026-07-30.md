@@ -21,6 +21,10 @@ aus; sie erfindet keine Produktgruppen. Vollstaendige Entscheidung, Regeln und
 Abnahmegrenzen:
 `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 
+Produktivstand: deployed und technisch verifiziert am **2026-08-06 12:31
+MESZ**, Funktionscommit `bb009bf`, `435/435` Tests. Die echte ZC23-Map bleibt
+die offene fachliche Datenlieferung.
+
 ## Umsetzungsstand 2026-07-30 (alles umgesetzt, `346/346` Tests gruen)
 
 | Punkt | Stand | Bemerkung |
