@@ -245,65 +245,140 @@ $notNeeded
 }
 
 # ------------------------------------------------------------------ 5 Deutschland
+#
+# KORREKTUR 2026-08-03: Die frueheren drei "bitte Export erweitern"-Punkte waren FALSCH
+# ADRESSIERT. Die Export-SQL steht in diesem Repo - AlphaplanExportPackage/scripte/
+# alphaplanExport.ps1 Zeilen 143-202 und alphaplandeltaexport.ps1 mit identischer Query -
+# und liest ausschliesslich dbo.Belege + dbo.BelegePositionen. Supplier, Kundenname/-land
+# und eine saubere Artikelbezeichnung fehlen, weil UNSERE Query sie nicht liest, nicht weil
+# DE sie nicht liefern koennte: `RechnungsAdressenID` wird sogar selektiert, aber nie
+# aufgeloest. Was wirklich fehlt, ist das Alphaplan-Schema - die Discovery
+# (Run-AlphaplanDiscoveryAndUpload.ps1) wurde nie zurueckgeliefert, candidate_objects.csv
+# im Repo-Root ist nur eine Kopfzeile. Deshalb: KEINE Tabellen-/Spaltennamen erfinden, die
+# einzige echte Bitte an DE ist ein Schema-Auszug. Nur die Frage ArtikelNummer vs.
+# SAP-MATNR ist eine fachliche Frage AN Deutschland.
+#
+# Zahlen am 2026-08-03 gegen Finance_Dashboard_Audit_All_2026-07-29.csv nachgerechnet:
+# 7'171 TRDE-Zeilen, Supplier alle drei Felder 7'171 leer, CustomerName und CustomerCountry
+# 7'171 leer bei 7'171 gefuellten CustomerNumber, 2'903 Bezeichnungen mit Font-Muell,
+# Material 0 leer.
+#
+# Der allgemeine $notNeeded-Kasten darf hier NICHT verwendet werden: er sagt "Produktsparte
+# ist egal, solange die Materialnummer zum TR-AG-Stamm passt" - und genau das ist fuer DE
+# der ungeklaerte Punkt 4. Deshalb eine DE-Fassung ohne diesen Satz.
+# SPRACHE 2026-08-03: Diese Mail ist DEUTSCH, im Unterschied zu den sechs anderen - Rohail sitzt
+# bei der Trafag GmbH. Umlaute stehen als HTML-Entities (`&uuml;`, `&auml;`, `&szlig;`), NICHT als
+# echte Zeichen: die Datei ist reines ASCII ohne BOM, und PowerShell 5.1 liest eine BOM-lose Datei
+# als Windows-1252 - echte Umlaute wuerden als Mojibake in der Mail landen. Entities rendern in
+# Outlook korrekt und halten die Datei ASCII, wie die vorhandenen `&mdash;`/`&nbsp;` schon zeigen.
+# Anrede bewusst "Hallo Rohail" mit Sie-Form: zu formell ist nie ein Fehler, zu vertraulich schon.
+$notNeededDe = GreyBox @"
+<p style="margin:0 0 6px 0;font:bold 9.5pt Calibri;color:#555555">Diese zwei Punkte brauchen Sie nicht anzufassen &mdash; bitte investieren Sie dort keine Zeit</p>
+<p style="margin:0;font:9.5pt Calibri;color:#555555">
+<b>Umrechnungskurse auf dem Beleg</b> &mdash; die W&auml;hrungsumrechnung passiert zentral.<br>
+<b>Artikelkosten auf Fracht-, Verpackungs-, Zertifikats- und Dokumentationszeilen</b> &mdash; wir
+haben sie gepr&uuml;ft, sie sind korrekt null.</p>
+"@
+
 $mails += [pscustomobject]@{
   File    = '5_TRDE_Deutschland_Rohail.msg'
+  Subject = 'BI Dashboard - Alphaplan-Export: eine Schemaliste und eine Frage zu den Artikelnummern'
   To      = 'Rohail.Munir@trafag.de'
-  Subject = 'BI Dashboard - three questions on the Alphaplan export (Trafag GmbH)'
   Html    = @"
-<p>Dear Rohail,</p>
-<p>$intro For Germany there are three points, and all three concern the Alphaplan export as it
-currently reaches us rather than master data maintenance. If someone else looks after the Alphaplan
-export on your side, could you please forward this to them?</p>
-$(Caption 'What arrives in the export, measured on 7,171 invoice lines')
+<p>Hallo Rohail,</p>
+<p>bevor Sie Zeit investieren: Ich hatte meine fr&uuml;here Notiz zum Alphaplan-Export falsch herum,
+und ich korrigiere das lieber, als dass Sie etwas verfolgen, das eigentlich bei uns liegt.</p>
+<p>Wir haben die Verkaufsdaten, die das Gruppen-BI-Dashboard speisen, Feld f&uuml;r Feld gepr&uuml;ft
+&mdash; gemessen am konsolidierten Auszug vom 29. Juli 2026. F&uuml;r Deutschland fehlen vier Dinge,
+aber <b>drei davon m&uuml;ssen wir beheben, nicht Sie.</b> Der n&auml;chtliche Export l&auml;uft als
+geplante Aufgabe auf Ihrem Server (<span style="font-family:Consolas,monospace">runAlphaplanDailyDelta.ps1</span>
+und <span style="font-family:Consolas,monospace">alphaplandeltaexport.ps1</span>, die zwei Dateien,
+die wir Ihnen im Juni geschickt haben) &mdash; die SQL-Abfrage darin stammt aber von uns. Diese drei
+Felder fehlen einfach, weil <b>unsere eigene Abfrage sie noch nicht liest</b>. In Alphaplan selbst
+ist nichts zu &auml;ndern, und niemand muss Daten von Hand pflegen.</p>
+$(Caption 'Die vier Luecken, gemessen an 7.171 Rechnungszeilen')
 <table cellpadding="0" cellspacing="0" border="0" width="$W" style="border-collapse:collapse;font:9.5pt Calibri">
 <tr>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD;width:210px">Material number</td>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $GREEN)&nbsp;complete</td>
+<td bgcolor="#EFEFEF" style="padding:5px 8px;border-bottom:1px solid #CCCCCC;width:200px;font:bold 9pt Calibri">Feld</td>
+<td bgcolor="#EFEFEF" style="padding:5px 8px;border-bottom:1px solid #CCCCCC;font:bold 9pt Calibri">Status und Zust&auml;ndigkeit</td>
 </tr>
 <tr>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Customer <b>number</b></td>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $GREEN)&nbsp;complete</td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Lieferant der Ware<br><span style="font:8.5pt Calibri;color:#707070">Nummer / Name / Land</span></td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $RED)&nbsp;leer auf allen 7.171 Zeilen<br><span style="font:8.5pt Calibri;color:$NAVY"><b>bei uns</b> &mdash; unsere Abfrage liest &uuml;berhaupt keine Lieferantenspalte</span></td>
 </tr>
 <tr>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Supplier number / name / country</td>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $RED)&nbsp;<b>empty on all 7,171 lines</b></td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Kundenname und Kundenland</td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $RED)&nbsp;leer auf allen 7.171 Zeilen<br><span style="font:8.5pt Calibri;color:$NAVY"><b>bei uns</b> &mdash; wir lesen <span style="font-family:Consolas,monospace">RechnungsAdressenID</span>, l&ouml;sen sie aber nie zu einem Namen auf</span></td>
 </tr>
 <tr>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Customer <b>name</b> and country</td>
-<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $RED)&nbsp;<b>empty on all 7,171 lines</b></td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">Artikelbezeichnung</td>
+<td style="padding:5px 8px;border-bottom:1px solid #DDDDDD">$(Swatch $AMBER)&nbsp;2.903 von 7.171 enthalten Formatierungstext (40 %)<br><span style="font:8.5pt Calibri;color:$NAVY"><b>bei uns</b> &mdash; wir lesen das Rich-Text-Feld der Belegposition</span></td>
 </tr>
 <tr>
-<td style="padding:5px 8px">Product description</td>
-<td style="padding:5px 8px">$(Swatch $AMBER)&nbsp;2,903 of 7,171 unusable (40%)</td>
+<td style="padding:5px 8px">Ist <span style="font-family:Consolas,monospace">ArtikelNummer</span> die Trafag-AG-Materialnummer?</td>
+<td style="padding:5px 8px">$(Swatch $AMBER)&nbsp;seit Juni unbest&auml;tigt<br><span style="font:8.5pt Calibri;color:$RED"><b>Ihre Antwort n&ouml;tig</b> &mdash; siehe Frage am Ende</span></td>
 </tr>
 </table>
-<p style="margin:14px 0 6px 0;font:9.5pt Calibri"><b>1.</b> Can the export be extended to include
-the <b>supplier of the goods</b> on each invoice line? This is what we need to separate
-intercompany deliveries from third-party purchases. If it is not feasible in the short term,
-please tell us so we can plan around it.</p>
-<p style="margin:0 0 6px 0;font:9.5pt Calibri"><b>2.</b> Could <b>customer name and country</b> be
-added? German customers currently appear in group reports as bare numbers, because only the
-customer number arrives.</p>
-<p style="margin:0 0 6px 0;font:9.5pt Calibri"><b>3.</b> <b>Product descriptions carry formatting
-text.</b> It looks as though a rich-text field is exported including its formatting header:</p>
+<p style="margin:6px 0 0 0;font:8.5pt Calibri;color:#707070">Kundennummer und Materialnummer kommen
+auf allen 7.171 Zeilen vollst&auml;ndig an &mdash; die zwei sind in Ordnung.</p>
+$(Caption 'Das Einzige, was wir von Ihnen brauchen')
+<p>Um diese Spalten lesen zu k&ouml;nnen, m&uuml;ssen wir wissen, wie sie in Ihrer
+Alphaplan-Datenbank hei&szlig;en. Wir hatten noch nie eine Tabellen- und Spaltenliste f&uuml;r
+<span style="font-family:Consolas,monospace">ApDaten</span>, und ich m&ouml;chte keine Namen raten
+und Ihnen eine kaputte Abfrage auf den Server schicken.</p>
+<p>K&ouml;nnte die Person, die den SQL Server betreut, folgende <b>rein lesende</b> Anweisung im
+SSMS gegen <span style="font-family:Consolas,monospace">ApDaten</span> ausf&uuml;hren und das
+Ergebnis als CSV oder Excel zur&uuml;ckschicken? Sie liest nur Metadaten &mdash; keine
+Alphaplan-Daten, keine &Auml;nderungen:</p>
+<table cellpadding="0" cellspacing="0" border="0" width="$W" style="border-collapse:collapse">
+<tr>
+<td bgcolor="#F7F9FB" style="padding:8px 10px;border:1px solid #A0B4C8;font:8.5pt Consolas,monospace;color:#1F3D5A">
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE<br>
+FROM INFORMATION_SCHEMA.COLUMNS<br>
+WHERE TABLE_NAME LIKE '%Adress%'<br>
+&nbsp;&nbsp;&nbsp;OR TABLE_NAME LIKE '%Artikel%'<br>
+&nbsp;&nbsp;&nbsp;OR TABLE_NAME LIKE '%Liefer%'<br>
+&nbsp;&nbsp;&nbsp;OR TABLE_NAME LIKE '%Kunde%'<br>
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
+</td>
+</tr>
+</table>
+<p style="margin:6px 0 0 0;font:9.5pt Calibri">Mit dieser Liste erweitern wir unsere eigene Abfrage,
+und die L&uuml;cken bei Lieferant und Kundenname schlie&szlig;en sich von unserer Seite &mdash; ohne
+dass jemand Daten von Hand pflegen muss.</p>
+$(Caption 'Warum die Artikelbezeichnung wichtig ist')
+<p style="margin:0 0 6px 0;font:9.5pt Calibri">Es sieht aus, als w&uuml;rde ein Rich-Text-Feld samt
+Formatierungskopf exportiert:</p>
 <table cellpadding="0" cellspacing="0" border="0" width="$W" style="border-collapse:collapse">
 <tr>
 <td bgcolor="#FFF4F4" style="padding:7px 9px;border:1px solid $RED;font:8.5pt Consolas,monospace;color:#7A1A1A">
-<span style="font:bold 8pt Calibri;color:$RED">WHAT WE RECEIVE</span><br>
+<span style="font:bold 8pt Calibri;color:$RED">WAS BEI UNS ANKOMMT</span><br>
 MS Shell Dlg, Microsoft Sans Serif, , , 9B4.4274.769.04.15.46.V3 Picostat PST4B3.44 &hellip;</td>
 </tr>
 <tr><td height="4" style="font-size:1px;line-height:1px">&nbsp;</td></tr>
 <tr>
 <td bgcolor="#F4FAF4" style="padding:7px 9px;border:1px solid $GREEN;font:8.5pt Consolas,monospace;color:#1B4D1F">
-<span style="font:bold 8pt Calibri;color:$GREEN">WHAT WE NEED</span><br>
+<span style="font:bold 8pt Calibri;color:$GREEN">WAS WIR BRAUCHEN</span><br>
 9B4.4274.769.04.15.46.V3 Picostat PST4B3.44</td>
 </tr>
 </table>
-<p style="margin:6px 0 0 0;font:9.5pt Calibri">For those 2,903 lines the product name is unusable
-in reports.</p>
-$notNeeded
-<p>Happy to set up a short call with whoever maintains the export if that is easier.</p>
-<p>Best regards<br>Ingo</p>
+<p style="margin:6px 0 0 0;font:9.5pt Calibri">Wir k&ouml;nnen das selbst herausfiltern, sicherer
+ist aber eine reine Textbezeichnung aus dem Artikelstamm, falls es eine gibt &mdash; dieselbe
+Tabellenliste oben zeigt uns das.</p>
+$(Caption 'Und eine echte Frage an Sie')
+<p>Ist <span style="font-family:Consolas,monospace">ArtikelNummer</span> in Alphaplan <b>dieselbe
+Nummer wie die Trafag-AG-Materialnummer</b>, oder eine rein lokale Alphaplan-Artikelnummer? Wir haben
+bisher angenommen, dass sie &uuml;bereinstimmen, es aber nie best&auml;tigt. Das ist wichtig, weil
+Produktsparten und Produktfamilien im Gruppenreporting zentral &uuml;ber den Abgleich dieser Nummer
+gegen den Trafag-AG-Materialstamm gebildet werden &mdash; weicht die Nummerierung ab, werden
+deutsche Ums&auml;tze den falschen Produktsparten zugeordnet, und keiner von uns w&uuml;rde es
+sehen.</p>
+<p>Falls es am Artikel ein separates Feld mit der Trafag-AG-Nummer gibt, w&auml;re das das Feld, das
+wir stattdessen exportieren sollten.</p>
+$notNeededDe
+<p>F&uuml;r ein kurzes Gespr&auml;ch mit der Person, die den Export oder den SQL Server betreut, bin
+ich gerne zu haben, wenn das einfacher ist als E-Mail.</p>
+<p>Freundliche Gr&uuml;&szlig;e<br>Ingo</p>
 "@
 }
 

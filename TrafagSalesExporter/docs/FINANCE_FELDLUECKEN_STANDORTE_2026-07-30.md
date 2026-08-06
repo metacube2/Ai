@@ -281,6 +281,16 @@ Zahlen stehen — Änderungen an Zahlen zuerst hier, dann in die Einzelmails üb
 >
 > **Germany (TRDE) — 7,171 lines**
 >
+> **ÜBERHOLT SEIT 2026-08-03 — diesen DE-Block NICHT mehr als Mailvorlage verwenden.** Die
+> drei Bitten unten sind falsch adressiert: die Alphaplan-Export-SQL ist unsere
+> (`AlphaplanExportPackage/scripte/alphaplanExport.ps1` Zeilen 143-202 und
+> `alphaplandeltaexport.ps1`, identische Query, lesen nur `dbo.Belege` +
+> `dbo.BelegePositionen`). Punkt 1-3 sind Spalten, die unsere eigene Query nicht liest, nicht
+> Felder, die Deutschland verweigert. Gültige Fassung und Begründung:
+> `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt „Korrektur Deutschland,
+> 2026-08-03"; Mailtext in `docs/mails/Build-StandortMails.ps1` Mail 5. Die **Zahlen** unten
+> stimmen weiterhin (am 2026-08-03 nachgemessen) — nur die Adressierung war falsch.
+>
 > Three points. All three concern the Alphaplan export as it currently reaches us, so these
 > are questions for your Alphaplan/BI contact rather than for master data maintenance:
 >
