@@ -618,30 +618,38 @@ public class PurchasingDashboardServiceTests : IDisposable
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '10', '000M1', '1', '120', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '20', 'M2', '1', '80', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '30', 'M3', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('PG1', '40', 'M4', '1', '40', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('PG1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
 
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V1', '001', 'M1', '2026-01-01');");
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V2', '002', 'M1', '2026-01-01');");
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '001', 'M2', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V4', 'EL7', 'M4', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'ALT', 'Darf manuell nicht ueberschreiben', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T2', 'FP_TRANSM. TX', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T3', 'Zweite Produktgruppe', '2026-01-01');");
 
         var state = await _service.LoadAsync(new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31)));
 
         Assert.False(state.Message.StartsWith("SAP Einkauf konnte nicht geladen werden", StringComparison.Ordinal), state.Message);
         var perspective = Assert.Single(state.SpendPerspectiveRows, row => row.Key == "productgroup");
-        Assert.Equal(250m, perspective.Rows.Sum(row => row.Total));
+        Assert.Equal(290m, perspective.Rows.Sum(row => row.Total));
         Assert.Equal(140m, Assert.Single(perspective.Rows, row => row.Label == "PG-A - Sensorik").Total);
         Assert.Equal(60m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
+        Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total);
+        Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T3 - Zweite Produktgruppe").Total);
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Darf manuell", StringComparison.Ordinal));
         Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
 
-        Assert.Equal(200m, state.ProductGroupAllocation.AssignedSpendChf);
+        Assert.Equal(240m, state.ProductGroupAllocation.AssignedSpendChf);
         Assert.Equal(50m, state.ProductGroupAllocation.UnassignedSpendChf);
-        Assert.Equal(120m, state.ProductGroupAllocation.MultiGroupSpendChf);
-        Assert.Equal(2, state.ProductGroupAllocation.AssignedMaterialCount);
+        Assert.Equal(160m, state.ProductGroupAllocation.MultiGroupSpendChf);
+        Assert.Equal(3, state.ProductGroupAllocation.AssignedMaterialCount);
         Assert.Equal(1, state.ProductGroupAllocation.UnassignedMaterialCount);
-        Assert.Equal(1, state.ProductGroupAllocation.MultiGroupMaterialCount);
-        Assert.Equal(2, state.ProductGroupAllocation.MappedDispatcherCount);
+        Assert.Equal(2, state.ProductGroupAllocation.MultiGroupMaterialCount);
+        Assert.Equal(3, state.ProductGroupAllocation.MappedDispatcherCount);
         Assert.Equal(0, state.ProductGroupAllocation.UnmappedDispatcherCount);
     }
 
@@ -728,6 +736,15 @@ CREATE TABLE PurchasingProductGroupMap (
     ProductGroupText TEXT NOT NULL DEFAULT '',
     Source TEXT NOT NULL DEFAULT 'ZC23',
     UpdatedAtUtc TEXT NOT NULL DEFAULT ''
+);");
+        ExecuteSync(@"
+CREATE TABLE PurchasingSpendDisponentRule (
+    DisponentPattern TEXT NOT NULL,
+    ProductGroup TEXT NOT NULL DEFAULT '',
+    ProductGroupText TEXT NOT NULL DEFAULT '',
+    Source TEXT NOT NULL DEFAULT 'zdispo*.xlsx',
+    UpdatedAtUtc TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (DisponentPattern, ProductGroup)
 );");
     }
 

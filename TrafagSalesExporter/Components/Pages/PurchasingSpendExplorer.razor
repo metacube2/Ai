@@ -45,8 +45,8 @@
     @if (ActivePerspectiveKey == "productgroup")
     {
         <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
-            @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> ZC23-Produktgruppe. Wird eine Komponente in mehreren unterschiedlichen Produktgruppen verwendet, wird ihr Spend gleichmaessig 1/n verteilt. Dadurch bleibt die Summe exakt erhalten. Fehlende ZC23-Texte erscheinen ehrlich als 'Disponent <Code>'.",
-               "Allocation: purchasing material -> ZLO03 component -> planner of the using header material -> ZC23 product group. If a component is used by several different product groups, its spend is split evenly 1/n. This preserves the exact total. Missing ZC23 texts are shown honestly as 'Planner <code>'.")
+            @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> Produktname. Bestehende manuelle Zuordnungen bleiben fuehrend; nur wenn dort kein Name steht, ergaenzen zdispo_grp.xlsx und zdispo_spart.xlsx den Namen. Bei mehreren Produktgruppen wird der Spend gleichmaessig 1/n verteilt und die Summe bleibt erhalten. Ohne Treffer erscheint 'Disponent <Code>'.",
+               "Allocation: purchasing material -> ZLO03 component -> planner of the using header material -> product name. Existing manual mappings remain authoritative; only when no name exists there do zdispo_grp.xlsx and zdispo_spart.xlsx add the name. For multiple product groups, spend is split evenly 1/n and the total is preserved. Without a match, 'Planner <code>' is shown.")
         </MudAlert>
         <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-2">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
@@ -59,7 +59,7 @@
                 @T("Mehrfachverwendung", "Multiple use"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
             </MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
-                ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")
+                ZDISPO/ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")
             </MudChip>
         </MudStack>
     }

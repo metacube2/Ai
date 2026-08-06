@@ -51,6 +51,8 @@
     <Content Include="erg.png" Condition="Exists('erg.png')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="login.png" Condition="Exists('login.png')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="manometer.png" Condition="Exists('manometer.png')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="zdispo_grp.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="zdispo_spart.xlsx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="$(HanaClientNativeDll)" Link="libadonetHDB.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(HanaClientNativeDll)')" />
   </ItemGroup>
 

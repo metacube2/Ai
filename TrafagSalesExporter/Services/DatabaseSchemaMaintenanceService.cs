@@ -393,7 +393,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             DatabaseSchemaSql.GetMaterialUsageCacheCreateSql(),
             DatabaseSchemaSql.GetMaterialParentCacheCreateSql(),
             DatabaseSchemaSql.GetMaterialUsageSyncStateCreateSql(),
-            DatabaseSchemaSql.GetPurchasingProductGroupMapCreateSql()
+            DatabaseSchemaSql.GetPurchasingProductGroupMapCreateSql(),
+            DatabaseSchemaSql.GetPurchasingSpendDisponentRuleCreateSql()
         })
         {
             using var cmd = conn.CreateCommand();

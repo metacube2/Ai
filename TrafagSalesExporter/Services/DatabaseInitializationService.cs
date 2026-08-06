@@ -26,6 +26,7 @@ public partial class DatabaseInitializationService : IDatabaseInitializationServ
         await db.Database.EnsureCreatedAsync();
         ConfigureSqlite(db);
         _schemaMaintenanceService.EnsureSchema(db);
+        PurchasingSpendDisponentRuleImporter.ImportFromDirectory(db, AppContext.BaseDirectory);
         _seedService.SeedDefaults(db);
     }
 

@@ -1269,11 +1269,53 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         }
 
         var hasZc23Map = await TableExistsAsync(conn, "PurchasingProductGroupMap", cancellationToken);
-        var mapJoin = hasZc23Map
+        var hasZdispoRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
+        var manualMapJoin = hasZc23Map
             ? "LEFT JOIN PurchasingProductGroupMap z ON trim(z.Disponent) = trim(u.VknrDispo)"
             : string.Empty;
-        var mappedCode = hasZc23Map ? "COALESCE(NULLIF(trim(z.ProductGroup), ''), '')" : "''";
-        var mappedText = hasZc23Map ? "COALESCE(NULLIF(trim(z.ProductGroupText), ''), '')" : "''";
+        var zdispoCtes = hasZdispoRules
+            ? @"ZdispoDispatchers AS (
+    SELECT DISTINCT trim(VknrDispo) AS Disponent
+    FROM MaterialUsageCache
+    WHERE COALESCE(trim(VknrDispo), '') <> ''
+),
+ZdispoCandidates AS (
+    SELECT d.Disponent,
+           r.ProductGroup,
+           r.ProductGroupText,
+           DENSE_RANK() OVER (
+               PARTITION BY d.Disponent
+               ORDER BY
+                   CASE WHEN upper(trim(r.DisponentPattern)) = upper(d.Disponent) THEN 0 ELSE 1 END,
+                   length(trim(r.DisponentPattern)) DESC
+           ) AS MatchRank
+    FROM ZdispoDispatchers d
+    INNER JOIN PurchasingSpendDisponentRule r
+        ON upper(trim(r.DisponentPattern)) = upper(d.Disponent)
+        OR (
+            substr(trim(r.DisponentPattern), -1, 1) = '*'
+            AND upper(d.Disponent) LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
+        )
+),
+ZdispoResolved AS (
+    SELECT DISTINCT Disponent, ProductGroup, ProductGroupText
+    FROM ZdispoCandidates
+    WHERE MatchRank = 1
+),
+"
+            : string.Empty;
+        var supplementalMapJoin = hasZdispoRules
+            ? "LEFT JOIN ZdispoResolved x ON upper(x.Disponent) = upper(trim(u.VknrDispo))"
+            : string.Empty;
+        var mapJoin = string.Join(Environment.NewLine, new[] { manualMapJoin, supplementalMapJoin }
+            .Where(value => value.Length > 0));
+        var manualCode = hasZc23Map ? "NULLIF(trim(z.ProductGroup), '')" : "NULL";
+        var manualText = hasZc23Map ? "NULLIF(trim(z.ProductGroupText), '')" : "NULL";
+        var excelCode = hasZdispoRules ? "NULLIF(trim(x.ProductGroup), '')" : "NULL";
+        var excelText = hasZdispoRules ? "NULLIF(trim(x.ProductGroupText), '')" : "NULL";
+        // Bestehende manuelle Zuordnung bleibt fuehrend; ZDISPO ist nur ein additiver Fallback.
+        var mappedCode = $"COALESCE({manualCode}, {excelCode}, '')";
+        var mappedText = $"COALESCE({manualText}, {excelText}, '')";
         var productGroupLabel = $@"CASE
             WHEN {mappedCode} <> '' AND {mappedText} <> '' THEN {mappedCode} || ' - ' || {mappedText}
             WHEN {mappedCode} <> '' THEN {mappedCode}
@@ -1285,7 +1327,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
         var usageGroupsCte = $@"
-UsageGroups AS (
+{zdispoCtes}UsageGroups AS (
     SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
            {productGroupLabel} AS ProductGroup
     FROM MaterialUsageCache u
@@ -1375,14 +1417,19 @@ FROM PositionFacts;";
         var unmappedDispatchers = 0;
         await using (var mappingCommand = conn.CreateCommand())
         {
-            mappingCommand.CommandText = hasZc23Map
-                ? @"
+            mappingCommand.CommandText = hasZc23Map || hasZdispoRules
+                ? $@"
+WITH {zdispoCtes}MappedDispatchers AS (
+    SELECT trim(u.VknrDispo) AS Disponent,
+           {mappedCode} AS ProductGroup
+    FROM MaterialUsageCache u
+    {mapJoin}
+    WHERE COALESCE(trim(u.VknrDispo), '') <> ''
+)
 SELECT
-    COUNT(DISTINCT CASE WHEN COALESCE(trim(z.ProductGroup), '') <> '' THEN trim(u.VknrDispo) END),
-    COUNT(DISTINCT CASE WHEN COALESCE(trim(z.ProductGroup), '') = '' THEN trim(u.VknrDispo) END)
-FROM MaterialUsageCache u
-LEFT JOIN PurchasingProductGroupMap z ON trim(z.Disponent) = trim(u.VknrDispo)
-WHERE COALESCE(trim(u.VknrDispo), '') <> '';"
+    COUNT(DISTINCT CASE WHEN ProductGroup <> '' THEN Disponent END),
+    COUNT(DISTINCT CASE WHEN ProductGroup = '' THEN Disponent END)
+FROM MappedDispatchers;"
                 : @"
 SELECT 0, COUNT(DISTINCT trim(VknrDispo))
 FROM MaterialUsageCache

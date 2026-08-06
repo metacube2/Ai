@@ -45,6 +45,35 @@ public class DatabaseInitializationServiceTests : IDisposable
         await using var columnCommand = _connection.CreateCommand();
         columnCommand.CommandText = "SELECT COUNT(1) FROM pragma_table_info('MaterialUsageCache') WHERE name='VknrDispo';";
         Assert.Equal(1L, Convert.ToInt64(await columnCommand.ExecuteScalarAsync()));
+
+        await using var ruleCommand = _connection.CreateCommand();
+        ruleCommand.CommandText = "SELECT COUNT(1) FROM PurchasingSpendDisponentRule;";
+        Assert.Equal(45L, Convert.ToInt64(await ruleCommand.ExecuteScalarAsync()));
+
+        await using var exactCommand = _connection.CreateCommand();
+        exactCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='001';";
+        Assert.Equal("H|HW_ZUKAUFSORT", (await exactCommand.ExecuteScalarAsync())?.ToString());
+
+        await using var wildcardCommand = _connection.CreateCommand();
+        wildcardCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='EL*';";
+        Assert.Equal("T2|FP_TRANSM. TX", (await wildcardCommand.ExecuteScalarAsync())?.ToString());
+
+        // DS1/DS2 stehen in der gelieferten Gruppendatei doppelt. Keine Gruppe wird still
+        // ueberschrieben; beide Regeln bleiben fuer die summenneutrale 1/n-Verteilung erhalten.
+        await using var ambiguousCommand = _connection.CreateCommand();
+        ambiguousCommand.CommandText = "SELECT group_concat(ProductGroup || '|' || ProductGroupText, ';') FROM (SELECT ProductGroup, ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='DS1' ORDER BY ProductGroup);";
+        Assert.Equal("D5|D5;DS|FP_DICHTESENS", (await ambiguousCommand.ExecuteScalarAsync())?.ToString());
+
+        await using (var manualCommand = _connection.CreateCommand())
+        {
+            manualCommand.CommandText = "INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText) VALUES ('001', 'MAN', 'Manuell');";
+            await manualCommand.ExecuteNonQueryAsync();
+        }
+
+        await CreateService().InitializeAsync();
+        await using var preservedCommand = _connection.CreateCommand();
+        preservedCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingProductGroupMap WHERE Disponent='001';";
+        Assert.Equal("MAN|Manuell", (await preservedCommand.ExecuteScalarAsync())?.ToString());
     }
 
     [Fact]

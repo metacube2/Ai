@@ -398,6 +398,18 @@ CREATE TABLE PurchasingProductGroupMap (
     UpdatedAtUtc TEXT NOT NULL DEFAULT ''
 );";
 
+    // Additive Excel-Zusatzquelle nur fuer den Spend-Aufriss. Die bestehende manuelle
+    // PurchasingProductGroupMap bleibt unberuehrt und hat bei der Anzeige Vorrang.
+    internal static string GetPurchasingSpendDisponentRuleCreateSql() => @"
+CREATE TABLE PurchasingSpendDisponentRule (
+    DisponentPattern TEXT NOT NULL,
+    ProductGroup TEXT NOT NULL DEFAULT '',
+    ProductGroupText TEXT NOT NULL DEFAULT '',
+    Source TEXT NOT NULL DEFAULT 'zdispo*.xlsx',
+    UpdatedAtUtc TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (DisponentPattern, ProductGroup)
+);";
+
     internal static string GetMaterialParentCacheCreateSql() => @"
 CREATE TABLE MaterialParentCache (
     Kompnr TEXT NOT NULL,
