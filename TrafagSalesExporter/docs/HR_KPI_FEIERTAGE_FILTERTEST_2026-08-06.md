@@ -2,6 +2,9 @@
 
 Stand: 2026-08-06
 
+Status: **produktiv deployed und technisch verifiziert am 2026-08-06,
+14:24 MESZ**, Funktionscommit `9435a5d`, Gesamtsuite `438/438` gruen.
+
 ## Umsetzung
 
 Die Arbeitstage im Nenner der Krankenquote sind nicht mehr nur Montag bis
@@ -71,3 +74,12 @@ Quelldaten. Sie koennen fehlende Quellfelder nicht ersetzen. Eine echte
 periodengenaue Krankenquote bleibt erst moeglich, wenn Rexx die kumulierten
 Krankheitsstunden mit einem belastbaren Bezugszeitraum oder datierten
 Einzelereignissen liefert.
+
+## Deployment-Nachweis
+
+- `BiDashboard.dll`: `4'137'472` Bytes, Zeitstempel `06.08.2026 14:24:10`;
+- SHA256:
+  `B8391FBFC69DBB6B45F93D1D6AF3D8FC621C34FD11405C14A0E52BF98397B7B0`;
+- Startseite HTTPS `200` (`64'740` Bytes);
+- `/BiDashboard/hr-kpi` HTTPS `200` (`65'874` Bytes);
+- `app_offline.htm` nach dem Publish nicht mehr aktiv.

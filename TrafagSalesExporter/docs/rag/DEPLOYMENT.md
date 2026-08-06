@@ -4,6 +4,14 @@ Stand: 2026-08-06
 
 ## Kurzstand
 
+- Letzter produktiv verifizierter Deploy: **2026-08-06 14:24, HR-ZH-Feiertage
+  und Filtervertrag**, Funktionscommit `9435a5d`, `438/438` Tests gruen.
+  `BiDashboard.dll` `06.08.2026 14:24:10`, `4'137'472` Bytes, SHA256
+  `B8391FBFC69DBB6B45F93D1D6AF3D8FC621C34FD11405C14A0E52BF98397B7B0`.
+  `app_offline.htm` gesetzt und danach aus dem aktiven Namen entfernt;
+  Startseite und `/BiDashboard/hr-kpi` liefern HTTPS `200`. Details:
+  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+
 - Letzter produktiv verifizierter Deploy: **2026-08-06 13:57, ZDISPO-Zusatz
   nur fuer den Einkauf Spend-Aufriss**, Funktionscommit `0a8a4c9`, `435/435`
   Tests gruen. `BiDashboard.dll` `06.08.2026 13:57:11`, `4'136'448` Bytes,

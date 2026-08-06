@@ -4,7 +4,8 @@ Stand: 2026-07-31
 
 ## Kurzstand
 
-- Seit 2026-08-06 zieht die Krankenquote bei den Arbeitstagen die neun
+- Produktiv deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit
+  `9435a5d`, Gesamtsuite `438/438` gruen: Die Krankenquote zieht bei den Arbeitstagen die neun
   gesetzlichen Feiertage des Kantons Zuerich ab. Ein automatischer
   Filtervertrag prueft 128 Kombinationen der sieben personenbezogenen Filter
   ueber alle sichtbaren HR-Ergebnisbloecke sowie eine Vollkombination mit

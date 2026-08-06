@@ -26,7 +26,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- 2026-08-06, HR-KRANKENQUOTE UND FILTERVERTRAG LOKAL UMGESETZT: Der
+- 2026-08-06, HR-KRANKENQUOTE UND FILTERVERTRAG DEPLOYED UND VERIFIZIERT
+  (14:24 MESZ, Commit `9435a5d`, `438/438` Tests): Der
   Arbeitstage-Nenner zieht neu die neun gesetzlichen Feiertage des Kantons
   Zuerich ab (inkl. dynamischem Ostertermin; lokale/nicht gesetzliche Tage
   bewusst nicht). Bei nicht periodengenau eingrenzbaren Rexx-Absenzen zeigt
