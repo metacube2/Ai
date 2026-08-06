@@ -11,9 +11,15 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
-- 2026-08-06, GRUPPENMARGE JETZT IN EINER KLASSE — COMMITTET (`515ab9d`), ABER NICHT DEPLOYED
-  UND NICHT GEPUSHT (`dotnet publish` und `git push` wurden vom Berechtigungsfilter abgelehnt;
-  auf dem Server laeuft weiter `9cb9c37` vom 2026-08-05 15:48). Die Kostenlogik stand doppelt da
+- 2026-08-06, DAS FELD IST PRODUKTIV ANGEKOMMEN: der TRIN-Export 06:54 fuellt Sales Type auf
+  **6'664 von 7'094 Zeilen (93,9 %)** (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430), Trafag-
+  Sachnummer auf 3'625. **5'868** `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.
+  Von 718 `LRD`-Zeilen finden **581 die Schweizer Konzernkosten — ueber die lokale Artikelnummer
+  waeren es 4**; die uebrigen 137 stehen auf `Konzernkosten fehlen` und weisen bewusst keine
+  Marge aus. Andere Standorte 0 (nur Indien fuehrt diese UDFs).
+- 2026-08-06, GRUPPENMARGE JETZT IN EINER KLASSE — DEPLOYED UND VERIFIZIERT (`515ab9d`,
+  Deploy 09:41, SHA256 `CF750722…`, HTTP 200, neue Typen in der ausgelieferten DLL belegt).
+  Die Kostenlogik stand doppelt da
   — `ExcelExportService` auf `SalesRecord`, `ManagementCockpitService` auf
   `FinanceAggregationRow`, 48 von rund 95 Zeilen identisch — und war beim Einbau von
   „Konzernkosten fehlen" bereits AUSEINANDERGELAUFEN: das Cockpit rief die Statusfunktion ohne

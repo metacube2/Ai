@@ -2,32 +2,43 @@
 
 Stand: 2026-08-06
 
-## Offen: committet, aber NICHT deployed
-
-- Commit `515ab9d` (**Gruppenmarge in einer Klasse**, `GroupMarginCalculator`), `431/431` Tests
-  gruen, Release-Build lokal erfolgreich. **Weder deployed noch gepusht** — beides wurde in der
-  Sitzung vom Berechtigungsfilter abgelehnt (`dotnet publish` auf die Freigabe und `git push`).
-  Auf dem Server laeuft weiterhin der Stand vom 2026-08-05 15:48 (`9cb9c37`). Der Deploy behebt
-  eine bereits produktive Abweichung: das Cockpit zeigt fuer LRD-Zeilen ohne Konzernkostentreffer
-  „Standardpreis fehlt", der Excel-Nachweis „Konzernkosten fehlen", und die Kennzahl „offene
-  Kostenbasis" zaehlt diese Zeilen im Cockpit nicht mit. Details:
-  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 7d.
-- Ebenfalls noch nicht geprueft: ob der TRIN-Export `SalesType`/`GroupMaterialNumber` inzwischen
-  gefuellt hat. Die Produktiv-DB ist am 2026-08-06 gewachsen (`339'140'608` Bytes, `09:17:59`),
-  die lesende Abfrage wurde aber ebenfalls abgelehnt.
-
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-05 15:48, Sales Type und
+- Letzter produktiv verifizierter Deploy: **2026-08-06 09:41, Gruppenmarge in einer Klasse**,
+  Commit `515ab9d` (`GroupMarginCalculator`: Lieferantentyp, Kostenbasis, Kostenquelle und Status
+  fuer Excel-Nachweis UND Cockpit aus einer Hand; Kostenbasisregeln als geordnete Kette),
+  `431/431` Tests gruen. `BiDashboard.dll` `06.08.2026 09:41:56`, `4'054'528` Bytes, SHA256
+  `CF750722BE3D9AA9377B77D4A9B5C53969D9F7326136D4313CFF557C3D54AA3D`. `app_offline.htm` gesetzt
+  und wieder entfernt, `https://…/BiDashboard/` liefert HTTP `200` (64'735 Bytes), Produktiv-DB
+  in Laenge und Schreibzeit unveraendert (`339'140'608` Bytes, `06.08.2026 09:17:59`).
+  Wirknachweis im Deploy-Artefakt: `GroupMarginCalculator`, `GroupMarginCostRules`,
+  `GroupDistributionWithoutGroupCost` und `GroupMarginLine` sind in der ausgelieferten DLL
+  enthalten. Der Deploy behebt eine seit 2026-08-05 15:48 produktive Abweichung: das Cockpit
+  zeigte fuer LRD-Zeilen ohne Konzernkostentreffer „Standardpreis fehlt", der Excel-Nachweis
+  „Konzernkosten fehlen", und die Kennzahl „offene Kostenbasis" zaehlte diese Zeilen nicht mit.
+  Details: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 7d.
+
+  **Hinweis zur SHA-Pruefung:** der Build ist NICHT deterministisch — zwei Uebersetzungen
+  derselben Quelle ergeben verschiedene Hashes (MVID). Der Vergleich „Server gleich lokaler
+  Build" belegt deshalb nur, dass beide aus demselben Zwischenstand (`obj/`) kopiert wurden.
+  Fuer den inhaltlichen Nachweis dient die Typenpruefung in der DLL.
+
+- Wirkung am Produktivbestand geprueft (2026-08-06 09:45): der TRIN-Export vom selben Tag 06:54
+  fuellt die neuen Felder — **6'664 von 7'094 TRIN-Zeilen tragen einen Sales Type (93,9 %)**,
+  3'625 eine Trafag-Sachnummer (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430). Alle anderen
+  Standorte stehen erwartungsgemaess auf 0. Von 718 `LRD`-Zeilen finden 581 die Schweizer
+  Konzernkosten (ueber die lokale Artikelnummer waeren es 4), 137 erhalten den Status
+  `Konzernkosten fehlen`; 5'868 `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.
+
+- Deploy davor: **2026-08-05 15:48, Sales Type und
   Trafag-Sachnummer im Export** (`SalesType`/`GroupMaterialNumber` aus dem Artikelstamm,
   Klassifikation und Konzernkostenschluessel darauf umgestellt), `406/406` Tests gruen.
   `BiDashboard.dll` `05.08.2026 15:48:20`, `4'045'824` Bytes, SHA256
   `0C65C9971460EE47A9C1999FB328E43BEBC63AB71AE7EFCD6D07010588A4E5EF`; Release-Build und
   Server bitgleich. `app_offline.htm` gesetzt und entfernt, HTTP `200`. Additive Migration
   wirksam: `CentralSalesRecords.SalesType` und `.GroupMaterialNumber` sind produktiv als
-  `TEXT NOT NULL DEFAULT ''` vorhanden. **Gefuellt werden sie erst mit dem naechsten
-  TRIN-Export** (Timer 12:00). Details:
-  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+  `TEXT NOT NULL DEFAULT ''` vorhanden. Gefuellt seit dem TRIN-Export 2026-08-06 06:54
+  (Nachweis oben). Details: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
 - Deploy davor: 2026-08-05 10:59, **Server-Analyse**, Commit `cc72e6d`
   (`ServerAnalysisBackgroundService`: lesende Diagnoseabfragen gegen Standort-B1,

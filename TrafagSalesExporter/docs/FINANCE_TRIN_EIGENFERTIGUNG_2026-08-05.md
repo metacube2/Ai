@@ -430,16 +430,24 @@ Was gebaut wurde:
    `CentralSalesRecordSalesTypeTests` abgesichert, der auch prueft, dass Standorte ohne diese
    Felder leere Werte und nicht `NULL` schreiben.
 
-### 7b. Was sich fachlich aendert, sobald der Export gelaufen ist
+### 7b. Was sich fachlich aendert — NACHGEMESSEN AM PRODUKTIVBESTAND 2026-08-06
 
-- Rund **5'830 TRIN-Zeilen** (`FFM` ohne Lieferant) wechseln von „Lieferant unklar" auf
-  „intern, liefernde Gesellschaft TR IN" mit lokaler Kostenbasis.
-- `LRD`-Zeilen suchen die Konzernkosten ueber die Trafag-Sachnummer statt ueber die indische
-  Artikelnummer: **569 statt 185 Zeilen** bekommen damit eine Schweizer Kostenbasis.
-- `LRD`-Zeilen **ohne** Konzernkostentreffer erhalten den neuen Status **`Konzernkosten fehlen`**
-  und **keine** Marge. Vorher zeigten sie eine Marge auf dem IC-Einkaufspreis — plausibel
-  aussehend und falsch. Diese Zeilen zaehlen in der Pruefsumme „Gruppenmarge offene
-  Kostenbasis".
+Der TRIN-Export vom 2026-08-06 06:54 hat die Felder erstmals gefuellt. Alle Zahlen unten sind
+gegen `trafag_exporter.db` gemessen, nicht geschaetzt.
+
+**Das Feld kommt an:** von 7'094 TRIN-Zeilen tragen **6'664 einen Sales Type (93,9 %)** und
+3'625 eine Trafag-Sachnummer. Verteilung: `FFM` 5'923, `LRD` 718, `CM` 23, leer 430. Alle
+anderen Standorte stehen erwartungsgemaess auf 0 — nur Indien fuehrt diese UDFs.
+
+- **5'868 TRIN-Zeilen** (`FFM`/`CM` ohne Lieferantenangabe) wechseln von „Lieferant unklar" auf
+  „intern, liefernde Gesellschaft TR IN" mit lokaler Kostenbasis. Vorab geschaetzt waren 5'830.
+- Die Bruecke ueber die Trafag-Sachnummer wirkt staerker als angenommen: von 718 `LRD`-Zeilen
+  finden **581 die Schweizer Konzernkosten — ueber die lokale Artikelnummer waeren es 4**. Die
+  frueher genannten „569 statt 185" waren eine Vorabschaetzung auf anderer Grundlage und sind
+  durch diese Messung ersetzt.
+- Die verbleibenden **137 `LRD`-Zeilen** erhalten den neuen Status **`Konzernkosten fehlen`** und
+  **keine** Marge. Vorher zeigten sie eine Marge auf dem IC-Einkaufspreis — plausibel aussehend
+  und falsch. Sie zaehlen in der Pruefsumme „Gruppenmarge offene Kostenbasis".
 - Ein vorhandener Lieferantentext geht weiterhin vor dem Sales Type. Damit bleibt das Verhalten
   der 10 widerspruechlichen Artikel unveraendert, bis Indien geantwortet hat.
 
