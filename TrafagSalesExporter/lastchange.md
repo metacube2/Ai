@@ -11,6 +11,13 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-06, ANZEIGE NACHGEZOGEN (noch nicht deployed): die Statusfarbe im Cockpit stand als
+  eigene Aufzaehlung neben `GroupMarginStatuses.Open` und kannte „Kostenwaehrung abweichend"
+  nicht — der Status wurde blau statt orange gezeigt, obwohl die Kennzahl „offene Kostenbasis"
+  ihn mitzaehlt. Die Farbe folgt jetzt `IsOpen`, also der Statusdefinition selbst. Die
+  Schulungsseite `Finance > Grundlagen` erklaerte „Konzernkosten fehlen" ueberhaupt nicht,
+  obwohl der Status seit heute 137 indische Zeilen betrifft; die Tabelle fuehrt ihn jetzt
+  mit der Abgrenzung zu „Standardpreis fehlt". `431/431` Tests gruen.
 - 2026-08-06, DAS FELD IST PRODUKTIV ANGEKOMMEN: der TRIN-Export 06:54 fuellt Sales Type auf
   **6'664 von 7'094 Zeilen (93,9 %)** (`FFM` 5'923, `LRD` 718, `CM` 23, leer 430), Trafag-
   Sachnummer auf 3'625. **5'868** `FFM`/`CM`-Zeilen wechseln von „Lieferant unklar" auf intern.

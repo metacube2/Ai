@@ -3081,16 +3081,15 @@
         _ => Color.Info
     };
 
-    // Konstanten statt Literale: ein Tippfehler wuerde hier nicht auffallen, die Zeile bekaeme
-    // nur still die falsche Farbe. "Konzernkosten fehlen" fehlte hier und stand deshalb als
-    // einziger offener Status nicht auf Warning.
+    // Die Farbe folgt der Statusdefinition statt einer zweiten Aufzaehlung: was
+    // GroupMarginStatuses.Open als offen fuehrt, ist eine Warnung. Vorher stand hier eine
+    // eigene Liste, in der "Konzernkosten fehlen" und "Kostenwaehrung abweichend" fehlten -
+    // beide erschienen still blau, obwohl die Kennzahl "offene Kostenbasis" sie mitzaehlt.
     private static Color GroupMarginStatusColor(string status) => status switch
     {
         GroupMarginStatuses.Ok => Color.Success,
-        GroupMarginStatuses.StandardCostMissing => Color.Warning,
-        GroupMarginStatuses.SupplierUnclear => Color.Warning,
-        GroupMarginStatuses.GroupCostMissing => Color.Warning,
         GroupMarginStatuses.SalesMissing => Color.Default,
+        _ when GroupMarginStatuses.IsOpen(status) => Color.Warning,
         _ => Color.Info
     };
 
