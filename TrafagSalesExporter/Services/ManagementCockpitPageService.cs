@@ -247,8 +247,11 @@ public sealed class ManagementCockpitPageService : IManagementCockpitPageService
                 Topic = "Einkaufsentscheidungen nicht berechenbar",
                 Severity = "Info",
                 Score = 10,
-                Metric = ex.Message,
-                Impact = "Einkaufssignale fehlen im Entscheidungsradar.",
+                // Die Spalte "Kennzahl" steht neben Zahlenwerten wie "1.234 offene Zeilen"; eine
+                // Ausnahmemeldung liest sich dort wie ein Messwert. Der Text gehoert in die
+                // Wirkung, die Kennzahl bleibt ehrlich leer.
+                Metric = "-",
+                Impact = $"Einkaufssignale fehlen im Entscheidungsradar. Fehler: {ex.Message}",
                 Recommendation = "Einkauf Cockpit separat pruefen.",
                 Decision = "Keine Managemententscheidung ohne Einkaufsdaten.",
                 Owner = "Einkauf / IT",
@@ -313,8 +316,8 @@ public sealed class ManagementCockpitPageService : IManagementCockpitPageService
                 Topic = "HR-Signale nicht berechenbar",
                 Severity = "Info",
                 Score = 10,
-                Metric = ex.Message,
-                Impact = "HR-Entscheidungen fehlen im Entscheidungsradar.",
+                Metric = "-",
+                Impact = $"HR-Entscheidungen fehlen im Entscheidungsradar. Fehler: {ex.Message}",
                 Recommendation = "HR KPI separat entsperren und Datenstand pruefen.",
                 Decision = "Keine HR-Entscheidung ohne aggregierte HR-Ampel.",
                 Owner = "HR",

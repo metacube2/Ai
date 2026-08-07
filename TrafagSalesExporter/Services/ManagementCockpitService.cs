@@ -53,7 +53,10 @@ public class ManagementCockpitService : IManagementCockpitService
         new()
         {
             Key = ManagementCockpitValueFieldKeys.StandardCostTotal,
-            Label = "Quantity * Standard cost",
+            // Der Zusatz ist noetig, weil die Rechnung bei Menge 0 auf den Stueckpreis
+            // zurueckfaellt (siehe ResolveValue). "Quantity * Standard cost" allein waere fuer
+            // diese Zeilen falsch.
+            Label = "Quantity * Standard cost (Menge 0: Stueckpreis)",
             IsCurrencyAmount = true,
             CurrencySource = ValueCurrencySource.StandardCost
         },
@@ -380,6 +383,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     SourceSystem = string.IsNullOrWhiteSpace(record.SourceSystem) ? "-" : record.SourceSystem,
                     Currency = ResolveFinanceCurrency(record),
                     Include = include,
+                    IsExcludedByRule = !rawInclude,
                     Value = value,
                     RawSalesValue = record.SalesPriceValue,
                     IsIntercompany = IsIntercompanyCustomer(record, intercompanyRules),
@@ -603,7 +607,10 @@ public class ManagementCockpitService : IManagementCockpitService
         var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupStandardCosts);
         var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts);
-        var financePivot = BuildFinancePivotResult(allRows, year);
+        // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
+        // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
+        // daneben weiterhin alle - die beiden Zahlen waren nicht gegeneinander abstimmbar.
+        var financePivot = BuildFinancePivotResult(scopedRows, year);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
         // Dieser Hinweis stand bis 2026-08-06 auf dem Stand vor dem Konzernkosten-Umbau und sagte,
         // die echten Konzern-Standardkosten seien noch nicht angebunden - seit 2026-08-05 sind sie es.
@@ -661,6 +668,8 @@ public class ManagementCockpitService : IManagementCockpitService
             GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
             GroupMarginDetailRows = groupMarginRows.Take(1000).ToList(),
             FinanceAuditLedgerRows = auditLedgerRows.Take(1000).ToList(),
+            GroupMarginDetailTotalRowCount = groupMarginRows.Count,
+            FinanceAuditLedgerTotalRowCount = auditLedgerRows.Count,
             FinancePivot = financePivot
         };
     }
@@ -1206,8 +1215,12 @@ public class ManagementCockpitService : IManagementCockpitService
             BuildQualityRow("Fehlender Kunde", rows.Count(row => string.IsNullOrWhiteSpace(row.CustomerName)), rowCount),
             BuildQualityRow("Fehlendes Rechnungsdatum", rows.Count(row => !row.InvoiceDate.HasValue), rowCount),
             BuildQualityRow("Fehlendes Buchungsdatum", rows.Count(row => !row.PostingDate.HasValue), rowCount),
-            BuildQualityRow("Nullwerte im Finance-Wert", rows.Count(row => row.Value == 0m), rowCount),
-            BuildQualityRow("Ausgeschlossene Zeilen", rows.Count(row => !row.Include), rowCount)
+            // Die beiden Pruefpunkte muessen sich ausschliessen. Zaehlte der erste jede Zeile mit
+            // Wert 0, meldete er jede regelausgeschlossene Zeile mit - ResolveNetSalesActual gibt
+            // dort 0 zurueck. Dieselben Zeilen standen dann in beiden Zeilen der Tabelle und im
+            // Entscheidungsradar zweimal.
+            BuildQualityRow("Nullwerte im Finance-Wert", rows.Count(row => !row.IsExcludedByRule && row.Value == 0m), rowCount),
+            BuildQualityRow("Ausgeschlossene Zeilen", rows.Count(row => row.IsExcludedByRule), rowCount)
         }
         .Where(row => row.Count > 0)
         .OrderByDescending(row => row.Count)
@@ -1279,6 +1292,11 @@ public class ManagementCockpitService : IManagementCockpitService
         => new()
         {
             DistinctMaterialCount = rows.Count,
+            DistinctMaterialNumberCount = rows
+                .Where(row => !string.IsNullOrWhiteSpace(row.Material))
+                .Select(row => NormalizeMaterialKey(row.Material))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count(),
             MatchedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Assigned),
             MiscMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Misc),
             UnassignedMaterialCount = rows.Count(row => row.Status == ProductAssignmentStatuses.Unassigned),
@@ -1342,6 +1360,12 @@ public class ManagementCockpitService : IManagementCockpitService
             {
                 var value = group.Sum(row => row.NetSalesActual);
                 totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+                var materialKeys = group
+                    .Select(row => row.Material)
+                    .Where(material => !string.IsNullOrWhiteSpace(material))
+                    .Select(NormalizeMaterialKey)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
                 return new ManagementProductDivisionFinanceRow
                 {
                     ProductDivisionCode = group.Key.ProductDivisionCode,
@@ -1353,7 +1377,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     Currency = group.Key.Currency,
                     NetSalesActual = value,
                     SharePercent = PercentOf(value, total),
-                    MaterialCount = group.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    MaterialCount = materialKeys.Count,
+                    MaterialKeys = materialKeys,
                     RowCount = group.Sum(row => row.RowCount),
                     Countries = JoinDistinct(group.Select(row => row.CountryKey))
                 };
@@ -1716,7 +1741,7 @@ public class ManagementCockpitService : IManagementCockpitService
         IEnumerable<FinanceAggregationRow> rows,
         int selectedYear)
     {
-        var pivotRows = rows
+        var candidateRows = rows
             .Where(row => row.Include)
             .Select(row =>
             {
@@ -1733,6 +1758,14 @@ public class ManagementCockpitService : IManagementCockpitService
                     rate.HasValue ? row.Value * rate.Value : 0m,
                     rate.HasValue);
             })
+            .ToList();
+
+        // Zwei Gruende, aus denen eine Zeile hier herausfaellt - beide werden gezaehlt, damit die
+        // Kachel "Zeilenbasis" nicht wie die vollstaendige Menge aussieht. Ohne Zaehler weicht sie
+        // still von "Enthaltene Zeilen" im Finance Summary ab und niemand weiss warum.
+        var missingRateRowCount = candidateRows.Count(row => !row.HasRate);
+        var missingTscRowCount = candidateRows.Count(row => row.HasRate && string.IsNullOrWhiteSpace(row.Tsc));
+        var pivotRows = candidateRows
             .Where(row => row.HasRate && !string.IsNullOrWhiteSpace(row.Tsc))
             .ToList();
 
@@ -1770,10 +1803,11 @@ public class ManagementCockpitService : IManagementCockpitService
         }
 
         var defaultMonth = monthOptions.LastOrDefault();
-        var latestYear = selectedYear == 0
-            ? pivotRows.Select(row => row.Year).DefaultIfEmpty(DateTime.Now.Year).Max()
-            : selectedYear;
 
+        // Fruher standen hier zusaetzlich YtdSalesChf/MtdSalesChf. Sie wurden nirgends gelesen -
+        // die GUI rechnet dieselben beiden Zahlen selbst, und zwar auf dem GEWAEHLTEN Jahr,
+        // waehrend diese Fassung das juengste Jahr nahm. Zwei Umsetzungen derselben Kennzahl, von
+        // denen eine tot war und beide verschiedene Ergebnisse liefern konnten.
         return new ManagementFinancePivotResult
         {
             TscColumns = tscColumns,
@@ -1781,10 +1815,8 @@ public class ManagementCockpitService : IManagementCockpitService
             MonthOptions = monthOptions,
             DefaultMonth = defaultMonth,
             RowCount = pivotRows.Count,
-            YtdSalesChf = pivotRows.Where(row => row.Year == latestYear).Sum(row => row.ValueChf),
-            MtdSalesChf = defaultMonth == 0
-                ? 0m
-                : pivotRows.Where(row => row.Year == latestYear && row.Month == defaultMonth).Sum(row => row.ValueChf),
+            MissingRateRowCount = missingRateRowCount,
+            MissingTscRowCount = missingTscRowCount,
             MonthlyRows = BuildFinancePivotMonthlyRows(pivotRows, tscColumns),
             DailyYearColumns = dailyYearColumns,
             DailyYearRows = BuildFinancePivotDailyYearRows(pivotRows, dailyYearColumns),
@@ -2012,13 +2044,15 @@ public class ManagementCockpitService : IManagementCockpitService
     private static string BuildFinanceStatus(decimal? referenceValue, int actualRowCount, decimal? difference)
     {
         if (!referenceValue.HasValue)
-            return "Kein Sollwert";
+            return FinanceCountryStatuses.NoReference;
         if (actualRowCount == 0)
-            return "Keine Daten";
+            return FinanceCountryStatuses.NoData;
         if (!difference.HasValue)
-            return "Pruefen";
+            return FinanceCountryStatuses.Check;
 
-        return Math.Abs(difference.Value) <= 1m ? "OK" : "Pruefen";
+        return Math.Abs(difference.Value) <= 1m
+            ? FinanceCountryStatuses.Ok
+            : FinanceCountryStatuses.Check;
     }
 
     private static bool LooksLikeCreditDocument(string documentType, string invoiceNumber)
@@ -2788,6 +2822,16 @@ public class ManagementCockpitService : IManagementCockpitService
         public string SourceSystem { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
         public bool Include { get; set; }
+
+        /// <summary>
+        /// Hat eine Finance-Regel diese Zeile ausgeschlossen? Bewusst getrennt von
+        /// <see cref="Include"/>: dort faellt eine Zeile auch dann heraus, wenn ihr Betrag echt 0
+        /// ist. Ohne die Trennung zaehlte die Kachel "Ausgeschlossen" (Untertitel "Finance-Regeln")
+        /// auch kostenlose Rechnungszeilen, und die beiden Datenqualitaets-Pruefpunkte
+        /// "Nullwerte im Finance-Wert" und "Ausgeschlossene Zeilen" meldeten dieselben Zeilen zweimal.
+        /// </summary>
+        public bool IsExcludedByRule { get; set; }
+
         public decimal Value { get; set; }
         public decimal RawSalesValue { get; set; }
         public bool IsIntercompany { get; set; }

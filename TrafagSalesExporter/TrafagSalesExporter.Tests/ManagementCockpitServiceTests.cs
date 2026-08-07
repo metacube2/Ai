@@ -988,6 +988,132 @@ public class ManagementCockpitServiceTests : IDisposable
             IsActive = true
         };
 
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CountsCountriesWithoutReference_SoTheTilesDoNotHideThem()
+    {
+        // Ohne Sollwert liefert BuildFinanceStatus "Kein Sollwert" - weder OK noch Pruefen. Die
+        // Schnelluebersicht zaehlte nur die beiden anderen Stati und zeigte dann 0/0, was wie
+        // "alles sauber" aussieht. Produktiv gemessen 2026-08-07: FinanceReferences enthaelt nur
+        // Zeilen fuer 2025, das Standardjahr der Seite ist aber das juengste Jahr der Daten.
+        // ACHTUNG zur Aussagekraft: die neue Kachel selbst steht in der Razor. Dieser Test pinnt
+        // den Statusvertrag darunter - dass "Kein Sollwert" weder als geprueft noch als OK gilt.
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.FinanceReferences.RemoveRange(db.FinanceReferences);
+            await db.SaveChangesAsync();
+        }
+
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        var country = Assert.Single(result.CountryRows);
+        Assert.Equal(FinanceCountryStatuses.NoReference, country.Status);
+        Assert.True(FinanceCountryStatuses.IsUnverified(country.Status));
+        Assert.False(FinanceCountryStatuses.IsChecked(country.Status));
+        Assert.Empty(result.CountryRows.Where(row => FinanceCountryStatuses.IsChecked(row.Status)));
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_FinancePivot_FollowsTheCountryFilter()
+    {
+        // Der Pivot rechnete auf allRows statt auf den gefilterten Zeilen. Mit Landfilter zeigte
+        // "Net Sales Actual" ein Land und die Pivotkacheln daneben weiterhin alle.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE", "EUR", 100m, new DateTime(2025, 3, 10)),
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-CH", "CHF", 400m, new DateTime(2025, 3, 11)));
+
+        var unfiltered = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+        Assert.Equal(2, unfiltered.FinancePivot.TscColumns.Count);
+        Assert.Equal(2, unfiltered.FinancePivot.RowCount);
+        Assert.Equal(0, unfiltered.FinancePivot.MissingRateRowCount);
+
+        var filtered = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+        Assert.Equal(1, filtered.FinancePivot.RowCount);
+        Assert.Equal("TRDE", Assert.Single(filtered.FinancePivot.TscColumns));
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_FinancePivot_CountsRowsItHadToDropForAMissingRate()
+    {
+        // Ohne CHF-Kurs faellt die Zeile aus der Pivotsicht heraus - sie wird verworfen, nicht mit
+        // 0 gerechnet. Ohne diesen Zaehler weicht die Kachel "Zeilenbasis" still von "Enthaltene
+        // Zeilen" im Finance Summary ab und niemand kann den Unterschied erklaeren.
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE", "EUR", 100m, new DateTime(2025, 3, 10)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        Assert.Equal(1, result.IncludedRows);
+        Assert.Equal(0, result.FinancePivot.RowCount);
+        Assert.Equal(1, result.FinancePivot.MissingRateRowCount);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_SeparatesRuleExclusionFromGenuineZeroValue()
+    {
+        // ResolveNetSalesActual gibt fuer ausgeschlossene Zeilen 0 zurueck. Ohne Trennung meldeten
+        // die Pruefpunkte "Nullwerte im Finance-Wert" und "Ausgeschlossene Zeilen" dieselben
+        // Zeilen zweimal. Der Fixture-Aufbau ist deshalb bewusst kreuzweise: eine ausgeschlossene
+        // Zeile MIT Betrag und eine eingeschlossene Zeile OHNE Betrag.
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 1, 10)),
+            // Standardregel DE: CustomerName "Trafag AG" wird ausgeschlossen - Betrag aber <> 0.
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-EXCL", "EUR", 250m, new DateTime(2025, 1, 11),
+                customerName: "Trafag AG"),
+            // Echter Nullwert, von keiner Regel betroffen.
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-ZERO", "EUR", 0m, new DateTime(2025, 1, 12)));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        var zeroRow = Assert.Single(result.DataQualityRows, row => row.Issue == "Nullwerte im Finance-Wert");
+        var excludedRow = Assert.Single(result.DataQualityRows, row => row.Issue == "Ausgeschlossene Zeilen");
+        Assert.Equal(1, zeroRow.Count);
+        Assert.Equal(1, excludedRow.Count);
+        // Nur die Regelzeile und die Nullzeile fallen aus Include heraus, die Umsatzzeile bleibt.
+        Assert.Equal(1, result.IncludedRows);
+        Assert.Equal(2, result.ExcludedRows);
+        Assert.Equal(100m, result.NetSalesActual);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CountsTheSameMaterialFromTwoSitesOnce()
+    {
+        // DistinctMaterialCount ist die Zahl der Pruefzeilen (Material x Land x TSC x Quelle x
+        // Waehrung) und darf nicht als Materialzahl beschriftet werden. Die echte Materialzahl
+        // steht daneben.
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE", "EUR", 100m, new DateTime(2025, 4, 1), material: "M-1"),
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-CH", "CHF", 100m, new DateTime(2025, 4, 2), material: "M-1"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(2, result.ProductAssignmentSummary.DistinctMaterialCount);
+        Assert.Equal(1, result.ProductAssignmentSummary.DistinctMaterialNumberCount);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_FinancePivot_KeepsAMeasuredZeroInsteadOfDroppingIt()
+    {
+        // Rechnung und Gutschrift heben sich im selben Monat auf. Das Ergebnis 0 ist gemessen und
+        // muss als 0 in der Matrix stehen; die GUI zeigte es als "-", also wie fehlende Daten.
+        // ACHTUNG zur Aussagekraft: der eigentliche Fehler sass in GetFinancePivotValue in der
+        // Razor (`value != 0m ? value : null`). Dieser Test pinnt nur die Dienstseite - dass die
+        // 0 ueberhaupt in ValuesByTsc ankommt. Die Anzeige selbst deckt er nicht ab.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-1", "EUR", 100m, new DateTime(2025, 5, 5)),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "GS-1", "EUR", -100m, new DateTime(2025, 5, 6), quantity: -1m));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        var monthRow = Assert.Single(result.FinancePivot.MonthlyRows.Where(row => row.Year == 2025 && row.Month == 5));
+        Assert.True(monthRow.ValuesByTsc.ContainsKey("TRDE"));
+        Assert.Equal(0m, monthRow.ValuesByTsc["TRDE"]);
+    }
+
     private static CentralSalesRecord CreateRow(
         string sourceSystem,
         string land,
@@ -1010,7 +1136,8 @@ public class ManagementCockpitServiceTests : IDisposable
         string productMappingAssigned = "",
         DateTime? postingDate = null,
         string? standardCostCurrency = null,
-        string supplierName = "Supplier")
+        string supplierName = "Supplier",
+        string customerName = "Customer")
     {
         return new CentralSalesRecord
         {
@@ -1036,7 +1163,7 @@ public class ManagementCockpitServiceTests : IDisposable
             SupplierName = supplierName,
             SupplierCountry = "CH",
             CustomerNumber = "CUS",
-            CustomerName = "Customer",
+            CustomerName = customerName,
             CustomerCountry = "CH",
             CustomerIndustry = "Industry",
             StandardCost = standardCost,

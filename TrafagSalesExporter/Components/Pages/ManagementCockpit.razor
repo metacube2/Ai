@@ -80,15 +80,25 @@
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Laender OK", "Countries OK")</MudText>
-                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "OK").ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5">@FinanceCountryStatusCount(FinanceCountryStatuses.Ok)</MudText>
                         <MudText Typo="Typo.body2">@T("Soll/Ist ohne Abweichung", "Actual/reference without deviation")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Zu pruefen", "To check")</MudText>
-                        <MudText Typo="Typo.h5">@_financeResult.CountryRows.Count(row => row.Status == "Pruefen").ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5">@FinanceCountryStatusCount(FinanceCountryStatuses.Check)</MudText>
                         <MudText Typo="Typo.body2">@T("Abweichung oder offene Regel", "Deviation or open rule")</MudText>
+                    </MudPaper>
+                </MudItem>
+                @* Dritte Kachel, weil BuildFinanceStatus VIER Werte liefert und die beiden oberen
+                   nur zwei davon zaehlen. Ohne sie stehen bei fehlenden Sollwerten beide auf 0 -
+                   das liest sich wie "alles sauber", heisst aber "nichts geprueft". *@
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.caption">@T("Nicht geprueft", "Not checked")</MudText>
+                        <MudText Typo="Typo.h5">@UnverifiedFinanceCountryCount.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2">@T("ohne Sollwert oder ohne Daten", "no reference value or no data")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
@@ -99,6 +109,16 @@
                     </MudPaper>
                 </MudItem>
             </MudGrid>
+
+            @if (UnverifiedFinanceCountryCount > 0 && FinanceCountryStatusCount(FinanceCountryStatuses.Ok) == "0"
+                 && FinanceCountryStatusCount(FinanceCountryStatuses.Check) == "0")
+            {
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-4">
+                    @T("Fuer dieses Jahr ist kein einziger Sollwert gepflegt - der Soll/Ist-Abgleich hat nichts geprueft. Sollwerte stehen je Jahr in FinanceReferences.",
+                        "No reference value is maintained for this year - the actual/reference check verified nothing. Reference values are stored per year in FinanceReferences.")
+                </MudAlert>
+            }
+            @MixedCurrencyWarning
 
             <MudPaper Class="pa-4 mb-4" Elevation="1">
                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
@@ -308,6 +328,7 @@
                        StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinanceSummary">
                 @T("Export to Excel", "Export to Excel")
             </MudButton>
+            @MixedCurrencyWarning
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -325,9 +346,13 @@
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
+                        @* Der Untertitel nennt jetzt beide Gruende. "Finance-Regeln" allein war
+                           falsch: die Zahl enthaelt auch Zeilen mit Betrag 0, die keine Regel
+                           ausgeschlossen hat. Wie viele davon Regelausschluesse sind, steht im
+                           Reiter Datenqualitaet, wo die beiden Faelle jetzt getrennt zaehlen. *@
                         <MudText Typo="Typo.caption">@T("Ausgeschlossen", "Excluded")</MudText>
                         <MudText Typo="Typo.h5">@_financeResult.ExcludedRows.ToString("N0")</MudText>
-                        <MudText Typo="Typo.body2">@T("Finance-Regeln", "Finance rules")</MudText>
+                        <MudText Typo="Typo.body2">@T("Finance-Regeln oder Wert 0", "Finance rules or value 0")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
@@ -432,16 +457,20 @@
             </MudStack>
 
             <MudGrid Class="mb-4">
+                @* Bewusst "Jahresumsatz", nicht "YTD": die Kachel summiert ALLE Monate des Jahres.
+                   Bei einem abgeschlossenen Jahr ist das der Jahreswert, nicht year-to-date. Der
+                   Untertitel nennt jetzt das tatsaechlich verwendete Jahr - vorher stand dort
+                   "Alle Jahre", waehrend der Wert ein einzelnes Jahr war. *@
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
-                        <MudText Typo="Typo.caption">@T("YTD Umsatz", "YTD sales")</MudText>
+                        <MudText Typo="Typo.caption">@T("Jahresumsatz", "Annual sales")</MudText>
                         <MudText Typo="Typo.h5">@FormatValue(CalculateFinancePivotYtd(), "CHF")</MudText>
                         <MudText Typo="Typo.body2">@BuildFinancePivotFilterLabel()</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
                     <MudPaper Class="pa-4" Elevation="1">
-                        <MudText Typo="Typo.caption">@T("MTD Umsatz", "MTD sales")</MudText>
+                        <MudText Typo="Typo.caption">@T("Monatsumsatz", "Monthly sales")</MudText>
                         <MudText Typo="Typo.h5">@FormatValue(CalculateFinancePivotMtd(), "CHF")</MudText>
                         <MudText Typo="Typo.body2">@($"{ResolveFinancePivotYearForKpi()} / {_financePivotMonth}")</MudText>
                     </MudPaper>
@@ -461,6 +490,19 @@
                     </MudPaper>
                 </MudItem>
             </MudGrid>
+
+            @if (FinancePivotDroppedRowCount > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-4">
+                    @T("Nicht jede eingeschlossene Zeile steht in dieser Pivotsicht. Ohne CHF-Kurs fuer Jahr und Waehrung fehlen",
+                        "Not every included row appears in this pivot view. Missing a CHF rate for year and currency:")
+                    <strong>@_financeResult.FinancePivot.MissingRateRowCount.ToString("N0")</strong>,
+                    @T("ohne TSC fehlen", "missing a TSC:")
+                    <strong>@_financeResult.FinancePivot.MissingTscRowCount.ToString("N0")</strong>.
+                    @T("Die Zeilenbasis oben zaehlt erst danach; sie ist deshalb kleiner als `Enthaltene Zeilen` im Finance Summary.",
+                        "The row basis above counts after that, so it is smaller than `Included rows` in the finance summary.")
+                </MudAlert>
+            }
 
             <MudPaper Class="pa-4 mb-4" Elevation="1" Style="overflow-x:auto;">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Monate nach TSC", "Months by TSC")</MudText>
@@ -696,6 +738,14 @@
                 @T("Diese Sicht ist bewusst keine Zusammenfassung. Sie zeigt die pruefbaren Detailzeilen fuer Finance; der Excel-Export enthaelt dieselben Spalten fuer die Nachrechnung.",
                     "This view is deliberately not a summary. It shows the verifiable detail rows for Finance; the Excel export contains the same columns for recalculation.")
             </MudAlert>
+            @if (_financeResult.FinanceAuditLedgerTotalRowCount > _financeResult.FinanceAuditLedgerRows.Count)
+            {
+                <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+                    @string.Format(T("Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern - fuer die vollstaendige Nachrechnung den Excel-Export verwenden.",
+                        "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters - use the Excel export for a complete recalculation."),
+                        _financeResult.FinanceAuditLedgerRows.Count, _financeResult.FinanceAuditLedgerTotalRowCount)
+                </MudAlert>
+            }
             <MudPaper Class="pa-4" Elevation="1" Style="overflow-x:auto;">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Originalwaehrung, CHF-Umrechnung und Kostenbasis", "Original currency, CHF conversion and cost basis")</MudText>
                 <MudTable Items="BuildFinanceAuditLedgerRows()" Dense Hover Striped>
@@ -946,10 +996,17 @@
                 @T("Export to Excel", "Export to Excel")
             </MudButton>
             <MudGrid Class="mb-4">
+                @* "Pruefzeilen", nicht "Materialien": ein Material aus drei Standorten ergibt drei
+                   Zeilen. Nur so summieren sich die Statuskacheln daneben wieder auf diesen Wert.
+                   Die echte Materialzahl steht als Untertitel. *@
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
-                        <MudText Typo="Typo.caption">@T("Materialien", "Materials")</MudText>
+                        <MudText Typo="Typo.caption">@T("Pruefzeilen", "Check rows")</MudText>
                         <MudText Typo="Typo.h6">@_financeResult.ProductAssignmentSummary.DistinctMaterialCount.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">
+                            @string.Format(T("{0:N0} Materialnummern", "{0:N0} material numbers"),
+                                _financeResult.ProductAssignmentSummary.DistinctMaterialNumberCount)
+                        </MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="2">
@@ -1001,7 +1058,7 @@
                     <HeaderContent>
                         <MudTh>@T("Land", "Country")</MudTh>
                         <MudTh>TSC</MudTh>
-                        <MudTh>@T("Materialien", "Materials")</MudTh>
+                        <MudTh>@T("Pruefzeilen", "Check rows")</MudTh>
                         <MudTh>@T("Zugeordnet", "Assigned")</MudTh>
                         <MudTh>@T("Übrige", "Miscellaneous")</MudTh>
                         <MudTh>@T("Nicht zugeordnet", "Unassigned")</MudTh>
@@ -1072,6 +1129,7 @@
                        StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGruppenmarge">
                 @T("Export to Excel", "Export to Excel")
             </MudButton>
+            @MixedCurrencyWarning
             <MudGrid Class="mb-4">
                 <MudItem xs="12" sm="6" md="2">
                     <MudPaper Class="pa-4" Elevation="1">
@@ -1191,6 +1249,14 @@
                 </MudItem>
             </MudGrid>
 
+            @if (_financeResult.GroupMarginDetailTotalRowCount > _financeResult.GroupMarginDetailRows.Count)
+            {
+                <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
+                    @string.Format(T("Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang.",
+                        "Showing {0:N0} of {1:N0} detail rows; the cards above use the full filtered scope."),
+                        _financeResult.GroupMarginDetailRows.Count, _financeResult.GroupMarginDetailTotalRowCount)
+                </MudAlert>
+            }
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">@T("Detailpruefung Kostenbasis", "Cost-basis detail check")</MudText>
                 <MudTable Items="_financeResult.GroupMarginDetailRows" Dense Hover Striped>
@@ -2569,14 +2635,19 @@
     private int ResolveFinancePivotYearForKpi()
         => TryParseFinancePivotYearFilter(out var year) ? year : _selectedFinanceYear;
 
+    private int FinancePivotDroppedRowCount
+        => (_financeResult?.FinancePivot.MissingRateRowCount ?? 0)
+           + (_financeResult?.FinancePivot.MissingTscRowCount ?? 0);
+
     private bool TryParseFinancePivotYearFilter(out int year)
         => int.TryParse(_financePivotYearFilter, NumberStyles.Integer, CultureInfo.InvariantCulture, out year);
 
     private string BuildFinancePivotFilterLabel()
     {
-        var yearLabel = TryParseFinancePivotYearFilter(out var year)
-            ? year.ToString(CultureInfo.InvariantCulture)
-            : T("Alle Jahre", "All years");
+        // Immer das Jahr, auf dem die Kachel WIRKLICH rechnet. Ohne Jahresfilter faellt
+        // ResolveFinancePivotYearForKpi auf das Seitenjahr zurueck; hier stand dann "Alle Jahre",
+        // obwohl der Wert daneben ein einzelnes Jahr war.
+        var yearLabel = ResolveFinancePivotYearForKpi().ToString(CultureInfo.InvariantCulture);
         var tscLabel = string.IsNullOrWhiteSpace(_financePivotTscFilter)
             ? T("Alle TSC", "All TSC")
             : _financePivotTscFilter;
@@ -2584,8 +2655,10 @@
         return $"{yearLabel} / {tscLabel}";
     }
 
+    // 0 ist ein gemessener Wert (Rechnung und Gutschrift heben sich auf) und wird als 0 gezeigt.
+    // Vorher lief er ueber FormatNullableValue als "-" heraus, also wie eine fehlende Zelle.
     private static decimal? GetFinancePivotValue(ManagementFinancePivotMatrixRow row, string tsc)
-        => row.ValuesByTsc.TryGetValue(tsc, out var value) && value != 0m ? value : null;
+        => row.ValuesByTsc.TryGetValue(tsc, out var value) ? value : null;
 
     private static decimal CalculateFinancePivotRowTotal(ManagementFinancePivotMatrixRow row, IReadOnlyList<string> columns)
         => columns.Sum(column => row.ValuesByTsc.TryGetValue(column, out var value) ? value : 0m);
@@ -2673,6 +2746,13 @@
             {
                 var value = group.Sum(row => row.NetSalesActual);
                 totalsByCurrency.TryGetValue(group.Key.Currency, out var total);
+                // Materialschluessel vereinigen statt die bereits distinkten Zaehlungen zu
+                // addieren. Ein Material, das in zwei Familien oder Waehrungen vorkommt, wurde
+                // beim Rollup auf Sparten-Ebene sonst doppelt gezaehlt.
+                var materialKeys = group
+                    .SelectMany(row => row.MaterialKeys)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
                 return new ManagementProductDivisionFinanceRow
                 {
@@ -2685,7 +2765,8 @@
                     Currency = group.Key.Currency,
                     NetSalesActual = value,
                     SharePercent = PercentOf(value, total),
-                    MaterialCount = group.Sum(row => row.MaterialCount),
+                    MaterialCount = materialKeys.Count,
+                    MaterialKeys = materialKeys,
                     RowCount = group.Sum(row => row.RowCount),
                     Countries = JoinCountries(group.Select(row => row.Countries))
                 };
@@ -3042,7 +3123,7 @@
             return T("Kein Sollwert gepflegt.", "No reference value maintained.");
         if (row.TotalRows == 0)
             return T("Sollwert gepflegt, aber kein Ist im aktuellen Filter.", "Reference maintained, but no actuals in the current filter.");
-        if (row.Status == "OK")
+        if (row.Status == FinanceCountryStatuses.Ok)
             return T("Freigabefaehig.", "Ready for approval.");
         if (row.Difference.HasValue)
             return T("Abweichung pruefen.", "Check deviation.");
@@ -3052,10 +3133,31 @@
 
     private static Color StatusColor(string status) => status switch
     {
-        "OK" => Color.Success,
-        "Pruefen" => Color.Warning,
+        FinanceCountryStatuses.Ok => Color.Success,
+        FinanceCountryStatuses.Check => Color.Warning,
         _ => Color.Default
     };
+
+    // Kachelzahlen des Soll/Ist-Abgleichs. BuildFinanceStatus liefert VIER Werte; "Laender OK" und
+    // "Zu pruefen" decken nur zwei ab, der Rest braucht eine eigene Kachel, sonst verschwinden
+    // ungeprueffte Laender lautlos zwischen den beiden verschwinden.
+    private string FinanceCountryStatusCount(string status)
+        => (_financeResult?.CountryRows.Count(row => row.Status == status) ?? 0).ToString("N0");
+
+    private int UnverifiedFinanceCountryCount
+        => _financeResult?.CountryRows.Count(row => FinanceCountryStatuses.IsUnverified(row.Status)) ?? 0;
+
+    // Bei mehreren Waehrungen im Filter addieren die Kacheln lokale Betraege numerisch (CHF + EUR
+    // + INR + ...) und beschriften das Ergebnis mit "Mixed". Der Sparten-Reiter warnte davor schon,
+    // Net Sales Actual und die Gruppenmarge-Kacheln nicht - obwohl sie genauso mischen.
+    private bool IsFinanceMixedCurrency
+        => string.Equals(_financeResult?.DisplayCurrency, "Mixed", StringComparison.OrdinalIgnoreCase);
+
+    private RenderFragment? MixedCurrencyWarning => !IsFinanceMixedCurrency ? null : @<MudAlert
+        Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-4">
+        @T("Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten.",
+            "Multiple currencies in the filter: cards marked `Mixed` add local amounts numerically, they are not a converted total. Filter to one country or currency, or switch on `Group currency (CHF)`, for a reliable amount.")
+    </MudAlert>;
 
     private static Color SeverityColor(string severity) => severity switch
     {

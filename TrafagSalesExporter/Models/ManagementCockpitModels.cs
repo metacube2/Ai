@@ -235,7 +235,19 @@ public class ManagementFinanceDataQualityRow
 
 public class ManagementProductAssignmentSummary
 {
+    /// <summary>
+    /// Zeilen der Materialpruefung. Ein Material aus drei TSC ergibt drei Zeilen - deshalb heisst
+    /// die Kachel "Pruefzeilen" und nicht "Materialien". Nur so summieren sich
+    /// <see cref="MatchedMaterialCount"/> und die uebrigen Statuszahlen wieder auf diesen Wert.
+    /// </summary>
     public int DistinctMaterialCount { get; set; }
+
+    /// <summary>
+    /// Tatsaechlich verschiedene Materialnummern ueber alle Laender und Standorte hinweg.
+    /// Kleiner als <see cref="DistinctMaterialCount"/>, sobald ein Material aus mehr als einem
+    /// Standort verkauft wird.
+    /// </summary>
+    public int DistinctMaterialNumberCount { get; set; }
     public int MatchedMaterialCount { get; set; }
     public int MiscMaterialCount { get; set; }
     public int UnassignedMaterialCount { get; set; }
@@ -273,6 +285,14 @@ public class ManagementProductDivisionFinanceRow
     public int MaterialCount { get; set; }
     public int RowCount { get; set; }
     public string Countries { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Die Materialnummern hinter <see cref="MaterialCount"/>. Die GUI fasst diese Zeilen je nach
+    /// gewaehlter Ebene (Sparte / Familie / Hierarchie) weiter zusammen; ohne die Schluessel
+    /// muesste sie die bereits distinkten Zaehlungen aufaddieren und wuerde jedes Material
+    /// doppeln, das in mehreren Familien oder Waehrungen vorkommt.
+    /// </summary>
+    public IReadOnlyCollection<string> MaterialKeys { get; set; } = [];
 }
 
 public class ManagementProductFinanceCountryRow
@@ -448,9 +468,20 @@ public class ManagementFinancePivotResult
     public List<int> YearOptions { get; set; } = [];
     public List<int> MonthOptions { get; set; } = [];
     public int DefaultMonth { get; set; }
-    public decimal YtdSalesChf { get; set; }
-    public decimal MtdSalesChf { get; set; }
     public int RowCount { get; set; }
+
+    /// <summary>
+    /// Zeilen, die in der Pivotsicht fehlen, weil fuer Jahr und Waehrung kein CHF-Kurs gepflegt
+    /// ist. Sie werden verworfen, nicht mit 0 gerechnet - ohne diesen Zaehler waere die Luecke
+    /// unsichtbar und <see cref="RowCount"/> saehe aus wie die vollstaendige Zeilenbasis.
+    /// </summary>
+    public int MissingRateRowCount { get; set; }
+
+    /// <summary>
+    /// Zeilen ohne TSC. Die Pivotsicht ist nach TSC aufgebaut, deshalb koennen sie dort nicht
+    /// dargestellt werden; sie zaehlen aber im Finance Summary mit.
+    /// </summary>
+    public int MissingTscRowCount { get; set; }
     public List<ManagementFinancePivotMatrixRow> MonthlyRows { get; set; } = [];
     public List<ManagementFinancePivotMatrixRow> DailyYearRows { get; set; } = [];
     public List<ManagementFinancePivotMatrixRow> DailyYearRowsByTsc { get; set; } = [];
@@ -501,6 +532,16 @@ public class ManagementFinanceSummaryResult
     public List<ManagementGroupMarginDivisionRow> GroupMarginDivisionRows { get; set; } = [];
     public List<ManagementGroupMarginDetailRow> GroupMarginDetailRows { get; set; } = [];
     public List<ManagementFinanceAuditLedgerRow> FinanceAuditLedgerRows { get; set; } = [];
+
+    /// <summary>
+    /// Zeilen VOR der Kappung auf 1'000. Beide Detailtabellen zeigen nur die ersten 1'000 Treffer;
+    /// ohne diese Zahlen sieht die Anzeige wie der vollstaendige Bestand aus, obwohl sie bei rund
+    /// 92'000 Zeilen nur einen Ausschnitt zeigt.
+    /// </summary>
+    public int GroupMarginDetailTotalRowCount { get; set; }
+
+    /// <inheritdoc cref="GroupMarginDetailTotalRowCount"/>
+    public int FinanceAuditLedgerTotalRowCount { get; set; }
     public ManagementFinancePivotResult FinancePivot { get; set; } = new();
 }
 

@@ -7,6 +7,13 @@ namespace TrafagSalesExporter.Services;
 public interface IFinanceReconciliationService
 {
     Task<List<NetSalesReferenceRow>> BuildNetSalesReferenceRowsAsync(int year = 2025);
+
+    /// <summary>
+    /// Jahre, fuer die ueberhaupt Sollwerte gepflegt sind. Ohne Sollwert gibt es nichts zu
+    /// vergleichen, deshalb ist das die richtige Liste fuer die Jahresauswahl der Seite - nicht
+    /// die Jahre der Ist-Daten.
+    /// </summary>
+    Task<List<int>> GetAvailableReferenceYearsAsync();
 }
 
 public sealed class FinanceReconciliationService : IFinanceReconciliationService
@@ -25,6 +32,18 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
     {
         _dbFactory = dbFactory;
         _centralSalesDataProvider = centralSalesDataProvider;
+    }
+
+    public async Task<List<int>> GetAvailableReferenceYearsAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.FinanceReferences
+            .AsNoTracking()
+            .Where(r => r.IsActive)
+            .Select(r => r.Year)
+            .Distinct()
+            .OrderBy(year => year)
+            .ToListAsync();
     }
 
     public async Task<List<NetSalesReferenceRow>> BuildNetSalesReferenceRowsAsync(int year = 2025)
@@ -62,7 +81,7 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
             .GroupBy(r => ResolveReferenceKey(r.Land, r.Tsc), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 g => g.Key,
-                g => BuildNetSalesActual(g.Key, g, budgetRatesToChf, intercompanyRules),
+                g => BuildNetSalesActual(g.Key, g, budgetRatesToChf, intercompanyRules, year),
                 StringComparer.OrdinalIgnoreCase);
 
         return financeReferences
@@ -223,7 +242,8 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         string referenceKey,
         IEnumerable<NetSalesActualSourceRow> rows,
         IReadOnlyDictionary<string, decimal> budgetRatesToChf,
-        IReadOnlyList<FinanceIntercompanyRule> intercompanyRules)
+        IReadOnlyList<FinanceIntercompanyRule> intercompanyRules,
+        int year)
     {
         var rowList = rows.ToList();
         var houseCurrency = ResolveHouseCurrency(referenceKey, rowList);
@@ -282,7 +302,9 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         if (budgetChf != 0m)
             candidates.Add(new(
                 "NetDocumentLocalCurrencyBudgetChf",
-                $"Nettofakturawert Hauswaehrung -> CHF Budget 2025 ({(repeatedDocumentTotals ? "Beleg" : "Position")})",
+                // Jahr aus dem Aufruf, nicht fest 2025: die Budgetkurse werden ebenfalls je Jahr
+                // geladen (LoadBudgetRatesToChfAsync), die Beschriftung muss dazu passen.
+                $"Nettofakturawert Hauswaehrung -> CHF Budget {year} ({(repeatedDocumentTotals ? "Beleg" : "Position")})",
                 "CHF",
                 budgetChf,
                 selectedNetRows.Where(row => IsIntercompanyCustomer(row, intercompanyRules)).Sum(row => ConvertHouseCurrencyNetToBudgetChf(houseCurrency, row, row.DocumentTotalLocalCurrency - row.VatSumLocalCurrency, budgetRatesToChf)),
@@ -404,9 +426,11 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
     private static string BuildReferenceStatus(decimal? difference)
     {
         if (!difference.HasValue)
-            return "Keine Daten";
+            return FinanceCountryStatuses.NoData;
 
-        return Math.Abs(difference.Value) <= 1m ? "OK" : "Pruefen";
+        return Math.Abs(difference.Value) <= 1m
+            ? FinanceCountryStatuses.Ok
+            : FinanceCountryStatuses.Check;
     }
 
     private static string ResolveReferenceKey(string land, string tsc)

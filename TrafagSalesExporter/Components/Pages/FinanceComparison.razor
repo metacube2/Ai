@@ -12,10 +12,20 @@
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudStack Row AlignItems="AlignItems.Center" Class="mb-3">
         <div>
-            <MudText Typo="Typo.h6">@T("Net Sales Actuals 2025 Referenz", "Net sales actuals 2025 reference")</MudText>
+            <MudText Typo="Typo.h6">@string.Format(T("Net Sales Actuals {0} Referenz", "Net sales actuals {0} reference"), _selectedYear)</MudText>
             <MudText Typo="Typo.caption">@T("Verbindliche Finance-Sicht aus der aktuellen zentralen Datenquelle", "Authoritative finance view from the current central data source")</MudText>
         </div>
         <MudSpacer />
+        @* Jahresauswahl aus FinanceReferences: ohne Sollwert gibt es nichts zu vergleichen.
+           Vorher stand das Jahr an drei Stellen fest auf 2025, waehrend die Seite sich
+           "aktuelle zentrale Datenquelle" nannte. *@
+        <MudSelect T="int" Value="_selectedYear" ValueChanged="OnYearChanged" Dense Margin="Margin.Dense"
+                   Variant="Variant.Outlined" Label="@T("Jahr", "Year")" Style="max-width:140px;">
+            @foreach (var year in _availableYears)
+            {
+                <MudSelectItem Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
         <MudButton Variant="@(_hideRowsWithoutActual ? Variant.Filled : Variant.Outlined)"
                    Color="Color.Primary"
                    Size="Size.Small"
@@ -36,7 +46,7 @@
         <HeaderContent>
             <MudTh>@T("Ampel", "Status")</MudTh>
             <MudTh>@T("Land", "Country")</MudTh>
-            <MudTh>@T("Ist 2025", "Actual 2025")</MudTh>
+            <MudTh>@string.Format(T("Ist {0}", "Actual {0}"), _selectedYear)</MudTh>
             <MudTh>@T("Referenz", "Reference")</MudTh>
             <MudTh>@T("Differenz", "Difference")</MudTh>
             <MudTh>@T("Waehrung", "Currency")</MudTh>
@@ -145,6 +155,8 @@
 
 @code {
     private List<NetSalesReferenceRow> _netSalesReferenceRows = new();
+    private List<int> _availableYears = new();
+    private int _selectedYear;
     private bool _hideRowsWithoutActual = true;
     private bool _loading = true;
 
@@ -160,13 +172,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _availableYears = await FinanceReconciliationService.GetAvailableReferenceYearsAsync();
+        _selectedYear = _availableYears.Count > 0 ? _availableYears[^1] : DateTime.Now.Year;
+        await LoadAsync();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
         _loading = true;
-        _netSalesReferenceRows = await FinanceReconciliationService.BuildNetSalesReferenceRowsAsync(2025);
+        _netSalesReferenceRows = await FinanceReconciliationService.BuildNetSalesReferenceRowsAsync(_selectedYear);
         _loading = false;
     }
 
@@ -196,7 +216,10 @@
         if (row.Key.Equals("FR", StringComparison.OrdinalIgnoreCase) ||
             row.Key.Equals("IN", StringComparison.OrdinalIgnoreCase) ||
             row.Key.Equals("US", StringComparison.OrdinalIgnoreCase))
-            return T("Passt gegen Soll; Sales Price/Value ist bevorzugte Variante.", "Matches reference; Sales Price/Value is the preferred variant.");
+            // Beschreibt die REGEL, nicht das Ergebnis. Vorher stand hier "Passt gegen Soll" - eine
+            // Ergebnisbehauptung aus einer fest verdrahteten Laenderliste, direkt neben dem
+            // gerechneten Statuschip, der fuer dieselbe Zeile "Pruefen" sagen konnte.
+            return T("Sales Price/Value ist die bevorzugte Variante; Ergebnis siehe Ampel.", "Sales Price/Value is the preferred variant; see the status chip for the outcome.");
 
         return row.ReferenceCurrency == "LC"
             ? T("Vergleich gegen Local Currency Referenz.", "Compared against local currency reference.")
@@ -204,13 +227,13 @@
     }
 
     private Color StatusColor(string status)
-        => status == "OK" ? Color.Success
-            : status == "Pruefen" ? Color.Warning
+        => status == FinanceCountryStatuses.Ok ? Color.Success
+            : status == FinanceCountryStatuses.Check ? Color.Warning
             : Color.Default;
 
     private string StatusText(string status)
-        => status == "OK" ? "OK"
-            : status == "Pruefen" ? T("Pruefen", "Check")
+        => status == FinanceCountryStatuses.Ok ? "OK"
+            : status == FinanceCountryStatuses.Check ? T("Pruefen", "Check")
             : T("Keine Daten", "No data");
 
     private string T(string german, string english) => UiText.Text(german, english);
