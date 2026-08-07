@@ -26,6 +26,66 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Aktueller Kurzstand
 
+- 2026-08-07, FINANCE-INDIKATOREN DURCHGESEHEN — DEPLOYED UND VERIFIZIERT
+  (10:22 MESZ, Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests im
+  Release-Lauf VOR dem Publish, vorher `449`; `BiDashboard.dll` `4'320'768`
+  Bytes, SHA256 `B43A9E4B…`, lokal und Server bitgleich; Produktiv-DB
+  unveraendert `339'210'240` / `07.08.2026 08:49:20`). Die Durchsicht vom
+  2026-08-06 deckte NUR den Kostenbasis-Strang ab; hier sind die anderen
+  Fehlerklassen. GROESSTER FUND, produktiv read-only gemessen:
+  `FinanceReferences` enthaelt AUSSCHLIESSLICH Zeilen fuer `2025` (17 Zeilen, 14
+  mit Wert), das Standardjahr der Seite ist aber das juengste Jahr der Daten,
+  also `2026` (35'841 Zeilen). Damit standen `Laender OK` und `Zu pruefen` beim
+  Standardaufruf beide auf `0` — ununterscheidbar von „alles sauber", obwohl
+  NICHTS geprueft war; die Abweichungen-Sicht war leer und die Finance-Aeste des
+  Entscheidungsradars fehlten ganz. Ursache: `BuildFinanceStatus` liefert VIER
+  Status, die Schnelluebersicht zaehlte zwei. Neu dritte Kachel `Nicht geprueft`
+  plus Warnhinweis; Statustexte in der neuen Klasse `FinanceCountryStatuses`
+  statt als Literale. SEPARAT DAVON, ebenfalls gemessen: fuer `CH`, `CN` und
+  `RU` fehlt der Sollwert auch in 2025 — CH ist mit `17'608` Zeilen der groesste
+  Standort und wird gegen nichts geprueft (Datenluecke fuer Andreas, kein
+  Codefehler). WEITERE ACHT: `Net Sales Actual` und die sieben
+  Gruppenmarge-Kacheln addieren CHF+EUR+GBP+INR+USD numerisch und schreiben
+  `Mixed` dahinter — der Sparten-Reiter warnte davor schon, diese nicht (jetzt
+  ueberall, Zahl bleibt, Entscheid Ingo); der Finance-Pivot rechnete auf den
+  UNGEFILTERTEN Zeilen, sodass ein Landfilter `Net Sales Actual` bewegte und die
+  Pivotkacheln daneben nicht (jetzt `scopedRows`, Entscheid Ingo), verlor Zeilen
+  ohne CHF-Kurs und ohne TSC still (jetzt gezaehlt und gemeldet), nannte einen
+  Jahreswert `YTD` mit Untertitel „Alle Jahre" (jetzt `Jahresumsatz` + echtes
+  Jahr) und trug eine tote Zweitimplementierung `YtdSalesChf`/`MtdSalesChf` mit
+  abweichender Jahreswahl (entfernt); die Kachel `Ausgeschlossen` und die zwei
+  Datenqualitaets-Pruefpunkte konnten Regelausschluss und echten Nullwert nicht
+  unterscheiden, weil `ResolveNetSalesActual` fuer ausgeschlossene Zeilen `0`
+  liefert — dieselben Zeilen zaehlten doppelt, auch im Entscheidungsradar (neu
+  `IsExcludedByRule`); der `Soll/Ist Vergleich` stand an drei Stellen fest auf
+  `2025` (jetzt Jahresauswahl aus `FinanceReferences`) und behauptete fuer FR,
+  IN und US unbedingt „Passt gegen Soll" — eine Ergebnisbehauptung aus einer
+  fest verdrahteten Liste, direkt neben einem gerechneten Statuschip, der
+  `Pruefen` sagen kann; `Materialien` zaehlte Gruppen aus Material x Land x TSC
+  x Quelle x Waehrung (jetzt `Pruefzeilen` mit echter Materialzahl daneben, und
+  der Sparten-Rollup vereinigt Materialschluessel statt distinkte Zaehlungen zu
+  addieren); eine gemessene `0` im Pivot rendete als `-` wie fehlende Daten; die
+  1000er-Kappung beider Detailtabellen war unsichtbar. Sechs neue Tests, DREI
+  davon per Gegenprobe nachweislich rot ohne Fix — die anderen drei pinnen
+  Vertraege unter Razor-Aenderungen und sagen das im Kommentar; die GUI-Seite
+  dieser beiden Punkte ist nur per Sichtpruefung abgedeckt.
+  ZWEI GRENZEN, ausdruecklich: (1) beide Finance-Routen liegen hinter dem
+  Finance-Unlock und liefern von hier aus das PASSWORTPANEL — der HTTPS `200`
+  belegt Erreichbarkeit, NICHT dass die Kacheln rendern; ein angemeldeter
+  Sichtprueflauf durch Ingo steht aus. (2) Nach dem ersten Publish stand
+  `Passt gegen Soll` noch als verwaister Uebersetzungsschluessel in der DLL —
+  Commit `b2e7c4f` entfernt ihn, danach zweiter Publish. NUR BERICHTET, nicht
+  geaendert: SAP-Proformabelegarten `F5`/`F8` laufen in den Umsatz (TRCH `F8`
+  `1'902` Zeilen / `+6'049'560.28`, `F5` `194` / `+497'752.51`, keine
+  F2-Dubletten) und koennen wegen des fehlenden CH-Sollwerts im Soll/Ist gar
+  nicht auffallen; die Toleranz `<= 1` ist waehrungsblind und steht dreifach;
+  die Gutschrift-Schluesselwortliste erfasst `CRN`/`G2`/`S1`/`S2` nicht, `1'522`
+  von `1'674` Gutschriftzeilen haengen allein an `Value < 0`. FALLE bei der
+  Lokalisierung: ein PowerShell-Skript mit nicht-ASCII-Text im Quelltext wird
+  von PS 5.1 als Windows-1252 gelesen und scheitert am Parser — Uebersetzungen
+  als UTF-8-JSON auslagern, Skript rein ASCII. Details:
+  `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md`.
+
 - 2026-08-07, EINKAUF-INDIKATOREN DURCHGESEHEN — DEPLOYED UND VERIFIZIERT
   (08:40 MESZ, Funktionscommit `eef6374`, `449/449` Tests im Release-Lauf VOR
   dem Publish, vorher `446`; `BiDashboard.dll` `4'293'632` Bytes, SHA256

@@ -20,6 +20,7 @@ Stand verwenden.
 | Budget-CHF-Fragen | `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` |
 | Gruppenmarge | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | Anzeigepruefung Finance (Pruefbuch-Marge, Statusfarbe) | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
+| Welche Finance-Indikatoren echt rechnen; fehlende Sollwerte, Waehrungsmischung, Pivot-Filter | `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | Gruppenmarge-Prozessgrafik | `docs/FINANCE_GRUPPENMARGE_PROZESSFLUSS_2026-07-27.svg` |
 | Standardkosten CH/AT/DE | `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` |
 | WAVWR/NETWR_HC SAP-Spezifikation | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` |

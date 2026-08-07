@@ -1,6 +1,26 @@
 # RAG Finance-Formeln (Zeilenverarbeitung/Mechanik)
 
-Stand: 2026-08-06
+Stand: 2026-08-07
+
+## Vorrang: was die Kacheln NICHT sagen (2026-08-07)
+
+Vor jeder Aussage ueber eine Finance-Kennzahl diese vier Punkte kennen — alle
+produktiv gemessen, Details in `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md`:
+
+1. **Sollwerte gibt es nur fuer 2025.** `FinanceReferences` enthaelt 17 Zeilen,
+   alle `Year = 2025`, davon 3 ohne Wert (`CH`, `CN`, `RU`). Das Standardjahr der
+   Seite ist das juengste Jahr der Daten (`2026`, 35'841 Zeilen) — dort ist der
+   Soll/Ist-Abgleich vollstaendig leer. Die Kachel `Nicht geprueft` zaehlt diese
+   Laender seit 2026-08-07; `Laender OK` und `Zu pruefen` tun es NICHT.
+2. **`CH` hat auch fuer 2025 keinen Sollwert** und wird damit gegen nichts
+   geprueft — mit `17'608` Zeilen der groesste Standort.
+3. **`Net Sales Actual` und die Gruppenmarge-Kacheln addieren Waehrungen
+   numerisch**, wenn der Filter mehrere enthaelt; die Anzeige endet dann auf
+   `Mixed`. Erst ein Land-/Waehrungsfilter oder `Group-Waehrung (CHF)` gibt eine
+   umgerechnete Summe.
+4. **Detailtabellen sind auf 1'000 Zeilen gekappt** (Pruefbuch und
+   Gruppenmarge-Detail, von rund 92'000). Die Kappung wirkt beim Pruefbuch VOR
+   den Spaltenfiltern. Fuer Nachrechnungen den Excel-Export nehmen.
 
 Zweck: Kompakte, code-verifizierte Referenz WIE Waehrungsumrechnung, Marge/Standardkosten
 und Land-Formeln rechnen — nicht Deploy-Historie (die steht in `docs/rag/FINANCE.md`).

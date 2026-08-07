@@ -4,7 +4,34 @@ Stand: 2026-08-07
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-07 08:40, Einkauf-Indikatoren
+- Letzter produktiv verifizierter Deploy: **2026-08-07 10:22, Finance-Indikatoren
+  ehrlich gemacht**, Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests gruen
+  (Release-Lauf vor dem Publish). `BiDashboard.dll` `07.08.2026 10:21:53`,
+  `4'320'768` Bytes, SHA256
+  `B43A9E4B49ADC3186A1DC7216F61E2C220BF5541C9A4180FBA9C51C7CA80E43D`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach
+  umbenannt. HTTPS `200`: Startseite (`68'411` Bytes), `/management-cockpit`
+  (`69'490`), `/finance-cockpit/vergleich` (`69'539`). Produktiv-DB in Laenge und
+  Schreibzeit unveraendert (`339'210'240` Bytes, `07.08.2026 08:49:20`).
+  Wirknachweis in der DLL: `FinanceCountryStatuses`, `IsExcludedByRule`,
+  `MissingRateRowCount`, `DistinctMaterialNumberCount`, `MaterialKeys`,
+  `GetAvailableReferenceYearsAsync` sowie die Literale `Nicht geprueft`,
+  `Jahresumsatz`, `Pruefzeilen`; `YtdSalesChf` und `Passt gegen Soll` sind nicht
+  mehr enthalten.
+  **ACHTUNG zur Reichweite dieses Nachweises:** beide Finance-Routen liegen hinter
+  dem Finance-Unlock und liefern von der Entwicklungsmaschine aus das
+  Passwortpanel, nicht die Seite (geprueft: Antwort enthaelt `Finance Cockpit` und
+  `Passwort`, aber nicht `Schnelluebersicht`). Der `200` belegt Erreichbarkeit,
+  **nicht** dass die geaenderten Kacheln rendern — dafuer ist ein angemeldeter
+  Sichtprueflauf noetig.
+  **Behebt neun Indikatoren**, u. a. `Laender OK`/`Zu pruefen`, die zwei von vier
+  Status verschwiegen (produktiv gemessen: `FinanceReferences` hat nur Zeilen fuer
+  `2025`, Standardjahr der Seite ist `2026` — beide Kacheln standen auf `0`),
+  Waehrungsmischung ohne Hinweis, Finance-Pivot auf ungefilterten Zeilen, und
+  „Passt gegen Soll" als fest verdrahtete Ergebnisbehauptung.
+  Details: `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md`.
+
+- Deploy davor: **2026-08-07 08:40, Einkauf-Indikatoren
   ehrlich gemacht**, Funktionscommit `eef6374`, `449/449` Tests gruen (Release-Lauf
   vor dem Publish). `BiDashboard.dll` `07.08.2026 08:40:33`, `4'293'632` Bytes,
   SHA256 `214C51E3D08479847813D49B04ED754D6AE5DA614CF458E806BE4AF256BD093A`;
