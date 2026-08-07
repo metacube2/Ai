@@ -147,6 +147,48 @@ public sealed class SupplyChainAnalysisServiceTests : IDisposable
         Assert.Equal(0m, row.ShortageValueChf);
     }
 
+    [Fact]
+    public async Task MissingUnitCost_LeavesShortageValueUnknown_InsteadOfCountingAValuedZero()
+    {
+        // Gegenstueck zu MissingFinalStock_...: die Fehlmenge ist echt, aber ohne gepflegte
+        // Stueckkosten ist ihr Wert unbekannt. Vorher lief die fehlende Zahl als 0 in die
+        // Summe der Kachel "Fehlwert CHF", ohne dass irgendetwas darauf hinwies.
+        SeedUsage("M-1", "K-1", "019", "-5", unitCost: "");
+
+        var result = await _service.LoadAsync(
+            SupplyChainAnalysisKind.MaterialDisposition,
+            new SupplyChainAnalysisFilter(OnlyActionable: true));
+
+        var row = Assert.Single(result.Rows);
+        Assert.Equal(5m, row.ShortageQuantity);
+        Assert.False(row.HasUnitCost);
+        Assert.Contains("nicht bewertet", result.Kpis[2].DetailDe, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RiskBuckets_KeepCountingOkRows_EvenWhenOnlyActionableHidesThemFromTheTable()
+    {
+        // "Nur Handlungsbedarf" entfernt genau die OK-Zeilen, die der gruene Balken zaehlen
+        // soll. Wuerden die Balken nach dem Schalter gezaehlt, stuende "Ohne akuten Hinweis"
+        // beim Standardaufruf immer auf 0 und saehe wie eine Messung aus.
+        SeedUsage("M-1", "K-1", "019", "-5", "10");
+        SeedUsage("M-2", "K-2", "019", "10", "10");
+
+        var result = await _service.LoadAsync(
+            SupplyChainAnalysisKind.MaterialDisposition,
+            new SupplyChainAnalysisFilter(OnlyActionable: true));
+
+        var row = Assert.Single(result.Rows);
+        Assert.Equal("K-1", row.Material);
+        var ok = Assert.Single(result.RiskBuckets, bucket => bucket.LabelDe == "Ohne akuten Hinweis");
+        Assert.Equal(1, ok.Count);
+        // Suche/Disponent/Produktgruppe grenzen dagegen auch die Balken ein.
+        var scoped = await _service.LoadAsync(
+            SupplyChainAnalysisKind.MaterialDisposition,
+            new SupplyChainAnalysisFilter(Search: "K-1", OnlyActionable: true));
+        Assert.Equal(0, Assert.Single(scoped.RiskBuckets, bucket => bucket.LabelDe == "Ohne akuten Hinweis").Count);
+    }
+
     private void SeedUsage(
         string header,
         string component,

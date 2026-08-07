@@ -168,6 +168,35 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_ContractChart_And_TopCommitment_Use_The_Same_Konnr_Basis_As_The_Kpi()
+    {
+        // Gegenstueck zu LoadAsync_ContractValue_Counts_Only_Positions_With_Konnr: die Kachel
+        // "Restwert" filterte auf Konnr, Diagramm und "Top Verpflichtung" daneben nicht. Damit
+        // zeigte derselbe Reiter zwei Grundmengen, die sich nicht gegeneinander abstimmen liessen.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Konnr, LastLoadedAtUtc) VALUES ('C1', '2025-06-01', 'L1', 'Ohne Kontrakt', '', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Konnr, LastLoadedAtUtc) VALUES ('C2', '2025-06-01', 'L2', 'Mit Kontrakt', '4600000123', '2026-01-01');");
+        // Der Beleg ohne Konnr ist der groessere: ohne Filter wuerde er die Top-Verpflichtung stellen.
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('C1', '10', 'M1', '10', '9000', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Menge, Netwr, LastLoadedAtUtc) VALUES ('C2', '10', 'M2', '10', '1000', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C1', '10', '1', '2025-08-01', '10', '0', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('C2', '10', '1', '2025-08-01', '10', '0', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        Assert.True(state.UsesCache);
+        Assert.Equal(10000m, state.OpenValueSample);
+        Assert.Equal(1000m, state.ContractValueSample);
+        // Diagramm und Top-Verpflichtung kennen nur noch den Kontraktabruf.
+        var chartRow = Assert.Single(state.ContractChartRows);
+        Assert.Contains("M2", chartRow.Label, StringComparison.Ordinal);
+        Assert.Equal(1000m, chartRow.Value);
+        Assert.Contains("Mit Kontrakt", state.TopCommitmentLabel, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ohne Kontrakt", state.TopCommitmentLabel, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task LoadAsync_Overdue_Counts_Only_Past_Due_Open_Positions()
     {
         // Phase 1.1: Ueberfaelliger Wert/Menge/Anzahl zaehlen nur offene Einteilungen, deren

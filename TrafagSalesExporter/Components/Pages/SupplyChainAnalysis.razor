@@ -175,7 +175,8 @@ else
                 @if (_kind == SupplyChainAnalysisKind.MaterialDisposition)
                 {
                     <MudTd Style="text-align:right">@FormatNumber(context.FixedReceipts) / @FormatNumber(context.PlannedReceipts)</MudTd>
-                    <MudTd Style="text-align:right">@FormatNumber(context.ShortageQuantity) / @FormatChf(context.ShortageValueChf)</MudTd>
+                    @* Ohne gepflegte Stueckkosten ist der Fehlwert unbekannt, nicht null: "-" statt einer bewerteten 0. *@
+                    <MudTd Style="text-align:right">@FormatNumber(context.ShortageQuantity) / @(context.HasUnitCost ? FormatChf(context.ShortageValueChf) : "-")</MudTd>
                     <MudTd>@context.ParentMaterialCount @T("Eltern", "parents")@(context.Exclusive ? $" · {T("exklusiv", "exclusive")}" : "")</MudTd>
                 }
                 else if (_kind == SupplyChainAnalysisKind.PurchaseCoverage)

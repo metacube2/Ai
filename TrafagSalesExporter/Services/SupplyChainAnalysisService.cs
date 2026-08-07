@@ -84,7 +84,14 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
         }
 
         var sourceMaterialCount = rows.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-        var filtered = ApplyFilter(rows, filter)
+        // Suche, Disponent und Produktgruppe grenzen den Umfang ein und gelten fuer alles.
+        // "Nur Handlungsbedarf" wirkt bewusst NUR auf Kennzahlen und Tabelle: der Schalter
+        // entfernt genau die OK-Zeilen, die der gruene Prioritaetsbalken zaehlen soll. Wuerden
+        // die Balken danach gezaehlt, stuende "Ohne akuten Hinweis" beim Standardaufruf immer
+        // auf 0 und saehe wie eine Messung aus, obwohl es der Filter selbst waere.
+        var scoped = ApplyScopeFilter(rows, filter);
+        var filtered = scoped
+            .Where(row => !filter.OnlyActionable || !row.RiskCode.Equals("OK", StringComparison.OrdinalIgnoreCase))
             .OrderBy(row => RiskRank(row.RiskCode))
             .ThenByDescending(row => row.ShortageValueChf + row.OpenOrderValueChf)
             .ThenBy(row => row.Material, StringComparer.OrdinalIgnoreCase)
@@ -101,12 +108,12 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
             NoticeDe = noticeDe,
             NoticeEn = noticeEn,
             Kpis = BuildKpis(kind, filtered, sourceMaterialCount),
-            RiskBuckets = BuildRiskBuckets(filtered),
+            RiskBuckets = BuildRiskBuckets(scoped),
             Rows = filtered.Take(1000).ToList()
         };
     }
 
-    private static IReadOnlyList<SupplyChainAnalysisRow> ApplyFilter(
+    private static IReadOnlyList<SupplyChainAnalysisRow> ApplyScopeFilter(
         IEnumerable<SupplyChainAnalysisRow> rows,
         SupplyChainAnalysisFilter filter)
     {
@@ -123,8 +130,6 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
             query = query.Where(row => Contains(row.Dispatcher, filter.Dispatcher.Trim()));
         if (!string.IsNullOrWhiteSpace(filter.ProductGroup))
             query = query.Where(row => Contains(row.ProductGroup, filter.ProductGroup.Trim()));
-        if (filter.OnlyActionable)
-            query = query.Where(row => !row.RiskCode.Equals("OK", StringComparison.OrdinalIgnoreCase));
         return query.ToList();
     }
 
@@ -274,7 +279,7 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
             fact.Material, fact.Description, fact.Dispatchers, fact.ProductGroups,
             "OK", "Kein Hinweis", "No issue", fact.Stock, fact.Consumption, fact.FixedReceipts, fact.PlannedReceipts,
             fact.FixedIssues, fact.PlannedIssues, fact.FinalStock, fact.SafetyStock, fact.ReorderPoint,
-            0m, 0m, open.OpenQuantity, open.OpenValueChf, open.OverdueQuantity, open.NextDeliveryDate,
+            0m, 0m, fact.HasUnitCost, open.OpenQuantity, open.OpenValueChf, open.OverdueQuantity, open.NextDeliveryDate,
             open.Suppliers, 0, 0m, fact.ParentMaterialCount, fact.Exclusive, fact.MrpType, fact.LotSize,
             fact.FixedLotSize, fact.ProcurementType, fact.MaterialStatus, fact.LzCode, "", "", "");
 
@@ -298,6 +303,7 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
             ReorderPoint: 0m,
             ShortageQuantity: 0m,
             ShortageValueChf: 0m,
+            HasUnitCost: false,
             OpenOrderQuantity: 0m,
             OpenOrderValueChf: 0m,
             OverdueQuantity: 0m,
@@ -328,13 +334,23 @@ public sealed class SupplyChainAnalysisService : ISupplyChainAnalysisService
         int sourceMaterialCount)
     {
         var affected = rows.Select(row => row.Material).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        // Materialien mit echter Fehlmenge, fuer die keine Stueckkosten gepflegt sind. Ihr
+        // Fehlwert ist unbekannt, nicht null — sonst meldet die Kachel eine zu kleine Summe,
+        // ohne dass jemand erkennt, dass ein Teil des Fehlbestands gar nicht bewertet wurde.
+        var unvaluedShortage = rows.Count(row => row.ShortageQuantity > 0m && !row.HasUnitCost);
+        var shortageValueDetailDe = unvaluedShortage > 0
+            ? $"Fehlmenge mal Stueckkosten; {unvaluedShortage:N0} ohne Stueckkosten nicht bewertet"
+            : "Fehlmenge mal Stueckkosten";
+        var shortageValueDetailEn = unvaluedShortage > 0
+            ? $"shortage times unit cost; {unvaluedShortage:N0} not valued (unit cost missing)"
+            : "shortage times unit cost";
         return kind switch
         {
             SupplyChainAnalysisKind.MaterialDisposition =>
             [
                 new("Kritische Materialien", "Critical materials", affected.ToString("N0"), "im aktuellen Filter", "in the current filter"),
                 new("Fehlmenge", "Shortage quantity", rows.Sum(row => row.ShortageQuantity).ToString("N0"), "negativer Endbestand", "negative final stock"),
-                new("Fehlwert CHF", "Shortage value CHF", rows.Sum(row => row.ShortageValueChf).ToString("N0"), "Fehlmenge mal Stueckkosten", "shortage times unit cost"),
+                new("Fehlwert CHF", "Shortage value CHF", rows.Sum(row => row.ShortageValueChf).ToString("N0"), shortageValueDetailDe, shortageValueDetailEn),
                 new("Datenumfang", "Data scope", sourceMaterialCount.ToString("N0"), "Materialien im ZLO03-Cache", "materials in the ZLO03 cache")
             ],
             SupplyChainAnalysisKind.PurchaseCoverage =>
@@ -400,6 +416,7 @@ SELECT
     MAX(CAST(REPLACE(REPLACE(NULLIF(trim(Endbestand), ''), ',', '.'), '''', '') AS REAL)) AS FinalStock,
     MAX(CASE WHEN trim(Endbestand) <> '' THEN 1 ELSE 0 END) AS HasFinalStock,
     MAX(CAST(REPLACE(REPLACE(NULLIF(trim(Stueckkosten), ''), ',', '.'), '''', '') AS REAL)) AS UnitCost,
+    MAX(CASE WHEN trim(Stueckkosten) <> '' THEN 1 ELSE 0 END) AS HasUnitCost,
     MAX(CAST(REPLACE(REPLACE(NULLIF(trim(Minbe), ''), ',', '.'), '''', '') AS REAL)) AS ReorderPoint,
     MAX(CAST(REPLACE(REPLACE(NULLIF(trim(Eisbe), ''), ',', '.'), '''', '') AS REAL)) AS SafetyStock,
     MAX(CAST(REPLACE(REPLACE(NULLIF(trim(Bstfe), ''), ',', '.'), '''', '') AS REAL)) AS FixedLotSize,
@@ -425,9 +442,9 @@ GROUP BY MaterialKey;";
                 reader.GetString(0), reader.GetString(1), reader.GetString(2), dispatchers,
                 ResolveProductGroups(dispatchers, maps), Decimal(reader, 4), Decimal(reader, 5), Decimal(reader, 6),
                 Decimal(reader, 7), Decimal(reader, 8), Decimal(reader, 9), Decimal(reader, 10), reader.GetInt32(11) != 0,
-                Decimal(reader, 12), Decimal(reader, 13), Decimal(reader, 14), Decimal(reader, 15),
-                Text(reader, 16), Text(reader, 17), Text(reader, 18), Text(reader, 19), Text(reader, 20),
-                Convert.ToInt32(reader.GetValue(21), CultureInfo.InvariantCulture), reader.GetInt32(22) != 0));
+                Decimal(reader, 12), reader.GetInt32(13) != 0, Decimal(reader, 14), Decimal(reader, 15), Decimal(reader, 16),
+                Text(reader, 17), Text(reader, 18), Text(reader, 19), Text(reader, 20), Text(reader, 21),
+                Convert.ToInt32(reader.GetValue(22), CultureInfo.InvariantCulture), reader.GetInt32(23) != 0));
         }
         return rows;
     }
@@ -663,7 +680,7 @@ GROUP BY CASE WHEN ltrim(upper(trim(p.Matnr)), '0') = '' THEN '0' ELSE ltrim(upp
     private sealed record MaterialFact(
         string MaterialKey, string Material, string Description, string Dispatchers, string ProductGroups,
         decimal Stock, decimal Consumption, decimal FixedReceipts, decimal PlannedReceipts, decimal FixedIssues, decimal PlannedIssues,
-        decimal FinalStock, bool HasFinalStock, decimal UnitCost, decimal ReorderPoint, decimal SafetyStock, decimal FixedLotSize,
+        decimal FinalStock, bool HasFinalStock, decimal UnitCost, bool HasUnitCost, decimal ReorderPoint, decimal SafetyStock, decimal FixedLotSize,
         string MrpType, string LotSize, string ProcurementType, string MaterialStatus, string LzCode,
         int ParentMaterialCount, bool Exclusive);
 

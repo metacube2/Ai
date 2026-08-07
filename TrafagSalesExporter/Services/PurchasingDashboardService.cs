@@ -450,6 +450,10 @@ WHERE " + openItemFilter + " AND " + eketOpenPeriod + @"
 GROUP BY COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin')
 ORDER BY Label
 LIMIT 6;", cancellationToken);
+        // Gleiche Grundmenge wie der Kontrakt-Restwert oben (nur Abrufe mit EKKO.Konnr). Ohne
+        // diese Bedingung zaehlte die Kachel "Restwert" nur Kontraktabrufe, waehrend Diagramm
+        // und "Top Verpflichtung" daneben alle offenen Bestellungen zeigten — die beiden Zahlen
+        // im selben Reiter liessen sich dann nicht gegeneinander abstimmen.
         state.CommitmentDetailChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT
     " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" || ' | ' ||
@@ -460,12 +464,14 @@ FROM PurchasingEketCache e
 LEFT JOIN PurchasingEkpoCache p ON p.Ebeln = e.Ebeln AND p.Ebelp = e.Ebelp
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = e.Ebeln
 WHERE " + openItemFilter + " AND " + eketOpenPeriod + @" AND MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) > 0
+  AND COALESCE(k.Konnr, '') <> ''
 GROUP BY " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @", COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')
 ORDER BY Value DESC
 LIMIT 6;", cancellationToken);
-        state.ContractChartRows = state.CommitmentDetailChartRows.Count > 0
-            ? state.CommitmentDetailChartRows.ToList()
-            : state.OpenValueChartRows.ToList();
+        // Bewusst KEIN Rueckfall auf OpenValueChartRows: gibt es keine Kontraktabrufe, ist das
+        // leere Diagramm die richtige Aussage und passt zum Restwert 0. Der fruehere Rueckfall
+        // zeigte in genau diesem Fall alle offenen Bestellungen unter der Ueberschrift Kontrakte.
+        state.ContractChartRows = state.CommitmentDetailChartRows.ToList();
         state.TopCommitmentLabel = state.CommitmentDetailChartRows.Count > 0
             ? $"{state.CommitmentDetailChartRows[0].Label}: CHF {state.CommitmentDetailChartRows[0].Value:N0}"
             : string.Empty;
@@ -723,6 +729,10 @@ SELECT 'Nullwert', COUNT(*) || ' Positionen', 'EKPO.Netwr = 0', CASE WHEN COUNT(
 
         state.OpenQuantitySample = enriched.Sum(row => row.OpenQuantity);
         state.OpenValueSample = enriched.Sum(row => row.OpenValue);
+        // ACHTUNG, Notweg ohne Cache (nur erreichbar, wenn eine der drei Cachetabellen leer ist):
+        // hier steht der Kontrakt-Restwert weiterhin als blosse Kopie des offenen Bestellwerts,
+        // weil die Live-Stichprobe EKKO.Konnr nicht mitliest. Im Cachepfad ist das seit K4 getrennt
+        // (siehe ContractValueSample oben). Wer diesen Pfad ausbaut, muss Konnr mitselektieren.
         state.ContractValueSample = state.OpenValueSample;
         state.OpenValueChartRows = enriched
             .GroupBy(row => row.DueDate?.ToString("yyyy-MM") ?? "ohne Termin")

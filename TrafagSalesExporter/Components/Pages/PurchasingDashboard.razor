@@ -817,16 +817,46 @@
         new("Restwert", "Remaining value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
         new("Einteilungen", "Schedules", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : "-", "EKET-Probe", "EKET sample"),
         new("Top Verpflichtung", "Top commitment", TopCommitmentLabel, "Lieferant / Artikel / Monat", "supplier / article / month"),
-        new("Faelligkeit", "Due date", _liveState.LatestOrderDate?.ToString("yyyy-MM-dd") ?? "-", "letztes bekanntes EKKO-Datum", "latest known EKKO date")
+        // Bewusst "Letztes Bestelldatum": der Wert ist MAX(EKKO.Bedat), also das juengste
+        // Bestelldatum im Cache - kein Faelligkeitsdatum. Der Untertitel sagte das bereits,
+        // die Ueberschrift widersprach ihm.
+        new("Letztes Bestelldatum", "Last order date", _liveState.LatestOrderDate?.ToString("yyyy-MM-dd") ?? "-", "letztes bekanntes EKKO-Datum", "latest known EKKO date")
     ];
 
     private IReadOnlyList<PurchasingSectionKpi> SupplierKpis =>
     [
         new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "mit nicht geloeschten EKPO-Positionen", "with non-deleted EKPO items"),
-        new("Performance Score", "Performance score", $"{Purchasing3dBaseRows.Average(x => x.SupplierScore):N1}%", "Simulation bis Bewertungsdaten kommen", "simulation until rating data arrives"),
-        new("Preisindikator", "Price indicator", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet", "Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
-        new("Qualitaet", "Quality", "offen", "Reklamationsquelle noch nicht angebunden", "claim source not connected yet")
+        // Kein Bewertungsdatensatz ist angebunden: Termintreue braucht EKBE/MSEG/MATDOC, Qualitaet
+        // eine QM-Quelle. Hier stand frueher der Mittelwert der zwoelf fest einprogrammierten
+        // Simulationszeilen aus Purchasing3dBaseRows - eine Konstante, die unabhaengig von SAP,
+        // Cache und Zeitraumfilter immer denselben Prozentwert zeigte und wie eine gemessene
+        // Kennzahl aussah. Solange die Quelle fehlt, ist "-" die richtige Anzeige.
+        new("Performance Score", "Performance score", "-", "Bewertungsdaten (EKBE/QM) nicht angebunden", "rating data (EKBE/QM) not connected"),
+        // Mengengewichteter Durchschnitts-Stueckpreis des juengsten Jahres - dieselbe Reihe, die
+        // der Reiter Preisentwicklung zeigt. Vorher stand hier der Gesamt-Spend des Zeitraums
+        // unter einem Label, dessen Untertitel einen Stueckpreis verspricht.
+        new("Preisindikator", "Price indicator", LatestAverageUnitPriceLabel, "Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
+        new("Qualitaet", "Quality", "-", "Reklamationsquelle noch nicht angebunden", "claim source not connected yet")
     ];
+
+    private string LatestAverageUnitPriceLabel
+    {
+        get
+        {
+            var rows = _liveState.PriceVarianceChartRows;
+            if (!_liveState.EkpoLoaded || rows.Count == 0)
+                return "-";
+            var current = rows[^1].Value;
+            var label = $"CHF {current:N2}";
+            // Der reine Preisstand mischt Schrauben und Baugruppen und ist als Niveau wenig wert;
+            // erst die Veraenderung gegenueber dem Vorjahr ist eine Aussage. Beides zusammen,
+            // damit der Wert zum Label "CHF/Stk" passt und trotzdem eine Richtung zeigt.
+            if (rows.Count < 2 || rows[^2].Value <= 0m)
+                return label;
+            var change = (current - rows[^2].Value) / rows[^2].Value * 100m;
+            return $"{label} ({change:+0.0;-0.0;0.0}%)";
+        }
+    }
 
     private readonly List<PowerBiPageInfo> PowerBiPages =
     [
@@ -841,7 +871,7 @@
 
     private IReadOnlyList<PurchasingIdea> PurchasingIdeas =>
     [
-        new("Lieferantenrisiko", "Supplier risk", "Kombiniert Abhaengigkeit, Single-Source-Anteil, offene Bestellungen und Lieferperformance zu einem Risiko-Score.", "Combines dependency, single-source share, open orders and delivery performance into one risk score.", "EKKO, EKPO, EKET, LFA1", "Engpaesse und Lieferantenabhaengigkeit frueh sehen", "see shortages and supplier dependency early", _liveState.EkpoLoaded && _liveState.EketLoaded ? "berechenbar" : "wartet auf EKPO/EKET", _liveState.EkpoLoaded && _liveState.EketLoaded ? "calculable" : "waiting for EKPO/EKET", Icons.Material.Filled.WarningAmber, _liveState.EkpoLoaded && _liveState.EketLoaded ? Color.Success : Color.Warning),
+        new("Lieferantenrisiko", "Supplier risk", "Kombiniert Abhaengigkeit, Single-Source-Anteil, offene Bestellungen und Lieferperformance zu einem Risiko-Score.", "Combines dependency, single-source share, open orders and delivery performance into one risk score.", "EKKO, EKPO, EKET, LFA1", "Engpaesse und Lieferantenabhaengigkeit frueh sehen", "see shortages and supplier dependency early", "Konzept", "concept", Icons.Material.Filled.WarningAmber, Color.Info),
         new("Preisentwicklung CHF", "Price trend CHF", "Entspricht PowerBI: Minimum Netto-Stueckpreis pro Artikel und Jahr.", "Matches Power BI: minimum net unit price by article and year.", "EKPO, EKKO", "Artikelpreise wie in PowerBI pruefen", "check article prices like in Power BI", _liveState.EkpoLoaded ? "berechenbar" : "wartet auf EKPO", _liveState.EkpoLoaded ? "calculable" : "waiting for EKPO", Icons.Material.Filled.TrendingUp, _liveState.EkpoLoaded ? Color.Success : Color.Warning),
         new("Maverick Buying", "Maverick buying", "Findet Bestellungen ausserhalb bevorzugter Lieferanten, Rahmenvertraege oder Warengruppenregeln.", "Finds orders outside preferred suppliers, contracts or material-group rules.", "EKKO, EKPO, Kontrakte", "Compliance und Buendelung verbessern", "improve compliance and bundling", "Konzept", "concept", Icons.Material.Filled.Policy, Color.Info),
         new("Rahmenvertragsnutzung", "Contract utilisation", "Zeigt Kontraktmenge, Abrufmenge, Restmenge, Laufzeit und drohenden Verfall.", "Shows contract quantity, call-off quantity, remaining quantity, term and expiry risk.", "EKKO, EKPO, EKET", "Restverpflichtungen aktiv steuern", "actively manage remaining commitments", _liveState.EketLoaded ? "teilweise" : "wartet auf EKET", _liveState.EketLoaded ? "partial" : "waiting for EKET", Icons.Material.Filled.AssignmentTurnedIn, _liveState.EketLoaded ? Color.Success : Color.Warning),
@@ -1336,8 +1366,11 @@
             ? BuildOpenOrderLiveChartRows()
             : BuildPurchasingChartRows(x => x.OpenValue, FormatChf);
 
+    // Sobald EKET geladen ist, gilt das echte Ergebnis - auch wenn es leer ist. Vorher fiel die
+    // Anzeige bei null Kontraktabrufen auf die Simulationszeilen zurueck und zeigte erfundene
+    // Balken unter der Ueberschrift Kontrakte, waehrend die Kachel Restwert korrekt 0 auswies.
     private IReadOnlyList<PurchasingSectionChartRow> ContractChartRows
-        => _liveState.EketLoaded && _liveState.ContractChartRows.Count > 0
+        => _liveState.EketLoaded
             ? BuildLiveChartRows(_liveState.ContractChartRows, FormatChf)
             : BuildPurchasingChartRows(x => x.ContractValue, FormatChf);
 

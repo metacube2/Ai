@@ -45,7 +45,7 @@ internal static class PurchasingKlingonOverrides
             ["Lieferant / Artikel / Monat"] = "ngevwI' / Doch / jar",
             ["letztes bekanntes EKKO-Datum"] = "EKKO jaj Qav Sovlu'bogh",
             ["mit nicht geloeschten EKPO-Positionen"] = "polHa'lu'be'bogh EKPO Dochmey ghaj",
-            ["Simulation bis Bewertungsdaten kommen"] = "nuDmeH De' pawpa' ngeb De' lo'lu'",
+            ["Bewertungsdaten (EKBE/QM) nicht angebunden"] = "nuDmeH De' (EKBE/QM) rarlu'be'",
             ["Netwr CHF/Stk braucht EKPO"] = "Doch Hoch CHF HuchvaD EKPO poQlu'",
             ["Reklamationsquelle noch nicht angebunden"] = "DoQ Hal wej rar",
             ["berechenbar"] = "SImlaH",

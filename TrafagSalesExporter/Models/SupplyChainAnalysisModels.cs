@@ -38,6 +38,9 @@ public sealed record SupplyChainAnalysisRow(
     decimal ReorderPoint,
     decimal ShortageQuantity,
     decimal ShortageValueChf,
+    // false = fuer dieses Material sind in ZLO03/ZMD04 keine Stueckkosten gepflegt. Dann ist
+    // ShortageValueChf keine bewertete 0, sondern unbekannt, und wird in der GUI als "-" gezeigt.
+    bool HasUnitCost,
     decimal OpenOrderQuantity,
     decimal OpenOrderValueChf,
     decimal OverdueQuantity,

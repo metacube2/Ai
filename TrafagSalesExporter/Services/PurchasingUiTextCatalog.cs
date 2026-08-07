@@ -45,7 +45,7 @@ internal static class PurchasingUiTextCatalog
         ("Lieferant / Artikel / Monat", "supplier / article / month"),
         ("letztes bekanntes EKKO-Datum", "latest known EKKO date"),
         ("mit nicht geloeschten EKPO-Positionen", "with non-deleted EKPO items"),
-        ("Simulation bis Bewertungsdaten kommen", "simulation until rating data arrives"),
+        ("Bewertungsdaten (EKBE/QM) nicht angebunden", "rating data (EKBE/QM) not connected"),
         ("Netwr CHF/Stk braucht EKPO", "Netwr CHF/unit needs EKPO"),
         ("Reklamationsquelle noch nicht angebunden", "claim source not connected yet"),
         ("berechenbar", "calculable"),
