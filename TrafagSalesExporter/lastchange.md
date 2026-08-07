@@ -11,8 +11,19 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Offene Punkte (nicht erledigt)
 
-- **Pausenspiel `/pause` Stufe 1 gebaut (2026-08-07), NICHT DEPLOYT und NIE IN EINEM
-  BROWSER GELAUFEN.** Rundenkampf mit Drohnen in 3D (three.js, liegt bereits global),
+- **FALLE BEIM DEPLOY 2026-08-07, selbst hineingelaufen: `dotnet publish` NIE ueber das
+  Bash-Werkzeug auf den UNC-Pfad.** Git Bash macht aus
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` still das lokale Verzeichnis
+  `C:\trch-webapp-bidashboard.trafagch.local\BiDashboard$`. Der Publish meldete Erfolg,
+  legte 120 Dateien auf der lokalen Platte ab, und der Server bekam NICHTS — waehrend
+  `app_offline.htm` dort bereits gesetzt war, die Anwendung also stillstand.
+  Erkennungsmerkmal: die letzte Publish-Zeile nennt `C:\trch-webapp-...` statt
+  `\\trch-webapp-...`. Aufgefallen ist es am SHA256-Vergleich Server gegen
+  `bin/Release/net8.0/BiDashboard.dll`; ohne diesen Vergleich waere ein Deploy gemeldet
+  worden, der nie stattgefunden hat. Publish IMMER aus PowerShell. Streuverzeichnis
+  entfernt (enthielt keine Datenbank), Produktion war zu keinem Zeitpunkt veraendert.
+- **Pausenspiel `/pause` Stufe 1 gebaut UND DEPLOYT (2026-08-07 17:05), aber NIE IN
+  EINEM BROWSER GELAUFEN.** Rundenkampf mit Drohnen in 3D (three.js, liegt bereits global),
   Hotseat oder gegen den Rechner, Namen im Startbildschirm. Rein additiv: neue Route,
   eigenes JS-Modul, kein Datenzugriff, kein Serverzustand — Namen und Bestenliste
   liegen im `localStorage` und verlassen den Browser nicht. Ausblendbar ueber
@@ -22,6 +33,10 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Abspieler — es liegt bewusst KEINE Bibliothek und KEINE Musikdatei im Repo).
   Geprueft kopflos in Node: `Tools/PauseGame.Probe/probe.mjs` und `modprobe.mjs`,
   je 18 Pruefungen gruen; `dotnet test` unveraendert `455/455`.
+  Deploy verifiziert: DLL `4'325'376` Bytes / SHA256 `7F4FAB94...`, bitgleich mit dem
+  lokalen Release-Build; Produktiv-DB und alle 16 `.bak` unveraendert; `/pause` liefert
+  HTTPS `200` mit dem Host-Element der Szene und ohne den Ausgeschaltet-Hinweis; beide
+  Spielmodule werden ausgeliefert.
   WAS DAS NICHT BELEGT: es gibt hier keine Browser-Automatisierung, also ist NICHT
   geprueft, ob die Szene erscheint, die Kamera brauchbar ist oder die Musik
   unterbrechungsfrei laeuft. Der erste Aufruf ist ein echter Test.

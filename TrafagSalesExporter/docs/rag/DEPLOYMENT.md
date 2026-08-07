@@ -2,7 +2,20 @@
 
 Stand: 2026-08-07
 
-## Werkzeug und zwei Fallen im Publish selbst
+## Werkzeug und drei Fallen im Publish selbst
+
+- **FALLE, am 2026-08-07 selbst hineingelaufen: `dotnet publish` NIEMALS ueber das
+  Bash-Werkzeug auf den UNC-Pfad.** Git Bash macht aus
+  `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` das lokale Verzeichnis
+  `C:\trch-webapp-bidashboard.trafagch.local\BiDashboard$` — der Publish meldet
+  Erfolg, legt 120 Dateien auf der lokalen Platte ab und **der Server bekommt
+  nichts**. Weil `app_offline.htm` zu dem Zeitpunkt bereits gesetzt war, stand die
+  Anwendung still, ohne dass etwas ausgeliefert wurde. Erkennungsmerkmal in der
+  Ausgabe: die letzte Zeile nennt `C:\trch-webapp-...` statt `\\trch-webapp-...`.
+  **Publish immer aus PowerShell**, dort bleibt der UNC-Pfad erhalten. Danach
+  zwingend die SHA256 der Server-DLL gegen `bin/Release/net8.0/BiDashboard.dll`
+  pruefen — genau dieser Vergleich hat den Fehlschlag sichtbar gemacht.
+
 
 - **Deploy-Konsole `Tools/DeployConsole`** (2026-08-07): schreibt den Ablauf fest —
   Bestandsaufnahme, `app_offline` unmittelbar vor/nach dem Publish, Publish als
@@ -29,7 +42,36 @@ Stand: 2026-08-07
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-07 10:22, Finance-Indikatoren
+- Letzter produktiv verifizierter Deploy: **2026-08-07 17:05, Pausenspiel `/pause`**,
+  Funktionscommits `ad0241d` (Spiel) und `b834d61` (Deploy-Konsole und Doku),
+  `455/455` Tests gruen im Release-Lauf vor dem Publish, dazu zwei kopflose
+  Prüfsonden mit je `18` Pruefungen gruen. `BiDashboard.dll` `07.08.2026 17:05:17`,
+  `4'325'376` Bytes, SHA256
+  `7F4FAB94B8C124042BC86D5E786F1D1EB54FDE159D9FB3D3CEF48D0FB3850811`; lokaler
+  Release-Build und Server bitgleich (hier nicht nur Formsache — siehe die
+  PreserveNewest- und die Bash-UNC-Falle oben). `app_offline.htm` gesetzt und danach
+  auf `app_offline.htm.disabled` umbenannt, die alte `.disabled` vorher entfernt.
+  HTTPS `200`: Startseite (`68'868` Bytes, kalt `29.59 s`), `/pause` (`62'349` Bytes,
+  `0.29 s`); `/pause` enthaelt das Host-Element der Szene und **nicht** den
+  Ausgeschaltet-Hinweis, der Schalter `Pause:Enabled` steht also wirksam auf `true`.
+  Beide Spielmodule werden ausgeliefert: `js/pausegame.js` (`56'032` Bytes) und
+  `js/modplayer.js` (`15'442` Bytes), jeweils HTTPS `200` und byteidentisch zur
+  Quelle. Produktiv-DB in Laenge und Schreibzeit unveraendert (`340'205'568` Bytes,
+  `07.08.2026 15:20:08`), alle `16` `.bak` unveraendert vorhanden, Dateien im Ziel
+  `1219` -> `1221`. Wirknachweis in der DLL: `PauseGameOptions`, `PauseGame` (UTF-8)
+  sowie die Literale `Der Pausenreiter ist ausgeschaltet.` und `pausegame.js`
+  (UTF-16).
+  **Rein additiv:** neue Route, eigenes JS-Modul, kein Datenzugriff, kein
+  Serverzustand. Bestehende Seiten und Berechnungen unveraendert.
+  **NICHT belegt:** dass das Spiel im Browser laeuft. Es gibt hier keine
+  Browser-Automatisierung — der `200` und die ausgelieferten Module beweisen
+  Erreichbarkeit, nicht dass die 3D-Szene erscheint, die Kamera brauchbar ist oder
+  die Musik durchlaeuft. Erster Aufruf durch Ingo ist ein echter Test.
+  Ausblenden ohne Deploy: `IsVisible` am Menueintrag `pause-game`; hart:
+  `"Pause": { "Enabled": false }` in `appsettings.json`.
+  Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+
+- Deploy davor: **2026-08-07 10:22, Finance-Indikatoren
   ehrlich gemacht**, Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests gruen
   (Release-Lauf vor dem Publish). `BiDashboard.dll` `07.08.2026 10:21:53`,
   `4'320'768` Bytes, SHA256
