@@ -2,6 +2,31 @@
 
 Stand: 2026-08-07
 
+## Werkzeug und zwei Fallen im Publish selbst
+
+- **Deploy-Konsole `Tools/DeployConsole`** (2026-08-07): schreibt den Ablauf fest —
+  Bestandsaufnahme, `app_offline` unmittelbar vor/nach dem Publish, Publish als
+  Argumentliste mit Guard gegen jedes Profil-Argument, Vergleich vorher/nachher,
+  Typen-/Literalpruefung in der DLL (UTF-8 und UTF-16), Abrufpruefung, fertiger
+  Protokollabsatz. Gegen einen nachgebauten Share verifiziert
+  (`Tools/DeployConsole.Probe`, 22 Pruefungen gruen), **noch nie produktiv gelaufen**.
+  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md`.
+
+- **FALLE, gemessen am 2026-08-07: ein erfolgreicher Publish kann `BiDashboard.dll`
+  stillschweigend ueberspringen.** Die Hauptbaugruppe wird mit PreserveNewest kopiert;
+  ist die Datei im Ziel **neuer** als der frische Build, bleibt sie liegen — die alte
+  Version laeuft weiter, `dotnet publish` meldet Erfolg. Nachweis: nach einem Publish
+  muss die SHA256 der ausgelieferten DLL mit der von `bin/Release/net8.0/BiDashboard.dll`
+  **uebereinstimmen**. Eine Abweichung ist hier NICHT der bekannte Nicht-Determinismus
+  zweier Builds (siehe Hinweis weiter unten) — der gilt nur beim Vergleich zweier
+  getrennter Uebersetzungen, nicht beim Vergleich einer Datei mit ihrer eigenen Kopie.
+
+- **BEFUND 2026-08-07: `check.xlsx`, `zdispo_grp.xlsx` und `zdispo_spart.xlsx` im
+  Publish-Verzeichnis sind Build-Ausgabe, kein Datenbestand.** Sie stehen in der csproj
+  mit `CopyToPublishDirectory="Always"` und werden bei JEDEM Publish mit dem
+  Repository-Stand ueberschrieben. Direkt auf dem Share bearbeiten heisst: Aenderung
+  beim naechsten Deploy weg, ohne Meldung.
+
 ## Kurzstand
 
 - Letzter produktiv verifizierter Deploy: **2026-08-07 10:22, Finance-Indikatoren

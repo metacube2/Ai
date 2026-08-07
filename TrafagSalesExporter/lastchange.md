@@ -11,6 +11,36 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Offene Punkte (nicht erledigt)
 
+- **Pausenspiel `/pause` Stufe 1 gebaut (2026-08-07), NICHT DEPLOYT und NIE IN EINEM
+  BROWSER GELAUFEN.** Rundenkampf mit Drohnen in 3D (three.js, liegt bereits global),
+  Hotseat oder gegen den Rechner, Namen im Startbildschirm. Rein additiv: neue Route,
+  eigenes JS-Modul, kein Datenzugriff, kein Serverzustand — Namen und Bestenliste
+  liegen im `localStorage` und verlassen den Browser nicht. Ausblendbar ueber
+  `Pause:Enabled` in `appsettings.json` oder `IsVisible` am Menueintrag `pause-game`.
+  Ton ist standardmaessig AUS; Geraeusche sind synthetisiert, Musik spielt eine
+  `.mod`-Datei ueber `wwwroot/js/modplayer.js` (selbst geschriebener ProTracker-
+  Abspieler — es liegt bewusst KEINE Bibliothek und KEINE Musikdatei im Repo).
+  Geprueft kopflos in Node: `Tools/PauseGame.Probe/probe.mjs` und `modprobe.mjs`,
+  je 18 Pruefungen gruen; `dotnet test` unveraendert `455/455`.
+  WAS DAS NICHT BELEGT: es gibt hier keine Browser-Automatisierung, also ist NICHT
+  geprueft, ob die Szene erscheint, die Kamera brauchbar ist oder die Musik
+  unterbrechungsfrei laeuft. Der erste Aufruf ist ein echter Test.
+  Vier echte Fehler haben die Pruefsonden vorher gefunden — u. a. spiegelverkehrte
+  Explosionskrater und ein Rechnergegner, der nie lief und deshalb aus unerreichbarer
+  Entfernung ins Leere schoss. Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+- **Deploy-Konsole `Tools/DeployConsole` gebaut (2026-08-07), aber NOCH NIE PRODUKTIV
+  GELAUFEN.** Verifiziert nur gegen einen nachgebauten Share (`Tools/DeployConsole.Probe`,
+  25 Pruefungen gruen, echter `dotnet publish`). Der erste echte Deploy darueber ist eine
+  bewusste Entscheidung, keine Selbstverstaendlichkeit. ZWEI FALLEN DABEI GEMESSEN, die
+  unabhaengig vom Werkzeug gelten: (1) ein erfolgreicher `dotnet publish` kann
+  `BiDashboard.dll` STILL ueberspringen, wenn die Datei im Ziel neuer ist als der frische
+  Build (PreserveNewest) — die alte Version laeuft dann weiter; Gegenprobe ist der
+  SHA256-Vergleich gegen `bin/Release/net8.0/BiDashboard.dll`, der nach einem Publish
+  uebereinstimmen MUSS. (2) `check.xlsx`, `zdispo_grp.xlsx`, `zdispo_spart.xlsx` im
+  Publish-Verzeichnis sind Build-Ausgabe (`CopyToPublishDirectory="Always"`) und werden bei
+  jedem Deploy mit dem Repo-Stand ueberschrieben — auf dem Share bearbeiten ist sinnlos.
+  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md`. Einzige verfolgte Aenderung dabei:
+  `TrafagSalesExporter.sln` (zwei Projekte aufgenommen); `dotnet test` weiterhin `455/455`.
 - **Statustext `"OK"` steht als Zeichenkette in der Excel-Formel** des Nachweises
   (`Services/ExcelExportService.cs`, Blatt „Gruppenmarge Details", Spalten 19 und 20:
   `IF(B{Zeile}="OK",Q-R,"")`). Eine Umbenennung von `GroupMarginStatuses.Ok` liesse dort
