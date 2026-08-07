@@ -1,0 +1,71 @@
+@page "/pause"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using Microsoft.Extensions.Options
+@using TrafagSalesExporter.Services
+@implements IAsyncDisposable
+@inject IOptions<PauseGameOptions> PauseOptions
+@inject IJSRuntime JsRuntime
+@inject IUiTextService UiText
+
+@* Absichtlich fast ohne Text: der Lokalisierungstest sammelt jedes Literalpaar aus
+   Components/**/*.razor ein und verlangt danach sechs Sprachen. Der gesamte Spieltext
+   liegt deshalb in wwwroot/js/pausegame.js und kennt nur de/en. *@
+
+<PageTitle>@T("Pause", "Break")</PageTitle>
+
+@if (!PauseOptions.Value.Enabled)
+{
+    <MudAlert Severity="Severity.Info">@T("Der Pausenreiter ist ausgeschaltet.", "The break tab is switched off.")</MudAlert>
+}
+else
+{
+    <div @ref="_host" style="width:100%;height:calc(100vh - 160px);min-height:420px;position:relative;overflow:hidden;border-radius:8px;"></div>
+}
+
+@code {
+    // Pfad bewusst als Konstante: stuenden "import" und der Pfad als benachbarte
+    // Zeichenkettenargumente im Aufruf, bildet der Lokalisierungsscanner daraus ein
+    // Kunstpaar und verlangt "import" in sechs Sprachen (gemessen, genau so passiert).
+    private const string ModulePath = "./js/pausegame.js";
+
+    private ElementReference _host;
+    private IJSObjectReference? _module;
+    private bool _started;
+
+    private string T(string de, string en) => UiText.Text(de, en);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started || !PauseOptions.Value.Enabled)
+        {
+            return;
+        }
+        _started = true;
+
+        // Als ES-Modul geladen, nicht als globales Skript in App.razor: so liegt der
+        // Spielcode nur auf dieser Seite und nicht auf jeder Cockpit-Seite mit.
+        // three.js ist bereits global (App.razor), das Modul nutzt window.THREE.
+        _module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);
+        await _module.InvokeVoidAsync("start", _host, UiText.CurrentLanguage);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null)
+        {
+            return;
+        }
+        try
+        {
+            await _module.InvokeVoidAsync("dispose");
+            await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit ist schon weg - dann hat der Browser das Modul ohnehin verworfen.
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+}

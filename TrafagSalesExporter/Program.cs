@@ -51,6 +51,7 @@ builder.Services.Configure<HrKpiAccessOptions>(builder.Configuration.GetSection(
 builder.Services.Configure<FinanceCockpitAccessOptions>(builder.Configuration.GetSection(FinanceCockpitAccessOptions.SectionName));
 builder.Services.Configure<AdminAccessOptions>(builder.Configuration.GetSection(AdminAccessOptions.SectionName));
 builder.Services.Configure<LandingPageOptions>(builder.Configuration.GetSection(LandingPageOptions.SectionName));
+builder.Services.Configure<PauseGameOptions>(builder.Configuration.GetSection(PauseGameOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));

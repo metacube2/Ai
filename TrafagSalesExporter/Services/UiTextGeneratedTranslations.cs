@@ -1396,6 +1396,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} números de material",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "Se muestran {0:N0} de {1:N0} filas de detalle; las tarjetas de arriba calculan sobre todo el ámbito filtrado.",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "Varias monedas en el filtro: las tarjetas marcadas con `Mixed` suman importes locales numéricamente, no son un total convertido. Para un importe fiable filtre por un país o una moneda, o active `Moneda de grupo (CHF)`.",
+                ["Pause"] = "Pausa",
+                ["Der Pausenreiter ist ausgeschaltet."] = "La pestaña de pausa está desactivada.",
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -2787,6 +2789,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} codici materiale",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "Sono mostrate {0:N0} di {1:N0} righe di dettaglio; le schede in alto calcolano sull'intero ambito filtrato.",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "Più valute nel filtro: le schede con `Mixed` sommano importi locali numericamente, non sono un totale convertito. Per un importo attendibile filtrare un paese o una valuta, oppure attivare `Valuta di gruppo (CHF)`.",
+                ["Pause"] = "Pausa",
+                ["Der Pausenreiter ist ausgeschaltet."] = "La scheda pausa è disattivata.",
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -4178,6 +4182,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} सामग्री संख्याएँ",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "{1:N0} में से {0:N0} विवरण पंक्तियाँ दिखाई जा रही हैं; ऊपर के कार्ड पूरे फ़िल्टर दायरे पर गणना करते हैं।",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "फ़िल्टर में कई मुद्राएँ: `Mixed` वाले कार्ड स्थानीय राशियों को संख्यात्मक रूप से जोड़ते हैं, वे परिवर्तित योग नहीं हैं। विश्वसनीय राशि के लिए एक देश या एक मुद्रा फ़िल्टर करें, या `समूह मुद्रा (CHF)` चालू करें।",
+                ["Pause"] = "विराम",
+                ["Der Pausenreiter ist ausgeschaltet."] = "विराम टैब बंद है।",
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -5569,6 +5575,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} numra materiali",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "Shfaqen {0:N0} nga {1:N0} rreshta detajesh; kartat më sipër llogarisin mbi të gjithë fushëveprimin e filtruar.",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "Disa monedha në filtër: kartat me `Mixed` mbledhin shuma lokale numerikisht, ato nuk janë një total i konvertuar. Për një shumë të besueshme filtroni një vend ose një monedhë, ose aktivizoni `Monedha e grupit (CHF)`.",
+                ["Pause"] = "Pushim",
+                ["Der Pausenreiter ist ausgeschaltet."] = "Skeda e pushimit është çaktivizuar.",
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -6960,6 +6968,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} malzeme numarası",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "{1:N0} detay satırından {0:N0} tanesi gösteriliyor; yukarıdaki kartlar tüm filtre kapsamı üzerinden hesaplar.",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "Filtrede birden çok para birimi: `Mixed` işaretli kartlar yerel tutarları sayısal olarak toplar, dönüştürülmüş bir toplam değildir. Güvenilir bir tutar için tek bir ülke veya para birimi filtreleyin ya da `Grup para birimi (CHF)` seçeneğini açın.",
+                ["Pause"] = "Mola",
+                ["Der Pausenreiter ist ausgeschaltet."] = "Mola sekmesi kapalı.",
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -8351,6 +8361,8 @@ internal static class UiTextGeneratedTranslations
                 ["{0:N0} Materialnummern"] = "{0:N0} Hap mI'",
                 ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen; die Kacheln oben rechnen ueber den gesamten Filterumfang."] = "{1:N0} tlheghmey ghoDaq {0:N0} 'ang; Dung nav Hoch tlhegh togh.",
                 ["Mehrere Waehrungen im Filter: Kacheln mit `Mixed` addieren lokale Betraege numerisch, sie sind keine umgerechnete Summe. Fuer einen belastbaren Betrag bitte ein Land oder eine Waehrung filtern oder `Group-Waehrung (CHF)` einschalten."] = "law' Huch: `Mixed` nav Hatlh mI' chel neH, choHlu'bogh mI' ghaHbe'. lI' mI' DalaHmeH wa' Sep pagh wa' Huch yIwIv, pagh `Group-Waehrung (CHF)` yIchu'.",
+                ["Pause"] = "leS",
+                ["Der Pausenreiter ist ausgeschaltet."] = "leS Hal chu'be'lu'.",
             },
         };
 }

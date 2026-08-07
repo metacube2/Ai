@@ -249,6 +249,10 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("menu-structure", "finance-admin", "Menuestruktur", "Menu structure", "AccountTree", "admin/menu-structure", 45, requiredPolicy: SecurityPolicies.AdminOnly),
         Link("logs", "finance-admin", "Logs", "Logs", "List", "logs", 50),
         Action("finance-lock", "finance", "Finance sperren", "Lock finance", "Lock", 70),
+        // Pausenspiel 2026-08-07. Rein additiv, eigene Route, kein Datenzugriff.
+        // Ausblenden: IsVisible hier auf false setzen (Eintrag weg) oder
+        // "Pause:Enabled" in appsettings.json auf false (Seite antwortet nicht mehr).
+        Link("pause-game", null, "Pause", "Break", "SportsEsports", "pause", 900, "All"),
         Group("hr", null, "HR KPI (Login)", "HR KPI (login)", "Groups", 20),
         Link("hr-dashboard", "hr", "HR Dashboard", "HR dashboard", "Dashboard", "hr-kpi", 10, "All"),
         Link("hr-training", "hr", "HR KPI Schulung", "HR KPI training", "School", "hr-kpi/schulung", 20),
