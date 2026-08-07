@@ -1,10 +1,35 @@
 # RAG Deployment
 
-Stand: 2026-08-06
+Stand: 2026-08-07
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 15:11, fuenf neue Supply-Chain-Reiter
+- Letzter produktiv verifizierter Deploy: **2026-08-07 08:40, Einkauf-Indikatoren
+  ehrlich gemacht**, Funktionscommit `eef6374`, `449/449` Tests gruen (Release-Lauf
+  vor dem Publish). `BiDashboard.dll` `07.08.2026 08:40:33`, `4'293'632` Bytes,
+  SHA256 `214C51E3D08479847813D49B04ED754D6AE5DA614CF458E806BE4AF256BD093A`;
+  lokaler Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach
+  auf `app_offline.htm.disabled` umbenannt. HTTPS `200` mit Inhalt: Startseite
+  (`68'466` Bytes), `/einkauf/lieferanten` (`101'751`, warm `8.46 s`),
+  `/einkauf/kontrakte` (`102'019`), `/einkauf/bestellbedarf` (`92'159`),
+  `/logistik/materialdisposition` (`81'070`). Produktiv-DB in Laenge und
+  Schreibzeit unveraendert (`339'210'240` Bytes, `07.08.2026 08:00:54`).
+  Wirknachweis in der ausgelieferten DLL: `HasUnitCost`, `ApplyScopeFilter`,
+  `LatestAverageUnitPriceLabel` sowie die Literale
+  `Bewertungsdaten (EKBE/QM) nicht angebunden` und `Letztes Bestelldatum`;
+  `Simulation bis Bewertungsdaten kommen` ist nicht mehr enthalten.
+  **Behebt sechs Indikatoren, die eine erfundene oder falsch beschriftete Zahl
+  zeigten** (u. a. `Performance Score` als Konstante aus zwoelf
+  Simulationszeilen, `Preisindikator` als Gesamt-Spend unter Stueckpreis-Label,
+  Kontrakt-KPI und -Diagramm mit verschiedenen Grundmengen, gruener Risikobalken
+  strukturell `0`) und macht fehlende Stueckkosten im Fehlwert sichtbar.
+  Details: `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md`.
+  **WICHTIG fuer kuenftige Deploys:** Publish ueber
+  `dotnet publish -c Release -o <UNC>`, NICHT ueber `/p:PublishProfile=FolderProfile` —
+  das Profil hat `DeleteExistingFiles=true` und das Zielverzeichnis enthaelt
+  `trafag_exporter.db` samt aller `.bak`-Sicherungen.
+
+- Deploy davor: **2026-08-06 15:11, fuenf neue Supply-Chain-Reiter
   (Einkauf/Logistik)**, Funktionscommit `01af1b8`, `446/446` Tests gruen (vor dem Commit
   nachgerechnet, nicht uebernommen). `BiDashboard.dll` `06.08.2026 15:11:34`, `4'291'072`
   Bytes, SHA256 `29B9DFC6F46F74840431966E82040066F7B66FDD3AC8F12F73B4DF8F04761A61`.

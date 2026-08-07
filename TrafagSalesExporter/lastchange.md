@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-06
+Stand: 2026-08-07
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -25,6 +25,52 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Innenumsatz-Frage an Andreas: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a.
 
 ## Aktueller Kurzstand
+
+- 2026-08-07, EINKAUF-INDIKATOREN DURCHGESEHEN — DEPLOYED UND VERIFIZIERT
+  (08:40 MESZ, Funktionscommit `eef6374`, `449/449` Tests im Release-Lauf VOR
+  dem Publish, vorher `446`; `BiDashboard.dll` `4'293'632` Bytes, SHA256
+  `214C51E3…`, lokal und Server bitgleich; Startseite und alle vier geaenderten
+  Routen HTTPS `200` mit Inhalt; `HasUnitCost`, `ApplyScopeFilter` und die neuen
+  Literale in der ausgelieferten DLL belegt, `Simulation bis Bewertungsdaten
+  kommen` verschwunden; Produktiv-DB unveraendert `339'210'240` /
+  `07.08.2026 08:00:54`): Frage war, ob die
+  Indikatoren der einzelnen Einkauf-Reiter rechnen oder nur da sind. Ergebnis
+  sind DREI Gruppen. (A) Rechnet echt: Spend, Spend-Aufriss, Offene
+  Bestellungen, Liefertermin-Risiko, Preisentwicklung, Spend-Konzentration,
+  Datenqualitaet. (B) Logik korrekt, Datenbasis produktiv duenn: die vier
+  ZLO03-gestuetzten Reiter laufen auf `105` Zeilen mit Disponent,
+  Lieferperformance hat kein Ist-Wareneingangsdatum und sagt das bereits —
+  Aktion ist ein ZLO03-Full-Load, kein Codefix. (C) SECHS Indikatoren zeigten
+  eine erfundene oder falsch beschriftete Zahl und sind jetzt behoben:
+  `Performance Score` war der Mittelwert von ZWOELF fest einprogrammierten
+  Simulationszeilen — eine Konstante unabhaengig von SAP, Cache und Filter,
+  jetzt `-` mit „Bewertungsdaten (EKBE/QM) nicht angebunden"; `Preisindikator`
+  zeigte den Gesamt-Spend unter einem Stueckpreis-Label, jetzt der
+  mengengewichtete Ø-Stueckpreis des juengsten Jahres; `Qualitaet` `"offen"` ->
+  `-`; die Idee `Lieferantenrisiko` stand ohne Implementierung auf
+  „berechenbar", jetzt „Konzept" wie die Nachbareintraege; im Reiter
+  `Kontrakte` filterte die Kachel `Restwert` auf `EKKO.Konnr`, Diagramm und
+  `Top Verpflichtung` daneben NICHT — zwei Grundmengen im selben Reiter, jetzt
+  dieselbe (inkl. Wegfall des Rueckfalls auf alle offenen Bestellungen), und
+  `Faelligkeit` heisst `Letztes Bestelldatum`, weil der Wert `MAX(EKKO.Bedat)`
+  ist; der gruene Balken `Ohne akuten Hinweis` stand auf ALLEN FUENF
+  Supply-Chain-Reitern beim Standardaufruf garantiert auf `0`, weil
+  `Nur Handlungsbedarf` genau die OK-Zeilen entfernte, BEVOR die Balken
+  gezaehlt wurden — Umfangs- und Handlungsbedarfsfilter sind jetzt getrennt.
+  Dazu `Fehlwert CHF`: fehlte der Stueckkostensatz, lief die Luecke als
+  bewertete `0` in die Summe, ohne dass ein P-Code darauf hinwies; neu traegt
+  `HasUnitCost` die Luecke bis in die Zeile (Tabelle `-`, Kachel nennt die
+  Zahl der unbewerteten Materialien) — dieselbe Bauform wie das bestehende
+  `HasFinalStock` direkt daneben. Drei neue Tests, jeder vor dem Fix
+  nachweislich rot (Gegenprobe durchgefuehrt). VIER Punkte bewusst NICHT
+  angefasst und ausdruecklich NICHT gemessen: `MAX()`-Deduplizierung bei
+  ZLO03, `Menge = 0` -> offener Wert `0`, `MinSpendYear`-Abweichung,
+  WKURS-Richtung. FALLE beim Deploy, die kuenftig gilt: NICHT ueber
+  `/p:PublishProfile=FolderProfile` publishen — das Profil hat
+  `DeleteExistingFiles=true`, und im Zielverzeichnis liegen die Produktiv-DB
+  (`339` MB) und alle `.bak`-Sicherungen. Richtig ist
+  `dotnet publish -c Release -o <UNC>`. Details:
+  `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md`.
 
 - 2026-08-06, NEUE EINKAUF-/LOGISTIK-REITER DEPLOYED UND VERIFIZIERT
   (15:11 MESZ, Commit `01af1b8`, `446/446` Tests vor dem Commit nachgerechnet;

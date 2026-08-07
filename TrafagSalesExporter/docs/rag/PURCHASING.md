@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-08-06
+Stand: 2026-08-07
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -11,7 +11,25 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
-- Lokal umgesetzt am 2026-08-06, noch nicht deployed: fuenf additive
+- Produktiv deployed und verifiziert am 2026-08-07 08:40 MESZ (Commit `eef6374`,
+  `449/449` Tests): SECHS Indikatoren zeigten eine erfundene oder falsch
+  beschriftete Zahl und sind behoben. `Lieferanten` hat keine Bewertungsquelle —
+  `Performance Score` und `Qualitaet` stehen jetzt auf `-` statt auf einer
+  Konstante aus zwoelf Simulationszeilen bzw. dem Literal `"offen"`;
+  `Preisindikator` zeigt den mengengewichteten Ø-Stueckpreis des juengsten
+  Jahres mit Vorjahresveraenderung statt des Gesamt-Spends. Die Idee
+  `Lieferantenrisiko` steht auf `Konzept` statt `berechenbar`. Im Reiter
+  `Kontrakte` verwenden Kachel, Diagramm und `Top Verpflichtung` jetzt DIESELBE
+  Grundmenge (`EKKO.Konnr`), der Rueckfall auf alle offenen Bestellungen bzw.
+  auf Simulationsbalken ist weg, und `Faelligkeit` heisst `Letztes
+  Bestelldatum` (der Wert ist `MAX(EKKO.Bedat)`). Auf allen fuenf
+  Supply-Chain-Reitern zaehlen die Prioritaetsbalken vor dem Schalter
+  `Nur Handlungsbedarf`; vorher stand `Ohne akuten Hinweis` im Standardaufruf
+  garantiert auf `0`. `Fehlwert CHF` weist fehlende Stueckkosten aus, statt sie
+  als bewertete `0` in die Summe laufen zu lassen. Details:
+  `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md`.
+- Produktiv deployed und verifiziert am 2026-08-06 15:11 MESZ (Commit `01af1b8`,
+  `446/446` Tests): fuenf additive
   Einkauf-/Logistik-Reiter fuer Materialdisposition, Bestellbedarf/Deckung,
   Materialabhaengigkeit, Dispositionspruefung und Lieferperformance-Datenstatus.
   Bestehende Reiter und Berechnungen bleiben unveraendert. Echte OTIF wird

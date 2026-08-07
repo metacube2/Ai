@@ -52,6 +52,7 @@ Stand verwenden.
 | Einkaufssitzung 2026-07-30 | `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md` |
 | Produktgruppen ZC23/Disponent, Mehrfachverwendung und ABC/XYZ-Entscheid | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Neue Supply-Chain-Reiter: Fehlteile, Deckung, Abhaengigkeit, Dispositionspruefung, Lieferperformance | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` |
+| Welche Einkauf-Indikatoren echt rechnen, welche leer sind und welche eine erfundene Zahl zeigten | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | Einkauf-Lokalisierung und Projektsuite | `docs/EINKAUF_LOKALISIERUNG_PROJEKTSUITE_2026-08-01.md` |
 | Logistik-Stuecklisten-Dashboard | `docs/LOGISTIK_STUECKLISTEN_DASHBOARD_2026-08-01.md` |
 | ZLO03/Materialverwendung | `docs/abap/README_LZCODE_WEBSERVICE.md` |

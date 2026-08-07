@@ -2,7 +2,9 @@
 
 Stand: 2026-08-06
 
-Status: lokal umgesetzt und getestet; noch nicht committed oder deployed.
+Status: produktiv deployed und verifiziert am 2026-08-06 15:11 MESZ, Commit `01af1b8`,
+`446/446` Tests. Nachweis: `docs/rag/DEPLOYMENT.md`. (Der Satz „noch nicht committed oder
+deployed" stand hier bis 2026-08-07 und stammte aus der Fassung vor dem Deploy desselben Tages.)
 
 ## Ziel und Abgrenzung
 
