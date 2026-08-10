@@ -6,6 +6,7 @@
 @implements IDisposable
 @inject IUiTextService UiText
 @inject IFinanceCockpitAccessService FinanceAccess
+@inject IPauseGameSettingsService PauseGame
 @inject INavigationMenuService NavigationMenuService
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
@@ -60,6 +61,12 @@
             _hiddenKeys.Add("finance-comparison");
         if (!FinanceAccess.IsEnabled || !FinanceAccess.IsUnlocked)
             _hiddenKeys.Add("finance-lock");
+        // Pausenspiel: standardmaessig aus. Einschalten unter Admin > Settings, das
+        // schreibt "Pause:Enabled" nach appsettings.json. Der Menueintrag bleibt in
+        // der Datenbank bestehen und laesst sich zusaetzlich ueber die
+        // Menuestruktur-Seite dauerhaft ausblenden.
+        if (!PauseGame.Enabled)
+            _hiddenKeys.Add("pause-game");
 
         _visibleItems = filtered;
     }

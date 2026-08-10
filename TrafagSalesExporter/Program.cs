@@ -101,6 +101,7 @@ builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializa
 builder.Services.AddScoped<IUiTextService, UiTextService>();
 builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
 builder.Services.AddSingleton<ILandingPageSettingsService, LandingPageSettingsService>();
+builder.Services.AddSingleton<IPauseGameSettingsService, PauseGameSettingsService>();
 builder.Services.AddSingleton<INavigationMenuService, NavigationMenuService>();
 
 // Datenquellen-Adapter (Strategy per ConnectionKind).

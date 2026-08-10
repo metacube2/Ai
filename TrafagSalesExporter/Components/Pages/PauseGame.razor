@@ -1,9 +1,8 @@
 @page "/pause"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
-@using Microsoft.Extensions.Options
 @using TrafagSalesExporter.Services
 @implements IAsyncDisposable
-@inject IOptions<PauseGameOptions> PauseOptions
+@inject IPauseGameSettingsService PauseSettings
 @inject IJSRuntime JsRuntime
 @inject IUiTextService UiText
 
@@ -13,7 +12,7 @@
 
 <PageTitle>@T("Pause", "Break")</PageTitle>
 
-@if (!PauseOptions.Value.Enabled)
+@if (!PauseSettings.Enabled)
 {
     <MudAlert Severity="Severity.Info">@T("Der Pausenreiter ist ausgeschaltet.", "The break tab is switched off.")</MudAlert>
 }
@@ -36,7 +35,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _started || !PauseOptions.Value.Enabled)
+        if (!firstRender || _started || !PauseSettings.Enabled)
         {
             return;
         }

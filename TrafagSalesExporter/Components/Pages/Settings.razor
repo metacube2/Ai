@@ -4,6 +4,7 @@
 @using TrafagSalesExporter.Models
 @using TrafagSalesExporter.Services
 @inject ISettingsPageService SettingsPageActions
+@inject IPauseGameSettingsService PauseGameSettings
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
@@ -363,6 +364,22 @@
     </MudText>
 </MudPaper>
 
+@* Pausenspiel: standardmaessig aus, hier einschaltbar. Der Schalter schreibt
+   "Pause:Enabled" nach appsettings.json und wirkt sofort - der Menueintrag links
+   erscheint beim naechsten Seitenaufbau. *@
+<MudText Typo="Typo.h5" Class="mb-2 mt-6">@T("Pause", "Break")</MudText>
+<MudPaper Class="pa-4 mb-6" Elevation="1">
+    <MudSwitch T="bool"
+               Value="_pauseGameEnabled"
+               ValueChanged="@TogglePauseGameAsync"
+               Label="@T("Pausenreiter anzeigen", "Show the break tab")"
+               Color="Color.Primary" />
+    <MudText Typo="Typo.caption">
+        @T("Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht.",
+           "Shows the 'Break' tab on the left. Switched off it does not appear and the page does not load the game.")
+    </MudText>
+</MudPaper>
+
 <style>
     .audit-csv-settings {
         background: #e8f3ff;
@@ -385,6 +402,7 @@
     private ExportSettings _exportSettings = new();
     private List<SourceSystemDefinition> _sourceSystems = [];
     private SourceSystemDefinition _editingSourceSystem = new();
+    private bool _pauseGameEnabled;
     private bool _testingSp;
     private bool _includeSecretsInExport;
     private bool _exportingConfig;
@@ -403,6 +421,20 @@
         _exportSettings = state.ExportSettings;
         _sourceSystems = state.SourceSystems;
         _exchangeRates = state.ExchangeRates;
+        _pauseGameEnabled = PauseGameSettings.Enabled;
+    }
+
+    private Task TogglePauseGameAsync(bool value)
+    {
+        PauseGameSettings.SetEnabled(value);
+        _pauseGameEnabled = PauseGameSettings.Enabled;
+        Snackbar.Add(
+            _pauseGameEnabled
+                ? T("Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint.",
+                    "Break tab switched on. Reload the page so it appears on the left.")
+                : T("Pausenreiter ausgeschaltet.", "Break tab switched off."),
+            Severity.Success);
+        return Task.CompletedTask;
     }
 
     private async Task SaveSharePoint()
