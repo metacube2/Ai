@@ -42,7 +42,37 @@ Stand: 2026-08-07
 
 ## Kurzstand
 
-- Letzter produktiv verifizierter Deploy: **2026-08-07 17:05, Pausenspiel `/pause`**,
+- Letzter produktiv verifizierter Deploy: **2026-08-10 07:05, Pausenreiter
+  standardmaessig aus**, Funktionscommit `8e09774`, `459/459` Tests gruen im
+  Release-Lauf vor dem Publish (vier neue, jeder vorher nachweislich rot).
+  `BiDashboard.dll` `10.08.2026 07:04:59`, `4'331'008` Bytes, SHA256
+  `1F0E3C79A9417FFAF61D2F090D5F929873BE4D7A43B07D08235D0D6E9BBCC6BF`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. Produktiv-DB in Laenge und Schreibzeit
+  unveraendert (`340'340'736` Bytes, `10.08.2026 00:10:51`), alle `16` `.bak`
+  unveraendert. `Pause:Enabled` im Ziel steht auf `false`.
+  Wirkung produktiv belegt: Startseite HTTPS `200` (`68'421` Bytes) **ohne** den
+  Reiter `Pause`, mit `Einkauf` als Gegenprobe weiterhin vorhanden; `/pause` liefert
+  `200` mit dem Hinweis „Der Pausenreiter ist ausgeschaltet." und **ohne** das
+  Szenen-Element. Wirknachweis in der DLL: `PauseGameSettingsService`,
+  `IPauseGameSettingsService` (UTF-8), Literale `Pausenreiter anzeigen`,
+  `pause-game` und die tuerkische Uebersetzung `Mola sekmesini göster` (UTF-16).
+  **NICHT belegt:** dass der Schalter unter Admin > Settings rendert — `/settings`
+  liegt hinter dem Admin-Passwortpanel und liefert von hier aus nur dieses (Antwort
+  enthaelt `Passwort`, aber weder `Einstellungen` noch `SharePoint`). Dafuer ist ein
+  angemeldeter Sichtprueflauf noetig.
+  Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+
+- **FALLE: Admin-Schalter in `appsettings.json` ueberlebt den naechsten Deploy NICHT.**
+  `appsettings.json` ist Build-Ausgabe und wird bei jedem Publish durch den
+  Repository-Stand ersetzt — gemessen am 2026-08-10, der Server stand auf
+  `Pause:Enabled = true`, danach auf `false`. Betrifft alles, was zur Laufzeit dorthin
+  geschrieben wird: `Pause:Enabled` und `LandingPage:ShowWalkingLabFigure`. Wer eine
+  Einstellung dauerhaft will, muss sie im Repository setzen. Dieselbe Klasse wie die
+  XLSX weiter unten. Vor jedem Deploy lohnt ein Vergleich der beiden Dateien; am
+  2026-08-10 war der Pausen-Schalter der einzige Unterschied.
+
+- Deploy davor: **2026-08-07 17:05, Pausenspiel `/pause`**,
   Funktionscommits `ad0241d` (Spiel) und `b834d61` (Deploy-Konsole und Doku),
   `455/455` Tests gruen im Release-Lauf vor dem Publish, dazu zwei kopflose
   Prüfsonden mit je `18` Pruefungen gruen. `BiDashboard.dll` `07.08.2026 17:05:17`,

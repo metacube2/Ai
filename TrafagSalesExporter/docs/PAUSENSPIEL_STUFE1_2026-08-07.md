@@ -19,14 +19,31 @@ Geaendert: `Program.cs` (+1 Zeile DI), `appsettings.json` (Abschnitt `Pause`),
 `DatabaseSeedService.cs` (+1 Menueintrag), `UiTextGeneratedTranslations.cs`
 (12 Eintraege). Keine bestehende Seite und keine Berechnung angefasst.
 
-## Ausblenden
+## Ausblenden — Standard ist AUS (seit 2026-08-10)
 
-Drei Ebenen, wie im Konzept:
+`Pause:Enabled` startet auf `false`. Der Reiter erscheint links **nicht**, und
+`/pause` laedt das Spiel nicht, sondern zeigt nur einen Hinweis.
 
-1. `"Pause": { "Enabled": false }` in `appsettings.json` — die Seite zeigt nur noch
-   einen Hinweis, das Spielmodul wird gar nicht geladen.
-2. Menueintrag `pause-game` auf `IsVisible = false` — Eintrag weg, Route bleibt.
-3. `RequiredPolicy` am Menueintrag.
+**Einschalten: Admin > Settings**, Schalter „Pausenreiter anzeigen". Er schreibt das
+Kennzeichen nach `appsettings.json` und wirkt sofort ohne Neustart; der Menueintrag
+erscheint beim naechsten Seitenaufbau. Dasselbe Vorgehen wie
+`LandingPage:ShowWalkingLabFigure`.
+
+Technisch nutzt die Navigation den `_hiddenKeys`-Haken, den `NavMenu.razor` schon
+fuer `finance-comparison` und `finance-lock` hat. Der Menueintrag bleibt dadurch in
+der Datenbank und laesst sich zusaetzlich ueber die Menuestruktur-Seite dauerhaft
+ausblenden (`IsVisible = false`) oder ueber `RequiredPolicy` einschraenken.
+
+**ACHTUNG:** was der Schalter nach `appsettings.json` schreibt, ueberlebt den
+naechsten Deploy nicht — die Datei ist Build-Ausgabe und wird vom Publish durch den
+Repository-Stand ersetzt. Soll der Reiter dauerhaft an sein, gehoert `true` ins
+Repository.
+
+Vier Tests decken den Schalter ab, jeder vorher nachweislich rot (der Schreiber
+wurde dafuer so veraendert, dass er die Datei ersetzt statt zu ergaenzen): Reiter
+bleibt aus bis jemand ihn einschaltet, Umschalten erhaelt jede andere Einstellung in
+`appsettings.json` (dort stehen auch die Passworthashes), das Kennzeichen ueberlebt
+einen Neustart, und ein vorhandener `Pause`-Abschnitt wird ergaenzt statt verdoppelt.
 
 ## Ton
 

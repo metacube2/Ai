@@ -11,6 +11,22 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Offene Punkte (nicht erledigt)
 
+- **PAUSENREITER STANDARDMAESSIG AUS, deployt 2026-08-10 07:05** (Commit `8e09774`,
+  `459/459`). `Pause:Enabled` startet auf `false`: kein Menueintrag links, und `/pause`
+  zeigt nur den Hinweis statt das Spiel zu laden. Einschalten unter **Admin > Settings**,
+  der Schalter schreibt das Kennzeichen nach `appsettings.json` (Muster von
+  `ShowWalkingLabFigure`). Die Navigation nutzt den vorhandenen `_hiddenKeys`-Haken aus
+  `NavMenu.razor`, der Menueintrag bleibt also in der Datenbank und laesst sich
+  zusaetzlich ueber die Menuestruktur-Seite dauerhaft ausblenden.
+  Produktiv belegt: Startseite ohne `Pause` (mit `Einkauf` als Gegenprobe), `/pause` mit
+  Ausgeschaltet-Hinweis und ohne Szenen-Element. NICHT belegt: dass der Schalter unter
+  Settings rendert — die Seite liegt hinter dem Admin-Passwortpanel.
+- **FALLE: was ein Admin-Schalter nach `appsettings.json` schreibt, ist beim naechsten
+  Deploy weg.** `appsettings.json` ist Build-Ausgabe und wird vom Publish durch den
+  Repository-Stand ersetzt (gemessen 2026-08-10: Server stand auf `Pause:Enabled = true`,
+  danach `false`). Betrifft `Pause:Enabled` und `LandingPage:ShowWalkingLabFigure`.
+  Dauerhaft gewollte Einstellungen gehoeren ins Repository. Vor dem Publish lohnt der
+  Vergleich Server gegen Repo — dieselbe Fehlerklasse wie die ZDISPO-XLSX.
 - **FALLE BEIM DEPLOY 2026-08-07, selbst hineingelaufen: `dotnet publish` NIE ueber das
   Bash-Werkzeug auf den UNC-Pfad.** Git Bash macht aus
   `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` still das lokale Verzeichnis
