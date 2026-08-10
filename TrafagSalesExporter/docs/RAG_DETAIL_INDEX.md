@@ -70,6 +70,7 @@ Stand verwenden.
 | HR-KPI-Fachpruefung | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |
 | IIS-/Publish-Handoff | `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md` |
 | Deploy-Konsole, Publish-Fallen | `docs/DEPLOY_KONSOLE_2026-08-07.md` |
+| UK 2025 Wertfehler, Stueckpreis statt Zeilenwert | `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` |
 | Pausenspiel Konzept | `docs/PAUSENSPIEL_DROHNEN_KONZEPT_2026-08-07.md` |
 | Pausenspiel Stufe 1, MOD-Abspieler | `docs/PAUSENSPIEL_STUFE1_2026-08-07.md` |
 | Admin/Startseite | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` |

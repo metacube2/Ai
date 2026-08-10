@@ -11,6 +11,25 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Offene Punkte (nicht erledigt)
 
+- **UK 2025 WERTFEHLER GEFUNDEN UND KORRIGIERTE DATEI HOCHGELADEN, 2026-08-10 — IMPORT LAEUFT
+  NOCH NICHT.** Der Backfill vom 2026-07-28 hat die Zeilen geliefert, aber Stueckpreise statt
+  Zeilenwerte: `394'439 GBP` gegen einen Sollwert von `3'538'972 GBP` = **11 %**, betroffen
+  1'241 von 1'867 Zeilen (alle mit Menge > 1). Ursache: die Quelldatei
+  `Sales_TRUK_2026-05-11.xlsx` ist ein App-Export von VOR der Mapping-Umstellung auf
+  `SageNetSales` und enthielt schon Stueckpreise; `BuildUkBaseFile` hat trotzdem durch die
+  Menge geteilt — doppelte Kompensation. Die alte Kontrollrechnung konnte das nicht sehen, weil
+  sie den Import gegen die QUELLDATEI verglich (`395'605.82 = 395'605.82`) und damit nur belegt,
+  dass wir die Datei reproduzieren. **LEHRE: eine Kontrollrechnung gegen die eigene Quelle ist
+  keine Kontrolle — es braucht einen unabhaengigen Sollwert.**
+  Neu und versioniert: `Tools/UkBackfillFile` (prueft, welche Lesart der Spalte den Sollwert
+  trifft, und schreibt sonst NICHTS) und `Tools/ManualImportUpload` (Upload mit Sicherung der
+  alten Fassung, ohne `--replace` Abbruch). Korrigierte `TRUK_2025.xlsx` liegt seit
+  2026-08-10 13:16 im Ordner `Import/Finance/UK_B1`, aus SharePoint zurueckgeladen und
+  nachgerechnet (1'881 Zeilen, Lesart A 99.8 %); alte Fassung gesichert unter
+  `Downloads\UK_Backfill\ersetzt\`.
+  **NOCH ZU TUN: UK-Standortexport starten** (kein externer Ausloeser vorhanden), danach
+  pruefen: UK 2025 ≈ `3'533'349` GBP und Marge dreht von −502.7 % ins Plausible.
+  Details: `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.
 - **PAUSENREITER STANDARDMAESSIG AUS, deployt 2026-08-10 07:05** (Commit `8e09774`,
   `459/459`). `Pause:Enabled` startet auf `false`: kein Menueintrag links, und `/pause`
   zeigt nur den Hinweis statt das Spiel zu laden. Einschalten unter **Admin > Settings**,

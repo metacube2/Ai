@@ -88,6 +88,59 @@ wird also weiterhin gelesen.
   anderen Standorte
 - Zeilenzahl bleibt bei 1'867 (die Korrektur aendert Werte, nicht Zeilen)
 
+## Stand der Umsetzung 2026-08-10
+
+### Erledigt
+
+**Neues Werkzeug `Tools/UkBackfillFile`** ersetzt `.tmp_tools/BuildUkBaseFile`. Es rechnet
+nichts mehr um, sondern **prueft, welche Bedeutung die Spalte hat**, und schreibt die Datei
+nur, wenn eine der beiden Lesarten den erwarteten Jahreswert trifft:
+
+```
+Erwarteter Jahreswert (Soll): 3,538,972.00
+  A) Spalte sind STUECKPREISE -> Import ergibt Betrag x Menge : 3,533,348.89  (99.8 % des Solls)
+  B) Spalte sind ZEILENWERTE  -> Import ergibt Betrag unveraendert: 395,605.82  (11.2 % des Solls)
+BEFUND: Spalte enthaelt STUECKPREISE. Datei unveraendert durchreichen - der Import multipliziert.
+```
+
+Bei „keine Lesart trifft" oder „beide treffen" schreibt es **nichts** und bricht ab. Genau
+diese Weiche fehlte im alten Werkzeug — dort war die Bedeutung der Spalte eine Annahme.
+
+**`Tools/ManualImportUpload`** legt eine Datei in den Manual-Import-Ordner eines Standorts und
+**sichert die bisherige Fassung vorher lokal**, damit der Schritt umkehrbar bleibt. Ohne
+`--replace` bricht es ab, wenn der Name belegt ist. Grund fuer das Werkzeug: der erste
+Backfill-Versuch am 2026-07-28 scheiterte an der Namenswahl, und ein Handupload zeigt nicht,
+welche Dateien die Auswahllogik danach wirklich liest.
+
+**Datei ersetzt** in
+`https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/UK_B1`:
+
+| | |
+| --- | --- |
+| vorher | `TRUK_2025.xlsx` `303'081` Bytes, 2026-07-28 12:52 |
+| gesichert nach | `C:\Users\koi\Downloads\UK_Backfill\ersetzt\TRUK_2025_20260728_1252.xlsx` |
+| jetzt | `TRUK_2025.xlsx` 2026-08-10 13:16 |
+
+Die hochgeladene Datei wurde **aus SharePoint zurueckgeladen und nachgerechnet**: 1'881
+TRUK-Zeilen, 0 Legendenzeilen, Lesart A trifft 99.8 %. Der Groessenunterschied zur lokalen
+Datei stammt aus dem Neuverpacken des ZIP, der Inhalt stimmt.
+
+### Offen: der Import muss noch laufen
+
+Die Daten aendern sich erst mit dem naechsten UK-Standortexport — er liest die Datei und
+ersetzt die UK-Zeilen. Es gibt **keinen externen Ausloeser** dafuer (nur die Server-Analyse
+hat eine Triggerdatei), also entweder:
+
+- im Dashboard den UK-Standortexport von Hand starten, oder
+- den taeglichen Lauf abwarten (die Exporte im Ordner liegen bei ~10:00).
+
+Die Auswahllogik ist geprueft (`.tmp_tools/ListUkFolder` gegen eine Lesekopie): bei einem
+normalen Lauf ohne `PreferredImportYear` liest sie **`TRUK_2025.xlsx` und** die 2026er
+Jahresdatei samt aller Deltas. Beide Jahre kommen also gemeinsam.
+
+**Nach dem Lauf zu pruefen (Abnahmekriterium oben):** UK 2025 ≈ `3'533'349` GBP, Marge dreht
+von −502.7 % ins Plausible, Zeilenzahl bleibt bei rund 1'867.
+
 ## Zweiter Befund: die Legendenzeile haengt dauerhaft in den Produktivdaten
 
 Der Datensatz mit `TSC = "Subsidiary abbreviation / company identifier"` (Land England,
