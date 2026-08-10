@@ -70,6 +70,12 @@ heute in der Datenbank (die enthaelt nur 1'088 UK-Zeilen, alle 2026).
 zurueck (`Zeilenwert / Menge`), damit das bestehende Mapping wieder den korrekten Zeilenwert
 errechnet. Die Menge bleibt unveraendert, es wird kein Feld erfunden.
 
+> **FALSCHE ANNAHME, korrigiert 2026-08-10:** Die Spalte enthielt in dieser Datei **keinen
+> Zeilenwert, sondern schon den Stueckpreis** — der Export stammt von vor der
+> Mapping-Umstellung. Das Zurueckrechnen war deshalb eine doppelte Division und hat die
+> Betraege um den Faktor der Menge zu klein gemacht. Richtig ist, die Spalte **unveraendert**
+> durchzureichen. Siehe `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.
+
 **Kontrollrechnung (Reimport simuliert, inkl. Gutschriften-Vorzeichenlogik):**
 
 ```text
@@ -171,6 +177,17 @@ Backfill 2026-07-28) unbemerkt blieben.
 
 TRUK hat jetzt **1'867 Zeilen fuer 2025** (Summe `394'439.16 GBP`) neben 1'082 fuer 2026.
 Der Backfill ist angekommen.
+
+> **KORREKTUR 2026-08-10 — die Zeilen sind richtig, die BETRAEGE nicht.**
+> `394'439.16 GBP` sind **11 %** des Sollwerts fuer UK 2025 (`3'538'972 GBP`, siehe
+> `FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`). Ursache: die Quelldatei
+> `Sales_TRUK_2026-05-11.xlsx` enthielt bereits **Stueckpreise** (App-Export von **vor** der
+> Mapping-Umstellung auf `SageNetSales` am 2026-05-19). Die Ruecktrechnung „Zeilenwert /
+> Menge" in Abschnitt „Erzeugte Datei" war damit eine **doppelte** Kompensation.
+> Die Kontrollrechnung unten (`395'605.82 = 395'605.82`) konnte das nicht aufdecken, weil sie
+> nur belegt, dass der Import die Datei reproduziert — nicht, dass die Datei stimmt.
+> Betroffen: 1'241 von 1'867 Zeilen (alle mit Menge > 1). Analyse, Belege und Fix:
+> `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.
 
 **Abweichung zur Vorabschaetzung geklaert (`395'605.82` vs. `394'439.16`, Differenz
 `1'166.66`):** Die Quelldatei enthaelt **14 echte Dubletten** — je zwei Zeilen mit
