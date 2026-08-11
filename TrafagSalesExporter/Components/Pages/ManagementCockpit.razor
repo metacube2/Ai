@@ -1156,7 +1156,7 @@
                     <MudPaper Class="pa-4" Elevation="1">
                         <MudText Typo="Typo.caption">@T("Interne Zeilen", "Internal rows")</MudText>
                         <MudText Typo="Typo.h6">@_financeResult.GroupMarginSummary.InternalSupplierRows.ToString("N0")</MudText>
-                        <MudText Typo="Typo.caption">@T("Extern", "External"): @_financeResult.GroupMarginSummary.ExternalSupplierRows.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption">@T("Lokal", "Local"): @_financeResult.GroupMarginSummary.LocalSupplierRows.ToString("N0") | @T("Extern", "External"): @_financeResult.GroupMarginSummary.ExternalSupplierRows.ToString("N0")</MudText>
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="2">
@@ -1200,6 +1200,7 @@
                                 <MudTh>@T("Marge", "Margin")</MudTh>
                                 <MudTh>%</MudTh>
                                 <MudTh>@T("Intern", "Internal")</MudTh>
+                                <MudTh>@T("Lokal", "Local")</MudTh>
                                 <MudTh>@T("Offen", "Open")</MudTh>
                                 <MudTh>DB</MudTh>
                             </HeaderContent>
@@ -1211,6 +1212,7 @@
                                 <MudTd>@FormatGroupMarginValue(context)</MudTd>
                                 <MudTd>@FormatGroupMarginPercent(context)</MudTd>
                                 <MudTd>@context.InternalSupplierRows.ToString("N0")</MudTd>
+                                <MudTd>@context.LocalSupplierRows.ToString("N0")</MudTd>
                                 <MudTd>@context.MissingCostRows.ToString("N0")</MudTd>
                                 <MudTd>
                                     <MudText Typo="Typo.body2">@FormatContributionMargin(context.ContributionMarginValue, context.Currency)</MudText>

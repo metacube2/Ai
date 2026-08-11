@@ -52,6 +52,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `66'049` MARC-1100-Materialien dauerhaft vor und nach App-Neustart bestaetigt;
   `63'550` MBEW-Schluessel vollstaendig enthalten. Deploynachweis:
   `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+- Nachtrag nach dem Deploy, noch nicht produktiv: Andreas bestaetigte, dass ein
+  sicherer MARC-Nichttreffer die Standardkosten der lokalen Gesellschaft verwenden
+  soll. Im lokalen Code heisst die Kategorie bewusst `Lokal`, nicht `Extern`.
+  Read-only Wirkung: 12'023 lokale Zeilen, davon 6'749 mit positivem Standardpreis;
+  110 Zeilen ohne Materialschluessel bleiben unklar. Detail:
+  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
 
 ## Offene Fachpunkte
 

@@ -9,6 +9,23 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
+## Andreas-Nachtrag lokale Standardkosten 2026-08-11 - committed, noch nicht deployed
+
+- Baseline vor der Aenderung: Commit `369d675`.
+- Einzelbestaetigter Beschluss aus dem Meeting, Transkript 06:31-07:16:
+  CH-MARC-Treffer = intern/TR_AG; sicherer Nichttreffer = `Lokal` und verwendet
+  die Standardkosten der jeweiligen Gesellschaft.
+- Schutzgrenzen: expliziter Supplier und Sales Type behalten Vorrang; fehlende
+  Materialnummer, fehlende TSC oder leerer MARC-Cache bleiben `Unklar`; Alt-Modus
+  MBEW bleibt unveraendert.
+- Produktiv read-only: 12.023 lokale Nichttreffer, davon 6.749 mit positivem
+  Standardpreis; 5.274 ohne Standardpreis und 110 ohne Materialschluessel.
+- Cockpit zeigt Lokal separat; Excel, Cockpit und Finance-Training verwenden dieselbe
+  Regel. `87/87` gezielte Margentests, Lokalisierungstest und `478/478`
+  Gesamttests im Release-Lauf gruen.
+- Separater Commit nach Baseline `369d675`; noch kein Deploy dieses Nachtrags. Detail:
+  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+
 ## Gesamtdeploy 2026-08-11 15:51 - produktiv
 
 - Gesamter aktueller Anwendungsstand produktiv deployed; `471/471` Release-Tests.

@@ -1528,6 +1528,7 @@ public class ManagementCockpitService : IManagementCockpitService
             RowCount = rows.Count,
             InternalSupplierRows = rows.Count(row => row.SupplierType == "Intern"),
             ExternalSupplierRows = rows.Count(row => row.SupplierType == "Extern"),
+            LocalSupplierRows = rows.Count(row => row.SupplierType == GroupMarginSupplierClassifier.Local),
             MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
             UnclearSupplierRows = rows.Count(row => row.Status == GroupMarginStatuses.SupplierUnclear),
             CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
@@ -1577,6 +1578,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     MarginPercent = baseRow.MarginPercent,
                     RowCount = baseRow.RowCount,
                     InternalSupplierRows = baseRow.InternalSupplierRows,
+                    LocalSupplierRows = baseRow.LocalSupplierRows,
                     MissingCostRows = baseRow.MissingCostRows,
                     ContributionMarginValue = baseRow.ContributionMarginValue,
                     ContributionMarginRows = baseRow.ContributionMarginRows,
@@ -1609,6 +1611,7 @@ public class ManagementCockpitService : IManagementCockpitService
             MarginPercent = PercentOf(margin, sales),
             RowCount = rowList.Count,
             InternalSupplierRows = rowList.Count(row => row.SupplierType == "Intern"),
+            LocalSupplierRows = rowList.Count(row => row.SupplierType == GroupMarginSupplierClassifier.Local),
             MissingCostRows = rowList.Count(HasOpenGroupMarginCostBasis),
             ContributionMarginValue = SumContributionMargin(rowList),
             ContributionMarginRows = rowList.Count(row => row.ContributionMarginValue.HasValue)

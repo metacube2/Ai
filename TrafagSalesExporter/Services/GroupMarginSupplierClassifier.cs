@@ -4,8 +4,9 @@ using TrafagSalesExporter.Models;
 namespace TrafagSalesExporter.Services;
 
 /// <summary>
-/// Classifies a sales-line supplier as internal (intercompany), external (3rd party)
-/// or unclear for the group-margin (Gruppenmarge) calculation.
+/// Classifies a sales-line supplier as internal (intercompany), external (explicit
+/// 3rd party), local (verified CH-master non-match) or unclear for the group-margin
+/// (Gruppenmarge) calculation.
 ///
 /// Finance decision (Andreas, 2026-06-29): a supplier counts as internal/intercompany
 /// whenever its name or number contains "TRAFAG" - "because we are Trafag", every Trafag
@@ -23,6 +24,7 @@ public static class GroupMarginSupplierClassifier
 {
     public const string Internal = "Intern";
     public const string External = "Extern";
+    public const string Local = "Lokal";
     public const string Unclear = "Unklar";
 
     // Entscheid Ingo, 2026-07-29: CH/AT (Site "ZSCHWEIZ", TSC TRCH/TRAT) verkauft immer als
@@ -98,9 +100,19 @@ public static class GroupMarginSupplierClassifier
         if (role is not null)
             return Internal;
 
-        return HasMaterialFallbackMatch(
-            normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode)
-            ? Internal
+        if (HasMaterialFallbackMatch(
+                normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode))
+            return Internal;
+
+        // Entscheid Andreas/Ingo, Meeting 2026-08-11 (Transkript 06:31-07:16): Ist ein
+        // pruefbarer Artikel NICHT im CH-Werkstamm enthalten, werden die Standardkosten der
+        // jeweiligen lokalen Gesellschaft verwendet. "Lokal" ist bewusst praeziser als
+        // "Extern": Ein Nichttreffer kann lokaler Einkauf oder lokale Fertigung sein.
+        // Nur ein geladener MARC-Cache und ein vorhandener Materialschluessel erlauben diese
+        // Aussage. Bei fehlender Pruefgrundlage bleibt die Zeile weiterhin ehrlich "Unklar".
+        return IsConfirmedLocalMaterial(
+            tsc, normalizedMaterialKey, chPlantMaterialKeys, supplierFallbackMode)
+            ? Local
             : Unclear;
     }
 
@@ -178,6 +190,20 @@ public static class GroupMarginSupplierClassifier
             return chPlantMaterialKeys.Contains(key);
 
         return HasGroupCostMatch(key, groupStandardCosts);
+    }
+
+    private static bool IsConfirmedLocalMaterial(
+        string? tsc,
+        string? normalizedMaterialKey,
+        IReadOnlySet<string>? chPlantMaterialKeys,
+        string? supplierFallbackMode)
+    {
+        var key = normalizedMaterialKey?.Trim() ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(tsc) &&
+               key.Length > 0 &&
+               SupplierFallbackModes.Normalize(supplierFallbackMode) == SupplierFallbackModes.ChPlantMaster &&
+               chPlantMaterialKeys is { Count: > 0 } &&
+               !chPlantMaterialKeys.Contains(key);
     }
 
     /// <summary>

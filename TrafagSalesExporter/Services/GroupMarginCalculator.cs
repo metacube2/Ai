@@ -114,6 +114,7 @@ public static class GroupMarginCalculator
         {
             GroupMarginSupplierClassifier.Internal => "Interner Standardpreis",
             GroupMarginSupplierClassifier.External => "Kosten aus Verkaufszeile",
+            GroupMarginSupplierClassifier.Local => "Standardkosten der lokalen Gesellschaft",
             _ => GroupMarginStatuses.SupplierUnclear
         };
     }

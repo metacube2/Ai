@@ -197,6 +197,38 @@ public class GroupMarginCalculatorTests
     }
 
     [Fact]
+    public void Neuer_ChWerkstammFallback_Nichttreffer_NutztLokaleStandardkostenMitBerechenbarerMarge()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "OTHER-MATERIAL" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            Line(tsc: "TRIT", material: "LOCAL-MATERIAL", standardCost: 60m),
+            chPlantMaterialKeys: chPlantMaterials,
+            supplierFallbackMode: SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.False(result.IsGroupCostMissing);
+        Assert.Equal(60m, result.CostBasis);
+        Assert.Equal("Standardkosten der lokalen Gesellschaft", result.CostSource);
+        Assert.Equal(GroupMarginStatuses.Ok, result.Status);
+    }
+
+    [Fact]
+    public void Lokaler_Nichttreffer_OhneStandardkosten_BleibtAlsFehlendeKostenOffen()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "OTHER-MATERIAL" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            Line(tsc: "TRIT", material: "LOCAL-MATERIAL", standardCost: 0m),
+            chPlantMaterialKeys: chPlantMaterials,
+            supplierFallbackMode: SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, result.SupplierType);
+        Assert.Equal(GroupMarginStatuses.StandardCostMissing, result.Status);
+    }
+
+    [Fact]
     public void Konzernkosten_fehlen_wird_vor_Standardpreis_fehlt_gemeldet()
     {
         // Beide Faelle haben Kostenbasis 0. Ein gemeinsames Label wuerde die Ursache verdecken:

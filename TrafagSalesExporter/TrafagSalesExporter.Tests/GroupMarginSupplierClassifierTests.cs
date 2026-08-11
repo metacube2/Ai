@@ -253,7 +253,7 @@ public class GroupMarginSupplierClassifierTests
             chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
 
         Assert.Equal(GroupMarginSupplierClassifier.Internal, newHit);
-        Assert.Equal(GroupMarginSupplierClassifier.Unclear, oldOnlyHit);
+        Assert.Equal(GroupMarginSupplierClassifier.Local, oldOnlyHit);
     }
 
     [Fact]
@@ -286,6 +286,48 @@ public class GroupMarginSupplierClassifierTests
             new HashSet<string>(StringComparer.Ordinal), SupplierFallbackModes.ChPlantMaster);
 
         Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_NewMode_ClassifiesVerifiedChPlantNonMatchAsLocal()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "CH-MATERIAL"
+        };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRDE", "LOCAL-MATERIAL", null, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, result);
+    }
+
+    [Theory]
+    [InlineData("", "LOCAL-MATERIAL")]
+    [InlineData("TRDE", "")]
+    public void Resolve_NewMode_KeepsUnclearWithoutSiteOrMaterialKey(string tsc, string materialKey)
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "CH-MATERIAL"
+        };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, tsc, materialKey, null, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
+    }
+
+    [Fact]
+    public void Resolve_NewMode_KeepsUnclearWhenPlantCacheIsEmptyAndOldFallbackDoesNotMatch()
+    {
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRDE", "LOCAL-MATERIAL", null, null,
+            new HashSet<string>(StringComparer.Ordinal), SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, result);
     }
 
     [Fact]

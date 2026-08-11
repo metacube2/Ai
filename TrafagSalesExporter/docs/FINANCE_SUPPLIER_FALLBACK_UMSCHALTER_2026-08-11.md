@@ -10,8 +10,11 @@ Materialnummer gegen den Artikelstamm der Trafag AG Schweiz geprueft.
 
 - Treffer in `MARC`, Werk `1100`: `SupplierType = Intern`, liefernde Gesellschaft
   `TR_AG`.
+- Sicherer Nichttreffer bei geladenem MARC-Cache: `SupplierType = Lokal`; verwendet
+  werden die Standardkosten der jeweiligen lokalen Gesellschaft.
 - Explizit vorhandener Supplier: hat immer Vorrang.
-- Kein Treffer: `Unklar`.
+- Ohne belastbaren Vergleich, etwa bei fehlender Materialnummer oder leerem Cache:
+  `Unklar`.
 - CH/AT selbst bleiben von dieser Fremdstandortregel unberuehrt; fuer sie gilt die
   vorhandene TSC-Regel.
 
@@ -59,6 +62,21 @@ atomar. Liefert SAP keine Daten oder tritt ein Fehler auf, bleibt der bisherige
 Cache erhalten. Ist nach einer Migration noch gar kein MARC-Cache vorhanden,
 verwendet der neue Modus voruebergehend automatisch den alten MBEW-Fallback.
 
+### Nachtrag aus dem Andreas-Meeting
+
+Andreas bestaetigte im Meeting vom 2026-08-11, Transkript 06:31-07:16, auch den
+zweiten Zweig: Ist der Artikel nicht im CH-Stamm enthalten, sind die Standardkosten
+der jeweiligen Gesellschaft zu verwenden. Nach dem Baseline-Commit `369d675` wurde
+diese Erweiterung vom Nutzer einzeln freigegeben und lokal umgesetzt.
+
+Produktive read-only Messung: Von `22.950` relevanten Zeilen treffen `10.817` den
+CH-Werkstamm. `12.023` belastbare Nichttreffer werden neu `Lokal`; `6.749` davon
+haben positive lokale Standardkosten, `5.274` noch nicht. Weitere `110` Zeilen
+haben keinen pruefbaren Materialschluessel und bleiben `Unklar`.
+
+Detailnachweis:
+`docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+
 ## Nachweis
 
 - SAP-Live-Dry-Run: 66.047 MARC-1100-Materialien; alle 63.550 aktuellen
@@ -98,3 +116,7 @@ Produktiv read-only bestaetigt:
 
 Vollstaendiger technischer Deploynachweis:
 `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+
+Der Nachtrag `Lokal bei MARC-Nichttreffer` ist erst nach diesem Deploy entstanden.
+Er ist lokal implementiert, getestet und separat committed, aber noch nicht produktiv
+deployed. Der Produktivstand verwendet fuer diese Nichttreffer weiterhin `Unklar`.

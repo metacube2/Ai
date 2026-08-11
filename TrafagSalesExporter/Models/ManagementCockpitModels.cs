@@ -353,6 +353,7 @@ public class ManagementGroupMarginSummary
     public int RowCount { get; set; }
     public int InternalSupplierRows { get; set; }
     public int ExternalSupplierRows { get; set; }
+    public int LocalSupplierRows { get; set; }
     public int MissingCostRows { get; set; }
     public int UnclearSupplierRows { get; set; }
     public decimal CleanCostBasisPercent { get; set; }
@@ -373,6 +374,7 @@ public class ManagementGroupMarginCountryRow
     public decimal MarginPercent { get; set; }
     public int RowCount { get; set; }
     public int InternalSupplierRows { get; set; }
+    public int LocalSupplierRows { get; set; }
     public int MissingCostRows { get; set; }
     // Deckungsbeitrag (additiv): nur ueber Zeilen mit geliefertem fix/variabel-Split summiert.
     public decimal? ContributionMarginValue { get; set; }

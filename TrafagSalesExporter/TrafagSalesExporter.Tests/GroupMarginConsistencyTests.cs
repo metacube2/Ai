@@ -118,12 +118,47 @@ public class GroupMarginConsistencyTests : IDisposable
         Assert.Equal(GroupMarginStatuses.GroupCostMissing, ledger.Status);
     }
 
-    private static ProofRow BuildExcelRow(string salesType)
+    [Fact]
+    public async Task MarcNichttreffer_WirdInExcelUndCockpitLokalMitLokalenStandardkosten()
+    {
+        await using (var db = new AppDbContext(_options))
+        {
+            db.GroupMaterialMasters.Add(new GroupMaterialMaster
+            {
+                MaterialKey = "OTHER-MATERIAL",
+                Plant = "1100",
+                RefreshedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var excel = BuildExcelRow("", useDatabaseSettings: true);
+        var cockpit = await BuildCockpitRowAsync("");
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, excel.SupplierType);
+        Assert.Equal(GroupMarginSupplierClassifier.Local, cockpit.SupplierType);
+        Assert.Equal(GroupMarginStatuses.Ok, excel.Status);
+        Assert.Equal(GroupMarginStatuses.Ok, cockpit.Status);
+        Assert.Equal("Standardkosten der lokalen Gesellschaft", excel.CostSource);
+        Assert.Equal("Standardkosten der lokalen Gesellschaft", cockpit.CostSource);
+        Assert.Equal(60m, excel.CostBasis);
+        Assert.Equal(60m, cockpit.CostBasis);
+
+        var result = await _cockpit.AnalyzeFinanceSummaryAsync(Year, null, null);
+        Assert.Equal(1, result.GroupMarginSummary.LocalSupplierRows);
+        Assert.Equal(0, result.GroupMarginSummary.UnclearSupplierRows);
+        Assert.Equal(100m, result.GroupMarginSummary.CleanCostBasisPercent);
+    }
+
+    private ProofRow BuildExcelRow(string salesType, bool useDatabaseSettings = false)
     {
         var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-groupmargin-{Guid.NewGuid():N}");
         try
         {
-            var path = new ExcelExportService().CreateConsolidatedExcelFile(
+            var service = useDatabaseSettings
+                ? new ExcelExportService(new TestDbContextFactory(_options))
+                : new ExcelExportService();
+            var path = service.CreateConsolidatedExcelFile(
                 outputDirectory, ExtractionDate, [BuildSalesRecord(salesType)]);
 
             using var workbook = new XLWorkbook(path);
