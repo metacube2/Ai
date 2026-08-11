@@ -181,6 +181,22 @@ public class GroupMarginCalculatorTests
     }
 
     [Fact]
+    public void Neuer_ChWerkstammFallback_Klassifiziert_Intern_UndNutztOhneMbewLokaleKosten()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "IC15415" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            Line(tsc: "TRIT"),
+            chPlantMaterialKeys: chPlantMaterials,
+            supplierFallbackMode: SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.Equal(60m, result.CostBasis);
+        Assert.Equal(GroupMarginStatuses.Ok, result.Status);
+    }
+
+    [Fact]
     public void Konzernkosten_fehlen_wird_vor_Standardpreis_fehlt_gemeldet()
     {
         // Beide Faelle haben Kostenbasis 0. Ein gemeinsames Label wuerde die Ursache verdecken:

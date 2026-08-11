@@ -2,6 +2,14 @@ namespace TrafagSalesExporter.Services;
 
 internal static class DatabaseSchemaSql
 {
+    internal static string GetGroupMaterialMastersCreateSql() => @"
+CREATE TABLE GroupMaterialMasters (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    MaterialKey TEXT NOT NULL,
+    Plant TEXT NOT NULL,
+    RefreshedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetGroupStandardCostsCreateSql() => @"
 CREATE TABLE GroupStandardCosts (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +51,7 @@ CREATE TABLE ExportSettings (
     LocalAuditCsvFolder TEXT NOT NULL DEFAULT '',
     ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate',
     GroupMarginCostCurrencyMode TEXT NOT NULL DEFAULT 'Mask',
+    SupplierFallbackMode TEXT NOT NULL DEFAULT 'ChPlantMaster',
     LastTimerRunUtc TEXT NULL
 );";
 
@@ -398,14 +407,15 @@ CREATE TABLE PurchasingProductGroupMap (
     UpdatedAtUtc TEXT NOT NULL DEFAULT ''
 );";
 
-    // Additive Excel-Zusatzquelle nur fuer den Spend-Aufriss. Die bestehende manuelle
-    // PurchasingProductGroupMap bleibt unberuehrt und hat bei der Anzeige Vorrang.
+    // SAP-ZDISPO-Referenz fuer den Produktgruppen-Aufriss. Die Tabelle erlaubt bewusst
+    // Sternmuster und mehrere Gruppen je Muster; jeder Einkauf-Full-Load und jedes Delta
+    // ersetzt ihren Inhalt atomar aus SAP OData.
     internal static string GetPurchasingSpendDisponentRuleCreateSql() => @"
 CREATE TABLE PurchasingSpendDisponentRule (
     DisponentPattern TEXT NOT NULL,
     ProductGroup TEXT NOT NULL DEFAULT '',
     ProductGroupText TEXT NOT NULL DEFAULT '',
-    Source TEXT NOT NULL DEFAULT 'zdispo*.xlsx',
+    Source TEXT NOT NULL DEFAULT 'SAP OData',
     UpdatedAtUtc TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (DisponentPattern, ProductGroup)
 );";

@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-07
+Stand: 2026-08-11
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -9,27 +9,79 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
+## Gesamtdeploy 2026-08-11 15:51 - produktiv
+
+- Gesamter aktueller Anwendungsstand produktiv deployed; `471/471` Release-Tests.
+- Konsistentes Vorher-Backup:
+  `trafag_exporter.db.before-all-current-20260811-145332.bak`, 340.455.424 Bytes.
+- Server-DLL `4.362.752` Bytes, SHA256
+  `2A5DBC034891F5B5D3FD1EE04C123A989CA987B5020CE04A0FE5161D037177F4`, lokal/server
+  bitgleich.
+- Supplier-Fallback produktiv: `ChPlantMaster`, 66.049 MARC-Materialien Werk 1100,
+  alle 63.550 MBEW-Schluessel enthalten; 96.298 Sales-Zeilen unveraendert.
+- Neun Routen liefern HTTP 200, darunter Settings, Management, Einkauf und Logistik.
+- Einkaufs-SAP-only-Code ist ebenfalls live. Bekannter externer Blocker bleibt:
+  `ZDISPO_GRP`/`ZDISPO_SPART` fehlen in SAP. Die 45 alten Excel-Regeln sind noch
+  gespeichert, werden aber nicht mehr verwendet; Namen/Refresh bleiben bis zur
+  SAP-Aktivierung eingeschraenkt.
+- Vollnachweis: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+
+## Supplier-Fallback CH-Werkstamm 2026-08-11 - produktiv
+
+- Neuer Default: Fremdstandort ohne Supplier/Sales Type prueft die normalisierte
+  Trafag-Materialnummer gegen `MARC`, Werk 1100. Treffer = `Intern / TR_AG`.
+- Unter `Admin Bereich > Settings` auf den alten MBEW-1100-Fallback umschaltbar;
+  Einstellung ist DB-persistent und Teil des Konfigurationstransfers.
+- Eigener atomarer Cache `GroupMaterialMasters`; bei leerem Cache automatischer
+  Rueckfall auf MBEW. Dashboard, Pruefbuch und Excel rechnen identisch.
+- Messung vor Deploy: +720 Zeilen / +392 Materialien intern, davon 674 Zeilen TRIT;
+  0 bisherige Treffer gehen verloren. Produktiver Cache nach Deploy: MARC 66.049,
+  MBEW 63.550.
+- Nachweis: 471/471 Tests gruen; Details in
+  `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md`.
+- Produktiv deployed; die fehlenden SAP-Sets blockieren weiterhin nur die
+  Einkaufs-Produktgruppennamen und deren Refresh, nicht den Supplier-Fallback.
+
+## Aktueller Deploy 2026-08-11 11:23
+
+- **Admin-Menues produktiv zusammengefuehrt:** Es gibt genau eine aeussere Root-Gruppe
+  `Admin Bereich`. Darunter liegen Aktive Logins, Standorte, Transformationen, Finance Regeln,
+  Settings, Menuestruktur und Logs. Der alte Unterpunkt `Finance Cockpit > Admin` ist weg.
+  Neue DBs, Reset und die gezielte Migration der alten Standardstruktur sind durch zwei neue
+  Tests abgesichert; produktive `NavigationMenuItems` nach dem Deploy read-only bestaetigt.
+- **FPV-Pausenspiel produktiv aktualisiert:** Der fruehere Artilleriekern ist durch direkte
+  FPV-Drohnensteuerung ersetzt. Der Code ist deployed, der Reiter bleibt gemaess
+  `Pause:Enabled=false` standardmaessig ausgeblendet. Manueller Spielgefuehl-Test bleibt offen.
+- **Deploynachweis:** `461/461` Release-Tests, `28/28` FPV- und `18/18` MOD-Probes gruen.
+  DLL `4'332'032` Bytes, SHA256
+  `D1A82215B25A3D5A86E74EDFBD11F7E5E810E2A2B77A739C5C550B74D19FD7AB`, lokaler Build und
+  Server bitgleich. Sechs HTTPS-Routen liefern 200, keine Datei verschwunden. Konsistentes
+  Vorher-Backup `trafag_exporter.db.before-admin-menu-merge-20260811-112250.bak` angelegt.
+  Details: `docs/rag/DEPLOYMENT.md`, `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md`,
+  `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+
 ## Offene Punkte (nicht erledigt)
 
-- **UK 2025 WERTFEHLER GEFUNDEN UND KORRIGIERTE DATEI HOCHGELADEN, 2026-08-10 — IMPORT LAEUFT
-  NOCH NICHT.** Der Backfill vom 2026-07-28 hat die Zeilen geliefert, aber Stueckpreise statt
-  Zeilenwerte: `394'439 GBP` gegen einen Sollwert von `3'538'972 GBP` = **11 %**, betroffen
-  1'241 von 1'867 Zeilen (alle mit Menge > 1). Ursache: die Quelldatei
-  `Sales_TRUK_2026-05-11.xlsx` ist ein App-Export von VOR der Mapping-Umstellung auf
-  `SageNetSales` und enthielt schon Stueckpreise; `BuildUkBaseFile` hat trotzdem durch die
-  Menge geteilt — doppelte Kompensation. Die alte Kontrollrechnung konnte das nicht sehen, weil
-  sie den Import gegen die QUELLDATEI verglich (`395'605.82 = 395'605.82`) und damit nur belegt,
-  dass wir die Datei reproduzieren. **LEHRE: eine Kontrollrechnung gegen die eigene Quelle ist
-  keine Kontrolle — es braucht einen unabhaengigen Sollwert.**
-  Neu und versioniert: `Tools/UkBackfillFile` (prueft, welche Lesart der Spalte den Sollwert
-  trifft, und schreibt sonst NICHTS) und `Tools/ManualImportUpload` (Upload mit Sicherung der
-  alten Fassung, ohne `--replace` Abbruch). Korrigierte `TRUK_2025.xlsx` liegt seit
-  2026-08-10 13:16 im Ordner `Import/Finance/UK_B1`, aus SharePoint zurueckgeladen und
-  nachgerechnet (1'881 Zeilen, Lesart A 99.8 %); alte Fassung gesichert unter
-  `Downloads\UK_Backfill\ersetzt\`.
-  **NOCH ZU TUN: UK-Standortexport starten** (kein externer Ausloeser vorhanden), danach
-  pruefen: UK 2025 ≈ `3'533'349` GBP und Marge dreht von −502.7 % ins Plausible.
-  Details: `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`.
+- **EINKAUF-PRODUKTGRUPPEN DIREKT AUS SAP: PRODUKTIV DEPLOYED,
+  SAP-AKTIVIERUNG FEHLT (2026-08-11).** App-Start importiert keine `zdispo*.xlsx` mehr;
+  Full Load und Delta lesen `ZDISPO_GRP`/`ZDISPO_SPART` direkt aus SAP und
+  ersetzen den Cache atomar. Spend-Aufriss und Supply Chain akzeptieren nur
+  Quelle `SAP OData: ...`; manuelle/Excel-Altzeilen sind wirkungslos. `464/464`
+  Tests im Teilstand, `471/471` im Gesamtrelease gruen. Produktives `$metadata`:
+  HTTP 200, 60 EntitySets, aber die beiden ZDISPO-Sets fehlen. Der Nutzer hat den
+  Deploy trotzdem freigegeben; Produktgruppennamen fehlen daher bis zur Aktivierung
+  und Nacht-Deltas koennen daran scheitern. SAP-Methodenruempfe,
+  SEGW-Schritte und Abschlussreihenfolge:
+  `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
+
+- **VERWAISTE LEGENDENZEILE STEHT WEITER IN DEN PRODUKTIVDATEN** (Nebenbefund aus dem
+  UK-Wertfix, am 2026-08-11 im neuen Export erneut bestaetigt): eine Zeile mit
+  `TSC = "Subsidiary abbreviation / company identifier"`, Jahr 2026, Wert `0.00`. Der Codefix
+  `9c0451e` verhindert nur den NEUIMPORT. Entfernen wird er sie nie, weil Manual-Importe den
+  Bestand je TSC ersetzen und diese TSC kein Import je anfasst. Wertmaessig harmlos, aber sie
+  taucht in JEDER TSC-Gruppierung als eigener „Standort" auf. Aufraeumen braucht ein gezieltes
+  `DELETE` auf `CentralSalesRecords` und ist bewusst ein eigener Schritt, weil er die
+  Produktivdatenbank beruehrt.
 - **PAUSENREITER STANDARDMAESSIG AUS, deployt 2026-08-10 07:05** (Commit `8e09774`,
   `459/459`). `Pause:Enabled` startet auf `false`: kein Menueintrag links, und `/pause`
   zeigt nur den Hinweis statt das Spiel zu laden. Einschalten unter **Admin > Settings**,
@@ -57,8 +109,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `bin/Release/net8.0/BiDashboard.dll`; ohne diesen Vergleich waere ein Deploy gemeldet
   worden, der nie stattgefunden hat. Publish IMMER aus PowerShell. Streuverzeichnis
   entfernt (enthielt keine Datenbank), Produktion war zu keinem Zeitpunkt veraendert.
-- **Pausenspiel `/pause` Stufe 1 gebaut UND DEPLOYT (2026-08-07 17:05), aber NIE IN
-  EINEM BROWSER GELAUFEN.** Rundenkampf mit Drohnen in 3D (three.js, liegt bereits global),
+- **Historischer Pausenspiel-Stand vom 07.08.; am 11.08. durch FPV ersetzt:** Stufe 1 war
+  gebaut und deployed, aber nie in einem Browser gelaufen. Rundenkampf mit Drohnen in 3D
+  (three.js, liegt bereits global),
   Hotseat oder gegen den Rechner, Namen im Startbildschirm. Rein additiv: neue Route,
   eigenes JS-Modul, kein Datenzugriff, kein Serverzustand — Namen und Bestenliste
   liegen im `localStorage` und verlassen den Browser nicht. Ausblendbar ueber
@@ -78,10 +131,11 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Vier echte Fehler haben die Pruefsonden vorher gefunden — u. a. spiegelverkehrte
   Explosionskrater und ein Rechnergegner, der nie lief und deshalb aus unerreichbarer
   Entfernung ins Leere schoss. Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
-- **Deploy-Konsole `Tools/DeployConsole` gebaut (2026-08-07), aber NOCH NIE PRODUKTIV
-  GELAUFEN.** Verifiziert nur gegen einen nachgebauten Share (`Tools/DeployConsole.Probe`,
-  25 Pruefungen gruen, echter `dotnet publish`). Der erste echte Deploy darueber ist eine
-  bewusste Entscheidung, keine Selbstverstaendlichkeit. ZWEI FALLEN DABEI GEMESSEN, die
+- **Deploy-Konsole `Tools/DeployConsole` gebaut (2026-08-07), erstmals produktiv erfolgreich
+  gelaufen am 11.08.2026.** Zuvor gegen einen nachgebauten Share verifiziert
+  (`Tools/DeployConsole.Probe`, 25 Pruefungen gruen, echter `dotnet publish`). Der erste
+  Produktivlauf erfolgte kopflos ueber `.tmp_tools/DeployHeadless` und endete ohne Alarm.
+  ZWEI FALLEN DABEI GEMESSEN, die
   unabhaengig vom Werkzeug gelten: (1) ein erfolgreicher `dotnet publish` kann
   `BiDashboard.dll` STILL ueberspringen, wenn die Datei im Ziel neuer ist als der frische
   Build (PreserveNewest) — die alte Version laeuft dann weiter; Gegenprobe ist der
@@ -105,6 +159,38 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Innenumsatz-Frage an Andreas: `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a.
 
 ## Aktueller Kurzstand
+
+- 2026-08-11, UK 2025 WERTFEHLER BEHOBEN UND ABGENOMMEN. Ingo hat den UK-Standortexport
+  gestartet und das zentrale File neu erzeugt (`neu.xlsx`, 2026-08-11 09:45, 96'234
+  Datenzeilen). Alle drei Abnahmekriterien aus
+  `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` sind erfuellt: UK 2025 steht bei
+  **`3'529'861.80 GBP`** gegen den Finance-Sollwert `3'538'972` = **99.7 %** (vorher
+  `394'439` = 11 %), die **Marge dreht von −502.7 % auf +33.8 %** und liegt damit in der
+  Bandbreite der anderen Standorte (TRCH 15.7, TRIT 34.3, TRES 38.6, TRAT 38.7, TRDE 41.2,
+  TRUS 45.2, TRIN 49.2, TRFR 49.3 %), die **Zeilenzahl bleibt bei `1'867`**. Der Ist-Wert
+  trifft auf den Rappen die unabhaengige Rekonstruktion vom 2026-08-10 (`3'529'862`), die vor
+  dem Fix aus der Quelldatei gerechnet wurde. Damit ist der Themenlistenpunkt „Daten TR UK
+  fuer 2025" erledigt. Geprueft mit dem neuen read-only Werkzeug
+  `.tmp_tools/CheckUk2025Result`, das die Spalten ueber die KOPFZEILE aufloest und
+  ausschliesslich gegen den Finance-Sollwert vergleicht, nie gegen die hochgeladene
+  Importdatei — genau dieser Selbstvergleich hatte den Fehler urspruenglich durchgelassen.
+  ZWEI NEBENBEFUNDE, beide gemessen: (1) **Zeile 2 des zentralen Exports ist eine echte
+  TRAT-DATENZEILE, keine Beschreibungszeile** — das feste `Skip(2)` aus der Analyse vom
+  2026-08-10 verliert dort still eine Verkaufszeile; richtig sind `96'234` Datenzeilen und
+  `682` statt `681` Zeilen fuer TRAT 2026. Die Konvention „96'233 Datenzeilen" aus dem
+  UK-Dokument gilt fuer diesen Export NICHT. (2) Im ZENTRALEN Export enthaelt
+  `Sales Price/Value` den bereits gemappten Zeilenwert und ist deshalb identisch mit
+  `Finance | Net Sales Actual`; der Stueckpreis steht nur in der Importdatei. NICHT MOEGLICH
+  war ein Vorher-Nachher-Vergleich mit demselben Werkzeug, weil `all.xlsx` nicht mehr im
+  Wurzelverzeichnis liegt — die Ausgangswerte stammen aus dem Dokument vom 2026-08-10.
+  Weiterhin offen: die verwaiste Legendenzeile (siehe offene Punkte).
+  **DIE LEHRE AUS DEM GANZEN VORGANG, gilt ueber UK hinaus: eine Kontrollrechnung gegen die
+  eigene Quelle ist keine Kontrolle.** Der Fehler ueberlebte zwei Pruefungen, weil beide nur
+  belegten, dass wir die Importdatei reproduzieren (`395'605.82 = 395'605.82`) bzw. dass die
+  Zeilen vollstaendig sind. Erst ein UNABHAENGIGER Sollwert hat ihn sichtbar gemacht. Die
+  Werkzeuge dazu sind versioniert: `Tools/UkBackfillFile` prueft, welche Lesart einer Spalte
+  den Sollwert trifft, und schreibt bei „keine Lesart trifft" oder „beide treffen" NICHTS;
+  `Tools/ManualImportUpload` sichert vor dem Ueberschreiben die alte Fassung.
 
 - 2026-08-07, FINANCE-INDIKATOREN DURCHGESEHEN — DEPLOYED UND VERIFIZIERT
   (10:22 MESZ, Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests im

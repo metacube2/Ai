@@ -1,13 +1,35 @@
 # Einkauf Spend: Produktgruppen und ABC/XYZ
 
-Stand: 2026-08-06
+Stand: 2026-08-11
 
-Status: **ZDISPO-Ergaenzung produktiv deployed und technisch verifiziert am
-2026-08-06, 13:57 MESZ** (Funktionscommit `0a8a4c9`; Grundfunktion
-`bb009bf`). Die beiden gelieferten Referenzdateien `zdispo_grp.xlsx` und
-`zdispo_spart.xlsx` sind eingebunden. Sie ergaenzen ausschliesslich den
-Produktgruppen-Aufriss; bestehende manuelle Zuordnungen bleiben fuehrend und
-werden nicht ueberschrieben.
+Aktueller Status: Die direkte SAP-OData-Strecke ist im Anwendungscode umgesetzt
+und mit `464/464` Tests verifiziert. Die SAP-EntitySets fehlen am 2026-08-11 noch
+im produktiven `$metadata`; deshalb ist dieser neue Stand noch nicht deployed.
+Vollstaendiger Nachweis und Aktivierungsreihenfolge:
+`docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
+
+Historischer Produktivstand: Die Excel-ZDISPO-Ergaenzung wurde am 2026-08-06
+deployed. Sie bleibt bis zum gemeinsamen SAP-/App-Deploy auf dem Server aktiv.
+
+## Klarstellung Warengruppe versus Produktgruppe (2026-08-11)
+
+- **Warengruppe** kommt aus SAP: bevorzugt wird die aktuelle Materialstamm-
+  Warengruppe `MARA001Set.Matkl`; nur wenn sie fehlt, wird die historische
+  Beleg-Warengruppe `EKPOSet.Matkl` verwendet. Die deutschen Bezeichnungen
+  stammen aus einer lokal im Code hinterlegten SAP-T023T-Listenausgabe.
+- **Produktgruppe** ist eine abgeleitete Einkaufssicht und soll fachlich
+  vollstaendig aus SAP kommen. Die Datenkette ist
+  `EKPO-MATNR -> ZLO03-Komponente -> Kopfmaterial -> VknrDispo -> ZC23/ZDISPO-Produktgruppe`.
+  Der neue Anwendungscode liest auch die letzte Zuordnung direkt aus SAP OData.
+  Im produktiven Gateway fehlen dafuer noch die EntitySets.
+- Der produktiv verifizierte Stand vom 2026-08-06 hatte `0` direkt geladene
+  ZC23-Zuordnungen und `45` Zuordnungen aus `42` ZDISPO-Mustern. Die Anwendung
+  uebernimmt diese SAP-ZDISPO-Referenzdaten derzeit technisch aus den beiden
+  Exportdateien `zdispo_grp.xlsx` und `zdispo_spart.xlsx`. Die Exceldateien sind
+  damit ein temporaerer Transportweg, nicht das fachlich fuehrende System.
+- Die Exceldateien sind im neuen Code weder Importquelle noch Notfall-Fallback
+  und werden nicht mehr in Build oder Publish kopiert.
+- `check.xlsx` ist an dieser Zuordnung nicht beteiligt.
 
 ## Entscheidung 1: Produktgruppen-Aufriss
 
@@ -20,26 +42,19 @@ Die Zuordnung verwendet die vorhandene Datenkette:
 
 `EKPO-MATNR -> ZLO03-Komponente -> verwendendes Kopfmaterial -> VknrDispo -> Produktname`
 
-`VknrDispo` wird beim ZLO03-Load neu als eigene Cache-Spalte gespeichert. Die
-optionale Tabelle `PurchasingProductGroupMap` enthaelt die Referenz
-`Disponent -> ProductGroup / ProductGroupText` mit Quelle `ZC23`.
+`VknrDispo` wird beim ZLO03-Load als eigene Cache-Spalte gespeichert. Full Load
+und Delta lesen die Produktgruppenreferenz direkt aus SAP:
 
-Ergaenzend wird beim App-Start nur die separate Tabelle
-`PurchasingSpendDisponentRule` aus den beiden ZDISPO-Dateien aktualisiert:
-
-- `zdispo_grp.xlsx`: `DISPO_KZ` (Disponent oder Muster) -> `DISPO`;
-- `zdispo_spart.xlsx`: `DISPO` -> lesbarer `DESCR`-Produktname;
+- SAP `ZDISPO_GRP`: `DISPO_KZ` (Disponent oder Muster) -> `DISPO`;
+- SAP `ZDISPO_SPART`: `DISPO` -> lesbarer `DESCR`-Produktname;
 - exakter Disponent gewinnt vor einem Sternmuster; bei mehreren Mustern gewinnt
   das laengste passende Muster;
-- Prioritaet: manuelle `PurchasingProductGroupMap` vor ZDISPO vor
-  `Disponent <Code>`.
+- ohne SAP-Treffer bleibt `Disponent <Code>` sichtbar.
 
-Der Import schreibt keine Zeile der bestehenden manuellen Tabelle und ist nur
-in der Perspektive `Produktgruppe` des Reiters `Spend-Aufriss` verdrahtet. Die
-anderen Einkaufs- und Finance-Sichten bleiben unveraendert.
+Nur Regeln mit Quelle `SAP OData: ...` werden ausgewertet. Alte Excel- und
+manuelle Cachezeilen sind damit wirkungslos.
 
-Solange ein Disponent weder einen manuellen noch einen ZDISPO-Treffer hat,
-lautet die sichtbare Gruppe
+Solange ein Disponent keinen SAP-ZDISPO-Treffer hat, lautet die sichtbare Gruppe
 `Disponent <Code>`. Materialien ohne ZLO03-/Disponenten-Zuordnung bleiben als
 `ohne Produktgruppe` sichtbar. Es gibt keinen stillen Ausschluss.
 
@@ -88,9 +103,9 @@ von Disposition, Sicherheitsbestand oder Lieferant.
 
 - Einen bekannten Mehrfachverwendungsfall mit Einkauf und Disposition gegen
   ZDISPO pruefen.
-- Fuer `DISPO D5` fehlt in `zdispo_spart.xlsx` ein `DESCR`; die GUI zeigt
+- Fuer `DISPO D5` fehlte in der bisherigen SAP-Listenausgabe ein `DESCR`; die GUI zeigt
   deshalb ehrlich den Code `D5`. Fachlich klaeren, ob ein Name nachzuliefern ist.
-- Eigentuemmer und Aktualisierungsweg der beiden ZDISPO-Dateien festlegen.
+- SAP-EntitySets `ZDISPO_GRP` und `ZDISPO_SPART` aktivieren und live pruefen.
 - Nach Deploy den ZLO03-Full-Load ausfuehren, damit `VknrDispo` im Cache gefuellt
   ist.
 - Summe des Produktgruppen-Aufrisses gegen den unverteilten Gesamt-Spend eines

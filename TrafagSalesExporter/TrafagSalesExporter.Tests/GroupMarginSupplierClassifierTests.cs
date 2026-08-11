@@ -235,4 +235,68 @@ public class GroupMarginSupplierClassifierTests
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public void Resolve_NewMode_UsesChPlantMaster_InsteadOfCostTable()
+    {
+        var costs = GroupCostsWith("OLD-COST-MATERIAL");
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "NEW-MARC-MATERIAL"
+        };
+
+        var newHit = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "NEW-MARC-MATERIAL", costs, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+        var oldOnlyHit = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "OLD-COST-MATERIAL", costs, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, newHit);
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, oldOnlyHit);
+    }
+
+    [Fact]
+    public void Resolve_OldMode_UsesCostTable_AndIgnoresChPlantMaster()
+    {
+        var costs = GroupCostsWith("OLD-COST-MATERIAL");
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "NEW-MARC-MATERIAL"
+        };
+
+        var oldHit = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "OLD-COST-MATERIAL", costs, null,
+            chPlantMaterials, SupplierFallbackModes.GroupStandardCosts);
+        var newOnlyHit = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "NEW-MARC-MATERIAL", costs, null,
+            chPlantMaterials, SupplierFallbackModes.GroupStandardCosts);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, oldHit);
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, newOnlyHit);
+    }
+
+    [Fact]
+    public void Resolve_NewMode_WithEmptyPlantCache_FallsBackToOldMode()
+    {
+        var costs = GroupCostsWith("ART123");
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRDE", "ART123", costs, null,
+            new HashSet<string>(StringComparer.Ordinal), SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_NewMode_DoesNotOverrideExplicitExternalSupplier()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            "V-001", "External Supplier", "DE", "TRDE", "ART123", null, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result);
+    }
 }

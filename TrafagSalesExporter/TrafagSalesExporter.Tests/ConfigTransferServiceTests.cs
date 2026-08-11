@@ -92,7 +92,8 @@ public class ConfigTransferServiceTests : IDisposable
                 TimerEnabled = false,
                 DebugLoggingEnabled = true,
                 LocalSiteExportFolder = "D:\\site",
-                LocalConsolidatedExportFolder = "D:\\consolidated"
+                LocalConsolidatedExportFolder = "D:\\consolidated",
+                SupplierFallbackMode = SupplierFallbackModes.GroupStandardCosts
             },
             SourceSystemDefinitions =
             [
@@ -197,6 +198,7 @@ public class ConfigTransferServiceTests : IDisposable
         Assert.True(settings.DebugLoggingEnabled);
         Assert.Equal("D:\\site", settings.LocalSiteExportFolder);
         Assert.Equal("D:\\consolidated", settings.LocalConsolidatedExportFolder);
+        Assert.Equal(SupplierFallbackModes.GroupStandardCosts, settings.SupplierFallbackMode);
 
         Assert.Equal("preserved-sharepoint-secret", sharePoint.ClientSecret);
         Assert.Equal("new-tenant", sharePoint.TenantId);

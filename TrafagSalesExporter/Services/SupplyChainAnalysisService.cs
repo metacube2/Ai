@@ -607,24 +607,18 @@ GROUP BY CASE WHEN ltrim(upper(trim(p.Matnr)), '0') = '' THEN '0' ELSE ltrim(upp
 
     private static async Task<ProductGroupMaps> LoadProductGroupMapsAsync(SqliteConnection conn, CancellationToken cancellationToken)
     {
-        var manual = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        await using (var command = conn.CreateCommand())
-        {
-            command.CommandText = "SELECT Disponent, ProductGroup, ProductGroupText FROM PurchasingProductGroupMap;";
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-                manual[Text(reader, 0).Trim()] = GroupLabel(Text(reader, 1), Text(reader, 2));
-        }
-
         var rules = new List<ProductGroupRule>();
         await using (var command = conn.CreateCommand())
         {
-            command.CommandText = "SELECT DisponentPattern, ProductGroup, ProductGroupText FROM PurchasingSpendDisponentRule;";
+            command.CommandText = @"
+SELECT DisponentPattern, ProductGroup, ProductGroupText
+FROM PurchasingSpendDisponentRule
+WHERE upper(trim(Source)) LIKE 'SAP ODATA%';";
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
                 rules.Add(new ProductGroupRule(Text(reader, 0).Trim(), GroupLabel(Text(reader, 1), Text(reader, 2))));
         }
-        return new ProductGroupMaps(manual, rules);
+        return new ProductGroupMaps(rules);
     }
 
     private static string ResolveProductGroups(string dispatcherList, ProductGroupMaps maps)
@@ -632,8 +626,6 @@ GROUP BY CASE WHEN ltrim(upper(trim(p.Matnr)), '0') = '' THEN '0' ELSE ltrim(upp
         var groups = dispatcherList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(dispatcher =>
             {
-                if (maps.Manual.TryGetValue(dispatcher, out var manual))
-                    return manual;
                 var rule = maps.Rules
                     .Where(candidate => RuleMatches(candidate.Pattern, dispatcher))
                     .OrderBy(candidate => candidate.Pattern.EndsWith('*') ? 1 : 0)
@@ -692,5 +684,5 @@ GROUP BY CASE WHEN ltrim(upper(trim(p.Matnr)), '0') = '' THEN '0' ELSE ltrim(upp
     private sealed record DependencySupplierFact(string MaterialKey, string Material, string Description, string Supplier, decimal SpendChf);
     private sealed record DependencyFact(string MaterialKey, string Material, string Description, int SupplierCount, string TopSupplier, decimal TopSupplierSharePercent, decimal TotalSpendChf);
     private sealed record ProductGroupRule(string Pattern, string Label);
-    private sealed record ProductGroupMaps(IReadOnlyDictionary<string, string> Manual, IReadOnlyList<ProductGroupRule> Rules);
+    private sealed record ProductGroupMaps(IReadOnlyList<ProductGroupRule> Rules);
 }

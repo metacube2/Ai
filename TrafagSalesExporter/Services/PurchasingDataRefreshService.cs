@@ -16,11 +16,16 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private const int EbelnBatchSize = 20;
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IAppEventLogService _logService;
+    private readonly IPurchasingProductGroupSapReader _productGroupSapReader;
 
-    public PurchasingDataRefreshService(IDbContextFactory<AppDbContext> dbFactory, IAppEventLogService logService)
+    public PurchasingDataRefreshService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        IAppEventLogService logService,
+        IPurchasingProductGroupSapReader productGroupSapReader)
     {
         _dbFactory = dbFactory;
         _logService = logService;
+        _productGroupSapReader = productGroupSapReader;
     }
 
     public async Task<PurchasingDataRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default)
@@ -34,6 +39,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         status.EkkoRows = await CountTableAsync(conn, "PurchasingEkkoCache", cancellationToken);
         status.EkpoRows = await CountTableAsync(conn, "PurchasingEkpoCache", cancellationToken);
         status.EketRows = await CountTableAsync(conn, "PurchasingEketCache", cancellationToken);
+        status.ProductGroupRows = await CountTableAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
         return status;
     }
 
@@ -56,6 +62,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
             var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
+            var productGroupResult = await _productGroupSapReader.ReadAsync(
+                connection.BaseUrl, connection.Username, connection.Password, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -69,10 +77,11 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await UpsertEkkoAsync(conn, transaction, ekkoRows, supplierNameMap, nowText, cancellationToken);
             await UpsertEkpoAsync(conn, transaction, ekpoRows, materialStatusMap, classificationMap, nowText, cancellationToken);
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
+            await ReplaceProductGroupRulesAsync(conn, transaction, productGroupResult, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}.";
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -125,6 +134,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
             var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
+            var productGroupResult = await _productGroupSapReader.ReadAsync(
+                connection.BaseUrl, connection.Username, connection.Password, cancellationToken);
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var conn = (SqliteConnection)db.Database.GetDbConnection();
@@ -141,11 +152,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             // Begruendung ausfuehrlich in ApplyMaterialMasterToWholeCacheAsync.
             var reclassifiedRows = await ApplyMaterialMasterToWholeCacheAsync(
                 conn, transaction, materialStatusMap, classificationMap, cancellationToken);
+            await ReplaceProductGroupRulesAsync(conn, transaction, productGroupResult, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);
-            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen.";
+            var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -594,6 +606,35 @@ VALUES ($Ebeln, $Ebelp, $Etenr, $Eindt, $Menge, $Wemng, $RawJson, $LastLoadedAtU
                 ["$RawJson"] = JsonSerializer.Serialize(row),
                 ["$LastLoadedAtUtc"] = loadedAtUtc
             }, cancellationToken);
+    }
+
+    private static async Task ReplaceProductGroupRulesAsync(
+        SqliteConnection conn,
+        SqliteTransaction transaction,
+        PurchasingProductGroupSapResult result,
+        string loadedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        // Erst nachdem SAP eine nicht-leere, validierte Liste geliefert hat, wird der alte
+        // Cache innerhalb derselben Transaktion ersetzt. Ein fehlendes/defektes EntitySet kann
+        // dadurch weder eine leere Produktgruppensicht noch einen Excel-Rueckfall erzeugen.
+        await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingSpendDisponentRule;", cancellationToken);
+        const string sql = @"
+INSERT INTO PurchasingSpendDisponentRule
+    (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc)
+VALUES
+    ($DisponentPattern, $ProductGroup, $ProductGroupText, $Source, $UpdatedAtUtc);";
+        foreach (var rule in result.Rules)
+        {
+            await ExecuteWithParametersAsync(conn, transaction, sql, new()
+            {
+                ["$DisponentPattern"] = rule.DisponentPattern,
+                ["$ProductGroup"] = rule.ProductGroup,
+                ["$ProductGroupText"] = rule.ProductGroupText,
+                ["$Source"] = $"SAP OData: {result.SourceEntitySets}",
+                ["$UpdatedAtUtc"] = loadedAtUtc
+            }, cancellationToken);
+        }
     }
 
     private async Task WriteStatusAsync(string mode, string status, DateTime? startedAtUtc, DateTime? completedAtUtc, DateTime? fromDate, DateTime? toDate, DateTime? lastSuccessfulDeltaAtUtc, int ekkoRows, int ekpoRows, int eketRows, string message, CancellationToken cancellationToken)

@@ -12,6 +12,11 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- UK 2025 ABGENOMMEN 2026-08-11: `3'529'861.80 GBP` = 99.7 % des Finance-Solls
+  `3'538'972`, Marge +33.8 % statt −502.7 %, `1'867` Zeilen. Der bis dahin
+  gefuehrte Wert `394'439` war ein Stueckpreis-statt-Zeilenwert-Fehler aus dem
+  Backfill vom 2026-07-28. Nachweis:
+  `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` Abschnitt „Abnahme 2026-08-11".
 - LIVE-PRUEFUNG 2026-07-31: TRUK enthaelt 1'867 Zeilen fuer 2025 und 1'090
   fuer 2026; UK ist in allen drei Supplier-Feldern vollstaendig. Insgesamt
   sind 77'466 von 95'396 Verkaufszeilen in allen drei Supplier-Feldern leer.
@@ -37,6 +42,16 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - Gruppenmarge ist bis zur Fachfreigabe nur Pruefsicht, nicht fuehrender Finance-Abschlusswert.
 - `DocumentRate` aus dem ERP ist ein gespeichertes Quellfeld; die App-Kurstabelle wird nur bei Anzeige-Waehrung, expliziter `ConvertCurrency`-Transformation oder Budget-CHF-Kandidat verwendet.
 - Schalter fuer Finance/Revision: `Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss`.
+- Supplier-Fallback bei Fremdstandorten ohne Supplier und ohne Sales Type: Default
+  `MARC/Werk 1100` (CH-Werkstamm), umschaltbar auf die alte
+  `MBEW/GroupStandardCosts-1100`-Regel unter `Admin Bereich > Settings`. Ein
+  expliziter Supplier gewinnt immer. Der MARC-Cache ist von den Kosten getrennt;
+  ohne MBEW-Treffer werden keine Konzernkosten erfunden. Vollnachweis:
+  `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md`.
+- Produktiv deployed am 2026-08-11: `SupplierFallbackMode=ChPlantMaster`,
+  `66'049` MARC-1100-Materialien dauerhaft vor und nach App-Neustart bestaetigt;
+  `63'550` MBEW-Schluessel vollstaendig enthalten. Deploynachweis:
+  `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
 
 ## Offene Fachpunkte
 

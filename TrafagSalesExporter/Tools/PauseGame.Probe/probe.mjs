@@ -1,15 +1,13 @@
-// Kopfloser Test des Spielkerns von wwwroot/js/pausegame.js.
+// Kopfloser Regressionstest fuer den rechnenden Kern des FPV-Pausenspiels.
 //
-// Es gibt in dieser Umgebung keine Browser-Automatisierung, das Spielgefuehl kann
-// also niemand ausser Ingo pruefen. Was sich OHNE Browser pruefen laesst, ist der
-// rechnende Teil: Gelaendeerzeugung, Einschlag, Bodenhoehe und Ballistik. Genau der
-// entscheidet, ob das Spiel ueberhaupt funktioniert - Licht und Kamera sind Optik.
-//
-// Aufruf:  node Tools/PauseGame.Probe/probe.mjs
+// Aufruf: node Tools/PauseGame.Probe/probe.mjs
 
 import { __testHooks as H } from "../../wwwroot/js/pausegame.js";
 
-const { MASK_W, MASK_H, MAX_CLIMB } = H.constants;
+const {
+  WORLD_W, WORLD_H, DRONE_RADIUS, MAX_SPEED, CHECKPOINT_RADIUS, GOAL_RADIUS,
+  FLIGHT_LIMIT,
+} = H.constants;
 
 let failures = 0;
 function check(name, ok, detail) {
@@ -17,218 +15,164 @@ function check(name, ok, detail) {
   if (!ok) failures++;
 }
 
-// Ersatz fuer den Masken-Canvas: paintMask braucht nur diese drei Faehigkeiten.
-function fakeContext() {
-  return {
-    createImageData: (w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
-    putImageData: () => {},
-  };
-}
+// ---------------------------------------------------------- Strecke
 
-function freshState(seed) {
-  const terrain = H.createTerrain(seed);
-  const state = {
-    terrain,
-    maskCtx: fakeContext(),
-    maskTexture: { needsUpdate: false },
-    worms: [],
-    wind: 0,
-    waterLevel: H.constants.WATER_LEVEL_START,
-  };
-  H.setState(state);
-  return state;
-}
+let lowestGround = Infinity;
+let highestGround = -Infinity;
+let steepestStep = 0;
+let everyWaypointClear = true;
+let everyGoalClear = true;
 
-// ---------------------------------------------------------- Gelaende
-
-freshState(1234);
-
-let minTop = Infinity;
-let maxTop = -Infinity;
-let maxStep = 0;
-let previous = H.groundHeightAt(0);
-for (let x = 0; x < MASK_W; x++) {
-  const top = H.groundHeightAt(x);
-  minTop = Math.min(minTop, top);
-  maxTop = Math.max(maxTop, top);
-  maxStep = Math.max(maxStep, Math.abs(top - previous));
-  previous = top;
-}
-check("Gelaende hat ueberall Boden", minTop > 0, `niedrigste Stelle ${minTop} px`);
-check("Gelaende bleibt unter der Decke", maxTop < MASK_H - 40, `hoechste Stelle ${maxTop} px`);
-check("Gelaende ist begehbar (keine Stufe ueber MAX_CLIMB)", maxStep <= MAX_CLIMB,
-  `groesste Stufe ${maxStep} px, erlaubt ${MAX_CLIMB}`);
-check("Gelaende liegt ueber dem Wasserstand", minTop > H.constants.WATER_LEVEL_START,
-  `${minTop} > ${H.constants.WATER_LEVEL_START}`);
-
-// Ueber mehrere Startwerte, damit nicht ein guenstiger Zufall das Ergebnis traegt.
-let worstStep = 0;
-let lowest = Infinity;
 for (let seed = 1; seed <= 40; seed++) {
-  freshState(seed * 7919);
-  let prev = H.groundHeightAt(0);
-  for (let x = 1; x < MASK_W; x++) {
-    const top = H.groundHeightAt(x);
-    worstStep = Math.max(worstStep, Math.abs(top - prev));
-    lowest = Math.min(lowest, top);
-    prev = top;
+  const course = H.createCourse(seed * 7919, seed % 3 === 0 ? "hard" : "normal");
+  let previous = H.groundHeightAt(course, 0);
+  for (let x = 0; x <= WORLD_W; x++) {
+    const ground = H.groundHeightAt(course, x);
+    lowestGround = Math.min(lowestGround, ground);
+    highestGround = Math.max(highestGround, ground);
+    steepestStep = Math.max(steepestStep, Math.abs(ground - previous));
+    previous = ground;
   }
-}
-check("40 Zufallskarten alle begehbar", worstStep <= MAX_CLIMB, `groesste Stufe ${worstStep} px`);
-check("40 Zufallskarten alle ueber Wasser", lowest > H.constants.WATER_LEVEL_START, `tiefste Stelle ${lowest} px`);
-
-// ---------------------------------------------------------- Einschlag
-
-const state = freshState(4242);
-const holeX = 600;
-const surface = H.groundHeightAt(holeX);
-const solidBefore = H.isSolid(holeX, surface - 20);
-H.carve(holeX, surface - 20, 40);
-const solidAfter = H.isSolid(holeX, surface - 20);
-const edgeUntouched = H.isSolid(holeX + 120, surface - 20);
-
-check("Vor dem Einschlag ist dort Boden", solidBefore, "solide");
-check("Einschlag entfernt Boden an der richtigen Stelle", !solidAfter, "Loch vorhanden");
-check("Einschlag laesst entfernten Boden in Ruhe", edgeUntouched, "120 px daneben noch solide");
-check("Bodenhoehe faellt nach dem Einschlag", H.groundHeightAt(holeX) < surface,
-  `${H.groundHeightAt(holeX)} < ${surface}`);
-check("Textur wurde zum Auffrischen vorgemerkt", state.maskTexture.needsUpdate === true, "needsUpdate");
-
-// ---------------------------------------------------------- Ballistik
-
-freshState(777);
-const shooter = { x: 300, y: H.groundHeightAt(300) + 8, alive: true, team: 0 };
-const hit = H.simulateShot(shooter, 45, 360, 1, 1);
-check("Wurf landet irgendwo im Gelaende", hit !== null && hit.x > shooter.x,
-  hit ? `bei x=${hit.x.toFixed(0)}` : "kein Treffer");
-
-// Der eigentliche Test des Rechnergegners: findet die Rastersuche eine Loesung, die
-// nahe genug am Ziel landet, um Schaden zu machen? Sprengdrohnenradius ist 44 px.
-const st = H.getState();
-const target = { x: 780, y: H.groundHeightAt(780) + 8, alive: true, team: 1, marked: false };
-st.worms = [shooter, target];
-st.config = { difficulty: "hard" };
-
-// planAiShot streut absichtlich zufaellig. Fuer einen Regressionstest muss das
-// reproduzierbar sein, sonst schwankt das Ergebnis von Lauf zu Lauf.
-const realRandom = Math.random;
-let rngState = 20260807;
-Math.random = () => {
-  rngState = (rngState * 1664525 + 1013904223) >>> 0;
-  return rngState / 4294967296;
-};
-
-// Ueber viele Zufallslagen messen, nicht an einer festen Geometrie. Gemessen und
-// nachgerechnet: steht das Ziel genau auf einer Kuppe, ist die Flugbahn zweigipflig -
-// haarscharf zu flach heisst Hang, haarscharf zu hoch heisst weit dahinter. Dort
-// verfehlt JEDER Schuetze regelmaessig, auch ein perfekter. Ein Test auf einzelne
-// Treffer misst deshalb die Landschaft, nicht den Gegner; darum Median ueber viele
-// Lagen und ein Vergleich gegen einen Schuetzen, der einfach stur 45 Grad nimmt.
-function measureAi(difficulty, samples) {
-  st.config = { difficulty };
-  const distances = [];
-  let naiveTotal = 0;
-  for (let i = 0; i < samples; i++) {
-    const terrain = H.createTerrain(1000 + i * 131);
-    H.getState().terrain = terrain;
-    // In Wurfweite: die groesste Reichweite liegt bei rund 560 px (Schub hoechstens
-    // 540). Weiter entfernte Ziele sind kein Zielproblem, sondern ein Laufproblem -
-    // die stehen im Anmarsch-Test darunter.
-    const sx = 150 + (i * 37) % 400;
-    const tx = sx + 200 + (i * 53) % 260;
-    const a = { x: sx, y: H.groundHeightAt(sx) + 8, alive: true, team: 0 };
-    const b = { x: tx, y: H.groundHeightAt(tx) + 8, alive: true, team: 1, marked: false };
-    H.getState().worms = [a, b];
-    H.getState().wind = ((i % 13) - 6) * 15;
-
-    const plan = H.planAiShot(a);
-    const land = plan ? H.simulateShot(a, plan.angle, plan.power, plan.dir, 1) : null;
-    distances.push(land ? Math.hypot(land.x - b.x, land.y - b.y) : 9999);
-
-    const naive = H.simulateShot(a, 45, 350, 1, 1);
-    naiveTotal += naive ? Math.hypot(naive.x - b.x, naive.y - b.y) : 9999;
+  for (const point of course.checkpoints) {
+    everyWaypointClear &&= !H.collides(course, { x: point.x, y: point.y });
   }
-  distances.sort((p, q) => p - q);
-  return {
-    median: distances[Math.floor(distances.length / 2)],
-    hits: distances.filter(d => d < 66).length,
-    naiveAverage: naiveTotal / samples,
-    samples,
-  };
+  everyGoalClear &&= !H.collides(course, { x: course.goal.x, y: course.goal.y });
 }
 
-const hard = measureAi("hard", 40);
-const easy = measureAi("easy", 40);
+check("40 Strecken haben durchgehend Boden", lowestGround > 35,
+  `niedrigster Boden ${lowestGround.toFixed(1)} px`);
+check("Gelaende laesst genuegend Flugraum", highestGround < WORLD_H * 0.25,
+  `hoechster Boden ${highestGround.toFixed(1)} px`);
+check("Gelaendeprofil hat keine Pixelzacken", steepestStep < 2,
+  `groesster Einzelschritt ${steepestStep.toFixed(2)} px`);
+check("Alle Kontrollpunkte liegen kollisionsfrei", everyWaypointClear, "40 Zufallsstrecken");
+check("Alle Zielpunkte liegen kollisionsfrei", everyGoalClear, "40 Zufallsstrecken");
 
-check("Rechnergegner zielt wirklich (besser als stur 45 Grad)",
-  hard.median < hard.naiveAverage / 3,
-  `Median ${hard.median.toFixed(0)} px gegen ${hard.naiveAverage.toFixed(0)} px bei sturem Schuss`);
-check("Hoechste Stufe trifft ueberwiegend im Wirkradius",
-  hard.hits >= hard.samples * 0.7,
-  `${hard.hits} von ${hard.samples} unter 66 px, Median ${hard.median.toFixed(0)} px`);
-check("Leichter Grad trifft spuerbar schlechter", easy.hits < hard.hits,
-  `leicht ${easy.hits} gegen schwer ${hard.hits} von ${hard.samples}`);
-check("Rechnergegner haelt den Schub im Bedienbereich (120-540)",
-  (() => {
-    for (let i = 0; i < 40; i++) {
-      H.getState().wind = ((i % 13) - 6) * 15;
-      const plan = H.planAiShot(H.getState().worms[0]);
-      if (plan && (plan.power < 120 || plan.power > 540)) return false;
-    }
-    return true;
-  })(),
-  "kein Schuss staerker als ein Mensch schiessen kann");
+const course = H.createCourse(20260811, "normal");
+check("Strecke enthaelt vier Kontrollpunkte", course.checkpoints.length === 4,
+  `${course.checkpoints.length} Kontrollpunkte`);
+check("Strecke enthaelt wechselnde Hindernisse", course.obstacles.length >= 4,
+  `${course.obstacles.length} Hindernisse`);
 
-// Anmarsch: ausser Wurfweite muss der Gegner laufen statt ins Leere zu schiessen.
-{
-  const terrain = H.createTerrain(31337);
-  H.getState().terrain = terrain;
-  H.getState().wind = 0;
-  H.getState().config = { difficulty: "hard" };
+// ---------------------------------------------------------- Kollision
 
-  const shooterFar = { x: 200, y: H.groundHeightAt(200) + 8, alive: true, team: 0 };
-  const targetFar = { x: 1000, y: H.groundHeightAt(1000) + 8, alive: true, team: 1, marked: false };
-  H.getState().worms = [shooterFar, targetFar];
-  const far = H.aiApproach(shooterFar);
-  check("Ausser Reichweite laeuft der Gegner auf das Ziel zu", far.dir === 1,
-    `Richtung ${far.dir}, Abstand ${(targetFar.x - shooterFar.x)} px`);
+const firstObstacle = course.obstacles[0];
+check("Kreistest erkennt Treffer auf Rechteck",
+  H.circleHitsRect(firstObstacle.x - 5, firstObstacle.y + 20, 8, firstObstacle),
+  "5 px vor der Kante bei Radius 8");
+check("Kreistest laesst entfernte Rechtecke in Ruhe",
+  !H.circleHitsRect(firstObstacle.x - 50, firstObstacle.y + 20, 8, firstObstacle),
+  "50 px vor der Kante");
+check("Drohne kollidiert mit dem Boden",
+  H.collides(course, { x: 220, y: H.groundHeightAt(course, 220) + DRONE_RADIUS - 1 }),
+  "Unterkante liegt einen Pixel im Boden");
+check("Drohne kollidiert mit einem Bauwerk",
+  H.collides(course, { x: firstObstacle.x + firstObstacle.w / 2, y: firstObstacle.y + 40 }),
+  firstObstacle.kind);
+check("Drohne ist am Start frei",
+  !H.collides(course, H.createDrone(course)),
+  `Start bei ${course.start.x}/${course.start.y.toFixed(0)}`);
 
-  // Spiegelbildlich: Schuetze rechts, Ziel weit links - ebenfalls ausser Reichweite.
-  const shooterRight = { x: 1000, y: H.groundHeightAt(1000) + 6, alive: true, team: 0 };
-  const targetLeft = { x: 100, y: H.groundHeightAt(100) + 6, alive: true, team: 1, marked: false };
-  H.getState().worms = [shooterRight, targetLeft];
-  const leftward = H.aiApproach(shooterRight);
-  check("Er laeuft auch nach links, wenn das Ziel links steht", leftward.dir === -1,
-    `Richtung ${leftward.dir}, Abstand ${(shooterRight.x - targetLeft.x)} px`);
+// ---------------------------------------------------------- Steuerung und Ressourcen
 
-  const near = { x: 480, y: H.groundHeightAt(480) + 8, alive: true, team: 1, marked: false };
-  H.getState().worms = [shooterFar, near];
-  const close = H.aiApproach(shooterFar);
-  check("In Reichweite laeuft er nicht mehr, sondern zielt",
-    close.dir === 0 && close.plan !== null,
-    `Richtung ${close.dir}, bester Abstand ${close.plan ? close.plan.dist.toFixed(0) : "-"} px`);
+const moving = H.createDrone(course);
+const startX = moving.x;
+const startY = moving.y;
+for (let i = 0; i < 60; i++) H.stepDrone(moving, { x: 1, y: 1, boost: false }, course, 1 / 60);
+check("Direkte Steuerung bewegt nach rechts", moving.x > startX + 70,
+  `${(moving.x - startX).toFixed(1)} px in einer Sekunde`);
+check("Direkte Steuerung bewegt nach oben", moving.y > startY + 70,
+  `${(moving.y - startY).toFixed(1)} px in einer Sekunde`);
+check("Geschwindigkeit bleibt begrenzt", Math.hypot(moving.vx, moving.vy) <= MAX_SPEED + 0.001,
+  `${Math.hypot(moving.vx, moving.vy).toFixed(1)} von ${MAX_SPEED}`);
+check("Flug verbraucht Akku", moving.battery < 92,
+  `${moving.battery.toFixed(1)} % verbleiben`);
 
-  // Anmarsch genau so getaktet wie in update(): erst walk, dann die Schwerkraft.
-  // walk hebt den Wurm nur an, herunter zieht ihn ausschliesslich stepWorm - ohne
-  // den zweiten Teil bliebe er beim ersten Gefaelle in der Luft stehen.
-  const walker = { x: 200, y: H.groundHeightAt(200) + 6, alive: true, team: 0, facing: 1, vx: 0, vy: 0, health: 100 };
-  H.getState().worms = [walker, targetFar];
-  H.getState().teams = [{ name: "A" }, { name: "B" }];
-  const startX = walker.x;
-  for (let step = 0; step < 420; step++) {          // 7 s bei 60 Hz
-    H.walk(walker, 1, 1 / 60);
-    H.stepWorm(walker, 1 / 60);
+const normalBattery = H.createDrone(course);
+const boostBattery = H.createDrone(course);
+for (let i = 0; i < 120; i++) {
+  H.stepDrone(normalBattery, { x: 1, y: 0, boost: false }, course, 1 / 60);
+  H.stepDrone(boostBattery, { x: 1, y: 0, boost: true }, course, 1 / 60);
+}
+check("Schub kostet mehr Akku", boostBattery.battery < normalBattery.battery - 1,
+  `Schub ${boostBattery.battery.toFixed(1)} %, normal ${normalBattery.battery.toFixed(1)} %`);
+
+const startSignal = H.computeSignal(course, H.createDrone(course), 0);
+const goalSignal = H.computeSignal(course, { x: course.goal.x, y: course.goal.y }, course.checkpoints.length);
+check("Funksignal ist am Sender stark", startSignal > 85, `${startSignal.toFixed(0)} %`);
+check("Funksignal nimmt mit Entfernung ab", goalSignal < startSignal - 25 && goalSignal > 15,
+  `Start ${startSignal.toFixed(0)} %, Ziel ${goalSignal.toFixed(0)} %`);
+
+const hardCourse = H.createCourse(20260811, "hard");
+const offRoute = H.createDrone(hardCourse);
+offRoute.x = 1580;
+offRoute.y = 630;
+const offRouteSignal = H.computeSignal(hardCourse, offRoute, 0);
+for (let i = 0; i < 6; i++) H.stepDrone(offRoute, { x: 0, y: 0, boost: false }, hardCourse, 0.5);
+check("Falsche Hochroute ohne Relais kann das Signal verlieren", offRouteSignal <= 1,
+  `${offRouteSignal.toFixed(0)} % Signal`);
+check("Vollstaendiger Signalausfall sammelt Abbruchzeit", offRoute.signalLostFor >= 2.4,
+  `${offRoute.signalLostFor.toFixed(1)} s ohne Verbindung`);
+
+// ---------------------------------------------------------- Kontrollpunkte und Ziel
+
+const progressDrone = H.createDrone(course);
+progressDrone.x = course.checkpoints[0].x + CHECKPOINT_RADIUS - 1;
+progressDrone.y = course.checkpoints[0].y;
+check("Kontrollring wird innerhalb des Radius gewertet", H.updateCheckpoint(course, progressDrone),
+  `Radius ${CHECKPOINT_RADIUS}`);
+check("Kontrollringe muessen in Reihenfolge durchflogen werden",
+  progressDrone.checkpointIndex === 1 && !H.reachedGoal(course, progressDrone),
+  `Fortschritt ${progressDrone.checkpointIndex}/${course.checkpoints.length}`);
+
+progressDrone.checkpointIndex = course.checkpoints.length;
+progressDrone.x = course.goal.x + GOAL_RADIUS - 1;
+progressDrone.y = course.goal.y;
+check("Zielzone beendet einen vollstaendigen Flug", H.reachedGoal(course, progressDrone),
+  `Zielradius ${GOAL_RADIUS}`);
+
+// ---------------------------------------------------------- Referenzpilot
+
+function flyReference(seed, difficulty) {
+  const referenceCourse = H.createCourse(seed, difficulty);
+  const drone = H.createDrone(referenceCourse);
+  let status = "Zeitlimit";
+  for (let frame = 0; frame < FLIGHT_LIMIT * 60; frame++) {
+    const input = H.autopilotControl(drone, referenceCourse, difficulty);
+    H.stepDrone(drone, input, referenceCourse, 1 / 60);
+    H.updateCheckpoint(referenceCourse, drone);
+    if (H.reachedGoal(referenceCourse, drone)) { status = "Ziel"; break; }
+    if (H.collides(referenceCourse, drone)) { status = "Kollision"; break; }
+    if (drone.battery <= 0) { status = "Akku"; break; }
   }
-  check("Sieben Sekunden Anmarsch verkuerzen den Abstand deutlich",
-    walker.x - startX > 260,
-    `${(walker.x - startX).toFixed(0)} px in 7 s gelaufen`);
-  check("Der Wurm bleibt beim Laufen auf dem Boden", H.onGround(walker),
-    `y=${walker.y.toFixed(0)}, Boden bei ${H.groundHeightAt(walker.x)}`);
-  check("Der Wurm ueberlebt den Anmarsch", walker.alive && walker.health === 100,
-    `Leben ${walker.health}`);
+  return { status, drone };
 }
 
-Math.random = realRandom;
+let referenceSuccesses = 0;
+let slowestReference = 0;
+for (const difficulty of ["easy", "normal", "hard"]) {
+  for (let seed = 1; seed <= 20; seed++) {
+    const result = flyReference(seed * 3571, difficulty);
+    if (result.status === "Ziel") referenceSuccesses++;
+    slowestReference = Math.max(slowestReference, result.drone.elapsed);
+  }
+}
+check("Referenzpilot absolviert 60 Zufallsstrecken", referenceSuccesses === 60,
+  `${referenceSuccesses}/60 im Ziel`);
+check("Referenzflug bleibt pausentauglich kurz", slowestReference < 20,
+  `langsamster Flug ${slowestReference.toFixed(1)} s`);
+
+// ---------------------------------------------------------- Wertung
+
+const successful = { success: true, checkpoints: 4, battery: 65, time: 18, distance: WORLD_W };
+const failed = { success: false, checkpoints: 3, battery: 80, time: 12, distance: 1180 };
+const careful = { success: true, checkpoints: 4, battery: 78, time: 18, distance: WORLD_W };
+check("Erfolgreicher Flug schlaegt Teilfortschritt",
+  H.scoreRun(successful) > H.scoreRun(failed),
+  `${H.scoreRun(successful)} gegen ${H.scoreRun(failed)} Punkte`);
+check("Mehr Restakku verbessert die Wertung",
+  H.scoreRun(careful) > H.scoreRun(successful),
+  `${H.scoreRun(careful)} gegen ${H.scoreRun(successful)} Punkte`);
 
 console.log("");
 console.log(failures === 0 ? "ALLE PRUEFUNGEN GRUEN" : `${failures} PRUEFUNG(EN) ROT`);

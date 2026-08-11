@@ -86,14 +86,14 @@ Erweiterung um `EKBE`, `MSEG` oder `MATDOC` erforderlich. Die GUI zeigt deshalb
 
 ## Produktgruppen
 
-Die neuen Reiter lesen dieselben additiven Zuordnungen wie der Spend-Aufriss:
+Die neuen Reiter lesen dieselben direkten SAP-Zuordnungen wie der Spend-Aufriss:
 
-1. manuelle `PurchasingProductGroupMap` bleibt fuehrend,
-2. `PurchasingSpendDisponentRule` aus `zdispo*.xlsx` ist nur Fallback,
+1. `PurchasingSpendDisponentRule` wird durch Full Load/Delta atomar aus SAP OData ersetzt,
+2. nur Regeln mit Quelle `SAP OData: ...` werden ausgewertet,
 3. exakte Regel gewinnt vor einem Sternmuster,
 4. ohne Namen bleibt `Disponent <Code>` sichtbar.
 
-Keine Zuordnungstabelle wird durch die neuen Seiten geschrieben oder ersetzt.
+Die Seiten selbst schreiben nicht; der Einkaufs-Refresh aktualisiert den gemeinsamen Cache.
 
 ## Technische Umsetzung
 

@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-07
+Stand: 2026-08-11
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -17,13 +17,15 @@ Stand: 2026-08-07
   pruefen — genau dieser Vergleich hat den Fehlschlag sichtbar gemacht.
 
 
-- **Deploy-Konsole `Tools/DeployConsole`** (2026-08-07): schreibt den Ablauf fest —
+- **Deploy-Konsole `Tools/DeployConsole`** (2026-08-07, erstmals produktiv erfolgreich
+  gelaufen am 2026-08-11): schreibt den Ablauf fest —
   Bestandsaufnahme, `app_offline` unmittelbar vor/nach dem Publish, Publish als
   Argumentliste mit Guard gegen jedes Profil-Argument, Vergleich vorher/nachher,
   Typen-/Literalpruefung in der DLL (UTF-8 und UTF-16), Abrufpruefung, fertiger
   Protokollabsatz. Gegen einen nachgebauten Share verifiziert
-  (`Tools/DeployConsole.Probe`, 22 Pruefungen gruen), **noch nie produktiv gelaufen**.
-  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md`.
+  (`Tools/DeployConsole.Probe`, 22 Pruefungen gruen). Der erste Produktivlauf erfolgte
+  kopflos ueber `.tmp_tools/DeployHeadless` und endete ohne Alarm.
+  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md` und der Kurzstand unten.
 
 - **FALLE, gemessen am 2026-08-07: ein erfolgreicher Publish kann `BiDashboard.dll`
   stillschweigend ueberspringen.** Die Hauptbaugruppe wird mit PreserveNewest kopiert;
@@ -41,6 +43,46 @@ Stand: 2026-08-07
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+
+- Aktuellster produktiv verifizierter Deploy: **2026-08-11 15:51, gesamter
+  Workspace-Anwendungsstand**, ausdruecklich freigegeben trotz fehlender SAP-Sets
+  `ZDISPO_GRP`/`ZDISPO_SPART`. `471/471` Release-Tests gruen. Konsistentes Backup
+  `trafag_exporter.db.before-all-current-20260811-145332.bak`, `340'455'424` Bytes.
+  `BiDashboard.dll` `4'362'752` Bytes, SHA256
+  `2A5DBC034891F5B5D3FD1EE04C123A989CA987B5020CE04A0FE5161D037177F4`; lokaler
+  Release-Build und Server bitgleich. Supplier-Fallback live mit
+  `SupplierFallbackMode=ChPlantMaster` und `66'049` dauerhaft bestaetigten
+  MARC-1100-Materialien; alle `63'550` MBEW-Schluessel enthalten, Sales-Bestand
+  unveraendert `96'298`. Neun HTTP-Routen liefern 200. Einkaufs-SAP-only-Code ist
+  live, aber die `45` historischen Excel-Regeln werden nun bewusst ignoriert; bis
+  zur SAP-Aktivierung fehlen Produktgruppennamen und Refreshes koennen scheitern.
+  Details: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+
+- Letzter produktiv verifizierter Deploy: **2026-08-11 11:23, Admin-Bereiche
+  zusammengefuehrt und FPV-Pausenspiel**, Funktionsstand aus schmutzigem Workspace auf Branch
+  `main`, HEAD `09fb1fa`, `461/461` Tests gruen im Release-Lauf vor dem Publish; dazu
+  `28/28` FPV- und `18/18` MOD-Pruefungen gruen.
+  `BiDashboard.dll` `11.08.2026 11:19:47`, `4'332'032` Bytes, SHA256
+  `D1A82215B25A3D5A86E74EDFBD11F7E5E810E2A2B77A739C5C550B74D19FD7AB`;
+  lokaler Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. HTTPS `200`: Startseite (`68'416` Bytes),
+  `/admin/sessions` (`69'540`), `/pause` (`62'348`), `/js/pausegame.js` (`42'645`),
+  `/management-cockpit` (`69'495`) und `/einkauf/aufriss` (`137'446`).
+  Zielvergleich: `0` Dateien neu, `7` geaendert, `1'268` unveraendert, `0` verschwunden;
+  alle geschuetzten DB-/WAL-/SHM-/BAK-Dateien im Publishvergleich unveraendert.
+  Vor der Menue-Migration wurde per SQLite-Backup-API die konsistente Sicherung
+  `trafag_exporter.db.before-admin-menu-merge-20260811-112250.bak` mit `340'369'408`
+  Bytes erstellt. Produktiv read-only bestaetigt: genau eine Root-Gruppe `Admin Bereich`
+  (`finance-admin`, Parent leer, Sort 90) mit den Kindern Aktive Logins, Standorte,
+  Transformationen, Finance Regeln, Settings, Menuestruktur und Logs; kein Admin-Knoten mehr
+  unter Finance. `wwwroot/js/pausegame.js` ist lokal und auf dem Server byteidentisch
+  (SHA256 `DE09879793AD70B6AF9DDEA3CFDBB9F4AD4D853A1BEE37EA7E234B1D3129BB28`).
+  Der Pausenreiter bleibt gemaess `Pause:Enabled=false` ausgeblendet; deployed ist der neue
+  FPV-Code, nicht eine Aenderung des Betriebsschalters. Wirknachweis in der DLL:
+  `DatabaseSeedService`, `Admin Bereich`, `Aktive Logins`, `finance-admin`, `pausegame.js`.
+  Nicht belegt: angemeldeter visueller Browsertest der Admin-Seiten und manuelles
+  Spielgefuehl. Details: `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` und
+  `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
 
 - Letzter produktiv verifizierter Deploy: **2026-08-10 07:05, Pausenreiter
   standardmaessig aus**, Funktionscommit `8e09774`, `459/459` Tests gruen im

@@ -70,7 +70,9 @@ public static class GroupMarginSupplierClassifier
         string? tsc = null,
         string? normalizedMaterialKey = null,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
-        string? salesType = null)
+        string? salesType = null,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return Internal;
@@ -96,7 +98,10 @@ public static class GroupMarginSupplierClassifier
         if (role is not null)
             return Internal;
 
-        return HasGroupCostMatch(normalizedMaterialKey, groupStandardCosts) ? Internal : Unclear;
+        return HasMaterialFallbackMatch(
+            normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode)
+            ? Internal
+            : Unclear;
     }
 
     /// <summary>
@@ -132,16 +137,11 @@ public static class GroupMarginSupplierClassifier
         };
     }
 
-    // Uebergangsregel (Andreas/Ingo, Meeting 2026-07-30): solange die B1-Lieferantenfelder
-    // (CardCode) bei den meisten Gesellschaften nicht gepflegt sind, wird ein Material OHNE
-    // jegliche Supplier-Angabe als intern gewertet, wenn es in der Konzern-Kostentabelle
-    // (GroupStandardCosts, siehe Models/GroupStandardCost.cs) einer bekannten liefernden
-    // Gesellschaft vorkommt. AUSDRUECKLICH ALS PROVISORIUM markiert: beide im Meeting einig,
-    // dass das "nicht wasserdicht" ist - die Tabelle kann falsch positive Eintraege enthalten
-    // (Beispiel aus dem Meeting: ein "Thermostat"-Artikel in der TR-AG/CH-Tabelle, der dort
-    // nicht hingehoert), was ein tatsaechlich extern beschafftes Material bei einer anderen
-    // Gesellschaft faelschlich als intern klassifizieren wuerde. Nur ein Fallback fuer den
-    // Unklar-Fall - ueberschreibt nie ein bereits per Supplier-Text/TSC ermitteltes Extern.
+    // Alte, weiterhin umschaltbare Uebergangsregel aus dem Meeting 2026-07-30:
+    // Material ohne Supplier-Angabe wird bei einem Treffer in GroupStandardCosts intern.
+    // Seit Ingos Entscheid 2026-08-11 ist MARC/Werk 1100 der neue Standard; diese Methode
+    // bleibt fuer den expliziten Alt-Modus und als Verfuegbarkeitsfallback bei leerem
+    // MARC-Cache erhalten. Ein expliziter Supplier wird nie ueberschrieben.
     private static bool HasGroupCostMatch(
         string? normalizedMaterialKey,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts)
@@ -156,6 +156,28 @@ public static class GroupMarginSupplierClassifier
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Umschaltbarer Supplier-Fallback. Der neue Standard prueft MARC/Werk 1100.
+    /// Ist dieser Cache noch leer (z. B. direkt nach einer Migration), bleibt die
+    /// Auswertung verfuegbar und verwendet voruebergehend den bisherigen MBEW-Fallback.
+    /// </summary>
+    private static bool HasMaterialFallbackMatch(
+        string? normalizedMaterialKey,
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts,
+        IReadOnlySet<string>? chPlantMaterialKeys,
+        string? supplierFallbackMode)
+    {
+        var key = normalizedMaterialKey?.Trim() ?? string.Empty;
+        if (key.Length == 0)
+            return false;
+
+        var mode = SupplierFallbackModes.Normalize(supplierFallbackMode);
+        if (mode == SupplierFallbackModes.ChPlantMaster && chPlantMaterialKeys is { Count: > 0 })
+            return chPlantMaterialKeys.Contains(key);
+
+        return HasGroupCostMatch(key, groupStandardCosts);
     }
 
     /// <summary>
@@ -174,14 +196,20 @@ public static class GroupMarginSupplierClassifier
         string? tsc = null,
         string? normalizedMaterialKey = null,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
-        string? salesType = null)
+        string? salesType = null,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null,
+        string? supplierNumber = null,
+        string? supplierCountry = null)
     {
         if (IsIntercompanySellingTsc(tsc))
             return GroupStandardCostEntities.TrAg;
 
-        if (!string.IsNullOrWhiteSpace(supplierName))
+        if (!string.IsNullOrWhiteSpace(supplierNumber) ||
+            !string.IsNullOrWhiteSpace(supplierName) ||
+            !string.IsNullOrWhiteSpace(supplierCountry))
         {
-            var name = supplierName.Trim();
+            var name = supplierName?.Trim() ?? string.Empty;
             if (name.Contains("Trafag AG", StringComparison.OrdinalIgnoreCase))
                 return GroupStandardCostEntities.TrAg;
             if (name.Contains("Trafag Italia", StringComparison.OrdinalIgnoreCase) ||
@@ -206,20 +234,13 @@ public static class GroupMarginSupplierClassifier
             };
         }
 
-        // Gleiches Uebergangs-Provisorium wie in Resolve(): ohne jegliche Supplier-Angabe
-        // wird die liefernde Gesellschaft ueber die Konzern-Kostentabelle geraten, nicht ueber
-        // den (leeren) Supplier-Text. Nur relevant, wenn Resolve() bereits "Intern" geliefert
-        // haette (HasGroupCostMatch) - siehe dortigen Kommentar zum Thermostat-Vorbehalt.
-        if (string.IsNullOrWhiteSpace(normalizedMaterialKey) || groupStandardCosts is null || groupStandardCosts.Count == 0)
-            return null;
-
-        foreach (var (entity, area) in GroupStandardCostAreas.ByEntity)
-        {
-            if (groupStandardCosts.ContainsKey((normalizedMaterialKey, area)))
-                return entity;
-        }
-
-        return null;
+        // Gleicher umschaltbarer Material-Fallback wie in Resolve(). Beide Methoden muessen
+        // dieselbe liefernde Gesellschaft liefern, damit Klassifikation und Kostenpfad nicht
+        // auseinanderlaufen.
+        return HasMaterialFallbackMatch(
+            normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode)
+            ? GroupStandardCostEntities.TrAg
+            : null;
     }
 
     /// <summary>

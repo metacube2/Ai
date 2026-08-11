@@ -66,7 +66,8 @@ public class DatabaseSeedService : IDatabaseSeedService
             DebugLoggingEnabled = false,
             LocalSiteExportFolder = "",
             LocalConsolidatedExportFolder = "",
-            ExchangeRateDateField = ExchangeRateDateFields.PostingDate
+            ExchangeRateDateField = ExchangeRateDateFields.PostingDate,
+            SupplierFallbackMode = SupplierFallbackModes.ChPlantMaster
         });
 
         db.SaveChanges();
@@ -210,6 +211,51 @@ public class DatabaseSeedService : IDatabaseSeedService
             changed = true;
         }
 
+        // Menuebereinigung 2026-08-11: Bisher gab es zwei getrennte Einstiege - die
+        // Gruppe "Admin" innerhalb von Finance und den Root-Link "Admin Bereich" fuer
+        // aktive Sessions. Bestehende Installationen werden nur dann automatisch
+        // umgestellt, wenn genau diese alte Standardstruktur noch vorliegt. Eine bereits
+        // individuell verschobene Menuestruktur wird dadurch nicht ueberschrieben.
+        var financeAdmin = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "finance-admin");
+        var adminSessions = db.NavigationMenuItems.FirstOrDefault(x => x.Key == "admin-sessions");
+        if (financeAdmin is not null && adminSessions is not null &&
+            string.Equals(financeAdmin.ParentKey, "finance", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(adminSessions.ParentKey))
+        {
+            financeAdmin.ParentKey = null;
+            financeAdmin.TitleDe = "Admin Bereich";
+            financeAdmin.TitleEn = "Admin area";
+            financeAdmin.Icon = "AdminPanelSettings";
+            financeAdmin.ItemType = NavigationMenuItemTypes.Group;
+            financeAdmin.Href = string.Empty;
+            financeAdmin.Match = "Prefix";
+            financeAdmin.SortOrder = 90;
+
+            adminSessions.ParentKey = "finance-admin";
+            adminSessions.TitleDe = "Aktive Logins";
+            adminSessions.TitleEn = "Active logins";
+            adminSessions.SortOrder = 10;
+
+            var adminChildOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["sites"] = 20,
+                ["transformations"] = 30,
+                ["finance-rules"] = 40,
+                ["settings"] = 50,
+                ["menu-structure"] = 60,
+                ["logs"] = 70
+            };
+            foreach (var child in db.NavigationMenuItems.Where(x => adminChildOrder.Keys.Contains(x.Key)))
+            {
+                if (!string.Equals(child.ParentKey, "finance-admin", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                child.SortOrder = adminChildOrder[child.Key];
+            }
+
+            changed = true;
+        }
+
         if (changed)
             db.SaveChanges();
     }
@@ -241,13 +287,16 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
         Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),
         Link("finance-journal-import", "finance", "Journal Import", "Journal import", "AccountBalance", "finance-journal-import", 55),
-        Group("finance-admin", "finance", "Admin", "Admin", "AdminPanelSettings", 60),
-        Link("sites", "finance-admin", "Standorte", "Sites", "LocationOn", "standorte", 10, requiredPolicy: SecurityPolicies.AdminOnly),
-        Link("transformations", "finance-admin", "Transformationen", "Transformations", "Transform", "transformations", 20, requiredPolicy: SecurityPolicies.AdminOnly),
-        Link("finance-rules", "finance-admin", "Finance Regeln", "Finance rules", "Rule", "finance-rules", 30, requiredPolicy: SecurityPolicies.AdminOnly),
-        Link("settings", "finance-admin", "Settings", "Settings", "Settings", "settings", 40, requiredPolicy: SecurityPolicies.AdminOnly),
-        Link("menu-structure", "finance-admin", "Menuestruktur", "Menu structure", "AccountTree", "admin/menu-structure", 45, requiredPolicy: SecurityPolicies.AdminOnly),
-        Link("logs", "finance-admin", "Logs", "Logs", "List", "logs", 50),
+        // Ein einziger, aeusserer Admin-Bereich. Er ist bewusst keine Untergruppe von
+        // Finance: Sitzungen und technische Konfiguration gelten fuer die ganze App.
+        Group("finance-admin", null, "Admin Bereich", "Admin area", "AdminPanelSettings", 90),
+        Link("admin-sessions", "finance-admin", "Aktive Logins", "Active logins", "PeopleAlt", "admin/sessions", 10),
+        Link("sites", "finance-admin", "Standorte", "Sites", "LocationOn", "standorte", 20, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("transformations", "finance-admin", "Transformationen", "Transformations", "Transform", "transformations", 30, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("finance-rules", "finance-admin", "Finance Regeln", "Finance rules", "Rule", "finance-rules", 40, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("settings", "finance-admin", "Settings", "Settings", "Settings", "settings", 50, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("menu-structure", "finance-admin", "Menuestruktur", "Menu structure", "AccountTree", "admin/menu-structure", 60, requiredPolicy: SecurityPolicies.AdminOnly),
+        Link("logs", "finance-admin", "Logs", "Logs", "List", "logs", 70),
         Action("finance-lock", "finance", "Finance sperren", "Lock finance", "Lock", 70),
         // Pausenspiel 2026-08-07. Rein additiv, eigene Route, kein Datenzugriff.
         // Ausblenden: IsVisible hier auf false setzen (Eintrag weg) oder
@@ -288,7 +337,6 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("logistics-planning-audit", "logistics", "Dispositionspruefung", "Planning parameter audit", "FactCheck", "logistik/dispositionspruefung", 30, "All"),
         Group("poor-mans-project-management", null, "Poor Man's Project Management Suite", "Poor Man's Project Management Suite", "Assignment", 40, expanded: true),
         Link("projects", "poor-mans-project-management", "Projekte", "Projects", "ViewKanban", "projekte", 10, "All"),
-        Link("admin-sessions", null, "Admin Bereich", "Admin area", "PeopleAlt", "admin/sessions", 90)
     ];
 
     private static NavigationMenuItem Group(string key, string? parentKey, string titleDe, string titleEn, string icon, int sortOrder, bool expanded = false)

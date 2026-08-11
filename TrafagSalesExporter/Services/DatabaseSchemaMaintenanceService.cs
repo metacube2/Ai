@@ -34,6 +34,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "LocalAuditCsvFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "ExchangeRateDateField", "TEXT NOT NULL DEFAULT 'PostingDate'");
         AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Mask'");
+        AddColumnIfMissing(db, "ExportSettings", "SupplierFallbackMode", "TEXT NOT NULL DEFAULT 'ChPlantMaster'");
         AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
         AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
@@ -56,6 +57,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureMaterialUsageCacheTables(db);
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
+        EnsureGroupMaterialMastersTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -681,6 +683,25 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         using var indexCommand = conn.CreateCommand();
         indexCommand.CommandText =
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupStandardCosts_Material_Area ON GroupStandardCosts (MaterialKey, ValuationArea);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureGroupMaterialMastersTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetGroupMaterialMastersCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupMaterialMasters_Material_Plant ON GroupMaterialMasters (MaterialKey, Plant);";
         indexCommand.ExecuteNonQuery();
     }
 

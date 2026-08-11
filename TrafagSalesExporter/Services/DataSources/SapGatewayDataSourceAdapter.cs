@@ -9,17 +9,20 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ISapCompositionService _sapCompositionService;
     private readonly ISapGatewayStandardCostReader _standardCostReader;
+    private readonly ISapGatewayPlantMaterialReader _plantMaterialReader;
     private readonly IAppEventLogService _appEventLogService;
 
     public SapGatewayDataSourceAdapter(
         IDbContextFactory<AppDbContext> dbFactory,
         ISapCompositionService sapCompositionService,
         ISapGatewayStandardCostReader standardCostReader,
+        ISapGatewayPlantMaterialReader plantMaterialReader,
         IAppEventLogService appEventLogService)
     {
         _dbFactory = dbFactory;
         _sapCompositionService = sapCompositionService;
         _standardCostReader = standardCostReader;
+        _plantMaterialReader = plantMaterialReader;
         _appEventLogService = appEventLogService;
     }
 
@@ -64,8 +67,64 @@ public sealed class SapGatewayDataSourceAdapter : IDataSourceAdapter
 
         await EnrichStandardCostsAsync(
             records, sapServiceUrl, credentials.Username, credentials.Password, site, context);
+        await RefreshChPlantMaterialMasterAsync(
+            records, sapServiceUrl, credentials.Username, credentials.Password, site, context);
 
         return new DataSourceFetchResult { Records = records };
+    }
+
+    private async Task RefreshChPlantMaterialMasterAsync(
+        IReadOnlyCollection<SalesRecord> records,
+        string sapServiceUrl,
+        string username,
+        string password,
+        Site site,
+        DataSourceFetchContext context)
+    {
+        const string chPlant = "1100";
+        var includesCh = records.Any(record =>
+            string.Equals(StandardCostEnricher.ResolveValuationArea(record.Land), chPlant, StringComparison.Ordinal));
+        if (!includesCh)
+            return;
+
+        try
+        {
+            context.UpdateStatus?.Invoke("SAP CH-Werkstamm laden...");
+            var materialKeys = await _plantMaterialReader.GetMaterialKeysAsync(
+                sapServiceUrl, username, password, chPlant, site.Land);
+            if (materialKeys.Count < SapGatewayPlantMaterialReader.MinimumExpectedChPlantMaterials)
+                throw new InvalidOperationException(
+                    $"MARC Werk 1100 lieferte nur {materialKeys.Count:N0} Materialien; " +
+                    $"erwartet sind mindestens {SapGatewayPlantMaterialReader.MinimumExpectedChPlantMaterials:N0}. " +
+                    "Bestehender Cache bleibt erhalten.");
+
+            await PersistGroupMaterialMasterAsync(materialKeys, chPlant);
+            await _appEventLogService.WriteAsync("Export", "CH-Werkstamm gespeichert",
+                siteId: site.Id, land: site.Land,
+                details: $"Werk={chPlant} | Materialien={materialKeys.Count}");
+        }
+        catch (Exception ex)
+        {
+            await _appEventLogService.WriteAsync("Export", "CH-Werkstamm nicht aktualisiert", "Warning",
+                siteId: site.Id, land: site.Land,
+                details: $"Bestehender Cache bleibt erhalten; bei leerem Cache greift automatisch der alte MBEW-Fallback. Grund: {ex.Message}");
+        }
+    }
+
+    private async Task PersistGroupMaterialMasterAsync(IReadOnlySet<string> materialKeys, string plant)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM GroupMaterialMasters WHERE Plant = {plant}");
+        var now = DateTime.UtcNow;
+        db.GroupMaterialMasters.AddRange(materialKeys.Select(materialKey => new GroupMaterialMaster
+        {
+            MaterialKey = materialKey,
+            Plant = plant,
+            RefreshedAtUtc = now
+        }));
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
     /// <summary>

@@ -1,6 +1,13 @@
 # Deploy-Konsole fuer das BiDashboard
 
-Stand: 2026-08-07
+Stand: 2026-08-11
+
+**Produktivnachtrag:** Der Runner wurde am 11.08.2026 erstmals produktiv eingesetzt,
+kopflos ueber `.tmp_tools/DeployHeadless`. Ergebnis ohne Alarm: `461/461` Release-Tests,
+Server-DLL bitgleich zum lokalen Build, sechs HTTPS-Routen mit Status 200, keine Datei
+verschwunden und alle geschuetzten DB-/WAL-/SHM-/BAK-Dateien im Publishvergleich
+unveraendert. Vorher wurde eine konsistente SQLite-Sicherung angelegt. Vollstaendiger
+Nachweis: `docs/rag/DEPLOYMENT.md`.
 
 ## Warum
 
@@ -139,11 +146,9 @@ nach der Aufnahme beider Projekte in die .sln.
 
 ## Ausdruecklich NICHT belegt
 
-- **Kein Lauf gegen den Produktiv-Share.** Das Werkzeug ist gegen einen nachgebauten
-  Share verifiziert. Der erste echte Deploy darueber ist Ingos Entscheidung, und bis
-  dahin ist die Konsole am Produktivsystem unerprobt.
-- Die Abrufpruefung war im Prueflauf abgeschaltet, damit die Produktion nicht
-  angefasst wird — der HTTP-Pfad ist also ungetestet.
+- Der historische Probe-Lauf vom 07.08. lief nur gegen einen nachgebauten Share. Der erste
+  Produktivlauf wurde am 11.08.2026 erfolgreich nachgeholt; Details stehen im Nachtrag oben
+  und in `docs/rag/DEPLOYMENT.md`.
 - Wie gehabt belegt ein HTTPS `200` nur Erreichbarkeit. Routen hinter dem
   Finance-Unlock liefern das Passwortpanel; das Protokoll sagt das selbst.
 - Die Konsole prueft nicht, ob IIS den neuen Stand geladen hat, und startet den

@@ -24,6 +24,12 @@ public class ExportSettings
     public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Mask;
 
     /// <summary>
+    /// Material-Fallback fuer leere Supplier-Felder: neuer CH-Werkstamm (MARC 1100)
+    /// oder bisherige CH-Kostentabelle (MBEW/GroupStandardCosts 1100).
+    /// </summary>
+    public string SupplierFallbackMode { get; set; } = SupplierFallbackModes.ChPlantMaster;
+
+    /// <summary>
     /// Zeitpunkt (UTC) des letzten automatischen Timer-Exports. Dient dem Nachhol-Lauf:
     /// War der Prozess zur geplanten Zeit nicht aktiv, wird beim naechsten Start erkannt,
     /// dass heute noch kein Lauf stattfand, und der Export einmalig nachgeholt.
@@ -42,4 +48,15 @@ public static class GroupMarginCostCurrencyModes
 {
     public const string Mask = nameof(Mask);
     public const string Convert = nameof(Convert);
+}
+
+public static class SupplierFallbackModes
+{
+    public const string ChPlantMaster = nameof(ChPlantMaster);
+    public const string GroupStandardCosts = nameof(GroupStandardCosts);
+
+    public static string Normalize(string? mode)
+        => string.Equals(mode?.Trim(), GroupStandardCosts, StringComparison.OrdinalIgnoreCase)
+            ? GroupStandardCosts
+            : ChPlantMaster;
 }

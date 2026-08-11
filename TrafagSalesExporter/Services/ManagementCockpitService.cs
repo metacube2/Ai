@@ -360,6 +360,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .Where(rule => rule.IsActive)
             .ToListAsync();
         var groupStandardCosts = await LoadGroupStandardCostsAsync(db);
+        var chPlantMaterialKeys = await LoadChPlantMaterialKeysAsync(db);
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await LoadCentralRecordsAsync();
 
@@ -605,8 +606,9 @@ public class ManagementCockpitService : IManagementCockpitService
         var productAssignmentRows = BuildProductAssignmentRows(scopedRows, allRows);
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
-        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupStandardCosts);
-        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts);
+        var supplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
         // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
         // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
         // daneben weiterhin alle - die beiden Zahlen waren nicht gegeneinander abstimmbar.
@@ -618,6 +620,9 @@ public class ManagementCockpitService : IManagementCockpitService
         notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
             ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem Jahreskurs in die Verkaufswaehrung umgerechnet (Schalter in den Export-Einstellungen)."
             : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'), bis der Fachentscheid vorliegt (Schalter in den Export-Einstellungen).");
+        notices.Add(supplierFallbackMode == SupplierFallbackModes.ChPlantMaster
+            ? $"Supplier-Fallback: CH-Werkstamm MARC 1100 (neu, {chPlantMaterialKeys.Count:N0} Materialien). Ist der Cache leer, greift automatisch die bisherige MBEW-Regel."
+            : "Supplier-Fallback: CH-Kostentabelle MBEW 1100 (alte Regel). Umschaltbar unter Admin Bereich > Settings.");
 
         return new ManagementFinanceSummaryResult
         {
@@ -1445,14 +1450,19 @@ public class ManagementCockpitService : IManagementCockpitService
     private List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(
         IEnumerable<FinanceAggregationRow> rows,
         string groupMarginCostCurrencyMode,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
+        IReadOnlySet<string> chPlantMaterialKeys,
+        string supplierFallbackMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
             {
                 // Lieferantentyp, Kostenbasis, Kostenquelle und Status kommen aus der gemeinsamen
                 // Rechnung — dieselbe, die der Excel-Nachweis verwendet.
-                var evaluation = GroupMarginCalculator.Evaluate(ToGroupMarginLine(row), groupStandardCosts);
+                var evaluation = GroupMarginCalculator.Evaluate(
+                    ToGroupMarginLine(row), groupStandardCosts,
+                    chPlantMaterialKeys: chPlantMaterialKeys,
+                    supplierFallbackMode: supplierFallbackMode);
                 var supplierType = evaluation.SupplierType;
                 var status = evaluation.Status;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -1641,11 +1651,23 @@ public class ManagementCockpitService : IManagementCockpitService
         return rows.ToDictionary(r => (r.MaterialKey, r.ValuationArea));
     }
 
+    private static async Task<IReadOnlySet<string>> LoadChPlantMaterialKeysAsync(AppDbContext db)
+    {
+        const string chPlant = "1100";
+        var keys = await db.GroupMaterialMasters.AsNoTracking()
+            .Where(row => row.Plant == chPlant)
+            .Select(row => row.MaterialKey)
+            .ToListAsync();
+        return keys.ToHashSet(StringComparer.Ordinal);
+    }
+
     private List<ManagementFinanceAuditLedgerRow> BuildFinanceAuditLedgerRows(
         IEnumerable<FinanceAggregationRow> rows,
         bool useAuditCsvAsCentralSource,
         string groupMarginCostCurrencyMode,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
+        IReadOnlySet<string> chPlantMaterialKeys,
+        string supplierFallbackMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
@@ -1656,7 +1678,9 @@ public class ManagementCockpitService : IManagementCockpitService
                 // Gleiche Rechnung wie Gruppenmarge und Excel-Nachweis; zusaetzlich schlaegt hier
                 // ein fehlender CHF-Kurs auf den Status durch.
                 var basis = GroupMarginCalculator.Evaluate(
-                    ToGroupMarginLine(row), groupStandardCosts, hasExchangeRate: chfRate.HasValue);
+                    ToGroupMarginLine(row), groupStandardCosts, hasExchangeRate: chfRate.HasValue,
+                    chPlantMaterialKeys: chPlantMaterialKeys,
+                    supplierFallbackMode: supplierFallbackMode);
                 var supplierType = basis.SupplierType;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency, row.Year,

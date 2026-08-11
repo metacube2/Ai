@@ -29,11 +29,12 @@ public sealed class SupplyChainAnalysisServiceTests : IDisposable
     public void Dispose() => _connection.Dispose();
 
     [Fact]
-    public async Task MaterialDisposition_Deduplicates_ComponentStock_And_Uses_Additive_ProductGroupFallback()
+    public async Task MaterialDisposition_Deduplicates_ComponentStock_And_Uses_SapProductGroupRule()
     {
         SeedUsage("M-1", "K-1", "019", "-5", "10");
         SeedUsage("M-2", "K-1", "019", "-5", "10");
         Execute("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText) VALUES ('019', 'PG1', 'Hybrid');");
+        Execute("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source) VALUES ('019', 'OLD', 'Excel Alt', 'zdispo_grp.xlsx');");
 
         var result = await _service.LoadAsync(
             SupplyChainAnalysisKind.MaterialDisposition,

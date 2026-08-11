@@ -48,21 +48,9 @@ public class DatabaseInitializationServiceTests : IDisposable
 
         await using var ruleCommand = _connection.CreateCommand();
         ruleCommand.CommandText = "SELECT COUNT(1) FROM PurchasingSpendDisponentRule;";
-        Assert.Equal(45L, Convert.ToInt64(await ruleCommand.ExecuteScalarAsync()));
-
-        await using var exactCommand = _connection.CreateCommand();
-        exactCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='001';";
-        Assert.Equal("H|HW_ZUKAUFSORT", (await exactCommand.ExecuteScalarAsync())?.ToString());
-
-        await using var wildcardCommand = _connection.CreateCommand();
-        wildcardCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='EL*';";
-        Assert.Equal("T2|FP_TRANSM. TX", (await wildcardCommand.ExecuteScalarAsync())?.ToString());
-
-        // DS1/DS2 stehen in der gelieferten Gruppendatei doppelt. Keine Gruppe wird still
-        // ueberschrieben; beide Regeln bleiben fuer die summenneutrale 1/n-Verteilung erhalten.
-        await using var ambiguousCommand = _connection.CreateCommand();
-        ambiguousCommand.CommandText = "SELECT group_concat(ProductGroup || '|' || ProductGroupText, ';') FROM (SELECT ProductGroup, ProductGroupText FROM PurchasingSpendDisponentRule WHERE DisponentPattern='DS1' ORDER BY ProductGroup);";
-        Assert.Equal("D5|D5;DS|FP_DICHTESENS", (await ambiguousCommand.ExecuteScalarAsync())?.ToString());
+        // Beim Start wird keine Excel-Referenz mehr importiert. Die Tabelle wird erst durch
+        // einen erfolgreichen Einkauf-Refresh direkt aus SAP gefuellt.
+        Assert.Equal(0L, Convert.ToInt64(await ruleCommand.ExecuteScalarAsync()));
 
         await using (var manualCommand = _connection.CreateCommand())
         {
@@ -74,6 +62,20 @@ public class DatabaseInitializationServiceTests : IDisposable
         await using var preservedCommand = _connection.CreateCommand();
         preservedCommand.CommandText = "SELECT ProductGroup || '|' || ProductGroupText FROM PurchasingProductGroupMap WHERE Disponent='001';";
         Assert.Equal("MAN|Manuell", (await preservedCommand.ExecuteScalarAsync())?.ToString());
+    }
+
+    [Fact]
+    public async Task InitializeAsync_Creates_ChPlantMasterCache_AndDefaultsToNewSupplierFallback()
+    {
+        await CreateService().InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.SingleAsync();
+        Assert.Equal(SupplierFallbackModes.ChPlantMaster, settings.SupplierFallbackMode);
+
+        await using var tableCommand = _connection.CreateCommand();
+        tableCommand.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='GroupMaterialMasters';";
+        Assert.Equal(1L, Convert.ToInt64(await tableCommand.ExecuteScalarAsync()));
     }
 
     [Fact]

@@ -654,9 +654,12 @@ public class PurchasingDashboardServiceTests : IDisposable
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V2', '002', 'M1', '2026-01-01');");
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V3', '001', 'M2', '2026-01-01');");
         await ExecuteAsync("INSERT INTO MaterialUsageCache (Richtung, Vknr, VknrDispo, Kompnr, LastLoadedAtUtc) VALUES ('V', 'V4', 'EL7', 'M4', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', '2026-01-01');");
-        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'ALT', 'Darf manuell nicht ueberschreiben', '2026-01-01');");
+        // Alte manuelle Zuordnungen sind nur noch Legacy-Daten und duerfen die SAP-Regeln
+        // nicht uebersteuern.
+        await ExecuteAsync("INSERT INTO PurchasingProductGroupMap (Disponent, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('001', 'ALT', 'Legacy darf nicht fuehren', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'XLS', 'Excel darf nicht fuehren', 'zdispo_grp.xlsx', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('001', 'PG-A', 'Sensorik', 'SAP OData', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, Source, UpdatedAtUtc) VALUES ('002', 'PG-B', 'Zubehoer', 'SAP OData', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T2', 'FP_TRANSM. TX', '2026-01-01');");
         await ExecuteAsync("INSERT INTO PurchasingSpendDisponentRule (DisponentPattern, ProductGroup, ProductGroupText, UpdatedAtUtc) VALUES ('EL*', 'T3', 'Zweite Produktgruppe', '2026-01-01');");
 
@@ -669,7 +672,8 @@ public class PurchasingDashboardServiceTests : IDisposable
         Assert.Equal(60m, Assert.Single(perspective.Rows, row => row.Label == "PG-B - Zubehoer").Total);
         Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T2 - FP_TRANSM. TX").Total);
         Assert.Equal(20m, Assert.Single(perspective.Rows, row => row.Label == "T3 - Zweite Produktgruppe").Total);
-        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Darf manuell", StringComparison.Ordinal));
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Legacy", StringComparison.Ordinal));
+        Assert.DoesNotContain(perspective.Rows, row => row.Label.Contains("Excel", StringComparison.Ordinal));
         Assert.Equal(50m, Assert.Single(perspective.Rows, row => row.Label == "ohne Produktgruppe").Total);
 
         Assert.Equal(240m, state.ProductGroupAllocation.AssignedSpendChf);
@@ -771,7 +775,7 @@ CREATE TABLE PurchasingSpendDisponentRule (
     DisponentPattern TEXT NOT NULL,
     ProductGroup TEXT NOT NULL DEFAULT '',
     ProductGroupText TEXT NOT NULL DEFAULT '',
-    Source TEXT NOT NULL DEFAULT 'zdispo*.xlsx',
+    Source TEXT NOT NULL DEFAULT 'SAP OData',
     UpdatedAtUtc TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (DisponentPattern, ProductGroup)
 );");

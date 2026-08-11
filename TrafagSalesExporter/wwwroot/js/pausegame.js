@@ -1,13 +1,13 @@
-// Drohnen-Duell - Pausenspiel im BiDashboard.
+// FPV-Fernpilot - Pausenspiel im BiDashboard.
 //
-// Laeuft vollstaendig im Browser. Der Blazor-Server bekommt nichts davon mit ausser
-// dem einmaligen start()-Aufruf: kein Zustand, kein Speichern, keine Uebertragung
-// pro Bild. Grund steht in docs/PAUSENSPIEL_DROHNEN_KONZEPT_2026-08-07.md Abschnitt 4.
+// Der Wurm bleibt an seiner Fernsteuerung. Geflogen wird die Drohne direkt aus
+// einer nahen Bordkamera bis zu einem fiktionalen Zielpunkt. Das Spiel laeuft
+// vollstaendig im Browser; Namen, Ergebnisse und Einstellungen verlassen den
+// Browser nicht. three.js wird bereits zentral durch App.razor geladen.
 //
-// Gespielt wird auf einer Ebene, dargestellt wird in 3D ueber das bereits global
-// geladene three.js (wwwroot/js/vendor/three.min.js, r160).
-//
-// Aller Text steht hier und nicht in der Razor - siehe Konzept Abschnitt 10.
+// Aller Spieltext steht absichtlich hier und nicht in der Razor-Komponente. Der
+// Lokalisierungstest des Dashboards scannt Components/**/*.razor und wuerde sonst
+// fuer jeden Spieltext sechs weitere Uebersetzungen verlangen.
 
 import { parseMod, ModPlayer } from "./modplayer.js";
 
@@ -15,137 +15,300 @@ import { parseMod, ModPlayer } from "./modplayer.js";
 
 const TEXTS = {
   de: {
-    title: "Drohnen-Duell",
-    subtitle: "Rundenkampf mit Drohnen. Wind beachten.",
-    modeLabel: "Gegner",
-    modePc: "Gegen den Rechner",
+    title: "FPV-Fernpilot",
+    subtitle: "Der Wurm bleibt am Sender. Steuere die Drohne durch alle Kontrollpunkte bis zum Ziel.",
+    fiction: "Fiktionales Trainingsgebiet - keine realen Orte oder Einheiten",
+    modeLabel: "Vergleich",
+    modePc: "Gegen einen Referenzpiloten",
     modeHuman: "Gegen einen Kollegen",
     name1: "Dein Name",
-    name2: "Name des Gegners",
-    difficulty: "Schwierigkeit",
-    teamSize: "Wuermer je Mannschaft",
-    start: "Partie starten",
-    player1: "Spieler 1",
-    player2: "Spieler 2",
-    turnOf: "Am Zug",
-    wind: "Wind",
-    time: "Zeit",
-    drone: "Drohne",
-    ammo: "Vorrat",
-    unlimited: "frei",
-    power: "Schub",
-    angle: "Winkel",
-    wins: "gewinnt",
-    draw: "Unentschieden",
-    again: "Nochmal",
-    back: "Zurueck zur Auswahl",
-    marked: "Ziel markiert: naechster Treffer verstaerkt",
-    controls: "Steuerung",
-    controlsBody:
-      "Pfeil links/rechts laufen  ·  Pfeil hoch/runter zielen  ·  Leertaste halten und loslassen: Schub  ·  Enter springen  ·  1 2 3 Drohne waehlen",
-    dropHint: "Leertaste: Drohne starten, dann Leertaste zum Ausklinken",
-    scoutHint: "Pfeiltasten steuern die Drohne, Leertaste markiert das Ziel",
-    hitWater: "im Wasser",
-    suddenDeath: "Sudden Death - das Wasser steigt",
-    thinking: "zielt...",
-    reduceEffects: "Effekte reduzieren",
+    name2: "Name des Kollegen",
+    difficulty: "Flugstrecke",
+    start: "Training starten",
+    player1: "Pilot 1",
+    player2: "Pilot 2",
+    levels: { easy: "Ruhiger Wind", normal: "Boeeiges Tal", hard: "Schwaches Signal" },
+    controlsBody: "Pfeiltasten oder W A S D: steuern  ·  Umschalt: Schub  ·  R: Flug neu starten",
     sound: "Geraeusche",
     music: "Musik",
     musicPick: "MOD-Datei waehlen (.mod)",
     musicNone: "keine Datei geladen",
     musicLoaded: "Musik geladen",
     musicBad: "Datei ist kein lesbares MOD",
-    drones: {
-      blast: { name: "Sprengdrohne", hint: "Wurf mit Winkel und Schub" },
-      drop: { name: "Abwurfdrohne", hint: "Ueberflug, drei Bomben" },
-      scout: { name: "Spaehdrohne", hint: "Freier Flug, markiert ein Ziel" },
-    },
-    levels: { easy: "Drohnenpilot", normal: "Schwarmfuehrer", hard: "Luftwacht" },
+    ready: "Am Sender bereit",
+    stationBody: "Der Wurm bleibt am Sender. Du uebernimmst jetzt die Bordkamera.",
+    launch: "Drohne starten",
+    watchReference: "Referenzflug ansehen",
+    pilot: "Pilot",
+    battery: "Akku",
+    signal: "Signal",
+    time: "Zeit",
+    checkpoint: "Kontrollpunkt",
+    target: "Zielpunkt",
+    boost: "SCHUB",
+    checkpointReached: "Kontrollpunkt erreicht",
+    targetReached: "Ziel erreicht",
+    crashed: "Drohne beschaedigt",
+    batteryEmpty: "Akku leer",
+    signalLost: "Funkverbindung verloren",
+    timeout: "Zeitfenster abgelaufen",
+    runComplete: "Flug abgeschlossen",
+    runFailed: "Flug beendet",
+    nextPilot: "Naechster Pilot",
+    score: "Punkte",
+    bestTime: "Flugzeit",
+    remaining: "Restakku",
+    wins: "gewinnt",
+    draw: "Gleichstand",
+    again: "Neue Strecke",
+    back: "Zurueck zur Auswahl",
+    reference: "Referenzpilot",
+    fpv: "BORDKAMERA",
+    lowSignal: "SIGNAL SCHWACH",
+    lowBattery: "AKKU NIEDRIG",
+    restartHint: "R startet diesen Flug neu",
   },
   en: {
-    title: "Drone Duel",
-    subtitle: "Turn-based drone combat. Mind the wind.",
-    modeLabel: "Opponent",
-    modePc: "Against the computer",
+    title: "FPV Remote Pilot",
+    subtitle: "The worm stays at the controller. Guide the drone through every checkpoint to the destination.",
+    fiction: "Fictional training area - no real locations or units",
+    modeLabel: "Challenge",
+    modePc: "Against a reference pilot",
     modeHuman: "Against a colleague",
     name1: "Your name",
-    name2: "Opponent name",
-    difficulty: "Difficulty",
-    teamSize: "Worms per team",
-    start: "Start match",
-    player1: "Player 1",
-    player2: "Player 2",
-    turnOf: "Turn",
-    wind: "Wind",
-    time: "Time",
-    drone: "Drone",
-    ammo: "Ammo",
-    unlimited: "free",
-    power: "Power",
-    angle: "Angle",
-    wins: "wins",
-    draw: "Draw",
-    again: "Play again",
-    back: "Back to setup",
-    marked: "Target marked: next hit amplified",
-    controls: "Controls",
-    controlsBody:
-      "Arrow left/right walk  ·  Arrow up/down aim  ·  Hold and release Space: power  ·  Enter jump  ·  1 2 3 pick drone",
-    dropHint: "Space: launch drone, then Space to release",
-    scoutHint: "Arrow keys steer the drone, Space marks the target",
-    hitWater: "in the water",
-    suddenDeath: "Sudden death - the water is rising",
-    thinking: "aiming...",
-    reduceEffects: "Reduce effects",
+    name2: "Colleague name",
+    difficulty: "Flight course",
+    start: "Start training",
+    player1: "Pilot 1",
+    player2: "Pilot 2",
+    levels: { easy: "Calm wind", normal: "Gusty valley", hard: "Weak signal" },
+    controlsBody: "Arrow keys or W A S D: steer  ·  Shift: boost  ·  R: restart flight",
     sound: "Sound effects",
     music: "Music",
     musicPick: "Pick a MOD file (.mod)",
     musicNone: "no file loaded",
     musicLoaded: "Music loaded",
     musicBad: "File is not a readable MOD",
-    drones: {
-      blast: { name: "Blast drone", hint: "Throw with angle and power" },
-      drop: { name: "Bomber drone", hint: "Fly-over, three bombs" },
-      scout: { name: "Scout drone", hint: "Free flight, marks a target" },
-    },
-    levels: { easy: "Drone pilot", normal: "Swarm leader", hard: "Air watch" },
+    ready: "Ready at the controller",
+    stationBody: "The worm stays at the controller. You now take over the onboard camera.",
+    launch: "Launch drone",
+    watchReference: "Watch reference flight",
+    pilot: "Pilot",
+    battery: "Battery",
+    signal: "Signal",
+    time: "Time",
+    checkpoint: "Checkpoint",
+    target: "Destination",
+    boost: "BOOST",
+    checkpointReached: "Checkpoint reached",
+    targetReached: "Destination reached",
+    crashed: "Drone damaged",
+    batteryEmpty: "Battery empty",
+    signalLost: "Radio link lost",
+    timeout: "Time window expired",
+    runComplete: "Flight complete",
+    runFailed: "Flight ended",
+    nextPilot: "Next pilot",
+    score: "Score",
+    bestTime: "Flight time",
+    remaining: "Battery left",
+    wins: "wins",
+    draw: "Draw",
+    again: "New course",
+    back: "Back to setup",
+    reference: "Reference pilot",
+    fpv: "ONBOARD CAMERA",
+    lowSignal: "WEAK SIGNAL",
+    lowBattery: "LOW BATTERY",
+    restartHint: "R restarts this flight",
   },
 };
 
-// ---------------------------------------------------------------- Konstanten
+// ---------------------------------------------------------------- Flugmodell
 
-const MASK_W = 1200;
-const MASK_H = 600;
-const UNITS = 6;              // Maskenpixel je Weltenheit
-const GRAVITY = -520;         // Pixel je Sekunde im Quadrat
-const WATER_LEVEL_START = 40;
-const WALK_SPEED = 62;
-const JUMP_SPEED = 210;
-const TURN_SECONDS = 25;
-const RETREAT_SECONDS = 3;
-const SUDDEN_DEATH_ROUND = 15;
-const MAX_CLIMB = 14;         // Stufenhoehe, die ein Wurm noch hochlaeuft
+const WORLD_W = 1600;
+const WORLD_H = 650;
+const SCALE = 8;
+const DRONE_RADIUS = 12;
+const ACCELERATION = 360;
+const BOOST_FACTOR = 1.38;
+const DRAG = 1.55;
+const MAX_SPEED = 205;
+const CHECKPOINT_RADIUS = 48;
+const GOAL_RADIUS = 54;
+const SIGNAL_GRACE = 2.4;
+const FLIGHT_LIMIT = 72;
 
-const DRONE_TYPES = [
-  { id: "blast", key: "1", ammo: -1, radius: 44, damage: 42, mass: 1.0, control: "throw" },
-  { id: "drop", key: "2", ammo: 3, radius: 30, damage: 22, mass: 1.6, control: "pass" },
-  { id: "scout", key: "3", ammo: 2, radius: 0, damage: 0, mass: 0.5, control: "free" },
-];
+const DIFFICULTY = {
+  easy: { wind: 9, battery: 100, signalPenalty: 0, aiError: 0.05 },
+  normal: { wind: 20, battery: 92, signalPenalty: 7, aiError: 0.12 },
+  hard: { wind: 31, battery: 84, signalPenalty: 20, aiError: 0.2 },
+};
 
-const TEAM_COLORS = [0x2f6fed, 0xe8563f];
+let G = null;
 
-// ---------------------------------------------------------------- Modulzustand
+function clamp(value, low, high) {
+  return value < low ? low : value > high ? high : value;
+}
 
-let G = null;   // gesamter Spielzustand, oder null wenn nichts laeuft
+function makeRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function groundHeightAt(course, x) {
+  const index = clamp(Math.round(x), 0, WORLD_W);
+  return course.ground[index];
+}
+
+function createCourse(seed = 1, difficulty = "normal") {
+  const rand = makeRandom(seed);
+  const ground = new Float32Array(WORLD_W + 1);
+  const phaseA = rand() * Math.PI * 2;
+  const phaseB = rand() * Math.PI * 2;
+  for (let x = 0; x <= WORLD_W; x++) {
+    ground[x] = 72
+      + Math.sin(x / 145 + phaseA) * 18
+      + Math.sin(x / 57 + phaseB) * 7;
+  }
+
+  const jitter = () => (rand() - 0.5) * 18;
+  const checkpoints = [
+    { x: 470, y: 320 + jitter() },
+    { x: 720, y: 235 + jitter() },
+    { x: 1020, y: 330 + jitter() },
+    { x: 1260, y: 245 + jitter() },
+  ];
+  const obstacles = [
+    { x: 372, y: groundHeightAt({ ground }, 392), w: 42, h: 168, kind: "tower" },
+    { x: 642, y: 352, w: 72, h: WORLD_H - 352, kind: "overhang" },
+    { x: 912, y: groundHeightAt({ ground }, 942), w: 58, h: 172, kind: "tower" },
+    { x: 1162, y: 390, w: 78, h: WORLD_H - 390, kind: "overhang" },
+  ];
+  return {
+    seed,
+    difficulty,
+    ground,
+    obstacles,
+    checkpoints,
+    goal: { x: 1490, y: groundHeightAt({ ground }, 1490) + 82 },
+    operator: { x: 64, y: groundHeightAt({ ground }, 64) + 20 },
+    start: { x: 125, y: groundHeightAt({ ground }, 125) + 72 },
+  };
+}
+
+function circleHitsRect(x, y, radius, rect) {
+  const nearestX = clamp(x, rect.x, rect.x + rect.w);
+  const nearestY = clamp(y, rect.y, rect.y + rect.h);
+  const dx = x - nearestX;
+  const dy = y - nearestY;
+  return dx * dx + dy * dy <= radius * radius;
+}
+
+function collides(course, drone) {
+  if (drone.x < DRONE_RADIUS || drone.x > WORLD_W - DRONE_RADIUS
+    || drone.y > WORLD_H - DRONE_RADIUS) return true;
+  if (drone.y - DRONE_RADIUS <= groundHeightAt(course, drone.x)) return true;
+  return course.obstacles.some(rect => circleHitsRect(drone.x, drone.y, DRONE_RADIUS, rect));
+}
+
+function computeSignal(course, drone, checkpointIndex = 0) {
+  const progressLoss = (drone.x / WORLD_W) * 65;
+  const altitudeLoss = Math.max(0, drone.y - 430) * 0.08;
+  const difficultyLoss = DIFFICULTY[course.difficulty]?.signalPenalty || 0;
+  let shadowLoss = 0;
+  for (const obstacle of course.obstacles) {
+    if (drone.x > obstacle.x + obstacle.w && drone.x < obstacle.x + obstacle.w + 155
+      && drone.y < obstacle.y + obstacle.h + 25) shadowLoss = Math.max(shadowLoss, 18);
+  }
+  const relayGain = Math.min(checkpointIndex, course.checkpoints.length) * 4;
+  return clamp(100 - progressLoss - altitudeLoss - difficultyLoss - shadowLoss + relayGain, 0, 100);
+}
+
+function createDrone(course) {
+  return {
+    x: course.start.x,
+    y: course.start.y,
+    vx: 0,
+    vy: 0,
+    battery: DIFFICULTY[course.difficulty]?.battery || 92,
+    signal: 100,
+    signalLostFor: 0,
+    elapsed: 0,
+    checkpointIndex: 0,
+    boost: false,
+  };
+}
+
+function stepDrone(drone, input, course, dt, elapsed = drone.elapsed) {
+  const profile = DIFFICULTY[course.difficulty] || DIFFICULTY.normal;
+  const boost = input.boost ? BOOST_FACTOR : 1;
+  const gustX = Math.sin(elapsed * 0.73 + course.seed * 0.01) * profile.wind;
+  const gustY = Math.sin(elapsed * 1.37 + course.seed * 0.017) * profile.wind * 0.42;
+  drone.vx += (input.x * ACCELERATION * boost + gustX) * dt;
+  drone.vy += (input.y * ACCELERATION * boost + gustY) * dt;
+  const damping = Math.exp(-DRAG * dt);
+  drone.vx *= damping;
+  drone.vy *= damping;
+  const speed = Math.hypot(drone.vx, drone.vy);
+  if (speed > MAX_SPEED) {
+    drone.vx *= MAX_SPEED / speed;
+    drone.vy *= MAX_SPEED / speed;
+  }
+  drone.x += drone.vx * dt;
+  drone.y += drone.vy * dt;
+  drone.elapsed += dt;
+  const effort = Math.min(1, Math.hypot(input.x, input.y));
+  drone.battery = Math.max(0, drone.battery - dt * (0.72 + effort * 0.48 + (input.boost ? 0.8 : 0)));
+  drone.boost = !!input.boost;
+  drone.signal = computeSignal(course, drone, drone.checkpointIndex);
+  drone.signalLostFor = drone.signal <= 1 ? drone.signalLostFor + dt : 0;
+  return drone;
+}
+
+function currentWaypoint(course, drone) {
+  return drone.checkpointIndex < course.checkpoints.length
+    ? course.checkpoints[drone.checkpointIndex]
+    : course.goal;
+}
+
+function autopilotControl(drone, course, difficulty = "normal") {
+  const waypoint = currentWaypoint(course, drone);
+  const error = DIFFICULTY[difficulty]?.aiError || DIFFICULTY.normal.aiError;
+  const wobble = Math.sin(drone.elapsed * 2.1 + course.seed) * error;
+  return {
+    x: clamp((waypoint.x - drone.x) / 92 - drone.vx / 135 + wobble, -1, 1),
+    y: clamp((waypoint.y - drone.y) / 82 - drone.vy / 125 - wobble * 0.5, -1, 1),
+    boost: difficulty === "hard" && waypoint.x - drone.x > 180,
+  };
+}
+
+function updateCheckpoint(course, drone) {
+  if (drone.checkpointIndex >= course.checkpoints.length) return false;
+  const point = course.checkpoints[drone.checkpointIndex];
+  if (Math.hypot(drone.x - point.x, drone.y - point.y) > CHECKPOINT_RADIUS) return false;
+  drone.checkpointIndex++;
+  return true;
+}
+
+function reachedGoal(course, drone) {
+  return drone.checkpointIndex === course.checkpoints.length
+    && Math.hypot(drone.x - course.goal.x, drone.y - course.goal.y) <= GOAL_RADIUS;
+}
+
+function scoreRun(run, checkpointCount = 4) {
+  const progress = Math.min(checkpointCount, run.checkpoints || 0);
+  if (!run.success) return Math.round(progress * 700 + Math.max(0, run.distance || 0) * 0.65);
+  return Math.round(10000 + progress * 500 + (run.battery || 0) * 24 - (run.time || 0) * 62);
+}
 
 // ---------------------------------------------------------------- Ton
-//
-// Alles selbst erzeugt: keine Audiodateien im Repository, kein Nachladen. Der
-// AudioContext entsteht erst beim ersten Klick - vorher lehnt ihn jeder Browser ab.
-// Ton ist standardmaessig AUS, das hier ist ein Buero.
 
-const MUSIC_CHUNK = 0.25;     // Sekunden je gerenderter Block
-const MUSIC_LEAD = 0.9;       // so weit im Voraus, dass 60-Hz-Ruckler nichts ausmachen
+const MUSIC_CHUNK = 0.25;
+const MUSIC_LEAD = 0.9;
 
 function ensureAudio() {
   if (!G || G.audio) return G ? G.audio : null;
@@ -153,131 +316,39 @@ function ensureAudio() {
   if (!Ctx) return null;
   const ctx = new Ctx();
   const master = ctx.createGain();
-  master.gain.value = 0.9;
+  master.gain.value = 0.85;
   master.connect(ctx.destination);
   const music = ctx.createGain();
-  music.gain.value = 0.55;
+  music.gain.value = 0.5;
   music.connect(master);
-  const sfx = ctx.createGain();
-  sfx.gain.value = 0.8;
-  sfx.connect(master);
-  G.audio = { ctx, master, music, sfx, player: null, nextTime: 0, song: null };
+  const effects = ctx.createGain();
+  effects.gain.value = 0.75;
+  effects.connect(master);
+  G.audio = { ctx, master, music, effects, player: null, nextTime: 0, song: null };
   return G.audio;
 }
 
-function noiseBuffer(ctx, seconds) {
-  const frames = Math.floor(ctx.sampleRate * seconds);
-  const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-  return buffer;
-}
-
-function sfx(kind, strength = 1) {
+function sound(kind) {
   if (!G || !G.soundOn || !G.audio) return;
-  const { ctx, sfx: out } = G.audio;
+  const { ctx, effects } = G.audio;
   const now = ctx.currentTime;
+  const oscillator = ctx.createOscillator();
   const gain = ctx.createGain();
-  gain.connect(out);
-
-  if (kind === "explosion") {
-    // Rauschstoss durch ein absinkendes Tiefpassfilter, dazu ein kurzer Bass.
-    const src = ctx.createBufferSource();
-    src.buffer = noiseBuffer(ctx, 0.6);
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(1800 * strength, now);
-    filter.frequency.exponentialRampToValueAtTime(90, now + 0.5);
-    gain.gain.setValueAtTime(0.9 * strength, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-    src.connect(filter).connect(gain);
-    src.start(now);
-    src.stop(now + 0.62);
-
-    const thump = ctx.createOscillator();
-    const thumpGain = ctx.createGain();
-    thump.frequency.setValueAtTime(120, now);
-    thump.frequency.exponentialRampToValueAtTime(38, now + 0.25);
-    thumpGain.gain.setValueAtTime(0.7 * strength, now);
-    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    thump.connect(thumpGain).connect(out);
-    thump.start(now);
-    thump.stop(now + 0.32);
-    return;
-  }
-
-  if (kind === "launch") {
-    const osc = ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(680, now + 0.28);
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.22, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    osc.connect(gain);
-    osc.start(now);
-    osc.stop(now + 0.32);
-    return;
-  }
-
-  if (kind === "rotor") {
-    // Kurzes Surren beim Start der Drohne, kein Dauerton - der nervt im Buero.
-    const osc = ctx.createOscillator();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(58, now);
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.frequency.value = 32;
-    lfoGain.gain.value = 14;
-    lfo.connect(lfoGain).connect(osc.frequency);
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    osc.connect(gain);
-    osc.start(now); lfo.start(now);
-    osc.stop(now + 0.52); lfo.stop(now + 0.52);
-    return;
-  }
-
-  if (kind === "jump") {
-    const osc = ctx.createOscillator();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(300, now);
-    osc.frequency.exponentialRampToValueAtTime(680, now + 0.12);
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    osc.connect(gain);
-    osc.start(now);
-    osc.stop(now + 0.18);
-    return;
-  }
-
-  if (kind === "splash") {
-    const src = ctx.createBufferSource();
-    src.buffer = noiseBuffer(ctx, 0.5);
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(900, now);
-    filter.frequency.exponentialRampToValueAtTime(220, now + 0.4);
-    filter.Q.value = 1.4;
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    src.connect(filter).connect(gain);
-    src.start(now);
-    src.stop(now + 0.48);
-    return;
-  }
-
-  if (kind === "hurt") {
-    const osc = ctx.createOscillator();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(420, now);
-    osc.frequency.exponentialRampToValueAtTime(140, now + 0.18);
-    gain.gain.setValueAtTime(0.16, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    osc.connect(gain);
-    osc.start(now);
-    osc.stop(now + 0.22);
-  }
+  const settings = {
+    launch: [120, 620, 0.35, "sawtooth"],
+    checkpoint: [440, 880, 0.18, "sine"],
+    success: [360, 1080, 0.55, "triangle"],
+    crash: [150, 42, 0.5, "square"],
+    alert: [680, 420, 0.2, "square"],
+  }[kind] || [300, 500, 0.15, "sine"];
+  oscillator.type = settings[3];
+  oscillator.frequency.setValueAtTime(settings[0], now);
+  oscillator.frequency.exponentialRampToValueAtTime(settings[1], now + settings[2]);
+  gain.gain.setValueAtTime(kind === "crash" ? 0.24 : 0.14, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + settings[2]);
+  oscillator.connect(gain).connect(effects);
+  oscillator.start(now);
+  oscillator.stop(now + settings[2] + 0.03);
 }
 
 function loadMusicFile(file) {
@@ -291,11 +362,11 @@ function loadMusicFile(file) {
       audio.player = new ModPlayer(song, audio.ctx.sampleRate);
       audio.nextTime = 0;
       G.musicName = song.title || file.name;
-      if (G.ui && G.ui.musicLabel) G.ui.musicLabel.textContent = G.musicName;
+      G.ui.musicLabel.textContent = G.musicName;
       flash(`${G.t.musicLoaded}: ${G.musicName}`);
-    } catch (err) {
+    } catch (error) {
       G.musicName = "";
-      if (G.ui && G.ui.musicLabel) G.ui.musicLabel.textContent = G.t.musicBad;
+      G.ui.musicLabel.textContent = G.t.musicBad;
       flash(G.t.musicBad);
     }
   };
@@ -303,341 +374,158 @@ function loadMusicFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// Blockweise im Voraus rendern und einreihen. Kein ScriptProcessor (veraltet, laeuft
-// im Haupt-Thread und knackst, sobald WebGL ruckelt) und kein AudioWorklet (eigene
-// Moduldatei, in der der Mischer ein zweites Mal liegen muesste).
 function pumpMusic() {
   if (!G || !G.musicOn || !G.audio || !G.audio.player) return;
   const { ctx, music, player } = G.audio;
   if (ctx.state === "suspended") ctx.resume();
   if (G.audio.nextTime < ctx.currentTime) G.audio.nextTime = ctx.currentTime + 0.05;
-
   let guard = 0;
   while (G.audio.nextTime < ctx.currentTime + MUSIC_LEAD && guard++ < 12) {
     const frames = Math.floor(ctx.sampleRate * MUSIC_CHUNK);
     const buffer = ctx.createBuffer(2, frames, ctx.sampleRate);
     player.render(buffer.getChannelData(0), buffer.getChannelData(1), frames);
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    src.connect(music);
-    src.start(G.audio.nextTime);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(music);
+    source.start(G.audio.nextTime);
     G.audio.nextTime += MUSIC_CHUNK;
   }
 }
 
-function setSound(on) {
-  G.soundOn = on;
-  if (on) ensureAudio();
+function setSound(enabled) {
+  G.soundOn = enabled;
+  if (enabled) ensureAudio();
   if (G.audio && G.audio.ctx.state === "suspended") G.audio.ctx.resume();
 }
 
-function setMusic(on) {
-  G.musicOn = on;
-  if (on) {
-    ensureAudio();
-    if (G.audio) {
-      G.audio.nextTime = 0;
-      if (G.audio.ctx.state === "suspended") G.audio.ctx.resume();
-    }
-  } else if (G.audio) {
-    // Bereits eingereihte Bloecke laufen noch bis zu MUSIC_LEAD weiter; ueber die
-    // Lautstaerke ist es sofort still.
-    G.audio.music.gain.setTargetAtTime(0, G.audio.ctx.currentTime, 0.05);
-  }
-  if (on && G.audio) {
-    G.audio.music.gain.setTargetAtTime(0.55, G.audio.ctx.currentTime, 0.05);
-  }
+function setMusic(enabled) {
+  G.musicOn = enabled;
+  if (enabled) ensureAudio();
+  if (!G.audio) return;
+  if (G.audio.ctx.state === "suspended") G.audio.ctx.resume();
+  G.audio.music.gain.setTargetAtTime(enabled ? 0.5 : 0, G.audio.ctx.currentTime, 0.05);
+  if (enabled) G.audio.nextTime = 0;
 }
 
-// ---------------------------------------------------------------- Gelaende
+// ---------------------------------------------------------------- 3D-Szene
 
-function createTerrain(seed) {
-  const solid = new Uint8Array(MASK_W * MASK_H);
-  const rand = makeRandom(seed);
+function px(x) { return x / SCALE - WORLD_W / (2 * SCALE); }
+function py(y) { return y / SCALE - WORLD_H / (2 * SCALE); }
 
-  // Mehrere ueberlagerte Sinuswellen ergeben eine Huegellandschaft, die immer
-  // begehbar ist - Rauschen allein liefert zu oft unerreichbare Spitzen.
-  const waves = [];
-  for (let i = 0; i < 5; i++) {
-    waves.push({
-      amp: 18 + rand() * 46,
-      len: 140 + rand() * 620,
-      phase: rand() * Math.PI * 2,
-    });
-  }
-
-  const heights = new Float32Array(MASK_W);
-  for (let x = 0; x < MASK_W; x++) {
-    let h = 210;
-    for (const w of waves) {
-      h += Math.sin((x / w.len) * Math.PI * 2 + w.phase) * w.amp;
-    }
-    // Raender leicht anheben, damit niemand direkt am Bildrand ins Wasser rutscht.
-    const edge = Math.min(x, MASK_W - 1 - x) / 160;
-    h += Math.max(0, 1 - edge) * 55;
-    heights[x] = Math.max(70, Math.min(MASK_H - 90, h));
-  }
-
-  for (let x = 0; x < MASK_W; x++) {
-    const top = Math.floor(heights[x]);
-    for (let y = 0; y < top; y++) {
-      solid[y * MASK_W + x] = 1;
-    }
-  }
-  return { solid, heights };
-}
-
-function makeRandom(seed) {
-  let s = seed >>> 0;
-  return function () {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
-
-function isSolid(x, y) {
-  const xi = x | 0;
-  const yi = y | 0;
-  if (xi < 0 || xi >= MASK_W || yi < 0) return false;
-  if (yi >= MASK_H) return false;
-  return G.terrain.solid[yi * MASK_W + xi] === 1;
-}
-
-// cx/cy in WELTKOORDINATEN (y nach oben), wie isSolid und groundHeightAt. Die
-// Umrechnung auf Canvas-Zeilen passiert nur fuer das Nachzeichnen der Textur -
-// vorher standen hier beide Konventionen gemischt und das Loch entstand gespiegelt.
-function carve(cx, cy, radius) {
-  const r2 = radius * radius;
-  const x0 = Math.max(0, Math.floor(cx - radius));
-  const x1 = Math.min(MASK_W - 1, Math.ceil(cx + radius));
-  const y0 = Math.max(0, Math.floor(cy - radius));
-  const y1 = Math.min(MASK_H - 1, Math.ceil(cy + radius));
-  for (let y = y0; y <= y1; y++) {
-    for (let x = x0; x <= x1; x++) {
-      const dx = x - cx;
-      const dy = y - cy;
-      if (dx * dx + dy * dy <= r2) {
-        G.terrain.solid[y * MASK_W + x] = 0;
-      }
-    }
-  }
-  paintMask(x0, MASK_H - 1 - y1, x1 - x0 + 1, y1 - y0 + 1);
-}
-
-// Die Maske ist zugleich die Alpha-Textur des Gelaendes. Neu gezeichnet wird nur der
-// betroffene Ausschnitt, nicht das ganze Bild - sonst kostet jede Explosion ein
-// volles 1200x600-Update.
-function paintMask(x0, y0, w, h) {
-  const ctx = G.maskCtx;
-  const image = ctx.createImageData(w, h);
-  const data = image.data;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const worldY = MASK_H - 1 - (y0 + y);
-      const on = G.terrain.solid[worldY * MASK_W + (x0 + x)] === 1;
-      const i = (y * w + x) * 4;
-      data[i] = on ? 255 : 0;
-      data[i + 1] = on ? 255 : 0;
-      data[i + 2] = on ? 255 : 0;
-      data[i + 3] = 255;
-    }
-  }
-  ctx.putImageData(image, x0, y0);
-  G.maskTexture.needsUpdate = true;
-}
-
-function groundHeightAt(x) {
-  const xi = Math.max(0, Math.min(MASK_W - 1, x | 0));
-  for (let y = MASK_H - 1; y >= 0; y--) {
-    if (G.terrain.solid[y * MASK_W + xi] === 1) return y + 1;
-  }
-  return 0;
-}
-
-// ---------------------------------------------------------------- Welt <-> Szene
-
-function wx(x) { return x / UNITS - MASK_W / (2 * UNITS); }
-function wy(y) { return y / UNITS - MASK_H / (2 * UNITS); }
-
-// ---------------------------------------------------------------- Szene
-
-function gradientTexture(THREE, stops) {
-  const c = document.createElement("canvas");
-  c.width = 4;
-  c.height = 256;
-  const ctx = c.getContext("2d");
-  const grad = ctx.createLinearGradient(0, 0, 0, 256);
-  for (const [pos, color] of stops) grad.addColorStop(pos, color);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 4, 256);
-  return new THREE.CanvasTexture(c);
-}
-
-function rockTexture(THREE) {
-  const c = document.createElement("canvas");
-  c.width = 64;
-  c.height = MASK_H;
-  const ctx = c.getContext("2d");
-  const grad = ctx.createLinearGradient(0, 0, 0, MASK_H);
-  grad.addColorStop(0, "#6fae4a");
-  grad.addColorStop(0.06, "#5d9440");
-  grad.addColorStop(0.2, "#8a6a44");
-  grad.addColorStop(1, "#5a4630");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 64, MASK_H);
-  // Etwas Koernung, damit die Flaeche im Licht nicht wie Plastik wirkt.
-  for (let i = 0; i < 5000; i++) {
-    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.10})`;
-    ctx.fillRect(Math.random() * 64, Math.random() * MASK_H, 2, 2);
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.repeat.set(18, 1);
-  return tex;
-}
-
-function labelSprite(THREE, text, color) {
-  // Gleiche Technik wie wwwroot/js/finance3d.js: Text auf ein Canvas, daraus ein
-  // Sprite. Sprites drehen sich immer zur Kamera, die Namen bleiben also lesbar.
-  const c = document.createElement("canvas");
-  c.width = 256;
-  c.height = 64;
-  const ctx = c.getContext("2d");
-  ctx.font = "bold 30px Segoe UI, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = "rgba(255,255,255,0.9)";
-  ctx.strokeText(text, 128, 32);
-  ctx.fillStyle = color;
-  ctx.fillText(text, 128, 32);
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: new THREE.CanvasTexture(c),
-    transparent: true,
-    depthTest: false,
-  }));
-  sprite.scale.set(11, 2.75, 1);
-  sprite.renderOrder = 10;
-  return sprite;
+function gradientTexture(THREE, colors) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+  colors.forEach(([position, color]) => gradient.addColorStop(position, color));
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 2, 256);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 function buildScene(host) {
   const THREE = window.THREE;
   const canvas = document.createElement("canvas");
-  canvas.style.width = "100%";
-  canvas.style.height = "100%";
-  canvas.style.display = "block";
+  canvas.style.cssText = "width:100%;height:100%;display:block;";
   host.appendChild(canvas);
-
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = gradientTexture(THREE, [
-    [0, "#0d2340"], [0.45, "#3f7fbf"], [1, "#bfe0f2"],
-  ]);
+  scene.background = gradientTexture(THREE, [[0, "#10243c"], [0.55, "#537b91"], [1, "#d2c1a0"]]);
+  scene.fog = new THREE.Fog(0x6f8791, 55, 175);
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.3, 500);
+  camera.position.set(px(180), py(210), 44);
 
-  const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 900);
-
-  const sun = new THREE.DirectionalLight(0xfff3e0, 1.15);
-  sun.position.set(-60, 90, 110);
+  const sun = new THREE.DirectionalLight(0xffe4bc, 1.35);
+  sun.position.set(-40, 80, 90);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.camera.left = -110;
-  sun.shadow.camera.right = 110;
-  sun.shadow.camera.top = 70;
-  sun.shadow.camera.bottom = -70;
-  sun.shadow.camera.far = 400;
+  sun.shadow.camera.left = -45;
+  sun.shadow.camera.right = 45;
+  sun.shadow.camera.top = 35;
+  sun.shadow.camera.bottom = -35;
   scene.add(sun);
-  scene.add(new THREE.HemisphereLight(0xbfd8ff, 0x4a3b2a, 0.75));
+  scene.add(new THREE.HemisphereLight(0xbad8ef, 0x4d3927, 0.85));
 
-  const maskCanvas = document.createElement("canvas");
-  maskCanvas.width = MASK_W;
-  maskCanvas.height = MASK_H;
-  const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
-  const maskTexture = new THREE.CanvasTexture(maskCanvas);
-
-  const worldW = MASK_W / UNITS;
-  const worldH = MASK_H / UNITS;
-  const geo = new THREE.PlaneGeometry(worldW, worldH);
-
-  // Vordere Platte traegt die Gesteinstextur, die hintere sitzt ein Stueck dahinter
-  // und ist dunkler. Durch die perspektivische Kamera bekommen Kraterraender dadurch
-  // sichtbare Tiefe, ohne dass echte Geometrie erzeugt werden muss.
-  const front = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-    map: rockTexture(THREE),
-    alphaMap: maskTexture,
-    alphaTest: 0.5,
-    roughness: 0.95,
-    metalness: 0.0,
-  }));
-  front.receiveShadow = true;
-  scene.add(front);
-
-  const back = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-    color: 0x3a2c1e,
-    alphaMap: maskTexture,
-    alphaTest: 0.5,
-    roughness: 1.0,
-  }));
-  back.position.z = -2.4;
-  scene.add(back);
-
-  const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(worldW * 1.6, worldH),
-    new THREE.MeshStandardMaterial({
-      color: 0x1f6ea8, transparent: true, opacity: 0.78, roughness: 0.25, metalness: 0.1,
-    }));
-  water.position.z = 3;
-  scene.add(water);
-
-  return {
-    THREE, canvas, renderer, scene, camera, sun, water,
-    maskCanvas, maskCtx, maskTexture, front, back, worldW, worldH,
-  };
+  return { THREE, canvas, renderer, scene, camera, sun, courseGroup: null };
 }
 
-function makeWormMesh(THREE, color) {
+function disposeObject(root) {
+  if (!root) return;
+  root.traverse(object => {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach(material => material.dispose());
+    }
+  });
+}
+
+function makeWormOperator(THREE) {
   const group = new THREE.Group();
   const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.85, 1.1, 6, 14),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.55 }));
+    new THREE.CapsuleGeometry(1.15, 1.8, 7, 16),
+    new THREE.MeshStandardMaterial({ color: 0xd88b43, roughness: 0.7 }));
+  body.position.y = 1.7;
   body.castShadow = true;
   group.add(body);
-  const eyeGeo = new THREE.SphereGeometry(0.24, 10, 10);
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  const pupilGeo = new THREE.SphereGeometry(0.11, 8, 8);
-  const pupilMat = new THREE.MeshStandardMaterial({ color: 0x101010 });
-  for (const dx of [-0.32, 0.32]) {
-    const eye = new THREE.Mesh(eyeGeo, eyeMat);
-    eye.position.set(dx, 0.55, 0.72);
+  for (const x of [-0.38, 0.38]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    eye.position.set(x, 2.35, 0.9);
     group.add(eye);
-    const pupil = new THREE.Mesh(pupilGeo, pupilMat);
-    pupil.position.set(dx, 0.55, 0.92);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0x111820 }));
+    pupil.position.set(x, 2.35, 1.13);
     group.add(pupil);
+  }
+  const controller = new THREE.Mesh(
+    new THREE.BoxGeometry(2.7, 1.2, 0.7),
+    new THREE.MeshStandardMaterial({ color: 0x26313a, roughness: 0.45, metalness: 0.25 }));
+  controller.position.set(0, 0.7, 1.25);
+  group.add(controller);
+  for (const x of [-0.7, 0.7]) {
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.65, 8), new THREE.MeshStandardMaterial({ color: 0xb9c3c9 }));
+    stick.position.set(x, 1.45, 1.25);
+    group.add(stick);
   }
   return group;
 }
 
-function makeDroneMesh(THREE, color) {
+function makeDrone(THREE) {
   const group = new THREE.Group();
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 0.5, 1.1),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.35 }));
+    new THREE.BoxGeometry(2.1, 0.62, 1.4),
+    new THREE.MeshStandardMaterial({ color: 0x456674, roughness: 0.38, metalness: 0.5 }));
   body.castShadow = true;
   group.add(body);
-  const armMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
+  const camera = new THREE.Mesh(
+    new THREE.SphereGeometry(0.34, 10, 10),
+    new THREE.MeshStandardMaterial({ color: 0x101820, emissive: 0x172b38, emissiveIntensity: 0.6 }));
+  camera.position.set(1.1, -0.08, 0);
+  group.add(camera);
+  for (const [z, color] of [[-0.77, 0xff4d45], [0.77, 0x5dff87]]) {
+    const light = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 8, 8),
+      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2.2 }));
+    light.position.set(0.75, 0.08, z);
+    group.add(light);
+  }
   const rotors = [];
-  for (const [ax, az] of [[-1, -0.8], [1, -0.8], [-1, 0.8], [1, 0.8]]) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), armMat);
-    arm.position.set(ax * 0.85, 0.15, az * 0.5);
+  for (const [x, z] of [[-1.2, -0.9], [-1.2, 0.9], [1.2, -0.9], [1.2, 0.9]]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.12, 0.12), new THREE.MeshStandardMaterial({ color: 0x1d2429 }));
+    arm.position.set(x * 0.55, 0, z * 0.55);
+    arm.rotation.y = z > 0 ? 0.65 : -0.65;
     group.add(arm);
     const rotor = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.55, 0.55, 0.05, 12),
-      new THREE.MeshStandardMaterial({ color: 0xdddddd, transparent: true, opacity: 0.55 }));
-    rotor.position.set(ax * 0.85, 0.32, az * 0.5);
+      new THREE.CylinderGeometry(0.7, 0.7, 0.045, 18),
+      new THREE.MeshStandardMaterial({ color: 0xe5edf0, transparent: true, opacity: 0.45 }));
+    rotor.position.set(x, 0.28, z);
     group.add(rotor);
     rotors.push(rotor);
   }
@@ -645,511 +533,193 @@ function makeDroneMesh(THREE, color) {
   return group;
 }
 
-// ---------------------------------------------------------------- Aufbau der Partie
+function buildCourseScene(course) {
+  const { THREE, scene } = G;
+  if (G.courseGroup) {
+    scene.remove(G.courseGroup);
+    disposeObject(G.courseGroup);
+  }
+  const group = new THREE.Group();
+
+  const shape = new THREE.Shape();
+  shape.moveTo(px(0), py(0));
+  for (let x = 0; x <= WORLD_W; x += 8) shape.lineTo(px(x), py(groundHeightAt(course, x)));
+  shape.lineTo(px(WORLD_W), py(0));
+  shape.closePath();
+  const ground = new THREE.Mesh(
+    new THREE.ShapeGeometry(shape),
+    new THREE.MeshStandardMaterial({ color: 0x6d5134, roughness: 0.96 }));
+  ground.position.z = 0;
+  ground.receiveShadow = true;
+  group.add(ground);
+
+  for (const obstacle of course.obstacles) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(obstacle.w / SCALE, obstacle.h / SCALE, 4.2),
+      new THREE.MeshStandardMaterial({ color: obstacle.kind === "tower" ? 0x5f6667 : 0x4c5355, roughness: 0.86 }));
+    mesh.position.set(px(obstacle.x + obstacle.w / 2), py(obstacle.y + obstacle.h / 2), -0.5);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    for (let y = obstacle.y + 24; y < obstacle.y + obstacle.h; y += 42) {
+      const stripe = new THREE.Mesh(
+        new THREE.BoxGeometry((obstacle.w + 2) / SCALE, 5 / SCALE, 4.35),
+        new THREE.MeshStandardMaterial({ color: 0xc08a3e, roughness: 0.7 }));
+      stripe.position.set(px(obstacle.x + obstacle.w / 2), py(y), 0);
+      group.add(stripe);
+    }
+  }
+
+  const checkpointMeshes = [];
+  course.checkpoints.forEach((point, index) => {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(CHECKPOINT_RADIUS / SCALE, 0.42, 10, 42),
+      new THREE.MeshStandardMaterial({ color: 0x62d9ff, emissive: 0x167da0, emissiveIntensity: 1.2 }));
+    ring.position.set(px(point.x), py(point.y), 0.5);
+    ring.userData.index = index;
+    group.add(ring);
+    checkpointMeshes.push(ring);
+  });
+
+  const target = new THREE.Group();
+  const targetRing = new THREE.Mesh(
+    new THREE.TorusGeometry(GOAL_RADIUS / SCALE, 0.58, 12, 48),
+    new THREE.MeshStandardMaterial({ color: 0xffc24a, emissive: 0xc46b12, emissiveIntensity: 1.1 }));
+  target.add(targetRing);
+  const beacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 1.25, 5.5, 10),
+    new THREE.MeshStandardMaterial({ color: 0xd69c31, emissive: 0x8f4a0a, emissiveIntensity: 0.65 }));
+  beacon.position.y = -GOAL_RADIUS / SCALE - 1.8;
+  target.add(beacon);
+  target.position.set(px(course.goal.x), py(course.goal.y), 0.5);
+  group.add(target);
+
+  const operator = makeWormOperator(THREE);
+  operator.scale.setScalar(1.4);
+  operator.position.set(px(course.operator.x), py(course.operator.y), 1.2);
+  group.add(operator);
+
+  const droneMesh = makeDrone(THREE);
+  droneMesh.scale.setScalar(1.15);
+  droneMesh.position.set(px(course.start.x), py(course.start.y), 1.4);
+  group.add(droneMesh);
+
+  scene.add(group);
+  G.courseGroup = group;
+  G.checkpointMeshes = checkpointMeshes;
+  G.targetMesh = target;
+  G.operatorMesh = operator;
+  G.droneMesh = droneMesh;
+}
+
+// ---------------------------------------------------------------- Partie und Wertung
 
 function startMatch(config) {
-  const THREE = G.THREE;
-  for (const w of G.worms) {
-    G.scene.remove(w.mesh);
-    G.scene.remove(w.label);
-  }
-  G.worms = [];
-  G.round = 1;
-  G.waterLevel = WATER_LEVEL_START;
   G.config = config;
-  G.terrain = createTerrain((Date.now() & 0xffff) ^ 0x5bd1);
-  paintMask(0, 0, MASK_W, MASK_H);
-
-  G.teams = [
-    { name: config.name1 || G.t.player1, color: TEAM_COLORS[0], human: true, ammo: freshAmmo() },
-    {
-      name: config.name2 || (config.mode === "pc" ? G.t.levels[config.difficulty] : G.t.player2),
-      color: TEAM_COLORS[1],
-      human: config.mode !== "pc",
-      ammo: freshAmmo(),
-    },
+  G.course = createCourse((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0, config.difficulty);
+  G.pilots = [
+    { name: config.name1 || G.t.player1, human: true },
+    { name: config.mode === "pc" ? G.t.reference : (config.name2 || G.t.player2), human: config.mode !== "pc" },
   ];
+  G.runs = [];
+  G.activePilot = 0;
+  buildCourseScene(G.course);
+  showReady();
+}
 
-  // Mannschaften abwechselnd ueber die Karte verteilen, mit Abstand zueinander.
-  const slots = [];
-  const count = config.teamSize * 2;
-  for (let i = 0; i < count; i++) {
-    slots.push(120 + ((MASK_W - 240) * (i + 0.5)) / count);
-  }
-  for (let i = 0; i < count; i++) {
-    const team = i % 2;
-    const x = slots[i] + (Math.random() - 0.5) * 40;
-    const worm = {
-      team,
-      index: Math.floor(i / 2) + 1,
-      x,
-      y: groundHeightAt(x) + 8,
-      vx: 0,
-      vy: 0,
-      health: 100,
-      facing: team === 0 ? 1 : -1,
-      alive: true,
-      marked: false,
-    };
-    worm.mesh = makeWormMesh(THREE, G.teams[team].color);
-    worm.label = labelSprite(THREE, `${G.teams[team].name} ${worm.index}`, "#1b2733");
-    G.scene.add(worm.mesh);
-    G.scene.add(worm.label);
-    G.worms.push(worm);
-  }
+function showReady() {
+  const pilot = G.pilots[G.activePilot];
+  G.phase = "ready";
+  G.ui.readyTitle.textContent = `${G.t.ready}: ${pilot.name}`;
+  G.ui.readyBody.textContent = pilot.human
+    ? `${G.t.stationBody}\n${G.t.controlsBody}`
+    : G.t.watchReference;
+  G.ui.readyButton.textContent = pilot.human ? G.t.launch : G.t.watchReference;
+  G.camera.position.set(px(150), py(160), 29);
+  G.camera.lookAt(px(105), py(125), 0);
+  setScreen("ready");
+}
 
-  G.activeTeam = 0;
-  G.phase = "aim";
-  G.turnTime = TURN_SECONDS;
-  G.wind = (Math.random() * 2 - 1) * 90;
-  G.angle = 45;
-  G.power = 0;
-  G.charging = false;
-  G.droneIndex = 0;
-  G.projectiles = [];
-  G.particles = [];
-  G.aiTimer = 0;
-  G.aiShot = null;
-  G.aiWalkLeft = undefined;
-  G.aiApproach = null;
-  G.aiReplan = 0;
+function beginRun() {
+  G.drone = createDrone(G.course);
+  G.phase = "flight";
   G.message = "";
   G.messageTime = 0;
-  G.activeWorm = firstAliveOfTeam(0);
+  G.alertedBattery = false;
+  G.alertedSignal = false;
+  G.input = { left: false, right: false, up: false, down: false, boost: false };
+  for (const mesh of G.checkpointMeshes) {
+    mesh.visible = true;
+    mesh.material.opacity = 1;
+    mesh.material.transparent = false;
+  }
   setScreen("game");
+  sound("launch");
 }
 
-function freshAmmo() {
-  const ammo = {};
-  for (const d of DRONE_TYPES) ammo[d.id] = d.ammo;
-  return ammo;
+function restartRun() {
+  if (G.phase !== "flight" || !G.pilots[G.activePilot].human) return;
+  beginRun();
+  flash(G.t.restartHint);
 }
 
-function firstAliveOfTeam(team) {
-  return G.worms.find(w => w.team === team && w.alive) || null;
-}
-
-function aliveCount(team) {
-  return G.worms.filter(w => w.team === team && w.alive).length;
-}
-
-// ---------------------------------------------------------------- Physik
-
-function stepWorm(worm, dt) {
-  if (!worm.alive) return;
-  const wasAir = !onGround(worm);
-  worm.vy += GRAVITY * dt;
-  let ny = worm.y + worm.vy * dt;
-  if (worm.vy <= 0) {
-    const ground = groundHeightAt(worm.x);
-    if (ny <= ground + 6) {
-      if (wasAir && worm.vy < -260) {
-        applyDamage(worm, Math.min(35, Math.round((-worm.vy - 260) / 12)));
-      }
-      ny = ground + 6;
-      worm.vy = 0;
-    }
-  } else if (isSolid(worm.x, ny + 10)) {
-    worm.vy = 0;
-  }
-  worm.y = ny;
-  if (worm.y < G.waterLevel) {
-    worm.alive = false;
-    sfx("splash");
-    flash(`${G.teams[worm.team].name} ${worm.index} ${G.t.hitWater}`);
-  }
-}
-
-function onGround(worm) {
-  return worm.y <= groundHeightAt(worm.x) + 7;
-}
-
-function walk(worm, dir, dt) {
-  if (!onGround(worm)) return;
-  worm.facing = dir;
-  const nx = worm.x + dir * WALK_SPEED * dt;
-  if (nx < 12 || nx > MASK_W - 12) return;
-  const target = groundHeightAt(nx);
-  if (target - worm.y > MAX_CLIMB) return;   // zu steil
-  worm.x = nx;
-  // Dem Gelaende folgen, auch BERGAB. Vorher stand hier Math.max(...), der Wurm
-  // wurde also nur angehoben und blieb bergab in der Luft haengen, bis ihn die
-  // Schwerkraft nachzog - gemessen: dauerhaft rund 2 px ueber Grund, damit ausserhalb
-  // der Toleranz von onGround. Folge waere gewesen: Laufen setzt mitten im Zug aus,
-  // und ein Gefaelle haette Fallschaden ausgeloest.
-  worm.y = target + 6;
-  worm.vy = 0;
-}
-
-function launch(worm, type, angleDeg, power, dir) {
-  sfx("launch");
-  const rad = (angleDeg * Math.PI) / 180;
-  const speed = power;
-  return spawnProjectile(type, {
-    x: worm.x + dir * 10,
-    y: worm.y + 10,
-    vx: Math.cos(rad) * speed * dir,
-    vy: Math.sin(rad) * speed,
-    team: worm.team,
-  });
-}
-
-function spawnProjectile(type, init) {
-  const p = {
-    type,
-    x: init.x, y: init.y, vx: init.vx, vy: init.vy,
-    team: init.team,
-    life: 12,
-    mesh: makeDroneMesh(G.THREE, G.teams[init.team].color),
-    steer: init.steer || null,
+function finishRun(success, reason) {
+  if (G.phase !== "flight") return;
+  const run = {
+    pilot: G.pilots[G.activePilot].name,
+    success,
+    reason,
+    time: G.drone.elapsed,
+    battery: G.drone.battery,
+    checkpoints: G.drone.checkpointIndex,
+    distance: G.drone.x,
   };
-  G.scene.add(p.mesh);
-  G.projectiles.push(p);
-  sfx("rotor");
-  return p;
-}
+  run.score = scoreRun(run, G.course.checkpoints.length);
+  G.runs.push(run);
+  G.phase = "runEnd";
+  success ? sound("success") : sound("crash");
 
-function stepProjectile(p, dt) {
-  if (p.steer === "free") {
-    // Spaehdrohne: kein Fall, dafuer traege Steuerung.
-    p.vx += G.input.right ? 220 * dt : 0;
-    p.vx -= G.input.left ? 220 * dt : 0;
-    p.vy += G.input.up ? 220 * dt : 0;
-    p.vy -= G.input.down ? 220 * dt : 0;
-    p.vx *= 0.985;
-    p.vy *= 0.985;
-  } else if (p.steer === "pass") {
-    // Abwurfdrohne haelt ihre Hoehe und faehrt durch.
-    p.vy += (p.targetY - p.y) * 1.6 * dt;
-    p.vy *= 0.9;
+  G.ui.runTitle.textContent = success ? G.t.runComplete : G.t.runFailed;
+  G.ui.runReason.textContent = reason;
+  G.ui.runStats.textContent = `${G.t.score}: ${run.score}  ·  ${G.t.bestTime}: ${run.time.toFixed(1)} s  ·  ${G.t.remaining}: ${run.battery.toFixed(0)} %`;
+  if (G.activePilot === 0) {
+    G.ui.runButton.textContent = G.t.nextPilot;
+    setScreen("runEnd");
   } else {
-    p.vy += GRAVITY * dt;
-  }
-  const massFactor = DRONE_TYPES.find(d => d.id === p.type).mass;
-  p.vx += (G.wind / massFactor) * dt;
-
-  p.x += p.vx * dt;
-  p.y += p.vy * dt;
-  p.life -= dt;
-
-  if (p.x < -40 || p.x > MASK_W + 40 || p.y < -60 || p.life <= 0) return "gone";
-  if (p.steer === "free") return "fly";
-  if (p.y < G.waterLevel) return "water";
-  if (isSolid(p.x, p.y)) return "hit";
-  for (const w of G.worms) {
-    if (!w.alive) continue;
-    const dx = w.x - p.x;
-    const dy = w.y - p.y;
-    if (dx * dx + dy * dy < 90) return "hit";
-  }
-  return "fly";
-}
-
-function explode(p) {
-  const def = DRONE_TYPES.find(d => d.id === p.type);
-  if (def.radius > 0) carve(p.x, p.y, def.radius);
-  for (const w of G.worms) {
-    if (!w.alive) continue;
-    const dist = Math.hypot(w.x - p.x, w.y - p.y);
-    if (dist > def.radius * 1.5) continue;
-    const falloff = Math.max(0, 1 - dist / (def.radius * 1.5));
-    let dmg = def.damage * falloff;
-    if (w.marked) {
-      dmg *= 1.5;
-      w.marked = false;
-      w.label.material.color.set(0xffffff);
-    }
-    applyDamage(w, Math.round(dmg));
-    const push = 210 * falloff;
-    w.vx += ((w.x - p.x) / (dist || 1)) * push;
-    w.vy += ((w.y - p.y) / (dist || 1)) * push + 40 * falloff;
-  }
-  spawnBlast(p.x, p.y, def.radius);
-  sfx("explosion", Math.min(1.2, def.radius / 44));
-}
-
-function applyDamage(worm, amount) {
-  if (amount <= 0 || !worm.alive) return;
-  sfx("hurt");
-  worm.health -= amount;
-  if (worm.health <= 0) {
-    worm.health = 0;
-    worm.alive = false;
+    showResult();
   }
 }
 
-function spawnBlast(x, y, radius) {
-  const THREE = G.THREE;
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(Math.max(4, radius) / UNITS, 14, 14),
-    new THREE.MeshBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0.9 }));
-  mesh.position.set(wx(x), wy(y), 1.5);
-  G.scene.add(mesh);
-  G.particles.push({ mesh, life: 0.45, max: 0.45 });
+function advancePilot() {
+  G.activePilot = 1;
+  showReady();
 }
 
-// ---------------------------------------------------------------- Zuege
-
-function currentDrone() { return DRONE_TYPES[G.droneIndex]; }
-
-function ammoLeft(teamIndex, droneId) {
-  return G.teams[teamIndex].ammo[droneId];
+function showResult() {
+  G.phase = "result";
+  const [first, second] = G.runs;
+  const winner = first.score === second.score ? null : (first.score > second.score ? first : second);
+  G.ui.resultTitle.textContent = winner ? `${winner.pilot} ${G.t.wins}` : G.t.draw;
+  G.ui.resultBody.innerHTML = "";
+  for (const run of G.runs) {
+    const row = el("div", "padding:10px 0;border-bottom:1px solid #dbe3e9;text-align:left;");
+    row.appendChild(el("div", "font-weight:700;color:#152532;", run.pilot));
+    row.appendChild(el("div", "font-size:13px;color:#657582;", `${G.t.score}: ${run.score}  ·  ${run.time.toFixed(1)} s  ·  ${run.battery.toFixed(0)} %`));
+    G.ui.resultBody.appendChild(row);
+  }
+  rememberResult(winner ? winner.pilot : null);
+  setScreen("result");
 }
 
-function fireCurrent() {
-  const worm = G.activeWorm;
-  if (!worm || G.phase !== "aim") return;
-  const def = currentDrone();
-  const left = ammoLeft(G.activeTeam, def.id);
-  if (left === 0) return;
-  if (left > 0) G.teams[G.activeTeam].ammo[def.id] = left - 1;
-
-  if (def.control === "throw") {
-    launch(worm, def.id, G.angle, 120 + G.power * 420, worm.facing);
-  } else if (def.control === "pass") {
-    const p = spawnProjectile(def.id, {
-      x: worm.facing > 0 ? 10 : MASK_W - 10,
-      y: worm.y + 90 + G.angle * 1.4,
-      vx: worm.facing * 210,
-      vy: 0,
-      team: worm.team,
-    });
-    p.steer = "pass";
-    p.targetY = p.y;
-    p.bombs = 3;
-    G.passDrone = p;
-  } else {
-    const p = spawnProjectile(def.id, {
-      x: worm.x + worm.facing * 12,
-      y: worm.y + 16,
-      vx: worm.facing * 120,
-      vy: 60,
-      team: worm.team,
-    });
-    p.steer = "free";
-    p.life = 8;
-    G.scoutDrone = p;
-  }
-  G.phase = "flying";
-  G.power = 0;
-  G.charging = false;
-}
-
-function releaseBombs() {
-  const p = G.passDrone;
-  if (!p || p.bombs <= 0) return;
-  p.bombs--;
-  spawnProjectile("drop", { x: p.x, y: p.y - 4, vx: p.vx * 0.5, vy: -20, team: p.team });
-  if (p.bombs <= 0) p.life = Math.min(p.life, 1.2);
-}
-
-function markTarget() {
-  const p = G.scoutDrone;
-  if (!p) return;
-  let best = null;
-  let bestDist = 1e9;
-  for (const w of G.worms) {
-    if (!w.alive || w.team === p.team) continue;
-    const d = Math.hypot(w.x - p.x, w.y - p.y);
-    if (d < bestDist) { bestDist = d; best = w; }
-  }
-  if (best && bestDist < 90) {
-    best.marked = true;
-    best.label.material.color.set(0xffd54f);
-    flash(G.t.marked);
-  }
-  p.life = 0;
-}
-
-function endTurn() {
-  G.phase = "retreat";
-  G.retreat = RETREAT_SECONDS;
-}
-
-function nextTurn() {
-  const other = G.activeTeam === 0 ? 1 : 0;
-  if (aliveCount(0) === 0 || aliveCount(1) === 0) {
-    G.phase = "over";
-    setScreen("result");
-    return;
-  }
-  G.activeTeam = other;
-  if (other === 0) G.round++;
-  if (G.round >= SUDDEN_DEATH_ROUND) {
-    G.waterLevel += 6;
-    flash(G.t.suddenDeath);
-  }
-  const team = G.worms.filter(w => w.team === other && w.alive);
-  const previous = G.lastWormIndex ? G.lastWormIndex[other] || 0 : 0;
-  const pick = team[previous % team.length];
-  G.lastWormIndex = G.lastWormIndex || [0, 0];
-  G.lastWormIndex[other] = previous + 1;
-  G.activeWorm = pick;
-  G.phase = "aim";
-  G.turnTime = TURN_SECONDS;
-  G.wind = (Math.random() * 2 - 1) * 90;
-  G.angle = 45;
-  G.power = 0;
-  G.charging = false;
-  G.droneIndex = 0;
-  G.passDrone = null;
-  G.scoutDrone = null;
-  G.aiTimer = G.teams[other].human ? 0 : 1.4;
-  G.aiShot = null;
-  G.aiWalkLeft = undefined;
-  G.aiApproach = null;
-  G.aiReplan = 0;
-}
-
-function flash(text) {
-  G.message = text;
-  G.messageTime = 2.6;
-}
-
-// ---------------------------------------------------------------- Rechnergegner
-
-// Grobe Rastersuche mit derselben Flugbahnrechnung, die auch das Spiel benutzt.
-// Kein Lernen, keine Wegfindung - das reicht fuer eine Pause.
-function planAiShot(worm) {
-  const targets = G.worms.filter(w => w.alive && w.team !== worm.team);
-  if (targets.length === 0) return null;
-  const target = targets[Math.floor(Math.random() * targets.length)];
-  const dir = target.x >= worm.x ? 1 : -1;
-  const level = G.config.difficulty;
-  const windFactor = level === "easy" ? 0.5 : 1.0;
-
-  const spread = level === "easy" ? 9 : level === "normal" ? 4 : 1.5;
-
-  // Bewertung einer Flugbahn: nicht nur der Abstand zum Ziel, sondern der
-  // SCHLECHTESTE Abstand, wenn man den Winkel um die eigene Streuung verwackelt.
-  // Ohne das waehlt die Suche gern eine Bahn, die knapp ueber einen Huegel geht -
-  // die Streuung laesst sie dann dagegenklatschen, und der Gegner wirkt nicht
-  // schwer, sondern dumm (gemessen: drei von zwoelf Schuessen ueber 200 px daneben).
-  function robustDistance(angle, power) {
-    let worst = 0;
-    for (const wobble of [0, spread * 0.8, -spread * 0.8]) {
-      const land = simulateShot(worm, angle + wobble, power, dir, windFactor);
-      if (!land) return Infinity;
-      worst = Math.max(worst, Math.hypot(land.x - target.x, land.y - target.y));
-    }
-    return worst;
-  }
-
-  let best = null;
-  for (let angle = 12; angle <= 80; angle += 3) {
-    for (let power = 180; power <= 540; power += 18) {
-      const land = simulateShot(worm, angle, power, dir, windFactor);
-      if (!land) continue;
-      const dist = Math.hypot(land.x - target.x, land.y - target.y);
-      if (!best || dist < best.dist) best = { angle, power, dist };
-    }
-  }
-  if (!best) return null;
-  best = { angle: best.angle, power: best.power, dist: robustDistance(best.angle, best.power) };
-
-  // Verfeinerung um den groben Treffer herum. Das Raster von 3 Grad und 18 Schub
-  // laesst auf weite Entfernung noch gut 60 px stehen - mehr als der Wirkradius
-  // der Sprengdrohne. Ohne diesen zweiten Durchgang verfehlt selbst die hoechste
-  // Stufe bei starkem Wind regelmaessig.
-  const coarse = best;
-  for (let angle = coarse.angle - 3; angle <= coarse.angle + 3; angle += 0.5) {
-    for (let power = coarse.power - 18; power <= coarse.power + 18; power += 4) {
-      // Derselbe Schubbereich, den ein Mensch ueber die Leertaste erreicht
-      // (120 + power * 420, power hoechstens 1). Ohne die Grenze schoesse der
-      // Rechner staerker, als ueberhaupt bedienbar ist.
-      if (power < 120 || power > 540) continue;
-      const dist = robustDistance(angle, power);
-      if (dist < best.dist) best = { angle, power, dist };
-    }
-  }
-  return {
-    angle: best.angle + (Math.random() * 2 - 1) * spread,
-    power: Math.min(540, Math.max(120, best.power * (1 + (Math.random() * 2 - 1) * spread * 0.012))),
-    dir,
-    dist: best.dist,
-  };
-}
-
-function simulateShot(worm, angleDeg, power, dir, windFactor) {
-  const rad = (angleDeg * Math.PI) / 180;
-  let x = worm.x + dir * 10;
-  let y = worm.y + 10;
-  let vx = Math.cos(rad) * power * dir;
-  let vy = Math.sin(rad) * power;
-  const dt = 1 / 40;
-  for (let i = 0; i < 400; i++) {
-    vy += GRAVITY * dt;
-    vx += G.wind * windFactor * dt;
-    x += vx * dt;
-    y += vy * dt;
-    if (x < 0 || x > MASK_W || y < G.waterLevel) return null;
-    if (isSolid(x, y)) return { x, y };
-    for (const w of G.worms) {
-      if (!w.alive) continue;
-      if (Math.hypot(w.x - x, w.y - y) < 9) return { x, y };
-    }
-  }
-  return null;
-}
-
-// Gemessen: die groesste Wurfweite liegt bei rund 560 px, die Karte ist 1200 px breit.
-// Ein Gegner, der nur zielt und nie laeuft, schiesst aus unerreichbarer Entfernung ins
-// Leere - in der Messung ueber 40 Zufallslagen war genau das die Haelfte aller Schuesse.
-// Deshalb naehert er sich erst an, solange kein brauchbarer Schuss existiert.
-const AI_GOOD_SHOT = 70;      // px Abstand, ab dem sich Laufen nicht mehr lohnt
-const AI_WALK_BUDGET = 7;     // Sekunden je Zug, der Rest bleibt fuers Zielen
-
-function aiApproach(worm) {
-  const plan = planAiShot(worm);
-  if (plan && plan.dist <= AI_GOOD_SHOT) return { dir: 0, plan };
-  let nearest = null;
-  let bestDist = Infinity;
-  for (const w of G.worms) {
-    if (!w.alive || w.team === worm.team) continue;
-    const d = Math.abs(w.x - worm.x);
-    if (d < bestDist) { bestDist = d; nearest = w; }
-  }
-  if (!nearest) return { dir: 0, plan };
-  return { dir: nearest.x > worm.x ? 1 : -1, plan };
-}
-
-function stepAi(dt) {
-  if (G.teams[G.activeTeam].human || G.phase !== "aim") return;
-  G.aiTimer -= dt;
-
-  if (G.aiWalkLeft === undefined) G.aiWalkLeft = AI_WALK_BUDGET;
-  if (G.aiShot === null && G.aiWalkLeft > 0) {
-    G.aiReplan = (G.aiReplan || 0) - dt;
-    if (G.aiReplan <= 0) {
-      G.aiReplan = 0.4;
-      G.aiApproach = aiApproach(G.activeWorm);
-    }
-    if (G.aiApproach && G.aiApproach.dir !== 0) {
-      walk(G.activeWorm, G.aiApproach.dir, dt);
-      G.aiWalkLeft -= dt;
-      G.aiTimer = Math.max(G.aiTimer, 1.2);   // nach dem Laufen noch sichtbar zielen
-      return;
-    }
-    G.aiWalkLeft = 0;
-  }
-
-  if (G.aiShot === null && G.aiTimer < 0.9) {
-    G.aiShot = planAiShot(G.activeWorm) || { angle: 45, power: 320, dir: 1 };
-  }
-  if (G.aiShot && G.aiTimer > 0) {
-    // Sichtbar zielen, bevor geschossen wird - eine sofortige perfekte Antwort
-    // fuehlt sich deutlich unangenehmer an als eine kurze Bedenkzeit.
-    G.angle += (G.aiShot.angle - G.angle) * Math.min(1, dt * 4);
-    G.activeWorm.facing = G.aiShot.dir;
-    G.power = Math.min(1, G.power + dt * 0.6);
-  }
-  if (G.aiShot && G.aiTimer <= 0) {
-    G.droneIndex = 0;
-    G.angle = G.aiShot.angle;
-    launch(G.activeWorm, "blast", G.aiShot.angle, G.aiShot.power, G.aiShot.dir);
-    G.phase = "flying";
-    G.power = 0;
-    G.aiShot = null;
+function rememberResult(winner) {
+  if (!winner) return;
+  try {
+    const raw = localStorage.getItem("pausegame.fpv.scores");
+    const scores = raw ? JSON.parse(raw) : {};
+    scores[winner] = (scores[winner] || 0) + 1;
+    localStorage.setItem("pausegame.fpv.scores", JSON.stringify(scores));
+  } catch (error) {
+    // Die lokale Bestenliste ist optional und darf das Spiel nicht unterbrechen.
   }
 }
 
@@ -1162,32 +732,27 @@ function el(tag, style, text) {
   return node;
 }
 
-const PANEL = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"
-  + "background:rgba(9,20,34,0.72);backdrop-filter:blur(3px);z-index:5;";
-const CARD = "background:#fff;border-radius:12px;padding:24px 28px;min-width:340px;max-width:460px;"
-  + "font-family:Segoe UI,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,0.35);";
-const FIELD = "width:100%;padding:8px 10px;margin:4px 0 14px 0;border:1px solid #c8d2dc;"
-  + "border-radius:6px;font-size:14px;box-sizing:border-box;";
-const LABEL = "font-size:12px;color:#5a6b7b;text-transform:uppercase;letter-spacing:0.4px;";
-const BUTTON = "width:100%;padding:11px;border:0;border-radius:6px;background:#2f6fed;color:#fff;"
-  + "font-size:15px;font-weight:600;cursor:pointer;";
+const PANEL = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(7,17,25,.74);backdrop-filter:blur(4px);z-index:8;";
+const CARD = "background:#f7f9fa;border-radius:12px;padding:24px 28px;min-width:340px;max-width:500px;font-family:Segoe UI,sans-serif;box-shadow:0 16px 46px rgba(0,0,0,.42);";
+const FIELD = "width:100%;padding:8px 10px;margin:4px 0 13px;border:1px solid #bfcbd3;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;";
+const LABEL = "font-size:11px;color:#5a6b76;text-transform:uppercase;letter-spacing:.55px;";
+const BUTTON = "width:100%;padding:11px;border:0;border-radius:6px;background:#2779a7;color:#fff;font-size:15px;font-weight:650;cursor:pointer;";
 
 function buildUi(host) {
   const t = G.t;
-
-  // --- Startbildschirm
   const setup = el("div", PANEL);
   const card = el("div", CARD);
-  card.appendChild(el("div", "font-size:22px;font-weight:700;color:#16222e;", t.title));
-  card.appendChild(el("div", "font-size:13px;color:#6b7b8b;margin:2px 0 18px 0;", t.subtitle));
+  card.appendChild(el("div", "font-size:23px;font-weight:750;color:#142531;", t.title));
+  card.appendChild(el("div", "font-size:13px;color:#60727e;margin:3px 0 5px;line-height:1.45;", t.subtitle));
+  card.appendChild(el("div", "font-size:11px;color:#9a6b27;margin:0 0 16px;", t.fiction));
 
   card.appendChild(el("div", LABEL, t.modeLabel));
   const mode = el("select", FIELD);
-  const optPc = el("option", null, t.modePc); optPc.value = "pc";
-  const optHuman = el("option", null, t.modeHuman); optHuman.value = "human";
-  mode.appendChild(optPc);
-  mode.appendChild(optHuman);
-
+  [["pc", t.modePc], ["human", t.modeHuman]].forEach(([value, text]) => {
+    const option = el("option", null, text);
+    option.value = value;
+    mode.appendChild(option);
+  });
   card.appendChild(mode);
 
   card.appendChild(el("div", LABEL, t.name1));
@@ -1205,371 +770,270 @@ function buildUi(host) {
   card.appendChild(name2Label);
   card.appendChild(name2);
 
-  const diffLabel = el("div", LABEL, t.difficulty);
-  const diff = el("select", FIELD);
+  card.appendChild(el("div", LABEL, t.difficulty));
+  const difficulty = el("select", FIELD);
   for (const key of ["easy", "normal", "hard"]) {
-    const o = el("option", null, t.levels[key]);
-    o.value = key;
-    diff.appendChild(o);
+    const option = el("option", null, t.levels[key]);
+    option.value = key;
+    difficulty.appendChild(option);
   }
-  card.appendChild(diffLabel);
-  card.appendChild(diff);
+  difficulty.value = "normal";
+  card.appendChild(difficulty);
 
-  card.appendChild(el("div", LABEL, t.teamSize));
-  const size = el("select", FIELD);
-  for (const n of [3, 4]) {
-    const o = el("option", null, String(n));
-    o.value = String(n);
-    size.appendChild(o);
-  }
-  card.appendChild(size);
+  mode.addEventListener("change", () => {
+    const visible = mode.value === "human";
+    name2Label.style.display = visible ? "" : "none";
+    name2.style.display = visible ? "" : "none";
+  });
+  mode.dispatchEvent(new Event("change"));
 
-  function syncMode() {
-    const pc = mode.value === "pc";
-    name2Label.style.display = pc ? "none" : "";
-    name2.style.display = pc ? "none" : "";
-    diffLabel.style.display = pc ? "" : "none";
-    diff.style.display = pc ? "" : "none";
-  }
-  mode.addEventListener("change", syncMode);
-  syncMode();
-
-  // --- Ton. Standardmaessig aus: das hier ist ein Buero.
-  const audioRow = el("div", "display:flex;gap:16px;align-items:center;margin:2px 0 12px 0;");
+  const audioRow = el("div", "display:flex;gap:18px;margin:2px 0 10px;");
   const soundBox = el("input", "margin:0 6px 0 0;");
   soundBox.type = "checkbox";
   soundBox.checked = localStorage.getItem("pausegame.sound") === "1";
-  const soundLbl = el("label", "font-size:13px;color:#2c3e50;cursor:pointer;display:flex;align-items:center;");
-  soundLbl.appendChild(soundBox);
-  soundLbl.appendChild(document.createTextNode(t.sound));
+  const soundLabel = el("label", "font-size:13px;color:#33454f;display:flex;align-items:center;cursor:pointer;");
+  soundLabel.append(soundBox, document.createTextNode(t.sound));
   const musicBox = el("input", "margin:0 6px 0 0;");
   musicBox.type = "checkbox";
   musicBox.checked = localStorage.getItem("pausegame.music") === "1";
-  const musicLbl = el("label", "font-size:13px;color:#2c3e50;cursor:pointer;display:flex;align-items:center;");
-  musicLbl.appendChild(musicBox);
-  musicLbl.appendChild(document.createTextNode(t.music));
-  audioRow.appendChild(soundLbl);
-  audioRow.appendChild(musicLbl);
+  const musicToggle = el("label", "font-size:13px;color:#33454f;display:flex;align-items:center;cursor:pointer;");
+  musicToggle.append(musicBox, document.createTextNode(t.music));
+  audioRow.append(soundLabel, musicToggle);
   card.appendChild(audioRow);
 
-  const musicPick = el("input", "font-size:12px;width:100%;margin-bottom:4px;");
+  const musicPick = el("input", "font-size:12px;width:100%;margin-bottom:3px;");
   musicPick.type = "file";
   musicPick.accept = ".mod,.MOD";
   musicPick.title = t.musicPick;
-  card.appendChild(musicPick);
-  const musicLabel = el("div", "font-size:11px;color:#8a97a4;margin-bottom:14px;", t.musicNone);
-  card.appendChild(musicLabel);
+  const musicLabel = el("div", "font-size:11px;color:#82909a;margin-bottom:13px;", t.musicNone);
+  card.append(musicPick, musicLabel);
 
-  const startBtn = el("button", BUTTON, t.start);
-  startBtn.addEventListener("click", () => {
+  const startButton = el("button", BUTTON, t.start);
+  startButton.addEventListener("click", () => {
     localStorage.setItem("pausegame.name1", name1.value.trim());
     localStorage.setItem("pausegame.name2", name2.value.trim());
     localStorage.setItem("pausegame.sound", soundBox.checked ? "1" : "0");
     localStorage.setItem("pausegame.music", musicBox.checked ? "1" : "0");
-    // Der Klick ist die Nutzeraktion, ohne die kein Browser Ton zulaesst.
     setSound(soundBox.checked);
     setMusic(musicBox.checked);
-    startMatch({
-      mode: mode.value,
-      name1: name1.value.trim(),
-      name2: mode.value === "pc" ? "" : name2.value.trim(),
-      difficulty: diff.value,
-      teamSize: Number(size.value),
-    });
+    startMatch({ mode: mode.value, name1: name1.value.trim(), name2: name2.value.trim(), difficulty: difficulty.value });
   });
-  card.appendChild(startBtn);
-  card.appendChild(el("div", "font-size:11px;color:#8a97a4;margin-top:14px;line-height:1.5;", t.controlsBody));
+  card.append(startButton, el("div", "font-size:11px;color:#768690;margin-top:12px;line-height:1.5;", t.controlsBody));
   setup.appendChild(card);
   host.appendChild(setup);
 
-  // --- Kopfzeile im Spiel
-  const hud = el("div",
-    "position:absolute;top:0;left:0;right:0;padding:10px 14px;display:flex;gap:18px;align-items:center;"
-    + "font-family:Segoe UI,sans-serif;font-size:13px;color:#fff;z-index:4;pointer-events:none;"
-    + "background:linear-gradient(rgba(9,20,34,0.55),rgba(9,20,34,0));");
-  const hudTurn = el("div", "font-weight:700;font-size:15px;");
-  const hudWind = el("div", "");
-  const hudTime = el("div", "");
-  const hudDrone = el("div", "margin-left:auto;text-align:right;");
-  hud.appendChild(hudTurn);
-  hud.appendChild(hudWind);
-  hud.appendChild(hudTime);
-  hud.appendChild(hudDrone);
+  const ready = el("div", PANEL + "display:none;justify-content:flex-end;padding-right:7%;box-sizing:border-box;");
+  const readyCard = el("div", CARD + "text-align:center;");
+  const readyTitle = el("div", "font-size:21px;font-weight:700;color:#142531;margin-bottom:8px;");
+  const readyBody = el("div", "font-size:13px;color:#60727e;margin-bottom:18px;white-space:pre-line;line-height:1.55;");
+  const readyButton = el("button", BUTTON);
+  readyButton.addEventListener("click", beginRun);
+  readyCard.append(readyTitle, readyBody, readyButton);
+  ready.appendChild(readyCard);
+  host.appendChild(ready);
+
+  const hud = el("div", "position:absolute;inset:0;pointer-events:none;z-index:5;font-family:Consolas,Segoe UI,sans-serif;color:#e8fbff;text-shadow:0 1px 3px #000;");
+  const fpvLabel = el("div", "position:absolute;top:14px;left:18px;font-size:12px;letter-spacing:1.4px;", `● REC  ${t.fpv}`);
+  const hudPilot = el("div", "position:absolute;top:36px;left:18px;font-weight:700;font-size:15px;");
+  const hudStatus = el("div", "position:absolute;top:15px;right:18px;text-align:right;font-size:13px;line-height:1.55;");
+  const hudCheckpoint = el("div", "position:absolute;bottom:18px;left:18px;font-size:13px;");
+  const hudControls = el("div", "position:absolute;bottom:18px;right:18px;font-size:11px;opacity:.85;", t.controlsBody);
+  const warning = el("div", "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;font-weight:800;letter-spacing:1.4px;color:#ffcb55;opacity:0;transition:opacity .15s;");
+  const crosshair = el("div", "position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);border:1px solid rgba(210,250,255,.65);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.2);");
+  const scanlines = el("div", "position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 1px,transparent 1px,transparent 4px);opacity:.45;");
+  hud.append(scanlines, fpvLabel, hudPilot, hudStatus, hudCheckpoint, hudControls, warning, crosshair);
   host.appendChild(hud);
 
-  const powerBar = el("div",
-    "position:absolute;left:14px;bottom:16px;width:220px;height:12px;border-radius:6px;"
-    + "background:rgba(255,255,255,0.25);z-index:4;overflow:hidden;");
-  const powerFill = el("div", "height:100%;width:0%;background:linear-gradient(90deg,#7ed957,#ffd400,#ff5a36);");
-  powerBar.appendChild(powerFill);
-  host.appendChild(powerBar);
-
-  const message = el("div",
-    "position:absolute;left:50%;top:64px;transform:translateX(-50%);padding:7px 16px;border-radius:16px;"
-    + "background:rgba(9,20,34,0.8);color:#fff;font-family:Segoe UI,sans-serif;font-size:13px;z-index:4;"
-    + "opacity:0;transition:opacity 0.2s;pointer-events:none;");
+  const message = el("div", "position:absolute;left:50%;top:74px;transform:translateX(-50%);padding:7px 15px;border-radius:18px;background:rgba(7,20,28,.82);color:#fff;font-family:Segoe UI,sans-serif;font-size:13px;z-index:6;opacity:0;transition:opacity .2s;pointer-events:none;");
   host.appendChild(message);
 
-  // --- Abspann
+  const runEnd = el("div", PANEL + "display:none;");
+  const runCard = el("div", CARD + "text-align:center;");
+  const runTitle = el("div", "font-size:21px;font-weight:750;color:#142531;");
+  const runReason = el("div", "font-size:14px;color:#536773;margin:6px 0 12px;");
+  const runStats = el("div", "font-size:13px;color:#6c7e88;margin-bottom:18px;");
+  const runButton = el("button", BUTTON);
+  runButton.addEventListener("click", advancePilot);
+  runCard.append(runTitle, runReason, runStats, runButton);
+  runEnd.appendChild(runCard);
+  host.appendChild(runEnd);
+
   const result = el("div", PANEL + "display:none;");
   const resultCard = el("div", CARD + "text-align:center;");
-  const resultText = el("div", "font-size:22px;font-weight:700;color:#16222e;margin-bottom:18px;");
-  const againBtn = el("button", BUTTON, t.again);
-  const backBtn = el("button", BUTTON + "background:#e8edf3;color:#2c3e50;margin-top:8px;", t.back);
-  resultCard.appendChild(resultText);
-  resultCard.appendChild(againBtn);
-  resultCard.appendChild(backBtn);
+  const resultTitle = el("div", "font-size:23px;font-weight:750;color:#142531;margin-bottom:10px;");
+  const resultBody = el("div", "margin-bottom:18px;");
+  const againButton = el("button", BUTTON, t.again);
+  const backButton = el("button", BUTTON + "background:#dfe7eb;color:#31444f;margin-top:8px;", t.back);
+  againButton.addEventListener("click", () => startMatch(G.config));
+  backButton.addEventListener("click", () => setScreen("setup"));
+  resultCard.append(resultTitle, resultBody, againButton, backButton);
   result.appendChild(resultCard);
   host.appendChild(result);
-
-  againBtn.addEventListener("click", () => startMatch(G.config));
-  backBtn.addEventListener("click", () => setScreen("setup"));
 
   musicPick.addEventListener("change", () => {
     if (musicPick.files && musicPick.files[0]) loadMusicFile(musicPick.files[0]);
   });
 
-  G.ui = { setup, result, resultText, hud, hudTurn, hudWind, hudTime, hudDrone, powerBar, powerFill, message, musicLabel };
+  G.ui = {
+    setup, ready, readyTitle, readyBody, readyButton, hud, hudPilot, hudStatus,
+    hudCheckpoint, warning, message, runEnd, runTitle, runReason, runStats, runButton,
+    result, resultTitle, resultBody, musicLabel,
+  };
 }
 
 function setScreen(name) {
-  const u = G.ui;
-  u.setup.style.display = name === "setup" ? "flex" : "none";
-  u.result.style.display = name === "result" ? "flex" : "none";
-  const playing = name === "game";
-  u.hud.style.display = playing ? "flex" : "none";
-  u.powerBar.style.display = playing ? "block" : "none";
-  if (name === "result") {
-    const a = aliveCount(0);
-    const b = aliveCount(1);
-    const text = a === b
-      ? G.t.draw
-      : `${G.teams[a > b ? 0 : 1].name} ${G.t.wins}`;
-    u.resultText.textContent = text;
-    rememberScore(a > b ? 0 : 1);
-  }
+  for (const key of ["setup", "ready", "runEnd", "result"]) G.ui[key].style.display = key === name ? "flex" : "none";
+  G.ui.hud.style.display = name === "game" ? "block" : "none";
 }
 
-// Bestenliste bleibt im Browser. Kein Serveraufruf, kein Eintrag in der Datenbank -
-// serverseitig ist damit nicht nachvollziehbar, wer wann gegen wen gespielt hat.
-function rememberScore(winnerTeam) {
-  try {
-    const raw = localStorage.getItem("pausegame.scores");
-    const scores = raw ? JSON.parse(raw) : {};
-    const name = G.teams[winnerTeam].name;
-    scores[name] = (scores[name] || 0) + 1;
-    localStorage.setItem("pausegame.scores", JSON.stringify(scores));
-  } catch (e) {
-    // Bestenliste ist Beiwerk; ein voller oder gesperrter localStorage darf das
-    // Spielende nicht kippen.
-  }
+function flash(text) {
+  if (!G || !G.ui) return;
+  G.message = text;
+  G.messageTime = 2.1;
+  G.ui.message.textContent = text;
 }
 
 function updateHud() {
-  const u = G.ui;
-  const t = G.t;
-  const team = G.teams[G.activeTeam];
-  const worm = G.activeWorm;
-  u.hudTurn.textContent = `${t.turnOf}: ${team.name}${worm ? " " + worm.index : ""}`
-    + (team.human ? "" : ` (${t.thinking})`);
-  const dir = G.wind >= 0 ? "▶" : "◀";
-  u.hudWind.textContent = `${t.wind} ${dir} ${Math.abs(G.wind).toFixed(0)}`;
-  u.hudTime.textContent = `${t.time} ${Math.max(0, Math.ceil(G.turnTime))}`;
-  const def = currentDrone();
-  const left = ammoLeft(G.activeTeam, def.id);
-  u.hudDrone.textContent = `${t.drone}: ${t.drones[def.id].name}`
-    + `  (${t.ammo} ${left < 0 ? t.unlimited : left})   ${t.angle} ${G.angle.toFixed(0)}°`;
-  u.powerFill.style.width = `${Math.round(G.power * 100)}%`;
-  u.message.style.opacity = G.messageTime > 0 ? "1" : "0";
-  if (G.messageTime > 0) u.message.textContent = G.message;
+  const drone = G.drone;
+  const total = G.course.checkpoints.length;
+  G.ui.hudPilot.textContent = `${G.t.pilot}: ${G.pilots[G.activePilot].name}`;
+  G.ui.hudStatus.textContent = `${G.t.battery} ${drone.battery.toFixed(0)} %\n${G.t.signal} ${drone.signal.toFixed(0)} %\n${G.t.time} ${drone.elapsed.toFixed(1)} s`;
+  G.ui.hudStatus.style.whiteSpace = "pre-line";
+  G.ui.hudCheckpoint.textContent = drone.checkpointIndex < total
+    ? `${G.t.checkpoint} ${drone.checkpointIndex + 1}/${total}`
+    : G.t.target;
+  let warning = "";
+  if (drone.signal < 20) warning = G.t.lowSignal;
+  else if (drone.battery < 18) warning = G.t.lowBattery;
+  else if (drone.boost) warning = G.t.boost;
+  G.ui.warning.textContent = warning;
+  G.ui.warning.style.opacity = warning ? "1" : "0";
+  G.ui.message.style.opacity = G.messageTime > 0 ? "1" : "0";
 }
 
-// ---------------------------------------------------------------- Eingabe
+// ---------------------------------------------------------------- Eingabe und Schleife
 
-function pickDrone(index) {
-  if (G.phase !== "aim" || !G.teams[G.activeTeam].human) return;
-  if (index < 0 || index >= DRONE_TYPES.length) return;
-  if (ammoLeft(G.activeTeam, DRONE_TYPES[index].id) === 0) return;
-  G.droneIndex = index;
-  flash(G.t.drones[DRONE_TYPES[index].id].hint);
-}
-
-function onKeyDown(e) {
+function onKeyDown(event) {
   if (!G || !G.running) return;
-  const human = G.teams && G.teams[G.activeTeam] && G.teams[G.activeTeam].human;
-  const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Enter"];
-  if (keys.includes(e.key)) e.preventDefault();
-  if (e.key === "ArrowLeft") G.input.left = true;
-  if (e.key === "ArrowRight") G.input.right = true;
-  if (e.key === "ArrowUp") G.input.up = true;
-  if (e.key === "ArrowDown") G.input.down = true;
-  if (e.key === "1") pickDrone(0);
-  if (e.key === "2") pickDrone(1);
-  if (e.key === "3") pickDrone(2);
-  if (!human) return;
-  if (e.key === "Enter" && G.phase === "aim" && G.activeWorm && onGround(G.activeWorm)) {
-    G.activeWorm.vy = JUMP_SPEED;
-    G.activeWorm.vx = G.activeWorm.facing * 42;
-    sfx("jump");
-  }
-  if (e.key === " " && !e.repeat) {
-    const def = currentDrone();
-    if (G.phase === "aim" && def.control === "throw") {
-      G.charging = true;
-      G.power = 0;
-    } else if (G.phase === "aim") {
-      fireCurrent();
-    } else if (G.phase === "flying" && G.passDrone) {
-      releaseBombs();
-    } else if (G.phase === "flying" && G.scoutDrone) {
-      markTarget();
-    }
-  }
+  const controlled = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Shift"];
+  if (controlled.includes(event.key)) event.preventDefault();
+  if (event.key.toLowerCase() === "r") restartRun();
+  if (G.phase !== "flight" || !G.pilots[G.activePilot].human) return;
+  if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") G.input.left = true;
+  if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") G.input.right = true;
+  if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") G.input.up = true;
+  if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") G.input.down = true;
+  if (event.key === "Shift") G.input.boost = true;
 }
 
-function onKeyUp(e) {
-  if (!G || !G.running) return;
-  if (e.key === "ArrowLeft") G.input.left = false;
-  if (e.key === "ArrowRight") G.input.right = false;
-  if (e.key === "ArrowUp") G.input.up = false;
-  if (e.key === "ArrowDown") G.input.down = false;
-  if (e.key === " " && G.charging) {
-    G.charging = false;
-    fireCurrent();
-  }
+function onKeyUp(event) {
+  if (!G || !G.input) return;
+  if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") G.input.left = false;
+  if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") G.input.right = false;
+  if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") G.input.up = false;
+  if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") G.input.down = false;
+  if (event.key === "Shift") G.input.boost = false;
 }
 
-// ---------------------------------------------------------------- Schleife
+function humanControl() {
+  return {
+    x: (G.input.right ? 1 : 0) - (G.input.left ? 1 : 0),
+    y: (G.input.up ? 1 : 0) - (G.input.down ? 1 : 0),
+    boost: G.input.boost,
+  };
+}
 
-function update(dt) {
+function updateFlight(dt) {
+  const pilot = G.pilots[G.activePilot];
+  const input = pilot.human ? humanControl() : autopilotControl(G.drone, G.course, G.config.difficulty);
+  stepDrone(G.drone, input, G.course, dt);
   if (G.messageTime > 0) G.messageTime -= dt;
-  const human = G.teams[G.activeTeam].human;
 
-  if (G.phase === "aim") {
-    G.turnTime -= dt;
-    if (human && G.activeWorm) {
-      if (G.input.left) walk(G.activeWorm, -1, dt);
-      if (G.input.right) walk(G.activeWorm, 1, dt);
-      if (G.input.up) G.angle = Math.min(89, G.angle + 55 * dt);
-      if (G.input.down) G.angle = Math.max(-20, G.angle - 55 * dt);
-      if (G.charging) G.power = Math.min(1, G.power + dt * 0.85);
-    }
-    if (G.turnTime <= 0) endTurn();
+  if (updateCheckpoint(G.course, G.drone)) {
+    const mesh = G.checkpointMeshes[G.drone.checkpointIndex - 1];
+    if (mesh) mesh.visible = false;
+    sound("checkpoint");
+    flash(`${G.t.checkpointReached}: ${G.drone.checkpointIndex}/${G.course.checkpoints.length}`);
   }
-
-  stepAi(dt);
-
-  for (const w of G.worms) {
-    if (!w.alive) continue;
-    w.x += w.vx * dt;
-    w.vx *= 0.86;
-    if (w.x < 12) { w.x = 12; w.vx = 0; }
-    if (w.x > MASK_W - 12) { w.x = MASK_W - 12; w.vx = 0; }
-    stepWorm(w, dt);
+  if (reachedGoal(G.course, G.drone)) {
+    finishRun(true, G.t.targetReached);
+    return;
   }
-
-  for (let i = G.projectiles.length - 1; i >= 0; i--) {
-    const p = G.projectiles[i];
-    const state = stepProjectile(p, dt);
-    if (state === "hit") {
-      explode(p);
-      removeProjectile(i);
-    } else if (state === "gone" || state === "water") {
-      if (state === "water") spawnBlast(p.x, G.waterLevel, 12);
-      removeProjectile(i);
-    }
+  if (collides(G.course, G.drone)) {
+    finishRun(false, G.t.crashed);
+    return;
   }
-
-  if (G.phase === "flying" && G.projectiles.length === 0) endTurn();
-
-  if (G.phase === "retreat") {
-    G.retreat -= dt;
-    if (G.retreat <= 0) nextTurn();
+  if (G.drone.battery <= 0) {
+    finishRun(false, G.t.batteryEmpty);
+    return;
   }
-
-  for (let i = G.particles.length - 1; i >= 0; i--) {
-    const q = G.particles[i];
-    q.life -= dt;
-    const k = Math.max(0, q.life / q.max);
-    q.mesh.scale.setScalar(1 + (1 - k) * 1.8);
-    q.mesh.material.opacity = k * 0.9;
-    if (q.life <= 0) {
-      G.scene.remove(q.mesh);
-      q.mesh.geometry.dispose();
-      q.mesh.material.dispose();
-      G.particles.splice(i, 1);
-    }
+  if (G.drone.signalLostFor >= SIGNAL_GRACE) {
+    finishRun(false, G.t.signalLost);
+    return;
   }
-}
-
-function removeProjectile(index) {
-  const p = G.projectiles[index];
-  G.scene.remove(p.mesh);
-  if (G.passDrone === p) G.passDrone = null;
-  if (G.scoutDrone === p) G.scoutDrone = null;
-  G.projectiles.splice(index, 1);
+  if (G.drone.elapsed >= FLIGHT_LIMIT) {
+    finishRun(false, G.t.timeout);
+    return;
+  }
+  if (!G.alertedBattery && G.drone.battery < 18) {
+    G.alertedBattery = true;
+    sound("alert");
+  }
+  if (!G.alertedSignal && G.drone.signal < 20) {
+    G.alertedSignal = true;
+    sound("alert");
+  }
 }
 
 function syncScene(dt) {
-  for (const w of G.worms) {
-    if (!w.alive) {
-      if (w.mesh.parent) {
-        G.scene.remove(w.mesh);
-        G.scene.remove(w.label);
-      }
-      continue;
-    }
-    w.mesh.position.set(wx(w.x), wy(w.y), 0);
-    w.mesh.rotation.y = w.facing > 0 ? 0.25 : -0.25;
-    w.label.position.set(wx(w.x), wy(w.y) + 3.1, 2);
-    const active = w === G.activeWorm && G.phase === "aim";
-    w.mesh.scale.setScalar(active ? 1.06 : 1.0);
+  if (!G.drone || !G.droneMesh) return;
+  const drone = G.drone;
+  G.droneMesh.position.set(px(drone.x), py(drone.y), 1.4);
+  G.droneMesh.rotation.z = clamp(drone.vy / MAX_SPEED, -0.5, 0.5) * 0.45;
+  G.droneMesh.rotation.x = clamp(-drone.vx / MAX_SPEED, -0.35, 0.35) * 0.25;
+  for (const rotor of G.droneMesh.userData.rotors) rotor.rotation.y += dt * (drone.boost ? 75 : 52);
+  if (G.targetMesh) G.targetMesh.rotation.z += dt * 0.42;
+  for (const mesh of G.checkpointMeshes) {
+    if (mesh.visible) mesh.rotation.z -= dt * 0.32;
   }
-  for (const p of G.projectiles) {
-    p.mesh.position.set(wx(p.x), wy(p.y), 0.4);
-    p.mesh.rotation.z = Math.atan2(p.vy, p.vx) * 0.25;
-    for (const rotor of p.mesh.userData.rotors) rotor.rotation.y += dt * 45;
-  }
-  G.water.position.y = wy(G.waterLevel) - G.worldH / 2;
 
-  // Kamera: beim Zielen senkrecht auf die Spielebene, sonst laesst sich der Winkel
-  // nicht abschaetzen. Erst im Flug, wenn niemand mehr eingibt, darf sie schwenken.
-  const focus = G.projectiles.length > 0 ? G.projectiles[G.projectiles.length - 1] : G.activeWorm;
-  if (focus) {
-    const fx = wx(focus.x);
-    const fy = wy(focus.y);
-    const flying = G.projectiles.length > 0;
-    const targetX = clamp(fx, -G.worldW / 2 + 30, G.worldW / 2 - 30);
-    const targetY = clamp(fy, -G.worldH / 2 + 18, G.worldH / 2 - 12);
-    const desired = flying
-      ? { x: targetX + 4, y: targetY + 5, z: 62 }
-      : { x: targetX, y: targetY + 2, z: 74 };
-    G.camera.position.x += (desired.x - G.camera.position.x) * Math.min(1, dt * 3.4);
-    G.camera.position.y += (desired.y - G.camera.position.y) * Math.min(1, dt * 3.4);
-    G.camera.position.z += (desired.z - G.camera.position.z) * Math.min(1, dt * 2.2);
-    G.camera.lookAt(targetX, targetY, 0);
-  }
+  // Nicht nur stur vor die Drohne schauen: der naechste Kontrollring muss schon
+  // vor dem Lenkmanoever sichtbar sein. Der Mittelpunkt zwischen Drohne und
+  // aktuellem Wegpunkt haelt beides im Bild, ohne zu weit herauszuzoomen.
+  const waypoint = currentWaypoint(G.course, drone);
+  const waypointLead = clamp((waypoint.x - drone.x) * 0.48, 95, 185);
+  const desiredX = px(clamp(drone.x + waypointLead, 185, WORLD_W - 90));
+  const desiredY = py(clamp(
+    drone.y + (waypoint.y - drone.y) * 0.42 + drone.vy * 0.08,
+    155,
+    WORLD_H - 110));
+  G.camera.position.x += (desiredX - G.camera.position.x) * Math.min(1, dt * 3.6);
+  G.camera.position.y += (desiredY - G.camera.position.y) * Math.min(1, dt * 3.6);
+  G.camera.position.z += (46 - G.camera.position.z) * Math.min(1, dt * 2.8);
+  G.camera.lookAt(desiredX + 2.5, desiredY, 0);
 }
 
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
 function resize() {
-  const w = G.host.clientWidth || 800;
-  const h = G.host.clientHeight || 500;
-  G.renderer.setSize(w, h, false);
-  G.camera.aspect = w / Math.max(1, h);
+  if (!G) return;
+  const width = G.host.clientWidth || 800;
+  const height = G.host.clientHeight || 500;
+  G.renderer.setSize(width, height, false);
+  G.camera.aspect = width / Math.max(1, height);
   G.camera.updateProjectionMatrix();
 }
 
 function frame(now) {
   if (!G || !G.running) return;
   G.raf = requestAnimationFrame(frame);
-  if (document.visibilityState === "hidden") { G.last = now; return; }
-  const dt = Math.min(0.05, (now - G.last) / 1000 || 0);
+  if (document.visibilityState === "hidden") {
+    G.last = now;
+    return;
+  }
+  const dt = Math.min(0.04, (now - G.last) / 1000 || 0);
   G.last = now;
   pumpMusic();
-  if (G.phase && G.phase !== "over" && G.worms.length > 0) {
-    update(dt);
+  if (G.phase === "flight") {
+    updateFlight(dt);
     syncScene(dt);
     updateHud();
   }
@@ -1581,57 +1045,53 @@ function frame(now) {
 export function start(host, language) {
   dispose();
   if (!window.THREE) {
-    host.appendChild(el("div", "padding:20px;font-family:Segoe UI,sans-serif;color:#b3261e;",
-      "three.js nicht geladen"));
+    host.appendChild(el("div", "padding:20px;font-family:Segoe UI,sans-serif;color:#b3261e;", "three.js nicht geladen"));
     return;
   }
   const scene = buildScene(host);
   G = Object.assign({
     host,
     t: TEXTS[language === "en" ? "en" : "de"],
-    worms: [],
-    projectiles: [],
-    particles: [],
-    phase: null,
-    input: { left: false, right: false, up: false, down: false },
     running: true,
-    audio: null,
-    soundOn: false,      // Buero: Ton ist aus, bis jemand ihn einschaltet
+    phase: "setup",
+    input: { left: false, right: false, up: false, down: false, boost: false },
+    last: performance.now(),
+    soundOn: false,
     musicOn: false,
     musicName: "",
-    last: performance.now(),
-    waterLevel: WATER_LEVEL_START,
-    terrain: { solid: new Uint8Array(MASK_W * MASK_H), heights: new Float32Array(MASK_W) },
+    audio: null,
+    message: "",
+    messageTime: 0,
   }, scene);
-
   buildUi(host);
   setScreen("setup");
   resize();
-  G.observer = new ResizeObserver(() => resize());
+  G.observer = new ResizeObserver(resize);
   G.observer.observe(host);
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
   G.raf = requestAnimationFrame(frame);
 }
 
-// Schmaler Zugang fuer den kopflosen Test (Tools/PauseGame.Probe): Gelaende,
-// Einschlag und Ballistik lassen sich damit ohne Browser und ohne WebGL pruefen.
-// Nichts davon wird im Spiel benutzt.
+// Reiner Rechenkern fuer Tools/PauseGame.Probe. Diese Funktionen benoetigen weder
+// DOM noch WebGL und koennen daher in Node als Regressionstest laufen.
 export const __testHooks = {
-  setState: (state) => { G = state; },
-  getState: () => G,
-  createTerrain,
-  paintMask,
-  isSolid,
-  carve,
+  createCourse,
   groundHeightAt,
-  simulateShot,
-  planAiShot,
-  aiApproach,
-  walk,
-  stepWorm,
-  onGround,
-  constants: { MASK_W, MASK_H, GRAVITY, MAX_CLIMB, WATER_LEVEL_START, DRONE_TYPES },
+  circleHitsRect,
+  collides,
+  computeSignal,
+  createDrone,
+  stepDrone,
+  currentWaypoint,
+  autopilotControl,
+  updateCheckpoint,
+  reachedGoal,
+  scoreRun,
+  constants: {
+    WORLD_W, WORLD_H, DRONE_RADIUS, MAX_SPEED, CHECKPOINT_RADIUS, GOAL_RADIUS,
+    SIGNAL_GRACE, FLIGHT_LIMIT, DIFFICULTY,
+  },
 };
 
 export function dispose() {
@@ -1641,21 +1101,19 @@ export function dispose() {
   window.removeEventListener("keydown", onKeyDown);
   window.removeEventListener("keyup", onKeyUp);
   if (G.observer) G.observer.disconnect();
-  // Ton zuerst: ein offener AudioContext ueberlebt den Seitenwechsel sonst und
-  // spielt weiter, waehrend jemand im Cockpit arbeitet.
   if (G.audio) {
     try {
       G.audio.master.gain.value = 0;
       G.audio.ctx.close();
-    } catch (e) {
-      // Bereits geschlossen.
+    } catch (error) {
+      // AudioContext ist bereits geschlossen.
     }
-    G.audio = null;
   }
+  if (G.courseGroup) disposeObject(G.courseGroup);
   try {
     G.renderer.dispose();
-  } catch (e) {
-    // Kontext kann bereits verloren sein, wenn der Reiter geschlossen wurde.
+  } catch (error) {
+    // WebGL-Kontext kann beim Seitenwechsel bereits verloren sein.
   }
   if (G.host) G.host.innerHTML = "";
   G = null;

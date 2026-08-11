@@ -19,6 +19,7 @@ public sealed class PurchasingDataRefreshStatus
     public int EkkoRows { get; set; }
     public int EkpoRows { get; set; }
     public int EketRows { get; set; }
+    public int ProductGroupRows { get; set; }
     public string Message { get; set; } = string.Empty;
     public bool IsComplete => string.Equals(Status, "Success", StringComparison.OrdinalIgnoreCase);
 }

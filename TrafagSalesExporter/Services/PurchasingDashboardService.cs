@@ -1237,7 +1237,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
     /// <summary>
     /// Produktgruppen-Aufriss ueber die belegte Kette Einkaufsmaterial (EKPO-MATNR) ->
     /// ZLO03-Komponente (KOMPNR) -> Disponent des verwendenden Kopfmaterials (VKNR_DISPO) ->
-    /// optionale ZC23-Bezeichnung in PurchasingProductGroupMap.
+    /// SAP-ZC23/ZDISPO-Bezeichnung im lokalen OData-Cache PurchasingSpendDisponentRule.
     ///
     /// Eine Komponente kann in Kopfmaterialien mehrerer Produktgruppen vorkommen. Sie wird dann
     /// zu gleichen Teilen auf die UNTERSCHIEDLICHEN Gruppen verteilt. Das ist bewusst keine
@@ -1278,18 +1278,14 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
                 new PurchasingProductGroupAllocationSummary(0m, fallbackUnassignedSpend, 0m, 0, fallbackUnassignedMaterials, 0, 0, 0));
         }
 
-        var hasZc23Map = await TableExistsAsync(conn, "PurchasingProductGroupMap", cancellationToken);
-        var hasZdispoRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
-        var manualMapJoin = hasZc23Map
-            ? "LEFT JOIN PurchasingProductGroupMap z ON trim(z.Disponent) = trim(u.VknrDispo)"
-            : string.Empty;
-        var zdispoCtes = hasZdispoRules
-            ? @"ZdispoDispatchers AS (
+        var hasSapProductGroupRules = await TableExistsAsync(conn, "PurchasingSpendDisponentRule", cancellationToken);
+        var sapProductGroupCtes = hasSapProductGroupRules
+            ? @"SapProductGroupDispatchers AS (
     SELECT DISTINCT trim(VknrDispo) AS Disponent
     FROM MaterialUsageCache
     WHERE COALESCE(trim(VknrDispo), '') <> ''
 ),
-ZdispoCandidates AS (
+SapProductGroupCandidates AS (
     SELECT d.Disponent,
            r.ProductGroup,
            r.ProductGroupText,
@@ -1299,33 +1295,27 @@ ZdispoCandidates AS (
                    CASE WHEN upper(trim(r.DisponentPattern)) = upper(d.Disponent) THEN 0 ELSE 1 END,
                    length(trim(r.DisponentPattern)) DESC
            ) AS MatchRank
-    FROM ZdispoDispatchers d
+    FROM SapProductGroupDispatchers d
     INNER JOIN PurchasingSpendDisponentRule r
         ON upper(trim(r.DisponentPattern)) = upper(d.Disponent)
         OR (
             substr(trim(r.DisponentPattern), -1, 1) = '*'
             AND upper(d.Disponent) LIKE upper(substr(trim(r.DisponentPattern), 1, length(trim(r.DisponentPattern)) - 1)) || '%'
         )
+    WHERE upper(trim(r.Source)) LIKE 'SAP ODATA%'
 ),
-ZdispoResolved AS (
+SapProductGroupResolved AS (
     SELECT DISTINCT Disponent, ProductGroup, ProductGroupText
-    FROM ZdispoCandidates
+    FROM SapProductGroupCandidates
     WHERE MatchRank = 1
 ),
 "
             : string.Empty;
-        var supplementalMapJoin = hasZdispoRules
-            ? "LEFT JOIN ZdispoResolved x ON upper(x.Disponent) = upper(trim(u.VknrDispo))"
+        var mapJoin = hasSapProductGroupRules
+            ? "LEFT JOIN SapProductGroupResolved x ON upper(x.Disponent) = upper(trim(u.VknrDispo))"
             : string.Empty;
-        var mapJoin = string.Join(Environment.NewLine, new[] { manualMapJoin, supplementalMapJoin }
-            .Where(value => value.Length > 0));
-        var manualCode = hasZc23Map ? "NULLIF(trim(z.ProductGroup), '')" : "NULL";
-        var manualText = hasZc23Map ? "NULLIF(trim(z.ProductGroupText), '')" : "NULL";
-        var excelCode = hasZdispoRules ? "NULLIF(trim(x.ProductGroup), '')" : "NULL";
-        var excelText = hasZdispoRules ? "NULLIF(trim(x.ProductGroupText), '')" : "NULL";
-        // Bestehende manuelle Zuordnung bleibt fuehrend; ZDISPO ist nur ein additiver Fallback.
-        var mappedCode = $"COALESCE({manualCode}, {excelCode}, '')";
-        var mappedText = $"COALESCE({manualText}, {excelText}, '')";
+        var mappedCode = hasSapProductGroupRules ? "COALESCE(NULLIF(trim(x.ProductGroup), ''), '')" : "''";
+        var mappedText = hasSapProductGroupRules ? "COALESCE(NULLIF(trim(x.ProductGroupText), ''), '')" : "''";
         var productGroupLabel = $@"CASE
             WHEN {mappedCode} <> '' AND {mappedText} <> '' THEN {mappedCode} || ' - ' || {mappedText}
             WHEN {mappedCode} <> '' THEN {mappedCode}
@@ -1337,7 +1327,7 @@ ZdispoResolved AS (
         var to = filter.ToDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var maxSpendYear = MaxSpendYear(filter);
         var usageGroupsCte = $@"
-{zdispoCtes}UsageGroups AS (
+{sapProductGroupCtes}UsageGroups AS (
     SELECT DISTINCT {usageMaterialKey} AS MaterialKey,
            {productGroupLabel} AS ProductGroup
     FROM MaterialUsageCache u
@@ -1427,9 +1417,9 @@ FROM PositionFacts;";
         var unmappedDispatchers = 0;
         await using (var mappingCommand = conn.CreateCommand())
         {
-            mappingCommand.CommandText = hasZc23Map || hasZdispoRules
+            mappingCommand.CommandText = hasSapProductGroupRules
                 ? $@"
-WITH {zdispoCtes}MappedDispatchers AS (
+WITH {sapProductGroupCtes}MappedDispatchers AS (
     SELECT trim(u.VknrDispo) AS Disponent,
            {mappedCode} AS ProductGroup
     FROM MaterialUsageCache u

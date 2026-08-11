@@ -292,6 +292,14 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="_exportSettings.SupplierFallbackMode"
+                       Label="@T("Supplier-Fallback ohne Lieferantenangabe", "Supplier fallback without supplier data")"
+                       HelperText="@T("Neu ist Standard: Artikel im CH-Werkstamm 1100 gelten als intern von TR_AG beliefert. Alt prueft nur die MBEW-Kostentabelle.", "New is default: materials in CH plant master 1100 are treated as internally supplied by TR_AG. Old checks only the MBEW cost table.")">
+                <MudSelectItem Value="@SupplierFallbackModes.ChPlantMaster">@T("Neu: CH-Werkstamm (MARC 1100)", "New: CH plant master (MARC 1100)")</MudSelectItem>
+                <MudSelectItem Value="@SupplierFallbackModes.GroupStandardCosts">@T("Alt: CH-Kostentabelle (MBEW 1100)", "Old: CH cost table (MBEW 1100)")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
             <MudSwitch @bind-Value="_exportSettings.DebugLoggingEnabled" Label="@T("Debug Live-Logging", "Debug live logging")" Color="Color.Warning" />
             <MudText Typo="Typo.caption">
                 @T("Schreibt zusaetzliche technische Fortschrittsmeldungen fuer HANA- und SAP-Lesevorgaenge ins Dashboard und in die Logs.",
@@ -711,4 +719,3 @@
 
     private string T(string german, string english) => UiText.Text(german, english);
 }
-

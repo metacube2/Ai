@@ -92,6 +92,7 @@ builder.Services.AddSingleton<IFinanceReconciliationService, FinanceReconciliati
 builder.Services.AddSingleton<IFinancialJournalReader, HanaFinancialJournalReader>();
 builder.Services.AddSingleton<ISapGatewayFinancialJournalReader, SapGatewayFinancialJournalReader>();
 builder.Services.AddSingleton<ISapGatewayStandardCostReader, SapGatewayStandardCostReader>();
+builder.Services.AddSingleton<ISapGatewayPlantMaterialReader, SapGatewayPlantMaterialReader>();
 builder.Services.AddSingleton<IFinancialJournalRefreshService, FinancialJournalRefreshService>();
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();
@@ -132,6 +133,7 @@ builder.Services.AddScoped<ITransformationsPageService, TransformationsPageServi
 builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
 builder.Services.AddScoped<IPurchasingDataSourcePageService, PurchasingDataSourcePageService>();
 builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>();
+builder.Services.AddScoped<IPurchasingProductGroupSapReader, PurchasingProductGroupSapReader>();
 builder.Services.AddScoped<IPurchasingDataRefreshService, PurchasingDataRefreshService>();
 builder.Services.AddScoped<IMaterialUsageDataRefreshService, MaterialUsageDataRefreshService>();
 builder.Services.AddScoped<ISupplyChainAnalysisService, SupplyChainAnalysisService>();

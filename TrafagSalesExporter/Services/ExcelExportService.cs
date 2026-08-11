@@ -61,6 +61,30 @@ public class ExcelExportService : IExcelExportService
             .ToDictionary(r => (r.MaterialKey, r.ValuationArea));
     }
 
+    private IReadOnlySet<string> LoadChPlantMaterialKeys()
+    {
+        if (_dbFactory is null)
+            return new HashSet<string>(StringComparer.Ordinal);
+
+        using var db = _dbFactory.CreateDbContext();
+        return db.GroupMaterialMasters.AsNoTracking()
+            .Where(row => row.Plant == "1100")
+            .Select(row => row.MaterialKey)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private string LoadSupplierFallbackMode()
+    {
+        if (_dbFactory is null)
+            return SupplierFallbackModes.ChPlantMaster;
+
+        using var db = _dbFactory.CreateDbContext();
+        var mode = db.ExportSettings.AsNoTracking()
+            .Select(settings => settings.SupplierFallbackMode)
+            .FirstOrDefault();
+        return SupplierFallbackModes.Normalize(mode);
+    }
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -87,7 +111,7 @@ public class ExcelExportService : IExcelExportService
             ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
             : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts());
+        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode());
         return fullPath;
     }
 
@@ -124,7 +148,7 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts());
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode());
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -178,12 +202,15 @@ public class ExcelExportService : IExcelExportService
         Func<string, int, decimal?>? resolveChfRate = null,
         string? groupMarginCostCurrencyMode = null,
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
-        var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate, groupStandardCosts);
+        var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate,
+            groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
@@ -292,7 +319,9 @@ public class ExcelExportService : IExcelExportService
         IEnumerable<FinanceProofRow> financeRows,
         string? groupMarginCostCurrencyMode = null,
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         return financeRows
@@ -302,7 +331,9 @@ public class ExcelExportService : IExcelExportService
                 // Lieferantentyp, Kostenbasis, Kostenquelle und Status kommen aus der gemeinsamen
                 // Rechnung — dieselbe, die das Cockpit verwendet.
                 var margin = GroupMarginCalculator.Evaluate(
-                    ToGroupMarginLine(row.Record, row.NetSalesActual), costs);
+                    ToGroupMarginLine(row.Record, row.NetSalesActual), costs,
+                    chPlantMaterialKeys: chPlantMaterialKeys,
+                    supplierFallbackMode: supplierFallbackMode);
                 var supplierType = margin.SupplierType;
                 var status = margin.Status;
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
@@ -943,7 +974,9 @@ public class ExcelExportService : IExcelExportService
         Func<string, int, decimal?>? resolveChfRate = null,
         string? groupMarginCostCurrencyMode = null,
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
-        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null)
+        IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1086,7 +1119,9 @@ public class ExcelExportService : IExcelExportService
                 BuildFinanceProofRows(records, financeRules),
                 groupMarginCostCurrencyMode,
                 resolveCrossRate,
-                groupStandardCosts);
+                groupStandardCosts,
+                chPlantMaterialKeys,
+                supplierFallbackMode);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);

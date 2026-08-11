@@ -41,18 +41,23 @@ public static class GroupMarginCalculator
     public static GroupMarginEvaluation Evaluate(
         GroupMarginLine line,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
-        bool hasExchangeRate = true)
+        bool hasExchangeRate = true,
+        IReadOnlySet<string>? chPlantMaterialKeys = null,
+        string? supplierFallbackMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
+        var plantMaterials = chPlantMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
         var materialKey = ResolveGroupCostKey(line);
 
         var supplierType = GroupMarginSupplierClassifier.Resolve(
             line.SupplierNumber, line.SupplierName, line.SupplierCountry, line.Tsc,
-            materialKey, costs, line.SalesType);
+            materialKey, costs, line.SalesType, plantMaterials, supplierFallbackMode);
 
         var context = new GroupMarginCostContext(
             MaterialKey: materialKey,
             GroupStandardCosts: costs,
+            ChPlantMaterialKeys: plantMaterials,
+            SupplierFallbackMode: SupplierFallbackModes.Normalize(supplierFallbackMode),
             // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss
             // mit umkehren, sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100,
             // Kosten +60 -> -160 statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
@@ -207,7 +212,9 @@ public sealed record GroupMarginCostBasis(
 public sealed record GroupMarginCostContext(
     string MaterialKey,
     IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> GroupStandardCosts,
-    bool IsReversal);
+    bool IsReversal,
+    IReadOnlySet<string>? ChPlantMaterialKeys = null,
+    string? SupplierFallbackMode = null);
 
 /// <summary>Vollstaendiges Ergebnis fuer eine Zeile.</summary>
 public sealed record GroupMarginEvaluation(
@@ -262,7 +269,9 @@ public static class GroupMarginCostRules
         (line, context) =>
         {
             var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
-                line.SupplierName, line.Tsc, context.MaterialKey, context.GroupStandardCosts, line.SalesType);
+                line.SupplierName, line.Tsc, context.MaterialKey, context.GroupStandardCosts, line.SalesType,
+                context.ChPlantMaterialKeys, context.SupplierFallbackMode,
+                line.SupplierNumber, line.SupplierCountry);
 
             if (deliveringEntity is null ||
                 !GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) ||

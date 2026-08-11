@@ -98,6 +98,7 @@ public sealed class SettingsPageService : ISettingsPageService
         {
             settings.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
             settings.GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
+            settings.SupplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
             db.ExportSettings.Add(settings);
         }
         else
@@ -114,6 +115,7 @@ public sealed class SettingsPageService : ISettingsPageService
             existing.LocalAuditCsvFolder = settings.LocalAuditCsvFolder;
             existing.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
             existing.GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
+            existing.SupplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
         }
 
         await db.SaveChangesAsync();

@@ -56,6 +56,7 @@ public class ConfigTransferExportSettings
     public string LocalAuditCsvFolder { get; set; } = string.Empty;
     public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
     public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Mask;
+    public string SupplierFallbackMode { get; set; } = SupplierFallbackModes.ChPlantMaster;
 }
 
 public class ConfigTransferCurrencyExchangeRate

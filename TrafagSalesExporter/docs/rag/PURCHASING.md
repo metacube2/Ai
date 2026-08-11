@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-08-07
+Stand: 2026-08-11
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -10,6 +10,16 @@ Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
+
+- Direkte Produktgruppenquelle aus SAP am 2026-08-11 produktiv deployed;
+  Gesamtrelease `471/471` Tests gruen. Full Load und Delta erwarten
+  `ZDISPO_GRP` + `ZDISPO_SPART` (oder ein zusammengefuehrtes Produktgruppen-Set),
+  laden atomar und verwenden keinen Excel-/manuellen Fallback mehr. Produktives
+  `$metadata` liefert HTTP 200 und 60 Sets, aber noch keines der benoetigten Sets.
+  Die `45` alten Excel-Regeln stehen noch in der DB, sind aber wirkungslos; bis zur
+  SAP-Aktivierung fehlen Produktgruppennamen und Einkaufs-Refreshes koennen daran
+  scheitern. Details:
+  `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
 - Produktiv deployed und verifiziert am 2026-08-07 08:40 MESZ (Commit `eef6374`,
   `449/449` Tests): SECHS Indikatoren zeigten eine erfundene oder falsch
@@ -40,11 +50,10 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   Spend-Aufriss liefern HTTPS `200`. Produktiv stehen `45` ZDISPO-Zuordnungen
   aus `42` Mustern; die bestehende manuelle ZC23-Tabelle blieb unveraendert bei
   `0` Eintraegen. `105` ZLO03-Zeilen tragen einen Disponenten.
-- Seit 2026-08-06 bietet der Spend-Aufriss die Perspektive
+- Seit 2026-08-06 bietet der Spend-Aufriss historisch die Perspektive
   `Produktgruppe -> Lieferant -> Material`. Die Zuordnung folgt
-  `EKPO-MATNR -> ZLO03 -> VknrDispo -> Produktname`. Manuelle ZC23-Zuordnungen
-  bleiben fuehrend; nur fehlende Namen werden ueber `zdispo_grp.xlsx` und
-  `zdispo_spart.xlsx` ergaenzt. Das gilt ausschliesslich fuer den Spend-Aufriss.
+  `EKPO-MATNR -> ZLO03 -> VknrDispo -> Produktname`. Der noch produktive Altstand
+  wurde am 2026-08-11 ersetzt; produktiv akzeptiert die Strecke nur noch SAP OData.
   Mehrfach verwendete Komponenten
   werden summenerhaltend gleichmaessig `1/n` auf unterschiedliche
   Produktgruppen verteilt; unzugeordneter Spend bleibt sichtbar.
