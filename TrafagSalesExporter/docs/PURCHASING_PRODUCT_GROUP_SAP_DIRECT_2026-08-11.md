@@ -2,6 +2,34 @@
 
 Stand: 2026-08-11
 
+## Produktiver Abschluss 2026-08-12
+
+Die beiden SAP-EntitySets sind produktiv aktiv und die SAP-only-Strecke ist live
+abgenommen:
+
+- produktives `$metadata`: HTTP 200, `62` EntitySets;
+- `ZDISPO_GRPSet`: HTTP 200, `45` Zeilen und `42` unterschiedliche Muster;
+- `ZDISPO_SPARTSet`: HTTP 200, `22` Zeilen;
+- produktiver Einkauf-Delta vom 2026-08-12: `Success`, abgeschlossen um
+  `10:03:42 MESZ`;
+- lokaler Produktivcache danach: `45` Regeln mit `Source = SAP OData: ...`,
+  `0` Regeln mit Excel-, manueller oder anderer Nicht-SAP-Quelle;
+- Spend-Aufriss und Materialdisposition liefern nach dem Delta HTTP 200.
+
+Damit ist Excel auch im produktiven Datenbestand als aktive Mappingquelle
+vollstaendig ersetzt. `zdispo_grp.xlsx` und `zdispo_spart.xlsx` sind weder
+Laufzeitquelle noch Fallback noch aktive Cachequelle.
+
+Zwei SAP-Nacharbeiten blockieren den Betrieb nicht:
+
+1. `ZDISPO_SPART` liefert fuer die Codes `D1` und `D5` keinen Text. Die Anwendung
+   zeigt deshalb gemaess Fallback den jeweiligen SAP-Code an.
+2. In den produktiven OData-Metadaten hat `ZDISPO_GRP` derzeit nur `DISPO` als
+   Key. Da `DISPO` in neun Gruppen mehrfach vorkommt, sollte SEGW auf den
+   zusammengesetzten Key `DISPO_KZ + DISPO` korrigiert werden. Der aktuelle
+   EntitySet-Read liefert trotzdem alle `45` Zeilen, und der Client verarbeitet
+   sie korrekt.
+
 ## Ergebnis
 
 Die Anwendung ist auf eine ausschliessliche SAP-Datenstrecke umgestellt:
@@ -78,7 +106,7 @@ Bestehende Warnungen betreffen die bereits bekannte NuGet-Sicherheitswarnung
 fuer `Microsoft.AspNetCore.Authentication.Negotiate 8.0.24`, bestehende
 MudBlazor-Analyzerhinweise und zwei bestehende xUnit-Analyzerhinweise.
 
-## Deploymentstatus und naechster Schritt
+## Deploymentstatus und naechster Schritt (historischer Stand 2026-08-11)
 
 Der Anwendungscode wurde am 2026-08-11 nach ausdruecklicher Nutzerfreigabe
 produktiv deployed, obwohl die zwei SAP-EntitySets noch fehlen. Die bekannte
@@ -96,5 +124,9 @@ Reihenfolge fuer den Abschluss:
    Regeln groesser null, `Source` beginnt mit `SAP OData:`.
 5. Spend-Aufriss und Supply-Chain-Seite gegen einen bekannten Disponenten
    fachlich pruefen.
+
+Die technischen Punkte 1 bis 4 sowie die Erreichbarkeit der Seiten aus Punkt 5
+wurden am 2026-08-12 abgeschlossen. Offen bleibt eine fachliche Stichprobe gegen
+einen bekannten Disponenten sowie die oben genannte SAP-Key-/Textpflege.
 
 Release- und Routennachweis: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.

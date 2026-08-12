@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-08-11
+Stand: 2026-08-12
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -11,14 +11,15 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
-- Direkte Produktgruppenquelle aus SAP am 2026-08-11 produktiv deployed;
-  Gesamtrelease `471/471` Tests gruen. Full Load und Delta erwarten
-  `ZDISPO_GRP` + `ZDISPO_SPART` (oder ein zusammengefuehrtes Produktgruppen-Set),
-  laden atomar und verwenden keinen Excel-/manuellen Fallback mehr. Produktives
-  `$metadata` liefert HTTP 200 und 60 Sets, aber noch keines der benoetigten Sets.
-  Die `45` alten Excel-Regeln stehen noch in der DB, sind aber wirkungslos; bis zur
-  SAP-Aktivierung fehlen Produktgruppennamen und Einkaufs-Refreshes koennen daran
-  scheitern. Details:
+- Direkte Produktgruppenquelle aus SAP am 2026-08-11 produktiv deployed und am
+  2026-08-12 nach SAP-Aktivierung live abgeschlossen. Full Load und Delta lesen
+  `ZDISPO_GRPSet` + `ZDISPO_SPARTSet`, laden atomar und verwenden keinen
+  Excel-/manuellen Fallback. Live: `$metadata` HTTP 200 mit `62` Sets,
+  `ZDISPO_GRPSet` `45` Zeilen, `ZDISPO_SPARTSet` `22` Zeilen. Der produktive
+  Delta endete um `10:03:42 MESZ` mit `Success`; der Cache enthaelt danach
+  `45` SAP-OData-Regeln und `0` Nicht-SAP-/Excel-Regeln. Offen: Texte fuer `D1`
+  und `D5` in `ZDISPO_SPART` pflegen und SEGW-Key von `ZDISPO_GRP` auf
+  `DISPO_KZ + DISPO` korrigieren. Details:
   `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
 - Produktiv deployed und verifiziert am 2026-08-07 08:40 MESZ (Commit `eef6374`,
@@ -94,12 +95,13 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Offene Punkte
 
-- Produktiven Delta-Lauf nach `66a34da` nachweisen (`PurchasingSyncState.Mode
-  = Delta`, aktualisiertes Cache-Enddatum und Nachklassifizierungszahl).
 - Marco-Abnahme: Offenwert gegen SAP und WKURS-Richtung an einem echten
   Fremdwaehrungsbeleg pruefen.
 - ZLO03-Full-Load und fachliche Summenabnahme an einem echten
-  Mehrfachverwendungsfall; fehlenden Produktnamen fuer `DISPO D5` klaeren.
+  Mehrfachverwendungsfall; fehlende Produktnamen fuer `DISPO D1` und `D5`
+  klaeren.
+- SAP-SEGW-Key fuer `ZDISPO_GRP` von nur `DISPO` auf den zusammengesetzten Key
+  `DISPO_KZ + DISPO` korrigieren.
 
 ## Rohquellen Nur Bei Bedarf
 

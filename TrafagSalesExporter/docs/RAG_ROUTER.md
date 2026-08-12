@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-08-06
+Stand: 2026-08-12
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber
@@ -37,6 +37,12 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
     laesst dort STILL alle Margen leer — kein Compiler, kein Test schlaegt an. Statuswerte
     selbst gehoeren ausschliesslich in `Services/GroupMarginStatuses.cs`.
 
+12. **Vor jeder Aenderung, parallelen Agentenarbeit, projektweitem Build oder Deploy:**
+    zuerst `docs/AGENT_COORDINATION.md` lesen. Aktive Bereiche und Reservierungen
+    beachten, den eigenen Bereich vor der Arbeit eintragen und beim Abschluss mit
+    Status, Dateien und Nachweis aktualisieren. Freie und historische Eintraege nicht
+    mit aktuell laufender Arbeit verwechseln.
+
 ## Themenverzeichnis
 
 | Thema | Standard laden |
@@ -69,6 +75,8 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 
 ## Weitere Navigation
 
+- Agentenstatus, Dateireservierungen und parallele Arbeit:
+  `docs/AGENT_COORDINATION.md`
 - Aktuelle Aenderungen: `lastchange.md`
 - Detailquellen, Werkzeugbefehle und Suchbegriffe: `docs/RAG_DETAIL_INDEX.md`
 - Einordnung aktiver/historischer Dokumente:

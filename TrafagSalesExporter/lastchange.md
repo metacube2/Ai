@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-11
+Stand: 2026-08-12
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -8,6 +8,37 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+
+## Agentenkoordination beim Sitzungsstart 2026-08-12
+
+- Neue Root-Datei `CLAUDE.md`: Claude muss vor jeder Arbeit
+  `docs/AGENT_COORDINATION.md` lesen, den eigenen Bereich eintragen,
+  Reservierungen respektieren und den Abschluss nachtragen.
+- Neue Root-Datei `AGENTS.md`: dieselbe Pflicht gilt fuer Codex und andere
+  Agenten.
+- `docs/RAG_ROUTER.md` verweist nun ebenfalls verpflichtend auf
+  `docs/AGENT_COORDINATION.md`, bevor Aenderungen, parallele Arbeit, Builds oder
+  Deployments beginnen.
+- Hintergrund: Ein neu gestarteter Claude hatte sich trotz Nutzeranweisung nicht
+  in der Koordinationsdatei eingetragen, weil zuvor keine Root-`CLAUDE.md`
+  existierte.
+- Alle im Rahmen dieser Sitzung beanspruchten Einkaufs-/Koordinationsdateien sind
+  wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
+  aktiv an einer reservierten Datei.
+
+## Einkauf Produktgruppen SAP-only 2026-08-12 - produktiv abgeschlossen
+
+- `ZDISPO_GRPSet` und `ZDISPO_SPARTSet` liefern produktiv HTTP 200 mit `45`
+  beziehungsweise `22` Zeilen.
+- Der ueber die produktive Anwendung gestartete Einkauf-Delta endete um
+  10:03:42 MESZ mit `Success` und `SAP-Produktgruppen=45`.
+- Read-only DB-Nachweis: `45` Mappingregeln insgesamt, `45` mit
+  `Source = SAP OData: ...`, `0` Nicht-SAP-/Excel-Regeln.
+- Spend-Aufriss und Materialdisposition liefern HTTP 200. Excel ist weder
+  Laufzeitquelle noch Fallback noch aktive Cachequelle.
+- SAP-Nacharbeit ohne Betriebsblockade: Texte fuer `D1`/`D5` und
+  SEGW-Composite-Key `DISPO_KZ + DISPO`.
+- Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
 ## Andreas-Nachtrag lokale Standardkosten 2026-08-11 - committed, noch nicht deployed
 

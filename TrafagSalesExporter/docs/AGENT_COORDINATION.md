@@ -1,9 +1,11 @@
 # Agenten-Koordination
 
-Stand: 2026-08-11
+Stand: 2026-08-12
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte kurz lesen und den eigenen Eintrag aktualisieren.
+Die Root-Dateien `AGENTS.md` und `CLAUDE.md` sowie `docs/RAG_ROUTER.md` machen
+diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 
 ## Aktive Bereiche
 
@@ -14,7 +16,7 @@ Workspace. Vor jeder Aenderung bitte kurz lesen und den eigenen Eintrag aktualis
 | Codex | Finance / Supplier-Fallback CH-Werkstamm | `Models/GroupMaterialMaster.cs`, `Services/SapGatewayPlantMaterialReader.cs`, Supplier-Klassifikation, Settings/Schema/Excel/Cockpit/Tests, `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md` | Produktiv deployed; Modus ChPlantMaster und 66.049 MARC-1100-Materialien nach Neustart bestaetigt |
 | Codex | Finance / Andreas-Nachtrag lokale Standardkosten | Supplier-Klassifikation/-Rechnung, Management-Cockpit, Excel-Hilfe, Tests, `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md` | Einzelbestaetigt; separat committed, 478/478 Gesamttests gruen; noch nicht deployed |
 | Codex | UI / Admin-Menues zusammenfuehren | `Services/DatabaseSeedService.cs`, `TrafagSalesExporter.Tests/NavigationMenuSeedTests.cs`, `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` | Produktiv deployed und in der DB verifiziert; 461/461 Tests gruen |
-| Codex | Einkauf / Produktgruppen direkt aus SAP | neue SAP-Refresh-Services, `Program.cs`, `Services/DatabaseInitializationService.cs`, Produktgruppenabfragen/UI/Tests, `TrafagSalesExporter.csproj`, `docs/abap/**`, Einkaufsdokumentation | Produktiv deployed; SAP-Aktivierung von ZDISPO_GRP/ZDISPO_SPART bleibt externer Blocker fuer Namen/Refresh |
+| Codex | Einkauf / Produktgruppen direkt aus SAP | neue SAP-Refresh-Services, `Program.cs`, `Services/DatabaseInitializationService.cs`, Produktgruppenabfragen/UI/Tests, `TrafagSalesExporter.csproj`, `docs/abap/**`, Einkaufsdokumentation | Produktiv abgeschlossen: Delta Success, 45 SAP-OData-Regeln, 0 Excel-Regeln; SAP-Key-/Textpflege D1/D5 offen |
 | Claude | Finance / UK-2025-Wertfix | `.tmp_tools/CheckUk2025Result/**` (neu, nur Analysewerkzeug), lesend `neu.xlsx` und `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` | Abnahmepruefung abgeschlossen, kein Anwendungscode geaendert |
 
 ## Absprachen
@@ -36,7 +38,7 @@ Workspace. Vor jeder Aenderung bitte kurz lesen und den eigenen Eintrag aktualis
 
 | Datei oder Aktion | Reserviert durch | Seit | Zweck / Status |
 |---|---|---|---|
-| `Program.cs`, `TrafagSalesExporter.csproj`, `Services/DatabaseInitializationService.cs`, Produktgruppen-Services/UI/Tests und Einkaufs-/ABAP-Dokumentation | frei | 2026-08-11 | Produktivdeploy abgeschlossen; weitere Aenderung erst nach SAP-Aktivierung |
+| `Program.cs`, `TrafagSalesExporter.csproj`, `Services/DatabaseInitializationService.cs`, Produktgruppen-Services/UI/Tests und Einkaufs-/ABAP-Dokumentation | frei | 2026-08-12 | SAP-Aktivierung und produktiver Delta abgeschlossen; nur SAP-Key-/Textpflege und fachliche Stichprobe offen |
 | Produktivdeploy des gesamten aktuellen Workspace-Stands | frei | 2026-08-11 | Abgeschlossen und dokumentiert in `docs/DEPLOY_GESAMTSTAND_2026-08-11.md` |
 
 Historie: Claude hat am 2026-08-11 nach Freigabe durch Ingo die UK-2025-Abnahme
@@ -51,6 +53,12 @@ Finance-Fragen). Reservierung wieder frei. Kein Anwendungscode, kein Commit, kei
 
 ### Codex - Einkauf / Produktgruppen direkt aus SAP
 
+- Live-Abschluss 2026-08-12: beide ZDISPO-Sets HTTP 200; Delta `Success` um
+  10:03:42 MESZ; Cache `45` SAP-OData-Regeln und `0` Nicht-SAP-/Excel-Regeln.
+- Spend-Aufriss und Materialdisposition danach HTTP 200.
+- Nicht blockierende SAP-Nacharbeit: Texte fuer D1/D5 sowie zusammengesetzter
+  SEGW-Key `DISPO_KZ + DISPO` fuer `ZDISPO_GRP`.
+
 - App-Start importiert keine `zdispo*.xlsx` mehr; die Dateien werden nicht mehr
   gebaut oder publiziert.
 - Einkauf-Full-Load und Delta lesen `ZDISPO_GRP` + `ZDISPO_SPART` direkt aus SAP,
@@ -58,11 +66,11 @@ Finance-Fragen). Reservierung wieder frei. Kein Anwendungscode, kein Commit, kei
   wird in Spend-Aufriss und Supply Chain ausgewertet.
 - SAP-Methodenruempfe und SEGW-Anleitung liegen unter
   `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md`.
-- Nachweis: sechs gezielte Tests und 464/464 Gesamttests gruen. Produktives
-  `$metadata`: HTTP 200, 60 EntitySets, aber noch kein ZDISPO-/ProductGroup-Set.
-- Am 2026-08-11 nach ausdruecklicher Nutzerfreigabe trotzdem produktiv deployed.
-  Ohne SAP-Sets fehlen nun erwartungsgemaess die Produktgruppennamen und Nacht-Deltas
-  koennen beim Produktgruppenabruf scheitern. Nach Aktivierung Delta live pruefen.
+- Historischer Vor-Aktivierungsnachweis vom 2026-08-11: sechs gezielte Tests und
+  464/464 Gesamttests gruen; produktives `$metadata` damals HTTP 200 mit 60
+  EntitySets, aber noch ohne ZDISPO-/ProductGroup-Set.
+- Der am 2026-08-11 bewusst akzeptierte Zwischenstand ohne SAP-Sets wurde durch
+  den oben dokumentierten erfolgreichen Live-Abschluss vom 2026-08-12 ersetzt.
 - Vollstaendiger Wiederaufnahmestand:
   `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
