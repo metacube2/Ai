@@ -1,0 +1,42 @@
+# RAG HR KPI
+
+Stand: 2026-07-31
+
+## Kurzstand
+
+- Produktiv deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit
+  `9435a5d`, Gesamtsuite `438/438` gruen: Die Krankenquote zieht bei den Arbeitstagen die neun
+  gesetzlichen Feiertage des Kantons Zuerich ab. Ein automatischer
+  Filtervertrag prueft 128 Kombinationen der sieben personenbezogenen Filter
+  ueber alle sichtbaren HR-Ergebnisbloecke sowie eine Vollkombination mit
+  Zeitraum und Fluktuation. Die Uebersicht zeigt bei nicht datierbaren
+  Rexx-Absenzen ebenfalls keine scheinbar genaue Quote mehr. Details:
+  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+- HR KPI Cockpit wurde um produktive Cockpit-Funktionen erweitert.
+- Enthalten sind Anleitung, Datenordner, Dateifrische, Datenstatus, Ampeln, Periodenvergleich, Datenqualitaet, Austritte, Absenzen, Managementsicht und Drucken/PDF.
+- Managementsicht anonymisiert Personennamen in Detailtabellen.
+- HR KPI Zugang unterstuetzt zusaetzliche Admin-User ueber `HrKpiAccess.AdminUsers`.
+- Alter HR-User `hr` wurde nicht geaendert.
+- Aktueller Zusatzuser: `hradmin`; Passwort wurde separat kommuniziert, im Repository liegt nur der Hash in `appsettings.json`.
+- Deployed 2026-07-01: Fluktuations-Kacheln sind fachlich klarer beschriftet, thematisch farbig hinterlegt und haben Hover-Texte mit Formel und genauer Bedeutung.
+- Wichtigste YTD-Kachel: `Fluktuation YTD` = fluktuationsrelevante Austritte vom 01.01. des gewaehlten Jahres bis Stichtag / durchschnittlicher Headcount im gleichen Zeitraum. Bei vergangenen Jahren ist der Stichtag 31.12.; beim laufenden Jahr heutiger Tag bzw. gewaehlter Bis-Stichtag.
+- Farblogik Fluktuations-Kacheln: Headcount/Basis blau, Austritte gelb, fluktuationsrelevante Austritte gruen, nicht relevante/ausgeschlossene Austritte grau, Fluktuationsraten rot, Prognose violett.
+- Validierung/Deploy: Commit `874a61c Add HR turnover metric tooltips`, Tests `125/125` gruen, produktive DLL `01.07.2026 08:20:54`, Port 443 erreichbar.
+- Review-Korrekturen vom 2026-07-07 sind seit den nachfolgenden produktiven
+  Builds enthalten (Commit `1afac2f`): korrekter Vorjahresvergleich,
+  YTD-konsistente Krankenquote/Fluktuation, aggregierte Top-Absenzen und neue
+  Datenqualitaets-Hinweise. Details:
+  `docs/HR_KPI_KORREKTUREN_2026-07-06.md`.
+
+## Datenquellen
+
+- Rexx-/SAP-Dateien aus konfiguriertem Datenordner.
+- Datenordner im Cockpit je Lauf anpassbar und dauerhaft ueber `HrKpi:DataFolder`.
+- Login-Logik akzeptiert den primaeren HR-User oder einen Eintrag aus `AdminUsers` und setzt den HR-Unlock-Cookie fuer den passenden User-Hash.
+
+## Rohquellen Nur Bei Bedarf
+
+- Nachdoku: `docs/HR_KPI_NACHDOKU_2026-05-13.md`
+- Fachpruefung: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
+- Feiertage/Filtervertrag: `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`
+- Anwenderdoku: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`

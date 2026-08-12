@@ -1,0 +1,50 @@
+namespace TrafagSalesExporter.Services;
+
+internal static class SupplyChainUiTextCatalog
+{
+    internal static readonly IReadOnlyList<(string German, string English)> All =
+    [
+        ("Material, Text oder Lieferant", "Material, text or supplier"),
+        ("Disponent", "Planner"),
+        ("Produktgruppe", "Product group"),
+        ("Nur Handlungsbedarf", "Action required only"),
+        ("Prioritaeten im aktuellen Filter", "Priorities in the current filter"),
+        ("Datenstand und Abgrenzung", "Data state and scope"),
+        ("Materialien im Quellumfang", "Materials in source scope"),
+        ("Materialien nach Filter", "Materials after filter"),
+        ("Ist-Wareneingangsdatum", "Actual goods-receipt date"),
+        ("Disponent / Produktgruppe", "Planner / product group"),
+        ("Bestand / Verbrauch", "Stock / consumption"),
+        ("Sicherheit / Melde", "Safety / reorder"),
+        ("Fest / geplant Zugang", "Fixed / planned receipts"),
+        ("Fehlmenge / CHF", "Shortage / CHF"),
+        ("Wirkung", "Impact"),
+        ("Offen / ueberfaellig", "Open / overdue"),
+        ("Naechster Termin", "Next date"),
+        ("Top-Lieferant", "Top supplier"),
+        ("Top-Anteil", "Top share"),
+        ("Elternmaterialien", "Parent materials"),
+        ("Pruefauftrag", "Review task"),
+        ("DISMM / BESKZ", "MRP / procurement"),
+        ("Losgroesse", "Lot size"),
+        ("Status / LZ", "Status / LC"),
+        ("Plantermin", "Planned date"),
+        ("Offener Wert CHF", "Open value CHF"),
+        ("Ist-Wareneingang", "Actual goods receipt"),
+        ("Quelle fehlt", "Source missing"),
+        ("Keine Treffer im aktuellen Filter.", "No rows match the current filter."),
+        ("Die Detailanzeige ist auf die 1'000 wichtigsten Treffer begrenzt; Kennzahlen und Prioritaetsbalken verwenden den gesamten Filterumfang.", "The detail table is limited to the 1,000 highest-priority rows; KPIs and priority bars use the full filtered scope."),
+        ("Auswertung konnte nicht geladen werden: ", "Analysis could not be loaded: "),
+        ("Logistik", "Logistics"),
+        ("Materialdisposition & Fehlteile", "Material planning & shortages"),
+        ("Priorisiert Deckungsluecken, kritische Bestaende und die Wirkung auf Fertigprodukte.", "Prioritises coverage gaps, critical stock and the impact on finished products."),
+        ("Bestellbedarf & Deckung", "Purchase demand & coverage"),
+        ("Verbindet den SAP-Endbestand mit offenen Bestellungen, Planterminen und Lieferanten.", "Connects SAP final stock with open orders, planned dates and suppliers."),
+        ("Lieferanten-/Materialabhaengigkeit", "Supplier/material dependency"),
+        ("Zeigt beobachtete Single-Source- und Konzentrationsrisiken bis zur Materialnummer.", "Shows observed single-source and concentration risks down to material number."),
+        ("Dispositionsparameter-Pruefung", "Planning parameter audit"),
+        ("Erzeugt getrennte Pruefauftraege fuer fehlende oder auffaellige MARC-/MARA-Parameter.", "Creates separate review tasks for missing or notable MARC/MARA parameters."),
+        ("Lieferperformance & Datenstatus", "Delivery performance & data status"),
+        ("Zeigt den belastbaren EKET-Plantermin-Rueckstand und trennt ihn von noch nicht messbarer Ist-Termintreue.", "Shows reliable EKET planned-date backlog and separates it from actual on-time delivery that cannot yet be measured.")
+    ];
+}

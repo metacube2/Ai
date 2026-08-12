@@ -1,0 +1,85 @@
+// ============================================================
+// QUERY 2: Rexx_Absenzen
+// ============================================================
+// Quelle: Abwesenheitinstunden.xlsx (Rexx #744)
+// Krankheitsstunden Detail → fuehrend statt SAP-Tage
+// ============================================================
+
+let
+    Source = Excel.Workbook(File.Contents("C:\temp\Abwesenheitinstunden.xlsx"), null, true),
+    Data = Source{0}[Data],
+    Head = Table.PromoteHeaders(Data, [PromoteAllScalars = true]),
+
+    Sel = Table.SelectColumns(Head, {
+        "Personalnummer",
+        "Nachname, Vorname (Link Personal)",
+        "Stelle", "Organisation", "Leitung j/n", "Personal Status",
+        "Krankheit angetreten (Stunden Ind.)",
+        "Krank nicht buchbar angetreten (Stunden Ind.)",
+        "Krankheit angetreten (Zeitraum)",
+        "Krank nicht buchbar angetreten (Zeitraum)",
+        "Krankheit genehmigt (Stunden Ind.)",
+        "Krank nicht buchbar genehmigt (Stunden Ind.)",
+        "Krankheit gebucht gesamt (Stunden Ind.)",
+        "Krank nicht buchbar gebucht gesamt (Stunden Ind.)"
+    }),
+
+    Ren = Table.RenameColumns(Sel, {
+        {"Personalnummer", "PERNR_Text"},
+        {"Nachname, Vorname (Link Personal)", "Name"},
+        {"Stelle", "Stelle"},
+        {"Organisation", "Organisation"},
+        {"Leitung j/n", "Leitung"},
+        {"Personal Status", "Status"},
+        {"Krankheit angetreten (Stunden Ind.)", "Krankheit_Kurz_Std"},
+        {"Krank nicht buchbar angetreten (Stunden Ind.)", "Krankheit_Lang_Std"},
+        {"Krankheit angetreten (Zeitraum)", "Krankheit_Kurz_Zeitraum"},
+        {"Krank nicht buchbar angetreten (Zeitraum)", "Krankheit_Lang_Zeitraum"},
+        {"Krankheit genehmigt (Stunden Ind.)", "Krankheit_Kurz_Genehmigt"},
+        {"Krank nicht buchbar genehmigt (Stunden Ind.)", "Krankheit_Lang_Genehmigt"},
+        {"Krankheit gebucht gesamt (Stunden Ind.)", "Krankheit_Kurz_Gebucht"},
+        {"Krank nicht buchbar gebucht gesamt (Stunden Ind.)", "Krankheit_Lang_Gebucht"}
+    }),
+
+    AddPernr = Table.AddColumn(Ren, "Personalnummer", each
+        try Number.FromText(Text.Trim(Text.From([PERNR_Text]))) otherwise null, Int64.Type),
+
+    SetTypes = Table.TransformColumnTypes(AddPernr, {
+        {"Krankheit_Kurz_Std", type number},
+        {"Krankheit_Lang_Std", type number},
+        {"Krankheit_Kurz_Genehmigt", type number},
+        {"Krankheit_Lang_Genehmigt", type number},
+        {"Krankheit_Kurz_Gebucht", type number},
+        {"Krankheit_Lang_Gebucht", type number}
+    }),
+
+    // Gesamt-Krankheitsstunden
+    AddGes = Table.AddColumn(SetTypes, "Krankheit_Gesamt_Std", each
+        (if [Krankheit_Kurz_Std] = null then 0 else [Krankheit_Kurz_Std]) +
+        (if [Krankheit_Lang_Std] = null then 0 else [Krankheit_Lang_Std]),
+        type number),
+
+    // Krankheitstage (Stunden / 8.4h pro Tag)
+    AddKTG = Table.AddColumn(AddGes, "Krankheitstage_Gesamt", each
+        Number.Round([Krankheit_Gesamt_Std] / 8.4, 1), type number),
+    AddKTK = Table.AddColumn(AddKTG, "Krankheitstage_Kurz", each
+        let s = if [Krankheit_Kurz_Std] = null then 0 else [Krankheit_Kurz_Std] in
+        Number.Round(s / 8.4, 1), type number),
+    AddKTL = Table.AddColumn(AddKTK, "Krankheitstage_Lang", each
+        let s = if [Krankheit_Lang_Std] = null then 0 else [Krankheit_Lang_Std] in
+        Number.Round(s / 8.4, 1), type number),
+
+    // Krankenquote (kompatibel, Basis 21 Tage)
+    AddKQ = Table.AddColumn(AddKTL, "Krankenquote_MA", each
+        if [Krankheitstage_Gesamt] = 0 then 0 else [Krankheitstage_Gesamt] / 21, type number),
+    AddKQO = Table.AddColumn(AddKQ, "Krankenquote_ohne_LZK", each
+        if [Krankheitstage_Kurz] = 0 then 0 else [Krankheitstage_Kurz] / 21, type number),
+
+    AddAbs = Table.AddColumn(AddKQO, "Absenztage_Total", each [Krankheitstage_Gesamt], type number),
+
+    Filter = Table.SelectRows(AddAbs, each [Status] = "Aktiv"),
+    Clean = Table.RemoveColumns(Filter, {"PERNR_Text"}),
+    Reorder = Table.ReorderColumns(Clean, {"Personalnummer"} &
+        List.RemoveItems(Table.ColumnNames(Clean), {"Personalnummer"}))
+in
+    Reorder

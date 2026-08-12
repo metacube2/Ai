@@ -1,0 +1,759 @@
+@using System.Globalization
+@using System.Text
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+@* Reiter „Spend-Aufriss" (2026-07-24): baut auf dem abgenommenen Spend-Reiter auf, laesst ihn aber
+   unangetastet. Drei Sichten: (1) mehrstufige Kaskade mit WAEHLBARER Einstiegsdimension
+   (2026-07-30), (2) Region-Kuchen je Warengruppe, (3) Volumen nach ABC / XYZ. *@
+
+<MudPaper Class="pa-3 purchasing-section-shell mb-3" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T("Spend-Aufriss (mehrstufig)", "Spend breakdown (multi-level)")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
+                @T("Perspektive waehlen, dann stufenweise aufklappen. Je Ebene sind die groessten Positionen einzeln, der Rest steckt in einer 'uebrige'-Zeile - die Elternsumme bleibt dadurch die Summe ihrer Kinder. Warengruppe aus Materialstamm (MARA-MATKL), Fallback Bestellbeleg.",
+                   "Choose a perspective, then expand level by level. Each level lists the largest positions individually, the rest is bundled into a 'remaining' row - so a parent total always equals the sum of its children. Material group from material master (MARA-MATKL), fallback purchase document.")
+            </MudText>
+        </div>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@T("Live aus Einkauf-Cache", "Live from purchasing cache")</MudChip>
+    </div>
+
+    @* Perspektivenwahl (Marco 2026-07-30). Alle Perspektiven sind serverseitig vorberechnet, das
+       Umschalten kostet also keine DB-Runde. *@
+    @if (Perspectives.Count > 1)
+    {
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mt-2 mb-1" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted">@T("Einstieg:", "Entry point:")</MudText>
+            @foreach (var perspective in Perspectives)
+            {
+                var isActive = perspective.Key == ActivePerspectiveKey;
+                <MudButton Size="Size.Small"
+                           Variant="@(isActive ? Variant.Filled : Variant.Outlined)"
+                           Color="@(isActive ? Color.Primary : Color.Default)"
+                           OnClick="() => SelectPerspective(perspective.Key)">
+                    @T(perspective.LabelDe, perspective.LabelEn)
+                </MudButton>
+            }
+        </MudStack>
+        <MudText Typo="Typo.caption" Class="purchasing-explorer-muted d-block mb-2">
+            @T("Ebenen", "Levels"): @ActiveLevelPath
+        </MudText>
+    }
+
+    @if (ActivePerspectiveKey == "productgroup")
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+            @T("Zuordnung: Einkaufsmaterial -> ZLO03-Komponente -> Disponent des verwendenden Kopfmaterials -> ZC23-Produktgruppe. Wird eine Komponente in mehreren unterschiedlichen Produktgruppen verwendet, wird ihr Spend gleichmaessig 1/n verteilt. Dadurch bleibt die Summe exakt erhalten. Fehlende ZC23-Texte erscheinen ehrlich als 'Disponent <Code>'.",
+               "Allocation: purchasing material -> ZLO03 component -> planner of the using header material -> SAP ZC23 product group. If a component is used in several different product groups, its spend is split evenly 1/n. This preserves the total exactly. Missing SAP mappings are shown honestly as 'Planner <code>'.")
+        </MudAlert>
+        <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-2">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success">
+                @T("Zugeordnet", "Assigned"): @FormatChf(ProductGroupAllocation.AssignedSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnassignedSpendChf > 0 ? Color.Warning : Color.Success)">
+                @T("Ohne Produktgruppe", "Without product group"): @FormatChf(ProductGroupAllocation.UnassignedSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
+                @T("Mehrfachverwendung", "Multiple use"): @ProductGroupAllocation.MultiGroupMaterialCount @T("Materialien", "materials") / @FormatChf(ProductGroupAllocation.MultiGroupSpendChf)
+            </MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ProductGroupAllocation.UnmappedDispatcherCount > 0 ? Color.Warning : Color.Success)">
+                SAP ZDISPO/ZC23: @ProductGroupAllocation.MappedDispatcherCount @T("zugeordnet", "mapped"), @ProductGroupAllocation.UnmappedDispatcherCount @T("offen", "open")
+            </MudChip>
+        </MudStack>
+    }
+
+    @if (ActiveRows.Count == 0 || SpendYears.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+            @T("Noch keine Spend-Daten im gewaehlten Zeitraum. Einkauf-Full-Load ausfuehren oder Zeitraum anpassen.",
+               "No spend data in the selected period yet. Run a purchasing full load or adjust the period.")
+        </MudAlert>
+    }
+    else
+    {
+        <div class="purchasing-matrix-scroll mt-2">
+            <table class="purchasing-matrix">
+                <thead>
+                    <tr>
+                        <th>@ActiveLevelPath</th>
+                        @foreach (var year in SpendYears)
+                        {
+                            <th>@year</th>
+                        }
+                        <th>@T("Gesamt", "Total")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @* Der Baum wird in C# zu einer flachen Zeilenliste abgewickelt (BuildVisibleRows),
+                       statt die Ebenen im Markup zu verschachteln: die Perspektiven sind
+                       unterschiedlich tief (Lieferant 3 Ebenen, Beschaffungsregion und Waehrung 4),
+                       eine feste Verschachtelung wuerde das nicht abbilden. *@
+                    @foreach (var row in BuildVisibleRows(ActiveRows, string.Empty, 1))
+                    {
+                        <tr class="@CascadeRowClass(row.Depth, row.IsRemainder)">
+                            <td>
+                                @if (row.HasChildren)
+                                {
+                                    <button type="button" class="purchasing-matrix-toggle" @onclick="() => Toggle(row.Key)"
+                                            title="@T("Naechste Ebene auf-/zuklappen", "Expand/collapse next level")">
+                                        @(_expanded.Contains(row.Key) ? "▾" : "▸")
+                                    </button>
+                                }
+                                @if (row.Depth == 1)
+                                {
+                                    <strong>@row.Node.Label</strong>
+                                }
+                                else
+                                {
+                                    @row.Node.Label
+                                }
+                            </td>
+                            @foreach (var year in SpendYears)
+                            {
+                                <td>@FormatAmount(GetYear(row.Node, year))</td>
+                            }
+                            <td>
+                                @if (row.Depth == 1)
+                                {
+                                    <strong>@FormatAmount(row.Node.Total)</strong>
+                                }
+                                else
+                                {
+                                    @FormatAmount(row.Node.Total)
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</MudPaper>
+
+
+<MudPaper Class="pa-3 purchasing-section-shell mb-3" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T("Kuchen je Warengruppe: Anteil nach Beschaffungsregion", "Pie by material group: share by procurement region")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
+                @T("Je Top-Warengruppe der CHF-Anteil je Lieferantenland. Region = Land des Lieferanten (LFA1-Land1).",
+                   "Per top material group the CHF share by supplier country. Region = supplier country (LFA1 Land1).")
+            </MudText>
+        </div>
+    </div>
+    @if (RegionGroups.Count == 0 || RegionGroups.All(HasOnlyUnknownRegion))
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+            @T("Lieferantenland (SupplierCountry) ist im Cache noch leer. Die Kuchen fuellen sich mit dem naechsten Einkauf-Full-Load.",
+               "Supplier country is still empty in the cache. The pies fill with the next purchasing full load.")
+        </MudAlert>
+    }
+    else
+    {
+        <div class="purchasing-pie-grid mt-2">
+            @foreach (var group in RegionGroups)
+            {
+                <div class="purchasing-pie-card">
+                    <div class="purchasing-pie" style="@BuildPieStyle(group)"></div>
+                    <div class="purchasing-pie-legend">
+                        <div class="purchasing-pie-title">@group.MaterialGroup</div>
+                        <div class="purchasing-pie-total">@FormatChf(group.Total)</div>
+                        @{ var sliceIndex = 0; }
+                        @foreach (var slice in group.Slices)
+                        {
+                            var color = Palette[sliceIndex % Palette.Length];
+                            sliceIndex++;
+                            <div class="purchasing-pie-row">
+                                <span class="purchasing-pie-swatch" style="@($"background:{color}")"></span>
+                                <span class="purchasing-pie-label">@slice.Label</span>
+                                <span class="purchasing-pie-share">@FormatShare(slice.Value, group.Total)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</MudPaper>
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Volumen nach ABC", "Volume by ABC")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
+                @T("ABC-Kennzeichen aus dem Materialstamm (MARC-MAABC). Fuellt sich mit dem naechsten Einkauf-Full-Load.",
+                   "ABC indicator from the material master (MARC-MAABC). Fills with the next purchasing full load.")
+            </MudText>
+            @if (BarsEmptyOrUnknown(AbcRows, "ohne ABC"))
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    @T("ABC-Kennzeichen im Cache noch leer. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
+                       "ABC indicator still empty in the cache. Fills with the next purchasing full load.")
+                </MudAlert>
+            }
+            else
+            {
+                <div class="purchasing-explorer-bars">
+                    @foreach (var bar in BuildBars(AbcRows))
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@bar.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@bar.ValueText</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-3 purchasing-section-shell" Outlined="true">
+            <div class="purchasing-section-panel-head">
+                <MudText Typo="Typo.subtitle1">@T("Volumen nach XYZ", "Volume by XYZ")</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Info" Size="Size.Small" />
+            </div>
+            <MudText Typo="Typo.caption" Class="purchasing-explorer-muted mb-2">
+                @T("XYZ-Klassifizierung aus der SAP-Zusatztabelle ZCA_MAT_ABC_XYZ. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
+                   "XYZ classification from the SAP add-on table ZCA_MAT_ABC_XYZ. Fills with the next purchasing full load.")
+            </MudText>
+            @if (BarsEmptyOrUnknown(XyzRows, "ohne XYZ"))
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    @T("XYZ-Klassifizierung im Cache noch leer. Fuellt sich mit dem naechsten Einkauf-Full-Load.",
+                       "XYZ classification still empty in the cache. Fills with the next purchasing full load.")
+                </MudAlert>
+            }
+            else
+            {
+                <div class="purchasing-explorer-bars">
+                    @foreach (var bar in BuildBars(XyzRows))
+                    {
+                        <div class="purchasing-bar-row">
+                            <div class="purchasing-bar-label">@bar.Label</div>
+                            <div class="purchasing-bar-track">
+                                <div class="purchasing-bar-fill" style="@($"width:{FormatPercent(bar.Percent)}%; background:{bar.Color}")"></div>
+                            </div>
+                            <div class="purchasing-bar-value">@bar.ValueText</div>
+                        </div>
+                    }
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-3 purchasing-section-shell mt-3" Outlined="true">
+    <div class="purchasing-section-head">
+        <div>
+            <MudText Typo="Typo.h6">@T("ABC/XYZ-Massnahmenmatrix", "ABC/XYZ action matrix")</MudText>
+            <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
+                @T("ABC priorisiert die Wertbedeutung, XYZ die Regelmaessigkeit des Bedarfs. Die Kombination uebersetzt den Spend in einen konkreten Pruefauftrag; sie aendert keine Disposition automatisch.",
+                   "ABC prioritizes value significance, XYZ demand regularity. Their combination translates spend into a concrete review action; it does not change planning automatically.")
+            </MudText>
+        </div>
+    </div>
+    @if (AbcXyzActionRows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true">
+            @T("Keine ABC/XYZ-Daten im gewaehlten Zeitraum.", "No ABC/XYZ data in the selected period.")
+        </MudAlert>
+    }
+    else
+    {
+        <div class="purchasing-matrix-scroll">
+            <table class="purchasing-action-matrix">
+                <thead>
+                    <tr>
+                        <th>@T("Klasse", "Class")</th>
+                        <th>@T("Spend CHF", "Spend CHF")</th>
+                        <th>@T("Materialien", "Materials")</th>
+                        <th>@T("Lieferanten", "Suppliers")</th>
+                        <th>@T("Empfohlener Pruefauftrag", "Recommended review action")</th>
+                        <th>@T("Prioritaet", "Priority")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in AbcXyzActionRows)
+                    {
+                        <tr>
+                            <td><strong>@row.Classification</strong></td>
+                            <td>@FormatChf(row.SpendChf)</td>
+                            <td>@row.MaterialCount.ToString("N0", CultureInfo.CurrentCulture)</td>
+                            <td>@row.SupplierCount.ToString("N0", CultureInfo.CurrentCulture)</td>
+                            <td>@T(row.ActionDe, row.ActionEn)</td>
+                            <td>
+                                <MudChip T="string" Size="Size.Small" Color="@ActionColor(row.Severity)" Variant="Variant.Outlined">
+                                    @T(ActionPriorityDe(row.Severity), ActionPriorityEn(row.Severity))
+                                </MudChip>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public IReadOnlyList<int> SpendYears { get; set; } = [];
+    // Waehlbare Einstiegsperspektiven (2026-07-30). CascadeRows bleibt als Rueckfallebene fuer den
+    // Fall, dass keine Perspektiven geliefert werden (aeltere Aufrufer / leerer Cache).
+    [Parameter] public IReadOnlyList<PurchasingSpendPerspectiveResult> Perspectives { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingSpendCascadeNode> CascadeRows { get; set; } = [];
+    [Parameter] public PurchasingProductGroupAllocationSummary ProductGroupAllocation { get; set; } = PurchasingProductGroupAllocationSummary.Empty;
+    [Parameter] public IReadOnlyList<PurchasingRegionPieGroup> RegionGroups { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> AbcRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingLiveChartPoint> XyzRows { get; set; } = [];
+    [Parameter] public IReadOnlyList<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
+
+    private static readonly string[] Palette = ["#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a", "#00838f", "#ad1457", "#5d4037", "#455a64", "#9e9d24"];
+    private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
+    private string? _activePerspectiveKey;
+
+    private string ActivePerspectiveKey
+        => _activePerspectiveKey is not null && Perspectives.Any(p => p.Key == _activePerspectiveKey)
+            ? _activePerspectiveKey
+            : Perspectives.FirstOrDefault()?.Key ?? string.Empty;
+
+    private PurchasingSpendPerspectiveResult? ActivePerspective
+        => Perspectives.FirstOrDefault(p => p.Key == ActivePerspectiveKey);
+
+    private IReadOnlyList<PurchasingSpendCascadeNode> ActiveRows
+        => ActivePerspective?.Rows ?? CascadeRows;
+
+    /// <summary>
+    /// Ebenenfolge als Pfad, z.B. „Beschaffungsregion > Lieferant > Warengruppe > Material".
+    /// Steht im Spaltenkopf, damit beim Umschalten sofort klar ist, was man gerade aufreisst.
+    /// </summary>
+    private string ActiveLevelPath
+    {
+        get
+        {
+            var perspective = ActivePerspective;
+            if (perspective is null)
+                return T("Aufriss", "Breakdown");
+
+            // Ebenenbeschriftungen kommen als zwei parallele Listen; T() erwartet einzelne Strings,
+            // deshalb hier paarweise durchgeben statt eine Liste vorzuwaehlen.
+            return string.Join(" > ", perspective.LevelLabelsDe
+                .Select((labelDe, index) => T(
+                    labelDe,
+                    index < perspective.LevelLabelsEn.Count ? perspective.LevelLabelsEn[index] : labelDe)));
+        }
+    }
+
+    // Beim Perspektivenwechsel den Aufklappzustand verwerfen: die Schluessel enthalten den Pfad der
+    // alten Dimensionsfolge und wuerden in der neuen Perspektive nichts oeffnen, aber Speicher und
+    // Verwirrung mitschleppen.
+    private void SelectPerspective(string key)
+    {
+        if (_activePerspectiveKey == key)
+            return;
+
+        _activePerspectiveKey = key;
+        _expanded.Clear();
+    }
+
+    private void Toggle(string key)
+    {
+        if (!_expanded.Remove(key))
+            _expanded.Add(key);
+    }
+
+    /// <summary>
+    /// Eine sichtbare Zeile des Aufrisses. Der Baum wird anhand des Aufklappzustands zu einer
+    /// flachen Liste abgewickelt, weil die Perspektiven unterschiedlich tief sind und eine feste
+    /// Verschachtelung im Markup das nicht abbilden kann.
+    /// </summary>
+    private readonly record struct CascadeDisplayRow(
+        PurchasingSpendCascadeNode Node,
+        int Depth,
+        string Key,
+        bool HasChildren,
+        bool IsRemainder);
+
+    private List<CascadeDisplayRow> BuildVisibleRows(
+        IReadOnlyList<PurchasingSpendCascadeNode> nodes,
+        string parentKey,
+        int depth)
+    {
+        var rows = new List<CascadeDisplayRow>();
+        foreach (var node in nodes)
+        {
+            // Der Schluessel traegt den ganzen Pfad, damit gleichnamige Knoten unter verschiedenen
+            // Eltern (z.B. Warengruppe "01 - Dummy" bei mehreren Lieferanten) unabhaengig auf- und
+            // zuklappen und nicht alle gleichzeitig aufgehen.
+            var key = $"{parentKey}|{depth}|{node.Label}";
+            rows.Add(new CascadeDisplayRow(
+                node,
+                depth,
+                key,
+                node.Children.Count > 0,
+                node.Label.StartsWith("uebrige", StringComparison.OrdinalIgnoreCase)));
+
+            if (node.Children.Count > 0 && _expanded.Contains(key))
+                rows.AddRange(BuildVisibleRows(node.Children, key, depth + 1));
+        }
+
+        return rows;
+    }
+
+    // Ebenen 1-3 haben eigene Klassen (bestehendes Styling); ab Ebene 4 wird die tiefste
+    // Einrueckung wiederverwendet, damit die Waehrungs-/Regionsperspektive nicht ungestylt bleibt.
+    private static string CascadeRowClass(int depth, bool isRemainder)
+    {
+        var level = depth switch
+        {
+            1 => "purchasing-cascade-l1",
+            2 => "purchasing-cascade-l2",
+            3 => "purchasing-cascade-l3",
+            _ => "purchasing-cascade-l4"
+        };
+
+        return isRemainder ? level + " purchasing-cascade-remainder" : level;
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    private static decimal GetYear(PurchasingSpendCascadeNode node, int year)
+        => node.YearValues.TryGetValue(year, out var value) ? value : 0m;
+
+    private static string FormatAmount(decimal value)
+        => value == 0m ? "-" : value.ToString("N2", CultureInfo.CurrentCulture);
+
+    private static string FormatChf(decimal value)
+        => "CHF " + value.ToString("N0", CultureInfo.CurrentCulture);
+
+    private static string FormatShare(decimal value, decimal total)
+        => total <= 0m ? "-" : (value / total * 100m).ToString("0.#", CultureInfo.CurrentCulture) + " %";
+
+    private static bool HasOnlyUnknownRegion(PurchasingRegionPieGroup group)
+        => group.Slices.All(slice => slice.Label.Equals("ohne Land", StringComparison.OrdinalIgnoreCase));
+
+    private static string BuildPieStyle(PurchasingRegionPieGroup group)
+    {
+        var total = group.Slices.Sum(slice => slice.Value);
+        if (total <= 0m)
+            return "background:conic-gradient(#cfd8dc 0 100%)";
+
+        var sb = new StringBuilder("background:conic-gradient(");
+        decimal cumulative = 0m;
+        for (var i = 0; i < group.Slices.Count; i++)
+        {
+            var start = cumulative / total * 100m;
+            cumulative += group.Slices[i].Value;
+            var end = cumulative / total * 100m;
+            if (i > 0)
+                sb.Append(", ");
+            sb.Append(Palette[i % Palette.Length])
+              .Append(' ')
+              .Append(start.ToString("0.##", CultureInfo.InvariantCulture))
+              .Append("% ")
+              .Append(end.ToString("0.##", CultureInfo.InvariantCulture))
+              .Append('%');
+        }
+
+        sb.Append(')');
+        return sb.ToString();
+    }
+
+    private sealed record BarRow(string Label, string ValueText, double Percent, string Color);
+
+    private List<BarRow> BuildBars(IReadOnlyList<PurchasingLiveChartPoint> rows)
+    {
+        var max = rows.Count == 0 ? 0m : rows.Max(row => row.Value);
+        return rows
+            .Select((row, index) => new BarRow(
+                row.Label,
+                FormatChf(row.Value),
+                max <= 0m ? 0d : Math.Clamp((double)(row.Value / max * 100m), 3d, 100d),
+                Palette[index % Palette.Length]))
+            .ToList();
+    }
+
+    // Leer-Zustand: keine Zeilen ODER alles in der Sammelklasse (z.B. nur „ohne ABC"), typisch
+    // solange der Cache das Feld noch nicht gefuellt hat -> ehrlicher Hinweis statt einer Scheinsaeule.
+    private static bool BarsEmptyOrUnknown(IReadOnlyList<PurchasingLiveChartPoint> rows, string unknownLabel)
+        => rows.Count == 0 || rows.All(row => row.Label.Equals(unknownLabel, StringComparison.OrdinalIgnoreCase));
+
+    private static string FormatPercent(double percent)
+        => percent.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static Color ActionColor(string severity)
+        => severity switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Warning" => Color.Warning,
+            _ => Color.Info
+        };
+
+    private static string ActionPriorityDe(string severity)
+        => severity switch
+        {
+            "High" => "hoch",
+            "Medium" => "mittel",
+            "Warning" => "Datenpflege",
+            _ => "optimieren"
+        };
+
+    private static string ActionPriorityEn(string severity)
+        => severity switch
+        {
+            "High" => "high",
+            "Medium" => "medium",
+            "Warning" => "data maintenance",
+            _ => "optimize"
+        };
+}
+
+<style>
+    /* Basisklassen bewusst hier dupliziert: der „aufriss"-Case rendert PurchasingSection nicht,
+       dessen (globaler) Style-Block waere also nicht geladen. Regeln identisch gehalten. */
+    .purchasing-section-shell {
+        border-radius: 8px;
+        background:
+            linear-gradient(180deg, rgba(21,101,192,.045), rgba(21,101,192,0) 210px),
+            var(--mud-palette-surface);
+    }
+
+    .purchasing-section-head,
+    .purchasing-section-panel-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .purchasing-section-head {
+        margin-bottom: 14px;
+    }
+
+    .purchasing-section-panel-head {
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .purchasing-matrix-scroll {
+        overflow-x: auto;
+    }
+
+    .purchasing-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .86rem;
+        min-width: 860px;
+    }
+
+    .purchasing-matrix th,
+    .purchasing-matrix td {
+        padding: 7px 9px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .purchasing-matrix th:first-child,
+    .purchasing-matrix td:first-child {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--mud-palette-surface);
+        min-width: 280px;
+    }
+
+    .purchasing-matrix thead th {
+        font-weight: 700;
+        background: rgba(21,101,192,.08);
+    }
+
+    .purchasing-matrix-toggle {
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-size: .95rem;
+        padding: 0 6px 0 0;
+        color: var(--mud-palette-primary);
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) 2fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-track {
+        height: 24px;
+        background: rgba(0,0,0,.08);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        min-width: 26px;
+        box-shadow: inset 0 -8px 16px rgba(0,0,0,.12);
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-value {
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        line-height: 1.2;
+    }
+
+    .purchasing-explorer-muted {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .purchasing-cascade-l1 td {
+        font-weight: 600;
+    }
+
+    .purchasing-cascade-l2 td:first-child {
+        padding-left: 30px;
+    }
+
+    .purchasing-cascade-l2 td {
+        background: rgba(21,101,192,.04);
+    }
+
+    .purchasing-cascade-l3 td:first-child {
+        padding-left: 56px;
+    }
+
+    .purchasing-cascade-l3 td {
+        font-size: .82rem;
+        color: var(--mud-palette-text-secondary);
+        background: rgba(21,101,192,.02);
+    }
+
+    /* Vierte Ebene, ab 2026-07-30 erreichbar (Perspektiven Beschaffungsregion und Waehrung haben
+       vier Stufen). Gleiches Schriftbild wie Ebene 3, nur weiter eingerueckt. */
+    .purchasing-cascade-l4 td:first-child {
+        padding-left: 82px;
+    }
+
+    .purchasing-cascade-l4 td {
+        font-size: .78rem;
+        color: var(--mud-palette-text-secondary);
+        background: rgba(21,101,192,.06);
+    }
+
+    /* Sammelzeile "uebrige (n)": keine echte Entitaet, deshalb kursiv und blasser. */
+    .purchasing-cascade-remainder td {
+        font-style: italic;
+        opacity: .75;
+    }
+
+    .purchasing-pie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .purchasing-pie-card {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-surface);
+    }
+
+    .purchasing-pie {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+    }
+
+    .purchasing-pie-legend {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .purchasing-pie-title {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .purchasing-pie-total {
+        font-size: .82rem;
+        color: var(--mud-palette-text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .purchasing-pie-row {
+        display: grid;
+        grid-template-columns: 14px 1fr auto;
+        gap: 6px;
+        align-items: center;
+        font-size: .8rem;
+        padding: 1px 0;
+    }
+
+    .purchasing-pie-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .purchasing-pie-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .purchasing-pie-share {
+        font-weight: 600;
+    }
+
+    .purchasing-explorer-bars {
+        display: grid;
+        gap: 10px;
+    }
+
+    .purchasing-action-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 960px;
+        font-size: .84rem;
+    }
+
+    .purchasing-action-matrix th,
+    .purchasing-action-matrix td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--mud-palette-lines-default);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .purchasing-action-matrix th {
+        font-weight: 700;
+        background: rgba(21,101,192,.08);
+    }
+
+    .purchasing-action-matrix td:nth-child(2),
+    .purchasing-action-matrix td:nth-child(3),
+    .purchasing-action-matrix td:nth-child(4) {
+        text-align: right;
+        white-space: nowrap;
+    }
+</style>

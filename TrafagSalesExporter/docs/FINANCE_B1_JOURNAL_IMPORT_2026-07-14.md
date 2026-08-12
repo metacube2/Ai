@@ -1,0 +1,117 @@
+# Finance Journal Import (Hauptbuch-Buchungszeilen)
+
+Stand: 2026-07-14
+
+Zweck: Erster Load der Hauptbuchdaten (Journal Entries) je Tochtergesellschaft in eine
+**separate Tabelle** `FinancialJournalEntries` — Grundlage fuer Konsolidierung und Analysen gemaess
+der Prioliste von Andreas/Finance. Der bestehende Sales-Datenfluss (`CentralSalesRecords`,
+Audit-CSV, Finance Summary) bleibt vollstaendig unberuehrt.
+
+Der Import startete als reiner SAP-B1-Import (daher der Dateiname) und deckt inzwischen **zwei
+Quellsysteme in derselben Tabelle** ab: SAP B1 ueber HANA (FR, IT, US, Indien) und SAP ECC ueber
+OData (CH/AT). Die Spalte `SourceSystem` unterscheidet die Herkunft.
+
+## Einordnung
+
+- Gleiche Mechanik wie gehabt (zentraler HANA-Konnektor, Standort-Zuordnung, Full Load mit
+  Datumsfilter, Ersetzen je Gesellschaft), aber **eigene Tabelle** und eigener Service.
+- Quelltabellen in SAP B1: `OJDT` (Journalkopf) + `JDT1` (Journalzeilen), dazu `OACT`
+  (Kontobezeichnung) und `OADM` (Hauswaehrung).
+- Bewusst **ohne** den IT-Umsatzkontenfilter der Sales-Strecke — das Journal ist das volle Hauptbuch.
+- Aktueller Umfang: **alle B1-Gesellschaften ueber HANA** — FR/`fr01_p`, IT/`it01_p`, US/`us01_p`
+  (Quellsystem `BI1`) und **Indien/`TRAFAG_LIVE`** (2026-07-14 ergaenzt).
+- **Wichtig zu Indien:** Indien ist fachlich ebenfalls SAP B1, ist in der Konfiguration aber
+  historisch unter dem irrefuehrenden Quellsystem-Code `SAGE` angeschrieben (eigener HANA-Server
+  `20.197.20.60:30015`). Die Standortauswahl grenzt deshalb bewusst **nicht ueber den
+  Quellsystem-Code** ein, sondern ueber die **Anschlussart HANA + vorhandenes Schema**
+  (`FinancialJournalRefreshService.IsJournalSite`). Ob `OJDT`/`JDT1` im Schema wirklich existieren,
+  prueft der Reader vor dem Lesen und meldet sonst klar statt mit rohem SQL-Fehler.
+- **CH/AT (2026-07-14 ergaenzt, App-Seite fertig):** `ZSCHWEIZ` ist jetzt ebenfalls Journalquelle,
+  ueber einen eigenen SAP-OData-Reader (`SapGatewayFinancialJournalReader`). Das Hauptbuch kommt
+  aus `BKPF`/`BSEG` ueber das EntitySet `FinanzJournalSet`; der Buchungskreis (`Bukrs`) landet in
+  der neuen Spalte `CompanyCode` und trennt CH von AT. `JournalEntryId = Bukrs/Gjahr/Belnr`, weil
+  die Belegnummer erst mit Buchungskreis und Geschaeftsjahr eindeutig ist.
+  **Abhaengigkeit:** Das EntitySet muss zuerst auf SAP-Seite bereitgestellt werden — Felddefinition
+  und ABAP-Skizze in `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`. Bis dahin prueft der
+  Reader die Service-Metadata und meldet klar, dass das EntitySet fehlt (kein Datenschaden).
+- Nicht enthalten: die Manual-Excel-Laender DE/UK/ES (keine Buchhaltungsquelle).
+  Weitere ERP-Systeme sollen spaeter als eigene Konnektoren **in dieselbe Tabelle** liefern
+  (`SourceSystem`-Spalte unterscheidet die Herkunft).
+
+## Bedienung
+
+- Seite: `Finance Cockpit > Journal Import` (`/finance-journal-import`, Seed-Key
+  `finance-journal-import`).
+- Je Gesellschaft `Laden` oder `Alle Gesellschaften laden`; die Tabelle zeigt Zeilenanzahl,
+  Buchungsdatum von/bis und letzten Load.
+- Zeithorizont = `ExportSettings.DateFilter` (gleicher Filter wie der Sales-Export), angewendet auf
+  `OJDT.RefDate` (B1) bzw. auf `Budat` im OData-Filter (CH/AT).
+- Ein Lauf **ersetzt** den Journalbestand der Gesellschaft komplett (Full Load). Guardrail: liefert
+  die Quelle 0 Zeilen, bleibt ein vorhandener Bestand unveraendert (Warnung im Eventlog).
+- Protokollierung ueber `AppEventLogs` (Kategorie `Journal`) — bewusst **nicht** ueber `ExportLogs`,
+  damit der Daten-Heartbeat der Sales-Strecke nicht verfaelscht wird.
+
+## Feld-Mapping (Prioliste Andreas -> Tabelle `FinancialJournalEntries`)
+
+Beide Quellsysteme schreiben in dieselben Spalten; nur die Herkunft unterscheidet sich.
+
+| Prioliste | Spalte | Quelle B1 (HANA, FR/IT/US/IN) | Quelle CH/AT (SAP ECC via OData) |
+| --- | --- | --- | --- |
+| Gesellschaft / Company Code | `Tsc`, `Land`, `CompanySchema`, `CompanyCode` | Standortstamm (`Sites`), B1-Schema z. B. `fr01_p`; `CompanyCode` leer | `CompanyCode` = `Bukrs` (Buchungskreis) — trennt CH von AT innerhalb von `ZSCHWEIZ` |
+| Quellsystem | `SourceSystem` | Quellsystem-Code (`BI1`, Indien historisch `SAGE`) | `ZSCHWEIZ` |
+| Journal Entry ID | `JournalEntryId` | `OJDT.TransId` | `Bukrs/Gjahr/Belnr` (Belegnummer erst mit Buchungskreis + Jahr eindeutig) |
+| Journal Entry Line ID | `JournalEntryLineId` | `JDT1.Line_ID` | `Buzei` (Belegzeile) |
+| Buchungsdatum | `PostingDate` | `OJDT.RefDate` | `Budat` |
+| Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` | `Gjahr` |
+| Buchungsperiode | `FiscalPeriod` | Monat aus `RefDate` | `Monat` (`BKPF.MONAT`) |
+| Lokales Sachkonto | `AccountCode` | `JDT1.Account` | `Hkont` (fuehrende Nullen entfernt) |
+| Kontobezeichnung | `AccountName` | `OACT.AcctName` | `HkontTxt` (aus `SKAT`) |
+| Sollbetrag | `DebitAmount` | `JDT1.Debit` (lokale Waehrung) | `Dmbtr`, wenn `Shkzg = 'S'` |
+| Habenbetrag | `CreditAmount` | `JDT1.Credit` (lokale Waehrung) | `Dmbtr`, wenn `Shkzg = 'H'` |
+| Betrag mit Vorzeichen | `SignedAmountLocal` | `Debit - Credit` (Soll positiv, Haben negativ) | `Dmbtr` mit Vorzeichen aus `Shkzg` (Soll positiv, Haben negativ) |
+| Lokale Waehrung | `LocalCurrency` | `OADM.MainCurncy` | `Hwaer` (Hauswaehrung des Buchungskreises) |
+| Betrag in lokaler Waehrung | `SignedAmountLocal` | identisch mit Betrag mit Vorzeichen (dokumentiert) | identisch mit Betrag mit Vorzeichen (dokumentiert) |
+| Transaktionswaehrung | `TransactionCurrency` | `JDT1.FCCurrency` (leer bei reinen LC-Buchungen) | `Waers`; leer, wenn `Waers = Hwaer` (keine echte Fremdwaehrung) |
+| Betrag in Transaktionswaehrung | `SignedAmountTransaction` | `FCDebit - FCCredit` | `Wrbtr` mit Vorzeichen aus `Shkzg` |
+| Kostenstelle / Dimension 1 | `CostCenter` | `JDT1.ProfitCode` | `Kostl` (fuehrende Nullen entfernt) |
+| Weitere Hauptdimension | `Dimension2` | `JDT1.OcrCode2` | `Prctr` (Profitcenter, fuehrende Nullen entfernt) |
+| Buchungstext / Line Memo | `LineMemo` | `JDT1.LineMemo` | `Sgtxt` (Positionstext) |
+| Belegart / Source Transaction Type | `TransactionType` | `OJDT.TransType` (B1-ObjType, z. B. 13=AR-Rechnung, 30=manuelle Buchung) | `Blart` (SAP-Belegart, z. B. `SA`, `RV`, `KR`) |
+| Quelldokumentnummer | `SourceDocumentNumber` | `OJDT.BaseRef` | `Xblnr` (Referenzbelegnummer) |
+| Manuell / automatisch | `IsManual` | `TransType = '30'` | `Blart = 'SA'` (**Annahme**, mit Andreas zu bestaetigen) |
+| Storno-/Reversal-Kennzeichen | `IsReversal` | `OJDT.StornoToTr` gesetzt oder `AutoStorno = 'Y'` | `Stblg` gesetzt (Stornobelegnummer) |
+| Extraktionszeitpunkt | `ExtractionDate` (+ `StoredAtUtc`) | `CURRENT_TIMESTAMP` der Quelle / Speicherzeitpunkt | Speicherzeitpunkt der App |
+
+## Technik
+
+| Baustein | Ort |
+| --- | --- |
+| Entity/Tabelle | `Models/FinancialJournalEntry.cs`, Create-SQL in `DatabaseInitializationService.SchemaSql.cs`, `EnsureFinancialJournalEntriesTable` in `DatabaseSchemaMaintenanceService` (additiv, kein Migrationsrisiko; `CompanyCode` per `AddColumnIfMissing`) |
+| Indizes | `Tsc`, `PostingDate`, `AccountCode`; Unique `(Tsc, JournalEntryId, JournalEntryLineId)` |
+| B1-Leser (HANA) | `Services/HanaFinancialJournalReader.cs` (`IFinancialJournalReader`); Query/Zeilenfabrik als pure statische Methoden mit Tests; prueft vorab ueber `sys.tables`, ob `OJDT`/`JDT1` im Schema existieren |
+| CH/AT-Leser (SAP OData) | `Services/SapGatewayFinancialJournalReader.cs`: EntitySet `FinanzJournalSet`, Gateway-Paging (`$top`/`$skip`/`$orderby`, 1000er-Seiten), `$filter` auf `Budat`; prueft vorab die Service-Metadata und meldet klar, wenn das EntitySet fehlt; Zeilenabbildung `MapRow` pure/statisch mit Tests |
+| Orchestrierung | `Services/FinancialJournalRefreshService.cs` (`IFinancialJournalRefreshService`): Standortauswahl `IsJournalSite` (**HANA + Schema** ODER **SAP-Gateway + aufloesbare Service-URL**, bewusst NICHT ueber den Quellsystem-Code), Routing nach Anschlussart auf den passenden Leser, Server-/Credential-Aufloesung wie `HanaDataSourceAdapter`, transaktionales Ersetzen je TSC |
+| UI | `Components/Pages/FinanceJournalImport.razor`; Schulung: `Components/Pages/FinanceTraining.razor`, Abschnitt 7 |
+| Tests | `TrafagSalesExporter.Tests/FinancialJournalTests.cs` (Vorzeichen/Periode/Manuell/Storno, Query-Aufbau, Standortauswahl inkl. Indien/ZSCHWEIZ, Gateway-Routing, `MapRow` Composite-Key/Waehrung/fuehrende Nullen, Ersetzen, 0-Zeilen-Guardrail, Ablehnung Manual-Excel); Gesamtsuite `189/189` gruen |
+
+## Offene Punkte / vor erstem Produktivlauf pruefen
+
+0. **CH/AT blockiert bis SAP liefert:** Das EntitySet `FinanzJournalSet` existiert auf `travp762`
+   noch nicht. Uebergabe an das SAP-/ABAP-Team: `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`
+   (Feldliste, ABAP-Skizze fuer `GET_ENTITYSET`, Paging-Anforderung, Abnahmekriterien). Bis dahin
+   meldet ein CH/AT-Ladeversuch klar "EntitySet fehlt"; alle anderen Gesellschaften laden normal.
+   Fachlich mit Andreas zu bestaetigen: `IsManual = Blart 'SA'` und Profitcenter als "weitere
+   Hauptdimension".
+1. Spaltenverfuegbarkeit live gegen `fr01_p` und `TRAFAG_LIVE` verifizieren (`JDT1.ProfitCode`,
+   `OcrCode2`, `FCCurrency`, `OJDT.StornoToTr`, `AutoStorno`) — Namen entsprechen dem
+   B1-Standardschema, wurden aber noch nicht gegen die produktiven Trafag-B1-Systeme geprobt.
+   Fuer Indien zusaetzlich bestaetigen, dass `OJDT`/`JDT1` im Schema `TRAFAG_LIVE` vorhanden sind;
+   der Reader bricht sonst mit klarer Meldung ab (kein Datenschaden).
+2. Volumen: `JDT1` ist deutlich groesser als die Verkaufsbelege; der `DateFilter` begrenzt den
+   Horizont. Falls Finance mehr Historie will, Datumsfilter bewusst setzen und Ladezeit beobachten.
+3. Fachlich mit Andreas abstimmen: reicht `OcrCode2` als "weitere Hauptdimension" oder braucht es
+   `OcrCode3-5`; ist `TransType` als Text-ObjType ausreichend oder soll eine Klartext-Belegart
+   uebersetzt werden.
+4. Geschaeftsjahr = Kalenderjahr ist fuer die B1-Gesellschaften angenommen; bei abweichenden
+   Wirtschaftsjahren muesste `OFPR`/`FinncPriod` ausgewertet werden.
+5. Firewall: der Webserver erreicht BI1-HANA bereits fuer die Sales-Strecke; keine neuen Ziele.

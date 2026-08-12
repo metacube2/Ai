@@ -1,0 +1,15 @@
+services:
+  trading-web:
+    build:
+      context: .
+    container_name: trading-web
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      FLASK_HOST: "0.0.0.0"
+      FLASK_DEBUG: "0"
+      PORT: "5050"
+    volumes:
+      - ./config.json:/app/config.json
+      - ./data:/app/data

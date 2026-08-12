@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trafag Finanze/Sales Management Cockpit</title>
+    <base href="@BaseHref" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <HeadOutlet @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+</head>
+<body>
+    <Routes @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+    <script src="@($"{BaseHref}_framework/blazor.web.js")" autostart="false"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                configureSignalR: builder => builder.withUrl('@($"{BaseHref}_blazor")')
+            }
+        });
+    </script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="js/download.js"></script>
+    <script src="js/vendor/three.min.js"></script>
+    <script src="js/finance3d.js"></script>
+</body>
+</html>
+
+@code {
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
+    private string BaseHref
+    {
+        get
+        {
+            var pathBase = Configuration["ASPNETCORE_PATHBASE"]?.Trim();
+            if (string.IsNullOrWhiteSpace(pathBase) || pathBase == "/")
+                return "/";
+
+            pathBase = "/" + pathBase.Trim('/');
+            return $"{pathBase}/";
+        }
+    }
+}

@@ -1,0 +1,279 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1450" viewBox="0 0 1800 1450">
+  <defs>
+    <style>
+      .bg { fill: #f7f8fa; }
+      .title { font: 700 34px Arial, sans-serif; fill: #111827; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #4b5563; }
+      .section { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .stepno { font: 700 18px Arial, sans-serif; fill: #ffffff; }
+      .box-title { font: 700 15px Arial, sans-serif; fill: #111827; }
+      .txt { font: 400 13px Arial, sans-serif; fill: #1f2937; }
+      .small { font: 400 12px Arial, sans-serif; fill: #4b5563; }
+      .tiny { font: 400 11px Arial, sans-serif; fill: #4b5563; }
+      .lane { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.2; }
+      .prep { fill: #e8f2ff; stroke: #2563eb; stroke-width: 1.5; }
+      .run { fill: #eaf8ef; stroke: #15803d; stroke-width: 1.5; }
+      .check { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+      .issue { fill: #fff1f2; stroke: #be123c; stroke-width: 1.5; }
+      .output { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.5; }
+      .admin { fill: #f0ecff; stroke: #6d28d9; stroke-width: 1.5; }
+      .line { stroke: #374151; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .line-soft { stroke: #6b7280; stroke-width: 1.2; fill: none; marker-end: url(#arrowSoft); }
+      .dash { stroke-dasharray: 6 5; }
+      .num-prep { fill: #2563eb; }
+      .num-run { fill: #15803d; }
+      .num-check { fill: #d97706; }
+      .num-issue { fill: #be123c; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#374151" />
+    </marker>
+    <marker id="arrowSoft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1450" />
+  <text class="title" x="48" y="58">Keyuser-Prozessdoku - Finance Export, zentrale Excel und Kontrolle</text>
+  <text class="subtitle" x="50" y="86">Stand 2026-05-20 | Zielgruppe: Finance Keyuser / Poweruser | Fokus: was wann in der App tun, nicht technische Implementierung</text>
+
+  <rect class="lane" x="40" y="120" width="1720" height="84" rx="8" />
+  <text class="section" x="60" y="150">Kurzprinzip</text>
+  <text class="txt" x="60" y="176">1. Einstellungen und Standorte pflegen -> 2. Länder-/Standortdaten importieren/exportieren -> 3. zentrale Excel erzeugen -> 4. Finance Soll/Ist prüfen -> 5. offene fachliche Abgrenzungen klären.</text>
+  <text class="small" x="60" y="196">Die zentrale Excel und das Finance Cockpit verwenden dieselbe Basis: CentralSalesRecords. Für Finance immer die Spalten `Finance | ...` bzw. den Reiter `Soll/Ist Vergleich` verwenden.</text>
+
+  <!-- Lanes -->
+  <rect class="lane" x="40" y="240" width="410" height="1010" rx="8" />
+  <text class="section" x="65" y="275">A. Vorbereitung / Stammdaten</text>
+
+  <rect class="lane" x="480" y="240" width="410" height="1010" rx="8" />
+  <text class="section" x="505" y="275">B. Import und Export ausführen</text>
+
+  <rect class="lane" x="920" y="240" width="410" height="1010" rx="8" />
+  <text class="section" x="945" y="275">C. Kontrolle und Finance-Abgleich</text>
+
+  <rect class="lane" x="1360" y="240" width="400" height="1010" rx="8" />
+  <text class="section" x="1385" y="275">D. Fehler / Freigabe / Betrieb</text>
+
+  <!-- Preparation steps -->
+  <rect class="prep" x="70" y="310" width="350" height="120" rx="8" />
+  <circle class="num-prep" cx="102" cy="342" r="18" />
+  <text class="stepno" x="96" y="349">1</text>
+  <text class="box-title" x="132" y="338">Settings prüfen</text>
+  <text class="small" x="132" y="362">Export Einstellungen öffnen</text>
+  <text class="small" x="132" y="380">Datum-Filter ab z.B. 2025-01-01</text>
+  <text class="small" x="132" y="398">Timer nur aktivieren, wenn automatischer Lauf gewünscht ist</text>
+  <text class="small" x="132" y="416">SharePoint nur bei vollständigen Credentials nutzen</text>
+
+  <rect class="prep" x="70" y="465" width="350" height="145" rx="8" />
+  <circle class="num-prep" cx="102" cy="497" r="18" />
+  <text class="stepno" x="96" y="504">2</text>
+  <text class="box-title" x="132" y="493">Standorte pflegen</text>
+  <text class="small" x="132" y="517">Admin -> Standorte</text>
+  <text class="small" x="132" y="535">aktive Länder kontrollieren</text>
+  <text class="small" x="132" y="553">TSC, Land, SourceSystem prüfen</text>
+  <text class="small" x="132" y="571">HANA/SAP: Schema, EntitySet, Mapping</text>
+  <text class="small" x="132" y="589">Manual Excel: Datei/Pfad und Mapping</text>
+
+  <rect class="prep" x="70" y="645" width="350" height="150" rx="8" />
+  <circle class="num-prep" cx="102" cy="677" r="18" />
+  <text class="stepno" x="96" y="684">3</text>
+  <text class="box-title" x="132" y="673">Manual Excel Länder vorbereiten</text>
+  <text class="small" x="132" y="697">UK: Sage Excel / SharePoint-Ordner UK_B1</text>
+  <text class="small" x="132" y="715">ES: Sage CSV / Manual Excel</text>
+  <text class="small" x="132" y="733">DE: Alphaplan Excel, Datei hochladen oder Pfad setzen</text>
+  <text class="small" x="132" y="751">nach Datei setzen: Header laden / Mapping prüfen</text>
+  <text class="small" x="132" y="769">Standort erst aktivieren, wenn Datei erreichbar ist</text>
+
+  <rect class="admin" x="70" y="830" width="350" height="120" rx="8" />
+  <circle class="num-prep" cx="102" cy="862" r="18" />
+  <text class="stepno" x="96" y="869">4</text>
+  <text class="box-title" x="132" y="858">Optional: Transformationen</text>
+  <text class="small" x="132" y="882">Admin -> Transformationen</text>
+  <text class="small" x="132" y="900">nur ändern, wenn Feld-/Währungslogik bekannt ist</text>
+  <text class="small" x="132" y="918">bestehende Regeln nicht spontan löschen</text>
+  <text class="small" x="132" y="936">Änderung danach mit Einzelstandort testen</text>
+
+  <rect class="check" x="70" y="985" width="350" height="145" rx="8" />
+  <circle class="num-check" cx="102" cy="1017" r="18" />
+  <text class="stepno" x="96" y="1024">5</text>
+  <text class="box-title" x="132" y="1013">Vor dem Lauf kurz prüfen</text>
+  <text class="small" x="132" y="1037">Sind die richtigen Standorte aktiv?</text>
+  <text class="small" x="132" y="1055">Sind manuelle Dateien aktuell?</text>
+  <text class="small" x="132" y="1073">Ist Datum-Filter korrekt?</text>
+  <text class="small" x="132" y="1091">SharePoint Upload gewünscht und konfiguriert?</text>
+  <text class="small" x="132" y="1109">Bei Unsicherheit zuerst Einzelstandort ausführen</text>
+
+  <!-- Run steps -->
+  <rect class="run" x="510" y="310" width="350" height="125" rx="8" />
+  <circle class="num-run" cx="542" cy="342" r="18" />
+  <text class="stepno" x="536" y="349">6</text>
+  <text class="box-title" x="572" y="338">Einzelstandort exportieren</text>
+  <text class="small" x="572" y="362">Export Dashboard öffnen</text>
+  <text class="small" x="572" y="380">Land/Standort starten</text>
+  <text class="small" x="572" y="398">Statusmeldungen beobachten</text>
+  <text class="small" x="572" y="416">bei Manual Excel wird Datei gelesen und gespeichert</text>
+
+  <rect class="run" x="510" y="470" width="350" height="135" rx="8" />
+  <circle class="num-run" cx="542" cy="502" r="18" />
+  <text class="stepno" x="536" y="509">7</text>
+  <text class="box-title" x="572" y="498">Was beim Standortexport passiert</text>
+  <text class="small" x="572" y="522">Quelle wird gelesen: HANA, SAP OData oder Excel/CSV</text>
+  <text class="small" x="572" y="540">Mapping/Transformationen werden angewendet</text>
+  <text class="small" x="572" y="558">CentralSalesRecords für diesen Standort wird ersetzt</text>
+  <text class="small" x="572" y="576">Standortdatei und Logs werden geschrieben</text>
+  <text class="small" x="572" y="594">optional SharePoint Upload</text>
+
+  <rect class="run" x="510" y="640" width="350" height="120" rx="8" />
+  <circle class="num-run" cx="542" cy="672" r="18" />
+  <text class="stepno" x="536" y="679">8</text>
+  <text class="box-title" x="572" y="668">Alle Standorte exportieren</text>
+  <text class="small" x="572" y="692">nur verwenden, wenn aktive Standorte bereit sind</text>
+  <text class="small" x="572" y="710">läuft Standort für Standort</text>
+  <text class="small" x="572" y="728">danach wird zentrale Excel automatisch erzeugt</text>
+  <text class="small" x="572" y="746">bei Fehler: Logs prüfen und Einzelstandort wiederholen</text>
+
+  <rect class="output" x="510" y="795" width="350" height="130" rx="8" />
+  <circle class="num-run" cx="542" cy="827" r="18" />
+  <text class="stepno" x="536" y="834">9</text>
+  <text class="box-title" x="572" y="823">Zentrale Excel erzeugen</text>
+  <text class="small" x="572" y="847">Button zentrale Datei / konsolidierter Export</text>
+  <text class="small" x="572" y="865">liest alle CentralSalesRecords</text>
+  <text class="small" x="572" y="883">erstellt Sales_All_yyyy-MM-dd.xlsx</text>
+  <text class="small" x="572" y="901">enthält Blatt Sales und Finance Filter Hilfe</text>
+
+  <rect class="output" x="510" y="960" width="350" height="150" rx="8" />
+  <circle class="num-run" cx="542" cy="992" r="18" />
+  <text class="stepno" x="531" y="999">10</text>
+  <text class="box-title" x="572" y="988">Endexcel richtig filtern</text>
+  <text class="small" x="572" y="1012">Blatt Sales verwenden</text>
+  <text class="small" x="572" y="1030">Finance | Year = gewünschtes Jahr</text>
+  <text class="small" x="572" y="1048">Finance | Country Key = Land, z.B. IT oder DE</text>
+  <text class="small" x="572" y="1066">Finance | Include = TRUE</text>
+  <text class="small" x="572" y="1084">Finance | Net Sales Actual summieren</text>
+
+  <!-- Check steps -->
+  <rect class="check" x="950" y="310" width="350" height="125" rx="8" />
+  <circle class="num-check" cx="982" cy="342" r="18" />
+  <text class="stepno" x="976" y="349">11</text>
+  <text class="box-title" x="1012" y="338">Soll/Ist Vergleich öffnen</text>
+  <text class="small" x="1012" y="362">Finance Cockpit -> Soll/Ist Vergleich</text>
+  <text class="small" x="1012" y="380">Jahr 2025 prüfen</text>
+  <text class="small" x="1012" y="398">Spalten: Ist, Soll, Differenz, Währung</text>
+  <text class="small" x="1012" y="416">Status OK/Prüfen beachten</text>
+
+  <rect class="check" x="950" y="470" width="350" height="140" rx="8" />
+  <circle class="num-check" cx="982" cy="502" r="18" />
+  <text class="stepno" x="976" y="509">12</text>
+  <text class="box-title" x="1012" y="498">Management Analyse nutzen</text>
+  <text class="small" x="1012" y="522">für Plausibilität je Land/Jahr/Monat</text>
+  <text class="small" x="1012" y="540">Summenfeld bewusst wählen</text>
+  <text class="small" x="1012" y="558">zentrale Roh-Auswertung arbeitet auf CentralSalesRecords</text>
+  <text class="small" x="1012" y="576">bei Einzeldatei: Land/TSC Filter übernehmen</text>
+  <text class="small" x="1012" y="594">keine fachliche Freigabe nur aus Rohsummen ableiten</text>
+
+  <rect class="check" x="950" y="645" width="350" height="150" rx="8" />
+  <circle class="num-check" cx="982" cy="677" r="18" />
+  <text class="stepno" x="976" y="684">13</text>
+  <text class="box-title" x="1012" y="673">Länderspezifische Prüfpunkte</text>
+  <text class="small" x="1012" y="697">IT: Trafag Italia ausgeschlossen</text>
+  <text class="small" x="1012" y="715">IT: doppelte Zeilen ohne Supplier country nur einmal</text>
+  <text class="small" x="1012" y="733">DE: Alphaplan, Kundenländer noch fachlich offen</text>
+  <text class="small" x="1012" y="751">UK/ES: Sage-Dateien, Gutschriften negativ</text>
+  <text class="small" x="1012" y="769">CH/AT: SAP OData DACH-Abgrenzung</text>
+
+  <rect class="check" x="950" y="830" width="350" height="125" rx="8" />
+  <circle class="num-check" cx="982" cy="862" r="18" />
+  <text class="stepno" x="976" y="869">14</text>
+  <text class="box-title" x="1012" y="858">Excel gegen Cockpit abgleichen</text>
+  <text class="small" x="1012" y="882">Endexcel: Finance-Spalten filtern</text>
+  <text class="small" x="1012" y="900">Soll/Ist Vergleich: gleiche Land/Jahr-Sicht</text>
+  <text class="small" x="1012" y="918">Summen sollten gleich sein</text>
+  <text class="small" x="1012" y="936">Abweichung dokumentieren, nicht manuell korrigieren</text>
+
+  <rect class="output" x="950" y="990" width="350" height="120" rx="8" />
+  <circle class="num-check" cx="982" cy="1022" r="18" />
+  <text class="stepno" x="976" y="1029">15</text>
+  <text class="box-title" x="1012" y="1018">Freigabe vorbereiten</text>
+  <text class="small" x="1012" y="1042">zentrale Excel ablegen/teilen</text>
+  <text class="small" x="1012" y="1060">offene Länder markieren</text>
+  <text class="small" x="1012" y="1078">Finance-Leiter entscheidet fachliche Regel</text>
+  <text class="small" x="1012" y="1096">erst danach Regel fixieren</text>
+
+  <!-- Issue lane -->
+  <rect class="issue" x="1390" y="310" width="340" height="125" rx="8" />
+  <circle class="num-issue" cx="1422" cy="342" r="18" />
+  <text class="stepno" x="1416" y="349">16</text>
+  <text class="box-title" x="1452" y="338">Wenn Export fehlschlägt</text>
+  <text class="small" x="1452" y="362">Logs öffnen</text>
+  <text class="small" x="1452" y="380">technische Fehlermeldung kopieren</text>
+  <text class="small" x="1452" y="398">bei Manual Excel: Pfad/Datei/Mapping prüfen</text>
+  <text class="small" x="1452" y="416">bei SAP/HANA: Verbindung/Schema/EntitySet prüfen</text>
+
+  <rect class="issue" x="1390" y="470" width="340" height="140" rx="8" />
+  <circle class="num-issue" cx="1422" cy="502" r="18" />
+  <text class="stepno" x="1416" y="509">17</text>
+  <text class="box-title" x="1452" y="498">Wenn zentrale Excel fehlt</text>
+  <text class="small" x="1452" y="522">prüfen, ob CentralSalesRecords vorhanden sind</text>
+  <text class="small" x="1452" y="540">mindestens ein Standort muss erfolgreich gelaufen sein</text>
+  <text class="small" x="1452" y="558">lokaler zentraler Pfad in Settings prüfen</text>
+  <text class="small" x="1452" y="576">SharePoint Upload separat von lokaler Erzeugung prüfen</text>
+  <text class="small" x="1452" y="594">Logs und AppEventLogs lesen</text>
+
+  <rect class="issue" x="1390" y="645" width="340" height="150" rx="8" />
+  <circle class="num-issue" cx="1422" cy="677" r="18" />
+  <text class="stepno" x="1416" y="684">18</text>
+  <text class="box-title" x="1452" y="673">Wenn Soll/Ist nicht passt</text>
+  <text class="small" x="1452" y="697">nicht direkt Code oder Excel manuell ändern</text>
+  <text class="small" x="1452" y="715">Quelle, Filter, Datum, Währung prüfen</text>
+  <text class="small" x="1452" y="733">Landesspezifische Regeln dokumentieren</text>
+  <text class="small" x="1452" y="751">Finance-Leiter um Bestätigung bitten</text>
+  <text class="small" x="1452" y="769">erst danach Mapping/Regel produktiv anpassen</text>
+
+  <rect class="admin" x="1390" y="830" width="340" height="125" rx="8" />
+  <circle class="num-issue" cx="1422" cy="862" r="18" />
+  <text class="stepno" x="1416" y="869">19</text>
+  <text class="box-title" x="1452" y="858">Betrieb / Server</text>
+  <text class="small" x="1452" y="882">IIS 500: Serveradmin/Event Viewer</text>
+  <text class="small" x="1452" y="900">.NET 8 Hosting Bundle prüfen</text>
+  <text class="small" x="1452" y="918">App Pool Rechte auf DB/logs prüfen</text>
+  <text class="small" x="1452" y="936">Microsoft Excel ist auf Server nicht nötig</text>
+
+  <rect class="output" x="1390" y="990" width="340" height="120" rx="8" />
+  <circle class="num-issue" cx="1422" cy="1022" r="18" />
+  <text class="stepno" x="1416" y="1029">20</text>
+  <text class="box-title" x="1452" y="1018">Monats-/Jahresabschluss</text>
+  <text class="small" x="1452" y="1042">Exportdatum und Dateiversion notieren</text>
+  <text class="small" x="1452" y="1060">offene Länder in Mail/Teams aufführen</text>
+  <text class="small" x="1452" y="1078">freigegebene Regeln nicht rückwirkend überschreiben</text>
+  <text class="small" x="1452" y="1096">neue Fachentscheide nachdokumentieren</text>
+
+  <!-- Arrows between lanes -->
+  <path class="line" d="M420 370 H510" />
+  <path class="line" d="M420 537 H510" />
+  <path class="line" d="M420 720 H510" />
+  <path class="line" d="M860 700 H950" />
+  <path class="line" d="M860 860 H950" />
+  <path class="line" d="M1300 372 H1390" />
+  <path class="line" d="M1300 535 H1390" />
+  <path class="line" d="M1300 705 H1390" />
+  <path class="line-soft dash" d="M1125 1110 V1185 H250 V1130" />
+
+  <!-- Bottom checklists -->
+  <rect class="lane" x="40" y="1285" width="1720" height="120" rx="8" />
+  <text class="section" x="60" y="1315">Keyuser-Merksatz und offene Fachpunkte</text>
+  <text class="txt" x="60" y="1342">Nie direkt Rohspalten wie `Sales Price/Value`, `Document Total LC` oder lokale Excel-Summen vergleichen, wenn es um CFO/Finance geht. Fuer den Abgleich immer `Soll/Ist Vergleich` oder im Endexcel die `Finance | ...`-Spalten nutzen.</text>
+  <text class="small" x="60" y="1368">DE offen: Alphaplan liefert `NettoPreisGesamtX`, aber Kundenländer/Filter müssen von Munir/Finance bestätigt werden. IT bestätigt: Trafag Italia ausschliessen und Blank-Supplier-Dubletten nur einmal zählen.</text>
+  <text class="small" x="60" y="1392">Bei Fehlern: Screenshot/Fehlertext, betroffener Standort, Uhrzeit, Datei/Pfad und letzter Schritt notieren. Danach Logs prüfen und erst dann technische Anpassung beauftragen.</text>
+
+  <!-- Legend -->
+  <rect class="prep" x="60" y="1420" width="22" height="16" rx="3" />
+  <text class="tiny" x="90" y="1433">Vorbereitung</text>
+  <rect class="run" x="190" y="1420" width="22" height="16" rx="3" />
+  <text class="tiny" x="220" y="1433">Ausführen</text>
+  <rect class="check" x="300" y="1420" width="22" height="16" rx="3" />
+  <text class="tiny" x="330" y="1433">Prüfen</text>
+  <rect class="issue" x="395" y="1420" width="22" height="16" rx="3" />
+  <text class="tiny" x="425" y="1433">Fehler/Fachentscheid</text>
+  <text class="tiny" x="1440" y="1433">Quelle: App-Navigation, Services und aktuelle Finance-Doku, Stand 2026-05-20</text>
+</svg>

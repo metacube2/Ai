@@ -1,0 +1,8 @@
+﻿"Database";"Object";"Action";"Rows";"File";"DateColumn";"Error"
+"Sage";"dbo.CabeceraAlbaranCliente";"Exported";"1973";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.CabeceraAlbaranCliente.csv";"FechaFactura";""
+"Sage";"dbo.LineasAlbaranCliente";"Exported";"4814";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.LineasAlbaranCliente.csv";"FechaRegistro";""
+"Sage";"dbo.EstadisVenta";"Exported";"16976";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.EstadisVenta.csv";;""
+"Sage";"dbo.EstadisVentaTallas";"Exported";"0";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.EstadisVentaTallas.csv";;""
+"Sage";"dbo.FacturasTB";"Exported";"3788";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.FacturasTB.csv";"FechaFactura";""
+"Sage";"dbo.MovimientosFacturas";"Exported";"6517";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.MovimientosFacturas.csv";"FechaFactura";""
+"Sage";"dbo.Vis_RTDV_EfectosFactura";"Exported";"0";"C:\Users\Administrador\Desktop\Sage_SQL_CSV_Export_20260505_102507\Sage.dbo.Vis_RTDV_EfectosFactura.csv";"expirationDate";""

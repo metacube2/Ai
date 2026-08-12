@@ -1,0 +1,840 @@
+using Microsoft.EntityFrameworkCore;
+using TrafagSalesExporter.Data;
+
+namespace TrafagSalesExporter.Services;
+
+public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceService
+{
+    public void EnsureSchema(AppDbContext db)
+    {
+        EnsureSitesTableSupportsOptionalHanaServer(db);
+        EnsureExportSettingsTableSupportsCurrentSchema(db);
+        EnsureHanaServersTableSupportsCurrentSchema(db);
+        RepairBrokenForeignKeys(db);
+        AddColumnIfMissing(db, "HanaServers", "SourceSystem", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "HanaServers", "DatabaseName", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "HanaServers", "UseSsl", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "HanaServers", "ValidateCertificate", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "HanaServers", "AdditionalParams", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SourceSystem", "TEXT NOT NULL DEFAULT 'SAP'");
+        AddColumnIfMissing(db, "Sites", "UsernameOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "PasswordOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "LocalExportFolderOverride", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "ManualImportFilePath", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "ManualImportLastUploadedAtUtc", "TEXT NULL");
+        AddColumnIfMissing(db, "Sites", "SapServiceUrl", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySet", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySetsCache", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "Sites", "SapEntitySetsRefreshedAtUtc", "TEXT NULL");
+        AddColumnIfMissing(db, "ExportSettings", "DebugLoggingEnabled", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "ExportSettings", "LocalSiteExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "LocalConsolidatedExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "AuditCsvEnabled", "INTEGER NOT NULL DEFAULT 1");
+        AddColumnIfMissing(db, "ExportSettings", "UseAuditCsvAsCentralSource", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "ExportSettings", "LocalAuditCsvFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportSettings", "ExchangeRateDateField", "TEXT NOT NULL DEFAULT 'PostingDate'");
+        AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Mask'");
+        AddColumnIfMissing(db, "ExportSettings", "SupplierFallbackMode", "TEXT NOT NULL DEFAULT 'ChPlantMaster'");
+        AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
+        AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");
+        EnsureTransformationTable(db);
+        AddColumnIfMissing(db, "FieldTransformationRules", "RuleScope", "TEXT NOT NULL DEFAULT 'Value'");
+        EnsureCurrencyExchangeRateTable(db);
+        EnsureFinanceReferenceTable(db);
+        EnsureFinanceIntercompanyRuleTable(db);
+        EnsureFinanceRuleTable(db);
+        EnsureSourceSystemDefinitionTable(db);
+        AddColumnIfMissing(db, "SourceSystemDefinitions", "CentralServiceUrl", "TEXT NOT NULL DEFAULT ''");
+        EnsureSapSourceTable(db);
+        EnsureSapJoinTable(db);
+        EnsureSapFieldMappingTable(db);
+        EnsureManualExcelColumnMappingTable(db);
+        EnsureCentralSalesRecordTable(db);
+        EnsureNavigationMenuItemTable(db);
+        EnsureProjectItemsTable(db);
+        EnsurePurchasingCacheTables(db);
+        EnsureMaterialUsageCacheTables(db);
+        EnsureFinancialJournalEntriesTable(db);
+        EnsureGroupStandardCostsTable(db);
+        EnsureGroupMaterialMastersTable(db);
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "VatSumForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "VatSumLocalCurrency", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "DocumentRate", "TEXT NOT NULL DEFAULT '0'");
+        AddColumnIfMissing(db, "CentralSalesRecords", "CompanyCurrency", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductHierarchyCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductHierarchyText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductFamilyCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductFamilyText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductDivisionCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductDivisionText", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "ProductMappingAssigned", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "PostingDate", "TEXT NULL");
+        AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostVariable", "TEXT NULL");
+        AddColumnIfMissing(db, "CentralSalesRecords", "StandardCostFixed", "TEXT NULL");
+        // Verrechnungspreisliche Rolle und Trafag-Sachnummer aus dem Artikelstamm der Quelle
+        // (Indien: OITM."U_Tasc_ST" / "U_TASC_OMN"), additiv nachgezogen.
+        AddColumnIfMissing(db, "CentralSalesRecords", "SalesType", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "CentralSalesRecords", "GroupMaterialNumber", "TEXT NOT NULL DEFAULT ''");
+        EnsureAppEventLogTable(db);
+    }
+
+    private static void EnsureExportSettingsTableSupportsCurrentSchema(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var columns = DatabaseSchemaTools.GetTableColumns(conn, transaction: null, "ExportSettings");
+        if (columns.Count == 0)
+            return;
+
+        var legacyColumns = new[]
+        {
+            "SapUsername",
+            "SapPassword",
+            "Bi1Username",
+            "Bi1Password",
+            "SageUsername",
+            "SagePassword"
+        };
+
+        if (!legacyColumns.Any(columns.Contains))
+            return;
+
+        DatabaseSchemaTools.RebuildTable(conn, "ExportSettings", DatabaseSchemaSql.GetExportSettingsCreateSql());
+    }
+
+    private static void EnsureHanaServersTableSupportsCurrentSchema(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var columns = DatabaseSchemaTools.GetTableColumns(conn, transaction: null, "HanaServers");
+        if (columns.Count == 0)
+            return;
+
+        if (!columns.Contains("Username") && !columns.Contains("Password"))
+            return;
+
+        DatabaseSchemaTools.RebuildTable(conn, "HanaServers", DatabaseSchemaSql.GetHanaServersCreateSql());
+    }
+
+    private static void EnsureSitesTableSupportsOptionalHanaServer(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var hanaServerIdIsRequired = false;
+        {
+            using var pragma = conn.CreateCommand();
+            pragma.CommandText = "PRAGMA table_info(Sites)";
+            using var reader = pragma.ExecuteReader();
+
+            while (reader.Read())
+            {
+                if (string.Equals(reader["name"]?.ToString(), "HanaServerId", StringComparison.OrdinalIgnoreCase))
+                {
+                    hanaServerIdIsRequired = Convert.ToInt32(reader["notnull"]) == 1;
+                    break;
+                }
+            }
+        }
+
+        if (!hanaServerIdIsRequired)
+            return;
+
+        using var disableFk = conn.CreateCommand();
+        disableFk.CommandText = "PRAGMA foreign_keys = OFF;";
+        disableFk.ExecuteNonQuery();
+
+        using var transaction = conn.BeginTransaction();
+
+        using (var rename = conn.CreateCommand())
+        {
+            rename.Transaction = transaction;
+            rename.CommandText = "ALTER TABLE Sites RENAME TO Sites_old;";
+            rename.ExecuteNonQuery();
+        }
+
+        using (var create = conn.CreateCommand())
+        {
+            create.Transaction = transaction;
+            create.CommandText = DatabaseSchemaSql.GetSitesCreateSql();
+            create.ExecuteNonQuery();
+        }
+
+        using (var copy = conn.CreateCommand())
+        {
+            copy.Transaction = transaction;
+            copy.CommandText = @"
+INSERT INTO Sites (
+    Id, HanaServerId, Schema, TSC, Land, SourceSystem,
+    UsernameOverride, PasswordOverride, LocalExportFolderOverride, ManualImportFilePath,
+    ManualImportLastUploadedAtUtc, SapServiceUrl, SapEntitySet, SapEntitySetsCache,
+    SapEntitySetsRefreshedAtUtc, IsActive
+)
+SELECT
+    Id, HanaServerId, Schema, TSC, Land,
+    COALESCE(SourceSystem, 'SAP'),
+    COALESCE(UsernameOverride, ''),
+    COALESCE(PasswordOverride, ''),
+    COALESCE(LocalExportFolderOverride, ''),
+    COALESCE(ManualImportFilePath, ''),
+    ManualImportLastUploadedAtUtc,
+    COALESCE(SapServiceUrl, ''),
+    COALESCE(SapEntitySet, ''),
+    COALESCE(SapEntitySetsCache, ''),
+    SapEntitySetsRefreshedAtUtc,
+    IsActive
+FROM Sites_old;";
+            copy.ExecuteNonQuery();
+        }
+
+        using (var drop = conn.CreateCommand())
+        {
+            drop.Transaction = transaction;
+            drop.CommandText = "DROP TABLE Sites_old;";
+            drop.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+
+        using var enableFk = conn.CreateCommand();
+        enableFk.CommandText = "PRAGMA foreign_keys = ON;";
+        enableFk.ExecuteNonQuery();
+    }
+
+    private static void RepairBrokenForeignKeys(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var siteDependentTables = new[]
+        {
+            ("ExportLogs", DatabaseSchemaSql.GetExportLogsCreateSql()),
+            ("AppEventLogs", DatabaseSchemaSql.GetAppEventLogsCreateSql()),
+            ("CentralSalesRecords", DatabaseSchemaSql.GetCentralSalesRecordsCreateSql()),
+            ("SapSourceDefinitions", DatabaseSchemaSql.GetSapSourceDefinitionsCreateSql()),
+            ("SapJoinDefinitions", DatabaseSchemaSql.GetSapJoinDefinitionsCreateSql()),
+            ("SapFieldMappings", DatabaseSchemaSql.GetSapFieldMappingsCreateSql()),
+            ("ManualExcelColumnMappings", DatabaseSchemaSql.GetManualExcelColumnMappingsCreateSql())
+        };
+
+        foreach (var (tableName, createSql) in siteDependentTables)
+        {
+            if (DatabaseSchemaTools.TableReferences(conn, tableName, "Sites_old") ||
+                DatabaseSchemaTools.TableReferencesObsoleteTable(conn, tableName, "Sites"))
+                DatabaseSchemaTools.RebuildTable(conn, tableName, createSql);
+        }
+
+        if (DatabaseSchemaTools.TableReferences(conn, "Sites", "HanaServers_repair_old") ||
+            DatabaseSchemaTools.TableReferencesObsoleteTable(conn, "Sites", "HanaServers"))
+            DatabaseSchemaTools.RebuildTable(conn, "Sites", DatabaseSchemaSql.GetSitesCreateSql());
+    }
+
+    private static bool AddColumnIfMissing(AppDbContext db, string table, string column, string type)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        var exists = false;
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = $"PRAGMA table_info({table})";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (string.Equals(reader["name"]?.ToString(), column, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists)
+        {
+            using var alter = conn.CreateCommand();
+            alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {type}";
+            alter.ExecuteNonQuery();
+        }
+
+        return !exists;
+    }
+
+    private static void EnsureTransformationTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS FieldTransformationRules (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SourceSystem TEXT NOT NULL DEFAULT 'SAP',
+    SourceField TEXT NOT NULL,
+    TargetField TEXT NOT NULL,
+    TransformationType TEXT NOT NULL,
+    RuleScope TEXT NOT NULL DEFAULT 'Value',
+    Argument TEXT NOT NULL DEFAULT '',
+    SortOrder INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureNavigationMenuItemTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetNavigationMenuItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureProjectItemsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetProjectItemsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsurePurchasingCacheTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        foreach (var createSql in new[]
+        {
+            DatabaseSchemaSql.GetPurchasingEkkoCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingEkpoCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingSyncStateCreateSql()
+        })
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = createSql.Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkkoCache_Bedat ON PurchasingEkkoCache (Bedat);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkkoCache_Lifnr ON PurchasingEkkoCache (Lifnr);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Ebeln ON PurchasingEkpoCache (Ebeln);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEkpoCache_Matkl ON PurchasingEkpoCache (Matkl);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_Eindt ON PurchasingEketCache (Eindt);",
+            "CREATE INDEX IF NOT EXISTS IX_PurchasingEketCache_EbelnEbelp ON PurchasingEketCache (Ebeln, Ebelp);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
+
+        AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
+        // Lieferantenland (LFA1-LAND1, seit SAP-Erweiterung 2026-07-23) fuer die Region-/
+        // Beschaffungsregion-Sicht. Ueber EKKO.Lifnr -> LFA1.Lifnr.
+        AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierCountry", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "Mstae", "TEXT NOT NULL DEFAULT ''");
+        // Aktuelle Warengruppe aus dem Materialstamm (MARA-MATKL) — getrennt vom Beleg-Matkl,
+        // weil alte Belege nur die Dummy-Warengruppe tragen. Quelle MARA001Set.Matkl.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraMatkl", "TEXT NOT NULL DEFAULT ''");
+        // ABC-Klassifizierung (MARC-MAABC, Werk 1100) und XYZ-Klassifizierung
+        // (ZCA_MAT_ABC_XYZ./ITS/CA_M_MAXYZ) je Material, ueber EKPO.Matnr gejoint. Beides
+        // SAP-Erweiterung 2026-07-23. ABC ist SAP-Standard, XYZ ist ein /ITS/-Add-on.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraAbc", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraXyz", "TEXT NOT NULL DEFAULT ''");
+
+        // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
+        // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.
+        var addedWaers = AddColumnIfMissing(db, "PurchasingEkkoCache", "Waers", "TEXT NOT NULL DEFAULT ''");
+        var addedWkurs = AddColumnIfMissing(db, "PurchasingEkkoCache", "Wkurs", "TEXT NOT NULL DEFAULT '0'");
+        var addedKonnr = AddColumnIfMissing(db, "PurchasingEkkoCache", "Konnr", "TEXT NOT NULL DEFAULT ''");
+        if (addedWaers || addedWkurs || addedKonnr)
+            BackfillEkkoHeaderFieldsFromRawJson(conn, addedWaers, addedWkurs, addedKonnr);
+
+        // Belegtyp/Belegart (Bstyp/Bsart) zur Trennung Bestellung/Anfrage/Kontrakt/Umlagerung
+        // und Endlieferungskennzeichen (Elikz) + Zielmenge (Ktmng) fuer Offen-/Abrufquoten-Logik.
+        var addedBstyp = AddColumnIfMissing(db, "PurchasingEkkoCache", "Bstyp", "TEXT NOT NULL DEFAULT ''");
+        var addedBsart = AddColumnIfMissing(db, "PurchasingEkkoCache", "Bsart", "TEXT NOT NULL DEFAULT ''");
+        if (addedBstyp || addedBsart)
+            BackfillEkkoDocTypeFromRawJson(conn, addedBstyp, addedBsart);
+
+        var addedElikz = AddColumnIfMissing(db, "PurchasingEkpoCache", "Elikz", "TEXT NOT NULL DEFAULT ''");
+        var addedKtmng = AddColumnIfMissing(db, "PurchasingEkpoCache", "Ktmng", "TEXT NOT NULL DEFAULT '0'");
+        if (addedElikz || addedKtmng)
+            BackfillEkpoItemFieldsFromRawJson(conn, addedElikz, addedKtmng);
+    }
+
+    private static void EnsureMaterialUsageCacheTables(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        foreach (var createSql in new[]
+        {
+            DatabaseSchemaSql.GetMaterialUsageCacheCreateSql(),
+            DatabaseSchemaSql.GetMaterialParentCacheCreateSql(),
+            DatabaseSchemaSql.GetMaterialUsageSyncStateCreateSql(),
+            DatabaseSchemaSql.GetPurchasingProductGroupMapCreateSql(),
+            DatabaseSchemaSql.GetPurchasingSpendDisponentRuleCreateSql()
+        })
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = createSql.Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_Vknr ON MaterialUsageCache (Richtung, Vknr);",
+            "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_Kompnr ON MaterialUsageCache (Richtung, Kompnr);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
+
+        // Seit 2026-07-23 liefert das ZLO03-EntitySet den Disponenten des Kopfmaterials. Das
+        // Feld war bisher nur im RawJson vorhanden und ging beim Schreiben des Caches verloren.
+        var addedVknrDispo = AddColumnIfMissing(db, "MaterialUsageCache", "VknrDispo", "TEXT NOT NULL DEFAULT ''");
+        if (addedVknrDispo)
+        {
+            try
+            {
+                using var backfill = conn.CreateCommand();
+                backfill.CommandText = @"
+UPDATE MaterialUsageCache
+SET VknrDispo = COALESCE(
+    NULLIF(json_extract(RawJson, '$.VknrDispo'), ''),
+    NULLIF(json_extract(RawJson, '$.VKNR_DISPO'), ''),
+    '')
+WHERE RawJson <> '';";
+                backfill.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Alte/ungueltige RawJson-Zeilen duerfen die additive Migration nicht blockieren.
+                // Der naechste ZLO03-Load schreibt VknrDispo regulaer in die neue Spalte.
+            }
+        }
+
+        using var dispoIndex = conn.CreateCommand();
+        dispoIndex.CommandText = "CREATE INDEX IF NOT EXISTS IX_MaterialUsageCache_KompnrDispo ON MaterialUsageCache (Kompnr, VknrDispo);";
+        dispoIndex.ExecuteNonQuery();
+    }
+
+    // Einmaliger Backfill der EKKO-Belegtyp/-Belegart-Spalten aus RawJson (Bestandsdaten ohne Neu-Load).
+    private static void BackfillEkkoDocTypeFromRawJson(System.Data.Common.DbConnection conn, bool bstyp, bool bsart)
+    {
+        var assignments = new List<string>();
+        if (bstyp)
+            assignments.Add("Bstyp = COALESCE(json_extract(RawJson, '$.Bstyp'), '')");
+        if (bsart)
+            assignments.Add("Bsart = COALESCE(json_extract(RawJson, '$.Bsart'), '')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkkoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // RawJson kennt die Felder erst ab dem naechsten Full Load; bis dahin bleiben sie leer.
+            // Leerer Bstyp wird in der Auswertung bewusst als "einschliessen" behandelt (Rueckwaertskompatibel).
+        }
+    }
+
+    // Einmaliger Backfill der EKPO-Positionsfelder (Elikz/Ktmng) aus RawJson.
+    private static void BackfillEkpoItemFieldsFromRawJson(System.Data.Common.DbConnection conn, bool elikz, bool ktmng)
+    {
+        var assignments = new List<string>();
+        if (elikz)
+            assignments.Add("Elikz = COALESCE(json_extract(RawJson, '$.Elikz'), '')");
+        if (ktmng)
+            assignments.Add("Ktmng = COALESCE(json_extract(RawJson, '$.Ktmng'), '0')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkpoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // Siehe oben: Felder werden spaetestens beim naechsten Full Load korrekt geschrieben.
+        }
+    }
+
+    // Einmaliger Backfill neu ergaenzter EKKO-Spalten aus dem gespeicherten RawJson,
+    // damit Bestandsdaten ohne kompletten Neu-Load bewertbar sind.
+    private static void BackfillEkkoHeaderFieldsFromRawJson(System.Data.Common.DbConnection conn, bool waers, bool wkurs, bool konnr)
+    {
+        var assignments = new List<string>();
+        if (waers)
+            assignments.Add("Waers = COALESCE(json_extract(RawJson, '$.Waers'), '')");
+        if (wkurs)
+            assignments.Add("Wkurs = COALESCE(json_extract(RawJson, '$.Wkurs'), '0')");
+        if (konnr)
+            assignments.Add("Konnr = COALESCE(json_extract(RawJson, '$.Konnr'), '')");
+        if (assignments.Count == 0)
+            return;
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"UPDATE PurchasingEkkoCache SET {string.Join(", ", assignments)} WHERE RawJson <> '';";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // JSON1 nicht verfuegbar oder RawJson unerwartet: Spalten bleiben auf Default,
+            // die CHF-Bewertung faellt dann auf den CHF-Zweig zurueck. Beim naechsten Full Load
+            // werden die Felder ohnehin korrekt geschrieben.
+        }
+    }
+
+    private static void EnsureSapSourceTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetSapSourceDefinitionsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureCurrencyExchangeRateTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    FromCurrency TEXT NOT NULL,
+    ToCurrency TEXT NOT NULL,
+    Rate REAL NOT NULL,
+    ValidFrom TEXT NOT NULL,
+    ValidTo TEXT NULL,
+    Notes TEXT NOT NULL DEFAULT '',
+    IsActive INTEGER NOT NULL DEFAULT 1
+);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceReferenceTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceReferencesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceIntercompanyRuleTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceIntercompanyRulesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinanceRuleTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetFinanceRulesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureSapJoinTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetSapJoinDefinitionsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureSapFieldMappingTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetSapFieldMappingsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureManualExcelColumnMappingTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetManualExcelColumnMappingsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureCentralSalesRecordTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetCentralSalesRecordsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureAppEventLogTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = DatabaseSchemaSql.GetAppEventLogsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void EnsureFinancialJournalEntriesTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetFinancialJournalEntriesCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        // Buchungskreis fuer SAP-ECC-Quellen (ZSCHWEIZ: trennt CH/AT); additiv fuer Bestandstabellen.
+        AddColumnIfMissing(db, "FinancialJournalEntries", "CompanyCode", "TEXT NOT NULL DEFAULT ''");
+
+        foreach (var indexSql in new[]
+        {
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_Tsc ON FinancialJournalEntries (Tsc);",
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_PostingDate ON FinancialJournalEntries (PostingDate);",
+            "CREATE INDEX IF NOT EXISTS IX_FinancialJournalEntries_AccountCode ON FinancialJournalEntries (AccountCode);",
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_FinancialJournalEntries_Line ON FinancialJournalEntries (Tsc, JournalEntryId, JournalEntryLineId);"
+        })
+        {
+            using var indexCommand = conn.CreateCommand();
+            indexCommand.CommandText = indexSql;
+            indexCommand.ExecuteNonQuery();
+        }
+    }
+
+    private static void EnsureGroupStandardCostsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetGroupStandardCostsCreateSql().Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupStandardCosts_Material_Area ON GroupStandardCosts (MaterialKey, ValuationArea);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureGroupMaterialMastersTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetGroupMaterialMastersCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupMaterialMasters_Material_Plant ON GroupMaterialMasters (MaterialKey, Plant);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureSourceSystemDefinitionTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS SourceSystemDefinitions (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Code TEXT NOT NULL,
+    DisplayName TEXT NOT NULL,
+    ConnectionKind TEXT NOT NULL,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    CentralServiceUrl TEXT NOT NULL DEFAULT '',
+    CentralUsername TEXT NOT NULL DEFAULT '',
+    CentralPassword TEXT NOT NULL DEFAULT ''
+);";
+        cmd.ExecuteNonQuery();
+    }
+}
+
+internal static class DatabaseSchemaTools
+{
+    internal static bool TableReferences(System.Data.Common.DbConnection connection, string tableName, string referencedTableName)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $tableName;";
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$tableName";
+        parameter.Value = tableName;
+        command.Parameters.Add(parameter);
+
+        var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
+        return sql.Contains(referencedTableName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool TableReferencesObsoleteTable(System.Data.Common.DbConnection connection, string tableName, string currentTableName)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $tableName;";
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$tableName";
+        parameter.Value = tableName;
+        command.Parameters.Add(parameter);
+
+        var sql = command.ExecuteScalar()?.ToString() ?? string.Empty;
+        var obsoletePrefix = $"{currentTableName}_";
+
+        return sql.Contains($"REFERENCES {obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES \"{obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES [{obsoletePrefix}", StringComparison.OrdinalIgnoreCase) ||
+               sql.Contains($"REFERENCES `{obsoletePrefix}", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static void RebuildTable(System.Data.Common.DbConnection connection, string tableName, string createSql)
+    {
+        using var disableFk = connection.CreateCommand();
+        disableFk.CommandText = "PRAGMA foreign_keys = OFF;";
+        disableFk.ExecuteNonQuery();
+
+        using var transaction = connection.BeginTransaction();
+
+        var tempTableName = $"{tableName}_repair_old";
+
+        using (var rename = connection.CreateCommand())
+        {
+            rename.Transaction = transaction;
+            rename.CommandText = $"ALTER TABLE {tableName} RENAME TO {tempTableName};";
+            rename.ExecuteNonQuery();
+        }
+
+        using (var create = connection.CreateCommand())
+        {
+            create.Transaction = transaction;
+            create.CommandText = createSql;
+            create.ExecuteNonQuery();
+        }
+
+        var columns = GetSharedColumns(connection, transaction, tableName, tempTableName);
+        if (columns.Count > 0)
+        {
+            var columnList = string.Join(", ", columns);
+
+            using var copy = connection.CreateCommand();
+            copy.Transaction = transaction;
+            copy.CommandText = $"INSERT INTO {tableName} ({columnList}) SELECT {columnList} FROM {tempTableName};";
+            copy.ExecuteNonQuery();
+        }
+
+        using (var drop = connection.CreateCommand())
+        {
+            drop.Transaction = transaction;
+            drop.CommandText = $"DROP TABLE {tempTableName};";
+            drop.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+
+        using var enableFk = connection.CreateCommand();
+        enableFk.CommandText = "PRAGMA foreign_keys = ON;";
+        enableFk.ExecuteNonQuery();
+    }
+
+    internal static List<string> GetSharedColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction? transaction, string newTableName, string oldTableName)
+    {
+        var newColumns = GetTableColumns(connection, transaction, newTableName);
+        var oldColumns = GetTableColumns(connection, transaction, oldTableName);
+
+        return newColumns.Where(oldColumns.Contains).ToList();
+    }
+
+    internal static HashSet<string> GetTableColumns(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction? transaction, string tableName)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"PRAGMA table_info({tableName})";
+
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var name = reader["name"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(name))
+                columns.Add(name);
+        }
+
+        return columns;
+    }
+}

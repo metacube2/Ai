@@ -1,0 +1,36 @@
+﻿**********************
+nStart der Windows PowerShell-Aufzeichnung
+Startzeit: 20260427082528
+Benutzername: TRAFAGCH\koi
+RunAs-Benutzer: TRAFAGCH\koi
+Konfigurationsname: 
+Computer: NB61258 (Microsoft Windows NT 10.0.26200.0)
+Hostanwendung: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\koi\source\repos\Ai\TrafagSalesExporter\.tmp_sap_probe\RunSapProbeInteractive.ps1 abap-activate Z_TEST3 --dry-run
+Prozess-ID: 452
+PSVersion: 5.1.26100.8115
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8115
+BuildVersion: 10.0.26100.8115
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+SAP NCo CLI
+Architecture   : x86
+NCo Assembly   : sapnco, Version=3.1.0.42, Culture=neutral, PublicKeyToken=50436dca5c7f7d23
+Password prompt: [masked input omitted]
+Target         : travt762.sap.trafag.com / SYSNR 00 / CLIENT 100 / USER KOI
+Ping           : OK
+
+Program        : Z_TEST3
+Lines          : 69
+Activation     : RPY_PROGRAM_INSERT with SAVE_INACTIVE blank
+Dry run        : no SAP repository changes were written.
+
+Exit code: 0
+**********************
+Ende der Windows PowerShell-Aufzeichnung
+Endzeit: 20260427082529
+**********************
+

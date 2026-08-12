@@ -1,0 +1,17 @@
+# Ignore Visual Studio + build artifacts
+.vs/
+TrafagSalesExporter/.vs/
+TrafagSalesExporter/bin/
+TrafagSalesExporter/obj/
+TrafagSalesExporter/*.user
+TrafagSalesExporter/*.suo
+TrafagSalesExporter/*.db
+TrafagSalesExporter/*.db-shm
+TrafagSalesExporter/*.db-wal
+Trafag/
+TeamsTextGrabber/bin/
+TeamsTextGrabber/obj/
+
+# Generierte Mail-Ausgaben: enthalten Empfaengeradressen, gehoeren nicht ins Repo.
+# Erzeugt aus docs/mails/Build-StandortMails.ps1, jederzeit reproduzierbar.
+TrafagSalesExporter/.tmp_standort_mails/

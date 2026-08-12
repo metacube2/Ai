@@ -1,0 +1,343 @@
+param(
+    [string]$ServerInstance = "localhost",
+    [string]$Database = "Sage",
+    [ValidateSet("InvoiceDate", "LineRegistrationDate")]
+    [string]$DateFilter = "LineRegistrationDate",
+    [datetime]$FromDate = (Get-Date).Date.AddDays(-7),
+    [datetime]$ToDate = (Get-Date).Date,
+    [string]$BaseDirectory = "C:\Trafag\SageSpain",
+    [string]$RcloneExe = "C:\Tools\rclone.exe",
+    [string]$RcloneRemote = "trafag-bi",
+    [string]$RcloneTarget = "Import/Finance/Spanien"
+)
+
+$ErrorActionPreference = "Stop"
+
+function New-Connection {
+    $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
+    $builder["Data Source"] = $ServerInstance
+    $builder["Initial Catalog"] = $Database
+    $builder["Integrated Security"] = $true
+    $builder["TrustServerCertificate"] = $true
+    $builder["Connect Timeout"] = 15
+    return New-Object System.Data.SqlClient.SqlConnection($builder.ConnectionString)
+}
+
+function Convert-ToCsvValue {
+    param($Value)
+
+    if ($null -eq $Value -or $Value -is [System.DBNull]) {
+        return ""
+    }
+
+    if ($Value -is [datetime]) {
+        $text = $Value.ToString("yyyy-MM-dd HH:mm:ss")
+    }
+    else {
+        $text = [string]$Value
+    }
+
+    $text = $text.Replace('"', '""')
+    return '"' + $text + '"'
+}
+
+function Export-QueryToCsv {
+    param(
+        [string]$Sql,
+        [string]$Path
+    )
+
+    $conn = New-Connection
+    $cmd = $conn.CreateCommand()
+    $cmd.CommandText = $Sql
+    $cmd.CommandTimeout = 0
+
+    $fromParameter = $cmd.Parameters.Add("@FromDate", [System.Data.SqlDbType]::Date)
+    $fromParameter.Value = $FromDate.Date
+
+    $toParameter = $cmd.Parameters.Add("@ToDate", [System.Data.SqlDbType]::Date)
+    $toParameter.Value = $ToDate.Date
+
+    $writer = New-Object System.IO.StreamWriter($Path, $false, [System.Text.Encoding]::UTF8)
+    $rowCount = 0
+    $salesSum = [decimal]0
+
+    try {
+        $conn.Open()
+        $reader = $cmd.ExecuteReader()
+
+        $headers = for ($i = 0; $i -lt $reader.FieldCount; $i++) {
+            Convert-ToCsvValue $reader.GetName($i)
+        }
+        $writer.WriteLine(($headers -join ";"))
+
+        $salesIndex = -1
+        for ($i = 0; $i -lt $reader.FieldCount; $i++) {
+            if ($reader.GetName($i) -eq "SalesPriceValue") {
+                $salesIndex = $i
+                break
+            }
+        }
+
+        while ($reader.Read()) {
+            $values = for ($i = 0; $i -lt $reader.FieldCount; $i++) {
+                Convert-ToCsvValue $reader.GetValue($i)
+            }
+            $writer.WriteLine(($values -join ";"))
+            $rowCount++
+
+            if ($salesIndex -ge 0 -and -not $reader.IsDBNull($salesIndex)) {
+                $salesSum += [decimal]$reader.GetValue($salesIndex)
+            }
+        }
+    }
+    finally {
+        $writer.Dispose()
+        $conn.Dispose()
+    }
+
+    return [pscustomobject]@{
+        Rows = $rowCount
+        SalesPriceValueSum = $salesSum
+    }
+}
+
+function Resolve-RcloneExecutable {
+    param([string]$ConfiguredPath)
+
+    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $candidates = @(
+        $ConfiguredPath,
+        (Join-Path $scriptDirectory "rclone.exe"),
+        "C:\Tools\rclone.exe",
+        "C:\Tools\rclone\rclone.exe",
+        "C:\Tools\rclone\rclone\rclone.exe",
+        "rclone"
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+
+        $command = Get-Command $candidate -ErrorAction SilentlyContinue
+        if ($null -ne $command) {
+            return $command.Source
+        }
+    }
+
+    throw "rclone executable not found. Checked: $($candidates -join ', ')"
+}
+
+function Throw-RcloneError {
+    param(
+        [string]$Message,
+        [string]$LogPath
+    )
+
+    if (Test-Path -LiteralPath $LogPath) {
+        Write-Host ""
+        Write-Host "Last rclone log lines:"
+        Get-Content -LiteralPath $LogPath -Tail 80 | ForEach-Object { Write-Host $_ }
+    }
+
+    throw "$Message Log: $LogPath"
+}
+
+if ($ToDate.Date -le $FromDate.Date) {
+    throw "ToDate must be later than FromDate. FromDate=$($FromDate.ToString("yyyy-MM-dd")), ToDate=$($ToDate.ToString("yyyy-MM-dd"))"
+}
+
+$RcloneExe = Resolve-RcloneExecutable -ConfiguredPath $RcloneExe
+Write-Host "Using rclone: $RcloneExe"
+
+$outputDirectory = Join-Path $BaseDirectory "out"
+$logDirectory = Join-Path $BaseDirectory "logs"
+New-Item -ItemType Directory -Force -Path $outputDirectory, $logDirectory | Out-Null
+
+$target = "${RcloneRemote}:$RcloneTarget"
+$rcloneLog = Join-Path $logDirectory ("rclone-spain-" + (Get-Date -Format "yyyyMMdd") + ".log")
+
+Write-Host "Checking SharePoint target with rclone: $target"
+& $RcloneExe mkdir $target --log-file $rcloneLog --log-level INFO
+if ($LASTEXITCODE -ne 0) {
+    Throw-RcloneError -Message "Could not create/check SharePoint target '$target'. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
+}
+
+$targetListing = & $RcloneExe lsf $target --max-depth 1 --log-file $rcloneLog --log-level INFO
+if ($LASTEXITCODE -ne 0) {
+    Throw-RcloneError -Message "SharePoint target '$target' is not reachable. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
+}
+Write-Host "SharePoint target reachable. Existing items: $(@($targetListing).Count)"
+
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$runDirectory = Join-Path $outputDirectory "Sage_Spain_Sales_Export_$timestamp"
+New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
+
+$fromToken = $FromDate.ToString("yyyyMMdd")
+$toToken = $ToDate.Date.AddDays(-1).ToString("yyyyMMdd")
+$outputFileName = "Spain_Sales_range_${fromToken}_to_${toToken}.csv"
+$csvPath = Join-Path $runDirectory $outputFileName
+$summaryPath = Join-Path $runDirectory ([System.IO.Path]::GetFileNameWithoutExtension($outputFileName) + "_summary.txt")
+
+$datePredicate = if ($DateFilter -eq "LineRegistrationDate") {
+    "COALESCE(l.FechaRegistro, c.FechaFactura) >= @FromDate
+  AND COALESCE(l.FechaRegistro, c.FechaFactura) < @ToDate"
+} else {
+    "c.FechaFactura >= @FromDate
+  AND c.FechaFactura < @ToDate"
+}
+
+$sql = @"
+SELECT
+    'TRES' AS TSC,
+    'Spanien' AS Land,
+    'Sage' AS SourceSystem,
+    c.CodigoEmpresa AS CompanyCode,
+    c.EjercicioAlbaran AS DeliveryYear,
+    c.SerieAlbaran AS DeliverySeries,
+    c.NumeroAlbaran AS DeliveryNumber,
+    c.EjercicioFactura AS InvoiceYear,
+    c.SerieFactura AS InvoiceSeries,
+    c.NumeroFactura AS InvoiceNumber,
+    l.Orden AS PositionOnInvoice,
+    l.LineasPosicion AS SourceLineId,
+    l.CodigoArticulo AS Material,
+    l.DescripcionArticulo AS Name,
+    l.Descripcion2Articulo AS Description2,
+    l.DescripcionLinea AS DescriptionLine,
+    l.CodigoFamilia AS ProductGroup,
+    l.CodigoSubfamilia AS ProductSubGroup,
+    CAST(l.Unidades AS decimal(19, 6)) AS Quantity,
+    c.CodigoCliente AS CustomerNumber,
+    c.Nombre AS CustomerName,
+    c.CodigoNacion AS CustomerCountryCode,
+    c.Nacion AS CustomerCountry,
+    CAST(l.PrecioCoste AS decimal(19, 6)) AS StandardCost,
+    CAST(l.ImporteCoste AS decimal(19, 6)) AS StandardCostValue,
+    'EUR' AS StandardCostCurrency,
+    CAST(CASE
+        WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN -ABS(l.ImporteNeto)
+        ELSE l.ImporteNeto
+    END AS decimal(19, 6)) AS SalesPriceValue,
+    'EUR' AS SalesCurrency,
+    'EUR' AS DocumentCurrency,
+    'EUR' AS CompanyCurrency,
+    c.CodigoDivisa AS SageCurrencyCode,
+    CAST(CASE
+        WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN -ABS(c.BaseImponible)
+        ELSE c.BaseImponible
+    END AS decimal(19, 6)) AS DocumentNetAmount,
+    CAST(c.TotalIva AS decimal(19, 6)) AS DocumentVatAmount,
+    CAST(c.ImporteFactura AS decimal(19, 6)) AS DocumentGrossAmount,
+    c.FechaFactura AS InvoiceDate,
+    c.FechaAlbaran AS DeliveryDate,
+    l.FechaRegistro AS LineRegistrationDate,
+    c.EjercicioPedido AS OrderYear,
+    c.SeriePedido AS OrderSeries,
+    c.NumeroPedido AS OrderNumber,
+    c.SuPedido AS PurchaseOrderNumber,
+    c.CodigoExportacion_ AS Incoterms2020,
+    c.CondicionExportacion_ AS IncotermsText,
+    c.CodigoComisionista AS SalesResponsibleEmployee,
+    c.StatusAbono AS CreditStatus,
+    c.NoFacturable AS NonBillable,
+    c.TipoNuevaFra AS InvoiceType,
+    c.StatusFacturado AS BillingStatus,
+    CASE
+        WHEN c.TipoNuevaFra = 2 OR c.SerieFactura = 'REC' OR c.StatusAbono <> 0 THEN 'Credit Note'
+        ELSE 'Invoice'
+    END AS DocumentType
+FROM dbo.CabeceraAlbaranCliente c
+JOIN dbo.LineasAlbaranCliente l
+  ON l.CodigoEmpresa = c.CodigoEmpresa
+ AND l.EjercicioAlbaran = c.EjercicioAlbaran
+ AND l.SerieAlbaran = c.SerieAlbaran
+ AND l.NumeroAlbaran = c.NumeroAlbaran
+WHERE $datePredicate
+ORDER BY
+    c.FechaFactura,
+    c.SerieFactura,
+    c.NumeroFactura,
+    l.Orden;
+"@
+
+Write-Host "Exporting Sage Spain range..."
+Write-Host "FromDate: $($FromDate.ToString("yyyy-MM-dd"))"
+Write-Host "ToDate:   $($ToDate.ToString("yyyy-MM-dd"))"
+Write-Host "DateFilter: $DateFilter"
+
+$result = Export-QueryToCsv -Sql $sql -Path $csvPath
+
+@"
+Sage Spain Sales CSV export
+===========================
+
+Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+Server instance: $ServerInstance
+Database: $Database
+Export mode: Range
+Date filter mode: $DateFilter
+From date: $($FromDate.ToString("yyyy-MM-dd"))
+To date: $($ToDate.ToString("yyyy-MM-dd"))
+
+Output:
+$csvPath
+
+Rows:
+$($result.Rows)
+
+SalesPriceValue sum:
+$($result.SalesPriceValueSum)
+
+SharePoint target:
+$target
+
+Source:
+dbo.CabeceraAlbaranCliente joined with dbo.LineasAlbaranCliente
+
+Filter:
+$datePredicate
+
+Notes:
+- ToDate is exclusive.
+- Currency is set to EUR.
+- SalesPriceValue uses LineasAlbaranCliente.ImporteNeto; credit notes are forced negative.
+- Credit notes are marked when TipoNuevaFra=2, SerieFactura='REC', or StatusAbono is non-zero.
+"@ | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+
+$filesToUpload = Get-ChildItem -LiteralPath $runDirectory -File |
+    Where-Object { $_.Name -like "*.csv" -or $_.Name -like "*_summary.txt" }
+if ($filesToUpload.Count -eq 0) {
+    throw "No CSV or summary files found for upload in $runDirectory"
+}
+
+Write-Host "Uploading $($filesToUpload.Count) file(s) to SharePoint target: $target"
+& $RcloneExe copy $runDirectory $target `
+    --include "*.csv" `
+    --include "*_summary.txt" `
+    --log-file $rcloneLog `
+    --log-level INFO
+if ($LASTEXITCODE -ne 0) {
+    Throw-RcloneError -Message "rclone upload failed with exit code $LASTEXITCODE." -LogPath $rcloneLog
+}
+
+foreach ($file in $filesToUpload) {
+    $uploadedMatch = & $RcloneExe lsf $target --files-only --include $file.Name --log-file $rcloneLog --log-level INFO
+    if ($LASTEXITCODE -ne 0) {
+        Throw-RcloneError -Message "Could not verify uploaded file '$($file.Name)' in '$target'. rclone exit code $LASTEXITCODE." -LogPath $rcloneLog
+    }
+
+    if (-not ($uploadedMatch | Where-Object { $_ -eq $file.Name })) {
+        Throw-RcloneError -Message "Upload verification failed. File '$($file.Name)' was not listed in '$target'." -LogPath $rcloneLog
+    }
+}
+
+Write-Host "Spain range export and SharePoint upload finished."
+Write-Host "Local export: $runDirectory"
+Write-Host "CSV: $csvPath"
+Write-Host "Summary: $summaryPath"
+Write-Host "Rows: $($result.Rows)"
+Write-Host "SalesPriceValue sum: $($result.SalesPriceValueSum)"
+Write-Host "SharePoint target: $target"
+Write-Host "rclone log: $rcloneLog"
