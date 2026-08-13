@@ -11,6 +11,7 @@ diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
+| Codex | PPWR / SAP-Klassifizierung fuer Verpackung und Stoffcompliance | `Verpackungsverordnung.docx` (nur lesen), `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md`, `docs/abap/ZPPWR_CLASS_SETUP.abap`, SAP T76/090 | Abgeschlossen am 2026-08-13: 21 Merkmale und die Klassen `ZPPWR_PACKMITTEL`/`ZCOMP_STOFF` in T76/090 angelegt und committed; P76 unangetastet. Material-Pilot und CL30N-Abnahme bleiben fachlich offen. Reservierung frei |
 | Codex | Pausenspiel / FPV-Fernpilot | `wwwroot/js/pausegame.js`, `Tools/PauseGame.Probe/probe.mjs`, `docs/PAUSENSPIEL_*.md` | Produktiv deployed; 28/28 FPV- und 18/18 MOD-Probes gruen, manueller Spieltest offen |
 | Codex | Finance / CH-AT Eigenfertigungspruefung | `.tmp_tools/CheckChAtOrigin/**`, `.tmp_tools/CheckChAtCosts/**`, `.tmp_tools/BuildSupplierReport/**`, `docs/SUPPLIER_LAENDERSTATUS_CH_AT_PRUEFUNG_2026-08-11.md`, `docs/Supplier_Laenderstatus_CH_AT_Pruefung_2026-08-11.docx` | Abgeschlossen; nur read-only Analyse und neue Nachweisdokumente, keine Produktivdaten- oder Anwendungsaenderung |
 | Codex | Finance / Supplier-Fallback CH-Werkstamm | `Models/GroupMaterialMaster.cs`, `Services/SapGatewayPlantMaterialReader.cs`, Supplier-Klassifikation, Settings/Schema/Excel/Cockpit/Tests, `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md` | Produktiv deployed; Modus ChPlantMaster und 66.049 MARC-1100-Materialien nach Neustart bestaetigt |
