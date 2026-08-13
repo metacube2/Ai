@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-07-31
+Stand: 2026-08-12
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -52,18 +52,23 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `66'049` MARC-1100-Materialien dauerhaft vor und nach App-Neustart bestaetigt;
   `63'550` MBEW-Schluessel vollstaendig enthalten. Deploynachweis:
   `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
-- Nachtrag nach dem Deploy, noch nicht produktiv: Andreas bestaetigte, dass ein
-  sicherer MARC-Nichttreffer die Standardkosten der lokalen Gesellschaft verwenden
-  soll. Im lokalen Code heisst die Kategorie bewusst `Lokal`, nicht `Extern`.
-  Read-only Wirkung: 12'023 lokale Zeilen, davon 6'749 mit positivem Standardpreis;
-  110 Zeilen ohne Materialschluessel bleiben unklar. Detail:
-  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+- Produktiv deployed am 2026-08-12 10:23: Andreas' Nachtrag, dass ein sicherer
+  MARC-Nichttreffer die Standardkosten der lokalen Gesellschaft verwendet. Die
+  Kategorie heisst bewusst `Lokal`, nicht `Extern`. Gegen die produktive Datenbank
+  nach dem Deploy gemessen: 22'950 Kandidatenzeilen, davon 10'817 CH-intern und
+  12'023 `Lokal`; 6'749 der lokalen Zeilen haben einen positiven Standardpreis,
+  110 Zeilen ohne Materialschluessel bleiben `Lieferant unklar`. Voraussetzung ist
+  `SupplierFallbackMode=ChPlantMaster`; im Alt-Modus MBEW greift die Regel nicht.
+  Detail: `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
 
 ## Offene Fachpunkte
 
 - Supplier-Mapping: 77'466 von 95'396 Live-Zeilen haben alle drei
-  Supplier-Felder leer. Ursache je Quelle klaeren; bis dahin bleibt die
-  Gruppenmarge fuer diese Zeilen als `Lieferant unklar` maskiert.
+  Supplier-Felder leer. Die Rohdatenluecke bleibt offen, die Ursache je Quelle ist
+  weiterhin zu klaeren. Seit dem Deploy vom 2026-08-12 maskiert die Gruppenmarge
+  aber nur noch die Zeilen ohne belastbare Pruefgrundlage: der CH-Werkstamm
+  entscheidet intern gegen `Lokal`, und `Lieferant unklar` bleibt nur bei fehlendem
+  Materialschluessel, fehlender TSC oder leerem MARC-Cache.
 - B1-Upgrade ab 2026-08-03 nachpruefen: Import FR/IT/US/IN, Kostenfuellgrad
   und Bewertungsmethoden.
 - TR IT: Moving-Average-/Cost-Run-Frage mit Paola Ende August abschliessen;

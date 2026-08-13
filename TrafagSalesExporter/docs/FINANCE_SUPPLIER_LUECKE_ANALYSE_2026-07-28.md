@@ -1,5 +1,13 @@
 # Supplier-Luecke: Analyse auf Produktivdaten
 
+> **ZAHLEN UEBERHOLT, Ursachenanalyse weiter gueltig. Stand der Feststellung: 2026-08-13.**
+> Die Messung beruht auf `84'788` Zeilen vom 2026-07-27. Aktuell sind es `97'537`, und die
+> Quote lautet `18'263` von `97'537` (18,7 %) mit allen drei Lieferantenfeldern. Fuer den
+> Status je Punkt gilt `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, Zeile ISS-003.
+> Ebenfalls ueberholt: der technische Teil ist inzwischen geloest. Der CH-Werkstamm-Fallback
+> ist seit 2026-08-11 produktiv, Andreas' lokale Standardkosten seit 2026-08-12. Die
+> Warum-Analyse je Quelle in diesem Dokument bleibt lesenswert.
+
 Stand: 2026-07-28
 
 Anlass: Aktionspunkt aus der Sitzung mit Andreas vom 2026-07-27 — Andreas hatte im Auszug

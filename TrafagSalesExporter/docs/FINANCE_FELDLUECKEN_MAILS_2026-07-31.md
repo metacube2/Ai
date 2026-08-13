@@ -1,5 +1,14 @@
 # Standort-Mails Feldlücken — versandfertig je Standort
 
+> **ÜBERHOLT, NICHT VERSENDEN. Stand der Feststellung: 2026-08-12.**
+> Abschnitt 3 bittet Indien um die Pflege von 1'271 Artikeln. Das ist seit dem
+> 2026-08-05 gegenstandslos, weil `OITM."U_Tasc_ST"` die Frage für 93 % der Artikel
+> beantwortet. Gültig ist `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`. Dasselbe
+> gilt für `docs/mails/Build-RanVijayFollowup.ps1`. Auch die übrigen Zahlen in dieser
+> Datei stammen vom Auszug des 2026-07-29 und sind überholt; aktuelle Füllgrade stehen
+> in `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, Zeile ISS-003.
+> Diese Datei ist nur noch Historie.
+
 Stand: 2026-07-31
 
 Herkunft: aufgeteilt aus dem Sammeltext in `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`

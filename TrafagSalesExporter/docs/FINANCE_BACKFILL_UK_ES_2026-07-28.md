@@ -1,5 +1,13 @@
 # Backfill UK/Spanien aus App-eigenen Exporten
 
+> **ÜBERHOLT für UK. Stand der Feststellung: 2026-08-12.**
+> Die hier beschriebene UK-Backfill-Datei trug Stückpreise statt Zeilenwerte und ergab
+> nur 11 % des Solls. Sie wurde am 2026-08-10 ersetzt; die Abnahme vom 2026-08-11 steht
+> in `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`, Abschnitt „Abnahme 2026-08-11":
+> UK 2025 = 3'529'861.80 GBP = 99,7 % des Solls. Der Spanien-Teil und die
+> Lückenbeschreibung Januar bis Mai 2026 sind weiterhin gültig, siehe
+> `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, Zeile ISS-004.1.
+
 Stand: 2026-07-28
 
 Anlass: Ziel ist, dass **alle Laender ab 2025 Daten haben**. Fuer die Anfangszeit haben die

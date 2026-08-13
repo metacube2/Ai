@@ -1,5 +1,15 @@
 # Pruefung der Importe CH/AT und Indien — 2026-07-29
 
+> **TEILWEISE UEBERHOLT. Stand der Feststellung: 2026-08-13.**
+> Abschnitt 6 zur verwaisten Legendenzeile ist ueberholt: die Zeile steht NICHT mehr in
+> `CentralSalesRecords` und in keiner Standort-CSV. Sie taucht nur noch in der zentralen
+> Audit-CSV und im Gesamtexport auf, entsteht also erst im Konsolidierungsschritt. Ein
+> `DELETE` auf die Produktivdatenbank waere wirkungslos. Nachweis und Pruefstelle:
+> `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, Zeile ISS-012.
+> Ebenfalls ueberholt ist die CH/AT-Betrachtung: seit dem taeglichen SAP-Batchjob vom
+> 2026-08-12 liefert ZSCHWEIZ wieder aktuelle Zeilen. Die Befunde zu den beiden Fixes vom
+> 2026-07-28 und zum `PreferredImportYear` bleiben gueltig.
+
 Grundlage: read-only Kopie von `\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db`
 (Stand 2026-07-29 08:27, 337.8 MB). `PRAGMA quick_check` = `ok`, die Kopie ist also
 auswertbar — anders als der defekte Snapshot vom 2026-07-28, bei dem waehrend laufender

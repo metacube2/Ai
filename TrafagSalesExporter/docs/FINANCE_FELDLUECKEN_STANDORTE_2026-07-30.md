@@ -1,5 +1,13 @@
 # Feldlücken je Standort — Soll/Ist und Mailtext
 
+> **ÜBERHOLT, MAILTEXTE NICHT UNGEPRÜFT VERSENDEN. Stand der Feststellung: 2026-08-13.**
+> Datenbasis sind `95'168` Zeilen vom 2026-07-29, heute sind es `97'537`. Zwei Bitten an
+> Standorte sind inzwischen gegenstandslos: Indien braucht keine Massenpflege, weil
+> `OITM."U_Tasc_ST"` die Frage für 94 % der Zeilen beantwortet, und Spanien liefert seine
+> Ländercodes seit dem Reimport normiert. Vor jeder Standortanfrage gilt Regel 8 im
+> `docs/RAG_ROUTER.md`: zuerst prüfen, ob unsere eigene Export-SQL das Feld überhaupt liest.
+> Gültige Füllgrade und Status: `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`.
+
 Stand: 2026-07-30
 
 Datenbasis: `Finance_Dashboard_Audit_All_2026-07-29.csv` (95'168 Zeilen, Audit-Export vom

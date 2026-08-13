@@ -31,6 +31,14 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
    `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` vor den Feldluecken-Dateien vom Juli.
    Abschnitt 3 in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` ist ueberholt.
 10. Arbeitsregeln, Tests und fachliche Grenzen: `persona.md`.
+10a. **Bei Statusfragen („ist X noch offen?") NIE aus einer datierten Arbeitsnotiz
+    antworten.** Gueltig ist `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`; darueber hinaus
+    zaehlt nur eine eigene Live-Messung. Am 2026-08-12 waren zwei Punkte in den MDs als
+    offen gefuehrt, die produktiv laengst erledigt waren, und ein hoher Punkt fehlte ganz.
+    Dateien mit einem `UEBERHOLT`-Block oben sind Historie und beantworten keine Statusfrage.
+10b. **Fuellgrade nie mit `Spalte > 0` messen.** `StandardCost` und `PostingDate` sind
+    TEXT-Spalten; in SQLite ist Text groesser als jede Zahl, das ergibt falsche 100 %.
+    `CAST(... AS REAL)` verwenden.
 11. **Bevor ein Gruppenmargen-Statustext geaendert oder ein neuer eingefuehrt wird:**
     `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` Abschnitt 5a lesen. Der Statustext `"OK"`
     steht zusaetzlich als Zeichenkette in der Excel-Formel des Nachweises; eine Umbenennung
@@ -51,6 +59,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Finance Cockpit, Soll/Ist, Regeln, Laender | `docs/rag/FINANCE.md` |
 | Finance Formeln, Waehrung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
+| **Was ist im Finance Dashboard noch offen? Issue-Log-Status, Todo-Liste** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` (Status je Punkt), dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` (Begruendung und Fallen) |
 | **Stimmt eine Finance-Anzeige? Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen zentrales Excel** | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |
 | **Export-SQL DE/ES gehoert UNS** (Feld fehlt = Query liest es nicht) | `docs/rag/MANUAL_IMPORT.md` Abschnitt „Skripthoheit" |

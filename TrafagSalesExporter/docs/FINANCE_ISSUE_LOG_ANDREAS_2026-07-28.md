@@ -1,5 +1,14 @@
 # Issue-Log Andreas — Analyse und Status
 
+> **STATUS JE PUNKT IST HIER TEILWEISE UEBERHOLT. Stand der Feststellung: 2026-08-12.**
+> Gueltig ist `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`. Diese Datei bleibt als
+> Analysebegruendung wertvoll, aber vier Statusangaben stimmen nicht mehr: die
+> Laendercode-Normalisierung ist deployt UND reimportiert (kein „Deploy offen"), der
+> Lieferanten-Fallback ist in beiden Stufen produktiv, die verwaiste Legendenzeile ist aus
+> den Produktivdaten verschwunden, und die Supplier-Quoten sind neu gemessen
+> (18'241 von 96'298 statt 17'930 von 95'396). Ausserdem fehlt hier der hoch priorisierte
+> Punkt „Datenzufluss AT/CH/FR steht seit 2026-07-31".
+
 Stand: 2026-07-28
 
 Andreas hat am 2026-07-28 ein Issue-Log mit sieben Punkten eroeffnet (Nr. 1 und 2 waren im
@@ -18,7 +27,7 @@ behoben, fuenf brauchen eine Handlung ausserhalb des Dashboard-Codes.
 | 4 | TR ES Sales | Daten TR ES Jan–Mai 2026 fehlen | **Bestaetigt**, Ursache klar | Mittel | Spanien / Ingo | Range-Export `2026-01-01` bis `2026-05-27` nachziehen | Jan–Apr = 0 Zeilen, Mai nur 35 (ab 28.05.). Ursache: vorhandener Export `Spain_Sales_range_20260528_to_20260603.csv`. `FINANCE_DATENLUECKEN_ANDREAS_2026-07-28.md` §2 |
 | 5 | TR AT und CH | Daten ab Mitte April nur noch vereinzelt | **Ursache gefunden, teilweise behoben** | **Hoch** | Ingo | Report `Z_TRAFAG_DACH_EXPORT` auf P76 fuer `s_gjahr = 2025` nachziehen, dann `Sites.SapServiceUrl` auf `travp762` | Dashboard las vom TEST-System T76 (Daten endeten Mitte April). Report war produktiv nie fuer 2026 gelaufen. Nach Ingos Lauf am 28.07.: P76 Gjahr2026 `18'290` statt `0`. `FINANCE_CHAT_2026_LUECKE_ROOTCAUSE_2026-07-28.md` |
 | 6 | Sales Database TR ES | Posting Date fehlt bei TR ES | **Bestaetigt, praeziser als vermutet** | Mittel | Spanien / Ingo | Klaeren, ob Sage ein Buchungsdatum liefern kann; die 229 Zeilen ohne jedes Datum separat pruefen | `PostingDate` fehlt bei **5'478 von 5'478** ES-Zeilen (100 %), nicht nur bei einigen. Fallback auf `InvoiceDate` greift, ausser bei **229 Zeilen ohne jedes Datum** — die fallen aus jeder Jahres-/Monatsauswertung heraus. Siehe unten §1 |
-| — | Sales Database | Lieferant wird bei sehr vielen Gesellschaften nicht angezeigt | **CH-Fallback deployed; lokaler Nichttreffer-Zweig committed, noch nicht deployed** | **Sehr hoch** | **App / Standorte** | Separaten Deploy bestaetigen lassen; danach 12'023 lokale Zeilen sowie 6'749 Zeilen mit positiver lokaler Kostenbasis nachmessen | Andreas-Beschluss 11.08.: CH-MARC-Treffer = intern/TR_AG; sicherer Nichttreffer = `Lokal` mit Standardkosten der jeweiligen Gesellschaft. Fehlender Schluessel/Cache bleibt unklar; expliziter Supplier gewinnt. `FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md` |
+| — | Sales Database | Lieferant wird bei sehr vielen Gesellschaften nicht angezeigt | **Beide Stufen produktiv: CH-Fallback am 2026-08-11, lokaler Nichttreffer-Zweig am 2026-08-12 10:23. Nach dem Deploy nachgemessen: 12'023 lokale Zeilen, davon 6'749 mit positiver lokaler Kostenbasis.** Offen bleibt die Rohdatenluecke je Quelle | Mittel | Standorte | Quell-/Pflegeluecken je Standort klaeren; angemeldeter Sichtprueflauf der Lokal-Zahl im Cockpit | Andreas-Beschluss 11.08.: CH-MARC-Treffer = intern/TR_AG; sicherer Nichttreffer = `Lokal` mit Standardkosten der jeweiligen Gesellschaft. Fehlender Schluessel/Cache bleibt unklar; expliziter Supplier gewinnt. `FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md` |
 | — | Sales Database | Customer Country code is not standardized | **BEHOBEN im Code** (Deploy offen) | Mittel | Ingo | Deploy + ES-Reimport, danach Stichprobe | Spanien lieferte spanische Klartextnamen. Neue Transformation `NormalizeCountryCode`, `294/294` Tests gruen. Siehe unten §2 |
 | — | Sales Database | (neu gefunden, nicht von Andreas gemeldet) `CustomerCountry` bei TR DE zu 100 % leer | Offen | Mittel | Ingo | Alphaparn-Exportspalten pruefen | `7'167` von `7'167` TRDE-Zeilen ohne Kundenland. Siehe unten §2 |
 

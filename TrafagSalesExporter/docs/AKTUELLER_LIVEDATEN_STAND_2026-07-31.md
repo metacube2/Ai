@@ -29,9 +29,19 @@ Schreibzugriff auf die Produktivdatenbank.
 
 ### 2.1 UK-2025 ist vorhanden und erledigt
 
+> **NACHTRAG 2026-08-11 — DIE ZEILEN STIMMTEN, DIE BETRAEGE NICHT.** Der Wert
+> `394'439.16 GBP` in der Tabelle unten war zum Pruefzeitpunkt korrekt ABGELESEN, aber
+> fachlich falsch: es waren Stueckpreise statt Zeilenwerte, also 11 % des Finance-Solls von
+> `3'538'972 GBP`. Aufgefallen ist das erst am 2026-08-10, weil diese Pruefung hier nur die
+> Vollstaendigkeit der Zeilen und Felder gemessen hat und keinen unabhaengigen Sollwert
+> gegenhielt. Nach Korrekturdatei und neuem Export gilt seit 2026-08-11:
+> **UK 2025 = `3'529'861.80 GBP` (99.7 % des Solls), Marge +33.8 %, weiterhin `1'867`
+> Zeilen.** Nachweis: `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md`, Abschnitt
+> „Abnahme 2026-08-11". Die Zeilen- und Supplier-Zahlen der Tabelle bleiben gueltig.
+
 | Jahr | Zeilen | SalesPriceValue | Supplier vollstaendig | Standardkosten ungleich 0 |
 | --- | ---: | ---: | ---: | ---: |
-| 2025 | 1'867 | 394'439.16 GBP | 1'867 | 1'759 |
+| 2025 | 1'867 | 394'439.16 GBP (ueberholt, siehe Nachtrag) | 1'867 | 1'759 |
 | 2026 | 1'090 | 2'765'684.34 GBP | 1'090 | 1'024 |
 
 Damit gilt:
@@ -77,6 +87,13 @@ fachliche Vollstaendigkeit jedes Monats oder Betrags.
 Aktuell sind **17'930 von 95'396 Zeilen** in allen drei Supplier-Feldern
 vollstaendig; **77'466 Zeilen** sind in allen drei Feldern leer. Es wurde kein
 Zwischenzustand festgestellt, bei dem nur ein Teil der drei Felder gefuellt ist.
+
+> **UEBERHOLTE ZAHLEN, Messung vom 2026-07-31.** Gueltig ist die Messung vom
+> 2026-08-12 gegen dieselbe produktive Datenbank: **18'241 von 96'298 Zeilen** in
+> allen drei Feldern vollstaendig, **78'057 Zeilen** in allen drei Feldern leer.
+> Quote je Land: UK 100 %, IT 71,2 %, IN 11,6 %, FR 5,2 %, US 0,4 %, CH/AT/DE/ES 0 %.
+> Die Aussage „kein Zwischenzustand" gilt weiterhin. Quelle:
+> `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, Zeile ISS-003.
 
 Folgerung:
 

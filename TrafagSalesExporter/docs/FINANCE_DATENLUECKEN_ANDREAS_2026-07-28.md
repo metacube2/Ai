@@ -1,5 +1,13 @@
 # Datenluecken 2026 — Andreas' rote Markierungen geprueft
 
+> **STATUS UEBERHOLT. Stand der Feststellung: 2026-08-13.**
+> Gemessen auf `84'788` Zeilen vom 2026-07-27, heute sind es `97'537`. Von Andreas' vier
+> roten Bereichen ist nur die spanische Luecke Januar bis Mai 2026 noch offen; UK 2025 ist
+> am 2026-08-11 abgenommen, und die CH/AT-Luecke ist seit dem taeglichen SAP-Batchjob vom
+> 2026-08-12 geschlossen. NEU und hier noch nicht enthalten: Frankreich liefert seit dem
+> 2026-07-30 keine Rechnung mehr. Gueltiger Status:
+> `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`.
+
 Stand: 2026-07-28
 
 Anlass: Andreas hat in einer Pivot-Auswertung (`docs/Bild.png`, Summe je TSC / Jahr / Monat)

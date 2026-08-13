@@ -26,6 +26,81 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
   aktiv an einer reservierten Datei.
 
+## Marktsegment Railway im zentralen Excel 2026-08-13 - Code fertig, nicht deployed
+
+- Neue Tabelle `CustomerMarketSegments` mit Schluessel TSC plus Kundennummer und eindeutigem
+  Index. `CustomerNumber` ist produktiv in allen neun Standorten zu 100 % gefuellt (4.888
+  verschiedene), taugt also als Schluessel; Namen kollabieren beim Abgleich.
+- `Services/MarketSegmentResolver.cs` ist rein und statisch. BEWUSST kein Rueckfall auf
+  `CustomerIndustry`: das Feld ist bei CH/AT/DE/ES/UK/US zu 0 % gefuellt und nutzt sonst je
+  Standort eine eigene Taxonomie. Ohne Zuordnung bleibt die Spalte leer.
+- Zwei neue Excel-Spalten `Market Segment` und `Market Segment Source` als Position 50/51
+  AM ENDE. Ein Einschub in der Mitte waere still toedlich, weil der Nachweis Blattformeln
+  auf Spaltenpositionen enthaelt. Ein Kopfzeilentest prueft vier Ankerpositionen.
+- `491/491` Release-Tests gruen (vorher 478, 13 neue).
+- Entscheid Segment am KUNDEN, nicht am Produkt: von 105 zugeordneten Bahnkunden kaufen 91
+  hoechstens drei Produktfamilien. Die Produktkuerzel der Umfrage sind dagegen
+  Standardfamilien quer durch alle Branchen (`NAT` 7.417 Zeilen, `8252` 6.217).
+- Vorschlagslisten erzeugt: `docs/Railway_Segment_Vorschlag_2026-08-12.xlsx` mit 312 Zeilen
+  und `docs/Railway_Kundenpruefung_Patrik_2026-08-13.xlsx` mit den 30 mengenstaerksten.
+  Die Top 30 decken 2.819 von 4.481 Zeilen ab (63 %). Vertrauen korreliert NICHT mit Menge:
+  die 21 sicheren Treffer decken nur 5,9 % ab.
+- OFFEN: Pflegemaske, Uebernahme der bestaetigten Liste, Deploy.
+
+## Datenzufluss und Marktsegment 2026-08-12 nachmittags
+
+- **CH/AT Zufluss behoben.** Ursache war NICHT der Export, sondern SAP: der Report
+  `Z_TRAFAG_DACH_EXPORT` lief nur manuell, deshalb lieferte travp762 seit dem 28.07.
+  unveraendert 48.932 Zeilen. Ingo hat den Batchjob ZSCHWEIZ auf taeglich gestellt;
+  `all8.xlsx` von 14:39 belegt die Wirkung am selben Tag mit CH 48.276 und AT 1.839,
+  zusammen 50.115, August 2026 erstmals vorhanden. Weder Verdoppelung noch Verlust von 2025.
+- **FR Zufluss: Quelle ist leer, nicht unsere Kette.** `FR01_P` zeigt Rechnungen und
+  Lieferscheine nur bis 30.07., Auftraege bis 07.08., Entwuerfe bis 11.08. und die sind
+  alle ObjType 20, also Wareneingaenge. Frankreich arbeitet, liefert und fakturiert aber
+  nicht. Kein zweites Schema aus dem B1-Upgrade, `SYS.SCHEMAS` kennt nur `FR01_P`.
+  Die taeglich frischen TRFR-Dateien in SharePoint sind UNSERE Exportausgaben.
+- **FALLE: `ReplaceForSiteAsync` loescht alle Zeilen des Standorts und schreibt, was die
+  Quelle liefert, ohne Mindestmengenpruefung.** Eine leere Antwort mit HTTP 200 wuerde
+  CH/AT leeren. Plausibilitaetsgrenze ist vorgeschlagen, aber NICHT gebaut.
+- **Legendenzeile praezise lokalisiert.** DB und alle acht Standort-CSVs haben 97.537
+  Zeilen und sind sauber; die zentrale Audit-CSV und `all8.xlsx` haben 97.538 und
+  enthalten die Zeile mit `extraction date 28.07.2026`. Sie entsteht erst im
+  Konsolidierungsschritt, `Finance | Include = FALSE`, wertmaessig harmlos, erscheint aber
+  als zehnter Phantom-Standort. Pruefstelle `Services/ConsolidatedExportService.cs`.
+- **Gesamtexport ohne Sales Type.** `all8.xlsx` hat keine Spalte fuer `SalesType` und keine
+  Trafag-Sachnummer. Folge: Indien sieht im Excel nach 11,8 % Lieferantenpflege aus,
+  waehrend die App 94,1 % ueber den Sales Type klassifiziert. Genau diese Fehleinschaetzung
+  fuehrte am 05.08. zur gegenstandslosen Pflegebitte an Indien.
+- **Neue Anforderung Railway.** `Railway_MarketSurvey_TSC_2026_05.xlsx` ist eine
+  Marktumfrage, keine Mappingtabelle: `Material Number` 0 von 269 gefuellt, keine
+  Kundennummer, Produktkuerzel nur 90 von 269. Namensabgleich trifft 151 von 234 Kunden,
+  produziert aber Fehltreffer wie BROT auf K.S. & BROTHERS. Die vorhandene Spalte
+  `Customer Industry` ist fast leer, CH/AT/DE/ES/UK/US bei 0 %, `Railway` steht auf 6
+  Zeilen. Vorgehen und offene Fachentscheide: `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`
+  Zeilen ISS-014 und ISS-014.1.
+
+## Issue-Log konsolidiert und MD-Bereinigung 2026-08-12
+
+- Neue einzige Statusquelle: `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, 12 Issues mit
+  Unterpunkten in den Spalten des Issue-Logs. Begruendung und Fallen:
+  `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md`.
+- Live-Messung korrigiert drei Angaben aus aelteren MDs: die Laendercode-Normalisierung ist
+  deployt UND reimportiert (Spanien zeigt ISO-2), die verwaiste Legendenzeile ist aus den
+  Produktivdaten verschwunden (genau neun TSC-Werte), und die Supplier-Quote lautet
+  18.241 von 96.298 statt 17.930 von 95.396.
+- NEU AUFGENOMMEN, hoch: **Datenzufluss TR AT, TR CH und TR FR steht seit 2026-07-31.** Am
+  2026-08-12 unveraendert: AT 1.790 Zeilen / letzter Beleg 28.07., CH 47.142 / 29.07.,
+  FR 2.598 / 30.07. Naechster Schritt ist die Exportlauf-Spur im Daten-Heartbeat, nicht eine
+  externe Anfrage.
+- FALLE fuer eigene Abfragen: `StandardCost` und `PostingDate` sind TEXT-Spalten. `> 0`
+  liefert in SQLite fuer jede Zeile wahr und damit falsche 100 %. Richtig mit CAST gemessen:
+  FR 51,7 %, DE 68,7 %, ES 81,0 %, US 90,0 %, UK 93,5 %, IT 95,7 %, CH 96,6 %, IN 99,4 %,
+  AT 99,9 %.
+- UEBERHOLT-Blöcke gesetzt in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` (nicht
+  versenden), `docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md` (UK-Teil),
+  `docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md` (vier Statusangaben) und im
+  Supplier-Abschnitt von `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
+
 ## Einkauf Produktgruppen SAP-only 2026-08-12 - produktiv abgeschlossen
 
 - `ZDISPO_GRPSet` und `ZDISPO_SPARTSet` liefern produktiv HTTP 200 mit `45`
@@ -40,7 +115,25 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   SEGW-Composite-Key `DISPO_KZ + DISPO`.
 - Details: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
-## Andreas-Nachtrag lokale Standardkosten 2026-08-11 - committed, noch nicht deployed
+## Andreas-Nachtrag lokale Standardkosten 2026-08-12 10:23 - PRODUKTIV
+
+- Commit `fc5ae75` ist deployed. `478/478` Release-Tests am Deploytag gruen.
+- `BiDashboard.dll` `4'364'800` Bytes, SHA256
+  `BC566BB9AF27805524583E293D604481E560FD5D3DDEA8D8F75DC76B19D0BAF4`, lokal und
+  Server bitgleich. Backup
+  `trafag_exporter.db.before-andreas-local-20260812-101429.bak`, `345'202'688` Bytes.
+- Wirknachweis mit Vorher-Messung: `IsConfirmedLocalMaterial`, `LocalSupplierRows`
+  und `Standardkosten der lokalen Gesellschaft` fehlten vor dem Publish und sind
+  danach enthalten. Das Wort `Lokal` allein waere ein Falschtreffer gewesen, weil
+  `Lokaler Standardpreis` schon vorher in der DLL stand.
+- Produktivbedingung geprueft: `SupplierFallbackMode=ChPlantMaster`, sonst greift die
+  Regel nicht. Wirkung nach dem Deploy reproduziert: 12.023 lokale Zeilen, davon
+  6.749 mit Standardpreis.
+- Offen: angemeldeter Sichtprueflauf im Cockpit; die Route liegt hinter dem
+  Finance-Unlock. Detail:
+  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+
+## Andreas-Nachtrag lokale Standardkosten 2026-08-11 - committed, Deploy siehe oben
 
 - Baseline vor der Aenderung: Commit `369d675`.
 - Einzelbestaetigter Beschluss aus dem Meeting, Transkript 06:31-07:16:
@@ -54,7 +147,8 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Cockpit zeigt Lokal separat; Excel, Cockpit und Finance-Training verwenden dieselbe
   Regel. `87/87` gezielte Margentests, Lokalisierungstest und `478/478`
   Gesamttests im Release-Lauf gruen.
-- Separater Commit nach Baseline `369d675`; noch kein Deploy dieses Nachtrags. Detail:
+- Separater Commit nach Baseline `369d675`; deployed am 2026-08-12 10:23, siehe den
+  Abschnitt oben. Detail:
   `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
 
 ## Gesamtdeploy 2026-08-11 15:51 - produktiv

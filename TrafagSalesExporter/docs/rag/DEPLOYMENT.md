@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-11
+Stand: 2026-08-12
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,7 +44,34 @@ Stand: 2026-08-11
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-11 15:51, gesamter
+- Aktuellster produktiv verifizierter Deploy: **2026-08-12 10:23, Andreas-Nachtrag
+  lokale Standardkosten bei CH-Werkstamm-Nichttreffer**, Funktionscommit `fc5ae75`,
+  `478/478` Release-Tests am Deploytag selbst gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-andreas-local-20260812-101429.bak`, `345'202'688` Bytes.
+  `BiDashboard.dll` `12.08.2026 10:12:33`, `4'364'800` Bytes, SHA256
+  `BC566BB9AF27805524583E293D604481E560FD5D3DDEA8D8F75DC76B19D0BAF4`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. Ziel: `0` neu, `5` geaendert, `1'294`
+  unveraendert, `0` verschwunden; alle geschuetzten DB-/WAL-/SHM-/BAK-Dateien
+  unveraendert. HTTPS `200`: Startseite (`68'441` Bytes), `/admin/sessions`
+  (`69'560`), `/settings` (`69'502`), `/management-cockpit` (`69'500`),
+  `/einkauf/aufriss` (`137'794`), `/logistik/materialdisposition` (`81'090`).
+  **Wirknachweis mit Vorher-Messung** statt nur SHA-Vergleich: im Prueflauf vor dem
+  Publish fehlten `IsConfirmedLocalMaterial`, `LocalSupplierRows` und
+  `Standardkosten der lokalen Gesellschaft` in der Server-DLL, danach sind alle drei
+  enthalten; das ersetzte Literal `'Kosten aus Verkaufszeile' (extern)` ist weg.
+  **Das Wort `Lokal` allein taugt hier NICHT als Nachweis** — `Lokaler Standardpreis`
+  stand schon im alten Stand. Nachweistokens gehoeren aus dem Diff, nicht aus der Doku.
+  Produktivbedingung read-only bestaetigt: `SupplierFallbackMode=ChPlantMaster`,
+  `96'298` Sales-Zeilen, `66'049` MARC-1100-Materialien; die Wirkungsmessung
+  reproduziert nach dem Deploy `12'023` lokale Zeilen, davon `6'749` mit
+  Standardpreis. Das Arbeitsverzeichnis war nicht sauber; die abweichenden Dateien
+  sind ausschliesslich Dokumentation, kein `.cs`. **NICHT belegt:** dass die neue
+  Lokal-Zahl im Cockpit rendert — `/management-cockpit` liegt hinter dem
+  Finance-Unlock. Details:
+  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+
+- Deploy davor: **2026-08-11 15:51, gesamter
   Workspace-Anwendungsstand**, ausdruecklich freigegeben trotz fehlender SAP-Sets
   `ZDISPO_GRP`/`ZDISPO_SPART`. `471/471` Release-Tests gruen. Konsistentes Backup
   `trafag_exporter.db.before-all-current-20260811-145332.bak`, `340'455'424` Bytes.
@@ -58,7 +85,7 @@ Stand: 2026-08-11
   zur SAP-Aktivierung fehlen Produktgruppennamen und Refreshes koennen scheitern.
   Details: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
 
-- Letzter produktiv verifizierter Deploy: **2026-08-11 11:23, Admin-Bereiche
+- Deploy davor: **2026-08-11 11:23, Admin-Bereiche
   zusammengefuehrt und FPV-Pausenspiel**, Funktionsstand aus schmutzigem Workspace auf Branch
   `main`, HEAD `09fb1fa`, `461/461` Tests gruen im Release-Lauf vor dem Publish; dazu
   `28/28` FPV- und `18/18` MOD-Pruefungen gruen.
@@ -84,7 +111,7 @@ Stand: 2026-08-11
   Spielgefuehl. Details: `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` und
   `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
 
-- Letzter produktiv verifizierter Deploy: **2026-08-10 07:05, Pausenreiter
+- Deploy davor: **2026-08-10 07:05, Pausenreiter
   standardmaessig aus**, Funktionscommit `8e09774`, `459/459` Tests gruen im
   Release-Lauf vor dem Publish (vier neue, jeder vorher nachweislich rot).
   `BiDashboard.dll` `10.08.2026 07:04:59`, `4'331'008` Bytes, SHA256
@@ -225,7 +252,7 @@ Stand: 2026-08-11
   Startseite und `/BiDashboard/hr-kpi` liefern HTTPS `200`. Details:
   `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 13:57, ZDISPO-Zusatz
+- Deploy davor: **2026-08-06 13:57, ZDISPO-Zusatz
   nur fuer den Einkauf Spend-Aufriss**, Funktionscommit `0a8a4c9`, `435/435`
   Tests gruen. `BiDashboard.dll` `06.08.2026 13:57:11`, `4'136'448` Bytes,
   SHA256 `0F1CB29F6F766C8CB71903D45B78DB48B3AB94FE58638837F5376E9D2A9B01C1`.
@@ -238,7 +265,7 @@ Stand: 2026-08-11
   ZDISPO-XLSX-Dateien liegen im Publish-Verzeichnis. Details:
   `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`.
 
-- Letzter produktiv verifizierter Deploy: **2026-08-06 12:31, Einkauf
+- Deploy davor: **2026-08-06 12:31, Einkauf
   Produktgruppen und ABC/XYZ**, Funktionscommit `bb009bf`, `435/435` Tests
   gruen. `BiDashboard.dll` `06.08.2026 12:31:27`, `4'120'064` Bytes, SHA256
   `B5C72496A7A4E11AC38675D840A5DF9DBABA6999517DD70FE3D7C0CE07BAEC3C`.
