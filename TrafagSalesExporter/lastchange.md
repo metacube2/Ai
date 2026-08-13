@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-12
+Stand: 2026-08-13
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -26,7 +26,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
   aktiv an einer reservierten Datei.
 
-## Marktumfrage in der Anwendung 2026-08-13 11:58 - PRODUKTIV, Import noch offen
+## Marktumfrage in der Anwendung 2026-08-13 11:58 - PRODUKTIV mit Daten
 
 - Commit `1371260` deployed, `517/517` Tests. DLL `4.560.384` Bytes, SHA256
   `24B007AC818A247046FDC6B73A44C0B0FB3AF50A5C4C72B2736CD7ACFABA0416`, bitgleich. Backup
@@ -38,12 +38,19 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `CHF 45`, obwohl die Spalte "In CHF" heisst.
 - Verknuepfung zu einem Verkaufskunden ist OPTIONAL. 90 der 269 Zeilen sind Interessenten
   ohne Umsatz; ein Pflichtfeld haette sie verworfen.
-- **WICHTIG, noch NICHT ausgefuehrt: der Import der Umfrage.** `MarketSurveyEntries` ist
-  produktiv leer, der Reiter zeigt keine Zeilen. Befehl steht bereit, Prueflauf gemessen:
-  269 Zeilen, 236 Kunden, 12 Laender, 179 verknuepfbar, 90 ohne Umsatz.
-  `dotnet run --project .tmp_tools\ImportMarketSurvey\ImportMarketSurvey.csproj -- <db> Railway_MarketSurvey_TSC_2026_05.xlsx "Railway 2026-05" --apply`
+- **Import AUSGEFUEHRT am 2026-08-13 nach Freigabe durch Ingo: 269 Umfragezeilen
+  geschrieben**, read-only nachgeprueft `269` Zeilen, `179` verknuepft, `13` Laender,
+  `240` Kunden. Statusverteilung: leer 142, `Existing Customer` 71, `No Potential` 25,
+  `Opportunity` 19, `New` 12.
+- Die 56 Zeilen mit `No Potential`, `Opportunity` oder `New` belegen die Notwendigkeit der
+  optionalen Verknuepfung: ein Pflichtfeld haette genau diese Interessenten verworfen.
+- Hinweis zu zwei Zaehlarten: der Prueflauf meldete 236 Kunden und 12 Laender, die Datenbank
+  240 und 13. Die Datenbank zaehlt einen leeren Landeswert als eigene Gruppe und gruppiert
+  Kunden ohne Beachtung der Gross-/Kleinschreibung anders. Kein Datenverlust.
 - Der Import bricht ab, wenn fuer dieselbe Umfrage schon Zeilen existieren, damit ein
   zweiter Lauf keine Doppel erzeugt und keine in der App gepflegten Aenderungen verdeckt.
+- `Railway_MarketSurvey_TSC_2026_05.xlsx` bleibt bis zur Gegenpruefung in der Anwendung
+  liegen und wird erst danach archiviert.
 - Fachdokument: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`.
 
 ## Marktsegmente Vorschlag gegen Bestaetigung 2026-08-13 11:14 - PRODUKTIV

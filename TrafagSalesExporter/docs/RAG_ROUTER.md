@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-08-12
+Stand: 2026-08-13
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber

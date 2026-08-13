@@ -136,16 +136,35 @@ Datenstand produktiv, read-only geprueft:
 - `CustomerMarketSegments`: **173 Zeilen, alle unbestaetigt**, ueber acht Standorte.
   Groesste Brocken Faiveley Transport Italia TRCH mit 693 Verkaufszeilen, RICA TRIT 164,
   CAF TRES 144, Medha Servo Drives TRCH 141.
-- `MarketSurveyEntries`: **leer**. Der Import wurde bewusst noch nicht ausgefuehrt.
-- Im zentralen Excel stehen deshalb noch keine Segmente, was korrekt ist: unbestaetigte
+- `MarketSurveyEntries`: **269 Zeilen**, importiert am 2026-08-13 nach Freigabe durch Ingo.
+  Read-only nachgeprueft: `179` mit Verkaufskunde verknuepft, `13` Laender, `240` Kunden.
+- Im zentralen Excel stehen noch keine Segmente, was korrekt ist: unbestaetigte
   Vorschlaege wirken dort nicht.
 
-Naechster Schritt fuer den Umfrage-Import:
+Statusverteilung der Umfrage, gemessen nach dem Import:
+
+| Status | Zeilen |
+| --- | ---: |
+| (leer) | 142 |
+| `Existing Customer` | 71 |
+| `No Potential` | 25 |
+| `Opportunity` | 19 |
+| `New` | 12 |
+
+Die 56 Zeilen mit `No Potential`, `Opportunity` oder `New` belegen nachtraeglich, warum die
+Verknuepfung optional sein musste: ein Pflichtfeld haette genau diese Interessenten beim
+Import verworfen.
+
+Zwei Zaehlarten, kein Datenverlust: der Prueflauf meldete 236 Kunden und 12 Laender, die
+Datenbank 240 und 13. Die Datenbank zaehlt einen leeren Landeswert als eigene Gruppe und
+gruppiert Kunden ohne Beachtung der Gross-/Kleinschreibung anders.
+
+Befehl fuer eine weitere Umfrage:
 
 ```powershell
 dotnet run --project .tmp_tools\ImportMarketSurvey\ImportMarketSurvey.csproj -- `
   "\\trch-webapp-bidashboard.trafagch.local\BiDashboard$\trafag_exporter.db" `
-  Railway_MarketSurvey_TSC_2026_05.xlsx "Railway 2026-05" --apply
+  <umfrage.xlsx> "<Umfragename>" --apply
 ```
 
 Ohne `--apply` laeuft nur die Pruefung. Der Import bricht ab, wenn fuer dieselbe Umfrage
@@ -154,7 +173,23 @@ Anwendung gepflegten Aenderungen verdeckt.
 
 **Nicht belegt:** ein angemeldeter Sichtprueflauf und das Speichern einer Zuordnung oder
 Umfragezeile durch einen echten Benutzer. Die Routen liefern HTTP 200 und die Seite rendert
-Inhalt, aber kein Mensch hat produktiv geklickt.
+Inhalt, aber kein Mensch hat produktiv geklickt. Der erste Klick von Ingo oder Patrik ist
+damit der eigentliche Test.
+
+## 11a. Was als Naechstes zu tun ist
+
+1. Angemeldet `/marktsegmente` oeffnen und den Reiter `Marktumfrage` gegen die Excel-Datei
+   stichprobenweise vergleichen. Erst danach die Datei archivieren.
+2. Auf dem Reiter `Pflege` einen Vorschlag bestaetigen. Erwartetes Verhalten: die Zahl in der
+   Filterbeschriftung faellt von 173 auf 172, und im Reiter `Ergebnis` erscheint der erste
+   Bahnumsatz je Land und Waehrung.
+3. Danach die 30 mengenstaerksten Vorschlaege durchgehen; sie decken rund zwei Drittel der
+   betroffenen Verkaufszeilen ab. Grundlage:
+   `docs/Railway_Kundenpruefung_Patrik_2026-08-13.xlsx`.
+4. Fachentscheid einholen, ob breit einkaufende Kunden wie Siemens pauschal als Railway
+   gelten. Die Oberflaeche warnt ab vier Produktsparten, entscheiden muss der Vertrieb.
+5. Anleitung fuer Patrik: `docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`. Der
+   Mailtext dazu wurde im Chat entworfen und ist NICHT im Repository abgelegt.
 
 ## 12. Werkzeuge und Nachweise
 
