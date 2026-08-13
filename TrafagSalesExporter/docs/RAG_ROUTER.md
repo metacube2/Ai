@@ -59,6 +59,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Finance Cockpit, Soll/Ist, Regeln, Laender | `docs/rag/FINANCE.md` |
 | Finance Formeln, Waehrung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
+| **Marktsegmente, Railway, Marktumfrage, Segment am Kunden statt am Produkt** | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` |
 | **Was ist im Finance Dashboard noch offen? Issue-Log-Status, Todo-Liste** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` (Status je Punkt), dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` (Begruendung und Fallen) |
 | **Stimmt eine Finance-Anzeige? Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen zentrales Excel** | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |

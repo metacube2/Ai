@@ -26,6 +26,45 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
   aktiv an einer reservierten Datei.
 
+## Marktumfrage in der Anwendung 2026-08-13 11:58 - PRODUKTIV, Import noch offen
+
+- Commit `1371260` deployed, `517/517` Tests. DLL `4.560.384` Bytes, SHA256
+  `24B007AC818A247046FDC6B73A44C0B0FB3AF50A5C4C72B2736CD7ACFABA0416`, bitgleich. Backup
+  `trafag_exporter.db.before-market-segments-20260813-114437.bak`.
+- Neue Tabelle `MarketSurveyEntries` und dritter Reiter `Marktumfrage` unter
+  `Finance Cockpit > Marktsegmente`. Alle Umfragespalten sind in der App pflegbar, damit
+  `Railway_MarketSurvey_TSC_2026_05.xlsx` entfallen kann.
+- Menge und Preis sind bewusst TEXT: die Quelle enthaelt `500-600 pcs` und `15k EUR` neben
+  `CHF 45`, obwohl die Spalte "In CHF" heisst.
+- Verknuepfung zu einem Verkaufskunden ist OPTIONAL. 90 der 269 Zeilen sind Interessenten
+  ohne Umsatz; ein Pflichtfeld haette sie verworfen.
+- **WICHTIG, noch NICHT ausgefuehrt: der Import der Umfrage.** `MarketSurveyEntries` ist
+  produktiv leer, der Reiter zeigt keine Zeilen. Befehl steht bereit, Prueflauf gemessen:
+  269 Zeilen, 236 Kunden, 12 Laender, 179 verknuepfbar, 90 ohne Umsatz.
+  `dotnet run --project .tmp_tools\ImportMarketSurvey\ImportMarketSurvey.csproj -- <db> Railway_MarketSurvey_TSC_2026_05.xlsx "Railway 2026-05" --apply`
+- Der Import bricht ab, wenn fuer dieselbe Umfrage schon Zeilen existieren, damit ein
+  zweiter Lauf keine Doppel erzeugt und keine in der App gepflegten Aenderungen verdeckt.
+- Fachdokument: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`.
+
+## Marktsegmente Vorschlag gegen Bestaetigung 2026-08-13 11:14 - PRODUKTIV
+
+- Commit `ecaae3d` deployed, `507/507` Tests. DLL `4.479.488` Bytes, SHA256
+  `0A3EF0C563C69705AE46059AD72FCE5CD98FA069E87F6FA1B4E337C23910A87C`.
+- Nur BESTAETIGTE Zuordnungen erscheinen im zentralen Excel; `MarketSegmentResolver` filtert
+  per Standard auf `IsConfirmed`. Unbestaetigte sind maschinelle Vorschlaege und damit keine
+  Aussage.
+- **Danach importiert: 173 unbestaetigte Vorschlaege** ueber
+  `.tmp_tools/ImportRailwayProposals --apply`, read-only nachgeprueft
+  `IsConfirmed=0: 173 Zeilen` ueber acht Standorte. Groesste Brocken: Faiveley Transport
+  Italia TRCH mit 693 Verkaufszeilen, RICA TRIT 164, CAF TRES 144, Medha 141.
+- Neuer Reiter `Ergebnis` mit Umsatz je Segment, Land und Waehrung plus Pflegestand.
+  Waehrungen werden bewusst nicht ueber Laender addiert.
+- BEHOBEN, echter Fehler: der Filter "nur zugeordnete" holte erst die obersten 2.000 Kunden
+  nach Zeilenzahl und filterte danach; ein zugeordneter kleiner Kunde von rund 4.900 fiel
+  still aus der Liste. Regressionstest deckt den Fall ab.
+- BEHOBEN: die Filterauswahl startete auf einem Wert, der leer sein kann. Ein leerer
+  Standardfilter sieht wie ein Defekt aus, auch wenn er richtig rechnet.
+
 ## Marktsegment Railway 2026-08-13 09:00 - PRODUKTIV
 
 - Commits `488cc42` (Code) und `07356a9` (Doku) sind deployed. `500/500` Release-Tests.

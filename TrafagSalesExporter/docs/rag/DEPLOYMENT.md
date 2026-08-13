@@ -44,7 +44,46 @@ Stand: 2026-08-13
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-13 09:00, Marktsegment-Pflege fuer
+- Aktuellster produktiv verifizierter Deploy: **2026-08-13 11:58, Marktumfrage in der
+  Anwendung pflegbar**, Funktionscommit `1371260`, `517/517` Release-Tests gruen.
+  Vorher-Sicherung `trafag_exporter.db.before-market-segments-20260813-114437.bak`,
+  `345'686'016` Bytes. `BiDashboard.dll` `13.08.2026 11:58:10`, `4'560'384` Bytes, SHA256
+  `24B007AC818A247046FDC6B73A44C0B0FB3AF50A5C4C72B2736CD7ACFABA0416`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. Ziel: `0` neu, `5` geaendert, `1'334` unveraendert,
+  `0` verschwunden. HTTPS `200`: Startseite (`68'934` Bytes), `/marktsegmente` (`66'815`),
+  `/management-cockpit` (`69'948`), `/settings` (`69'975`), `/einkauf/aufriss` (`138'247`),
+  `/logistik/materialdisposition` (`81'543`). Wirknachweis mit Vorher-Messung:
+  `MarketSurveyEntry`, `MarketSurveyPageService`, `MarketSurveyEntries`,
+  `EstimatedQuantity` und `Freitext, Bereiche erlaubt` fehlten im Prueflauf und sind danach
+  enthalten. **FALLE dabei erneut aufgefallen:** `Marktumfrage` taugt NICHT als Nachweis, das
+  Wort steckt schon im Hilfetext „Zum Beispiel: Marktumfrage Railway 2026-05" des
+  vorherigen Stands; ebenso war `IsConfirmed` beim Deploy um 11:14 ein Falschtreffer, weil
+  der Name anderswo im Code existiert. Nachweistokens gehoeren aus dem Diff und muessen im
+  Prueflauf nachweislich FEHLEN.
+  **OFFEN und bewusst nicht ausgefuehrt:** der Import der Umfrage in
+  `MarketSurveyEntries`. Die Tabelle ist produktiv LEER; der Reiter Marktumfrage zeigt
+  deshalb keine Zeilen. Werkzeug steht bereit: `.tmp_tools/ImportMarketSurvey` mit Prueflauf
+  und `--apply`, Prueflauf gemessen 269 Zeilen, 236 Kunden, 12 Laender, davon 179
+  verknuepfbar und 90 ohne Umsatz. Details:
+  `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`.
+
+- Deploy davor am selben Tag: **2026-08-13 11:14, Vorschlag gegen Bestaetigung getrennt und
+  Ergebnissicht**, Funktionscommit `ecaae3d`, `507/507` Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-market-segments-20260813-110030.bak`, `345'628'672` Bytes.
+  `BiDashboard.dll` `13.08.2026 11:14:01`, `4'479'488` Bytes, SHA256
+  `0A3EF0C563C69705AE46059AD72FCE5CD98FA069E87F6FA1B4E337C23910A87C`; bitgleich.
+  Wirknachweis: `ProposalNote`, `GetResultAsync`, `GetProgressAsync`,
+  `MarketSegmentFilterModes` und `Speichern und bestaetigen` fehlten vorher, danach
+  vorhanden. Migration produktiv bestaetigt: Spalten `IsConfirmed` und `ProposalNote` in
+  `CustomerMarketSegments` angelegt. **Danach ausgefuehrt:** Import von `173`
+  unbestaetigten Vorschlaegen ueber `.tmp_tools/ImportRailwayProposals --apply`, read-only
+  nachgeprueft `IsConfirmed=0: 173 Zeilen` ueber acht Standorte. Behebt zwei Fehler: der
+  Filter „nur zugeordnete" kappte vorher auf die obersten 2'000 Kunden und verlor
+  zugeordnete kleine Kunden, und die Filterauswahl startete auf einem Wert, der leer sein
+  kann.
+
+- Deploy davor am selben Tag: **2026-08-13 09:00, Marktsegment-Pflege fuer
   den Vertrieb und konsolidierter Issue-Log**, Funktionscommits `488cc42` (Code) und
   `07356a9` (Doku), `500/500` Release-Tests gruen. Vorher-Sicherung
   `trafag_exporter.db.before-market-segments-20260813-084731.bak`, `345'620'480` Bytes.
