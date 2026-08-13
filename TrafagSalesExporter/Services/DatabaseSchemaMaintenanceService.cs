@@ -719,6 +719,11 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
             cmd.ExecuteNonQuery();
         }
 
+        // Additive Nachruestung fuer Datenbanken, in denen die Tabelle schon ohne den
+        // Bestaetigungsschritt angelegt wurde (produktiv am 2026-08-13 der Fall).
+        AddColumnIfMissing(db, "CustomerMarketSegments", "IsConfirmed", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(db, "CustomerMarketSegments", "ProposalNote", "TEXT NOT NULL DEFAULT ''");
+
         // Ein Kunde je Standort hat genau ein Segment. Der eindeutige Index macht eine
         // doppelte Pflege zum Fehler statt zu einer stillen Mehrdeutigkeit.
         using var indexCommand = conn.CreateCommand();

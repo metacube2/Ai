@@ -108,6 +108,7 @@ public class CentralExcelMarketSegmentTests
                 CustomerName = "Stadler Rail AG",
                 Segment = "Railway",
                 Source = "Marktumfrage Railway 2026-05, bestaetigt",
+                IsConfirmed = true,
                 UpdatedAtUtc = new DateTime(2026, 8, 12, 12, 0, 0, DateTimeKind.Utc)
             });
             db.SaveChanges();
@@ -141,6 +142,51 @@ public class CentralExcelMarketSegmentTests
 
             var unmapped = FindRow(sales, "INV-99999", "TRCH");
             Assert.Equal(string.Empty, sales.Cell(unmapped, MarketSegmentColumn).GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory)) Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ConsolidatedExcel_IgnoresUnconfirmedProposal()
+    {
+        // Kernregel: ein maschineller Vorschlag ist keine Aussage und darf im Export nicht
+        // erscheinen. Sonst waere dort nicht unterscheidbar, was der Vertrieb geprueft hat
+        // und was der fehlbare Namensabgleich geraten hat.
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using (var db = new AppDbContext(options))
+        {
+            db.Database.EnsureCreated();
+            db.CustomerMarketSegments.Add(new CustomerMarketSegment
+            {
+                Tsc = "TRCH",
+                CustomerNumber = "10042",
+                CustomerName = "Stadler Rail AG",
+                Segment = "Railway",
+                Source = "Namensabgleich, noch nicht bestaetigt",
+                IsConfirmed = false,
+                UpdatedAtUtc = new DateTime(2026, 8, 13, 9, 0, 0, DateTimeKind.Utc)
+            });
+            db.SaveChanges();
+        }
+
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-segment-proposal-{Guid.NewGuid():N}");
+        var service = new ExcelExportService(new TestDbContextFactory(options));
+
+        try
+        {
+            var path = service.CreateConsolidatedExcelFile(
+                outputDirectory, new DateTime(2026, 8, 13), [Record("TRCH", "10042", "Stadler Rail AG")]);
+
+            using var workbook = new XLWorkbook(path);
+            var sales = workbook.Worksheet("Sales");
+            var row = FindRow(sales, "INV-10042", "TRCH");
+            Assert.Equal(string.Empty, sales.Cell(row, MarketSegmentColumn).GetString());
+            Assert.Equal(string.Empty, sales.Cell(row, MarketSegmentSourceColumn).GetString());
         }
         finally
         {

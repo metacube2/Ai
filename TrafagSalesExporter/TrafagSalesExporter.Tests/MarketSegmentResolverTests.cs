@@ -24,6 +24,7 @@ public class MarketSegmentResolverTests
             Segment = segment,
             Source = source,
             CustomerName = name,
+            IsConfirmed = true,
             UpdatedAtUtc = updated ?? new DateTime(2026, 8, 12, 12, 0, 0, DateTimeKind.Utc)
         };
 
@@ -124,6 +125,18 @@ public class MarketSegmentResolverTests
         var (_, source) = MarketSegmentResolver.Resolve("TRCH", "10042", lookup);
 
         Assert.Equal(MarketSegmentResolver.SourceCustomerMap, source);
+    }
+
+    [Fact]
+    public void BuildLookup_SkipsUnconfirmedRowsByDefault()
+    {
+        var proposal = Row("TRCH", "10042", "Railway");
+        proposal.IsConfirmed = false;
+
+        // Standard ist confirmedOnly: der Export darf nur geprueftes Wissen ausweisen.
+        Assert.Empty(MarketSegmentResolver.BuildLookup([proposal]));
+        // Die Pflegeoberflaeche will die Vorschlaege dagegen sehen.
+        Assert.Single(MarketSegmentResolver.BuildLookup([proposal], confirmedOnly: false));
     }
 
     [Fact]

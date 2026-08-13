@@ -37,6 +37,24 @@ public class CustomerMarketSegment
     public string Segment { get; set; } = string.Empty;
 
     /// <summary>
+    /// Ob ein Mensch diese Zuordnung fachlich bestaetigt hat.
+    ///
+    /// Nur bestaetigte Zeilen erscheinen im zentralen Excel. Unbestaetigte sind
+    /// maschinelle VORSCHLAEGE aus dem Namensabgleich mit der Marktumfrage und damit
+    /// ausdruecklich noch keine Aussage. Der Abgleich ist nachweislich fehlbar: "BROT"
+    /// trifft "K.S. &amp; BROTHERS", und "Stadler Rail" aus der Schweiz trifft die
+    /// spanische "Stadler Rail Valencia". Ohne diese Trennung waere im Export nicht
+    /// unterscheidbar, was geprueft ist und was geraten wurde.
+    /// </summary>
+    public bool IsConfirmed { get; set; }
+
+    /// <summary>
+    /// Zusatzinformation zum Vorschlag, zum Beispiel die Vertrauensstufe oder der Grund
+    /// fuer einen Warnhinweis. Reine Lesehilfe fuer die Pflege.
+    /// </summary>
+    public string ProposalNote { get; set; } = string.Empty;
+
+    /// <summary>
     /// Woher die Zuordnung stammt, zum Beispiel
     /// `Marktumfrage Railway 2026-05, bestaetigt`. Dokumentiert, wer die Aussage traegt.
     /// </summary>

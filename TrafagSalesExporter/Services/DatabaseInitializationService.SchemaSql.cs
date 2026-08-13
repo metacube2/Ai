@@ -17,6 +17,8 @@ CREATE TABLE CustomerMarketSegments (
     CustomerNumber TEXT NOT NULL,
     CustomerName TEXT NOT NULL DEFAULT '',
     Segment TEXT NOT NULL,
+    IsConfirmed INTEGER NOT NULL DEFAULT 0,
+    ProposalNote TEXT NOT NULL DEFAULT '',
     Source TEXT NOT NULL DEFAULT '',
     UpdatedAtUtc TEXT NOT NULL
 );";

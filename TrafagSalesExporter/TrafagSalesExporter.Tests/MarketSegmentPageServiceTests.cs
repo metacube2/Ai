@@ -67,7 +67,7 @@ public class MarketSegmentPageServiceTests : IDisposable
     {
         var service = CreateService();
 
-        var rows = await service.SearchCustomersAsync(null, null, onlyAssigned: false);
+        var rows = await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.All);
 
         Assert.Equal(3, rows.Count);
         var top = rows[0];
@@ -85,7 +85,7 @@ public class MarketSegmentPageServiceTests : IDisposable
 
         await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Umfrage 2026-05");
 
-        var rows = await service.SearchCustomersAsync(null, null, onlyAssigned: false);
+        var rows = await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.All);
         var swiss = rows.Single(r => r.Tsc == "TRCH" && r.CustomerNumber == "10042");
         var italian = rows.Single(r => r.Tsc == "TRIT" && r.CustomerNumber == "10042");
 
@@ -127,7 +127,7 @@ public class MarketSegmentPageServiceTests : IDisposable
 
         await service.ClearAsync("TRCH", "10042");
 
-        var rows = await service.SearchCustomersAsync(null, null, onlyAssigned: false);
+        var rows = await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.All);
         Assert.All(rows, r => Assert.Equal(string.Empty, r.Segment));
     }
 
@@ -137,7 +137,7 @@ public class MarketSegmentPageServiceTests : IDisposable
         var service = CreateService();
         await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Quelle");
 
-        var rows = await service.SearchCustomersAsync(null, null, onlyAssigned: true);
+        var rows = await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Confirmed);
 
         Assert.Single(rows);
         Assert.Equal("Railway", rows[0].Segment);
@@ -148,28 +148,106 @@ public class MarketSegmentPageServiceTests : IDisposable
     {
         var service = CreateService();
 
-        var byName = await service.SearchCustomersAsync("Stadler", null, onlyAssigned: false);
+        var byName = await service.SearchCustomersAsync("Stadler", null, MarketSegmentFilterModes.All);
         Assert.Single(byName);
         Assert.Equal("Stadler Rail AG", byName[0].CustomerName);
 
-        var bySite = await service.SearchCustomersAsync(null, "TRIT", onlyAssigned: false);
+        var bySite = await service.SearchCustomersAsync(null, "TRIT", MarketSegmentFilterModes.All);
         Assert.Single(bySite);
         Assert.Equal("TRIT", bySite[0].Tsc);
     }
 
     [Fact]
-    public async Task Summary_CountsCustomersAndRowsPerSegment()
+    public async Task Result_GroupsBySegmentSiteAndCurrency()
     {
         var service = CreateService();
         await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Quelle");
         await service.AssignAsync("TRIT", "10042", "Irgendwer SRL", "Railway", "Quelle");
 
-        var summary = await service.GetSummaryAsync();
+        var result = await service.GetResultAsync();
 
-        var railway = Assert.Single(summary);
-        Assert.Equal("Railway", railway.Segment);
-        Assert.Equal(2, railway.Customers);
-        Assert.Equal(3, railway.SalesRows);   // 2 Zeilen CH + 1 Zeile IT
+        // Zwei Standorte, deshalb zwei Zeilen: Waehrungen werden nicht ueber Laender addiert.
+        Assert.Equal(2, result.Count);
+        Assert.All(result, r => Assert.Equal("Railway", r.Segment));
+        var swiss = result.Single(r => r.Tsc == "TRCH");
+        Assert.Equal(2, swiss.SalesRows);
+        Assert.Equal(250m, swiss.SalesValue);
+        Assert.Equal("CHF", swiss.Currency);
+        Assert.Equal(1, swiss.Customers);
+    }
+
+    [Fact]
+    public async Task Result_ExcludesUnconfirmedProposals()
+    {
+        var service = CreateService();
+        await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Vorschlag",
+            isConfirmed: false);
+
+        // Der Vorschlag darf im Ergebnis NICHT auftauchen, sonst waere im Export nicht
+        // unterscheidbar, was geprueft ist und was der Namensabgleich geraten hat.
+        Assert.Empty(await service.GetResultAsync());
+        Assert.Single(await service.GetResultAsync(confirmedOnly: false));
+    }
+
+    [Fact]
+    public async Task Proposals_AppearOnlyInProposalFilter_UntilConfirmed()
+    {
+        var service = CreateService();
+        await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Vorschlag",
+            isConfirmed: false);
+
+        Assert.Single(await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Proposals));
+        Assert.Empty(await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Confirmed));
+
+        await service.ConfirmAsync("TRCH", "10042");
+
+        Assert.Empty(await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Proposals));
+        var confirmed = Assert.Single(await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Confirmed));
+        Assert.True(confirmed.IsConfirmed);
+        // Bestaetigen darf Segment und Quelle nicht veraendern.
+        Assert.Equal("Railway", confirmed.Segment);
+        Assert.Equal("Vorschlag", confirmed.Source);
+    }
+
+    [Fact]
+    public async Task Confirm_WithoutProposal_Throws()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ConfirmAsync("TRCH", "99999"));
+    }
+
+    [Fact]
+    public async Task Progress_SeparatesConfirmedFromProposals()
+    {
+        var service = CreateService();
+        await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Quelle");
+        await service.AssignAsync("TRIT", "10042", "Irgendwer SRL", "Railway", "Vorschlag",
+            isConfirmed: false);
+
+        var progress = await service.GetProgressAsync();
+
+        Assert.Equal(1, progress.ConfirmedCustomers);
+        Assert.Equal(1, progress.ProposalCustomers);
+        Assert.Equal(2, progress.ConfirmedSalesRows);
+        Assert.Equal(1, progress.ProposalSalesRows);
+        Assert.Equal(4, progress.TotalSalesRows);
+    }
+
+    [Fact]
+    public async Task AssignedFilter_FindsSmallCustomerOutsideTheTopRows()
+    {
+        // Regression: frueher wurden erst die obersten Kunden nach Zeilenzahl geholt und
+        // danach gefiltert. Ein zugeordneter kleiner Kunde fiel dadurch still aus der Liste,
+        // was wie ein leerer Schalter aussah.
+        var service = CreateService();
+        await service.AssignAsync("TRIT", "10042", "Irgendwer SRL", "Railway", "Quelle");
+
+        var rows = await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.Confirmed);
+
+        var hit = Assert.Single(rows);
+        Assert.Equal("TRIT", hit.Tsc);
+        Assert.Equal(1, hit.SalesRows);
     }
 
     [Fact]

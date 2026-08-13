@@ -23,9 +23,14 @@ public static class MarketSegmentResolver
     /// Baut die Nachschlagetabelle. Doppelte Schluessel gewinnen nach dem jueng*sten*
     /// <see cref="CustomerMarketSegment.UpdatedAtUtc"/>, damit eine Korrektur eine aeltere
     /// Zuordnung ueberstimmt, ohne dass die Historie geloescht werden muss.
+    ///
+    /// <paramref name="confirmedOnly"/> ist fuer den Export der Normalfall: nur fachlich
+    /// bestaetigte Zuordnungen duerfen als Segment ausgewiesen werden. Die Pflegeoberflaeche
+    /// setzt es auf false, weil sie die Vorschlaege ja gerade zeigen soll.
     /// </summary>
     public static IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment> BuildLookup(
-        IEnumerable<CustomerMarketSegment>? rows)
+        IEnumerable<CustomerMarketSegment>? rows,
+        bool confirmedOnly = true)
     {
         var lookup = new Dictionary<(string, string), CustomerMarketSegment>();
         if (rows is null) return lookup;
@@ -36,6 +41,7 @@ public static class MarketSegmentResolver
             var customer = NormalizeCustomerNumber(row.CustomerNumber);
             if (tsc.Length == 0 || customer.Length == 0) continue;
             if (string.IsNullOrWhiteSpace(row.Segment)) continue;
+            if (confirmedOnly && !row.IsConfirmed) continue;
 
             var key = (tsc, customer);
             if (lookup.TryGetValue(key, out var existing) && existing.UpdatedAtUtc >= row.UpdatedAtUtc)
