@@ -76,6 +76,10 @@
         }
     </MudTabPanel>
 
+    <MudTabPanel Text="@T("Marktumfrage", "Market survey")" Icon="@Icons.Material.Filled.Poll">
+        <MarketSurveyPanel />
+    </MudTabPanel>
+
     <MudTabPanel Text="@T("Pflege", "Maintenance")" Icon="@Icons.Material.Filled.EditNote">
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4 mt-3">
             @T("Hier wird festgelegt, welcher Kunde zu welchem Marktsegment gehoert. Offene Vorschlaege stammen aus dem maschinellen Namensabgleich mit der Marktumfrage und sind noch keine Aussage. Erst nach Ihrer Bestaetigung erscheint das Segment im zentralen Excel.",

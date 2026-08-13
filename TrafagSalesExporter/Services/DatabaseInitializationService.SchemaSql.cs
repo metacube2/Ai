@@ -23,6 +23,30 @@ CREATE TABLE CustomerMarketSegments (
     UpdatedAtUtc TEXT NOT NULL
 );";
 
+    internal static string GetMarketSurveyEntriesCreateSql() => @"
+CREATE TABLE MarketSurveyEntries (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    SurveyName TEXT NOT NULL DEFAULT '',
+    Country TEXT NOT NULL DEFAULT '',
+    CustomerName TEXT NOT NULL DEFAULT '',
+    CustomerShort TEXT NOT NULL DEFAULT '',
+    CustomerType TEXT NOT NULL DEFAULT '',
+    BusinessType TEXT NOT NULL DEFAULT '',
+    Application TEXT NOT NULL DEFAULT '',
+    ApplicationDescription TEXT NOT NULL DEFAULT '',
+    Status TEXT NOT NULL DEFAULT '',
+    TrafagUsp TEXT NOT NULL DEFAULT '',
+    Competitor TEXT NOT NULL DEFAULT '',
+    Product TEXT NOT NULL DEFAULT '',
+    MaterialNumber TEXT NOT NULL DEFAULT '',
+    EstimatedQuantity TEXT NOT NULL DEFAULT '',
+    EstimatedPrice TEXT NOT NULL DEFAULT '',
+    Comments TEXT NOT NULL DEFAULT '',
+    LinkedTsc TEXT NOT NULL DEFAULT '',
+    LinkedCustomerNumber TEXT NOT NULL DEFAULT '',
+    UpdatedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetGroupStandardCostsCreateSql() => @"
 CREATE TABLE GroupStandardCosts (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

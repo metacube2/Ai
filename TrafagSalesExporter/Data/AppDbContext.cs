@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<GroupStandardCost> GroupStandardCosts => Set<GroupStandardCost>();
     public DbSet<GroupMaterialMaster> GroupMaterialMasters => Set<GroupMaterialMaster>();
     public DbSet<CustomerMarketSegment> CustomerMarketSegments => Set<CustomerMarketSegment>();
+    public DbSet<MarketSurveyEntry> MarketSurveyEntries => Set<MarketSurveyEntry>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
     public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();
 }

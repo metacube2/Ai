@@ -1,0 +1,370 @@
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@inject IMarketSurveyPageService SurveyService
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+@* Pflege der Marktumfrage in der Anwendung. Ziel ist die Abloesung der Excel-Datei. *@
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4 mt-3">
+    @T("Hier wird die Marktumfrage gepflegt. Sie beschreibt den Markt und enthaelt auch Interessenten ohne Umsatz, ist also keine Umsatzquelle. Der ausgewiesene Umsatz kommt weiterhin aus den Verkaufsdaten.",
+        "The market survey is maintained here. It describes the market and also contains prospects without revenue, so it is not a revenue source. Reported revenue still comes from the sales data.")
+</MudAlert>
+
+@if (_summaries.Count > 0)
+{
+    <MudPaper Class="pa-3 mb-4" Elevation="1">
+        @foreach (var s in _summaries)
+        {
+            <MudStack Row Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-1">
+                <MudText Typo="Typo.subtitle2">@s.SurveyName</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">
+                    @s.Entries @T("Zeilen", "rows"), @s.Customers @T("Kunden", "customers"), @s.Countries @T("Laender", "countries")
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">
+                    @s.LinkedEntries @T("mit Verkaufskunde verknuepft", "linked to a sales customer")
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">
+                    @s.WithoutSales @T("ohne Umsatz bei uns", "without revenue with us")
+                </MudChip>
+            </MudStack>
+        }
+    </MudPaper>
+}
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Row Spacing="2" Class="mb-3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudTextField @bind-Value="_textFilter" Label="@T("Suchen", "Search")"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      HelperText="@T("Kunde, Anwendung, Produkt, Wettbewerber oder Kommentar", "Customer, application, product, competitor or comment")"
+                      Immediate="false" OnKeyUp="OnSearchKey" Style="min-width:240px" />
+        <MudSelect T="string" @bind-Value="_countryFilter" Label="@T("Land", "Country")" Clearable Style="min-width:120px">
+            <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
+            @foreach (var c in _countries)
+            {
+                <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="string" @bind-Value="_statusFilter" Label="@T("Status", "Status")" Clearable Style="min-width:170px">
+            <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
+            @foreach (var s in _statuses)
+            {
+                <MudSelectItem T="string" Value="@s">@s</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Search" OnClick="ReloadAsync">
+            @T("Suchen", "Search")
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenNew">
+            @T("Zeile hinzufuegen", "Add row")
+        </MudButton>
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate Color="Color.Primary" Class="my-4" />
+    }
+    else if (_rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Normal" Dense Variant="Variant.Outlined">
+            @T("Keine Umfragezeilen gefunden.", "No survey rows found.")
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="_rows" Dense Hover Striped Breakpoint="Breakpoint.Md" FixedHeader Height="56vh">
+            <HeaderContent>
+                <MudTh>@T("Land", "Country")</MudTh>
+                <MudTh>@T("Kunde", "Customer")</MudTh>
+                <MudTh>@T("Rolle", "Role")</MudTh>
+                <MudTh>@T("Anwendung", "Application")</MudTh>
+                <MudTh>@T("Geschaeft", "Business")</MudTh>
+                <MudTh>@T("Status", "Status")</MudTh>
+                <MudTh>@T("Produkt", "Product")</MudTh>
+                <MudTh>@T("Wettbewerber", "Competitor")</MudTh>
+                <MudTh>@T("Menge p.a.", "Quantity p.a.")</MudTh>
+                <MudTh>@T("Preis", "Price")</MudTh>
+                <MudTh>@T("Verknuepft", "Linked")</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="@T("Land", "Country")">@context.Country</MudTd>
+                <MudTd DataLabel="@T("Kunde", "Customer")">
+                    @context.CustomerName
+                    @if (context.Comments.Length > 0)
+                    {
+                        <MudTooltip Text="@context.Comments">
+                            <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Size="Size.Small" Color="Color.Default" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="@T("Rolle", "Role")">@context.CustomerType</MudTd>
+                <MudTd DataLabel="@T("Anwendung", "Application")">
+                    @if (context.ApplicationDescription.Length > 0)
+                    {
+                        <MudTooltip Text="@context.ApplicationDescription">
+                            <span>@context.Application</span>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        @context.Application
+                    }
+                </MudTd>
+                <MudTd DataLabel="@T("Geschaeft", "Business")">@context.BusinessType</MudTd>
+                <MudTd DataLabel="@T("Status", "Status")">
+                    @if (context.Status.Length > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@StatusColor(context.Status)">
+                            @context.Status
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="@T("Produkt", "Product")">@context.Product</MudTd>
+                <MudTd DataLabel="@T("Wettbewerber", "Competitor")">@context.Competitor</MudTd>
+                <MudTd DataLabel="@T("Menge p.a.", "Quantity p.a.")">@context.EstimatedQuantity</MudTd>
+                <MudTd DataLabel="@T("Preis", "Price")">@context.EstimatedPrice</MudTd>
+                <MudTd DataLabel="@T("Verknuepft", "Linked")">
+                    @if (context.LinkedCustomerNumber.Length > 0)
+                    {
+                        <MudTooltip Text="@($"{context.LinkedTsc} / {context.LinkedCustomerNumber}")">
+                            <MudIcon Icon="@Icons.Material.Filled.Link" Size="Size.Small" Color="Color.Success" />
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="@T("kein Verkaufskunde zugeordnet", "no sales customer assigned")">
+                            <MudIcon Icon="@Icons.Material.Filled.LinkOff" Size="Size.Small" Color="Color.Default" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudStack Row Spacing="1">
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                       Title="@T("Bearbeiten", "Edit")" OnClick="@(() => OpenEdit(context))" />
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Default"
+                                       Title="@T("Zeile loeschen", "Delete row")" OnClick="@(() => DeleteAsync(context))" />
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+        <MudText Typo="Typo.caption" Class="mt-2">
+            @T("Menge und Preis sind bewusst Freitext. Die Quelle enthaelt Bereiche wie 500-600 pcs und gemischte Waehrungen wie 15k Euro neben CHF 45; eine Zahl waere Scheingenauigkeit.",
+                "Quantity and price are deliberately free text. The source contains ranges such as 500-600 pcs and mixed currencies such as 15k euro alongside CHF 45; a number would be false precision.")
+        </MudText>
+    }
+</MudPaper>
+
+<MudDialog @bind-Visible="_dialogOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(_editing?.Id > 0 ? T("Umfragezeile bearbeiten", "Edit survey row") : T("Umfragezeile hinzufuegen", "Add survey row"))
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_editing is not null)
+        {
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.SurveyName" Label="@T("Umfrage", "Survey")"
+                                  HelperText="@T("Name und Stand, zum Beispiel Railway 2026-05", "Name and date, for example Railway 2026-05")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.Country" Label="@T("Land", "Country")"
+                                  HelperText="@T("ISO-2, zum Beispiel AT", "ISO-2, for example AT")" />
+                </MudItem>
+                <MudItem xs="12" sm="8">
+                    <MudTextField @bind-Value="_editing.CustomerName" Label="@T("Kunde", "Customer")" Required />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="_editing.CustomerShort" Label="@T("Kurzname", "Short name")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="_editing.CustomerType" Label="@T("Rolle", "Role")" Clearable>
+                        @foreach (var v in _customerTypes)
+                        {
+                            <MudSelectItem T="string" Value="@v">@v</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="_editing.BusinessType" Label="@T("Geschaeft", "Business")" Clearable>
+                        @foreach (var v in _businessTypes)
+                        {
+                            <MudSelectItem T="string" Value="@v">@v</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.Application" Label="@T("Anwendung", "Application")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="_editing.Status" Label="@T("Status", "Status")" Clearable>
+                        @foreach (var v in _statuses)
+                        {
+                            <MudSelectItem T="string" Value="@v">@v</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_editing.ApplicationDescription" Label="@T("Beschreibung der Anwendung", "Application description")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.TrafagUsp" Label="@T("Trafag Verkaufsargument", "Trafag USP")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.Competitor" Label="@T("Wettbewerber", "Competitor")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.Product" Label="@T("Produkt", "Product")"
+                                  HelperText="@T("Produktfamilie aus der Umfrage, keine Materialnummer", "Product family from the survey, not a material number")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.MaterialNumber" Label="@T("Materialnummer", "Material number")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.EstimatedQuantity" Label="@T("Menge p.a.", "Quantity p.a.")"
+                                  HelperText="@T("Freitext, Bereiche erlaubt", "Free text, ranges allowed")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.EstimatedPrice" Label="@T("Preis pro Stueck", "Price per piece")"
+                                  HelperText="@T("Freitext, Waehrung mit angeben", "Free text, please state the currency")" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_editing.Comments" Label="@T("Kommentar", "Comment")" Lines="2" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.LinkedTsc" Label="@T("Verknuepfter Standort", "Linked site")"
+                                  HelperText="@T("optional, zum Beispiel TRCH", "optional, for example TRCH")" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editing.LinkedCustomerNumber" Label="@T("Verknuepfte Kundennummer", "Linked customer number")"
+                                  HelperText="@T("optional, leer lassen wenn kein Umsatz besteht", "optional, leave empty if there is no revenue")" />
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _dialogOpen = false)">@T("Abbrechen", "Cancel")</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync">@T("Speichern", "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<MarketSurveyEntry> _rows = [];
+    private List<MarketSurveySummary> _summaries = [];
+    private List<string> _statuses = [];
+    private List<string> _countries = [];
+    private List<string> _businessTypes = [];
+    private List<string> _customerTypes = [];
+    private string _textFilter = string.Empty;
+    private string _countryFilter = string.Empty;
+    private string _statusFilter = string.Empty;
+    private bool _loading = true;
+
+    private bool _dialogOpen;
+    private MarketSurveyEntry? _editing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _statuses = await SurveyService.GetDistinctValuesAsync("status");
+        _countries = await SurveyService.GetDistinctValuesAsync("country");
+        _businessTypes = await SurveyService.GetDistinctValuesAsync("businesstype");
+        _customerTypes = await SurveyService.GetDistinctValuesAsync("customertype");
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = await SurveyService.SearchAsync(null, _textFilter, _countryFilter, _statusFilter);
+            _summaries = await SurveyService.GetSummariesAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnSearchKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") await ReloadAsync();
+    }
+
+    private void OpenNew()
+    {
+        _editing = new MarketSurveyEntry
+        {
+            SurveyName = _summaries.FirstOrDefault()?.SurveyName ?? "Railway 2026-05"
+        };
+        _dialogOpen = true;
+    }
+
+    private void OpenEdit(MarketSurveyEntry row)
+    {
+        // Kopie bearbeiten, damit ein Abbrechen die Liste nicht veraendert.
+        _editing = new MarketSurveyEntry
+        {
+            Id = row.Id,
+            SurveyName = row.SurveyName,
+            Country = row.Country,
+            CustomerName = row.CustomerName,
+            CustomerShort = row.CustomerShort,
+            CustomerType = row.CustomerType,
+            BusinessType = row.BusinessType,
+            Application = row.Application,
+            ApplicationDescription = row.ApplicationDescription,
+            Status = row.Status,
+            TrafagUsp = row.TrafagUsp,
+            Competitor = row.Competitor,
+            Product = row.Product,
+            MaterialNumber = row.MaterialNumber,
+            EstimatedQuantity = row.EstimatedQuantity,
+            EstimatedPrice = row.EstimatedPrice,
+            Comments = row.Comments,
+            LinkedTsc = row.LinkedTsc,
+            LinkedCustomerNumber = row.LinkedCustomerNumber
+        };
+        _dialogOpen = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_editing is null) return;
+        try
+        {
+            await SurveyService.SaveAsync(_editing);
+            _dialogOpen = false;
+            Snackbar.Add(T("Umfragezeile gespeichert.", "Survey row saved."), Severity.Success);
+            _statuses = await SurveyService.GetDistinctValuesAsync("status");
+            _countries = await SurveyService.GetDistinctValuesAsync("country");
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task DeleteAsync(MarketSurveyEntry row)
+    {
+        await SurveyService.DeleteAsync(row.Id);
+        Snackbar.Add(T("Umfragezeile geloescht.", "Survey row deleted."), Severity.Info);
+        await ReloadAsync();
+    }
+
+    private static Color StatusColor(string status) => status.ToLowerInvariant() switch
+    {
+        "existing customer" => Color.Success,
+        "opportunity" => Color.Info,
+        "new" => Color.Primary,
+        "no potential" => Color.Default,
+        _ => Color.Default
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

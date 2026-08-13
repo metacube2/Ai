@@ -59,6 +59,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
         EnsureCustomerMarketSegmentsTable(db);
+        EnsureMarketSurveyEntriesTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -729,6 +730,28 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         using var indexCommand = conn.CreateCommand();
         indexCommand.CommandText =
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_CustomerMarketSegments_Tsc_Customer ON CustomerMarketSegments (Tsc, CustomerNumber);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureMarketSurveyEntriesTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetMarketSurveyEntriesCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        // BEWUSST kein eindeutiger Index: ein Kunde kann in derselben Umfrage mehrfach
+        // vorkommen, je Anwendung eine Zeile. In der Railway-Umfrage stehen 269 Zeilen fuer
+        // 234 Kunden. Ein Index auf Umfrage plus Kunde wuerde diese Faelle abweisen.
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE INDEX IF NOT EXISTS IX_MarketSurveyEntries_Survey_Customer ON MarketSurveyEntries (SurveyName, CustomerName);";
         indexCommand.ExecuteNonQuery();
     }
 
