@@ -58,6 +58,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
+        EnsureCustomerMarketSegmentsTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentTotalForeignCurrency", "TEXT NOT NULL DEFAULT '0'");
@@ -702,6 +703,27 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         using var indexCommand = conn.CreateCommand();
         indexCommand.CommandText =
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupMaterialMasters_Material_Plant ON GroupMaterialMasters (MaterialKey, Plant);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureCustomerMarketSegmentsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetCustomerMarketSegmentsCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        // Ein Kunde je Standort hat genau ein Segment. Der eindeutige Index macht eine
+        // doppelte Pflege zum Fehler statt zu einer stillen Mehrdeutigkeit.
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_CustomerMarketSegments_Tsc_Customer ON CustomerMarketSegments (Tsc, CustomerNumber);";
         indexCommand.ExecuteNonQuery();
     }
 

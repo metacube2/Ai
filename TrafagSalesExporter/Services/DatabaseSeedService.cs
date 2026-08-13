@@ -287,6 +287,9 @@ public class DatabaseSeedService : IDatabaseSeedService
         Link("finance-training", "finance", "Finance Schulung", "Finance training", "School", "finance-cockpit/schulung", 40),
         Link("manual-imports", "finance", "Manuelle Importe", "Manual imports", "UploadFile", "manual-imports", 50),
         Link("finance-journal-import", "finance", "Journal Import", "Journal import", "AccountBalance", "finance-journal-import", 55),
+        // Bewusst unter Finance und nicht im Admin-Bereich: die Zuordnung ist eine
+        // fachliche Aussage des Vertriebs, keine technische Konfiguration.
+        Link("market-segments", "finance", "Marktsegmente", "Market segments", "Category", "marktsegmente", 58),
         // Ein einziger, aeusserer Admin-Bereich. Er ist bewusst keine Untergruppe von
         // Finance: Sitzungen und technische Konfiguration gelten fuer die ganze App.
         Group("finance-admin", null, "Admin Bereich", "Admin area", "AdminPanelSettings", 90),

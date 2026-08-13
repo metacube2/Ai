@@ -1,0 +1,243 @@
+@page "/marktsegmente"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject IMarketSegmentPageService SegmentService
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+
+<PageTitle>@T("Marktsegmente", "Market segments")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Marktsegmente", "Market segments")</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4">
+    @T("Hier wird festgelegt, welcher Kunde zu welchem Marktsegment gehoert, zum Beispiel Railway. Die Zuordnung erscheint im zentralen Excel in den Spalten Market Segment und Market Segment Source. Kunden ohne Zuordnung bleiben dort bewusst leer, es wird nichts geraten.",
+        "This page defines which customer belongs to which market segment, for example Railway. The assignment appears in the central Excel in the columns Market Segment and Market Segment Source. Customers without an assignment deliberately stay empty; nothing is guessed.")
+</MudAlert>
+
+@if (_summary.Count > 0)
+{
+    <MudPaper Class="pa-3 mb-4" Elevation="1">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">@T("Bereits zugeordnet", "Already assigned")</MudText>
+        <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+            @foreach (var entry in _summary)
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                    @entry.Segment: @entry.Customers @T("Kunden", "customers"), @entry.SalesRows.ToString("N0") @T("Zeilen", "rows")
+                </MudChip>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Row Spacing="2" Class="mb-3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudTextField @bind-Value="_nameFilter" Label="@T("Kunde suchen", "Search customer")"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="false" OnKeyUp="OnSearchKey" Style="min-width:260px" />
+        <MudSelect T="string" @bind-Value="_tscFilter" Label="@T("Standort", "Site")" Clearable Style="min-width:150px">
+            <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
+            @foreach (var tsc in Sites)
+            {
+                <MudSelectItem T="string" Value="@tsc">@tsc</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSwitch T="bool" @bind-Value="_onlyAssigned" Color="Color.Primary"
+                   Label="@T("nur zugeordnete", "assigned only")" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Search" OnClick="ReloadAsync">
+            @T("Suchen", "Search")
+        </MudButton>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Class="mb-2">
+        @T("Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten.",
+            "Sorted by number of sales lines. The largest customers come first, where an assignment has the biggest effect.")
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate Color="Color.Primary" Class="my-4" />
+    }
+    else if (_rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Normal" Dense Variant="Variant.Outlined">
+            @T("Keine Kunden gefunden.", "No customers found.")
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="_rows" Dense Hover Striped Breakpoint="Breakpoint.Md" FixedHeader Height="60vh">
+            <HeaderContent>
+                <MudTh>@T("Standort", "Site")</MudTh>
+                <MudTh>@T("Kundennummer", "Customer number")</MudTh>
+                <MudTh>@T("Kunde", "Customer")</MudTh>
+                <MudTh>@T("Land", "Country")</MudTh>
+                <MudTh Style="text-align:right">@T("Zeilen", "Rows")</MudTh>
+                <MudTh Style="text-align:right">@T("Umsatz", "Sales")</MudTh>
+                <MudTh Style="text-align:right">@T("Sparten", "Families")</MudTh>
+                <MudTh>@T("Segment", "Segment")</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="@T("Standort", "Site")">@context.Tsc</MudTd>
+                <MudTd DataLabel="@T("Kundennummer", "Customer number")">@context.CustomerNumber</MudTd>
+                <MudTd DataLabel="@T("Kunde", "Customer")">@context.CustomerName</MudTd>
+                <MudTd DataLabel="@T("Land", "Country")">@context.CustomerCountry</MudTd>
+                <MudTd DataLabel="@T("Zeilen", "Rows")" Style="text-align:right">@context.SalesRows.ToString("N0")</MudTd>
+                <MudTd DataLabel="@T("Umsatz", "Sales")" Style="text-align:right">
+                    @context.SalesValue.ToString("N0") @context.Currency
+                </MudTd>
+                <MudTd DataLabel="@T("Sparten", "Families")" Style="text-align:right">
+                    @if (context.ProductFamilies >= 4)
+                    {
+                        <MudTooltip Text="@T("Kunde kauft aus mehreren Produktsparten. Eine pauschale Segmentzuordnung kann Umsatz ueberzeichnen.", "Customer buys across several product families. A blanket segment assignment can overstate revenue.")">
+                            <MudText Typo="Typo.body2" Color="Color.Warning">@context.ProductFamilies</MudText>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        @context.ProductFamilies
+                    }
+                </MudTd>
+                <MudTd DataLabel="@T("Segment", "Segment")">
+                    @if (context.Segment.Length > 0)
+                    {
+                        <MudTooltip Text="@context.Source">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">@context.Segment</MudChip>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Tertiary">@T("nicht zugeordnet", "unassigned")</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudStack Row Spacing="1">
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                   OnClick="@(() => OpenAssign(context))">
+                            @T("Zuordnen", "Assign")
+                        </MudButton>
+                        @if (context.Segment.Length > 0)
+                        {
+                            <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Default"
+                                           Title="@T("Zuordnung entfernen", "Remove assignment")"
+                                           OnClick="@(() => ClearAsync(context))" />
+                        }
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+<MudDialog @bind-Visible="_dialogOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@T("Segment zuordnen", "Assign segment")</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_editing is not null)
+        {
+            <MudText Typo="Typo.body2" Class="mb-3">
+                @_editing.CustomerName (@_editing.Tsc / @_editing.CustomerNumber)
+            </MudText>
+            @if (_editing.ProductFamilies >= 4)
+            {
+                <MudAlert Severity="Severity.Warning" Dense Variant="Variant.Outlined" Class="mb-3">
+                    @T("Dieser Kunde kauft aus", "This customer buys from") @_editing.ProductFamilies
+                    @T("Produktsparten. Bitte nur zuordnen, wenn er ueberwiegend fuer dieses Segment kauft.",
+                        "product families. Only assign if they buy predominantly for this segment.")
+                </MudAlert>
+            }
+            <MudSelect T="string" @bind-Value="_editSegment" Label="@T("Segment", "Segment")" Class="mb-3">
+                @foreach (var segment in _knownSegments)
+                {
+                    <MudSelectItem T="string" Value="@segment">@segment</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="_editSegment" Label="@T("oder eigenes Segment eintragen", "or enter your own segment")" Class="mb-3" />
+            <MudTextField @bind-Value="_editSource" Label="@T("Quelle der Aussage", "Source of this decision")"
+                          HelperText="@T("Zum Beispiel: Marktumfrage Railway 2026-05, bestaetigt durch Patrik.", "For example: Railway market survey 2026-05, confirmed by Patrik.")" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _dialogOpen = false)">@T("Abbrechen", "Cancel")</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync">@T("Speichern", "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private static string[] Sites => MarketSegmentPageService.Sites;
+
+    private List<MarketSegmentCustomerRow> _rows = [];
+    private List<(string Segment, int Customers, int SalesRows)> _summary = [];
+    private List<string> _knownSegments = [];
+    private string _nameFilter = string.Empty;
+    private string _tscFilter = string.Empty;
+    private bool _onlyAssigned;
+    private bool _loading = true;
+
+    private bool _dialogOpen;
+    private MarketSegmentCustomerRow? _editing;
+    private string _editSegment = string.Empty;
+    private string _editSource = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _knownSegments = await SegmentService.GetKnownSegmentsAsync();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = await SegmentService.SearchCustomersAsync(_nameFilter, _tscFilter, _onlyAssigned);
+            _summary = await SegmentService.GetSummaryAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnSearchKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") await ReloadAsync();
+    }
+
+    private void OpenAssign(MarketSegmentCustomerRow row)
+    {
+        _editing = row;
+        _editSegment = row.Segment.Length > 0 ? row.Segment : "Railway";
+        _editSource = row.Source.Length > 0 ? row.Source : string.Empty;
+        _dialogOpen = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_editing is null) return;
+        try
+        {
+            await SegmentService.AssignAsync(
+                _editing.Tsc, _editing.CustomerNumber, _editing.CustomerName, _editSegment, _editSource);
+            _dialogOpen = false;
+            Snackbar.Add(T("Zuordnung gespeichert.", "Assignment saved."), Severity.Success);
+            _knownSegments = await SegmentService.GetKnownSegmentsAsync();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task ClearAsync(MarketSegmentCustomerRow row)
+    {
+        await SegmentService.ClearAsync(row.Tsc, row.CustomerNumber);
+        Snackbar.Add(T("Zuordnung entfernt.", "Assignment removed."), Severity.Info);
+        await ReloadAsync();
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+}

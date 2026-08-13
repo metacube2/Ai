@@ -131,6 +131,7 @@ builder.Services.AddScoped<IDashboardPageService, DashboardPageService>();
 builder.Services.AddScoped<ILogsPageService, LogsPageService>();
 builder.Services.AddScoped<ITransformationsPageService, TransformationsPageService>();
 builder.Services.AddScoped<IFinanceRulesPageService, FinanceRulesPageService>();
+builder.Services.AddScoped<IMarketSegmentPageService, MarketSegmentPageService>();
 builder.Services.AddScoped<IPurchasingDataSourcePageService, PurchasingDataSourcePageService>();
 builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>();
 builder.Services.AddScoped<IPurchasingProductGroupSapReader, PurchasingProductGroupSapReader>();

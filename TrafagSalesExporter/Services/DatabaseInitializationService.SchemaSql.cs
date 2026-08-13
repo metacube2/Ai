@@ -10,6 +10,17 @@ CREATE TABLE GroupMaterialMasters (
     RefreshedAtUtc TEXT NOT NULL
 );";
 
+    internal static string GetCustomerMarketSegmentsCreateSql() => @"
+CREATE TABLE CustomerMarketSegments (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Tsc TEXT NOT NULL,
+    CustomerNumber TEXT NOT NULL,
+    CustomerName TEXT NOT NULL DEFAULT '',
+    Segment TEXT NOT NULL,
+    Source TEXT NOT NULL DEFAULT '',
+    UpdatedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetGroupStandardCostsCreateSql() => @"
 CREATE TABLE GroupStandardCosts (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

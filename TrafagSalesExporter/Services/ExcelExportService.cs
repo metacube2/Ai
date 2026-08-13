@@ -73,6 +73,21 @@ public class ExcelExportService : IExcelExportService
             .ToHashSet(StringComparer.Ordinal);
     }
 
+    /// <summary>
+    /// Gepflegte Kunden-Segment-Zuordnung. Ohne Datenbank oder bei leerer Tabelle bleiben
+    /// die beiden Segmentspalten leer — bewusst, denn ein geratenes Segment waere
+    /// schlimmer als ein leeres Feld.
+    /// </summary>
+    private IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment> LoadCustomerMarketSegments()
+    {
+        if (_dbFactory is null)
+            return MarketSegmentResolver.BuildLookup(null);
+
+        using var db = _dbFactory.CreateDbContext();
+        var rows = db.CustomerMarketSegments.AsNoTracking().ToList();
+        return MarketSegmentResolver.BuildLookup(rows);
+    }
+
     private string LoadSupplierFallbackMode()
     {
         if (_dbFactory is null)
@@ -148,7 +163,7 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode());
+        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadCustomerMarketSegments());
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -976,7 +991,8 @@ public class ExcelExportService : IExcelExportService
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
-        string? supplierFallbackMode = null)
+        string? supplierFallbackMode = null,
+        IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment>? customerMarketSegments = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1035,7 +1051,13 @@ public class ExcelExportService : IExcelExportService
             "Finance | Net Sales Actual",
             "Finance | Currency",
             "Finance | Include",
-            "Finance | Source Value Field"
+            "Finance | Source Value Field",
+            // Additiv am ENDE angehaengt, damit keine bestehende Spalte verrutscht. Der
+            // zentrale Excel-Nachweis enthaelt Blattformeln, die auf Spaltenpositionen und
+            // auf Textwerte zeigen; ein Einschub in der Mitte waere dort still toedlich
+            // (gleiche Fehlerklasse wie die Statustext-Falle in RAG_ROUTER Regel 11).
+            "Market Segment",
+            "Market Segment Source"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1105,6 +1127,10 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 49).Value = financeInclude
                 ? "Sales Price/Value"
                 : financeRuleEngine.ResolveExclusionReason(record, financeCountryKey);
+            var (marketSegment, marketSegmentSource) = MarketSegmentResolver.Resolve(
+                record.Tsc, record.CustomerNumber, customerMarketSegments);
+            ws.Cell(row, 50).Value = marketSegment;
+            ws.Cell(row, 51).Value = marketSegmentSource;
             row++;
         }
 
