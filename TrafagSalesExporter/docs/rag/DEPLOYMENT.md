@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-12
+Stand: 2026-08-13
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,7 +44,33 @@ Stand: 2026-08-12
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-12 10:23, Andreas-Nachtrag
+- Aktuellster produktiv verifizierter Deploy: **2026-08-13 09:00, Marktsegment-Pflege fuer
+  den Vertrieb und konsolidierter Issue-Log**, Funktionscommits `488cc42` (Code) und
+  `07356a9` (Doku), `500/500` Release-Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-market-segments-20260813-084731.bak`, `345'620'480` Bytes.
+  `BiDashboard.dll` `13.08.2026 09:00:42`, `4'431'360` Bytes, SHA256
+  `9B5A3039414C12679C0AB8DF3C837C6C2EA7953B29516F036118365E68174854`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. Ziel: `0` neu, `5` geaendert, `1'329`
+  unveraendert, `0` verschwunden. HTTPS `200`: Startseite (`68'939` Bytes),
+  **`/marktsegmente` (`329'931` Bytes)**, `/management-cockpit` (`69'958`), `/settings`
+  (`69'995`), `/einkauf/aufriss` (`138'252`), `/logistik/materialdisposition` (`81'548`).
+  **Wirknachweis mit Vorher-Messung:** im Prueflauf fehlten `MarketSegmentResolver`,
+  `CustomerMarketSegment`, `MarketSegmentPageService`, `Market Segment Source` und
+  `marktsegmente` in der Server-DLL, danach sind alle fuenf enthalten; `/marktsegmente`
+  lieferte vorher keine Antwort. Die `329'931` Bytes sind hier mehr als ein
+  Erreichbarkeitsnachweis: Finance-Seiten hinter dem Unlock liefern sonst rund `69'000`
+  Bytes Passwortpanel, die Seite rendert also wirklich. Additive Migration produktiv
+  bestaetigt: Tabelle `CustomerMarketSegments` vorhanden, eindeutiger Index
+  `UX_CustomerMarketSegments_Tsc_Customer` angelegt, `0` Zuordnungen (erwartet, die Pflege
+  beginnt erst), Menueeintrag `market-segments` vorhanden, `CentralSalesRecords`
+  unveraendert bei `97'537` Zeilen. Das Arbeitsverzeichnis war nicht sauber; die
+  abweichenden Dateien sind Fremdbestand aus dem Repo-Wurzelverzeichnis, kein `.cs`.
+  **NICHT belegt:** ein angemeldeter Sichtprueflauf der Seite und das Speichern einer
+  Zuordnung durch einen echten Benutzer. Anleitung fuer den Vertrieb:
+  `docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`.
+
+- Deploy davor: **2026-08-12 10:23, Andreas-Nachtrag
   lokale Standardkosten bei CH-Werkstamm-Nichttreffer**, Funktionscommit `fc5ae75`,
   `478/478` Release-Tests am Deploytag selbst gruen. Vorher-Sicherung
   `trafag_exporter.db.before-andreas-local-20260812-101429.bak`, `345'202'688` Bytes.

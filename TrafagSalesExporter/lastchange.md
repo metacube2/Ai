@@ -26,7 +26,26 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
   aktiv an einer reservierten Datei.
 
-## Marktsegment Railway im zentralen Excel 2026-08-13 - Code fertig, nicht deployed
+## Marktsegment Railway 2026-08-13 09:00 - PRODUKTIV
+
+- Commits `488cc42` (Code) und `07356a9` (Doku) sind deployed. `500/500` Release-Tests.
+- DLL `4.431.360` Bytes, SHA256
+  `9B5A3039414C12679C0AB8DF3C837C6C2EA7953B29516F036118365E68174854`, lokal und Server
+  bitgleich. Backup `trafag_exporter.db.before-market-segments-20260813-084731.bak`.
+- Wirknachweis mit Vorher-Messung: `MarketSegmentResolver`, `CustomerMarketSegment`,
+  `MarketSegmentPageService`, `Market Segment Source` und `marktsegmente` fehlten im
+  Prueflauf und sind danach enthalten.
+- **`/marktsegmente` liefert 329.931 Bytes.** Das ist mehr als Erreichbarkeit: Seiten hinter
+  dem Finance-Unlock liefern sonst rund 69.000 Bytes Passwortpanel, die Seite rendert also
+  wirklich. Sie liegt bewusst unter Finance und ist NICHT auf Admins beschraenkt.
+- Additive Migration produktiv bestaetigt: Tabelle `CustomerMarketSegments` und Index
+  `UX_CustomerMarketSegments_Tsc_Customer` vorhanden, 0 Zuordnungen, Menueeintrag
+  `market-segments` vorhanden, `CentralSalesRecords` unveraendert 97.537 Zeilen.
+- Solange niemand zuordnet, bleiben die beiden Excel-Spalten leer. Das ist beabsichtigt.
+- Anleitung fuer den Vertrieb: `docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`.
+- OFFEN: angemeldeter Sichtprueflauf und die erste echte Zuordnung durch Patrik.
+
+## Marktsegment Railway im zentralen Excel 2026-08-13 - Code fertig, Deploy siehe oben
 
 - Neue Tabelle `CustomerMarketSegments` mit Schluessel TSC plus Kundennummer und eindeutigem
   Index. `CustomerNumber` ist produktiv in allen neun Standorten zu 100 % gefuellt (4.888
