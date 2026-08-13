@@ -269,3 +269,66 @@ Technischer Nachweis: Die abschließende SAP-Ausgabe meldete für jedes Merkmal
 `FERTIG: Merkmale und Klassen angelegt/geprueft.` Der wiederholbare Quellcode liegt
 unter `docs/abap/ZPPWR_CLASS_SETUP.abap`. Der Report enthält eine feste Systemsperre
 für alle Systeme und Mandanten außer T76/090.
+
+## 13. Anforderungsherkunft und Abdeckung
+
+Die folgende Matrix hält fest, wie die Anforderungen aus der Maildiskussion und aus
+`Verpackungsverordnung.docx` umgesetzt beziehungsweise bewusst abgegrenzt wurden.
+
+| Ursprüngliche Anforderung | Entscheidung / SAP-Abbildung |
+| --- | --- |
+| keine zusätzlichen Z-Felder im Materialstamm | Umsetzung vollständig über zwei Klassen der Klassenart `001` und deren Merkmale |
+| Recyclability Class | `ZPPWR_RECYCL_CLASS` mit `A` bis `E` |
+| Total Recycled Content | `ZPPWR_RECYCLAT_PCT`, numerisch `0` bis `100` |
+| PCR Content | `ZPPWR_PCR_PCT`, numerisch `0` bis `100` |
+| REACH compliant | dreiwertiger Status plus Bewertungsdatum in `ZCOMP_STOFF` |
+| SVHC compliant | dreiwertiger Status plus Stand der Kandidatenliste in `ZCOMP_STOFF` |
+| RoHS compliant | zusätzlich aus Florians Diskussion aufgenommen: dreiwertiger Status plus Bewertungsdatum |
+| PFAS Content (%) | Prozentfeld bewusst nicht angelegt; stattdessen vorläufig Status plus Bewertungsdatum, bis Stoffliste, Einheit und Rechtsgrundlage geklärt sind |
+| Supplier Declaration available | nicht nur Ja/Nein: Status, Ausstellungsdatum, Gültigkeit und Dokumentreferenz in beiden fachlich passenden Klassen |
+| Materialgruppe PM beibehalten | `MAGRV` bleibt führendes Standardfeld; keine doppelte Klassifizierung desselben Inhalts |
+| dreiwertige Compliance statt leer/Ja/Nein | `COMPLIANT`, `NON_COMPLIANT`, `UNDEFINED`; bei Erklärungen `YES`, `NO`, `UNDEFINED` |
+| Pflege im SAP GUI | Klassen und Merkmale funktionieren mit CT04/CL01 sowie später MM02/CL30N; keine Fiori-Custom-Fields vorausgesetzt |
+| Reporting nur auf Anfrage als Excel-Liste | Zielweg ist CL30N mit Excel-Export; keine Dashboard-/OData-Integration im Pilot erforderlich |
+| Adil baut zunächst die Klassifizierung | technischer Katalog und wiederholbarer ABAP-Report wurden für T76/090 bereitgestellt und ausgeführt |
+
+Nicht Teil der technischen Anlage waren Materialzuordnungen, Massenpflege,
+Produkt-Packmittel-Verknüpfungen, Dokumentmigration und ein Transport nach P76. Diese
+Schritte benötigen die im Abschnitt 10 genannten fachlichen Entscheidungen.
+
+## 14. ABAP-/BAPI-Learnings aus der tatsächlichen Ausführung
+
+Diese Punkte gelten für das am 13.08.2026 verwendete Trafag-SAP-System und sollen bei
+einer Wiederholung nicht erneut durch Versuch und Irrtum ermittelt werden:
+
+1. `BAPI_CHARACT_EXISTENCECHECK` lieferte bei nicht vorhandenen Merkmalen in diesem
+   System keinen auswertbaren Fehler vom Typ `E` oder `A`. Eine Prüfung nur über die
+   Return-Tabelle führte deshalb fälschlich zu `SKIP Merkmal vorhanden`. Der finale
+   Report prüft die Existenz idempotent über `CABN-ATNAM`.
+2. `BAPI_CHARACT_CREATE` verlangt auch bei Datumsmerkmalen einen Eintrag in
+   `CHARACTVALUESNUM`. Nur `ADDITIONAL_VALUES = 'X'` genügte nicht und erzeugte
+   `C1 040 Bitte Werte einpflegen`. Der Report übergibt deshalb für DATE den Bereich
+   `19000101` bis `99991231`.
+3. Freie CHAR-Dokumentreferenzen wurden trotz `ADDITIONAL_VALUES = 'X'` ohne
+   Wertetabelleneintrag ebenfalls mit `C1 040` abgewiesen. Deshalb wird der neutrale
+   erlaubte Wert `-` mit der Beschreibung `Keine Referenz` mitgegeben; weitere
+   Referenzwerte bleiben frei eingebbar.
+4. SAP-Merkmalskurztexte sind längenbegrenzt. Der Text
+   `Lieferantenerklaerung gueltig bis` war für den formalen ABAP-Parameter zu lang und
+   wurde auf `Liefererklaerung gueltig bis` gekürzt.
+5. Die BAPIs schreiben erst nach `BAPI_TRANSACTION_COMMIT` dauerhaft. Sämtliche
+   fehlerhaften Probeläufe vor dem erfolgreichen Abschluss wurden per
+   `BAPI_TRANSACTION_ROLLBACK` beendet. Die zunächst nur angekündigten Anlagen waren
+   deshalb nicht in der Datenbank vorhanden.
+6. Der finale Ablauf arbeitet in zwei Transaktionsphasen: zuerst alle Merkmale und
+   deren Commit, danach beide Klassen und deren Commit. Dadurch sind die Merkmale bei
+   der Klassenanlage sicher sichtbar. Der Report ist wiederholbar und überspringt
+   bereits vorhandene Objekte.
+7. `P_WRITE` ist standardmäßig leer. Ohne gesetztes Kennzeichen zeigt der Report nur
+   den Katalog. Schreibzugriffe erfolgen ausschließlich mit `P_WRITE = X`.
+8. Zusätzlich verhindert eine feste Prüfung von `SY-SYSID` und `SY-MANDT` jede
+   Ausführung außerhalb von `T76/090`. Der Report enthält absichtlich keine
+   Materialzuordnung und keine P76-Logik.
+
+Die erfolgreiche Schlussausgabe des Anwenders ist der operative Nachweis. Es wurden
+21 Merkmale und zwei Klassen angelegt; danach erschien die Abschlussmeldung `FERTIG`.
