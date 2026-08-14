@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-08-13
+Stand: 2026-08-14
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber
@@ -56,6 +56,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | Thema | Standard laden |
 | --- | --- |
 | Aktueller Produktiv-/Projektstand | `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, danach `docs/rag/PROJECT.md` |
+| **Persoenliche Aufgabenliste Ingo, „woran arbeite ich gerade", ZLO03/ZC12/ZZPRDAT-Arbeitsstand, Auftraggeber und Termine** | `projektmanagement/PROJEKTSTATUS.md` (fuehrend, IDs `PM-01` ff.). Finance-Details NICHT von dort beantworten, dafuer gilt das Issue-Log |
 | Finance Cockpit, Soll/Ist, Regeln, Laender | `docs/rag/FINANCE.md` |
 | Finance Formeln, Waehrung, Marge, Filter | `docs/rag/FINANCE_FORMELN.md` |
 | Finance Prozess, Audit-CSV, Sales_All, Pruefbuch | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` |
@@ -91,6 +92,11 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 - Detailquellen, Werkzeugbefehle und Suchbegriffe: `docs/RAG_DETAIL_INDEX.md`
 - Einordnung aktiver/historischer Dokumente:
   `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`
+- ABGELOEST, nicht laden: `projektmanagement/kontext.txt` ist ein
+  ChatGPT-Rohprotokoll vom 05.05. bis 10.08.2026 und beantwortet keine
+  Statusfrage. Es fuehrte am 2026-08-14 zwei Punkte falsch als offen, die
+  laengst erledigt beziehungsweise anders blockiert waren. Gueltig ist
+  `projektmanagement/PROJEKTSTATUS.md`.
 - Historie/Audit: `docs/raw_md_archive/`
 - Vollstaendiger vorheriger Routerstand:
   `docs/raw_md_archive/RAG_ROUTER_ARCHIV_2026-07-31.md`

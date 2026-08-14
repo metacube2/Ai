@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-13
+Stand: 2026-08-14
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -25,6 +25,35 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Alle im Rahmen dieser Sitzung beanspruchten Einkaufs-/Koordinationsdateien sind
   wieder frei; aktuell ist laut `docs/AGENT_COORDINATION.md` kein anderer Agent
   aktiv an einer reservierten Datei.
+
+## Projektmanagement verdichtet 2026-08-14 - nur Dokumentation
+
+- `projektmanagement/kontext.txt`, ein ChatGPT-Rohprotokoll vom 2026-05-05 bis
+  2026-08-10 mit 2025 Zeilen, wurde zu `projektmanagement/PROJEKTSTATUS.md`
+  verdichtet. Diese Datei ist ab jetzt die fuehrende persoenliche Aufgabenliste
+  mit den IDs `PM-01` ff.
+- Inhalt: sechs offene Arbeitspakete, 21 erledigte Punkte, Personenregister,
+  Arbeitsregeln und Pflegehinweise. Finance-Details bleiben ausdruecklich im
+  Issue-Log und werden dort nicht dupliziert.
+- `docs/RAG_ROUTER.md`: Themenzeile fuer `PROJEKTSTATUS.md` ergaenzt,
+  `kontext.txt` unter „Weitere Navigation" als ABGELOEST markiert.
+- **Zwei Statusangaben des Protokolls waren falsch** und wurden gegen das
+  Repository korrigiert. Das Einkaufsdashboard `PM-04` war dort als offen
+  gefuehrt, ist aber seit dem 2026-08-12 erledigt. `PM-01` ZLO03 stand als
+  „Klaerung offen", hat aber den Transport als echten Blocker: die Transaktion
+  startet `Z_ZLO03_TURBO2`, dort sind nur FIX 1, 2, 4, 5 enthalten, die Fixes 10
+  bis 18 wirken nicht.
+- `PM-02` ZC12: Codeanalyse nachgetragen. Kein Dump, sondern stilles
+  Ueberspringen mit Eintrag im Fehlerlog, weil `fmt_quan` Trailing-Nullen
+  entfernt und die nackte `0` von `CA02` abgewiesen wird. Die Verifikation ist
+  blockiert, weil `trace_open` ein hartes `return.` enthaelt und `p_debug`
+  auskommentiert ist, es existieren also keine Trace-Logs. Vorfrage in `SE93`:
+  ist `ZC12` die Transaktion zu `Z_ABGLEICH_KTSCH`?
+- `PM-06` PPWR neu aufgenommen und auf die vorhandene Codex-Dokumentation
+  verlinkt: 21 Merkmale und die Klassen `ZPPWR_PACKMITTEL` und `ZCOMP_STOFF` am
+  2026-08-13 in T76/090 angelegt. Pilotzuordnung und CL30N-Abnahme offen, P76
+  und Massenpflege gesperrt.
+- Kein Anwendungscode, kein Build, kein Test, kein Deploy.
 
 ## Marktumfrage in der Anwendung 2026-08-13 11:58 - PRODUKTIV mit Daten
 

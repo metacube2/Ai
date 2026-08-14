@@ -22,6 +22,7 @@ diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 | Codex | UI / Admin-Menues zusammenfuehren | `Services/DatabaseSeedService.cs`, `TrafagSalesExporter.Tests/NavigationMenuSeedTests.cs`, `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` | Produktiv deployed und in der DB verifiziert; 461/461 Tests gruen |
 | Codex | Einkauf / Produktgruppen direkt aus SAP | neue SAP-Refresh-Services, `Program.cs`, `Services/DatabaseInitializationService.cs`, Produktgruppenabfragen/UI/Tests, `TrafagSalesExporter.csproj`, `docs/abap/**`, Einkaufsdokumentation | Produktiv abgeschlossen: Delta Success, 45 SAP-OData-Regeln, 0 Excel-Regeln; SAP-Key-/Textpflege D1/D5 offen |
 | Claude | Finance / UK-2025-Wertfix | `.tmp_tools/CheckUk2025Result/**` (neu, nur Analysewerkzeug), lesend `neu.xlsx` und `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` | Abnahmepruefung abgeschlossen, kein Anwendungscode geaendert |
+| Claude | Projektmanagement / Verdichtung des Chatprotokolls | `projektmanagement/PROJEKTSTATUS.md` (neu), `projektmanagement/kontext.txt` (nur UEBERHOLT-Kopf ergaenzt) | Abgeschlossen am 2026-08-14: `kontext.txt` mit 2025 Zeilen ChatGPT-Protokoll zu `PROJEKTSTATUS.md` verdichtet, sechs offene Arbeitspakete PM-01 bis PM-06 und 21 erledigte Punkte. Beim Abgleich gegen das Repository korrigiert: PM-04 ist seit 2026-08-12 erledigt und PM-01 hat den Transport als echten Blocker, beides war im Protokoll falsch als „Klaerung offen" gefuehrt. Nachgetragen: ZC12-Codeanalyse als PM-02 und das PPWR-Paket als PM-06 mit Verweis auf die Codex-Dokumentation. Ebenfalls gepflegt: `docs/RAG_ROUTER.md` und `lastchange.md`. Kein Anwendungscode, keine Produktivdaten, kein Build, kein Deploy. Reservierung frei |
 
 ## Absprachen
 
@@ -42,6 +43,8 @@ diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 
 | Datei oder Aktion | Reserviert durch | Seit | Zweck / Status |
 |---|---|---|---|
+| `lastchange.md` | frei | 2026-08-14 | Abgeschlossen am 2026-08-14: Abschnitt „Projektmanagement verdichtet" nachgetragen, Stand auf 2026-08-14 gesetzt. Nur Dokumentation. Reservierung frei |
+| `docs/RAG_ROUTER.md` | frei | 2026-08-14 | Abgeschlossen am 2026-08-14: Themenzeile fuer `projektmanagement/PROJEKTSTATUS.md` im Themenverzeichnis, Warnhinweis auf das abgeloeste `projektmanagement/kontext.txt` unter „Weitere Navigation", Stand auf 2026-08-14 gesetzt. Nur Navigation, keine fachliche Aussage geaendert. Reservierung frei |
 | `Program.cs`, `TrafagSalesExporter.csproj`, `Services/DatabaseInitializationService.cs`, Produktgruppen-Services/UI/Tests und Einkaufs-/ABAP-Dokumentation | frei | 2026-08-12 | SAP-Aktivierung und produktiver Delta abgeschlossen; nur SAP-Key-/Textpflege und fachliche Stichprobe offen |
 | Produktivdeploy des gesamten aktuellen Workspace-Stands | frei | 2026-08-11 | Abgeschlossen und dokumentiert in `docs/DEPLOY_GESAMTSTAND_2026-08-11.md` |
 

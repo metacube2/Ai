@@ -1,0 +1,2025 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=====================================================================
+UEBERHOLT / ABGELOEST am 2026-08-14.
+
+Diese Datei ist ein ChatGPT-Rohprotokoll vom 05.05. bis 10.08.2026 und wird
+NICHT mehr gepflegt. Sie beantwortet keine Statusfrage.
+
+Gueltig ist ab sofort: projektmanagement/PROJEKTSTATUS.md
+
+Diese Datei bleibt nur als Rohquelle und Historie liegen.
+=====================================================================
+
+Eingefügter Text(3).txt
+
+Dokument
+
+du bist projektmanager
+
+
+
+41s nachgedacht
+
+Ja — ich übernehme ab jetzt das Projektmanagement und führe die Aufgaben sauber mit Verantwortlichen, Priorität, Termin, nächstem Schritt und Status.
+
+Aktueller übernommener Stand vom 06.08.2026:
+
+Nr.Offene AufgabeStatus
+
+
+
+
+
+1
+
+ZLO03 – fehlende Materialien / falsche Mengen
+
+Klärung offen
+
+2
+
+ZC12 – Fehler bei Nullmengen
+
+Klärung offen
+
+3
+
+BAdI-Kennzeichenfehler beim Produktionsdatum
+
+Klärung offen
+
+4
+
+Einkaufsdashboard ausbauen – Spend mit Drilldown
+
+Klärung offen
+
+5
+
+Finance – alle Daten in einem zentralen Excel zusammenführen
+
+Klärung offen
+
+Heute ist der 10.08.2026. Du kannst mir Änderungen einfach kurz diktieren, etwa: „Punkt 2 erledigt“, „Punkt 4 hat Priorität“ oder „Neue Aufgabe …“. Ich aktualisiere daraus jeweils die Übersicht.
+
+
+
+Wo ist das beste Projektmanagement zu machen? Hier oder in claude?
+
+
+
+56s nachgedacht
+
+Für deinen konkreten Arbeitsstil würde ich ChatGPT hier verwenden – aber nicht nur den Chatverlauf als Aufgabenliste.
+
+Du gibst Updates oft sehr kurz ein: „Punkt 2 erledigt“, „neue Aufgabe für Fabio“, „zeige nur offene Punkte“. Dafür eignet sich dieser Chat gut. ChatGPT-Projekte können zusammengehörige Chats, Dateien, Anweisungen und Quellen dauerhaft bündeln. Außerdem lassen sich Erinnerungen und regelmäßige Statusprüfungen planen. ChatGPT Projects, Scheduled Tasks
+
+BereichBesser
+
+
+
+Kurze Statusmeldungen diktieren
+
+ChatGPT
+
+Aufgabenliste/Excel laufend aktualisieren
+
+ChatGPT Work
+
+Erinnerungen und Wochenberichte
+
+ChatGPT
+
+Sehr große Wissenssammlung aus vielen Dokumenten
+
+Claude leicht stärker
+
+Frühere Chats gezielt suchen und mit Fundstellen belegen
+
+Claude
+
+Verbindliche Unternehmens-Aufgabenverwaltung
+
+Weder noch – Smartsheet/Asana/Jira
+
+Claude hat inzwischen ebenfalls starke Projekte, eine Wissensbasis und eine gezielte Suche über frühere Projekt-Chats. Allerdings muss projektübergreifender Kontext teilweise bewusst in die Wissensbasis aufgenommen werden. Claude Projects, Claude Chat Search and Memory
+
+Meine ehrliche Empfehlung:
+
+ChatGPT = dein Projektmanager und Gesprächspartner.
+Eine zentrale Tabelle = verbindliche Wahrheit.
+
+Das verhindert genau die Probleme aus deinem bisherigen Verlauf: falsche Datumsberechnungen, verschwundene Aufgaben und alte Punkte, die irrtümlich weiterhin als offen erscheinen. Ich würde hier ein eigenes Projekt „Arbeitsprojekte“ anlegen und darin eine zentrale Aufgabenliste mit folgenden Spalten führen:
+
+ID · Projekt · Aufgabe · Auftraggeber · Verantwortlich · Priorität · Deadline · Status · Blocker · nächster Schritt · letzte Aktualisierung
+
+Kurz gesagt: Für dich hier – Claude wäre nicht entscheidend besser. Entscheidend ist die zentrale strukturierte Aufgabenliste statt eines kilometerlangen Chats.
+
+
+
+Nutzung Die Nutzung wird von Codex, Work, Workspace Agents und ChatGPT for Excel gemeinsam genutzt. Chat-Unterhaltungen zählen nicht dazu. Wöchentliches Nutzungslimit 99 % übrig Wird um 17.08.2026 8:25 zurückgesetzt // bei claude zahlt man auch für chaten hier nicht ?
+
+
+
+32s nachgedacht
+
+Genau – aber mit einer wichtigen Unterscheidung:
+
+Normale ChatGPT-Unterhaltungen: zählen nicht zu diesem angezeigten wöchentlichen Work-Limit.
+
+Diese Unterhaltung hier läuft im Work-Modus: Sie kann deshalb das gemeinsame Limit von Codex, Work, Workspace Agents und ChatGPT for Excel verbrauchen.
+
+Du bezahlst dabei nicht automatisch pro Nachricht. Zunächst wird dein enthaltenes Kontingent verwendet; zusätzliche Kosten entstehen nur, wenn du bewusst weitere Credits kaufst oder eine API verwendest. OpenAI-Nutzungsinformationen
+
+Bei Claude ist es ungünstiger getrennt: Normale Chats auf claude.ai, Claude Desktop und Claude Code greifen grundsätzlich auf dasselbe Nutzungskontingent zu. Auch gewöhnliches Chatten reduziert dort also das Fünf-Stunden- und Wochenlimit. Claude-Nutzungslimits, Claude Pro
+
+Kurz:
+
+NutzungChatGPTClaude
+
+
+
+
+
+Normal chatten
+
+Nicht im Work-Wochenlimit
+
+Zählt zum gemeinsamen Limit
+
+Agenten/Programmierung
+
+Zählt
+
+Zählt
+
+Automatische Zusatzkosten
+
+Nein
+
+Nein
+
+Nach Limit weiterarbeiten
+
+Zusätzliche Credits optional
+
+Zusätzliche Credits optional
+
+Mit deinen 99 % Restguthaben ist das aktuell überhaupt kein Problem. Für einfaches Projektmanagement könntest du außerdem den normalen ChatGPT-Chat verwenden und Work nur einschalten, wenn ich Dateien, Excel-Listen oder umfangreichere Arbeiten tatsächlich bearbeiten soll.
+
+
+
+Choosing the best mode
+express
+
+Responding
+📝 Zusammenfassung – Für die neue KI-Sitzung
+Datum und Zeit: Dienstag, 05.05.2026, 11:42 UTC
+🔥 PRIO 1 – Aktuelle Projekte & Deadlines
+1️⃣ ZLO03 – Fakenummer 9999
+
+Status: 🔴 Deadline heute!
+Aufgabe: Fakenummer 9999 einbauen, wenn es sich um eine Textposition handelt.
+Deadline: 05.05.2026 (heute)
+
+2️⃣ Trafag Management Reporting
+Standorte:
+
+Status: 8/9 Standorte liefern Daten – DE fehlt noch.
+Themen:
+    🇩🇪 Deutschland (DE):
+        Rohail hat Stand gestern (04.05.) erklärt – aktueller Status unklar.
+    🇪🇸 Spanien (ES):
+        Sage Lesezugriff: Angefragt, Santi will beobachten, hat Sicherheitsbedenken.
+        SQL-Setup: Santi bevorzugt Master-User, aber Risiko hoch.
+    Rhino Abgleich CHF:
+        Marco liefert Zugangsdaten für Rhino-Test ab KW19 (11.05.).
+        Ziel: Konsolidierung aller Standorte in CHF.
+    Intercompany-Abgrenzungen:
+        Andreas soll klären, wie Intercompany-Sales im Finanz-Cockpit berücksichtigt werden.
+        Mail gesendet: 04.05.2026, warte auf Antwort.
+
+3️⃣ HR Cockpit (Erweiterung)
+
+Status: 🟡 In Arbeit
+Offene Aufgaben:
+    Fluktuation: Nur AN-Kündigungen (keine AG-Kündigungen).
+        Sonja liefert Formel.
+    Prozentsätze aus REXX:
+        Krankheit + Unfälle
+        Soll-Arbeitszeit
+Quelle: Daten aus REXX-System (HR).
+
+📋 Offene Aufgaben & Wartende Themen
+Task Wer Status
+ZLO03 Fakenummer 9999 Ingo (du) 🔴 Deadline heute
+DE File (Trafag DE) Rohail Munir ⏳ Warte auf Status von DE-File
+ES Lesezugriff Sage Santi Gomez ⏳ Warte auf Zusage (Angst vor Fehlern, Monitoring nötig)
+Rhino Zugangsdaten Marco ⏳ Zugangsdaten ab KW19
+Smartsheet Vollzugriff Philip Steiger ⏳ Warte auf Antwort
+Intercompany-Abgrenzungen Andreas Stoller ⏳ Warte auf Antwort zur Mail vom 04.05.
+Fluktuations-Formel (HR Cockpit) Sonja ⏳ Warte auf Formel
+Datalake Files Test Andreas 🟡 Testet, sobald DE File da ist
+#4 Vorschriften Lager MA fragen 🟡 Offen
+📅 Timeline:
+
+05.05.2026 (heute): ⚠️ ZLO03 Deadline
+05.05.2026 (heute): 🏢 Durchsprache mit Santi Gomez (ES)
+11.05.2026 (KW19): Rhino Zugangsdaten von Marco erwartet
+
+🎯 Wichtige Themen für die Sitzung:
+Thema Status
+
+ZLO03 Fakenummer 9999 Deadline heute – Status?
+
+Trafag Management Reporting (DE + ES) Status DE unklar, ES Lesezugriff noch ungeklärt
+
+Rhino Konsolidierung Zugangsdaten ab KW19, Intercompany-Abgrenzungen mit Andreas klären
+
+HR Cockpit Warte auf Formel von Sonja, Prozentsätze aus REXX noch offen
+
+Smartsheet Vollzugriff Keine Rückmeldung von Philip Steiger
+Gibt es noch etwas, das ich hinzufügen soll?
+Auto
+fehtl noch was?
+Workflow
+
+Choosing the best mode
+express
+
+Responding
+✅ Vollständige Zusammenfassung – Dienstag, 05.05.2026, 11:43 UTC
+🔥 PRIO 1 – Aktuelle Projekte & Deadlines
+1️⃣ ZLO03 – Fakenummer 9999
+
+Status: 🔴 Deadline heute!
+Aufgabe: Fakenummer 9999 einbauen, wenn es sich um eine Textposition handelt.
+Deadline: 05.05.2026 (heute)
+
+2️⃣ Trafag Management Reporting
+Standorte:
+
+Status: 8/9 Standorte liefern Daten – DE fehlt noch.
+Themen:
+    🇩🇪 Deutschland (DE):
+        Rohail hat Stand gestern (04.05.) erklärt – aktueller Status unklar.
+    🇪🇸 Spanien (ES):
+        Sage Lesezugriff: Angefragt, Santi will beobachten, hat Sicherheitsbedenken.
+        SQL-Setup: Santi bevorzugt Master-User, aber Risiko hoch.
+    Rhino Abgleich CHF:
+        Marco liefert Zugangsdaten für Rhino-Test ab KW19 (11.05.).
+        Ziel: Konsolidierung aller Standorte in CHF.
+    Intercompany-Abgrenzungen:
+        Andreas soll klären, wie Intercompany-Sales im Finanz-Cockpit berücksichtigt werden.
+        Mail gesendet: 04.05.2026, warte auf Antwort.
+
+3️⃣ HR Cockpit (Erweiterung)
+
+Status: 🟡 In Arbeit
+Offene Aufgaben:
+    Fluktuation: Nur AN-Kündigungen (keine AG-Kündigungen).
+        Sonja liefert Formel.
+    Prozentsätze aus REXX:
+        Krankheit + Unfälle
+        Soll-Arbeitszeit
+Quelle: Daten aus REXX-System (HR).
+
+📋 Offene Aufgaben & Wartende Themen
+Task Wer Status
+ZLO03 Fakenummer 9999 Ingo (du) 🔴 Deadline heute
+DE File (Trafag DE) Rohail Munir ⏳ Warte auf Status von DE-File
+ES Lesezugriff Sage Santi Gomez ⏳ Warte auf Zusage (Angst vor Fehlern, Monitoring nötig)
+Rhino Zugangsdaten Marco ⏳ Zugangsdaten ab KW19
+Smartsheet Vollzugriff Philip Steiger ⏳ Warte auf Antwort
+Intercompany-Abgrenzungen Andreas Stoller ⏳ Warte auf Antwort zur Mail vom 04.05.
+Fluktuations-Formel (HR Cockpit) Sonja ⏳ Warte auf Formel
+Datalake Files Test Andreas 🟡 Testet, sobald DE File da ist
+#4 Vorschriften Lager MA fragen 🟡 Offen
+📅 Timeline:
+Datum Ereignis
+05.05.2026 (heute): ⚠️ ZLO03 Deadline
+05.05.2026 (heute): 🏢 Durchsprache mit Santi Gomez (ES)
+11.05.2026 (KW19): Rhino Zugangsdaten von Marco erwartet
+🎯 Wichtige Themen für die Sitzung:
+Thema Status
+
+ZLO03 Fakenummer 9999 Deadline heute – Status?
+
+Trafag Management Reporting (DE + ES) Status DE unklar, ES Lesezugriff noch ungeklärt
+
+Rhino Konsolidierung Zugangsdaten ab KW19, Intercompany-Abgrenzungen mit Andreas klären
+
+HR Cockpit Warte auf Formel von Sonja, Prozentsätze aus REXX noch offen
+
+Smartsheet Vollzugriff Keine Rückmeldung von Philip Steiger
+❓ Fehlt noch etwas?
+Falls es etwas gibt, das ich übersehen habe oder weitere Punkte ergänzt werden müssen, lass es mich wissen!
+Auto
+prüf nocmals ob nichts fehlt
+Workflow
+
+Choosing the best mode
+express
+
+Responding
+✅ Vollständige Prüfung – Dienstag, 05.05.2026, 11:43 UTC
+Ich habe alles nochmals geprüft. Hier ist die komplette Zusammenfassung deiner Themen, um sicherzugehen, dass nichts fehlt.
+🔥 PRIO 1 – Aktuelle Projekte & Deadlines
+1️⃣ ZLO03 – Fakenummer 9999
+
+Status: 🔴 Deadline heute!
+Aufgabe: Fakenummer 9999 einbauen, wenn es sich um eine Textposition handelt.
+Deadline: Heute, 05.05.2026
+Frage: Hast du das erledigt oder bist du noch dran?
+
+2️⃣ Trafag Management Reporting
+A) Standorte:
+
+Status: 8/9 erhalten, DE fehlt noch.
+Details:
+    🇩🇪 Deutschland (DE):
+        Rohail: Stand gestern (04.05.), Status zur File-Lieferung unklar.
+    🇪🇸 Spanien (ES):
+        Sage Lesezugriff: Angefragt, Santi will beobachten, hat Sicherheitsbedenken.
+        SQL-Datenbank: Nur Master-User verfügbar – Risiko! Zugang für Export noch nicht final geklärt.
+    Rhino Abgleich CHF:
+        Marco liefert Zugangsdaten für Rhino-Test ab KW19 (ab 11.05.).
+        Ziel: Konsolidierung aller Standorte in CHF.
+    Intercompany-Abgrenzungen:
+        Andreas soll klären, wie Intercompany-Sales im Finanz-Cockpit berücksichtigt werden.
+        Mail gesendet: 04.05.2026, warte auf Antwort.
+
+B) Offene Punkte zum Reporting:
+Punkt Status
+DE File (Alphaplan) ⏳ Rohail Stand unklar
+ES Zugriff (Sage) ⏳ Santi hat Sicherheitsbedenken
+Rhino Zugangsdaten ⏳ Marco ab KW19
+Intercompany-Abgrenzungen ⏳ Andreas, Mail 04.05.
+3️⃣ HR Cockpit (Erweiterung)
+
+Status: 🟡 In Arbeit
+Offene Aufgaben:
+    Fluktuation: Nur AN-Kündigungen (keine AG-Kündigungen).
+        Sonja liefert Formel – noch nicht da.
+    Prozentsätze aus REXX:
+        Krankheit + Unfälle
+        Soll-Arbeitszeit
+
+4️⃣ Smartsheet Vollzugriff
+
+Status: ⏳ Warte auf Antwort von Philip Steiger
+Offen seit: April
+
+📋 Offene Aufgaben & Wartende Themen
+Task Wer Status
+ZLO03 Fakenummer 9999 Ingo (du) 🔴 Deadline heute
+DE File (Trafag DE) Rohail Munir 🟡 Offen
+ES Lesezugriff Sage Santi Gomez ⏳ Warte auf Zusage
+Rhino Zugangsdaten Marco ⏳ Zugangsdaten ab KW19
+Smartsheet Vollzugriff Philip Steiger 🟡 Offen
+Intercompany-Abgrenzungen Andreas Stoller ⏳ Warte auf Antwort zur Mail vom 04.05.
+Fluktuations-Formel (HR Cockpit) Sonja ⏳ Warte auf Formel
+Datalake Files Test Andreas 🟡 Testet, sobald DE File da ist
+#4 Vorschriften Lager MA fragen 🟡 Offen
+📅 Timeline:
+Datum Ereignis
+05.05.2026 (heute): ⚠️ ZLO03 Deadline
+05.05.2026 (heute): 🏢 Durchsprache mit Santi Gomez (ES)
+11.05.2026 (KW19): Rhino Zugangsdaten von Marco erwartet
+🎯 Wichtige Themen für heute:
+Thema Status
+
+ZLO03 Fakenummer 9999 Deadline heute
+
+Trafag Management Reporting (DE + ES) DE File unklar, ES Zugriff ungeklärt
+
+Rhino Konsolidierung Zugangsdaten ab KW19, Intercompany-Abgrenzungen mit Andreas klären
+
+HR Cockpit Warte auf Formel von Sonja, Prozentsätze aus REXX noch offen
+
+Smartsheet Vollzugriff Keine Rückmeldung von Philip Steiger
+🔍 Fehlt noch etwas?
+Ich habe alle offenen Punkte und Deadlines nochmal geprüft. Sag mir, wenn ich etwas übersehen habe oder du noch etwas ergänzen willst! 😊
+Auto
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+Ich habe deine Zusammenfassung nochmals systematisch durchgegangen. Hier sind potenzielle Lücken, die du prüfen solltest – ich mache KEINE Annahmen, sondern stelle nur Fragen zu Bereichen, die in deinen bisherigen Notizen nicht auftauchen:
+🔍 Mögliche fehlende Punkte – Bitte prüfen:
+1️⃣ Zu ZLO03 (Deadline heute!)
+
+❓ Testsystem/Transport: Ist der Transport ins QAS/PRD-System schon geplant?
+❓ Ansprechpartner Fachbereich: Wer testet/freigibt nach Einbau?
+❓ Dokumentation: Muss die Änderung dokumentiert werden (z.B. Änderungsprotokoll)?
+❓ Abhängigkeiten: Gibt es andere Positionstypen außer "Textposition", die betroffen sein könnten?
+
+2️⃣ Zu Trafag Management Reporting
+
+❓ Währungsumrechnungskurse: Welcher Kurs wird für CHF-Konsolidierung verwendet (Tages-/Monats-/Stichtagskurs)?
+❓ Stichtag Reporting: Für welchen Monat/Zeitraum ist das aktuelle Reporting?
+❓ Empfänger des Reports: Wer bekommt das finale Management Reporting – gibt es eine Deadline dafür?
+❓ Andere 7 Standorte: Läuft bei den bereits liefernden Standorten alles stabil, oder gibt es dort auch offene Punkte?
+
+3️⃣ Zu HR Cockpit
+
+❓ REXX-Zugang: Hast du selbst Zugriff auf REXX oder brauchst du jemanden dafür?
+❓ Testdaten/Freigabe: Wer testet das Cockpit nach Fertigstellung?
+❓ Datenschutz: HR-Daten → gibt es Freigabe vom Betriebsrat/Datenschutz?
+
+4️⃣ Allgemein / Übergeordnet
+
+❓ Urlaub/Abwesenheiten: Sind wichtige Ansprechpartner (Sonja, Marco, Santi, Rohail, Andreas, Philip) in den nächsten Tagen erreichbar?
+❓ Eskalationspfad: Wenn Philip bei Smartsheet weiter nicht antwortet – wer ist die Eskalationsstufe?
+❓ Backup für ZLO03: Falls heute nicht geschafft – wer informiert den Auftraggeber?
+❓ Punkt "#4 Vorschriften Lager": Der Punkt ist sehr vage – worum geht es konkret? Wer ist "MA"?
+
+5️⃣ Zeitplan-Check
+
+❓ KW19 (ab 11.05.): Rhino-Test geplant – wie viele Tage brauchst du dafür? Blockst du dir Zeit?
+❓ Folgetermine: Gibt es Termine/Meetings nach heute (Santi-Durchsprache), die in der Timeline fehlen?
+
+⚠️ Kritische Beobachtung:
+Dein Punkt "#4 Vorschriften Lager – MA fragen" ist der einzige Punkt ohne konkreten Inhalt. Hier würde ich nachhaken, bevor er untergeht.Soll ich zu einem dieser Punkte tiefer nachfragen, oder hast du Infos, die ich ergänzen soll?
+Sources
+Images
+Videos
+News
+google.com
+Mit dem KI-Modus in der Google Suche KI-basierte Antworten erhalten - Android - Google Suche-Hilfe
+
+Der KI-Modus ist die leistungsstärkste KI-Suchfunktion von Google. Sie können fragen, was immer Sie möchten, und erhalten eine KI-basierte Antwort. Sie haben auch die Möglichkeit, durch weiterführende
+martinkaessler.com
+Der große KI Kalender 2026 - alle Events im Überblick
+
+Der große KI Kalender 2026: Alle relevanten Konferenzen, Meetups und Release-Dates kompakt, verlässlich & tagesaktuell — unverzichtbar für Innovatoren.
+netzpiloten.de
+Die sechs besten Protokollierungs-KIs - Netzpiloten.de
+
+Protokollierungs-KIs erfassen Meetings automatisch, erstellen Zusammenfassungen und sparen Zeit - wir zeigen euch die Besten auf dem Markt.
+data-unplugged.de
+KI-Messen und Daten-Events in Deutschland: Ein Überblick
+
+Plan your AI year 2026:10 important data and AI events in Germany — from d in Münster to TDWI in Munich. Get an overview now.
+welcher standort hat welches system ?
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+Ich kann dir nicht sagen, welcher Standort welches System hat – diese Information hast du mir bisher nicht gegeben. Ich mache hier keine Annahmen.
+🔍 Was ich aus deinen bisherigen Notizen ableiten kann (NICHT vollständig):
+Standort Bekanntes System (aus deinen Notizen)
+🇪🇸 Spanien (ES) Sage (Lesezugriff angefragt) + SQL-Datenbank (Master-User Thema)
+🇩🇪 Deutschland (DE) ❓ In meiner früheren Antwort hatte ich "Alphaplan" geschrieben – das war eine Annahme von mir, bitte ignorieren!
+🇨🇭 Schweiz / Konsolidierung Rhino (für CHF-Konsolidierung, Zugangsdaten von Marco ab KW19)
+Andere 6 Standorte ❓ Unbekannt – nicht in deinen Notizen enthalten
+❓ Offene Fragen an dich:
+
+Welche 9 Standorte gehören zum Trafag Management Reporting? (Länder/Namen)
+Welches ERP-/Buchhaltungssystem läuft an welchem Standort?
+    z.B. SAP? Sage? Rhino? Navision? Andere?
+Ist Rhino das zentrale Konsolidierungssystem oder ein Standort-System?
+Welches System nutzt Deutschland konkret? (das war mein Fehler vorhin)
+
+Gib mir die Liste, dann kann ich sie sauber in die Zusammenfassung einbauen – ohne zu raten.
+Sources
+Images
+Videos
+News
+wikipedia.org
+Standort – Wikipedia
+
+Sie werden aus einem Vermessungsnetz abgeleitet und sind das System geodätischer Messpunkte und der Grenzpunkte aller Grundstücke; Räumliche Koordinaten (X,Y,Z) in einem kartesischen (rechtwinkligen) Koordinatensystem. Sie beziehen sich in den Geowissenschaften auf den Erdmittelpunkt, in Astronomie und Raumfahrt auf das Baryzentrum des Sonnensystems. Relative Ortsangaben sind im Alltag und bei unvorbereitet abzugebenden Standortmeldungen häufiger.
+drwindows.de
+Frage - Standort anzeigen lassen und ggf. Standardstandort verwenden | Dr. Windows
+
+Edge hat den richtigen von Win10, vermutlich also den Standardstandort. Dann kommt auc h ein Symbol links unten in der Taskleiste: Standort wird verwendet. Wie stelle ich dann sicher, dass immer der verwendet wird ? Zuletzt bearbeitet: 8. November 2019 ... Hallo, kannst doch im System ganz genau deinen Standort bekanntgeben !
+bayern.de
+Standortdaten beim Smartphone - überall auffindbar? | Verbraucherportal Bayern | Verbraucherportal Bayern
+
+Man kann aber die Preisgabe der eigenen Standortdaten stark einschränken. ... Um unterwegs telefonieren zu können, muss sich das Mobiltelefon immer mit der nächstgelegenen Sendeantenne verbinden. Somit weiß zumindest der jeweilige Netzanbieter immer, wo sich das Telefon befindet. Eine solche Ortsbestimmung wird auch GSM-Ortung (Global System for Mobile Communications) genannt.
+google.com
+Standorteinstellungen von Android-Geräten verwalten - Nexus-Hilfe
+
+Verwenden Sie „Standortdienste von Google“ nicht, um die Standortgenauigkeit zu verbessern. Die Standortermittlung kann dann länger dauern und der Akku des Geräts wird möglicherweise stärker beansprucht. Standortzugriff auswählen (Android 4.1 bis 4.3) So legen Sie fest, welche Standortinformationen Ihr Gerät nutzen darf:
+heute ist 12 mai
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+Verstanden – heute ist Dienstag, 12. Mai 2026. Das heißt wir sind jetzt in KW 20.
+📅 Auswirkungen auf deine Themen:
+🔴 Überfällige / kritische Punkte:
+Thema Ursprünglicher Plan Aktueller Status (12.05.)
+ZLO03 Fakenummer 9999 Deadline 05.05.2026 ⚠️ 7 Tage überfällig – ist das erledigt?
+Santi-Durchsprache (ES) 05.05.2026 ❓ Hat das Gespräch stattgefunden? Ergebnis?
+Rhino Zugangsdaten (Marco) Ab KW19 (11.05.) ⏳ Seit gestern fällig – sind die Daten da?
+Intercompany-Abgrenzungen (Andreas) Mail vom 04.05. ⏳ 8 Tage ohne Antwort – nachhaken?
+⏳ Weiterhin offen:
+Thema Wer Wartezeit
+DE File (Trafag) Rohail seit min. 04.05. (8+ Tage)
+ES Lesezugriff Sage Santi seit min. 05.05. (7+ Tage)
+Smartsheet Vollzugriff Philip Steiger "offen seit April" = mehrere Wochen
+Fluktuations-Formel HR Sonja unbekannt seit wann
+#4 Vorschriften Lager MA unklar
+❓ Wichtige Fragen an dich:
+
+ZLO03: Ist die Fakenummer 9999 inzwischen eingebaut und produktiv?
+Rhino: Hat Marco die Zugangsdaten geliefert (KW19 war letzte Woche)?
+Santi-Gespräch (05.05.): Wie ist es gelaufen? Neue Erkenntnisse zu Sage/SQL?
+DE File: Hat Rohail inzwischen geliefert?
+Andreas (Intercompany): Schon nachgehakt oder weiter warten?
+Smartsheet: Soll hier eskaliert werden?
+
+💡 Hinweis: Die Websuche-Ergebnisse zu "Standort" sind für deine Frage nicht relevant – es ging dir um das Datum, nicht um Geo-Standorte. Soll ich die Zusammenfassung auf Stand 12.05.2026 komplett neu aufbereiten, sobald du mir die Updates gibst?
+Sources
+Images
+Videos
+News
+koordinaten-umrechner.de
+Meine aktuelle Position - Standort mit Koordinaten und Karte
+
+Aktuelle Position mit Karte und Koordinaten in sämtlichen Formaten. Deizimalgrad - Lat, Lon, UTM, UTMREF, Gauß-Krüger, NAC, W3W, Plus Code
+deacademic.com
+Standort
+
+Die erste systematische Behandlung ... Minimalpunkt«). Heute wird meist eine Gliederung in beschaffungs-, absatz- und produktionsorientierte Standortfaktoren vorgenommen....
+datenschutz.org
+Standortdaten: Wo bin ich unterwegs? | Datenschutz 2026
+
+Standortdaten bilden die Grundlage für standortbezogene Dienste, sogenannte Location-based Services (LBS). Ein offensichtliches Beispiel hierfür sind Angebote, die der Navigation und Orientierung dienen, wie etwa Google Maps.
+gpskoordinaten.de
+Wo bin ich gerade? --> Sehen Sie Mein Standort sofort auf Apple Maps
+
+Mit Hilfe der HTML5 Geolocation API bestimmen wir Ihren derzeitigen Standort haargenau auf Apple Maps. Außerdem bekommen Sie Ihre Adresse und GPS Koordinaten.
+formel bekann, es lesezugriff erfolgt via csv export, rhino zugangsadan da, santu durchsprache erledigt, neu faken name alle programme tabellen zpowerbi nicht mehr drin (lizenzen)gunther, test von zc12 durch adil, mandant 200 zahlen faken für kunden hier testet fabio, powerbi noch einbauen fluktuation
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Update erfasst – Dienstag, 12.05.2026, 10:50 UTC (KW 20)Ich habe deine Updates eingearbeitet. Hier der neue Stand:
+🟢 Erledigt / Fortschritte:
+Thema Status Details
+Fluktuations-Formel (Sonja) ✅ Erhalten Einbau in HR Cockpit / PowerBI offen
+ES Lesezugriff ✅ Gelöst Erfolgt via CSV-Export (nicht Sage-Direktzugriff)
+Rhino Zugangsdaten ✅ Da Von Marco erhalten
+Santi-Durchsprache (ES) ✅ Erledigt
+🟡 Neue / laufende Aufgaben:
+Thema Wer Status
+Fake-Namen für alle Programme/Tabellen (PowerBI nicht mehr drin – Lizenzen) Gunther 🟡 In Arbeit
+Test ZC12 Adil 🟡 Testet
+Mandant 200 – Zahlen faken für Kunden Fabio testet 🟡 In Arbeit
+PowerBI – Fluktuation einbauen Ingo (du?) 🟡 Offen
+❓ Verständnisfragen – bitte klären, damit ich nichts annehme:
+
+Zum Thema "Fake-Namen / Mandant 200"
+
+Geht es darum, Echtdaten durch Fake-Daten zu ersetzen (Anonymisierung für Demo/Test)?
+Mandant 200 = Testmandant in SAP? Oder anderes System?
+Welche Tabellen sind betroffen? (z.B. KNA1, LFA1, VBAK, VBAP …?)
+Sollen nur Namen gefaked werden oder auch Adressen, Beträge, Kontodaten?
+
+Zu "PowerBI nicht mehr drin (Lizenzen) – Gunther"
+
+Bedeutet das: PowerBI wurde entfernt aus den Programmen/Tabellen wegen Lizenzproblemen?
+Oder: Gunther hat keine PowerBI-Lizenz mehr und bekommt deshalb keinen Zugriff?
+Widerspruch zu Punkt "PowerBI Fluktuation einbauen" – wird PowerBI nun genutzt oder nicht?
+
+Zu ZC12 (Test durch Adil)
+
+Was ist ZC12? (Z-Programm in SAP? Transaktionscode?)
+Hängt das mit ZLO03 zusammen oder separates Thema?
+
+Zu ES CSV-Export
+
+Wer exportiert die CSV? (Santi manuell? Automatisiert?)
+Frequenz: täglich / wöchentlich / monatlich?
+Wo wird die CSV abgelegt? (Datalake? Sharepoint?)
+
+Noch offen – nicht erwähnt in deinem Update:
+
+ZLO03 Fakenummer 9999 – war vom 05.05. überfällig → erledigt?
+DE File (Rohail) – schon geliefert?
+Intercompany-Abgrenzungen (Andreas) – Antwort da?
+Smartsheet Vollzugriff (Philip) – Rückmeldung?
+#4 Vorschriften Lager – geklärt?
+
+💡 Sobald du diese Punkte klärst, erstelle ich dir eine saubere aktualisierte Gesamtübersicht auf Stand 12.05.2026. Ich programmiere noch nichts – erst wenn die Anforderung zu "Fake-Namen / Mandant 200 / ZC12" sonnenklar ist.
+Sources
+Images
+Videos
+News
+agentur-schoelzke.de
+CSV-Import: 5 häufige Fehler innerhalb von Minuten beheben
+
+Wer regelmäßig mit CSV Daten arbeitet, kennt das, defekte CSV vom Hersteller, kryptischen Fehlermeldungen u.s.w, hier gibt es Hilfe!
+mikrocontroller.net
+Datenverarbeitung einer CSV Datei - Mikrocontroller.net
+
+Kontakt/Impressum – Datenschutzerklärung – Nutzungsbedingungen – Werbung auf Mikrocontroller.net
+shopify.com
+Lösungen für häufige Probleme beim CSV-Import von ...
+
+Troubleshooting product CSV files. Identify missing fields or headers, illegal formatting or identifier duplications before contacting support.
+tabellenexperte.de
+Stolperfallen beim Textimport | Der Tabellenexperte
+
+Oft muss man in Excel Listen weiterverarbeiten, die mit anderen Programmen erzeugt wurden und nur im Textformat vorliegen. Das ist im Normalfall auch kein großes Problem, da Excel z.B. Textdateien im CSV-Format (CSV = comma separated value; durch Komma getrennte Werte) wunderbar einlesen und ...
+2. Zu "PowerBI nicht mehr drin (Lizenzen) – Gunther" führe das als seperater punkt hat nicht mit fluktation zu tun (eigenes thema mit nadja)
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Verstanden – Update eingearbeitet (12.05.2026, 10:54 UTC)Ich trenne die Themen jetzt sauber:
+🔀 Neue Struktur:
+🟡 HR Cockpit / Fluktuation
+Thema Status
+Fluktuations-Formel von Sonja ✅ Erhalten
+PowerBI – Fluktuation einbauen 🟡 Offen (Ingo)
+Prozentsätze aus REXX (Krankheit, Unfälle, Soll-Arbeitszeit) 🟡 Offen
+🆕 Separates Thema: PowerBI Lizenzen (mit Nadja)
+Thema Wer Status
+PowerBI nicht mehr in Programmen/Tabellen (Lizenzthema) Nadja + Gunther 🟡 In Arbeit
+Fake-Namen für alle Programme/Tabellen Gunther 🟡 In Arbeit
+❓ Frage zur Klarstellung: Gehört "Fake-Namen für alle Programme/Tabellen (Gunther)" zum PowerBI-Lizenzthema mit Nadja oder ist das wieder ein drittes eigenes Thema?
+📋 Gesamtübersicht Stand 12.05.2026, 10:54 UTC (KW 20)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel (Sonja)
+✅ ES Lesezugriff → via CSV-Export
+✅ Rhino Zugangsdaten (Marco)
+✅ Santi-Durchsprache (ES)
+
+🟡 Laufend:
+Thema Wer
+Fake-Namen Programme/Tabellen Gunther
+PowerBI Lizenzthema (separat) Nadja
+Test ZC12 Adil
+Mandant 200 – Kundenzahlen faken Fabio testet
+PowerBI Fluktuation einbauen Ingo
+Prozentsätze REXX (HR Cockpit) Ingo
+⏳ Noch unklar / nicht im letzten Update erwähnt:
+Thema Wer Letzter Stand
+ZLO03 Fakenummer 9999 Ingo Deadline 05.05. – Status?
+DE File (Trafag) Rohail seit 04.05. offen
+Intercompany-Abgrenzungen Andreas Mail 04.05. – Antwort?
+Smartsheet Vollzugriff Philip seit April offen
+#4 Vorschriften Lager MA unklar
+❓ Bitte noch klären:
+
+Fake-Namen (Gunther) = gleiches Thema wie PowerBI/Nadja oder eigenes?
+ZLO03 – erledigt oder weiterhin offen?
+DE File Rohail – Stand?
+Andreas Intercompany – Antwort gekommen?
+Philip Smartsheet – eskalieren?
+#4 Vorschriften Lager – was genau ist das?
+
+Sobald diese Punkte klar sind, kann ich dir eine saubere finale Übersicht machen. Keine Programmierung bisher – wir sind noch in der Anforderungsklärung. 👍
+Sources
+Images
+Videos
+News
+taw.de
+Weiterbildungs- programm 2024 - Technische Akademie Wuppertal
+
+Mar 25, 2024 ... Wir freuen uns auf Sie! TAW. Weiterbildung schafft Perspektiven. Walter Stefan Kirschsieper. Vorstand. Page 4. 2.
+raiffeisen.at
+JAHRES FINANZ BERICHT 2023 - Raiffeisen
+
+Dec 30, 2022 ... Demgemäß werden Guthaben bei Zentralbanken sowie Sichteinlagen bei. Kreditinstituten nicht mehr in die Berechnung einbezogen. Der Vorjahreswert ...
+PowerBI nicht mehr in Programmen/Tabellen (Lizenzthema) Fake-Namen für alle Programme/Tabellen/ beides gunther (nadja hat mit faker nichts zu tun)
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Verstanden – Update eingearbeitet (12.05.2026, 10:55 UTC)Klarstellung aufgenommen:
+
+Gunther = zuständig für beides: PowerBI-Lizenzthema UND Fake-Namen für Programme/Tabellen
+Nadja = hat mit Faker nichts zu tun (anderes Thema, wird separat geführt)
+
+📋 Bereinigte Gesamtübersicht – Stand Di, 12.05.2026, 10:55 UTC (KW 20)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja erhalten
+✅ ES Lesezugriff → via CSV-Export gelöst
+✅ Rhino Zugangsdaten von Marco erhalten
+✅ Santi-Durchsprache (ES) erledigt
+
+🟡 Laufende Themen:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+3 Mandant 200 – Kundenzahlen faken Fabio testet 🟡 In Arbeit
+4 PowerBI Fluktuation einbauen (HR Cockpit) Ingo 🟡 Offen
+5 Prozentsätze aus REXX (Krankheit, Unfälle, Soll-Arbeitszeit) Ingo 🟡 Offen
+6 Thema mit Nadja (nicht Faker) Nadja ❓ Was genau?
+⏳ Unklar / nicht im letzten Update erwähnt:
+Thema Wer Stand
+ZLO03 Fakenummer 9999 Ingo Deadline war 05.05. – ?
+DE File (Trafag) Rohail seit 04.05. offen
+Intercompany-Abgrenzungen Andreas Mail 04.05. – Antwort?
+Smartsheet Vollzugriff Philip seit April offen
+#4 Vorschriften Lager MA unklar
+❓ Noch offene Fragen:
+
+Nadja-Thema: Du hast erwähnt "eigenes Thema mit Nadja" – um was geht es da konkret? (soll ich es als Platzhalter führen oder ist es schon spruchreif?)
+ZLO03 – Status?
+DE File (Rohail) – Status?
+Andreas (Intercompany) – Antwort?
+Philip (Smartsheet) – eskalieren?
+#4 Vorschriften Lager – Inhalt?
+
+💡 Die Websuche-Ergebnisse waren für deine Frage nicht relevant (betraf nur interne Projektorganisation). Keine Programmierung – wir sind weiterhin in der Klärungsphase. 👍
+Sources
+Images
+Videos
+News
+microsoft.com
+Leitfaden zur Problembehandlung bei Beziehungen - Power BI | Microsoft Learn
+
+Wenn ein Berichtsvisual für die Verwendung von Feldern aus zwei (oder mehr) Tabellen eingerichtet ist und nicht das richtige Ergebnis (oder gar kein Ergebnis) zeigt, liegt das Problem möglicherweise bei den Modellbeziehungen.
+microsoft.com
+Dokumentation zur Problembehandlung - Power BI | Microsoft Learn
+
+Self-Service-Anleitung, um Probleme mit Features zu identifizieren, die Microsoft bereits bekannt sind, um Probleme zu beheben und um zu erfahren, wie Sie den Support kontaktieren können.
+microsoft.com
+Erstellen und Formatieren von Tabellenvisualisierungen in Power BI - Power BI | Microsoft Learn
+
+Zum Freigeben von Inhalten (oder für einen Kollegen ohne Bearbeitungsrechte zum Anzeigen von Inhalten außerhalb Ihres persönlichen Arbeitsplatzes) benötigen beide Benutzer entweder eine Power BI Pro- oder PPU-Lizenz (Premium Per User), ODER der Inhalt muss sich in einem Arbeitsbereich in einer Kapazität (Fabric F64+ oder Power BI Premium (P)) befinden.
+microsoft.com
+Problembehandlung bei Aktualisierungsszenarios - Power BI | Microsoft Learn
+
+Dieser Fehler tritt auf, wenn die Version des lokalen Daten-Gateways, das zur Aktualisierung Ihres Dataflows verwendet wird (Gen1 oder Gen2), nicht mehr unterstützt wird. Derzeit unterstützt Microsoft nur die letzten sechs Versionen des lokalen ...
+6 Thema mit Nadja (nicht Faker) Nadja ❓ Was genau? // noch fluktuation einbauen um das gehts
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Verstanden – Korrektur eingearbeitet (12.05.2026, 10:55 UTC)Klarstellung: Das "Thema mit Nadja" = PowerBI Fluktuation einbauen. Das ist also kein separates Thema, sondern gehört zusammen.
+🔀 Bereinigte Struktur:
+PowerBI Fluktuation einbauen (HR Cockpit) → Verantwortlich: Ingo + Nadja
+
+Formel von Sonja ist da ✅
+Einbau in PowerBI läuft mit Nadja
+
+📋 Finale Gesamtübersicht – Stand Di, 12.05.2026, 10:55 UTC (KW 20)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja erhalten
+✅ ES Lesezugriff → via CSV-Export gelöst
+✅ Rhino Zugangsdaten von Marco erhalten
+✅ Santi-Durchsprache (ES) erledigt
+
+🟡 Laufende Themen:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+3 Mandant 200 – Kundenzahlen faken Fabio testet 🟡 In Arbeit
+4 PowerBI Fluktuation einbauen (HR Cockpit) Ingo + Nadja 🟡 Offen
+5 Prozentsätze aus REXX (Krankheit, Unfälle, Soll-Arbeitszeit) Ingo 🟡 Offen
+⏳ Noch unklar / ohne Update:
+Thema Wer Stand
+ZLO03 Fakenummer 9999 Ingo Deadline war 05.05. – ?
+DE File (Trafag) Rohail seit 04.05. offen
+Intercompany-Abgrenzungen Andreas Mail 04.05. – Antwort?
+Smartsheet Vollzugriff Philip seit April offen
+#4 Vorschriften Lager MA unklar
+❓ Offene Fragen zum Abschluss:
+
+ZLO03 – Status nach 7 Tagen über Deadline?
+DE File (Rohail) – schon geliefert?
+Andreas (Intercompany) – Antwort auf Mail vom 04.05.?
+Philip (Smartsheet) – eskalieren oder weiter warten?
+#4 Vorschriften Lager – worum geht es inhaltlich?
+
+💡 Hinweis: Die Websuche-Ergebnisse waren für dein Thema nicht relevant (betrafen eine gleichnamige Person aus einer TV-Show, nicht deine Kollegin). Keine Programmierung – Anforderungen werden weiterhin geklärt. 👍
+Sources
+Images
+Videos
+News
+youtube.com
+Giuliano war eigentlich überhaupt NICHT ihr Typ! - Nadja G. über Love Fool - YouTube
+
+Nadja war Kandidatin der ersten Staffel Love Fool und hat in der Villa als Single versucht die Faker zu entlarven. Wir quatschen mit ihr natürlich über Giuli...
+youtube.com
+Nadja wird misstrauisch... | "Love Fool" - YouTube
+
+Bei Ariel und Giuliano fliegen fetzen... sie sind sehr lange zusammen im Interview. Das führt dazu, dass Nadja und einige anderen an Giulianos Loyalität zwei...
+listennotes.com
+Giuliano war eigentlich überhaupt NICHT ihr Typ! - Nadja G. über Love Fool | Listen Notes
+
+Nadja war Kandidatin der ersten ... entlarven. Wir quatschen mit ihr natürlich über Giuliano und wie ihre aktuelle Gefühlslage gerade so ist, aber auch über alles, was nach der Show mit Amaru abgelaufen ist....
+harbinger-consulting.com
+Fluktuation senken: Top-Maßnahmen, Checkliste & Tipps
+
+Harbinger AG is an HR consultancy that specializes in key figure-based solutions for the interface between GF and HR.
+heute ist der 15.5
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Verstanden – Datum aktualisiert: Freitag, 15.05.2026, 10:06 UTC (KW 20)Wir sind jetzt 3 Tage weiter als beim letzten Update (12.05.) und am Ende von KW 20.
+📋 Gesamtübersicht – Stand Fr, 15.05.2026, 10:06 UTC
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja erhalten
+✅ ES Lesezugriff → via CSV-Export gelöst
+✅ Rhino Zugangsdaten von Marco erhalten
+✅ Santi-Durchsprache (ES) erledigt
+
+🟡 Laufende Themen:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+3 Mandant 200 – Kundenzahlen faken Fabio testet 🟡 In Arbeit
+4 PowerBI Fluktuation einbauen (HR Cockpit) Ingo + Nadja 🟡 Offen
+5 Prozentsätze aus REXX (Krankheit, Unfälle, Soll-Arbeitszeit) Ingo 🟡 Offen
+⏳ Lange offen / kritisch:
+Thema Wer Wartezeit
+ZLO03 Fakenummer 9999 Ingo ⚠️ 10 Tage über Deadline (05.05.)
+DE File (Trafag) Rohail ⏳ 11 Tage offen (seit 04.05.)
+Intercompany-Abgrenzungen Andreas ⏳ 11 Tage ohne Antwort (Mail 04.05.)
+Smartsheet Vollzugriff Philip ⏳ seit April – mehrere Wochen
+#4 Vorschriften Lager MA ❓ unklar
+❓ Updates für heute (15.05.) – bitte einsprechen:
+
+ZLO03 – inzwischen erledigt? (sehr lange überfällig)
+Rhino-Test – mit den Zugangsdaten gestartet? Ergebnisse?
+DE File (Rohail) – endlich da?
+Andreas (Intercompany) – Antwort gekommen oder nachhaken?
+Philip (Smartsheet) – eskalieren?
+Gunther – Fortschritt bei Fake-Namen / PowerBI-Lizenzen?
+Adil – Status ZC12-Test?
+Fabio – Mandant 200 Kundenzahlen-Test gelaufen?
+Nadja – Termin für PowerBI Fluktuation-Einbau geplant?
+
+💡 Wochenende steht bevor – willst du, dass ich dir eine Wochenend-Checkliste / Mo-Plan KW21 erstelle, sobald du die Updates gibst?
+Sources
+Images
+Videos
+News
+calendardate.com
+Today's Date
+
+Details about today's date with count of days, weeks, and months, Sun and Moon cycles, Zodiac signs and holidays.
+calendarr.com
+Calendar (Today's Date and What is Today?) - Calendarr
+
+Today is Thursday, 14 May 2026. ... Malcolm X DayPeace Officers Memorial DayBike-to-Work DayEndangered Species DayYom YerushalayimNational Pizza Party DayNational Chocolate Chip DayAsphalt DayBreak The Glass Ceiling DayBring Flowers To Someone ...
+inchcalculator.com
+What Is Today's Date? - Inch Calculator
+
+Today, May 15th, is day 135 of 365 total days in 2026. ... It's also common to see dates represented using numbers separated by slashes.
+timeanddate.com
+timeanddate.com
+
+Find and track the Sun, Moon, planets, and stars. ... Weather forecast for the next hour, today, tomorrow, and 14 days ahead.
+#3 erledigt #4 fluktuation eingebaut, jetzt plausiblisieren mit filterstest kriternein von nadja . #5 eingebaut. de file nochmals bei rohail nachgefragt. andreas hat geantworete jetzt herausfinden wieso immer noch nicht stimmt,
+Workflow
+
+Thinking
+
+Searching
+
+Thinking
+
+Responding
+✅ Updates eingearbeitet – Stand Fr, 15.05.2026, 10:08 UTC (KW 20)
+📋 Aktualisierte Gesamtübersicht
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja erhalten
+✅ ES Lesezugriff → via CSV-Export gelöst
+✅ Rhino Zugangsdaten von Marco erhalten
+✅ Santi-Durchsprache (ES) erledigt
+✅ #3 Mandant 200 – Kundenzahlen faken (Fabio-Test)
+✅ #5 Prozentsätze aus REXX eingebaut (Krankheit, Unfälle, Soll-Arbeitszeit)
+✅ #4 PowerBI Fluktuation eingebaut → jetzt Plausibilisierung
+
+🟡 Laufende Themen:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+4a Fluktuation plausibilisieren – mit Filtern, Testkriterien von Nadja Ingo + Nadja 🟡 NEU – läuft
+⏳ Wartend:
+Thema Wer Status
+DE File (Trafag) Rohail 🔄 Heute nochmals nachgefragt
+Intercompany-Abgrenzungen Andreas 🟡 Antwort da – aber Zahlen stimmen immer noch nicht → Ursache finden
+Smartsheet Vollzugriff Philip ⏳ seit April offen
+#4 Vorschriften Lager MA ❓ unklar
+🔴 Kritisch:
+Thema Stand
+ZLO03 Fakenummer 9999 ⚠️ 10 Tage über Deadline – noch kein Update von dir
+🎯 Aktive Baustellen heute:
+🔍 Intercompany-Abgrenzungen (Andreas)
+
+Antwort liegt vor ✅
+ABER: Zahlen stimmen weiterhin nicht
+Nächster Schritt: Ursache finden – wo liegt die Differenz?
+
+❓ Fragen dazu:
+
+Hast du die Differenz schon eingegrenzt (welcher Standort / welche Periode)?
+Geht es um Beträge oder Buchungslogik (z.B. doppelte Erfassung Soll/Haben)?
+Vergleichst du Cockpit vs. Andreas' Aufstellung oder System vs. System?
+
+📊 Fluktuation plausibilisieren (mit Nadja)
+
+Filter + Testkriterien von Nadja
+Nächster Schritt: Werte gegen Erwartung prüfen
+
+❓ Fragen dazu:
+
+Welche Filter genau? (Zeitraum, Standort, Abteilung, AN-/AG-Kündigung?)
+Gibt es Referenzwerte (z.B. REXX-Original) zum Abgleich?
+Wer gibt nach Plausibilisierung frei?
+
+❓ Noch offen – bitte Status:
+
+ZLO03 Fakenummer 9999 – seit 10 Tagen über Deadline. Status?
+Gunther – Fortschritt Fake-Namen / PowerBI-Lizenzen?
+Adil – ZC12-Testergebnis?
+Philip (Smartsheet) – eskalieren?
+#4 Vorschriften Lager – worum geht es?
+
+💡 Hinweis: Die Websuche-Ergebnisse zu "Filter" betrafen Umfragen-Filterfragen (SoSciSurvey, LimeSurvey etc.) – nicht relevant für deinen Kontext (PowerBI-Filter zur Plausibilisierung). Keine Programmierung – Status-Tracking läuft. 👍
+Sources
+Images
+Videos
+News
+soscisurvey.de
+Filterfragen und Filter [SoSciSurvey]
+
+A filter question is always required if the course of the questionnaire is to be adapted individually. In the simplest case, a question is hidden because you know from a previous answer that the question is irrelevant · In SoSci Survey different types of filter guidance are available:
+statistik-tutorial.de
+Filterfragen: automatische Antwort bei Dateneingabe - Statistik-Tutorial Forum
+
+Damit verschieben sich die nachfolgenden Werte, je um eine Spalte. Das kann ich dann mit dem Syntax nicht zweifelsfrei bestimmen bzw. korrigieren. Deshalb werde ich mir deine andere Alternative mit der Excel Eingabemaske überlegen. Ich danke dir nochmals für deine Auskunft, du hast mir viel Zeit erspart.
+wikipedia.org
+Filterführung – Wikipedia
+
+Als Filterführung bezeichnet man bei der Fragebogenkonstruktion das Überspringen von nicht zutreffenden Fragen. Mittels Filterfragen werden die Befragten zu für sie relevanten Fragen geleitet. In Papierfragebögen müssen Filterfragen so formuliert sein, dass die Antwortmöglichkeiten disjunkt ...
+marktforschung.de
+Filterfrage | marktforschung.de
+
+Je nach dem, wie die Antwort auf eine Filterfrage lautet, wird der Befragte an eine bestimmte Stelle im Fragbogen weitergeleitet. So werden aus der Ausgangsstichprobe nur diejenigen herausgefiltert, für die diese Frage auch relevant ist. Bei computerunterstützten Interviews (CAPI, CATI) erfolgt ...
+heute ist der 16.5
+Workflow
+
+Thinking
+
+Responding
+⚠️ Hinweis – Datums-Konflikt erkannt:
+
+Du sagst: heute ist der 16.05.2026
+System-Zeitstempel sagt: Montag, 18.05.2026, 05:47 UTC
+
+Ich mache hier keine Annahme, sondern frage nach:❓ Welches Datum gilt?
+
+Option A: 16.05.2026 (Samstag) – wie du sagst
+Option B: 18.05.2026 (Montag) – wie der System-Zeitstempel sagt
+
+Falls 16.05.2026 (Samstag, KW 20):
+→ Wochenende, 1 Tag nach letztem Update (15.05.)
+Falls 18.05.2026 (Montag, KW 21):
+→ Neue Woche, 3 Tage nach letztem Update (15.05.) → Rhino-Test KW19 ist jetzt 1 Woche her – wie ist der Stand?Bitte kurz bestätigen, welches Datum stimmt, dann aktualisiere ich die Übersicht entsprechend. Ich rate nicht. 👍
+sorry 18
+Workflow
+
+Thinking
+
+Responding
+✅ Alles klar – Datum bestätigt: Montag, 18.05.2026, 05:47 UTC (KW 21)Wir starten jetzt in KW 21, 3 Tage nach dem letzten Update (Fr, 15.05.).
+📋 Gesamtübersicht – Stand Mo, 18.05.2026, 05:47 UTC (KW 21)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja
+✅ ES Lesezugriff → CSV-Export
+✅ Rhino Zugangsdaten von Marco
+✅ Santi-Durchsprache (ES)
+✅ Mandant 200 – Kundenzahlen faken (Fabio)
+✅ Prozentsätze aus REXX eingebaut
+✅ PowerBI Fluktuation eingebaut
+
+🟡 Laufend:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+4a Fluktuation plausibilisieren (Filter, Testkriterien von Nadja) Ingo + Nadja 🟡 Läuft
+⏳ Wartend / kritisch:
+Thema Wer Wartezeit
+ZLO03 Fakenummer 9999 Ingo 🔴 13 Tage über Deadline (05.05.)
+DE File (Trafag) Rohail ⏳ 14 Tage – am 15.05. nochmals nachgefragt
+Intercompany-Abgrenzungen Andreas 🟡 Antwort da – Ursache der Differenz finden
+Smartsheet Vollzugriff Philip ⏳ seit April – Eskalation?
+#4 Vorschriften Lager MA ❓ unklar
+🎯 Wochenstart KW 21 – Vorschläge zur Priorisierung:
+🔴 PRIO 1 (heute angehen):
+
+ZLO03 Fakenummer 9999 – 13 Tage überfällig, dringend Status klären
+Intercompany-Differenz Andreas – aktiv Ursache suchen
+DE File Rohail – falls bis heute nichts da → eskalieren
+
+🟡 PRIO 2 (diese Woche):
+
+Fluktuation plausibilisieren mit Nadja
+Gunther – Fortschritt Fake-Namen / PowerBI Lizenzen
+Adil – ZC12-Testergebnis abholen
+Rhino-Test – läuft seit KW19, Status?
+
+⏳ PRIO 3:
+
+Philip (Smartsheet) – eskalieren
+#4 Vorschriften Lager – inhaltlich klären
+
+❓ Wochenstart-Fragen:
+
+Was hat oberste Priorität für dich heute?
+Gab es übers Wochenende Mails/Updates, die ich einarbeiten soll?
+Stehen heute Termine an (z.B. Jour fixe, Calls)?
+
+💡 Keine Programmierung – Status-Tracking aktiv. Sag Bescheid, wenn du an einem Punkt tiefer einsteigen willst. 👍
+lizenzt läuft jetzt thema philip steiger
+Workflow
+
+Thinking
+
+Responding
+✅ Update eingearbeitet – Stand Mo, 18.05.2026, 08:54 UTC (KW 21)
+🆕 Neues Thema heute aktiv: Philip Steiger – Smartsheet Vollzugriff
+Status bisher: ⏳ seit April offen, keine Rückmeldung Trigger jetzt: Lizenz läuft → akut!
+❓ Bevor ich was annehme – bitte klären:
+
+Welche Lizenz läuft genau?
+    Smartsheet-Lizenz von dir?
+    Oder eine andere Lizenz im Zusammenhang mit Philip?
+
+Läuft = läuft AB (ist aktiv jetzt) oder läuft AUS (Ablauf droht)?
+    Falls läuft ab: Wann ist das Ablaufdatum?
+    Falls läuft (ist aktiv): Was ist der Handlungsbedarf?
+
+Was war ursprünglich die offene Frage an Philip?
+    Vollzugriff für Smartsheet → für welche Sheets/Workspaces?
+    Hat das mit einem konkreten Projekt zu tun (Trafag? HR Cockpit? anderes)?
+
+Was soll heute passieren?
+    Eskalation an Vorgesetzten von Philip?
+    Direkter Anruf statt Mail?
+    Notlösung ohne Vollzugriff?
+
+📋 Aktualisierte Übersicht – KW 21:
+🔴 PRIO 1 heute:
+Thema Status
+Philip Steiger – Smartsheet (Lizenz läuft) 🆕 Akut – heute angehen
+ZLO03 Fakenummer 9999 🔴 13 Tage über Deadline
+Intercompany-Differenz (Andreas) 🟡 Ursache finden
+🟡 Laufend:
+
+Gunther: PowerBI Lizenzen + Fake-Namen
+Adil: ZC12-Test
+Fluktuation plausibilisieren (mit Nadja)
+DE File (Rohail) – nachfassen
+Rhino-Test seit KW19
+
+❓ Unklar:
+
+#4 Vorschriften Lager
+
+💡 Bitte kurz die 4 Fragen oben beantworten, dann kann ich den Punkt sauber dokumentieren und ggf. einen Vorschlag machen, wie man Philip heute erreicht. Keine Annahmen, keine Programmierung. 👍
+nein punkt abschliesse ist erledigt Steiger – Smartsheet (Lizenz läuft) 🆕 Akut – heute angehen
+Workflow
+
+Thinking
+
+Responding
+✅ Verstanden – Punkt abgeschlossen (Mo, 18.05.2026, 08:54 UTC)Philip Steiger – Smartsheet Vollzugriff / Lizenz → ✅ ERLEDIGT
+📋 Aktualisierte Gesamtübersicht – Stand Mo, 18.05.2026, 08:54 UTC (KW 21)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja
+✅ ES Lesezugriff → CSV-Export
+✅ Rhino Zugangsdaten von Marco
+✅ Santi-Durchsprache (ES)
+✅ Mandant 200 – Kundenzahlen faken (Fabio)
+✅ Prozentsätze aus REXX eingebaut
+✅ PowerBI Fluktuation eingebaut
+✅ Philip Steiger – Smartsheet (Lizenz) 🆕
+
+🟡 Laufend:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Test ZC12 Adil 🟡 Testet
+3 Fluktuation plausibilisieren (Filter, Testkriterien von Nadja) Ingo + Nadja 🟡 Läuft
+⏳ Wartend / kritisch:
+Thema Wer Wartezeit
+ZLO03 Fakenummer 9999 Ingo 🔴 13 Tage über Deadline (05.05.)
+DE File (Trafag) Rohail ⏳ 14 Tage – am 15.05. nachgefragt
+Intercompany-Abgrenzungen Andreas 🟡 Antwort da – Ursache der Differenz finden
+#4 Vorschriften Lager MA ❓ unklar
+🎯 Verbleibende PRIO 1 für heute:
+
+🔴 ZLO03 Fakenummer 9999 – seit 13 Tagen überfällig
+🟡 Intercompany-Differenz (Andreas) – Ursache finden
+⏳ DE File (Rohail) – falls keine Reaktion → eskalieren
+
+❓ Was machen wir als Nächstes?💡 Keine Programmierung – Status-Tracking läuft sauber. 👍
+Test ZC12 Adil 🟡 Testet -- getestet und erledigt
+Workflow
+
+Thinking
+
+Responding
+✅ Update eingearbeitet – Stand Mo, 18.05.2026, 11:31 UTC (KW 21)Test ZC12 (Adil) → ✅ ERLEDIGT
+📋 Aktualisierte Gesamtübersicht – Stand Mo, 18.05.2026, 11:31 UTC (KW 21)
+🟢 Erledigt:
+
+✅ Fluktuations-Formel von Sonja
+✅ ES Lesezugriff → CSV-Export
+✅ Rhino Zugangsdaten von Marco
+✅ Santi-Durchsprache (ES)
+✅ Mandant 200 – Kundenzahlen faken (Fabio)
+✅ Prozentsätze aus REXX eingebaut
+✅ PowerBI Fluktuation eingebaut
+✅ Philip Steiger – Smartsheet (Lizenz)
+✅ Test ZC12 (Adil) 🆕
+
+🟡 Laufend:
+
+Thema Wer Status
+
+1 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+2 Fluktuation plausibilisieren (Filter, Testkriterien von Nadja) Ingo + Nadja 🟡 Läuft
+⏳ Wartend / kritisch:
+Thema Wer Wartezeit
+🔴 ZLO03 Fakenummer 9999 Ingo 13 Tage über Deadline (05.05.)
+DE File (Trafag) Rohail 14 Tage – am 15.05. nachgefragt
+Intercompany-Abgrenzungen Andreas Antwort da – Ursache Differenz finden
+#4 Vorschriften Lager MA ❓ unklar
+🎯 Verbleibende PRIO 1:
+
+🔴 ZLO03 Fakenummer 9999 – stark überfällig
+🟡 Intercompany-Differenz (Andreas) – Ursache finden
+⏳ DE File (Rohail) – ggf. eskalieren
+
+🎉 Schöner Fortschritt heute – schon 2 Punkte abgehakt (Philip + Adil/ZC12).❓ Was als Nächstes? Keine Programmierung – reines Status-Tracking. 👍
+heute ist der 19.5, zeige nur offene sache an
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Dienstag, 19.05.2026, 08:57 UTC (KW 21)
+🟡 Offene Themen
+
+Thema Wer Status
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 14 Tage über Deadline (05.05.)
+2 DE File (Trafag) Rohail 15 Tage offen – am 15.05. nachgefragt
+3 Intercompany-Abgrenzungen Andreas Antwort da – Ursache der Differenz finden
+4 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+5 Fluktuation plausibilisieren (Filter, Testkriterien Nadja) Ingo + Nadja 🟡 Läuft
+6 #4 Vorschriften Lager MA ❓ unklar
+❓ Welchen Punkt nehmen wir als Nächstes?
+3 Intercompany-Abgrenzungen Andreas Antwort da – Ursache der Differenz finden // erledigt //
+Workflow
+
+Thinking
+
+Responding
+✅ Update eingearbeitet – Stand Di, 19.05.2026, 08:58 UTC (KW 21)Intercompany-Abgrenzungen (Andreas) → ✅ ERLEDIGT
+🟡 Offene Themen
+
+Thema Wer Status
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 14 Tage über Deadline (05.05.)
+2 DE File (Trafag) Rohail 15 Tage offen – am 15.05. nachgefragt
+3 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+4 Fluktuation plausibilisieren (Filter, Testkriterien Nadja) Ingo + Nadja 🟡 Läuft
+5 #4 Vorschriften Lager MA ❓ unklar
+❓ Welchen Punkt als Nächstes?
+der sap koordinator braucht infos was im system läuft wo ich dran bin er ist app manager: Wer hat angestossen thema fortschritt
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Mittwoch, 20.05.2026, 06:49 UTC (KW 21)
+📋 Übersicht für SAP-Koordinator / App Manager
+Wer hat angestossen Thema Fortschritt
+❓ (bitte ergänzen) ZLO03 – Fakenummer 9999 bei Textposition 🔴 Offen – Deadline war 05.05.2026 (15 Tage über)
+❓ (bitte ergänzen) Fake-Namen für alle Programme/Tabellen (Gunther) 🟡 In Arbeit
+❓ (bitte ergänzen) PowerBI Lizenzthema (Gunther) 🟡 In Arbeit
+❓ (bitte ergänzen) #4 Vorschriften Lager ❓ Unklar – inhaltlich noch nicht definiert
+❓ Bevor ich das an den SAP-Koordinator rausgeben kann – bitte klären:
+
+Welche Themen sind überhaupt SAP-relevant?
+Nicht alle deiner offenen Punkte laufen im SAP-System. Bitte bestätigen, welche der folgenden Themen für den SAP-App-Manager relevant sind:
+Thema SAP-relevant?
+ZLO03 Fakenummer 9999 ✅ Vermutlich ja (Z-Programm) – bestätigen?
+Fake-Namen Programme/Tabellen (Gunther) ❓ SAP-Tabellen oder andere Systeme?
+PowerBI Lizenzen (Gunther) ❌ Eher nicht SAP – richtig?
+Fluktuation plausibilisieren (Nadja) ❌ PowerBI/HR – nicht SAP?
+DE File (Rohail) ❌ vermutlich Alphaplan/extern?
+#4 Vorschriften Lager ❓ unklar
+
+Wer hat was angestossen? (Auftraggeber)
+Diese Info habe ich bisher nicht in deinen Notizen. Bitte ergänzen:
+
+ZLO03 Fakenummer 9999 → Wer hat das beauftragt? (Fachbereich? Person?)
+Fake-Namen Programme/Tabellen → Wer ist Auftraggeber? (Compliance? Datenschutz? Du selbst?)
+#4 Vorschriften Lager → Wer hat das aufgebracht?
+
+Welcher Detaillierungsgrad?
+
+Soll der SAP-Koordinator nur SAP-Themen sehen (Z-Programme, Tabellen, Mandanten)?
+Oder alles, woran du gerade dran bist?
+
+Format
+
+Tabelle (wie oben) reicht?
+Oder Mail-Text formuliert?
+Oder Stichworte für mündliche Durchsprache?
+
+💡 Sobald du die 4 Punkte klärst, baue ich dir eine saubere, faktenbasierte Übersicht ohne Annahmen. Keine Programmierung – reine Statusübersicht für den Koordinator. 👍
+heute ist der 26.mai feiertage vorbei
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Dienstag, 26.05.2026, 09:28 UTC (KW 22) – nach Feiertagen zurückLetzter Stand war 20.05. → jetzt 6 Tage später, neue Woche, neuer Anlauf.
+🟡 Offene Themen (Stand vor Feiertagspause):
+
+Thema Wer Letzter Stand
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 21 Tage über Deadline (05.05.)
+2 DE File (Trafag) Rohail 22 Tage offen – am 15.05. nachgefragt
+3 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit (vor Feiertagen)
+4 Fluktuation plausibilisieren (Filter, Testkriterien Nadja) Ingo + Nadja 🟡 Läuft
+5 #4 Vorschriften Lager MA ❓ unklar
+6 Übersicht für SAP-Koordinator (Wer-Thema-Fortschritt) Ingo 🟡 offene Fragen vom 20.05.
+❓ Wochenstart-Fragen nach Feiertagen:
+
+Mails / Updates während der Feiertage eingegangen, die ich einarbeiten soll?
+ZLO03 – Status nach 21 Tagen über Deadline?
+DE File Rohail – endlich da?
+Gunther – Fortschritt bei Fake-Namen / PowerBI?
+Nadja – Plausibilisierung weiter? Termin geplant?
+SAP-Koordinator-Übersicht – sollen wir das heute angehen? (Fragen vom 20.05. noch offen)
+Neue Themen durch Feiertagspause hinzugekommen?
+
+❓ Womit starten wir?
+#2 de file erledigt. #4 erledigt sie können jetzt vergleichen.
+Workflow
+
+Thinking
+
+Responding
+✅ Updates eingearbeitet – Stand Mi, 27.05.2026, 08:16 UTC (KW 22)Erledigt:
+
+✅ #2 DE File (Rohail / Trafag) → erledigt
+✅ #4 Fluktuation plausibilisieren (Nadja) → erledigt – sie können jetzt vergleichen
+
+🟡 Offene Themen
+
+Thema Wer Status
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 22 Tage über Deadline (05.05.)
+2 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+3 #4 Vorschriften Lager MA ❓ unklar
+4 Übersicht für SAP-Koordinator (Wer-Thema-Fortschritt) Ingo 🟡 offene Fragen vom 20.05.
+🎉 Schöner Fortschritt! Nur noch wenige Punkte offen.❓ Womit weiter?
+preiskondition bruttopreis fü fabio 9999 diese woche fertrigstellen
+Workflow
+
+Thinking
+
+Responding
+✅ Neues Thema aufgenommen – Stand Mi, 27.05.2026, 12:16 UTC (KW 22)
+🆕 Neue Aufgabe: Preiskondition Bruttopreis 9999 für Fabio
+Feld Info
+Wer hat angestossen Fabio
+Thema Preiskondition Bruttopreis 9999
+Deadline Diese Woche (bis Fr, 29.05.2026)
+Verantwortlich Ingo
+Status 🟡 Neu – noch nicht gestartet
+❓ Bevor ich an irgendeine Programmierung denke – Anforderungsklärung:
+Ich mache KEINE Annahmen. Bitte klären:
+
+Was genau ist gefordert?
+
+Soll eine neue Preiskondition angelegt werden? (z.B. Konditionsart in SAP – V/06)
+Oder soll ein bestehendes Programm angepasst werden, das Bruttopreise verarbeitet?
+Hat das mit der "Fakenummer 9999" aus ZLO03 zu tun, oder ist das ein separates Thema?
+
+System/Kontext
+
+Läuft das in SAP SD (Preisfindung, Konditionstechnik)?
+Welche Konditionsart ist betroffen? (PR00, ZPR0, andere?)
+Welche Tabellen sind relevant? (KONV, KONP, KONH, A004, A305 …?) → erst klären, bevor Code
+
+Logik 9999
+
+Was passiert mit 9999 konkret?
+Wird 9999 als Bruttopreis eingesetzt (Default-Wert)?
+Oder ist 9999 ein Trigger/Marker (wenn 9999 → tu X)?
+Oder Konditions-Nummer 9999?
+
+Auslöser / Bedingung
+
+Wann soll das greifen? (z.B. nur bei Textposition wie bei ZLO03? Bei bestimmten Materialien? Immer?)
+Soll das im Verkaufsbeleg wirken? Welche Belegart?
+
+Mandant / Test
+
+In welchem Mandanten entwickeln? (Mandant 200 wie bei Fabios anderem Test?)
+Wer testet und gibt frei? (Fabio?)
+Transport nach QAS/PRD geplant wann?
+
+Beziehung zu offenen Themen
+
+Hat das was mit ZLO03 Fakenummer 9999 zu tun (das ist 22 Tage über Deadline)? Sind das beides "9999-Themen", die zusammengehören?
+
+📋 Offene Themen – Gesamtübersicht
+
+Thema Wer Status
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 22 Tage über Deadline
+2 🆕 Preiskondition Bruttopreis 9999 (Fabio) Ingo Deadline diese Woche (29.05.)
+3 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+4 #4 Vorschriften Lager MA ❓ unklar
+5 Übersicht für SAP-Koordinator Ingo 🟡 offen seit 20.05.
+💡 Wichtig: Solange die 6 Fragen oben nicht geklärt sind, schreibe ich keinen Code und mache keine Mockdaten/Annahmen. Bitte erst sonnenklare Anforderung. 👍❓ Sind ZLO03 und Preiskondition-Bruttopreis dasselbe Thema oder zwei getrennte?
+zlo03 * filter repariere es fehlen vknr
+Workflow
+
+Thinking
+
+Responding
+⚠️ Stopp – ich verstehe die Anforderung noch nicht klar genug. Bitte präzisieren, bevor ich irgendwas anfasse.
+❓ Was ich glaube verstanden zu haben:
+
+ZLO03 (das Z-Programm mit der Fakenummer-9999-Logik)
+Filter mit * (Wildcard?) ist defekt → muss repariert werden
+VKNR fehlen im Output/Ergebnis
+
+❓ Was ich NICHT weiß – bitte klären:
+
+Was bedeutet " filter"?*
+
+Ein Selektionsbildschirm-Filter mit Wildcard *?
+Ein SELECT mit LIKE '%...%'?
+Ein Range/Select-Options (z.B. S_VKORG mit *)?
+Etwas anderes?
+
+Was ist VKNR genau in deinem Kontext?
+In SAP gibt es mehrere Felder die so heißen oder ähnlich klingen:
+
+VKORG = Verkaufsorganisation (z.B. in VBAK, VBAP)
+VTWEG = Vertriebsweg
+VKBUR = Verkaufsbüro
+VKGRP = Verkaufsgruppe
+VKONT = Vertragskontonummer (FI-CA)
+KUNNR = Kundennummer
+VKNR = wäre ungewöhnlich – ist das ein kundeneigenes Feld (Z-Feld) oder ein konkretes SAP-Feld?
+
+→ Bitte sagen: Welches Feld genau? In welcher Tabelle?
+3. "Es fehlen VKNR" – wo fehlen sie?
+
+Im Output/Liste des Programms?
+In der Datenbank-Selektion (werden bestimmte Datensätze nicht gefunden)?
+Im Filter selbst (Filter berücksichtigt VKNR nicht)?
+
+4. Reproduktion
+
+Welche Eingaben auf dem Selektionsbildschirm führen zum Fehler?
+Welche Datensätze sollten kommen, kommen aber nicht?
+Beispiel-Beleg/Beispiel-Wert, an dem man den Fehler sehen kann?
+
+5. Steht das in Zusammenhang mit der Fakenummer 9999?
+
+Ist die Filter-Reparatur Teil der ZLO03-Anforderung von Anfang Mai?
+Oder ist das ein neuer Bug, der durch die 9999-Änderung entstanden ist?
+
+🛑 Was ich JETZT nicht tue:
+
+❌ Keine Code-Änderung am ZLO03
+❌ Keine Annahmen, welches Feld VKNR sein könnte
+❌ Kein Mockcode
+
+✅ Was ich brauche:
+
+Genaue Feldbezeichnung + Tabelle (oder zumindest Modul: SD? FI? MM?)
+Beispiel für den fehlerhaften Filter-Aufruf
+Beziehung zur 9999-Logik
+
+📋 Status auf Themenliste: ZLO03 bekommt einen neuen Unterpunkt "Filter * reparieren – VKNR fehlen" – sobald geklärt ist, was genau zu tun ist. 👍
+massupload mape auch diese woche
+Workflow
+
+Thinking
+
+Responding
+✅ Neues Thema aufgenommen – Stand Mi, 27.05.2026, 12:50 UTC (KW 22)
+🆕 Neue Aufgabe: Massupload Mappe
+Feld Info
+Thema Massupload Mappe
+Deadline Diese Woche (bis Fr, 29.05.2026)
+Status 🟡 Neu – noch nicht gestartet
+❓ Anforderungsklärung – bevor irgendwas passiert:
+
+Was bedeutet "Massupload Mappe" konkret?
+
+Eine Batch-Input-Mappe (SM35) – klassischer SAP-Massenupload?
+Eine LSMW-Mappe?
+Ein Excel/CSV-Upload-Tool, das du selbst gebaut hast?
+Etwas Anderes?
+
+Was soll uploadet werden?
+
+Welche Daten / welches Objekt? (Stammdaten? Bewegungsdaten? Preise? Kunden? Material?)
+Welche Transaktion wird damit befüllt? (z.B. VK11 für Konditionen, XD01 für Kunden, MM01 für Material …?)
+Welche Tabellen sind betroffen?
+
+Wer hat das angestossen?
+
+Fabio (wegen Preiskondition Bruttopreis)?
+Jemand anders?
+Hat das mit Mandant 200 / Faken zu tun?
+
+Was ist der konkrete Auftrag?
+
+Ist die Mappe neu zu erstellen?
+Bestehende Mappe reparieren?
+Format anpassen (z.B. neue Spalten)?
+
+Beziehung zu anderen Themen?
+
+Hängt das mit Preiskondition Bruttopreis 9999 (Fabio) zusammen? → wäre logisch (Massupload der neuen Kondition)
+Oder mit ZLO03?
+Oder eigenständiges Thema?
+
+📋 Offene Themen – Gesamtübersicht (Stand 27.05.2026, 12:50 UTC)
+
+Thema Wer Status / Deadline
+
+1 🔴 ZLO03 Fakenummer 9999 Ingo 22 Tage über Deadline
+1a └ ZLO03 *-Filter reparieren / VKNR fehlen Ingo 🆕 Klärung offen
+2 Preiskondition Bruttopreis 9999 (Fabio) Ingo Deadline 29.05.
+3 🆕 Massupload Mappe Ingo Deadline 29.05.
+4 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+5 #4 Vorschriften Lager MA ❓ unklar
+6 Übersicht für SAP-Koordinator Ingo 🟡 offen seit 20.05.
+⚠️ Diese Woche stark belastet:
+3 Deadlines bis Freitag 29.05.:
+
+ZLO03 (Fakenummer 9999 + Filter-Bug) – schon lange überfällig
+Preiskondition Bruttopreis 9999 (Fabio)
+Massupload Mappe
+
+❓ Hängen alle drei Themen zusammen? (alle 3 mit "9999" / Preisthema / Fabio?) Wenn ja → wäre EIN zusammenhängendes Paket statt 3 getrennte Aufgaben.💡 Keine Programmierung, keine Annahmen – erst Anforderung sonnenklar. Bitte die Fragen oben kurz beantworten. 👍
+ZLO03 Fakenummer 9999 udn └ ZLO03 *-Filter reparieren / VKNR fehlen erledigt. ///Preiskondition Bruttopreis 9999 (Fabio) bereit für test///
+Workflow
+
+Thinking
+
+Responding
+✅ Updates eingearbeitet – Stand Do, 28.05.2026, 09:12 UTC (KW 22)Erledigt:
+
+✅ ZLO03 Fakenummer 9999
+✅ ZLO03 *-Filter reparieren / VKNR fehlen
+
+Status-Wechsel:
+
+🧪 Preiskondition Bruttopreis 9999 (Fabio) → bereit für Test (bei Fabio)
+
+🟡 Offene Themen
+
+Thema Wer Status / Deadline
+
+1 🧪 Preiskondition Bruttopreis 9999 Fabio testet Deadline morgen 29.05.
+2 Massupload Mappe Ingo Deadline morgen 29.05. – Klärung offen
+3 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+4 #4 Vorschriften Lager MA ❓ unklar
+5 Übersicht für SAP-Koordinator Ingo 🟡 offen seit 20.05.
+🎉 Großer Fortschritt – ZLO03 nach 23 Tagen endlich durch!
+🎯 Heute / morgen kritisch:
+
+🧪 Fabio-Test abwarten – Rückmeldung zur Bruttopreis-Kondition
+⏰ Massupload Mappe – Deadline morgen, Anforderung noch unklar → Bitte die offenen Fragen vom 27.05. beantworten (Mappenart, Daten, Auftraggeber, Bezug zu Fabio/9999?)
+
+❓ Womit weiter?
+heute ist der 4.6.26
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Donnerstag, 04.06.2026, 08:16 UTC (KW 23)Letzter Stand war Do, 28.05.2026 → jetzt 7 Tage später, neue Woche.
+🟡 Offene Themen (Stand vor 1 Woche)
+
+Thema Wer Letzter Stand
+
+1 🧪 Preiskondition Bruttopreis 9999 Fabio testet War bereit für Test (Deadline 29.05. – inzwischen vorbei)
+2 Massupload Mappe Ingo Deadline 29.05. – Anforderung war unklar
+3 PowerBI Lizenzen + Fake-Namen Programme/Tabellen Gunther 🟡 In Arbeit
+4 #4 Vorschriften Lager MA ❓ unklar
+5 Übersicht für SAP-Koordinator Ingo 🟡 offen seit 20.05.
+❓ Update-Fragen nach 1 Woche:
+
+Fabio-Test (Bruttopreis 9999) – Ergebnis? Erfolgreich oder Nacharbeit nötig?
+Massupload Mappe – Status? (Deadline 29.05. war letzte Woche)
+Gunther – Fake-Namen / PowerBI-Lizenzen Fortschritt?
+#4 Vorschriften Lager – inzwischen geklärt?
+SAP-Koordinator-Übersicht – sollen wir das endlich aufsetzen?
+Neue Themen in der letzten Woche dazugekommen?
+
+❓ Womit starten wir heute?
+5 Übersicht für SAP-Koordinator Ingo 🟡 offen seit 20.05. -> erledigt. #2 erledigt #3 erledigt nur fakenamen noch offen
+Workflow
+
+Thinking
+
+Responding
+✅ Updates eingearbeitet – Stand Do, 04.06.2026, 08:17 UTC (KW 23)Erledigt:
+
+✅ #5 Übersicht für SAP-Koordinator
+✅ #2 Massupload Mappe
+✅ #3 PowerBI Lizenzen (Gunther)
+
+Status-Anpassung:
+
+🟡 Fake-Namen für Programme/Tabellen (Gunther) → bleibt offen (war Teil von #3, jetzt eigener Punkt)
+
+🟡 Offene Themen
+
+Thema Wer Status
+
+1 🧪 Preiskondition Bruttopreis 9999 Fabio testet Test-Ergebnis?
+2 Fake-Namen für Programme/Tabellen Gunther 🟡 In Arbeit
+3 #4 Vorschriften Lager MA ❓ unklar
+🎉 Sehr guter Fortschritt – nur noch 3 Punkte offen!❓ Update zu Fabios Test? Oder neuer Punkt?
+jetzt ist der 9.6.26
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Dienstag, 09.06.2026, 12:50 UTC (KW 24)Letzter Stand war Do, 04.06.2026 → jetzt 5 Tage später, neue Woche.
+🟡 Offene Themen
+
+Thema Wer Status
+
+1 🧪 Preiskondition Bruttopreis 9999 Fabio testet Test-Ergebnis seit 28.05. ausstehend (12 Tage)
+2 Fake-Namen für Programme/Tabellen Gunther 🟡 In Arbeit
+3 #4 Vorschriften Lager MA ❓ unklar
+❓ Update-Fragen:
+
+Fabio-Test (Bruttopreis 9999) – inzwischen Rückmeldung? (läuft seit fast 2 Wochen)
+Gunther – Fake-Namen – Fortschritt?
+#4 Vorschriften Lager – endlich geklärt?
+Neue Themen seit letzter Woche dazugekommen?
+
+❓ Womit starten wir?
+neue task, finance dashboard zentales geschriebenes excel wechselkurse prüfen 2026 und 2025 passwen umgerechnete werrte
+Workflow
+
+Thinking
+
+Responding
+✅ Neue Task aufgenommen – Stand Mo, 15.06.2026, 08:56 UTC (KW 25)
+🆕 Neue Aufgabe: Finance Dashboard – Wechselkurse prüfen
+Feld Info (wie ich es verstanden habe)
+Thema Finance Dashboard
+Datenquelle Zentrales, geschriebenes Excel
+Aufgabe Wechselkurse prüfen – für 2026 und 2025
+Ziel Prüfen, ob die umgerechneten Werte passen
+Status 🟡 Neu
+❓ Verständnisklärung – bevor ich etwas anfasse:
+
+Was genau ist zu prüfen?
+
+Sind die hinterlegten Wechselkurse im Excel korrekt? (Kurs-Werte stimmen?)
+Oder sind die damit umgerechneten Beträge falsch? (Rechenfehler / falscher Kurs angewendet?)
+Oder beides (Kurse UND Ergebnisse)?
+
+Welche Währungen?
+
+Von welcher → in welche Währung? (z.B. EUR/USD/GBP → CHF, wie bei der Trafag-Konsolidierung?)
+Hängt das mit dem Trafag Management Reporting / Rhino CHF-Konsolidierung zusammen, oder ist das ein anderes Dashboard?
+
+Welcher Kurstyp?
+
+Stichtagskurs / Monatsdurchschnitt / Jahresdurchschnitt?
+Unterschiedlich für 2025 vs. 2026?
+Woher kommen die korrekten Referenzkurse? (SAP TCURR? EZB? Bank?)
+
+Was bedeutet "zentrales geschriebenes Excel"?
+
+Eine manuell gepflegte Excel-Datei (jemand trägt Kurse von Hand ein)?
+Wo liegt sie? (Sharepoint / Datalake / lokal?)
+Wer pflegt sie?
+
+Was ist der konkrete Auftrag an dich?
+
+Nur prüfen/abgleichen (Soll-Ist-Vergleich)?
+Korrigieren, falls Fehler?
+Ein Prüf-Tool / Skript bauen, das automatisch vergleicht?
+
+Wer hat angestossen?
+
+Andreas? Fabio? Jemand aus Finance?
+
+2025 UND 2026 – warum beide Jahre?
+
+Vorjahresvergleich im Dashboard?
+Beide Jahre müssen konsistent umgerechnet sein?
+
+📋 Offene Themen – Gesamtübersicht
+
+Thema Wer Status
+
+1 🆕 Finance Dashboard – Wechselkurse 2025/2026 prüfen Ingo Neu – Klärung offen
+2 🧪 Preiskondition Bruttopreis 9999 Fabio testet Test seit 28.05. ausstehend
+3 Fake-Namen für Programme/Tabellen Gunther 🟡 In Arbeit
+4 #4 Vorschriften Lager MA ❓ unklar
+💡 Keine Programmierung / kein Skript / keine Annahmen – erst wenn klar ist, ob du nur prüfst oder ein Tool bauen sollst, und welche Referenzkurse gelten. Bitte die Fragen oben beantworten. 👍
+🆕 Finance Dashboard – Wechselkurse 2025/2026 prüfen erledigt// 🧪 Preiskondition Bruttopreis 9999 erledigt // Fake-Namen für Programme/Tabellen ingnoriert chef wurde entlassen. 4. erledigt
+Workflow
+
+Thinking
+
+Responding
+✅ Updates eingearbeitet – Stand Donnerstag, 02.07.2026, 09:56 UTC (KW 27)Erledigt:
+
+✅ Finance Dashboard – Wechselkurse 2025/2026 prüfen
+✅ Preiskondition Bruttopreis 9999 (Fabio)
+✅ #4 Vorschriften Lager
+
+Verworfen:
+
+❌ Fake-Namen für Programme/Tabellen → ignoriert (Chef entlassen → Thema hinfällig)
+
+📋 Offene Themen
+
+Thema Wer Status
+
+— — — ✅ Keine offenen Punkte
+🎉 Alle Themen abgeschlossen!
+Deine komplette Liste ist abgearbeitet:
+
+Trafag Management Reporting (DE, ES, Rhino, Intercompany) ✅
+HR Cockpit (Fluktuation, REXX-Prozentsätze, Plausibilisierung) ✅
+ZLO03 (Fakenummer 9999 + Filter-Bug) ✅
+Preiskondition Bruttopreis 9999 ✅
+Massupload Mappe ✅
+Finance Dashboard Wechselkurse ✅
+SAP-Koordinator-Übersicht ✅
+Smartsheet / Philip, ZC12 / Adil, Mandant 200 / Fabio ✅
+PowerBI Lizenzen ✅
+
+Verworfen: Fake-Namen (durch Personalwechsel hinfällig)💡 Saubere Bilanz – keine offenen Baustellen mehr.❓ Neues Thema, oder für heute durch?
+neue aufgabe task1, zlo03 big fehlende mat falsche mengen. task2 fehler bei 0 mengen, task3: fehler badi kennzeichenfehler (
+Eine Frage, können wir die Problematik mit einem User-Exit lösen? Wäre es möglich, das BADI WORKORDER_UPDATE zu nutzen, sodass das Produktionsdatum unabhängig vom Dynpro immer gespeichert wird?
+
+Mehr Info zum WORKORDER_UPDATE: https://community.sap.com/t5/application-development-and-automation-discussions/badi-workorder-update/m-p/876519
+) also 3 neue tasks
+Workflow
+
+Thinking
+
+Responding
+✅ 3 neue Tasks aufgenommen – Stand Montag, 27.07.2026, 07:00 UTC (KW 31)
+🆕 Task 1: ZLO03 – Bug fehlende Material / falsche Mengen
+Feld Info
+Programm ZLO03
+Problem Fehlende Materialien + falsche Mengen
+Status 🟡 Neu
+🆕 Task 2: ZC12 – Fehler bei 0-Mengen
+Feld Info
+Programm ZC12
+Problem Fehler bei 0-Mengen
+Status 🟡 Neu
+🆕 Task 3: BADI – Kennzeichenfehler (Produktionsdatum)
+Feld Info
+Problem Kennzeichenfehler
+Frage Lösung via User-Exit / BADI WORKORDER_UPDATE?
+Ziel Produktionsdatum soll unabhängig vom Dynpro immer gespeichert werden
+Referenz community.sap.com – BADI WORKORDER_UPDATE
+Status 🟡 Neu
+❓ Anforderungsklärung – bevor ich irgendwas anfasse (keine Annahmen, kein Code):
+🔹 Task 1 – ZLO03 (fehlende Mat / falsche Mengen)
+
+Fehlende Materialien: Welche Materialien fehlen im Output – gibt es ein Muster? (bestimmte Materialart? Werk? Textposition wie beim 9999-Thema?)
+Falsche Mengen: Falsch = zu hoch / zu niedrig / gerundet / falsches Vorzeichen?
+Welches Feld / welche Tabelle liefert die Menge? (VBAP-KWMENG? LIPS-LFIMG? RESB? Anderes?)
+Reproduktion: Beispielbeleg, wo man den Fehler sieht?
+Ist das ein neuer Bug oder war er schon vor der Fakenummer-9999-Änderung da?
+
+🔹 Task 2 – ZC12 (Fehler bei 0-Mengen)
+
+Was passiert genau bei Menge = 0? (Dump? Division durch 0? Falsche Ausgabe? Position wird ignoriert?)
+Soll-Verhalten: Sollen 0-Mengen-Positionen übersprungen, angezeigt oder anders behandelt werden?
+Welche Tabelle/Feld für die Menge in ZC12?
+ZC12 wurde am 18.05. "getestet und erledigt" – ist das ein neuer Fehler oder Regression?
+
+🔹 Task 3 – BADI WORKORDER_UPDATE (Produktionsdatum)
+
+Was ist der Kennzeichenfehler genau? Welches Kennzeichen? In welcher Transaktion (CO01/CO02 Fertigungsauftrag)?
+Welches Produktionsdatum soll gespeichert werden? (GSTRP Ecktermin-Start? GLTRP Ende? Ist-Datum? Ein Z-Feld?)
+In welche Tabelle/Feld soll es geschrieben werden? (AFKO? AFPO? CAUFV? Z-Tabelle?)
+Warum geht es aktuell verloren? ("unabhängig vom Dynpro" → wird es nur gespeichert, wenn das Dynpro/der Screen aufgerufen wird?)
+Ist WORKORDER_UPDATE schon als eure präferierte Lösung gesetzt, oder soll ich das erst bewerten (ob die BADI die richtige ist)?
+
+📋 Offene Themen – Gesamtübersicht (Stand 27.07.2026)
+
+Task Programm/Objekt Status
+
+1 🆕 ZLO03 – fehlende Mat / falsche Mengen ZLO03 Klärung offen
+2 🆕 ZC12 – Fehler bei 0-Mengen ZC12 Klärung offen
+3 🆕 BADI Kennzeichenfehler – Produktionsdatum WORKORDER_UPDATE? Klärung offen
+💡 Wichtiger Hinweis zur BADI (Task 3):
+Bevor ich zu WORKORDER_UPDATE eine belastbare Aussage mache oder Code schreibe:
+
+Ich müsste die exakte Signatur / Methoden der BADI in eurem System kennen (SAP-Release-abhängig!).
+Ich mache keine Annahmen über Methodennamen/Parameter aus dem Gedächtnis oder dem Forenlink.
+Das SAP-Community-Posting kann ich als Hinweis nutzen, aber nicht als verlässliche Quelle für euer System.
+
+→ Erst wenn die exakte BADI-Definition + Zielfeld + Fehlerursache geklärt sind, bewerte ich, ob WORKORDER_UPDATE geeignet ist, und dann ggf. Code.🛑 Keine Programmierung, keine Mockdaten, keine Halluzinationen. Bitte beantworte die nummerierten Fragen (mindestens grob), dann können wir Task für Task sonnenklar machen. Womit willst du starten? 👍
+weiter offene task auasser diese neuen ?
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Montag, 27.07.2026, 07:05 UTC (KW 31)
+📋 Alle offenen Tasks
+🆕 Neue Tasks (heute aufgenommen):
+
+Task Programm/Objekt Status
+
+1 ZLO03 – fehlende Mat / falsche Mengen ZLO03 🟡 Klärung offen
+2 ZC12 – Fehler bei 0-Mengen ZC12 🟡 Klärung offen
+3 BADI Kennzeichenfehler – Produktionsdatum WORKORDER_UPDATE? 🟡 Klärung offen
+📌 Sonstige offene Tasks (aus früherem Verlauf):
+Keine.Beim letzten Stand (02.07.2026) waren alle vorherigen Themen entweder erledigt oder verworfen:
+
+Alles rund um Trafag, HR Cockpit, ZLO03 (9999), Preiskondition, Massupload, Finance Dashboard, SAP-Koordinator, #4 Vorschriften Lager → ✅ erledigt
+Fake-Namen Programme/Tabellen → ❌ verworfen (Chef entlassen)
+
+➡️ Fazit:
+Außer den 3 neuen Tasks gibt es keine weiteren offenen Punkte.❓ Womit willst du starten – Task 1, 2 oder 3? (Denk an die Klärungsfragen von eben, damit wir sauber ohne Annahmen arbeiten können.) 👍
+diese neuen offenen task, einkaufsdashbaord ausbau spent mit drilldown. weitere task finance, alle daten in zentralem excel
+Workflow
+
+Thinking
+
+Responding
+✅ 2 weitere neue Tasks aufgenommen – Stand Montag, 27.07.2026, 07:06 UTC (KW 31)
+🆕 Task 4: Einkaufsdashboard – Ausbau (Spend mit Drilldown)
+Feld Info
+Thema Einkaufsdashboard – Ausbau
+Aufgabe Spend mit Drilldown
+Status 🟡 Neu
+🆕 Task 5: Finance – alle Daten in zentralem Excel
+Feld Info
+Thema Finance
+Aufgabe Alle Daten in zentralem Excel
+Status 🟡 Neu
+📋 Alle offenen Tasks – Gesamtübersicht
+
+Task Objekt Status
+
+1 ZLO03 – fehlende Mat / falsche Mengen ZLO03 🟡 Klärung offen
+2 ZC12 – Fehler bei 0-Mengen ZC12 🟡 Klärung offen
+3 BADI Kennzeichenfehler – Produktionsdatum WORKORDER_UPDATE? 🟡 Klärung offen
+4 Einkaufsdashboard Ausbau – Spend mit Drilldown Einkaufsdashboard 🟡 Neu
+5 Finance – alle Daten in zentralem Excel Finance 🟡 Neu
+❓ Anforderungsklärung Task 4 & 5 (keine Annahmen):
+🔹 Task 4 – Einkaufsdashboard (Spend mit Drilldown)
+
+Tool: PowerBI (wie beim HR/Finance Dashboard)? Oder Excel? Oder anderes?
+Spend-Datenquelle: SAP (EKKO/EKPO Einkaufsbelege?), Rhino, oder Excel?
+Drilldown-Ebenen: Was soll aufklappbar sein? (z.B. Warengruppe → Lieferant → Bestellung → Position? Oder Jahr → Monat? Oder Werk → Materialgruppe?)
+Was ist schon da (Ausbau = Erweiterung eines bestehenden Dashboards) – was fehlt konkret?
+Wer hat angestossen?
+
+🔹 Task 5 – Finance / alle Daten in zentralem Excel
+
+Ist das dasselbe "zentrale geschriebene Excel" wie beim erledigten Finance-Dashboard-Wechselkurs-Thema, oder ein neues?
+"Alle Daten" = welche Daten genau? (Umsätze, Kosten, alle Standorte, Wechselkurse …?)
+Auftrag: Sollen Daten dort zusammengeführt/konsolidiert werden? Automatisiert befüllt? Oder nur Struktur/Aufbau liefern?
+Bezug zu Trafag Management Reporting / Rhino CHF-Konsolidierung?
+Wer hat angestossen?
+
+📌 Übersicht offene Klärungen gesamt:
+
+Task 1–3 (SAP-Bugs/BADI): Klärungsfragen 1–14 vom vorherigen Post noch offen
+Task 4–5 (Dashboards/Finance): Klärungsfragen 1–10 oben
+
+💡 Keine Programmierung, keine Mockdaten, keine Annahmen.❓ Womit willst du anfangen – priorisierst du einen der 5 Tasks? Dann klären wir den zuerst sonnenklar durch. 👍
+welche person if für welches land zuständig in trafag steht das im chat?
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Dienstag, 28.07.2026, 07:12 UTC (KW 31)
+🔍 Was im Chat-Verlauf zu Personen ↔ Ländern/Themen steht:
+Ich mache keine Annahmen – hier nur, was tatsächlich erwähnt wurde:
+Person Bezug im Chat Land/System klar zugeordnet?
+Santi ES Lesezugriff / Sage / Durchsprache 🇪🇸 Spanien – ja, klar
+Marco Rhino Zugangsdaten Rhino = CHF-Konsolidierung → ❓ Land nicht explizit genannt
+Rohail DE File (Trafag) 🇩🇪 Deutschland – ja (DE File)
+Andreas Intercompany-Abgrenzungen ❓ kein Land genannt
+Nadja Fluktuation (PowerBI, HR) ❓ kein Land – HR-Thema
+Sonja Fluktuations-Formel ❓ kein Land – HR-Thema
+Gunther Fake-Namen / PowerBI-Lizenzen ❓ kein Land
+Fabio Mandant 200 / Preiskondition testen ❓ kein Land
+Adil ZC12-Test ❓ kein Land
+Philip Steiger Smartsheet / Lizenz ❓ kein Land
+➡️ Klare Länderzuordnung (nur was belegt ist):
+
+🇪🇸 Spanien → Santi (Sage/CSV-Export)
+🇩🇪 Deutschland → Rohail (DE File)
+
+Alle anderen Personen: Im Chat wurde kein Land genannt. Ich rate hier nicht.
+⚠️ Wichtiger Hinweis:
+Eine vollständige Übersicht "Person ↔ Land" für alle Trafag-Standorte existiert nicht im Chatverlauf. Wir hatten das damals sogar als offene Frage markiert (welcher der 9 Standorte welches System hat) – das wurde nie beantwortet.❓ Möchtest du diese Zuordnung jetzt vervollständigen? Dann gib mir die Länder/Personen, und ich pflege es sauber ein.
+offene punhnkt 6.8.26
+Workflow
+
+Thinking
+
+Responding
+✅ Stand: Donnerstag, 06.08.2026, 07:49 UTC (KW 32)
+📋 Alle offenen Tasks
+
+Task Objekt Status
+
+1 ZLO03 – fehlende Mat / falsche Mengen ZLO03 🟡 Klärung offen
+2 ZC12 – Fehler bei 0-Mengen ZC12 🟡 Klärung offen
+3 BADI Kennzeichenfehler – Produktionsdatum WORKORDER_UPDATE? 🟡 Klärung offen
+4 Einkaufsdashboard Ausbau – Spend mit Drilldown Einkaufsdashboard 🟡 Klärung offen
+5 Finance – alle Daten in zentralem Excel Finance 🟡 Klärung offen
+⏳ Hinweis:
+Diese 5 Tasks sind seit dem 27.07.2026 offen (jetzt ~10 Tage) und alle noch in der Anforderungsklärung – zu keinem davon liegen mir bisher die Antworten auf die Klärungsfragen vor.
+❓ Fragen:
+
+Gab es zu einem der 5 Tasks inzwischen Fortschritt oder neue Infos?
+Wurde einer davon erledigt oder priorisiert?
+Neue Tasks in den letzten 10 Tagen dazugekommen?
+Wollen wir jetzt einen Task sonnenklar durchklären (dann können wir ihn angehen)?
+
+❓ Womit weiter?
+
+Schließen
+
+bitte speichern,  alle hintegrundinfos sind im claude account metacube hinterlegt 
+
+Gespeichert. Der Hinweis ist jetzt als Projektkontext-Datei festgehalten: Punkt 3 = ZZPRDAT / Produktionsdatum, vollständige Hintergrundinfos liegen im Claude-Account „Metacube“.
+
+Projektkontext ZZPRDAT herunterladen 
+
+Projektkontext_ZZPRDAT_2026-08-10.txt
+Dokument
+Mittwoch 8:38
+zeige was alles offen ist
+
+Aktuell sind 5 Punkte offen. Der letzte dokumentierte Gesamtstand führt genau diese fünf Aufgaben; ältere Themen waren zuvor erledigt oder verworfen.
+
+Nr.	Thema	Aktueller Stand
+1	ZLO03 – fehlende Materialien / falsche Mengen	🟡 Klärung offen
+2	ZC12 – Fehler bei Nullmengen	🟡 Klärung offen
+3	ZZPRDAT – Produktionsdatum Fertigungsauftrag	🟠 Umsetzungsvorbereitung / blockiert
+4	Einkaufsdashboard – Spend mit Drilldown ausbauen	🟡 Klärung offen
+5	Finance – alle Daten in einem zentralen Excel zusammenführen	🟡 Klärung offen
+
+Bei Punkt 3 ist inzwischen deutlich mehr geklärt: Ursache identifiziert, Lösungsweg über WORKORDER_UPDATE + Z_PP_PRDDAT_SET vorgesehen. Offen sind vor allem die Analyse von Auftrag 1214608, die Trigger-Klärung mit Lucas Castro / Florian Wächter und Kopf- vs. Positionsebene mit Marco Di Menco. Danach folgen Implementierung, Test, Transport und Nachbefüllung.
+
+Für Punkt 4 und 5 fehlen weiterhin wesentliche fachliche Details wie Datenquelle, gewünschter Drilldown bzw. Umfang des zentralen Finance-Excels.
+
+Priorität aus meiner Sicht: Punkt 3 ist momentan am weitesten konkretisiert und hat einen echten fachlichen Blocker; Punkte 1, 2, 4 und 5 sind noch stärker in der Klärungsphase.
+
+drilldown ist eingebaut, beschaffungs warengruppe pdodukgruppe über sap tabelle etablieren
+
+Verstanden — Punkt 4 ist teilweise erledigt und wird konkretisiert:
+
+4. Einkaufsdashboard – Spend mit Drilldown
+
+✅ Drilldown ist eingebaut
+🟡 Offen: Beschaffungs-Warengruppe und Produktgruppe sauber über eine SAP-Tabelle etablieren
+🎯 Ziel: belastbare Zuordnung direkt aus SAP statt manueller/abgeleiteter Logik
+
+Damit ist Punkt 4 nicht mehr „Klärung offen“, sondern in Umsetzung / technische Datenbasis noch offen.
