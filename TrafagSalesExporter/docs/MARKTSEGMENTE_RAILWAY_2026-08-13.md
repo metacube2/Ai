@@ -270,4 +270,24 @@ Jahresfilters auf Ergebnis, Suche und Kacheln, sowie die Jahresliste.
 Angemeldet lokal gegen `trafag_exporter.db` geprueft: Jahresfilter sichtbar und ohne
 Ueberlagerung, Ergebnistabelle mit Jahresspalte, 3D-Sicht gezeichnet und mit der Maus gedreht.
 Drei Testzuordnungen wurden dafuer angelegt und danach wieder entfernt. Die Produktivdatenbank
-wurde nicht angefasst.
+wurde dabei nicht angefasst.
+
+Produktiv deployed am 2026-08-14 21:02, Funktionscommit `7419473`, ohne Alarm. Werkzeug
+`.tmp_tools/DeployMarketSegmentYear`. Vorher-Sicherung
+`trafag_exporter.db.before-segment-year-20260814-205358.bak`. `BiDashboard.dll`
+`4'595'712` Bytes, SHA256
+`D1FE3189A1C37401E8CF813134E0A882AAAC03D01F7996DA2D964B54A1613AE7`, lokaler Release-Build und
+Server bitgleich. Wirknachweis mit Vorher-Messung: `MarketSegmentChartAxes`,
+`MarketSegmentChartValues`, `GetAvailableYearsAsync`,
+`Auf der Standortachse sind alle Segmente zusammengefasst.` und `px-4 pb-4` fehlten im
+Prueflauf und sind danach enthalten; `/marktsegmente` waechst von `66'785` auf `68'598` Bytes.
+Keine Migration, kein Schemawechsel, Produktiv-DB in Laenge und Schreibzeit unveraendert.
+
+Bei der Tokenwahl bewusst vermieden, weil sie einen Treffer vorgetaeuscht haetten: `Jahr`,
+`Segment`, `marktsegmente` und `MarketSegmentPageService` stehen seit dem 2026-08-13 in der
+DLL, `Z: Jahr` ist ein Teilstring des vorhandenen `Z: Jahr / Zeit` und `Alle Jahre` steht im
+Finance-Pivot des Management Cockpits.
+
+**Produktiv NICHT belegt:** ein angemeldeter Sichtprueflauf. Die Finance-Routen liegen hinter
+dem Unlock und liefern von aussen nur das Passwortpanel. Der erste angemeldete Aufruf von Ingo
+oder Patrik ist der eigentliche Test.

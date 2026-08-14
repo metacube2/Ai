@@ -9,7 +9,7 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
-## Marktsegmente mit Jahr und 3D-Analyse 2026-08-14 - NICHT deployed
+## Marktsegmente mit Jahr und 3D-Analyse 2026-08-14 - produktiv deployed 21:02
 
 - Die Seite `/marktsegmente` hat oben einen Jahresfilter, der auf Ergebnissicht,
   Pflegeliste und die Kacheln unter `Stand der Pflege` wirkt. Voreingestellt ist
@@ -33,9 +33,16 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Beschriftung. Mit `Placeholder` korrigiert in der Marktumfrage (Land, Status),
   in der Pflege (Standort), beim neuen Jahresfilter und im Finance-Pivot des
   Management Cockpits (Jahr, TSC).
-- `520/520` Tests gruen. Angemeldet lokal gegen `trafag_exporter.db` sichtgeprueft;
-  die Produktivdatenbank wurde nicht beruehrt.
-- Details: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 13.
+- `520/520` Release-Tests gruen. Angemeldet lokal gegen `trafag_exporter.db`
+  sichtgeprueft.
+- Produktiv deployed am 2026-08-14 21:02, Funktionscommit `7419473`, ohne Alarm.
+  Vorher-Sicherung `trafag_exporter.db.before-segment-year-20260814-205358.bak`.
+  `BiDashboard.dll` SHA256
+  `D1FE3189A1C37401E8CF813134E0A882AAAC03D01F7996DA2D964B54A1613AE7`, lokaler
+  Release-Build und Server bitgleich. Sechs Routen HTTPS `200`, `/marktsegmente`
+  waechst von `66'785` auf `68'598` Bytes. Keine Migration, kein Schemawechsel.
+- Details: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 13 und
+  `docs/rag/DEPLOYMENT.md`.
 
 ## Agentenkoordination beim Sitzungsstart 2026-08-12
 

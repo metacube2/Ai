@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-13
+Stand: 2026-08-14
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,7 +44,37 @@ Stand: 2026-08-13
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-13 11:58, Marktumfrage in der
+- Aktuellster produktiv verifizierter Deploy: **2026-08-14 21:02, Marktsegmente mit
+  Jahresbezug und drehbarer 3D-Analyse**, Funktionscommit `7419473`, `520/520`
+  Release-Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-segment-year-20260814-205358.bak`. `BiDashboard.dll`
+  `14.08.2026 21:03:23`, `4'595'712` Bytes, SHA256
+  `D1FE3189A1C37401E8CF813134E0A882AAAC03D01F7996DA2D964B54A1613AE7`; lokaler
+  Release-Build und Server bitgleich. `app_offline.htm` gesetzt und danach auf
+  `app_offline.htm.disabled` umbenannt. Ziel: `0` neu, `5` geaendert, `1'400` unveraendert,
+  `0` verschwunden. Produktiv-DB in Laenge und Schreibzeit unveraendert
+  (`346'648'576` Bytes, `14.08.2026 14:25:41`). HTTPS `200`: Startseite (`68'934` Bytes),
+  `/marktsegmente` (`68'598`), `/management-cockpit` (`69'988`), `/settings` (`70'015`),
+  `/einkauf/aufriss` (`138'016`), `/logistik/materialdisposition` (`81'543`).
+  **Wirknachweis mit Vorher-Messung:** im Prueflauf fehlten `MarketSegmentChartAxes`,
+  `MarketSegmentChartValues`, `GetAvailableYearsAsync`,
+  `Auf der Standortachse sind alle Segmente zusammengefasst.` und `px-4 pb-4` in der
+  Server-DLL, danach sind alle fuenf enthalten. `/marktsegmente` waechst dabei von
+  `66'785` auf `68'598` Bytes.
+  **FALLE bei der Tokenwahl, hier bewusst umgangen:** `Jahr`, `Segment`, `marktsegmente`
+  und `MarketSegmentPageService` stehen seit dem 2026-08-13 in der DLL; `Z: Jahr` waere ein
+  Teilstring des schon vorhandenen `Z: Jahr / Zeit` aus dem Management Cockpit und
+  `Alle Jahre` steht dort im Finance-Pivot. Alle fuenf haetten einen Treffer vorgetaeuscht.
+  Dieser Deploy enthaelt neben dem Jahresfilter und der 3D-Analyse zwei Korrekturen mit
+  Wirkung ueber die Seite hinaus: `MudMainContent` trug `pa-4`, was per `!important` den
+  Abstand zur festen Kopfleiste ueberschrieb und die obersten rund 48 Pixel **jeder Seite**
+  unsichtbar machte, und sechs `MudSelect`-Filter schrieben ihren Wert `alle` ueber die
+  eigene Beschriftung. Keine Migration, kein Schemawechsel.
+  **NICHT belegt:** ein angemeldeter Sichtprueflauf produktiv. Lokal gegen
+  `trafag_exporter.db` wurde er gefahren, produktiv liegen die Finance-Routen hinter dem
+  Unlock. Details: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 13.
+
+- Deploy davor: **2026-08-13 11:58, Marktumfrage in der
   Anwendung pflegbar**, Funktionscommit `1371260`, `517/517` Release-Tests gruen.
   Vorher-Sicherung `trafag_exporter.db.before-market-segments-20260813-114437.bak`,
   `345'686'016` Bytes. `BiDashboard.dll` `13.08.2026 11:58:10`, `4'560'384` Bytes, SHA256
