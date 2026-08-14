@@ -17,6 +17,21 @@ public static class MarketSegmentFilterModes
     public const string Confirmed = "confirmed";
 }
 
+/// <summary>Was die 3D-Analyse auf der X-Achse auftraegt.</summary>
+public static class MarketSegmentChartAxes
+{
+    public const string Site = "site";
+    public const string Segment = "segment";
+}
+
+/// <summary>Welche Groesse die 3D-Analyse als Hoehe darstellt.</summary>
+public static class MarketSegmentChartValues
+{
+    public const string Sales = "sales";
+    public const string Rows = "rows";
+    public const string Customers = "customers";
+}
+
 /// <summary>Ein Kunde mit Umsatzgewicht und aktuellem Zuordnungsstand.</summary>
 public sealed record MarketSegmentCustomerRow(
     string Tsc,
@@ -32,9 +47,10 @@ public sealed record MarketSegmentCustomerRow(
     bool IsConfirmed,
     string ProposalNote);
 
-/// <summary>Eine Zeile der Ergebnissicht: Segment je Land und Waehrung.</summary>
+/// <summary>Eine Zeile der Ergebnissicht: Segment je Jahr, Land und Waehrung.</summary>
 public sealed record MarketSegmentResultRow(
     string Segment,
+    int Year,
     string Tsc,
     string Currency,
     int Customers,
@@ -51,8 +67,11 @@ public sealed record MarketSegmentProgress(
 
 public interface IMarketSegmentPageService
 {
+    /// <summary>
+    /// <paramref name="year"/> schraenkt auf ein Verkaufsjahr ein; `null` bedeutet alle Jahre.
+    /// </summary>
     Task<List<MarketSegmentCustomerRow>> SearchCustomersAsync(
-        string? nameFilter, string? tscFilter, string filterMode, int take = 200);
+        string? nameFilter, string? tscFilter, string filterMode, int? year = null, int take = 200);
 
     Task AssignAsync(
         string tsc, string customerNumber, string customerName, string segment, string source,
@@ -63,12 +82,17 @@ public interface IMarketSegmentPageService
 
     Task ClearAsync(string tsc, string customerNumber);
 
-    /// <summary>Ergebnissicht: welcher Umsatz haengt je Segment, Land und Waehrung daran.</summary>
-    Task<List<MarketSegmentResultRow>> GetResultAsync(bool confirmedOnly = true);
+    /// <summary>
+    /// Ergebnissicht: welcher Umsatz haengt je Segment, Jahr, Land und Waehrung daran.
+    /// </summary>
+    Task<List<MarketSegmentResultRow>> GetResultAsync(bool confirmedOnly = true, int? year = null);
 
-    Task<MarketSegmentProgress> GetProgressAsync();
+    Task<MarketSegmentProgress> GetProgressAsync(int? year = null);
 
     Task<List<string>> GetKnownSegmentsAsync();
+
+    /// <summary>Verkaufsjahre im Bestand, juengstes zuerst.</summary>
+    Task<List<int>> GetAvailableYearsAsync();
 }
 
 /// <summary>
@@ -102,16 +126,34 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
         _log = log;
     }
 
+    /// <summary>
+    /// Schraenkt auf ein Verkaufsjahr ein. Das Jahr einer Zeile folgt absichtlich derselben
+    /// Regel wie das zentrale Excel: Buchungsdatum, sonst Rechnungsdatum, sonst
+    /// Extraktionsdatum. Waere die Regel hier eine andere, stuende dieselbe Zeile in der
+    /// Segmentsicht in einem anderen Jahr als in der Finance-Spalte `Year`, und niemand
+    /// koennte die beiden Zahlen gegeneinander pruefen.
+    ///
+    /// Die Finance-Regel `ForceYear` wird bewusst NICHT ausgewertet. Sie ist am 2026-06-29
+    /// entfernt worden und diese Sicht ist ausdruecklich keine Finanzaussage. Kaeme sie
+    /// zurueck, gehoerte sie auch hierher.
+    /// </summary>
+    private static IQueryable<CentralSalesRecord> FilterByYear(IQueryable<CentralSalesRecord> query, int? year)
+        => year is null
+            ? query
+            : query.Where(row => (row.PostingDate ?? row.InvoiceDate ?? row.ExtractionDate).Year == year.Value);
+
     public async Task<List<MarketSegmentCustomerRow>> SearchCustomersAsync(
-        string? nameFilter, string? tscFilter, string filterMode, int take = 200)
+        string? nameFilter, string? tscFilter, string filterMode, int? year = null, int take = 200)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var assignments = await db.CustomerMarketSegments.AsNoTracking().ToListAsync();
         var lookup = MarketSegmentResolver.BuildLookup(assignments, confirmedOnly: false);
 
-        var query = db.CentralSalesRecords.AsNoTracking()
-            .Where(row => row.CustomerNumber != null && row.CustomerNumber.Trim() != "");
+        var query = FilterByYear(
+            db.CentralSalesRecords.AsNoTracking()
+                .Where(row => row.CustomerNumber != null && row.CustomerNumber.Trim() != ""),
+            year);
 
         var name = nameFilter?.Trim();
         if (!string.IsNullOrEmpty(name))
@@ -299,7 +341,7 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
             details: $"{normalizedTsc}/{normalizedCustomer} | war {previous}");
     }
 
-    public async Task<List<MarketSegmentResultRow>> GetResultAsync(bool confirmedOnly = true)
+    public async Task<List<MarketSegmentResultRow>> GetResultAsync(bool confirmedOnly = true, int? year = null)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var assignments = await db.CustomerMarketSegments.AsNoTracking().ToListAsync();
@@ -317,15 +359,24 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
         var tscKeys = segmentByKey.Keys.Select(k => k.Item1).Distinct().ToList();
         var customerKeys = segmentByKey.Keys.Select(k => k.Item2).Distinct().ToList();
 
-        var grouped = await db.CentralSalesRecords.AsNoTracking()
-            .Where(row => row.CustomerNumber != null && row.CustomerNumber.Trim() != ""
-                          && tscKeys.Contains(row.Tsc)
-                          && customerKeys.Contains(row.CustomerNumber.Trim()))
-            .GroupBy(row => new { row.Tsc, row.CustomerNumber, row.SalesCurrency })
+        var grouped = await FilterByYear(
+                db.CentralSalesRecords.AsNoTracking()
+                    .Where(row => row.CustomerNumber != null && row.CustomerNumber.Trim() != ""
+                                  && tscKeys.Contains(row.Tsc)
+                                  && customerKeys.Contains(row.CustomerNumber.Trim())),
+                year)
+            .GroupBy(row => new
+            {
+                row.Tsc,
+                row.CustomerNumber,
+                row.SalesCurrency,
+                Year = (row.PostingDate ?? row.InvoiceDate ?? row.ExtractionDate).Year
+            })
             .Select(g => new
             {
                 g.Key.Tsc,
                 g.Key.CustomerNumber,
+                g.Key.Year,
                 Currency = g.Key.SalesCurrency ?? string.Empty,
                 SalesRows = g.Count(),
                 SalesValue = g.Sum(x => (double)x.SalesPriceValue)
@@ -334,35 +385,43 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
 
         // Waehrungen werden BEWUSST nicht ueber Laender addiert. Jede Zeile bleibt in ihrer
         // Originalwaehrung; eine Konzernsumme braucht Kurse und gehoert in die Finance-Sicht.
+        // Genauso wenig werden Jahre addiert: ein Segmentumsatz ohne Jahresbezug verleitet
+        // dazu, mehrere Geschaeftsjahre als eine Zahl zu lesen.
         return grouped
             .Select(x => new
             {
                 Key = (MarketSegmentResolver.NormalizeTsc(x.Tsc),
                        MarketSegmentResolver.NormalizeCustomerNumber(x.CustomerNumber)),
                 x.Tsc,
+                x.Year,
                 x.Currency,
                 x.SalesRows,
                 x.SalesValue
             })
             .Where(x => segmentByKey.ContainsKey(x.Key))
-            .GroupBy(x => (Segment: segmentByKey[x.Key], x.Tsc, x.Currency))
+            .GroupBy(x => (Segment: segmentByKey[x.Key], x.Year, x.Tsc, x.Currency))
             .Select(g => new MarketSegmentResultRow(
                 g.Key.Segment,
+                g.Key.Year,
                 g.Key.Tsc,
                 g.Key.Currency.Trim(),
                 g.Select(x => x.Key).Distinct().Count(),
                 g.Sum(x => x.SalesRows),
                 (decimal)g.Sum(x => x.SalesValue)))
             .OrderBy(r => r.Segment, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(r => r.Year)
             .ThenByDescending(r => r.SalesRows)
             .ToList();
     }
 
-    public async Task<MarketSegmentProgress> GetProgressAsync()
+    public async Task<MarketSegmentProgress> GetProgressAsync(int? year = null)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var assignments = await db.CustomerMarketSegments.AsNoTracking().ToListAsync();
-        var totalRows = await db.CentralSalesRecords.CountAsync();
+        // Der Gesamtbestand richtet sich nach demselben Jahr wie die beiden anderen Zaehler.
+        // Sonst stuenden im Kopf der Seite gefilterte Zeilen neben einer ungefilterten
+        // Gesamtzahl, und der Pflegestand saehe schlechter aus, als er ist.
+        var totalRows = await FilterByYear(db.CentralSalesRecords.AsNoTracking(), year).CountAsync();
 
         if (assignments.Count == 0)
             return new MarketSegmentProgress(0, 0, 0, 0, totalRows);
@@ -371,9 +430,11 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
         var customerKeys = assignments
             .Select(a => MarketSegmentResolver.NormalizeCustomerNumber(a.CustomerNumber)).Distinct().ToList();
 
-        var counts = await db.CentralSalesRecords.AsNoTracking()
-            .Where(row => row.CustomerNumber != null && tscKeys.Contains(row.Tsc)
-                          && customerKeys.Contains(row.CustomerNumber.Trim()))
+        var counts = await FilterByYear(
+                db.CentralSalesRecords.AsNoTracking()
+                    .Where(row => row.CustomerNumber != null && tscKeys.Contains(row.Tsc)
+                                  && customerKeys.Contains(row.CustomerNumber.Trim())),
+                year)
             .GroupBy(row => new { row.Tsc, row.CustomerNumber })
             .Select(g => new { g.Key.Tsc, g.Key.CustomerNumber, Rows = g.Count() })
             .ToListAsync();
@@ -390,6 +451,10 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
             (MarketSegmentResolver.NormalizeTsc(a.Tsc),
              MarketSegmentResolver.NormalizeCustomerNumber(a.CustomerNumber)));
 
+        // Die Kundenzahlen bleiben jahresunabhaengig, weil die Zuordnung selbst kein Jahr
+        // traegt. Nur die Zeilenzahlen folgen dem Filter. Ein bestaetigter Kunde ohne Umsatz
+        // im gewaehlten Jahr erscheint damit als "bestaetigt" mit null Zeilen, was genau die
+        // richtige Aussage ist.
         var confirmed = assignments.Where(a => a.IsConfirmed).ToList();
         var proposals = assignments.Where(a => !a.IsConfirmed).ToList();
 
@@ -416,5 +481,16 @@ public sealed class MarketSegmentPageService : IMarketSegmentPageService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    public async Task<List<int>> GetAvailableYearsAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        return await db.CentralSalesRecords.AsNoTracking()
+            .Select(row => (row.PostingDate ?? row.InvoiceDate ?? row.ExtractionDate).Year)
+            .Distinct()
+            .OrderByDescending(year => year)
+            .ToListAsync();
     }
 }

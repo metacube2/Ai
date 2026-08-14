@@ -51,7 +51,11 @@
         <NavMenu />
     </MudDrawer>
 
-    <MudMainContent Class="pa-4" @key="UiText.CurrentLanguage">
+    @* Bewusst kein `pa-4`: die MudBlazor-Hilfsklasse setzt `padding` mit `!important` und
+       ueberschreibt damit den Abstand, den MudBlazor fuer die fest positionierte Kopfleiste
+       vergibt. Der Seitenkopf lag dadurch auf jeder Seite unter der Kopfleiste und war
+       unsichtbar. Oben deshalb nichts setzen, seitlich und unten weiterhin `4`. *@
+    <MudMainContent Class="px-4 pb-4" @key="UiText.CurrentLanguage">
         @Body
     </MudMainContent>
 </MudLayout>

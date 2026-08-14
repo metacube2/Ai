@@ -38,14 +38,19 @@
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                       HelperText="@T("Kunde, Anwendung, Produkt, Wettbewerber oder Kommentar", "Customer, application, product, competitor or comment")"
                       Immediate="false" OnKeyUp="OnSearchKey" Style="min-width:240px" />
-        <MudSelect T="string" @bind-Value="_countryFilter" Label="@T("Land", "Country")" Clearable Style="min-width:120px">
+        @* Placeholder ist hier Pflicht, nicht Kosmetik: ohne ihn haelt MudBlazor das Feld bei
+           leerem Wert fuer unbefuellt, laesst die Beschriftung unten stehen und schreibt "alle"
+           direkt darueber. *@
+        <MudSelect T="string" @bind-Value="_countryFilter" Label="@T("Land", "Country")"
+                   Placeholder="@T("alle", "all")" Clearable Style="min-width:120px">
             <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
             @foreach (var c in _countries)
             {
                 <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect T="string" @bind-Value="_statusFilter" Label="@T("Status", "Status")" Clearable Style="min-width:170px">
+        <MudSelect T="string" @bind-Value="_statusFilter" Label="@T("Status", "Status")"
+                   Placeholder="@T("alle", "all")" Clearable Style="min-width:170px">
             <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
             @foreach (var s in _statuses)
             {

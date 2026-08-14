@@ -43,7 +43,8 @@ public class MarketSegmentPageServiceTests : IDisposable
     }
 
     private static CentralSalesRecord Row(
-        string tsc, string customerNumber, string customerName, string country, decimal value, string family)
+        string tsc, string customerNumber, string customerName, string country, decimal value, string family,
+        DateTime? postingDate = null)
         => new()
         {
             SiteId = 1,
@@ -55,6 +56,7 @@ public class MarketSegmentPageServiceTests : IDisposable
             SalesPriceValue = value,
             SalesCurrency = "CHF",
             ProductFamilyText = family,
+            PostingDate = postingDate,
             ExtractionDate = new DateTime(2026, 8, 13),
             DocumentType = "Invoice"
         };
@@ -174,6 +176,73 @@ public class MarketSegmentPageServiceTests : IDisposable
         Assert.Equal(250m, swiss.SalesValue);
         Assert.Equal("CHF", swiss.Currency);
         Assert.Equal(1, swiss.Customers);
+        // Ohne Buchungs- und Rechnungsdatum zaehlt das Extraktionsdatum, genau wie im
+        // zentralen Excel.
+        Assert.Equal(2026, swiss.Year);
+    }
+
+    [Fact]
+    public async Task Result_SplitsSameCustomerIntoOneRowPerYear()
+    {
+        await using (var db = new AppDbContext(_options))
+        {
+            db.CentralSalesRecords.Add(
+                Row("TRCH", "10042", "Stadler Rail AG", "CH", 900m, "Pressostat", new DateTime(2025, 6, 1)));
+            await db.SaveChangesAsync();
+        }
+
+        var service = CreateService();
+        await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Quelle");
+
+        var result = await service.GetResultAsync();
+
+        var y2026 = result.Single(r => r.Tsc == "TRCH" && r.Year == 2026);
+        var y2025 = result.Single(r => r.Tsc == "TRCH" && r.Year == 2025);
+        Assert.Equal(250m, y2026.SalesValue);
+        Assert.Equal(900m, y2025.SalesValue);
+        // Jahre werden nicht addiert; derselbe Kunde erscheint in jedem Jahr einmal.
+        Assert.Equal(1, y2025.Customers);
+    }
+
+    [Fact]
+    public async Task YearFilter_NarrowsResultSearchAndProgress()
+    {
+        await using (var db = new AppDbContext(_options))
+        {
+            db.CentralSalesRecords.Add(
+                Row("TRCH", "10042", "Stadler Rail AG", "CH", 900m, "Pressostat", new DateTime(2025, 6, 1)));
+            await db.SaveChangesAsync();
+        }
+
+        var service = CreateService();
+        await service.AssignAsync("TRCH", "10042", "Stadler Rail AG", "Railway", "Quelle");
+
+        var result = Assert.Single(await service.GetResultAsync(confirmedOnly: true, year: 2025));
+        Assert.Equal(2025, result.Year);
+        Assert.Equal(900m, result.SalesValue);
+
+        var rows = Assert.Single(await service.SearchCustomersAsync(null, null, MarketSegmentFilterModes.All, 2025));
+        Assert.Equal("10042", rows.CustomerNumber);
+        Assert.Equal(1, rows.SalesRows);
+
+        var progress = await service.GetProgressAsync(2025);
+        Assert.Equal(1, progress.ConfirmedSalesRows);
+        Assert.Equal(1, progress.TotalSalesRows);
+    }
+
+    [Fact]
+    public async Task AvailableYears_AreDistinctAndNewestFirst()
+    {
+        await using (var db = new AppDbContext(_options))
+        {
+            db.CentralSalesRecords.Add(
+                Row("TRCH", "10042", "Stadler Rail AG", "CH", 900m, "Pressostat", new DateTime(2025, 6, 1)));
+            await db.SaveChangesAsync();
+        }
+
+        var years = await CreateService().GetAvailableYearsAsync();
+
+        Assert.Equal([2026, 2025], years);
     }
 
     [Fact]

@@ -202,3 +202,72 @@ damit der eigentliche Test.
 - Anleitung fuer den Vertrieb: `docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`.
 - Quelle der Umfrage: `Railway_MarketSurvey_TSC_2026_05.xlsx`. Nach dem Import archivieren,
   aber erst nach einer Gegenpruefung in der Anwendung loeschen.
+
+## 13. Jahresbezug und 3D-Analyse, 2026-08-14
+
+Auftrag von Ingo: das Jahr soll in die Marktsegmente hinein, dazu eine drehbare 3D-Ansicht im
+selben Reiter.
+
+### 13.1 Jahresfilter fuer die ganze Seite
+
+Oben auf der Seite steht ein Auswahlfeld `Jahr`. Es wirkt auf die Ergebnissicht, auf die
+Pflegeliste und auf die drei Kacheln unter `Stand der Pflege`. Voreingestellt ist das juengste
+Jahr im Bestand, weil das die uebliche Frage ist. `alle Jahre` bleibt waehlbar.
+
+Das Jahr einer Verkaufszeile folgt **derselben Regel wie das zentrale Excel**: Buchungsdatum,
+sonst Rechnungsdatum, sonst Extraktionsdatum. Waere die Regel hier eine andere, stuende
+dieselbe Zeile in der Segmentsicht in einem anderen Jahr als in der Finance-Spalte `Year`, und
+die beiden Zahlen liessen sich nicht mehr gegeneinander pruefen. Die Finance-Regel `ForceYear`
+wird bewusst nicht ausgewertet; sie ist am 2026-06-29 entfernt worden.
+
+Die Ergebnistabelle hat jetzt eine Spalte `Jahr` und je Jahr, Standort und Waehrung eine Zeile.
+Jahre werden ebenso wenig addiert wie Waehrungen.
+
+Bewusst **nicht** gemacht: die Zuordnung selbst bekommt kein Jahr. Ein Kunde gehoert zu einem
+Segment oder nicht; eine Gueltigkeit je Jahr haette Tabelle, Resolver und die Logik des
+zentralen Excel veraendert. In den Kacheln bleiben die Kundenzahlen deshalb
+jahresunabhaengig, nur die Zeilenzahlen folgen dem Filter. Ein bestaetigter Kunde ohne Umsatz
+im gewaehlten Jahr erscheint als `bestaetigt` mit null Zeilen, was genau richtig ist.
+
+### 13.2 3D-Analyse im Ergebnisreiter
+
+Unter der Ergebnistabelle steht eine drehbare 3D-Sicht. Sie nutzt die vorhandene Engine
+`wwwroot/js/finance3d.js` aus dem Management Cockpit, es kommt keine neue Bibliothek dazu.
+
+- X-Achse: `Standort` oder `Segment`.
+- Z-Achse: Jahr.
+- Y-Achse: `Umsatz`, `Verkaufszeilen` oder `Kunden`.
+
+Zwei Festlegungen, die sich aus Abschnitt 1 und 7 ergeben:
+
+1. Es wird **immer genau eine Waehrung** dargestellt, voreingestellt die umsatzstaerkste.
+   Waehrungen zu addieren waere ohne Kurse falsch; die Umrechnung gehoert in die Finance-Sicht.
+2. Die Zeitachse zeigt **immer alle Jahre**, auch wenn oben ein einzelnes Jahr gewaehlt ist.
+   Eine einzelne Jahresscheibe ergaebe keinen Verlauf und damit kein Diagramm.
+
+Auf der Standortachse sind alle Segmente zusammengefasst; die Oberflaeche sagt das an.
+
+### 13.3 Zwei Fehler, die bei der Sichtpruefung aufgefallen sind
+
+**Der Seitenkopf lag unter der Kopfleiste.** `MudMainContent` trug in
+`Components/Layout/MainLayout.razor` die Klasse `pa-4`. Diese MudBlazor-Hilfsklasse setzt
+`padding` mit `!important` und ueberschrieb damit den Abstand, den MudBlazor fuer die fest
+positionierte Kopfleiste vergibt. Die obersten rund 48 Pixel **jeder Seite** waren dadurch
+unsichtbar, auch die Seitentitel. Aufgefallen ist es erst, als der neue Jahresfilter im DOM
+stand, aber nicht auf dem Bildschirm. Jetzt `px-4 pb-4`.
+
+**Auswahlwerte lagen ueber ihrer Beschriftung.** Ein `MudSelect` mit einem Eintrag vom Wert
+leer, beschriftet `alle`, gilt fuer MudBlazor als unbefuellt. Die Beschriftung blieb unten
+stehen, waehrend der Text `alle` darueber geschrieben wurde. Behoben mit einem `Placeholder`
+an vier Stellen: Land und Status in der Marktumfrage, Standort in der Pflege, Jahr und
+zusaetzlich die beiden Filter `Jahr` und `TSC` im Finance-Pivot des Management Cockpits.
+
+### 13.4 Nachweis
+
+`520/520` Tests gruen. Neue Tests: Aufteilung eines Kunden in eine Zeile je Jahr, Wirkung des
+Jahresfilters auf Ergebnis, Suche und Kacheln, sowie die Jahresliste.
+
+Angemeldet lokal gegen `trafag_exporter.db` geprueft: Jahresfilter sichtbar und ohne
+Ueberlagerung, Ergebnistabelle mit Jahresspalte, 3D-Sicht gezeichnet und mit der Maus gedreht.
+Drei Testzuordnungen wurden dafuer angelegt und danach wieder entfernt. Die Produktivdatenbank
+wurde nicht angefasst.

@@ -4,16 +4,33 @@
 @inject IMarketSegmentPageService SegmentService
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
+@inject IJSRuntime JsRuntime
 
 <PageTitle>@T("Marktsegmente", "Market segments")</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">@T("Marktsegmente", "Market segments")</MudText>
+<MudStack Row Spacing="3" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+    <MudText Typo="Typo.h4">@T("Marktsegmente", "Market segments")</MudText>
+    @* Ohne Placeholder haelt MudBlazor das Feld bei leerem Wert fuer unbefuellt und schreibt
+       "alle Jahre" direkt ueber die Beschriftung. *@
+    <MudSelect T="int?" Value="_year" ValueChanged="OnYearChanged" Label="@T("Jahr", "Year")"
+               Placeholder="@T("alle Jahre", "all years")" Style="min-width:150px">
+        <MudSelectItem T="int?" Value="@(null)">@T("alle Jahre", "all years")</MudSelectItem>
+        @foreach (var year in _years)
+        {
+            <MudSelectItem T="int?" Value="@year">@year</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>
 
-<MudTabs Elevation="0" Rounded="false" ApplyEffectsToContainer Class="mb-2">
+@* Der Reiterwechsel muss die 3D-Sicht neu zeichnen. MudTabs haelt auch die inaktiven Panels
+   im DOM, der Canvas hat dort aber die Groesse null; eine Zeichnung waehrend dieser Zeit
+   bliebe unsichtbar. *@
+<MudTabs Elevation="0" Rounded="false" ApplyEffectsToContainer Class="mb-2"
+         ActivePanelIndex="_activeTab" ActivePanelIndexChanged="OnTabChanged">
     <MudTabPanel Text="@T("Ergebnis", "Result")" Icon="@Icons.Material.Filled.PieChart">
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense Class="mb-4 mt-3">
-            @T("Diese Sicht zeigt den Umsatz je Marktsegment. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Waehrungen werden bewusst nicht ueber Laender addiert.",
-                "This view shows revenue per market segment. Only confirmed assignments are included, because only those also appear in the central Excel. Currencies are deliberately not added across countries.")
+            @T("Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert.",
+                "This view shows revenue per market segment and year. Only confirmed assignments are included, because only those also appear in the central Excel. Neither currencies nor years are added up.")
         </MudAlert>
 
         <MudPaper Class="pa-3 mb-4" Elevation="1">
@@ -36,8 +53,11 @@
         @if (_result.Count == 0)
         {
             <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mb-3">
-                @T("Noch keine bestaetigte Zuordnung. Wechseln Sie auf den Reiter Pflege, bestaetigen Sie dort Vorschlaege, und das Ergebnis erscheint hier.",
-                    "No confirmed assignment yet. Switch to the Maintenance tab, confirm proposals there, and the result will appear here.")
+                @(_progress.ConfirmedCustomers > 0
+                    ? T("Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre.",
+                        "The confirmed customers have no revenue in the selected year. Choose a different year above, or all years.")
+                    : T("Noch keine bestaetigte Zuordnung. Wechseln Sie auf den Reiter Pflege, bestaetigen Sie dort Vorschlaege, und das Ergebnis erscheint hier.",
+                        "No confirmed assignment yet. Switch to the Maintenance tab, confirm proposals there, and the result will appear here."))
             </MudAlert>
         }
         else
@@ -47,12 +67,15 @@
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
                     <MudText Typo="Typo.h6" Class="mb-1">@segment.Key</MudText>
                     <MudText Typo="Typo.caption" Class="mb-3">
+                        @* Kunden stehen bewusst nur je Zeile: ueber Jahre und Waehrungen addiert
+                           wuerde derselbe Kunde mehrfach gezaehlt. *@
+                        @segment.Select(r => r.Year).Distinct().Count() @T("Jahre", "years"),
                         @segment.Select(r => r.Tsc).Distinct().Count() @T("Laender", "countries"),
-                        @segment.Sum(r => r.Customers) @T("Kunden", "customers"),
                         @segment.Sum(r => r.SalesRows).ToString("N0") @T("Verkaufszeilen", "sales lines")
                     </MudText>
-                    <MudTable Items="segment.OrderByDescending(r => r.SalesRows)" Dense Hover Striped Breakpoint="Breakpoint.Sm">
+                    <MudTable Items="segment.OrderByDescending(r => r.Year).ThenByDescending(r => r.SalesRows)" Dense Hover Striped Breakpoint="Breakpoint.Sm">
                         <HeaderContent>
+                            <MudTh>@T("Jahr", "Year")</MudTh>
                             <MudTh>@T("Standort", "Site")</MudTh>
                             <MudTh Style="text-align:right">@T("Kunden", "Customers")</MudTh>
                             <MudTh Style="text-align:right">@T("Zeilen", "Rows")</MudTh>
@@ -60,6 +83,7 @@
                             <MudTh>@T("Waehrung", "Currency")</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            <MudTd DataLabel="@T("Jahr", "Year")">@context.Year</MudTd>
                             <MudTd DataLabel="@T("Standort", "Site")">@context.Tsc</MudTd>
                             <MudTd DataLabel="@T("Kunden", "Customers")" Style="text-align:right">@context.Customers</MudTd>
                             <MudTd DataLabel="@T("Zeilen", "Rows")" Style="text-align:right">@context.SalesRows.ToString("N0")</MudTd>
@@ -73,6 +97,57 @@
                 @T("Der Umsatz steht in der jeweiligen Landeswaehrung. Der fuehrende Finanzwert bleibt die Finance-Sicht im zentralen Excel; diese Sicht dient der Segmentbetrachtung.",
                     "Revenue is shown in the respective local currency. The authoritative financial figure remains the finance view in the central Excel; this view serves the segment perspective.")
             </MudText>
+
+            <MudDivider Class="my-6" />
+
+            <MudText Typo="Typo.h6" Class="mb-2">@T("3D Analyse", "3D analysis")</MudText>
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <MudGrid>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string" Value="_chartAxis" ValueChanged="OnChartAxisChanged" Label="@T("X Achse", "X axis")" Dense>
+                            <MudSelectItem T="string" Value="@MarketSegmentChartAxes.Site">@T("Standort", "Site")</MudSelectItem>
+                            <MudSelectItem T="string" Value="@MarketSegmentChartAxes.Segment">@T("Segment", "Segment")</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string" Value="_chartValue" ValueChanged="OnChartValueChanged" Label="@T("Y Wert", "Y value")" Dense>
+                            <MudSelectItem T="string" Value="@MarketSegmentChartValues.Sales">@T("Umsatz", "Sales")</MudSelectItem>
+                            <MudSelectItem T="string" Value="@MarketSegmentChartValues.Rows">@T("Verkaufszeilen", "Sales lines")</MudSelectItem>
+                            <MudSelectItem T="string" Value="@MarketSegmentChartValues.Customers">@T("Kunden", "Customers")</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudSelect T="string" Value="_chartCurrency" ValueChanged="OnChartCurrencyChanged" Label="@T("Waehrung", "Currency")" Dense>
+                            @foreach (var currency in ChartCurrencies)
+                            {
+                                <MudSelectItem T="string" Value="@currency">@currency</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.caption">
+                            @T("Linke Maustaste dreht, Mausrad zoomt, Shift plus Ziehen verschiebt. Die Zeitachse zeigt immer alle Jahre, unabhaengig vom Jahresfilter oben, weil eine einzelne Jahresscheibe keinen Verlauf ergibt.",
+                                "Left mouse button rotates, mouse wheel zooms, Shift plus drag pans. The time axis always shows every year, regardless of the year filter above, because a single year slice shows no trend.")
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+                @* `d-block`, weil MudText mit `Typo.caption` ein `span` erzeugt: zwei davon
+                   liefen sonst ohne Leerzeichen ineinander. *@
+                <MudText Typo="Typo.caption" Class="d-block">
+                    @T("Es wird genau eine Waehrung dargestellt. Waehrungen zu addieren waere ohne Kurse falsch, und die Umrechnung gehoert in die Finance-Sicht.",
+                        "Exactly one currency is shown. Adding currencies without exchange rates would be wrong, and the conversion belongs in the finance view.")
+                </MudText>
+                @if (_chartAxis == MarketSegmentChartAxes.Site)
+                {
+                    <MudText Typo="Typo.caption" Class="d-block">
+                        @T("Auf der Standortachse sind alle Segmente zusammengefasst.", "On the site axis all segments are combined.")
+                    </MudText>
+                }
+            </MudPaper>
+
+            <MudPaper Elevation="1" Style="width:100%;height:min(70vh, 640px);min-height:420px;overflow:hidden;background:#f7f9fb;">
+                <canvas @ref="_chartCanvas" style="display:block;width:100%;height:100%;touch-action:none;"></canvas>
+            </MudPaper>
         }
     </MudTabPanel>
 
@@ -91,7 +166,8 @@
                 <MudTextField @bind-Value="_nameFilter" Label="@T("Kunde suchen", "Search customer")"
                               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                               Immediate="false" OnKeyUp="OnSearchKey" Style="min-width:240px" />
-                <MudSelect T="string" @bind-Value="_tscFilter" Label="@T("Standort", "Site")" Clearable Style="min-width:130px">
+                <MudSelect T="string" @bind-Value="_tscFilter" Label="@T("Standort", "Site")"
+                           Placeholder="@T("alle", "all")" Clearable Style="min-width:130px">
                     <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
                     @foreach (var tsc in Sites)
                     {
@@ -116,8 +192,8 @@
             </MudStack>
 
             <MudText Typo="Typo.caption" Class="mb-2">
-                @T("Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten.",
-                    "Sorted by number of sales lines. The largest customers come first, where an assignment has the biggest effect.")
+                @T("Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend.",
+                    "Sorted by number of sales lines. The largest customers come first, where an assignment has the biggest effect. Rows and revenue refer to the year selected above; the assignment itself applies across all years.")
             </MudText>
 
             @if (_loading)
@@ -276,10 +352,23 @@
 @code {
     private static string[] Sites => MarketSegmentPageService.Sites;
 
+    private const int ResultTabIndex = 0;
+
     private List<MarketSegmentCustomerRow> _rows = [];
     private List<MarketSegmentResultRow> _result = [];
+    // Getrennt vom gefilterten Ergebnis: die 3D-Sicht braucht die Zeitachse und waere mit
+    // einer einzelnen Jahresscheibe sinnlos.
+    private List<MarketSegmentResultRow> _resultAllYears = [];
+    private ElementReference _chartCanvas;
+    private bool _chartNeedsRender;
+    private int _activeTab;
+    private string _chartAxis = MarketSegmentChartAxes.Site;
+    private string _chartValue = MarketSegmentChartValues.Sales;
+    private string _chartCurrency = string.Empty;
     private MarketSegmentProgress _progress = new(0, 0, 0, 0, 0);
     private List<string> _knownSegments = [];
+    private List<int> _years = [];
+    private int? _year;
     private string _nameFilter = string.Empty;
     private string _tscFilter = string.Empty;
     private string _filterMode = MarketSegmentFilterModes.Proposals;
@@ -293,7 +382,10 @@
     protected override async Task OnInitializedAsync()
     {
         _knownSegments = await SegmentService.GetKnownSegmentsAsync();
-        _progress = await SegmentService.GetProgressAsync();
+        _years = await SegmentService.GetAvailableYearsAsync();
+        // Das juengste Jahr ist der Normalfall der Frage "wie steht das Segment jetzt da".
+        _year = _years.Count > 0 ? _years[0] : null;
+        _progress = await SegmentService.GetProgressAsync(_year);
         // Ohne offene Vorschlaege waere der Standardfilter leer und wirkte wie ein Defekt.
         if (_progress.ProposalCustomers == 0)
             _filterMode = _progress.ConfirmedCustomers > 0
@@ -302,20 +394,121 @@
         await ReloadAsync();
     }
 
+    private async Task OnYearChanged(int? year)
+    {
+        _year = year;
+        await ReloadAsync();
+    }
+
     private async Task ReloadAsync()
     {
         _loading = true;
         try
         {
-            _rows = await SegmentService.SearchCustomersAsync(_nameFilter, _tscFilter, _filterMode);
-            _result = await SegmentService.GetResultAsync();
-            _progress = await SegmentService.GetProgressAsync();
+            _rows = await SegmentService.SearchCustomersAsync(_nameFilter, _tscFilter, _filterMode, _year);
+            _result = await SegmentService.GetResultAsync(confirmedOnly: true, year: _year);
+            _resultAllYears = _year is null
+                ? _result
+                : await SegmentService.GetResultAsync(confirmedOnly: true);
+            _progress = await SegmentService.GetProgressAsync(_year);
+
+            if (!ChartCurrencies.Contains(_chartCurrency, StringComparer.OrdinalIgnoreCase))
+                _chartCurrency = ChartCurrencies.FirstOrDefault() ?? string.Empty;
+            _chartNeedsRender = true;
         }
         finally
         {
             _loading = false;
         }
     }
+
+    /// <summary>
+    /// Waehrungen nach Umsatzgewicht, die staerkste zuerst. Sie ist die sinnvolle
+    /// Voreinstellung der 3D-Sicht, weil sie den groessten Teil des Segments zeigt.
+    /// </summary>
+    private List<string> ChartCurrencies => _resultAllYears
+        .Where(r => r.Currency.Length > 0)
+        .GroupBy(r => r.Currency, StringComparer.OrdinalIgnoreCase)
+        .OrderByDescending(g => g.Sum(r => Math.Abs(r.SalesValue)))
+        .Select(g => g.Key)
+        .ToList();
+
+    private async Task OnChartAxisChanged(string value)
+    {
+        _chartAxis = value;
+        await RenderChartAsync();
+    }
+
+    private async Task OnChartValueChanged(string value)
+    {
+        _chartValue = value;
+        await RenderChartAsync();
+    }
+
+    private async Task OnChartCurrencyChanged(string value)
+    {
+        _chartCurrency = value;
+        await RenderChartAsync();
+    }
+
+    private void OnTabChanged(int index)
+    {
+        _activeTab = index;
+        if (index == ResultTabIndex && _result.Count > 0)
+            _chartNeedsRender = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_chartNeedsRender && _activeTab == ResultTabIndex && _result.Count > 0)
+        {
+            _chartNeedsRender = false;
+            await RenderChartAsync();
+        }
+    }
+
+    private async Task RenderChartAsync()
+    {
+        var rows = _resultAllYears
+            .Where(r => string.Equals(r.Currency, _chartCurrency, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(r => new
+            {
+                Axis = _chartAxis == MarketSegmentChartAxes.Segment ? r.Segment : r.Tsc,
+                r.Year
+            })
+            .Select(g => new
+            {
+                country = g.Key.Axis,
+                year = g.Key.Year,
+                value = _chartValue switch
+                {
+                    MarketSegmentChartValues.Rows => (double)g.Sum(r => r.SalesRows),
+                    MarketSegmentChartValues.Customers => (double)g.Sum(r => r.Customers),
+                    _ => (double)g.Sum(r => r.SalesValue)
+                }
+            })
+            .ToList();
+
+        await JsRuntime.InvokeVoidAsync("trafagFinance3d.render", _chartCanvas, rows, new
+        {
+            chartType = "bar",
+            title = ChartTitle(),
+            xAxis = _chartAxis == MarketSegmentChartAxes.Segment
+                ? T("X: Segment", "X: segment")
+                : T("X: Standort", "X: site"),
+            yAxis = ChartTitle(),
+            zAxis = T("Z: Jahr", "Z: year"),
+            labelScale = 1.4d,
+            scenarioFactor = 1d
+        });
+    }
+
+    private string ChartTitle() => _chartValue switch
+    {
+        MarketSegmentChartValues.Rows => T("Verkaufszeilen", "Sales lines"),
+        MarketSegmentChartValues.Customers => T("Kunden", "Customers"),
+        _ => $"{T("Umsatz", "Sales")} {_chartCurrency}"
+    };
 
     private async Task OnSearchKey(KeyboardEventArgs args)
     {

@@ -9,6 +9,34 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
+## Marktsegmente mit Jahr und 3D-Analyse 2026-08-14 - NICHT deployed
+
+- Die Seite `/marktsegmente` hat oben einen Jahresfilter, der auf Ergebnissicht,
+  Pflegeliste und die Kacheln unter `Stand der Pflege` wirkt. Voreingestellt ist
+  das juengste Jahr, `alle Jahre` bleibt waehlbar.
+- Das Jahr einer Zeile folgt derselben Regel wie das zentrale Excel:
+  Buchungsdatum, sonst Rechnungsdatum, sonst Extraktionsdatum. Die Ergebnistabelle
+  hat eine Spalte `Jahr`; Jahre werden so wenig addiert wie Waehrungen.
+- Die Zuordnung selbst bekommt BEWUSST kein Jahr. Tabelle `CustomerMarketSegments`,
+  `MarketSegmentResolver` und der Excel-Export sind unveraendert.
+- Neu im Ergebnisreiter: eine drehbare 3D-Analyse auf Basis der vorhandenen Engine
+  `wwwroot/js/finance3d.js`, ohne neue Bibliothek. X ist Standort oder Segment, Z
+  ist das Jahr, Y ist Umsatz, Verkaufszeilen oder Kunden. Es wird immer genau eine
+  Waehrung gezeigt, und die Zeitachse zeigt immer alle Jahre.
+- **Layoutfehler mit Wirkung auf ALLE Seiten behoben:** `MudMainContent` trug in
+  `Components/Layout/MainLayout.razor` die Klasse `pa-4`, die per `!important` den
+  Abstand zur fest positionierten Kopfleiste ueberschrieb. Die obersten rund 48
+  Pixel jeder Seite lagen dadurch unsichtbar unter der Kopfleiste, auch die
+  Seitentitel. Jetzt `px-4 pb-4`.
+- Ebenfalls behoben: ein `MudSelect` mit einem Eintrag vom Wert leer gilt fuer
+  MudBlazor als unbefuellt, deshalb stand der Text `alle` direkt ueber der
+  Beschriftung. Mit `Placeholder` korrigiert in der Marktumfrage (Land, Status),
+  in der Pflege (Standort), beim neuen Jahresfilter und im Finance-Pivot des
+  Management Cockpits (Jahr, TSC).
+- `520/520` Tests gruen. Angemeldet lokal gegen `trafag_exporter.db` sichtgeprueft;
+  die Produktivdatenbank wurde nicht beruehrt.
+- Details: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 13.
+
 ## Agentenkoordination beim Sitzungsstart 2026-08-12
 
 - Neue Root-Datei `CLAUDE.md`: Claude muss vor jeder Arbeit

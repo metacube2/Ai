@@ -430,7 +430,10 @@
                            StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportFinancePivot">
                     @T("Export to Excel", "Export to Excel")
                 </MudButton>
-                <MudSelect T="string" @bind-Value="_financePivotYearFilter" Label="@T("Jahr", "Year")" Dense Style="width:150px;">
+                @* Ohne Placeholder haelt MudBlazor das Feld bei leerem Wert fuer unbefuellt und
+                   schreibt "Alle Jahre" direkt ueber die Beschriftung. *@
+                <MudSelect T="string" @bind-Value="_financePivotYearFilter" Label="@T("Jahr", "Year")"
+                           Placeholder="@T("Alle Jahre", "All years")" Dense Style="width:150px;">
                     <MudSelectItem Value="@string.Empty">@T("Alle Jahre", "All years")</MudSelectItem>
                     @foreach (var year in _financeResult.FinancePivot.YearOptions)
                     {
@@ -443,7 +446,8 @@
                         <MudSelectItem Value="@month">@month</MudSelectItem>
                     }
                 </MudSelect>
-                <MudSelect T="string" @bind-Value="_financePivotTscFilter" Label="TSC" Dense Style="width:170px;">
+                <MudSelect T="string" @bind-Value="_financePivotTscFilter" Label="TSC"
+                           Placeholder="@T("Alle TSC", "All TSC")" Dense Style="width:170px;">
                     <MudSelectItem Value="@string.Empty">@T("Alle TSC", "All TSC")</MudSelectItem>
                     @foreach (var tsc in _financeResult.FinancePivot.TscColumns)
                     {
