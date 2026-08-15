@@ -10,18 +10,18 @@
   >
   <meta name="robots" content="index,follow,max-image-preview:large">
   <meta name="keywords" content="MacYaesu, FT-991A, Yaesu, macOS, CAT control, ham radio software, amateur radio, FT991A remote, rig control">
-  <link rel="canonical" href="http://192.168.178.146/macyaesu/">
+  <link rel="canonical" href="https://www.aiscom.ch/macyaesu/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MacYaesu | FT-991A Remote für macOS">
   <meta property="og:description" content="Native macOS-Steuerung für Yaesu FT-991A mit CAT, Logging, Speicherkanälen, Repeater-Setup und Audio-Routing.">
-  <meta property="og:url" content="http://192.168.178.146/macyaesu/">
-  <meta property="og:image" content="http://192.168.178.146/macyaesu/main.png">
+  <meta property="og:url" content="https://www.aiscom.ch/macyaesu/">
+  <meta property="og:image" content="https://www.aiscom.ch/macyaesu/main.png">
   <meta property="og:image:alt" content="MacYaesu Hauptansicht auf macOS">
   <meta property="og:site_name" content="MacYaesu">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MacYaesu | FT-991A Remote für macOS">
   <meta name="twitter:description" content="FT-991A am Mac ohne VM oder Wine: CAT-Steuerung, Logging, Speicher und Digimode-Vorbereitung.">
-  <meta name="twitter:image" content="http://192.168.178.146/macyaesu/main.png">
+  <meta name="twitter:image" content="https://www.aiscom.ch/macyaesu/main.png">
   <link rel="stylesheet" href="./styles.css">
   <script type="application/ld+json">
     {
@@ -31,14 +31,14 @@
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "macOS",
       "description": "Native macOS-Remote-App fuer Yaesu FT-991A mit CAT-Steuerung, Logging, Speicherkanaelen, Repeater-Setup und Audio-Routing.",
-      "image": "http://192.168.178.146/macyaesu/main.png",
+      "image": "https://www.aiscom.ch/macyaesu/main.png",
       "screenshot": [
-        "http://192.168.178.146/macyaesu/main.png",
-        "http://192.168.178.146/macyaesu/memview.png"
+        "https://www.aiscom.ch/macyaesu/main.png",
+        "https://www.aiscom.ch/macyaesu/memview.png"
       ],
-      "downloadUrl": "http://192.168.178.146/macyaesu/MacYaesu.dmg",
-      "installUrl": "http://192.168.178.146/macyaesu/MacYaesu.dmg",
-      "url": "http://192.168.178.146/macyaesu/",
+      "downloadUrl": "https://www.aiscom.ch/macyaesu/MacYaesu.dmg",
+      "installUrl": "https://www.aiscom.ch/macyaesu/MacYaesu.dmg",
+      "url": "https://www.aiscom.ch/macyaesu/",
       "offers": {
         "@type": "Offer",
         "price": "49",
@@ -275,17 +275,34 @@
 
         <div class="download-card">
           <div class="download-copy">
-            <p class="download-lead" data-i18n="purchase_text">Die Vollversion kostet einmalig 49 CHF. Nach Zahlung per PayPal erhält der Käufer den Lizenzschlüssel per E-Mail. Regelmässige Updates für diese Version sind kostenlos enthalten.</p>
+            <p class="download-lead" data-i18n="purchase_text">Die Vollversion kostet einmalig 49 CHF. Die Zahlung wird sicher bei PayPal abgeschlossen. Der Lizenzschlüssel wird an die beim Kauf angegebene E-Mail-Adresse geliefert. Regelmässige Updates für diese Version sind kostenlos enthalten.</p>
             <div class="download-meta">
               <span data-i18n="purchase_meta_1">49 CHF einmalig</span>
               <span data-i18n="purchase_meta_2">PayPal</span>
               <span data-i18n="purchase_meta_3">Updates inklusive</span>
             </div>
           </div>
-          <div class="download-actions">
-            <a href="https://www.paypal.com/" class="primary-button" target="_blank" rel="noreferrer" data-i18n="purchase_cta_primary" data-config-link="paypal">Vollversion mit PayPal kaufen</a>
-            <a href="mailto:hello@macyaesu.example?subject=MacYaesu%20License" class="secondary-button" data-i18n="purchase_cta_secondary" data-config-link="license_mail">Fragen zur Lizenz</a>
+          <div class="purchase-actions">
+            <form id="paypal-buy-form" class="paypal-buy-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+              <label for="license-email" data-i18n="purchase_email_label">E-Mail für den Lizenzschlüssel</label>
+              <input id="license-email" name="os0" type="email" autocomplete="email" required placeholder="name@example.com">
+              <input type="hidden" name="cmd" value="_xclick">
+              <input type="hidden" name="business" value="metacube@gmail.com">
+              <input type="hidden" name="item_name" value="MacYaesu Vollversion">
+              <input type="hidden" name="item_number" value="MACYAESU-1.1">
+              <input type="hidden" name="amount" value="49.00">
+              <input type="hidden" name="currency_code" value="CHF">
+              <input type="hidden" name="no_shipping" value="1">
+              <input type="hidden" name="on0" value="Lizenz-E-Mail">
+              <input type="hidden" name="return" value="https://www.aiscom.ch/macyaesu/?payment=success#kaufen">
+              <input type="hidden" name="cancel_return" value="https://www.aiscom.ch/macyaesu/?payment=cancelled#kaufen">
+              <input type="hidden" name="rm" value="2">
+              <input type="hidden" name="charset" value="utf-8">
+              <button type="submit" class="primary-button" data-i18n="purchase_cta_primary">Vollversion mit PayPal kaufen</button>
+            </form>
+            <a href="mailto:metacube@gmail.com?subject=MacYaesu%20License" class="secondary-button" data-i18n="purchase_cta_secondary" data-config-link="license_mail">Fragen zur Lizenz</a>
           </div>
+          <p id="payment-status" class="payment-status" hidden></p>
         </div>
       </section>
 
@@ -310,10 +327,10 @@
             <a href="#vertrieb" class="secondary-button" data-i18n="download_cta_secondary">Lizenzmodell ansehen</a>
           </div>
           <div class="download-release">
-            <span><strong data-i18n="download_release_version_label">Version</strong> 1.0</span>
-            <span><strong data-i18n="download_release_build_label">Build</strong> 1</span>
-            <span><strong data-i18n="download_release_updated_label">Aktualisiert</strong> 12.04.2026 19:43 CEST</span>
-            <span><strong data-i18n="download_release_size_label">Dateigrösse</strong> 2.7 MB</span>
+            <span><strong data-i18n="download_release_version_label">Version</strong> <span data-release="version">1.1</span></span>
+            <span><strong data-i18n="download_release_build_label">Build</strong> <span data-release="build">2</span></span>
+            <span><strong data-i18n="download_release_updated_label">Aktualisiert</strong> <span data-release="updated">15.08.2026</span></span>
+            <span><strong data-i18n="download_release_size_label">Dateigrösse</strong> <span data-release="size">3.0 MB</span></span>
           </div>
         </div>
       </section>
@@ -345,11 +362,11 @@
       <div>
         <p class="section-kicker" data-i18n="footer_kicker">Nächster Schritt</p>
         <h2 data-i18n="footer_title">Demo herunterladen, im Shack testen und bei Bedarf direkt freischalten.</h2>
-        <p class="footer-contact" data-i18n="footer_contact">Kontakt für Lizenzfragen, Vertrieb und Support: hello@macyaesu.example</p>
+        <p class="footer-contact" data-i18n="footer_contact">Kontakt für Lizenzfragen, Vertrieb und Support: metacube@gmail.com</p>
       </div>
       <div class="footer-actions">
         <a href="./MacYaesu.dmg" class="primary-button" download data-i18n="footer_cta_1" data-config-link="download">Demo herunterladen</a>
-        <a href="mailto:hello@macyaesu.example?subject=MacYaesu%20Pricing" class="secondary-button" data-i18n="footer_cta_2" data-config-link="pricing_mail">Lizenz anfragen</a>
+        <a href="mailto:metacube@gmail.com?subject=MacYaesu%20Pricing" class="secondary-button" data-i18n="footer_cta_2" data-config-link="pricing_mail">Lizenz anfragen</a>
       </div>
     </footer>
   </div>

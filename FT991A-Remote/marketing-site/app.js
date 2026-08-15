@@ -74,12 +74,13 @@ const translations = {
     sales_2_point_4: "Eher sinnvoll nur für eine Companion-App ohne Hardware-Steuerung",
     purchase_kicker: "Kaufen",
     purchase_title: "Einfacher Direktverkauf statt komplizierter Store-Logik.",
-    purchase_text: "Die Vollversion kostet einmalig 49 CHF. Nach Zahlung per PayPal erhält der Käufer den Lizenzschlüssel per E-Mail. Regelmässige Updates für diese Version sind kostenlos enthalten.",
+    purchase_text: "Die Vollversion kostet einmalig 49 CHF. Die Zahlung wird sicher bei PayPal abgeschlossen. Nach bestätigtem Zahlungseingang wird der Lizenzschlüssel an die beim Kauf angegebene E-Mail-Adresse geschickt. Regelmässige Updates für diese Version sind kostenlos enthalten.",
     purchase_meta_1: "49 CHF einmalig",
     purchase_meta_2: "PayPal",
     purchase_meta_3: "Updates inklusive",
     purchase_cta_primary: "Vollversion mit PayPal kaufen",
     purchase_cta_secondary: "Fragen zur Lizenz",
+    purchase_email_label: "E-Mail für den Lizenzschlüssel",
     download_kicker: "Download",
     download_title: "Demo direkt laden und 15 Minuten im eigenen Shack testen.",
     download_text: "Die Demo läuft 15 Minuten ohne Aktivierung. Danach kann die App mit einem Lizenzschlüssel freigeschaltet werden. Der Download liegt direkt neben dieser Website als DMG.",
@@ -95,7 +96,7 @@ const translations = {
     download_cta_secondary: "Lizenzmodell ansehen",
     footer_kicker: "Nächster Schritt",
     footer_title: "Demo herunterladen, im Shack testen und bei Bedarf direkt freischalten.",
-    footer_contact: "Kontakt für Lizenzfragen, Vertrieb und Support: hello@macyaesu.example",
+    footer_contact: "Kontakt für Lizenzfragen, Vertrieb und Support: metacube@gmail.com",
     footer_cta_1: "Demo herunterladen",
     footer_cta_2: "Lizenz anfragen",
     faq_kicker: "FAQ",
@@ -182,12 +183,13 @@ const translations = {
     sales_2_point_4: "More realistic only as a companion app without hardware control",
     purchase_kicker: "Buy",
     purchase_title: "Simple direct sales instead of complicated store logic.",
-    purchase_text: "The full version costs 49 CHF as a one-time purchase. After payment via PayPal, the buyer receives the license key by email. Regular updates for this version are included at no extra cost.",
+    purchase_text: "The full version costs 49 CHF as a one-time purchase. Payment is completed securely on PayPal. Once the payment is confirmed, the license key is sent to the email address entered during checkout. Regular updates for this version are included at no extra cost.",
     purchase_meta_1: "49 CHF one-time",
     purchase_meta_2: "PayPal",
     purchase_meta_3: "Updates included",
     purchase_cta_primary: "Buy Full Version with PayPal",
     purchase_cta_secondary: "License Questions",
+    purchase_email_label: "Email for the license key",
     download_kicker: "Download",
     download_title: "Download the demo directly and test it in your own shack for 15 minutes.",
     download_text: "The demo runs for 15 minutes without activation. After that, the app can be unlocked with a license key. The download is placed directly next to this website as a DMG.",
@@ -203,7 +205,7 @@ const translations = {
     download_cta_secondary: "View Licensing",
     footer_kicker: "Next step",
     footer_title: "Download the demo, test it in the shack and unlock it directly when needed.",
-    footer_contact: "Contact for licensing, sales and support: hello@macyaesu.example",
+    footer_contact: "Contact for licensing, sales and support: metacube@gmail.com",
     footer_cta_1: "Download Demo",
     footer_cta_2: "Request License",
     faq_kicker: "FAQ",
@@ -229,22 +231,33 @@ const elements = {
   modeButtons: Array.from(document.querySelectorAll("#mode-controls .mode-button")),
   translatable: Array.from(document.querySelectorAll("[data-i18n]")),
   images: Array.from(document.querySelectorAll("[data-alt-de][data-alt-en]")),
-  configLinks: Array.from(document.querySelectorAll("[data-config-link]"))
+  configLinks: Array.from(document.querySelectorAll("[data-config-link]")),
+  paypalForm: document.getElementById("paypal-buy-form"),
+  paymentStatus: document.getElementById("payment-status"),
+  releaseValues: Array.from(document.querySelectorAll("[data-release]"))
 };
 
 const config = window.MACYAESU_CONFIG || {
   sellerName: "MacYaesu",
   sellerCallsign: "",
-  siteUrl: "http://192.168.178.146/macyaesu/",
+  siteUrl: "https://www.aiscom.ch/macyaesu/",
   companyName: "MacYaesu",
   priceChf: 49,
-  paypalUrl: "https://www.paypal.com/",
-  supportEmail: "hello@macyaesu.example",
-  licenseEmail: "hello@macyaesu.example",
-  pricingEmail: "hello@macyaesu.example",
-  downloadFile: "../MacYaesu.dmg",
+  currency: "CHF",
+  paypalMerchantEmail: "metacube@gmail.com",
+  paypalEndpoint: "https://www.paypal.com/cgi-bin/webscr",
+  productName: "MacYaesu Vollversion",
+  productNumber: "MACYAESU-1.1",
+  supportEmail: "metacube@gmail.com",
+  licenseEmail: "metacube@gmail.com",
+  pricingEmail: "metacube@gmail.com",
+  downloadFile: "./MacYaesu.dmg",
   downloadFileName: "MacYaesu.dmg",
   demoMinutes: 15,
+  releaseVersion: "1.1",
+  releaseBuild: "2",
+  releaseUpdated: "15.08.2026",
+  releaseSize: "—",
   updatesIncludedTextDe: "Regelmässige Updates sind kostenlos enthalten.",
   updatesIncludedTextEn: "Regular updates are included at no extra cost."
 };
@@ -290,8 +303,8 @@ function applyLanguage(language) {
 function applyConfig() {
   const localizedUpdates = state.currentLanguage === "de" ? config.updatesIncludedTextDe : config.updatesIncludedTextEn;
   const purchaseText = state.currentLanguage === "de"
-    ? `Die Vollversion kostet einmalig ${config.priceChf} CHF. Nach Zahlung per PayPal erhält der Käufer den Lizenzschlüssel per E-Mail. ${localizedUpdates}`
-    : `The full version costs ${config.priceChf} CHF as a one-time purchase. After payment via PayPal, the buyer receives the license key by email. ${localizedUpdates}`;
+    ? `Die Vollversion kostet einmalig ${config.priceChf} ${config.currency}. Die Zahlung wird sicher bei PayPal abgeschlossen. Nach bestätigtem Zahlungseingang wird der Lizenzschlüssel an die beim Kauf angegebene E-Mail-Adresse geschickt. ${localizedUpdates}`
+    : `The full version costs ${config.priceChf} ${config.currency} as a one-time purchase. Payment is completed securely on PayPal. Once the payment is confirmed, the license key is sent to the email address entered during checkout. ${localizedUpdates}`;
   const downloadText = state.currentLanguage === "de"
     ? `Die Demo läuft ${config.demoMinutes} Minuten ohne Aktivierung. Danach kann die App mit einem Lizenzschlüssel freigeschaltet werden. Der Download liegt direkt neben dieser Website als ${config.downloadFileName}.`
     : `The demo runs for ${config.demoMinutes} minutes without activation. After that, the app can be unlocked with a license key. The download is placed directly next to this website as ${config.downloadFileName}.`;
@@ -299,8 +312,8 @@ function applyConfig() {
     ? `Demo direkt laden und ${config.demoMinutes} Minuten im eigenen Shack testen.`
     : `Download the demo directly and test it in your own shack for ${config.demoMinutes} minutes.`;
   const purchasePrice = state.currentLanguage === "de"
-    ? `${config.priceChf} CHF einmalig`
-    : `${config.priceChf} CHF one-time`;
+    ? `${config.priceChf} ${config.currency} einmalig`
+    : `${config.priceChf} ${config.currency} one-time`;
   const updatesLabel = state.currentLanguage === "de" ? "Updates inklusive" : "Updates included";
   const freeUpdatesLabel = state.currentLanguage === "de" ? "Spätere Updates kostenlos" : "Future updates free";
 
@@ -316,12 +329,39 @@ function applyConfig() {
   setText("purchase_meta_3", updatesLabel);
   setText("download_meta_3", state.currentLanguage === "de" ? `${config.demoMinutes}-Minuten-Demo` : `${config.demoMinutes}-Minute Demo`);
   setText("download_meta_4", freeUpdatesLabel);
+  setText("footer_contact", state.currentLanguage === "de"
+    ? `Kontakt für Lizenzfragen, Vertrieb und Support: ${config.supportEmail}`
+    : `Contact for licensing, sales and support: ${config.supportEmail}`);
+
+  if (elements.paypalForm) {
+    elements.paypalForm.action = config.paypalEndpoint;
+    const setFormValue = (name, value) => {
+      const field = elements.paypalForm.elements.namedItem(name);
+      if (field) field.value = value;
+    };
+    setFormValue("business", config.paypalMerchantEmail);
+    setFormValue("item_name", config.productName);
+    setFormValue("item_number", config.productNumber);
+    setFormValue("amount", Number(config.priceChf).toFixed(2));
+    setFormValue("currency_code", config.currency);
+    setFormValue("on0", state.currentLanguage === "de" ? "Lizenz-E-Mail" : "License email");
+    setFormValue("return", `${config.siteUrl}?payment=success#kaufen`);
+    setFormValue("cancel_return", `${config.siteUrl}?payment=cancelled#kaufen`);
+  }
+
+  const releaseConfig = {
+    version: config.releaseVersion,
+    build: config.releaseBuild,
+    updated: config.releaseUpdated,
+    size: config.releaseSize
+  };
+  elements.releaseValues.forEach((node) => {
+    node.textContent = releaseConfig[node.dataset.release] || "—";
+  });
 
   elements.configLinks.forEach((link) => {
     const kind = link.dataset.configLink;
-    if (kind === "paypal") {
-      link.href = config.paypalUrl;
-    } else if (kind === "download") {
+    if (kind === "download") {
       link.href = config.downloadFile;
       link.setAttribute("download", config.downloadFileName);
     } else if (kind === "license_mail") {
@@ -330,6 +370,27 @@ function applyConfig() {
       link.href = `mailto:${config.pricingEmail}?subject=${encodeURIComponent(`${config.sellerName} Pricing`)}`;
     }
   });
+
+  showPaymentStatus();
+}
+
+function showPaymentStatus() {
+  if (!elements.paymentStatus) return;
+
+  const payment = new URLSearchParams(window.location.search).get("payment");
+  elements.paymentStatus.hidden = payment !== "success" && payment !== "cancelled";
+  elements.paymentStatus.classList.toggle("is-success", payment === "success");
+  elements.paymentStatus.classList.toggle("is-cancelled", payment === "cancelled");
+
+  if (payment === "success") {
+    elements.paymentStatus.textContent = state.currentLanguage === "de"
+      ? "Danke für deinen Kauf. Sobald PayPal den Zahlungseingang bestätigt hat, erhältst du den Lizenzschlüssel an die angegebene E-Mail-Adresse."
+      : "Thank you for your purchase. Once PayPal confirms the payment, the license key will be sent to the email address you entered.";
+  } else if (payment === "cancelled") {
+    elements.paymentStatus.textContent = state.currentLanguage === "de"
+      ? "Die Zahlung wurde abgebrochen. Es wurde keine Lizenz bestellt."
+      : "The payment was cancelled. No license was ordered.";
+  }
 }
 
 function updateBand(button) {

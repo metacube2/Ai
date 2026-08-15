@@ -29,13 +29,13 @@ MacYaesu soll in der Amateurfunk- und Mac-Nische sichtbar werden, zuerst ueber t
 - Sitemap einreichen:
 
 ```text
-http://192.168.178.146/sitemap.xml
+https://www.aiscom.ch/macyaesu/sitemap.xml
 ```
 
 - Hauptseite zur Indexierung anfordern:
 
 ```text
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ### 2. Basis-Assets vorbereiten
@@ -46,14 +46,6 @@ http://192.168.178.146/macyaesu/
 - 1 kurzes Demo-Video oder GIF
 
 ### 3. Ein einheitlicher Link
-
-Vorlaeufig:
-
-```text
-http://192.168.178.146/macyaesu/
-```
-
-Spaeter besser:
 
 ```text
 https://www.aiscom.ch/macyaesu/

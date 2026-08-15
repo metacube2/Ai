@@ -58,7 +58,7 @@ MacYaesu bietet:
 Die App ist fuer Anwender gedacht, die auf macOS arbeiten und den FT-991A ohne Windows, Wine oder VM sauber integrieren wollen.
 
 Demo und weitere Informationen:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ## eHam.net
@@ -84,7 +84,7 @@ Current focus:
 - Audio routing preparation for digital modes
 
 Website and demo:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ### Ask for Reviews
@@ -125,7 +125,7 @@ Im Fokus:
 Die App richtet sich an FT-991A Operatoren, die den Transceiver auf dem Mac ohne Wine, VM oder Windows-Hilfsloesungen betreiben wollen.
 
 Demo und Download:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ## Reddit / Foren
@@ -136,7 +136,7 @@ http://192.168.178.146/macyaesu/
 Ich habe eine native macOS-App fuer den Yaesu FT-991A gebaut: MacYaesu. Ziel war eine saubere Mac-Loesung fuer CAT-Steuerung, Speicher, Repeater-Setup, Logging und Diagnose, ohne Wine oder VM. Falls hier FT-991A Nutzer auf dem Mac unterwegs sind, wuerde mich praxisnahes Feedback interessieren.
 
 Demo:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ### Reddit technisch
@@ -155,7 +155,7 @@ Aktuell drin:
 Mich interessiert besonders Feedback von Leuten, die FT-991A, CP210x-CAT und macOS wirklich im Shack benutzen.
 
 Demo:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ### Ham-Forum Beitrag
@@ -170,7 +170,7 @@ Der Schwerpunkt liegt auf:
 - einem Workflow ohne Windows, Wine oder VM
 
 Eine Demo ist hier erreichbar:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ## groups.io / Mailinglisten
@@ -187,7 +187,7 @@ Zielgruppe sind Anwender, die ihren FT-991A auf macOS ohne Wine oder virtuelle M
 Falls das fuer die Gruppe relevant ist, freue ich mich ueber Rueckmeldungen von FT-991A-Nutzern auf dem Mac.
 
 Infos und Demo:
-http://192.168.178.146/macyaesu/
+https://www.aiscom.ch/macyaesu/
 ```
 
 ## Produktvergleich

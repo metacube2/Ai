@@ -52,6 +52,7 @@ body::before {
 .experience-section,
 .workflow-section,
 .sales-section,
+.purchase-section,
 .pricing-section,
 .download-section,
 .faq-section,
@@ -263,6 +264,8 @@ a {
 }
 
 .primary-button {
+  cursor: pointer;
+  font: inherit;
   background: var(--text);
   color: #f8f3ed;
   box-shadow: var(--shadow);
@@ -584,6 +587,61 @@ main section {
   gap: 12px;
 }
 
+.purchase-actions {
+  display: grid;
+  justify-items: stretch;
+  gap: 12px;
+}
+
+.paypal-buy-form {
+  display: grid;
+  gap: 9px;
+  min-width: min(100%, 360px);
+}
+
+.paypal-buy-form label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.paypal-buy-form input[type="email"] {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.paypal-buy-form input[type="email"]:focus {
+  border-color: var(--text);
+  outline: 2px solid rgba(23, 20, 17, 0.12);
+  outline-offset: 1px;
+}
+
+.payment-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  line-height: 1.6;
+}
+
+.payment-status.is-success {
+  border-color: rgba(96, 112, 88, 0.35);
+  background: var(--signal-soft);
+  color: var(--signal);
+}
+
+.payment-status.is-cancelled {
+  border-color: rgba(181, 110, 96, 0.35);
+  background: rgba(181, 110, 96, 0.08);
+  color: var(--danger);
+}
+
 .download-release {
   display: flex;
   flex-wrap: wrap;
@@ -596,7 +654,7 @@ main section {
   font-size: 0.94rem;
 }
 
-.download-release span {
+.download-release > span {
   padding: 9px 12px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.42);
@@ -802,7 +860,8 @@ main section {
   }
 
   .download-card,
-  .download-actions {
+  .download-actions,
+  .purchase-actions {
     justify-content: flex-start;
   }
 }

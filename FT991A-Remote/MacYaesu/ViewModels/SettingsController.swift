@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CryptoKit
 import SwiftUI
 
 @MainActor
@@ -54,7 +55,8 @@ final class SettingsController: ObservableObject {
     private var activeSince: Date?
 
     static let availableBaudRates = [4800, 9600, 19200, 38400, 57600, 115200]
-    private static let trialDurationSeconds = 30 * 60
+    private static let trialDurationSeconds = 15 * 60
+    private static let licenseSecret = "MacYaesu-License-v1::FT991A::Offline"
 
     init() {
         settings = AppSettings.load()
@@ -90,11 +92,16 @@ final class SettingsController: ObservableObject {
     }
 
     func submitLicense(email: String, rawKey: String) -> Bool {
-        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedKey = rawKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedEmail = Self.normalizeLicenseEmail(email)
+        let normalizedKey = Self.normalizeLicenseKey(rawKey)
 
         guard !normalizedEmail.isEmpty, !normalizedKey.isEmpty else {
             activationErrorMessage = "E-Mail und Lizenzschlüssel dürfen nicht leer sein."
+            return false
+        }
+
+        guard Self.isValidLicense(email: normalizedEmail, key: normalizedKey) else {
+            activationErrorMessage = "Der Lizenzschlüssel passt nicht zu dieser E-Mail-Adresse."
             return false
         }
 
@@ -138,9 +145,9 @@ final class SettingsController: ObservableObject {
         arrowFrequencyEnabled = settings.arrowFrequencyEnabled
         tunerShortcutEnabled = settings.tunerShortcutEnabled
 
-        licenseEmail = settings.licenseEmail
-        licenseKey = settings.licenseKey
-        isActivated = settings.isActivated
+        licenseEmail = Self.normalizeLicenseEmail(settings.licenseEmail)
+        licenseKey = Self.normalizeLicenseKey(settings.licenseKey)
+        isActivated = Self.isValidLicense(email: licenseEmail, key: licenseKey)
     }
 
     private func saveSettings() {
@@ -212,5 +219,35 @@ final class SettingsController: ObservableObject {
         let consumed = max(0, settings.trialConsumedSeconds)
         trialSecondsRemaining = max(0, Self.trialDurationSeconds - consumed)
         isTrialExpired = trialSecondsRemaining == 0
+    }
+
+    private static func normalizeLicenseEmail(_ raw: String) -> String {
+        raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private static func normalizeLicenseKey(_ raw: String) -> String {
+        raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    }
+
+    private static func expectedLicenseKey(for email: String) -> String {
+        let material = "\(normalizeLicenseEmail(email))|\(licenseSecret)"
+        let digest = SHA256.hash(data: Data(material.utf8))
+        let prefix = digest.prefix(8).map { String(format: "%02X", $0) }.joined()
+
+        return stride(from: 0, to: prefix.count, by: 4).map { start in
+            let first = prefix.index(prefix.startIndex, offsetBy: start)
+            let last = prefix.index(first, offsetBy: 4)
+            return String(prefix[first..<last])
+        }.joined(separator: "-")
+    }
+
+    private static func isValidLicense(email: String, key: String) -> Bool {
+        let expected = Array(expectedLicenseKey(for: email).utf8)
+        let submitted = Array(normalizeLicenseKey(key).utf8)
+        guard expected.count == submitted.count else { return false }
+
+        return zip(expected, submitted).reduce(UInt8.zero) { difference, pair in
+            difference | (pair.0 ^ pair.1)
+        } == 0
     }
 }

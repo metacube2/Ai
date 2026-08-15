@@ -1,130 +1,78 @@
-# PayPal Und Website-Konfiguration
+# PayPal- und Website-Konfiguration
 
-Diese Datei beschreibt, wie `MacYaesu` für den einfachen Direktverkauf eingerichtet ist und was angepasst werden muss, damit Zahlungen und Downloads live funktionieren.
+## Aktueller Verkaufsfluss
 
-## Aktueller Stand
+Die öffentliche Seite liegt unter `https://www.aiscom.ch/macyaesu/`. Der
+Kaufbutton öffnet einen vorkonfigurierten PayPal-Checkout für:
 
-Die Landingpage liegt unter:
+- Produkt: `MacYaesu Vollversion`
+- Artikelnummer: `MACYAESU-1.1`
+- Preis: `49.00 CHF`
+- Empfänger: `metacube@gmail.com`
+- Lizenzbindung: die vor dem Kauf eingegebene E-Mail-Adresse
 
-- `marketing-site/index.html`
+Die Website übergibt keine geheimen Zugangsdaten. Sie verwendet PayPals
+gehosteten `Buy Now`-Ablauf; Anmeldung, Zahlungsart und Zahlungsbestätigung
+finden ausschließlich bei PayPal statt.
 
-Die zentrale Konfiguration liegt unter:
+## Ablauf pro Bestellung
 
-- `marketing-site/config.js`
+1. Käufer gibt die E-Mail-Adresse für die Lizenz ein.
+2. PayPal zeigt Produkt, Empfänger und Betrag und führt die Zahlung aus.
+3. Im PayPal-Händlerkonto prüfen: Status abgeschlossen, `49.00 CHF`,
+   Artikelnummer `MACYAESU-1.1` und Lizenz-E-Mail vorhanden.
+4. Schlüssel im Projektordner erzeugen:
 
-Die Website liest daraus automatisch:
+   ```bash
+   ./generate-license.command kunde@example.com
+   ```
 
-- Preis
-- PayPal-Link
-- Support-/Lizenz-Mail
-- DMG-Datei
-- Demo-Laufzeit
+5. Schlüssel an exakt diese E-Mail-Adresse schicken. Die App akzeptiert ihn
+   nur zusammen mit der gebundenen Adresse.
 
-## Bereits eingetragen
+Die Rückkehrseite zeigt nur eine Empfangsmeldung. Sie ist kein Zahlungsbeleg;
+ein Schlüssel wird erst nach Kontrolle der Transaktion ausgegeben.
 
-In `marketing-site/config.js` ist aktuell gesetzt:
+## Zentrale Konfiguration
 
-- `priceChf: 49`
-- `supportEmail: "metacube@gmail.com"`
-- `licenseEmail: "metacube@gmail.com"`
-- `pricingEmail: "metacube@gmail.com"`
-- `downloadFile: "../MacYaesu.dmg"`
-- `downloadFileName: "MacYaesu.dmg"`
-- `demoMinutes: 15`
+`marketing-site/config.js` enthält Preis, Währung, PayPal-Empfänger,
+Artikelnummer, Kontaktadressen, Download und Release-Metadaten. Bei einer
+Preis- oder Versionsänderung immer gleichzeitig anpassen:
 
-Der PayPal-Link ist noch Platzhalter:
+- `priceChf`
+- `currency`
+- `productNumber`
+- `releaseVersion` und `releaseBuild`
+- Website-Angebot und PayPal-Kontrollbetrag
 
-- `paypalUrl: "https://www.paypal.com/"`
+`paypalMerchantEmail` muss zu einem aktiven PayPal-Konto gehören, das
+Zahlungen in CHF empfangen kann.
 
-## Was noch zu tun ist
+## App und Download
 
-### 1. PayPal-Link eintragen
+- Die Demo erlaubt 15 Minuten aktive Nutzung.
+- Ein Schlüssel wird aus normalisierter E-Mail und dem lokalen
+  Lizenzverfahren erzeugt und von der App tatsächlich geprüft.
+- Beliebige Texte oder ein gespeichertes Aktivierungs-Flag schalten die App
+  nicht frei.
+- Das aktuelle Release liegt als `MacYaesu.dmg` neben der Website.
 
-Empfohlene einfache Variante:
+Vor Veröffentlichung prüfen:
 
-1. PayPal-Konto öffnen
-2. `PayPal.Me` einrichten
-3. Link mit festem Betrag verwenden
-
-Beispiel:
-
-```js
-paypalUrl: "https://paypal.me/DEINNAME/49CHF"
+```bash
+node --check marketing-site/config.js
+node --check marketing-site/app.js
+swift run --package-path Tools/LicenseTool license-tool verify \
+  kunde@example.com "$(./generate-license.command kunde@example.com)"
 ```
 
-Alternativ kann auch ein echter PayPal-Checkout- oder Button-Link eingetragen werden.
+Danach `index.html`, `styles.css`, `app.js`, `config.js`, `robots.txt`,
+`sitemap.xml`, `main.png`, `memview.png` und `MacYaesu.dmg` nach
+`/macyaesu/` ausliefern.
 
-### 2. DMG-Datei ablegen
+## Grenze dieser Variante
 
-Die Website erwartet aktuell:
-
-- `MacYaesu.dmg`
-
-Speicherort:
-
-- direkt im Projekt-Hauptordner neben `marketing-site/`
-
-Also hier:
-
-- `MacYaesu.dmg`
-- `marketing-site/`
-
-Wenn die Datei anders heißt, in `marketing-site/config.js` anpassen:
-
-```js
-downloadFile: "../AndererName.dmg",
-downloadFileName: "AndererName.dmg"
-```
-
-## Verkaufsablauf
-
-Der aktuelle geplante Ablauf ist bewusst simpel:
-
-1. Besucher lädt Demo herunter
-2. Demo läuft 15 Minuten
-3. Besucher klickt auf Kauf per PayPal
-4. Nach Zahlung wird der Lizenzschlüssel manuell per E-Mail verschickt
-5. Käufer aktiviert die App lokal mit dem Key
-
-## Preis
-
-Aktuell gesetzt:
-
-- `49 CHF` einmalig
-
-Regelmäßige Updates sind im Text als kostenlos enthalten kommuniziert.
-
-## Wo man die Werte ändert
-
-Alles Relevante an einer Stelle:
-
-- `marketing-site/config.js`
-
-Typische spätere Änderungen:
-
-- Preis ändern
-- PayPal-Link einsetzen
-- E-Mail-Adresse ändern
-- DMG-Dateiname ändern
-- Demo-Dauer ändern
-
-## App-Aktivierung
-
-Die App ist aktuell lokal so gebaut:
-
-- Demo läuft 15 Minuten aktive Nutzung
-- danach stoppt die App ohne Aktivierung
-- Lizenzschlüssel schaltet frei
-
-Die Aktivierungslogik liegt in:
-
-- `MacYaesu/ViewModels/SettingsController.swift`
-
-## Nächster Schritt
-
-Wenn später ein echter Verkauf startet:
-
-1. echten PayPal-Link in `marketing-site/config.js` eintragen
-2. `MacYaesu.dmg` ins Projekt legen
-3. Website veröffentlichen
-4. Lizenzschlüssel manuell per Mail verschicken
+Lizenzversand und Zahlungsabgleich sind bewusst manuell. Eine automatische
+Ausgabe darf nicht allein einer Browser-Rückleitung vertrauen. Dafür wäre ein
+öffentlich erreichbares Backend mit PayPal Orders API, geheimem Client-Secret,
+Webhook-Prüfung und Mailversand erforderlich.
