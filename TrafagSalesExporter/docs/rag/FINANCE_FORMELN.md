@@ -136,8 +136,8 @@ StandardCost         = StprsHc             (aktueller Materialstandardpreis)
 StandardCostCurrency = Hwaer
 ```
 `WAVWR` = historisch eingefroren, `STPRS` = aktueller Stand (fachlich schwaecherer,
-aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN_ARBEITSNOTIZ_2026-07-17.md`,
-`docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`.
+aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN.md`,
+`docs/FINANCE_STANDARDKOSTEN.md`.
 
 **Deckungsbeitrag (DB):** `StandardCostVariable`/`StandardCostFixed` +
 `ContributionMarginCalculator` sind technisch vorbereitet, aber LEER — Fix/Variabel-Split
@@ -186,7 +186,7 @@ Fachgrundlage Kunden-Marker: `docs/FINANCE_ENTSCHEIDE.md` Abschnitt „Intercomp
 - `docs/FINANCE_BUDGET_CHF_FRAGEN_FINANZCHEF_2026-06-15.md` — Budget-CHF offene Fragen
 - `docs/FINANCE_ENTSCHEIDE.md` — Entscheide, Kunden-IC-Marker
 - `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` — Gruppenmarge-Fachlogik
-- `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` / `docs/FINANCE_STANDARDKOSTEN_ARBEITSNOTIZ_2026-07-17.md` — Standardkosten CH/AT
+- `docs/FINANCE_STANDARDKOSTEN.md` / `docs/FINANCE_STANDARDKOSTEN.md` — Standardkosten CH/AT
 - `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` — WAVWR/STPRS-Spezifikation, NETWR_HC-Bug
 - `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` — Formeln je Land im Detail
 - `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` — Gesamt-Datenfluss im Detail

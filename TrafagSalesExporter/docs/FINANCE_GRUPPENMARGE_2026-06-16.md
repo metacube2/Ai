@@ -92,7 +92,7 @@ Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 
 Umgesetzt, getestet (`240/240`) und deployed (Commit `5efeed7`, DLL `15.07.2026 11:22:32`).
 Live-Pruefung 2026-07-16 zeigt: produktiv noch NICHT wirksam, siehe Nachtrag unten. Nach
 Live-Stichprobe (siehe
-`docs/FINANCE_STANDARDKOSTEN_2026-07-14.md` "Offen" Punkt 1) wurde Frage B fuer TR AG
+`docs/FINANCE_STANDARDKOSTEN.md` "Offen" Punkt 1) wurde Frage B fuer TR AG
 konkret geloest:
 
 - **Lieferant -> Gesellschaft:** `GroupMarginSupplierClassifier.ResolveDeliveringEntity`
@@ -193,7 +193,7 @@ NICHT umgesetzt — reine Dokumentation des Befunds, Entscheidung liegt bei Andr
 
 ## Nachtrag 2026-07-27: Sitzung Andreas — 3-Tabellen-Architektur bestaetigt, Supplier-Widerspruch offen
 
-Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`. Kurz:
+Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN.md`. Kurz:
 
 - **Bestaetigt final:** Genau 3 Konzern-Standardkosten-Tabellen (Trafag AG, Trafag
   Italien, Trafag Indien) — deckt sich mit `GroupStandardCostEntities.TrAg/TrIt/TrIn`
@@ -220,7 +220,7 @@ Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`.
   `INV1.StockPrice` ist fuer 2'019 der 2'082 in 2026 verkauften Materialien (97.0 %)
   gefuellt. Damit ist TR ITs eigene Verkaufszeile die tragfaehige Konzernkostenquelle —
   gleiches Prinzip wie `VBRP-WAVWR` bei CH/AT, ohne neue Datenlieferung. Details inkl.
-  Zahlen und offener Fachfragen: `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`
+  Zahlen und offener Fachfragen: `docs/FINANCE_STANDARDKOSTEN.md`
   Abschnitt 5b Befund 6. Hinweis: Der Kommentar in `Models/GroupStandardCost.cs` (Zeile
   12-16) transportiert noch die alte, irrefuehrende Schlussfolgerung und sollte
   nachgezogen werden.

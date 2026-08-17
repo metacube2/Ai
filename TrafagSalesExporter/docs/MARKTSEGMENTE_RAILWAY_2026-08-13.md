@@ -88,7 +88,7 @@ von 269.
 `Market Segment` und `Market Segment Source` stehen als Position 50 und 51 hinter allen
 bestehenden Spalten. Ein Einschub in der Mitte waere still toedlich, weil der zentrale
 Nachweis Blattformeln auf Spaltenpositionen enthaelt — dieselbe Fehlerklasse wie die
-Statustext-Falle in `docs/RAG_ROUTER.md` Regel 11. Ein Kopfzeilentest prueft vier
+Statustext-Falle in `router.md` Regel 11. Ein Kopfzeilentest prueft vier
 Ankerpositionen und schlaegt an, sobald jemand mittig einfuegt.
 
 ## 8. Wo es liegt

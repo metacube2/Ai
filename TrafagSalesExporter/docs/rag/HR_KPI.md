@@ -11,7 +11,7 @@ Stand: 2026-07-31
   ueber alle sichtbaren HR-Ergebnisbloecke sowie eine Vollkombination mit
   Zeitraum und Fluktuation. Die Uebersicht zeigt bei nicht datierbaren
   Rexx-Absenzen ebenfalls keine scheinbar genaue Quote mehr. Details:
-  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+  `docs/HR_KPI.md`.
 - HR KPI Cockpit wurde um produktive Cockpit-Funktionen erweitert.
 - Enthalten sind Anleitung, Datenordner, Dateifrische, Datenstatus, Ampeln, Periodenvergleich, Datenqualitaet, Austritte, Absenzen, Managementsicht und Drucken/PDF.
 - Managementsicht anonymisiert Personennamen in Detailtabellen.
@@ -26,7 +26,7 @@ Stand: 2026-07-31
   Builds enthalten (Commit `1afac2f`): korrekter Vorjahresvergleich,
   YTD-konsistente Krankenquote/Fluktuation, aggregierte Top-Absenzen und neue
   Datenqualitaets-Hinweise. Details:
-  `docs/HR_KPI_KORREKTUREN_2026-07-06.md`.
+  `docs/HR_KPI.md`.
 
 ## Datenquellen
 
@@ -36,7 +36,7 @@ Stand: 2026-07-31
 
 ## Rohquellen Nur Bei Bedarf
 
-- Nachdoku: `docs/HR_KPI_NACHDOKU_2026-05-13.md`
+- Nachdoku: `docs/HR_KPI.md`
 - Fachpruefung: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`
-- Feiertage/Filtervertrag: `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`
+- Feiertage/Filtervertrag: `docs/HR_KPI.md`
 - Anwenderdoku: `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx`

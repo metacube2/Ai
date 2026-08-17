@@ -348,7 +348,7 @@ referenziert die Strukturnamen direkt).
 | `WERT_ENDBESTAND` | Vordefinierter Typ: `DEC`, Laenge 11, Dezimalstellen 2 | |
 | `OWERT` | `SALK3` | Referenzfeld `WAERUNG` (s. u.), CURR-Pflichtfeld |
 | `OMKWR` | `SALK3` | Referenzfeld `WAERUNG` (s. u.), CURR-Pflichtfeld |
-| `WAERUNG` | `WAERS` | NEU 2026-07-21: Waehrungsschluessel, im Provider fest `'CHF'` (Werk 1100 = Trafag AG/CH/CHF laut `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`) |
+| `WAERUNG` | `WAERS` | NEU 2026-07-21: Waehrungsschluessel, im Provider fest `'CHF'` (Werk 1100 = Trafag AG/CH/CHF laut `docs/FINANCE_STANDARDKOSTEN.md`) |
 | `DISMM` | `DISMM` | |
 | `MINBE` | `MINBE` | |
 | `DISLS` | `DISLS` | |

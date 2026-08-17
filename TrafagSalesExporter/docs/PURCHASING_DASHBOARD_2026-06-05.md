@@ -383,12 +383,12 @@ Marco-Review-Korrekturen) wurden deployed. Commit `335907c`, `157/157` Tests gru
 `BiDashboard.dll` `10.07.2026 14:17:01` (`2'782'208`), DB unveraendert, Port 443 erreichbar.
 RISIKO/NACHSORGE: Kein Einkauf-Full-/Delta-Load gegen travp762, solange `Bstyp`/`Bsart`/`Elikz`
 dort nicht im OData-Modell sind (sonst schlaegt der Loader-`$select` fehl / leert den Cache).
-Siehe `docs/rag/DEPLOYMENT.md` und `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` (A0).
+Siehe `docs/rag/DEPLOYMENT.md` und `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` (A0).
 
 ## Nachtrag 2026-07-10 Review-Mail Marco und Sofort-Korrekturen
 
 Marco (Einkaufs-Koordinator) hat das produktive Cockpit durchgesehen; vollstaendiges Mapping in
-`docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`. Sofort umgesetzt (157/157 Tests gruen,
+`docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`. Sofort umgesetzt (157/157 Tests gruen,
 kein Deploy):
 
 - **Verpflichtungen Stand heute:** Offene Positionen sind jetzt komplett zeitraumunabhaengig
@@ -495,10 +495,10 @@ Validierung:
 
 ## Nachtrag 2026-07-09 Umsetzung Phase 1 (Ueberfaellig, Preisentwicklung je Artikel, Kontrakt-Label)
 
-Grundlage: `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`. Umgesetzt wurde der
+Grundlage: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`. Umgesetzt wurde der
 code-seitig ohne externe Inputs machbare Teil von Phase 1; alles Uebrige (Referenzlisten,
 SAP-Metadaten-Checks, neue SAP-Objekte) ist in
-`docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md` als Vorbereitungsauftrag beschrieben.
+`docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` als Vorbereitungsauftrag beschrieben.
 
 - **Phase 1.1 Ueberfaellige Lieferpositionen:** Neue KPIs `OverdueValueSample`,
   `OverdueQuantitySample`, `OverduePositionCount` und Drilldown `OverduePositionRows` im
@@ -521,7 +521,7 @@ Validierung:
   Artikel-Preistrend (YoY).
 - Kein Deploy (Deploy-Entscheid inkl. Phase-0-Full-Load offen, siehe Vorbereitungs-MD).
 
-Noch offen / vorzubereiten (siehe `PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md`):
+Noch offen / vorzubereiten (siehe `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`):
 
 - Phase 1.3/1.4: Warengruppen-Text-CSV (T023T) und Disponenten-CSV (ZC23) von Ingo.
 - Phase 2: OData-Proben LFA1-Adresse/Elikz/MBEW/Kontraktbelege.
@@ -534,7 +534,7 @@ schriftlich umrissen (Echtzeit-Uebersicht Einkaufstransaktionen, 7 Aufrisse, KPI
 Beschaffungstransaktionen/Lager/Lieferantenperformance). Die Anforderungen wurden gegen den
 Code- und Datenstand gemappt und in einen Phasenplan uebersetzt:
 
-- Arbeitsauftrag: `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`
+- Arbeitsauftrag: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
 - Kernaussage: Phase 0 = Deploy Korrektur-Stand + Full Load + Soll-Abgleich; Phase 1 = Ausbau
   mit vorhandenen Daten (Ueberfaellige Positionen, Preisentwicklung je Artikel, Warengruppen-
   und Disponenten-Referenzlisten); Phase 2/3 = gezielte SAP-Erweiterungen (LFA1-Adresse, Elikz,
@@ -681,7 +681,7 @@ Empfehlung fuer kuenftige grosse Einkauf-Ladevorgaenge:
 
 ## Nachtrag 2026-07-06 Formel-/Logik-Korrekturen (Review)
 
-Grundlage: Formel-Review in `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`. Umgesetzte
+Grundlage: Formel-Review in `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`. Umgesetzte
 Korrekturen (Prioritaet in Klammern):
 
 - K1 (kritisch) Waehrungsbewertung nach CHF: `EKPO.Netwr` ist Belegwaehrung, wurde bisher 1:1 als

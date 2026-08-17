@@ -129,4 +129,4 @@ Die technischen Punkte 1 bis 4 sowie die Erreichbarkeit der Seiten aus Punkt 5
 wurden am 2026-08-12 abgeschlossen. Offen bleibt eine fachliche Stichprobe gegen
 einen bekannten Disponenten sowie die oben genannte SAP-Key-/Textpflege.
 
-Release- und Routennachweis: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+Release- und Routennachweis: `docs/DEPLOYMENT.md`.

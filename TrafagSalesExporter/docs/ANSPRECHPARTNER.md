@@ -23,8 +23,8 @@ aber sie gehört nicht in Exporte, Artefakte oder Weitergaben an Dritte.
 ## 1. Standorte / Tochtergesellschaften
 
 Das ist die Liste aus der Diskussion vom 2026-07-30 (Feldlücken je Standort, Bitte um
-Stammdatenpflege). Vollständiger fachlicher Kontext samt Zeilenzahlen und Mailtext:
-`docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitte 5 und 6.
+Stammdatenpflege). Vollständiger fachlicher Kontext samt Zeilenzahlen:
+`docs/FINANCE_FELDLUECKEN.md`. Die dort frueher enthaltenen Mailtexte wurden am 2026-08-17 entfernt, weil zwei davon gegenstandslos geworden waren.
 
 | TSC | Standort | Person | Adresse | Thema | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -40,7 +40,7 @@ Stammdatenpflege). Vollständiger fachlicher Kontext samt Zeilenzahlen und Mailt
 | `TRCH` / `TRAT` | Schweiz / Österreich | — | — | keine Standortbitte, läuft über SAP und das Schweizer Team | entfällt |
 
 Quelle der bestätigten Adressen: von Ingo am 2026-07-30 recherchiert und in
-`docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md:137` ff. festgehalten. Vorher enthielt kein
+`docs/FINANCE_FELDLUECKEN.md` festgehalten. Vorher enthielt kein
 Dokument dieses Repos irgendeine Mailadresse.
 
 Zu Italien gehört ein zweiter, übergeordneter Absender: nach Paolas Antwort kam am 2026-07-28
@@ -71,7 +71,7 @@ BLP-Vorfall gestört.
 Quellen: `saptasks/zzprdat-kontext.md:189` ff. („## 11. Beteiligte", Rollen von Lucas, Marco
 Di Menco, Adil, Florian, Fabio), `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25` und `:159-166`
 (Domänenzuständigkeiten, Andreas, Sonja, Alex, Ramon),
-`docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md:3` (Marco Widmer).
+`docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` (Marco Widmer).
 
 ## 3. Externe Partner
 
@@ -107,9 +107,9 @@ nächste Ausfall wieder beim erstbesten Erreichbaren.
 **Paola Castagna trägt zwei unabhängige Anliegen.** Nicht in einer Mail mischen:
 
 1. Bewertungsmethode / Standardkosten, Zusage **Ende August 2026** —
-   `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitte 5c/5d.
+   `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 6.
 2. Stammdatenpflege *Preferred Vendor* (`OITM.CardCode`), 939 von 3'280 TR-IT-Artikeln —
-   `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`.
+   `docs/FINANCE_FELDLUECKEN.md`.
 
 Eine gemischte Mail gefährdet den klaren Termin von Punkt 1. Zeitlich zusätzlich: B1-Upgrade
 Go-Live 2026-08-03, danach zwei Wochen Ferien.
@@ -125,11 +125,11 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
 
 - **Zwei Marcos.** *Marco Di Menco* ist Fachseite Etiketten/PP (`saptasks/zzprdat-kontext.md`),
   *Marco Widmer* ist Einkauf und Autor des Dashboard-Reviews
-  (`docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`). Dateinamen mit „MARCO" beziehen sich
+  (`docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`). Dateinamen mit „MARCO" beziehen sich
   auf Widmer.
 - **`Hugo Cuesta` ist kein Ansprechpartner.** Der Name stammt aus einem spanischen Artikeltext
   der TRES-Daten (`- Entregado por Hugo Cuesta`, 377 Zeilen,
-  `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md:81`).
+  `docs/FINANCE_FELDLUECKEN.md`).
 - **Beteiligtenlisten in Ticketdokus sind nicht der Verteiler.** Die Tabelle in
   `saptasks/zzprdat-kontext.md` gilt für den ZZPRDAT-/Etikettenvorgang. Dass sie zufällig die
   Namen aus dem BLP-Fall enthält, ist kein Beleg für Zuständigkeit dort.
@@ -140,7 +140,7 @@ Alle drei sind in diesem Repo schon einmal echte Stolpersteine gewesen:
    Das ist die praktisch wichtigste Lücke.
 2. **Nachnamen** von Andreas, Sonja, Alex, Ramon.
 3. **Empfänger TRFR und TRUS** — beide haben eine echte, offene Bitte im Standort-Mailtext.
-   Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`),
+   Die versandfertigen Mails liegen bereits vor (`docs/FINANCE_FELDLUECKEN.md`),
    es fehlt ausschliesslich die Adresse.
 4. **Owner von BLP** (Abschnitt 4).
 5. **Absender der italienischen Eskalation vom 2026-07-28** (Abschnitt 1).

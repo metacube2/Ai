@@ -25,7 +25,7 @@ Stand: 2026-08-14
   Protokollabsatz. Gegen einen nachgebauten Share verifiziert
   (`Tools/DeployConsole.Probe`, 22 Pruefungen gruen). Der erste Produktivlauf erfolgte
   kopflos ueber `.tmp_tools/DeployHeadless` und endete ohne Alarm.
-  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md` und der Kurzstand unten.
+  Details: `docs/DEPLOYMENT.md` und der Kurzstand unten.
 
 - **FALLE, gemessen am 2026-08-07: ein erfolgreicher Publish kann `BiDashboard.dll`
   stillschweigend ueberspringen.** Die Hauptbaugruppe wird mit PreserveNewest kopiert;
@@ -164,7 +164,7 @@ Stand: 2026-08-14
   sind ausschliesslich Dokumentation, kein `.cs`. **NICHT belegt:** dass die neue
   Lokal-Zahl im Cockpit rendert — `/management-cockpit` liegt hinter dem
   Finance-Unlock. Details:
-  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+  `docs/FINANCE_STANDARDKOSTEN.md`.
 
 - Deploy davor: **2026-08-11 15:51, gesamter
   Workspace-Anwendungsstand**, ausdruecklich freigegeben trotz fehlender SAP-Sets
@@ -178,7 +178,7 @@ Stand: 2026-08-14
   unveraendert `96'298`. Neun HTTP-Routen liefern 200. Einkaufs-SAP-only-Code ist
   live, aber die `45` historischen Excel-Regeln werden nun bewusst ignoriert; bis
   zur SAP-Aktivierung fehlen Produktgruppennamen und Refreshes koennen scheitern.
-  Details: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+  Details: `docs/DEPLOYMENT.md`.
 
 - Deploy davor: **2026-08-11 11:23, Admin-Bereiche
   zusammengefuehrt und FPV-Pausenspiel**, Funktionsstand aus schmutzigem Workspace auf Branch
@@ -204,7 +204,7 @@ Stand: 2026-08-14
   `DatabaseSeedService`, `Admin Bereich`, `Aktive Logins`, `finance-admin`, `pausegame.js`.
   Nicht belegt: angemeldeter visueller Browsertest der Admin-Seiten und manuelles
   Spielgefuehl. Details: `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md` und
-  `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+  `docs/PAUSENSPIEL.md`.
 
 - Deploy davor: **2026-08-10 07:05, Pausenreiter
   standardmaessig aus**, Funktionscommit `8e09774`, `459/459` Tests gruen im
@@ -225,7 +225,7 @@ Stand: 2026-08-14
   liegt hinter dem Admin-Passwortpanel und liefert von hier aus nur dieses (Antwort
   enthaelt `Passwort`, aber weder `Einstellungen` noch `SharePoint`). Dafuer ist ein
   angemeldeter Sichtprueflauf noetig.
-  Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+  Details: `docs/PAUSENSPIEL.md`.
 
 - **FALLE: Admin-Schalter in `appsettings.json` ueberlebt den naechsten Deploy NICHT.**
   `appsettings.json` ist Build-Ausgabe und wird bei jedem Publish durch den
@@ -263,7 +263,7 @@ Stand: 2026-08-14
   die Musik durchlaeuft. Erster Aufruf durch Ingo ist ein echter Test.
   Ausblenden ohne Deploy: `IsVisible` am Menueintrag `pause-game`; hart:
   `"Pause": { "Enabled": false }` in `appsettings.json`.
-  Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+  Details: `docs/PAUSENSPIEL.md`.
 
 - Deploy davor: **2026-08-07 10:22, Finance-Indikatoren
   ehrlich gemacht**, Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests gruen
@@ -345,7 +345,7 @@ Stand: 2026-08-14
   `B8391FBFC69DBB6B45F93D1D6AF3D8FC621C34FD11405C14A0E52BF98397B7B0`.
   `app_offline.htm` gesetzt und danach aus dem aktiven Namen entfernt;
   Startseite und `/BiDashboard/hr-kpi` liefern HTTPS `200`. Details:
-  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+  `docs/HR_KPI.md`.
 
 - Deploy davor: **2026-08-06 13:57, ZDISPO-Zusatz
   nur fuer den Einkauf Spend-Aufriss**, Funktionscommit `0a8a4c9`, `435/435`
@@ -471,5 +471,5 @@ Stand: 2026-08-14
 
 ## Rohquellen Nur Bei Bedarf
 
-- IIS-Handoff: `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`
-- historischer lokaler Uebergangsserver: `docs/LOCAL_DEV_SERVER_UEBERGANG_2026-05-21.md`
+- IIS-Handoff: `docs/DEPLOYMENT.md`
+- historischer lokaler Uebergangsserver: `docs/DEPLOYMENT.md`

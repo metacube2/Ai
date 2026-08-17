@@ -13,7 +13,7 @@ Andreas-Frage mehr.
 Seit 2026-07-14 fuellt die App `StandardCost` fuer CH/AT ueber `mbewSet` (MBEW-STPRS,
 Bewertungskreis 1100/1200). Dieser Scan ist seit dem Deploy des TR-AG-Gruppenkosten-
 Features (2026-07-15) reproduzierbar haengen geblieben (siehe Nachtrag 2026-07-16 in
-`docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`). Alternative, direkt an der Fakturaposition:
+`docs/FINANCE_STANDARDKOSTEN.md`). Alternative, direkt an der Fakturaposition:
 `VBRP-WAVWR` (Kostenwert), bereits im ABAP-Analysebericht vom 14.07. mit 92.3 % Abdeckung
 identifiziert, aber laut Report „im Z-Service nicht exponiert".
 
@@ -327,7 +327,7 @@ Export-Pipeline nach `ZSCHWEIZ`):
     verifiziert.
   - Produktiv-Deploy dieser App-Aenderung steht noch aus (bisher nur gegen
     `travt762` verifiziert, siehe `Sites.SapServiceUrl`-Altproblem in
-    `docs/FINANCE_STANDARDKOSTEN_2026-07-14.md`).
+    `docs/FINANCE_STANDARDKOSTEN.md`).
 
 ## 14. C#-seitiger Fix fuer den NETWR_HC-Skalierungsfehler (2026-07-16, spaeter Abend)
 

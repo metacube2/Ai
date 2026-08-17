@@ -45,7 +45,7 @@ Datenbasis wird sichtbar gemacht, nicht geschaetzt.** Belege dafuer sind der
 bestehende Umgang mit dem Ist-Wareneingangsdatum
 (`docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` § Lieferperformance),
 mit `DISPO D5` ohne `DESCR` und mit dem Deckungsbeitrag in Finance, sowie
-`docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`: „Ohne EKBE nicht
+`docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`: „Ohne EKBE nicht
 serioes berechenbar — nicht naehern/simulieren."
 
 Keine neue Kennzahl, keine neue Datenquelle.
@@ -269,4 +269,4 @@ Stellen sind korrigiert.
 - Fuer eine echte Lieferantenbewertung braucht es `EKBE` (Termintreue), eine
   QM-Quelle (Qualitaet) und von Marco die Bewertungsformel der bestehenden
   Lieferantenbewertung (Toleranzklassen/Punkteschema), siehe
-  `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md` § C1.
+  `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` § C1.

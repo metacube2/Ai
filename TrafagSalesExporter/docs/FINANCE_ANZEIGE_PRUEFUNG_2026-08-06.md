@@ -64,7 +64,7 @@ gemessen am Produktivbestand 2026-08-06:
 
 Also rund **drei Viertel aller Zeilen**. Der Schwerpunkt liegt bei TRCH, TRDE, TRES und TRAT,
 deren Quellsysteme kein Lieferantenfeld liefern (siehe
-`docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md`) — nicht bei Indien.
+`docs/FINANCE_SUPPLIER.md`) — nicht bei Indien.
 
 ## 2. Weitere Anzeigekorrekturen
 

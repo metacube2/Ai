@@ -2,12 +2,40 @@
 
 Stand: 2026-08-17
 
-WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
-`docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
-seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
-`docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
+WARNUNG fuer neue Sitzungen: `docs/mails/Build-RanVijayFollowup.ps1` bittet Indien um
+Pflege von 1'271 Artikeln. Das ist seit 2026-08-05 ueberholt und darf NICHT versendet
+werden — gueltig ist `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`. Der frueher hier
+genannte Mailtext in den Feldluecken-Dateien wurde am 2026-08-17 entfernt.
 
-Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+Diese Datei ist ein chronologisches Protokoll. **Eintraege vor dem 2026-08-17 nennen
+Dateinamen, die es seit der Doku-Aufraeumung nicht mehr gibt.** Das ist gewollt, sie
+beschreiben den Stand ihres Tages. Die Zuordnung alt zu neu steht in `baum.md`, Abschnitt
+„Am 2026-08-17 zusammengefuehrt und geloescht".
+
+## Dokumentation aufgeraeumt und neu navigierbar 2026-08-17
+
+- **Neue Navigation.** `router.md` in der Repo-Wurzel ist der einzige globale Einstieg und
+  enthaelt nur Vorrangregeln und sieben Themenaeste. Je Ast ein Unterrouter unter
+  `docs/router/`. `baum.md` listet jede Markdown-Datei genau einmal und dient der
+  Vollstaendigkeitspruefung. Ladeweg fuer eine Aufgabe: Router, Unterrouter, Detaildatei.
+- `AGENTS.md` und `CLAUDE.md` verweisen sofort auf `router.md`.
+- **41 Dateien in 11 zusammengefuehrt**, rund 26'400 auf rund 14'600 Zeilen. Aufgeloest
+  wurden unter anderem die vier Standardkosten-, vier Supplier-, drei Feldluecken- und
+  sechs Einkaufssitzungsdateien. Zuordnungstabelle in `baum.md`.
+- **Acht Dateien trugen einen `UEBERHOLT`-Kopf und standen trotzdem in der Navigation.**
+  Darunter ein versandfertiger Mailtext, der Indien um 1'271 Artikel Pflege gebeten haette,
+  die seit 2026-08-05 gegenstandslos ist. Dieser Text ist ersatzlos entfernt, die Regel
+  dahinter steht als Vorrangregel 3 in `router.md`.
+- Geloescht, weil ihre Aufgabe an die neue Navigation uebergegangen ist: `RAG_ROUTER.md`,
+  `RAG_DETAIL_INDEX.md`, `MD_DOKUMENTENSTATUS_2026-05-20.md`.
+- **Gerettet statt geloescht:** die Betriebsfallen aus der Importpruefung (UK-Reimport nur
+  ohne Jahresfilter, Legendenzeile, Stueckpreisnachweis) nach `docs/rag/MANUAL_IMPORT.md`;
+  die Betriebsregeln des SAP-Reports `Z_TRAFAG_DACH_EXPORT` samt Namensfalle und der
+  Warnung gegen das Umstellen der Service-URL nach `docs/FINANCE_STANDARDKOSTEN.md`.
+- Nicht angefasst: `docs/raw_md_archive/` bleibt unveraendert Historie,
+  `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` trug eine fremde, nicht committete
+  Aenderung und wurde deshalb ausgelassen, ebenso alle untracked Dateien.
+- Nur Dokumentation. Kein Anwendungscode, keine Datenbank, kein Deploy.
 
 ## Spanien liefert das Buchungsdatum 2026-08-17 - Skript fertig, Live-Pruefung offen
 
@@ -131,7 +159,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Reservierungen respektieren und den Abschluss nachtragen.
 - Neue Root-Datei `AGENTS.md`: dieselbe Pflicht gilt fuer Codex und andere
   Agenten.
-- `docs/RAG_ROUTER.md` verweist nun ebenfalls verpflichtend auf
+- `router.md` verweist nun ebenfalls verpflichtend auf
   `docs/AGENT_COORDINATION.md`, bevor Aenderungen, parallele Arbeit, Builds oder
   Deployments beginnen.
 - Hintergrund: Ein neu gestarteter Claude hatte sich trotz Nutzeranweisung nicht
@@ -150,7 +178,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Inhalt: sechs offene Arbeitspakete, 21 erledigte Punkte, Personenregister,
   Arbeitsregeln und Pflegehinweise. Finance-Details bleiben ausdruecklich im
   Issue-Log und werden dort nicht dupliziert.
-- `docs/RAG_ROUTER.md`: Themenzeile fuer `PROJEKTSTATUS.md` ergaenzt,
+- `router.md`: Themenzeile fuer `PROJEKTSTATUS.md` ergaenzt,
   `kontext.txt` unter „Weitere Navigation" als ABGELOEST markiert.
 - **Zwei Statusangaben des Protokolls waren falsch** und wurden gegen das
   Repository korrigiert. Das Einkaufsdashboard `PM-04` war dort als offen
@@ -305,9 +333,9 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   liefert in SQLite fuer jede Zeile wahr und damit falsche 100 %. Richtig mit CAST gemessen:
   FR 51,7 %, DE 68,7 %, ES 81,0 %, US 90,0 %, UK 93,5 %, IT 95,7 %, CH 96,6 %, IN 99,4 %,
   AT 99,9 %.
-- UEBERHOLT-Blöcke gesetzt in `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` (nicht
-  versenden), `docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md` (UK-Teil),
-  `docs/FINANCE_ISSUE_LOG_ANDREAS_2026-07-28.md` (vier Statusangaben) und im
+- UEBERHOLT-Blöcke gesetzt in `docs/FINANCE_FELDLUECKEN.md` (nicht
+  versenden), `docs/STANDORT_ES_SAGE.md` (UK-Teil),
+  `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` (vier Statusangaben) und im
   Supplier-Abschnitt von `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 
 ## Einkauf Produktgruppen SAP-only 2026-08-12 - produktiv abgeschlossen
@@ -340,7 +368,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   6.749 mit Standardpreis.
 - Offen: angemeldeter Sichtprueflauf im Cockpit; die Route liegt hinter dem
   Finance-Unlock. Detail:
-  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+  `docs/FINANCE_STANDARDKOSTEN.md`.
 
 ## Andreas-Nachtrag lokale Standardkosten 2026-08-11 - committed, Deploy siehe oben
 
@@ -358,7 +386,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Gesamttests im Release-Lauf gruen.
 - Separater Commit nach Baseline `369d675`; deployed am 2026-08-12 10:23, siehe den
   Abschnitt oben. Detail:
-  `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+  `docs/FINANCE_STANDARDKOSTEN.md`.
 
 ## Gesamtdeploy 2026-08-11 15:51 - produktiv
 
@@ -375,7 +403,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   `ZDISPO_GRP`/`ZDISPO_SPART` fehlen in SAP. Die 45 alten Excel-Regeln sind noch
   gespeichert, werden aber nicht mehr verwendet; Namen/Refresh bleiben bis zur
   SAP-Aktivierung eingeschraenkt.
-- Vollnachweis: `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+- Vollnachweis: `docs/DEPLOYMENT.md`.
 
 ## Supplier-Fallback CH-Werkstamm 2026-08-11 - produktiv
 
@@ -389,7 +417,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   0 bisherige Treffer gehen verloren. Produktiver Cache nach Deploy: MARC 66.049,
   MBEW 63.550.
 - Nachweis: 471/471 Tests gruen; Details in
-  `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md`.
+  `docs/FINANCE_SUPPLIER.md`.
 - Produktiv deployed; die fehlenden SAP-Sets blockieren weiterhin nur die
   Einkaufs-Produktgruppennamen und deren Refresh, nicht den Supplier-Fallback.
 
@@ -409,7 +437,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Server bitgleich. Sechs HTTPS-Routen liefern 200, keine Datei verschwunden. Konsistentes
   Vorher-Backup `trafag_exporter.db.before-admin-menu-merge-20260811-112250.bak` angelegt.
   Details: `docs/rag/DEPLOYMENT.md`, `docs/ADMIN_MENUE_ZUSAMMENFUEHRUNG_2026-08-11.md`,
-  `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+  `docs/PAUSENSPIEL.md`.
 
 ## Offene Punkte (nicht erledigt)
 
@@ -481,7 +509,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   unterbrechungsfrei laeuft. Der erste Aufruf ist ein echter Test.
   Vier echte Fehler haben die Pruefsonden vorher gefunden — u. a. spiegelverkehrte
   Explosionskrater und ein Rechnergegner, der nie lief und deshalb aus unerreichbarer
-  Entfernung ins Leere schoss. Details: `docs/PAUSENSPIEL_STUFE1_2026-08-07.md`.
+  Entfernung ins Leere schoss. Details: `docs/PAUSENSPIEL.md`.
 - **Deploy-Konsole `Tools/DeployConsole` gebaut (2026-08-07), erstmals produktiv erfolgreich
   gelaufen am 11.08.2026.** Zuvor gegen einen nachgebauten Share verifiziert
   (`Tools/DeployConsole.Probe`, 25 Pruefungen gruen, echter `dotnet publish`). Der erste
@@ -494,7 +522,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   uebereinstimmen MUSS. (2) `check.xlsx`, `zdispo_grp.xlsx`, `zdispo_spart.xlsx` im
   Publish-Verzeichnis sind Build-Ausgabe (`CopyToPublishDirectory="Always"`) und werden bei
   jedem Deploy mit dem Repo-Stand ueberschrieben — auf dem Share bearbeiten ist sinnlos.
-  Details: `docs/DEPLOY_KONSOLE_2026-08-07.md`. Einzige verfolgte Aenderung dabei:
+  Details: `docs/DEPLOYMENT.md`. Einzige verfolgte Aenderung dabei:
   `TrafagSalesExporter.sln` (zwei Projekte aufgenommen); `dotnet test` weiterhin `455/455`.
 - **Statustext `"OK"` steht als Zeichenkette in der Excel-Formel** des Nachweises
   (`Services/ExcelExportService.cs`, Blatt „Gruppenmarge Details", Spalten 19 und 20:
@@ -674,7 +702,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Mitarbeitertyp, Eintrittsjahr, GLZ, Restferien und Suche ueber alle sichtbaren
   HR-Ergebnisbloecke; ein weiterer Test kombiniert Zeitraum, Jahr,
   Fluktuationsfilter und alle Personenfilter. Details:
-  `docs/HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
+  `docs/HR_KPI.md`.
 
 - 2026-08-06, ZDISPO NUR IM EINKAUF-SPEND-AUFRISS ERGAENZT, DEPLOYED UND
   VERIFIZIERT (13:57 MESZ, Commit `0a8a4c9`): `zdispo_grp.xlsx` ordnet
@@ -890,7 +918,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   (heute `NormalizeMaterialKey(record.Material)`). Der Platzhalter aus zwei Bindestrichen ist
   wie leer zu behandeln. REGEL: bei LRD-Zeilen ohne Konzernkostentreffer NICHT auf den lokalen
   Wert zurueckfallen — das ergaebe eine plausibel aussehende, falsche Marge (derselbe Fehler wie
-  bei TRIT, siehe `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a). NEUE
+  bei TRIT, siehe `docs/FINANCE_SUPPLIER.md` Abschnitt 4). NEUE
   BITTE AN INDIEN dadurch: 3 LRD-Artikel brauchen die `Material No` (139 Zeilen) — das blockiert
   die Kostenbasis, nicht die Klassifikation.
 
@@ -991,7 +1019,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   am 2026-08-03 neu gemessen und exakt bestaetigt: 7'171 Zeilen, Supplier 7'171 leer,
   CustomerName/-Country 7'171 leer bei 7'171 gefuellter CustomerNumber, 2'903 Bezeichnungen mit
   Font-Muell, Material 0 leer. Details:
-  `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt „Korrektur Deutschland, 2026-08-03".
+  `docs/FINANCE_FELDLUECKEN.md` Abschnitt 6.
 
 - VERSAND 2026-08-03, Indien-Nachfassung: RanVijay hat auf die Mail vom 31.07. geantwortet, dass
   er die Frage nicht versteht, und um einen Teams-Call gebeten. Ursache mutmasslich die
@@ -1021,10 +1049,10 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   unveraendert, `app_offline.htm` entfernt, Port 443 offen und authentifizierter
   Aufruf von `/BiDashboard/logistik/stuecklistenanalyse` mit HTTP `200`.
 
-- DOKU 2026-07-31, RAG-Inhaltsverzeichnis konsolidiert: `docs/RAG_ROUTER.md`
+- DOKU 2026-07-31, RAG-Inhaltsverzeichnis konsolidiert: `router.md`
   von 289 auf 51 Zeilen reduziert und auf Vorrangregeln/Themenrouting
   beschraenkt. Detailquellen, Live-Werkzeuge und Suchbegriffe stehen jetzt in
-  `docs/RAG_DETAIL_INDEX.md`. Der vorherige Router ist vollstaendig und
+  `baum.md`. Der vorherige Router ist vollstaendig und
   zeilengleich in
   `docs/raw_md_archive/RAG_ROUTER_ARCHIV_2026-07-31.md` erhalten.
 
@@ -1038,7 +1066,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Release und Server bitgleich, Produktiv-DB unveraendert, Port 443 offen,
   authentifizierter HTTPS-Aufruf `200`.
 
-- VERSAND 2026-07-31, Stand bei Chatende (Detail: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`
+- VERSAND 2026-07-31, Stand bei Chatende (Detail: `docs/FINANCE_FELDLUECKEN.md`
   Abschnitt „Stand bei Chatende"): INDIEN IST RAUS - gesendet 09:56 an `RanVijay.Kumar@trafag.com`,
   Betreff von Ingo ergaenzt auf „... (Trafag India) -> Supplier Name", NICHT an `tasc.co.in`, damit
   ist die Fremddomain-Frage fuer diesen Versand erledigt. In Entwuerfen liegen sechs: DE, ES, UK, IT
@@ -1081,7 +1109,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   waeren aus gerundeten Prozenten abgeleitet und wuerden Scheingenauigkeit erzeugen); keine Bilder,
   nur Tabellen mit `bgcolor`, weil Outlook externe Bilder beim Empfaenger blockiert.
 - DOKU 2026-07-31, versandfertige Einzelmails je Standort (kein Code):
-  `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md`. Der Sammeltext aus
+  `docs/FINANCE_FELDLUECKEN.md`. Der Sammeltext aus
   `FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 6 ist in SIEBEN Einzelmails aufgeteilt,
   jede mit To/Subject/Anrede; Zahlen unveraendert (Messung 29.07.2026, 95'168 Zeilen). Aenderungen
   an Zahlen kuenftig ZUERST im Sammeltext, dann uebernehmen. UK-EMPFAENGER NACHGETRAGEN:
@@ -1101,7 +1129,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   im `RAG_ROUTER.md` als eigenes Thema und ueber Suchwoerter verlinkt. Anlass: Kontaktangaben lagen
   in DREI Dokumenten verstreut - Rollen in der Ticket-Beteiligtenliste `saptasks/zzprdat-kontext.md:189`,
   Domaenenzustaendigkeiten in `docs/INGO_TODOS_180_TAGE_2026-06-18.md:23-25`/`:159-166`, Adressen nur
-  in `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md:137`. Beim BLP-Vorfall 2026-07-30 war dadurch
+  in `docs/FINANCE_FELDLUECKEN.md`. Beim BLP-Vorfall 2026-07-30 war dadurch
   klar WER zustaendig ist, aber nicht wie er zu erreichen ist. Inhalt: Standortempfaenger (Abschnitt 1),
   interne Rollen (2), externe Partner (3), Eskalationspfad plus Paola-Doppelvorgang und
   `tasc.co.in`-Einschraenkung (4), Verwechslungsgefahren (5), offene Luecken (6).
@@ -1110,7 +1138,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Alex, Ramon) ist eine Adresse dokumentiert, und Andreas/Sonja/Alex/Ramon haben nicht einmal einen
   belegten Nachnamen. Neu festgehaltene Verwechslungsgefahr: ZWEI Marcos - Marco Di Menco (Etiketten/PP)
   vs. Marco Widmer (Einkauf, Autor `PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`).
-- DOKU 2026-07-30, Empfaenger fuer die Standort-Mail (kein Code): `docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md`
+- DOKU 2026-07-30, Empfaenger fuer die Standort-Mail (kein Code): `docs/FINANCE_FELDLUECKEN.md`
   hat einen neuen Abschnitt 5 `Empfaenger` (alter Abschnitt 5 Mailtext -> 6, Reproduzierbar -> 7).
   Anlass: In KEINEM `.md` des Repos stand vorher eine Mailadresse (Regex ueber alle Markdown-Dateien:
   null Treffer) - benannt war als einziger Standortkontakt Paola (TR IT), und zwar nur fuer das
@@ -1123,7 +1151,7 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
   Bewertungsthemas mit Zusage Ende August (B1-Go-Live 2026-08-03 + 2 Wochen Ferien) - die Bitte hier
   ist Stammdatenpflege und ein anderer Vorgang; getrennt verschicken, sonst kostet es den klaren
   Termin des Bewertungsthemas. Querverweis dazu jetzt auch in
-  `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md` Abschnitt 5d. (3) **`tasc.co.in` ist
+  `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 6. (3) **`tasc.co.in` ist
   keine Trafag-Domain** - zwei der drei indischen Adressen liegen bei einem externen Dienstleister.
   Der Mailtext selbst ist unkritisch, aber er enthaelt das Angebot "we can send the item list"
   (1'271 Artikelnummern des TRIN-Stamms); vor dem Versand einer solchen Liste an eine Fremddomain
@@ -1154,6 +1182,6 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 
 ## Einstieg / Router
 
-- Themenrouter (zuerst laden): `docs/RAG_ROUTER.md`.
+- Themenrouter (zuerst laden): `router.md`.
 - Fuehrender Kurzkontext: `docs/rag/PROJECT.md`.
-- Naechster Chat: `docs/RAG_ROUTER.md` -> diese Datei -> passende Themen-Kurzdatei aus `docs/rag/`.
+- Naechster Chat: `router.md` -> diese Datei -> passende Themen-Kurzdatei aus `docs/rag/`.

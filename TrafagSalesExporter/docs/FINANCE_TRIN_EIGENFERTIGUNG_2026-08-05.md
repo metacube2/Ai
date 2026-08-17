@@ -11,7 +11,7 @@ Live-Analysen auf Indiens SAP B1 vom 2026-08-05 11:13 und 11:20.
 
 ## 1. Warum die bisherige Bitte an Indien falsch adressiert war
 
-Bisheriger Stand (`docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3): Indien sollte
+Bisheriger Stand (`docs/FINANCE_FELDLUECKEN.md` Abschnitt 1): Indien sollte
 auf 1'271 Artikelnummern den *Preferred Vendor* (`OITM.CardCode`) nachpflegen.
 
 RanVijays Einwand: *„There are many items which are manufactured at TRIN locally. How do we
@@ -188,7 +188,7 @@ Alle drei Artikelklassen zusammen ergeben fuer TRIN:
 **Von den 6'236 heute maskierten TRIN-Zeilen werden rund 5'830 (93 %) allein durch das Lesen
 dieses Feldes klassifizierbar** — ohne dass Indien einen einzigen Artikel anfassen muss. Die
 Kostenbasis liegt bereits auf allen Zeilen vor (`StandardCost` aus `INV1.StockPrice`, Fuellgrad
-99.4 %, siehe `docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md`).
+99.4 %, siehe `docs/FINANCE_SUPPLIER.md`).
 
 ## 4a. Nebenbefund beim CM-Nachgraben: Innenumsatz ist gruppenweit nicht ausgeschlossen
 
@@ -372,7 +372,7 @@ Damit ist die Kostenlogik entscheidbar: **fuer `LRD`-Zeilen wird die Konzernkost
 bleibt die Kostenbasis offen — und **es wird NICHT auf den lokalen Wert zurueckgefallen**, weil
 das eine Marge auf dem IC-Preis ergaebe: plausibel aussehend und falsch, also schlechter als ein
 offenes „-". Derselbe Fehler ist fuer TRIT-Zeilen in
-`docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 7a beschrieben.
+`docs/FINANCE_SUPPLIER.md` Abschnitt 4 beschrieben.
 
 **Folge fuer den Export:** es sind **zwei** neue Felder zu lesen, nicht eines —
 `itm."U_Tasc_ST"` (Sales Type) und `itm."U_TASC_OMN"` (Trafag-Materialnummer). Beide kommen aus
@@ -385,7 +385,7 @@ Trafag-Materialnummer abbildet, koennte `U_TASC_OMN` auch dort greifen. Das ist 
 keine Messung — separat zu pruefen, nicht Teil dieses Themas.
 
 Andreas ist zu informieren (Gegenstueck zum Supplier-Regel-Entscheid aus
-`docs/FINANCE_SUPPLIER_LUECKE_ANALYSE_2026-07-28.md` Abschnitt 8); Entscheid in
+`docs/FINANCE_SUPPLIER.md` Abschnitt 7); Entscheid in
 `docs/FINANCE_ENTSCHEIDE.md` nachtragen.
 
 ## 7. Umsetzung im Export — UMGESETZT UND DEPLOYED (2026-08-05 15:48)
@@ -504,7 +504,7 @@ wegwirft. `431/431` Tests gruen (vorher `406`).
 
 ## 7c. Frueherer Umsetzungsplan (erledigt, zur Nachvollziehbarkeit)
 
-**Die B1-Query gehoert uns** (Vorrangregel 7 im `RAG_ROUTER.md`):
+**Die B1-Query gehoert uns** (Vorrangregel 3 in `router.md`):
 
 - `Services/HanaQueryService.cs`: **zwei** Felder in die Select-Liste — `itm."U_Tasc_ST"`
   (Sales Type) und `itm."U_TASC_OMN"` (Trafag-Materialnummer, siehe 6b). `OITM` ist als

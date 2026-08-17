@@ -59,6 +59,43 @@ darin stammt aber von uns. Zwei Regeln daraus:
 | ES / `TRSE`/`TRES` | Sage CSV `Spain_Sales*.csv` | ja, wenn Ordner mit Basis + Deltas | `SalesPriceValue`/`ImporteNeto`, REC/Credit negativ, EUR |
 | DE / `TRDE` | Alphaplan CSV-Paar oder `Alphaplan*.zip` mit `invoice_headers.csv` + `invoice_lines.csv` | ja, Full + `delta`-Unterordner/Delta-ZIP | `NettoPreisGesamt`, CreditNote/GS negativ, EUR |
 
+## Zwei Betriebsfallen, die Daten vernichten koennen
+
+**1. UK-Reimport nur OHNE Jahresfilter starten.** Der Ordner `UK_B1` enthaelt Dateien
+beider Jahre. `ReplaceForSiteAsync` loescht vorher **alle** Zeilen des Standorts, deshalb
+vernichtet ein Import mit Jahresvorgabe das jeweils andere Jahr:
+
+| `PreferredImportYear` | gelesene Dateien |
+| --- | --- |
+| **keins** (richtig) | `TRUK_2025.xlsx` **und** alle 2026er Dateien |
+| 2025 | nur `TRUK_2025.xlsx` — die 2026er Zeilen gehen verloren |
+| 2026 | alle 2026er **ohne** `TRUK_2025.xlsx` — 2025 geht verloren |
+
+Kontrolle nach dem Reimport: die UK-Zeilenzahl muss ueber der Summe beider Jahre liegen,
+nicht nur bei einem davon.
+
+**2. Legendenzeile im Template.** Die erste Datenzeile in `TRUK_2025.xlsx` ist eine
+Beschreibungszeile (`Tsc = "Subsidiary abbreviation / company identifier"`). Sie kam bei
+jedem Reimport zurueck, weil der Adapter keinen Filter hatte.
+`RemoveTemplateDescriptionRowsAsync` verwirft solche Zeilen jetzt vor der Deduplizierung
+und protokolliert „Legendenzeile verworfen". Erkannt wird am TSC-Feld: echte Werte sind
+kurze Codes ohne Leerzeichen, die Legende traegt dort einen ganzen Satz.
+
+**Bewusst nicht gegen `site.TSC` verglichen:** Der Spanien-Standort heisst in `Sites`
+`TRSE`, liefert in den Daten aber `TRES`. Ein Gleichheitstest wuerde dort saemtliche Zeilen
+verwerfen.
+
+## `Standard cost` und `Sales Price/Value` sind STUECKpreise
+
+Die Margenlogik rechnet `Menge x StandardCost`. Waere die Spalte eine Zeilensumme, laege
+die Marge um den Faktor Menge daneben. An 1'650 UK-Zeilen gegengeprueft: als Stueckpreis
+gelesen sind 1'643 Zeilen plausibel (Margen 12–55 %), als Zeilensumme nur 1'253
+(Margen 86–99 %).
+
+`Sales Price/Value` ist ebenfalls ein Stueckpreis; das UK-Mapping fuehrt ihn durch
+`=SageNetSales([Sales Price/Value], [Quantity], ...)`, und die Funktion rechnet
+`amount * quantity`. Der Zeilenumsatz ist also `Menge x Sales Price/Value`.
+
 ## Bedienreihenfolge
 
 1. Datei oder Delta im richtigen Ordner bereitstellen.
@@ -100,7 +137,7 @@ darin stammt aber von uns. Zwei Regeln daraus:
   aufgeloest. Blocker ist das fehlende Alphaplan-Schema fuer `ApDaten` (`candidate_objects.csv`
   im Repo-Root ist leer, `obj/candidate_objects.csv` ist Sage Spanien) — deshalb KEINE
   Tabellen-/Spaltennamen raten, sondern Schema-Auszug anfordern. Details und Mailstand:
-  `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt „Korrektur Deutschland, 2026-08-03".
+  `docs/FINANCE_FELDLUECKEN.md` Abschnitt 6.
 - Das alte Alphaplan-Excel-Mapping bleibt technisch vorhanden, ist aber nicht mehr der bevorzugte DE-Pfad. Produktiver DE-Pfad seit 2026-07-03: `Import/Finance/Deutschland/AlphaplanRaw`.
 
 ## Rohquellen Nur Bei Bedarf

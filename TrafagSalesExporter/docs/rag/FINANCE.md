@@ -36,7 +36,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - B1-Upgrade: Go-live ueber alle Tochtergesellschaften ist fuer 2026-08-03
   angekuendigt. Danach Importlaeufe FR/IT/US/IN, `StandardCost`-Fuellgrad und
   `EvalSystem` erneut pruefen; Details in
-  `docs/FINANCE_STANDARDKOSTEN_SITZUNG_ANDREAS_2026-07-27.md`.
+  `docs/FINANCE_STANDARDKOSTEN.md`.
 - TR IT: Fuer den ersten Schritt ist `INV1.StockPrice` als Kostenbasis
   freigegeben. Die Bewertung einer Umstellung auf Moving Average und die
   Cost-Run-Frage folgen laut Paola Ende August 2026.
@@ -58,11 +58,11 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `MBEW/GroupStandardCosts-1100`-Regel unter `Admin Bereich > Settings`. Ein
   expliziter Supplier gewinnt immer. Der MARC-Cache ist von den Kosten getrennt;
   ohne MBEW-Treffer werden keine Konzernkosten erfunden. Vollnachweis:
-  `docs/FINANCE_SUPPLIER_FALLBACK_UMSCHALTER_2026-08-11.md`.
+  `docs/FINANCE_SUPPLIER.md`.
 - Produktiv deployed am 2026-08-11: `SupplierFallbackMode=ChPlantMaster`,
   `66'049` MARC-1100-Materialien dauerhaft vor und nach App-Neustart bestaetigt;
   `63'550` MBEW-Schluessel vollstaendig enthalten. Deploynachweis:
-  `docs/DEPLOY_GESAMTSTAND_2026-08-11.md`.
+  `docs/DEPLOYMENT.md`.
 - Produktiv deployed am 2026-08-12 10:23: Andreas' Nachtrag, dass ein sicherer
   MARC-Nichttreffer die Standardkosten der lokalen Gesellschaft verwendet. Die
   Kategorie heisst bewusst `Lokal`, nicht `Extern`. Gegen die produktive Datenbank
@@ -70,7 +70,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   12'023 `Lokal`; 6'749 der lokalen Zeilen haben einen positiven Standardpreis,
   110 Zeilen ohne Materialschluessel bleiben `Lieferant unklar`. Voraussetzung ist
   `SupplierFallbackMode=ChPlantMaster`; im Alt-Modus MBEW greift die Regel nicht.
-  Detail: `docs/FINANCE_ANDREAS_BESCHLUSS_LOKALE_STANDARDKOSTEN_2026-08-11.md`.
+  Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
 
 ## Offene Fachpunkte
 
@@ -88,7 +88,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - Budget-CHF: Finance muss Kurse/Freigabe, Pflegeprozess, Spaltenumfang,
   Fehlkursverhalten, Rundung und Anzeigeort entscheiden.
 - CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` bleibt Voraussetzung;
-  Spezifikation: `docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`.
+  Spezifikation: `docs/FINANCE_JOURNAL.md`.
 
 ## Management-Analyse-Reiter
 
@@ -163,5 +163,5 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - Isolierter Kurs-Workflow: `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`
 - IT Detail: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`
 - UK Korrektur: `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md`
-- ES Detail: `SAGE_SPAIN_EXPORT_2026-05-05.md`
+- ES Detail: `docs/STANDORT_ES_SAGE.md`
 - alter Finance-Handoff: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`

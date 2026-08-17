@@ -220,8 +220,8 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
   Ø-Stückpreis mit YoY-Trend.
 - **REQ-PUR-10 (offen)** Marco-Anforderungen (Aufrisse Zeit/Produktgruppe/Materialgruppe/Kreditor/
   Region/Materialnummer, Lager/Kosten, Lieferantenperformance) siehe
-  `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md` und Vorbereitung in
-  `docs/PURCHASING_DASHBOARD_VORBEREITUNG_INGO_2026-07-09.md`. Genutzte Zusatzquellen (MARC/MBEW/
+  `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` und Vorbereitung in
+  `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`. Genutzte Zusatzquellen (MARC/MBEW/
   EKBE/LFA1-Adresse/QM) sind großteils im OData-Service verfügbar; echte Luecken: T023T/T024D-Texte,
   RESB. Property-Rollout auf travp762: `Bstyp`/`Bsart`/`Elikz` noch nachzuziehen (`Ktmng` vorhanden).
 
@@ -280,9 +280,9 @@ als geführte Cockpits, Excel-Nachweise und Analyseansichten bereit.
   Kurs-Workflow `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md`, Gruppenmarge `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`
 - Produktmapping: `docs/rag/PRODUCT_MAPPING.md`, `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md`
 - Manual Import: `docs/rag/MANUAL_IMPORT.md`
-- HR-KPI: `docs/rag/HR_KPI.md`, `docs/HR_KPI_NACHDOKU_2026-05-13.md`
+- HR-KPI: `docs/rag/HR_KPI.md`, `docs/HR_KPI.md`
 - Einkauf: `docs/PURCHASING_DASHBOARD_2026-06-05.md` (+ Umsetzungsplan/Vorbereitung 2026-07-09)
-- Deployment/IIS: `docs/rag/DEPLOYMENT.md`, `docs/DEPLOYMENT_IIS_HANDOFF_2026-05-19.md`
+- Deployment/IIS: `docs/rag/DEPLOYMENT.md`, `docs/DEPLOYMENT.md`
 - Admin/Startseite: `docs/rag/ADMIN.md`, `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md`
 
 ---

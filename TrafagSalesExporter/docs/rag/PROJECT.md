@@ -46,4 +46,4 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 - kanonische Detailhistorie: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`
 - exakte Originaldateien zur Wiederherstellung: `docs/raw_md_archive/original_history_raws.zip`
-- Dokumentstatus: `docs/MD_DOKUMENTENSTATUS_2026-05-20.md`
+- Dokumentstatus: `baum.md`

@@ -341,7 +341,7 @@ beziffert: `StandardCostVariable` und `StandardCostFixed` existieren in `SalesRe
 Audit-Export, sind aber bei **allen neun Gesellschaften zu 0 % gefüllt**, und **kein Importer
 schreibt sie** – sie werden nur aus dem Audit-CSV zurückgelesen
 (`Services/ExportAuditCsvService.cs:349`, Befund 2026-07-30, siehe
-`docs/FINANCE_FELDLUECKEN_STANDORTE_2026-07-30.md` Abschnitt 2). Eine Fix-/Variabel-Sicht im
+`docs/FINANCE_FELDLUECKEN.md` Abschnitt 2). Eine Fix-/Variabel-Sicht im
 Dashboard wäre also nicht "Feld anzeigen", sondern erst eine Ladestrecke bauen.
 
 ### 8.7 Was offen bleibt

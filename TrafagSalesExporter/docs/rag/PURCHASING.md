@@ -106,10 +106,10 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 ## Rohquellen Nur Bei Bedarf
 
 - Hauptdoku: `docs/PURCHASING_DASHBOARD_2026-06-05.md`
-- Umsetzungsplan: `docs/PURCHASING_DASHBOARD_UMSETZUNGSPLAN_MARCO_2026-07-09.md`
-- Formel-Korrekturen: `docs/PURCHASING_DASHBOARD_KORREKTUREN_2026-07-06.md`
-- Marco-Review: `docs/PURCHASING_DASHBOARD_REVIEW_MARCO_2026-07-10.md`
-- Wuensche Einkaufssitzung: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-23.md`
-- Nachfolgesitzung 2026-07-30: `docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md`
+- Umsetzungsplan: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
+- Formel-Korrekturen: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
+- Marco-Review: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
+- Wuensche Einkaufssitzung: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
+- Nachfolgesitzung 2026-07-30: `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md`
 - Produktgruppen-/ABC-XYZ-Entscheid 2026-08-06:
   `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md`
