@@ -42,6 +42,35 @@ Default source:
 - DateFilter InvoiceDate uses CabeceraAlbaranCliente.FechaFactura
 - DateFilter LineRegistrationDate uses LineasAlbaranCliente.FechaRegistro, with fallback to FechaFactura
 - Sales value: LineasAlbaranCliente.ImporteNeto
+- Posting date: dbo.FacturasTB.FechaAsiento, joined per invoice, exported as PostingDate
+- Posting document: dbo.FacturasTB.Asiento, exported as PostingDocument
+
+
+Posting date (new columns PostingDate and PostingDocument)
+==========================================================
+
+Added 2026-08-17 for issue ISS-004.2. Until then Spain was the only site without a
+posting date, so every Spanish row fell back to the invoice date for the fiscal year.
+
+The delivery note header and lines do not carry a posting date. It lives in
+dbo.FacturasTB as FechaAsiento, together with the posting document number Asiento.
+The lookup uses OUTER APPLY with TOP 1 on purpose, not a plain JOIN: some invoice keys
+appear more than once in FacturasTB, and a JOIN would multiply the sales lines and
+inflate the Spanish revenue. OUTER APPLY returns at most one row per sales line, and
+rows without a posting stay in the export with an empty PostingDate.
+
+The join key is CodigoEmpresa, Ejercicio, Serie, Factura against the invoice fields of
+CabeceraAlbaranCliente. It is a reasoned assumption, not yet verified against the live
+Spanish database. Please check on first run:
+
+1. How many exported rows have an empty PostingDate.
+2. Whether PostingDate and InvoiceDate differ, and by how much.
+3. How credit notes behave (SerieFactura = 'REC' or StatusAbono <> 0).
+4. That the exported row count did NOT grow compared with the previous run. A higher
+   count means the lookup returned more than one row and must be corrected.
+
+Background: docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md in the BiDashboard repository.
+
 
 If the SQL instance or database name differs:
 

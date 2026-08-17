@@ -1,6 +1,6 @@
 # Last Change
 
-Stand: 2026-08-14
+Stand: 2026-08-17
 
 WARNUNG fuer neue Sitzungen: `docs/FINANCE_FELDLUECKEN_MAILS_2026-07-31.md` Abschnitt 3 und
 `docs/mails/Build-RanVijayFollowup.ps1` bitten Indien um Pflege von 1'271 Artikeln. Das ist
@@ -8,6 +8,44 @@ seit 2026-08-05 ueberholt und darf NICHT versendet werden — gueltig ist
 `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md`.
 
 Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
+
+## Spanien liefert das Buchungsdatum 2026-08-17 - Skript fertig, Live-Pruefung offen
+
+- Die spanische Export-SQL selektiert neu `f.FechaAsiento AS PostingDate` und
+  `f.Asiento AS PostingDocument` aus `dbo.FacturasTB`. Bis dahin war Spanien der
+  einzige Standort ohne Buchungsdatum, alle TRES-Zeilen fielen auf das
+  Rechnungsdatum zurueck.
+- Geaendert an allen drei Stellen, damit Voll- und Range-Export nicht
+  auseinanderlaufen: `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1`,
+  `.../Run-SpainRangeExportAndUpload-AllInOne.ps1` und die byte-identische
+  Spiegelung `scripts/Export-SageSpainSalesCsv.ps1`.
+- **Bewusst `OUTER APPLY` mit `TOP 1`, kein `JOIN`.** Am Auszug
+  `SageSpainExportPackage/v2/Sage.dbo.FacturasTB.csv` nachgezaehlt: 3'788 Zeilen
+  auf 3'642 Rechnungsschluessel, 70 Schluessel mehrfach, davon 6 mit
+  unterschiedlichem `FechaAsiento`. Ein `JOIN` haette fuer diese Rechnungen jede
+  Verkaufszeile vervielfacht und den spanischen Umsatz still erhoeht. `OUTER`
+  statt `CROSS`, damit Zeilen ohne Buchung im Export bleiben.
+- BELEGT IST NUR DIE SYNTAX: alle vier erzeugten SQL-Varianten, beide Skripte mal
+  `DateFilter InvoiceDate` und `LineRegistrationDate`, wurden mit
+  `Microsoft.SqlServer.TransactSql.ScriptDom` als gueltiges T-SQL geparst;
+  Gegenprobe mit absichtlich kaputtem SQL wird abgelehnt. Alle drei PowerShell-
+  Dateien parsen fehlerfrei. Trefferquote, Schluesselrichtigkeit und Gutschriften
+  sind NICHT belegt, dafuer fehlt der Lauf gegen die spanische Datenbank.
+- Der Join-Schluessel `CodigoEmpresa`, `Ejercicio`, `Serie`, `Factura` ist eine
+  begruendete ANNAHME und im Skript sowie im Paket-README so gekennzeichnet. Beim
+  ersten Lauf in Spanien pruefen: leere `PostingDate`, Abstand zum Rechnungsdatum,
+  Gutschriften (`SerieFactura = 'REC'`, `StatusAbono <> 0`) und vor allem, dass die
+  ZEILENZAHL gegenueber dem Vorlauf NICHT gestiegen ist.
+- NEBENBEFUND: `SageSpainFinalExportPackage.zip` war seit dem rclone-Fix veraltet,
+  ihr fehlte `Resolve-RcloneExecutable`. Neu gebaut, `10'087` auf `13'005` Bytes,
+  alle fuenf enthaltenen Dateien nachgeprueft byte-identisch mit dem Ordner. Wer
+  bisher aus der Zip installiert hat, hatte den rclone-Fix nicht.
+- Danach in der Anwendung noetig: Spanien haengt als `MANUAL_EXCEL`-Standort an
+  SharePoint und hat KEINE fest verdrahtete Spaltenzuordnung im Seed, anders als
+  UK und DE. Die Spalte `PostingDate` muss in den Einstellungen beim Standort
+  Spanien zugeordnet werden, danach Reimport und Jahresverteilung TRES neu messen.
+- Kein Anwendungscode, keine Datenbank, kein Deploy, kein Testlauf noetig.
+- Details: `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 8. Issue ISS-004.2.
 
 ## Marktsegmente mit Jahr und 3D-Analyse 2026-08-14 - produktiv deployed 21:02
 

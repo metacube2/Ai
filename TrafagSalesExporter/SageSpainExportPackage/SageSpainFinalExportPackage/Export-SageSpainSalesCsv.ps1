@@ -184,6 +184,8 @@ SELECT
     c.FechaFactura AS InvoiceDate,
     c.FechaAlbaran AS DeliveryDate,
     l.FechaRegistro AS LineRegistrationDate,
+    f.FechaAsiento AS PostingDate,
+    f.Asiento AS PostingDocument,
     c.EjercicioPedido AS OrderYear,
     c.SeriePedido AS OrderSeries,
     c.NumeroPedido AS OrderNumber,
@@ -205,6 +207,34 @@ JOIN dbo.LineasAlbaranCliente l
  AND l.EjercicioAlbaran = c.EjercicioAlbaran
  AND l.SerieAlbaran = c.SerieAlbaran
  AND l.NumeroAlbaran = c.NumeroAlbaran
+-- Buchungsdatum (PostingDate). Bis hierher liest der Export nur Lieferscheinkopf und
+-- Lieferscheinposition, die kennen kein Buchungsdatum. Es liegt in dbo.FacturasTB als
+-- FechaAsiento, dazu die Buchungsnummer Asiento.
+--
+-- Bewusst OUTER APPLY mit TOP 1 statt eines gewoehnlichen JOIN: im Schemaauszug vom
+-- 05.05.2026 verteilen sich 3'788 FacturasTB-Zeilen auf 3'642 Rechnungsschluessel,
+-- 70 Schluessel kommen also mehrfach vor, und bei 6 davon steht in den Doppelzeilen ein
+-- unterschiedliches FechaAsiento. Ein JOIN wuerde fuer diese Rechnungen jede
+-- Verkaufszeile vervielfachen und damit den spanischen Umsatz erhoehen. OUTER APPLY
+-- liefert garantiert hoechstens eine Zeile, das ORDER BY macht die Auswahl bei den
+-- Mehrfachtreffern reproduzierbar statt zufaellig. OUTER und nicht CROSS, damit Zeilen
+-- ohne Buchung erhalten bleiben statt still aus dem Export zu fallen.
+--
+-- ACHTUNG, der Schluessel ist eine begruendete ANNAHME und noch nicht live geprueft:
+-- der Schemaauszug ist bei 80 Objekten je Datenbank abgeschnitten und der echte
+-- Rechnungskopf CabeceraFacturaCliente fehlt darin ganz. Vor dem produktiven Einsatz auf
+-- dem spanischen Server pruefen, wie oft PostingDate leer bleibt und wie sich
+-- Gutschriften verhalten (SerieFactura = 'REC' beziehungsweise StatusAbono <> 0).
+-- Hintergrund: docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md, Issue ISS-004.2.
+OUTER APPLY (
+    SELECT TOP 1 t.FechaAsiento, t.Asiento
+    FROM dbo.FacturasTB t
+    WHERE t.CodigoEmpresa = c.CodigoEmpresa
+      AND t.Ejercicio     = c.EjercicioFactura
+      AND t.Serie         = c.SerieFactura
+      AND t.Factura       = c.NumeroFactura
+    ORDER BY t.FechaAsiento, t.Asiento
+) f
 WHERE $datePredicate
 ORDER BY
     c.FechaFactura,

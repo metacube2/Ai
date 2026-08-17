@@ -136,3 +136,48 @@ foreach ($t in ($all | Select-Object -ExpandProperty TSC -Unique | Sort-Object))
     ($g | Where-Object { -not $_.InvoiceDate }).Count
 }
 ```
+
+## 8. Nachtrag 2026-08-17: Feld ist im Exportskript eingebaut
+
+Abschnitt 4 sagt „keine Query bauen, bevor das Schema live geprueft ist". Diese Regel gilt
+weiter fuer den produktiven Einsatz, der Code steht ihr aber nicht entgegen: das Feld ist
+jetzt eingebaut, damit Ingo es in einer RDP-Sitzung auf dem spanischen Sage-Server
+**messen** kann. Genau diese Messung fehlt bis heute.
+
+Geaendert wurden beide Fundstellen der Query, wie in Abschnitt 3 gefordert, dazu die
+byte-identische Spiegelung unter `scripts/`:
+
+- `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1`
+- `SageSpainExportPackage/SageSpainFinalExportPackage/Run-SpainRangeExportAndUpload-AllInOne.ps1`
+- `scripts/Export-SageSpainSalesCsv.ps1`
+
+Neu im Select sind `f.FechaAsiento AS PostingDate` und `f.Asiento AS PostingDocument`,
+geliefert von einem `OUTER APPLY` mit `TOP 1` auf `dbo.FacturasTB` ueber
+`CodigoEmpresa`, `Ejercicio`, `Serie`, `Factura`.
+
+**Warum kein gewoehnlicher `JOIN`.** Am Auszug `SageSpainExportPackage/v2/Sage.dbo.FacturasTB.csv`
+nachgezaehlt: 3'788 Zeilen verteilen sich auf 3'642 Rechnungsschluessel, 70 Schluessel
+kommen mehrfach vor, und bei 6 davon steht in den Doppelzeilen ein unterschiedliches
+`FechaAsiento`. Ein `JOIN` haette fuer diese Rechnungen jede Verkaufszeile vervielfacht
+und den spanischen Umsatz still erhoeht. `FechaAsiento` ist im Auszug bei allen 3'788
+Zeilen gefuellt.
+
+**Was damit belegt ist und was nicht.** Belegt ist nur die Syntax: alle vier erzeugten
+SQL-Varianten, also beide Skripte mal `DateFilter InvoiceDate` und
+`LineRegistrationDate`, wurden mit `Microsoft.SqlServer.TransactSql.ScriptDom` als
+gueltiges T-SQL geparst, und eine Gegenprobe mit absichtlich kaputtem SQL wird vom selben
+Parser abgelehnt. **Nicht** belegt sind Trefferquote, Schluesselrichtigkeit und das
+Verhalten bei Gutschriften — dafuer braucht es die Sitzung in Spanien. Der Schluessel
+bleibt eine begruendete Annahme und ist im Skript und im README des Pakets als solche
+gekennzeichnet.
+
+**Beim ersten Lauf in Spanien pruefen:** wie viele Zeilen leeres `PostingDate` haben, wie
+weit Buchungs- und Rechnungsdatum auseinanderliegen, wie sich Gutschriften verhalten
+(`SerieFactura = 'REC'` beziehungsweise `StatusAbono <> 0`), und vor allem, dass die
+**Zeilenzahl gegenueber dem Vorlauf nicht gestiegen** ist. Eine hoehere Zeilenzahl waere
+der Beweis, dass die Zuordnung doch mehrfach trifft.
+
+**Danach in der Anwendung:** Spanien haengt als `MANUAL_EXCEL`-Standort an SharePoint und
+hat, anders als UK und Deutschland, keine fest verdrahtete Spaltenzuordnung im Seed. Die
+neue Spalte `PostingDate` muss deshalb in den Einstellungen beim Standort Spanien
+zugeordnet werden, danach Reimport und Jahresverteilung TRES neu messen.

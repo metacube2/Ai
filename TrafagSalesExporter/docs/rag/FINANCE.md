@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-08-12
+Stand: 2026-08-17
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -12,6 +12,17 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- ES BUCHUNGSDATUM 2026-08-17: die spanische Export-SQL selektiert jetzt
+  `FacturasTB.FechaAsiento` als `PostingDate` und `FacturasTB.Asiento` als
+  `PostingDocument`, per `OUTER APPLY` mit `TOP 1` statt `JOIN` (70 von 3'642
+  Rechnungsschluesseln haben mehrere Buchungszeilen, ein `JOIN` haette den
+  spanischen Umsatz vervielfacht). Belegt ist bisher NUR die Syntax, geprueft mit
+  `ScriptDom` inklusive Gegenprobe. Trefferquote, Schluesselrichtigkeit und
+  Gutschriften sind offen, dafuer braucht es den Lauf auf dem spanischen Server.
+  Bis dahin bleiben alle TRES-Zeilen ohne Buchungsdatum und fallen auf das
+  Rechnungsdatum zurueck. Danach ist zusaetzlich die Spaltenzuordnung `PostingDate`
+  beim Standort Spanien noetig. Details:
+  `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 8.
 - UK 2025 ABGENOMMEN 2026-08-11: `3'529'861.80 GBP` = 99.7 % des Finance-Solls
   `3'538'972`, Marge +33.8 % statt −502.7 %, `1'867` Zeilen. Der bis dahin
   gefuehrte Wert `394'439` war ein Stueckpreis-statt-Zeilenwert-Fehler aus dem

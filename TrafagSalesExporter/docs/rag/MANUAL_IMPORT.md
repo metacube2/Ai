@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-07-13
+Stand: 2026-08-17
 
 ## Kurzstand
 
@@ -17,6 +17,11 @@ Stand: 2026-07-13
   jedes Datum" beschreibt nur diese Teilmenge, nicht das Problem. Ursache ist unsere eigene
   Query (s. Abschnitt „Skripthoheit"). Details, Kandidatenquelle und offene Fachentscheide:
   `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`.
+- ES BUCHUNGSDATUM, STAND 2026-08-17: das Feld ist im Exportskript EINGEBAUT, aber noch NICHT
+  in Spanien gelaufen. Bis der Standortexport dort neu laeuft und die Spalte `PostingDate` beim
+  Standort Spanien zugeordnet ist, bleibt der Befund oben unveraendert gueltig. Die Zuordnung
+  ist bei Spanien NICHT im Seed verdrahtet, anders als bei UK und DE — sie wird in den
+  Einstellungen gepflegt. Der Join-Schluessel ist bis zur Messung eine Annahme.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.
 - DE/Alphaplan liest `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen. Seit 2026-07-03 werden zusaetzlich `Alphaplan*.zip` im SharePoint-Ordner automatisch entpackt und wie CSV-Paare ausgewertet.
 - DE-Dedupe: primaer `BelegePositionenID` als `SourceLineId`, Fallback Invoice/Position/Material; Delta gewinnt gegen Vollbestand.
@@ -32,7 +37,7 @@ nicht den Standort anschreiben — sonst geht die Bitte an die falsche Stelle.
 | Standort | Skript (in diesem Repo) | liest | Konsequenz |
 | --- | --- | --- | --- |
 | DE | `AlphaplanExportPackage/scripte/alphaplanExport.ps1` Z. 143-202, identisch in `alphaplandeltaexport.ps1` | nur `dbo.Belege` + `dbo.BelegePositionen` | Supplier, Kundenname/-land, saubere Bezeichnung fehlen, weil die Query sie nicht liest; `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
-| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Z. 184-186, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-235 | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente` | kein Buchungsdatum selektiert -> `PostingDate` auf allen 5'504 Zeilen leer |
+| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Z. 184-188 und Z. 229-237, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-237 und Z. 278-286, gespiegelt in `scripts/Export-SageSpainSalesCsv.ps1` | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente`, seit 2026-08-17 zusaetzlich `dbo.FacturasTB` per `OUTER APPLY` | Buchungsdatum ist seit 2026-08-17 als `PostingDate` selektiert, aber noch nicht in Spanien gelaufen; bis dahin bleibt `PostingDate` auf allen TRES-Zeilen leer |
 
 Die Skripte laufen auf den Standortservern (DE `localhost\SQL2012`/`ApDaten`), die Query
 darin stammt aber von uns. Zwei Regeln daraus:
@@ -41,6 +46,10 @@ darin stammt aber von uns. Zwei Regeln daraus:
 - **Keine Tabellen-/Spaltennamen raten.** Fuer `ApDaten` existiert keine Schemaliste, der
   Sage-Auszug `obj/candidate_objects.csv` ist bei 80 Objekten abgeschnitten und enthaelt
   `CabeceraFacturaCliente` nicht. Erst Schema live klaeren, dann Query erweitern.
+- Die ES-Erweiterung um `PostingDate` vom 2026-08-17 ist KEINE Ausnahme von dieser Regel: der
+  Schluessel steht als offen gekennzeichnete Annahme im Skript, damit er in Spanien gemessen
+  werden kann. Erst die Messung dort macht ihn zur Tatsache. Vor allem die Zeilenzahl gegen den
+  Vorlauf pruefen — steigt sie, trifft die Zuordnung mehrfach und der Umsatz waere zu hoch.
 
 ## Laender
 
