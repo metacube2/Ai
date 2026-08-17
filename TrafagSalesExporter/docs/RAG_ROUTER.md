@@ -1,6 +1,6 @@
 # RAG Router
 
-Stand: 2026-08-14
+Stand: 2026-08-17
 
 Zweck: kurzer Einstieg fuer die Kontextauswahl. Nur die zum Thema genannten
 Kurzdateien laden; Detailquellen erst bei Bedarf ueber
@@ -65,7 +65,7 @@ Kurzdateien laden; Detailquellen erst bei Bedarf ueber
 | **Stimmt eine Finance-Anzeige? Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen zentrales Excel** | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Manual Import UK/ES/DE | `docs/rag/MANUAL_IMPORT.md` |
 | **Export-SQL DE/ES gehoert UNS** (Feld fehlt = Query liest es nicht) | `docs/rag/MANUAL_IMPORT.md` Abschnitt „Skripthoheit" |
-| Spanien Buchungsdatum/PostingDate | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` |
+| **Spanien Buchungsdatum/PostingDate** (seit 2026-08-17 live verifiziert: Schluessel korrekt, Ursache war Buchungsverzug ~2-3 Wochen) | `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 9 |
 | **Indien: Sales Type, Eigenfertigung, Supplier/Preferred Vendor TRIN** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` |
 | **Abfrage auf einem Standortsystem, das nur der Server erreicht** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 5, Skript `docs/analyse/Run-ServerAnalysis.ps1` |
 | **Innenumsatz / Konzerngesellschaft als Kunde / Doppelzaehlung** | `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 4a (offene Frage an Andreas) |

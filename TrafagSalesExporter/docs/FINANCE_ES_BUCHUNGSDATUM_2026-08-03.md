@@ -181,3 +181,66 @@ der Beweis, dass die Zuordnung doch mehrfach trifft.
 hat, anders als UK und Deutschland, keine fest verdrahtete Spaltenzuordnung im Seed. Die
 neue Spalte `PostingDate` muss deshalb in den Einstellungen beim Standort Spanien
 zugeordnet werden, danach Reimport und Jahresverteilung TRES neu messen.
+
+## 9. Nachtrag 2026-08-17: Live-Pruefung bestaetigt den Schluessel, Ursache war Buchungsverzug
+
+Live mit Ingo per RDP auf dem spanischen Sage-Server geprueft, mit einem neuen read-only
+Diagnosewerkzeug: `SageSpainExportPackage/SageSpainFinalExportPackage/Analyze-SpainPostingDateKey.ps1`.
+
+**Erster Testlauf, Zeitfenster 10.-13.08.2026 (Standardfenster damals, letzte 7 Tage):**
+`PostingDate` bei allen 58 exportierten Zeilen leer, 0 von 22 Rechnungsschluesseln trafen
+in `FacturasTB`.
+
+**Ursache war NICHT der Join-Schluessel, sondern Buchungsverzug.** Eine direkte Suche
+gegen `FacturasTB` ueber `CodigoEmpresa` + `FechaFactura` (unabhaengig vom Schluessel aus
+Abschnitt 8) fand fuer keine der 10 Beispielrechnungen vom 10.-13.08. irgendeine Zeile —
+diese Rechnungen waren zum Testzeitpunkt schlicht noch nicht gebucht. Das spaeteste
+tatsaechlich gebuchte `FechaFactura` in `FacturasTB` war `2026-07-30`.
+
+**Zweiter Test auf einem bereits gebuchten Fenster (23.-30.07.2026): 53 von 53
+Rechnungsschluesseln treffen (100%).** Der Schluessel `CodigoEmpresa`/`Ejercicio`/
+`Serie`/`Factura` aus Abschnitt 8 ist damit als korrekt bestaetigt, sobald der verglichene
+Zeitraum tatsaechlich verbucht ist.
+
+**Nebenbefund, der die erste Stichprobe irregefuehrt hatte:** `FacturasTB` fuehrt zwei
+Bewegungstypen ueber `TipoIngreso`. Nur `TipoIngreso = 2` (3'540 Zeilen) fuehrt `Serie`
+fast durchgehend (3'539 von 3'540 Zeilen gefuellt) — das sind die echten Verkaufsrechnungen.
+`TipoIngreso = 1` (3'917 Zeilen) hat `Serie` fast nie gefuellt und `Factura` traegt dort
+grosse, fortlaufende interne Nummern statt der Rechnungsnummer. Eine ungefilterte
+Stichprobe der neuesten `FacturasTB`-Zeilen nach `FechaAsiento` zeigt bevorzugt diesen
+zweiten Typ und sieht dadurch faelschlich nach einem falschen Schluessel aus.
+
+**Bug im Ausfuehrungsskript gefunden und behoben, unabhaengig vom Buchungsdatum-Thema.**
+`Resolve-RcloneExecutable` in `Run-SpainRangeExportAndUpload-AllInOne.ps1` nutzte
+`Split-Path -Parent $MyInvocation.MyCommand.Path` INNERHALB einer Funktion. Dieser Wert
+ist bei einem Funktionsaufruf in PowerShell zuverlaessig `$null`, nur auf Skript-Top-Level
+ist er gefuellt. Fehlermeldung beim ersten echten Lauf: "No se puede enlazar el argumento
+al parametro 'Path' porque es nulo." Fix: `$PSScriptRoot` statt `$MyInvocation.MyCommand.Path`,
+das liefert den Skriptordner zuverlaessig auch innerhalb von Funktionen. Der Bug bestand
+bereits in der Vor-Version vom 2026-08-11 (rclone-Fix), wurde aber vorher nie produktiv
+ausgefuehrt, nur syntaktisch geprueft — deshalb ist er erst jetzt aufgefallen.
+
+**Zeitfenster von 7 auf 35 Tage erweitert** in `Run-SpainRangeExportAndUpload-AllInOne.ps1`
+und im Paket-README. Bei einem Buchungsverzug von rund 2-3 Wochen fiel eine Rechnung mit
+dem alten 7-Tage-Fenster aus dem taeglichen Delta-Export heraus, bevor sie ueberhaupt ein
+`PostingDate` haben konnte, und blieb dadurch dauerhaft leer. Laut `docs/rag/MANUAL_IMPORT.md`
+dedupliziert die App Spanien-Zeilen ueber `SourceLineId`, die neuere Delta-Zeile gewinnt —
+ein breiteres, ueberlappendes Fenster erzeugt deshalb keine Duplikate, es aktualisiert nur
+still die alten, noch unverbuchten Zeilen sobald sie gebucht wurden.
+
+**Einmaliger Nachtrag fuer die Vergangenheit:** Range-Export Januar bis Mai 2026 lokal
+erzeugt (`Export-SageSpainSalesCsv.ps1 -ExportMode Range -FromDate 2026-01-01 -ToDate 2026-06-01`),
+`1'571` Zeilen, `1'461'263.57 EUR`, `PostingDate` bei `100%` der Zeilen gefuellt und plausibel
+(`PostingDate` = `InvoiceDate` bei den geprueften Beispielen). Per `rclone copy` nach
+`Import/Finance/Spanien` hochgeladen.
+
+**Weitergabe an Spanien:** Mailtext an Santi Gomez (`Santi.Gomez@trafag.es`, siehe
+`docs/ANSPRECHPARTNER.md`) vorbereitet, NICHT von Claude versendet. Er soll die alte
+`-7`-Tage-Version von `Run-SpainRangeExportAndUpload-AllInOne.ps1` auf dem Server durch die
+neue `-35`-Tage-Version mit `PostingDate`/`PostingDocument` und dem `$PSScriptRoot`-Fix
+ersetzen.
+
+**Weiterhin offen:** Santi muss die Datei serverseitig ersetzen. Danach unveraendert wie in
+Abschnitt 8 beschrieben: die `PostingDate`-Spaltenzuordnung im Seed fuer Spanien ist NICHT
+verdrahtet, muss in den Einstellungen manuell gesetzt werden, danach Reimport und
+Jahresverteilung TRES neu messen.

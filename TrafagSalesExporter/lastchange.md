@@ -47,6 +47,48 @@ Diese Datei ist fuer tokenarme RAG-Nutzung komprimiert.
 - Kein Anwendungscode, keine Datenbank, kein Deploy, kein Testlauf noetig.
 - Details: `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 8. Issue ISS-004.2.
 
+### Nachtrag 2026-08-17: Live-Pruefung in Spanien abgeschlossen, Schluessel bestaetigt
+
+- Mit Ingo per RDP auf dem spanischen Sage-Server live geprueft (neues,
+  read-only Diagnosewerkzeug `SageSpainExportPackage/SageSpainFinalExportPackage/Analyze-SpainPostingDateKey.ps1`).
+- **Erster Testlauf (10.-13.08.):** `PostingDate` bei allen 58 Zeilen leer.
+  Ursache war NICHT der Join-Schluessel, sondern Buchungsverzug: das letzte
+  tatsaechlich gebuchte `FechaFactura` in `FacturasTB` war `2026-07-30`, die
+  Testwoche war schlicht noch nicht gebucht.
+- **Zweiter Test auf einem bereits gebuchten Fenster (23.-30.07.):**
+  `53` von `53` Rechnungsschluesseln treffen (`100%`). Der Schluessel
+  `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura` ist damit bestaetigt richtig.
+- `FacturasTB` enthaelt zwei Bewegungstypen (`TipoIngreso`). Nur `TipoIngreso = 2`
+  fuehrt `Serie` (3'539 von 3'540 Zeilen gefuellt); `TipoIngreso = 1` fast nie.
+  Eine ungefilterte Stichprobe nach `TipoMov`/`TipoIngreso` haette faelschlich
+  nach einem falschen Schluessel aussehen lassen.
+- **Bug im Skript selbst gefunden und behoben:** `Resolve-RcloneExecutable` in
+  `Run-SpainRangeExportAndUpload-AllInOne.ps1` nutzte
+  `Split-Path -Parent $MyInvocation.MyCommand.Path` INNERHALB einer Funktion —
+  dort ist dieser Wert in PowerShell zuverlaessig `$null`. Fix: `$PSScriptRoot`,
+  das auch innerhalb von Funktionen den Skriptordner liefert. Der Fehler bestand
+  bereits in der Vor-Version, wurde vorher nie produktiv ausgefuehrt.
+- **Zeitfenster von 7 auf 35 Tage erweitert** (`Run-SpainRangeExportAndUpload-AllInOne.ps1`
+  und README): bei ~2-3 Wochen Buchungsverzug fiel eine Rechnung sonst aus dem
+  taeglichen Delta-Fenster, bevor sie ein `PostingDate` bekam, und blieb dauerhaft
+  leer. Laut `docs/rag/MANUAL_IMPORT.md` dedupliziert die App Spanien-Zeilen ueber
+  `SourceLineId`, die neuere Delta-Zeile gewinnt — ein breiteres, ueberlappendes
+  Fenster erzeugt also KEINE Duplikate.
+- **Einmaliger Nachtrag fuer die Vergangenheit:** Range-Export Januar bis Mai 2026
+  lokal erzeugt (`1'571` Zeilen, `1'461'263.57 EUR`), `PostingDate` bei `100%`
+  der Zeilen gefuellt, per `rclone copy` nach `Import/Finance/Spanien`
+  hochgeladen.
+- Mailtext an Santi Gomez (`Santi.Gomez@trafag.es`, siehe `docs/ANSPRECHPARTNER.md`)
+  vorbereitet, NICHT von Claude versendet: er soll die alte `-7`-Tage-Version von
+  `Run-SpainRangeExportAndUpload-AllInOne.ps1` auf dem Server durch die neue
+  `-35`-Tage-Version mit `PostingDate`/`PostingDocument` und dem `$PSScriptRoot`-Fix
+  ersetzen.
+- Offen: Santi muss die Datei serverseitig ersetzen. Danach weiterhin noetig wie
+  in Abschnitt 8 beschrieben: `PostingDate`-Spaltenzuordnung im Seed fuer Spanien
+  ist NICHT verdrahtet, muss in den Einstellungen manuell gesetzt werden, danach
+  Reimport und Jahresverteilung TRES neu messen.
+- Kein Anwendungscode, keine Datenbank, kein Deploy, kein Testlauf noetig.
+
 ## Marktsegmente mit Jahr und 3D-Analyse 2026-08-14 - produktiv deployed 21:02
 
 - Die Seite `/marktsegmente` hat oben einen Jahresfilter, der auf Ergebnissicht,

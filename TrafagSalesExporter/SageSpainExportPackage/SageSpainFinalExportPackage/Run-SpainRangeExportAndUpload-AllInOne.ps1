@@ -3,7 +3,7 @@ param(
     [string]$Database = "Sage",
     [ValidateSet("InvoiceDate", "LineRegistrationDate")]
     [string]$DateFilter = "LineRegistrationDate",
-    [datetime]$FromDate = (Get-Date).Date.AddDays(-7),
+    [datetime]$FromDate = (Get-Date).Date.AddDays(-35),
     [datetime]$ToDate = (Get-Date).Date,
     [string]$BaseDirectory = "C:\Trafag\SageSpain",
     [string]$RcloneExe = "C:\Tools\rclone.exe",
@@ -105,7 +105,7 @@ function Export-QueryToCsv {
 function Resolve-RcloneExecutable {
     param([string]$ConfiguredPath)
 
-    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $scriptDirectory = $PSScriptRoot
     $candidates = @(
         $ConfiguredPath,
         (Join-Path $scriptDirectory "rclone.exe"),

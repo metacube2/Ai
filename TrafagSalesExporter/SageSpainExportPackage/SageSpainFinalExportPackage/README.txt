@@ -138,9 +138,18 @@ This file does not require Export-SageSpainSalesCsv.ps1 or Run-SpainExportAndUpl
 
 Default date window:
 
-- FromDate = today - 7 days
+- FromDate = today - 35 days
 - ToDate = today
 - ToDate is exclusive
+
+Widened from 7 to 35 days on 2026-08-17 (ISS-004.2 follow-up): posting in
+FacturasTB lags roughly 2-3 weeks behind the invoice date, so a 7-day window
+never re-exported an invoice after it finally got a PostingDate. The app
+dedupes Spain rows by SourceLineId and the newer delta row wins, so the wider,
+overlapping window is safe and does not create duplicates. Verified live with
+Analyze-SpainPostingDateKey.ps1: the OUTER APPLY key matched 53 of 53 already
+posted invoices (100%) once the compared window actually contained posted
+data; on 2026-08-17 the most recent posted FechaFactura was 2026-07-30.
 
 Override the all-in-one default date window:
 
