@@ -275,6 +275,35 @@ Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.aba
 | Sonderbestaende einbeziehen? | **Offen**, Frage an Armin, nirgends dokumentiert. |
 | Disponent `004` Betriebsmaterial einbeziehen? | **Offen**, Frage an Armin. |
 
+## 5b. MB5L-Abgleich per Report statt von Hand
+
+`docs/abap/Z_PURCHASING_MB5L_ABGLEICH.abap` (read-only) fuehrt den Vergleich selbst aus, damit
+die Zahl nicht abgetippt und dabei anders eingegrenzt wird als gerechnet.
+
+Ablauf in zwei Stufen, `p_run` zunaechst leer lassen:
+
+1. **Ohne `p_run`:** ermittelt den Programmnamen zu `MB5L` **aus `TSTC`** statt ihn zu raten,
+   listet dessen Selektionsparameter auf und rechnet die eigene Vergleichszahl aus `MBEW`.
+   Kostet nichts und zeigt, ob die Feldzuordnung passt.
+2. **Mit `p_run = X`:** ruft das Programm per `SUBMIT` mit dynamisch gefuellter
+   Selektionstabelle auf — gefuellt wird **nur, was in Stufe 1 tatsaechlich vorhanden war**.
+   Das Ergebnis wird ueber `cl_salv_bs_runtime_info` abgegriffen (MB5L ist ALV-basiert, ein
+   reines `EXPORTING LIST TO MEMORY` liefert dort oft nichts), summiert und gegenuebergestellt.
+
+**Verglichen wird die Gesamtsumme des Bewertungskreises, nicht die Disponentengruppe.** MB5L
+kennt keinen Disponentenfilter. Stimmt die Gesamtsumme, ist die Bewertungslogik (`SALK3`)
+bestaetigt; die Abgrenzung auf `001`–`005` ist danach nur noch ein Filter auf derselben Basis
+und braucht keinen eigenen Beweis.
+
+Weicht die Summe ab, nennt der Report die wahrscheinlichen Ursachen in der zu pruefenden
+Reihenfolge: Sonderbestaende, getrennte Bewertung (`BWTAR`), abweichende Selektion.
+
+**Grenze dieses Wegs:** MB5L zeigt den Saldo zum aktuellen Stand beziehungsweise Vor-Periode und
+Vorjahr. Fuer einen **beliebigen** Monat im Sinne von Armins „per «bis Monat»" ist eher `MB5B`
+(Bestand zum Buchungsdatum) die passende Referenz. Der Report vergleicht deshalb zuerst den
+aktuellen Stand — das prueft die Bewertungslogik. Die Stichtagslogik ist davon getrennt und in
+2b bis 2d behandelt.
+
 ## 6. Messwerkzeug
 
 `docs/abap/Z_PURCHASING_LAGERWERT_ANALYSE.abap` (read-only, SE38) beantwortet in einem Lauf:
