@@ -1,6 +1,42 @@
 # Last Change
 
-Stand: 2026-08-17
+Stand: 2026-08-18
+
+## Materialtext im Einkauf-Spend-Drilldown 2026-08-18 (PRODUKTIV)
+
+- **Was sichtbar wird:** Auf der Materialebene des Spend-Drilldowns steht jetzt
+  `Materialnummer - Materialtext` statt nur der Nummer, zum Beispiel
+  `B64880 - PCBA HYBRID DENSITY 6.5...20mA 56KG/m3`. Gilt in der Kaskadierungsmatrix
+  Lieferant/Jahr und im Reiter `Spend-Aufriss`.
+- **Quelle richtiggestellt:** `MARA` fuehrt keinen Text. Der Materialtext liegt in `MAKT`
+  und ist ueber `MATNR + SPRAS` sprachabhaengig. Gelesen wird das EntitySet `MAKTSet`
+  (`ZPOWERBI_EINKAUF_SRV`, Felder `Matnr`/`Spras`/`Maktx`), das wie `MARA001Set` kein Paging
+  kennt und alle Sprachen liefert.
+- **Sprachfilter ist Pflicht, nicht Kosmetik.** Messung am 2026-08-18 auf T76/100 mit dem
+  neuen read-only Report `docs/abap/Z_PURCHASING_MAKTX_ANALYSE.abap`: alle `3'682`
+  Einkaufsmaterialien haben einen Text, aber `1'425` davon (rund 39 %) sind mehrsprachig
+  gepflegt (`6'390` Zeilen; DE `3'681`, EN `1'426`, FR `1'275`, IT `8`). Gewaehlt wird je
+  Material genau ein Text: Deutsch, sonst Englisch, sonst die erste Sprache.
+- **Kein Feldname geraten.** Der Gateway-Login scheiterte mehrfach mit `401`; die
+  Property-Namen stammen aus der von Ingo gelieferten PROD-Antwort, die Fuellgrade aus dem
+  ABAP-Report direkt auf der Datenbank.
+- **Ausfallsicherheit:** Der Textabruf bricht den Einkauf-Lauf bewusst NICHT ab und leert bei
+  einem Ausfall auch keine vorhandenen Texte. Grund ist der Vorfall vom 2026-07-02, als ein
+  `MARA001Set`-404 den Full Load abbrach und der Datenstand bis zum 2026-07-17 einfror.
+- Additive Spalte `PurchasingEkpoCache.Maktx`, keine Migration, kein Schemabruch.
+  `532/532` Tests gruen. Commits `6f62fda` und `dbfe364`.
+- **Deploy 2026-08-18:** `BiDashboard.dll` Zeitstempel `18.08.2026 11:26:04`, Laenge
+  `4'602'880`, lokal und auf dem Server bitgleich. Vorher-Sicherung
+  `trafag_exporter.db.before-material-text-20260818-111501.bak` (groessengleich, 346'734'592
+  Bytes). Spalte `Maktx` in der produktiven Datenbank nachgewiesen, `237'883` EKPO-Zeilen,
+  `7'329` distinkte Materialien. App startet sauber (`Application started`, Production).
+- **NACHSORGE, sonst bleibt die Anzeige unveraendert:** Einmal Einkauf-Delta oder Full Load
+  laufen lassen (`Einkauf > Ideen > Einkauf-Datenservice`); der naechtliche Delta erledigt es
+  ebenfalls. Bis dahin ist `Maktx` produktiv zu `0` gefuellt und es erscheint nur die Nummer.
+  Danach den Fuellgrad gegen PROD nachmessen, die 100 % stammen aus T76/100.
+- Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-08-18.
+
+## Dokumentation aufgeraeumt (Stand 2026-08-17)
 
 WARNUNG fuer neue Sitzungen: `docs/mails/Build-RanVijayFollowup.ps1` bittet Indien um
 Pflege von 1'271 Artikeln. Das ist seit 2026-08-05 ueberholt und darf NICHT versendet

@@ -864,11 +864,39 @@ Validierung: `dotnet test TrafagSalesExporter.sln` -> `531/531` gruen, davon neu
 Sprachauswahl (`PurchasingMaterialTextTests`), zwei zur Anzeige in beiden Sichten und zwei zum
 Cache-Nachzug.
 
+### Ausfallsicherheit des Textabrufs
+
+Der `MAKTSet`-Read wirft bewusst NICHT, anders als die uebrigen Reads. Der Materialtext ist ein
+reines Anzeigefeld und darf den Einkauf-Lauf nicht abbrechen. Genau dieses Muster hat schon
+einmal zwei Wochen Datenstillstand gekostet (Nachtrag 2026-07-17 weiter oben: der Full Load vom
+2026-07-02 lief in einen `MARA001Set`-404 und brach ab, bevor er LFA1 laden konnte). Faellt
+`MAKTSet` aus, wird eine Warnung protokolliert und der Lauf geht ohne Text weiter.
+
+Ergaenzend schreibt `ApplyMaterialMasterToWholeCacheAsync` den Text nur, wenn ueberhaupt einer
+geladen wurde. Sonst wuerde ein Ausfall alle bereits vorhandenen Texte leeren, was schlechter
+waere als ein veralteter Text. Das entspricht dem bestehenden Schutz fuer die Stammdaten
+insgesamt.
+
+### Deploy 2026-08-18
+
+- Commits `6f62fda` (Funktion) und `dbfe364` (Ausfallsicherheit), `532/532` Tests gruen.
+- `BiDashboard.dll` Zeitstempel `18.08.2026 11:26:04`, Laenge `4'602'880`, lokal und auf dem
+  Server per SHA256 bitgleich.
+- Vorher-Sicherung `trafag_exporter.db.before-material-text-20260818-111501.bak`,
+  groessengleich mit `346'734'592` Bytes.
+- Nachweis in der produktiven Datenbank (read-only, `.tmp_tools/CheckMaktxColumn`): Spalte
+  `Maktx` vorhanden, `237'883` EKPO-Zeilen, `7'329` distinkte Materialien, Fuellgrad `0` —
+  korrekt, solange kein Load gelaufen ist.
+- App startet sauber (`Application started`, Hosting environment Production), keine Fehler im
+  Startlog. Der HTTPS-Smoketest vom Arbeitsplatz scheiterte an einem TLS-Handshake des Clients,
+  nicht am Server; Port 443 ist offen und der Prozess laeuft.
+
 ### Offen
 
-- **Kein Deploy ausgefuehrt.** Nach dem Deploy muss einmal ein Einkauf-Full-Load oder Delta
-  laufen, damit `Maktx` real gefuellt ist; vorher bleibt die Anzeige unveraendert bei der
-  Materialnummer.
+- **Der Load fehlt noch.** Erst ein Einkauf-Delta oder Full Load fuellt `Maktx`
+  (`Einkauf > Ideen > Einkauf-Datenservice`); der naechtliche Delta erledigt es ebenfalls. Bis
+  dahin zeigt die Materialebene unveraendert nur die Nummer. Ein Delta genuegt, weil der
+  Cache-Nachzug alle Zeilen erfasst, nicht nur die geholten Belege.
 - Fuellgrad nach dem ersten produktiven Load gegenpruefen. Die 100 % stammen aus `T76/100`.
 - Weitere Stellen zeigen die Materialnummer weiterhin ohne Text, bewusst noch nicht angefasst
   (Marcos Leitplanke „ein Punkt nach dem anderen"): Kachel `Top-Artikel`, `Liefertermin-Risiko`,
