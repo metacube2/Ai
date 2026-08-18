@@ -125,6 +125,44 @@ Nebenbefund zur Datenmenge: Fuer die 7'261 Zielmaterialien allein liegen **1'132
 Historie inzwischen mit Periodeneinschraenkung in der `WHERE`-Klausel statt alles zu holen und
 im Code zu verwerfen.
 
+## 2d. Dritter Lauf: Gegentest mit altem Stichtag
+
+Stichtag `2024 / 06`, also bewusst so gewaehlt, dass der Historienpfad traegt statt des
+Fallbacks. Damit ist die in 2c beschriebene Luecke geschlossen.
+
+| Groesse | 2026 / 06 | 2024 / 06 |
+| --- | --- | --- |
+| Lagerwert (korrekt zurueckgerechnet) | CHF 8'973'694.30 | **CHF 10'648'966.26** |
+| Menge | 14'215'807.724 | 15'480'608.268 |
+| aus `MBEWH` (Historie) | 687 (9 %) | **6'893 (95 %)** |
+| aus `MBEW` (Fallback) | 6'574 (91 %) | 368 (5 %) |
+| naive Summe nur ueber `MBEWH` | CHF 3'070'209.07 | CHF 10'640'616.98 |
+| Abweichung der naiven Methode | **−66 %** | **−0,08 %** |
+
+**Beide Pfade sind damit geprueft.** Beim alten Stichtag stammen 95 % der Werte aus der
+Historie, beim jungen 91 % aus dem Fallback. Die Rueckrechnung liefert in beiden Faellen einen
+plausiblen Wert, und der Bestandsverlauf ist stimmig: von 10,65 Mio (Mitte 2024) auf 8,98 Mio
+(heute), passend zur Periodenreihe aus dem ersten Lauf.
+
+### Die eigentliche Falle: die naive Methode sieht bei alten Perioden richtig aus
+
+Das ist der wichtigste Befund dieses Laufs. Die falsche Methode weicht
+
+- bei `2024 / 06` nur um **0,08 %** ab (8'349 CHF) — praktisch unauffaellig,
+- bei `2026 / 06` dagegen um **66 %** (5,9 Mio CHF) — offensichtlich kaputt.
+
+Der Grund ist derselbe wie in 2b: Je aelter die Periode, desto dichter ist die Historie, weil
+inzwischen fast jedes Material einmal bewegt wurde. Wer die Umsetzung also an einem
+zurueckliegenden Stichtag testet, **sieht den Fehler nicht** und baut ihn produktiv ein — wo er
+dann ausgerechnet fuer den aktuellen Monat zuschlaegt, den die Kachel am haeufigsten zeigt.
+
+Konsequenz fuer die Abnahme: **immer mit einem jungen Stichtag testen**, nicht mit einem alten.
+
+### Was noch fehlt
+
+Beide Laeufe zeigen nur, dass die Rueckrechnung in sich stimmig ist. **Konsistenz ist nicht
+Korrektheit.** Ob die Zahl fachlich richtig ist, beweist erst der Abgleich mit MB5L.
+
 ## 3. Der fachliche Knackpunkt: „per «bis Monat»"
 
 Das ist der Teil, an dem die Umsetzung haengt, und er ist nicht offensichtlich.
@@ -208,12 +246,13 @@ Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.aba
 
 ## 5. Vorschlag fuer das Vorgehen
 
-1. **Messen** — erledigt am 2026-08-18, siehe 2a bis 2c.
-2. **Zweiter Messlauf mit aelterem Stichtag** (`2025 / 03` oder `2024 / 12`), damit auch der
-   Historienpfad geprueft ist und nicht nur der Fallback (Begruendung in 2c).
-3. **Gegen MB5L abgleichen.** Armin oder Ingo laesst MB5L fuer denselben Stichtag und
-   Bewertungskreis laufen. Erst wenn die Zahl des Reports mit MB5L uebereinstimmt, ist die
-   Grundlage belastbar. Ohne diesen Abgleich keine Kachel.
+1. **Messen** — erledigt am 2026-08-18, siehe 2a bis 2d. Beide Rechenpfade geprueft.
+2. **Gegen MB5L abgleichen — der naechste offene Schritt.** MB5L mit Bewertungskreis `1100`
+   laufen lassen, einmal per heute (Erwartung `8'982'938.78`) und einmal per Ende Juni 2026
+   (Erwartung `8'973'694.30`), jeweils eingeschraenkt auf die Disponenten `001`–`005`.
+   **Wichtig: den jungen Stichtag nicht weglassen** — bei einem alten Stichtag saehe selbst die
+   nachweislich falsche Methode richtig aus (2d). Erst bei Uebereinstimmung ist die Grundlage
+   belastbar. Ohne diesen Abgleich keine Kachel.
 3. **Offene Fragen aus Abschnitt 4 mit Armin klaeren**, insbesondere `004 Betriebsmat`,
    Sonderbestaende und Bewertungskreis.
 4. **Erst danach umsetzen.** Bei Variante B zuerst die SAP-Erweiterung fuer `MBEWH`, dann Cache,
@@ -231,7 +270,8 @@ Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.aba
 | Wie rechnet man einen Stichtag? | **Beantwortet und korrigiert**: kleinste `MBEWH`-Periode >= Stichtag, sonst `MBEW`. Nicht naiv summieren. |
 | Kann man `MBEWH` per OData laden? | **Nein**, siehe 3b. Braucht ein aggregierendes EntitySet. |
 | Stimmt die Zahl mit MB5L? | **Offen** — der Abgleich ist der naechste Schritt. |
-| Ist die Rueckrechnung validiert? | **Nur halb.** Der `MBEW`-Fallback ist geprueft, der Historienpfad kaum (siehe 2c). Zweiter Lauf mit aelterem Stichtag noetig. |
+| Ist die Rueckrechnung in sich stimmig? | **Ja**, beide Pfade geprueft: Fallback bei `2026/06` (91 %), Historie bei `2024/06` (95 %). Siehe 2c und 2d. |
+| Ist sie fachlich korrekt? | **Offen** — das beweist nur MB5L. |
 | Sonderbestaende einbeziehen? | **Offen**, Frage an Armin, nirgends dokumentiert. |
 | Disponent `004` Betriebsmaterial einbeziehen? | **Offen**, Frage an Armin. |
 
