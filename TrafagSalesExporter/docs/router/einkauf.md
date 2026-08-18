@@ -16,6 +16,8 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Thema | Datei |
 | --- | --- |
+| **Lagerwert der Einkaufsteile (Wunsch Armin), MB5L, MBEW/MBEWH, Disponenten 001-005** | `docs/EINKAUF_LAGERWERT_2026-08-18.md` |
+| Materialtext im Spend-Drilldown, MAKT/MAKTX, Sprachfilter | `docs/PURCHASING_DASHBOARD_2026-06-05.md` Nachtrag 2026-08-18 |
 | Welche Indikatoren echt rechnen, welche leer sind | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | Produktgruppen, ZC23/Disponent, Mehrfachverwendung, ABC/XYZ-Nutzen | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` |
 | Produktgruppen direkt aus SAP OData, ZDISPO | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` |

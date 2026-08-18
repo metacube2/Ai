@@ -84,6 +84,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/PURCHASING_DASHBOARD_2026-06-05.md` | Hauptdoku, Formeln, Cache |
 | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` | **zusammengefuehrt**: umgesetzt, offen, zurueckgestellt |
 | `docs/EINKAUF_INDIKATOREN_PRUEFUNG_2026-08-07.md` | welche Indikatoren echt rechnen |
+| `docs/EINKAUF_LAGERWERT_2026-08-18.md` | Lagerwert Einkaufsteile (Wunsch Armin), MB5L, MBEW/MBEWH, Disponenten 001-005 |
 | `docs/PURCHASING_PRODUKTGRUPPEN_ABCXYZ_2026-08-06.md` | Produktgruppen, ZC23, ABC/XYZ |
 | `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md` | Produktgruppen aus SAP OData |
 | `docs/EINKAUF_LOGISTIK_SUPPLY_CHAIN_REITER_2026-08-06.md` | Supply-Chain-Reiter |
@@ -125,7 +126,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` | Analysereport STPRS und Journal |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping |
 | `docs/rag/PRODUCT_MAPPING.md` | Produktmapping, Kurzstand |
-| `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` | PPWR und Stoffcompliance |
+| `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` | PPWR, aktueller Stand und Mandant 100 |
+| `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` | PPWR und Stoffcompliance, fachlicher Katalog |
 | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` | Ruest- gegen Bearbeitungszeit |
 | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` | Uebergabe Spartenzuordnung |
 | `saptasks/zzprdat-kontext.md` | ZZPRDAT-Arbeitsstand |
