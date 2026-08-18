@@ -269,6 +269,78 @@ public class DatabaseInitializationServiceTests : IDisposable
             spain.ManualImportFilePath);
     }
 
+    [Fact]
+    public async Task InitializeAsync_Adds_PostingDate_Mapping_For_Spain_Without_Touching_Existing_Rows()
+    {
+        var spainId = await PrepareSpainManualImportFilePathAsync();
+
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.ManualExcelColumnMappings.AddRange(
+                new ManualExcelColumnMapping
+                {
+                    SiteId = spainId,
+                    TargetField = nameof(SalesRecord.InvoiceNumber),
+                    SourceHeader = "InvoiceNumber",
+                    IsRequired = true,
+                    IsActive = true,
+                    SortOrder = 0
+                },
+                new ManualExcelColumnMapping
+                {
+                    SiteId = spainId,
+                    TargetField = nameof(SalesRecord.CustomerCountry),
+                    SourceHeader = "CustomerCountry",
+                    IsRequired = false,
+                    IsActive = true,
+                    SortOrder = 1
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var service = CreateService();
+        await service.InitializeAsync();
+
+        await using var verifyDb = await _dbFactory.CreateDbContextAsync();
+        var mappings = verifyDb.ManualExcelColumnMappings
+            .Where(x => x.SiteId == spainId)
+            .OrderBy(x => x.SortOrder)
+            .ToList();
+
+        Assert.Equal(3, mappings.Count);
+
+        var invoiceNumber = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.InvoiceNumber));
+        Assert.Equal("InvoiceNumber", invoiceNumber.SourceHeader);
+        Assert.Equal(0, invoiceNumber.SortOrder);
+
+        var customerCountry = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.CustomerCountry));
+        Assert.Equal("CustomerCountry", customerCountry.SourceHeader);
+        Assert.Equal(1, customerCountry.SortOrder);
+
+        var postingDate = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.PostingDate));
+        Assert.Equal("PostingDate", postingDate.SourceHeader);
+        Assert.False(postingDate.IsRequired);
+        Assert.True(postingDate.IsActive);
+        Assert.Equal(2, postingDate.SortOrder);
+
+        // Erneuter Lauf darf keine zweite PostingDate-Zeile anlegen.
+        await service.InitializeAsync();
+        await using var secondRunDb = await _dbFactory.CreateDbContextAsync();
+        Assert.Equal(3, secondRunDb.ManualExcelColumnMappings.Count(x => x.SiteId == spainId));
+    }
+
+    [Fact]
+    public async Task InitializeAsync_Does_Not_Add_PostingDate_Mapping_When_Spain_Has_No_Explicit_Mappings()
+    {
+        var spainId = await PrepareSpainManualImportFilePathAsync();
+
+        var service = CreateService();
+        await service.InitializeAsync();
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        Assert.Empty(db.ManualExcelColumnMappings.Where(x => x.SiteId == spainId));
+    }
+
     private async Task PrepareLegacySitesTableAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -374,13 +446,23 @@ VALUES (
         await db.SaveChangesAsync();
     }
 
-    private async Task PrepareSpainManualImportFilePathAsync()
+    private async Task<int> PrepareSpainManualImportFilePathAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         db.HanaServers.RemoveRange(db.HanaServers);
         db.Sites.RemoveRange(db.Sites);
         await db.SaveChangesAsync();
+
+        var spain = new Site
+        {
+            Schema = "Spanien",
+            TSC = "TRSE",
+            Land = "Spanien",
+            SourceSystem = "MANUAL_EXCEL",
+            ManualImportFilePath = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien/Spain_Sales_2025.csv",
+            IsActive = true
+        };
 
         db.Sites.AddRange(
             new Site
@@ -391,16 +473,10 @@ VALUES (
                 SourceSystem = "BI1",
                 IsActive = true
             },
-            new Site
-            {
-                Schema = "Spanien",
-                TSC = "TRSE",
-                Land = "Spanien",
-                SourceSystem = "MANUAL_EXCEL",
-                ManualImportFilePath = "https://trafagag.sharepoint.com/sites/WorldwideBIPlatform/Import/Finance/Spanien/Spain_Sales_2025.csv",
-                IsActive = true
-            });
+            spain);
         await db.SaveChangesAsync();
+
+        return spain.Id;
     }
 
     private async Task PrepareBrokenHanaServerForeignKeyAsync()

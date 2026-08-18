@@ -672,10 +672,13 @@ public class DatabaseSeedService : IDatabaseSeedService
             if (changed)
                 db.SaveChanges();
 
+            if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
+                EnsureSpainPostingDateMapping(db, existing.Id);
+
             return;
         }
 
-        db.Sites.Add(new Site
+        var created = new Site
         {
             Schema = string.Empty,
             TSC = "TRES",
@@ -683,8 +686,12 @@ public class DatabaseSeedService : IDatabaseSeedService
             SourceSystem = "MANUAL_EXCEL",
             ManualImportFilePath = SpainSharePointFolder,
             IsActive = false
-        });
+        };
+        db.Sites.Add(created);
         db.SaveChanges();
+
+        if (CanSeedSiteDependentTable(db, "ManualExcelColumnMappings"))
+            EnsureSpainPostingDateMapping(db, created.Id);
     }
 
     private static bool ShouldRepairSpainManualImportPath(string? path)
@@ -695,6 +702,45 @@ public class DatabaseSeedService : IDatabaseSeedService
         var normalized = path.Trim().Replace('\\', '/');
         return normalized.Contains("/Import/Finance/Spanien/Spain_Sales_", StringComparison.OrdinalIgnoreCase) ||
                normalized.EndsWith("/Import/Finance/Spanien/Spain_Sales_2025.csv", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Spanien pflegt seine Spaltenzuordnung von Hand in den Einstellungen (anders als DE/UK,
+    // die den kompletten Satz aus dem Seed ueberschreiben). ISS-004.2: der Sage-Export liefert
+    // seit 2026-08-17 die Spalte PostingDate, sie fehlte aber in der von Hand gepflegten Liste.
+    // Da eine nicht-leere Mappingliste den generischen Kopfzeilen-Fallback abschaltet
+    // (ManualExcelImportService.ReadCsvSalesRecords), blieb PostingDate unabhaengig vom
+    // CSV-Inhalt leer. Nur diese eine Zeile ergaenzen, die uebrigen von Hand gepflegten
+    // Zuordnungen unangetastet lassen.
+    private static void EnsureSpainPostingDateMapping(AppDbContext db, int siteId)
+    {
+        var existingMappings = db.ManualExcelColumnMappings
+            .Where(x => x.SiteId == siteId)
+            .Select(x => new { x.TargetField, x.SortOrder })
+            .ToList();
+
+        // Ohne jede von Hand gepflegte Zeile faellt die Site auf den generischen
+        // Kopfzeilen-Fallback zurueck, der alle Felder automatisch erkennt (siehe
+        // ManualExcelImportService.ReadDefaultCsvRows). Eine einzelne neue Zeile wuerde
+        // diesen Fallback abschalten und alle anderen Felder leer laufen lassen, deshalb
+        // nur ergaenzen, wenn die Site bereits eine explizite Liste pflegt.
+        if (existingMappings.Count == 0)
+            return;
+
+        if (existingMappings.Any(x => x.TargetField == nameof(SalesRecord.PostingDate)))
+            return;
+
+        var nextSortOrder = existingMappings.Max(x => (int?)x.SortOrder) ?? -1;
+
+        db.ManualExcelColumnMappings.Add(new ManualExcelColumnMapping
+        {
+            SiteId = siteId,
+            TargetField = nameof(SalesRecord.PostingDate),
+            SourceHeader = "PostingDate",
+            IsRequired = false,
+            IsActive = true,
+            SortOrder = nextSortOrder + 1
+        });
+        db.SaveChanges();
     }
 
     private static void EnsureGermanyManualExcelSite(AppDbContext db)
