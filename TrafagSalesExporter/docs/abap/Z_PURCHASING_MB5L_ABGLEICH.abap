@@ -95,12 +95,21 @@ START-OF-SELECTION.
     RETURN.
   ENDIF.
 
+  " Auch die Vorbelegung zeigen: sie entscheidet mit, WAS MB5L rechnet
+  " (z.B. aktueller Saldo gegenueber Vormonat/Vorjahr).
   DATA lv_par_cnt TYPE i.
   LOOP AT lt_sel INTO DATA(ls_sel).
     lv_par_cnt = lv_par_cnt + 1.
-    WRITE: / '  ', ls_sel-kind, ls_sel-selname.
+    WRITE: / '  ', ls_sel-kind, ls_sel-selname,
+             '| SIGN=', ls_sel-sign, '| OPT=', ls_sel-option,
+             '| LOW=', ls_sel-low, '| HIGH=', ls_sel-high.
   ENDLOOP.
   WRITE: / '  Anzahl Selektionsfelder:', lv_par_cnt.
+  WRITE: / '  Am 2026-08-18 auf T76/100 gefunden: Programm RM07MBST mit den'.
+  WRITE: / '  Saldoschaltern AKSALDO (aktuell), VMSALDO (Vormonat) und'.
+  WRITE: / '  VJSALDO (Vorjahr). MB5L kennt damit GENAU DIESE DREI Zeitpunkte'.
+  WRITE: / '  und keinen frei waehlbaren Monat - fuer beliebige Stichtage ist'.
+  WRITE: / '  MB5B die passende Referenz, nicht MB5L.'.
 
   IF lv_par_cnt = 0.
     WRITE: / '  Keine Selektionsfelder gefunden - SUBMIT waere blind. Abbruch.'.
@@ -191,21 +200,47 @@ START-OF-SELECTION.
         ls_run  TYPE rsparams,
         lv_hit  TYPE abap_bool.
 
+  " Es wird bewusst NUR gesetzt, was fuer einen fairen Vergleich noetig ist,
+  " und ausschliesslich anhand der in Stufe 1 gefundenen Feldnamen:
+  "   BWKEY   - auf denselben Bewertungskreis wie die eigene Rechnung
+  "   AKSALDO - aktueller Saldo. Das ist der Zeitpunkt, den MBEW fuehrt.
+  "             Ohne dieses Kennzeichen koennte MB5L Vormonat oder Vorjahr
+  "             ausweisen, und der Vergleich waere wertlos.
+  "   VMSALDO / VJSALDO - ausdruecklich AUS, damit keine zweite Wertspalte
+  "             die Summe verfaelscht.
+  "   NULLB   - Nullbestaende einschliessen. Deren Wert ist meist 0, aber ein
+  "             Material mit Wert ohne Menge wuerde sonst fehlen und die
+  "             Differenz unerklaerlich machen.
+  " Alle uebrigen Parameter bleiben auf der Vorbelegung des Reports.
   LOOP AT lt_sel INTO ls_sel.
     CLEAR ls_run.
     ls_run-selname = ls_sel-selname.
     ls_run-kind    = ls_sel-kind.
 
-    " Bewertungskreis setzen. Der Feldname kann je nach Release BWKEY oder
-    " (bei aelteren Staenden) anders heissen - deshalb Vergleich statt Annahme.
-    IF ls_sel-selname = 'BWKEY'.
-      ls_run-sign   = 'I'.
-      ls_run-option = 'EQ'.
-      ls_run-low    = p_bwkey.
-      APPEND ls_run TO lt_run.
-      lv_hit = abap_true.
-      WRITE: / '  Selektion gesetzt: BWKEY =', p_bwkey.
-    ENDIF.
+    CASE ls_sel-selname.
+      WHEN 'BWKEY'.
+        ls_run-sign   = 'I'.
+        ls_run-option = 'EQ'.
+        ls_run-low    = p_bwkey.
+        APPEND ls_run TO lt_run.
+        lv_hit = abap_true.
+        WRITE: / '  Selektion gesetzt: BWKEY =', p_bwkey.
+
+      WHEN 'AKSALDO'.
+        ls_run-low = 'X'.
+        APPEND ls_run TO lt_run.
+        WRITE: / '  Selektion gesetzt: AKSALDO = X (aktueller Saldo)'.
+
+      WHEN 'VMSALDO' OR 'VJSALDO'.
+        CLEAR ls_run-low.
+        APPEND ls_run TO lt_run.
+        WRITE: / '  Selektion geleert:', ls_sel-selname, '(nicht vergleichsrelevant)'.
+
+      WHEN 'NULLB'.
+        ls_run-low = 'X'.
+        APPEND ls_run TO lt_run.
+        WRITE: / '  Selektion gesetzt: NULLB = X (Nullbestaende einschliessen)'.
+    ENDCASE.
   ENDLOOP.
 
   IF lv_hit = abap_false.
@@ -304,10 +339,15 @@ START-OF-SELECTION.
   ELSE.
     WRITE: / '  ERGEBNIS: ABWEICHUNG. Nicht als bestaetigt behandeln.'.
     WRITE: / '  Uebliche Ursachen, in dieser Reihenfolge pruefen:'.
+    WRITE: / '   - Doppelzaehlung: enthaelt die ALV-Tabelle neben den'.
+    WRITE: / '     Materialzeilen auch Summenzeilen? Dann ist die Summe grob zu'.
+    WRITE: / '     hoch. Zeilenzahl oben mit der Materialzahl vergleichen.'.
     WRITE: / '   - MB5L zeigt Sonderbestaende (Konsignation, Kundenauftrag,'.
     WRITE: / '     Projekt) mit an; MBEW allein fuehrt nur den Eigenbestand.'.
-    WRITE: / '   - Bewertungsart (BWTAR) / getrennte Bewertung.'.
-    WRITE: / '   - MB5L-Variante schraenkt anders ein als hier gesetzt.'.
+    WRITE: / '   - Bewertungsart (BWTAR) / getrennte Bewertung: bei getrennter'.
+    WRITE: / '     Bewertung gibt es je Material einen Kopfsatz UND Teilsaetze.'.
+    WRITE: / '   - Buchungskreis (BUKRS) schraenkt zusaetzlich ein.'.
+    WRITE: / '   - Saldoschalter: steht wirklich nur AKSALDO auf X?'.
   ENDIF.
 
   ULINE.

@@ -298,11 +298,37 @@ und braucht keinen eigenen Beweis.
 Weicht die Summe ab, nennt der Report die wahrscheinlichen Ursachen in der zu pruefenden
 Reihenfolge: Sonderbestaende, getrennte Bewertung (`BWTAR`), abweichende Selektion.
 
-**Grenze dieses Wegs:** MB5L zeigt den Saldo zum aktuellen Stand beziehungsweise Vor-Periode und
-Vorjahr. Fuer einen **beliebigen** Monat im Sinne von Armins „per «bis Monat»" ist eher `MB5B`
-(Bestand zum Buchungsdatum) die passende Referenz. Der Report vergleicht deshalb zuerst den
-aktuellen Stand — das prueft die Bewertungslogik. Die Stichtagslogik ist davon getrennt und in
-2b bis 2d behandelt.
+### Ergebnis Stufe 1, gemessen 2026-08-18 auf T76/100
+
+- Transaktion `MB5L` -> Programm **`RM07MBST`** (aus `TSTC`, nicht angenommen).
+- 16 Selektionsfelder, darunter `BWKEY`, `BUKRS`, `BKLAS`, `BWTAR`, `MATNR`, `SKONT` als
+  Select-Options und `AKSALDO`, `VMSALDO`, `VJSALDO`, `SUMMEN`, `KEINZEL`, `NULLB`, `NEGATIV`,
+  `PRUEF`, `MATLINES`, `ALV_DEF` als Parameter.
+- Eigene Vergleichszahl aus `MBEW`, Bewertungskreis `1100`:
+
+| Basis | Materialien | SALK3-Summe CHF |
+| --- | --- | --- |
+| **Alle Materialien** (Vergleichsgroesse fuer MB5L) | 65'498 | **10'937'376.40** |
+| davon Disponenten `001`–`005` | 7'261 | 8'982'938.78 |
+
+Die Einkaufsteile machen damit rund **82 %** des gesamten Lagerwerts aus — plausibel und ein
+Hinweis darauf, dass Armins Abgrenzung den wesentlichen Teil trifft.
+
+### Belegt: MB5L kann keinen freien Stichtag
+
+Die Saldoschalter heissen `AKSALDO`, `VMSALDO` und `VJSALDO` — aktueller Saldo, Vormonat,
+Vorjahr. **Damit ist aus dem Selektionsbild selbst bewiesen, dass MB5L genau diese drei
+Zeitpunkte kennt und keinen frei waehlbaren Monat.** Das war vorher eine Vermutung.
+
+Fuer Armin heisst das: „Werte dito MB5L" laesst sich als **Bewertungslogik** eins zu eins
+uebernehmen (`SALK3`, aktueller Saldo), aber „per «bis Monat»" geht ueber das hinaus, was MB5L
+selbst leisten kann. Die passende Referenz fuer beliebige Stichtage ist `MB5B` (Bestand zum
+Buchungsdatum). Das ist kein Widerspruch in Armins Wunsch, sondern eine Praezisierung, die beim
+Abgleich zu beachten ist: die Kachel kann mehr als MB5L, und MB5L taugt nur zur Pruefung des
+aktuellen Stands.
+
+Stufe 2 setzt deshalb gezielt `AKSALDO = X`, leert `VMSALDO`/`VJSALDO` und schliesst mit
+`NULLB = X` Nullbestaende ein, damit beide Seiten dieselbe Grundmenge haben.
 
 ## 6. Messwerkzeug
 
