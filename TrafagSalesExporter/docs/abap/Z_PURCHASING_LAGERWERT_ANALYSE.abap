@@ -328,19 +328,21 @@ START-OF-SELECTION.
       RETURN.
     ENDIF.
 
-    " Historie NUR fuer die Zielmaterialien und NUR ab dem Stichtag lesen.
-    " Das begrenzt die Menge erheblich (im Bewertungskreis liegen insgesamt
-    " ueber 5 Mio Saetze) und liefert genau die Kandidaten fuer "kleinste
-    " Periode >= Stichtag".
+    " Historie NUR fuer die Zielmaterialien und NUR AB dem Stichtag lesen.
+    " Die Periodeneinschraenkung gehoert in die WHERE-Klausel, nicht in den Code:
+    " ohne sie kamen am 2026-08-18 fuer 7'261 Materialien 1'132'402 Saetze zurueck
+    " (Historie reicht bis 2000), von denen fast alle sofort verworfen wurden.
     DATA lt_hist TYPE STANDARD TABLE OF mbewh.
     SELECT matnr, lfgja, lfmon, lbkum, salk3
       FROM mbewh
       FOR ALL ENTRIES IN @lt_zielmat
       WHERE bwkey = @p_bwkey
         AND matnr = @lt_zielmat-matnr
+        AND ( lfgja > @p_sjahr
+           OR ( lfgja = @p_sjahr AND lfmon >= @p_smon ) )
       INTO CORRESPONDING FIELDS OF TABLE @lt_hist.
 
-    WRITE: / '  MBEWH-Saetze zu diesen Materialien (alle Perioden):', lines( lt_hist ).
+    WRITE: / '  MBEWH-Saetze ab Stichtag zu diesen Materialien:', lines( lt_hist ).
 
     " Je Material den besten Kandidaten bestimmen: kleinste Periode >= Stichtag.
     TYPES: BEGIN OF ty_best,

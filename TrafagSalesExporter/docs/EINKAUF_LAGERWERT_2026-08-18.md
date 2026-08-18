@@ -95,6 +95,36 @@ Der Report ist entsprechend korrigiert und rechnet jetzt mit dieser Rueckrechnun
 waehlbaren Stichtag. Die Zahlen der Tabelle oben sind damit **ueberholt** und nur noch als Beleg
 fuer den Fallstrick aufgefuehrt.
 
+## 2c. Zweiter Lauf mit korrigierter Rueckrechnung
+
+Stichtag `2026 / 06`, Bewertungskreis `1100`:
+
+| Groesse | Wert |
+| --- | --- |
+| Lagerwert per 2026/06 (korrekt zurueckgerechnet) | **CHF 8'973'694.30** |
+| Menge | 14'215'807.724 |
+| Aktueller Wert aus `MBEW` (heute) | CHF 8'982'938.78 |
+| Differenz zu heute | −9'244.48 CHF (0,1 %) |
+| davon aus `MBEWH` (Historiensatz vorhanden) | 687 Materialien |
+| davon aus `MBEW` (Fallback) | 6'574 Materialien |
+| **Naive Summe nur ueber `MBEWH`** | **CHF 3'070'209.07** — um Faktor 2,9 zu niedrig |
+
+Die naive Methode haette also fuer Juni 2026 rund 5,9 Millionen CHF zu wenig ausgewiesen. Der
+Unterschied zwischen richtiger und falscher Rechnung ist damit belegt.
+
+**Vorbehalt zur Aussagekraft (Hinweis Ingo):** `T76` ist eine mehrere Monate alte Kopie, in 2026
+bewegt sich dort kaum noch etwas. Deshalb stammen 6'574 der 7'261 Werte aus dem `MBEW`-Fallback
+und nur 687 aus der Historie. Der Fallback-Pfad ist damit gut geprueft, der **Historienpfad
+praktisch nicht**. Fuer eine belastbare Abnahme fehlt ein zweiter Lauf mit einem Stichtag, an dem
+die Historie traegt, zum Beispiel `2025 / 03` oder `2024 / 12` — dort liegen laut Abschnitt 4
+noch rund 33'000 Saetze je Periode. Auf dem Produktivsystem ist die Verteilung ohnehin anders,
+weil dort laufend gebucht wird.
+
+Nebenbefund zur Datenmenge: Fuer die 7'261 Zielmaterialien allein liegen **1'132'402**
+`MBEWH`-Saetze vor (Historie bis 2000). Das unterstreicht Abschnitt 3b. Der Report liest die
+Historie inzwischen mit Periodeneinschraenkung in der `WHERE`-Klausel statt alles zu holen und
+im Code zu verwerfen.
+
 ## 3. Der fachliche Knackpunkt: „per «bis Monat»"
 
 Das ist der Teil, an dem die Umsetzung haengt, und er ist nicht offensichtlich.
@@ -178,9 +208,10 @@ Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.aba
 
 ## 5. Vorschlag fuer das Vorgehen
 
-1. **Messen** mit dem Report aus Abschnitt 6: Existiert `MBEWH`, ist sie gefuellt, welche
-   Disponenten gibt es, wie hoch ist der Lagerwert je Disponent heute und per Monatsende?
-2. **Gegen MB5L abgleichen.** Armin oder Ingo laesst MB5L fuer denselben Stichtag und
+1. **Messen** — erledigt am 2026-08-18, siehe 2a bis 2c.
+2. **Zweiter Messlauf mit aelterem Stichtag** (`2025 / 03` oder `2024 / 12`), damit auch der
+   Historienpfad geprueft ist und nicht nur der Fallback (Begruendung in 2c).
+3. **Gegen MB5L abgleichen.** Armin oder Ingo laesst MB5L fuer denselben Stichtag und
    Bewertungskreis laufen. Erst wenn die Zahl des Reports mit MB5L uebereinstimmt, ist die
    Grundlage belastbar. Ohne diesen Abgleich keine Kachel.
 3. **Offene Fragen aus Abschnitt 4 mit Armin klaeren**, insbesondere `004 Betriebsmat`,
@@ -200,6 +231,7 @@ Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.aba
 | Wie rechnet man einen Stichtag? | **Beantwortet und korrigiert**: kleinste `MBEWH`-Periode >= Stichtag, sonst `MBEW`. Nicht naiv summieren. |
 | Kann man `MBEWH` per OData laden? | **Nein**, siehe 3b. Braucht ein aggregierendes EntitySet. |
 | Stimmt die Zahl mit MB5L? | **Offen** — der Abgleich ist der naechste Schritt. |
+| Ist die Rueckrechnung validiert? | **Nur halb.** Der `MBEW`-Fallback ist geprueft, der Historienpfad kaum (siehe 2c). Zweiter Lauf mit aelterem Stichtag noetig. |
 | Sonderbestaende einbeziehen? | **Offen**, Frage an Armin, nirgends dokumentiert. |
 | Disponent `004` Betriebsmaterial einbeziehen? | **Offen**, Frage an Armin. |
 
