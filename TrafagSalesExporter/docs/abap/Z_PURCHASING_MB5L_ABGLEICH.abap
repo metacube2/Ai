@@ -111,6 +111,71 @@ START-OF-SELECTION.
   WRITE: / '  und keinen frei waehlbaren Monat - fuer beliebige Stichtage ist'.
   WRITE: / '  MB5B die passende Referenz, nicht MB5L.'.
 
+" ----------------------------------------------------------------------------
+" 2b) Bedeutung der Selektionsfelder aus dem Textpool des Programms
+" ----------------------------------------------------------------------------
+  ULINE.
+  WRITE: / '=== 2b) WAS DIE FELDER BEDEUTEN (Selektionstexte des Programms) ==='.
+  WRITE: / '  Gelesen aus dem Textpool, nicht interpretiert.'.
+
+  DATA lt_text TYPE TABLE OF textpool.
+  READ TEXTPOOL lv_prog INTO lt_text LANGUAGE sy-langu.
+  IF lt_text IS INITIAL AND sy-langu <> 'E'.
+    " Fallback Englisch, falls die Landessprache nicht gepflegt ist.
+    READ TEXTPOOL lv_prog INTO lt_text LANGUAGE 'E'.
+  ENDIF.
+
+  IF lt_text IS INITIAL.
+    WRITE: / '  Keine Texte lesbar. Bedeutung bitte per F1 im Selektionsbild.'.
+  ELSE.
+    LOOP AT lt_sel INTO ls_sel.
+      DATA lv_txt TYPE string.
+      CLEAR lv_txt.
+      LOOP AT lt_text INTO DATA(ls_text)
+        WHERE id = 'S' AND key = ls_sel-selname.
+        lv_txt = ls_text-entry.
+        EXIT.
+      ENDLOOP.
+      WRITE: / '  ', ls_sel-selname, '=', lv_txt.
+    ENDLOOP.
+  ENDIF.
+
+" ----------------------------------------------------------------------------
+" 2c) Welche Felder die Summe verfaelschen koennen
+" ----------------------------------------------------------------------------
+  ULINE.
+  WRITE: / '=== 2c) RISIKO JE FELD FUER DEN SUMMENVERGLEICH ==='.
+  WRITE: / '  Bewertung anhand der Feldnamen und -texte oben. Wo unsicher, ist'.
+  WRITE: / '  das gekennzeichnet - dann gilt der Text aus 2b, nicht diese Zeile.'.
+  WRITE: / ''.
+  WRITE: / '  HOCH - veraendert die Grundmenge oder zaehlt doppelt:'.
+  WRITE: / '   SUMMEN   Summenzeilen zusaetzlich in der Ausgabe -> beim'.
+  WRITE: / '            Aufsummieren aller Zeilen wird doppelt gezaehlt.'.
+  WRITE: / '   KEINZEL  unterdrueckt Einzelposten -> es bleiben nur Summen'.
+  WRITE: / '            uebrig, die Materialsumme waere dann nicht bildbar.'.
+  WRITE: / '   MATLINES begrenzt die Zahl der Materialzeilen -> die Liste wird'.
+  WRITE: / '            abgeschnitten und die Summe ist zu niedrig.'.
+  WRITE: / '   NEGATIV  schraenkt auf negative Bestaende ein -> nur ein'.
+  WRITE: / '            Bruchteil der Materialien.'.
+  WRITE: / '   VMSALDO  Vormonatssaldo als zusaetzliche Wertspalte.'.
+  WRITE: / '   VJSALDO  Vorjahressaldo als zusaetzliche Wertspalte.'.
+  WRITE: / ''.
+  WRITE: / '  MITTEL - schraenkt die Materialmenge ein:'.
+  WRITE: / '   BUKRS    Buchungskreis. Ein Bewertungskreis kann an mehreren'.
+  WRITE: / '            haengen; gesetzt fehlen sonst Zeilen.'.
+  WRITE: / '   BKLAS    Bewertungsklasse.'.
+  WRITE: / '   MATNR    Materialnummer.'.
+  WRITE: / '   SKONT    siehe Text in 2b.'.
+  WRITE: / '   NULLB    Nullbestaende. Hier bewusst AN, damit ein Material mit'.
+  WRITE: / '            Wert ohne Menge nicht stillschweigend fehlt.'.
+  WRITE: / ''.
+  WRITE: / '  BESONDERS BEACHTEN:'.
+  WRITE: / '   BWTAR    Bewertungsart. Bei getrennter Bewertung fuehrt SAP je'.
+  WRITE: / '            Material einen Kopfsatz UND Teilsaetze. Werden beide'.
+  WRITE: / '            summiert, ist der Wert doppelt. Messung dazu in 3b.'.
+  WRITE: / '   AKSALDO  aktueller Saldo. MUSS an sein, sonst vergleicht man'.
+  WRITE: / '            einen anderen Zeitpunkt als MBEW fuehrt.'.
+
   IF lv_par_cnt = 0.
     WRITE: / '  Keine Selektionsfelder gefunden - SUBMIT waere blind. Abbruch.'.
     RETURN.
@@ -179,6 +244,72 @@ START-OF-SELECTION.
   WRITE: / '  Vergleich ist deshalb die GESAMTSUMME. Stimmt die, ist die'.
   WRITE: / '  Bewertungslogik (SALK3) bestaetigt; die Disponentenabgrenzung'.
   WRITE: / '  ist danach nur noch ein Filter auf derselben Basis.'.
+
+" ----------------------------------------------------------------------------
+" 3b) Datencheck: die zwei Konstellationen, die echte Differenzen erzeugen
+" ----------------------------------------------------------------------------
+  ULINE.
+  WRITE: / '=== 3b) WELCHE MATERIALIEN EINE DIFFERENZ ERZEUGEN KOENNEN ==='.
+
+  " (1) Getrennte Bewertung: Kopfsatz (BWTAR leer) plus Teilsaetze (BWTAR
+  "     gefuellt). Der Kopfsatz enthaelt bereits die Summe der Teilsaetze -
+  "     wer beide addiert, zaehlt den Wert doppelt.
+  DATA: lv_bwtar_leer TYPE i,
+        lv_bwtar_voll TYPE i,
+        lv_bwtar_wert TYPE p LENGTH 16 DECIMALS 2.
+
+  SELECT matnr, bwtar, salk3 FROM mbew
+    WHERE bwkey = @p_bwkey
+    INTO TABLE @DATA(lt_bw).
+
+  LOOP AT lt_bw INTO DATA(ls_bw).
+    IF ls_bw-bwtar IS INITIAL.
+      lv_bwtar_leer = lv_bwtar_leer + 1.
+    ELSE.
+      lv_bwtar_voll = lv_bwtar_voll + 1.
+      lv_bwtar_wert = lv_bwtar_wert + ls_bw-salk3.
+    ENDIF.
+  ENDLOOP.
+
+  WRITE: / '--- (1) Getrennte Bewertung (BWTAR) ---'.
+  WRITE: / '  Saetze ohne Bewertungsart (Kopfsaetze):', lv_bwtar_leer.
+  WRITE: / '  Saetze MIT Bewertungsart (Teilsaetze) :', lv_bwtar_voll.
+  IF lv_bwtar_voll > 0.
+    WRITE: / '  Wert der Teilsaetze                   :', lv_bwtar_wert.
+    WRITE: / '  ACHTUNG: Es gibt getrennte Bewertung. Die eigene Summe oben'.
+    WRITE: / '  enthaelt Kopf- UND Teilsaetze und ist damit moeglicherweise'.
+    WRITE: / '  zu hoch. Zeigt MB5L nur eine Ebene, entsteht genau hier die'.
+    WRITE: / '  Differenz. Dann die eigene Summe auf BWTAR = leer beschraenken.'.
+  ELSE.
+    WRITE: / '  Keine getrennte Bewertung vorhanden - diese Fehlerquelle'.
+    WRITE: / '  entfaellt und kann bei einer Differenz ausgeschlossen werden.'.
+  ENDIF.
+
+  " (2) Sonderbestaende. MBEW fuehrt nur den eigenen, frei verwendbaren
+  "     Bestand. Konsignation beim Lieferanten (MSLB), Kundenauftragsbestand
+  "     (MSKA) und Projektbestand (MSPR) liegen in eigenen Tabellen. Zeigt
+  "     MB5L die mit an, ist MB5L hoeher.
+  WRITE: / '--- (2) Sonderbestaende ausserhalb von MBEW ---'.
+
+  DATA: lv_mska TYPE i,
+        lv_mspr TYPE i,
+        lv_mslb TYPE i.
+
+  SELECT COUNT(*) FROM mska WHERE werks = @p_bwkey INTO @lv_mska.
+  SELECT COUNT(*) FROM mspr WHERE werks = @p_bwkey INTO @lv_mspr.
+  SELECT COUNT(*) FROM mslb WHERE werks = @p_bwkey INTO @lv_mslb.
+
+  WRITE: / '  MSKA Kundenauftragsbestand, Saetze:', lv_mska.
+  WRITE: / '  MSPR Projektbestand, Saetze       :', lv_mspr.
+  WRITE: / '  MSLB Bestand beim Lieferanten     :', lv_mslb.
+  IF lv_mska > 0 OR lv_mspr > 0 OR lv_mslb > 0.
+    WRITE: / '  Es gibt Sonderbestaende. Ob MB5L sie mitzaehlt, entscheidet'.
+    WRITE: / '  sich an der Selektion. Bei einer Differenz ist das der zweite'.
+    WRITE: / '  Verdacht nach der getrennten Bewertung.'.
+  ELSE.
+    WRITE: / '  Keine Sonderbestaende in diesem Werk - auch diese Fehlerquelle'.
+    WRITE: / '  entfaellt.'.
+  ENDIF.
 
 " ----------------------------------------------------------------------------
 " 4) MB5L ausfuehren und Summe einsammeln
@@ -282,10 +413,26 @@ START-OF-SELECTION.
 
   DATA(lv_rows) = lines( <lt_alv> ).
   WRITE: / '  Von MB5L gelieferte Zeilen:', lv_rows.
+  WRITE: / '  MBEW-Saetze im Bewertungskreis:', lv_cnt_alle.
 
   IF lv_rows = 0.
     WRITE: / '  MB5L hat keine Zeilen geliefert. Selektion pruefen.'.
     RETURN.
+  ENDIF.
+
+  " Plausibilitaet der Zeilenzahl, BEVOR summiert wird. Weicht sie deutlich ab,
+  " ist die Summe mit hoher Wahrscheinlichkeit nicht vergleichbar - dann ist
+  " die Ursache dort zu suchen und nicht in der Bewertungslogik.
+  IF lv_rows > lv_cnt_alle.
+    WRITE: / '  WARNUNG: MEHR Zeilen als MBEW-Saetze. Typische Ursache sind'.
+    WRITE: / '  Summenzeilen in der ALV-Ausgabe oder Teilsaetze bei getrennter'.
+    WRITE: / '  Bewertung. Die Summe unten waere dann zu hoch.'.
+  ELSEIF lv_rows < lv_cnt_alle.
+    WRITE: / '  WARNUNG: WENIGER Zeilen als MBEW-Saetze. Typische Ursache ist'.
+    WRITE: / '  eine zusaetzliche Einschraenkung (BUKRS, BKLAS, MATLINES) oder'.
+    WRITE: / '  unterdrueckte Nullbestaende. Die Summe unten waere zu niedrig.'.
+  ELSE.
+    WRITE: / '  Zeilenzahl passt exakt zur MBEW-Menge - gutes Zeichen.'.
   ENDIF.
 
   " Feldnamen der ersten Zeile zeigen, damit sichtbar ist, was MB5L liefert

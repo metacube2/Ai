@@ -330,6 +330,39 @@ aktuellen Stands.
 Stufe 2 setzt deshalb gezielt `AKSALDO = X`, leert `VMSALDO`/`VJSALDO` und schliesst mit
 `NULLB = X` Nullbestaende ein, damit beide Seiten dieselbe Grundmenge haben.
 
+### Welche Feldeinstellungen das Ergebnis verfaelschen
+
+Der Report gibt die Bedeutung jedes Feldes aus dem **Textpool des Programms** aus, damit sie
+nicht interpretiert werden muss, und bewertet das Risiko:
+
+| Feld | Wirkung auf den Summenvergleich |
+| --- | --- |
+| `SUMMEN` | **hoch** — Summenzeilen zusaetzlich in der Ausgabe. Wer alle Zeilen addiert, zaehlt doppelt. |
+| `KEINZEL` | **hoch** — unterdrueckt Einzelposten; dann bleiben nur Summen und die Materialsumme ist nicht bildbar. |
+| `MATLINES` | **hoch** — begrenzt die Zahl der Materialzeilen. Die Liste wird abgeschnitten, die Summe ist zu niedrig. |
+| `NEGATIV` | **hoch** — schraenkt auf negative Bestaende ein. |
+| `VMSALDO` / `VJSALDO` | **hoch** — zusaetzliche Wertspalte fuer Vormonat bzw. Vorjahr. |
+| `BWTAR` | **besonders** — bei getrennter Bewertung fuehrt SAP je Material einen Kopfsatz UND Teilsaetze. Werden beide summiert, ist der Wert doppelt. |
+| `AKSALDO` | **muss an sein**, sonst wird ein anderer Zeitpunkt verglichen, als `MBEW` fuehrt. |
+| `BUKRS`, `BKLAS`, `MATNR`, `SKONT` | mittel — schraenken die Materialmenge ein. |
+| `NULLB` | bewusst an, damit ein Material mit Wert ohne Menge nicht fehlt. |
+
+### Datencheck statt Vermutung
+
+Der Report misst zusaetzlich die beiden Konstellationen, die erfahrungsgemaess echte Differenzen
+erzeugen, damit man bei einer Abweichung nicht im Nebel sucht:
+
+1. **Getrennte Bewertung:** Zaehlt `MBEW`-Saetze mit und ohne `BWTAR`. Gibt es Teilsaetze, ist
+   die eigene Summe moeglicherweise zu hoch und muss auf `BWTAR = leer` beschraenkt werden.
+   Gibt es keine, ist diese Ursache ausgeschlossen.
+2. **Sonderbestaende:** Zaehlt `MSKA` (Kundenauftrag), `MSPR` (Projekt) und `MSLB` (Bestand beim
+   Lieferanten). `MBEW` fuehrt diese nicht; zeigt MB5L sie mit an, liegt MB5L hoeher.
+
+Nach dem Lauf vergleicht der Report ausserdem **die Zeilenzahl von MB5L mit der Zahl der
+`MBEW`-Saetze**, bevor er summiert. Mehr Zeilen deuten auf Summenzeilen oder Teilsaetze, weniger
+auf eine zusaetzliche Einschraenkung. So faellt eine unbrauchbare Grundmenge auf, bevor man die
+Summe fuer bare Muenze nimmt.
+
 ## 6. Messwerkzeug
 
 `docs/abap/Z_PURCHASING_LAGERWERT_ANALYSE.abap` (read-only, SE38) beantwortet in einem Lauf:
