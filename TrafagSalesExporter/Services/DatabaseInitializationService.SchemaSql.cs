@@ -341,6 +341,7 @@ CREATE TABLE PurchasingEkpoCache (
     Txz01 TEXT NOT NULL DEFAULT '',
     Matkl TEXT NOT NULL DEFAULT '',
     MaraMatkl TEXT NOT NULL DEFAULT '',
+    Maktx TEXT NOT NULL DEFAULT '',
     Menge TEXT NOT NULL DEFAULT '0',
     Meins TEXT NOT NULL DEFAULT '',
     Netwr TEXT NOT NULL DEFAULT '0',

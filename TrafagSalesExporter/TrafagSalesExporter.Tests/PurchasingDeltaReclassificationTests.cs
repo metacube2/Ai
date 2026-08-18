@@ -33,6 +33,7 @@ CREATE TABLE PurchasingEkpoCache (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    Maktx TEXT NOT NULL DEFAULT '',
     Mstae TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (Ebeln, Ebelp)
 );");
@@ -75,6 +76,40 @@ CREATE TABLE PurchasingEkpoCache (
         Assert.Equal("A", ReadSingle("MaraAbc"));
         Assert.Equal("Z", ReadSingle("MaraXyz"));
         Assert.Equal("98", ReadSingle("Mstae"));
+    }
+
+    [Fact]
+    public async Task ApplyMaterialMaster_Writes_Material_Text_On_Old_Closed_Order()
+    {
+        // Dieselbe Falle wie bei der Warengruppe, seit 2026-08-18 auch fuer den Materialtext:
+        // ein Material, das nur auf alten abgeschlossenen Bestellungen liegt, taucht im Delta nie
+        // auf und haette sonst dauerhaft keinen Text im Drilldown.
+        Execute("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr) VALUES ('ALT7', '10', 'B64880');");
+
+        var updated = await ApplyAsync(
+            statusMap: new()
+            {
+                ["B64880"] = new PurchasingDataRefreshService.MaterialMasterInfo(
+                    "", "10.08.00", "PCBA HYBRID DENSITY 6.5...20mA 56KG/m3")
+            },
+            classificationMap: []);
+
+        Assert.Equal(1, updated);
+        Assert.Equal("PCBA HYBRID DENSITY 6.5...20mA 56KG/m3", ReadSingle("Maktx"));
+    }
+
+    [Fact]
+    public async Task ApplyMaterialMaster_Reports_Zero_When_Text_Already_Current()
+    {
+        // Der Text allein darf keinen Dauerschreiber ausloesen: steht er bereits richtig im Cache,
+        // meldet der Nachtlauf 0 geaenderte Zeilen.
+        Execute("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Maktx) VALUES ('ALT8', '10', 'B64880', 'Sensor');");
+
+        var updated = await ApplyAsync(
+            statusMap: new() { ["B64880"] = new PurchasingDataRefreshService.MaterialMasterInfo("", "", "Sensor") },
+            classificationMap: []);
+
+        Assert.Equal(0, updated);
     }
 
     [Fact]

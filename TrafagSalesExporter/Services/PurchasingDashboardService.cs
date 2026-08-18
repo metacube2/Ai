@@ -31,6 +31,27 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
             ELSE {lifnrExpression}
         END";
 
+    /// <summary>
+    /// Anzeigelabel fuer ein Material: <c>Materialnummer - Materialtext</c>.
+    ///
+    /// Der Text kommt aus dem Materialstamm (MAKT, deutsch bevorzugt, gefuellt vom
+    /// Einkauf-Loader in <c>PurchasingEkpoCache.Maktx</c>). Fehlt er, bleibt es bei der bisherigen
+    /// Anzeige: Materialnummer, ersatzweise der Bestelltext, sonst „ohne Artikel". Es wird nie ein
+    /// Platzhaltertext erfunden.
+    ///
+    /// WICHTIG: Das Label ist eine reine Funktion der Materialnummer (der Text haengt am
+    /// Materialstamm, nicht am Beleg). Deshalb bleibt die Gruppierung identisch, wenn dieser
+    /// Ausdruck in einem GROUP BY die blosse Materialnummer ersetzt - es entstehen weder
+    /// zusaetzliche noch zusammengelegte Zeilen.
+    /// </summary>
+    private static string MaterialLabelSql(string matnrExpr = "p.Matnr", string txz01Expr = "p.Txz01", string maktxExpr = "p.Maktx")
+        => $@"(COALESCE(NULLIF({matnrExpr}, ''), NULLIF({txz01Expr}, ''), 'ohne Artikel')
+            || CASE
+                WHEN COALESCE(NULLIF({maktxExpr}, ''), '') <> '' AND COALESCE(NULLIF({matnrExpr}, ''), '') <> ''
+                    THEN ' - ' || {maktxExpr}
+                ELSE ''
+            END)";
+
     // MARA-MSTAE-Werte, die ein Material als zur Loeschung vorgemerkt / gesperrt kennzeichnen.
     private static readonly string[] DeletedMaterialStatusCodes = ["98", "99"];
 
@@ -1054,7 +1075,7 @@ ORDER BY Supplier, MaterialGroup, Year;";
         command.CommandText = @"
 SELECT " + SupplierLabelSql("k.Lifnr", "k.SupplierName") + @" AS Supplier,
        COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS MaterialGroup,
-       COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
+       " + MaterialLabelSql() + @" AS Article,
        CAST(substr(k.Bedat, 1, 4) AS INTEGER) AS Year,
        SUM(" + ChfValueSql("p.Netwr", "k.Waers", "k.Wkurs") + @") AS Value
 FROM PurchasingEkpoCache p
@@ -1154,8 +1175,7 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
             ResolveMaterialGroupText: true);
 
     private static readonly SpendDimension ArticleDimension =
-        new("article", "Material", "Material",
-            "COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel')");
+        new("article", "Material", "Material", MaterialLabelSql());
 
     private static readonly SpendDimension RegionDimension =
         new("region", "Beschaffungsregion", "Procurement region",

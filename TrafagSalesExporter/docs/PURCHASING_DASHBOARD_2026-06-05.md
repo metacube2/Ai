@@ -773,3 +773,104 @@ gelesen wird.
   Zeitraumfilter-Wirkung auf die Drill-Ebene).
 - Noch nicht deployed. NACH Deploy: Einkauf Full Load laufen lassen (fuellt `Mstae` wieder aus
   `maracalcSet`; `MaraMatkl` bleibt leer bis zur SAP-Erweiterung).
+
+## Nachtrag 2026-08-18 Materialtext (MAKTX) fuer den Spend-Drilldown
+
+Auftrag von Ingo: Im Spend-Drilldown `Lieferant > Warengruppe > Material` soll neben der
+Materialnummer der Materialtext stehen. Heute zeigt die Materialebene nur
+`COALESCE(EKPO.Matnr, EKPO.Txz01, 'ohne Artikel')` — also die Nummer, ersatzweise den
+Beleg-Kurztext, aber nie den aktuellen Materialstamm-Text.
+
+**Wichtig zur Quelle:** `MARA` hat KEIN Textfeld. Der Materialtext liegt im SAP-Standard in
+`MAKT` und ist **sprachabhaengig** (Schluessel `MATNR + SPRAS`). Die urspruengliche Formulierung
+„MAKTX aus MARA" trifft also nicht die Tabelle, wohl aber die Absicht.
+
+### Live-Messung 2026-08-18 (Report `docs/abap/Z_PURCHASING_MAKTX_ANALYSE.abap`, T76/100)
+
+Der Gateway-Weg war blockiert (Basic-Auth lieferte auf travp762 UND travt762 `401`), deshalb
+wurde direkt auf der Datenbank gemessen. Grundgesamtheit: alle Materialien aus `EKPO` mit
+`EKKO.BEDAT >= 2020-01-01`.
+
+| Messgroesse | Wert |
+| --- | --- |
+| Distinkte Materialien im Einkauf | `3'682` |
+| Materialien mit mindestens einem `MAKT`-Satz | `3'682` (**100 %**) |
+| Materialien ganz ohne Text | `0` |
+| `MAKT`-Zeilen gesamt (alle Sprachen) | `6'390` |
+| Sprachverteilung | `DE 3'681`, `EN 1'426`, `FR 1'275`, `IT 8` |
+| Materialien mit Text in `DE` | `3'681` von `3'682` |
+| **Mehrsprachig gepflegte Materialien** | **`1'425`** |
+
+Stichprobe der beiden Materialien aus der BEPRO-AG-Zeile (Warengruppe `10.08.00`):
+
+- `B64880` -> `PCBA HYBRID DENSITY 6.5...20mA 56KG/m3`
+- `B64336` -> `PCBA NAT TR5 MODUL CURRENT STD COLDB Rei`
+
+### Was daraus fuer die Umsetzung folgt
+
+1. **Der Join MUSS auf `SPRAS` filtern.** `1'425` von `3'682` Materialien (rund 39 %) haben
+   mehr als eine Sprachzeile. Ein Join nur ueber `MATNR` wuerde genau diese Materialien im
+   Drilldown vervielfachen und damit die Spend-Summe verfaelschen — die Pivot-Eigenschaft
+   „Drilldown-Summe gleich Lieferantenzeile" waere gebrochen. Das ist der kritische Punkt.
+2. **`DE` ist die richtige Leitsprache**, mit `3'681` von `3'682` praktisch vollstaendig.
+   Genau ein Material hat keinen deutschen Text; dafuer genuegt ein Fallback.
+3. **Ein leerer Text ist der Ausnahmefall, nicht die Regel.** Trotzdem bleibt die Anzeige
+   beim vorhandenen Muster: fehlt der Text, wird die Materialnummer allein gezeigt, nie ein
+   erfundener Platzhalter.
+4. **Vorbehalt Systemstand:** Gemessen wurde auf `T76/100` (Test). Der produktive Loader liest
+   den Gateway auf `travp762`. Die Struktur (Tabelle, Sprachabhaengigkeit) ist
+   systemunabhaengig, die Fuellgrade sind nach dem ersten produktiven Load gegenzupruefen.
+
+### SAP-Quelle: `MAKTSet` (live geprueft 2026-08-18 an travp762)
+
+Ingo hat die Antwort des produktiven Gateways geliefert. Damit ist nichts geraten:
+
+- EntityType `ZPOWERBI_EINKAUF_SRV.MAKT`, Felder `Mandt`, `Matnr`, `Spras`, `Maktx`, `Maktg`.
+  Verwendet werden `Matnr`, `Spras` und `Maktx`.
+- Das Set existiert auf PROD (`travp762`) identisch wie auf TEST (`travt762`).
+- **Es ignoriert `$top`/`$skip` und liefert immer den Vollbestand** — dasselbe Verhalten wie
+  `MARA001Set`. Der Loader macht deshalb bewusst EINEN ungepagten Request; ein Paging-Lauf wuerde
+  bei jedem „Blatt" den kompletten Bestand erneut holen.
+- Es liefert **alle Sprachen**, filtert also serverseitig nicht. Die Sprachauswahl muss im Loader
+  passieren.
+
+### Umgesetzt 2026-08-18
+
+- **Schema additiv:** neue Spalte `PurchasingEkpoCache.Maktx` (`CREATE`-Statement und
+  Schema-Maintenance). Bestehende Datenbanken bekommen sie beim Start ergaenzt; sie bleibt leer,
+  bis ein Full Load oder Delta gelaufen ist.
+- **Loader:** neue `LoadMaterialTextMapAsync` liest `MAKTSet` (`$select=Matnr,Spras,Maktx`) und
+  mischt das Ergebnis in dieselbe Materialstamm-Map, mit der schon `Mstae` und `Matkl` verteilt
+  werden. Dadurch bleiben alle nachgelagerten Signaturen unveraendert.
+  `LoadMaterialStatusMapAsync` heisst jetzt `LoadMaterialMasterMapAsync`, weil sie drei Quellen
+  fuehrt und der alte Name nur noch den Status nannte.
+- **Sprachauswahl** in der eigens herausgezogenen, testbaren `SelectMaterialTexts`: je Material
+  genau EIN Text, Deutsch vor Englisch vor allem anderen; bei gleichrangigen Sprachen gewinnt der
+  zuerst gelesene Text, damit das Ergebnis nicht von der Antwortreihenfolge abhaengt. Ein- und
+  zweistellige Sprachschluessel (`D` wie `DE`) gelten gleich.
+- **Nachzug auf den ganzen Cache:** `Maktx` laeuft in `ApplyMaterialMasterToWholeCacheAsync` mit.
+  Ohne das haetten Materialien, die nur auf alten abgeschlossenen Bestellungen liegen, dauerhaft
+  keinen Text bekommen — dieselbe Falle wie seinerzeit bei der Warengruppe.
+- **Anzeige:** neuer zentraler Ausdruck `MaterialLabelSql()` liefert `Materialnummer - Text`.
+  Eingesetzt in der dritten Ebene der Spend-Matrix und in der Aufriss-Dimension `Material`, damit
+  beide Sichten dasselbe Label zeigen. Fehlt der Text, bleibt die bisherige Anzeige unveraendert
+  (Nummer, ersatzweise Bestelltext, sonst „ohne Artikel"); ein Trennstrich ohne Text entsteht nie.
+- **Summen bleiben unberuehrt:** Das Label ist eine reine Funktion der Materialnummer, weil der
+  Text am Materialstamm haengt und nicht am Beleg. Die Gruppierung erzeugt daher weder neue noch
+  zusammengelegte Zeilen; ein Test sichert die Pivot-Eigenschaft ab.
+- **Full-Load-Meldung** weist zusaetzlich `MAKT-Texte=<Anzahl>` aus.
+
+Validierung: `dotnet test TrafagSalesExporter.sln` -> `531/531` gruen, davon neu sieben Tests zur
+Sprachauswahl (`PurchasingMaterialTextTests`), zwei zur Anzeige in beiden Sichten und zwei zum
+Cache-Nachzug.
+
+### Offen
+
+- **Kein Deploy ausgefuehrt.** Nach dem Deploy muss einmal ein Einkauf-Full-Load oder Delta
+  laufen, damit `Maktx` real gefuellt ist; vorher bleibt die Anzeige unveraendert bei der
+  Materialnummer.
+- Fuellgrad nach dem ersten produktiven Load gegenpruefen. Die 100 % stammen aus `T76/100`.
+- Weitere Stellen zeigen die Materialnummer weiterhin ohne Text, bewusst noch nicht angefasst
+  (Marcos Leitplanke „ein Punkt nach dem anderen"): Kachel `Top-Artikel`, `Liefertermin-Risiko`,
+  die Kontrakt-Detailzeilen und der Artikel-Preistrend. Beim Preistrend dient der Artikel
+  zusaetzlich als Join-Schluessel zwischen zwei CTEs, das braucht eine eigene Pruefung.

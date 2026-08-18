@@ -364,6 +364,10 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         // SAP-Erweiterung 2026-07-23. ABC ist SAP-Standard, XYZ ist ein /ITS/-Add-on.
         AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraAbc", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "PurchasingEkpoCache", "MaraXyz", "TEXT NOT NULL DEFAULT ''");
+        // Materialtext aus MAKT (Deutsch bevorzugt), damit der Spend-Drilldown nicht nur die
+        // Materialnummer zeigt. MARA fuehrt keinen Text; Quelle ist MAKTSet ueber EKPO.Matnr.
+        // Bleibt leer, bis ein Full Load oder Delta gelaufen ist.
+        AddColumnIfMissing(db, "PurchasingEkpoCache", "Maktx", "TEXT NOT NULL DEFAULT ''");
 
         // Waehrung (Waers/Wkurs) fuer CHF-Bewertung und Konnr fuer die Kontrakt-Abgrenzung.
         // Diese Felder werden bereits aus SAP gelesen, lagen bei Bestandsdaten aber nur im RawJson.

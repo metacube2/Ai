@@ -59,7 +59,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var ekkoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKKOSet", "Ebeln,Bedat,Aedat,Lifnr,Bukrs,Bstyp,Bsart,Konnr,Waers,Wkurs", ekkoFilter, "Ebeln", cancellationToken);
             var ekpoRows = await ReadAllRowsAsync(client, connection.BaseUrl, "EKPOSet", "Ebeln,Ebelp,Matnr,Txz01,Matkl,Menge,Ktmng,Netwr,Loekz,Elikz,Bukrs,Werks", string.Empty, "Ebeln,Ebelp", cancellationToken);
             var eketRows = await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", string.Empty, "Ebeln,Ebelp,Etenr", cancellationToken);
-            var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var materialStatusMap = await LoadMaterialMasterMapAsync(client, connection.BaseUrl, cancellationToken);
             var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
             var productGroupResult = await _productGroupSapReader.ReadAsync(
@@ -81,7 +81,8 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await transaction.CommitAsync(cancellationToken);
 
             var completed = DateTime.UtcNow;
-            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
+            var materialTextCount = materialStatusMap.Values.Count(info => info.Maktx.Length > 0);
+            var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, MAKT-Texte={materialTextCount:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
@@ -131,7 +132,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 eketRows.AddRange(await ReadAllRowsAsync(client, connection.BaseUrl, "eketSet", "Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng", ebelnFilter, "Ebeln,Ebelp,Etenr", cancellationToken));
             }
 
-            var materialStatusMap = await LoadMaterialStatusMapAsync(client, connection.BaseUrl, cancellationToken);
+            var materialStatusMap = await LoadMaterialMasterMapAsync(client, connection.BaseUrl, cancellationToken);
             var classificationMap = await LoadMaterialClassificationMapAsync(client, connection.BaseUrl, cancellationToken);
             var supplierNameMap = await LoadSupplierNameMapAsync(client, connection.BaseUrl, cancellationToken);
             var productGroupResult = await _productGroupSapReader.ReadAsync(
@@ -290,8 +291,8 @@ VALUES ($Ebeln, $Bedat, $Aedat, $Lifnr, $SupplierName, $SupplierCountry, $Bukrs,
     private static async Task UpsertEkpoAsync(SqliteConnection conn, SqliteTransaction transaction, IReadOnlyList<Dictionary<string, object?>> rows, IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, IReadOnlyDictionary<string, MaterialClassification> classificationMap, string loadedAtUtc, CancellationToken cancellationToken)
     {
         const string sql = @"
-INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, MaraAbc, MaraXyz, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
-VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
+INSERT OR REPLACE INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Txz01, Matkl, MaraMatkl, MaraAbc, MaraXyz, Maktx, Menge, Meins, Netwr, Loekz, Mstae, Elikz, Ktmng, RawJson, LastLoadedAtUtc)
+VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Menge, $Meins, $Netwr, $Loekz, $Mstae, $Elikz, $Ktmng, $RawJson, $LastLoadedAtUtc);";
         foreach (var row in rows)
             await ExecuteWithParametersAsync(conn, transaction, sql, new()
             {
@@ -310,6 +311,9 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, 
                 // gejoint. Leer, wo nicht klassifiziert.
                 ["$MaraAbc"] = ResolveAbc(classificationMap, GetText(row, "Matnr")),
                 ["$MaraXyz"] = ResolveXyz(classificationMap, GetText(row, "Matnr")),
+                // Materialtext aus MAKT (Deutsch bevorzugt), ueber Matnr gejoint. Leer, wenn das
+                // Material keinen Text hat; die Anzeige faellt dann auf die Materialnummer zurueck.
+                ["$Maktx"] = ResolveMaterialText(materialStatusMap, GetText(row, "Matnr")),
                 ["$Menge"] = GetText(row, "Menge"),
                 ["$Meins"] = GetText(row, "Meins"),
                 ["$Netwr"] = GetText(row, "Netwr"),
@@ -338,8 +342,11 @@ VALUES ($Ebeln, $Ebelp, $Matnr, $Txz01, $Matkl, $MaraMatkl, $MaraAbc, $MaraXyz, 
     /// docs/PURCHASING_DASHBOARD_WUENSCHE_EINKAUF_2026-07-30.md Abschnitt 2.
     ///
     /// Kein zusaetzlicher SAP-Read: Beide Maps werden im Delta ohnehin vollstaendig geladen
-    /// (<see cref="LoadMaterialStatusMapAsync"/> und <see cref="LoadMaterialClassificationMapAsync"/>
+    /// (<see cref="LoadMaterialMasterMapAsync"/> und <see cref="LoadMaterialClassificationMapAsync"/>
     /// nehmen keine Materialliste als Parameter, es sind dieselben Aufrufe wie im Full Load).
+    ///
+    /// Gilt seit 2026-08-18 auch fuer den Materialtext (<c>Maktx</c>): ohne diesen Nachzug haetten
+    /// Materialien, die nur auf alten abgeschlossenen Bestellungen liegen, dauerhaft keinen Text.
     ///
     /// Umgesetzt ueber eine temporaere Staging-Tabelle und EIN UPDATE statt eines Statements je
     /// Zeile. Die Staging-Tabelle wird bewusst aus den im Cache VORHANDENEN Materialnummern
@@ -383,13 +390,17 @@ CREATE TEMP TABLE IF NOT EXISTS PurchasingMaterialStaging (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    Maktx TEXT NOT NULL DEFAULT '',
     Mstae TEXT NOT NULL DEFAULT ''
 );", cancellationToken);
+        // Die TEMP-Tabelle ueberlebt die Verbindung; eine aeltere Fassung ohne Maktx wuerde beim
+        // INSERT scheitern. Deshalb bei fehlender Spalte einmalig neu anlegen.
+        await EnsureStagingHasMaterialTextColumnAsync(conn, transaction, cancellationToken);
         await ExecuteAsync(conn, transaction, "DELETE FROM PurchasingMaterialStaging;", cancellationToken);
 
         const string insertSql = @"
-INSERT OR REPLACE INTO PurchasingMaterialStaging (Matnr, MaraMatkl, MaraAbc, MaraXyz, Mstae)
-VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Mstae);";
+INSERT OR REPLACE INTO PurchasingMaterialStaging (Matnr, MaraMatkl, MaraAbc, MaraXyz, Maktx, Mstae)
+VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Mstae);";
         foreach (var matnr in cachedMaterials)
             await ExecuteWithParametersAsync(conn, transaction, insertSql, new()
             {
@@ -397,6 +408,7 @@ VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Mstae);";
                 ["$MaraMatkl"] = ResolveMaterialGroup(materialStatusMap, matnr),
                 ["$MaraAbc"] = ResolveAbc(classificationMap, matnr),
                 ["$MaraXyz"] = ResolveXyz(classificationMap, matnr),
+                ["$Maktx"] = ResolveMaterialText(materialStatusMap, matnr),
                 ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, matnr)
             }, cancellationToken);
 
@@ -407,6 +419,7 @@ UPDATE PurchasingEkpoCache
 SET MaraMatkl = (SELECT s.MaraMatkl FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
     MaraAbc   = (SELECT s.MaraAbc   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
     MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    Maktx     = (SELECT s.Maktx     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
     Mstae     = (SELECT s.Mstae     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)
 WHERE EXISTS (
     SELECT 1 FROM PurchasingMaterialStaging s
@@ -414,16 +427,35 @@ WHERE EXISTS (
       AND (s.MaraMatkl <> COALESCE(PurchasingEkpoCache.MaraMatkl, '')
         OR s.MaraAbc   <> COALESCE(PurchasingEkpoCache.MaraAbc, '')
         OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')
+        OR s.Maktx     <> COALESCE(PurchasingEkpoCache.Maktx, '')
         OR s.Mstae     <> COALESCE(PurchasingEkpoCache.Mstae, '')));";
         return await updateCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialStatusMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    /// <summary>
+    /// Ergaenzt die TEMP-Staging-Tabelle um <c>Maktx</c>, falls sie in derselben Verbindung noch in
+    /// der alten Form (ohne Materialtext) angelegt wurde. <c>CREATE TEMP TABLE IF NOT EXISTS</c>
+    /// wuerde eine bestehende Tabelle sonst unveraendert lassen.
+    /// </summary>
+    private static async Task EnsureStagingHasMaterialTextColumnAsync(
+        SqliteConnection conn,
+        SqliteTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var check = conn.CreateCommand();
+        check.Transaction = transaction;
+        check.CommandText = "SELECT COUNT(*) FROM pragma_table_info('PurchasingMaterialStaging') WHERE name = 'Maktx';";
+        var exists = Convert.ToInt32(await check.ExecuteScalarAsync(cancellationToken) ?? 0, CultureInfo.InvariantCulture) > 0;
+        if (!exists)
+            await ExecuteAsync(conn, transaction, "ALTER TABLE PurchasingMaterialStaging ADD COLUMN Maktx TEXT NOT NULL DEFAULT '';", cancellationToken);
+    }
+
+    private async Task<Dictionary<string, MaterialMasterInfo>> LoadMaterialMasterMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
     {
         // Materialstamm-Attribute je Material, ueber EKPO.Matnr -> MARA.Matnr in den EKPO-Cache
-        // uebernommen: Mstae (Materialstatus, fuer MSTAE-98/99-Filter) und Matkl (aktuelle
+        // uebernommen: Mstae (Materialstatus, fuer MSTAE-98/99-Filter), Matkl (aktuelle
         // Warengruppe aus dem Materialstamm, Wunsch Marco - Beleg-Matkl ist in alten Belegen nur
-        // die Dummy-Gruppe "01").
+        // die Dummy-Gruppe "01") und Maktx (Materialtext, siehe LoadMaterialTextMapAsync).
         //
         // HISTORIE der Quelle:
         //  - bis 2026-07-17: MARA001Set (hatte Mstae).
@@ -453,10 +485,101 @@ WHERE EXISTS (
             map[key] = new MaterialMasterInfo(GetText(row, "Mstae"), GetText(row, "Matkl"));
         }
 
+        // Materialtexte aus einer ZWEITEN Quelle (MAKT) in dieselbe Map mischen, damit die
+        // nachgelagerten Aufrufer (Upsert und Cache-Nachzug) unveraendert mit einer Map arbeiten.
+        var textMap = await LoadMaterialTextMapAsync(client, baseUrl, cancellationToken);
+        foreach (var (key, text) in textMap)
+        {
+            map[key] = map.TryGetValue(key, out var info)
+                ? info with { Maktx = text }
+                // Text ohne MARA-Satz ist praktisch ausgeschlossen (MAKT haengt an MARA), wird
+                // aber trotzdem uebernommen statt still verworfen.
+                : new MaterialMasterInfo(string.Empty, string.Empty, text);
+        }
+
         return map;
     }
 
-    internal sealed record MaterialMasterInfo(string Mstae, string Matkl);
+    /// <summary>
+    /// Materialtexte je Material aus <c>MAKTSet</c> (SAP-Tabelle MAKT), genau EIN Text je
+    /// Materialnummer.
+    ///
+    /// WARUM EIN EIGENER READ: MARA fuehrt keinen Text. Der Materialtext liegt sprachabhaengig in
+    /// MAKT mit dem Schluessel MATNR + SPRAS, deshalb ein zweiter Request statt einer Erweiterung
+    /// des MARA-Selects.
+    ///
+    /// WARUM DER SPRACHFILTER PFLICHT IST (Messung 2026-08-18 auf T76/100, Report
+    /// docs/abap/Z_PURCHASING_MAKTX_ANALYSE.abap): Zu den 3'682 Einkaufsmaterialien gibt es 6'390
+    /// MAKT-Zeilen; 1'425 Materialien (rund 39 %) sind mehrsprachig gepflegt
+    /// (DE 3'681, EN 1'426, FR 1'275, IT 8). MAKTSet liefert alle Sprachen. Wuerde man je Zeile in
+    /// die Map schreiben, gaebe es zwar keine Zeilenvervielfachung (Dictionary), aber der
+    /// angezeigte Text haenge von der Lesereihenfolge ab. Deshalb wird je Material deterministisch
+    /// EIN Text gewaehlt: Deutsch, sonst Englisch, sonst die erste gelieferte Sprache. Deutsch ist
+    /// mit 3'681 von 3'682 praktisch vollstaendig; der Rueckfall greift fuer genau ein Material.
+    ///
+    /// PAGING: MAKTSet ignoriert $top/$skip und liefert immer den Vollbestand (am 2026-08-18 an
+    /// travp762 bestaetigt) - dasselbe Verhalten wie MARA001Set. Deshalb bewusst EIN ungepagter
+    /// Request statt <see cref="ReadAllRowsAsync"/>; Paging wuerde bei jedem "Blatt" den vollen
+    /// Bestand erneut laden.
+    /// </summary>
+    private async Task<Dictionary<string, string>> LoadMaterialTextMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
+    {
+        var url = $"{baseUrl}MAKTSet?$format=json&$select={Uri.EscapeDataString("Matnr,Spras,Maktx")}";
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"SAP OData MAKTSet fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) URL={url} Antwort={TrimForLog(error)}");
+        }
+
+        return SelectMaterialTexts(ParseRows(await response.Content.ReadAsStringAsync(cancellationToken)));
+    }
+
+    /// <summary>
+    /// Waehlt aus den MAKT-Zeilen je Materialnummer GENAU EINEN Text: Deutsch, sonst Englisch,
+    /// sonst die erste gelieferte Sprache. Bei gleichrangigen Sprachen bleibt der zuerst gelesene
+    /// Text stehen, damit das Ergebnis nicht von der Antwortreihenfolge abhaengt.
+    /// Getrennt von <see cref="LoadMaterialTextMapAsync"/>, damit die Auswahl ohne SAP testbar ist.
+    /// </summary>
+    internal static Dictionary<string, string> SelectMaterialTexts(IEnumerable<Dictionary<string, object?>> rows)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        var chosenRank = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            var key = NormalizeMatnr(GetText(row, "Matnr"));
+            if (key.Length == 0)
+                continue;
+
+            var text = GetText(row, "Maktx").Trim();
+            if (text.Length == 0)
+                continue;
+
+            // Kleinerer Rang gewinnt.
+            var rank = LanguageRank(GetText(row, "Spras"));
+            if (chosenRank.TryGetValue(key, out var current) && current <= rank)
+                continue;
+
+            map[key] = text;
+            chosenRank[key] = rank;
+        }
+
+        return map;
+    }
+
+    /// <summary>
+    /// Sprachrang fuer die Textauswahl: Deutsch vor Englisch vor allem anderen. SAP liefert den
+    /// Sprachschluessel je nach Service als ISO-Code ("DE") oder als einstelliges SAP-Kennzeichen
+    /// ("D"), deshalb werden beide Schreibweisen akzeptiert.
+    /// </summary>
+    private static int LanguageRank(string spras) => spras.Trim().ToUpperInvariant() switch
+    {
+        "DE" or "D" => 0,
+        "EN" or "E" => 1,
+        _ => 2
+    };
+
+    internal sealed record MaterialMasterInfo(string Mstae, string Matkl, string Maktx = "");
 
     private static string ResolveMaterialStatus(IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string matnr)
     {
@@ -468,6 +591,12 @@ WHERE EXISTS (
     {
         var key = NormalizeMatnr(matnr);
         return key.Length > 0 && materialStatusMap.TryGetValue(key, out var info) ? info.Matkl : string.Empty;
+    }
+
+    private static string ResolveMaterialText(IReadOnlyDictionary<string, MaterialMasterInfo> materialStatusMap, string matnr)
+    {
+        var key = NormalizeMatnr(matnr);
+        return key.Length > 0 && materialStatusMap.TryGetValue(key, out var info) ? info.Maktx : string.Empty;
     }
 
     private static string NormalizeMatnr(string value)

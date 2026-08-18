@@ -436,6 +436,57 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadAsync_SpendCascade_Shows_Material_Text_Next_To_Number()
+    {
+        // Wunsch Ingo 2026-08-18: Auf der Materialebene soll der Materialtext (MAKT-MAKTX) neben
+        // der Nummer stehen. Ohne Text bleibt es bei der Nummer allein - es wird nie ein
+        // Platzhalter erfunden. Wichtig: die Summen duerfen sich durch das Label nicht aendern.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('T1', '2025-03-01', 'L1', 'BEPRO AG', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Maktx, Menge, Netwr, LastLoadedAtUtc) VALUES ('T1', '10', 'B64880', 'WG1', 'PCBA HYBRID DENSITY 6.5...20mA 56KG/m3', '1', '100', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('T1', '20', 'B99999', 'WG1', '1', '50', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('T1', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplier = Assert.Single(state.SpendCascadeRows, node => node.Label.Contains("BEPRO AG"));
+        var group = Assert.Single(supplier.Children);
+
+        var withText = Assert.Single(group.Children, child => child.Label.StartsWith("B64880", StringComparison.Ordinal));
+        Assert.Equal("B64880 - PCBA HYBRID DENSITY 6.5...20mA 56KG/m3", withText.Label);
+        Assert.Equal(100m, withText.Total);
+
+        // Kein Text im Materialstamm: unveraenderte Anzeige, kein angehaengter Trenner.
+        var withoutText = Assert.Single(group.Children, child => child.Label.StartsWith("B99999", StringComparison.Ordinal));
+        Assert.Equal("B99999", withoutText.Label);
+
+        // Pivot-Eigenschaft bleibt erhalten, das Label aendert nur die Beschriftung.
+        Assert.Equal(150m, supplier.Total);
+        Assert.Equal(supplier.Total, group.Children.Sum(child => child.Total));
+    }
+
+    [Fact]
+    public async Task LoadAsync_SpendMatrix_Article_Rows_Show_Material_Text()
+    {
+        // Dieselbe Materialebene in der Kaskadierungsmatrix Lieferant/Jahr (dritte Ebene).
+        // Beide Sichten muessen dasselbe Label zeigen, sonst wirken sie wie verschiedene Daten.
+        await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('T2', '2025-03-01', 'L2', 'BEPRO AG Zwei', 'F', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Maktx, Menge, Netwr, LastLoadedAtUtc) VALUES ('T2', '10', 'B64336', 'WG9', 'PCBA NAT TR5 MODUL CURRENT STD COLDB Rei', '1', '200', '2026-01-01');");
+        await ExecuteAsync("INSERT INTO PurchasingEketCache (Ebeln, Ebelp, Etenr, Eindt, Menge, Wemng, LastLoadedAtUtc) VALUES ('T2', '10', '1', '2025-04-01', '1', '1', '2026-01-01');");
+
+        var filter = new PurchasingDashboardFilter(new DateTime(2025, 1, 1), new DateTime(2025, 12, 31));
+
+        var state = await _service.LoadAsync(filter);
+
+        var supplierRow = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("BEPRO AG Zwei"));
+        var groupRow = Assert.Single(supplierRow.MaterialGroups);
+        var article = Assert.Single(groupRow.Articles);
+        Assert.Equal("B64336 - PCBA NAT TR5 MODUL CURRENT STD COLDB Rei", article.Article);
+        Assert.Equal(200m, article.Total);
+    }
+
+    [Fact]
     public async Task LoadAsync_SpendCascade_Caps_Article_Level_With_Remainder_Row()
     {
         // Artikelebene ist auf 10 gedeckelt: 12 Artikel -> 10 einzeln + 1 „uebrige (2)"-Zeile,
@@ -715,6 +766,7 @@ CREATE TABLE PurchasingEkpoCache (
     MaraMatkl TEXT NOT NULL DEFAULT '',
     MaraAbc TEXT NOT NULL DEFAULT '',
     MaraXyz TEXT NOT NULL DEFAULT '',
+    Maktx TEXT NOT NULL DEFAULT '',
     Menge TEXT NOT NULL DEFAULT '0',
     Meins TEXT NOT NULL DEFAULT '',
     Netwr TEXT NOT NULL DEFAULT '0',
