@@ -891,12 +891,45 @@ insgesamt.
   Startlog. Der HTTPS-Smoketest vom Arbeitsplatz scheiterte an einem TLS-Handshake des Clients,
   nicht am Server; Port 443 ist offen und der Prozess laeuft.
 
-### Offen
+### Load gelaufen und produktiv nachgemessen 2026-08-18
 
-- **Der Load fehlt noch.** Erst ein Einkauf-Delta oder Full Load fuellt `Maktx`
-  (`Einkauf > Ideen > Einkauf-Datenservice`); der naechtliche Delta erledigt es ebenfalls. Bis
-  dahin zeigt die Materialebene unveraendert nur die Nummer. Ein Delta genuegt, weil der
-  Cache-Nachzug alle Zeilen erfasst, nicht nur die geholten Belege.
+Der Einkauf-Delta lief von `12:25:35` bis `13:15:31` (rund 50 Minuten) mit Status `Success`.
+Ergebnis in der produktiven Datenbank:
+
+| Messgroesse | Wert |
+| --- | --- |
+| EKPO-Zeilen gesamt | `238'073` |
+| Zeilen mit Materialtext | `192'115` (80.7 %) |
+| Distinkte Materialnummern | `7'329` |
+| **Materialien mit Text** | **`7'327` (100.0 %)** |
+
+Die 45'958 Zeilen ohne Text sind erklaert und kein Fehler: `45'956` davon sind gekontierte
+Bestellpositionen **ohne Materialnummer**, die per Definition keinen Materialstamm-Text haben
+koennen; genau `2` Zeilen tragen eine Materialnummer, zu der im Stamm kein Text existiert.
+
+Stichprobe des fertigen Drilldown-Labels direkt aus der Produktivdatenbank:
+
+- `B64880 - PCBA HYBRID DENSITY 6.5...20mA 56KG/m3` (BEPRO AG, `10.08.00`)
+- `B64336 - PCBA NAT TR5 MODUL CURRENT STD COLDB Rei` (BEPRO AG, `10.08.00`)
+- `C17237 - MESSWERK 005.027 1:14.29 NIRO /  NEUSIL` (HB-Feinmechanik GmbH, `40.03.00`)
+- `C37836 - MESSWERK BG 87x9 RADIAL` (HB-Feinmechanik GmbH, `40.03.00`)
+
+**Wichtig fuer die Sichtpruefung:** `IPurchasingDashboardService` ist `AddScoped`, der
+Seitenzustand haengt also am Blazor-Circuit. Eine Seite, die vor dem Delta-Ende geoeffnet wurde,
+zeigt weiterhin den alten Stand ohne Text, bis sie neu geladen wird. Das ist kein Datenfehler.
+
+### Nebenbefund: ueberlappende Delta-Laeufe
+
+`PurchasingSyncState` enthaelt vom 2026-08-18 drei Zeilen mit Status `Running`, die nie
+abgeschlossen wurden (Ids 26, 27, 28), neben zwei `Success`-Zeilen (Ids 29, 30). Zwei der
+`Running`-Zeilen haben exakt dieselbe Startzeit wie je eine `Success`-Zeile, gehoeren also zum
+selben Lauf: der Status wird pro Lauf als NEUE Zeile geschrieben statt die bestehende zu
+aktualisieren. Die Zeile von `11:33:53` hat dagegen keinen Abschluss und blieb haengen.
+Im Anwendungslog stehen dazu `SQLite Error 5: 'database is locked'`. Ursache sind mehrere
+gleichzeitig angestossene Laeufe (manuell plus Nachtlauf). Das ist bestehendes Verhalten, nicht
+Teil dieser Aenderung, aber es macht die Statusanzeige schwer lesbar und sollte eigenstaendig
+angesehen werden. Auffaellig ausserdem: der Delta laedt `176'003` Belege, praktisch den ganzen
+Bestand, und ist damit faktisch ein Full Load.
 - Fuellgrad nach dem ersten produktiven Load gegenpruefen. Die 100 % stammen aus `T76/100`.
 - Weitere Stellen zeigen die Materialnummer weiterhin ohne Text, bewusst noch nicht angefasst
   (Marcos Leitplanke „ein Punkt nach dem anderen"): Kachel `Top-Artikel`, `Liefertermin-Risiko`,

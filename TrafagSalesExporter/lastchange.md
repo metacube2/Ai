@@ -30,10 +30,22 @@ Stand: 2026-08-18
   `trafag_exporter.db.before-material-text-20260818-111501.bak` (groessengleich, 346'734'592
   Bytes). Spalte `Maktx` in der produktiven Datenbank nachgewiesen, `237'883` EKPO-Zeilen,
   `7'329` distinkte Materialien. App startet sauber (`Application started`, Production).
-- **NACHSORGE, sonst bleibt die Anzeige unveraendert:** Einmal Einkauf-Delta oder Full Load
-  laufen lassen (`Einkauf > Ideen > Einkauf-Datenservice`); der naechtliche Delta erledigt es
-  ebenfalls. Bis dahin ist `Maktx` produktiv zu `0` gefuellt und es erscheint nur die Nummer.
-  Danach den Fuellgrad gegen PROD nachmessen, die 100 % stammen aus T76/100.
+- **Delta gelaufen und nachgemessen (2026-08-18, `12:25`–`13:15`, Status `Success`):**
+  `7'327` von `7'329` Materialien tragen jetzt einen Text (**100.0 %**), das sind `192'115` von
+  `238'073` EKPO-Zeilen (80.7 %). Die restlichen `45'956` Zeilen sind gekontierte Positionen
+  **ohne Materialnummer** und koennen per Definition keinen Stammtext haben; genau `2` Zeilen
+  haben eine Nummer ohne Text im Stamm. Stichprobe aus PROD:
+  `C17237 - MESSWERK 005.027 1:14.29 NIRO /  NEUSIL`,
+  `B64880 - PCBA HYBRID DENSITY 6.5...20mA 56KG/m3`.
+- **Wenn die Texte im Browser fehlen:** Seite neu laden. `IPurchasingDashboardService` ist
+  `AddScoped`, der Seitenzustand haengt am Blazor-Circuit; eine vor dem Delta-Ende geoeffnete
+  Seite zeigt weiter den alten Stand. Betroffene Sichten: `/einkauf/spend` (Kaskadierung
+  Lieferant/Jahr, dritte Ebene) und `/einkauf/aufriss` (mehrstufiger Spend-Aufriss).
+- **Nebenbefund, nicht Teil dieser Aenderung:** `PurchasingSyncState` fuehrt vom 2026-08-18 drei
+  `Running`-Zeilen, die nie abgeschlossen wurden, und das Log zeigt
+  `SQLite Error 5: 'database is locked'`. Ursache sind ueberlappende Laeufe (manuell plus
+  Nachtlauf); der Status wird je Lauf als neue Zeile geschrieben statt aktualisiert. Der Delta
+  laedt zudem `176'003` Belege und ist damit faktisch ein Full Load (rund 50 Minuten).
 - Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtrag 2026-08-18.
 
 ## Dokumentation aufgeraeumt (Stand 2026-08-17)
