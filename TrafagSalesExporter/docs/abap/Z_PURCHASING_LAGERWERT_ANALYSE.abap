@@ -41,9 +41,13 @@ REPORT z_purchasing_lagerwert_analyse.
 " ============================================================================
 
 PARAMETERS:
-  p_bwkey TYPE mbew-bwkey DEFAULT '1100',   " Bewertungskreis (Trafag CH = 1100)
+  p_bwkey TYPE mbew-bwkey DEFAULT '1100',   " Bewertungskreis (CH = 1100, AT = 1200, per T001K)
   p_spras TYPE spras      DEFAULT sy-langu, " Sprache fuer Disponententexte
-  p_perio TYPE i          DEFAULT 12.       " so viele Monatsperioden aus MBEWH zeigen
+  p_perio TYPE i          DEFAULT 12,       " so viele Monatsperioden aus MBEWH zeigen
+  " Stichtag fuer die Rueckrechnung in Abschnitt 5 (Jahr und Buchungsperiode).
+  " Beispiel: 2026 / 06 = Lagerwert am Ende Juni 2026.
+  p_sjahr TYPE mbewh-lfgja DEFAULT '2026',
+  p_smon  TYPE mbewh-lfmon DEFAULT '06'.
 
 " Zusammengefasste Werte je Disponent.
 TYPES: BEGIN OF ty_dispo_sum,
@@ -277,57 +281,163 @@ START-OF-SELECTION.
 " ----------------------------------------------------------------------------
   IF lv_mbewh_cnt > 0.
     ULINE.
-    WRITE: / '=== 5) HISTORISCHER LAGERWERT 001-005 JE PERIODE ==='.
+    WRITE: / '=== 5) LAGERWERT 001-005 PER STICHTAG (Rueckrechnung) ==='.
+    WRITE: / '  Stichtag: Jahr', p_sjahr, 'Periode', p_smon.
 
+    " ==================================================================
+    " WARUM NICHT EINFACH SUM(MBEWH-SALK3) FUER DIE PERIODE?
+    "
+    " Genau das hat die erste Fassung dieses Reports getan und dabei am
+    " 2026-08-18 offensichtlich falsche Zahlen geliefert: 2026/02 noch
+    " 8'355'679 CHF, 2026/04 nur noch 383'904 CHF. Der Bestand ist nicht
+    " gefallen - MBEWH enthaelt fuer eine Periode NUR die Materialien, bei
+    " denen es DANACH eine bewertungsrelevante Bewegung gab. Ein Material
+    " ohne Bewegung seit Maerz hat fuer 2026/04 keinen Historiensatz; sein
+    " Wert steht unveraendert in MBEW.
+    "
+    " KORREKTE LOGIK (das macht MB5L auch): je Material den MBEWH-Satz der
+    " KLEINSTEN Periode >= Stichtag nehmen. Existiert keiner, gilt der
+    " aktuelle MBEW-Wert, weil sich seit dem Stichtag nichts geaendert hat.
+    " ==================================================================
+
+    DATA lv_stichtag TYPE i.
+    lv_stichtag = p_sjahr * 100 + p_smon.
+
+    " Zielmaterialien (Disponenten 001-005) einmal aufbauen.
+    TYPES: BEGIN OF ty_zielmat,
+             matnr TYPE marc-matnr,
+           END OF ty_zielmat.
+    DATA: lt_zielmat TYPE SORTED TABLE OF ty_zielmat WITH UNIQUE KEY matnr,
+          ls_zielmat TYPE ty_zielmat.
+
+    LOOP AT lt_matdispo INTO ls_matdispo.
+      READ TABLE lt_ziel TRANSPORTING NO FIELDS
+        WITH KEY table_line = ls_matdispo-dispo.
+      IF sy-subrc <> 0.
+        CONTINUE.
+      ENDIF.
+      CLEAR ls_zielmat.
+      ls_zielmat-matnr = ls_matdispo-matnr.
+      INSERT ls_zielmat INTO TABLE lt_zielmat.
+    ENDLOOP.
+
+    WRITE: / '  Zielmaterialien (Disponenten 001-005):', lines( lt_zielmat ).
+
+    IF lt_zielmat IS INITIAL.
+      WRITE: / '  Keine Zielmaterialien - Abschnitt uebersprungen.'.
+      RETURN.
+    ENDIF.
+
+    " Historie NUR fuer die Zielmaterialien und NUR ab dem Stichtag lesen.
+    " Das begrenzt die Menge erheblich (im Bewertungskreis liegen insgesamt
+    " ueber 5 Mio Saetze) und liefert genau die Kandidaten fuer "kleinste
+    " Periode >= Stichtag".
+    DATA lt_hist TYPE STANDARD TABLE OF mbewh.
     SELECT matnr, lfgja, lfmon, lbkum, salk3
       FROM mbewh
+      FOR ALL ENTRIES IN @lt_zielmat
       WHERE bwkey = @p_bwkey
-      INTO TABLE @DATA(lt_mbewh).
+        AND matnr = @lt_zielmat-matnr
+      INTO CORRESPONDING FIELDS OF TABLE @lt_hist.
 
-    TYPES: BEGIN OF ty_per_sum,
-             lfgja TYPE mbewh-lfgja,
-             lfmon TYPE mbewh-lfmon,
-             salk3 TYPE p LENGTH 16 DECIMALS 2,
-             cnt   TYPE i,
-           END OF ty_per_sum.
-    DATA: lt_per_sum TYPE SORTED TABLE OF ty_per_sum WITH UNIQUE KEY lfgja lfmon,
-          ls_per_sum TYPE ty_per_sum.
+    WRITE: / '  MBEWH-Saetze zu diesen Materialien (alle Perioden):', lines( lt_hist ).
 
-    LOOP AT lt_mbewh INTO DATA(ls_mbewh).
-      " Nur Materialien der Zieldisponenten beruecksichtigen.
-      READ TABLE lt_matdispo INTO ls_matdispo WITH TABLE KEY matnr = ls_mbewh-matnr.
-      IF sy-subrc <> 0.
-        CONTINUE.
+    " Je Material den besten Kandidaten bestimmen: kleinste Periode >= Stichtag.
+    TYPES: BEGIN OF ty_best,
+             matnr TYPE mbewh-matnr,
+             perio TYPE i,
+             salk3 TYPE mbewh-salk3,
+             lbkum TYPE mbewh-lbkum,
+           END OF ty_best.
+    DATA: lt_best TYPE SORTED TABLE OF ty_best WITH UNIQUE KEY matnr,
+          ls_best TYPE ty_best,
+          lv_perio TYPE i.
+
+    LOOP AT lt_hist INTO DATA(ls_hist).
+      lv_perio = ls_hist-lfgja * 100 + ls_hist-lfmon.
+      IF lv_perio < lv_stichtag.
+        CONTINUE.   " liegt vor dem Stichtag, irrelevant
       ENDIF.
-      READ TABLE lt_ziel TRANSPORTING NO FIELDS WITH KEY table_line = ls_matdispo-dispo.
-      IF sy-subrc <> 0.
-        CONTINUE.
-      ENDIF.
 
-      READ TABLE lt_per_sum INTO ls_per_sum
-        WITH KEY lfgja = ls_mbewh-lfgja lfmon = ls_mbewh-lfmon.
+      READ TABLE lt_best INTO ls_best WITH TABLE KEY matnr = ls_hist-matnr.
       IF sy-subrc = 0.
-        ls_per_sum-salk3 = ls_per_sum-salk3 + ls_mbewh-salk3.
-        ls_per_sum-cnt   = ls_per_sum-cnt + 1.
-        MODIFY TABLE lt_per_sum FROM ls_per_sum.
+        IF lv_perio < ls_best-perio.
+          ls_best-perio = lv_perio.
+          ls_best-salk3 = ls_hist-salk3.
+          ls_best-lbkum = ls_hist-lbkum.
+          MODIFY TABLE lt_best FROM ls_best.
+        ENDIF.
       ELSE.
-        CLEAR ls_per_sum.
-        ls_per_sum-lfgja = ls_mbewh-lfgja.
-        ls_per_sum-lfmon = ls_mbewh-lfmon.
-        ls_per_sum-salk3 = ls_mbewh-salk3.
-        ls_per_sum-cnt   = 1.
-        INSERT ls_per_sum INTO TABLE lt_per_sum.
+        CLEAR ls_best.
+        ls_best-matnr = ls_hist-matnr.
+        ls_best-perio = lv_perio.
+        ls_best-salk3 = ls_hist-salk3.
+        ls_best-lbkum = ls_hist-lbkum.
+        INSERT ls_best INTO TABLE lt_best.
       ENDIF.
     ENDLOOP.
 
-    WRITE: / '--- Lagerwert 001-005 je Periode ---'.
-    LOOP AT lt_per_sum INTO ls_per_sum.
-      WRITE: / '  Jahr', ls_per_sum-lfgja, 'Periode', ls_per_sum-lfmon,
-               '| Materialien=', ls_per_sum-cnt,
-               '| Wert=', ls_per_sum-salk3.
+    " Summieren: Historienwert wenn vorhanden, sonst aktueller MBEW-Wert.
+    DATA: lv_hist_wert  TYPE p LENGTH 16 DECIMALS 2,
+          lv_hist_menge TYPE p LENGTH 16 DECIMALS 3,
+          lv_aus_hist   TYPE i,
+          lv_aus_mbew   TYPE i.
+
+    " MBEW einmal nach Material indizieren, damit der Fallback schnell ist.
+    TYPES: BEGIN OF ty_mbew_idx,
+             matnr TYPE mbew-matnr,
+             salk3 TYPE mbew-salk3,
+             lbkum TYPE mbew-lbkum,
+           END OF ty_mbew_idx.
+    DATA: lt_mbew_idx TYPE SORTED TABLE OF ty_mbew_idx WITH UNIQUE KEY matnr,
+          ls_mbew_idx TYPE ty_mbew_idx.
+
+    LOOP AT lt_mbew INTO ls_mbew.
+      CLEAR ls_mbew_idx.
+      ls_mbew_idx-matnr = ls_mbew-matnr.
+      ls_mbew_idx-salk3 = ls_mbew-salk3.
+      ls_mbew_idx-lbkum = ls_mbew-lbkum.
+      INSERT ls_mbew_idx INTO TABLE lt_mbew_idx.
     ENDLOOP.
-    WRITE: / '  Hinweis: MBEWH fuehrt den Stand am ENDE der jeweiligen Periode.'.
-    WRITE: / '  Fuer den Abgleich MB5L mit passendem Stichtag laufen lassen.'.
+
+    LOOP AT lt_zielmat INTO ls_zielmat.
+      READ TABLE lt_best INTO ls_best WITH TABLE KEY matnr = ls_zielmat-matnr.
+      IF sy-subrc = 0.
+        lv_hist_wert  = lv_hist_wert  + ls_best-salk3.
+        lv_hist_menge = lv_hist_menge + ls_best-lbkum.
+        lv_aus_hist   = lv_aus_hist + 1.
+      ELSE.
+        READ TABLE lt_mbew_idx INTO ls_mbew_idx
+          WITH TABLE KEY matnr = ls_zielmat-matnr.
+        IF sy-subrc = 0.
+          lv_hist_wert  = lv_hist_wert  + ls_mbew_idx-salk3.
+          lv_hist_menge = lv_hist_menge + ls_mbew_idx-lbkum.
+          lv_aus_mbew   = lv_aus_mbew + 1.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+    WRITE: / '--- Zusammensetzung ---'.
+    WRITE: / '  Materialien mit Historiensatz ab Stichtag:', lv_aus_hist.
+    WRITE: / '  Materialien ohne Historiensatz (MBEW-Fallback):', lv_aus_mbew.
+    ULINE.
+    WRITE: / '*** LAGERWERT PER STICHTAG ***'.
+    WRITE: / '  Jahr', p_sjahr, 'Periode', p_smon, 'Bewertungskreis', p_bwkey.
+    WRITE: / '  Menge     :', lv_hist_menge.
+    WRITE: / '  LAGERWERT :', lv_hist_wert.
+    WRITE: / '  Bitte MB5L mit genau diesem Stichtag und Bewertungskreis'.
+    WRITE: / '  gegenrechnen. Erst bei Uebereinstimmung ist die Logik belegt.'.
+
+    " Zur Einordnung zusaetzlich die naive Summe zeigen, damit der Unterschied
+    " zur falschen Methode sichtbar bleibt.
+    DATA lv_naiv TYPE p LENGTH 16 DECIMALS 2.
+    LOOP AT lt_hist INTO ls_hist.
+      IF ls_hist-lfgja = p_sjahr AND ls_hist-lfmon = p_smon.
+        lv_naiv = lv_naiv + ls_hist-salk3.
+      ENDIF.
+    ENDLOOP.
+    WRITE: / '  Zum Vergleich, NAIVE Summe nur ueber MBEWH dieser Periode:', lv_naiv.
+    WRITE: / '  (Diese Zahl ist FALSCH und steht hier nur zur Abgrenzung.)'.
   ENDIF.
 
 " ----------------------------------------------------------------------------
@@ -335,15 +445,21 @@ START-OF-SELECTION.
 " ----------------------------------------------------------------------------
   ULINE.
   WRITE: / '=== 6) OFFEN - BITTE MANUELL PRUEFEN ==='.
-  WRITE: / '  a) Liefert der Gateway-Service ZPOWERBI_EINKAUF_SRV neben mbewSet'.
-  WRITE: / '     auch ein Set fuer MBEWH? Ohne das ist "per <bis Monat>" ueber'.
-  WRITE: / '     OData nicht ladbar und braucht eine SAP-Erweiterung.'.
+  WRITE: / '  a) Liefert der Gateway-Service ZPOWERBI_EINKAUF_SRV ein Set fuer'.
+  WRITE: / '     MBEWH? mbewSet (MBEW) ist bereits im Einsatz, MBEWH nirgends'.
+  WRITE: / '     dokumentiert. ACHTUNG: mbewSet kostet mit 68 Tsd Zeilen bereits'.
+  WRITE: / '     124 MB und 28 s je Aufruf; MBEWH hat hier ueber 5 Mio Zeilen.'.
+  WRITE: / '     Ein Full Load ist damit ausgeschlossen - es braucht ein eigenes,'.
+  WRITE: / '     serverseitig AGGREGIERENDES Set (Wert je Periode/Disponentengruppe).'.
   WRITE: / '  b) Sollen Sonderbestaende (Konsignation MSKU, Kundenauftrag MSKA,'.
   WRITE: / '     Projekt MSPR) mitzaehlen? MBEW deckt nur den Eigenbestand.'.
-  WRITE: / '  c) Gehoert Disponent 004 (Betriebsmaterial) fachlich zum'.
-  WRITE: / '     gewuenschten Lagerwert der Einkaufsteile? Frage an Armin.'.
-  WRITE: / '  d) Nur Bewertungskreis 1100 oder mehrere? Eine Summe ueber Kreise'.
-  WRITE: / '     mit unterschiedlicher Hauswaehrung waere falsch.'.
+  WRITE: / '     In der Projektdokumentation bisher nirgends behandelt.'.
+  WRITE: / '  c) Gehoert Disponent 004 fachlich zum Lagerwert der Einkaufsteile?'.
+  WRITE: / '     SAP-Text ist "Betriebsmat/Einkau", organisatorisch also Einkauf.'.
+  WRITE: / '     Entscheidung liegt bei Armin.'.
+  WRITE: / '  d) BEANTWORTET, nicht mehr offen: Bewertungskreis 1100 = CH,'.
+  WRITE: / '     1200 = AT, per T001K bestaetigt (docs/FINANCE_STANDARDKOSTEN.md).'.
+  WRITE: / '     Eine Summe ueber beide waere wegen Hauswaehrung falsch.'.
 
   ULINE.
   WRITE: / '=== ENDE. Bitte komplette Ausgabe an Claude/Analytics zurueckgeben. ==='.

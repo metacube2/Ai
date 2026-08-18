@@ -35,6 +35,66 @@ gemessen, dass `MBEW.STPRS` bei `3'725` von `3'727` Saetzen gefuellt ist und `SA
 `2'762` Saetzen. Bestandswerte sind also grundsaetzlich vorhanden. Im Ideenbereich steht
 ausserdem `Working Capital` als unausgearbeitete Idee.
 
+## 2a. Messung am 2026-08-18 (T76/100, Bewertungskreis 1100)
+
+Gelaufen mit `docs/abap/Z_PURCHASING_LAGERWERT_ANALYSE.abap`.
+
+**Armins Abgrenzung ist stimmig.** Alle fuenf Disponenten existieren, und ihre Bezeichnungen
+bestaetigen die Zuordnung zum Einkauf:
+
+| Disponent | Bezeichnung | Materialien | Lagerwert CHF |
+| --- | --- | --- | --- |
+| `001` | rot / Einkauf | 2'810 | 4'041'124.80 |
+| `002` | gun / Einkauf | 30 | 302'246.37 |
+| `003` | mso / Einkauf | 3'724 | 4'301'097.56 |
+| `004` | Betriebsmat/Einkau | 686 | 322'931.33 |
+| `005` | wid / Einkauf | 11 | 15'538.72 |
+| **Summe** | | **7'261** | **8'982'938.78** |
+
+Das ist die **Zielzahl fuer den MB5L-Abgleich** (Stichtag heute, Bewertungskreis 1100).
+
+Weitere Messwerte:
+
+- `65'549` MARC-Saetze im Werk 1100, `65'498` MBEW-Saetze. Es gibt **89 Disponenten** insgesamt;
+  die grosse Restmenge liegt in Produktions- und Sensorik-Dispos (`A99 PPD / Status 99` allein
+  26'750 Materialien) sowie 2'172 Materialien ohne Disponent.
+- **Kein bewertetes Material ohne MARC-Satz** (0 Zeilen, 0 CHF). Der Join ist also lueckenlos.
+- Preissteuerung: `65'493` mal `S` (Standardpreis), **`5` mal `V`** (gleitender Durchschnitt).
+  Die fuenf `V`-Materialien genuegen, um `SALK3` verbindlich zu machen.
+- `MBEWH` ist vorhanden und umfangreich: **`5'371'798` Saetze** allein im Bewertungskreis 1100,
+  mit Historie zurueck bis Periode 2000/12.
+
+## 2b. FALLSTRICK: MBEWH darf nicht einfach summiert werden
+
+Die Messung hat einen Fehler in der naheliegenden Methode aufgedeckt. Abschnitt 5 des Reports
+summierte fuer jede Periode schlicht die vorhandenen `MBEWH`-Saetze. Das ergibt:
+
+| Periode | Materialien | Summe SALK3 |
+| --- | --- | --- |
+| 2026/01 | 6'814 | 8'472'199.14 |
+| 2026/02 | 6'817 | 8'355'679.91 |
+| 2026/03 | 1'432 | 5'914'193.63 |
+| 2026/04 | **74** | **383'904.48** |
+| 2026/05 | 136 | 681'062.31 |
+| 2026/06 | 652 | 3'070'209.07 |
+| 2026/07 | **60** | **285'762.03** |
+
+Der Bestand ist selbstverstaendlich nicht von 8,4 Millionen auf 0,29 Millionen gefallen.
+**`MBEWH` enthaelt fuer eine Periode nur die Materialien, bei denen es danach eine
+bewertungsrelevante Bewegung gab.** Ein Material, das seit Maerz nicht bewegt wurde, hat fuer
+2026/04 keinen Historiensatz; sein Wert steht unveraendert in `MBEW`. Je juenger die Periode,
+desto grosser die Luecke — und in den Altjahren fallen einzelne Perioden aus demselben Grund ab
+(z. B. 2025/07 nur 1'787 Materialien, 2024/03 nur 1'858).
+
+**Korrekte Logik fuer einen Stichtag P** (das ist auch, was MB5L tut): je Material den
+`MBEWH`-Satz der **kleinsten Periode >= P** nehmen; existiert keiner, gilt der aktuelle
+`MBEW`-Wert. Eine reine Summe ueber `MBEWH` ist systematisch zu niedrig und waere als
+Cockpit-Kachel ein Zahlenfehler.
+
+Der Report ist entsprechend korrigiert und rechnet jetzt mit dieser Rueckrechnung, mit einem
+waehlbaren Stichtag. Die Zahlen der Tabelle oben sind damit **ueberholt** und nur noch als Beleg
+fuer den Fallstrick aufgefuehrt.
+
 ## 3. Der fachliche Knackpunkt: „per «bis Monat»"
 
 Das ist der Teil, an dem die Umsetzung haengt, und er ist nicht offensichtlich.
@@ -58,6 +118,37 @@ Daraus folgt eine Verzweigung, die vor der Umsetzung entschieden werden muss:
 **Nicht geraten:** Ob `MBEWH` ueber `ZPOWERBI_EINKAUF_SRV` erreichbar ist, welche Felder das
 `mbewSet` heute fuehrt und ob die Historie ueberhaupt gepflegt wird, ist ungeprueft. Nach
 Vorrangregel 5 wird das gemessen, nicht angenommen. Dafuer gibt es den Report in Abschnitt 6.
+
+## 3a. Was zu den offenen Punkten schon dokumentiert ist
+
+Geprueft am 2026-08-18 quer durch `docs/`:
+
+| Punkt | Schon beschrieben? | Wo und was |
+| --- | --- | --- |
+| **Bewertungskreis** | **Ja, belegt** | `docs/FINANCE_STANDARDKOSTEN.md`: „MBEW ist je Material **und** Bewertungskreis verschluesselt (CH = 1100, AT = 1200, per `T001K` bestaetigt)". Damit ist Frage (d) beantwortet: `1100` ist CH, `1200` ist AT, und eine Summe ueber beide waere wegen unterschiedlicher Hauswaehrung falsch. |
+| **`mbewSet` im Gateway** | **Ja, im Einsatz** | `Services/SapGatewayStandardCostReader.cs` liest `mbewSet` produktiv fuer die Gruppenmarge, mit `$filter=Bwkey eq '...'`. Dokumentiert in `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md`. |
+| **Kosten dieses Reads** | **Ja, gemessen** | Ebendort im Code: `mbewSet` ignoriert `$top`, `$skip` und `$orderby` und liefert bei jeder Anfrage den vollen Bestand — am Produktivsystem 2026-07-28 gemessen: **`68'543` Zeilen, 124 MB, rund 28 Sekunden**. |
+| **`MBEWH` im Gateway** | **Nein** | Nirgends erwaehnt. Ob ein Historien-Set existiert, ist offen. |
+| **Sonderbestaende** (`MSKU`, `MSKA`, `MSPR`) | **Nein** | Kommen in der gesamten Dokumentation nicht vor. Vollstaendig offen. |
+| **Disponent `004` Betriebsmaterial** | **Nein** | Nicht dokumentiert. Die Messung liefert aber den SAP-Text `Betriebsmat/Einkau`, der Disponent gehoert also organisatorisch zum Einkauf. Ob er fachlich in den Lagerwert soll, bleibt Armins Entscheidung. |
+| **Preiseinheit `PEINH`** | **Ja, als Warnung** | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md`: „`PEINH` ist kritisch: der Preis gilt pro X Stueck — wird das uebersehen, liegt die Marge um Faktor 10/100 daneben". Fuer den Lagerwert entfaellt das Problem, weil `SALK3` ein absoluter Wert ohne Preiseinheit ist. Ein weiteres Argument gegen `LBKUM * STPRS`. |
+
+## 3b. Architektur-Folgerung: MBEWH ist nicht ladbar wie MAKT oder MARA
+
+Das ist die wichtigste technische Konsequenz aus 2a und 3a.
+
+Der bisherige Weg fuer Stammdaten war „ein ungepagter Request, alles in den Cache" — so laufen
+`MARA001Set`, `MAKTSet` und `mbewSet`. Fuer `MBEWH` funktioniert das **nicht**:
+
+- `mbewSet` kostet mit `68'543` Zeilen bereits **124 MB und 28 Sekunden** je Aufruf.
+- `MBEWH` hat im Bewertungskreis 1100 allein **`5'371'798` Zeilen**, also rund das
+  **78-fache**. Hochgerechnet waeren das mehrere Gigabyte je Aufruf.
+
+Ein Full-Load-Ansatz ist damit ausgeschlossen. Der richtige Weg ist ein **eigenes, serverseitig
+aggregierendes EntitySet**: SAP rechnet den Lagerwert je Bewertungskreis, Periode und
+Disponentengruppe und liefert wenige Zeilen statt Millionen. Die Rueckrechnungslogik aus 2b
+gehoert dann ebenfalls nach ABAP, wo sie neben den Daten liegt, statt in C# ueber einen
+Millionen-Zeilen-Cache. Muster dafuer: `docs/abap/ZSTR_MAT_XYZ_GET_ENTITYSET.abap`.
 
 ## 4. Weitere Punkte, die vor der Umsetzung zu klaeren sind
 
@@ -97,6 +188,20 @@ Vorrangregel 5 wird das gemessen, nicht angenommen. Dafuer gibt es den Report in
 4. **Erst danach umsetzen.** Bei Variante B zuerst die SAP-Erweiterung fuer `MBEWH`, dann Cache,
    dann Kachel. Nach Marcos Leitplanke „ein Punkt nach dem anderen" und erst nach Abnahme des
    laufenden Spend-Themas.
+
+## 5a. Beantwortete und noch offene Fragen im Ueberblick
+
+| Frage | Stand |
+| --- | --- |
+| Existieren die Disponenten `001`–`005`? | **Ja**, alle fuenf, zusammen 7'261 Materialien, alle mit „Einkauf" im Namen. |
+| Ist `MBEWH` vorhanden? | **Ja**, 5'371'798 Saetze zurueck bis 2000. |
+| Ist `SALK3` oder `LBKUM * STPRS` zu nehmen? | **`SALK3`**, belegt durch 5 `V`-Materialien und die dokumentierte `PEINH`-Falle. |
+| Welcher Bewertungskreis? | **Beantwortet**: `1100` = CH, `1200` = AT (`T001K`). Nicht summieren. |
+| Wie rechnet man einen Stichtag? | **Beantwortet und korrigiert**: kleinste `MBEWH`-Periode >= Stichtag, sonst `MBEW`. Nicht naiv summieren. |
+| Kann man `MBEWH` per OData laden? | **Nein**, siehe 3b. Braucht ein aggregierendes EntitySet. |
+| Stimmt die Zahl mit MB5L? | **Offen** — der Abgleich ist der naechste Schritt. |
+| Sonderbestaende einbeziehen? | **Offen**, Frage an Armin, nirgends dokumentiert. |
+| Disponent `004` Betriebsmaterial einbeziehen? | **Offen**, Frage an Armin. |
 
 ## 6. Messwerkzeug
 
