@@ -412,22 +412,32 @@ VALUES ($Matnr, $MaraMatkl, $MaraAbc, $MaraXyz, $Maktx, $Mstae);";
                 ["$Mstae"] = ResolveMaterialStatus(materialStatusMap, matnr)
             }, cancellationToken);
 
+        // Der Materialtext wird nur angefasst, wenn ueberhaupt einer geladen wurde. Sonst wuerde
+        // ein ausgefallener MAKTSet-Read (der bewusst nicht mehr wirft, siehe
+        // LoadMaterialTextMapAsync) alle bereits vorhandenen Texte flaechendeckend leeren -
+        // dieselbe Schutzlogik wie oben fuer die Stammdaten insgesamt.
+        var hasMaterialTexts = materialStatusMap.Values.Any(info => info.Maktx.Length > 0);
+        var textAssignment = hasMaterialTexts
+            ? "\n    Maktx     = (SELECT s.Maktx     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),"
+            : string.Empty;
+        var textCondition = hasMaterialTexts
+            ? "\n        OR s.Maktx     <> COALESCE(PurchasingEkpoCache.Maktx, '')"
+            : string.Empty;
+
         await using var updateCommand = conn.CreateCommand();
         updateCommand.Transaction = transaction;
         updateCommand.CommandText = @"
 UPDATE PurchasingEkpoCache
 SET MaraMatkl = (SELECT s.MaraMatkl FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
     MaraAbc   = (SELECT s.MaraAbc   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
-    MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
-    Maktx     = (SELECT s.Maktx     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr),
+    MaraXyz   = (SELECT s.MaraXyz   FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)," + textAssignment + @"
     Mstae     = (SELECT s.Mstae     FROM PurchasingMaterialStaging s WHERE s.Matnr = PurchasingEkpoCache.Matnr)
 WHERE EXISTS (
     SELECT 1 FROM PurchasingMaterialStaging s
     WHERE s.Matnr = PurchasingEkpoCache.Matnr
       AND (s.MaraMatkl <> COALESCE(PurchasingEkpoCache.MaraMatkl, '')
         OR s.MaraAbc   <> COALESCE(PurchasingEkpoCache.MaraAbc, '')
-        OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')
-        OR s.Maktx     <> COALESCE(PurchasingEkpoCache.Maktx, '')
+        OR s.MaraXyz   <> COALESCE(PurchasingEkpoCache.MaraXyz, '')" + textCondition + @"
         OR s.Mstae     <> COALESCE(PurchasingEkpoCache.Mstae, '')));";
         return await updateCommand.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -524,15 +534,39 @@ WHERE EXISTS (
     /// </summary>
     private async Task<Dictionary<string, string>> LoadMaterialTextMapAsync(HttpClient client, string baseUrl, CancellationToken cancellationToken)
     {
+        // BEWUSST NICHT WERFEND, anders als die uebrigen Reads. Der Materialtext ist ein reines
+        // Anzeigefeld; ein Problem daran darf den Einkauf-Lauf nicht abbrechen. Genau dieser Fall
+        // hat schon einmal zwei Wochen Datenstillstand gekostet: Am 2026-07-02 lief der Full Load
+        // in einen MARA001Set-404 und brach ab, BEVOR er LFA1 laden konnte - bis zum 2026-07-17
+        // blieb dadurch der Stand vom 07.06. aktiv (siehe Nachtrag 2026-07-17 in
+        // docs/PURCHASING_DASHBOARD_2026-06-05.md). Faellt MAKTSet aus, laeuft der Rest weiter und
+        // die Materialebene zeigt so lange nur die Nummer.
         var url = $"{baseUrl}MAKTSet?$format=json&$select={Uri.EscapeDataString("Matnr,Spras,Maktx")}";
-        using var response = await client.GetAsync(url, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"SAP OData MAKTSet fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) URL={url} Antwort={TrimForLog(error)}");
-        }
+            using var response = await client.GetAsync(url, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                await _logService.WriteAsync(
+                    "Purchasing",
+                    "Materialtexte konnten nicht geladen werden - Lauf geht ohne Text weiter",
+                    "Warning",
+                    details: $"MAKTSet {(int)response.StatusCode} {response.ReasonPhrase} URL={url} Antwort={TrimForLog(error)}");
+                return [];
+            }
 
-        return SelectMaterialTexts(ParseRows(await response.Content.ReadAsStringAsync(cancellationToken)));
+            return SelectMaterialTexts(ParseRows(await response.Content.ReadAsStringAsync(cancellationToken)));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await _logService.WriteAsync(
+                "Purchasing",
+                "Materialtexte konnten nicht geladen werden - Lauf geht ohne Text weiter",
+                "Warning",
+                details: $"MAKTSet URL={url} Fehler={ex.Message}");
+            return [];
+        }
     }
 
     /// <summary>

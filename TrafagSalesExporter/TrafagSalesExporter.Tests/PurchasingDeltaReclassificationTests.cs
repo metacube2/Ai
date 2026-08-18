@@ -99,6 +99,23 @@ CREATE TABLE PurchasingEkpoCache (
     }
 
     [Fact]
+    public async Task ApplyMaterialMaster_Keeps_Existing_Text_When_Text_Source_Failed()
+    {
+        // Schutz gegen den teuren Fehlerfall: MAKTSet ist bewusst nicht mehr werfend, damit ein
+        // Ausfall den Einkauf-Lauf nicht abbricht. Dann darf die leere Textmenge aber auch nicht
+        // alle vorhandenen Texte leerschreiben. Hier ist die Warengruppe da, der Text fehlt.
+        Execute("INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, Maktx) VALUES ('ALT9', '10', 'B64880', 'Vorhandener Text');");
+
+        var updated = await ApplyAsync(
+            statusMap: new() { ["B64880"] = new PurchasingDataRefreshService.MaterialMasterInfo("", "10.08.00") },
+            classificationMap: []);
+
+        Assert.Equal(1, updated);
+        Assert.Equal("10.08.00", ReadSingle("MaraMatkl"));
+        Assert.Equal("Vorhandener Text", ReadSingle("Maktx"));
+    }
+
+    [Fact]
     public async Task ApplyMaterialMaster_Reports_Zero_When_Text_Already_Current()
     {
         // Der Text allein darf keinen Dauerschreiber ausloesen: steht er bereits richtig im Cache,
