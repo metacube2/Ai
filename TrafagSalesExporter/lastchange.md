@@ -2,6 +2,27 @@
 
 Stand: 2026-08-18
 
+## Lagerwert der Einkaufsteile analysiert 2026-08-18 (NUR ANALYSE, kein Code)
+
+- **Wunsch Armin:** Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie
+  MB5L, abgegrenzt auf die Disponenten `001`–`005`. **Nicht umgesetzt**, bewusst.
+- **Die Zahl:** heute **CHF 8'982'938.78** ueber `7'261` Materialien, das sind 82 % des
+  gesamten Bewertungskreises (`CHF 10'937'376.40`, 65'498 Materialien).
+- Alle fuenf Disponenten existieren und tragen „Einkauf" im Namen, Armins Abgrenzung ist
+  stimmig. `MBEWH` reicht bis 2000 zurueck.
+- **Drei Fallstricke dokumentiert.** `MBEWH` darf nicht je Periode summiert werden (naiv fehlten
+  fuer 2026/06 rund 5,9 Mio); dieser Fehler faellt bei ALTEN Stichtagen nicht auf (0,08 %
+  Abweichung gegenueber 66 % bei jungen), Abnahme deshalb zwingend mit jungem Stichtag; und
+  `MBEWH` ist mit 5,4 Mio Zeilen nicht ueber OData ladbar, es braucht ein serverseitig
+  aggregierendes EntitySet.
+- **MB5L kann keinen freien Stichtag** — belegt ueber die Schalter `AKSALDO`/`VMSALDO`/`VJSALDO`
+  des Programms `RM07MBST`. Fuer beliebige Monate waere `MB5B` die Referenz.
+- Zwei read-only ABAP-Reports angelegt, beide ermitteln Programm- und Feldnamen aus dem System
+  statt sie anzunehmen: `docs/abap/Z_PURCHASING_LAGERWERT_ANALYSE.abap` und
+  `docs/abap/Z_PURCHASING_MB5L_ABGLEICH.abap` (ruft MB5L per `SUBMIT` auf und vergleicht).
+- **Offen:** MB5L-Abgleich und drei Fachfragen an Armin (Disponent `004`, Sonderbestaende, ob
+  wirklich jeder Monat gebraucht wird). Details und Einstieg: `docs/EINKAUF_LAGERWERT_2026-08-18.md`.
+
 ## Materialtext im Einkauf-Spend-Drilldown 2026-08-18 (PRODUKTIV)
 
 - **Was sichtbar wird:** Auf der Materialebene des Spend-Drilldowns steht jetzt
