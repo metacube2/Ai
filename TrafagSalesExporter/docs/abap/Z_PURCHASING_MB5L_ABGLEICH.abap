@@ -148,13 +148,20 @@ START-OF-SELECTION.
   WRITE: / '  Bewertung anhand der Feldnamen und -texte oben. Wo unsicher, ist'.
   WRITE: / '  das gekennzeichnet - dann gilt der Text aus 2b, nicht diese Zeile.'.
   WRITE: / ''.
+  WRITE: / '  KRITISCH, live bestaetigt am 2026-08-19 ueber den Textpool:'.
+  WRITE: / '   MATLINES "Materialeinzelzeilen anzeigen" - OHNE dieses Kennzeichen'.
+  WRITE: / '            liefert MB5L die FI-Kontenabgleichsansicht (Felder BUPER/'.
+  WRITE: / '            BUKRS/BUTXT/KONTS/TXT50, keine Materialzeile, kein SALK3).'.
+  WRITE: / '            MUSS auf X stehen, sonst ist kein Materialvergleich'.
+  WRITE: / '            moeglich. Fruehere Annahme "begrenzt Materialzeilen" war'.
+  WRITE: / '            falsch und ist hiermit korrigiert.'.
+  WRITE: / '   KEINZEL  Text ist "nur Bewertungskreisebene", NICHT "unterdrueckt'.
+  WRITE: / '            Einzelposten" wie zuvor angenommen. Wirkung auf den'.
+  WRITE: / '            Summenvergleich noch ungeklaert, erst nach dem ersten'.
+  WRITE: / '            Lauf mit MATLINES = X beurteilen.'.
   WRITE: / '  HOCH - veraendert die Grundmenge oder zaehlt doppelt:'.
   WRITE: / '   SUMMEN   Summenzeilen zusaetzlich in der Ausgabe -> beim'.
   WRITE: / '            Aufsummieren aller Zeilen wird doppelt gezaehlt.'.
-  WRITE: / '   KEINZEL  unterdrueckt Einzelposten -> es bleiben nur Summen'.
-  WRITE: / '            uebrig, die Materialsumme waere dann nicht bildbar.'.
-  WRITE: / '   MATLINES begrenzt die Zahl der Materialzeilen -> die Liste wird'.
-  WRITE: / '            abgeschnitten und die Summe ist zu niedrig.'.
   WRITE: / '   NEGATIV  schraenkt auf negative Bestaende ein -> nur ein'.
   WRITE: / '            Bruchteil der Materialien.'.
   WRITE: / '   VMSALDO  Vormonatssaldo als zusaetzliche Wertspalte.'.
@@ -312,6 +319,149 @@ START-OF-SELECTION.
   ENDIF.
 
 " ----------------------------------------------------------------------------
+" 3c) Buchungskreis zum Bewertungskreis (fuer den manuellen MB5L-Lauf)
+" ----------------------------------------------------------------------------
+" Meldung M7375 sagt: Eingrenzungen unterhalb der Buchungskreisebene
+" verfaelschen den Abgleich gegen das FI-Bestandskonto. Wer MB5L von Hand
+" laufen laesst, sollte deshalb wissen, welcher Buchungskreis zu diesem
+" Bewertungskreis gehoert - statt ihn zu raten.
+  ULINE.
+  WRITE: / '=== 3c) BUCHUNGSKREIS ZUM BEWERTUNGSKREIS (aus T001K) ==='.
+
+  SELECT bwkey, bukrs FROM t001k
+    WHERE bwkey = @p_bwkey
+    INTO TABLE @DATA(lt_t001k).
+
+  DATA: lv_bukrs     TYPE t001k-bukrs,
+        lr_bwkey     TYPE RANGE OF t001k-bwkey,
+        lv_sum_bukrs TYPE p LENGTH 16 DECIMALS 2.
+
+  IF lt_t001k IS INITIAL.
+    WRITE: / '  Kein Eintrag in T001K zu Bewertungskreis', p_bwkey.
+  ELSE.
+    LOOP AT lt_t001k INTO DATA(ls_t001k).
+      WRITE: / '  BWKEY', ls_t001k-bwkey, '-> BUKRS', ls_t001k-bukrs.
+      lv_bukrs = ls_t001k-bukrs.
+    ENDLOOP.
+
+    " GEGENRICHTUNG - entscheidet, ob eine Eingrenzung auf den Buchungskreis
+    " dieselbe Materialmenge trifft wie unsere Eingrenzung auf den
+    " Bewertungskreis. Nur wenn genau EIN Bewertungskreis am Buchungskreis
+    " haengt, sind beide Wege gleichwertig und die Summen vergleichbar.
+    SELECT bwkey FROM t001k
+      WHERE bukrs = @lv_bukrs
+      INTO TABLE @DATA(lt_bwk_all).
+
+    WRITE: / '  Bewertungskreise am Buchungskreis', lv_bukrs, ':', lines( lt_bwk_all ).
+    LOOP AT lt_bwk_all INTO DATA(ls_bwk_all).
+      WRITE: / '    ', ls_bwk_all-bwkey.
+      APPEND VALUE #( sign = 'I' option = 'EQ' low = ls_bwk_all-bwkey ) TO lr_bwkey.
+    ENDLOOP.
+
+    IF lines( lt_bwk_all ) = 1.
+      WRITE: / '  GLEICHWERTIG: Genau ein Bewertungskreis am Buchungskreis.'.
+      WRITE: / '  In MB5L darf deshalb der BUCHUNGSKREIS eingegrenzt werden'.
+      WRITE: / '  statt des Bewertungskreises - gleiche Materialmenge, aber'.
+      WRITE: / '  ohne Meldung M7375, weil das die erlaubte Ebene ist.'.
+    ELSE.
+      SELECT SUM( salk3 ) FROM mbew
+        WHERE bwkey IN @lr_bwkey
+        INTO @lv_sum_bukrs.
+
+      WRITE: / '  ACHTUNG: MEHRERE Bewertungskreise am selben Buchungskreis.'.
+      WRITE: / '  Eine Eingrenzung auf den Buchungskreis trifft dann MEHR'.
+      WRITE: / '  Material als unsere Rechnung auf', p_bwkey, 'allein.'.
+      WRITE: / '  Vergleichswert ueber ALLE diese Bewertungskreise:', lv_sum_bukrs.
+      WRITE: / '  Diesen Wert gegen MB5L stellen, nicht die Summe aus Abschnitt 3.'.
+    ENDIF.
+  ENDIF.
+
+" ----------------------------------------------------------------------------
+" 3d) Welche ALV-Technik nutzt RM07MBST wirklich
+" ----------------------------------------------------------------------------
+" WARUM DIESER ABSCHNITT: Der Lauf am 2026-08-19 lieferte trotz MATLINES = X
+" nur 2 Zeilen mit den Feldern BUPER/BUKRS/BUTXT/KONTS/TXT50 - das ist der
+" KOPF einer Liste (Sachkonto-Ebene), nicht die Materialebene.
+"
+" Verdacht: RM07MBST gibt eine hierarchisch-sequenzielle Liste aus (Kopf =
+" Sachkonto, Positionen = Materialien). cl_salv_bs_runtime_info greift dabei
+" nur EINE Tabelle ab, naemlich den Kopf. Die Materialzeilen kommen so nie an.
+"
+" Das ist eine Hypothese. Statt sie zu glauben, wird sie hier am Quelltext
+" GEPRUEFT: alle Includes des Programms werden nach ALV-Aufrufen durchsucht.
+" Rein lesend.
+  ULINE.
+  WRITE: / '=== 3d) ALV-TECHNIK VON', lv_prog, '(am Quelltext geprueft) ==='.
+
+  DATA: lt_incl TYPE TABLE OF progname,
+        lt_src  TYPE TABLE OF string,
+        lv_up   TYPE string,
+        lv_hits TYPE i.
+
+  " Alle Includes einsammeln; der ALV-Aufruf steckt selten im Hauptprogramm.
+  CALL FUNCTION 'RS_GET_ALL_INCLUDES'
+    EXPORTING
+      program      = lv_prog
+    TABLES
+      includetab   = lt_incl
+    EXCEPTIONS
+      not_existent = 1
+      no_program   = 2
+      OTHERS       = 3.
+
+  IF sy-subrc <> 0.
+    WRITE: / '  Includes nicht lesbar (sy-subrc =', sy-subrc, '), nur Hauptprogramm.'.
+    CLEAR lt_incl.
+  ELSE.
+    WRITE: / '  Includes gefunden:', lines( lt_incl ).
+  ENDIF.
+
+  " Das Hauptprogramm gehoert mit in die Suche.
+  APPEND lv_prog TO lt_incl.
+
+  LOOP AT lt_incl INTO DATA(lv_inc).
+    CLEAR lt_src.
+    READ REPORT lv_inc INTO lt_src.
+    IF sy-subrc <> 0.
+      CONTINUE.
+    ENDIF.
+
+    LOOP AT lt_src INTO DATA(ls_src).
+      lv_up = ls_src.
+      TRANSLATE lv_up TO UPPER CASE.
+
+      " Kommentarzeilen ueberspringen, sonst melden Doku-Zeilen falsche Treffer.
+      IF lv_up CS '*' AND lv_up(1) = '*'.
+        CONTINUE.
+      ENDIF.
+
+      IF lv_up CS 'REUSE_ALV_HIERSEQ'
+      OR lv_up CS 'CL_SALV_HIERSEQ'
+      OR lv_up CS 'REUSE_ALV_GRID_DISPLAY'
+      OR lv_up CS 'REUSE_ALV_LIST_DISPLAY'
+      OR lv_up CS 'CL_SALV_TABLE'
+      OR lv_up CS 'CL_GUI_ALV_GRID'.
+        lv_hits = lv_hits + 1.
+        WRITE: / '  ', lv_inc, 'Zeile', sy-tabix, ':', ls_src.
+      ENDIF.
+    ENDLOOP.
+  ENDLOOP.
+
+  IF lv_hits = 0.
+    WRITE: / '  Kein ALV-Aufruf gefunden. Dann ist es eine klassische WRITE-Liste'.
+    WRITE: / '  und cl_salv_bs_runtime_info kann grundsaetzlich nichts liefern.'.
+  ELSE.
+    WRITE: / '  Treffer gesamt:', lv_hits.
+    WRITE: / '  BELEGT am 2026-08-19: RM07MBST Zeile 2956 ruft'.
+    WRITE: / '  REUSE_ALV_HIERSEQ_LIST_DISPLAY. Die Liste ist also'.
+    WRITE: / '  hierarchisch-sequenziell (Kopf = Buchungskreis/Konto,'.
+    WRITE: / '  Positionen = Material). cl_salv_bs_runtime_info liefert davon'.
+    WRITE: / '  nur die KOPFtabelle - genau das beobachtete Verhalten. Ein'.
+    WRITE: / '  automatischer Abgriff der Materialzeilen ist damit AUSGESCHLOSSEN,'.
+    WRITE: / '  nicht nur unwahrscheinlich. Weiter mit dem manuellen Weg in 6.'.
+  ENDIF.
+
+" ----------------------------------------------------------------------------
 " 4) MB5L ausfuehren und Summe einsammeln
 " ----------------------------------------------------------------------------
   IF p_run <> 'X'.
@@ -342,6 +492,10 @@ START-OF-SELECTION.
   "   NULLB   - Nullbestaende einschliessen. Deren Wert ist meist 0, aber ein
   "             Material mit Wert ohne Menge wuerde sonst fehlen und die
   "             Differenz unerklaerlich machen.
+  "   MATLINES - "Materialeinzelzeilen anzeigen". KRITISCH, am 2026-08-19 live
+  "             gefunden: ohne dieses Kennzeichen liefert MB5L nur die
+  "             FI-Kontenabgleichsansicht (BUPER/BUKRS/BUTXT/KONTS/TXT50) ohne
+  "             Materialbezug und ohne SALK3 - ein Vergleich ist dann unmoeglich.
   " Alle uebrigen Parameter bleiben auf der Vorbelegung des Reports.
   LOOP AT lt_sel INTO ls_sel.
     CLEAR ls_run.
@@ -371,6 +525,11 @@ START-OF-SELECTION.
         ls_run-low = 'X'.
         APPEND ls_run TO lt_run.
         WRITE: / '  Selektion gesetzt: NULLB = X (Nullbestaende einschliessen)'.
+
+      WHEN 'MATLINES'.
+        ls_run-low = 'X'.
+        APPEND ls_run TO lt_run.
+        WRITE: / '  Selektion gesetzt: MATLINES = X (Materialeinzelzeilen anzeigen)'.
     ENDCASE.
   ENDLOOP.
 
@@ -461,8 +620,52 @@ START-OF-SELECTION.
   ENDLOOP.
 
   IF lv_found = abap_false.
-    WRITE: / '  Kein Feld SALK3 im Ergebnis. Bitte aus der Feldliste oben den'.
-    WRITE: / '  richtigen Wertfeldnamen melden, dann wird er hier eingesetzt.'.
+    WRITE: / '  Kein Feld SALK3 im Ergebnis - die abgegriffene Tabelle ist nicht'.
+    WRITE: / '  die Materialebene. Inhalt der gelieferten Zeilen im Klartext,'.
+    WRITE: / '  damit sichtbar ist, WAS stattdessen kam:'.
+
+    LOOP AT <lt_alv> ASSIGNING FIELD-SYMBOL(<ls_dump>).
+      WRITE: / '  --- Zeile', sy-tabix, '---'.
+      DATA(lo_dump) = CAST cl_abap_structdescr(
+        cl_abap_typedescr=>describe_by_data( <ls_dump> ) ).
+      LOOP AT lo_dump->components INTO DATA(ls_dcomp).
+        ASSIGN COMPONENT ls_dcomp-name OF STRUCTURE <ls_dump>
+          TO FIELD-SYMBOL(<lv_dval>).
+        IF sy-subrc = 0.
+          WRITE: / '     ', ls_dcomp-name, '=', <lv_dval>.
+        ENDIF.
+      ENDLOOP.
+    ENDLOOP.
+
+    WRITE: / ''.
+    WRITE: / '  Das Feld KONTS ist das Bestandskonto. Die Zeilen zeigen also die'.
+    WRITE: / '  FI-Kontensicht, nicht die Materialsicht. Weiter mit Abschnitt 6.'.
+
+" ----------------------------------------------------------------------------
+" 6) Manueller Weg, wenn der automatische Abgriff nicht moeglich ist
+" ----------------------------------------------------------------------------
+    ULINE.
+    WRITE: / '=== 6) MANUELLER ABGLEICH (empfohlener Weg) ==='.
+    WRITE: / '  Der MB5L-Abgleich ist eine EINMALIGE Validierung, keine laufende'.
+    WRITE: / '  Funktion. Die spaetere Kachel rechnet aus MBEW/MBEWH und ruft MB5L'.
+    WRITE: / '  nie auf. Weitere Automatisierungsversuche lohnen deshalb nicht.'.
+    WRITE: / ''.
+    WRITE: / '  So von Hand pruefen:'.
+    WRITE: / '   1. MB5L aufrufen.'.
+    WRITE: / '   2. BUCHUNGSKREIS =', lv_bukrs, 'eintragen - NICHT den'.
+    WRITE: / '      Bewertungskreis. Das ist die Ebene, die Meldung M7375'.
+    WRITE: / '      ausdruecklich erlaubt; mit dem Bewertungskreis blockiert'.
+    WRITE: / '      die Maske. Laut Abschnitt 3c trifft das dieselbe'.
+    WRITE: / '      Materialmenge, solange dort GLEICHWERTIG steht.'.
+    WRITE: / '   3. "Materialien mit Nullbestand" ankreuzen.'.
+    WRITE: / '   4. Saldoauswahl lfd. Periode lassen (nicht Vorperiode/Vorjahr).'.
+    WRITE: / '   5. "Materialeinzelzeilen anzeigen" ankreuzen.'.
+    WRITE: / '   6. Ausfuehren.'.
+    WRITE: / '   7. Die ausgewiesene Gesamtsumme mit diesem Wert vergleichen:'.
+    WRITE: / '      Eigene SALK3-Summe GESAMT =', lv_eigen_alle.
+    WRITE: / ''.
+    WRITE: / '  Stimmt die Summe, ist die Bewertungslogik bestaetigt und der'.
+    WRITE: / '  Lagerwert der Einkaufsteile lautet:', lv_eigen_ziel.
     RETURN.
   ENDIF.
 

@@ -18,14 +18,53 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private readonly IAppEventLogService _logService;
     private readonly IPurchasingProductGroupSapReader _productGroupSapReader;
 
+    private readonly ISapGatewayStockValueReader? _stockValueReader;
+
     public PurchasingDataRefreshService(
         IDbContextFactory<AppDbContext> dbFactory,
         IAppEventLogService logService,
-        IPurchasingProductGroupSapReader productGroupSapReader)
+        IPurchasingProductGroupSapReader productGroupSapReader,
+        ISapGatewayStockValueReader? stockValueReader = null)
     {
         _dbFactory = dbFactory;
         _logService = logService;
         _productGroupSapReader = productGroupSapReader;
+        _stockValueReader = stockValueReader;
+    }
+
+    /// <summary>
+    /// Liest den Lagerwert der Einkaufsteile nach und legt ihn in den Reader-Cache, damit die
+    /// KPI-Kachel ihn ohne eigenen SAP-Zugriff anzeigen kann.
+    ///
+    /// WIRFT BEWUSST NICHT. Ein Ausfall dieses Reads darf den Einkauf-Lauf nicht abbrechen.
+    /// Begruendung ist der Vorfall vom 2026-07-02, als ein 404 auf `MARA001Set` den Full Load
+    /// abbrach und der Datenstand bis zum 2026-07-17 einfror.
+    /// </summary>
+    private async Task RefreshStockValueSafeAsync(
+        PurchasingSapConnection connection, CancellationToken cancellationToken)
+    {
+        if (_stockValueReader is null)
+            return;
+
+        try
+        {
+            var snapshot = await _stockValueReader.RefreshAsync(
+                connection.BaseUrl,
+                connection.Username,
+                connection.Password,
+                PurchasingDashboardService.PurchasingValuationArea,
+                cancellationToken);
+
+            await _logService.WriteAsync("Purchasing", "Lagerwert aktualisiert",
+                details: $"Bewertungskreis={snapshot.ValuationArea} | Disponenten={snapshot.Rows.Count} | " +
+                         $"Materialien={snapshot.TotalMaterialCount:N0} | Gesamtwert={snapshot.TotalValue:N2}");
+        }
+        catch (Exception ex)
+        {
+            await _logService.WriteAsync("Purchasing", "Lagerwert konnte nicht gelesen werden", "Warning",
+                details: $"{ex.GetType().Name}: {ex.Message} — Der Einkauf-Lauf laeuft trotzdem weiter, " +
+                         "die Lagerwert-Kachel bleibt auf dem vorherigen Stand.");
+        }
     }
 
     public async Task<PurchasingDataRefreshStatus> GetStatusAsync(CancellationToken cancellationToken = default)
@@ -79,6 +118,10 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             await UpsertEketAsync(conn, transaction, eketRows, nowText, cancellationToken);
             await ReplaceProductGroupRulesAsync(conn, transaction, productGroupResult, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
+            // nicht mehr gefaehrden kann.
+            await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
             var materialTextCount = materialStatusMap.Values.Count(info => info.Maktx.Length > 0);
@@ -155,6 +198,10 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 conn, transaction, materialStatusMap, classificationMap, cancellationToken);
             await ReplaceProductGroupRulesAsync(conn, transaction, productGroupResult, nowText, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            // Nach dem Commit, damit ein Fehler hier die bereits geschriebenen Belegdaten
+            // nicht mehr gefaehrden kann.
+            await RefreshStockValueSafeAsync(connection, cancellationToken);
 
             var completed = DateTime.UtcNow;
             var status = await GetStatusAsync(cancellationToken);

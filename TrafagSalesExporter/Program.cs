@@ -93,6 +93,9 @@ builder.Services.AddSingleton<IFinancialJournalReader, HanaFinancialJournalReade
 builder.Services.AddSingleton<ISapGatewayFinancialJournalReader, SapGatewayFinancialJournalReader>();
 builder.Services.AddSingleton<ISapGatewayStandardCostReader, SapGatewayStandardCostReader>();
 builder.Services.AddSingleton<ISapGatewayPlantMaterialReader, SapGatewayPlantMaterialReader>();
+// Singleton, weil der Reader den zuletzt gelesenen Lagerwert im Speicher haelt: ein frischer
+// Read kostet ueber 100 MB und darf nicht an einem Seitenaufruf haengen.
+builder.Services.AddSingleton<ISapGatewayStockValueReader, SapGatewayStockValueReader>();
 builder.Services.AddSingleton<IFinancialJournalRefreshService, FinancialJournalRefreshService>();
 builder.Services.AddSingleton<IDatabaseSchemaMaintenanceService, DatabaseSchemaMaintenanceService>();
 builder.Services.AddSingleton<IDatabaseSeedService, DatabaseSeedService>();

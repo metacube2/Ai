@@ -9,6 +9,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "comprar valores completos de caché",
+                ["Lagerwert Einkaufsteile"] = "Valor de stock de piezas compradas",
+                ["wartet auf Einkauf-Lauf"] = "esperando la ejecución de compras",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO en vivo, aún faltan valores de posición",
                 ["EKKO-Belege im Zeitraum"] = "Pedidos EKKO en el periodo",
                 ["Einkaufsbelege sind im Zeitraum"] = "las órdenes de compra están en la cabina para",
@@ -111,6 +113,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "acquistando i valori completi della cache",
+                ["Lagerwert Einkaufsteile"] = "Valore di magazzino dei pezzi acquistati",
+                ["wartet auf Einkauf-Lauf"] = "in attesa dell'esecuzione acquisti",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO live, valori di posizione ancora mancanti",
                 ["EKKO-Belege im Zeitraum"] = "Ordini EKKO nel periodo",
                 ["Einkaufsbelege sind im Zeitraum"] = "gli ordini di acquisto sono nella cabina di pilotaggio per",
@@ -213,6 +217,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "कैश पूर्ण मान खरीदना",
+                ["Lagerwert Einkaufsteile"] = "क्रय सामग्री का स्टॉक मूल्य",
+                ["wartet auf Einkauf-Lauf"] = "क्रय प्रक्रिया की प्रतीक्षा",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO लाइव, स्थिति मान अभी भी गायब हैं",
                 ["EKKO-Belege im Zeitraum"] = "EKKO अवधि में ऑर्डर करता है",
                 ["Einkaufsbelege sind im Zeitraum"] = "खरीद आदेश कॉकपिट में हैं",
@@ -315,6 +321,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "blerjen e vlerave të plota të cache-it",
+                ["Lagerwert Einkaufsteile"] = "Vlera e stokut të pjesëve të blera",
+                ["wartet auf Einkauf-Lauf"] = "në pritje të ekzekutimit të blerjeve",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO live, vlerat e pozicionit ende mungojnë",
                 ["EKKO-Belege im Zeitraum"] = "EKKO porosit në periudhë",
                 ["Einkaufsbelege sind im Zeitraum"] = "urdhrat e blerjes janë në kabinë për",
@@ -417,6 +425,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "önbellek tam değerlerini satın alma",
+                ["Lagerwert Einkaufsteile"] = "Satın alınan parçaların stok değeri",
+                ["wartet auf Einkauf-Lauf"] = "satın alma çalışması bekleniyor",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO canlı, konum değerleri hâlâ eksik",
                 ["EKKO-Belege im Zeitraum"] = "EKKO siparişleri dönemde",
                 ["Einkaufsbelege sind im Zeitraum"] = "satın alma siparişleri kokpitte",
@@ -519,6 +529,8 @@ internal static class PurchasingUiTextGeneratedTranslations
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Einkauf Cache Vollwerte"] = "je' cache lo'laHghach naQ",
+                ["Lagerwert Einkaufsteile"] = "je' Dochmey lo'laHghach",
+                ["wartet auf Einkauf-Lauf"] = "je' qatlh loS",
                 ["EKKO live, Positionswerte fehlen noch"] = "EKKO yIn, wej Hutlh position lo'laHghach",
                 ["EKKO-Belege im Zeitraum"] = "'eSSIm ra' EKKO",
                 ["Einkaufsbelege sind im Zeitraum"] = "cockpit lutu'lu'bej je'",

@@ -12,10 +12,65 @@ namespace TrafagSalesExporter.Services;
 public sealed class PurchasingDashboardService : IPurchasingDashboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly ISapGatewayStockValueReader? _stockValueReader;
 
-    public PurchasingDashboardService(IDbContextFactory<AppDbContext> dbFactory)
+    /// <summary>
+    /// Bewertungskreis des Einkaufs. <c>1100</c> = Schweiz, <c>1200</c> = Oesterreich
+    /// (per <c>T001K</c> bestaetigt, siehe docs/FINANCE_STANDARDKOSTEN.md). Das Einkauf-Dashboard
+    /// arbeitet durchgaengig auf <c>1100</c>; auch der bestehende XYZ-Loader filtert auf dieses Werk.
+    /// Ueber beide Kreise zu summieren waere wegen unterschiedlicher Hauswaehrung falsch.
+    /// </summary>
+    public const string PurchasingValuationArea = "1100";
+
+    /// <summary>
+    /// Disponenten, die den Lagerwert der "Einkaufsteile" bilden. Vorgabe von Armin
+    /// (docs/EINKAUF_LAGERWERT_2026-08-18.md). Alle fuenf existieren und tragen laut
+    /// SAP-Bezeichnung "Einkauf" im Namen.
+    ///
+    /// OFFEN: Ob Disponent <c>004</c> ("Betriebsmat/Einkau", 686 Materialien / CHF 322'931)
+    /// fachlich dazugehoert, ist bei Armin noch nicht entschieden. Die Liste steht deshalb hier
+    /// an einer Stelle und nicht verstreut in Abfragen — eine Aenderung ist eine Zeile.
+    /// </summary>
+    public static readonly string[] PurchasingPlanners = ["001", "002", "003", "004", "005"];
+
+    public PurchasingDashboardService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        ISapGatewayStockValueReader? stockValueReader = null)
     {
         _dbFactory = dbFactory;
+        _stockValueReader = stockValueReader;
+    }
+
+    /// <summary>
+    /// Uebernimmt den zuletzt gelesenen Lagerwert in den Anzeigezustand.
+    ///
+    /// BEWUSST NUR AUS DEM CACHE: Ein frischer Read kostet ueber 100 MB und rund 28 Sekunden.
+    /// Das darf nicht an einem Seitenaufruf haengen. Gefuellt wird der Cache vom
+    /// Einkauf-Refresh; solange nichts vorliegt, bleibt <c>StockValueLoaded</c> false und die
+    /// Kachel sagt das offen, statt eine 0 zu zeigen, die wie ein leeres Lager aussaehe.
+    /// </summary>
+    private void ApplyStockValue(PurchasingDashboardLiveState state)
+    {
+        if (_stockValueReader is null)
+            return;
+
+        var snapshot = _stockValueReader.GetCached(PurchasingValuationArea);
+        if (snapshot is null)
+            return;
+
+        state.StockValueLoaded = true;
+        state.StockValueValuationArea = snapshot.ValuationArea;
+        state.StockValueReadAtUtc = snapshot.ReadAtUtc;
+        state.StockValueTotal = snapshot.ValueForPlanners(PurchasingPlanners);
+        state.StockValueMaterialCount = snapshot.MaterialCountForPlanners(PurchasingPlanners);
+        state.StockValueRows = snapshot.Rows
+            .Select(row => new PurchasingStockValueRow(
+                row.Planner,
+                row.Value,
+                row.Quantity,
+                row.MaterialCount,
+                PurchasingPlanners.Contains(row.Planner, StringComparer.OrdinalIgnoreCase)))
+            .ToList();
     }
 
     private static PurchasingDashboardFilter BuildDefaultFilter()
@@ -128,6 +183,11 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)
             .Where(year => year >= MinSpendYear && year <= MaxSpendYear(filter))
             .ToList();
+
+        // Vor jedem moeglichen Rueckgabepunkt: der Lagerwert haengt weder am Zeitfilter noch
+        // am Cache-Zustand der Belegdaten. Stuende er weiter unten, waere er im
+        // Cache-Pfad (der frueh zurueckkehrt) immer leer.
+        ApplyStockValue(state);
 
         try
         {

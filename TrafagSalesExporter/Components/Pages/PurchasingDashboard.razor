@@ -729,8 +729,29 @@
         new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary),
         new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Noch nicht geladen", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning),
         new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "offener Bestell-/Abrufwert Stand heute, zeitraumunabhaengig" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "open order/call-off value as of today, period-independent" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info),
-        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success)
+        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success),
+        // Lagerwert der Einkaufsteile (Wunsch Armin). Zeigt den AKTUELLEN Bestandswert, nicht
+        // einen frei waehlbaren Stichtag - MBEW fuehrt nur den Jetzt-Wert. Ohne geladenen Stand
+        // steht hier bewusst ein Hinweis statt einer 0, die wie ein leeres Lager aussaehe.
+        new("Lagerwert Einkaufsteile", "Purchased parts stock value",
+            _liveState.StockValueLoaded ? FormatChf(_liveState.StockValueTotal) : T("wartet auf Einkauf-Lauf", "waiting for purchasing run"),
+            _liveState.StockValueLoaded ? StockValueDetailDe : "wird beim naechsten Einkauf-Lauf gefuellt",
+            _liveState.StockValueLoaded ? StockValueDetailEn : "filled by the next purchasing run",
+            Icons.Material.Filled.Inventory, Color.Secondary)
     ];
+
+    // Detailzeile der Lagerwert-Kachel. Nennt Materialzahl und Lesezeitpunkt, damit der Wert
+    // einordenbar ist: er stammt aus dem letzten Einkauf-Lauf, nicht aus diesem Seitenaufruf.
+    private string StockValueDetailDe =>
+        $"{_liveState.StockValueMaterialCount:N0} Materialien, Disponenten {string.Join("/", TrafagSalesExporter.Services.PurchasingDashboardService.PurchasingPlanners)}, Stand {FormatStockValueTimestamp()}";
+
+    private string StockValueDetailEn =>
+        $"{_liveState.StockValueMaterialCount:N0} materials, planners {string.Join("/", TrafagSalesExporter.Services.PurchasingDashboardService.PurchasingPlanners)}, as of {FormatStockValueTimestamp()}";
+
+    private string FormatStockValueTimestamp()
+        => _liveState.StockValueReadAtUtc is { } readAt
+            ? readAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+            : "-";
 
     private readonly List<PurchasingAxis> AnalysisAxes =
     [

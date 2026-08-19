@@ -7,7 +7,7 @@ Stand: 2026-08-18. Zurueck: `docs/router/einkauf.md`.
 | | |
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
-| **Umgesetzt?** | **Nein.** Analyse und Messung sind fertig, Code ist nicht angefasst. |
+| **Umgesetzt?** | **Teilweise, seit 2026-08-19.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist gebaut, `543/543` Tests gruen, **nicht deployed und nie gegen echtes SAP gelaufen**. Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |
@@ -151,9 +151,9 @@ kann also mehr als MB5L; MB5L taugt zur Pruefung des **aktuellen** Stands.
 
 | Feld | Wirkung auf den Summenvergleich |
 | --- | --- |
+| `MATLINES` | **kritisch, live bestaetigt 2026-08-19**: Text lautet „Materialeinzelzeilen anzeigen". Ohne dieses Kennzeichen liefert MB5L die FI-Kontenabgleichsansicht (Felder `BUPER`/`BUKRS`/`BUTXT`/`KONTS`/`TXT50`), keine Materialzeile und kein `SALK3` — ein Vergleich ist dann unmoeglich. Die fruehere Annahme „begrenzt die Materialzeilen" war falsch. |
+| `KEINZEL` | Text lautet „nur Bewertungskreisebene", **nicht** „unterdrueckt Einzelposten" wie zuvor angenommen. Wirkung auf den Summenvergleich noch ungeklaert, wird nach dem ersten Lauf mit `MATLINES = X` beurteilt. |
 | `SUMMEN` | **hoch** — Summenzeilen zusaetzlich in der Ausgabe; wer alle Zeilen addiert, zaehlt doppelt. |
-| `KEINZEL` | **hoch** — unterdrueckt Einzelposten; dann bleiben nur Summen. |
-| `MATLINES` | **hoch** — begrenzt die Materialzeilen; Liste abgeschnitten, Summe zu niedrig. |
 | `NEGATIV` | **hoch** — schraenkt auf negative Bestaende ein. |
 | `VMSALDO` / `VJSALDO` | **hoch** — zusaetzliche Wertspalte Vormonat bzw. Vorjahr. |
 | `BWTAR` | **besonders** — bei getrennter Bewertung fuehrt SAP je Material einen Kopfsatz UND Teilsaetze; beide summiert ergibt den doppelten Wert. |
@@ -163,6 +163,21 @@ kann also mehr als MB5L; MB5L taugt zur Pruefung des **aktuellen** Stands.
 
 Der Abgleichsreport setzt deshalb gezielt `BWKEY`, `AKSALDO = X`, `NULLB = X` und leert
 `VMSALDO`/`VJSALDO`. Alles andere bleibt auf der Vorbelegung des Programms.
+
+**NACHTRAG 2026-08-19, live beobachtet:** Beim `SUBMIT` auf `RM07MBST` mit `BWKEY`
+eingegrenzt erscheint SAP-Meldung **M7375**: „Eingrenzungen dieses Feldes führen zu
+fehlerhaften Ergebnissen." Diagnosetext: Die Salden auf den Bestandskonten liegen auf
+**Buchungskreisebene**; eine Eingrenzung darunter — genannt werden Material,
+Bewertungskreis, Bewertungsart, Bewertungsklasse und Negative Bestände — liefert korrekte
+Materialdetails, aber der Abgleich gegen das **Bestandskonto der Finanzbuchhaltung** kann
+dabei falsch werden. Das betrifft die Ruecksteuerung gegen FI, nicht unseren Vergleich: wir
+stellen die eigene `MBEW`-Summe gegen die `MB5L`-Summe, beide mit derselben
+`BWKEY`-Eingrenzung, kein FI-Bestandskonto im Spiel. Für unseren Zweck ist die Meldung
+deshalb keine Fehlerquelle, nur bestaetigen und weiterlaufen lassen. Neu entdecktes,
+bisher nicht dokumentiertes Feld auf dem MB5L-Selektionsbild: **„nur
+Bewertungskreisebene"** (Checkbox, im beobachteten Lauf nicht angehakt) — Zusammenhang mit
+`BWTAR`/getrennter Bewertung noch ungeklaert, vor der naechsten Fachfrage nicht selbst
+anhaken.
 
 ### 5.3 Welche Materialien eine Differenz erzeugen koennen
 
@@ -188,6 +203,94 @@ Einschraenkung.
 | **Sonderbestaende** | nirgends erwaehnt | — |
 | **Disponent `004`** | nicht dokumentiert; SAP-Text ist `Betriebsmat/Einkau` | — |
 
+## 6a. Live-Lauf 2026-08-19: Ursache fuer den fehlgeschlagenen MB5L-Vergleich gefunden
+
+Erster Lauf von `Z_PURCHASING_MB5L_ABGLEICH` mit `p_run = X` auf T76/100 lieferte nur
+**2 Zeilen statt der erwarteten rund 65'498** und keine Materialdaten:
+
+- Ergebnisfelder waren `BUPER`, `BUKRS`, `BUTXT`, `KONTS`, `TXT50` — das ist MB5L's
+  **FI-Kontenabgleichsansicht** (Saldo je Sachkonto), nicht die Materialliste.
+- Ursache: das Kennzeichen `MATLINES` („Materialeinzelzeilen anzeigen") wurde vom Report
+  nicht gesetzt. Ohne dieses Kennzeichen zeigt MB5L standardmaessig die Kontenansicht.
+  Die fruehere Einschaetzung, `MATLINES` wuerde nur die Zeilenzahl begrenzen, war falsch.
+  **Behoben**: der Report setzt jetzt zusaetzlich `MATLINES = X`.
+- Nebenbefund beim manuellen Test der MB5L-Maske direkt (ausserhalb des Reports): Meldung
+  **M7375** „Eingrenzungen dieses Feldes fuehren zu fehlerhaften Ergebnissen", wenn
+  `Bewertungskreis` eingeschraenkt wird. Diagnosetext: Bestandskonten-Saldi liegen auf
+  **Buchungskreisebene**; Eingrenzungen darunter (Material, Bewertungskreis, Bewertungsart,
+  Bewertungsklasse, Negative Bestaende) verfaelschen den Abgleich gegen das **FI-Bestandskonto**.
+  Das betrifft unseren Vergleich NICHT, weil wir gegen die eigene `MBEW`-Summe abgleichen,
+  nicht gegen ein FI-Konto. Reine Warnung, kein Blocker fuer diesen Report.
+- Die eigene `MBEW`-Rechnung im selben Lauf zeigt den Stand von heute: **CHF 10'947'696.40**
+  gesamt (65'498 Materialien), **CHF 8'993'258.78** fuer die Disponenten 001-005 (7'261
+  Materialien) — rund CHF 10'320 hoeher als der Messwert vom 18.08., normale Tagesbewegung.
+  Keine getrennte Bewertung (`BWTAR`) im Bestand. Sonderbestaende: `MSKA` **320'848** Saetze,
+  `MSLB` 760, `MSPR` 0 — die hohe `MSKA`-Zeilenzahl ist neu und noch nicht bewertet, weil der
+  Report nur Saetze zaehlt, nicht deren Wert.
+
+### 6a.1 Zweiter Lauf: `MATLINES = X` hat nichts geaendert
+
+Der Lauf um 09:14 mit gesetztem `MATLINES = X` lieferte **exakt dasselbe Ergebnis**: 2 Zeilen,
+Felder `BUPER`/`BUKRS`/`BUTXT`/`KONTS`/`TXT50`, kein `SALK3`. Damit ist die Erklaerung aus
+6a **widerlegt**. `MATLINES` steuert die Bildschirmausgabe, aber nicht, welche Tabelle
+`cl_salv_bs_runtime_info` abgreift.
+
+### 6a.1a Ursache am Quelltext BELEGT (Lauf 09:22)
+
+Die Quelltextsuche ueber alle sechs Includes von `RM07MBST` liefert den Beweis:
+
+| Fundstelle | Aufruf |
+| --- | --- |
+| **`RM07MBST` Zeile 2956** | **`CALL FUNCTION 'REUSE_ALV_HIERSEQ_LIST_DISPLAY'`** |
+| `RM07MBST` Zeile 3029 | `CALL FUNCTION 'REUSE_ALV_LIST_DISPLAY'` |
+| `RM07ALVI` Zeilen 81/83/103 | `alv_detail_func = 'REUSE_ALV_GRID_DISPLAY'` bzw. `…LIST_DISPLAY` |
+
+`RM07MBST` gibt eine **hierarchisch-sequenzielle Liste** aus. `cl_salv_bs_runtime_info`
+greift davon nur die **Kopftabelle** ab, nie die Positionen. Der automatische Abgriff der
+Materialebene ist damit **ausgeschlossen**, nicht nur unwahrscheinlich.
+
+Bestaetigt wird das durch den Inhalt der zwei Zeilen: sie tragen `BUKRS 1100` („Trafag AG")
+und `BUKRS 1200` („Trafag Ges.m.b.H."), `KONTS` und `TXT50` sind **leer**. Wir sehen also die
+oberste Hierarchieebene (Buchungskreis) — auf der die gesetzte `BWKEY`-Selektion noch gar
+nicht greift, weshalb auch der oesterreichische Buchungskreis mit erscheint.
+
+### 6a.2 Konsequenz: der Abgleich wird von Hand gemacht
+
+**Der MB5L-Abgleich ist eine einmalige Validierung, keine laufende Funktion.** Die spaetere
+KPI-Kachel rechnet aus `MBEW`/`MBEWH` und ruft MB5L nie auf. Weitere Runden, um den
+ALV-Abgriff zu automatisieren, zahlen deshalb auf nichts ein — der Aufwand steht nicht im
+Verhaeltnis zum einmaligen Nutzen.
+
+Der Report gibt jetzt in Abschnitt 6 eine vollstaendige Anleitung fuer den manuellen Lauf
+aus, inklusive der eigenen Vergleichszahl. Zusaetzlich liest er in Abschnitt 3c den
+**Buchungskreis** zum Bewertungskreis aus `T001K`, weil Meldung M7375 genau auf diese Ebene
+zielt, und gibt die zwei gefundenen **Bestandskonten** (`KONTS`) im Klartext aus.
+
+### 6a.3 Die Selektionsmaske blockiert beim Bewertungskreis — Loesung ueber den Buchungskreis
+
+Ingo meldet am 2026-08-19: In der MB5L-Maske laesst sich der **Bewertungskreis nicht setzen
+und ausfuehren**, Meldung M7375 blockiert.
+
+Die Loesung steht im Text von M7375 selbst: Eingrenzungen **auf** Buchungskreisebene sind
+erlaubt, nur **darunter** nicht. Und `T001K` liefert die Bruecke:
+
+| Bewertungskreis | Buchungskreis |
+| --- | --- |
+| `1100` | `1100` (Trafag AG) |
+
+**Also in MB5L den Buchungskreis `1100` eingrenzen statt des Bewertungskreises.** Damit
+entfaellt die Meldung.
+
+Eine Bedingung muss dafuer erfuellt sein, sonst vergleicht man verschiedene Materialmengen:
+am Buchungskreis `1100` darf **genau ein** Bewertungskreis haengen. Der Report prueft das
+jetzt in Abschnitt 3c in der Gegenrichtung (`SELECT bwkey FROM t001k WHERE bukrs = …`) und
+meldet entweder `GLEICHWERTIG` oder rechnet die Vergleichssumme ueber alle betroffenen
+Bewertungskreise neu. **Diese Pruefung steht noch aus.**
+
+**Naechster Schritt:** Report einmal laufen lassen (Abschnitt 3c zeigt jetzt die
+Gegenrichtung), danach MB5L von Hand mit **Buchungskreis 1100** gegen die eigene Summe
+stellen.
+
 ## 7. Naechste Schritte
 
 1. **Abgleichsreport Stufe 1** erneut laufen lassen (`p_run` leer). Er zeigt jetzt zusaetzlich
@@ -206,6 +309,65 @@ Einschraenkung.
 
 **Bei der Abnahme:** mit einem **jungen** Stichtag pruefen, nie nur mit einem alten (Grund in
 4.2).
+
+## 10. Umsetzung vom 2026-08-19
+
+Gebaut wurde die Kachel fuer den **aktuellen** Lagerwert. Der Stichtag bleibt bewusst aussen
+vor, solange Armins Antwort auf Frage 3 (braucht es wirklich jeden Monat?) fehlt — davon
+haengt der ganze `MBEWH`-Aufwand ab.
+
+### 10.1 Was gebaut wurde
+
+| Datei | Rolle |
+| --- | --- |
+| `Services/SapGatewayStockValueReader.cs` (neu) | Liest `mbewSet` (`Salk3`, `Lbkum`) und `MARCSet` (`Dispo`), aggregiert je Disponent, haelt den Stand im Speicher |
+| `Services/IPurchasingDashboardService.cs` | Additive Felder `StockValue*` plus Record `PurchasingStockValueRow` |
+| `Services/PurchasingDashboardService.cs` | Konstanten `PurchasingValuationArea` / `PurchasingPlanners`, Befuellung aus dem Cache |
+| `Services/PurchasingDataRefreshService.cs` | `RefreshStockValueSafeAsync`, aufgerufen nach dem Commit in Full **und** Delta |
+| `Components/Pages/PurchasingDashboard.razor` | Fuenfte KPI-Kachel „Lagerwert Einkaufsteile" |
+| `Services/PurchasingUiTextGeneratedTranslations.cs` | Zwei neue Texte in sechs Sprachen |
+| `Program.cs` | Eine `AddSingleton`-Zeile |
+| `TrafagSalesExporter.Tests/StockValueReaderTests.cs` (neu) | 9 Tests der Rechenlogik |
+
+### 10.2 Drei Entwurfsentscheidungen, die den Fallstricken aus Abschnitt 4 folgen
+
+1. **`SALK3` statt `LBKUM * STPRS`.** `SALK3` ist ein absoluter Betrag ohne Preiseinheit. Die
+   Multiplikation liefe in die `PEINH`-Falle und laege bei `PEINH = 100` um Faktor 100 daneben
+   — derselbe Fehler wie einst bei der Gruppenmarge.
+2. **Nicht am Seitenaufruf.** Ein Read kostet ueber 100 MB und rund 28 Sekunden. Die Kachel
+   liest deshalb **nur aus dem Cache**; gefuellt wird er vom Einkauf-Lauf. Liegt nichts vor,
+   zeigt die Kachel „wartet auf Einkauf-Lauf" statt einer `0`, die wie ein leeres Lager
+   aussaehe.
+3. **Je Disponent, nicht vorsummiert.** SAP liefert die Aufschluesselung, die Anwendung
+   summiert. Armins offene Frage zu Disponent `004` ist damit eine Zeilenaenderung in
+   `PurchasingPlanners` — ohne SAP-Aenderung und ohne Transport.
+
+Ausfallsicherheit: `RefreshStockValueSafeAsync` wirft nicht. Begruendung ist der Vorfall vom
+2026-07-02, als ein `404` auf `MARA001Set` den Full Load abbrach und der Datenstand bis zum
+2026-07-17 einfror.
+
+### 10.3 NICHT geprueft — vor dem Deploy zwingend
+
+| Punkt | Warum offen |
+| --- | --- |
+| **Liefert `MARCSet` das Feld `Dispo`?** | Der bestehende Loader liest `MARCSet` nur mit `$select=Matnr,Werks,Maabc`. Ob `Dispo` exponiert ist, wurde **nicht** geprueft und nach Vorrangregel 5 auch nicht angenommen. Fehlt es, wirft der Reader mit klarer Meldung und dem Hinweis auf SEGW. |
+| **Liefert `mbewSet` das Feld `Salk3`?** | Der Standardpreis-Reader nutzt nur `Stprs`/`Peinh`. Der neue Reader prueft das Feld zur Laufzeit und wirft mit der Liste der tatsaechlich vorhandenen Felder, statt still `0` zu zeigen. |
+| **Stimmt die Zahl?** | Der MB5L-Abgleich steht weiterhin aus (Abschnitt 6a.3). Die Kachel zeigt bis dahin einen **unbestaetigten** Wert. |
+| **Lauf gegen echtes SAP** | Der Code ist gebaut und getestet, aber **nie gegen ein SAP-System gelaufen**. |
+
+Der Cache liegt im Speicher und ist nach einem App-Neustart leer, bis der naechste
+Einkauf-Lauf durchlaeuft. Eine Persistierung in eine Cache-Tabelle waere der naechste
+Schritt; sie wurde bewusst zurueckgestellt, weil parallel am Finance-Dashboard gearbeitet
+wird und eine Schemaaenderung dort kollidieren koennte.
+
+### 10.4 Der Stichtag bleibt offen
+
+Fuer „per «bis Monat»" liegt der Entwurf eines serverseitig aggregierenden EntitySets bereit:
+`docs/abap/ZSTR_PURCH_STOCKVAL_GET_ENTITYSET.abap`. Er enthaelt die Rueckrechnung aus 4.1
+(kleinste Historienperiode >= Stichtag, sonst `MBEW`) und liefert je Bewertungskreis, Periode
+und Disponent eine Zeile. Anzulegen sind dafuer eine Struktur in `SE11` und ein EntityType in
+`SEGW`; beides ist im Kopf der Datei beschrieben. **Erst starten, wenn Armin bestaetigt, dass
+er den Monatsverlauf wirklich braucht.**
 
 ## 8. Werkzeuge
 

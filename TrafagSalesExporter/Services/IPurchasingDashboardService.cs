@@ -45,6 +45,26 @@ public sealed class PurchasingDashboardLiveState
     public decimal OverdueValueSample { get; set; }
     public decimal OverdueQuantitySample { get; set; }
     public int OverduePositionCount { get; set; }
+    // Lagerwert der Einkaufsteile (MBEW-SALK3, abgegrenzt auf die Einkaufsdisponenten).
+    // Wunsch von Armin, siehe docs/EINKAUF_LAGERWERT_2026-08-18.md.
+    //
+    // ZEITBEZUG: aktueller Stand, NICHT frei waehlbarer Stichtag. MBEW fuehrt nur den
+    // Jetzt-Wert; ein Stichtag braeuchte die Historie MBEWH (5,4 Mio Zeilen, nicht ueber
+    // OData ladbar). Fachlich derselbe Zeitpunkt, den MB5L mit "Saldoauswahl lfd. Periode"
+    // ausweist.
+    //
+    // Wird NICHT beim Seitenaufruf gelesen, sondern kommt aus dem Einkauf-Refresh. Ist noch
+    // kein Stand vorhanden, bleibt StockValueLoaded false und die Kachel sagt das offen,
+    // statt eine 0 zu zeigen, die wie ein leeres Lager aussaehe.
+    public bool StockValueLoaded { get; set; }
+    public decimal StockValueTotal { get; set; }
+    public int StockValueMaterialCount { get; set; }
+    public DateTime? StockValueReadAtUtc { get; set; }
+    public string StockValueValuationArea { get; set; } = string.Empty;
+    // Je Disponent aufgeschluesselt, damit die Abgrenzung nachvollziehbar bleibt und die
+    // offene Fachfrage zu Disponent 004 (Betriebsmaterial) ohne SAP-Aenderung entschieden
+    // werden kann.
+    public List<PurchasingStockValueRow> StockValueRows { get; set; } = [];
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;
@@ -144,3 +164,15 @@ public sealed record PurchasingAbcXyzActionRow(
     string Severity);
 
 public sealed record PurchasingIdeaAnalysisRow(string Label, string Value, string Detail, string Severity);
+
+/// <summary>
+/// Lagerwert je Disponent. <paramref name="IsPurchasing"/> sagt, ob der Disponent zur
+/// Abgrenzung "Einkaufsteile" gehoert — so bleibt in der Anzeige sichtbar, was in die Summe
+/// eingeht und was nicht, statt dass die Auswahl unsichtbar im Code verschwindet.
+/// </summary>
+public sealed record PurchasingStockValueRow(
+    string Planner,
+    decimal Value,
+    decimal Quantity,
+    int MaterialCount,
+    bool IsPurchasing);
