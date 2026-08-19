@@ -1,6 +1,46 @@
 # Last Change
 
-Stand: 2026-08-18
+Stand: 2026-08-19
+
+## Lagerwert-KPI-Kachel im Einkauf-Cockpit 2026-08-19 (PRODUKTIV DEPLOYED)
+
+- **Umgesetzt:** Fuenfte KPI-Kachel „Lagerwert Einkaufsteile" im Einkauf-Cockpit, liest
+  `mbewSet` (`Salk3`, `Lbkum`) und `MARCSet` (`Dispo`), aggregiert je Disponent im Speicher.
+  Zeigt den **aktuellen** Stand, keinen frei waehlbaren Stichtag. Deployed 2026-08-19 10:07,
+  Commit `08901bb`, `543/543` Tests gruen (Debug und Release), ohne Alarm. Vorher-Sicherung
+  `trafag_exporter.db.before-stock-value-kpi-20260819-095935.bak`. Details und alle
+  Entwurfsentscheidungen: `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 10,
+  Deploy-Nachweis in `docs/rag/DEPLOYMENT.md`.
+- **Bewusst NICHT geprueft vor dem Deploy:** ob `MARCSet` das Feld `Dispo` und `mbewSet` das
+  Feld `Salk3` liefert. Zeigt sich erst beim naechsten Einkauf-Lauf; ein Ausfall bricht den
+  Lauf nicht ab. Bis dahin zeigt die Kachel „wartet auf Einkauf-Lauf" statt einer Zahl.
+- **MB5L-Abgleich weiterhin ungeloest, mit echtem Fortschritt:** Der SAP-Report
+  `docs/abap/Z_PURCHASING_MB5L_ABGLEICH.abap` lieferte trotz gesetztem `MATLINES = X` nur
+  die FI-Kontenabgleichsansicht (`RM07MBST` ruft laut Quelltextsuche
+  `REUSE_ALV_HIERSEQ_LIST_DISPLAY` auf — eine hierarchisch-sequenzielle Liste, aus der
+  `cl_salv_bs_runtime_info` nur die Kopftabelle abgreifen kann, die Materialzeilen NIE). Der
+  Automatikweg ist damit belegt ausgeschlossen. **Entscheidung:** Abgleich wird von Hand in
+  MB5L gemacht, der Report liefert dafuer die Anleitung samt Vergleichszahl. Fund am Rande:
+  SAP-Meldung `M7375` blockiert die Eingrenzung auf `Bewertungskreis` in der MB5L-Maske;
+  Workaround ist die Eingrenzung auf den **Buchungskreis** (`1100`, per `T001K` bestaetigt),
+  das ist die von M7375 erlaubte Ebene.
+- **Offen:** MB5L-Abgleich von Hand durchfuehren, danach drei Fachfragen an Armin.
+
+## Feedback zum Cockpit von Philip Steiger 2026-08-19 (Kontext, kein Code)
+
+- Philip Steiger (PMO Produkt- und Prozessentwicklung) hat sich per Teams positiv nach der
+  Motivation fuer das Cockpit erkundigt.
+- **Wichtiger Punkt fuer die Projekte-Seite (`Components/Pages/Projects.razor`, noch im
+  Aufbau):** Auf Ingos Aussage, es gebe „noch kein schlaues Projektmanagement-Tool", hat
+  Philip nachgefragt und mitgeteilt, dass sein Bereich bereits **„Project Power Pack"**
+  testet — eine offizielle, von der PMO evaluierte Alternative fuer die Produkt-/
+  Prozessentwicklung. Philips Fazit „zielt an meinen Beduerfnissen vorbei" ist kein Verriss,
+  sondern eine Abgrenzung: das Cockpit-Projektmodul (persoenlich, lizenzfrei, durch
+  Mitarbeiter-Input erweiterbar) und Philips PMO-Bedarf sind zwei verschiedene Zielgruppen.
+  Philip hat eine kurze PMO-Einfuehrung angeboten.
+- **Warum das festzuhalten ist:** bevor die Projekte-Seite im Cockpit weiter ausgebaut wird,
+  lohnt sich der Abgleich mit Project Power Pack, um Doppelarbeit oder eine Fehlentscheidung
+  zu vermeiden.
 
 ## Lagerwert der Einkaufsteile analysiert 2026-08-18 (NUR ANALYSE, kein Code)
 
