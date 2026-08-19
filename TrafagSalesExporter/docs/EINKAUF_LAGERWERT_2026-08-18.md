@@ -7,7 +7,7 @@ Stand: 2026-08-18. Zurueck: `docs/router/einkauf.md`.
 | | |
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
-| **Umgesetzt?** | **Teilweise, seit 2026-08-19.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist gebaut, `543/543` Tests gruen, **nicht deployed und nie gegen echtes SAP gelaufen**. Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
+| **Umgesetzt?** | **Teilweise, seit 2026-08-19 PRODUKTIV DEPLOYED** (10:07, Commit `08901bb`, ohne Alarm). Die KPI-Kachel fuer den **aktuellen** Lagerwert ist live, zeigt aber „wartet auf Einkauf-Lauf", bis der naechste Einkauf-Full-/Delta-Lauf sie fuellt — **noch nie gegen echtes SAP gelaufen**. Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |

@@ -44,7 +44,32 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-14 21:02, Marktsegmente mit
+- Aktuellster produktiv verifizierter Deploy: **2026-08-19 10:07, Lagerwert-KPI-Kachel im
+  Einkauf-Cockpit (Wunsch Armin)**, Funktionscommit `08901bb`, `543/543` Tests gruen
+  (Release-Lauf vor dem Publish, sowohl Debug- als auch Release-Konfiguration geprueft).
+  Vorher-Sicherung `trafag_exporter.db.before-stock-value-kpi-20260819-095935.bak`
+  (`353'099'776` Bytes). `BiDashboard.dll` `19.08.2026 09:53:41`, `4'631'552` Bytes, SHA256
+  `9635E2E0A2EF97E228BAB39E59EDED3C49F65AFA644299CAAE090EE08E8DD4AB`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `0` neu, `5` geaendert, `1'474` unveraendert, `0` verschwunden.
+  Produktiv-DB in Laenge und Schreibzeit unveraendert (`353'099'776` Bytes,
+  `18.08.2026 21:26:05`). HTTPS `200`: Startseite (`68'944` Bytes), `/einkauf` (`97'781`
+  Bytes), `/management-cockpit` (`69'983` Bytes), `/einkauf/aufriss` (`139'269` Bytes).
+  **Wirknachweis mit Vorher-Messung:** im Prueflauf (`.tmp_tools/DeployStockValueKpi
+  --dry-run`) fehlten `SapGatewayStockValueReader`, `StockValueTotal`,
+  `PurchasingPlanners`, `Lagerwert Einkaufsteile` und `wartet auf Einkauf-Lauf` in der
+  Server-DLL, danach sind alle fuenf enthalten.
+  **Rein additiv, kein Schemawechsel, keine Migration.** Die Kachel liest den Lagerwert
+  ausschliesslich aus einem In-Memory-Cache, der vom Einkauf-Full-/Delta-Lauf gefuellt
+  wird; bis zum naechsten Lauf zeigt sie „wartet auf Einkauf-Lauf" statt einer Zahl.
+  **NICHT geprueft:** ob `MARCSet` das Feld `Dispo` und `mbewSet` das Feld `Salk3`
+  liefert — beides wird beim naechsten Einkauf-Lauf zur Laufzeit sichtbar, ein Ausfall
+  bricht den Lauf nicht ab (`RefreshStockValueSafeAsync` wirft nicht). Der MB5L-Abgleich
+  und Armins drei Fachfragen zur Abgrenzung sind weiterhin offen; die angezeigte Zahl ist
+  bis dahin fachlich unbestaetigt. Details: `docs/EINKAUF_LAGERWERT_2026-08-18.md`
+  Abschnitt 10.
+
+- Deploy davor: **2026-08-14 21:02, Marktsegmente mit
   Jahresbezug und drehbarer 3D-Analyse**, Funktionscommit `7419473`, `520/520`
   Release-Tests gruen. Vorher-Sicherung
   `trafag_exporter.db.before-segment-year-20260814-205358.bak`. `BiDashboard.dll`
