@@ -10,6 +10,7 @@ public interface ILandingPageSettingsService
 {
     bool ShowWalkingLabFigure { get; }
     void SetShowWalkingLabFigure(bool value);
+    bool PlayWelcomeSound { get; }
 }
 
 public sealed class LandingPageSettingsService : ILandingPageSettingsService
@@ -25,6 +26,7 @@ public sealed class LandingPageSettingsService : ILandingPageSettingsService
     }
 
     public bool ShowWalkingLabFigure => _options.ShowWalkingLabFigure;
+    public bool PlayWelcomeSound => _options.PlayWelcomeSound;
 
     public void SetShowWalkingLabFigure(bool value)
     {

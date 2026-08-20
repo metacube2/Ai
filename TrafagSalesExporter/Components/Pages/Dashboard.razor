@@ -6,6 +6,14 @@
 
 <PageTitle>@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</PageTitle>
 
+@if (LandingSettings.PlayWelcomeSound)
+{
+    @* Autoplay ohne Ton kann von Edge/Chrome blockiert werden, wenn die Seite noch keine
+       Nutzerinteraktion hatte (Autoplay-Policy). Kein Blocker fuer die Anwendung selbst,
+       die Wiedergabe schlaegt dann lediglich lautlos fehl. *@
+    <audio src="audio/herzlich.mp3" autoplay style="display:none" aria-hidden="true"></audio>
+}
+
 <div class="home-shell">
     <div class="home-content">
         <svg class="home-manometer" viewBox="0 0 600 340" role="img" aria-label="Trafag cockpit manometer">
