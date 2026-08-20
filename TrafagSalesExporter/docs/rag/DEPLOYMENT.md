@@ -44,7 +44,48 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-19 10:07, Lagerwert-KPI-Kachel im
+- Aktuellster produktiv verifizierter Deploy: **2026-08-20 10:33, Begruessungston auf der
+  Startseite** (`herzlich.mp3`, autoplay, Schalter `LandingPage:PlayWelcomeSound` default an),
+  Funktionscommit `86a7782`, `543/543` Release-Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-welcome-sound-20260820-*.bak`. `BiDashboard.dll`
+  `20.08.2026 10:12:02`, `4'631'552` Bytes, SHA256
+  `475C811111EDE9946758367F0F539D038BD4528269347612F35F5BDAF0806625`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `1` neu (die mp3), `7` geaendert, `1'508` unveraendert, `0` verschwunden.
+  Produktiv-DB unveraendert. HTTPS `200`: Startseite, `/management-cockpit`,
+  `/einkauf/aufriss`. **Wirknachweis mit Vorher-Messung:** im Prueflauf fehlten
+  `PlayWelcomeSound` und `audio/herzlich.mp3` in der Server-DLL, danach sind beide
+  enthalten. **NICHT belegt:** ob die Wiedergabe im Browser tatsaechlich hoerbar ist —
+  Chromium-Autoplay-Policy (Firmenbrowser ist Edge) kann unmutigen Autoplay ohne vorherige
+  Nutzerinteraktion blockieren; dann bleibt die Wiedergabe stumm, ohne Fehler. Rueckmeldung
+  von Ingo nach eigenem Test steht noch aus. Details: siehe Commit-Beschreibung `86a7782`.
+
+- Deploy davor: **2026-08-19 10:56, App-Titel umbenannt in
+  "Trafag Cockpit"** (vorher "Trafag Finance/Sales Management Cockpit", Browser-Tab hatte
+  zusaetzlich den Tippfehler "Finanze"), Funktionscommit `81e1eb3`, `543/543` Release-Tests
+  gruen. Vorher-Sicherung `trafag_exporter.db.before-title-rename-20260819-104751.bak`
+  (`353'099'776` Bytes). `BiDashboard.dll` `19.08.2026 10:44:30`, `4'631'040` Bytes, SHA256
+  `BE9FA4DA0610A9DA85C4B2817F6F1850BCD8A460C1A49C9FD7F3C92D75DBBF5E`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `0` neu, `5` geaendert, `1'476` unveraendert, `0` verschwunden.
+  Produktiv-DB in Laenge und Schreibzeit unveraendert (`353'099'776` Bytes,
+  `19.08.2026 10:39:20`). HTTPS `200`: Startseite (`68'901` Bytes), `/management-cockpit`
+  (`69'965` Bytes), `/einkauf/aufriss` (`138'964` Bytes).
+  **Wirknachweis mit Vorher-Messung:** `Trafag Cockpit` selbst war als Token ungeeignet, weil
+  es als Substring bereits im unabhaengigen Schluessel `Trafag Global BI Cockpit` (spanische
+  Uebersetzung `Trafag Cockpit BI global`) steckte und einen Treffer vorgetaeuscht haette.
+  Stattdessen vier kollisionsfreie neue Uebersetzungswerte gewaehlt: `ट्रैफ़ैग कॉकपिट` (Hindi),
+  `Kabina Trafag` (Albanisch), `Trafag Kokpiti` (Tuerkisch), `Trafag raQ` (Klingonisch)
+  fehlten im Prueflauf und sind danach enthalten; `Trafag Finance/Sales Management Cockpit`
+  und `Trafag Finanze/Sales Management Cockpit` waren vorher enthalten und sind jetzt weg.
+  Betrifft nur den App-Titel (Browser-Tab in `App.razor`, Kopfzeile in `MainLayout.razor`)
+  in allen acht Sprachen; reine Textaenderung, kein Schemawechsel, keine Migration.
+  **Arbeitsverzeichnis war beim Deploy nicht sauber** (Branch `main`, mehrere andere
+  Sitzungen arbeiten parallel im selben Ordner); die abweichenden Dateien sind Dokumentation
+  und Fremdbestand, kein zusaetzlicher `.cs`-Code ausser dem committeten Titel-Diff.
+  **NICHT belegt:** angemeldeter Sichtprueflauf des neuen Titels im Browser.
+
+- Deploy davor: **2026-08-19 10:07, Lagerwert-KPI-Kachel im
   Einkauf-Cockpit (Wunsch Armin)**, Funktionscommit `08901bb`, `543/543` Tests gruen
   (Release-Lauf vor dem Publish, sowohl Debug- als auch Release-Konfiguration geprueft).
   Vorher-Sicherung `trafag_exporter.db.before-stock-value-kpi-20260819-095935.bak`
