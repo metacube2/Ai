@@ -1,4 +1,4 @@
-namespace TrafagSalesExporter.Services;
+﻿namespace TrafagSalesExporter.Services;
 
 // Generated from every literal UI T(de, en) call. Regenerate when UI text changes.
 internal static class UiTextGeneratedTranslations
@@ -8,6 +8,13 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "Mensajes",
+                ["Keine neuen Meldungen"] = "Sin mensajes nuevos",
+                ["Keine Meldungen."] = "Sin mensajes.",
+                ["Meldung(en), darunter eine Warnung"] = "mensaje(s), incluida una advertencia",
+                ["Liste leeren"] = "Vaciar la lista",
+                ["neue Meldung(en)"] = "mensaje(s) nuevo(s)",
+                ["Meldung(en), darunter ein Fehler"] = "mensaje(s), incluido un error",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "Esta vista muestra los ingresos por segmento de mercado y año. Solo se incluyen las asignaciones confirmadas, porque solo esas aparecen también en el Excel central. Ni las monedas ni los años se suman.",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "Para el año seleccionado no hay ingresos de los clientes confirmados. Elija otro año arriba o todos los años.",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "Ordenado por número de líneas de venta. Los clientes más grandes aparecen primero, allí una asignación tiene el mayor efecto. Las líneas y los ingresos se refieren al año seleccionado arriba; la asignación en sí es válida para todos los años.",
@@ -1506,6 +1513,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "Messaggi",
+                ["Keine neuen Meldungen"] = "Nessun nuovo messaggio",
+                ["Keine Meldungen."] = "Nessun messaggio.",
+                ["Meldung(en), darunter eine Warnung"] = "messaggio/i, tra cui un avviso",
+                ["Liste leeren"] = "Svuota l'elenco",
+                ["neue Meldung(en)"] = "nuovo/i messaggio/i",
+                ["Meldung(en), darunter ein Fehler"] = "messaggio/i, tra cui un errore",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "Questa vista mostra il fatturato per segmento di mercato e anno. Sono incluse solo le assegnazioni confermate, perché solo queste compaiono anche nell'Excel centrale. Né le valute né gli anni vengono sommati.",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "Per l'anno selezionato non c'è fatturato dei clienti confermati. Scegliere sopra un altro anno oppure tutti gli anni.",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "Ordinato per numero di righe di vendita. I clienti più grandi sono in alto, lì un'assegnazione ha l'effetto maggiore. Righe e fatturato si riferiscono all'anno selezionato sopra; l'assegnazione stessa vale per tutti gli anni.",
@@ -3004,6 +3018,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "संदेश",
+                ["Keine neuen Meldungen"] = "कोई नया संदेश नहीं",
+                ["Keine Meldungen."] = "कोई संदेश नहीं।",
+                ["Meldung(en), darunter eine Warnung"] = "संदेश, जिनमें एक चेतावनी है",
+                ["Liste leeren"] = "सूची खाली करें",
+                ["neue Meldung(en)"] = "नए संदेश",
+                ["Meldung(en), darunter ein Fehler"] = "संदेश, जिनमें एक त्रुटि है",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "यह दृश्य बाज़ार खंड और वर्ष के अनुसार बिक्री दिखाता है। इसमें केवल पुष्ट असाइनमेंट शामिल हैं, क्योंकि केवल वही केंद्रीय Excel में भी दिखते हैं। न मुद्राएँ जोड़ी जाती हैं और न वर्ष।",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "चुने गए वर्ष में पुष्ट ग्राहकों की कोई बिक्री नहीं है। ऊपर कोई दूसरा वर्ष या सभी वर्ष चुनें।",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "बिक्री पंक्तियों की संख्या के अनुसार क्रमबद्ध। सबसे बड़े ग्राहक ऊपर हैं, वहाँ असाइनमेंट का सबसे अधिक असर होता है। पंक्तियाँ और बिक्री ऊपर चुने गए वर्ष पर आधारित हैं; असाइनमेंट स्वयं सभी वर्षों के लिए मान्य है।",
@@ -4502,6 +4523,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "Mesazhe",
+                ["Keine neuen Meldungen"] = "Asnjë mesazh i re",
+                ["Keine Meldungen."] = "Asnjë mesazh.",
+                ["Meldung(en), darunter eine Warnung"] = "mesazh(e), përfshirë një paralajmërim",
+                ["Liste leeren"] = "Zbraz listën",
+                ["neue Meldung(en)"] = "mesazh(e) i/të re(ja)",
+                ["Meldung(en), darunter ein Fehler"] = "mesazh(e), përfshirë një gabim",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "Kjo pamje tregon xhiron sipas segmentit të tregut dhe vitit. Përfshihen vetëm caktimet e konfirmuara, sepse vetëm ato shfaqen edhe në Excel-in qendror. Nuk mblidhen as monedhat, as vitet.",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "Për vitin e zgjedhur nuk ka xhiro nga klientët e konfirmuar. Zgjidhni më lart një vit tjetër ose të gjitha vitet.",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "Renditur sipas numrit të rreshtave të shitjes. Klientët më të mëdhenj janë lart, aty një caktim ka efektin më të madh. Rreshtat dhe xhiroja i referohen vitit të zgjedhur më lart; vetë caktimi vlen për të gjitha vitet.",
@@ -6000,6 +6028,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "Mesajlar",
+                ["Keine neuen Meldungen"] = "Yeni mesaj yok",
+                ["Keine Meldungen."] = "Mesaj yok.",
+                ["Meldung(en), darunter eine Warnung"] = "mesaj, bir uyarı dahil",
+                ["Liste leeren"] = "Listeyi temizle",
+                ["neue Meldung(en)"] = "yeni mesaj",
+                ["Meldung(en), darunter ein Fehler"] = "mesaj, bir hata dahil",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "Bu görünüm ciroyu pazar segmentine ve yıla göre gösterir. Yalnızca onaylanmış atamalar dahildir, çünkü merkezi Excel'de de yalnızca bunlar görünür. Ne para birimleri ne de yıllar toplanır.",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "Seçilen yıl için onaylanmış müşterilerin cirosu yok. Yukarıdan başka bir yıl ya da tüm yıllar seçin.",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "Satış satırı sayısına göre sıralanmıştır. En büyük müşteriler üstte yer alır, orada bir atama en çok etkiyi yapar. Satırlar ve ciro yukarıda seçilen yıla aittir; atamanın kendisi tüm yıllar için geçerlidir.",
@@ -7498,6 +7533,13 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Meldungen"] = "QInmey",
+                ["Keine neuen Meldungen"] = "QIn chu' tu'lu'be'",
+                ["Keine Meldungen."] = "QIn tu'lu'be'.",
+                ["Meldung(en), darunter eine Warnung"] = "QInmey, ghuHmoH je",
+                ["Liste leeren"] = "tetlh chIm",
+                ["neue Meldung(en)"] = "QIn chu'",
+                ["Meldung(en), darunter ein Fehler"] = "QInmey, Qagh je",
                 ["Diese Sicht zeigt den Umsatz je Marktsegment und Jahr. Enthalten sind nur bestaetigte Zuordnungen, denn nur diese erscheinen auch im zentralen Excel. Weder Waehrungen noch Jahre werden addiert."] = "market segment je DIS Suq 'ang. confirmed assignments neH tu'lu', central Excel je. Huch pat DIS je chelbe'lu'.",
                 ["Fuer das gewaehlte Jahr gibt es keinen Umsatz der bestaetigten Kunden. Waehlen Sie oben ein anderes Jahr oder alle Jahre."] = "DIS wIvbogh confirmed customers Suq tu'be'lu'. latlh DIS ghap Hoch DIS yIwIv.",
                 ["Sortiert nach Zahl der Verkaufszeilen. Die groessten Kunden stehen oben, dort bewirkt eine Zuordnung am meisten. Zeilen und Umsatz beziehen sich auf das oben gewaehlte Jahr; die Zuordnung selbst gilt jahresuebergreifend."] = "sales rows mI' Sort. tIn customers Dung, pa' assignment potlh law'. rows Huch je DIS wIvbogh; assignment Hoch DIS lo'laH.",

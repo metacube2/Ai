@@ -1,0 +1,194 @@
+@* Statusampel in der Kopfleiste.
+
+   ZWECK (Auftrag Ingo, 2026-08-21): Meldungen erschienen bisher nur als Snackbar, die nach
+   Sekunden verschwindet, und der Status stand abgeschnitten mitten auf der Seite. Die Ampel
+   zeigt den Zustand dauerhaft ganz oben und haelt jede Meldung nachlesbar.
+
+   WIE DIE MELDUNGEN HIERHER KOMMEN: ueber das Ereignis `ISnackbar.OnSnackbarsUpdated`. Die
+   129 `Snackbar.Add`-Aufrufstellen der Anwendung bleiben unangetastet und laufen automatisch
+   mit. Bei jedem Ereignis wird `ShownSnackbars` gegen die bereits gesehenen Instanzen
+   verglichen, damit dieselbe Meldung nicht mehrfach gezaehlt wird - das Ereignis feuert auch
+   beim Ausblenden.
+
+   An MudBlazor 7.15.0 nachgemessen, nicht angenommen: eine Meldung traegt genau `Message`
+   und `Severity`, einen Zeitstempel gibt es nicht. Der wird beim Beobachten gesetzt.
+*@
+@implements IDisposable
+@inject ISnackbar Snackbar
+@inject TrafagSalesExporter.Services.IAppNotificationCenter Center
+@inject TrafagSalesExporter.Services.IUiTextService UiText
+
+<MudMenu AnchorOrigin="Origin.BottomRight"
+         TransformOrigin="Origin.TopRight"
+         Class="mr-3 status-light-menu"
+         Dense
+         OpenChanged="HandleOpenChanged">
+    <ActivatorContent>
+        @* Der Zaehler haengt am Traeger, nicht an der Lampe, sonst verdeckt er sie. *@
+        <MudBadge Content="Center.UnseenCount"
+                  Visible="Center.UnseenCount > 0"
+                  Color="Color.Dark"
+                  Overlap="true"
+                  Bordered="true">
+            <MudTooltip Text="@TooltipText">
+                <span class="status-light @LampClass" aria-label="@TooltipText">
+                    <span class="status-light-lamp"></span>
+                </span>
+            </MudTooltip>
+        </MudBadge>
+    </ActivatorContent>
+    <ChildContent>
+        <div class="status-light-list">
+            @if (_entries.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="pa-4 status-light-empty">
+                    @T("Keine Meldungen.", "No messages.")
+                </MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle2" Class="px-4 pt-3 pb-1">
+                    @T("Meldungen", "Messages") (@_entries.Count)
+                </MudText>
+                <MudDivider />
+                @foreach (var entry in _entries)
+                {
+                    <div class="status-light-entry">
+                        <MudIcon Icon="@IconFor(entry.Severity)"
+                                 Color="@ColorFor(entry.Severity)"
+                                 Size="Size.Small"
+                                 Class="mt-1" />
+                        <div class="status-light-entry-text">
+                            <MudText Typo="Typo.body2">@entry.Message</MudText>
+                            <MudText Typo="Typo.caption" Class="status-light-time">
+                                @entry.At.ToString("dd.MM.yyyy HH:mm:ss")
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                <MudDivider />
+                <div class="status-light-actions">
+                    <MudButton Size="Size.Small"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Filled.DeleteSweep"
+                               OnClick="ClearAll">
+                        @T("Liste leeren", "Clear list")
+                    </MudButton>
+                </div>
+            }
+        </div>
+    </ChildContent>
+</MudMenu>
+
+@code {
+    /// <summary>
+    /// Bereits verarbeitete Snackbar-Instanzen.
+    ///
+    /// Der Standardvergleich ist hier genau der richtige: an MudBlazor 7.15.0 nachgemessen
+    /// ueberschreibt `Snackbar` weder `Equals` noch `GetHashCode`, also wird ueber die
+    /// Referenz verglichen. Das ist gewollt, denn zwei Meldungen mit demselben Text koennen
+    /// zwei echte Vorgaenge sein und muessen beide zaehlen.
+    /// </summary>
+    private readonly HashSet<Snackbar> _seen = [];
+
+    private IReadOnlyList<TrafagSalesExporter.Services.AppNotification> _entries = [];
+
+    protected override void OnInitialized()
+    {
+        Snackbar.OnSnackbarsUpdated += HandleSnackbarsUpdated;
+        Center.Changed += HandleCenterChanged;
+        UiText.Changed += HandleCenterChanged;
+        _entries = Center.Notifications;
+    }
+
+    /// <summary>
+    /// Uebernimmt neu erschienene Meldungen. Das Ereignis feuert auch, wenn eine Snackbar
+    /// VERSCHWINDET; ohne den Abgleich gegen <see cref="_seen"/> wuerde dann nichts Neues
+    /// erkannt, aber auch nichts doppelt gezaehlt.
+    /// </summary>
+    private void HandleSnackbarsUpdated()
+    {
+        var current = Snackbar.ShownSnackbars.ToList();
+
+        foreach (var snackbar in current)
+        {
+            if (!_seen.Add(snackbar))
+                continue;
+
+            Center.Record(snackbar.Message ?? string.Empty, snackbar.Severity);
+        }
+
+        // Verschwundene Instanzen aus der Verfolgung nehmen, sonst waechst das Set ueber die
+        // Lebensdauer der Sitzung unbegrenzt.
+        _seen.RemoveWhere(tracked => !current.Contains(tracked));
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleCenterChanged()
+    {
+        _entries = Center.Notifications;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleOpenChanged(bool open)
+    {
+        _entries = Center.Notifications;
+        if (open)
+        {
+            // Ansehen gilt als gelesen: die Ampel geht danach auf gruen zurueck.
+            Center.MarkAllSeen();
+        }
+    }
+
+    private void ClearAll() => Center.Clear();
+
+    private string LampClass => Center.WorstUnseen switch
+    {
+        Severity.Error => "status-light-red",
+        Severity.Warning => "status-light-yellow",
+        _ => "status-light-green"
+    };
+
+    private string TooltipText
+    {
+        get
+        {
+            var count = Center.UnseenCount;
+            if (count == 0)
+                return T("Keine neuen Meldungen", "No new messages");
+
+            return Center.WorstUnseen switch
+            {
+                Severity.Error => $"{count} " + T("Meldung(en), darunter ein Fehler", "message(s), including an error"),
+                Severity.Warning => $"{count} " + T("Meldung(en), darunter eine Warnung", "message(s), including a warning"),
+                _ => $"{count} " + T("neue Meldung(en)", "new message(s)")
+            };
+        }
+    }
+
+    private static string IconFor(Severity severity) => severity switch
+    {
+        Severity.Error => Icons.Material.Filled.Error,
+        Severity.Warning => Icons.Material.Filled.Warning,
+        Severity.Success => Icons.Material.Filled.CheckCircle,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private static Color ColorFor(Severity severity) => severity switch
+    {
+        Severity.Error => Color.Error,
+        Severity.Warning => Color.Warning,
+        Severity.Success => Color.Success,
+        _ => Color.Info
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    public void Dispose()
+    {
+        Snackbar.OnSnackbarsUpdated -= HandleSnackbarsUpdated;
+        Center.Changed -= HandleCenterChanged;
+        UiText.Changed -= HandleCenterChanged;
+    }
+}

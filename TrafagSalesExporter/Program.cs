@@ -103,6 +103,10 @@ builder.Services.AddSingleton<IDatabaseInitializationService, DatabaseInitializa
 // UI language belongs to one Blazor circuit/user. A singleton leaked language
 // changes into every active session and made language switching unpredictable.
 builder.Services.AddScoped<IUiTextService, UiTextService>();
+// Sammelstelle fuer die Statusampel in der Kopfleiste. BEWUSST Scoped, nicht Singleton:
+// Meldungen entstehen aus den Aktionen EINES Benutzers, ein Singleton wuerde die Meldungen
+// aller Sitzungen vermischen und fremde Vorgaenge sichtbar machen.
+builder.Services.AddScoped<IAppNotificationCenter, AppNotificationCenter>();
 builder.Services.AddSingleton<IAccessSessionTracker, AccessSessionTracker>();
 builder.Services.AddSingleton<ILandingPageSettingsService, LandingPageSettingsService>();
 builder.Services.AddSingleton<IPauseGameSettingsService, PauseGameSettingsService>();

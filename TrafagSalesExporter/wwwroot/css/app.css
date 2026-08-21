@@ -148,3 +148,110 @@ body,
 .components-reconnect-show .reconnect-box .reconnect-showing { display: block !important; }
 .components-reconnect-failed .reconnect-box .reconnect-failed { display: block !important; }
 .components-reconnect-rejected .reconnect-box .reconnect-rejected { display: block !important; }
+
+/* -------------------------------------------------------------------------
+   Statusampel in der Kopfleiste (Components/AppStatusLight.razor)
+
+   GESTALTUNGSGRUND: Die Kopfleiste ist `#B71C1C`, also dunkelrot. Eine rote
+   Lampe direkt darauf waere praktisch unsichtbar - genau der Zustand, den
+   die Ampel anzeigen soll, waere der am schlechtesten erkennbare. Deshalb
+   sitzt die Lampe auf einem hellen, kreisrunden Traeger.
+   ------------------------------------------------------------------------- */
+
+.status-light {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    display: inline-flex;
+    height: 26px;
+    justify-content: center;
+    transition: background 120ms ease;
+    width: 26px;
+}
+
+.status-light:hover {
+    background: #ffffff;
+}
+
+.status-light-lamp {
+    border-radius: 50%;
+    height: 14px;
+    width: 14px;
+}
+
+/* Farben bewusst kraeftig und nicht die MudBlazor-Palette: die Ampel muss auf
+   dem hellen Traeger eindeutig lesbar sein, nicht zum Theme passen. */
+.status-light-green .status-light-lamp {
+    background: #2E7D32;
+    box-shadow: 0 0 4px rgba(46, 125, 50, 0.6);
+}
+
+.status-light-yellow .status-light-lamp {
+    background: #F9A825;
+    box-shadow: 0 0 5px rgba(249, 168, 37, 0.75);
+}
+
+.status-light-red .status-light-lamp {
+    background: #C62828;
+    box-shadow: 0 0 6px rgba(198, 40, 40, 0.85);
+}
+
+/* Rot zusaetzlich pulsieren lassen. Ein Fehler soll auch am Rand des
+   Blickfelds auffallen, nicht nur wenn man hinsieht. */
+@media (prefers-reduced-motion: no-preference) {
+    .status-light-red .status-light-lamp {
+        animation: status-light-pulse 1.6s ease-in-out infinite;
+    }
+}
+
+@keyframes status-light-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+}
+
+.status-light-list {
+    max-height: 60vh;
+    max-width: 460px;
+    min-width: 320px;
+    overflow-y: auto;
+}
+
+.status-light-empty {
+    color: #616161;
+}
+
+.status-light-entry {
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    gap: 10px;
+    padding: 8px 16px;
+}
+
+.status-light-entry:last-of-type {
+    border-bottom: none;
+}
+
+.status-light-entry-text {
+    /* Ohne `min-width: 0` bricht ein langer Meldungstext im Flex-Element nicht
+       um, sondern schiebt die Liste in die Breite. Genau dieses Abschneiden am
+       rechten Rand war der gemeldete Ausgangsfehler. */
+    min-width: 0;
+}
+
+.status-light-entry-text .mud-typography-body2 {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.status-light-time {
+    color: #757575;
+}
+
+.status-light-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 8px;
+}
