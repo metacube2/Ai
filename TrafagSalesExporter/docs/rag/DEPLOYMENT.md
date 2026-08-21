@@ -44,7 +44,25 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-21 13:35, Reconnect-Overlay
+- Aktuellster produktiv verifizierter Deploy: **2026-08-21 14:17, Statusampel fuer alle
+  Meldungen in der Kopfleiste**, Funktionscommit `669c920`, `564/564` Release-Tests gruen.
+  Vorher-Sicherung `trafag_exporter.db.before-status-light-20260821-141006.bak`. Lokaler
+  Release-Build und Server bitgleich. Ziel: `0` neu, `7` geaendert, `1'578` unveraendert,
+  `0` verschwunden. HTTPS `200`: Startseite, `/management-cockpit`. Wirknachweis mit
+  Vorher-Messung fuer `AppNotificationCenter`, `WorstUnseen` und `status-light`.
+  **Ueber HTTP nachgeprueft:** die Startseite liefert `status-light`, `status-light-lamp`
+  und `status-light-green` (gruen ist der richtige Anfangszustand), die Versionskennung ist
+  von `639229094291882821` auf `639229112309249018` gewechselt (der Cache-Bruch wirkt), und
+  das CSS enthaelt `.status-light-lamp`, `status-light-red`, `status-light-pulse` sowie
+  `min-width: 0` fuer den Textumbruch.
+  **ERSTER DEPLOY MIT DER NEUEN SICHERUNGSLOGIK, mit Messung:** `194,6 s` gesamt statt der
+  vorherigen rund 35 Minuten, also etwa elffach schneller. Aufteilung: Lesen `96,1 s`,
+  `integrity_check` `ok`, Uebertragen `93,8 s`. Begruendung und die widerlegte erste
+  Erklaerung in `docs/DEPLOYMENT.md` Abschnitt 5a.
+  **NICHT belegt:** dass die Ampel im Browser richtig aussieht und der Klick die Liste
+  oeffnet. Die Zustandslogik ist durch 13 Tests abgedeckt, die Darstellung nicht.
+
+- Vorheriger Deploy: **2026-08-21 13:35, Reconnect-Overlay
   gehaertet**, Funktionscommit `fa63849`, `547/547` Release-Tests gruen. Vorher-Sicherung
   `trafag_exporter.db.before-overlay-fix-20260821-130136.bak` (`353'378'304` Bytes).
   Lokaler Release-Build und Server bitgleich. Ziel: `0` neu, `7` geaendert, `1'577`

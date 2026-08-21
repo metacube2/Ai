@@ -80,6 +80,35 @@ public static class DatabaseBackup
 
         log($"Keine passende Sicherung vorhanden, lege neue an ({current.Length:N0} Bytes).");
 
+        // SCHNELLER WEG ZUERST. Gemessen am 2026-08-21 gegen die Produktivfreigabe:
+        //   Blockkopie der Datei      3,8 MB/s  ->  89 s fuer 353 MB
+        //   `BackupDatabase` seitenweise  0,11-0,15 MB/s  ->  40-50 min
+        // Also rund 27-facher Unterschied. Der Engpass ist das seitenweise LESEN ueber SMB,
+        // nicht das Schreiben - eine erste Fassung schrieb nur das Ziel lokal und war mit
+        // 114 KB/s sogar noch langsamer.
+        //
+        // WARUM EINE BLOCKKOPIE HIER ZULAESSIG IST: Die Datenbank laeuft im WAL-Modus
+        // (`PRAGMA journal_mode` = `wal`, am 2026-08-21 gemessen). Dort wird die HAUPTDATEI
+        // im laufenden Betrieb nicht beschrieben; alle Aenderungen landen in der
+        // `-wal`-Datei und wandern erst bei einem Checkpoint hinueber. Eine Kopie der
+        // Hauptdatei ist deshalb in aller Regel in sich geschlossen.
+        //
+        // Und weil "in aller Regel" fuer eine Sicherung nicht genuegt, wird das Ergebnis
+        // ueberpruefte Tatsache statt Annahme: die Kopie wird lokal mit
+        // `PRAGMA integrity_check` geprueft. Faellt ein Checkpoint mitten in die Kopie und
+        // zerreisst sie, schlaegt die Pruefung an und es wird auf den langsamen, immer
+        // korrekten Weg zurueckgefallen.
+        if (await TryFastCopyBackupAsync(databasePath, target, log, cancellationToken))
+        {
+            WriteSourceMarker(target, databasePath);
+            var fastReason = $"Neue Sicherung als gepruefte Blockkopie: {Path.GetFileName(target)}.";
+            log(fastReason);
+            return new BackupResult(target, false, fastReason);
+        }
+
+        log("Blockkopie nicht verwendbar, weiche auf den seitenweisen Weg aus. " +
+            "Das dauert deutlich laenger, ist aber immer korrekt.");
+
         // ERST LOKAL SICHERN, DANN IN EINEM ZUG KOPIEREN.
         //
         // Gemessen am 2026-08-21: schreibt `BackupDatabase` direkt auf die Freigabe, laeuft es
@@ -162,6 +191,94 @@ public static class DatabaseBackup
         var newReason = $"Neue Sicherung angelegt: {Path.GetFileName(target)} ({written:N0} Bytes).";
         log(newReason);
         return new BackupResult(target, false, newReason);
+    }
+
+    /// <summary>
+    /// Versucht die Sicherung als Blockkopie und prueft das Ergebnis. Gibt <c>false</c>
+    /// zurueck, wenn der Weg nicht tragfaehig ist; dann muss der Aufrufer auf den
+    /// seitenweisen Weg ausweichen. Hinterlaesst in diesem Fall keine halbe Datei.
+    /// </summary>
+    private static async Task<bool> TryFastCopyBackupAsync(
+        string databasePath, string target, Action<string> log, CancellationToken cancellationToken)
+    {
+        // Steht in der `-wal` noch Inhalt, fehlen der Hauptdatei bestaetigte Transaktionen.
+        // Eine Kopie nur der Hauptdatei waere dann aelter als der echte Stand - fuer eine
+        // Sicherung, die als Rueckfallpunkt dient, nicht akzeptabel.
+        var wal = databasePath + "-wal";
+        var walSize = File.Exists(wal) ? new FileInfo(wal).Length : 0;
+        if (walSize > 0)
+        {
+            log($"`-wal` enthaelt {walSize:N0} Bytes, die der Hauptdatei noch fehlen. " +
+                "Blockkopie waere unvollstaendig.");
+            return false;
+        }
+
+        var staging = Path.Combine(Path.GetTempPath(), Path.GetFileName(target));
+        try
+        {
+            if (File.Exists(staging))
+                File.Delete(staging);
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            File.Copy(databasePath, staging, overwrite: false);
+            watch.Stop();
+            var size = new FileInfo(staging).Length;
+            log($"Blockkopie gelesen: {size:N0} Bytes in {watch.Elapsed.TotalSeconds:N1} s " +
+                $"({size / 1024d / 1024d / Math.Max(watch.Elapsed.TotalSeconds, 0.001):N1} MB/s).");
+
+            // Pruefung gegen die LOKALE Kopie, damit sie schnell ist und die Freigabe nicht
+            // noch einmal belastet.
+            var check = new SqliteConnectionStringBuilder
+            {
+                DataSource = staging,
+                Mode = SqliteOpenMode.ReadOnly,
+                Cache = SqliteCacheMode.Private,
+                DefaultTimeout = 120
+            }.ToString();
+
+            await using (var connection = new SqliteConnection(check))
+            {
+                await connection.OpenAsync(cancellationToken);
+                await using var command = connection.CreateCommand();
+                command.CommandText = "PRAGMA integrity_check;";
+                var result = (await command.ExecuteScalarAsync(cancellationToken))?.ToString();
+                if (!string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    log($"`integrity_check` der Kopie ergab '{result}' statt 'ok'.");
+                    return false;
+                }
+            }
+            log("`integrity_check` der Kopie: ok.");
+
+            // Hat sich die Quelle waehrend der Kopie veraendert, war ein Checkpoint aktiv und
+            // die Kopie beschreibt einen Mischzustand. Sie kann trotzdem `ok` ergeben, deshalb
+            // wird das zusaetzlich geprueft.
+            var afterwards = new FileInfo(databasePath);
+            if (afterwards.Length != size)
+            {
+                log($"Quelle hat sich waehrend der Kopie geaendert ({size:N0} auf " +
+                    $"{afterwards.Length:N0} Bytes).");
+                return false;
+            }
+
+            var copyBack = System.Diagnostics.Stopwatch.StartNew();
+            File.Copy(staging, target, overwrite: false);
+            copyBack.Stop();
+            log($"Auf die Freigabe uebertragen in {copyBack.Elapsed.TotalSeconds:N1} s.");
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or SqliteException)
+        {
+            log($"Blockkopie fehlgeschlagen: {ex.GetType().Name}: {ex.Message}");
+            // Eine unvollstaendige Zieldatei darf nicht als Sicherung stehen bleiben.
+            try { if (File.Exists(target)) File.Delete(target); } catch (IOException) { }
+            return false;
+        }
+        finally
+        {
+            try { if (File.Exists(staging)) File.Delete(staging); }
+            catch (IOException) { log($"Hinweis: Zwischendatei blieb liegen: {staging}"); }
+        }
     }
 
     /// <summary>

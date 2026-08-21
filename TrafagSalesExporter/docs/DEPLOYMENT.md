@@ -157,20 +157,37 @@ Die Ursache ist **Latenz, nicht Bandbreite**. Die `BackupDatabase`-API kopiert s
 und jede Seite ist ein eigener Schreibvorgang mit eigener SMB-Rundreise. Das Netz ist dabei
 nicht ausgelastet.
 
-**Loesung, umgesetzt in `DatabaseBackup`:** zuerst lokal ins Temp-Verzeichnis sichern, dann
-die fertige Datei in einem Zug auf die Freigabe kopieren. Lokal entfaellt die Rundreise je
-Seite, und der abschliessende `File.Copy` uebertraegt in grossen Bloecken mit
-Netzgeschwindigkeit.
+**ERSTE, WIDERLEGTE ERKLAERUNG — hier festgehalten, damit sie nicht noch einmal versucht
+wird.** Die naheliegende Annahme war, die Schreibseite sei schuld, und die Loesung sei,
+lokal ins Temp-Verzeichnis zu sichern und dann in einem Zug zu uebertragen. **Gemessen lief
+das mit `114 KB/s`, also noch LANGSAMER als die `145 KB/s` direkt auf die Freigabe.** Der
+Engpass ist das seitenweise **LESEN** ueber SMB, und daran aendert ein lokales Ziel nichts.
 
-**Die Konsistenz bleibt dabei voll erhalten**, denn sie stammt aus der `BackupDatabase`-API
-selbst und haengt nicht davon ab, wohin geschrieben wird. **Ein reiner `File.Copy` der
-LIVE-Datenbank waere dagegen unzulaessig** — paralleles Schreiben und der WAL-Zustand
-koennten eine zerrissene Kopie ergeben. Deshalb bleibt die API der erste Schritt und der
-Bulk-Copy nur der zweite.
+**Was tatsaechlich hilft, gemessen am 2026-08-21:**
 
-**NOCH NICHT GEMESSEN:** wie schnell die neue Fassung tatsaechlich ist. Die `145 KB/s` sind
-belegt, der Gewinn durch das lokale Zwischenspeichern ist bisher nur begruendet. Beim
-naechsten Deploy nachmessen und die Zahl hier eintragen.
+| Verfahren | Tempo | Dauer fuer 353 MB |
+| --- | --- | --- |
+| `BackupDatabase` seitenweise auf die Freigabe | `145 KB/s` | ca. 40 min |
+| `BackupDatabase` seitenweise nach lokal | `114 KB/s` | ca. 50 min |
+| **Blockkopie der Datei** | **`3,5-3,8 MB/s`** | **96 s je Richtung** |
+
+Echte Messung des ganzen Vorgangs beim Deploy der Statusampel: **`194,6 s`** fuer Lesen
+(`96,1 s`), `integrity_check` und Uebertragen (`93,8 s`). Gegenueber den vorherigen rund
+35 Minuten ist das etwa **elfmal schneller**. Beide Richtungen werden bezahlt, deshalb nicht
+der volle Faktor 27 aus dem reinen Lesevergleich.
+
+**Warum eine Blockkopie hier zulaessig ist:** Die Produktivdatenbank laeuft im **WAL-Modus**
+(`PRAGMA journal_mode` = `wal`, gemessen). Dort wird die **Hauptdatei im laufenden Betrieb
+nicht beschrieben**; alle Aenderungen landen in der `-wal`-Datei und wandern erst bei einem
+Checkpoint hinueber. Eine Kopie der Hauptdatei ist deshalb in sich geschlossen.
+
+**Drei Absicherungen, weil "in aller Regel" fuer eine Sicherung nicht genuegt.**
+`DatabaseBackup.TryFastCopyBackupAsync` verweigert die Blockkopie, wenn (1) die `-wal` noch
+Inhalt fuehrt, der der Hauptdatei fehlt, oder (2) `PRAGMA integrity_check` auf der lokalen
+Kopie nicht `ok` ergibt, oder (3) die Quelle waehrend der Kopie ihre Groesse aendert, was
+einen Checkpoint mitten im Vorgang verraet. In jedem dieser Faelle faellt sie auf den
+langsamen, immer korrekten seitenweisen Weg zurueck. **Eine unverifizierte Blockkopie der
+Live-Datenbank waere unzulaessig** — hier ist sie es nur, weil das Ergebnis geprueft wird.
 
 Der Effekt verschaerft sich mit der Zeit, weil die Datenbank waechst: **Juni 234 MB, am
 2026-08-21 bereits 353 MB**, also plus 51 Prozent. Die Sicherungsdauer skaliert direkt
