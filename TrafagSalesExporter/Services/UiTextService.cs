@@ -28,7 +28,7 @@ public sealed class UiTextService : IUiTextService
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Trafag Finance/Sales Management Cockpit"] = "Trafag Cockpit de finanzas y ventas",
+                ["Trafag Cockpit"] = "Trafag Cockpit",
                 ["Trafag Global BI Cockpit"] = "Trafag Cockpit BI global",
                 ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Consultas de paises conectadas automaticamente con actualizacion diaria",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Bienvenido al panel analítico de Trafag",
@@ -375,7 +375,7 @@ public sealed class UiTextService : IUiTextService
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Trafag Finance/Sales Management Cockpit"] = "Cockpit Trafag finanza e vendite",
+                ["Trafag Cockpit"] = "Cockpit Trafag",
                 ["Trafag Global BI Cockpit"] = "Cockpit BI globale Trafag",
                 ["Automatisch angebundene Laenderabfragen mit taeglichem Refresh"] = "Query Paese collegate automaticamente con refresh giornaliero",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Benvenuto nel dashboard analitico Trafag",
@@ -722,7 +722,7 @@ public sealed class UiTextService : IUiTextService
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Trafag Finance/Sales Management Cockpit"] = "Trafag वित्त और बिक्री प्रबंधन कॉकपिट",
+                ["Trafag Cockpit"] = "ट्रैफ़ैग कॉकपिट",
                 ["Willkommen im Trafag Analyse Dashboard"] = "Trafag विश्लेषण डैशबोर्ड में आपका स्वागत है",
                 ["Finance Cockpit"] = "वित्त कॉकपिट",
                 ["Finance Cockpit ist geschuetzt. Bitte separat anmelden."] = "वित्त कॉकपिट सुरक्षित है. कृपया अलग से साइन इन करें.",
