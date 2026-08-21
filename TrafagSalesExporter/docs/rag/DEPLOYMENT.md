@@ -44,7 +44,32 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-20 10:33, Begruessungston auf der
+- Aktuellster produktiv verifizierter Deploy: **2026-08-21 10:26, Endlosschleife im
+  Lagerwert-Read behoben**, Funktionscommit `d36d9a2`, `547/547` Release-Tests gruen.
+  Vorher-Sicherung `trafag_exporter.db.before-stockvalue-loopfix-20260821-101222.bak`
+  (`276'226'048` Bytes ueber die SQLite-`BackupDatabase`-API). `BiDashboard.dll`
+  `21.08.2026 10:27:18`, `4'633'088` Bytes, SHA256
+  `92D6D4B8072F22C1E2920CCDA1294657222B67F765424E61EF60CC3374460584`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `0` neu, `5` geaendert, `1'544` unveraendert, `0` verschwunden.
+  Produktiv-DB in Laenge und Schreibzeit unveraendert (`353'378'304` Bytes). HTTPS `200`:
+  Startseite, `/einkauf`, `/einkauf/aufriss`, `/management-cockpit`. Deploy ueber das neue
+  Konsolenwerkzeug `.tmp_tools/DeployStockValueLoopFix` (Wiederverwendung von
+  `Tools/DeployConsole/DeployRunner`), Prueflauf vorher gefahren.
+  **Wirknachweis mit Vorher-Messung:** im Prueflauf fehlten `ParsePlannerMap`,
+  `StockValueReadTimeout`, `Lagerwert-Read wegen Zeitgrenze abgebrochen` und
+  `ignoriert $top: angefordert` allesamt in der Server-DLL und sind danach enthalten; der
+  alte Formatstring `&$select=Matnr,Werks,Dispo&$filter=` war vorher vorhanden und ist weg.
+  Behoben wurde damit, dass **jeder Einkauf-Lauf seit dem 2026-08-19 haengen blieb**, weil
+  `MARCSet` `$top`/`$skip`/`$filter` ignoriert und die Paginierungsschleife im
+  Lagerwert-Read deshalb nie abbrach. Details:
+  `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 11.
+  **NOCH NICHT belegt:** dass der Lagerwert wirklich gelesen wird — dafuer muss ein
+  Einkauf-Lauf durchlaufen und `Lagerwert-Read beendet` im Log erscheinen. Der Cache liegt
+  im Speicher und ist nach diesem Deploy leer, die Kachel zeigt bis dahin weiter
+  „wartet auf Einkauf-Lauf". Der fachliche MB5L-Abgleich steht ebenfalls weiter aus.
+
+- Vorheriger Deploy: **2026-08-20 10:33, Begruessungston auf der
   Startseite** (`herzlich.mp3`, autoplay, Schalter `LandingPage:PlayWelcomeSound` default an),
   Funktionscommit `86a7782`, `543/543` Release-Tests gruen. Vorher-Sicherung
   `trafag_exporter.db.before-welcome-sound-20260820-*.bak`. `BiDashboard.dll`
