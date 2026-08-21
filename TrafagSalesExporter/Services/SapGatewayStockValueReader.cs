@@ -194,55 +194,45 @@ public class SapGatewayStockValueReader : ISapGatewayStockValueReader
     public const string WithoutPlanner = "(ohne Disponent)";
 
     /// <summary>
-    /// Disponent je Material aus MARC. Gepagt gelesen — anders als `mbewSet` beherrscht
-    /// `MARCSet` `$top`/`$skip`, der bestehende Einkauf-Loader nutzt das ebenso.
+    /// Disponent je Material aus MARC. BEWUSST OHNE PAGINIERUNG und mit clientseitigem
+    /// Werks-Filter, genau wie <see cref="SapGatewayPlantMaterialReader"/> und der
+    /// Einkauf-Loader in <c>PurchasingDataRefreshService</c>.
+    ///
+    /// VORFALL 2026-08-19 bis 2026-08-21, der zu dieser Fassung fuehrte: Hier stand eine
+    /// `while`-Schleife mit `$top`/`$skip` und Abbruch bei `page.Count &lt; pageSize`. Der
+    /// Kommentar behauptete, `MARCSet` beherrsche Paginierung. Das ist falsch — `MARCSet`
+    /// ignoriert `$top`, `$skip` UND `$filter` und liefert bei jeder Anfrage alle ~68'559
+    /// Zeilen (live verifiziert 2026-07-23, siehe `PurchasingDataRefreshService` und
+    /// <see cref="SapGatewayPlantMaterialReader"/>). Die Abbruchbedingung wurde damit nie
+    /// wahr: die Schleife lief unendlich, jede Anfrage einzeln erfolgreich und unter dem
+    /// Timeout, weshalb weder ein Fehler noch ein Timeout anschlug. Folge: ALLE
+    /// Einkauf-Laeufe seit dem 2026-08-19 hingen an dieser Stelle auf Status `Running`,
+    /// und das produktive SAP `travp762` bekam stundenlang Volltabellen-Abfragen.
+    ///
+    /// Weil `$filter` ebenfalls ignoriert wird, war zusaetzlich die Einschraenkung auf den
+    /// Bewertungskreis wirkungslos: der Disponent wurde ueber alle Werke hinweg per
+    /// Last-Wins zugewiesen. Deshalb wird `Werks` jetzt im Code geprueft.
     /// </summary>
     private async Task<IReadOnlyDictionary<string, string>> LoadPlannerMapAsync(
         HttpClient client, string baseUrl, string valuationArea, CancellationToken cancellationToken)
     {
-        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        const int pageSize = 1000;
-        var skip = 0;
-        var sawDispoField = false;
+        var url = $"{baseUrl}{PlantEntitySet}?$format=json&$select={Uri.EscapeDataString("Matnr,Werks,Dispo")}";
 
-        while (true)
+        using var response = await client.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
         {
-            var url = $"{baseUrl}{PlantEntitySet}?$format=json&$top={pageSize}&$skip={skip}" +
-                      $"&$select=Matnr,Werks,Dispo&$filter={Uri.EscapeDataString($"Werks eq '{valuationArea}'")}";
-
-            using var response = await client.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                // Haeufigste Ursache: das EntitySet exponiert `Dispo` nicht. Das ist eine
-                // SAP-seitige Frage und wird hier NICHT geraten, sondern klar gemeldet.
-                throw new HttpRequestException(
-                    $"SAP OData {PlantEntitySet} mit $select=Matnr,Werks,Dispo fehlgeschlagen " +
-                    $"({(int)response.StatusCode} {response.ReasonPhrase}). Moeglicherweise liefert das " +
-                    $"EntitySet das Feld 'Dispo' nicht — dann muss es in SEGW ergaenzt werden. " +
-                    $"URL={url} Antwort={TrimForLog(error)}");
-            }
-
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
-            var page = ParseRows(json);
-
-            foreach (var row in page)
-            {
-                if (row.ContainsKey("Dispo"))
-                    sawDispoField = true;
-
-                var material = MaterialKeyNormalizer.Normalize(GetText(row, "Matnr"));
-                if (string.IsNullOrWhiteSpace(material))
-                    continue;
-
-                map[material] = GetText(row, "Dispo");
-            }
-
-            if (page.Count < pageSize)
-                break;
-
-            skip += pageSize;
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            // Haeufigste Ursache: das EntitySet exponiert `Dispo` nicht. Das ist eine
+            // SAP-seitige Frage und wird hier NICHT geraten, sondern klar gemeldet.
+            throw new HttpRequestException(
+                $"SAP OData {PlantEntitySet} mit $select=Matnr,Werks,Dispo fehlgeschlagen " +
+                $"({(int)response.StatusCode} {response.ReasonPhrase}). Moeglicherweise liefert das " +
+                $"EntitySet das Feld 'Dispo' nicht — dann muss es in SEGW ergaenzt werden. " +
+                $"URL={url} Antwort={TrimForLog(error)}");
         }
+
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        var map = ParsePlannerMap(ParseRows(json), valuationArea, out var sawDispoField);
 
         // Ein leeres Feld bei JEDER Zeile ist verdaechtig: dann liefert das Set die Spalte
         // zwar formal, aber ohne Inhalt, und die ganze Abgrenzung waere still wirkungslos.
@@ -251,6 +241,40 @@ public class SapGatewayStockValueReader : ISapGatewayStockValueReader
             await _appEventLogService.WriteAsync("SAP", "Lagerwert: Disponent fehlt", "Warning",
                 details: $"{baseUrl}{PlantEntitySet} liefert kein Feld 'Dispo'. Die Abgrenzung auf die " +
                          "Einkaufsdisponenten kann damit nicht gebildet werden.");
+        }
+
+        return map;
+    }
+
+    /// <summary>
+    /// Baut die Zuordnung Material auf Disponent aus den MARC-Rohzeilen. Filtert das Werk
+    /// clientseitig, weil `MARCSet` `$filter` ignoriert. Ohne diesen Filter wuerde ein
+    /// Material, das in mehreren Werken liegt, den Disponenten des zuletzt gelesenen Werks
+    /// erhalten und die Abgrenzung auf die Einkaufsdisponenten still verfaelschen.
+    /// </summary>
+    internal static Dictionary<string, string> ParsePlannerMap(
+        IEnumerable<Dictionary<string, object?>> rows, string valuationArea, out bool sawDispoField)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var area = valuationArea?.Trim() ?? string.Empty;
+        sawDispoField = false;
+
+        foreach (var row in rows)
+        {
+            if (row.ContainsKey("Dispo"))
+                sawDispoField = true;
+
+            // Liefert das Set kein `Werks`, kann nicht gefiltert werden. Dann lieber alle
+            // Zeilen nehmen als stumm eine leere Zuordnung zurueckgeben.
+            if (area.Length > 0 && row.ContainsKey("Werks") &&
+                !string.Equals(GetText(row, "Werks"), area, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var material = MaterialKeyNormalizer.Normalize(GetText(row, "Matnr"));
+            if (string.IsNullOrWhiteSpace(material))
+                continue;
+
+            map[material] = GetText(row, "Dispo");
         }
 
         return map;

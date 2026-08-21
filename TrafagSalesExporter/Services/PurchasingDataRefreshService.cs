@@ -20,6 +20,12 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
 
     private readonly ISapGatewayStockValueReader? _stockValueReader;
 
+    /// <summary>
+    /// Obergrenze fuer den Lagerwert-Read. Siehe <see cref="RefreshStockValueSafeAsync"/> fuer
+    /// die Begruendung (Haenger vom 2026-08-19, der jeden Einkauf-Lauf blockierte).
+    /// </summary>
+    private static readonly TimeSpan StockValueReadTimeout = TimeSpan.FromMinutes(10);
+
     public PurchasingDataRefreshService(
         IDbContextFactory<AppDbContext> dbFactory,
         IAppEventLogService logService,
@@ -46,6 +52,16 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         if (_stockValueReader is null)
             return;
 
+        // HARTE ZEITGRENZE. Der `catch` unten faengt nur Ausnahmen, aber der Vorfall vom
+        // 2026-08-19 war kein Fehler, sondern ein HAENGER: eine Endlosschleife im Reader
+        // lief ohne Ausnahme und ohne Timeout weiter, und weil dieser Aufruf VOR dem
+        // Statuseintrag steht, blieb jeder Einkauf-Lauf dauerhaft auf `Running`. Eine
+        // Zeitgrenze ist die einzige Absicherung, die auch gegen einen kuenftigen Haenger
+        // greift. Der Read kostet regulaer rund eine Minute (zwei Vollbestaende, je etwa
+        // 28 s), zehn Minuten sind also reichlich und trotzdem endlich.
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(StockValueReadTimeout);
+
         try
         {
             var snapshot = await _stockValueReader.RefreshAsync(
@@ -53,11 +69,20 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 connection.Username,
                 connection.Password,
                 PurchasingDashboardService.PurchasingValuationArea,
-                cancellationToken);
+                timeout.Token);
 
             await _logService.WriteAsync("Purchasing", "Lagerwert aktualisiert",
                 details: $"Bewertungskreis={snapshot.ValuationArea} | Disponenten={snapshot.Rows.Count} | " +
                          $"Materialien={snapshot.TotalMaterialCount:N0} | Gesamtwert={snapshot.TotalValue:N2}");
+        }
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            // Eigene Zeitgrenze gerissen, nicht der Lauf abgebrochen. Das eigens zu melden
+            // ist wichtig, weil genau dieser Fall vorher als stiller Haenger auftrat.
+            await _logService.WriteAsync("Purchasing", "Lagerwert-Read wegen Zeitgrenze abgebrochen", "Warning",
+                details: $"Der Read hat die Grenze von {StockValueReadTimeout.TotalMinutes:N0} Minuten " +
+                         "ueberschritten und wurde abgebrochen. Der Einkauf-Lauf laeuft weiter und wird " +
+                         "sauber abgeschlossen, die Lagerwert-Kachel bleibt auf dem vorherigen Stand.");
         }
         catch (Exception ex)
         {
@@ -286,6 +311,23 @@ WHERE COALESCE(e.Ebeln, '') <> '' AND CAST(e.Menge AS REAL) > CAST(e.Wemng AS RE
             }
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             var page = ParseRows(json);
+
+            // NOTBREMSE gegen ignoriertes Paging. Mehrere Sets dieses Service ignorieren
+            // $top/$skip und liefern immer den Vollbestand (MARCSet, MARA001Set, MAKTSet,
+            // mbewSet — live verifiziert). Wird eines davon versehentlich hier durchgeleitet,
+            // ist die Abbruchbedingung unten NIE erfuellt und die Schleife laeuft unendlich,
+            // ohne Fehler und ohne Timeout, weil jede einzelne Anfrage erfolgreich ist.
+            // Genau das hat vom 2026-08-19 bis 2026-08-21 jeden Einkauf-Lauf zum Haengen
+            // gebracht (Lagerwert-Read, siehe SapGatewayStockValueReader). Mehr Zeilen als
+            // angefordert ist der eindeutige Beweis dafuer, deshalb hier lauter Abbruch
+            // statt stiller Endlosschleife.
+            if (page.Count > PageSize)
+                throw new InvalidOperationException(
+                    $"SAP OData {entitySet} ignoriert $top: angefordert {PageSize} Zeilen, " +
+                    $"geliefert {page.Count}. Dieses Set darf NICHT gepagt gelesen werden — " +
+                    $"stattdessen ein einziger ungepagter Request mit clientseitigem Filter, " +
+                    $"wie in SapGatewayPlantMaterialReader. URL={url}");
+
             if (page.Count == 0)
                 return rows;
             rows.AddRange(page);

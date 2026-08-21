@@ -35,6 +35,10 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    mit Status und Nachweis aktualisieren. Eintraege mit `abgeschlossen`, `deployed`,
    `frei` oder `Historie` sind keine laufende Arbeit.
 7. **Arbeitsregeln, Tests und fachliche Grenzen:** `persona.md`.
+8. **Ingo testet immer auf dem deployten Produktivstand, nie lokal.** Eine leere oder
+   abweichende lokale `trafag_exporter.db` oder ein lokal gestarteter Dev-Server sind kein
+   Beleg fuer den produktiven Zustand. Bei UI-/Datenfragen den produktiven Stand pruefen
+   (Browser, Admin-Logs, `docs/rag/DEPLOYMENT.md`), nicht die lokale Kopie im Repo.
 
 ## Themenaeste
 

@@ -382,3 +382,73 @@ Beide ermitteln Programm- und Feldnamen aus dem System, statt sie anzunehmen.
 
 Analyse und Dokumentation. **Kein Anwendungscode, keine Datenbank, kein Deploy.** Die Umsetzung
 ist bewusst nicht begonnen, weil der MB5L-Abgleich und drei fachliche Entscheidungen ausstehen.
+
+## 11. Nachtrag 2026-08-21: Endlosschleife im Lagerwert-Read, alle Einkauf-Laeufe blockiert
+
+Ingo meldete, die Kachel haenge dauerhaft auf `wartet auf Einkauf-Lauf` und ein manueller
+Full Load bewirke nichts. Die Kachel hatte recht: es war seit ihrem Deploy tatsaechlich kein
+Einkauf-Lauf mehr fertig geworden.
+
+### 11.1 Messung auf dem Produktivstand
+
+Read-only gegen die produktive `trafag_exporter.db` (nur `SELECT`):
+
+| Lauf | Start | Status |
+| --- | --- | --- |
+| `Delta` | 2026-08-18 13:15 | **Success** — der letzte erfolgreiche Lauf ueberhaupt |
+| `Full` | 2026-08-19 10:10 | `Running`, nie beendet |
+| `Delta` | 2026-08-19 12:24 | `Running`, nie beendet |
+| `Full` | 2026-08-20 07:34 | `Running`, nie beendet |
+
+In allen drei haengenden Laeufen ist `Lagerwert-Read gestartet` der **letzte** Logeintrag.
+Weder `Lagerwert-Read beendet` noch eine Fehlerwarnung folgt. Die Kachel wurde am
+2026-08-19 um 10:07 deployed, der erste haengende Lauf startete um 10:10.
+
+### 11.2 Ursache, am eigenen Code belegt
+
+`LoadPlannerMapAsync` paginierte `MARCSet` in einer `while (true)`-Schleife mit Abbruch bei
+`page.Count < 1000`. **`MARCSet` ignoriert `$top`, `$skip` und `$filter`** und liefert bei
+jeder Anfrage alle rund 68'559 Zeilen. Die Abbruchbedingung wurde damit nie wahr.
+
+Das war keine neue Erkenntnis: das Verhalten ist seit dem 2026-07-23 live verifiziert und an
+zwei Stellen dokumentiert, in `PurchasingDataRefreshService` (Grossbuchstaben-Warnung mit
+Verifikationsdatum) und in `SapGatewayPlantMaterialReader`. Der Kommentar im Lagerwert-Reader
+behauptete das Gegenteil und war in beiden Halbsaetzen falsch. In
+`docs/AGENT_COORDINATION.md` stand die Pruefung dieses Punktes ausdruecklich als **vor dem
+Deploy zwingend** und wurde nicht durchgefuehrt.
+
+Warum es nie einen Fehler gab: jede einzelne Anfrage war erfolgreich und blieb unter dem
+Fuenf-Minuten-Timeout des `HttpClient`. Der Timeout gilt je Anfrage, nicht fuer die Schleife.
+
+### 11.3 Zweiter, dabei gefundener Fehler
+
+Weil `MARCSet` auch `$filter` ignoriert, war die Einschraenkung auf den Bewertungskreis
+wirkungslos. Der Reader bekam alle Werke geliefert und schrieb `map[material] = Dispo` ohne
+Werkspruefung, also **Last-Wins**: ein Material in mehreren Werken erhielt den Disponenten des
+zuletzt gelesenen Werks. Die Abgrenzung auf die Einkaufsdisponenten waere damit still falsch
+gewesen, auch wenn die Schleife je gelaufen waere.
+
+### 11.4 Behoben
+
+| Aenderung | Datei |
+| --- | --- |
+| `MARCSet` mit EINEM ungepagten Request, Schleife entfernt; neue testbare `ParsePlannerMap` mit clientseitigem Werks-Filter | `Services/SapGatewayStockValueReader.cs` |
+| Notbremse: liefert ein Set mehr Zeilen als per `$top` angefordert, lauter Abbruch statt stiller Endlosschleife | `Services/PurchasingDataRefreshService.cs` |
+| Harte Zeitgrenze von 10 Minuten um den Lagerwert-Read, weil der bestehende `catch` nur Ausnahmen faengt und gegen einen Haenger wirkungslos ist | `Services/PurchasingDataRefreshService.cs` |
+| Vier Regressionstests | `TrafagSalesExporter.Tests/StockValueReaderTests.cs` |
+
+`547/547` Tests gruen (vorher 543), `dotnet build -c Release` ohne Fehler.
+
+### 11.5 Was offen bleibt
+
+- **Deploy steht aus.** Ohne ihn wirkt der Fix produktiv nicht.
+- Die drei Zombie-Zeilen `Running` in `PurchasingSyncState` raeumt nichts auf. Sie
+  blockieren keinen neuen Lauf (es gibt keinen Nebenlaeufigkeitsschutz), zeigen in der
+  Oberflaeche aber einen laufenden Stand, den es nicht gibt.
+- `MaterialUsageDataRefreshService.ReadAllRowsAsync` hat dieselbe strukturelle Schwaeche
+  ohne Notbremse. Dort wird sie nur mit paginierfaehigen Sets aufgerufen, das ist Glueck in
+  der Aufrufliste und keine Sicherung im Code.
+- Der MB5L-Abgleich aus Abschnitt 6a.3 steht weiterhin aus. Die Kachel zeigt auch nach dem
+  Fix einen fachlich **unbestaetigten** Wert.
+- Die Schleife hat ueber zwei Tage hinweg stundenlang Volltabellen-Abfragen gegen das
+  produktive SAP `travp762` gefeuert. Ob das dort aufgefallen ist, ist nicht geprueft.

@@ -186,6 +186,94 @@ public class StockValueReaderTests
             reader.RefreshAsync("http://example/", "u", "p", "  "));
     }
 
+    private static Dictionary<string, object?> MarcRow(string matnr, string werks, string dispo)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Matnr"] = matnr,
+            ["Werks"] = werks,
+            ["Dispo"] = dispo
+        };
+
+    /// <summary>
+    /// REGRESSION zum Vorfall 2026-08-19 bis 2026-08-21. `MARCSet` ignoriert `$filter`, der
+    /// Aufruf bekommt also ALLE Werke geliefert. Ohne clientseitigen Filter erhielt ein
+    /// Material, das in mehreren Werken liegt, den Disponenten des zuletzt gelesenen Werks
+    /// (Last-Wins) und die Abgrenzung auf die Einkaufsdisponenten war still falsch.
+    /// </summary>
+    [Fact]
+    public void ParsePlannerMap_FiltertFremdeWerkeAus()
+    {
+        var rows = new[]
+        {
+            MarcRow("A1", "1100", "001"),
+            MarcRow("A1", "1200", "A99"),   // anderes Werk, darf 1100 NICHT ueberschreiben
+            MarcRow("B1", "1200", "A99")    // gehoert gar nicht in den Bewertungskreis
+        };
+
+        var map = SapGatewayStockValueReader.ParsePlannerMap(rows, "1100", out var sawDispo);
+
+        Assert.True(sawDispo);
+        Assert.Equal("001", map["A1"]);
+        Assert.False(map.ContainsKey("B1"));
+        Assert.Single(map);
+    }
+
+    /// <summary>
+    /// Liefert das Set kein `Werks`, darf nicht stumm eine leere Zuordnung entstehen — dann
+    /// waere der ganze Lagerwert ohne Disponent und die Kachel zeigte nur „(ohne Disponent)".
+    /// </summary>
+    [Fact]
+    public void ParsePlannerMap_NimmtAlleZeilenWennWerksFehlt()
+    {
+        var rows = new[]
+        {
+            new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                { ["Matnr"] = "A1", ["Dispo"] = "001" }
+        };
+
+        var map = SapGatewayStockValueReader.ParsePlannerMap(rows, "1100", out var sawDispo);
+
+        Assert.True(sawDispo);
+        Assert.Equal("001", map["A1"]);
+    }
+
+    /// <summary>
+    /// Fehlt `Dispo` ganz, muss das erkennbar sein. Der Aufrufer schreibt daraufhin eine
+    /// Warnung, statt die Abgrenzung still wirkungslos zu lassen.
+    /// </summary>
+    [Fact]
+    public void ParsePlannerMap_MeldetFehlendesDispoFeld()
+    {
+        var rows = new[]
+        {
+            new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                { ["Matnr"] = "A1", ["Werks"] = "1100" }
+        };
+
+        var map = SapGatewayStockValueReader.ParsePlannerMap(rows, "1100", out var sawDispo);
+
+        Assert.False(sawDispo);
+        Assert.Equal(string.Empty, map["A1"]);
+    }
+
+    /// <summary>
+    /// Ohne Bewertungskreis wird nicht gefiltert. Das ist kein Normalfall, aber es darf keine
+    /// leere Zuordnung ergeben.
+    /// </summary>
+    [Fact]
+    public void ParsePlannerMap_OhneBewertungskreisNimmtAlles()
+    {
+        var rows = new[]
+        {
+            MarcRow("A1", "1100", "001"),
+            MarcRow("B1", "1200", "002")
+        };
+
+        var map = SapGatewayStockValueReader.ParsePlannerMap(rows, "", out _);
+
+        Assert.Equal(2, map.Count);
+    }
+
     private sealed class NullAppEventLogService : IAppEventLogService
     {
         public Task WriteAsync(string category, string message, string level = "Info",
