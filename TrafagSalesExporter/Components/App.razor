@@ -13,6 +13,46 @@
 </head>
 <body>
     <Routes @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+
+    @*
+        Verbindungsanzeige. Blazor sucht dieses Element bei einem Verbindungsverlust ueber
+        seine Id und setzt darauf die Klassen `components-reconnect-show`, `-failed` oder
+        `-rejected`. Fehlt es, bleibt ein abgerissener Circuit VOLLSTAENDIG unsichtbar: die
+        Seite sieht normal aus, reagiert aber auf keinen Klick mehr. Genau das war der von
+        Ingo am 2026-08-21 gemeldete Fehler. Gestaltung in `wwwroot/css/app.css`,
+        automatischer Neuaufbau in `wwwroot/js/reconnect.js`.
+
+        Die Texte stehen bewusst statisch im Markup und nicht ueber `T(...)`: wenn dieses
+        Overlay erscheint, ist der Circuit weg, und damit ist der Uebersetzungsdienst
+        serverseitig nicht mehr erreichbar. Deutsch und Englisch stehen deshalb zusammen.
+    *@
+    <div id="components-reconnect-modal">
+        <div class="reconnect-box">
+            <h3>Verbindung zum Server unterbrochen</h3>
+            <p class="reconnect-state reconnect-showing">
+                Die Verbindung wird wiederhergestellt. Bitte kurz warten.<br />
+                <em>Reconnecting to the server.</em>
+                @*
+                    Blazor schreibt die Zahlen in Elemente mit genau diesen beiden Klassen
+                    (am Framework 8.0.27 nachgeprueft, nicht angenommen). Die Klammer steht
+                    im Markup, damit bei nicht gefuellten Werten kein halber Satz entsteht.
+                *@
+                <br /><small>Versuch <span class="components-reconnect-current"></span>
+                    von <span class="components-reconnect-max"></span></small>
+            </p>
+            <p class="reconnect-state reconnect-failed">
+                Die Verbindung konnte nicht wiederhergestellt werden. Die Seite wird
+                automatisch neu geladen.<br />
+                <em>Could not reconnect. Reloading automatically.</em>
+            </p>
+            <p class="reconnect-state reconnect-rejected">
+                Die Sitzung ist auf dem Server abgelaufen, meist nach einem Neustart der
+                Anwendung. Die Seite wird automatisch neu geladen.<br />
+                <em>Session expired on the server. Reloading automatically.</em>
+            </p>
+        </div>
+    </div>
+
     <script src="@($"{BaseHref}_framework/blazor.web.js")" autostart="false"></script>
     <script>
         Blazor.start({
@@ -22,6 +62,7 @@
         });
     </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="js/reconnect.js"></script>
     <script src="js/download.js"></script>
     <script src="js/vendor/three.min.js"></script>
     <script src="js/finance3d.js"></script>

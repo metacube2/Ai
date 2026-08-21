@@ -78,3 +78,73 @@ body,
         min-height: 480px;
     }
 }
+
+/* -------------------------------------------------------------------------
+   Verbindungsanzeige (Blazor Server Circuit)
+
+   Blazor sucht beim Verbindungsverlust ein Element mit der Id
+   `components-reconnect-modal` und setzt darauf eine dieser Klassen:
+     components-reconnect-show      Verbindung weg, Wiederaufbau laeuft
+     components-reconnect-failed    alle Versuche erschoepft
+     components-reconnect-rejected  Server kennt den Circuit nicht mehr
+   Ohne dieses Element bleibt der Ausfall UNSICHTBAR: die Seite sieht normal
+   aus, reagiert aber auf keinen Klick mehr. Genau das war der gemeldete
+   Fehler "beim Wechsel zwischen Modulen passiert nichts".
+   ------------------------------------------------------------------------- */
+
+#components-reconnect-modal {
+    display: none;
+}
+
+#components-reconnect-modal.components-reconnect-show,
+#components-reconnect-modal.components-reconnect-failed,
+#components-reconnect-modal.components-reconnect-rejected {
+    align-items: center;
+    background: rgba(33, 33, 33, 0.72);
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    /* Ueber MudBlazor-Dialogen und -Overlays, sonst verdeckt ein offener
+       Dialog die Meldung und der Ausfall bleibt trotzdem unsichtbar. */
+    z-index: 20000;
+}
+
+.reconnect-box {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
+    color: #212121;
+    font-family: "Open Sans", sans-serif;
+    max-width: 420px;
+    padding: 24px 28px;
+    text-align: center;
+}
+
+.reconnect-box h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+
+.reconnect-box p {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.reconnect-box small {
+    color: #616161;
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* Je Zustand genau eine Zeile zeigen. */
+.reconnect-box .reconnect-state { display: none; }
+
+.components-reconnect-show .reconnect-box .reconnect-showing { display: block; }
+.components-reconnect-failed .reconnect-box .reconnect-failed { display: block; }
+.components-reconnect-rejected .reconnect-box .reconnect-rejected { display: block; }
