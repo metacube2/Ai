@@ -6,7 +6,8 @@
     <title>Trafag Cockpit</title>
     <base href="@BaseHref" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link href="css/app.css" rel="stylesheet" />
+    @* `AssetVersion` erzwingt das Neuladen nach einem Deploy, siehe unten. *@
+    <link href="css/app.css?v=@AssetVersion" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <HeadOutlet @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
@@ -26,10 +27,19 @@
         Overlay erscheint, ist der Circuit weg, und damit ist der Uebersetzungsdienst
         serverseitig nicht mehr erreichbar. Deutsch und Englisch stehen deshalb zusammen.
     *@
-    <div id="components-reconnect-modal">
+    @*
+        WICHTIG, `style="display:none"` NICHT entfernen. Am 2026-08-21 stand hier nur die
+        Klasse, und das Ausblenden lag allein in `app.css`. Als die Datei aus dem
+        Browsercache kam, war das Overlay dauerhaft sichtbar, stand im normalen Seitenfluss
+        und zeigte ALLE drei Zustandstexte hintereinander. Das Inline-Attribut haelt das
+        Overlay auch ohne CSS verborgen; die Anzeige-Regeln in `app.css` ueberschreiben es
+        gezielt mit `!important`. Damit ist der Fehlerfall "CSS fehlt" harmlos statt
+        entstellend.
+    *@
+    <div id="components-reconnect-modal" style="display: none">
         <div class="reconnect-box">
             <h3>Verbindung zum Server unterbrochen</h3>
-            <p class="reconnect-state reconnect-showing">
+            <p class="reconnect-state reconnect-showing" style="display: none">
                 Die Verbindung wird wiederhergestellt. Bitte kurz warten.<br />
                 <em>Reconnecting to the server.</em>
                 @*
@@ -40,12 +50,12 @@
                 <br /><small>Versuch <span class="components-reconnect-current"></span>
                     von <span class="components-reconnect-max"></span></small>
             </p>
-            <p class="reconnect-state reconnect-failed">
+            <p class="reconnect-state reconnect-failed" style="display: none">
                 Die Verbindung konnte nicht wiederhergestellt werden. Die Seite wird
                 automatisch neu geladen.<br />
                 <em>Could not reconnect. Reloading automatically.</em>
             </p>
-            <p class="reconnect-state reconnect-rejected">
+            <p class="reconnect-state reconnect-rejected" style="display: none">
                 Die Sitzung ist auf dem Server abgelaufen, meist nach einem Neustart der
                 Anwendung. Die Seite wird automatisch neu geladen.<br />
                 <em>Session expired on the server. Reloading automatically.</em>
@@ -62,7 +72,7 @@
         });
     </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-    <script src="js/reconnect.js"></script>
+    <script src="js/reconnect.js?v=@AssetVersion"></script>
     <script src="js/download.js"></script>
     <script src="js/vendor/three.min.js"></script>
     <script src="js/finance3d.js"></script>
@@ -72,6 +82,39 @@
 @code {
     [Inject]
     private IConfiguration Configuration { get; set; } = default!;
+
+    /// <summary>
+    /// Versionskennzeichen fuer <c>app.css</c> und <c>reconnect.js</c>, damit der Browser
+    /// sie nach einem Deploy neu holt statt die zwischengespeicherte Fassung zu verwenden.
+    ///
+    /// ANLASS: Am 2026-08-21 wurde das Reconnect-Overlay ausgeliefert, aber die Browser
+    /// hielten die alte <c>app.css</c>. Ohne die Anzeige-Regeln stand das Overlay dauerhaft
+    /// sichtbar mitten in der Seite und zeigte alle drei Zustandstexte am Stueck. Der
+    /// Serverstand war korrekt, nur beim Benutzer kam er nicht an.
+    ///
+    /// Der Wert kommt aus der Schreibzeit der eigenen Assembly. Die aendert sich bei jedem
+    /// Build und damit bei jedem Deploy, aber NICHT zwischen zwei Aufrufen desselben
+    /// Stands - sonst waere die Datei nie zwischenspeicherbar. Bewusst keine feste Zahl im
+    /// Quelltext, die beim naechsten Mal wieder vergessen wuerde.
+    /// </summary>
+    private static readonly string AssetVersion = ResolveAssetVersion();
+
+    private static string ResolveAssetVersion()
+    {
+        try
+        {
+            var location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            if (!string.IsNullOrEmpty(location) && File.Exists(location))
+                return File.GetLastWriteTimeUtc(location).Ticks.ToString();
+        }
+        catch
+        {
+            // Eine fehlende Versionskennung darf die Seite nicht verhindern. Der Fallback
+            // wirkt wie vorher: der Browser entscheidet selbst ueber den Cache.
+        }
+
+        return "1";
+    }
 
     private string BaseHref
     {

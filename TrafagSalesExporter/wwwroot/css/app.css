@@ -92,17 +92,18 @@ body,
    Fehler "beim Wechsel zwischen Modulen passiert nichts".
    ------------------------------------------------------------------------- */
 
-#components-reconnect-modal {
-    display: none;
-}
-
+/* Das Ausblenden steht ZUSAETZLICH als `style="display:none"` im Markup von
+   `App.razor`. Deshalb brauchen die Anzeige-Regeln hier `!important`, denn ein
+   Inline-Attribut gewinnt sonst gegen jede Regel aus der Datei. Grund fuer diesen
+   Aufbau: kommt `app.css` aus dem Browsercache oder fehlt sie, war das Overlay
+   vorher dauerhaft sichtbar und zeigte alle drei Zustandstexte am Stueck. */
 #components-reconnect-modal.components-reconnect-show,
 #components-reconnect-modal.components-reconnect-failed,
 #components-reconnect-modal.components-reconnect-rejected {
     align-items: center;
     background: rgba(33, 33, 33, 0.72);
     bottom: 0;
-    display: flex;
+    display: flex !important;
     justify-content: center;
     left: 0;
     position: fixed;
@@ -142,9 +143,8 @@ body,
     margin-top: 8px;
 }
 
-/* Je Zustand genau eine Zeile zeigen. */
-.reconnect-box .reconnect-state { display: none; }
-
-.components-reconnect-show .reconnect-box .reconnect-showing { display: block; }
-.components-reconnect-failed .reconnect-box .reconnect-failed { display: block; }
-.components-reconnect-rejected .reconnect-box .reconnect-rejected { display: block; }
+/* Je Zustand genau eine Zeile zeigen. Auch hier `!important` gegen das
+   Inline-Attribut im Markup, siehe Begruendung oben. */
+.components-reconnect-show .reconnect-box .reconnect-showing { display: block !important; }
+.components-reconnect-failed .reconnect-box .reconnect-failed { display: block !important; }
+.components-reconnect-rejected .reconnect-box .reconnect-rejected { display: block !important; }
