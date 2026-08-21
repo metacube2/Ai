@@ -15,4 +15,10 @@
     <None Update="deploy.settings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Fuer die konsistente Vorher-Sicherung ueber die BackupDatabase-API, siehe
+         DatabaseBackup.cs. Version identisch zu den Deploy-Werkzeugen. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+  </ItemGroup>
+
 </Project>

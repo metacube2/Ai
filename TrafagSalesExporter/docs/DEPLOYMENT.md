@@ -122,7 +122,8 @@ direkt auf dem Share bearbeitet, verliert die Aenderung ohne Meldung. Sie stehen
 
 1. Release-Tests lokal laufen lassen, Anzahl notieren.
 2. Konsistente Vorher-Sicherung der Produktivdatenbank ueber die SQLite-`BackupDatabase`-API
-   anlegen (`trafag_exporter.db.before-<thema>-<zeitstempel>.bak`).
+   anlegen (`trafag_exporter.db.before-<thema>-<zeitstempel>.bak`) — **aber nur, wenn nicht
+   schon eine passende Sicherung existiert, siehe Abschnitt 5a.**
 3. Deploy-Konsole im Prueflauf starten, Bestandsaufnahme pruefen.
 4. Prueflauf abwaehlen, Zielpfad bestaetigen, Publish.
 5. Nachweis pruefen: keine verschwundenen Dateien, Schutzdateien unveraendert, DLL bitgleich.
@@ -134,6 +135,67 @@ direkt auf dem Share bearbeitet, verliert die Aenderung ohne Meldung. Sie stehen
 **Was ein HTTP-`200` nicht belegt:** Routen hinter dem Finance- oder HR-Unlock liefern von
 der Entwicklungsmaschine aus das Passwortpanel. Der `200` belegt Erreichbarkeit, nicht die
 Anzeige. Dafuer braucht es einen angemeldeten Sichtprueflauf.
+
+## 5a. Keine redundante Sicherung anlegen — VERBINDLICH
+
+**Regel: Vor dem Anlegen einer Sicherung pruefen, ob auf der Freigabe schon eine `.bak`
+liegt, deren Groesse UND Schreibzeit zur aktuellen `trafag_exporter.db` passen. Wenn ja,
+diese als Vorher-Nachweis verwenden und KEINE neue anlegen.** Im Protokollabsatz dann die
+wiederverwendete Datei nennen, damit der Nachweis vollstaendig bleibt.
+
+Begruendung, gemessen am 2026-08-21: An diesem Tag entstanden **drei Sicherungen derselben
+unveraenderten Datenbank** (`10:12`, `10:46`, `13:01`), weil drei Deploys hintereinander
+liefen und keiner die Datenbank anfasste — drei inhaltsgleiche Dateien, jede voll bezahlt.
+
+### Warum eine Sicherung direkt auf die Freigabe so lange dauert
+
+**Gemessen am 2026-08-21 am laufenden Deploy: `145 KB/s`.** In 40 Sekunden wuchs die
+Sicherung um `5,9 MB` (`188,6` auf `194,5 MB`). Fuer die vollen `353 MB` sind das
+**gegen 40 Minuten**, nicht die zuvor geschaetzten zehn.
+
+Die Ursache ist **Latenz, nicht Bandbreite**. Die `BackupDatabase`-API kopiert seitenweise,
+und jede Seite ist ein eigener Schreibvorgang mit eigener SMB-Rundreise. Das Netz ist dabei
+nicht ausgelastet.
+
+**Loesung, umgesetzt in `DatabaseBackup`:** zuerst lokal ins Temp-Verzeichnis sichern, dann
+die fertige Datei in einem Zug auf die Freigabe kopieren. Lokal entfaellt die Rundreise je
+Seite, und der abschliessende `File.Copy` uebertraegt in grossen Bloecken mit
+Netzgeschwindigkeit.
+
+**Die Konsistenz bleibt dabei voll erhalten**, denn sie stammt aus der `BackupDatabase`-API
+selbst und haengt nicht davon ab, wohin geschrieben wird. **Ein reiner `File.Copy` der
+LIVE-Datenbank waere dagegen unzulaessig** — paralleles Schreiben und der WAL-Zustand
+koennten eine zerrissene Kopie ergeben. Deshalb bleibt die API der erste Schritt und der
+Bulk-Copy nur der zweite.
+
+**NOCH NICHT GEMESSEN:** wie schnell die neue Fassung tatsaechlich ist. Die `145 KB/s` sind
+belegt, der Gewinn durch das lokale Zwischenspeichern ist bisher nur begruendet. Beim
+naechsten Deploy nachmessen und die Zahl hier eintragen.
+
+Der Effekt verschaerft sich mit der Zeit, weil die Datenbank waechst: **Juni 234 MB, am
+2026-08-21 bereits 353 MB**, also plus 51 Prozent. Die Sicherungsdauer skaliert direkt
+damit. Wer den Schritt unveraendert laesst, wartet in einem halben Jahr entsprechend
+laenger.
+
+Umgesetzt in `Tools/DeployConsole` (`DatabaseBackup.EnsureBackup`), damit die Regel fuer
+jeden Weg gilt und nicht in jedem Wegwerf-Werkzeug unter `.tmp_tools/` neu erfunden wird.
+
+**Wann eine neue Sicherung trotzdem zwingend ist:** sobald die Datenbank seit der letzten
+Sicherung geschrieben wurde, also bei Schemaaenderungen, Seed-Aenderungen, Migrationen und
+nach jedem Import oder Lauf, der Daten schreibt. Genau das erkennt der Vergleich von Groesse
+und Schreibzeit automatisch — weicht eines davon ab, wird gesichert.
+
+### Zwei weitere Zeitfresser
+
+- **Routen sparsam pruefen.** `/einkauf` braucht allein rund `90 s`, `/einkauf/aufriss` je
+  nach Cachezustand bis `88 s`. Diese Routen nur in die Abrufpruefung nehmen, wenn die
+  Aenderung den Einkauf betrifft. Startseite und `/management-cockpit` antworten in
+  Bruchteilen einer Sekunde.
+- **Alte Sicherungen aufraeumen.** Am 2026-08-21 lagen **38 `.bak`-Dateien mit 7,8 GB** auf
+  der Freigabe, die aelteste vom 5. Juni; die Freigabe insgesamt 1585 Dateien und 13,5 GB.
+  Aufbewahrung: die letzten fuenf plus je eine pro Monat genuegen. **Loeschen nur nach
+  ausdruecklicher Freigabe durch Ingo und nur von ihm selbst ausgefuehrt**, nie beilaeufig
+  im Rahmen eines Deploys.
 
 ## 6. Firewall
 
