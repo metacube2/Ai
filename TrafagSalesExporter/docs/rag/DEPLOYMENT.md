@@ -44,7 +44,28 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-21 11:02, Verbindungsanzeige und
+- Aktuellster produktiv verifizierter Deploy: **2026-08-21 13:35, Reconnect-Overlay
+  gehaertet**, Funktionscommit `fa63849`, `547/547` Release-Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-overlay-fix-20260821-130136.bak` (`353'378'304` Bytes).
+  Lokaler Release-Build und Server bitgleich. Ziel: `0` neu, `7` geaendert, `1'577`
+  unveraendert, `0` verschwunden. HTTPS `200`: Startseite, `/management-cockpit`.
+  Wirknachweis mit Vorher-Messung fuer `AssetVersion`, `css/app.css?v=` und
+  `style="display: none"`.
+  **BEHOBENER FEHLGRIFF des vorherigen Deploys:** Das Overlay aus `99e92f2` versteckte sich
+  ausschliesslich ueber `app.css`. Die Browser hielten die alte Datei im Zwischenspeicher,
+  also fehlten die Regeln, und das Markup wurde nackt gerendert — dauerhaft sichtbar, im
+  normalen Seitenfluss, mit allen drei Zustandstexten am Stueck. Der Server lieferte die
+  richtige Datei, sie kam nur beim Benutzer nicht an. Lehre: **ausgeliefert ist nicht
+  angekommen**; bei Aenderungen an `wwwroot`-Dateien immer eine Versionskennung mitgeben.
+  **Ueber HTTP nachgeprueft, nicht nur am Publish:** Versionskennung im HTML aktiv
+  (`v=639229094291882821`), Overlay und alle `3` Zustandszeilen tragen
+  `style="display:none"`, das CSS ist unter der Versionsadresse erreichbar und enthaelt
+  genau `4` Regeln mit `!important` (eine fuer das Overlay, drei fuer die Zustaende),
+  `reconnect.js` ebenfalls versioniert.
+  **NICHT belegt:** dass das Overlay im echten Verbindungsverlust erscheint und der
+  automatische Reload greift. Das braucht eine Sichtpruefung.
+
+- Vorheriger Deploy: **2026-08-21 11:02, Verbindungsanzeige und
   Selbstheilung fuer den Blazor-Circuit**, Funktionscommit `99e92f2`, `547/547`
   Release-Tests gruen. Vorher-Sicherung
   `trafag_exporter.db.before-reconnect-ui-20260821-104645.bak` (`353'378'304` Bytes).
