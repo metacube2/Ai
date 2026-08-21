@@ -44,7 +44,34 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-21 10:26, Endlosschleife im
+- Aktuellster produktiv verifizierter Deploy: **2026-08-21 11:02, Verbindungsanzeige und
+  Selbstheilung fuer den Blazor-Circuit**, Funktionscommit `99e92f2`, `547/547`
+  Release-Tests gruen. Vorher-Sicherung
+  `trafag_exporter.db.before-reconnect-ui-20260821-104645.bak` (`353'378'304` Bytes).
+  `BiDashboard.dll` `21.08.2026 11:03:21`, `4'635'648` Bytes, SHA256
+  `951D5BD878C83B27A9D42F17CA672D439E598F3851AF0490AC07F2CE1DD6A661`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `1` neu (`wwwroot/js/reconnect.js`), `7` geaendert, `1'544` unveraendert,
+  `0` verschwunden. Produktiv-DB unveraendert. HTTPS `200`: Startseite,
+  `/management-cockpit`, `/einkauf/aufriss`. Deploy ueber das neue Konsolenwerkzeug
+  `.tmp_tools/DeployReconnectUi`, Prueflauf vorher gefahren.
+  **Wirknachweis mit Vorher-Messung:** `components-reconnect-modal`,
+  `Verbindung zum Server unterbrochen` und `js/reconnect.js` fehlten im Prueflauf in der
+  Server-DLL und sind danach enthalten.
+  **Zusaetzlich ueber HTTP nachgeprueft**, weil die Deploy-Konsole nur Routen abruft und
+  keine statischen Dateien: `/js/reconnect.js` liefert `200` (`3'408` Bytes, enthaelt die
+  Terminalzustands-Pruefung und `location.reload`), `/css/app.css` liefert `200`
+  (`3'503` Bytes, lokal und Server byteidentisch, Overlay-Styles und alter Bestand beide
+  vorhanden), und im HTML der Startseite stehen sowohl das Element
+  `id="components-reconnect-modal"` als auch die Einbindung des Skripts. Die Seitengroesse
+  der Startseite stieg von `69'014` auf `70'150` Bytes, was zum ergaenzten Markup passt.
+  Behoben wird damit, dass ein abgerissener Circuit voellig unsichtbar war und die Seite auf
+  keinen Klick mehr reagierte. **NICHT behoben und weiterhin offen: die Ursache der
+  Verbindungsabrisse selbst.** Details: `docs/AGENT_COORDINATION.md`.
+  **NICHT durch Tests abgedeckt:** Markup, CSS und JavaScript; dass das Overlay im Browser
+  wirklich erscheint und der automatische Reload greift, ist noch nicht sichtgeprueft.
+
+- Vorheriger Deploy: **2026-08-21 10:26, Endlosschleife im
   Lagerwert-Read behoben**, Funktionscommit `d36d9a2`, `547/547` Release-Tests gruen.
   Vorher-Sicherung `trafag_exporter.db.before-stockvalue-loopfix-20260821-101222.bak`
   (`276'226'048` Bytes ueber die SQLite-`BackupDatabase`-API). `BiDashboard.dll`
