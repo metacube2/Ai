@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject IPurchasingDataSourcePageService DataSourceService
 @inject IPurchasingDataRefreshService RefreshService
+@inject IPurchasingRefreshRunner RefreshRunner
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject ISnackbar Snackbar
 
@@ -94,15 +95,19 @@ else
             @T("Full Load = kompletter Neuaufbau des Einkaufs-Caches (schwer, mit Marco/Andreas abstimmen). Delta = nur neue/geaenderte Belege seit dem letzten Lauf. Nachts laeuft automatisch ein Delta, sofern die Einkaufsquelle aktiv ist.",
                "Full load = complete rebuild of the purchasing cache (heavy, coordinate with Marco/Andreas). Delta = only new/changed documents since the last run. A delta runs automatically each night while the purchasing source is active.")
         </MudText>
-        @if (_refreshBusy)
+        @if (RefreshRunning)
         {
             <MudProgressLinear Indeterminate="true" Class="mb-2" />
+            <MudText Typo="Typo.caption" Class="purchasing-muted d-block mb-2">
+                @T("Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen.",
+                   "The run continues in the background even if you leave the page.")
+            </MudText>
         }
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" OnClick="RunFullLoadAsync" Disabled="_refreshBusy || _busy">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" OnClick="RunFullLoadAsync" Disabled="RefreshRunning || _busy">
                 @T("Full Load starten", "Start full load")
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Sync" OnClick="RunDeltaAsync" Disabled="_refreshBusy || _busy">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Sync" OnClick="RunDeltaAsync" Disabled="RefreshRunning || _busy">
                 @T("Delta aktualisieren", "Refresh delta")
             </MudButton>
             @if (_refreshStatus is not null)
@@ -210,8 +215,11 @@ else
     private PurchasingDataSourceState _state = new();
     private bool _loading = true;
     private bool _busy;
-    private bool _refreshBusy;
     private PurchasingDataRefreshStatus? _refreshStatus;
+    private CancellationTokenSource? _refreshPollCts;
+
+    /// <summary>Laeuft anwendungsweit gerade ein Einkauf-Lauf? Siehe <c>PurchasingRefreshRunner</c>.</summary>
+    private bool RefreshRunning => RefreshRunner.Current.IsRunning;
 
     protected override async Task OnInitializedAsync()
     {
@@ -219,41 +227,85 @@ else
         _state = await DataSourceService.LoadAsync();
         _refreshStatus = await RefreshService.GetStatusAsync();
         _loading = false;
+
+        if (RefreshRunning)
+            StartRefreshPolling();
     }
 
-    private async Task RunFullLoadAsync()
-    {
-        await RunRefreshAsync(
-            () => RefreshService.RunFullLoadAsync(),
-            T("Full Load abgeschlossen.", "Full load completed."));
-    }
+    private Task RunFullLoadAsync() => StartRunAsync(PurchasingRefreshRunner.ModeFull);
 
-    private async Task RunDeltaAsync()
-    {
-        await RunRefreshAsync(
-            () => RefreshService.RunDeltaAsync(),
-            T("Delta aktualisiert.", "Delta refreshed."));
-    }
+    private Task RunDeltaAsync() => StartRunAsync(PurchasingRefreshRunner.ModeDelta);
 
-    private async Task RunRefreshAsync(Func<Task<PurchasingDataRefreshStatus>> action, string successMessage)
+    /// <summary>
+    /// Loest den Lauf aus und kehrt sofort zurueck.
+    ///
+    /// HIER STAND BIS ZUM 2026-08-24 `await RefreshService.RunFullLoadAsync()`, also ein rund
+    /// fuenfzig Minuten dauernder Lauf im Klick-Handler des Circuits. Dieselbe Falle wie im
+    /// Einkauf-Dashboard: riss die Verbindung ab, blieb der Statuseintrag dauerhaft auf
+    /// `Running` stehen. Diese Seite ist der zweite Ausloeser fuer denselben Lauf und muss
+    /// deshalb denselben Weg gehen, sonst entstehen die Zombie-Eintraege einfach hier weiter.
+    /// </summary>
+    private async Task StartRunAsync(string mode)
     {
-        if (_refreshBusy || _busy)
+        if (_busy)
             return;
 
-        _refreshBusy = true;
+        if (!RefreshRunner.TryStart(mode))
+        {
+            Snackbar.Add(T("Es laeuft bereits ein Einkauf-Lauf.", "A purchasing run is already in progress."),
+                Severity.Info);
+            return;
+        }
+
+        Snackbar.Add(
+            T("Der Lauf ist gestartet und laeuft im Hintergrund weiter.",
+              "The run has started and continues in the background."),
+            Severity.Success);
+
+        _refreshStatus = await RefreshService.GetStatusAsync();
+        StartRefreshPolling();
+    }
+
+    private void StartRefreshPolling()
+    {
+        if (_refreshPollCts is not null)
+            return;
+
+        var cts = new CancellationTokenSource();
+        _refreshPollCts = cts;
+        _ = PollRefreshAsync(cts);
+    }
+
+    private async Task PollRefreshAsync(CancellationTokenSource cts)
+    {
         try
         {
-            _refreshStatus = await action();
-            var ok = _refreshStatus.IsComplete;
-            Snackbar.Add(ok ? successMessage : _refreshStatus.Message, ok ? Severity.Success : Severity.Error);
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                var stillRunning = RefreshRunner.Current.IsRunning;
+
+                await InvokeAsync(async () =>
+                {
+                    _refreshStatus = await RefreshService.GetStatusAsync();
+                    StateHasChanged();
+                });
+
+                if (!stillRunning)
+                    break;
+            }
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (ObjectDisposedException)
+        {
         }
         finally
         {
-            _refreshBusy = false;
+            if (ReferenceEquals(_refreshPollCts, cts))
+                _refreshPollCts = null;
+            cts.Dispose();
         }
     }
 
@@ -328,6 +380,15 @@ else
     public void Dispose()
     {
         UiText.Changed -= HandleLanguageChanged;
+
+        // Nur die Abfrage beenden. Der Lauf haengt an der Anwendung und laeuft weiter.
+        try
+        {
+            _refreshPollCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     private string TranslateConnectionMessage(string message)

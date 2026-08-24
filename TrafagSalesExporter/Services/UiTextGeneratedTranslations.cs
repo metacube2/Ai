@@ -9,6 +9,7 @@ internal static class UiTextGeneratedTranslations
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "Cancelado",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "El proceso se ha iniciado y continúa en segundo plano.",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "Ya se está ejecutando un proceso de compras.",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "El proceso continúa en segundo plano, incluso si abandona la página.",
                 ["Meldungen"] = "Mensajes",
@@ -1517,6 +1518,7 @@ internal static class UiTextGeneratedTranslations
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "Interrotto",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "L'elaborazione è stata avviata e continua in background.",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "È già in corso un'elaborazione degli acquisti.",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "L'elaborazione continua in background, anche se si abbandona la pagina.",
                 ["Meldungen"] = "Messaggi",
@@ -3025,6 +3027,7 @@ internal static class UiTextGeneratedTranslations
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "रद्द किया गया",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "प्रक्रिया आरंभ हो गई है और पृष्ठभूमि में चलती रहती है।",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "एक क्रय प्रक्रिया पहले से चल रही है।",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "प्रक्रिया पृष्ठभूमि में चलती रहती है, चाहे आप पृष्ठ छोड़ दें।",
                 ["Meldungen"] = "संदेश",
@@ -4533,6 +4536,7 @@ internal static class UiTextGeneratedTranslations
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "Ndërprerë",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "Procesi ka nisur dhe vazhdon në sfond.",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "Një proces i blerjeve është tashmë në vazhdim.",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "Procesi vazhdon në sfond, edhe nëse largoheni nga faqja.",
                 ["Meldungen"] = "Mesazhe",
@@ -6041,6 +6045,7 @@ internal static class UiTextGeneratedTranslations
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "İptal edildi",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "Çalışma başlatıldı ve arka planda devam ediyor.",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "Zaten bir satın alma çalışması sürüyor.",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "Çalışma, sayfadan ayrılsanız bile arka planda devam eder.",
                 ["Meldungen"] = "Mesajlar",
@@ -7549,6 +7554,7 @@ internal static class UiTextGeneratedTranslations
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Abgebrochen"] = "mevyaw'pu'",
+                ["Der Lauf ist gestartet und laeuft im Hintergrund weiter."] = "vum taghpu' 'ej qaS taH.",
                 ["Es laeuft bereits ein Einkauf-Lauf."] = "je'wI' vum qaS taH.",
                 ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "vum qaS taH 'ej yavDaq Damejchugh vaj qaS taH.",
                 ["Meldungen"] = "QInmey",
