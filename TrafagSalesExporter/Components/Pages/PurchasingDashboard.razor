@@ -23,6 +23,7 @@
 @inject NavigationManager Navigation
 @inject IPurchasingDashboardService PurchasingDashboardService
 @inject IPurchasingDataRefreshService PurchasingDataRefreshService
+@inject IPurchasingRefreshRunner RefreshRunner
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
@@ -444,16 +445,26 @@
                             </MudItem>
                         </MudGrid>
                         <MudStack Row="true" Spacing="2" Class="mb-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" Disabled="_refreshBusy" OnClick="RunPurchasingFullLoadAsync">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" Disabled="RefreshRunning" OnClick="RunPurchasingFullLoadAsync">
                                 @T("Full Load starten", "Start full load")
                             </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Disabled="_refreshBusy" OnClick="RunPurchasingDeltaAsync">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Disabled="RefreshRunning" OnClick="RunPurchasingDeltaAsync">
                                 @T("Delta aktualisieren", "Refresh delta")
                             </MudButton>
                         </MudStack>
-                        @if (_refreshBusy)
+                        @if (RefreshRunning)
                         {
                             <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+                            <MudText Typo="Typo.caption" Class="purchasing-muted d-block mb-2">
+                                @T("Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen.",
+                                   "The run continues in the background even if you leave the page.")
+                            </MudText>
+                        }
+                        @if (_refreshStartRejected)
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                                @T("Es laeuft bereits ein Einkauf-Lauf.", "A purchasing run is already in progress.")
+                            </MudAlert>
                         }
                         <MudText Typo="Typo.body2" Class="purchasing-muted">@TranslatePurchasingMessage(_refreshStatus.Message)</MudText>
                     </MudPaper>
@@ -693,7 +704,16 @@
     private PurchasingDashboardLiveState _liveState = new();
     private PurchasingDataRefreshStatus _refreshStatus = new();
     private bool _liveLoading = true;
-    private bool _refreshBusy;
+    private bool _refreshStartRejected;
+    private CancellationTokenSource? _refreshPollCts;
+
+    /// <summary>
+    /// Laeuft gerade ein Einkauf-Lauf? Kommt aus dem Runner und damit aus der ganzen Anwendung,
+    /// nicht aus diesem Circuit. Ein Lauf, der in einem anderen Browserfenster ausgeloest wurde,
+    /// sperrt die Schaltflaechen hier ebenfalls — vorher war das ein reines Seitenfeld und zwei
+    /// Fenster konnten zwei Volllaeufe gleichzeitig anstossen.
+    /// </summary>
+    private bool RefreshRunning => RefreshRunner.Current.IsRunning;
     private string _purchasing3dIndicator = "spend";
     private string _purchasing3dChartType = "bar";
     private double _purchasing3dFactor = 1d;
@@ -1619,6 +1639,11 @@
         _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
         _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
         _liveLoading = false;
+
+        // Laeuft bereits einer (aus einem anderen Fenster oder vom naechtlichen Slot), dann
+        // diesen Circuit gleich mithoeren lassen, statt erst beim naechsten Klick.
+        if (RefreshRunning)
+            StartRefreshPolling();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1647,6 +1672,15 @@
     {
         Navigation.LocationChanged -= HandleLocationChanged;
         UiText.Changed -= HandleLanguageChanged;
+
+        // Nur die Abfrage beenden. Der Lauf selbst haengt an der Anwendung und laeuft weiter.
+        try
+        {
+            _refreshPollCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     private string T(string german, string english) => UiText.Text(german, english);
@@ -1775,6 +1809,9 @@
             "Running" => T("Laeuft", "Running"),
             "Error" => T("Fehler", "Error"),
             "Empty" => T("Noch leer", "Empty"),
+            // Ein Lauf, der einen Neustart der Anwendung nicht ueberlebt hat. Beim Start
+            // aufgeraeumt, damit die Anzeige nicht dauerhaft "Laeuft" behauptet.
+            "Abgebrochen" => T("Abgebrochen", "Aborted"),
             _ => string.IsNullOrWhiteSpace(status) ? "-" : status
         };
 
@@ -1844,31 +1881,77 @@
             _ => Color.Warning
         };
 
-    private async Task RunPurchasingFullLoadAsync()
+    private Task RunPurchasingFullLoadAsync() => StartPurchasingRunAsync(PurchasingRefreshRunner.ModeFull);
+
+    private Task RunPurchasingDeltaAsync() => StartPurchasingRunAsync(PurchasingRefreshRunner.ModeDelta);
+
+    /// <summary>
+    /// Loest einen Einkauf-Lauf aus und kehrt sofort zurueck.
+    ///
+    /// HIER STAND BIS ZUM 2026-08-24 `await ...RunFullLoadAsync()`, also ein rund fuenfzig
+    /// Minuten dauernder Lauf im Klick-Handler des Circuits. Riss die Verbindung in dieser Zeit
+    /// ab, starb der Lauf mitten im Ablauf und sein Statuseintrag blieb dauerhaft auf `Running`
+    /// stehen — produktiv viermal passiert (Ids 31 bis 34). Jetzt haengt der Lauf an der
+    /// Anwendung, und diese Seite fragt nur noch nach.
+    /// </summary>
+    private async Task StartPurchasingRunAsync(string mode)
     {
-        _refreshBusy = true;
-        try
-        {
-            _refreshStatus = await PurchasingDataRefreshService.RunFullLoadAsync();
-            _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
-        }
-        finally
-        {
-            _refreshBusy = false;
-        }
+        _refreshStartRejected = !RefreshRunner.TryStart(mode);
+
+        // Sofort nachlesen: der Lauf hat seinen `Running`-Eintrag bereits geschrieben, damit die
+        // Anzeige nicht bis zum ersten Abfragetakt auf dem alten Stand steht.
+        _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
+        StartRefreshPolling();
     }
 
-    private async Task RunPurchasingDeltaAsync()
+    /// <summary>
+    /// Fragt den Lauf im Takt ab, solange er laeuft. Nur der Statusblock wird dabei neu geladen;
+    /// der teure Dashboard-Zustand erst, wenn der Lauf fertig ist.
+    /// </summary>
+    private void StartRefreshPolling()
     {
-        _refreshBusy = true;
+        if (_refreshPollCts is not null)
+            return;
+
+        var cts = new CancellationTokenSource();
+        _refreshPollCts = cts;
+        _ = PollRefreshAsync(cts);
+    }
+
+    private async Task PollRefreshAsync(CancellationTokenSource cts)
+    {
         try
         {
-            _refreshStatus = await PurchasingDataRefreshService.RunDeltaAsync();
-            _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                var stillRunning = RefreshRunner.Current.IsRunning;
+
+                await InvokeAsync(async () =>
+                {
+                    _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
+                    if (!stillRunning)
+                        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+                    StateHasChanged();
+                });
+
+                if (!stillRunning)
+                    break;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Seite verlassen. Der Lauf laeuft weiter, nur die Abfrage endet.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Circuit abgeraeumt, waehrend eine Abfrage unterwegs war.
         }
         finally
         {
-            _refreshBusy = false;
+            if (ReferenceEquals(_refreshPollCts, cts))
+                _refreshPollCts = null;
+            cts.Dispose();
         }
     }
 

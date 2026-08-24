@@ -19,6 +19,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private readonly IPurchasingProductGroupSapReader _productGroupSapReader;
 
     private readonly ISapGatewayStockValueReader? _stockValueReader;
+    private readonly IPurchasingStockValueStore? _stockValueStore;
 
     /// <summary>
     /// Obergrenze fuer den Lagerwert-Read. Siehe <see cref="RefreshStockValueSafeAsync"/> fuer
@@ -30,12 +31,14 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         IDbContextFactory<AppDbContext> dbFactory,
         IAppEventLogService logService,
         IPurchasingProductGroupSapReader productGroupSapReader,
-        ISapGatewayStockValueReader? stockValueReader = null)
+        ISapGatewayStockValueReader? stockValueReader = null,
+        IPurchasingStockValueStore? stockValueStore = null)
     {
         _dbFactory = dbFactory;
         _logService = logService;
         _productGroupSapReader = productGroupSapReader;
         _stockValueReader = stockValueReader;
+        _stockValueStore = stockValueStore;
     }
 
     /// <summary>
@@ -71,9 +74,17 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
                 PurchasingDashboardService.PurchasingValuationArea,
                 timeout.Token);
 
+            // In die Datenbank schreiben, nicht nur in den Reader-Cache. Der Cache liegt im
+            // Arbeitsspeicher eines Singletons und ist nach jedem Neustart des IIS-Workers
+            // leer; genau daran stand die Kachel am 2026-08-24 wieder auf "wartet auf
+            // Einkauf-Lauf", obwohl der Wert am 2026-08-21 gelesen worden war.
+            if (_stockValueStore is not null)
+                await _stockValueStore.SaveAsync(snapshot, cancellationToken);
+
             await _logService.WriteAsync("Purchasing", "Lagerwert aktualisiert",
                 details: $"Bewertungskreis={snapshot.ValuationArea} | Disponenten={snapshot.Rows.Count} | " +
-                         $"Materialien={snapshot.TotalMaterialCount:N0} | Gesamtwert={snapshot.TotalValue:N2}");
+                         $"Materialien={snapshot.TotalMaterialCount:N0} | Gesamtwert={snapshot.TotalValue:N2} | " +
+                         $"gespeichert={(_stockValueStore is not null ? "ja" : "nein")}");
         }
         catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {

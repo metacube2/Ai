@@ -129,6 +129,13 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundSer
 // weder Remoteausfuehrung noch RDP zur Verfuegung steht.
 builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
 
+// Einkauf-Laeufe laufen an der Anwendung, nicht am Blazor-Circuit des Anwenders. Derselbe
+// Singleton raeumt beim Start liegengebliebene `Running`-Eintraege auf. Begruendung in
+// PurchasingRefreshRunner.
+builder.Services.AddSingleton<PurchasingRefreshRunner>();
+builder.Services.AddSingleton<IPurchasingRefreshRunner>(sp => sp.GetRequiredService<PurchasingRefreshRunner>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<PurchasingRefreshRunner>());
+
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();
 builder.Services.AddScoped<IStandortePageService, StandortePageService>();
@@ -144,6 +151,8 @@ builder.Services.AddScoped<IPurchasingDataSourcePageService, PurchasingDataSourc
 builder.Services.AddScoped<IPurchasingDashboardService, PurchasingDashboardService>();
 builder.Services.AddScoped<IPurchasingProductGroupSapReader, PurchasingProductGroupSapReader>();
 builder.Services.AddScoped<IPurchasingDataRefreshService, PurchasingDataRefreshService>();
+// Gespeicherter Lagerwert: ueberlebt Neustarts, damit die KPI-Kachel nicht jeden Morgen leer ist.
+builder.Services.AddScoped<IPurchasingStockValueStore, PurchasingStockValueStore>();
 builder.Services.AddScoped<IMaterialUsageDataRefreshService, MaterialUsageDataRefreshService>();
 builder.Services.AddScoped<ISupplyChainAnalysisService, SupplyChainAnalysisService>();
 builder.Services.AddScoped<IHrKpiAccessService, HrKpiAccessService>();

@@ -13,6 +13,7 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ISapGatewayStockValueReader? _stockValueReader;
+    private readonly IPurchasingStockValueStore? _stockValueStore;
 
     /// <summary>
     /// Bewertungskreis des Einkaufs. <c>1100</c> = Schweiz, <c>1200</c> = Oesterreich
@@ -35,26 +36,47 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
 
     public PurchasingDashboardService(
         IDbContextFactory<AppDbContext> dbFactory,
-        ISapGatewayStockValueReader? stockValueReader = null)
+        ISapGatewayStockValueReader? stockValueReader = null,
+        IPurchasingStockValueStore? stockValueStore = null)
     {
         _dbFactory = dbFactory;
         _stockValueReader = stockValueReader;
+        _stockValueStore = stockValueStore;
     }
 
     /// <summary>
     /// Uebernimmt den zuletzt gelesenen Lagerwert in den Anzeigezustand.
     ///
-    /// BEWUSST NUR AUS DEM CACHE: Ein frischer Read kostet ueber 100 MB und rund 28 Sekunden.
-    /// Das darf nicht an einem Seitenaufruf haengen. Gefuellt wird der Cache vom
-    /// Einkauf-Refresh; solange nichts vorliegt, bleibt <c>StockValueLoaded</c> false und die
-    /// Kachel sagt das offen, statt eine 0 zu zeigen, die wie ein leeres Lager aussaehe.
+    /// NIE EIN FRISCHER READ: Der kostet ueber 100 MB und rund 28 Sekunden und darf nicht an
+    /// einem Seitenaufruf haengen. Gefuellt wird der Stand vom Einkauf-Refresh.
+    ///
+    /// ZWEI QUELLEN, IN DIESER REIHENFOLGE: erst der Arbeitsspeicher des Readers, dann die
+    /// Datenbank. Der zweite Schritt kam am 2026-08-24 dazu. Vorher gab es nur den ersten, und
+    /// weil der bei jedem Neustart des IIS-Workers leer ist, stand die Kachel praktisch jeden
+    /// Morgen auf "wartet auf Einkauf-Lauf" — obwohl der Wert am Vortag gelesen worden war.
+    ///
+    /// Liegt gar nichts vor, bleibt <c>StockValueLoaded</c> false und die Kachel sagt das
+    /// offen, statt eine 0 zu zeigen, die wie ein leeres Lager aussaehe.
     /// </summary>
-    private void ApplyStockValue(PurchasingDashboardLiveState state)
+    private async Task ApplyStockValueAsync(
+        PurchasingDashboardLiveState state, CancellationToken cancellationToken = default)
     {
-        if (_stockValueReader is null)
-            return;
+        var snapshot = _stockValueReader?.GetCached(PurchasingValuationArea);
 
-        var snapshot = _stockValueReader.GetCached(PurchasingValuationArea);
+        if (snapshot is null && _stockValueStore is not null)
+        {
+            try
+            {
+                snapshot = await _stockValueStore.LoadAsync(PurchasingValuationArea, cancellationToken);
+            }
+            catch (Exception)
+            {
+                // Ein Lesefehler am gespeicherten Stand darf das ganze Dashboard nicht
+                // umbringen. Dann bleibt die Kachel eben beim offenen Hinweis.
+                snapshot = null;
+            }
+        }
+
         if (snapshot is null)
             return;
 
@@ -187,7 +209,7 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
         // Vor jedem moeglichen Rueckgabepunkt: der Lagerwert haengt weder am Zeitfilter noch
         // am Cache-Zustand der Belegdaten. Stuende er weiter unten, waere er im
         // Cache-Pfad (der frueh zurueckkehrt) immer leer.
-        ApplyStockValue(state);
+        await ApplyStockValueAsync(state, cancellationToken);
 
         try
         {

@@ -328,7 +328,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             DatabaseSchemaSql.GetPurchasingEkkoCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingEkpoCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
-            DatabaseSchemaSql.GetPurchasingSyncStateCreateSql()
+            DatabaseSchemaSql.GetPurchasingSyncStateCreateSql(),
+            DatabaseSchemaSql.GetPurchasingStockValueCacheCreateSql()
         })
         {
             using var cmd = conn.CreateCommand();

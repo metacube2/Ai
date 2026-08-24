@@ -8,6 +8,9 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "Cancelado",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "Ya se está ejecutando un proceso de compras.",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "El proceso continúa en segundo plano, incluso si abandona la página.",
                 ["Meldungen"] = "Mensajes",
                 ["Keine neuen Meldungen"] = "Sin mensajes nuevos",
                 ["Keine Meldungen."] = "Sin mensajes.",
@@ -1513,6 +1516,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "Interrotto",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "È già in corso un'elaborazione degli acquisti.",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "L'elaborazione continua in background, anche se si abbandona la pagina.",
                 ["Meldungen"] = "Messaggi",
                 ["Keine neuen Meldungen"] = "Nessun nuovo messaggio",
                 ["Keine Meldungen."] = "Nessun messaggio.",
@@ -3018,6 +3024,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "रद्द किया गया",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "एक क्रय प्रक्रिया पहले से चल रही है।",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "प्रक्रिया पृष्ठभूमि में चलती रहती है, चाहे आप पृष्ठ छोड़ दें।",
                 ["Meldungen"] = "संदेश",
                 ["Keine neuen Meldungen"] = "कोई नया संदेश नहीं",
                 ["Keine Meldungen."] = "कोई संदेश नहीं।",
@@ -4523,6 +4532,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "Ndërprerë",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "Një proces i blerjeve është tashmë në vazhdim.",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "Procesi vazhdon në sfond, edhe nëse largoheni nga faqja.",
                 ["Meldungen"] = "Mesazhe",
                 ["Keine neuen Meldungen"] = "Asnjë mesazh i re",
                 ["Keine Meldungen."] = "Asnjë mesazh.",
@@ -6028,6 +6040,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "İptal edildi",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "Zaten bir satın alma çalışması sürüyor.",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "Çalışma, sayfadan ayrılsanız bile arka planda devam eder.",
                 ["Meldungen"] = "Mesajlar",
                 ["Keine neuen Meldungen"] = "Yeni mesaj yok",
                 ["Keine Meldungen."] = "Mesaj yok.",
@@ -7533,6 +7548,9 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Abgebrochen"] = "mevyaw'pu'",
+                ["Es laeuft bereits ein Einkauf-Lauf."] = "je'wI' vum qaS taH.",
+                ["Der Lauf laeuft im Hintergrund weiter, auch wenn Sie die Seite verlassen."] = "vum qaS taH 'ej yavDaq Damejchugh vaj qaS taH.",
                 ["Meldungen"] = "QInmey",
                 ["Keine neuen Meldungen"] = "QIn chu' tu'lu'be'",
                 ["Keine Meldungen."] = "QIn tu'lu'be'.",

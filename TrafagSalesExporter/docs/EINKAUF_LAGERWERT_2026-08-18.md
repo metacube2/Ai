@@ -452,3 +452,96 @@ gewesen, auch wenn die Schleife je gelaufen waere.
   Fix einen fachlich **unbestaetigten** Wert.
 - Die Schleife hat ueber zwei Tage hinweg stundenlang Volltabellen-Abfragen gegen das
   produktive SAP `travp762` gefeuert. Ob das dort aufgefallen ist, ist nicht geprueft.
+
+## 12. Nachtrag 2026-08-24: Warum die Kachel trotz Fix wieder leer war
+
+Ingo meldete drei Tage nach dem Deploy des Fixes erneut `wartet auf Einkauf-Lauf` und dazu:
+"habe schon 2 mal full load angestossen, was ist los?". Die Kachel hatte wieder recht, aber
+aus zwei ganz anderen Gruenden.
+
+### 12.1 Messung auf dem Produktivstand
+
+Read-only gegen die produktive `trafag_exporter.db` sowie die Protokolle auf der Freigabe:
+
+| Befund | Beleg |
+| --- | --- |
+| Letzter Eintrag in `PurchasingSyncState`: Id 34, `Full`, `Running`, gestartet 2026-08-21 08:32 UTC. **Danach nichts.** | `SELECT ... ORDER BY Id DESC` |
+| Die Ids 31 bis 34 stehen alle auf `Running` und sind alle abgebrochen | dieselbe Abfrage |
+| Letzter Eintrag in `AppEventLogs`: 2026-08-21 13:04 | `SELECT MAX(Timestamp)` |
+| Der Fix liegt korrekt auf dem Server | `ParsePlannerMap`, `ignoriert $top` und `Zeitgrenze` in `BiDashboard.dll` vom 2026-08-21 14:13 nachgewiesen |
+| Die Anwendung laeuft, `/einkauf` antwortet mit HTTP 200 | Abruf am 2026-08-24 |
+| Der Worker ist am 2026-08-24 um 06:39 neu gestartet | `logs/stdout_20260824043919_19860.log` |
+
+Lauf 34 startete um 10:32 Ortszeit, also **vor** dem Ende des Fix-Deploys (Sicherung ab 10:12,
+mit der damals noch seitenweisen Kopie deutlich spaeter fertig). Er lief auf dem alten,
+fehlerhaften Code und wurde vom `app_offline` des Deploys erschlagen. Er beweist zum Fix
+nichts. **Seit dem Fix ist ueberhaupt kein Einkauf-Lauf mehr gestartet worden.**
+
+### 12.2 Erste Ursache: der Lagerwert lag nur im Arbeitsspeicher
+
+`SapGatewayStockValueReader` hielt den Stand in einem privaten `Dictionary`-Feld mit 20 Stunden
+Haltbarkeit. Eine Tabelle dafuer gab es nicht. Damit gilt:
+
+- Jeder Neustart des IIS-Workers loescht den Wert. Am 2026-08-24 um 06:39 ist genau das
+  passiert, und ueber das Wochenende lag der Prozess ohnehin still.
+- Der naechtliche Nachschub greift kaum: das Einkauf-Delta laeuft **nur im planmaessigen Slot**
+  (12:00) und bewusst nicht im Nachhol-Lauf. Lebt der Worker in dieser Minute nicht, faellt es
+  aus. Am 20. und 21.08. fiel der Slot in einen Neustart; der Nachhol-Lauf um 12:41 machte den
+  Verkaufsexport und liess den Einkauf liegen, wie vorgesehen.
+
+Die Kachel konnte deshalb nur in einem schmalen Zeitfenster gefuellt sein und war jeden
+Morgen wieder leer. Das ist keine Fehlfunktion des Fixes, sondern eine Luecke im Entwurf vom
+2026-08-19, dort in Abschnitt 10.3 als "naechster Schritt" auch so benannt.
+
+### 12.3 Zweite Ursache: der Lauf hing am Blazor-Circuit des Anwenders
+
+`RunPurchasingFullLoadAsync` in der Seite wartete den Lauf im Klick-Handler ab
+(`await ...RunFullLoadAsync()`). Ein Lauf dauert rund fuenfzig Minuten. Reisst die
+SignalR-Verbindung in dieser Zeit ab, wechselt der Anwender die Seite oder startet IIS den
+Worker neu, dann stirbt der Lauf mitten im Ablauf — und weil sein Statuseintrag zu diesem
+Zeitpunkt auf `Running` steht, bleibt er dort fuer immer stehen. Genau so sind die vier
+Zombie-Zeilen 31 bis 34 entstanden. Aufgeraeumt hat sie nichts.
+
+### 12.4 Behoben
+
+| Aenderung | Datei |
+| --- | --- |
+| Neue Tabelle `PurchasingStockValueCache` (Bewertungskreis, Disponent, Wert, Menge, Materialzahl, Lesezeitpunkt) | `Services/DatabaseInitializationService.SchemaSql.cs`, `Services/DatabaseSchemaMaintenanceService.cs` |
+| Neuer Speicher `IPurchasingStockValueStore` mit `SaveAsync`/`LoadAsync`, Ersetzen in einer Transaktion | `Services/PurchasingStockValueStore.cs` (neu) |
+| Der Einkauf-Lauf schreibt den gelesenen Stand jetzt zusaetzlich in die Datenbank | `Services/PurchasingDataRefreshService.cs` |
+| Die Kachel liest zwei Quellen in dieser Reihenfolge: Arbeitsspeicher, dann Datenbank | `Services/PurchasingDashboardService.cs` |
+| Neuer `PurchasingRefreshRunner`: der Lauf haengt an der Anwendung, nicht am Circuit; zwei gleichzeitige Laeufe werden abgewiesen | `Services/PurchasingRefreshRunner.cs` (neu), `Program.cs` |
+| Beim Start werden liegengebliebene `Running`-Eintraege auf `Abgebrochen` gesetzt | `Services/PurchasingRefreshRunner.cs` |
+| Die Seite loest nur aus und fragt im 15-Sekunden-Takt nach; der Hinweis nennt ausdruecklich, dass der Lauf im Hintergrund weiterlaeuft | `Components/Pages/PurchasingDashboard.razor` |
+| Drei neue Texte in sechs Sprachen | `Services/UiTextGeneratedTranslations.cs` |
+| 16 neue Tests | `TrafagSalesExporter.Tests/PurchasingStockValueStoreTests.cs`, `TrafagSalesExporter.Tests/PurchasingRefreshRunnerTests.cs` (beide neu) |
+
+`580/580` Tests gruen (vorher 564), `dotnet build -c Release` ohne Fehler.
+
+Ein Test hat dabei einen echten Fehler gefunden: `DateTimeStyles.RoundtripKind` laesst sich
+nicht mit `AdjustToUniversal` kombinieren, die Kombination wirft. Ohne den Test waere jedes
+Zurueckschreiben des Lesezeitpunkts produktiv gescheitert und die Kachel trotz Tabelle leer
+geblieben.
+
+### 12.5 Zwei bewusste Entscheidungen
+
+1. **Der gespeicherte Stand verfaellt nicht.** Die Kachel zeigt ihn immer mit Lesezeitpunkt
+   daneben. Ein sichtbar alter Wert ist fachlich brauchbar, eine leere Kachel ist es nicht. Die
+   20 Stunden Haltbarkeit gelten weiter fuer den Arbeitsspeicher, der der schnellere Weg bleibt.
+2. **Aufraeumen beim Start ist zulaessig**, weil ein Lauf im Prozess lebt: ueberlebt der Prozess
+   nicht, hat auch kein Lauf ueberlebt. Ein Eintrag, der etwas anderes behauptet, ist eine
+   Falschaussage. Deshalb wird beim Start und nur dort aufgeraeumt, bevor ein neuer Lauf
+   beginnen kann.
+
+### 12.6 Was offen bleibt
+
+- **Der Beweis fuer den Fix der Endlosschleife fehlt weiterhin**, weil seit dem 2026-08-21
+  kein Lauf mehr gestartet wurde. Erst ein durchgelaufener Full Load mit
+  `Lagerwert-Read beendet` im Protokoll belegt ihn.
+- Der naechtliche Einkauf-Lauf faellt weiterhin aus, wenn der Worker um 12:00 nicht lebt. Das
+  ist unveraendert und bewusst so gebaut (kein SAP-Lauf bei beliebigem Tages-Restart). Mit dem
+  gespeicherten Stand ist es aber nicht mehr sichtbar in der Kachel.
+- Der MB5L-Abgleich aus Abschnitt 6a.3 steht weiterhin aus. Die Kachel zeigt einen fachlich
+  **unbestaetigten** Wert.
+- `MaterialUsageDataRefreshService.ReadAllRowsAsync` hat die strukturelle Schwaeche aus 11.5
+  weiterhin ohne Notbremse.

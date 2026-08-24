@@ -383,6 +383,34 @@ CREATE TABLE PurchasingSyncState (
     Message TEXT NOT NULL DEFAULT ''
 );";
 
+    /// <summary>
+    /// Zuletzt gelesener Lagerwert je Disponent, damit die KPI-Kachel einen Neustart uebersteht.
+    ///
+    /// VORFALL 2026-08-19 bis 2026-08-24, der zu dieser Tabelle fuehrte: Der Lagerwert lag
+    /// ausschliesslich in einem Feld des Singleton-Readers, mit 20 Stunden Haltbarkeit. Jeder
+    /// Neustart des IIS-Workers loeschte ihn, und weil der naechtliche Einkauf-Lauf nur im
+    /// planmaessigen Slot laeuft (nicht im Nachhol-Lauf), war die Kachel praktisch jeden
+    /// Morgen wieder auf "wartet auf Einkauf-Lauf". Ein gelesener Wert muss die Nacht
+    /// ueberleben, sonst ist er fuer eine Kachel wertlos.
+    ///
+    /// BEWUSST OHNE HALTBARKEIT: ein alter Wert wird angezeigt, aber immer mit
+    /// <c>ReadAtUtc</c> daneben. Ein sichtbar alter Stand ist fachlich brauchbar, eine leere
+    /// Kachel ist es nicht. Die Bewertung des Alters gehoert zum Leser, nicht zum Speicher.
+    ///
+    /// Betraege liegen als Text vor, wie in allen Einkaufstabellen dieser Datenbank, und
+    /// werden invariant formatiert und gelesen.
+    /// </summary>
+    internal static string GetPurchasingStockValueCacheCreateSql() => @"
+CREATE TABLE PurchasingStockValueCache (
+    ValuationArea TEXT NOT NULL,
+    Planner TEXT NOT NULL,
+    Value TEXT NOT NULL DEFAULT '0',
+    Quantity TEXT NOT NULL DEFAULT '0',
+    MaterialCount INTEGER NOT NULL DEFAULT 0,
+    ReadAtUtc TEXT NOT NULL,
+    PRIMARY KEY (ValuationArea, Planner)
+);";
+
     // MaterialUsageSet/MaterialParentSet - siehe docs/abap/README_LZCODE_WEBSERVICE.md.
     // SAP-seitiges EntitySet existiert noch nicht (Entwurf fuer Lucas), Tabellen bleiben
     // additiv leer, bis MaterialUsageDataRefreshService erfolgreich laden kann.
