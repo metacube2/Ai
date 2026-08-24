@@ -545,3 +545,80 @@ geblieben.
   **unbestaetigten** Wert.
 - `MaterialUsageDataRefreshService.ReadAllRowsAsync` hat die strukturelle Schwaeche aus 11.5
   weiterhin ohne Notbremse.
+
+### 12.7 Deploy und Ergebnis, 2026-08-24
+
+| Punkt | Ergebnis |
+| --- | --- |
+| Deploy | 2026-08-24 08:01, Commits `45c3aa4` und `29a0f44`, `BiDashboard.dll` bitgleich mit dem lokalen Release-Build (SHA256 `49514D54F8CE1ABEFE6ECD9B3DA8B2AB8D985CF625C94B858CEE936C66EF520A`) |
+| Wirknachweis in der DLL | `PurchasingStockValueCache`, `PurchasingStockValueStore`, `PurchasingRefreshRunner`, `Abgebrochen` |
+| Routen | `/`, `/einkauf`, `/einkauf/verbindungen` je HTTP 200 |
+| Sicherung | `trafag_exporter.db.before-stockvalue-persistence-20260824-080003.bak`, gepruefte Blockkopie |
+| Tabelle angelegt | `PurchasingStockValueCache` ist in der produktiven Datenbank vorhanden |
+| Zombie-Zeilen aufgeraeumt | Ids 31 bis 34 stehen jetzt auf `Abgebrochen`, mit angehaengter Begruendung; die abgeschlossenen Zeilen 29 und 30 wurden nicht angetastet |
+| Lagerwert-Read | 42,5 s, 87 Disponenten, 68'657 Materialien, Gesamtwert CHF 11'552'400.04 |
+| Kachelwert | **CHF 9'205'959** ueber 7'335 Materialien, Disponenten 001/002/003/004/005 |
+| Kachel produktiv geprueft | `/einkauf` liefert `CHF 9'205'959 / 7'335 Materialien / Stand 24.08.2026 08:11` statt `wartet auf Einkauf-Lauf` |
+
+**Damit ist der Fix der Endlosschleife aus Abschnitt 11 endlich belegt.** Der Read laeuft ueber
+`MARCSet`, also genau die Stelle, an der die Schleife vom 2026-08-19 hing. Er kam nach 42,5
+Sekunden zurueck.
+
+Die Verteilung ueber die Disponenten (Bewertungskreis 1100, Stand 2026-08-24 08:11):
+
+| Disponent | Wert CHF | Materialien | in der Kachel |
+| --- | --- | --- | --- |
+| 003 | 4'334'317.53 | 3'749 | ja |
+| 001 | 4'250'829.48 | 2'853 | ja |
+| 004 | 348'957.51 | 687 | ja |
+| 002 | 253'416.32 | 34 | ja |
+| 025 | 257'282.06 | 80 | nein |
+| 024 | 244'460.13 | 397 | nein |
+| 019 | 200'320.85 | 2'614 | nein |
+| 099 | 175'222.46 | 42 | nein |
+
+Auffaellig fuer die offene Frage aus Abschnitt 0: Disponent `005` erscheint mit Wert 0 und ist
+in der Summe damit wirkungslos, `004` ("Betriebsmat/Einkau") traegt CHF 348'957.51 bei. Das ist
+die Zahl, um die es bei Armins offener Entscheidung geht.
+
+### 12.8 FALLE, dabei selbst hineingelaufen: ein Schreibvorgang von aussen ist fuer die Anwendung unsichtbar
+
+Der erste Versuch, die Kachel zu fuellen, ging schief, und die Ursache ist eine Falle, die
+jeden kuenftigen Eingriff von aussen betrifft.
+
+Die produktive Datenbank laeuft im Modus `wal` (nachgemessen: `PRAGMA journal_mode` = `wal`).
+Ein Werkzeug von diesem Rechner schrieb den Stand erfolgreich und las ihn selbst korrekt
+zurueck. Die Anwendung auf dem Server zeigte trotzdem weiter `wartet auf Einkauf-Lauf`.
+
+Grund: der Datensatz stand in `trafag_exporter.db-wal` auf der Freigabe (140'112 Bytes,
+geschrieben 08:11:19), die Hauptdatei war noch vom 07:14. Im WAL-Modus finden Leser neue
+Commits ueber den gemeinsamen Speicherindex `trafag_exporter.db-shm`. Der lag vom 08:01:46, also
+vom Start der Anwendung nach dem Deploy. **Ueber SMB ist diese Koordination zwischen zwei
+Rechnern nicht verlaesslich**, die Anwendung sah den Commit deshalb nicht.
+
+Nachgewiesen durch Ausschluss, nicht vermutet: eine Sonde
+(`.tmp_tools/ProbeStockValueTile`) baute `IPurchasingDashboardService` genau wie `Program.cs`
+auf und zeigte `_stockValueStore injiziert: True` und
+`Store.LoadAsync: 87 Zeilen, Gesamtwert 11'552'400.04`. Der Code war also in Ordnung, die
+Sichtbarkeit nicht.
+
+Behoben mit `PRAGMA wal_checkpoint(TRUNCATE)` (`.tmp_tools/CheckpointWal`): danach
+`busy=0 log=0 checkpointed=0`, WAL- und SHM-Datei verschwunden, Hauptdatei 08:24:51, und der
+naechste Abruf von `/einkauf` zeigte den Wert.
+
+**Lehre fuer kuenftige Eingriffe:** Daten, die die Anwendung lesen soll, sollte die Anwendung
+selbst schreiben. Wird doch von aussen geschrieben, gehoert ein Checkpoint dazu, sonst ist der
+Datensatz vorhanden und trotzdem wirkungslos — und die Fehlersuche landet zuerst im Code, wo
+nichts zu finden ist. Das ist dieselbe Klasse von Irrtum wie beim Overlay am 2026-08-21:
+ausgeliefert ist nicht angekommen.
+
+### 12.9 Was jetzt noch offen ist
+
+- **Die ganze Kette serverseitig** ist noch nicht am Stueck gelaufen: Klick, Runner,
+  Lagerwert-Read, Speichern, Kachel. Belegt sind die Teile einzeln. Der naechtliche Slot um
+  12:00 fuehrt sie zusammen, sofern der Worker dann lebt.
+- Der MB5L-Abgleich aus Abschnitt 6a.3 steht weiterhin aus. Die Kachel zeigt einen fachlich
+  **unbestaetigten** Wert.
+- Armins Entscheidung zu Disponent `004` (CHF 348'957.51, siehe Tabelle oben) ist offen.
+- `MaterialUsageDataRefreshService.ReadAllRowsAsync` hat die strukturelle Schwaeche aus 11.5
+  weiterhin ohne Notbremse.

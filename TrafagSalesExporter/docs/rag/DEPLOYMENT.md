@@ -630,3 +630,16 @@ Stand: 2026-08-14
 
 - IIS-Handoff: `docs/DEPLOYMENT.md`
 - historischer lokaler Uebergangsserver: `docs/DEPLOYMENT.md`
+
+- **FALLE, am 2026-08-24 selbst hineingelaufen: ein Schreibvorgang von aussen in die
+  produktive Datenbank ist fuer die Anwendung unsichtbar, bis das WAL geschrieben ist.** Die
+  produktive `trafag_exporter.db` laeuft im Modus `wal` (nachgemessen). Ein Werkzeug von einem
+  Arbeitsplatzrechner schreibt seinen Commit in `trafag_exporter.db-wal` auf der Freigabe und
+  liest ihn selbst korrekt zurueck; die Anwendung auf dem Server sieht ihn nicht, weil Leser
+  neue Commits ueber den gemeinsamen Speicherindex `-shm` finden und diese Koordination ueber
+  SMB zwischen zwei Rechnern nicht verlaesslich ist. Erkennungsmerkmal: Hauptdatei alt,
+  `-wal` frisch und gross, Anwendung zeigt weiter den alten Stand, und eine Sonde vom eigenen
+  Rechner findet die Daten trotzdem. Abhilfe `PRAGMA wal_checkpoint(TRUNCATE)`
+  (`.tmp_tools/CheckpointWal`), danach ist `-wal` leer und die Hauptdatei traegt die Aenderung.
+  **Besser: Daten, die die Anwendung lesen soll, von der Anwendung selbst schreiben lassen.**
+  Details in `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 12.8.
