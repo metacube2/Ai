@@ -60,6 +60,13 @@ public class CentralSalesRecord
     public DateTime? PostingDate { get; set; }
     public DateTime? InvoiceDate { get; set; }
     public DateTime? OrderDate { get; set; }
+    // Sage-Feld FechaRegistro. Es entsteht beim Erzeugen der Rechnungszeile (Proforma-Schritt),
+    // also VOR der Validierung, und ist deshalb im spanischen Export zu 100 % gefuellt, wo
+    // PostingDate bei noch nicht validierten Rechnungen leer bleibt. Anlass ist Andreas Stollers
+    // Frage nach einem "Entry Date"; dass er genau dieses Feld meint, ist UNBESTAETIGT (ISS-004.2,
+    // docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md Abschnitt 10b/10d). Wird nur mitgefuehrt und
+    // ausgegeben, geht in KEINE Finance-Rechnung und in KEINE Periodenabgrenzung ein.
+    public DateTime? LineRegistrationDate { get; set; }
     public string Land { get; set; } = string.Empty;
     public string DocumentType { get; set; } = string.Empty;
 }

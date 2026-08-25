@@ -62,7 +62,9 @@ public class CentralExcelMarketSegmentTests
             // Neue Spalten stehen am Ende.
             Assert.Equal("Market Segment", sales.Cell(1, MarketSegmentColumn).GetString());
             Assert.Equal("Market Segment Source", sales.Cell(1, MarketSegmentSourceColumn).GetString());
-            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 1).GetString());
+            // 2026-08-25 additiv dahinter: Line Registration Date (ISS-004.2).
+            Assert.Equal("Line Registration Date", sales.Cell(1, MarketSegmentSourceColumn + 1).GetString());
+            Assert.Equal(string.Empty, sales.Cell(1, MarketSegmentSourceColumn + 2).GetString());
         }
         finally
         {

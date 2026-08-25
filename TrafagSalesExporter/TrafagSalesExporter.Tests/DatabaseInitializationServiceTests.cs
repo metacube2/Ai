@@ -270,7 +270,7 @@ public class DatabaseInitializationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task InitializeAsync_Adds_PostingDate_Mapping_For_Spain_Without_Touching_Existing_Rows()
+    public async Task InitializeAsync_Adds_Date_Mappings_For_Spain_Without_Touching_Existing_Rows()
     {
         var spainId = await PrepareSpainManualImportFilePathAsync();
 
@@ -307,7 +307,8 @@ public class DatabaseInitializationServiceTests : IDisposable
             .OrderBy(x => x.SortOrder)
             .ToList();
 
-        Assert.Equal(3, mappings.Count);
+        // PostingDate und LineRegistrationDate kommen dazu, die beiden vorhandenen bleiben.
+        Assert.Equal(4, mappings.Count);
 
         var invoiceNumber = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.InvoiceNumber));
         Assert.Equal("InvoiceNumber", invoiceNumber.SourceHeader);
@@ -323,14 +324,20 @@ public class DatabaseInitializationServiceTests : IDisposable
         Assert.True(postingDate.IsActive);
         Assert.Equal(2, postingDate.SortOrder);
 
-        // Erneuter Lauf darf keine zweite PostingDate-Zeile anlegen.
+        var lineRegistrationDate = Assert.Single(mappings, x => x.TargetField == nameof(SalesRecord.LineRegistrationDate));
+        Assert.Equal("LineRegistrationDate", lineRegistrationDate.SourceHeader);
+        Assert.False(lineRegistrationDate.IsRequired);
+        Assert.True(lineRegistrationDate.IsActive);
+        Assert.Equal(3, lineRegistrationDate.SortOrder);
+
+        // Erneuter Lauf darf keine zweite Datumszeile anlegen.
         await service.InitializeAsync();
         await using var secondRunDb = await _dbFactory.CreateDbContextAsync();
-        Assert.Equal(3, secondRunDb.ManualExcelColumnMappings.Count(x => x.SiteId == spainId));
+        Assert.Equal(4, secondRunDb.ManualExcelColumnMappings.Count(x => x.SiteId == spainId));
     }
 
     [Fact]
-    public async Task InitializeAsync_Does_Not_Add_PostingDate_Mapping_When_Spain_Has_No_Explicit_Mappings()
+    public async Task InitializeAsync_Does_Not_Add_Date_Mappings_When_Spain_Has_No_Explicit_Mappings()
     {
         var spainId = await PrepareSpainManualImportFilePathAsync();
 

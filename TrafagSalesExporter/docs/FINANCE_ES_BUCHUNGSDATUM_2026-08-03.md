@@ -355,3 +355,58 @@ Anfrage reproduzierbar aus derselben CSV, `SourceLineId`
   Reimport in die App sind davon unabhaengig zu pruefen, dieser Nachtrag betrifft nur den
   manuell zugesandten Vollexport 2025.
 
+## 11. Nachtrag 2026-08-25: LineRegistrationDate ist als eigene Spalte eingebaut, NICHT deployed
+
+Andreas hat auf die Entry-Date-Frage aus Abschnitt 10b bis heute nicht geantwortet. Ingo hat
+entschieden, das Feld trotzdem mitzufuehren, ausdruecklich mit der Moeglichkeit, es wieder zu
+entfernen. Umgesetzt am 2026-08-25, `586/586` Tests gruen (vorher `580`), `dotnet build -c
+Release` ohne Fehler. **Noch nicht deployed und deshalb produktiv noch nicht sichtbar.**
+
+**Benennung.** Die Spalte heisst `Line Registration Date` und nicht `Entry Date`. Dass Andreas
+genau dieses Feld meint, ist unbestaetigt; nach Vorrangregel 5 traegt sie deshalb den
+Quellfeldnamen und nicht die fachliche Deutung. Wird die Gleichsetzung bestaetigt, ist eine
+Umbenennung ein Einzeiler.
+
+**Wo das Feld jetzt durchlaeuft.** Vollstaendige Kette, damit es nicht auf halbem Weg
+verschwindet:
+
+| Stelle | Aenderung |
+| --- | --- |
+| `Models/SalesRecord.cs`, `Models/CentralSalesRecord.cs` | neues Feld `LineRegistrationDate` |
+| `Services/DatabaseInitializationService.SchemaSql.cs`, `Services/DatabaseSchemaMaintenanceService.cs` | Spalte `LineRegistrationDate TEXT NULL`, additiv per `AddColumnIfMissing` |
+| `Services/CentralSalesRecordService.cs`, `Services/CentralSalesDataProvider.cs` | Insert, Lesen und Rueckabbildung der zentralen Tabelle |
+| `Services/ExportAuditCsvService.cs` | Spalte am ENDE der Kopfzeile, Schreiben und Lesen |
+| `Services/ExcelExportService.cs` | Spalte **52** im Blatt `Sales` des zentralen Sales_All |
+| `Services/ManualExcelImportService.cs` | eigenes Zielfeld statt Alias auf `PostingDate` |
+| `Services/DatabaseSeedService.cs` | Spanien-Zuordnung, aus `EnsureSpainPostingDateMapping` wurde `EnsureSpainDateMappings` |
+
+**Position 52, bewusst am Ende.** Vor der Spalte stehen unveraendert `Market Segment` (50) und
+`Market Segment Source` (51). Der Kopfzeilentest in
+`TrafagSalesExporter.Tests/CentralExcelMarketSegmentTests.cs` sichert weiter die vier
+Ankerpositionen 2, 20, 23 und 49 ab. Ein Einschub in der Mitte waere im Excel-Nachweis mit
+seinen Blattformeln still toedlich.
+
+**Die eine Falle, die dabei aufgefallen ist.** Der Kopfzeilen-Alias
+`["lineregistrationdate"]` zeigte im Importer direkt auf `PostingDate`, aus der Zeit, als der
+spanische Export noch kein Buchungsdatum lieferte. Mit beiden Spalten in derselben Datei
+entschied allein die Spaltenreihenfolge, welche gewinnt. Jetzt hat jedes Feld sein eigenes
+Ziel, und der Rueckfall ist ausdruecklich **spaltenweise statt zeilenweise**: fehlt die Spalte
+`PostingDate` ganz, tritt `LineRegistrationDate` an ihre Stelle (Verhalten wie vorher, damit
+aeltere Dateien beim Reimport ihr Buchungsdatum nicht verlieren). Ist die Spalte vorhanden,
+bleiben **leere Zellen leer**. Eine in Spanien noch nicht validierte Rechnung darf kein
+Buchungsdatum bekommen, sonst zaehlt sie Umsatz in einer Periode, in der sie fachlich keinen
+hat. Genau dieser Fall ist als Test abgesichert
+(`CentralExcelLineRegistrationDateTests.ManualImport_KeepsPostingDateAndLineRegistrationDateApart`).
+
+**Was sich fachlich NICHT aendert.** Die Periodenabgrenzung bleibt
+`Year(PostingDate ?? InvoiceDate ?? ExtractionDate)`. Das neue Feld geht in keine
+Finance-Spalte, keine Marge und keine Summe ein; es wird nur mitgefuehrt und ausgegeben. Im
+Excel steht es als reines Datum ohne Uhrzeit, wie die drei bestehenden Datumsspalten, obwohl
+die Quelle eine Uhrzeit fuehrt.
+
+**Rueckbau, falls Andreas widerspricht.** Ein Commit zurueck. Die Datenbankspalte bleibt dabei
+stehen und stoert nicht, weil sie `NULL` erlaubt und nirgends gelesen wird.
+
+**Offen:** Deploy, danach die Sichtpruefung im produktiven Sales_All, und weiterhin Andreas'
+Antwort auf Abschnitt 10b. Der Blocker aus ISS-004.2 ist unveraendert: Santi Gomez muss die
+35-Tage-Version des Exportskripts auf dem spanischen Server ersetzen.

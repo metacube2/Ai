@@ -184,6 +184,7 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
             PostingDate = r.PostingDate,
             InvoiceDate = r.InvoiceDate,
             OrderDate = r.OrderDate,
+            LineRegistrationDate = r.LineRegistrationDate,
             Land = r.Land,
             DocumentType = r.DocumentType
         };

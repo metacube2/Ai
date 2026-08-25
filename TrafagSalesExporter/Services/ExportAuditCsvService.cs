@@ -91,7 +91,9 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         "DocumentType",
         // Additive Spalten am Ende, damit aeltere Audit-CSV weiter lesbar bleiben.
         "StandardCostVariable",
-        "StandardCostFixed"
+        "StandardCostFixed",
+        // Sage FechaRegistro (ISS-004.2). Rein additiv, nur mitgefuehrt, nicht gerechnet.
+        "LineRegistrationDate"
     ];
 
     public async Task<string?> WriteSiteAuditCsvAsync(
@@ -280,6 +282,7 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         yield return record.DocumentType;
         yield return FormatNullableDecimal(record.StandardCostVariable);
         yield return FormatNullableDecimal(record.StandardCostFixed);
+        yield return FormatNullableDate(record.LineRegistrationDate);
     }
 
     private static async Task<List<SalesRecord>> ReadFileAsync(string path)
@@ -353,7 +356,8 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
                 Land = GetText(values, headers, "Land"),
                 DocumentType = GetText(values, headers, "DocumentType"),
                 StandardCostVariable = GetNullableDecimal(values, headers, "StandardCostVariable"),
-                StandardCostFixed = GetNullableDecimal(values, headers, "StandardCostFixed")
+                StandardCostFixed = GetNullableDecimal(values, headers, "StandardCostFixed"),
+                LineRegistrationDate = GetDate(values, headers, "LineRegistrationDate")
             });
         }
 

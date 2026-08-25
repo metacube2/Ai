@@ -63,7 +63,12 @@ public class ManualExcelImportService : IManualExcelImportService
         ["salesresponsibleemployee"] = nameof(SalesRecord.SalesResponsibleEmployee),
         ["postingdate"] = nameof(SalesRecord.PostingDate),
         ["buchungsdatum"] = nameof(SalesRecord.PostingDate),
-        ["lineregistrationdate"] = nameof(SalesRecord.PostingDate),
+        // Bis 2026-08-25 zeigte dieser Alias auf PostingDate, weil der spanische Export noch
+        // kein Buchungsdatum lieferte. Das Feld hat jetzt eine eigene Spalte. Damit eine Datei
+        // OHNE PostingDate-Spalte weiter genau wie vorher gelesen wird, springt
+        // ApplyLineRegistrationDateFallback fuer PostingDate auf diese Spalte.
+        ["lineregistrationdate"] = nameof(SalesRecord.LineRegistrationDate),
+        ["fecharegistro"] = nameof(SalesRecord.LineRegistrationDate),
         ["invoicedate"] = nameof(SalesRecord.InvoiceDate),
         ["fakturadatum"] = nameof(SalesRecord.InvoiceDate),
         ["orderdate"] = nameof(SalesRecord.OrderDate),
@@ -402,6 +407,7 @@ public class ManualExcelImportService : IManualExcelImportService
                 PostingDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.PostingDate)),
                 InvoiceDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.InvoiceDate)),
                 OrderDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.OrderDate)),
+                LineRegistrationDate = ReadDate(headerIndexes, fields, nameof(SalesRecord.LineRegistrationDate)),
                 Land = ReadString(headerIndexes, fields, nameof(SalesRecord.Land), site.Land),
                 DocumentType = ReadString(headerIndexes, fields, nameof(SalesRecord.DocumentType))
             });
@@ -514,6 +520,7 @@ public class ManualExcelImportService : IManualExcelImportService
                 PostingDate = ReadDate(headerIndexes, row, nameof(SalesRecord.PostingDate)),
                 InvoiceDate = ReadDate(headerIndexes, row, nameof(SalesRecord.InvoiceDate)),
                 OrderDate = ReadDate(headerIndexes, row, nameof(SalesRecord.OrderDate)),
+                LineRegistrationDate = ReadDate(headerIndexes, row, nameof(SalesRecord.LineRegistrationDate)),
                 Land = ReadString(headerIndexes, row, nameof(SalesRecord.Land), site.Land),
                 DocumentType = ReadString(headerIndexes, row, nameof(SalesRecord.DocumentType))
             });
@@ -593,6 +600,8 @@ public class ManualExcelImportService : IManualExcelImportService
                 result[targetField] = cell.Address.ColumnNumber;
         }
 
+        ApplyLineRegistrationDateFallback(result);
+
         if (!result.ContainsKey(nameof(SalesRecord.InvoiceNumber)))
             throw new InvalidOperationException("Die Excel-Datei hat nicht das erwartete Exportformat. Spalte 'Invoice Number' fehlt.");
 
@@ -613,10 +622,30 @@ public class ManualExcelImportService : IManualExcelImportService
                 result[targetField] = i;
         }
 
+        ApplyLineRegistrationDateFallback(result);
+
         if (!result.ContainsKey(nameof(SalesRecord.InvoiceNumber)))
             throw new InvalidOperationException("Die CSV-Datei hat nicht das erwartete Exportformat. Spalte 'Invoice Number' fehlt.");
 
         return result;
+    }
+
+    /// <summary>
+    /// Spaltenweiser Rueckfall, ausdruecklich KEIN zeilenweiser: fehlt in der Datei die Spalte
+    /// PostingDate ganz, tritt LineRegistrationDate an ihre Stelle. Genau so verhielt sich der
+    /// Leser vor dem 2026-08-25, als der Alias "lineregistrationdate" direkt auf PostingDate zeigte.
+    ///
+    /// Ist die Spalte PostingDate vorhanden, bleiben LEERE Zellen leer. Eine spanische Rechnung
+    /// ohne Validierung hat fachlich kein Buchungsdatum; sie mit dem Registrierdatum zu fuellen
+    /// wuerde sie still in eine Periode einordnen, in der sie noch keinen Umsatz darstellt.
+    /// </summary>
+    private static void ApplyLineRegistrationDateFallback(Dictionary<string, int> result)
+    {
+        if (result.ContainsKey(nameof(SalesRecord.PostingDate)))
+            return;
+
+        if (result.TryGetValue(nameof(SalesRecord.LineRegistrationDate), out var index))
+            result[nameof(SalesRecord.PostingDate)] = index;
     }
 
     private static Dictionary<string, int> BuildRawHeaderIndexMap(IXLRangeRow headerRow)

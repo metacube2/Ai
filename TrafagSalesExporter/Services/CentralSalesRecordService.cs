@@ -107,6 +107,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 PostingDate = r.PostingDate,
                 InvoiceDate = r.InvoiceDate,
                 OrderDate = r.OrderDate,
+                LineRegistrationDate = r.LineRegistrationDate,
                 Land = r.Land,
                 DocumentType = r.DocumentType
             })
@@ -182,7 +183,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 CustomerNumber, CustomerName, CustomerCountry, CustomerIndustry, StandardCost,
                 StandardCostCurrency, StandardCostVariable, StandardCostFixed, PurchaseOrderNumber, SalesPriceValue, SalesCurrency, Incoterms2020,
                 DocumentCurrency, DocumentTotalForeignCurrency, DocumentTotalLocalCurrency, VatSumForeignCurrency,
-                VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, PostingDate, InvoiceDate, OrderDate, Land, DocumentType
+                VatSumLocalCurrency, DocumentRate, CompanyCurrency, SalesResponsibleEmployee, PostingDate, InvoiceDate, OrderDate, LineRegistrationDate, Land, DocumentType
             )
             VALUES (
                 $storedAtUtc, $siteId, $sourceSystem, $extractionDate, $tsc, $documentEntry, $invoiceNumber, $positionOnInvoice,
@@ -192,7 +193,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 $customerNumber, $customerName, $customerCountry, $customerIndustry, $standardCost,
                 $standardCostCurrency, $standardCostVariable, $standardCostFixed, $purchaseOrderNumber, $salesPriceValue, $salesCurrency, $incoterms2020,
                 $documentCurrency, $documentTotalForeignCurrency, $documentTotalLocalCurrency, $vatSumForeignCurrency,
-                $vatSumLocalCurrency, $documentRate, $companyCurrency, $salesResponsibleEmployee, $postingDate, $invoiceDate, $orderDate, $land, $documentType
+                $vatSumLocalCurrency, $documentRate, $companyCurrency, $salesResponsibleEmployee, $postingDate, $invoiceDate, $orderDate, $lineRegistrationDate, $land, $documentType
             );
             """;
 
@@ -243,6 +244,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.Add("$postingDate", SqliteType.Text);
         command.Parameters.Add("$invoiceDate", SqliteType.Text);
         command.Parameters.Add("$orderDate", SqliteType.Text);
+        command.Parameters.Add("$lineRegistrationDate", SqliteType.Text);
         command.Parameters.Add("$land", SqliteType.Text);
         command.Parameters.Add("$documentType", SqliteType.Text);
 
@@ -298,6 +300,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters["$postingDate"].Value = record.PostingDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$invoiceDate"].Value = record.InvoiceDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$orderDate"].Value = record.OrderDate?.ToString("O") ?? (object)DBNull.Value;
+        command.Parameters["$lineRegistrationDate"].Value = record.LineRegistrationDate?.ToString("O") ?? (object)DBNull.Value;
         command.Parameters["$land"].Value = record.Land ?? string.Empty;
         command.Parameters["$documentType"].Value = record.DocumentType ?? string.Empty;
     }

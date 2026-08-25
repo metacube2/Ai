@@ -82,6 +82,8 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         // (Indien: OITM."U_Tasc_ST" / "U_TASC_OMN"), additiv nachgezogen.
         AddColumnIfMissing(db, "CentralSalesRecords", "SalesType", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "CentralSalesRecords", "GroupMaterialNumber", "TEXT NOT NULL DEFAULT ''");
+        // Sage FechaRegistro, additiv. Nur mitgefuehrt, nicht gerechnet (ISS-004.2).
+        AddColumnIfMissing(db, "CentralSalesRecords", "LineRegistrationDate", "TEXT NULL");
         EnsureAppEventLogTable(db);
     }
 

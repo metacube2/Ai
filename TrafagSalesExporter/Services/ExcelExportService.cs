@@ -1057,7 +1057,13 @@ public class ExcelExportService : IExcelExportService
             // auf Textwerte zeigen; ein Einschub in der Mitte waere dort still toedlich
             // (gleiche Fehlerklasse wie die Statustext-Falle in RAG_ROUTER Regel 11).
             "Market Segment",
-            "Market Segment Source"
+            "Market Segment Source",
+            // 2026-08-25, ebenfalls additiv am ENDE: Sage-Feld FechaRegistro (ISS-004.2).
+            // Es ist der unbestaetigte Kandidat fuer Andreas Stollers "Entry Date", deshalb
+            // traegt die Spalte den QUELLFELDNAMEN und nicht die fachliche Deutung. Sie wird
+            // in keiner Finance-Spalte verrechnet; die Periodenabgrenzung bleibt unveraendert
+            // bei PostingDate -> InvoiceDate -> ExtractionDate.
+            "Line Registration Date"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1131,6 +1137,7 @@ public class ExcelExportService : IExcelExportService
                 record.Tsc, record.CustomerNumber, customerMarketSegments);
             ws.Cell(row, 50).Value = marketSegment;
             ws.Cell(row, 51).Value = marketSegmentSource;
+            ws.Cell(row, 52).Value = record.LineRegistrationDate?.ToString("dd.MM.yyyy") ?? string.Empty;
             row++;
         }
 

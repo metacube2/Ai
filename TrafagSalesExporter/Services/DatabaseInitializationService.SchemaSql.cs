@@ -189,6 +189,7 @@ CREATE TABLE CentralSalesRecords (
     PostingDate TEXT NULL,
     InvoiceDate TEXT NULL,
     OrderDate TEXT NULL,
+    LineRegistrationDate TEXT NULL,
     Land TEXT NOT NULL,
     DocumentType TEXT NOT NULL,
     FOREIGN KEY (SiteId) REFERENCES Sites (Id)
