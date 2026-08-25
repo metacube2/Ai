@@ -355,12 +355,13 @@ Anfrage reproduzierbar aus derselben CSV, `SourceLineId`
   Reimport in die App sind davon unabhaengig zu pruefen, dieser Nachtrag betrifft nur den
   manuell zugesandten Vollexport 2025.
 
-## 11. Nachtrag 2026-08-25: LineRegistrationDate ist als eigene Spalte eingebaut, NICHT deployed
+## 11. Nachtrag 2026-08-25: LineRegistrationDate ist als eigene Spalte eingebaut und deployed
 
 Andreas hat auf die Entry-Date-Frage aus Abschnitt 10b bis heute nicht geantwortet. Ingo hat
 entschieden, das Feld trotzdem mitzufuehren, ausdruecklich mit der Moeglichkeit, es wieder zu
 entfernen. Umgesetzt am 2026-08-25, `586/586` Tests gruen (vorher `580`), `dotnet build -c
-Release` ohne Fehler. **Noch nicht deployed und deshalb produktiv noch nicht sichtbar.**
+Release` ohne Fehler. **Produktiv deployed am 2026-08-25 10:14**, Commit `d414427`, lokaler
+Release-Build und Server bitgleich; Deploy-Nachweis in `docs/rag/DEPLOYMENT.md`.
 
 **Benennung.** Die Spalte heisst `Line Registration Date` und nicht `Entry Date`. Dass Andreas
 genau dieses Feld meint, ist unbestaetigt; nach Vorrangregel 5 traegt sie deshalb den
@@ -407,6 +408,33 @@ die Quelle eine Uhrzeit fuehrt.
 **Rueckbau, falls Andreas widerspricht.** Ein Commit zurueck. Die Datenbankspalte bleibt dabei
 stehen und stoert nicht, weil sie `NULL` erlaubt und nirgends gelesen wird.
 
-**Offen:** Deploy, danach die Sichtpruefung im produktiven Sales_All, und weiterhin Andreas'
-Antwort auf Abschnitt 10b. Der Blocker aus ISS-004.2 ist unveraendert: Santi Gomez muss die
+**Produktiv nachgemessen nach dem Deploy** mit dem neuen read-only Werkzeug
+`.tmp_tools/CheckLineRegistrationColumn`:
+
+| Messung | Ergebnis |
+| --- | --- |
+| Spalten in `CentralSalesRecords` | `51`, `LineRegistrationDate` als letzte vorhanden |
+| Fuellgrad `LineRegistrationDate`, alle neun Standorte | `0` — vor dem ersten Spanien-Import korrekt |
+| `TRES` Zeilen / davon mit `PostingDate` | `7'168` / `1'523` (`21.2 %`) |
+| `TRUK` Zeilen / davon mit `PostingDate` | `3'106` / `3'090` (die bekannten `16` ohne Datum) |
+| Spalten-Zuordnung Spanien | **keine eigenen Zeilen**, generischer Kopfzeilen-Fallback aktiv |
+
+**Die letzte Zeile aendert den Rest dieses Dokuments an einer Stelle.** Abschnitt 8 und 9
+sagen, die neue Spalte muesse fuer Spanien von Hand in den Einstellungen zugeordnet werden,
+weil Spanien anders als UK und Deutschland keine verdrahtete Zuordnung im Seed hat. Das
+stimmt heute nicht mehr: Spanien fuehrt in `ManualExcelColumnMappings` ueberhaupt keine
+Zeilen mehr und laeuft ueber den generischen Kopfzeilen-Fallback, der alle Felder ueber
+`HeaderMap` selbst erkennt. `EnsureSpainDateMappings` hat deshalb bewusst nichts angelegt —
+eine einzelne Zeile wuerde den Fallback abschalten und alle uebrigen Felder leer laufen
+lassen. **Handarbeit in den Einstellungen ist also nicht noetig**, weder fuer
+`PostingDate` noch fuer `LineRegistrationDate`.
+
+**Ein Alarm im Deploy, erklaert und nachgemessen:** `trafag_exporter.db-wal` (`0` Bytes) und
+`-shm` galten als verschwunden. Das ist der WAL-Flush beim Herunterfahren durch
+`app_offline.htm`, kein Datenverlust. Beide Dateien sind um `10:15:55` beim Neustart wieder
+da, die Hauptdatei blieb in Laenge und Schreibzeit unveraendert.
+
+**Offen:** die Sichtpruefung im erzeugten Sales_All. Der Fuellgrad ist heute `0`, weil seit
+dem Deploy kein Spanien-Import lief; erst danach traegt die Spalte Werte. Weiterhin offen
+sind Andreas' Antwort auf Abschnitt 10b und der Blocker aus ISS-004.2: Santi Gomez muss die
 35-Tage-Version des Exportskripts auf dem spanischen Server ersetzen.

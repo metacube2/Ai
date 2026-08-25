@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-14
+Stand: 2026-08-25
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,7 +44,44 @@ Stand: 2026-08-14
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-08-21 14:17, Statusampel fuer alle
+- Aktuellster produktiv verifizierter Deploy: **2026-08-25 10:14, LineRegistrationDate als
+  Spalte 52 im zentralen Sales_All**, Funktionscommit `d414427`, `586/586` Release-Tests
+  gruen. Vorher-Sicherung `trafag_exporter.db.before-linereg-date-20260825-101315.bak`
+  (`353'685'504` Bytes, geprueste Blockkopie, groessen- und zeitgleich zur Quelle).
+  `BiDashboard.dll` `25.08.2026 10:15:48`, `4'675'072` Bytes, SHA256
+  `D665E0DCA23159E1BCC85C86B04C710770542824C94B82760E29FD77FE8C3617`, lokaler Release-Build
+  und Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'623` unveraendert, `2` verschwunden.
+  HTTPS `200`: Startseite (`71'413` Bytes), `/management-cockpit` (`72'279` Bytes).
+  Wirknachweis mit Vorher-Messung fuer `ApplyLineRegistrationDateFallback`,
+  `EnsureSpainDateMappings`, `Line Registration Date` und `fecharegistro`; alle vier fehlten
+  im Prueflauf und sind danach enthalten. Nicht mehr enthalten: der alte Seed-Name
+  `EnsureSpainPostingDateMapping`, der vorher nachweislich da war. Die vier Tokens wurden
+  vorab per `git grep` gegen `22767e8` geprueft, damit keines einen Treffer vortaeuscht.
+  **Der eine Alarm ist erklaert und nachgemessen:** `trafag_exporter.db-wal` (`0` Bytes) und
+  `-shm` galten als verschwunden. Das ist der WAL-Flush beim Herunterfahren, nicht ein
+  Datenverlust — beide Dateien sind um `10:15:55` beim Neustart wieder da, und die
+  Hauptdatei blieb in Laenge und Schreibzeit unveraendert (`353'685'504` Bytes,
+  `24.08.2026 13:48:05`).
+  **Schemaaenderung produktiv nachgemessen** mit dem neuen read-only Werkzeug
+  `.tmp_tools/CheckLineRegistrationColumn`: `CentralSalesRecords` hat jetzt `51` Spalten,
+  `LineRegistrationDate` ist als letzte vorhanden. Fuellgrad ueber alle neun Standorte `0`,
+  was vor dem ersten Spanien-Import korrekt ist. Zum Vergleich mitgemessen: `TRES` hat
+  `7'168` Zeilen mit `1'523` Buchungsdaten (`21.2 %`), `TRUK` `3'106` Zeilen mit `3'090`.
+  **Wichtiger Nebenbefund, der die Sichtpruefung betrifft:** Spanien fuehrt in
+  `ManualExcelColumnMappings` **keine** eigenen Zeilen mehr und laeuft ueber den generischen
+  Kopfzeilen-Fallback. `EnsureSpainDateMappings` hat deshalb bewusst nichts angelegt — genau
+  so ist die Funktion gebaut, weil eine einzelne Zeile den Fallback abschalten und alle
+  anderen Felder leer laufen lassen wuerde. Der Fallback erkennt `LineRegistrationDate`
+  ueber `HeaderMap` von selbst, es ist also keine Handarbeit in den Einstellungen noetig.
+  **NICHT belegt:** dass die Spalte im erzeugten Sales_All beim naechsten Gesamtexport
+  gefuellt ankommt. Das braucht einen Spanien-Import und danach einen Blick in die Datei.
+
+- Deploy davor: **2026-08-24 08:01, Lagerwert dauerhaft speichern**, Commits `45c3aa4` und
+  `29a0f44`, `580/580` Tests gruen. Dieser Deploy ist hier nie als Kurzstand nachgetragen
+  worden; die Belege stehen in `docs/AGENT_COORDINATION.md` und die dabei gefundene
+  WAL-Sichtbarkeitsfalle unten in diesem Dokument.
+
+- Deploy davor: **2026-08-21 14:17, Statusampel fuer alle
   Meldungen in der Kopfleiste**, Funktionscommit `669c920`, `564/564` Release-Tests gruen.
   Vorher-Sicherung `trafag_exporter.db.before-status-light-20260821-141006.bak`. Lokaler
   Release-Build und Server bitgleich. Ziel: `0` neu, `7` geaendert, `1'578` unveraendert,

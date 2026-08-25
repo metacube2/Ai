@@ -2,12 +2,16 @@
 
 Stand: 2026-08-25
 
-## LineRegistrationDate im zentralen Sales_All 2026-08-25 (GEBAUT, NICHT DEPLOYED)
+## LineRegistrationDate im zentralen Sales_All 2026-08-25 (PRODUKTIV DEPLOYED)
 
 - **Umgesetzt:** Neue Spalte **52** `Line Registration Date` im Blatt `Sales` des zentralen
   Sales_All, dazu die vollstaendige Kette Importer -> zentrale Tabelle -> Audit-CSV -> Excel.
   `586/586` Tests gruen (vorher `580`), `dotnet build -c Release` ohne Fehler.
-  **Noch nicht deployed**, produktiv also noch nicht sichtbar.
+  Produktiv deployed am 2026-08-25 10:14, Commit `d414427`. Vorher-Sicherung
+  `trafag_exporter.db.before-linereg-date-20260825-101315.bak`, lokaler Release-Build und
+  Server bitgleich, Wirknachweis mit Vorher-Messung fuer alle vier Tokens. Nachgemessen in
+  der Produktivdatenbank: `CentralSalesRecords` hat `51` Spalten, `LineRegistrationDate` als
+  letzte. Deploy-Nachweis in `docs/rag/DEPLOYMENT.md`.
 - **Anlass:** Andreas Stoller wollte am 2026-08-20 „nach dem Entry Date auf Tagesebene ziehen
   und nach dem Posting Date reporten" (ISS-004.2). Auf die Rueckfrage, welches Feld sein Entry
   Date ist, hat er nicht geantwortet. Ingo hat entschieden, das Feld trotzdem mitzufuehren,
@@ -24,9 +28,14 @@ Stand: 2026-08-25
   zeilenweise: fehlt `PostingDate` ganz, tritt das Registrierdatum an seine Stelle (Verhalten
   wie vorher); ist die Spalte vorhanden, bleiben leere Zellen leer. Eine noch nicht validierte
   spanische Rechnung darf kein Buchungsdatum bekommen.
-- **Offen:** Deploy und Sichtpruefung im produktiven Sales_All, Andreas' Antwort, und
-  unveraendert der ISS-004.2-Blocker, dass Santi Gomez die 35-Tage-Version des Exportskripts
-  auf dem spanischen Server ersetzt.
+- **Nebenbefund beim Nachmessen:** Spanien fuehrt in `ManualExcelColumnMappings` keine
+  eigenen Zeilen mehr und laeuft ueber den generischen Kopfzeilen-Fallback. Der neue
+  `EnsureSpainDateMappings` hat deshalb bewusst nichts angelegt, und es ist auch keine
+  Handarbeit in den Einstellungen noetig: der Fallback erkennt das Feld selbst.
+- **Offen:** Sichtpruefung im produktiven Sales_All nach dem naechsten Spanien-Import (der
+  Fuellgrad ist heute noch `0`, das ist vor dem ersten Import korrekt), Andreas' Antwort,
+  und unveraendert der ISS-004.2-Blocker, dass Santi Gomez die 35-Tage-Version des
+  Exportskripts auf dem spanischen Server ersetzt.
 - Details: `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 11.
 
 ## Lagerwert-KPI-Kachel im Einkauf-Cockpit 2026-08-19 (PRODUKTIV DEPLOYED)
