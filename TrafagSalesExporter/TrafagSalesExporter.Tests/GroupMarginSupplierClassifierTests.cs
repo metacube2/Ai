@@ -12,8 +12,11 @@ public class GroupMarginSupplierClassifierTests
     [InlineData("Trafag Italy S.r.l.", "IT")]
     [InlineData("Trafag Italia", "IT")]
     [InlineData("TRIT", "")]
+    [InlineData("TR IT", "")]
     [InlineData("Trafag India Private Limited", "IN")]
     [InlineData("TRIN", "")]
+    [InlineData("TR IN", "")]
+    [InlineData("TR AG", "")]
     [InlineData("Trafag GmbH", "DE")]            // any Trafag company is intercompany
     [InlineData("Trafag France", "FR")]
     public void Resolve_ReturnsInternal_WhenNameOrCodeContainsTrafag(string supplierName, string supplierCountry)
@@ -122,6 +125,9 @@ public class GroupMarginSupplierClassifierTests
     [InlineData("Trafag Italy S.r.l.", GroupStandardCostEntities.TrIt)]
     [InlineData("Trafag Controls India Pvt. Ltd.", GroupStandardCostEntities.TrIn)]
     [InlineData("Trafag India Private Limited", GroupStandardCostEntities.TrIn)]
+    [InlineData("TR AG", GroupStandardCostEntities.TrAg)]
+    [InlineData("TR IT", GroupStandardCostEntities.TrIt)]
+    [InlineData("TR IN", GroupStandardCostEntities.TrIn)]
     public void ResolveDeliveringEntity_MatchesKnownEntities(string supplierName, string expectedEntity)
     {
         var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(supplierName);
@@ -224,6 +230,22 @@ public class GroupMarginSupplierClassifierTests
         var result = GroupMarginSupplierClassifier.ResolveDeliveringEntity(null, "TRDE", "ART123", costs);
 
         Assert.Equal(GroupStandardCostEntities.TrAg, result);
+    }
+
+    [Fact]
+    public void TrItOrTrInCost_DoesNotMasqueradeAsTrAgMaterialFallback()
+    {
+        var costs = GroupCostsWith("ART123", "TRIT");
+
+        var supplierType = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRDE", "ART123", costs,
+            supplierFallbackMode: SupplierFallbackModes.GroupStandardCosts);
+        var entity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            null, "TRDE", "ART123", costs,
+            supplierFallbackMode: SupplierFallbackModes.GroupStandardCosts);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Unclear, supplierType);
+        Assert.Null(entity);
     }
 
     [Fact]

@@ -56,6 +56,37 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
             : await _hanaService.GetSalesRecordsAsync(
                 exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter);
 
+        await PersistB1GroupStandardCostsAsync(db, site, records);
+
         return new DataSourceFetchResult { Records = records };
+    }
+
+    private async Task PersistB1GroupStandardCostsAsync(
+        AppDbContext db,
+        Site site,
+        IReadOnlyCollection<SalesRecord> records)
+    {
+        if (!GroupStandardCostAreas.TryResolveB1Source(site.TSC, out var area, out _))
+            return;
+
+        var result = await B1GroupStandardCostStore.ReplaceAsync(db, site.TSC, records, DateTime.UtcNow);
+        if (!result.Updated)
+        {
+            await _appEventLogService.WriteAsync(
+                "Export",
+                "Konzernkosten nicht aktualisiert",
+                "Warning",
+                site.Id,
+                site.Land,
+                $"Kostenbereich={area} | keine positive B1-Belegkostenbasis; vorhandener Bestand bleibt erhalten");
+            return;
+        }
+
+        await _appEventLogService.WriteAsync(
+            "Export",
+            "Konzernkosten aktualisiert",
+            siteId: site.Id,
+            land: site.Land,
+            details: $"Kostenbereich={area} | Materialien={result.MaterialCount} | Quelle=juengster positiver B1 StockPrice");
     }
 }

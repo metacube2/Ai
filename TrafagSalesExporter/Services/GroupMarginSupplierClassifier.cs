@@ -53,9 +53,12 @@ public static class GroupMarginSupplierClassifier
     {
         "TRAFAG",
         "TR-AG",
+        "TR AG",
         "TRCH",
         "TRIT",
+        "TR IT",
         "TRIN",
+        "TR IN",
         "GFS",
         "GESELLSCHAFT FUER SENSORIK",
         "GESELLSCHAFT FUR SENSORIK"
@@ -63,6 +66,18 @@ public static class GroupMarginSupplierClassifier
 
     private static readonly Regex InternalMarkerPattern = new(
         @"\b(" + string.Join('|', InternalMarkers.Select(Regex.Escape)) + @")\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex TrAgEntityPattern = new(
+        @"\b(?:TRAFAG\s+AG|TR[\s-]?AG)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex TrItEntityPattern = new(
+        @"\b(?:TRAFAG\s+(?:ITALIA|ITALY)|TR[\s-]?IT)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex TrInEntityPattern = new(
+        @"\b(?:TRAFAG\s+(?:CONTROLS\s+)?INDIA|TR[\s-]?IN)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public static string Resolve(
@@ -154,20 +169,15 @@ public static class GroupMarginSupplierClassifier
     // Seit Ingos Entscheid 2026-08-11 ist MARC/Werk 1100 der neue Standard; diese Methode
     // bleibt fuer den expliziten Alt-Modus und als Verfuegbarkeitsfallback bei leerem
     // MARC-Cache erhalten. Ein expliziter Supplier wird nie ueberschrieben.
-    private static bool HasGroupCostMatch(
+    private static bool HasTrAgGroupCostMatch(
         string? normalizedMaterialKey,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts)
     {
         if (string.IsNullOrWhiteSpace(normalizedMaterialKey) || groupStandardCosts is null || groupStandardCosts.Count == 0)
             return false;
 
-        foreach (var area in GroupStandardCostAreas.ByEntity.Values)
-        {
-            if (groupStandardCosts.ContainsKey((normalizedMaterialKey, area)))
-                return true;
-        }
-
-        return false;
+        var trAgArea = GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrAg];
+        return groupStandardCosts.ContainsKey((normalizedMaterialKey, trAgArea));
     }
 
     /// <summary>
@@ -189,7 +199,7 @@ public static class GroupMarginSupplierClassifier
         if (mode == SupplierFallbackModes.ChPlantMaster && chPlantMaterialKeys is { Count: > 0 })
             return chPlantMaterialKeys.Contains(key);
 
-        return HasGroupCostMatch(key, groupStandardCosts);
+        return HasTrAgGroupCostMatch(key, groupStandardCosts);
     }
 
     private static bool IsConfirmedLocalMaterial(
@@ -236,13 +246,11 @@ public static class GroupMarginSupplierClassifier
             !string.IsNullOrWhiteSpace(supplierCountry))
         {
             var name = supplierName?.Trim() ?? string.Empty;
-            if (name.Contains("Trafag AG", StringComparison.OrdinalIgnoreCase))
+            if (TrAgEntityPattern.IsMatch(name))
                 return GroupStandardCostEntities.TrAg;
-            if (name.Contains("Trafag Italia", StringComparison.OrdinalIgnoreCase) ||
-                name.Contains("Trafag Italy", StringComparison.OrdinalIgnoreCase))
+            if (TrItEntityPattern.IsMatch(name))
                 return GroupStandardCostEntities.TrIt;
-            if (name.Contains("Trafag Controls India", StringComparison.OrdinalIgnoreCase) ||
-                name.Contains("Trafag India", StringComparison.OrdinalIgnoreCase))
+            if (TrInEntityPattern.IsMatch(name))
                 return GroupStandardCostEntities.TrIn;
             return null;
         }
@@ -301,11 +309,8 @@ public static class SalesTypeRoles
 
 /// <summary>
 /// Bekannte liefernde Trafag-Gesellschaften fuer die Konzern-Kostenbasis (Mappe1.xlsx).
-/// Nur <see cref="TrAg"/> hat aktuell eine verifiziert befuellte Kostenquelle
-/// (MBEW-STPRS, Bewertungskreis 1100 -> <see cref="GroupStandardCost"/>). TR IN/TR IT
-/// sind als Konstanten vorhanden, damit der Lieferant korrekt beschriftet wird, liefern
-/// aber bewusst (noch) keine Kostenzahl (siehe docs/FINANCE_GRUPPENMARGE_2026-06-16.md
-/// Nachtrag 2026-07-15).
+/// TR AG kommt aus MBEW-STPRS; TR IT/TR IN werden aus dem jeweils juengsten positiven
+/// B1-Belegkostenwert der eigenen Verkaufszeilen aufgebaut.
 /// </summary>
 public static class GroupStandardCostEntities
 {
@@ -315,19 +320,50 @@ public static class GroupStandardCostEntities
 }
 
 /// <summary>
-/// Liefernde Gesellschaft -> MBEW-Bewertungskreis (nur fuer Gesellschaften mit
-/// verifizierter Kostenquelle). TR AG = Bewertungskreis 1100, Hauswaehrung CHF
-/// (siehe StandardCostEnricher.ValuationAreaByCountry / docs/FINANCE_STANDARDKOSTEN_2026-07-14.md).
+/// Liefernde Gesellschaft -> technischer Kostenbereich. Fuer TR AG ist dies der echte
+/// MBEW-Bewertungskreis 1100; TR IT/TR IN verwenden stabile B1-Kostenbereichsschluessel.
 /// </summary>
 public static class GroupStandardCostAreas
 {
     public static readonly IReadOnlyDictionary<string, string> ByEntity = new Dictionary<string, string>
     {
-        [GroupStandardCostEntities.TrAg] = "1100"
+        [GroupStandardCostEntities.TrAg] = "1100",
+        [GroupStandardCostEntities.TrIt] = "TRIT",
+        [GroupStandardCostEntities.TrIn] = "TRIN"
     };
 
     public static readonly IReadOnlyDictionary<string, string> CurrencyByEntity = new Dictionary<string, string>
     {
-        [GroupStandardCostEntities.TrAg] = "CHF"
+        [GroupStandardCostEntities.TrAg] = "CHF",
+        [GroupStandardCostEntities.TrIt] = "EUR",
+        [GroupStandardCostEntities.TrIn] = "INR"
     };
+
+    public static readonly IReadOnlyDictionary<string, string> SourceLabelByEntity = new Dictionary<string, string>
+    {
+        [GroupStandardCostEntities.TrAg] = GroupMarginCalculator.GroupCostSourceLabel,
+        [GroupStandardCostEntities.TrIt] = "Konzernkosten TR IT (B1 StockPrice)",
+        [GroupStandardCostEntities.TrIn] = "Konzernkosten TR IN (B1 StockPrice)"
+    };
+
+    public static bool TryResolveB1Source(string? tsc, out string area, out string currency)
+    {
+        var entity = tsc?.Trim().ToUpperInvariant() switch
+        {
+            "TRIT" => GroupStandardCostEntities.TrIt,
+            "TRIN" => GroupStandardCostEntities.TrIn,
+            _ => null
+        };
+
+        if (entity is not null &&
+            ByEntity.TryGetValue(entity, out area!) &&
+            CurrencyByEntity.TryGetValue(entity, out currency!))
+        {
+            return true;
+        }
+
+        area = string.Empty;
+        currency = string.Empty;
+        return false;
+    }
 }

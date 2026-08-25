@@ -1509,7 +1509,9 @@ public class ExcelExportService : IExcelExportService
             ("FR/IT/US/IN (SAP B1)", "Positionsfeld StockPrice der Verkaufszeile. Waehrung: Hauswaehrung der Gesellschaft."),
             ("ES (Sage)", "Kostenspalte aus dem Sage-Export, sofern geliefert."),
             ("UK", "Aktuell KEINE Kostenquelle im Export - Kostenbasis fehlt durchgaengig (offener Punkt)."),
-            ("TR-AG-geliefert", "Unabhaengig vom Verkaufsland: echte Konzern-Herstellkosten MBEW-STPRS der Trafag AG (CHF) aus GroupStandardCosts, wenn der Lieferant als Trafag AG erkannt wird und ein Materialtreffer vorliegt.")
+            ("TR-AG-geliefert", "Unabhaengig vom Verkaufsland: Konzern-Herstellkosten MBEW-STPRS der Trafag AG (CHF) aus GroupStandardCosts, wenn der Lieferant als Trafag AG erkannt wird und ein Materialtreffer vorliegt."),
+            ("TR-IT-geliefert", "Unabhaengig vom Verkaufsland: juengster positiver B1-Belegkostenwert StockPrice aus den eigenen TR-IT-Verkaufszeilen (EUR), wenn Trafag Italia als Lieferant erkannt wird und ein Materialtreffer vorliegt."),
+            ("TR-IN-geliefert", "Unabhaengig vom Verkaufsland: juengster positiver B1-Belegkostenwert StockPrice aus den eigenen TR-IN-Verkaufszeilen (INR), bevorzugt ueber die Trafag-Sachnummer, wenn Trafag Indien als Lieferant erkannt wird und ein Materialtreffer vorliegt.")
         };
 
         ws.Cell(costSourceStart + 2, 1).Value = "Land";

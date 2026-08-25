@@ -106,7 +106,7 @@ public static class GroupMarginCalculator
     public static string ResolveCostSource(string supplierType, GroupMarginCostBasis basis)
     {
         if (basis.IsGroupCost)
-            return GroupCostSourceLabel;
+            return basis.GroupCostSource ?? GroupCostSourceLabel;
         if (basis.IsGroupCostMissing)
             return GroupMarginStatuses.GroupCostMissingSource;
 
@@ -207,7 +207,8 @@ public sealed record GroupMarginCostBasis(
     decimal CostBasis,
     string CostCurrency,
     bool IsGroupCost = false,
-    bool IsGroupCostMissing = false);
+    bool IsGroupCostMissing = false,
+    string? GroupCostSource = null);
 
 /// <summary>Was die Regeln ausser der Zeile selbst brauchen.</summary>
 public sealed record GroupMarginCostContext(
@@ -260,13 +261,13 @@ public static class GroupMarginCostRules
 {
     /// <summary>
     /// Echte Konzern-Herstellkosten: die liefernde Gesellschaft hat eine verifizierte
-    /// Kostenquelle (aktuell nur TR AG / MBEW-STPRS, siehe <see cref="GroupStandardCostAreas"/>)
+    /// Kostenquelle (TR AG aus MBEW-STPRS, TR IT/TR IN aus B1-Belegkosten)
     /// UND fuer das Material liegt ein Treffer vor. Das ist der eigentliche Zweck der
     /// Gruppenmarge: der lokal gespeicherte Wert wird durch die Konzernkosten ersetzt.
     /// </summary>
     public static readonly GroupMarginCostRule GroupStandardCost = new(
         nameof(GroupStandardCost),
-        "Konzern-Herstellkosten der liefernden Gesellschaft (MBEW-STPRS).",
+        "Konzern-Herstellkosten der liefernden Gesellschaft.",
         (line, context) =>
         {
             var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
@@ -284,7 +285,10 @@ public static class GroupMarginCostRules
 
             var magnitude = Magnitude(line.Quantity, groupCost.UnitCost);
             return new GroupMarginCostBasis(
-                context.IsReversal ? -magnitude : magnitude, groupCost.Currency, IsGroupCost: true);
+                context.IsReversal ? -magnitude : magnitude,
+                groupCost.Currency,
+                IsGroupCost: true,
+                GroupCostSource: GroupStandardCostAreas.SourceLabelByEntity.GetValueOrDefault(deliveringEntity));
         });
 
     /// <summary>

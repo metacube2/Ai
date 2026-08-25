@@ -38,13 +38,13 @@ public class GroupMarginCalculatorTests
         };
 
     private static Dictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> GroupCosts(
-        string materialKey, decimal unitCost, string currency = "CHF")
+        string materialKey, decimal unitCost, string currency = "CHF", string area = TrAgArea)
         => new()
         {
-            [(materialKey, TrAgArea)] = new GroupStandardCost
+            [(materialKey, area)] = new GroupStandardCost
             {
                 MaterialKey = materialKey,
-                ValuationArea = TrAgArea,
+                ValuationArea = area,
                 UnitCost = unitCost,
                 Currency = currency
             }
@@ -84,6 +84,35 @@ public class GroupMarginCalculatorTests
         Assert.False(result.IsGroupCostMissing);
         Assert.Equal(42m, result.CostBasis);
         Assert.Equal(GroupMarginCalculator.GroupCostSourceLabel, result.CostSource);
+        Assert.Equal(GroupMarginStatuses.Ok, result.Status);
+    }
+
+    [Theory]
+    [InlineData("TR IN", "TRIN", "INR", 40, "Konzernkosten TR IN (B1 StockPrice)")]
+    [InlineData("TR IT", "TRIT", "EUR", 100, "Konzernkosten TR IT (B1 StockPrice)")]
+    public void Konzernkosten_von_TR_IN_und_TR_IT_ersetzen_den_lokalen_IC_Preis(
+        string supplierName,
+        string area,
+        string currency,
+        decimal groupUnitCost,
+        string expectedSource)
+    {
+        var result = GroupMarginCalculator.Evaluate(
+            Line(
+                supplierName: supplierName,
+                supplierNumber: "IC-SUPPLIER",
+                tsc: "TRDE",
+                material: "A2",
+                quantity: 1m,
+                standardCost: 100m,
+                netSalesValue: 200m),
+            GroupCosts("A2", groupUnitCost, currency, area));
+
+        Assert.True(result.IsGroupCost);
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result.SupplierType);
+        Assert.Equal(groupUnitCost, result.CostBasis);
+        Assert.Equal(currency, result.CostCurrency);
+        Assert.Equal(expectedSource, result.CostSource);
         Assert.Equal(GroupMarginStatuses.Ok, result.Status);
     }
 

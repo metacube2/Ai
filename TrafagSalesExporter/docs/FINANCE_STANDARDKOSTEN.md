@@ -105,8 +105,8 @@ Entscheid Andreas 2026-07-27, im Wortlaut „Trafag, das ist ja die drei — wei
 wir nicht gehen":
 
 1. **Trafag AG** — umgesetzt, `GroupStandardCosts`, MBEW-STPRS Bewertungskreis 1100, CHF
-2. **Trafag Italien**
-3. **Trafag Indien**
+2. **Trafag Italien** — im Code umgesetzt am 2026-08-25, B1-Belegkosten `StockPrice`, EUR
+3. **Trafag Indien** — im Code umgesetzt am 2026-08-25, B1-Belegkosten `StockPrice`, INR
 
 Magnetic Sense ist **keine** vierte Quelle. Andreas: „Fuer Magnetic Sense benoetigen wir
 aus meiner Sicht keine Daten." Datenbefund deckt sich: `SupplierName LIKE '%MAGNET%'`
@@ -127,6 +127,32 @@ sonst                       -> Standardkosten der verkaufenden Landesgesellschaf
 Konzernvorgabe ist Moving Average, aber laut Andreas halten sich nicht alle Gesellschaften
 daran; manche nutzen noch LIFO oder aehnliches. **Bei Abweichungen zwischen den drei
 Tabellen zuerst die Bewertungsmethode pruefen, bevor ein Datenfehler vermutet wird.**
+
+### Umsetzung TR IT/TR IN vom 2026-08-25
+
+Der HANA-Import baut fuer die beiden eigenen Gesellschaften jetzt je einen getrennten
+Kostenbereich in `GroupStandardCosts` auf (`TRIT` beziehungsweise `TRIN`). Quelle ist der
+bereits gelesene positive Beleg-Stueckpreis `INV1.StockPrice` beziehungsweise
+`RIN1.StockPrice`; je Material gilt der juengste beobachtete Wert nach
+`PostingDate ?? InvoiceDate ?? ExtractionDate`. Das entspricht dem bestehenden aktuellen
+Snapshot-Modell der TR-AG-Kostentabelle und erfindet keinen Artikelstammwert, den B1 bei
+Chargenbewertung nicht fuehrt.
+
+TR IN verwendet bevorzugt `GroupMaterialNumber` (Trafag-Sachnummer), wenn gepflegt, sonst
+die lokale Materialnummer. TR IT folgt derselben Schluesselregel. Werte mit `0`, leerem
+Materialschluessel oder einer von der Gesellschaftswaehrung abweichenden Kostenwaehrung
+werden verworfen. Liefert ein Import gar keinen gueltigen Kostenwert, bleibt der bestehende
+Kostenbereich erhalten; ein Quellausfall darf den letzten brauchbaren Stand nicht leeren.
+
+Die Gruppenmarge ersetzt danach bei erkanntem Lieferanten Trafag Italia beziehungsweise
+Trafag Indien den lokalen IC-Preis durch den passenden Konzernkostenwert. Die Kostenquelle
+wird explizit als `Konzernkosten TR IT (B1 StockPrice)` beziehungsweise
+`Konzernkosten TR IN (B1 StockPrice)` ausgewiesen.
+
+**Noch nicht produktiv belegt:** Code und Tests sind lokal umgesetzt, aber nicht deployed.
+Nach einem Deploy muessen je ein TR-IT- und TR-IN-Import laufen; erst danach sind die beiden
+Kostenbereiche befuellt. Anschliessend sind Materialzahl, Trefferquote und zwei konkrete
+A2/A3-Beispielzeilen gegen `Mappe1.xlsx` nachzumessen.
 
 ## 4. TR IT: warum der B1-Artikelstamm leer ist
 
@@ -210,9 +236,8 @@ Reporting-Marge im Dashboard.
 
 | Punkt | Bei wem |
 | --- | --- |
-| `GroupStandardCostAreas.ByEntity` enthaelt nur `TrAg`. `ResolveDeliveringEntity` erkennt TR IT/TR IN am Namen, der `TryGetValue` schlaegt aber fehl und die Zeile faellt **still** auf lokale Kosten zurueck | Code |
-| Kostenquelle TR IT/TR IN aus Belegzeilen ableiten, analog `SapGatewayDataSourceAdapter.PersistGroupStandardCostsAsync` (befuellt heute nur TR AG) | Code |
-| Welcher Stand je Material gilt: letzter Verkauf, Durchschnitt oder Stichtag | Andreas, nur implizit als Teil des „einfachsten Wegs" mitgemeint |
+| Produktive Befuellung der neuen Kostenbereiche durch je einen TR-IT- und TR-IN-Import, danach Trefferquote und A2/A3-Stichprobe messen | Ingo / Betrieb |
+| Fachlich bestaetigen, ob der jetzt transparent gewaehlte juengste positive Belegkostenwert dauerhaft gilt oder spaeter ein Durchschnitt/Stichtag benoetigt wird | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
 | Fix-/Variabel-Split fuer den Deckungsbeitrag wird von keinem Quellsystem geliefert; `StandardCostVariable`/`StandardCostFixed` und `ContributionMarginCalculator` sind vorbereitet, die DB bleibt bewusst leer | Quellsysteme |
