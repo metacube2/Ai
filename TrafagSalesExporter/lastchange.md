@@ -2,6 +2,44 @@
 
 Stand: 2026-08-25
 
+## Konzernkosten TR IT und TR IN produktiv nachgemessen 2026-08-25 16:15 (BELEGT)
+
+- **Erledigt:** Der offene Punkt aus dem Deploy von 15:21 ist geschlossen. Je ein TR-IT-
+  und TR-IN-Import ist gelaufen, die beiden Kostenbereiche sind befuellt und die Wirkung
+  ist gegen zwei produktive Exporte desselben Tages gemessen.
+- **Vergleichsbasis:** `Sales_All_2026-08-25.xlsx` (15:35, vor den Importen) gegen
+  `Sales_All_2026-08-25 (1).xlsx` (16:15, danach), Blatt `Gruppenmarge Details` mit je
+  `94'751` Zeilen, zeilenweise ueber den Schluessel Jahr/Land/TSC/Rechnung/Position/
+  Material/Umsatz verglichen. **Nicht ueber die Zeilennummer:** die Reihenfolge der beiden
+  Exporte unterscheidet sich, ein Positionsvergleich meldet `87'476` falsche Treffer.
+- **Ergebnis:** `Konzernkosten TR IN (B1 StockPrice)` `0` -> `6'119` Zeilen ueber `1'242`
+  Materialien, `Konzernkosten TR IT (B1 StockPrice)` `0` -> `112` Zeilen ueber `40`
+  Materialien. Genau `6'231` Zeilen haben gewechselt, alle von `Interner Standardpreis`.
+  Keine andere Quelle veraendert, keine Zeile hat ihre Kostenbasis verloren, Abdeckung
+  bleibt `94.2 %`.
+- **A2/A3 rechnet jetzt auf Ist-Kosten:** TRIT bezogen von Trafag Italia `88` Zeilen,
+  Kostenbasis `113'854` -> `84'124` EUR (`-26.1 %`); TRFR `21` Zeilen, `18'044` ->
+  `13'035` EUR (`-27.8 %`). Die Marge steigt entsprechend.
+- **Groesste Wirkung bei Indiens eigenen Verkaeufen:** `6'090` Zeilen, Kostenbasis 2025
+  `222'584'821` -> `245'987'594` INR (`+10.5 %`), 2026 `199'323'195` -> `197'822'061` INR
+  (`-0.8 %`). Fuer 2025 sinkt die indische Marge um rund `23.4` Mio INR. Das ist die
+  direkte Folge der Regel „juengster positiver Wert" und gibt der offenen Frage an Andreas
+  erstmals eine Zahl.
+- **Guard greift:** `32` Zeilen sind von `OK` auf `Kostenwaehrung abweichend` gewechselt,
+  weil INR- oder EUR-Kosten gegen einen Umsatz in anderer Waehrung stehen (TRUK/TR IN
+  `24`, TRIT/TR IN `5`, TRUK/TR IT `3`). Sie tragen bewusst keine Marge mehr statt einer
+  plausibel aussehenden falschen. Neuer offener Punkt fuer Andreas: die Umrechnungsregel.
+- **Unveraendert:** die `140` Zeilen `Konzernkosten fehlen` (TRIN mit Sales Type `LRD`,
+  liefernde Gesellschaft ist Trafag AG) und die `21'986` Zeilen
+  `Kostenwaehrung abweichend` insgesamt, davon `10'364` bei TRIT mit CHF-Kosten gegen
+  EUR-Umsatz.
+- **Auswertungsfalle notiert:** Das Blatt `Gruppenmarge Summary` fuehrt in den Spalten E
+  bis M nur `SUMIFS`/`COUNTIFS` ohne gespeicherte Ergebnisse. Maschinell gelesen sieht es
+  leer aus; richtig ist, aus `Gruppenmarge Details` zu aggregieren.
+- Nur Dokumentation, kein Anwendungscode, keine Datenbank, kein Deploy.
+- Details: `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt „Produktive Nachmessung vom
+  2026-08-25 16:15".
+
 ## Konzern-Standardkosten TR IT und TR IN 2026-08-25 (PRODUKTIV DEPLOYED)
 
 - **Umgesetzt:** Der HANA-Import baut fuer TR IT und TR IN eigene Bereiche in

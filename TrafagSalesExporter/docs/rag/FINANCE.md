@@ -37,6 +37,14 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   angekuendigt. Danach Importlaeufe FR/IT/US/IN, `StandardCost`-Fuellgrad und
   `EvalSystem` erneut pruefen; Details in
   `docs/FINANCE_STANDARDKOSTEN.md`.
+- Konzernkosten stehen fuer genau drei Gesellschaften: TR AG aus MBEW-STPRS (Kreis
+  1100, CHF), TR IT und TR IN aus dem je Material juengsten positiven B1-Belegwert
+  `INV1/RIN1.StockPrice` (EUR bzw. INR). Produktiv seit 2026-08-25 15:21 und um 16:15
+  nachgemessen: 6'119 Zeilen ueber 1'242 Materialien fuer TR IN, 112 Zeilen ueber 40
+  Materialien fuer TR IT; 6'231 Zeilen sind von `Interner Standardpreis` gewechselt.
+  A2/A3-Kostenbasis faellt um rund 26 %, Indiens eigene Kostenbasis steigt 2025 um
+  10.5 %. 32 Zeilen mit Fremdwaehrungskosten stehen bewusst auf
+  `Kostenwaehrung abweichend`. Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
 - TR IT: Fuer den ersten Schritt ist `INV1.StockPrice` als Kostenbasis
   freigegeben. Die Bewertung einer Umstellung auf Moving Average und die
   Cost-Run-Frage folgen laut Paola Ende August 2026.

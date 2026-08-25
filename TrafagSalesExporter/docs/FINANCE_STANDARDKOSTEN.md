@@ -1,7 +1,10 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-08-17. Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14,
-Arbeitsnotiz 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11).
+Stand: 2026-08-25
+
+Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
+2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
+TR IT/TR IN produktiv nachgemessen am 2026-08-25, siehe Abschnitt 3.
 
 Betrifft die Kostenbasis der **Gruppenmarge**, nicht den Journal-Import
 (dafuer `docs/FINANCE_JOURNAL.md`).
@@ -151,10 +154,90 @@ wird explizit als `Konzernkosten TR IT (B1 StockPrice)` beziehungsweise
 
 **Produktiv deployed am 2026-08-25 15:21:** Funktionscommit `b83ee84`; Server-DLL und
 lokaler Release-Build sind bitgleich, und alle vier neuen Wirktokens wurden in der
-ausgelieferten DLL nachgewiesen. Noch nicht produktiv belegt ist die Befuellung selbst:
-Je ein TR-IT- und TR-IN-Import muss laufen; erst danach sind die beiden Kostenbereiche
-befuellt. Anschliessend sind Materialzahl, Trefferquote und zwei konkrete
-A2/A3-Beispielzeilen gegen `Mappe1.xlsx` nachzumessen.
+ausgelieferten DLL nachgewiesen. Die Befuellung selbst wurde am selben Tag um 16:15 nach
+je einem TR-IT- und TR-IN-Import nachgemessen, siehe den folgenden Abschnitt.
+
+### Produktive Nachmessung vom 2026-08-25 16:15
+
+Die oben offene Befuellung ist erledigt und gemessen. Grundlage sind zwei produktive
+Exporte desselben Tages: `Sales_All_2026-08-25.xlsx` von 15:35, also nach dem Deploy und
+vor den Importen, und `Sales_All_2026-08-25 (1).xlsx` von 16:15, nach je einem TR-IT- und
+TR-IN-Import. Beide Male hat das Blatt `Gruppenmarge Details` 94'751 Datenzeilen. Der
+Vergleich lief zeilenweise ueber den Schluessel Jahr, Land, TSC, Rechnung, Position,
+Material und Umsatz, nicht ueber die Zeilennummer: **die Zeilenreihenfolge der beiden
+Exporte ist nicht identisch**, ein Positionsvergleich meldet 87'476 falsche Treffer.
+
+Kostenquellen vorher und nachher:
+
+| Kostenquelle | 15:35 | 16:15 |
+| --- | ---: | ---: |
+| Konzernkosten TR AG (MBEW-STPRS) | 65'672 | 65'672 |
+| Standardkosten der lokalen Gesellschaft | 11'075 | 11'075 |
+| Kosten aus Verkaufszeile | 7'501 | 7'501 |
+| Interner Standardpreis | 10'253 | 4'022 |
+| **Konzernkosten TR IN (B1 StockPrice)** | 0 | **6'119** |
+| **Konzernkosten TR IT (B1 StockPrice)** | 0 | **112** |
+| Konzernkosten fehlen | 140 | 140 |
+| Lieferant unklar | 110 | 110 |
+
+Genau `6'231` Zeilen haben gewechselt, alle in dieselbe Richtung von
+`Interner Standardpreis` auf die beiden neuen Quellen. Keine andere Quelle hat sich
+veraendert, keine Zeile hat ihre Kostenbasis verloren, der Anteil mit Kostenbasis bleibt
+bei `94.2 %` (`89'298` auf `89'299` von `94'751`). Abgedeckt sind `1'242` Materialien
+ueber TR IN und `40` Materialien ueber TR IT.
+
+**Die A2/A3-Faelle rechnen jetzt auf Ist-Kosten statt auf dem Verrechnungspreis.** Nur
+Zeilen mit gleicher Waehrung, deshalb direkt vergleichbar:
+
+| verkauft | Konzernkosten | Zeilen | Umsatz EUR | Kosten alt | Kosten neu | Delta |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| TRIT | TR IT | 88 | 145'750 | 113'854 | 84'124 | -26.1 % |
+| TRFR | TR IT | 21 | 36'023 | 18'044 | 13'035 | -27.8 % |
+
+**Die groesste Wirkung liegt bei Indiens eigenen Verkaeufen**, `6'090` der `6'119`
+TR-IN-Zeilen. Dort ersetzt der materialbezogene juengste positive Belegwert den bisher
+zeilenbezogenen Standardpreis:
+
+| Jahr | Zeilen | Umsatz INR | Kosten alt | Kosten neu | Delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2025 | 3'348 | 548'375'007 | 222'584'821 | 245'987'594 | +10.5 % |
+| 2026 | 2'742 | 473'026'345 | 199'323'195 | 197'822'061 | -0.8 % |
+| Summe | 6'090 | 1'021'401'352 | 421'908'016 | 443'809'656 | +5.2 % |
+
+Fuer 2025 sinkt die indische Marge damit um rund `23.4` Mio INR, fuer 2026 bleibt sie
+praktisch unveraendert. Der Ausschlag im Vorjahr ist die direkte Folge der Regel
+„juengster positiver Wert": ein heutiger Kostenwert wirkt auf alte Zeilen. Damit hat die
+noch offene Frage an Andreas erstmals eine Zahl.
+
+**Neuer Nebeneffekt, den der Guard korrekt abfaengt:** `32` Zeilen sind von `OK` auf
+`Kostenwaehrung abweichend` gewechselt, weil ein INR- oder EUR-Kostenwert gegen einen
+Umsatz in anderer Waehrung steht.
+
+| verkauft | Konzernkosten | Zeilen |
+| --- | --- | ---: |
+| TRUK | TR IN | 24 |
+| TRIT | TR IN | 5 |
+| TRUK | TR IT | 3 |
+
+Beispiel: Rechnung `0000041734/1`, Material `52473`, Umsatz `3'203.40` GBP, Kostenbasis
+vorher `2'290.50` GBP, jetzt `86'988.57` INR. Diese Zeilen tragen bewusst keine Marge
+mehr, statt eine plausibel aussehende falsche auszuweisen. Sie brauchen eine
+Umrechnungsentscheidung.
+
+Die `140` Zeilen `Konzernkosten fehlen` sind unveraendert geblieben. Das ist richtig: es
+sind TRIN-Zeilen mit Sales Type `LRD`, deren liefernde Gesellschaft Trafag AG ist, die
+neuen indischen Kosten duerfen dort nicht greifen.
+
+**Die Lieferantenerkennung war nie der Engpass.** Alle in den Daten vorkommenden
+Schreibvarianten treffen die Regexes in `Services/GroupMarginSupplierClassifier.cs`:
+`Trafag Italia S.r.l.`, `Trafag Italia S.r.l` ohne Schlusspunkt,
+`Trafag Controls India Pvt. Ltd.` und `Trafag Controls India Pvt Limited`.
+
+**Auswertungsfalle fuer kuenftige Messungen:** Das Blatt `Gruppenmarge Summary` enthaelt
+in den Spalten E bis M nur `SUMIFS`- und `COUNTIFS`-Formeln ohne gespeicherte Ergebnisse.
+Wer die Mappe maschinell liest statt in Excel zu oeffnen, sieht dort leere Zellen und
+haelt das faelschlich fuer fehlende Daten. Richtig ist, aus `Gruppenmarge Details` selbst
+zu aggregieren.
 
 ## 4. TR IT: warum der B1-Artikelstamm leer ist
 
@@ -238,8 +321,8 @@ Reporting-Marge im Dashboard.
 
 | Punkt | Bei wem |
 | --- | --- |
-| Produktive Befuellung der neuen Kostenbereiche durch je einen TR-IT- und TR-IN-Import, danach Trefferquote und A2/A3-Stichprobe messen | Ingo / Betrieb |
-| Fachlich bestaetigen, ob der jetzt transparent gewaehlte juengste positive Belegkostenwert dauerhaft gilt oder spaeter ein Durchschnitt/Stichtag benoetigt wird | Andreas |
+| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend` | Andreas |
+| Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
 | Fix-/Variabel-Split fuer den Deckungsbeitrag wird von keinem Quellsystem geliefert; `StandardCostVariable`/`StandardCostFixed` und `ContributionMarginCalculator` sind vorbereitet, die DB bleibt bewusst leer | Quellsysteme |
