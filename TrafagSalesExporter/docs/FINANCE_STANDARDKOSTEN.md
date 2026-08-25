@@ -149,9 +149,11 @@ Trafag Indien den lokalen IC-Preis durch den passenden Konzernkostenwert. Die Ko
 wird explizit als `Konzernkosten TR IT (B1 StockPrice)` beziehungsweise
 `Konzernkosten TR IN (B1 StockPrice)` ausgewiesen.
 
-**Noch nicht produktiv belegt:** Code und Tests sind lokal umgesetzt, aber nicht deployed.
-Nach einem Deploy muessen je ein TR-IT- und TR-IN-Import laufen; erst danach sind die beiden
-Kostenbereiche befuellt. Anschliessend sind Materialzahl, Trefferquote und zwei konkrete
+**Produktiv deployed am 2026-08-25 15:21:** Funktionscommit `b83ee84`; Server-DLL und
+lokaler Release-Build sind bitgleich, und alle vier neuen Wirktokens wurden in der
+ausgelieferten DLL nachgewiesen. Noch nicht produktiv belegt ist die Befuellung selbst:
+Je ein TR-IT- und TR-IN-Import muss laufen; erst danach sind die beiden Kostenbereiche
+befuellt. Anschliessend sind Materialzahl, Trefferquote und zwei konkrete
 A2/A3-Beispielzeilen gegen `Mappe1.xlsx` nachzumessen.
 
 ## 4. TR IT: warum der B1-Artikelstamm leer ist

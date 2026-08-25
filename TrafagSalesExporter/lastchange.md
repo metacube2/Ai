@@ -2,7 +2,7 @@
 
 Stand: 2026-08-25
 
-## Konzern-Standardkosten TR IT und TR IN 2026-08-25 (LOKAL, NICHT DEPLOYED)
+## Konzern-Standardkosten TR IT und TR IN 2026-08-25 (PRODUKTIV DEPLOYED)
 
 - **Umgesetzt:** Der HANA-Import baut fuer TR IT und TR IN eigene Bereiche in
   `GroupStandardCosts` auf (`TRIT`/EUR und `TRIN`/INR). Je Material wird der juengste
@@ -17,8 +17,13 @@ Stand: 2026-08-25
   kann nicht durch einen TR-IT-/TR-IN-Treffer ausgeloest werden.
 - **Pruefung:** 95/95 gezielte Tests und 601/601 Tests der kompletten Release-Suite gruen;
   Release-Build ohne Fehler. Bekannte Paket- und Bestandswarnungen bleiben bestehen.
-- **Noch offen:** Kein Deploy. Danach je ein TR-IT- und TR-IN-Import sowie produktive
-  Messung von Materialzahl, Trefferquote und konkreten A2/A3-Beispielen. Andreas sollte
+- **Produktiv:** Deployed am 2026-08-25 15:21, Funktionscommit `b83ee84`. Neue konsistente
+  Sicherung `trafag_exporter.db.before-group-costs-trit-trin-20260825-150549.bak`;
+  Server-DLL und lokaler Release-Build bitgleich, vier Wirktokens vorhanden, keine Datei
+  verschwunden, Startseite und Management-Cockpit HTTP 200. Vollstaendiger Nachweis in
+  `docs/rag/DEPLOYMENT.md`.
+- **Noch offen:** Je ein TR-IT- und TR-IN-Import sowie produktive Messung von Materialzahl,
+  Trefferquote und konkreten A2/A3-Beispielen. Andreas sollte
   noch bestaetigen, ob dauerhaft der juengste positive Wert statt Durchschnitt/Stichtag
   gelten soll. Materialien ohne eigenen Verkauf bleiben ohne eigene Belegkostenquelle.
 - Details: `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt "Umsetzung TR IT/TR IN vom

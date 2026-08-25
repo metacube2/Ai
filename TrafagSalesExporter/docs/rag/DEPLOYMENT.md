@@ -44,6 +44,23 @@ Stand: 2026-08-25
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-08-25 15:21, Konzern-Standardkosten
+  TR IT und TR IN aus B1 StockPrice**, Funktionscommit `b83ee84`, `601/601` Release-Tests
+  gruen. Neue Sicherung
+  `trafag_exporter.db.before-group-costs-trit-trin-20260825-150549.bak`
+  (`354'263'040` Bytes); wegen `105'237'192` Bytes noch nicht eingecheckter WAL-Daten
+  korrekt ueber den langsamen seitenweisen SQLite-Weg erstellt (`960,8 s`).
+  `BiDashboard.dll` `25.08.2026 15:23:03`, `4'688'896` Bytes, SHA256
+  `0DDFA2A57A6F1A402AF0EF5F6347B32313FDAF4A14EEBCBD060A858D8C35C874`; lokaler
+  Release-Build und Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'659`
+  unveraendert, `0` verschwunden. HTTPS `200`: Startseite (`71'403` Bytes) und
+  `/management-cockpit` (`72'264` Bytes). Wirknachweis in der DLL:
+  `B1GroupStandardCostBuilder`, `TryResolveB1Source`,
+  `Konzernkosten TR IT (B1 StockPrice)` und `Konzernkosten TR IN (B1 StockPrice)`;
+  alle vier fehlten im Prueflauf und sind nach dem Deploy enthalten. Kein Schemawechsel.
+  Noch nicht belegt: produktive Befuellung der Kostenbereiche `TRIT`/`TRIN`; dafuer muss
+  nach dem Deploy je ein Standortimport laufen.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-08-25 10:14, LineRegistrationDate als
   Spalte 52 im zentralen Sales_All**, Funktionscommit `d414427`, `586/586` Release-Tests
   gruen. Vorher-Sicherung `trafag_exporter.db.before-linereg-date-20260825-101315.bak`
