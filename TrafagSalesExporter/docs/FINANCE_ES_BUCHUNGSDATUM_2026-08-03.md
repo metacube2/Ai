@@ -244,3 +244,114 @@ ersetzen.
 Abschnitt 8 beschrieben: die `PostingDate`-Spaltenzuordnung im Seed fuer Spanien ist NICHT
 verdrahtet, muss in den Einstellungen manuell gesetzt werden, danach Reimport und
 Jahresverteilung TRES neu messen.
+
+## 10. Nachtrag 2026-08-20: Fachbestaetigung durch Andreas/Saioa, Entry-Date-Frage offen
+
+Ingo hat eine Mailkette geteilt: Andreas Stoller (Finance) hatte Saioa Ochoa (Trafag
+Espana, Finance) zwischen 17. und 20.08.2026 den spanischen Rechnungsprozess erklaeren
+lassen, dazu einen neuen manuellen Vollexport 01.01.2025-01.01.2026 mit `PostingDate`
+angefordert und von Santi Gomez erhalten.
+
+### 10a. Fachlicher Prozess laut Saioa Ochoa (woertlich zitiert)
+
+Ablauf: Lieferschein -> Rechnungserstellung (Proforma in Sage) -> Validierung. Die
+Validierung ist der rechtsverbindliche Schritt gegenueber der spanischen Steuerbehoerde
+(digitale Signatur, QR-Code, Meldepflicht seit Ende 2024). Dabei wird automatisch das
+Datum gesetzt, das unser Export als `PostingDate` liest (`FacturasTB.FechaAsiento`).
+**Einmal validiert, ist die Rechnung gesperrt und nicht rueckdatierbar** — Korrekturen
+laufen nur ueber Gutschrift plus Neufakturierung.
+
+Saioa woertlich auf Andreas' Nachfrage, ob die Validierung auch der Buchungszeitpunkt im
+Finanzsystem ist: *"Correct! The validated date is the posting date, which is when it
+becomes revenue in the P&L."* Damit ist die offene Fachfrage aus Abschnitt 6 (welches
+Feld das Umsatzrealisierungsdatum ist) fachlich beantwortet: **`PostingDate`**.
+
+Zum Timing: *"we usually validate invoices the month of delivery. At the end of each
+month and before the closing, we review all deliveries to ensure they are invoiced, if
+for any reason we cannot invoice a delivery, we will post and validate it the following
+month. Only at the end of the year, and if necessary, do we record a provision in order
+to recognize the sale in the correct period."* Es gibt also **keine automatische
+Monatsabgrenzung**, nur eine optionale Jahresend-Provision.
+
+Beispiel aus der Mail: Lieferung am 28.08., Validierung am 02.09. -> Buchungsdatum 02.09.,
+Umsatz zaehlt im September, nicht im August.
+
+Das deckt sich mit Santis frueherer Erklaerung vom 18.08. (Abschnitt 9): leeres
+`PostingDate` bei kuerzlich gelieferten, noch nicht validierten Rechnungen ist normal und
+transient, kein Datenfehler.
+
+### 10b. Andreas' offene Abstimmungsfrage — bisher UNBEANTWORTET
+
+Andreas an Ingo (2026-08-20, per Mail an Ingo weitergeleitet über die Kette): *"So wie ich
+das sehe, müssten die Daten nach dem Entry Date auf Tagesebene gezogen werden und nach
+dem Posting Date reported werden (potenziell auch in die Vergangenheit)."*
+
+Ingo hat dazu bislang **keine Antwort von Andreas erhalten**. Der Punkt bleibt offen zur
+Klaerung, nicht als entschiedene Fachvorgabe zu behandeln.
+
+Fachlich deckt sich Andreas' Vorschlag mit dem bereits gebauten Mechanismus aus Abschnitt
+9: das 35-Tage-Exportfenster plus Dedup ueber `SourceLineId` aktualisiert aeltere, noch
+unverbuchte Zeilen automatisch, sobald `PostingDate` bei einem spaeteren Lauf vorliegt —
+das ist technisch schon "ruckwirkend in die Vergangenheit reporten".
+
+**Nicht belegt, nur eine Annahme:** was Andreas mit "Entry Date" genau meint. Nach
+Vorrangregel 5/Router-Fallenregel darf hier kein Feld einfach unterstellt werden.
+
+### 10c. Messung am neuen Vollexport 2025 (`Spain_Sales_range_20250101_to_20251231.csv`)
+
+Gemessen mit `Import-Csv -Delimiter ';'` (korrektes Quote-Handling, mehrzeilige Felder in
+`DescriptionLine`). Datei erzeugt 2026-08-20 11:39 auf dem Sage-Server, Filtermodus
+`InvoiceDate`, Zeitraum 01.01.2025 bis 01.01.2026 (exklusiv), **4'341 Zeilen**, Summe
+`SalesPriceValue` 3'081'740.18 EUR (identisch mit dem mitgelieferten Summary).
+
+| Kennzahl | Wert |
+| --- | --- |
+| `PostingDate` gefuellt | 4'264 / 4'341 (98.2 %), 77 leer, alle `DocumentType = Invoice` |
+| Gutschriften (`Credit Note`) mit `PostingDate` | 101 / 101 (100 %) |
+| Verzug `PostingDate` minus `InvoiceDate` | Ø 3.3 Tage, Median praktisch 0, Maximum 28 Tage |
+
+Damit deutlich besser als der letzte dokumentierte Stand in Abschnitt 9/
+`docs/AGENT_COORDINATION.md` (21.1 % Fuellgrad, nur Jan-Mai 2026). Das ist ein Sonderexport
+fuer 2025, keine Aussage ueber den taeglichen Server-Delta-Lauf bei Santi.
+
+### 10d. `LineRegistrationDate` als datengestuetzter Entry-Date-Kandidat
+
+Ingos These: "PostingDate ist immer verzoegert geschrieben, Entry Date eventuell sofort
+beim Erzeugen ohne Validierung/Approve." Am selben Export gemessen:
+
+| Feld | Fuellgrad | Besonderheit |
+| --- | --- | --- |
+| `LineRegistrationDate` (`FechaRegistro`) | 100 % (4'341/4'341) | einzige Spalte mit Uhrzeit, z. B. `2025-01-10 09:42:35` |
+| `PostingDate` | 98.2 % | reines Datum, erst bei Validierung gesetzt |
+
+`LineRegistrationDate` liegt in **0 von 4'341 Faellen nach** `InvoiceDate` (in 594 Faellen
+bis zu 23 Tage davor, Ø 0.64 Tage), und gegenueber `PostingDate` bis zu 30 Tage davor
+(Ø 3.65 Tage). Es entsteht offenbar sofort bei Zeilenerzeugung (Proforma-Schritt), bevor
+die Rechnung validiert wird — ein plausibler, aber von Andreas **nicht bestaetigter**
+Kandidat fuer sein "Entry Date".
+
+### 10e. Vier Beispielzeilen (zur Vorlage an Andreas)
+
+Aus demselben Export, Company Code 1:
+
+| # | Lieferdatum | LineRegistrationDate | InvoiceDate | PostingDate | Typ | Wert EUR | Anmerkung |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Rechnung `20241332` | 2025-01-02 | 2025-01-02 11:15:36 | 2025-01-02 | 2025-01-02 | Invoice | 265.00 | Normalfall, alle Daten praktisch gleich |
+| Rechnung `20242026` | 2025-06-06 | 2025-06-06 09:50:43 | 2025-06-30 | 2025-06-30 | Invoice | 46.50 | Validierung erst zum Monatsende |
+| Rechnung `20242081` | 2025-07-08 | 2025-07-08 09:03:30 | 2025-07-08 | **leer** | Invoice | 1'080.00 | Zum Exportzeitpunkt noch nicht validiert |
+| Rechnung `7024287` (Serie `LAT`) | 2025-07-29 | 2025-07-29 12:23:31 | 2025-08-13 | 2025-08-29 | Invoice | 1'231.30 | Latam-Extra-Freigabeschritt, groesster gemessener Verzug (31 Tage) |
+
+Volle 51-Feld-Zeile fuer Rechnung `20242081` (Beispiel des unvalidierten Falls) auf
+Anfrage reproduzierbar aus derselben CSV, `SourceLineId`
+`62f1ba25-f1ea-4e9a-b0eb-3569be0c159f`.
+
+### 10f. Offene Punkte
+
+- Andreas' Antwort auf die Entry-Date-Frage steht aus; bis dahin `LineRegistrationDate`
+  nicht als bestaetigtes Feld behandeln.
+- Ob und wodurch der Fuellgrad-Sprung von 21.1 % auf 98.2 % zustande kam (Santi hat das
+  Serverskript ersetzt? Sonderlauf?), ist nicht geklaert.
+- Wie in Abschnitt 8/9: die taegliche Server-Export-Version bei Santi und der laufende
+  Reimport in die App sind davon unabhaengig zu pruefen, dieser Nachtrag betrifft nur den
+  manuell zugesandten Vollexport 2025.
+
