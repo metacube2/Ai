@@ -39,6 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Uebergangsweise Lieferantenzuordnung Trafag Italia, siehe Models/SupplierMaterialOverride.cs.
+         Bewusst eingebettet statt als Datei daneben: so reist die Liste im DLL mit und der
+         Deploy-Nachweis ueber den DLL-Hash deckt sie ab. -->
+    <EmbeddedResource Include="Data\supplier_overrides_TRIT_2026-08-26.csv" />
     <Content Include="trafag_exporter.db" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
     <Content Include="trafag_exporter.db-wal" Condition="Exists('trafag_exporter.db-wal')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
     <Content Include="trafag_exporter.db-shm" Condition="Exists('trafag_exporter.db-shm')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />

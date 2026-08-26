@@ -1,6 +1,29 @@
 # Last Change
 
-Stand: 2026-08-25
+Stand: 2026-08-26
+
+## Italienische Lieferantenzuordnung uebergangsweise eingebaut 2026-08-26 (NICHT DEPLOYED)
+
+- **Anlass:** Paola Castagna hat am 2026-08-26 die 942 TR-IT-Artikel ohne Lieferant geprueft
+  zurueckgeschickt, den B1-Artikelstamm (`OITM.CardCode`) aber noch nicht gepflegt und hat
+  keinen DTW-Zugriff fuer eine Massenpflege. Ohne Ersatzquelle waere ihre Arbeit wirkungslos.
+- **Umgesetzt:** Tabelle `SupplierMaterialOverrides`, eingebettete Liste mit `941` Zeilen,
+  Anwendung in `Services/DataSources/HanaDataSourceAdapter.cs` vor der Konzernkosten-
+  Fortschreibung. Greift nur bei drei leeren Lieferantenfeldern und nur beim passenden TSC,
+  baut sich also von selbst ab, sobald Italien den Stamm pflegt.
+- **Tests:** `611/611` gruen (vorher `601`), `dotnet build -c Release` 0 Fehler.
+- **Wirkung gemessen** mit dem neuen read-only Werkzeug `.tmp_tools/CheckItalySupplierImpact`
+  gegen `Sales_All_2026-08-25 (1).xlsx`: von `19'179` TRIT-Zeilen sind `5'088` ohne Lieferant,
+  die Liste trifft `5'077`, es bleiben `11`. Davon `4'101` TR AG, `301` TR IT, `675` extern.
+- **Richtigstellung zur ersten Einschaetzung:** Die befuerchtete Margenverluste durch den
+  Waehrungs-Guard treffen nicht `4'101`, sondern nur `12` Zeilen. `4'089` der TR-AG-Zeilen
+  rechnen bereits heute ueber den Material-Fallback auf TR-AG-Konzernkosten und stehen bereits
+  auf `Kostenwaehrung abweichend`.
+- **Der eigentliche Gewinn:** `670` Zeilen mit rund `474'000` EUR Umsatz gelten heute als
+  konzernintern (`Interner Standardpreis`), obwohl der Lieferant ein Dritter ist (ITEC,
+  Senseca, Eletta Flow). Dazu `134` Zeilen, die heute gar keine Kostenbasis haben.
+- **Offen:** Deploy-Freigabe durch Ingo, danach ein TR-IT-Import ueber 2025 und 2026, damit die
+  Ergaenzung in den Bestandsdaten ankommt. Details: `docs/FINANCE_SUPPLIER.md` Abschnitt 8.
 
 ## Konzernkosten TR IT und TR IN produktiv nachgemessen 2026-08-25 16:15 (BELEGT)
 

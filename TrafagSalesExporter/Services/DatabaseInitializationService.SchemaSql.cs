@@ -57,6 +57,18 @@ CREATE TABLE GroupStandardCosts (
     RefreshedAtUtc TEXT NOT NULL
 );";
 
+    internal static string GetSupplierMaterialOverridesCreateSql() => @"
+CREATE TABLE SupplierMaterialOverrides (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Tsc TEXT NOT NULL,
+    MaterialKey TEXT NOT NULL,
+    SupplierNumber TEXT NOT NULL DEFAULT '',
+    SupplierName TEXT NOT NULL DEFAULT '',
+    SupplierCountry TEXT NOT NULL DEFAULT '',
+    Source TEXT NOT NULL DEFAULT '',
+    ImportedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetExportLogsCreateSql() => @"
 CREATE TABLE ExportLogs (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

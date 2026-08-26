@@ -27,6 +27,11 @@ public partial class DatabaseInitializationService : IDatabaseInitializationServ
         ConfigureSqlite(db);
         _schemaMaintenanceService.EnsureSchema(db);
         _seedService.SeedDefaults(db);
+
+        // Uebergangsweise Lieferantenzuordnung (Trafag Italia). Bewusst NACH SeedDefaults und
+        // idempotent: steht der gleiche Bestand schon in der Datenbank, wird nicht geschrieben.
+        await SupplierMaterialOverrideStore.SeedAsync(
+            db, SupplierMaterialOverrideStore.LoadEmbedded(DateTime.UtcNow));
     }
 
     private static void ConfigureSqlite(AppDbContext db)

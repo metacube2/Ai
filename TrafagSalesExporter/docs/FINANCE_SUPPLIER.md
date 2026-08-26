@@ -197,7 +197,73 @@ Abnahmeweg:
   Export-Query, nicht den Standort fragen.
 - ES und US: Quellfeld und Mapping bestimmen.
 - FR: ungefuellte Zeilen nach Quelle und Artikelstamm segmentieren.
-- Verbleibende TRIT-Zeilen nach Ursache segmentieren.
+- Verbleibende TRIT-Zeilen nach Ursache segmentieren. Der grosse Teil ist mit Abschnitt 8 geklaert; offen bleiben `11` Zeilen ohne Treffer in der Uebergangsliste.
+
+## 8. Italien: Uebergangsweise Lieferantenzuordnung (Stand 2026-08-26)
+
+### Warum es sie gibt
+
+Trafag Italia hat auf die Bitte vom 2026-07-31 geantwortet. Paola Castagna hat die 942
+Artikel ohne `OITM.CardCode` geprueft und den Lieferanten je Artikel geliefert. Ihre
+Rueckmeldung vom 2026-08-26 enthaelt aber eine ausdrueckliche Einschraenkung:
+
+> *"At the moment I have only updated the Excel file itself, not yet the item master in B1.
+> The vendors have not been maintained on OITM.CardCode yet ... I do not have access to mass
+> updates via DTW and will need to enter them manually one by one."*
+
+Der Import liest den Lieferanten ausschliesslich aus `OITM.CardCode`
+(`Services/HanaQueryService.cs`). Ohne Pflege im Artikelstamm bliebe die Antwort damit
+wirkungslos, obwohl die fachliche Arbeit gemacht ist. Bis Italien die Pflege nachgezogen hat,
+dient die Rueckmeldung deshalb als Ersatzquelle.
+
+### Wie sie funktioniert
+
+Tabelle `SupplierMaterialOverrides` je Standort und normalisierter Materialnummer, befuellt
+aus einer im DLL eingebetteten Liste (`Data/supplier_overrides_TRIT_2026-08-26.csv`, `941`
+Zeilen). Angewendet wird sie in `Services/DataSources/HanaDataSourceAdapter.cs`, direkt vor
+der Konzernkosten-Fortschreibung.
+
+Zwei Regeln sind hart abgesichert (`SupplierMaterialOverrideStoreTests`):
+
+1. **Es wird nie ueberschrieben.** Der Ersatzwert greift nur, wenn alle drei Lieferantenfelder
+   leer sind. Sobald Italien einen Artikel im Stamm pflegt, gewinnt automatisch wieder die
+   Quelle und der Eintrag wird wirkungslos. Die Loesung baut sich also von selbst ab.
+2. **Eine Zuordnung wirkt nie ueber den Standort hinaus**, auch wenn dieselbe Materialnummer
+   bei einem anderen TSC vorkommt.
+
+Von den 942 Zeilen der Rueckmeldung sind `941` verwertbar. Die eine verworfene Zeile ist eine
+Bonusgutschrift ohne Artikelnummer (`PREMIO PER RAGGIUNGIMENTO FATTURATO ANNO 2025`), die im
+Artikelstamm gar nicht existieren kann. Ebenfalls nachgetragen: das bei
+`OFFICINE MECCANICHE M.A.M. S.R.L.` fehlende Lieferantenland `IT`, von Paola am 2026-08-26
+bestaetigt.
+
+### Gemessene Wirkung, Produktivexport `Sales_All_2026-08-25 (1).xlsx`
+
+Werkzeug `.tmp_tools/CheckItalySupplierImpact`, read-only. Von `19'179` TRIT-Zeilen sind
+`5'088` ohne jeden Lieferanten; die Liste trifft davon `5'077`, es bleiben `11` offen.
+
+| Wird zu | Zeilen | Bisherige Kostenquelle | Wirkung |
+| --- | ---: | --- | --- |
+| TR AG | 4'089 | `Konzernkosten TR AG (MBEW-STPRS)` | **keine** — der Material-Fallback erkennt sie heute schon, sie stehen bereits auf `Kostenwaehrung abweichend` |
+| TR AG | 12 | `Standardkosten der lokalen Gesellschaft` | verlieren die Marge, weil CHF-Kosten gegen EUR-Umsatz stehen |
+| TR IT | 301 | `Standardkosten der lokalen Gesellschaft` | **Verbesserung**, Kosten in EUR, kein Waehrungskonflikt; darunter `134` Zeilen mit heute `Standardpreis fehlt` |
+| extern | 675 | `Interner Standardpreis` (670) | **Korrektur** — diese Zeilen gelten heute faelschlich als konzernintern, obwohl ITEC, Senseca und Eletta Flow Fremdlieferanten sind |
+
+**Wichtige Richtigstellung zur ersten Einschaetzung.** Die Sorge, die `4'101` Trafag-AG-Zeilen
+wuerden durch den Waehrungs-Guard ihre Marge verlieren, hat sich nicht bestaetigt: `4'089`
+davon rechnen bereits heute auf TR-AG-Konzernkosten und tragen bereits den Status
+`Kostenwaehrung abweichend`. Die Zuordnung macht diese Klassifikation nur explizit statt
+abgeleitet. Betroffen sind lediglich `12` Zeilen.
+
+Der eigentliche Gewinn liegt woanders: `670` Zeilen mit rund `474'000` EUR Umsatz werden heute
+als konzernintern behandelt, obwohl der Lieferant ein Dritter ist.
+
+### Wann sie wieder verschwindet
+
+Sobald Paola den Artikelstamm vollstaendig gepflegt hat. Pruefkriterium: Das Ereignisprotokoll
+meldet nach einem TR-IT-Import `Lieferant aus Uebergangsliste ergaenzt` mit
+`Zeilen ergaenzt=0`. Dann sind Tabelle, eingebettete Liste und der Anwendungsschritt
+ersatzlos entfernbar.
 
 ## Werkzeuge
 
@@ -205,6 +271,7 @@ Abnahmeweg:
 - `.tmp_tools/RefreshChPlantMaterialMaster` — SAP-Bestand validieren; ohne `--apply`
   read-only, mit `--apply` atomarer Cache-Backfill
 - `.tmp_tools/MeasureAndreasLocalFallback` — Wirkung der lokalen Standardkostenregel
+- `.tmp_tools/CheckItalySupplierImpact` — read-only Wirkung der italienischen Uebergangsliste
 
 Berichte: `docs/Supplier_Laenderstatus_CH_AT_Pruefung_2026-08-11.docx` und
 `docs/Supplier_Laenderstatus_CH_AT_Pruefung_mit_Fallback_2026-08-11.docx`.

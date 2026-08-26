@@ -58,6 +58,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureFinancialJournalEntriesTable(db);
         EnsureGroupStandardCostsTable(db);
         EnsureGroupMaterialMastersTable(db);
+        EnsureSupplierMaterialOverridesTable(db);
         EnsureCustomerMarketSegmentsTable(db);
         EnsureMarketSurveyEntriesTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
@@ -692,6 +693,29 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
         using var indexCommand = conn.CreateCommand();
         indexCommand.CommandText =
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupStandardCosts_Material_Area ON GroupStandardCosts (MaterialKey, ValuationArea);";
+        indexCommand.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Uebergangsweise Lieferantenzuordnung je Standort und Material, siehe
+    /// <see cref="Models.SupplierMaterialOverride"/>. Additiv wie die uebrigen Nachschlagetabellen.
+    /// </summary>
+    private static void EnsureSupplierMaterialOverridesTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetSupplierMaterialOverridesCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        using var indexCommand = conn.CreateCommand();
+        indexCommand.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_SupplierMaterialOverrides_Tsc_Material ON SupplierMaterialOverrides (Tsc, MaterialKey);";
         indexCommand.ExecuteNonQuery();
     }
 

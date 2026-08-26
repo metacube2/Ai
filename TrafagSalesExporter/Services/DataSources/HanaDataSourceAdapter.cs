@@ -56,9 +56,33 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
             : await _hanaService.GetSalesRecordsAsync(
                 exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter);
 
+        await ApplySupplierOverridesAsync(db, site, records);
         await PersistB1GroupStandardCostsAsync(db, site, records);
 
         return new DataSourceFetchResult { Records = records };
+    }
+
+    /// <summary>
+    /// Fuellt Lieferantenfelder, die der B1-Artikelstamm noch nicht fuehrt, aus der
+    /// uebergangsweisen Zuordnung (siehe <see cref="SupplierMaterialOverrideStore"/>).
+    /// Laeuft VOR der Konzernkosten-Fortschreibung, damit beide Schritte dieselbe Sicht auf die
+    /// Zeilen haben. Bleibt wirkungslos, sobald der Artikelstamm gepflegt ist.
+    /// </summary>
+    private async Task ApplySupplierOverridesAsync(
+        AppDbContext db,
+        Site site,
+        IReadOnlyCollection<SalesRecord> records)
+    {
+        var result = await SupplierMaterialOverrideStore.ApplyAsync(db, site.TSC, records);
+        if (result.RowsFilled == 0)
+            return;
+
+        await _appEventLogService.WriteAsync(
+            "Export",
+            "Lieferant aus Uebergangsliste ergaenzt",
+            siteId: site.Id,
+            land: site.Land,
+            details: $"{SupplierMaterialOverrideStore.Describe(result)} | Quelle={SupplierMaterialOverrideStore.SourceLabel}");
     }
 
     private async Task PersistB1GroupStandardCostsAsync(
