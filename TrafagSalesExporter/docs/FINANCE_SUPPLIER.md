@@ -265,6 +265,37 @@ meldet nach einem TR-IT-Import `Lieferant aus Uebergangsliste ergaenzt` mit
 `Zeilen ergaenzt=0`. Dann sind Tabelle, eingebettete Liste und der Anwendungsschritt
 ersatzlos entfernbar.
 
+### Das Abbaukriterium war schon am Deploytag erfuellt
+
+Deployed am 2026-08-26 14:08, Funktionscommit `bc46286`. Der Nachweis unmittelbar danach mit
+`.tmp_tools/CheckSupplierOverrides` (read-only gegen die Produktivdatenbank) zeigt: die Tabelle
+ist angelegt und mit `941` Zeilen befuellt, aber **sie kann nicht mehr greifen**.
+
+| Messung auf der Produktivdatenbank, 2026-08-26 nach dem Deploy | Wert |
+| --- | ---: |
+| TRIT-Zeilen in `CentralSalesRecords` | 19'968 |
+| davon ohne jeden Lieferanten | **12** |
+| Umsatzzeilen zu den 941 Materialien der Liste | 5'739 |
+| davon ohne Lieferanten | **0** |
+| davon mit exakt dem Lieferanten aus Paolas Liste | **5'739** |
+
+Zwischen dem Export vom 2026-08-25 16:15 (`5'088` TRIT-Zeilen ohne Lieferant) und dem Import
+vom 2026-08-26 12:10 ist die Luecke verschwunden. Alle `941` Materialien fuehren jetzt genau
+den Lieferanten, den Paola gemeldet hat, und der einzige Weg, auf dem dieser Wert in die
+Umsatzzeile kommt, ist `OITM.CardCode`. **Der B1-Artikelstamm ist also doch gepflegt worden**,
+entgegen der Aussage in Paolas Mail vom selben Vormittag. Die Trefferquote fuer Italien steigt
+damit von rund `71 %` auf `99.94 %`.
+
+Konsequenz: Die Uebergangsloesung ist wirkungslos, aber auch harmlos — sie fuellt ausschliesslich
+leere Felder und es gibt keine mehr. Sie bleibt vorerst liegen und wird beim naechsten
+ohnehin faelligen Deploy ersatzlos entfernt. Ein eigener Deploy nur zum Ausbau lohnt nicht.
+
+**Neue kleine Luecke, die noch offen ist.** Von den `12` verbliebenen Zeilen sind `5` Dienst-
+und Bonusbelege ohne Artikelnummer (Weihnachtspraemie, Broschuerenaenderung, `PREMIO PER
+RAGGIUNGIMENTO FATTURATO`, eine Periodenabrechnung, ein Entwicklungsanteil fuer BU MAG) — dort
+gibt es nichts zu pflegen. Die anderen `5` sind echte Artikel, die in Paolas Liste fehlten:
+`54290`, `GC11887`, `GC11902`, `GC11903`, `GC11905`. Die gehoeren bei Gelegenheit nachgemeldet.
+
 ## Werkzeuge
 
 - `.tmp_tools/CompareSupplierFallback` — Alt/Neu-Differenz read-only messen
@@ -272,6 +303,7 @@ ersatzlos entfernbar.
   read-only, mit `--apply` atomarer Cache-Backfill
 - `.tmp_tools/MeasureAndreasLocalFallback` — Wirkung der lokalen Standardkostenregel
 - `.tmp_tools/CheckItalySupplierImpact` — read-only Wirkung der italienischen Uebergangsliste
+- `.tmp_tools/CheckSupplierOverrides` — read-only Nachweis der Uebergangsliste auf der Produktivdatenbank
 
 Berichte: `docs/Supplier_Laenderstatus_CH_AT_Pruefung_2026-08-11.docx` und
 `docs/Supplier_Laenderstatus_CH_AT_Pruefung_mit_Fallback_2026-08-11.docx`.

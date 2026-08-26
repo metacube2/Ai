@@ -31,6 +31,20 @@ public sealed class FinanceRuleEngine
         if (forceYear?.Year is > 0)
             return new DateTime(forceYear.Year.Value, 12, 31);
 
+        // Fachentscheid Andreas Stoller vom 2026-08-26 (ISS-004.2): fuer Spanien zaehlt das
+        // Rechnungsdatum. Dort ist `PostingDate` nur zu 21 % gefuellt, `InvoiceDate` zu 97 %.
+        // Gemessen am 2026-08-26 aendert die Umstellung bei keiner einzigen der 100'558
+        // produktiven Zeilen das Jahr; sie schuetzt aber davor, dass ein spaeter nachgelieferter
+        // Buchungsstapel Umsatz ueber die Jahresgrenze verschiebt.
+        // Alle anderen Standorte bleiben ausdruecklich beim Buchungsdatum.
+        var useInvoiceDate = _rules.Any(rule =>
+            IsRuleInScope(rule, countryKey) &&
+            rule.RuleType.Equals(FinanceRuleTypes.UseInvoiceDate, StringComparison.OrdinalIgnoreCase) &&
+            RuleMatches(rule, record));
+
+        if (useInvoiceDate)
+            return record.InvoiceDate ?? record.PostingDate ?? record.ExtractionDate;
+
         return record.PostingDate ?? record.InvoiceDate ?? record.ExtractionDate;
     }
 
@@ -93,6 +107,17 @@ public sealed class FinanceRuleEngine
     public static IReadOnlyList<FinanceRule> CreateDefaultRules()
         =>
         [
+            // ISS-004.2, Fachentscheid Andreas Stoller vom 2026-08-26: Spanien ordnet die Periode
+            // ueber das Rechnungsdatum zu, nicht ueber das Buchungsdatum. NUR Spanien; alle
+            // anderen Standorte bleiben unveraendert beim Buchungsdatum.
+            new FinanceRule
+            {
+                ScopeKey = "ES",
+                RuleType = FinanceRuleTypes.UseInvoiceDate,
+                MatchType = FinanceRuleMatchTypes.Always,
+                Notes = "ES Periode ueber Rechnungsdatum (Entscheid Andreas 2026-08-26, ISS-004.2)",
+                SortOrder = 10
+            },
             // DE finance year follows the invoice date (Fakturierungsdatum); no forced year.
             // (Removed the former "DE Alphaplan Jahresfile 2025" ForceYear rule on 2026-06-29.)
             new FinanceRule

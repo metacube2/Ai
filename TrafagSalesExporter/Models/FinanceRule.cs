@@ -22,12 +22,21 @@ public static class FinanceRuleTypes
     public const string ForceYear = "ForceYear";
     public const string DeduplicateBlankSupplierCountry = "DeduplicateBlankSupplierCountry";
 
+    /// <summary>
+    /// Periodenzuordnung ueber das Rechnungsdatum statt ueber das Buchungsdatum. Fachentscheid
+    /// Andreas Stoller vom 2026-08-26 zu ISS-004.2, ausdruecklich NUR fuer Spanien: dort ist
+    /// `PostingDate` erst zu 21 % gefuellt, `InvoiceDate` zu 97 %. Bewusst als Regel und nicht
+    /// hart im Code, damit der Geltungsbereich ohne Deploy aenderbar bleibt.
+    /// </summary>
+    public const string UseInvoiceDate = "UseInvoiceDate";
+
     public static readonly string[] All =
     [
         Exclude,
         NegateAmount,
         ForceYear,
-        DeduplicateBlankSupplierCountry
+        DeduplicateBlankSupplierCountry,
+        UseInvoiceDate
     ];
 }
 

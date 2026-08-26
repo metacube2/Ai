@@ -438,3 +438,65 @@ da, die Hauptdatei blieb in Laenge und Schreibzeit unveraendert.
 dem Deploy kein Spanien-Import lief; erst danach traegt die Spalte Werte. Weiterhin offen
 sind Andreas' Antwort auf Abschnitt 10b und der Blocker aus ISS-004.2: Santi Gomez muss die
 35-Tage-Version des Exportskripts auf dem spanischen Server ersetzen.
+
+## 12. Nachtrag 2026-08-26: ISS-004.2 ist entschieden — Spanien rechnet auf dem Rechnungsdatum
+
+### Der Entscheid
+
+Andreas Stoller hat die seit dem 2026-08-20 offene Frage beantwortet: Mit dem Buchungsdatum ist
+das **Rechnungsdatum** gemeint. Damit ist die ganze Entry-Date-Konstruktion hinfaellig.
+
+### Was die Produktivdaten dazu sagen
+
+Read-only gemessen am 2026-08-26 mit `.tmp_tools/CheckSpainDates`:
+
+| Feld | gefuellt von 7'155 TRES-Zeilen |
+| --- | ---: |
+| `InvoiceDate` | 6'918 (96,7 %) |
+| `PostingDate` | 1'523 (21,3 %) |
+| `LineRegistrationDate` | 7'155 (100 %) |
+
+Wo beide Daten vorliegen, weichen sie in `1'322` von `1'523` Faellen am **Tag** ab, aber in
+**null** Faellen im **Jahr**. Die Jahresverteilung ist unter beiden Regeln identisch:
+2025 `4'315` Zeilen, 2026 `2'840` Zeilen.
+
+Zur Sicherheit ebenfalls global gemessen: von `100'558` produktiven Zeilen ueber alle neun
+Standorte wechselt unter der neuen Regel **keine einzige** das Jahr. Die Umstellung ist damit
+heute wirkungsneutral. Ihr Wert liegt in der Zukunft: sobald Santi die 35-Tage-Version
+serverseitig tauscht und Spanien Buchungsdaten mit mehreren Wochen Verzug nachliefert, koennte
+ein Buchungsstapel Umsatz ueber die Jahresgrenze schieben. Genau das verhindert der Entscheid.
+
+### Umsetzung
+
+Neue Regelart `UseInvoiceDate` in `FinanceRuleTypes`, ausgewertet in
+`FinanceRuleEngine.ResolveFinanceDate`. Als Standardregel mit `ScopeKey = "ES"` und
+`MatchType = Always` angelegt.
+
+Bewusst als **Regel** und nicht hart im Code: Der Geltungsbereich ist damit im Admin-Bereich
+ohne Deploy aenderbar, und die Aenderung bleibt sichtbar statt in einer Bedingung zu verschwinden.
+
+Drei Punkte, die hart abgesichert sind (`FinanceRuleEngineTests`):
+
+1. **Nur Spanien.** Ein eigener Test prueft fuer CH, AT, DE, IT, IN, FR, UK und US, dass eine
+   Zeile mit Buchung am 02.01.2026 und Faktura am 31.12.2025 weiterhin auf dem Buchungsdatum
+   landet. Das war Ingos ausdrueckliche Anweisung.
+2. **Rueckfall bleibt.** Ohne Rechnungsdatum gilt fuer Spanien wieder das Buchungsdatum, ohne
+   beides das Extraktionsdatum. Die rund `237` spanischen Zeilen ohne jedes Datum aendern ihr
+   Verhalten nicht.
+3. **`ForceYear` bleibt staerker.** Ein ausdruecklich erzwungenes Jahr schlaegt die neue Regel.
+
+Die rohe Spalte `posting date` im Sales_All bleibt unveraendert das Buchungsdatum. Geaendert hat
+sich ausschliesslich `Finance | Date` und die daraus abgeleitete Jahresspalte.
+
+### Folge fuer LineRegistrationDate
+
+Die am 2026-08-25 additiv angehaengte Spalte `Line Registration Date` (Sales_All Spalte 52) war
+die Antwort auf die unbeantwortete Entry-Date-Frage. Mit dem Entscheid ist sie **gegenstandslos**.
+Sie ist harmlos und bleibt vorerst stehen; sie kann bei Gelegenheit ersatzlos entfernt werden.
+
+### Entscheid zur Rohspalte
+
+Ingo hat am 2026-08-26 festgelegt, dass die Spalte `posting date` im Sales_All unveraendert das
+Buchungsdatum aus der Quelle bleibt. Sie wird weder mit dem Rechnungsdatum ueberschrieben noch
+entfernt. Begruendung: So bleibt sichtbar, was Sage geliefert hat und was daraus gerechnet wird,
+und die echten Buchungsdaten, die nach Santis Dateitausch kommen, bleiben verwertbar.

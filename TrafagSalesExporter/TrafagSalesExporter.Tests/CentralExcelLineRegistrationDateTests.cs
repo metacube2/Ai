@@ -71,9 +71,14 @@ public class CentralExcelLineRegistrationDateTests
             // Nur das Datum, ohne Uhrzeit, wie bei den drei bestehenden Datumsspalten.
             Assert.Equal("29.07.2025", sales.Cell(2, LineRegistrationDateColumn).GetString());
 
-            // Die Finance-Spalten bleiben an PostingDate haengen, nicht am Registrierdatum.
+            // Die rohe Spalte `posting date` bleibt unveraendert das Buchungsdatum.
             Assert.Equal("30.07.2025", sales.Cell(2, 38).GetString());
-            Assert.Equal("30.07.2025", sales.Cell(2, 45).GetString());
+            // `Finance | Date` folgt fuer Spanien seit dem 2026-08-26 dem RECHNUNGSDATUM
+            // (Fachentscheid Andreas Stoller zu ISS-004.2, Regelart UseInvoiceDate, ScopeKey ES).
+            // Entscheidend bleibt: NICHT dem Registrierdatum - das steht hier zufaellig auf
+            // demselben Tag, ist aber nicht die Quelle. Der Beweis dafuer ist der zweite Test,
+            // der das Registrierdatum bewusst auf ein anderes Jahr legt.
+            Assert.Equal("29.07.2025", sales.Cell(2, 45).GetString());
             Assert.Equal("2025", sales.Cell(2, 43).GetString());
         }
         finally

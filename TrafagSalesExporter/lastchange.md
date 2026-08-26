@@ -2,7 +2,55 @@
 
 Stand: 2026-08-26
 
-## Italienische Lieferantenzuordnung uebergangsweise eingebaut 2026-08-26 (NICHT DEPLOYED)
+## Spanien rechnet die Periode auf dem Rechnungsdatum 2026-08-26 (NICHT DEPLOYED)
+
+- **Entscheid:** Andreas Stoller hat ISS-004.2 beantwortet, mit dem Buchungsdatum ist das
+  Rechnungsdatum gemeint. Ingo hat ausdruecklich angewiesen: **nur Spanien**, alle anderen
+  Standorte bleiben beim Buchungsdatum.
+- **Umgesetzt:** Neue Regelart `UseInvoiceDate` in `FinanceRuleTypes`, ausgewertet in
+  `FinanceRuleEngine.ResolveFinanceDate`, als Standardregel mit `ScopeKey = "ES"` angelegt.
+  Bewusst als Regel und nicht hart im Code, damit der Geltungsbereich ohne Deploy aenderbar ist.
+- **Tests:** `624/624` gruen (vorher `611`), 13 neue. Darunter ein Test ueber CH, AT, DE, IT, IN,
+  FR, UK und US, der die Beschraenkung auf Spanien absichert, und je einer fuer den Rueckfall
+  ohne Rechnungsdatum und fuer den Vorrang von `ForceYear`.
+- **Wirkung vorab gemessen** (`.tmp_tools/CheckSpainDates`, read-only): Von `100'558` produktiven
+  Zeilen ueber alle neun Standorte wechselt **keine einzige** das Jahr. Fuer Spanien weichen
+  Buchungs- und Rechnungsdatum in `1'322` von `1'523` Faellen am Tag ab, aber in `0` Faellen im
+  Jahr; die Jahresverteilung bleibt 2025 `4'315` und 2026 `2'840`.
+- **Warum trotzdem sinnvoll:** Sobald Santi die 35-Tage-Version tauscht und Spanien Buchungsdaten
+  mit Wochen Verzug nachliefert, koennte ein Buchungsstapel Umsatz ueber die Jahresgrenze
+  schieben. Der Entscheid verhindert das.
+- **Ein bestehender Test wurde bewusst angepasst:** `CentralExcelLineRegistrationDateTests`
+  erwartete fuer eine spanische Zeile in `Finance | Date` das Buchungsdatum. Die rohe Spalte
+  `posting date` bleibt unveraendert, nur `Finance | Date` folgt jetzt dem Rechnungsdatum.
+- **Folge:** Die am 2026-08-25 angehaengte Spalte `Line Registration Date` ist gegenstandslos,
+  bleibt aber harmlos stehen. Details: `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 12.
+
+## Italienische Lieferantenzuordnung deployed und beim Nachweis als bereits ueberholt erkannt 2026-08-26 14:08
+
+- **Deployed** um 14:08, Funktionscommit `bc46286`, `611/611` Tests gruen. Sicherung
+  `trafag_exporter.db.before-supplier-overrides-20260826-135406.bak` (`354'754'560` Bytes,
+  seitenweiser Weg wegen `5'207'712` Bytes offener WAL-Daten, `831` s). `BiDashboard.dll`
+  `4'745'728` Bytes, SHA256 `582183C7497134B635E42CCA9B029C0C3D22567C4052CA30580867D0C3B3F1E9`,
+  lokal und Server bitgleich. Ziel: `0` neu, `7` geaendert, `1'689` unveraendert, `0`
+  verschwunden. Alle vier Wirktokens in der DLL, HTTPS `200` fuer Startseite und
+  `/management-cockpit`. Der eine Alarm betraf `trafag_exporter.db`: Laenge unveraendert
+  (`354'750'464` Bytes), nur die Schreibzeit — das additive Anlegen der Tabelle beim Start.
+- **NACHWEIS ZEIGT: die Loesung kommt zu spaet.** Read-only gegen die Produktivdatenbank
+  (`.tmp_tools/CheckSupplierOverrides`): Tabelle vorhanden, `941` Zeilen, eindeutiger Index.
+  Aber von `19'968` TRIT-Zeilen sind nur noch `12` ohne Lieferant, und die `5'739` Umsatzzeilen
+  zu den `941` Materialien der Liste tragen **alle** einen Lieferanten, in jedem Fall exakt den
+  von Paola gemeldeten. Zwischen dem Export vom 25.08. 16:15 und dem Import vom 26.08. 12:10 ist
+  die Luecke verschwunden. Der einzige Weg dorthin ist `OITM.CardCode`, also **wurde der
+  B1-Artikelstamm doch gepflegt** — entgegen Paolas Mail vom selben Vormittag. Trefferquote
+  Italien von rund `71 %` auf `99.94 %`.
+- **Konsequenz:** Die Uebergangsloesung ist wirkungslos, aber harmlos (sie fuellt nur leere
+  Felder). Sie bleibt liegen und wird beim naechsten ohnehin faelligen Deploy ersatzlos entfernt.
+- **Neu offen:** `5` echte Artikel fehlten in Paolas Liste und haben weiterhin keinen Lieferanten:
+  `54290`, `GC11887`, `GC11902`, `GC11903`, `GC11905`. Die uebrigen `7` Zeilen sind Dienst- und
+  Bonusbelege ohne Artikelnummer, dort gibt es nichts zu pflegen.
+
+## Bau der italienischen Lieferantenzuordnung 2026-08-26 (Hintergrund)
 
 - **Anlass:** Paola Castagna hat am 2026-08-26 die 942 TR-IT-Artikel ohne Lieferant geprueft
   zurueckgeschickt, den B1-Artikelstamm (`OITM.CardCode`) aber noch nicht gepflegt und hat
