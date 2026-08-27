@@ -12,7 +12,7 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
 11	Heute	SAP ZZPRDAT	PM-03	ZZPRDAT Umsetzung	Ingo	Hoch	Läuft		BAdI WORKORDER_UPDATE neu aus der Anforderung bauen; Altcode ist auskommentiert und keine Referenz
 12	Heute	SAP ZZPRDAT	PM-03	ZZPRDAT Rückfragen	Ingo	Hoch	Offen		Trigger an Lucas Castro / Florian Wächter, Quellfeld GLTRP und Herkunft seines Auszugs an Marco Di Menco
 13	Umsetzung	Finance DE/ES	ISS-003.3	DE/ES ohne Lieferantenfelder	Ingo	Mittel	Offen		Zuerst eigene Export-SQL prüfen, erst danach den Standort fragen
-14	Heute	Finance Export	ISS-013	Sales Type und Sachnummer im Export	App	Mittel	Umgesetzt, nicht deployed		Beide Felder stehen additiv am Ende von Sales_All und im Nachweisblatt Gruppenmarge Details, Bedeutung im Hilfeblatt beschrieben. Nach dem Deploy die Indien-Quote gegenprüfen
+14	Nur terminieren	Finance Export	ISS-013	Sales Type und Sachnummer im Export	App	Mittel	Erledigt		Produktiv seit 27.08.2026 15:28. Beim nächsten Export die Indien-Quote im Excel gegen die App gegenprüfen
 15	Umsetzung	Finance CH/AT	ISS-006	CH/AT Journal, SAP-Set aktivieren	SAP / Ingo	Mittel	Offen		FinanzJournalSet aktivieren, danach $metadata prüfen
 16	Umsetzung	Einkauf	PM-04	Einkauf Restpunkte SAP	Ingo	Mittel	Offen		D1/D5-Texte pflegen, SEGW-Key auf DISPO_KZ + DISPO korrigieren
 17	Umsetzung	Marktsegmente	-	Sichtprüfläufe produktiv nachholen	Ingo	Mittel	Offen		3 Deploys angemeldet sichtprüfen: Segmente, Umfrage, Jahresfilter

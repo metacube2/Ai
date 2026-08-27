@@ -349,7 +349,7 @@ Reporting-Marge im Dashboard.
 | --- | --- |
 | Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
 | **Neu am 2026-08-27:** Bleibt Stufe 4 der Kaskade, also der Abgleich gegen `MARC` Werk 1100, bestehen? Andreas hat entschieden, dass ohne Lieferant die lokalen Standardkosten gelten (Abschnitt 11, B1). Heute setzt ein MARC-Treffer stattdessen `Intern / TR_AG`; betroffen sind `10'817` von `22'950` Kandidatenzeilen. Gehoert zusammen mit der Frage darueber entschieden, weil beide am selben Hebel ziehen | Andreas |
-| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend`. **Am 2026-08-27 umgesetzt, noch nicht deployed:** Kostenbasis wird mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
+| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend`. **Am 2026-08-27 umgesetzt und um 15:28 produktiv deployed:** Kostenbasis wird mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
@@ -591,7 +591,7 @@ sechs Entscheide bei Finance gefuehrt.
 
 ### Umsetzung des Waehrungsteils am 2026-08-27
 
-B5 und B6 sind umgesetzt, `630/630` Tests gruen. **Noch nicht deployed**, der Produktivstand
+B5 und B6 sind umgesetzt und am 2026-08-27 um 15:28 produktiv deployed. Der Produktivstand
 rechnet bis zur Freigabe unveraendert weiter.
 
 **1. Umrechnen ist die Regel, nicht mehr die Ausnahme.** Der Schalter
@@ -641,6 +641,11 @@ Lokalwaehrungen. Das faellt heute nicht auf, weil kein Quellsystem den fix/varia
 liefert und der Wert produktiv leer bleibt. Sobald eine Quelle ihn liefert, gilt hier
 dieselbe CHF-Regel wie fuer die Marge.
 
+
+**Produktiv deployed am 2026-08-27 15:28** (Commit `686e1e1`, `635/635` Release-Tests gruen).
+Der Waehrungsschalter wurde dabei einmalig nachgezogen und steht produktiv auf `Convert`,
+die Markerspalte `GroupMarginCostCurrencyDecision20260827Applied` ist gesetzt. Read-only
+gegengeprueft nach dem ersten Start. Der angemeldete Sichtprueflauf im Cockpit steht noch aus.
 ### Nebenbefund zur Reihenfolge im Flussdiagramm
 
 B4 beschreibt keine Codeaenderung, sondern eine Korrektur der Darstellung. Der Sales Type
@@ -651,7 +656,7 @@ Umgekehrt fehlt der Sales Type im Gesamtexport, gefuehrt als `ISS-013`. Ohne die
 kann Andreas die indische Steuerung im Vergleichs-Excel nicht nachvollziehen. `ISS-013`
 gehoert deshalb **vor** die Vergleichsrunde, nicht danach.
 
-**Am 2026-08-27 umgesetzt, noch nicht deployed.** `Sales Type` und `Trafag Sachnummer`
+**Am 2026-08-27 umgesetzt und um 15:28 produktiv deployed.** `Sales Type` und `Trafag Sachnummer`
 stehen jetzt additiv am Ende des zentralen `Sales_All` (Spalten `53` und `54`) und im
 Nachweisblatt `Gruppenmarge Details` (Spalten `27` und `28`), beide im Hilfeblatt fachlich
 beschrieben. Bewusst der Rohwert aus dem Artikelstamm und keine Deutung: leer heisst nicht

@@ -2,7 +2,7 @@
 
 Stand: 2026-08-27
 
-## Sales Type geht vor den Lieferantenfeldern 2026-08-27 (NICHT DEPLOYED)
+## Sales Type geht vor den Lieferantenfeldern 2026-08-27 (DEPLOYED 15:28)
 
 - **Entscheid Ingo:** Wo die Quelle einen Sales Type fuehrt, entscheidet dieser — auch gegen
   gepflegte Lieferantenfelder. Sind die Felder leer, entschied der Sales Type ohnehin schon;
@@ -27,7 +27,7 @@ Stand: 2026-08-27
 - Details: `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 1,
   `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Nachtrag zu 3b.
 
-## Einkaufsdashboard: Deckelungen weg, Balken ausgerichtet, Kacheln erklaert 2026-08-27 (NICHT DEPLOYED)
+## Einkaufsdashboard: Deckelungen weg, Balken ausgerichtet, Kacheln erklaert 2026-08-27 (DEPLOYED 15:28)
 
 - **Anlass:** Ingos Sichtpruefung und die Sitzung mit Marco. Drei Auftraege: Beschriftungen
   ausfuehrlicher, Lieferantenliste nicht mehr abschneiden, versetzte Balken.
@@ -52,7 +52,7 @@ Stand: 2026-08-27
   produktive Sichtnachweis (Chrome-Erweiterung war nicht verbunden).
 - Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtraege vom 2026-08-27.
 
-## ISS-013: Sales Type und Trafag-Sachnummer im Export 2026-08-27 (NOCH NICHT DEPLOYED)
+## ISS-013: Sales Type und Trafag-Sachnummer im Export 2026-08-27 (DEPLOYED 15:28)
 
 - **Anlass:** Ohne diese beiden Felder kann Andreas im Vergleichs-Excel nicht sehen, warum eine
   indische Zeile so gerechnet wird, wie sie gerechnet wird. Die Klassifikation haengt an ihnen,
@@ -74,7 +74,7 @@ Stand: 2026-08-27
   Guardrail-Test fuer die Spaltenpositionen ist mitgezogen.
 - **Kein Deploy.** Geht zusammen mit dem Waehrungsbeschluss B5/B6, sobald Ingo freigibt.
 
-## Waehrungsbeschluss B5/B6 umgesetzt 2026-08-27 (NOCH NICHT DEPLOYED)
+## Waehrungsbeschluss B5/B6 umgesetzt 2026-08-27 (DEPLOYED 15:28)
 
 - **Anlass:** Ingo gibt den Waehrungsteil der Sitzung mit Andreas zur Umsetzung frei. Alles
   Uebrige aus Abschnitt 11 bleibt liegen, weil die drei Abweichungen noch bei Andreas sind.

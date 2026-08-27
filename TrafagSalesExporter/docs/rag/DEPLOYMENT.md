@@ -44,6 +44,32 @@ Stand: 2026-08-25
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-08-27 15:28, Sales Type vor
+  Lieferantenfeldern, Waehrungsbeschluss B5/B6, ISS-013, Einkaufsdashboard**, Funktionscommit
+  `686e1e1`, `635/635` Tests gruen (Release-Lauf vor dem Publish). Neue Sicherung
+  `trafag_exporter.db.before-salestype-waehrung-einkauf-20260827-152748.bak` als gepruefte
+  Blockkopie. Hinweis: das Arbeitsverzeichnis war nicht sauber (Branch
+  `feature/supplier-overrides-trit`, dazu Bestandsaenderungen aus fruheren Sitzungen).
+  `BiDashboard.dll` `27.08.2026 15:26:12`, `4'784'640` Bytes, SHA256
+  `453A7CB8476A7721EBD192F41ADEC2495FC909E1A25649574BE7BF64FDF8FFB5`; lokaler Release-Build
+  und Server bitgleich. `app_offline.htm` gesetzt und danach auf `app_offline.htm.disabled`
+  umbenannt. Ziel: `0` neu, `5` geaendert, `1'734` unveraendert, `0` verschwunden.
+  HTTPS `200`: Startseite (`71'408` Bytes), `/management-cockpit` (`72'299` Bytes),
+  `/einkauf` (`101'251` Bytes). Wirknachweis in der DLL:
+  `GroupMarginCostCurrencyDecision20260827Applied`, `TAGESKURS`, `Konzernmarge in CHF`,
+  `Trafag Sachnummer`, `Bestellwert im Zeitraum`; nicht mehr enthalten
+  `Kosten mit Jahreskurs in Verkaufswaehrung umrechnen`.
+  **Schemaaenderung und einmalige Datenmigration produktiv nachgemessen** mit
+  `.tmp_tools/SqlQ` (ReadOnly) nach dem ersten Start: `ExportSettings` traegt die neue
+  Markerspalte `GroupMarginCostCurrencyDecision20260827Applied = 1`, und
+  `GroupMarginCostCurrencyMode` steht jetzt auf `Convert` statt `Mask`. Der
+  `SupplierFallbackMode` blieb erwartungsgemaess auf `ChPlantMaster`.
+  Werkzeug: `.tmp_tools/DeployAugust27`.
+  **Noch offen:** der angemeldete Sichtprueflauf. Die HTTP-`200` belegen Erreichbarkeit, nicht
+  die Anzeige hinter dem Finance-Unlock. Anzusehen sind die Waehrungsbalken im Einkauf
+  (starten sie jetzt an derselben Kante), die vollstaendige Lieferantenkaskade, und im
+  Cockpit die Konzernmarge in CHF samt der `32` bisher maskierten Zeilen.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-08-25 15:21, Konzern-Standardkosten
   TR IT und TR IN aus B1 StockPrice**, Funktionscommit `b83ee84`, `601/601` Release-Tests
   gruen. Neue Sicherung
