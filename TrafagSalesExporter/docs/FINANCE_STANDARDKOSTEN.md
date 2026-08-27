@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-08-25
+Stand: 2026-08-27
 
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
@@ -321,6 +321,7 @@ Reporting-Marge im Dashboard.
 
 | Punkt | Bei wem |
 | --- | --- |
+| Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10) | Andreas |
 | Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend` | Andreas |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
@@ -378,9 +379,136 @@ Empfehlung in diese Richtung war gefaehrlich und ist zurueckgezogen.
   aktiven Lagerartikeln sind es 75.7 %. Die daraus gezogene Schlussfolgerung war
   entsprechend nicht belegbar.
 
+## 10. Praemisse „produziert wird nur in Trafag CH" — geprueft am 2026-08-27
+
+Ingo hat am 2026-08-27 die Frage gestellt, ob die drei Konzernkostenquellen ueberhaupt
+tragen, wenn nur die Schweiz fertigt. Gemessen read-only gegen die Produktivdatenbank mit
+`.tmp_tools/CheckProductionOrigin`, Stand der Kostentabellen 2026-08-27 07:44 bis 07:49.
+
+**Die Praemisse trifft fuer Indien nicht zu und fuer Italien weitgehend schon.** Das ist
+keine Wertung des Standorts, sondern eine Aussage darueber, was die jeweilige Zahl misst.
+
+### Indien fertigt nachweislich selbst
+
+| Rolle im Artikelstamm (`OITM.U_Tasc_ST`) | Zeilen | Materialien |
+| --- | ---: | ---: |
+| `FFM` Eigenfertigung | 6'171 | 1'241 |
+| `LRD` Bezug von Trafag AG | 776 | 135 |
+| `(leer)` | 462 | 135 |
+| `CM` Auftragsfertigung fuer Trafag AG | 23 | 2 |
+
+Von den `6'171` `FFM`-Zeilen fuehrt die Schweiz bei genau `3` dasselbe Material. Indien
+fertigt also einen eigenen Produktbestand, keine Schweizer Ware. `6'522` der indischen
+Zeilen tragen ueberhaupt keinen Lieferanten, was zur Eigenfertigung passt; nur `760`
+Zeilen kommen von Trafag AG.
+
+Gegenprobe ueber die Kostenhoehe: `623` Materialien liegen in beiden Kostentabellen. Der
+mittlere Faktor INR zu CHF ist `109` bei einem Kurs von rund `95`, und `338` der `623`
+sind in Indien **guenstiger** als in der Schweiz. Ein Verrechnungspreis waere systematisch
+teurer. Die indische Zahl verhaelt sich wie eine eigene Kostenbasis.
+
+Ingo hat `FFM` am 2026-08-05 selbst bestaetigt („in Indien hergestellt"), siehe
+`docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 2.
+
+### Italien sieht ganz anders aus
+
+Italien fuehrt **keinen** Sales Type: alle `19'968` Zeilen sind leer. Die Rolle des
+Standorts laesst sich aus dem Feld nicht ablesen. Die Lieferantenseite ist dafuer
+eindeutig:
+
+| Lieferant in Italiens eigenen Verkaufszeilen | Zeilen |
+| --- | ---: |
+| Trafag AG | 10'699 |
+| Trafag Italia S.r.l. | 1'018 |
+| Trafag Controls India Pvt. Ltd. | 342 |
+| uebrige, extern oder ohne Lieferant | 7'909 |
+
+Italien kauft also weit ueberwiegend bei Trafag AG und verkauft weiter. Entsprechend
+zerfaellt die TR-IT-Kostentabelle in zwei Haelften:
+
+| Nummernkreis | Materialien | davon auch in CH |
+| --- | ---: | ---: |
+| `M_IT01_*`, italienische Hausnummer | 1'726 | 0 |
+| numerische Trafag-Sachnummer | 837 | **837, also alle** |
+| sonstiges | 668 | 30 |
+
+### Der eigentliche Befund: bei Trafag-Sachnummern misst Italien den Einkaufspreis
+
+Fuer die `867` Materialien, die beide Tabellen fuehren, liegt der italienische Stueckwert
+im Mittel beim **`3.48`-fachen** des Schweizer `MBEW-STPRS`. `416` liegen ueber dem
+Doppelten, `296` ueber dem Dreifachen, nur `169` sind vergleichbar und `48` guenstiger.
+Der Wechselkurs erklaert davon nichts, EUR zu CHF liegt bei rund `1.05`.
+
+Stichprobe mit identischer Materialbezeichnung in beiden Standorten, Menge je Zeile in
+Klammern:
+
+| Material | Bezeichnung | CH `STPRS` | IT `StockPrice` | Umsatz je Stueck |
+| --- | --- | ---: | ---: | ---: |
+| `17000` | 920 DIFF.-PRESSOSTAT PD | `112.69` CHF | `826.77` EUR (1) | `1'599` EUR |
+| `30111` | ND2.5 DIFF. TRANSMITTER | `187.85` CHF | `822.76` EUR (1) | `1'175` EUR |
+| `52535` | 8736 3-STAGE DENSITY MONITOR | `165.79` CHF | `1'100.00` EUR (1) | `2'066` EUR |
+| `44537` | 8783 3-STAGE HYBRID DENSITY MONITOR | `137.52` CHF | `619.66` EUR (2) | `2'337` EUR |
+| `62045` | 8782 2-STAGE HYBRID DENSITY MONITOR | `173.43` CHF | `344.63` EUR (4) | `1'906` EUR |
+| `64939` | 8736 3-STAGE DENSITY MONITOR | `150.05` CHF | `340.69` EUR (3) | `1'880` EUR |
+
+Die Bezeichnungen sind zeichengleich, es ist dasselbe Produkt. Die drei Zeilen mit Menge 1
+schliessen die bekannte Stueckpreis-gegen-Zeilensumme-Falle aus Abschnitt 2 aus: der Wert
+ist ein echter Stueckwert und liegt trotzdem beim Sieben- bis Achtfachen.
+
+Damit ist der italienische `StockPrice` bei Trafag-Sachnummern **der Einkaufspreis von
+Trafag AG**, also genau der IC-Verrechnungspreis, den die Gruppenmarge herausrechnen soll.
+Die Warnung in Abschnitt 4 („Kauft TRFR von Trafag Italia, ist TRFRs `StockPrice` der
+IC-Verrechnungspreis") gilt eine Ebene hoeher auch fuer Italien selbst.
+
+### Warum trotzdem heute nichts falsch gerechnet wird
+
+Die TR-IT-Kosten greifen nur, wenn Trafag Italia als **Lieferant erkannt** ist. Genau dort
+fuehrt die Schweiz das Material praktisch nie:
+
+| Zeilen mit Lieferant Trafag Italia | Zeilen | davon fuehrt CH dasselbe Material |
+| --- | ---: | ---: |
+| TRIT | 1'018 | **0** |
+| TRFR | 44 | **0** |
+| TRUK | 14 | 1 |
+
+Dasselbe fuer Trafag India: TRIT `342` Zeilen mit `1` Ueberschneidung, TRUK `108` Zeilen
+mit `31`. Italiens `10'699` Zeilen mit Lieferant Trafag AG laufen ueber die
+TR-AG-Klassifikation und damit korrekt auf den Schweizer `STPRS`.
+
+**Die `837` ueberteuerten Trafag-Sachnummern liegen also in der Tabelle, werden aber nicht
+gezogen.** Das Risiko ist angelegt, nicht aktiv. Es wird aktiv, sobald Italien bei einer
+Trafag-Sachnummer sich selbst als Lieferant pflegt — dann kaeme statt der Herstellkosten
+der Einkaufspreis in die Konzernmarge, mit dem gemessenen Faktor drei bis acht.
+
+### Empfehlung, Entscheid steht bei Andreas
+
+Eine enge, gut begruendbare Regel: **Fuehrt die Schweiz ein Material im Werkstamm 1100,
+gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, unabhaengig davon, welche
+Gesellschaft geliefert hat.** Die lokale B1-Kostenbasis der TR IT/TR IN kaeme nur noch bei
+Materialien zum Zug, die die Schweiz nicht fuehrt — also bei genau dem eigenen
+Produktbestand, fuer den sie gedacht war.
+
+Wirkung heute nach der Messung oben: praktisch keine Zeile aendert sich, `1` Zeile in TRUK
+bei Italien und `32` bei Indien. Die Regel ist damit fast wirkungsneutral einzufuehren und
+schliesst den Fehler, bevor er entsteht. Umgesetzt ist sie **nicht**; das ist ein
+Fachentscheid.
+
+### Zwei Nebenbefunde
+
+- Italien fuehrt **keinen Sales Type**. Was fuer Indien seit dem 2026-08-05 die
+  Klassifikation traegt, fehlt in Italien vollstaendig. Ohne dieses Feld bleibt die
+  italienische Rolle je Artikel unbestimmt.
+- In Italiens B1 traegt `Trafag AG` bei `10'699` Zeilen das Lieferantenland **`DE`**, bei
+  Trafag UK dagegen korrekt `CH`. Ein Stammdatenfehler in Italiens Lieferantenstamm, ohne
+  heutige Wirkung auf die Kostenlogik, aber irrefuehrend in jeder Lieferantenauswertung.
+
 ## Querverweise
 
 - Gruppenmarge-Fachlogik: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`
 - SAP-Spezifikation WAVWR: `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md`
 - Supplier-Klassifikation und Laenderstatus: `docs/FINANCE_SUPPLIER.md`
 - ABAP-Analysereport STPRS: `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md`
+- Vereinfachte Arbeitsmappe mit Flussdiagramm, Grundregel zuerst:
+  `docs/Standortkosten_Logik_2026-08-26.xlsx`
+- Ausfuehrliche technische Arbeitsmappe je Standort:
+  `docs/Standardkosten_Standorte_2026-08-26.xlsx`

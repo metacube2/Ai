@@ -2,6 +2,33 @@
 
 Stand: 2026-08-27
 
+## Konzernkosten: Praemisse „nur CH fertigt" geprueft 2026-08-27
+
+- **Anlass:** Ingo fragt, ob die drei Konzernkostenquellen tragen, wenn nur Trafag CH
+  fertigt. Read-only gemessen mit dem neuen Werkzeug `.tmp_tools/CheckProductionOrigin`.
+- **Indien: Praemisse trifft nicht zu.** `6'171` Zeilen ueber `1'241` Materialien tragen
+  Sales Type `FFM` (Eigenfertigung, von Ingo am 2026-08-05 bestaetigt); die Schweiz fuehrt
+  davon genau `3` Materialien. `623` gemeinsame Materialien liegen im Mittel beim Faktor
+  `109` INR zu CHF bei einem Kurs von rund `95`, und `338` sind in Indien **guenstiger**.
+  Ein Verrechnungspreis waere systematisch teurer. Die TR-IN-Quelle bleibt richtig.
+- **Italien: Praemisse trifft, und deckt einen Konstruktionsfehler auf.** Die
+  TR-IT-Kostentabelle enthaelt `837` numerische Trafag-Sachnummern, die **alle** auch in
+  der Schweiz liegen. Fuer die `867` gemeinsamen Materialien liegt der italienische
+  Stueckwert im Mittel beim **`3.48`-fachen** des Schweizer `MBEW-STPRS`. Beispiel mit
+  zeichengleicher Bezeichnung und Menge 1: `52535` „8736 3-STAGE DENSITY MONITOR",
+  CH `165.79` CHF gegen IT `1'100.00` EUR. Das ist der Einkaufspreis von Trafag AG, also
+  genau der IC-Verrechnungspreis, den die Gruppenmarge herausrechnen soll.
+- **Heute wird trotzdem nichts falsch gerechnet.** Die TR-IT-Kosten greifen nur bei
+  erkanntem Lieferanten Trafag Italia, und dort fuehrt die Schweiz das Material praktisch
+  nie: TRIT `1'018` Zeilen mit `0` Ueberschneidung, TRFR `44` mit `0`, TRUK `14` mit `1`.
+  Das Risiko ist angelegt, nicht aktiv.
+- **Empfehlung, nicht umgesetzt, Entscheid bei Andreas:** Fuehrt CH ein Material im
+  Werkstamm 1100, gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, unabhaengig
+  von der liefernden Gesellschaft. Heutige Wirkung: `1` Zeile bei Italien, `32` bei Indien.
+- **Nebenbefunde:** Italien fuehrt **keinen** Sales Type (alle `19'968` Zeilen leer); und
+  `Trafag AG` traegt in Italiens B1 bei `10'699` Zeilen das Lieferantenland `DE` statt `CH`.
+- Details: `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 10.
+
 ## Railway: Termin 2026-09-08 aufgenommen, zwei Blocker gemessen 2026-08-27
 
 - **Anlass:** Rohail Munir aus Deutschland braucht den Railway-Export bis spaetestens
