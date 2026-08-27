@@ -45,16 +45,16 @@ public static class ContributionMarginCalculator
         decimal? variableUnitCost,
         string? salesCurrency,
         string? costCurrency,
-        int year,
         string? costCurrencyMode,
-        Func<string, string, DateTime, decimal?>? resolveRate)
+        Func<string, string, DateTime, decimal?>? resolveRate,
+        DateTime? today = null)
     {
         var basis = ResolveVariableCostBasis(quantity, salesValue, variableUnitCost);
         if (!basis.HasValue)
             return Open;
 
         var conversion = GroupMarginCostCurrencyConverter.Resolve(
-            basis.Value, salesCurrency, costCurrency, year, costCurrencyMode, resolveRate);
+            basis.Value, salesCurrency, costCurrency, costCurrencyMode, resolveRate, today);
         if (conversion.IsMasked)
             return Open;
 

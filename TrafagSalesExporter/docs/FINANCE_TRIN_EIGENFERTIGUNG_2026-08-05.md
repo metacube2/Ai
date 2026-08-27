@@ -161,6 +161,22 @@ erledigt.)
 „maybe 50 60" geschaetzt — die Groessenordnung trifft, aber aus einem anderen Grund als
 angenommen.
 
+### 3b-Nachtrag 2026-08-27: die Widerspruchsfrage ist entschieden
+
+Die Frage, welches Feld bei Widerspruch gilt, stand hier seit dem 2026-08-05 offen. **Ingo hat
+am 2026-08-27 entschieden: der gepflegte Sales Type geht vor den Lieferantenfeldern.** Steht
+kein Sales Type, gilt weiterhin der Lieferantentext.
+
+Damit faellt auch die Asymmetrie weg, die Abschnitt 7a festhaelt: fuer die Klassifikation
+gewann bisher der Lieferantentext, fuer die Kostenbasis der Sales Type — dieselbe Zeile war
+gleichzeitig „extern" und „Konzernvertrieb". Beide Wege folgen jetzt demselben Feld.
+
+Produktiv gemessen am 2026-08-27: `41` Zeilen tragen Sales Type `FFM` bei gepflegtem **fremdem**
+Lieferanten und wechseln damit von `Extern` auf `Intern`. Weitere `37` Zeilen tragen `FFM` mit
+einem Trafag-Lieferanten; steht dort Trafag AG, wechselt die liefernde Gesellschaft von `TR_AG`
+auf `TR_IN`. Die `516` `LRD`-Zeilen mit Trafag-Lieferant bleiben unveraendert, weil beide Wege
+`TR_AG` ergeben. Details in `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 1.
+
 ### 3c. Eine Regelfrage, die die Daten nicht beantworten koennen
 
 Dass heute alle 93 `LRD`-Artikel auf Trafag AG zeigen, ist eine **Messung, keine Regel**.

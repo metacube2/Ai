@@ -354,14 +354,14 @@ public class ExcelExportService : IExcelExportService
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
                 // offen markieren — gleiche Logik wie ManagementCockpitService/Dashboard.
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
-                    margin.CostBasis, row.Currency, margin.CostCurrency, row.Year,
+                    margin.CostBasis, row.Currency, margin.CostCurrency,
                     groupMarginCostCurrencyMode, resolveCrossRate);
                 if (status == GroupMarginStatuses.Ok && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
                 // Deckungsbeitrag (additiv): gleiche gemeinsame Logik wie das Dashboard.
                 var contribution = ContributionMarginCalculator.Resolve(
                     row.Record.Quantity, row.NetSalesActual, row.Record.StandardCostVariable,
-                    row.Currency, row.Record.StandardCostCurrency, row.Year,
+                    row.Currency, row.Record.StandardCostCurrency,
                     groupMarginCostCurrencyMode, resolveCrossRate);
                 return new GroupMarginProofRow(
                     row.Year,
@@ -387,7 +387,9 @@ public class ExcelExportService : IExcelExportService
                     row.Record.StandardCostVariable,
                     contribution.VariableCostBasis,
                     contribution.ContributionMargin,
-                    contribution.ContributionMarginPercent);
+                    contribution.ContributionMarginPercent,
+                    row.Record.SalesType ?? string.Empty,
+                    row.Record.GroupMaterialNumber ?? string.Empty);
             })
             .OrderBy(row => GroupMarginStatuses.Sort(row.Status))
             .ThenBy(row => row.Year)
@@ -684,7 +686,10 @@ public class ExcelExportService : IExcelExportService
             "Unit Cost", "Sales Value", "Known Cost Basis", "Margin Value", "Margin %", "Product Division Code",
             "Product Division Text",
             // Additive DB-Spalten am Ende, damit bestehende Spalten/Formeln unveraendert bleiben.
-            "Variable Unit Cost", "Variable Cost Basis", "Deckungsbeitrag (DB)", "DB %"
+            "Variable Unit Cost", "Variable Cost Basis", "Deckungsbeitrag (DB)", "DB %",
+            // ISS-013, 2026-08-27: ebenfalls additiv am Ende. Die Formeln in Spalte S und T
+            // zeigen auf feste Spaltenbuchstaben, ein Einschub in der Mitte waere still toedlich.
+            "Sales Type", "Trafag Sachnummer"
         };
         WriteHeaders(ws, headers);
 
@@ -722,6 +727,8 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 25).Value = row.ContributionMarginValue.Value;
             if (row.ContributionMarginPercent.HasValue)
                 ws.Cell(rowIndex, 26).Value = row.ContributionMarginPercent.Value / 100m;
+            ws.Cell(rowIndex, 27).Value = row.SalesType;
+            ws.Cell(rowIndex, 28).Value = row.GroupMaterialNumber;
             rowIndex++;
         }
 
@@ -979,7 +986,12 @@ public class ExcelExportService : IExcelExportService
         decimal? VariableUnitCost,
         decimal? VariableCostBasisValue,
         decimal? ContributionMarginValue,
-        decimal? ContributionMarginPercent);
+        decimal? ContributionMarginPercent,
+        // Rohfelder aus dem Artikelstamm der Quelle (ISS-013, 2026-08-27): sie steuern die
+        // Klassifikation, standen bisher aber in keinem Blatt. Ohne sie ist die indische
+        // Zeile im Nachweis nicht nachvollziehbar.
+        string SalesType,
+        string GroupMaterialNumber);
 
     private static void WriteWorkbook(
         string fullPath,
@@ -1063,7 +1075,16 @@ public class ExcelExportService : IExcelExportService
             // traegt die Spalte den QUELLFELDNAMEN und nicht die fachliche Deutung. Sie wird
             // in keiner Finance-Spalte verrechnet; die Periodenabgrenzung bleibt unveraendert
             // bei PostingDate -> InvoiceDate -> ExtractionDate.
-            "Line Registration Date"
+            "Line Registration Date",
+            // 2026-08-27, ebenfalls additiv am ENDE (ISS-013): die beiden Rohfelder aus dem
+            // Artikelstamm der Quelle, die die Gruppenmarge steuern. Ohne sie ist im Sales_All
+            // nicht nachvollziehbar, WARUM eine indische Zeile so gerechnet wird. Bewusst die
+            // Quellfeldnamen als Inhalt und keine Deutung: `Sales Type` traegt FFM/CM/LRD roh,
+            // die Zuordnung zur liefernden Gesellschaft macht GroupMarginSupplierClassifier.
+            // Bisher liefert nur TRIN diese Felder (Indien: OITM."U_Tasc_ST"/"U_TASC_OMN");
+            // Italien fuehrt den Sales Type bei allen Zeilen leer, gemessen am 2026-08-27.
+            "Sales Type",
+            "Trafag Sachnummer"
         };
 
         for (var i = 0; i < headers.Length; i++)
@@ -1138,6 +1159,8 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(row, 50).Value = marketSegment;
             ws.Cell(row, 51).Value = marketSegmentSource;
             ws.Cell(row, 52).Value = record.LineRegistrationDate?.ToString("dd.MM.yyyy") ?? string.Empty;
+            ws.Cell(row, 53).Value = record.SalesType ?? string.Empty;
+            ws.Cell(row, 54).Value = record.GroupMaterialNumber ?? string.Empty;
             row++;
         }
 
@@ -1478,14 +1501,16 @@ public class ExcelExportService : IExcelExportService
             ("Margin Value", "Formel im Blatt: Sales Value - Known Cost Basis, NUR wenn Status = OK. Sonst leer - offene Kostenbasis darf nicht als Marge gelesen werden. Dies ist eine BRUTTOMARGE auf Basis der vollen Standardkosten."),
             ("Margin %", "Formel im Blatt: Margin Value / Sales Value, nur bei Status OK."),
             ("Supplier Type", "Intern = Trafag/GFS im Lieferantentext erkannt; Extern = anderer Lieferant; Unklar = alle drei Lieferantenfelder leer (Quelle liefert keinen Lieferanten, z. B. CH/AT, UK, ES)."),
-            ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (explizit extern), 'Standardkosten der lokalen Gesellschaft' (kein Treffer im geprueften CH-Werkstamm), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit Jahreskurs oder maskiert."),
+            ("Cost Source", "Woher die Kostenbasis kommt: 'Kosten aus Verkaufszeile' (explizit extern), 'Standardkosten der lokalen Gesellschaft' (kein Treffer im geprueften CH-Werkstamm), 'Interner Standardpreis' (intern), 'Konzernkosten TR AG (MBEW-STPRS)' (echte Gruppenkosten), 'Lieferant unklar'. Zusatz bei abweichender Kostenwaehrung: umgerechnet mit dem Tageskurs (Beschluss Andreas 27.08.2026) oder maskiert."),
             ("Status", "OK = Marge belastbar. 'Standardpreis fehlt' = Kostenbasis 0. 'Lieferant unklar' = Lieferantenfelder leer. '" + GroupMarginCostCurrencyConverter.OpenStatus + "' = Kosten- und Verkaufswaehrung verschieden bei Schalter Mask. '" + GroupMarginStatuses.GroupCostMissing + "' = Standort verkauft Konzernware (Sales Type LRD), Konzernkosten zum Material aber nicht auffindbar; der lokale Standardpreis ist dort der IC-Einkaufspreis und wird bewusst nicht verwendet. 'Umsatz fehlt' = Wert 0. Grundregel: fehlende Daten werden markiert, NIE geschaetzt."),
             ("Variable Unit Cost", "NEU/vorbereitet: variabler Anteil des Standardpreises pro Stueck (Quelle: fix/variabel-Split, z. B. SAP Planpreis variabel). Leer = Quelle liefert den Split noch nicht."),
             ("Variable Cost Basis", "Berechnet: Menge x Variable Unit Cost, gleiche Vorzeichen- und Waehrungsregel wie Known Cost Basis. Leer ohne Split."),
             ("Deckungsbeitrag (DB)", "Berechnet: Sales Value - Variable Cost Basis. Fachidee (Finance): was bleibt nach Abzug NUR der variablen Kosten - Fixkosten bleiben bei Artikelwegfall bestehen. Leer, solange kein fix/variabel-Split geliefert wird; wird nie geschaetzt."),
             ("DB %", "Berechnet: Deckungsbeitrag / Sales Value. Leer ohne Split oder bei Umsatz 0."),
             ("Summary: Margin Value/%", "Formeln (SUMIFS/COUNTIFS) ueber Gruppenmarge Details je Jahr/Land/TSC/Waehrung; leer, sobald die Gruppe offene Kostenzeilen hat (Open Cost Rows > 0)."),
-            ("Summary: Deckungsbeitrag (DB)", "SUMIFS ueber die DB-Spalte der Details - Summe NUR ueber Zeilen mit fix/variabel-Split; 'DB Zeilen' zeigt, wie viele Zeilen abgedeckt sind. Nicht mit der Marge vergleichen, wenn DB Zeilen deutlich kleiner als die Zeilenzahl ist.")
+            ("Summary: Deckungsbeitrag (DB)", "SUMIFS ueber die DB-Spalte der Details - Summe NUR ueber Zeilen mit fix/variabel-Split; 'DB Zeilen' zeigt, wie viele Zeilen abgedeckt sind. Nicht mit der Marge vergleichen, wenn DB Zeilen deutlich kleiner als die Zeilenzahl ist."),
+            ("Sales Type", "ROHWERT aus dem Artikelstamm der Quelle, keine Deutung. Indien: OITM.\"U_Tasc_ST\". FFM = Eigenfertigung am Standort. CM = Contract Manufacturing im Auftrag von Trafag AG, die Herstellkosten entstehen trotzdem am Standort. LRD = Limited Risk Distributor, die Ware ist in der Schweiz hergestellt und wird von Trafag AG bezogen; ohne Konzernkostentreffer bleibt die Zeile deshalb offen, weil der lokale Preis dort der IC-Einkaufspreis waere. Leer heisst NICHT 'extern', sondern nur, dass die Quelle das Feld nicht fuehrt - bisher liefert es nur TRIN, Italien fuehrt es bei allen Zeilen leer (gemessen 27.08.2026)."),
+            ("Trafag Sachnummer", "ROHWERT aus dem Artikelstamm der Quelle (Indien: OITM.\"U_TASC_OMN\"): die konzernweite Trafag-Materialnummer neben der lokalen Artikelnummer. Ueber sie wird die Konzern-Kostentabelle (MBEW-STPRS TR AG) gesucht; ist sie gefuellt, gewinnt sie gegenueber der lokalen Artikelnummer. Leer = die Quelle fuehrt keine Konzernnummer.")
         };
 
         ws.Cell(fieldDocStart + 2, 1).Value = "Feld";

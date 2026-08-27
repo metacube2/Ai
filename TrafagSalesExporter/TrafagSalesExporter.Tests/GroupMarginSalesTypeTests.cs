@@ -60,18 +60,47 @@ public class GroupMarginSalesTypeTests
     }
 
     [Fact]
-    public void Resolve_laesst_einen_vorhandenen_Lieferantentext_vorgehen()
+    public void Resolve_laesst_den_Sales_Type_vor_einem_widersprechenden_Lieferantentext_vorgehen()
     {
-        // Produktiv widersprechen sich beide Felder bei 10 TRIN-Artikeln (Sales Type FFM, aber
-        // Lieferant gepflegt). Solange offen ist, welches Feld gilt, bleibt das Verhalten dieser
-        // Zeilen unveraendert, statt es auf eine Vermutung umzustellen.
-        var externalSupplier = GroupMarginSupplierClassifier.Resolve(
+        // Entscheid Ingo, 2026-08-27: Wo ein Sales Type gepflegt ist, gilt ER - auch gegen die
+        // Lieferantenfelder. Produktiv widersprechen sich beide Angaben bei 10 TRIN-Artikeln
+        // (Sales Type FFM, aber Lieferant gepflegt); bis dahin gewann der Lieferantentext und
+        // machte aus einer Eigenfertigung eine Fremdbeschaffung.
+        var contradictingSupplier = GroupMarginSupplierClassifier.Resolve(
             "V0393", "Cenlub Systems", "IN", "TRIN", "PS000358", NoGroupCosts, "FFM");
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, contradictingSupplier);
+
+        var matchingSupplier = GroupMarginSupplierClassifier.Resolve(
+            "V0078", "Trafag AG", "CH", "TRIN", "PT000003", NoGroupCosts, "FFM");
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, matchingSupplier);
+    }
+
+    [Fact]
+    public void Resolve_nimmt_den_Lieferantentext_erst_ohne_gepflegten_Sales_Type()
+    {
+        // Die Umkehr gilt nur, WO ein Sales Type steht. Ohne ihn bleibt der Lieferantentext
+        // massgeblich, sonst wuerde die Regel jede Zeile ohne das Feld stillschweigend
+        // umdeuten - Italien fuehrt es bei allen Zeilen leer.
+        var externalSupplier = GroupMarginSupplierClassifier.Resolve(
+            "V0393", "Cenlub Systems", "IN", "TRIN", "PS000358", NoGroupCosts, salesType: null);
         Assert.Equal(GroupMarginSupplierClassifier.External, externalSupplier);
 
-        var internalSupplier = GroupMarginSupplierClassifier.Resolve(
-            "V0078", "Trafag AG", "CH", "TRIN", "PT000003", NoGroupCosts, "FFM");
-        Assert.Equal(GroupMarginSupplierClassifier.Internal, internalSupplier);
+        var unknownSalesType = GroupMarginSupplierClassifier.Resolve(
+            "V0393", "Cenlub Systems", "IN", "TRIN", "PS000358", NoGroupCosts, "XYZ");
+        Assert.Equal(GroupMarginSupplierClassifier.External, unknownSalesType);
+    }
+
+    [Fact]
+    public void ResolveDeliveringEntity_folgt_dem_Sales_Type_auch_gegen_den_Lieferantentext()
+    {
+        // LRD heisst: die Ware kommt von Trafag AG, also gilt die Schweizer Kostenquelle
+        // (MBEW-STPRS, Bewertungskreis 1100) - auch wenn im Lieferantenfeld ein Dritter steht.
+        var entity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            supplierName: "Cenlub Systems", tsc: "TRIN", normalizedMaterialKey: "PS000358",
+            groupStandardCosts: NoGroupCosts, salesType: "LRD",
+            supplierNumber: "V0393", supplierCountry: "IN");
+
+        Assert.Equal(GroupStandardCostEntities.TrAg, entity);
     }
 
     [Theory]

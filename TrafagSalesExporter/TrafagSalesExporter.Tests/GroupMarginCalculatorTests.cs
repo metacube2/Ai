@@ -169,19 +169,20 @@ public class GroupMarginCalculatorTests
     }
 
     [Fact]
-    public void Lieferantentext_bestimmt_den_Typ_der_Sales_Type_die_Kostenbasis()
+    public void Der_Sales_Type_bestimmt_Typ_und_Kostenbasis_auch_gegen_den_Lieferantentext()
     {
-        // Produktiv widersprechen sich beide Felder bei 10 TRIN-Artikeln (Sales Type gepflegt UND
-        // Lieferant gepflegt). Das Verhalten ist dort ASYMMETRISCH und war es schon vor der
-        // Zusammenfuehrung: fuer die Klassifikation gewinnt der Lieferantentext (die Zeile gilt
-        // als extern), fuer die Kostenbasis gewinnt der Sales Type (LRD laesst sie offen).
-        // Der Test haelt das absichtlich fest, statt es stillschweigend zu vereinheitlichen -
-        // welches Feld gilt, ist mit Indien noch zu klaeren.
+        // Die frueher hier festgehaltene ASYMMETRIE ist mit dem Entscheid von Ingo vom
+        // 2026-08-27 aufgeloest: Wo ein Sales Type gepflegt ist, gilt er fuer BEIDES - fuer die
+        // Klassifikation und fuer die Kostenbasis. Vorher gewann fuer den Typ der
+        // Lieferantentext (Zeile galt als extern) und fuer die Kostenbasis der Sales Type;
+        // dieselbe Zeile war damit gleichzeitig extern und Konzernvertrieb.
         // Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 3b.
         var result = GroupMarginCalculator.Evaluate(
             Line(salesType: "LRD", supplierName: "Fremdlieferant GmbH", supplierCountry: "DE"));
 
-        Assert.Equal(GroupMarginSupplierClassifier.External, result.SupplierType);
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result.SupplierType);
+        // LRD ohne Konzernkostentreffer bleibt bewusst offen: der lokale Preis waere dort der
+        // IC-Einkaufspreis und wird nicht als Herstellkostenbasis verwendet.
         Assert.True(result.IsGroupCostMissing);
         Assert.Equal(0m, result.CostBasis);
         Assert.Equal(GroupMarginStatuses.GroupCostMissing, result.Status);

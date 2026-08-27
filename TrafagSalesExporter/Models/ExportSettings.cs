@@ -17,11 +17,15 @@ public class ExportSettings
 
     /// <summary>
     /// Verhalten der Gruppenmarge, wenn die Standardkostenwaehrung von der Verkaufswaehrung
-    /// abweicht: "Mask" zeigt Marge/% als offen ("-"), "Convert" rechnet die Kostenbasis mit
-    /// dem Jahreskurs in die Verkaufswaehrung um. Wirkt auf Dashboard, Pruefbuch, zentrale
-    /// Excel und Nachweis-Excel gleichermassen (Andreas-Fachentscheid D, bis dahin Default Mask).
+    /// abweicht: "Convert" rechnet die Kostenbasis mit dem Tageskurs in die Verkaufswaehrung um,
+    /// "Mask" zeigt Marge/% als offen ("-"). Wirkt auf Dashboard, Pruefbuch, zentrale Excel und
+    /// Nachweis-Excel gleichermassen.
+    ///
+    /// Default seit dem Beschluss von Andreas vom 2026-08-27 ist "Convert"; bis dahin war es
+    /// "Mask", weil der Fachentscheid ausstand. "Mask" bleibt als bewusst waehlbare Ausnahme
+    /// bestehen. Siehe docs/FINANCE_STANDARDKOSTEN.md Abschnitt 11, B5/B6.
     /// </summary>
-    public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Mask;
+    public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Convert;
 
     /// <summary>
     /// Material-Fallback fuer leere Supplier-Felder: neuer CH-Werkstamm (MARC 1100)

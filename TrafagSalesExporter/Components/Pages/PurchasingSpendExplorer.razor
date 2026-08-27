@@ -584,11 +584,18 @@
         color: var(--mud-palette-primary);
     }
 
-    .purchasing-explorer-bars .purchasing-bar-row {
+    /* Gleiche Korrektur wie in PurchasingSection.razor: ein gemeinsames Spaltenraster fuer alle
+       Balkenzeilen, sonst bestimmt die unterschiedlich lange Wertspalte je Zeile eine andere
+       Balkenbreite und die Balken starten versetzt (Meldung Armin, 2026-08-27). */
+    .purchasing-explorer-bars {
         display: grid;
         grid-template-columns: minmax(120px, 1fr) 2fr auto;
         gap: 10px;
         align-items: center;
+    }
+
+    .purchasing-explorer-bars .purchasing-bar-row {
+        display: contents;
     }
 
     .purchasing-explorer-bars .purchasing-bar-track {

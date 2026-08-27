@@ -357,7 +357,19 @@ public class ManagementGroupMarginSummary
     public int MissingCostRows { get; set; }
     public int UnclearSupplierRows { get; set; }
     public decimal CleanCostBasisPercent { get; set; }
+
+    /// <summary>
+    /// Die Konzernmarge wird in CHF ausgewiesen (Beschluss Andreas vom 2026-08-27, B5). Vorher
+    /// summierte diese Kachel Betraege verschiedener Waehrungen unkonvertiert auf und trug als
+    /// Label „Mixed"; das war keine Konzernzahl, sondern eine Addition ungleicher Groessen.
+    /// </summary>
     public string DisplayCurrency { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Zeilen, die mangels gepflegtem Kurs NICHT in der CHF-Summe stecken. Bewusst sichtbar:
+    /// eine gefuellte Zahl ohne Vorbehalt ist gefaehrlicher als eine offen ausgewiesene Luecke.
+    /// </summary>
+    public int MissingGroupCurrencyRateRows { get; set; }
     // Deckungsbeitrag (additiv): nur ueber Zeilen mit geliefertem fix/variabel-Split summiert.
     public decimal? ContributionMarginValue { get; set; }
     public int ContributionMarginRows { get; set; }
@@ -409,6 +421,15 @@ public class ManagementGroupMarginDetailRow
     public decimal CostBasisValue { get; set; }
     public decimal MarginValue { get; set; }
     public decimal MarginPercent { get; set; }
+
+    // Konzernsicht in CHF (Beschluss Andreas vom 2026-08-27, B5: die Konzernmarge gibt es nur
+    // in CHF). Die Felder oben bleiben die lokale Sicht in Verkaufswaehrung und fuehren die
+    // Detail- und Landeszeilen. Null heisst: fuer diese Waehrung ist kein Kurs gepflegt; solche
+    // Zeilen werden in der Konzernsumme NICHT mitgerechnet, sondern gezaehlt und ausgewiesen.
+    public decimal? SalesValueChf { get; set; }
+    public decimal? CostBasisValueChf { get; set; }
+    public decimal? MarginValueChf { get; set; }
+
     // Deckungsbeitrag (additiv): null solange die Quelle keinen fix/variabel-Split liefert.
     public decimal? VariableUnitCost { get; set; }
     public decimal? VariableCostBasisValue { get; set; }

@@ -9,7 +9,7 @@ public sealed class ContributionMarginCalculatorTests
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: 5m, salesValue: 100m, variableUnitCost: null,
-            salesCurrency: "CHF", costCurrency: "CHF", year: 2026,
+            salesCurrency: "CHF", costCurrency: "CHF",
             costCurrencyMode: null, resolveRate: null);
 
         Assert.Null(result.VariableCostBasis);
@@ -22,7 +22,7 @@ public sealed class ContributionMarginCalculatorTests
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: 5m, salesValue: 100m, variableUnitCost: 12m,
-            salesCurrency: "CHF", costCurrency: "CHF", year: 2026,
+            salesCurrency: "CHF", costCurrency: "CHF",
             costCurrencyMode: null, resolveRate: null);
 
         Assert.Equal(60m, result.VariableCostBasis);
@@ -36,7 +36,7 @@ public sealed class ContributionMarginCalculatorTests
         // Gutschrift: Umsatz -100, variable Kosten 60 -> DB -40, nicht -160.
         var result = ContributionMarginCalculator.Resolve(
             quantity: -5m, salesValue: -100m, variableUnitCost: 12m,
-            salesCurrency: "CHF", costCurrency: "CHF", year: 2026,
+            salesCurrency: "CHF", costCurrency: "CHF",
             costCurrencyMode: null, resolveRate: null);
 
         Assert.Equal(-60m, result.VariableCostBasis);
@@ -49,7 +49,7 @@ public sealed class ContributionMarginCalculatorTests
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: -2m, salesValue: 0m, variableUnitCost: 10m,
-            salesCurrency: "CHF", costCurrency: "CHF", year: 2026,
+            salesCurrency: "CHF", costCurrency: "CHF",
             costCurrencyMode: null, resolveRate: null);
 
         Assert.Equal(-20m, result.VariableCostBasis);
@@ -63,7 +63,7 @@ public sealed class ContributionMarginCalculatorTests
         // Gleiche Sonderregel wie die Margen-Kostenbasis: Menge 0 -> Stueckpreis als Basis.
         var result = ContributionMarginCalculator.Resolve(
             quantity: 0m, salesValue: 100m, variableUnitCost: 12m,
-            salesCurrency: "CHF", costCurrency: "CHF", year: 2026,
+            salesCurrency: "CHF", costCurrency: "CHF",
             costCurrencyMode: null, resolveRate: null);
 
         Assert.Equal(12m, result.VariableCostBasis);
@@ -75,7 +75,7 @@ public sealed class ContributionMarginCalculatorTests
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: 5m, salesValue: 100m, variableUnitCost: 12m,
-            salesCurrency: "EUR", costCurrency: "CHF", year: 2026,
+            salesCurrency: "EUR", costCurrency: "CHF",
             costCurrencyMode: "Mask", resolveRate: (_, _, _) => 0.5m);
 
         Assert.Null(result.VariableCostBasis);
@@ -83,16 +83,17 @@ public sealed class ContributionMarginCalculatorTests
     }
 
     [Fact]
-    public void Resolve_CurrencyMismatch_ConvertMode_UsesYearRate()
+    public void Resolve_CurrencyMismatch_ConvertMode_UsesTodaysRate()
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: 5m, salesValue: 100m, variableUnitCost: 12m,
-            salesCurrency: "EUR", costCurrency: "CHF", year: 2026,
+            salesCurrency: "EUR", costCurrency: "CHF",
             costCurrencyMode: "Convert", resolveRate: (from, to, date) =>
             {
                 Assert.Equal("CHF", from);
                 Assert.Equal("EUR", to);
-                Assert.Equal(new DateTime(2026, 12, 31), date);
+                // B6 vom 2026-08-27: Tageskurs, nicht Jahresendkurs.
+                Assert.Equal(DateTime.Today, date);
                 return 0.5m;
             });
 
@@ -105,7 +106,7 @@ public sealed class ContributionMarginCalculatorTests
     {
         var result = ContributionMarginCalculator.Resolve(
             quantity: 5m, salesValue: 100m, variableUnitCost: 12m,
-            salesCurrency: "EUR", costCurrency: "CHF", year: 2026,
+            salesCurrency: "EUR", costCurrency: "CHF",
             costCurrencyMode: "Convert", resolveRate: (_, _, _) => null);
 
         Assert.Null(result.ContributionMargin);

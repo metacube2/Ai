@@ -99,7 +99,10 @@ CREATE TABLE ExportSettings (
     UseAuditCsvAsCentralSource INTEGER NOT NULL DEFAULT 0,
     LocalAuditCsvFolder TEXT NOT NULL DEFAULT '',
     ExchangeRateDateField TEXT NOT NULL DEFAULT 'PostingDate',
-    GroupMarginCostCurrencyMode TEXT NOT NULL DEFAULT 'Mask',
+    GroupMarginCostCurrencyMode TEXT NOT NULL DEFAULT 'Convert',
+    -- Marker fuer den einmaligen Nachzug des Waehrungsbeschlusses vom 2026-08-27; bei einer
+    -- neuen Datenbank ist nichts nachzuziehen, deshalb direkt 1.
+    GroupMarginCostCurrencyDecision20260827Applied INTEGER NOT NULL DEFAULT 1,
     SupplierFallbackMode TEXT NOT NULL DEFAULT 'ChPlantMaster',
     LastTimerRunUtc TEXT NULL
 );";

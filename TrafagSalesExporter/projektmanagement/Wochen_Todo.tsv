@@ -3,16 +3,16 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
 2	Nur terminieren	Finance ES	ISS-004.1	Spanien Januar bis Mai 2026	Ingo	Mittel	Erledigt		Nachtrag und Import am 18.08.2026 bestätigt; keine Aktion
 3	Heute	SAP ZC12	PM-02	ZC12 Fehler bei Nullmengen	Ingo	Mittel	Blockiert		Vorfrage in SE93: ist ZC12 = Z_ABGLEICH_KTSCH?
 4	Hoch, haengt an anderen	Finance FR	ISS-001.2	Datenzufluss TR FR	Frankreich / Ingo	Hoch	Wartet auf andere		Eskalieren, seit 30.07.2026 keine Faktura mehr (18 Tage)
-5	Hoch, haengt an anderen	Finance CH/AT	ISS-003.4	Herstellerregel CH/AT	Andreas	Hoch	Wartet auf Entscheid		Termin mit Andreas, Punkt 1 von 4
-6	Hoch, haengt an anderen	Finance Gruppenmarge	ISS-009	Fachfreigabe Gruppenmarge	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 2 von 4
-7	Hoch, haengt an anderen	Finance Abgrenzung	ISS-010	Innenumsatz / Doppelzählung	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 3 von 4
-8	Hoch, haengt an anderen	Finance CH/AT	ISS-003.5	Supplier-Fallback je Land	Andreas	Niedrig	Vorfrage		Termin mit Andreas, Punkt 4 von 4
+5	Hoch, haengt an anderen	Finance CH/AT	ISS-003.4	Herstellerregel CH/AT	Andreas	Hoch	Wartet auf Entscheid		Termin mit Andreas, Punkt 1 von 3
+6	Hoch, haengt an anderen	Finance Gruppenmarge	ISS-009	Fachfreigabe Gruppenmarge	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 2 von 3
+7	Hoch, haengt an anderen	Finance Abgrenzung	ISS-010	Innenumsatz / Doppelzählung	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 3 von 3
+8	Hoch, haengt an anderen	Finance CH/AT	ISS-003.5	Supplier-Fallback je Land	Andreas	Niedrig	Erledigt		Entschieden am 27.08.2026: steht kein Lieferant, gelten die lokalen Standardkosten der verkaufenden Gesellschaft; keine Aufteilung je Land
 9	Heute	SAP ZLO03	PM-01	ZLO03 Mengen und Materialien	Ingo	Hoch	Offen		Diagnoselauf p_diag und Regressionstest, danach Transport nach B76
 10	Heute	SAP ZLO03	PM-01	ZLO03 Kommunikationspflicht	Ingo	Hoch	Offen		Ann-Katrin Michel vorwarnen: Spalte Exklusiv liefert künftig auch "?"
 11	Heute	SAP ZZPRDAT	PM-03	ZZPRDAT Umsetzung	Ingo	Hoch	Läuft		BAdI WORKORDER_UPDATE neu aus der Anforderung bauen; Altcode ist auskommentiert und keine Referenz
 12	Heute	SAP ZZPRDAT	PM-03	ZZPRDAT Rückfragen	Ingo	Hoch	Offen		Trigger an Lucas Castro / Florian Wächter, Quellfeld GLTRP und Herkunft seines Auszugs an Marco Di Menco
 13	Umsetzung	Finance DE/ES	ISS-003.3	DE/ES ohne Lieferantenfelder	Ingo	Mittel	Offen		Zuerst eigene Export-SQL prüfen, erst danach den Standort fragen
-14	Umsetzung	Finance Export	ISS-013	Sales Type und Sachnummer im Export	App	Mittel	Offen		Beide Felder in den Gesamtexport aufnehmen
+14	Heute	Finance Export	ISS-013	Sales Type und Sachnummer im Export	App	Mittel	Umgesetzt, nicht deployed		Beide Felder stehen additiv am Ende von Sales_All und im Nachweisblatt Gruppenmarge Details, Bedeutung im Hilfeblatt beschrieben. Nach dem Deploy die Indien-Quote gegenprüfen
 15	Umsetzung	Finance CH/AT	ISS-006	CH/AT Journal, SAP-Set aktivieren	SAP / Ingo	Mittel	Offen		FinanzJournalSet aktivieren, danach $metadata prüfen
 16	Umsetzung	Einkauf	PM-04	Einkauf Restpunkte SAP	Ingo	Mittel	Offen		D1/D5-Texte pflegen, SEGW-Key auf DISPO_KZ + DISPO korrigieren
 17	Umsetzung	Marktsegmente	-	Sichtprüfläufe produktiv nachholen	Ingo	Mittel	Offen		3 Deploys angemeldet sichtprüfen: Segmente, Umfrage, Jahresfilter
@@ -25,3 +25,5 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
 24	Heute	Railway	PM-08	Railway Kundenname Deutschland	Ingo	Hoch	Blockiert	08.09.2026	INFORMATION_SCHEMA-Auszug aus Alphaplan holen; ohne Kundenname kein DE-Railway
 25	Heute	Railway	PM-08	Railway Zuordnung prüfen lassen	Patrik	Hoch	Offen	08.09.2026	Patrik prüft die 30 mengenstärksten Vorschläge oder setzt sie selbst
 26	Nur terminieren	Railway	PM-08	Railway Export für Rohail Munir	Ingo	Hoch	Wartet auf andere	08.09.2026	Nach Bestätigung exportieren; Deutschland notfalls offen ausweisen
+27	Heute	Finance Standardkosten	-	Rückfrage an Andreas zur Sitzung vom 27.08.2026	Ingo	Hoch	Offen		Drei Abweichungen klären, bevor er das Vergleichs-Excel prüft: Italien misst den Einkaufspreis statt Herstellkosten (Faktor 3,48); bleibt die MARC-1100-Stufe bestehen; Kursquelle und Stichtag für die Umrechnung
+28	Umsetzung	Finance Standardkosten	-	Arbeitsmappe Standortkosten auf den Sitzungsstand bringen	Ingo	Mittel	Offen		Sales Type in den oberen Block ziehen, Zweig ohne Lieferant und Währungszeile ergänzen, danach Sales_All neu generieren

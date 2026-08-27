@@ -5,6 +5,8 @@ Stand: 2026-08-27
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
 TR IT/TR IN produktiv nachgemessen am 2026-08-25, siehe Abschnitt 3.
+Die Sitzung mit Andreas vom 2026-08-27 steht in Abschnitt 11; ihre offenen Folgefragen
+sind in Abschnitt 7 nachgezogen.
 
 Betrifft die Kostenbasis der **Gruppenmarge**, nicht den Journal-Import
 (dafuer `docs/FINANCE_JOURNAL.md`).
@@ -17,9 +19,33 @@ Beschluss Andreas vom 2026-08-11, umgesetzt und deployed am 2026-08-12 10:23 MES
 Prioritaet bei der Lieferantenklassifikation:
 
 1. CH/AT-TSC-Regel
-2. explizit gepflegter Supplier
-3. gepflegter Sales Type `FFM`, `CM` oder `LRD`
+2. **gepflegter Sales Type `FFM`, `CM` oder `LRD`** (Entscheid Ingo, 2026-08-27)
+3. explizit gepflegter Supplier
 4. Materialvergleich gegen `MARC`, Werk `1100`
+
+**Stufe 2 und 3 waren bis zum 2026-08-27 vertauscht.** Ingo hat entschieden: Wo die Quelle
+einen Sales Type fuehrt, entscheidet dieser — auch dann, wenn die Lieferantenfelder etwas
+anderes sagen. Steht kein Sales Type, gilt weiterhin der Lieferantentext. Praktisch betrifft
+die Regel nur TRIN, weil bisher nur Indien das Feld fuehrt.
+
+Damit ist die seit dem 2026-08-05 offene Frage beantwortet, welches Feld bei Widerspruch gilt
+(`docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Abschnitt 3b). Sie loest zugleich eine
+Asymmetrie auf: fuer die Klassifikation gewann bisher der Lieferantentext, fuer die
+Kostenbasis der Sales Type — dieselbe Zeile war also gleichzeitig „extern" und
+„Konzernvertrieb".
+
+Steht `LRD`, kommt die Ware von Trafag AG, und damit greift die Schweizer Kostenquelle
+`MBEW-STPRS` im Bewertungskreis `1100`.
+
+**Produktive Wirkung, gemessen am 2026-08-27** (nur TRIN fuehrt das Feld, Italien hat es bei
+allen Zeilen leer):
+
+| Fall | Zeilen | Wirkung |
+| --- | ---: | --- |
+| Sales Type `FFM`, aber **fremder** Lieferant gepflegt | `41` | wechselt von `Extern` auf `Intern` |
+| Sales Type `FFM` mit gepflegtem Trafag-Lieferanten | `37` | liefernde Gesellschaft kann von `TR_AG` auf `TR_IN` wechseln, sofern dort Trafag AG steht; die genaue Aufteilung ist nicht gemessen |
+| Sales Type `LRD` mit Lieferant Trafag | `516` | unveraendert, beide Wege ergeben `TR_AG` |
+| Sales Type gepflegt, Lieferantenfelder leer | `6'379` | unveraendert, der Sales Type entschied dort schon vorher |
 
 In Stufe 4 gilt:
 
@@ -321,8 +347,9 @@ Reporting-Marge im Dashboard.
 
 | Punkt | Bei wem |
 | --- | --- |
-| Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10) | Andreas |
-| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend` | Andreas |
+| Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
+| **Neu am 2026-08-27:** Bleibt Stufe 4 der Kaskade, also der Abgleich gegen `MARC` Werk 1100, bestehen? Andreas hat entschieden, dass ohne Lieferant die lokalen Standardkosten gelten (Abschnitt 11, B1). Heute setzt ein MARC-Treffer stattdessen `Intern / TR_AG`; betroffen sind `10'817` von `22'950` Kandidatenzeilen. Gehoert zusammen mit der Frage darueber entschieden, weil beide am selben Hebel ziehen | Andreas |
+| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend`. **Am 2026-08-27 umgesetzt, noch nicht deployed:** Kostenbasis wird mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
@@ -501,6 +528,134 @@ Fachentscheid.
 - In Italiens B1 traegt `Trafag AG` bei `10'699` Zeilen das Lieferantenland **`DE`**, bei
   Trafag UK dagegen korrekt `CH`. Ein Stammdatenfehler in Italiens Lieferantenstamm, ohne
   heutige Wirkung auf die Kostenlogik, aber irrefuehrend in jeder Lieferantenauswertung.
+
+## 11. Sitzung mit Andreas vom 2026-08-27
+
+Andreas und Ingo sind die vereinfachte Arbeitsmappe
+`docs/Standortkosten_Logik_2026-08-26.xlsx` im Blatt **Flussdiagramm** gemeinsam
+durchgegangen. Grundlage dieses Abschnitts ist das Transkript der Aufzeichnung. Es wurde
+in dieser Sitzung **kein Anwendungscode geaendert**; Ingo hat ausdruecklich vorgegeben,
+zunaechst nichts zu programmieren.
+
+### Beschluesse
+
+| Nr | Beschluss | Begruendung von Andreas |
+| --- | --- | --- |
+| B1 | **Kein Lieferant im Feld heisst: Standardkosten der verkaufenden Landesgesellschaft.** | Steht kein Lieferant, wird angenommen, dass es ein externer ist. Der Fall soll nicht zu weiteren Ausnahmen fuehren. |
+| B2 | **Steht ein Lieferant, gilt dessen Kostenquelle:** Trafag AG, Trafag Italia oder Trafag India. | Andere liefernde Gesellschaften kommen fachlich nicht vor. |
+| B3 | Alle drei Quellen sind **im ersten Schritt die Herstellkostenseite**. | So war es bereits vereinbart. Siehe aber die Einschraenkung unter „Abweichungen". |
+| B4 | **Der Sales Type gehoert in den oberen Block**, nicht in einen eigenen Sonderfallzweig unten. | Damit faellt der untere Zweig weg und die Regel bleibt in einer Kaskade lesbar. Der Sales Type betrifft nur Indien; Italien hat Andreas selbst als Sales-Type-Fall verworfen. |
+| B5 | **Die Konzernmarge gibt es nur in CHF.** Lokale Sichten bleiben in Lokalwaehrung, eine Anzeige in weiteren Waehrungen waere spaeter reine Umrechnung. | In unterschiedlichen Waehrungen ist eine Konzernmarge fachlich sinnlos. |
+| B6 | **Kein Rueckrechnen auf historische Kurse.** Andreas haelt die Umrechnung fuer unkritisch, weil keine volatile Waehrung im Bestand ist; er nennt USD, EUR, GBP und INR. Interessanter findet er, mit aktuellen Kursen zu simulieren, um die Richtung der Margen zu sehen. | Zeitpunktgenaue Kurse machen die Rechnung kompliziert, ohne den Erkenntniswert zu erhoehen. |
+
+Ausdruecklich vertagt hat Andreas die Blaetter **Sonderfaelle** und **Standorte**. Zuerst
+sollen die Grundregeln durchgezogen werden.
+
+### Vereinbartes Vorgehen
+
+1. Ingo passt die Arbeitsmappe an den Sitzungsstand an.
+2. Danach wird `Sales_All` neu generiert.
+3. Andreas prueft die Felder gegen ein Vergleichs-Excel und meldet zurueck.
+
+Korrekturen an der Logik sollen den Weg ueber die Mappe nehmen, nicht ueber Zuruf: Wenn
+etwas nicht passt, wird es zuerst im Excel korrigiert und erst dann im Code nachgezogen.
+
+### Abweichungen gegen den heutigen Stand
+
+Diese drei Punkte gehoeren zu Andreas zurueck, bevor er das Vergleichs-Excel prueft.
+Sonst prueft er gegen eine Annahme statt gegen die Daten.
+
+**1. B3 trifft fuer Italien nachweislich nicht zu.** Abschnitt 10 dieser Datei, gemessen
+am Vormittag desselben Tages, zeigt: Italiens `StockPrice` ist bei Trafag-Sachnummern der
+Einkaufspreis von Trafag AG und liegt im Mittel beim `3.48`-fachen des Schweizer
+`MBEW-STPRS`. Das ist ein Verrechnungspreis, keine Herstellkosten. Andreas hat B3 mit
+hoher Wahrscheinlichkeit ohne Kenntnis dieser Messung bestaetigt.
+
+**2. B1 ist einfacher als die produktive Regel.** Nach Abschnitt 1 laeuft heute eine
+vierstufige Kaskade. Stufe 4 vergleicht das Material gegen `MARC` Werk `1100` und setzt
+bei einem Treffer `SupplierType = Intern` mit liefernder Gesellschaft `TR_AG`, also
+Schweizer Kosten und gerade nicht lokale. Gemessen am 2026-08-12 betrifft das `10'817`
+von `22'950` Kandidatenzeilen. Wird B1 woertlich umgesetzt, wechseln diese Zeilen auf
+lokale Kosten.
+
+Beide Punkte ziehen am selben Hebel in **entgegengesetzte Richtungen**: Der Italien-Befund
+spricht dafuer, den Schweizer `STPRS` auszuweiten, auch wenn ein Lieferant genannt ist.
+B1 wuerde ihn einschraenken. Andreas sollte das in einem Zug entscheiden, nicht getrennt.
+
+**3. B5/B6 stehen gegen den Waehrungs-Guard vom 2026-08-25.** Produktiv tragen seit dem
+2026-08-25 bewusst `32` Zeilen keine Marge und stehen auf `Kostenwaehrung abweichend`,
+weil ein INR- oder EUR-Kostenwert gegen einen Umsatz in anderer Waehrung steht. Die
+Sitzung gibt die Richtung vor, naemlich umrechnen statt sperren. Die Regel selbst fehlt
+weiter: Kursquelle, Stichtag und Pflegeprozess sind offen und werden in `ISS-008` als
+sechs Entscheide bei Finance gefuehrt.
+
+### Umsetzung des Waehrungsteils am 2026-08-27
+
+B5 und B6 sind umgesetzt, `630/630` Tests gruen. **Noch nicht deployed**, der Produktivstand
+rechnet bis zur Freigabe unveraendert weiter.
+
+**1. Umrechnen ist die Regel, nicht mehr die Ausnahme.** Der Schalter
+`ExportSettings.GroupMarginCostCurrencyMode` existierte seit dem 2026-07-15 und stand auf
+`Mask`, ausdruecklich „bis der Fachentscheid vorliegt". Der Entscheid liegt jetzt vor, also
+ist `Convert` der Default. `Mask` bleibt waehlbar, ist aber die bewusst gesetzte Ausnahme;
+`NormalizeMode` faellt entsprechend auf `Convert` zurueck statt auf `Mask`.
+
+Bestehende Datenbanken tragen den alten Wert `Mask` ausdruecklich in der Zeile, ein
+geaenderter Spalten-Default wirkt dort nicht. `DatabaseSchemaMaintenanceService` zieht den
+Entscheid deshalb **einmal je Datenbank** nach, gesteuert ueber die Markerspalte
+`GroupMarginCostCurrencyDecision20260827Applied`. Wer den Schalter danach wieder auf `Mask`
+stellt, behaelt diese Wahl.
+
+**2. Tageskurs statt Jahreskurs.** `GroupMarginCostCurrencyConverter` fragte den Kurs bisher
+zum 31.12. des Finance-Jahres der Zeile ab, rechnete also auf historische Kurse zurueck.
+Jetzt gilt der laufende Tag. Der Parameter `year` ist aus der Signatur entfallen, statt still
+ignoriert zu werden; `ContributionMarginCalculator` folgt derselben Regel.
+
+**Bewusste Folge:** dieselbe Zeile kann an zwei Tagen zwei Margen ergeben, wenn sich der Kurs
+dazwischen aendert. Zwei Nachweis-Excel aus verschiedenen Wochen sind daher nicht mehr
+zeichengleich. Genau das ist gewollt, weil mit aktuellen Kursen gerechnet und mit anderen
+Kursen simuliert werden soll.
+
+**3. Die Konzernmarge wird in CHF ausgewiesen.** Hier lag ein echter Fehler, der ohne B5 nicht
+aufgefallen waere: `BuildGroupMarginSummary` addierte `SalesValue` und `CostBasisValue` ueber
+alle Laender, obwohl beide in der jeweiligen Verkaufswaehrung stehen. CHF, EUR, GBP und INR
+landeten unkonvertiert in derselben Summe; die Kachel trug dann nur das Label `Mixed`. Das war
+keine Konzernzahl, sondern eine Addition ungleicher Groessen.
+
+Jede Detailzeile traegt jetzt zusaetzlich `SalesValueChf`, `CostBasisValueChf` und
+`MarginValueChf`, umgerechnet mit demselben Tageskurs. Die Konzernsumme rechnet ueber diese
+Felder und zeigt `CHF`. Fehlt fuer eine Waehrung ein Kurs, bleibt die Zeile **aus der Summe
+heraus** und wird in `MissingGroupCurrencyRateRows` gezaehlt und als Hinweis ausgewiesen; eine
+gefuellte Zahl ohne Vorbehalt waere gefaehrlicher als eine sichtbar offene Position.
+
+Landes- und Divisionszeilen bleiben in Lokalwaehrung. Das ist Andreas' „lokale Sicht in
+Lokalwaehrung" und zugleich unveraendert gegenueber heute.
+
+**Nicht angefasst:** die offizielle Umrechnung des Umsatzes nach CHF (Group-Currency-Ansicht,
+Pruefbuch, `ResolveChfRate`) rechnet weiter mit dem Jahreskurs. Andreas' Aussage bezog sich im
+Gespraech auf die Kostenbasis der Gruppenmarge. Kursquelle, Stichtag und Pflegeprozess der
+offiziellen Reportingumrechnung haengen an `ISS-008` und sind nicht entschieden.
+
+**Ebenfalls nicht angefasst:** der Deckungsbeitrag in der Konzernsumme summiert weiter ueber
+Lokalwaehrungen. Das faellt heute nicht auf, weil kein Quellsystem den fix/variabel-Split
+liefert und der Wert produktiv leer bleibt. Sobald eine Quelle ihn liefert, gilt hier
+dieselbe CHF-Regel wie fuer die Marge.
+
+### Nebenbefund zur Reihenfolge im Flussdiagramm
+
+B4 beschreibt keine Codeaenderung, sondern eine Korrektur der Darstellung. Der Sales Type
+ist im Code bereits **Stufe 3** der Kaskade und steht damit dort, wo Andreas ihn haben
+will. Falsch ist nur die Anordnung in der Mappe.
+
+Umgekehrt fehlt der Sales Type im Gesamtexport, gefuehrt als `ISS-013`. Ohne dieses Feld
+kann Andreas die indische Steuerung im Vergleichs-Excel nicht nachvollziehen. `ISS-013`
+gehoert deshalb **vor** die Vergleichsrunde, nicht danach.
+
+**Am 2026-08-27 umgesetzt, noch nicht deployed.** `Sales Type` und `Trafag Sachnummer`
+stehen jetzt additiv am Ende des zentralen `Sales_All` (Spalten `53` und `54`) und im
+Nachweisblatt `Gruppenmarge Details` (Spalten `27` und `28`), beide im Hilfeblatt fachlich
+beschrieben. Bewusst der Rohwert aus dem Artikelstamm und keine Deutung: leer heisst nicht
+„extern", sondern nur, dass die Quelle das Feld nicht fuehrt.
 
 ## Querverweise
 

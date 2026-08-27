@@ -487,10 +487,11 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_SpendCascade_Caps_Article_Level_With_Remainder_Row()
+    public async Task LoadAsync_SpendCascade_Shows_Every_Article_Without_Truncation()
     {
-        // Artikelebene ist auf 10 gedeckelt: 12 Artikel -> 10 einzeln + 1 „uebrige (2)"-Zeile,
-        // Pivot-Summe bleibt trotz Deckelung exakt erhalten.
+        // Seit dem 2026-08-27 ist keine Ebene mehr gedeckelt (Wunsch Marco/Ingo): 12 Artikel
+        // ergeben 12 Zeilen, keine „uebrige"-Sammelzeile, und die Pivot-Summe bleibt exakt.
+        // Vorher waren es 10 einzeln plus eine Restzeile.
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('C2', '2025-03-01', 'L1', 'Lieferant Zwei', 'F', '2026-01-01');");
         for (var i = 1; i <= 12; i++)
             await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('C2', '{i:00}', 'ART-{i:00}', 'WG', '1', '{i * 10}', '2026-01-01');");
@@ -502,15 +503,12 @@ public class PurchasingDashboardServiceTests : IDisposable
 
         var supplier = Assert.Single(state.SpendCascadeRows, node => node.Label.Contains("Lieferant Zwei"));
         var group = Assert.Single(supplier.Children);
-        Assert.Equal(11, group.Children.Count);
+        Assert.Equal(12, group.Children.Count);
+        Assert.DoesNotContain(group.Children, child => child.Label.StartsWith("uebrige", StringComparison.Ordinal));
 
         var expectedTotal = (decimal)Enumerable.Range(1, 12).Sum(i => i * 10);
         Assert.Equal(expectedTotal, group.Total);
         Assert.Equal(group.Total, group.Children.Sum(child => child.Total));
-
-        var remainder = Assert.Single(group.Children, child => child.Label == "uebrige (2)");
-        Assert.Empty(remainder.Children);
-        Assert.Equal(30m, remainder.Total);
     }
 
     [Fact]
@@ -571,10 +569,11 @@ public class PurchasingDashboardServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadAsync_SpendMatrix_Caps_Material_Level_With_Remainder_Row()
+    public async Task LoadAsync_SpendMatrix_Shows_Every_Material_Without_Truncation()
     {
-        // Deckelung 25 Materialien je Warengruppe: 27 -> 25 einzeln + „uebrige (2)". Die Jahresspalten
-        // muessen auch mit Restzeile aufgehen, nicht nur die Gesamtspalte.
+        // Seit dem 2026-08-27 ohne Deckelung: 27 Materialien ergeben 27 Zeilen und keine
+        // Restzeile. Die Jahresspalten muessen dabei genauso aufgehen wie die Gesamtspalte.
+        // Vorher waren es 25 einzeln plus „uebrige (2)".
         await ExecuteAsync("INSERT INTO PurchasingEkkoCache (Ebeln, Bedat, Lifnr, SupplierName, Bstyp, LastLoadedAtUtc) VALUES ('D2', '2025-03-01', 'L9', 'Viel AG', 'F', '2026-01-01');");
         for (var i = 1; i <= 27; i++)
             await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln, Ebelp, Matnr, MaraMatkl, Menge, Netwr, LastLoadedAtUtc) VALUES ('D2', '{i:00}', 'ART-{i:00}', 'WG', '1', '{i * 10}', '2026-01-01');");
@@ -585,13 +584,10 @@ public class PurchasingDashboardServiceTests : IDisposable
         var supplier = Assert.Single(state.SupplierYearSpendRows, row => row.Supplier.Contains("Viel AG"));
         var group = Assert.Single(supplier.MaterialGroups);
 
-        Assert.Equal(26, group.Articles.Count);
+        Assert.Equal(27, group.Articles.Count);
+        Assert.DoesNotContain(group.Articles, article => article.IsRemainder);
         Assert.Equal(group.Total, group.Articles.Sum(article => article.Total));
         Assert.Equal(group.YearValues[2025], group.Articles.Sum(article => article.YearValues[2025]));
-
-        var remainder = Assert.Single(group.Articles, article => article.IsRemainder);
-        Assert.Equal("uebrige (2)", remainder.Article);
-        Assert.Equal(30m, remainder.Total); // ART-01 (10) + ART-02 (20)
     }
 
     [Fact]

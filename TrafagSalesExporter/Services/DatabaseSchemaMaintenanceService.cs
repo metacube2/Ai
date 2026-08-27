@@ -33,7 +33,8 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "UseAuditCsvAsCentralSource", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "ExportSettings", "LocalAuditCsvFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportSettings", "ExchangeRateDateField", "TEXT NOT NULL DEFAULT 'PostingDate'");
-        AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Mask'");
+        AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Convert'");
+        ApplyGroupMarginCostCurrencyDecisionOnce(db);
         AddColumnIfMissing(db, "ExportSettings", "SupplierFallbackMode", "TEXT NOT NULL DEFAULT 'ChPlantMaster'");
         AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
         AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
@@ -245,6 +246,34 @@ FROM Sites_old;";
             DatabaseSchemaTools.RebuildTable(conn, "Sites", DatabaseSchemaSql.GetSitesCreateSql());
     }
 
+
+    /// <summary>
+    /// Einmaliger Nachzug des Waehrungsbeschlusses von Andreas vom 2026-08-27 (B5/B6, belegt in
+    /// docs/FINANCE_STANDARDKOSTEN.md Abschnitt 11): Die Gruppenmarge rechnet eine abweichende
+    /// Kostenwaehrung um, statt die Zeile offen zu lassen.
+    ///
+    /// Bestehende Datenbanken tragen noch den ausdruecklich gesetzten Wert 'Mask' aus der Zeit
+    /// vor dem Entscheid. Ein geaenderter Spalten-Default wirkt dort nicht, deshalb dieser
+    /// gezielte Nachzug. Die Marker-Spalte sorgt dafuer, dass er **genau einmal je Datenbank**
+    /// laeuft: Wer den Schalter spaeter bewusst wieder auf 'Mask' stellt, behaelt diese Wahl.
+    /// </summary>
+    private static void ApplyGroupMarginCostCurrencyDecisionOnce(AppDbContext db)
+    {
+        var markerWasMissing = AddColumnIfMissing(
+            db, "ExportSettings", "GroupMarginCostCurrencyDecision20260827Applied", "INTEGER NOT NULL DEFAULT 0");
+        if (!markerWasMissing)
+            return;
+
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "UPDATE ExportSettings SET GroupMarginCostCurrencyMode = 'Convert', "
+            + "GroupMarginCostCurrencyDecision20260827Applied = 1;";
+        cmd.ExecuteNonQuery();
+    }
     private static bool AddColumnIfMissing(AppDbContext db, string table, string column, string type)
     {
         var conn = db.Database.GetDbConnection();

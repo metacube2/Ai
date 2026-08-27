@@ -286,9 +286,9 @@
         <MudItem xs="12" md="4">
             <MudSelect T="string" @bind-Value="_exportSettings.GroupMarginCostCurrencyMode"
                        Label="@T("Gruppenmarge bei abweichender Kostenwaehrung", "Group margin on differing cost currency")"
-                       HelperText="@T("Wirkt auf Dashboard, Pruefbuch, zentrale Excel und Nachweis-Excel. Fachentscheid mit Finance/Andreas offen.", "Applies to dashboard, audit ledger, central Excel and proof Excel. Business decision with finance/Andreas pending.")">
-                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Mask">@T("Marge offen lassen ('-')", "Leave margin open ('-')")</MudSelectItem>
-                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Convert">@T("Kosten mit Jahreskurs in Verkaufswaehrung umrechnen", "Convert cost with yearly rate to sales currency")</MudSelectItem>
+                       HelperText="@T("Wirkt auf Dashboard, Pruefbuch, zentrale Excel und Nachweis-Excel. Beschluss Andreas vom 27.08.2026: umrechnen ist die Regel.", "Applies to dashboard, audit ledger, central Excel and proof Excel. Andreas decision of 27.08.2026: converting is the rule.")">
+                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Mask">@T("Marge offen lassen ('-') — Ausnahme", "Leave margin open ('-') — exception")</MudSelectItem>
+                <MudSelectItem Value="@GroupMarginCostCurrencyModes.Convert">@T("Kosten mit Tageskurs in Verkaufswaehrung umrechnen (Regel)", "Convert cost with daily rate to sales currency (rule)")</MudSelectItem>
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="4">

@@ -608,6 +608,14 @@ public class ManagementCockpitService : IManagementCockpitService
         var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
         var supplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
         var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
+        var groupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies);
+        // Beschluss B5: die Konzernmarge gibt es nur in CHF. Fehlt fuer eine Verkaufswaehrung der
+        // Kurs, bleiben diese Zeilen aus der Konzernsumme heraus - das muss sichtbar sein, sonst
+        // liest sich eine zu kleine Summe wie eine vollstaendige.
+        if (groupMarginSummary.MissingGroupCurrencyRateRows > 0)
+        {
+            notices.Insert(0, $"Konzernmarge in CHF: fuer {groupMarginSummary.MissingGroupCurrencyRateRows:N0} von {groupMarginSummary.RowCount:N0} Zeilen fehlt ein Kurs in die Konzernwaehrung. Diese Zeilen sind in der CHF-Summe NICHT enthalten; die Landeszeilen darunter zeigen sie weiterhin in Lokalwaehrung.");
+        }
         var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
         // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
         // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
@@ -618,8 +626,8 @@ public class ManagementCockpitService : IManagementCockpitService
         // die echten Konzern-Standardkosten seien noch nicht angebunden - seit 2026-08-05 sind sie es.
         notices.Add("Gruppenmarge: Kostenbasis sind die Konzern-Standardkosten TR AG (SAP MBEW-STPRS, CHF), sobald die Trafag-Sachnummer der Zeile dort gefunden wird. Verkauft ein Standort Ware einer anderen Konzerngesellschaft (Sales Type LRD) ohne solchen Treffer, bleibt die Zeile offen, weil der lokale Preis dort der IC-Einkaufspreis ist. Sonst gilt der lokale Standardpreis; als intern gilt zusaetzlich jeder Lieferant, dessen Name oder Nummer 'Trafag' enthaelt. Den Sales Type liefert bisher nur TRIN. Fehlende Werte werden markiert, nicht geschaetzt.");
         notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
-            ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem Jahreskurs in die Verkaufswaehrung umgerechnet (Schalter in den Export-Einstellungen)."
-            : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'), bis der Fachentscheid vorliegt (Schalter in den Export-Einstellungen).");
+            ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem TAGESKURS in die Verkaufswaehrung umgerechnet (Beschluss Andreas vom 27.08.2026: kein Rueckrechnen auf historische Kurse). Ohne verfuegbaren Kurs bleibt die Zeile offen."
+            : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'). Das ist seit dem Beschluss vom 27.08.2026 die bewusst gewaehlte Ausnahme, nicht mehr der Normalfall (Schalter in den Export-Einstellungen).");
         notices.Add(supplierFallbackMode == SupplierFallbackModes.ChPlantMaster
             ? $"Supplier-Fallback: CH-Werkstamm MARC 1100 (neu, {chPlantMaterialKeys.Count:N0} Materialien). Ist der Cache leer, greift automatisch die bisherige MBEW-Regel."
             : "Supplier-Fallback: CH-Kostentabelle MBEW 1100 (alte Regel). Umschaltbar unter Admin Bereich > Settings.");
@@ -668,7 +676,7 @@ public class ManagementCockpitService : IManagementCockpitService
             ProductAssignmentSummary = BuildProductAssignmentSummary(productAssignmentRows),
             ProductAssignmentCountryRows = BuildProductAssignmentCountryRows(productAssignmentRows),
             ProductAssignmentRows = productAssignmentRows,
-            GroupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies),
+            GroupMarginSummary = groupMarginSummary,
             GroupMarginCountryRows = BuildGroupMarginCountryRows(groupMarginRows),
             GroupMarginDivisionRows = BuildGroupMarginDivisionRows(groupMarginRows),
             GroupMarginDetailRows = groupMarginRows.Take(1000).ToList(),
@@ -1453,7 +1461,25 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
         IReadOnlySet<string> chPlantMaterialKeys,
         string supplierFallbackMode)
-        => rows
+    {
+        // Kurs je Verkaufswaehrung nach CHF nur einmal aufloesen (Beschluss B5): dieselbe
+        // Waehrung kommt in tausenden Zeilen vor, und ResolveCrossRate geht jedes Mal an die DB.
+        var chfRates = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+        decimal? ChfRate(string? currency)
+        {
+            var key = currency?.Trim() ?? string.Empty;
+            if (key.Length == 0)
+                return null;
+            if (!chfRates.TryGetValue(key, out var cached))
+            {
+                cached = ResolveCrossRate(key, "CHF", GroupMarginCostCurrencyConverter.ResolveRateDate());
+                chfRates[key] = cached;
+            }
+
+            return cached;
+        }
+
+        return rows
             .Where(row => row.Include)
             .Select(row =>
             {
@@ -1466,15 +1492,20 @@ public class ManagementCockpitService : IManagementCockpitService
                 var supplierType = evaluation.SupplierType;
                 var status = evaluation.Status;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
-                    evaluation.CostBasis, row.Currency, evaluation.CostCurrency, row.Year,
+                    evaluation.CostBasis, row.Currency, evaluation.CostCurrency,
                     groupMarginCostCurrencyMode, ResolveCrossRate);
                 if (status == GroupMarginStatuses.Ok && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
                 var margin = row.Value - conversion.CostBasis;
+                // Konzernsicht in CHF (Beschluss B5). Derselbe Stichtag wie bei der Kostenbasis:
+                // der aktuelle Tageskurs, nicht der Jahreskurs der Verkaufszeile (B6).
+                var chfRate = ChfRate(row.Currency);
+                var salesChf = chfRate.HasValue ? row.Value * chfRate.Value : (decimal?)null;
+                var costBasisChf = chfRate.HasValue ? conversion.CostBasis * chfRate.Value : (decimal?)null;
                 // Deckungsbeitrag (additiv): nur wenn die Quelle einen fix/variabel-Split liefert.
                 var contribution = ContributionMarginCalculator.Resolve(
                     row.Quantity, row.Value, row.StandardCostVariable,
-                    row.Currency, row.StandardCostCurrency, row.Year,
+                    row.Currency, row.StandardCostCurrency,
                     groupMarginCostCurrencyMode, ResolveCrossRate);
                 return new ManagementGroupMarginDetailRow
                 {
@@ -1499,6 +1530,11 @@ public class ManagementCockpitService : IManagementCockpitService
                     SalesValue = row.Value,
                     MarginValue = margin,
                     MarginPercent = PercentOf(margin, row.Value),
+                    SalesValueChf = salesChf,
+                    CostBasisValueChf = costBasisChf,
+                    MarginValueChf = salesChf.HasValue && costBasisChf.HasValue
+                        ? salesChf.Value - costBasisChf.Value
+                        : null,
                     VariableUnitCost = row.StandardCostVariable,
                     VariableCostBasisValue = contribution.VariableCostBasis,
                     ContributionMarginValue = contribution.ContributionMargin,
@@ -1509,13 +1545,25 @@ public class ManagementCockpitService : IManagementCockpitService
             .ThenBy(row => row.CountryKey, StringComparer.OrdinalIgnoreCase)
             .ThenByDescending(row => Math.Abs(row.MarginValue))
             .ToList();
+    }
 
+    /// <summary>
+    /// Die Konzernsumme rechnet in CHF (Beschluss Andreas vom 2026-08-27, B5). Bis dahin wurden
+    /// hier <c>SalesValue</c> und <c>CostBasisValue</c> ueber alle Laender aufaddiert, obwohl sie
+    /// in der jeweiligen Verkaufswaehrung stehen: EUR, GBP, INR und CHF landeten unkonvertiert in
+    /// derselben Summe, die Kachel trug dann nur das Label „Mixed". Die Landes- und Detailzeilen
+    /// bleiben bewusst in Lokalwaehrung, das ist die lokale Sicht.
+    ///
+    /// Zeilen ohne gepflegten Kurs gehen NICHT in die Summe ein und werden in
+    /// <see cref="ManagementGroupMarginSummary.MissingGroupCurrencyRateRows"/> ausgewiesen.
+    /// </summary>
     private static ManagementGroupMarginSummary BuildGroupMarginSummary(
         IReadOnlyCollection<ManagementGroupMarginDetailRow> rows,
         IReadOnlyCollection<string> currencies)
     {
-        var sales = rows.Sum(row => row.SalesValue);
-        var cost = rows.Sum(row => row.CostBasisValue);
+        var convertible = rows.Where(row => row.SalesValueChf.HasValue && row.CostBasisValueChf.HasValue).ToList();
+        var sales = convertible.Sum(row => row.SalesValueChf!.Value);
+        var cost = convertible.Sum(row => row.CostBasisValueChf!.Value);
         var margin = sales - cost;
         var cleanRows = rows.Count(row => row.Status == GroupMarginStatuses.Ok);
 
@@ -1525,6 +1573,7 @@ public class ManagementCockpitService : IManagementCockpitService
             CostBasisValue = cost,
             MarginValue = margin,
             MarginPercent = PercentOf(margin, sales),
+            MissingGroupCurrencyRateRows = rows.Count - convertible.Count,
             RowCount = rows.Count,
             InternalSupplierRows = rows.Count(row => row.SupplierType == "Intern"),
             ExternalSupplierRows = rows.Count(row => row.SupplierType == "Extern"),
@@ -1532,7 +1581,9 @@ public class ManagementCockpitService : IManagementCockpitService
             MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
             UnclearSupplierRows = rows.Count(row => row.Status == GroupMarginStatuses.SupplierUnclear),
             CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
-            DisplayCurrency = BuildDisplayCurrencyLabel(currencies),
+            // Fuehrt nur noch eine Waehrung ins Ergebnis, bleibt deren Label stehen; sonst gilt
+            // die Konzernwaehrung CHF, weil die Summe genau dorthin umgerechnet ist.
+            DisplayCurrency = currencies.Count == 1 ? BuildDisplayCurrencyLabel(currencies) : "CHF",
             ContributionMarginValue = SumContributionMargin(rows),
             ContributionMarginRows = rows.Count(row => row.ContributionMarginValue.HasValue)
         };
@@ -1686,7 +1737,7 @@ public class ManagementCockpitService : IManagementCockpitService
                     supplierFallbackMode: supplierFallbackMode);
                 var supplierType = basis.SupplierType;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
-                    basis.CostBasis, originalCurrency, basis.CostCurrency, row.Year,
+                    basis.CostBasis, originalCurrency, basis.CostCurrency,
                     groupMarginCostCurrencyMode, ResolveCrossRate);
                 var status = basis.Status;
                 if (status == GroupMarginStatuses.Ok && conversion.IsMasked)

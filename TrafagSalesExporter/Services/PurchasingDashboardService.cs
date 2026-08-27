@@ -132,6 +132,19 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     // MARA-MSTAE-Werte, die ein Material als zur Loeschung vorgemerkt / gesperrt kennzeichnen.
     private static readonly string[] DeletedMaterialStatusCodes = ["98", "99"];
 
+    /// <summary>
+    /// Keine Deckelung. Marco und Ingo haben am 2026-08-27 ausdruecklich die vollstaendige
+    /// Liste verlangt, gerade wegen der kleinen Lieferanten („gerade wenn du die Kleinen mal
+    /// aufraeumen willst"). Eine lange Liste stoert nicht, gescrollt wird ohnehin.
+    ///
+    /// Die frueher noetige Deckelung stammte aus der Sorge, der serverseitig gerenderte Baum
+    /// koenne bei ueber 230'000 Positionen explodieren. Am 2026-08-27 produktiv nachgemessen:
+    /// `707` Lieferanten, `1'244` Lieferant/Warengruppe-Paare und `17'064` Blattknoten ueber
+    /// alle Jahre. Das traegt die Oberflaeche, zumal Kinder erst beim Aufklappen gerendert
+    /// werden. Die „uebrige"-Sammelzeile bleibt im Code, greift damit aber nicht mehr.
+    /// </summary>
+    private const int NoCap = int.MaxValue;
+
     // Jahresachse fuer Spend/Matrix: fixe Untergrenze (fachliche Vorgabe), dynamische Obergrenze,
     // damit die Sicht beim Jahreswechsel nicht still das aktuelle Jahr verliert.
     private const int MinSpendYear = 2020;
@@ -1047,7 +1060,6 @@ ORDER BY Supplier, Year;";
                 MaterialGroups = groupsBySupplier.TryGetValue(row.Key, out var groups) ? groups : []
             })
             .OrderByDescending(row => row.Total)
-            .Take(40)
             .ToList();
     }
 
@@ -1132,7 +1144,10 @@ ORDER BY Supplier, MaterialGroup, Year;";
     /// zehn Zeilen abgeschnitten bekommen. Der Rest landet in einer "uebrige (n)"-Zeile, damit
     /// Warengruppensumme = Summe der Artikelzeilen bleibt (Pivot-Eigenschaft).
     /// </summary>
-    private const int SpendMatrixArticleCap = 25;
+    // Seit dem 2026-08-27 ohne Deckelung (Wunsch Marco/Ingo, siehe NoCap). Der Wert bleibt als
+    // Konstante stehen, damit die „uebrige"-Buendelung unveraendert weiterlebt, falls je wieder
+    // gedeckelt werden soll.
+    private const int SpendMatrixArticleCap = NoCap;
 
     /// <summary>
     /// Dritte Ebene der Spend-Matrix: Spend je Lieferant/Warengruppe/Materialnummer und Jahr
@@ -1277,25 +1292,25 @@ GROUP BY Supplier, MaterialGroup, Article, Year;";
     /// Beispielkette ausdruecklich „nach Beschaffungsregion, dann Lieferant, dann Warengruppen und
     /// wieder Material".
     ///
-    /// Die Deckelungen sind je Perspektive eigen: bei wenigen Einstiegswerten (Region, Waehrung)
-    /// darf die erste Ebene klein sein und die Tiefe grosszuegiger, bei vielen (Lieferant) ist es
-    /// umgekehrt. Insgesamt bleibt das Produkt der Deckelungen in derselben Groessenordnung, damit
-    /// der serverseitig gerenderte Baum bei &gt;230k Positionen nicht explodiert.
+    /// Seit dem 2026-08-27 ist KEINE Ebene mehr gedeckelt, siehe <see cref="NoCap"/>. Vorher trug
+    /// jede Perspektive eigene Deckelungen (Lieferant 40/15/10, Region 12/15/10/8 und so weiter),
+    /// und der Rest verschwand in einer „uebrige"-Zeile. Marco hat das als Mangel gemeldet: er
+    /// kommt so an die kleinen Lieferanten nicht heran.
     /// </summary>
     private static readonly IReadOnlyList<SpendPerspective> SpendPerspectives =
     [
         new("supplier", "Lieferant", "Supplier",
             [SupplierDimension, MaterialGroupDimension, ArticleDimension],
-            [40, 15, 10]),
+            [NoCap, NoCap, NoCap]),
         new("region", "Beschaffungsregion", "Procurement region",
             [RegionDimension, SupplierDimension, MaterialGroupDimension, ArticleDimension],
-            [12, 15, 10, 8]),
+            [NoCap, NoCap, NoCap, NoCap]),
         new("materialgroup", "Warengruppe", "Material group",
             [MaterialGroupDimension, SupplierDimension, ArticleDimension],
-            [20, 15, 10]),
+            [NoCap, NoCap, NoCap]),
         new("currency", "Waehrung", "Currency",
             [CurrencyDimension, SupplierDimension, MaterialGroupDimension, ArticleDimension],
-            [8, 15, 10, 8])
+            [NoCap, NoCap, NoCap, NoCap])
     ];
 
     /// <summary>

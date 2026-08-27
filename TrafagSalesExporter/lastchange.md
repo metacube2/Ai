@@ -2,6 +2,132 @@
 
 Stand: 2026-08-27
 
+## Sales Type geht vor den Lieferantenfeldern 2026-08-27 (NICHT DEPLOYED)
+
+- **Entscheid Ingo:** Wo die Quelle einen Sales Type fuehrt, entscheidet dieser — auch gegen
+  gepflegte Lieferantenfelder. Sind die Felder leer, entschied der Sales Type ohnehin schon;
+  neu ist der Fall **Widerspruch**. Ohne Sales Type gilt weiterhin der Lieferantentext.
+  Steht `LRD`, kommt die Ware von Trafag AG, also gilt die Schweizer Kostenquelle
+  `MBEW-STPRS` im Bewertungskreis `1100`.
+- **Damit ist eine seit dem 2026-08-05 offene Frage beantwortet** und zugleich eine Asymmetrie
+  aufgeloest: fuer die Klassifikation gewann bisher der Lieferantentext, fuer die Kostenbasis
+  der Sales Type — dieselbe Zeile war gleichzeitig „extern" und „Konzernvertrieb".
+- **Umgesetzt** in `GroupMarginSupplierClassifier`, in **beiden** Methoden (`Resolve` und
+  `ResolveDeliveringEntity`) mit identischer Reihenfolge. Laufen die beiden auseinander,
+  widersprechen sich Klassifikation und Kostenpfad — genau der Fehler, wegen dem die Rechnung
+  am 2026-08-05 zusammengelegt wurde.
+- **Produktiv gemessen am 2026-08-27**, read-only: Nur TRIN fuehrt das Feld (Italien hat es bei
+  allen Zeilen leer). `41` Zeilen mit `FFM` und fremdem Lieferanten wechseln von `Extern` auf
+  `Intern`. `37` Zeilen mit `FFM` und Trafag-Lieferant koennen die liefernde Gesellschaft von
+  `TR_AG` auf `TR_IN` wechseln, sofern dort Trafag AG steht. `516` `LRD`-Zeilen bleiben gleich,
+  weil beide Wege `TR_AG` ergeben. `6'379` Zeilen ohne Lieferantenfelder sind unveraendert.
+- **Tests:** `635/635` gruen. Die zwei Tests, die die alte Reihenfolge samt Asymmetrie
+  ausdruecklich festhielten, pruefen jetzt das Gegenteil; zwei neue sichern ab, dass die
+  Umkehr NUR greift, wo ein Sales Type gepflegt ist.
+- Details: `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 1,
+  `docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md` Nachtrag zu 3b.
+
+## Einkaufsdashboard: Deckelungen weg, Balken ausgerichtet, Kacheln erklaert 2026-08-27 (NICHT DEPLOYED)
+
+- **Anlass:** Ingos Sichtpruefung und die Sitzung mit Marco. Drei Auftraege: Beschriftungen
+  ausfuehrlicher, Lieferantenliste nicht mehr abschneiden, versetzte Balken.
+- **Keine Deckelung mehr.** Alle vier Spend-Perspektiven und die Lieferanten-Jahres-Matrix
+  laufen auf `NoCap`. Vorher Lieferant `40`/`15`/`10` und `25` Artikel je Warengruppe, der Rest
+  verschwand in „uebrige" oder in der Matrix sogar ersatzlos. Produktiv nachgemessen, dass das
+  traegt: `707` Lieferanten, `1'244` Lieferant/Warengruppe-Paare, `17'064` Blattknoten.
+- **Balkenfehler gefunden und behoben.** `display: grid` sass auf der einzelnen Balkenzeile,
+  jede Zeile war ihr eigenes Raster. Die Wertspalte ist `auto` und je Zeile verschieden lang,
+  deshalb standen die Balken treppenartig versetzt. Jetzt traegt der Container das Raster und
+  die Zeile steht auf `display: contents` — in **beiden** Komponenten, nicht nur an der
+  auffaelligen Stelle.
+- **Zwei irrefuehrende Beschriftungen korrigiert.** `Bereits beschafft` traegt den Bestellwert
+  und wurde von Marco als Wareneingang gelesen; heisst jetzt `Bestellwert im Zeitraum`.
+  `Offener Bestellwert` und `Disponierter Zulauf` waren zwei Zeilen mit demselben Wert und sind
+  jetzt eine.
+- **Jede KPI-Kachel hat eine erklaerende zweite Zeile** (`ExplainDe`/`ExplainEn`), bewusst zwei
+  Saetze statt eines Absatzes. Zehn neue Oberflaechentexte in allen sechs Sprachen nachgezogen.
+- **Tests:** `633/633` gruen; die zwei Tests, die die Deckelung samt Restzeile absicherten,
+  pruefen jetzt das Gegenteil, naemlich dass nichts mehr abgeschnitten wird.
+- **Offen:** die `LIMIT 10`-Liste unter „Ueberfaellige Positionen", die Balkenfarbe, und der
+  produktive Sichtnachweis (Chrome-Erweiterung war nicht verbunden).
+- Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`, Nachtraege vom 2026-08-27.
+
+## ISS-013: Sales Type und Trafag-Sachnummer im Export 2026-08-27 (NOCH NICHT DEPLOYED)
+
+- **Anlass:** Ohne diese beiden Felder kann Andreas im Vergleichs-Excel nicht sehen, warum eine
+  indische Zeile so gerechnet wird, wie sie gerechnet wird. Die Klassifikation haengt an ihnen,
+  sichtbar waren sie bisher nur in der Audit-CSV.
+- **Zentrales `Sales_All`:** zwei neue Spalten am ENDE, Position `53` `Sales Type` und `54`
+  `Trafag Sachnummer`. Additiv, weil die Blattformeln des Nachweises auf feste Spaltenpositionen
+  und Textwerte zeigen; ein Einschub in der Mitte waere still toedlich.
+- **Nachweisblatt `Gruppenmarge Details`:** dieselben zwei Spalten an Position `27` und `28`,
+  hinter den DB-Spalten. Die Formeln fuer `Margin Value` und `Margin %` in Spalte S und T
+  bleiben damit unberuehrt.
+- **Hilfeblatt:** beide Felder sind fachlich beschrieben. `FFM` Eigenfertigung, `CM` Contract
+  Manufacturing im Auftrag von Trafag AG mit Herstellkosten am Standort, `LRD` Limited Risk
+  Distributor mit Ware aus der Schweiz. Ausdruecklich dokumentiert: **leer heisst nicht
+  „extern"**, sondern nur, dass die Quelle das Feld nicht fuehrt.
+- **Quelle:** Indien `OITM."U_Tasc_ST"` und `OITM."U_TASC_OMN"`. Bisher liefert nur TRIN diese
+  Felder; Italien fuehrt den Sales Type bei allen `19'968` Zeilen leer (gemessen 2026-08-27).
+- **Tests:** `633/633` gruen, davon drei neue in `CentralExcelSalesTypeTests`: Spalten am Ende
+  mit Rohwert, leere Quelle bleibt leer, und dasselbe im Nachweisblatt. Der bestehende
+  Guardrail-Test fuer die Spaltenpositionen ist mitgezogen.
+- **Kein Deploy.** Geht zusammen mit dem Waehrungsbeschluss B5/B6, sobald Ingo freigibt.
+
+## Waehrungsbeschluss B5/B6 umgesetzt 2026-08-27 (NOCH NICHT DEPLOYED)
+
+- **Anlass:** Ingo gibt den Waehrungsteil der Sitzung mit Andreas zur Umsetzung frei. Alles
+  Uebrige aus Abschnitt 11 bleibt liegen, weil die drei Abweichungen noch bei Andreas sind.
+- **Umrechnen ist die Regel.** `ExportSettings.GroupMarginCostCurrencyMode` steht neu auf
+  `Convert`; `Mask` bleibt waehlbar, ist aber die Ausnahme. Bestehende Datenbanken tragen den
+  alten Wert ausdruecklich, deshalb zieht `DatabaseSchemaMaintenanceService` den Entscheid
+  **einmal je Datenbank** nach, gesteuert ueber die Markerspalte
+  `GroupMarginCostCurrencyDecision20260827Applied`.
+- **Tageskurs statt Jahreskurs.** `GroupMarginCostCurrencyConverter` fragte den Kurs bisher
+  zum 31.12. des Finance-Jahres ab, rechnete also zurueck. Jetzt gilt der laufende Tag, der
+  Parameter `year` ist aus der Signatur entfallen. Bewusste Folge: zwei Nachweis-Excel aus
+  verschiedenen Wochen sind nicht mehr zeichengleich.
+- **Echter Fehler gefunden und behoben:** `BuildGroupMarginSummary` addierte `SalesValue` und
+  `CostBasisValue` ueber alle Laender, obwohl sie in der jeweiligen Verkaufswaehrung stehen.
+  CHF, EUR, GBP und INR landeten unkonvertiert in einer Summe, die Kachel trug das Label
+  `Mixed`. Die Konzernsumme rechnet jetzt in CHF; Zeilen ohne Kurs bleiben draussen und
+  werden gezaehlt und als Hinweis ausgewiesen. Landes- und Divisionszeilen bleiben in
+  Lokalwaehrung.
+- **Nicht angefasst:** die offizielle Umrechnung des Umsatzes nach CHF (`ResolveChfRate`,
+  Group-Currency-Ansicht, Pruefbuch) rechnet weiter mit dem Jahreskurs. Das haengt an
+  `ISS-008` und ist nicht entschieden.
+- **Tests:** `630/630` gruen, darunter vier neue zu Tageskurs, Default und CHF-Summe.
+- **Kein Deploy.** Der Produktivstand rechnet unveraendert weiter, bis Ingo freigibt. Die
+  Wirkung auf die `32` heute maskierten Zeilen ist erst danach messbar.
+- Details: `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 11.
+
+## Sitzung mit Andreas zur Standortkosten-Logik, dokumentiert 2026-08-27
+
+- **Anlass:** Ingo hat das Transkript der heutigen Sitzung mit Andreas weitergegeben. Es
+  wurde ausdruecklich **nichts programmiert**; die Aufnahme ist reine Dokumentation.
+- **Durchgesprochen** wurde das Blatt `Flussdiagramm` der Arbeitsmappe
+  `docs/Standortkosten_Logik_2026-08-26.xlsx`.
+- **Sechs Beschluesse**, festgehalten in `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 11:
+  ohne Lieferant gelten die lokalen Standardkosten der verkaufenden Gesellschaft (B1);
+  mit Lieferant die Quelle von Trafag AG, Italia oder India (B2); alle drei gelten im
+  ersten Schritt als Herstellkosten (B3); der Sales Type gehoert in den oberen Block statt
+  in einen Sonderfallzweig (B4); die Konzernmarge gibt es nur in CHF (B5); ohne
+  Rueckrechnen auf historische Kurse (B6).
+- **Drei Abweichungen gegen den heutigen Stand**, alle in Abschnitt 11 belegt und in
+  Abschnitt 7 als offene Punkte nachgezogen. (1) B3 trifft fuer Italien nicht zu: Der
+  Vormittagsbefund zeigt den Einkaufspreis beim `3.48`-fachen des Schweizer `MBEW-STPRS`.
+  (2) B1 ist einfacher als die produktive Kaskade; Stufe 4 setzt bei einem MARC-Treffer
+  Werk 1100 heute `Intern / TR_AG`, betroffen sind `10'817` von `22'950` Kandidatenzeilen.
+  (3) B5/B6 stehen gegen den Waehrungs-Guard vom 2026-08-25, der `32` Zeilen bewusst ohne
+  Marge laesst.
+- **Statusfolgen:** `ISS-003.5` (Supplier-Fallback je Land) ist damit **entschieden** und
+  im Issue-Log auf erledigt gesetzt. Der Andreas-Termin fuehrt noch `ISS-003.4`, `ISS-009`
+  und `ISS-010`, also drei statt vier Punkte. `ISS-013` (Sales Type im Gesamtexport) ist
+  auf `Heute` hochgezogen, weil Andreas ohne dieses Feld die indische Steuerung im
+  Vergleichs-Excel nicht nachvollziehen kann.
+- **Vereinbart:** Ingo passt die Mappe an, generiert `Sales_All` neu, Andreas prueft gegen
+  ein Vergleichs-Excel.
+
 ## Konzernkosten: Praemisse „nur CH fertigt" geprueft 2026-08-27
 
 - **Anlass:** Ingo fragt, ob die drei Konzernkostenquellen tragen, wenn nur Trafag CH

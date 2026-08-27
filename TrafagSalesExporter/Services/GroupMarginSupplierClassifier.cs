@@ -94,12 +94,26 @@ public static class GroupMarginSupplierClassifier
         if (IsIntercompanySellingTsc(tsc))
             return Internal;
 
-        // Ein vorhandener Lieferantentext geht vor: er ist die ausdruecklich gepflegte Angabe
-        // zur konkreten Zeile, der Sales Type dagegen eine Eigenschaft des Artikels. Beides
-        // widerspricht sich produktiv bei 10 TRIN-Artikeln (Sales Type FFM, aber Lieferant
-        // gepflegt); welches Feld dort gilt, ist mit Indien noch zu klaeren. Bis dahin bleibt
-        // das Verhalten dieser Zeilen unveraendert, statt es auf eine Vermutung umzustellen.
+        // ENTSCHEID INGO, 2026-08-27: Wo die Quelle einen Sales Type fuehrt, entscheidet DIESER -
+        // auch dann, wenn die Lieferantenfelder etwas anderes sagen. Damit ist die Frage
+        // beantwortet, die hier seit dem 2026-08-05 als offen stand: produktiv widersprechen
+        // sich beide Angaben bei 10 TRIN-Artikeln (Sales Type FFM, aber Lieferant gepflegt).
+        // Bis heute gewann der Lieferantentext, jetzt gewinnt der Sales Type.
+        //
+        // Begruendung: Der Sales Type ist die verrechnungspreisliche Rolle aus dem
+        // Artikelstamm und damit die fachlich gesetzte Aussage; die Lieferantenfelder sind in
+        // Indien nachweislich unvollstaendig und teilweise widerspruechlich gepflegt. Praktisch
+        // betrifft die Regel nur TRIN, weil bisher nur Indien das Feld fuehrt - Italien hat es
+        // bei allen 19'968 Zeilen leer (gemessen 2026-08-27).
+        //
+        // Alle drei Werte bezeichnen eine Konzernrolle, keinen Fremdbezug: FFM und CM fertigt
+        // der Standort selbst (bei CM im Auftrag von Trafag AG), LRD bezieht von Trafag AG.
         // Siehe docs/FINANCE_TRIN_EIGENFERTIGUNG_2026-08-05.md Abschnitt 3b.
+        var role = ResolveSalesTypeRole(salesType);
+        if (role is not null)
+            return Internal;
+
+        // Erst ohne gepflegten Sales Type zaehlt der Lieferantentext.
         if (!string.IsNullOrWhiteSpace(supplierNumber) ||
             !string.IsNullOrWhiteSpace(supplierName) ||
             !string.IsNullOrWhiteSpace(supplierCountry))
@@ -107,13 +121,6 @@ public static class GroupMarginSupplierClassifier
             var supplierText = string.Join(' ', supplierNumber, supplierName, supplierCountry);
             return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
         }
-
-        // Ohne Lieferantentext entscheidet der Sales Type, falls die Quelle ihn fuehrt. Alle
-        // drei Werte bezeichnen eine Konzernrolle, keinen Fremdbezug: FFM und CM fertigt der
-        // Standort selbst (bei CM im Auftrag von Trafag AG), LRD bezieht von Trafag AG.
-        var role = ResolveSalesTypeRole(salesType);
-        if (role is not null)
-            return Internal;
 
         if (HasMaterialFallbackMatch(
                 normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode))
@@ -241,6 +248,24 @@ public static class GroupMarginSupplierClassifier
         if (IsIntercompanySellingTsc(tsc))
             return GroupStandardCostEntities.TrAg;
 
+        // Entscheid Ingo, 2026-08-27, identisch zu Resolve(): der gepflegte Sales Type geht vor
+        // den Lieferantenfeldern. Beide Methoden MUESSEN dieselbe Reihenfolge haben, sonst
+        // laufen Klassifikation und Kostenpfad auseinander - genau der Fehler, wegen dem die
+        // Rechnung 2026-08-05 in GroupMarginCalculator zusammengelegt wurde.
+        //
+        // FFM und CM fertigt der Standort selbst, liefernde Gesellschaft ist damit der Standort.
+        // LRD kommt von Trafag AG - und damit greift die Schweizer Kostenquelle (MBEW-STPRS,
+        // Bewertungskreis 1100), so wie Ingo es am 2026-08-27 festgelegt hat.
+        var role = ResolveSalesTypeRole(salesType);
+        if (role is not null)
+        {
+            return role switch
+            {
+                SalesTypeRoles.GroupDistribution => GroupStandardCostEntities.TrAg,
+                _ => ResolveSiteEntity(tsc)
+            };
+        }
+
         if (!string.IsNullOrWhiteSpace(supplierNumber) ||
             !string.IsNullOrWhiteSpace(supplierName) ||
             !string.IsNullOrWhiteSpace(supplierCountry))
@@ -253,19 +278,6 @@ public static class GroupMarginSupplierClassifier
             if (TrInEntityPattern.IsMatch(name))
                 return GroupStandardCostEntities.TrIn;
             return null;
-        }
-
-        // Ohne Lieferantentext entscheidet der Sales Type, wo die Quelle ihn fuehrt. FFM und CM
-        // fertigt der Standort selbst - liefernde Gesellschaft ist damit der Standort; LRD kommt
-        // von Trafag AG.
-        var role = ResolveSalesTypeRole(salesType);
-        if (role is not null)
-        {
-            return role switch
-            {
-                SalesTypeRoles.GroupDistribution => GroupStandardCostEntities.TrAg,
-                _ => ResolveSiteEntity(tsc)
-            };
         }
 
         // Gleicher umschaltbarer Material-Fallback wie in Resolve(). Beide Methoden muessen

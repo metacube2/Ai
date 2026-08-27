@@ -935,3 +935,213 @@ Bestand, und ist damit faktisch ein Full Load.
   (Marcos Leitplanke „ein Punkt nach dem anderen"): Kachel `Top-Artikel`, `Liefertermin-Risiko`,
   die Kontrakt-Detailzeilen und der Artikel-Preistrend. Beim Preistrend dient der Artikel
   zusaetzlich als Join-Schluessel zwischen zwei CTEs, das braucht eine eigene Pruefung.
+
+## Nachtrag 2026-08-27 Sichtpruefung Ingo: produktiv nachgemessen
+
+Ingo hat das produktive Einkaufsdashboard angesehen und mehrere Auffaelligkeiten gemeldet.
+Alle Zahlen hier sind am 2026-08-27 **read-only gegen die Produktivdatenbank** gemessen
+(`.tmp_tools/SqlQ`, SQLite im ReadOnly-Modus gegen die Serverfreigabe), mit denselben Filtern,
+die der Code als Default setzt: `OrdersOnly`, `ExcludeDeletedItems`, `ExcludeEndDelivered`.
+Es wurde **nichts geaendert**.
+
+### 1. Der offene Zulauf ist rechnerisch richtig und trotzdem irrefuehrend
+
+Gesamter offener Wert: rund **`26.6` Mio CHF**. Das deckt sich mit Ingos Beobachtung
+(„wirkt viel zu hoch, maximal `10` Mio"). Die Aufteilung nach dem Jahr des geplanten
+Liefertermins `EKET.EINDT` zeigt, woher der Betrag kommt:
+
+| Liefertermin | offener Wert CHF |
+| --- | ---: |
+| 2003 bis 2025 | `16.8` Mio |
+| 2026 | `9.2` Mio |
+| 2027 | `0.7` Mio |
+
+**Rund zwei Drittel des Betrags sind Einteilungen mit einem Liefertermin vor 2026**, die
+aelteste stammt aus `2003`. Ingos erwartete Groessenordnung von `10` Mio entspricht fast genau
+`2026` plus `2027`. Die Kennzahl rechnet also korrekt, sie zaehlt nur einen Altbestand mit, den
+niemand als „Zulauf" liest.
+
+Der fehlende Zeitfilter ist eine bewusste Entscheidung aus dem Marco-Review vom 2026-07-10
+(„keine Untergrenze, sonst verschwinden alte ueberfaellige Rueckstaende"). Die Entscheidung ist
+fuer die Ueberfaellig-Sicht richtig und fuer die Zulauf-Sicht falsch: derselbe Wert beantwortet
+beide Fragen, und fuer die zweite ist er unbrauchbar. Fachlich zu klaeren ist nicht die Formel,
+sondern ob diese Altpositionen in SAP je geschlossen werden — `EKPO.ELIKZ` ist dort nicht
+gesetzt und `EKET.WEMNG` bleibt unter `EKET.MENGE`.
+
+### 2. Der ueberfaellige Wert ist gross, die Liste darunter ist gedeckelt
+
+Gemessen: **`7'448` ueberfaellige Positionen**, offener Wert **`18.3` Mio CHF**, davon nur
+`1.5` Mio mit einem Termin ab `2026`.
+
+Definition, damit sie im Dashboard steht: eine Einteilung zaehlt als ueberfaellig, wenn
+`EKET.EINDT` vor heute liegt, die offene Menge `EKET.MENGE - EKET.WEMNG` groesser null ist, die
+Position nicht storniert (`EKPO.LOEKZ`) und nicht endgeliefert (`EKPO.ELIKZ = 'X'`) ist, das
+Material nicht `MARA-MSTAE` 98/99 traegt und der Beleg eine echte Bestellung ist
+(`EKKO.BSTYP = 'F'`, ohne Umlagerung `BSART = 'UB'`).
+
+Ingos Eindruck „der Wert ist viel zu wenig" bezieht sich auf die Liste unter der Kachel: die
+Abfrage `OverduePositionRows` endet auf `LIMIT 10`. Gezeigt werden die zehn groessten
+Lieferant/Material-Kombinationen, ohne Restzeile und ohne Hinweis. Die Summe der sichtbaren
+Zeilen ist deshalb systematisch viel kleiner als die Kachel darueber.
+
+### 3. Die Waehrungsumrechnung ist in Ordnung — anders als vermutet
+
+Geprueft wurde, ob `EKKO.WKURS` fehlt und die Rechnung still auf 1:1 zurueckfaellt. Ergebnis:
+
+| Waehrung | Positionen | Kurs = 0 | Kurs < 0 | Kursspanne | Netto in Belegwaehrung |
+| --- | ---: | ---: | ---: | --- | ---: |
+| EUR | `30'987` | `0` | `0` | `0.94` bis `1.10` | `143.5` Mio |
+| CHF | `15'183` | `0` | `0` | `1.00` | `46.8` Mio |
+| USD | `2'594` | `0` | `0` | `0.80` bis `1.00` | `12.4` Mio |
+| GBP | `27` | `0` | `0` | `1.10` bis `1.30` | `0.012` Mio |
+
+**Keine einzige Position faellt auf 1:1 zurueck**, es gibt keine negativen Kurse und keine
+Waehrung mit TCURR-Kursfaktor. Der theoretisch offene Punkt (fehlender Kursfaktor, stiller
+Fallback) trifft mit diesem Datenbestand nicht zu.
+
+Was bleibt, ist eine **Lesefalle, kein Rechenfehler**: Die Perspektive „Waehrung" im
+Spend-Aufriss gruppiert nach der **Belegwaehrung** `EKKO.WAERS`, zeigt darin aber
+**CHF-Betraege**. Und der Kurs ist der auf dem Bestellbeleg festgeschriebene Kurs zum
+Bestellzeitpunkt, nicht der heutige. Beides gehoert an die Kachel geschrieben.
+
+### 4. Die Lieferantenmatrix schneidet stillschweigend ab
+
+`ExecuteSupplierYearRowsAsync` endet auf `.Take(40)` — **ohne** „uebrige"-Restzeile. Der
+Aufriss daneben macht es richtig und sammelt den Rest. Die Matrixsumme ist dadurch kleiner als
+der Spend total, ohne dass es irgendwo steht. Der Hinweistext unter der Tabelle erklaert nur
+die Deckelung auf `25` Materialien je Warengruppe, nicht die Deckelung der Lieferanten.
+
+Ingo sieht produktiv `20` Lieferanten, im Repository stehen `40`. Der Unterschied ist noch
+nicht erklaert; wahrscheinlich laeuft produktiv ein aelterer Stand.
+
+### 5. Was die Kennzahlen bedeuten — Kurzfassung fuer die Beschreibungstexte
+
+| Kachel | Was genau gerechnet wird | Was sie NICHT ist |
+| --- | --- | --- |
+| Spend total | `SUM(EKPO.NETWR)` nach CHF, Belege im Zeitraum ueber `EKKO.BEDAT` | kein Wareneingang, keine Rechnung, keine Zahlung |
+| Spend nach Jahr | dasselbe, Jahr aus `EKKO.BEDAT` (Bestelldatum) | nicht das Liefer- oder Buchungsjahr |
+| Offener Zulauf | `SUM((EKET.MENGE - EKET.WEMNG) x CHF-Stueckpreis)`, zeitraumunabhaengig | kein Forecast, keine Faelligkeitssicht |
+| Ueberfaelliger Wert | wie oben, zusaetzlich `EKET.EINDT < heute` | keine Verzugsstrafe, kein Fehlteilrisiko |
+| Kontrakt-Restwert | wie offener Zulauf, aber nur Belege mit gesetztem `EKKO.KONNR` | nicht die Kontraktmenge selbst |
+
+Der Belegbestand trennt sauber: `151'249` Bestellungen (`BSTYP = 'F'`), `10'948` Kontrakte
+(`K`), `14'006` Anfragen (`A`), `64'059` Belege mit Kontraktbezug `KONNR`. `BSTYP` ist bei
+**null** Belegen leer, die Belegtyptrennung greift produktiv also vollstaendig.
+
+
+### Abgleich mit der Sitzung Marco/Ingo vom 2026-08-27
+
+Marco hat dieselben Kacheln live durchgesprochen. Seine abgelesenen Werte bestaetigen die
+Messung oben **auf den Franken genau** und beantworten damit seine eigene offene Frage:
+
+| Kachel im Dashboard | Marco liest ab | hier gemessen |
+| --- | ---: | ---: |
+| Spend total / „Bereits beschafft" | `24'895'000` | `EKPO.NETWR` in CHF ueber `EKKO.BEDAT` |
+| Verpflichtungen / „Disponierter Zulauf" | `26'627'000` | `26.6` Mio, davon `16.8` Mio mit Termin vor 2026 |
+| Ueberfaelliger Wert | `18` Mio, `7'533` Einteilungen | `18.3` Mio, `7'448` Positionen |
+
+**Marcos Kernfrage ist damit beantwortet.** Er vermutete, der offene Bestellwert enthalte
+neben Normalbestellungen auch Mengenkontrakte (Nummernkreis `46`) und sei deshalb so hoch.
+Das trifft **nicht** zu: Die Messung oben lief ausschliesslich auf `EKKO.BSTYP = 'F'` und
+traf den Dashboardwert exakt. Kontrakte sind also bereits ausgeschlossen. Der Grund fuer die
+Hoehe ist ein anderer und liegt in den Altterminen. Marcos eigene Plausibilisierung
+(„maximal drei Monate im Voraus bestellt, also hoechstens rund `10` Mio") passt genau auf die
+`9.2` Mio aus 2026 plus `0.7` Mio aus 2027.
+
+**Zwei Kachelbeschriftungen fuehren in die Irre und gehoeren korrigiert:**
+
+1. „Bereits beschafft" beziehungsweise „Bereits beschafft / gebucht" traegt den
+   Bestellwert `EKPO.NETWR`. Marco hat es im Gespraech als „Bestellungen, wo wir schon
+   Wareneingaenge haben" gelesen — genau die falsche Bedeutung. Ein Wareneingangsbezug
+   braeuchte `EKBE`/`MSEG` und existiert nirgends im Dashboard.
+2. „Verpflichtungen" und „Disponierter Zulauf" sind **dieselbe Zahl**
+   (`OpenValueSample`), nur zweimal beschriftet. Marco hat das selbst vermutet
+   („das ist irgendwie das Gleiche, oder?").
+
+**Zur Waehrung, Rueckmeldung von Armin ueber Marco.** Armin hat zwei Punkte gemeldet: die
+Balken starten nicht am gleichen Ort, und die Umrechnung stimme nicht. Marco hat
+gegengerechnet und kommt auf rund `0.94` CHF je EUR und `0.80` CHF je USD, was er fuer
+plausibel haelt; die Messung oben bestaetigt genau diese Spannen. Marcos Verdacht ist
+vermutlich richtig: gemeint ist wahrscheinlich der **interne Umrechnungskurs**. Die Antwort
+darauf steht fest: Das Dashboard rechnet mit `EKKO.WKURS`, also dem **auf dem Bestellbeleg
+festgeschriebenen Kurs zum Bestellzeitpunkt**, nicht mit einem internen Planungs- oder
+Budgetkurs und nicht mit dem Tageskurs. Welcher Kurs fachlich gelten soll, ist ein Entscheid
+und keine Fehlersuche.
+
+**Zur Lieferantenkaskadierung** hat Marco die Anforderung praezisiert: Er will die
+**vollstaendige Liste** ohne Abschneiden, ausdruecklich auch die kleinen Lieferanten, „gerade
+wenn du die Kleinen mal aufraeumen willst". Eine lange Liste stoert ihn nicht, gescrollt wird
+ohnehin. Ein Limitschieber waere nett, ist aber ausdruecklich **nicht** verlangt.
+
+**Nicht zu aendern, ausdruecklich bestaetigt:** Der Lagerwert ist als Stichtagsbetrachtung
+richtig verstanden, ein woechentlicher Lauf reicht Marco. Der Materialtext-Drilldown ist
+abgenommen („wirklich recht cool"). Marcos Lesehilfe dazu, die im Dashboard fehlt: Eintraege
+**mit** Bindestrich sind echte Artikel mit Materialnummer, Eintraege **ohne** Bindestrich sind
+Textbestellungen ohne Artikelstamm.
+
+### Offen
+
+- Anzeigefehler (Balkenstart, Balkenfarbe, verschobene Balken) sind noch nicht geprueft; dafuer
+  muss die Oberflaeche selbst angesehen werden.
+- Die Beschreibungstexte im Dashboard sind noch nicht angepasst.
+- Deckelung der Lieferantenmatrix und `LIMIT 10` der Ueberfaellig-Liste sind unveraendert.
+
+## Nachtrag 2026-08-27 Umsetzung: Deckelungen weg, Balken ausgerichtet, Kacheln erklaert
+
+Umgesetzt nach der Sichtpruefung oben, **noch nicht deployed**. `633/633` Tests gruen.
+
+### 1. Keine Deckelung mehr im Spend-Aufriss und in der Matrix
+
+Alle vier Perspektiven laufen jetzt auf `NoCap`, ebenso die Lieferanten-Jahres-Matrix und die
+Artikelebene darunter. Vorher waren es Lieferant `40`/`15`/`10`, Region `12`/`15`/`10`/`8`,
+Warengruppe `20`/`15`/`10`, Waehrung `8`/`15`/`10`/`8` und `25` Artikel je Warengruppe in der
+Matrix; der Rest verschwand in einer „uebrige"-Zeile, in der Matrix sogar ersatzlos.
+
+Die Deckelung stammte aus der Sorge, der serverseitig gerenderte Baum koenne bei ueber
+`230'000` Positionen explodieren. Produktiv nachgemessen am 2026-08-27: `707` Lieferanten,
+`1'244` Lieferant/Warengruppe-Paare, `17'064` Blattknoten ueber alle Jahre. Das traegt die
+Oberflaeche, zumal Kinder erst beim Aufklappen gerendert werden. Die „uebrige"-Buendelung
+bleibt im Code stehen und greift nur nicht mehr.
+
+### 2. Die Balken starten wieder an derselben Kante
+
+Ursache war kein Rechenfehler, sondern das Raster. `display: grid` sass auf der **einzelnen**
+Balkenzeile, jede Zeile war also ihr eigenes Raster. Die dritte Spalte ist `auto` und damit so
+breit wie ihr Text — und der ist je Zeile verschieden lang, etwa
+`CHF 145'068'141 (143'041'648 EUR)` gegen `CHF 14'403 (12'033 GBP)`. Dadurch bekamen die
+`1fr`- und `2fr`-Spalten in jeder Zeile eine andere Breite, und die Balken standen treppenartig
+versetzt. Genau das hat Armin gemeldet.
+
+Behoben in **beiden** Komponenten, nicht nur an der auffaelligen Stelle: `PurchasingSection`
+und `PurchasingSpendExplorer` tragen das Raster jetzt am Container, die Zeile steht auf
+`display: contents`. Damit richten sich alle Zeilen an denselben Spaltenkanten aus.
+
+### 3. Kacheltexte sagen jetzt, was gezaehlt wird
+
+Jede KPI-Kachel hat eine zweite, erklaerende Zeile bekommen (`ExplainDe`/`ExplainEn`). Die
+bisherige Kurzzeile nannte nur die Datenquelle, nicht die fachliche Bedeutung. Bewusst kurz
+gehalten, zwei Saetze je Kachel: ein Absatz in einer Kachel liest sich nicht, und jeder
+deutsche Text braucht sechs Uebersetzungen.
+
+Zwei Beschriftungen waren nachweislich irrefuehrend und sind umbenannt:
+
+| vorher | jetzt | warum |
+| --- | --- | --- |
+| `Bereits beschafft`, `Bereits beschafft / gebucht` | `Bestellwert im Zeitraum` | Marco hat es als „Bestellungen, wo wir schon Wareneingaenge haben" gelesen. Es ist der Bestellwert; einen Wareneingangsbezug gibt es im Dashboard nirgends. |
+| `Offener Bestellwert` **und** `Disponierter Zulauf` als zwei Zeilen | eine Zeile `Offener Bestellwert (= disponierter Zulauf)` | Beide zeigten denselben Wert `OpenValueSample`. Marco hat es selbst bemerkt. |
+
+Die Abschnittsbeschreibungen von „Spend total vergangen" und „Offene Bestellwerte und Mengen"
+nennen jetzt ausdruecklich, dass am Bestelldatum gezaehlt wird, dass der offene Wert
+zeitraumunabhaengig ist und deshalb Alttermine enthaelt, und dass keine Mengenkontrakte
+mitzaehlen. Die Matrix-Bildunterschrift nennt zusaetzlich Marcos Lesehilfe: Materialeintrag
+**mit** Bindestrich ist ein echter Artikel, **ohne** Bindestrich eine Textbestellung.
+
+### Weiterhin offen
+
+- Die `LIMIT 10`-Liste unter „Ueberfaellige Positionen" ist unveraendert. Sie ist nicht
+  Gegenstand des Auftrags gewesen, faellt aber in dieselbe Klasse wie die entfernten
+  Deckelungen.
+- Die Balkenfarbe (Armins „nicht gruen") ist nicht angefasst. Die Farbe kommt aus der Zeile
+  selbst und ist keine Statusfarbe; ob das gewollt ist, ist eine Gestaltungsfrage.
+- Der produktive Sichtnachweis fehlt: die Chrome-Erweiterung war nicht verbunden. Nach dem
+  Deploy gehoert die Waehrungskachel angesehen, bevor der Punkt als erledigt gilt.

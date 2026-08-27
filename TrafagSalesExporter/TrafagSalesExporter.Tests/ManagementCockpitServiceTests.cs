@@ -405,10 +405,86 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Masks_Margin_By_Default()
+    public async Task AnalyzeFinanceSummaryAsync_GroupMarginSummary_Is_Reported_In_Chf()
     {
-        // Verkauf in CHF, Standardkosten in EUR: ohne Fachentscheid (Default Mask) bleibt die
-        // Marge in Originalwaehrung offen, statt CHF-Umsatz mit EUR-Kosten zu mischen.
+        // Beschluss Andreas vom 2026-08-27 (B5): die Konzernmarge gibt es nur in CHF. Vorher
+        // addierte diese Summe 100 CHF und 100 EUR zu "200 Mixed" - eine Zahl, die es nicht gibt.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-CH", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "CHF"),
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE", "EUR", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "EUR"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        // 100 CHF + 100 EUR x 0.95 = 195 CHF Umsatz, 60 + 57 = 117 CHF Kosten, Marge 78 CHF.
+        Assert.Equal("CHF", result.GroupMarginSummary.DisplayCurrency);
+        Assert.Equal(195m, result.GroupMarginSummary.SalesValue);
+        Assert.Equal(117m, result.GroupMarginSummary.CostBasisValue);
+        Assert.Equal(78m, result.GroupMarginSummary.MarginValue);
+        Assert.Equal(0, result.GroupMarginSummary.MissingGroupCurrencyRateRows);
+
+        // Die Landeszeile bleibt bewusst in Lokalwaehrung; das ist die lokale Sicht.
+        var germany = Assert.Single(result.GroupMarginCountryRows, row => row.Tsc == "TRDE");
+        Assert.Equal("EUR", germany.Currency);
+        Assert.Equal(100m, germany.SalesValue);
+        Assert.Equal(40m, germany.MarginValue);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_GroupMarginSummary_Leaves_Out_Rows_Without_Chf_Rate_And_Says_So()
+    {
+        // Ohne gepflegten Kurs darf die Zeile nicht stillschweigend als 0 in die Konzernsumme
+        // laufen. Sie bleibt draussen und wird gezaehlt, damit die Luecke sichtbar ist.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-CH", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "CHF"),
+            CreateRow("MANUAL_EXCEL", "Grossbritannien", "TRUK", "INV-UK", "GBP", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "GBP"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.Equal(1, result.GroupMarginSummary.MissingGroupCurrencyRateRows);
+        Assert.Equal(100m, result.GroupMarginSummary.SalesValue);
+        Assert.Equal(40m, result.GroupMarginSummary.MarginValue);
+        Assert.Contains(result.Notices, notice => notice.Contains("Konzernmarge in CHF"));
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Converts_By_Default()
+    {
+        // Verkauf in CHF, Standardkosten in EUR. Seit dem Beschluss von Andreas vom 2026-08-27
+        // (B5/B6) wird ohne weitere Einstellung umgerechnet; vorher blieb die Zeile offen, bis
+        // der Fachentscheid vorlag.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("SAP", "Schweiz", "TRCH", "INV-MIX", "CHF", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "EUR"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        // 60 EUR x 0.95 = 57 CHF -> Marge 43 CHF, die Zeile ist belastbar.
+        var detail = Assert.Single(result.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("OK", detail.Status);
+        Assert.Equal(57m, detail.CostBasisValue);
+        Assert.Equal(43m, detail.MarginValue);
+        Assert.Equal(0, result.GroupMarginSummary.MissingCostRows);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-MIX");
+        Assert.Equal("OK", ledger.Status);
+        Assert.Equal(43m, ledger.MarginOriginal!.Value);
+        Assert.Equal(43m, ledger.MarginChf!.Value);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_CostCurrencyMismatch_Stays_Open_When_Mask_Is_Chosen()
+    {
+        // Mask bleibt waehlbar, ist seit dem 2026-08-27 aber die Ausnahme und muss ausdruecklich
+        // gesetzt werden. Dann bleibt die Marge in Originalwaehrung offen, statt CHF-Umsatz mit
+        // EUR-Kosten zu mischen.
+        await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Mask);
         await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
         await SeedCentralRowsAsync(
             CreateRow("SAP", "Schweiz", "TRCH", "INV-MIX", "CHF", 100m, new DateTime(2025, 3, 1),
@@ -516,7 +592,7 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AnalyzeFinanceSummaryAsync_GroupStandardCost_CrossCountryCurrencyMismatch_MasksByDefault_ConvertsWhenSwitched()
+    public async Task AnalyzeFinanceSummaryAsync_GroupStandardCost_CrossCountryCurrencyMismatch_ConvertsByDefault_MasksWhenChosen()
     {
         // Realistischstes Szenario: TR AG liefert an eine DE-Verkaufszeile (Finance-Waehrung
         // EUR), die Konzernkosten stehen aber in CHF (TR AGs Hauswaehrung) -> derselbe
@@ -527,18 +603,18 @@ public class ManagementCockpitServiceTests : IDisposable
             CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-TRAG-DE", "EUR", 100m, new DateTime(2025, 3, 1),
                 quantity: 2m, standardCost: 999m, standardCostCurrency: "EUR", material: "MAT-TRAG-DE", supplierName: "Trafag AG"));
 
-        var maskResult = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
-        var maskDetail = Assert.Single(maskResult.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG-DE");
-        Assert.Equal(GroupMarginCostCurrencyConverter.OpenStatus, maskDetail.Status);
-
-        await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Convert);
+        // Konzernkosten 60 CHF (2 x 30) werden mit dem Tageskurs CHF->EUR (1.05) umgerechnet: 63 EUR.
         var convertResult = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
         var convertDetail = Assert.Single(convertResult.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG-DE");
-        // Konzernkosten 60 CHF (2 x 30) werden mit dem Jahreskurs CHF->EUR (1.05) umgerechnet: 63 EUR.
         Assert.Equal("OK", convertDetail.Status);
         Assert.Equal(63m, convertDetail.CostBasisValue);
         Assert.Equal(37m, convertDetail.MarginValue);
         Assert.Contains("Konzernkosten TR AG", convertDetail.CostSource);
+
+        await SeedExportSettingsAsync(GroupMarginCostCurrencyModes.Mask);
+        var maskResult = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+        var maskDetail = Assert.Single(maskResult.GroupMarginDetailRows, row => row.InvoiceNumber == "INV-TRAG-DE");
+        Assert.Equal(GroupMarginCostCurrencyConverter.OpenStatus, maskDetail.Status);
     }
 
     [Fact]

@@ -97,9 +97,11 @@
             </div>
             <MudText Typo="Typo.caption" Class="purchasing-section-muted mb-2">
                 @* Hinweis 2026-07-30 aktualisiert: SAP liefert MARA-MATKL seit dem Full Load vom
-                   24.07., der alte Text ("folgt, sobald SAP das Feld liefert") war ueberholt. *@
-                @T("Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Warengruppe aus dem Materialstamm (MARA-MATKL), Fallback Beleg-Warengruppe. Je Warengruppe werden die 25 groessten Materialien gezeigt, der Rest steht in \"uebrige\".",
-                   "Expanding a supplier shows spend by material group; expanding a material group shows the individual material numbers. Material group from the material master (MARA-MATKL), fallback to the document group. Per material group the 25 largest materials are shown, the rest is in \"uebrige\".")
+                   24.07., der alte Text ("folgt, sobald SAP das Feld liefert") war ueberholt.
+                   2026-08-27: Die Deckelungen sind weg (Wunsch Marco/Ingo), der Text nennt jetzt
+                   stattdessen, wie die Materialtexte zu lesen sind. *@
+                @T("Lieferant aufklappen zeigt den Spend nach Warengruppe, Warengruppe aufklappen die einzelnen Materialnummern. Seit dem 27.08.2026 wird nichts mehr abgeschnitten: alle Lieferanten, Warengruppen und Materialien stehen hier. Ein Materialeintrag MIT Bindestrich ist ein echter Artikel, OHNE Bindestrich eine Textbestellung ohne Artikelstamm.",
+                   "Expanding a supplier shows spend by material group; expanding a material group shows the individual material numbers. Since 27.08.2026 nothing is truncated: all suppliers, material groups and materials are shown. A material entry WITH a hyphen is a real article, WITHOUT a hyphen a text order with no material master.")
             </MudText>
             <div class="purchasing-matrix-scroll">
                 <table class="purchasing-matrix">
@@ -321,9 +323,24 @@
         background: rgba(255,255,255,.02);
     }
 
+    /* Alle Balkenzeilen teilen sich EIN Spaltenraster.
+       Vorher war `display: grid` auf der einzelnen Zeile, jede Zeile war also ihr eigenes
+       Raster. Die dritte Spalte ist `auto` und damit so breit wie ihr Text - und dieser Text
+       ist je Zeile verschieden lang ("CHF 145'068'141 (143'041'648 EUR)" gegen
+       "CHF 14'403 (12'033 GBP)"). Dadurch bekamen die 1fr- und 2fr-Spalten in jeder Zeile eine
+       andere Breite, und die Balken starteten und endeten treppenartig versetzt. Genau das hat
+       Armin am 2026-08-27 gemeldet ("die Balken starten nicht am gleichen Ort").
+       Mit `display: contents` auf der Zeile rutschen Label, Balken und Wert in das Raster des
+       Containers, und alle Zeilen richten sich an denselben Spaltenkanten aus. */
     .purchasing-bars {
         display: grid;
+        grid-template-columns: minmax(120px, 1fr) 2fr auto;
         gap: 10px;
+        align-items: center;
+    }
+
+    .purchasing-bars .purchasing-bar-row {
+        display: contents;
     }
 
     .purchasing-bar-row,
