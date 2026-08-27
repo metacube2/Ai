@@ -1,9 +1,40 @@
 # Last Change
 
-Stand: 2026-08-26
+Stand: 2026-08-27
 
-## Spanien rechnet die Periode auf dem Rechnungsdatum 2026-08-26 (NICHT DEPLOYED)
+## Railway: Termin 2026-09-08 aufgenommen, zwei Blocker gemessen 2026-08-27
 
+- **Anlass:** Rohail Munir aus Deutschland braucht den Railway-Export bis spaetestens
+  2026-09-08 fuer eine Praesentation zum Projektmanagement-Status. Neu als PM-08 gefuehrt.
+- **Gemessen** mit dem neuen read-only Werkzeug `.tmp_tools/CheckRailwayDe`: `173` Vorschlaege
+  ueber acht Standorte, davon **`0` bestaetigt**; Deutschland hat `0` Vorschlaege. Ein Export
+  waere heute leer, weil unbestaetigte Vorschlaege bewusst nicht ins zentrale Excel wirken.
+- **Blocker 1, der kritische:** Bei **allen `7'526` deutschen Verkaufszeilen fehlt der
+  Kundenname**, ebenso das Kundenland; die Kundennummer ist zu 100 % da. Deutschland ist der
+  einzige Standort mit dieser Luecke. Der Namensabgleich konnte dort deshalb nichts finden.
+  Ursache ist unsere eigene Alphaplan-Query, die `RechnungsAdressenID` selektiert, aber nie zu
+  einem Namen aufloest (`docs/FINANCE_FELDLUECKEN.md` Abschnitt 6).
+- **Blocker 2:** Die Zuordnung ist ungeprueft. Ingo hat festgelegt, dass Patrik sie vorher
+  prueft oder gleich selbst setzt; es wird nicht blind bestaetigt.
+- **Nebenbefund zur Messtechnik:** Die Anwendung war heruntergefahren, `-wal` und `-shm` fehlten.
+  Ein read-only Zugriff ueber SMB scheitert dann mit `unable to open database file`. Der
+  dokumentierte Ausweg ueber eine lokale Wegwerfkopie hat funktioniert.
+- Details: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 14 und
+  `projektmanagement/PROJEKTSTATUS.md` PM-08.
+
+## Spanien rechnet die Periode auf dem Rechnungsdatum 2026-08-26 (DEPLOYED)
+
+- **PRODUKTIV DEPLOYED am 2026-08-26 15:26** nach Freigabe durch Ingo, Funktionscommit `91830c2`.
+  Sicherung `trafag_exporter.db.before-spain-invoice-date-20260826-151306.bak`
+  (`355'471'360` Bytes, `782,9` s). `BiDashboard.dll` `4'746'240` Bytes, SHA256
+  `5C6AFC6AEF37EFC74CC984481798067D9928116D92C22E3D62D5D812391721D4`, lokal und Server
+  bitgleich. Ziel: `0` neu, `5` geaendert, `1'701` unveraendert, `0` verschwunden.
+  Beide Wirktokens in der DLL, HTTPS `200` fuer Startseite und `/management-cockpit`.
+  **Fertig ohne Alarm** — anders als beim Italien-Deploy blieb die Produktiv-DB unberuehrt,
+  weil kein Schemawechsel noetig war.
+- **Produktiv nachgemessen** (`.tmp_tools/CheckSpainDates`, read-only): Die Regel liegt in
+  `FinanceRules` mit `ScopeKey = ES`, `RuleType = UseInvoiceDate`, `MatchType = Always`,
+  `IsActive = 1`, `SortOrder = 10`. Gegenprobe: `0` Regeln dieser Art ausserhalb von Spanien.
 - **Entscheid:** Andreas Stoller hat ISS-004.2 beantwortet, mit dem Buchungsdatum ist das
   Rechnungsdatum gemeint. Ingo hat ausdruecklich angewiesen: **nur Spanien**, alle anderen
   Standorte bleiben beim Buchungsdatum.

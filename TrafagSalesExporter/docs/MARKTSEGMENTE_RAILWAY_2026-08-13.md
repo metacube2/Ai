@@ -291,3 +291,78 @@ Finance-Pivot des Management Cockpits.
 **Produktiv NICHT belegt:** ein angemeldeter Sichtprueflauf. Die Finance-Routen liegen hinter
 dem Unlock und liefern von aussen nur das Passwortpanel. Der erste angemeldete Aufruf von Ingo
 oder Patrik ist der eigentliche Test.
+
+## 14. Stand 2026-08-27: Termin gesetzt, zwei Blocker gemessen
+
+### Der Termin
+
+Rohail Munir aus Deutschland braucht den Railway-Export **bis spaetestens 2026-09-08**, um damit
+den Projektmanagement-Status zu praesentieren. Gefuehrt wird der Punkt als PM-08 in
+`projektmanagement/PROJEKTSTATUS.md`.
+
+### Produktiv gemessen
+
+Werkzeug `.tmp_tools/CheckRailwayDe`, read-only. Weil die Anwendung zum Messzeitpunkt
+heruntergefahren war (`-wal` und `-shm` fehlten, ein Lesezugriff ueber SMB scheitert dann mit
+`unable to open database file`), lief die Messung ueber eine lokale Wegwerfkopie.
+
+| Standort | Vorschlaege | bestaetigt |
+| --- | ---: | ---: |
+| TRCH | 81 | 0 |
+| TRIT | 40 | 0 |
+| TRFR | 17 | 0 |
+| TRUK | 13 | 0 |
+| TRES | 9 | 0 |
+| TRAT | 8 | 0 |
+| TRIN | 4 | 0 |
+| TRUS | 1 | 0 |
+| **TRDE** | **0** | **0** |
+
+Alle `173` Vorschlaege tragen die Herkunft
+`Namensabgleich Marktumfrage Railway 2026-05, noch nicht bestaetigt`. **Ein Export waere heute
+leer**, weil unbestaetigte Vorschlaege bewusst nicht ins zentrale Excel wirken (Abschnitt 4).
+
+### Blocker 1: Deutschland hat keine Kundennamen
+
+Der kritischste Befund, weil die Anfrage aus Deutschland kommt.
+
+| TSC | Zeilen | ohne Kundenname | ohne Kundenland |
+| --- | ---: | ---: | ---: |
+| TRDE | 7'526 | **7'526** | **7'526** |
+| alle anderen acht | 93'032 | 0 | 359 |
+
+Gegenprobe: Es gibt in `CentralSalesRecords` **keine einzige** TRDE-Zeile mit gefuelltem
+Kundennamen. Die Kundennummer ist dagegen zu 100 % da.
+
+Damit konnte der Namensabgleich fuer Deutschland nichts finden — es gab nichts zu vergleichen.
+Das ist **unsere Luecke**: laut `docs/FINANCE_FELDLUECKEN.md` Abschnitt 6 selektiert die
+Alphaplan-Query die `RechnungsAdressenID`, loest sie aber nie zu einem Namen auf. Gebraucht wird
+ein read-only Auszug aus `INFORMATION_SCHEMA.COLUMNS`, gefiltert auf `%Adress%`, `%Artikel%`,
+`%Liefer%`, `%Kunde%`. **Keine Tabellennamen raten**, das war die Lehre aus UK-2025.
+
+Die Daten waeren vorhanden: Die Marktumfrage fuehrt `67` deutsche Zeilen mit genau den
+erwarteten Namen (DB Regio, DB Fahrzeuginstandhaltung, Bombardier Transportation,
+AKW A+V Protec Rail, DEUTA-WERKE). Davon sind `27` mit keinem Verkaufskunden verknuepft, die
+uebrigen mit TRIT (`18`), TRCH (`17`), TRAT (`3`), TRUK (`1`) und TRES (`1`) —
+**mit TRDE keine einzige**, weil die Verknuepfung ueber den Namen laeuft.
+
+### Blocker 2: die Zuordnung ist ungeprueft
+
+Ingo hat am 2026-08-27 festgelegt: **Patrik prueft vorher, ob die Zuordnung passt, oder macht
+sie gleich selbst.** Es wird nicht blind bestaetigt, und Ingo bestaetigt auch nicht
+stellvertretend. Die Segmentzuordnung ist eine Vertriebsentscheidung und bleibt dort.
+
+Einstieg ist die Liste der 30 mengenstaerksten Vorschlaege
+(`docs/Railway_Kundenpruefung_Patrik_2026-08-13.xlsx`), sie decken rund zwei Drittel der
+betroffenen Verkaufszeilen ab. Anleitung:
+`docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`.
+
+### Empfehlung fuer den Termin
+
+Die beiden Blocker parallel bearbeiten, nicht nacheinander. Blocker 2 ist in Tagen loesbar,
+Blocker 1 haengt an einem Auszug vom deutschen Server und laesst sich von hier aus nicht
+erzwingen.
+
+**Rohail Munir sollte frueh wissen, dass Deutschland moeglicherweise fehlt.** Ein Export, der
+Deutschland stillschweigend mit null Bahnumsatz zeigt, waere schlechter als einer, der die
+Luecke benennt — besonders in einer Statuspraesentation.

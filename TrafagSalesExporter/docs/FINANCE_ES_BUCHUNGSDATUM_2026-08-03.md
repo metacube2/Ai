@@ -500,3 +500,14 @@ Ingo hat am 2026-08-26 festgelegt, dass die Spalte `posting date` im Sales_All u
 Buchungsdatum aus der Quelle bleibt. Sie wird weder mit dem Rechnungsdatum ueberschrieben noch
 entfernt. Begruendung: So bleibt sichtbar, was Sage geliefert hat und was daraus gerechnet wird,
 und die echten Buchungsdaten, die nach Santis Dateitausch kommen, bleiben verwertbar.
+
+### Deploystatus
+
+Produktiv deployed am 2026-08-26 15:26, Funktionscommit `91830c2`, fertig ohne Alarm.
+`BiDashboard.dll` SHA256 `5C6AFC6AEF37EFC74CC984481798067D9928116D92C22E3D62D5D812391721D4`,
+lokaler Release-Build und Server bitgleich. Read-only nachgemessen: die Regel liegt in
+`FinanceRules` mit `ScopeKey = ES`, `RuleType = UseInvoiceDate`, `MatchType = Always`,
+`IsActive = 1`; `0` Regeln dieser Art ausserhalb von Spanien.
+
+Ein Import ist nicht noetig. Die Regel greift beim Erzeugen des Exports, nicht beim Import,
+der naechste Sales_All-Lauf traegt sie also bereits.

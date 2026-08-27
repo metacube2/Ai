@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-08-17
+Stand: 2026-08-27
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -23,10 +23,11 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | Umsetzungsvorbereitung, fachlich blockiert | Aenderungsbelege zu Auftrag 1214608 lesen, danach Trigger und Ebene klaeren | 2026-08-17 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | Vorarbeit geklaert, wartet auf den Trigger-Entscheid | Trigger mit Lucas Castro und Florian Waechter klaeren, danach BAdI `WORKORDER_UPDATE` neu bauen; der Altcode ist als Referenz ausgeschlossen | 2026-08-26 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren | 2026-08-14 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
+| PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, terminiert** | Zwei Blocker, beide belegt; der zweite trifft ausgerechnet Deutschland | Deutschen Kundennamen aus Alphaplan holen UND Patrik bitten, die Zuordnung zu pruefen oder selbst zu setzen | 2026-08-27 |
 
 ---
 
@@ -126,45 +127,73 @@ Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Pun
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.
 
 Ziel ist, dass das Produktionsdatum unabhaengig vom Dynpro immer gespeichert
-wird. Als Loesungsweg vorgesehen sind das BAdI `WORKORDER_UPDATE` und ein neuer
-Baustein `Z_PP_PRDDAT_SET`.
+wird, einmalig bei der Freigabe und danach write-once. Als Loesungsweg vorgesehen
+sind das BAdI `WORKORDER_UPDATE` und ein neuer Baustein `Z_PP_PRDDAT_SET`.
 
-Die Ursache der Altloesung ist bereits geklaert und war nie ein Transportproblem:
-Der Kundensubscreen der Erweiterung `PPCO0012` schreibt das Datum nur dann, wenn
-ein Benutzer in `CO01`/`CO02` aktiv auf den Trafag-Tab springt und der Auftrag
-freigegeben wird. In der Praxis laeuft die Planauftragsumsetzung ueber `MD04` in
-der Schweiz und `CO41` in Tschechien, teils mit automatischer Freigabe, also ohne
-Dynpro. Deshalb tragen im P76 faktisch alle Saetze den Initialwert `'00000000'`.
+**Abgleich am 2026-08-26.** Dieser Block stand noch auf dem Kenntnisstand vor der
+SapProbe-Pruefung vom 2026-07-27. Vier Angaben waren ueberholt und sind hier
+korrigiert.
 
-Offene Punkte, die die Umsetzung blockieren:
+1. **Die Ursache ist nicht der unbesuchte Tab, sondern fehlender Code.** Bisher
+   stand hier, der Kundensubscreen der Erweiterung `PPCO0012` schreibe das Datum
+   nur bei Tab-Besuch und Freigabe. Die Quelltextpruefung mit `abap-read` zeigt
+   etwas anderes: die gesamte Schreiblogik ist auskommentiert. `ZXCO1U11` und
+   `ZXCO1U12` sind Zeile fuer Zeile deaktiviert, `ZXCO1O01` hat einen leeren
+   Rumpf, und `ZXCO1I01` enthaelt mit `MOVE-CORRESPONDING ci_aufk TO ci_aufk`
+   einen No-op. Es gibt derzeit keinen einzigen aktiven Codepfad, der
+   `AUFK-ZZPRDAT` schreibt. Die Tab-Bedingung beschreibt den beabsichtigten Code,
+   nicht den vorhandenen. Folge fuer die Umsetzung: der Altcode taugt weder fuer
+   die Trigger-Logik noch fuer die Feldzuordnung als Referenz, die
+   Neuimplementierung wird vollstaendig aus der Anforderung abgeleitet.
+2. **Der bisherige naechste Schritt ist erledigt und ergebnislos.** Die
+   Aenderungsbelege zum Auftrag 1214608 wurden gelesen. `CDPOS` liefert zu
+   Objektklasse `ORDER` und Objekt-ID `000001214608` keine Zeile, weder generell
+   fuer `TABNAME = 'AUFK'` in T76 noch gezielt fuer `FNAME = 'ZZPRDAT'` in T76 und
+   P76. Aenderungsbelege scheiden als Nachweisquelle aus. Dieser Schritt darf
+   nicht laenger als Blocker gefuehrt werden.
+3. **Der Referenzfall 1214608 traegt in dieser Form nicht.** Die hier frueher
+   genannte Abweichung zwischen `DGLTP` mit dem 02.12.2025 und `ZZPRDAT` mit dem
+   20.11.2025 gibt es live nicht. Am 2026-07-27 zeigt P76 Mandant 100 fuer diesen
+   Auftrag `AFKO-GLTRP` und `AFPO-DGLTP` mit dem 08.01.2026 und `AUFK-ZZPRDAT`
+   mit `00000000`, also leer.
+4. **Kopf gegen Position ist fuer Einpositionsauftraege beantwortet.**
+   `AFKO-GLTRP` und `AFPO-DGLTP` sind fuer alle vier Referenzauftraege 1214608,
+   1216195, 1214481 und 1214062 auf T76 und P76 identisch. Als Quelle bleibt
+   `AFKO-GLTRP` sinnvoll, weil das Etikett je Auftrag gedruckt wird. Nicht
+   geprueft sind Mehrpositionsauftraege mit abweichenden Terminen.
 
-- Aenderungsbelege zum Auftrag 1214608 lesen, ueber `CO03` oder ueber `CDHDR`
-  und `CDPOS` mit Objektklasse `ORDER`. Dort weichen `DGLTP` mit dem 02.12.2025
-  und `ZZPRDAT` mit dem 20.11.2025 voneinander ab. Wurde der Eckendtermin nach
-  dem Schreiben verschoben, arbeitet die Altlogik korrekt und ist ein
-  belastbarer Referenzfall. Schreibt sie das falsche Feld, darf sich die
-  Neuimplementierung in keinem Punkt daran orientieren.
-- Trigger-Klaerung mit Lucas Castro und Florian Waechter: Die Anforderung sagt
-  „beim Auftragsstart", Adil hat „nach Freigabe" beobachtet.
-- Entscheidung Kopf- gegen Positionsebene mit Marco Di Menco, dazu die
-  Bestaetigung von `GLTRP` gegen `GLTRS` als Quellfeld.
+Wirklich offen sind nur noch drei Punkte:
+
+- **Trigger** mit Lucas Castro und Florian Waechter. Die Anforderung sagt „beim
+  Auftragsstart", Adil hat „nach Freigabe" beobachtet. Bei automatischer Freigabe
+  faellt beides zusammen, bei manueller nicht. Das ist der einzige verbliebene
+  fachliche Blocker vor der Implementierung.
+- **Quellfeld** `GLTRP` gegen `GLTRS` von Marco Di Menco oder Florian Waechter
+  bestaetigen lassen. Die Anforderung sagt woertlich Eck-End-Termin, das ist
+  `GLTRP`.
+- **Neue Rueckfrage an Marco Di Menco**: Woher stammt der Auszug mit
+  `ZZPRDAT = 20.11.2025` fuer 1214608, mit Ziehungsdatum und Report? Der
+  Live-Stand widerspricht ihm. Die wahrscheinlichste Erklaerung ist Adils
+  Kopierprogramm von Ende November 2025, weil der Exit nie geschrieben hat.
 
 Danach folgen Implementierung, Test, Transport und die Nachbefuellung der
-bestehenden Auftraege. Zwei technische Risiken stehen dabei schon fest: Der
-eigene Verbuchungsbaustein kann vor der Standard-CO-Verbuchung laufen und dann
-wieder ueberschrieben werden, weshalb ein Diagnoselauf mit direktem Lesen nach
-dem Commit eingeplant gehoert. Und der `PPCO0012`-Exit schreibt sonst parallel
-weiter, was das write-once genau in dem Qualitaetsfall aushebelt, der das
-Projekt ausgeloest hat.
+bestehenden Auftraege. Drei technische Punkte stehen dabei schon fest. Der eigene
+Verbuchungsbaustein kann vor der Standard-CO-Verbuchung laufen und wird dann
+wieder ueberschrieben; das Fehlerbild saehe genauso aus wie heute, deshalb gehoert
+ein Diagnoselauf mit direktem Lesen nach dem Commit eingeplant und notfalls das
+Ausweichen auf `IN_UPDATE`. Die exakte Signatur des BAdI ist releaseabhaengig und
+muss im eigenen System gelesen werden; ein SAP-Community-Beitrag taugt als
+Hinweis, nicht als Beleg. Und der Punkt „Altlogik entschaerfen" ist gegenstandslos,
+solange der Exit auskommentiert bleibt: Er wird erst wieder relevant, wenn jemand
+die Schreiblogik dort reaktiviert. Das Feld im Subscreen auf Anzeige zu setzen
+bleibt trotzdem sinnvoll, damit write-once nicht ueber `CO02` aushebelbar ist.
 
-Wichtige Einschraenkung, die aus dem Protokoll uebernommen wird: Die exakte
-Signatur des BAdI ist releaseabhaengig und muss im eigenen System gelesen
-werden. Ein SAP-Community-Beitrag taugt als Hinweis, nicht als Beleg.
+Die Testmatrix mit acht Faellen in T76/100 ist unveraendert vollstaendig offen.
+Kritisch sind `MD04` fuer die Schweiz, `CO41` fuer Tschechien, die automatische
+Freigabe und der zweite Save nach einer Terminverschiebung.
 
-Quelle im Repository: `saptasks/zzprdat-kontext.md` mit Ziel, Systemumgebung,
-Root Cause, Loesungsansatz, Reihenfolge-Risiko, Testmatrix und den offenen
-Rueckfragen. Die frueher hier stehende Aussage, es liege kein Dokument vor, ist
-am 2026-08-17 als falsch korrigiert worden.
+Quelle im Repository: `saptasks/zzprdat-kontext.md`. Fuehrend sind dort die beiden
+Nachtraege vom 2026-07-27; die Abschnitte 3 und 7 beschreiben den Stand davor.
 
 ### PM-04 Einkaufsdashboard: Spend mit Drilldown
 
@@ -229,6 +258,91 @@ fuer die technische Umsetzung der automatischen Auswertung.
 
 ---
 
+### PM-08 Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08
+
+**Harter Termin.** Rohail Munir aus Deutschland hat am 2026-08-27 nachgefragt und braucht den
+Export **bis spaetestens 2026-09-08**, um damit den Projektmanagement-Status zu praesentieren.
+Das sind ab heute zwoelf Tage.
+
+Worum es geht: Railway ist ein Marktsegment, also eine Kundenkategorie. Die Frage lautet, wie
+viel Umsatz der Konzern mit der Bahnindustrie macht. Das Segment haengt am **Kunden**, nicht am
+Produkt, weil derselbe Drucktransmitter in einen Zug oder in eine Werkzeugmaschine gehen kann.
+Die Technik dafuer steht seit dem 2026-08-13 produktiv, siehe
+`docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`. Fachlicher Eigentuemer der Zuordnung ist Patrik aus
+dem Vertrieb, von dem die Marktumfrage vom Mai 2026 stammt.
+
+#### Ist-Stand, produktiv gemessen am 2026-08-27
+
+| Standort | Vorschlaege | bestaetigt |
+| --- | ---: | ---: |
+| TRCH | 81 | 0 |
+| TRIT | 40 | 0 |
+| TRFR | 17 | 0 |
+| TRUK | 13 | 0 |
+| TRES | 9 | 0 |
+| TRAT | 8 | 0 |
+| TRIN | 4 | 0 |
+| TRUS | 1 | 0 |
+| **TRDE** | **0** | **0** |
+
+**Heute wuerde der Export leer bleiben.** Unbestaetigte Vorschlaege wirken bewusst nicht im
+zentralen Excel, und bestaetigt ist bisher keiner der 173.
+
+#### Blocker 1: Deutschland kann gar nicht mitspielen — und genau von dort kommt die Anfrage
+
+Das ist der kritische Punkt, weil der Anfragende selbst aus Deutschland kommt und mit hoher
+Wahrscheinlichkeit deutsche Zahlen erwartet.
+
+Gemessen am 2026-08-27 mit `.tmp_tools/CheckRailwayDe` (read-only): Bei **allen 7'526 deutschen
+Verkaufszeilen fehlt der Kundenname**, ebenso das Kundenland. Nur die Kundennummer ist gefuellt.
+Deutschland ist der einzige Standort mit dieser Luecke, die anderen acht haben durchgehend
+Namen. Der Namensabgleich, aus dem die 173 Vorschlaege stammen, konnte fuer Deutschland deshalb
+nichts finden — es gab nichts zu vergleichen.
+
+**Das ist unsere Luecke, nicht die von Deutschland.** Laut `docs/FINANCE_FELDLUECKEN.md`
+Abschnitt 6 selektiert die Alphaplan-Query die `RechnungsAdressenID`, loest sie aber nie zu
+einem Namen auf. Gebraucht wird ein read-only Auszug aus `INFORMATION_SCHEMA.COLUMNS` der
+Alphaplan-Datenbank, gefiltert auf `%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%`. Danach kann
+die Query selbst erweitert werden. **Keine Tabellennamen raten** — das war die Lehre aus
+UK-2025.
+
+Die Daten waeren da: Die Marktumfrage enthaelt `67` deutsche Zeilen mit genau den erwarteten
+Namen, darunter DB Regio, DB Fahrzeuginstandhaltung, Bombardier Transportation,
+AKW A+V Protec Rail und DEUTA-WERKE. Davon sind `27` mit gar keinem Verkaufskunden verknuepft,
+die uebrigen mit TRIT (`18`), TRCH (`17`), TRAT (`3`), TRUK (`1`) und TRES (`1`).
+**Mit TRDE ist keine einzige verknuepft**, weil die Verknuepfung ueber den Namen laeuft.
+
+#### Blocker 2: niemand hat bestaetigt
+
+Kein technisches Problem, sondern ein Fachentscheid des Vertriebs. **Ingo hat am 2026-08-27
+festgelegt: Patrik prueft vorher, ob die Zuordnung passt, oder macht sie gleich selbst.** Es
+wird also nicht blind bestaetigt, und Ingo bestaetigt auch nicht stellvertretend — die
+Segmentzuordnung ist eine Vertriebsentscheidung und bleibt dort. Sobald der erste Vorschlag
+auf `/marktsegmente` bestaetigt ist, erscheint im Reiter `Ergebnis` der erste Bahnumsatz je Land
+und Waehrung. Die 30 mengenstaerksten Vorschlaege decken rund zwei Drittel der betroffenen
+Verkaufszeilen ab, Liste: `docs/Railway_Kundenpruefung_Patrik_2026-08-13.xlsx`, Anleitung:
+`docs/Anleitung_Marktsegmente_Vertrieb_2026-08-13.docx`.
+
+Offen bleibt dabei der Fachentscheid, ob breit einkaufende Kunden wie Siemens pauschal als
+Railway gelten. Die Oberflaeche warnt ab vier Produktsparten, entscheiden muss der Vertrieb.
+
+#### Was bis zum 2026-09-08 realistisch ist
+
+Blocker 2 ist in Tagen loesbar, sobald Patrik die Zuordnung geprueft oder selbst gesetzt hat;
+die Auswertung fuer acht Standorte steht dann sofort. Der erste Schritt ist deshalb, Patrik zu
+bitten, mit der Liste der 30 mengenstaerksten Vorschlaege anzufangen. Blocker 1 haengt an einem Auszug aus dem deutschen Server und ist
+nicht allein von hier aus zu erzwingen. Der Schritt sollte deshalb **sofort** angestossen
+werden, nicht erst nach der Bestaetigungsrunde — die beiden Blocker lassen sich parallel
+bearbeiten.
+
+**Rohail Munir sollte frueh wissen, dass Deutschland moeglicherweise fehlt.** Ein Export, der
+Deutschland stillschweigend mit null Bahnumsatz zeigt, waere schlechter als einer, der die
+Luecke benennt — besonders in einer Praesentation zum Projektstatus. Genau dieser Fehler ist im
+Repository schon dokumentiert: eine gefuellte Zahl ohne Vorbehalt ist gefaehrlicher als eine
+sichtbar offene Position.
+
+---
+
 ## 3. Erledigt
 
 Verdichtetes Archiv aus `kontext.txt`. Ein Eintrag je abgeschlossenem Punkt.
@@ -288,7 +402,7 @@ Verdichtetes Archiv aus `kontext.txt`. Ein Eintrag je abgeschlossenem Punkt.
 |---|---|
 | Andreas Stoller | Finance, Intercompany-Abgrenzung, Standardkosten, offene Fachentscheide zur Gruppenmarge |
 | Santi Gomez | Spanien, Sage, CSV-Export |
-| Rohail Munir | Deutschland, DE File |
+| Rohail Munir | Deutschland, DE File; braucht die Railway-Auswertung bis 2026-09-08 (PM-08) |
 | Marco | Rhino, CHF-Konsolidierung |
 | Marco Di Menco | ZZPRDAT, Entscheidung Kopf- gegen Positionsebene |
 | Nadja | HR Cockpit, Plausibilisierung der Fluktuation |
@@ -297,6 +411,7 @@ Verdichtetes Archiv aus `kontext.txt`. Ein Eintrag je abgeschlossenem Punkt.
 | Fabio | Test Mandant 200, Preiskondition Bruttopreis |
 | Adil | Test ZC12 |
 | Philip Steiger | Smartsheet |
+| Patrik | Vertrieb, Marktsegment Railway; prueft die Kundenzuordnung oder setzt sie selbst |
 | Ann-Katrin Michel | Fachanwenderin ZLO03, Phase-Out-Prozess |
 | Sandro Moltisanti | ZLO03, Meldung CS15 42 gegen ZLO03 21 |
 | Lucas Castro | ZZPRDAT, Trigger-Klaerung |

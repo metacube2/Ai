@@ -37,6 +37,11 @@ kein `ORDER BY` in Subqueries in bestimmten Kontexten.
 
 ## 3. Root Cause der bisherigen Lösung
 
+> **Überholt seit 2026-07-27.** Die hier beschriebene Bedingung „nur bei
+> Tab-Besuch und Freigabe" gilt für den *beabsichtigten* Code. Im System ist die
+> gesamte Schreiblogik auskommentiert, es gibt keinen aktiven Pfad. Siehe
+> Nachtrag am Ende der Datei.
+
 Die Altlösung schreibt aus dem Kundensubscreen der Erweiterung `PPCO0012`
 ("FAUF: Anzeigen/Ändern Daten Auftragskopf", Tab "Trafag Daten",
 aktiv seit 28.10.2025, Transport `T76K911110`).
@@ -121,6 +126,10 @@ Commit lesen. Bleibt es leer → auf `IN_UPDATE` ausweichen.
 ---
 
 ## 7. Altlogik entschärfen
+
+> **Überholt seit 2026-07-27.** Der Exit ist vollständig auskommentiert und
+> schreibt nichts. Dieser Abschnitt wird erst wieder relevant, wenn jemand die
+> Schreiblogik dort reaktiviert. Siehe Nachtrag am Ende der Datei.
 
 Der `PPCO0012`-Exit bleibt sonst aktiv und schreibt parallel weiter. Ohne
 write-once dort überschreibt jeder spätere Tab-Besuch den eingefrorenen Wert —
@@ -210,7 +219,7 @@ damit die bereits korrekt gefüllten Sätze nicht angefasst werden.
 
 ## Nachtrag 2026-07-27 (SapProbe-Live-Verifikation T76 + P76)
 
-Read-only per SapProbe (RFC/NCo), siehe `docs/RAG_ROUTER.md` Abschnitt
+Read-only per SapProbe (RFC/NCo), siehe `router.md` Abschnitt
 „Werkzeug: SAP-Direktzugriff (SapProbe)". Keine Schreibzugriffe, nichts verändert.
 
 ### §9 Kopf vs. Position — für Einpositionsaufträge beantwortet
