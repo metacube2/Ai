@@ -64,6 +64,7 @@ class AmountCandidate:
     currency: str
     confidence: int
     context: str
+    source: str = "regex"
 
 
 def parse_amount(raw: str) -> Optional[Decimal]:

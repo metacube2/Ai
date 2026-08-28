@@ -13,6 +13,8 @@ services:
       FINANCE_SECRET_KEY: "${FINANCE_SECRET_KEY}"
       FINANCE_ADMIN_USER: "${FINANCE_ADMIN_USER:-metacube}"
       FINANCE_ADMIN_PASSWORD: "${FINANCE_ADMIN_PASSWORD}"
+      QWEN_GATEWAY_URL: "${QWEN_GATEWAY_URL:-http://192.168.178.106:5678/webhook/qwen-chat}"
+      QWEN_GATEWAY_KEY: "${QWEN_GATEWAY_KEY}"
     volumes:
       - ./output:/app/output
       - ./.cache:/app/.cache

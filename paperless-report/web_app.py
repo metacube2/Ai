@@ -12,6 +12,9 @@ from amount_extractor import best_amount_candidate
 from config import Config
 from extractor import DataAggregator, DocumentExtractor
 from paperless_client import PaperlessClient
+from qwen_extractor import qwen_amount_candidate
+
+QWEN_MAX_SUGGESTIONS = int(os.environ.get("QWEN_MAX_SUGGESTIONS", "10"))
 
 
 def create_app():
@@ -113,8 +116,13 @@ def create_app():
 
         suggestions = []
         missing_amounts = [doc for doc in documents if doc.betrag is None]
+        qwen_used = 0
         for doc in missing_amounts[:60]:
-            candidate = best_amount_candidate(doc.raw_data.get("content", ""), config.currency)
+            content = doc.raw_data.get("content", "")
+            candidate = best_amount_candidate(content, config.currency)
+            if candidate is None and qwen_used < QWEN_MAX_SUGGESTIONS:
+                candidate = qwen_amount_candidate(content, config.currency)
+                qwen_used += 1
             suggestions.append(
                 {
                     "doc": doc,
@@ -156,7 +164,10 @@ def create_app():
                 continue
 
             full_doc = client.get_document(raw_doc["id"])
-            candidate = best_amount_candidate(full_doc.get("content", ""), config.currency)
+            content = full_doc.get("content", "")
+            candidate = best_amount_candidate(content, config.currency)
+            if candidate is None:
+                candidate = qwen_amount_candidate(content, config.currency)
             if not candidate or candidate.confidence < minimum_confidence:
                 skipped += 1
                 continue

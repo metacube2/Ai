@@ -192,8 +192,9 @@
 
     <div class="section">
       <h2>Offene Betragsvorschläge</h2>
+      <p class="muted">Grau = Regex-Treffer im Text. „Qwen" = kein Regex-Treffer, Vorschlag vom lokalen Sprachmodell (bewusst niedriger Score, wird beim Speichern nur uebernommen, wenn der Mindestscore entsprechend gesenkt wird).</p>
       <table>
-        <thead><tr><th>Dokument</th><th class="amount">Vorschlag</th><th class="amount">Score</th><th>Kontext</th></tr></thead>
+        <thead><tr><th>Dokument</th><th class="amount">Vorschlag</th><th class="amount">Score</th><th>Quelle</th><th>Kontext</th></tr></thead>
         <tbody>
         {% for item in suggestions %}
           <tr>
@@ -201,9 +202,10 @@
             {% if item.candidate %}
               <td class="amount">{{ item.candidate.currency }} {{ item.candidate.amount|money }}</td>
               <td class="amount {% if item.candidate.confidence < 70 %}danger{% endif %}">{{ item.candidate.confidence }}</td>
+              <td class="{% if item.candidate.source == 'qwen' %}warn{% else %}muted{% endif %}">{{ "Qwen" if item.candidate.source == "qwen" else "Regex" }}</td>
               <td class="muted">{{ item.candidate.context }}</td>
             {% else %}
-              <td class="amount">-</td><td class="amount danger">0</td><td class="muted">Kein plausibler Betrag erkannt.</td>
+              <td class="amount">-</td><td class="amount danger">0</td><td class="muted">-</td><td class="muted">Kein plausibler Betrag erkannt.</td>
             {% endif %}
           </tr>
         {% endfor %}
