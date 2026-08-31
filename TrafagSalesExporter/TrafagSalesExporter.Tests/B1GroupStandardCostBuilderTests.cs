@@ -45,6 +45,22 @@ public class B1GroupStandardCostBuilderTests
     }
 
     [Fact]
+    public void Build_AveragesPositiveB1Costs_WhenFinanceSwitchIsSet()
+    {
+        var records = new[]
+        {
+            Row("A1", 30m, "EUR", new DateTime(2026, 1, 10), documentEntry: 1),
+            Row("A1", 60m, "EUR", new DateTime(2026, 7, 10), documentEntry: 2),
+            Row("A1", 0m, "EUR", new DateTime(2026, 8, 10), documentEntry: 3)
+        };
+
+        var cost = Assert.Single(B1GroupStandardCostBuilder.Build(
+            "TRIT", records, RefreshedAtUtc, B1GroupStandardCostModes.AveragePositive));
+
+        AssertCost(cost, "A1", "TRIT", 45m, "EUR");
+    }
+
+    [Fact]
     public void Build_IgnoresSitesWithoutOwnGroupCostSource()
     {
         Assert.Empty(B1GroupStandardCostBuilder.Build(

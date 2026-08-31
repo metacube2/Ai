@@ -44,6 +44,52 @@ Stand: 2026-08-25
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-08-31 09:47, Finance: IT/IN-Kostenmethode
+  und CHF-Kursprofil, dazu die Abhaengigkeiten in den GUI-Texten**, `644/644` Release-Tests
+  gruen vor dem Publish. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-finance-itin-chf-switches-20260831-094559.bak`. `BiDashboard.dll`
+  `31.08.2026 09:17:43`, `4'830'720` Bytes, SHA256
+  `DEA49DC63FFB1C261CF80AB073B2C4BC21A9EECC295763A9E8250BBEB0E4CDFF`, lokaler Release-Build und
+  Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'809` unveraendert. HTTPS `200`: Startseite,
+  `/settings`, `/management-cockpit`. Wirknachweis in der DLL: `B1GroupStandardCostMode`,
+  `GroupMarginChfRateMode`, `AveragePositive`, `FinanceYearEndRate`,
+  `CHF-Finance-Umrechnung: Kursprofil`, `Greift nur bei Zeilen ohne Sales Type und ohne
+  Lieferantenangabe`, `Aendert nur die Kostenquelle, nicht die Lieferantenklassifikation`; alle
+  sieben fehlten im Prueflauf vorher. Nicht mehr enthalten sind die beiden ersetzten Hilfetexte
+  vom 27.08. **Schemaerweiterung produktiv nachgemessen** (read-only, nach dem ersten Start):
+  `ExportSettings` hat jetzt `B1GroupStandardCostMode = LatestPositive` und
+  `GroupMarginChfRateMode = CurrentDailyRate`; `SupplierFallbackMode` blieb `ChPlantMaster` und
+  `InternalSupplierCostSourceMode` blieb `DeliveringEntityCosts`. Alle vier Schalter stehen also
+  auf dem bisherigen Verhalten, keine stille fachliche Aenderung. **Der eine Alarm ist die
+  bekannte WAL-Falle und nachgemessen entkraeftet:** `-wal` und `-shm` galten als verschwunden,
+  sind beim Neustart um `09:47:28` wieder da (`16'512` und `32'768` Bytes), und die Hauptdatei ist
+  in Laenge und Schreibzeit unveraendert (`357'761'024` Bytes, `30.08.2026 17:18:50`). Werkzeug:
+  `.tmp_tools/DeployFinanceSwitches0831`. **Sichtprueflauf durch Ingo am 2026-08-31 erledigt:**
+  in `Admin Bereich > Settings` zeigen alle vier Auswahlfelder die neuen Abhaengigkeitstexte an
+  der richtigen Stelle unter der Sektion `Finance: Kostenbasis und CHF-Umrechnung`, auf Deutsch
+  und mit den erwarteten Standardwerten (`Neu: CH-Werkstamm (MARC 1100)`,
+  `Kosten der liefernden Gesellschaft (Standard)`,
+  `Juengster positiver Belegpreis je Material (Standard)`,
+  `Aktueller Tageskurs (bisheriger Standard)`). Nebenbefund: die Server-DLL vor diesem Deploy war
+  `27.08.2026 16:21:35`, `4'795'392` Bytes, SHA256
+  `8A21A8AC997B9F24BA4B4B887EB13E83E65D8956777896AC71AE2074DF80C13C` und damit ein spaeterer
+  Publish als der unten protokollierte Stand von `16:12`; der Literalnachweis belegt aber, dass
+  es derselbe Funktionsumfang vom 27.08. war.
+
+- Aktuellster produktiv verifizierter Deploy: **2026-08-27 16:12, Finance: zwei
+  steuerbare Kostenquellen-Schalter fuer Andreas**, `638/638` Release-Tests gruen. Neue,
+  konsistente Sicherung `trafag_exporter.db.before-finance-cost-switches-20260827-161130.bak`;
+  `integrity_check` der Blockkopie ist `ok`. `BiDashboard.dll` `4'794'880` Bytes, SHA256
+  `E0E2CF23F01D3A04A9E891D8AF674B381BEE683E57A5A938954309531D10E0DD`, lokaler
+  Release-Build und Server bitgleich. Wirknachweis: `InternalSupplierCostSourceMode`,
+  `Kostenquelle bei internem Lieferanten`, `Schweizer STPRS bei MARC Werk 1100` und
+  `Lokale Standardkosten bei fehlendem Lieferanten`. HTTPS `200`: Startseite, `/settings`
+  und `/management-cockpit`. Produktivdatenbank read-only nach Start geprueft:
+  `SupplierFallbackMode = ChPlantMaster`,
+  `InternalSupplierCostSourceMode = DeliveringEntityCosts`; das ist der bisherige Stand.
+  Offen bleibt der angemeldete Sichtprueflauf hinter dem Finance-Unlock. Werkzeug:
+  `.tmp_tools/DeployFinanceCostSwitches`.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-08-27 15:28, Sales Type vor
   Lieferantenfeldern, Waehrungsbeschluss B5/B6, ISS-013, Einkaufsdashboard**, Funktionscommit
   `686e1e1`, `635/635` Tests gruen (Release-Lauf vor dem Publish). Neue Sicherung

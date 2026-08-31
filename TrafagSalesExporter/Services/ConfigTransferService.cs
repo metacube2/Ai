@@ -76,7 +76,10 @@ public class ConfigTransferService : IConfigTransferService
                 LocalAuditCsvFolder = exportSettings.LocalAuditCsvFolder,
                 ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(exportSettings.ExchangeRateDateField),
                 GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(exportSettings.GroupMarginCostCurrencyMode),
-                SupplierFallbackMode = SupplierFallbackModes.Normalize(exportSettings.SupplierFallbackMode)
+                SupplierFallbackMode = SupplierFallbackModes.Normalize(exportSettings.SupplierFallbackMode),
+                InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(exportSettings.InternalSupplierCostSourceMode),
+                B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(exportSettings.B1GroupStandardCostMode),
+                GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(exportSettings.GroupMarginChfRateMode)
             },
             SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
             {
@@ -295,7 +298,10 @@ public class ConfigTransferService : IConfigTransferService
             LocalAuditCsvFolder = importedSettings.LocalAuditCsvFolder,
             ExchangeRateDateField = SettingsPageService.NormalizeExchangeRateDateField(importedSettings.ExchangeRateDateField),
             GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(importedSettings.GroupMarginCostCurrencyMode),
-            SupplierFallbackMode = SupplierFallbackModes.Normalize(importedSettings.SupplierFallbackMode)
+            SupplierFallbackMode = SupplierFallbackModes.Normalize(importedSettings.SupplierFallbackMode),
+            InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(importedSettings.InternalSupplierCostSourceMode),
+            B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(importedSettings.B1GroupStandardCostMode),
+            GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(importedSettings.GroupMarginChfRateMode)
         });
 
         foreach (var sourceSystem in importedSourceSystems)

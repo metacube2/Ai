@@ -607,7 +607,9 @@ public class ManagementCockpitService : IManagementCockpitService
         var productFinanceSummary = BuildProductFinanceSummary(productAssignmentRows, resultCurrencies);
         var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
         var supplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
-        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
+        var internalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
+        var groupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
         var groupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies);
         // Beschluss B5: die Konzernmarge gibt es nur in CHF. Fehlt fuer eine Verkaufswaehrung der
         // Kurs, bleiben diese Zeilen aus der Konzernsumme heraus - das muss sichtbar sein, sonst
@@ -616,11 +618,11 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             notices.Insert(0, $"Konzernmarge in CHF: fuer {groupMarginSummary.MissingGroupCurrencyRateRows:N0} von {groupMarginSummary.RowCount:N0} Zeilen fehlt ein Kurs in die Konzernwaehrung. Diese Zeilen sind in der CHF-Summe NICHT enthalten; die Landeszeilen darunter zeigen sie weiterhin in Lokalwaehrung.");
         }
-        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
         // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
         // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
         // daneben weiterhin alle - die beiden Zahlen waren nicht gegeneinander abstimmbar.
-        var financePivot = BuildFinancePivotResult(scopedRows, year);
+        var financePivot = BuildFinancePivotResult(scopedRows, year, groupMarginChfRateMode);
         notices.AddRange(BuildProductAssignmentNotices(productAssignmentRows, productFinanceSummary));
         // Dieser Hinweis stand bis 2026-08-06 auf dem Stand vor dem Konzernkosten-Umbau und sagte,
         // die echten Konzern-Standardkosten seien noch nicht angebunden - seit 2026-08-05 sind sie es.
@@ -628,9 +630,18 @@ public class ManagementCockpitService : IManagementCockpitService
         notices.Add(groupMarginCostCurrencyMode == GroupMarginCostCurrencyModes.Convert
             ? "Abweichende Kostenwaehrung: Kostenbasis wird mit dem TAGESKURS in die Verkaufswaehrung umgerechnet (Beschluss Andreas vom 27.08.2026: kein Rueckrechnen auf historische Kurse). Ohne verfuegbaren Kurs bleibt die Zeile offen."
             : "Abweichende Kostenwaehrung: Marge/% bleiben offen ('-'). Das ist seit dem Beschluss vom 27.08.2026 die bewusst gewaehlte Ausnahme, nicht mehr der Normalfall (Schalter in den Export-Einstellungen).");
-        notices.Add(supplierFallbackMode == SupplierFallbackModes.ChPlantMaster
-            ? $"Supplier-Fallback: CH-Werkstamm MARC 1100 (neu, {chPlantMaterialKeys.Count:N0} Materialien). Ist der Cache leer, greift automatisch die bisherige MBEW-Regel."
-            : "Supplier-Fallback: CH-Kostentabelle MBEW 1100 (alte Regel). Umschaltbar unter Admin Bereich > Settings.");
+        notices.Add(groupMarginChfRateMode == GroupMarginChfRateModes.FinanceYearEndRate
+            ? "CHF-Umrechnung: Kurs zum 31.12. des jeweiligen Finance-Jahres (Cockpit, Pruefbuch, Nachweis und Sales_All reproduzierbar)."
+            : "CHF-Umrechnung: aktueller Tageskurs (bisheriger Standard; Cockpit, Pruefbuch, Nachweis und Sales_All koennen sich mit dem Kurs aendern).");
+        notices.Add(supplierFallbackMode switch
+        {
+            SupplierFallbackModes.ChPlantMaster => $"Supplier-Fallback: CH-Werkstamm MARC 1100 (neu, {chPlantMaterialKeys.Count:N0} Materialien). Ist der Cache leer, greift automatisch die bisherige MBEW-Regel.",
+            SupplierFallbackModes.LocalStandardCosts => "Supplier-Fallback: Ohne Lieferantenangabe gelten die Standardkosten der verkaufenden Gesellschaft. Umschaltbar unter Admin Bereich > Settings.",
+            _ => "Supplier-Fallback: CH-Kostentabelle MBEW 1100 (alte Regel). Umschaltbar unter Admin Bereich > Settings."
+        });
+        notices.Add(internalSupplierCostSourceMode == InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial
+            ? "Interne Lieferanten: Bei MARC Werk 1100 hat Schweizer STPRS Vorrang vor den Kosten der liefernden Gesellschaft. Umschaltbar unter Admin Bereich > Settings."
+            : "Interne Lieferanten: Es gelten die Kosten der liefernden Konzerngesellschaft (Standard). Schweizer STPRS kann bei MARC Werk 1100 unter Admin Bereich > Settings zum Vorrang gemacht werden.");
 
         return new ManagementFinanceSummaryResult
         {
@@ -1458,22 +1469,26 @@ public class ManagementCockpitService : IManagementCockpitService
     private List<ManagementGroupMarginDetailRow> BuildGroupMarginDetailRows(
         IEnumerable<FinanceAggregationRow> rows,
         string groupMarginCostCurrencyMode,
+        string groupMarginChfRateMode,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
         IReadOnlySet<string> chPlantMaterialKeys,
-        string supplierFallbackMode)
+        string supplierFallbackMode,
+        string internalSupplierCostSourceMode)
     {
         // Kurs je Verkaufswaehrung nach CHF nur einmal aufloesen (Beschluss B5): dieselbe
         // Waehrung kommt in tausenden Zeilen vor, und ResolveCrossRate geht jedes Mal an die DB.
-        var chfRates = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
-        decimal? ChfRate(string? currency)
+        var chfRates = new Dictionary<(string Currency, DateTime Date), decimal?>();
+        decimal? ChfRate(string? currency, int financeYear)
         {
             var key = currency?.Trim() ?? string.Empty;
             if (key.Length == 0)
                 return null;
-            if (!chfRates.TryGetValue(key, out var cached))
+            var rateDate = GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, financeYear);
+            var cacheKey = (key, rateDate);
+            if (!chfRates.TryGetValue(cacheKey, out var cached))
             {
-                cached = ResolveCrossRate(key, "CHF", GroupMarginCostCurrencyConverter.ResolveRateDate());
-                chfRates[key] = cached;
+                cached = ResolveCrossRate(key, "CHF", rateDate);
+                chfRates[cacheKey] = cached;
             }
 
             return cached;
@@ -1488,7 +1503,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 var evaluation = GroupMarginCalculator.Evaluate(
                     ToGroupMarginLine(row), groupStandardCosts,
                     chPlantMaterialKeys: chPlantMaterialKeys,
-                    supplierFallbackMode: supplierFallbackMode);
+                    supplierFallbackMode: supplierFallbackMode,
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
                 var supplierType = evaluation.SupplierType;
                 var status = evaluation.Status;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -1497,9 +1513,10 @@ public class ManagementCockpitService : IManagementCockpitService
                 if (status == GroupMarginStatuses.Ok && conversion.IsMasked)
                     status = GroupMarginCostCurrencyConverter.OpenStatus;
                 var margin = row.Value - conversion.CostBasis;
-                // Konzernsicht in CHF (Beschluss B5). Derselbe Stichtag wie bei der Kostenbasis:
-                // der aktuelle Tageskurs, nicht der Jahreskurs der Verkaufszeile (B6).
-                var chfRate = ChfRate(row.Currency);
+                // Konzernsicht in CHF: das Kursprofil ist unter Finance-Einstellungen steuerbar.
+                // Default bleibt der bisherige Tageskurs; Jahresende dient der reproduzierbaren
+                // Finance-Jahressicht und wird gleich auch in Pruefbuch, Nachweis und Sales_All verwendet.
+                var chfRate = ChfRate(row.Currency, row.Year);
                 var salesChf = chfRate.HasValue ? row.Value * chfRate.Value : (decimal?)null;
                 var costBasisChf = chfRate.HasValue ? conversion.CostBasis * chfRate.Value : (decimal?)null;
                 // Deckungsbeitrag (additiv): nur wenn die Quelle einen fix/variabel-Split liefert.
@@ -1719,14 +1736,16 @@ public class ManagementCockpitService : IManagementCockpitService
         IEnumerable<FinanceAggregationRow> rows,
         bool useAuditCsvAsCentralSource,
         string groupMarginCostCurrencyMode,
+        string groupMarginChfRateMode,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
         IReadOnlySet<string> chPlantMaterialKeys,
-        string supplierFallbackMode)
+        string supplierFallbackMode,
+        string internalSupplierCostSourceMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
             {
-                var rateDate = new DateTime(row.Year, 12, 31);
+                var rateDate = GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, row.Year);
                 var originalCurrency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
                 var chfRate = _exchangeRateService.ResolveRate(originalCurrency, "CHF", rateDate);
                 // Gleiche Rechnung wie Gruppenmarge und Excel-Nachweis; zusaetzlich schlaegt hier
@@ -1734,7 +1753,8 @@ public class ManagementCockpitService : IManagementCockpitService
                 var basis = GroupMarginCalculator.Evaluate(
                     ToGroupMarginLine(row), groupStandardCosts, hasExchangeRate: chfRate.HasValue,
                     chPlantMaterialKeys: chPlantMaterialKeys,
-                    supplierFallbackMode: supplierFallbackMode);
+                    supplierFallbackMode: supplierFallbackMode,
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
                 var supplierType = basis.SupplierType;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency,
@@ -1781,7 +1801,11 @@ public class ManagementCockpitService : IManagementCockpitService
                     OriginalCurrency = originalCurrency,
                     ChfRate = chfRate,
                     ChfAmount = chfRate.HasValue ? row.Value * chfRate.Value : null,
-                    RateSource = chfRate.HasValue ? "CurrencyExchangeRates / Jahreskurs" : "Kurs fehlt",
+                    RateSource = chfRate.HasValue
+                        ? groupMarginChfRateMode == GroupMarginChfRateModes.FinanceYearEndRate
+                            ? "CurrencyExchangeRates / Jahresendkurs"
+                            : "CurrencyExchangeRates / Tageskurs"
+                        : "Kurs fehlt",
                     RateYear = row.Year,
                     RateDate = rateDate,
                     SupplierNumber = row.SupplierNumber,
@@ -1817,7 +1841,8 @@ public class ManagementCockpitService : IManagementCockpitService
 
     private ManagementFinancePivotResult BuildFinancePivotResult(
         IEnumerable<FinanceAggregationRow> rows,
-        int selectedYear)
+        int selectedYear,
+        string groupMarginChfRateMode)
     {
         var candidateRows = rows
             .Where(row => row.Include)
@@ -1827,7 +1852,8 @@ public class ManagementCockpitService : IManagementCockpitService
                     ? row.InvoiceDate ?? row.PostingDate ?? row.ExtractionDate
                     : row.FinanceDate;
                 var currency = string.IsNullOrWhiteSpace(row.Currency) ? "CHF" : row.Currency.Trim();
-                var rate = _exchangeRateService.ResolveRate(currency, "CHF", new DateTime(row.Year, 12, 31));
+                var rate = _exchangeRateService.ResolveRate(currency, "CHF",
+                    GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, row.Year));
                 return new FinancePivotValue(
                     row.Tsc,
                     financeDate.Year,

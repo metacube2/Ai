@@ -10,6 +10,61 @@ namespace TrafagSalesExporter.Tests;
 public class ExcelExportServiceTests
 {
     [Fact]
+    public void ChfRateProfile_UsesFinanceYearEnd_InSalesAllAndProofExport()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using (var db = new AppDbContext(options))
+        {
+            db.Database.EnsureCreated();
+            db.ExportSettings.Add(new ExportSettings
+            {
+                GroupMarginChfRateMode = GroupMarginChfRateModes.FinanceYearEndRate
+            });
+            db.SaveChanges();
+        }
+
+        var rates = new CapturingExchangeRateService();
+        var service = new ExcelExportService(new TestDbContextFactory(options), rates);
+        var outputDirectory = Path.Combine(Path.GetTempPath(), $"trafag-chf-profile-{Guid.NewGuid():N}");
+        var records = new List<SalesRecord>
+        {
+            new()
+            {
+                ExtractionDate = new DateTime(2026, 7, 15),
+                PostingDate = new DateTime(2025, 3, 1),
+                InvoiceDate = new DateTime(2025, 3, 1),
+                Tsc = "TRFR",
+                Land = "FR",
+                InvoiceNumber = "EUR-1",
+                PositionOnInvoice = 1,
+                Material = "MAT-EUR",
+                Quantity = 1m,
+                SalesPriceValue = 100m,
+                SalesCurrency = "EUR",
+                CompanyCurrency = "EUR",
+                StandardCost = 10m,
+                StandardCostCurrency = "EUR"
+            }
+        };
+
+        try
+        {
+            service.CreateConsolidatedExcelFile(outputDirectory, new DateTime(2026, 7, 15), records);
+            service.CreateDashboardProofExcelFile(outputDirectory, new DateTime(2026, 7, 15), records, false);
+
+            Assert.Contains(new DateTime(2025, 12, 31), rates.EffectiveDates);
+            Assert.DoesNotContain(rates.EffectiveDates, date => date.HasValue && date.Value.Year == 2025 && date.Value.Month != 12);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CreateConsolidatedExcelFile_UsesGroupStandardCost_ForTrAgDeliveringSupplier()
     {
         // Spiegelt ManagementCockpitServiceTests: TR AG liefert (Mappe1.xlsx), Konzernkosten
@@ -87,6 +142,20 @@ public class ExcelExportServiceTests
 
         public Task<AppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new AppDbContext(_options));
+    }
+
+    private sealed class CapturingExchangeRateService : ICurrencyExchangeRateService
+    {
+        public List<DateTime?> EffectiveDates { get; } = [];
+
+        public decimal? ResolveRate(string fromCurrency, string toCurrency, DateTime? effectiveDate)
+        {
+            EffectiveDates.Add(effectiveDate);
+            return 0.95m;
+        }
+
+        public string NormalizeCurrencyCode(string? currencyCode)
+            => currencyCode?.Trim().ToUpperInvariant() ?? string.Empty;
     }
 
     [Fact]

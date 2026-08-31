@@ -283,6 +283,14 @@
                 <MudSelectItem Value="@ExchangeRateDateFields.ExtractionDate">@T("ExtractionDate / Extraktionsdatum", "ExtractionDate / extraction date")</MudSelectItem>
             </MudSelect>
         </MudItem>
+        <MudItem xs="12">
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.h6">@T("Finance: Kostenbasis und CHF-Umrechnung", "Finance: cost basis and CHF conversion")</MudText>
+            <MudText Typo="Typo.caption">
+                @T("Diese Auswahlen sind fachlich getrennt, greifen aber in einer festen Reihenfolge: Ein gepflegter Sales Type (FFM, CM, LRD) entscheidet zuerst, danach ein explizit gepflegter Lieferant, erst zuletzt der Supplier-Fallback. Kostenquelle und Kursprofil aendern die Klassifikation nicht. Jede Auswahl bleibt gespeichert und wirkt beim naechsten Erzeugen von Cockpit, Pruefbuch und Nachweis; die IT/IN-Kostenmethode erst nach dem naechsten Import von Italien oder Indien.",
+                   "These choices are independent, yet they apply in a fixed order: a maintained sales type (FFM, CM, LRD) decides first, then an explicitly maintained supplier, and only last the supplier fallback. Cost source and rate profile do not change the classification. Each choice is saved and applies the next time cockpit, audit ledger and proof are generated; the IT/IN cost method only after the next Italy or India import.")
+            </MudText>
+        </MudItem>
         <MudItem xs="12" md="4">
             <MudSelect T="string" @bind-Value="_exportSettings.GroupMarginCostCurrencyMode"
                        Label="@T("Gruppenmarge bei abweichender Kostenwaehrung", "Group margin on differing cost currency")"
@@ -294,9 +302,34 @@
         <MudItem xs="12" md="4">
             <MudSelect T="string" @bind-Value="_exportSettings.SupplierFallbackMode"
                        Label="@T("Supplier-Fallback ohne Lieferantenangabe", "Supplier fallback without supplier data")"
-                       HelperText="@T("Neu ist Standard: Artikel im CH-Werkstamm 1100 gelten als intern von TR_AG beliefert. Alt prueft nur die MBEW-Kostentabelle.", "New is default: materials in CH plant master 1100 are treated as internally supplied by TR_AG. Old checks only the MBEW cost table.")">
+                       HelperText="@T("Greift nur bei Zeilen ohne Sales Type und ohne Lieferantenangabe. Standard: Material im CH-Werkstamm MARC 1100 gilt als intern von TR_AG beliefert und rechnet mit Schweizer STPRS. Alternativen: die alte MBEW-Kostentabelle, oder direkt die lokalen Standardkosten der verkaufenden Gesellschaft, wobei der MARC-Treffer dann bewusst unerheblich ist. Ohne bekannte Gesellschaft bleibt die Zeile unklar.", "Applies only to rows without a sales type and without supplier data. Default: material in CH plant master MARC 1100 counts as internally supplied by TR_AG and uses Swiss STPRS. Alternatives: the old MBEW cost table, or the local standard cost of the selling entity directly, in which case the MARC hit is deliberately irrelevant. Without a known entity the row stays unclear.")">
                 <MudSelectItem Value="@SupplierFallbackModes.ChPlantMaster">@T("Neu: CH-Werkstamm (MARC 1100)", "New: CH plant master (MARC 1100)")</MudSelectItem>
                 <MudSelectItem Value="@SupplierFallbackModes.GroupStandardCosts">@T("Alt: CH-Kostentabelle (MBEW 1100)", "Old: CH cost table (MBEW 1100)")</MudSelectItem>
+                <MudSelectItem Value="@SupplierFallbackModes.LocalStandardCosts">@T("Lokale Standardkosten bei fehlendem Lieferanten", "Local standard costs when supplier data is missing")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="_exportSettings.InternalSupplierCostSourceMode"
+                       Label="@T("Kostenquelle bei internem Lieferanten", "Cost source for internal supplier")"
+                       HelperText="@T("Aendert nur die Kostenquelle, nicht die Lieferantenklassifikation. Gilt bei internem Lieferanten und Material in MARC Werk 1100. Standard: Kosten der liefernden Gesellschaft. Die Schweizer STPRS greift nur bei positivem Schweizer Wert, sonst bleibt die bisherige Quelle sichtbar.", "Changes only the cost source, not the supplier classification. Applies to internal suppliers and material in MARC plant 1100. Default: delivering entity cost. Swiss STPRS applies only where a positive Swiss value exists, otherwise the previous source stays visible.")">
+                <MudSelectItem Value="@InternalSupplierCostSourceModes.DeliveringEntityCosts">@T("Kosten der liefernden Gesellschaft (Standard)", "Delivering entity costs (default)")</MudSelectItem>
+                <MudSelectItem Value="@InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial">@T("Schweizer STPRS bei MARC Werk 1100", "Swiss STPRS for MARC plant 1100")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_exportSettings.B1GroupStandardCostMode"
+                       Label="@T("IT/IN: eigene Konzernkosten aus B1-Belegen", "IT/IN: own group costs from B1 documents")"
+                       HelperText="@T("Gilt nur fuer Trafag Italien und Indien. Umschalten allein aendert keine gespeicherten Kosten; erst der naechste Standortimport baut deren Kostenbereich neu auf. Ein historischer Stichtag ist nicht moeglich, weil keine Beleghistorie gespeichert wird.", "Applies only to Trafag Italy and India. Switching alone changes no stored cost; only the next site import rebuilds their cost area. A historical cut-off date is not possible because no document history is stored.")">
+                <MudSelectItem Value="@B1GroupStandardCostModes.LatestPositive">@T("Juengster positiver Belegpreis je Material (Standard)", "Latest positive document cost per material (default)")</MudSelectItem>
+                <MudSelectItem Value="@B1GroupStandardCostModes.AveragePositive">@T("Durchschnitt aller positiven Belegpreise je Material im Import", "Average of all positive document costs per material in the import")</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_exportSettings.GroupMarginChfRateMode"
+                       Label="@T("CHF-Finance-Umrechnung: Kursprofil", "CHF finance conversion: rate profile")"
+                       HelperText="@T("Wirkt einheitlich auf alle CHF-Finance-Werte in Cockpit, Finance-Pivot, Pruefbuch, Nachweis-Excel und Sales_All. Der Tageskurs kann diese Werte bei jeder Neuberechnung aendern, der Jahresendkurs macht die Jahressicht reproduzierbar. Kursquelle und verbindlicher Stichtag der offiziellen Reportingumrechnung sind fachlich noch offen (ISS-008).", "Applies uniformly to all CHF finance values in cockpit, finance pivot, audit ledger, proof Excel and Sales_All. The daily rate can change these values on every recalculation, the year-end rate makes the yearly view reproducible. Rate source and binding cut-off date of the official reporting conversion are still open (ISS-008).")">
+                <MudSelectItem Value="@GroupMarginChfRateModes.CurrentDailyRate">@T("Aktueller Tageskurs (bisheriger Standard)", "Current daily rate (existing default)")</MudSelectItem>
+                <MudSelectItem Value="@GroupMarginChfRateModes.FinanceYearEndRate">@T("Jahresendkurs je Finance-Jahr (reproduzierbar)", "Year-end rate per finance year (reproducible)")</MudSelectItem>
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="4">

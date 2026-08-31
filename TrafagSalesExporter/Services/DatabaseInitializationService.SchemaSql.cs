@@ -104,6 +104,9 @@ CREATE TABLE ExportSettings (
     -- neuen Datenbank ist nichts nachzuziehen, deshalb direkt 1.
     GroupMarginCostCurrencyDecision20260827Applied INTEGER NOT NULL DEFAULT 1,
     SupplierFallbackMode TEXT NOT NULL DEFAULT 'ChPlantMaster',
+    InternalSupplierCostSourceMode TEXT NOT NULL DEFAULT 'DeliveringEntityCosts',
+    B1GroupStandardCostMode TEXT NOT NULL DEFAULT 'LatestPositive',
+    GroupMarginChfRateMode TEXT NOT NULL DEFAULT 'CurrentDailyRate',
     LastTimerRunUtc TEXT NULL
 );";
 

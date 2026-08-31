@@ -26,11 +26,13 @@ public class ExcelExportService : IExcelExportService
     }
 
     /// <summary>
-    /// Jahreskurs nach CHF wie im Finance Pruefbuch: Stichtag 31.12. des Finance-Jahres
-    /// der Zeile, damit historische Jahre mit ihrem eigenen Kurs bewertet werden.
+    /// Einheitliches CHF-Kursprofil fuer Cockpit, Pruefbuch, Nachweis und Sales_All.
+    /// Der Stichtag wird bewusst aus dem Finance-Setting aufgeloest, nicht von einer
+    /// einzelnen Ausgabe still vorgegeben.
     /// </summary>
-    private decimal? ResolveChfRate(string currency, int year)
-        => _exchangeRateService?.ResolveRate(currency, "CHF", new DateTime(year, 12, 31));
+    private decimal? ResolveChfRate(string currency, int year, string? groupMarginChfRateMode)
+        => _exchangeRateService?.ResolveRate(currency, "CHF",
+            GroupMarginChfRateModes.ResolveRateDate(groupMarginChfRateMode, year));
 
     /// <summary>Jahreskurs zwischen zwei Waehrungen (Kostenbasis -> Verkaufswaehrung), wie im Dashboard.</summary>
     private decimal? ResolveCrossRate(string fromCurrency, string toCurrency, DateTime rateDate)
@@ -48,6 +50,18 @@ public class ExcelExportService : IExcelExportService
         using var db = _dbFactory.CreateDbContext();
         var settings = db.ExportSettings.AsNoTracking().FirstOrDefault();
         return GroupMarginCostCurrencyConverter.NormalizeMode(settings?.GroupMarginCostCurrencyMode);
+    }
+
+    private string LoadGroupMarginChfRateMode()
+    {
+        if (_dbFactory is null)
+            return GroupMarginChfRateModes.CurrentDailyRate;
+
+        using var db = _dbFactory.CreateDbContext();
+        var mode = db.ExportSettings.AsNoTracking()
+            .Select(settings => settings.GroupMarginChfRateMode)
+            .FirstOrDefault();
+        return GroupMarginChfRateModes.Normalize(mode);
     }
 
     /// <summary>Konzern-Standardkosten TR AG (MBEW-STPRS); gleiche Quelle wie das Dashboard.</summary>
@@ -100,6 +114,18 @@ public class ExcelExportService : IExcelExportService
         return SupplierFallbackModes.Normalize(mode);
     }
 
+    private string LoadInternalSupplierCostSourceMode()
+    {
+        if (_dbFactory is null)
+            return InternalSupplierCostSourceModes.DeliveringEntityCosts;
+
+        using var db = _dbFactory.CreateDbContext();
+        var mode = db.ExportSettings.AsNoTracking()
+            .Select(settings => settings.InternalSupplierCostSourceMode)
+            .FirstOrDefault();
+        return InternalSupplierCostSourceModes.Normalize(mode);
+    }
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -126,7 +152,10 @@ public class ExcelExportService : IExcelExportService
             ? $"Finance_Dashboard_Nachweis_{fileDate:yyyy-MM-dd}.xlsx"
             : $"Finance_Dashboard_Nachweis_{scopePart}_{fileDate:yyyy-MM-dd}.xlsx";
         var fullPath = Path.Combine(outputDirectory, fileName);
-        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode());
+        var chfRateMode = LoadGroupMarginChfRateMode();
+        WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(),
+            (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
+            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode());
         return fullPath;
     }
 
@@ -163,7 +192,12 @@ public class ExcelExportService : IExcelExportService
         => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, FinanceRuleEngine.CreateDefaultRules());
 
     private void WriteWorkbookWithConfiguredRules(string fullPath, List<SalesRecord> records, bool includeFinanceHelpSheet)
-        => WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(), ResolveChfRate, LoadGroupMarginCostCurrencyMode(), ResolveCrossRate, LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadCustomerMarketSegments());
+    {
+        var chfRateMode = LoadGroupMarginChfRateMode();
+        WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(),
+            (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
+            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(), LoadCustomerMarketSegments());
+    }
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
     {
@@ -219,13 +253,14 @@ public class ExcelExportService : IExcelExportService
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
-        string? supplierFallbackMode = null)
+        string? supplierFallbackMode = null,
+        string? internalSupplierCostSourceMode = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
         var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate,
-            groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode);
+            groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
@@ -336,7 +371,8 @@ public class ExcelExportService : IExcelExportService
         Func<string, string, DateTime, decimal?>? resolveCrossRate = null,
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
-        string? supplierFallbackMode = null)
+        string? supplierFallbackMode = null,
+        string? internalSupplierCostSourceMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         return financeRows
@@ -348,7 +384,8 @@ public class ExcelExportService : IExcelExportService
                 var margin = GroupMarginCalculator.Evaluate(
                     ToGroupMarginLine(row.Record, row.NetSalesActual), costs,
                     chPlantMaterialKeys: chPlantMaterialKeys,
-                    supplierFallbackMode: supplierFallbackMode);
+                    supplierFallbackMode: supplierFallbackMode,
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
                 var supplierType = margin.SupplierType;
                 var status = margin.Status;
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
@@ -1004,6 +1041,7 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
+        string? internalSupplierCostSourceMode = null,
         IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment>? customerMarketSegments = null)
     {
         using var workbook = new XLWorkbook();
@@ -1177,7 +1215,8 @@ public class ExcelExportService : IExcelExportService
                 resolveCrossRate,
                 groupStandardCosts,
                 chPlantMaterialKeys,
-                supplierFallbackMode);
+                supplierFallbackMode,
+                internalSupplierCostSourceMode);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);

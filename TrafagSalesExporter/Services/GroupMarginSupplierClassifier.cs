@@ -122,6 +122,14 @@ public static class GroupMarginSupplierClassifier
             return InternalMarkerPattern.IsMatch(supplierText) ? Internal : External;
         }
 
+        if (SupplierFallbackModes.Normalize(supplierFallbackMode) == SupplierFallbackModes.LocalStandardCosts)
+        {
+            // Bewusst waehlbare Finance-Regel: ohne jeden Lieferantennachweis wird der
+            // Standardpreis der verkaufenden Gesellschaft verwendet. Anders als der
+            // MARC-Fallback braucht dieser Modus keinen Materialschluessel oder CH-Cache.
+            return string.IsNullOrWhiteSpace(tsc) ? Unclear : Local;
+        }
+
         if (HasMaterialFallbackMatch(
                 normalizedMaterialKey, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode))
             return Internal;
@@ -188,7 +196,8 @@ public static class GroupMarginSupplierClassifier
     }
 
     /// <summary>
-    /// Umschaltbarer Supplier-Fallback. Der neue Standard prueft MARC/Werk 1100.
+    /// Umschaltbarer Supplier-Fallback. Der Standard prueft MARC/Werk 1100; der lokale
+    /// Modus liefert bewusst keinen Konzern-Treffer.
     /// Ist dieser Cache noch leer (z. B. direkt nach einer Migration), bleibt die
     /// Auswertung verfuegbar und verwendet voruebergehend den bisherigen MBEW-Fallback.
     /// </summary>
@@ -203,6 +212,8 @@ public static class GroupMarginSupplierClassifier
             return false;
 
         var mode = SupplierFallbackModes.Normalize(supplierFallbackMode);
+        if (mode == SupplierFallbackModes.LocalStandardCosts)
+            return false;
         if (mode == SupplierFallbackModes.ChPlantMaster && chPlantMaterialKeys is { Count: > 0 })
             return chPlantMaterialKeys.Contains(key);
 
@@ -279,6 +290,9 @@ public static class GroupMarginSupplierClassifier
                 return GroupStandardCostEntities.TrIn;
             return null;
         }
+
+        if (SupplierFallbackModes.Normalize(supplierFallbackMode) == SupplierFallbackModes.LocalStandardCosts)
+            return null;
 
         // Gleicher umschaltbarer Material-Fallback wie in Resolve(). Beide Methoden muessen
         // dieselbe liefernde Gesellschaft liefern, damit Klassifikation und Kostenpfad nicht

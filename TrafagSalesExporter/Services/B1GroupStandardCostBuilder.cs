@@ -14,11 +14,13 @@ public static class B1GroupStandardCostBuilder
     public static IReadOnlyList<GroupStandardCost> Build(
         string? tsc,
         IEnumerable<SalesRecord> records,
-        DateTime refreshedAtUtc)
+        DateTime refreshedAtUtc,
+        string? costMode = null)
     {
         if (!GroupStandardCostAreas.TryResolveB1Source(tsc, out var area, out var expectedCurrency))
             return [];
 
+        var mode = B1GroupStandardCostModes.Normalize(costMode);
         return records
             .Select(record => new Candidate(
                 MaterialKey: MaterialKeyNormalizer.Normalize(
@@ -36,23 +38,36 @@ public static class B1GroupStandardCostBuilder
                                 candidate.UnitCost > 0m &&
                                 candidate.Currency.Equals(expectedCurrency, StringComparison.OrdinalIgnoreCase))
             .GroupBy(candidate => candidate.MaterialKey, StringComparer.Ordinal)
-            .Select(group => group
-                .OrderByDescending(candidate => candidate.EffectiveDate)
-                .ThenByDescending(candidate => candidate.ExtractionDate)
-                .ThenByDescending(candidate => candidate.DocumentEntry)
-                .ThenByDescending(candidate => candidate.PositionOnInvoice)
-                .ThenByDescending(candidate => candidate.SourceLineId, StringComparer.Ordinal)
-                .First())
-            .OrderBy(candidate => candidate.MaterialKey, StringComparer.Ordinal)
-            .Select(candidate => new GroupStandardCost
+            .Select(group => BuildCost(group, mode, area, expectedCurrency, refreshedAtUtc))
+            .OrderBy(cost => cost.MaterialKey, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static GroupStandardCost BuildCost(
+        IGrouping<string, Candidate> candidates,
+        string mode,
+        string area,
+        string expectedCurrency,
+        DateTime refreshedAtUtc)
+    {
+        var selected = candidates
+            .OrderByDescending(candidate => candidate.EffectiveDate)
+            .ThenByDescending(candidate => candidate.ExtractionDate)
+            .ThenByDescending(candidate => candidate.DocumentEntry)
+            .ThenByDescending(candidate => candidate.PositionOnInvoice)
+            .ThenByDescending(candidate => candidate.SourceLineId, StringComparer.Ordinal)
+            .First();
+
+        return new GroupStandardCost
             {
-                MaterialKey = candidate.MaterialKey,
+                MaterialKey = candidates.Key,
                 ValuationArea = area,
-                UnitCost = candidate.UnitCost,
+                UnitCost = mode == B1GroupStandardCostModes.AveragePositive
+                    ? candidates.Average(candidate => candidate.UnitCost)
+                    : selected.UnitCost,
                 Currency = expectedCurrency,
                 RefreshedAtUtc = refreshedAtUtc
-            })
-            .ToList();
+            };
     }
 
     private static string FirstNonEmpty(params string?[] values)
@@ -76,12 +91,13 @@ public static class B1GroupStandardCostStore
         string? tsc,
         IReadOnlyCollection<SalesRecord> records,
         DateTime refreshedAtUtc,
+        string? costMode = null,
         CancellationToken cancellationToken = default)
     {
         if (!GroupStandardCostAreas.TryResolveB1Source(tsc, out var area, out _))
             return new(false, string.Empty, 0);
 
-        var costs = B1GroupStandardCostBuilder.Build(tsc, records, refreshedAtUtc);
+        var costs = B1GroupStandardCostBuilder.Build(tsc, records, refreshedAtUtc, costMode);
         if (costs.Count == 0)
             return new(false, area, 0);
 

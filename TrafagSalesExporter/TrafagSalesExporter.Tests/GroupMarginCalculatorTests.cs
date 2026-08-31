@@ -245,6 +245,51 @@ public class GroupMarginCalculatorTests
     }
 
     [Fact]
+    public void LokalerSupplierFallback_UebergehtChWerkstammUndNutztLokaleStandardkosten()
+    {
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "IC15415" };
+        var groupCosts = GroupCosts("IC15415", 25m);
+
+        var result = GroupMarginCalculator.Evaluate(
+            Line(tsc: "TRIT", material: "IC15415", standardCost: 60m), groupCosts,
+            chPlantMaterialKeys: chPlantMaterials,
+            supplierFallbackMode: SupplierFallbackModes.LocalStandardCosts);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.Equal(60m, result.CostBasis);
+        Assert.Equal("Standardkosten der lokalen Gesellschaft", result.CostSource);
+        Assert.Equal(GroupMarginStatuses.Ok, result.Status);
+    }
+
+    [Fact]
+    public void SchweizerStprsSchalter_UebersteuertBeiInternemLieferantenNurDieKostenquelle()
+    {
+        var groupCosts = GroupCosts("IC15415", 50m);
+        groupCosts[("IC15415", GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrIt])] = new GroupStandardCost
+        {
+            MaterialKey = "IC15415",
+            ValuationArea = GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrIt],
+            UnitCost = 120m,
+            Currency = "EUR"
+        };
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "IC15415" };
+        var line = Line(tsc: "TRIT", material: "IC15415", supplierName: "Trafag Italia S.r.l.");
+
+        var defaultResult = GroupMarginCalculator.Evaluate(line, groupCosts, chPlantMaterialKeys: chPlantMaterials);
+        var swissResult = GroupMarginCalculator.Evaluate(
+            line, groupCosts, chPlantMaterialKeys: chPlantMaterials,
+            internalSupplierCostSourceMode: InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, swissResult.SupplierType);
+        Assert.Equal(120m, defaultResult.CostBasis);
+        Assert.Equal("Konzernkosten TR IT (B1 StockPrice)", defaultResult.CostSource);
+        Assert.Equal(50m, swissResult.CostBasis);
+        Assert.Equal("CHF", swissResult.CostCurrency);
+        Assert.Equal(GroupMarginCalculator.GroupCostSourceLabel, swissResult.CostSource);
+    }
+
+    [Fact]
     public void Lokaler_Nichttreffer_OhneStandardkosten_BleibtAlsFehlendeKostenOffen()
     {
         IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "OTHER-MATERIAL" };

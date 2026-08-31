@@ -57,6 +57,9 @@ public class ConfigTransferExportSettings
     public string ExchangeRateDateField { get; set; } = ExchangeRateDateFields.PostingDate;
     public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Convert;
     public string SupplierFallbackMode { get; set; } = SupplierFallbackModes.ChPlantMaster;
+    public string InternalSupplierCostSourceMode { get; set; } = InternalSupplierCostSourceModes.DeliveringEntityCosts;
+    public string B1GroupStandardCostMode { get; set; } = B1GroupStandardCostModes.LatestPositive;
+    public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.CurrentDailyRate;
 }
 
 public class ConfigTransferCurrencyExchangeRate

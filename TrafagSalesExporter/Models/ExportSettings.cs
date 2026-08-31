@@ -28,10 +28,28 @@ public class ExportSettings
     public string GroupMarginCostCurrencyMode { get; set; } = GroupMarginCostCurrencyModes.Convert;
 
     /// <summary>
-    /// Material-Fallback fuer leere Supplier-Felder: neuer CH-Werkstamm (MARC 1100)
-    /// oder bisherige CH-Kostentabelle (MBEW/GroupStandardCosts 1100).
+    /// Material-Fallback fuer leere Supplier-Felder: CH-Werkstamm (MARC 1100), bisherige
+    /// CH-Kostentabelle (MBEW/GroupStandardCosts 1100) oder bewusst lokale Standardkosten.
     /// </summary>
     public string SupplierFallbackMode { get; set; } = SupplierFallbackModes.ChPlantMaster;
+
+    /// <summary>
+    /// Kostenquelle bei internem Lieferanten und Schweizer Werkstammtreffer (MARC 1100):
+    /// bisherige Kosten der liefernden Gesellschaft oder bewusst Schweizer MBEW-STPRS.
+    /// </summary>
+    public string InternalSupplierCostSourceMode { get; set; } = InternalSupplierCostSourceModes.DeliveringEntityCosts;
+
+    /// <summary>
+    /// Verdichtung der eigenen B1-Belegkosten fuer Trafag Italien und Indien. Wirkt erst beim
+    /// naechsten Import dieser Gesellschaft, weil dann <c>GroupStandardCosts</c> neu aufgebaut wird.
+    /// </summary>
+    public string B1GroupStandardCostMode { get; set; } = B1GroupStandardCostModes.LatestPositive;
+
+    /// <summary>
+    /// Kursprofil fuer alle CHF-Finance-Umrechnungen: Gruppenmarge im Cockpit,
+    /// Finance-Pruefbuch sowie Nachweis- und Sales_All-Excel.
+    /// </summary>
+    public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.CurrentDailyRate;
 
     /// <summary>
     /// Zeitpunkt (UTC) des letzten automatischen Timer-Exports. Dient dem Nachhol-Lauf:
@@ -58,9 +76,55 @@ public static class SupplierFallbackModes
 {
     public const string ChPlantMaster = nameof(ChPlantMaster);
     public const string GroupStandardCosts = nameof(GroupStandardCosts);
+    public const string LocalStandardCosts = nameof(LocalStandardCosts);
 
     public static string Normalize(string? mode)
         => string.Equals(mode?.Trim(), GroupStandardCosts, StringComparison.OrdinalIgnoreCase)
             ? GroupStandardCosts
-            : ChPlantMaster;
+            : string.Equals(mode?.Trim(), LocalStandardCosts, StringComparison.OrdinalIgnoreCase)
+                ? LocalStandardCosts
+                : ChPlantMaster;
+}
+
+public static class InternalSupplierCostSourceModes
+{
+    public const string DeliveringEntityCosts = nameof(DeliveringEntityCosts);
+    public const string SwissStprsForChPlantMaterial = nameof(SwissStprsForChPlantMaterial);
+
+    public static string Normalize(string? mode)
+        => string.Equals(mode?.Trim(), SwissStprsForChPlantMaterial, StringComparison.OrdinalIgnoreCase)
+            ? SwissStprsForChPlantMaterial
+            : DeliveringEntityCosts;
+}
+
+public static class B1GroupStandardCostModes
+{
+    public const string LatestPositive = nameof(LatestPositive);
+    public const string AveragePositive = nameof(AveragePositive);
+
+    public static string Normalize(string? mode)
+        => string.Equals(mode?.Trim(), AveragePositive, StringComparison.OrdinalIgnoreCase)
+            ? AveragePositive
+            : LatestPositive;
+
+    public static string Describe(string? mode)
+        => Normalize(mode) == AveragePositive
+            ? "Durchschnitt positiver B1 StockPrice-Werte des Imports"
+            : "Juengster positiver B1 StockPrice";
+}
+
+public static class GroupMarginChfRateModes
+{
+    public const string CurrentDailyRate = nameof(CurrentDailyRate);
+    public const string FinanceYearEndRate = nameof(FinanceYearEndRate);
+
+    public static string Normalize(string? mode)
+        => string.Equals(mode?.Trim(), FinanceYearEndRate, StringComparison.OrdinalIgnoreCase)
+            ? FinanceYearEndRate
+            : CurrentDailyRate;
+
+    public static DateTime ResolveRateDate(string? mode, int financeYear, DateTime? today = null)
+        => Normalize(mode) == FinanceYearEndRate
+            ? new DateTime(financeYear, 12, 31)
+            : (today ?? DateTime.Today).Date;
 }

@@ -1,6 +1,115 @@
 # Last Change
 
-Stand: 2026-08-27
+Stand: 2026-08-31
+
+## Finance-Schalter produktiv, Abhaengigkeiten im GUI-Text 2026-08-31 (DEPLOYED 09:47)
+
+- **Auftrag Ingo:** die beiden noch nicht deployten Schalter produktiv ausliefern, und die
+  Abhaengigkeiten sollen fuer Andreas im Oberflaechentext selbst stehen, nicht nur in der
+  Dokumentation.
+- Alle vier Hilfetexte der Sektion **Finance: Kostenbasis und CHF-Umrechnung** tragen jetzt
+  die Abhaengigkeit, nicht nur die Wirkung. Der Einleitungstext nennt die Vorrangkette
+  ausdruecklich: ein gepflegter Sales Type (`FFM`, `CM`, `LRD`) entscheidet zuerst, danach ein
+  explizit gepflegter Lieferant, erst zuletzt der Supplier-Fallback; Kostenquelle und
+  Kursprofil aendern die Klassifikation nicht.
+- Je Schalter steht jetzt auch die Grenze im Text: der Supplier-Fallback greift nur bei Zeilen
+  ohne Sales Type und ohne Lieferantenangabe; die Schweizer `STPRS` nur bei positivem Schweizer
+  Wert; die IT/IN-Methode erst beim naechsten Standortimport und ohne historischen Stichtag,
+  weil keine Beleghistorie gespeichert wird; das CHF-Kursprofil einheitlich in Cockpit,
+  Finance-Pivot, Pruefbuch, Nachweis-Excel und `Sales_All`, mit dem Hinweis, dass Kursquelle und
+  verbindlicher Stichtag als `ISS-008` fachlich offen sind.
+- **Roter Test im Vorbereitungsstand gefunden und behoben:**
+  `UiTextServiceTests.Generated_Translations_Cover_Every_Literal_Ui_Key_And_Preserve_Placeholders`
+  war rot. Sektionstitel, CHF-Label und CHF-Hilfetext hatten keinen Uebersetzungsschluessel und
+  waeren in allen sechs Sprachen auf Englisch zurueckgefallen; fuenf weitere Schluessel standen in
+  `es`, `it`, `hi`, `sq` und `tr` als englischer Platzhalter. Jetzt sind alle zwoelf Schluessel der
+  Sektion in jeder Sprache echt uebersetzt und elf veraltete Schluessel entfernt.
+- Release-Tests **644/644** gruen.
+- **PRODUKTIV DEPLOYED um 09:47** nach ausdruecklicher Freigabe durch Ingo, mit
+  `.tmp_tools/DeployFinanceSwitches0831`: erst der Prueflauf ohne jeden Schreibvorgang, dann der
+  echte Lauf. Der erste Versuch scheiterte noch daran, dass das VPN nicht aktiv war; das Werkzeug
+  bricht in diesem Fall vor dem ersten Schreibvorgang ab, es war also nichts halb ausgeliefert.
+- Sicherung als gepruefte Blockkopie
+  `trafag_exporter.db.before-finance-itin-chf-switches-20260831-094559.bak`. `BiDashboard.dll`
+  `4'830'720` Bytes, SHA256
+  `DEA49DC63FFB1C261CF80AB073B2C4BC21A9EECC295763A9E8250BBEB0E4CDFF`, lokaler Release-Build und
+  Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'809` unveraendert. HTTPS `200` auf
+  Startseite, `/settings` und `/management-cockpit`.
+- Wirknachweis: alle sieben erwarteten Literale fehlten im Prueflauf vorher und sind nach dem
+  Deploy in der DLL; die beiden ersetzten Hilfetexte vom 27.08. sind nicht mehr enthalten.
+- **Schemaerweiterung produktiv nachgemessen** (read-only, nach dem ersten Start):
+  `B1GroupStandardCostMode = LatestPositive`, `GroupMarginChfRateMode = CurrentDailyRate`,
+  `SupplierFallbackMode` unveraendert `ChPlantMaster`, `InternalSupplierCostSourceMode`
+  unveraendert `DeliveringEntityCosts`. Alle vier Schalter stehen auf dem bisherigen Verhalten.
+- Der eine Alarm war die bekannte WAL-Falle und ist entkraeftet: `-wal` und `-shm` sind beim
+  Neustart um `09:47:28` wieder da, die Hauptdatei ist in Laenge und Schreibzeit unveraendert
+  (`357'761'024` Bytes, `30.08.2026 17:18:50`).
+- **Sichtprueflauf durch Ingo erledigt:** in `Admin Bereich > Settings` sind alle vier
+  Auswahlfelder mit den neuen Abhaengigkeitstexten sichtbar, auf Deutsch, an der richtigen
+  Stelle unter `Finance: Kostenbasis und CHF-Umrechnung`, mit den erwarteten Standardwerten.
+  Damit ist die neue Sektion fuer Andreas nachweislich sichtbar, nicht nur per HTTP `200`
+  erreichbar.
+
+## Dokumentationsabgleich Finance und Wochen-Todo 2026-08-31
+
+- `ISS-012` (Phantom-Legendenzeile im zentralen Export) ist nach Produktivdeploy vom
+  27.08.2026 im Wochen-Todo als **Erledigt** mit Abschlussdatum `27.08.2026` nachgezogen.
+- Die zwei noch nicht deployten Finance-Schalter sind dokumentarisch auf den tatsaechlichen
+  Umfang berichtigt: Die CHF-Wahl gilt fuer Cockpit, Finance-Pivot, Pruefbuch,
+  Nachweis-Excel und `Sales_All`; die IT/IN-Wahl wirkt beim naechsten Standortimport auf
+  alle danach erzeugten Ausgaben. Gezielte Tests: **52/52** gruen.
+- Offen und unveraendert: produktiver Deploy der beiden neuen Schalter sowie die fachliche
+  Kurs-Governance (`ISS-008`) und die Entscheidungen von Andreas. Keine fachliche Freigabe
+  wird durch die technische Umschaltbarkeit ersetzt.
+
+## Finance: zwei weitere steuerbare Varianten 2026-08-28 (noch nicht deployed)
+
+- Unter **Admin Bereich > Settings** ist die Finance-Sektion fuer Kostenbasis und
+  CHF-Umrechnung ergaenzt. Die vorhandenen beiden MARC-/STPRS-Schalter bleiben davon
+  getrennt; alle vier Entscheidungen sind mit Wirkung und Grenze beschrieben.
+- **IT/IN-Kostenmethode:** Default bleibt der juengste positive B1-`StockPrice` je
+  Material. Alternativ kann Finance den Durchschnitt der positiven Belegpreise des naechsten
+  IT-/IN-Imports waehlen. Bereits gespeicherte Werte werden nicht beim blossen Umschalten
+  veraendert; der naechste Standortimport baut den jeweiligen Kostenbereich neu auf.
+- **CHF-Finance-Umrechnung:** Default bleibt der bisherige Tageskurs. Alternativ ist der
+  Jahresendkurs des jeweiligen Finance-Jahrs fuer eine reproduzierbare Jahressicht waehlbar.
+  Die Wahl gilt einheitlich fuer Cockpit, Finance-Pruefbuch, Nachweis-Excel und `Sales_All`.
+- Beide Einstellungen sind persistent, schemaerweitert, im Konfigurationsimport/-export
+  enthalten und mit gezielten Tests fuer Kostenverdichtung, Defaults, Kursstichtag,
+  Cockpit/Pruefbuch/Pivot sowie beide Excel-Ausgaben abgesichert (**52/52** gruen).
+
+## Finance: zwei Kostenquellen-Schalter fuer Andreas 2026-08-27 (DEPLOYED 16:12)
+
+- **Entscheid Ingo:** Der bisherige Standard bleibt unveraendert: Kein Lieferant plus
+  Materialstamm in `MARC` Werk `1100` bedeutet `Intern / TR_AG / Schweizer STPRS`.
+  Als Alternative gibt es unter **Admin Bereich > Settings** neu
+  **Lokale Standardkosten bei fehlendem Lieferanten**.
+- Nach dem Speichern gilt die Auswahl bei der **naechsten** Cockpit- oder
+  Nachweisgenerierung. Im lokalen Modus geht jede Zeile ohne Lieferantenangabe auf die
+  Standardkosten der verkaufenden Gesellschaft; der MARC-Treffer ist dann absichtlich
+  unerheblich. Sales Type und explizit gepflegte Lieferanten behalten Vorrang.
+- Der Wert wird in `ExportSettings.SupplierFallbackMode` gespeichert und durch den
+  Konfigurationsimport/-export uebernommen. Keine Datenbankmigration: die vorhandene
+  Zeichenketten-Spalte kann den neuen Modus bereits aufnehmen.
+- Umsetzung in `ExportSettings`, `GroupMarginSupplierClassifier`, Settings und
+  Cockpit-Hinweis; Texte in allen sechs Oberflaechensprachen nachgezogen. Zielgerichtete
+  Tests fuer Klassifikation, Kostenberechnung, Konfigurationsuebernahme und UI-Texte
+  sind gruen. **Produktiv deployed um 16:12; 638/638 Release-Tests gruen.**
+- Details: `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt 7a.
+
+- Zweiter, vom Lieferantenfallback unabhaengiger Schalter unter **Admin Bereich > Settings**:
+  Bei internem Lieferanten gilt standardmaessig weiterhin die Kostenquelle der liefernden
+  Konzerngesellschaft. Andreas kann fuer Materialien im Schweizer Werkstamm `MARC 1100`
+  stattdessen Schweizer `MBEW-STPRS` als Konzernkostenbasis waehlen.
+- Der Schalter aendert ausschliesslich die Kostenquelle; Sales Type und Lieferantenerkennung
+  bleiben unveraendert. Ohne positiven Schweizer Kostenwert bleibt die bisherige Kostenquelle
+  erhalten, damit kein Vergleich durch kuenstlich offene Kostenzeilen verfaelscht wird.
+- Der Wert ist persistent, wird im Konfigurationsimport/-export mitgenommen und wirkt in
+  Cockpit, Pruefbuch, zentraler Excel und Nachweis-Excel. Produktivdatenbank nach Start
+  gelesen: `SupplierFallbackMode = ChPlantMaster` und
+  `InternalSupplierCostSourceMode = DeliveringEntityCosts` â€” beide Defaults entsprechen
+  dem bisherigen Stand.
+- Details: `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt 7b.
 
 ## Sales Type geht vor den Lieferantenfeldern 2026-08-27 (DEPLOYED 15:28)
 
@@ -93,9 +202,9 @@ Stand: 2026-08-27
   `Mixed`. Die Konzernsumme rechnet jetzt in CHF; Zeilen ohne Kurs bleiben draussen und
   werden gezaehlt und als Hinweis ausgewiesen. Landes- und Divisionszeilen bleiben in
   Lokalwaehrung.
-- **Nicht angefasst:** die offizielle Umrechnung des Umsatzes nach CHF (`ResolveChfRate`,
-  Group-Currency-Ansicht, Pruefbuch) rechnet weiter mit dem Jahreskurs. Das haengt an
-  `ISS-008` und ist nicht entschieden.
+- **Kurs-Governance bleibt offen:** Der Schalter waehlt lediglich den Stichtag aus den bereits
+  gepflegten `CurrencyExchangeRates`. Die fachliche Festlegung von Kursquelle, verbindlichem
+  Stichtag und Pflegeprozess bleibt in `ISS-008` offen.
 - **Tests:** `630/630` gruen, darunter vier neue zu Tageskurs, Default und CHF-Summe.
 - **Kein Deploy.** Der Produktivstand rechnet unveraendert weiter, bis Ingo freigibt. Die
   Wirkung auf die `32` heute maskierten Zeilen ist erst danach messbar.

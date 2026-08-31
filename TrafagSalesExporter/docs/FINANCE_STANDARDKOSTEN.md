@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-08-27
+Stand: 2026-08-28
 
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
@@ -348,13 +348,112 @@ Reporting-Marge im Dashboard.
 | Punkt | Bei wem |
 | --- | --- |
 | Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
-| **Neu am 2026-08-27:** Bleibt Stufe 4 der Kaskade, also der Abgleich gegen `MARC` Werk 1100, bestehen? Andreas hat entschieden, dass ohne Lieferant die lokalen Standardkosten gelten (Abschnitt 11, B1). Heute setzt ein MARC-Treffer stattdessen `Intern / TR_AG`; betroffen sind `10'817` von `22'950` Kandidatenzeilen. Gehoert zusammen mit der Frage darueber entschieden, weil beide am selben Hebel ziehen | Andreas |
-| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) tragen seit dem 2026-08-25 bewusst keine Marge mehr und stehen auf `Kostenwaehrung abweichend`. **Am 2026-08-27 umgesetzt und um 15:28 produktiv deployed:** Kostenbasis wird mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
+| **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Andreas soll weiterhin die davon getrennte erste Frage entscheiden, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt. | Ingo / Andreas |
+| Umrechnungsregel fuer Konzernkosten in fremder Waehrung. Die frueheren `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) waren bis 2026-08-25 auf `Kostenwaehrung abweichend` maskiert. **Seit Deploy 2026-08-27 15:28** wird die Kostenbasis mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, verbindlicher Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
 | Fix-/Variabel-Split fuer den Deckungsbeitrag wird von keinem Quellsystem geliefert; `StandardCostVariable`/`StandardCostFixed` und `ContributionMarginCalculator` sind vorbereitet, die DB bleibt bewusst leer | Quellsysteme |
 | Angemeldeter Sichtprueflauf der Lokal-Zahl im Cockpit. Der HTTP-`200` auf `/management-cockpit` belegt Erreichbarkeit, nicht die Anzeige hinter dem Finance-Unlock | Ingo |
+
+### 7a. Analyse und Entscheidungsrichtung Ingo vom 2026-08-27: steuerbarer MARC-1100-Fallback
+
+Die vorhandene Regel bleibt die fachliche **Standardvorgabe**:
+
+```text
+Kein Lieferant + Material in MARC, Werk 1100
+-> Intern / TR_AG
+-> Konzernkosten TR AG (MBEW-STPRS)
+```
+
+Sie wird nicht durch Andreas' einfachere Aussage B1 still ersetzt. Denn ein Schweizer
+Werkstammtreffer ist heute die einzige systematisch vorhandene Evidenz, die bei fehlenden
+Lieferantenfeldern einen Konzernbezug sichtbar macht. Ohne ihn wuerden `10'817` von `22'950`
+Kandidatenzeilen pauschal auf lokale Kosten wechseln.
+
+Gleichzeitig ist eine **bewusst waehlbare Alternative** im Finance-Admin umgesetzt. Sie wird
+in den Settings dauerhaft gespeichert und beim naechsten Generieren von Cockpit bzw.
+Nachweis angewendet:
+
+```text
+Modus Standard (Default):
+Kein Lieferant + MARC Werk 1100 -> Intern / TR_AG / Schweizer STPRS
+
+Modus Lokale Kosten ohne Lieferant:
+Kein Lieferant -> Standardkosten der verkaufenden Gesellschaft
+```
+
+Der Schalter betrifft nur den Lieferanten-Fallback. Er darf weder einen gepflegten Sales Type
+noch einen expliziten Lieferanten ueberschreiben: `FFM`/`CM`/`LRD` und vorhandene
+Lieferantenfelder folgen weiterhin ihren eigenen, hoeheren Regeln. Im lokalen Modus ist ein
+MARC- oder Cache-Treffer bewusst unerheblich: fehlt der Lieferant und ist die verkaufende
+Gesellschaft bekannt, gelten deren lokale Standardkosten. Fehlt auch diese Zuordnung, bleibt
+der Status `Unklar`.
+
+**Umgesetzt und produktiv deployed am 2026-08-27 um 16:12:** Unter `Admin Bereich > Settings` gibt es
+jetzt die Auswahl **Lokale Standardkosten bei fehlendem Lieferanten**. Sie wird als
+`SupplierFallbackMode` gespeichert und bei Konfigurationsimport/-export mitgenommen; eine
+Schema-Migration ist nicht erforderlich, weil die vorhandene Zeichenketten-Spalte den neuen
+Modus speichert. Der Modus steuert Klassifikation und Kostenquelle einheitlich in Cockpit und
+Nachweis. Zielgerichtete Tests sichern Klassifikation, Kostenberechnung,
+Konfigurationsuebernahme und die UI-Texte ab.
+
+### 7b. Zweiter Schalter: Kostenquelle bei internem Lieferanten
+
+Die davon getrennte Andreas-Frage ist ebenfalls als eigene Auswahl unter
+`Admin Bereich > Settings` umgesetzt:
+
+```text
+Standard (heutiger Stand):
+Interner Lieferant -> Kosten der liefernden Konzerngesellschaft
+
+Alternative Schweizer STPRS:
+Interner Lieferant + Material in MARC Werk 1100 -> Schweizer MBEW-STPRS
+```
+
+Der zweite Schalter aendert **nur die Kostenquelle**, nicht die Lieferantenklassifikation.
+Er wirkt auf Cockpit, Pruefbuch sowie zentrale und Nachweis-Excel. Schweizer STPRS wird nur
+genommen, wenn fuer das Material auch ein positiver Schweizer Kostenwert vorhanden ist;
+andernfalls bleibt die bisherige Gesellschaftskostenquelle sichtbar. Damit kann Andreas die
+beiden fachlichen Varianten vergleichen, ohne Sales Type, Lieferantenerkennung oder den ersten
+Fallback-Schalter zu veraendern.
+
+### 7c. Zwei weitere Finance-Schalter: IT/IN-Kostenmethode und CHF-Umrechnung
+
+Unter `Admin Bereich > Settings` steht dafuer jetzt eine eigene, beschriebene Sektion
+**Finance: Kostenbasis und CHF-Umrechnung**. Die beiden Auswahlfelder sind unabhaengig
+voneinander und haben bewusst den bisherigen Stand als Default.
+
+| Schalter | Standard | Alternative | Wirkung und Grenze |
+| --- | --- | --- | --- |
+| **IT/IN: eigene Konzernkosten aus B1-Belegen** | Juengster positiver `B1 StockPrice` je Material | Arithmetischer Durchschnitt aller positiven `B1 StockPrice` je Material im Import | Gilt nur fuer Trafag Italien und Indien. Der Wert wird beim **naechsten Standortimport** neu in `GroupStandardCosts` aufgebaut; das Umschalten allein veraendert keine bereits gespeicherten Kosten. Ein historischer Stichtagsmodus wird bewusst nicht angeboten, weil der Cache keine Beleghistorie speichert. |
+| **CHF-Finance-Umrechnung: Kursprofil** | Aktueller Tageskurs | Jahresendkurs (31.12.) des jeweiligen Finance-Jahrs | Steuert einheitlich alle CHF-Finance-Werte: Gruppenmarge im Cockpit, Finance-Pruefbuch, Nachweis-Excel und `Sales_All`. Tageskurs kann diese Werte bei einer Neuberechnung aendern; der Jahresendkurs macht die jeweilige Jahressicht reproduzierbar. |
+
+Beide Werte werden in `ExportSettings` persistent gespeichert, beim Konfigurationsimport/-export
+mitgenommen und bei unbekannten Altwerten auf den jeweiligen Standard normalisiert. Damit kann
+Finance die Varianten nachvollziehbar vergleichen, ohne Daten zu loeschen oder Quellwerte zu
+ueberschreiben.
+
+**Technischer Status am 2026-08-31: PRODUKTIV DEPLOYED um 09:47**, `644/644` Release-Tests gruen
+vor dem Publish. Nach dem ersten Start read-only nachgemessen: `ExportSettings` traegt die neuen
+Spalten `B1GroupStandardCostMode = LatestPositive` und
+`GroupMarginChfRateMode = CurrentDailyRate`, der produktive Default ist also unveraendert und
+niemand rechnet ungefragt anders. Die CHF-Auswahl ist im Code fuer Cockpit,
+Finance-Pivot, Pruefbuch, Nachweis-Excel und `Sales_All` identisch verdrahtet; die IT/IN-Auswahl
+greift beim naechsten Standortimport und damit in allen danach erzeugten Ausgaben.
+
+**Nachtrag 2026-08-31, Abhaengigkeiten stehen jetzt in der Oberflaeche:** Auf Wunsch von Ingo
+erklaeren die Hilfetexte der Sektion nicht mehr nur die Wirkung, sondern auch die Abhaengigkeit.
+Der Einleitungstext nennt die Vorrangkette (gepflegter Sales Type, dann expliziter Lieferant,
+erst zuletzt der Fallback) und haelt fest, dass Kostenquelle und Kursprofil die Klassifikation
+nicht aendern. Je Schalter steht die Grenze dabei: Fallback nur ohne Sales Type und ohne
+Lieferant, Schweizer `STPRS` nur bei positivem Schweizer Wert, IT/IN erst beim naechsten
+Standortimport und ohne historischen Stichtag, CHF-Kursprofil einheitlich ueber alle fuenf
+Ausgaben mit dem Hinweis auf die offene Kurs-Governance `ISS-008`. Andreas soll die Auswahl
+also ohne Rueckgriff auf diese Datei verstehen koennen. Dabei ist ein roter Test aufgefallen:
+drei dieser Texte hatten keinen Uebersetzungsschluessel und waeren in allen sechs Sprachen
+englisch erschienen. Alle zwoelf Schluessel der Sektion sind jetzt uebersetzt, Release-Tests
+`644/644` gruen. Alles davon ist mit dem Deploy von `09:47` produktiv.
 
 ## 8. Der SAP-Report, der CH/AT befuellt
 
@@ -631,10 +730,10 @@ gefuellte Zahl ohne Vorbehalt waere gefaehrlicher als eine sichtbar offene Posit
 Landes- und Divisionszeilen bleiben in Lokalwaehrung. Das ist Andreas' „lokale Sicht in
 Lokalwaehrung" und zugleich unveraendert gegenueber heute.
 
-**Nicht angefasst:** die offizielle Umrechnung des Umsatzes nach CHF (Group-Currency-Ansicht,
-Pruefbuch, `ResolveChfRate`) rechnet weiter mit dem Jahreskurs. Andreas' Aussage bezog sich im
-Gespraech auf die Kostenbasis der Gruppenmarge. Kursquelle, Stichtag und Pflegeprozess der
-offiziellen Reportingumrechnung haengen an `ISS-008` und sind nicht entschieden.
+**Kurs-Governance bleibt offen:** Der Schalter bestimmt nur, welchen vorhandenen Eintrag aus
+`CurrencyExchangeRates` die Finance-Ausgaben verwenden. Kursquelle, verbindlicher Stichtag und
+Pflegeprozess der offiziellen Reportingumrechnung bleiben Thema von `ISS-008` und sind nicht
+fachlich entschieden.
 
 **Ebenfalls nicht angefasst:** der Deckungsbeitrag in der Konzernsumme summiert weiter ueber
 Lokalwaehrungen. Das faellt heute nicht auf, weil kein Quellsystem den fix/variabel-Split

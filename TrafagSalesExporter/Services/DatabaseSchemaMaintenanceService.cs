@@ -36,6 +36,9 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         AddColumnIfMissing(db, "ExportSettings", "GroupMarginCostCurrencyMode", "TEXT NOT NULL DEFAULT 'Convert'");
         ApplyGroupMarginCostCurrencyDecisionOnce(db);
         AddColumnIfMissing(db, "ExportSettings", "SupplierFallbackMode", "TEXT NOT NULL DEFAULT 'ChPlantMaster'");
+        AddColumnIfMissing(db, "ExportSettings", "InternalSupplierCostSourceMode", "TEXT NOT NULL DEFAULT 'DeliveringEntityCosts'");
+        AddColumnIfMissing(db, "ExportSettings", "B1GroupStandardCostMode", "TEXT NOT NULL DEFAULT 'LatestPositive'");
+        AddColumnIfMissing(db, "ExportSettings", "GroupMarginChfRateMode", "TEXT NOT NULL DEFAULT 'CurrentDailyRate'");
         AddColumnIfMissing(db, "ExportSettings", "LastTimerRunUtc", "TEXT NULL");
         AddColumnIfMissing(db, "SharePointConfigs", "CentralExportFolder", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing(db, "ExportLogs", "FilePath", "TEXT NOT NULL DEFAULT ''");

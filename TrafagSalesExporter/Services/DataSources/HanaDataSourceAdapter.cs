@@ -57,7 +57,7 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
                 exportServer, site.Schema, site.TSC, site.Land, context.Settings.DateFilter);
 
         await ApplySupplierOverridesAsync(db, site, records);
-        await PersistB1GroupStandardCostsAsync(db, site, records);
+        await PersistB1GroupStandardCostsAsync(db, site, records, context.Settings.B1GroupStandardCostMode);
 
         return new DataSourceFetchResult { Records = records };
     }
@@ -88,12 +88,15 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
     private async Task PersistB1GroupStandardCostsAsync(
         AppDbContext db,
         Site site,
-        IReadOnlyCollection<SalesRecord> records)
+        IReadOnlyCollection<SalesRecord> records,
+        string? costMode)
     {
         if (!GroupStandardCostAreas.TryResolveB1Source(site.TSC, out var area, out _))
             return;
 
-        var result = await B1GroupStandardCostStore.ReplaceAsync(db, site.TSC, records, DateTime.UtcNow);
+        var normalizedCostMode = B1GroupStandardCostModes.Normalize(costMode);
+        var result = await B1GroupStandardCostStore.ReplaceAsync(
+            db, site.TSC, records, DateTime.UtcNow, normalizedCostMode);
         if (!result.Updated)
         {
             await _appEventLogService.WriteAsync(
@@ -111,6 +114,6 @@ public sealed class HanaDataSourceAdapter : IDataSourceAdapter
             "Konzernkosten aktualisiert",
             siteId: site.Id,
             land: site.Land,
-            details: $"Kostenbereich={area} | Materialien={result.MaterialCount} | Quelle=juengster positiver B1 StockPrice");
+            details: $"Kostenbereich={area} | Materialien={result.MaterialCount} | Quelle={B1GroupStandardCostModes.Describe(normalizedCostMode)}");
     }
 }

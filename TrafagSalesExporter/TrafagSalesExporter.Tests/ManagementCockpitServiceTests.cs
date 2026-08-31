@@ -433,6 +433,28 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_YearEndChfProfile_AppliesToCockpitAuditLedgerAndPivot()
+    {
+        await SeedExportSettingsAsync(
+            GroupMarginCostCurrencyModes.Convert,
+            GroupMarginChfRateModes.FinanceYearEndRate);
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-EUR", "EUR", 100m,
+                new DateTime(2025, 3, 1), standardCost: 60m, standardCostCurrency: "EUR"));
+        var rates = new CountingCurrencyExchangeRateService();
+        var service = new ManagementCockpitService(_dbFactory, rates);
+
+        var result = await service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        Assert.NotEmpty(result.GroupMarginDetailRows);
+        Assert.NotEmpty(result.FinanceAuditLedgerRows);
+        Assert.NotEmpty(result.FinancePivot.MonthlyRows);
+        Assert.Contains(new DateTime(2025, 12, 31), rates.EffectiveDates);
+        Assert.DoesNotContain(rates.EffectiveDates,
+            date => date.HasValue && date.Value.Year == 2025 && date.Value.Month != 12);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_GroupMarginSummary_Leaves_Out_Rows_Without_Chf_Rate_And_Says_So()
     {
         // Ohne gepflegten Kurs darf die Zeile nicht stillschweigend als 0 in die Konzernsumme
@@ -1023,12 +1045,18 @@ public class ManagementCockpitServiceTests : IDisposable
         await db.SaveChangesAsync();
     }
 
-    private async Task SeedExportSettingsAsync(string groupMarginCostCurrencyMode)
+    private async Task SeedExportSettingsAsync(
+        string groupMarginCostCurrencyMode,
+        string groupMarginChfRateMode = GroupMarginChfRateModes.CurrentDailyRate)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         db.ExportSettings.RemoveRange(db.ExportSettings);
         await db.SaveChangesAsync();
-        db.ExportSettings.Add(new ExportSettings { GroupMarginCostCurrencyMode = groupMarginCostCurrencyMode });
+        db.ExportSettings.Add(new ExportSettings
+        {
+            GroupMarginCostCurrencyMode = groupMarginCostCurrencyMode,
+            GroupMarginChfRateMode = groupMarginChfRateMode
+        });
         await db.SaveChangesAsync();
     }
 

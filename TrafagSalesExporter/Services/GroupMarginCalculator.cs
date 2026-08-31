@@ -43,7 +43,8 @@ public static class GroupMarginCalculator
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         bool hasExchangeRate = true,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
-        string? supplierFallbackMode = null)
+        string? supplierFallbackMode = null,
+        string? internalSupplierCostSourceMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         var plantMaterials = chPlantMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
@@ -58,6 +59,7 @@ public static class GroupMarginCalculator
             GroupStandardCosts: costs,
             ChPlantMaterialKeys: plantMaterials,
             SupplierFallbackMode: SupplierFallbackModes.Normalize(supplierFallbackMode),
+            InternalSupplierCostSourceMode: InternalSupplierCostSourceModes.Normalize(internalSupplierCostSourceMode),
             // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss
             // mit umkehren, sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100,
             // Kosten +60 -> -160 statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
@@ -216,7 +218,8 @@ public sealed record GroupMarginCostContext(
     IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> GroupStandardCosts,
     bool IsReversal,
     IReadOnlySet<string>? ChPlantMaterialKeys = null,
-    string? SupplierFallbackMode = null);
+    string? SupplierFallbackMode = null,
+    string? InternalSupplierCostSourceMode = null);
 
 /// <summary>Vollstaendiges Ergebnis fuer eine Zeile.</summary>
 public sealed record GroupMarginEvaluation(
@@ -275,6 +278,14 @@ public static class GroupMarginCostRules
                 context.ChPlantMaterialKeys, context.SupplierFallbackMode,
                 line.SupplierNumber, line.SupplierCountry);
 
+            // Unabhaengiger Finance-Schalter: Die Lieferantenklassifikation bleibt erhalten,
+            // aber bei einem CH-Werkstammtreffer kann Andreas bewusst Schweizer STPRS statt
+            // der Kosten der liefernden Konzerngesellschaft vergleichen. Nur ein vorhandener
+            // positiver Schweizer Wert aktiviert die Alternative; sonst bleibt die bisherige
+            // Kostenquelle sichtbar statt eine Zeile grundlos auf "Kosten fehlen" zu setzen.
+            if (ShouldUseSwissStprs(context))
+                deliveringEntity = GroupStandardCostEntities.TrAg;
+
             if (deliveringEntity is null ||
                 !GroupStandardCostAreas.ByEntity.TryGetValue(deliveringEntity, out var area) ||
                 !context.GroupStandardCosts.TryGetValue((context.MaterialKey, area), out var groupCost) ||
@@ -290,6 +301,19 @@ public static class GroupMarginCostRules
                 IsGroupCost: true,
                 GroupCostSource: GroupStandardCostAreas.SourceLabelByEntity.GetValueOrDefault(deliveringEntity));
         });
+
+    private static bool ShouldUseSwissStprs(GroupMarginCostContext context)
+    {
+        if (InternalSupplierCostSourceModes.Normalize(context.InternalSupplierCostSourceMode) !=
+            InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial)
+            return false;
+        if (context.ChPlantMaterialKeys is null || !context.ChPlantMaterialKeys.Contains(context.MaterialKey))
+            return false;
+
+        var trAgArea = GroupStandardCostAreas.ByEntity[GroupStandardCostEntities.TrAg];
+        return context.GroupStandardCosts.TryGetValue((context.MaterialKey, trAgArea), out var swissCost)
+               && swissCost.UnitCost > 0m;
+    }
 
     /// <summary>
     /// Konzernvertrieb ohne Kostentreffer: bei Sales Type <c>LRD</c> ist die Ware in der Schweiz

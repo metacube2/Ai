@@ -363,4 +363,21 @@ public class GroupMarginSupplierClassifierTests
 
         Assert.Equal(GroupMarginSupplierClassifier.External, result);
     }
+
+    [Fact]
+    public void Resolve_LocalStandardCostMode_IgnoresChPlantAndDoesNotResolveDeliveringEntity()
+    {
+        var costs = GroupCostsWith("ART123");
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var supplierType = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "ART123", costs, null,
+            chPlantMaterials, SupplierFallbackModes.LocalStandardCosts);
+        var entity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            null, "TRIT", "ART123", costs, null,
+            chPlantMaterials, SupplierFallbackModes.LocalStandardCosts);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, supplierType);
+        Assert.Null(entity);
+    }
 }

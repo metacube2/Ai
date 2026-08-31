@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-08-17
+Stand: 2026-08-31
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -43,11 +43,20 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   nachgemessen: 6'119 Zeilen ueber 1'242 Materialien fuer TR IN, 112 Zeilen ueber 40
   Materialien fuer TR IT; 6'231 Zeilen sind von `Interner Standardpreis` gewechselt.
   A2/A3-Kostenbasis faellt um rund 26 %, Indiens eigene Kostenbasis steigt 2025 um
-  10.5 %. 32 Zeilen mit Fremdwaehrungskosten stehen bewusst auf
-  `Kostenwaehrung abweichend`. Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
+  10.5 %. Die zuvor `32` maskierten Fremdwaehrungszeilen werden seit dem Deploy vom
+  27.08.2026 mit Tageskurs umgerechnet. Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
 - TR IT: Fuer den ersten Schritt ist `INV1.StockPrice` als Kostenbasis
   freigegeben. Die Bewertung einer Umstellung auf Moving Average und die
   Cost-Run-Frage folgen laut Paola Ende August 2026.
+- **Produktiv seit 2026-08-31 09:47:** Finance kann fuer
+  IT/IN zwischen juengstem positivem B1-`StockPrice` (Default) und Durchschnitt aller positiven
+  Werte des naechsten Standortimports waehlen. Fuer CHF kann zwischen Tageskurs (Default) und
+  Jahresendkurs je Finance-Jahr umgeschaltet werden. Das CHF-Profil gilt einheitlich fuer
+  Cockpit, Finance-Pivot, Pruefbuch, Nachweis-Excel und `Sales_All`. Produktiv nachgemessen:
+  beide Spalten stehen auf dem bisherigen Verhalten, `LatestPositive` und `CurrentDailyRate`.
+  Release-Tests `644/644` gruen. Die Hilfetexte in den Einstellungen nennen seit diesem Deploy
+  auch die Abhaengigkeiten, also Vorrangkette, Wirkzeitpunkt und Grenzen. Detail:
+  `docs/FINANCE_STANDARDKOSTEN.md`, Abschnitt 7c.
 - Fuehrende fachliche Sicht ist `Finance Summary`; `Management Analyse` bleibt
   Diagnose-/Plausibilitaetssicht.
 
@@ -61,24 +70,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - Gruppenmarge ist bis zur Fachfreigabe nur Pruefsicht, nicht fuehrender Finance-Abschlusswert.
 - `DocumentRate` aus dem ERP ist ein gespeichertes Quellfeld; die App-Kurstabelle wird nur bei Anzeige-Waehrung, expliziter `ConvertCurrency`-Transformation oder Budget-CHF-Kandidat verwendet.
 - Schalter fuer Finance/Revision: `Einstellungen > Export Einstellungen > Audit-CSV / nachvollziehbarer Datenfluss`.
-- Supplier-Fallback bei Fremdstandorten ohne Supplier und ohne Sales Type: Default
-  `MARC/Werk 1100` (CH-Werkstamm), umschaltbar auf die alte
-  `MBEW/GroupStandardCosts-1100`-Regel unter `Admin Bereich > Settings`. Ein
-  expliziter Supplier gewinnt immer. Der MARC-Cache ist von den Kosten getrennt;
-  ohne MBEW-Treffer werden keine Konzernkosten erfunden. Vollnachweis:
-  `docs/FINANCE_SUPPLIER.md`.
-- Produktiv deployed am 2026-08-11: `SupplierFallbackMode=ChPlantMaster`,
-  `66'049` MARC-1100-Materialien dauerhaft vor und nach App-Neustart bestaetigt;
-  `63'550` MBEW-Schluessel vollstaendig enthalten. Deploynachweis:
-  `docs/DEPLOYMENT.md`.
-- Produktiv deployed am 2026-08-12 10:23: Andreas' Nachtrag, dass ein sicherer
-  MARC-Nichttreffer die Standardkosten der lokalen Gesellschaft verwendet. Die
-  Kategorie heisst bewusst `Lokal`, nicht `Extern`. Gegen die produktive Datenbank
-  nach dem Deploy gemessen: 22'950 Kandidatenzeilen, davon 10'817 CH-intern und
-  12'023 `Lokal`; 6'749 der lokalen Zeilen haben einen positiven Standardpreis,
-  110 Zeilen ohne Materialschluessel bleiben `Lieferant unklar`. Voraussetzung ist
-  `SupplierFallbackMode=ChPlantMaster`; im Alt-Modus MBEW greift die Regel nicht.
-  Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
+- Supplier-Fallback ohne Sales Type oder expliziten Supplier: produktiver Default ist
+  `MARC/Werk 1100 -> Intern / TR_AG / Schweizer STPRS`. Alternativ kann Finance seit dem
+  Deploy vom 27.08.2026 16:12 die alte `MBEW/GroupStandardCosts-1100`-Regel oder direkt
+  lokale Standardkosten ohne Lieferantenangabe waehlen. Davon getrennt ist die Kostenquelle
+  bei internem Lieferanten steuerbar: Kosten der liefernden Gesellschaft (Default) oder
+  Schweizer STPRS bei MARC 1100. Details: `docs/FINANCE_STANDARDKOSTEN.md`, 7a/7b.
 
 ## Offene Fachpunkte
 

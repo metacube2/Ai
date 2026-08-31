@@ -99,6 +99,9 @@ public sealed class SettingsPageService : ISettingsPageService
             settings.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
             settings.GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
             settings.SupplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
+            settings.InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
+            settings.B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(settings.B1GroupStandardCostMode);
+            settings.GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
             db.ExportSettings.Add(settings);
         }
         else
@@ -116,6 +119,9 @@ public sealed class SettingsPageService : ISettingsPageService
             existing.ExchangeRateDateField = NormalizeExchangeRateDateField(settings.ExchangeRateDateField);
             existing.GroupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
             existing.SupplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
+            existing.InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
+            existing.B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(settings.B1GroupStandardCostMode);
+            existing.GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
         }
 
         await db.SaveChangesAsync();

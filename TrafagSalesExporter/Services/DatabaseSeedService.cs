@@ -67,7 +67,8 @@ public class DatabaseSeedService : IDatabaseSeedService
             LocalSiteExportFolder = "",
             LocalConsolidatedExportFolder = "",
             ExchangeRateDateField = ExchangeRateDateFields.PostingDate,
-            SupplierFallbackMode = SupplierFallbackModes.ChPlantMaster
+            SupplierFallbackMode = SupplierFallbackModes.ChPlantMaster,
+            InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.DeliveringEntityCosts
         });
 
         db.SaveChanges();

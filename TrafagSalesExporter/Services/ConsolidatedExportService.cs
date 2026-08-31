@@ -7,6 +7,10 @@ namespace TrafagSalesExporter.Services;
 public class ConsolidatedExportService : IConsolidatedExportService
 {
     private const string FinanceImportRootFolder = "/Import/Finance";
+    // Keine Gesellschaft, sondern die Kopfzeile eines historischen UK-Backfills. Sie darf
+    // weder in Sales_All noch in die zentrale Audit-CSV gelangen, auch wenn eine alte
+    // zentrale Audit-Datei als Eingabe konfiguriert ist (ISS-012).
+    private const string PhantomLegendTsc = "Subsidiary abbreviation / company identifier";
     private const int MaxSingleProofWorkbookRows = 50000;
     private const int MaxPartitionedProofWorkbookRows = 25000;
     private static readonly TimeSpan SharePointProbeTimeout = TimeSpan.FromSeconds(25);
@@ -64,6 +68,7 @@ public class ConsolidatedExportService : IConsolidatedExportService
         var outputDir = ResolveConsolidatedOutputDirectory(settings);
         var fileDate = DateTime.UtcNow.Date;
         var sortedRecords = consolidatedRecords
+            .Where(record => !string.Equals(record.Tsc?.Trim(), PhantomLegendTsc, StringComparison.OrdinalIgnoreCase))
             .OrderBy(r => r.Land)
             .ThenBy(r => r.Tsc)
             .ThenByDescending(r => r.InvoiceDate ?? DateTime.MinValue)
