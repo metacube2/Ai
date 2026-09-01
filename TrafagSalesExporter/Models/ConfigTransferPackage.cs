@@ -60,6 +60,7 @@ public class ConfigTransferExportSettings
     public string InternalSupplierCostSourceMode { get; set; } = InternalSupplierCostSourceModes.DeliveringEntityCosts;
     public string B1GroupStandardCostMode { get; set; } = B1GroupStandardCostModes.LatestPositive;
     public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.CurrentDailyRate;
+    public string MarcForeignProcurementMode { get; set; } = MarcForeignProcurementModes.Ignore;
 }
 
 public class ConfigTransferCurrencyExchangeRate

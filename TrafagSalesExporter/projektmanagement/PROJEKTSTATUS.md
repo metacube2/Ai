@@ -25,7 +25,7 @@ nicht.
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | Vorarbeit geklaert, wartet auf den Trigger-Entscheid | Trigger mit Lucas Castro und Florian Waechter klaeren, danach BAdI `WORKORDER_UPDATE` neu bauen; der Altcode ist als Referenz ausgeschlossen | 2026-08-26 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
-| PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren | 2026-08-14 |
+| PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
 | PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, terminiert** | Zwei Blocker, beide belegt; der zweite trifft ausgerechnet Deutschland | Deutschen Kundennamen aus Alphaplan holen UND Patrik bitten, die Zuordnung zu pruefen oder selbst zu setzen | 2026-08-27 |
 
@@ -231,7 +231,8 @@ Dort stehen zwoelf Issues mit eigenem Owner und eigenem Status.
 Die wichtigsten offenen Punkte von dort, nur als Verweis:
 
 - Datenzufluss TR FR steht seit dem 2026-07-30, Antwort aus Frankreich fehlt.
-- CH/AT-Herstellerregel wartet auf einen Fachentscheid von Andreas.
+- CH/AT-Herstellerregel: der dafuer gebaute Umschalter ist seit 31.08.2026 produktiv;
+  der Default behaelt die bisherige Regel bei, die Fachentscheidung von Andreas steht noch aus.
 - Moving Average bei TR IT mit Paola, Zieldatum Ende August 2026.
 - Fachfreigabe der Gruppenmarge als fuehrender Abschlusswert.
 
@@ -340,6 +341,19 @@ Deutschland stillschweigend mit null Bahnumsatz zeigt, waere schlechter als eine
 Luecke benennt — besonders in einer Praesentation zum Projektstatus. Genau dieser Fehler ist im
 Repository schon dokumentiert: eine gefuellte Zahl ohne Vorbehalt ist gefaehrlicher als eine
 sichtbar offene Position.
+
+#### Nachtrag 2026-09-01: Excel-Export per Mausklick, PRODUKTIV DEPLOYED
+
+`/marktsegmente` hat jetzt den Knopf `Export (Excel)`, der die Pruefmenge als Arbeitsdatei mit
+acht Blaettern herunterlaedt. Deployed am 2026-09-01 um 09:21, `668/668` Release-Tests gruen.
+Details: `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` und
+`docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 15.
+
+**Damit ist ein Werkzeug fuer Patrik da, die beiden Blocker oben sind es nicht.** Blocker 1
+(Deutschland ohne Kundennamen) bleibt unveraendert offen, das Blatt `Datenluecken` weist ihn nur
+aus. Blocker 2 (niemand hat bestaetigt) bleibt ebenfalls offen: Stand des Deploytags waren
+weiterhin `0` von `173` Vorschlaegen bestaetigt. Der Export macht die Pruefung fuer Patrik
+bequemer, nimmt sie ihm aber nicht ab.
 
 ---
 

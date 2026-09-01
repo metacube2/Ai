@@ -102,6 +102,7 @@ public sealed class SettingsPageService : ISettingsPageService
             settings.InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
             settings.B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(settings.B1GroupStandardCostMode);
             settings.GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
+            settings.MarcForeignProcurementMode = MarcForeignProcurementModes.Normalize(settings.MarcForeignProcurementMode);
             db.ExportSettings.Add(settings);
         }
         else
@@ -122,6 +123,7 @@ public sealed class SettingsPageService : ISettingsPageService
             existing.InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
             existing.B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(settings.B1GroupStandardCostMode);
             existing.GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
+            existing.MarcForeignProcurementMode = MarcForeignProcurementModes.Normalize(settings.MarcForeignProcurementMode);
         }
 
         await db.SaveChangesAsync();

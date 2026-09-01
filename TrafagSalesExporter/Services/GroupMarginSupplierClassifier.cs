@@ -80,6 +80,16 @@ public static class GroupMarginSupplierClassifier
         @"\b(?:TRAFAG\s+(?:CONTROLS\s+)?INDIA|TR[\s-]?IN)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    /// <summary>
+    /// Ob ein Lieferantentext (Nummer/Name/Land) einen der bekannten internen Trafag/GFS-Marker
+    /// traegt. Oeffentlich, damit andere Quellen dieselbe Regel anwenden koennen wie die
+    /// Verkaufsseite - insbesondere <see cref="ForeignProcurementEvidenceStore"/> fuer ISS-003.4,
+    /// wo ein interner Bestelltransfer nicht als Fremdbezugsindiz zaehlen darf.
+    /// </summary>
+    public static bool MatchesInternalSupplierMarker(
+        string? supplierNumber, string? supplierName, string? supplierCountry)
+        => InternalMarkerPattern.IsMatch(string.Join(' ', supplierNumber, supplierName, supplierCountry));
+
     public static string Resolve(
         string? supplierNumber,
         string? supplierName,
@@ -89,10 +99,21 @@ public static class GroupMarginSupplierClassifier
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         string? salesType = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
-        string? supplierFallbackMode = null)
+        string? supplierFallbackMode = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         if (IsIntercompanySellingTsc(tsc))
+        {
+            // ISS-003.4, bewusst waehlbare Alternative: die CH/AT-Herstellerregel gilt
+            // eigentlich unbedingt (jede TRCH/TRAT-Zeile ist per TSC-Definition intern), aber
+            // ein aktiver externer Einkaufsbeleg zum Material kann sie durchbrechen. Betrifft
+            // NUR diesen TSC-Kurzschluss, nicht den generischen MARC-1100-Supplier-Fallback
+            // weiter unten - das ist eine andere, hier nicht diskutierte Population.
+            if (IsMarcForeignProcurementOverride(normalizedMaterialKey, foreignProcurementMaterialKeys, marcForeignProcurementMode))
+                return External;
             return Internal;
+        }
 
         // ENTSCHEID INGO, 2026-08-27: Wo die Quelle einen Sales Type fuehrt, entscheidet DIESER -
         // auch dann, wenn die Lieferantenfelder etwas anderes sagen. Damit ist die Frage
@@ -220,6 +241,29 @@ public static class GroupMarginSupplierClassifier
         return HasTrAgGroupCostMatch(key, groupStandardCosts);
     }
 
+    /// <summary>
+    /// ISS-003.4: gilt nur, wenn (1) der Schalter <see cref="MarcForeignProcurementModes"/>
+    /// explizit auf <c>OverridesToExternal</c> steht und (2) fuer genau dieses Material ein
+    /// aktiver externer Einkaufsbeleg vorliegt. Wird ausschliesslich vom TSC-Kurzschluss in
+    /// <see cref="IsIntercompanySellingTsc"/> aufgerufen (die eigentliche CH/AT-Herstellerregel
+    /// aus docs/FINANCE_SUPPLIER.md Abschnitt 6) - NICHT vom generischen MARC-1100-Supplier-
+    /// Fallback weiter unten, der eine andere, hier nicht diskutierte Population bedient.
+    /// </summary>
+    private static bool IsMarcForeignProcurementOverride(
+        string? normalizedMaterialKey,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys,
+        string? marcForeignProcurementMode)
+    {
+        if (MarcForeignProcurementModes.Normalize(marcForeignProcurementMode) !=
+            MarcForeignProcurementModes.OverridesToExternal)
+            return false;
+
+        var key = normalizedMaterialKey?.Trim() ?? string.Empty;
+        return key.Length > 0 &&
+               foreignProcurementMaterialKeys is { Count: > 0 } &&
+               foreignProcurementMaterialKeys.Contains(key);
+    }
+
     private static bool IsConfirmedLocalMaterial(
         string? tsc,
         string? normalizedMaterialKey,
@@ -254,10 +298,18 @@ public static class GroupMarginSupplierClassifier
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
         string? supplierNumber = null,
-        string? supplierCountry = null)
+        string? supplierCountry = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         if (IsIntercompanySellingTsc(tsc))
+        {
+            // ISS-003.4, identisch zu Resolve(): klassifiziert der Override die Zeile als Extern,
+            // hat sie keine Konzern-Kostenquelle.
+            if (IsMarcForeignProcurementOverride(normalizedMaterialKey, foreignProcurementMaterialKeys, marcForeignProcurementMode))
+                return null;
             return GroupStandardCostEntities.TrAg;
+        }
 
         // Entscheid Ingo, 2026-08-27, identisch zu Resolve(): der gepflegte Sales Type geht vor
         // den Lieferantenfeldern. Beide Methoden MUESSEN dieselbe Reihenfolge haben, sonst

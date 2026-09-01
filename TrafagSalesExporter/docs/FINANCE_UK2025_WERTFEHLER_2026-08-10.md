@@ -2,6 +2,11 @@
 
 Stand: 2026-08-10. Diagnose **vor** dem Fix festgehalten.
 
+> **ERLEDIGT AM 2026-08-11.** Der UK-Standortexport ist gelaufen, alle drei
+> Abnahmekriterien sind erfuellt: UK 2025 = `3'529'861.80 GBP` (99.7 % des Solls), Marge
+> +33.8 %, `1'867` Zeilen. Messung und Grenzen: Abschnitt „Abnahme 2026-08-11" am Ende.
+> Der Rest dieses Dokuments bleibt als Diagnose unveraendert stehen.
+
 ## Kurzfassung
 
 Der UK-Backfill vom 2026-07-28 (`docs/FINANCE_BACKFILL_UK_ES_2026-07-28.md`) hat die
@@ -125,7 +130,13 @@ Die hochgeladene Datei wurde **aus SharePoint zurueckgeladen und nachgerechnet**
 TRUK-Zeilen, 0 Legendenzeilen, Lesart A trifft 99.8 %. Der Groessenunterschied zur lokalen
 Datei stammt aus dem Neuverpacken des ZIP, der Inhalt stimmt.
 
-### Offen: der Import muss noch laufen
+### Erledigt am 2026-08-11: der Import ist gelaufen
+
+Ingo hat den UK-Standortexport gestartet und das zentrale File neu erzeugt. Das Ergebnis
+steht unten in „Abnahme 2026-08-11". Der folgende Abschnitt beschreibt den Stand von vorher
+und bleibt als Historie stehen.
+
+### Damals offen: der Import muss noch laufen
 
 Die Daten aendern sich erst mit dem naechsten UK-Standortexport — er liest die Datei und
 ersetzt die UK-Zeilen. Es gibt **keinen externen Ausloeser** dafuer (nur die Server-Analyse
@@ -167,3 +178,82 @@ Alle Zahlen dieses Dokuments stammen aus zwei Dateien, ohne Datenbankzugriff:
 
 Gegenprobe zur Methode: dieselbe Multiplikationsprobe auf UK **2026** ergibt einen
 Faktor 89.8x — Unsinn, und genau deshalb der Beleg, dass dort schon Zeilenwerte stehen.
+
+## Abnahme 2026-08-11
+
+Gemessen auf `neu.xlsx` (zentrales File, erzeugt 2026-08-11 09:45, Blatt `Sales`, 96'234
+Datenzeilen) nach dem von Ingo gestarteten UK-Standortexport.
+
+### Ergebnis: alle drei Kriterien erfuellt
+
+| Kriterium | Erwartet | Gemessen | |
+| --- | ---: | ---: | --- |
+| Wert UK 2025 | ≈ `3'538'972` GBP (Finance-Soll) | **`3'529'861.80`** = 99.7 % | erfuellt |
+| Marge UK 2025 | positiv, im Band der anderen Standorte | **+33.8 %** (vorher −502.7 %) | erfuellt |
+| Zeilenzahl | rund `1'867` | **`1'867`** | erfuellt |
+
+Der Ist-Wert trifft auf den Rappen die Rekonstruktion `3'529'862` aus Abschnitt
+„Kurzfassung", die am 2026-08-10 **vor** dem Fix unabhaengig aus der Quelldatei gerechnet
+wurde. Die Marge liegt mitten im Band der anderen Standorte 2025: TRCH 15.7, TRIT 34.3,
+TRES 38.6, TRAT 38.7, TRDE 41.2, TRUS 45.2, TRIN 49.2, TRFR 49.3 Prozent. Die Bandwerte
+weichen leicht von denen in Abschnitt „Drei unabhaengige Belege" ab, weil seit dem
+2026-08-10 Zeilen dazugekommen sind. UK 2026 bleibt mit `1'197` Zeilen und `2'938'222.56`
+GBP unauffaellig.
+
+Aufriss UK 2025 nach Mengenband, der zeigt, dass die Multiplikation jetzt greift:
+
+| Band | Zeilen | Summe Net Sales Actual |
+| --- | ---: | ---: |
+| Menge = 1 | 626 | 141'026.29 |
+| Menge 2 - 10 | 861 | 790'467.33 |
+| Menge 11 - 100 | 354 | 1'610'656.33 |
+| Menge > 100 | 26 | 987'711.85 |
+
+Vor dem Fix wuchs der Zeilenwert nicht mit der Menge (siehe Abschnitt „Wie es entstanden
+ist"). Jetzt tragen die 26 Zeilen mit Menge ueber 100 mehr Umsatz als die 626 Zeilen mit
+Menge 1.
+
+### Womit geprueft wurde
+
+`.tmp_tools/CheckUk2025Result` (read-only, kein Datenbankzugriff). Zwei bewusste
+Eigenschaften, beide als Konsequenz aus der Fehlerursache:
+
+1. Die Spalten werden ueber die **Kopfzeile** aufgeloest, nicht ueber feste Buchstaben. Eine
+   feste Annahme ueber die Bedeutung einer Spalte war genau der Ausgangsfehler.
+2. Verglichen wird ausschliesslich gegen den **Finance-Sollwert**, nie gegen die
+   hochgeladene `TRUK_2025.xlsx`. Der Vergleich gegen die eigene Quelle hat den Fehler
+   urspruenglich durchgelassen.
+
+### Zwei Nebenbefunde aus derselben Messung
+
+**Zeile 2 des zentralen Exports ist eine echte TRAT-Datenzeile, keine Beschreibungszeile.**
+Die in Abschnitt „Reproduktion" notierte Konvention „96'233 Datenzeilen, Kopfzeile und
+Legendenzeile 2 nicht mitzaehlen" gilt fuer diesen Export NICHT. Ein festes `Skip(2)`
+verliert hier still eine Verkaufszeile. Richtig sind `96'234` Datenzeilen und `682` statt
+`681` Zeilen fuer TRAT 2026. Das Pruefwerkzeug entscheidet deshalb anhand des Inhalts, ob
+Zeile 2 uebersprungen wird, statt es anzunehmen.
+
+**`Sales Price/Value` ist im zentralen Export der Zeilenwert, nicht der Stueckpreis.** Beide
+Spalten summieren sich auf denselben Betrag `3'529'861.80`. Der Stueckpreis existiert nur in
+der Importdatei; das Mapping `SageNetSales` multipliziert beim Import, und gespeichert wird
+das Ergebnis. Wer die Rohspalte im zentralen Export als Stueckpreis liest, rechnet ein
+zweites Mal mit der Menge und landet bei `326'613'339` GBP.
+
+### Was diese Abnahme NICHT belegt
+
+- Ein Vorher-Nachher-Vergleich mit demselben Werkzeug war **nicht moeglich**, weil `all.xlsx`
+  (Export 2026-08-09) nicht mehr im Wurzelverzeichnis liegt. Die Ausgangswerte `394'439` und
+  −502.7 % stammen aus diesem Dokument, nicht aus einer eigenen Messung von heute.
+- Geprueft wurde die **Exportdatei**, nicht die GUI. Dass das Cockpit die Zahl auch anzeigt,
+  ist nicht nachgewiesen; die Finance-Routen liegen hinter dem Finance-Unlock.
+- Die Restdifferenz zum Soll von rund `9'110` GBP (0.3 %) ist **nicht aufgeschluesselt**. Sie
+  liegt in der Groessenordnung der 14 bekannten Quelldubletten und der Rundung, das ist aber
+  eine Plausibilitaet und keine Messung.
+
+### Weiterhin offen
+
+Der zweite Befund dieses Dokuments bleibt bestehen: die verwaiste Zeile mit
+`TSC = "Subsidiary abbreviation / company identifier"` steht mit Jahr 2026 und Wert `0.00`
+unveraendert in den Produktivdaten und taucht in jeder TSC-Gruppierung als eigener Standort
+auf. Sie braucht ein gezieltes `DELETE` auf `CentralSalesRecords` und bleibt ein eigener
+Schritt.

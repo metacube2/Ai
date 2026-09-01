@@ -107,6 +107,7 @@ CREATE TABLE ExportSettings (
     InternalSupplierCostSourceMode TEXT NOT NULL DEFAULT 'DeliveringEntityCosts',
     B1GroupStandardCostMode TEXT NOT NULL DEFAULT 'LatestPositive',
     GroupMarginChfRateMode TEXT NOT NULL DEFAULT 'CurrentDailyRate',
+    MarcForeignProcurementMode TEXT NOT NULL DEFAULT 'Ignore',
     LastTimerRunUtc TEXT NULL
 );";
 

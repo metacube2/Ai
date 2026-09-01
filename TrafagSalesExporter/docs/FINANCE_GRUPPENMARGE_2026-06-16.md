@@ -71,9 +71,11 @@ Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 
 - `Mask`: Zeilen, deren Standardkostenwaehrung von der Verkaufswaehrung abweicht, erhalten
   den Status `Kostenwaehrung abweichend`; `Marge`/`%` bleiben offen (`-` bzw. leer). Im
   Pruefbuch sind `MarginOriginal`/`MarginPercent` dafuer nullable geworden.
-- `Convert`: Die Kostenbasis wird mit dem Jahreskurs (31.12. des Finance-Jahres der Zeile)
-  in die Verkaufswaehrung umgerechnet; ohne verfuegbaren Kurs faellt die Zeile auf `Mask`
-  zurueck. Der verwendete Kurs steht sichtbar im `CostSource`-Label.
+- `Convert`: Die Kostenbasis wird mit dem **aktuellen Tageskurs** in die
+  Verkaufswaehrung umgerechnet; ohne verfuegbaren Kurs faellt die Zeile auf `Mask` zurueck.
+  Der verwendete Kurs steht sichtbar im `CostSource`-Label. Diese Regel ist seit dem
+  Waehrungsbeschluss vom 27.08.2026 produktiv; die fruehere 31.12.-Beschreibung ist
+  historisch ueberholt.
 - Gemeinsame Logik: `Services/GroupMarginCostCurrencyConverter.cs`; verdrahtet in
   `ManagementCockpitService` (Gruppenmarge-Tab + Finance Pruefbuch) UND
   `ExcelExportService` (zentrales `Sales_All` + `Finance_Dashboard_Nachweis`), damit
@@ -114,7 +116,7 @@ konkret geloest:
 - **Zusammenspiel mit Entscheid D bestaetigt:** Verkauft z. B. TRDE (Finance-Waehrung EUR)
   ein TR-AG-geliefertes Produkt, weichen Kosten- (CHF) und Verkaufswaehrung (EUR)
   automatisch ab — der bestehende Schalter greift korrekt (Mask maskiert, Convert
-  rechnet mit Jahreskurs um).
+  rechnet mit Tageskurs um).
 
 **TR IN/TR IT bleiben offen** (Frage B fuer diese beiden Gesellschaften): Live-Stichprobe
 2026-07-15 gegen TR ITs SAP-B1-Schema (`IT01_P`, erreichbar ueber BI1-HANA) zeigt, dass
@@ -231,4 +233,3 @@ Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN.md`. Kurz:
 - Falls interne Lieferanten immer ueber SAP `MBEW-STPRS` laufen muessen, separate SAP-Kostenquelle bzw. Mapping anbinden.
 - Lieferantenerkennung nicht nur heuristisch, sondern regel-/stammdatenbasiert pflegen.
 - Tests fuer offene Kostenbasis und Aggregationsanzeige ergaenzen, sobald die finale Fachregel fixiert ist.
-

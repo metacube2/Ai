@@ -1,7 +1,22 @@
 REPORT zppwr_class_setup.
 
 * Einmaliger, idempotenter Aufbau der PPWR-/Compliance-Klassifizierung.
-* Zielsystem: T76, Mandant 090. Keine Materialzuordnungen, keine P76-Aenderung.
+* Zielsystem: T76, Mandant 100. Keine Materialzuordnungen, keine P76-Aenderung.
+*
+* Aenderung 18.08.2026 (Ingo/Claude):
+*  - Zielmandant von 090 auf 100 umgestellt. 090 traegt keine Daten; der Pilot
+*    braucht den Testmandanten mit echten Materialien.
+*  - FEHLERBEHEBUNG Klassenanlage: die Existenzpruefung lief ueber
+*    BAPI_CLASS_EXISTENCECHECK mit Vorbelegung gv_exists = 'X'. Genau dieser
+*    Prueftyp lieferte in diesem System schon bei den Merkmalen keinen
+*    auswertbaren Fehler vom Typ E oder A (siehe Anlageprotokoll Abschnitt 14
+*    Punkt 1). Der Report meldete deshalb 'SKIP Klasse vorhanden' und rief
+*    BAPI_CLASS_CREATE nie auf, obwohl keine Klasse existierte. Die Pruefung
+*    laeuft jetzt wie bei den Merkmalen ueber einen direkten SELECT, hier auf
+*    KLAH.
+*  - Neue Ruecklesephase am Ende: nach dem Commit wird aus CABN, KLAH und KSML
+*    gezaehlt, was wirklich in der Datenbank steht. Die Schlussmeldung FERTIG
+*    erscheint nur noch, wenn die Istzahlen den Sollzahlen entsprechen.
 
 PARAMETERS p_write AS CHECKBOX DEFAULT space.
 
@@ -28,9 +43,20 @@ DATA: gt_defs       TYPE STANDARD TABLE OF ty_char_def,
       gt_return     TYPE STANDARD TABLE OF bapiret2,
       gs_return     TYPE bapiret2,
       gv_error      TYPE c LENGTH 1,
-      gv_exists     TYPE c LENGTH 1,
       gv_atinn      TYPE cabn-atinn,
+      gv_clint      TYPE klah-clint,
       gv_tabix      TYPE sy-tabix.
+
+* Sollzahlen fuer die Ruecklesekontrolle am Ende.
+CONSTANTS: gc_soll_ppwr  TYPE i VALUE 9,
+           gc_soll_comp  TYPE i VALUE 12.
+
+DATA: gv_ist_ppwr   TYPE i,
+      gv_ist_comp   TYPE i,
+      gv_ist_class  TYPE i,
+      gv_ist_ksml_p TYPE i,
+      gv_ist_ksml_c TYPE i,
+      gv_verify_ok  TYPE c LENGTH 1.
 
 DATA: gs_class_basic TYPE bapi1003_basic,
       gs_class_desc  TYPE bapi1003_catch,
@@ -39,8 +65,8 @@ DATA: gs_class_basic TYPE bapi1003_basic,
       gt_class_char  TYPE STANDARD TABLE OF bapi1003_charact.
 
 START-OF-SELECTION.
-  IF sy-sysid <> 'T76' OR sy-mandt <> '090'.
-    WRITE: / 'ABBRUCH: Report darf nur in T76/090 laufen.',
+  IF sy-sysid <> 'T76' OR sy-mandt <> '100'.
+    WRITE: / 'ABBRUCH: Report darf nur in T76/100 laufen.',
            / 'Aktuell:', sy-sysid, sy-mandt.
     RETURN.
   ENDIF.
@@ -56,6 +82,16 @@ START-OF-SELECTION.
     ENDLOOP.
     WRITE: / 'Klasse P: ZPPWR_PACKMITTEL',
            / 'Klasse C: ZCOMP_STOFF'.
+
+*   Auch ohne Schreibzugriff den Iststand aus der Datenbank zeigen. So laesst
+*   sich vor jeder Anlage sehen, was in diesem Mandanten wirklich existiert.
+    PERFORM verify_counts.
+    SKIP.
+    IF gv_verify_ok = 'X'.
+      WRITE: / 'Iststand vollstaendig. Es ist nichts anzulegen.' COLOR COL_POSITIVE.
+    ELSE.
+      WRITE: / 'Iststand unvollstaendig. Mit P_WRITE = X anlegen.' COLOR COL_TOTAL.
+    ENDIF.
     RETURN.
   ENDIF.
 
@@ -87,12 +123,83 @@ START-OF-SELECTION.
   IF gv_error = 'X'.
     CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
     WRITE: / 'ABBRUCH: Fehler erkannt, Rollback ausgefuehrt.' COLOR COL_NEGATIVE.
-  ELSE.
-    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
-      EXPORTING
-        wait = 'X'.
-    WRITE: / 'FERTIG: Merkmale und Klassen angelegt/geprueft.' COLOR COL_POSITIVE.
+    RETURN.
   ENDIF.
+
+  CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+    EXPORTING
+      wait = 'X'.
+
+  PERFORM verify_counts.
+
+  SKIP.
+  IF gv_verify_ok = 'X'.
+    WRITE: / 'FERTIG: Anlage in der Datenbank nachgewiesen.' COLOR COL_POSITIVE.
+    WRITE: / 'Naechster Schritt: CL03 und CT04 im SAP GUI sichtpruefen.'.
+  ELSE.
+    WRITE: / 'WARNUNG: Istzahlen weichen vom Soll ab.' COLOR COL_NEGATIVE.
+    WRITE: / 'Der Lauf gilt NICHT als erfolgreich. Nicht weitermelden,',
+           / 'bevor die Abweichung geklaert ist.' COLOR COL_NEGATIVE.
+  ENDIF.
+
+FORM verify_counts.
+* Zaehlt ausschliesslich, was tatsaechlich in der Datenbank steht, und setzt
+* gv_verify_ok. Das Urteil formuliert der Aufrufer, weil dieselbe Messung im
+* Prueflauf und nach dem Schreiben verwendet wird.
+* Die Selbstmeldung der BAPIs ist ausdruecklich KEIN Nachweis: am 13.08.2026
+* meldete dieser Report 'FERTIG', obwohl keine Klasse angelegt worden war.
+  gv_verify_ok = 'X'.
+
+  SELECT COUNT( DISTINCT atnam ) FROM cabn
+    INTO gv_ist_ppwr
+    WHERE atnam LIKE 'ZPPWR%'.
+
+  SELECT COUNT( DISTINCT atnam ) FROM cabn
+    INTO gv_ist_comp
+    WHERE atnam LIKE 'ZCOMP%'.
+
+  SELECT COUNT( * ) FROM klah
+    INTO gv_ist_class
+    WHERE klart = '001'
+      AND ( class = 'ZPPWR_PACKMITTEL' OR class = 'ZCOMP_STOFF' ).
+
+* Zugeordnete Merkmale je Klasse ueber die interne Klassennummer zaehlen.
+  CLEAR: gv_clint, gv_ist_ksml_p.
+  SELECT SINGLE clint FROM klah INTO gv_clint
+    WHERE klart = '001' AND class = 'ZPPWR_PACKMITTEL'.
+  IF sy-subrc = 0.
+    SELECT COUNT( * ) FROM ksml INTO gv_ist_ksml_p WHERE clint = gv_clint.
+  ENDIF.
+
+  CLEAR: gv_clint, gv_ist_ksml_c.
+  SELECT SINGLE clint FROM klah INTO gv_clint
+    WHERE klart = '001' AND class = 'ZCOMP_STOFF'.
+  IF sy-subrc = 0.
+    SELECT COUNT( * ) FROM ksml INTO gv_ist_ksml_c WHERE clint = gv_clint.
+  ENDIF.
+
+  SKIP.
+  WRITE: / '--- Ruecklesekontrolle aus der Datenbank ---'.
+  WRITE: / 'Merkmale ZPPWR* in CABN :', gv_ist_ppwr,
+           'Soll', gc_soll_ppwr.
+  WRITE: / 'Merkmale ZCOMP* in CABN :', gv_ist_comp,
+           'Soll', gc_soll_comp.
+  WRITE: / 'Klassen in KLAH (001)   :', gv_ist_class, 'Soll', 2.
+  WRITE: / 'Merkmale an ZPPWR_PACKMITTEL (KSML):', gv_ist_ksml_p,
+           'Soll', gc_soll_ppwr.
+  WRITE: / 'Merkmale an ZCOMP_STOFF (KSML)     :', gv_ist_ksml_c,
+           'Soll', gc_soll_comp.
+
+  IF gv_ist_ppwr <> gc_soll_ppwr OR gv_ist_comp <> gc_soll_comp.
+    CLEAR gv_verify_ok.
+  ENDIF.
+  IF gv_ist_class <> 2.
+    CLEAR gv_verify_ok.
+  ENDIF.
+  IF gv_ist_ksml_p <> gc_soll_ppwr OR gv_ist_ksml_c <> gc_soll_comp.
+    CLEAR gv_verify_ok.
+  ENDIF.
+ENDFORM.
 
 FORM add_def USING VALUE(iv_name) TYPE atnam
                    VALUE(iv_text) TYPE atbez
@@ -258,23 +365,20 @@ ENDFORM.
 FORM create_class USING VALUE(iv_class) TYPE klasse_d
                         VALUE(iv_text)  TYPE klschl
                         VALUE(iv_id)    TYPE c.
-  REFRESH gt_return.
-  CALL FUNCTION 'BAPI_CLASS_EXISTENCECHECK'
-    EXPORTING
-      classtype = '001'
-      classnum  = iv_class
-    TABLES
-      return    = gt_return.
+* Existenz idempotent ueber die Tabelle pruefen, NICHT ueber
+* BAPI_CLASS_EXISTENCECHECK. Der BAPI meldete eine fehlende Klasse in diesem
+* System nicht als Fehler vom Typ E oder A. Mit der frueheren Vorbelegung
+* gv_exists = 'X' galt die Klasse dadurch faelschlich als vorhanden, die Anlage
+* wurde still uebersprungen und der Report meldete trotzdem FERTIG.
+  CLEAR gv_clint.
+  SELECT SINGLE clint
+    FROM klah
+    INTO gv_clint
+    WHERE klart = '001'
+      AND class = iv_class.
 
-  gv_exists = 'X'.
-  LOOP AT gt_return INTO gs_return.
-    IF gs_return-type = 'E' OR gs_return-type = 'A'.
-      CLEAR gv_exists.
-    ENDIF.
-  ENDLOOP.
-
-  IF gv_exists = 'X'.
-    WRITE: / 'SKIP Klasse vorhanden:', iv_class.
+  IF sy-subrc = 0.
+    WRITE: / 'SKIP Klasse vorhanden:', iv_class, 'CLINT', gv_clint.
     RETURN.
   ENDIF.
 

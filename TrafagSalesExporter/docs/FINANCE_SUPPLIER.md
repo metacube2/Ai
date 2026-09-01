@@ -1,6 +1,6 @@
 # Finance: Supplier-Klassifikation, Laenderstatus und CH-Werkstamm-Fallback
 
-Stand: 2026-08-17. Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
+Stand: 2026-08-31. Zusammengefuehrt aus vier Vorgaengerdateien (Lueckenanalyse
 2026-07-28, Laenderstatus und Handoff 2026-08-11, Fallback-Umschalter 2026-08-11).
 
 Issue ISS-003. Fuer den Status je Punkt gilt
@@ -37,10 +37,18 @@ Konzernkosten kommen weiterhin ausschliesslich aus MBEW/`GroupStandardCosts`.
 - `Neu: CH-Werkstamm (MARC 1100)` — Default, produktiv
 - `Alt: CH-Kostentabelle (MBEW 1100)` — historisches Verhalten
 
+Zusatzoption: `Lokale Standardkosten bei fehlendem Lieferanten` bedeutet bewusst: kein
+Lieferant -> Kosten der verkaufenden Gesellschaft, auch bei MARC-Treffer.
+
 Gespeichert in `ExportSettings.SupplierFallbackMode`, im Konfigurationsexport mitgefuehrt.
 Dashboard, Finance-Pruefbuch, zentrale Excel und Nachweis-Excel nutzen denselben Modus.
 Ist nach einer Migration noch kein MARC-Cache vorhanden, faellt der neue Modus
 voruebergehend automatisch auf den alten MBEW-Fallback zurueck.
+
+Davon getrennt steht unter Settings die **Kostenquelle bei internem Lieferanten**:
+`Kosten der liefernden Gesellschaft` (Default) oder `Schweizer STPRS bei MARC Werk 1100`.
+Dieser zweite Schalter aendert nur die Kostenquelle, nie die Lieferantenklassifikation.
+Sales Type und explizit gepflegte Lieferanten behalten in allen Modi Vorrang.
 
 `SapGatewayPlantMaterialReader` liest beim CH/AT-SAP-Export genau einmal `MARCSet` mit
 `Matnr,Werks`, filtert Werk 1100 clientseitig und ersetzt den Cache atomar. Bei Fehler
@@ -191,6 +199,58 @@ Abnahmeweg:
    (Materialart, Verkaufsrolle), **nicht** blind alle 1'191 Materialien umklassifizieren.
 4. Optional den Stuecklisten-Cache vollstaendig laden.
 
+### Nachtrag 31.08.2026: technische Umsetzung liegt vor, Fachentscheid steht noch aus
+
+Fuer den Fall, dass Andreas die Ausnahme will, existiert jetzt ein Schalter — die
+Fachentscheidung selbst ist damit **nicht** getroffen, `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`
+fuehrt ISS-003.4 weiterhin als `Offen, wartet auf Entscheid`.
+
+`Admin Bereich > Settings > Export Einstellungen`, Feld
+`CH/AT: Herstellerregel gegen Fremdbezugsbeleg`:
+
+- `Herstellerregel gilt immer` — Default, produktiv, heutiges Verhalten unveraendert
+- `Fremdbezugsbeleg bricht die Herstellerregel` — die in diesem Abschnitt beschriebene Ausnahme
+
+**Mechanik:** der Schalter greift ausschliesslich am TSC-Kurzschluss aus Abschnitt 5
+(`IsIntercompanySellingTsc`, jede TRCH/TRAT-Zeile ist unbedingt `Intern / TR_AG`), nicht am
+generischen MARC-1100-Fallback aus Abschnitt 1 fuer Fremdstandorte — die beiden Mechanismen
+bleiben getrennt.
+
+**Datengrundlage, kein neuer SAP-Zugriff:** die Evidenz kommt aus dem bereits geladenen
+Einkauf-Cache (`PurchasingEkpoCache`/`PurchasingEkkoCache`) des bestehenden
+Einkauf-Dashboards. Ein Material zaehlt als Fremdbezug bei einer aktiven, nicht geloeschten
+Position (`Loekz` leer) mit einem Lieferanten ohne Trafag/GFS-Marker.
+
+**Nachgemessen 31.08.2026 gegen die Produktiv-DB:**
+
+| Kennzahl | Ergebnis |
+| --- | ---: |
+| Materialien mit aktivem Fremdbezugsbeleg, verknuepft mit TRCH/TRAT-Verkaufszeilen | 1'201 |
+| davon betroffene CH/AT-Verkaufszeilen | 5'886 |
+| Vergleich zur Pruefliste oben | 1'191 / 5'910 — deckt sich, kleine Drift durch Datenstand |
+| `PurchasingEkkoCache`, Bukrs-Verteilung | 176'202 von 176'203 Zeilen `Bukrs = 1100` |
+
+**Wichtige Einschraenkung fuer Andreas:** der Einkauf-Cache ist praktisch ausschliesslich
+Bukrs `1100` (Schweiz) gefuellt. Fuer TRAT liegt aktuell kaum eigene Fremdbezugsevidenz vor
+— der Schalter wirkt also faktisch fast nur auf TRCH-Zeilen, auch wenn er formal fuer
+TRCH/TRAT gemeinsam gilt.
+
+Diese Einschraenkung steht jetzt auch im Hilfetext des Schalters selbst und in der
+Cockpit-Meldung, nicht nur hier.
+
+**Status:** produktiv deployed am 31.08.2026 um 11:32 (655/655 Tests gruen). Der
+produktive Default ist read-only nachgemessen `MarcForeignProcurementMode = Ignore`, das
+bisherige Verhalten bleibt also bestehen; die Fachentscheidung von Andreas steht weiterhin
+aus. Noch nicht visuell im angemeldeten Browser gegengeprueft. Umsetzung: `Models/ExportSettings.cs`
+(`MarcForeignProcurementMode`), `Services/GroupMarginSupplierClassifier.cs`,
+`Services/ForeignProcurementEvidenceStore.cs` (neu), `Services/GroupMarginCalculator.cs`,
+`Services/ManagementCockpitService.cs`, `Services/ExcelExportService.cs`,
+`Services/SettingsPageService.cs`, `Models/ConfigTransferPackage.cs` /
+`Services/ConfigTransferService.cs`, Schema-Spalte in
+`Services/DatabaseInitializationService.SchemaSql.cs` /
+`Services/DatabaseSchemaMaintenanceService.cs`, UI-Text in `Components/Pages/Settings.razor`
+inkl. aller sechs Fremdsprachen in `Services/UiTextGeneratedTranslations.cs`.
+
 ## 7. Weitere offene Punkte
 
 - DE-Supplier-Spalten pruefen: 7'332 Zeilen komplett ohne Lieferant, zuerst die eigene
@@ -310,11 +370,13 @@ Berichte: `docs/Supplier_Laenderstatus_CH_AT_Pruefung_2026-08-11.docx` und
 
 ## Nachweis und Deploymentstatus
 
-Produktiv deployed am 2026-08-11 (Fallback) und 2026-08-12 (lokale Standardkosten).
-`471/471` beziehungsweise `478/478` Tests gruen. Produktiv read-only bestaetigt:
-`SupplierFallbackMode = ChPlantMaster`, `66'049` MARC-Materialien fuer Werk 1100, alle
-`63'550` bisherigen MBEW-Schluessel enthalten, Server-DLL und lokaler Release-Build
-bitgleich. Technischer Deploynachweis: `docs/DEPLOYMENT.md`.
+Die beiden getrennten Finance-Schalter fuer Fallback und interne Kostenquelle sind am
+2026-08-27 um 16:12 produktiv deployed. Produktiv read-only bestaetigt:
+`SupplierFallbackMode = ChPlantMaster` und
+`InternalSupplierCostSourceMode = DeliveringEntityCosts`, also beide bisherigen Defaults.
+`66'049` MARC-Materialien fuer Werk 1100 und alle `63'550` bisherigen MBEW-Schluessel
+blieben erhalten; Server-DLL und lokaler Release-Build waren bitgleich. Technischer
+Deploynachweis: `docs/DEPLOYMENT.md`.
 
 ## Querverweise
 

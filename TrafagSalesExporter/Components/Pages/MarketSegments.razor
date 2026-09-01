@@ -2,6 +2,9 @@
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
 @inject IMarketSegmentPageService SegmentService
+@inject IMarketSegmentExportService SegmentExport
+@inject IExcelExportService ExcelExport
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISnackbar Snackbar
 @inject IUiTextService UiText
 @inject IJSRuntime JsRuntime
@@ -20,6 +23,13 @@
             <MudSelectItem T="int?" Value="@year">@year</MudSelectItem>
         }
     </MudSelect>
+    @* Ein Klick, kein Zwischendialog. Jahr und Standort der Seite wirken, der Namensfilter
+       bewusst nicht; welche Filter gewirkt haben, steht im Blatt Anleitung. *@
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.FileDownload"
+               Disabled="@(_loading || _exporting)" OnClick="ExportExcelAsync">
+        @T("Export (Excel)", "Export (Excel)")
+    </MudButton>
 </MudStack>
 
 @* Der Reiterwechsel muss die 3D-Sicht neu zeichnen. MudTabs haelt auch die inaktiven Panels
@@ -373,6 +383,7 @@
     private string _tscFilter = string.Empty;
     private string _filterMode = MarketSegmentFilterModes.Proposals;
     private bool _loading = true;
+    private bool _exporting;
 
     private bool _dialogOpen;
     private MarketSegmentCustomerRow? _editing;
@@ -398,6 +409,37 @@
     {
         _year = year;
         await ReloadAsync();
+    }
+
+    /// <summary>
+    /// Erzeugt die Arbeitsmappe im Speicher und laedt sie sofort herunter. Nichts wird auf
+    /// dem Server abgelegt: eine wachsende Sammlung von Arbeitsdateien mit Kundendaten waere
+    /// eine Altlast, die niemand pflegt.
+    /// </summary>
+    private async Task ExportExcelAsync()
+    {
+        _exporting = true;
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var requestedBy = authenticationState.User.Identity?.Name ?? string.Empty;
+
+            var sheets = await SegmentExport.BuildSheetsAsync(_year, _tscFilter, requestedBy);
+            var bytes = ExcelExport.CreateWorkbookBytes(sheets);
+            var base64 = Convert.ToBase64String(bytes);
+            var scope = _year?.ToString() ?? "ALLE";
+            var fileName = $"Marktsegmente_Export_{scope}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JsRuntime.InvokeVoidAsync("trafagDownload.saveBytes", fileName, base64,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(T("Excel-Export fehlgeschlagen: {0}", "Excel export failed: {0}"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _exporting = false;
+        }
     }
 
     private async Task ReloadAsync()

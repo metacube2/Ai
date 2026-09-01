@@ -57,6 +57,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` | UK 2025, Stueckpreis statt Zeilenwert |
 | `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` | Begruendung und Fallen zum Issue-Log |
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
+| `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
+| `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |
 
 ## Standortdaten und Exporte
 

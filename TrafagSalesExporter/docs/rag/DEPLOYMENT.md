@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-08-25
+Stand: 2026-09-01
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -43,6 +43,75 @@ Stand: 2026-08-25
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+
+- Aktuellster produktiv verifizierter Deploy: **2026-09-01 09:21, Marktsegmente: Excel-Export
+  der Zuordnungen per Mausklick**, `668/668` Release-Tests gruen vor dem Publish. Neue gepruefte
+  Blockkopie `trafag_exporter.db.before-market-segment-export-20260901-092034.bak`
+  (`357'822'464` Bytes, `integrity_check` `ok`, `81,0 s`: Lesen `39,0 s`, Uebertragen `37,7 s`).
+  `BiDashboard.dll` `01.09.2026 09:03:21`, `4'893'696` Bytes, SHA256
+  `06E904A6F3821F31CB4165AB1354F179FC38532D49EB273FD775F86147781E8D`, lokaler Release-Build und
+  Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'846` unveraendert. HTTPS `200`: Startseite
+  (`71'418` Bytes), `/marktsegmente` (`71'453` Bytes), `/management-cockpit` (`72'314` Bytes).
+  Die Segmentseite waechst von `70'914` auf `71'453` Bytes, was zum neuen Knopf passt.
+  Wirknachweis in der DLL: `MarketSegmentExportService`, `Verworfen (Protokoll)`,
+  `Umsatz_Summen`, `Breites Sortiment, bitte einzeln pruefen`, `Marktsegmente_Export_` und die
+  tuerkische Uebersetzung `Dışa aktar (Excel)`; alle sechs fehlten im Prueflauf nachweislich und
+  waren vorab per `git grep` gegen `d346b32` als neu bestaetigt. Nichts entfernt, deshalb kein
+  verbotenes Literal. **Kein Schemawechsel und keine Migration:** read-only nachgemessen hat
+  `CustomerMarketSegments` unveraendert neun Spalten (`Id`, `Tsc`, `CustomerNumber`,
+  `CustomerName`, `Segment`, `Source`, `UpdatedAtUtc`, `IsConfirmed`, `ProposalNote`).
+  **Der eine Alarm ist die bekannte WAL-Falle und nachgemessen entkraeftet:** `-wal` und `-shm`
+  galten als verschwunden, sind beim Neustart um `09:22:12` wieder da (`0` und `32'768` Bytes),
+  und die Hauptdatei ist in Laenge und Schreibzeit unveraendert (`357'822'464` Bytes,
+  `01.09.2026 00:00:41`). `app_offline.htm` wurde nach dem Publish auf
+  `app_offline.htm.disabled` umbenannt. **Vor dem Publish gepruefte Besonderheit:** das
+  Arbeitsverzeichnis trug uncommittete Codeaenderungen einer anderen Sitzung (fuenfter
+  Finance-Schalter, `+335` Zeilen ueber 15 Dateien). Diese sind bereits seit dem 2026-08-31
+  produktiv; belegt durch die Server-DLL VOR diesem Deploy, die `MarcForeignProcurementMode`,
+  `ForeignProcurementEvidenceStore`, `CH/AT: Herstellerregel gegen Fremdbezugsbeleg` und
+  `IsIntercompanySellingTsc` bereits enthielt. Dieser Publish hat also nur den Export neu
+  ausgeliefert. Werkzeug: `.tmp_tools/DeployMarketSegmentExport0901`.
+  **ACHTUNG, der Funktionscode dieses Deploys ist NICHT committet.** `d346b32` im automatisch
+  erzeugten Protokollabsatz ist der Elterncommit, nicht der Funktionscommit; er enthaelt vom
+  Export keine Zeile. Die DLL ist aus dem Arbeitsverzeichnis dieses Rechners gebaut. Solange
+  das so bleibt, ist der produktive Stand nicht reproduzierbar und es gibt keinen Stand, auf
+  den man zurueckrollen koennte. Sauber committen laesst sich alles ausser
+  `Services/UiTextGeneratedTranslations.cs`: dort stehen die sechs neuen Uebersetzungszeilen
+  neben uncommitteten Aenderungen der anderen Sitzung, das braucht deren Abstimmung.
+  **Nebenbefund zur Datenhygiene:** die Sicherungsroutine laesst ihre Zwischendatei im lokalen
+  `%TEMP%` liegen und meldet das auch. Dort lagen dadurch neun vollstaendige Kopien der
+  Produktivdatenbank aus Deploys seit dem 2026-08-25, zusammen rund `3` GB Kundendaten
+  ausserhalb der Freigabe. Die Kopie dieses Laufs ist nach Groessenvergleich mit der
+  geprueften Kopie auf der Freigabe geloescht; die acht aelteren stehen noch offen.
+  **Fachlicher Stand am Deploytag, read-only gemessen:** `173` Vorschlaege, davon `0`
+  bestaetigt, `269` Umfragezeilen, `104'222` Verkaufszeilen, `7'526` TRDE-Zeilen ohne
+  Kundenname, `0` Protokolleintraege `Segment entfernt`. Die Blaetter `Bestaetigt` und
+  `Verworfen (Protokoll)` sind daher heute leer und tragen ihren Hinweistext.
+  **Zusaetzlich ueber HTTP nachgeprueft, weil die Deploy-Konsole nur Statuscodes und Groessen
+  misst:** ein Abruf von `/marktsegmente` mit den Anmeldedaten des angemeldeten Nutzers liefert
+  `200` mit `71'438` Bytes, enthaelt die Knopfbeschriftung `Export (Excel)` und **kein**
+  `Passwort`. Die Seite rendert also wirklich, statt nur erreichbar zu sein, und der Knopf ist
+  im ausgelieferten HTML vorhanden.
+  **Offen bleibt trotzdem:** dass ein Klick die Datei erzeugt und die acht Blaetter so
+  aussehen wie beschrieben. Das belegt erst ein Klick im Browser mit Blick in die Datei.
+  Konzept: `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md`.
+
+- Aktuellster produktiv verifizierter Deploy: **2026-08-31 11:32, Finance: CH/AT-
+  Herstellerregel gegen aktiven Fremdbezugsbeleg steuerbar**, Funktionscommit `d346b32`,
+  `655/655` Release-Tests gruen vor dem Publish. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-finance-foreign-procurement-switch-20260831-113052.bak`;
+  `BiDashboard.dll` `31.08.2026 11:22:18`, `4'854'784` Bytes, SHA256
+  `7C986CB003F4BD6FCE421E2135E567216AB2AFE66F73E8D86C80F2DFF`, lokaler Release-Build und
+  Server bitgleich. Ziel: `0` neu, `3` geaendert, `1'817` unveraendert, `0` verschwunden.
+  HTTPS `200`: Startseite, `/settings`, `/management-cockpit`. Wirknachweis in der DLL:
+  `MarcForeignProcurementMode`, `ForeignProcurementEvidenceStore`,
+  `CH/AT: Herstellerregel gegen Fremdbezugsbeleg`,
+  `Fremdbezugsbeleg klassifiziert als Extern`; alle vier fehlten im Prueflauf vor dem
+  Deploy. Schema produktiv read-only nachgemessen: `MarcForeignProcurementMode = Ignore`,
+  also bleibt die Herstellerregel standardmaessig bestehen. Der fachliche Entscheid von
+  Andreas ist nicht vorweggenommen. `app_offline.htm` wurde nach dem Publish entfernt.
+  Werkzeug: `.tmp_tools/DeployFinanceForeignProcurement0831`. Offen bleibt allein der
+  Sichtprueflauf im angemeldeten Browser.
 
 - Aktuellster produktiv verifizierter Deploy: **2026-08-31 09:47, Finance: IT/IN-Kostenmethode
   und CHF-Kursprofil, dazu die Abhaengigkeiten in den GUI-Texten**, `644/644` Release-Tests

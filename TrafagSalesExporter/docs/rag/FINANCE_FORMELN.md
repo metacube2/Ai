@@ -145,7 +145,8 @@ wird von keiner Quelle geliefert.
 
 **Kostenwaehrungsschalter `GroupMarginCostCurrencyMode`:**
 - `Mask` (Default): Kostenwaehrung != Verkaufswaehrung -> Status `Kostenwaehrung abweichend`, Marge bleibt `-`.
-- `Convert`: Umrechnung mit Jahreskurs 31.12.
+- `Convert`: Umrechnung mit aktuellem Tageskurs (seit dem Beschluss vom 27.08.2026);
+  fehlender Kurs laesst die Zeile offen.
 
 **Statuswerte:** `OK` (Marge berechnet) / `Standardpreis fehlt` / `Lieferant unklar` /
 `Kostenwaehrung abweichend` (nur Mask).

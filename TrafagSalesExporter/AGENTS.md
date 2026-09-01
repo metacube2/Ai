@@ -39,3 +39,12 @@ einem Chat beschrieben wurde.
 Arbeitsregeln, Testerwartungen und fachliche Grenzen stehen in `persona.md`.
 
 Bereichsspezifische `AGENTS.md`-Dateien gelten zusaetzlich zu dieser Root-Datei.
+
+## 4. Kostenbewusstsein
+
+Ingo arbeitet mit einem begrenzten Kontingent (Einstiegsplan, kein Enterprise-Kontingent).
+Deshalb generell sparsam mit Kontext und Modellwahl umgehen: das guenstigste/kleinere
+Modell nehmen, das die Aufgabe zuverlaessig loest, und ein staerkeres/teureres Modell nur
+gezielt einsetzen, wenn eine Aufgabe erkennbar staerkeres Reasoning braucht (komplexe
+Fehlerdiagnose, Architekturentscheidung mit mehreren Zielkonflikten). Unnoetig lange
+Ausgaben, wiederholte Zusammenfassungen und ueberfluessige Werkzeugaufrufe vermeiden.

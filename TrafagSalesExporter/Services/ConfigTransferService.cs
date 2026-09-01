@@ -79,7 +79,8 @@ public class ConfigTransferService : IConfigTransferService
                 SupplierFallbackMode = SupplierFallbackModes.Normalize(exportSettings.SupplierFallbackMode),
                 InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(exportSettings.InternalSupplierCostSourceMode),
                 B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(exportSettings.B1GroupStandardCostMode),
-                GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(exportSettings.GroupMarginChfRateMode)
+                GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(exportSettings.GroupMarginChfRateMode),
+                MarcForeignProcurementMode = MarcForeignProcurementModes.Normalize(exportSettings.MarcForeignProcurementMode)
             },
             SourceSystemDefinitions = sourceSystems.Select(system => new ConfigTransferSourceSystemDefinition
             {
@@ -301,7 +302,8 @@ public class ConfigTransferService : IConfigTransferService
             SupplierFallbackMode = SupplierFallbackModes.Normalize(importedSettings.SupplierFallbackMode),
             InternalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(importedSettings.InternalSupplierCostSourceMode),
             B1GroupStandardCostMode = B1GroupStandardCostModes.Normalize(importedSettings.B1GroupStandardCostMode),
-            GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(importedSettings.GroupMarginChfRateMode)
+            GroupMarginChfRateMode = GroupMarginChfRateModes.Normalize(importedSettings.GroupMarginChfRateMode),
+            MarcForeignProcurementMode = MarcForeignProcurementModes.Normalize(importedSettings.MarcForeignProcurementMode)
         });
 
         foreach (var sourceSystem in importedSourceSystems)

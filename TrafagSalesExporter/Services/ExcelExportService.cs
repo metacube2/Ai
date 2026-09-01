@@ -87,6 +87,16 @@ public class ExcelExportService : IExcelExportService
             .ToHashSet(StringComparer.Ordinal);
     }
 
+    /// <summary>ISS-003.4: Materialien mit aktivem externen Einkaufsbeleg, siehe ForeignProcurementEvidenceStore.</summary>
+    private IReadOnlySet<string> LoadForeignProcurementMaterialKeys()
+    {
+        if (_dbFactory is null)
+            return new HashSet<string>(StringComparer.Ordinal);
+
+        using var db = _dbFactory.CreateDbContext();
+        return ForeignProcurementEvidenceStore.LoadMaterialKeys(db);
+    }
+
     /// <summary>
     /// Gepflegte Kunden-Segment-Zuordnung. Ohne Datenbank oder bei leerer Tabelle bleiben
     /// die beiden Segmentspalten leer — bewusst, denn ein geratenes Segment waere
@@ -126,6 +136,18 @@ public class ExcelExportService : IExcelExportService
         return InternalSupplierCostSourceModes.Normalize(mode);
     }
 
+    private string LoadMarcForeignProcurementMode()
+    {
+        if (_dbFactory is null)
+            return MarcForeignProcurementModes.Ignore;
+
+        using var db = _dbFactory.CreateDbContext();
+        var mode = db.ExportSettings.AsNoTracking()
+            .Select(settings => settings.MarcForeignProcurementMode)
+            .FirstOrDefault();
+        return MarcForeignProcurementModes.Normalize(mode);
+    }
+
     public string CreateExcelFile(string outputDirectory, string tsc, DateTime fileDate, List<SalesRecord> records)
     {
         Directory.CreateDirectory(outputDirectory);
@@ -155,7 +177,8 @@ public class ExcelExportService : IExcelExportService
         var chfRateMode = LoadGroupMarginChfRateMode();
         WriteDashboardProofWorkbook(fullPath, records, fileDate, useAuditCsvAsCentralSource, LoadFinanceRules(), LoadFinanceReferences(),
             (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
-            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode());
+            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(),
+            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode());
         return fullPath;
     }
 
@@ -196,7 +219,8 @@ public class ExcelExportService : IExcelExportService
         var chfRateMode = LoadGroupMarginChfRateMode();
         WriteWorkbook(fullPath, records, includeFinanceHelpSheet, LoadFinanceRules(),
             (currency, year) => ResolveChfRate(currency, year, chfRateMode), LoadGroupMarginCostCurrencyMode(), ResolveCrossRate,
-            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(), LoadCustomerMarketSegments());
+            LoadGroupStandardCosts(), LoadChPlantMaterialKeys(), LoadSupplierFallbackMode(), LoadInternalSupplierCostSourceMode(), LoadCustomerMarketSegments(),
+            LoadForeignProcurementMaterialKeys(), LoadMarcForeignProcurementMode());
     }
 
     private IReadOnlyList<FinanceRule> LoadFinanceRules()
@@ -254,13 +278,16 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
-        string? internalSupplierCostSourceMode = null)
+        string? internalSupplierCostSourceMode = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         using var workbook = new XLWorkbook();
         var financeRows = BuildFinanceProofRows(records, financeRules);
         var divisionRows = BuildDivisionProofRows(financeRows);
         var groupMarginRows = BuildGroupMarginProofRows(financeRows, groupMarginCostCurrencyMode, resolveCrossRate,
-            groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
+            groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode,
+            foreignProcurementMaterialKeys, marcForeignProcurementMode);
         var referenceByMaterial = ProductReferenceEnricher.BuildReferenceByMaterial(records);
 
         AddProofDataLineageSheet(workbook, records, financeRows, fileDate, useAuditCsvAsCentralSource);
@@ -372,7 +399,9 @@ public class ExcelExportService : IExcelExportService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost>? groupStandardCosts = null,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
-        string? internalSupplierCostSourceMode = null)
+        string? internalSupplierCostSourceMode = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         return financeRows
@@ -385,7 +414,9 @@ public class ExcelExportService : IExcelExportService
                     ToGroupMarginLine(row.Record, row.NetSalesActual), costs,
                     chPlantMaterialKeys: chPlantMaterialKeys,
                     supplierFallbackMode: supplierFallbackMode,
-                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode,
+                    foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
+                    marcForeignProcurementMode: marcForeignProcurementMode);
                 var supplierType = margin.SupplierType;
                 var status = margin.Status;
                 // Schalter D: abweichende Kostenwaehrung entweder umrechnen oder Zeile als
@@ -1042,7 +1073,9 @@ public class ExcelExportService : IExcelExportService
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
         string? internalSupplierCostSourceMode = null,
-        IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment>? customerMarketSegments = null)
+        IReadOnlyDictionary<(string Tsc, string CustomerNumber), CustomerMarketSegment>? customerMarketSegments = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Sales");
@@ -1216,7 +1249,9 @@ public class ExcelExportService : IExcelExportService
                 groupStandardCosts,
                 chPlantMaterialKeys,
                 supplierFallbackMode,
-                internalSupplierCostSourceMode);
+                internalSupplierCostSourceMode,
+                foreignProcurementMaterialKeys,
+                marcForeignProcurementMode);
             AddProofGroupMarginSummarySheet(workbook, groupMarginRows);
             AddProofGroupMarginDetailsSheet(workbook, groupMarginRows);
             AddFinanceHelpSheet(workbook);

@@ -52,6 +52,16 @@ public class ExportSettings
     public string GroupMarginChfRateMode { get; set; } = GroupMarginChfRateModes.CurrentDailyRate;
 
     /// <summary>
+    /// ISS-003.4: Verhalten der CH/AT-Herstellerregel (jede TRCH/TRAT-Verkaufszeile ist per
+    /// TSC-Definition "Intern / TR_AG", siehe <see cref="GroupMarginSupplierClassifier"/>), wenn
+    /// zum selben Material ein aktiver, nicht geloeschter externer Einkaufsbeleg existiert.
+    /// Default belaesst die Regel unveraendert; die Alternative klassifiziert eine solche Zeile
+    /// als "Extern". Grundlage ist der bereits geladene Einkauf-Cache (EKKO/EKPO), kein
+    /// zusaetzlicher SAP-Zugriff. Siehe docs/FINANCE_SUPPLIER.md Abschnitt 6.
+    /// </summary>
+    public string MarcForeignProcurementMode { get; set; } = MarcForeignProcurementModes.Ignore;
+
+    /// <summary>
     /// Zeitpunkt (UTC) des letzten automatischen Timer-Exports. Dient dem Nachhol-Lauf:
     /// War der Prozess zur geplanten Zeit nicht aktiv, wird beim naechsten Start erkannt,
     /// dass heute noch kein Lauf stattfand, und der Export einmalig nachgeholt.
@@ -127,4 +137,15 @@ public static class GroupMarginChfRateModes
         => Normalize(mode) == FinanceYearEndRate
             ? new DateTime(financeYear, 12, 31)
             : (today ?? DateTime.Today).Date;
+}
+
+public static class MarcForeignProcurementModes
+{
+    public const string Ignore = nameof(Ignore);
+    public const string OverridesToExternal = nameof(OverridesToExternal);
+
+    public static string Normalize(string? mode)
+        => string.Equals(mode?.Trim(), OverridesToExternal, StringComparison.OrdinalIgnoreCase)
+            ? OverridesToExternal
+            : Ignore;
 }

@@ -44,15 +44,19 @@ public static class GroupMarginCalculator
         bool hasExchangeRate = true,
         IReadOnlySet<string>? chPlantMaterialKeys = null,
         string? supplierFallbackMode = null,
-        string? internalSupplierCostSourceMode = null)
+        string? internalSupplierCostSourceMode = null,
+        IReadOnlySet<string>? foreignProcurementMaterialKeys = null,
+        string? marcForeignProcurementMode = null)
     {
         var costs = groupStandardCosts ?? new Dictionary<(string, string), GroupStandardCost>();
         var plantMaterials = chPlantMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
+        var foreignProcurementMaterials = foreignProcurementMaterialKeys ?? new HashSet<string>(StringComparer.Ordinal);
         var materialKey = ResolveGroupCostKey(line);
 
         var supplierType = GroupMarginSupplierClassifier.Resolve(
             line.SupplierNumber, line.SupplierName, line.SupplierCountry, line.Tsc,
-            materialKey, costs, line.SalesType, plantMaterials, supplierFallbackMode);
+            materialKey, costs, line.SalesType, plantMaterials, supplierFallbackMode,
+            foreignProcurementMaterials, marcForeignProcurementMode);
 
         var context = new GroupMarginCostContext(
             MaterialKey: materialKey,
@@ -60,6 +64,8 @@ public static class GroupMarginCalculator
             ChPlantMaterialKeys: plantMaterials,
             SupplierFallbackMode: SupplierFallbackModes.Normalize(supplierFallbackMode),
             InternalSupplierCostSourceMode: InternalSupplierCostSourceModes.Normalize(internalSupplierCostSourceMode),
+            ForeignProcurementMaterialKeys: foreignProcurementMaterials,
+            MarcForeignProcurementMode: MarcForeignProcurementModes.Normalize(marcForeignProcurementMode),
             // Gutschriften/Retouren tragen einen negativen Netto-Umsatz. Die Kostenbasis muss
             // mit umkehren, sonst rechnet die Marge die Kosten doppelt negativ (Umsatz -100,
             // Kosten +60 -> -160 statt korrekt -40). Bei Umsatz 0 fuehrt das Mengenvorzeichen.
@@ -219,7 +225,9 @@ public sealed record GroupMarginCostContext(
     bool IsReversal,
     IReadOnlySet<string>? ChPlantMaterialKeys = null,
     string? SupplierFallbackMode = null,
-    string? InternalSupplierCostSourceMode = null);
+    string? InternalSupplierCostSourceMode = null,
+    IReadOnlySet<string>? ForeignProcurementMaterialKeys = null,
+    string? MarcForeignProcurementMode = null);
 
 /// <summary>Vollstaendiges Ergebnis fuer eine Zeile.</summary>
 public sealed record GroupMarginEvaluation(
@@ -276,7 +284,8 @@ public static class GroupMarginCostRules
             var deliveringEntity = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
                 line.SupplierName, line.Tsc, context.MaterialKey, context.GroupStandardCosts, line.SalesType,
                 context.ChPlantMaterialKeys, context.SupplierFallbackMode,
-                line.SupplierNumber, line.SupplierCountry);
+                line.SupplierNumber, line.SupplierCountry,
+                context.ForeignProcurementMaterialKeys, context.MarcForeignProcurementMode);
 
             // Unabhaengiger Finance-Schalter: Die Lieferantenklassifikation bleibt erhalten,
             // aber bei einem CH-Werkstammtreffer kann Andreas bewusst Schweizer STPRS statt

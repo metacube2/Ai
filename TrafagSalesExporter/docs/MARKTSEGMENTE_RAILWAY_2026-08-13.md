@@ -366,3 +366,42 @@ erzwingen.
 **Rohail Munir sollte frueh wissen, dass Deutschland moeglicherweise fehlt.** Ein Export, der
 Deutschland stillschweigend mit null Bahnumsatz zeigt, waere schlechter als einer, der die
 Luecke benennt — besonders in einer Statuspraesentation.
+
+## 15. Stand 2026-09-01: Excel-Export per Mausklick, PRODUKTIV DEPLOYED
+
+Antwort auf den Termin aus Abschnitt 14: `/marktsegmente` hat jetzt neben dem Jahresfilter den
+Knopf **Export (Excel)**. Ein Klick, kein Zwischendialog, Download im Browser, nichts wird auf
+dem Server abgelegt. Fachliche Herleitung, alle zwoelf Entscheidungen mit gesetzten
+Defaultwerten und die technische Umsetzung stehen vollstaendig in
+`docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md`; dieser Abschnitt fasst nur zusammen, was fuer die
+Fortsetzung dieser Fachdatei wichtig ist.
+
+**Acht Blaetter:** `Anleitung`, `Pruefung`, `Bestaetigt`, `Verworfen (Protokoll)`,
+`Umsatz_Summen`, `Umsatz_Detail`, `Marktumfrage`, `Datenluecken`. Jahr und Standort der Seite
+wirken auf den Export, der Namensfilter bewusst nicht — sonst saehe eine Datei nach einer
+stehengebliebenen Sucheingabe vollstaendig aus, obwohl sie es nicht ist.
+
+**Zwei Fragen aus dieser Fachdatei beantwortet der Export, ohne sie zu loesen:**
+
+- Ein Zustandsblatt `Verworfen` wie im urspruenglichen Fragebogen vorgesehen gibt es nicht.
+  `MarketSegmentPageService.ClearAsync` loescht die Zuordnungszeile, ein Zustand `verworfen`
+  wird nirgends gespeichert. Der Export liefert stattdessen die Protokollspur aus
+  `AppEventLogs`, Kategorie `Marktsegment`, Nachricht `Segment entfernt` — ohne Nutzerspalte,
+  weil `AppEventLog` keinen Nutzer fuehrt. Eine echte gespeicherte Ablehnung waere ein eigener
+  Auftrag mit Schemawechsel und ist nicht Teil dieses Deploys.
+- Blocker 1 aus Abschnitt 14 (Deutschland ohne Kundennamen) ist damit **nicht geloest**. Das
+  Blatt `Datenluecken` weist ihn offen aus, statt ihn als Umsatz von null zu zeigen. Er bleibt
+  der eigentliche Blocker fuer den Termin am 08.09.
+
+**Produktiv am Deploytag read-only gemessen** (deckt sich mit der Messung aus Abschnitt 14, kein
+neuer Zuwachs seither): `173` Vorschlaege, `0` bestaetigt, `269` Umfragezeilen, `104'222`
+Verkaufszeilen, `7'526` TRDE-Zeilen ohne Kundenname, `0` Protokolleintraege `Segment entfernt`.
+Die Blaetter `Bestaetigt` und `Verworfen (Protokoll)` sind deshalb heute leer und tragen ihren
+Hinweistext statt Zeilen — der erwartete Zustand, kein Fehler.
+
+**Deploy:** 2026-09-01, 09:21 Uhr, `668/668` Release-Tests gruen, Details und Nachweise in
+`docs/rag/DEPLOYMENT.md` Kurzstand und `docs/AGENT_COORDINATION.md`. **Wichtig fuer den
+naechsten Bearbeiter:** der Funktionscode dieses Deploys ist NICHT committet, er liegt nur im
+Arbeitsverzeichnis dieses Rechners; der produktive Stand ist deshalb aktuell nicht
+reproduzierbar. Offen bleibt der angemeldete Sichtprueflauf: dass ein Klick die Datei erzeugt
+und die acht Blaetter so aussehen wie hier beschrieben.

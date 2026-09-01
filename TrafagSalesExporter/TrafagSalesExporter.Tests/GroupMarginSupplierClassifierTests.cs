@@ -380,4 +380,91 @@ public class GroupMarginSupplierClassifierTests
         Assert.Equal(GroupMarginSupplierClassifier.Local, supplierType);
         Assert.Null(entity);
     }
+
+    // ISS-003.4: die unbedingte TRCH/TRAT-Herstellerregel gegen einen aktiven externen
+    // Einkaufsbeleg. Betrifft ausschliesslich IsIntercompanySellingTsc (TRCH/TRAT), nicht den
+    // generischen MARC-1100-Supplier-Fallback fuer andere Standorte.
+
+    [Fact]
+    public void Resolve_DefaultIgnoreMode_KeepsManufacturerRule_EvenWithForeignProcurementEvidence()
+    {
+        IReadOnlySet<string> foreignProcurement = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRCH", "ART123", null, null, null, null,
+            foreignProcurementMaterialKeys: foreignProcurement, marcForeignProcurementMode: null);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_OverrideMode_ClassifiesTrchTratRowWithForeignProcurementEvidenceAsExternal()
+    {
+        IReadOnlySet<string> foreignProcurement = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var chRow = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRCH", "ART123", null, null, null, null,
+            foreignProcurement, MarcForeignProcurementModes.OverridesToExternal);
+        var atRow = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRAT", "ART123", null, null, null, null,
+            foreignProcurement, MarcForeignProcurementModes.OverridesToExternal);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, chRow);
+        Assert.Equal(GroupMarginSupplierClassifier.External, atRow);
+    }
+
+    [Fact]
+    public void Resolve_OverrideMode_WithoutForeignProcurementEvidence_StaysInternal()
+    {
+        IReadOnlySet<string> foreignProcurement = new HashSet<string>(StringComparer.Ordinal) { "OTHER-MATERIAL" };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRCH", "ART123", null, null, null, null,
+            foreignProcurement, MarcForeignProcurementModes.OverridesToExternal);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void Resolve_OverrideMode_DoesNotApplyToGenericMarcSupplierFallback()
+    {
+        // Der Override gilt nur fuer die TSC-Herstellerregel (TRCH/TRAT), nicht fuer den
+        // generischen MARC-1100-Supplier-Fallback anderer Standorte - eine andere, hier nicht
+        // diskutierte Population, obwohl derselbe MARC-Cache dahintersteht.
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+        IReadOnlySet<string> foreignProcurement = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var result = GroupMarginSupplierClassifier.Resolve(
+            null, null, null, "TRIT", "ART123", null, null,
+            chPlantMaterials, SupplierFallbackModes.ChPlantMaster,
+            foreignProcurement, MarcForeignProcurementModes.OverridesToExternal);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Internal, result);
+    }
+
+    [Fact]
+    public void ResolveDeliveringEntity_OverrideMode_WithForeignProcurementEvidence_ReturnsNull()
+    {
+        IReadOnlySet<string> foreignProcurement = new HashSet<string>(StringComparer.Ordinal) { "ART123" };
+
+        var withoutOverride = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            null, "TRCH", "ART123", null, null,
+            null, null, null, null,
+            foreignProcurement, MarcForeignProcurementModes.Ignore);
+        var withOverride = GroupMarginSupplierClassifier.ResolveDeliveringEntity(
+            null, "TRCH", "ART123", null, null,
+            null, null, null, null,
+            foreignProcurement, MarcForeignProcurementModes.OverridesToExternal);
+
+        Assert.Equal(GroupStandardCostEntities.TrAg, withoutOverride);
+        Assert.Null(withOverride);
+    }
+
+    [Fact]
+    public void MatchesInternalSupplierMarker_DetectsTrafagAndGfsMarkers()
+    {
+        Assert.True(GroupMarginSupplierClassifier.MatchesInternalSupplierMarker("60000", "Trafag AG", "CH"));
+        Assert.True(GroupMarginSupplierClassifier.MatchesInternalSupplierMarker(null, "Gesellschaft fuer Sensorik", null));
+        Assert.False(GroupMarginSupplierClassifier.MatchesInternalSupplierMarker("V-002", "Aptasic SA", "FR"));
+    }
 }

@@ -314,7 +314,10 @@ Wichtig fuer die fachliche Pruefung:
 
 - Das Pruefbuch ist die richtige Sicht fuer Einzelzeilen und Nachvollziehbarkeit.
 - Es verwendet die gepflegte Kurstabelle `CurrencyExchangeRates`.
-- Fuer die CHF-Umrechnung wird aktuell ein Jahreskurs per `31.12.<Jahr>` verwendet, kein Tageskurs.
+- Produktiv wird fuer die CHF-Umsatzumrechnung aktuell ein Jahreskurs per `31.12.<Jahr>`
+  verwendet. Lokal ist bereits ein noch nicht deployter Finance-Schalter vorbereitet, der
+  dieses Profil einheitlich fuer Cockpit, Pruefbuch, Nachweis und `Sales_All` auf Tageskurs
+  oder Jahresende je Finance-Jahr setzt; Details: `docs/FINANCE_STANDARDKOSTEN.md`, 7c.
 - Die Berechnungen sind technisch getestet; die fachliche Abnahme der Kurse, Kostenbasis und Lieferantenlogik muss Finance/Andreas anhand von Stichproben bestaetigen.
 
 Bekannte, noch offene Punkte (kein Fehler in `Marge CHF`, aber zu beachten):

@@ -1,9 +1,9 @@
-Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
+Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt	Erledigt am
 1	Heute	Finance ES	ISS-004.2	Spanien Buchungsdatum	Ingo	Mittel	Läuft		Mail an Santi: 7-Tage- gegen 35-Tage-Version ersetzen lassen
 2	Nur terminieren	Finance ES	ISS-004.1	Spanien Januar bis Mai 2026	Ingo	Mittel	Erledigt		Nachtrag und Import am 18.08.2026 bestätigt; keine Aktion
 3	Heute	SAP ZC12	PM-02	ZC12 Fehler bei Nullmengen	Ingo	Mittel	Blockiert		Vorfrage in SE93: ist ZC12 = Z_ABGLEICH_KTSCH?
 4	Hoch, haengt an anderen	Finance FR	ISS-001.2	Datenzufluss TR FR	Frankreich / Ingo	Hoch	Wartet auf andere		Eskalieren, seit 30.07.2026 keine Faktura mehr (18 Tage)
-5	Hoch, haengt an anderen	Finance CH/AT	ISS-003.4	Herstellerregel CH/AT	Andreas	Hoch	Wartet auf Entscheid		Termin mit Andreas, Punkt 1 von 3
+5	Hoch, haengt an anderen	Finance CH/AT	ISS-003.4	Herstellerregel CH/AT	Andreas	Hoch	Wartet auf Entscheid		Produktiven Schalter in Settings vergleichen; Andreas entscheidet, ob Fremdbezug die Herstellerregel als Ausnahme bricht (Default bleibt bisherige Regel)
 6	Hoch, haengt an anderen	Finance Gruppenmarge	ISS-009	Fachfreigabe Gruppenmarge	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 2 von 3
 7	Hoch, haengt an anderen	Finance Abgrenzung	ISS-010	Innenumsatz / Doppelzählung	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 3 von 3
 8	Hoch, haengt an anderen	Finance CH/AT	ISS-003.5	Supplier-Fallback je Land	Andreas	Niedrig	Erledigt		Entschieden am 27.08.2026: steht kein Lieferant, gelten die lokalen Standardkosten der verkaufenden Gesellschaft; keine Aufteilung je Land
@@ -16,7 +16,7 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
 15	Umsetzung	Finance CH/AT	ISS-006	CH/AT Journal, SAP-Set aktivieren	SAP / Ingo	Mittel	Offen		FinanzJournalSet aktivieren, danach $metadata prüfen
 16	Umsetzung	Einkauf	PM-04	Einkauf Restpunkte SAP	Ingo	Mittel	Offen		D1/D5-Texte pflegen, SEGW-Key auf DISPO_KZ + DISPO korrigieren
 17	Umsetzung	Marktsegmente	-	Sichtprüfläufe produktiv nachholen	Ingo	Mittel	Offen		3 Deploys angemeldet sichtprüfen: Segmente, Umfrage, Jahresfilter
-18	Umsetzung	Finance Export	ISS-012	Phantom-Legendenzeile im Export	App	Niedrig	Offen		Konsolidierungsschritt in ConsolidatedExportService.cs prüfen
+18	Umsetzung	Finance Export	ISS-012	Phantom-Legendenzeile im Export	App	Niedrig	Erledigt		Produktiv deployed am 27.08.2026: Phantom-Legendenzeile wird im Konsolidierungsschritt ausgefiltert.	27.08.2026
 19	Nur terminieren	Finance IT	ISS-007.1	TR IT Moving Average	Paola / Ingo	Mittel	Offen	Ende Aug 2026	Termin mit Paola setzen
 20	Nur terminieren	SAP PPWR	PM-06	PPWR Pilotmaterialien	Adil	Mittel	Erledigt		Komplett erledigt 2026-08-20 laut Ingo: Pilotmaterialien zugeordnet, CL30N-Abnahme gefahren
 21	Nur terminieren	Finance Reporting	ISS-008	Budget-CHF als Reportinggrösse	Finance / Andreas	Niedrig	Offen		6 offene Entscheide bei Finance, nur beobachten
@@ -25,5 +25,5 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt
 24	Heute	Railway	PM-08	Railway Kundenname Deutschland	Ingo	Hoch	Blockiert	08.09.2026	INFORMATION_SCHEMA-Auszug aus Alphaplan holen; ohne Kundenname kein DE-Railway
 25	Heute	Railway	PM-08	Railway Zuordnung prüfen lassen	Patrik	Hoch	Offen	08.09.2026	Patrik prüft die 30 mengenstärksten Vorschläge oder setzt sie selbst
 26	Nur terminieren	Railway	PM-08	Railway Export für Rohail Munir	Ingo	Hoch	Wartet auf andere	08.09.2026	Nach Bestätigung exportieren; Deutschland notfalls offen ausweisen
-27	Heute	Finance Standardkosten	-	Rückfrage an Andreas zur Sitzung vom 27.08.2026	Ingo	Hoch	Offen		Drei Abweichungen klären, bevor er das Vergleichs-Excel prüft: Italien misst den Einkaufspreis statt Herstellkosten (Faktor 3,48); bleibt die MARC-1100-Stufe bestehen; Kursquelle und Stichtag für die Umrechnung
+27	Heute	Finance Standardkosten	-	Rückfrage an Andreas zur Sitzung vom 27.08.2026	Ingo	Hoch	Erledigt		Technische Vergleichslogik abgeschlossen: Andreas kann beide Kostenquellen direkt in Settings wählen; fachliche Auswahl erfolgt im Vergleich.	27.08.2026
 28	Umsetzung	Finance Standardkosten	-	Arbeitsmappe Standortkosten auf den Sitzungsstand bringen	Ingo	Mittel	Offen		Sales Type in den oberen Block ziehen, Zweig ohne Lieferant und Währungszeile ergänzen, danach Sales_All neu generieren

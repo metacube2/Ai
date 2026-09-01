@@ -1,6 +1,96 @@
 # Last Change
 
-Stand: 2026-08-31
+Stand: 2026-09-01
+
+## Marktsegmente: Excel-Export per Mausklick, 2026-09-01 (DEPLOYED 09:21)
+
+- **Auftrag Ingo:** aus dem Fragebogen `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md`
+  ein Konzept mit gesetzten Defaultwerten machen und den Exporter danach bauen. Ziel ist die
+  Arbeitsdatei, mit der Patrik die Railway-Zuordnungen bis zum Termin PM-08 am 2026-09-08
+  fachlich pruefen kann.
+- Neuer Knopf `Export (Excel)` auf `/marktsegmente`, direkt neben dem Jahresfilter. Ein Klick,
+  kein Zwischendialog, Download im Browser, nichts wird auf dem Server abgelegt.
+- Acht Blaetter: `Anleitung`, `Pruefung`, `Bestaetigt`, `Verworfen (Protokoll)`,
+  `Umsatz_Summen`, `Umsatz_Detail`, `Marktumfrage`, `Datenluecken`.
+- **Drei Entscheidungen, die der Code gegen den Fragebogen korrigiert hat:**
+  - Ein Blatt `Verworfen` als Zustandsliste gibt es nicht, weil
+    `MarketSegmentPageService.ClearAsync` die Zuordnung loescht und kein Zustand `verworfen`
+    gespeichert wird. Der Export liefert stattdessen die Protokollspur aus `AppEventLogs`,
+    ohne Nutzerspalte, weil `AppEventLog` keinen Nutzer fuehrt. Eine echte gespeicherte
+    Ablehnung waere ein eigener Auftrag mit Schemawechsel.
+  - Der Umsatz kommt nicht aus der Kundenzeile der Pflegeseite. Dort steht eine
+    waehrungsuebergreifende Summe neben einer einzelnen, per `Max` gegriffenen Waehrung. Das
+    Geld steht deshalb ausschliesslich waehrungsrein im Blatt `Umsatz_Summen`, und
+    `Pruefung` fuehrt bewusst gar keine Umsatzspalte.
+  - Der Knopf filtert nicht auf Railway, sondern exportiert alle gepflegten Segmente mit
+    `Segment` als Spalte. Ein stiller Segmentfilter wuerde spaeter gepflegte Segmente aus
+    einer Datei heraushalten, die vollstaendig aussieht.
+- Der Namensfilter des Suchfeldes wirkt bewusst NICHT auf den Export, Jahr und Standort schon.
+  Beides steht im Blatt `Anleitung`, damit niemand eine gefilterte Datei fuer vollstaendig haelt.
+- Neuer Dienst `Services/MarketSegmentExportService.cs`, in `Program.cs` registriert. Kein
+  Schemawechsel, keine Migration, kein SAP-Zugriff, nur lesender Zugriff.
+- Tests: **668/668** gruen, dreizehn neu in
+  `TrafagSalesExporter.Tests/MarketSegmentExportServiceTests.cs`, darunter einer, der die
+  erzeugte Mappe mit ClosedXML zurueckliest. Beim ersten Vollablauf war
+  `UiTextServiceTests` rot, weil die Knopfbeschriftung in keiner der sechs generierten
+  Sprachen stand; nachgetragen.
+- Konzept mit allen zwoelf beantworteten Entscheidungen:
+  `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md`.
+- **PRODUKTIV DEPLOYED am 2026-09-01 um 09:21** nach ausdruecklicher Freigabe von Ingo.
+  Sicherung `trafag_exporter.db.before-market-segment-export-20260901-092034.bak`,
+  `BiDashboard.dll` `4'893'696` Bytes, SHA256
+  `06E904A6F3821F31CB4165AB1354F179FC38532D49EB273FD775F86147781E8D`, lokaler Release-Build
+  und Server bitgleich, alle sechs Nachweisliterale vorher fehlend und nachher enthalten,
+  drei Routen HTTPS `200`, kein Schemawechsel. Der eine Alarm war die bekannte WAL-Falle und
+  ist nachgemessen entkraeftet. Belege: `docs/rag/DEPLOYMENT.md` Kurzstand.
+- **Produktiv gemessen am Deploytag, read-only:** `173` Vorschlaege, davon `0` bestaetigt,
+  `269` Umfragezeilen, `104'222` Verkaufszeilen, `7'526` TRDE-Zeilen ohne Kundenname, `0`
+  Protokolleintraege `Segment entfernt`. Die Blaetter `Bestaetigt` und `Verworfen (Protokoll)`
+  sind heute also leer und tragen ihren Hinweistext.
+- **Offen:** der angemeldete Sichtprueflauf, denn `200` belegt Erreichbarkeit und nicht, dass
+  der Knopf rendert. Fachlich offen bleibt der eigentliche Blocker fuer den Termin: in allen
+  deutschen Verkaufszeilen fehlt der Kundenname, deshalb bleibt TRDE im Export leer, und von
+  den 173 Vorschlaegen ist bisher keiner bestaetigt.
+
+## Fuenfter Finance-Schalter: MARC 1100 trotz Fremdbezugsbeleg, ISS-003.4, 2026-08-31 (DEPLOYED 11:32)
+
+- **Auftrag Ingo:** die offene Fachfrage ISS-003.4 (`docs/FINANCE_SUPPLIER.md` Abschnitt 6) als
+  Schalter einbauen, danach alles nachdokumentieren.
+- Neuer Umschalter `MarcForeignProcurementMode`, `Admin Bereich > Settings > Export
+  Einstellungen`, Feld `CH/AT: Herstellerregel gegen Fremdbezugsbeleg`:
+  - `Herstellerregel gilt immer` — Default, produktiv, heutiges Verhalten unveraendert.
+  - `Fremdbezugsbeleg bricht die Herstellerregel` — ein aktiver externer Einkaufsbeleg zum
+    Material klassifiziert eine TRCH/TRAT-Verkaufszeile als `Extern` statt der sonst
+    unbedingten `Intern / TR_AG`-Regel.
+- **Fachliche Korrektur waehrend der Umsetzung, selbst gefunden vor dem Testlauf:** der Schalter
+  gehoert an den TSC-Kurzschluss `IsIntercompanySellingTsc` (Abschnitt 5, die eigentliche
+  CH/AT-Herstellerregel), nicht an den generischen MARC-1100-Supplier-Fallback fuer
+  Fremdstandorte aus Abschnitt 1 — beide Mechanismen sind getrennt und duerfen es bleiben.
+  Code, Settings-Text, Uebersetzungen und Tests waren dafuer neu auszurichten.
+- **Keine neue SAP-Abfrage:** die Fremdbezugs-Evidenz kommt aus dem bereits geladenen
+  Einkauf-Cache (`PurchasingEkpoCache`/`PurchasingEkkoCache`) des bestehenden
+  Einkauf-Dashboards, ueber den neuen `Services/ForeignProcurementEvidenceStore.cs`.
+- **Read-only gegen die Produktiv-DB nachgemessen (31.08.2026, `.tmp_tools/SqlQ`):**
+  1'201 Materialien / 5'886 CH/AT-Verkaufszeilen mit aktivem Fremdbezugsbeleg — deckt sich mit
+  der dokumentierten Pruefliste (1'191 / 5'910, kleine Drift durch Datenstand seither).
+  `PurchasingEkkoCache` ist mit 176'202 von 176'203 Zeilen praktisch vollstaendig `Bukrs 1100`
+  (Schweiz); fuer TRAT liegt kaum eigene Fremdbezugsevidenz vor, der Schalter wirkt also faktisch
+  fast nur auf TRCH. Diese Einschraenkung steht jetzt im Nachtrag zu Abschnitt 6.
+- Release-Tests **655/655** gruen, inklusive 5 neuer Klassifikator-Tests (TSC-basiert, nicht
+  MARC-basiert) und 5 neuer Tests fuer `ForeignProcurementEvidenceStore`.
+- Dokumentiert in `docs/FINANCE_SUPPLIER.md` Abschnitt 6 (Nachtrag), Status in
+  `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` bleibt bewusst **`Offen, wartet auf Entscheid`**
+  — der Schalter ist eine technische Option, die Fachentscheidung von Andreas steht weiterhin
+  aus.
+- **Produktiv deployed am 31.08.2026 um 11:32 nach ausdruecklicher Freigabe von Ingo.**
+  `655/655` Release-Tests gruen, neue gepruefte Sicherung
+  `trafag_exporter.db.before-finance-foreign-procurement-switch-20260831-113052.bak`,
+  Server-DLL und lokaler Release-Build bitgleich (SHA256
+  `7C986CB003F4BD6FCE421E2135E567216AB2AFE66F73E8D86C80F2DFF`). Alle vier neuen Tokens
+  fehlten im Dry Run und sind danach in der Server-DLL nachgewiesen; Startseite, Settings und
+  Cockpit antworten HTTPS `200`. Produktivschema read-only: `MarcForeignProcurementMode = Ignore`,
+  der Default aendert das bisherige Verhalten also nicht. Offen bleibt nur die Sichtpruefung
+  im angemeldeten Browser; die Fachentscheidung von Andreas bleibt offen.
 
 ## Finance-Schalter produktiv, Abhaengigkeiten im GUI-Text 2026-08-31 (DEPLOYED 09:47)
 

@@ -1,8 +1,26 @@
 # PPWR und Stoffcompliance im SAP – Anlageprotokoll für Adil
 
+> **NACHTRAG vom 18.08.2026 — Anlage in T76/090 war fehlerhaft, in T76/100 jetzt live belegt.**
+> Ingo meldete, dass in T76/090 trotz der Erfolgsmeldung in Abschnitt 12 **keine Klassen**
+> angelegt wurden. Codebefund: `create_class` prüfte die Existenz nur über
+> `BAPI_CLASS_EXISTENCECHECK` mit Vorbelegung „vorhanden", und genau dieser Prüftyp
+> lieferte laut Abschnitt 14 Punkt 1 schon bei den Merkmalen keinen auswertbaren Fehler.
+> Als Nachweis diente ausschließlich die Selbstmeldung des Reports, die unabhängige
+> `CL03`-Kontrolle aus Abschnitt 9 wurde nie ausgeführt.
+> Zielmandant ist seit dem 18.08.2026 **T76/100**, weil 090 keine Daten trägt. Nach
+> Korrektur der Existenzprüfung wurde der Report am 18.08.2026 in T76/100 mit `P_WRITE = X`
+> ausgeführt; eine echte Tabellenzählung aus `CABN`/`KLAH`/`KSML` bestätigt danach 9+12
+> Merkmale und beide Klassen mit vollständiger Merkmalszuordnung. Details und die
+> Kennzahlentabelle: `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` Abschnitt 9.
+> Offen bleibt die Sichtprüfung in `CL03`/`CT04` (Reihenfolge, Wertelisten, Bezeichnungen)
+> und die Klärung des Programmnamens, unter dem der Lauf protokolliert wurde (`ZTEST55`).
+> Der **fachliche** Teil dieses Dokuments — Merkmalskatalog, Wertelisten, Rechtsrahmen,
+> Abnahmekriterien, offene Entscheidungen — gilt unverändert weiter.
+
 Stand: 13.08.2026  
-System für Aufbau und Pilot: **T76, Mandant 090**  
-Status: Technische Anlage in T76/090 abgeschlossen; keine Freigabe für P76 oder Massenpflege
+System für Aufbau und Pilot: **T76, Mandant 090** (überholt, jetzt Mandant 100)
+Status: Anlage in T76/090 gemeldet, aber nicht unabhängig belegt; keine Freigabe für P76
+oder Massenpflege
 
 Quelle: `Verpackungsverordnung.docx` im Projektstamm sowie die Mailabstimmung zwischen
 Fabio Palma und Florian Wächter. Ziel ist die Abbildung über die SAP-Klassifizierung,
@@ -260,15 +278,18 @@ verantwortliche Pflegeprozess abgenommen.
 | --- | --- | --- | --- |
 | 13.08.2026 | lokal | Quelldokument ausgewertet und Anlagekatalog erstellt | abgeschlossen |
 | 13.08.2026 | T76/090 | Report `ZPPWR_CLASS_SETUP` mit Schreibmodus ausgeführt | 21 Merkmale erfolgreich angelegt und per BAPI-Commit gesichert |
-| 13.08.2026 | T76/090 | Klassenart `001`: `ZPPWR_PACKMITTEL` und `ZCOMP_STOFF` angelegt | beide Klassen mit den vorgesehenen Merkmalen erfolgreich angelegt und committed |
-| offen | T76/090 | Pilotmaterialien zuordnen und CL30N-Abnahme | noch nicht ausgeführt |
+| 13.08.2026 | T76/090 | Klassenart `001`: `ZPPWR_PACKMITTEL` und `ZCOMP_STOFF` angelegt | **STRITTIG.** Der Report meldete Erfolg, Ingo findet die Klassen am 18.08.2026 nicht. Ursachenverdacht: stilles `SKIP` durch die fehlerhafte Existenzprüfung |
+| 18.08.2026 | lokal | Klassenprüfung auf `SELECT` aus `KLAH` umgestellt, Zielmandant auf 100, Rücklesekontrolle ergänzt | im Quelltext umgesetzt, im System noch nicht ausgeführt |
+| offen | T76/100 | Iststand messen, Report einspielen, Pilotmaterialien zuordnen, CL30N-Abnahme | noch nicht ausgeführt |
 | gesperrt | P76 | Transport/Verteilung und Massenpflege | erst nach Fachfreigabe |
 
 Technischer Nachweis: Die abschließende SAP-Ausgabe meldete für jedes Merkmal
 `wird angelegt`, für beide Klassen `wird angelegt` und abschließend
-`FERTIG: Merkmale und Klassen angelegt/geprueft.` Der wiederholbare Quellcode liegt
-unter `docs/abap/ZPPWR_CLASS_SETUP.abap`. Der Report enthält eine feste Systemsperre
-für alle Systeme und Mandanten außer T76/090.
+`FERTIG: Merkmale und Klassen angelegt/geprueft.` **Dieser Nachweis trägt nicht**, denn
+es ist die Selbstmeldung genau des Programms, dessen Klassenanlage fehlerhaft war. Die
+unabhängige Kontrolle über `CL03` steht bis heute aus. Der wiederholbare Quellcode liegt
+unter `docs/abap/ZPPWR_CLASS_SETUP.abap`; er ist seit dem 18.08.2026 auf T76/100 gesperrt
+und meldet `FERTIG` nur noch nach einer Rücklesekontrolle aus `CABN`, `KLAH` und `KSML`.
 
 ## 13. Anforderungsherkunft und Abdeckung
 
@@ -330,5 +351,85 @@ einer Wiederholung nicht erneut durch Versuch und Irrtum ermittelt werden:
    Ausführung außerhalb von `T76/090`. Der Report enthält absichtlich keine
    Materialzuordnung und keine P76-Logik.
 
-Die erfolgreiche Schlussausgabe des Anwenders ist der operative Nachweis. Es wurden
-21 Merkmale und zwei Klassen angelegt; danach erschien die Abschlussmeldung `FERTIG`.
+9. **Nachtrag 18.08.2026, der wichtigste Punkt.** Learning 1 wurde nur für die Merkmale
+   umgesetzt, nicht für die Klassen. `create_class` prüfte weiter über
+   `BAPI_CLASS_EXISTENCECHECK` mit der Vorbelegung `gv_exists = 'X'`, die nur ein Fehler
+   vom Typ `E`/`A` widerlegt. Da dieser BAPI-Typ in diesem System bei fehlenden Objekten
+   keinen solchen Fehler liefert, galt die Klasse als vorhanden, `BAPI_CLASS_CREATE` wurde
+   nie gerufen und der Report meldete trotzdem `FERTIG`. Regel daraus: In diesem System
+   ist **kein** `BAPI_*_EXISTENCECHECK` als Existenzbeweis brauchbar; immer direkt gegen
+   die Tabelle prüfen (`CABN` für Merkmale, `KLAH` für Klassen).
+10. Ein Programm, das sein eigenes Ergebnis meldet, ist kein Nachweis. Der Report zählt
+    seit dem 18.08.2026 nach dem Commit aus `CABN`, `KLAH` und `KSML` zurück und meldet
+    `FERTIG` nur bei Übereinstimmung mit dem Soll.
+
+Die Schlussausgabe `FERTIG` galt zunächst als operativer Nachweis für 21 Merkmale und zwei
+Klassen. Nach dem Befund vom 18.08.2026 ist diese Schlussfolgerung zurückgezogen: Für die
+Merkmale ist sie plausibel, für die Klassen widerlegt der Codebefund sie. Verbindlich ist
+erst die Messung nach `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` Abschnitt 5.
+
+## 15. Nachtrag 2026-08-20: Rückmeldung Adil/Florian zu Umfang und Sprache
+
+Ingo hat zwei Kritikpunkte aus einer Mail von Adil an Florian weitergegeben, nachdem die
+21 Merkmale bereits in T76/100 angelegt waren (siehe Abschnitt 14 Punkt 9). Entscheidung
+von Ingo: **keine Änderung an der SAP-Anlage**, nur hier dokumentiert, damit der Hintergrund
+für spätere Rückfragen nachvollziehbar bleibt.
+
+### 15a. „Zu viele Felder"
+
+Adils Mail an Florian nennt acht vereinfachte Attribute für die PPWR-Klassifizierung:
+Recyclability Class, Total Recycled Content, PCR Content, Reach Compliant, SVHC Compliant,
+PFAS Content (%), Supplier Declaration available, Supplier Declarat. valid until. Adil ist
+in diesem Protokoll selbst als Data Owner/SAP für die Anlage geführt; die Mail ist also
+vermutlich seine vereinfachte Zusammenfassung fürs Business, nicht ein unabhängiger
+Gegenentwurf.
+
+Abgleich gegen die 21 angelegten Merkmale (Abschnitt 4 und 5):
+
+- Fünf der acht Mail-Felder entsprechen 1:1 einem angelegten Merkmal: Recyclability Class,
+  Total Recycled Content, PCR Content, Reach Compliant, SVHC Compliant.
+- **PFAS Content (%) wurde bewusst NICHT als eigenes Merkmal angelegt** — siehe Abschnitt 4,
+  Tabelle der verworfenen Merkmale: „Prozent ist nicht die Einheit der PPWR-Grenzwerte
+  (ppb/ppm) und nur für Verpackungen mit Lebensmittelkontakt." Adils Mail-Feld ist damit
+  exakt die Variante, die die fachliche Prüfung verworfen hat, nicht ein fehlendes Feld.
+  Stattdessen gibt es `ZCOMP_PFAS_STATUS` + `ZCOMP_PFAS_DATE` und dafür `ZPPWR_FOOD_CONTACT`
+  als Voraussetzung, ob die Grenzwerte überhaupt greifen.
+- „Supplier Declaration available" und „valid until" existieren bei uns **zweimal**
+  (`ZPPWR_*` für die Verpackung, `ZCOMP_*` für die Stoffcompliance), weil das zwei
+  unterschiedliche Lieferantenerklärungen mit potenziell unterschiedlichem Stand sein
+  können.
+- Die übrigen zusätzlichen Merkmale ohne Entsprechung in der Mail: je ein eigenes
+  Bewertungsdatum für REACH, SVHC, RoHS und PFAS (vier Felder, Begründung Abschnitt 5:
+  „ein Datum wäre für vier unterschiedliche Rechts-/Prüfstände mehrdeutig"), zwei
+  Dokument-Referenzfelder, `ZPPWR_DATA_DATE` (Datenstand Verpackung) und **RoHS Status +
+  Datum**.
+
+**RoHS ist der ehrlichste Kandidat für „zu viel":** RoHS ist keine PPWR-Anforderung, sondern
+eine andere EU-Richtlinie (Schadstoffe in Elektro/Elektronik-Geräten). Sie steht trotzdem in
+`ZCOMP_STOFF`, weil diese Klasse laut Abschnitt 3 bewusst als „stoffliche Compliance"
+allgemein angelegt wurde, nicht als reine PPWR-Klasse. Das war eine bewusste
+Scope-Erweiterung der damaligen Sitzung, keine versehentliche Übererfüllung — aber genau
+der Punkt, den man vorher mit Adil/Florian hätte abstimmen sollen.
+
+### 15b. „Wieso plötzlich deutsche Bezeichnungen"
+
+Ursache steht bereits in Abschnitt 6 Punkt 2 und 6 dieses Dokuments: „Deutsche Bezeichnung
+gemäß den Tabellen eintragen... Keine automatische Übersetzung oder anderssprachige
+Kurztexte erfinden. Deutsche Texte sind Pflicht; englische Texte werden nur nach Freigabe
+ergänzt." Das war eine bewusste Regel der Sitzung vom 13.08.2026, keine versehentliche
+Übersetzung. Adils Mail an Florian verwendet durchgehend englische Fachbegriffe (REACH,
+SVHC, PFAS, Recyclability Class); die vorgesehene Freigabe für englische Zusatztexte wurde
+nie eingeholt oder mit Florian abgestimmt, deshalb wirkt der produktive Stand für ihn
+unangekündigt deutsch.
+
+### 15c. Lehre für künftige SAP-Merkmalsanlagen
+
+Bei international standardisierten Fachbegriffen (PPWR, REACH, SVHC, RoHS, PFAS und
+vergleichbar) vor der Anlage die Sprache der Kurztexte mit dem tatsächlichen fachlichen
+Ansprechpartner klären, statt pauschal „Deutsch zuerst, Englisch nach Freigabe" zu setzen.
+Ebenso den Klassenumfang (z. B. RoHS in einer PPWR-Klasse) vorher kurz rückfragen, wenn er
+über die ursprüngliche Anforderung hinausgeht.
+
+**Bewusst nicht umgesetzt:** weder Feldreduktion noch Sprachwechsel der bereits angelegten
+Merkmale. Der Stand in T76/100 bleibt wie er ist; P76-Transport bleibt ohnehin gemäß
+Abschnitt 10 bis zur Fachfreigabe gesperrt.

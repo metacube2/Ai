@@ -15,7 +15,8 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
 | Uebergabe Produktsparten-Zuordnung | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` |
-| **PPWR und Stoffcompliance, Anlageprotokoll** | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
+| **PPWR und Stoffcompliance, aktueller Stand und Mandant 100** | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` |
+| PPWR, fachlicher Katalog und Anlageprotokoll (Erfolgsmeldung strittig, siehe Zeile darueber) | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
 | ZZPRDAT-Arbeitsstand | `saptasks/zzprdat-kontext.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |

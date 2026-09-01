@@ -361,6 +361,7 @@ public class ManagementCockpitService : IManagementCockpitService
             .ToListAsync();
         var groupStandardCosts = await LoadGroupStandardCostsAsync(db);
         var chPlantMaterialKeys = await LoadChPlantMaterialKeysAsync(db);
+        var foreignProcurementMaterialKeys = await ForeignProcurementEvidenceStore.LoadMaterialKeysAsync(db);
         var financeRuleEngine = new FinanceRuleEngine(financeRules);
         var records = await LoadCentralRecordsAsync();
 
@@ -608,8 +609,9 @@ public class ManagementCockpitService : IManagementCockpitService
         var groupMarginCostCurrencyMode = GroupMarginCostCurrencyConverter.NormalizeMode(settings.GroupMarginCostCurrencyMode);
         var supplierFallbackMode = SupplierFallbackModes.Normalize(settings.SupplierFallbackMode);
         var internalSupplierCostSourceMode = InternalSupplierCostSourceModes.Normalize(settings.InternalSupplierCostSourceMode);
+        var marcForeignProcurementMode = MarcForeignProcurementModes.Normalize(settings.MarcForeignProcurementMode);
         var groupMarginChfRateMode = GroupMarginChfRateModes.Normalize(settings.GroupMarginChfRateMode);
-        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
+        var groupMarginRows = BuildGroupMarginDetailRows(scopedRows, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode);
         var groupMarginSummary = BuildGroupMarginSummary(groupMarginRows, resultCurrencies);
         // Beschluss B5: die Konzernmarge gibt es nur in CHF. Fehlt fuer eine Verkaufswaehrung der
         // Kurs, bleiben diese Zeilen aus der Konzernsumme heraus - das muss sichtbar sein, sonst
@@ -618,7 +620,7 @@ public class ManagementCockpitService : IManagementCockpitService
         {
             notices.Insert(0, $"Konzernmarge in CHF: fuer {groupMarginSummary.MissingGroupCurrencyRateRows:N0} von {groupMarginSummary.RowCount:N0} Zeilen fehlt ein Kurs in die Konzernwaehrung. Diese Zeilen sind in der CHF-Summe NICHT enthalten; die Landeszeilen darunter zeigen sie weiterhin in Lokalwaehrung.");
         }
-        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode);
+        var auditLedgerRows = BuildFinanceAuditLedgerRows(auditSourceRows, settings.UseAuditCsvAsCentralSource, groupMarginCostCurrencyMode, groupMarginChfRateMode, groupStandardCosts, chPlantMaterialKeys, supplierFallbackMode, internalSupplierCostSourceMode, foreignProcurementMaterialKeys, marcForeignProcurementMode);
         // scopedRows, nicht allRows: die Pivotkacheln stehen im selben Filterpanel wie
         // "Net Sales Actual". Mit allRows zeigte ein gesetzter Landfilter dort ein Land und
         // daneben weiterhin alle - die beiden Zahlen waren nicht gegeneinander abstimmbar.
@@ -642,6 +644,9 @@ public class ManagementCockpitService : IManagementCockpitService
         notices.Add(internalSupplierCostSourceMode == InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial
             ? "Interne Lieferanten: Bei MARC Werk 1100 hat Schweizer STPRS Vorrang vor den Kosten der liefernden Gesellschaft. Umschaltbar unter Admin Bereich > Settings."
             : "Interne Lieferanten: Es gelten die Kosten der liefernden Konzerngesellschaft (Standard). Schweizer STPRS kann bei MARC Werk 1100 unter Admin Bereich > Settings zum Vorrang gemacht werden.");
+        notices.Add(marcForeignProcurementMode == MarcForeignProcurementModes.OverridesToExternal
+            ? $"ISS-003.4: ein aktiver externer Einkaufsbeleg klassifiziert eine TRCH/TRAT-Zeile als Extern statt der sonst unbedingten Herstellerregel ({foreignProcurementMaterialKeys.Count:N0} Materialien mit Beleg, Einkauf-Cache praktisch nur Schweiz Bukrs 1100, wirkt also faktisch fast nur auf TRCH). Umschaltbar unter Admin Bereich > Settings."
+            : "ISS-003.4: die CH/AT-Herstellerregel (jede TRCH/TRAT-Zeile ist Intern/TR_AG) gilt weiterhin auch bei einem externen Einkaufsbeleg zum Material (Standard). Umschaltbar unter Admin Bereich > Settings.");
 
         return new ManagementFinanceSummaryResult
         {
@@ -1473,7 +1478,9 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
         IReadOnlySet<string> chPlantMaterialKeys,
         string supplierFallbackMode,
-        string internalSupplierCostSourceMode)
+        string internalSupplierCostSourceMode,
+        IReadOnlySet<string> foreignProcurementMaterialKeys,
+        string marcForeignProcurementMode)
     {
         // Kurs je Verkaufswaehrung nach CHF nur einmal aufloesen (Beschluss B5): dieselbe
         // Waehrung kommt in tausenden Zeilen vor, und ResolveCrossRate geht jedes Mal an die DB.
@@ -1504,7 +1511,9 @@ public class ManagementCockpitService : IManagementCockpitService
                     ToGroupMarginLine(row), groupStandardCosts,
                     chPlantMaterialKeys: chPlantMaterialKeys,
                     supplierFallbackMode: supplierFallbackMode,
-                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode,
+                    foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
+                    marcForeignProcurementMode: marcForeignProcurementMode);
                 var supplierType = evaluation.SupplierType;
                 var status = evaluation.Status;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
@@ -1740,7 +1749,9 @@ public class ManagementCockpitService : IManagementCockpitService
         IReadOnlyDictionary<(string MaterialKey, string ValuationArea), GroupStandardCost> groupStandardCosts,
         IReadOnlySet<string> chPlantMaterialKeys,
         string supplierFallbackMode,
-        string internalSupplierCostSourceMode)
+        string internalSupplierCostSourceMode,
+        IReadOnlySet<string> foreignProcurementMaterialKeys,
+        string marcForeignProcurementMode)
         => rows
             .Where(row => row.Include)
             .Select(row =>
@@ -1754,7 +1765,9 @@ public class ManagementCockpitService : IManagementCockpitService
                     ToGroupMarginLine(row), groupStandardCosts, hasExchangeRate: chfRate.HasValue,
                     chPlantMaterialKeys: chPlantMaterialKeys,
                     supplierFallbackMode: supplierFallbackMode,
-                    internalSupplierCostSourceMode: internalSupplierCostSourceMode);
+                    internalSupplierCostSourceMode: internalSupplierCostSourceMode,
+                    foreignProcurementMaterialKeys: foreignProcurementMaterialKeys,
+                    marcForeignProcurementMode: marcForeignProcurementMode);
                 var supplierType = basis.SupplierType;
                 var conversion = GroupMarginCostCurrencyConverter.Resolve(
                     basis.CostBasis, originalCurrency, basis.CostCurrency,

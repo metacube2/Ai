@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Standardkosten und Kostenbasis der Gruppenmarge</title>
+  <desc id="desc">Infografik zur Ermittlung lokaler Stückkosten, zum Ersatz durch Konzernkosten von Trafag AG, Trafag Italien oder Trafag Indien sowie zur Berechnung von Kostenbasis und Gruppenmarge.</desc>
+
+  <defs>
+    <linearGradient id="headerGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8f1420"/>
+      <stop offset="1" stop-color="#c62828"/>
+    </linearGradient>
+    <linearGradient id="formulaGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#12395f"/>
+      <stop offset="1" stop-color="#1f5f92"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#142438" flood-opacity="0.15"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#315f82"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#2e7d57"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#b5433d"/>
+    </marker>
+    <style>
+      .sans { font-family: "Segoe UI", Arial, sans-serif; }
+      .title { font-size: 40px; font-weight: 700; fill: #ffffff; }
+      .subtitle { font-size: 19px; font-weight: 400; fill: #ffe9e9; }
+      .step { font-size: 18px; font-weight: 700; letter-spacing: 1.2px; fill: #8f1420; }
+      .sectionTitle { font-size: 26px; font-weight: 700; fill: #1d2d3d; }
+      .cardTitle { font-size: 22px; font-weight: 700; fill: #172b3a; }
+      .cardText { font-size: 17px; font-weight: 400; fill: #354b5c; }
+      .small { font-size: 15px; font-weight: 400; fill: #536878; }
+      .label { font-size: 15px; font-weight: 700; fill: #315f82; }
+      .whiteTitle { font-size: 27px; font-weight: 700; fill: #ffffff; }
+      .whiteText { font-size: 18px; font-weight: 400; fill: #eaf5ff; }
+      .stat { font-size: 18px; font-weight: 700; fill: #173a55; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1120" fill="#f3f6f8"/>
+  <rect x="0" y="0" width="1600" height="108" fill="url(#headerGradient)"/>
+  <text class="sans title" x="70" y="53">Standardkosten und Kostenbasis der Gruppenmarge</text>
+  <text class="sans subtitle" x="72" y="84">Stand 25.08.2026 · lokale Stückkosten → Konzernkosten-Ersatz → Währungsprüfung → Marge</text>
+
+  <!-- Schritt 1 -->
+  <text class="sans step" x="70" y="150">SCHRITT 1</text>
+  <text class="sans sectionTitle" x="70" y="181">Lokale Stückkosten des verkaufenden Standorts ermitteln</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="207" width="335" height="190" rx="18" fill="#ffffff" stroke="#9db6c7" stroke-width="2"/>
+    <rect x="70" y="207" width="335" height="9" rx="5" fill="#315f82"/>
+    <circle cx="111" cy="253" r="22" fill="#e5f0f7"/>
+    <text class="sans cardTitle" x="103" y="261">1</text>
+    <text class="sans cardTitle" x="145" y="260">CH / AT</text>
+    <text class="sans cardText" x="98" y="302">WAVWR ÷ FKIMG</text>
+    <text class="sans small" x="98" y="330">Fallback: MBEW-STPRS ÷ PEINH</text>
+    <text class="sans small" x="98" y="361">Bewertungskreis CH 1100 · AT 1200</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="430" y="207" width="335" height="190" rx="18" fill="#ffffff" stroke="#9db6c7" stroke-width="2"/>
+    <rect x="430" y="207" width="335" height="9" rx="5" fill="#315f82"/>
+    <circle cx="471" cy="253" r="22" fill="#e5f0f7"/>
+    <text class="sans cardTitle" x="463" y="261">2</text>
+    <text class="sans cardTitle" x="505" y="260">Deutschland</text>
+    <text class="sans cardText" x="458" y="301">NettoPreisGesamt</text>
+    <text class="sans cardText" x="458" y="329">− RohertragGesamt</text>
+    <line x1="458" y1="342" x2="655" y2="342" stroke="#5d7282" stroke-width="1.5"/>
+    <text class="sans cardText" x="458" y="371">Menge</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="790" y="207" width="335" height="190" rx="18" fill="#ffffff" stroke="#9db6c7" stroke-width="2"/>
+    <rect x="790" y="207" width="335" height="9" rx="5" fill="#315f82"/>
+    <circle cx="831" cy="253" r="22" fill="#e5f0f7"/>
+    <text class="sans cardTitle" x="823" y="261">3</text>
+    <text class="sans cardTitle" x="865" y="260">B1-Standorte</text>
+    <text class="sans cardText" x="818" y="302">INV1 / RIN1.StockPrice</text>
+    <text class="sans small" x="818" y="333">bereits ein Beleg-Stückpreis</text>
+    <text class="sans small" x="818" y="363">IT · IN · US · FR · ES</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1150" y="207" width="380" height="190" rx="18" fill="#fff8f1" stroke="#d69b55" stroke-width="2"/>
+    <rect x="1150" y="207" width="380" height="9" rx="5" fill="#d17a18"/>
+    <circle cx="1191" cy="253" r="22" fill="#ffead1"/>
+    <text class="sans cardTitle" x="1183" y="261">4</text>
+    <text class="sans cardTitle" x="1225" y="260">UK</text>
+    <text class="sans cardText" x="1178" y="308">Keine Kostenquelle</text>
+    <text class="sans small" x="1178" y="341">Sage liefert keine Kostenspalte.</text>
+    <text class="sans small" x="1178" y="367">Füllgrad derzeit 0 %.</text>
+  </g>
+
+  <!-- Verbindungen Schritt 1 zu Schritt 2 -->
+  <path d="M237 397 V430 H800 V457" fill="none" stroke="#315f82" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M597 397 V430" fill="none" stroke="#315f82" stroke-width="3"/>
+  <path d="M957 397 V430" fill="none" stroke="#315f82" stroke-width="3"/>
+  <path d="M1340 397 V430 H800" fill="none" stroke="#315f82" stroke-width="3"/>
+
+  <!-- Schritt 2 -->
+  <text class="sans step" x="70" y="474">SCHRITT 2</text>
+  <text class="sans sectionTitle" x="70" y="505">Konzernkostenquelle wählen</text>
+  <rect x="600" y="458" width="400" height="64" rx="32" fill="#e5f0f7" stroke="#315f82" stroke-width="2"/>
+  <text class="sans cardTitle" text-anchor="middle" x="800" y="485">Welche Gesellschaft liefert?</text>
+  <text class="sans small" text-anchor="middle" x="800" y="508">Supplier / Sales Type / MARC-Werk 1100</text>
+
+  <path d="M800 522 V548 H243 V568" fill="none" stroke="#315f82" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M800 548 H614 V568" fill="none" stroke="#315f82" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M800 548 H986 V568" fill="none" stroke="#315f82" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M800 548 H1357 V568" fill="none" stroke="#315f82" stroke-width="3" marker-end="url(#arrowBlue)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="568" width="345" height="168" rx="18" fill="#edf8f2" stroke="#4f9b72" stroke-width="2"/>
+    <text class="sans label" text-anchor="middle" x="242" y="597">LIEFERANT TRAFAG AG</text>
+    <text class="sans cardTitle" text-anchor="middle" x="242" y="631">Konzernkosten TR AG</text>
+    <text class="sans cardText" text-anchor="middle" x="242" y="664">MBEW-STPRS ÷ PEINH</text>
+    <text class="sans small" text-anchor="middle" x="242" y="694">Bewertungskreis 1100 · CHF</text>
+    <text class="sans small" text-anchor="middle" x="242" y="718">ersetzt lokale IC-Kosten</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="443" y="568" width="345" height="168" rx="18" fill="#edf8f2" stroke="#4f9b72" stroke-width="2"/>
+    <text class="sans label" text-anchor="middle" x="615" y="597">LIEFERANT TRAFAG ITALIA</text>
+    <text class="sans cardTitle" text-anchor="middle" x="615" y="631">Konzernkosten TR IT</text>
+    <text class="sans cardText" text-anchor="middle" x="615" y="664">jüngster positiver eigener</text>
+    <text class="sans cardText" text-anchor="middle" x="615" y="690">B1 StockPrice · EUR</text>
+    <text class="sans small" text-anchor="middle" x="615" y="718">neu produktiv seit 25.08.2026</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="815" y="568" width="345" height="168" rx="18" fill="#edf8f2" stroke="#4f9b72" stroke-width="2"/>
+    <text class="sans label" text-anchor="middle" x="987" y="597">LIEFERANT TRAFAG INDIEN</text>
+    <text class="sans cardTitle" text-anchor="middle" x="987" y="631">Konzernkosten TR IN</text>
+    <text class="sans cardText" text-anchor="middle" x="987" y="664">jüngster positiver eigener</text>
+    <text class="sans cardText" text-anchor="middle" x="987" y="690">B1 StockPrice · INR</text>
+    <text class="sans small" text-anchor="middle" x="987" y="718">Trafag-Sachnummer bevorzugt</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1187" y="568" width="343" height="168" rx="18" fill="#ffffff" stroke="#9db6c7" stroke-width="2"/>
+    <text class="sans label" text-anchor="middle" x="1358" y="597">ANDERER / LOKALER LIEFERANT</text>
+    <text class="sans cardTitle" text-anchor="middle" x="1358" y="637">Lokale Stückkosten</text>
+    <text class="sans cardText" text-anchor="middle" x="1358" y="672">bleiben bestehen</text>
+    <text class="sans small" text-anchor="middle" x="1358" y="707">„Lokal“ bedeutet nicht automatisch extern.</text>
+  </g>
+
+  <!-- Konvergenz und Währungsprüfung -->
+  <path d="M242 736 V770 H800 V790" fill="none" stroke="#2e7d57" stroke-width="3" marker-end="url(#arrowGreen)"/>
+  <path d="M615 736 V770" fill="none" stroke="#2e7d57" stroke-width="3"/>
+  <path d="M987 736 V770" fill="none" stroke="#2e7d57" stroke-width="3"/>
+  <path d="M1358 736 V770 H800" fill="none" stroke="#2e7d57" stroke-width="3"/>
+
+  <rect x="565" y="790" width="470" height="68" rx="34" fill="#fff6da" stroke="#c08a18" stroke-width="2.5"/>
+  <text class="sans cardTitle" text-anchor="middle" x="800" y="818">Kostenwährung = Umsatzwährung?</text>
+  <text class="sans small" text-anchor="middle" x="800" y="844">Währungs-Guard verhindert plausibel aussehende Fehlmargen.</text>
+
+  <path d="M690 858 V892 H485 V916" fill="none" stroke="#2e7d57" stroke-width="3" marker-end="url(#arrowGreen)"/>
+  <text class="sans label" x="606" y="884">JA</text>
+  <path d="M910 858 V892 H1255 V916" fill="none" stroke="#b5433d" stroke-width="3" marker-end="url(#arrowRed)"/>
+  <text class="sans label" x="1016" y="884" fill="#a8332f">NEIN</text>
+
+  <!-- Ergebnis -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="916" width="830" height="126" rx="20" fill="url(#formulaGradient)"/>
+    <text class="sans whiteTitle" x="110" y="957">Kostenbasis = Menge × Standardkosten je Stück</text>
+    <line x1="110" y1="977" x2="860" y2="977" stroke="#82b6db" stroke-width="1.5"/>
+    <text class="sans whiteTitle" x="110" y="1015">Gruppenmarge = Umsatz − Kostenbasis</text>
+    <text class="sans whiteText" x="720" y="1015">(vereinfacht)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="930" y="916" width="600" height="126" rx="20" fill="#fff0ef" stroke="#c84b45" stroke-width="2"/>
+    <text class="sans cardTitle" x="970" y="956" fill="#9c2824">Keine Marge ausweisen</text>
+    <text class="sans cardText" x="970" y="989">Status: „Kostenwährung abweichend“</text>
+    <text class="sans small" x="970" y="1019">Seit 25.08.2026 korrekt abgefangen: 32 Zeilen.</text>
+  </g>
+
+  <!-- Aktueller Nachweis -->
+  <rect x="0" y="1070" width="1600" height="50" fill="#dfe9ef"/>
+  <text class="sans stat" x="70" y="1102">Produktive Nachmessung 25.08.2026:</text>
+  <text class="sans cardText" x="405" y="1102">6'231 Zeilen auf TR-IT/TR-IN-Konzernkosten umgestellt</text>
+  <circle cx="940" cy="1096" r="4" fill="#315f82"/>
+  <text class="sans cardText" x="960" y="1102">Kostenabdeckung 94,2 %</text>
+  <circle cx="1209" cy="1096" r="4" fill="#315f82"/>
+  <text class="sans cardText" x="1229" y="1102">offen: Umrechnung &amp; Stichtagsregel</text>
+</svg>
