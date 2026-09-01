@@ -44,6 +44,29 @@ Stand: 2026-09-01
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-09-01 13:40, Marktsegmente:
+  vollstaendige Standardliste aus der Vertriebsvorgabe**, Funktionscommit `275fe95`,
+  `668/668` Release-Tests gruen vor dem Publish. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-market-segment-list-20260901-133820.bak` (`358'440'960`
+  Bytes, `integrity_check` `ok`). `BiDashboard.dll` `01.09.2026 13:40:29`,
+  `4'894'208` Bytes, SHA256
+  `A029CB980D5EB3B4A89143874C69872EB8678A35717FEADC610D2F88EF530333`; lokaler
+  Release-Build und Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'877`
+  unveraendert. HTTPS `200`: Startseite (`71'378` Bytes), `/marktsegmente` (`79'254`
+  Bytes), `/management-cockpit` (`72'259` Bytes). Die neun vorab fehlenden Literale
+  `Calibration services`, `Food & Beverage`, `General Industry`, `Large Engines`,
+  `Power Distribution`, `Water Treatment`, `Automotive (MAG)`, `E-Bikes (MAG)` und
+  `Robotics (MAG)` sind danach in der Server-DLL vorhanden; `Ship Building` und
+  `Mobile Hydraulics` sind entfernt. Die sechs weiteren Sollwerte waren bereits im
+  produktiven Binary enthalten. **Kein Schemawechsel, keine Migration und keine
+  Kundenzuordnung geaendert:** die Aenderung betrifft ausschliesslich die angebotene
+  Standardauswahl. Der eine Werkzeug-Alarm war die bekannte WAL-Falle und ist direkt
+  nach dem Neustart entkraeftet: `trafag_exporter.db-wal` und `-shm` sind wieder da,
+  die Hauptdatei blieb in Laenge und Schreibzeit unveraendert (`358'440'960` Bytes,
+  `01.09.2026 13:16:14`). `app_offline.htm` ist entfernt. Werkzeug:
+  `.tmp_tools/DeployMarketSegmentList0901`. Offen bleibt der visuelle Sichtprueflauf
+  der aufgeklappten Auswahlliste im Browser.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-09-01 09:21, Marktsegmente: Excel-Export
   der Zuordnungen per Mausklick**, `668/668` Release-Tests gruen vor dem Publish. Neue gepruefte
   Blockkopie `trafag_exporter.db.before-market-segment-export-20260901-092034.bak`
@@ -71,13 +94,10 @@ Stand: 2026-09-01
   `ForeignProcurementEvidenceStore`, `CH/AT: Herstellerregel gegen Fremdbezugsbeleg` und
   `IsIntercompanySellingTsc` bereits enthielt. Dieser Publish hat also nur den Export neu
   ausgeliefert. Werkzeug: `.tmp_tools/DeployMarketSegmentExport0901`.
-  **ACHTUNG, der Funktionscode dieses Deploys ist NICHT committet.** `d346b32` im automatisch
-  erzeugten Protokollabsatz ist der Elterncommit, nicht der Funktionscommit; er enthaelt vom
-  Export keine Zeile. Die DLL ist aus dem Arbeitsverzeichnis dieses Rechners gebaut. Solange
-  das so bleibt, ist der produktive Stand nicht reproduzierbar und es gibt keinen Stand, auf
-  den man zurueckrollen koennte. Sauber committen laesst sich alles ausser
-  `Services/UiTextGeneratedTranslations.cs`: dort stehen die sechs neuen Uebersetzungszeilen
-  neben uncommitteten Aenderungen der anderen Sitzung, das braucht deren Abstimmung.
+  **Nachtrag 2026-09-01:** der damals uncommittete Funktionsstand ist inzwischen im Commit
+  `835b317` enthalten; der Produktivstand ist damit wieder aus Git reproduzierbar. `d346b32`
+  im automatisch erzeugten Protokollabsatz bleibt historisch der Elterncommit des damaligen
+  Arbeitsverzeichnisses.
   **Nebenbefund zur Datenhygiene:** die Sicherungsroutine laesst ihre Zwischendatei im lokalen
   `%TEMP%` liegen und meldet das auch. Dort lagen dadurch neun vollstaendige Kopien der
   Produktivdatenbank aus Deploys seit dem 2026-08-25, zusammen rund `3` GB Kundendaten

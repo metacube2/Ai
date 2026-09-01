@@ -2,6 +2,26 @@
 
 Stand: 2026-09-01
 
+## Marktsegmente: vollstaendige Standardliste, 2026-09-01 (DEPLOYED 13:40)
+
+- Die Standardauswahl in der Kundenpflege enthaelt jetzt alle 15 Werte aus der
+  Vertriebsvorgabe `segmente.png`, darunter die zusaetzlichen Fachsegmente und die drei
+  MAG-Segmente. `Shipbuilding` ersetzt die alte Schreibweise `Ship Building`;
+  `Mobile Hydraulics` ist kein Standardwert mehr.
+- Bereits gespeicherte Sonderwerte bleiben weiterhin sichtbar. Es wurde keine bestehende
+  Kundenzuordnung geaendert, automatisch bestaetigt oder neu klassifiziert; kein
+  Schemawechsel und keine Migration.
+- Funktionscommit `275fe95`; 17/17 gezielte Tests und **668/668** Release-Tests gruen.
+- **PRODUKTIV DEPLOYED am 2026-09-01 um 13:40:** Sicherung
+  `trafag_exporter.db.before-market-segment-list-20260901-133820.bak`, Server-DLL und
+  lokaler Release-Build bitgleich, SHA256
+  `A029CB980D5EB3B4A89143874C69872EB8678A35717FEADC610D2F88EF530333`, drei Routen
+  HTTPS `200`. Alle neun vorher fehlenden neuen Literale sind produktiv nachgewiesen;
+  die zwei entfernten alten Werte fehlen. Der WAL-Alarm ist nach dem Neustart entkraeftet,
+  Hauptdatenbank in Laenge und Schreibzeit unveraendert. Details:
+  `docs/rag/DEPLOYMENT.md`.
+- Offen bleibt nur der visuelle Sichtprueflauf der aufgeklappten Auswahlliste im Browser.
+
 ## Marktsegmente: Excel-Export per Mausklick, 2026-09-01 (DEPLOYED 09:21)
 
 - **Auftrag Ingo:** aus dem Fragebogen `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md`
@@ -47,10 +67,10 @@ Stand: 2026-09-01
   `269` Umfragezeilen, `104'222` Verkaufszeilen, `7'526` TRDE-Zeilen ohne Kundenname, `0`
   Protokolleintraege `Segment entfernt`. Die Blaetter `Bestaetigt` und `Verworfen (Protokoll)`
   sind heute also leer und tragen ihren Hinweistext.
-- **Offen:** der angemeldete Sichtprueflauf, denn `200` belegt Erreichbarkeit und nicht, dass
-  der Knopf rendert. Fachlich offen bleibt der eigentliche Blocker fuer den Termin: in allen
-  deutschen Verkaufszeilen fehlt der Kundenname, deshalb bleibt TRDE im Export leer, und von
-  den 173 Vorschlaegen ist bisher keiner bestaetigt.
+- Der Knopf wurde zusaetzlich im ausgelieferten HTML nachgewiesen. Offen bleibt der echte
+  Klicktest mit Kontrolle der erzeugten Arbeitsmappe. Fachlich offen bleibt der eigentliche
+  Blocker fuer den Termin: in allen deutschen Verkaufszeilen fehlt der Kundenname, deshalb
+  bleibt TRDE im Export leer, und von den 173 Vorschlaegen ist bisher keiner bestaetigt.
 
 ## Fuenfter Finance-Schalter: MARC 1100 trotz Fremdbezugsbeleg, ISS-003.4, 2026-08-31 (DEPLOYED 11:32)
 

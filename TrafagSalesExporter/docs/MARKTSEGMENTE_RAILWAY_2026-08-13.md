@@ -400,11 +400,10 @@ Die Blaetter `Bestaetigt` und `Verworfen (Protokoll)` sind deshalb heute leer un
 Hinweistext statt Zeilen — der erwartete Zustand, kein Fehler.
 
 **Deploy:** 2026-09-01, 09:21 Uhr, `668/668` Release-Tests gruen, Details und Nachweise in
-`docs/rag/DEPLOYMENT.md` Kurzstand und `docs/AGENT_COORDINATION.md`. **Wichtig fuer den
-naechsten Bearbeiter:** der Funktionscode dieses Deploys ist NICHT committet, er liegt nur im
-Arbeitsverzeichnis dieses Rechners; der produktive Stand ist deshalb aktuell nicht
-reproduzierbar. Offen bleibt der angemeldete Sichtprueflauf: dass ein Klick die Datei erzeugt
-und die acht Blaetter so aussehen wie hier beschrieben.
+`docs/rag/DEPLOYMENT.md` Kurzstand und `docs/AGENT_COORDINATION.md`. Der Funktionsstand ist
+inzwischen im Commit `835b317` enthalten und aus Git reproduzierbar. Der Knopf wurde im
+ausgelieferten HTML nachgewiesen; offen bleibt der echte Klicktest, dass der Browser die Datei
+erzeugt und die acht Blaetter so aussehen wie hier beschrieben.
 
 ## 16. Segmentliste aus der Vertriebsvorgabe, 2026-09-01
 
@@ -419,3 +418,12 @@ Die Schreibweise wird exakt aus der Vorgabe uebernommen; insbesondere ersetzt `S
 den bisherigen Standardvorschlag `Ship Building`. Bereits gespeicherte freie Sonderwerte
 bleiben zusaetzlich sichtbar, damit keine bestehende Zuordnung durch die neue Liste verborgen
 wird. Es werden keine Kunden automatisch umklassifiziert und keine Vorschlaege bestaetigt.
+
+**Produktiv deployed am 2026-09-01 um 13:40:** Funktionscommit `275fe95`, `668/668`
+Release-Tests gruen, Server-DLL und lokaler Build bitgleich. Die neun vorher produktiv
+fehlenden neuen Literale sind nach dem Publish vorhanden; `Ship Building` und
+`Mobile Hydraulics` sind nicht mehr enthalten. Startseite, `/marktsegmente` und
+`/management-cockpit` antworten HTTPS `200`. Kein Schemawechsel und keine Datenmigration;
+die Produktivdatenbank blieb in Laenge und Schreibzeit unveraendert. Der genaue
+Deploynachweis steht in `docs/rag/DEPLOYMENT.md`. Offen bleibt der visuelle Sichtprueflauf
+der aufgeklappten Auswahlliste im Browser.
