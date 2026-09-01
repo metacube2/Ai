@@ -327,7 +327,10 @@ public class MarketSegmentPageServiceTests : IDisposable
 
         var segments = await service.GetKnownSegmentsAsync();
 
-        Assert.Contains("Railway", segments);
+        Assert.All(MarketSegmentPageService.DefaultSegments, segment => Assert.Contains(segment, segments));
+        Assert.Equal(15, MarketSegmentPageService.DefaultSegments.Length);
+        Assert.DoesNotContain("Ship Building", MarketSegmentPageService.DefaultSegments);
+        Assert.DoesNotContain("Industrial", MarketSegmentPageService.DefaultSegments);
         Assert.Contains("Sondermaschinen", segments);
     }
 

@@ -105,9 +105,29 @@ public interface IMarketSegmentPageService
 /// </summary>
 public sealed class MarketSegmentPageService : IMarketSegmentPageService
 {
-    /// <summary>Vorschlagswerte fuer das Auswahlfeld. Frei ergaenzbar, keine harte Schranke.</summary>
+    /// <summary>
+    /// Verbindliche Segmentauswahl aus der Vertriebsliste `segmente.png` vom 2026-09-01.
+    /// Bereits gespeicherte Sonderwerte werden von <see cref="GetKnownSegmentsAsync"/>
+    /// weiterhin ergaenzt, damit bestehende Zuordnungen nicht unsichtbar werden.
+    /// </summary>
     public static readonly string[] DefaultSegments =
-        ["Railway", "Ship Building", "Hydrogen", "Industrial", "Energy", "Mobile Hydraulics"];
+    [
+        "Calibration services",
+        "Food & Beverage",
+        "General Industry",
+        "Hydraulics",
+        "Hydrogen",
+        "Large Engines",
+        "Power Distribution",
+        "Railway",
+        "Shipbuilding",
+        "Test & Measurement",
+        "Water Treatment",
+        "Others",
+        "Automotive (MAG)",
+        "E-Bikes (MAG)",
+        "Robotics (MAG)"
+    ];
 
     /// <summary>
     /// Standortkuerzel fuer den Filter. Bewusst hier und nicht in der Razor-Datei: der

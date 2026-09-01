@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="850" viewBox="0 0 1400 850" role="img" aria-labelledby="title desc">
+  <title id="title">ER-Diagramm Railway-Marktsegmente</title>
+  <desc id="desc">Datenmodell fuer Kunden-Marktsegmente, Verkaufsdaten, Marktumfrage und Ereignisprotokoll. Die Zuordnung erfolgt fachlich ueber TSC plus Kundennummer; es gibt keinen Datenbank-Fremdschluessel.</desc>
+  <style>
+    text{font-family:Segoe UI,Arial,sans-serif;fill:#172033}.title{font-size:28px;font-weight:700}.sub{font-size:15px;fill:#536277}.box{fill:#fff;stroke:#2c4d74;stroke-width:2}.head{fill:#2c4d74}.headText{font-size:18px;font-weight:700;fill:#fff}.darkHeadText{font-size:18px;font-weight:700;fill:#2c4d74}.field{font-size:15px}.key{font-weight:700;fill:#8a3d00}.note{font-size:14px;fill:#536277}.link{stroke:#176b87;stroke-width:3;fill:none}.dash{stroke:#a05c00;stroke-width:3;stroke-dasharray:9 7;fill:none}.legend{fill:#f6f8fb;stroke:#ccd6e3;stroke-width:1.5}
+  </style>
+  <rect width="1400" height="850" fill="#f7f9fc"/>
+  <text x="55" y="55" class="title">Railway-Marktsegmente – ER-Diagramm</text>
+  <text x="55" y="82" class="sub">Produktiver Exportstand 01.09.2026 · Kundenschluessel: TSC + CustomerNumber · keine automatische Bestaetigung</text>
+
+  <!-- CentralSalesRecords -->
+  <rect x="55" y="150" width="330" height="330" rx="8" class="box"/>
+  <rect x="55" y="150" width="330" height="48" rx="8" class="head"/>
+  <text x="75" y="181" class="headText">CentralSalesRecords</text>
+  <text x="75" y="227" class="field key">PK  Id</text>
+  <text x="75" y="257" class="field key">UK  Tsc + CustomerNumber</text>
+  <text x="75" y="287" class="field">CustomerName · CustomerCountry</text>
+  <text x="75" y="317" class="field">PostingDate · InvoiceDate · ExtractionDate</text>
+  <text x="75" y="347" class="field">SalesCurrency · SalesPriceValue</text>
+  <text x="75" y="377" class="field">Material · ProductFamilyText · Quantity</text>
+  <text x="75" y="422" class="note">Ist-Umsatz; eine Kundenzeile kann viele</text>
+  <text x="75" y="444" class="note">Verkaufszeilen und Waehrungen haben.</text>
+
+  <!-- CustomerMarketSegments -->
+  <rect x="525" y="135" width="365" height="330" rx="8" class="box"/>
+  <rect x="525" y="135" width="365" height="48" rx="8" class="head"/>
+  <text x="545" y="166" class="headText">CustomerMarketSegments</text>
+  <text x="545" y="212" class="field key">PK  Id</text>
+  <text x="545" y="242" class="field key">BK  Tsc + CustomerNumber</text>
+  <text x="545" y="272" class="field">Segment (z. B. Railway)</text>
+  <text x="545" y="302" class="field">IsConfirmed</text>
+  <text x="545" y="332" class="field">Source · Note · UpdatedAt</text>
+  <text x="545" y="377" class="note">Nur IsConfirmed = true wirkt im</text>
+  <text x="545" y="399" class="note">zentralen Reporting-Export.</text>
+  <text x="545" y="431" class="note">Vorschlaege werden fachlich bestaetigt</text>
+  <text x="545" y="453" class="note">oder entfernt, nie automatisch bestaetigt.</text>
+
+  <!-- MarketSurveyEntries -->
+  <rect x="1010" y="150" width="335" height="330" rx="8" class="box"/>
+  <rect x="1010" y="150" width="335" height="48" rx="8" class="head"/>
+  <text x="1030" y="181" class="headText">MarketSurveyEntries</text>
+  <text x="1030" y="227" class="field key">PK  Id</text>
+  <text x="1030" y="257" class="field">LinkedTsc + LinkedCustomerNumber</text>
+  <text x="1030" y="287" class="field">Land · Kundenname · Kundentyp</text>
+  <text x="1030" y="317" class="field">Geschaeftsart · Anwendung · Produkt</text>
+  <text x="1030" y="347" class="field">Status · geschaetzte Menge / Preis</text>
+  <text x="1030" y="392" class="note">Marktwissen und Interessenten;</text>
+  <text x="1030" y="414" class="note">wirkt nie direkt auf Ist-Umsatz.</text>
+
+  <!-- AppEventLogs -->
+  <rect x="525" y="585" width="365" height="185" rx="8" class="box"/>
+  <rect x="525" y="585" width="365" height="48" rx="8" class="head"/>
+  <text x="545" y="616" class="headText">AppEventLogs</text>
+  <text x="545" y="662" class="field key">PK  Id</text>
+  <text x="545" y="692" class="field">Timestamp · Category · Message</text>
+  <text x="545" y="722" class="field">Details (TSC/Kundennummer als Text)</text>
+  <text x="545" y="752" class="note">Protokollspur „Segment entfernt“;</text>
+  <text x="545" y="774" class="note">kein gespeicherter Verworfen-Zustand.</text>
+
+  <!-- relationships -->
+  <path d="M385 300 H525" class="link"/>
+  <text x="408" y="285" class="note">0..n Verkaufszeilen</text>
+  <text x="435" y="322" class="note">zu 0..1 Segmentzeile</text>
+  <text x="394" y="302" class="key">∞</text><text x="504" y="302" class="key">0..1</text>
+
+  <path d="M890 300 H1010" class="dash"/>
+  <text x="906" y="285" class="note">optionale Namens-</text>
+  <text x="906" y="307" class="note">verknuepfung</text>
+  <text x="903" y="345" class="note">kein FK</text>
+
+  <path d="M708 465 V585" class="dash"/>
+  <text x="724" y="520" class="note">Loeschen protokolliert</text>
+  <text x="724" y="542" class="note">nur im Details-Text</text>
+
+  <!-- export -->
+  <rect x="990" y="610" width="355" height="125" rx="8" class="legend"/>
+  <text x="1012" y="643" class="darkHeadText">Excel-Export (abgeleitet)</text>
+  <text x="1012" y="674" class="field">Pruefung · Bestaetigt · Umsatz_* · Marktumfrage</text>
+  <text x="1012" y="704" class="field">Datenluecken · Verworfen (Protokoll)</text>
+  <path d="M890 678 H990" class="dash"/>
+
+  <!-- legend -->
+  <rect x="55" y="610" width="355" height="135" rx="8" class="legend"/>
+  <text x="75" y="645" class="darkHeadText">Legende</text>
+  <line x1="75" y1="677" x2="145" y2="677" class="link"/><text x="160" y="682" class="field">fachlicher Schluessel TSC + Kundennummer</text>
+  <line x1="75" y1="710" x2="145" y2="710" class="dash"/><text x="160" y="715" class="field">Text-/Namensbezug, kein Fremdschluessel</text>
+  <text x="75" y="740" class="note">Orange = Primär- oder fachlicher Schluessel</text>
+</svg>

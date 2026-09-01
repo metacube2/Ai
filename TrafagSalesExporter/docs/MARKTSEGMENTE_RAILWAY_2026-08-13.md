@@ -405,3 +405,17 @@ naechsten Bearbeiter:** der Funktionscode dieses Deploys ist NICHT committet, er
 Arbeitsverzeichnis dieses Rechners; der produktive Stand ist deshalb aktuell nicht
 reproduzierbar. Offen bleibt der angemeldete Sichtprueflauf: dass ein Klick die Datei erzeugt
 und die acht Blaetter so aussehen wie hier beschrieben.
+
+## 16. Segmentliste aus der Vertriebsvorgabe, 2026-09-01
+
+Die bisherige kleine Vorschlagsliste war unvollstaendig. Als verbindliche Standardauswahl in
+der Kundenpflege gelten jetzt die 15 Werte aus `segmente.png`:
+
+`Calibration services`, `Food & Beverage`, `General Industry`, `Hydraulics`, `Hydrogen`,
+`Large Engines`, `Power Distribution`, `Railway`, `Shipbuilding`, `Test & Measurement`,
+`Water Treatment`, `Others`, `Automotive (MAG)`, `E-Bikes (MAG)` und `Robotics (MAG)`.
+
+Die Schreibweise wird exakt aus der Vorgabe uebernommen; insbesondere ersetzt `Shipbuilding`
+den bisherigen Standardvorschlag `Ship Building`. Bereits gespeicherte freie Sonderwerte
+bleiben zusaetzlich sichtbar, damit keine bestehende Zuordnung durch die neue Liste verborgen
+wird. Es werden keine Kunden automatisch umklassifiziert und keine Vorschlaege bestaetigt.
