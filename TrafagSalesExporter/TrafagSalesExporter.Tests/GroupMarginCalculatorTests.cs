@@ -290,6 +290,52 @@ public class GroupMarginCalculatorTests
     }
 
     [Fact]
+    public void SchweizerStprsSchalter_GreiftNichtBeiExternemLieferanten()
+    {
+        // Der Schalter heisst "Kostenquelle bei INTERNEM Lieferanten". Bis zum 2026-09-02 pruefte
+        // er das nicht und setzte die liefernde Gesellschaft bei jedem CH-Werkstammtreffer auf
+        // TR_AG - auch fuer eine Zeile mit echtem Drittlieferanten. Damit erfand er einen
+        // Konzernbezug, den die Klassifikation gerade NICHT gefunden hatte, und das fuer jedes
+        // der rund 66'000 Materialien im CH-Werkstamm.
+        var groupCosts = GroupCosts("IC15415", 50m);
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "IC15415" };
+        var line = Line(
+            tsc: "TRIT", material: "IC15415",
+            supplierName: "ITEC S.R.L.", supplierNumber: "V4711", supplierCountry: "IT");
+
+        var result = GroupMarginCalculator.Evaluate(
+            line, groupCosts, chPlantMaterialKeys: chPlantMaterials,
+            internalSupplierCostSourceMode: InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial);
+
+        Assert.Equal(GroupMarginSupplierClassifier.External, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.Equal(60m, result.CostBasis);
+        Assert.Equal("Kosten aus Verkaufszeile", result.CostSource);
+    }
+
+    [Fact]
+    public void SchweizerStprsSchalter_GreiftNichtBeiLokalerKlassifikationOhneLieferanten()
+    {
+        // Kombination zweier Schalter: der Fallback-Modus "LocalStandardCosts" sagt ausdruecklich,
+        // dass ohne Lieferant die Kosten der verkaufenden Gesellschaft gelten - unabhaengig von
+        // einem MARC-Treffer. Der STPRS-Schalter darf diese bewusste Entscheidung nicht durch die
+        // Hintertuer wieder aufheben; sonst haetten sich die beiden Schalter widersprochen.
+        var groupCosts = GroupCosts("IC15415", 50m);
+        IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "IC15415" };
+
+        var result = GroupMarginCalculator.Evaluate(
+            Line(tsc: "TRDE", material: "IC15415"), groupCosts,
+            chPlantMaterialKeys: chPlantMaterials,
+            supplierFallbackMode: SupplierFallbackModes.LocalStandardCosts,
+            internalSupplierCostSourceMode: InternalSupplierCostSourceModes.SwissStprsForChPlantMaterial);
+
+        Assert.Equal(GroupMarginSupplierClassifier.Local, result.SupplierType);
+        Assert.False(result.IsGroupCost);
+        Assert.Equal(60m, result.CostBasis);
+        Assert.Equal("Standardkosten der lokalen Gesellschaft", result.CostSource);
+    }
+
+    [Fact]
     public void Lokaler_Nichttreffer_OhneStandardkosten_BleibtAlsFehlendeKostenOffen()
     {
         IReadOnlySet<string> chPlantMaterials = new HashSet<string>(StringComparer.Ordinal) { "OTHER-MATERIAL" };

@@ -292,7 +292,22 @@ public static class GroupMarginCostRules
             // der Kosten der liefernden Konzerngesellschaft vergleichen. Nur ein vorhandener
             // positiver Schweizer Wert aktiviert die Alternative; sonst bleibt die bisherige
             // Kostenquelle sichtbar statt eine Zeile grundlos auf "Kosten fehlen" zu setzen.
-            if (ShouldUseSwissStprs(context))
+            //
+            // Die Bedingung "deliveringEntity is not null" fehlte bis zum 2026-09-02 und ist der
+            // eigentliche Punkt: der Schalter heisst "Kostenquelle bei INTERNEM Lieferanten" und
+            // darf deshalb nur die Kostenquelle einer Zeile aendern, fuer die bereits eine
+            // liefernde Konzerngesellschaft erkannt wurde. Ohne die Bedingung setzte er
+            // deliveringEntity auch bei Extern, Lokal und Unklar auf TR_AG und erfand damit einen
+            // Konzernbezug, den die Klassifikation gerade NICHT gefunden hatte - fuer jedes der
+            // rund 66'000 Materialien im CH-Werkstamm. Das widersprach der eigenen Zusage des
+            // Schalters, ausschliesslich die Kostenquelle und nie die Klassifikation zu aendern.
+            //
+            // ABGRENZUNG, falls das jemand erweitern will: Das ist bewusst die enge Lesart. Die
+            // Empfehlung in docs/FINANCE_STANDARDKOSTEN.md Abschnitt 10, den Schweizer STPRS
+            // unabhaengig von der liefernden Gesellschaft gelten zu lassen, ist eine ANDERE und
+            // weitergehende Regel und ein offener Fachentscheid von Andreas. Sie gehoert dann in
+            // eine eigene, benannte Regel oder einen eigenen Modus, nicht in diesen Schalter.
+            if (deliveringEntity is not null && ShouldUseSwissStprs(context))
                 deliveringEntity = GroupStandardCostEntities.TrAg;
 
             if (deliveringEntity is null ||

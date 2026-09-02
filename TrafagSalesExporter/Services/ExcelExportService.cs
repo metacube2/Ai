@@ -44,8 +44,14 @@ public class ExcelExportService : IExcelExportService
     /// </summary>
     private string LoadGroupMarginCostCurrencyMode()
     {
+        // Ohne Datenbank gilt derselbe Default wie mit einem ungesetzten Wert. Frueher stand
+        // hier fest "Mask"; das war seit dem Beschluss von Andreas vom 2026-08-27 (Default
+        // "Convert") der FALSCHE Wert und wich zudem von der Nachbarmethode
+        // LoadGroupMarginChfRateMode ab, die auf ihren dokumentierten Default zurueckfaellt.
+        // Bewusst ueber NormalizeMode statt ueber ein Literal: so folgt dieser Pfad einer
+        // kuenftigen Default-Aenderung automatisch, statt erneut auseinanderzulaufen.
         if (_dbFactory is null)
-            return GroupMarginCostCurrencyModes.Mask;
+            return GroupMarginCostCurrencyConverter.NormalizeMode(null);
 
         using var db = _dbFactory.CreateDbContext();
         var settings = db.ExportSettings.AsNoTracking().FirstOrDefault();
