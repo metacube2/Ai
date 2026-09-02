@@ -125,6 +125,10 @@ Beim Build wurden bereits vorhandene Warnungen ausgegeben, insbesondere zwei `NU
 für `Microsoft.AspNetCore.Authentication.Negotiate 8.0.24`. Diese Änderung hat das Paket nicht
 angefasst.
 
+**Nachtrag 2026-09-01:** Der aktuelle NuGet-Audit weist insgesamt fuenf High-Advisories
+ueber vier Pakete aus. Der vollstaendige, datierte Befund steht in
+`docs/NUGET_SICHERHEIT_2026-09-01.md`.
+
 ## Geänderte Dateien
 
 - `Services/DatabaseSeedService.cs`

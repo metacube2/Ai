@@ -169,10 +169,24 @@ strukturelle Gruende:
 | Quelle | Supplier-Felder | Grund |
 | --- | --- | --- |
 | CH/AT (`ZSCHWEIZ`, SAP OData) | immer leer | Im Seed-Mapping (`DatabaseSeedService.EnsureSapODataDachMapping`) gibt es fuer `SupplierNumber/Name/Country` gar kein Mapping — `FinanzdataSchweizOeSet` (VBRK/VBRP) exponiert kein Lieferantenfeld. |
-| UK (Manual Excel) | immer leer | `EnsureUkManualExcelMapping` enthaelt keine Supplier-Spalten. |
+| UK (Manual Excel) | **ueberholt, siehe Korrektur unter der Tabelle** | Stand 2026-07-17: `EnsureUkManualExcelMapping` enthielt keine Supplier-Spalten. Inzwischen gemappt, UK ist bei 100 %. |
 | DE (Alphaplan) | leer je nach Exportspalten | Mapping erwartet `Lieferanten Nummer`/`Name Lieferant`/`Land Lieferant`; nur gefuellt, wenn Alphaplan diese Spalten liefert. |
 | ES (Sage CSV) | leer | Kein Supplier-Mapping im Spanien-Import vorhanden. |
 | FR/IT/US/IN (SAP B1/HANA) | teilweise gefuellt | Supplier = `OITM.CardCode`, der **Standardlieferant im Artikelstamm** (`HanaQueryService`), nicht der Beleglieferant — leer, wenn im Artikel kein Default-Lieferant gepflegt ist. |
+
+> **Korrektur zur UK-Zeile, nachgetragen 2026-09-02.** Die Diagnose von 2026-07-17 war fuer
+> UK falsch, und zwar in der Ursache, nicht nur im Zahlenstand. Die Lieferanten- und
+> Kostenspalten sind in der UK-Datei **seit jeher vorhanden und gefuellt** — gemessen
+> 2026-07-29 an `Sales_TRUK_2026-05-11.xlsx`: Lieferantenfelder `1881/1881`,
+> `Standard cost` `1773/1881` = 94.3 %. Sie waren nur nie gemappt. Der Kommentar dazu steht
+> heute in `Services/DatabaseSeedService.cs` bei `EnsureUkManualExcelMapping`. Nach dem
+> Nachzug liegt TRUK bei `3'064` von `3'064` Zeilen, also 100 %
+> (`docs/FINANCE_SUPPLIER.md` Abschnitt 3, bestaetigt in
+> `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` Abschnitt 2.3).
+>
+> Die Lehre gilt ueber UK hinaus: die Zeile stand hier als *strukturelle* Quellenluecke,
+> war aber eine Luecke auf **unserer** Seite. Das ist Vorrangregel 3 im `router.md`. Fuer
+> Deutschland steht genau dieselbe Pruefung noch aus.
 
 **Fachliche Konsequenz, die ueber reine Datenluecken hinausgeht:** Sind alle drei
 Supplier-Felder leer, liefert `GroupMarginSupplierClassifier.Resolve` `Unklar`, und
@@ -184,7 +198,8 @@ unklar` zaehlt als offene Kostenbasis (`HasOpenGroupMarginCostBasis`), also blei
 Damit greift die am 2026-07-16 gefuellte CH/AT-Kostenbasis (WAVWR/STPRS, Fuellgrad TRCH
 96,5 %/TRAT 99,9 %) **in der Gruppenmarge-Sicht aktuell gar nicht**: Jede ZSCHWEIZ-Zeile
 bleibt mangels Supplier-Feldern auf `Lieferant unklar` maskiert, obwohl die Kostenbasis
-selbst jetzt vorhanden waere. Gleiches gilt strukturell fuer UK und ES.
+selbst jetzt vorhanden waere. Gleiches galt damals strukturell fuer UK und ES; fuer UK ist
+es seit dem Mapping-Nachzug erledigt, siehe die Korrektur unter der Tabelle oben.
 
 **Offene Fachfrage an Andreas (neu, noch nicht auf dem Multiple-Choice-Bogen):** Soll
 CH/AT (verkauft als Trafag AG selbst) ueber eine Regel automatisch als eigene
@@ -206,7 +221,8 @@ Sitzungsmitschrift: `docs/FINANCE_STANDARDKOSTEN.md`. Kurz:
   monatlicher Andreas-Export mit nur letztem Stand je Material).
 - **Widerspruch zum Nachtrag 2026-07-17 (oben):** Andreas beobachtete am 2026-07-27
   live, dass `SupplierCountry` "meistens gefuellt" ist — steht im Gegensatz zum
-  dokumentierten Befund "CH/AT/UK/ES strukturell immer leer". Noch NICHT verifiziert,
+  dokumentierten Befund "CH/AT/UK/ES strukturell immer leer" (fuer UK ist dieser Befund
+  inzwischen widerlegt, siehe Korrektur unter der Tabelle im Nachtrag 2026-07-17). Noch NICHT verifiziert,
   welche Aussage/welcher Datenstand zutrifft. Separat davon: neuer Verdachtsbefund,
   dass `SupplierNumber` bei sehr vielen Zeilen (60-79 Tsd., Zaehlung im Gespraech nicht
   eindeutig) fehlt — Ursache ungeklaert, Analyse von Ingo und Andreas zugesagt.

@@ -26,6 +26,7 @@ Marktsegmente.
 | Gruppenmarge, Fachlogik und Kostenwaehrungsschalter | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | **Standardkosten, Kostenbasis, Konzernkosten TR AG/IT/IN** | `docs/FINANCE_STANDARDKOSTEN.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |
+| **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |
 | Hauptbuch-Import und EntitySet `FinanzJournalSet` | `docs/FINANCE_JOURNAL.md` |
 | SAP-Spezifikation WAVWR/NETWR_HC | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` |
 | Aufbau und Formeln der Nachweis-Excel | `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md` |

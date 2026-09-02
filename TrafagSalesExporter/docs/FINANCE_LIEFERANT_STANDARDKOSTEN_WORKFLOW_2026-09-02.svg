@@ -1,0 +1,776 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="8516" viewBox="0 0 1560 8516">
+  <defs>
+    <style>
+      .bg { fill: #f7f8fa; }
+      .title { font: 700 30px Arial, sans-serif; fill: #111827; }
+      .subtitle { font: 400 14px Arial, sans-serif; fill: #4b5563; }
+      .box-title { font: 700 15px Arial, sans-serif; fill: #111827; }
+      .k { font: 700 13.5px Arial, sans-serif; fill: #111827; }
+      .small { font: 400 13px Arial, sans-serif; fill: #1f2937; }
+      .tiny { font: 400 12px Arial, sans-serif; fill: #4b5563; }
+      .mono { font: 400 12.5px Consolas, Courier New, monospace; fill: #1f2937; }
+      .colhead { font: 400 11px Arial, sans-serif; fill: #6b7280; }
+      .colhead-on { font: 700 11px Arial, sans-serif; fill: #111827; }
+      .val { font: 400 13px Arial, sans-serif; fill: #6b7280; }
+      .val-on { font: 700 13px Arial, sans-serif; fill: #111827; }
+      .res { font: 700 13.5px Arial, sans-serif; fill: #1d4ed8; }
+      .band { fill: #111827; }
+      .stage { fill: #374151; }
+      .bandtxt { font: 700 15px Arial, sans-serif; fill: #ffffff; }
+      .prep { fill: #e8f2ff; stroke: #2563eb; stroke-width: 1.5; }
+      .run { fill: #eaf8ef; stroke: #15803d; stroke-width: 1.5; }
+      .check { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+      .issue { fill: #fff1f2; stroke: #be123c; stroke-width: 1.5; }
+      .output { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.5; }
+      .switch { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 1.5; }
+      .muted { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.2; }
+      .plain { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.2; }
+      .strip { fill: #ffffff; stroke: #9ca3af; stroke-width: 1.4; }
+      .hl-good { fill: #bbf7d0; }
+      .hl-warn { fill: #fed7aa; }
+      .hl-bad { fill: #fecaca; }
+      .sep { stroke: #e5e7eb; stroke-width: 1; }
+      .rowline { stroke: #e5e7eb; stroke-width: 1; }
+      .line-no { stroke: #6b7280; stroke-width: 1.8; fill: none; marker-end: url(#arrowGrey); }
+      .lbl { font: 700 12px Arial, sans-serif; }
+      .lbl-no { fill: #6b7280; }
+    </style>
+    <marker id="arrowGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1560" height="8516" />
+  <text class="title" x="40" y="48">Lieferantenfeld und Standardkostenlogik - mit Beispielzeile zu jedem Schritt</text>
+  <text class="subtitle" x="40" y="74">Zu docs/FINANCE_SUPPLIER.md und docs/FINANCE_STANDARDKOSTEN.md | Stand 2026-09-02 | Logik und Bezeichner am Code gelesen (GroupMarginSupplierClassifier.cs, GroupMarginCalculator.cs, GroupMarginStatuses.cs, ExportSettings.cs), Zahlen live gegen Sales_All_2026-09-01.xlsx gemessen</text>
+  <text class="subtitle" x="40" y="94">Pro Verkaufszeile entstehen ZWEI getrennte Werte: der SupplierType aus Resolve() und die liefernde Gesellschaft aus ResolveDeliveringEntity(). Beide Methoden durchlaufen dieselbe Kaskade in derselben Reihenfolge.</text>
+  <rect class="prep" x="110" y="118" width="1410" height="122" rx="8" />
+  <text class="box-title" x="128" y="144">So ist jede Beispielzeile zu lesen</text>
+  <text class="small" x="128" y="168">Jede Stufe zeigt eine echte Verkaufszeile mit ihren Feldern. Farbig hinterlegt ist das Feld, auf das es an dieser Stelle ankommt.</text>
+  <text class="small" x="128" y="186">GRUEN = dieses Feld entscheidet hier.   ORANGE = auffaellig oder mit Nebenwirkung, aber nicht entscheidend.   ROT = wird an dieser Stufe bewusst uebergangen oder ist fachlich gefaehrlich.</text>
+  <text class="small" x="128" y="204">Feldbelegung, Entscheidungsfeld und alle genannten Zeilenzahlen stammen aus den dokumentierten Produktivmessungen. Steht (leer), ist das Feld in der Quelle wirklich leer; steht k. A. oder s. Notiz,</text>
+  <text class="small" x="128" y="222">liegt fuer dieses Beispiel kein belegter Einzelwert vor.</text>
+  <rect class="plain" x="110" y="254" width="1410" height="122" rx="8" />
+  <text class="box-title" x="128" y="280">Die Verkaufszeile, wie sie aus dem Standortimport kommt</text>
+  <text class="small" x="128" y="304">Kaufmaennische Felder: TSC (verkaufender Standort), Material, Trafag-Sachnummer, Menge, Umsatz, Belegwaehrung.</text>
+  <text class="small" x="128" y="322">Lieferantenfelder: SupplierNumber, SupplierName, SupplierCountry - sie kommen bei den B1-Laendern gemeinsam aus OITM.CardCode und sind deshalb immer alle drei gefuellt oder alle drei leer.</text>
+  <text class="small" x="128" y="340">Rollenfeld: Sales Type aus dem Artikelstamm (Indien: OITM.U_Tasc_ST). Vorstufe nur fuer TRIT: SupplierMaterialOverrides fuellt ausschliesslich leere Lieferantenfelder und ist seit dem 26.08.2026</text>
+  <text class="small" x="128" y="358">wirkungslos, weil Italien OITM.CardCode doch gepflegt hat.</text>
+  <rect class="muted" x="110" y="390" width="1410" height="140" rx="8" />
+  <text class="box-title" x="128" y="416">Was sich in Sales_All nachpruefen laesst - und was nicht</text>
+  <text class="small" x="128" y="440">Nachpruefbar sind die Stufen 1 bis 3: TSC, Material, die drei Lieferantenfelder sowie seit dem 27.08.2026 Sales Type und Trafag Sachnummer in den Spalten 53 und 54.</text>
+  <text class="small" x="128" y="458">NICHT enthalten sind eine Spalte Cost Source und der Margen-Status. Welche Kostenquelle am Ende gezogen wurde und warum eine Zeile offen bleibt, steht ausschliesslich im Nachweis-Excel im Blatt</text>
+  <text class="small" x="128" y="476">Gruppenmarge Details. Wer Teil B pruefen will, braucht deshalb den Nachweis, nicht Sales_All.</text>
+  <text class="small" x="128" y="494">Auswertungsfalle im Nachweis: das Blatt Gruppenmarge Summary enthaelt in den Spalten E bis M nur SUMIFS- und COUNTIFS-Formeln ohne gespeicherte Ergebnisse. Maschinell gelesen sieht das leer aus.</text>
+  <text class="small" x="128" y="512">Richtig ist, aus Gruppenmarge Details selbst zu aggregieren.</text>
+  <rect class="band" x="40" y="556" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="576">Teil 0 - Die Grundregel, wie Andreas sie festgehalten hat. Sie gilt unveraendert und ist unten Stufe 3.</text>
+  <rect class="plain" x="110" y="600" width="1410" height="372" rx="8" />
+  <rect class="stage" x="615" y="622" width="400" height="40" rx="6" />
+  <text class="bandtxt" x="639" y="648">Verkaufszeile aus dem Sales-Export</text>
+  <path class="line-no" d="M815 662 V688" />
+  <rect class="check" x="415" y="690" width="800" height="74" rx="6" />
+  <text class="box-title" x="435" y="716">Steht im Lieferantenfeld ein Trafag-Unternehmen?</text>
+  <text class="small" x="435" y="739">Geprueft werden SupplierName, SupplierNumber und SupplierCountry - und der Sales Type,</text>
+  <text class="small" x="435" y="757">den nur Indien pflegt.</text>
+  <path class="line-no" d="M815 764 H430 V800" />
+  <path class="line-no" d="M815 764 H1200 V800" />
+  <text class="lbl lbl-no" x="440" y="792">JA</text>
+  <text class="lbl lbl-no" x="1210" y="792">NEIN</text>
+  <rect class="run" x="170" y="800" width="520" height="56" rx="6" />
+  <text class="box-title" x="190" y="824">Konzern-Standardkosten der liefernden</text>
+  <text class="box-title" x="190" y="844">Trafag-Gesellschaft</text>
+  <rect class="output" x="940" y="800" width="520" height="56" rx="6" />
+  <text class="box-title" x="960" y="824">Standardkosten der verkaufenden</text>
+  <text class="box-title" x="960" y="844">Landesgesellschaft</text>
+  <path class="line-no" d="M430 856 V884" />
+  <path class="line-no" d="M1200 856 V884" />
+  <rect class="run" x="170" y="884" width="164" height="76" rx="6" />
+  <text class="k" x="182" y="904">Trafag AG</text>
+  <text class="tiny" x="182" y="922">MBEW-STPRS</text>
+  <text class="tiny" x="182" y="938">Bewertungskreis 1100</text>
+  <text class="tiny" x="182" y="954">CHF</text>
+  <rect class="run" x="348" y="884" width="164" height="76" rx="6" />
+  <text class="k" x="360" y="904">Trafag Italia</text>
+  <text class="tiny" x="360" y="922">B1 INV1.StockPrice</text>
+  <text class="tiny" x="360" y="938">Belegposition</text>
+  <text class="tiny" x="360" y="954">EUR</text>
+  <rect class="run" x="526" y="884" width="164" height="76" rx="6" />
+  <text class="k" x="538" y="904">Trafag Controls India</text>
+  <text class="tiny" x="538" y="922">B1 RIN1.StockPrice</text>
+  <text class="tiny" x="538" y="938">Belegposition</text>
+  <text class="tiny" x="538" y="954">INR</text>
+  <rect class="output" x="940" y="884" width="520" height="76" rx="6" />
+  <text class="tiny" x="958" y="904">Quelle je Land verschieden: SAP fuer CH/AT, Alphaplan fuer DE,</text>
+  <text class="tiny" x="958" y="922">SAP B1 fuer IT, IN, US, ES und FR, keine Quelle fuer UK.</text>
+  <text class="tiny" x="958" y="944">Fuellgrade siehe Laendertabelle in Teil B.</text>
+  <text class="tiny" x="170" y="966">Die drei Konzerntabellen sind die einzigen. Magnetic Sense ist keine vierte Quelle: SupplierName LIKE %MAGNET% ergibt 0 Zeilen, Magnetic Sense kommt ausschliesslich als Kunde vor.</text>
+  <rect class="issue" x="110" y="988" width="1410" height="230" rx="8" />
+  <text class="box-title" x="128" y="1014">Warum daraus vier Stufen werden - und warum das KEINE Sonderfaelle sind</text>
+  <text class="small" x="128" y="1038">Die Frage oben ist richtig. Nur ist das Feld, nach dem sie fragt, in drei von vier Zeilen leer. Live gemessen am 02.09.2026 gegen Sales_All_2026-09-01.xlsx, also gegen genau den Export, den Andreas</text>
+  <text class="small" x="128" y="1056">ansieht: von 105'282 Verkaufszeilen fuehren 28'248 alle drei Lieferantenfelder, das sind 26,8 Prozent.</text>
+  <text class="small" x="128" y="1074">Bei TRCH, TRAT, TRDE und TRES - zusammen 66'318 Zeilen - ist das Feld in 100,0 Prozent der Faelle leer, und zwar strukturell: die Quelle liefert dort ueberhaupt keinen Vorlieferanten. Bei CH und AT</text>
+  <text class="small" x="128" y="1092">ist das dauerhaft so, weil eine Verkaufsfaktura keinen Vorlieferanten kennt. Es gibt dort also nichts nachzupflegen.</text>
+  <text class="small" x="128" y="1110">Vollstaendig beantwortbar ist die Frage bei UK (100,0 Prozent) und seit Paolas Stammdatenpflege auch bei Italien (99,9 Prozent, nur noch 17 leere Zeilen). Duenn bleibt es bei IN mit 12,2, FR mit 5,1</text>
+  <text class="small" x="128" y="1128">und US mit 0,4 Prozent.</text>
+  <text class="small" x="128" y="1146">Der Kernbefund ist auf der vollen Grundgesamtheit bestaetigt: NULL von 105'282 Zeilen haben nur eines oder zwei der drei Felder. Es ist wirklich alles oder nichts - deshalb ist es ein Mapping- und</text>
+  <text class="small" x="128" y="1164">Quellenproblem und kein Pflegeproblem.</text>
+  <text class="small" x="128" y="1182">Die vier Stufen sind deshalb nicht vier verschiedene Regeln, sondern VIER BELEGE FUER DIESELBE FRAGE, geordnet nach Belegqualitaet. Die erste Stufe, die etwas Belastbares sagt, gewinnt - alle</text>
+  <text class="small" x="128" y="1200">spaeteren werden nicht mehr geprueft.</text>
+  <rect class="prep" x="110" y="1232" width="1410" height="278" rx="8" />
+  <text class="box-title" x="128" y="1258">Die vier Stufen als Belegkette fuer die eine Frage - live gemessen am 02.09.2026 gegen Sales_All_2026-09-01.xlsx</text>
+  <text class="colhead" x="128" y="1286">Stufe</text>
+  <text class="colhead" x="220" y="1286">Woran sie die Frage beantwortet</text>
+  <text class="colhead" x="510" y="1286">Warum es diesen Weg braucht</text>
+  <text class="colhead" x="1350" y="1286">Zeilen</text>
+  <path class="rowline" d="M128 1296 H1502" />
+  <text class="k" x="128" y="1320">Stufe 1</text>
+  <text class="small" x="220" y="1320">TSC ist TRCH oder TRAT</text>
+  <text class="small" x="510" y="1320">Der verkaufende Standort IST Trafag AG. Dafuer braucht es kein Lieferantenfeld.</text>
+  <text class="small" x="1350" y="1320">51'635</text>
+  <path class="rowline" d="M128 1330 H1502" />
+  <text class="k" x="128" y="1350">Stufe 2</text>
+  <text class="small" x="220" y="1350">Sales Type FFM, CM oder LRD</text>
+  <text class="small" x="510" y="1350">Der Artikelstamm nennt die Konzernrolle direkt. Nur Indien fuehrt das Feld.</text>
+  <text class="small" x="1350" y="1350">7'012</text>
+  <path class="rowline" d="M128 1360 H1502" />
+  <text class="k" x="128" y="1380">Stufe 3</text>
+  <text class="small" x="220" y="1380">Lieferantenfeld gefuellt</text>
+  <text class="small" x="510" y="1380">DAS IST ANDREAS KASTEN, wortgleich. Das Feld ist da, die Frage ist direkt beantwortbar.</text>
+  <text class="small" x="1350" y="1380">27'654</text>
+  <path class="rowline" d="M128 1390 H1502" />
+  <text class="k" x="128" y="1410">Stufe 4</text>
+  <text class="small" x="220" y="1410">Material in MARC, Werk 1100</text>
+  <text class="small" x="510" y="1410">Letzter Ersatzbeleg, wenn nichts anderes etwas sagt. Bewusst die schwaechste Evidenz.</text>
+  <text class="small" x="1350" y="1410">18'981</text>
+  <path class="rowline" d="M128 1420 H1502" />
+  <text class="k" x="128" y="1440">Summe</text>
+  <text class="small" x="220" y="1440"></text>
+  <text class="small" x="510" y="1440">Die vier Wege decken die Grundgesamtheit vollstaendig und ueberschneidungsfrei ab.</text>
+  <text class="small" x="1350" y="1440">105'282</text>
+  <path class="rowline" d="M128 1450 H1502" />
+  <text class="tiny" x="128" y="1478">Alle vier Zahlen aus derselben Messung, Werkzeug .tmp_tools/CheckSupplierClaims0902, read-only. Stufe 4 ist die echte Kandidatenmenge: nicht CH/AT, kein Sales Type, alle drei Lieferantenfelder leer.</text>
+  <text class="tiny" x="128" y="1496">Der Dokuwert 22 950 fuer Stufe 4 stammt vom 12.08.2026 und ist ueberholt: Italien ist durch Paolas Stammdatenpflege von rund 5 700 Kandidaten auf 17 gefallen.</text>
+  <rect class="band" x="40" y="1536" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="1556">Teil A - Die Belegkette im Detail: die erste zutreffende Stufe gewinnt, alle spaeteren werden nicht mehr geprueft</text>
+  <rect class="stage" x="110" y="1592" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="1612">Stufe 1 - IsIntercompanySellingTsc(tsc): Ist der verkaufende Standort TRCH oder TRAT?</text>
+  <rect class="check" x="110" y="1634" width="1410" height="64" rx="8" />
+  <text class="small" x="128" y="1660">Die CH/AT-Herstellerregel ist ein unbedingter Kurzschluss: Material, Sales Type und Lieferantenfelder werden gar nicht erst gelesen. Grund ist, dass die Verkaufsfaktura keinen Vorlieferanten fuehrt -</text>
+  <text class="small" x="128" y="1678">die drei Supplier-Felder sind dort strukturell leer und nicht etwa ungepflegt.</text>
+  <rect class="strip" x="110" y="1710" width="1410" height="130" rx="8" />
+  <text class="k" x="126" y="1734">Beispiel 1 - eine Schweizer Verkaufszeile</text>
+  <rect class="hl-good" x="119" y="1771" width="82" height="24" rx="4" />
+  <text class="colhead-on" x="126" y="1760">TSC</text>
+  <text class="val-on" x="126" y="1788">TRCH</text>
+  <text class="colhead" x="206" y="1760">Material</text>
+  <text class="val" x="206" y="1788">17000</text>
+  <text class="colhead" x="326" y="1760">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="1788">(leer)</text>
+  <text class="colhead" x="466" y="1760">SupplierNumber</text>
+  <text class="val" x="466" y="1788">(leer)</text>
+  <text class="colhead" x="631" y="1760">SupplierName</text>
+  <text class="val" x="631" y="1788">(leer)</text>
+  <text class="colhead" x="876" y="1760">SupplierCountry</text>
+  <text class="val" x="876" y="1788">(leer)</text>
+  <text class="colhead" x="1016" y="1760">Sales Type</text>
+  <text class="val" x="1016" y="1788">(leer)</text>
+  <text class="colhead" x="1140" y="1760">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="1788">Intern  /  TR_AG</text>
+  <path class="sep" d="M126 1800 H1504" />
+  <text class="tiny" x="126" y="1814">Allein die Spalte TSC entscheidet. Betrifft alle 48'932 CH/AT-Zeilen. Kostenquelle spaeter: Konzernkosten TR AG (MBEW-STPRS).</text>
+  <rect class="switch" x="110" y="1852" width="1410" height="68" rx="8" />
+  <text class="box-title" x="128" y="1878">Schalter 5 - MarcForeignProcurementMode: Ignore (Default, produktiv)  |  OverridesToExternal</text>
+  <text class="small" x="128" y="1902">Greift AUSSCHLIESSLICH hier am TSC-Kurzschluss, niemals am MARC-1100-Fallback der Stufe 4. Das sind zwei getrennte Populationen. ISS-003.4, Fachentscheid von Andreas steht aus.</text>
+  <rect class="strip" x="110" y="1932" width="1410" height="166" rx="8" />
+  <text class="k" x="126" y="1956">Beispiel 2 - dieselbe Stufe, wenn Schalter 5 auf OverridesToExternal steht</text>
+  <rect class="hl-good" x="119" y="1993" width="82" height="24" rx="4" />
+  <text class="colhead-on" x="126" y="1982">TSC</text>
+  <text class="val-on" x="126" y="2010">TRCH</text>
+  <rect class="hl-warn" x="199" y="1993" width="122" height="24" rx="4" />
+  <text class="colhead-on" x="206" y="1982">Material</text>
+  <text class="val-on" x="206" y="2010">F88103</text>
+  <text class="colhead" x="326" y="1982">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="2010">(leer)</text>
+  <text class="colhead" x="466" y="1982">SupplierNumber</text>
+  <text class="val" x="466" y="2010">(leer)</text>
+  <text class="colhead" x="631" y="1982">SupplierName</text>
+  <text class="val" x="631" y="2010">(leer)</text>
+  <text class="colhead" x="876" y="1982">SupplierCountry</text>
+  <text class="val" x="876" y="2010">(leer)</text>
+  <text class="colhead" x="1016" y="1982">Sales Type</text>
+  <text class="val" x="1016" y="2010">(leer)</text>
+  <text class="colhead" x="1140" y="1982">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="2010">Extern  /  keine</text>
+  <path class="sep" d="M126 2022 H1504" />
+  <text class="tiny" x="126" y="2036">Zu Material F88103 (8854 Transmitter EX) gibt es einen aktiven Einkaufsbeleg bei STS Sensor Technik Sirnach. Nur im Alternativmodus bricht dieser Beleg die Herstellerregel.</text>
+  <text class="tiny" x="126" y="2054">Im produktiven Default Ignore bleibt genau dieselbe Zeile Intern / TR_AG. Betroffen waeren 1'201 Materialien und 5'886 CH/AT-Zeilen; der Einkauf-Cache ist praktisch nur Bukrs 1100, der Schalter wirkt also fast nur</text>
+  <text class="tiny" x="126" y="2072">auf TRCH und kaum auf TRAT.</text>
+  <path class="line-no" d="M170 2106 V2132" />
+  <text class="lbl lbl-no" x="186" y="2126">nein - weiter zur naechsten Stufe</text>
+  <rect class="stage" x="110" y="2158" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="2178">Stufe 2 - ResolveSalesTypeRole(salesType): Ist der Sales Type als FFM, CM oder LRD gepflegt?</text>
+  <rect class="check" x="110" y="2200" width="1410" height="82" rx="8" />
+  <text class="small" x="128" y="2226">Entscheid Ingo vom 27.08.2026: wo die Quelle einen Sales Type fuehrt, entscheidet DIESER - auch gegen ein gepflegtes Lieferantenfeld. Alle drei Werte bezeichnen eine Konzernrolle, der SupplierType</text>
+  <text class="small" x="128" y="2244">ist deshalb immer Intern. FFM und CM fertigt der Standort selbst, LRD bezieht von Trafag AG. Praktisch betrifft die Stufe nur TRIN. Live gemessen am 02.09.2026: 7'012 der 7'476 TRIN-Zeilen tragen</text>
+  <text class="small" x="128" y="2262">einen Sales Type (FFM 6'213, LRD 776, CM 23), alle acht anderen Standorte stehen auf null - Italien bei allen 24'095 Zeilen.</text>
+  <rect class="strip" x="110" y="2294" width="1410" height="148" rx="8" />
+  <text class="k" x="126" y="2318">Beispiel 3 - Indien fertigt selbst</text>
+  <text class="colhead" x="126" y="2344">TSC</text>
+  <text class="val" x="126" y="2372">TRIN</text>
+  <text class="colhead" x="206" y="2344">Material</text>
+  <text class="val" x="206" y="2372">(lokale Nr.)</text>
+  <text class="colhead" x="326" y="2344">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="2372">gepflegt</text>
+  <text class="colhead" x="466" y="2344">SupplierNumber</text>
+  <text class="val" x="466" y="2372">(leer)</text>
+  <text class="colhead" x="631" y="2344">SupplierName</text>
+  <text class="val" x="631" y="2372">(leer)</text>
+  <text class="colhead" x="876" y="2344">SupplierCountry</text>
+  <text class="val" x="876" y="2372">(leer)</text>
+  <rect class="hl-good" x="1009" y="2355" width="107" height="24" rx="4" />
+  <text class="colhead-on" x="1016" y="2344">Sales Type</text>
+  <text class="val-on" x="1016" y="2372">FFM</text>
+  <text class="colhead" x="1140" y="2344">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="2372">Intern  /  TR_IN</text>
+  <path class="sep" d="M126 2384 H1504" />
+  <text class="tiny" x="126" y="2398">FFM heisst Full Fledged Manufacturing: der Standort fertigt auf eigene Rechnung. Live 6'213 Zeilen ueber rund 1'241 Materialien. Dass es kein Schweizer Produkt ist, belegt die Gegenprobe: von diesen 1'241</text>
+  <text class="tiny" x="126" y="2416">Materialien fuehrt die Schweiz genau 3.</text>
+  <rect class="strip" x="110" y="2454" width="1410" height="148" rx="8" />
+  <text class="k" x="126" y="2478">Beispiel 4 - Indien verkauft Schweizer Ware</text>
+  <text class="colhead" x="126" y="2504">TSC</text>
+  <text class="val" x="126" y="2532">TRIN</text>
+  <text class="colhead" x="206" y="2504">Material</text>
+  <text class="val" x="206" y="2532">(lokale Nr.)</text>
+  <text class="colhead" x="326" y="2504">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="2532">gepflegt</text>
+  <text class="colhead" x="466" y="2504">SupplierNumber</text>
+  <text class="val" x="466" y="2532">V0078</text>
+  <text class="colhead" x="631" y="2504">SupplierName</text>
+  <text class="val" x="631" y="2532">Trafag AG</text>
+  <text class="colhead" x="876" y="2504">SupplierCountry</text>
+  <text class="val" x="876" y="2532">CH</text>
+  <rect class="hl-good" x="1009" y="2515" width="107" height="24" rx="4" />
+  <text class="colhead-on" x="1016" y="2504">Sales Type</text>
+  <text class="val-on" x="1016" y="2532">LRD</text>
+  <text class="colhead" x="1140" y="2504">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="2532">Intern  /  TR_AG</text>
+  <path class="sep" d="M126 2544 H1504" />
+  <text class="tiny" x="126" y="2558">LRD heisst Limited Risk Distributor: die Ware kommt von Trafag AG, also greift der Schweizer MBEW-STPRS. 776 Zeilen. Hier sagen Sales Type und Lieferantenfeld dasselbe - alle 93 LRD-Artikel mit gepflegtem</text>
+  <text class="tiny" x="126" y="2576">Lieferanten zeigen ohne Ausnahme auf V0078 = Trafag AG.</text>
+  <rect class="strip" x="110" y="2614" width="1410" height="202" rx="8" />
+  <text class="k" x="126" y="2638">Beispiel 5 - DER KONFLIKTFALL: Sales Type und Lieferantenfeld widersprechen sich</text>
+  <text class="colhead" x="126" y="2664">TSC</text>
+  <text class="val" x="126" y="2692">TRIN</text>
+  <text class="colhead" x="206" y="2664">Material</text>
+  <text class="val" x="206" y="2692">(lokale Nr.)</text>
+  <text class="colhead" x="326" y="2664">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="2692">gepflegt</text>
+  <rect class="hl-bad" x="459" y="2675" width="167" height="24" rx="4" />
+  <text class="colhead-on" x="466" y="2664">SupplierNumber</text>
+  <text class="val-on" x="466" y="2692">(fremde Nr.)</text>
+  <rect class="hl-bad" x="624" y="2675" width="247" height="24" rx="4" />
+  <text class="colhead-on" x="631" y="2664">SupplierName</text>
+  <text class="val-on" x="631" y="2692">Cenlub Systems</text>
+  <rect class="hl-bad" x="869" y="2675" width="142" height="24" rx="4" />
+  <text class="colhead-on" x="876" y="2664">SupplierCountry</text>
+  <text class="val-on" x="876" y="2692">IN</text>
+  <rect class="hl-good" x="1009" y="2675" width="107" height="24" rx="4" />
+  <text class="colhead-on" x="1016" y="2664">Sales Type</text>
+  <text class="val-on" x="1016" y="2692">FFM</text>
+  <text class="colhead" x="1140" y="2664">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="2692">Intern  /  TR_IN</text>
+  <path class="sep" d="M126 2704 H1504" />
+  <text class="tiny" x="126" y="2718">Rot markiert sind die Felder, die hier BEWUSST uebergangen werden. Der Artikelstamm sagt: Indien fertigt selbst. Das Lieferantenfeld nennt Cenlub Systems, einen indischen Fremdlieferanten. Bis zum 27.08.2026 gewann</text>
+  <text class="tiny" x="126" y="2736">der Lieferantentext und die Zeile war Extern; seit Ingos Entscheid gewinnt der Sales Type.</text>
+  <text class="tiny" x="126" y="2754">Live gemessen am 02.09.2026: es sind genau 41 Zeilen, und sie gehen alle auf EINEN EINZIGEN Lieferanten zurueck - Cenlub Systems, Land IN, durchgehend Sales Type FFM. Es sind also die Artikel eines Lieferanten, die</text>
+  <text class="tiny" x="126" y="2772">im Stamm als Eigenfertigung gefuehrt sind. Das ist ein konkreter Pruefauftrag an Indien, kein diffuses Datenrauschen.</text>
+  <text class="tiny" x="126" y="2790">Die alte Regel erzeugte hier eine Asymmetrie: fuer die Klassifikation gewann der Lieferantentext, fuer die Kostenbasis der Sales Type - dieselbe Zeile war also gleichzeitig extern und Konzernvertrieb.</text>
+  <path class="line-no" d="M170 2824 V2850" />
+  <text class="lbl lbl-no" x="186" y="2844">kein Sales Type gepflegt - weiter zur naechsten Stufe</text>
+  <rect class="stage" x="110" y="2876" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="2896">Stufe 3 - Lieferantenfelder: Ist EINES der drei Felder SupplierNumber, SupplierName oder SupplierCountry gefuellt?</text>
+  <rect class="issue" x="110" y="2918" width="1410" height="140" rx="8" />
+  <text class="box-title" x="128" y="2944">Achtung: hier greifen ZWEI verschiedene Regexes auf dieselbe Zeile</text>
+  <text class="small" x="128" y="2968">Der SupplierType kommt aus InternalMarkerPattern ueber Nummer, Name und Land zusammen (Marker: TRAFAG, TR AG, TRIN, GFS, GESELLSCHAFT FUER SENSORIK und weitere). Trifft ein Marker, gilt Intern, sonst</text>
+  <text class="small" x="128" y="2986">Extern.</text>
+  <text class="small" x="128" y="3004">Die liefernde Gesellschaft kommt aus drei getrennten Entity-Regexes und NUR aus SupplierName: TRAFAG AG oder TR AG ergibt TR_AG, TRAFAG ITALIA oder ITALY oder TR IT ergibt TR_IT, TRAFAG CONTROLS</text>
+  <text class="small" x="128" y="3022">INDIA oder TR IN ergibt TR_IN. Trifft keine, bleibt sie leer.</text>
+  <text class="small" x="128" y="3040">Der Code prueft die drei Felder mit ODER, nicht mit UND. Dass produktiv immer alle drei zusammen gefuellt oder leer sind, ist ein Messbefund und keine kodierte Regel.</text>
+  <rect class="strip" x="110" y="3070" width="1410" height="184" rx="8" />
+  <text class="k" x="126" y="3094">Beispiel 6 - Italien verkauft Ware von Trafag AG</text>
+  <text class="colhead" x="126" y="3120">TSC</text>
+  <text class="val" x="126" y="3148">TRIT</text>
+  <text class="colhead" x="206" y="3120">Material</text>
+  <text class="val" x="206" y="3148">17000</text>
+  <text class="colhead" x="326" y="3120">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="3148">17000</text>
+  <text class="colhead" x="466" y="3120">SupplierNumber</text>
+  <text class="val" x="466" y="3148">S_CH01_0065180</text>
+  <rect class="hl-good" x="624" y="3131" width="247" height="24" rx="4" />
+  <text class="colhead-on" x="631" y="3120">SupplierName</text>
+  <text class="val-on" x="631" y="3148">Trafag AG</text>
+  <rect class="hl-warn" x="869" y="3131" width="142" height="24" rx="4" />
+  <text class="colhead-on" x="876" y="3120">SupplierCountry</text>
+  <text class="val-on" x="876" y="3148">DE</text>
+  <text class="colhead" x="1016" y="3120">Sales Type</text>
+  <text class="val" x="1016" y="3148">(leer)</text>
+  <text class="colhead" x="1140" y="3120">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="3148">Intern  /  TR_AG</text>
+  <path class="sep" d="M126 3160 H1504" />
+  <text class="tiny" x="126" y="3174">Entscheidend ist allein der Klartext in SupplierName. Die Lieferantennummer taugt nicht als Schluessel, weil sie je Standort anders verschluesselt ist: Trafag AG heisst bei TRIT S_CH01_0065180, bei TRDE 60000 und</text>
+  <text class="tiny" x="126" y="3192">bei TRIN V0078.</text>
+  <text class="tiny" x="126" y="3210">Orange: das Lieferantenland ist in Italiens B1 uneinheitlich gepflegt. Live gemessen am 02.09.2026 tragen von 14'536 TRIT-Zeilen mit Lieferant Trafag AG genau 7'464 korrekt CH und 7'072 falsch DE. Ein</text>
+  <text class="tiny" x="126" y="3228">Stammdatenfehler ohne Wirkung auf die Kostenlogik, weil nur der Name gelesen wird - aber irrefuehrend in jeder Lieferantenauswertung.</text>
+  <rect class="strip" x="110" y="3266" width="1410" height="148" rx="8" />
+  <text class="k" x="126" y="3290">Beispiel 7 - Intern, aber OHNE liefernde Gesellschaft</text>
+  <text class="colhead" x="126" y="3316">TSC</text>
+  <text class="val" x="126" y="3344">(Standort)</text>
+  <text class="colhead" x="206" y="3316">Material</text>
+  <text class="val" x="206" y="3344">(Material)</text>
+  <text class="colhead" x="326" y="3316">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="3344">(leer)</text>
+  <text class="colhead" x="466" y="3316">SupplierNumber</text>
+  <text class="val" x="466" y="3344">(Nr.)</text>
+  <rect class="hl-warn" x="624" y="3327" width="247" height="24" rx="4" />
+  <text class="colhead-on" x="631" y="3316">SupplierName</text>
+  <text class="val-on" x="631" y="3344">Gesellschaft fuer Sensorik</text>
+  <text class="colhead" x="876" y="3316">SupplierCountry</text>
+  <text class="val" x="876" y="3344">(Land)</text>
+  <text class="colhead" x="1016" y="3316">Sales Type</text>
+  <text class="val" x="1016" y="3344">(leer)</text>
+  <text class="colhead" x="1140" y="3316">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="3344">Intern  /  KEINE</text>
+  <path class="sep" d="M126 3356 H1504" />
+  <text class="tiny" x="126" y="3370">Der Marker GFS macht die Zeile Intern, aber keine der drei Entity-Regexes trifft - fuer GFS gibt es keine verifizierte Konzern-Kostenquelle. Die Kostenquelle wird deshalb Interner Standardpreis statt Konzernkosten.</text>
+  <text class="tiny" x="126" y="3388">Das ist ein echter Zustand und kein Fehler. Genau deshalb fuehrt dieses Diagramm SupplierType und liefernde Gesellschaft als zwei getrennte Ergebnisse.</text>
+  <rect class="strip" x="110" y="3426" width="1410" height="148" rx="8" />
+  <text class="k" x="126" y="3450">Beispiel 8 - echter Fremdlieferant</text>
+  <text class="colhead" x="126" y="3476">TSC</text>
+  <text class="val" x="126" y="3504">TRIT</text>
+  <text class="colhead" x="206" y="3476">Material</text>
+  <text class="val" x="206" y="3504">(Material)</text>
+  <text class="colhead" x="326" y="3476">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="3504">(leer)</text>
+  <text class="colhead" x="466" y="3476">SupplierNumber</text>
+  <text class="val" x="466" y="3504">(Nr.)</text>
+  <rect class="hl-good" x="624" y="3487" width="247" height="24" rx="4" />
+  <text class="colhead-on" x="631" y="3476">SupplierName</text>
+  <text class="val-on" x="631" y="3504">ITEC / Senseca / Eletta Flow</text>
+  <text class="colhead" x="876" y="3476">SupplierCountry</text>
+  <text class="val" x="876" y="3504">IT</text>
+  <text class="colhead" x="1016" y="3476">Sales Type</text>
+  <text class="val" x="1016" y="3504">(leer)</text>
+  <text class="colhead" x="1140" y="3476">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="3504">Extern  /  keine</text>
+  <path class="sep" d="M126 3516 H1504" />
+  <text class="tiny" x="126" y="3530">Kein interner Marker im Lieferantentext, also Extern; Kostenquelle Kosten aus Verkaufszeile. 670 solcher Zeilen mit rund 474'000 EUR Umsatz galten vor der italienischen Lieferantenpflege faelschlich als</text>
+  <text class="tiny" x="126" y="3548">konzernintern.</text>
+  <path class="line-no" d="M170 3582 V3608" />
+  <text class="lbl lbl-no" x="186" y="3602">alle drei Lieferantenfelder leer - weiter zur letzten Stufe</text>
+  <rect class="stage" x="110" y="3634" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="3654">Stufe 4 - Fallback ohne jede Lieferantenangabe: Steht das Material im Schweizer Werkstamm MARC, Werk 1100?</text>
+  <rect class="check" x="110" y="3676" width="1410" height="64" rx="8" />
+  <text class="small" x="128" y="3702">Erst hier wird das Material geprueft. Warum MARC und nicht die mandantenweite MARA: MARC belegt, dass die Schweiz das Material im Werkstamm fuehrt. Das ist ein Stammdaten-Fallback und ausdruecklich</text>
+  <text class="small" x="128" y="3720">kein Produktions- oder Warenbewegungsnachweis. Deshalb ist die Tabelle GroupMaterialMasters von GroupStandardCosts getrennt - ein Treffer darf klassifizieren, aber niemals eine Kostenbasis erfinden.</text>
+  <rect class="switch" x="110" y="3752" width="1410" height="86" rx="8" />
+  <text class="box-title" x="128" y="3778">Schalter 1 - SupplierFallbackMode: ChPlantMaster (Default, produktiv)  |  GroupStandardCosts (Alt)  |  LocalStandardCosts</text>
+  <text class="small" x="128" y="3802">ChPlantMaster prueft MARC Werk 1100 mit 66'049 Materialien. GroupStandardCosts ist das historische Verhalten ueber MBEW 1100 mit 63'550 Schluesseln und dient zugleich als automatischer Rueckfall,</text>
+  <text class="small" x="128" y="3820">solange der MARC-Cache leer ist. LocalStandardCosts setzt ohne Lieferant sofort Lokal, ohne Material- und Cachepruefung.</text>
+  <rect class="strip" x="110" y="3850" width="1410" height="166" rx="8" />
+  <text class="k" x="126" y="3874">Beispiel 9 - kein Lieferant, aber die Schweiz fuehrt das Material</text>
+  <text class="colhead" x="126" y="3900">TSC</text>
+  <text class="val" x="126" y="3928">TRDE</text>
+  <rect class="hl-good" x="199" y="3911" width="122" height="24" rx="4" />
+  <text class="colhead-on" x="206" y="3900">Material</text>
+  <text class="val-on" x="206" y="3928">(Material)</text>
+  <text class="colhead" x="326" y="3900">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="3928">(leer)</text>
+  <text class="colhead" x="466" y="3900">SupplierNumber</text>
+  <text class="val" x="466" y="3928">(leer)</text>
+  <text class="colhead" x="631" y="3900">SupplierName</text>
+  <text class="val" x="631" y="3928">(leer)</text>
+  <text class="colhead" x="876" y="3900">SupplierCountry</text>
+  <text class="val" x="876" y="3928">(leer)</text>
+  <text class="colhead" x="1016" y="3900">Sales Type</text>
+  <text class="val" x="1016" y="3928">(leer)</text>
+  <text class="colhead" x="1140" y="3900">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="3928">Intern  /  TR_AG</text>
+  <path class="sep" d="M126 3940 H1504" />
+  <text class="tiny" x="126" y="3954">Live-Kandidatenmenge am 02.09.2026: 18'981 Zeilen, davon TRDE 7'612, TRES 7'071, TRFR 2'518, TRUS 1'615, TRIN 148 und TRIT nur noch 17.</text>
+  <text class="tiny" x="126" y="3972">Wie sich diese Menge auf Treffer und Nichttreffer aufteilt, laesst sich aus Sales_All NICHT nachmessen - die Datei fuehrt keine Kostenquelle. Der letzte belastbare Wert stammt vom 12.08.2026 und lautet 10'817</text>
+  <text class="tiny" x="126" y="3990">Treffer zu 12'023 Nichttreffern auf damals 22'950 Kandidaten; er ist durch Italiens Stammdatenpflege ueberholt und braucht eine neue Messung am Nachweis-Excel.</text>
+  <rect class="strip" x="110" y="4028" width="1410" height="166" rx="8" />
+  <text class="k" x="126" y="4052">Beispiel 10 - kein Lieferant und die Schweiz fuehrt das Material nicht</text>
+  <text class="colhead" x="126" y="4078">TSC</text>
+  <text class="val" x="126" y="4106">TRDE</text>
+  <rect class="hl-good" x="199" y="4089" width="122" height="24" rx="4" />
+  <text class="colhead-on" x="206" y="4078">Material</text>
+  <text class="val-on" x="206" y="4106">(Material)</text>
+  <text class="colhead" x="326" y="4078">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="4106">(leer)</text>
+  <text class="colhead" x="466" y="4078">SupplierNumber</text>
+  <text class="val" x="466" y="4106">(leer)</text>
+  <text class="colhead" x="631" y="4078">SupplierName</text>
+  <text class="val" x="631" y="4106">(leer)</text>
+  <text class="colhead" x="876" y="4078">SupplierCountry</text>
+  <text class="val" x="876" y="4106">(leer)</text>
+  <text class="colhead" x="1016" y="4078">Sales Type</text>
+  <text class="val" x="1016" y="4106">(leer)</text>
+  <text class="colhead" x="1140" y="4078">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="4106">Lokal  /  keine</text>
+  <path class="sep" d="M126 4118 H1504" />
+  <text class="tiny" x="126" y="4132">Sicherer Nichttreffer bei geladenem Cache: es gelten die Standardkosten der verkaufenden Gesellschaft. Am 12.08.2026 waren das 12'023 der damals 22'950 Kandidaten; die aktuelle Aufteilung ist wie bei Beispiel 9 nur</text>
+  <text class="tiny" x="126" y="4150">am Nachweis-Excel messbar.</text>
+  <text class="tiny" x="126" y="4168">Lokal ist bewusst nicht Extern: aus dem fehlenden CH-Treffer folgt nur, dass lokale Kosten gelten - nicht, ob lokal eingekauft oder lokal gefertigt wurde.</text>
+  <rect class="strip" x="110" y="4206" width="1410" height="130" rx="8" />
+  <text class="k" x="126" y="4230">Beispiel 11 - keine Pruefgrundlage</text>
+  <text class="colhead" x="126" y="4256">TSC</text>
+  <text class="val" x="126" y="4284">(Standort)</text>
+  <rect class="hl-bad" x="199" y="4267" width="122" height="24" rx="4" />
+  <text class="colhead-on" x="206" y="4256">Material</text>
+  <text class="val-on" x="206" y="4284">(leer)</text>
+  <text class="colhead" x="326" y="4256">Trafag-Sachnummer</text>
+  <text class="val" x="326" y="4284">(leer)</text>
+  <text class="colhead" x="466" y="4256">SupplierNumber</text>
+  <text class="val" x="466" y="4284">(leer)</text>
+  <text class="colhead" x="631" y="4256">SupplierName</text>
+  <text class="val" x="631" y="4284">(leer)</text>
+  <text class="colhead" x="876" y="4256">SupplierCountry</text>
+  <text class="val" x="876" y="4284">(leer)</text>
+  <text class="colhead" x="1016" y="4256">Sales Type</text>
+  <text class="val" x="1016" y="4284">(leer)</text>
+  <text class="colhead" x="1140" y="4256">Ergebnis: SupplierType / liefernde Gesellschaft</text>
+  <text class="res" x="1140" y="4284">Unklar  /  keine</text>
+  <path class="sep" d="M126 4296 H1504" />
+  <text class="tiny" x="126" y="4310">Materialnummer fehlt oder der MARC-Cache ist leer. Dann wird nicht geraten: die Zeile bleibt ehrlich offen und traegt Status Lieferant unklar. Zuletzt gemessen am 25.08.2026 im Nachweis-Excel: nur noch 110 Zeilen.</text>
+  <rect class="output" x="110" y="4356" width="1410" height="86" rx="8" />
+  <text class="box-title" x="128" y="4382">Ergebnis von Teil A - zwei getrennte Werte, jede Kombination ist moeglich</text>
+  <text class="small" x="128" y="4406">SupplierType: Intern, Extern, Lokal oder Unklar.   Liefernde Gesellschaft: TR_AG, TR_IT, TR_IN oder keine.</text>
+  <text class="small" x="128" y="4424">Der SupplierType steuert Beschriftung und Status, die liefernde Gesellschaft steuert die Konzern-Kostenquelle. Beispiel 7 zeigt die Kombination Intern ohne liefernde Gesellschaft.</text>
+  <rect class="band" x="40" y="4468" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="4488">Teil B - Kostenquelle und Kostenbasis: GroupMarginCalculator.ResolveCostSource() und ResolveGroupMarginCostBasis()</text>
+  <rect class="prep" x="110" y="4510" width="1410" height="158" rx="8" />
+  <text class="box-title" x="128" y="4536">Wie das im Code tatsaechlich verdrahtet ist - am 02.09.2026 nachgelesen</text>
+  <text class="small" x="128" y="4560">Die Kostenbasis ist eine benannte Regelkette aus GENAU DREI Regeln, in dieser Reihenfolge: GroupStandardCost (Konzernkosten der liefernden Gesellschaft), GroupDistributionWithoutGroupCost (Sales Type</text>
+  <text class="small" x="128" y="4578">LRD ohne Treffer bleibt offen), LocalStandardCost (lokaler Standardpreis, trifft immer zu und schliesst die Kette ab). Die erste zutreffende Regel gewinnt.</text>
+  <text class="small" x="128" y="4596">Cockpit und Nachweis rechnen NICHT mehr getrennt: ManagementCockpitService ruft GroupMarginCalculator.Evaluate an zwei Stellen auf, ExcelExportService an einer, alle drei mit denselben fuenf</text>
+  <text class="small" x="128" y="4614">Schaltern. Vorher stand dieselbe Logik zweimal da, und genau das ist am 05.08.2026 misslungen - der Status Konzernkosten fehlen kam im Nachweis an, im Cockpit nicht, dieselbe Zeile stand dort weiter</text>
+  <text class="small" x="128" y="4632">auf Standardpreis fehlt.</text>
+  <text class="small" x="128" y="4650">Konzernkosten werden nur genommen, wenn der hinterlegte Stueckwert groesser als 0 ist. Sonst faellt die Zeile auf die naechste Regel.</text>
+  <rect class="plain" x="110" y="4680" width="1410" height="86" rx="8" />
+  <text class="box-title" x="128" y="4706">Mit welchem Schluessel die Konzernkosten gesucht werden</text>
+  <text class="small" x="128" y="4730">ResolveGroupCostKey: ist die Trafag-Sachnummer gepflegt, gilt sie; sonst die lokale Materialnummer. Beide normalisiert. Gemessen auf TRIN am 05.08.2026: ueber die lokale Nummer trafen 34 von 135</text>
+  <text class="small" x="128" y="4748">Artikeln, ueber die Trafag-Sachnummer 118 von 123 - also alle, die eine gepflegte Nummer haben.</text>
+  <rect class="stage" x="110" y="4792" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="4812">Liefernde Gesellschaft TR_AG - Konzernkosten TR AG (MBEW-STPRS), Bewertungskreis 1100 fuer CH und 1200 fuer AT, in CHF</text>
+  <rect class="strip" x="110" y="4834" width="1410" height="184" rx="8" />
+  <text class="k" x="126" y="4858">Beispiel 12 - Konzernkosten der Trafag AG, hier zusaetzlich mit Waehrungsumrechnung</text>
+  <text class="colhead" x="126" y="4884">Material</text>
+  <text class="val" x="126" y="4912">17000</text>
+  <text class="colhead" x="236" y="4884">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="4912">17000</text>
+  <text class="colhead" x="366" y="4884">Liefernde Ges.</text>
+  <text class="val" x="366" y="4912">TR_AG</text>
+  <text class="colhead" x="486" y="4884">Menge</text>
+  <text class="val" x="486" y="4912">1</text>
+  <rect class="hl-good" x="549" y="4895" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="556" y="4884">Stueckkosten</text>
+  <text class="val-on" x="556" y="4912">112.69</text>
+  <rect class="hl-warn" x="679" y="4895" width="57" height="24" rx="4" />
+  <text class="colhead-on" x="686" y="4884">Whg</text>
+  <text class="val-on" x="686" y="4912">CHF</text>
+  <text class="colhead" x="741" y="4884">Kostenbasis</text>
+  <text class="val" x="741" y="4912">112.69</text>
+  <text class="colhead" x="871" y="4884">Umsatz</text>
+  <text class="val" x="871" y="4912">1'599.00 EUR</text>
+  <text class="colhead" x="1025" y="4884">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="4912">Konzernkosten TR AG (MBEW-STPRS)</text>
+  <path class="sep" d="M126 4924 H1504" />
+  <text class="tiny" x="126" y="4938">Der Stueckpreis kommt aus MBEW-STPRS und wird durch die Preiseinheit PEINH geteilt. Der Schluessel ist Material UND Bewertungskreis - ein Join nur ueber das Material gaebe CH-Zeilen den oesterreichischen Preis.</text>
+  <text class="tiny" x="126" y="4956">Material 17000 ist 920 DIFF.-PRESSOSTAT PD.</text>
+  <text class="tiny" x="126" y="4974">Orange: Kostenwaehrung CHF gegen Umsatzwaehrung EUR. Seit dem Default Convert wird mit dem Tageskurs umgerechnet; vorher trug eine solche Zeile den Status Kostenwaehrung abweichend und gar keine Marge. Haeufigste</text>
+  <text class="tiny" x="126" y="4992">Quelle produktiv: 65'672 Zeilen.</text>
+  <rect class="stage" x="110" y="5044" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="5064">Liefernde Gesellschaft TR_IT - Konzernkosten TR IT (B1 StockPrice), juengster positiver INV1.StockPrice je Material, in EUR</text>
+  <rect class="strip" x="110" y="5086" width="1410" height="202" rx="8" />
+  <text class="k" x="126" y="5110">Beispiel 13 - dasselbe Material aus Italiens Kostentabelle: das dokumentierte Risiko</text>
+  <text class="colhead" x="126" y="5136">Material</text>
+  <text class="val" x="126" y="5164">17000</text>
+  <text class="colhead" x="236" y="5136">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="5164">17000</text>
+  <text class="colhead" x="366" y="5136">Liefernde Ges.</text>
+  <text class="val" x="366" y="5164">TR_IT</text>
+  <text class="colhead" x="486" y="5136">Menge</text>
+  <text class="val" x="486" y="5164">1</text>
+  <rect class="hl-bad" x="549" y="5147" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="556" y="5136">Stueckkosten</text>
+  <text class="val-on" x="556" y="5164">826.77</text>
+  <text class="colhead" x="686" y="5136">Whg</text>
+  <text class="val" x="686" y="5164">EUR</text>
+  <text class="colhead" x="741" y="5136">Kostenbasis</text>
+  <text class="val" x="741" y="5164">826.77</text>
+  <text class="colhead" x="871" y="5136">Umsatz</text>
+  <text class="val" x="871" y="5164">1'599.00 EUR</text>
+  <text class="colhead" x="1025" y="5136">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="5164">Konzernkosten TR IT (B1 StockPrice)</text>
+  <path class="sep" d="M126 5176 H1504" />
+  <text class="tiny" x="126" y="5190">826.77 EUR ist Italiens EINKAUFSPREIS bei Trafag AG, nicht die Herstellkosten. Der Schweizer STPRS desselben Materials betraegt 112.69 CHF, also rund ein Siebtel. Menge 1 schliesst die</text>
+  <text class="tiny" x="126" y="5208">Stueckpreis-gegen-Zeilensumme-Falle aus: es ist wirklich ein Stueckwert.</text>
+  <text class="tiny" x="126" y="5226">Diese Quelle greift nur, wenn Italien sich bei einer Trafag-Sachnummer SELBST als Lieferant pflegt. Live 1'028 TRIT-Zeilen mit Lieferant Trafag Italia, davon fuehrt die Schweiz bei keiner dasselbe Material - das</text>
+  <text class="tiny" x="126" y="5244">Risiko ist angelegt, nicht aktiv. Ueber 867 gemeinsame Materialien liegt Italien im Mittel beim 3.48-fachen des Schweizer Werts.</text>
+  <text class="tiny" x="126" y="5262">Kein Artikelstammwert moeglich: OITM.PrdStdCst ist bei allen 40'478 Artikeln 0, weil 99.1 Prozent der aktiven Lagerartikel chargenbewertet sind (EvalSystem B). Das ist architektonisch so und fuellt sich nie.</text>
+  <rect class="stage" x="110" y="5314" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="5334">Liefernde Gesellschaft TR_IN - Konzernkosten TR IN (B1 StockPrice), juengster positiver RIN1.StockPrice je Material, in INR</text>
+  <rect class="strip" x="110" y="5356" width="1410" height="184" rx="8" />
+  <text class="k" x="126" y="5380">Beispiel 14 - Indiens eigene Belegkosten</text>
+  <text class="colhead" x="126" y="5406">Material</text>
+  <text class="val" x="126" y="5434">(lokale Nr.)</text>
+  <text class="colhead" x="236" y="5406">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="5434">gepflegt</text>
+  <text class="colhead" x="366" y="5406">Liefernde Ges.</text>
+  <text class="val" x="366" y="5434">TR_IN</text>
+  <text class="colhead" x="486" y="5406">Menge</text>
+  <text class="val" x="486" y="5434">(Zeile)</text>
+  <rect class="hl-good" x="549" y="5417" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="556" y="5406">Stueckkosten</text>
+  <text class="val-on" x="556" y="5434">s. Notiz</text>
+  <text class="colhead" x="686" y="5406">Whg</text>
+  <text class="val" x="686" y="5434">INR</text>
+  <text class="colhead" x="741" y="5406">Kostenbasis</text>
+  <text class="val" x="741" y="5434">s. Notiz</text>
+  <text class="colhead" x="871" y="5406">Umsatz</text>
+  <text class="val" x="871" y="5434">(Zeile)</text>
+  <text class="colhead" x="1025" y="5406">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="5434">Konzernkosten TR IN (B1 StockPrice)</text>
+  <path class="sep" d="M126 5446 H1504" />
+  <text class="tiny" x="126" y="5460">Je Material gilt der juengste positive Wert nach PostingDate, sonst InvoiceDate, sonst ExtractionDate. Verworfen werden Nullwerte, leere Materialschluessel und Kostenwaehrungen, die von der Gesellschaftswaehrung</text>
+  <text class="tiny" x="126" y="5478">abweichen.</text>
+  <text class="tiny" x="126" y="5496">Gemessene Wirkung ueber alle 6'090 TRIN-Eigenverkaufszeilen: Kostenbasis 2025 plus 10.5 Prozent, das sind rund 23.4 Mio INR weniger Marge, und 2026 minus 0.8 Prozent. Der Ausschlag im Vorjahr ist die direkte Folge</text>
+  <text class="tiny" x="126" y="5514">der Regel juengster positiver Wert - ein heutiger Kostenwert wirkt auf alte Zeilen. Ob das dauerhaft gilt oder ein Durchschnitt beziehungsweise Stichtag noetig ist, liegt fachlich bei Andreas.</text>
+  <rect class="switch" x="110" y="5552" width="1410" height="86" rx="8" />
+  <text class="box-title" x="128" y="5578">Schalter 3 - B1GroupStandardCostMode: LatestPositive (Default, produktiv)  |  AveragePositive</text>
+  <text class="small" x="128" y="5602">Gilt nur fuer Trafag Italien und Indien. Wirkt ERST beim naechsten Standortimport, weil GroupStandardCosts dann neu aufgebaut wird - das Umschalten allein veraendert keine bereits gespeicherten</text>
+  <text class="small" x="128" y="5620">Kosten. Ein historischer Stichtagsmodus wird bewusst nicht angeboten, weil der Cache keine Beleghistorie speichert.</text>
+  <rect class="switch" x="110" y="5650" width="1410" height="230" rx="8" />
+  <text class="box-title" x="128" y="5676">Schalter 2 - InternalSupplierCostSourceMode: DeliveringEntityCosts (Default, produktiv)  |  SwissStprsForChPlantMaterial</text>
+  <text class="small" x="128" y="5700">Aendert NUR die Kostenquelle, niemals die Lieferantenklassifikation. Der Schweizer STPRS wird nur genommen, wenn das Material in MARC 1100 steht UND ein positiver Schweizer Wert vorliegt; sonst</text>
+  <text class="small" x="128" y="5718">bleibt die bisherige Kostenquelle sichtbar. Genau dieser Schalter ist die Antwort auf Beispiel 13.</text>
+  <text class="small" x="128" y="5736">ACHTUNG, am Code geprueft und nicht deckungsgleich mit der Beschriftung: GroupMarginCostRules.ShouldUseSwissStprs prueft nur den Modus, den MARC-1100-Treffer und einen positiven Schweizer Wert. Es</text>
+  <text class="small" x="128" y="5754">wird NICHT geprueft, ob die Zeile ueberhaupt einen internen Lieferanten hat. Der Schalter setzt die liefernde Gesellschaft danach bedingungslos auf TR_AG.</text>
+  <text class="small" x="128" y="5772">Im Alternativmodus bekaemen also auch Zeilen mit echtem Drittlieferanten sowie Zeilen der Typen Lokal und Unklar Schweizer Konzernkosten, sobald die Schweiz das Material fuehrt - und das sind 66'049</text>
+  <text class="small" x="128" y="5790">Materialien. Der Name des Schalters, der GUI-Hilfetext und der Codeblock in der Doku sagen alle drei uebereinstimmend bei INTERNEM Lieferanten. Das spricht dafuer, dass die Bedingung im Code fehlt</text>
+  <text class="small" x="128" y="5808">und nicht, dass die Beschriftung zu eng ist.</text>
+  <text class="small" x="128" y="5826">Die Gegenthese waere Abschnitt 10 der Standardkosten-Doku, der den Schweizer STPRS unabhaengig von der liefernden Gesellschaft empfiehlt. Diese Empfehlung setzt aber voraus, dass ueberhaupt eine</text>
+  <text class="small" x="128" y="5844">liefernde Gesellschaft erkannt wurde - eine Extern-Zeile mit echtem Drittlieferanten hat keine und ist davon nicht gedeckt. Zu klaeren mit Andreas, bevor er den Schalter zum Vergleichen benutzt.</text>
+  <text class="small" x="128" y="5862">Produktiv ist nichts betroffen, der Default steht auf DeliveringEntityCosts.</text>
+  <rect class="stage" x="110" y="5906" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="5926">Sonderfall - Sales Type LRD ohne Konzernkostentreffer: die Kostenbasis bleibt bewusst offen</text>
+  <rect class="strip" x="110" y="5948" width="1410" height="184" rx="8" />
+  <text class="k" x="126" y="5972">Beispiel 15 - Konzernkosten fehlen</text>
+  <text class="colhead" x="126" y="5998">Material</text>
+  <text class="val" x="126" y="6026">(Material)</text>
+  <text class="colhead" x="236" y="5998">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="6026">(leer)</text>
+  <text class="colhead" x="366" y="5998">Liefernde Ges.</text>
+  <text class="val" x="366" y="6026">TR_AG</text>
+  <text class="colhead" x="486" y="5998">Menge</text>
+  <text class="val" x="486" y="6026">(Zeile)</text>
+  <rect class="hl-bad" x="549" y="6009" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="556" y="5998">Stueckkosten</text>
+  <text class="val-on" x="556" y="6026">nicht gefunden</text>
+  <text class="colhead" x="686" y="5998">Whg</text>
+  <text class="val" x="686" y="6026">-</text>
+  <rect class="hl-bad" x="734" y="6009" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="741" y="5998">Kostenbasis</text>
+  <text class="val-on" x="741" y="6026">0.00</text>
+  <text class="colhead" x="871" y="5998">Umsatz</text>
+  <text class="val" x="871" y="6026">(Zeile)</text>
+  <text class="colhead" x="1025" y="5998">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="6026">Konzernkosten fehlen</text>
+  <path class="sep" d="M126 6038 H1504" />
+  <text class="tiny" x="126" y="6052">TRIN-Zeile mit Sales Type LRD: die Ware kommt von Trafag AG, fuer das Material gibt es aber keinen Konzernkostensatz - entweder fehlt der Eintrag ganz oder er steht auf 0, denn die Regel verlangt einen Stueckwert</text>
+  <text class="tiny" x="126" y="6070">groesser als 0. Der lokale indische Standardpreis IST vorhanden, wird aber BEWUSST nicht genommen: er ist der IC-Einkaufspreis. Die Zeile bleibt offen, statt eine Marge auf dem Verrechnungspreis auszuweisen. Zuletzt</text>
+  <text class="tiny" x="126" y="6088">gemessen 140 Zeilen.</text>
+  <text class="tiny" x="126" y="6106">Nebenwirkung dieser Konstruktion: ein Konzernkostensatz mit Wert 0 und ein fehlender Eintrag sind in der Ausgabe nicht unterscheidbar, beide erscheinen als Konzernkosten fehlen.</text>
+  <rect class="issue" x="110" y="6144" width="1410" height="194" rx="8" />
+  <text class="box-title" x="128" y="6170">WICHTIGE GRENZE, am Code geprueft: dieser Schutz greift NUR bei Sales Type LRD</text>
+  <text class="small" x="128" y="6194">Die Regel GroupMarginCostRules.GroupDistributionWithoutGroupCost prueft ausschliesslich, ob der Sales Type LRD ist. Sie prueft NICHT, ob eine liefernde Konzerngesellschaft erkannt wurde.</text>
+  <text class="small" x="128" y="6212">Folge: eine Zeile mit erkanntem Lieferanten Trafag AG, Trafag Italia oder Trafag India, fuer deren Material KEIN Konzernkostensatz existiert, faellt still auf die letzte Regel LocalStandardCost</text>
+  <text class="small" x="128" y="6230">durch. Sie zeigt dann eine Marge auf dem lokalen IC-Preis und traegt die Kostenquelle Interner Standardpreis - ohne offenen Status und ohne jeden Hinweis. Praktisch existiert der Schutz also nur fuer</text>
+  <text class="small" x="128" y="6248">Indien, weil nur dort ein Sales Type gepflegt ist.</text>
+  <text class="small" x="128" y="6266">OBERGRENZE, live gemessen am 02.09.2026: 19'221 Zeilen tragen eine erkannte liefernde Konzerngesellschaft OHNE Sales Type LRD, das sind 18,3 Prozent aller Verkaufszeilen. Groesste Bloecke: TRIT mit</text>
+  <text class="small" x="128" y="6284">Lieferant Trafag AG 14'536, TRUK mit Trafag AG 2'839, TRIT mit Trafag Italia 1'028, TRIT mit Trafag India 366.</text>
+  <text class="small" x="128" y="6302">Das ist ausdruecklich eine OBERGRENZE und nicht die betroffene Menge: wie viele dieser Zeilen wirklich keinen Konzernkostensatz finden, laesst sich aus Sales_All nicht messen, weil dort die</text>
+  <text class="small" x="128" y="6320">Kostenquelle fehlt. Dafuer braucht es eine Messung gegen GroupStandardCosts in der Produktivdatenbank. Die Groessenordnung genuegt aber, um den Punkt fuer Andreas auf die Tagesordnung zu setzen.</text>
+  <rect class="stage" x="110" y="6364" width="1410" height="30" rx="4" />
+  <text class="bandtxt" x="128" y="6384">Keine liefernde Gesellschaft - die Kostenquelle folgt dem SupplierType und nutzt den StandardCost der Verkaufszeile</text>
+  <rect class="plain" x="110" y="6406" width="1410" height="46" rx="8" />
+  <text class="small" x="128" y="6432">Intern ergibt Interner Standardpreis.   Extern ergibt Kosten aus Verkaufszeile.   Lokal ergibt Standardkosten der lokalen Gesellschaft.   Unklar ergibt Lieferant unklar.</text>
+  <rect class="plain" x="110" y="6464" width="1410" height="328" rx="8" />
+  <text class="box-title" x="128" y="6490">Standardkosten der verkaufenden Gesellschaft, je Land</text>
+  <text class="colhead" x="128" y="6518">Land</text>
+  <text class="colhead" x="250" y="6518">Quelle</text>
+  <text class="colhead" x="1300" y="6518">Fuellgrad</text>
+  <path class="rowline" d="M128 6528 H1502" />
+  <text class="small" x="128" y="6552">CH / AT</text>
+  <text class="small" x="250" y="6552">VBRP-WAVWR geteilt durch FKIMG, ohne Lieferbezug Rueckfall auf MBEW-STPRS</text>
+  <text class="small" x="1300" y="6552">rund 96 %</text>
+  <path class="rowline" d="M128 6562 H1502" />
+  <text class="small" x="128" y="6582">DE</text>
+  <text class="small" x="250" y="6582">Alphaplan: (NettoPreisGesamt minus RohertragGesamt) geteilt durch die Menge</text>
+  <text class="small" x="1300" y="6582">68.5 %</text>
+  <path class="rowline" d="M128 6592 H1502" />
+  <text class="small" x="128" y="6612">IT</text>
+  <text class="small" x="250" y="6612">SAP B1, INV1.StockPrice der Belegposition</text>
+  <text class="small" x="1300" y="6612">95.7 %</text>
+  <path class="rowline" d="M128 6622 H1502" />
+  <text class="small" x="128" y="6642">IN</text>
+  <text class="small" x="250" y="6642">SAP B1, RIN1.StockPrice der Belegposition</text>
+  <text class="small" x="1300" y="6642">99.4 %</text>
+  <path class="rowline" d="M128 6652 H1502" />
+  <text class="small" x="128" y="6672">US</text>
+  <text class="small" x="250" y="6672">SAP B1, Belegposition</text>
+  <text class="small" x="1300" y="6672">92.3 %</text>
+  <path class="rowline" d="M128 6682 H1502" />
+  <text class="small" x="128" y="6702">ES</text>
+  <text class="small" x="250" y="6702">SAP B1, Belegposition</text>
+  <text class="small" x="1300" y="6702">80.9 %</text>
+  <path class="rowline" d="M128 6712 H1502" />
+  <text class="small" x="128" y="6732">FR</text>
+  <text class="small" x="250" y="6732">SAP B1, Belegposition - rund die Haelfte der Zeilen ohne StockPrice, Stammdatenfrage an FR</text>
+  <text class="small" x="1300" y="6732">51.4 %</text>
+  <path class="rowline" d="M128 6742 H1502" />
+  <text class="small" x="128" y="6762">UK</text>
+  <text class="small" x="250" y="6762">keine - Sage liefert keine Kostenspalte</text>
+  <text class="small" x="1300" y="6762">0 %</text>
+  <path class="rowline" d="M128 6772 H1502" />
+  <rect class="band" x="40" y="6818" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="6838">Teil C - Normalisierung auf den Stueckpreis, Kostenbasis und Vorzeichen</text>
+  <rect class="issue" x="110" y="6860" width="1410" height="140" rx="8" />
+  <text class="box-title" x="128" y="6886">Die zentrale Falle: Stueckpreis gegen Zeilensumme</text>
+  <text class="small" x="128" y="6910">ResolveGroupMarginCostBasis rechnet Menge mal StandardCost. StandardCost MUSS deshalb ein Stueckpreis sein. MBEW-STPRS gilt je PEINH Stueck und wird durch die Preiseinheit geteilt. VBRP-WAVWR ist</text>
+  <text class="small" x="128" y="6928">eine Zeilensumme und wird durch die Menge geteilt. Der Alphaplan-Rohertrag ist ebenfalls eine Zeilensumme und wird durch die Menge geteilt. Der B1 StockPrice ist bereits ein Stueckpreis und bleibt</text>
+  <text class="small" x="128" y="6946">unveraendert.</text>
+  <text class="small" x="128" y="6964">Ohne diese Normalisierung waere die Kostenbasis STILL um genau diesen Faktor zu hoch - kein Compiler und kein Test schlaegt an. Dass heute ueberall PEINH gleich 1 steht, schuetzt nicht: ein einziges</text>
+  <text class="small" x="128" y="6982">Material mit PEINH gleich 100 genuegt.</text>
+  <rect class="strip" x="110" y="7012" width="1410" height="184" rx="8" />
+  <text class="k" x="126" y="7036">Beispiel 16 - Gutschrift: das Vorzeichen der Kostenbasis folgt dem Umsatz</text>
+  <text class="colhead" x="126" y="7062">Material</text>
+  <text class="val" x="126" y="7090">(Material)</text>
+  <text class="colhead" x="236" y="7062">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="7090">-</text>
+  <text class="colhead" x="366" y="7062">Liefernde Ges.</text>
+  <text class="val" x="366" y="7090">(beliebig)</text>
+  <text class="colhead" x="486" y="7062">Menge</text>
+  <text class="val" x="486" y="7090">1</text>
+  <text class="colhead" x="556" y="7062">Stueckkosten</text>
+  <text class="val" x="556" y="7090">60.00</text>
+  <text class="colhead" x="686" y="7062">Whg</text>
+  <text class="val" x="686" y="7090">EUR</text>
+  <rect class="hl-good" x="734" y="7073" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="741" y="7062">Kostenbasis</text>
+  <text class="val-on" x="741" y="7090">-60.00</text>
+  <rect class="hl-good" x="864" y="7073" width="147" height="24" rx="4" />
+  <text class="colhead-on" x="871" y="7062">Umsatz</text>
+  <text class="val-on" x="871" y="7090">-100.00 EUR</text>
+  <text class="colhead" x="1025" y="7062">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="7090">Marge = -100 minus (-60) = -40</text>
+  <path class="sep" d="M126 7102 H1504" />
+  <text class="tiny" x="126" y="7116">Ohne die Vorzeichenregel waere die Kostenbasis plus 60 und die Marge minus 160: der negative Umsatz und die positiven Kosten wuerden sich addieren statt aufzuheben. Die Gutschrift wuerde die Marge doppelt belasten.</text>
+  <text class="tiny" x="126" y="7134">Im Code exakt so: IsReversal gilt bei negativem Netto-Umsatz und, wenn der Umsatz genau 0 ist, zusaetzlich bei negativer Menge. Die Rechnung selbst arbeitet mit Betraegen (Menge mal Stueckkosten, beides als</text>
+  <text class="tiny" x="126" y="7152">Absolutwert) und dreht am Ende das Vorzeichen - so kann eine negative Menge die Kosten nicht ein zweites Mal umdrehen.</text>
+  <text class="tiny" x="126" y="7170">Randfall aus derselben Methode: ist die Menge 0, wird bewusst der reine Stueckpreis als Kostenbasis genommen und nicht 0. Sonst fiele die Zeile faelschlich auf den Status Standardpreis fehlt.</text>
+  <rect class="band" x="40" y="7222" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="7242">Teil D - Waehrung: GroupMarginCostCurrencyConverter, Beschluesse B5 und B6 von Andreas vom 27.08.2026</text>
+  <rect class="switch" x="110" y="7264" width="1410" height="122" rx="8" />
+  <text class="box-title" x="128" y="7290">Schalter Kostenwaehrung - GroupMarginCostCurrencyMode: Convert (Default und produktiv seit 27.08.2026)  |  Mask</text>
+  <text class="small" x="128" y="7314">Convert rechnet eine abweichende Kostenwaehrung mit dem Kurs in die Verkaufswaehrung um; ohne verfuegbaren Kurs faellt die Zeile automatisch auf Mask zurueck. Mask laesst Marge und Prozentwert offen</text>
+  <text class="small" x="128" y="7332">und setzt den Status Kostenwaehrung abweichend.</text>
+  <text class="small" x="128" y="7350">Bestehende Datenbanken trugen Mask ausdruecklich in der Zeile, ein geaenderter Spalten-Default wirkt dort nicht. DatabaseSchemaMaintenanceService zieht den Entscheid einmal je Datenbank nach,</text>
+  <text class="small" x="128" y="7368">gesteuert ueber die Markerspalte GroupMarginCostCurrencyDecision20260827Applied. Wer danach wieder Mask waehlt, behaelt diese Wahl.</text>
+  <rect class="switch" x="110" y="7398" width="1410" height="122" rx="8" />
+  <text class="box-title" x="128" y="7424">Schalter 4 - GroupMarginChfRateMode: CurrentDailyRate (Default, produktiv)  |  FinanceYearEndRate, also der 31.12. des Finance-Jahrs</text>
+  <text class="small" x="128" y="7448">Steuert einheitlich alle fuenf CHF-Finance-Ausgaben: Gruppenmarge im Cockpit, Finance-Pivot, Finance-Pruefbuch, Nachweis-Excel und Sales_All. Jede Detailzeile traegt SalesValueChf, CostBasisValueChf</text>
+  <text class="small" x="128" y="7466">und MarginValueChf; die Konzernsumme rechnet ueber diese Felder und zeigt CHF, waehrend Landes- und Divisionszeilen in Lokalwaehrung bleiben.</text>
+  <text class="small" x="128" y="7484">Fehlt fuer eine Waehrung ein Kurs, bleibt die Zeile AUS DER SUMME heraus und wird in MissingGroupCurrencyRateRows gezaehlt und ausgewiesen - eine gefuellte Zahl ohne Vorbehalt waere gefaehrlicher als</text>
+  <text class="small" x="128" y="7502">eine sichtbar offene Position. Bewusste Folge des Tageskurses: dieselbe Zeile kann an zwei Tagen zwei Margen ergeben. Kursquelle, verbindlicher Stichtag und Pflegeprozess bleiben als ISS-008 offen.</text>
+  <rect class="strip" x="110" y="7532" width="1410" height="166" rx="8" />
+  <text class="k" x="126" y="7556">Beispiel 17 - Rechnung 0000041734/1: Kostenwaehrung gegen Umsatzwaehrung</text>
+  <text class="colhead" x="126" y="7582">Material</text>
+  <text class="val" x="126" y="7610">52473</text>
+  <text class="colhead" x="236" y="7582">Trafag-Sachnr.</text>
+  <text class="val" x="236" y="7610">(gepflegt)</text>
+  <text class="colhead" x="366" y="7582">Liefernde Ges.</text>
+  <text class="val" x="366" y="7610">TR_IN</text>
+  <text class="colhead" x="486" y="7582">Menge</text>
+  <text class="val" x="486" y="7610">(Zeile)</text>
+  <text class="colhead" x="556" y="7582">Stueckkosten</text>
+  <text class="val" x="556" y="7610">s. Notiz</text>
+  <rect class="hl-bad" x="679" y="7593" width="57" height="24" rx="4" />
+  <text class="colhead-on" x="686" y="7582">Whg</text>
+  <text class="val-on" x="686" y="7610">INR</text>
+  <rect class="hl-bad" x="734" y="7593" width="132" height="24" rx="4" />
+  <text class="colhead-on" x="741" y="7582">Kostenbasis</text>
+  <text class="val-on" x="741" y="7610">86'988.57</text>
+  <rect class="hl-bad" x="864" y="7593" width="147" height="24" rx="4" />
+  <text class="colhead-on" x="871" y="7582">Umsatz</text>
+  <text class="val-on" x="871" y="7610">3'203.40 GBP</text>
+  <text class="colhead" x="1025" y="7582">Kostenquelle bzw. Status</text>
+  <text class="res" x="1025" y="7610">vorher: Kostenwaehrung abweichend</text>
+  <path class="sep" d="M126 7622 H1504" />
+  <text class="tiny" x="126" y="7636">TRUK verkauft, Indien liefert. Vor dem 25.08.2026 lag die Kostenbasis bei 2'290.50 GBP aus dem lokalen Wert, danach bei 86'988.57 INR aus den Konzernkosten TR IN - und die Zeile trug bewusst keine Marge mehr, statt</text>
+  <text class="tiny" x="126" y="7654">eine plausibel aussehende falsche auszuweisen.</text>
+  <text class="tiny" x="126" y="7672">Betroffen waren 32 Zeilen: TRUK mit TR-IN-Kosten 24, TRIT mit TR-IN-Kosten 5, TRUK mit TR-IT-Kosten 3. Seit dem Default Convert wird stattdessen mit dem Tageskurs umgerechnet.</text>
+  <rect class="band" x="40" y="7724" width="1480" height="30" rx="4" />
+  <text class="bandtxt" x="58" y="7744">Teil E - Statuskette: GroupMarginCalculator.ResolveStatus(), streng der Reihe nach, die erste zutreffende Bedingung gewinnt</text>
+  <rect class="output" x="110" y="7766" width="1410" height="254" rx="8" />
+  <text class="k" x="128" y="7798">1.</text>
+  <text class="small" x="160" y="7798">kein Kurs vorhanden</text>
+  <text class="res" x="440" y="7798">Kurs fehlt</text>
+  <text class="tiny" x="720" y="7798">Nur im Audit-Ledger moeglich. Ueberlagert jede weitere Aussage zur Zeile.</text>
+  <text class="k" x="128" y="7826">2.</text>
+  <text class="small" x="160" y="7826">SupplierType = Unklar</text>
+  <text class="res" x="440" y="7826">Lieferant unklar</text>
+  <text class="tiny" x="720" y="7826">Der Typ ist nicht erkennbar, also ist keine Kostenaussage belastbar. Siehe Beispiel 11.</text>
+  <text class="k" x="128" y="7854">3.</text>
+  <text class="small" x="160" y="7854">basis.IsGroupCostMissing</text>
+  <text class="res" x="440" y="7854">Konzernkosten fehlen</text>
+  <text class="tiny" x="720" y="7854">Steht VOR Standardpreis fehlt: ein Standardpreis IST da, er ist nur der IC-Einkaufspreis. Siehe Beispiel 15.</text>
+  <text class="k" x="128" y="7882">4.</text>
+  <text class="small" x="160" y="7882">Kostenbasis = 0</text>
+  <text class="res" x="440" y="7882">Standardpreis fehlt</text>
+  <text class="tiny" x="720" y="7882">Das Quellsystem hat keinen Standardpreis geliefert. Betrifft vor allem UK mit 0 Prozent und FR mit 51.4 Prozent.</text>
+  <text class="k" x="128" y="7910">5.</text>
+  <text class="small" x="160" y="7910">Umsatz = 0</text>
+  <text class="res" x="440" y="7910">Umsatz fehlt</text>
+  <text class="tiny" x="720" y="7910">Diagnosefall, etwa eine reine Mengen- oder Korrekturzeile. Die Kostenbasis ist hier in Ordnung.</text>
+  <text class="k" x="128" y="7938">6.</text>
+  <text class="small" x="160" y="7938">sonst</text>
+  <text class="res" x="440" y="7938">OK</text>
+  <text class="tiny" x="720" y="7938">Marge belastbar.</text>
+  <path class="rowline" d="M128 7958 H1502" />
+  <text class="tiny" x="128" y="7980">Zusaetzlich setzt der Mask-Pfad aus Teil D den Status Kostenwaehrung abweichend (GroupMarginCostCurrencyConverter.OpenStatus). Als OFFEN im Sinne von GroupMarginStatuses.IsOpen gelten genau vier Werte:</text>
+  <text class="tiny" x="128" y="7998">Standardpreis fehlt, Lieferant unklar, Kostenwaehrung abweichend und Konzernkosten fehlen. Umsatz fehlt gehoert bewusst NICHT dazu, weil dort die Kostenbasis stimmt und nur der Umsatz fehlt.</text>
+  <rect class="issue" x="110" y="8040" width="1410" height="194" rx="8" />
+  <text class="box-title" x="128" y="8066">Zwei Stellen, an denen die Grundregel aus Teil 0 heute zu einfach ist - beide liegen fachlich bei Andreas</text>
+  <text class="small" x="128" y="8090">ERSTENS, der JA-Ast. Die Grundregel nennt alle drei Konzerntabellen als Herstellkosten (Beschluss B3 vom 27.08.2026). Fuer Italien trifft das nachweislich nicht zu: bei Trafag-Sachnummern ist der B1</text>
+  <text class="small" x="128" y="8108">StockPrice der Einkaufspreis von Trafag AG und liegt ueber 867 gemeinsame Materialien im Mittel beim 3.48-fachen des Schweizer STPRS. Das ist ein Verrechnungspreis, keine Herstellkosten. Andreas hat</text>
+  <text class="small" x="128" y="8126">B3 mit hoher Wahrscheinlichkeit ohne Kenntnis dieser Messung bestaetigt. Siehe Beispiel 13.</text>
+  <text class="small" x="128" y="8144">ZWEITENS, der NEIN-Ast. Die Grundregel sagt: kein Trafag-Lieferant, also Standardkosten der verkaufenden Landesgesellschaft (Beschluss B1). Produktiv gehen von den 22'950 Zeilen ohne</text>
+  <text class="small" x="128" y="8162">Lieferantenangabe aber 10'817 auf SCHWEIZER Kosten, weil Stufe 4 einen MARC-1100-Treffer als Konzernbezug wertet. Wird B1 woertlich umgesetzt, wechseln diese Zeilen auf lokale Kosten. Siehe Beispiel</text>
+  <text class="small" x="128" y="8180">9.</text>
+  <text class="small" x="128" y="8198">Beide Punkte ziehen am selben Hebel in ENTGEGENGESETZTE Richtungen: der Italien-Befund spricht dafuer, den Schweizer STPRS auszuweiten, auch wenn ein Lieferant genannt ist; B1 wuerde ihn</text>
+  <text class="small" x="128" y="8216">einschraenken. Andreas sollte das in einem Zug entscheiden, nicht getrennt. Technisch sind beide Varianten als Schalter 1 und Schalter 2 bereits waehlbar, der produktive Default ist unveraendert.</text>
+  <rect class="issue" x="110" y="8256" width="1410" height="230" rx="8" />
+  <text class="box-title" x="128" y="8282">Fallen in diesem Ast - alle aus echten Fehlern entstanden</text>
+  <text class="small" x="128" y="8306">1. Statustexte nie umbenennen. Der Text OK steht zusaetzlich als Zeichenkette in der Excel-Formel des Nachweises. Eine Umbenennung laesst dort STILL alle Margen leer, kein Compiler und kein Test</text>
+  <text class="small" x="128" y="8324">schlaegt an. Statuswerte gehoeren ausschliesslich in Services/GroupMarginStatuses.cs.</text>
+  <text class="small" x="128" y="8342">2. Fuellgrade nie mit Spalte groesser 0 messen. StandardCost ist eine TEXT-Spalte, und in SQLite ist Text groesser als jede Zahl - das ergibt falsche 100 Prozent. CAST(... AS REAL) verwenden und die</text>
+  <text class="small" x="128" y="8360">Grundgesamtheit fachlich filtern. Dieser Fehler hat am 16.07.2026 eine ganze Messreihe verfaelscht.</text>
+  <text class="small" x="128" y="8378">3. Das Blatt Gruppenmarge Summary enthaelt in den Spalten E bis M nur SUMIFS- und COUNTIFS-Formeln ohne gespeicherte Ergebnisse. Wer die Mappe nicht in Excel oeffnet, sieht dort leere Zellen und</text>
+  <text class="small" x="128" y="8396">haelt das faelschlich fuer fehlende Daten. Richtig ist, aus Gruppenmarge Details selbst zu aggregieren.</text>
+  <text class="small" x="128" y="8414">4. Die Zeilenreihenfolge zweier Exporte ist nicht stabil. Verglichen wird ueber den Schluessel Jahr, Land, TSC, Rechnung, Position, Material und Umsatz, nie ueber die Zeilennummer. Ein</text>
+  <text class="small" x="128" y="8432">Positionsvergleich meldete am 25.08.2026 87'476 falsche Treffer.</text>
+  <text class="small" x="128" y="8450">5. Resolve() und ResolveDeliveringEntity() muessen dieselbe Kaskadenreihenfolge haben, sonst laufen Klassifikation und Kostenpfad auseinander - genau der Fehler, wegen dem die Rechnung am 05.08.2026</text>
+  <text class="small" x="128" y="8468">in GroupMarginCalculator zusammengelegt wurde.</text>
+</svg>

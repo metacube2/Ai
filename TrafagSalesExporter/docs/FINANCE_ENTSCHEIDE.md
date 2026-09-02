@@ -143,6 +143,10 @@ Bekannte Warnungen:
 - MudBlazor Analyzer meldet bestehende `Dense`-Attribute in einzelnen Razor-Komponenten.
 - NuGet-Sicherheitsdaten konnten lokal nicht von `api.nuget.org` geladen werden.
 
+Nachtrag 2026-09-01: Der Abruf funktioniert wieder; der aktuelle Audit meldet fuenf
+High-Advisories ueber vier Pakete. Details:
+`docs/NUGET_SICHERHEIT_2026-09-01.md`.
+
 ## UK / England Befund
 
 England/UK ist im System vorhanden und wird im FinanceProbe-Abgleich angezeigt.

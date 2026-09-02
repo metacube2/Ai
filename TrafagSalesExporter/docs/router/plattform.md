@@ -10,6 +10,7 @@ Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse.
 | --- | --- |
 | **Aktuell verifizierter Produktivstand** | `docs/rag/DEPLOYMENT.md` |
 | **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
+| **NuGet-Sicherheitsbefund und Updatepfad** | `docs/NUGET_SICHERHEIT_2026-09-01.md` |
 | Architektur, Kurzstand | `docs/rag/ARCHITECTURE.md` |
 | Admin-Bereich, Kurzstand | `docs/rag/ADMIN.md` |
 | Admin-Bereich und Startseite | `docs/ADMIN_BEREICH_STARTSEITE_2026-05-21.md` |

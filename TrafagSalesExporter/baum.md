@@ -59,6 +59,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
 | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |
+| `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` | Diagramm fuer Andreas: Grundregel, vier Belegstufen statt Sonderfaelle, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, fuenf Schalter, Statuskette. Erzeugt aus `.tmp_tools/BuildSupplierWorkflowSvg` |
 
 ## Standortdaten und Exporte
 
@@ -107,6 +108,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | --- | --- |
 | `docs/rag/DEPLOYMENT.md` | aktuell verifizierter Produktivstand |
 | `docs/DEPLOYMENT.md` | **zusammengefuehrt**: Verfahren, Konsole, Fallen |
+| `docs/NUGET_SICHERHEIT_2026-09-01.md` | aktueller NuGet-Audit, Sicherheitsbefund und Updatepfad |
 | `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand |
 | `docs/rag/ADMIN.md` | Admin, Kurzstand |
 | `docs/rag/PROJECT.md` | Projektstand, Kurzstand |

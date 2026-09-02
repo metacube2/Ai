@@ -44,6 +44,52 @@ Stand: 2026-09-01
 
 ## Kurzstand
 
+- **Offener Sicherheitsnachtrag, kein Deploy:** Der lokale NuGet-Audit vom 2026-09-01
+  meldet fuenf High-Advisories ueber vier Pakete. Es gab hierzu weder eine Paket- noch eine
+  Codeaenderung, keinen Neubuild und keinen Produktivpublish; der unten dokumentierte
+  Produktivstand bleibt unveraendert. Vor dem naechsten Deploy sind die Abhaengigkeiten zu
+  aktualisieren, Audit, Release-Build, volle Tests und SQLite-/SharePoint-Smokes zu wiederholen.
+  Details und sichere Mindestversionen: `docs/NUGET_SICHERHEIT_2026-09-01.md`.
+
+- Aktuellster produktiv verifizierter Deploy: **2026-09-02 10:59, Finance: zwei
+  Code-gegen-Doku-Reparaturen**, Funktionscommit `8ae972f`, `670/670` Release-Tests gruen
+  vor dem Publish. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-swiss-stprs-guard-20260902-105839.bak`. `BiDashboard.dll`
+  `02.09.2026 10:59:58`, `4'894'208` Bytes, SHA256
+  `D9B680010D4C9618C931F32EAF86B45755FA807E7304FF1EED700938DFA8CFF8`; lokaler
+  Release-Build und Server bitgleich. Ziel: `0` neu, `5` geaendert, `1'884` unveraendert.
+  HTTPS `200`: Startseite (`71'378` Bytes), `/settings` (`72'241` Bytes),
+  `/management-cockpit` (`72'304` Bytes). Werkzeug:
+  `.tmp_tools/DeploySwissStprsGuard0902`.
+
+  **Inhalt:** (M2) `GroupMarginCalculator` — der Schweizer-STPRS-Schalter greift nur noch,
+  wenn eine liefernde Konzerngesellschaft erkannt wurde (`deliveringEntity is not null`);
+  vorher setzte er auch bei `Extern`, `Lokal` und `Unklar` auf `TR_AG` und erfand damit
+  einen Konzernbezug. (M3) `ExcelExportService` — Rueckfall ohne Datenbank geht ueber
+  `GroupMarginCostCurrencyConverter.NormalizeMode(null)` statt hart auf `Mask`.
+
+  **NACHWEIS BEWUSST OHNE LITERALPRUEFUNG.** Beide Aenderungen fuehren keine neue
+  Zeichenkette ein, es sind eine Bedingung und ein Methodenaufruf. Der sonst uebliche
+  Nachweis „Literal vorher NEIN, nachher JA" ist hier strukturell unmoeglich und wurde
+  nicht vorgetaeuscht. Stattdessen dreifach binaer belegt: Server-DLL vorher
+  `A029CB98...` (entsprach exakt dem dokumentierten Stand vom 2026-09-01 13:40), nachher
+  `D9B68001...`, und nachher **bitgleich** zum lokalen Release-Build. Das Werkzeug prueft
+  den Vorher-Hash gegen den dokumentierten Stand und meldet, wenn zwischenzeitlich jemand
+  anders deployed hat.
+
+  **PRODUKTIVE WIRKUNG: KEINE, und das ist beabsichtigt.** Read-only nachgemessen:
+  `InternalSupplierCostSourceMode = DeliveringEntityCosts`, `SupplierFallbackMode =
+  ChPlantMaster`, `GroupMarginCostCurrencyMode = Convert` — alle unveraendert. Die
+  Korrektur wirkt erst, wenn Andreas den Schalter umstellt. Kein Schemawechsel, keine
+  Migration.
+
+  Der eine Alarm war die bekannte WAL-Falle und ist nachgemessen entkraeftet:
+  `-wal` und `-shm` sind um `11:00:02` wieder da, die Hauptdatei ist in Laenge und
+  Schreibzeit unveraendert (`358'440'960` Bytes, `01.09.2026 13:48:19`).
+  `app_offline.htm` ist auf `app_offline.htm.disabled` zurueckbenannt. Offen bleibt der
+  angemeldete Sichtprueflauf in `Admin Bereich > Settings`; sichtbar aendert sich dort
+  aber nichts, weil nur die Wirkung des Schalters korrigiert wurde und nicht sein Text.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-09-01 13:40, Marktsegmente:
   vollstaendige Standardliste aus der Vertriebsvorgabe**, Funktionscommit `275fe95`,
   `668/668` Release-Tests gruen vor dem Publish. Neue gepruefte Blockkopie

@@ -106,6 +106,9 @@ Bestehende Warnungen betreffen die bereits bekannte NuGet-Sicherheitswarnung
 fuer `Microsoft.AspNetCore.Authentication.Negotiate 8.0.24`, bestehende
 MudBlazor-Analyzerhinweise und zwei bestehende xUnit-Analyzerhinweise.
 
+**Nachtrag 2026-09-01:** Der aktuelle NuGet-Audit meldet fuenf High-Advisories ueber vier
+Pakete. Details und Updatepfad: `docs/NUGET_SICHERHEIT_2026-09-01.md`.
+
 ## Deploymentstatus und naechster Schritt (historischer Stand 2026-08-11)
 
 Der Anwendungscode wurde am 2026-08-11 nach ausdruecklicher Nutzerfreigabe

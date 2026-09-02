@@ -418,6 +418,54 @@ andernfalls bleibt die bisherige Gesellschaftskostenquelle sichtbar. Damit kann 
 beiden fachlichen Varianten vergleichen, ohne Sales Type, Lieferantenerkennung oder den ersten
 Fallback-Schalter zu veraendern.
 
+### Abweichung zwischen Beschriftung und Code — gefunden und behoben am 2026-09-02
+
+**Der Fehler.** `GroupMarginCostRules.ShouldUseSwissStprs` prueft genau drei Dinge: Modus auf
+`SwissStprsForChPlantMaterial`, Material in `ChPlantMaterialKeys`, Schweizer Stueckwert groesser
+als 0. Eine Pruefung auf den `SupplierType` gab es nicht, und der Aufruf setzte die liefernde
+Gesellschaft danach **bedingungslos** auf `TR_AG`. Im Alternativmodus haetten deshalb auch Zeilen
+mit echtem Drittlieferanten (`Extern`) sowie Zeilen der Typen `Lokal` und `Unklar` Schweizer
+Konzernkosten bekommen, sobald die Schweiz das Material im Werkstamm 1100 fuehrt — und das sind
+`66'049` Materialien. Der Schalter erfand damit einen Konzernbezug, den die Klassifikation gerade
+**nicht** gefunden hatte, und widersprach seiner eigenen Zusage, ausschliesslich die Kostenquelle
+und nie die Klassifikation zu aendern.
+
+**Die Korrektur.** Der Aufruf in `GroupMarginCostRules.GroupStandardCost` lautet jetzt:
+
+```csharp
+if (deliveringEntity is not null && ShouldUseSwissStprs(context))
+    deliveringEntity = GroupStandardCostEntities.TrAg;
+```
+
+Der Schalter aendert damit nur noch die Kostenquelle einer Zeile, fuer die bereits eine liefernde
+Konzerngesellschaft erkannt wurde. Abgesichert durch zwei neue Tests in
+`TrafagSalesExporter.Tests/GroupMarginCalculatorTests.cs`
+(`SchweizerStprsSchalter_GreiftNichtBeiExternemLieferanten` und
+`..._GreiftNichtBeiLokalerKlassifikationOhneLieferanten`). Beide wurden gegengeprueft: ohne die
+neue Bedingung fallen sie um, der bestehende Test fuer den internen Fall bleibt gruen.
+Release-Tests `670/670`.
+
+**Warum die enge Lesart gewaehlt wurde.** Schaltername, GUI-Hilfetext und die Beschreibung in
+diesem Abschnitt sagen uebereinstimmend „bei **internem** Lieferanten". Die Empfehlung aus
+Abschnitt 10 — Schweizer `STPRS` „unabhaengig davon, welche Gesellschaft geliefert hat" — setzt
+voraus, dass ueberhaupt eine liefernde Gesellschaft erkannt wurde; eine `Extern`-Zeile mit echtem
+Drittlieferanten hat keine und ist davon nicht gedeckt.
+
+**Weiterhin offen und davon unberuehrt** ist der Fachentscheid aus Abschnitt 10, ob der Schweizer
+`STPRS` auch dann gelten soll, wenn eine ANDERE Konzerngesellschaft geliefert hat. Das ist eine
+weitergehende Regel und gehoert in einen eigenen Modus, nicht in diesen Schalter.
+
+**Produktiv war und ist nichts betroffen**, der Default steht read-only bestaetigt auf
+`InternalSupplierCostSourceMode = DeliveringEntityCosts`.
+
+**PRODUKTIV DEPLOYED am 2026-09-02 um 10:59**, Funktionscommit `8ae972f`, `670/670`
+Release-Tests gruen vor dem Publish. `BiDashboard.dll` SHA256
+`D9B680010D4C9618C931F32EAF86B45755FA807E7304FF1EED700938DFA8CFF8`, lokaler Build und
+Server bitgleich. Die Aenderung fuehrt keine neue Zeichenkette ein, der Nachweis ist
+deshalb rein binaer statt ueber Literale gefuehrt. Nach dem Lauf read-only bestaetigt:
+alle drei Finance-Schalter stehen unveraendert auf ihren Defaults, die Korrektur wirkt
+also erst, wenn Andreas den Schalter umstellt. Details: `docs/rag/DEPLOYMENT.md`.
+
 ### 7c. Zwei weitere Finance-Schalter: IT/IN-Kostenmethode und CHF-Umrechnung
 
 Unter `Admin Bereich > Settings` steht dafuer jetzt eine eigene, beschriebene Sektion
@@ -624,9 +672,17 @@ Fachentscheid.
 - Italien fuehrt **keinen Sales Type**. Was fuer Indien seit dem 2026-08-05 die
   Klassifikation traegt, fehlt in Italien vollstaendig. Ohne dieses Feld bleibt die
   italienische Rolle je Artikel unbestimmt.
-- In Italiens B1 traegt `Trafag AG` bei `10'699` Zeilen das Lieferantenland **`DE`**, bei
-  Trafag UK dagegen korrekt `CH`. Ein Stammdatenfehler in Italiens Lieferantenstamm, ohne
-  heutige Wirkung auf die Kostenlogik, aber irrefuehrend in jeder Lieferantenauswertung.
+- In Italiens B1 traegt `Trafag AG` teilweise das falsche Lieferantenland **`DE`**. Ein
+  Stammdatenfehler in Italiens Lieferantenstamm, ohne Wirkung auf die Kostenlogik — die
+  liefernde Gesellschaft wird ausschliesslich aus `SupplierName` bestimmt —, aber
+  irrefuehrend in jeder Lieferantenauswertung.
+
+  **Praeziser gemessen am 2026-09-02** gegen `Sales_All_2026-09-01.xlsx`
+  (`.tmp_tools/CheckSupplierClaims0902`, read-only): der Fehler ist **nicht durchgaengig,
+  sondern gemischt**. Von `14'536` TRIT-Zeilen mit Lieferant `Trafag AG` tragen `7'464`
+  korrekt `CH` und `7'072` falsch `DE`. Die frueher notierte Formulierung „bei 10'699
+  Zeilen `DE`" beschrieb einen aelteren und kleineren Datenstand und legt faelschlich
+  nahe, dass alle Trafag-AG-Zeilen betroffen sind.
 
 ## 11. Sitzung mit Andreas vom 2026-08-27
 

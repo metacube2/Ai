@@ -2,6 +2,18 @@
 
 Stand: 2026-09-01
 
+## NuGet-Sicherheitsbefund dokumentiert, 2026-09-01 (NICHT aktualisiert)
+
+- Der aktuelle NuGet-Audit meldet fuenf High-Advisories in vier Paketen: direkt
+  `Microsoft.AspNetCore.Authentication.Negotiate 8.0.24` (zwei), transitiv
+  `Microsoft.Bcl.Memory 9.0.0`, `Microsoft.Kiota.Abstractions 1.17.1` und
+  `SQLitePCLRaw.lib.e_sqlite3 2.1.6`.
+- Keine Paket-, Code-, Datenbank-, Test- oder Deployaenderung in diesem Schritt. Der
+  aktuelle Produktivdeploy bleibt unveraendert; ein sicherer Neubuild ist erst nach dem
+  geplanten Paketupdate moeglich.
+- Der detaillierte Befund mit Abhaengigkeitspfaden, Fixversionen und der abgestuften
+  Update-Reihenfolge steht in `docs/NUGET_SICHERHEIT_2026-09-01.md`.
+
 ## Marktsegmente: vollstaendige Standardliste, 2026-09-01 (DEPLOYED 13:40)
 
 - Die Standardauswahl in der Kundenpflege enthaelt jetzt alle 15 Werte aus der

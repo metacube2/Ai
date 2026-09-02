@@ -77,18 +77,74 @@ kein Datenqualitaetsproblem im Sinne von „Lieferant vergessen zu pflegen", son
 **Mapping- und Quellenproblem**: die Lieferanteninformation kommt entweder komplett durch
 oder gar nicht.
 
-- **Strukturell 100 % leer:** CH, AT, DE, ES, UK — die Quelle liefert kein
-  Lieferantenfeld beziehungsweise es existiert kein Mapping.
+- **Strukturell 100 % leer:** CH, AT, DE, ES — die Quelle liefert kein Lieferantenfeld
+  beziehungsweise es existiert kein Mapping. Bei CH/AT ist das dauerhaft so: die Quelle
+  ist die Verkaufsfaktura (`FinanzdataSchweizOeSet`, VBRK/VBRP), und eine
+  Verkaufsrechnung kennt keinen Vorlieferanten. Bei ES fehlt das Supplier-Mapping im
+  Import ganz, bei DE haengt es an den Exportspalten von Alphaplan.
 - **Teilweise gefuellt, B1-Laender:** IT am besten, dann IN, FR, US — dort kommt der Wert
   aus `OITM.CardCode`, dem Standardlieferanten im Artikelstamm, der oft ungepflegt ist.
+  Nur in dieser Gruppe ist „pflegen" ueberhaupt eine sinnvolle Bitte, und zwar je Artikel
+  statt je Belegzeile.
+- **UK: geloest, kein Sonderfall mehr.** Fruehere Fassungen dieser Datei fuehrten UK in
+  der ersten Gruppe. Das ist falsch. Die Lieferanten- und Kostenspalten sind in der
+  UK-Datei **seit jeher vorhanden und gefuellt** (gemessen 2026-07-29 an
+  `Sales_TRUK_2026-05-11.xlsx`: Lieferantenfelder `1881/1881`), sie waren nur nie
+  gemappt. Seit dem Nachzug in `DatabaseSeedService.EnsureUkManualExcelMapping` steht
+  TRUK bei `3'064` von `3'064` Zeilen, also 100 % (Abschnitt 3).
 
 Diese Unterscheidung ist der Grund, warum eine pauschale Bitte um Feldpflege an die
-Standorte falsch waere: bei fuenf Laendern gibt es schlicht nichts zu pflegen.
+Standorte falsch waere: bei vier Laendern gibt es schlicht nichts zu pflegen.
+
+**UK ist zugleich der Beweisfall fuer Vorrangregel 3 im `router.md`** — erst die eigene
+Export- und Mappingseite pruefen, dann den Standort fragen. Solange die Spalten ungemappt
+waren, kamen alle UK-Zeilen ohne Lieferant und ohne Kostenbasis in die zentrale Tabelle,
+und die UK-Gruppenmarge war damit ueberhaupt nicht berechenbar. Genau dieselbe Pruefung
+steht fuer Deutschland noch aus, siehe die offene Frage zu Deutschland in Abschnitt 3.
 
 ## 3. Laenderstatus
 
-Basis `neu.xlsx` vom 2026-08-11 mit 96'233 Sales-Zeilen. Aktuellere Gesamtquote:
-`18'263` von `97'537` Zeilen (18,7 %) mit allen drei Feldern.
+### Live gemessen am 2026-09-02 gegen `Sales_All_2026-09-01.xlsx`
+
+Das ist der Export, den Andreas ansieht, und damit nach Vorrangregel 1 der gueltige Stand.
+Werkzeug `.tmp_tools/CheckSupplierClaims0902`, read-only, `105'282` Verkaufszeilen.
+
+| Land | TSC | Zeilen | alle 3 Felder | Quote | nur 1 oder 2 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Oesterreich | TRAT | 1'888 | 0 | 0,0 % | 0 |
+| Schweiz | TRCH | 49'747 | 0 | 0,0 % | 0 |
+| Deutschland | TRDE | 7'612 | 0 | 0,0 % | 0 |
+| Spanien | TRES | 7'071 | 0 | 0,0 % | 0 |
+| Frankreich | TRFR | 2'653 | 135 | 5,1 % | 0 |
+| Indien | TRIN | 7'476 | 910 | 12,2 % | 0 |
+| Italien | TRIT | 24'095 | 24'078 | **99,9 %** | 0 |
+| UK | TRUK | 3'119 | 3'119 | **100,0 %** | 0 |
+| USA | TRUS | 1'621 | 6 | 0,4 % | 0 |
+| **Gesamt** | | **105'282** | **28'248** | **26,8 %** | **0** |
+
+**Der Kernbefund aus Abschnitt 2 ist damit auf der vollen Grundgesamtheit bestaetigt:**
+`0` von `105'282` Zeilen haben nur eines oder zwei der drei Felder.
+
+**Zwei Aenderungen gegenueber der historischen Tabelle unten.** Italien ist von 71,2 % auf
+99,9 % gesprungen, weil Paola Castagna `OITM.CardCode` doch gepflegt hat (Abschnitt 8);
+es bleiben nur noch `17` leere Zeilen. Dadurch steigt die Gesamtquote von 18,7 % auf
+26,8 %. Der Auftrag „verbleibende TRIT-Zeilen nach Ursache segmentieren" ist damit
+erledigt bis auf diese 17 Zeilen.
+
+Ebenfalls live gemessen und fuer die Klassifikation wichtig: **Sales Type fuehrt
+ausschliesslich Indien** (`7'012` von `7'476` Zeilen: `FFM` 6'213, `LRD` 776, `CM` 23).
+Alle acht anderen Standorte stehen auf `0`, Italien bei allen `24'095` Zeilen.
+
+**Nicht in `Sales_All` enthalten:** eine Spalte `Cost Source` und der Margen-Status. Wer
+die Kostenlogik pruefen will, braucht das Nachweis-Excel, Blatt `Gruppenmarge Details`.
+In `Sales_All` sind seit dem 2026-08-27 nur `Sales Type` und `Trafag Sachnummer`
+(Spalten 53 und 54) enthalten, damit lassen sich die Stufen 1 bis 3 nachvollziehen.
+
+### Historischer Stand vom 2026-08-11
+
+Basis `neu.xlsx` vom 2026-08-11 mit 96'233 Sales-Zeilen. Damalige Gesamtquote:
+`18'263` von `97'537` Zeilen (18,7 %) mit allen drei Feldern. Die folgende Tabelle ist der
+Stand jenes Tages und wird als Historie stehen gelassen; gueltig ist die Messung oben.
 
 | Land | TSC | Zeilen | alle 3 Felder | Quote | Naechster Schritt |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -133,6 +189,61 @@ von 22'950 Kandidaten werden 10'817 `Intern` und 12'023 `Lokal`, nur 110 bleiben
 maskiert und zeigen eine Marge — auch dann, wenn die Kostenbasis fachlich der
 IC-Verrechnungspreis statt der Konzernkosten ist. Das ist schlechter als ein sichtbares
 Minuszeichen, weil es nicht als offen erkennbar ist.
+
+### Warum genau, am Code nachgelesen am 2026-09-02
+
+Der Schutz dagegen existiert, ist aber **enger als oft angenommen**. Die Regel
+`GroupMarginCostRules.GroupDistributionWithoutGroupCost` in
+`Services/GroupMarginCalculator.cs` prueft ausschliesslich, ob der **Sales Type `LRD`** ist:
+
+```csharp
+ResolveSalesTypeRole(line.SalesType) == SalesTypeRoles.GroupDistribution
+    ? new GroupMarginCostBasis(0m, line.StandardCostCurrency, IsGroupCostMissing: true)
+    : null
+```
+
+Sie prueft **nicht**, ob eine liefernde Konzerngesellschaft erkannt wurde. Eine Zeile mit
+erkanntem Lieferanten `Trafag Italia` oder `Trafag AG`, fuer deren Material kein
+Konzernkostensatz existiert, faellt deshalb still auf die letzte Regel `LocalStandardCost`
+durch. Sie zeigt eine Marge auf dem lokalen IC-Preis, traegt die Kostenquelle
+`Interner Standardpreis` und ist an **keiner** Stelle als offen erkennbar.
+
+Da nur Indien einen Sales Type pflegt, existiert dieser Schutz praktisch **nur fuer
+Indien**. Fuer Italien und alle uebrigen Standorte gibt es ihn nicht.
+
+**Obergrenze, live gemessen am 2026-09-02** gegen `Sales_All_2026-09-01.xlsx` mit
+`.tmp_tools/CheckSupplierClaims0902`: `19'221` Zeilen tragen eine erkannte liefernde
+Konzerngesellschaft **ohne** Sales Type `LRD`, also 18,3 % aller `105'282`
+Verkaufszeilen.
+
+| Verkaufender Standort | erkannte liefernde Gesellschaft | Zeilen |
+| --- | --- | ---: |
+| TRIT | TR_AG | 14'536 |
+| TRUK | TR_AG | 2'839 |
+| TRIT | TR_IT | 1'028 |
+| TRIT | TR_IN | 366 |
+| TRIN | TR_AG | 244 |
+| TRUK | TR_IN | 108 |
+| TRFR | TR_IT | 44 |
+| TRFR | TR_AG | 40 |
+| TRUK | TR_IT | 14 |
+| TRUS | TR_AG | 2 |
+| **Gesamt** | | **19'221** |
+
+**Das ist ausdruecklich eine Obergrenze und nicht die betroffene Menge.** Wie viele dieser
+Zeilen wirklich keinen Konzernkostensatz finden, laesst sich aus `Sales_All` nicht messen,
+weil die Datei keine Kostenquelle fuehrt. Dafuer braucht es eine Messung gegen
+`GroupStandardCosts` in der Produktivdatenbank, nach dem Muster von
+`.tmp_tools/CheckProductionOrigin`. Die Groessenordnung genuegt aber, um den Punkt auf die
+Tagesordnung zu setzen.
+
+Wer die Regel auf weitere Faelle ausdehnen will, setzt eine zusaetzliche benannte Regel vor
+`LocalStandardCost` — die Kette ist genau dafuer gebaut. Das ist ein Fachentscheid und
+keine reine Technikfrage, deshalb hier nur dokumentiert und nicht umgesetzt.
+
+**Nebenwirkung derselben Konstruktion:** Regel 1 verlangt `groupCost.UnitCost > 0`. Ein
+Konzernkostensatz mit Wert `0` und ein voellig fehlender Eintrag sind in der Ausgabe
+deshalb nicht unterscheidbar, beide erscheinen bei `LRD` als `Konzernkosten fehlen`.
 
 ## 5. CH/AT: Kostenbasis und Beschaffungsindizien
 
@@ -364,6 +475,12 @@ gibt es nichts zu pflegen. Die anderen `5` sind echte Artikel, die in Paolas Lis
 - `.tmp_tools/MeasureAndreasLocalFallback` — Wirkung der lokalen Standardkostenregel
 - `.tmp_tools/CheckItalySupplierImpact` — read-only Wirkung der italienischen Uebergangsliste
 - `.tmp_tools/CheckSupplierOverrides` — read-only Nachweis der Uebergangsliste auf der Produktivdatenbank
+- `.tmp_tools/CheckSupplierClaims0902` — read-only Nachmessung gegen `Sales_All_*.xlsx`: Lieferantenfuellgrad
+  je TSC inklusive Teilzeilen-Gegenprobe, Sales-Type-Verteilung, Konfliktfaelle, echte Stufe-4-Kandidatenmenge
+  und Lieferantenland bei Trafag AG. Grundlage der Live-Tabelle in Abschnitt 3
+- `.tmp_tools/BuildSupplierWorkflowSvg` — erzeugt
+  `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` neu. Das Diagramm wird nicht von Hand
+  bearbeitet, sondern hier geaendert und neu erzeugt; Rahmen und Zeilenumbrueche rechnet das Skript
 
 Berichte: `docs/Supplier_Laenderstatus_CH_AT_Pruefung_2026-08-11.docx` und
 `docs/Supplier_Laenderstatus_CH_AT_Pruefung_mit_Fallback_2026-08-11.docx`.
