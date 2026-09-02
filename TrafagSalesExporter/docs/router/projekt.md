@@ -22,6 +22,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | **Persoenliche Aufgabenliste, „woran arbeite ich gerade", Auftraggeber und Termine** | `projektmanagement/PROJEKTSTATUS.md` (IDs `PM-01` ff.) |
 | **Offene Punkte im Finance Dashboard, Status je Punkt** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` |
 | 180-Tage-Roadmap Analytics, BI, HR, Einkauf | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
+| **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` |
 | Aktueller Aenderungsstand | `lastchange.md` |
 | Ansprechpartner und Standortempfaenger | `docs/ANSPRECHPARTNER.md` |
 
