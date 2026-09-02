@@ -1,6 +1,24 @@
-# Spanien: fehlendes Buchungsdatum (PostingDate)
+# Spanien: Buchungsdatum (PostingDate) — Analyse, Umsetzung und Entscheid
 
-Stand: 2026-08-03
+**Stand: 2026-09-02.** Die Datei beginnt mit der Analyse vom 2026-08-03 und traegt die
+Umsetzung in den Abschnitten 8 bis 12. Der Dateiname behaelt sein Ursprungsdatum.
+
+## Kurzstand ganz oben, damit niemand nur die Analyse liest
+
+| Frage | Antwort |
+| --- | --- |
+| Wie heisst das Feld? | `FacturasTB.FechaAsiento`, exportiert als `PostingDate`; dazu `FacturasTB.Asiento` als `PostingDocument` |
+| Ist es eingebaut? | Ja, seit 2026-08-17 in beiden Export-Queries, per `OUTER APPLY` mit `TOP 1` |
+| Ist der Schluessel belegt? | Ja, live am 2026-08-17 auf dem spanischen Server: `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura`, 53 von 53 Treffern |
+| Kommt es an? | Teilweise: `1'523` von `7'071` TRES-Zeilen (21,5 %), gemessen 2026-09-02 gegen `Sales_All_2026-09-01.xlsx` |
+| Was rechnet Finance? | **Das Rechnungsdatum.** Entscheid Andreas 2026-08-26, umgesetzt als Regel `UseInvoiceDate` mit `ScopeKey = ES`, produktiv seit 2026-08-26 15:26 |
+| Was ist noch offen? | Nur der Dateitausch durch Santi Gomez, 7-Tage- gegen 35-Tage-Version |
+
+**Die Abschnitte 1 bis 7 sind der Analysestand vom 2026-08-03 und stehen als Historie.**
+Sie sind an mehreren Stellen ueberholt; die jeweilige Stelle sagt das. Wer den heutigen
+Stand sucht, liest die Tabelle oben und die Abschnitte 8 bis 12.
+
+---
 
 Anlass: Andreas hat als wichtigsten offenen Punkt bei Spanien das **fehlende Buchungsdatum**
 benannt. Die bisherige Doku und der Mailentwurf an Santi nannten stattdessen nur
@@ -8,9 +26,13 @@ benannt. Die bisherige Doku und der Mailentwurf an Santi nannten stattdessen nur
 
 Messgrundlage: `Finance_Dashboard_Audit_All_2026-07-29.csv`, TSC `TRES`, 5'504 Zeilen.
 
-## 1. Der gemessene Befund
+## 1. Der gemessene Befund (Stand 2026-08-03, UEBERHOLT)
 
-**`PostingDate` ist bei Spanien auf ALLEN 5'504 Zeilen leer.** Spanien ist damit der einzige
+> **Ueberholt seit 2026-08-17.** Damals war `PostingDate` bei Spanien tatsaechlich auf allen
+> Zeilen leer. Heute sind es `1'523` von `7'071` Zeilen (21,5 %), gemessen am 2026-09-02.
+> Der folgende Befund bleibt als Ausgangslage stehen.
+
+**`PostingDate` war bei Spanien auf ALLEN 5'504 Zeilen leer.** Spanien war damit der einzige
 Standort ohne Buchungsdatum.
 
 | TSC | Zeilen | PostingDate leer | InvoiceDate leer | beide leer |
@@ -73,7 +95,13 @@ nicht die Rechnungs-/Buchhaltungstabellen. Dieselbe Query steht ein zweites Mal 
 `Run-SpainRangeExportAndUpload-AllInOne.ps1` Zeilen 233-235; **Änderungen müssen an beiden
 Stellen erfolgen**, sonst laufen Voll- und Range-Export auseinander.
 
-## 4. Wo das Buchungsdatum vermutlich liegt — NICHT belegt
+## 4. Wo das Buchungsdatum vermutlich liegt — INZWISCHEN BELEGT
+
+> **Aufgeloest am 2026-08-17.** Die hier als Vermutung notierte Quelle `FacturasTB` mit
+> `FechaAsiento` und `Asiento` hat sich bestaetigt. Der damals fehlende Schluessel ist
+> `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura` und wurde live auf dem spanischen Server
+> geprueft, 53 von 53 Treffern. Siehe Abschnitte 8 und 9. Der folgende Text bleibt als
+> Herleitung stehen.
 
 Im vorhandenen Sage-Schema-Auszug (`obj/candidate_objects.csv`) gibt es genau zwei
 Tabellen mit einer Buchungsdatumsspalte: **`FacturasTB`** und `FacturasSII`.
@@ -109,7 +137,19 @@ Diese Felder sind rein additiv mitnehmbar, ohne neuen Join. `EjercicioFactura` i
 kein Buchungsdatum, würde aber die Geschäftsjahr-Zuordnung belastbarer machen als der
 heutige Fallback über das Rechnungsdatum. Ob das fachlich ausreicht, entscheidet Finance.
 
-## 6. Offene Punkte
+## 6. Offene Punkte (Stand 2026-08-03, GROSSTEILS ERLEDIGT)
+
+> **Nachgefuehrt am 2026-09-02.** Von den folgenden Punkten ist nur noch der Mailentwurf an
+> Santi offen, und auch der hat einen neuen Schwerpunkt: es geht nicht mehr um den Weg,
+> sondern nur noch um den Tausch der 7-Tage- gegen die 35-Tage-Version des Exportskripts.
+>
+> | Punkt von 2026-08-03 | Stand heute |
+> | --- | --- |
+> | Live-Schemapruefung, wo das Buchungsdatum liegt und ueber welchen Schluessel | **Erledigt** 2026-08-17, Abschnitt 9 |
+> | Fachentscheid, ob `OrderDate` als Fallback vor `ExtractionDate` treten darf | **Gegenstandslos.** Andreas hat am 2026-08-26 das Rechnungsdatum als massgeblich gesetzt; die Fallbackkette bleibt Rechnungsdatum, dann Buchungsdatum, dann Extraktionsdatum |
+> | Fachentscheid, ob `EjercicioFactura` als Geschaeftsjahr-Anker reicht | **Gegenstandslos**, aus demselben Grund |
+> | Query an beiden Stellen erweitern, danach Reimport und Jahresverteilung messen | **Erledigt**, beide Skripte plus Spiegelung; Jahresverteilung gemessen, keine Zeile wechselt das Jahr |
+> | Mailentwurf an Santi auf Buchungsdatum umstellen | **Offen**, jetzt mit dem Ziel Dateitausch |
 
 - Live-Schemaprüfung der spanischen Sage-Datenbank: wo liegt das Buchungsdatum je
   Rechnung, und über welchen Schlüssel ist es an den Lieferschein/die Position gebunden?

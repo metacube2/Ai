@@ -12,17 +12,24 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
-- ES BUCHUNGSDATUM 2026-08-17: die spanische Export-SQL selektiert jetzt
+- ES BUCHUNGSDATUM, STAND 2026-09-02: das Feld ist eingebaut, live geprueft und die
+  Fachfrage ist entschieden. Die spanische Export-SQL selektiert
   `FacturasTB.FechaAsiento` als `PostingDate` und `FacturasTB.Asiento` als
   `PostingDocument`, per `OUTER APPLY` mit `TOP 1` statt `JOIN` (70 von 3'642
   Rechnungsschluesseln haben mehrere Buchungszeilen, ein `JOIN` haette den
-  spanischen Umsatz vervielfacht). Belegt ist bisher NUR die Syntax, geprueft mit
-  `ScriptDom` inklusive Gegenprobe. Trefferquote, Schluesselrichtigkeit und
-  Gutschriften sind offen, dafuer braucht es den Lauf auf dem spanischen Server.
-  Bis dahin bleiben alle TRES-Zeilen ohne Buchungsdatum und fallen auf das
-  Rechnungsdatum zurueck. Danach ist zusaetzlich die Spaltenzuordnung `PostingDate`
-  beim Standort Spanien noetig. Details:
-  `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitt 8.
+  spanischen Umsatz vervielfacht). Der Schluessel
+  `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura` ist am 2026-08-17 auf dem spanischen
+  Server live bestaetigt, 53 von 53 Treffern auf einem gebuchten Fenster.
+  **Fachentscheid Andreas vom 2026-08-26: mit Buchungsdatum ist das RECHNUNGSDATUM
+  gemeint.** Umgesetzt als Regel `UseInvoiceDate` mit `ScopeKey = ES`, produktiv
+  deployed am 2026-08-26 15:26 (Commit `91830c2`). Die Umstellung war
+  wirkungsneutral: ueber `100'558` Zeilen wechselt keine einzige das Jahr.
+  Fuellgrad selbst gemessen am 2026-09-02 gegen `Sales_All_2026-09-01.xlsx`:
+  `PostingDate` `1'523/7'071` (21,5 %), `InvoiceDate` `6'838/7'071` (96,7 %).
+  OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
+  Exportskripts tauscht; die absolute Zahl `1'523` steht seit dem 2026-08-26
+  unveraendert, es kommen also derzeit keine neuen Buchungsdaten nach. Details:
+  `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - UK 2025 ABGENOMMEN 2026-08-11: `3'529'861.80 GBP` = 99.7 % des Finance-Solls
   `3'538'972`, Marge +33.8 % statt −502.7 %, `1'867` Zeilen. Der bis dahin
   gefuehrte Wert `394'439` war ein Stueckpreis-statt-Zeilenwert-Fehler aus dem

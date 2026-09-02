@@ -34,7 +34,40 @@ Danach:
 Diese Schritte duerfen auch dann nicht uebersprungen werden, wenn der Auftrag bereits in
 einem Chat beschrieben wurde.
 
-## 3. Arbeitsweise
+## 3. Abschluss einer Aufgabe: committen und Doku nachfuehren
+
+**Jede abgeschlossene Aufgabe endet mit einem Commit und nachgefuehrter Dokumentation.**
+Nicht erst beim Deploy, nicht erst auf Nachfrage.
+
+Zum Abschluss gehoeren:
+
+1. **Committen.** Quellcode und Tests gehoeren in einen Funktionscommit, die Dokumentation
+   entweder dazu oder in einen eigenen Doku-Commit. Ein produktiver Stand ohne Commit ist
+   nicht reproduzierbar und hat keinen Rollback-Punkt — genau das ist beim Deploy vom
+   2026-09-01 passiert und dort protokolliert.
+2. **Doku nachfuehren, und zwar vollstaendig.** Es genuegt nicht, einen Nachtrag unten
+   anzuhaengen. Wenn Titel, Kopfstand („Stand: ...") oder fruehere Abschnitte derselben
+   Datei danach etwas anderes behaupten, ist die Datei nicht nachgefuehrt, sondern
+   widerspruechlich. Ueberholte Aussagen als ueberholt markieren, statt sie stehen zu
+   lassen oder die datierte Historie umzuschreiben.
+3. **Die Statusquelle mitnehmen.** Aendert sich der Stand eines Issues, gehoert das in
+   `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` und, wo betroffen, in
+   `projektmanagement/Wochen_Todo.tsv` samt neu erzeugter `.xlsx`. Nach Vorrangregel 2 ist
+   der Issue-Log die gueltige Statusquelle; wenn eine Arbeitsnotiz mehr weiss als er, ist
+   das ein Fehler.
+4. **Die RAG-Kurzdateien pruefen.** `docs/rag/*.md` werden zu Sitzungsbeginn geladen. Eine
+   veraltete Aussage wirkt dort staerker als in einer Detaildatei, weil sie die naechste
+   Sitzung falsch startet.
+5. **`docs/AGENT_COORDINATION.md` abschliessen** mit Ergebnis, geaenderten Dateien, Tests
+   und Deploystatus, und die Reservierung freigeben.
+
+Beispiele, warum diese Regel existiert: UK galt in drei Dateien als „strukturell ohne
+Lieferantenfelder", obwohl die Spalten immer gefuellt und nur nie gemappt waren. Das
+spanische Buchungsdatum war seit dem 2026-08-26 entschieden und deployed, waehrend Titel und
+Abschnitt 1 derselben Datei weiter „fehlendes Buchungsdatum" sagten und der Issue-Log neun
+Tage hinterherhinkte. Beides ist am 2026-09-02 aufgefallen und korrigiert worden.
+
+## 4. Arbeitsweise
 
 Arbeitsregeln, Testerwartungen und fachliche Grenzen stehen in `persona.md`.
 

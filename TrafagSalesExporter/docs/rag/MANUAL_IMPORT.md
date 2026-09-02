@@ -10,18 +10,27 @@ Stand: 2026-08-17
 - BUGFIX 2026-07-13 (UK-Selbstfuetterung): Der Standortexport laedt eigene Ausgaben (`Sales_ProcessedMergeInput_<TSC>_*.csv` und `Sales_<TSC>_<yyyy-MM-dd>.xlsx`) in denselben SharePoint-Landesordner hoch, aus dem der Manual-Import liest. Seit ca. 30.06. (Audit-CSV produktiv) waehlte der UK-Import dadurch taeglich seine EIGENE Audit-CSV vom Vortag als "neueste TRUK-Datei" und ersetzte den UK-Bestand mit deren 2 Zeilen (Beweis: AppEventLog `Neueste SharePoint-Datei ausgewaehlt | UK_B1/Sales_ProcessedMergeInput_TRUK_*.csv`). Fix: `SharePointUploadService.IsOwnExportOutputFile` schliesst eigene Ausgaben aus der Kandidatenauswahl aus (SharePoint- und Lokalordner-Pfad).
 - NEU 2026-07-13 (UK Basis+Delta im Tageslauf): Ohne explizites Importjahr las der Ordner-Import bisher NUR die neueste Datei — beim taeglichen Timer-Export wurde der UK-Bestand also durch das juengste Delta (`ddMMyy_TRUK.xlsx`, oft nur wenige Zeilen) ersetzt. Jetzt gilt auch ohne Jahresangabe das Basis+Delta-Modell: neueste Jahres-/Basisdatei plus alle neueren datierten Deltas werden zusammen gelesen und generisch dedupliziert (`SourceLineId`, sonst Invoice/Position/Material; spaetere Datei gewinnt). Gibt es keine Basisdatei, werden alle datierten Deltas gemeinsam gelesen.
 - ES/Spanien liest im Ordner alle `Spain_Sales*.csv`, also Basisdatei plus taegliche `Spain_Sales_range_YYYYMMDD_to_YYYYMMDD.csv`.
-- ES BUCHUNGSDATUM FEHLT KOMPLETT (Befund 2026-08-03, Prio von Andreas): `PostingDate` ist auf
-  ALLEN 5'504 TRES-Zeilen leer — Spanien ist der einzige Standort ohne Buchungsdatum. Alle Zeilen
-  fallen deshalb auf `InvoiceDate` zurueck, 231 davon eine Stufe weiter auf `ExtractionDate`
-  (140'598.19 EUR, zaehlen pauschal im Exportjahr). Die aeltere Formulierung „231 Zeilen ohne
-  jedes Datum" beschreibt nur diese Teilmenge, nicht das Problem. Ursache ist unsere eigene
-  Query (s. Abschnitt „Skripthoheit"). Details, Kandidatenquelle und offene Fachentscheide:
-  `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`.
-- ES BUCHUNGSDATUM, STAND 2026-08-17: das Feld ist im Exportskript EINGEBAUT, aber noch NICHT
-  in Spanien gelaufen. Bis der Standortexport dort neu laeuft und die Spalte `PostingDate` beim
-  Standort Spanien zugeordnet ist, bleibt der Befund oben unveraendert gueltig. Die Zuordnung
-  ist bei Spanien NICHT im Seed verdrahtet, anders als bei UK und DE — sie wird in den
-  Einstellungen gepflegt. Der Join-Schluessel ist bis zur Messung eine Annahme.
+- ES BUCHUNGSDATUM, STAND 2026-09-02 — ERLEDIGT BIS AUF SANTIS DATEITAUSCH. Der frueher hier
+  gefuehrte Befund „`PostingDate` ist auf ALLEN 5'504 TRES-Zeilen leer" (2026-08-03) ist
+  UEBERHOLT und wurde entfernt, weil er die naechste Sitzung falsch gestartet hat. Aktueller
+  Stand, selbst gemessen gegen `Sales_All_2026-09-01.xlsx`: `PostingDate` `1'523/7'071`
+  (21,5 %), `InvoiceDate` `6'838/7'071` (96,7 %).
+  - Quelle: `FacturasTB.FechaAsiento` als `PostingDate`, `FacturasTB.Asiento` als
+    `PostingDocument`, per `OUTER APPLY` mit `TOP 1`. Schluessel
+    `CodigoEmpresa`/`Ejercicio`/`Serie`/`Factura`, am 2026-08-17 live auf dem spanischen
+    Server bestaetigt (53 von 53 Treffern) — also KEINE Annahme mehr.
+  - **Fachentscheid Andreas vom 2026-08-26: mit Buchungsdatum ist das RECHNUNGSDATUM
+    gemeint.** Umgesetzt als Regel `UseInvoiceDate` mit `ScopeKey = ES`, produktiv seit
+    2026-08-26 15:26 (Commit `91830c2`), wirkungsneutral gemessen. Die Rohspalte
+    `posting date` im `Sales_All` bleibt bewusst das Buchungsdatum aus der Quelle.
+  - Die Spaltenzuordnung ist inzwischen DOCH im Seed verdrahtet: `DatabaseSeedService`
+    `EnsureSpainDateMappings` ergaenzt `PostingDate` und `LineRegistrationDate`, aber nur
+    wenn Spanien bereits eine eigene Mappingliste pflegt — eine leere Liste bleibt beim
+    generischen Kopfzeilen-Fallback.
+  - OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
+    Exportskripts tauscht. Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
+    es kommen also derzeit keine neuen Buchungsdaten nach. Details:
+    `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.
 - DE/Alphaplan liest `invoice_headers.csv` + `invoice_lines.csv`; Vollbestand im Ordner plus 7-Tage-Delta im Unterordner `delta` werden zusammen gelesen. Seit 2026-07-03 werden zusaetzlich `Alphaplan*.zip` im SharePoint-Ordner automatisch entpackt und wie CSV-Paare ausgewertet.
 - DE-Dedupe: primaer `BelegePositionenID` als `SourceLineId`, Fallback Invoice/Position/Material; Delta gewinnt gegen Vollbestand.
@@ -37,7 +46,7 @@ nicht den Standort anschreiben — sonst geht die Bitte an die falsche Stelle.
 | Standort | Skript (in diesem Repo) | liest | Konsequenz |
 | --- | --- | --- | --- |
 | DE | `AlphaplanExportPackage/scripte/alphaplanExport.ps1` Z. 143-202, identisch in `alphaplandeltaexport.ps1` | nur `dbo.Belege` + `dbo.BelegePositionen` | Supplier, Kundenname/-land, saubere Bezeichnung fehlen, weil die Query sie nicht liest; `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
-| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Z. 184-188 und Z. 229-237, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-237 und Z. 278-286, gespiegelt in `scripts/Export-SageSpainSalesCsv.ps1` | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente`, seit 2026-08-17 zusaetzlich `dbo.FacturasTB` per `OUTER APPLY` | Buchungsdatum ist seit 2026-08-17 als `PostingDate` selektiert, aber noch nicht in Spanien gelaufen; bis dahin bleibt `PostingDate` auf allen TRES-Zeilen leer |
+| ES | `SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Z. 184-188 und Z. 229-237, identisch in `Run-SpainRangeExportAndUpload-AllInOne.ps1` Z. 233-237 und Z. 278-286, gespiegelt in `scripts/Export-SageSpainSalesCsv.ps1` | `dbo.CabeceraAlbaranCliente` + `dbo.LineasAlbaranCliente`, seit 2026-08-17 zusaetzlich `dbo.FacturasTB` per `OUTER APPLY` | Buchungsdatum ist seit 2026-08-17 als `PostingDate` selektiert und kommt an: `1'523/7'071` (21,5 %, gemessen 2026-09-02). Voll gefuellt ist nur der einmalige Nachtrag Januar bis Mai 2026; der laufende Tageslauf holt erst nach, wenn Santi die 35-Tage-Version einspielt |
 
 Die Skripte laufen auf den Standortservern (DE `localhost\SQL2012`/`ApDaten`), die Query
 darin stammt aber von uns. Zwei Regeln daraus:
