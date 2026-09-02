@@ -14,6 +14,7 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ISapGatewayStockValueReader? _stockValueReader;
     private readonly IPurchasingStockValueStore? _stockValueStore;
+    private readonly PurchasingDashboardSnapshotCache? _snapshotCache;
 
     /// <summary>
     /// Bewertungskreis des Einkaufs. <c>1100</c> = Schweiz, <c>1200</c> = Oesterreich
@@ -37,11 +38,13 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     public PurchasingDashboardService(
         IDbContextFactory<AppDbContext> dbFactory,
         ISapGatewayStockValueReader? stockValueReader = null,
-        IPurchasingStockValueStore? stockValueStore = null)
+        IPurchasingStockValueStore? stockValueStore = null,
+        PurchasingDashboardSnapshotCache? snapshotCache = null)
     {
         _dbFactory = dbFactory;
         _stockValueReader = stockValueReader;
         _stockValueStore = stockValueStore;
+        _snapshotCache = snapshotCache;
     }
 
     /// <summary>
@@ -209,10 +212,24 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     }
 
 
-    public async Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default)
+    public Task<PurchasingDashboardLiveState> LoadAsync(
+        PurchasingDashboardFilter? filter = null,
+        CancellationToken cancellationToken = default)
+    {
+        filter ??= BuildDefaultFilter();
+        return _snapshotCache is null
+            ? LoadUncachedAsync(filter, cancellationToken)
+            : _snapshotCache.GetOrCreateAsync(
+                filter,
+                token => LoadUncachedAsync(filter, token),
+                cancellationToken);
+    }
+
+    private async Task<PurchasingDashboardLiveState> LoadUncachedAsync(
+        PurchasingDashboardFilter filter,
+        CancellationToken cancellationToken)
     {
         var state = new PurchasingDashboardLiveState();
-        filter ??= BuildDefaultFilter();
         state.PeriodFrom = filter.FromDate;
         state.PeriodTo = filter.ToDate;
         state.SpendYears = Enumerable.Range(filter.FromDate.Year, filter.ToDate.Year - filter.FromDate.Year + 1)

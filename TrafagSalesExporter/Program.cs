@@ -135,6 +135,9 @@ builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
 builder.Services.AddSingleton<PurchasingRefreshRunner>();
 builder.Services.AddSingleton<IPurchasingRefreshRunner>(sp => sp.GetRequiredService<PurchasingRefreshRunner>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<PurchasingRefreshRunner>());
+// Die Einkaufsauswertung fuehrt rund 30-40 Vollcache-Aggregationen aus. Identische Filter
+// werden deshalb fuer alle Circuits geteilt; erfolgreiche Full-/Delta-Laeufe invalidieren.
+builder.Services.AddSingleton<PurchasingDashboardSnapshotCache>();
 
 // UI-/Page-Services: Scoped = pro Blazor-Circuit.
 builder.Services.AddScoped<ISettingsPageService, SettingsPageService>();

@@ -17,6 +17,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IAppEventLogService _logService;
     private readonly IPurchasingProductGroupSapReader _productGroupSapReader;
+    private readonly PurchasingDashboardSnapshotCache? _dashboardSnapshotCache;
 
     private readonly ISapGatewayStockValueReader? _stockValueReader;
     private readonly IPurchasingStockValueStore? _stockValueStore;
@@ -32,13 +33,15 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
         IAppEventLogService logService,
         IPurchasingProductGroupSapReader productGroupSapReader,
         ISapGatewayStockValueReader? stockValueReader = null,
-        IPurchasingStockValueStore? stockValueStore = null)
+        IPurchasingStockValueStore? stockValueStore = null,
+        PurchasingDashboardSnapshotCache? dashboardSnapshotCache = null)
     {
         _dbFactory = dbFactory;
         _logService = logService;
         _productGroupSapReader = productGroupSapReader;
         _stockValueReader = stockValueReader;
         _stockValueStore = stockValueStore;
+        _dashboardSnapshotCache = dashboardSnapshotCache;
     }
 
     /// <summary>
@@ -163,6 +166,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var materialTextCount = materialStatusMap.Values.Count(info => info.Maktx.Length > 0);
             var message = $"Full Load abgeschlossen: EKKO={ekkoRows.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, MARA-Status={materialStatusMap.Count:N0}, MAKT-Texte={materialTextCount:N0}, Klassifizierung={classificationMap.Count:N0}, LFA1-Namen={supplierNameMap.Count:N0}, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
             await WriteStatusAsync("Full", "Success", started, completed, fromDate, null, completed, ekkoRows.Count, ekpoRows.Count, eketRows.Count, message, cancellationToken);
+            _dashboardSnapshotCache?.Clear();
             await _logService.WriteAsync("Purchasing", "Einkauf Full Load erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
         }
@@ -243,6 +247,7 @@ public sealed class PurchasingDataRefreshService : IPurchasingDataRefreshService
             var status = await GetStatusAsync(cancellationToken);
             var message = $"Delta abgeschlossen: geaenderte Belege={changedEbelns.Count:N0}, offene Belege nachgeladen={openEbelns.Count:N0}, Belege gesamt={ebelnKeys.Count:N0}, EKPO={ekpoRows.Count:N0}, EKET={eketRows.Count:N0}, Stammdaten aktualisiert auf={reclassifiedRows:N0} Cachezeilen, SAP-Produktgruppen={productGroupResult.Rules.Count:N0} ({productGroupResult.SourceEntitySets}).";
             await WriteStatusAsync("Delta", "Success", started, completed, deltaFrom, null, completed, status.EkkoRows, status.EkpoRows, status.EketRows, message, cancellationToken);
+            _dashboardSnapshotCache?.Clear();
             await _logService.WriteAsync("Purchasing", "Einkauf Delta erfolgreich", details: message);
             return await GetStatusAsync(cancellationToken);
         }
