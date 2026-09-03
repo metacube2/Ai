@@ -928,3 +928,47 @@ und sind fachlich wertlos. `1241812` und `1241813` sind die Nachweisfaelle.
 5. Erst danach ueber den Transport nach P76 entscheiden.
 6. Getrennt davon und erst nach dem Transport: Altbestaende nachfuellen, ausschliesslich
    fuer leere Felder.
+
+## Vier Wege gemessen, 2026-09-03
+
+| Auftrag | Weg | GLTRP | ZZPRDAT | Urteil |
+|---|---|---|---|---|
+| `1241813` | **CO01** anlegen und freigeben in einem Vorgang | 27.11.2026 | 27.11.2026 | gesetzt |
+| `1241812` | **CO02** bestehenden Auftrag freigeben | 20.11.2026 | 20.11.2026 | gesetzt |
+| `1241814`, `1241815` | **COHV** Sammelfreigabe, Funktion 130 | 04.12.2026 | 04.12.2026 | gesetzt |
+| `1241816` | **CO40** Planauftrag `2406062` umsetzen und freigeben | 09.12.2026 | 09.12.2026 | gesetzt |
+
+Bei `1241812` und `1241813` wurde zusaetzlich der Eckendtermin verschoben; `ZZPRDAT` blieb
+in beiden Faellen stehen. Der Reiter „Trafag Daten" wurde in keinem Fall geoeffnet.
+
+**COHV ist der wichtigste dieser Nachweise.** In der Massenbearbeitung gibt es kein Dynpro,
+das man besuchen koennte; genau daran musste die alte Loesung scheitern. Dass es dort
+funktioniert, zeigt, dass die Abhaengigkeit vom Bildschirm vollstaendig aufgeloest ist.
+
+### Vorgehen bei COHV
+
+Selektion auf dem Reiter `SEL_00`, Auftragsnummernbereich. Auf dem Reiter `MVE_00` die
+Funktion **130 = Freigabe** im Auswahlfeld `COWORK_FCT_SETUP-FUNCT`. Nach `F8` in der
+Ergebnisliste alle Zeilen markieren und **Massenbearbeitung → Ausfuehren**. Skripte:
+`SapGuiCohvSammelfreigabe.vbs` und `SapGuiCohvAusfuehren.vbs`.
+
+### Vorgehen bei CO40
+
+Ein Planauftrag ist die Vorbedingung. Angelegt mit **MD11**, Profil `LA` (Lagerauftrag),
+Material `36385`, Werk und Dispobereich `1100`, Menge 1. Der Dispobereich ist ein Mussfeld
+und entspricht hier dem Werk. Danach CO40 mit Planauftragsnummer und Auftragsart `PP21`.
+Skripte: `SapGuiMd11Anlegen.vbs` und `SapGuiCo40Umsetzen.vbs`.
+
+**Das Planauftragsprofil `LA` ist bewusst als neutraler technischer Test gewaehlt.** Ob der
+reale Ablauf in CH mit `LA` oder `KD` arbeitet, ist eine Stammdatenfrage und gehoert zu
+Fabio Palma und Daniel Tobler. Fuer die technische Frage, ob die Umsetzung das Datum
+schreibt, ist das Profil unerheblich.
+
+### Was damit noch offen ist
+
+**MD04 und CO41** sind nicht einzeln gemessen. Beide setzen Planauftraege um und enden im
+Sichern eines Fertigungsauftrags, also in demselben Pfad, den CO40 durchlaufen hat. Das ist
+ein begruendeter Schluss, aber keine Messung; wer ihn zusagt, sollte das kenntlich machen.
+
+Ebenfalls offen: die Auftragsart **`PP22`**, die bei 10 der 34 Auftraege aus Marcos Liste
+vorkommt.
