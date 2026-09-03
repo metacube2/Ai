@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-08-12
+Stand: 2026-09-03
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -10,6 +10,15 @@ Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
+
+- Performancefix produktiv seit 2026-09-03: Alle 15 Routen des Einkaufsdashboards teilen
+  pro Filter einen 15 Minuten gueltigen Snapshot (maximal 32 Filter, Single-Flight).
+  Erfolgreiche Full- und Delta-Ladeprozesse invalidieren den Cache. Vorher brauchten selbst
+  warme direkte Aufrufe von `/einkauf` und `/einkauf/aufriss` jeweils rund `9-11 s`.
+  Nach der einmaligen Kaltberechnung (`83.17 s` direkt nach Neustart) lieferten alle 14
+  weiteren Einkaufsrouten HTTPS `200` in `0.05-0.14 s`. Der SQLite-3.53-Planer benoetigt
+  fuer die Artikelpreistrend-Abfrage eine materialisierte CTE; dies ist mit Tests und einer
+  Produktionskopie abgesichert. Commits `756e931`, `2444731`; `674/674` Tests gruen.
 
 - Direkte Produktgruppenquelle aus SAP am 2026-08-11 produktiv deployed und am
   2026-08-12 nach SAP-Aktivierung live abgeschlossen. Full Load und Delta lesen

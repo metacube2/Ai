@@ -1,8 +1,29 @@
 # Last Change
 
-Stand: 2026-09-01
+Stand: 2026-09-03
 
-## NuGet-Sicherheitsbefund dokumentiert, 2026-09-01 (NICHT aktualisiert)
+## Einkauf beschleunigt und Sicherheitsupdates deployed, 2026-09-03
+
+- Alle 15 Einkaufsrouten teilen jetzt einen filterabhaengigen 15-Minuten-Snapshot mit
+  Single-Flight, maximal 32 Filtern und Invalidierung nach erfolgreichem Full-/Delta-Lauf.
+- Vorher brauchten wiederholte Einkaufsaufrufe rund `9-11 s` je Seite. Produktiv nach dem
+  Neustart: einmalig `83.17 s` fuer die Komplettberechnung, danach alle 14 weiteren
+  Einkaufsrouten in `0.05-0.14 s`, jeweils HTTPS `200`.
+- Der erste Publish deckte einen SQLite-3.53-Query-Planer-Rueckschritt auf. Die betroffene
+  Artikelpreis-CTE ist seit Commit `2444731` materialisiert; gegen Produktionskopie und
+  produktiv erfolgreich verifiziert.
+- Die fuenf High-Advisories vom 2026-09-01 sind geschlossen. Der finale Audit meldet fuer
+  alle sieben Projekte keine anfaelligen Pakete; BCL `9.0.14`, Kiota `1.22.0` und
+  SQLitePCLRaw `2.1.12` sind produktiv, Negotiate ist entfernt.
+- **674/674** Release-Tests, SQLite-Smoke, echte SharePoint/Graph-Verbindung und Windows-
+  Authentifizierung sind gruen. Funktionscommits `756e931`, `2444731`.
+- **Produktiv deployed am 2026-09-03 um 08:17:** gepruefte Sicherung
+  `trafag_exporter.db.before-purchasing-cache-security-20260903-081528.bak`; Server-DLL
+  `4'901'888` Bytes, SHA256
+  `65F4CD90BC03C49496025BB6659FD62DBA42FAAC1975685A12A68691045A89D7`; Referenz-Publish
+  und Server bitgleich. Details: `docs/rag/DEPLOYMENT.md`.
+
+## NuGet-Sicherheitsbefund dokumentiert, 2026-09-01 (Ausgangsbefund; am 03.09. behoben)
 
 - Der aktuelle NuGet-Audit meldet fuenf High-Advisories in vier Paketen: direkt
   `Microsoft.AspNetCore.Authentication.Negotiate 8.0.24` (zwei), transitiv

@@ -1145,3 +1145,28 @@ mitzaehlen. Die Matrix-Bildunterschrift nennt zusaetzlich Marcos Lesehilfe: Mate
   selbst und ist keine Statusfarbe; ob das gewollt ist, ist eine Gestaltungsfrage.
 - Der produktive Sichtnachweis fehlt: die Chrome-Erweiterung war nicht verbunden. Nach dem
   Deploy gehoert die Waehrungskachel angesehen, bevor der Punkt als erledigt gilt.
+
+## Nachtrag 2026-09-03: gemeinsamer Snapshot-Cache produktiv
+
+Die direkten Einkaufs-Unterseiten verwendeten dieselbe teure Berechnung, fuehrten sie aber
+bei jedem Seitenwechsel erneut aus. Produktiv gemessen vor der Aenderung: `/einkauf` rund
+`9.2 s`, `/einkauf/aufriss` rund `9.8-11.1 s` auch bei wiederholten Aufrufen.
+
+`PurchasingDashboardSnapshotCache` haelt den vollstaendigen Snapshot jetzt filterabhaengig
+fuer 15 Minuten, begrenzt den Bestand auf 32 Filter und buendelt parallele Erstaufrufe per
+Single-Flight. Eine erfolgreiche Full- oder Delta-Aktualisierung invalidiert alle Snapshots.
+Die aufrufseitige Abbruchanforderung beendet nur das Warten des einzelnen Aufrufers, nicht
+die gemeinsam laufende Berechnung. Eine Generation verhindert ausserdem, dass ein waehrend
+einer Invalidierung bereits laufender Alt-Load anschliessend wieder als aktuell gespeichert
+wird.
+
+Beim ersten Publish machte das SQLite-Update einen Query-Planer-Unterschied sichtbar: Die
+CTE `article_spend` in der Artikelpreistrend-Abfrage lief mit SQLite `3.53.3` ohne feste
+Materialisierung in das Proxy-Timeout. `AS MATERIALIZED` stabilisiert den Plan. Gegen eine
+Kopie der Produktionsdatenbank lief die Komplettberechnung danach in rund `18-30 s`; auf dem
+Produktivserver benoetigte der erste Aufruf direkt nach Neustart `83.17 s`, blieb aber unter
+der 120-Sekunden-Grenze. Danach lieferten alle 14 weiteren Einkaufsrouten HTTPS `200` in
+`0.05-0.14 s`.
+
+Nachweis: Commits `756e931` und `2444731`, vier gezielte Cachetests, **674/674** Release-
+Tests, NuGet-Audit ohne bekannte Schwachstelle sowie produktiver Deploy am 2026-09-03.

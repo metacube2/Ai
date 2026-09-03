@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-01
+Stand: 2026-09-03
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,12 +44,38 @@ Stand: 2026-09-01
 
 ## Kurzstand
 
-- **Offener Sicherheitsnachtrag, kein Deploy:** Der lokale NuGet-Audit vom 2026-09-01
-  meldet fuenf High-Advisories ueber vier Pakete. Es gab hierzu weder eine Paket- noch eine
-  Codeaenderung, keinen Neubuild und keinen Produktivpublish; der unten dokumentierte
-  Produktivstand bleibt unveraendert. Vor dem naechsten Deploy sind die Abhaengigkeiten zu
-  aktualisieren, Audit, Release-Build, volle Tests und SQLite-/SharePoint-Smokes zu wiederholen.
-  Details und sichere Mindestversionen: `docs/NUGET_SICHERHEIT_2026-09-01.md`.
+- Aktuellster produktiv verifizierter Deploy: **2026-09-03 08:17, Einkauf-Performance
+  und NuGet-Sicherheitsupdates**, Funktionscommits `756e931` und `2444731`, **674/674**
+  Release-Tests gruen. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-purchasing-cache-security-20260903-081528.bak`
+  (`358'772'736` Bytes, `integrity_check` `ok`). `BiDashboard.dll` `03.09.2026 08:16:52`,
+  `4'901'888` Bytes, SHA256
+  `65F4CD90BC03C49496025BB6659FD62DBA42FAAC1975685A12A68691045A89D7`.
+  Lokaler Referenz-Publish und Server sind fuer Haupt-DLL, `deps.json`, BCL, Kiota und
+  native SQLite-Datei bitgleich; `app_offline.htm` fehlt und die Anwendung ist online.
+
+  **Routen:** Startseite und Management-Cockpit sowie alle 15 Einkaufsrouten lieferten
+  HTTPS `200`. Die einmalige Kaltberechnung nach Neustart brauchte `83.17 s`; die folgenden
+  14 Einkaufsrouten lagen bei `0.05-0.14 s`. Vorher berechnete jede Unterseite denselben
+  Snapshot erneut und brauchte warm rund `9-11 s`. Der neue filterabhaengige Cache gilt
+  15 Minuten, arbeitet per Single-Flight und wird nach erfolgreichen Full-/Delta-Ladungen
+  invalidiert.
+
+  **Sicherheit:** Der Audit meldet in allen sieben Solution-Projekten keine anfaelligen
+  Pakete mehr. Produktiv aufgeloest sind `Microsoft.Bcl.Memory 9.0.14`,
+  `Microsoft.Kiota.Abstractions 1.22.0` und SQLitePCLRaw `2.1.12`; die direkte Negotiate-
+  Referenz und DLL sind entfernt. SQLite-Smoke (`3.53.3`), echte SharePoint/Graph-Verbindung
+  und Windows-Authentifizierung sind gruen.
+
+  **Erster Publish vom 2026-09-02:** Der sichere Ablauf erkannte vor Abschluss, dass die
+  Artikelpreistrend-Abfrage unter der aktualisierten SQLite-Version in das 120-Sekunden-
+  Proxy-Timeout lief. Die Anwendung blieb online; `AS MATERIALIZED` stabilisierte den
+  Query-Plan in Commit `2444731`. Erst der oben dokumentierte zweite Publish gilt als
+  erfolgreicher Abschluss. Die nach dem Publish zunaechst fehlschlagende Zusatzpruefung
+  verglich `deps.json` mit dem Build- statt mit dem Publish-Artefakt; der anschliessende
+  Vergleich gegen einen frischen Referenz-Publish belegte alle fuenf Dateien bitgleich.
+  Details: `docs/NUGET_SICHERHEIT_2026-09-01.md` und
+  `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 - Aktuellster produktiv verifizierter Deploy: **2026-09-02 10:59, Finance: zwei
   Code-gegen-Doku-Reparaturen**, Funktionscommit `8ae972f`, `670/670` Release-Tests gruen
