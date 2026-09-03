@@ -1,0 +1,34 @@
+
+
+Ich wollte nicht einfach „ja" sagen, also habe ich es gemessen. Dabei fand ich eine echte Lücke: Von rund 57 Skripten waren nur neun namentlich dokumentiert. Wer neu dazukommt, hätte den Rest im Ordner gefunden, ohne zu wissen, was er tut. Das ist jetzt geschlossen — Abschnitt 6 ist nach Aufgaben gegliedert, jedes wiederverwendbare Skript hat eine Zeile, gleichartige Einmalskripte sind als Muster erfasst.
+
+Ausserdem stand dort noch die Warnung, der Ordner sei nicht versioniert. Das stimmte seit heute Mittag nicht mehr. Auch entfernt.
+
+Stand
+
+┌──────────────────────────────────┬───────────────────────────────────────────────┐
+│                                  │                                               │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ✅ Alles committet               │ letzter Stand c9dc7bb, Arbeitsbereich sauber  │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ✅ Lösung produktiv in T76       │ beide Wege nachgewiesen                       │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ✅ Word-Doku für den Fachbereich │ docs\ZZPRDAT_Loesung_2026-09-03.docx          │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ✅ Werkzeugdoku vollständig      │ 14 Abschnitte, Skriptbestand komplett         │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ✅ Koordinationseintrag          │ abgeschlossen, Reservierung frei              │
+├──────────────────────────────────┼───────────────────────────────────────────────┤
+│ ⏳ Suchindex                     │ läuft im Hintergrund nach, braucht dich nicht │
+└──────────────────────────────────┴───────────────────────────────────────────────┘
+
+Wie eine neue KI-Sitzung startet
+
+router.md → docs/router/sap.md → saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md. Dort steht ganz oben in Abschnitt 0 der eine Befehl, und dahinter die Zusage, dass danach alles ohne Klick läuft. Dazu die Fallen, die uns heute Stunden gekostet haben: der nicht auslesbare ABAP-Editor, SelectAll das auch METHOD/ENDMETHOD löscht, der Aktivierungsdialog mit fremden Objekten, die BAdI-Implementierung die zweimal aktiviert werden muss, JEST das kein Freigabenachweis ist, und LOAD_PROGRAM_CLASS_MISMATCH nach jeder Klassenaktivierung.
+
+Zwei Dinge liegen bei dir                                                                                                                       
+Zurücksetzen, wenn du mit SAP fertig bist:
+
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\Set-SapScriptingWarnings.ps1 -Ein
+
+Und die fachliche Seite ist bewusst offen: MD04, CO41, CO40, COHV und die Auftragsart PP22 sind nicht gemessen. Die Lösung greift technisch bei jedem Speichern und sollte auch dort ziehen — aber „sollte"hat MD04 und CO41 als die realen Wege benannt. Bevor derDisposition etwas zugesagt wird, gehören die gemessen. Das steht so auch im Word-Dokument, damit sich niemand auf mehr verlässt, als belegt ist.

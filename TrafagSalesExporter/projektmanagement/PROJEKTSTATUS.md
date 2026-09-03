@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-08-27
+Stand: 2026-09-03
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | Vorarbeit geklaert, wartet auf den Trigger-Entscheid | Trigger mit Lucas Castro und Florian Waechter klaeren, danach BAdI `WORKORDER_UPDATE` neu bauen; der Altcode ist als Referenz ausgeschlossen | 2026-08-26 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest und auf vier Wegen nachgewiesen, wartet auf fachliche Abnahme** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); MD04, CO41 und Auftragsart PP22 mit der Disposition messen; erst danach Transport nach P76 entscheiden | 2026-09-03 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -122,6 +122,28 @@ Randnotiz zur Kopfhistorie: Adil erscheint dort nur mit dem Eintrag
 `20.04.2026 A.Lahrach Deaktiviert wegen Fehlfunktion (alt)`.
 
 ### PM-03 ZZPRDAT: Produktionsdatum am Fertigungsauftrag
+
+**Ergebnis vom 2026-09-03: in T76 geloest.** Das Produktionsdatum wird bei der Freigabe
+gesetzt und bleibt bei einer spaeteren Terminverschiebung stehen, ohne dass der Reiter
+„Trafag Daten" besucht wird. Nachgewiesen auf vier Wegen: CO01 (anlegen und freigeben in
+einem Vorgang), CO02 (bestehenden Auftrag freigeben), COHV (Sammelfreigabe) und CO40
+(Planauftrag umsetzen). Auftraege `1241812` bis `1241816`.
+
+Drei unabhaengige Ursachen waren zu beheben, keine davon am Quelltext erkennbar: Der
+SAP-Standard ueberschrieb den als V1 geschriebenen Wert aus seinem eigenen Puffer, weshalb
+der Baustein auf V2 („Start verzoegert") umgestellt wurde. Literale an einen
+Verbuchungsbaustein reissen die ganze Verbuchung mit, weshalb nur getypte Variablen
+uebergeben werden. Und beim Anlegen mit sofortiger Freigabe traegt der Auftrag noch eine
+temporaere Nummer, weshalb zusaetzlich `BEFORE_UPDATE` implementiert wurde.
+
+Loesungsdokument fuer den Fachbereich: `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
+Vollstaendiger Verlauf und Messwerte: `saptasks/zzprdat-kontext.md`.
+
+**Es ist nichts nach P76 transportiert.** Alle Objekte liegen als lokale `$TMP`-Objekte in
+T76/100 und lassen sich mit `Strg+F4` in SE19 sofort abschalten. Offen sind die fachliche
+Abnahme, die Messung von MD04, CO41 und der Auftragsart `PP22` mit der Disposition, Marcos
+Pruefung von Etikett und Typenschild, und danach getrennt der Transportentscheid und das
+Nachfuellen der Altbestaende.
 
 Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Punkt
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.
