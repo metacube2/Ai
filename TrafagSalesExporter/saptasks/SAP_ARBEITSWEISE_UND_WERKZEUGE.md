@@ -158,33 +158,120 @@ Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere V
 
 ## 6. Skriptbestand unter `.tmp_sap_probe/`
 
-Wiederverwendbar und aufgabenunabhaengig:
+Der Ordner ist versioniert. Eine `.gitignore` darin haelt Buildausgaben, Protokolle,
+Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Repository.
+
+### Grundwerkzeuge, immer zuerst
 
 | Skript | Zweck |
 |---|---|
 | `SapGuiInspect.vbs` | listet alle offenen Sitzungen mit System, Mandant, Transaktion |
-| `SapGuiDumpSession.vbs <TX> <Datei>` | schreibt den kompletten Steuerelementbaum einer Sitzung in eine Datei; **das Arbeitspferd**, weil daraus alle Element-Ids stammen |
+| `SapGuiDumpSession.vbs <TX> <Datei>` | schreibt den Steuerelementbaum einer Sitzung in eine Datei. **Das Arbeitspferd**, weil daraus alle Element-Ids stammen |
 | `SapGuiInspectMainToolbar.vbs <TX>` | listet die Knoepfe der Anwendungsleiste mit Tooltip |
-| `SapGuiPressButton.vbs <TX> <ElementId>` | drueckt einen Knopf und meldet Fenster, Status und offenen Dialog |
-| `SapGuiOpenNewTransaction.vbs <TX>` | oeffnet eine neue Sitzung per `/o` |
-| `SapGuiBringToFront.vbs <Titelteil>` | holt eine Sitzung in den Vordergrund, damit Ingo sie snippen kann |
-| `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte" auflisten oder eigene Objekte per Namensabgleich markieren |
-| `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den Editor zu lesen; **funktioniert nicht**, bewusst als Beleg behalten |
+| `SapGuiInspectDialogButtons.vbs` | dasselbe fuer die Schaltflaechen eines Modaldialogs |
+| `SapGuiInspectTopWindows.vbs` | zeigt, welche Fenster einer Sitzung offen sind |
 
-| `SapGuiSendVKey.vbs <TX> <VKey> [Fenster]` | Funktionstaste senden. 0=Enter, 3=F3 zurueck, 8=F8 ausfuehren, 11=Sichern, 12=Abbrechen, 26=Strg+F2 |
+### Bedienen
 
-Aufgabenspezifisch fuer ZZPRDAT: `SapGuiOpenAtRelease.vbs`, `SapGuiSetAtReleaseSource.vbs`,
-`SapGuiCheckMethod.vbs`, `SapGuiActivateClass.vbs`, `SapGuiActivateBadiImpl.vbs`,
-`SapGuiListInactiveObjects.vbs`, `SapGuiCo01Start.vbs`, `SapGuiCo01FillHeader.vbs`,
-`SapGuiRunZzprdatCheck.vbs`.
+| Skript | Zweck |
+|---|---|
+| `SapGuiPressButton.vbs <TX> <ElementId>` | Knopf druecken, meldet Fenster, Statustyp, Meldung und offenen Dialog |
+| `SapGuiSelectElement.vbs <TX> <Id> [...]` | Reiter, Radiobutton oder Ankreuzfeld waehlen |
+| `SapGuiReadFields.vbs <TX> <Id> [...]` | Werte einzelner Elemente lesen. Noetig fuer Ankreuzfelder, deren Zustand der Baum nicht zeigt |
+| `SapGuiSendVKey.vbs <TX> <VKey> [Fenster]` | Funktionstaste senden. 0=Enter, 3=F3, 7=F7, 8=F8, 11=Sichern, 12=Abbrechen, 26=Strg+F2 |
+| `SapGuiCommand.vbs <TX> <Befehl>` | Kommandofeld: `/nXXXX`, `/oXXXX`, `/i` zum Schliessen einer Sitzung |
+| `SapGuiOpenNewTransaction.vbs <TX>` | neue Sitzung per `/o` |
+| `SapGuiSwitchTransaction.vbs <von> <nach>` | Transaktion in derselben Sitzung wechseln |
+| `SapGuiBringToFront.vbs <Titelteil>` | Sitzung in den Vordergrund holen, damit Ingo sie snippen kann |
 
-Die Namensfilter in `SapGuiWorklistSelect.vbs` sind fest auf die ZZPRDAT-Objekte gesetzt
-und muessen fuer eine andere Aufgabe angepasst werden.
+### Auswerten
 
-**Achtung, offene Luecke:** `.tmp_sap_probe/` ist nicht versioniert. Die Skripte und die
-kompilierte `SapProbe.exe` liegen nur lokal auf diesem Arbeitsplatz. Ein neu geklontes
-Repository hat sie nicht. Wer sie dauerhaft sichern will, muss die `.vbs`-Dateien in einen
-versionierten Ordner verschieben; die Binaerdateien gehoeren nicht ins Repository.
+| Skript | Zweck |
+|---|---|
+| `Get-SapList.ps1 -Transaktion <TX>` | setzt eine klassische ABAP-Liste aus den `GuiLabel`-Koordinaten zu lesbaren Zeilen zusammen. **Der wichtigste Zeitsparer** |
+| `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
+| `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
+
+### Entwicklungsobjekte aendern und aktivieren
+
+| Skript | Zweck |
+|---|---|
+| `SapGuiSetBadiMethodSource.vbs <Impl> <Methode> <Datei>` | Methodenquelltext einer BAdI-Implementierung aus einer Datei setzen und sichern |
+| `SapGuiShowBadiMethod.vbs <Impl> <Methode>` | Methode nur anzeigen, ohne zu aendern |
+| `SapGuiSetFunctionSourceFromFile.vbs <FB> <Datei>` | Quelltext eines Funktionsbausteins aus einer Datei setzen und sichern |
+| `SapGuiActivateFunction.vbs` | Funktionsbaustein aktivieren (oeffnet den Arbeitsvorrat) |
+| `SapGuiActivateClass.vbs` | Klasse als Ganzes ueber das SE24-Einstiegsbild aktivieren |
+| `SapGuiActivateBadiImpl.vbs` | BAdI-Implementierung aktivieren und `RSEXSCRN-ACTIVE` zurueckmessen |
+| `SapGuiDeactivateBadi.vbs <Impl>` | **Rueckfallschalter.** Implementierung deaktivieren, mit Statuskontrolle |
+| `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte" auflisten oder die eigenen Objekte per Namensabgleich markieren |
+
+### Zustand pruefen
+
+| Skript | Zweck |
+|---|---|
+| `SapGuiBadiStatus.vbs <Impl>` | ist die BAdI-Implementierung aktiv? |
+| `SapGuiFunctionStatus.vbs <FB>` | ist der Funktionsbaustein aktiv? |
+| `SapGuiEnhImplStatus.vbs <Name>` | Status der uebergeordneten Erweiterungsimplementierung |
+| `SapGuiSe11Show.vbs <Datentyp>` | Datentyp in SE11 anzeigen |
+| `SapGuiSe18Show.vbs <BAdI>` | BAdI-Definition anzeigen, etwa fuer „mehrfach nutzbar" und „filterabhaengig" |
+| `SapGuiSm13.vbs [Benutzer]` | Verbuchungsauftraege des Tages |
+| `SapGuiSt22.vbs [Benutzer]` | Kurzdumps des Tages |
+
+### Fertigungsauftraege
+
+| Skript | Zweck |
+|---|---|
+| `SapGuiRunFlow.vbs co01 <matnr> <werks> <auart> <menge> <ende> <ja\|nein>` | Auftrag anlegen, wahlweise freigeben, sichern. **Ein Aufruf statt sieben** |
+| `SapGuiRunFlow.vbs co02release <aufnr>` | bestehenden Auftrag freigeben und sichern |
+| `SapGuiRunFlow.vbs status <aufnr>` | Auftragsstatus lesen, ohne zu aendern |
+| `SapGuiCo02ChangeEnd.vbs <aufnr> <TT.MM.JJJJ>` | Eckendtermin verschieben und sichern. Der Write-once-Nachweis |
+| `SapGuiCo01Start.vbs`, `SapGuiCo01FillHeader.vbs` | Einzelschritte von CO01, falls `SapGuiRunFlow` an einer neuen Maske haengt |
+
+### SapProbe ueber RFC
+
+| Skript | Zweck |
+|---|---|
+| `SapCredential.ps1` | `Set-SapPassword`, `Test-SapPassword`, `Get-SapPassword`, `Remove-SapPassword`. Nur T76 |
+| `RunSapProbe.ps1 <Argumente>` | SapProbe ohne Passwortabfrage, wenn eine Ablage existiert |
+| `RunSapProbeInteractive.ps1` | aeltere Fassung mit Fenster und Eingabe |
+| `Set-SapScriptingWarnings.ps1 -Aus\|-Ein` | Warnfenster von SAP GUI Scripting schalten. **Muss Ingo selbst ausfuehren** |
+
+### Aufgabenspezifisch, nur als Vorlage lesen
+
+`SapGuiRunZzprdatCheck.vbs` fuehrt den Nachweisreport `ZTESTQQ` aus. Die uebrigen
+`*Zzprdat*`- und `RunPpwr*`-Skripte stammen aus einzelnen Arbeitsschritten und sind
+nicht allgemein verwendbar; sie zeigen aber, wie ein bestimmter Dialog bedient wird.
+`probe_*.ps1` und `diag_password.ps1` sind Altbestand aus frueheren Untersuchungen.
+
+**Anzupassen bei einer neuen Aufgabe:** Die Namensfilter in `SapGuiWorklistSelect.vbs`
+sind fest auf die ZZPRDAT-Objekte gesetzt. Ohne Anpassung markiert das Skript fuer eine
+andere Aufgabe gar nichts, was sicher, aber wirkungslos ist.
+
+### Weitere Einzelschritt-Skripte, aus dem Lauf vom 2026-09-03
+
+Sie machen jeweils einen einzelnen Schritt und sind vor allem als Vorlage nuetzlich, wenn
+dieselbe Maske noch einmal bedient werden muss.
+
+| Skript | Zweck |
+|---|---|
+| `SapGuiCheckFunction.vbs`, `SapGuiCheckMethod.vbs` | Syntaxpruefung in SE37 beziehungsweise im Class Builder ausloesen |
+| `SapGuiSetFunctionSource.vbs` | aeltere Fassung mit fest eingebautem Quelltext; besser `SapGuiSetFunctionSourceFromFile.vbs` |
+| `SapGuiSetUpdateAndOpenSource.vbs` | Verarbeitungsart eines Bausteins auf Verbuchung stellen und den Quelltextreiter oeffnen |
+| `SapGuiListInactiveObjects.vbs` | Dialog „Inaktive Objekte" vollstaendig auflisten, mit Markierungsstand |
+| `SapGuiSelectOwnInactiveObjects.vbs` | fruehere Auswahlfassung; besser `SapGuiWorklistSelect.vbs` |
+| `SapGuiChooseLocalObject.vbs`, `SapGuiChooseSe37GroupLocal.vbs` | im Objektkatalog „Lokales Objekt" waehlen, also `$TMP` ohne Transport |
+| `SapGuiStartFunctionCreate.vbs`, `SapGuiFillFunctionCreate.vbs` | Funktionsbaustein anlegen |
+| `SapGuiStartFunctionGroupCreate.vbs`, `SapGuiFillFunctionGroupCreate.vbs` | Funktionsgruppe anlegen |
+| `SapGuiFillFunctionImports.vbs` | Importparameter eines Bausteins eintragen |
+| `SapGuiStartEnhancementContainer.vbs`, `SapGuiNameEnhancementContainer.vbs`, `SapGuiSelectEnhancementContainer.vbs`, `SapGuiInspectEnhancementSelection.vbs` | Erweiterungsimplementierung anlegen und zuordnen |
+| `SapGuiStartZzprdatBadiCreate.vbs`, `SapGuiNameZzprdatBadi.vbs`, `SapGuiSaveZzprdatBadiHeader.vbs` | BAdI-Implementierung anlegen und benennen |
+| `SapGuiOpenBadiInterfaceTab.vbs`, `SapGuiOpenAtRelease.vbs`, `SapGuiSetAtReleaseSource.vbs` | Interface-Reiter und Methode `AT_RELEASE` |
+| `SapGuiSwitchSe37ToSe80.vbs`, `SapGuiOpenT76.vbs` | Navigationshilfen |
+
+Die `RunZzprdat*`- und `RunPpwr*`-Skripte oeffnen jeweils ein Fenster fuer die
+Passworteingabe und fuehren dann eine feste Folge von SapProbe-Aufrufen aus. Seit es
+`SapCredential.ps1` gibt, ist `RunSapProbe.ps1` der bessere Weg. `probe_*.ps1` und
+`diag_password.ps1` sind Altbestand aus frueheren Untersuchungen.
 
 ## 7. Empfohlener Ablauf fuer eine neue Aufgabe
 
