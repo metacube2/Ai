@@ -1928,7 +1928,7 @@ GROUP BY MaterialGroup, Region;";
 
         await using var command = conn.CreateCommand();
         command.CommandText = @"
-WITH article_spend AS (
+WITH article_spend AS MATERIALIZED (
     SELECT COALESCE(NULLIF(p.Matnr, ''), NULLIF(p.Txz01, ''), 'ohne Artikel') AS Article,
            SUM(" + ChfNetValue + @") AS TotalSpend
     FROM PurchasingEkpoCache p
