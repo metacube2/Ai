@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "doku-suche": {
+      "command": "C:\\Users\\koi\\.local\\bin\\uvx.exe",
+      "args": ["--python", "3.12", "mcp-server-qdrant"],
+      "env": {
+        "QDRANT_URL": "http://127.0.0.1:6333",
+        "COLLECTION_NAME": "trafag_docs",
+        "EMBEDDING_MODEL": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "FASTEMBED_CACHE_PATH": "C:\\Users\\koi\\tools\\qdrant\\models",
+        "QDRANT_READ_ONLY": "true",
+        "QDRANT_SEARCH_LIMIT": "8",
+        "TOOL_FIND_DESCRIPTION": "Durchsucht die Projektdokumentation von TrafagSalesExporter (alle Markdown-Dateien inklusive router.md, docs/, docs/rag/, persona.md und projektmanagement/) semantisch nach Inhalt. Nuetzlich, wenn die passende Datei noch unbekannt ist, zum Beispiel bei Fragen nach einer Fachregel, einer Entscheidung, einem Issue oder einem Deploystand. Jeder Treffer nennt Datei und Abschnitt; die gefundene Datei danach vollstaendig lesen, weil der Index nur Ausschnitte enthaelt und dem letzten Indexlauf entspricht."
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-09-02
+Stand: 2026-09-03
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
@@ -13,6 +13,12 @@ Stand: 2026-09-02
 
 Aelteres liegt im Archiv (`docs/raw_md_archive/`) und wird nicht standardmaessig geladen.
 Den vollstaendigen Bestand listet `baum.md`; das ist ein Pruefindex, keine Lesereihenfolge.
+
+Ist unklar, in welcher Datei eine Aussage steht, gibt es zusaetzlich das MCP-Werkzeug
+`qdrant-find`: eine semantische Suche ueber alle Markdown-Dateien, eingerichtet in
+`Tools/Qdrant/`. Sie ersetzt die Ladereihenfolge nicht, sondern findet den Einstiegspunkt,
+und ihre Treffer sind Hinweise, keine Belege — die genannte Datei danach vollstaendig
+lesen. Antwortet sie nicht, laeuft Qdrant nicht (`Tools/Qdrant/Start-Qdrant.ps1`).
 
 ## Abschlussregel: committen und Doku nachfuehren
 
@@ -30,3 +36,6 @@ steht in `CLAUDE.md` Abschnitt 3; hier die Kurzform:
    veraltete Aussage wirkt hier staerker als in einer Detaildatei, weil sie die naechste
    Sitzung falsch startet.
 5. `docs/AGENT_COORDINATION.md` abschliessen und die Reservierung freigeben.
+6. Wurde Dokumentation geaendert: `Tools/Qdrant/Reindex-Docs.ps1` ausfuehren. Der
+   Suchindex wird nicht automatisch nachgefuehrt und widerspricht sonst still den
+   Dateien, die er abbildet — dieselbe Falle wie Punkt 4, nur eine Ebene tiefer.
