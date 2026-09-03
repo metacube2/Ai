@@ -673,3 +673,50 @@ Protokoll ist jede weitere Codeaenderung geraten.
 
 Nicht vergessen: Jeder Testauftrag verbraucht genau einen erstmaligen Freigabeuebergang.
 Fuer jeden neuen Versuch wird ein neuer Auftrag gebraucht.
+
+### Diagnoselauf 2026-09-03: AT_RELEASE wird nicht gerufen
+
+Nach dem negativen Erstversuch wurde die Methode auf eine Diagnosefassung umgestellt
+(`saptasks/zzprdat/WORKORDER_UPDATE_AT_RELEASE_DIAGNOSE.abap`): **alle drei `CHECK`-Zeilen
+entfernt**, die Auftragsnummer per `CONVERSION_EXIT_ALPHA_INPUT` normalisiert, und als
+Ersatzwert bei leerem `GLTRP` das fachlich unmoegliche Datum `01.01.1900` als Marke.
+
+Damit konnte das Ergebnis nur noch drei Bedeutungen haben. Gemessen wurde die dritte.
+
+| Auftrag | Weg | ZZPRDAT | Marke `01.01.1900`? |
+|---|---|---|---|
+| `1241807` | CO01 anlegen und freigeben | leer | nein |
+| `1241806` | vorher gesichert, dann CO02 freigeben | leer | nein |
+
+Beide sind freigegeben (`FREI FMAT ABRV` beziehungsweise `FREI FMAT VOKL ABRV`, `FTRMI`
+gesetzt). Bei `1241806` existierte die echte Auftragsnummer beim Freigeben, der ALPHA-Fall
+ist also ebenfalls ausgeschlossen.
+
+**Damit ist belegt: `IF_EX_WORKORDER_UPDATE~AT_RELEASE` wird in diesen Freigabewegen nicht
+aufgerufen.** Es liegt weder an einer Vorbedingung noch am Zahlenformat noch am
+Zeitpunkt der Nummernvergabe.
+
+Zwei weitere Erklaerungen wurden geprueft und ausgeschlossen:
+
+* **Abgebrochene Verbuchung.** SM13 fuer Benutzer KOI, Auswahl „Alle", zeigt fuer den
+  2026-09-03 keinen einzigen Verbuchungsauftrag. Es wurde also nie einer registriert.
+* **Verdraengung durch eine andere Implementierung.** SE18 zeigt fuer `WORKORDER_UPDATE`:
+  **Mehrfach nutzbar = ja, filterabhaengig = nein.** Alle aktiven Implementierungen laufen,
+  unsere wird von keiner anderen verdraengt.
+
+### Naechster Schritt
+
+Die Loesung muss in eine Methode wandern, die beim Sichern sicher laeuft: `BEFORE_UPDATE`,
+`IN_UPDATE` oder `AT_SAVE`. Dafuer wird die jeweilige Signatur gebraucht; sie steht im
+Class Builder hinter dem Knopf **Signatur** (`Umschalt+F9`) und laesst sich ueber die
+Scripting-Schnittstelle bisher nicht auslesen.
+
+`AT_RELEASE` bleibt als Kandidat fuer den Sammelfreigabeweg im Blick: Der Parameter
+`I_FLG_COL_RELEASE` deutet darauf hin, dass die Methode fuer CO40 und COHV gedacht ist und
+im Einzeldialog von CO01/CO02 gar nicht vorgesehen war.
+
+### Testauftraege in T76/100 aus diesem Lauf
+
+`1241802`, `1241803`, `1241804`, `1241805` (nicht freigegeben), `1241806`, `1241807`.
+Alle Material `36385`, Werk `1100`, Art `PP21`, Menge 1. Jeder verbraucht genau einen
+erstmaligen Freigabeuebergang und ist danach als Trigger-Test verbraucht.

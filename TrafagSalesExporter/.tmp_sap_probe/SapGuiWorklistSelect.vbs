@@ -38,6 +38,14 @@ If Err.Number <> 0 Or InStr(1, titel, "Inaktive Objekte", vbTextCompare) = 0 The
 End If
 On Error GoTo 0
 
+' Der Reiter "Lokale Objekte" muss sichtbar sein, sonst bestaetigt der gruene Haken
+' die Auswahl des anderen Reiters, also nichts, und der Dialog bleibt einfach stehen.
+' Das ist am 2026-09-03 mehrfach passiert und sah wie ein wirkungsloser Klick aus.
+On Error Resume Next
+s.FindById("wnd[1]/usr/tabsACT_TAB_STRIP/tabpLOCAL").Select
+On Error GoTo 0
+WScript.Sleep 800
+
 basis = "wnd[1]/usr/tabsACT_TAB_STRIP/tabpLOCAL/ssubSCREEN_ACTIVATE:SAPLSEWORKINGAREA:0202/tblSAPLSEWORKINGAREAT_LOCAL"
 
 Function IstEigenes(name)
