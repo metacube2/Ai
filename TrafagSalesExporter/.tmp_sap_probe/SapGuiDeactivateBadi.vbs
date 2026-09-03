@@ -1,0 +1,66 @@
+Option Explicit
+' Deaktiviert eine klassische BAdI-Implementierung und misst den Status zurueck.
+' Das ist der Rueckfallschalter: danach laeuft im System wieder alles wie vorher.
+'
+' Aufruf: SapGuiDeactivateBadi.vbs <Implementierung>
+
+Dim impl, s, vorher, nachher
+
+impl = WScript.Arguments(0)
+
+Function SitzungHolen(tx)
+  Dim a, app, c, s2, i, j, erste
+  Set a = GetObject("SAPGUI")
+  Set app = a.GetScriptingEngine
+  Set erste = Nothing
+  For i = 0 To app.Children.Count - 1
+    Set c = app.Children(CLng(i))
+    For j = 0 To c.Children.Count - 1
+      Set s2 = c.Children(CLng(j))
+      If s2.Info.SystemName = "T76" And s2.Info.Client = "100" Then
+        If erste Is Nothing Then Set erste = s2
+        If UCase(s2.Info.Transaction) = UCase(tx) Then
+          Set SitzungHolen = s2
+          Exit Function
+        End If
+      End If
+    Next
+  Next
+  If erste Is Nothing Then WScript.Quit 4
+  erste.FindById("wnd[0]/tbar[0]/okcd").Text = "/o" & tx
+  erste.FindById("wnd[0]").SendVKey 0
+  WScript.Sleep 2500
+  Set SitzungHolen = SitzungHolen(tx)
+End Function
+
+Set s = SitzungHolen("SE19")
+s.FindById("wnd[0]/tbar[0]/okcd").Text = "/nSE19"
+s.FindById("wnd[0]").SendVKey 0
+WScript.Sleep 2500
+Set s = SitzungHolen("SE19")
+
+s.FindById("wnd[0]/usr/radG_IS_CLASSIC_1").Select
+s.FindById("wnd[0]/usr/ctxtRSEXSCRN-IMP_NAME").Text = impl
+' Aendern, sonst laesst sich nicht deaktivieren.
+s.FindById("wnd[0]/usr/btnPUSHBUTTON_CHANGE_TEXT").Press
+WScript.Sleep 3000
+
+vorher = "?"
+On Error Resume Next
+vorher = s.FindById("wnd[0]/usr/txtRSEXSCRN-ACTIVE").Text
+On Error GoTo 0
+WScript.Echo "VORHER=" & vorher
+
+' Strg+F4 ist Deaktivieren.
+s.FindById("wnd[0]/tbar[1]/btn[28]").Press
+WScript.Sleep 3000
+
+WScript.Echo "MELDUNGSTYP=" & s.FindById("wnd[0]/sbar").MessageType
+WScript.Echo "MELDUNG=" & s.FindById("wnd[0]/sbar/pane[0]").Text
+
+nachher = "?"
+On Error Resume Next
+nachher = s.FindById("wnd[0]/usr/txtRSEXSCRN-ACTIVE").Text
+On Error GoTo 0
+WScript.Echo "NACHHER=" & nachher
+WScript.Quit 0

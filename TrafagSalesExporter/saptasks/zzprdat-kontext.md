@@ -768,3 +768,98 @@ gebraucht; sie sind noch nicht abgelesen.
 * **Laufzeitverhalten der Implementierung: „Implementierung wird aufgerufen".** SAP selbst
   haelt sie fuer aufrufbar.
 * **`Z_PP_PRDDAT_SET`: aktiv.** SE37 bestaetigt.
+
+## Durchbruch 2026-09-03: ZZPRDAT wird gesetzt und bleibt stehen
+
+**Auftrag `1241812` in T76/100 ist der erste Nachweis.**
+
+| Schritt | GLTRP | ZZPRDAT | Urteil |
+|---|---|---|---|
+| Anlegen ohne Freigabe, dann Freigabe in CO02 | 20.11.2026 | **20.11.2026** | gesetzt, gleich GLTRP |
+| Eckendtermin auf 09.12.2026 verschoben, gesichert | 09.12.2026 | **20.11.2026** | **eingefroren, Write-once nachgewiesen** |
+
+Der Reiter „Trafag Daten" wurde nie geoeffnet. Damit ist die fachliche Anforderung aus der
+Mailkette erfuellt: das Produktionsdatum entsteht mit der Freigabe und ueberlebt eine
+spaetere Terminverschiebung.
+
+### Es waren zwei Ursachen, nicht eine
+
+Beide muessen behoben sein, sonst passiert gar nichts, und keine der beiden ist am Code
+sichtbar.
+
+**Erstens: der Standard ueberschrieb unseren Wert.** `Z_PP_PRDDAT_SET` lief als V1
+(`Start sofort`) und schrieb korrekt. Unmittelbar danach schrieb die SAP-Standardverbuchung
+die komplette `AUFK`-Zeile aus ihrem eigenen Puffer und deckte `ZZPRDAT` wieder zu. Der
+Wechsel auf **V2 (`Start verzoegert`)** loest das: V2-Bausteine laufen erst, wenn alle
+V1-Bausteine durch sind.
+
+Das erklaert auch, warum die Diagnosesonden mit festem Zielauftrag funktionierten: `1241802`
+und `1241805` waren nicht die gerade gesicherten Auftraege, standen also nicht im
+Standardpuffer.
+
+**Zweitens: Parameter niemals als Literal uebergeben.** Beim `CALL FUNCTION ... IN UPDATE
+TASK` serialisiert SAP die Parameter und liest sie beim Ausfuehren zurueck. Ein
+Zeichenliteral `'19000101'` fuer den DATS-Parameter `IV_PRDDAT` fuehrt dort zu
+`CONNE_IMPORT_WRONG_FIELD_TYPE` und reisst die ganze Verbuchung mit. Immer getypte
+Variablen verwenden.
+
+### Was noch offen ist: der CO01-Weg
+
+`1241811`, ueber CO01 in einem Vorgang angelegt **und** freigegeben, bleibt leer.
+Grund ist mit hoher Wahrscheinlichkeit die temporaere Auftragsnummer: Im Freigabedialog
+heisst der Auftrag `%00000000001`. Das Feld ist nicht initial, die Diagnosesonde meldete
+deshalb faelschlich „AUFNR gefuellt", aber das `UPDATE` findet keinen Satz.
+
+Ansatz dafuer ist die Methode **`NUMBER_SWITCH`** des BAdI, die genau fuer den Wechsel von
+der temporaeren auf die endgueltige Nummer vorgesehen ist. Alternativ in `AT_RELEASE` auf
+ein fuehrendes `%` pruefen und die Registrierung in dem Fall nach `BEFORE_UPDATE` oder
+`IN_UPDATE` verlagern, wo `IT_HEADER` den endgueltigen Kopf enthaelt.
+
+**Fachlich ist das kein Randfall.** Marcos Aufträge entstehen aus der Umsetzung von
+Planauftraegen ueber MD04 und CO41, nicht ueber CO01. Ob dort die endgueltige Nummer
+vorliegt, ist noch nicht gemessen und muss vor jeder Aussage gegenueber der Disposition
+geprueft werden.
+
+### Zielfassung, Stand 2026-09-03
+
+`Z_PP_PRDDAT_SET`, Verbuchungsbaustein, **Start verzoegert (V2)**, aktiv:
+
+```abap
+FUNCTION z_pp_prddat_set.
+  CHECK iv_aufnr IS NOT INITIAL.
+  CHECK iv_prddat IS NOT INITIAL.
+
+  UPDATE aufk
+    SET zzprdat = iv_prddat
+    WHERE aufnr = iv_aufnr
+      AND zzprdat = '00000000'.
+ENDFUNCTION.
+```
+
+`IF_EX_WORKORDER_UPDATE~AT_RELEASE` (Vorlage `saptasks/zzprdat/AT_RELEASE_ZIEL.abap`):
+
+```abap
+METHOD if_ex_workorder_update~at_release.
+  DATA: lv_aufnr  TYPE aufnr,
+        lv_prddat TYPE zco_gltrp.
+
+  CHECK is_header_dialog-aufnr IS NOT INITIAL.
+  CHECK is_header_dialog-gltrp IS NOT INITIAL.
+
+  lv_aufnr  = is_header_dialog-aufnr.
+  lv_prddat = is_header_dialog-gltrp.
+
+  CALL FUNCTION 'Z_PP_PRDDAT_SET' IN UPDATE TASK
+    EXPORTING
+      iv_aufnr  = lv_aufnr
+      iv_prddat = lv_prddat.
+ENDMETHOD.
+```
+
+`IF_EX_WORKORDER_UPDATE~AT_SAVE` ist wieder leer; das Produktionsdatum entsteht mit der
+Freigabe, nicht mit jedem Sichern.
+
+### Testauftraege dieses Laufs
+
+`1241802` bis `1241812`. Die Aufträge `1241802` und `1241805` tragen Diagnosedaten
+(`04.01.1900` und `04.01.1901`) und sind fachlich wertlos. `1241812` ist der Nachweisfall.
