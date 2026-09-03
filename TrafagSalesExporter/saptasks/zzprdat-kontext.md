@@ -720,3 +720,51 @@ im Einzeldialog von CO01/CO02 gar nicht vorgesehen war.
 `1241802`, `1241803`, `1241804`, `1241805` (nicht freigegeben), `1241806`, `1241807`.
 Alle Material `36385`, Werk `1100`, Art `PP21`, Menge 1. Jeder verbraucht genau einen
 erstmaligen Freigabeuebergang und ist danach als Trigger-Test verbraucht.
+
+### Fehler in der eigenen Diagnose, 2026-09-03
+
+Die Diagnosefassungen markierten nur das **Datum**, nicht die **Auftragsnummer**. Das ist zu
+schwach, und zwar auf eine Art, die falsche Sicherheit erzeugt:
+
+Ist `IS_HEADER_DIALOG-AUFNR` an der betreffenden Stelle leer, macht
+`CONVERSION_EXIT_ALPHA_INPUT` daraus zwoelf Nullen. `'000000000000'` ist in einem
+CHAR-Feld **nicht initial**, die Nichtinitial-Pruefung im Verbuchungsbaustein greift also,
+das `UPDATE` laeuft und trifft null Saetze. Von aussen ist das nicht davon zu
+unterscheiden, dass die Methode nie gelaufen waere.
+
+Aus den Laeufen mit `AT_RELEASE` und `AT_SAVE` folgt deshalb **nicht**, dass diese Methoden
+nicht aufgerufen werden. Bewiesen ist nur, dass unter der jeweiligen Fassung nichts
+geschrieben wurde. Die frueheren Abschnitte dieser Datei sind in diesem Punkt zu
+weitgehend formuliert.
+
+**Konsequenz fuer kuenftige Diagnosen: Eine Sonde darf nicht von den Eingabedaten
+abhaengen, die sie gerade pruefen soll.** Die aktuelle Fassung schreibt deshalb in einen
+festen, bekannten Auftrag:
+
+* `SONDE_AT_SAVE.abap` schreibt `02.01.1900` nach `1241805`
+* `SONDE_AT_RELEASE.abap` schreibt `01.01.1900` nach `1241802`
+
+Beide sind am 2026-09-03 aktiviert. Ein einziger gesicherter Fertigungsauftrag beantwortet
+damit beide Fragen auf einmal, unabhaengig davon, was in der Dialogstruktur steht.
+
+### Signaturen der uebrigen Methoden, live abgelesen
+
+| Methode | Signatur | Bemerkung |
+|---|---|---|
+| `AT_SAVE` | `IS_HEADER_DIALOG TYPE COBAI_S_HEADER_DIALOG`, Exception `ERROR_WITH_MESSAGE` | **identisch zu `AT_RELEASE`**, der bereits syntaxgepruefte Code laeuft unveraendert |
+| `IN_UPDATE` | 24 Tabellenparameter, darunter `IT_HEADER TYPE COBAI_T_HEADER` und `IT_HEADER_OLD` | **kein** `IT_STATUS` |
+| `BEFORE_UPDATE` | 31 Tabellenparameter, darunter `IT_HEADER`, **`IT_STATUS TYPE COBAI_T_STATUS`** und **`IT_STATUS_OLD`** | die einzige Methode mit Statustabellen |
+
+**`BEFORE_UPDATE` ist damit fachlich die richtige Zielstelle.** Nur dort laesst sich der
+erstmalige Uebergang auf `REL` sauber am Statusunterschied erkennen, statt ihn zu raten.
+Fuer die Umsetzung werden die Zeilenstrukturen von `COBAI_T_HEADER` und `COBAI_T_STATUS`
+gebraucht; sie sind noch nicht abgelesen.
+
+### Weiter ausgeschlossen
+
+* **Erweiterungsimplementierung `Z_ZZPRDAT_REL_TEST`: Aktiv.** Der Container klassischer
+  BAdI-Implementierungen im neuen Enhancement-Framework hat einen eigenen Aktivstatus; waere
+  er inaktiv, liefe nichts darin. Er ist es nicht.
+* **Laufzeitverhalten der Implementierung: „Implementierung wird aufgerufen".** SAP selbst
+  haelt sie fuer aufrufbar.
+* **`Z_PP_PRDDAT_SET`: aktiv.** SE37 bestaetigt.

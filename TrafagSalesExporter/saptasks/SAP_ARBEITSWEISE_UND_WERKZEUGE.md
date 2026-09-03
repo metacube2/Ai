@@ -355,3 +355,63 @@ bewusst unterblieben, aus zwei Gruenden:
 Nach ABAP gehoert deshalb alles **Messende**: `Z_ZZPRDAT_CHECK` liest und urteilt, das
 Anlegen bleibt im Dialog. Diese Aufteilung ist die schnellste und zugleich die mit dem
 hoechsten Beweiswert.
+
+## 11. Diagnosesonden richtig bauen
+
+Am 2026-09-03 ist eine Diagnose ins Leere gelaufen, weil die Sonde von genau den Daten
+abhing, die sie pruefen sollte. Der Fehler ist lehrreich genug, um ihn festzuhalten.
+
+Gemessen werden sollte, ob eine BAdI-Methode ueberhaupt laeuft. Die Sonde uebernahm dafuer
+die Auftragsnummer aus der Schnittstellenstruktur und schrieb ein Erkennungsdatum in genau
+diesen Auftrag. War die Nummer in der Struktur leer, machte `CONVERSION_EXIT_ALPHA_INPUT`
+daraus zwoelf Nullen, das `UPDATE` traf null Saetze, und das Ergebnis sah exakt so aus wie
+„die Methode wurde nie gerufen".
+
+**Regel: Eine Sonde darf keinen Eingabewert verwenden, dessen Richtigkeit sie gerade
+klaeren soll.** Sie schreibt in ein festes, vorher bekanntes Ziel:
+
+```abap
+METHOD if_ex_workorder_update~at_save.
+  CALL FUNCTION 'Z_PP_PRDDAT_SET' IN UPDATE TASK
+    EXPORTING
+      iv_aufnr  = '000001241805'   " fester Testauftrag
+      iv_prddat = '19000102'.      " fachlich unmoegliche Marke
+ENDMETHOD.
+```
+
+Zwei weitere Punkte, die sich bewaehrt haben:
+
+* **Je Methode eine eigene Marke und ein eigenes Ziel.** Dann beantwortet ein einziger
+  Testlauf mehrere Fragen gleichzeitig, statt sie nacheinander abzuarbeiten. Jeder
+  Testauftrag verbraucht einen erstmaligen Freigabeuebergang und ist danach verbraucht.
+* **Ein fachlich unmoegliches Datum als Marke**, etwa `01.01.1900`. Es kann nicht zufaellig
+  entstehen und ist im Nachweisreport sofort als Diagnosewert erkennbar.
+
+## 12. Die Warnfenster von SAP GUI Scripting
+
+Mit `WarnOnAttach = 1` und `WarnOnConnection = 1` fragt SAP GUI bei jedem Anhaengen eines
+Skripts nach. Das macht unbeaufsichtigtes Arbeiten unmoeglich und aeussert sich zwischendurch
+als Laufzeitfehler `Erlaubnis verweigert: 'a.GetScriptingEngine'`; ein Wiederholen desselben
+Aufrufs genuegt dann meist.
+
+Abschalten, damit im Hintergrund gearbeitet werden kann:
+
+```powershell
+$p = 'HKCU:\Software\SAP\SAPGUI Front\SAP Frontend Server\Security'
+Set-ItemProperty $p WarnOnAttach 0 -Type DWord
+Set-ItemProperty $p WarnOnConnection 0 -Type DWord
+```
+
+**Zurueck am Ende der SAP-Arbeit, zusammen mit `UserScripting`:**
+
+```powershell
+$p = 'HKCU:\Software\SAP\SAPGUI Front\SAP Frontend Server\Security'
+Set-ItemProperty $p WarnOnAttach 1 -Type DWord
+Set-ItemProperty $p WarnOnConnection 1 -Type DWord
+Set-ItemProperty $p UserScripting 0 -Type DWord
+```
+
+Diese Aenderung schaltet eine Sicherheitsabfrage ab und muss deshalb **vom Benutzer selbst**
+ausgefuehrt werden. Ohne die Warnungen haengt sich jedes Skript ohne Rueckfrage an eine
+angemeldete SAP-Sitzung an. In einer Umgebung, in der auch produktive Systeme angemeldet
+sein koennen, ist das keine Nebensaechlichkeit.
