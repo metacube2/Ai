@@ -1,6 +1,25 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 27.07.2026.
+Arbeitsstand für die Fortsetzung im CLI. Stand: 03.09.2026.
+
+## Aktueller Kurzstand 03.09.2026
+
+- Die vollstaendige Mailkette bestaetigt den fachlichen Ablauf: Das Produktionsdatum wird
+  nicht schon beim Eroeffnen, sondern bei der erstmaligen Freigabe geschrieben und muss
+  danach trotz Terminverschiebung unveraendert bleiben. Lucas Castro nennt
+  `WORKORDER_UPDATE` ausdruecklich als Loesungsweg fuer eine dynprounabhaengige Speicherung.
+- Der am 03.09.2026 erneut direkt aus T76/100 gelesene Altcode bestaetigt als Quelle
+  `I_CAUFVD-GLTRP` und als damalige Triggernaeherung `I_CAUFVD-FTRMI = sy-datum`. Die
+  gesamte Schreib- und Rueckgabelogik bleibt auskommentiert.
+- Kundenauftrag `399566` ist kein frischer Testauftrag. Er fuehrte zum Fertigungsauftrag
+  `1194970`, der bereits am 03.07.2025 freigegeben und spaeter weiter abgeschlossen wurde;
+  `REL/I0002` ist heute inaktiv, es gibt keinen verbliebenen Planauftrag und
+  `AUFK-ZZPRDAT` ist weiterhin leer. Der Fall belegt den Fehler, kann den erstmaligen
+  Freigabetrigger aber nicht erneut testen.
+- Naechster externer Input: Die Disposition stellt in T76/100 einen neuen, noch nicht
+  freigegebenen Plan- oder Fertigungsauftrag bereit und bestaetigt, dass er fuer CO01/CO02-
+  beziehungsweise Umsetzungs-/Freigabetests verwendet werden darf. Vor jeder ABAP-Anlage
+  werden ausserdem Paket/Transportauftrag und die Schreibfreigabe fuer T76 benoetigt.
 
 ---
 
@@ -295,3 +314,44 @@ nie schreibt — passt zeitlich eher zu §10 (Adils Kopierprogramm, Ende Novembe
 **keine verwertbare Referenz** — weder für die Trigger-Logik noch für die
 Feldzuordnung. Die Neuimplementierung muss komplett neu aus den Anforderungen
 (§1) abgeleitet werden, nicht aus dem, was `PPCO0012` heute (nicht) tut.
+
+---
+
+## Nachtrag 2026-09-03: Mailabgleich und erneute Live-Pruefung T76/100
+
+Die von Ingo bereitgestellte Mailkette Oktober 2025 bis Maerz 2026 bestaetigt:
+
+1. Das Feld soll ein einheitliches Produktionsdatum pro Auftrag konservieren. Eine
+   spaetere Verschiebung des Eckendtermins darf den gespeicherten Wert nicht mehr aendern.
+2. Adil beobachtete am 06.01.2026 in T76, dass das Eroeffnen allein nicht genuegt und die
+   Fortschreibung nach der Freigabe erfolgt.
+3. Georg reproduzierte am 13.03.2026, dass die alte PPCO0012-Loesung nur bei Besuch des
+   Trafag-Dynpros plus anschliessender Freigabe/Sicherung schreibt. CO40, COHV, MD04, CO41
+   und automatische Freigaben werden dadurch nicht verlaesslich abgedeckt.
+4. Lucas schlug deshalb am 31.03.2026 das BAdI `WORKORDER_UPDATE` fuer eine vom Dynpro
+   unabhaengige Speicherung vor. Georg bestaetigte zuletzt, dass sein bisheriger Stand im
+   Projekt `ZPP00012` liegt und der Code in den User-Exit-Bausteinen nicht aktiv ist.
+5. Fabio verlangt, dass Disposition beziehungsweise Supply Chain bei PP-Aenderungen und
+   Tests einbezogen werden. Schreibtests in P76 ohne abgestimmten Auftrag sind damit
+   ausgeschlossen.
+
+Read-only am 03.09.2026 mit SapProbe gegen `travt762`, Client 100, erneut verifiziert:
+
+| Pruefung | Live-Ergebnis |
+| --- | --- |
+| System | T76, HANA, Verbindung erfolgreich |
+| Feld | `AUFK-ZZPRDAT`, DATS(8), Datenelement `ZCO_GLTRP`, Text `Produktionsdatum` |
+| BAdI-Definition | `WORKORDER_UPDATE` als `SXSD` und `ENHS` im Paket `COBADI` vorhanden |
+| CMOD | `ZPP00012` enthaelt `PPCO0012` |
+| Exit-Code | `ZXCO1U11`/`ZXCO1U12` weiterhin auskommentiert; PBO ohne Fuelllogik; PAI No-op |
+| Kundenauftrag | `399566`, Auftragsart `TA`, angelegt 02.07.2025 |
+| resultierender FAUF | `1194970`, Typ `PP21`, Material `36385`, Position `10` des Kundenauftrags |
+| Termine FAUF | `GSTRP 09.07.2025`, `GLTRP 23.07.2025`, `GLTRS 22.07.2025` |
+| Freigabe/Ende | `FTRMI 03.07.2025`, `GETRI 23.07.2025`; `I0002/REL` heute inaktiv |
+| Produktionsdatum | `AUFK-ZZPRDAT = 00000000` |
+| Planauftraege zu 399566 | keine verbliebenen Zeilen in `PLAF` |
+
+Damit ist `1194970` ein belastbarer Fehlerbeleg: Er wurde freigegeben, aber das
+Produktionsdatum blieb leer. Fuer den neuen BAdI-Schreibtest ist er ungeeignet, weil der
+erstmalige REL-Uebergang laengst vorbei ist. Benoetigt wird ein frischer, von der Disposition
+freigegebener T76-Testfall.
