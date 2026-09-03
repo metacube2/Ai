@@ -126,9 +126,12 @@ Wiederverwendbar und aufgabenunabhaengig:
 | `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte" auflisten oder eigene Objekte per Namensabgleich markieren |
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den Editor zu lesen; **funktioniert nicht**, bewusst als Beleg behalten |
 
+| `SapGuiSendVKey.vbs <TX> <VKey> [Fenster]` | Funktionstaste senden. 0=Enter, 3=F3 zurueck, 8=F8 ausfuehren, 11=Sichern, 12=Abbrechen, 26=Strg+F2 |
+
 Aufgabenspezifisch fuer ZZPRDAT: `SapGuiOpenAtRelease.vbs`, `SapGuiSetAtReleaseSource.vbs`,
 `SapGuiCheckMethod.vbs`, `SapGuiActivateClass.vbs`, `SapGuiActivateBadiImpl.vbs`,
-`SapGuiListInactiveObjects.vbs`.
+`SapGuiListInactiveObjects.vbs`, `SapGuiCo01Start.vbs`, `SapGuiCo01FillHeader.vbs`,
+`SapGuiRunZzprdatCheck.vbs`.
 
 Die Namensfilter in `SapGuiWorklistSelect.vbs` sind fest auf die ZZPRDAT-Objekte gesetzt
 und muessen fuer eine andere Aufgabe angepasst werden.
@@ -149,3 +152,206 @@ versionierten Ordner verschieben; die Binaerdateien gehoeren nicht ins Repositor
 5. Erst fuer Schreiboperationen zum GUI-Scripting greifen, und dort jede Aenderung
    ueber ein Zustandsfeld zurueckmessen.
 6. Am Ende `UserScripting` wieder auf `0`, Doku nachfuehren, committen.
+
+## 8. Fertige Befehlsfolgen zum Kopieren
+
+Alle Aufrufe laufen aus der Repository-Wurzel. Sie setzen voraus, dass SAP GUI mit einer
+angemeldeten T76/100-Sitzung offen ist und `UserScripting` auf `1` steht.
+
+### Lage feststellen
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiInspect.vbs'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiOpenNewTransaction.vbs' SE38
+```
+
+### Einen Bildschirm verstehen
+
+Das ist der Einstieg in **jede** neue Maske. Ohne den Baum kennt man die Element-Ids nicht.
+
+```powershell
+$o = "$PWD\.tmp_sap_probe\dump.txt"
+cscript.exe //nologo '.tmp_sap_probe\SapGuiDumpSession.vbs' CO01 $o | Out-Null
+Select-String -Path $o -Pattern '/usr/ctxt|/usr/txt|wnd\[1\]' | ForEach-Object { $_.Line.Trim() }
+cscript.exe //nologo '.tmp_sap_probe\SapGuiInspectMainToolbar.vbs' CO01
+```
+
+### Fertigungsauftrag anlegen und freigeben — der schnelle Weg
+
+`SapGuiRunFlow.vbs` erledigt den ganzen Vorgang in **einem** Aufruf und beantwortet die
+Zwischendialoge selbst:
+
+```powershell
+# anlegen und freigeben; gibt am Ende AUFTRAGSNUMMER=... aus
+cscript.exe //nologo '.tmp_sap_probe\SapGuiRunFlow.vbs' co01 '36385' '1100' 'PP21' '1' '09.10.2026' 'ja'
+
+# anlegen ohne Freigabe (fuer Tests, bei denen erst spaeter freigegeben wird)
+cscript.exe //nologo '.tmp_sap_probe\SapGuiRunFlow.vbs' co01 '36385' '1100' 'PP21' '1' '09.10.2026' 'nein'
+
+# bestehenden Auftrag freigeben und sichern
+cscript.exe //nologo '.tmp_sap_probe\SapGuiRunFlow.vbs' co02release '1241803'
+
+# nur den Status lesen, ohne etwas zu aendern
+cscript.exe //nologo '.tmp_sap_probe\SapGuiRunFlow.vbs' status '1241804'
+```
+
+Am 2026-09-03 gemessen: aus sieben Einzelaufrufen wurde einer, mit derselben Wirkung.
+
+**Wichtige Eigenschaft:** Ein Dialog, den die Regeltabelle nicht kennt, wird **nicht** blind
+weggeklickt. Der Ablauf bricht ab, meldet Titel und verfuegbare Schaltflaechen und
+ueberlaesst die Entscheidung dem Menschen. Blindklicken in einem gemeinsam genutzten
+Testsystem ist die gefaehrlichste Abkuerzung, die es gibt. Wer eine neue Maske trifft,
+ergaenzt die Funktion `DialogRegel` um eine Zeile.
+
+Bekannte Dialoge und ihre Antworten:
+
+| Dialogtitel | Antwort |
+|---|---|
+| Materialstatuspruefung | Ja, Komponente uebernehmen |
+| Information | Weiter |
+| Auftrag freigeben | freigeben, oder Abbrechen im Modus `nein` |
+| Statusverarbeitung: Freigeben | Weiter |
+
+### Fertigungsauftrag anlegen und freigeben — Einzelschritte
+
+Nur noch noetig, wenn der Ablauf oben an einer neuen Maske haengt. Die Dialoge kommen in
+dieser Reihenfolge.
+
+```powershell
+# 1. Einstiegsbild: Material, Werk, Auftragsart
+cscript.exe //nologo '.tmp_sap_probe\SapGuiCo01Start.vbs' '36385' '1100' 'PP21'
+
+# 2. Kopf: Menge und Eckendtermin. Kein Wochenende waehlen, sonst Warnung.
+cscript.exe //nologo '.tmp_sap_probe\SapGuiCo01FillHeader.vbs' '1' '02.10.2026'
+
+# 3. "Materialstatuspruefung": Komponente trotzdem uebernehmen
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO01 'wnd[1]/usr/btnSPOP-VAROPTION1'
+
+# 4. "Information: Fehlende Materialverfuegbarkeit" bestaetigen
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO01 'wnd[1]/tbar[0]/btn[0]'
+
+# 5. "Auftrag freigeben": freigeben (btnCANCEL statt VAROPTION1 sichert OHNE Freigabe)
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO01 'wnd[1]/usr/btnSPOP-VAROPTION1'
+
+# 6. "Statusverarbeitung: Freigeben" mit Weiter schliessen
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO01 'wnd[1]/usr/btnOPTION2'
+
+# 7. Sichern. Die Auftragsnummer steht in der Statusmeldung.
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO01 'wnd[0]/tbar[0]/btn[11]'
+```
+
+Die Freigabe-Schaltflaeche im Kopf ist `wnd[0]/tbar[1]/btn[25]` (Strg+F1). Den Auftragsstatus
+liest man aus `wnd[0]/usr/txtCAUFVD-STTXT`; `FREI` heisst freigegeben.
+
+**Achtung:** Auftragsart `PP21` gibt beim Sichern automatisch frei. Der Dialog „Auftrag
+freigeben" erscheint auch dann, wenn man die Freigabe nie angestossen hat. Wer bewusst
+einen unfreigegebenen Auftrag braucht, drueckt dort `wnd[1]/usr/btnCANCEL`; die Meldung
+lautet dann „Freigabe abgelehnt", der Auftrag wird trotzdem gesichert.
+
+### Bestehenden Auftrag freigeben (CO02)
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiOpenNewTransaction.vbs' CO02
+# Auftragsnummer steht meist schon im Feld; sonst wnd[0]/usr/ctxtCAUFVD-AUFNR setzen
+cscript.exe //nologo '.tmp_sap_probe\SapGuiSendVKey.vbs' CO02 0
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO02 'wnd[0]/tbar[1]/btn[25]'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO02 'wnd[1]/usr/btnSPOP-VAROPTION1'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO02 'wnd[0]/tbar[0]/btn[11]'
+```
+
+### Report ausfuehren und die Liste auslesen
+
+Der Report heisst im System **`ZTESTQQ`**; die Vorlage im Repository ist
+`saptasks/zzprdat/Z_ZZPRDAT_CHECK.abap`.
+
+```powershell
+# Falls die Liste noch offen ist: mit F3 zurueck auf das Selektionsbild
+cscript.exe //nologo '.tmp_sap_probe\SapGuiSendVKey.vbs' SE38 3
+cscript.exe //nologo '.tmp_sap_probe\SapGuiRunZzprdatCheck.vbs' '1241802' '1241803'
+```
+
+**Das Auslesen der Listenausgabe ist der Trick, der am meisten Zeit spart.** Eine klassische
+ABAP-Liste besteht aus `GuiLabel`-Elementen mit Spalten- und Zeilenkoordinate. Dieses
+Snippet setzt sie wieder zu lesbaren Zeilen zusammen:
+
+```powershell
+$o = "$PWD\.tmp_sap_probe\liste.txt"
+cscript.exe //nologo '.tmp_sap_probe\SapGuiDumpSession.vbs' SE38 $o | Out-Null
+$zeilen = @{}
+foreach ($l in (Get-Content $o)) {
+  if ($l -match 'lbl\[(\d+),(\d+)\].*\| Text=(.*)$') {
+    $sp=[int]$Matches[1]; $ze=[int]$Matches[2]; $tx=$Matches[3]
+    if (-not $zeilen.ContainsKey($ze)) { $zeilen[$ze] = @{} }
+    $zeilen[$ze][$sp] = $tx
+  }
+}
+foreach ($ze in ($zeilen.Keys | Sort-Object)) {
+  $s = ""
+  foreach ($sp in ($zeilen[$ze].Keys | Sort-Object)) {
+    $s += (" " * [Math]::Max(0, $sp - $s.Length)) + $zeilen[$ze][$sp]
+  }
+  if ($s.Trim()) { $s }
+}
+```
+
+Damit laesst sich jede klassische `WRITE`-Liste vollstaendig auswerten, ohne Ingo um einen
+Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der Weg.
+
+### Kleine Regeln, die Rundreisen sparen
+
+* Nach jedem Knopfdruck meldet `SapGuiPressButton.vbs` bereits Fenster, Statustyp,
+  Statusmeldung und offenen Dialog. Ein zusaetzlicher Dump ist meist unnoetig.
+* Erscheint „The control could not be found by id", hat sich die Maske zwischen Dump und
+  Klick geaendert. Dann neu dumpen statt den Aufruf zu wiederholen.
+* Eingabefelder behalten ihre Werte zwischen Aufrufen. CO02 hat die zuletzt bearbeitete
+  Auftragsnummer meist schon stehen, SE38 den zuletzt ausgefuehrten Report.
+* Nach dem Sichern springt CO01 auf das Einstiegsbild zurueck und **leert die Felder**.
+  Fuer den naechsten Auftrag wieder mit `SapGuiCo01Start.vbs` beginnen.
+
+## 9. Passwort einmal statt bei jedem Lauf
+
+SapProbe fragt von sich aus bei jedem Aufruf nach dem Passwort. In einer Analysesitzung
+sind das schnell ein Dutzend Unterbrechungen, bei denen jemand am Rechner sitzen muss.
+
+`SapCredential.ps1` legt das Passwort einmalig mit der Windows-Datenschutz-API (DPAPI) ab.
+Der Schluessel haengt am Windows-Konto und am Rechner: Die Datei ist anderswo wertlos. Sie
+liegt unter `%LOCALAPPDATA%\TrafagSap\` und **nicht** im Repository.
+
+```powershell
+. .\.tmp_sap_probe\SapCredential.ps1
+Set-SapPassword       # einmalig, verdeckte Eingabe
+Test-SapPassword      # zeigt, ob und seit wann etwas abgelegt ist
+Remove-SapPassword    # loescht die Ablage wieder
+```
+
+Danach laeuft SapProbe ohne Rueckfrage:
+
+```powershell
+.\.tmp_sap_probe\RunSapProbe.ps1 system-info
+.\.tmp_sap_probe\RunSapProbe.ps1 table-read AUFK 5 "AUFNR EQ '000001241804'"
+```
+
+Ist nichts abgelegt, fragt `RunSapProbe.ps1` einmal fuer diesen Lauf und speichert nichts.
+
+**Absichtliche Grenze: nur T76.** Fuer das Produktivsystem P76 wird kein Passwort
+gespeichert; `Get-SapPassword -System 'P76'` bricht mit einer Meldung ab. Diese Grenze ist
+hart im Code verankert und nicht ueber einen Parameter aufhebbar. Ein gespeichertes
+Produktivpasswort auf einem Arbeitsplatz ist ein anderes Risiko als eine Eingabe pro Lauf,
+und diese Entscheidung soll nicht beilaeufig fallen.
+
+## 10. Was bewusst *nicht* nach ABAP verlagert wurde
+
+Der urspruengliche Gedanke war, das Anlegen und Freigeben eines Testauftrags per
+`BAPI_PRODORD_CREATE` und `BAPI_PRODORD_RELEASE` in einen Report zu packen. Das ist
+bewusst unterblieben, aus zwei Gruenden:
+
+1. **Der Nutzen ist weg.** Seit `SapGuiRunFlow.vbs` existiert, kostet der Dialogweg genau
+   einen Aufruf. Ein BAPI-Report waere nicht schneller.
+2. **Der Beweiswert waere geringer.** Die Mailkette beschreibt einen Fehler im
+   Dialogweg ueber CO01, CO02, CO40, COHV, MD04 und CO41. Ein BAPI-Aufruf durchlaeuft nicht
+   zwingend dieselben BAdI-Aufrufe. Ein gruener BAPI-Test waere kein Nachweis fuer den Weg,
+   um den es fachlich geht.
+
+Nach ABAP gehoert deshalb alles **Messende**: `Z_ZZPRDAT_CHECK` liest und urteilt, das
+Anlegen bleibt im Dialog. Diese Aufteilung ist die schnellste und zugleich die mit dem
+hoechsten Beweiswert.
