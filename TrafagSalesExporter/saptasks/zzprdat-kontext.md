@@ -635,3 +635,41 @@ Der Werkzeug- und Fallenkatalog steht in `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUG
 Die Kurzfassung: **Fuer alles Lesende zuerst einen ABAP-Report schreiben, den Ingo
 ausfuehrt.** GUI-Fernsteuerung nur fuer Schreiboperationen, und was am Bildschirm steht,
 aber nicht aus der Scripting-Schnittstelle kommt, per Screenshot geben lassen.
+
+### Erster Livetest am 2026-09-03: der Prototyp schreibt nicht
+
+Zwei Testauftraege in T76/100, Material `36385`, Werk `1100`, Art `PP21`, Menge `1`, der
+Reiter „Trafag Daten" wurde nie geoeffnet:
+
+| Auftrag | Weg | GLTRP | FTRMI | ZZPRDAT | Urteil |
+|---|---|---|---|---|---|
+| `1241802` | CO01 anlegen **und** freigeben in einem Vorgang | 05.10.2026 | 03.09.2026 | `00.00.0000` | FEHLT trotz Freigabe |
+| `1241803` | CO01 ohne Freigabe gesichert, danach **CO02 freigegeben** | 02.10.2026 | 03.09.2026 | `00.00.0000` | FEHLT trotz Freigabe |
+
+Beide Auftraege sind nachweislich freigegeben: Status `FREI FMAT ABRV`, `FTRMI` gesetzt,
+`REL` im Report gesetzt.
+
+**Die naheliegende Erklaerung ist widerlegt.** Beim Anlegen mit CO01 heisst der Auftrag im
+Freigabedialog `%00000000001`, also temporaer; das haette die erste Zeile erklaert. Bei
+`1241803` existierte die echte Nummer beim Freigeben jedoch bereits, und auch dort blieb
+`ZZPRDAT` leer. Die Reihenfolge der Verbuchung allein ist damit nicht die Ursache.
+
+Verbleibende Verdachtsmomente, noch nicht gemessen:
+
+1. **`CHECK is_header_dialog-autyp = '10'` greift nicht.** Die Syntaxpruefung belegt nur,
+   dass das Feld existiert, nicht welchen Wert es zur Laufzeit traegt.
+2. **`CHECK is_header_dialog-gltrp IS NOT INITIAL` greift nicht,** weil die Dialogstruktur
+   das Feld an dieser Stelle nicht gefuellt hat.
+3. **Formatunterschied bei der Auftragsnummer.** Traegt `IS_HEADER_DIALOG-AUFNR` die externe
+   Darstellung ohne fuehrende Nullen, findet `WHERE aufnr = iv_aufnr` keinen Satz, weil
+   `AUFK` intern mit fuehrenden Nullen speichert.
+4. **`AT_RELEASE` wird gar nicht aufgerufen.** Zu pruefen ist, ob `WORKORDER_UPDATE` in
+   diesem System weitere aktive Implementierungen hat und wie sie sich zueinander verhalten.
+
+**Naechster Schritt ist Messen statt Raten.** Die Methode soll die tatsaechlichen Werte
+protokollieren, bevor irgendein `CHECK` greift, zum Beispiel per
+`EXPORT ... TO DATABASE indx(zz) ID '...'` und einem kleinen Lesereport. Ohne dieses
+Protokoll ist jede weitere Codeaenderung geraten.
+
+Nicht vergessen: Jeder Testauftrag verbraucht genau einen erstmaligen Freigabeuebergang.
+Fuer jeden neuen Versuch wird ein neuer Auftrag gebraucht.
