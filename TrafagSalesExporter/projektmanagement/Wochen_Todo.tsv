@@ -1,5 +1,5 @@
 Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt	Erledigt am
-1	Heute	Finance ES	ISS-004.2	Spanien Buchungsdatum	Ingo	Mittel	Läuft		NUR NOCH DIESER SCHRITT: Mail an Santi, 7-Tage- gegen 35-Tage-Version ersetzen lassen. Fachentscheid und Umsetzung sind fertig - Andreas hat am 26.08.2026 das Rechnungsdatum als massgeblich gesetzt, Regel UseInvoiceDate mit ScopeKey ES ist seit 26.08.2026 produktiv. Fuellgrad PostingDate 1'523/7'071 (21,5 %) und seit dem 26.08. unveraendert
+1	Erledigt	Finance ES	ISS-004.2	Spanien Buchungsdatum	Ingo	Mittel	Erledigt		Entscheid 02.09.2026: Die 7-Tage-Version bleibt im Einsatz; Finance verwendet fuer Spanien InvoiceDate. Kein Wechsel auf die 35-Tage-Version und keine weitere Aktion bei Santi erforderlich.	02.09.2026
 2	Nur terminieren	Finance ES	ISS-004.1	Spanien Januar bis Mai 2026	Ingo	Mittel	Erledigt		Nachtrag und Import am 18.08.2026 bestätigt; keine Aktion
 3	Heute	SAP ZC12	PM-02	ZC12 Fehler bei Nullmengen	Ingo	Mittel	Blockiert		Vorfrage in SE93: ist ZC12 = Z_ABGLEICH_KTSCH?
 4	Hoch, haengt an anderen	Finance FR	ISS-001.2	Datenzufluss TR FR	Frankreich / Ingo	Hoch	Wartet auf andere		Eskalieren, seit 30.07.2026 keine Faktura mehr (18 Tage)
