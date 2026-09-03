@@ -9,6 +9,13 @@ Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
 Mehr soll nicht noetig sein. Wer den ganzen Bestand sucht, nimmt `baum.md` — das ist ein
 Vollstaendigkeitsindex zur Pruefung, keine Lesereihenfolge.
 
+Ist dagegen unklar, in welcher Datei eine Aussage ueberhaupt steht, hilft vorab das
+MCP-Werkzeug `qdrant-find`: eine semantische Suche ueber alle Markdown-Dateien,
+eingerichtet in `Tools/Qdrant/`. Sie nennt Datei und Abschnitt und ersetzt weder diesen
+Ladeweg noch das Lesen der Datei, denn ihre Treffer sind Ausschnitte aus dem letzten
+Indexlauf. Antwortet sie gar nicht, laeuft Qdrant nicht; `Tools/Qdrant/Start-Qdrant.ps1`
+startet es.
+
 ## Vorrangregeln
 
 Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstanden.
@@ -62,12 +69,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | „Wie bringe ich das auf den Server?" | Plattform |
 | „Was liefert SAP und wie?" | SAP, bei Verkaufszahlen Standortdaten |
 
-Hilft auch das nicht weiter, weil unklar ist, in welcher Datei eine Aussage ueberhaupt
-steht, gibt es eine semantische Volltextsuche ueber alle Markdown-Dateien: das
-MCP-Werkzeug `qdrant-find` aus `.mcp.json`, eingerichtet in `Tools/Qdrant/`. Sie ersetzt
-diesen Router nicht, sondern findet den Einstiegspunkt. Ein Treffer nennt Datei und
-Abschnitt und ist ein Hinweis, kein Beleg: die genannte Datei danach vollstaendig lesen,
-denn der Index bildet den Stand des letzten Indexlaufs ab. Antwortet die Suche gar nicht,
-laeuft Qdrant nicht; `Tools/Qdrant/Start-Qdrant.ps1` startet es.
+Hilft auch das nicht weiter, ist `qdrant-find` aus dem Kopf dieser Datei der naechste
+Schritt.
 
 Vollstaendiger Dateibestand mit Einordnung: `baum.md`.

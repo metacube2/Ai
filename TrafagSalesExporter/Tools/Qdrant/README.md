@@ -123,6 +123,16 @@ Wird das Modell in `.mcp.json` geaendert, aendert sich auch der Vektorname. Dann
 `Reindex-Docs.ps1` mit demselben Modell laufen, sonst passt der Index nicht mehr zum Server.
 Der Vorgabewert steht an beiden Stellen und muss gemeinsam gepflegt werden.
 
+Ein fuenfter Punkt kommt hinzu, der nicht in der Konfiguration steht: **beide Seiten muessen
+dieselbe fastembed-Version verwenden.** `uv` loest die Version bei jedem Lauf neu auf, und
+fastembed hat die Berechnung fuer dieses Modell schon einmal geaendert; der Indexlauf warnt
+seit 0.6 ausdruecklich, dass statt CLS-Einbettung nun Mittelwertbildung verwendet wird.
+Solange Indexierskript und MCP-Server dieselbe Version ziehen, ist das harmlos. Am
+2026-09-03 war das beidseitig `0.8.0`, geprueft mit
+`uv run --python 3.12 --with fastembed --no-project` gegen beide Umgebungen. Zeigt die Suche
+irgendwann nur noch unpassende Treffer, obwohl Qdrant laeuft und Punkte enthaelt, ist das
+der erste Verdacht: Versionen vergleichen und neu indexieren.
+
 ## 6. Neuinstallation auf einem anderen Rechner
 
 `.mcp.json` und die Skripte enthalten absolute Pfade unter `C:\Users\koi`. Auf einem anderen
