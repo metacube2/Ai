@@ -355,3 +355,283 @@ Damit ist `1194970` ein belastbarer Fehlerbeleg: Er wurde freigegeben, aber das
 Produktionsdatum blieb leer. Fuer den neuen BAdI-Schreibtest ist er ungeeignet, weil der
 erstmalige REL-Uebergang laengst vorbei ist. Benoetigt wird ein frischer, von der Disposition
 freigegebener T76-Testfall.
+
+---
+
+## Arbeitsuebergabe 2026-09-03: Prototyp in T76/100 begonnen (UEBERHOLT)
+
+> **Ueberholt am 2026-09-03 durch den Abschnitt „Arbeitsstand 2026-09-03, Fortsetzung
+> durch Claude" am Ende dieser Datei.** Die dort genannten offenen Punkte 1 bis 4 sind
+> erledigt: Hilfsbaustein, Klasse und BAdI-Implementierung sind aktiv, und
+> `IS_HEADER_DIALOG-GLTRP` ist von der SAP-Syntaxpruefung bestaetigt. Der Abschnitt bleibt
+> als datierter Verlauf stehen, ist aber nicht mehr der Handlungsstand.
+
+Ingo hat die Anlage eines separaten Testauftrags sowie die Anlage/Aktivierung der
+benoetigten Objekte **ausschliesslich in T76/100 und als lokale `$TMP`-Objekte**
+freigegeben. P76 und Transporte bleiben ausdruecklich ausgeschlossen.
+
+### Aktueller SAP-Stand
+
+Folgende Objekte wurden in T76/100 neu angelegt:
+
+| Objekt | Typ | Paket | Stand |
+| --- | --- | --- | --- |
+| `Z_ZZPRDAT_REL_TEST` | Erweiterungsimplementierung/Container | `$TMP` / LOCAL | angelegt |
+| `Z_ZZPRDAT_AT_RELEASE` | klassische BAdI-Implementierung fuer `WORKORDER_UPDATE` | `$TMP` / LOCAL | gespeichert, **inaktiv** |
+| `ZCL_IM__ZZPRDAT_AT_RELEASE` | von SE19 generierte Implementierungsklasse | lokal | noch ohne Methodencode, **inaktiv** |
+| `ZPP_ZZPRDAT_TEST` | Funktionsgruppe | `$TMP` / LOCAL | angelegt |
+| `Z_PP_PRDDAT_SET` | Update-Funktionsbaustein | `$TMP` / LOCAL | Schnittstelle, Attribute und Code gespeichert; Syntax OK; Aktivierung noch nicht bestaetigt |
+
+`Z_PP_PRDDAT_SET` besitzt diese Importparameter (Wertuebergabe):
+
+- `IV_AUFNR TYPE AUFNR`
+- `IV_PRDDAT TYPE ZCO_GLTRP`
+
+Eigenschaft: **Verbuchungsbaustein, Start sofort**. Gespeicherter Code:
+
+```abap
+FUNCTION z_pp_prddat_set.
+  CHECK iv_aufnr IS NOT INITIAL.
+  CHECK iv_prddat IS NOT INITIAL.
+
+  UPDATE aufk
+    SET zzprdat = iv_prddat
+    WHERE aufnr = iv_aufnr
+      AND zzprdat = '00000000'.
+ENDFUNCTION.
+```
+
+Die SAP-Syntaxpruefung meldete fuer den Funktionsbaustein ausdruecklich:
+`Es wurde kein Syntaxfehler gefunden` (Statusart S).
+
+Beim anschliessenden Aktivieren wurde nur der Dialog **Inaktive Objekte von KOI**
+geoeffnet. Die Auswahl/Aktivierung wurde wegen der Uebergabe an Claude nicht mehr
+bestaetigt. Vor dem Weiterarbeiten deshalb zuerst pruefen, ob der Funktionsbaustein
+noch `inaktiv` ist, und im Aktivierungsdialog ausschliesslich die Objekte der neuen
+Funktionsgruppe aktivieren. Keine anderen inaktiven KOI-Objekte mitaktivieren.
+
+### Geplante BAdI-Methode (noch nicht eingetragen)
+
+In SE19 ist die Methodenliste der Klasse `ZCL_IM__ZZPRDAT_AT_RELEASE` sichtbar.
+`AT_RELEASE` steht in Zeile 8 und ist im System beschrieben als:
+`Freigabe Auftrag Zeitpunkt: Nach SAP Pruefungen, vor Freigabe`.
+
+Vorgesehener Code:
+
+```abap
+METHOD if_ex_workorder_update~at_release.
+  CHECK is_header_dialog-autyp = '10'.
+  CHECK is_header_dialog-aufnr IS NOT INITIAL.
+  CHECK is_header_dialog-gltrp IS NOT INITIAL.
+
+  CALL FUNCTION 'Z_PP_PRDDAT_SET' IN UPDATE TASK
+    EXPORTING
+      iv_aufnr  = is_header_dialog-aufnr
+      iv_prddat = is_header_dialog-gltrp.
+ENDMETHOD.
+```
+
+Wichtig: `IS_HEADER_DIALOG-AUFNR` und `-AUTYP` sind bestaetigt.
+`IS_HEADER_DIALOG-GLTRP` konnte per RFC nicht aufgeloest werden und muss beim
+Eintragen einmal durch die SAP-Syntaxpruefung bestaetigt werden. Falls die Komponente
+nicht existiert, **keinen Ersatzwert verwenden**; dann auf `BEFORE_UPDATE` und die
+Kopfdaten aus `IT_HEADER` wechseln und deren echte Zeilenstruktur im Methodeneditor
+pruefen.
+
+### Offene SAP-GUI-Sitzungen bei der Uebergabe
+
+Alle Sitzungen sind T76, Mandant 100, Benutzer KOI:
+
+1. Session 0: CO02 (war bereits offen, wurde nicht veraendert).
+2. Session 1: SE19, Implementierung `Z_ZZPRDAT_AT_RELEASE`, Reiter Interface,
+   Implementierung weiterhin inaktiv.
+3. Session 2: SE37, `Z_PP_PRDDAT_SET`, Quelltextreiter; Aktivierungsansicht
+   `Inaktive Objekte von KOI` kann noch offen sein.
+
+SAP GUI Scripting war im Benutzerprofil deaktiviert. Fuer diese Arbeit wurde nur
+`HKCU\Software\SAP\SAPGUI Front\SAP Frontend Server\Security\UserScripting`
+von `0` auf `1` gesetzt. `WarnOnAttach` und `WarnOnConnection` blieben auf `1`.
+Nach Abschluss der SAP-Arbeit den Wert wieder auf `0` setzen, sofern Scripting nicht
+bewusst dauerhaft verwendet werden soll.
+
+### Lokales Testwerkzeug
+
+Unter `.tmp_sap_probe/ZzprdatOrderTool/` liegt ein x86/.NET-Framework-NCo-Werkzeug.
+Es hat einen harten Guard auf **T76/100** und getrennte Bestaetigungsschalter fuer
+Schreibaktionen. Build:
+
+```powershell
+dotnet build .tmp_sap_probe\ZzprdatOrderTool\ZzprdatOrderTool.csproj -c Release -p:Platform=x86
+```
+
+Der Build lief mit 0 Fehlern und 0 Warnungen. Unterstuetzte Aktionen:
+
+- ohne Argument beziehungsweise `metadata`: nur BAPI-Metadaten lesen
+- `verify --order <Nummer>`: AUFK/AFKO read-only lesen
+- `create --confirm-create [--start yyyyMMdd] [--end yyyyMMdd]`
+- `release --order <Nummer> --confirm-release`
+- `change-end --order <Nummer> --end yyyyMMdd --confirm-change`
+
+Der Create-Pfad verwendet die live bestaetigten Referenzdaten von Auftrag `1194970`:
+Material `36385`, Werk/Planungswerk `1100`, Auftragsart `PP21`, Menge `1 ST`,
+Produktionsversion `1001`, Lagerort `0001`. Er arbeitet in einem stateful NCo-Kontext,
+rollt bei BAPI-Fehlern zurueck und committed sonst explizit. **Noch nicht mit create
+ausgefuehrt.**
+
+Grund fuer das bewusste Warten: `PP21` kann laut Mail/Referenz automatisch freigeben.
+Ein vor Aktivierung des BAdI angelegter Auftrag koennte den entscheidenden ersten
+REL-Uebergang verbrauchen. Deshalb erst Hilfsbaustein und BAdI fehlerfrei aktivieren,
+dann den separaten Auftrag anlegen.
+
+### Exakte naechste Schritte fuer Claude
+
+1. In Session 2 nur `Z_PP_PRDDAT_SET` und die dazugehoerigen neuen
+   `ZPP_ZZPRDAT_TEST`-Includes aktivieren; keine fremden inaktiven Objekte.
+2. In Session 1 die Zeile `AT_RELEASE` oeffnen und den obigen Methodencode eintragen.
+3. Syntaxpruefung ausfuehren. Bei unbekanntem `GLTRP` wie oben beschrieben stoppen
+   und die echte Headerstruktur klaeren.
+4. Nur bei fehlerfreier Syntax Klasse und BAdI-Implementierung aktivieren. Noch keinen
+   Produktivtransport und keine P76-Aktion.
+5. Erst jetzt den separaten PP21-Testauftrag in T76/100 anlegen. Wegen moeglicher
+   automatischer Freigabe direkt danach AUFK/AFKO und Status pruefen.
+6. Erwartung beim ersten REL: `AUFK-ZZPRDAT = AFKO-GLTRP` des Freigabezeitpunkts,
+   ohne Besuch des Trafag-Tabs.
+7. Eckendtermin aendern und erneut speichern. Erwartung: `AFKO-GLTRP` aendert sich,
+   `AUFK-ZZPRDAT` bleibt unveraendert.
+8. SM13/ST22 pruefen. Wenn der Auftrag beim Anlegen automatisch freigegeben wird und
+   `ZZPRDAT` trotzdem leer bleibt, kann der in `AT_RELEASE` registrierte Update-Task
+   vor dem Standard-AUFK-Insert laufen. Dann diese Variante nicht weiterverwenden,
+   sondern `IN_UPDATE`/`BEFORE_UPDATE` mit den echten Kopfstrukturen untersuchen.
+9. Danach einen zweiten Test ueber den realen Umsetzungsweg (MD04/CO40; fuer CZ auch
+   CO41/COHV) mit Disposition abstimmen.
+
+### Sicherheits- und Scope-Nachweis
+
+- Keine Verbindung oder Aenderung in P76 waehrend dieses Arbeitsblocks.
+- Kein Transportauftrag angelegt.
+- Kein Fertigungsauftrag angelegt, freigegeben oder terminiert.
+- Bestehende Objekte `Z_IKO_CHECK_CO`, `Z_IKO_WORKORDER_CHECK_SAVE` und
+  `ZPP00012/PPCO0012` wurden nicht veraendert.
+- Alle neuen SAP-Objekte sind testbezogen benannt und lokal (`$TMP`).
+
+## Arbeitsstand 2026-09-03, Fortsetzung durch Claude
+
+Uebernahme von Codex, nachdem dessen Sitzung am Nutzungslimit abbrach. Freigabe von Ingo
+unveraendert: **nur T76/100, Paket `$TMP`, kein Transport, kein P76.**
+
+### Der Prototyp ist in T76/100 aktiv
+
+| Objekt | Stand |
+|---|---|
+| `ZPP_ZZPRDAT_TEST` (Funktionsgruppe) | aktiv |
+| `Z_PP_PRDDAT_SET` (Verbuchungsbaustein, Start sofort) | **aktiv** |
+| `ZCL_IM__ZZPRDAT_AT_RELEASE` | **aktiv, alle 13 Interface-Methoden** |
+| `Z_ZZPRDAT_AT_RELEASE` (BAdI-Implementierung) | **aktiv** |
+| `Z_ZZPRDAT_REL_TEST` (Container) | angelegt |
+
+**Rueckfall in einem Schritt:** SE19, Implementierung `Z_ZZPRDAT_AT_RELEASE`, `Strg+F4`
+(Deaktivieren). Danach verhaelt sich T76 wieder wie vorher.
+
+### Gelaufener Code
+
+`Z_PP_PRDDAT_SET`, am Bildschirm als `aktiv` bestaetigt:
+
+```abap
+FUNCTION z_pp_prddat_set.
+  CHECK iv_aufnr IS NOT INITIAL.
+  CHECK iv_prddat IS NOT INITIAL.
+
+  UPDATE aufk
+    SET zzprdat = iv_prddat
+    WHERE aufnr = iv_aufnr
+      AND zzprdat = '00000000'.
+ENDFUNCTION.
+```
+
+`ZCL_IM__ZZPRDAT_AT_RELEASE`, Methode `IF_EX_WORKORDER_UPDATE~AT_RELEASE`, von der
+SAP-Syntaxpruefung mit **0 Fehlern** abgenommen:
+
+```abap
+METHOD if_ex_workorder_update~at_release.
+  CHECK is_header_dialog-autyp = '10'.
+  CHECK is_header_dialog-aufnr IS NOT INITIAL.
+  CHECK is_header_dialog-gltrp IS NOT INITIAL.
+
+  CALL FUNCTION 'Z_PP_PRDDAT_SET' IN UPDATE TASK
+    EXPORTING
+      iv_aufnr  = is_header_dialog-aufnr
+      iv_prddat = is_header_dialog-gltrp.
+ENDMETHOD.
+```
+
+### Die offene Frage aus der Uebergabe ist beantwortet
+
+Codex konnte `IS_HEADER_DIALOG-GLTRP` nicht aufloesen. Die Signatur ist jetzt belegt,
+abgelesen im Class Builder:
+
+| Art | Parameter | Typisierung | Beschreibung |
+|---|---|---|---|
+| Importing | `I_AKTYP` | `RC27S-AKTYP` | Transaktionstyp |
+| Importing | `I_NO_DIALOG` | `C` | Kennzeichen: kein Dialog |
+| Importing | `I_FLG_COL_RELEASE` | `C` | **Kennzeichen: Sammelfreigabe** |
+| Importing | `IS_HEADER_DIALOG` | `COBAI_S_HEADER_DIALOG` | Auftragskopf in Dialogstruktur |
+| Exception | `FREE_FAILED_ERROR` | | Fehlermeldung aufgetreten |
+
+Die Syntaxpruefung akzeptiert `-GLTRP` und `-AUTYP`. Ein Wechsel auf `BEFORE_UPDATE` ist
+damit **nicht** noetig. Fachlich wichtig ist `I_FLG_COL_RELEASE`: die Methode kennt die
+Sammelfreigabe ausdruecklich, also genau den CO40- und COHV-Weg, an dem die alte
+Dynpro-Loesung gescheitert ist.
+
+### Nachweisreport `Z_ZZPRDAT_CHECK`
+
+Vorlage: `saptasks/zzprdat/Z_ZZPRDAT_CHECK.abap`. Rein lesend, Paket `$TMP`, SE38.
+Er stellt je Auftrag `AFKO-GLTRP`, `AUFK-ZZPRDAT` und den Freigabestatus gegenueber und
+faellt ein Urteil: `gesetzt, gleich GLTRP` / `eingefroren, GLTRP verschoben` /
+`FEHLT trotz Freigabe` / `noch nicht freigegeben`.
+
+**Gemessene Nulllinie am 2026-09-03**, Marcos 34 Auftraege `1214601` bis `1214634` in
+T76/100: 32 sind freigegeben und haben trotzdem `ZZPRDAT = 00.00.0000`, die uebrigen zwei
+sind Sonderfaelle mit inaktivem `I0002`. **Kein einziger Auftrag traegt ein
+Produktionsdatum.** Das ist der Fehler aus der Mailkette in voller Breite.
+
+`1214608`, der Auftrag, fuer den Marco einen Auszug mit `ZZPRDAT = 20.11.2025` geschickt
+hatte, steht in T76 auf `00.00.0000`.
+
+Nebenbefund, der in den Report eingearbeitet ist: **`JEST`/`I0002` allein ist kein
+Freigabenachweis**, weil der Status bei abgeschlossenen Auftraegen inaktiv gesetzt wird.
+`AFKO-FTRMI` ist verlaesslich. Ein Report, der nur JEST liest, meldet gerade die
+interessanten Altfaelle faelschlich als nie freigegeben.
+
+Zweiter Nebenbefund: **Auftragsart `PP21` traegt den Kurztext „Simulationsauftrag", ist
+aber der reale Fertigungsauftragstyp.** Von den 34 Auftraegen sind 24 `PP21` und 10 `PP22`.
+`PP22` gehoert spaeter als zweiter Testfall dazu.
+
+### Was jetzt aussteht
+
+1. **Testauftrag in T76/100 anlegen**: CO01, Material `36385`, Werk `1100`, Art `PP21`,
+   Menge `1`. Den Reiter **Trafag Daten nicht oeffnen**, freigeben, sichern.
+2. `Z_ZZPRDAT_CHECK` mit dieser Auftragsnummer. Erwartung `gesetzt, gleich GLTRP`.
+3. CO02, Eckendtermin verschieben, sichern, Report erneut. Erwartung
+   `eingefroren, GLTRP verschoben`. Das ist der Write-once-Nachweis, den Marco fuer die
+   Etiketten braucht.
+4. Bleibt `ZZPRDAT` nach Schritt 2 leer: **nicht weiterprobieren**, sondern SM13 und ST22
+   ansehen. Dann laeuft der registrierte Verbuchungsbaustein vor dem Standard-Insert in
+   `AUFK` und die Variante muss auf `IN_UPDATE` wechseln.
+5. Danach zweiter Fall ueber den realen Umsetzungsweg (MD04 fuer CH, CO41 fuer CZ, CO40
+   und COHV fuer die Sammelfreigabe) mit der Disposition abstimmen. Fabio hat in der
+   Mailkette ausdruecklich verlangt, bei PP-Aenderungen einbezogen zu werden.
+6. Erst danach fachliche Abnahme durch Lucas, Florian und Marco, dann getrennt entscheiden
+   ueber Transport nach P76 und ueber das Nachfuellen der Altbestaende.
+
+### Offener Punkt am Arbeitsplatz
+
+`HKCU\Software\SAP\SAPGUI Front\SAP Frontend Server\Security\UserScripting` steht auf `1`.
+Codex hatte es fuer diese Arbeit von `0` heraufgesetzt. **Nach Abschluss der SAP-Arbeit
+wieder auf `0` setzen**, sofern GUI-Scripting nicht bewusst dauerhaft gewuenscht ist.
+
+### Wie man hier effizient weiterarbeitet
+
+Der Werkzeug- und Fallenkatalog steht in `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`.
+Die Kurzfassung: **Fuer alles Lesende zuerst einen ABAP-Report schreiben, den Ingo
+ausfuehrt.** GUI-Fernsteuerung nur fuer Schreiboperationen, und was am Bildschirm steht,
+aber nicht aus der Scripting-Schnittstelle kommt, per Screenshot geben lassen.
