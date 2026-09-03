@@ -10,6 +10,44 @@ Sie ist bewusst aufgabenunabhaengig. Der fachliche Stand des ZZPRDAT-Auftrags st
 Alles hier bezieht sich auf **T76, Mandant 100** (`travt762`). P76 ist Produktion und wird
 nur nach ausdruecklicher Freigabe angefasst.
 
+## 0. Start einer neuen Sitzung: ein Befehl, dann laeuft alles
+
+**Voraussetzung ist einzig, dass SAP GUI mit einer angemeldeten T76/100-Sitzung offen ist.**
+Danach genuegt ein Befehl, den **Ingo selbst ausfuehren muss**, weil er eine
+Sicherheitsabfrage abschaltet und deshalb nicht von einem Agenten kommen darf. Aus der
+Repository-Wurzel:
+
+```
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\Set-SapScriptingWarnings.ps1 -Aus
+```
+
+Das Skript zeigt vorher und nachher die drei Werte, man sieht also sofort, ob es gewirkt
+hat. Der Zielzustand ist `UserScripting 1`, `WarnOnAttach 0`, `WarnOnConnection 0`.
+
+**Ab diesem Moment laeuft die gesamte SAP-Arbeit ohne einen einzigen Klick:** Anlegen und
+Freigeben von Fertigungsauftraegen, Aendern von ABAP-Quelltext, Aktivieren von Klassen und
+BAdI-Implementierungen, Ausfuehren von Reports und das Auslesen ihrer Listen. Der Agent
+steuert die bereits angemeldeten Sitzungen fern.
+
+Am Ende der Arbeit zuruecksetzen:
+
+```
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\Set-SapScriptingWarnings.ps1 -Ein
+```
+
+Drei Stolpersteine, die sonst Zeit kosten:
+
+* **Der Aufruf braucht das richtige Verzeichnis.** Aus `C:\Users\koi` heraus gibt es
+  `.tmp_sap_probe` nicht, und PowerShell meldet nur, die Datei existiere nicht. Der Befehl
+  hat dann nichts getan.
+* **Wirken die Warnungen weiter, SAP Logon samt allen Sitzungen neu starten.** SAP GUI liest
+  die Einstellung beim Verbindungsaufbau.
+* **Das SAP-Passwort wird fuer diesen Weg nicht gebraucht.** Es gehoert zu SapProbe, das
+  eine eigene RFC-Verbindung an der GUI vorbei aufbaut. Fuer alles, was ueber die
+  Oberflaeche geht, ist es ueberfluessig. Wer die Struktur eines Objekts braucht, das die
+  GUI nicht herausgibt, kommt oft auch mit `ASSIGN COMPONENT` zur Laufzeit ans Ziel; siehe
+  Abschnitt 13.
+
 ## 1. Die drei Zugangswege und wann welcher taugt
 
 Es gibt drei Wege ins System. Sie unterscheiden sich vor allem darin, was sie **kosten**,
@@ -54,11 +92,18 @@ Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere V
   bleiben `sbar.MessageType` und `sbar/pane[0]` leer, obwohl eine Fehlerliste am Bildschirm
   steht. Verlass ist nur auf **Zustandsfelder**, etwa `RSEXSCRN-ACTIVE` in SE19 oder
   `DY0200_STATUS` im Class Builder.
-* **Scripting muss lokal eingeschaltet sein.** `HKCU\Software\SAP\SAPGUI Front\SAP Frontend
-  Server\Security\UserScripting` steht normalerweise auf `0`. Fuer eine Arbeitssitzung auf
-  `1` setzen und **danach wieder auf `0`**. `WarnOnAttach` und `WarnOnConnection` bleiben
-  auf `1`; deshalb kann der erste Zugriff nach einer Pause mit „Erlaubnis verweigert"
-  abgewiesen werden und muss einmal wiederholt werden.
+* **Scripting muss lokal eingeschaltet sein.** Wie, steht in Abschnitt 0. Bleiben
+  `WarnOnAttach` und `WarnOnConnection` auf `1`, wird der erste Zugriff nach einer Pause
+  mit „Erlaubnis verweigert: 'a.GetScriptingEngine'" abgewiesen; ein Wiederholen desselben
+  Aufrufs genuegt dann. Genau das macht unbeaufsichtigtes Arbeiten unmoeglich und ist der
+  Grund fuer den Freischaltbefehl.
+* **Eine geschlossene Sitzung macht gehaltene Referenzen ungueltig.** Nach `/i` meldet der
+  naechste Zugriff „Das aufgerufene Objekt wurde von den Clients getrennt". Der Aufruf muss
+  dann einfach wiederholt werden, dann wird die COM-Verbindung neu aufgebaut.
+* **Nach dem Aktivieren einer Klasse brechen laufende Sitzungen ab.** Wer eine Transaktion
+  offen hat, die die alte Fassung geladen hat, bekommt beim naechsten Schritt
+  `LOAD_PROGRAM_CLASS_MISMATCH`. Die Sitzung mit `/i` schliessen und neu oeffnen; nur ein
+  frischer interner Modus laedt die neue Version.
 
 ## 3. Fallen beim Aktivieren
 
@@ -415,3 +460,39 @@ Diese Aenderung schaltet eine Sicherheitsabfrage ab und muss deshalb **vom Benut
 ausgefuehrt werden. Ohne die Warnungen haengt sich jedes Skript ohne Rueckfrage an eine
 angemeldete SAP-Sitzung an. In einer Umgebung, in der auch produktive Systeme angemeldet
 sein koennen, ist das keine Nebensaechlichkeit.
+
+## 13. Wenn eine Struktur nicht auslesbar ist: dynamischer Komponentenzugriff
+
+Am 2026-09-03 wurde die Zeilenstruktur von `COBAI_T_HEADER` gebraucht, um `BEFORE_UPDATE`
+des BAdI `WORKORDER_UPDATE` zu implementieren. Sie liegt in einer **Typgruppe**, nicht als
+DDIC-Struktur. SE11 springt dorthin, der Quelltext steht in einem ABAP-Editor, und der ist
+ueber die Scripting-Schnittstelle nicht lesbar. Auch die Signaturtabelle im Class Builder
+erscheint nicht im Steuerelementbaum.
+
+Der Ausweg braucht die Struktur gar nicht:
+
+```abap
+FIELD-SYMBOLS: <ls_kopf>  TYPE any,
+               <lv_aufnr> TYPE any,
+               <lv_gltrp> TYPE any.
+
+LOOP AT it_header ASSIGNING <ls_kopf>.
+  UNASSIGN: <lv_aufnr>, <lv_gltrp>.
+  ASSIGN COMPONENT 'AUFNR' OF STRUCTURE <ls_kopf> TO <lv_aufnr>.
+  CHECK sy-subrc = 0.
+  ASSIGN COMPONENT 'GLTRP' OF STRUCTURE <ls_kopf> TO <lv_gltrp>.
+  CHECK sy-subrc = 0.
+  " ...
+ENDLOOP.
+```
+
+`ASSIGN COMPONENT` loest den Feldnamen zur Laufzeit auf. Der Uebersetzer muss die Struktur
+nicht kennen, und ein fehlendes Feld fuehrt nicht zum Abbruch, sondern zu `sy-subrc <> 0`.
+Die Feldnamen selbst waren aus `AUFK` und `AFKO` ohnehin bekannt.
+
+**Das ist kein Notbehelf, sondern oft die bessere Wahl**, wenn eine Schnittstelle nur
+gelesen wird: Sie bleibt auch dann uebersetzbar, wenn SAP die Struktur in einem Release
+erweitert.
+
+Kosten: Der Zugriff ist nicht typgeprueft. Deshalb sollten die Werte sofort in getypte
+Variablen uebernommen werden, wie oben in `lv_aufnr` und `lv_prddat`.

@@ -53,6 +53,27 @@ function Set-SapPassword {
         throw "Kein Passwort eingegeben, es wurde nichts gespeichert."
     }
 
+    # Plausibilitaetspruefung. Am 2026-09-03 sind beim Einfuegen 99 Zeichen mit
+    # Leerzeichen in die Ablage geraten; der erste RFC-Versuch damit war eine
+    # Fehlanmeldung. Wiederholte Fehlanmeldungen sperren den SAP-Benutzer, deshalb
+    # wird Unsinn hier abgefangen statt ihn an SAP zu schicken.
+    $zeiger = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sicher)
+    try {
+        $klartext = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($zeiger)
+    } finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($zeiger)
+    }
+
+    if ($klartext.Length -gt 40) {
+        $klartext = $null
+        throw "Die Eingabe ist $($sicher.Length) Zeichen lang. Das ist kein Passwort, sondern vermutlich versehentlich eingefuegter Text. Es wurde nichts gespeichert."
+    }
+    if ($klartext -match '\s') {
+        $klartext = $null
+        throw "Die Eingabe enthaelt Leerzeichen oder Zeilenumbrueche. Bitte das Passwort tippen statt einfuegen. Es wurde nichts gespeichert."
+    }
+    $klartext = $null
+
     [pscustomobject]@{
         System   = $script:SapCredentialSystem
         Mandant  = '100'

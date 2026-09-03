@@ -172,7 +172,7 @@ def dokument_erzeugen() -> None:
     ueberschrift(dok, "Warum es zunächst trotzdem nicht funktionierte", 1)
     dok.add_paragraph(
         "Die Erweiterung war korrekt eingebaut und aktiv, und trotzdem blieb das Feld leer. "
-        "Elf Testaufträge waren nötig, um die Ursache einzugrenzen. Es waren zwei "
+        "Zwölf Testaufträge waren nötig, um die Ursachen einzugrenzen. Es waren drei "
         "voneinander unabhängige Ursachen, und keine davon war am Quelltext erkennbar."
     )
 
@@ -209,6 +209,24 @@ def dokument_erzeugen() -> None:
         "Laufzeit auftritt und die Syntaxprüfung ihn nicht findet."
     )
 
+    ueberschrift(
+        dok, "Ursache 3: Beim Anlegen hat der Auftrag noch keine Nummer", 2)
+    dok.add_paragraph(
+        "Wird ein Auftrag über CO01 in einem einzigen Vorgang angelegt und sofort "
+        "freigegeben, trägt er zum Zeitpunkt der Freigabe noch eine vorläufige "
+        "Kennung statt seiner endgültigen Nummer. Der Schreibvorgang findet den "
+        "Auftrag deshalb nicht. Über CO02 freigegebene Aufträge waren davon nicht "
+        "betroffen, weil ihre Nummer bereits vergeben war."
+    )
+    fett_dann_text(
+        dok, "Lösung: ",
+        "Die Erweiterung wurde zusätzlich an einer zweiten Stelle des Business "
+        "Add-In verankert, die unmittelbar vor dem Speichern läuft und die "
+        "endgültigen Auftragsdaten kennt. Damit sind das Anlegen mit sofortiger "
+        "Freigabe, die spätere Freigabe und die Sammelfreigabe gleichermassen "
+        "abgedeckt."
+    )
+
     ueberschrift(dok, "Der Ablauf vorher und nachher", 1)
     dok.add_picture(str(BILD), width=Cm(17))
     bu = dok.add_paragraph(
@@ -219,23 +237,32 @@ def dokument_erzeugen() -> None:
 
     ueberschrift(dok, "Nachweis", 1)
     dok.add_paragraph(
-        "Auftrag 1241812 im System T76, Material 36385, Werk 1100, Auftragsart PP21. "
-        "Der Reiter „Trafag Daten“ wurde zu keinem Zeitpunkt geöffnet."
+        "Zwei Aufträge im System T76, beide Material 36385, Werk 1100, Auftragsart "
+        "PP21. Der Reiter „Trafag Daten“ wurde zu keinem Zeitpunkt geöffnet. "
+        "Geprüft wurden beide Wege, auf denen ein Auftrag freigegeben werden kann."
     )
 
-    tab = dok.add_table(rows=1, cols=4)
+    tab = dok.add_table(rows=1, cols=5)
     tab.style = "Light Grid Accent 1"
     kopf = tab.rows[0].cells
-    for i, text in enumerate(["Schritt", "Eckendtermin", "Produktionsdatum", "Ergebnis"]):
+    for i, text in enumerate(
+            ["Auftrag", "Schritt", "Eckendtermin", "Produktionsdatum", "Ergebnis"]):
         kopf[i].text = text
         for absatz in kopf[i].paragraphs:
             for lauf in absatz.runs:
                 lauf.bold = True
 
     for zeile in [
-        ("Auftrag angelegt, noch nicht freigegeben", "20.11.2026", "leer", "wie erwartet"),
-        ("Auftrag freigegeben", "20.11.2026", "20.11.2026", "wird gesetzt"),
-        ("Eckendtermin verschoben", "09.12.2026", "20.11.2026", "bleibt stehen"),
+        ("1241812", "angelegt, noch nicht freigegeben", "20.11.2026", "leer",
+         "wie erwartet"),
+        ("1241812", "in CO02 freigegeben", "20.11.2026", "20.11.2026",
+         "wird gesetzt"),
+        ("1241812", "Eckendtermin verschoben", "09.12.2026", "20.11.2026",
+         "bleibt stehen"),
+        ("1241813", "in CO01 angelegt und freigegeben", "27.11.2026", "27.11.2026",
+         "wird gesetzt"),
+        ("1241813", "Eckendtermin verschoben", "18.12.2026", "27.11.2026",
+         "bleibt stehen"),
     ]:
         zellen = tab.add_row().cells
         for i, text in enumerate(zeile):
@@ -248,33 +275,36 @@ def dokument_erzeugen() -> None:
         "mit der Freigabe und überlebt eine spätere Terminverschiebung."
     ).bold = True
 
-    ueberschrift(dok, "Was noch offen ist", 1)
+    ueberschrift(dok, "Was noch aussteht", 1)
     dok.add_paragraph(
-        "Ein Auftrag, der in einem einzigen Vorgang über CO01 angelegt und sofort "
-        "freigegeben wird, bleibt bislang leer. Zum Zeitpunkt der Freigabe hat er noch "
-        "keine endgültige Nummer, sondern eine vorläufige Kennung. Der "
-        "Schreibvorgang findet den Auftrag deshalb nicht."
+        "Getestet sind bisher die beiden Dialogwege CO01 und CO02. Die Erweiterung "
+        "greift technisch bei jedem Speichern und sollte deshalb auch die übrigen "
+        "Wege abdecken, gemessen ist das aber noch nicht. Adil Lahrach hat MD04 im "
+        "Werk CH und CO41 in CZ als die realen Wege benannt; genau diese gehören "
+        "als Nächstes geprüft."
     )
     dok.add_paragraph(
-        "Das ist kein Randfall. Laut Adil Lahrach entstehen die Aufträge im Werk CH "
-        "über MD04 und in CZ teilweise über CO41, also ebenfalls durch Umsetzung "
-        "von Planaufträgen. Ob dort die endgültige Nummer bereits vorliegt, ist "
-        "noch nicht gemessen. Vor einer Zusage an die Disposition muss dieser Punkt "
-        "geklärt sein."
+        "Diese Tests greifen in Planung und Fertigung ein und sollten deshalb mit der "
+        "Disposition abgestimmt werden. Fabio Palma hat ausdrücklich darum gebeten, "
+        "bei Änderungen im PP-Modul einbezogen zu werden."
     )
     dok.add_paragraph(
-        "Ebenfalls offen und bewusst getrennt zu entscheiden: der Transport nach P76 und "
-        "das nachträgliche Füllen der Altbestände. Beides erst nach "
-        "fachlicher Abnahme durch Lucas Castro, Florian Wächter und Marco Di Menco."
+        "Der Transport nach P76 und das nachträgliche Füllen der Altbestände "
+        "sind bewusst zwei getrennte Entscheidungen. Beides erst nach fachlicher Abnahme "
+        "durch Lucas Castro, Florian Wächter und Marco Di Menco."
     )
 
     ueberschrift(dok, "Nächste Schritte", 1)
     for text in [
-        "Verhalten bei der Umsetzung von Planaufträgen über MD04 und CO41 messen.",
-        "Sammelfreigabe über CO40 und COHV testen, mit der Disposition abgestimmt.",
+        "Umsetzung von Planaufträgen über MD04 und CO41 messen, mit der "
+        "Disposition abgestimmt.",
+        "Sammelfreigabe über CO40 und COHV testen.",
+        "Auftragsart PP22 als zweiten Typ prüfen; 10 der 34 Aufträge aus Marcos "
+        "Liste sind PP22.",
         "Marco prüft, ob Verpackungsetikett und Typenschild dasselbe Feld verwenden.",
         "Erst danach über den Transport nach P76 entscheiden.",
-        "Getrennt davon: Altbestände nachfüllen, ausschliesslich für leere Felder.",
+        "Getrennt davon und erst nach dem Transport: Altbestände nachfüllen, "
+        "ausschliesslich für leere Felder.",
     ]:
         dok.add_paragraph(text, style="List Number")
 

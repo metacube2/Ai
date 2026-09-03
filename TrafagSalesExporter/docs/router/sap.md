@@ -1,4 +1,5 @@
-# Unterrouter SAP
+| **ZZPRDAT geloest am 2026-09-03, Loesungsdokument fuer den Fachbereich** | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
+| ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |# Unterrouter SAP
 
 Zurueck: `router.md`. Stand: 2026-09-03.
 

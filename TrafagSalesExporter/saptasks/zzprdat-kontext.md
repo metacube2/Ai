@@ -803,7 +803,7 @@ Zeichenliteral `'19000101'` fuer den DATS-Parameter `IV_PRDDAT` fuehrt dort zu
 `CONNE_IMPORT_WRONG_FIELD_TYPE` und reisst die ganze Verbuchung mit. Immer getypte
 Variablen verwenden.
 
-### Was noch offen ist: der CO01-Weg
+### Was noch offen war: der CO01-Weg (GELOEST, siehe Abschnitt am Ende)
 
 `1241811`, ueber CO01 in einem Vorgang angelegt **und** freigegeben, bleibt leer.
 Grund ist mit hoher Wahrscheinlichkeit die temporaere Auftragsnummer: Im Freigabedialog
@@ -863,3 +863,68 @@ Freigabe, nicht mit jedem Sichern.
 
 `1241802` bis `1241812`. Die Aufträge `1241802` und `1241805` tragen Diagnosedaten
 (`04.01.1900` und `04.01.1901`) und sind fachlich wertlos. `1241812` ist der Nachweisfall.
+
+## Abschluss 2026-09-03: alle Wege abgedeckt
+
+Der zuvor offene CO01-Fall ist geloest. **Auftrag `1241813`** wurde in einem einzigen
+Vorgang ueber CO01 angelegt **und** freigegeben, ohne den Reiter „Trafag Daten":
+
+| Schritt | GLTRP | ZZPRDAT | Urteil |
+|---|---|---|---|
+| CO01 anlegen und freigeben | 27.11.2026 | **27.11.2026** | gesetzt, gleich GLTRP |
+| Eckendtermin auf 18.12.2026 verschoben | 18.12.2026 | **27.11.2026** | eingefroren |
+
+Zusammen mit `1241812` (Freigabe ueber CO02) sind damit beide Dialogwege nachgewiesen.
+
+### Die Loesung in drei Teilen
+
+**1. `BEFORE_UPDATE` statt nur `AT_RELEASE`.** `AT_RELEASE` bekommt beim Anlegen und
+Freigeben in einem Vorgang die temporaere Auftragsnummer `%00000000001`; das `UPDATE`
+findet damit keinen Satz. `BEFORE_UPDATE` laeuft unmittelbar vor der Verbuchung und hat in
+`IT_HEADER` die endgueltigen Koepfe. `AT_RELEASE` bleibt zusaetzlich aktiv; die
+Write-once-Regel macht die doppelte Registrierung unschaedlich.
+
+**2. Dynamischer Komponentenzugriff.** Die Zeilenstruktur von `COBAI_T_HEADER` liegt in
+einer Typgruppe und war weder ueber die GUI noch ueber die Signaturtabelle auslesbar.
+`ASSIGN COMPONENT 'AUFNR' OF STRUCTURE` loest den Feldnamen zur Laufzeit auf; der
+Uebersetzer braucht die Struktur nicht. Ein fehlendes Feld fuehrt zu `sy-subrc <> 0` statt
+zum Abbruch. Vorlage: `saptasks/zzprdat/BEFORE_UPDATE_ZIEL.abap`.
+
+**3. Die Freigabepruefung wanderte in den Verbuchungsbaustein.** Dort ist sie an
+`AFKO-FTRMI` messbar, und weil der Baustein als V2 nach der Standardverbuchung laeuft, ist
+`FTRMI` zu diesem Zeitpunkt bereits festgeschrieben. Damit greift die Regel unabhaengig
+davon, aus welcher BAdI-Methode registriert wurde. Vorlage:
+`saptasks/zzprdat/Z_PP_PRDDAT_SET_V2.abap`.
+
+### Endstand der Objekte in T76/100, Paket `$TMP`
+
+| Objekt | Art | Stand |
+|---|---|---|
+| `Z_PP_PRDDAT_SET` | Verbuchungsbaustein, **Start verzoegert (V2)** | aktiv |
+| `ZPP_ZZPRDAT_TEST` | Funktionsgruppe | aktiv |
+| `ZCL_IM__ZZPRDAT_AT_RELEASE` | Implementierungsklasse | aktiv |
+| `Z_ZZPRDAT_AT_RELEASE` | BAdI-Implementierung zu `WORKORDER_UPDATE` | aktiv |
+| `Z_ZZPRDAT_REL_TEST` | Erweiterungsimplementierung | aktiv |
+| `ZTESTQQ` | Nachweisreport, Vorlage `Z_ZZPRDAT_CHECK.abap` | aktiv |
+
+Belegte Methoden: `AT_RELEASE` und `BEFORE_UPDATE` registrieren den Baustein, `AT_SAVE` ist
+bewusst leer.
+
+**Rueckfall in einem Schritt:** SE19, `Z_ZZPRDAT_AT_RELEASE`, `Strg+F4`.
+
+### Testauftraege und ihr Zustand
+
+`1241802` bis `1241813`, alle Material `36385`, Werk `1100`, Art `PP21`, Menge 1.
+`1241802` (`04.01.1900`) und `1241805` (`04.01.1901`) tragen Diagnosewerte aus den Sonden
+und sind fachlich wertlos. `1241812` und `1241813` sind die Nachweisfaelle.
+
+### Was fachlich noch aussteht
+
+1. Sammelfreigabe ueber CO40 und COHV messen, mit der Disposition abgestimmt.
+2. Umsetzung von Planauftraegen ueber MD04 (CH) und CO41 (CZ) messen. Adil Lahrach hat
+   diese Wege als die realen benannt.
+3. Auftragsart `PP22` als zweiten Typ testen; von Marcos 34 Auftraegen sind 10 vom Typ PP22.
+4. Marco prueft, ob Verpackungsetikett und Typenschild dasselbe Feld verwenden.
+5. Erst danach ueber den Transport nach P76 entscheiden.
+6. Getrennt davon und erst nach dem Transport: Altbestaende nachfuellen, ausschliesslich
+   fuer leere Felder.
