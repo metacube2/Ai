@@ -237,9 +237,18 @@ def dokument_erzeugen() -> None:
 
     ueberschrift(dok, "Nachweis", 1)
     dok.add_paragraph(
-        "Zwei Aufträge im System T76, beide Material 36385, Werk 1100, Auftragsart "
-        "PP21. Der Reiter „Trafag Daten“ wurde zu keinem Zeitpunkt geöffnet. "
-        "Geprüft wurden beide Wege, auf denen ein Auftrag freigegeben werden kann."
+        "Geprüft wurden vier Wege, auf denen ein Fertigungsauftrag entstehen und "
+        "freigegeben werden kann. Alle Aufträge im System T76, Material 36385, "
+        "Werk 1100, Auftragsart PP21. Der Reiter „Trafag Daten“ wurde in keinem "
+        "einzigen Fall geöffnet."
+    )
+    p = dok.add_paragraph()
+    p.add_run("Der wichtigste Nachweis ist die Sammelfreigabe über COHV. ").bold = True
+    p.add_run(
+        "Dort gibt es überhaupt keine Bildschirmmaske, die man besuchen könnte — "
+        "genau daran musste die bisherige Lösung scheitern. Dass das Datum auch dort "
+        "gesetzt wird, zeigt, dass die Abhängigkeit vom Dynpro vollständig "
+        "aufgelöst ist."
     )
 
     tab = dok.add_table(rows=1, cols=5)
@@ -263,6 +272,12 @@ def dokument_erzeugen() -> None:
          "wird gesetzt"),
         ("1241813", "Eckendtermin verschoben", "18.12.2026", "27.11.2026",
          "bleibt stehen"),
+        ("1241814", "Sammelfreigabe über COHV", "04.12.2026", "04.12.2026",
+         "wird gesetzt"),
+        ("1241815", "Sammelfreigabe über COHV", "04.12.2026", "04.12.2026",
+         "wird gesetzt"),
+        ("1241816", "Planauftrag über CO40 umgesetzt", "09.12.2026", "09.12.2026",
+         "wird gesetzt"),
     ]:
         zellen = tab.add_row().cells
         for i, text in enumerate(zeile):
@@ -277,14 +292,26 @@ def dokument_erzeugen() -> None:
 
     ueberschrift(dok, "Was noch aussteht", 1)
     dok.add_paragraph(
-        "Getestet sind bisher die beiden Dialogwege CO01 und CO02. Die Erweiterung "
-        "greift technisch bei jedem Speichern und sollte deshalb auch die übrigen "
-        "Wege abdecken, gemessen ist das aber noch nicht. Adil Lahrach hat MD04 im "
-        "Werk CH und CO41 in CZ als die realen Wege benannt; genau diese gehören "
-        "als Nächstes geprüft."
+        "Nicht einzeln gemessen sind MD04 und CO41. Beide setzen Planaufträge um "
+        "und enden im Speichern eines Fertigungsauftrags, also in demselben Ablauf, "
+        "den CO40 bereits durchlaufen hat. Das ist ein begründeter Schluss, aber "
+        "keine Messung — und es steht hier bewusst als solcher, damit sich niemand "
+        "auf mehr verlässt, als belegt ist."
     )
     dok.add_paragraph(
-        "Diese Tests greifen in Planung und Fertigung ein und sollten deshalb mit der "
+        "Der für den CO40-Test verwendete Planauftrag wurde mit dem Profil "
+        "„Lagerauftrag“ angelegt. Das ist ein neutraler technischer Testfall. "
+        "Ob der reale Ablauf im Werk CH mit diesem oder einem anderen Profil arbeitet, "
+        "ist eine Stammdatenfrage und gehört zu Fabio Palma und Daniel Tobler. "
+        "Für die Frage, ob die Umsetzung das Datum schreibt, spielt das Profil "
+        "keine Rolle."
+    )
+    dok.add_paragraph(
+        "Ebenfalls offen ist die Auftragsart PP22, die bei 10 der 34 Aufträge aus "
+        "Marcos Liste vorkommt."
+    )
+    dok.add_paragraph(
+        "Weitere Tests greifen in Planung und Fertigung ein und sollten deshalb mit der "
         "Disposition abgestimmt werden. Fabio Palma hat ausdrücklich darum gebeten, "
         "bei Änderungen im PP-Modul einbezogen zu werden."
     )
@@ -298,7 +325,6 @@ def dokument_erzeugen() -> None:
     for text in [
         "Umsetzung von Planaufträgen über MD04 und CO41 messen, mit der "
         "Disposition abgestimmt.",
-        "Sammelfreigabe über CO40 und COHV testen.",
         "Auftragsart PP22 als zweiten Typ prüfen; 10 der 34 Aufträge aus Marcos "
         "Liste sind PP22.",
         "Marco prüft, ob Verpackungsetikett und Typenschild dasselbe Feld verwenden.",
