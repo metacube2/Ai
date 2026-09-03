@@ -1,0 +1,21 @@
+# Versioniert wird nur der Quellcode der SAP-Werkzeuge, nicht das, was sie erzeugen.
+#
+# Der Ordner heisst historisch `.tmp_sap_probe`, ist aber kein Wegwerfordner mehr:
+# SapProbe, das ZzprdatOrderTool und die GUI-Scripting-Helfer sind der Arbeitsstand,
+# mit dem T76/100 bedient wird. Die Anleitung dazu steht in
+# `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`.
+
+# Buildausgaben
+bin/
+obj/
+ZzprdatOrderTool/bin/
+ZzprdatOrderTool/obj/
+
+# Laufzeitprotokolle und Bildschirmabzuege
+*.log
+*.png
+*.csv
+
+# Bildschirmbaeume aus SapGuiDumpSession.vbs. Sie sind Momentaufnahmen einer Maske
+# und veralten sofort; die verwertbaren Erkenntnisse stehen in der Doku.
+*.txt
