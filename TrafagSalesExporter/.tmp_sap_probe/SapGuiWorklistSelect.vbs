@@ -56,6 +56,7 @@ Function IstEigenes(name)
   If n = "Z_PP_PRDDAT_SET" Then IstEigenes = True
   If Left(n, 18) = "LZPP_ZZPRDAT_TEST" & "T" Then IstEigenes = True
   If Left(n, 26) = "ZCL_IM__ZZPRDAT_AT_RELEASE" Then IstEigenes = True
+  If n = "ZTESTQQ" Then IstEigenes = True
 End Function
 
 ' Alle Zeilen liegen auf einer Seite: RowCount ist groesser als die Trefferzahl.

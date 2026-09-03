@@ -19,6 +19,7 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 | PPWR, fachlicher Katalog und Anlageprotokoll (Erfolgsmeldung strittig, siehe Zeile darueber) | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
 | **Wie man ueberhaupt effizient mit SAP arbeitet: Zugangswege, Grenzen des GUI-Scriptings, Aktivierungsfallen, Skriptbestand** | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
+| **ZZPRDAT: was fuer den Transport nach P76 fehlt** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
 | **ZZPRDAT: Loesungsdokument fuer den Fachbereich, Stand 2026-09-03** | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
