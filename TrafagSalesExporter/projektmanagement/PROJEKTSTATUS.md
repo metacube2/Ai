@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); Marco prueft Etikett und Typenschild; erst danach den Auftrag freigeben | 2026-09-04 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren, Loesungsdokument haengt bereits an; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild; erst zuletzt den Auftrag freigeben | 2026-09-04 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -163,12 +163,26 @@ Abschalten geht weiter mit `Strg+F4` in SE19, auch nach einem Import. **Technisc
 mehr offen.** Es fehlen die fachliche Abnahme und Marcos Pruefung von Etikett und
 Typenschild; danach getrennt die Freigabe des Auftrags und das Nachfuellen der Altbestaende.
 
+**Das Anschreiben zur Abnahme ist am 2026-09-04 geschrieben, aber noch nicht versandt.** Es
+nennt, was vorher falsch war, die drei Ursachen, die sieben gemessenen Wege, den
+CO41-Sonderfall, die zwei erbetenen Rueckmeldungen und den Hinweis, dass in P76 nichts
+geaendert ist. Der Outlook-Entwurf traegt Betreff und das angehaengte Loesungsdokument,
+**aber weder Empfaenger noch Text**: fuer Lucas Castro, Florian Waechter, Marco Di Menco und
+Fabio Palma sind in `docs/ANSPRECHPARTNER.md` keine Adressen hinterlegt, und Outlook
+verwirft an diesem Arbeitsplatz jede Zuweisung an den Nachrichtentext stillschweigend
+(gemessen und dokumentiert in `docs/router/plattform.md`). Der Text liegt deshalb als
+`docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` daneben und muss einmal hineinkopiert werden.
+Vor dem Versand sind also drei Handgriffe noetig: Adressen eintragen, Text einfuegen,
+absenden.
+
 Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Punkt
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.
 
 Ziel ist, dass das Produktionsdatum unabhaengig vom Dynpro immer gespeichert
 wird, einmalig bei der Freigabe und danach write-once. Als Loesungsweg vorgesehen
 sind das BAdI `WORKORDER_UPDATE` und ein neuer Baustein `Z_PP_PRDDAT_SET`.
+(Namen ueberholt: gebaut wurde `Z_ZZPRDAT_SET` in der Funktionsgruppe `ZPP_ZZPRDAT`,
+siehe oben. Das Ziel selbst gilt unveraendert und ist erreicht.)
 
 **Abgleich am 2026-08-26.** Dieser Block stand noch auf dem Kenntnisstand vor der
 SapProbe-Pruefung vom 2026-07-27. Vier Angaben waren ueberholt und sind hier
