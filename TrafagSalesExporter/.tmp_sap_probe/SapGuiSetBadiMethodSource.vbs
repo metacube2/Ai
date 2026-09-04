@@ -75,7 +75,16 @@ Set s = SitzungHolen("SE19")
 
 ' Klassisches BAdI, Implementierung eintragen, aendern.
 s.FindById("wnd[0]/usr/radG_IS_CLASSIC_1").Select
+WScript.Sleep 600
+' Ohne SetFocus nimmt dieses Feld die Zuweisung stillschweigend nicht an.
+s.FindById("wnd[0]/usr/ctxtRSEXSCRN-IMP_NAME").SetFocus
+WScript.Sleep 400
 s.FindById("wnd[0]/usr/ctxtRSEXSCRN-IMP_NAME").Text = impl
+WScript.Sleep 400
+If UCase(Trim(s.FindById("wnd[0]/usr/ctxtRSEXSCRN-IMP_NAME").Text)) <> UCase(impl) Then
+  WScript.Echo "ABBRUCH: Implementierungsname nicht uebernommen."
+  WScript.Quit 7
+End If
 s.FindById("wnd[0]/usr/btnPUSHBUTTON_CHANGE_TEXT").Press
 WScript.Sleep 3000
 WScript.Echo "Implementierung geoeffnet: " & s.FindById("wnd[0]").Text

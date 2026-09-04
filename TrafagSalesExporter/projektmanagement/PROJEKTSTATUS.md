@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest und auf vier Wegen nachgewiesen, wartet auf fachliche Abnahme** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); MD04, CO41 und Auftragsart PP22 mit der Disposition messen; erst danach Transport nach P76 entscheiden | 2026-09-03 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf vier Wegen nachgetestet. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); MD04, CO41 und Auftragsart PP22 mit der Disposition messen; erst danach den Auftrag freigeben | 2026-09-04 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -139,11 +139,24 @@ temporaere Nummer, weshalb zusaetzlich `BEFORE_UPDATE` implementiert wurde.
 Loesungsdokument fuer den Fachbereich: `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
 Vollstaendiger Verlauf und Messwerte: `saptasks/zzprdat-kontext.md`.
 
-**Es ist nichts nach P76 transportiert.** Alle Objekte liegen als lokale `$TMP`-Objekte in
-T76/100 und lassen sich mit `Strg+F4` in SE19 sofort abschalten. Offen sind die fachliche
-Abnahme, die Messung von MD04, CO41 und der Auftragsart `PP22` mit der Disposition, Marcos
-Pruefung von Etikett und Typenschild, und danach getrennt der Transportentscheid und das
-Nachfuellen der Altbestaende.
+**Stand 2026-09-04: die Objekte sind transportfaehig gebaut, aber nichts ist nach P76
+transportiert.** Sie liegen im Paket `ZPP1` und im Workbench-Auftrag **`T76K912490`**
+(„ZZPRDAT: Produktionsdatum bei Auftragsfreigabe"), der bewusst **nicht freigegeben** ist.
+Ingo hat vorgeschlagen, vor der Abnahme zu paketieren, damit der Fachbereich genau die
+Objekte abnimmt, die spaeter ausgeliefert werden. Im Auftrag stecken `FUGR ZPP_ZZPRDAT`
+(mit `Z_ZZPRDAT_SET`), `SXCI Z_ZZPRDAT_UPDATE`, `CLAS ZCL_IM__ZZPRDAT_UPDATE`,
+`ENHO Z_ZZPRDAT` und `PROG Z_ZZPRDAT_CHECK`.
+
+Der Nachtest auf diesem Stand lief am 2026-09-04 mit **neu angelegten** Auftraegen `1241817`
+bis `1241820`, weil der Baustein nur schreibt, wo `ZZPRDAT` initial ist; die alten
+Testauftraege haetten unabhaengig vom Code „gesetzt" gemeldet. Alle vier Wege bestanden,
+Write-once ebenfalls. Die alten `$TMP`-Testobjekte sind geloescht, damit nicht zwei
+Implementierungen desselben BAdI registrieren.
+
+Abschalten geht weiter mit `Strg+F4` in SE19, auch nach einem Import. Offen sind die
+fachliche Abnahme, die Messung von MD04, CO41 und der Auftragsart `PP22` mit der
+Disposition, Marcos Pruefung von Etikett und Typenschild, und danach getrennt die Freigabe
+des Auftrags und das Nachfuellen der Altbestaende.
 
 Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Punkt
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.

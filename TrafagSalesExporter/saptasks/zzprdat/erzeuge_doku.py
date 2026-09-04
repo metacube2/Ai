@@ -72,14 +72,14 @@ def schaubild_erzeugen() -> None:
     schritte_alt = [
         ("Auftrag wird freigegeben\nund gesichert", GRAU),
         ("BAdI WORKORDER_UPDATE\nAT_RELEASE läuft", GRAU),
-        ("Z_PP_PRDDAT_SET als V1\nschreibt ZZPRDAT", GRAU),
+        ("Z_ZZPRDAT_SET als V1\nschreibt ZZPRDAT", GRAU),
         ("SAP-Standardverbuchung schreibt\ndie ganze AUFK-Zeile\naus ihrem eigenen Puffer", ROT),
         ("ZZPRDAT ist wieder leer", ROT),
     ]
     schritte_neu = [
         ("Auftrag wird freigegeben\nund gesichert", GRAU),
         ("BAdI WORKORDER_UPDATE\nAT_RELEASE läuft", GRAU),
-        ("Z_PP_PRDDAT_SET wird als V2\nnur vorgemerkt", GRUEN),
+        ("Z_ZZPRDAT_SET wird als V2\nnur vorgemerkt", GRUEN),
         ("SAP-Standardverbuchung\nschreibt die AUFK-Zeile", GRAU),
         ("V2 läuft danach und setzt\nZZPRDAT dauerhaft", GRUEN),
     ]
@@ -99,7 +99,7 @@ def schaubild_erzeugen() -> None:
                                  linewidth=2, color=GRUEN))
 
     ax.text(5.0, 0.85,
-            "Verbuchungsart des Bausteins Z_PP_PRDDAT_SET: "
+            "Verbuchungsart des Bausteins Z_ZZPRDAT_SET: "
             "von „Start sofort“ (V1) auf „Start verzögert“ (V2)",
             ha="center", fontsize=9.5, color=GRAU)
 
@@ -132,7 +132,7 @@ def dokument_erzeugen() -> None:
     unter = dok.add_paragraph(
         "Feld AUFK-ZZPRDAT – Analyse und Lösung im Testsystem T76")
     unter.runs[0].italic = True
-    dok.add_paragraph("Stand: 3. September 2026, Ingo Kohler, IT Analytics")
+    dok.add_paragraph("Stand: 4. September 2026, Ingo Kohler, IT Analytics")
 
     ueberschrift(dok, "Worum es geht", 1)
     dok.add_paragraph(
@@ -164,8 +164,9 @@ def dokument_erzeugen() -> None:
         "entfällt die Abhängigkeit vom Dynpro."
     )
     dok.add_paragraph(
-        "Die Umsetzung erfolgte im Testsystem T76, Mandant 100, ausschliesslich als lokale "
-        "Objekte im Paket $TMP. Es wurde kein Transportauftrag angelegt, und das "
+        "Die Umsetzung erfolgte im Testsystem T76, Mandant 100. Die Objekte liegen im Paket "
+        "ZPP1 und vollständig im Transportauftrag T76K912490. Dieser Auftrag ist bewusst "
+        "nicht freigegeben: transportiert wird erst nach der fachlichen Abnahme. Das "
         "Produktivsystem P76 wurde zu keinem Zeitpunkt berührt."
     )
 
@@ -278,12 +279,31 @@ def dokument_erzeugen() -> None:
          "wird gesetzt"),
         ("1241816", "Planauftrag über CO40 umgesetzt", "09.12.2026", "09.12.2026",
          "wird gesetzt"),
+        ("1241817", "angelegt, noch nicht freigegeben", "02.10.2026", "leer",
+         "wie erwartet"),
+        ("1241817", "in CO02 freigegeben", "02.10.2026", "02.10.2026",
+         "wird gesetzt"),
+        ("1241817", "Eckendtermin verschoben", "20.10.2026", "02.10.2026",
+         "bleibt stehen"),
+        ("1241818", "in CO01 angelegt und freigegeben", "05.10.2026", "05.10.2026",
+         "wird gesetzt"),
+        ("1241819", "Sammelfreigabe über COHV", "08.10.2026", "08.10.2026",
+         "wird gesetzt"),
+        ("1241820", "Planauftrag über CO40 umgesetzt", "12.10.2026", "12.10.2026",
+         "wird gesetzt"),
     ]:
         zellen = tab.add_row().cells
         for i, text in enumerate(zeile):
             zellen[i].text = text
 
     dok.add_paragraph()
+    dok.add_paragraph(
+        "Die Aufträge 1241812 bis 1241816 wurden am 3. September auf dem Testaufbau "
+        "gemessen. Danach sind dieselben Bausteine mit endgültigen Namen im Paket ZPP1 "
+        "neu aufgebaut und in den Transportauftrag gelegt worden. Die Aufträge 1241817 "
+        "bis 1241820 sind die Wiederholung derselben vier Wege auf genau diesem Stand — "
+        "also auf den Objekten, die später ausgeliefert werden."
+    )
     p = dok.add_paragraph()
     p.add_run(
         "Damit ist die fachliche Anforderung erfüllt: Das Produktionsdatum entsteht "
@@ -316,7 +336,7 @@ def dokument_erzeugen() -> None:
         "bei Änderungen im PP-Modul einbezogen zu werden."
     )
     dok.add_paragraph(
-        "Der Transport nach P76 und das nachträgliche Füllen der Altbestände "
+        "Die Freigabe des Transportauftrags und das nachträgliche Füllen der Altbestände "
         "sind bewusst zwei getrennte Entscheidungen. Beides erst nach fachlicher Abnahme "
         "durch Lucas Castro, Florian Wächter und Marco Di Menco."
     )
@@ -328,8 +348,8 @@ def dokument_erzeugen() -> None:
         "Auftragsart PP22 als zweiten Typ prüfen; 10 der 34 Aufträge aus Marcos "
         "Liste sind PP22.",
         "Marco prüft, ob Verpackungsetikett und Typenschild dasselbe Feld verwenden.",
-        "Erst danach über den Transport nach P76 entscheiden.",
-        "Getrennt davon und erst nach dem Transport: Altbestände nachfüllen, "
+        "Erst danach den Transportauftrag T76K912490 freigeben.",
+        "Getrennt davon und erst nach dem Import in P76: Altbestände nachfüllen, "
         "ausschliesslich für leere Felder.",
     ]:
         dok.add_paragraph(text, style="List Number")

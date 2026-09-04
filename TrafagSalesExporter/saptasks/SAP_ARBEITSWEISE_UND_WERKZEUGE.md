@@ -127,9 +127,24 @@ Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere V
   **nicht**; das Kennzeichen `RSEXSCRN-ACTIVE` bleibt auf `inaktiv`. Der zweite Druck
   meldet „wurde aktiviert". Immer `RSEXSCRN-ACTIVE` zurueckmessen.
 * **Rueckfall:** `Strg+F4` in SE19 deaktiviert eine BAdI-Implementierung sofort.
-* **Funktionsbaustein vor Aufrufer aktivieren.** Solange `Z_PP_PRDDAT_SET` inaktiv ist,
-  meldet die Syntaxpruefung des Aufrufers, der Baustein existiere nicht. Das verdeckt die
-  eigentlich interessanten Fehler.
+* **Funktionsbaustein vor Aufrufer aktivieren.** Solange der gerufene Baustein inaktiv ist
+  (heute `Z_ZZPRDAT_SET`), meldet die Syntaxpruefung des Aufrufers, er existiere nicht. Das
+  verdeckt die eigentlich interessanten Fehler.
+* **Eine neue klassische BAdI-Implementierung ist erst gesichert, wenn eine Methode
+  angefasst wurde.** SE19 legt die Implementierungsklasse nicht beim Sichern des Kopfes an,
+  sondern beim ersten Oeffnen einer Methode auf dem Reiter „Interface". Wer vorher das Paket
+  zuordnet, bekommt „Objekttyp ZCL_IM__… ist nicht vorhanden", und ein Sprung auf das
+  Einstiegsbild verwirft die halbfertige Implementierung wieder — am 2026-09-04 passiert.
+  Reihenfolge: anlegen, Kurztext, Reiter „Interface", Methode mit `F2` oeffnen, die
+  Rueckfrage „Sichern" mit Ja beantworten.
+* **SAP migriert dabei auf eine Erweiterungsimplementierung.** Es erscheint „Implementierung
+  … wird migriert" und danach „Erweiterungsimplementierung auswaehlen oder neu anlegen".
+  `wnd[1]/tbar[0]/btn[8]` legt eine neue an; sie braucht einen eigenen Namen, ein eigenes
+  Paket und landet als `ENHO` im selben Transport.
+* **Die halbfertige Implementierung vertraegt keine Navigation.** `SapGuiSetBadiMethodSource.vbs`
+  springt zu Beginn auf `/nSE19` zurueck und ist deshalb erst brauchbar, wenn die
+  Implementierung existiert. Fuer den Zustand davor gibt es
+  `SapGuiBadiMethodeHier.vbs`, das ohne Navigation auf dem aktuellen Bild arbeitet.
 
 ## 4. Fachliche Fallen in den Auftragsdaten
 
@@ -183,6 +198,9 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiOpenNewTransaction.vbs <TX>` | neue Sitzung per `/o` |
 | `SapGuiSwitchTransaction.vbs <von> <nach>` | Transaktion in derselben Sitzung wechseln |
 | `SapGuiBringToFront.vbs <Titelteil>` | Sitzung in den Vordergrund holen, damit Ingo sie snippen kann |
+| `SapGuiFeldSetzen.vbs <TX> <Id> <Wert>` | Eingabefeld mit `SetFocus` davor und Rueckmessung danach. **Der Normalfall fuer Felder in Modaldialogen** |
+| `SapGuiComboSetzen.vbs <TX> <Id> <Schluessel>` | Auswahlliste ueber den Schluessel setzen, nicht ueber den Anzeigetext. Umlaute ueberleben den Weg ueber die PowerShell-Kommandozeile nicht |
+| `SapGuiFokus.vbs <TX> <Id> [VKey]` | Cursor auf ein Element setzen und optional eine Taste senden. In klassischen Listen haengt die Wirkung eines Knopfes an der Cursorzeile, und Labels lassen sich nicht „auswaehlen" |
 
 ### Auswerten
 
@@ -191,6 +209,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `Get-SapList.ps1 -Transaktion <TX>` | setzt eine klassische ABAP-Liste aus den `GuiLabel`-Koordinaten zu lesbaren Zeilen zusammen. **Der wichtigste Zeitsparer** |
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
+| `SapGuiBaumLesen.vbs <TX> <BaumId>` | einen `GuiTree` vollstaendig auslesen, etwa Objektlisten in SE01/SE09 |
 
 ### Entwicklungsobjekte aendern und aktivieren
 
@@ -203,7 +222,11 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiActivateClass.vbs` | Klasse als Ganzes ueber das SE24-Einstiegsbild aktivieren |
 | `SapGuiActivateBadiImpl.vbs` | BAdI-Implementierung aktivieren und `RSEXSCRN-ACTIVE` zurueckmessen |
 | `SapGuiDeactivateBadi.vbs <Impl>` | **Rueckfallschalter.** Implementierung deaktivieren, mit Statuskontrolle |
-| `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte" auflisten oder die eigenen Objekte per Namensabgleich markieren |
+| `SapGuiBadiMethodeHier.vbs <Methode> <Datei>` | wie oben, aber **ohne Navigation** auf dem gerade offenen SE19-Bild. Noetig, solange die Implementierung noch nicht gesichert ist |
+| `SapGuiSetReportSource.vbs <Prog> <Datei>` | Quelltext eines **bestehenden** Reports ersetzen, sichern und aktivieren. Legt keinen Report an |
+| `SapGuiPaketZuordnen.vbs <TX> <Paket> [Fenster]` | Dialog „Objektkatalogeintrag anlegen" beantworten. Die anschliessende Auftragsfrage bleibt bewusst offen |
+| `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte", Reiter **Lokale Objekte** ($TMP) |
+| `SapGuiWorklistTransport.vbs <TX> waehle\|liste` | derselbe Dialog, Reiter **Transportierbare Objekte**. Sobald die Objekte in `ZPP1` liegen, stehen sie nur noch dort |
 
 ### Zustand pruefen
 
@@ -238,7 +261,9 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 
 ### Aufgabenspezifisch, nur als Vorlage lesen
 
-`SapGuiRunZzprdatCheck.vbs` fuehrt den Nachweisreport `ZTESTQQ` aus. Die uebrigen
+`SapGuiRunZzprdatCheck.vbs` fuellt das Selektionsbild des Nachweisreports und fuehrt ihn
+aus. Der Report heisst seit dem 2026-09-04 im System `Z_ZZPRDAT_CHECK` und liegt im Paket
+`ZPP1`; der frueher dort verwendete `$TMP`-Report `ZTESTQQ` ist geloescht. Die uebrigen
 `*Zzprdat*`- und `RunPpwr*`-Skripte stammen aus einzelnen Arbeitsschritten und sind
 nicht allgemein verwendbar; sie zeigen aber, wie ein bestimmter Dialog bedient wird.
 `probe_*.ps1` und `diag_password.ps1` sind Altbestand aus frueheren Untersuchungen.
@@ -280,7 +305,7 @@ Passworteingabe und fuehren dann eine feste Folge von SapProbe-Aufrufen aus. Sei
 3. `cscript //nologo .tmp_sap_probe\SapGuiInspect.vbs` — welche Sitzungen sind offen?
 4. **Fuer alles Lesende zuerst pruefen, ob ein ABAP-Report die Frage beantwortet.**
    Wenn ja: Report schreiben, im Chat posten, Ingo legt ihn in SE38 als `$TMP` an und
-   fuehrt ihn aus. Vorlage: `saptasks/zzprdat/Z_ZZPRDAT_CHECK.abap`.
+   fuehrt ihn aus. Vorlage: `saptasks/zzprdat/produktiv/Z_ZZPRDAT_CHECK.abap`.
 5. Erst fuer Schreiboperationen zum GUI-Scripting greifen, und dort jede Aenderung
    ueber ein Zustandsfeld zurueckmessen.
 6. Am Ende `UserScripting` wieder auf `0`, Doku nachfuehren, committen.
@@ -393,8 +418,9 @@ cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO02 'wnd[0]/tbar[0]
 
 ### Report ausfuehren und die Liste auslesen
 
-Der Report heisst im System **`ZTESTQQ`**; die Vorlage im Repository ist
-`saptasks/zzprdat/Z_ZZPRDAT_CHECK.abap`.
+Der Report heisst im System **`Z_ZZPRDAT_CHECK`** und liegt im Paket `ZPP1`; die Vorlage im
+Repository ist `saptasks/zzprdat/produktiv/Z_ZZPRDAT_CHECK.abap`. Bis zum 2026-09-04 hiess
+er `ZTESTQQ` und lag in `$TMP`; dieser Report ist geloescht.
 
 ```powershell
 # Falls die Liste noch offen ist: mit F3 zurueck auf das Selektionsbild
@@ -428,6 +454,39 @@ foreach ($ze in ($zeilen.Keys | Sort-Object)) {
 
 Damit laesst sich jede klassische `WRITE`-Liste vollstaendig auswerten, ohne Ingo um einen
 Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der Weg.
+
+### Objekte in einem echten Paket statt in `$TMP` anlegen
+
+Der Ablauf ist bei jedem Objekttyp derselbe: anlegen, sichern, **Paket** eintragen,
+**Transportauftrag** bestaetigen. Zwei Dialoge, immer in dieser Reihenfolge. Am 2026-09-04
+in T76/100 fuer Paket `ZPP1` und Auftrag `T76K912490` durchlaufen.
+
+```powershell
+# Paketdialog "Objektkatalogeintrag anlegen" beantworten.
+# Das Fenster ist je nach Verschachtelung wnd[1], wnd[2] oder wnd[3].
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPaketZuordnen.vbs' SE19 ZPP1 'wnd[2]'
+
+# Danach "Abfrage transportierbarer Workbench-Auftrag".
+# Ein passender Auftrag steht meist schon im Feld KO008-TRKORR; dann genuegt btn[0].
+# Beim allerersten Objekt legt btn[8] einen neuen Auftrag an.
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE19 'wnd[2]/tbar[0]/btn[0]'
+```
+
+**Report anlegen** geht nicht mit `SapGuiSetReportSource.vbs`, das nur bestehende Reports
+aendert. In SE38: Name setzen, `btnNEW` druecken, im Eigenschaftenbild `RS38M-REPTI`
+fuellen **und** die Auswahlliste `TRDIR-SUBC` auf Schluessel `1` („Ausfuehrbares Programm")
+setzen. Ohne Typ kommt „Bitte geben Sie einen Wert an", und die Meldung nennt das Feld
+nicht. Erst danach sichern, Paket, Auftrag; dann den Quelltext einspielen.
+
+**Aktivieren:** Sobald die Objekte in einem echten Paket liegen, stehen sie im Dialog
+„Inaktive Objekte" auf dem Reiter **Transportierbare Objekte**, nicht mehr unter „Lokale
+Objekte". Wer weiter `SapGuiWorklistSelect.vbs` benutzt, markiert nichts und der Dialog
+bleibt scheinbar wirkungslos stehen. Dafuer gibt es `SapGuiWorklistTransport.vbs`.
+
+**Nachweisen, was im Auftrag steckt:** SE01, Reiter „Einzelanzeige", Auftragsnummer,
+„Anzeigen". Die Objektliste steckt nicht im Auftrag, sondern in seiner Aufgabe: mit
+`SapGuiFokus.vbs SE01 '<Label der Aufgabenzeile>' 2` hineinspringen, dann Reiter „Objekte".
+Die Tabelle liest man ueber `TRE071X-OBJECT`, `TRE071X-OBJ_NAME` und `TRE071X-OBJ_DESCRI`.
 
 ### Kleine Regeln, die Rundreisen sparen
 

@@ -1,5 +1,10 @@
 # ZZPRDAT-Prototyp in T76/100
 
+> **Ueberholt seit 2026-09-04.** Diese Datei beschreibt den `$TMP`-Prototyp; dessen Objekte
+> sind geloescht. Die produktiven Objekte liegen im Paket `ZPP1` und im Transportauftrag
+> `T76K912490`. Gueltiger Stand: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` und
+> `saptasks/zzprdat-kontext.md`. Die fachliche Zielsetzung unten gilt unveraendert.
+
 ## Ziel und Grenze
 
 Beim erstmaligen Freigeben eines Fertigungsauftrags wird der zu diesem Zeitpunkt

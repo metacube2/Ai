@@ -1,8 +1,36 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 03.09.2026.
+Arbeitsstand für die Fortsetzung im CLI. Stand: 04.09.2026.
 
-## Aktueller Kurzstand 03.09.2026
+## Aktueller Kurzstand 04.09.2026
+
+Die Loesung ist **gebaut, im Paket `ZPP1`, im Transportauftrag `T76K912490` und auf allen
+vier Wegen nachgetestet**. Der Auftrag ist bewusst **nicht freigegeben**; das geschieht erst
+nach der fachlichen Abnahme. Einzelheiten zu Auftrag, Objektliste und offenen Punkten stehen
+in `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+
+Produktive Objekte in T76/100:
+
+| Typ | Objekt |
+|---|---|
+| `FUGR` | `ZPP_ZZPRDAT` mit Verbuchungsbaustein `Z_ZZPRDAT_SET` (V2, „Start verzoegert") |
+| `SXCI` | `Z_ZZPRDAT_UPDATE`, Methoden `AT_RELEASE` und `BEFORE_UPDATE`, `AT_SAVE` leer |
+| `CLAS` | `ZCL_IM__ZZPRDAT_UPDATE` |
+| `ENHO` | `Z_ZZPRDAT` |
+| `PROG` | `Z_ZZPRDAT_CHECK` (Nachweisreport, rein lesend) |
+
+Die Quelltexte liegen unter `saptasks/zzprdat/produktiv/`. Die `$TMP`-Testobjekte
+(`Z_ZZPRDAT_AT_RELEASE`, `ZCL_IM__ZZPRDAT_AT_RELEASE`, `Z_PP_PRDDAT_SET`, `ZTESTQQ`) sind
+geloescht, damit nicht zwei Implementierungen desselben BAdI nebeneinander registrieren;
+uebrig ist nur die leere Funktionsgruppe `ZPP_ZZPRDAT_TEST` in `$TMP`.
+
+Nachtest vom 04.09.2026 mit neu angelegten Auftraegen, weil der Baustein nur schreibt, wo
+`ZZPRDAT` noch initial ist: 1241817 (CO01 ohne Freigabe, dann CO02, danach Eckendtermin
+verschoben — eingefroren), 1241818 (CO01 mit Freigabe beim Sichern), 1241819 (COHV
+Sammelfreigabe), 1241820 (CO40 aus Planauftrag 2406063). Alle vier gesetzt, Write-once
+gehalten.
+
+## Kurzstand 03.09.2026 (ueberholt, Ausgangslage der Analyse)
 
 - Die vollstaendige Mailkette bestaetigt den fachlichen Ablauf: Das Produktionsdatum wird
   nicht schon beim Eroeffnen, sondern bei der erstmaligen Freigabe geschrieben und muss
@@ -584,7 +612,9 @@ Dynpro-Loesung gescheitert ist.
 
 ### Nachweisreport `Z_ZZPRDAT_CHECK`
 
-Vorlage: `saptasks/zzprdat/Z_ZZPRDAT_CHECK.abap`. Rein lesend, Paket `$TMP`, SE38.
+Vorlage: `saptasks/zzprdat/produktiv/Z_ZZPRDAT_CHECK.abap`. Rein lesend, SE38. Er lief bis
+zum 04.09.2026 unter dem Namen `ZTESTQQ` in `$TMP`; seither heisst er im System
+`Z_ZZPRDAT_CHECK` und liegt im Paket `ZPP1`.
 Er stellt je Auftrag `AFKO-GLTRP`, `AUFK-ZZPRDAT` und den Freigabestatus gegenueber und
 faellt ein Urteil: `gesetzt, gleich GLTRP` / `eingefroren, GLTRP verschoben` /
 `FEHLT trotz Freigabe` / `noch nicht freigegeben`.

@@ -1,95 +1,111 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-09-03
+Stand: 2026-09-04. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
+gebaut und nachgetestet. Freigegeben ist der Auftrag nicht** — das geschieht erst nach der
+fachlichen Abnahme.
 
-Diese Datei beantwortet eine Frage: **Was fehlt, damit die Loesung nach P76 kann?**
-Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`,
-das Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
+Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`, das
+Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
 
-## 1. Der Ist-Zustand: nichts davon ist transportfaehig
+## 1. Der Transportauftrag
 
-Am 2026-09-03 aus dem Objektkatalog `TADIR` in T76/100 gelesen:
-
-| Typ | Objekt | Paket |
-|---|---|---|
-| `SXCI` | `Z_ZZPRDAT_AT_RELEASE` (BAdI-Implementierung) | `$TMP` |
-| `CLAS` | `ZCL_IM__ZZPRDAT_AT_RELEASE` (Implementierungsklasse) | `$TMP` |
-| `ENHO` | `Z_ZZPRDAT_REL_TEST` (Erweiterungsimplementierung) | `$TMP` |
-| `FUGR` | `ZPP_ZZPRDAT_TEST` (Funktionsgruppe mit `Z_PP_PRDDAT_SET`) | `$TMP` |
-| `PROG` | `ZTESTQQ` (Nachweisreport) | `$TMP` |
-
-**`$TMP` heisst „lokales Objekt".** Solche Objekte sind nicht „noch nicht" transportfaehig,
-sondern grundsaetzlich nicht: Sie erzeugen keinen Transportauftrag und koennen keinem
-zugeordnet werden. Fuer den Testaufbau war das richtig, weil dabei nichts entstehen sollte,
-das versehentlich mitwandert. Fuer produktiv ist es eine Sackgasse.
-
-## 2. Das Zielpaket steht fest
-
-Die bestehende PP-Erweiterung liegt im Paket **`ZPP1`**: das Erweiterungsprojekt `ZPP00012`
-sowie saemtliche Includes `ZXCO1*`, angelegt von `I001067` und `MEEY_GEWA` (Georg Wagner).
-Das ist damit auch das natuerliche Zuhause der neuen Objekte.
-
-## 3. Zwei Wege, und warum der zweite besser ist
-
-### Weg A: Objekte umhaengen
-
-Ueber „Objektverzeichniseintrag aendern" laesst sich jedes Objekt von `$TMP` nach `ZPP1`
-umsetzen; SAP fragt dann nach einem Transportauftrag. Schnell, aber es zementiert die
-Testnamen.
-
-### Weg B: sauber neu anlegen (empfohlen)
-
-Drei der fuenf Objekte tragen Testnamen, die produktiv nichts zu suchen haben:
-`ZPP_ZZPRDAT_TEST`, `Z_ZZPRDAT_REL_TEST` und `ZTESTQQ`. Funktionsgruppen und von SE19
-erzeugte Klassen lassen sich **nicht umbenennen**; der Klassenname `ZCL_IM__…` wird aus dem
-Namen der BAdI-Implementierung abgeleitet.
-
-Neu anlegen kostet heute wenig, weil Code und Einstellungen bekannt und erprobt sind. Es ist
-im Wesentlichen dieselbe Klickfolge wie am 2026-09-03, nur mit anderen Namen und Paket
-`ZPP1` statt „Lokales Objekt".
-
-Vorschlag fuer die Namen, abzustimmen mit Lucas Castro und Georg Wagner:
-
-| Bisher | Vorschlag |
+| | |
 |---|---|
-| `ZPP_ZZPRDAT_TEST` (Funktionsgruppe) | `ZPP_PRDDAT` |
-| `Z_PP_PRDDAT_SET` (Funktionsbaustein) | unveraendert, der Name passt |
-| `Z_ZZPRDAT_AT_RELEASE` (BAdI-Implementierung) | `Z_PP_PRDDAT_UPDATE` |
-| `Z_ZZPRDAT_REL_TEST` (Erweiterungsimplementierung) | `Z_PP_PRDDAT` |
-| `ZTESTQQ` (Nachweisreport) | `Z_PP_PRDDAT_CHECK` |
+| Auftrag | **`T76K912490`** |
+| Aufgabe | `T76K912491` (Entwicklung/Korrektur, KOI) |
+| Kurztext | ZZPRDAT: Produktionsdatum bei Auftragsfreigabe |
+| Typ | Workbench-Auftrag, Ziel `P76` |
+| Status | **aenderbar, bewusst nicht freigegeben** |
+| Paket | `ZPP1` |
 
-Der Report gehoert mit in den Transport. Er ist rein lesend und beantwortet im Betrieb die
-Frage, ob das Produktionsdatum gesetzt ist und ob es bei Terminverschiebungen stehen bleibt.
+Objektliste, am 2026-09-04 aus SE01 gelesen:
 
-## 4. Was in den Transport gehoert
+| Typ | Objekt |
+|---|---|
+| `FUGR` | `ZPP_ZZPRDAT` (Funktionsgruppe) |
+| `SXCI` | `Z_ZZPRDAT_UPDATE` (BAdI-Implementierung) |
+| `CLAS` | `ZCL_IM__ZZPRDAT_UPDATE` (Implementierungsklasse) |
+| `ENHO` | `Z_ZZPRDAT` (Erweiterungsimplementierung, Container) |
+| `PROG` | `Z_ZZPRDAT_CHECK` (Nachweisreport) |
 
-Alles in **einen** Auftrag, weil die Teile nur gemeinsam funktionieren:
+Alle fuenf Teile liegen in **einem** Auftrag, weil sie nur gemeinsam funktionieren. Der
+Verbuchungsbaustein `Z_ZZPRDAT_SET` steckt in der Funktionsgruppe und wandert mit ihr,
+einschliesslich seiner Verarbeitungsart.
 
-1. Funktionsgruppe samt Verbuchungsbaustein. **Verarbeitungsart „Start verzoegert" (V2) muss
-   mitkommen**, sonst ueberschreibt der SAP-Standard den Wert wieder. Das ist eine
-   Eigenschaft des Bausteins und wandert mit ihm.
-2. Erweiterungsimplementierung (`ENHO`) als Container.
-3. BAdI-Implementierung (`SXCI`) mit den Methoden `AT_RELEASE` und `BEFORE_UPDATE`.
-4. Implementierungsklasse (`CLAS`).
-5. Nachweisreport (`PROG`).
+**Die Verarbeitungsart ist der Punkt, an dem eine unbedachte Aenderung die Loesung still
+kaputt macht:** `Z_ZZPRDAT_SET` ist Verbuchungsbaustein mit **„Start verzoegert" (V2)**, am
+2026-09-04 nach der Aktivierung noch einmal gegengelesen. Bei V1 („Start sofort")
+ueberschreibt der SAP-Standard den Wert wieder.
 
-Die Quelltexte liegen versioniert unter `saptasks/zzprdat/`:
-`Z_PP_PRDDAT_SET_V2.abap`, `AT_RELEASE_ZIEL.abap`, `BEFORE_UPDATE_ZIEL.abap`,
-`AT_SAVE_LEER.abap` und `Z_ZZPRDAT_CHECK.abap`.
+## 2. Warum vor der Abnahme transportiert wurde
 
-## 5. Was vor dem Transport erledigt sein muss
+Ingo hat das am 2026-09-03 vorgeschlagen, und der Gedanke traegt: Der Fachbereich soll
+genau die Objekte abnehmen, die spaeter nach P76 gehen. Wer erst abnimmt und danach
+umbaut, nimmt einen anderen Stand ab als den, der ausgeliefert wird. Deshalb erst bauen,
+dann nachtesten, dann vorlegen — und die Freigabe des Auftrags bleibt der letzte Schritt.
 
-Der Transport ist der letzte Schritt, nicht der naechste.
+## 3. Wie gebaut wurde: Weg B, neu anlegen
+
+Von den beiden Wegen — Objekte aus `$TMP` nach `ZPP1` umhaengen (Weg A) oder sauber neu
+anlegen (Weg B) — wurde Weg B umgesetzt. Funktionsgruppen und von SE19 erzeugte Klassen
+lassen sich nicht umbenennen, und der Klassenname `ZCL_IM__…` wird aus dem Namen der
+BAdI-Implementierung abgeleitet. Die Testnamen waeren also mitgewandert.
+
+Der Namensvorschlag aus der Fassung vom 2026-09-03 (`ZPP_PRDDAT`, `Z_PP_PRDDAT_UPDATE`,
+`Z_PP_PRDDAT`, `Z_PP_PRDDAT_CHECK`) ist **ueberholt**. Ingo hat am 2026-09-03 die
+Bezeichnung `ZZPRDAT` gewaehlt, damit Auftrag und Objekte denselben Namen tragen wie das
+Feld. Gueltig sind die Namen aus Abschnitt 1.
+
+## 4. Die `$TMP`-Testobjekte sind entfernt
+
+Zwei aktive Implementierungen desselben BAdI wuerden beide registrieren, und ein Nachtest
+liesse sich dann nicht mehr dem neuen Stand zuordnen. Deshalb am 2026-09-04 geloescht,
+**vor** dem Nachtest:
+
+| Objekt | Stand |
+|---|---|
+| `SXCI Z_ZZPRDAT_AT_RELEASE` | deaktiviert und geloescht |
+| `CLAS ZCL_IM__ZZPRDAT_AT_RELEASE` | geloescht |
+| `FUNC Z_PP_PRDDAT_SET` | geloescht |
+| `PROG ZTESTQQ` | geloescht |
+| `FUGR ZPP_ZZPRDAT_TEST` | **leer stehengeblieben** |
+
+Die leere Funktionsgruppe liegt in `$TMP`, enthaelt keinen Baustein mehr und transportiert
+nie. Sie ist kein Risiko, nur Restmuell; wer sie aufraeumen will, nimmt in SE37 „Springen →
+FGruppenverwaltung → Gruppe loeschen".
+
+## 5. Der Nachtest auf dem ZPP1-Stand
+
+Alle vier Wege am 2026-09-04 mit **neu angelegten** Auftraegen gemessen. Neue Nummern sind
+noetig, weil `Z_ZZPRDAT_SET` nur schreibt, wo `ZZPRDAT` noch initial ist: Auf den alten
+Testauftraegen haette der Report auch dann „gesetzt" gemeldet, wenn gar kein Code gelaufen
+waere.
+
+| Auftrag | Weg | Vorher | Nachher | Urteil |
+|---|---|---|---|---|
+| 1241817 | CO01 ohne Freigabe, dann CO02 | `ZZPRDAT` initial, „noch nicht freigegeben" | 02.10.2026 | gesetzt, gleich GLTRP |
+| 1241817 | danach Eckendtermin auf 20.10.2026 | 02.10.2026 | 02.10.2026 | eingefroren, GLTRP verschoben |
+| 1241818 | CO01 mit Freigabe beim Sichern | — | 05.10.2026 | gesetzt, gleich GLTRP |
+| 1241819 | COHV Sammelfreigabe | `ZZPRDAT` initial | 08.10.2026 | gesetzt, gleich GLTRP |
+| 1241820 | CO40 aus Planauftrag 2406063 | — | 12.10.2026 | gesetzt, gleich GLTRP |
+
+Auftrag 1241818 ist der aussagekraeftigste Einzelfall: Beim Anlegen mit Freigabe traegt der
+Auftrag noch eine temporaere Nummer (`%00000000001`), und nur `BEFORE_UPDATE` sieht die
+endgueltige. Diese Methode gab es in der geloeschten `$TMP`-Fassung nicht. Der Treffer ist
+damit eindeutig dem neuen Stand in `ZPP1` zuzurechnen.
+
+## 6. Was vor der Freigabe des Auftrags noch offen ist
 
 1. **Fachliche Abnahme** durch Lucas Castro, Florian Waechter und Marco Di Menco anhand von
    `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
-2. **MD04 und CO41 messen.** Beide enden im selben Speichervorgang wie das bereits
-   nachgewiesene CO40, gemessen ist es aber nicht. Mit der Disposition abstimmen; Fabio
-   Palma hat ausdruecklich darum gebeten, bei PP-Aenderungen einbezogen zu werden.
+2. **MD04 und CO41 messen.** Beide enden im selben Speichervorgang wie das nachgewiesene
+   CO40, gemessen ist es aber nicht. Mit der Disposition abstimmen; Fabio Palma hat
+   ausdruecklich darum gebeten, bei PP-Aenderungen einbezogen zu werden.
 3. **Auftragsart `PP22`** pruefen, sie kommt bei 10 der 34 Auftraege aus Marcos Liste vor.
+   Gemessen wurde ausschliesslich `PP21`.
 4. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden.
 
-## 6. Risiko im Produktivsystem und wie man es begrenzt
+## 7. Risiko im Produktivsystem und wie man es begrenzt
 
 Nach dem Import laeuft der Verbuchungsbaustein bei **jedem** Sichern eines
 Fertigungsauftrags in P76. Das ist gewollt, verdient aber Aufmerksamkeit:
@@ -102,19 +118,36 @@ Fertigungsauftrags in P76. Das ist gewollt, verdient aber Aufmerksamkeit:
   BAdI-Implementierung sofort, auch im Produktivsystem. Das ist der Notausschalter, falls
   nach dem Import etwas auffaellt.
 * **Nach dem Import kurz beobachten.** SM13 auf abgebrochene Verbuchungen und ST22 auf
-  Kurzdumps, und den Nachweisreport ueber die neu angelegten Auftraege laufen lassen.
+  Kurzdumps, und `Z_ZZPRDAT_CHECK` ueber die neu angelegten Auftraege laufen lassen.
 
-## 7. Das Nachfuellen der Altbestaende ist ein eigener Schritt
+## 8. Das Nachfuellen der Altbestaende ist ein eigener Schritt
 
 Es gehoert **nicht** in denselben Transport und **nicht** in denselben Termin. Erst wenn die
 Logik produktiv nachweislich greift, wird ein eigener Lauf entschieden, der ausschliesslich
 leere `ZZPRDAT`-Felder fuellt und vorhandene Werte niemals ueberschreibt. Grundlage dafuer
 ist die fachlich bestaetigte Quelle, nach heutigem Stand `AFKO-GLTRP`.
 
-## 8. Was mit der alten Loesung geschieht
+## 9. Was mit der alten Loesung geschieht
 
 Das Erweiterungsprojekt `ZPP00012` mit den Includes `ZXCO1U11` und `ZXCO1U12` bleibt
 unberuehrt; der dortige Code ist vollstaendig auskommentiert und laeuft nicht. Die neue
 Loesung liegt an einer anderen Stelle und kollidiert nicht mit ihm. Ob die alten Includes
 aufgeraeumt werden, ist eine Entscheidung fuer Georg Wagner und kein Teil dieses
 Transports.
+
+## 10. Anhang: der Ist-Zustand vor dem Umbau
+
+Am 2026-09-03 aus dem Objektkatalog `TADIR` in T76/100 gelesen. Diese Tabelle ist Historie
+und beschreibt nicht mehr den heutigen Stand:
+
+| Typ | Objekt | Paket |
+|---|---|---|
+| `SXCI` | `Z_ZZPRDAT_AT_RELEASE` | `$TMP` |
+| `CLAS` | `ZCL_IM__ZZPRDAT_AT_RELEASE` | `$TMP` |
+| `ENHO` | `Z_ZZPRDAT_REL_TEST` | `$TMP` |
+| `FUGR` | `ZPP_ZZPRDAT_TEST` | `$TMP` |
+| `PROG` | `ZTESTQQ` | `$TMP` |
+
+`$TMP` heisst „lokales Objekt". Solche Objekte sind nicht „noch nicht" transportfaehig,
+sondern grundsaetzlich nicht: Sie erzeugen keinen Transportauftrag und koennen keinem
+zugeordnet werden. Fuer den Testaufbau war das richtig, fuer produktiv eine Sackgasse.
