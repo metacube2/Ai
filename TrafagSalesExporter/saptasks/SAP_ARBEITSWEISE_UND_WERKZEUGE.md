@@ -210,6 +210,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
 | `SapGuiBaumLesen.vbs <TX> <BaumId>` | einen `GuiTree` vollstaendig auslesen, etwa Objektlisten in SE01/SE09 |
+| `SapGuiGridLesen.vbs <TX> [GridId] [MaxZeilen]` | ein **ALV-Grid** ueber `RowCount`, `ColumnOrder` und `GetCellValue` auslesen. Ohne `GridId` meldet es die gefundenen Grid-Ids. Noetig ueberall dort, wo `Get-SapList.ps1` „Keine Listenzeilen gefunden" sagt, obwohl sichtbar Daten am Bildschirm stehen |
+| `SapGuiGridMarkieren.vbs <TX> <GridId> <Zeilen>` | Zeilen eines ALV-Grids ueber `SelectedRows` markieren, nullbasiert und kommagetrennt. Der Vergleich in der Versionsverwaltung erwartet genau zwei markierte Zeilen |
 | `SapGuiTabelleSuchen.vbs <TX> <TabId> <Text> [Feld] [VKey]` | in einer `GuiTableControl` seitenweise nach einem Text suchen, optional Cursor setzen und Taste senden. **Noetig bei MD04**, wo nur fuenf Zeilen sichtbar sind und ein Dump so aussieht, als fehle die Zeile |
 | `SapGuiTabelleMarkieren.vbs <TX> <TabId> [Zeile\|alle]` | Zeilen einer `GuiTableControl` markieren und zurueckmessen, etwa die Planauftragsliste in CO41 |
 
@@ -456,6 +458,58 @@ foreach ($ze in ($zeilen.Keys | Sort-Object)) {
 
 Damit laesst sich jede klassische `WRITE`-Liste vollstaendig auswerten, ohne Ingo um einen
 Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der Weg.
+
+### Versionsverwaltung eines Reports auswerten
+
+Am 2026-09-04 fuer `ZM_ABGLEICH_KTSCH` durchlaufen. Der Weg beantwortet drei Fragen ohne
+eine einzige Aenderung am Objekt: wer hat wann geaendert, welcher Transport gehoert dazu,
+und **in welchen Versionen kommt ein bestimmter Bezeichner ueberhaupt vor**.
+
+```powershell
+# SE38, Programm eintragen, Quelltext anzeigen
+cscript.exe //nologo '.tmp_sap_probe\SapGuiFeldSetzen.vbs' SE38 'wnd[0]/usr/ctxtRS38M-PROGRAMM' 'ZM_ABGLEICH_KTSCH'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiSelectElement.vbs' SE38 'wnd[0]/usr/radRS38M-FUNC_EDIT'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[0]/usr/btnSHOP'
+
+# Hilfsmittel -> Versionen -> Versionsverwaltung
+cscript.exe //nologo '.tmp_sap_probe\SapGuiSelectElement.vbs' SE38 'wnd[0]/mbar/menu[3]/menu[12]/menu[0]'
+
+# Die Versionsliste ist ein ALV-Grid, kein klassisches Listenbild
+$grid = 'wnd[0]/usr/cntlCONT/shellcont/shell/shellcont[0]/shell'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiGridLesen.vbs' SE38 $grid 60
+```
+
+**Menuepunkte brauchen `SapGuiSelectElement.vbs`, nicht `SapGuiPressButton.vbs`.** Ein
+`GuiMenu` kennt `Press` nicht; der Aufruf endet mit „Das Objekt unterstuetzt diese
+Eigenschaft oder Methode nicht".
+
+**Der eigentliche Zeitsparer ist die Suche ueber alle Versionen**, Knopf `tbar[1]/btn[9]`
+(F9). Das Suchfeld ist ein Control, kein Textfeld; `SapGuiFeldSetzen.vbs` setzt es trotzdem.
+Danach traegt jede Version, die den Text enthaelt, in der Spalte `COMPARE` das Symbol
+`Gefunden`. So laesst sich in einem Durchgang datieren, wann ein Bezeichner ins Programm kam,
+ohne einen einzigen Zeilenvergleich zu oeffnen.
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[0]/tbar[1]/btn[9]'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiFeldSetzen.vbs' SE38 'wnd[1]/usr/cntlCONT_TEXT/shellcont/shell' 'fmt_quan'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[1]/tbar[0]/btn[0]'
+```
+
+Der Zeilenvergleich braucht genau zwei markierte Zeilen und `tbar[1]/btn[8]` (F8). Sein
+Ergebnis ist wieder eine klassische Liste, also `Get-SapList.ps1`, und sie ist lang:
+weiterblaettern mit VKey `82`.
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiGridMarkieren.vbs' SE38 $grid '1,2'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[0]/tbar[1]/btn[8]'
+& '.\.tmp_sap_probe\Get-SapList.ps1' -Transaktion SE38
+```
+
+**Warnung aus demselben Lauf:** Mehrere Suchdurchgaenge in einer Schleife hintereinander
+haben die Scripting-Schnittstelle haengen lassen; danach lief kein einziger Aufruf mehr
+durch, auch `SapGuiInspect.vbs` nicht. Vermutlich blieb ein Modaldialog offen, auf den kein
+Skript mehr zugreifen konnte. Solche Suchen einzeln absetzen und zwischendurch den
+Fensterzustand pruefen, statt sie zu bündeln.
 
 ### Objekte in einem echten Paket statt in `$TMP` anlegen
 

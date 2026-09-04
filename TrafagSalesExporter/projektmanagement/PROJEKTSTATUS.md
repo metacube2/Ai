@@ -22,7 +22,7 @@ nicht.
 | ID | Thema | Verantwortlich | Prioritaet | Status | Naechster Schritt | Letztes Update |
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
-| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
+| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, nicht auf `Z_ABGLEICH_KTSCH`. `fmt_quan` kam mit Adils Reparatur vom 18.05.2026, die Trace-Infrastruktur ist Ingos eigener Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Vergleich Version 3 gegen 2 nachziehen | 2026-09-04 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren, Loesungsdokument haengt bereits an; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild; erst zuletzt den Auftrag freigeben | 2026-09-04 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
@@ -74,12 +74,49 @@ Quellen: `zlo03/CLAUDE.md`, `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`,
 
 ### PM-02 ZC12: Fehler bei Nullmengen
 
-Aufgenommen am 2026-07-27, Codeanalyse nachgetragen am 2026-08-14.
+Aufgenommen am 2026-07-27, Codeanalyse nachgetragen am 2026-08-14, **am 2026-09-04 in
+T76/100 rein lesend am System geprueft**.
 
-**Vorfrage, die alles Weitere traegt:** Ist `ZC12` die Transaktion zu
-`Z_ABGLEICH_KTSCH`? In `SE93` gegenpruefen. Falls `ZC12` ein anderes Programm
-ist, etwa aus dem VC- oder Klassenumfeld, gilt der ganze folgende Abschnitt
-nicht.
+**Die Vorfrage ist beantwortet, und die Antwort korrigiert einen Namen.** `ZC12` ist eine
+Reporttransaktion und zeigt auf das Programm **`ZM_ABGLEICH_KTSCH`**, Paket `ZPP1`,
+Transaktionstext „Abgleich Textvorlagen", Selektionsbild 1000. Das bisher in dieser Datei
+gefuehrte **`Z_ABGLEICH_KTSCH` existiert in T76 nicht**; SE38 meldet „Das Programm
+Z_ABGLEICH_KTSCH ist nicht vorhanden". Es ist derselbe Fehlertyp wie beim CH/AT-Exportreport,
+wo der lokal notierte Name in keinem System stand. Die Codeanalyse unten bleibt gueltig, sie
+gehoert nur zu `ZM_ABGLEICH_KTSCH`.
+
+Eigenschaften des Programms, am 2026-09-04 aus SE38 gelesen: angelegt am 03.03.2003 von
+`I001067`, letzte Aenderung am **27.05.2026 durch `KOI`**, Status aktiv und „Produktives
+Kundenprogramm", Typ ausfuehrbares Programm.
+
+**Die Versionsverwaltung raeumt mit der Arbeitshypothese auf.** Es gibt vier Versionen und
+keine einzige vom 30.04.2026:
+
+| Version | Datum | Benutzer | Auftrag | Kurztext |
+|---|---|---|---|---|
+| aktiv | 27.05.2026 06:21 | `KOI` | — | identisch mit Version 4, per Vergleich belegt |
+| 4 | 27.05.2026 06:48 | `KOI` | `T76K912063` | `ZV12` |
+| 3 | 18.05.2026 13:18 | `LAA` | `T76K911927` | `Repair_zc12` |
+| 2 | 20.04.2026 13:06 | `LAA` | `T76K911893` | `DENY_ZM_ABGLEICH_KTSCH` |
+| 1 | 20.04.2026 12:15 | `LAA` | — | — |
+
+Die Versionssuche ueber alle Fassungen findet `fmt_quan` **nur in den Versionen 3 und 4**,
+nicht in 1 und 2. Die Trailing-Null-Logik stammt also nicht aus einem „Neuaufbau Ende April",
+sondern kam **mit Adils Reparatur vom 18.05.2026** ins Programm, die er am selben Tag
+freigegeben hat. Damit ist die Arbeitshypothese „keine Regression, sondern Testluecke"
+umgekehrt: der Fehler ist mit der Reparatur entstanden. Direkt im Zeilenvergleich nachgewiesen
+ist das noch nicht, dafuer fehlt ein Vergleich von Version 3 gegen Version 2; die Suche selbst
+hat sich am Fall `p_debug` als verlaesslich erwiesen, siehe naechster Absatz.
+
+**Der Blocker „das Tracing ist tot" hat einen anderen Ursprung als gedacht.** `p_debug`
+kommt ausschliesslich in Version 4 vor, und der Zeilenvergleich von Version 4 gegen
+Version 3 zeigt die Zeile als **eingefuegt und bereits auskommentiert**:
+`"p_debug as checkbox default ' '.` Mit derselben Aenderung kamen `gv_trace_file`,
+`gv_trace_open`, `lv_trace_line` sowie die Aufrufe `perform trace_open`, `perform trace` und
+`perform trace_close` hinzu. Die ganze Trace-Infrastruktur ist also am **27.05.2026 von
+`KOI`** eingebaut und nie scharf geschaltet worden. Sie zu reaktivieren aendert nichts an
+Adils Stand und braucht keine Abstimmung mit ihm; sie einzuschalten ist eine Aenderung an
+Ingos eigenem Code.
 
 Unter der Annahme, dass es dasselbe Programm ist:
 

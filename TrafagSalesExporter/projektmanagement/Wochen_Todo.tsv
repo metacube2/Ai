@@ -1,7 +1,7 @@
 Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt	Erledigt am
 1	Erledigt	Finance ES	ISS-004.2	Spanien Buchungsdatum	Ingo	Mittel	Erledigt		Entscheid 02.09.2026: Die 7-Tage-Version bleibt im Einsatz; Finance verwendet fuer Spanien InvoiceDate. Kein Wechsel auf die 35-Tage-Version und keine weitere Aktion bei Santi erforderlich.	02.09.2026
 2	Nur terminieren	Finance ES	ISS-004.1	Spanien Januar bis Mai 2026	Ingo	Mittel	Erledigt		Nachtrag und Import am 18.08.2026 bestätigt; keine Aktion
-3	Heute	SAP ZC12	PM-02	ZC12 Fehler bei Nullmengen	Ingo	Mittel	Blockiert		Vorfrage in SE93: ist ZC12 = Z_ABGLEICH_KTSCH?
+3	Heute	SAP ZC12	PM-02	ZC12 Fehler bei Nullmengen	Ingo	Mittel	Läuft		Vorfrage am 04.09.2026 am System beantwortet: ZC12 ist eine Reporttransaktion auf ZM_ABGLEICH_KTSCH; das bisher notierte Z_ABGLEICH_KTSCH existiert in T76 nicht. fmt_quan kommt erst ab Version 3 vor, also aus Adils Reparatur vom 18.05.2026, und ist damit eine Regression und keine Testlücke. Die Trace-Infrastruktur samt auskommentiertem p_debug hat KOI selbst am 27.05.2026 eingebaut. Nächster Schritt: entscheiden, ob p_debug reaktiviert wird, danach den Nullmengenfall tracen.	
 4	Hoch, haengt an anderen	Finance FR	ISS-001.2	Datenzufluss TR FR	Frankreich / Ingo	Hoch	Wartet auf andere		Eskalieren, seit 30.07.2026 keine Faktura mehr (18 Tage)
 5	Hoch, haengt an anderen	Finance CH/AT	ISS-003.4	Herstellerregel CH/AT	Andreas	Hoch	Wartet auf Entscheid		Produktiven Schalter in Settings vergleichen; Andreas entscheidet, ob Fremdbezug die Herstellerregel als Ausnahme bricht (Default bleibt bisherige Regel)
 6	Hoch, haengt an anderen	Finance Gruppenmarge	ISS-009	Fachfreigabe Gruppenmarge	Andreas	Mittel	Offen		Termin mit Andreas, Punkt 2 von 3
