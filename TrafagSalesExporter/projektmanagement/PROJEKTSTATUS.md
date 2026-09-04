@@ -22,7 +22,7 @@ nicht.
 | ID | Thema | Verantwortlich | Prioritaet | Status | Naechster Schritt | Letztes Update |
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
-| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, nicht auf `Z_ABGLEICH_KTSCH`. `fmt_quan` kam mit Adils Reparatur vom 18.05.2026, die Trace-Infrastruktur ist Ingos eigener Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Vergleich Version 3 gegen 2 nachziehen | 2026-09-04 |
+| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-04 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren, Loesungsdokument haengt bereits an; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild; erst zuletzt den Auftrag freigeben | 2026-09-04 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
@@ -81,9 +81,15 @@ T76/100 rein lesend am System geprueft**.
 Reporttransaktion und zeigt auf das Programm **`ZM_ABGLEICH_KTSCH`**, Paket `ZPP1`,
 Transaktionstext „Abgleich Textvorlagen", Selektionsbild 1000. Das bisher in dieser Datei
 gefuehrte **`Z_ABGLEICH_KTSCH` existiert in T76 nicht**; SE38 meldet „Das Programm
-Z_ABGLEICH_KTSCH ist nicht vorhanden". Es ist derselbe Fehlertyp wie beim CH/AT-Exportreport,
-wo der lokal notierte Name in keinem System stand. Die Codeanalyse unten bleibt gueltig, sie
-gehoert nur zu `ZM_ABGLEICH_KTSCH`.
+Z_ABGLEICH_KTSCH ist nicht vorhanden". Die Codeanalyse unten bleibt gueltig, sie gehoert nur
+zu `ZM_ABGLEICH_KTSCH`.
+
+**Woher der falsche Name kommt, ist ebenfalls geklaert, und er war nicht erfunden.** Der
+Quelltext selbst traegt seit dem Neuaufbau den Kopf `*& Report  Z_ABGLEICH_KTSCH` und die
+Anweisung `report z_abgleich_ktsch.`, waehrend das Objekt `ZM_ABGLEICH_KTSCH` heisst. Wer den
+Quelltext liest, liest den falschen Namen. Das ist derselbe Fall wie beim CH/AT-Exportreport,
+wo `REPORT`-Kopf und Dateiname `Z_TRAFAG_SCHWEIZ_EXPORT` sagen und das System
+`Z_TRAFAG_DACH_EXPORT` kennt. Beim Suchen im System zaehlt ausschliesslich der Objektname.
 
 Eigenschaften des Programms, am 2026-09-04 aus SE38 gelesen: angelegt am 03.03.2003 von
 `I001067`, letzte Aenderung am **27.05.2026 durch `KOI`**, Status aktiv und „Produktives
@@ -100,16 +106,35 @@ keine einzige vom 30.04.2026:
 | 2 | 20.04.2026 13:06 | `LAA` | `T76K911893` | `DENY_ZM_ABGLEICH_KTSCH` |
 | 1 | 20.04.2026 12:15 | `LAA` | — | — |
 
-Die Versionssuche ueber alle Fassungen findet `fmt_quan` **nur in den Versionen 3 und 4**,
-nicht in 1 und 2. Die Trailing-Null-Logik stammt also nicht aus einem „Neuaufbau Ende April",
-sondern kam **mit Adils Reparatur vom 18.05.2026** ins Programm, die er am selben Tag
-freigegeben hat. Damit ist die Arbeitshypothese „keine Regression, sondern Testluecke"
-umgekehrt: der Fehler ist mit der Reparatur entstanden. Direkt im Zeilenvergleich nachgewiesen
-ist das noch nicht, dafuer fehlt ein Vergleich von Version 3 gegen Version 2; die Suche selbst
-hat sich am Fall `p_debug` als verlaesslich erwiesen, siehe naechster Absatz.
+**Version 3 ist kein Reparaturpflaster, sondern der komplette Neuaufbau.** Der Vergleich von
+Version 3 gegen Version 2 zeigt eine vollstaendige Ersetzung: Version 2 bestand im Kern aus
+dem Vermerk „Deaktiviert wegen Fehlfunktion. 20.04.2026, Adil Lahrach", Version 3 bringt den
+neuen Report mit ALV-Grid, eigenen Typen und der ganzen heutigen Struktur. Die Kopfhistorie
+**innerhalb** von Version 3 datiert diese Arbeit selbst:
+
+```
+*&   20.04.2026  A.Lahrach   Deaktiviert wegen Fehlfunktion (alt)
+*&   28.04.2026  I.Kohler    Neuaufbau (PLNAL-Fix, ALV)
+*&   29.04.2026  I.Kohler    Umbau auf CL_GUI_ALV_GRID + Splitter
+*&   30.04.2026  I.Kohler    Variante B: Editor zeigt KTSCH-Vorlage (CA10) ...
+```
+
+**Damit ist die urspruengliche Arbeitshypothese bestaetigt, nicht widerlegt.** Die
+Trailing-Null-Logik gehoert zum Neuaufbau vom 28. bis 30.04.2026 und war bei der Freigabe am
+18.05.2026 bereits enthalten. Adil hat sie transportiert, gebaut hat sie Ingo. Es ist keine
+Regression gegen einen funktionierenden neuen Stand, sondern eine Testluecke: der Nullmengenfall
+war im Testfall nicht enthalten. Dass die Datenbank keine Version vom 30.04. kennt, liegt nur
+daran, dass Versionen erst beim Transport entstehen; die Aprilarbeit steckt in Version 3.
+
+**Falle bei der Versionssuche, am 2026-09-04 aufgefallen:** Die Suche in der
+Versionsverwaltung markiert die Versionen, in denen der Text in **geaenderten** Zeilen
+vorkommt, nicht jede Version, die ihn enthaelt. Belegt an `report z_abgleich_ktsch`: die Suche
+meldet nur Version 3, obwohl der Zeilenvergleich die Zeilen 1 bis 116 von Version 4 als
+unveraendert gegenueber Version 3 ausweist, die Anweisung dort also ebenfalls steht. Wer die
+Trefferliste als „kommt nur dort vor" liest, zieht falsche Schluesse.
 
 **Der Blocker „das Tracing ist tot" hat einen anderen Ursprung als gedacht.** `p_debug`
-kommt ausschliesslich in Version 4 vor, und der Zeilenvergleich von Version 4 gegen
+erscheint erst in Version 4, und der Zeilenvergleich von Version 4 gegen
 Version 3 zeigt die Zeile als **eingefuegt und bereits auskommentiert**:
 `"p_debug as checkbox default ' '.` Mit derselben Aenderung kamen `gv_trace_file`,
 `gv_trace_open`, `lv_trace_line` sowie die Aufrufe `perform trace_open`, `perform trace` und
@@ -154,6 +179,11 @@ Testfall keine Zeile mit Vorgabewert null enthielt. Zeigt die Versionsverwaltung
 dass `fmt_quan` seit dem 2026-04-30 unveraendert ist, gilt das als bestaetigt.
 Dann lautet die Antwort: der Fehler bestand von Anfang an, und die
 Testabdeckung ist um den Nullmengenfall zu erweitern.
+
+> **Am 2026-09-04 in der Versionsverwaltung bestaetigt.** Version 3 vom 18.05.2026 ist der
+> Neuaufbau selbst, ihre eigene Kopfhistorie datiert ihn auf den 28. bis 30.04.2026. Die
+> Antwort lautet also genau so: der Fehler bestand von Anfang an, und die Testabdeckung ist
+> um den Nullmengenfall zu erweitern. Einzelheiten oben im Abschnitt zur Vorfrage.
 
 Randnotiz zur Kopfhistorie: Adil erscheint dort nur mit dem Eintrag
 `20.04.2026 A.Lahrach Deaktiviert wegen Fehlfunktion (alt)`.

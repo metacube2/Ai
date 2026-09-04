@@ -485,9 +485,18 @@ Eigenschaft oder Methode nicht".
 
 **Der eigentliche Zeitsparer ist die Suche ueber alle Versionen**, Knopf `tbar[1]/btn[9]`
 (F9). Das Suchfeld ist ein Control, kein Textfeld; `SapGuiFeldSetzen.vbs` setzt es trotzdem.
-Danach traegt jede Version, die den Text enthaelt, in der Spalte `COMPARE` das Symbol
-`Gefunden`. So laesst sich in einem Durchgang datieren, wann ein Bezeichner ins Programm kam,
-ohne einen einzigen Zeilenvergleich zu oeffnen.
+Danach traegt die Spalte `COMPARE` bei den Treffern das Symbol `Gefunden`. So laesst sich in
+einem Durchgang datieren, **wann ein Bezeichner ins Programm kam**, ohne einen einzigen
+Zeilenvergleich zu oeffnen.
+
+**Sie sucht in den geaenderten Zeilen, nicht im ganzen Text der Version.** Der Dialog sagt es
+selbst: „Suchen Sie nach Aenderungen innerhalb von Versionen". Am 2026-09-04 belegt: die Suche
+nach `report z_abgleich_ktsch` meldet nur Version 3, obwohl der Zeilenvergleich die Zeilen 1
+bis 116 von Version 4 als unveraendert gegenueber Version 3 ausweist, die Anweisung dort also
+ebenfalls steht. „Gefunden" heisst **eingefuehrt oder geaendert**, „nicht gefunden" heisst
+**unveraendert**, nicht „nicht vorhanden". Wer daraus „kommt nur in dieser Version vor" liest,
+zieht falsche Schluesse. Fuer die Frage „ist der Bezeichner ueberhaupt drin" ist der
+Zeilenvergleich die Quelle.
 
 ```powershell
 cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[0]/tbar[1]/btn[9]'
@@ -505,11 +514,14 @@ cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' SE38 'wnd[0]/tbar[1]
 & '.\.tmp_sap_probe\Get-SapList.ps1' -Transaktion SE38
 ```
 
-**Warnung aus demselben Lauf:** Mehrere Suchdurchgaenge in einer Schleife hintereinander
-haben die Scripting-Schnittstelle haengen lassen; danach lief kein einziger Aufruf mehr
-durch, auch `SapGuiInspect.vbs` nicht. Vermutlich blieb ein Modaldialog offen, auf den kein
-Skript mehr zugreifen konnte. Solche Suchen einzeln absetzen und zwischendurch den
-Fensterzustand pruefen, statt sie zu bündeln.
+**Wenn ploetzlich kein Aufruf mehr durchkommt, zuerst die Verbindung pruefen, nicht das
+Skript.** Am 2026-09-04 blieb mitten in einer Reihe von Suchlaeufen jeder Aufruf haengen, bis
+hin zu `SapGuiInspect.vbs`. Der Verdacht fiel zuerst auf einen offenen Modaldialog; tatsaechlich
+war der VPN abgebrochen und mit ihm die SAP-Sitzung. `SapGuiInspect.vbs` meldet dann
+`Connections=0`, und nach der Neuanmeldung steht die Verbindung zuerst mit `Client=000` und
+leerem Benutzer auf dem Anmeldebild — alle Skripte hier suchen aber gezielt `T76` mit
+`Client=100` und finden noch nichts. Eine Warteschleife auf `Client=100 User=...` erspart das
+Raten.
 
 ### Objekte in einem echten Paket statt in `$TMP` anlegen
 
