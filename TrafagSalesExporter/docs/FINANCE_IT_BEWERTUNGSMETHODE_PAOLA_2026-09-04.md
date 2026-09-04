@@ -76,8 +76,10 @@ Angleichung aus Konzernsicht ist. Der fachliche Entscheid liegt damit bei Andrea
 
 Das Reporting haengt nicht daran. Der von Andreas am 2026-07-27 freigegebene Weg ueber
 `INV1.StockPrice` arbeitet auf Belegebene und funktioniert unabhaengig von der
-Bewertungsmethode; fuer 2026 verkaufte Materialien sind 2'019 von 2'082 Positionen
-(97.0 %) gefuellt. Die Bewertungsmethode veraendert die Bestandsbewertung und damit die
+Bewertungsmethode; von den 2026 verkauften **Materialien** haben 2'019 von 2'082 (97.0 %)
+einen `INV1.StockPrice` groesser null. Das ist eine Materialzaehlung, keine Positions- oder
+Zeilenzaehlung; Messung und Einschraenkungen stehen in `docs/FINANCE_STANDARDKOSTEN.md`
+Abschnitt 4. Die Bewertungsmethode veraendert die Bestandsbewertung und damit die
 bilanzielle COGS, und das ist nicht dasselbe wie die Reporting-Marge im Dashboard. Ohne
 diese Abgrenzung entsteht bei Italien der Eindruck, das Gruppenmargen-Projekt haenge an
 ihrer Bewertungsmethode.
