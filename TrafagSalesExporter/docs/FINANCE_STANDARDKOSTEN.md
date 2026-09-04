@@ -1,6 +1,10 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-08-28
+Stand: 2026-09-04
+
+Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
+B1-Artikel ist in Italien technisch nicht umstellbar, die fruehere Aussage „als Massenupdate
+machbar" ist dort als ueberholt markiert.
 
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
@@ -322,16 +326,43 @@ Moving-Average-Bewertung ansprechen wollte.
 Fuer Abfragen gegen Standortsysteme, die nur der Server erreicht, siehe
 `docs/router/plattform.md`, Abschnitt Server-Analyse.
 
-## 6. TR IT Bewertungsmethode: Umstellung auf 2027 verschoben
+## 6. TR IT Bewertungsmethode: technisch nicht umstellbar, Entscheid offen
 
-Paola Castagna (`Paola.Castagna@trafag.com`) hat die Analyse bestaetigt: die Umstellung
-von Charge auf Moving Average fuer die rund 31'600 Artikel ist technisch als Massenupdate
-machbar. Offen bleibt, ob SAP den Durchschnittspreis danach automatisch fortrechnet oder
-ob eine einmalige Bewertungsaktion noetig ist.
+**Stand 2026-09-04.** Paola Castagna (`Paola.Castagna@trafag.com`) hat die Frage mit ihren
+SAP-Beratern abgeschlossen. Ergebnis: **Die Bewertungsmethode eines bestehenden Artikels
+laesst sich in B1 nicht mehr aendern, nachdem der Artikel angelegt wurde**, unabhaengig
+davon, ob Bestand vorhanden ist. Die Einstellung auf Firmenebene ist nur eine Vorgabe fuer
+kuenftig neu angelegte Artikel und wirkt nicht rueckwirkend. Es gibt deshalb **weder ein
+Massenupdate noch einen artikelweisen Weg** fuer die rund 31'600 chargenbewerteten Artikel.
 
-Italien hat ueber uebergeordnete Stelle gebeten, die neue Bewertungspolitik **erst ab
-2027** zu starten (Kosten des B1-Partners VARONE, Arbeitslast, Verifikation des neuen
-Bestandswerts, Margenauswirkung, neue interne Prozesse).
+Der einzige verbleibende Weg waere ein vollstaendiges Neucodierungsprojekt: Bestaende auf
+null bringen, neue Artikelnummern mit Moving Average anlegen, Bestaende chargenweise mit
+korrekten Kosten darauf importieren, alle offenen Belege umstellen und die Lagerbewegungen
+neu starten. Das reicht ueber das eigene System hinaus, weil **alle Lieferanten** ihre
+technischen Zeichnungen unter neuen Artikelnummern neu ausstellen muessten und Etiketten
+neu zu drucken waeren. Eine Kostenschaetzung liegt nicht vor; Paola fordert sie erst an,
+wenn Umfang und Prioritaet geklaert sind.
+
+**Die Cost-Run-Frage stellt sich damit nicht mehr als eigener Schritt.** Sie ist nicht
+erledigt, sondern in den Bestandsimport des Neucodierungsprojekts aufgegangen.
+
+Offen und nicht von Italien beurteilbar ist die Wirkung auf die Artikel von Trafag und
+Industrial Components, die bei uns codiert werden und ueber Intercompany in das
+italienische B1 fliessen. Paola schlaegt eine gemeinsame Bewertung mit **Lucas Castro** und
+unseren SAP-Beratern vor. Sie erwartet von Ingo und Andreas eine Einschaetzung, wie
+notwendig und dringend die Angleichung aus Konzernsicht ist; der fachliche Entscheid liegt
+bei Andreas. Wortlaut und Einzelheiten:
+`docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
+
+> **UEBERHOLT, Stand 2026-08-28.** Bis zur Antwort vom 2026-09-04 stand hier, die Umstellung
+> sei „technisch als Massenupdate machbar" und lediglich bis 2027 verschoben. Das war die
+> Einschaetzung vor der Pruefung durch die SAP-Berater und ist widerlegt: machbar ist sie
+> ueberhaupt nicht, auch nicht 2027, sondern nur als Neucodierungsprojekt. Die damals
+> genannte Bitte Italiens bleibt als Motivlage gueltig und ist unten als Historie notiert.
+
+Historie: Italien hat ueber uebergeordnete Stelle gebeten, die neue Bewertungspolitik
+**erst ab 2027** zu starten (Kosten des B1-Partners VARONE, Arbeitslast, Verifikation des
+neuen Bestandswerts, Margenauswirkung, neue interne Prozesse).
 
 **Das blockiert das Reporting nicht.** Der freigegebene Weg `INV1.StockPrice` arbeitet auf
 Belegebene und funktioniert unabhaengig von der Bewertungsmethode. Die

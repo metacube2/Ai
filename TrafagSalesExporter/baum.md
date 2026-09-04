@@ -1,6 +1,6 @@
 # Dokumentationsbaum — Vollstaendigkeitsindex
 
-Stand: 2026-08-17
+Stand: 2026-09-04
 
 **Diese Datei ist zur Pruefung da, nicht zum Lesen einer Aufgabe.** Fuer eine konkrete
 Aufgabe gilt `router.md` -> Unterrouter -> Detaildatei. Hier steht jede Markdown-Datei des
@@ -46,6 +46,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` | Waehrung und Kurse |
 | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge, Fachlogik |
 | `docs/FINANCE_STANDARDKOSTEN.md` | **zusammengefuehrt**: Kostenbasis, Konzernkosten, SAP-Report |
+| `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` | Antwort Italien: Bewertungsmethode nicht umstellbar |
 | `docs/FINANCE_SUPPLIER.md` | **zusammengefuehrt**: Klassifikation, Laenderstatus, Fallback |
 | `docs/FINANCE_JOURNAL.md` | **zusammengefuehrt**: Hauptbuch-Import, `FinanzJournalSet` |
 | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` | SAP-Spezifikation WAVWR |

@@ -1,6 +1,6 @@
 # Unterrouter Finance
 
-Zurueck: `router.md`. Stand: 2026-08-17.
+Zurueck: `router.md`. Stand: 2026-09-04.
 
 Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal,
 Marktsegmente.
@@ -25,6 +25,7 @@ Marktsegmente.
 | Waehrungs- und Kursworkflow | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` |
 | Gruppenmarge, Fachlogik und Kostenwaehrungsschalter | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | **Standardkosten, Kostenbasis, Konzernkosten TR AG/IT/IN** | `docs/FINANCE_STANDARDKOSTEN.md` |
+| **TR IT Bewertungsmethode: warum Moving Average technisch nicht umstellbar ist** (Antwort Paola vom 2026-09-04, Primaerquelle) | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |
 | **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |
 | Hauptbuch-Import und EntitySet `FinanzJournalSet` | `docs/FINANCE_JOURNAL.md` |

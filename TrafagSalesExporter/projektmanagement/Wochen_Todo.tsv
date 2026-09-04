@@ -17,7 +17,7 @@ Nr	Dringlichkeit	Bereich	ID	Thema	Wer	Prio	Status	Fällig	Nächster Schritt	Erle
 16	Umsetzung	Einkauf	PM-04	Einkauf Restpunkte SAP	Ingo	Mittel	Offen		D1/D5-Texte pflegen, SEGW-Key auf DISPO_KZ + DISPO korrigieren
 17	Umsetzung	Marktsegmente	-	Sichtprüfläufe produktiv nachholen	Ingo	Mittel	Offen		3 Deploys angemeldet sichtprüfen: Segmente, Umfrage, Jahresfilter
 18	Umsetzung	Finance Export	ISS-012	Phantom-Legendenzeile im Export	App	Niedrig	Erledigt		Produktiv deployed am 27.08.2026: Phantom-Legendenzeile wird im Konsolidierungsschritt ausgefiltert.	27.08.2026
-19	Nur terminieren	Finance IT	ISS-007.1	TR IT Moving Average	Paola / Ingo	Mittel	Offen	Ende Aug 2026	Termin mit Paola setzen
+19	Nur terminieren	Finance IT	ISS-007.1	TR IT Moving Average: technisch nicht umstellbar	Andreas / Ingo	Mittel	Wartet auf Entscheid		Paola hat am 04.09.2026 geantwortet: bestehende B1-Artikel lassen sich nicht umstellen, nur ein Neucodierungsprojekt ueber 31'600 Artikel. Andreas entscheidet ueber Notwendigkeit und Dringlichkeit, Intercompany-Wirkung mit Lucas Castro klaeren	
 20	Nur terminieren	SAP PPWR	PM-06	PPWR Pilotmaterialien	Adil	Mittel	Erledigt		Komplett erledigt 2026-08-20 laut Ingo: Pilotmaterialien zugeordnet, CL30N-Abnahme gefahren
 21	Nur terminieren	Finance Reporting	ISS-008	Budget-CHF als Reportinggrösse	Finance / Andreas	Niedrig	Offen		6 offene Entscheide bei Finance, nur beobachten
 22	Nur terminieren	HR	PM-07	REXX automatische Auswertung	Ingo	Mittel	Wartet auf externe Firma		Exporter-Fertigstellung abwarten, danach Anbindung/Auswertung planen

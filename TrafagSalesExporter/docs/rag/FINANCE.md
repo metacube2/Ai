@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-08-31
+Stand: 2026-09-04
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -53,8 +53,15 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   10.5 %. Die zuvor `32` maskierten Fremdwaehrungszeilen werden seit dem Deploy vom
   27.08.2026 mit Tageskurs umgerechnet. Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
 - TR IT: Fuer den ersten Schritt ist `INV1.StockPrice` als Kostenbasis
-  freigegeben. Die Bewertung einer Umstellung auf Moving Average und die
-  Cost-Run-Frage folgen laut Paola Ende August 2026.
+  freigegeben. **Antwort Paola vom 2026-09-04: die Bewertungsmethode eines bestehenden
+  B1-Artikels laesst sich nicht mehr aendern**, weder als Massenupdate noch artikelweise;
+  die Firmeneinstellung wirkt nur fuer neu angelegte Artikel. Eine Angleichung an die
+  Konzernvorgabe Moving Average ginge nur als Neucodierungsprojekt ueber rund 31'600
+  Artikel, inklusive neuer technischer Zeichnungen bei allen Lieferanten. Die Cost-Run-Frage
+  stellt sich damit nicht mehr als eigener Schritt. Kosten unbekannt, Entscheid ueber
+  Notwendigkeit und Dringlichkeit liegt bei Andreas. **Kein Reporting-Blocker**, weil
+  `INV1.StockPrice` auf Belegebene davon unabhaengig ist. Details:
+  `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
 - **Produktiv seit 2026-08-31 09:47:** Finance kann fuer
   IT/IN zwischen juengstem positivem B1-`StockPrice` (Default) und Durchschnitt aller positiven
   Werte des naechsten Standortimports waehlen. Fuer CHF kann zwischen Tageskurs (Default) und
@@ -94,8 +101,11 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Materialschluessel, fehlender TSC oder leerem MARC-Cache.
 - B1-Upgrade ab 2026-08-03 nachpruefen: Import FR/IT/US/IN, Kostenfuellgrad
   und Bewertungsmethoden.
-- TR IT: Moving-Average-/Cost-Run-Frage mit Paola Ende August abschliessen;
-  der freigegebene Belegebenen-Weg ueber `INV1.StockPrice` bleibt davon
+- TR IT: Technisch geklaert und seit 2026-09-04 kein Umsetzungs-, sondern ein
+  Entscheidungspunkt. Andreas muss beurteilen, ob eine Angleichung an Moving Average als
+  Neucodierungsprojekt aus Konzernsicht noetig und dringend ist; die Wirkung auf die
+  Intercompany-Artikel von Trafag und Industrial Components ist mit Lucas Castro zu
+  bewerten. Der freigegebene Belegebenen-Weg ueber `INV1.StockPrice` bleibt davon
   unabhaengig.
 - Budget-CHF: Finance muss Kurse/Freigabe, Pflegeprozess, Spaltenumfang,
   Fehlkursverhalten, Rundung und Anzeigeort entscheiden.
