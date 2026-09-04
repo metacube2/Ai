@@ -11,7 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from amount_extractor import best_amount_candidate
 from config import Config
 from extractor import DataAggregator, DocumentExtractor
-from paperless_client import PaperlessClient
+from paperless_client import PaperlessAPIError, PaperlessClient
 from qwen_extractor import qwen_amount_candidate
 
 QWEN_MAX_SUGGESTIONS = int(os.environ.get("QWEN_MAX_SUGGESTIONS", "10"))
@@ -130,6 +130,14 @@ def create_app():
                 }
             )
 
+        sync_result = None
+        if any(k in request.args for k in ("synced", "skipped", "failed")):
+            sync_result = {
+                "synced": request.args.get("synced", type=int) or 0,
+                "skipped": request.args.get("skipped", type=int) or 0,
+                "failed": request.args.get("failed", type=int) or 0,
+            }
+
         return render_template(
             "dashboard.html",
             title="Paperless Finance Suite",
@@ -138,6 +146,7 @@ def create_app():
             currency=config.currency,
             result=result,
             suggestions=suggestions,
+            sync_result=sync_result,
         )
 
     @app.post("/sync")
@@ -152,6 +161,7 @@ def create_app():
         amount_field = client.ensure_custom_field("betrag", "monetary")
         synced = 0
         skipped = 0
+        failed = 0
 
         for raw_doc in raw_docs:
             existing_amount = None
@@ -163,21 +173,33 @@ def create_app():
                 skipped += 1
                 continue
 
-            full_doc = client.get_document(raw_doc["id"])
-            content = full_doc.get("content", "")
-            candidate = best_amount_candidate(content, config.currency)
-            if candidate is None:
-                candidate = qwen_amount_candidate(content, config.currency)
-            if not candidate or candidate.confidence < minimum_confidence:
-                skipped += 1
+            try:
+                full_doc = client.get_document(raw_doc["id"])
+                content = full_doc.get("content", "")
+                candidate = best_amount_candidate(content, config.currency)
+                if candidate is None:
+                    candidate = qwen_amount_candidate(content, config.currency)
+                if not candidate or candidate.confidence < minimum_confidence:
+                    skipped += 1
+                    continue
+
+                client.update_document_custom_field(
+                    full_doc, amount_field["id"], str(candidate.amount)
+                )
+            except PaperlessAPIError as exc:
+                # Ein einzelnes Dokument darf den ganzen Lauf nicht kippen
+                # (z. B. Paperless-500 durch soft-geloeschte Custom-Field-Reste).
+                failed += 1
+                app.logger.warning("Sync fuer Dokument %s fehlgeschlagen: %s", raw_doc.get("id"), exc)
                 continue
 
-            client.update_document_custom_field(full_doc, amount_field["id"], str(candidate.amount))
             synced += 1
             if synced >= limit:
                 break
 
-        return redirect(url_for("dashboard", year=year, tag=tag, synced=synced, skipped=skipped))
+        return redirect(
+            url_for("dashboard", year=year, tag=tag, synced=synced, skipped=skipped, failed=failed)
+        )
 
     @app.template_filter("money")
     def money(value):

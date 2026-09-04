@@ -105,6 +105,13 @@
     </div>
   </header>
   <main>
+    {% if sync_result %}
+    <div class="section" style="border-left:4px solid {% if sync_result.failed %}#c62828{% else %}#2e7d32{% endif %}; padding-left:12px;">
+      <strong>Sync abgeschlossen:</strong>
+      {{ sync_result.synced }} gespeichert, {{ sync_result.skipped }} übersprungen,
+      {{ sync_result.failed }} fehlgeschlagen{% if sync_result.failed %} (siehe Container-Log){% endif %}.
+    </div>
+    {% endif %}
     <div class="cards">
       <div class="card">
         <div class="label">Gesamtsumme</div>
