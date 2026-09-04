@@ -210,6 +210,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
 | `SapGuiBaumLesen.vbs <TX> <BaumId>` | einen `GuiTree` vollstaendig auslesen, etwa Objektlisten in SE01/SE09 |
+| `SapGuiTabelleSuchen.vbs <TX> <TabId> <Text> [Feld] [VKey]` | in einer `GuiTableControl` seitenweise nach einem Text suchen, optional Cursor setzen und Taste senden. **Noetig bei MD04**, wo nur fuenf Zeilen sichtbar sind und ein Dump so aussieht, als fehle die Zeile |
+| `SapGuiTabelleMarkieren.vbs <TX> <TabId> [Zeile\|alle]` | Zeilen einer `GuiTableControl` markieren und zurueckmessen, etwa die Planauftragsliste in CO41 |
 
 ### Entwicklungsobjekte aendern und aktivieren
 
@@ -487,6 +489,47 @@ bleibt scheinbar wirkungslos stehen. Dafuer gibt es `SapGuiWorklistTransport.vbs
 „Anzeigen". Die Objektliste steckt nicht im Auftrag, sondern in seiner Aufgabe: mit
 `SapGuiFokus.vbs SE01 '<Label der Aufgabenzeile>' 2` hineinspringen, dann Reiter „Objekte".
 Die Tabelle liest man ueber `TRE071X-OBJECT`, `TRE071X-OBJ_NAME` und `TRE071X-OBJ_DESCRI`.
+
+### Planauftrag umsetzen: MD04 und CO41
+
+Beide brauchen einen Planauftrag aus MD11.
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiMd11Profil.vbs'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiMd11Anlegen.vbs' '36385' '1100' '1' '19.10.2026'
+```
+
+**MD04:** Material und Werk stehen meist schon im Einstiegsbild, Enter zeigt die Liste. Die
+Tabelle zeigt nur fuenf Zeilen; der Planauftrag steht weiter unten und wird mit
+`SapGuiTabelleSuchen.vbs` gefunden und mit `F2` geoeffnet. Im Detailfenster fuehrt
+`wnd[1]/tbar[0]/btn[25]` („-> FertAuftr") in die CO01-Maske; danach laufen dieselben
+Dialoge wie beim Anlegen.
+
+```powershell
+$tab = 'wnd[0]/usr/subINCLUDE1XX:SAPMM61R:0750/tblSAPMM61RTC_EZ'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiTabelleSuchen.vbs' MD04 $tab '2406064' 'MDEZ-EXTRA' 2
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' MD04 'wnd[1]/tbar[0]/btn[25]'
+```
+
+**Achtung, Sitzungskollision:** Die Umsetzung aus MD04 laeuft intern unter dem
+Transaktionscode **CO40**. Alle Skripte hier suchen die Sitzung ueber den
+Transaktionscode und nehmen die **erste** passende. Ist noch eine aeltere CO40- oder
+CO01-Sitzung offen, landen die Klicks dort. Erst die alte Sitzung mit `/n` parken, dann
+weiterarbeiten. Am 2026-09-04 hat das zwei Rundreisen gekostet.
+
+**CO41:** Werk steht meist schon da, Material eintragen, `F8`. Die Trefferliste ist eine
+`GuiTableControl`; Zeile markieren, dann `wnd[0]/tbar[1]/btn[20]` („Umsetzen"). Die
+Rueckfrage „Fehlende Verfuegbarkeit" wird mit `wnd[1]/usr/btnDY_VAROPTION1` bejaht.
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiFeldSetzen.vbs' CO41 'wnd[0]/usr/ctxtCAUFVD-MATNR' '36385'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiSendVKey.vbs' CO41 8
+cscript.exe //nologo '.tmp_sap_probe\SapGuiTabelleMarkieren.vbs' CO41 'wnd[0]/usr/tblSAPLCOUPTCTRL_0200' '0'
+cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO41 'wnd[0]/tbar[1]/btn[20]'
+```
+
+**CO41 gibt nicht frei.** Der Auftrag entsteht und wird gesichert, aber ohne Freigabe. Wer
+den Freigabetrigger messen will, gibt anschliessend ueber CO02 oder COHV frei.
 
 ### Kleine Regeln, die Rundreisen sparen
 

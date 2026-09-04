@@ -1,8 +1,8 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
 Stand: 2026-09-04. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
-gebaut und nachgetestet. Freigegeben ist der Auftrag nicht** — das geschieht erst nach der
-fachlichen Abnahme.
+gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
+geschieht erst nach der fachlichen Abnahme. Technisch offen ist nichts mehr.
 
 Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`, das
 Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
@@ -76,7 +76,7 @@ FGruppenverwaltung → Gruppe loeschen".
 
 ## 5. Der Nachtest auf dem ZPP1-Stand
 
-Alle vier Wege am 2026-09-04 mit **neu angelegten** Auftraegen gemessen. Neue Nummern sind
+Alle Wege am 2026-09-04 mit **neu angelegten** Auftraegen gemessen. Neue Nummern sind
 noetig, weil `Z_ZZPRDAT_SET` nur schreibt, wo `ZZPRDAT` noch initial ist: Auf den alten
 Testauftraegen haette der Report auch dann „gesetzt" gemeldet, wenn gar kein Code gelaufen
 waere.
@@ -88,6 +88,16 @@ waere.
 | 1241818 | CO01 mit Freigabe beim Sichern | — | 05.10.2026 | gesetzt, gleich GLTRP |
 | 1241819 | COHV Sammelfreigabe | `ZZPRDAT` initial | 08.10.2026 | gesetzt, gleich GLTRP |
 | 1241820 | CO40 aus Planauftrag 2406063 | — | 12.10.2026 | gesetzt, gleich GLTRP |
+| 1241821 | **CO01 mit Auftragsart `PP22`** | — | 15.10.2026 | gesetzt, gleich GLTRP |
+| 1241822 | **MD04**, Planauftrag 2406064 ueber „-> FertAuftr" | — | 19.10.2026 | gesetzt, gleich GLTRP |
+| 1241823 | **CO41** Sammelumsetzung, Planauftrag 2406065 | umgesetzt ohne Freigabe, `ZZPRDAT` initial | — | korrekt: ohne Freigabe kein Datum |
+| 1241823 | derselbe Auftrag, danach in CO02 freigegeben | `ZZPRDAT` initial | 22.10.2026 | gesetzt, gleich GLTRP |
+
+**CO41 gibt nicht frei.** Die Sammelumsetzung erzeugt den Fertigungsauftrag und speichert
+ihn, loest aber keine Freigabe aus. Der Nachweisreport meldet danach „noch nicht
+freigegeben", und das ist richtig so: Ohne Freigabe darf kein Produktionsdatum entstehen.
+Es entsteht bei der spaeteren Freigabe, gemessen ueber CO02. Wer das nicht weiss, koennte
+den Zwischenstand faelschlich fuer einen Fehler halten.
 
 Auftrag 1241818 ist der aussagekraeftigste Einzelfall: Beim Anlegen mit Freigabe traegt der
 Auftrag noch eine temporaere Nummer (`%00000000001`), und nur `BEFORE_UPDATE` sieht die
@@ -98,12 +108,12 @@ damit eindeutig dem neuen Stand in `ZPP1` zuzurechnen.
 
 1. **Fachliche Abnahme** durch Lucas Castro, Florian Waechter und Marco Di Menco anhand von
    `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
-2. **MD04 und CO41 messen.** Beide enden im selben Speichervorgang wie das nachgewiesene
-   CO40, gemessen ist es aber nicht. Mit der Disposition abstimmen; Fabio Palma hat
-   ausdruecklich darum gebeten, bei PP-Aenderungen einbezogen zu werden.
-3. **Auftragsart `PP22`** pruefen, sie kommt bei 10 der 34 Auftraege aus Marcos Liste vor.
-   Gemessen wurde ausschliesslich `PP21`.
-4. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden.
+2. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden.
+
+Technisch offen ist nichts mehr. MD04, CO41 und die Auftragsart `PP22` sind am 2026-09-04
+gemessen und stehen in der Tabelle oben. Die Disposition muss dafuer nicht mehr um
+Testfaelle gebeten werden; Fabio Palmas Bitte, bei PP-Aenderungen einbezogen zu werden,
+gilt weiterhin fuer den Import nach P76.
 
 ## 7. Risiko im Produktivsystem und wie man es begrenzt
 

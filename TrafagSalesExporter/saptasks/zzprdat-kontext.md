@@ -5,9 +5,10 @@ Arbeitsstand für die Fortsetzung im CLI. Stand: 04.09.2026.
 ## Aktueller Kurzstand 04.09.2026
 
 Die Loesung ist **gebaut, im Paket `ZPP1`, im Transportauftrag `T76K912490` und auf allen
-vier Wegen nachgetestet**. Der Auftrag ist bewusst **nicht freigegeben**; das geschieht erst
-nach der fachlichen Abnahme. Einzelheiten zu Auftrag, Objektliste und offenen Punkten stehen
-in `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+sieben Wegen nachgetestet**. Der Auftrag ist bewusst **nicht freigegeben**; das geschieht
+erst nach der fachlichen Abnahme. **Technisch ist nichts mehr offen**, auch MD04, CO41 und
+die Auftragsart `PP22` sind gemessen. Einzelheiten zu Auftrag, Objektliste und den beiden
+verbliebenen fachlichen Punkten stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
 
 Produktive Objekte in T76/100:
 
@@ -27,8 +28,14 @@ uebrig ist nur die leere Funktionsgruppe `ZPP_ZZPRDAT_TEST` in `$TMP`.
 Nachtest vom 04.09.2026 mit neu angelegten Auftraegen, weil der Baustein nur schreibt, wo
 `ZZPRDAT` noch initial ist: 1241817 (CO01 ohne Freigabe, dann CO02, danach Eckendtermin
 verschoben — eingefroren), 1241818 (CO01 mit Freigabe beim Sichern), 1241819 (COHV
-Sammelfreigabe), 1241820 (CO40 aus Planauftrag 2406063). Alle vier gesetzt, Write-once
-gehalten.
+Sammelfreigabe), 1241820 (CO40 aus Planauftrag 2406063), 1241821 (Auftragsart `PP22`),
+1241822 (MD04, Planauftrag 2406064 ueber „-> FertAuftr"), 1241823 (CO41 Sammelumsetzung aus
+Planauftrag 2406065, danach in CO02 freigegeben). Alle gesetzt, Write-once gehalten.
+
+**CO41 gibt nicht frei.** Die Sammelumsetzung erzeugt und sichert den Fertigungsauftrag,
+loest aber keine Freigabe aus; `ZZPRDAT` bleibt dabei richtigerweise leer und entsteht erst
+bei der spaeteren Freigabe. MD04 dagegen fuehrt ueber „-> FertAuftr" direkt in die
+CO01-Maske und gibt beim Sichern frei wie CO40.
 
 ## Kurzstand 03.09.2026 (ueberholt, Ausgangslage der Analyse)
 

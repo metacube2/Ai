@@ -291,6 +291,14 @@ def dokument_erzeugen() -> None:
          "wird gesetzt"),
         ("1241820", "Planauftrag über CO40 umgesetzt", "12.10.2026", "12.10.2026",
          "wird gesetzt"),
+        ("1241821", "Auftragsart PP22, angelegt und freigegeben", "15.10.2026",
+         "15.10.2026", "wird gesetzt"),
+        ("1241822", "Planauftrag über MD04 umgesetzt", "19.10.2026", "19.10.2026",
+         "wird gesetzt"),
+        ("1241823", "Sammelumsetzung über CO41", "22.10.2026", "leer",
+         "CO41 gibt nicht frei"),
+        ("1241823", "derselbe Auftrag in CO02 freigegeben", "22.10.2026",
+         "22.10.2026", "wird gesetzt"),
     ]:
         zellen = tab.add_row().cells
         for i, text in enumerate(zeile):
@@ -301,7 +309,8 @@ def dokument_erzeugen() -> None:
         "Die Aufträge 1241812 bis 1241816 wurden am 3. September auf dem Testaufbau "
         "gemessen. Danach sind dieselben Bausteine mit endgültigen Namen im Paket ZPP1 "
         "neu aufgebaut und in den Transportauftrag gelegt worden. Die Aufträge 1241817 "
-        "bis 1241820 sind die Wiederholung derselben vier Wege auf genau diesem Stand — "
+        "bis 1241823 sind die Wiederholung auf genau diesem Stand, erweitert um die "
+        "Auftragsart PP22 sowie die Wege MD04 und CO41 — "
         "also auf den Objekten, die später ausgeliefert werden."
     )
     p = dok.add_paragraph()
@@ -310,30 +319,40 @@ def dokument_erzeugen() -> None:
         "mit der Freigabe und überlebt eine spätere Terminverschiebung."
     ).bold = True
 
-    ueberschrift(dok, "Was noch aussteht", 1)
+    ueberschrift(dok, "Ein Sonderfall, den man kennen sollte: CO41", 1)
     dok.add_paragraph(
-        "Nicht einzeln gemessen sind MD04 und CO41. Beide setzen Planaufträge um "
-        "und enden im Speichern eines Fertigungsauftrags, also in demselben Ablauf, "
-        "den CO40 bereits durchlaufen hat. Das ist ein begründeter Schluss, aber "
-        "keine Messung — und es steht hier bewusst als solcher, damit sich niemand "
-        "auf mehr verlässt, als belegt ist."
+        "Die Sammelumsetzung über CO41 erzeugt den Fertigungsauftrag und sichert ihn, "
+        "gibt ihn aber nicht frei. In diesem Zwischenzustand bleibt das Produktionsdatum "
+        "leer — und das ist richtig so, denn ohne Freigabe darf kein Datum entstehen. "
+        "Es wird gesetzt, sobald der Auftrag später freigegeben wird. Wer das nicht "
+        "weiß, könnte den Zwischenzustand für einen Fehler halten."
     )
     dok.add_paragraph(
-        "Der für den CO40-Test verwendete Planauftrag wurde mit dem Profil "
-        "„Lagerauftrag“ angelegt. Das ist ein neutraler technischer Testfall. "
+        "MD04 verhält sich anders: Der Weg „→ FertAuftrag“ führt direkt in die "
+        "Anlagemaske und gibt beim Sichern frei, genau wie CO40."
+    )
+
+    ueberschrift(dok, "Was noch aussteht", 1)
+    dok.add_paragraph(
+        "Technisch ist nichts mehr offen. Alle sieben Wege sind gemessen, "
+        "einschließlich MD04, CO41 und der Auftragsart PP22, die bei 10 der 34 Aufträge "
+        "aus Marcos Liste vorkommt."
+    )
+    dok.add_paragraph(
+        "Die verwendeten Planaufträge wurden mit dem Profil „Lagerauftrag“ angelegt. "
+        "Das ist ein neutraler technischer Testfall. "
         "Ob der reale Ablauf im Werk CH mit diesem oder einem anderen Profil arbeitet, "
         "ist eine Stammdatenfrage und gehört zu Fabio Palma und Daniel Tobler. "
         "Für die Frage, ob die Umsetzung das Datum schreibt, spielt das Profil "
         "keine Rolle."
     )
     dok.add_paragraph(
-        "Ebenfalls offen ist die Auftragsart PP22, die bei 10 der 34 Aufträge aus "
-        "Marcos Liste vorkommt."
+        "Offen sind zwei fachliche Punkte: die Abnahme selbst, und Marcos Prüfung, "
+        "ob Verpackungsetikett und Typenschild dasselbe Feld verwenden."
     )
     dok.add_paragraph(
-        "Weitere Tests greifen in Planung und Fertigung ein und sollten deshalb mit der "
-        "Disposition abgestimmt werden. Fabio Palma hat ausdrücklich darum gebeten, "
-        "bei Änderungen im PP-Modul einbezogen zu werden."
+        "Der Import nach P76 greift in Planung und Fertigung ein. Fabio Palma hat "
+        "ausdrücklich darum gebeten, bei Änderungen im PP-Modul einbezogen zu werden."
     )
     dok.add_paragraph(
         "Die Freigabe des Transportauftrags und das nachträgliche Füllen der Altbestände "
@@ -343,10 +362,6 @@ def dokument_erzeugen() -> None:
 
     ueberschrift(dok, "Nächste Schritte", 1)
     for text in [
-        "Umsetzung von Planaufträgen über MD04 und CO41 messen, mit der "
-        "Disposition abgestimmt.",
-        "Auftragsart PP22 als zweiten Typ prüfen; 10 der 34 Aufträge aus Marcos "
-        "Liste sind PP22.",
         "Marco prüft, ob Verpackungsetikett und Typenschild dasselbe Feld verwenden.",
         "Erst danach den Transportauftrag T76K912490 freigeben.",
         "Getrennt davon und erst nach dem Import in P76: Altbestände nachfüllen, "

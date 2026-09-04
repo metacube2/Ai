@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-09-03
+Stand: 2026-09-04
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | Fehlerbild rekonstruiert, Verifikation blockiert | Vorfrage in SE93 klaeren, danach `p_debug` reaktivieren | 2026-08-14 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf vier Wegen nachgetestet. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); MD04, CO41 und Auftragsart PP22 mit der Disposition messen; erst danach den Auftrag freigeben | 2026-09-04 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Ergebnis Lucas Castro, Florian Waechter und Marco Di Menco vorlegen (`docs/ZZPRDAT_Loesung_2026-09-03.docx`); Marco prueft Etikett und Typenschild; erst danach den Auftrag freigeben | 2026-09-04 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -125,7 +125,7 @@ Randnotiz zur Kopfhistorie: Adil erscheint dort nur mit dem Eintrag
 
 **Ergebnis vom 2026-09-03: in T76 geloest.** Das Produktionsdatum wird bei der Freigabe
 gesetzt und bleibt bei einer spaeteren Terminverschiebung stehen, ohne dass der Reiter
-„Trafag Daten" besucht wird. Nachgewiesen auf vier Wegen: CO01 (anlegen und freigeben in
+„Trafag Daten" besucht wird. Damals auf vier Wegen nachgewiesen: CO01 (anlegen und freigeben in
 einem Vorgang), CO02 (bestehenden Auftrag freigeben), COHV (Sammelfreigabe) und CO40
 (Planauftrag umsetzen). Auftraege `1241812` bis `1241816`.
 
@@ -148,15 +148,20 @@ Objekte abnimmt, die spaeter ausgeliefert werden. Im Auftrag stecken `FUGR ZPP_Z
 `ENHO Z_ZZPRDAT` und `PROG Z_ZZPRDAT_CHECK`.
 
 Der Nachtest auf diesem Stand lief am 2026-09-04 mit **neu angelegten** Auftraegen `1241817`
-bis `1241820`, weil der Baustein nur schreibt, wo `ZZPRDAT` initial ist; die alten
-Testauftraege haetten unabhaengig vom Code „gesetzt" gemeldet. Alle vier Wege bestanden,
+bis `1241823`, weil der Baustein nur schreibt, wo `ZZPRDAT` initial ist; die alten
+Testauftraege haetten unabhaengig vom Code „gesetzt" gemeldet. Alle Wege bestanden,
 Write-once ebenfalls. Die alten `$TMP`-Testobjekte sind geloescht, damit nicht zwei
 Implementierungen desselben BAdI registrieren.
 
-Abschalten geht weiter mit `Strg+F4` in SE19, auch nach einem Import. Offen sind die
-fachliche Abnahme, die Messung von MD04, CO41 und der Auftragsart `PP22` mit der
-Disposition, Marcos Pruefung von Etikett und Typenschild, und danach getrennt die Freigabe
-des Auftrags und das Nachfuellen der Altbestaende.
+**Ebenfalls am 2026-09-04 gemessen und damit erledigt:** die Auftragsart `PP22` (`1241821`),
+die Umsetzung ueber MD04 (`1241822`) und die Sammelumsetzung ueber CO41 (`1241823`). CO41
+gibt dabei nicht frei — der Auftrag entsteht ohne Produktionsdatum, was richtig ist, und das
+Datum kommt bei der spaeteren Freigabe. Die Disposition muss dafuer nicht mehr um Testfaelle
+gebeten werden.
+
+Abschalten geht weiter mit `Strg+F4` in SE19, auch nach einem Import. **Technisch ist nichts
+mehr offen.** Es fehlen die fachliche Abnahme und Marcos Pruefung von Etikett und
+Typenschild; danach getrennt die Freigabe des Auftrags und das Nachfuellen der Altbestaende.
 
 Aufgenommen am 2026-07-27, urspruenglich als „BAdI-Kennzeichenfehler". Der Punkt
 ist am 2026-08-10 praezisiert worden und heisst seither ZZPRDAT.
