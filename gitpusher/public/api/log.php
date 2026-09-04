@@ -4,8 +4,8 @@
  * Retrieves log entries
  */
 
-require_once '../../src/ConfigManager.php';
-require_once '../../src/Logger.php';
+require_once __DIR__ . '/../../src/ConfigManager.php';
+require_once __DIR__ . '/../../src/Logger.php';
 
 header('Content-Type: application/json');
 

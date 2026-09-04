@@ -15,3 +15,29 @@ TeamsTextGrabber/obj/
 # Generierte Mail-Ausgaben: enthalten Empfaengeradressen, gehoeren nicht ins Repo.
 # Erzeugt aus docs/mails/Build-StandortMails.ps1, jederzeit reproduzierbar.
 TrafagSalesExporter/.tmp_standort_mails/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# Xcode: Benutzerzustand, gehoert nicht ins Repo
+**/xcuserdata/
+*.xcuserstate
+
+# Claude Code: Arbeitskopien anderer Projekte, keine Quelle
+.claude/
+
+# Lokale ZIP-Sicherungen, nicht versionieren
+_Archive/
+**/_Archive/
+
+# Kompilierte Binaries
+FT991A-Remote/Tools/LicenseTool/license-tool

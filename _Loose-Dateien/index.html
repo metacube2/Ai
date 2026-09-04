@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neurovoid Synthex</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-2: #0f1630;
+      --panel: rgba(7, 11, 24, 0.72);
+      --line: rgba(154, 255, 225, 0.22);
+      --text: #eff7ff;
+      --muted: #97a6c7;
+      --acid: #b6ff3b;
+      --aqua: #59f6ff;
+      --ember: #ff8447;
+      --rose: #ff4fd8;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(89, 246, 255, 0.16), transparent 26%),
+        radial-gradient(circle at 80% 15%, rgba(255, 79, 216, 0.18), transparent 30%),
+        radial-gradient(circle at 50% 85%, rgba(182, 255, 59, 0.12), transparent 28%),
+        linear-gradient(135deg, #02040d 0%, #09101f 45%, #160b24 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 88%);
+      opacity: 0.2;
+    }
+
+    body::after {
+      background:
+        radial-gradient(circle at center, transparent 0 58%, rgba(5, 8, 22, 0.6) 80%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+      mix-blend-mode: screen;
+    }
+
+    .shell {
+      width: min(1200px, calc(100vw - 32px));
+      margin: 24px auto;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(14, 20, 42, 0.74), rgba(4, 6, 16, 0.84));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .panel,
+    .display,
+    .grid-panel {
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--panel);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card {
+      padding: 28px;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      isolation: isolate;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -20% auto auto -10%;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(182, 255, 59, 0.25), transparent 70%);
+      filter: blur(22px);
+      z-index: -1;
+      animation: orbit 12s linear infinite;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--aqua);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(3rem, 8vw, 7rem);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      max-width: 8ch;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, var(--acid), var(--aqua), var(--rose));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 55ch;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.6;
+    }
+
+    .feature-ribbon {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .chip {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .chip strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .chip span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .spectral-stage {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      min-height: 520px;
+    }
+
+    .stage-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stage-top h2,
+    .section-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(182, 255, 59, 0.12);
+      color: var(--acid);
+      font-size: 0.88rem;
+    }
+
+    .holo-core {
+      position: relative;
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 28%),
+        conic-gradient(from 90deg, rgba(182, 255, 59, 0.18), rgba(89, 246, 255, 0.16), rgba(255, 79, 216, 0.18), rgba(255, 132, 71, 0.16), rgba(182, 255, 59, 0.18)),
+        rgba(255, 255, 255, 0.03);
+      min-height: 290px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .rings,
+    .rings::before,
+    .rings::after {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      content: "";
+    }
+
+    .rings {
+      width: 210px;
+      height: 210px;
+      animation: pulse 3.5s infinite ease-in-out;
+    }
+
+    .rings::before {
+      inset: -26px;
+      animation: spin 18s linear infinite reverse;
+    }
+
+    .rings::after {
+      inset: 34px;
+      border-style: dashed;
+      animation: spin 12s linear infinite;
+    }
+
+    .core-label {
+      position: relative;
+      text-align: center;
+      z-index: 1;
+    }
+
+    .core-label strong {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--aqua);
+      text-transform: uppercase;
+    }
+
+    .core-label span {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.06em;
+    }
+
+    .wave-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .wave-pill {
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .wave-pill b {
+      color: var(--text);
+    }
+
+    .console {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .display {
+      padding: 20px;
+    }
+
+    .display-screen {
+      position: relative;
+      border-radius: 22px;
+      min-height: 290px;
+      padding: 16px;
+      background:
+        radial-gradient(circle at center, rgba(89, 246, 255, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(7, 18, 29, 0.95), rgba(7, 10, 16, 0.98));
+      border: 1px solid rgba(89, 246, 255, 0.16);
+      overflow: hidden;
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.02) 0 2px,
+        transparent 2px 8px
+      );
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+
+    .display-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      min-height: 86px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      color: var(--text);
+      font-size: 1.2rem;
+    }
+
+    .controls {
+      padding: 20px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .knob-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .knob-card,
+    .switch-bank,
+    .matrix,
+    .footer-bar {
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .knob-card {
+      padding: 14px;
+      display: grid;
+      place-items: center;
+      gap: 10px;
+      min-height: 170px;
+      user-select: none;
+    }
+
+    .dial {
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.16), transparent 20%),
+        conic-gradient(from 220deg, var(--ember), var(--rose), var(--aqua), var(--acid), var(--ember));
+      position: relative;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+      cursor: ns-resize;
+      touch-action: none;
+      transform: rotate(var(--angle, 0deg));
+    }
+
+    .dial::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 9px;
+      width: 5px;
+      height: 34px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.6);
+    }
+
+    .knob-card b {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.78rem;
+    }
+
+    .value-readout {
+      color: var(--aqua);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .knob-card span {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    .switch-bank {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .toggle {
+      padding: 12px 10px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.22);
+      text-align: center;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      position: relative;
+    }
+
+    .toggle::before {
+      content: "";
+      display: block;
+      width: 18px;
+      height: 38px;
+      margin: 0 auto 10px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.05));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .toggle.active {
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(89, 246, 255, 0.15), rgba(255, 79, 216, 0.1));
+      border: 1px solid rgba(89, 246, 255, 0.16);
+    }
+
+    .transport {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .transport button {
+      border: 1px solid rgba(89, 246, 255, 0.22);
+      background: linear-gradient(135deg, rgba(182, 255, 59, 0.2), rgba(89, 246, 255, 0.18));
+      color: var(--text);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .transport button.secondary {
+      background: linear-gradient(135deg, rgba(255, 79, 216, 0.16), rgba(255, 132, 71, 0.15));
+    }
+
+    .transport button:hover {
+      filter: brightness(1.08);
+    }
+
+    .transport button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .mode-select {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .mode-chip {
+      border: 1px solid rgba(89, 246, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .mode-chip.active {
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(89, 246, 255, 0.16), rgba(182, 255, 59, 0.14));
+      border-color: rgba(182, 255, 59, 0.3);
+    }
+
+    .transport p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .mic-status {
+      grid-column: 1 / -1;
+      min-height: 1.2rem;
+      color: var(--aqua);
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+    }
+
+    .matrix-wrap {
+      margin-top: 20px;
+    }
+
+    .grid-panel {
+      margin-top: 20px;
+      padding: 20px;
+    }
+
+    .matrix {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+      overflow: hidden;
+      animation: blink 4s infinite;
+      animation-delay: calc(var(--d) * 0.18s);
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 12px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.48), transparent 62%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .cell.active::after {
+      opacity: 1;
+    }
+
+    .cell.playing {
+      outline: 2px solid rgba(182, 255, 59, 0.7);
+      outline-offset: -4px;
+      box-shadow: 0 0 24px rgba(182, 255, 59, 0.24);
+    }
+
+    .footer-bar {
+      margin-top: 20px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer-bar strong {
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.84rem;
+      color: var(--aqua);
+    }
+
+    .footer-bar span {
+      color: var(--muted);
+      max-width: 65ch;
+      line-height: 1.5;
+    }
+
+    @keyframes orbit {
+      0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.92); opacity: 0.65; }
+      50% { transform: scale(1.04); opacity: 1; }
+    }
+
+    @keyframes blink {
+      0%, 100% { box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+      50% { box-shadow: 0 0 18px rgba(89, 246, 255, 0.18); }
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .console {
+        grid-template-columns: 1fr;
+      }
+
+      .feature-ribbon,
+      .wave-row,
+      .display-grid,
+      .switch-bank {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100vw - 16px, 100%);
+        margin: 8px auto;
+        padding: 14px;
+        border-radius: 22px;
+      }
+
+      .hero-card,
+      .spectral-stage,
+      .display,
+      .controls,
+      .grid-panel {
+        border-radius: 20px;
+      }
+
+      h1 {
+        font-size: clamp(2.5rem, 18vw, 4.2rem);
+      }
+
+      .feature-ribbon,
+      .wave-row,
+      .display-grid,
+      .knob-grid,
+      .switch-bank {
+        grid-template-columns: 1fr;
+      }
+
+      .matrix {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .footer-bar {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <article class="hero-card">
+        <div>
+          <div class="eyebrow">Hyper Analog / Alien Logic / One-Off Prototype</div>
+          <h1>Neurovoid <span class="gradient-text">Synthex</span></h1>
+          <p class="lead">
+            Ein Synthesizer wie aus einer Parallelwelt: gebaut aus gravitativen Wellenkammern,
+            spektralem Staub und einem Sequencer, der auf Emotion statt auf MIDI hört.
+          </p>
+          <div class="feature-ribbon">
+            <div class="chip">
+              <strong>13D Oszillator</strong>
+              <span>formt Klangkörper in spiralförmigen Resonanzschichten</span>
+            </div>
+            <div class="chip">
+              <strong>Traum-Filter</strong>
+              <span>zerlegt Töne in Schimmer, Sand und elektrische Geister</span>
+            </div>
+            <div class="chip">
+              <strong>Anti-Gravity Arp</strong>
+              <span>spielt Muster rückwärts, seitwärts und außerhalb der Zeit</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <strong>Manifest</strong>
+          <span>Keine Vintage-Kopie. Keine Retro-Maske. Dieses Interface inszeniert ein Instrument, das eher entdeckt als bedient wird.</span>
+        </div>
+      </article>
+
+      <aside class="panel spectral-stage">
+        <div class="stage-top">
+          <h2>Quantum Core</h2>
+          <div class="status">Resonanz aktiv</div>
+        </div>
+        <div class="holo-core">
+          <div class="rings"></div>
+          <div class="core-label">
+            <strong>Void Drive</strong>
+            <span>∞ Hz</span>
+          </div>
+        </div>
+        <div class="wave-row">
+          <div class="wave-pill"><b>Mode:</b> Liquid Prism</div>
+          <div class="wave-pill"><b>Flux:</b> 87% unstable</div>
+          <div class="wave-pill"><b>Scene:</b> Neon Catacomb</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="console">
+      <div class="display">
+        <div class="section-head">
+          <h3>Spektraldisplay</h3>
+          <span>live visualisierte Phantomwelle</span>
+        </div>
+        <div class="display-screen">
+          <canvas id="waveCanvas" width="780" height="260" aria-label="Animierte Synthesizer-Wellenform"></canvas>
+          <div class="scanline"></div>
+        </div>
+        <div class="display-grid">
+          <div class="metric">Chromatic Rift<strong id="metricPitch">+7 st</strong></div>
+          <div class="metric">Memory Fog<strong id="metricCutoff">2.8 kHz</strong></div>
+          <div class="metric">Orbit Delay<strong id="metricTempo">118 BPM</strong></div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="section-head">
+          <h3>Mutationsbank</h3>
+          <span>jeder Regler verändert die Realität anders</span>
+        </div>
+        <div class="transport">
+          <p>Klicke auf Audio Start und wähle dann, ob das Mikro live verbogen oder als Aufnahme zerlegt werden soll.</p>
+          <button id="powerButton" type="button">Audio Start</button>
+          <button id="micButton" class="secondary" type="button">Mic Sample</button>
+          <button id="testButton" type="button">Test Tone</button>
+          <div class="mode-select">
+            <button id="modeLive" class="mode-chip" type="button">Live</button>
+            <button id="modeSample" class="mode-chip active" type="button">Sample</button>
+            <button id="monitorButton" class="mode-chip" type="button">Monitor</button>
+          </div>
+          <div class="mic-status" id="micStatus">Noch kein Mikro-Sample geladen.</div>
+        </div>
+        <div class="knob-grid">
+          <div class="knob-card" data-knob="pitch">
+            <div class="dial" data-knob-control="pitch"></div>
+            <b>Plasma Drift</b>
+            <div class="value-readout" id="readoutPitch">+7 st</div>
+            <span>biegt Obertöne in flüssige Kurven</span>
+          </div>
+          <div class="knob-card" data-knob="cutoff">
+            <div class="dial" data-knob-control="cutoff"></div>
+            <b>Noise Bloom</b>
+            <div class="value-readout" id="readoutCutoff">2.8 kHz</div>
+            <span>lässt Rauschen aufblühen wie Metallstaub</span>
+          </div>
+          <div class="knob-card" data-knob="echo">
+            <div class="dial" data-knob-control="echo"></div>
+            <b>Echo Fracture</b>
+            <div class="value-readout" id="readoutEcho">35%</div>
+            <span>zerlegt Hall in kleine Lichtsplitter</span>
+          </div>
+          <div class="knob-card" data-knob="tempo">
+            <div class="dial" data-knob-control="tempo"></div>
+            <b>Soul Sync</b>
+            <div class="value-readout" id="readoutTempo">118 BPM</div>
+            <span>kalibriert das Pattern auf Puls statt BPM</span>
+          </div>
+        </div>
+        <div class="switch-bank">
+          <div class="toggle active" data-toggle="warp">warp</div>
+          <div class="toggle" data-toggle="mist">mist</div>
+          <div class="toggle active" data-toggle="glow">glow</div>
+          <div class="toggle" data-toggle="void">void</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-panel">
+      <div class="section-head">
+        <h3>Emotion Matrix</h3>
+        <span>Sequencer-Felder feuern nicht nach Raster, sondern nach Spannung</span>
+      </div>
+      <div class="matrix" id="matrix"></div>
+      <div class="footer-bar matrix-wrap">
+        <strong>Unmögliches Feature</strong>
+        <span>Wenn alle Felder gleichzeitig leuchten, kippt der Neurovoid in den Modus „Zero Gravity Choir“ und singt Akkorde, die nie programmiert wurden.</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("waveCanvas");
+    const ctx = canvas.getContext("2d");
+    const matrix = document.getElementById("matrix");
+    const powerButton = document.getElementById("powerButton");
+    const micButton = document.getElementById("micButton");
+    const testButton = document.getElementById("testButton");
+    const micStatus = document.getElementById("micStatus");
+    const modeLive = document.getElementById("modeLive");
+    const modeSample = document.getElementById("modeSample");
+    const monitorButton = document.getElementById("monitorButton");
+    const toggles = [...document.querySelectorAll(".toggle")];
+    const knobControls = [...document.querySelectorAll("[data-knob-control]")];
+    const metricPitch = document.getElementById("metricPitch");
+    const metricCutoff = document.getElementById("metricCutoff");
+    const metricTempo = document.getElementById("metricTempo");
+    const readoutPitch = document.getElementById("readoutPitch");
+    const readoutCutoff = document.getElementById("readoutCutoff");
+    const readoutEcho = document.getElementById("readoutEcho");
+    const readoutTempo = document.getElementById("readoutTempo");
+
+    const state = {
+      pitch: 0.58,
+      cutoff: 0.54,
+      echo: 0.35,
+      tempo: 0.48,
+      micMode: "sample",
+      monitor: false,
+      warp: true,
+      mist: false,
+      glow: true,
+      void: false
+    };
+
+    const noteMap = [0, 3, 7, 10];
+    let sequenceStep = 0;
+    let nextStepAt = 0;
+    let isAudioRunning = false;
+    let audioCtx;
+    let masterGain;
+    let lowpass;
+    let delayNode;
+    let feedbackGain;
+    let wetGain;
+    let dryGain;
+    let analyser;
+    let micMonitorGain;
+    let liveMicGate;
+    let micMediaStream;
+    let mediaRecorder;
+    let micChunks = [];
+    let micSampleBuffer = null;
+    let micSampleBufferReverse = null;
+    let isCapturingMic = false;
+    let micInputSource = null;
+    let micSampleGainBoost = 1.8;
+
+    for (let i = 0; i < 32; i += 1) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.style.setProperty("--d", i % 8);
+      cell.dataset.index = String(i);
+      if (i % 3 === 0 || i % 7 === 0) {
+        cell.classList.add("active");
+      }
+      matrix.appendChild(cell);
+    }
+
+    const cells = [...document.querySelectorAll(".cell")];
+    cells.forEach((cell) => {
+      cell.addEventListener("click", () => {
+        cell.classList.toggle("active");
+        if (isAudioRunning) {
+          triggerVoice(Number(cell.dataset.index), audioCtx.currentTime, 0.18);
+        }
+      });
+    });
+
+    matrix.addEventListener("pointerdown", async () => {
+      await ensureAudio();
+    });
+
+    toggles.forEach((toggle) => {
+      toggle.addEventListener("click", () => {
+        const key = toggle.dataset.toggle;
+        state[key] = !state[key];
+        toggle.classList.toggle("active", state[key]);
+        updateAudioParams();
+      });
+    });
+
+    knobControls.forEach((dial) => {
+      const key = dial.dataset.knobControl;
+      positionDial(dial, state[key]);
+      dial.addEventListener("pointerdown", async (event) => {
+        await ensureAudio();
+        dial.setPointerCapture(event.pointerId);
+        const startY = event.clientY;
+        const startValue = state[key];
+
+        const onMove = (moveEvent) => {
+          const delta = (startY - moveEvent.clientY) / 180;
+          const value = clamp(startValue + delta, 0, 1);
+          state[key] = value;
+          positionDial(dial, value);
+          updateReadouts();
+          updateAudioParams();
+        };
+
+        const onUp = (upEvent) => {
+          dial.releasePointerCapture(upEvent.pointerId);
+          dial.removeEventListener("pointermove", onMove);
+          dial.removeEventListener("pointerup", onUp);
+          dial.removeEventListener("pointercancel", onUp);
+        };
+
+        dial.addEventListener("pointermove", onMove);
+        dial.addEventListener("pointerup", onUp);
+        dial.addEventListener("pointercancel", onUp);
+      });
+    });
+
+    powerButton.addEventListener("click", async () => {
+      await ensureAudio();
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+      isAudioRunning = true;
+      powerButton.textContent = "Audio aktiv";
+      powerButton.disabled = true;
+    });
+
+    micButton.addEventListener("click", async () => {
+      await ensureAudio();
+      if (state.micMode === "live") {
+        await ensureMicStream();
+        micStatus.textContent = "Live-Mikro offen. Die Matrix hackt jetzt direkt in dein Eingangssignal.";
+        micButton.textContent = "Mic Live";
+      } else {
+        await captureMicSample();
+      }
+    });
+
+    modeLive.addEventListener("click", async () => {
+      state.micMode = "live";
+      updateModeButtons();
+      await ensureAudio();
+      await ensureMicStream();
+      updateAudioParams();
+      micStatus.textContent = "Live-Modus aktiv. Aktive Matrix-Spalten schneiden direkt in dein Mikro.";
+      micButton.textContent = "Mic Live";
+    });
+
+    modeSample.addEventListener("click", () => {
+      state.micMode = "sample";
+      updateModeButtons();
+      updateAudioParams();
+      micStatus.textContent = micSampleBuffer
+        ? "Sample-Modus aktiv. Der Sequencer zerlegt deine letzte Aufnahme."
+        : "Sample-Modus aktiv. Nimm ein Mikro-Sample auf.";
+      micButton.textContent = "Mic Sample";
+    });
+
+    monitorButton.addEventListener("click", async () => {
+      await ensureAudio();
+      await ensureMicStream();
+      state.monitor = !state.monitor;
+      updateModeButtons();
+      updateAudioParams();
+      micStatus.textContent = state.monitor
+        ? "Direct Monitor aktiv. Du solltest dein Mikro jetzt sofort hören."
+        : "Direct Monitor aus.";
+    });
+
+    testButton.addEventListener("click", async () => {
+      await ensureAudio();
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+      playTestTone();
+      micStatus.textContent = "Test Tone ausgelöst. Wenn du nichts hörst, liegt das Problem an Browser oder Audioausgabe.";
+    });
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function positionDial(dial, value) {
+      const angle = -140 + value * 280;
+      dial.style.setProperty("--angle", angle + "deg");
+    }
+
+    function updateModeButtons() {
+      modeLive.classList.toggle("active", state.micMode === "live");
+      modeSample.classList.toggle("active", state.micMode === "sample");
+      monitorButton.classList.toggle("active", state.monitor);
+    }
+
+    function formatPitch() {
+      return (Math.round(state.pitch * 24) - 12 >= 0 ? "+" : "") + (Math.round(state.pitch * 24) - 12) + " st";
+    }
+
+    function formatCutoff() {
+      const cutoffValue = 200 + state.cutoff * 5800;
+      return cutoffValue >= 1000
+        ? (cutoffValue / 1000).toFixed(1) + " kHz"
+        : Math.round(cutoffValue) + " Hz";
+    }
+
+    function formatEcho() {
+      return Math.round(state.echo * 100) + "%";
+    }
+
+    function formatTempo() {
+      return Math.round(70 + state.tempo * 130) + " BPM";
+    }
+
+    function updateReadouts() {
+      readoutPitch.textContent = formatPitch();
+      readoutCutoff.textContent = formatCutoff();
+      readoutEcho.textContent = formatEcho();
+      readoutTempo.textContent = formatTempo();
+      metricPitch.textContent = formatPitch();
+      metricCutoff.textContent = formatCutoff();
+      metricTempo.textContent = formatTempo();
+    }
+
+    function createNoiseBuffer(context) {
+      const buffer = context.createBuffer(1, context.sampleRate * 0.25, context.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) {
+        data[i] = (Math.random() * 2 - 1) * 0.7;
+      }
+      return buffer;
+    }
+
+    function reverseAudioBuffer(context, sourceBuffer) {
+      const reversed = context.createBuffer(
+        sourceBuffer.numberOfChannels,
+        sourceBuffer.length,
+        sourceBuffer.sampleRate
+      );
+
+      for (let channel = 0; channel < sourceBuffer.numberOfChannels; channel += 1) {
+        const sourceData = sourceBuffer.getChannelData(channel);
+        const targetData = reversed.getChannelData(channel);
+        for (let i = 0; i < sourceData.length; i += 1) {
+          targetData[i] = sourceData[sourceData.length - 1 - i];
+        }
+      }
+
+      return reversed;
+    }
+
+    function getBufferPeak(buffer) {
+      let peak = 0;
+      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < data.length; i += 1) {
+          const value = Math.abs(data[i]);
+          if (value > peak) {
+            peak = value;
+          }
+        }
+      }
+      return peak;
+    }
+
+    function playMicPreview() {
+      if (!audioCtx || !micSampleBuffer) {
+        return;
+      }
+
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      source.buffer = micSampleBuffer;
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.22 * micSampleGainBoost, audioCtx.currentTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + Math.min(micSampleBuffer.duration, 1.2));
+      source.connect(gain);
+      gain.connect(lowpass);
+      source.start(audioCtx.currentTime, 0, Math.min(micSampleBuffer.duration, 1.25));
+    }
+
+    function playTestTone() {
+      const when = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sawtooth";
+      osc2.type = "square";
+      osc.frequency.setValueAtTime(220, when);
+      osc2.frequency.setValueAtTime(330, when);
+      gain.gain.setValueAtTime(0.0001, when);
+      gain.gain.exponentialRampToValueAtTime(0.2, when + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.7);
+
+      osc.connect(gain);
+      osc2.connect(gain);
+      gain.connect(lowpass);
+
+      osc.start(when);
+      osc2.start(when);
+      osc.stop(when + 0.72);
+      osc2.stop(when + 0.72);
+    }
+
+    async function ensureAudio() {
+      if (audioCtx) {
+        return;
+      }
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextClass();
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.18;
+
+      lowpass = audioCtx.createBiquadFilter();
+      lowpass.type = "lowpass";
+
+      dryGain = audioCtx.createGain();
+      wetGain = audioCtx.createGain();
+      delayNode = audioCtx.createDelay(1.2);
+      feedbackGain = audioCtx.createGain();
+      analyser = audioCtx.createAnalyser();
+      micMonitorGain = audioCtx.createGain();
+      liveMicGate = audioCtx.createGain();
+      analyser.fftSize = 2048;
+
+      lowpass.connect(dryGain);
+      lowpass.connect(delayNode);
+      delayNode.connect(feedbackGain);
+      feedbackGain.connect(delayNode);
+      delayNode.connect(wetGain);
+      dryGain.connect(masterGain);
+      wetGain.connect(masterGain);
+      liveMicGate.connect(micMonitorGain);
+      micMonitorGain.connect(lowpass);
+      masterGain.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      micMonitorGain.gain.value = 0.0;
+      liveMicGate.gain.value = 0.0;
+
+      updateAudioParams();
+      updateReadouts();
+      isAudioRunning = true;
+      powerButton.textContent = "Audio aktiv";
+      powerButton.disabled = true;
+      nextStepAt = audioCtx.currentTime + 0.08;
+    }
+
+    async function ensureMicStream() {
+      if (micMediaStream && micInputSource) {
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        micStatus.textContent = "Dieser Browser bietet keinen Mikrofonzugriff.";
+        return;
+      }
+
+      micMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micInputSource = audioCtx.createMediaStreamSource(micMediaStream);
+      micInputSource.connect(liveMicGate);
+    }
+
+    function updateAudioParams() {
+      if (!audioCtx) {
+        return;
+      }
+
+      const cutoffValue = 200 + state.cutoff * 5800 + (state.glow ? 1200 : 0);
+      lowpass.frequency.setTargetAtTime(cutoffValue, audioCtx.currentTime, 0.03);
+      lowpass.Q.setTargetAtTime(state.warp ? 11 : 3.5, audioCtx.currentTime, 0.03);
+      delayNode.delayTime.setTargetAtTime(0.08 + state.echo * 0.58, audioCtx.currentTime, 0.03);
+      feedbackGain.gain.setTargetAtTime(0.15 + state.echo * 0.55, audioCtx.currentTime, 0.03);
+      wetGain.gain.setTargetAtTime(state.echo * 0.55, audioCtx.currentTime, 0.03);
+      dryGain.gain.setTargetAtTime(1 - state.echo * 0.35, audioCtx.currentTime, 0.03);
+      masterGain.gain.setTargetAtTime(state.void ? 0.25 : 0.18, audioCtx.currentTime, 0.04);
+      micMonitorGain.gain.setTargetAtTime(
+        state.monitor
+          ? 0.85
+          : state.micMode === "live" ? (state.mist ? 0.38 : 0.26) : (state.mist ? 0.04 : 0.0),
+        audioCtx.currentTime,
+        0.04
+      );
+    }
+
+    function triggerVoice(index, when, accent) {
+      if (!audioCtx) {
+        return;
+      }
+
+      const row = Math.floor(index / 8);
+      const note = 42 + noteMap[row] + Math.round(state.pitch * 12) + (state.warp ? 12 : 0);
+      const frequency = 440 * (2 ** ((note - 69) / 12));
+      const osc = audioCtx.createOscillator();
+      const sub = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = state.mist ? "triangle" : "sawtooth";
+      sub.type = state.void ? "square" : "sine";
+
+      osc.frequency.setValueAtTime(frequency, when);
+      sub.frequency.setValueAtTime(frequency * 0.5, when);
+      if (state.warp) {
+        osc.detune.setValueAtTime(8 + row * 2, when);
+      }
+
+      gain.gain.setValueAtTime(0.0001, when);
+      gain.gain.exponentialRampToValueAtTime(0.11 + accent, when + 0.02);
+      gain.gain.exponentialRampToValueAtTime(state.mist ? 0.045 : 0.03, when + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + (state.void ? 1.2 : 0.7));
+
+      osc.connect(gain);
+      sub.connect(gain);
+      gain.connect(lowpass);
+
+      if (state.mist) {
+        const noiseSource = audioCtx.createBufferSource();
+        const noiseGain = audioCtx.createGain();
+        noiseSource.buffer = createNoiseBuffer(audioCtx);
+        noiseGain.gain.setValueAtTime(0.025 + state.echo * 0.02, when);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, when + 0.28);
+        noiseSource.connect(noiseGain);
+        noiseGain.connect(lowpass);
+        noiseSource.start(when);
+        noiseSource.stop(when + 0.3);
+      }
+
+      osc.start(when);
+      sub.start(when);
+      osc.stop(when + 1.4);
+      sub.stop(when + 1.4);
+
+      if (state.micMode === "sample" && micSampleBuffer) {
+        triggerMicGrain(index, when, accent);
+      }
+    }
+
+    async function captureMicSample() {
+      if (isCapturingMic) {
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        micStatus.textContent = "Dieser Browser bietet keinen Mikrofonzugriff.";
+        return;
+      }
+
+      try {
+        isCapturingMic = true;
+        micButton.disabled = true;
+        micButton.textContent = "Aufnahme...";
+        micStatus.textContent = "Mikro aktiv. Sprich, summe oder mache etwas Absurdes für 2 Sekunden.";
+
+        await ensureMicStream();
+
+        mediaRecorder = new MediaRecorder(micMediaStream);
+        micChunks = [];
+
+        mediaRecorder.addEventListener("dataavailable", (event) => {
+          if (event.data.size > 0) {
+            micChunks.push(event.data);
+          }
+        });
+
+        mediaRecorder.addEventListener("stop", async () => {
+          const blob = new Blob(micChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+          const arrayBuffer = await blob.arrayBuffer();
+          const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+          const peak = Math.max(getBufferPeak(decoded), 0.001);
+          micSampleBuffer = decoded;
+          micSampleBufferReverse = reverseAudioBuffer(audioCtx, decoded);
+          micSampleGainBoost = Math.min(4, Math.max(1.4, 0.92 / peak));
+          micStatus.textContent = "Mikro-Sample geladen. Preview läuft jetzt, danach zerlegt der Sequencer dein Signal in Grains.";
+          micButton.textContent = "Mic Neu";
+          micButton.disabled = false;
+          isCapturingMic = false;
+          playMicPreview();
+        });
+
+        mediaRecorder.start();
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+          }
+        }, 1800);
+      } catch (error) {
+        micStatus.textContent = "Mikro blockiert. Erlaube den Zugriff oder öffne die Datei über localhost.";
+        micButton.textContent = "Mic Sample";
+        micButton.disabled = false;
+        isCapturingMic = false;
+      }
+    }
+
+    function triggerMicGrain(index, when, accent) {
+      if (!audioCtx || !micSampleBuffer) {
+        return;
+      }
+
+      const useReverse = state.void && micSampleBufferReverse;
+      const sourceBuffer = useReverse ? micSampleBufferReverse : micSampleBuffer;
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      const panner = audioCtx.createStereoPanner();
+      const row = Math.floor(index / 8);
+      const column = index % 8;
+      const safeDuration = Math.max(sourceBuffer.duration, 0.08);
+      const slice = safeDuration / 8;
+      const requestedDuration = Math.min(0.18 + state.echo * 0.42 + row * 0.025, 0.72);
+      const grainDuration = Math.min(requestedDuration, Math.max(safeDuration - 0.01, 0.06));
+      const maxOffset = Math.max(safeDuration - grainDuration - 0.01, 0);
+      const startOffset = Math.min(
+        Math.max(column * slice * 0.72 + state.pitch * 0.08, 0),
+        maxOffset
+      );
+      const baseRate = 0.5 + state.pitch * 1.6 + row * 0.08;
+      const bentRate = state.warp ? baseRate * (1.1 + Math.sin(column + state.tempo * 3) * 0.18) : baseRate;
+
+      source.buffer = sourceBuffer;
+      source.playbackRate.setValueAtTime(bentRate, when);
+      if (state.glow) {
+        source.detune.setValueAtTime((column - 3.5) * 18, when);
+      }
+
+      panner.pan.setValueAtTime((column - 3.5) / 4, when);
+      gain.gain.setValueAtTime(0.0001, when);
+      gain.gain.exponentialRampToValueAtTime((0.16 + accent * 0.9) * micSampleGainBoost, when + 0.015);
+      gain.gain.exponentialRampToValueAtTime((state.mist ? 0.07 : 0.03) * micSampleGainBoost, when + grainDuration * 0.55);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + grainDuration);
+
+      source.connect(gain);
+      gain.connect(panner);
+      panner.connect(lowpass);
+
+      source.start(when, startOffset, grainDuration);
+      source.stop(when + grainDuration + 0.03);
+    }
+
+    function tickSequencer() {
+      if (audioCtx && isAudioRunning) {
+        const stepDuration = 60 / (70 + state.tempo * 130) / 2;
+        while (nextStepAt < audioCtx.currentTime + 0.1) {
+          const column = sequenceStep % 8;
+          let liveColumnActive = false;
+          cells.forEach((cell, index) => {
+            cell.classList.toggle("playing", index % 8 === column);
+            if (index % 8 === column && cell.classList.contains("active")) {
+              liveColumnActive = true;
+              triggerVoice(index, nextStepAt, index < 8 ? 0.07 : 0);
+            }
+          });
+          if (state.micMode === "live" && liveMicGate) {
+            liveMicGate.gain.cancelScheduledValues(nextStepAt);
+            liveMicGate.gain.setValueAtTime(liveMicGate.gain.value || 0.0001, nextStepAt);
+            liveMicGate.gain.exponentialRampToValueAtTime(liveColumnActive ? 1 : 0.0001, nextStepAt + 0.01);
+            liveMicGate.gain.exponentialRampToValueAtTime(0.0001, nextStepAt + Math.max(stepDuration * 0.82, 0.04));
+          }
+          nextStepAt += stepDuration;
+          sequenceStep = (sequenceStep + 1) % 8;
+        }
+      }
+      requestAnimationFrame(tickSequencer);
+    }
+
+    function draw(time) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const gradient = ctx.createLinearGradient(0, 0, w, h);
+      gradient.addColorStop(0, "#b6ff3b");
+      gradient.addColorStop(0.45, "#59f6ff");
+      gradient.addColorStop(1, "#ff4fd8");
+
+      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = gradient;
+      ctx.beginPath();
+
+      const drift = state.pitch * 16;
+      const bloom = state.cutoff * 18;
+      const fracture = state.echo * 22;
+      const sync = state.tempo * 30;
+
+      for (let x = 0; x <= w; x += 4) {
+        const t = x / w;
+        const y =
+          h * 0.5 +
+          Math.sin(t * (18 + drift) + time * (0.0013 + state.echo * 0.0007)) * (20 + bloom) +
+          Math.cos(t * (33 + sync) - time * 0.0009) * (8 + fracture) +
+          Math.sin(t * (72 + bloom * 0.7) + time * (0.0025 + state.pitch * 0.0015)) * (6 + fracture);
+
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
+
+      for (let i = 0; i < 18; i += 1) {
+        const offset = (time * 0.08 + i * 40) % w;
+        const size = 2 + ((i % 4) * 1.6);
+        const hue = state.glow
+          ? (i % 2 === 0 ? "#59f6ff" : "#ff8447")
+          : (i % 2 === 0 ? "#b6ff3b" : "#eff7ff");
+        const y =
+          h * 0.5 +
+          Math.sin(offset * 0.04 + time * (0.002 + state.pitch * 0.001) + i) * (18 + bloom) +
+          Math.cos(offset * 0.018 - time * (0.0014 + state.echo * 0.001)) * (10 + fracture);
+
+        ctx.fillStyle = hue;
+        ctx.beginPath();
+        ctx.arc(offset, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    updateReadouts();
+    updateModeButtons();
+    tickSequencer();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

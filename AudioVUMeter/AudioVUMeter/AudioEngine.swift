@@ -83,6 +83,7 @@ class AudioEngine: ObservableObject {
             mElement: kAudioObjectPropertyElementMain
         )
 
+        
         var propertySize: UInt32 = 0
         var status = AudioObjectGetPropertyDataSize(
             AudioObjectID(kAudioObjectSystemObject),
