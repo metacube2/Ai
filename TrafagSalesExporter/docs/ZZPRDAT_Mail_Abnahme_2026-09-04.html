@@ -1,0 +1,76 @@
+<div style="font-family:Calibri,sans-serif;font-size:11pt;">
+
+<p>Guten Tag zusammen</p>
+
+<p>kurz zum Stand beim Produktionsdatum im Fertigungsauftrag, dem Feld im Reiter
+&bdquo;Trafag Daten&ldquo;, das seit Oktober 2025 existiert, in der Praxis aber leer geblieben
+ist.</p>
+
+<p><b>Was vorher falsch war.</b> Das Feld wurde nur dann gef&uuml;llt, wenn jemand den Reiter
+&bdquo;Trafag Daten&ldquo; beim Anlegen oder &Auml;ndern des Auftrags tats&auml;chlich
+angeklickt hat. Bei der Sammelfreigabe und bei der Umsetzung von Planauftr&auml;gen gibt es
+diesen Reiter gar nicht. Der Ausgangszustand war entsprechend deutlich: Von den 34
+Auftr&auml;gen aus Marcos Liste waren 32 freigegeben &ndash; und kein einziger trug ein
+Produktionsdatum.</p>
+
+<p><b>Wie es gel&ouml;st wurde.</b> Die Logik h&auml;ngt jetzt nicht mehr an der
+Bildschirmmaske, sondern am Business Add-In <i>WORKORDER_UPDATE</i>, das SAP bei jedem
+Speichern eines Fertigungsauftrags aufruft &ndash; der Weg, den Lucas von Anfang an genannt
+hatte. Drei Ursachen waren dabei zu beheben, keine davon am Quelltext erkennbar:</p>
+
+<ul>
+<li><b>Der SAP-Standard hat den Wert wieder zugedeckt.</b> Unser Baustein schrieb das Datum
+korrekt, unmittelbar danach schrieb die Standardverbuchung dieselbe Tabellenzeile aus ihrem
+eigenen Puffer &ndash; und dort war das Feld leer. Gel&ouml;st, indem unser Baustein als
+Letztes l&auml;uft.</li>
+<li><b>Ein Verbuchungsfehler riss die ganze Buchung mit.</b> Werte m&uuml;ssen an dieser
+Stelle in typisierter Form &uuml;bergeben werden; andernfalls bricht die gesamte Verbuchung
+ab. Entsprechend umgestellt.</li>
+<li><b>Beim Anlegen mit sofortiger Freigabe gab es die Auftragsnummer noch nicht.</b> Der
+Auftrag tr&auml;gt zu diesem Zeitpunkt eine vorl&auml;ufige Nummer. Deshalb wird das Datum
+zus&auml;tzlich an der Stelle geschrieben, an der die endg&uuml;ltige Nummer bereits
+feststeht.</li>
+</ul>
+
+<p><b>Was jetzt gilt.</b> Das Produktionsdatum wird bei der erstmaligen Freigabe aus dem
+Eckendtermin gesetzt, unabh&auml;ngig davon, welche Maske jemand besucht hat. Wird der
+Eckendtermin sp&auml;ter verschoben, bleibt das Produktionsdatum unver&auml;ndert stehen.
+Genau das war die urspr&uuml;ngliche Anforderung.</p>
+
+<p><b>Getestet im Testsystem T76</b>, auf sieben Wegen und jeweils mit frisch angelegten
+Auftr&auml;gen: CO01 (anlegen und freigeben in einem Vorgang), CO02 (bestehenden Auftrag
+freigeben), COHV (Sammelfreigabe), CO40 und MD04 (Planauftrag umsetzen), CO41
+(Sammelumsetzung) sowie die Auftragsart PP22 zus&auml;tzlich zu PP21. In allen F&auml;llen
+wird das Datum gesetzt, und in allen F&auml;llen bleibt es bei einer sp&auml;teren
+Terminverschiebung stehen.</p>
+
+<p><b>Ein Punkt, den Sie kennen sollten.</b> CO41 legt den Fertigungsauftrag an und sichert
+ihn, gibt ihn aber nicht frei. In diesem Zwischenzustand ist das Produktionsdatum leer, und
+das ist so beabsichtigt: Ohne Freigabe soll kein Datum entstehen. Es wird gesetzt, sobald
+der Auftrag freigegeben wird. Ich erw&auml;hne es, damit ein solcher Zwischenstand nicht
+f&auml;lschlich als Fehler gemeldet wird.</p>
+
+<p><b>Was ich von Ihnen ben&ouml;tige.</b></p>
+
+<ol>
+<li>Die fachliche Abnahme des beschriebenen Verhaltens. Die Einzelheiten samt Messwerten
+stehen im angeh&auml;ngten Dokument.</li>
+<li>Marco: bitte pr&uuml;fen, ob Verpackungsetikett und Typenschild dasselbe Feld
+verwenden.</li>
+</ol>
+
+<p><b>Wie es danach weitergeht.</b> Im Produktivsystem P76 ist bisher nichts ge&auml;ndert
+worden. Die Objekte liegen fertig in einem Transportauftrag, der erst nach Ihrer
+R&uuml;ckmeldung freigegeben und eingespielt wird. Sollte nach dem Import etwas auffallen,
+l&auml;sst sich die Logik innerhalb von Sekunden abschalten, ohne erneuten Transport.</p>
+
+<p>Das nachtr&auml;gliche F&uuml;llen der bereits bestehenden Auftr&auml;ge ist bewusst eine
+eigene Entscheidung und nicht Teil dieses Schritts. Dar&uuml;ber w&uuml;rde ich erst
+sprechen, wenn die Logik produktiv nachweislich greift.</p>
+
+<p>F&uuml;r R&uuml;ckfragen stehe ich gerne zur Verf&uuml;gung.</p>
+
+<p>Freundliche Gr&uuml;sse<br>
+Ingo Kohler</p>
+
+</div>

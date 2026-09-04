@@ -1,8 +1,8 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-08-17.
+Zurueck: `router.md`. Stand: 2026-09-04.
 
-Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse.
+Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen.
 
 ## Dateien
 
@@ -42,6 +42,27 @@ oder Git.
 Grenzen: DDIC-Strukturen bleiben manuell in SE11, globale Klassen in SE24/ADT,
 Gateway-Modell und EntitySets in SEGW. SapProbe verifiziert SAP-Fakten, ersetzt diese
 Oberflaechen aber nicht.
+
+### Outlook: was ueber COM geht und was nicht
+
+Am 2026-09-04 an Ingos Arbeitsplatz gemessen. `New-Object -ComObject Outlook.Application`
+verbindet sich, und ein Entwurf laesst sich anlegen:
+
+| Vorgang | Ergebnis |
+| --- | --- |
+| `CreateItem(0)`, `Save()` in `GetDefaultFolder(16)` | funktioniert, der Entwurf erscheint in „Entwuerfe" |
+| `.Subject` setzen | funktioniert, Umlaute inbegriffen |
+| `.Attachments.Add(<Pfad>)` | funktioniert |
+| `.Body` oder `.HTMLBody` **setzen** | **wird stillschweigend verworfen**, die Rueckmessung liefert 0 Zeichen — ohne Fehler und ohne Dialog |
+| `.PropertyAccessor` | ist `null`, nicht nutzbar |
+| `.GetInspector.WordEditor` | kennt `Content.Text` nicht |
+| `Session.OpenSharedItem(<eml>)` | blockiert ohne Rueckmeldung, laeuft in die Zeitgrenze |
+
+Vermutlich eine DLP- oder Sicherheitsrichtlinie, die den Nachrichtentext schuetzt. **Der
+brauchbare Weg** ist deshalb: Entwurf mit Betreff und Anhang per COM anlegen, den Text als
+HTML-Datei danebenlegen und beim Versand einmal hineinkopieren. So entstanden
+`docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` und der zugehoerige Entwurf. Wer das nicht
+weiss, baut den Text dreimal ueber COM und wundert sich, dass der Entwurf leer bleibt.
 
 ### SAP B1/HANA: HanaQ
 

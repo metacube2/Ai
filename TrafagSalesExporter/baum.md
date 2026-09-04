@@ -134,7 +134,12 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` | PPWR und Stoffcompliance, fachlicher Katalog |
 | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` | Ruest- gegen Bearbeitungszeit |
 | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` | Uebergabe Spartenzuordnung |
-| `saptasks/zzprdat-kontext.md` | ZZPRDAT-Arbeitsstand |
+| `saptasks/zzprdat-kontext.md` | ZZPRDAT-Arbeitsstand und Analyseverlauf |
+| `saptasks/ZZPRDAT_TRANSPORTPLAN.md` | ZZPRDAT: Transportauftrag T76K912490, Objektliste, Nachtest |
+| `saptasks/ZZPRDAT_T76_PROTOTYP_2026-09-03.md` | ZZPRDAT-Prototyp in $TMP (ueberholt) |
+| `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` | SAP effizient bedienen: Zugangswege, Skriptbestand, Aktivierungsfallen |
+| `docs/ZZPRDAT_Loesung_2026-09-03.docx` | ZZPRDAT-Loesungsdokument fuer den Fachbereich |
+| `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` | Anschreiben zur Abnahme, Vorlage fuer den Outlook-Entwurf |
 | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md` | ZLO03-Systemabgleich |
 | `zlo03/ZM_LZCODE20_OPT_fixes.md` | ZLO03-Codefixes |
 | `zlo03/CLAUDE.md` | bereichsspezifische Arbeitsregeln ZLO03 |

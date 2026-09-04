@@ -20,7 +20,8 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
 | **Wie man ueberhaupt effizient mit SAP arbeitet: Zugangswege, Grenzen des GUI-Scriptings, Aktivierungsfallen, Skriptbestand** | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
 | **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
-| **ZZPRDAT: Loesungsdokument fuer den Fachbereich, Stand 2026-09-03** | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
+| **ZZPRDAT: Loesungsdokument fuer den Fachbereich** | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
+| ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
 | ZZPRDAT-Arbeitsstand und vollstaendiger Analyseverlauf | `saptasks/zzprdat-kontext.md` |
 | ZLO03-Systemabgleich und Codefixes | `zlo03/BEFUND_SYSTEMABGLEICH_2026-08-03.md`, `zlo03/ZM_LZCODE20_OPT_fixes.md` |
 

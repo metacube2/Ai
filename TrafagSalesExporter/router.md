@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-09-03
+Stand: 2026-09-04
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -55,7 +55,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | **Standortdaten** | Exporte und Importe je Land (ES, DE, UK, IT, IN, CH/AT), Feldluecken, Ansprechpartner | `docs/router/standortdaten.md` |
 | **Einkauf** | Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ | `docs/router/einkauf.md` |
 | **HR** | HR-KPI-Cockpit, Fluktuation, Absenzen | `docs/router/hr.md` |
-| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse | `docs/router/plattform.md` |
+| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen | `docs/router/plattform.md` |
 | **SAP** | ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
 
