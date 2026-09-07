@@ -1,0 +1,184 @@
+erDiagram
+    HANA_SERVERS ||--o{ SITES : "default for HANA source system"
+    SITES ||--o{ CENTRAL_SALES_RECORDS : stores
+    SITES ||--o{ EXPORT_LOGS : writes
+    SITES ||--o{ APP_EVENT_LOGS : logs
+    SITES ||--o{ SAP_SOURCE_DEFINITIONS : configures
+    SITES ||--o{ SAP_JOIN_DEFINITIONS : configures
+    SITES ||--o{ SAP_FIELD_MAPPINGS : configures
+
+    SOURCE_SYSTEM_DEFINITIONS {
+        int Id PK
+        string Code
+        string DisplayName
+        string ConnectionKind
+        bool IsActive
+        string CentralServiceUrl
+        string CentralUsername
+        string CentralPassword
+    }
+
+    HANA_SERVERS {
+        int Id PK
+        string SourceSystem
+        string Name
+        string Host
+        int Port
+        string DatabaseName
+        bool UseSsl
+        bool ValidateCertificate
+        string AdditionalParams
+    }
+
+    SITES {
+        int Id PK
+        int HanaServerId FK
+        string Schema
+        string TSC
+        string Land
+        string SourceSystem
+        string UsernameOverride
+        string PasswordOverride
+        string LocalExportFolderOverride
+        string ManualImportFilePath
+        datetime ManualImportLastUploadedAtUtc
+        string SapServiceUrl
+        string SapEntitySet
+        string SapEntitySetsCache
+        datetime SapEntitySetsRefreshedAtUtc
+        bool IsActive
+    }
+
+    SHARE_POINT_CONFIGS {
+        int Id PK
+        string SiteUrl
+        string ExportFolder
+        string CentralExportFolder
+        string TenantId
+        string ClientId
+        string ClientSecret
+    }
+
+    EXPORT_SETTINGS {
+        int Id PK
+        string DateFilter
+        int TimerHour
+        int TimerMinute
+        bool TimerEnabled
+        bool DebugLoggingEnabled
+        string LocalSiteExportFolder
+        string LocalConsolidatedExportFolder
+    }
+
+    FIELD_TRANSFORMATION_RULES {
+        int Id PK
+        string SourceSystem
+        string SourceField
+        string TargetField
+        string TransformationType
+        string RuleScope
+        string Argument
+        int SortOrder
+        bool IsActive
+    }
+
+    SAP_SOURCE_DEFINITIONS {
+        int Id PK
+        int SiteId FK
+        string Alias
+        string EntitySet
+        bool IsPrimary
+        bool IsActive
+        int SortOrder
+    }
+
+    SAP_JOIN_DEFINITIONS {
+        int Id PK
+        int SiteId FK
+        string LeftAlias
+        string RightAlias
+        string LeftKeys
+        string RightKeys
+        string JoinType
+        bool IsActive
+        int SortOrder
+    }
+
+    SAP_FIELD_MAPPINGS {
+        int Id PK
+        int SiteId FK
+        string TargetField
+        string SourceExpression
+        bool IsRequired
+        bool IsActive
+        int SortOrder
+    }
+
+    CENTRAL_SALES_RECORDS {
+        int Id PK
+        datetime StoredAtUtc
+        int SiteId FK
+        string SourceSystem
+        datetime ExtractionDate
+        string Tsc
+        string InvoiceNumber
+        int PositionOnInvoice
+        string Material
+        string Name
+        string ProductGroup
+        decimal Quantity
+        string SupplierNumber
+        string SupplierName
+        string SupplierCountry
+        string CustomerNumber
+        string CustomerName
+        string CustomerCountry
+        string CustomerIndustry
+        decimal StandardCost
+        string StandardCostCurrency
+        string PurchaseOrderNumber
+        decimal SalesPriceValue
+        string SalesCurrency
+        string Incoterms2020
+        string SalesResponsibleEmployee
+        datetime InvoiceDate
+        datetime OrderDate
+        string Land
+        string DocumentType
+    }
+
+    EXPORT_LOGS {
+        int Id PK
+        datetime Timestamp
+        int SiteId FK
+        string Land
+        string TSC
+        string Status
+        int RowCount
+        string ErrorMessage
+        string FileName
+        string FilePath
+        double DurationSeconds
+    }
+
+    APP_EVENT_LOGS {
+        int Id PK
+        datetime Timestamp
+        string Level
+        string Category
+        int SiteId FK
+        string Land
+        string Message
+        string Details
+    }
+
+    CURRENCY_EXCHANGE_RATES {
+        int Id PK
+        string FromCurrency
+        string ToCurrency
+        decimal Rate
+        datetime ValidFrom
+        datetime ValidTo
+        string Notes
+        bool IsActive
+    }

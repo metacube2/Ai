@@ -335,9 +335,11 @@ struct ControlButtonStyle: ButtonStyle {
     }
 }
 
-#Preview {
-    ContentView()
-        .environmentObject(AudioEngine())
-        .environmentObject(SystemMonitor())
-        .environmentObject(SerialManager())
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(AudioEngine())
+            .environmentObject(SystemMonitor())
+            .environmentObject(SerialManager())
+    }
 }

@@ -1,0 +1,19 @@
+{
+  "ProjectPath": "C:\\Users\\koi\\source\\repos\\Ai\\TrafagSalesExporter\\TrafagSalesExporter.csproj",
+  "TargetDir": "\\\\trch-webapp-bidashboard.trafagch.local\\BiDashboard$",
+  "LocalReleaseDll": "C:\\Users\\koi\\source\\repos\\Ai\\TrafagSalesExporter\\bin\\Release\\net8.0\\BiDashboard.dll",
+  "MainAssembly": "BiDashboard.dll",
+  "DatabaseFile": "trafag_exporter.db",
+  "BaseUrl": "https://trch-webapp-bidashboard.trafagch.local/BiDashboard/",
+  "Routes": [
+    "",
+    "management-cockpit",
+    "einkauf/aufriss"
+  ],
+  "ProtectedPatterns": [
+    "*.db",
+    "*.db-wal",
+    "*.db-shm",
+    "*.bak"
+  ]
+}

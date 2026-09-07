@@ -1,0 +1,118 @@
+let
+    Source = Excel.Workbook(File.Contents("C:\temp\Personalausgeschieden.xlsx"), null, true),
+    Data = Source{0}[Data],
+    Head = Table.PromoteHeaders(Data, [PromoteAllScalars = true]),
+
+    Ren = Table.RenameColumns(Head, {
+        {"Personalnummer", "PERNR_Text"},
+        {"Nachname, Vorname (Link Personal)", "Name_Voll"},
+        {"Stelle-1", "Stelle"},
+        {"Organisation-1", "Organisationseinheit"},
+        {"Leitung j/n", "Leitung"},
+        {"Austrittsdatum", "Austrittsdatum_Raw"},
+        {"Austrittsart", "Austrittsart"},
+        {"Eintrittsdatum", "Eintrittsdatum_Raw"},
+        {"Personal Status", "Status"}
+    }),
+
+    AddPernr = Table.AddColumn(Ren, "Personalnummer", each
+        try Number.FromText(Text.Trim(Text.From([PERNR_Text]))) otherwise null, Int64.Type),
+
+    // Datumsfelder (Excel liefert evtl. schon als Date)
+    AddAustritt = Table.AddColumn(AddPernr, "Austrittsdatum", each
+        let raw = [Austrittsdatum_Raw] in
+        if raw is date then raw
+        else if raw is datetime then Date.From(raw)
+        else if raw is number then Date.AddDays(#date(1899, 12, 30), Number.RoundDown(raw))
+        else if (try Number.FromText(Text.From(raw)) otherwise null) <> null then
+            Date.AddDays(#date(1899, 12, 30), Number.RoundDown(Number.FromText(Text.From(raw))))
+        else try Date.FromText(Text.From(raw), [Format = "dd.MM.yyyy"]) otherwise null,
+        type date),
+    AddEintritt = Table.AddColumn(AddAustritt, "Eintrittsdatum", each
+        let raw = [Eintrittsdatum_Raw] in
+        if raw is date then raw
+        else if raw is datetime then Date.From(raw)
+        else if raw is number then Date.AddDays(#date(1899, 12, 30), Number.RoundDown(raw))
+        else if (try Number.FromText(Text.From(raw)) otherwise null) <> null then
+            Date.AddDays(#date(1899, 12, 30), Number.RoundDown(Number.FromText(Text.From(raw))))
+        else try Date.FromText(Text.From(raw), [Format = "dd.MM.yyyy"]) otherwise null,
+        type date),
+
+    // Verweildauer
+    AddVW = Table.AddColumn(AddEintritt, "Verweildauer_Monate", each
+        try Number.Round(Duration.TotalDays([Austrittsdatum] - [Eintrittsdatum]) / 30.44, 1)
+        otherwise null, type number),
+
+    // Mitarbeitertyp
+    AddMT = Table.AddColumn(AddVW, "Mitarbeitertyp", each
+        let s = Text.Lower(Text.From(if [Stelle] = null then "" else [Stelle])) in
+        if Text.Contains(s, "praktik") then "Praktikant"
+        else if Text.Contains(s, "werkstudent") then "Werkstudent"
+        else if Text.Contains(s, "aushilfe") then "Aushilfe"
+        else if Text.Contains(s, "lehrling") then "Lehrling"
+        else "Festangestellt", type text),
+
+    // Fluktuationslogik gemaess HR-Definition aus formeln.docx:
+    // Zaehlen nur Arbeitnehmerkuendigungen von festangestellten Mitarbeitenden.
+    // Nicht zaehlen: Aushilfen, Praktikanten, Werkstudenten, Lehrlinge,
+    // befristete Vertraege, Pensionierungen und Kuendigungen durch Trafag.
+    AddAustrittsartNorm = Table.AddColumn(AddMT, "Austrittsart_Normalisiert", each
+        let
+            raw = Text.Lower(Text.Trim(Text.From(if [Austrittsart] = null then "" else [Austrittsart]))),
+            ae = Text.Replace(raw, Character.FromNumber(228), "ae"),
+            oe = Text.Replace(ae, Character.FromNumber(246), "oe"),
+            ue = Text.Replace(oe, Character.FromNumber(252), "ue"),
+            ss = Text.Replace(ue, Character.FromNumber(223), "ss")
+        in ss,
+        type text),
+    AddIstArbeitnehmerkuendigung = Table.AddColumn(AddAustrittsartNorm, "Ist_Arbeitnehmerkuendigung", each
+        let a = [Austrittsart_Normalisiert] in
+        Text.Contains(a, "arbeitnehmer") or
+        Text.Contains(a, "mitarbeiter") or
+        Text.Contains(a, "kuendigung an") or
+        Text.Contains(a, "an kuendigung") or
+        Text.Contains(a, "eigenkuendigung") or
+        Text.Contains(a, "kuendigung ma") or
+        Text.Contains(a, "kuendigung durch ma"),
+        type logical),
+    AddIstAusgeschlossen = Table.AddColumn(AddIstArbeitnehmerkuendigung, "Ist_Fluktuation_Ausgeschlossen", each
+        let a = [Austrittsart_Normalisiert] in
+        [Mitarbeitertyp] <> "Festangestellt" or
+        Text.Contains(a, "befrist") or
+        Text.Contains(a, "pension") or
+        Text.Contains(a, "rente") or
+        Text.Contains(a, "trafag") or
+        Text.Contains(a, "arbeitgeber") or
+        Text.Contains(a, "ag-kuendigung") or
+        Text.Contains(a, "ag kuendigung") or
+        Text.Contains(a, "kuendigung ag"),
+        type logical),
+    AddFluktuationRelevant = Table.AddColumn(AddIstAusgeschlossen, "Ist_Fluktuationsrelevant", each
+        [Ist_Arbeitnehmerkuendigung] = true and [Ist_Fluktuation_Ausgeschlossen] = false,
+        type logical),
+    AddAusschlussgrund = Table.AddColumn(AddFluktuationRelevant, "Fluktuation_Ausschlussgrund", each
+        let a = [Austrittsart_Normalisiert] in
+        if [Ist_Fluktuationsrelevant] then null
+        else if [Mitarbeitertyp] <> "Festangestellt" then [Mitarbeitertyp]
+        else if Text.Trim(a) = "" then "Austrittsart leer/unklar"
+        else if Text.Contains(a, "befrist") then "Befristeter Vertrag"
+        else if Text.Contains(a, "pension") or Text.Contains(a, "rente") then "Pensionierung"
+        else if Text.Contains(a, "trafag") or Text.Contains(a, "arbeitgeber") or Text.Contains(a, "ag-kuendigung") or Text.Contains(a, "ag kuendigung") or Text.Contains(a, "kuendigung ag") then "Kuendigung durch Trafag"
+        else if [Ist_Arbeitnehmerkuendigung] = false then "Keine Arbeitnehmerkuendigung"
+        else "Ausgeschlossen",
+        type text),
+
+    AddAM = Table.AddColumn(AddAusschlussgrund, "Austrittsmonat", each Date.StartOfMonth([Austrittsdatum]), type date),
+    AddAJ = Table.AddColumn(AddAM, "Austrittsjahr", each Date.Year([Austrittsdatum]), Int64.Type),
+
+    AddNN = Table.AddColumn(AddAJ, "Nachname", each
+        Text.Trim(Text.Split(Text.From([Name_Voll]), ","){0}), type text),
+    AddVN = Table.AddColumn(AddNN, "Vorname", each
+        let p = Text.Split(Text.From([Name_Voll]), ",") in
+        if List.Count(p) > 1 then Text.Trim(p{1}) else "", type text),
+
+    Clean = Table.RemoveColumns(AddVN, {"PERNR_Text", "Austrittsdatum_Raw", "Eintrittsdatum_Raw"}),
+    Reorder = Table.ReorderColumns(Clean, {"Personalnummer"} &
+        List.RemoveItems(Table.ColumnNames(Clean), {"Personalnummer"}))
+in
+    Reorder

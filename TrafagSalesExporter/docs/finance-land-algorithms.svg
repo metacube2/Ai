@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1450" viewBox="0 0 1800 1450" role="img" aria-labelledby="title desc">
+  <title id="title">Finance-Fluss je Land</title>
+  <desc id="desc">Blockdiagramm fuer den buchhalterischen Finanzfluss je Land vom Quellsystem bis zum Soll-Ist-Abgleich.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f7f9; }
+      .panel { fill: #ffffff; stroke: #d8dee8; stroke-width: 1.4; rx: 8; }
+      .head { fill: #22324a; }
+      .source { fill: #e9f1fb; stroke: #8eb3df; }
+      .mapping { fill: #eef8f0; stroke: #8bc790; }
+      .finance { fill: #fff4e3; stroke: #e1a84d; }
+      .check { fill: #f4eefb; stroke: #b497d6; }
+      .warn { fill: #fff7cc; stroke: #d5b53b; }
+      .line { stroke: #7b8798; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .title { font: 700 28px "Segoe UI", Arial, sans-serif; fill: #17202a; }
+      .subtitle { font: 400 15px "Segoe UI", Arial, sans-serif; fill: #667085; }
+      .h2 { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .country { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #17202a; }
+      .txt { font: 400 13px "Segoe UI", Arial, sans-serif; fill: #17202a; }
+      .small { font: 400 12px "Segoe UI", Arial, sans-serif; fill: #667085; }
+      .mono { font: 600 12px "Consolas", "Segoe UI", monospace; fill: #17202a; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#7b8798"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1450"/>
+  <text class="title" x="48" y="58">Finance-Fluss je Land: was buchhalterisch im Hintergrund passiert</text>
+  <text class="subtitle" x="48" y="86">Zielbild fuer Finance: je Land wird der Nettofakturawert in Hauswaehrung pro Position gelesen, per Buchungsdatum abgegrenzt und gegen check.xlsx verglichen.</text>
+
+  <rect class="panel" x="48" y="118" width="1704" height="130"/>
+  <rect class="head" x="48" y="118" width="1704" height="34" rx="8"/>
+  <text class="h2" x="68" y="141">Globale Finance-Regeln</text>
+  <text class="txt" x="70" y="176">1. Datumsabgrenzung: Buchungsdatum. Technischer Fallback, falls Quelle kein Buchungsdatum liefert: Fakturadatum, danach Extraktionsdatum.</text>
+  <text class="txt" x="70" y="200">2. Waehrung: Hauswaehrung ist fuehrend. CHF wird nur als eigener Kandidat ueber Budgetkurs gerechnet, nicht mit Tageskurs.</text>
+  <text class="txt" x="70" y="224">3. Wertbasis: Nettofakturawert pro Belegposition. Wiederholte B1-Belegkopfwerte werden erkannt, damit DocTotal nicht pro Position multipliziert wird.</text>
+  <text class="txt" x="945" y="176">4. Gutschriften/Storno: eigene Beleg-/Positionszeilen bleiben sichtbar und laufen ueber Artikel/Position.</text>
+  <text class="txt" x="945" y="200">5. Intercompany: 2nd/3rd Party wird separat ausgewiesen; der Abzug ist Kontrollsicht, nicht stiller Standardabzug.</text>
+  <text class="txt" x="945" y="224">6. Sollwert: FinanceReferences/check.xlsx je Jahr; gleiche Logik funktioniert fuer andere Jahre mit passenden Sollwerten und Budgetkursen.</text>
+
+  <rect class="panel" x="48" y="278" width="1704" height="148"/>
+  <rect class="head" x="48" y="278" width="1704" height="34" rx="8"/>
+  <text class="h2" x="68" y="301">Zentraler Algorithmus im Programm</text>
+  <g transform="translate(78 332)">
+    <rect class="source" x="0" y="0" width="245" height="64" rx="6"/>
+    <text class="txt" x="16" y="25">Landesquelle lesen</text>
+    <text class="small" x="16" y="46">SAP OData, HANA, Excel/CSV</text>
+    <path class="line" d="M245 32 H305"/>
+    <rect class="mapping" x="305" y="0" width="250" height="64" rx="6"/>
+    <text class="txt" x="321" y="25">Grafisches Mapping</text>
+    <text class="small" x="321" y="46">Zielmodell SalesRecord</text>
+    <path class="line" d="M555 32 H615"/>
+    <rect class="mapping" x="615" y="0" width="250" height="64" rx="6"/>
+    <text class="txt" x="631" y="25">Zentrale Tabelle</text>
+    <text class="small" x="631" y="46">CentralSalesRecords</text>
+    <path class="line" d="M865 32 H925"/>
+    <rect class="finance" x="925" y="0" width="285" height="64" rx="6"/>
+    <text class="txt" x="941" y="25">FinanceReconciliationService</text>
+    <text class="small" x="941" y="46">Jahr, Hauswaehrung, Netto, IC</text>
+    <path class="line" d="M1210 32 H1270"/>
+    <rect class="check" x="1270" y="0" width="285" height="64" rx="6"/>
+    <text class="txt" x="1286" y="25">Vergleich gegen Soll</text>
+    <text class="small" x="1286" y="46">FinanceReferences / check.xlsx</text>
+  </g>
+
+  <g transform="translate(48 466)">
+    <rect class="head" x="0" y="0" width="1704" height="34" rx="8"/>
+    <text class="h2" x="20" y="23">Landesspezifische Fluesse</text>
+
+    <!-- row helper coordinates: x source 20, map 310, finance 600, check 965, note 1270 -->
+    <g transform="translate(0 54)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">CH / AT</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">SAP ZSCHWEIZ OData</text>
+      <text class="small" x="151" y="55">BUKRS 1100=CH, 1200=AT</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Mapping ZSCHWEIZSet</text>
+      <text class="small" x="451" y="55">LAND1/TSC trennt CH und AT</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">NETWR_HC pro Position</text>
+      <text class="small" x="761" y="55">Hauswaehrung CHF/EUR, FKDAT aktuell als Datum</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Soll je Land</text>
+      <text class="small" x="1161" y="55">CH und AT separat in FinanceReferences</text>
+      <rect class="warn" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Offen</text>
+      <text class="small" x="1456" y="55">echtes SAP-BUDAT noch klaeren/mappen</text>
+    </g>
+
+    <g transform="translate(0 158)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">FR</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">BI1 / SAP B1 HANA</text>
+      <text class="small" x="151" y="55">OINV/INV1, ORIN/RIN1</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Legacy B1 oder grafisches HANA</text>
+      <text class="small" x="451" y="55">DocDate=PostingDate, TaxDate=InvoiceDate</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Positions-Netto in Hauswaehrung EUR</text>
+      <text class="small" x="761" y="55">keine DocTotal-Multiplikation</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll FR</text>
+      <text class="small" x="1161" y="55">bisher nahe an check.xlsx</text>
+      <rect class="mapping" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">IC sichtbar</text>
+      <text class="small" x="1456" y="55">2nd/3rd Party Kandidat</text>
+    </g>
+
+    <g transform="translate(0 262)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">IT</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">BI1 / SAP B1 HANA</text>
+      <text class="small" x="151" y="55">Italien ist B1</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Hauswaehrung EUR</text>
+      <text class="small" x="451" y="55">B1-Headerwerte werden erkannt</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Netto nach Position, IC separat</text>
+      <text class="small" x="761" y="55">Trafag/Magnetic Sense usw. als 2nd Party</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll IT</text>
+      <text class="small" x="1161" y="55">mit und ohne IC-Deduction sichtbar</text>
+      <rect class="warn" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Kontrollpunkt</text>
+      <text class="small" x="1456" y="55">IC-Kundenliste finalisieren</text>
+    </g>
+
+    <g transform="translate(0 366)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">UK</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">SharePoint Excel</text>
+      <text class="small" x="151" y="55">neueste Datei ddMMyy_TRUK.xlsx</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Manual Excel Mapper</text>
+      <text class="small" x="451" y="55">Hauswaehrung GBP fuehrend</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Delta/neueste Datei lesen</text>
+      <text class="small" x="761" y="55">Netto pro Position, Jahr nach Buchungsdatum</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll UK</text>
+      <text class="small" x="1161" y="55">Reporting in GBP, CHF nur Kandidat</text>
+      <rect class="mapping" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Quelle bleibt Ordner</text>
+      <text class="small" x="1456" y="55">Export in gleichen SharePoint-Ort</text>
+    </g>
+
+    <g transform="translate(0 470)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">IN</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">SAGE / HANA</text>
+      <text class="small" x="151" y="55">Indien wird als INR gefuehrt</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Waehrung normalisieren</text>
+      <text class="small" x="451" y="55">Hauswaehrung INR statt Belegmix</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Nettofakturawert INR</text>
+      <text class="small" x="761" y="55">Budget-CHF nur Kontrollkandidat</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll IN</text>
+      <text class="small" x="1161" y="55">bisher nahe an check.xlsx</text>
+      <rect class="warn" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Kontrollpunkt</text>
+      <text class="small" x="1456" y="55">keine gemischten Belegwaehrungen summieren</text>
+    </g>
+
+    <g transform="translate(0 574)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">ES</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">SAGE Export Excel/CSV</text>
+      <text class="small" x="151" y="55">SharePoint oder lokales File</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Manual Excel/CSV Mapper</text>
+      <text class="small" x="451" y="55">LineRegistrationDate als Buchungsdatum</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Netto pro Position in EUR</text>
+      <text class="small" x="761" y="55">CSV und XLSX technisch erlaubt</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll ES</text>
+      <text class="small" x="1161" y="55">Differenz fachlich klaeren</text>
+      <rect class="warn" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Kontrollpunkt</text>
+      <text class="small" x="1456" y="55">Serien/Gutschriften bestaetigen</text>
+    </g>
+
+    <g transform="translate(0 678)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">DE</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">Alphaplan Excel</text>
+      <text class="small" x="151" y="55">Jahresfile von Deutschland</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">Manual Excel Mapper</text>
+      <text class="small" x="451" y="55">NettoPreisGesamtX, Belegdatum</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Netto pro Position in EUR</text>
+      <text class="small" x="761" y="55">Sample nicht als Jahres-Ist verwenden</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll DE</text>
+      <text class="small" x="1161" y="55">erst nach finalem Jahresfile</text>
+      <rect class="warn" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">Offen</text>
+      <text class="small" x="1456" y="55">vollstaendiger 2025-Export fehlt</text>
+    </g>
+
+    <g transform="translate(0 782)">
+      <rect class="panel" x="0" y="0" width="1704" height="92"/>
+      <text class="country" x="20" y="30">US</text>
+      <rect class="source" x="135" y="14" width="250" height="58" rx="6"/>
+      <text class="txt" x="151" y="35">BI1 / SAP B1 HANA</text>
+      <text class="small" x="151" y="55">US B1 Schema</text>
+      <path class="line" d="M385 43 H435"/>
+      <rect class="mapping" x="435" y="14" width="260" height="58" rx="6"/>
+      <text class="txt" x="451" y="35">B1-Positionsdaten</text>
+      <text class="small" x="451" y="55">DocDate=PostingDate</text>
+      <path class="line" d="M695 43 H745"/>
+      <rect class="finance" x="745" y="14" width="350" height="58" rx="6"/>
+      <text class="txt" x="761" y="35">Netto pro Position in USD</text>
+      <text class="small" x="761" y="55">CHF Budget als Kandidat</text>
+      <path class="line" d="M1095 43 H1145"/>
+      <rect class="check" x="1145" y="14" width="270" height="58" rx="6"/>
+      <text class="txt" x="1161" y="35">Vergleich Soll US</text>
+      <text class="small" x="1161" y="55">FinanceReferences je Jahr</text>
+      <rect class="mapping" x="1440" y="14" width="235" height="58" rx="6"/>
+      <text class="txt" x="1456" y="35">IC sichtbar</text>
+      <text class="small" x="1456" y="55">gleiche Regel wie B1-Laender</text>
+    </g>
+  </g>
+
+  <rect class="panel" x="48" y="1382" width="1704" height="44"/>
+  <text class="small" x="68" y="1409">Stand: 2026-05-11. Abgeleitet aus Services/DataSources, MappedSalesRecordComposer, CentralSalesRecords, DatabaseSeedService und FinanceReconciliationService. Das Diagramm beschreibt die Buchhaltungslogik, nicht einzelne Testzahlen.</text>
+</svg>

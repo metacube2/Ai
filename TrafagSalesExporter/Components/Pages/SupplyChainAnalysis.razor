@@ -1,0 +1,351 @@
+@page "/logistik/materialdisposition"
+@page "/einkauf/bestellbedarf"
+@page "/einkauf/materialabhaengigkeit"
+@page "/logistik/dispositionspruefung"
+@page "/einkauf/lieferperformance"
+@using System.Globalization
+@using TrafagSalesExporter.Models
+@using TrafagSalesExporter.Services
+@implements IDisposable
+@inject ISupplyChainAnalysisService AnalysisService
+@inject IUiTextService UiText
+@inject NavigationManager Navigation
+
+<PageTitle>@T(Page.TitleDe, Page.TitleEn)</PageTitle>
+
+<MudPaper Class="supply-hero mb-4" Elevation="0">
+    <div>
+        <MudChip T="string" Color="Color.Info" Size="Size.Small">@T(Page.AreaDe, Page.AreaEn)</MudChip>
+        <MudText Typo="Typo.h4" Class="mt-2">@T(Page.TitleDe, Page.TitleEn)</MudText>
+        <MudText Typo="Typo.body1" Class="supply-muted">@T(Page.DescriptionDe, Page.DescriptionEn)</MudText>
+    </div>
+    <MudIcon Icon="@Page.Icon" Size="Size.Large" Color="Color.Primary" />
+</MudPaper>
+
+<MudPaper Class="pa-3 mb-4" Outlined>
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_search" Label="@T("Material, Text oder Lieferant", "Material, text or supplier")"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2">
+            <MudTextField @bind-Value="_dispatcher" Label="@T("Disponent", "Planner")"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2">
+            <MudTextField @bind-Value="_productGroup" Label="@T("Produktgruppe", "Product group")"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2">
+            <MudSwitch T="bool" @bind-Value="_onlyActionable" Color="Color.Warning"
+                       Label="@T("Nur Handlungsbedarf", "Action required only")" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2">
+            <MudButton FullWidth Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt"
+                       OnClick="LoadAsync" Disabled="_loading">@T("Anwenden", "Apply")</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate Color="Color.Primary" Class="mb-4" />
+}
+else if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+else
+{
+    <MudAlert Severity="@(_kind == SupplyChainAnalysisKind.DeliveryPerformance ? Severity.Warning : Severity.Info)"
+              Variant="Variant.Outlined" Class="mb-4">
+        @T(_result.NoticeDe, _result.NoticeEn)
+    </MudAlert>
+
+    <MudGrid Class="mb-4" Spacing="2">
+        @foreach (var kpi in _result.Kpis)
+        {
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="pa-3 supply-kpi" Outlined>
+                    <MudText Typo="Typo.caption" Class="supply-muted">@T(kpi.LabelDe, kpi.LabelEn)</MudText>
+                    <MudText Typo="Typo.h5">@kpi.Value</MudText>
+                    <MudText Typo="Typo.caption">@T(kpi.DetailDe, kpi.DetailEn)</MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudGrid Class="mb-4" Spacing="2">
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-3 supply-panel" Outlined>
+                <MudText Typo="Typo.h6">@T("Prioritaeten im aktuellen Filter", "Priorities in the current filter")</MudText>
+                <div class="supply-bars mt-3">
+                    @foreach (var bucket in _result.RiskBuckets)
+                    {
+                        <div class="supply-bar-row">
+                            <span>@T(bucket.LabelDe, bucket.LabelEn)</span>
+                            <div class="supply-bar-track"><div style="@RiskWidth(bucket)"></div></div>
+                            <strong>@bucket.Count.ToString("N0")</strong>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-3 supply-panel" Outlined>
+                <MudText Typo="Typo.h6">@T("Datenstand und Abgrenzung", "Data state and scope")</MudText>
+                <div class="supply-status mt-3">
+                    <div><span>ZLO03 / ZMD04</span><strong>@FormatTimestamp(_result.MaterialUsageLoadedAtUtc)</strong></div>
+                    <div><span>EKKO / EKPO / EKET</span><strong>@FormatTimestamp(_result.PurchasingLoadedAtUtc)</strong></div>
+                    <div><span>@T("Materialien im Quellumfang", "Materials in source scope")</span><strong>@_result.SourceMaterialCount.ToString("N0")</strong></div>
+                    <div><span>@T("Materialien nach Filter", "Materials after filter")</span><strong>@_result.FilteredMaterialCount.ToString("N0")</strong></div>
+                    @if (_kind == SupplyChainAnalysisKind.DeliveryPerformance)
+                    {
+                        <div><span>@T("Ist-Wareneingangsdatum", "Actual goods-receipt date")</span><strong class="missing">@T("fehlt", "missing")</strong></div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-2" Outlined>
+        <MudTable Items="_result.Rows" Dense Hover Striped Breakpoint="Breakpoint.Sm" RowsPerPage="25">
+            <HeaderContent>
+                <MudTh>@T("Prioritaet", "Priority")</MudTh>
+                <MudTh>@T("Material", "Material")</MudTh>
+                <MudTh>@T("Bezeichnung", "Description")</MudTh>
+                @if (_kind is SupplyChainAnalysisKind.MaterialDisposition or SupplyChainAnalysisKind.PurchaseCoverage)
+                {
+                    <MudTh>@T("Disponent / Produktgruppe", "Planner / product group")</MudTh>
+                    <MudTh Style="text-align:right">@T("Bestand / Verbrauch", "Stock / consumption")</MudTh>
+                    <MudTh Style="text-align:right">@T("Endbestand", "Final stock")</MudTh>
+                    <MudTh Style="text-align:right">@T("Sicherheit / Melde", "Safety / reorder")</MudTh>
+                }
+                @if (_kind == SupplyChainAnalysisKind.MaterialDisposition)
+                {
+                    <MudTh Style="text-align:right">@T("Fest / geplant Zugang", "Fixed / planned receipts")</MudTh>
+                    <MudTh Style="text-align:right">@T("Fehlmenge / CHF", "Shortage / CHF")</MudTh>
+                    <MudTh>@T("Wirkung", "Impact")</MudTh>
+                }
+                else if (_kind == SupplyChainAnalysisKind.PurchaseCoverage)
+                {
+                    <MudTh Style="text-align:right">@T("Offen / ueberfaellig", "Open / overdue")</MudTh>
+                    <MudTh>@T("Naechster Termin", "Next date")</MudTh>
+                    <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                }
+                else if (_kind == SupplyChainAnalysisKind.MaterialDependency)
+                {
+                    <MudTh>@T("Top-Lieferant", "Top supplier")</MudTh>
+                    <MudTh Style="text-align:right">@T("Lieferanten", "Suppliers")</MudTh>
+                    <MudTh Style="text-align:right">@T("Top-Anteil", "Top share")</MudTh>
+                    <MudTh Style="text-align:right">@T("Spend CHF", "Spend CHF")</MudTh>
+                    <MudTh Style="text-align:right">@T("Elternmaterialien", "Parent materials")</MudTh>
+                }
+                else if (_kind == SupplyChainAnalysisKind.PlanningParameterAudit)
+                {
+                    <MudTh>@T("Pruefauftrag", "Review task")</MudTh>
+                    <MudTh>@T("DISMM / BESKZ", "MRP / procurement")</MudTh>
+                    <MudTh Style="text-align:right">@T("Sicherheit / Melde", "Safety / reorder")</MudTh>
+                    <MudTh>@T("Losgroesse", "Lot size")</MudTh>
+                    <MudTh>@T("Status / LZ", "Status / LC")</MudTh>
+                }
+                else if (_kind == SupplyChainAnalysisKind.DeliveryPerformance)
+                {
+                    <MudTh>@T("Lieferant", "Supplier")</MudTh>
+                    <MudTh>@T("Plantermin", "Planned date")</MudTh>
+                    <MudTh Style="text-align:right">@T("Offene Menge", "Open quantity")</MudTh>
+                    <MudTh Style="text-align:right">@T("Ueberfaellig", "Overdue")</MudTh>
+                    <MudTh Style="text-align:right">@T("Offener Wert CHF", "Open value CHF")</MudTh>
+                    <MudTh>@T("Ist-Wareneingang", "Actual goods receipt")</MudTh>
+                }
+                <MudTh>@T("Quelle", "Source")</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><MudChip T="string" Size="Size.Small" Color="@RiskColor(context.RiskCode)">@context.RiskCode</MudChip></MudTd>
+                <MudTd><strong>@context.Material</strong></MudTd>
+                <MudTd>@context.Description</MudTd>
+                @if (_kind is SupplyChainAnalysisKind.MaterialDisposition or SupplyChainAnalysisKind.PurchaseCoverage)
+                {
+                    <MudTd><span>@context.Dispatcher</span><br /><small>@context.ProductGroup</small></MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.Stock) / @FormatNumber(context.Consumption)</MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.FinalStock)</MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.SafetyStock) / @FormatNumber(context.ReorderPoint)</MudTd>
+                }
+                @if (_kind == SupplyChainAnalysisKind.MaterialDisposition)
+                {
+                    <MudTd Style="text-align:right">@FormatNumber(context.FixedReceipts) / @FormatNumber(context.PlannedReceipts)</MudTd>
+                    @* Ohne gepflegte Stueckkosten ist der Fehlwert unbekannt, nicht null: "-" statt einer bewerteten 0. *@
+                    <MudTd Style="text-align:right">@FormatNumber(context.ShortageQuantity) / @(context.HasUnitCost ? FormatChf(context.ShortageValueChf) : "-")</MudTd>
+                    <MudTd>@context.ParentMaterialCount @T("Eltern", "parents")@(context.Exclusive ? $" · {T("exklusiv", "exclusive")}" : "")</MudTd>
+                }
+                else if (_kind == SupplyChainAnalysisKind.PurchaseCoverage)
+                {
+                    <MudTd Style="text-align:right">@FormatNumber(context.OpenOrderQuantity) / @FormatNumber(context.OverdueQuantity)</MudTd>
+                    <MudTd>@FormatDate(context.NextDeliveryDate)</MudTd>
+                    <MudTd>@context.Supplier</MudTd>
+                }
+                else if (_kind == SupplyChainAnalysisKind.MaterialDependency)
+                {
+                    <MudTd>@context.Supplier</MudTd>
+                    <MudTd Style="text-align:right">@context.SupplierCount</MudTd>
+                    <MudTd Style="text-align:right">@context.TopSupplierSharePercent.ToString("N1")%</MudTd>
+                    <MudTd Style="text-align:right">@FormatChf(context.OpenOrderValueChf)</MudTd>
+                    <MudTd Style="text-align:right">@context.ParentMaterialCount</MudTd>
+                }
+                else if (_kind == SupplyChainAnalysisKind.PlanningParameterAudit)
+                {
+                    <MudTd>@T(context.IssueDe, context.IssueEn)</MudTd>
+                    <MudTd>@context.MrpType / @context.ProcurementType</MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.SafetyStock) / @FormatNumber(context.ReorderPoint)</MudTd>
+                    <MudTd>@context.LotSize @FormatNumber(context.FixedLotSize)</MudTd>
+                    <MudTd>@context.MaterialStatus / @context.LzCode</MudTd>
+                }
+                else if (_kind == SupplyChainAnalysisKind.DeliveryPerformance)
+                {
+                    <MudTd>@context.Supplier</MudTd>
+                    <MudTd>@FormatDate(context.NextDeliveryDate)</MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.OpenOrderQuantity)</MudTd>
+                    <MudTd Style="text-align:right">@FormatNumber(context.OverdueQuantity)</MudTd>
+                    <MudTd Style="text-align:right">@FormatChf(context.OpenOrderValueChf)</MudTd>
+                    <MudTd><MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@T("Quelle fehlt", "Source missing")</MudChip></MudTd>
+                }
+                <MudTd><small>@context.Source</small></MudTd>
+            </RowTemplate>
+            <PagerContent><MudTablePager PageSizeOptions="@(new int[] { 25, 50, 100 })" /></PagerContent>
+            <NoRecordsContent><MudText Class="pa-3">@T("Keine Treffer im aktuellen Filter.", "No rows match the current filter.")</MudText></NoRecordsContent>
+        </MudTable>
+        @if (_result.Rows.Count >= 1000)
+        {
+            <MudAlert Severity="Severity.Info" Dense Class="mt-2">@T("Die Detailanzeige ist auf die 1'000 wichtigsten Treffer begrenzt; Kennzahlen und Prioritaetsbalken verwenden den gesamten Filterumfang.", "The detail table is limited to the 1,000 highest-priority rows; KPIs and priority bars use the full filtered scope.")</MudAlert>
+        }
+    </MudPaper>
+}
+
+@code {
+    private SupplyChainAnalysisKind _kind;
+    private SupplyChainAnalysisResult _result = new();
+    private bool _loading;
+    private bool _onlyActionable = true;
+    private string _search = string.Empty;
+    private string _dispatcher = string.Empty;
+    private string _productGroup = string.Empty;
+    private string? _error;
+
+    private PageDefinition Page => PageDefinitions[_kind];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += HandleLocationChanged;
+        UiText.Changed += HandleLanguageChanged;
+        _kind = ResolveKind(Navigation.ToBaseRelativePath(Navigation.Uri));
+        await LoadAsync();
+    }
+
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        var resolved = ResolveKind(Navigation.ToBaseRelativePath(args.Location));
+        if (resolved == _kind)
+            return;
+
+        _ = InvokeAsync(async () =>
+        {
+            _kind = resolved;
+            _search = string.Empty;
+            _dispatcher = string.Empty;
+            _productGroup = string.Empty;
+            _onlyActionable = true;
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
+        UiText.Changed -= HandleLanguageChanged;
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _result = await AnalysisService.LoadAsync(_kind,
+                new SupplyChainAnalysisFilter(_search, _dispatcher, _productGroup, _onlyActionable));
+        }
+        catch (Exception ex)
+        {
+            _error = T("Auswertung konnte nicht geladen werden: ", "Analysis could not be loaded: ") + ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static SupplyChainAnalysisKind ResolveKind(string path)
+    {
+        var normalized = path.Split('?', '#')[0].Trim('/').ToLowerInvariant();
+        return normalized switch
+        {
+            "einkauf/bestellbedarf" => SupplyChainAnalysisKind.PurchaseCoverage,
+            "einkauf/materialabhaengigkeit" => SupplyChainAnalysisKind.MaterialDependency,
+            "logistik/dispositionspruefung" => SupplyChainAnalysisKind.PlanningParameterAudit,
+            "einkauf/lieferperformance" => SupplyChainAnalysisKind.DeliveryPerformance,
+            _ => SupplyChainAnalysisKind.MaterialDisposition
+        };
+    }
+
+    private string RiskWidth(SupplyChainRiskBucket bucket)
+    {
+        var max = Math.Max(1, _result.RiskBuckets.Max(row => row.Count));
+        var width = bucket.Count == 0 ? 0d : Math.Max(3d, bucket.Count * 100d / max);
+        return $"width:{width.ToString("0.##", CultureInfo.InvariantCulture)}%;background:{bucket.Color}";
+    }
+
+    private static Color RiskColor(string code) => code switch
+    {
+        "P1" => Color.Error,
+        "P2" => Color.Warning,
+        "P3" => Color.Info,
+        _ => Color.Success
+    };
+
+    private string T(string german, string english) => UiText.Text(german, english);
+    private static string FormatNumber(decimal value) => value.ToString("N2", CultureInfo.CurrentCulture);
+    private static string FormatChf(decimal value) => value.ToString("N0", CultureInfo.CurrentCulture);
+    private static string FormatDate(DateTime? value) => value?.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture) ?? "-";
+    private static string FormatTimestamp(DateTime? value) => value?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture) ?? "-";
+
+    private static readonly IReadOnlyDictionary<SupplyChainAnalysisKind, PageDefinition> PageDefinitions =
+        new Dictionary<SupplyChainAnalysisKind, PageDefinition>
+        {
+            [SupplyChainAnalysisKind.MaterialDisposition] = new("Logistik", "Logistics", "Materialdisposition & Fehlteile", "Material planning & shortages", "Priorisiert Deckungsluecken, kritische Bestaende und die Wirkung auf Fertigprodukte.", "Prioritises coverage gaps, critical stock and the impact on finished products.", Icons.Material.Filled.Inventory),
+            [SupplyChainAnalysisKind.PurchaseCoverage] = new("Einkauf", "Purchasing", "Bestellbedarf & Deckung", "Purchase demand & coverage", "Verbindet den SAP-Endbestand mit offenen Bestellungen, Planterminen und Lieferanten.", "Connects SAP final stock with open orders, planned dates and suppliers.", Icons.Material.Filled.PlaylistAddCheck),
+            [SupplyChainAnalysisKind.MaterialDependency] = new("Einkauf", "Purchasing", "Lieferanten-/Materialabhaengigkeit", "Supplier/material dependency", "Zeigt beobachtete Single-Source- und Konzentrationsrisiken bis zur Materialnummer.", "Shows observed single-source and concentration risks down to material number.", Icons.Material.Filled.Hub),
+            [SupplyChainAnalysisKind.PlanningParameterAudit] = new("Logistik", "Logistics", "Dispositionsparameter-Pruefung", "Planning parameter audit", "Erzeugt getrennte Pruefauftraege fuer fehlende oder auffaellige MARC-/MARA-Parameter.", "Creates separate review tasks for missing or notable MARC/MARA parameters.", Icons.Material.Filled.FactCheck),
+            [SupplyChainAnalysisKind.DeliveryPerformance] = new("Einkauf", "Purchasing", "Lieferperformance & Datenstatus", "Delivery performance & data status", "Zeigt den belastbaren EKET-Plantermin-Rueckstand und trennt ihn von noch nicht messbarer Ist-Termintreue.", "Shows reliable EKET planned-date backlog and separates it from actual on-time delivery that cannot yet be measured.", Icons.Material.Filled.EventAvailable)
+        };
+
+    private sealed record PageDefinition(string AreaDe, string AreaEn, string TitleDe, string TitleEn, string DescriptionDe, string DescriptionEn, string Icon);
+}
+
+<style>
+    .supply-hero { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:24px; border-radius:10px; background:linear-gradient(125deg,rgba(21,101,192,.12),rgba(0,150,136,.06)); }
+    .supply-muted { color:var(--mud-palette-text-secondary); }
+    .supply-kpi { min-height:104px; border-top:4px solid var(--mud-palette-primary); }
+    .supply-panel { min-height:228px; }
+    .supply-bars { display:grid; gap:12px; }
+    .supply-bar-row { display:grid; grid-template-columns:minmax(130px,1fr) 2fr 60px; gap:12px; align-items:center; }
+    .supply-bar-track { height:24px; overflow:hidden; background:rgba(0,0,0,.08); border-radius:4px; }
+    .supply-bar-track > div { height:100%; border-radius:4px; }
+    .supply-bar-row strong { text-align:right; }
+    .supply-status { display:grid; gap:10px; }
+    .supply-status > div { display:flex; justify-content:space-between; gap:16px; padding-bottom:8px; border-bottom:1px solid var(--mud-palette-lines-default); }
+    .supply-status .missing { color:var(--mud-palette-warning); }
+    @@media (max-width:600px) { .supply-hero { align-items:flex-start; } .supply-bar-row { grid-template-columns:1fr 1fr 42px; } }
+</style>

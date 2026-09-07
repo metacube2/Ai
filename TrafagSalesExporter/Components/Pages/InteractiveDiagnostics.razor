@@ -1,0 +1,63 @@
+@page "/diagnostics/interactive"
+@rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
+@using TrafagSalesExporter.Services
+@inject ILogger<InteractiveDiagnostics> Logger
+@inject NavigationManager Navigation
+@inject IUiTextService UiText
+
+<PageTitle>@T("Interaktivitaet Diagnose", "Interactivity diagnostics")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">@T("Interaktivitaet Diagnose", "Interactivity diagnostics")</MudText>
+
+<MudPaper Class="pa-4" Elevation="1" Style="max-width:760px;">
+    <MudStack Spacing="3">
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+            @T("HTML wurde vom Server gerendert.", "HTML was rendered by the server.")
+        </MudAlert>
+
+        <MudText>@T("Adresse:", "Address:") @Navigation.Uri</MudText>
+        <MudText>@T("Blazor interaktiv verbunden:", "Blazor connected interactively:") @(_interactive ? "JA" : "NEIN")</MudText>
+        <MudText>@T("Server-Klicks angekommen:", "Server clicks received:") @_clickCount</MudText>
+        <MudText>@T("JavaScript Diagnose:", "JavaScript diagnostics:") <span id="js-diagnostic-status">@T("nicht ausgefuehrt", "not executed")</span></MudText>
+        <MudText>@T("Blazor Objekt im Browser:", "Blazor object in browser:") <span id="blazor-diagnostic-status">@T("unbekannt", "unknown")</span></MudText>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RegisterClick">
+            @T("Server-Klick testen", "Test server click")
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+<script>
+    (function () {
+        var jsStatus = document.getElementById('js-diagnostic-status');
+        var blazorStatus = document.getElementById('blazor-diagnostic-status');
+        if (jsStatus) {
+            jsStatus.textContent = 'ausgefuehrt';
+        }
+        if (blazorStatus) {
+            blazorStatus.textContent = window.Blazor ? 'vorhanden' : 'fehlt';
+        }
+    })();
+</script>
+
+@code {
+    private string T(string german, string english) => UiText.Text(german, english);
+    private bool _interactive;
+    private int _clickCount;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _interactive = true;
+        Logger.LogInformation("Interactive diagnostics became interactive for {Uri}", Navigation.Uri);
+        StateHasChanged();
+    }
+
+    private void RegisterClick()
+    {
+        _clickCount++;
+        Logger.LogInformation("Interactive diagnostics server click received. Count={ClickCount}", _clickCount);
+    }
+}

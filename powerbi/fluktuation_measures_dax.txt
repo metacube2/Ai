@@ -1,0 +1,198 @@
+// ============================================================
+// DAX MEASURES: Fluktuation gemaess formeln.docx
+// ============================================================
+// Voraussetzung:
+// - Query/Tabelle: HR_KPI_DATEN_SAP mit aktiven Mitarbeitenden
+// - Query/Tabelle: Rexx_Ausgeschieden aus rexx_ausgeschieden.txt
+// - Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] filtert:
+//   nur Arbeitnehmerkuendigungen, keine Aushilfen/Praktikanten/
+//   Werkstudenten/Lehrlinge, keine Pensionierungen, keine befristeten
+//   Vertraege, keine Kuendigungen durch Trafag.
+//
+// Hinweis:
+// HR_KPI_DATEN_SAP ist aktuell eine Stichtags-/Monatstabelle. Falls spaeter
+// echte Monats-Snapshots geladen werden, funktionieren die Durchschnitts-
+// Headcount-Measures ueber Monat/Quartal/Jahr genauer.
+// ============================================================
+
+Headcount Festangestellt =
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(HR_KPI_DATEN_SAP[Personalnummer]),
+        HR_KPI_DATEN_SAP[Ist_Aktiv] = TRUE(),
+        HR_KPI_DATEN_SAP[Mitarbeitertyp] = "Festangestellt"
+    ),
+    0
+)
+
+Headcount Aktiv Total =
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(HR_KPI_DATEN_SAP[Personalnummer]),
+        HR_KPI_DATEN_SAP[Ist_Aktiv] = TRUE()
+    ),
+    0
+)
+
+Austritte Total Rexx =
+COALESCE(DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]), 0)
+
+Austritte Arbeitnehmerkuendigung =
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Arbeitnehmerkuendigung] = TRUE()
+    ),
+    0
+)
+
+Austritte Fluktuationsrelevant =
+VAR Perioden = VALUES(HR_KPI_DATEN_SAP[Periode])
+VAR Basis =
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] = TRUE()
+    )
+VAR NachPeriode =
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] = TRUE(),
+        TREATAS(Perioden, Rexx_Ausgeschieden[Austrittsmonat])
+    )
+RETURN
+    COALESCE(
+        IF(
+        ISFILTERED(HR_KPI_DATEN_SAP[Periode]) || ISINSCOPE(HR_KPI_DATEN_SAP[Periode]),
+        NachPeriode,
+        Basis
+        ),
+        0
+    )
+
+Austritte Nicht Fluktuationsrelevant =
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] = FALSE()
+    ),
+    0
+)
+
+Fluktuation Monat % =
+COALESCE(
+    DIVIDE(
+        [Austritte Fluktuationsrelevant],
+        [Headcount Festangestellt]
+    ),
+    0
+)
+
+Avg Headcount Quartal =
+COALESCE(
+    AVERAGEX(
+        VALUES(HR_KPI_DATEN_SAP[Periode]),
+        [Headcount Festangestellt]
+    ),
+    [Headcount Festangestellt],
+    0
+)
+
+Austritte Quartal =
+VAR HatPeriodenfilter =
+    ISFILTERED(HR_KPI_DATEN_SAP[Periode]) ||
+    ISFILTERED(HR_KPI_DATEN_SAP[Jahr]) ||
+    ISFILTERED(HR_KPI_DATEN_SAP[Monat])
+VAR Auswertungsdatum =
+    IF(
+        HatPeriodenfilter,
+        MAX(HR_KPI_DATEN_SAP[Periode]),
+        MAX(Rexx_Ausgeschieden[Austrittsmonat])
+    )
+VAR QuartalsStart =
+    DATE(
+        YEAR(Auswertungsdatum),
+        1 + 3 * QUOTIENT(MONTH(Auswertungsdatum) - 1, 3),
+        1
+    )
+VAR QuartalsEnde = EOMONTH(QuartalsStart, 2)
+RETURN
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] = TRUE(),
+        FILTER(
+            ALL(Rexx_Ausgeschieden[Austrittsmonat]),
+            Rexx_Ausgeschieden[Austrittsmonat] >= QuartalsStart &&
+            Rexx_Ausgeschieden[Austrittsmonat] <= QuartalsEnde
+        )
+    ),
+    0
+)
+
+Fluktuation Quartal % =
+COALESCE(
+    DIVIDE(
+        [Austritte Quartal],
+        [Avg Headcount Quartal]
+    ),
+    0
+)
+
+Fluktuation Hochrechnung Jahr % =
+COALESCE([Fluktuation Quartal %] * 4, 0)
+
+Avg Headcount Jahr =
+COALESCE(
+    AVERAGEX(
+        VALUES(HR_KPI_DATEN_SAP[Periode]),
+        [Headcount Festangestellt]
+    ),
+    [Headcount Festangestellt],
+    0
+)
+
+Austritte Jahr =
+VAR HatPeriodenfilter =
+    ISFILTERED(HR_KPI_DATEN_SAP[Periode]) ||
+    ISFILTERED(HR_KPI_DATEN_SAP[Jahr]) ||
+    ISFILTERED(HR_KPI_DATEN_SAP[Monat])
+VAR Auswertungsdatum =
+    IF(
+        HatPeriodenfilter,
+        MAX(HR_KPI_DATEN_SAP[Periode]),
+        MAX(Rexx_Ausgeschieden[Austrittsmonat])
+    )
+VAR Auswertungsjahr = YEAR(Auswertungsdatum)
+RETURN
+COALESCE(
+    CALCULATE(
+        DISTINCTCOUNT(Rexx_Ausgeschieden[Personalnummer]),
+        Rexx_Ausgeschieden[Ist_Fluktuationsrelevant] = TRUE(),
+        FILTER(
+            ALL(Rexx_Ausgeschieden[Austrittsmonat]),
+            YEAR(Rexx_Ausgeschieden[Austrittsmonat]) = Auswertungsjahr
+        )
+    ),
+    0
+)
+
+Fluktuation Jahr Effektiv % =
+COALESCE(
+    DIVIDE(
+        [Austritte Jahr],
+        [Avg Headcount Jahr]
+    ),
+    0
+)
+
+BU_Tage_Total =
+COALESCE(SUM(HR_KPI_DATEN_SAP[BU_Tage]), 0)
+
+NBU_Tage_Total =
+COALESCE(SUM(HR_KPI_DATEN_SAP[NBU_Tage]), 0)
+
+Unfalltage Total =
+[BU_Tage_Total] + [NBU_Tage_Total]
+
+Fluktuation Ausschlussgrund Anzahl =
+COUNTROWS(Rexx_Ausgeschieden)

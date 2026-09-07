@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trading Ampel</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Trading Cockpit</h1>
+          <p id="updated">Warte auf Daten</p>
+        </div>
+        <form id="symbol-form" class="controls">
+          <select id="symbol"></select>
+          <select id="signal-mode"></select>
+          <input id="custom-symbol" type="text" placeholder="Symbol">
+          <button type="submit">Anwenden</button>
+          <button type="button" id="refresh">Aktualisieren</button>
+          <label class="demo-toggle">
+            <input id="demo" type="checkbox">
+            Demo
+          </label>
+        </form>
+      </header>
+
+      <section class="signal-band" id="decision-card">
+        <div class="decision-status">
+          <div class="signal-light" id="signal-light"></div>
+          <div>
+            <div class="muted">Entscheidung</div>
+            <h2 id="signal-type">Warten</h2>
+            <div class="decision-copy" id="decision-copy">Noch keine Daten geladen.</div>
+          </div>
+        </div>
+        <div class="signal-numbers">
+          <span><strong id="entry-price">--</strong><small>Entry</small></span>
+          <span><strong id="stop-loss">--</strong><small>Stop</small></span>
+          <span><strong id="target">--</strong><small>Ziel</small></span>
+          <span><strong id="risk-reward">--</strong><small>R/R</small></span>
+        </div>
+        <div class="decision-graphic" id="decision-graphic"></div>
+        <div class="decision-foot">
+          <span id="signal-meta">Signalgruende erscheinen nach dem Laden.</span>
+          <button type="button" id="primary-paper-order">Paper Order</button>
+        </div>
+        <div class="signal-blockers" id="signal-blockers"></div>
+      </section>
+
+      <nav class="tabs" aria-label="Ansichten">
+        <button type="button" class="tab-button active" data-tab="dashboard">Analyse</button>
+        <button type="button" class="tab-button" data-tab="forecast">Forecast</button>
+        <button type="button" class="tab-button" data-tab="optimizer">Optimieren</button>
+        <button type="button" class="tab-button" data-tab="risk">Risiko</button>
+        <button type="button" class="tab-button" data-tab="methodology">Methodik</button>
+      </nav>
+
+      <section class="tab-panel active" id="tab-dashboard">
+        <section class="summary-strip">
+          <article>
+            <span>Makro</span>
+            <strong id="macro-chip">--</strong>
+          </article>
+          <article>
+            <span>Risk</span>
+            <strong id="risk-chip">--</strong>
+          </article>
+          <article>
+            <span>Daten</span>
+            <strong id="data-chip">--</strong>
+          </article>
+          <article>
+            <span>Modus</span>
+            <strong id="mode-chip">--</strong>
+          </article>
+        </section>
+
+        <section class="grid" id="frames"></section>
+
+        <section class="details-grid">
+          <article class="panel">
+            <h3>W-Muster</h3>
+            <div id="pattern" class="pattern"></div>
+          </article>
+          <article class="panel">
+            <h3>Korrelationen</h3>
+            <div id="correlations"></div>
+          </article>
+        </section>
+
+        <section class="panel macro-panel">
+          <h3>Makro & Marktstruktur</h3>
+          <div id="macro"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-forecast">
+        <section class="panel">
+          <div class="panel-heading">
+            <h3>Forecast & Lernkurve</h3>
+            <button type="button" id="run-forecast">Forecast laden</button>
+          </div>
+          <div id="forecast"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-optimizer">
+        <section class="panel backtest-panel">
+          <div class="panel-heading">
+            <h3>Automatisches Backtesting</h3>
+            <div class="panel-actions">
+              <button type="button" id="run-backtest">Backtest starten</button>
+              <button type="button" id="run-optimizer">Live optimieren</button>
+              <button type="button" id="cancel-optimizer" disabled>Stop</button>
+            </div>
+          </div>
+          <div id="optimizer-progress" class="optimizer-progress"></div>
+          <div id="backtest"></div>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="panel-heading">
+            <h3>Run-Historie</h3>
+            <button type="button" id="refresh-history">Historie laden</button>
+          </div>
+          <div id="history"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-risk">
+        <section class="details-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <h3>Risk-Plan</h3>
+              <button type="button" id="paper-order">Paper Order</button>
+            </div>
+            <div id="risk-plan"></div>
+          </article>
+          <article class="panel">
+            <h3>System Health</h3>
+            <div id="health"></div>
+          </article>
+        </section>
+        <section class="panel history-panel">
+          <div class="panel-heading">
+            <h3>Paper Orders</h3>
+            <button type="button" id="refresh-orders">Orders laden</button>
+          </div>
+          <div id="paper-orders"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-methodology">
+        <section class="panel methodology-panel">
+          <h3>Signal-Methodik</h3>
+          <div id="methodology"></div>
+        </section>
+        <section class="panel methodology-panel">
+          <h3>TradingView Formelcheck</h3>
+          <div id="indicator-audit"></div>
+        </section>
+      </section>
+
+      <section id="warnings" class="warnings"></section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

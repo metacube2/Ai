@@ -1,0 +1,111 @@
+@using TrafagSalesExporter.Services
+@inject IAdminAccessService AdminAccess
+@inject ISnackbar Snackbar
+@inject IUiTextService UiText
+@inject ILogger<AdminAccessPanel> Logger
+@inject NavigationManager Navigation
+
+<MudPaper Class="pa-4 mb-4" Elevation="1" Style="max-width:520px;">
+    <MudStack Spacing="3">
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            @T("Adminbereich ist geschützt. Bitte anmelden.", "Admin area is protected. Please sign in.")
+        </MudAlert>
+        @if (!AdminAccess.IsConfigured)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                @T("Admin-Zugang ist noch nicht konfiguriert.", "Admin access is not configured yet.")
+            </MudAlert>
+        }
+        <form method="post" action="@AccessUrl">
+            <input type="hidden" name="returnUrl" value="@Navigation.Uri" />
+            <MudStack Spacing="3">
+                <MudTextField T="string" Name="username" Label="@T("Name", "Name")" Disabled="@(!AdminAccess.IsConfigured)" />
+                <MudTextField T="string" Name="password" Label="@T("Passwort", "Password")" InputType="InputType.Password" Disabled="@(!AdminAccess.IsConfigured)" />
+                <button type="submit" class="mud-button-root mud-button mud-button-filled mud-button-filled-primary mud-button-filled-size-medium mud-ripple">
+                    @T("Admin entsperren", "Unlock admin")
+                </button>
+            </MudStack>
+        </form>
+        <MudText Typo="Typo.caption">
+            @T("Server-Klicks", "Server clicks"): @_unlockClickCount |
+            @T("Konfiguriert", "Configured"): @(AdminAccess.IsConfigured ? "JA" : "NEIN")
+        </MudText>
+        <MudDivider />
+        <MudExpansionPanels Elevation="0">
+            <MudExpansionPanel Text="@T("Passwort ändern", "Change password")" Icon="@Icons.Material.Filled.Password">
+                <MudStack Spacing="3" Class="pt-2">
+                    <MudTextField @bind-Value="_changeUsername" Label="@T("Name", "Name")" Disabled="@(!AdminAccess.IsConfigured)" />
+                    <MudTextField @bind-Value="_currentPassword" Label="@T("Aktuelles Passwort", "Current password")" InputType="InputType.Password" Disabled="@(!AdminAccess.IsConfigured)" />
+                    <MudTextField @bind-Value="_newPassword" Label="@T("Neues Passwort", "New password")" InputType="InputType.Password" HelperText="@T("Mindestens 8 Zeichen.", "At least 8 characters.")" Disabled="@(!AdminAccess.IsConfigured)" />
+                    <MudTextField @bind-Value="_newPasswordRepeat" Label="@T("Neues Passwort wiederholen", "Repeat new password")" InputType="InputType.Password" Disabled="@(!AdminAccess.IsConfigured)" />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ChangePassword"
+                               StartIcon="@Icons.Material.Filled.Save" Disabled="@(!AdminAccess.IsConfigured)">
+                        @T("Passwort speichern", "Save password")
+                    </MudButton>
+                </MudStack>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private string? _username;
+    private string? _password;
+    private string? _changeUsername;
+    private string? _currentPassword;
+    private string? _newPassword;
+    private string? _newPasswordRepeat;
+    private int _unlockClickCount;
+    private string AccessUrl => new Uri(new Uri(Navigation.BaseUri), "access/admin").ToString();
+
+    private void Unlock()
+    {
+        _unlockClickCount++;
+        Logger.LogInformation(
+            "Admin unlock button handler reached. ClickCount={ClickCount}, IsConfigured={IsConfigured}, UsernameLength={UsernameLength}, PasswordLength={PasswordLength}",
+            _unlockClickCount,
+            AdminAccess.IsConfigured,
+            _username?.Length ?? 0,
+            _password?.Length ?? 0);
+
+        if (!AdminAccess.TryUnlock(_username ?? string.Empty, _password ?? string.Empty))
+        {
+            Snackbar.Add(T("Admin-Anmeldung fehlgeschlagen.", "Admin sign-in failed."), Severity.Error);
+            return;
+        }
+
+        _password = string.Empty;
+        OnUnlocked.InvokeAsync();
+    }
+
+    private void ChangePassword()
+    {
+        if (string.IsNullOrWhiteSpace(_newPassword) || _newPassword.Length < 8)
+        {
+            Snackbar.Add(T("Das neue Passwort muss mindestens 8 Zeichen lang sein.", "The new password must be at least 8 characters long."), Severity.Warning);
+            return;
+        }
+
+        if (_newPassword != _newPasswordRepeat)
+        {
+            Snackbar.Add(T("Die neuen Passwörter stimmen nicht überein.", "The new passwords do not match."), Severity.Warning);
+            return;
+        }
+
+        if (!AdminAccess.TryChangePassword(_changeUsername ?? string.Empty, _currentPassword ?? string.Empty, _newPassword))
+        {
+            Snackbar.Add(T("Passwort konnte nicht geändert werden. Name oder aktuelles Passwort prüfen.", "Password could not be changed. Check the name or current password."), Severity.Error);
+            return;
+        }
+
+        _currentPassword = string.Empty;
+        _newPassword = string.Empty;
+        _newPasswordRepeat = string.Empty;
+        Snackbar.Add(T("Passwort wurde geändert.", "Password has been changed."), Severity.Success);
+    }
+
+    private string T(string german, string english) => UiText.Text(german, english);
+
+    [Parameter]
+    public EventCallback OnUnlocked { get; set; }
+}
