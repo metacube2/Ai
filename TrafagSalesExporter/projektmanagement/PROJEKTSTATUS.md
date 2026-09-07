@@ -22,7 +22,7 @@ nicht.
 | ID | Thema | Verantwortlich | Prioritaet | Status | Naechster Schritt | Letztes Update |
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
-| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-04 |
+| PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Die vorbereitete Fassung `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` einspielen — sie ist **noch nicht im System** —, danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-07 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **Der am 2026-09-07 gefundene Konstruktionsfehler ist am selben Tag behoben: `BEFORE_UPDATE` prueft jetzt, ob der Auftrag vor diesem Sichern schon freigegeben war, und laesst Altauftraege in Ruhe. Alle sieben Wege plus Altauftragsfall und Write-once sind am 2026-09-07 auf dem korrigierten Stand nachgemessen, Klasse liegt in der Aufgabe `T76K912491`. Auftrag weiter nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild und dabei neu auch den Zeitpunkt des Drucks gegenueber V2. Erst zuletzt den Auftrag freigeben | 2026-09-07 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
@@ -187,6 +187,40 @@ Testabdeckung ist um den Nullmengenfall zu erweitern.
 
 Randnotiz zur Kopfhistorie: Adil erscheint dort nur mit dem Eintrag
 `20.04.2026 A.Lahrach Deaktiviert wegen Fehlfunktion (alt)`.
+
+**Stand 2026-09-07: die Aenderung ist vorbereitet, aber nicht eingespielt.** Ingo hat am
+2026-09-07 entschieden „ja mach scharf". Der Quelltext liegt seither erstmals im Repository:
+
+| Datei | Rolle |
+|---|---|
+| `saptasks/zc12/ZM_ABGLEICH_KTSCH_vorher.abap` | Ist-Stand aus T76, 1'941 Zeilen, Rueckfallpunkt |
+| `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` | dieselbe Fassung mit zwei geaenderten Zeilen |
+| `saptasks/zc12/Z_KOI_SRC_DUMP.abap` | Wegwerfhilfe, mit der der Quelltext geholt wurde; das Objekt ist geloescht |
+
+Die zwei Aenderungen: `p_debug` wird entkommentiert, wobei der Punkt der `PARAMETERS`-Kette
+zu einem Komma werden muss, sonst waere die Zeile eine eigene, syntaktisch falsche
+Anweisung. Und in `trace_open` haengt das Tracing nicht mehr an einem nackten `return.`,
+sondern an `IF p_debug <> 'X'.` — was der Kommentar darueber ohnehin schon behauptete.
+
+**Warum es nicht eingespielt ist:** Der Aufruf, der den Quelltext zurueckschreibt, wurde vom
+Berechtigungsfilter der Sitzung abgelehnt. Er muss von Hand abgesetzt werden, aus der
+Repository-Wurzel:
+
+```
+cscript //nologo .tmp_sap_probe/SapGuiSetReportSource.vbs ZM_ABGLEICH_KTSCH saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap
+```
+
+Danach fragt SAP nach einem Transportauftrag, weil das Programm in `ZPP1` liegt. Vor dem
+naechsten Schritt gehoert geprueft, ob der aktive Quelltext wirklich die beiden Zeilen
+traegt; solange das nicht belegt ist, ist `p_debug` **nicht** scharf.
+
+Nicht angefasst wurde `run_debug`. Die Form existiert vollstaendig, wird aber von niemandem
+aufgerufen und ist damit toter Code. Sie an den Schalter zu haengen waere eine eigene
+Entscheidung und gehoerte nicht zu „mach scharf".
+
+Der Trace schreibt uebrigens mit `OPEN DATASET` nach
+`/tmp/z_abgleich_ktsch_<user>_<zeitstempel>.log`, also auf den **Applikationsserver** und
+nicht auf den Arbeitsplatz. Zum Lesen braucht es AL11 oder einen kleinen Lesereport.
 
 ### PM-03 ZZPRDAT: Produktionsdatum am Fertigungsauftrag
 

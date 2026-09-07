@@ -20,7 +20,7 @@ Stand: 2026-09-07
   und der Nachweisreport `Z_ZZPRDAT_CHECK`, der jeden abweichenden Wert als „Write-once
   nachgewiesen" meldet. Einstieg: `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
 
-## ZC12: Vorfrage beantwortet, Tracing scharf geschaltet, 2026-09-04 bis 2026-09-07
+## ZC12: Vorfrage beantwortet, Tracing vorbereitet aber nicht eingespielt, 2026-09-04 bis 2026-09-07
 
 - `ZC12` ist eine Reporttransaktion auf **`ZM_ABGLEICH_KTSCH`**. Das in der Doku gefuehrte
   `Z_ABGLEICH_KTSCH` existiert nicht; der Quelltext nennt sich selbst so, im `REPORT`-Kopf.
@@ -29,7 +29,11 @@ Stand: 2026-09-07
   eine Testluecke und keine Regression.
 - `p_debug` und die ganze Trace-Infrastruktur stammen aus Version 4 vom 27.05.2026 von
   `KOI` selbst und waren von Anfang an auskommentiert. Der Quelltext liegt jetzt erstmals im
-  Repository unter `saptasks/zc12/`. Detail: `projektmanagement/PROJEKTSTATUS.md` PM-02.
+  Repository unter `saptasks/zc12/`, als Ist-Stand und als geaenderte Fassung.
+- **Die Aenderung ist vorbereitet, aber nicht im System.** Das Zurueckschreiben hat der
+  Berechtigungsfilter der Sitzung abgelehnt; der Aufruf muss von Hand abgesetzt werden.
+  Solange das nicht geschehen und der aktive Quelltext nicht nachgelesen ist, ist `p_debug`
+  **nicht** scharf. Befehl und Einzelheiten: `projektmanagement/PROJEKTSTATUS.md` PM-02.
 
 ## Einkauf beschleunigt und Sicherheitsupdates deployed, 2026-09-03
 
