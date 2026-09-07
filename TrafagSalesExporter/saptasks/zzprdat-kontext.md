@@ -1,14 +1,40 @@
 # Kontext: Produktionsdatum ZZPRDAT (PP / Fertigungsauftrag)
 
-Arbeitsstand für die Fortsetzung im CLI. Stand: 04.09.2026.
+Arbeitsstand für die Fortsetzung im CLI. Stand: 07.09.2026.
 
-## Aktueller Kurzstand 04.09.2026
+## Aktueller Kurzstand 07.09.2026
 
-Die Loesung ist **gebaut, im Paket `ZPP1`, im Transportauftrag `T76K912490` und auf allen
-sieben Wegen nachgetestet**. Der Auftrag ist bewusst **nicht freigegeben**; das geschieht
-erst nach der fachlichen Abnahme. **Technisch ist nichts mehr offen**, auch MD04, CO41 und
-die Auftragsart `PP22` sind gemessen. Einzelheiten zu Auftrag, Objektliste und den beiden
-verbliebenen fachlichen Punkten stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+Die Loesung ist gebaut, im Paket `ZPP1`, im Transportauftrag `T76K912490`, und der Auftrag
+ist bewusst **nicht freigegeben**.
+
+**Am 07.09.2026 ist ein Konstruktionsfehler gefunden und am selben Tag behoben worden.**
+`BEFORE_UPDATE` lief bei **jedem** Sichern, nicht nur bei der Freigabe, und der
+Verbuchungsbaustein prueft nur, ob `AFKO-FTRMI` gefuellt und `AUFK-ZZPRDAT` leer ist. Jeder
+laengst freigegebene Altauftrag mit leerem Feld haette deshalb beim naechsten beliebigen
+Sichern den **heutigen** Eckendtermin bekommen, nicht den vom Tag seiner Freigabe. Das
+umgeht die Entscheidung, das Nachfuellen der Altbestaende zu einem eigenen Schritt zu
+machen, und liefert bei verschobenen Terminen einen falschen Wert. Aufgefallen ist es nicht,
+weil alle Messungen bis dahin mit **neu** angelegten Auftraegen liefen.
+
+Behoben durch eine Gegenprobe in `BEFORE_UPDATE`: vor dem Registrieren wird `AFKO-FTRMI`
+gelesen; steht dort schon ein Wert, war der Auftrag vorher freigegeben und wird
+uebersprungen. Danach ist die **komplette Reihe wiederholt** worden, alle sieben Wege plus
+Altauftragsfall und Write-once, mit den Auftraegen 1241824 bis 1241830.
+
+**Zwei Punkte sind weiterhin offen und nicht behoben:**
+
+1. **Der Druckablauf gegenueber V2.** `Z_ZZPRDAT_SET` laeuft in einer eigenen
+   Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit einen Moment lang
+   gespeichert, waehrend `ZZPRDAT` noch fehlt. Ob ein unmittelbar angestossener Etiketten-
+   oder Typenschilddruck das trifft, ist **nicht gemessen** und gehoert zu Marcos Pruefung.
+2. **Der Nachweisreport urteilt zu sicher.** `Z_ZZPRDAT_CHECK` meldet jedes `ZZPRDAT`
+   ungleich `GLTRP` als „eingefroren" und zaehlt es unter „Write-once nachgewiesen"; ein
+   schlicht falscher Wert bekaeme dasselbe Urteil, und ein nachgefuellter Altauftrag waere
+   dort sogar als Erfolgsfall erschienen. Der Report ist **dokumentiert, aber nicht
+   korrigiert**. Die Messungen vom 07.09.2026 wurden deshalb direkt aus `AUFK` gelesen.
+
+Einzelheiten zu Auftrag, Objektliste, Befund und Messungen stehen in
+`saptasks/ZZPRDAT_TRANSPORTPLAN.md`, Abschnitt 6a.
 
 Produktive Objekte in T76/100:
 

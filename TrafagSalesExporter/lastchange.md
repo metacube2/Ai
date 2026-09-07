@@ -1,6 +1,35 @@
 # Last Change
 
-Stand: 2026-09-03
+Stand: 2026-09-07
+
+## ZZPRDAT: gebaut, transportfaehig, korrigiert — nichts nach P76, 2026-09-03 bis 2026-09-07
+
+- Das Produktionsdatum wird bei der Freigabe aus dem Eckendtermin gesetzt und bleibt bei
+  einer spaeteren Terminverschiebung stehen. Objekte im Paket `ZPP1`, Transportauftrag
+  **`T76K912490`**, bewusst **nicht freigegeben**. In P76 ist nichts geaendert.
+- Drei Ursachen waren zu beheben, keine am Quelltext erkennbar: V1 wurde vom SAP-Standard
+  aus dessen Puffer ueberschrieben (jetzt V2), Literale an einen Verbuchungsbaustein reissen
+  die Verbuchung mit (nur getypte Variablen), und beim Anlegen mit Freigabe traegt der
+  Auftrag noch eine temporaere Nummer (zusaetzlich `BEFORE_UPDATE`).
+- **Befund vom 2026-09-07 aus einer Gegenpruefung:** `BEFORE_UPDATE` lief bei **jedem**
+  Sichern und haette laengst freigegebene Altauftraege mit dem heutigen Eckendtermin
+  gefuellt. Behoben durch eine Pruefung auf `AFKO-FTRMI` vor dem Registrieren. Danach alle
+  sieben Wege plus Altauftragsfall und Write-once neu gemessen, Werte direkt aus `AUFK`.
+- **Offen:** Anschreiben absenden (Adressen und Text fehlen im Outlook-Entwurf), fachliche
+  Abnahme, Marcos Pruefung von Etikett und Typenschild samt Druckzeitpunkt gegenueber V2,
+  und der Nachweisreport `Z_ZZPRDAT_CHECK`, der jeden abweichenden Wert als „Write-once
+  nachgewiesen" meldet. Einstieg: `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+
+## ZC12: Vorfrage beantwortet, Tracing scharf geschaltet, 2026-09-04 bis 2026-09-07
+
+- `ZC12` ist eine Reporttransaktion auf **`ZM_ABGLEICH_KTSCH`**. Das in der Doku gefuehrte
+  `Z_ABGLEICH_KTSCH` existiert nicht; der Quelltext nennt sich selbst so, im `REPORT`-Kopf.
+- Die Versionsverwaltung zeigt: Version 3 vom 18.05.2026 ist der komplette Neuaufbau, ihre
+  Kopfhistorie datiert ihn auf den 28. bis 30.04.2026. `fmt_quan` gehoert dazu, es ist also
+  eine Testluecke und keine Regression.
+- `p_debug` und die ganze Trace-Infrastruktur stammen aus Version 4 vom 27.05.2026 von
+  `KOI` selbst und waren von Anfang an auskommentiert. Der Quelltext liegt jetzt erstmals im
+  Repository unter `saptasks/zc12/`. Detail: `projektmanagement/PROJEKTSTATUS.md` PM-02.
 
 ## Einkauf beschleunigt und Sicherheitsupdates deployed, 2026-09-03
 
