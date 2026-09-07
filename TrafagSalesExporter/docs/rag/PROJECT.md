@@ -14,9 +14,11 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
   gefunden und am selben Tag behoben worden:** `BEFORE_UPDATE` lief bei jedem Sichern und
   fuellte dadurch laengst freigegebene Altauftraege mit dem heutigen Eckendtermin. Jetzt
   wird `AFKO-FTRMI` vorher gelesen; war der Auftrag schon freigegeben, passiert nichts.
-  Mit drei RFC-Messungen belegt, die Klasse liegt in der Aufgabe `T76K912491`. **Vor der
-  Abnahme fehlt noch die Wiederholung der uebrigen sechs Wege** und eine neue Messtabelle
-  im Loesungsdokument. Befund, Messungen und zwei Nebenbefunde zu V2 und zum
+  Am 2026-09-07 sind **alle sieben Wege plus der Altauftragsfall und Write-once** auf dem
+  korrigierten Stand nachgemessen, direkt aus `AUFK` statt ueber den Nachweisreport, der den
+  Fehler verdeckt haette; die Klasse liegt in der Aufgabe `T76K912491`. Offen ist nur noch
+  das Absenden des Anschreibens und die fachliche Abnahme. Befund, Messungen und zwei
+  Nebenbefunde zu V2 und zum
   Nachweisreport: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
   dieselbe Datei.
 

@@ -319,6 +319,80 @@ def dokument_erzeugen() -> None:
         "mit der Freigabe und überlebt eine spätere Terminverschiebung."
     ).bold = True
 
+    ueberschrift(dok, "Nachmessung vom 7. September nach einer Korrektur", 1)
+    dok.add_paragraph(
+        "Bei einer Gegenprüfung ist am 7. September ein Fehler in der Lösung aufgefallen, "
+        "der in den bisherigen Tests nicht sichtbar war. Er ist am selben Tag behoben "
+        "worden, und danach wurde die komplette Reihe wiederholt. Der Punkt gehört hierher, "
+        "weil er zeigt, wonach bei der Abnahme zu schauen ist."
+    )
+    p = dok.add_paragraph()
+    p.add_run("Was falsch war. ").bold = True
+    p.add_run(
+        "Die Logik hängt an einem Zeitpunkt, den SAP bei jedem Sichern eines "
+        "Fertigungsauftrags durchläuft, nicht nur bei der Freigabe. Geprüft wurde bis dahin "
+        "nur, ob der Auftrag überhaupt schon einmal freigegeben wurde und ob das Feld noch "
+        "leer ist. Auf einen alten, längst freigegebenen Auftrag mit leerem Feld trifft "
+        "beides zu: Er hätte beim nächsten beliebigen Sichern den heute gültigen "
+        "Eckendtermin bekommen, nicht den vom Tag seiner Freigabe."
+    )
+    p = dok.add_paragraph()
+    p.add_run("Warum das nicht auffiel. ").bold = True
+    p.add_run(
+        "Alle bisherigen Messungen liefen mit neu angelegten Aufträgen, bei denen Freigabe "
+        "und erstes Sichern zusammenfallen. Der Fall „alter Auftrag wird erneut gesichert“ "
+        "kam darin nicht vor."
+    )
+    p = dok.add_paragraph()
+    p.add_run("Was geändert wurde. ").bold = True
+    p.add_run(
+        "Vor dem Schreiben wird jetzt nachgesehen, ob der Auftrag schon vor diesem Sichern "
+        "freigegeben war. Wenn ja, passiert nichts. Damit bleibt das nachträgliche Füllen "
+        "bestehender Aufträge das, was es sein sollte: ein eigener, bewusst zu "
+        "entscheidender Schritt."
+    )
+
+    tab = dok.add_table(rows=1, cols=4)
+    tab.style = "Light Grid Accent 1"
+    kopf = tab.rows[0].cells
+    for i, text in enumerate(["Auftrag", "Weg", "Produktionsdatum", "Ergebnis"]):
+        kopf[i].text = text
+        for absatz in kopf[i].paragraphs:
+            for lauf in absatz.runs:
+                lauf.bold = True
+
+    for zeile in [
+        ("1241819", "alter, bereits freigegebener Auftrag; Eckendtermin verschoben "
+                    "und gesichert", "bleibt leer", "so soll es sein"),
+        ("1241824", "CO01 anlegen und freigeben", "13.11.2026", "wird gesetzt"),
+        ("1241824", "danach Eckendtermin verschoben", "13.11.2026", "bleibt stehen"),
+        ("1241825", "in CO02 freigegeben", "27.11.2026", "wird gesetzt"),
+        ("1241826", "Auftragsart PP22, angelegt und freigegeben", "04.12.2026",
+         "wird gesetzt"),
+        ("1241827", "Sammelfreigabe über COHV", "09.12.2026", "wird gesetzt"),
+        ("1241828", "Planauftrag über CO40 umgesetzt", "15.12.2026", "wird gesetzt"),
+        ("1241829", "Planauftrag über MD04 umgesetzt", "22.12.2026", "wird gesetzt"),
+        ("1241830", "Sammelumsetzung über CO41", "leer", "CO41 gibt nicht frei"),
+        ("1241830", "derselbe Auftrag in CO02 freigegeben", "23.12.2026",
+         "wird gesetzt"),
+    ]:
+        zellen = tab.add_row().cells
+        for i, text in enumerate(zeile):
+            zellen[i].text = text
+
+    dok.add_paragraph()
+    dok.add_paragraph(
+        "Die Werte sind diesmal nicht über den Nachweisreport abgelesen, sondern direkt aus "
+        "der Datenbanktabelle des Auftragskopfs. Der Report hätte den Fehler nämlich nicht "
+        "gezeigt: Ein so nachgefüllter Altauftrag sieht dort wie ein Erfolgsfall aus."
+    )
+    p = dok.add_paragraph()
+    p.add_run(
+        "Die zweite Zeile ist die wichtigste. Ohne einen Auftrag, der weiterhin ein Datum "
+        "bekommt, wäre „das Feld bleibt leer“ auch damit erklärbar, dass die Lösung gar "
+        "nicht mehr läuft."
+    ).bold = True
+
     ueberschrift(dok, "Ein Sonderfall, den man kennen sollte: CO41", 1)
     dok.add_paragraph(
         "Die Sammelumsetzung über CO41 erzeugt den Fertigungsauftrag und sichert ihn, "

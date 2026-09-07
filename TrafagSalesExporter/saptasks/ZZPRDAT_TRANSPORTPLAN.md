@@ -8,8 +8,8 @@ geschieht erst nach der fachlichen Abnahme.
 > Konstruktionsfehler gezeigt: `BEFORE_UPDATE` laeuft bei **jedem** Sichern, nicht nur bei
 > der Freigabe, und fuellte damit Altauftraege ungewollt nach. Die Freigabepruefung ist
 > eingebaut, aktiviert und mit drei Messungen belegt; die Klasse steckt in der Aufgabe
-> `T76K912491` des Auftrags. Einzelheiten in Abschnitt 6a. Damit ist technisch wieder
-> nichts offen, aber die Testreihe im Loesungsdokument ist noch die alte.
+> `T76K912491` des Auftrags. Anschliessend ist die **komplette Reihe wiederholt** worden,
+> alle sieben Wege plus der neue Altauftragsfall. Einzelheiten in Abschnitt 6a.
 
 Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`, das
 Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
@@ -205,12 +205,32 @@ ausschliesslich Auftragsnummern der eigenen Testreihe akzeptiert. `1241819` trae
 kein Produktionsdatum mehr und einen auf den 26.10.2026 verschobenen Eckendtermin; als
 Messpunkt der alten Reihe ist er damit verbraucht.
 
-**Noch offen nach dieser Korrektur:** Die uebrigen sechs Wege (CO02, COHV, CO40, MD04, CO41,
-Auftragsart `PP22`) sind auf dem neuen Stand **nicht** erneut gemessen. Die Aenderung sitzt
-in dem Pfad, den alle sieben Wege gemeinsam durchlaufen, und CO01 ist gemessen; trotzdem war
-genau diese Art von Schluss der Grund, warum der Fehler ueberhaupt durchgerutscht ist. Vor
-der Abnahme gehoert die Reihe einmal komplett wiederholt, und das Loesungsdokument braucht
-die neue Messtabelle.
+### Die komplette Reihe auf dem korrigierten Stand, 2026-09-07
+
+Alle Werte direkt aus `AUFK` ueber RFC gelesen, nicht ueber `Z_ZZPRDAT_CHECK`. Der Report
+haette den Altauftragsfall als Erfolg gemeldet und taugt deshalb hier nicht als Quelle.
+
+| Auftrag | Weg | `ZZPRDAT` | Urteil |
+|---|---|---|---|
+| 1241819 | Altauftrag, freigegeben, Feld geleert, Eckendtermin verschoben und gesichert | `00000000` | bleibt leer, wie gewollt |
+| 1241824 | CO01 anlegen und freigeben | 13.11.2026 | gesetzt |
+| 1241824 | danach Eckendtermin auf 20.11.2026 | 13.11.2026 | Write-once haelt |
+| 1241825 | CO01 ohne Freigabe, dann CO02 | 27.11.2026 | gesetzt |
+| 1241826 | **Auftragsart `PP22`** | 04.12.2026 | gesetzt |
+| 1241827 | **COHV Sammelfreigabe** | 09.12.2026 | gesetzt |
+| 1241828 | **CO40** aus Planauftrag 2406066 | 15.12.2026 | gesetzt |
+| 1241829 | **MD04** aus Planauftrag 2406067 ueber „-> FertAuftr" | 22.12.2026 | gesetzt |
+| 1241830 | **CO41** Sammelumsetzung aus Planauftrag 2406068 | `00000000` | korrekt, CO41 gibt nicht frei |
+| 1241830 | derselbe Auftrag danach in CO02 freigegeben | 23.12.2026 | gesetzt |
+
+Damit sind alle sieben Wege plus der neue Altauftragsfall plus Write-once auf dem
+korrigierten Stand belegt. Zeile 2 ist die Gegenprobe zu Zeile 1: ohne einen Auftrag, der
+weiterhin ein Datum bekommt, waere „bleibt leer" auch mit einem abgeschalteten BAdI
+erklaerbar.
+
+Das Loesungsdokument fuer den Fachbereich hat seit dem 2026-09-07 ein eigenes Kapitel
+„Nachmessung vom 7. September nach einer Korrektur" mit derselben Tabelle und der
+Erklaerung, was falsch war und warum es die alte Testreihe nicht zeigen konnte.
 
 **Zwei kleinere Punkte aus derselben Pruefung.** Erstens laeuft `Z_ZZPRDAT_SET` als V2 in
 einer eigenen Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit kurz
