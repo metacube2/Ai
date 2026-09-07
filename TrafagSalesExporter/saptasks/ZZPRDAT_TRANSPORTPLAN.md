@@ -239,20 +239,60 @@ Das Loesungsdokument fuer den Fachbereich hat seit dem 2026-09-07 ein eigenes Ka
 „Nachmessung vom 7. September nach einer Korrektur" mit derselben Tabelle und der
 Erklaerung, was falsch war und warum es die alte Testreihe nicht zeigen konnte.
 
-**Zwei kleinere Punkte aus derselben Pruefung.** Erstens laeuft `Z_ZZPRDAT_SET` als V2 in
+**Zwei weitere Punkte aus derselben Pruefung.** Erstens laeuft `Z_ZZPRDAT_SET` als V2 in
 einer eigenen Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit kurz
 gespeichert, waehrend `ZZPRDAT` noch fehlt. Fuer einen unmittelbar angestossenen Etiketten-
 oder Typenschilddruck ist das ein offenes Integrationsrisiko; nachgewiesen ist kein
 Druckfehler, gemessen wurde dieser Ablauf aber auch nie. Das gehoert zu Marcos Pruefung
-dazu. Zweitens meldet `Z_ZZPRDAT_CHECK` jedes `ZZPRDAT` ungleich `GLTRP` als „eingefroren"
-und zaehlt es unter „Write-once nachgewiesen"; ein schlicht falsch eingetragenes Datum
-bekaeme dasselbe Urteil. Der Report ist ein Diagnosehilfsmittel, der Nachweis ist der
-Vorher-Nachher-Test.
+dazu. Zweitens meldete die bisherige Fassung von `Z_ZZPRDAT_CHECK` jedes `ZZPRDAT` ungleich
+`GLTRP` als „eingefroren" und zaehlte es unter „Write-once nachgewiesen"; ein schlicht
+falsch eingetragenes Datum bekam dasselbe Urteil. Dieser Reportfehler ist inzwischen
+behoben, siehe folgenden Abschnitt. Der Nachweis bleibt der Vorher-Nachher-Test.
+
+### Diagnosebericht korrigiert und in T76 aktiviert, 07.09.2026
+
+Auf Ingos Auftrag „ansonst kannst du das fixe wenn nicht behoben“ hat Codex den
+verbliebenen Reportfehler behoben. Die Freigabelogik und Auftragsdaten wurden dabei
+nicht veraendert.
+
+* Keine Erfolgsbehauptung aus einem Einzelstand: „Datum gleich aktuellem GLTRP“ und
+  „Datum weicht von GLTRP ab“ beschreiben nur die beobachteten Werte.
+* „Leer; Freigabe vorhanden“ ersetzt die pauschale Fehlermeldung. Altbestaende bleiben
+  bewusst leer; auch eine noch ausstehende V2 ist aus diesem Einzelstand nicht erkennbar.
+* Gefuellte Daten ohne Freigabenachweis werden separat ausgewiesen.
+* Werk- und Leerfilter stehen jetzt in der Datenbankabfrage, **vor** `UP TO p_max ROWS`.
+  Zuvor konnte das Limit alle passenden Auftraege abschneiden, bevor der Nachfilter griff.
+* `p_max <= 0` wird im Selektionsbild abgewiesen. Der Hinweis zum Anlagedatum stellt klar,
+  dass die Datumsgrenze auch bei eingegebener Auftragsnummer gilt.
+
+Nachweise, direkt gegen T76/100:
+
+| Pruefung | Ergebnis |
+|---|---|
+| Original vor Aenderung aus SAP gelesen | `saptasks/zzprdat/system/Z_ZZPRDAT_CHECK_vorher_20260907.abap`, 155 Zeilen |
+| Aktivierung | Nur `Z_ZZPRDAT_CHECK` ausgewaehlt; fremdes `Z_REICHW` blieb unmarkiert |
+| Syntaxpruefung des gespeicherten Reports | `Syntax status: OK`, `Error subrc: 0` |
+| Aktiven Quelltext zurueckgelesen | `saptasks/zzprdat/system/Z_ZZPRDAT_CHECK_nachher_20260907.abap`, 184 Zeilen; textgleich zur produktiven Repository-Vorlage (Encoding/Zeilenenden normalisiert) |
+| Auftraege 1241817 bis 1241830 | 14 Zeilen; 1241817/1241824 als abweichend, 1241819 als leer mit Freigabe, uebrige 11 gleich GLTRP |
+| Werk 1100, nur leere Felder, maximal 1 Treffer im selben Bereich | 1241819 gefunden; die alte Reihenfolge haette zuerst 1241830 genommen und danach weggefiltert |
+| `p_max = 0` | Fehlermeldung im Selektionsbild, kein unbeschraenkter Lauf |
+| Transportzuordnung aus E071 | `T76K912491`, `R3TR PROG Z_ZZPRDAT_CHECK` |
+
+Der wiederholbare lesende GUI-Test liegt in
+`saptasks/zzprdat/Pruefe_Report_Selektion.vbs`; er erwartet das Selektionsbild des Reports.
+Die Vorpruefung mit `abap-check --source-file` lieferte auch fuer das unveraenderte
+Original einen Fehler ohne Details und war deshalb kein verwertbarer Syntaxnachweis.
+Massgeblich sind die erfolgreiche Aktivierung, die Syntaxpruefung des gespeicherten
+Reports und seine reale Ausfuehrung.
+
+Kein Auftrag angelegt, freigegeben oder geaendert; keine BAdI-/V2-Aenderung, keine
+Transportfreigabe und kein P76-Zugriff. Der Drucknachweis aus Abschnitt 6 bleibt offen.
 
 ## 7. Risiko im Produktivsystem und wie man es begrenzt
 
-Nach dem Import laeuft der Verbuchungsbaustein bei **jedem** Sichern eines
-Fertigungsauftrags in P76. Das ist gewollt, verdient aber Aufmerksamkeit:
+Nach dem Import wird `BEFORE_UPDATE` bei jedem Sichern aufgerufen, registriert den
+Verbuchungsbaustein seit der Korrektur jedoch nur, wenn der bisherige Freigabenachweis
+noch fehlt. `AT_RELEASE` registriert weiterhin bei der Freigabe. Zu beachten:
 
 * **Ein Fehler im Baustein reisst die Verbuchung mit.** Genau das ist am 2026-09-03 in T76
   passiert, als versehentlich ein Literal statt einer getypten Variablen uebergeben wurde:

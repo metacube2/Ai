@@ -16,10 +16,12 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
   wird `AFKO-FTRMI` vorher gelesen; war der Auftrag schon freigegeben, passiert nichts.
   Am 2026-09-07 sind **alle sieben Wege plus der Altauftragsfall und Write-once** auf dem
   korrigierten Stand nachgemessen, direkt aus `AUFK` statt ueber den Nachweisreport, der den
-  Fehler verdeckt haette; die Klasse liegt in der Aufgabe `T76K912491`. Offen ist nur noch
-  das Absenden des Anschreibens und die fachliche Abnahme. Befund, Messungen und zwei
-  Nebenbefunde zu V2 und zum
-  Nachweisreport: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
+  Fehler verdeckt haette; die Klasse liegt in der Aufgabe `T76K912491`. Auch der
+  Diagnosebericht `Z_ZZPRDAT_CHECK` ist am 07.09.2026 korrigiert, in T76 aktiviert und
+  geprueft: sachliche Momentaufnahme statt Write-once-Behauptung, Werk-/Leerfilter vor
+  Trefferlimit, kein unbeschraenkter Lauf mit `p_max <= 0`. Offen bleiben das Absenden
+  des Anschreibens und die fachliche Abnahme inklusive des realen Druckablaufs gegenueber
+  V2. Befund und Messungen: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
   dieselbe Datei.
 
 - LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);

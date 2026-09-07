@@ -21,17 +21,21 @@ gelesen; steht dort schon ein Wert, war der Auftrag vorher freigegeben und wird
 uebersprungen. Danach ist die **komplette Reihe wiederholt** worden, alle sieben Wege plus
 Altauftragsfall und Write-once, mit den Auftraegen 1241824 bis 1241830.
 
-**Zwei Punkte sind weiterhin offen und nicht behoben:**
+**Drucknachweis offen; Diagnosebericht am 07.09.2026 ebenfalls korrigiert:**
 
 1. **Der Druckablauf gegenueber V2.** `Z_ZZPRDAT_SET` laeuft in einer eigenen
    Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit einen Moment lang
    gespeichert, waehrend `ZZPRDAT` noch fehlt. Ob ein unmittelbar angestossener Etiketten-
    oder Typenschilddruck das trifft, ist **nicht gemessen** und gehoert zu Marcos Pruefung.
-2. **Der Nachweisreport urteilt zu sicher.** `Z_ZZPRDAT_CHECK` meldet jedes `ZZPRDAT`
-   ungleich `GLTRP` als „eingefroren" und zaehlt es unter „Write-once nachgewiesen"; ein
-   schlicht falscher Wert bekaeme dasselbe Urteil, und ein nachgefuellter Altauftrag waere
-   dort sogar als Erfolgsfall erschienen. Der Report ist **dokumentiert, aber nicht
-   korrigiert**. Die Messungen vom 07.09.2026 wurden deshalb direkt aus `AUFK` gelesen.
+2. **Der Diagnosebericht ist korrigiert und in T76/100 aktiviert.**
+   `Z_ZZPRDAT_CHECK` beschreibt jetzt nur die Momentaufnahme: gleiches/abweichendes Datum,
+   leeres Feld mit/ohne Freigabenachweis oder gefuelltes Datum ohne Freigabenachweis.
+   Er behauptet weder Write-once noch einen Fehler allein aus einem leeren Altauftrag.
+   Werk- und Leerfilter greifen vor der Trefferbegrenzung; `p_max <= 0` wird abgewiesen.
+   Syntaxpruefung und Ruecklesung des aktiven Quelltexts bestanden. Live mit 14 vorhandenen
+   Auftraegen geprueft; der Grenztest `p_max = 1`, Werk 1100, nur leere Felder liefert
+   korrekt `1241819`. Der Vorher-Nachher-Test bleibt der eigentliche Write-once-Nachweis.
+   Report weiterhin in Aufgabe `T76K912491`, kein Import nach P76.
 
 Einzelheiten zu Auftrag, Objektliste, Befund und Messungen stehen in
 `saptasks/ZZPRDAT_TRANSPORTPLAN.md`, Abschnitt 6a.
