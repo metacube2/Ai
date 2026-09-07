@@ -13,11 +13,17 @@ METHOD if_ex_workorder_update~before_update.
 * auslesbar. ASSIGN COMPONENT braucht die Struktur nicht zur Uebersetzungszeit.
 * Fehlt eine Komponente, wird die Zeile still uebersprungen statt abzubrechen.
 *
-* Die Freigabepruefung steht bewusst NICHT hier, sondern im Verbuchungsbaustein.
-* Dort ist sie an AFKO-FTRMI messbar, und zwar erst dann, wenn die
-* Standardverbuchung sie festgeschrieben hat.
+* Die positive Freigabepruefung steht weiterhin im Verbuchungsbaustein. Dort ist
+* sie an AFKO-FTRMI messbar, und zwar erst dann, wenn die Standardverbuchung sie
+* festgeschrieben hat.
+*
+* Hier steht seit dem 2026-09-07 die Gegenprobe: war der Auftrag VOR diesem
+* Sichern schon freigegeben, wird gar nicht erst registriert. Sonst fuellt die
+* Loesung Altbestaende nebenbei mit, was ein eigener, bewusst terminierter
+* Schritt sein soll.
   DATA: lv_aufnr  TYPE aufnr,
-        lv_prddat TYPE zco_gltrp.
+        lv_prddat TYPE zco_gltrp,
+        lv_ftrmi  TYPE afko-ftrmi.
 
   FIELD-SYMBOLS: <ls_kopf>  TYPE any,
                  <lv_aufnr> TYPE any,
@@ -40,6 +46,24 @@ METHOD if_ex_workorder_update~before_update.
     CHECK lv_prddat IS NOT INITIAL.
 *   Temporaere Nummern beginnen mit %; sie zeigen auf keinen AUFK-Satz.
     CHECK lv_aufnr(1) <> '%'.
+
+*   Nur der Freigabeuebergang darf schreiben, nicht jedes Sichern.
+*   BEFORE_UPDATE laeuft bei JEDEM Sichern. Ohne diese Pruefung bekaeme jeder
+*   laengst freigegebene Altauftrag mit leerem ZZPRDAT beim naechsten beliebigen
+*   Sichern den HEUTIGEN Eckendtermin eingetragen - also weder den Termin seiner
+*   Freigabe noch den getrennt geplanten Nachfuelllauf. Gefunden am 2026-09-07.
+*
+*   Hier steht noch der Stand VOR diesem Sichern, weil die Standardverbuchung
+*   AFKO erst danach schreibt. Ein bereits gefuelltes FTRMI heisst deshalb
+*   'war vor diesem Sichern schon freigegeben', also Altauftrag. Ist FTRMI leer
+*   oder gibt es noch keinen Satz, kann dieses Sichern die Freigabe sein; ob sie
+*   wirklich stattfand, prueft der Verbuchungsbaustein danach an FTRMI.
+    CLEAR lv_ftrmi.
+    SELECT SINGLE ftrmi FROM afko INTO lv_ftrmi
+      WHERE aufnr = lv_aufnr.
+    IF sy-subrc = 0 AND lv_ftrmi IS NOT INITIAL.
+      CONTINUE.
+    ENDIF.
 
     CALL FUNCTION 'Z_ZZPRDAT_SET' IN UPDATE TASK
       EXPORTING

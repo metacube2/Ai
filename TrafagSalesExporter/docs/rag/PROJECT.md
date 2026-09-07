@@ -10,11 +10,13 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 - ZZPRDAT (Produktionsdatum im Fertigungsauftrag) ist gebaut und auf sieben Wegen
   nachgetestet: Paket `ZPP1`, Transportauftrag `T76K912490`, bewusst **nicht
-  freigegeben**, in P76 nichts geaendert. **Am 2026-09-07 ist die Abnahme angehalten
-  worden:** `BEFORE_UPDATE` laeuft bei jedem Sichern, nicht nur bei der Freigabe, und
-  fuellt dadurch laengst freigegebene Altauftraege ungewollt mit dem **heutigen**
-  Eckendtermin. Die frueher hier stehende Aussage „technisch nichts mehr offen" ist
-  zurueckgezogen. Befund, Behebungsvorschlag und zwei Nebenbefunde zu V2 und zum
+  freigegeben**, in P76 nichts geaendert. **Am 2026-09-07 ist ein Konstruktionsfehler
+  gefunden und am selben Tag behoben worden:** `BEFORE_UPDATE` lief bei jedem Sichern und
+  fuellte dadurch laengst freigegebene Altauftraege mit dem heutigen Eckendtermin. Jetzt
+  wird `AFKO-FTRMI` vorher gelesen; war der Auftrag schon freigegeben, passiert nichts.
+  Mit drei RFC-Messungen belegt, die Klasse liegt in der Aufgabe `T76K912491`. **Vor der
+  Abnahme fehlt noch die Wiederholung der uebrigen sechs Wege** und eine neue Messtabelle
+  im Loesungsdokument. Befund, Messungen und zwei Nebenbefunde zu V2 und zum
   Nachweisreport: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
   dieselbe Datei.
 

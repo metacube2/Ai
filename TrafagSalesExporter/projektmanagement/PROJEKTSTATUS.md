@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-04 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 gebaut und auf sieben Wegen nachgetestet, aber am 2026-09-07 ist ein Konstruktionsfehler aufgefallen: `BEFORE_UPDATE` laeuft bei jedem Sichern und fuellt dadurch Altauftraege ungewollt mit dem heutigen Eckendtermin. Abnahme angehalten, Auftrag nicht freigegeben** | Zuerst entscheiden, ob die Freigabepruefung in `BEFORE_UPDATE` nachgezogen wird (Vorschlag in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a), danach alle sieben Wege plus einen neuen Altauftragsfall erneut messen. Erst dann das Anschreiben absenden und die Abnahme einholen | 2026-09-07 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **Der am 2026-09-07 gefundene Konstruktionsfehler ist am selben Tag behoben: `BEFORE_UPDATE` prueft jetzt, ob der Auftrag vor diesem Sichern schon freigegeben war, und laesst Altauftraege in Ruhe. Mit drei RFC-Messungen belegt, Klasse liegt in der Aufgabe `T76K912491`. Auftrag weiter nicht freigegeben** | Die sechs noch nicht wiederholten Wege (CO02, COHV, CO40, MD04, CO41, `PP22`) auf dem korrigierten Stand nachmessen und die Messtabelle im Loesungsdokument erneuern. Erst dann das Anschreiben absenden und die Abnahme einholen | 2026-09-07 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -241,9 +241,14 @@ einem eigenen Schritt zu machen, und liefert bei verschobenen Terminen einen fal
 Wert. Aufgefallen ist es nicht, weil alle neun Messungen vom 2026-09-04 mit **neu**
 angelegten Auftraegen liefen, bei denen Freigabe und erstes Sichern zusammenfallen.
 
-Die fruehere Aussage, technisch sei nichts mehr offen, ist zurueckgezogen. Der Vorschlag,
-die beiden kleineren Nebenbefunde zu V2 und zum Nachweisreport und der noetige achte
-Testfall stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a.
+**Am selben Tag behoben und gemessen.** `BEFORE_UPDATE` liest jetzt vor dem Registrieren
+`AFKO-FTRMI`; steht dort schon ein Wert, war der Auftrag vorher freigegeben und wird
+uebersprungen. Drei Messungen ueber RFC gegen `AUFK`: der kuenstlich geleerte Altauftrag
+`1241819` bleibt beim Sichern leer, der neue Auftrag `1241824` bekommt weiterhin sein
+Datum, und beim Verschieben des Termins bleibt es stehen. Die Klasse steckt laut `E071`
+in der Aufgabe `T76K912491`, wandert also mit dem Auftrag mit. Einzelheiten, die beiden
+Nebenbefunde zu V2 und zum Nachweisreport und die noch offene Wiederholung der uebrigen
+sechs Wege stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a.
 
 **Das Anschreiben zur Abnahme ist am 2026-09-04 geschrieben, aber noch nicht versandt.** Es
 nennt, was vorher falsch war, die drei Ursachen, die sieben gemessenen Wege, den

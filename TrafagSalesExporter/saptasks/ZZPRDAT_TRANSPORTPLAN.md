@@ -4,12 +4,12 @@ Stand: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind n
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
 geschieht erst nach der fachlichen Abnahme.
 
-> **Die Aussage „technisch offen ist nichts mehr" ist am 2026-09-07 zurueckgezogen worden.**
-> Eine Gegenpruefung hat einen Konstruktionsfehler gezeigt: `BEFORE_UPDATE` laeuft bei
-> **jedem** Sichern, nicht nur bei der Freigabe, und der Verbuchungsbaustein unterscheidet
-> nicht zwischen einer Freigabe und einem beliebigen spaeteren Sichern. Damit fuellt die
-> Loesung Altauftraege ungewollt nach. Einzelheiten und Vorschlag: Abschnitt 6a. Bis das
-> entschieden ist, geht das Anschreiben nicht raus und der Auftrag wird nicht freigegeben.
+> **Am 2026-09-07 gefunden und noch am selben Tag behoben.** Eine Gegenpruefung hat einen
+> Konstruktionsfehler gezeigt: `BEFORE_UPDATE` laeuft bei **jedem** Sichern, nicht nur bei
+> der Freigabe, und fuellte damit Altauftraege ungewollt nach. Die Freigabepruefung ist
+> eingebaut, aktiviert und mit drei Messungen belegt; die Klasse steckt in der Aufgabe
+> `T76K912491` des Auftrags. Einzelheiten in Abschnitt 6a. Damit ist technisch wieder
+> nichts offen, aber die Testreihe im Loesungsdokument ist noch die alte.
 
 Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`, das
 Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
@@ -174,9 +174,43 @@ Zeitpunkt steht dort noch der alte Stand, weil die Standardverbuchung erst danac
   tatsaechlich stattgefunden hat.
 
 Damit ist „Freigabeuebergang" sauber definiert als „vorher leer, nachher gefuellt", und das
-Nachfuellen der Altbestaende bleibt der getrennte Schritt, als der er gedacht war. Die
-Aenderung braucht einen erneuten Durchlauf aller sieben Wege plus einen neuen achten
-Testfall mit einem alten Auftrag.
+Nachfuellen der Altbestaende bleibt der getrennte Schritt, als der er gedacht war.
+
+### Umgesetzt und gemessen am 2026-09-07
+
+Die Pruefung ist eingebaut, die Klasse ist aktiviert, und `E071` weist
+`R3TR CLAS ZCL_IM__ZZPRDAT_UPDATE` in der Aufgabe `T76K912491` aus, also im bestehenden
+Auftrag. Der Quelltextstand vor der Aenderung liegt als
+`saptasks/zzprdat/system/BEFORE_UPDATE_vorher.abap` im Repository und ist der Rueckfallpunkt;
+er wurde ueber `CL_OO_CLASSNAME_SERVICE=>GET_METHOD_INCLUDE` und `READ REPORT` auf
+`ZCL_IM__ZZPRDAT_UPDATE========CM008` direkt aus dem System gelesen und war inhaltlich
+identisch mit der Repository-Kopie.
+
+Drei Messungen, alle ueber RFC gegen `AUFK` gelesen und damit unabhaengig vom Nachweisreport:
+
+| Fall | Vorgehen | `ZZPRDAT` | Urteil |
+|---|---|---|---|
+| Altauftrag `1241819` | war freigegeben (`FTRMI` 04.09.2026), Feld kuenstlich geleert, dann Eckendtermin auf 26.10.2026 verschoben und gesichert | `00000000` | **bleibt leer, die Korrektur greift** |
+| Neuer Auftrag `1241824` | CO01 anlegen und freigeben, Eckendtermin 13.11.2026 | `20261113` | Gegenprobe: die Logik arbeitet weiter |
+| derselbe Auftrag | Eckendtermin auf 20.11.2026 verschoben und gesichert | `20261113` | Write-once haelt |
+
+Die mittlere Zeile ist die wichtige Gegenprobe. Ohne sie waere „Feld bleibt leer" auch mit
+einem abgeschalteten BAdI erklaerbar gewesen.
+
+**Wie der Altauftragszustand entstanden ist:** Die beiden echten Altauftraege im System
+(`9000005594`, `9000005518`, beide freigegeben mit leerem Feld) lassen sich nicht mehr
+aendern, SAP meldet „Verändern ist nicht erlaubt". Der Zustand wurde deshalb auf dem eigenen
+Testauftrag `1241819` hergestellt, mit dem Wegwerfreport `Z_KOI_ZZPRDAT_CLR` in `$TMP`, der
+ausschliesslich Auftragsnummern der eigenen Testreihe akzeptiert. `1241819` traegt seither
+kein Produktionsdatum mehr und einen auf den 26.10.2026 verschobenen Eckendtermin; als
+Messpunkt der alten Reihe ist er damit verbraucht.
+
+**Noch offen nach dieser Korrektur:** Die uebrigen sechs Wege (CO02, COHV, CO40, MD04, CO41,
+Auftragsart `PP22`) sind auf dem neuen Stand **nicht** erneut gemessen. Die Aenderung sitzt
+in dem Pfad, den alle sieben Wege gemeinsam durchlaufen, und CO01 ist gemessen; trotzdem war
+genau diese Art von Schluss der Grund, warum der Fehler ueberhaupt durchgerutscht ist. Vor
+der Abnahme gehoert die Reihe einmal komplett wiederholt, und das Loesungsdokument braucht
+die neue Messtabelle.
 
 **Zwei kleinere Punkte aus derselben Pruefung.** Erstens laeuft `Z_ZZPRDAT_SET` als V2 in
 einer eigenen Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit kurz
