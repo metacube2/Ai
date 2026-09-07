@@ -113,9 +113,16 @@ damit eindeutig dem neuen Stand in `ZPP1` zuzurechnen.
 
 ## 6. Was vor der Freigabe des Auftrags noch offen ist
 
-1. **Fachliche Abnahme** durch Lucas Castro, Florian Waechter und Marco Di Menco anhand von
+1. **Anschreiben absenden.** Der Outlook-Entwurf hat Betreff und Anhang, aber weder
+   Empfaenger noch Text; die Adressen fehlen in `docs/ANSPRECHPARTNER.md`, und der Text
+   liegt als `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` daneben.
+2. **Fachliche Abnahme** durch Lucas Castro, Florian Waechter und Marco Di Menco anhand von
    `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
-2. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden.
+3. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden — und
+   seit dem 2026-09-07 zusaetzlich **den Zeitpunkt**: der Verbuchungsbaustein laeuft als V2
+   nach der Standardverbuchung, der Auftrag ist also einen Moment lang gespeichert, waehrend
+   `ZZPRDAT` noch fehlt. Ob ein unmittelbar angestossener Druck das trifft, ist nicht
+   gemessen und laesst sich nur im echten Druckablauf beantworten.
 
 Das Dokument enthaelt seit dem 2026-09-07 das Kapitel **„So testen Sie es selbst"**: drei
 Testfaelle (Freigabe setzt das Datum, das Datum bleibt bei Terminverschiebung stehen, die
@@ -129,8 +136,8 @@ MD04, CO41 und die Auftragsart `PP22` sind am 2026-09-04 gemessen und stehen in 
 oben. Die Disposition muss dafuer nicht mehr um Testfaelle gebeten werden; Fabio Palmas
 Bitte, bei PP-Aenderungen einbezogen zu werden, gilt weiterhin fuer den Import nach P76.
 
-**Technisch offen ist entgegen der bisherigen Aussage sehr wohl etwas**, siehe den
-folgenden Abschnitt.
+Die Tabelle oben ist der Stand vom 2026-09-04 und damit **vor** der Korrektur. Gueltig fuer
+die Abnahme ist die wiederholte Reihe vom 2026-09-07 im folgenden Abschnitt.
 
 ## 6a. Befund vom 2026-09-07: Altauftraege werden ungewollt nachgefuellt
 

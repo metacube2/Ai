@@ -209,6 +209,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `Get-SapList.ps1 -Transaktion <TX>` | setzt eine klassische ABAP-Liste aus den `GuiLabel`-Koordinaten zu lesbaren Zeilen zusammen. **Der wichtigste Zeitsparer** |
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
+| `SapGuiProbeSe38Editor.vbs [Datei]` | dasselbe fuer SE38, und zwar fuer die Eigenschaft `Text`, die in der aelteren Sonde fehlte. Ergebnis: 19 Zeichen, also nur der Steuerelementtitel. Damit ist die Luecke geschlossen, der Editor gibt den Quelltext auf **keinem** Weg heraus |
 | `SapGuiBaumLesen.vbs <TX> <BaumId>` | einen `GuiTree` vollstaendig auslesen, etwa Objektlisten in SE01/SE09 |
 | `SapGuiGridLesen.vbs <TX> [GridId] [MaxZeilen]` | ein **ALV-Grid** ueber `RowCount`, `ColumnOrder` und `GetCellValue` auslesen. Ohne `GridId` meldet es die gefundenen Grid-Ids. Noetig ueberall dort, wo `Get-SapList.ps1` „Keine Listenzeilen gefunden" sagt, obwohl sichtbar Daten am Bildschirm stehen |
 | `SapGuiGridMarkieren.vbs <TX> <GridId> <Zeilen>` | Zeilen eines ALV-Grids ueber `SelectedRows` markieren, nullbasiert und kommagetrennt. Der Vergleich in der Versionsverwaltung erwartet genau zwei markierte Zeilen |
@@ -226,6 +227,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiActivateClass.vbs` | Klasse als Ganzes ueber das SE24-Einstiegsbild aktivieren |
 | `SapGuiActivateBadiImpl.vbs` | BAdI-Implementierung aktivieren und `RSEXSCRN-ACTIVE` zurueckmessen |
 | `SapGuiDeactivateBadi.vbs <Impl>` | **Rueckfallschalter.** Implementierung deaktivieren, mit Statuskontrolle |
+| `SapGuiActivateBadi.vbs <Impl>` | Gegenstueck dazu, Implementierung aktivieren. Nimmt den Namen als Argument. Das aeltere `SapGuiActivateBadiImpl.vbs` hat den Namen `Z_ZZPRDAT_AT_RELEASE` fest eingebaut und steigt bei jedem anderen **still mit Code 5** aus |
+| `SapGuiWorklistWaehlen.vbs <TX> <LOCAL\|TRANSPORT> [Namen...]` | Dialog „Inaktive Objekte", Reiter waehlen, genau die genannten Objekte markieren und alles andere demarkieren. Ohne Namen wird nur aufgelistet. Ersetzt `SapGuiWorklistSelect.vbs` und `SapGuiWorklistTransport.vbs`, deren Namensfilter fest verdrahtet sind |
 | `SapGuiBadiMethodeHier.vbs <Methode> <Datei>` | wie oben, aber **ohne Navigation** auf dem gerade offenen SE19-Bild. Noetig, solange die Implementierung noch nicht gesichert ist |
 | `SapGuiSetReportSource.vbs <Prog> <Datei>` | Quelltext eines **bestehenden** Reports ersetzen, sichern und aktivieren. Legt keinen Report an |
 | `SapGuiPaketZuordnen.vbs <TX> <Paket> [Fenster]` | Dialog „Objektkatalogeintrag anlegen" beantworten. Die anschliessende Auftragsfrage bleibt bewusst offen |
@@ -459,6 +462,37 @@ foreach ($ze in ($zeilen.Keys | Sort-Object)) {
 Damit laesst sich jede klassische `WRITE`-Liste vollstaendig auswerten, ohne Ingo um einen
 Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der Weg.
 
+### Quelltext aus dem System holen, wenn der Editor ihn nicht hergibt
+
+Der ABAP-Editor ist ueber die Scripting-Schnittstelle nicht auslesbar, auch nicht ueber die
+Eigenschaft `Text`. Wer aber `SapGuiSetReportSource.vbs` oder
+`SapGuiSetBadiMethodSource.vbs` benutzt, ersetzt den **gesamten** Puffer und braucht deshalb
+zwingend den exakten Ist-Stand — sonst zerstoert das Zurueckschreiben das Objekt.
+
+Der Weg ohne Passwort ist ein Wegwerfreport in `$TMP`, der `READ REPORT` macht und das
+Ergebnis mit `gui_download` auf einen **festen** Pfad schreibt. Fest deshalb, weil ein
+Dateidialog ein Windows-Fenster waere, das kein Skript bedienen kann. Fuer einen
+Methodenrumpf einer Klasse braucht es zuerst den Namen des Includes:
+
+```abap
+data ls_key type seocpdkey.
+ls_key-clsname = 'ZCL_IM__ZZPRDAT_UPDATE'.
+ls_key-cpdname = 'IF_EX_WORKORDER_UPDATE~BEFORE_UPDATE'.
+lv_prog = cl_oo_classname_service=>get_method_include( mtdkey = ls_key ).
+read report lv_prog into lt_src.
+```
+
+Am 2026-09-07 lieferte das `ZCL_IM__ZZPRDAT_UPDATE========CM008`, 50 Zeilen. Die Vorlage
+liegt als `saptasks/zc12/Z_KOI_SRC_DUMP.abap` im Repository; das Objekt selbst ist nach
+Gebrauch geloescht worden.
+
+**Zwei Fallen dabei.** Erstens fragt SAP GUI beim Schreiben auf die Platte nach, und diese
+Sicherheitsabfrage ist ein Windows-Dialog: Die Sitzung meldet danach „Die fuer diesen Vorgang
+erforderlichen Daten sind noch nicht verfuegbar", bis jemand sie bestaetigt. Zweitens schreibt
+`gui_download` mit `codepage = '4110'` UTF-8, waehrend `SapGuiSetReportSource.vbs` die Datei
+frueher in der ANSI-Codepage gelesen hat. Deutsche Umlaute waeren dabei still zu
+Buchstabensalat geworden; das Skript liest seit dem 2026-09-07 ueber `ADODB.Stream` als UTF-8.
+
 ### Versionsverwaltung eines Reports auswerten
 
 Am 2026-09-04 fuer `ZM_ABGLEICH_KTSCH` durchlaufen. Der Weg beantwortet drei Fragen ohne
@@ -596,6 +630,26 @@ cscript.exe //nologo '.tmp_sap_probe\SapGuiPressButton.vbs' CO41 'wnd[0]/tbar[1]
 
 **CO41 gibt nicht frei.** Der Auftrag entsteht und wird gesichert, aber ohne Freigabe. Wer
 den Freigabetrigger messen will, gibt anschliessend ueber CO02 oder COHV frei.
+
+**Nachtrag vom 2026-09-07 zu den aufgabenspezifischen Skripten.** Drei davon sind auf einen
+bestimmten Bildschirmzustand zugeschnitten und brechen sonst ab, ohne dass der Grund am
+Fehlertext ablesbar waere:
+
+* `SapGuiMd11Anlegen.vbs` erwartet das Anlagebild „Planauftrag anlegen: Lagerauftrag". Nach
+  jedem gesicherten Planauftrag steht MD11 wieder auf dem Einstiegsbild, deshalb vor **jedem**
+  weiteren Anlegen erneut `SapGuiMd11Profil.vbs` aufrufen.
+* `SapGuiCo40Umsetzen.vbs` braucht **zwei** Argumente, Planauftrag und Auftragsart. Fehlt das
+  zweite, endet es mit „Index ausserhalb des gueltigen Bereichs".
+* `SapGuiCohvSammelfreigabe.vbs` ist an der Ruecklesung der Funktionsauswahl gescheitert. Der
+  Bildschirm selbst ist in Ordnung: Reiter „Massenbearbeitung - Freigabe" waehlen, Funktion
+  steht dann schon auf „Freigabe", Auftragsbereich auf dem Reiter „Selektion" setzen, `F8`,
+  Zeile mit `SapGuiGridMarkieren.vbs` markieren, dann Menue „Massenbearbeitung → Ausfuehren"
+  und den Dialog „Auftrag freigeben" bestaetigen.
+
+Beim Anlegen ueber CO01 fragt SAP fuer Material 36385 nach dem Materialstatus der Komponente
+`D24057`. `SapGuiRunFlow.vbs` beantwortet das selbst; wer von Hand klickt, bekommt den Dialog
+scheinbar endlos wieder, weil der Ablauf ohne den passenden naechsten Schritt an derselben
+Stelle stehen bleibt.
 
 ### Kleine Regeln, die Rundreisen sparen
 
