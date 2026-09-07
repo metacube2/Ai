@@ -1,6 +1,6 @@
 # ZZPRDAT: Weg vom Testaufbau zum Transport
 
-Stand: 2026-09-04. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
+Stand: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
 geschieht erst nach der fachlichen Abnahme. Technisch offen ist nichts mehr.
 
@@ -109,6 +109,14 @@ damit eindeutig dem neuen Stand in `ZPP1` zuzurechnen.
 1. **Fachliche Abnahme** durch Lucas Castro, Florian Waechter und Marco Di Menco anhand von
    `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
 2. **Marco prueft Etikett und Typenschild**, also ob beide dasselbe Feld verwenden.
+
+Das Dokument enthaelt seit dem 2026-09-07 das Kapitel **„So testen Sie es selbst"**: drei
+Testfaelle (Freigabe setzt das Datum, das Datum bleibt bei Terminverschiebung stehen, die
+Wege ohne Bildschirmmaske) und eine Tabelle, welche Beobachtung ein Fehler waere und welche
+nicht. Vorher stand dort nur, was **wir** gemessen haben, also kein Weg fuer jemanden, der
+es selbst nachvollziehen will. Erzeugt wird das Dokument aus
+`saptasks/zzprdat/erzeuge_doku.py`; Aenderungen gehoeren in das Skript, nicht in die
+`.docx`.
 
 Technisch offen ist nichts mehr. MD04, CO41 und die Auftragsart `PP22` sind am 2026-09-04
 gemessen und stehen in der Tabelle oben. Die Disposition muss dafuer nicht mehr um

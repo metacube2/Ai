@@ -332,6 +332,110 @@ def dokument_erzeugen() -> None:
         "Anlagemaske und gibt beim Sichern frei, genau wie CO40."
     )
 
+    ueberschrift(dok, "So testen Sie es selbst", 1)
+    dok.add_paragraph(
+        "Alles Folgende passiert im Testsystem T76, Mandant 100. Im Produktivsystem "
+        "P76 ist nichts geändert, und es kann dort auch nichts passieren, solange der "
+        "Transportauftrag nicht freigegeben ist."
+    )
+    dok.add_paragraph(
+        "Das Produktionsdatum steht im Auftragskopf auf dem Reiter „Trafag Daten“. "
+        "Der Reiter muss zum Setzen des Wertes nicht mehr geöffnet werden — genau das "
+        "war der Fehler. Zum Nachsehen öffnen Sie ihn natürlich schon."
+    )
+    p = dok.add_paragraph()
+    p.add_run("Vorschlag für die Testdaten: ").bold = True
+    p.add_run(
+        "Material 36385, Werk 1100, Auftragsart PP21 oder PP22. Jeder andere "
+        "Fertigungsauftrag geht genauso. Wichtig ist nur, einen "
+    )
+    p.add_run("neu angelegten").bold = True
+    p.add_run(
+        " Auftrag zu nehmen: Die Logik schreibt ausschließlich in ein noch leeres Feld, "
+        "und auf einem alten Auftrag mit bereits gefülltem Datum sähe man nicht, ob "
+        "überhaupt etwas passiert ist."
+    )
+
+    ueberschrift(dok, "Testfall 1: Freigabe setzt das Datum", 2)
+    for text in [
+        "In CO01 einen Fertigungsauftrag anlegen, einen Eckendtermin eintragen und "
+        "sichern, ohne freizugeben.",
+        "Den Auftrag in CO02 öffnen und auf dem Reiter „Trafag Daten“ nachsehen: "
+        "Das Produktionsdatum ist leer. So soll es sein, ohne Freigabe entsteht kein Datum.",
+        "Denselben Auftrag in CO02 freigeben und sichern.",
+        "Wieder auf „Trafag Daten“ nachsehen: Jetzt steht dort der Eckendtermin.",
+    ]:
+        dok.add_paragraph(text, style="List Number")
+
+    ueberschrift(dok, "Testfall 2: Das Datum bleibt stehen", 2)
+    dok.add_paragraph(
+        "Das ist der eigentliche Kern der Anforderung und der Punkt, an dem die alte "
+        "Lösung falsch lag."
+    )
+    for text in [
+        "Denselben, jetzt freigegebenen Auftrag in CO02 öffnen.",
+        "Den Eckendtermin auf ein anderes Datum verschieben und sichern.",
+        "Auf „Trafag Daten“ nachsehen: Das Produktionsdatum steht unverändert auf dem "
+        "ursprünglichen Termin. Es wandert nicht mit.",
+    ]:
+        dok.add_paragraph(text, style="List Number")
+
+    ueberschrift(dok, "Testfall 3: Die Wege ohne Bildschirmmaske", 2)
+    dok.add_paragraph(
+        "Diese Wege sind uns am wichtigsten, weil es dort gar keine Maske gibt, die "
+        "jemand hätte besuchen können. Jeder für sich mit einem neuen Auftrag:"
+    )
+    for text in [
+        "In CO01 anlegen und gleich beim Sichern freigeben.",
+        "Über COHV mehrere Aufträge auf einmal freigeben (Sammelfreigabe).",
+        "Einen Planauftrag über CO40 in einen Fertigungsauftrag umsetzen.",
+        "Einen Planauftrag über MD04 mit „→ FertAuftrag“ umsetzen.",
+    ]:
+        dok.add_paragraph(text, style="List Bullet")
+    dok.add_paragraph(
+        "In allen vier Fällen muss nach dem Sichern auf „Trafag Daten“ der Eckendtermin "
+        "als Produktionsdatum stehen."
+    )
+
+    ueberschrift(dok, "Was ein Fehler wäre", 2)
+    tab = dok.add_table(rows=1, cols=2)
+    tab.style = "Light Grid Accent 1"
+    kopf = tab.rows[0].cells
+    for i, text in enumerate(["Beobachtung", "Bedeutung"]):
+        kopf[i].text = text
+        for absatz in kopf[i].paragraphs:
+            for lauf in absatz.runs:
+                lauf.bold = True
+    for zeile in [
+        ("Nach der Freigabe bleibt das Feld leer",
+         "Fehler. Bitte Auftragsnummer und Weg notieren und uns melden."),
+        ("Das Datum ändert sich beim Verschieben des Eckendtermins",
+         "Fehler. Genau das soll nicht mehr passieren."),
+        ("Ein über CO41 umgesetzter Auftrag hat kein Datum",
+         "Kein Fehler. CO41 gibt nicht frei, siehe eigener Abschnitt."),
+        ("Ein alter Auftrag bekommt kein Datum",
+         "Kein Fehler. Bestehende Aufträge werden nicht nachträglich gefüllt, "
+         "das ist ein eigener, später zu entscheidender Schritt."),
+        ("Eine Meldung „Verbuchung wurde abgebrochen“",
+         "Fehler, und zwar ein ernster. Bitte sofort melden."),
+    ]:
+        zellen = tab.add_row().cells
+        for i, text in enumerate(zeile):
+            zellen[i].text = text
+
+    dok.add_paragraph()
+    dok.add_paragraph(
+        "Wer es technisch nachprüfen möchte, statt in jeden Auftrag zu schauen: Der "
+        "Report Z_ZZPRDAT_CHECK in SE38 nimmt eine Liste von Auftragsnummern entgegen "
+        "und zeigt je Auftrag den Eckendtermin, das Produktionsdatum und den "
+        "Freigabestatus. Er liest nur und ändert nichts."
+    )
+    dok.add_paragraph(
+        "Fällt etwas auf, lässt sich die Lösung sofort abschalten, auch nach einem "
+        "Import: in SE19 die Implementierung Z_ZZPRDAT_UPDATE deaktivieren. Danach "
+        "verhält sich das System wieder wie vorher."
+    )
+
     ueberschrift(dok, "Was noch aussteht", 1)
     dok.add_paragraph(
         "Technisch ist nichts mehr offen. Alle sieben Wege sind gemessen, "
