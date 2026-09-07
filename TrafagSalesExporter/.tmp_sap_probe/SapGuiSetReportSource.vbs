@@ -13,7 +13,28 @@ If Not fso.FileExists(datei) Then
   WScript.Echo "Datei nicht gefunden: " & datei
   WScript.Quit 2
 End If
-quelle = fso.OpenTextFile(datei, 1).ReadAll
+
+' Die Datei wird als UTF-8 gelesen. OpenTextFile liest in der ANSI-Codepage des
+' Rechners; deutsche Umlaute aus einer UTF-8-Datei kaemen dann als Buchstabensalat
+' im Quelltext an, ohne dass irgendetwas eine Fehlermeldung gibt.
+Dim strom
+On Error Resume Next
+Set strom = CreateObject("ADODB.Stream")
+If Err.Number = 0 Then
+  strom.Type = 2
+  strom.Charset = "utf-8"
+  strom.Open
+  strom.LoadFromFile datei
+  quelle = strom.ReadText
+  strom.Close
+End If
+If Err.Number <> 0 Then
+  Err.Clear
+  quelle = fso.OpenTextFile(datei, 1).ReadAll
+  WScript.Echo "HINWEIS=UTF-8-Lesen nicht moeglich, ANSI-Rueckfall verwendet"
+End If
+On Error GoTo 0
+WScript.Echo "QUELLE_ZEICHEN=" & Len(quelle)
 
 Function SitzungHolen(tx)
   Dim a, app, c, s2, i, j, erste
