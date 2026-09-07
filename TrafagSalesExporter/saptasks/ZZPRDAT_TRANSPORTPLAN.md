@@ -2,7 +2,14 @@
 
 Stand: 2026-09-07. **Der Transport ist angelegt und gefuellt, die Objekte sind neu in `ZPP1`
 gebaut und auf allen sieben Wegen nachgetestet. Freigegeben ist der Auftrag nicht** — das
-geschieht erst nach der fachlichen Abnahme. Technisch offen ist nichts mehr.
+geschieht erst nach der fachlichen Abnahme.
+
+> **Die Aussage „technisch offen ist nichts mehr" ist am 2026-09-07 zurueckgezogen worden.**
+> Eine Gegenpruefung hat einen Konstruktionsfehler gezeigt: `BEFORE_UPDATE` laeuft bei
+> **jedem** Sichern, nicht nur bei der Freigabe, und der Verbuchungsbaustein unterscheidet
+> nicht zwischen einer Freigabe und einem beliebigen spaeteren Sichern. Damit fuellt die
+> Loesung Altauftraege ungewollt nach. Einzelheiten und Vorschlag: Abschnitt 6a. Bis das
+> entschieden ist, geht das Anschreiben nicht raus und der Auftrag wird nicht freigegeben.
 
 Der fachliche Stand und der Analyseverlauf stehen in `saptasks/zzprdat-kontext.md`, das
 Dokument fuer den Fachbereich in `docs/ZZPRDAT_Loesung_2026-09-03.docx`.
@@ -118,10 +125,68 @@ es selbst nachvollziehen will. Erzeugt wird das Dokument aus
 `saptasks/zzprdat/erzeuge_doku.py`; Aenderungen gehoeren in das Skript, nicht in die
 `.docx`.
 
-Technisch offen ist nichts mehr. MD04, CO41 und die Auftragsart `PP22` sind am 2026-09-04
-gemessen und stehen in der Tabelle oben. Die Disposition muss dafuer nicht mehr um
-Testfaelle gebeten werden; Fabio Palmas Bitte, bei PP-Aenderungen einbezogen zu werden,
-gilt weiterhin fuer den Import nach P76.
+MD04, CO41 und die Auftragsart `PP22` sind am 2026-09-04 gemessen und stehen in der Tabelle
+oben. Die Disposition muss dafuer nicht mehr um Testfaelle gebeten werden; Fabio Palmas
+Bitte, bei PP-Aenderungen einbezogen zu werden, gilt weiterhin fuer den Import nach P76.
+
+**Technisch offen ist entgegen der bisherigen Aussage sehr wohl etwas**, siehe den
+folgenden Abschnitt.
+
+## 6a. Befund vom 2026-09-07: Altauftraege werden ungewollt nachgefuellt
+
+Der Befund stammt aus einer Gegenpruefung durch ein zweites Modell und ist an den Quellen
+unter `saptasks/zzprdat/produktiv/` bestaetigt. Er trifft zu.
+
+**Die Wirkungskette.** `BEFORE_UPDATE` ist keine Freigabemethode, sondern laeuft bei
+**jedem** Sichern eines Fertigungsauftrags. Sie registriert `Z_ZZPRDAT_SET` fuer jeden Kopf
+mit gefuellter Auftragsnummer und gefuelltem `GLTRP`, ohne zu pruefen, ob in diesem Vorgang
+ueberhaupt freigegeben wurde. Der Baustein prueft anschliessend nur zwei Dinge: `AFKO-FTRMI`
+ist gefuellt, und `AUFK-ZZPRDAT` ist noch leer.
+
+Fuer einen Auftrag, der **irgendwann frueher** freigegeben wurde und dessen `ZZPRDAT` leer
+ist, sind beide Bedingungen erfuellt. Beim naechsten beliebigen Sichern bekommt er also den
+**heute gueltigen** Eckendtermin eingetragen. Das ist doppelt falsch:
+
+1. Es widerspricht der ausdruecklichen Entscheidung, das Nachfuellen der Altbestaende zu
+   einem eigenen, bewusst terminierten Schritt zu machen (Abschnitt 8).
+2. Der eingetragene Wert ist nicht der Eckendtermin **zum Zeitpunkt der Freigabe**, sondern
+   der heutige. Bei jedem Auftrag, dessen Termin nach der Freigabe verschoben wurde, ist er
+   damit fachlich falsch.
+
+**Warum es in den Tests nicht auffiel.** Alle neun Messungen vom 2026-09-04 liefen mit neu
+angelegten Auftraegen, bei denen Freigabe und erstes Sichern zusammenfallen. Der Fall
+„alter, laengst freigegebener Auftrag wird erneut gesichert" kam darin nicht vor. Die
+Testreihe war auf die Frage „wird gesetzt und bleibt stehen" zugeschnitten und hat die
+Frage „wird auch dann gesetzt, wenn gar nicht freigegeben wird" nie gestellt.
+
+**Der Nachweisreport verdeckt es zusaetzlich.** Ein so nachgefuellter Altauftrag traegt
+`ZZPRDAT` gleich `GLTRP` und erscheint deshalb als „gesetzt, gleich GLTRP", also als
+Erfolgsfall.
+
+**Vorschlag zur Behebung.** In `BEFORE_UPDATE` vor dem Registrieren den Zustand **vor**
+diesem Sichern lesen: `SELECT SINGLE ftrmi FROM afko WHERE aufnr = lv_aufnr`. Zu diesem
+Zeitpunkt steht dort noch der alte Stand, weil die Standardverbuchung erst danach schreibt.
+
+* `FTRMI` ist bereits gefuellt: Der Auftrag war vor diesem Sichern schon freigegeben. Nicht
+  registrieren. Genau das ist der Altauftragsfall.
+* `FTRMI` ist leer oder es gibt noch keinen Satz: Dieses Sichern kann die Freigabe sein.
+  Registrieren; der Baustein prueft anschliessend wie bisher an `FTRMI`, ob sie
+  tatsaechlich stattgefunden hat.
+
+Damit ist „Freigabeuebergang" sauber definiert als „vorher leer, nachher gefuellt", und das
+Nachfuellen der Altbestaende bleibt der getrennte Schritt, als der er gedacht war. Die
+Aenderung braucht einen erneuten Durchlauf aller sieben Wege plus einen neuen achten
+Testfall mit einem alten Auftrag.
+
+**Zwei kleinere Punkte aus derselben Pruefung.** Erstens laeuft `Z_ZZPRDAT_SET` als V2 in
+einer eigenen Datenbanktransaktion nach der Standardverbuchung. Der Auftrag ist damit kurz
+gespeichert, waehrend `ZZPRDAT` noch fehlt. Fuer einen unmittelbar angestossenen Etiketten-
+oder Typenschilddruck ist das ein offenes Integrationsrisiko; nachgewiesen ist kein
+Druckfehler, gemessen wurde dieser Ablauf aber auch nie. Das gehoert zu Marcos Pruefung
+dazu. Zweitens meldet `Z_ZZPRDAT_CHECK` jedes `ZZPRDAT` ungleich `GLTRP` als „eingefroren"
+und zaehlt es unter „Write-once nachgewiesen"; ein schlicht falsch eingetragenes Datum
+bekaeme dasselbe Urteil. Der Report ist ein Diagnosehilfsmittel, der Nachweis ist der
+Vorher-Nachher-Test.
 
 ## 7. Risiko im Produktivsystem und wie man es begrenzt
 

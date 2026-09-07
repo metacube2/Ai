@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-09-04
+Stand: 2026-09-07
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -23,7 +23,7 @@ nicht.
 |---|---|---|---|---|---|---|
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Entscheiden, ob `p_debug` reaktiviert wird; das ist eine Aenderung an eigenem Code und braucht keine Abstimmung mit Adil. Danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-04 |
-| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 geloest, im Paket ZPP1 und im Transport `T76K912490` gebaut, auf sieben Wegen nachgetestet. Technisch nichts mehr offen. Wartet auf fachliche Abnahme; Auftrag bewusst nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren, Loesungsdokument haengt bereits an; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild; erst zuletzt den Auftrag freigeben | 2026-09-04 |
+| PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **In T76 gebaut und auf sieben Wegen nachgetestet, aber am 2026-09-07 ist ein Konstruktionsfehler aufgefallen: `BEFORE_UPDATE` laeuft bei jedem Sichern und fuellt dadurch Altauftraege ungewollt mit dem heutigen Eckendtermin. Abnahme angehalten, Auftrag nicht freigegeben** | Zuerst entscheiden, ob die Freigabepruefung in `BEFORE_UPDATE` nachgezogen wird (Vorschlag in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a), danach alle sieben Wege plus einen neuen Altauftragsfall erneut messen. Erst dann das Anschreiben absenden und die Abnahme einholen | 2026-09-07 |
 | PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
@@ -229,6 +229,21 @@ gebeten werden.
 Abschalten geht weiter mit `Strg+F4` in SE19, auch nach einem Import. **Technisch ist nichts
 mehr offen.** Es fehlen die fachliche Abnahme und Marcos Pruefung von Etikett und
 Typenschild; danach getrennt die Freigabe des Auftrags und das Nachfuellen der Altbestaende.
+
+**Befund vom 2026-09-07: die Loesung fuellt Altauftraege ungewollt nach.** Eine
+Gegenpruefung durch ein zweites Modell hat gezeigt, dass `BEFORE_UPDATE` bei **jedem**
+Sichern laeuft und nicht nur bei der Freigabe. Der Verbuchungsbaustein prueft anschliessend
+nur, ob `AFKO-FTRMI` gefuellt und `AUFK-ZZPRDAT` leer ist. Beides trifft auf jeden laengst
+freigegebenen Altauftrag zu, dessen Feld noch leer ist: Er bekommt beim naechsten
+beliebigen Sichern den **heute** gueltigen Eckendtermin eingetragen, nicht den vom Tag
+seiner Freigabe. Das widerspricht der Entscheidung, das Nachfuellen der Altbestaende zu
+einem eigenen Schritt zu machen, und liefert bei verschobenen Terminen einen falschen
+Wert. Aufgefallen ist es nicht, weil alle neun Messungen vom 2026-09-04 mit **neu**
+angelegten Auftraegen liefen, bei denen Freigabe und erstes Sichern zusammenfallen.
+
+Die fruehere Aussage, technisch sei nichts mehr offen, ist zurueckgezogen. Der Vorschlag,
+die beiden kleineren Nebenbefunde zu V2 und zum Nachweisreport und der noetige achte
+Testfall stehen in `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a.
 
 **Das Anschreiben zur Abnahme ist am 2026-09-04 geschrieben, aber noch nicht versandt.** Es
 nennt, was vorher falsch war, die drei Ursachen, die sieben gemessenen Wege, den

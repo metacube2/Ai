@@ -1,6 +1,6 @@
 # RAG Project
 
-Stand: 2026-09-04
+Stand: 2026-09-07
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -8,11 +8,15 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 ## Kurzstand
 
-- ZZPRDAT (Produktionsdatum im Fertigungsauftrag) ist seit 2026-09-04 **fertig
-  gebaut und auf sieben Wegen nachgetestet**: Paket `ZPP1`, Transportauftrag
-  `T76K912490`, bewusst **nicht freigegeben**. Technisch nichts mehr offen; es
-  fehlen die fachliche Abnahme und Marcos Pruefung von Etikett und Typenschild.
-  In P76 ist nichts geaendert. Einstieg: `saptasks/ZZPRDAT_TRANSPORTPLAN.md`.
+- ZZPRDAT (Produktionsdatum im Fertigungsauftrag) ist gebaut und auf sieben Wegen
+  nachgetestet: Paket `ZPP1`, Transportauftrag `T76K912490`, bewusst **nicht
+  freigegeben**, in P76 nichts geaendert. **Am 2026-09-07 ist die Abnahme angehalten
+  worden:** `BEFORE_UPDATE` laeuft bei jedem Sichern, nicht nur bei der Freigabe, und
+  fuellt dadurch laengst freigegebene Altauftraege ungewollt mit dem **heutigen**
+  Eckendtermin. Die frueher hier stehende Aussage „technisch nichts mehr offen" ist
+  zurueckgezogen. Befund, Behebungsvorschlag und zwei Nebenbefunde zu V2 und zum
+  Nachweisreport: `saptasks/ZZPRDAT_TRANSPORTPLAN.md` Abschnitt 6a. Einstieg bleibt
+  dieselbe Datei.
 
 - LIVE-PRUEFUNG 2026-07-31: UK-2025 ist produktiv vorhanden (1'867 Zeilen);
   `GroupStandardCosts` ist mit 63'506 TR-AG-Werten gefuellt; Supplier bleibt bei
