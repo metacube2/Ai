@@ -5,21 +5,20 @@ sagt, was fertig ist, was als naechstes dran ist und welche Reihenfolge zwingend
 Details stehen jeweils in der genannten Datei; hier steht nur, was man wissen muss, um
 weiterzumachen.
 
-## 1. Der wichtigste Punkt: ein zweiter Ladelauf fehlt
+## 1. Der wichtigste Punkt: zweiter Ladelauf abgeschlossen
 
-Der Journalimport lief am 2026-09-08 von **12:48 bis 12:50**, der Deploy des
-Faelligkeitsdatums war um **14:02**. Der Ladelauf war also noch mit dem alten Code.
-
-**`AUFK`-Spalte `DueDate` ist deshalb in der Produktivdatenbank leer**, obwohl der Code sie
-liest. Wer das Feld sehen will, muss die vier B1-Gesellschaften auf
-`/finance-journal-import` **erneut** laden und danach `Finance_All` neu erzeugen:
+Nach dem Deploy um **14:02** wurden die vier B1-Gesellschaften erneut geladen: TRFR 20'170,
+TRIN 265'042, TRIT 162'726 und TRUS 21'770, zusammen **469'708** Journalzeilen. Danach wurde
+`Finance_All_2026-09-08.xlsx` mit lokaler Datenbankkopie neu erzeugt:
 
 ```
 uv run --python 3.12 Tools/FinanceAll/finance_all_xlsx.py --lokal
 ```
 
-Im Blatt `Feldstatus` steht danach `due date` als gefuellt. Ohne diesen zweiten Lauf sieht
-es aus, als haette der Deploy nichts bewirkt.
+Der vollstaendige Zellscan belegt `due date`, `fiscal year` und `period` jeweils in
+469'708 von 469'708 Zeilen. `cost center` und `dimension 2` bleiben wegen leerer/inaktiver
+B1-Quellen leer; `Konzernkonto` wartet auf Andreas' Mapping. Das Blatt `Feldstatus` zeigt
+dies je Gesellschaft.
 
 ## 2. Was heute fertig geworden ist
 
@@ -27,8 +26,8 @@ es aus, als haette der Deploy nichts bewirkt.
 |---|---|---|
 | Bahnmarkt-Datei fuer Rohail | geliefert, 172 Kunden, acht Standorte | `Bahnmarkt_Datenaufbereitung_2026-09-08.xlsx` |
 | Branchenfund in Alphaplan, 99 Bahnadressen | dokumentiert | `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` |
-| Journal FR, IT, US, IN | geladen, 469'629 Zeilen | Blatt `Datenstatus` |
-| `Finance_All` als Gegenstueck zu `Sales_All` | erzeugt und geprueft | `Finance_All_2026-09-08.xlsx` |
+| Journal FR, IT, US, IN | nach Deploy neu geladen, 469'708 Zeilen | Blatt `Datenstatus` |
+| `Finance_All` als Gegenstueck zu `Sales_All` | neu erzeugt, geprueft und nach `Import/Finance/Alle` hochgeladen | `Finance_All_2026-09-08.xlsx` |
 | Faelligkeitsdatum aus `JDT1.DueDate` | gebaut, getestet, **produktiv seit 14:02** | Commit `646a998`, Deploy in `docs/rag/DEPLOYMENT.md` |
 | Werkzeug fuer die Mappe | mit `--lokal`, `--tage`, `--seit` | `Tools/FinanceAll/finance_all_xlsx.py` |
 | Zwei Teams-Nachrichten | formuliert, **nicht versandt** | `docs/TEAMS_ROHAIL_BAHNMARKT_2026-09-08.md`, `docs/TEAMS_ANDREAS_ZAHLUNGSDATEN_2026-09-08.md` |
@@ -53,22 +52,16 @@ Empfaenger und ohne Text; beides muss vor dem Versand von Hand hinein.
 
 ## 4. Was als naechstes zu tun ist, mit Reihenfolge
 
-1. **Zweiter Ladelauf** der vier B1-Gesellschaften, danach `Finance_All` neu erzeugen.
-   Siehe Abschnitt 1. Alles andere haengt nicht davon ab, aber es ist der schnellste
-   sichtbare Fortschritt.
-2. **CH/AT im Journal.** Das EntitySet fehlt **nicht**, es heisst in P76
+1. **CH/AT im Journal.** Das EntitySet fehlt **nicht**, es heisst in P76
    `FinanzdataSchweizOeSet` statt `FinanzJournalSet`. Vor einer Umstellung die Feldliste aus
    `$metadata` gegen das Mapping in `docs/FINANCE_JOURNAL.md` pruefen. Der Aufruf mit
    Windows-Anmeldung endet in einem `401`; die Fakten gehoeren aus dem Browser geholt, nicht
    per Skript-Login. `Sites.SapEntitySet` existiert und ist leer, der Name liesse sich also
    konfigurieren statt einkompilieren.
-3. **Gateway-Leser nachziehen.** `SapGatewayFinancialJournalReader.cs` wurde beim
+2. **Gateway-Leser nachziehen.** `SapGatewayFinancialJournalReader.cs` wurde beim
    Faelligkeitsdatum **nicht** mit angepasst. Faellt heute nicht auf, weil CH/AT nicht
    laedt, aber spaetestens bei Punkt 2.
-4. **`Finance_All` nach SharePoint**, gleicher Ort wie `Sales_All`. Heute nicht gebaut. Der
-   Weg fuehrt ueber `ConsolidatedExportService`, dort liegt das Muster fuer Erzeugen und
-   Hochladen.
-5. **ZC12 `p_debug` einspielen.** Vorbereitet als
+3. **ZC12 `p_debug` einspielen.** Vorbereitet als
    `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap`, aber **nicht im System**. Der Befehl
    steht in `projektmanagement/PROJEKTSTATUS.md` unter PM-02.
 
