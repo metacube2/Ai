@@ -696,6 +696,7 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
 
         // Buchungskreis fuer SAP-ECC-Quellen (ZSCHWEIZ: trennt CH/AT); additiv fuer Bestandstabellen.
         AddColumnIfMissing(db, "FinancialJournalEntries", "CompanyCode", "TEXT NOT NULL DEFAULT ''");
+        AddColumnIfMissing(db, "FinancialJournalEntries", "DueDate", "TEXT NULL");
 
         foreach (var indexSql in new[]
         {

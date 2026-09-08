@@ -10,16 +10,14 @@ Aufruf:
     uv run --python 3.12 Tools/FinanceAll/finance_all_xlsx.py --tage 30      # Schnelltest
     uv run --python 3.12 Tools/FinanceAll/finance_all_xlsx.py --lokal        # DB vorher kopieren
 
-Warum die Begrenzung: Das Detailblatt hat im Vollausbau ueber 450'000 Zeilen mal 21
-Spalten. Das sind rund 9,5 Millionen Zellen, und openpyxl braucht dafuer ueber zehn
-Minuten. Fuer einen Formattest ist das unbrauchbar. `--tage 30` liefert dieselbe Mappe
-mit denselben Blaettern in unter einer Minute; die Summenblaetter bleiben dabei
-vollstaendig, weil sie ohnehin nur wenige tausend Zeilen haben.
+Bei grossen Auswertungen zuerst --lokal verwenden: Lesen ueber SMB war der Engpass.
+Gemessen am 08.09.2026: 30 Tage 49 Sekunden, Vollauszug 4 min 10 s mit lokaler Kopie.
+--tage/--seit begrenzen nur das Detailblatt; Summen und Feldstatus bleiben vollstaendig.
 
 Das Layout der Detailzeilen folgt Andreas' Skizze `db1_fin.xlsx`: `entity` zuerst, damit
-nach Gesellschaft sortiert und gefiltert werden kann. `due date` und `Konzernkonto` sind
-als Spalten angelegt, aber leer - beides ist noch nicht vorhanden und soll sichtbar
-fehlen statt stillschweigend zu verschwinden.
+nach Gesellschaft sortiert und gefiltert werden kann. `due date` liest das importierte
+Faelligkeitsdatum der Buchungszeile. Ohne Konzernkontenplan bleibt `Konzernkonto` leer.
+Das Blatt Feldstatus zeigt die tatsaechliche Belegung je Gesellschaft.
 """
 from __future__ import annotations
 
@@ -103,6 +101,9 @@ def main() -> None:
 
     con = sqlite3.connect(f"file:{quelle}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
+    journal_spalten = {r["name"] for r in con.execute("PRAGMA table_info(FinancialJournalEntries)")}
+    # Alte Produktivstaende bleiben lesbar, bis Schema und Journalimport erneuert sind.
+    due_sql = "DueDate" if "DueDate" in journal_spalten else "NULL"
 
     where = ""
     parameter: tuple = ()
@@ -140,14 +141,18 @@ def main() -> None:
     hinweiszeile(ws, "Konten - jedes Konto je Gesellschaft einmal. Das ist die Arbeitsliste fuer das "
                      "Konzernkonto-Mapping: Spalte Konzernkonto ausfuellen und zurueckgeben.")
     hinweiszeile(ws, "Datenstatus - welche Gesellschaft wie weit geladen ist.")
+    hinweiszeile(ws, "Feldstatus - Belegung je Gesellschaft im gesamten geladenen Journalbestand.")
     hinweiszeile(ws, "")
     hinweiszeile(ws, "Was fehlt, und zwar sichtbar", "h")
     hinweiszeile(ws, "Die Schweiz und Oesterreich fehlen. Ihr Hauptbuch kommt aus SAP; das dortige "
                      "EntitySet heisst FinanzdataSchweizOeSet, der Leser sucht aber weiterhin nach "
                      "FinanzJournalSet. Siehe ISS-006.", "warn")
-    hinweiszeile(ws, "Faelligkeitsdatum und Konzernkonto sind als Spalten vorhanden, aber leer. Das "
-                     "Faelligkeitsdatum wird noch nicht gelesen, und der Konzernkontenplan liegt "
-                     "noch nicht vor.", "warn")
+    hinweiszeile(ws, "due date zeigt das Faelligkeitsdatum der Buchungszeile, kein Zahlungsdatum. "
+                     "Nach Erweiterung des Imports muessen die Gesellschaften erneut geladen werden; "
+                     "die Belegung steht im Blatt Feldstatus.")
+    hinweiszeile(ws, "Der Konzernkontenplan mit Zuordnungen je Gesellschaft liegt noch nicht vor; "
+                     "Konzernkonto bleibt deshalb leer. Kostenstelle und dimension 2 werden aus "
+                     "den Buchungszeilen uebernommen; leere Quellfelder bleiben leer.", "warn")
     hinweiszeile(ws, "")
     hinweiszeile(ws, "Betraege und Waehrungen", "h")
     hinweiszeile(ws, "Die Spalte amount ist der Betrag mit Vorzeichen in der Landeswaehrung: Soll "
@@ -170,7 +175,7 @@ def main() -> None:
             " AccountCode, AccountName, CAST(SignedAmountLocal AS REAL) AS Betrag,"
             " LocalCurrency, LineMemo, PostingDate, JournalEntryId, JournalEntryLineId,"
             " FiscalYear, FiscalPeriod, CostCenter, Dimension2, TransactionType,"
-            " SourceDocumentNumber, IsManual, IsReversal, SourceSystem"
+            " SourceDocumentNumber, IsManual, IsReversal, SourceSystem, " + due_sql + " AS DueDate"
             " FROM FinancialJournalEntries" + where +
             " ORDER BY Tsc, PostingDate, JournalEntryId, JournalEntryLineId", parameter):
         ws.append([
@@ -179,7 +184,7 @@ def main() -> None:
             r["AccountCode"], r["AccountName"], r["Betrag"], r["LocalCurrency"], r["LineMemo"],
             (r["PostingDate"] or "")[:10],
             r["JournalEntryId"], r["JournalEntryLineId"],
-            "", "",
+            (r["DueDate"] or "")[:10], "",
             r["FiscalYear"], r["FiscalPeriod"], r["CostCenter"], r["Dimension2"],
             r["TransactionType"], r["SourceDocumentNumber"],
             "ja" if r["IsManual"] else "nein",
@@ -232,6 +237,29 @@ def main() -> None:
         ws.append(["ZSCHWEIZ", "SAP", 0, "", "", "",
                    "Fehlt: der Leser sucht FinanzJournalSet, in P76 heisst das EntitySet "
                    "FinanzdataSchweizOeSet (ISS-006)"])
+
+    # --- Feldstatus (vollstaendiger Bestand, auch beim gekuerzten Detailblatt) --
+    ws = wb.create_sheet("Feldstatus")
+    kopfzeile(ws, ["entity", "Feld", "Zeilen gesamt", "Gefuellt", "Leer", "Hinweis"],
+              [10, 18, 16, 14, 14, 80])
+    felder = [
+        ("fiscal year", "FiscalYear", "Geschaeftsjahr laut Import."),
+        ("period", "FiscalPeriod", "Periode laut Import."),
+        ("cost center", "CostCenter", "B1: Verteilungsregel der Dimension 1; ohne Quellwert leer."),
+        ("dimension 2", "Dimension2", "B1: Verteilungsregel der Dimension 2; ohne Quellwert leer."),
+        ("due date", due_sql, "Faelligkeitsdatum; fehlende Werte ggf. durch erneutes Laden nachziehen."),
+        ("Konzernkonto", "NULL", "Wartet auf Konzernkontenplan und Zuordnung je Gesellschaft."),
+    ]
+    zaehler = ", ".join(
+        f"SUM(CASE WHEN CAST({spalte} AS REAL) > 0 THEN 1 ELSE 0 END) AS f{i}"
+        if feld in ("fiscal year", "period") else
+        f"SUM(CASE WHEN NULLIF(TRIM({spalte}), '') IS NOT NULL THEN 1 ELSE 0 END) AS f{i}"
+        for i, (feld, spalte, _) in enumerate(felder))
+    for r in con.execute("SELECT Tsc, COUNT(*) AS Gesamt, " + zaehler +
+                         " FROM FinancialJournalEntries GROUP BY Tsc ORDER BY Tsc"):
+        for i, (feld, _, hinweis) in enumerate(felder):
+            ws.append([r["Tsc"], feld, r["Gesamt"], r[f"f{i}"],
+                       r["Gesamt"] - r[f"f{i}"], hinweis])
 
     wb.save(ziel)
     con.close()

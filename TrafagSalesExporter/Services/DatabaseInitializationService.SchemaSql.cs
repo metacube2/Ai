@@ -538,6 +538,7 @@ CREATE TABLE FinancialJournalEntries (
     JournalEntryId TEXT NOT NULL DEFAULT '',
     JournalEntryLineId INTEGER NOT NULL DEFAULT 0,
     PostingDate TEXT NULL,
+    DueDate TEXT NULL,
     FiscalYear INTEGER NOT NULL DEFAULT 0,
     FiscalPeriod INTEGER NOT NULL DEFAULT 0,
     AccountCode TEXT NOT NULL DEFAULT '',

@@ -12,6 +12,13 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- JOURNAL-FELDER, 2026-09-08: `JDT1.DueDate` live in FR/IT/US/IN vollstaendig belegt
+  (469'661 Zeilen ab 2025), lokal durch Modell/Schema/Reader/Finance_All implementiert,
+  **noch nicht deployed oder nachgeladen**. `ProfitCode` und `OcrCode2-5` sind in allen
+  vier Quellen leer, Dimension 2-5 inaktiv. Konzernkonto wartet auf Andreas' Mapping.
+  Neues Exportblatt `Feldstatus` weist die tatsaechliche Belegung aus. Zahlungsbuchung
+  (`ORCT/OVPM.DocDate`) und Ausgleich (`OITR.ReconDate`) sind verfuegbar, fachliche
+  Bedeutung eines gewuenschten `date paid` noch offen. Detail: `docs/FINANCE_JOURNAL.md`.
 - ES BUCHUNGSDATUM, STAND 2026-09-02: das Feld ist eingebaut, live geprueft und die
   Fachfrage ist entschieden. Die spanische Export-SQL selektiert
   `FacturasTB.FechaAsiento` als `PostingDate` und `FacturasTB.Asiento` als

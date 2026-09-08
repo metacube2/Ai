@@ -69,7 +69,8 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
                 transactionType: reader["transaction_type"]?.ToString() ?? string.Empty,
                 sourceDocumentNumber: reader["source_document"]?.ToString() ?? string.Empty,
                 stornoToTrans: reader["storno_to_trans"]?.ToString() ?? string.Empty,
-                autoStorno: reader["auto_storno"]?.ToString() ?? string.Empty));
+                autoStorno: reader["auto_storno"]?.ToString() ?? string.Empty,
+                dueDate: reader.IsDBNull(reader.GetOrdinal("due_date")) ? null : reader.GetDateTime(reader.GetOrdinal("due_date"))));
 
             counter++;
             if (counter % 5000 == 0)
@@ -111,7 +112,8 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
         string transactionType,
         string sourceDocumentNumber,
         string stornoToTrans,
-        string autoStorno)
+        string autoStorno,
+        DateTime? dueDate = null)
     {
         var normalizedTransType = transactionType?.Trim() ?? string.Empty;
         var hasStornoReference = !string.IsNullOrWhiteSpace(stornoToTrans) &&
@@ -128,6 +130,7 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
             JournalEntryId = journalEntryId?.Trim() ?? string.Empty,
             JournalEntryLineId = journalEntryLineId,
             PostingDate = postingDate,
+            DueDate = dueDate?.Date,
             FiscalYear = postingDate?.Year ?? 0,
             FiscalPeriod = postingDate?.Month ?? 0,
             AccountCode = accountCode?.Trim() ?? string.Empty,
@@ -158,6 +161,7 @@ SELECT
     j.""TransId"" AS trans_id,
     j.""Line_ID"" AS line_id,
     h.""RefDate"" AS posting_date,
+    j.""DueDate"" AS due_date,
     COALESCE(j.""Account"", '') AS account_code,
     COALESCE(a.""AcctName"", '') AS account_name,
     COALESCE(j.""Debit"", 0) AS debit_lc,

@@ -4,7 +4,7 @@ namespace TrafagSalesExporter.Models;
 /// Eine Hauptbuch-Buchungszeile aus SAP B1 (OJDT/JDT1), getrennt von den
 /// Verkaufszeilen in CentralSalesRecords. Feldumfang folgt der Finance-Prioliste
 /// fuer den ersten B1-Load (Konsolidierung/Analysen), siehe
-/// docs/FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md.
+/// docs/FINANCE_JOURNAL.md.
 /// </summary>
 public class FinancialJournalEntry
 {
@@ -42,6 +42,9 @@ public class FinancialJournalEntry
 
     /// <summary>Buchungsdatum (B1: OJDT.RefDate; SAP: BKPF-BUDAT).</summary>
     public DateTime? PostingDate { get; set; }
+
+    /// <summary>Faelligkeitsdatum der Buchungszeile (B1: JDT1.DueDate); kein Zahlungsdatum.</summary>
+    public DateTime? DueDate { get; set; }
 
     /// <summary>Geschaeftsjahr; B1 = Kalenderjahr des Buchungsdatums, SAP = BKPF-GJAHR.</summary>
     public int FiscalYear { get; set; }

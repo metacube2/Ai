@@ -59,7 +59,8 @@ public class FinancialJournalTests : IDisposable
             localCurrency: "EUR", transactionCurrency: "",
             costCenter: "CC-100", dimension2: "PC-1",
             lineMemo: "Rechnung 404110", transactionType: "13",
-            sourceDocumentNumber: "404110", stornoToTrans: "0", autoStorno: "N");
+            sourceDocumentNumber: "404110", stornoToTrans: "0", autoStorno: "N",
+            dueDate: new DateTime(2026, 4, 30));
 
         Assert.Equal(-918m, entry.SignedAmountLocal);
         Assert.Equal(2026, entry.FiscalYear);
@@ -68,6 +69,7 @@ public class FinancialJournalTests : IDisposable
         Assert.False(entry.IsReversal);
         Assert.Equal("12345", entry.JournalEntryId);
         Assert.Equal("EUR", entry.LocalCurrency);
+        Assert.Equal(new DateTime(2026, 4, 30), entry.DueDate);
     }
 
     [Fact]
@@ -82,6 +84,7 @@ public class FinancialJournalTests : IDisposable
         Assert.Equal(500m, manual.SignedAmountLocal);
         Assert.Equal(550m, manual.SignedAmountTransaction);
         Assert.Equal("USD", manual.TransactionCurrency);
+        Assert.Null(manual.DueDate); // kein erfundener Rueckfall auf das Buchungsdatum
 
         var stornoByReference = HanaFinancialJournalReader.CreateEntry(
             "TRFR", "Frankreich", "fr01_p", "BI1", DateTime.UtcNow,
@@ -106,6 +109,7 @@ public class FinancialJournalTests : IDisposable
         Assert.Contains(@"fr01_p.""OACT""", query);
         Assert.Contains(@"fr01_p.""OADM""", query);
         Assert.Contains(@"""RefDate"" >= :dateFilter", query);
+        Assert.Contains(@"j.""DueDate"" AS due_date", query); // Zeilendatum, nicht Kopfdatum
         Assert.DoesNotContain("47005", query); // kein IT-Umsatzkontenfilter im Hauptbuch
     }
 
@@ -302,6 +306,7 @@ public class FinancialJournalTests : IDisposable
         {
             CreateStoredEntry("TRIN", "900", 0, new DateTime(2026, 4, 2))
         };
+        indiaEntries[0].DueDate = new DateTime(2026, 5, 20);
         var service = CreateService(new FakeJournalReader(indiaEntries));
 
         var result = await service.RefreshSiteAsync(2);
@@ -310,6 +315,28 @@ public class FinancialJournalTests : IDisposable
         Assert.Equal(1, result.InsertedRows);
         await using var verify = await _dbFactory.CreateDbContextAsync();
         Assert.Equal(1, await verify.FinancialJournalEntries.CountAsync(e => e.Tsc == "TRIN"));
+        Assert.Equal(new DateTime(2026, 5, 20), (await verify.FinancialJournalEntries.SingleAsync()).DueDate);
+    }
+
+    [Fact]
+    public async Task SchemaMaintenance_Adds_Nullable_DueDate_Without_Losing_Existing_Journal()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.FinancialJournalEntries.Add(CreateStoredEntry("TRFR", "old", 0, new DateTime(2025, 1, 1)));
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE FinancialJournalEntries DROP COLUMN DueDate");
+
+        var maintenance = new DatabaseSchemaMaintenanceService();
+        maintenance.EnsureSchema(db);
+        maintenance.EnsureSchema(db); // Wiederanlauf muss idempotent bleiben.
+        var old = await db.FinancialJournalEntries.SingleAsync();
+        Assert.Equal("old", old.JournalEntryId);
+        Assert.Null(old.DueDate);
+        old.DueDate = new DateTime(2025, 2, 15);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        Assert.Equal(new DateTime(2025, 2, 15), (await db.FinancialJournalEntries.SingleAsync()).DueDate);
     }
 
     [Fact]

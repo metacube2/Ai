@@ -1,6 +1,6 @@
 # Finance Journal Import (Hauptbuch-Buchungszeilen)
 
-Stand: 2026-08-17. Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
+Stand: 2026-09-08. Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
 `FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`.
 
 Zweck: Hauptbuchdaten je Tochtergesellschaft in die **separate** Tabelle
@@ -11,7 +11,8 @@ unberuehrt.
 Zwei Quellsysteme schreiben in dieselbe Tabelle, die Spalte `SourceSystem` unterscheidet:
 
 - **SAP B1 ueber HANA** — FR (`fr01_p`), IT (`it01_p`), US (`us01_p`), Indien (`TRAFAG_LIVE`)
-- **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`), blockiert bis SAP das EntitySet liefert
+- **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`), Feldliste und Abbildung des vorhandenen
+  `FinanzdataSchweizOeSet` noch zu pruefen; der Leser erwartet `FinanzJournalSet`.
 
 Nicht enthalten: die Manual-Excel-Laender DE, UK, ES — sie haben keine Buchhaltungsquelle.
 
@@ -46,6 +47,7 @@ beziehungsweise `Budat` (CH/AT).
 | Journal Entry ID | `JournalEntryId` | `OJDT.TransId` | `Bukrs/Gjahr/Belnr` |
 | Zeilen-ID | `JournalEntryLineId` | `JDT1.Line_ID` | `Buzei` |
 | Buchungsdatum | `PostingDate` | `OJDT.RefDate` | `Budat` |
+| Faelligkeitsdatum | `DueDate` | `JDT1.DueDate` (lokal vorbereitet, noch nicht deployed) | Noch keine belegte Abbildung, bleibt `null` |
 | Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` | `Gjahr` |
 | Periode | `FiscalPeriod` | Monat aus `RefDate` | `Monat` |
 | Sachkonto | `AccountCode` | `JDT1.Account` | `Hkont`, fuehrende Nullen entfernt |
@@ -79,10 +81,11 @@ Buchungskreis und Geschaeftsjahr eindeutig ist.
 | UI | `Components/Pages/FinanceJournalImport.razor` |
 | Tests | `TrafagSalesExporter.Tests/FinancialJournalTests.cs` |
 
-## SAP-Anforderung: EntitySet `FinanzJournalSet` (offen)
+## SAP-Anforderung: bisherige Spezifikation `FinanzJournalSet` (Abgleich offen)
 
-Zielgruppe SAP-/ABAP-Team, Service-Owner von `ZPOWERBI_EINKAUF_SRV`. Die App-Seite ist
-umgesetzt und deployed; der Load funktioniert, sobald das EntitySet verfuegbar ist.
+Zielgruppe SAP-/ABAP-Team, Service-Owner von `ZPOWERBI_EINKAUF_SRV`. Diese Spezifikation
+beschreibt die bisherige Erwartung des Readers. Vor einem neuen EntitySet zuerst das
+vorhandene `FinanzdataSchweizOeSet` per `$metadata` gegenpruefen (siehe offene Punkte).
 
 **Anforderungen**
 
@@ -167,17 +170,70 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 2. Fachlich mit Andreas: reicht `IsManual = Blart 'SA'`, oder gelten weitere Belegarten als
    manuell? Genuegt Profitcenter als weitere Hauptdimension, oder wird Segment gewuenscht?
    Reicht `OcrCode2` bei B1 oder braucht es `OcrCode3-5`?
-3. Spaltenverfuegbarkeit live gegen `fr01_p` und `TRAFAG_LIVE` verifizieren
-   (`JDT1.ProfitCode`, `OcrCode2`, `FCCurrency`, `OJDT.StornoToTr`, `AutoStorno`).
+3. **Dimensionspruefung erledigt am 2026-09-08:** `ProfitCode` und `OcrCode2-5` existieren
+   in FR/IT/US/IN und sind ab 2025 vollstaendig leer. Dimension 2-5 sind in `ODIM` inaktiv.
+   Ein anderes Dimensionsfeld loest die Luecke nicht; keine Ersatzwerte erfinden.
 4. Volumen: `JDT1` ist deutlich groesser als die Verkaufsbelege. Bei mehr Historie den
    Datumsfilter bewusst setzen und Ladezeit beobachten.
 5. Geschaeftsjahr = Kalenderjahr ist fuer die B1-Gesellschaften **angenommen**; bei
    abweichenden Wirtschaftsjahren muesste `OFPR`/`FinncPriod` ausgewertet werden.
 
-6. **Zielbild Andreas vom 2026-09-08 fuer die Konsolidierung:** Faelligkeitsdatum und
-   Konzernkonto-Mapping fehlen noch, die verdichtete Ein-Zeilen-Darstellung traegt nur bei
+6. **Zielbild Andreas vom 2026-09-08 fuer die Konsolidierung:** Faelligkeitsdatum ist
+   lokal implementiert; Deploy und erneutes Laden stehen aus. Konzernkonto-Mapping fehlt
+   fachlich weiterhin. Die verdichtete Ein-Zeilen-Darstellung traegt nur bei
    zweizeiligen Buchungen. Einzelheiten in
    `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md`.
+
+## Live-Feldpruefung und Umsetzung vom 2026-09-08
+
+Direkter HANA-Zugriff mit der produktiven Standortkonfiguration, ausschliesslich SELECT.
+Grundgesamtheit: `OJDT.RefDate >= 2025-01-01`; kein Kontenfilter. Auch Indien war vom
+Entwicklungsrechner erreichbar. Werkzeug und aggregierter Nachweis:
+`.tmp_tools/JournalFieldProbe0908/` (`Program.cs`, `details.sql`, `results.txt`).
+
+| TSC | Journalzeilen | DueDate gefuellt | ProfitCode / OcrCode2-5 jeweils gefuellt | Zeilen-DueDate anders als Kopf-DueDate |
+| --- | ---: | ---: | ---: | ---: |
+| TRFR | 20'170 | 20'170 | 0 | 87 |
+| TRIT | 162'724 | 162'724 | 0 | 16'551 |
+| TRUS | 21'770 | 21'770 | 0 | 54 |
+| TRIN | 264'997 | 264'997 | 0 | 16 |
+
+Damit muss **JDT1.DueDate** gelesen werden, nicht das Kopfdatum `OJDT.DueDate` und nicht
+das Buchungsdatum. Die Quelle hat 469'661 Zeilen, etwas mehr als der zuvor geladene
+Export (469'629), weil Indien waehrend des Tages weiterbucht. Das ist kein neuer Import.
+
+Dimension 1 ist in allen vier Gesellschaften aktiv, aber ohne Buchungswerte; FR/IT nennen
+sie in der Beschreibung `Business Unit`. Dimension 2-5 sind ueberall inaktiv.
+`JDT1.U_CTX_OCRCD` ist in FR/IT ebenfalls leer. `OACT.ExportCode` ist in allen vier
+Kontenstaemmen leer; daraus entsteht kein Konzernkonten-Mapping. Das indische
+`OACT.U_PROFIT` hat sieben Stammsaetze, ist aber kein belegtes Buchungsdimension-Mapping.
+
+**Lokal implementiert, nicht deployed:** nullable `DueDate` im Modell und im Create-SQL,
+additiver Nachzug per Schema-Maintenance, HANA-Reader und `Finance_All` durchverbunden.
+Bestehende Zeilen erhalten beim Schemawechsel keinen erfundenen Wert; danach alle vier
+Gesellschaften ueber den Journalimport erneut laden. EF und der Refresh speichern das
+neue Modellfeld ohne separate Sonderbehandlung. CH/AT bleibt ohne bestaetigte Quellabbildung.
+`Finance_All` kann alte Datenbanken weiterhin lesen und zeigt die tatsaechliche
+Feldbelegung im neuen Blatt `Feldstatus`, immer ueber den vollstaendigen Journalbestand.
+
+**Zahlungsdatum / Clearing Date:** live in allen vier B1-Schemata vorhanden und belegt:
+`OITR.ReconDate` (interner Ausgleich), `ORCT.DocDate` (Zahlungseingang), `OVPM.DocDate`
+(Zahlungsausgang) sowie `TrsfrDate` fuer den jeweiligen Ueberweisungsweg. Zahlungsbelege
+und Ausgleichshistorie wurden ueber ihre gesamte Historie gezaehlt, nicht nur ab 2025.
+`JDT1.MthDate` ist ebenfalls teilweise gefuellt (FR 5'680, IT 64'672, US 9'892,
+IN 98'778 Journalzeilen ab 2025); es wird nicht pauschal als `date paid` uebernommen.
+Ein Ausgleich kann aus Teilzahlung, Gutschrift oder manueller Zuordnung entstehen;
+auch stornierte Ausgleiche sind vorhanden. Deshalb vor Umsetzung mit Andreas unterscheiden:
+Zahlungsbuchungsdatum, Ueberweisungsdatum, letzter Ausgleich oder vollstaendig ausgeglichen.
+Keine dieser Bedeutungen wurde stillschweigend als zusaetzliches Journalfeld eingebaut.
+SAP-Referenzen: [OITR](https://help.sap.com/doc/089315d8d0f8475a9fc84fb919b501a3/10.0/en-US/SDKHelp/OITR.html),
+[Payments.DocDate](https://help.sap.com/doc/089315d8d0f8475a9fc84fb919b501a3/10.0/en-US/SDKHelp/SAPbobsCOM~Payments~DocDate.html),
+[Teil- und Vollausgleich](https://help.sap.com/docs/SAP_BUSINESS_ONE/68a2e87fb29941b5bf959a184d9c6727/44f3e8dfc4b80486e10000000a155369.html).
+
+Validierung: 675/675 Release-Tests, darin 14/14 gezielte Journaltests mit idempotenter Schemaerweiterung,
+Erhalt alter Zeilen und Persistenz beim Refresh; Python-Exportpruefung mit alter und neuer
+Datenbank bestanden (Datum, fehlendes Mapping, gekuerztes Detail, vollstaendiger Feldstatus).
+Keine Produktivdaten geaendert, kein App-Start, kein Deploy.
 
 ## Querverweise
 

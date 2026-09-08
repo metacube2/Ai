@@ -7,7 +7,7 @@ zusaetzlich braucht und was dafuer noch fehlt.
 Grundlage sind Andreas' Feldliste und die Layoutskizze `db1_fin.xlsx`, beides am
 2026-09-08 von Ingo weitergegeben.
 
-## 1. Von 24 gewuenschten Feldern sind 22 bereits spezifiziert und gebaut
+## 1. Faelligkeitsdatum vorbereitet; Konzernkonto und Quellbelegung bleiben offen
 
 Andreas' Liste deckt sich fast vollstaendig mit dem Mapping in `docs/FINANCE_JOURNAL.md`.
 Vorhanden sind Gesellschaft, Quellsystem, Journal Entry ID und Zeilen-ID, Buchungsdatum,
@@ -16,21 +16,22 @@ Vorzeichen, lokale Waehrung und Betrag, Transaktionswaehrung und Betrag, Kostens
 zweite Dimension, Buchungstext, Belegart, Quelldokumentnummer, das Manuell-Kennzeichen,
 das Stornokennzeichen und der Extraktionszeitpunkt.
 
-Zwei Dinge aus seinem Zielbild fehlen.
+Das Faelligkeitsdatum ist inzwischen lokal implementiert und live in allen vier
+B1-Gesellschaften zu 100 % belegt. Deploy und erneutes Laden stehen noch aus.
+Kostenstelle und Dimension 2 existieren technisch, sind aber direkt in allen vier
+Quellen leer; Dimension 2-5 sind inaktiv. Fuer das Konzernkonto fehlt weiterhin Andreas'
+Mapping. Vollstaendiger Nachweis in `FINANCE_JOURNAL.md`, Abschnitt Live-Feldpruefung.
 
-## 2. Luecke 1: Faelligkeitsdatum
+## 2. Faelligkeitsdatum: lokal umgesetzt, Auslieferung und Nachladen offen
 
-In der Skizze heisst die Spalte `due date`. Im heutigen Modell
-`Models/FinancialJournalEntry.cs` gibt es sie nicht.
+In der Skizze heisst die Spalte `due date`. `Models/FinancialJournalEntry.cs` fuehrt
+dafuer jetzt `DueDate` als nullable Datum; Schema-Maintenance, HANA-Reader und Export
+sind durchverbunden. Ohne Nachladen bleiben alte Datenbankzeilen leer.
 
-Fachlich ist sie fuer eine Konsolidierung nachvollziehbar: Offene-Posten-Sichten und
-Faelligkeitsstaffeln haengen daran. Technisch ist es eine Spalte mehr im HANA-Leser.
-
-**Vor der Umsetzung zu pruefen, nicht zu raten:** ob das Datum in B1 an der Buchungszeile
-oder am Beleg haengt und wie das Feld dort wirklich heisst. Genau dieser Fehlertyp hat bei
-UK-2025 und bei ZC12 Zeit gekostet. Die Pruefung gehoert auf denselben Lauf wie Punkt 3 der
-offenen Punkte in `FINANCE_JOURNAL.md`, also die Live-Verifikation der Spalten gegen
-`fr01_p` und `TRAFAG_LIVE`.
+**Live geprueft am 08.09.2026:** `JDT1.DueDate` ist in 469'661 Buchungszeilen ab 2025
+ueber FR/IT/US/IN vollstaendig gefuellt. Das Datum der Buchungszeile weicht in 16'708
+Faellen vom Kopfdatum `OJDT.DueDate` ab; deshalb wird ausdruecklich das Zeilendatum gelesen.
+Es ist kein Zahlungs- oder Ausgleichsdatum. Diese zusaetzliche Fachfrage klaert Ingo noch.
 
 ## 3. Luecke 2: Konzernkonto-Mapping
 
@@ -75,31 +76,23 @@ ueber den Quellsystem-Code ein, sondern ueber die Anschlussart. Indien ist mit
 `ConnectionKind = Hana` und Schema `TRAFAG_LIVE` ein gueltiger Journalstandort; der Code
 `SAGE` ist laut Kommentar im Dienst historisch und irrefuehrend, fachlich ist es B1.
 
-Ob dort `OJDT` und `JDT1` liegen, prueft der Leser selbst und meldet es klar. Vom
-Entwicklungsrechner ist die indische Quelle nicht erreichbar, der Produktivserver dagegen
-schon. Der Test ist also ein Ladeversuch aus der Anwendung heraus, kein Entwicklungsschritt.
+Ob dort `OJDT` und `JDT1` liegen, prueft der Leser selbst und meldet es klar.
+Die Feldprobe vom 08.09.2026 bestaetigt inzwischen auch den direkten lesenden Zugriff
+vom Entwicklungsrechner auf Indien. Eine aeltere Nichterreichbarkeit gilt nicht mehr als
+aktueller Blocker.
 
-## 6. Der Datenbestand steht seit Juli still
+## 6. Alle vier B1-Gesellschaften sind am 08.09.2026 nachgeladen
 
-Am 2026-09-08 produktiv gemessen:
+Aktueller Export `Finance_All_2026-09-08.xlsx`: 469'629 Zeilen, FR 20'170,
+IT 162'724, US 21'770 und IN 264'965, jeweils bis 08.09.2026. Die anschliessende
+direkte HANA-Feldprobe zaehlt bereits 264'997 indische Zeilen; das ist eine spaetere
+Quellmessung und kein erneuter Import. CH/AT fehlen weiterhin.
 
-| Standort | Zeilen | Von | Bis |
-|---|---:|---|---|
-| TRIT | 149'705 | 01.01.2025 | 16.07.2026 |
-| TRUS | 19'599 | 01.01.2025 | 13.07.2026 |
-| TRFR | 18'285 | 01.01.2025 | 13.07.2026 |
-| TRIN | **264'911** | **01.01.2025** | **08.09.2026** |
-| ZSCHWEIZ | 0 | — | — |
-
-**Nachtrag vom selben Tag:** Ingo hat den Journalimport fuer Indien angestossen. Er hat
-getragen — 264'911 Zeilen bis zum 08.09.2026. Damit ist belegt, dass `OJDT` und `JDT1` in
-`TRAFAG_LIVE` liegen und die Anbindung funktioniert; ein Umbau des Importers war nicht
-noetig. Frankreich, Italien und die USA tragen dagegen unveraendert den Ladestempel vom
-14.07.2026, sind also nicht mitgelaufen.
-
-Von neun Gesellschaften liefern heute vier Hauptbuchdaten. Fuer
-eine Konsolidierung ist das die groessere Luecke als jedes fehlende Feld. CH/AT haengt
-weiter am EntitySet `FinanzJournalSet`, siehe `ISS-006`.
+Der vorherige Vormittagsstand mit FR 18'285, IT 149'705 und US 19'599 Zeilen bis
+Juli sowie IN 264'911 Zeilen bis September ist durch das Nachladen ueberholt.
+Von neun Gesellschaften liefern vier Hauptbuchdaten. CH/AT haengt an der noch
+ungeprueften Feldabbildung des vorhandenen `FinanzdataSchweizOeSet` gegen die
+Erwartung `FinanzJournalSet`, siehe `ISS-006`. DE/UK/ES haben noch keine Journalquelle.
 
 ## 7. Abgrenzung gegen `Sales_All`
 
@@ -110,15 +103,16 @@ Abschreibungen und manuelle Buchungen haben ueberhaupt keine Verkaufszeile. Zusa
 waere beides doppelt gezaehlt.
 
 Der Gewinn liegt in der Abstimmung: Der Erloes auf den GuV-Konten muss sich gegen den
-Nettoumsatz in `Sales_All` abgleichen lassen. Diese Pruefung ist heute nicht fahrbar,
-solange nur vier Gesellschaften geladen sind und drei davon nur bis Juli.
+Nettoumsatz in `Sales_All` abgleichen lassen. Diese Pruefung ist
+fuer die vier geladenen Gesellschaften grundsaetzlich pruefbar; eine gruppenweite
+Abstimmung bleibt wegen der fehlenden Journalquellen unvollstaendig.
 
 ## 8. Finance_All: die Excel-Mappe zum Journal
 
 Auf Ingos Vorgabe „alles in einem File, ein Feld ermoeglicht Sortierung nach
 Gesellschaften, db1 auch rein" ist am 2026-09-08 `Finance_All_2026-09-08.xlsx`
-entstanden, das Gegenstueck zu `Sales_All`. 452'500 Buchungszeilen, 36,4 MB, fuenf
-Blaetter:
+entstanden, das Gegenstueck zu `Sales_All`. Nach dem Nachladen 469'629 Buchungszeilen.
+Der erweiterte Generator erzeugt sechs Blaetter (Feldstatus neu):
 
 | Blatt | Inhalt |
 |---|---|
@@ -127,6 +121,7 @@ Blaetter:
 | `Journal Summary` | Summen je Gesellschaft, Konto und Periode, 9'181 Zeilen |
 | `Konten` | 915 Konten je Gesellschaft — die Arbeitsliste fuer den Konzernkontenplan |
 | `Datenstatus` | wer wie weit geladen ist, inklusive der fehlenden Schweiz |
+| `Feldstatus` | Belegung aller sechs diskutierten Felder je Gesellschaft, immer ueber den Gesamtbestand |
 
 Das Detailblatt folgt Andreas' Skizze: `entity`, `db/cr` mit 40 fuer Soll und 50 fuer
 Haben, `accnt`, `acct desrc`, `amount` mit Vorzeichen, `entry text`, `posting date`,
