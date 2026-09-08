@@ -1,6 +1,31 @@
 # Last Change
 
-Stand: 2026-09-07
+Stand: 2026-09-08
+
+## Bahnmarkt Deutschland und Journal-Konsolidierung, 2026-09-08
+
+- **Bahnmarkt fuer Rohail geliefert:** `Bahnmarkt_Datenaufbereitung_2026-09-08.xlsx` mit 172
+  Bahnkunden ueber acht Standorte, Umsatz 2025 und 2026, Summen je Standort, Datenluecken.
+  Von 172 Zuordnungen ist erst **eine** bestaetigt; der Status steht in jeder Zeile. Keine
+  Summe ueber Waehrungen.
+- **Fund:** Alphaplan pflegt eine Branche, und **99 Adressen tragen dort Bahn** — Deutsche
+  Bahn, Siemens Mobility, Knorr-Bremse, Bombardier, Wabtec, MAHLE. Fuer Deutschland waere
+  die Zuordnung damit belastbarer als in jedem anderen Standort.
+- **Aber der Schluessel passt nicht:** Alphaplans `Adress-Nr.` beginnt bei 10000, unsere
+  `CustomerNumber` bei TRDE laeuft von 10 bis 14016. Zwei Nummernkreise; die 119 scheinbaren
+  Treffer sind Zufall. Es fehlt die Bruecke `AdressenID` zu `Adress-Nr.`. Drei Wege dorthin
+  stehen in `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`.
+- **Journal Indien geladen:** 264'911 Zeilen bis zum 08.09.2026. Ein Umbau des Importers war
+  nicht noetig; `IsJournalSite` grenzt ueber die Anschlussart ein, nicht ueber den
+  Quellsystem-Code. FR, IT und US stehen unveraendert auf dem Ladestand vom 14.07.2026.
+- **Neu: `Finance_All_2026-09-08.xlsx`**, das Gegenstueck zu `Sales_All`. 452'500
+  Buchungszeilen, fuenf Blaetter, `entity` als erste Spalte. `due date` und `Konzernkonto`
+  sind als Spalten da und bewusst leer. Das Blatt `Konten` mit 915 Konten ist die
+  Arbeitsliste fuer den Konzernkontenplan, den Andreas liefern muss.
+- **Offen:** die Bruecke fuer Deutschland, der Kontenplan von Andreas, das Faelligkeitsdatum
+  im Leser, CH/AT ueber `FinanzJournalSet` (ISS-006) und der Nachladelauf fuer FR, IT, US.
+
+## ZZPRDAT: gebaut, transportfaehig, korrigiert — nichts nach P76, 2026-09-03 bis 2026-09-07
 
 ## ZZPRDAT: gebaut, transportfaehig, korrigiert — nichts nach P76, 2026-09-03 bis 2026-09-07
 

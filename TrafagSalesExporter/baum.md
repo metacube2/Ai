@@ -60,6 +60,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` | Marktsegmente und Marktumfrage |
 | `docs/FRAGEBOGEN_RAILWAY_EXPORT_PATRIK_2026-09-01.md` | Fragebogen zum Railway-Export |
 | `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` | Konzept Railway-Export per Mausklick |
+| `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` | Bahnmarkt DE: Branchenfund und fehlender Adressschluessel |
+| `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` | Journal fuer die Konsolidierung, Zielbild Andreas |
 | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` | Diagramm fuer Andreas: Grundregel, vier Belegstufen statt Sonderfaelle, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, fuenf Schalter, Statuskette. Erzeugt aus `.tmp_tools/BuildSupplierWorkflowSvg` |
 
 ## Standortdaten und Exporte

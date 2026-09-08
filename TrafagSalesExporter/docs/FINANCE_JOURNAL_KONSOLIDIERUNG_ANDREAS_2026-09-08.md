@@ -88,10 +88,16 @@ Am 2026-09-08 produktiv gemessen:
 | TRIT | 149'705 | 01.01.2025 | 16.07.2026 |
 | TRUS | 19'599 | 01.01.2025 | 13.07.2026 |
 | TRFR | 18'285 | 01.01.2025 | 13.07.2026 |
-| TRIN | 0 | — | — |
+| TRIN | **264'911** | **01.01.2025** | **08.09.2026** |
 | ZSCHWEIZ | 0 | — | — |
 
-Von neun Gesellschaften liefern heute drei Hauptbuchdaten, und die nur bis Mitte Juli. Fuer
+**Nachtrag vom selben Tag:** Ingo hat den Journalimport fuer Indien angestossen. Er hat
+getragen — 264'911 Zeilen bis zum 08.09.2026. Damit ist belegt, dass `OJDT` und `JDT1` in
+`TRAFAG_LIVE` liegen und die Anbindung funktioniert; ein Umbau des Importers war nicht
+noetig. Frankreich, Italien und die USA tragen dagegen unveraendert den Ladestempel vom
+14.07.2026, sind also nicht mitgelaufen.
+
+Von neun Gesellschaften liefern heute vier Hauptbuchdaten. Fuer
 eine Konsolidierung ist das die groessere Luecke als jedes fehlende Feld. CH/AT haengt
 weiter am EntitySet `FinanzJournalSet`, siehe `ISS-006`.
 
@@ -105,4 +111,31 @@ waere beides doppelt gezaehlt.
 
 Der Gewinn liegt in der Abstimmung: Der Erloes auf den GuV-Konten muss sich gegen den
 Nettoumsatz in `Sales_All` abgleichen lassen. Diese Pruefung ist heute nicht fahrbar,
-solange nur drei Gesellschaften und nur bis Juli geladen sind.
+solange nur vier Gesellschaften geladen sind und drei davon nur bis Juli.
+
+## 8. Finance_All: die Excel-Mappe zum Journal
+
+Auf Ingos Vorgabe „alles in einem File, ein Feld ermoeglicht Sortierung nach
+Gesellschaften, db1 auch rein" ist am 2026-09-08 `Finance_All_2026-09-08.xlsx`
+entstanden, das Gegenstueck zu `Sales_All`. 452'500 Buchungszeilen, 36,4 MB, fuenf
+Blaetter:
+
+| Blatt | Inhalt |
+|---|---|
+| `Lesehinweis` | Was die Mappe ist, Abgrenzung zu `Sales_All`, die drei sichtbaren Luecken |
+| `Journal Detail` | alle Buchungszeilen, `entity` als **erste** Spalte zum Sortieren und Filtern |
+| `Journal Summary` | Summen je Gesellschaft, Konto und Periode, 9'181 Zeilen |
+| `Konten` | 915 Konten je Gesellschaft — die Arbeitsliste fuer den Konzernkontenplan |
+| `Datenstatus` | wer wie weit geladen ist, inklusive der fehlenden Schweiz |
+
+Das Detailblatt folgt Andreas' Skizze: `entity`, `db/cr` mit 40 fuer Soll und 50 fuer
+Haben, `accnt`, `acct desrc`, `amount` mit Vorzeichen, `entry text`, `posting date`,
+`entry ID`. **`due date` und `Konzernkonto` sind als Spalten da, aber leer** — beides ist
+noch nicht vorhanden und soll sichtbar fehlen statt stillschweigend zu verschwinden.
+
+Das Blatt `Konten` ist der praktische Teil der Nachlieferung: Andreas fuellt dort die
+Spalte `Konzernkonto` aus und hat damit den Kontenplan, ohne ihn von Hand aufzustellen.
+
+**Falle beim Erzeugen:** Die Betragsspalten liegen in SQLite als TEXT. Ohne
+`CAST(... AS REAL)` scheitert schon der Vergleich, und ein `>` auf Text liefert stillen
+Unsinn. Dieselbe Falle wie bei `StandardCost`, siehe `docs/router/finance.md`.
