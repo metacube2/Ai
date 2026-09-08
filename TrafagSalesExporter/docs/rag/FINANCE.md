@@ -13,8 +13,10 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 ## Kurzstand
 
 - JOURNAL-FELDER, 2026-09-08: `JDT1.DueDate` live in FR/IT/US/IN vollstaendig belegt
-  (469'661 Zeilen ab 2025), lokal durch Modell/Schema/Reader/Finance_All implementiert,
-  **noch nicht deployed oder nachgeladen**. `ProfitCode` und `OcrCode2-5` sind in allen
+  (469'661 Zeilen ab 2025), durch Modell/Schema/Reader/Finance_All implementiert und
+  **am 2026-09-08 um 14:02 produktiv deployed** (Commit `646a998`, 675/675 Tests gruen).
+  Gefuellt ist das Feld erst nach einem erneuten Ladelauf je Gesellschaft; der
+  SAP-Gateway-Leser fuer CH/AT ist nicht mit angepasst. `ProfitCode` und `OcrCode2-5` sind in allen
   vier Quellen leer, Dimension 2-5 inaktiv. Konzernkonto wartet auf Andreas' Mapping.
   Neues Exportblatt `Feldstatus` weist die tatsaechliche Belegung aus. Zahlungsbuchung
   (`ORCT/OVPM.DocDate`) und Ausgleich (`OITR.ReconDate`) sind verfuegbar, fachliche

@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-03
+Stand: 2026-09-08
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -44,7 +44,27 @@ Stand: 2026-09-03
 
 ## Kurzstand
 
-- Aktuellster produktiv verifizierter Deploy: **2026-09-03 08:17, Einkauf-Performance
+- Aktuellster produktiv verifizierter Deploy: **2026-09-08 14:02, Journal:
+  Faelligkeitsdatum aus `JDT1.DueDate` lesen**, Funktionscommit `646a998`, **675/675**
+  Release-Tests gruen (eigener Lauf vor dem Publish, 23 s). Gepruefte Blockkopie
+  `trafag_exporter.db.before-journal-duedate-20260908-135738.bak`. `BiDashboard.dll`
+  `08.09.2026 13:59:47`, `4'902'400` Bytes, SHA256
+  `B6315BCF7E16D5D09269D28CDF4110F1A82AEC7A6002008C26C806EBA0E29BC7`; lokaler
+  Release-Build und Server bitgleich. Ziel: 1 Datei neu, 5 geaendert, 2048
+  unveraendert, 0 verschwunden. `app_offline.htm` gesetzt und danach wieder
+  deaktiviert.
+
+  **Routen:** Startseite `71'378` Bytes in `5.61 s` (Kaltstart), `/management-cockpit`
+  `0.10 s`, `/finance-journal-import` `0.32 s`, `/standorte` `0.02 s`, alle HTTPS `200`.
+  **Wirknachweis in der DLL:** `DueDate`, `due_date`, `FinancialJournalEntries`.
+
+  **Was dieser Deploy noch nicht bedeutet:** Das Feld ist erst gefuellt, wenn die
+  Gesellschaften erneut geladen werden. Der Schemadienst ergaenzt die Spalte beim
+  Start; bestehende Zeilen bleiben bis zum naechsten Import leer. Der
+  SAP-Gateway-Leser fuer CH/AT ist **nicht** mit angepasst, dort gibt es weiterhin
+  kein Faelligkeitsdatum.
+
+- Vorheriger Deploy: **2026-09-03 08:17, Einkauf-Performance **2026-09-03 08:17, Einkauf-Performance
   und NuGet-Sicherheitsupdates**, Funktionscommits `756e931` und `2444731`, **674/674**
   Release-Tests gruen. Neue gepruefte Blockkopie
   `trafag_exporter.db.before-purchasing-cache-security-20260903-081528.bak`

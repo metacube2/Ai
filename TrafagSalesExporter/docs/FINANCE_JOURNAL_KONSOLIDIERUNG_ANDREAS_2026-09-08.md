@@ -22,7 +22,14 @@ Kostenstelle und Dimension 2 existieren technisch, sind aber direkt in allen vie
 Quellen leer; Dimension 2-5 sind inaktiv. Fuer das Konzernkonto fehlt weiterhin Andreas'
 Mapping. Vollstaendiger Nachweis in `FINANCE_JOURNAL.md`, Abschnitt Live-Feldpruefung.
 
-## 2. Faelligkeitsdatum: lokal umgesetzt, Auslieferung und Nachladen offen
+## 2. Faelligkeitsdatum: umgesetzt und produktiv, Nachladen offen
+
+> **Deployed am 2026-09-08 um 14:02**, Commit `646a998`, `675/675` Release-Tests gruen,
+> Blockkopie `trafag_exporter.db.before-journal-duedate-20260908-135738.bak`, Server-DLL
+> und lokaler Release-Build bitgleich. Zwei Einschraenkungen bleiben: Die Spalte ist erst
+> nach einem **erneuten Ladelauf** je Gesellschaft gefuellt, und der **SAP-Gateway-Leser
+> fuer CH/AT ist nicht mit angepasst** — dort gibt es weiterhin kein Faelligkeitsdatum.
+> Der Rest dieses Abschnitts beschreibt den Stand vor dem Deploy.
 
 In der Skizze heisst die Spalte `due date`. `Models/FinancialJournalEntry.cs` fuehrt
 dafuer jetzt `DueDate` als nullable Datum; Schema-Maintenance, HANA-Reader und Export
