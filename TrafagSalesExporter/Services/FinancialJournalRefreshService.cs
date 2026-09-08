@@ -221,7 +221,7 @@ public class FinancialJournalRefreshService : IFinancialJournalRefreshService
             }
 
             return await _sapJournalReader.GetJournalEntriesAsync(
-                serviceUrl, credentials.Username, credentials.Password,
+                serviceUrl, site.SapEntitySet, credentials.Username, credentials.Password,
                 site.TSC, site.Land, sourceDefinition.Code, settings.DateFilter, cancellationToken);
         }
 

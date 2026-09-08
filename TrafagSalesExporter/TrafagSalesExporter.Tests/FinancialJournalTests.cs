@@ -161,6 +161,7 @@ public class FinancialJournalTests : IDisposable
             ["Gjahr"] = "2026",
             ["Buzei"] = "001",
             ["Budat"] = "/Date(1767139200000)/", // 31.12.2025 UTC
+            ["Faedt"] = "2026-01-30T00:00:00",
             ["Monat"] = "12",
             ["Hkont"] = "0000470050",
             ["HkontTxt"] = "Umsatzerloese Inland",
@@ -194,6 +195,7 @@ public class FinancialJournalTests : IDisposable
         Assert.Equal("1200", entry.CostCenter);
         Assert.Equal("9100", entry.Dimension2);
         Assert.Equal(new DateTime(2025, 12, 31), entry.PostingDate);
+        Assert.Equal(new DateTime(2026, 1, 30), entry.DueDate);
         Assert.False(entry.IsManual);
         Assert.False(entry.IsReversal);
     }
@@ -230,6 +232,25 @@ public class FinancialJournalTests : IDisposable
         Assert.True(entry.IsManual);   // Belegart SA
         Assert.True(entry.IsReversal); // Storno-Belegnummer gesetzt
         Assert.Equal(new DateTime(2026, 1, 15), entry.PostingDate);
+        Assert.Null(entry.DueDate);
+    }
+
+    [Fact]
+    public void Journal_Metadata_Rejects_Sales_EntitySet_And_Accepts_Complete_Journal()
+    {
+        var salesFields = new[]
+        {
+            "WavwrDc", "Mandt", "Bukrs", "Gjahr", "Vbeln", "Posnr", "Fkdat", "Kunnr",
+            "Matnr", "NetwrDc", "Waerk"
+        };
+
+        var missing = SapGatewayFinancialJournalReader.FindMissingRequiredFields(salesFields);
+
+        Assert.Contains("Belnr", missing);
+        Assert.Contains("Hkont", missing);
+        Assert.Contains("Faedt", missing);
+        Assert.Empty(SapGatewayFinancialJournalReader.FindMissingRequiredFields(
+            SapGatewayFinancialJournalReader.RequiredFields));
     }
 
     [Fact]
@@ -391,6 +412,24 @@ public class FinancialJournalTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.RefreshSiteAsync(3));
     }
 
+    [Fact]
+    public async Task RefreshSiteAsync_Passes_Configured_Gateway_Journal_EntitySet()
+    {
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            var site = await db.Sites.SingleAsync(x => x.Id == 4);
+            site.SapEntitySet = "ZFinanceJournalSet";
+            await db.SaveChangesAsync();
+        }
+
+        var gatewayReader = new FakeGatewayJournalReader([]);
+        var service = CreateService(new FakeJournalReader([]), gatewayReader);
+
+        await service.RefreshSiteAsync(4);
+
+        Assert.Equal("ZFinanceJournalSet", gatewayReader.LastEntitySet);
+    }
+
     private static FinancialJournalEntry CreateStoredEntry(string tsc, string journalEntryId, int lineId, DateTime postingDate)
         => new()
         {
@@ -429,12 +468,14 @@ public class FinancialJournalTests : IDisposable
     private sealed class FakeGatewayJournalReader(List<FinancialJournalEntry> entries) : ISapGatewayFinancialJournalReader
     {
         public string? LastServiceUrl { get; private set; }
+        public string? LastEntitySet { get; private set; }
 
         public Task<List<FinancialJournalEntry>> GetJournalEntriesAsync(
-            string serviceUrl, string username, string password, string tsc, string land, string sourceSystem,
+            string serviceUrl, string entitySet, string username, string password, string tsc, string land, string sourceSystem,
             string dateFilter, CancellationToken cancellationToken = default)
         {
             LastServiceUrl = serviceUrl;
+            LastEntitySet = entitySet;
             return Task.FromResult(entries);
         }
     }

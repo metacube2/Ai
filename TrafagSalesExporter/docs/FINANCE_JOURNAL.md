@@ -11,8 +11,9 @@ unberuehrt.
 Zwei Quellsysteme schreiben in dieselbe Tabelle, die Spalte `SourceSystem` unterscheidet:
 
 - **SAP B1 ueber HANA** — FR (`fr01_p`), IT (`it01_p`), US (`us01_p`), Indien (`TRAFAG_LIVE`)
-- **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`), Feldliste und Abbildung des vorhandenen
-  `FinanzdataSchweizOeSet` noch zu pruefen; der Leser erwartet `FinanzJournalSet`.
+- **SAP ECC ueber OData** — CH/AT (`ZSCHWEIZ`). Das benoetigte Hauptbuch-EntitySet ist
+  in P76 noch nicht vorhanden; `FinanzdataSchweizOeSet` wurde live als Verkaufsdatenquelle
+  identifiziert. Der Journal-EntitySet-Name ist am Standort konfigurierbar.
 
 Nicht enthalten: die Manual-Excel-Laender DE, UK, ES — sie haben keine Buchhaltungsquelle.
 
@@ -47,7 +48,7 @@ beziehungsweise `Budat` (CH/AT).
 | Journal Entry ID | `JournalEntryId` | `OJDT.TransId` | `Bukrs/Gjahr/Belnr` |
 | Zeilen-ID | `JournalEntryLineId` | `JDT1.Line_ID` | `Buzei` |
 | Buchungsdatum | `PostingDate` | `OJDT.RefDate` | `Budat` |
-| Faelligkeitsdatum | `DueDate` | `JDT1.DueDate` (lokal vorbereitet, noch nicht deployed) | Noch keine belegte Abbildung, bleibt `null` |
+| Faelligkeitsdatum | `DueDate` | `JDT1.DueDate` (produktiv) | `Faedt`, berechnetes Nettofaelligkeitsdatum |
 | Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` | `Gjahr` |
 | Periode | `FiscalPeriod` | Monat aus `RefDate` | `Monat` |
 | Sachkonto | `AccountCode` | `JDT1.Account` | `Hkont`, fuehrende Nullen entfernt |
@@ -76,21 +77,21 @@ Buchungskreis und Geschaeftsjahr eindeutig ist.
 | Entity/Tabelle | `Models/FinancialJournalEntry.cs`, Create-SQL in `DatabaseInitializationService.SchemaSql.cs` |
 | Indizes | `Tsc`, `PostingDate`, `AccountCode`; Unique `(Tsc, JournalEntryId, JournalEntryLineId)` |
 | B1-Leser | `Services/HanaFinancialJournalReader.cs`, prueft vorab ueber `sys.tables`, ob `OJDT`/`JDT1` existieren |
-| CH/AT-Leser | `Services/SapGatewayFinancialJournalReader.cs`, EntitySet `FinanzJournalSet`, Paging in 1000er-Seiten |
+| CH/AT-Leser | `Services/SapGatewayFinancialJournalReader.cs`, EntitySet aus `Sites.SapEntitySet`, Fallback `FinanzJournalSet`, Paging in 1000er-Seiten |
 | Orchestrierung | `Services/FinancialJournalRefreshService.cs` |
 | UI | `Components/Pages/FinanceJournalImport.razor` |
 | Tests | `TrafagSalesExporter.Tests/FinancialJournalTests.cs` |
 
-## SAP-Anforderung: bisherige Spezifikation `FinanzJournalSet` (Abgleich offen)
+## SAP-Anforderung: vollstaendiges Journal-EntitySet
 
-Zielgruppe SAP-/ABAP-Team, Service-Owner von `ZPOWERBI_EINKAUF_SRV`. Diese Spezifikation
-beschreibt die bisherige Erwartung des Readers. Vor einem neuen EntitySet zuerst das
-vorhandene `FinanzdataSchweizOeSet` per `$metadata` gegenpruefen (siehe offene Punkte).
+Zielgruppe SAP-/ABAP-Team, Service-Owner von `ZPOWERBI_EINKAUF_SRV`. Der Live-Abgleich
+vom 2026-09-08 zeigt, dass noch kein vorhandenes EntitySet diese Spezifikation erfuellt.
 
 **Anforderungen**
 
-- Name `FinanzJournalSet`, fest hinterlegt in
-  `SapGatewayFinancialJournalReader.JournalEntitySet`.
+- Name vorzugsweise `FinanzJournalSet`; ein anderer Name kann am Standort in
+  `Sites.SapEntitySet` gepflegt werden. Vor jedem Datenabruf prueft die App im `$metadata`,
+  ob alle Pflicht-Properties vorhanden sind.
 - Idealerweise derselbe Service, auf den der `ZSCHWEIZ`-Standort zeigt, damit URL und
   Berechtigungen unveraendert bleiben.
 - Eine Zeile je FI-Belegzeile (`BKPF` x `BSEG`), beide Buchungskreise, **alle Konten**.
@@ -121,10 +122,18 @@ vorhandene `FinanzdataSchweizOeSet` per `$metadata` gegenpruefen (siehe offene P
 | `Kostl` | BSEG-KOSTL | CHAR 10 | Kostenstelle |
 | `Prctr` | BSEG-PRCTR | CHAR 10 | Profitcenter |
 | `Sgtxt` | BSEG-SGTXT | CHAR 50 | Buchungstext |
+| `Faedt` | aus BSEG-Zahlungsbedingungen berechnet | DATS | Nettofaelligkeitsdatum; nicht das Basisdatum `ZFBDT` |
 
 Bei S/4 kann `ACDOCA` als Quelle dienen; Property-Namen und Bedeutungen muessen gleich
 bleiben. Zahlen als String und Datum als OData-`/Date(...)/` sind ok, die App parst
 invariant.
+
+`Faedt` ist kein unveraendert zu kopierendes BSEG-Datenbankfeld. SAP muss das
+Nettofaelligkeitsdatum mit der Standardlogik aus Basisdatum und Zahlungsbedingungen
+ermitteln (zum Beispiel `DETERMINE_DUE_DATE`, Ergebnis `NETDT`). Ein leeres Datum ist bei
+fachlich nicht faelligen Sachkontenzeilen erlaubt; die Property selbst ist Pflicht. Ein
+spaeter benoetigtes Ausgleichsdatum waere separat `Augdt` und darf nicht mit `Faedt`
+vermischt werden.
 
 **ABAP-Skizze**
 
@@ -146,6 +155,9 @@ METHOD finanzjournalset_get_entityset.
 ENDMETHOD.
 ```
 
+Nach dem paketierten Select `Faedt` je Zeile mit der SAP-Standard-Faelligkeitslogik
+ermitteln und in die OData-Property uebertragen.
+
 Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 
 **Abnahme**
@@ -157,16 +169,15 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 
 ## Offene Punkte
 
-1. **CH/AT blockiert — aber anders als lange angenommen.** Am 2026-09-08 aus
-   `Sites.SapEntitySetsCache` gelesen: der produktive Service auf `travp762` enthaelt
-   sehr wohl ein Hauptbuch-EntitySet, es heisst dort aber **`FinanzdataSchweizOeSet`**
-   und nicht `FinanzJournalSet`. Ebenfalls vorhanden sind `bkpfSet` und `bsisSet`.
-   `SapGatewayFinancialJournalReader.JournalEntitySet` ist auf `FinanzJournalSet` fest
-   verdrahtet, deshalb meldet jeder Ladeversuch „EntitySet fehlt" — zuletzt am
-   2026-09-08 um 12:49. Vor einer Umstellung muss die **Feldliste** aus `$metadata`
-   gegen das Mapping oben geprueft werden; der Name allein genuegt nicht. Das Feld
-   `Sites.SapEntitySet` existiert bereits und ist leer, der Name liesse sich also
-   konfigurieren statt einzukompilieren.
+1. **CH/AT wartet auf ein SAP-Journal-EntitySet.** Live-$metadata aus P76 am 2026-09-08:
+   `FinanzdataSchweizOeSet` ist Verkaufs-/Fakturadaten mit `Vbeln`, `Posnr`, `Matnr` und
+   `NetwrDc`; Journalfelder wie `Belnr`, `Buzei`, `Hkont`, `Dmbtr`, `Shkzg` und `Faedt`
+   fehlen. `bkpfSet` enthaelt nur Kopfdaten. `bsisSet` enthaelt nur offene
+   Sachkontenposten und zudem weder `Dmbtr`, `Shkzg`, Kontotext, Profitcenter,
+   Buchungstext noch Faelligkeitsdatum. Keines der drei Sets darf als Volljournal
+   angebunden werden. App-seitig sind ein konfigurierbarer EntitySet-Name, eine strikte
+   Pflichtfeldpruefung und das `Faedt`-Mapping umgesetzt. SAP muss jetzt das oben
+   spezifizierte EntitySet liefern; danach `Sites.SapEntitySet` pflegen und CH/AT laden.
 2. Fachlich mit Andreas: reicht `IsManual = Blart 'SA'`, oder gelten weitere Belegarten als
    manuell? Genuegt Profitcenter als weitere Hauptdimension, oder wird Segment gewuenscht?
    Reicht `OcrCode2` bei B1 oder braucht es `OcrCode3-5`?
@@ -178,8 +189,8 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 5. Geschaeftsjahr = Kalenderjahr ist fuer die B1-Gesellschaften **angenommen**; bei
    abweichenden Wirtschaftsjahren muesste `OFPR`/`FinncPriod` ausgewertet werden.
 
-6. **Zielbild Andreas vom 2026-09-08 fuer die Konsolidierung:** Faelligkeitsdatum ist
-   lokal implementiert; Deploy und erneutes Laden stehen aus. Konzernkonto-Mapping fehlt
+6. **Zielbild Andreas vom 2026-09-08 fuer die Konsolidierung:** Das B1-Faelligkeitsdatum
+   ist produktiv und die vier B1-Gesellschaften wurden neu geladen. Konzernkonto-Mapping fehlt
    fachlich weiterhin. Die verdichtete Ein-Zeilen-Darstellung traegt nur bei
    zweizeiligen Buchungen. Einzelheiten in
    `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md`.
@@ -208,11 +219,10 @@ sie in der Beschreibung `Business Unit`. Dimension 2-5 sind ueberall inaktiv.
 Kontenstaemmen leer; daraus entsteht kein Konzernkonten-Mapping. Das indische
 `OACT.U_PROFIT` hat sieben Stammsaetze, ist aber kein belegtes Buchungsdimension-Mapping.
 
-**Lokal implementiert, nicht deployed:** nullable `DueDate` im Modell und im Create-SQL,
+**Produktiv seit 2026-09-08:** nullable `DueDate` im Modell und im Create-SQL,
 additiver Nachzug per Schema-Maintenance, HANA-Reader und `Finance_All` durchverbunden.
-Bestehende Zeilen erhalten beim Schemawechsel keinen erfundenen Wert; danach alle vier
-Gesellschaften ueber den Journalimport erneut laden. EF und der Refresh speichern das
-neue Modellfeld ohne separate Sonderbehandlung. CH/AT bleibt ohne bestaetigte Quellabbildung.
+Alle vier B1-Gesellschaften wurden danach neu geladen. EF und der Refresh speichern das
+neue Modellfeld ohne separate Sonderbehandlung. CH/AT wartet auf das SAP-EntitySet oben.
 `Finance_All` kann alte Datenbanken weiterhin lesen und zeigt die tatsaechliche
 Feldbelegung im neuen Blatt `Feldstatus`, immer ueber den vollstaendigen Journalbestand.
 

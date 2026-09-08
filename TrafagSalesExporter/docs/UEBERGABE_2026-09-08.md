@@ -52,15 +52,15 @@ Empfaenger und ohne Text; beides muss vor dem Versand von Hand hinein.
 
 ## 4. Was als naechstes zu tun ist, mit Reihenfolge
 
-1. **CH/AT im Journal.** Das EntitySet fehlt **nicht**, es heisst in P76
-   `FinanzdataSchweizOeSet` statt `FinanzJournalSet`. Vor einer Umstellung die Feldliste aus
-   `$metadata` gegen das Mapping in `docs/FINANCE_JOURNAL.md` pruefen. Der Aufruf mit
-   Windows-Anmeldung endet in einem `401`; die Fakten gehoeren aus dem Browser geholt, nicht
-   per Skript-Login. `Sites.SapEntitySet` existiert und ist leer, der Name liesse sich also
-   konfigurieren statt einkompilieren.
-2. **Gateway-Leser nachziehen.** `SapGatewayFinancialJournalReader.cs` wurde beim
-   Faelligkeitsdatum **nicht** mit angepasst. Faellt heute nicht auf, weil CH/AT nicht
-   laedt, aber spaetestens bei Punkt 2.
+1. **SAP muss das CH/AT-Journal-EntitySet liefern.** Live-$metadata aus P76 belegt:
+   `FinanzdataSchweizOeSet` ist ein Verkaufs-/Faktura-Set und darf nicht als Journal
+   verwendet werden. `bkpfSet` enthaelt nur Koepfe, `bsisSet` nur offene Sachkontenposten
+   und beide zusammen decken das Volljournal ebenfalls nicht ab. Die vollstaendige
+   Pflichtfeldliste einschliesslich `Faedt` steht in `docs/FINANCE_JOURNAL.md`.
+2. **Nach SAP-Bereitstellung konfigurieren und laden.** Der Gateway-Leser verwendet jetzt
+   `Sites.SapEntitySet` mit Fallback `FinanzJournalSet`, prueft alle Pflichtfelder vor dem
+   Abruf und uebernimmt `Faedt` nach `DueDate`. Den gelieferten Namen am Standort pflegen,
+   den App-Stand deployen und CH/AT laden.
 3. **ZC12 `p_debug` einspielen.** Vorbereitet als
    `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap`, aber **nicht im System**. Der Befehl
    steht in `projektmanagement/PROJEKTSTATUS.md` unter PM-02.

@@ -8,16 +8,17 @@ namespace TrafagSalesExporter.Services;
 
 /// <summary>
 /// Liest Hauptbuch-Buchungszeilen fuer SAP-ECC-Gesellschaften (ZSCHWEIZ = CH/AT)
-/// ueber das SAP-OData-Gateway aus dem EntitySet <see cref="JournalEntitySet"/>.
+/// ueber das SAP-OData-Gateway aus einem konfigurierbaren Journal-EntitySet.
 /// Das EntitySet muss auf SAP-Seite bereitgestellt werden (BKPF/BSEG plus
 /// SKAT-Kontotext); die erwartete Felddefinition steht in
-/// docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md. Fehlt das EntitySet im
+/// docs/FINANCE_JOURNAL.md. Fehlt das EntitySet oder eine Pflicht-Property im
 /// Service, bricht der Reader mit einer klaren fachlichen Meldung ab.
 /// </summary>
 public interface ISapGatewayFinancialJournalReader
 {
     Task<List<FinancialJournalEntry>> GetJournalEntriesAsync(
         string serviceUrl,
+        string entitySet,
         string username,
         string password,
         string tsc,
@@ -29,8 +30,15 @@ public interface ISapGatewayFinancialJournalReader
 
 public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReader
 {
-    /// <summary>Erwartetes EntitySet im ZSCHWEIZ-Service; Name ist mit der ABAP-Spez abgestimmt.</summary>
-    public const string JournalEntitySet = "FinanzJournalSet";
+    /// <summary>Fallback, solange am Standort kein abweichender Journal-EntitySet-Name gepflegt ist.</summary>
+    public const string DefaultJournalEntitySet = "FinanzJournalSet";
+
+    public static readonly IReadOnlyList<string> RequiredFields =
+    [
+        "Bukrs", "Belnr", "Gjahr", "Buzei", "Budat", "Monat", "Blart", "Xblnr", "Stblg",
+        "Hwaer", "Waers", "Hkont", "HkontTxt", "Shkzg", "Dmbtr", "Wrbtr", "Kostl", "Prctr",
+        "Sgtxt", "Faedt"
+    ];
 
     private const int PageSize = 1000;
     private readonly ISapGatewayService _sapGatewayService;
@@ -46,6 +54,7 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
 
     public async Task<List<FinancialJournalEntry>> GetJournalEntriesAsync(
         string serviceUrl,
+        string entitySet,
         string username,
         string password,
         string tsc,
@@ -54,19 +63,23 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         string dateFilter,
         CancellationToken cancellationToken = default)
     {
+        var resolvedEntitySet = string.IsNullOrWhiteSpace(entitySet)
+            ? DefaultJournalEntitySet
+            : entitySet.Trim();
         var parsedDateFilter = ParseDateFilter(dateFilter);
-        await EnsureEntitySetExistsAsync(serviceUrl, username, password, land, cancellationToken);
+        await EnsureEntitySetIsUsableAsync(
+            serviceUrl, resolvedEntitySet, username, password, land, cancellationToken);
 
         var baseUrl = serviceUrl.TrimEnd('/') + "/";
         var filter = $"Budat ge datetime'{parsedDateFilter:yyyy-MM-dd}T00:00:00'";
         await _appEventLogService.WriteAsync("SAP", "Journal-Read gestartet", land: land,
-            details: $"{baseUrl}{JournalEntitySet} | Filter={filter}");
+            details: $"{baseUrl}{resolvedEntitySet} | Filter={filter}");
 
         using var client = CreateClient(username, password);
         var result = new List<FinancialJournalEntry>();
         for (var skip = 0; ; skip += PageSize)
         {
-            var url = $"{baseUrl}{JournalEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
+            var url = $"{baseUrl}{resolvedEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
                       $"&$orderby={Uri.EscapeDataString("Bukrs,Gjahr,Belnr,Buzei")}" +
                       $"&$filter={Uri.EscapeDataString(filter)}";
             using var response = await client.GetAsync(url, cancellationToken);
@@ -74,7 +87,7 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             {
                 var error = await response.Content.ReadAsStringAsync(cancellationToken);
                 throw new HttpRequestException(
-                    $"SAP OData {JournalEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
+                    $"SAP OData {resolvedEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
                     $"URL={url} Antwort={TrimForLog(error)}");
             }
 
@@ -94,7 +107,7 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         }
 
         await _appEventLogService.WriteAsync("SAP", "Journal-Read beendet", land: land,
-            details: $"{baseUrl}{JournalEntitySet} | Zeilen={result.Count}");
+            details: $"{baseUrl}{resolvedEntitySet} | Zeilen={result.Count}");
         return result;
     }
 
@@ -130,6 +143,7 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             JournalEntryId = $"{bukrs}/{gjahr}/{belnr}",
             JournalEntryLineId = ParseInt(GetText(row, "Buzei")),
             PostingDate = ParseSapDate(row.TryGetValue("Budat", out var budat) ? budat : null),
+            DueDate = ParseSapDate(row.TryGetValue("Faedt", out var faedt) ? faedt : null),
             FiscalYear = gjahr,
             FiscalPeriod = ParseInt(GetText(row, "Monat")),
             AccountCode = GetText(row, "Hkont").TrimStart('0'),
@@ -155,8 +169,15 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         };
     }
 
-    private async Task EnsureEntitySetExistsAsync(
-        string serviceUrl, string username, string password, string land, CancellationToken cancellationToken)
+    public static List<string> FindMissingRequiredFields(IEnumerable<string> availableFields)
+    {
+        var available = availableFields.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return RequiredFields.Where(field => !available.Contains(field)).ToList();
+    }
+
+    private async Task EnsureEntitySetIsUsableAsync(
+        string serviceUrl, string entitySet, string username, string password, string land,
+        CancellationToken cancellationToken)
     {
         List<string> entitySets;
         try
@@ -170,15 +191,27 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             throw;
         }
 
-        if (entitySets.Any(name => string.Equals(name, JournalEntitySet, StringComparison.OrdinalIgnoreCase)))
+        if (!entitySets.Any(name => string.Equals(name, entitySet, StringComparison.OrdinalIgnoreCase)))
+        {
+            await _appEventLogService.WriteAsync("SAP", "Journal-EntitySet fehlt", "Error", land: land,
+                details: $"{serviceUrl} | erwartet={entitySet} | vorhanden={string.Join(", ", entitySets.Take(20))}");
+            throw new InvalidOperationException(
+                $"Der SAP-Service enthaelt das konfigurierte Journal-EntitySet '{entitySet}' nicht. " +
+                "Die Felddefinition steht in docs/FINANCE_JOURNAL.md.");
+        }
+
+        var fields = await _sapGatewayService.GetEntityFieldNamesAsync(
+            serviceUrl, entitySet, username, password, cancellationToken);
+        var missingFields = FindMissingRequiredFields(fields);
+        if (missingFields.Count == 0)
             return;
 
-        await _appEventLogService.WriteAsync("SAP", "Journal-EntitySet fehlt", "Error", land: land,
-            details: $"{serviceUrl} | erwartet={JournalEntitySet} | vorhanden={string.Join(", ", entitySets.Take(20))}");
+        await _appEventLogService.WriteAsync("SAP", "Journal-EntitySet ungeeignet", "Error", land: land,
+            details: $"{serviceUrl} | EntitySet={entitySet} | fehlende Felder={string.Join(", ", missingFields)}");
         throw new InvalidOperationException(
-            $"Der SAP-Service enthaelt das EntitySet '{JournalEntitySet}' noch nicht. " +
-            "Das Hauptbuch-EntitySet muss zuerst auf SAP-Seite bereitgestellt werden " +
-            "(Felddefinition: docs/FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md).");
+            $"Das SAP-EntitySet '{entitySet}' ist kein vollstaendiges Hauptbuch-Journal. " +
+            $"Fehlende Properties: {string.Join(", ", missingFields)}. " +
+            "Die Felddefinition steht in docs/FINANCE_JOURNAL.md.");
     }
 
     private static HttpClient CreateClient(string username, string password)

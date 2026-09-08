@@ -1,0 +1,25 @@
+CH/AT SAP-Gateway-Metadatenpruefung, 2026-09-08
+
+Quelle: produktive, in der Anwendung hinterlegte Konfiguration fuer ZSCHWEIZ.
+Zugriff: ein read-only GET auf $metadata, HTTP 200. Keine Zugangsdaten oder Buchungswerte
+wurden ausgegeben oder in diesem Nachweis gespeichert.
+
+FinanzdataSchweizOeSet -> ZPOWERBI_EINKAUF_SRV.FinanzdataSchweizOe
+Properties:
+WavwrDc, Mandt, StprsHc, Bukrs, Gjahr, Vbeln, Posnr, Land1, Tsc, Fkdat, Fkart,
+Vbtyp, Kunnr, Name1, Matnr, Arktx, Prodh, Fkimg, Vrkme, Kurrf, Waerk, Hwaer,
+NetwrDc, TaxHc, TaxDc, NetwrHc, IsCredit, PartyClass, ErdatSrc, AedatSrc,
+CreatedAt, ChangedAt, CreatedBy, ChangedBy, CustomerLand
+Bewertung: Verkaufs-/Fakturapositionen, kein Hauptbuch-Journal.
+
+bkpfSet Properties:
+Mandt, Bukrs, Belnr, Gjahr, Budat, Monat, Wwert, Stblg, Stjah, Kzkrs, Bstat
+Bewertung: nur Belegkopf, keine Journalzeilen.
+
+bsisSet Properties:
+Mandt, Bukrs, Hkont, Zuonr, Gjahr, Belnr, Buzei, Budat, Bldat, Waers, Xblnr,
+Blart, Bschl, Fkont, Wrbtr, Aufnr, Werks, Kostl
+Bewertung: nur offene Sachkontenposten; kein Volljournal und wesentliche Felder fehlen.
+
+Der vollstaendige EntitySet-Bestand enthaelt kein BSEG-, BSAS-, BSID- oder BSIK-Set.
+Keines der vorhandenen Sets erfuellt die Pflichtfelder aus docs/FINANCE_JOURNAL.md.
