@@ -22,8 +22,18 @@ Stand: 2026-09-08
   Buchungszeilen, fuenf Blaetter, `entity` als erste Spalte. `due date` und `Konzernkonto`
   sind als Spalten da und bewusst leer. Das Blatt `Konten` mit 915 Konten ist die
   Arbeitsliste fuer den Konzernkontenplan, den Andreas liefern muss.
-- **Offen:** die Bruecke fuer Deutschland, der Kontenplan von Andreas, das Faelligkeitsdatum
-  im Leser, CH/AT ueber `FinanzJournalSet` (ISS-006) und der Nachladelauf fuer FR, IT, US.
+- **Faelligkeitsdatum produktiv seit 14:02**, Commit `646a998`, `675/675` Tests gruen.
+  `JDT1.DueDate` ist in allen vier B1-Gesellschaften vollstaendig belegt und wird an der
+  **Buchungszeile** gelesen, nicht am Kopfsatz — in Italien weichen 16'551 Zeilen ab.
+  **Achtung:** der Ladelauf von 12:48 lag vor dem Deploy, die Spalte ist deshalb noch
+  leer; es braucht einen zweiten Lauf.
+- **CH/AT ist kein Blocker mehr, sondern eine Aufgabe.** Das EntitySet fehlt nicht, es
+  heisst in P76 `FinanzdataSchweizOeSet` statt `FinanzJournalSet`. Vor der Umstellung
+  die Feldliste pruefen; der Gateway-Leser hat ausserdem kein Faelligkeitsdatum bekommen.
+- **Offen:** die Bruecke fuer Deutschland, der Kontenplan von Andreas, der zweite
+  Ladelauf, CH/AT, der SharePoint-Upload fuer `Finance_All` und zwei formulierte, aber
+  nicht versandte Teams-Nachrichten. Reihenfolge und Einzelheiten:
+  `docs/UEBERGABE_2026-09-08.md`.
 
 ## ZZPRDAT: gebaut, transportfaehig, korrigiert — nichts nach P76, 2026-09-03 bis 2026-09-07
 

@@ -58,6 +58,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen | `docs/router/plattform.md` |
 | **SAP** | ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
+| **Wo stehen wir gerade?** Uebergabestand mit offenen Punkten und Reihenfolge | `docs/UEBERGABE_2026-09-08.md` |
 
 ## Wenn der Ast nicht klar ist
 
