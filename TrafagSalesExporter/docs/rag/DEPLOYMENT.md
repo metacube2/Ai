@@ -44,6 +44,25 @@ Stand: 2026-09-08
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-09-08 15:12, CH/AT Journal:
+  konfigurierbares EntitySet, Pflichtfeldpruefung und `Faedt`**, Funktionscommit
+  `7b1f163`, **677/677** Release-Tests gruen. Neue gepruefte Blockkopie
+  `trafag_exporter.db.before-ch-journal-gateway-20260908-151137.bak` (`457'355'264`
+  Bytes, `integrity_check` `ok`). `BiDashboard.dll` `08.09.2026 15:12:58`,
+  `4'904'448` Bytes, SHA256
+  `CEE1FA97F8FD49540FC6ADE3A646D34ED65EDA871BDD7036B4BC42D0A22EEE89`; lokaler
+  Release-Build und Server bitgleich. Ziel: 0 Dateien neu, 4 geaendert, 2053
+  unveraendert, 0 verschwunden; Produktiv-DB in Laenge und Schreibzeit unveraendert.
+  `app_offline.htm` gesetzt und danach auf `.disabled` umbenannt.
+
+  **Routen:** Startseite `6.99 s`, `/management-cockpit` `0.08 s`,
+  `/finance-journal-import` `30.20 s`, `/standorte` `0.04 s`, alle HTTPS `200`.
+  **Wirknachweis in der DLL:** `Faedt`, `Journal-EntitySet ungeeignet`,
+  `DefaultJournalEntitySet`; alle drei fehlten im Server-Binary vor dem Deploy.
+  `FinanzdataSchweizOeSet` wurde bewusst nicht konfiguriert: Live-$metadata belegt
+  Verkaufs-/Fakturadaten statt Hauptbuch. CH/AT bleibt bis zur SAP-Bereitstellung des
+  in `docs/FINANCE_JOURNAL.md` spezifizierten Volljournal-EntitySets ohne Datenlauf.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-09-08 14:02, Journal:
   Faelligkeitsdatum aus `JDT1.DueDate` lesen**, Funktionscommit `646a998`, **675/675**
   Release-Tests gruen (eigener Lauf vor dem Publish, 23 s). Gepruefte Blockkopie
@@ -61,8 +80,8 @@ Stand: 2026-09-08
   **Was dieser Deploy noch nicht bedeutet:** Das Feld ist erst gefuellt, wenn die
   Gesellschaften erneut geladen werden. Der Schemadienst ergaenzt die Spalte beim
   Start; bestehende Zeilen bleiben bis zum naechsten Import leer. Der
-  SAP-Gateway-Leser fuer CH/AT ist **nicht** mit angepasst, dort gibt es weiterhin
-  kein Faelligkeitsdatum.
+  SAP-Gateway-Leser fuer CH/AT war in diesem Stand **nicht** mit angepasst. Dieser
+  historische Restpunkt wurde mit dem Deploy von 15:12 direkt darueber erledigt.
 
 - Vorheriger Deploy: **2026-09-03 08:17, Einkauf-Performance **2026-09-03 08:17, Einkauf-Performance
   und NuGet-Sicherheitsupdates**, Funktionscommits `756e931` und `2444731`, **674/674**

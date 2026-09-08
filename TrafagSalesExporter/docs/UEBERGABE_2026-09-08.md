@@ -59,8 +59,8 @@ Empfaenger und ohne Text; beides muss vor dem Versand von Hand hinein.
    Pflichtfeldliste einschliesslich `Faedt` steht in `docs/FINANCE_JOURNAL.md`.
 2. **Nach SAP-Bereitstellung konfigurieren und laden.** Der Gateway-Leser verwendet jetzt
    `Sites.SapEntitySet` mit Fallback `FinanzJournalSet`, prueft alle Pflichtfelder vor dem
-   Abruf und uebernimmt `Faedt` nach `DueDate`. Den gelieferten Namen am Standort pflegen,
-   den App-Stand deployen und CH/AT laden.
+   Abruf und uebernimmt `Faedt` nach `DueDate`; dieser Stand ist seit 15:12 produktiv.
+   Den gelieferten Namen am Standort pflegen und CH/AT laden.
 3. **ZC12 `p_debug` einspielen.** Vorbereitet als
    `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap`, aber **nicht im System**. Der Befehl
    steht in `projektmanagement/PROJEKTSTATUS.md` unter PM-02.
