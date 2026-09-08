@@ -39,6 +39,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
 
             updateStatus?.Invoke("Zentrale Tabelle: neue Saetze vorbereiten...");
             await InsertRecordsInCommittedBatchesAsync(connection, site, recordList, updateStatus);
+            var railwayAssignments = await UpsertGermanRailwayAssignmentsAsync(connection, site, recordList);
             updateStatus?.Invoke("Zentrale Tabelle aktualisiert");
 
             await _appEventLogService.WriteAsync(
@@ -46,7 +47,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
                 "Zentrale Tabelle aktualisiert",
                 siteId: site.Id,
                 land: site.Land,
-                details: $"Geloescht={existingCount} | Neu={recordList.Count}");
+                details: $"Geloescht={existingCount} | Neu={recordList.Count} | DE-Bahnzuordnungen={railwayAssignments}");
         }
         finally
         {
@@ -132,6 +133,86 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         command.Parameters.AddWithValue("$siteId", siteId);
         await command.ExecuteNonQueryAsync();
         await transaction.CommitAsync();
+    }
+
+    private static async Task<int> UpsertGermanRailwayAssignmentsAsync(
+        SqliteConnection connection,
+        Site site,
+        IReadOnlyList<SalesRecord> records)
+    {
+        if (!string.Equals(site.TSC?.Trim(), "TRDE", StringComparison.OrdinalIgnoreCase))
+            return 0;
+
+        var customers = records
+            .Where(record => IsGermanRailwayIndustry(record.CustomerIndustry))
+            .Where(record => !string.IsNullOrWhiteSpace(record.CustomerNumber))
+            .GroupBy(record => record.CustomerNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new
+            {
+                CustomerNumber = group.Key,
+                CustomerName = group.Select(record => record.CustomerName?.Trim())
+                    .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? string.Empty
+            })
+            .ToList();
+
+        if (customers.Count == 0)
+            return 0;
+
+        await using var transaction = connection.BeginTransaction();
+        var affected = 0;
+        foreach (var customer in customers)
+        {
+            await using var find = connection.CreateCommand();
+            find.Transaction = transaction;
+            find.CommandText = "SELECT Id, Segment, IsConfirmed FROM CustomerMarketSegments WHERE Tsc='TRDE' AND CustomerNumber=$customerNumber LIMIT 1;";
+            find.Parameters.AddWithValue("$customerNumber", customer.CustomerNumber);
+            await using var reader = await find.ExecuteReaderAsync();
+
+            int? existingId = null;
+            var mayReplace = true;
+            if (await reader.ReadAsync())
+            {
+                existingId = reader.GetInt32(0);
+                var existingSegment = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                var isConfirmed = !reader.IsDBNull(2) && reader.GetBoolean(2);
+                mayReplace = !isConfirmed || string.Equals(existingSegment, "Railway", StringComparison.OrdinalIgnoreCase);
+            }
+            await reader.DisposeAsync();
+
+            if (!mayReplace)
+                continue;
+
+            await using var write = connection.CreateCommand();
+            write.Transaction = transaction;
+            write.CommandText = existingId is null
+                ? """
+                    INSERT INTO CustomerMarketSegments
+                        (Tsc, CustomerNumber, CustomerName, Segment, IsConfirmed, ProposalNote, Source, UpdatedAtUtc)
+                    VALUES ('TRDE', $customerNumber, $customerName, 'Railway', 1, '',
+                            'Alphaplan Kundenstamm / Branche', $updatedAtUtc);
+                    """
+                : """
+                    UPDATE CustomerMarketSegments SET
+                        CustomerName=$customerName, Segment='Railway', IsConfirmed=1,
+                        ProposalNote='', Source='Alphaplan Kundenstamm / Branche', UpdatedAtUtc=$updatedAtUtc
+                    WHERE Id=$id;
+                    """;
+            write.Parameters.AddWithValue("$customerNumber", customer.CustomerNumber);
+            write.Parameters.AddWithValue("$customerName", customer.CustomerName);
+            write.Parameters.AddWithValue("$updatedAtUtc", DateTime.UtcNow.ToString("O"));
+            write.Parameters.AddWithValue("$id", existingId ?? 0);
+            affected += await write.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+        return affected;
+    }
+
+    internal static bool IsGermanRailwayIndustry(string? value)
+    {
+        var normalized = (value ?? string.Empty).Trim();
+        return normalized.StartsWith("00 Bahn", StringComparison.OrdinalIgnoreCase) ||
+               normalized.StartsWith("05 rw Railways / Bahntechnik", StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task InsertRecordsInCommittedBatchesAsync(

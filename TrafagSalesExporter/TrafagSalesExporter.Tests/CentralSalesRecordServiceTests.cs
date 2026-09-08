@@ -96,6 +96,85 @@ public class CentralSalesRecordServiceTests : IDisposable
         Assert.Equal(new DateTime(2026, 4, 29), row.InvoiceDate);
     }
 
+    [Fact]
+    public async Task ReplaceForSiteAsync_ConfirmsGermanRailwayCustomerFromIndustry()
+    {
+        var site = new Site
+        {
+            Id = 8,
+            Schema = "Deutschland",
+            TSC = "TRDE",
+            Land = "Deutschland",
+            SourceSystem = "MANUAL_EXCEL",
+            IsActive = true
+        };
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(site);
+            await db.SaveChangesAsync();
+        }
+
+        var service = new CentralSalesRecordService(_dbFactory, new NullAppEventLogService());
+        await service.ReplaceForSiteAsync(site,
+        [
+            new SalesRecord
+            {
+                Tsc = "TRDE", CustomerNumber = "55013",
+                CustomerName = "Siemens Mobility Rail Equipment (Tianjin) Ltd.",
+                CustomerIndustry = "00 Bahn", ExtractionDate = DateTime.UtcNow
+            },
+            new SalesRecord
+            {
+                Tsc = "TRDE", CustomerNumber = "10001", CustomerName = "Nicht Bahn",
+                CustomerIndustry = "30 Haendler", ExtractionDate = DateTime.UtcNow
+            }
+        ]);
+
+        await using var verify = await _dbFactory.CreateDbContextAsync();
+        var assignment = Assert.Single(verify.CustomerMarketSegments);
+        Assert.Equal("TRDE", assignment.Tsc);
+        Assert.Equal("55013", assignment.CustomerNumber);
+        Assert.Equal("Railway", assignment.Segment);
+        Assert.True(assignment.IsConfirmed);
+        Assert.Equal("Alphaplan Kundenstamm / Branche", assignment.Source);
+    }
+
+    [Fact]
+    public async Task ReplaceForSiteAsync_DoesNotOverwriteConfirmedNonRailwayDecision()
+    {
+        var site = new Site
+        {
+            Id = 8, Schema = "Deutschland", TSC = "TRDE", Land = "Deutschland",
+            SourceSystem = "MANUAL_EXCEL", IsActive = true
+        };
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            db.Sites.Add(site);
+            db.CustomerMarketSegments.Add(new CustomerMarketSegment
+            {
+                Tsc = "TRDE", CustomerNumber = "55013", CustomerName = "Siemens",
+                Segment = "Industry", IsConfirmed = true, Source = "Fachentscheid",
+                UpdatedAtUtc = DateTime.UtcNow.AddDays(-1)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var service = new CentralSalesRecordService(_dbFactory, new NullAppEventLogService());
+        await service.ReplaceForSiteAsync(site,
+        [
+            new SalesRecord
+            {
+                Tsc = "TRDE", CustomerNumber = "55013", CustomerName = "Siemens",
+                CustomerIndustry = "05 rw Railways / Bahntechnik", ExtractionDate = DateTime.UtcNow
+            }
+        ]);
+
+        await using var verify = await _dbFactory.CreateDbContextAsync();
+        var assignment = Assert.Single(verify.CustomerMarketSegments);
+        Assert.Equal("Industry", assignment.Segment);
+        Assert.Equal("Fachentscheid", assignment.Source);
+    }
+
     private sealed class NullAppEventLogService : IAppEventLogService
     {
         public Task WriteAsync(string category, string message, string level = "Info", int? siteId = null, string? land = null, string? details = null)

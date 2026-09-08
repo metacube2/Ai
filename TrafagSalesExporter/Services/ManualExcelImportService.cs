@@ -235,6 +235,9 @@ public class ManualExcelImportService : IManualExcelImportService
                 Name = NormalizeAlphaplanText(ReadRawString(lineIndexes, fields, "ArtikelBezeichnung")),
                 Quantity = quantity,
                 CustomerNumber = alphaplanHeader.CustomerNumber,
+                CustomerName = alphaplanHeader.CustomerName,
+                CustomerCountry = alphaplanHeader.CustomerCountry,
+                CustomerIndustry = alphaplanHeader.CustomerIndustry,
                 PurchaseOrderNumber = FirstNonEmpty(alphaplanHeader.PurchaseOrderNumber, alphaplanHeader.CustomerOrderText),
                 SalesPriceValue = salesValue,
                 SalesCurrency = alphaplanHeader.CurrencyCode,
@@ -311,13 +314,24 @@ public class ManualExcelImportService : IManualExcelImportService
             if (documentEntry == 0)
                 continue;
 
+            var hasBusinessCustomerNumber = HasRawHeader(headerIndexes,
+                "AdressNummer-Kunde", "AdressNummer", "KundenNummer");
             rows[documentEntry] = new AlphaplanInvoiceHeader
             {
                 DocumentEntry = documentEntry,
                 DocumentType = ReadRawString(headerIndexes, fields, "DocumentType"),
                 InvoiceNumber = ReadRawString(headerIndexes, fields, "Belegnummer"),
                 DocumentDate = ReadRawDate(headerIndexes, fields, "Datum"),
-                CustomerNumber = ReadRawString(headerIndexes, fields, "RechnungsAdressenID"),
+                // RechnungsAdressenID ist nur die technische Alphaplan-ID. Sobald der
+                // Export die fachliche Adressnummer liefert, darf niemals auf die
+                // technische ID zurueckgefallen werden (auch nicht bei einer leeren
+                // Einzelzeile), sonst werden zwei Nummernkreise vermischt.
+                CustomerNumber = hasBusinessCustomerNumber
+                    ? ReadFirstRawString(headerIndexes, fields, "AdressNummer-Kunde", "AdressNummer", "KundenNummer")
+                    : ReadRawString(headerIndexes, fields, "RechnungsAdressenID"),
+                CustomerName = ReadFirstRawString(headerIndexes, fields, "Name Kunde", "KundenName"),
+                CustomerCountry = ReadFirstRawString(headerIndexes, fields, "Land Kunde", "KundenLand"),
+                CustomerIndustry = ReadFirstRawString(headerIndexes, fields, "Branche", "KundenBranche"),
                 CurrencyCode = ResolveAlphaplanCurrencyCode(ReadRawString(headerIndexes, fields, "WaehrungenID")),
                 NetAmount = ReadRawDecimal(headerIndexes, fields, "NettoPreisEndSumme"),
                 GrossAmount = ReadRawDecimal(headerIndexes, fields, "BruttoPreisEndSumme"),
@@ -1078,6 +1092,24 @@ public class ManualExcelImportService : IManualExcelImportService
     private static string FirstNonEmpty(params string[] values)
         => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
 
+    private static bool HasRawHeader(Dictionary<string, int> indexes, params string[] names)
+        => names.Any(name => indexes.ContainsKey(NormalizeHeader(name)));
+
+    private static string ReadFirstRawString(
+        Dictionary<string, int> indexes,
+        string[] fields,
+        params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var value = ReadRawString(indexes, fields, name);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        return string.Empty;
+    }
+
     private static string NormalizeFinanceToken(string value)
     {
         var chars = value
@@ -1103,6 +1135,9 @@ public class ManualExcelImportService : IManualExcelImportService
         public string InvoiceNumber { get; init; } = string.Empty;
         public DateTime? DocumentDate { get; init; }
         public string CustomerNumber { get; init; } = string.Empty;
+        public string CustomerName { get; init; } = string.Empty;
+        public string CustomerCountry { get; init; } = string.Empty;
+        public string CustomerIndustry { get; init; } = string.Empty;
         public string CurrencyCode { get; init; } = "EUR";
         public decimal NetAmount { get; init; }
         public decimal GrossAmount { get; init; }

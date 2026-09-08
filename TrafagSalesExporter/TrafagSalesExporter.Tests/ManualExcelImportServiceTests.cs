@@ -503,6 +503,39 @@ public class ManualExcelImportServiceTests
         }
     }
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_AlphaplanPair_PrefersBusinessCustomerFields()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteAlphaplanPair(folder,
+                [
+                    "DocumentType;BelegeID;BelegTyp;Belegnummer;Datum;RechnungsAdressenID;WaehrungenID;ZahlungsBedingungenID;NettoPreisEndSumme;BruttoPreisEndSumme;IstStorniert;IstArchiviert;ExterneBelegNummer;BestellNummer;IhrAuftrag;KostenStelle;KostenTraeger;UUID;AdressNummer-Kunde;Name Kunde;Land Kunde;Branche",
+                    "Invoice;401613;5;RE2610696;2026-06-08 10:15:10.000;419;4;13;100;119;0;0;;PO;;;;uuid;55013;Siemens Mobility Rail Equipment (Tianjin) Ltd.;China;00 Bahn"
+                ],
+                [
+                    "DocumentType;Belegnummer;BelegDatum;BelegeID;BelegePositionenID;ZeilenPosition;PositionsTyp;ArtikelID;ArtikelNummer;KundenArtikelNummer;ArtikelBezeichnung;BEAnzahl;PEAnzahl;PENettoPreis;NettoPreisEinzel;NettoPreisGesamt;BruttoPreisGesamt;MehrwertSteuerSatz;MehrwertSteuer;RohertragGesamt;KostenStelle;KostenTraeger;LieferDatum;NichtDrucken",
+                    "Invoice;RE2610696;2026-06-08 10:15:10.000;401613;1464626;2;0;324;PK250;;Kolben-Pressostat;1;1;100;100;100;119;19;19;30;;;2026-06-05 00:00:00.000;0"
+                ]);
+
+            var rows = await new ManualExcelImportService().ReadSalesRecordsAsync(
+                Path.Combine(folder, "invoice_lines.csv"),
+                new Site { TSC = "TRDE", Land = "Deutschland" });
+
+            var row = Assert.Single(rows);
+            Assert.Equal("55013", row.CustomerNumber);
+            Assert.Equal("Siemens Mobility Rail Equipment (Tianjin) Ltd.", row.CustomerName);
+            Assert.Equal("China", row.CustomerCountry);
+            Assert.Equal("00 Bahn", row.CustomerIndustry);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static string CreateWorkbook(Action<XLWorkbook> fillWorkbook)
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");

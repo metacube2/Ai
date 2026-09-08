@@ -116,3 +116,34 @@ eine fachliche Bestaetigung erforderlich.
 Die zwei im UI-Screenshot sichtbaren Vorschlaege `FAIVELEY TRANSPORT ITALIA S.P.A.` und
 `CAF CONSTRUCC. Y AUXL. DE FERROC.` kommen in Rohails deutschem Kundenstamm nicht vor.
 Diese beiden konkreten Vorschlaege werden durch die neue Tabelle daher **nicht** bestaetigt.
+
+## 7. Umsetzungsstand am 08.09.2026
+
+Die produktive Standortkonfiguration und der SharePoint-Ordner wurden direkt geprueft.
+TRDE liest aus `Import/Finance/Deutschland/AlphaplanRaw`. Dort liegen der Vollbestand
+`invoice_headers.csv`/`invoice_lines.csv`, taegliche Delta-ZIP-Dateien bis einschliesslich
+08.09.2026 und die daraus erzeugten Sales-Dateien. Die aktuelle Kopfdatei enthaelt aber
+weiterhin nur `RechnungsAdressenID`; auch die erzeugte Datei vom 08.09.2026 hat leere
+Felder fuer Kundenname, Kundenland und Branche.
+
+Der App-Leser ist lokal erweitert: Sobald die Alphaplan-Kopfdatei
+`AdressNummer-Kunde` oder `AdressNummer`, `Name Kunde`, `Land Kunde` und `Branche`
+liefert, werden diese Werte in `CustomerNumber`, `CustomerName`, `CustomerCountry` und
+`CustomerIndustry` uebernommen. Ist eine fachliche Nummernspalte vorhanden, faellt eine
+leere Einzelzeile bewusst nicht auf `RechnungsAdressenID` zurueck. Ein Regressionstest
+mit `55013`, Siemens Mobility und `00 Bahn` ist gruen.
+
+Beim anschliessenden TRDE-Lauf uebernimmt die App Kunden mit den exakten Branchen
+`00 Bahn` oder `05 rw Railways / Bahntechnik` automatisch als bestaetigtes Segment
+`Railway`. Bestehende bestaetigte menschliche Entscheide auf ein anderes Segment werden
+nicht ueberschrieben. Bei der heutigen Quelle bleibt diese Automatik wirkungslos, weil
+`CustomerIndustry` leer ist; dadurch kann der falsche interne Nummernkreis keine
+Bahnzuordnung ausloesen.
+
+Der Produktivbestand wurde bewusst noch nicht ersetzt und die 99 Bahnzuordnungen wurden
+noch nicht aktiviert. Der Grund ist fachlich zwingend: Ein Teil der externen Nummern ab
+10000 liegt zufaellig im Bereich der derzeit gespeicherten internen IDs. Eine vorzeitige
+Zuordnung wuerde daher Umsatz fremder Kunden als Railway ausweisen. Der letzte Quellschritt
+ist eine neue Alphaplan-Kopfdatei mit beiden Schluesseln und den vier Kundenfeldern. Danach
+folgen gesicherter TRDE-Neulauf, Fuellgradpruefung und die kundennummerngenaue Uebernahme
+der 99 Bahnbranchen.
