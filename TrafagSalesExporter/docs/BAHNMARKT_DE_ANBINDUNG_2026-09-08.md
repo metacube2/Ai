@@ -1,4 +1,4 @@
-# Bahnmarkt Deutschland: Auswertung, Branchenfund und der fehlende Schluessel
+# Bahnmarkt Deutschland: Auswertung, Branchenfund und der korrekte Kundenschluessel
 
 Stand: 2026-09-08. Anlass war Rohail Munirs Anfrage nach der Datenaufbereitung fuer den
 Bahnmarkt, mit dem Zusatz, dass Patrik die Zuordnung nicht gemacht hat und trotzdem etwas
@@ -69,44 +69,50 @@ Das ist **gepflegte Klassifizierung aus dem Quellsystem**, kein Namensabgleich. 
 Deutschland waere die Zuordnung damit belastbarer als in jedem anderen Standort — die
 anderen acht haben kein solches Feld.
 
-## 4. Der Schluessel passt nicht, und das ist belegt
+## 4. Korrektur: `AdressNummer-Kunde` ist bereits der richtige Schluessel
 
-Die naheliegende Idee, die Liste sofort als Nachschlagetabelle zu verwenden, traegt nicht.
-Am 2026-09-08 gemessen:
+Ingos Screenshot und der im Repository hinterlegte deutsche Excel-Aufbau belegen am
+2026-09-08 dieselbe Feldtrennung:
 
-| Seite | Wertebereich |
-|---|---|
-| Alphaplan `Adress-Nr.` | 10000 bis 601025, **kein einziger Wert unter 10000** |
-| `CentralSalesRecords.CustomerNumber` bei TRDE | 10 bis 14016 |
-| `Belege.RechnungsAdressenID` im lokalen Auszug | 0 bis 13990 |
+| Quellspalte | Bedeutung | Ziel in der App |
+|---|---|---|
+| `AdressNummer-Kunde` / `AdressNummer` | fachliche Kundennummer | `CustomerNumber` |
+| `Name Kunde` | Kundenname | `CustomerName` |
+| `Land Kunde` | Kundenland | `CustomerCountry` |
+| `Branche` | gepflegte Kundenbranche | `CustomerIndustry` |
+| `Lieferanten Nummer` / `Lieferant` | Lieferant des Artikels | `SupplierNumber`; **niemals** Kundenschluessel |
 
-Von 572 Kundennummern der Verkaufszeilen treffen 119 auf eine Adressnummer, also 20
-Prozent. Diese Treffer liegen ausschliesslich im Ueberlappungsbereich 10000 bis 14016 und
-sind **Zufall**. Wer darauf zuordnet, bucht Umsatz auf falsche Firmen.
+Die Standardzuordnung der App war dafuer bereits richtig: `DatabaseSeedService` und der
+Excel-Import mappen `AdressNummer-Kunde` auf `CustomerNumber` und die Lieferantenspalten
+separat. Falsch war die Schlussfolgerung aus dem spaeter gebauten Zwei-Dateien-Rohexport:
+Dessen Kopfdatei enthaelt nur `RechnungsAdressenID`, also die interne Datenbank-ID. Der
+Spezialimport hat diese technische ID ersatzweise als `CustomerNumber` gespeichert. Daher
+kam in der zentralen Datenbank der Bereich 10 bis 14016 zustande. Das beweist keinen
+fehlenden Quellschluessel, sondern einen Informationsverlust dieses Rohexportwegs.
 
-Es sind zwei verschiedene Nummernkreise: unsere Verkaufszeilen tragen die interne
-`AdressenID`, Rohails Export die fachliche `Adress-Nr.`. Es fehlt genau eine Bruecke
-zwischen beiden.
+Konkrete Gegenprobe: Die im Screenshot sichtbare `AdressNummer 55013` steht in Rohails
+Kundenstamm exakt bei `Siemens Mobility Rail Equipment (Tianjin) Ltd.` und traegt die
+Branche `00 Bahn`.
 
-## 5. Drei Wege zur Bruecke
+## 5. Richtiger weiterer Weg
 
-1. **Interne ID mitexportieren.** Im Alphaplan-Exportassistenten heisst das Feld meist `ID`,
-   `AdressenID` oder `Datensatz-Nr.`; es wird in der Maske nicht angezeigt, laesst sich aber
-   anhaken. Schnellster Weg, kein Serverzugriff noetig.
-2. **Rechnungsexport mit Belegnummer, Adress-Nr. und Name.** Unsere Zeilen tragen
-   Belegnummern wie `RE2510000` und `GS2510095`; im lokalen Alphaplan-Auszug steht zu jeder
-   Belegnummer die interne ID. Damit laesst sich die Bruecke selbst bauen.
-3. **Dauerhaft: den Export erweitern.** `AlphaplanExportPackage/scripte/kundenname_ergaenzen.sql`
-   enthaelt Schritt 1 zum Belegen der echten Tabellen- und Spaltennamen ueber
-   `INFORMATION_SCHEMA` und Schritt 2 mit dem ergaenzten Kopfexport samt `LEFT JOIN` auf die
-   Adresse. Rein lesend, laeuft nur auf dem deutschen Server (`localhost\SQL2012`, `ApDaten`).
-
-Solange keiner der drei Wege gegangen ist, bleibt Deutschland ohne Namen und damit ohne
-Bahnzuordnung.
+1. Fuer den naechsten deutschen Lauf den bestehenden Excel-Export mit
+   `AdressNummer-Kunde`, `Name Kunde`, `Land Kunde` und `Branche` verwenden.
+2. Den Zwei-Dateien-Rohexport erst wieder verwenden, wenn seine Kopfdatei dieselben vier
+   fachlichen Felder liefert. `RechnungsAdressenID` darf nicht mehr als fachliche
+   Kundennummer ausgegeben werden.
+3. Nach dem Deutschland-Import die 99 Zeilen mit gepflegter Bahnbranche ueber
+   `TSC + CustomerNumber` gegen Rohails Kundenstamm abgleichen und als Quelle
+   `Alphaplan Kundenstamm / Branche` kennzeichnen.
 
 ## 6. Was danach moeglich wird
 
-Namen an alle 7'615 deutschen Zeilen; Bahnkunden direkt aus der gepflegten Branche statt aus
-Vorschlaegen; und im Reiter Marktsegmente fuer Deutschland bestaetigungsreife Zuordnungen
-statt gar keiner. Fuer die uebrigen acht Standorte aendert das nichts — dort bleibt es bei
-Patriks Pruefung der 171 Vorschlaege.
+Nach einem neuen Deutschland-Import stehen fachliche Kundennummer, Name, Land und Branche
+an den Verkaufszeilen. Die 99 Bahnbranchen-Eintraege koennen dann ohne Namensheuristik als
+belastbare TRDE-Zuordnungen uebernommen werden. Fuer andere TSC gilt Rohails deutscher
+Kundenstamm nicht automatisch: dort bleibt eine Zuordnung ueber lokale Kundennummer oder
+eine fachliche Bestaetigung erforderlich.
+
+Die zwei im UI-Screenshot sichtbaren Vorschlaege `FAIVELEY TRANSPORT ITALIA S.P.A.` und
+`CAF CONSTRUCC. Y AUXL. DE FERROC.` kommen in Rohails deutschem Kundenstamm nicht vor.
+Diese beiden konkreten Vorschlaege werden durch die neue Tabelle daher **nicht** bestaetigt.

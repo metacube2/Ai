@@ -31,7 +31,7 @@ Marktsegmente.
 | **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |
 | Hauptbuch-Import, live gepruefte B1-Feldbelegung, DueDate-Umsetzung und Zahlungs-/Ausgleichsdatum; CH/AT-EntitySet-Abgleich | `docs/FINANCE_JOURNAL.md` |
 | **Journal fuer die Konsolidierung: Zielbild Andreas, Faelligkeitsdatum vorbereitet, Konzernkonto-Mapping offen, Aufbau von `Finance_All` mit Feldstatus** | `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` |
-| **Bahnmarkt Deutschland: warum TRDE keine Zuordnungen hat, der Branchenfund in Alphaplan und der fehlende Adressschluessel** | `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` |
+| **Bahnmarkt Deutschland: korrekter Kundenschluessel `AdressNummer-Kunde`, Branchenfund in Alphaplan und Rohail-Abgleich** | `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` |
 | SAP-Spezifikation WAVWR/NETWR_HC | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` |
 | Aufbau und Formeln der Nachweis-Excel | `docs/FINANCE_DASHBOARD_NACHWEIS_2026-06-17.md` |
 | Schulung fuer Anwender, Keyuser und Revision | `docs/FINANCE_SCHULUNG_FINANZ_2026-06-11.md` |
