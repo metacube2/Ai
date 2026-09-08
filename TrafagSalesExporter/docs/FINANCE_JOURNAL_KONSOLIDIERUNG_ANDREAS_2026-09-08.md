@@ -136,6 +136,14 @@ noch nicht vorhanden und soll sichtbar fehlen statt stillschweigend zu verschwin
 Das Blatt `Konten` ist der praktische Teil der Nachlieferung: Andreas fuellt dort die
 Spalte `Konzernkonto` aus und hat damit den Kontenplan, ohne ihn von Hand aufzustellen.
 
+Erzeugt wird die Mappe mit `Tools/FinanceAll/finance_all_xlsx.py`. Schalter:
+`--lokal` kopiert die Datenbank vor dem Lesen (dringend empfohlen), `--tage N` und
+`--seit JJJJ-MM-TT` kuerzen das Detailblatt fuer schnelle Formattests, `--ziel` setzt
+den Dateinamen. Laufzeiten am 2026-09-08 bei 469'629 Zeilen: vollstaendig mit `--lokal`
+**4 min 10 s**, gekuerzt auf 30 Tage **49 s**; ohne `--lokal` waren es ueber zehn
+Minuten, selbst fuer die gekuerzte Fassung. Begruendung und Messreihe:
+`docs/router/plattform.md`, Abschnitt „Grosse Auswertungen".
+
 **Falle beim Erzeugen:** Die Betragsspalten liegen in SQLite als TEXT. Ohne
 `CAST(... AS REAL)` scheitert schon der Vergleich, und ein `>` auf Text liefert stillen
 Unsinn. Dieselbe Falle wie bei `StandardCost`, siehe `docs/router/finance.md`.

@@ -102,6 +102,39 @@ ist eine Zeile ab `;;`, nur `SELECT`/`WITH` (`Services/ReadOnlySqlGuard.cs`), Pl
 `{schema}`, maximal 500 Zeilen je Statement. **Zwei Bindestriche als Zeichenkettenliteral
 sind nicht moeglich** — sie gelten als Kommentar und der Guardrail lehnt ab.
 
+### Grosse Auswertungen: die Produktivdatenbank vorher lokal kopieren
+
+Die produktive SQLite liegt auf der Freigabe `BiDashboard$` des Servers
+`trch-webapp-bidashboard.trafagch.local`, Datei `trafag_exporter.db`, und ist rund
+360 MB gross. Jeder Blockzugriff laeuft ueber SMB, und SQLite liest bei einem
+`GROUP BY` ueber eine grosse Tabelle sehr viele einzelne Bloecke. Das schlaegt brutal
+durch.
+
+Am 2026-09-08 an `Finance_All` gemessen, `FinancialJournalEntries` mit 469'629 Zeilen:
+
+| Lauf | direkt ueber die Freigabe | mit lokaler Kopie |
+|---|---:|---:|
+| gekuerzt, 30 Tage im Detailblatt | **10 min 21 s** | **49 s** |
+| vollstaendig | ueber 10 min | **4 min 10 s** |
+
+Die gekuerzte Fassung schrieb nur ein Zwanzigstel der Detailzeilen und war trotzdem
+genauso langsam. Damit ist belegt: **nicht das Schreiben der Excel bremst, sondern das
+Lesen ueber das Netz.** Die Summenblaetter gehen ueber die ganze Tabelle, und genau die
+kosten die Zeit.
+
+Die Kopie selbst dauert unter einer Minute und amortisiert sich ab dem ersten
+Tabellenscan. `Tools/FinanceAll/finance_all_xlsx.py` hat dafuer den Schalter `--lokal`;
+wer ein eigenes Auswertungsskript baut, macht es genauso.
+
+Zwei Punkte dazu:
+
+* **Nur lesend, und die Kopie danach wegwerfen.** Das Skript legt sie unter `%TEMP%` an
+  und raeumt sie am Ende weg. Eine liegengebliebene Kopie ist ein veralteter
+  Produktivstand, auf den irgendwann jemand hereinfaellt.
+* **Fuer kleine Abfragen lohnt es nicht.** `SqlQ` gegen die Freigabe ist fuer ein paar
+  tausend Zeilen voellig in Ordnung. Die Kopie lohnt ab dem Punkt, wo ein voller
+  Tabellenscan oder mehrere Aggregationen im Spiel sind.
+
 ## Fallen in diesem Ast
 
 Die vier Deploy-Fallen stehen ausfuehrlich in `docs/DEPLOYMENT.md` Abschnitt 4. Kurz:

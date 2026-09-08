@@ -154,8 +154,16 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 
 ## Offene Punkte
 
-1. **CH/AT blockiert**, bis `FinanzJournalSet` auf `travp762` bereitsteht. Bis dahin
-   meldet ein Ladeversuch klar „EntitySet fehlt"; alle anderen Gesellschaften laden normal.
+1. **CH/AT blockiert — aber anders als lange angenommen.** Am 2026-09-08 aus
+   `Sites.SapEntitySetsCache` gelesen: der produktive Service auf `travp762` enthaelt
+   sehr wohl ein Hauptbuch-EntitySet, es heisst dort aber **`FinanzdataSchweizOeSet`**
+   und nicht `FinanzJournalSet`. Ebenfalls vorhanden sind `bkpfSet` und `bsisSet`.
+   `SapGatewayFinancialJournalReader.JournalEntitySet` ist auf `FinanzJournalSet` fest
+   verdrahtet, deshalb meldet jeder Ladeversuch „EntitySet fehlt" — zuletzt am
+   2026-09-08 um 12:49. Vor einer Umstellung muss die **Feldliste** aus `$metadata`
+   gegen das Mapping oben geprueft werden; der Name allein genuegt nicht. Das Feld
+   `Sites.SapEntitySet` existiert bereits und ist leer, der Name liesse sich also
+   konfigurieren statt einzukompilieren.
 2. Fachlich mit Andreas: reicht `IsManual = Blart 'SA'`, oder gelten weitere Belegarten als
    manuell? Genuegt Profitcenter als weitere Hauptdimension, oder wird Segment gewuenscht?
    Reicht `OcrCode2` bei B1 oder braucht es `OcrCode3-5`?
