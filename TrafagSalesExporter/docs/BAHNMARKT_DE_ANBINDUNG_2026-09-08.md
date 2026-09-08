@@ -119,6 +119,34 @@ Diese beiden konkreten Vorschlaege werden durch die neue Tabelle daher **nicht**
 
 ## 7. Umsetzungsstand am 08.09.2026
 
+### Korrektur nach erweitertem Schluesselabgleich am 09.09.2026
+
+Die fruehere Aussage, in den vorhandenen Dateien gebe es keine Bruecke, war zu pauschal.
+`docs/2025_DataExport_DE.xlsx` enthaelt 6'198 belegte Zeilen mit Belegnummer und fachlicher
+Adressnummer. Fuenf historische `Sales_TRDE`-Arbeitsmappen und das kleine DE-Beispiel
+wurden ebenfalls abgeglichen. Zusammen ergeben sie 1'573 eindeutige Belegnummern.
+Ueber `Belegnummer` zur Rohkopfdatei entsteht die Verbindung zu `RechnungsAdressenID`.
+
+Gemessen gegen den heruntergeladenen Sales-Stand vom 08.09.2026, 7'615 Zeilen:
+
+| Weg | Zeilen | Aussage |
+|---|---:|---|
+| Direkte Belegnummer zur fachlichen Kundennummer | 4'549 | Belegbezogener Nachweis vorhanden |
+| Ueber historische interne ID mit einer beobachteten fachlichen Nummer | 2'427 | Kandidat fuer Nachzug; zeitliche Stabilitaet noch pruefen |
+| Keine eindeutige Nummer | 639 | 150 interne IDs in der Restliste |
+
+Alle 6'976 ermittelten Nummern haben einen Namen im Adressexport. Das ist **noch kein
+produktiver Nachzug und keine bewiesene Vollabdeckung**. Zwei interne IDs sind historisch
+mehrdeutig: `3295` -> `12028`/`12717` (Sonepar), `10783` -> `14529`/`40334` (EMS).
+Bei vorhandener Belegnummer wird die belegbezogene Nummer verwendet, sonst bleibt der
+Konflikt offen. Gleicher Firmenname beweist keine identische Adresse oder Nummer.
+
+Reproduzierbare Pruefung und Excel mit Adressbruecke und Restliste:
+`.tmp_tools/DeKeys0909/check.py`, `.tmp_tools/DeKeys0909/DE_Kundenschluessel_Pruefung.xlsx`.
+Fuer vollstaendige und dauerhafte Zuordnung braucht es den aktuellen Alphaplan-Abgleich
+`RechnungsAdressenID` -> fachliche Adressnummer, mindestens fuer die 150 offenen IDs,
+und die Klaerung der beobachteten Nummernwechsel. Keine Produktivdaten geaendert.
+
 Die produktive Standortkonfiguration und der SharePoint-Ordner wurden direkt geprueft.
 TRDE liest aus `Import/Finance/Deutschland/AlphaplanRaw`. Dort liegen der Vollbestand
 `invoice_headers.csv`/`invoice_lines.csv`, taegliche Delta-ZIP-Dateien bis einschliesslich
