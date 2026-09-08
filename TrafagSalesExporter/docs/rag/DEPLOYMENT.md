@@ -44,6 +44,25 @@ Stand: 2026-09-08
 
 ## Kurzstand
 
+- Aktuellster produktiv verifizierter Deploy: **2026-09-08 23:51, DE-Kundenfelder und
+  Railway-Zuordnung aus Alphaplan-Branche**, Funktionscommit `872fca9`, **680/680**
+  Release-Tests gruen. Vorhandene unveraenderte Sicherung
+  `trafag_exporter.db.before-ch-journal-gateway-20260908-151137.bak` wiederverwendet;
+  Hauptdatenbank unveraendert bei `457'355'264` Bytes / `08.09.2026 14:30:04`.
+  `BiDashboard.dll` `4'912'640` Bytes, SHA256
+  `6DD72BAD51B2985D083832A245912BCBBEC3B61581711A4C03B796C2469F4B51`; Server und
+  lokaler Release-Build bitgleich. HTTPS `200`: Startseite, `/management-cockpit`,
+  `/marktsegmente` und `/standorte`. Wirknachweis: `IsGermanRailwayIndustry`,
+  `Alphaplan Kundenstamm / Branche`, `DE-Bahnzuordnungen`.
+
+  Die Deploy-Konsole meldete zunaechst einen Alarm, weil die fluechtigen Dateien
+  `trafag_exporter.db-wal` und `-shm` beim App-Neustart verschwanden. Direkte Nachpruefung
+  nach dem Start: beide wieder vorhanden, WAL `0` Bytes; Hauptdatenbank in Laenge und
+  Schreibzeit unveraendert. Das war der normale SQLite-Neustart, kein Datenverlust.
+  Produktivdaten wurden nicht neu geladen: Der SharePoint-Rohkopf vom 08.09.2026 liefert
+  weiterhin nur `RechnungsAdressenID`. Die neue Logik wirkt erst nach einem angereicherten
+  Alphaplan-Export mit fachlicher Kundennummer, Name, Land und Branche.
+
 - Aktuellster produktiv verifizierter Deploy: **2026-09-08 15:12, CH/AT Journal:
   konfigurierbares EntitySet, Pflichtfeldpruefung und `Faedt`**, Funktionscommit
   `7b1f163`, **677/677** Release-Tests gruen. Neue gepruefte Blockkopie

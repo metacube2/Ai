@@ -126,12 +126,13 @@ TRDE liest aus `Import/Finance/Deutschland/AlphaplanRaw`. Dort liegen der Vollbe
 weiterhin nur `RechnungsAdressenID`; auch die erzeugte Datei vom 08.09.2026 hat leere
 Felder fuer Kundenname, Kundenland und Branche.
 
-Der App-Leser ist lokal erweitert: Sobald die Alphaplan-Kopfdatei
+Der App-Leser ist seit dem Deploy um 23:51 produktiv erweitert: Sobald die Alphaplan-Kopfdatei
 `AdressNummer-Kunde` oder `AdressNummer`, `Name Kunde`, `Land Kunde` und `Branche`
 liefert, werden diese Werte in `CustomerNumber`, `CustomerName`, `CustomerCountry` und
 `CustomerIndustry` uebernommen. Ist eine fachliche Nummernspalte vorhanden, faellt eine
 leere Einzelzeile bewusst nicht auf `RechnungsAdressenID` zurueck. Ein Regressionstest
-mit `55013`, Siemens Mobility und `00 Bahn` ist gruen.
+mit `55013`, Siemens Mobility und `00 Bahn` ist gruen; der Gesamtlauf bestand mit
+680/680 Tests. Funktionscommit: `872fca9`.
 
 Beim anschliessenden TRDE-Lauf uebernimmt die App Kunden mit den exakten Branchen
 `00 Bahn` oder `05 rw Railways / Bahntechnik` automatisch als bestaetigtes Segment
