@@ -166,6 +166,11 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 5. Geschaeftsjahr = Kalenderjahr ist fuer die B1-Gesellschaften **angenommen**; bei
    abweichenden Wirtschaftsjahren muesste `OFPR`/`FinncPriod` ausgewertet werden.
 
+6. **Zielbild Andreas vom 2026-09-08 fuer die Konsolidierung:** Faelligkeitsdatum und
+   Konzernkonto-Mapping fehlen noch, die verdichtete Ein-Zeilen-Darstellung traegt nur bei
+   zweizeiligen Buchungen. Einzelheiten in
+   `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md`.
+
 ## Querverweise
 
 - B1-Anbindung der Verkaufsstrecke: `docs/QUELLSYSTEME_SAP_B1.md`
