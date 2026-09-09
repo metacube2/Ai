@@ -144,6 +144,14 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             JournalEntryLineId = ParseInt(GetText(row, "Buzei")),
             PostingDate = ParseSapDate(row.TryGetValue("Budat", out var budat) ? budat : null),
             DueDate = ParseSapDate(row.TryGetValue("Faedt", out var faedt) ? faedt : null),
+            // Ausgleich in SAP ECC: BSEG-AUGDT/AUGBL. Bewusst NICHT in RequiredFields, weil
+            // das produktive EntitySet die Felder heute nicht liefert; fehlen sie, bleibt der
+            // Ausgleich leer statt den ganzen CH/AT-Import abzubrechen.
+            ClearingDate = ParseSapDate(row.TryGetValue("Augdt", out var augdt) ? augdt : null),
+            ClearingReference = GetText(row, "Augbl"),
+            // ECC kennt je Position genau einen Ausgleichsbeleg; ein Mehrfachausgleich wie in
+            // B1 (dort live bis zu 9 je Zeile) entsteht hier nicht.
+            ClearingCount = string.IsNullOrWhiteSpace(GetText(row, "Augbl")) ? 0 : 1,
             FiscalYear = gjahr,
             FiscalPeriod = ParseInt(GetText(row, "Monat")),
             AccountCode = GetText(row, "Hkont").TrimStart('0'),
@@ -258,6 +266,13 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         => decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0m;
 
     /// <summary>Parst SAP-OData-Daten: /Date(epochms)/, ISO-Strings und yyyyMMdd.</summary>
+    /// <summary>
+    /// SAP liefert ein leeres Datumsfeld je nach Serialisierung als `00000000`,
+    /// `0001-01-01` oder `1753-01-01`. Ein solcher Initialwert ist kein Datum; bei einem
+    /// Ausgleichsdatum saehe er sonst wie „ausgeglichen am 01.01.0001" aus.
+    /// </summary>
+    private static DateTime? NullIfInitial(DateTime value) => value.Year < 1900 ? null : value;
+
     public static DateTime? ParseSapDate(object? value)
     {
         if (value is null)
@@ -273,13 +288,13 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             if (separator > 0)
                 epochRaw = epochRaw[..separator];
             if (long.TryParse(epochRaw, out var ms))
-                return DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.Date;
+                return NullIfInitial(DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.Date);
         }
 
         if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsed))
-            return parsed.Date;
+            return NullIfInitial(parsed.Date);
         return DateTime.TryParseExact(text, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
-            ? parsed.Date
+            ? NullIfInitial(parsed.Date)
             : null;
     }
 

@@ -46,6 +46,47 @@ public class FinancialJournalEntry
     /// <summary>Faelligkeitsdatum der Buchungszeile (B1: JDT1.DueDate); kein Zahlungsdatum.</summary>
     public DateTime? DueDate { get; set; }
 
+    /// <summary>
+    /// Ausgleichsdatum der Buchungszeile (B1: JDT1.MthDate; SAP ECC: BSEG-AUGDT).
+    /// Live gemessen am 2026-09-09 ab 2025: FR 5'680, IT 64'677, US 9'902 Zeilen.
+    /// **Kein `date paid`**: der Ausgleich kann aus Teilzahlung, Gutschrift oder
+    /// manueller Zuordnung stammen. Leer heisst „nicht (oder noch nicht) ausgeglichen",
+    /// nicht „nicht geladen". Die fachliche Auswahl liegt bei Andreas, siehe
+    /// docs/FINANCE_JOURNAL.md.
+    /// </summary>
+    public DateTime? ClearingDate { get; set; }
+
+    /// <summary>
+    /// Nummer des zuletzt angelegten Ausgleichs (B1: hoechste OITR.ReconNum ueber die
+    /// ITR1-Bruecke; SAP ECC: BSEG-AUGBL). **Nicht** JDT1.IntrnMatch: das Feld ist am
+    /// 2026-09-09 in FR/IT/US live gemessen durchgehend 0 oder -1, also ungepflegt.
+    /// Die Platzhalter werden als leer uebernommen, damit der Feldstatus sie nicht
+    /// als gefuellt zaehlt.
+    /// </summary>
+    public string ClearingReference { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Datum des juengsten zugehoerigen Ausgleichsvorgangs (B1: MAX(OITR.ReconDate) ueber
+    /// ITR1.TransId/TransRowId). Steht neben <see cref="ClearingDate"/>, weil beide
+    /// auseinanderfallen: live tragen 1'613 US-Zeilen ein MthDate ohne Ausgleichssatz.
+    /// </summary>
+    public DateTime? ReconciliationDate { get; set; }
+
+    /// <summary>
+    /// Anzahl der Ausgleichsvorgaenge zu dieser Buchungszeile (B1: COUNT ueber ITR1).
+    /// Live gemessen kommen Werte bis 9 vor. Ein Wert groesser 1 heisst, dass
+    /// <see cref="ReconciliationDate"/> nur der letzte von mehreren Ausgleichen ist und
+    /// gerade nicht als „bezahlt am" gelesen werden darf.
+    /// </summary>
+    public int ClearingCount { get; set; }
+
+    /// <summary>
+    /// Mindestens ein zugehoeriger Ausgleich ist storniert (B1: OITR.Canceled in `Y`
+    /// oder `C`). Ohne dieses Kennzeichen waere ein zurueckgenommener Ausgleich von einem
+    /// gueltigen nicht zu unterscheiden; live betrifft das FR 16, IT 267 und US 257 Zeilen.
+    /// </summary>
+    public bool IsClearingCancelled { get; set; }
+
     /// <summary>Geschaeftsjahr; B1 = Kalenderjahr des Buchungsdatums, SAP = BKPF-GJAHR.</summary>
     public int FiscalYear { get; set; }
 

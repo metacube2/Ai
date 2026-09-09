@@ -4,8 +4,8 @@ using TrafagSalesExporter.Models;
 namespace TrafagSalesExporter.Services;
 
 /// <summary>
-/// SAP-B1-Hauptbuch-Leser: liest Journalzeilen aus JDT1/OJDT (plus OACT-Kontonamen
-/// und OADM-Hauswaehrung) fuer den Finance-Journal-Import. Bewusst OHNE den
+/// SAP-B1-Hauptbuch-Leser: liest Journalzeilen aus JDT1/OJDT (plus OACT-Kontonamen,
+/// OADM-Hauswaehrung und OITR-Ausgleichsvorgang) fuer den Finance-Journal-Import. Bewusst OHNE den
 /// IT-Umsatzkontenfilter aus der Sales-Strecke — das Journal ist das volle Hauptbuch.
 /// </summary>
 public class HanaFinancialJournalReader : IFinancialJournalReader
@@ -70,7 +70,12 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
                 sourceDocumentNumber: reader["source_document"]?.ToString() ?? string.Empty,
                 stornoToTrans: reader["storno_to_trans"]?.ToString() ?? string.Empty,
                 autoStorno: reader["auto_storno"]?.ToString() ?? string.Empty,
-                dueDate: reader.IsDBNull(reader.GetOrdinal("due_date")) ? null : reader.GetDateTime(reader.GetOrdinal("due_date"))));
+                dueDate: reader.IsDBNull(reader.GetOrdinal("due_date")) ? null : reader.GetDateTime(reader.GetOrdinal("due_date")),
+                clearingDate: reader.IsDBNull(reader.GetOrdinal("clearing_date")) ? null : reader.GetDateTime(reader.GetOrdinal("clearing_date")),
+                clearingReference: reader["clearing_reference"]?.ToString() ?? string.Empty,
+                reconciliationDate: reader.IsDBNull(reader.GetOrdinal("reconciliation_date")) ? null : reader.GetDateTime(reader.GetOrdinal("reconciliation_date")),
+                clearingCount: Convert.ToInt32(reader["clearing_count"]),
+                cancelledClearingCount: Convert.ToInt32(reader["clearing_cancelled_count"])));
 
             counter++;
             if (counter % 5000 == 0)
@@ -113,11 +118,20 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
         string sourceDocumentNumber,
         string stornoToTrans,
         string autoStorno,
-        DateTime? dueDate = null)
+        DateTime? dueDate = null,
+        DateTime? clearingDate = null,
+        string? clearingReference = null,
+        DateTime? reconciliationDate = null,
+        int clearingCount = 0,
+        int cancelledClearingCount = 0)
     {
         var normalizedTransType = transactionType?.Trim() ?? string.Empty;
         var hasStornoReference = !string.IsNullOrWhiteSpace(stornoToTrans) &&
                                  stornoToTrans.Trim() is not ("0" or "-1");
+        // B1 kennt keine NULL-Ausgleichsnummer, sondern die Platzhalter 0 und -1.
+        var normalizedClearingReference = clearingReference?.Trim() ?? string.Empty;
+        if (normalizedClearingReference is "0" or "-1")
+            normalizedClearingReference = string.Empty;
 
         return new FinancialJournalEntry
         {
@@ -131,6 +145,11 @@ public class HanaFinancialJournalReader : IFinancialJournalReader
             JournalEntryLineId = journalEntryLineId,
             PostingDate = postingDate,
             DueDate = dueDate?.Date,
+            ClearingDate = clearingDate?.Date,
+            ClearingReference = normalizedClearingReference,
+            ReconciliationDate = reconciliationDate?.Date,
+            ClearingCount = clearingCount,
+            IsClearingCancelled = cancelledClearingCount > 0,
             FiscalYear = postingDate?.Year ?? 0,
             FiscalPeriod = postingDate?.Month ?? 0,
             AccountCode = accountCode?.Trim() ?? string.Empty,
@@ -162,6 +181,11 @@ SELECT
     j.""Line_ID"" AS line_id,
     h.""RefDate"" AS posting_date,
     j.""DueDate"" AS due_date,
+    j.""MthDate"" AS clearing_date,
+    COALESCE(CAST(rec.""last_recon"" AS NVARCHAR(20)), '') AS clearing_reference,
+    rec.""last_recon_date"" AS reconciliation_date,
+    COALESCE(rec.""cancelled_count"", 0) AS clearing_cancelled_count,
+    COALESCE(rec.""recon_count"", 0) AS clearing_count,
     COALESCE(j.""Account"", '') AS account_code,
     COALESCE(a.""AcctName"", '') AS account_name,
     COALESCE(j.""Debit"", 0) AS debit_lc,
@@ -181,6 +205,22 @@ FROM {schemaPrefix}""JDT1"" j
 INNER JOIN {schemaPrefix}""OJDT"" h ON j.""TransId"" = h.""TransId""
 CROSS JOIN {schemaPrefix}""OADM"" adm
 LEFT JOIN {schemaPrefix}""OACT"" a ON j.""Account"" = a.""AcctCode""
+-- Ausgleich: die Bruecke ist ITR1 (TransId/TransRowId), NICHT JDT1.IntrnMatch — das Feld
+-- ist am 2026-09-09 in FR/IT/US live gemessen durchgehend 0 oder -1, also ungepflegt.
+-- Eine Buchungszeile kann mehrfach ausgeglichen werden (live bis zu 9 Mal). Deshalb wird
+-- vor dem Join aggregiert; ein direkter JOIN wuerde diese Zeilen vervielfachen und den
+-- Journalsaldo verfaelschen — derselbe Fehler wie beim spanischen Buchungsdatum.
+LEFT JOIN (
+    SELECT t.""TransId"" AS trans_id,
+           t.""TransRowId"" AS row_id,
+           MAX(o.""ReconDate"") AS ""last_recon_date"",
+           MAX(o.""ReconNum"") AS ""last_recon"",
+           COUNT(*) AS ""recon_count"",
+           SUM(CASE WHEN o.""Canceled"" IN ('Y', 'C') THEN 1 ELSE 0 END) AS ""cancelled_count""
+    FROM {schemaPrefix}""ITR1"" t
+    INNER JOIN {schemaPrefix}""OITR"" o ON o.""ReconNum"" = t.""ReconNum""
+    GROUP BY t.""TransId"", t.""TransRowId""
+) rec ON rec.trans_id = j.""TransId"" AND rec.row_id = j.""Line_ID""
 WHERE h.""RefDate"" >= :{DateFilterParameterName}
 ORDER BY h.""RefDate"", j.""TransId"", j.""Line_ID""";
     }

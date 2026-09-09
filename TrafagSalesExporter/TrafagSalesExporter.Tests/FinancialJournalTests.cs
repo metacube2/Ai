@@ -110,7 +110,81 @@ public class FinancialJournalTests : IDisposable
         Assert.Contains(@"fr01_p.""OADM""", query);
         Assert.Contains(@"""RefDate"" >= :dateFilter", query);
         Assert.Contains(@"j.""DueDate"" AS due_date", query); // Zeilendatum, nicht Kopfdatum
+        Assert.Contains(@"j.""MthDate"" AS clearing_date", query);
+        // Die Ausgleichsbruecke ist ITR1, nicht JDT1.IntrnMatch: das Feld ist live durchgehend
+        // 0 oder -1 und haette nie einen Treffer geliefert.
+        Assert.Contains(@"fr01_p.""ITR1""", query);
+        Assert.Contains(@"fr01_p.""OITR""", query);
+        Assert.DoesNotContain(@"""IntrnMatch""", query);
+        // Eine Zeile kann mehrfach ausgeglichen werden (live bis zu 9 Mal). Vor dem Join muss
+        // aggregiert werden, sonst vervielfacht der Ausgleich Journalzeilen und Saldo.
+        Assert.Contains(@"GROUP BY t.""TransId"", t.""TransRowId""", query);
+        Assert.Contains(@"rec.trans_id = j.""TransId"" AND rec.row_id = j.""Line_ID""", query);
+        Assert.DoesNotContain(@"""ORCT""", query); // Zahlungsbeleg bewusst nicht angebunden
+        Assert.DoesNotContain(@"""OVPM""", query);
         Assert.DoesNotContain("47005", query); // kein IT-Umsatzkontenfilter im Hauptbuch
+    }
+
+    [Fact]
+    public void CreateEntry_Maps_Clearing_Fields_And_Ignores_B1_Placeholders()
+    {
+        var cleared = HanaFinancialJournalReader.CreateEntry(
+            "TRIT", "Italien", "it01_p", "BI1", DateTime.UtcNow,
+            "500", 1, new DateTime(2026, 2, 3), "12100", "Forderungen",
+            1000m, 0m, 0m, 0m, "EUR", "", "", "", "Rechnung 900", "13", "900", "0", "N",
+            dueDate: new DateTime(2026, 3, 5),
+            clearingDate: new DateTime(2026, 3, 12),
+            clearingReference: "4711",
+            reconciliationDate: new DateTime(2026, 3, 13),
+            clearingCount: 1);
+
+        Assert.Equal(new DateTime(2026, 3, 12), cleared.ClearingDate);
+        Assert.Equal("4711", cleared.ClearingReference);
+        Assert.Equal(new DateTime(2026, 3, 13), cleared.ReconciliationDate);
+        Assert.Equal(1, cleared.ClearingCount);
+        Assert.False(cleared.IsClearingCancelled);
+
+        // B1 kennt keine NULL-Ausgleichsnummer, sondern die Platzhalter 0 und -1. Ohne diese
+        // Normalisierung meldet der Feldstatus jede offene Zeile als ausgeglichen.
+        foreach (var placeholder in new[] { "0", "-1", " ", "" })
+        {
+            var open = HanaFinancialJournalReader.CreateEntry(
+                "TRIT", "Italien", "it01_p", "BI1", DateTime.UtcNow,
+                "501", 1, new DateTime(2026, 2, 3), "12100", "Forderungen",
+                1000m, 0m, 0m, 0m, "EUR", "", "", "", "", "13", "", "0", "N",
+                clearingReference: placeholder);
+            Assert.Equal(string.Empty, open.ClearingReference);
+        }
+
+        // Ohne Ausgleich bleibt alles leer; kein Rueckfall auf Buchungs- oder Faelligkeitsdatum.
+        var untouched = HanaFinancialJournalReader.CreateEntry(
+            "TRIT", "Italien", "it01_p", "BI1", DateTime.UtcNow,
+            "502", 1, new DateTime(2026, 2, 3), "12100", "Forderungen",
+            1000m, 0m, 0m, 0m, "EUR", "", "", "", "", "13", "", "0", "N");
+        Assert.Null(untouched.ClearingDate);
+        Assert.Null(untouched.ReconciliationDate);
+        Assert.Equal(string.Empty, untouched.ClearingReference);
+        Assert.Equal(0, untouched.ClearingCount);
+        Assert.False(untouched.IsClearingCancelled);
+
+        // Mehrfachausgleich: das Ausgleichsdatum ist dann nur der letzte von mehreren
+        // Vorgaengen und darf nicht als „bezahlt am" gelesen werden.
+        var partial = HanaFinancialJournalReader.CreateEntry(
+            "TRUS", "USA", "us01_p", "BI1", DateTime.UtcNow,
+            "504", 1, new DateTime(2026, 2, 3), "12100", "Forderungen",
+            1000m, 0m, 0m, 0m, "USD", "", "", "", "", "13", "", "0", "N",
+            reconciliationDate: new DateTime(2026, 4, 1), clearingCount: 3);
+        Assert.Equal(3, partial.ClearingCount);
+        Assert.False(partial.IsClearingCancelled);
+
+        // Ein einziger stornierter Ausgleich genuegt fuer das Kennzeichen.
+        var cancelled = HanaFinancialJournalReader.CreateEntry(
+            "TRIT", "Italien", "it01_p", "BI1", DateTime.UtcNow,
+            "503", 1, new DateTime(2026, 2, 3), "12100", "Forderungen",
+            1000m, 0m, 0m, 0m, "EUR", "", "", "", "", "13", "", "0", "N",
+            clearingCount: 2, cancelledClearingCount: 1);
+        Assert.True(cancelled.IsClearingCancelled);
+        Assert.Equal(2, cancelled.ClearingCount);
     }
 
     [Fact]
@@ -175,7 +249,9 @@ public class FinancialJournalTests : IDisposable
             ["Sgtxt"] = "Rechnung 404110",
             ["Blart"] = "RV",
             ["Xblnr"] = "404110",
-            ["Stblg"] = ""
+            ["Stblg"] = "",
+            ["Augdt"] = "2026-02-14T00:00:00",
+            ["Augbl"] = "0200000007"
         };
 
         var entry = SapGatewayFinancialJournalReader.MapRow(debitRow, "ZSCHWEIZ", "Schweiz/Oesterreich", "SAP");
@@ -196,6 +272,8 @@ public class FinancialJournalTests : IDisposable
         Assert.Equal("9100", entry.Dimension2);
         Assert.Equal(new DateTime(2025, 12, 31), entry.PostingDate);
         Assert.Equal(new DateTime(2026, 1, 30), entry.DueDate);
+        Assert.Equal(new DateTime(2026, 2, 14), entry.ClearingDate); // BSEG-AUGDT
+        Assert.Equal("0200000007", entry.ClearingReference);         // BSEG-AUGBL
         Assert.False(entry.IsManual);
         Assert.False(entry.IsReversal);
     }
@@ -218,7 +296,9 @@ public class FinancialJournalTests : IDisposable
             ["Hwaer"] = "EUR",
             ["Waers"] = "EUR",
             ["Blart"] = "SA",
-            ["Stblg"] = "0100000099"
+            ["Stblg"] = "0100000099",
+            ["Augdt"] = "00000000", // SAP-Initialwert einer offenen Position
+            ["Augbl"] = ""
         };
 
         var entry = SapGatewayFinancialJournalReader.MapRow(creditRow, "ZSCHWEIZ", "Schweiz/Oesterreich", "SAP");
@@ -233,6 +313,18 @@ public class FinancialJournalTests : IDisposable
         Assert.True(entry.IsReversal); // Storno-Belegnummer gesetzt
         Assert.Equal(new DateTime(2026, 1, 15), entry.PostingDate);
         Assert.Null(entry.DueDate);
+        // Der SAP-Initialwert darf nicht als „ausgeglichen am 01.01.0001" durchschlagen.
+        Assert.Null(entry.ClearingDate);
+        Assert.Equal(string.Empty, entry.ClearingReference);
+    }
+
+    [Fact]
+    public void ParseSapDate_Treats_Initial_Sap_Dates_As_Empty()
+    {
+        Assert.Null(SapGatewayFinancialJournalReader.ParseSapDate("00000000"));
+        Assert.Null(SapGatewayFinancialJournalReader.ParseSapDate("0001-01-01T00:00:00"));
+        Assert.Null(SapGatewayFinancialJournalReader.ParseSapDate("1753-01-01T00:00:00"));
+        Assert.Equal(new DateTime(2026, 1, 30), SapGatewayFinancialJournalReader.ParseSapDate("2026-01-30T00:00:00"));
     }
 
     [Fact]
@@ -340,13 +432,18 @@ public class FinancialJournalTests : IDisposable
     }
 
     [Fact]
-    public async Task SchemaMaintenance_Adds_Nullable_DueDate_Without_Losing_Existing_Journal()
+    public async Task SchemaMaintenance_Adds_Date_Columns_Without_Losing_Existing_Journal()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         db.FinancialJournalEntries.Add(CreateStoredEntry("TRFR", "old", 0, new DateTime(2025, 1, 1)));
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
-        await db.Database.ExecuteSqlRawAsync("ALTER TABLE FinancialJournalEntries DROP COLUMN DueDate");
+        foreach (var spalte in new[]
+                 { "DueDate", "ClearingDate", "ClearingReference", "ReconciliationDate",
+                   "ClearingCount", "IsClearingCancelled" })
+        {
+            await db.Database.ExecuteSqlRawAsync($"ALTER TABLE FinancialJournalEntries DROP COLUMN {spalte}");
+        }
 
         var maintenance = new DatabaseSchemaMaintenanceService();
         maintenance.EnsureSchema(db);
@@ -354,10 +451,28 @@ public class FinancialJournalTests : IDisposable
         var old = await db.FinancialJournalEntries.SingleAsync();
         Assert.Equal("old", old.JournalEntryId);
         Assert.Null(old.DueDate);
+        Assert.Null(old.ClearingDate);
+        Assert.Null(old.ReconciliationDate);
+        Assert.Equal(string.Empty, old.ClearingReference);
+        Assert.Equal(0, old.ClearingCount);
+        Assert.False(old.IsClearingCancelled);
+
         old.DueDate = new DateTime(2025, 2, 15);
+        old.ClearingDate = new DateTime(2025, 3, 1);
+        old.ReconciliationDate = new DateTime(2025, 3, 2);
+        old.ClearingReference = "4711";
+        old.ClearingCount = 2;
+        old.IsClearingCancelled = true;
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
-        Assert.Equal(new DateTime(2025, 2, 15), (await db.FinancialJournalEntries.SingleAsync()).DueDate);
+
+        var reloaded = await db.FinancialJournalEntries.SingleAsync();
+        Assert.Equal(new DateTime(2025, 2, 15), reloaded.DueDate);
+        Assert.Equal(new DateTime(2025, 3, 1), reloaded.ClearingDate);
+        Assert.Equal(new DateTime(2025, 3, 2), reloaded.ReconciliationDate);
+        Assert.Equal("4711", reloaded.ClearingReference);
+        Assert.Equal(2, reloaded.ClearingCount);
+        Assert.True(reloaded.IsClearingCancelled);
     }
 
     [Fact]

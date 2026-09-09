@@ -16,7 +16,8 @@ Gemessen am 08.09.2026: 30 Tage 49 Sekunden, Vollauszug 4 min 10 s mit lokaler K
 
 Das Layout der Detailzeilen folgt Andreas' Skizze `db1_fin.xlsx`: `entity` zuerst, damit
 nach Gesellschaft sortiert und gefiltert werden kann. `due date` liest das importierte
-Faelligkeitsdatum der Buchungszeile. Ohne Konzernkontenplan bleibt `Konzernkonto` leer.
+Faelligkeitsdatum der Buchungszeile, `clearing date`/`recon date`/`clearing ref` den
+Ausgleich. Ohne Konzernkontenplan bleibt `Konzernkonto` leer.
 Das Blatt Feldstatus zeigt die tatsaechliche Belegung je Gesellschaft.
 """
 from __future__ import annotations
@@ -102,8 +103,17 @@ def main() -> None:
     con = sqlite3.connect(f"file:{quelle}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
     journal_spalten = {r["name"] for r in con.execute("PRAGMA table_info(FinancialJournalEntries)")}
+
     # Alte Produktivstaende bleiben lesbar, bis Schema und Journalimport erneuert sind.
-    due_sql = "DueDate" if "DueDate" in journal_spalten else "NULL"
+    def spalte(name: str, fehlt: str = "NULL") -> str:
+        return name if name in journal_spalten else fehlt
+
+    due_sql = spalte("DueDate")
+    clearing_sql = spalte("ClearingDate")
+    clearing_ref_sql = spalte("ClearingReference")
+    recon_sql = spalte("ReconciliationDate")
+    clearing_anzahl_sql = spalte("ClearingCount", "0")
+    clearing_storno_sql = spalte("IsClearingCancelled", "0")
 
     where = ""
     parameter: tuple = ()
@@ -150,6 +160,18 @@ def main() -> None:
     hinweiszeile(ws, "due date zeigt das Faelligkeitsdatum der Buchungszeile, kein Zahlungsdatum. "
                      "Nach Erweiterung des Imports muessen die Gesellschaften erneut geladen werden; "
                      "die Belegung steht im Blatt Feldstatus.")
+    hinweiszeile(ws, "clearing date ist das Ausgleichsdatum der Buchungszeile und ausdruecklich kein "
+                     "fertiges date paid: ein Ausgleich kann aus einer Teilzahlung, einer Gutschrift "
+                     "oder einer manuellen Zuordnung entstehen. Eine leere Zelle heisst 'nicht (oder "
+                     "noch nicht) ausgeglichen', nicht 'nicht geladen'. recon date ist das Datum des "
+                     "juengsten zugehoerigen Ausgleichsvorgangs, clearing ref seine Nummer, "
+                     "Ausgleiche deren Anzahl und clearing storniert weist zurueckgenommene "
+                     "Ausgleiche aus. Steht in Ausgleiche eine Zahl groesser 1, ist die Zeile "
+                     "mehrfach ausgeglichen worden und recon date ist nur der letzte Vorgang. "
+                     "Welche dieser Bedeutungen die fuehrende Kennzahl werden soll, entscheidet "
+                     "Finance.", "warn")
+    hinweiszeile(ws, "Das Zahlungsdatum des Zahlungsbelegs selbst (ORCT/OVPM) ist bewusst noch nicht "
+                     "angebunden; dafuer fehlt die live gemessene Verknuepfung ueber ITR1.", "warn")
     hinweiszeile(ws, "Der Konzernkontenplan mit Zuordnungen je Gesellschaft liegt noch nicht vor; "
                      "Konzernkonto bleibt deshalb leer. Kostenstelle und dimension 2 werden aus "
                      "den Buchungszeilen uebernommen; leere Quellfelder bleiben leer.", "warn")
@@ -164,10 +186,12 @@ def main() -> None:
     ws = wb.create_sheet("Journal Detail")
     kopfzeile(ws,
               ["entity", "db/cr", "accnt", "acct desrc", "amount", "currency", "entry text",
-               "posting date", "entry ID", "line ID", "due date", "Konzernkonto",
-               "fiscal year", "period", "cost center", "dimension 2", "doc type",
-               "source document", "manual", "reversal", "source system"],
-              [10, 8, 14, 34, 16, 10, 42, 13, 16, 9, 12, 14, 11, 8, 14, 14, 10, 18, 9, 9, 13])
+               "posting date", "entry ID", "line ID", "due date", "clearing date",
+               "recon date", "clearing ref", "Ausgleiche", "clearing storniert",
+               "Konzernkonto", "fiscal year", "period", "cost center", "dimension 2",
+               "doc type", "source document", "manual", "reversal", "source system"],
+              [10, 8, 14, 34, 16, 10, 42, 13, 16, 9, 12, 13, 12, 13, 11, 16, 14, 11, 8, 14,
+               14, 10, 18, 9, 9, 13])
 
     anzahl = 0
     for r in con.execute(
@@ -175,7 +199,11 @@ def main() -> None:
             " AccountCode, AccountName, CAST(SignedAmountLocal AS REAL) AS Betrag,"
             " LocalCurrency, LineMemo, PostingDate, JournalEntryId, JournalEntryLineId,"
             " FiscalYear, FiscalPeriod, CostCenter, Dimension2, TransactionType,"
-            " SourceDocumentNumber, IsManual, IsReversal, SourceSystem, " + due_sql + " AS DueDate"
+            " SourceDocumentNumber, IsManual, IsReversal, SourceSystem, " + due_sql + " AS DueDate,"
+            " " + clearing_sql + " AS ClearingDate, " + recon_sql + " AS ReconciliationDate,"
+            " " + clearing_ref_sql + " AS ClearingReference,"
+            " " + clearing_anzahl_sql + " AS ClearingCount,"
+            " " + clearing_storno_sql + " AS IsClearingCancelled"
             " FROM FinancialJournalEntries" + where +
             " ORDER BY Tsc, PostingDate, JournalEntryId, JournalEntryLineId", parameter):
         ws.append([
@@ -184,7 +212,13 @@ def main() -> None:
             r["AccountCode"], r["AccountName"], r["Betrag"], r["LocalCurrency"], r["LineMemo"],
             (r["PostingDate"] or "")[:10],
             r["JournalEntryId"], r["JournalEntryLineId"],
-            (r["DueDate"] or "")[:10], "",
+            (r["DueDate"] or "")[:10],
+            (r["ClearingDate"] or "")[:10],
+            (r["ReconciliationDate"] or "")[:10],
+            r["ClearingReference"] or "",
+            r["ClearingCount"] or "",
+            "ja" if r["IsClearingCancelled"] else "",
+            "",
             r["FiscalYear"], r["FiscalPeriod"], r["CostCenter"], r["Dimension2"],
             r["TransactionType"], r["SourceDocumentNumber"],
             "ja" if r["IsManual"] else "nein",
@@ -248,11 +282,25 @@ def main() -> None:
         ("cost center", "CostCenter", "B1: Verteilungsregel der Dimension 1; ohne Quellwert leer."),
         ("dimension 2", "Dimension2", "B1: Verteilungsregel der Dimension 2; ohne Quellwert leer."),
         ("due date", due_sql, "Faelligkeitsdatum; fehlende Werte ggf. durch erneutes Laden nachziehen."),
+        ("clearing date", clearing_sql,
+         "Ausgleichsdatum der Buchungszeile (B1 JDT1.MthDate). Leer heisst nicht ausgeglichen, "
+         "nicht ungeladen: nur ausgeglichene Zeilen tragen ein Datum."),
+        ("recon date", recon_sql,
+         "Datum des zugehoerigen Ausgleichsvorgangs (B1 OITR.ReconDate). Ohne Ausgleich leer."),
+        ("clearing ref", clearing_ref_sql,
+         "Nummer des zuletzt angelegten Ausgleichs (hoechste B1 OITR.ReconNum). Nicht "
+         "JDT1.IntrnMatch: das Feld ist live durchgehend 0 oder -1, also ungepflegt."),
+        ("Ausgleiche", clearing_anzahl_sql,
+         "Anzahl der Ausgleichsvorgaenge zur Buchungszeile. Groesser 1 heisst Teilausgleich; "
+         "recon date ist dann nur der letzte davon."),
+        ("clearing storniert", clearing_storno_sql,
+         "Gefuellt = mindestens ein zugehoeriger Ausgleich ist storniert (B1 OITR.Canceled Y "
+         "oder C). Die Spalte Leer zaehlt hier die nicht stornierten Zeilen."),
         ("Konzernkonto", "NULL", "Wartet auf Konzernkontenplan und Zuordnung je Gesellschaft."),
     ]
     zaehler = ", ".join(
         f"SUM(CASE WHEN CAST({spalte} AS REAL) > 0 THEN 1 ELSE 0 END) AS f{i}"
-        if feld in ("fiscal year", "period") else
+        if feld in ("fiscal year", "period", "Ausgleiche", "clearing storniert") else
         f"SUM(CASE WHEN NULLIF(TRIM({spalte}), '') IS NOT NULL THEN 1 ELSE 0 END) AS f{i}"
         for i, (feld, spalte, _) in enumerate(felder))
     for r in con.execute("SELECT Tsc, COUNT(*) AS Gesamt, " + zaehler +
