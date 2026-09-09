@@ -260,7 +260,7 @@ statt.
 | --- | --- | --- | --- |
 | `ClearingDate` | `JDT1.MthDate` | `BSEG-AUGDT` | Ausgleichsdatum der Buchungszeile |
 | `ReconciliationDate` | `MAX(OITR.ReconDate)` ueber ITR1 | — | Datum des juengsten Ausgleichsvorgangs |
-| `ClearingReference` | `MAX(OITR.ReconNum)` ueber ITR1 | `BSEG-AUGBL` | Nummer des zuletzt angelegten Ausgleichs |
+| `ClearingReference` | hoechste `OITR.ReconNum` **am** `ReconciliationDate` | `BSEG-AUGBL` | Nummer genau dieses Ausgleichs |
 | `ClearingCount` | `COUNT(*)` ueber ITR1 | 0 oder 1 | Anzahl der Ausgleichsvorgaenge |
 | `IsClearingCancelled` | `OITR.Canceled` in `Y`/`C` | — | mindestens ein Ausgleich storniert |
 
@@ -281,6 +281,13 @@ den produktiven B1-Schemata erhoben, ausschliesslich lesend.
    wird in einer Unterabfrage nach `TransId`/`TransRowId` aggregiert, bevor verknuepft
    wird. `ClearingCount` macht den Mehrfachausgleich in der Auswertung sichtbar, statt ihn
    hinter einem einzelnen Datum verschwinden zu lassen.
+3. **Die hoechste Ausgleichsnummer ist nicht die des juengsten Ausgleichs.** Der erste
+   Entwurf nahm `MAX(ReconNum)` und `MAX(ReconDate)` in derselben Aggregation und haette
+   damit Nummer und Datum zweier **verschiedener** Ausgleiche nebeneinandergestellt.
+   Gemessen betrifft das FR 374 von 1'412, IT 77 von 5'834 und US 49 von 332 mehrfach
+   ausgeglichene Zeilen; `ReconNum` wird also nicht in Datumsreihenfolge vergeben. Die
+   Unterabfrage laeuft deshalb zweistufig: erst Datum und Anzahl je Zeile, dann die
+   hoechste Nummer genau an diesem Datum.
 
 **Gegenprobe auf Produktivdaten.** Die unveraenderte produktive Reader-Query wurde live
 ausgefuehrt und ihre Zeilenzahl gegen die Basisabfrage ohne Ausgleichs-Join gezaehlt:
@@ -295,6 +302,16 @@ Die Zeilenzahl ist in allen drei Gesellschaften identisch; die Erweiterung vervi
 also keine Zeile. **Indien war am 2026-09-09 vom Entwicklungsrechner nicht erreichbar**
 (TCP-Timeout), die Belegung dort ist ungemessen — am 2026-09-08 war der Standort noch
 erreichbar, es handelt sich also um ein Netzfenster und nicht um einen Befund.
+
+**Offen und vor dem Deploy nachzuholen:** Diese Gegenprobe gilt fuer die einstufige
+Fassung der Unterabfrage. Die zweistufige Korrektur aus Befund 3 ist **noch nicht live
+gegengezaehlt**, weil das Firmennetz waehrend der Nachmessung ausfiel (DNS-Aufloesung
+schlug fuer alle Standorte fehl). Das ist kein Formalismus: der erste Versuch der
+zweistufigen Fassung scheiterte an HANA mit `invalid column name REC.last_recon_date`,
+weil unquotierte Aliase grossgeschrieben werden. Die Unit-Tests pruefen nur Teilzeichen
+der Query und koennen eine solche Laufzeitfrage grundsaetzlich nicht entscheiden. Vor dem
+Deploy ist deshalb `.tmp_tools/JournalClearingProbe0909` erneut auszufuehren; erwartet
+werden dieselben Basiszeilenzahlen wie oben.
 
 Dass `ClearingDate` und `ReconciliationDate` **beide** gefuehrt werden, ist gemessen und
 nicht kosmetisch: in den USA tragen 1'613 Zeilen ein `MthDate` ohne zugehoerigen
@@ -313,8 +330,16 @@ Journal-Ladelauf je Gesellschaft gefuellt; das Blatt `Feldstatus` in `Finance_Al
 die tatsaechliche Belegung aus. Der Schemanachzug ist additiv, alte Produktivstaende
 bleiben lesbar. CH/AT liest `BSEG-AUGDT`/`AUGBL` optional: die Felder stehen **nicht** in
 `RequiredFields`, damit ein EntitySet ohne sie den CH/AT-Import nicht abbricht, sondern
-den Ausgleich leer laesst. Dabei filtert `ParseSapDate` die SAP-Initialwerte (`00000000`,
-`0001-01-01`, `1753-01-01`) heraus, die sonst als „ausgeglichen am 01.01.0001" erschienen.
+den Ausgleich leer laesst. `ReconciliationDate`, `ClearingCount` und `IsClearingCancelled`
+bleiben fuer CH/AT bauartbedingt leer, weil ECC keine Ausgleichshistorie wie `OITR` fuehrt;
+das ist im Lesehinweis von `Finance_All` ausdruecklich vermerkt, damit es nicht als
+fehlende Ladung missverstanden wird.
+
+**Bewusste Ausweitung:** `ParseSapDate` filtert die SAP-Initialwerte (`00000000`,
+`0001-01-01`, `1753-01-01`) heraus und gibt dafuer `null` zurueck. Das wirkt auf **alle**
+Datumsfelder des CH/AT-Lesers, also auch auf `Budat` und `Faedt`, nicht nur auf das neue
+`Augdt`. Das ist beabsichtigt: ein Initialwert ist in keinem der drei Felder ein Datum,
+und bei einer Position ohne Faelligkeit waere zuvor der 01.01.0001 als `DueDate` gelandet.
 
 Validierung: 690/690 Release-Tests, darin die neuen Journaltests zu Mehrfachausgleich,
 Storno, B1-Platzhaltern und additivem Schemanachzug; Python-Exportpruefung mit alter und

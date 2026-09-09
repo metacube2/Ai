@@ -172,6 +172,10 @@ def main() -> None:
                      "Finance.", "warn")
     hinweiszeile(ws, "Das Zahlungsdatum des Zahlungsbelegs selbst (ORCT/OVPM) ist bewusst noch nicht "
                      "angebunden; dafuer fehlt die live gemessene Verknuepfung ueber ITR1.", "warn")
+    hinweiszeile(ws, "Die Ausgleichsspalten stammen aus SAP B1. Fuer die Schweiz und Oesterreich "
+                     "(SAP ECC) koennen nur clearing date und clearing ref belegt werden; recon "
+                     "date, Ausgleiche und clearing storniert bleiben dort bauartbedingt leer und "
+                     "nicht etwa mangels Daten.", "warn")
     hinweiszeile(ws, "Der Konzernkontenplan mit Zuordnungen je Gesellschaft liegt noch nicht vor; "
                      "Konzernkonto bleibt deshalb leer. Kostenstelle und dimension 2 werden aus "
                      "den Buchungszeilen uebernommen; leere Quellfelder bleiben leer.", "warn")
@@ -288,11 +292,11 @@ def main() -> None:
         ("recon date", recon_sql,
          "Datum des zugehoerigen Ausgleichsvorgangs (B1 OITR.ReconDate). Ohne Ausgleich leer."),
         ("clearing ref", clearing_ref_sql,
-         "Nummer des zuletzt angelegten Ausgleichs (hoechste B1 OITR.ReconNum). Nicht "
-         "JDT1.IntrnMatch: das Feld ist live durchgehend 0 oder -1, also ungepflegt."),
+         "Nummer des Ausgleichs, der zu recon date gehoert. Nicht JDT1.IntrnMatch: das Feld "
+         "ist live durchgehend 0 oder -1, also ungepflegt."),
         ("Ausgleiche", clearing_anzahl_sql,
-         "Anzahl der Ausgleichsvorgaenge zur Buchungszeile. Groesser 1 heisst Teilausgleich; "
-         "recon date ist dann nur der letzte davon."),
+         "Anzahl der Ausgleichsvorgaenge zur Buchungszeile; Leer zaehlt die Zeilen ohne "
+         "Ausgleich. Groesser 1 heisst Teilausgleich, recon date ist dann nur der letzte davon."),
         ("clearing storniert", clearing_storno_sql,
          "Gefuellt = mindestens ein zugehoeriger Ausgleich ist storniert (B1 OITR.Canceled Y "
          "oder C). Die Spalte Leer zaehlt hier die nicht stornierten Zeilen."),

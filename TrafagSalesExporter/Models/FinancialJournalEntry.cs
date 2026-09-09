@@ -57,8 +57,10 @@ public class FinancialJournalEntry
     public DateTime? ClearingDate { get; set; }
 
     /// <summary>
-    /// Nummer des zuletzt angelegten Ausgleichs (B1: hoechste OITR.ReconNum ueber die
-    /// ITR1-Bruecke; SAP ECC: BSEG-AUGBL). **Nicht** JDT1.IntrnMatch: das Feld ist am
+    /// Nummer des Ausgleichs, der zu <see cref="ReconciliationDate"/> gehoert (B1: hoechste
+    /// OITR.ReconNum **an diesem Datum**, nicht die hoechste ueberhaupt — die beiden fallen
+    /// live bei FR 374 von 1'412 mehrfach ausgeglichenen Zeilen auseinander; SAP ECC:
+    /// BSEG-AUGBL). **Nicht** JDT1.IntrnMatch: das Feld ist am
     /// 2026-09-09 in FR/IT/US live gemessen durchgehend 0 oder -1, also ungepflegt.
     /// Die Platzhalter werden als leer uebernommen, damit der Feldstatus sie nicht
     /// als gefuellt zaehlt.

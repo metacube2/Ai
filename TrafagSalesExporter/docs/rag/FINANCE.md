@@ -40,8 +40,14 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   durchgehend `0`/`-1` und als Bruecke unbrauchbar, verknuepft wird ueber
   `ITR1.TransId`/`TransRowId`; und eine Zeile kann mehrfach ausgeglichen sein (FR 56,
   IT 559, US 324, bis zu neun Vorgaenge), weshalb vor dem Join aggregiert wird — ein
-  direkter `JOIN` haette den Journalsaldo verfaelscht. Die produktive Query wurde live
-  gegengezaehlt und liefert exakt die Basiszeilenzahl. Bewusst **nicht** eingebaut: ein
+  direkter `JOIN` haette den Journalsaldo verfaelscht. Dritter Befund: `ReconNum` wird
+  nicht in Datumsreihenfolge vergeben, die hoechste Nummer gehoert bei FR 374 von 1'412
+  mehrfach ausgeglichenen Zeilen nicht zum juengsten Ausgleich; die Unterabfrage laeuft
+  deshalb zweistufig. Die einstufige Fassung wurde live gegengezaehlt und lieferte exakt
+  die Basiszeilenzahl; **die zweistufige Korrektur ist noch nicht live geprueft**, weil
+  das Netz ausfiel. Vor einem Deploy `.tmp_tools/JournalClearingProbe0909` erneut laufen
+  lassen — die Unit-Tests pruefen nur Teilzeichen und faengen einen HANA-Syntaxfehler
+  nicht. Bewusst **nicht** eingebaut: ein
   abgeleitetes `date paid` und die Zahlungsbelege `ORCT`/`OVPM`; welche der vier
   Bedeutungen fuehrend wird, entscheidet Andreas. Gefuellt sind die Spalten erst nach
   einem erneuten Ladelauf je Gesellschaft. **Nicht deployed.** Detail:

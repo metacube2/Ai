@@ -210,17 +210,29 @@ LEFT JOIN {schemaPrefix}""OACT"" a ON j.""Account"" = a.""AcctCode""
 -- Eine Buchungszeile kann mehrfach ausgeglichen werden (live bis zu 9 Mal). Deshalb wird
 -- vor dem Join aggregiert; ein direkter JOIN wuerde diese Zeilen vervielfachen und den
 -- Journalsaldo verfaelschen — derselbe Fehler wie beim spanischen Buchungsdatum.
+-- Zweistufig, damit die ausgewiesene Nummer zum ausgewiesenen Datum gehoert: die
+-- hoechste ReconNum ist NICHT die des juengsten Ausgleichs (live abweichend bei FR 374
+-- von 1'412, IT 77 von 5'834, US 49 von 332 mehrfach ausgeglichenen Zeilen). Stufe 1
+-- bestimmt Datum und Anzahl je Zeile, Stufe 2 die Nummer genau an diesem Datum.
 LEFT JOIN (
-    SELECT t.""TransId"" AS trans_id,
-           t.""TransRowId"" AS row_id,
-           MAX(o.""ReconDate"") AS ""last_recon_date"",
-           MAX(o.""ReconNum"") AS ""last_recon"",
-           COUNT(*) AS ""recon_count"",
-           SUM(CASE WHEN o.""Canceled"" IN ('Y', 'C') THEN 1 ELSE 0 END) AS ""cancelled_count""
-    FROM {schemaPrefix}""ITR1"" t
-    INNER JOIN {schemaPrefix}""OITR"" o ON o.""ReconNum"" = t.""ReconNum""
-    GROUP BY t.""TransId"", t.""TransRowId""
-) rec ON rec.trans_id = j.""TransId"" AND rec.row_id = j.""Line_ID""
+    SELECT g.""trans_id"", g.""row_id"", g.""last_recon_date"", g.""recon_count"", g.""cancelled_count"",
+           MAX(o2.""ReconNum"") AS ""last_recon""
+    FROM (
+        SELECT t.""TransId"" AS ""trans_id"",
+               t.""TransRowId"" AS ""row_id"",
+               MAX(o.""ReconDate"") AS ""last_recon_date"",
+               COUNT(*) AS ""recon_count"",
+               SUM(CASE WHEN o.""Canceled"" IN ('Y', 'C') THEN 1 ELSE 0 END) AS ""cancelled_count""
+        FROM {schemaPrefix}""ITR1"" t
+        INNER JOIN {schemaPrefix}""OITR"" o ON o.""ReconNum"" = t.""ReconNum""
+        GROUP BY t.""TransId"", t.""TransRowId""
+    ) g
+    INNER JOIN {schemaPrefix}""ITR1"" t2
+        ON t2.""TransId"" = g.""trans_id"" AND t2.""TransRowId"" = g.""row_id""
+    INNER JOIN {schemaPrefix}""OITR"" o2
+        ON o2.""ReconNum"" = t2.""ReconNum"" AND o2.""ReconDate"" = g.""last_recon_date""
+    GROUP BY g.""trans_id"", g.""row_id"", g.""last_recon_date"", g.""recon_count"", g.""cancelled_count""
+) rec ON rec.""trans_id"" = j.""TransId"" AND rec.""row_id"" = j.""Line_ID""
 WHERE h.""RefDate"" >= :{DateFilterParameterName}
 ORDER BY h.""RefDate"", j.""TransId"", j.""Line_ID""";
     }

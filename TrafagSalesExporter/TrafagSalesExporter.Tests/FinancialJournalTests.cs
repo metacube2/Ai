@@ -119,7 +119,17 @@ public class FinancialJournalTests : IDisposable
         // Eine Zeile kann mehrfach ausgeglichen werden (live bis zu 9 Mal). Vor dem Join muss
         // aggregiert werden, sonst vervielfacht der Ausgleich Journalzeilen und Saldo.
         Assert.Contains(@"GROUP BY t.""TransId"", t.""TransRowId""", query);
-        Assert.Contains(@"rec.trans_id = j.""TransId"" AND rec.row_id = j.""Line_ID""", query);
+        Assert.Contains(@"rec.""trans_id"" = j.""TransId"" AND rec.""row_id"" = j.""Line_ID""", query);
+        // Die ausgewiesene Ausgleichsnummer muss zum ausgewiesenen Datum gehoeren: die
+        // hoechste ReconNum ist live nicht die des juengsten Ausgleichs.
+        Assert.Contains(@"o2.""ReconDate"" = g.""last_recon_date""", query);
+        // HANA schreibt unquotierte Aliase gross. Die Spalten der Ausgleichs-Unterabfrage
+        // werden aussen kleingeschrieben quotiert gelesen, also muessen sie dort auch
+        // quotiert vergeben werden; unquotiert scheitert die Query erst zur Laufzeit.
+        Assert.Contains(@"t.""TransId"" AS ""trans_id""", query);
+        Assert.Contains(@"MAX(o.""ReconDate"") AS ""last_recon_date""", query);
+        Assert.DoesNotContain(@"AS last_recon_date", query);
+        Assert.DoesNotContain(@"AS recon_count", query);
         Assert.DoesNotContain(@"""ORCT""", query); // Zahlungsbeleg bewusst nicht angebunden
         Assert.DoesNotContain(@"""OVPM""", query);
         Assert.DoesNotContain("47005", query); // kein IT-Umsatzkontenfilter im Hauptbuch
