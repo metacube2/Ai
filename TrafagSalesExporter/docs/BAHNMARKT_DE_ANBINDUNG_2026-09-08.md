@@ -176,3 +176,72 @@ Zuordnung wuerde daher Umsatz fremder Kunden als Railway ausweisen. Der letzte Q
 ist eine neue Alphaplan-Kopfdatei mit beiden Schluesseln und den vier Kundenfeldern. Danach
 folgen gesicherter TRDE-Neulauf, Fuellgradpruefung und die kundennummerngenaue Uebernahme
 der 99 Bahnbranchen.
+
+## 8. Produktiver Nachzug und Rohail-Dateien am 09.09.2026
+
+**Dieser Abschnitt ersetzt die frueheren Offenmeldungen zum gesamten DE-Nachzug.**
+Die historische ID-Bruecke ist weiterhin kein Beweis fuer zeitliche Stabilitaet.
+Deshalb wurden nur direkte Belegnachweise automatisch uebernommen.
+
+| Nachweis | Ergebnis |
+|---|---:|
+| DE-Verkaufszeilen unveraendert | 7'615 |
+| Fachliche Kundennummer, Name, Land und Branche direkt belegt nachgezogen | 4'549 |
+| Historisch ableitbar, produktiv weiterhin offen | 2'427 |
+| Ohne Kandidat | 624 |
+| Mehrdeutige Zuordnung ohne direkten Beleg | 15 |
+| Produktiv weiterhin ohne fachliche Zuordnung | 3'066 |
+| Neue bestaetigte DE-Railway-Kunden | 19 |
+| Offene Vorschlaege anderer Standorte, unveraendert | 171 |
+
+Rechnungsnummer **und** interne Adress-ID muessen zur eingebetteten Belegbruecke
+passen. Neue Rechnungen werden nicht aus einer historischen internen ID abgeleitet.
+Die 3'066 offenen internen Nummern sind als `ALPHAPLAN-ID:<ID>` gekennzeichnet,
+damit keine zufaellige Ueberschneidung mit fachlichen Kundennummern entsteht.
+Vorhandene fachliche Nummernspalten im neuen Alphaplan-Export haben weiter Vorrang.
+Die Branchenpruefung verwendet jetzt wirklich Gleichheit: `00 Bahn, 13 Flugzeugbau`
+wird nicht automatisch bestaetigt. Der vorherige StartsWith-Code widersprach der Doku.
+
+Funktionscommit `8a0cee6`, produktiv am 09.09. um 07:20, 687/687 Release-Tests gruen.
+DLL lokal/Server bitgleich, vier Routen HTTP 200, Deploy ohne Alarm. Keine komplette
+Standortersetzung: ausschliesslich Kundenfelder und DE-Segmentzuordnungen in einer
+Transaktion nachgezogen. Vorherbestand und Segmente liegen in `.tmp_tools/DeApply0909/`.
+Der erste Vergleich brach wegen unterschiedlicher Dezimalskalen ab; der korrigierte
+numerische Vergleich bestand vor der Datenmutation. Ein langsamer Excel-Nachlauf
+wurde nach belegtem DB-Commit beendet; CSV und Excel wurden danach separat geprueft
+bereitgestellt. Die Sales-Excel wurde aus dem vorhandenen Export durch Aenderung der
+Kunden-/Segmentzellen erzeugt, nicht mit ungeprueften Finance-Defaultregeln neu berechnet.
+
+Nachweis am konsistenten Produktivsnapshot: SQLite-Checkpoint erfolgreich, Kopie
+unter Schreibsperre bei leerer WAL, `quick_check=ok`. Alle 7'615 Zeilen behalten ihre
+Finanzwerte, Mengen und Lieferantenschluessel; auch die Dashboard-CSV ist dagegen
+geprueft. In der Sales-Excel sind ausser Kunden-/Segmentzellen alle Zellwerte und
+Formeln unveraendert. Aktuelle Dashboardquelle im Serverordner `output`:
+`Sales_ProcessedMergeInput_TRDE_2026-09-09.csv`, SHA256
+`F0F6B78D194EF48B44D68619AB218D92E61EB6F52B17B49B9BB030C46643994C`.
+`Sales_TRDE_2026-09-09.xlsx` liegt daneben. Beide Dateien sind ausserdem im
+konfigurierten SharePoint-Ordner `Import/Finance/Deutschland/AlphaplanRaw` hochgeladen
+und zurueckgelesen: CSV bytegleich, Excel saemtliche Zellwerte und Formeln gleich.
+SharePoint hat an der Excel Klassifizierungsbeziehungen ergaenzt.
+
+### Dateien zum Weitergeben
+
+- `Bahnmarkt_Rohail_2026-09-09.xlsx`: aktuelle Gesamtauswertung mit demselben Dienst
+  wie der Exportknopf auf `/marktsegmente`, alle Jahre und Standorte. Acht Blaetter:
+  171 Vorschlaege, 20 bestaetigte Kunden (19 DE + 1 IN), 286 Umsatzsummenzeilen nach
+  Jahr/Waehrung, 3'928 Detailzeilen, Marktumfrage und Datenluecken. Keine Kostenfelder.
+- `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`: DE-Pruefmappe mit direktem
+  Belegnachweis, historischen Kandidaten, Restliste und nach Jahr/Waehrung getrenntem
+  Railway-Umsatz. Historische Kandidaten erscheinen nur im eigenen Vorschlagsblatt
+  mit aufgeloestem Namen; im Verkaufsblatt bleiben sie offen.
+- `Tools/DeCustomerMapping/README.md`: reproduzierbarer Ablauf fuer Nachzug,
+  Gegenpruefung, Export und SharePoint-Verifikation.
+
+Kein Versand an Rohail oder andere Personen erfolgt. MD und PM-08 im Wochen-Todo
+nachgefuehrt. Beim Wochen-Todo wurde ausserdem die durch unsere Regeneration vom
+08.09. verlorene Erlaeuterungsseite und der vorherige Stand der uebrigen
+Zusammenfassung wiederhergestellt; die aktuelle TSV bleibt fuehrend.
+
+**Fuer vollstaendige Zuordnung weiterhin erforderlich:** aktueller Alphaplan-Abgleich
+zwischen interner RechnungsAdressenID und fachlicher Adressnummer, einschliesslich
+Sonepar/EMS-Nummernwechsel. Eine vollstaendig gefuellte Kundenliste ist noch nicht belegt.

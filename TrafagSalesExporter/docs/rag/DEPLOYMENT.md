@@ -43,6 +43,16 @@ Stand: 2026-09-08
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+- Neuester verifizierter Deploy: **09.09.2026 07:20, DE-Belegbruecke und reine
+  Railway-Branchen**, Commit `8a0cee6`, **687/687** Release-Tests. Ohne Alarm,
+  vier Routen HTTP 200. DLL `6'403'584` Bytes, SHA256
+  `0257C3DF25410FC2D1D09CDA8582E0E996C32B0A6BE207287799255DF8E53EE3`, lokal/Server
+  bitgleich. Wirknachweise: `GermanCustomerInvoiceMapping`, `ALPHAPLAN-ID:`,
+  eingebettete JSON-Belegbruecke. Deploy selbst ohne DB-Aenderung; anschliessend
+  autorisierter Kunden-Nachzug: 4'549 direkte Belegzeilen und 19 bestaetigte
+  DE-Railway-Kunden. 3'066 Zeilen bleiben offen, Finanzwerte unveraendert.
+  Dashboard-CSV und Sales-Excel auf Server und SharePoint geprueft. Vollnachweis:
+  `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.
 
 - Aktuellster produktiv verifizierter Deploy: **2026-09-08 23:51, DE-Kundenfelder und
   Railway-Zuordnung aus Alphaplan-Branche**, Funktionscommit `872fca9`, **680/680**

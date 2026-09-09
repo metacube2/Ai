@@ -9,6 +9,7 @@ import csv
 import hashlib
 import json
 from collections import Counter, defaultdict
+from decimal import Decimal
 from pathlib import Path
 import openpyxl
 from openpyxl.styles import Font, PatternFill
@@ -104,6 +105,7 @@ s.append(['Verkaufszeilen', len(sales)])
 for key, count in counts.items():
     s.append([key, count])
 s.append(['Historische ID-Bruecke', 'Ableitung aus eindeutigen historischen Belegen; kein aktueller Stammdatenexport der internen ID. Gilt nur fuer die hier aufgefuehrten Rechnungen.'])
+s.append(['Produktive Uebernahme', 'Nur Belegnachweise. Historische Ableitungen stehen ausschliesslich als Vorschlaege im eigenen Blatt; im DE-Verkaufsblatt bleiben sie unaufgeloest.'])
 s.append(['Offene Nummern', 'ALPHAPLAN-ID: kennzeichnet interne IDs, keine fachlichen Kundennummern. Keine Zuordnung anhand Lieferantennummer oder Namensaehnlichkeit.'])
 s.append(['Branchen', 'Nur reine Bahnbranchen sind automatisch Railway; Mischbranchen sind nicht bestaetigt.'])
 s.append(['Finanzwerte', 'Aus der Quelldatei unveraendert; keine Waehrungsaddition. Dies ist der DE-Teil, keine weltweite Bahnmarkt-Gesamtsumme.'])
@@ -116,7 +118,19 @@ for title, selected in [('DE_Verkaeufe', audit), ('Offene_Zuordnungen', [x for x
         display = corrected
         if title == 'DE_Verkaeufe' and basis == 'Historische ID-Bruecke':
             display = dict(original, CustomerNumber='ALPHAPLAN-ID:' + original['CustomerNumber'])
-        s.append([basis, original['CustomerNumber'], *[display[h] for h in headers]])
+        numeric = {'SalesPriceValue', 'Quantity', 'PositionOnInvoice'}
+        s.append([basis, original['CustomerNumber'], *[float(Decimal(display[h])) if h in numeric and display[h] else display[h] for h in headers]])
+s = book.create_sheet('Railway_Umsatz')
+s.append(['Jahr', 'Kundennummer', 'Kundenname', 'Waehrung', 'Verkaufszeilen', 'Umsatz', 'Nachweis'])
+totals = defaultdict(lambda: [0, Decimal(0)])
+for original, corrected, basis in audit:
+    if basis != 'Belegnachweis' or corrected['CustomerIndustry'].strip() not in ('00 Bahn', '05 rw Railways / Bahntechnik'):
+        continue
+    key = ((corrected['PostingDate'] or corrected['InvoiceDate'])[:4], corrected['CustomerNumber'], corrected['CustomerName'], corrected['SalesCurrency'])
+    totals[key][0] += 1
+    totals[key][1] += Decimal(corrected['SalesPriceValue'])
+for key, (count, amount) in sorted(totals.items()):
+    s.append([*key, count, float(amount), 'Belegnachweis und reine Bahnbranche'])
 s = book.create_sheet('Belegbruecke')
 s.append(['Rechnung', 'Interne Adress-ID', 'Kundennummer', 'Name', 'Land', 'Branche', 'Nachweis', 'Belege oder Dateien'])
 for item in mapping.values():

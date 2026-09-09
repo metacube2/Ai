@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 using TrafagSalesExporter.Models;
 using TrafagSalesExporter.Services;
+using ClosedXML.Excel;
 
 // Prepare first, then apply a guarded customer-only patch. No sales-row replacement.
 // Usage: Apply <db> <mapping.json> <workdir> [--apply <source.csv> <server-output-directory>]
@@ -34,9 +35,15 @@ if (JsonSerializer.Serialize(assignments) != File.ReadAllText(Path.Combine(folde
 var records = await new ManualExcelImportService().ReadSalesRecordsAsync(args[4], site);
 if (records.Count != rows.Count) throw new InvalidOperationException("CSV/DB row count differs.");
 // Match full line keys and financial values before touching either destination.
-string Key(SalesRecord r) => $"{r.DocumentEntry}|{r.InvoiceNumber}|{r.PositionOnInvoice}|{r.Material}|{r.CustomerNumber}|{r.SalesCurrency}|{r.SalesPriceValue}|{r.Quantity}|{r.StandardCost}";
-string DbKey(CentralSalesRecord r) => $"{r.DocumentEntry}|{r.InvoiceNumber}|{r.PositionOnInvoice}|{r.Material}|{r.CustomerNumber}|{r.SalesCurrency}|{r.SalesPriceValue}|{r.Quantity}|{r.StandardCost}";
-if (!records.Select(Key).Order().SequenceEqual(rows.Select(DbKey).Order())) throw new InvalidOperationException("CSV and DB line contents differ; aborting.");
+LineKey Key(SalesRecord r) => new(r.DocumentEntry,r.InvoiceNumber,r.PositionOnInvoice,r.Material,r.CustomerNumber,r.SalesCurrency,r.SalesPriceValue,r.Quantity,r.StandardCost);
+LineKey DbKey(CentralSalesRecord r) => new(r.DocumentEntry,r.InvoiceNumber,r.PositionOnInvoice,r.Material,r.CustomerNumber,r.SalesCurrency,r.SalesPriceValue,r.Quantity,r.StandardCost);
+var csvKeys=records.GroupBy(Key).ToDictionary(x=>x.Key,x=>x.Count());
+var dbKeys=rows.GroupBy(DbKey).ToDictionary(x=>x.Key,x=>x.Count());
+if(csvKeys.Count!=dbKeys.Count || csvKeys.Any(x=>dbKeys.GetValueOrDefault(x.Key)!=x.Value))
+{
+    File.WriteAllText(Path.Combine(folder,"line-difference.json"),JsonSerializer.Serialize(new{Csv=csvKeys.Keys.Except(dbKeys.Keys).Take(5),Db=dbKeys.Keys.Except(csvKeys.Keys).Take(5)}));
+    throw new InvalidOperationException("CSV and DB line contents differ; see line-difference.json. Aborting.");
+}
 foreach (var r in records)
 {
     if (!string.IsNullOrWhiteSpace(r.CustomerName)) continue;
@@ -46,7 +53,35 @@ foreach (var r in records)
 }
 // Produce files before the transaction; existing product files remain available.
 var csv = await new ExportAuditCsvService().WriteSiteAuditCsvAsync(site, new ExportSettings { AuditCsvEnabled=true }, site.SourceSystem, folder, records);
-var excel = new ExcelExportService().CreateExcelFile(folder, site.TSC, DateTime.UtcNow.Date, records);
+var sourceExcel = Directory.EnumerateFiles(args[5], "Sales_TRDE_*.xlsx")
+    .OrderByDescending(File.GetLastWriteTimeUtc).First();
+var excel = Path.Combine(folder, $"Sales_TRDE_{DateTime.UtcNow:yyyy-MM-dd}.xlsx");
+// Preserve all existing financial sheets and amounts. Only customer cells change.
+using (var workbook = new XLWorkbook(sourceExcel))
+{
+    foreach(var sheet in workbook.Worksheets)
+    {
+        var headers=sheet.FirstRowUsed()?.CellsUsed().ToDictionary(c=>c.GetString().Trim().ToLowerInvariant(),c=>c.Address.ColumnNumber);
+        if(headers is null || !headers.TryGetValue("customer number",out var nc) || !headers.TryGetValue("invoice number",out var ic)) continue;
+        foreach(var row in sheet.RowsUsed().Skip(1))
+        {
+            var number=row.Cell(nc).GetString();
+            if(map.TryGetValue((row.Cell(ic).GetString(),number),out var m))
+            {
+                row.Cell(nc).Value=m.CustomerNumber;
+                foreach(var pair in new[]{("customer name",m.CustomerName),("customer country",m.CustomerCountry),("customer industry",m.CustomerIndustry)})
+                    if(headers.TryGetValue(pair.Item1,out var col)) row.Cell(col).Value=pair.Item2;
+                if(m.CustomerIndustry.Trim() is "00 Bahn" or "05 rw Railways / Bahntechnik" && !assignments.Any(x=>x.CustomerNumber==m.CustomerNumber && x.IsConfirmed && x.Segment!="Railway"))
+                {
+                    if(headers.TryGetValue("market segment",out var sc)) row.Cell(sc).Value="Railway";
+                    if(headers.TryGetValue("market segment source",out var sourceCol)) row.Cell(sourceCol).Value="Alphaplan Kundenstamm / Branche";
+                }
+            }
+            else if(number.Length>0 && !number.StartsWith("ALPHAPLAN-ID:") && (!headers.TryGetValue("customer name",out var nameCol) || row.Cell(nameCol).IsEmpty())) row.Cell(nc).Value="ALPHAPLAN-ID:"+number;
+        }
+    }
+    workbook.SaveAs(excel);
+}
 foreach (var file in new[] {csv!,excel})
     if (File.Exists(Path.Combine(args[5],Path.GetFileName(file)))) throw new IOException("Target already exists; inspect before replacing: "+Path.GetFileName(file));
 if(args.Contains("--validate")) { Console.WriteLine("Validation OK: full line keys and financial values agree; prepared files only."); return; }
@@ -81,9 +116,6 @@ await using (var tx = connection.BeginTransaction())
     await tx.CommitAsync();
 }
 File.WriteAllText(Path.Combine(folder,"database-applied.txt"),DateTime.UtcNow.ToString("O"));
-// Excel resolves confirmed segments from the now-updated central database.
-excel = new ExcelExportService(new Microsoft.EntityFrameworkCore.Infrastructure.PooledDbContextFactory<AppDbContext>(options))
-    .CreateExcelFile(folder, site.TSC, DateTime.UtcNow.Date, records);
 foreach(var file in new[]{csv!,excel})
 {
     var target=Path.Combine(args[5],Path.GetFileName(file));
@@ -94,3 +126,4 @@ foreach(var file in new[]{csv!,excel})
 Console.WriteLine($"Applied customer-only correction; names={records.Count(x=>!string.IsNullOrWhiteSpace(x.CustomerName))}; CSV={csv}; Excel={excel}");
 
 record Mapping(string InvoiceNumber,string InternalId,string CustomerNumber,string CustomerName,string CustomerCountry,string CustomerIndustry,string Basis);
+record LineKey(int Entry,string Invoice,int Position,string Material,string Customer,string Currency,decimal Value,decimal Quantity,decimal Cost);

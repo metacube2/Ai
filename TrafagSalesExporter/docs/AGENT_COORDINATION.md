@@ -9,6 +9,8 @@ diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 
 ## Aktive Bereiche
 
+Codex 2026-09-09: ABGESCHLOSSEN, Reservierung frei. DE-Belegbruecke produktiv (8a0cee6, 687/687 Tests, DLL bitgleich, vier Routen HTTP 200). Kundenfelder fuer 4'549 von 7'615 Zeilen nachgezogen, 19 DE-Railway-Kunden bestaetigt; 3'066 Zeilen bleiben fachlich offen (historische Kandidaten und Restliste). Finanz-/Lieferantenwerte unveraendert. Dashboard-CSV und Sales-Excel auf Server/SharePoint verifiziert, neue Rohail-Gesamtmappe und DE-Pruefmappe rueckgelesen, kein Versand. Geaendert: DE-Mapping/Import/Bahnregel und Tests, Tools/DeCustomerMapping, Bahnmarkt-Doku, Deployment-Kurzstand, PM-08 TSV/XLSX (verlorene Erlaeuterungsseite und vorigen Nicht-PM08-Summarystand unserer Regeneration wiederhergestellt). ZZPRDAT-Fachtexte nicht bearbeitet. Vollnachweis: docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md Abschnitt 8.
+
 Codex 2026-09-09: Schluesselanalyse abgeschlossen, Reservierung frei. Sieben DE-Arbeitsmappen gegen Rohkoepfe und Sales-Stand 08.09. abgeglichen: 4'549 Zeilen direkt belegbar, 2'427 ueber historische ID-Bruecke ableitbar, 639 Zeilen/150 IDs noch offen. Zwei historische ID-Konflikte belegt; deshalb keine pauschale produktive ID-Umstellung. Pruefhilfe und Excel `.tmp_tools/DeKeys0909/`, Nachweis in `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`. Keine Code-/Produktivdatenaenderung, kein Deploy. Vollstaendige Zuordnung bleibt offen.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
