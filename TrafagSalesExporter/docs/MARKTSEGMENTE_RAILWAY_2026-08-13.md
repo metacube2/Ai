@@ -389,9 +389,10 @@ stehengebliebenen Sucheingabe vollstaendig aus, obwohl sie es nicht ist.
   `AppEventLogs`, Kategorie `Marktsegment`, Nachricht `Segment entfernt` — ohne Nutzerspalte,
   weil `AppEventLog` keinen Nutzer fuehrt. Eine echte gespeicherte Ablehnung waere ein eigener
   Auftrag mit Schemawechsel und ist nicht Teil dieses Deploys.
-- Blocker 1 aus Abschnitt 14 (Deutschland ohne Kundennamen) ist damit **nicht geloest**. Das
-  Blatt `Datenluecken` weist ihn offen aus, statt ihn als Umsatz von null zu zeigen. Er bleibt
-  der eigentliche Blocker fuer den Termin am 08.09.
+- Zum damaligen Stand war Blocker 1 aus Abschnitt 14 (Deutschland ohne Kundennamen)
+  **nicht geloest**. Das Blatt `Datenluecken` wies ihn offen aus, statt ihn als Umsatz von
+  null zu zeigen. Der Produktivnachtrag vom 09.09. am Ende dieser Datei ersetzt diesen
+  historischen Status: 4'549 Zeilen sind inzwischen belegt, 3'066 bleiben offen.
 
 **Produktiv am Deploytag read-only gemessen** (deckt sich mit der Messung aus Abschnitt 14, kein
 neuer Zuwachs seither): `173` Vorschlaege, `0` bestaetigt, `269` Umfragezeilen, `104'222`
@@ -427,3 +428,18 @@ fehlenden neuen Literale sind nach dem Publish vorhanden; `Ship Building` und
 die Produktivdatenbank blieb in Laenge und Schreibzeit unveraendert. Der genaue
 Deploynachweis steht in `docs/rag/DEPLOYMENT.md`. Offen bleibt der visuelle Sichtprueflauf
 der aufgeklappten Auswahlliste im Browser.
+
+## 17. Produktivnachtrag Deutschland 09.09.2026
+
+Deutschland hat jetzt 19 bestaetigte Railway-Kunden aus direkten Belegnachweisen und
+einer reinen Alphaplan-Bahnbranche. Die Pruefung verlangt exakt `00 Bahn` oder
+`05 rw Railways / Bahntechnik`; Mischbranchen bleiben offen. Von 7'615 DE-Verkaufszeilen
+sind 4'549 fachlich zugeordnet. 3'066 Zeilen tragen weiterhin einen sichtbar technischen
+Schluessel `ALPHAPLAN-ID:<ID>` und werden nicht ueber Nummernueberschneidungen,
+Lieferantennummern oder Namensaehnlichkeit zugeordnet.
+
+Die 171 offenen Vorschlaege der anderen Standorte bleiben fachlich zu pruefen. Der
+deutsche Kundenstamm ist kein Nachweis fuer deren lokale Kundenschluessel. Aktuelle
+Arbeitsdateien: `Bahnmarkt_Rohail_2026-09-09.xlsx` und
+`Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`. Vollstaendiger technischer und
+fachlicher Nachweis: `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.

@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-09-04
+Stand: 2026-09-09
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -12,6 +12,17 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- BAHNMARKT DE, PRODUKTIV 2026-09-09: Von 7'615 deutschen Verkaufszeilen wurden
+  4'549 ueber die Kombination aus Rechnungsnummer und interner Alphaplan-Adress-ID
+  einer fachlichen Kundennummer, Name, Land und Branche zugeordnet. 19 DE-Kunden mit
+  einer reinen Bahnbranche sind als `Railway` bestaetigt; bestaetigte Gegenentscheide
+  bleiben erhalten. Mischbranchen werden nicht automatisch bestaetigt. 3'066 Zeilen
+  bleiben als `ALPHAPLAN-ID:<ID>` sichtbar offen: 2'427 historisch ableitbare Kandidaten,
+  624 ohne Kandidat und 15 Konfliktzeilen. Finanzwerte, Mengen und Lieferantenschluessel
+  sind unveraendert. Dashboard-CSV und Sales-Excel sind auf Server und SharePoint
+  verifiziert. Weitergabedateien: `Bahnmarkt_Rohail_2026-09-09.xlsx` und
+  `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`. Detail und Grenzen:
+  `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.
 - JOURNAL-FELDER, 2026-09-08: `JDT1.DueDate` live in FR/IT/US/IN vollstaendig belegt
   (469'661 Zeilen ab 2025), durch Modell/Schema/Reader/Finance_All implementiert und
   **am 2026-09-08 um 14:02 produktiv deployed** (Commit `646a998`, 675/675 Tests gruen).
