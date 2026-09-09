@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-08
+Stand: 2026-09-09
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -43,7 +43,31 @@ Stand: 2026-09-08
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
-- Neuester verifizierter Deploy: **09.09.2026 07:20, DE-Belegbruecke und reine
+- Neuester verifizierter Deploy: **09.09.2026 08:43, RTF-Schrift- und Farbtabelle aus der
+  Alphaplan-Artikelbezeichnung**, Funktionscommit `eb8cd43` (Stand beim Publish: `5363005`),
+  **688/688** Release-Tests gruen im eigenen Lauf vor dem Publish. `BiDashboard.dll`
+  `09.09.2026 08:43:53`, `6'404'096` Bytes, SHA256
+  `A26514ADDEAC747F78F1204F8611B90BA81C9798D28FD269831029FEAC9B835C`; lokaler Release-Build
+  und Server bitgleich. Ziel: 0 Dateien neu, 4 geaendert, 2061 unveraendert, 0 verschwunden.
+  `app_offline.htm` gesetzt und danach auf `.disabled` umbenannt. Produktiv-DB in Laenge und
+  Schreibzeit unveraendert (`458'055'680` Bytes, `09.09.2026 07:23:16`).
+
+  **Routen:** Startseite `71'383` Bytes in `7.16 s` (Kaltstart), `/management-cockpit`
+  `0.08 s`, `/marktsegmente` `13.36 s`, `/standorte` `0.03 s`, alle HTTPS `200`.
+  **Wirknachweis in der DLL:** `RemoveRtfDiscardedGroups`, `RtfDiscardedDestinations`,
+  `StartsRtfDiscardedGroup`. Das Arbeitsverzeichnis war beim Deploy nicht sauber, Branch
+  `feature/supplier-overrides-trit`.
+
+  **Was dieser Deploy noch nicht bedeutet:** Er wirkt nur auf **kuenftige** DE-Importe.
+  Die bereits gespeicherten `3'089` von `7'615` TRDE-Zeilen mit Schriftrest bleiben stehen,
+  bis `Tools/DeNameFix` sie nachzieht. Dieser Nachzug ist am 09.09. **nicht** gelaufen: Das
+  VPN fiel unmittelbar nach dem Deploy wieder aus, der Firmenshare war nicht mehr
+  erreichbar. Ein Lesezugriff im Nur-Lese-Modus scheitert ueber SMB ausserdem mit
+  `SQLite Error 14`; deshalb laeuft der Probelauf gegen eine konsistente lokale Kopie
+  (Checkpoint, `BEGIN IMMEDIATE`, leere WAL, Kopie) und erst die Anwendung gegen den
+  Produktivpfad. Details: `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8.
+
+- Vorheriger Deploy: **09.09.2026 07:20, DE-Belegbruecke und reine
   Railway-Branchen**, Commit `8a0cee6`, **687/687** Release-Tests. Ohne Alarm,
   vier Routen HTTP 200. DLL `6'403'584` Bytes, SHA256
   `0257C3DF25410FC2D1D09CDA8582E0E996C32B0A6BE207287799255DF8E53EE3`, lokal/Server

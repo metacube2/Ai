@@ -177,11 +177,20 @@ lokalen Rohkopie vom 12.06.2026 allein waeren nur 2'684 Zeilen erreichbar gewese
 restlichen 405 stecken in den Delta-Archiven auf SharePoint. Deshalb liest das Werkzeug im
 Regelfall mit `--sharepoint` denselben Ordner wie der Import.
 
-**Offen am 09.09.2026: Deploy und produktiver Nachzug.** Der Firmenshare
-`\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` war an diesem Abend nicht
-erreichbar, der DNS-Name loeste nicht auf. Bis der Deploy laeuft, erzeugt jeder neue DE-Import den Schriftrest erneut; der Nachzug allein
-wuerde also nicht halten. Der Standort muss dafuer nichts liefern, die Ursache lag
-vollstaendig bei uns.
+**Deploy erledigt am 09.09.2026 um 08:43**, Nachweis in `docs/rag/DEPLOYMENT.md`. Damit
+sind alle **kuenftigen** DE-Importe sauber. Der Standort muss dafuer nichts liefern, die
+Ursache lag vollstaendig bei uns.
+
+**Offen: der Nachzug des Bestands.** Die 3'089 bereits gespeicherten Zeilen tragen den
+Schriftrest weiter. Der Lauf konnte am 09.09. nicht ausgefuehrt werden, weil das VPN
+unmittelbar nach dem Deploy wieder ausfiel und der Firmenshare
+`\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` nicht mehr erreichbar war. Zwei
+Betriebshinweise dafuer: Ein Nur-Lese-Zugriff auf die Produktivdatenbank scheitert ueber
+SMB mit `SQLite Error 14`, weil SQLite die `-shm`-Datei der WAL nicht anlegen kann. Deshalb
+laeuft der Probelauf gegen eine konsistente lokale Kopie nach dem Verfahren in
+`Tools/DeCustomerMapping/README.md` (Checkpoint, `BEGIN IMMEDIATE`, leere WAL pruefen,
+kopieren) und erst die Anwendung mit `--aus-plan --apply` gegen den Produktivpfad. Der
+Vergleich des Vorherstands gegen die Live-Zeilen bleibt dabei die Sicherung.
 
 Die Standort-Mails aus 07/2026 (`docs/mails/Build-StandortMails.ps1`) nennen weiterhin
 2'903 von 7'171 Texten mit Formatierungstext. Das ist der Stand des damaligen Versands und
