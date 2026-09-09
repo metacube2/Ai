@@ -47,6 +47,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` | Gruppenmarge, Fachlogik |
 | `docs/FINANCE_STANDARDKOSTEN.md` | **zusammengefuehrt**: Kostenbasis, Konzernkosten, SAP-Report |
 | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` | Antwort Italien: Bewertungsmethode nicht umstellbar |
+| `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` | Andreas' Referenzkost je Artikel: Stand, Messpaket, Abgrenzung, Antwortvorschlaege |
 | `docs/FINANCE_SUPPLIER.md` | **zusammengefuehrt**: Klassifikation, Laenderstatus, Fallback |
 | `docs/FINANCE_JOURNAL.md` | **zusammengefuehrt**: Hauptbuch-Import, `FinanzJournalSet` |
 | `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md` | SAP-Spezifikation WAVWR |

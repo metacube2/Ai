@@ -27,6 +27,7 @@ Marktsegmente.
 | Gruppenmarge, Fachlogik und Kostenwaehrungsschalter | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | **Standardkosten, Kostenbasis, Konzernkosten TR AG/IT/IN** | `docs/FINANCE_STANDARDKOSTEN.md` |
 | **TR IT Bewertungsmethode: warum Moving Average technisch nicht umstellbar ist** (Antwort Paola vom 2026-09-04, Primaerquelle) | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
+| **TR IT Referenzkost je Artikel** aus Bestandswert geteilt durch Bestandsmenge: Andreas' Vorschlag vom 2026-09-09, was davon schon produktiv ist, vorbereitetes Messpaket, Abgrenzung gegen die Konzern-Herstellkosten, Antwortvorschlaege | `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |
 | **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |
 | Hauptbuch-Import, live gepruefte B1-Feldbelegung, DueDate-Umsetzung und Zahlungs-/Ausgleichsdatum; CH/AT-EntitySet-Abgleich | `docs/FINANCE_JOURNAL.md` |

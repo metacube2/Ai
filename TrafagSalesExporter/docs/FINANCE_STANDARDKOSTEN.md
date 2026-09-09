@@ -1,10 +1,15 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-09-04
+Stand: 2026-09-09
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
 B1-Artikel ist in Italien technisch nicht umstellbar, die fruehere Aussage „als Massenupdate
 machbar" ist dort als ueberholt markiert.
+
+Am 2026-09-09 ergaenzt: Andreas priorisiert die Umstellung der Bewertungsmethode nicht und
+fragt stattdessen nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
+Bestandsmenge. Abschnitte 6 und 7 sind nachgefuehrt; Einzelheiten, vorbereitetes Messpaket
+und Antwortvorschlaege in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
@@ -326,7 +331,7 @@ Moving-Average-Bewertung ansprechen wollte.
 Fuer Abfragen gegen Standortsysteme, die nur der Server erreicht, siehe
 `docs/router/plattform.md`, Abschnitt Server-Analyse.
 
-## 6. TR IT Bewertungsmethode: technisch nicht umstellbar, Entscheid offen
+## 6. TR IT Bewertungsmethode: technisch nicht umstellbar, von Andreas nicht priorisiert
 
 **Stand 2026-09-04.** Paola Castagna (`Paola.Castagna@trafag.com`) hat die Frage mit ihren
 SAP-Beratern abgeschlossen. Ergebnis: **Die Bewertungsmethode eines bestehenden Artikels
@@ -353,6 +358,18 @@ unseren SAP-Beratern vor. Sie erwartet von Ingo und Andreas eine Einschaetzung, 
 notwendig und dringend die Angleichung aus Konzernsicht ist; der fachliche Entscheid liegt
 bei Andreas. Wortlaut und Einzelheiten:
 `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
+
+**Diese Einschaetzung liegt seit dem 2026-09-09 vor.** Andreas hat im selben Mailverlauf
+geantwortet, er wuerde der Umstellung auf Moving Average derzeit keine Prioritaet geben und
+das Gesamtbild im naechsten Jahr erneut betrachten. Damit ist die Kostenschaetzung bei
+Italien nicht anzufordern, und die Intercompany-Bewertung mit Lucas Castro ist mit dem
+Projekt zurueckgestellt, nicht erledigt. Offen ist nur noch die Rueckmeldung an Paola.
+Stattdessen fragt Andreas nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
+Bestandsmenge, mit dem letzten verfuegbaren Wert fuer Artikel ohne Bestand. Der Fallback ist
+bereits der produktive Weg `INV1.StockPrice`; die Kennzahl aus dem Bestand ist neu und noch
+nicht gemessen. Vollstaendiger Stand, Messpaket, Abgrenzung gegen die
+Konzern-Herstellkostenbasis und Antwortvorschlaege:
+`docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 
 > **UEBERHOLT, Stand 2026-08-28.** Bis zur Antwort vom 2026-09-04 stand hier, die Umstellung
 > sei „technisch als Massenupdate machbar" und lediglich bis 2027 verschoben. Das war die
@@ -381,7 +398,8 @@ Reporting-Marge im Dashboard.
 | Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
 | **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Andreas soll weiterhin die davon getrennte erste Frage entscheiden, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt. | Ingo / Andreas |
 | Umrechnungsregel fuer Konzernkosten in fremder Waehrung. Die frueheren `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) waren bis 2026-08-25 auf `Kostenwaehrung abweichend` maskiert. **Seit Deploy 2026-08-27 15:28** wird die Kostenbasis mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, verbindlicher Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
-| Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %` | Andreas |
+| Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %`. **Konkret geworden am 2026-09-09:** Andreas schlaegt fuer Artikel ohne Bestand den letzten verfuegbaren Wert vor, was dem heutigen Default `LatestPositive` entspricht | Andreas |
+| **Neu am 2026-09-09:** Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge. Der Artikelstamm ist als Quelle gemessen ausgeschlossen (Abschnitt 4), die Werte muessten aus Bestandsjournal oder Chargentabellen kommen; Messpaket vorbereitet, wegen fehlender Netzverbindung am 09.09. noch nicht gelaufen. Zu entscheiden ist zusaetzlich, ob die Kennzahl die fuehrende lokale Kostenbasis oder eine Vergleichsgroesse ist und welcher Stichtag gilt; `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` | Andreas / Ingo |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
 | Fix-/Variabel-Split fuer den Deckungsbeitrag wird von keinem Quellsystem geliefert; `StandardCostVariable`/`StandardCostFixed` und `ContributionMarginCalculator` sind vorbereitet, die DB bleibt bewusst leer | Quellsysteme |

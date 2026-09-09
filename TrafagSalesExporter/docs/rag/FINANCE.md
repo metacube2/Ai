@@ -82,6 +82,16 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Notwendigkeit und Dringlichkeit liegt bei Andreas. **Kein Reporting-Blocker**, weil
   `INV1.StockPrice` auf Belegebene davon unabhaengig ist. Details:
   `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
+- **Entscheid vom 2026-09-09:** Andreas gibt der Umstellung auf Moving Average keine
+  Prioritaet, erneute Betrachtung im naechsten Jahr; Rueckmeldung an Paola noch offen.
+  Stattdessen fragt er nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
+  Bestandsmenge. Der Teil "letzter Wert fuer Artikel ohne Bestand" ist mit
+  `INV1.StockPrice` bereits produktiv; die Bestandskennzahl ist neu, der Artikelstamm als
+  Quelle gemessen ausgeschlossen, Messpaket vorbereitet und am 09.09. wegen fehlender
+  Netzverbindung noch nicht gelaufen. Sie traegt bei Trafag-Sachnummern die
+  Intercompany-Ladung und gehoert deshalb an die Stelle der lokalen Standardkosten, nicht
+  an die der Konzern-Herstellkosten. Details:
+  `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 - **Produktiv seit 2026-08-31 09:47:** Finance kann fuer
   IT/IN zwischen juengstem positivem B1-`StockPrice` (Default) und Durchschnitt aller positiven
   Werte des naechsten Standortimports waehlen. Fuer CHF kann zwischen Tageskurs (Default) und
@@ -121,12 +131,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Materialschluessel, fehlender TSC oder leerem MARC-Cache.
 - B1-Upgrade ab 2026-08-03 nachpruefen: Import FR/IT/US/IN, Kostenfuellgrad
   und Bewertungsmethoden.
-- TR IT: Technisch geklaert und seit 2026-09-04 kein Umsetzungs-, sondern ein
-  Entscheidungspunkt. Andreas muss beurteilen, ob eine Angleichung an Moving Average als
-  Neucodierungsprojekt aus Konzernsicht noetig und dringend ist; die Wirkung auf die
-  Intercompany-Artikel von Trafag und Industrial Components ist mit Lucas Castro zu
-  bewerten. Der freigegebene Belegebenen-Weg ueber `INV1.StockPrice` bleibt davon
-  unabhaengig.
+- TR IT: Bewertungsmethode ist seit 2026-09-09 entschieden und zurueckgestellt, Andreas
+  priorisiert sie nicht und will das Gesamtbild im naechsten Jahr erneut betrachten; die
+  Intercompany-Bewertung mit Lucas Castro ruht mit dem Projekt. Offen ist die Rueckmeldung
+  an Paola und, als neuer Punkt `ISS-007.2`, die Messung der Referenzkost je Artikel aus
+  Bestandswert geteilt durch Bestandsmenge. Der freigegebene Belegebenen-Weg ueber
+  `INV1.StockPrice` bleibt davon unabhaengig.
 - Budget-CHF: Finance muss Kurse/Freigabe, Pflegeprozess, Spaltenumfang,
   Fehlkursverhalten, Rundung und Anzeigeort entscheiden.
 - CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` bleibt Voraussetzung;

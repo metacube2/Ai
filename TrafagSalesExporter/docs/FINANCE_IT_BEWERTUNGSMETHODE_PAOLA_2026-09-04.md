@@ -1,6 +1,6 @@
 # TR IT Bewertungsmethode: Antwort von Paola Castagna, 2026-09-04
 
-Stand: 2026-09-04. Gehoert zu `ISS-007.1`.
+Stand: 2026-09-04, Nachtrag vom 2026-09-09 in Abschnitt 7. Gehoert zu `ISS-007.1`.
 
 Diese Datei haelt die Primaerquelle fest. Der fachliche Stand steht in
 `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 6, der Status im Issue-Log
@@ -71,6 +71,13 @@ Budget und eigene Ressourcen braeuchte.
 
 Eine Einschaetzung von Ingo und Andreas, **wie notwendig und wie dringend** diese
 Angleichung aus Konzernsicht ist. Der fachliche Entscheid liegt damit bei Andreas Stoller.
+
+**Beantwortet am 2026-09-09.** Andreas Stoller hat im selben Mailverlauf geantwortet: der
+Umstellung auf Moving Average gibt er derzeit keine Prioritaet, das Gesamtbild wird im
+naechsten Jahr erneut betrachtet. Die Kostenschaetzung ist damit nicht anzufordern, die
+Intercompany-Bewertung mit Lucas Castro ist zurueckgestellt. Stattdessen fragt er nach
+einer Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge. Stand,
+Messpaket und Antwortvorschlaege: `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 
 ## 8. Abgrenzung, die in jede Antwort gehoert
 
