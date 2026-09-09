@@ -602,6 +602,49 @@ public class ManualExcelImportServiceTests
             IsActive = true
         };
 
+    [Fact]
+    public async Task ReadSalesRecordsAsync_Removes_Rtf_Font_And_Color_Tables()
+    {
+        // Alphaplan liefert die Artikelbezeichnung als RTF. Schrift- und Farbtabelle sind
+        // Zielgruppen mit Klammern in Klammern; werden sie nicht klammerbalanciert entfernt,
+        // beginnt die Bezeichnung mit "MS Shell Dlg, Microsoft Sans Serif, , ,".
+        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            WriteAlphaplanPair(folder,
+                [
+                    "DocumentType;BelegeID;BelegTyp;Belegnummer;Datum;RechnungsAdressenID;WaehrungenID;ZahlungsBedingungenID;NettoPreisEndSumme;BruttoPreisEndSumme;IstStorniert;IstArchiviert;ExterneBelegNummer;BestellNummer;IhrAuftrag;KostenStelle;KostenTraeger;UUID",
+                    "Invoice   ;401620;5;RE2610700;2026-06-08 10:15:10.000;419;4;13;110.00;130.90;0;0;;PO-1;;;;header-uuid"
+                ],
+                [
+                    "DocumentType;Belegnummer;BelegDatum;BelegeID;BelegePositionenID;ZeilenPosition;PositionsTyp;ArtikelID;ArtikelNummer;KundenArtikelNummer;ArtikelBezeichnung;BEAnzahl;PEAnzahl;PENettoPreis;NettoPreisEinzel;NettoPreisGesamt;BruttoPreisGesamt;MehrwertSteuerSatz;MehrwertSteuer;RohertragGesamt;KostenStelle;KostenTraeger;LieferDatum;NichtDrucken",
+                    "Invoice   ;RE2610700;2026-06-08 10:15:10.000;401620;1464700;1;0;324;8252.78;;{\\rtf1\\ansi\\ansicpg1200\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 MS Shell Dlg,}{\\f1\\fnil\\fcharset0 Microsoft Sans Serif,}}  {\\colortbl ,\\red0\\green0\\blue0,}  \\viewkind4\\uc1\\pard\\cf1\\lang1031\\f0\\fs17 8252.78.2517.32.19.01\\par  \\cf0\\f1 Pressure Transmitter NAT 0...10 bar Rel, CT25\\'b0C, G 1/4 a\\par  };1.0;1.0;100.0;100.0;100.0;119.0;19.0;19.0;10.0;;;2026-06-05 00:00:00.000;0",
+                    "Invoice   ;RE2610700;2026-06-08 10:15:10.000;401620;1464701;2;0;325;VERSAND;;{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Microsoft Sans Serif,}}  \\viewkind4\\uc1\\pard\\lang1031\\f0\\fs17 Versand bis 2,9 kg, EP/DHL\\par  };1.0;1.0;10.0;10.0;10.0;11.9;19.0;1.9;1.0;;;2026-06-05 00:00:00.000;0"
+                ]);
+
+            var service = new ManualExcelImportService();
+
+            var rows = await service.ReadSalesRecordsAsync(Path.Combine(folder, "invoice_lines.csv"), new Site
+            {
+                TSC = "TRDE",
+                Land = "Deutschland"
+            });
+
+            var withTwoFonts = Assert.Single(rows, row => row.Material == "8252.78");
+            Assert.Equal("8252.78.2517.32.19.01 Pressure Transmitter NAT 0...10 bar Rel, CT25°C, G 1/4 a", withTwoFonts.Name);
+
+            var withOneFont = Assert.Single(rows, row => row.Material == "VERSAND");
+            Assert.Equal("Versand bis 2,9 kg, EP/DHL", withOneFont.Name);
+
+            Assert.DoesNotContain(rows, row => row.Name.Contains("Shell Dlg") || row.Name.Contains("Sans Serif"));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
     private static void WriteAlphaplanPair(string folder, string[] headers, string[] lines)
     {
         Directory.CreateDirectory(folder);

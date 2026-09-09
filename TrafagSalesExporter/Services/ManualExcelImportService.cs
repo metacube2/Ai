@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
@@ -1071,6 +1072,100 @@ public class ManualExcelImportService : IManualExcelImportService
         };
     }
 
+    // Alphaplan speichert die Artikelbezeichnung als RTF. Schrift- und Farbtabelle sind
+    // eigene Zielgruppen; ihr Inhalt ist Technik und kein Text. Wird nur das Steuerwort
+    // entfernt, bleiben die Schriftnamen stehen und die Bezeichnung beginnt mit
+    // "MS Shell Dlg, Microsoft Sans Serif, , ,". Deshalb werden diese Gruppen vorher
+    // klammerbalanciert entfernt.
+    private static readonly string[] RtfDiscardedDestinations =
+    {
+        "fonttbl",
+        "colortbl",
+        "stylesheet",
+        "listtable",
+        "listoverridetable",
+        "info",
+        "generator",
+        "themedata",
+        "colorschememapping",
+        "datastore"
+    };
+
+    private static string RemoveRtfDiscardedGroups(string text)
+    {
+        var result = new StringBuilder(text.Length);
+        var depth = 0;
+        var discardDepth = 0;
+
+        for (var index = 0; index < text.Length; index++)
+        {
+            var current = text[index];
+
+            // Maskierte Klammern sind Text und duerfen die Zaehlung nicht verschieben.
+            if (current == '\\' && index + 1 < text.Length
+                && (text[index + 1] == '{' || text[index + 1] == '}' || text[index + 1] == '\\'))
+            {
+                if (discardDepth == 0)
+                {
+                    result.Append(current);
+                    result.Append(text[index + 1]);
+                }
+
+                index++;
+                continue;
+            }
+
+            if (current == '{')
+            {
+                depth++;
+                if (discardDepth == 0 && StartsRtfDiscardedGroup(text, index))
+                    discardDepth = depth;
+
+                if (discardDepth == 0)
+                    result.Append(current);
+
+                continue;
+            }
+
+            if (current == '}')
+            {
+                var closesDiscardedGroup = discardDepth != 0 && depth == discardDepth;
+                if (discardDepth == 0)
+                    result.Append(current);
+
+                if (closesDiscardedGroup)
+                    discardDepth = 0;
+
+                depth--;
+                continue;
+            }
+
+            if (discardDepth == 0)
+                result.Append(current);
+        }
+
+        return result.ToString();
+    }
+
+    private static bool StartsRtfDiscardedGroup(string text, int braceIndex)
+    {
+        var index = braceIndex + 1;
+        if (index >= text.Length || text[index] != '\\')
+            return false;
+
+        index++;
+        // Ein Zusatzziel in der Form {\*\... traegt keinen sichtbaren Text.
+        if (index < text.Length && text[index] == '*')
+            return true;
+
+        var start = index;
+        while (index < text.Length && char.IsLetter(text[index]))
+            index++;
+
+        var keyword = text[start..index];
+        return RtfDiscardedDestinations.Contains(keyword, StringComparer.OrdinalIgnoreCase);
+    }
+
     private static string NormalizeAlphaplanText(string value)
     {
         var text = value.Trim();
@@ -1079,6 +1174,7 @@ public class ManualExcelImportService : IManualExcelImportService
 
         if (text.StartsWith(@"{\rtf", StringComparison.OrdinalIgnoreCase))
         {
+            text = RemoveRtfDiscardedGroups(text);
             text = Regex.Replace(text, @"\\'(?<hex>[0-9a-fA-F]{2})", match =>
             {
                 var code = Convert.ToInt32(match.Groups["hex"].Value, 16);
