@@ -17,16 +17,24 @@ var site=await graph.Sites[$"{uri.Host}:{uri.AbsolutePath.TrimEnd('/')}"] .GetAs
 var drive=await graph.Sites[site!.Id].Drive.GetAsync();
 var folder=new Uri(de.ManualImportFilePath).AbsolutePath[uri.AbsolutePath.TrimEnd('/').Length..].Trim('/');
 var verifyOnly=args.Contains("--verify-only");
-foreach(var file in args.Skip(1).Where(x=>x!="--verify-only"))
+// --ersetzen ueberschreibt eine vorhandene Datei bewusst. Nur fuer eine Korrektur desselben
+// Tages verwenden, bei der die Vorversion gesichert und der Unterschied nachgewiesen ist.
+var replace=args.Contains("--ersetzen");
+foreach(var file in args.Skip(1).Where(x=>x!="--verify-only" && x!="--ersetzen"))
 {
     var name=Path.GetFileName(file);
     if(!name.StartsWith("Sales_TRDE_") && !name.StartsWith("Sales_ProcessedMergeInput_TRDE_")) throw new ArgumentException("DE sales files only");
     var request=graph.Drives[drive!.Id].Root.ItemWithPath(folder+"/"+name);
     if(!verifyOnly)
     {
-        try { if(await request.GetAsync() is not null) throw new IOException("Already exists; no overwrite: "+name); }
-        catch(ODataError e) when(e.ResponseStatusCode==404) {}
-        await using(var source=File.OpenRead(file)) await request.Content.PutAsync(source,c=>c.Headers.Add("If-None-Match","*"));
+        if(!replace)
+        {
+            try { if(await request.GetAsync() is not null) throw new IOException("Already exists; no overwrite: "+name); }
+            catch(ODataError e) when(e.ResponseStatusCode==404) {}
+        }
+        await using var source=File.OpenRead(file);
+        if(replace) await request.Content.PutAsync(source);
+        else await request.Content.PutAsync(source,c=>c.Headers.Add("If-None-Match","*"));
     }
     using var returned=new MemoryStream();
     await using(var stream=await request.Content.GetAsync()) await stream!.CopyToAsync(returned);

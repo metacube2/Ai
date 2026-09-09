@@ -181,16 +181,44 @@ Regelfall mit `--sharepoint` denselben Ordner wie der Import.
 sind alle **kuenftigen** DE-Importe sauber. Der Standort muss dafuer nichts liefern, die
 Ursache lag vollstaendig bei uns.
 
-**Offen: der Nachzug des Bestands.** Die 3'089 bereits gespeicherten Zeilen tragen den
-Schriftrest weiter. Der Lauf konnte am 09.09. nicht ausgefuehrt werden, weil das VPN
-unmittelbar nach dem Deploy wieder ausfiel und der Firmenshare
-`\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` nicht mehr erreichbar war. Zwei
-Betriebshinweise dafuer: Ein Nur-Lese-Zugriff auf die Produktivdatenbank scheitert ueber
-SMB mit `SQLite Error 14`, weil SQLite die `-shm`-Datei der WAL nicht anlegen kann. Deshalb
-laeuft der Probelauf gegen eine konsistente lokale Kopie nach dem Verfahren in
-`Tools/DeCustomerMapping/README.md` (Checkpoint, `BEGIN IMMEDIATE`, leere WAL pruefen,
-kopieren) und erst die Anwendung mit `--aus-plan --apply` gegen den Produktivpfad. Der
-Vergleich des Vorherstands gegen die Live-Zeilen bleibt dabei die Sicherung.
+**Nachzug erledigt am 09.09.2026.** `3'089` Namen wurden in einer Transaktion aktualisiert.
+Nachweis am konsistenten Vorher- und Nachher-Snapshot, beide unter Schreibsperre bei leerer
+WAL kopiert, `quick_check` `ok`: 7'615 Zeilen vorher und nachher, identische Zeilenmenge,
+**3'089 Zeilen mit geaendertem `Name` und null Abweichungen in den uebrigen 50 Spalten**.
+Alle 3'089 Werte entsprechen genau dem Plan, die Summe `SalesPriceValue` bleibt bei
+`7'029'335.84`, die 191 Segmentzuordnungen bleiben unveraendert, und in der gesamten Tabelle
+steht ueber alle Standorte kein Schriftrest mehr. Sicherung vor dem Eingriff:
+`trafag_exporter.db.before-de-name-rtf-fix-20260909-084140.bak` aus dem Deploy.
+
+**Betriebshinweis fuer Wiederholungen:** Ein Nur-Lese-Zugriff auf die Produktivdatenbank
+scheitert ueber SMB mit `SQLite Error 14`, weil SQLite die `-shm`-Datei der WAL nicht
+anlegen kann. Deshalb laeuft der Probelauf gegen eine konsistente lokale Kopie nach dem
+Verfahren in `Tools/DeCustomerMapping/README.md` (Checkpoint, `BEGIN IMMEDIATE`, leere WAL
+pruefen, kopieren) und erst die Anwendung mit `--aus-plan --apply` gegen den Produktivpfad.
+Der Vergleich des Vorherstands gegen die Live-Zeilen bleibt dabei die Sicherung.
+
+**Die veroeffentlichten Dateien wurden mitgezogen**, weil die Dashboards bevorzugt
+`Sales_ProcessedMergeInput_*.csv` lesen und eine korrigierte Datenbank allein die Anzeige
+nicht heilt. `Tools/DeNameFixFiles` ersetzt in der vorhandenen CSV und der vorhandenen
+Sales-Excel ausschliesslich Namenszellen, ueber die eindeutige Abbildung alter Text ->
+bereinigter Text (1'178 verschiedene Texte fuer 3'089 Zeilen). Es wird nichts neu
+berechnet. Gegenprobe: In der CSV sind 3'089 Felder der Spalte `Name` abweichend und **null
+Felder in allen anderen Spalten**; jede unveraenderte Zeile wurde vorher testweise
+zurueckgeschrieben und musste dabei byteweise gleich bleiben. In der Excel sind 3'089
+Namenszellen abweichend und **null sonstige Zellen oder Formeln**. Die Vorversionen liegen
+als `*.vor-namefix.csv`/`.xlsx` im Arbeitsordner. Serverordner `output`: CSV mit SHA256
+`86672538A821F058BD2630508C3F56000F33352A0A9C7B870948240B17A4E7FC`, Excel mit
+`80FD2B45AAA1D8F7E4EAD0660E5B0EB4D4509910355B4CAC823D1C52B23A5845`. Beide Dateien wurden
+mit `Publish --ersetzen` auch im SharePoint-Ordner ersetzt und zurueckgelesen: CSV bytegleich
+bei 4'068'299 Bytes, Excel alle Zellwerte und Formeln gleich bei 1'346'876 Bytes.
+
+**Noch offen, bewusst nicht angefasst:** Der konsolidierte Gesamtexport
+`Sales_All_2026-09-08.xlsx` und die zugehoerige `Finance_Dashboard_Audit_All_2026-09-08.csv`
+stammen vom Vortag und tragen den Schriftrest weiter. Der naechste Gesamtexport liest die
+korrigierte Standort-CSV und braucht dafuer keinen Eingriff. Eine Sichtpruefung im Browser
+war nicht moeglich, weil die Chrome-Erweiterung in dieser Sitzung nicht verbunden war;
+gepruefte Ersatznachweise sind die Datenbank, die beiden Dateien und HTTP `200` auf
+Startseite und Management Cockpit ohne Schriftrest im ausgelieferten Seitenrumpf.
 
 Die Standort-Mails aus 07/2026 (`docs/mails/Build-StandortMails.ps1`) nennen weiterhin
 2'903 von 7'171 Texten mit Formatierungstext. Das ist der Stand des damaligen Versands und

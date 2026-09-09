@@ -58,14 +58,18 @@ Stand: 2026-09-09
   `StartsRtfDiscardedGroup`. Das Arbeitsverzeichnis war beim Deploy nicht sauber, Branch
   `feature/supplier-overrides-trit`.
 
-  **Was dieser Deploy noch nicht bedeutet:** Er wirkt nur auf **kuenftige** DE-Importe.
-  Die bereits gespeicherten `3'089` von `7'615` TRDE-Zeilen mit Schriftrest bleiben stehen,
-  bis `Tools/DeNameFix` sie nachzieht. Dieser Nachzug ist am 09.09. **nicht** gelaufen: Das
-  VPN fiel unmittelbar nach dem Deploy wieder aus, der Firmenshare war nicht mehr
-  erreichbar. Ein Lesezugriff im Nur-Lese-Modus scheitert ueber SMB ausserdem mit
-  `SQLite Error 14`; deshalb laeuft der Probelauf gegen eine konsistente lokale Kopie
-  (Checkpoint, `BEGIN IMMEDIATE`, leere WAL, Kopie) und erst die Anwendung gegen den
-  Produktivpfad. Details: `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8.
+  **Der Deploy allein wirkt nur auf kuenftige DE-Importe.** Der Nachzug des Bestands lief
+  im Anschluss am selben Tag, nach einem VPN-Ausfall zwischendurch: `3'089` von `7'615`
+  TRDE-Zeilen, ausschliesslich die Spalte `Name`, in einer Transaktion. Vorher-/Nachher-
+  Snapshot unter Schreibsperre, `quick_check` `ok`, identische Zeilenmenge, **null
+  Abweichungen in den uebrigen 50 Spalten**, `SalesPriceValue` unveraendert bei
+  `7'029'335.84`, Segmente unveraendert bei 191, kein Schriftrest mehr in der ganzen
+  Tabelle. Anschliessend wurden `Sales_ProcessedMergeInput_TRDE_2026-09-09.csv` und
+  `Sales_TRDE_2026-09-09.xlsx` im Serverordner `output` und im SharePoint-Ordner ersetzt
+  und zurueckgelesen; nur Namensfelder weichen ab. **Betriebsfalle:** ein Lesezugriff im
+  Nur-Lese-Modus scheitert ueber SMB mit `SQLite Error 14`, deshalb Probelauf gegen eine
+  konsistente lokale Kopie und erst die Anwendung gegen den Produktivpfad. Details und
+  Hashes: `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8.
 
 - Vorheriger Deploy: **09.09.2026 07:20, DE-Belegbruecke und reine
   Railway-Branchen**, Commit `8a0cee6`, **687/687** Release-Tests. Ohne Alarm,

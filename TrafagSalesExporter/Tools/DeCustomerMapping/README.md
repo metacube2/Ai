@@ -39,6 +39,15 @@ oder blossen Namensaehnlichkeiten zum Kundenabgleich verwenden.
    Excel alle Zellwerte und Formeln gleich. SharePoint kann Klassifizierungsmetadaten
    und Beziehungen ergaenzen, weshalb ein ZIP-Gesamthash kein Inhaltsnachweis ist.
 
+## Verwandt: Namenskorrektur der Artikelbezeichnung
+
+`Tools/DeNameFix` zieht die Spalte `Name` nach, wenn sich die RTF-Bereinigung geaendert hat,
+und `Tools/DeNameFixFiles` korrigiert dieselbe Spalte in der bereits veroeffentlichten CSV
+und Sales-Excel. `Publish` kennt dafuer `--ersetzen`; das ueberschreibt eine vorhandene
+SharePoint-Datei bewusst und ist nur fuer eine Korrektur desselben Tages gedacht, bei der
+die Vorversion gesichert und der Unterschied nachgewiesen ist. Fachlicher Nachweis:
+`docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8.
+
 ## Lokale Datenbankkopie fuer grosse Auswertungen
 
 Die am 09.09. verwendete Kopie wurde unter SQLite-Schreibsperre erstellt: zuerst
