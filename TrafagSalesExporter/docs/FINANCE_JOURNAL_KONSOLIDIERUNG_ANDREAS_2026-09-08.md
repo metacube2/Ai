@@ -62,6 +62,14 @@ Was dafuer noetig ist, in dieser Reihenfolge:
 
 ## 4. Einwand zur verdichteten Darstellung
 
+**Nachtrag vom 2026-09-09.** Im Gespraech mit Andreas und Philipp Steiger hat Andreas eine
+Minimalladung genannt (Buchungsdatum, Faelligkeitsdatum, Buchungs-ID, Konto,
+Kontobezeichnung, Betrag, Buchungstext, Entity, dazu das Mapping auf das Konzernkonto)
+und dabei **beide** Soll-Haben-Varianten vertreten: zuerst ein Soll-Haben-Kennzeichen,
+spaeter zwei Betragsspalten Debit und Credit. Die Darstellung ist damit **nicht**
+entschieden; Philipp schaut darauf, und was B1 beziehungsweise HANA im Standard liefert,
+ist noch zu pruefen. Wortlaut: `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md` Abschnitt 8.
+
 Die untere Tabelle der Skizze presst eine Buchung in **eine** Zeile, mit `accnt db` und
 `accnt cr` nebeneinander. Das funktioniert nur bei Buchungen mit genau zwei Zeilen.
 

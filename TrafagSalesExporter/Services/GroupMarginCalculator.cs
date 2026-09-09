@@ -305,8 +305,11 @@ public static class GroupMarginCostRules
             // ABGRENZUNG, falls das jemand erweitern will: Das ist bewusst die enge Lesart. Die
             // Empfehlung in docs/FINANCE_STANDARDKOSTEN.md Abschnitt 10, den Schweizer STPRS
             // unabhaengig von der liefernden Gesellschaft gelten zu lassen, ist eine ANDERE und
-            // weitergehende Regel und ein offener Fachentscheid von Andreas. Sie gehoert dann in
-            // eine eigene, benannte Regel oder einen eigenen Modus, nicht in diesen Schalter.
+            // weitergehende Regel. Andreas hat sie am 2026-09-09 ENTSCHIEDEN, und zwar dagegen:
+            // Schnitt nach der ersten internen Lieferstufe, intern sind nur TR AG, TR IN und TR IT.
+            // Die enge Lesart hier bleibt damit richtig, und die weitergehende Regel wird nicht
+            // gebaut. Wortlaut und akzeptierte Ungenauigkeit in
+            // docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md.
             if (deliveringEntity is not null && ShouldUseSwissStprs(context))
                 deliveringEntity = GroupStandardCostEntities.TrAg;
 

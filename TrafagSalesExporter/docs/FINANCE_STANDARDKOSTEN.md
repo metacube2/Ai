@@ -11,6 +11,11 @@ fragt stattdessen nach einer Referenzkost je Artikel aus Bestandswert geteilt du
 Bestandsmenge. Abschnitte 6 und 7 sind nachgefuehrt; Einzelheiten, vorbereitetes Messpaket
 und Antwortvorschlaege in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 
+Ebenfalls am 2026-09-09: Andreas hat die Konzernkostenkaskade entschieden. **Schnitt nach
+der ersten internen Lieferstufe**, extern gilt der lokale Standardpreis. Das schliesst den
+wichtigsten offenen Punkt aus Abschnitt 7. Neuer Abschnitt 12, Primaerquelle
+`docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`.
+
 Zusammengefuehrt aus vier Vorgaengerdateien (Umsetzung 2026-07-14, Arbeitsnotiz
 2026-07-17, Sitzung Andreas 2026-07-27, Andreas-Beschluss 2026-08-11); Konzernkosten
 TR IT/TR IN produktiv nachgemessen am 2026-08-25, siehe Abschnitt 3.
@@ -395,7 +400,7 @@ Reporting-Marge im Dashboard.
 
 | Punkt | Bei wem |
 | --- | --- |
-| Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
+| **ENTSCHIEDEN am 2026-09-09: nein**, siehe Abschnitt 12. Der Schnitt nach der ersten internen Stufe beantwortet diese Frage; der Schalter bleibt die enge Alternative und wird nicht zur Regel. Die Frage lautete: Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
 | **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Andreas soll weiterhin die davon getrennte erste Frage entscheiden, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt. | Ingo / Andreas |
 | Umrechnungsregel fuer Konzernkosten in fremder Waehrung. Die frueheren `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) waren bis 2026-08-25 auf `Kostenwaehrung abweichend` maskiert. **Seit Deploy 2026-08-27 15:28** wird die Kostenbasis mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, verbindlicher Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %`. **Konkret geworden am 2026-09-09:** Andreas schlaegt fuer Artikel ohne Bestand den letzten verfuegbaren Wert vor, was dem heutigen Default `LatestPositive` entspricht | Andreas |
@@ -866,8 +871,52 @@ Nachweisblatt `Gruppenmarge Details` (Spalten `27` und `28`), beide im Hilfeblat
 beschrieben. Bewusst der Rohwert aus dem Artikelstamm und keine Deutung: leer heisst nicht
 „extern", sondern nur, dass die Quelle das Feld nicht fuehrt.
 
+## 12. Entscheid vom 2026-09-09: Schnitt nach der ersten internen Lieferstufe
+
+Andreas Stoller hat die Kaskade im Gespraech mit Ingo und Philipp Steiger entschieden.
+Primaerquelle mit Wortlaut, akzeptierter Ungenauigkeit und den Journalthemen desselben
+Gespraechs: `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`.
+
+Zwei Regeln, mehr nicht:
+
+| Fall | Kostenbasis |
+| --- | --- |
+| externer Lieferant | lokaler Standardpreis der verkaufenden Gesellschaft |
+| interner Lieferant | Kosten der **ersten** liefernden Konzerngesellschaft, keine Kettenaufloesung |
+
+Intern heisst ausschliesslich Trafag AG, Trafag Controls India und Trafag Italia, also genau
+die drei Konzernkostentabellen aus Abschnitt 3.
+
+**Das ist der heutige Standard der Berechnung.** `GroupMarginCostRules.GroupStandardCost`
+loest ueber `ResolveDeliveringEntity` genau eine Stufe auf, ohne Rekursion; extern faellt bis
+zum lokalen Standardpreis durch. Der Entscheid verlangt keinen Umbau, er schliesst einen
+offenen Punkt.
+
+**Damit erledigt:** die Frage, ob der Schweizer `STPRS` unabhaengig von der liefernden
+Gesellschaft gilt, sobald die Schweiz das Material im Werk 1100 fuehrt. Antwort nein. Der
+Modus `InternalSupplierCostSourceMode = SwissStprsForChPlantMaterial` bleibt die eng
+gefasste Alternative und wird nicht zur Regel; die weitergehende Lesart aus Abschnitt 10
+wird nicht gebaut.
+
+**Akzeptierte Ungenauigkeit, von Andreas selbst bemessen.** Thermostate, die Italien von
+Indien zukauft und an die Toechter weiterverkauft, laufen ueber Preisliste minus 30 Prozent
+statt ueber Herstellkosten. Beim Schnitt bleibt Italiens Handelsmarge in der Kostenbasis,
+die Konzernmarge dieser Zeilen ist zu niedrig. Andreas beziffert das auf rund 200'000 bis
+300'000 Gruppenumsatz und haelt eine mehrstufige Rechnung dafuer ausdruecklich fuer
+unverhaeltnismaessig. Das ist deshalb **kein offener Punkt**, sondern eine bewusst
+akzeptierte Abweichung.
+
+**Zurueckgestellt, nicht verworfen:** eine zweite Stufe. Andreas nennt sie ausdruecklich als
+moeglichen zweiten Schritt, besonders fuer die Thermostate ueber Italien. Der Schnitt ist die
+erste Iteration.
+
+**Offen bleibt der Fall ohne Lieferantenfeld**, weil dort weder extern noch intern bekannt
+ist. Dafuer gilt weiter die Entscheidungsrichtung aus 7a: MARC Werk 1100 als Standard, mit
+Andreas' einfacherer Variante als Schalter.
+
 ## Querverweise
 
+- Entscheid vom 2026-09-09 im Wortlaut: `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`
 - Gruppenmarge-Fachlogik: `docs/FINANCE_GRUPPENMARGE_2026-06-16.md`
 - SAP-Spezifikation WAVWR: `docs/FINANCE_VBRP_WAVWR_SPEZ_2026-07-16.md`
 - Supplier-Klassifikation und Laenderstatus: `docs/FINANCE_SUPPLIER.md`

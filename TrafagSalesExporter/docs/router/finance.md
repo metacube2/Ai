@@ -26,6 +26,7 @@ Marktsegmente.
 | Waehrungs- und Kursworkflow | `docs/FINANCE_KURS_WORKFLOW_2026-06-09.md` |
 | Gruppenmarge, Fachlogik und Kostenwaehrungsschalter | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | **Standardkosten, Kostenbasis, Konzernkosten TR AG/IT/IN** | `docs/FINANCE_STANDARDKOSTEN.md` |
+| **Wie tief geht die Konzernkostenkaskade?** Entscheid Andreas vom 2026-09-09 im Wortlaut: Schnitt nach der ersten internen Stufe, akzeptierte Thermostat-Ungenauigkeit, zurueckgestellte zweite Stufe, dazu die Journalthemen desselben Gespraechs | `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md` |
 | **TR IT Bewertungsmethode: warum Moving Average technisch nicht umstellbar ist** (Antwort Paola vom 2026-09-04, Primaerquelle) | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
 | **TR IT Referenzkost je Artikel** aus Bestandswert geteilt durch Bestandsmenge: Andreas' Vorschlag vom 2026-09-09, was davon schon produktiv ist, vorbereitetes Messpaket, Abgrenzung gegen die Konzern-Herstellkosten, Antwortvorschlaege | `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |

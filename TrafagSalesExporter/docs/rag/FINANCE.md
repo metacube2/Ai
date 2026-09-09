@@ -82,6 +82,15 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Notwendigkeit und Dringlichkeit liegt bei Andreas. **Kein Reporting-Blocker**, weil
   `INV1.StockPrice` auf Belegebene davon unabhaengig ist. Details:
   `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
+- **Kostenkaskade entschieden am 2026-09-09:** externer Lieferant heisst lokaler
+  Standardpreis, interner Lieferant heisst Kosten der **ersten** liefernden
+  Konzerngesellschaft und dann Schnitt, ohne Kettenaufloesung. Intern sind nur TR AG,
+  TR IN und TR IT. Das ist der heutige Standard im Code, also kein Umbau. Damit ist die
+  Frage nach dem Schweizer `STPRS` unabhaengig von der liefernden Gesellschaft mit nein
+  beantwortet. Akzeptierte Ungenauigkeit: Thermostate Italien aus Indien laufen ueber
+  Preisliste minus 30 Prozent, rund 200-300k Gruppenumsatz, von Andreas bewusst in Kauf
+  genommen. Eine zweite Stufe ist zurueckgestellt, nicht verworfen. Details:
+  `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`.
 - **Entscheid vom 2026-09-09:** Andreas gibt der Umstellung auf Moving Average keine
   Prioritaet, erneute Betrachtung im naechsten Jahr; Rueckmeldung an Paola noch offen.
   Stattdessen fragt er nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
