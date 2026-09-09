@@ -299,19 +299,30 @@ ausgefuehrt und ihre Zeilenzahl gegen die Basisabfrage ohne Ausgleichs-Join geza
 | TRUS | 21'816 | 21'816 | 9'902 | 8'289 | 324 | 257 |
 
 Die Zeilenzahl ist in allen drei Gesellschaften identisch; die Erweiterung vervielfacht
-also keine Zeile. **Indien war am 2026-09-09 vom Entwicklungsrechner nicht erreichbar**
-(TCP-Timeout), die Belegung dort ist ungemessen — am 2026-09-08 war der Standort noch
-erreichbar, es handelt sich also um ein Netzfenster und nicht um einen Befund.
+also keine Zeile.
 
-**Offen und vor dem Deploy nachzuholen:** Diese Gegenprobe gilt fuer die einstufige
-Fassung der Unterabfrage. Die zweistufige Korrektur aus Befund 3 ist **noch nicht live
-gegengezaehlt**, weil das Firmennetz waehrend der Nachmessung ausfiel (DNS-Aufloesung
-schlug fuer alle Standorte fehl). Das ist kein Formalismus: der erste Versuch der
-zweistufigen Fassung scheiterte an HANA mit `invalid column name REC.last_recon_date`,
-weil unquotierte Aliase grossgeschrieben werden. Die Unit-Tests pruefen nur Teilzeichen
-der Query und koennen eine solche Laufzeitfrage grundsaetzlich nicht entscheiden. Vor dem
-Deploy ist deshalb `.tmp_tools/JournalClearingProbe0909` erneut auszufuehren; erwartet
-werden dieselben Basiszeilenzahlen wie oben.
+Die Gegenprobe ist nach der zweistufigen Korrektur aus Befund 3 **wiederholt** worden und
+hat dasselbe Ergebnis: `basis = produktiv` bei TRFR 20'198, TRIT 162'843 und TRUS 21'816,
+und die abgeleiteten Zahlen (`ClearingDate`, `ReconciliationDate`, mehrfach ausgeglichen,
+storniert) sind Wert fuer Wert unveraendert. Die Korrektur hat also ausschliesslich die
+Zuordnung von Nummer zu Datum geaendert und nichts an der Zeilenmenge. Dass TRIT zwischen
+den beiden Laeufen von 162'833 auf 162'843 gewachsen ist, liegt am laufenden Tagesgeschaeft
+und ist kein Effekt der Query.
+
+Diese Wiederholung war notwendig und kein Formalismus: der erste Versuch der zweistufigen
+Fassung scheiterte auf HANA mit `invalid column name REC.last_recon_date`, weil
+unquotierte Aliase grossgeschrieben werden — waehrend alle 690 Unit-Tests gruen waren. Die
+Tests pruefen nur Teilzeichen der Query und koennen eine solche Laufzeitfrage
+grundsaetzlich nicht entscheiden. Werkzeug: `.tmp_tools/JournalClearingProbe0909`, das die
+unveraenderte produktive Query ausfuehrt und gegen eine Basisabfrage ohne Ausgleichs-Join
+zaehlt; es schreibt weder in die App-Datenbank noch in das Ereignisprotokoll.
+
+**Indien ist weiterhin ungemessen.** Der Standort war am 2026-09-09 auch bei aktiver VPN
+nicht erreichbar: weder Ping noch TCP auf `30015` oder `30013` (unabhaengig mit
+`Test-NetConnection` gegen `20.197.20.60` geprueft), waehrend FR, IT und US ueber dieselbe
+Verbindung antworteten. Am 2026-09-08 war Indien noch erreichbar. Es handelt sich also um
+eine Stoerung auf indischer Seite oder auf der Route dorthin, nicht um einen Befund zu den
+Ausgleichsfeldern. Die Belegung dort ist beim naechsten erreichbaren Fenster nachzumessen.
 
 Dass `ClearingDate` und `ReconciliationDate` **beide** gefuehrt werden, ist gemessen und
 nicht kosmetisch: in den USA tragen 1'613 Zeilen ein `MthDate` ohne zugehoerigen

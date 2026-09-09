@@ -35,7 +35,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `Finance_All` ausgewiesen — `ClearingDate` (`JDT1.MthDate`), `ReconciliationDate`
   (juengstes `OITR.ReconDate`), `ClearingReference`, `ClearingCount` und
   `IsClearingCancelled`. Live gemessen ab 2025: FR 5'680 von 20'198, IT 64'677 von
-  162'833, US 9'902 von 21'816 Zeilen mit Ausgleichsdatum; Indien war nicht erreichbar.
+  162'833, US 9'902 von 21'816 Zeilen mit Ausgleichsdatum. Indien ist ungemessen: der
+  Standort war am 2026-09-09 auch mit VPN weder per Ping noch per TCP erreichbar, waehrend
+  FR/IT/US ueber dieselbe Verbindung antworteten.
   **Zwei Fallen, die die Umsetzung bestimmt haben:** `JDT1.IntrnMatch` ist in FR/IT/US
   durchgehend `0`/`-1` und als Bruecke unbrauchbar, verknuepft wird ueber
   `ITR1.TransId`/`TransRowId`; und eine Zeile kann mehrfach ausgeglichen sein (FR 56,
@@ -43,11 +45,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   direkter `JOIN` haette den Journalsaldo verfaelscht. Dritter Befund: `ReconNum` wird
   nicht in Datumsreihenfolge vergeben, die hoechste Nummer gehoert bei FR 374 von 1'412
   mehrfach ausgeglichenen Zeilen nicht zum juengsten Ausgleich; die Unterabfrage laeuft
-  deshalb zweistufig. Die einstufige Fassung wurde live gegengezaehlt und lieferte exakt
-  die Basiszeilenzahl; **die zweistufige Korrektur ist noch nicht live geprueft**, weil
-  das Netz ausfiel. Vor einem Deploy `.tmp_tools/JournalClearingProbe0909` erneut laufen
-  lassen — die Unit-Tests pruefen nur Teilzeichen und faengen einen HANA-Syntaxfehler
-  nicht. Bewusst **nicht** eingebaut: ein
+  deshalb zweistufig. Die zweistufige Fassung ist live gegengezaehlt: `basis = produktiv`
+  bei FR 20'198, IT 162'843, US 21'816, abgeleitete Zahlen unveraendert. Werkzeug
+  `.tmp_tools/JournalClearingProbe0909`; nach jeder Aenderung an der Ausgleichs-Query
+  erneut laufen lassen, weil die Unit-Tests nur Teilzeichen pruefen und einen
+  HANA-Syntaxfehler nicht fangen — genau der ist beim ersten Versuch aufgetreten.
+  Bewusst **nicht** eingebaut: ein
   abgeleitetes `date paid` und die Zahlungsbelege `ORCT`/`OVPM`; welche der vier
   Bedeutungen fuehrend wird, entscheidet Andreas. Gefuellt sind die Spalten erst nach
   einem erneuten Ladelauf je Gesellschaft. **Nicht deployed.** Detail:
@@ -156,8 +159,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Bedeutungsfrage ist offen. Andreas muss entscheiden, was fuehrend wird:
   Zahlungsbuchungsdatum, Ueberweisungsdatum, Datum des letzten Ausgleichs oder erst der
   vollstaendige Ausgleich. Erst danach eine einzelne fuehrende Kennzahl ableiten; bis
-  dahin zeigt `Finance_All` die Quelllage. Offen bleibt zusaetzlich die Messung fuer
-  Indien, das am 2026-09-09 nicht erreichbar war.
+  dahin zeigt `Finance_All` die Quelllage. Offen bleiben zusaetzlich der Deploy samt
+  Ladelauf je Gesellschaft und die Messung fuer Indien, das am 2026-09-09 nicht
+  erreichbar war.
 - Supplier-Mapping: 77'466 von 95'396 Live-Zeilen haben alle drei
   Supplier-Felder leer. Die Rohdatenluecke bleibt offen, die Ursache je Quelle ist
   weiterhin zu klaeren. Seit dem Deploy vom 2026-08-12 maskiert die Gruppenmarge
