@@ -29,9 +29,23 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Gefuellt ist das Feld erst nach einem erneuten Ladelauf je Gesellschaft; der
   SAP-Gateway-Leser fuer CH/AT ist nicht mit angepasst. `ProfitCode` und `OcrCode2-5` sind in allen
   vier Quellen leer, Dimension 2-5 inaktiv. Konzernkonto wartet auf Andreas' Mapping.
-  Neues Exportblatt `Feldstatus` weist die tatsaechliche Belegung aus. Zahlungsbuchung
-  (`ORCT/OVPM.DocDate`) und Ausgleich (`OITR.ReconDate`) sind verfuegbar, fachliche
-  Bedeutung eines gewuenschten `date paid` noch offen. Detail: `docs/FINANCE_JOURNAL.md`.
+  Neues Exportblatt `Feldstatus` weist die tatsaechliche Belegung aus. Detail:
+  `docs/FINANCE_JOURNAL.md`.
+- AUSGLEICHSFELDER, 2026-09-09 (ISS-006.1): fuenf Felder je Buchungszeile eingebaut und in
+  `Finance_All` ausgewiesen — `ClearingDate` (`JDT1.MthDate`), `ReconciliationDate`
+  (juengstes `OITR.ReconDate`), `ClearingReference`, `ClearingCount` und
+  `IsClearingCancelled`. Live gemessen ab 2025: FR 5'680 von 20'198, IT 64'677 von
+  162'833, US 9'902 von 21'816 Zeilen mit Ausgleichsdatum; Indien war nicht erreichbar.
+  **Zwei Fallen, die die Umsetzung bestimmt haben:** `JDT1.IntrnMatch` ist in FR/IT/US
+  durchgehend `0`/`-1` und als Bruecke unbrauchbar, verknuepft wird ueber
+  `ITR1.TransId`/`TransRowId`; und eine Zeile kann mehrfach ausgeglichen sein (FR 56,
+  IT 559, US 324, bis zu neun Vorgaenge), weshalb vor dem Join aggregiert wird — ein
+  direkter `JOIN` haette den Journalsaldo verfaelscht. Die produktive Query wurde live
+  gegengezaehlt und liefert exakt die Basiszeilenzahl. Bewusst **nicht** eingebaut: ein
+  abgeleitetes `date paid` und die Zahlungsbelege `ORCT`/`OVPM`; welche der vier
+  Bedeutungen fuehrend wird, entscheidet Andreas. Gefuellt sind die Spalten erst nach
+  einem erneuten Ladelauf je Gesellschaft. **Nicht deployed.** Detail:
+  `docs/FINANCE_JOURNAL.md`, Abschnitt „Ausgleichsfelder".
 - ES BUCHUNGSDATUM, STAND 2026-09-02: das Feld ist eingebaut, live geprueft und die
   Fachfrage ist entschieden. Die spanische Export-SQL selektiert
   `FacturasTB.FechaAsiento` als `PostingDate` und `FacturasTB.Asiento` als
@@ -132,6 +146,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Offene Fachpunkte
 
+- `date paid` (ISS-006.1): die Ausgleichsfelder sind seit dem 2026-09-09 eingebaut, die
+  Bedeutungsfrage ist offen. Andreas muss entscheiden, was fuehrend wird:
+  Zahlungsbuchungsdatum, Ueberweisungsdatum, Datum des letzten Ausgleichs oder erst der
+  vollstaendige Ausgleich. Erst danach eine einzelne fuehrende Kennzahl ableiten; bis
+  dahin zeigt `Finance_All` die Quelllage. Offen bleibt zusaetzlich die Messung fuer
+  Indien, das am 2026-09-09 nicht erreichbar war.
 - Supplier-Mapping: 77'466 von 95'396 Live-Zeilen haben alle drei
   Supplier-Felder leer. Die Rohdatenluecke bleibt offen, die Ursache je Quelle ist
   weiterhin zu klaeren. Seit dem Deploy vom 2026-08-12 maskiert die Gruppenmarge

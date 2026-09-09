@@ -1,6 +1,6 @@
 # Finance Journal Import (Hauptbuch-Buchungszeilen)
 
-Stand: 2026-09-08. Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
+Stand: 2026-09-09. Zusammengefuehrt aus `FINANCE_B1_JOURNAL_IMPORT_2026-07-14.md` und
 `FINANCE_JOURNAL_SAP_ODATA_SPEZ_2026-07-14.md`.
 
 Zweck: Hauptbuchdaten je Tochtergesellschaft in die **separate** Tabelle
@@ -19,8 +19,9 @@ Nicht enthalten: die Manual-Excel-Laender DE, UK, ES — sie haben keine Buchhal
 
 ## Einordnung
 
-- Quelltabellen B1: `OJDT` (Kopf) und `JDT1` (Zeilen), dazu `OACT` (Kontobezeichnung) und
-  `OADM` (Hauswaehrung). Quelle CH/AT: `BKPF`/`BSEG`.
+- Quelltabellen B1: `OJDT` (Kopf) und `JDT1` (Zeilen), dazu `OACT` (Kontobezeichnung),
+  `OADM` (Hauswaehrung) sowie seit dem 2026-09-09 `ITR1`/`OITR` fuer den Ausgleich.
+  Quelle CH/AT: `BKPF`/`BSEG`.
 - Bewusst **ohne** den IT-Umsatzkontenfilter der Sales-Strecke — das Journal ist das
   volle Hauptbuch.
 - **Indien-Falle:** Indien ist fachlich SAP B1, ist in der Konfiguration aber historisch
@@ -49,6 +50,11 @@ beziehungsweise `Budat` (CH/AT).
 | Zeilen-ID | `JournalEntryLineId` | `JDT1.Line_ID` | `Buzei` |
 | Buchungsdatum | `PostingDate` | `OJDT.RefDate` | `Budat` |
 | Faelligkeitsdatum | `DueDate` | `JDT1.DueDate` (produktiv) | `Faedt`, berechnetes Nettofaelligkeitsdatum |
+| Ausgleichsdatum der Zeile | `ClearingDate` | `JDT1.MthDate` | `Augdt`, Initialwerte werden zu leer |
+| Datum des juengsten Ausgleichs | `ReconciliationDate` | `MAX(OITR.ReconDate)` ueber `ITR1` | nicht vorhanden |
+| Ausgleichsnummer | `ClearingReference` | `MAX(OITR.ReconNum)` ueber `ITR1` | `Augbl` |
+| Anzahl Ausgleiche | `ClearingCount` | `COUNT(*)` ueber `ITR1` | 0 oder 1 |
+| Ausgleich storniert | `IsClearingCancelled` | `OITR.Canceled` in `Y`/`C` | nicht vorhanden |
 | Geschaeftsjahr | `FiscalYear` | Kalenderjahr aus `RefDate` | `Gjahr` |
 | Periode | `FiscalPeriod` | Monat aus `RefDate` | `Monat` |
 | Sachkonto | `AccountCode` | `JDT1.Account` | `Hkont`, fuehrende Nullen entfernt |
@@ -226,19 +232,93 @@ neue Modellfeld ohne separate Sonderbehandlung. CH/AT wartet auf das SAP-EntityS
 `Finance_All` kann alte Datenbanken weiterhin lesen und zeigt die tatsaechliche
 Feldbelegung im neuen Blatt `Feldstatus`, immer ueber den vollstaendigen Journalbestand.
 
-**Zahlungsdatum / Clearing Date:** live in allen vier B1-Schemata vorhanden und belegt:
-`OITR.ReconDate` (interner Ausgleich), `ORCT.DocDate` (Zahlungseingang), `OVPM.DocDate`
-(Zahlungsausgang) sowie `TrsfrDate` fuer den jeweiligen Ueberweisungsweg. Zahlungsbelege
-und Ausgleichshistorie wurden ueber ihre gesamte Historie gezaehlt, nicht nur ab 2025.
-`JDT1.MthDate` ist ebenfalls teilweise gefuellt (FR 5'680, IT 64'672, US 9'892,
-IN 98'778 Journalzeilen ab 2025); es wird nicht pauschal als `date paid` uebernommen.
+**Zahlungsdatum / Clearing Date — Erhebung vom 2026-09-08, teilweise ueberholt:** live in
+allen vier B1-Schemata vorhanden und belegt: `OITR.ReconDate` (interner Ausgleich),
+`ORCT.DocDate` (Zahlungseingang), `OVPM.DocDate` (Zahlungsausgang) sowie `TrsfrDate` fuer
+den jeweiligen Ueberweisungsweg. Zahlungsbelege und Ausgleichshistorie wurden ueber ihre
+gesamte Historie gezaehlt, nicht nur ab 2025. `JDT1.MthDate` ist ebenfalls teilweise
+gefuellt (FR 5'680, IT 64'672, US 9'892, IN 98'778 Journalzeilen ab 2025).
 Ein Ausgleich kann aus Teilzahlung, Gutschrift oder manueller Zuordnung entstehen;
 auch stornierte Ausgleiche sind vorhanden. Deshalb vor Umsetzung mit Andreas unterscheiden:
 Zahlungsbuchungsdatum, Ueberweisungsdatum, letzter Ausgleich oder vollstaendig ausgeglichen.
-Keine dieser Bedeutungen wurde stillschweigend als zusaetzliches Journalfeld eingebaut.
+**UEBERHOLT ist der letzte Satz dieses Absatzes vom 2026-09-08**, die Felder seien nicht
+eingebaut worden: die Ausgleichsfelder sind am 2026-09-09 aufgenommen worden, siehe den
+folgenden Abschnitt. Unveraendert gilt, dass **kein** abgeleitetes `date paid` eingebaut
+wurde; die Bedeutungsfrage ist weiterhin offen.
 SAP-Referenzen: [OITR](https://help.sap.com/doc/089315d8d0f8475a9fc84fb919b501a3/10.0/en-US/SDKHelp/OITR.html),
 [Payments.DocDate](https://help.sap.com/doc/089315d8d0f8475a9fc84fb919b501a3/10.0/en-US/SDKHelp/SAPbobsCOM~Payments~DocDate.html),
 [Teil- und Vollausgleich](https://help.sap.com/docs/SAP_BUSINESS_ONE/68a2e87fb29941b5bf959a184d9c6727/44f3e8dfc4b80486e10000000a155369.html).
+
+### Ausgleichsfelder, eingebaut am 2026-09-09 (ISS-006.1)
+
+Auftrag von Ingo: „kannst du die felder einbauen, in Finance_All waere ja korrekt oder,
+dann haben wir die felder auch drin beim import klick". Aufgenommen sind fuenf Felder je
+Buchungszeile, die die Quelle **abbilden**; eine fachliche Auswahl findet bewusst nicht
+statt.
+
+| Feld im Modell | B1-Quelle | SAP ECC (CH/AT) | Bedeutung |
+| --- | --- | --- | --- |
+| `ClearingDate` | `JDT1.MthDate` | `BSEG-AUGDT` | Ausgleichsdatum der Buchungszeile |
+| `ReconciliationDate` | `MAX(OITR.ReconDate)` ueber ITR1 | — | Datum des juengsten Ausgleichsvorgangs |
+| `ClearingReference` | `MAX(OITR.ReconNum)` ueber ITR1 | `BSEG-AUGBL` | Nummer des zuletzt angelegten Ausgleichs |
+| `ClearingCount` | `COUNT(*)` ueber ITR1 | 0 oder 1 | Anzahl der Ausgleichsvorgaenge |
+| `IsClearingCancelled` | `OITR.Canceled` in `Y`/`C` | — | mindestens ein Ausgleich storniert |
+
+**Zwei Messbefunde vom 2026-09-09 haben die Umsetzung bestimmt.** Beide sind direkt auf
+den produktiven B1-Schemata erhoben, ausschliesslich lesend.
+
+1. **`JDT1.IntrnMatch` ist unbrauchbar.** Der naheliegende Weg, die Ausgleichsnummer
+   direkt aus der Buchungszeile zu nehmen, faellt aus: das Feld ist in FR, IT und US in
+   **jeder** Zeile `0` oder `-1`, also nie gepflegt (FR 0 von 20'198, IT 0 von 162'821,
+   US 0 von 21'816 echte Werte). Ein `LEFT JOIN OITR ON ReconNum = IntrnMatch` haette
+   syntaktisch funktioniert und dauerhaft leere Spalten geliefert. Die tragfaehige
+   Bruecke ist `ITR1.TransId`/`ITR1.TransRowId` gegen `JDT1.TransId`/`JDT1.Line_ID`.
+2. **Eine Buchungszeile kann mehrfach ausgeglichen werden.** Betroffen sind FR 56, IT 559
+   und US 324 Zeilen, mit bis zu **neun** Ausgleichsvorgaengen je Zeile. Ein direkter
+   `JOIN` ueber `ITR1` haette diese Zeilen vervielfacht und damit den Journalsaldo
+   verfaelscht — derselbe Fehler, der beim spanischen Buchungsdatum durch `OUTER APPLY`
+   statt `JOIN` vermieden wurde (`docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md`). Deshalb
+   wird in einer Unterabfrage nach `TransId`/`TransRowId` aggregiert, bevor verknuepft
+   wird. `ClearingCount` macht den Mehrfachausgleich in der Auswertung sichtbar, statt ihn
+   hinter einem einzelnen Datum verschwinden zu lassen.
+
+**Gegenprobe auf Produktivdaten.** Die unveraenderte produktive Reader-Query wurde live
+ausgefuehrt und ihre Zeilenzahl gegen die Basisabfrage ohne Ausgleichs-Join gezaehlt:
+
+| TSC | Basis ohne Join | produktive Query | `ClearingDate` | `ReconciliationDate` | mehrfach ausgeglichen | Ausgleich storniert |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| TRFR | 20'198 | 20'198 | 5'680 | 5'680 | 56 | 16 |
+| TRIT | 162'833 | 162'833 | 64'677 | 64'609 | 559 | 267 |
+| TRUS | 21'816 | 21'816 | 9'902 | 8'289 | 324 | 257 |
+
+Die Zeilenzahl ist in allen drei Gesellschaften identisch; die Erweiterung vervielfacht
+also keine Zeile. **Indien war am 2026-09-09 vom Entwicklungsrechner nicht erreichbar**
+(TCP-Timeout), die Belegung dort ist ungemessen — am 2026-09-08 war der Standort noch
+erreichbar, es handelt sich also um ein Netzfenster und nicht um einen Befund.
+
+Dass `ClearingDate` und `ReconciliationDate` **beide** gefuehrt werden, ist gemessen und
+nicht kosmetisch: in den USA tragen 1'613 Zeilen ein `MthDate` ohne zugehoerigen
+Ausgleichssatz, in Italien 68; umgekehrt weichen die Daten dort, wo beide gefuellt sind,
+in FR 5, IT 13 und US 45 Zeilen voneinander ab.
+
+**Was bewusst nicht eingebaut wurde.** Kein abgeleitetes `date paid`, und keine Anbindung
+der Zahlungsbelege `ORCT`/`OVPM`. Ein Ausgleich ist nicht dasselbe wie eine Zahlung, und
+welche der vier Bedeutungen fuehrend werden soll, ist eine Fachfrage an Andreas. Solange
+sie offen ist, zeigt `Finance_All` die Quelllage und benennt im Lesehinweis ausdruecklich,
+dass eine leere Zelle „nicht (oder noch nicht) ausgeglichen" heisst und nicht „nicht
+geladen".
+
+**Wirksamkeit.** Wie beim Faelligkeitsdatum sind die Spalten erst nach einem erneuten
+Journal-Ladelauf je Gesellschaft gefuellt; das Blatt `Feldstatus` in `Finance_All` weist
+die tatsaechliche Belegung aus. Der Schemanachzug ist additiv, alte Produktivstaende
+bleiben lesbar. CH/AT liest `BSEG-AUGDT`/`AUGBL` optional: die Felder stehen **nicht** in
+`RequiredFields`, damit ein EntitySet ohne sie den CH/AT-Import nicht abbricht, sondern
+den Ausgleich leer laesst. Dabei filtert `ParseSapDate` die SAP-Initialwerte (`00000000`,
+`0001-01-01`, `1753-01-01`) heraus, die sonst als „ausgeglichen am 01.01.0001" erschienen.
+
+Validierung: 690/690 Release-Tests, darin die neuen Journaltests zu Mehrfachausgleich,
+Storno, B1-Platzhaltern und additivem Schemanachzug; Python-Exportpruefung mit alter und
+neuer Datenbank bestanden. Keine Produktivdaten geaendert, kein Deploy.
 
 Validierung: 675/675 Release-Tests, darin 14/14 gezielte Journaltests mit idempotenter Schemaerweiterung,
 Erhalt alter Zeilen und Persistenz beim Refresh; Python-Exportpruefung mit alter und neuer
