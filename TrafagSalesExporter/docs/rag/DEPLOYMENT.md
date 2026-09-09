@@ -43,6 +43,25 @@ Stand: 2026-09-09
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+- **Datennachzug 09.09.2026 14:37, DE-Kundenfelder auf Rohails Belegbruecke.** Kein Deploy,
+  reine Datenaenderung bei laufender Anwendung. `Tools/DeCustomerBackfill` schrieb 3'043 von
+  7'622 TRDE-Zeilen in einer Transaktion: fachliche Kundennummer, Name, Land und Branche.
+  Fachliche Nummern von `4'549` auf `7'592`, bestaetigte Segmente von `19` auf `24`,
+  `quick_check` `ok`, Zeilenzahl und `SalesPriceValue` mit `7'033'623.00` unveraendert.
+  Vorher-Sicherung `trafag_exporter.db.before-de-customer-backfill-20260909-143601.bak`
+  (`458'653'696` Bytes). Danach `Tools/DeCustomerBackfillFiles` fuer die veroeffentlichten
+  Dateien: `Sales_ProcessedMergeInput_TRDE_2026-09-09.csv` SHA256
+  `982F03E118175A7EB9DBB56CA54BE9E5C689B0D4DE106C58035F97CAFE2BF392` und
+  `Sales_TRDE_2026-09-09.xlsx` SHA256
+  `7B60972CCE6C1CC7FF601B3F46FD5C7BC8F934569F0799B1C6902510A6DC468C`, im Serverordner
+  `output` bytegleich zurueckgelesen und ueber `Publish --ersetzen` auch auf SharePoint.
+  **Nachweis der Unversehrtheit:** in der CSV null Zellen ausserhalb der vier Kundenspalten,
+  in der Excel null fremde Zellen und null Formeln veraendert. Vier Routen HTTPS `200`.
+  **Betriebsfalle bestaetigt:** ein Aufruf ohne Windows-Anmeldung liefert `401`, nicht `200`;
+  `Invoke-WebRequest` braucht `-UseDefaultCredentials`. **Zweite Falle:** der Produktivstand
+  hatte sich seit der Analyse bewegt (Standortexport um 13:07, 7'622 statt 7'615 Zeilen),
+  deshalb wurde der Vorher-Snapshot unmittelbar vor dem Schreiben neu genommen. Detail:
+  `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.
 - Neuester verifizierter Deploy: **09.09.2026 08:43, RTF-Schrift- und Farbtabelle aus der
   Alphaplan-Artikelbezeichnung**, Funktionscommit `eb8cd43` (Stand beim Publish: `5363005`),
   **688/688** Release-Tests gruen im eigenen Lauf vor dem Publish. `BiDashboard.dll`

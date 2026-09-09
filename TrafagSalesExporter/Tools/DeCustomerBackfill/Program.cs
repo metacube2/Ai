@@ -96,6 +96,18 @@ var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(new SqliteCo
 }.ToString()).Options;
 
 await using var db = new AppDbContext(options);
+
+// Integritaet vor jeder Aussage ueber den Inhalt.
+await db.Database.OpenConnectionAsync();
+await using (var check = ((SqliteConnection)db.Database.GetDbConnection()).CreateCommand())
+{
+    check.CommandText = "PRAGMA quick_check;";
+    var result = (await check.ExecuteScalarAsync())?.ToString() ?? "";
+    Console.WriteLine($"quick_check: {result}");
+    if (!string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException("Die Datenbank besteht quick_check nicht. Abbruch.");
+}
+
 var site = await db.Sites.AsNoTracking().SingleAsync(x => x.TSC == "TRDE");
 var rows = await db.CentralSalesRecords.AsNoTracking()
     .Where(x => x.SiteId == site.Id).OrderBy(x => x.Id).ToListAsync();

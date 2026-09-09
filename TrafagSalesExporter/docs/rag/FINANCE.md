@@ -21,11 +21,20 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx` ist darauf neu gebaut: 7'592 von 7'622
   Zeilen zugeordnet, 30 offen, 24 Bahnkunden, 657 Bahnzeilen. Deutscher Bahnumsatz
   erstmals belegbar: 2025 rund 578'636 EUR, 2026 bis 09.09. rund 432'237 EUR.
-  **Der produktive Nachzug steht noch aus**, deshalb gilt der naechste Punkt weiter fuer
-  Datenbank und Dashboard. Rohails Datei enthaelt keine Gutschriften und ihre
-  Branchenspalte ist unbrauchbar; die Branche kommt aus dem Kundenstamm. Detail:
+  **Produktiv nachgezogen am 2026-09-09 um 14:37**: 3'043 Zeilen in einer Transaktion,
+  fachliche Nummern von 4'549 auf 7'592, Segmente von 19 auf 24, `quick_check` `ok`,
+  Zeilenzahl und `SalesPriceValue` mit `7'033'623.00` unveraendert. CSV und Sales-Excel im
+  Serverordner `output` und auf SharePoint ersetzt und zurueckgelesen; in der CSV null
+  Zellen ausserhalb der vier Kundenspalten, in der Excel null fremde Zellen und null
+  Formeln veraendert. Vier Routen HTTPS `200`. Sicherung
+  `trafag_exporter.db.before-de-customer-backfill-20260909-143601.bak`.
+  **Offen bleiben 30 Gutschriftenzeilen** ohne fachliche Nummer, weil Rohails Datei keine
+  Gutschriften enthaelt, sowie die 40 Zeilen der drei Doppelnummern Sonepar, EMS und
+  Magnetic Sense, die der Nachzug bewusst nicht angefasst hat. Rohails Branchenspalte ist
+  unbrauchbar; die Branche kommt aus dem Kundenstamm. Detail:
   `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.
-- BAHNMARKT DE, PRODUKTIV 2026-09-09: Von 7'615 deutschen Verkaufszeilen wurden
+- BAHNMARKT DE, ERSTER NACHZUG 2026-09-09 07:20, **durch den Nachzug um 14:37 ueberholt**:
+  Von 7'615 deutschen Verkaufszeilen wurden
   4'549 ueber die Kombination aus Rechnungsnummer und interner Alphaplan-Adress-ID
   einer fachlichen Kundennummer, Name, Land und Branche zugeordnet. 19 DE-Kunden mit
   einer reinen Bahnbranche sind als `Railway` bestaetigt; bestaetigte Gegenentscheide

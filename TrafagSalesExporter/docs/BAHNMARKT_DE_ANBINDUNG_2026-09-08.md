@@ -7,9 +7,10 @@ etwas vorzeigbar sein muss.
 **Kurzfassung des heutigen Stands:** Der Kundenschluessel fuer Deutschland ist geloest.
 Rohails Rechnungsliste vom 09.09. liefert zu jeder Rechnungsnummer die fachliche
 Adressnummer; 7'592 der 7'622 Verkaufszeilen sind damit zugeordnet und 24 Bahnkunden
-belegt. Die Abschnitte 2 bis 8 beschreiben den Weg dorthin und enthalten Zwischenstaende,
-die inzwischen ueberholt sind. **Massgeblich ist Abschnitt 9.** Der produktive Nachzug in
-Datenbank und Dashboard steht noch aus.
+belegt. **Produktiv nachgezogen am 09.09.2026 um 14:37**, einschliesslich der
+veroeffentlichten Dateien auf Server und SharePoint. Die Abschnitte 2 bis 8 beschreiben den
+Weg dorthin und enthalten Zwischenstaende, die inzwischen ueberholt sind. **Massgeblich ist
+Abschnitt 9.**
 
 Ergaenzt `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` und
 `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md`, ersetzt beide nicht.
@@ -343,14 +344,58 @@ als Gegenprobe, und eine dort vorhandene, in der Mappe fehlende Zeile bricht den
 Gegenprobe nach dem Bau: alle 7'615 Zeilen des Archivstands tragen unveraenderte Menge,
 `SalesPriceValue` und Waehrung; null Abweichungen, sieben zusaetzliche Zeilen.
 
+### Produktiver Nachzug am 09.09.2026 um 14:37
+
+Der Nachzug ist gelaufen. Ingo hat ihn um 14:10 beauftragt („ja alles nachziehen, dachte
+ist schon deployd, aber demall nicht"); der App-Code war seit 07:20 produktiv, aber der
+Code wirkt nur auf kuenftige Importe, und die Daten hatte bis dahin niemand nachgezogen.
+
+Werkzeuge: `Tools/DeCustomerBackfill` fuer die Datenbank, `Tools/DeCustomerBackfillFiles`
+fuer die veroeffentlichten Dateien, `Tools/DeCustomerMapping/Publish --ersetzen` fuer
+SharePoint.
+
+| Messung | vorher | nachher |
+|---|---:|---:|
+| TRDE-Verkaufszeilen | 7'622 | 7'622 |
+| mit fachlicher Kundennummer | 4'549 | **7'592** |
+| ohne Zuordnung | 3'073 | **30** |
+| bestaetigte Segmenteintraege | 19 | **24** |
+| Summe `SalesPriceValue` | 7'033'623.00 | 7'033'623.00 |
+
+3'043 Zeilen in einer Transaktion, 358 Kunden, fuenf neue bestaetigte `Railway`-Segmente.
+`quick_check` `ok`. Zeilenzahl und Umsatzsumme unveraendert; keine Zeile geloescht, angelegt
+oder umsortiert, kein Finanzfeld angefasst.
+
+Der Produktivstand hatte sich zwischen Analyse und Nachzug bewegt: um 13:07 lief ein
+Standortexport, dadurch waren die beiden neuen Rechnungen bereits in der Datenbank und die
+Zeilenzahl stand auf 7'622 statt 7'615. Der Vorher-Snapshot wurde deshalb unmittelbar vor
+dem Schreiben neu genommen.
+
+Sicherungen: `trafag_exporter.db.before-de-customer-backfill-20260909-143601.bak`
+(458'653'696 Bytes) sowie je eine `.vor-kundennachzug-20260909-144212.bak` neben den beiden
+Exportdateien.
+
+Veroeffentlichte Dateien ersetzt und zurueckgelesen. `Sales_ProcessedMergeInput_TRDE_2026-09-09.csv`
+SHA256 `982F03E118175A7EB9DBB56CA54BE9E5C689B0D4DE106C58035F97CAFE2BF392`,
+`Sales_TRDE_2026-09-09.xlsx` SHA256
+`7B60972CCE6C1CC7FF601B3F46FD5C7BC8F934569F0799B1C6902510A6DC468C`, beide im Serverordner
+`output` bytegleich. In der CSV sind **null** Zellen ausserhalb der vier Kundenspalten
+veraendert, in der Excel **null** fremde Zellen und **null** Formeln; 291 Zeilen haben
+zusaetzlich das Segment `Railway` bekommen. Beide Dateien liegen auch im SharePoint-Ordner
+`Import/Finance/Deutschland/AlphaplanRaw` und sind von dort zurueckgelesen.
+
+Anwendung nach dem Nachzug geprueft: Startseite, `/management-cockpit`, `/marktsegmente`
+und `/standorte` antworten mit HTTPS `200`. Der Aufruf braucht Windows-Anmeldung, ohne sie
+antwortet der Server mit `401`.
+
 ### Was noch offen ist
 
-1. **Der produktive Nachzug ist nicht erfolgt.** Datenbank und Dashboard weisen die 3'043
-   Zeilen weiter als `ALPHAPLAN-ID:<ID>` aus. Die Mappe ist damit bewusst weiter als der
-   Produktivstand; der Lesehinweis sagt das in der Datei selbst.
-2. **Gutschriftenauszug** von Rohail erbitten, dann sind es 100 statt 99,6 Prozent.
-3. **Die drei Doppelnummern** fachlich klaeren.
-4. **Der dauerhafte Weg bleibt der Join in der Quelle.** `alphaplanExport.ps1` Zeile 164
+1. **Gutschriftenauszug** von Rohail erbitten, dann sind es 100 statt 99,6 Prozent. Die 30
+   offenen Zeilen sind ausnahmslos Gutschriften ohne fachliche Nummer.
+2. **Die drei Doppelnummern** fachlich klaeren. Der Nachzug hat sie bewusst nicht
+   angefasst, weil beide Nummern belegt sind und die Entscheidung zwischen zwei Firmen
+   fachlich ist. Sie stehen im Blatt `Nummernkonflikte` der Pruefmappe.
+3. **Der dauerhafte Weg bleibt der Join in der Quelle.** `alphaplanExport.ps1` Zeile 164
    liest `FROM dbo.Belege` ohne Verbindung zur Adresstabelle. Solange das so bleibt, ist
    jede Bruecke eine Momentaufnahme und muss bei neuen Rechnungen wiederholt werden.
-5. Nicht versendet. Die Datei liegt bereit, an Rohail ist nichts gegangen.
+4. Nicht versendet. Die Pruefmappe liegt bereit, an Rohail ist nichts gegangen.
