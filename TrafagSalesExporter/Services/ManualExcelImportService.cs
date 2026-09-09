@@ -316,6 +316,9 @@ public class ManualExcelImportService : IManualExcelImportService
 
             var hasBusinessCustomerNumber = HasRawHeader(headerIndexes,
                 "AdressNummer-Kunde", "AdressNummer", "KundenNummer");
+            var internalId = ReadRawString(headerIndexes, fields, "RechnungsAdressenID");
+            var customerEvidence = hasBusinessCustomerNumber ? null : GermanCustomerInvoiceMapping.Find(
+                ReadRawString(headerIndexes, fields, "Belegnummer"), internalId);
             rows[documentEntry] = new AlphaplanInvoiceHeader
             {
                 DocumentEntry = documentEntry,
@@ -328,10 +331,10 @@ public class ManualExcelImportService : IManualExcelImportService
                 // Einzelzeile), sonst werden zwei Nummernkreise vermischt.
                 CustomerNumber = hasBusinessCustomerNumber
                     ? ReadFirstRawString(headerIndexes, fields, "AdressNummer-Kunde", "AdressNummer", "KundenNummer")
-                    : ReadRawString(headerIndexes, fields, "RechnungsAdressenID"),
-                CustomerName = ReadFirstRawString(headerIndexes, fields, "Name Kunde", "KundenName"),
-                CustomerCountry = ReadFirstRawString(headerIndexes, fields, "Land Kunde", "KundenLand"),
-                CustomerIndustry = ReadFirstRawString(headerIndexes, fields, "Branche", "KundenBranche"),
+                    : customerEvidence?.CustomerNumber ?? (internalId.Length == 0 ? "" : $"ALPHAPLAN-ID:{internalId}"),
+                CustomerName = customerEvidence?.CustomerName ?? ReadFirstRawString(headerIndexes, fields, "Name Kunde", "KundenName"),
+                CustomerCountry = customerEvidence?.CustomerCountry ?? ReadFirstRawString(headerIndexes, fields, "Land Kunde", "KundenLand"),
+                CustomerIndustry = customerEvidence?.CustomerIndustry ?? ReadFirstRawString(headerIndexes, fields, "Branche", "KundenBranche"),
                 CurrencyCode = ResolveAlphaplanCurrencyCode(ReadRawString(headerIndexes, fields, "WaehrungenID")),
                 NetAmount = ReadRawDecimal(headerIndexes, fields, "NettoPreisEndSumme"),
                 GrossAmount = ReadRawDecimal(headerIndexes, fields, "BruttoPreisEndSumme"),

@@ -487,12 +487,14 @@ public class ManualExcelImportServiceTests
             Assert.Equal(5m, invoice.Quantity);
             Assert.Equal(2096.38m, invoice.SalesPriceValue);
             Assert.Equal("EUR", invoice.SalesCurrency);
-            Assert.Equal("419", invoice.CustomerNumber);
+            Assert.Equal("ALPHAPLAN-ID:419", invoice.CustomerNumber);
+            Assert.Equal("", invoice.CustomerName);
             Assert.Equal("1261692", invoice.PurchaseOrderNumber);
             Assert.Equal("Alphaplan Invoice", invoice.DocumentType);
             Assert.Equal(new DateTime(2026, 6, 8, 10, 15, 10), invoice.PostingDate);
 
             var credit = Assert.Single(rows, row => row.InvoiceNumber == "GS2610001");
+            Assert.Equal("ALPHAPLAN-ID:420", credit.CustomerNumber);
             Assert.Equal(-120m, credit.SalesPriceValue);
             Assert.Equal(-120m, credit.DocumentTotalForeignCurrency);
             Assert.Equal("Alphaplan CreditNote", credit.DocumentType);

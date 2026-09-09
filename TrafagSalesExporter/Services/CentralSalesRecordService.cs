@@ -146,6 +146,7 @@ public class CentralSalesRecordService : ICentralSalesRecordService
         var customers = records
             .Where(record => IsGermanRailwayIndustry(record.CustomerIndustry))
             .Where(record => !string.IsNullOrWhiteSpace(record.CustomerNumber))
+            .Where(record => !record.CustomerNumber.StartsWith("ALPHAPLAN-ID:", StringComparison.OrdinalIgnoreCase))
             .GroupBy(record => record.CustomerNumber.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(group => new
             {
@@ -211,8 +212,8 @@ public class CentralSalesRecordService : ICentralSalesRecordService
     internal static bool IsGermanRailwayIndustry(string? value)
     {
         var normalized = (value ?? string.Empty).Trim();
-        return normalized.StartsWith("00 Bahn", StringComparison.OrdinalIgnoreCase) ||
-               normalized.StartsWith("05 rw Railways / Bahntechnik", StringComparison.OrdinalIgnoreCase);
+        return normalized.Equals("00 Bahn", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Equals("05 rw Railways / Bahntechnik", StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task InsertRecordsInCommittedBatchesAsync(
