@@ -1,6 +1,7 @@
 # Standort Deutschland: Alphaplan-Export und Import
 
-Stand: 2026-08-17. Zusammengefuehrt aus `ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
+Stand: 2026-09-09 (Abschnitt 8 neu, Abschnitte 5 und 6 nachgefuehrt).
+Zusammengefuehrt aus `ALPHAPLAN_DISCOVERY_EXPORTER_GUIDE_2026-06-08.md`
 und `ALPHAPLAN_SQL_RCLONE_KONZEPT_DE_2026-06-08.md`.
 
 **Die Export-SQL gehoert uns**, nicht Deutschland. Fehlt ein Feld, liest zuerst unsere
@@ -86,7 +87,7 @@ Microsoft 365 fuer `rclone`.
 | `TSC` / `Land` / `SourceSystem` | `TRDE` / `Deutschland` / `Alphaplan` |
 | `InvoiceNumber`, `PositionOnInvoice` | Rechnungs- und Positionsnummer |
 | `Material` | `ArtikelNummer`, **lokale** Alphaplan-Nummer |
-| `Name` | Artikeltext, aktuell aus dem Rich-Text-Feld der Belegposition |
+| `Name` | Artikeltext aus dem RTF-Feld der Belegposition; Schrift- und Farbtabelle werden beim Import entfernt, siehe Abschnitt 8 |
 | `Quantity` | Menge |
 | `CustomerNumber` | Kundennummer |
 | `SalesPriceValue` | `NettoPreisGesamt` der Position |
@@ -108,8 +109,10 @@ haengt die Spartenabdeckung genau daran.
   benoetigt wird ein read-only `INFORMATION_SCHEMA.COLUMNS`-Auszug, gefiltert auf
   `%Adress%`, `%Artikel%`, `%Liefer%`, `%Kunde%`.
 - Danach die Query selbst erweitern: Kundenname und -land (`RechnungsAdressenID` wird
-  selektiert, aber nie aufgeloest), Lieferantenquelle, saubere Bezeichnung aus dem
-  Artikelstamm statt des RTF-Felds (2'903 von 7'171 Texten mit Schriftmuell).
+  selektiert, aber nie aufgeloest) und die Lieferantenquelle. Der frueher hier genannte
+  Punkt „saubere Bezeichnung aus dem Artikelstamm statt des RTF-Felds“ ist **ueberholt**:
+  Der Schriftmuell entstand nicht in der Quelle, sondern beim Lesen, und ist seit dem
+  09.09.2026 im Import behoben (Abschnitt 8). Ein Artikelstammtext ist dafuer nicht noetig.
 - Fachfrage an Deutschland: Ist `ArtikelNummer` gleich der TR-AG-/SAP-`MATNR`?
 - Offen, ob Alphaplan ueberhaupt einen Lieferanten auf der **Verkaufszeile** fuehrt oder
   nur einen Hauptlieferanten im Artikelstamm.
@@ -124,6 +127,65 @@ Das urspruengliche Phase-1-Paket
 bewertete Kandidaten und schrieb `candidate_objects.csv` und `export_summary.csv`.
 **Das ist nicht mehr der aktive Pfad** — die App liest das finale Header-/Line-Paarformat.
 Das Discovery-Skript bleibt nur als Werkzeug fuer eine erneute Schemaerhebung nuetzlich.
+
+## 8. RTF-Schriftmuell in der Artikelbezeichnung, Ursache und Korrektur
+
+Alphaplan speichert `ArtikelBezeichnung` als RTF. Die Export-SQL nimmt das Feld roh mit und
+ersetzt nur Zeilenumbrueche und Semikolons
+(`AlphaplanExportPackage/scripte/alphaplanExport.ps1`, Zeile 183). Der Import hat die
+RTF-Steuerworte und die Klammern entfernt, **nicht aber den Inhalt der Zielgruppen**
+`\fonttbl` und `\colortbl`. Uebrig blieben die Schriftnamen, und die Bezeichnung begann mit
+`MS Shell Dlg, Microsoft Sans Serif, , ,`. Die Kommas stehen dort, weil die Export-SQL die
+Semikolons der RTF-Tabellen durch Kommas ersetzt.
+
+Gemessen am geprueften Produktivsnapshot vom 09.09.2026: **3'089 von 7'615 TRDE-Zeilen**,
+davon 2'922 mit `MS Shell Dlg` und 167 nur mit `Microsoft Sans Serif`. Betroffen war
+ausschliesslich die Spalte `Name`. `Material`, `CustomerName`, `SupplierName` und
+`ProductGroup` waren sauber, und kein anderer Standort war betroffen, weil nur Alphaplan
+RTF liefert. Sichtbar war der Rest in jeder Dashboardanzeige der Artikelbezeichnung, in
+`Sales_ProcessedMergeInput_TRDE_*.csv` als Feld 9, in `Sales_TRDE_*.xlsx` und in
+`Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`, dort in Spalte G der Blaetter
+`DE_Verkaeufe`, `Offene_Zuordnungen` und `Historisch_abgeleitet`.
+
+**Falle:** Die Gruppen muessen klammerbalanciert entfernt werden. Ein einfaches
+`{\fonttbl.*?}` endet an der ersten schliessenden Klammer und laesst den zweiten
+Schrifteintrag stehen — genau das Muster der 167 Zeilen, die nur `Microsoft Sans Serif`
+tragen. Wer nur die 2'922 verschwinden sieht, haelt den Rest fuer eine Quelleigenheit.
+
+Korrigiert in `NormalizeAlphaplanText` (`Services/ManualExcelImportService.cs`): Die
+Zielgruppen `fonttbl`, `colortbl`, `stylesheet`, `listtable`, `listoverridetable`, `info`,
+`generator`, `themedata`, `colorschememapping` und `datastore` sowie jedes Zusatzziel
+`{\*\...}` werden klammerbalanciert entfernt, bevor die Steuerworte fallen. Maskierte
+Klammern `\{` und `\}` verschieben die Zaehlung nicht. Regressionstest mit zwei echten
+Belegtexten, einer mit zwei Schrifteintraegen und einer mit einem. Funktionscommit
+`eb8cd43`, 688/688 Release-Tests gruen.
+
+Den Bestand zieht `Tools/DeNameFix` nach. Das Werkzeug liest die Rohdateien mit demselben
+Importdienst und demselben SharePoint-Adapter wie der produktive Lauf, gleicht ueber Beleg,
+Rechnungsnummer, Position und Artikelnummer ab und aendert ausschliesslich die Spalte
+`Name` in einer Transaktion. Zwei Sicherungen greifen: der neue Wert muss ein Endstueck des
+gespeicherten Wertes sein, sonst Abbruch, und die Datenbank darf sich zwischen Probelauf
+und Anwendung nicht geaendert haben. Kein Loeschen und kein Neuladen von Verkaufszeilen.
+Eine komplette Standortersetzung wuerde `ExtractionDate` und die abgeleiteten
+Standardkosten mitziehen und den Nachweis „nur `Name` hat sich geaendert“ unmoeglich
+machen.
+
+Probelauf gegen den Snapshot vom 09.09.2026: 7'615 von 7'615 Zeilen ueber den
+Zeilenschluessel getroffen, genau 3'089 geplante Aenderungen, null Verstoesse gegen die
+Endstueck-Regel, null mehrdeutige Rohzeilen und kein verbleibender Schriftrest. Mit der
+lokalen Rohkopie vom 12.06.2026 allein waeren nur 2'684 Zeilen erreichbar gewesen; die
+restlichen 405 stecken in den Delta-Archiven auf SharePoint. Deshalb liest das Werkzeug im
+Regelfall mit `--sharepoint` denselben Ordner wie der Import.
+
+**Offen am 09.09.2026: Deploy und produktiver Nachzug.** Der Firmenshare
+`\\trch-webapp-bidashboard.trafagch.local\BiDashboard$` war an diesem Abend nicht
+erreichbar, der DNS-Name loeste nicht auf. Bis der Deploy laeuft, erzeugt jeder neue DE-Import den Schriftrest erneut; der Nachzug allein
+wuerde also nicht halten. Der Standort muss dafuer nichts liefern, die Ursache lag
+vollstaendig bei uns.
+
+Die Standort-Mails aus 07/2026 (`docs/mails/Build-StandortMails.ps1`) nennen weiterhin
+2'903 von 7'171 Texten mit Formatierungstext. Das ist der Stand des damaligen Versands und
+wird als datierte Historie nicht umgeschrieben.
 
 ## Querverweise
 

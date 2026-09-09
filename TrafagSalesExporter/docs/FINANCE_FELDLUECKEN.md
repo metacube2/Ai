@@ -145,7 +145,7 @@ Zwei Praezisierungen:
 | --- | --- | --- |
 | Lieferant (Nummer/Name/Land) | 7'171 von 7'171 leer | **uns** — Query liest keine Lieferantenspalte |
 | Kundenname und -land | 7'171 leer, Kundennummer 7'171 gefuellt | **uns** — `RechnungsAdressenID` wird selektiert, aber nie aufgeloest |
-| Artikelbezeichnung | 2'903 von 7'171 mit Font-Muell | **uns** — Rich-Text-Feld der Belegposition gelesen |
+| Artikelbezeichnung | **erledigt am 09.09.2026**, zuvor 2'903 von 7'171 mit Font-Muell, zuletzt 3'089 von 7'615 | **uns** — die RTF-Schrifttabelle wurde beim Lesen nicht entfernt; Ursache und Korrektur in `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8 |
 | `ArtikelNummer` = TR-AG-/SAP-`MATNR`? | 0 leer, Gleichheit unbelegt | **Deutschland** — echte Fachfrage |
 
 Was fehlt, ist eine Tabellen- und Spaltenliste fuer `ApDaten`. Die DB liegt auf

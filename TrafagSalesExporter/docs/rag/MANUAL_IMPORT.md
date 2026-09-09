@@ -1,6 +1,6 @@
 # RAG Manual Import
 
-Stand: 2026-08-17
+Stand: 2026-09-09
 
 ## Kurzstand
 
@@ -138,9 +138,14 @@ gelesen sind 1'643 Zeilen plausibel (Margen 12–55 %), als Zeilensumme nur 1'25
 - `SalesPriceValue = NettoPreisGesamt`; `DocumentTotal... = NettoPreisEndSumme`; `CreditNote`/GS/Gutschriften werden negativ gerechnet.
 - `CustomerNumber = RechnungsAdressenID`; Kundenname und Kundenland sind im aktuellen CSV-Paar nicht enthalten.
 - `Material = ArtikelNummer`; diese lokale Alphaplan-Nummer ist nicht garantiert identisch mit TR-AG-/SAP-`MATNR`.
-- URSACHE DER DE-FELDLUECKEN (Befund 2026-08-03): Lieferant, Kundenname/-land und die saubere
-  Artikelbezeichnung fehlen, weil **unsere eigene Export-Query** sie nicht liest — nicht weil
-  Deutschland sie nicht liefern koennte. `AlphaplanExportPackage/scripte/alphaplanExport.ps1`
+- Die Artikelbezeichnung ist ein RTF-Feld. Schrift- und Farbtabelle werden seit dem 2026-09-09
+  beim Import klammerbalanciert entfernt; davor begannen 3'089 von 7'615 DE-Zeilen mit
+  `MS Shell Dlg, Microsoft Sans Serif, , ,`. Ursache, Messung und Nachzugswerkzeug:
+  `docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 8. Ein Artikelstammtext aus der Quelle ist dafuer
+  nicht noetig.
+- URSACHE DER DE-FELDLUECKEN (Befund 2026-08-03): Lieferant und Kundenname/-land fehlen, weil
+  **unsere eigene Export-Query** sie nicht liest — nicht weil Deutschland sie nicht liefern
+  koennte. `AlphaplanExportPackage/scripte/alphaplanExport.ps1`
   Zeilen 143-202 und `alphaplandeltaexport.ps1` (identische Query) lesen nur `dbo.Belege` und
   `dbo.BelegePositionen`; `RechnungsAdressenID` wird selektiert, aber nie auf einen Namen
   aufgeloest. Blocker ist das fehlende Alphaplan-Schema fuer `ApDaten` (`candidate_objects.csv`

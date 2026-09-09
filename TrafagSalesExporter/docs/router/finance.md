@@ -47,6 +47,7 @@ Marktsegmente.
 | Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen Excel | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Welche Indikatoren echt rechnen, fehlende Sollwerte, Waehrungsmischung, Pivot-Filter | `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | UK 2025: Stueckpreis statt Zeilenwert, Faktor 9 | `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` |
+| Artikelbezeichnung beginnt mit `MS Shell Dlg` oder `Microsoft Sans Serif` (nur DE) | `docs/STANDORT_DE_ALPHAPLAN.md`, Abschnitt 8 |
 
 ## Fallen in diesem Ast
 
