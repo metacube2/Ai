@@ -1,8 +1,15 @@
 # Bahnmarkt Deutschland: Auswertung, Branchenfund und der korrekte Kundenschluessel
 
-Stand: 2026-09-08. Anlass war Rohail Munirs Anfrage nach der Datenaufbereitung fuer den
-Bahnmarkt, mit dem Zusatz, dass Patrik die Zuordnung nicht gemacht hat und trotzdem etwas
-vorzeigbar sein muss.
+Stand: 2026-09-09, 14:00. Anlass war Rohail Munirs Anfrage nach der Datenaufbereitung fuer
+den Bahnmarkt, mit dem Zusatz, dass Patrik die Zuordnung nicht gemacht hat und trotzdem
+etwas vorzeigbar sein muss.
+
+**Kurzfassung des heutigen Stands:** Der Kundenschluessel fuer Deutschland ist geloest.
+Rohails Rechnungsliste vom 09.09. liefert zu jeder Rechnungsnummer die fachliche
+Adressnummer; 7'592 der 7'622 Verkaufszeilen sind damit zugeordnet und 24 Bahnkunden
+belegt. Die Abschnitte 2 bis 8 beschreiben den Weg dorthin und enthalten Zwischenstaende,
+die inzwischen ueberholt sind. **Massgeblich ist Abschnitt 9.** Der produktive Nachzug in
+Datenbank und Dashboard steht noch aus.
 
 Ergaenzt `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` und
 `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md`, ersetzt beide nicht.
@@ -216,9 +223,13 @@ Nachweis am konsistenten Produktivsnapshot: SQLite-Checkpoint erfolgreich, Kopie
 unter Schreibsperre bei leerer WAL, `quick_check=ok`. Alle 7'615 Zeilen behalten ihre
 Finanzwerte, Mengen und Lieferantenschluessel; auch die Dashboard-CSV ist dagegen
 geprueft. In der Sales-Excel sind ausser Kunden-/Segmentzellen alle Zellwerte und
-Formeln unveraendert. Aktuelle Dashboardquelle im Serverordner `output`:
+Formeln unveraendert. Dashboardquelle im Serverordner `output` **zum Stand 07:20**:
 `Sales_ProcessedMergeInput_TRDE_2026-09-09.csv`, SHA256
 `F0F6B78D194EF48B44D68619AB218D92E61EB6F52B17B49B9BB030C46643994C`.
+**Diese Pruefsumme ist seit dem 09.09. 09:33 ueberholt.** Der Nachzug der
+RTF-Artikelbezeichnung (`46e8b5d`) hat in derselben Datei 3'089 Namenszellen
+ersetzt; die Datei auf dem Server traegt seither eine andere Pruefsumme. Die
+Angabe bleibt als Beleg fuer den damaligen Stand stehen.
 `Sales_TRDE_2026-09-09.xlsx` liegt daneben. Beide Dateien sind ausserdem im
 konfigurierten SharePoint-Ordner `Import/Finance/Deutschland/AlphaplanRaw` hochgeladen
 und zurueckgelesen: CSV bytegleich, Excel saemtliche Zellwerte und Formeln gleich.
@@ -245,3 +256,101 @@ Zusammenfassung wiederhergestellt; die aktuelle TSV bleibt fuehrend.
 **Fuer vollstaendige Zuordnung weiterhin erforderlich:** aktueller Alphaplan-Abgleich
 zwischen interner RechnungsAdressenID und fachlicher Adressnummer, einschliesslich
 Sonepar/EMS-Nummernwechsel. Eine vollstaendig gefuellte Kundenliste ist noch nicht belegt.
+
+> Diese Forderung ist am 09.09.2026 um 12:51 erfuellt worden. Siehe Abschnitt 9.
+
+## 9. Rohails Rechnungsliste schliesst die Luecke, 2026-09-09
+
+Rohail hat um 12:51 `Rechnungen_20260909.xlsx` geliefert, 60'539 Rechnungen. Die Datei
+traegt in Spalte H `Adressnr._R` die **fachliche** Kundennummer neben `Rech.-Nr.`. Damit
+existiert die Bruecke, die Abschnitt 8 noch als offen gemeldet hat. Der Weg ueber die
+interne `RechnungsAdressenID` wird dafuer nicht mehr gebraucht.
+
+Der Beweis, dass es die fachliche und nicht die interne Nummer ist: `RE2611082` fuehrt auf
+`13859`, und diese Nummer steht im Kundenstamm bei „Magnetic Sense Automotive GmbH" mit der
+Branche `29 Drehmomentanwendungen` — genau den Werten, die Rohails Zeile ebenfalls traegt.
+Die internen IDs liegen dagegen im Bereich 9 bis 13990.
+
+### Vier Pruefungen
+
+| Pruefung | Ergebnis |
+|---|---|
+| Abdeckung der 7'615 DE-Verkaufszeilen | 7'531, also 98,9 Prozent |
+| Uebereinstimmung mit dem bestehenden Belegnachweis | 4'455 gleich, 40 abweichend |
+| Unabhaengiger Gegentest gegen `docs/2025_DataExport_DE.xlsx` | 2'912 von 2'922, also 99,66 Prozent |
+| Neue Adressnummern im Kundenstamm auffindbar | 358 von 358, keine Waise |
+
+Die 40 Abweichungen sind ausschliesslich die drei bekannten Doppelnummern: Sonepar
+(12028/12717), EMS (14529/40334) und neu Magnetic Sense (13561 „GmbH" gegen 13859
+„Automotive GmbH"). Alle drei sind **keine** Bahnkunden und aendern die Bahnauswertung
+nicht. Welche der beiden Nummern fachlich richtig ist, ist offen und gehoert mit Rohail
+geklaert; die Mappe weist beide im Blatt `Nummernkonflikte` aus.
+
+### Was Rohails Datei nicht liefert
+
+**Gutschriften.** Die Liste enthaelt 46'372 `RE`-, 8'936 `R0`- und 5'231 `R9`-Belege, aber
+keinen einzigen `GS`-Beleg. 84 Verkaufszeilen bleiben deshalb ohne Eintrag in der Bruecke.
+Fuer 54 davon gilt weiter die Nummer aus dem frueheren Belegnachweis, sodass nur 30 Zeilen
+wirklich offen bleiben. Ein Auszug fuer Gutschriften wuerde auch diese schliessen.
+
+**Eine brauchbare Branchenspalte.** In 5'785 Zeilen steht dort eine Zahl statt einer
+Branche, ueberwiegend bei Adressen ohne gepflegte Stammbranche; Alphaplan verschiebt beim
+Export die letzten Spalten. Die Branche wird deshalb aus dem Kundenstamm gezogen, nicht aus
+der Rechnungsliste. Die Spalten H, J, L und T sind davon nicht betroffen, was die 98,8
+Prozent Laenderuebereinstimmung gegen den Kundenstamm belegen.
+
+### Neu erzeugte Pruefmappe
+
+`Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx` ist auf dieser Grundlage neu gebaut. Der
+vorherige Stand liegt als
+`.tmp_tools/DeBridge0909/Bahnmarkt_DE_Kundenzuordnung_2026-09-09.vor-rohail-bruecke.xlsx`.
+
+| Kennzahl | vorher | jetzt |
+|---|---:|---:|
+| Verkaufszeilen | 7'615 | 7'622 |
+| mit fachlicher Kundennummer | 4'549 | 7'592 |
+| ohne Zuordnung | 3'066 | 30 |
+| Bahnkunden mit reiner Bahnbranche | 19 | 24 |
+| Bahnzeilen | — | 657 |
+
+Die Spalte „vorher" ist der produktive Stand von 07:20 mit 7'615 Zeilen, die Spalte
+„jetzt" der Mappenstand mit 7'622 Zeilen; die sieben zusaetzlichen sind die Rechnungen
+`RE2611081` und `RE2611082`, die nach dem Archivstand dazugekommen sind.
+
+Deutscher Bahnumsatz, erstmals belegbar: **2025 rund 578'636 EUR** bei 19 Kunden und
+**2026 bis zum 09.09. rund 432'237 EUR** bei 18 Kunden. Neu sichtbar sind unter anderem
+Wabtec Germany, Knorr-Bremse, Noske-Kaeser, Autokuehler und die Eisenbahngesellschaft
+Ostfriesland-Oldenburg.
+
+Jede Zeile traegt ihren Nachweis. Die Verteilung ist 4'455 „Belegnachweis und
+Rechnungsliste, uebereinstimmend", 3'043 „Rechnungsliste Rohail 09.09.", 54 „frueherer
+Belegnachweis, Gutschrift", 40 Nummernkonflikte und 30 offen.
+
+### Wie die Mappe gebaut wurde
+
+`Tools/BahnmarktDeWorkbook` liest die Artikelbezeichnung **nicht** selbst, sondern
+ueber `ManualExcelDataSourceAdapter` und `ManualExcelImportService`, also denselben Weg wie
+der produktive Import. Damit traegt die Mappe denselben Text wie die produktiven Dateien
+seit dem Nachzug um 09:33; der Schriftrest ist von 3'089 Zeilen auf null gefallen. Zwei
+Abbruchbedingungen sind eingebaut: verbleibender RTF-Schriftrest und der Verlust einer
+bereits belegten Kundennummer.
+
+Zeilenquelle ist der produktive Leser ueber `ManualExcelDataSourceAdapter`, nicht die
+archivierte CSV. Das ist kein Detail: dem um 07:22 abgelegten Archivstand fehlten bereits
+die Rechnungen `RE2611081` und `RE2611082` mit sieben Positionen. Die CSV dient nur noch
+als Gegenprobe, und eine dort vorhandene, in der Mappe fehlende Zeile bricht den Lauf ab.
+
+Gegenprobe nach dem Bau: alle 7'615 Zeilen des Archivstands tragen unveraenderte Menge,
+`SalesPriceValue` und Waehrung; null Abweichungen, sieben zusaetzliche Zeilen.
+
+### Was noch offen ist
+
+1. **Der produktive Nachzug ist nicht erfolgt.** Datenbank und Dashboard weisen die 3'043
+   Zeilen weiter als `ALPHAPLAN-ID:<ID>` aus. Die Mappe ist damit bewusst weiter als der
+   Produktivstand; der Lesehinweis sagt das in der Datei selbst.
+2. **Gutschriftenauszug** von Rohail erbitten, dann sind es 100 statt 99,6 Prozent.
+3. **Die drei Doppelnummern** fachlich klaeren.
+4. **Der dauerhafte Weg bleibt der Join in der Quelle.** `alphaplanExport.ps1` Zeile 164
+   liest `FROM dbo.Belege` ohne Verbindung zur Adresstabelle. Solange das so bleibt, ist
+   jede Bruecke eine Momentaufnahme und muss bei neuen Rechnungen wiederholt werden.
+5. Nicht versendet. Die Datei liegt bereit, an Rohail ist nichts gegangen.

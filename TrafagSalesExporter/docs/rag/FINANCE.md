@@ -12,6 +12,19 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Kurzstand
 
+- BAHNMARKT DE, SCHLUESSEL GELOEST 2026-09-09 12:51: Rohail Munir hat
+  `Rechnungen_20260909.xlsx` geliefert, 60'539 Rechnungen mit `Rech.-Nr.` und der
+  **fachlichen** `Adressnr._R`. Die interne `RechnungsAdressenID` wird als Bruecke nicht
+  mehr gebraucht. Geprueft: deckt 7'531 der 7'615 DE-Zeilen, stimmt in 4'455 Faellen mit
+  dem bisherigen Belegnachweis ueberein, unabhaengig gegen `docs/2025_DataExport_DE.xlsx`
+  mit 99,66 Prozent bestaetigt, alle 358 neuen Nummern im Kundenstamm auffindbar.
+  `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx` ist darauf neu gebaut: 7'592 von 7'622
+  Zeilen zugeordnet, 30 offen, 24 Bahnkunden, 657 Bahnzeilen. Deutscher Bahnumsatz
+  erstmals belegbar: 2025 rund 578'636 EUR, 2026 bis 09.09. rund 432'237 EUR.
+  **Der produktive Nachzug steht noch aus**, deshalb gilt der naechste Punkt weiter fuer
+  Datenbank und Dashboard. Rohails Datei enthaelt keine Gutschriften und ihre
+  Branchenspalte ist unbrauchbar; die Branche kommt aus dem Kundenstamm. Detail:
+  `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.
 - BAHNMARKT DE, PRODUKTIV 2026-09-09: Von 7'615 deutschen Verkaufszeilen wurden
   4'549 ueber die Kombination aus Rechnungsnummer und interner Alphaplan-Adress-ID
   einer fachlichen Kundennummer, Name, Land und Branche zugeordnet. 19 DE-Kunden mit
