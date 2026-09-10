@@ -43,7 +43,34 @@ Stand: 2026-09-09
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
-- **Datennachzug 09.09.2026 14:37, DE-Kundenfelder auf Rohails Belegbruecke.** Kein Deploy,
+ . "- **Deploy 2026-09-10 08:53, Journal-Ausgleichsfelder und erweiterte DE-Belegbruecke.** Funktionscommits
+  `9ffe7af`/`8905e5d`/`8208c62` (Ausgleichsfelder) und `ee46d18` (Bruecke); Stand beim Publish `1a977ff`.
+  **691/691** Release-Tests gruen im eigenen Lauf vor dem Publish. `BiDashboard.dll` `10.09.2026 08:53:05`,
+  `6'229'504` Bytes, SHA256 `63BC290443DCF6B7A31B9D36779048E76106010EA86115968D0D82BD47FB221D`;
+  lokaler Release-Build und Server bitgleich. Ziel: 1 neu, 7 geaendert, 2102 unveraendert.
+  Wirknachweis in der DLL: `ClearingDate`, `ReconciliationDate`, `ClearingReference`,
+  `IsClearingCancelled`, `de_customer_invoice_map_2026-09-10.json`; **nicht mehr enthalten**
+  `de_customer_invoice_map_2026-09-09.json`. Vier Routen HTTPS `200`.
+  **Der eine Alarm ist erklaert:** `trafag_exporter.db-wal` und `-shm` verschwanden und die DB
+  wechselte den Zeitstempel bei gleicher Laenge — das ist der Checkpoint beim App-Neustart,
+  derselbe Befund wie am 2026-08-21 und 2026-09-08. Beide Dateien sind danach wieder da.
+  **FALLE, dabei selbst hineingelaufen:** eine Pruefkopie nur der `.db` ohne `-wal` zeigte die
+  fuenf neuen Spalten als FEHLEND. Erst die Kopie aus `.db`, `-wal` und `-shm` zusammen zeigte
+  `34` statt `29` Spalten. Bei WAL-Modus immer alle drei Dateien kopieren, sonst fehlt der
+  gerade migrierte Stand.
+  Datenstand nach dem Deploy gegengeprueft: TRDE `7'622` Zeilen, `7'592` mit fachlicher Nummer,
+  `24` Segmente, `SalesPriceValue` `7'033'623.00`, `quick_check` `ok`.
+  Vorher-Sicherungen `trafag_exporter.db.before-de-country-fix-20260910-080942.bak` und die vom
+  Deploywerkzeug angelegte `before-journal-clearing-und-de-bruecke`.
+- **Datenkorrektur 2026-09-10 08:52, Laendercode in den DE-Verkaufszeilen.** `Tools/DeCountryFix`
+  hat `3'037` Zeilen von Laendertext auf Code umgestellt (`Deutschland` auf `D`, `China` auf `PRC`
+  und so weiter). Grund war ein Fehler im Nachzug vom Vortag: dort wurde Spalte 5 des
+  Kundenstamms gelesen statt Spalte 4. Danach `D` `7'127`, `PRC` `182`, `CZ` `65`, `SGP` `60`.
+  **Nicht angefasst:** 15 Zeilen des Kunden `55011` mit `US` statt `USA`; sie stammen aus einem
+  aelteren Weg, nicht aus dem Nachzug. Das Werkzeug meldet sie und laesst sie stehen.
+  **Betriebsbefund:** 3'037 Einzelupdates ueber SMB brauchten rund 25 Minuten; die Anwendung
+  blieb waehrenddessen ansprechbar (`200` in `1.02 s`).
+"- **Datennachzug 09.09.2026 14:37, DE-Kundenfelder auf Rohails Belegbruecke.** Kein Deploy,
   reine Datenaenderung bei laufender Anwendung. `Tools/DeCustomerBackfill` schrieb 3'043 von
   7'622 TRDE-Zeilen in einer Transaktion: fachliche Kundennummer, Name, Land und Branche.
   Fachliche Nummern von `4'549` auf `7'592`, bestaetigte Segmente von `19` auf `24`,
