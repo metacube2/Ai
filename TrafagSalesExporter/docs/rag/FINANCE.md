@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-09-09
+Stand: 2026-09-10
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -11,7 +11,23 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 `docs/raw_md_archive/`.
 
 ## Kurzstand
-
+ . "- MARKTSEGMENTE, AUTOMATIK GEMESSEN 2026-09-10: Die Segmentzuweisung laeuft **fuer Deutschland
+  bereits automatisch**, fuer die anderen acht Standorte nicht, und der Unterschied liegt am
+  Quellsystem, nicht am Programm. Von 196 Zuordnungen sind 25 bestaetigt, davon **24 aus TRDE**
+  mit Quelle `Alphaplan Kundenstamm / Branche`; die uebrigen 171 sind weiter
+  Namensabgleich-Vorschlaege aus der Marktumfrage. Fuellgrad `CustomerIndustry`: TRDE 7'433 von
+  7'622 Zeilen und 543 Kunden, TRFR 221/20, TRIN 21/6, TRIT 10/2, TRSE/TRUK/TRUS/ZSCHWEIZ **0**.
+  ZSCHWEIZ ist mit 52'276 Zeilen der groesste Standort und hat kein Branchenfeld.
+  **Fund:** die 543 deutschen Kunden verteilen sich auf 38 Branchenwerte und decken
+  6'887'039 von 7'033'623 EUR DE-Umsatz ab (97,9 Prozent); genutzt werden bisher nur die 24 mit
+  `00 Bahn`. In `CustomerMarketSegments` existiert ueberhaupt nur ein Segmentwert, `Railway`.
+  **Naechster Schritt ist kein Code, sondern ein fachlicher Entscheid** Branche auf Segment,
+  rund 38 Zeilen, beim Vertrieb beziehungsweise Andreas. Damit ist auch die Vorfrage aus
+  ISS-014 beantwortet: das Segment haengt am KUNDEN, Schluessel ist Kundennummer plus
+  gepflegte Branche. Vollstaendige Liste und zwei Datenmaengel im Kundenstamm (Nummer `52`
+  doppelt belegt, zwei Werte mit Komma am Ende) in
+  `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
+"
 - BAHNMARKT DE, SCHLUESSEL GELOEST 2026-09-09 12:51: Rohail Munir hat
   `Rechnungen_20260909.xlsx` geliefert, 60'539 Rechnungen mit `Rech.-Nr.` und der
   **fachlichen** `Adressnr._R`. Die interne `RechnungsAdressenID` wird als Bruecke nicht

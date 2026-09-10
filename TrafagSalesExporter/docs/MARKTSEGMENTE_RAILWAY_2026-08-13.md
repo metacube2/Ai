@@ -1,6 +1,6 @@
 # Marktsegmente und Marktumfrage in der Anwendung
 
-Stand: 2026-08-13
+Stand: 2026-09-10
 
 Anlass: Patrik aus dem Vertrieb hat die Railway-Marktumfrage vom Mai 2026 geschickt mit dem
 Wunsch, den Bahnumsatz im Sales-Dashboard auswerten zu koennen. Ingo hat entschieden, dass
@@ -443,3 +443,125 @@ deutsche Kundenstamm ist kein Nachweis fuer deren lokale Kundenschluessel. Aktue
 Arbeitsdateien: `Bahnmarkt_Rohail_2026-09-09.xlsx` und
 `Bahnmarkt_DE_Kundenzuordnung_2026-09-09.xlsx`. Vollstaendiger technischer und
 fachlicher Nachweis: `docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md`, Abschnitt 8.
+
+## 18. Kann die Segmentzuweisung automatisch laufen? Messung 2026-09-10
+
+Ingos Frage nach dem produktiven Nachzug Deutschlands: „kann man dadurch die zuweisung
+segment zu kunde automatisch machen oder muss das weiterhin noch manuell erfolgen?"
+
+Die Antwort ist zweigeteilt, und der Unterschied liegt nicht am Programm, sondern daran, ob
+das Quellsystem ein Branchenfeld pflegt.
+
+### Ist-Stand der Zuordnungen, produktiv gemessen
+
+| Standort | Eintraege | bestaetigt | Vorschlag |
+| --- | ---: | ---: | ---: |
+| **TRDE** | 24 | **24** | 0 |
+| TRCH | 80 | 0 | 80 |
+| TRIT | 40 | 0 | 40 |
+| TRFR | 17 | 0 | 17 |
+| TRUK | 13 | 0 | 13 |
+| TRES | 9 | 0 | 9 |
+| TRAT | 8 | 0 | 8 |
+| TRIN | 4 | 1 | 3 |
+| TRUS | 1 | 0 | 1 |
+
+Von 196 Eintraegen sind 25 bestaetigt, davon **24 aus Deutschland** mit der Quelle
+`Alphaplan Kundenstamm / Branche`. Die uebrigen 171 sind weiterhin Namensabgleich-Vorschlaege
+aus der Marktumfrage. In der ganzen Tabelle existiert bisher genau **ein** Segmentwert,
+`Railway`.
+
+### Warum nur Deutschland: Fuellgrad von `CustomerIndustry`
+
+| Standort | Zeilen | mit Branche | Kunden mit Branche |
+| --- | ---: | ---: | ---: |
+| TRDE | 7'622 | 7'433 | **543** |
+| TRFR | 2'684 | 221 | 20 |
+| TRIN | 7'548 | 21 | 6 |
+| TRIT | 24'935 | 10 | 2 |
+| TRSE | 6'915 | 0 | 0 |
+| TRUK | 3'181 | 0 | 0 |
+| TRUS | 1'631 | 0 | 0 |
+| **ZSCHWEIZ** | **52'276** | **0** | **0** |
+
+Die Schweiz ist mit 52'276 Zeilen der groesste Standort und hat kein einziges Branchenfeld.
+Ohne Quellfeld gibt es nichts zu automatisieren; das ist keine Frage der Umsetzung.
+
+### Der eigentliche Fund: Deutschland traegt weit mehr als Bahn
+
+543 deutsche Kunden tragen eine gepflegte Branche ueber 38 verschiedene Werte, zusammen
+**6'887'039 EUR von 7'033'623 EUR DE-Umsatz, also 97,9 Prozent**. Genutzt werden davon heute
+nur die 24 Kunden mit `00 Bahn`.
+
+| Branche | Kunden | Zeilen | Umsatz EUR |
+|---|---:|---:|---:|
+| 31 Ersatzteilhändler Schiffbau | 83 | 1355 | 535'848 |
+| 30 Händler | 80 | 655 | 448'889 |
+| 32 Ersatzteilhändler Industrie | 40 | 233 | 90'054 |
+| 25 Allgemeiner Anlagenbau | 26 | 356 | 262'348 |
+| 03 Schiffbau (Systeme) | 25 | 679 | 850'522 |
+| 00 Bahn | 24 | 657 | 1'010'874 |
+| 34 Reederei | 24 | 166 | 66'594 |
+| 40 Kleinbetriebe | 23 | 132 | 645'297 |
+| 33 Ersatzteilhändler S/I | 21 | 241 | 101'168 |
+| 05 Prüfstände | 20 | 214 | 333'051 |
+| 35 Instandhaltung/Wartung | 18 | 90 | 26'545 |
+| 09 Mobilhydraulik | 14 | 321 | 511'485 |
+| 01 Motoren | 14 | 269 | 476'036 |
+| 02 Schiffbau (Werft) | 14 | 322 | 115'898 |
+| 10 Hydraulik | 13 | 206 | 193'753 |
+| 04 Gasdichte (SF6) | 13 | 69 | 144'076 |
+| 06 Klimatechnik | 11 | 336 | 179'072 |
+| 07 Pumpen | 10 | 161 | 203'906 |
+| 12 Automatisierungstechnik | 9 | 96 | 72'091 |
+| 11 Getriebe | 8 | 65 | 54'103 |
+| 08 Kompressoren | 7 | 67 | 50'987 |
+| 52 Wasserstoffanwendungen | 7 | 66 | 28'388 |
+| 16 Wasseranwendungen | 7 | 53 | 25'170 |
+| 23 Brandschutz | 5 | 86 | 61'885 |
+| 19 Medizintechnik | 4 | 23 | 34'342 |
+| 27 Baumaschinen | 3 | 176 | 92'591 |
+| 15 EX-Anwendungen | 3 | 12 | 5'430 |
+| 29 Drehmomentanwendungen | 2 | 173 | 97'548 |
+| 21 Lebensmittelindustrie | 2 | 26 | 87'610 |
+| 20 Energietechnik | 2 | 34 | 48'133 |
+| 17 Verpackungsanlagen | 2 | 59 | 22'125 |
+| 26 Erneuerbare Energien | 2 | 11 | 5'771 |
+| 22 Filtertechnik | 2 | 6 | 1'594 |
+| 52 Allgemeiner Anlagenbau | 1 | 3 | 1'427 |
+| 36 Kunststofftechnik | 1 | 6 | 1'242 |
+| 13 Flugzeugbau | 1 | 3 | 727 |
+| 25 Allgemeiner Anlagenbau, | 1 | 3 | 231 |
+| 30 Händler, | 1 | 3 | 228 |
+| **Summe** | **543** | **7'433** | **6'887'039** |
+
+Allein die schiffbaunahen Branchen `31`, `03`, `34`, `02` und `33` ergeben rund 167 Kunden.
+
+**Zwei Datenmaengel im deutschen Kundenstamm, beim Messen aufgefallen:** die Nummer `52`
+traegt zwei verschiedene Bezeichnungen (`Wasserstoffanwendungen` und `Allgemeiner
+Anlagenbau`), und zwei Werte enden auf ein Komma (`25 Allgemeiner Anlagenbau,` und
+`30 Händler,`). Betroffen sind zusammen neun Kunden. Das gehoert mit Rohail geklaert, bevor
+eine Zuordnungstabelle auf diesen Werten aufsetzt.
+
+### Was fehlt, damit mehr automatisch geht
+
+1. **Ein fachlicher Entscheid, welche Alphaplan-Branche auf welches Marktsegment abbildet.**
+   Das ist eine Tabelle mit rund 38 Zeilen und gehoert dem Vertrieb beziehungsweise Andreas,
+   nicht der Entwicklung. Erst danach kann die Automatik ueber `00 Bahn` hinausgehen.
+2. **Ein zweites Segment ueberhaupt.** Heute kennt `CustomerMarketSegments` nur `Railway`.
+   Die Segmentliste aus der Vertriebsvorgabe steht in Abschnitt 16.
+3. **Fuer die anderen acht Standorte eine Quelle.** Entweder pflegen sie ein Branchenfeld im
+   eigenen System, oder es braucht je Standort eine einmalig kuratierte Liste auf
+   Kundennummer. Ein Namensabgleich zur Laufzeit bleibt untauglich; der Beleg dafuer steht in
+   Abschnitt 3 und im Issue-Log bei ISS-014.
+
+### Was damit beantwortet ist
+
+Die Vorfrage aus ISS-014 vom 2026-08-12 lautete, ob Railway am Kunden oder an der Anwendung
+bestimmt wird und welcher Schluessel gepflegt wird. **Deutschland beantwortet beides:
+Das Segment haengt am Kunden, und der belastbare Schluessel ist die Kundennummer plus ein
+gepflegtes Branchenfeld im Quellsystem.** Es ist damit kein theoretischer Vorschlag mehr,
+sondern seit dem 2026-09-09 produktiv belegt.
+
+Messwerkzeug: `.tmp_tools/SegmentCheck`, rein lesend gegen einen konsistenten Abzug der
+Produktivdatenbank vom 2026-09-10.
