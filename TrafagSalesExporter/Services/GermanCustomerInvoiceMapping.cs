@@ -12,7 +12,7 @@ internal static class GermanCustomerInvoiceMapping
     private static readonly Lazy<Dictionary<(string, string), Entry>> Entries = new(() =>
     {
         using var stream = typeof(GermanCustomerInvoiceMapping).Assembly.GetManifestResourceStream(
-            "TrafagSalesExporter.Data.de_customer_invoice_map_2026-09-09.json")
+            "TrafagSalesExporter.Data.de_customer_invoice_map_2026-09-10.json")
             ?? throw new InvalidOperationException("DE-Kundenbelegbruecke fehlt im Build.");
         return (JsonSerializer.Deserialize<List<Entry>>(stream) ?? [])
             .ToDictionary(x => (x.InvoiceNumber, x.InternalId));
