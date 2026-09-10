@@ -1,7 +1,9 @@
 @page "/marktsegmente"
 @rendermode @(Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer)
 @using TrafagSalesExporter.Services
+@using TrafagSalesExporter.Models
 @inject IMarketSegmentPageService SegmentService
+@inject MarketSegmentPatternService PatternService
 @inject IMarketSegmentExportService SegmentExport
 @inject IExcelExportService ExcelExport
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -313,6 +315,127 @@
                 </MudTable>
             }
         </MudPaper>
+
+    <MudTabPanel Text="@T("Namensmuster", "Name patterns")" Icon="@Icons.Material.Filled.Rule">
+        <MudPaper Class="pa-4" Elevation="0">
+            <MudAlert Severity="Severity.Info" Dense Class="mb-3">
+                @T("Ein Muster erzeugt ausschliesslich Vorschlaege. Es bestaetigt nie und ueberschreibt keine bestaetigte Zuordnung.",
+                   "A pattern only ever creates proposals. It never confirms and never overwrites a confirmed assignment.")
+                <br />
+                @T("Muster kurz halten heisst nicht gut: 'siemens' trifft auch Siemens Energy, 'abb' trifft Abbott Labs. Lieber 'siemens mobility'.",
+                   "Short is not good: 'siemens' also hits Siemens Energy, 'abb' hits Abbott Labs. Prefer 'siemens mobility'.")
+            </MudAlert>
+
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Class="mb-3" Wrap="Wrap.Wrap">
+                <MudTextField @bind-Value="_newPattern" Label="@T("Muster im Kundennamen", "Pattern in customer name")"
+                              Style="min-width:240px" Immediate />
+                <MudTextField @bind-Value="_newPatternSegment" Label="@T("Segment", "Segment")"
+                              Style="min-width:160px" Immediate />
+                <MudSelect T="string" @bind-Value="_newPatternTsc" Label="@T("nur Standort", "site only")"
+                           Style="min-width:150px" Clearable>
+                    <MudSelectItem T="string" Value="@string.Empty">@T("alle", "all")</MudSelectItem>
+                    @foreach (var site in Sites)
+                    {
+                        <MudSelectItem T="string" Value="@site">@site</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField @bind-Value="_newPatternNote" Label="@T("Notiz", "Note")"
+                              Style="min-width:200px" Immediate />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="AddPatternAsync">
+                    @T("Muster aufnehmen", "Add pattern")
+                </MudButton>
+            </MudStack>
+
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Class="mb-3" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.AutoAwesome"
+                           OnClick="SeedStarterAsync" Disabled="_patternBusy">
+                    @T("Startsatz Bahn aufnehmen", "Add railway starter set")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Preview"
+                           OnClick="PreviewPatternsAsync" Disabled="_patternBusy">
+                    @T("Vorschau rechnen", "Compute preview")
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.PlaylistAdd"
+                           OnClick="ApplyPatternsAsync" Disabled="_patternBusy || _patternPreview is null || _patternPreview.Neu == 0">
+                    @T("Vorschlaege anlegen", "Create proposals")
+                </MudButton>
+                @if (_patternPreview is not null)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small">@_patternPreview.Neu @T("neu", "new")</MudChip>
+                    <MudChip T="string" Color="Color.Default" Size="Size.Small">@_patternPreview.BereitsVorgeschlagen @T("schon vorgeschlagen", "already proposed")</MudChip>
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small">@_patternPreview.BereitsBestaetigt @T("schon bestaetigt", "already confirmed")</MudChip>
+                    @if (_patternPreview.Konflikte > 0)
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small">@_patternPreview.Konflikte @T("Konflikt", "conflict")</MudChip>
+                    }
+                }
+            </MudStack>
+
+            <MudTable Items="_patterns" Dense Hover Class="mb-4">
+                <HeaderContent>
+                    <MudTh>@T("Muster", "Pattern")</MudTh>
+                    <MudTh>@T("Segment", "Segment")</MudTh>
+                    <MudTh>@T("Standort", "Site")</MudTh>
+                    <MudTh>@T("Aktiv", "Active")</MudTh>
+                    <MudTh>@T("Notiz", "Note")</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Pattern</MudTd>
+                    <MudTd>@context.Segment</MudTd>
+                    <MudTd>@(context.Tsc.Length == 0 ? T("alle", "all") : context.Tsc)</MudTd>
+                    <MudTd>
+                        <MudSwitch T="bool" Value="context.IsActive" Color="Color.Primary"
+                                   ValueChanged="@(async (bool v) => await TogglePatternAsync(context, v))" />
+                    </MudTd>
+                    <MudTd>@context.Note</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       OnClick="@(async () => await DeletePatternAsync(context.Id))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            @if (_patternPreview is not null && _patternPreview.Hits.Count > 0)
+            {
+                <MudText Typo="Typo.subtitle2" Class="mb-2">
+                    @T("Was die Muster treffen", "What the patterns hit")
+                </MudText>
+                <MudTable Items="_patternPreview.Hits" Dense Hover Height="420px" FixedHeader>
+                    <HeaderContent>
+                        <MudTh>@T("Status", "Status")</MudTh>
+                        <MudTh>@T("Standort", "Site")</MudTh>
+                        <MudTh>@T("Kundennummer", "Customer number")</MudTh>
+                        <MudTh>@T("Kunde", "Customer")</MudTh>
+                        <MudTh>@T("Segment", "Segment")</MudTh>
+                        <MudTh>@T("Muster", "Pattern")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Color="@PatternKindColor(context.Kind)">
+                                @PatternKindText(context.Kind)
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.Tsc</MudTd>
+                        <MudTd>@context.CustomerNumber</MudTd>
+                        <MudTd>@context.CustomerName</MudTd>
+                        <MudTd>
+                            @context.Segment
+                            @if (context.Kind == SegmentPatternHitKind.KonfliktMitBestaetigung)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Error">
+                                    @T("bestaetigt als", "confirmed as") @context.ExistingSegment
+                                </MudText>
+                            }
+                        </MudTd>
+                        <MudTd>@context.Pattern</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+    </MudTabPanel>
     </MudTabPanel>
 </MudTabs>
 
@@ -360,6 +483,126 @@
 </MudDialog>
 
 @code {
+
+    // ---------------------------------------------------------------- Namensmuster
+    private List<SegmentNamePattern> _patterns = [];
+    private SegmentPatternPreview? _patternPreview;
+    private bool _patternBusy;
+    private string _newPattern = string.Empty;
+    private string _newPatternSegment = "Railway";
+    private string _newPatternTsc = string.Empty;
+    private string _newPatternNote = string.Empty;
+
+    private async Task LoadPatternsAsync() => _patterns = await PatternService.GetPatternsAsync();
+
+    private async Task AddPatternAsync()
+    {
+        try
+        {
+            await PatternService.SavePatternAsync(new SegmentNamePattern
+            {
+                Pattern = _newPattern,
+                Segment = _newPatternSegment,
+                Tsc = _newPatternTsc ?? string.Empty,
+                Note = _newPatternNote,
+                IsActive = true
+            });
+            _newPattern = string.Empty;
+            _newPatternNote = string.Empty;
+            await LoadPatternsAsync();
+            _patternPreview = null;
+            Snackbar.Add(T("Muster aufgenommen", "Pattern added"), Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private async Task TogglePatternAsync(SegmentNamePattern pattern, bool active)
+    {
+        pattern.IsActive = active;
+        await PatternService.SavePatternAsync(pattern);
+        await LoadPatternsAsync();
+        _patternPreview = null;
+    }
+
+    private async Task DeletePatternAsync(int id)
+    {
+        await PatternService.DeletePatternAsync(id);
+        await LoadPatternsAsync();
+        _patternPreview = null;
+    }
+
+
+    private async Task SeedStarterAsync()
+    {
+        _patternBusy = true;
+        try
+        {
+            var added = await PatternService.SeedRailwayStarterSetAsync();
+            await LoadPatternsAsync();
+            _patternPreview = null;
+            Snackbar.Add(string.Format(
+                T("{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag.",
+                  "{0} patterns added. Please review and adjust; the set is a suggestion."),
+                added), Severity.Success);
+        }
+        finally
+        {
+            _patternBusy = false;
+        }
+    }
+    private async Task PreviewPatternsAsync()
+    {
+        _patternBusy = true;
+        try
+        {
+            _patternPreview = await PatternService.PreviewAsync();
+            Snackbar.Add(string.Format(
+                T("{0} Treffer, davon {1} neu", "{0} hits, {1} of them new"),
+                _patternPreview.Hits.Count, _patternPreview.Neu), Severity.Info);
+        }
+        finally
+        {
+            _patternBusy = false;
+        }
+    }
+
+    private async Task ApplyPatternsAsync()
+    {
+        _patternBusy = true;
+        try
+        {
+            var written = await PatternService.ApplyAsync();
+            Snackbar.Add(string.Format(
+                T("{0} Vorschlaege angelegt. Sie sind unbestaetigt und wirken noch nicht im Export.",
+                  "{0} proposals created. They are unconfirmed and do not yet affect the export."),
+                written), Severity.Success);
+            _patternPreview = await PatternService.PreviewAsync();
+            await ReloadAsync();
+        }
+        finally
+        {
+            _patternBusy = false;
+        }
+    }
+
+    private static Color PatternKindColor(SegmentPatternHitKind kind) => kind switch
+    {
+        SegmentPatternHitKind.Neu => Color.Success,
+        SegmentPatternHitKind.BereitsVorgeschlagen => Color.Default,
+        SegmentPatternHitKind.BereitsBestaetigt => Color.Info,
+        _ => Color.Error
+    };
+
+    private string PatternKindText(SegmentPatternHitKind kind) => kind switch
+    {
+        SegmentPatternHitKind.Neu => T("neu", "new"),
+        SegmentPatternHitKind.BereitsVorgeschlagen => T("schon vorgeschlagen", "already proposed"),
+        SegmentPatternHitKind.BereitsBestaetigt => T("schon bestaetigt", "already confirmed"),
+        _ => T("Konflikt", "conflict")
+    };
     private static string[] Sites => MarketSegmentPageService.Sites;
 
     private const int ResultTabIndex = 0;
@@ -392,6 +635,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _patterns = await PatternService.GetPatternsAsync();
         _knownSegments = await SegmentService.GetKnownSegmentsAsync();
         _years = await SegmentService.GetAvailableYearsAsync();
         // Das juengste Jahr ist der Normalfall der Frage "wie steht das Segment jetzt da".

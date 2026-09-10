@@ -565,3 +565,85 @@ sondern seit dem 2026-09-09 produktiv belegt.
 
 Messwerkzeug: `.tmp_tools/SegmentCheck`, rein lesend gegen einen konsistenten Abzug der
 Produktivdatenbank vom 2026-09-10.
+
+## 19. Musterbasierte Vorschlaege ueber alle Standorte, 2026-09-10
+
+Ingos Vorschlag nach der Messung aus Abschnitt 18: „man koennte so was machen im ersten
+Schritt *deutsche bahn*, so was mit Regex ueber Namen", und dazu die Begruendung, die
+Keyuser wuerden es ohnehin so machen statt alles von Hand.
+
+### Warum das etwas anderes ist als der gescheiterte Namensabgleich
+
+Der Unterschied ist nicht die Technik, sondern die Herkunft der Muster. Beim Abgleich mit
+der Marktumfrage wurde jeder der 234 Umfragenamen automatisch gegen jeden Kundennamen
+gehalten; das ergab 172 Vorschlaege, von denen bis heute genau einer bestaetigt wurde, und
+Fehltreffer wie „BROT" auf „K.S. & BROTHERS". Hier pflegt ein Mensch eine kurze Liste und
+verantwortet sie.
+
+Vorgemessen am Produktivbestand mit 12 kuratierten Mustern:
+
+| Muster | Kunden | Standorte | schon Railway | neu |
+|---|---:|---:|---:|---:|
+| alstom | 16 | 6 | 4 | 12 |
+| faiveley | 12 | 3 | 2 | 10 |
+| siemens mobility | 11 | 6 | 5 | 6 |
+| wabtec | 11 | 5 | 1 | 10 |
+| voith | 7 | 3 | 3 | 4 |
+| knorr-bremse | 4 | 3 | 1 | 3 |
+
+Rund 66 neue Kunden aus 12 Mustern, gegenueber 172 Vorschlaegen mit einer Bestaetigung aus
+dem gesamten Umfrageabgleich.
+
+### Die gemessene Grenze, die im Entwurf steckt
+
+| zu weites Muster | faengt zusaetzlich |
+|---|---|
+| `siemens` | `SIEMENS ENERGY S.A`, `SIEMENS ENERGY SPA` |
+| `abb` | `ABBOTT LABS US` |
+| `voith` | `Voith Hydro`, also Wasserkraft statt Bahn |
+
+Deshalb drei Regeln, die im Dienst festgeschrieben und mit Tests belegt sind:
+
+1. **Ein Muster bestaetigt nie.** Es erzeugt ausschliesslich Zeilen mit `IsConfirmed = 0`.
+   Unbestaetigte Zuordnungen erscheinen nicht im zentralen Excel, wirken also nirgends,
+   bevor ein Mensch sie geprueft hat.
+2. **Eine bestaetigte Zuordnung wird nie ueberschrieben**, auch nicht mit demselben Segment.
+   Der menschliche Entscheid hat Vorrang vor jedem Muster.
+3. **Ein Widerspruch wird gemeldet, nicht verschluckt.** Trifft ein Muster einen Kunden, den
+   ein Mensch auf ein ANDERES Segment bestaetigt hat, erscheint er in der Vorschau als
+   `Konflikt`. Sonst bliebe ein falsches Muster unbemerkt.
+
+Zusaetzlich verlangt der Dienst mindestens drei Zeichen je Muster und laesst ein Muster
+optional auf einen Standort begrenzen. Genau das braucht `voith`, das nur in Deutschland
+eindeutig ist.
+
+### Was gebaut ist
+
+| Teil | Datei |
+|---|---|
+| Modell und Begruendung | `Models/SegmentNamePattern.cs` |
+| Dienst mit Vorschau, Anwenden und Startsatz | `Services/MarketSegmentPatternService.cs` |
+| Tabelle und additive Schemapflege | `DatabaseInitializationService.SchemaSql.cs`, `DatabaseSchemaMaintenanceService.cs` |
+| Registerkarte `Namensmuster` | `Components/Pages/MarketSegments.razor` |
+| Tests der drei Regeln | `TrafagSalesExporter.Tests/MarketSegmentPatternServiceTests.cs` |
+
+Die Registerkarte zeigt zuerst eine **Vorschau**: wie viele Treffer neu waeren, wie viele
+schon vorgeschlagen oder bestaetigt sind und wie viele im Konflikt stehen. Erst ein zweiter
+Klick legt die Vorschlaege an. Der Startsatz mit 15 Bahnmustern ist ein Knopf und keine
+stille Vorbelegung, damit sichtbar bleibt, wer die Liste zu verantworten hat.
+
+Ein eindeutiger Index auf `Pattern` plus `Segment` plus `Tsc` macht ein doppelt gepflegtes
+Muster zum Fehler statt zu einer stillen Mehrdeutigkeit.
+
+### Was das Verfahren nicht loest
+
+Es findet Konzernnamen, keine Tochtergesellschaften mit abweichendem Namen. Von 24
+bestaetigten deutschen Bahnkunden hat genau einer einen exakten Namenstreffer an einem
+anderen Standort; die uebrigen heissen dort schlicht anders. Der saubere Weg bleibt eine
+konzernweite Identitaet am Kunden. Der naheliegende Kandidat dafuer, die Spalte `W-IdNr.`
+im deutschen Adressexport, ist in **0 von 6'788 Adressen** gefuellt.
+
+Das Musterverfahren ist damit genau das, was Ingo vorgeschlagen hat: ein erster Schritt, der
+den Keyusern die Fleissarbeit abnimmt, ohne die fachliche Entscheidung vorwegzunehmen.
+
+Stand: gebaut und mit 697/697 Tests gruen, **nicht deployed**.

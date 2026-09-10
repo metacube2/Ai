@@ -65,6 +65,7 @@ public class DatabaseSchemaMaintenanceService : IDatabaseSchemaMaintenanceServic
         EnsureGroupMaterialMastersTable(db);
         EnsureSupplierMaterialOverridesTable(db);
         EnsureCustomerMarketSegmentsTable(db);
+        EnsureSegmentNamePatternsTable(db);
         EnsureMarketSurveyEntriesTable(db);
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentEntry", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(db, "CentralSalesRecords", "DocumentCurrency", "TEXT NOT NULL DEFAULT ''");
@@ -777,6 +778,32 @@ CREATE TABLE IF NOT EXISTS CurrencyExchangeRates (
             "CREATE UNIQUE INDEX IF NOT EXISTS UX_GroupMaterialMasters_Material_Plant ON GroupMaterialMasters (MaterialKey, Plant);";
         indexCommand.ExecuteNonQuery();
     }
+    /// <summary>
+    /// Legt die Tabelle der kuratierten Namensmuster an. Additiv; bestehende Muster
+    /// bleiben unberuehrt.
+    /// </summary>
+    private static void EnsureSegmentNamePatternsTable(AppDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            conn.Open();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = DatabaseSchemaSql.GetSegmentNamePatternsCreateSql()
+                .Replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
+            cmd.ExecuteNonQuery();
+        }
+
+        // Dasselbe Muster zweimal fuer denselben Standort waere eine stille
+        // Mehrdeutigkeit statt eines Fehlers.
+        using var index = conn.CreateCommand();
+        index.CommandText =
+            "CREATE UNIQUE INDEX IF NOT EXISTS UX_SegmentNamePatterns_Pattern " +
+            "ON SegmentNamePatterns (Pattern, Segment, Tsc);";
+        index.ExecuteNonQuery();
+    }
+
 
     private static void EnsureCustomerMarketSegmentsTable(AppDbContext db)
     {

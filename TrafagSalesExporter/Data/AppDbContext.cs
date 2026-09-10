@@ -29,6 +29,7 @@ public class AppDbContext : DbContext
     public DbSet<GroupMaterialMaster> GroupMaterialMasters => Set<GroupMaterialMaster>();
     public DbSet<SupplierMaterialOverride> SupplierMaterialOverrides => Set<SupplierMaterialOverride>();
     public DbSet<CustomerMarketSegment> CustomerMarketSegments => Set<CustomerMarketSegment>();
+    public DbSet<SegmentNamePattern> SegmentNamePatterns => Set<SegmentNamePattern>();
     public DbSet<MarketSurveyEntry> MarketSurveyEntries => Set<MarketSurveyEntry>();
     public DbSet<NavigationMenuItem> NavigationMenuItems => Set<NavigationMenuItem>();
     public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();

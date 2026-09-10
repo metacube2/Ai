@@ -23,6 +23,17 @@ CREATE TABLE CustomerMarketSegments (
     UpdatedAtUtc TEXT NOT NULL
 );";
 
+    internal static string GetSegmentNamePatternsCreateSql() => @"
+CREATE TABLE SegmentNamePatterns (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Pattern TEXT NOT NULL,
+    Segment TEXT NOT NULL,
+    Tsc TEXT NOT NULL DEFAULT '',
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    Note TEXT NOT NULL DEFAULT '',
+    UpdatedAtUtc TEXT NOT NULL
+);";
+
     internal static string GetMarketSurveyEntriesCreateSql() => @"
 CREATE TABLE MarketSurveyEntries (
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
