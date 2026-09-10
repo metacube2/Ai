@@ -32,20 +32,20 @@
         <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
             @T("Einkauf Cockpit", "Purchasing cockpit")
         </MudChip>
-        <MudText Typo="Typo.h3" Class="purchasing-hero-title">@T("Spend, Lieferanten, offene Verpflichtungen", "Spend, suppliers, open commitments")</MudText>
+        <MudText Typo="Typo.h3" Class="purchasing-hero-title">@T("Bestellwerte, Lieferanten und offene Liefermengen", "Ordered values, suppliers and open delivery quantities")</MudText>
         <MudText Typo="Typo.body1" Class="purchasing-hero-text">
-            @T("Operative Einkaufsanalyse mit Live-EKKO, klarer SAP-Datenpipeline, Simulationen und 3D-What-if-Ansicht.",
-               "Operational purchasing analytics with live EKKO, clear SAP data pipeline, simulations and 3D what-if view.")
+            @T("Bestellungen, offene Liefermengen und Lagerwerte aus SAP. Die Quellenhilfe erklaert die Kennzahlen und nennt die SAP-Felder.",
+               "Purchase orders, open delivery quantities and stock values from SAP. The source guide explains the measures and identifies their SAP fields.")
         </MudText>
         <div class="purchasing-hero-actions">
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkkoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKKO @(_liveState.EkkoLoaded ? T("live", "live") : T("wartet", "pending"))
+                EKKO @(_liveState.EkkoLoaded ? DataSourceLabel : T("wartet", "pending"))
             </MudChip>
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EkpoLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKPO @(_liveState.EkpoLoaded ? T("live", "live") : T("wartet", "pending"))
+                EKPO @(_liveState.EkpoLoaded ? DataSourceLabel : T("wartet", "pending"))
             </MudChip>
             <MudChip T="string" Size="Size.Small" Color="@(_liveState.EketLoaded ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                EKET @(_liveState.EketLoaded ? T("live", "live") : T("wartet", "pending"))
+                EKET @(_liveState.EketLoaded ? DataSourceLabel : T("wartet", "pending"))
             </MudChip>
         </div>
     </div>
@@ -53,7 +53,7 @@
         <div class="purchasing-radar" style="@BuildReadinessDonutStyle()">
             <div>
                 <strong>@DataReadinessPercent.ToString("N0")%</strong>
-                <span>@T("Live", "Live")</span>
+                <span>@T("Geladen", "Loaded")</span>
             </div>
         </div>
         <div class="purchasing-hero-note">
@@ -72,8 +72,8 @@
         <div>
             <MudText Typo="Typo.subtitle1">@T("Zeitraum", "Period")</MudText>
             <MudText Typo="Typo.body2" Class="purchasing-muted">
-                @T("Alle Einkauf-Kennzahlen, Top-Listen und 3D-Daten werden auf diesen Zeitraum abgegrenzt.",
-                   "All purchasing KPIs, top lists and 3D data are limited to this period.")
+                @T("Bestellwerte und Lieferantenzahl nach Bestelldatum (EKKO.BEDAT). Offene Werte enthalten alle Jahre; der Lagerwert zeigt seinen eigenen Ladestand.",
+                   "Ordered values and supplier count use the order date (EKKO.BEDAT). Open values include all years; stock value has its own load timestamp.")
             </MudText>
         </div>
         <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@FilterLabel</MudChip>
@@ -118,6 +118,52 @@
     </div>
 </MudPaper>
 
+<MudPaper Class="pa-3 mb-4" Outlined="true">
+    <MudText Typo="Typo.body2">
+        @if (_liveLoading)
+        {
+            @T("Datenstatus wird geladen.", "Loading data status.")
+        }
+        else if (_liveState.UsesCache)
+        {
+            @T("Quelle: gespeicherte SAP-Daten, keine Echtzeitabfrage. Letzter protokollierter Ladelauf:", "Source: stored SAP data, not a real-time query. Last recorded load:")
+            @TranslateRefreshStatus(_liveState.CacheStatus)
+            @if (_liveState.CacheCompletedAtUtc is { } completedAt)
+            {
+                <span> · @FormatRefreshDate(completedAt)</span>
+            }
+            <span> · @T("Ein fehlgeschlagener oder laufender Ladelauf bestaetigt keinen neuen Datenstand. Der Lagerwert hat einen eigenen Zeitstempel an der Kachel.", "A failed or running load does not confirm a new data snapshot. Stock value has its own timestamp on the card.")</span>
+        }
+        else
+        {
+            @T("Ohne gespeicherten Bestand: begrenzte SAP-Stichprobe, sofern erreichbar. Stichproben und gekennzeichnete Simulationen sind keine vollstaendigen Einkaufswerte.", "Without stored data: a limited SAP sample, if reachable. Samples and labelled simulations are not complete purchasing totals.")
+        }
+    </MudText>
+    <details class="mt-2">
+        <summary>@T("Kennzahlen verstehen: SAP-Quellen und Felder", "Understanding measures: SAP sources and fields")</summary>
+        <MudText Typo="Typo.body2" Class="my-2">
+            @T("Die Formeln beschreiben den gespeicherten Einkaufsbestand. Bestellkopf EKKO und Position EKPO sind ueber EBELN verbunden; Einteilungen EKET ueber EBELN und EBELP. Die SAP-Feldnamen bleiben zum Nachschlagen unveraendert.", "The formulas describe the stored purchasing data. Order header EKKO and item EKPO join on EBELN; schedule lines EKET join on EBELN and EBELP. SAP field names are preserved for reference.")
+        </MudText>
+        <MudSimpleTable Dense="true" Hover="true" Style="overflow-x:auto">
+            <thead><tr>
+                <th>@T("Kennzahl / Feld", "Measure / field")</th>
+                <th>@T("Herkunft und Berechnung", "Source and calculation")</th>
+            </tr></thead>
+            <tbody>
+                <tr><td>@T("Bestellwert / Jahr", "Ordered value / year")</td><td>@T("Summe EKPO.NETWR (Netto-Positionswert), in CHF umgerechnet. Zeitraum und Jahr aus EKKO.BEDAT (Bestelldatum). Kein Rechnungs- oder Zahlungswert.", "Sum of EKPO.NETWR (net item value), converted to CHF. Period and year from EKKO.BEDAT (order date). Not an invoice or payment value.")</td></tr>
+                <tr><td>@T("Bestellungen / Lieferanten", "Orders / suppliers")</td><td>@T("Unterschiedliche EKKO.EBELN (Bestellnummern) mit passenden Positionen; Lieferanten als unterschiedliche EKKO.LIFNR mit EKPO.NETWR ungleich 0 im Zeitraum. Keine Lieferantenbewertung.", "Distinct EKKO.EBELN (order numbers) with matching items; suppliers are distinct EKKO.LIFNR with non-zero EKPO.NETWR in the period. Not a supplier rating.")</td></tr>
+                <tr><td>@T("Offene Menge / offener Bestellwert", "Open quantity / order value")</td><td>@T("Je Einteilung: MAX(EKET.MENGE - EKET.WEMNG, 0), also eingeplante Menge minus erfasste Wareneingangsmenge. Wert = offene Menge × (EKPO.NETWR in CHF / EKPO.MENGE). Bei Bestellmenge 0 ist der Stueckwert 0. Alle Jahre inklusive alter Rueckstaende.", "Per schedule line: MAX(EKET.MENGE - EKET.WEMNG, 0), scheduled quantity minus recorded received quantity. Value = open quantity × (EKPO.NETWR in CHF / EKPO.MENGE). A zero order quantity gives a zero unit value. All years, including old backlogs.")</td></tr>
+                <tr><td>@T("Ueberfaelliger Wert / Positionen", "Overdue value / items")</td><td>@T("Offener Bestellwert mit EKET.EINDT (geplanter Liefertermin) vor heute. Positionszahl zaehlt unterschiedliche EBELN/EBELP mit offener ueberfaelliger Einteilung. EKET.EINDT ist kein tatsaechliches Wareneingangsdatum; daraus wird keine Liefertreue berechnet.", "Open order value with EKET.EINDT (planned delivery date) before today. Item count uses distinct EBELN/EBELP with an overdue open schedule line. EKET.EINDT is not an actual receipt date; it does not measure delivery reliability.")</td></tr>
+                <tr><td>@T("Offener Wert der Kontraktabrufe", "Open contract call-off value")</td><td>@T("Gleiche Offenwert-Formel, eingeschraenkt auf Bestellungen mit gefuelltem EKKO.KONNR (Kontraktbezug). Naeherung fuer offene Abrufe, kein noch verfuegbarer Vertragsrahmen. Ohne KONNR-Zuordnung ergibt sich 0.", "Same open-value formula, restricted to orders with EKKO.KONNR (contract reference). An approximation of open call-offs, not unused contract capacity. No KONNR assignments results in 0.")</td></tr>
+                <tr><td>@T("Waehrung / CHF-Umrechnung", "Currency / CHF conversion")</td><td>@T("EKKO.WAERS ist die Belegwaehrung; EKKO.WKURS der Kurs des Bestellbelegs. Positiver Kurs: multiplizieren; negativer Kurs: durch den Absolutwert teilen. CHF bleibt unveraendert. Bei fehlender Waehrung oder Kurs 0 bleibt der Betrag derzeit ebenfalls unveraendert. Der Waehrungsaufriss gruppiert nach Belegwaehrung und zeigt CHF-Werte.", "EKKO.WAERS is the document currency; EKKO.WKURS the order document exchange rate. Positive rate: multiply; negative rate: divide by its absolute value. CHF is unchanged. Missing currency or a zero rate currently also leaves the amount unchanged. The currency breakdown groups by document currency and shows CHF values.")</td></tr>
+                <tr><td>@T("Lieferant / Material / Warengruppe", "Supplier / material / material group")</td><td>@T("Lieferant: EKKO.LIFNR → LFA1.NAME1; Land: LFA1.LAND1. Material: EKPO.MATNR mit MAKT.MAKTX im Drilldown. Ohne Stammtext bleibt die Nummer; ohne Materialnummer wird EKPO.TXZ01 angezeigt. Warengruppe: MARA.MATKL, ersatzweise EKPO.MATKL; Texte aus dem lokalen T023T-Katalog.", "Supplier: EKKO.LIFNR → LFA1.NAME1; country: LFA1.LAND1. Material: EKPO.MATNR with MAKT.MAKTX in the drilldown. Missing master text leaves the number; without a material number, EKPO.TXZ01 is shown. Material group: MARA.MATKL, falling back to EKPO.MATKL; descriptions from the local T023T catalogue.")</td></tr>
+                <tr><td>@T("Lagerwert Einkaufsteile", "Purchased parts stock value")</td><td>@T("Summe MBEW.SALK3 (bewerteter Gesamtbestand), Bewertungskreis MBEW.BWKEY = 1100; Zuordnung ueber Materialnummer zu MARC.DISPO, Disponenten 001–005. Eigener gespeicherter Abrufzeitpunkt an der Kachel; unabhaengig vom Bestellzeitraum.", "Sum of MBEW.SALK3 (valued total stock), valuation area MBEW.BWKEY = 1100; material number maps to MARC.DISPO, planners 001–005. Its own stored retrieval timestamp is shown on the card; independent of the order period.")</td></tr>
+                <tr><td>@T("Beleg- und Positionsfilter", "Document and item filters")</td><td>@T("Standard: EKKO.BSTYP = F (Bestellung), EKKO.BSART ungleich UB (keine Umlagerung). Der Storno-Schalter schliesst EKPO.LOEKZ aus; bei offenen Werten zusaetzlich MARA.MSTAE 98/99. Endgelieferte Positionen (EKPO.ELIKZ = X) sind aus offenen Werten ausgeschlossen.", "Default: EKKO.BSTYP = F (purchase order), EKKO.BSART other than UB (no stock transfers). The cancellation filter excludes EKPO.LOEKZ; open values also exclude MARA.MSTAE 98/99. Delivery-completed items (EKPO.ELIKZ = X) are excluded from open values.")</td></tr>
+            </tbody>
+        </MudSimpleTable>
+    </details>
+</MudPaper>
+
 <MudGrid Class="mb-4" Spacing="2">
     @foreach (var card in KpiCards)
     {
@@ -149,8 +195,8 @@
 @switch (CurrentPurchasingPage)
 {
     case "spend":
-        <PurchasingSection TitleDe="Spend total vergangen"
-                           TitleEn="Historic total spend"
+        <PurchasingSection TitleDe="Bestellwert nach Lieferant und Jahr"
+                           TitleEn="Ordered value by supplier and year"
                            DescriptionDe="Beschaffungsvolumen in CHF nach Lieferant und Jahr. Gezählt wird der Bestellpositionswert am Bestelldatum, also bestelltes Volumen und nicht Wareneingang oder Rechnung. Fremdwährungen mit dem Kurs vom Bestellbeleg. Seit dem 27.08.2026 vollständig, ohne Kürzung auf die grössten Lieferanten."
                            DescriptionEn="Purchasing volume in CHF by supplier and year. It counts the order item value on the order date, so ordered volume and not goods receipt or invoice. Foreign currencies use the rate from the order document. Complete since 27.08.2026, no longer truncated to the largest suppliers."
                            ChartTitleDe="Spend pro Lieferant im aktuellen Jahr"
@@ -166,8 +212,8 @@
     case "offene-bestellungen":
         <PurchasingSection TitleDe="Offene Bestellwerte und Mengen"
                            TitleEn="Open order values and quantities"
-                           DescriptionDe="Was ist bestellt und noch nicht da: offene Menge je Termineinteilung mal Stückwert. Bewusst zeitraumunabhängig, Stand heute über alle Jahre, damit alte Rückstände nicht verschwinden. Deshalb ist der Betrag höher als eine Zwölfmonatssicht: am 27.08.2026 hatten rund zwei Drittel einen Liefertermin vor 2026. Nur Bestellungen, keine Mengenkontrakte."
-                           DescriptionEn="What is ordered and not yet here: open quantity per schedule line times unit value. Deliberately period-independent, as of today across all years so old backlogs do not disappear. That is why the amount exceeds a twelve-month view: on 27.08.2026 about two thirds had a delivery date before 2026. Purchase orders only, no quantity contracts."
+                           DescriptionDe="Was ist bestellt und noch nicht da: offene Menge je Termineinteilung mal Stückwert. Bewusst zeitraumunabhängig, laut geladenem SAP-Stand über alle Jahre, damit alte Rückstände nicht verschwinden. Enthält auch alte, in SAP noch offene Rückstände. Nur Bestellungen, keine Mengenkontrakte."
+                           DescriptionEn="What is ordered and not yet here: open quantity per schedule line times unit value. Deliberately period-independent, across all years in the loaded SAP data so old backlogs do not disappear. Includes old backlogs still open in SAP. Purchase orders only, no quantity contracts."
                            ChartTitleDe="Bestellaktivitaet und offene Positionen"
                            ChartTitleEn="Order activity and open items"
                            Kpis="@OpenOrderKpis"
@@ -176,8 +222,8 @@
                            DetailRows="@OpenOrderDetailRows" />
         break;
     case "kontrakte":
-        <PurchasingSection TitleDe="Offene Verpflichtungen"
-                           TitleEn="Open commitments"
+        <PurchasingSection TitleDe="Offene Kontraktabrufe"
+                           TitleEn="Open contract call-offs"
                            DescriptionDe="Naeherung: Restwert nur fuer Abrufe zu Rahmenkontrakten (EKKO.Konnr gesetzt), aus EKET-Offenmenge und EKPO-Stueckwert. Echte Mengenkontrakte mit Ablaufdatum brauchen noch Kontraktbelege aus SAP; bis dahin ist dieser Wert eine Annaeherung und 0, wenn keine Konnr-Daten vorliegen."
                            DescriptionEn="Approximation: remaining value only for call-offs against outline agreements (EKKO.Konnr set), from EKET open quantity and EKPO unit value. True quantity contracts with expiry dates still need contract documents from SAP; until then this value is an approximation and 0 when no Konnr data is present."
                            ChartTitleDe="Top Verpflichtungen nach Lieferant und Artikel"
@@ -188,10 +234,10 @@
                            DetailRows="@ContractDetailRows" />
         break;
     case "lieferanten":
-        <PurchasingSection TitleDe="Lieferantenbewertung und Performance"
-                           TitleEn="Supplier rating and performance"
-                           DescriptionDe="Lieferantenbasis kommt live aus EKKO. Bewertung, Termintreue und Preisentwicklung brauchen spaeter EKPO/EKET und Reklamationsdaten."
-                           DescriptionEn="The supplier base comes live from EKKO. Rating, delivery reliability and price development later need EKPO/EKET and claim data."
+        <PurchasingSection TitleDe="Lieferanten und Bestellpreise"
+                           TitleEn="Suppliers and order prices"
+                           DescriptionDe="Lieferanten aus EKKO.LIFNR mit Bestellpositionen EKPO, Namen aus LFA1.NAME1. Bestellpreise aus EKPO.NETWR / EKPO.MENGE in CHF. Liefertreue und Qualitaet werden mangels angebundener Ist-Wareneingangs- und Reklamationsdaten nicht bewertet."
+                           DescriptionEn="Suppliers from EKKO.LIFNR with EKPO order items, names from LFA1.NAME1. Order prices from EKPO.NETWR / EKPO.MENGE in CHF. Delivery reliability and quality are not rated because actual receipt and claim data are not connected."
                            ChartTitleDe="Top Lieferanten nach Spend im gewaehlten Zeitraum"
                            ChartTitleEn="Top suppliers by spend in the selected period"
                            Kpis="@SupplierKpis"
@@ -681,7 +727,7 @@
                             <strong>@DataReadinessPercent.ToString("N0")%</strong>
                         </div>
                         <div class="purchasing-mini-legend">
-                            <span><i class="ready"></i>@T("Live", "Live")</span>
+                            <span><i class="ready"></i>@T("Geladen", "Loaded")</span>
                             <span><i class="waiting"></i>@T("Wartet", "Waiting")</span>
                             <span><i class="simulation"></i>@T("Simulation", "Simulation")</span>
                         </div>
@@ -752,20 +798,24 @@
         }
     }
 
+    private string DataSourceLabel => _liveState.UsesCache
+        ? T("SAP-Datenbestand", "Stored SAP data")
+        : T("SAP-Stichprobe", "SAP sample");
+
     private IReadOnlyList<PurchasingKpiCard> KpiCards =>
     [
-        new("Spend total", "Total spend", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "Einkauf Cache Vollwerte" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "purchasing cache full values" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary,
-            "Bestelltes Volumen am Bestelldatum, nicht Wareneingang und nicht Rechnung. Nur echte Bestellungen, umgerechnet mit dem Kurs vom Bestellbeleg.",
-            "Ordered volume on the order date, not goods receipt and not invoice. Purchase orders only, converted with the rate fixed on the order document."),
+        new("Bestellwert im Zeitraum", "Ordered value in period", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : T("wartet auf EKPO", "waiting for EKPO"), _liveState.UsesCache ? "SAP-Bestellungen aus gespeichertem Datenbestand" : _liveState.EkpoLoaded ? "EKPO-Live-Sample" : "EKKO live, Positionswerte fehlen noch", _liveState.UsesCache ? "SAP purchase orders from stored data" : _liveState.EkpoLoaded ? "EKPO live sample" : "EKKO live, position values still missing", Icons.Material.Filled.Payments, Color.Primary,
+            "SAP: EKPO.NETWR, EKKO.BEDAT, EKKO.WAERS/WKURS. Bestelltes Volumen am Bestelldatum, nicht Wareneingang und nicht Rechnung. Nur echte Bestellungen, umgerechnet mit dem Kurs vom Bestellbeleg.",
+            "SAP: EKPO.NETWR, EKKO.BEDAT, EKKO.WAERS/WKURS. Ordered volume on the order date, not goods receipt and not invoice. Purchase orders only, converted with the rate fixed on the order document."),
         new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Noch nicht geladen", _liveState.EkkoLoaded ? WithFilter("EKKO-Belege im Zeitraum", "EKKO orders in period") : "Not loaded yet", Icons.Material.Filled.PendingActions, Color.Warning,
-            "Anzahl Bestellbelege im Zeitraum, gezaehlt am Bestelldatum. Ein Beleg mit zwanzig Positionen zaehlt einmal.",
-            "Number of order documents in the period, counted on the order date. A document with twenty items counts once."),
-        new("Verpflichtungen", "Commitments", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "offener Bestell-/Abrufwert Stand heute, zeitraumunabhaengig" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "open order/call-off value as of today, period-independent" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info,
-            "Bestellt und noch nicht eingetroffen: offene Menge mal Stueckwert, Stand heute ueber alle Jahre. Enthaelt auch alte, nie geschlossene Einteilungen; nur Bestellungen, keine Mengenkontrakte.",
-            "Ordered and not yet arrived: open quantity times unit value, as of today across all years. Includes old schedule lines never closed; purchase orders only, no quantity contracts."),
-        new("Lieferantenperformance", "Supplier performance", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success,
-            "Anzahl Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum. Sagt nichts ueber Liefertreue oder Qualitaet aus.",
-            "Number of suppliers with at least one non-zero order item in the period. Says nothing about delivery reliability or quality."),
+            "SAP: EKKO.EBELN und EKKO.BEDAT. Anzahl Bestellbelege im Zeitraum, gezaehlt am Bestelldatum. Ein Beleg mit zwanzig Positionen zaehlt einmal.",
+            "SAP: EKKO.EBELN and EKKO.BEDAT. Number of order documents in the period, counted on the order date. A document with twenty items counts once."),
+        new("Offener Bestellwert inkl. Rueckstaende", "Open order value incl. backlog", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : T("wartet auf EKET", "waiting for EKET"), _liveState.UsesCache ? "Offene SAP-Einteilungen, unabhaengig vom Zeitraum" : _liveState.EketLoaded ? "Restwert aus EKET/EKPO-Sample" : "EKKO live, Terminwerte fehlen noch", _liveState.UsesCache ? "Open SAP schedule lines, independent of period" : _liveState.EketLoaded ? "remaining value from EKET/EKPO sample" : "EKKO live, schedule values still missing", Icons.Material.Filled.Assignment, Color.Info,
+            "SAP: EKET.MENGE/WEMNG, EKPO.NETWR/MENGE, EKKO.WAERS/WKURS. Bestellt und noch nicht eingetroffen: offene Menge mal Stueckwert, laut geladenem SAP-Stand ueber alle Jahre. Enthaelt auch alte, nie geschlossene Einteilungen; nur Bestellungen, keine Mengenkontrakte.",
+            "SAP: EKET.MENGE/WEMNG, EKPO.NETWR/MENGE, EKKO.WAERS/WKURS. Ordered and not yet arrived: open quantity times unit value, across all years in the loaded SAP data. Includes old schedule lines never closed; purchase orders only, no quantity contracts."),
+        new("Aktive Lieferanten im Zeitraum", "Active suppliers in period", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", _liveState.EkkoLoaded ? "aktive Lieferanten mit Spend-Positionen" : "Noch nicht geladen", _liveState.EkkoLoaded ? "active suppliers with spend items" : "Not loaded yet", Icons.Material.Filled.Verified, Color.Success,
+            "SAP: EKKO.LIFNR, EKPO.NETWR, EKKO.BEDAT; Name aus LFA1.NAME1. Anzahl Lieferanten mit mindestens einer Bestellposition ungleich null im Zeitraum. Sagt nichts ueber Liefertreue oder Qualitaet aus.",
+            "SAP: EKKO.LIFNR, EKPO.NETWR, EKKO.BEDAT; name from LFA1.NAME1. Number of suppliers with at least one non-zero order item in the period. Says nothing about delivery reliability or quality."),
         // Lagerwert der Einkaufsteile (Wunsch Armin). Zeigt den AKTUELLEN Bestandswert, nicht
         // einen frei waehlbaren Stichtag - MBEW fuehrt nur den Jetzt-Wert. Ohne geladenen Stand
         // steht hier bewusst ein Hinweis statt einer 0, die wie ein leeres Lager aussaehe.
@@ -774,8 +824,8 @@
             _liveState.StockValueLoaded ? StockValueDetailDe : "wird beim naechsten Einkauf-Lauf gefuellt",
             _liveState.StockValueLoaded ? StockValueDetailEn : "filled by the next purchasing run",
             Icons.Material.Filled.Inventory, Color.Secondary,
-            "Bewerteter Lagerbestand zum letzten Einkauf-Lauf, eine Stichtagsbetrachtung. Ein frei waehlbarer Stichtag ist nicht moeglich, die Quelle fuehrt nur den Jetzt-Wert.",
-            "Valued stock at the last purchasing run, a snapshot. A freely chosen key date is not possible, the source only carries the current value.")
+            "SAP: MBEW.SALK3 (Bestandswert), MBEW.BWKEY (Bewertungskreis), MARC.DISPO (Disponent). Bewerteter Lagerbestand zum letzten erfolgreichen Lagerwert-Abruf, eine Stichtagsbetrachtung. Ein frei waehlbarer Stichtag ist nicht moeglich, die Quelle fuehrt nur den Jetzt-Wert.",
+            "SAP: MBEW.SALK3 (stock value), MBEW.BWKEY (valuation area), MARC.DISPO (planner). Valued stock at the last successful stock value load, a snapshot. A freely chosen key date is not possible, the source only carries the current value.")
     ];
 
     // Detailzeile der Lagerwert-Kachel. Nennt Materialzahl und Lesezeitpunkt, damit der Wert
@@ -794,19 +844,19 @@
     private readonly List<PurchasingAxis> AnalysisAxes =
     [
         new("Jahr", "Year", "EKKOSet.Bedat", "Zeitfilter und Verlauf", "Time filter and trend"),
-        new("Lieferant", "Supplier", "Data.Name / Data.Lieferant", "Spend und Performance pro Lieferant", "Spend and performance by supplier"),
-        new("Warengruppe", "Material group", "Data (2).Warengruppe / WG komplett", "Spend nach Warengruppe", "Spend by material group"),
-        new("Artikel", "Article", "EKPOSet.Matnr / EKPOSet.Txz01", "Artikel- und Preisentwicklung", "Article and price development"),
-        new("Region", "Region", "Data.Laender-/Regionenschluessel", "Regionale Spend-Verteilung", "Regional spend distribution")
+        new("Lieferant", "Supplier", "EKKO.LIFNR → LFA1.NAME1", "Spend und Performance pro Lieferant", "Spend and performance by supplier"),
+        new("Warengruppe", "Material group", "MARA.MATKL / EKPO.MATKL; T023T-Textkatalog", "Spend nach Warengruppe", "Spend by material group"),
+        new("Artikel", "Article", "EKPO.MATNR + MAKT.MAKTX; ohne MATNR: EKPO.TXZ01", "Artikel- und Preisentwicklung", "Article and price development"),
+        new("Region", "Region", "LFA1.LAND1", "Regionale Spend-Verteilung", "Regional spend distribution")
     ];
 
     private readonly List<PurchasingSource> SapSources =
     [
         new("EKKOSet", "Bestellkopf: Datum, Lieferant, Einkaufsbeleg."),
-        new("EKPOSet", "Bestellposition: Artikel, Text, Netwr CHF, Preis pro Stueck."),
+        new("EKPOSet", "Bestellposition: MATNR, TXZ01, NETWR in Belegwaehrung, MENGE. CHF-Wert wird berechnet."),
         new("eketSet", "Einteilungen/Termine: Basis fuer offene Mengen und Liefertermine."),
-        new("Data", "Lieferanten-Mapping und Lieferantennamen."),
-        new("Data (2)", "Warengruppen-Mapping und Warengruppentexte.")
+        new("LFA1Set", "Lieferantenstamm: LIFNR (Nummer), NAME1 (Name), LAND1 (Land)."),
+        new("maracalcSet", "Materialstamm: MATKL (Warengruppe), MSTAE (Materialstatus); Warengruppentexte aus lokalem T023T-Katalog.")
     ];
 
     private int DataReadinessPercent
@@ -860,7 +910,7 @@
         new("Spend CHF", "Spend CHF", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), _liveState.EkpoLoaded ? "aus SAP Positionen" : "Simulation bis EKPO liefert", _liveState.EkpoLoaded ? "from SAP item rows" : "simulation until EKPO delivers"),
         new("Jahre", "Years", _liveState.SpendYears.Count > 0 ? $"{_liveState.SpendYears.Min()}-{_liveState.SpendYears.Max()}" : "2020-2026", "Matrix wie Excel/PowerBI", "matrix like Excel/Power BI"),
         new("Dimensionen", "Dimensions", "4", "Jahr, Lieferant, Warengruppe, Artikel", "year, supplier, material group, article"),
-        new("SAP Status", "SAP status", _liveState.EkpoLoaded ? "live" : "wartet", "EKPOSet fuer Spend notwendig", "EKPOSet required for spend")
+        new("SAP Status", "SAP status", _liveState.EkpoLoaded ? DataSourceLabel : "wartet", "EKPOSet fuer Spend notwendig", "EKPOSet required for spend")
     ];
 
     private IReadOnlyList<PurchasingSectionKpi> OpenOrderKpis =>
@@ -873,13 +923,13 @@
 
     private IReadOnlyList<PurchasingSectionKpi> ContractKpis =>
     [
-        new("Restwert", "Remaining value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
-        new("Einteilungen", "Schedules", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : "-", "EKET-Probe", "EKET sample"),
+        new("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), _liveState.EketLoaded ? "aus SAP Einteilungen" : "Simulation bis EKET liefert", _liveState.EketLoaded ? "from SAP schedules" : "simulation until EKET delivers"),
+        new("Einteilungen im Zeitraum (alle Belege)", "Schedule lines in period (all documents)", _liveState.EketLoaded ? _liveState.ScheduleSampleCount.ToString("N0") : "-", "EKET.EINDT; nicht auf Kontraktabrufe begrenzt", "EKET.EINDT; not restricted to contract call-offs"),
         new("Top Verpflichtung", "Top commitment", TopCommitmentLabel, "Lieferant / Artikel / Monat", "supplier / article / month"),
         // Bewusst "Letztes Bestelldatum": der Wert ist MAX(EKKO.Bedat), also das juengste
         // Bestelldatum im Cache - kein Faelligkeitsdatum. Der Untertitel sagte das bereits,
         // die Ueberschrift widersprach ihm.
-        new("Letztes Bestelldatum", "Last order date", _liveState.LatestOrderDate?.ToString("yyyy-MM-dd") ?? "-", "letztes bekanntes EKKO-Datum", "latest known EKKO date")
+        new("Letztes Bestelldatum", "Last order date", _liveState.LatestOrderDate?.ToString("yyyy-MM-dd") ?? "-", "MAX(EKKO.BEDAT) im Zeitraum; alle passenden Belege", "MAX(EKKO.BEDAT) in period; all matching documents")
     ];
 
     private IReadOnlyList<PurchasingSectionKpi> SupplierKpis =>
@@ -1018,8 +1068,8 @@
             "Min(Netwr CHF/unit), article, year, supplier slicer.",
             "Netto-Stueckpreis als Netwr/Menge bilden und Minimum je Artikel/Jahr ausweisen.",
             "calculate net unit price as Netwr/quantity and show minimum by article/year.",
-            "Naechster Schritt: Lieferantennamen aus Data-Quelle mitcachen.",
-            "Next step: cache supplier names from Data source.",
+            "Lieferantennamen werden aus LFA1.NAME1 ueber EKKO.LIFNR geladen.",
+            "Supplier names are loaded from LFA1.NAME1 via EKKO.LIFNR.",
             _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
             _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
             Icons.Material.Filled.TrendingUp,
@@ -1115,8 +1165,8 @@
             "Unit price = net / quantity, then minimum by article/year like Power BI.",
             "Pivot nach Jahr, Artikel-Hotlist, Verlaufslinie je Artikel.",
             "pivot by year, article hotlist, trend line by article.",
-            "Naechster Schritt: Lieferanten- und Warengruppennamen aus Data/Data2 als Mapping anbinden.",
-            "Next step: connect supplier and material group names from Data/Data2 as mapping.",
+            "Quellen: LFA1.NAME1 fuer Lieferantennamen; MARA.MATKL / EKPO.MATKL und lokaler T023T-Katalog fuer Warengruppen.",
+            "Sources: LFA1.NAME1 for supplier names; MARA.MATKL / EKPO.MATKL and local T023T catalogue for material groups.",
             _liveState.EkpoLoaded ? "bereit" : "wartet auf EKPO",
             _liveState.EkpoLoaded ? "ready" : "waiting for EKPO",
             Icons.Material.Filled.TrendingUp,
@@ -1306,7 +1356,7 @@
         new("spend", "Spend CHF", "Spend CHF", "CHF"),
         new("openValue", "Offener Bestellwert", "Open order value", "CHF"),
         new("openQuantity", "Offene Menge", "Open quantity", "Qty"),
-        new("contractValue", "Kontrakt-Restwert", "Contract remaining value", "CHF"),
+        new("contractValue", "Offener Wert der Kontraktabrufe", "Open contract call-off value", "CHF"),
         new("deliveryRisk", "Liefertermin-Risiko", "Delivery due-date risk", "CHF"),
         new("priceVariance", "Preisentwicklung CHF", "Price trend CHF", "CHF"),
         new("spendConcentration", "Spend-Konzentration", "Spend concentration", "CHF"),
@@ -1503,31 +1553,31 @@
     {
         "ideen/liefertermin-risiko" =>
         [
-            new("Faelligkeits-Buckets", "Due-date buckets", $"{_liveState.DeliveryRiskChartRows.Count:N0}", "EKET.Eindt", "SAP live"),
-            new("Offener Wert", "Open value", FormatChf(_liveState.OpenValueSample), "EKET/EKPO", "SAP live"),
-            new("Ueberfaelliger Wert", "Overdue value", FormatChf(_liveState.OverdueValueSample), $"{_liveState.OverduePositionCount:N0} Positionen", "SAP live"),
-            new("Berechnung", "Calculation", "Menge - WEMNG", "EKET", "SAP live")
+            new("Faelligkeits-Buckets", "Due-date buckets", $"{_liveState.DeliveryRiskChartRows.Count:N0}", "EKET.Eindt", DataSourceLabel),
+            new("Offener Wert", "Open value", FormatChf(_liveState.OpenValueSample), "EKET/EKPO", DataSourceLabel),
+            new("Ueberfaelliger Wert", "Overdue value", FormatChf(_liveState.OverdueValueSample), $"{_liveState.OverduePositionCount:N0} Positionen", DataSourceLabel),
+            new("Berechnung", "Calculation", "Menge - WEMNG", "EKET", DataSourceLabel)
         ],
         "ideen/preisabweichung" =>
         [
-            new("Kennzahl", "Measure", "Mengengew. Ø CHF/Stk", "EKPO/EKKO", "SAP live"),
-            new("Preis", "Price", "SUM(Netwr CHF) / SUM(Menge)", "EKPO", "SAP live"),
-            new("Jahresspalten", "Year columns", $"{_liveState.PriceVarianceChartRows.Count:N0}", "EKKO.Bedat Jahr", "SAP live"),
-            new("Artikel im Trend", "Articles in trend", $"{_liveState.ArticlePriceTrendRows.Count:N0}", "Top nach Spend / YoY", "SAP live")
+            new("Kennzahl", "Measure", "Mengengew. Ø CHF/Stk", "EKPO/EKKO", DataSourceLabel),
+            new("Preis", "Price", "SUM(Netwr CHF) / SUM(Menge)", "EKPO", DataSourceLabel),
+            new("Jahresspalten", "Year columns", $"{_liveState.PriceVarianceChartRows.Count:N0}", "EKKO.Bedat Jahr", DataSourceLabel),
+            new("Artikel im Trend", "Articles in trend", $"{_liveState.ArticlePriceTrendRows.Count:N0}", "Top nach Spend / YoY", DataSourceLabel)
         ],
         "ideen/spend-konzentration" =>
         [
-            new("Gesamtspend", "Total spend", FormatChf(_liveState.SpendChfSample), "EKPO.Netwr", "SAP live"),
-            new("Top Lieferanten", "Top suppliers", $"{_liveState.SpendConcentrationRows.Count:N0}", "EKKO.Lifnr", "SAP live"),
-            new("Top Anteil", "Top share", FormatTopShare(), "Pareto", "SAP live"),
-            new("Warengruppen", "Material groups", TopMaterialGroupLabel, "EKPO.Matkl", "SAP live")
+            new("Gesamtspend", "Total spend", FormatChf(_liveState.SpendChfSample), "EKPO.Netwr", DataSourceLabel),
+            new("Top Lieferanten", "Top suppliers", $"{_liveState.SpendConcentrationRows.Count:N0}", "EKKO.Lifnr", DataSourceLabel),
+            new("Top Anteil", "Top share", FormatTopShare(), "Pareto", DataSourceLabel),
+            new("Warengruppen", "Material groups", TopMaterialGroupLabel, "EKPO.Matkl", DataSourceLabel)
         ],
         "ideen/datenqualitaet" =>
         [
-            new("Fehlender Lieferant", "Missing supplier", FormatChartValue("fehlender Lieferant", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKKO.Lifnr", "SAP live"),
-            new("Fehlende Warengruppe", "Missing material group", FormatChartValue("fehlende Warengruppe", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Matkl", "SAP live"),
-            new("Nullmenge", "Zero quantity", FormatChartValue("Nullmenge", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Menge", "SAP live"),
-            new("Nullwert", "Zero value", FormatChartValue("Nullwert", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Netwr", "SAP live")
+            new("Fehlender Lieferant", "Missing supplier", FormatChartValue("fehlender Lieferant", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKKO.Lifnr", DataSourceLabel),
+            new("Fehlende Warengruppe", "Missing material group", FormatChartValue("fehlende Warengruppe", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Matkl", DataSourceLabel),
+            new("Nullmenge", "Zero quantity", FormatChartValue("Nullmenge", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Menge", DataSourceLabel),
+            new("Nullwert", "Zero value", FormatChartValue("Nullwert", _liveState.DataQualityChartRows, value => value.ToString("N0")), "EKPO.Netwr", DataSourceLabel)
         ],
         _ => []
     };
@@ -1595,64 +1645,64 @@
 
     private IReadOnlyList<PurchasingSectionStatusRow> OpenOrderStatusRows =>
     [
-        BuildStatus("Bestellkoepfe", "Purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? "live" : "-"),
-        BuildStatus("Gebuchter Spend", "Booked spend", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet auf EKPO"),
+        BuildStatus("Bestellkoepfe", "Purchase headers", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? DataSourceLabel : "-"),
+        BuildStatus("Bestellwert im Zeitraum", "Ordered value in period", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "wartet auf EKPO"),
         BuildStatus("Offene Werte", "Open values", _liveState.EketLoaded, _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : "wartet auf EKET"),
-        BuildStatus("Faelligkeiten", "Due dates", _liveState.EketLoaded, _liveState.EketLoaded ? "live" : "wartet auf EKET")
+        BuildStatus("Faelligkeiten", "Due dates", _liveState.EketLoaded, _liveState.EketLoaded ? DataSourceLabel : "wartet auf EKET")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> ContractStatusRows =>
     [
-        BuildStatus("Kontraktkopf/-position", "Contract header/item", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? "live" : "wartet auf EKPO"),
-        BuildStatus("Einteilungen", "Schedules", _liveState.EketLoaded, _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0"),
-        BuildStatus("Restverpflichtung", "Remaining commitment", _liveState.EkpoLoaded && _liveState.EketLoaded, _liveState.EkpoLoaded && _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : "Simulation")
+        BuildStatus("Bestellpositionen mit Kontraktbezug", "Order items with contract reference", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? DataSourceLabel : "wartet auf EKPO"),
+        BuildStatus("Einteilungen im Zeitraum (alle Belege)", "Schedule lines in period (all documents)", _liveState.EketLoaded, _liveState.EketLoaded ? $"{_liveState.ScheduleSampleCount:N0}" : "0"),
+        BuildStatus("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EkpoLoaded && _liveState.EketLoaded, _liveState.EkpoLoaded && _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : "Simulation")
     ];
 
     private IReadOnlyList<PurchasingSectionStatusRow> SupplierStatusRows =>
     [
         BuildStatus("Lieferantenbasis", "Supplier base", _liveState.EkkoLoaded, _liveState.EkkoLoaded ? $"{_liveState.SupplierCount:N0}" : "-"),
-        BuildStatus("Preisentwicklung", "Price trend", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? "live" : "wartet auf EKPO"),
-        BuildStatus("Termintreue", "Delivery reliability", _liveState.EketLoaded, _liveState.EketLoaded ? "live" : "wartet auf EKET")
+        BuildStatus("Preisentwicklung", "Price trend", _liveState.EkpoLoaded, _liveState.EkpoLoaded ? DataSourceLabel : "wartet auf EKPO"),
+        BuildStatus("Termintreue", "Delivery reliability", false, T("Nicht berechnet: Ist-Wareneingangsdatum fehlt", "Not calculated: actual receipt date missing"))
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> SpendDetailRows =>
     [
-        new("Spend nach Jahr", "Spend by year", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "EKKOSet.Bedat Jahr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Spend aktuelles Jahr", "Current-year spend", FormatChf(_liveState.CurrentYearSupplierSpendRows.Sum(x => x.Value)), "Lieferant / aktuelles Jahr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "SupplierName / EKKOSet.Lifnr", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Spend nach Warengruppe", "Spend by material group", TopMaterialGroupLabel, "Data (2).Warengruppe", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Spend nach Artikel", "Spend by article", TopArticleLabel, "Artikel / Lieferant / Monat", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Spend nach Jahr", "Spend by year", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "EKKOSet.Bedat Jahr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Spend aktuelles Jahr", "Current-year spend", FormatChf(_liveState.CurrentYearSupplierSpendRows.Sum(x => x.Value)), "Lieferant / aktuelles Jahr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "SupplierName / EKKOSet.Lifnr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Spend nach Warengruppe", "Spend by material group", TopMaterialGroupLabel, "MARA.MATKL / EKPO.MATKL; T023T-Textkatalog", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Spend nach Artikel", "Spend by article", TopArticleLabel, "Artikel / Lieferant / Monat", _liveState.EkpoLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> OpenOrderDetailRows =>
     [
-        new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", "EKKOSet.Bedat", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Bestellungen im Zeitraum", "Orders in period", _liveState.EkkoLoaded ? _liveState.PurchaseOrderCount.ToString("N0") : "-", "EKKOSet.Bedat", _liveState.EkkoLoaded ? DataSourceLabel : "Wartet auf SAP"),
         // 2026-08-27: "Bereits beschafft" hiess bis heute so und traegt doch den BESTELLWERT.
         // Marco hat es in der Sitzung als "Bestellungen, wo wir schon Wareneingaenge haben"
         // gelesen - genau die falsche Bedeutung. Einen Wareneingangsbezug gibt es nirgends im
         // Dashboard, dafuer braeuchte es EKBE/MSEG. Deshalb umbenannt.
-        new("Bestellwert im Zeitraum", "Ordered value in period", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "-", "Summe EKPO.Netwr in CHF, am Bestelldatum - kein Wareneingang", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
+        new("Bestellwert im Zeitraum", "Ordered value in period", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : "-", "Summe EKPO.Netwr in CHF, am Bestelldatum - kein Wareneingang", _liveState.EkpoLoaded ? DataSourceLabel : "Wartet auf SAP"),
         // "Offener Bestellwert" und "Disponierter Zulauf" waren zwei Zeilen mit demselben Wert
         // (OpenValueSample). Marco hat das selbst bemerkt. Jetzt eine Zeile.
-        new("Offener Bestellwert (= disponierter Zulauf)", "Open order value (= planned inbound)", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "offene EKET-Menge (Menge minus Wareneingang) mal Stueckwert, Stand heute ueber alle Jahre", _liveState.EketLoaded ? "SAP live" : "Simulation"),
-        new("Ueberfaelliger Wert", "Overdue value", _liveState.EketLoaded ? FormatChf(_liveState.OverdueValueSample) : "-", "davon der Teil mit Liefertermin EKET.Eindt vor heute", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Ueberfaellige Positionen", "Overdue items", _liveState.EketLoaded ? _liveState.OverduePositionCount.ToString("N0") : "-", "Anzahl Bestellpositionen mit mindestens einer ueberfaelligen offenen Einteilung", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Offener Bestellwert (= disponierter Zulauf)", "Open order value (= planned inbound)", _liveState.EketLoaded ? FormatChf(_liveState.OpenValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.OpenValue)), "offene EKET-Menge (Menge minus Wareneingang) mal Stueckwert, laut geladenem SAP-Stand ueber alle Jahre", _liveState.EketLoaded ? DataSourceLabel : "Simulation"),
+        new("Ueberfaelliger Wert", "Overdue value", _liveState.EketLoaded ? FormatChf(_liveState.OverdueValueSample) : "-", "davon der Teil mit Liefertermin EKET.Eindt vor heute", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Ueberfaellige Positionen", "Overdue items", _liveState.EketLoaded ? _liveState.OverduePositionCount.ToString("N0") : "-", "Anzahl Bestellpositionen mit mindestens einer ueberfaelligen offenen Einteilung", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> ContractDetailRows =>
     [
-        new("Restverpflichtung (Naeherung)", "Remaining commitment (approx.)", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "nur Abrufe mit EKKO.Konnr", _liveState.EketLoaded ? "SAP live" : "Simulation"),
-        new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Faelligkeit", "Due date", _liveState.OpenValueChartRows.Count > 0 ? "als Detail verfuegbar" : "-", "eketSet.Eindt", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "SupplierName wenn geliefert" : "wartet", "SupplierName / Lifnr", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Offener Wert der Kontraktabrufe", "Open contract call-off value", _liveState.EketLoaded ? FormatChf(_liveState.ContractValueSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.ContractValue)), "nur Abrufe mit EKKO.Konnr", _liveState.EketLoaded ? DataSourceLabel : "Simulation"),
+        new("Groesste Verpflichtung", "Largest commitment", TopCommitmentLabel, "Lieferant / Artikel / Faelligkeit", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Faelligkeit", "Due date", _liveState.OpenValueChartRows.Count > 0 ? "als Detail verfuegbar" : "-", "eketSet.Eindt", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Namensmapping", "Name mapping", _liveState.EketLoaded ? "SupplierName wenn geliefert" : "wartet", "SupplierName / Lifnr", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
 
     private IReadOnlyList<PurchasingSectionDetailRow> SupplierDetailRows =>
     [
-        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKO + aktive EKPO", _liveState.EkkoLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Top Spend Lieferant", "Top spend supplier", TopSpendLabel, "Lieferant / Spend CHF", _liveState.EkpoLoaded ? "SAP live" : "Simulation"),
-        new("Preisentwicklung", "Price trend", _liveState.EkpoLoaded ? "SAP live" : "wartet auf EKPO", "Netwr CHF/Stk", _liveState.EkpoLoaded ? "SAP live" : "Wartet auf SAP"),
-        new("Liefertermintreue", "Delivery reliability", _liveState.EketLoaded ? "SAP live" : "wartet auf EKET", "Termin / Rueckstand", _liveState.EketLoaded ? "SAP live" : "Wartet auf SAP")
+        new("Aktive Lieferanten", "Active suppliers", _liveState.EkkoLoaded ? _liveState.SupplierCount.ToString("N0") : "-", "EKKO + aktive EKPO", _liveState.EkkoLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Top Spend Lieferant", "Top spend supplier", TopSpendLabel, "Lieferant / Spend CHF", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Preisentwicklung", "Price trend", _liveState.EkpoLoaded ? DataSourceLabel : "wartet auf EKPO", "Netwr CHF/Stk", _liveState.EkpoLoaded ? DataSourceLabel : "Wartet auf SAP"),
+        new("Liefertermintreue", "Delivery reliability", "-", "Ist-Wareneingangsdatum fehlt; EKET.EINDT ist nur der geplante Termin", _liveState.EketLoaded ? DataSourceLabel : "Wartet auf SAP")
     ];
 
     protected override async Task OnInitializedAsync()

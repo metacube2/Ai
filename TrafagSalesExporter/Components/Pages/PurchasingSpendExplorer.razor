@@ -13,11 +13,11 @@
         <div>
             <MudText Typo="Typo.h6">@T("Spend-Aufriss (mehrstufig)", "Spend breakdown (multi-level)")</MudText>
             <MudText Typo="Typo.body2" Class="purchasing-explorer-muted">
-                @T("Perspektive waehlen, dann stufenweise aufklappen. Je Ebene sind die groessten Positionen einzeln, der Rest steckt in einer 'uebrige'-Zeile - die Elternsumme bleibt dadurch die Summe ihrer Kinder. Warengruppe aus Materialstamm (MARA-MATKL), Fallback Bestellbeleg.",
-                   "Choose a perspective, then expand level by level. Each level lists the largest positions individually, the rest is bundled into a 'remaining' row - so a parent total always equals the sum of its children. Material group from material master (MARA-MATKL), fallback purchase document.")
+                @T("Bestellwert aus EKPO.NETWR in CHF, Zeitraum nach EKKO.BEDAT, Umrechnung mit EKKO.WAERS/WKURS. Perspektive waehlen und aufklappen: alle Lieferanten, Warengruppen und Materialien bleiben sichtbar. Warengruppe aus MARA.MATKL, ersatzweise EKPO.MATKL. In der Waehrungssicht ist die Gruppe die Belegwaehrung, der Wert bleibt CHF.",
+                   "Ordered value from EKPO.NETWR in CHF, period from EKKO.BEDAT, conversion using EKKO.WAERS/WKURS. Select a perspective and expand: all suppliers, material groups and materials remain visible. Material group from MARA.MATKL, falling back to EKPO.MATKL. Currency groups represent document currency; values remain CHF.")
             </MudText>
         </div>
-        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@T("Live aus Einkauf-Cache", "Live from purchasing cache")</MudChip>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@T("Gespeicherte SAP-Einkaufsdaten", "Stored SAP purchasing data")</MudChip>
     </div>
 
     @* Perspektivenwahl (Marco 2026-07-30). Alle Perspektiven sind serverseitig vorberechnet, das

@@ -3,6 +3,18 @@ namespace TrafagSalesExporter.Services;
 // Generated from PurchasingUiTextCatalog. Regenerate when its dynamic UI text changes.
 internal static class PurchasingUiTextGeneratedTranslations
 {
+    static PurchasingUiTextGeneratedTranslations()
+    {
+        // Preserve existing translations. New DE/EN source help explicitly uses
+        // the application's English fallback until further translations are reviewed.
+        foreach (var catalogue in All.Values)
+        {
+            var entries = (Dictionary<string, string>)catalogue;
+            foreach (var (german, english) in PurchasingUiTextCatalog.FieldHelpEnglishFallbacks)
+                entries.TryAdd(german, english);
+        }
+    }
+
     internal static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> All =
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

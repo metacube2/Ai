@@ -1,5 +1,47 @@
 # Einkaufsdashboard 2026-06-05
 
+## Nachtrag 2026-09-10: verstaendliche Beschriftungen und SAP-Feldherkunft
+
+Repository-Stand, **noch nicht deployed**. Auf Wunsch von Ingo sind die Bezeichnungen
+fachlich geschaerft und die Quellfelder direkt an den Hauptkacheln sowie in der
+aufklappbaren Hilfe **Kennzahlen verstehen: SAP-Quellen und Felder** sichtbar.
+Die Hilfe steht auf allen Routen der gemeinsamen Einkaufsdashboard-Komponente.
+
+- Bestellwert im Zeitraum statt Spend total; aktive Lieferanten im Zeitraum statt
+  Lieferantenperformance; offener Bestellwert inkl. Rueckstaende statt Verpflichtungen.
+- Kontraktwerte heissen offener Wert der Kontraktabrufe. Sie sind kein verfuegbarer
+  Vertragsrahmen. Die Einteilungszahl auf dieser Seite ist ausdruecklich als
+  Zeitraumwert fuer alle Belege beschriftet.
+- Quellenhilfe: Bestellwert aus EKPO.NETWR, Zeitraum aus EKKO.BEDAT, CHF-Umrechnung
+  ueber EKKO.WAERS/WKURS; offene Menge aus MAX(EKET.MENGE - EKET.WEMNG, 0),
+  bewertet mit EKPO.NETWR in CHF / EKPO.MENGE. Ueberfaellig ueber EKET.EINDT;
+  Kontraktabrufe ueber gefuelltes EKKO.KONNR.
+- Lieferantenherkunft aus EKKO.LIFNR / LFA1.NAME1 und LFA1.LAND1, Materialtext im
+  Drilldown aus MAKT.MAKTX, Warengruppe aus MARA.MATKL mit EKPO.MATKL als Ersatz
+  und lokalem T023T-Textkatalog. Ueberholte Data/Data2-Quellenhinweise korrigiert.
+- Lagerwert: MBEW.SALK3, Bewertungskreis MBEW.BWKEY = 1100, Disponent MARC.DISPO
+  001–005; eigener Abrufzeitpunkt. Die Hilfe nennt ausserdem Join-Schluessel,
+  Beleg-/Positionsfilter und die vorhandenen Nullmengen-/Waehrungs-Fallbacks.
+- Gespeicherte Daten heissen nicht mehr SAP live. Der gemeinsame Hinweis zeigt den
+  letzten im Snapshot protokollierten Laufstatus und dessen Abschlusszeit, ohne einen
+  fehlgeschlagenen Lauf als neuen erfolgreichen Datenstand auszugeben. Ohne Cache
+  werden die Begrenzung der SAP-Stichprobe und Simulationen erklaert.
+- Zeitraumhinweis korrigiert: offene Werte ueber alle Jahre, Lagerwert mit eigenem
+  Stand. Spend-Aufriss nennt Bestelldatum, Quellwert und CHF-Umrechnung und behauptet
+  keine bereits entfernte Deckelung mehr. Liefertreue wird als nicht berechnet
+  ausgewiesen, da das Ist-Wareneingangsdatum nicht angebunden ist.
+
+Berechnungen, Datenabruf und Datenbestand wurden nicht geaendert. Die Quellen sind
+gegen die bestehenden Reader und SQL-Ausdruecke geprueft, kein neuer SAP-Live-Abgleich.
+Neue Texte sind DE/EN; fuer weitere Sprachen sind englische Ersatztexte explizit in
+PurchasingUiTextCatalog.FieldHelpEnglishFallbacks erfasst, bestehende Uebersetzungen
+bleiben bevorzugt. Diese Ersatztexte sind keine fachlich geprueften Uebersetzungen.
+
+Validierung: Release-Build und 78 gezielte Einkaufs-/UiTextService-Tests erfolgreich.
+Der erste Debug-Build scheiterte an durch einen bestehenden lokalen .NET-Prozess
+gesperrten DLLs; der Prozess wurde nicht beendet. Produktive Sichtpruefung und Deploy
+sind nicht erfolgt.
+
 Nachtrag 2026-06-18: Das Einkaufsdashboard wurde fuer die Management-/Einkaufssicht nachgezogen und deployed. Schwerpunkt war die Excel-aehnliche Lieferant/Jahr-Kaskadierung analog Referenzbild `einkauf.png`, Zeitraum 2020 bis aktuelles Jahr, Spend aktuelles Jahr je Lieferant, offene Bestellungen/Zulauf, Filter fuer Loeschkennzeichen und MARA-MSTAE sowie echte Lieferantennamen statt Platzhalter.
 
 Nachtrag 2026-07-31, finaler Praesentationsstand der Spend-Matrix (Commits
