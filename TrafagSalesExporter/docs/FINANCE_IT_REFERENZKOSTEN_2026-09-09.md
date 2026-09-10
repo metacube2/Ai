@@ -1,7 +1,7 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
-Stand: 2026-09-09. Gehoert zu `ISS-007.1` (Bewertungsmethode) und zum neuen `ISS-007.2`
-(Referenzkost aus dem Bestand).
+Stand: 2026-09-10, Messergebnis in Abschnitt 4a und Paolas Antwort in Abschnitt 7a.
+Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
 
 Vorgaengerstand: `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`. Fachlicher
 Gesamtstand der Kostenbasis: `docs/FINANCE_STANDARDKOSTEN.md`.
@@ -42,7 +42,9 @@ priorisiert, erneute Betrachtung im naechsten Jahr.** Damit gilt fuer `ISS-007.1
   nach geklaerter Prioritaet einholen.
 - Die Intercompany-Bewertung mit Lucas Castro ist mit dem Projekt zurueckgestellt, nicht
   erledigt. Sie wird wieder gebraucht, sobald das Thema 2027 aufgerufen wird.
-- Offen bleibt nur die Rueckmeldung an Paola. Der Textvorschlag steht in Abschnitt 7.
+- Offen bleibt nur die Rueckmeldung an Paola. **Sie hat am 2026-09-10 geantwortet und will die
+  Referenzkost selbst pruefen; das ist erledigt und sollte ihr abgenommen werden.** Gueltiger
+  Textvorschlag und ihr Wortlaut in Abschnitt 7a, nicht mehr in Abschnitt 7.
 
 ## 3. Was von Andreas' Frage bereits beantwortet ist
 
@@ -62,7 +64,7 @@ sondern seit dem 2026-07-27 der Standardweg. Zu klaeren bleibt an dieser Stelle 
 schon in Abschnitt 7 der Kostendoku gefuehrte Frage, ob der **juengste** positive Belegwert
 dauerhaft gilt oder ein Durchschnitt beziehungsweise ein Stichtag noetig ist.
 
-## 4. Was neu ist und gemessen werden muss
+## 4. Was neu war und wie es gemessen wurde
 
 Neu ist die Kennzahl **Bestandswert geteilt durch Bestandsmenge je Artikel**. Das ist genau
 die "zusaetzlich kalkulierte Groesse", die Andreas am 2026-07-27 noch nicht gebraucht hat;
@@ -78,14 +80,18 @@ vermutet (live gegen `it01_p` am 2026-07-27):
 | `OITM.AvgPrice` | groesser null bei nur 248 von 40'478 |
 | `OITW.AvgPrice` | 0 bei allen 1'902'456 Lagerzeilen |
 
-Bei Chargenbewertung fuehrt B1 die Kosten je Charge. Ein Stueckwert aus dem Artikel- oder
-Lagerstamm kann es dort also nicht geben. Die beiden von Andreas gesuchten Groessen muessen
-deshalb aus dem **Bestandsjournal** oder den **Chargentabellen** kommen.
+Bei Chargenbewertung fuehrt B1 die Kosten je Charge, ein **Stueckwert** aus diesen Feldern
+kann es also nicht geben. Die Vermutung vor der Messung war deshalb, die beiden Groessen
+muessten aus dem Bestandsjournal oder den Chargentabellen kommen. Das war zu pessimistisch:
+die Metadatenabfrage hat mit `OITM.StockValue` ein gepflegtes Feld gefunden, das die
+frueheren Messungen nicht im Blick hatten, weil sie nach Stueckwerten gesucht haben und
+nicht nach dem Bestandswert. Einzelheiten in Abschnitt 4a.
 
-**Welche Felder dort tatsaechlich existieren, steht hier bewusst nicht.** Vorrangregel 5 in
-`router.md` verbietet, SAP-Feldnamen aus Erinnerung zu behaupten; genau dieser Fehler hat bei
-UK-2025 und beim IT-Superlativ zugeschlagen. Die Messung beginnt daher mit einer
-Metadatenabfrage und nicht mit einer Datenabfrage.
+**Die Feldnamen sind nicht geraten, sondern gemessen.** Vorrangregel 5 in `router.md` verbietet,
+SAP-Feldnamen aus Erinnerung zu behaupten; genau dieser Fehler hat bei UK-2025 und beim
+IT-Superlativ zugeschlagen. Das Messpaket beginnt deshalb mit einer Metadatenabfrage und nicht
+mit einer Datenabfrage. Genau die hat den Fund gebracht: die Felder in Abschnitt 4a stammen aus
+`SYS.TABLE_COLUMNS`, nicht aus einer Annahme.
 
 ### Vorbereitetes Messpaket
 
@@ -112,13 +118,87 @@ Die Abfragen 03 bis 09 nennen Spalten, die erst 01 und 02 bestaetigen. Der Laeuf
 bei einem Fehler nicht ab, sondern protokolliert ihn je Anweisung; falsch geratene Namen
 fallen damit sichtbar durch und werden nicht als Befund verkauft.
 
-**Noch nicht gelaufen.** Das Firmennetz war am 2026-09-09 gegen 09:50 nicht erreichbar:
-`trch-webapp-bidashboard.trafagch.local` loest nicht auf, `10.194.65.22:30015` antwortet
-nicht, aktiv ist nur das private WLAN. Damit fehlt sowohl der konsistente
-Konfigurationssnapshot als auch die HANA-Verbindung. Sobald das Netz steht, ist die Messung
-ein Lauf von wenigen Minuten. Alternativweg, falls der Entwicklungsrechner die Quelle
-dauerhaft nicht erreicht: Ausfuehrung ueber den Server nach `docs/router/plattform.md`,
-Abschnitt Server-Analyse, wie bei TR IN.
+**Gelaufen am 2026-09-09 gegen 10:30**, nachdem das Netz wieder stand, read-only gegen
+`it01_p` auf `travtrp0:30015` als `TRAFAG_ALL`. Eine zweite Runde
+(`it_referenzkosten2.sql`) hat den Fund aus der Metadatenabfrage vertieft. Rohprotokolle:
+`.tmp_tools/ItReferenceCost0909/lauf1.txt` und `lauf2.txt`.
+
+**Betriebshinweis:** Die produktive SQLite-Datei auf dem Share liess sich auch mit
+stehendem VPN nicht oeffnen (`unable to open database file`), obwohl `Test-Path` wahr
+liefert und der HANA-Port antwortet. Fuer HanaQ genuegt die Konfiguration, deshalb lief die
+Messung mit der lokalen `trafag_exporter.db`; Host, Schema und Benutzer werden vom Werkzeug
+ausgegeben und stimmen mit `docs/QUELLSYSTEME_SAP_B1.md` ueberein. Die Messwerte selbst
+kommen ausschliesslich aus HANA, nicht aus der lokalen Kopie.
+
+## 4a. Ergebnis der Messung
+
+**Ja, beide Werte lassen sich einfach ziehen, und zwar direkt auf Artikelebene.** Der
+Artikelstamm fuehrt neben den bekannten Nullfeldern zwei Spalten, die tatsaechlich gepflegt
+sind: `OITM.StockValue` und `OITM.OnHand`. Eine Chargenaggregation ist nicht noetig.
+
+| Messung | Ergebnis |
+| --- | ---: |
+| `OITM.StockValue` gefuellt | 1'077 von 40'720 Artikeln |
+| Summe `OITM.StockValue` | 987'909.28 EUR |
+| Summe `OITM.OnHand` | 62'601 Stueck |
+| Bestandsjournal `OINM` kumuliert, 154'762 Zeilen | 62'601 Stueck und 987'909.28 EUR |
+| Artikel mit Bestand groesser null | 1'100, davon 1'077 mit Wert |
+
+Wert und Menge des Artikelstamms sind also **auf den Cent und das Stueck identisch mit dem
+kumulierten Bestandsjournal**. Die Gegenprobe je Artikel ueber 9'323 Artikel ergibt
+**0 Mengenabweichungen** zwischen Journal und Lagerstamm. Damit ist die Zahl abgestimmt und
+nicht nur vorhanden.
+
+Zwei Wege, die man erwarten wuerde und die **nicht** tragen:
+
+- `OITW.StockValue` ist in allen 1'913'828 Lagerzeilen null, ebenso `OITW.AvgPrice`. Der
+  Bestandswert wird auf Lagerebene nicht gefuehrt, nur auf Artikelebene.
+- `OBTN.CostTotal` sieht wie der Chargenwert aus, ist es aber nicht: 38'791'861.79 EUR bei
+  62'267 offenen Stueck ergaebe rund 623 EUR je Stueck gegenueber 15.78 EUR aus den beiden
+  abgestimmten Quellen. Das Feld summiert offenkundig die Kosten aller je gebuchten
+  Chargenzugaenge, nicht den offenen Bestand. **Nicht verwenden.**
+
+### Der Haken liegt nicht in der Technik, sondern in der Abdeckung
+
+| Bezugsgroesse | Mit Bestand | Ohne Bestand |
+| --- | ---: | ---: |
+| 2026 verkaufte Materialien: 2'216 (Stand 09.09., im Juli waren es 2'082) | 568 (25.6 %) | 1'648 (74.4 %) |
+| 2026 fakturierter Positionsumsatz: 9'254'229.87 EUR | 2'677'517.43 (28.9 %) | 6'576'712.44 (71.1 %) |
+
+Die Formel greift also fuer rund ein Viertel der verkauften Materialien und rund 29 Prozent
+des Umsatzes. Fuer die uebrigen drei Viertel gilt ohnehin der Fallback, also der heute schon
+produktive Belegwert.
+
+### Und dort, wo sie greift, sagt sie dasselbe wie der heutige Weg
+
+Fuer die 555 Artikel, die sowohl Bestand als auch einen Belegwert 2026 haben:
+
+| Verhaeltnis Referenzkost zu `StockPrice` | Artikel |
+| --- | ---: |
+| Median | **1.00** |
+| zwischen 0.8 und 1.25 | 484 von 555 |
+| unter 0.8 | 49 |
+| ueber 1.25 bis 2 | 11 |
+| ueber 2 | 11 |
+
+Getrennt nach Nummernkreis, weil Abschnitt 5 genau dort einen Unterschied vermuten liesse:
+
+| Nummernkreis | Artikel | Referenzkost im Mittel | `StockPrice` im Mittel | Median des Verhaeltnisses |
+| --- | ---: | ---: | ---: | ---: |
+| numerische Trafag-Sachnummer | 326 | 59.43 | 65.85 | 1.00 |
+| italienische Hausnummer | 207 | 33.14 | 37.46 | 1.00 |
+| sonstige | 22 | 74.82 | 75.08 | 1.00 |
+
+Das ist der eigentliche Befund: Beide Wege messen dieselbe Kostenwelt, auch bei den
+Trafag-Sachnummern. Die Referenzkost aus dem Bestand ist also **keine neue Kostenquelle**,
+sondern eine Bestaetigung der vorhandenen, mit geringerer Abdeckung. Damit traegt sie
+dieselbe Intercompany-Ladung wie der Belegwert, was die Abgrenzung in Abschnitt 5
+bestaetigt statt sie zu entkraeften.
+
+**Empfehlung:** Den Belegwert `INV1.StockPrice` als fuehrende Kostenbasis behalten und die
+Referenzkost aus dem Bestand als monatliche Plausibilisierung fuehren, die zeigt, ob die
+Belegwerte zum bewerteten Bestand passen. Ein Umbau der Kostenquelle wuerde bei 29 Prozent
+Umsatzabdeckung und einem Median von 1.00 praktisch keine andere Zahl liefern.
 
 ## 5. Die Einschraenkung, die in jede Antwort gehoert
 
@@ -166,24 +246,37 @@ Beide Texte sind Vorschlaege fuer Ingo. Es ist keine Mail verschickt worden.
 > 27 July, and it is independent of the batch valuation. Coverage for the materials TR IT
 > sold in 2026 is 2,019 of 2,082, or 97.0 %.
 >
-> The new part is inventory value divided by quantity on hand. I can already rule out the
-> item master as a source, and that is measured, not assumed: `PrdStdCst` is zero for all
-> 40,478 items, and `AvgPrice` is empty for all 1.9 million warehouse rows, because with
-> batch valuation B1 keeps the cost on the batch. So the two figures have to come from the
-> inventory journal or the batch tables instead. I have the read-only queries prepared and
-> will send you the numbers, including how many of the 2,082 materials we sold actually
-> carry stock — that ratio decides how often the formula applies and how often we fall back
-> to the document value.
+> On the second part: yes, both figures come out of B1 easily, and at item level, so the
+> batch valuation is not in the way. The item master carries `StockValue` and `OnHand`
+> directly — 1,077 items with a value, EUR 987,909.28 over 62,601 units — and that
+> reconciles to the cent and the unit with the cumulated inventory journal, with zero
+> quantity deviations across the 9,323 items I compared. So the mechanics are a non-issue.
 >
-> One point worth settling before we build anything on it: inventory value over quantity on
-> hand is a weighted average of what TR IT paid. On Trafag part numbers that is the
-> intercompany purchase price — we measured it at 3.48x the Swiss standard cost on average
-> for the 867 items both companies carry. So this figure fits the local cost slot of the
-> selling company; it should not replace the Swiss standard cost as the group manufacturing
-> cost basis, otherwise the group margin measures the transfer price again. Happy to keep it
-> as the local figure, as a comparison figure, or both — that is your call, and it is the
-> same question as whether the latest positive document cost is enough or we need an average
-> and a cut-off date.
+> The two caveats are about usefulness rather than feasibility, and I think they change the
+> answer:
+>
+> Coverage is thin. Of the 2,216 materials we invoiced in Italy in 2026, only 568 carry
+> stock at all — that is 25.6 % of the materials and 28.9 % of the invoiced revenue
+> (EUR 2.68m of 9.25m). For the remaining 71 % the fallback applies anyway, so the document
+> value stays the workhorse either way.
+>
+> And where both exist, they say the same thing. For the 555 items with both stock and a
+> 2026 document value, the median ratio between the two is exactly 1.00, and 484 of 555 sit
+> within plus/minus 25 %. That holds separately for Trafag part numbers (326 items) and for
+> Italian house numbers (207) — no systematic gap. Which also answers a question I had:
+> the inventory figure carries the same intercompany loading as the document value, since
+> it is a weighted average of what TR IT paid. On Trafag part numbers that is the purchase
+> price, which we measured at 3.48x the Swiss standard cost. So neither figure is a group
+> manufacturing cost; both belong in the local cost slot of the selling company.
+>
+> My suggestion, therefore: keep the document value as the leading cost basis and run
+> inventory value over quantity on hand as a monthly plausibility check against it, which
+> is cheap now that we know where the fields are. Rebuilding the cost source would cost
+> effort and, at a median ratio of 1.00 and 29 % coverage, produce practically the same
+> number. If you would rather have it as the leading figure for the items that do carry
+> stock, say so and I will set it up — it is your call, and it is the same decision as
+> whether the latest positive document value is enough or we need an average and a cut-off
+> date.
 >
 > Best regards,
 > Ingo
@@ -204,6 +297,85 @@ Beide Texte sind Vorschlaege fuer Ingo. Es ist keine Mail verschickt worden.
 > To be explicit about one thing, because it is easy to misread: the group reporting does not
 > depend on your valuation method. We take the cost from the invoice line, which B1 fills
 > regardless of batch valuation, so nothing on your side is blocking us.
+>
+> Best regards,
+> Ingo
+
+**Ueberholt seit dem 2026-09-10.** Dieser Entwurf ist geschrieben worden, bevor Paola
+geantwortet hat. Er ist fachlich weiter richtig, aber unvollstaendig: er sagt nichts dazu,
+dass Paola die Referenzkost selbst pruefen will. Gueltig ist der Text in Abschnitt 7a.
+
+## 7a. Antwort von Paola vom 2026-09-10 und der neue Antwortvorschlag
+
+Paola hat auf Andreas' Rueckmeldung geantwortet. Drei Punkte:
+
+**Erstens, eine Klarstellung.** Ihr Befund ist das Ergebnis der Pruefung durch ihre
+SAP-Berater, nicht ihre eigene Einschaetzung.
+
+> Just to clarify: what I reported was the outcome of the analysis carried out by our SAP
+> consultants, who confirmed that the valuation method of an existing item in B1 cannot be
+> changed once the item has been created, regardless of stock on hand [...]
+
+**Zweitens, ein Vorbehalt, der offen bleibt.** Sie schliesst ausdruecklich nicht aus, dass
+Lucas Castro oder unsere Berater eine andere Loesung kennen.
+
+> It's possible that Lucas or your SAP consultants (ANG) have a different solution or a
+> workaround I'm not aware of — at the moment I only have the explanation I was given, so I
+> can't rule that out.
+
+Dieser Vorbehalt ist **nicht aufgeloest**. Er ist aber gegenstandslos, solange die
+Umstellung nicht priorisiert ist, und ist der erste Punkt fuer ANG, falls das Thema 2027
+aufgerufen wird. Ihn jetzt zu verfolgen waere Arbeit an einem zurueckgestellten Projekt.
+
+**Drittens, und das ist der handlungsrelevante Teil:** Sie will die Referenzkost selbst
+pruefen, sobald es die Arbeitslast erlaubt, und sich dann melden.
+
+> Regarding the alternative approach you're suggesting (a mathematical reference cost per
+> article), I won't be able to look into this right away given our current workload, but I
+> will take it up again as soon as possible [...]
+
+**Diese Pruefung ist erledigt und sollte ihr abgenommen werden.** Die Messung vom
+2026-09-09 in Abschnitt 4a beantwortet genau ihre Frage: die Werte lassen sich trotz
+Chargenbewertung auf Artikelebene ableiten. Wenn wir das nicht sagen, arbeitet Italien
+unter Arbeitslast an einer Frage, die zentral schon beantwortet ist, und meldet sich in
+einigen Wochen mit demselben Ergebnis.
+
+Uebrig bleibt genau **eine** Frage an Italien, die wir nicht selbst beantworten koennen:
+ob `OITM.StockValue` demselben Bestandswert entspricht, den Italien bilanziell ausweist.
+Das ist billig fuer Paola und genau die Frage, die Andreas stellen wird, sobald die
+Kennzahl im Gruppenreporting auftaucht.
+
+### Gueltiger Antwortvorschlag an Paola, Andreas in Kopie
+
+> Hi Paola,
+>
+> Thanks for the clarification - and to be clear, nobody is questioning your consultants'
+> finding. Two things from our side.
+>
+> On the valuation method: Andreas has taken the conversion off the priority list for now,
+> and we will look at the overall setup again next year. So there is no need to chase a
+> possible workaround with Lucas or ANG at this point. If we do revisit it, that assessment
+> belongs in the same round, together with the intercompany question on the Trafag and
+> Industrial Components items.
+>
+> On the reference cost, please don't spend any time on it - we measured it centrally today,
+> read-only against your database, and it works. The item master carries StockValue and
+> OnHand, and both are populated: 1,077 items with a value, EUR 987,909.28 over 62,601
+> units. That reconciles to the cent with the cumulated inventory journal, and the
+> quantities match the warehouse records for all 9,323 items I compared. So the figure can
+> be derived at article level despite the batch valuation, from our side, with no work on
+> yours.
+>
+> There is one thing where your view would help, and it is the only thing I need: does
+> StockValue in the item master match the inventory value your finance side reports, for
+> example at the last month end? If it does, we can build on it with confidence. If your
+> balance sheet figure comes from a different source, I would rather know that now than
+> after a group figure is built on it.
+>
+> For context, the limitation turned out to be coverage rather than mechanics: only about a
+> quarter of the articles you invoiced in 2026 carry stock at all, so for the rest we keep
+> using the cost B1 records on the invoice line, which is what the group reporting already
+> does today.
 >
 > Best regards,
 > Ingo

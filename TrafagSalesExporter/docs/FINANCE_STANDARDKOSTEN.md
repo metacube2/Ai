@@ -1,6 +1,6 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-09-09
+Stand: 2026-09-10
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
 B1-Artikel ist in Italien technisch nicht umstellbar, die fruehere Aussage „als Massenupdate
@@ -8,8 +8,11 @@ machbar" ist dort als ueberholt markiert.
 
 Am 2026-09-09 ergaenzt: Andreas priorisiert die Umstellung der Bewertungsmethode nicht und
 fragt stattdessen nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
-Bestandsmenge. Abschnitte 6 und 7 sind nachgefuehrt; Einzelheiten, vorbereitetes Messpaket
-und Antwortvorschlaege in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
+Bestandsmenge. Abschnitte 6 und 7 sind nachgefuehrt; Einzelheiten, Messung und
+Antwortvorschlaege in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
+
+Am 2026-09-10 ergaenzt: die Referenzkost ist gemessen (Abschnitt 7, Zeile dazu) und Paola hat
+geantwortet; ihre Absicht, die Frage selbst zu pruefen, ist mit der Messung ueberholt.
 
 Ebenfalls am 2026-09-09: Andreas hat die Konzernkostenkaskade entschieden. **Schnitt nach
 der ersten internen Lieferstufe**, extern gilt der lokale Standardpreis. Das schliesst den
@@ -404,7 +407,7 @@ Reporting-Marge im Dashboard.
 | **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Andreas soll weiterhin die davon getrennte erste Frage entscheiden, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt. | Ingo / Andreas |
 | Umrechnungsregel fuer Konzernkosten in fremder Waehrung. Die frueheren `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) waren bis 2026-08-25 auf `Kostenwaehrung abweichend` maskiert. **Seit Deploy 2026-08-27 15:28** wird die Kostenbasis mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, verbindlicher Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %`. **Konkret geworden am 2026-09-09:** Andreas schlaegt fuer Artikel ohne Bestand den letzten verfuegbaren Wert vor, was dem heutigen Default `LatestPositive` entspricht | Andreas |
-| **Neu am 2026-09-09:** Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge. Der Artikelstamm ist als Quelle gemessen ausgeschlossen (Abschnitt 4), die Werte muessten aus Bestandsjournal oder Chargentabellen kommen; Messpaket vorbereitet, wegen fehlender Netzverbindung am 09.09. noch nicht gelaufen. Zu entscheiden ist zusaetzlich, ob die Kennzahl die fuehrende lokale Kostenbasis oder eine Vergleichsgroesse ist und welcher Stichtag gilt; `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` | Andreas / Ingo |
+| **Gemessen am 2026-09-09, Fachentscheid offen:** Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge ist technisch ableitbar. `OITM.StockValue` und `OITM.OnHand` sind gepflegt und stimmen auf den Cent mit dem kumulierten Bestandsjournal; `OITW.StockValue` ist dagegen durchgaengig null und `OBTN.CostTotal` ist **nicht** der offene Bestandswert. Der Haken ist die Abdeckung: nur `568` von `2'216` der 2026 verkauften Materialien tragen Bestand, also `28.9 %` des Umsatzes, und wo beide Werte existieren ist der Median des Verhaeltnisses zum Belegwert genau `1.00`. Empfehlung: Belegwert bleibt fuehrend, Bestandskennzahl als monatliche Plausibilisierung. Zu entscheiden bleibt, ob das so gilt und welcher Stichtag zaehlt; Rueckfrage an Italien, ob `StockValue` dem bilanziellen Bestandswert entspricht; `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` Abschnitt 4a | Andreas / Ingo |
 | Materialien, die TR IT/TR IN nur weiterliefern und nie selbst verkaufen, haben keinen eigenen Kostenwert | Andreas |
 | UK ohne Kostenquelle; FR nur zur Haelfte gefuellt | Standorte |
 | Fix-/Variabel-Split fuer den Deckungsbeitrag wird von keinem Quellsystem geliefert; `StandardCostVariable`/`StandardCostFixed` und `ContributionMarginCalculator` sind vorbereitet, die DB bleibt bewusst leer | Quellsysteme |

@@ -141,8 +141,15 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Stattdessen fragt er nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
   Bestandsmenge. Der Teil "letzter Wert fuer Artikel ohne Bestand" ist mit
   `INV1.StockPrice` bereits produktiv; die Bestandskennzahl ist neu, der Artikelstamm als
-  Quelle gemessen ausgeschlossen, Messpaket vorbereitet und am 09.09. wegen fehlender
-  Netzverbindung noch nicht gelaufen. Sie traegt bei Trafag-Sachnummern die
+  Quelle gemessen ausgeschlossen. **Am 09.09. gemessen und beantwortet: ja, beide Werte
+  liegen auf Artikelebene vor.** `OITM.StockValue` und `OITM.OnHand` sind gepflegt (1'077
+  Artikel, 987'909.28 EUR, 62'601 Stueck) und stimmen auf den Cent mit dem kumulierten
+  Bestandsjournal, 0 Mengenabweichungen bei 9'323 Artikeln. `OITW.StockValue` ist dagegen
+  durchgaengig null und `OBTN.CostTotal` ist NICHT der offene Bestandswert. Der Haken ist die
+  Abdeckung: nur 568 von 2'216 der 2026 verkauften Materialien tragen Bestand, also 28.9 %
+  des Umsatzes, und wo beide Werte existieren ist der Median des Verhaeltnisses zum Belegwert
+  genau 1.00. Empfehlung deshalb: Belegwert bleibt fuehrend, Bestandskennzahl als monatliche
+  Plausibilisierung. Sie traegt bei Trafag-Sachnummern die
   Intercompany-Ladung und gehoert deshalb an die Stelle der lokalen Standardkosten, nicht
   an die der Konzern-Herstellkosten. Details:
   `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
@@ -196,8 +203,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   priorisiert sie nicht und will das Gesamtbild im naechsten Jahr erneut betrachten; die
   Intercompany-Bewertung mit Lucas Castro ruht mit dem Projekt. Offen ist die Rueckmeldung
   an Paola und, als neuer Punkt `ISS-007.2`, die Messung der Referenzkost je Artikel aus
-  Bestandswert geteilt durch Bestandsmenge. Der freigegebene Belegebenen-Weg ueber
-  `INV1.StockPrice` bleibt davon unabhaengig.
+  Bestandswert geteilt durch Bestandsmenge; die Messung liegt vor, offen ist nur der
+  Fachentscheid und eine Rueckfrage an Italien. Der freigegebene Belegebenen-Weg ueber
+  `INV1.StockPrice` bleibt davon unabhaengig. **Paola hat am 10.09. geantwortet:** ihr Befund
+  stammt von ihren SAP-Beratern, ein Workaround ueber Lucas Castro oder ANG ist nicht
+  ausgeschlossen, und die Referenzkost will sie wegen Arbeitslast spaeter pruefen. Diese
+  Pruefung ist erledigt und sollte ihr abgenommen werden.
 - Budget-CHF: Finance muss Kurse/Freigabe, Pflegeprozess, Spaltenumfang,
   Fehlkursverhalten, Rundung und Anzeigeort entscheiden.
 - CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` bleibt Voraussetzung;

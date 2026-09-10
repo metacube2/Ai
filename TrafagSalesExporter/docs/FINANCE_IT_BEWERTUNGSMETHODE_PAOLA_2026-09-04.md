@@ -1,6 +1,7 @@
 # TR IT Bewertungsmethode: Antwort von Paola Castagna, 2026-09-04
 
-Stand: 2026-09-04, Nachtrag vom 2026-09-09 in Abschnitt 7. Gehoert zu `ISS-007.1`.
+Stand: 2026-09-04, Nachtraege vom 2026-09-09 und 2026-09-10 in Abschnitt 7. Gehoert zu
+`ISS-007.1`.
 
 Diese Datei haelt die Primaerquelle fest. Der fachliche Stand steht in
 `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 6, der Status im Issue-Log
@@ -78,6 +79,22 @@ naechsten Jahr erneut betrachtet. Die Kostenschaetzung ist damit nicht anzuforde
 Intercompany-Bewertung mit Lucas Castro ist zurueckgestellt. Stattdessen fragt er nach
 einer Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge. Stand,
 Messpaket und Antwortvorschlaege: `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
+
+**Rueckmeldung von Paola vom 2026-09-10.** Sie stellt klar, dass ihre Aussage das Ergebnis
+der Pruefung durch ihre SAP-Berater ist, und haelt ausdruecklich offen, dass Lucas Castro oder
+unsere Berater (ANG) eine Loesung oder einen Workaround kennen koennten, den sie nicht kennt.
+**Dieser Vorbehalt bleibt unaufgeloest**, ist aber gegenstandslos, solange die Umstellung nicht
+priorisiert ist; er ist der erste Punkt, den man mit ANG klaert, falls das Thema 2027 aufgerufen
+wird. Zur Referenzkost schreibt sie, sie koenne das wegen der aktuellen Arbeitslast nicht sofort
+ansehen, wolle es aber so bald wie moeglich pruefen und sich melden.
+
+**Diese Pruefung ist nicht mehr noetig und sollte ihr abgenommen werden.** Wir haben die Frage
+am 2026-09-09 zentral und rein lesend gegen `it01_p` gemessen: `OITM.StockValue` und
+`OITM.OnHand` sind gepflegt und stimmen auf den Cent mit dem kumulierten Bestandsjournal.
+Wortlaut ihrer Mail und der Antwortvorschlag stehen in `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`
+Abschnitt 7; die Messung in Abschnitt 4a derselben Datei. Offen bleibt gegenueber Italien nur
+eine einzige Frage, die wir nicht selbst beantworten koennen: ob `OITM.StockValue` demselben
+Bestandswert entspricht, den Italien bilanziell ausweist.
 
 ## 8. Abgrenzung, die in jede Antwort gehoert
 
