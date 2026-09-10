@@ -43,7 +43,21 @@ Stand: 2026-09-09
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
- . "- **Deploy 2026-09-10 08:53, Journal-Ausgleichsfelder und erweiterte DE-Belegbruecke.** Funktionscommits
+ . "- **Deploy 2026-09-10 09:40, Einkaufsbeschriftungen und SAP-Feldherkunft.** Funktionscommit `d5bc321`
+  von Codex, ausgeliefert von Claude, weil Codex ohne Guthaben war. **691/691** Release-Tests gruen
+  im eigenen Lauf vor dem Publish. `BiDashboard.dll` `10.09.2026 09:20:22`, `6'229'504` Bytes,
+  SHA256 `8E84FA80BD8FF7880FB5199A84DFC6798ABE6EC4BBEA2F9146A44A6BA40A7CBF`; lokaler
+  Release-Build und Server bitgleich. Ziel: 0 neu, 5 geaendert, 2108 unveraendert, 0 verschwunden.
+  **Ohne Alarm.** Produktiv-DB in Laenge und Schreibzeit unveraendert (`469'819'392` Bytes).
+  Wirknachweis in der DLL: `Aktive Lieferanten im Zeitraum`, `Bestellpositionen mit Kontraktbezug`,
+  und weiterhin `de_customer_invoice_map_2026-09-10.json` aus dem Deploy von 08:53.
+  Fuenf Routen HTTPS `200`, darunter `/einkauf/aufriss`.
+  **Zwei Befunde:** `/einkauf/aufriss` brauchte `79.29 s` beim ersten Aufruf nach dem Neustart,
+  deutlich mehr als die uebrigen Routen; das ist Kaltstart der schwersten Seite und gehoert
+  beobachtet. Und Codex' letzte Ersetzung von drei Statusbeschriftungen (`Gebuchter Spend`
+  statt `Bestellwert im Zeitraum`) war **nicht committet** und ist deshalb NICHT ausgeliefert;
+  der alte Text steht weiterhin an vier Stellen in `PurchasingDashboard.razor`.
+" . "- **Deploy 2026-09-10 08:53, Journal-Ausgleichsfelder und erweiterte DE-Belegbruecke.** Funktionscommits
   `9ffe7af`/`8905e5d`/`8208c62` (Ausgleichsfelder) und `ee46d18` (Bruecke); Stand beim Publish `1a977ff`.
   **691/691** Release-Tests gruen im eigenen Lauf vor dem Publish. `BiDashboard.dll` `10.09.2026 08:53:05`,
   `6'229'504` Bytes, SHA256 `63BC290443DCF6B7A31B9D36779048E76106010EA86115968D0D82BD47FB221D`;
