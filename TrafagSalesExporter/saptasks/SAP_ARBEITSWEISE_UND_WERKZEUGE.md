@@ -48,6 +48,66 @@ Drei Stolpersteine, die sonst Zeit kosten:
   GUI nicht herausgibt, kommt oft auch mit `ASSIGN COMPONENT` zur Laufzeit ans Ziel; siehe
   Abschnitt 13.
 
+### Wenn `Sessions=0` gemeldet wird: erst den Server pruefen, nicht den Arbeitsplatz
+
+**Am 2026-09-10 zwei Stunden gekostet, deshalb hier ganz vorn.** `SapGuiInspect.vbs` meldete
+`Connections=1 ... Sessions=0` — ohne jede Fehlermeldung. Das sieht aus wie ein
+Arbeitsplatzproblem und ist keins: die drei Registrywerte standen richtig, Ingo hat sich
+zweimal neu angemeldet, ohne Wirkung.
+
+**Ursache war der serverseitige Profilparameter `sapgui/user_scripting`.** Er stand auf
+`FALSE`, und dann gibt SAP die Sitzungen nicht an die Scripting-Schnittstelle heraus,
+obwohl die Verbindung sichtbar bleibt.
+
+Die Diagnose dauert einen Aufruf:
+
+```powershell
+cscript.exe //nologo '.tmp_sap_probe\SapGuiProbeSession.vbs'
+```
+
+Die Sonde fragt `DisabledByServer` an der Verbindung ab. Steht dort `Wahr`, ist es
+zweifelsfrei der Server; alles Weitere am Arbeitsplatz ist verlorene Zeit. Gegenprobe ueber
+RFC, ganz ohne GUI:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  rfc-call TH_GET_PARAMETER --param "PARAMETER_NAME=sapgui/user_scripting" --quiet
+```
+
+**Behebung:** `RZ11`, Parameter `sapgui/user_scripting`, `Wert aendern` auf `TRUE`. Der
+Parameter ist dynamisch, wirkt also sofort — aber **nur fuer neu aufgebaute Verbindungen**.
+Eine offene Verbindung traegt weiter `DisabledByServer=Wahr`, weil SAP GUI den Wert beim
+Verbindungsaufbau liest. Die Verbindung muss geschlossen und neu angemeldet werden; eine
+neue Sitzung mit `/o` genuegt nicht.
+
+**Warum es wiederkommt.** RZ11 zeigte am 2026-09-10 alle drei Stufen auf `FALSE`:
+Kernel-Default, Default-Profil und Instanz-Profil, resultierende Quelle `Kernel-Default`.
+Der Parameter steht also in **keiner** Profildatei. Eine Aenderung ueber RZ11 gilt bis zum
+naechsten Neustart der Instanz und faellt dann still auf `FALSE` zurueck. Genau das ist
+zwischen dem 2026-09-04 und dem 2026-09-10 passiert, ohne dass am Arbeitsplatz etwas
+geaendert wurde. Fuer dauerhaftes Arbeiten gehoert `sapgui/user_scripting = TRUE` ueber
+`RZ10` ins Instanzprofil; das ist eine bewusste Sicherheitsentscheidung und Basis-Arbeit.
+
+**Merksatz:** die Registry am Arbeitsplatz und der Profilparameter am Server sind zwei
+getrennte Schalter. Beide muessen an sein. Die Registry meldet sich mit einer Warnung oder
+`Erlaubnis verweigert`, der Server meldet sich mit **Schweigen**.
+
+### Was ohne GUI-Scripting trotzdem geht
+
+Der RFC-Weg ueber SapProbe ist davon voellig unberuehrt und braucht nur die
+Passwortablage. Am 2026-09-10 liess sich damit die komplette Vorpruefung fuer das
+CH/AT-Journal erledigen: `field-exists` fuer 25 DDIC-Felder, `table-read` mit `--fields`,
+`--where` und `--rowcount` fuer Buchungskreise und Stichproben, `abap-read` fuer den
+Quelltext von `Z_TRAFAG_DACH_EXPORT` und `rfc-call` fuer Profilparameter und Serverliste.
+
+**Falle dabei:** `table-read` ohne `--fields` und `--where` liefert eine **abgeschnittene**
+Liste ohne Hinweis darauf. `T001` sah so aus, als gaebe es nur zehn Buchungskreise und
+keinen oesterreichischen; mit `--where "BUKRS IN ('1100','1200')"` stand `1200` sofort da.
+Immer filtern, nie aus einer ungefilterten Liste auf Nichtexistenz schliessen.
+
+**Zweite Falle:** `abap-write` scheitert an `RPY_PROGRAM_INSERT` mit `PERMISSION_ERROR`.
+Der RFC-Benutzer darf keine Programme anlegen. Reports anlegen geht nur ueber die GUI.
+
 ## 1. Die drei Zugangswege und wann welcher taugt
 
 Es gibt drei Wege ins System. Sie unterscheiden sich vor allem darin, was sie **kosten**,
@@ -106,6 +166,85 @@ Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere V
   frischer interner Modus laedt die neue Version.
 
 ## 3. Fallen beim Aktivieren
+
+### Aktivieren aus SE38: der Dialog „Fehler beim Aktivieren" kommt auch bei WARNUNGEN
+
+Am 2026-09-10 gemessen. Der Dialog heisst „Fehler beim Aktivieren", enthaelt aber einen
+HTML-Bereich und drei Knoepfe `Aktivieren`, `Bearbeiten`, `Abbrechen`. Er erscheint
+**auch dann, wenn es nur Warnungen sind**. Der HTML-Inhalt ist ueber die
+Scripting-Schnittstelle nicht lesbar.
+
+Erkennen, was wirklich vorliegt: `Aktivieren` druecken und danach den Programmstatus
+messen. Steht `wnd[0]/usr/txtSTATUS_TEXT` auf `aktiv`, waren es Warnungen. Bei echten
+Syntaxfehlern aktiviert SAP nicht.
+
+**Der Knopf heisst in SE38 `tbar[1]/btn[27]`, nicht `btn[21]`.** `btn[21]` gibt es dort
+nicht; der Aufruf scheitert mit „The control could not be found by id".
+
+### `abap-check --source-file` ist unbrauchbar, `abap-check` ohne Datei prueft die AKTIVE Version
+
+Zwei Fallen an derselben Stelle, beide am 2026-09-10 gemessen:
+
+* **Ohne `--source-file`** prueft der Befehl die **aktive** Version aus dem Repository.
+  Solange die aktive Version ein leerer Rumpf ist und der neue Quelltext nur inaktiv
+  vorliegt, meldet er `Syntax status OK`, obwohl der Quelltext Fehler hat. Das hat eine
+  Stunde gekostet.
+* **Mit `--source-file`** meldet er `ERROR subrc 4` ohne jede Detailangabe, und zwar
+  **auch fuer einen trivialen, fehlerfreien Dreizeiler**. Der Befund ist damit wertlos.
+  Kontrollprobe immer mit einem minimalen Report machen, bevor man auf eine Fehlermeldung
+  hin den eigenen Quelltext umbaut.
+
+**Der zuverlaessige Weg zur Fehlermeldung:** Report ausfuehren, `ST22` oeffnen, `Heute`
+druecken, das ALV-Grid mit `SapGuiGridLesen.vbs` auslesen, den eigenen Dump ueber
+`UNAME` und Uhrzeit finden, Zeile markieren und mit `SendVKey 2` oeffnen. Der Langtext
+nennt Include, **Zeilennummer** und Fehlertext im Klartext. So wurden am 2026-09-10 zwei
+Fehler gefunden, die vorher nicht sichtbar waren:
+
+| Fehler | Ursache |
+| --- | --- |
+| `"TIT01" was already declared.` | `SELECTION-SCREEN ... WITH FRAME TITLE tit01` deklariert die Titelvariable **selbst**. Eine eigene `DATA`-Deklaration dafuer kollidiert. Titel stattdessen in `INITIALIZATION` fuellen. |
+| Syntaxfehler in `WRITE` | `WRITE: / 'Text', lv_a + lv_b.` — **`WRITE` vertraegt keinen Rechenausdruck.** Vorher in eine Variable summieren. |
+
+Beide Fehler brechen erst zur **Laufzeit** ab, beim Aufbau des Selektionsbildes durch
+`SAPLALDB`, nicht beim Aktivieren. Ein Report kann also aktiv sein und trotzdem beim
+ersten Start dumpen.
+
+### Mehrere Sitzungen mit demselben Transaktionscode
+
+Die Skripte suchen die Sitzung ueber den Transaktionscode. Wird `/nSE38` in eine zweite
+Sitzung geschickt, tragen **beide** denselben Code, und Klicks landen in der falschen.
+Am 2026-09-10 passiert, nachdem ST22 in `ses[1]` geoeffnet und spaeter mit `/nSE38`
+umgeparkt worden war: die Aktivierung meldete beharrlich „Kein Dialog offen", waehrend
+der Dialog in `ses[0]` stand.
+
+`SapGuiAktivieren.vbs` nimmt deshalb den **Sitzungsindex** als erstes Argument statt des
+Transaktionscodes. Bei Zweifeln vorher `SapGuiInspect.vbs` laufen lassen und den Index
+ablesen.
+
+### `RFC_READ_TABLE` schneidet still ab und scheitert an breiten Tabellen
+
+`table-read` ohne `--fields` und `--where` liefert eine **abgeschnittene** Liste ohne
+Hinweis. `T001` sah so aus, als gaebe es nur zehn Buchungskreise und keinen
+oesterreichischen; mit `--where "BUKRS IN ('1100','1200')"` stand `1200` sofort da.
+Nie aus einer ungefilterten Liste auf Nichtexistenz schliessen.
+
+Bei sehr breiten Tabellen wie `BKPF` und `BSEG` scheitert der Aufruf ganz, weil
+`RFC_READ_TABLE` eine Zeilenbreite von 512 Byte nicht ueberschreiten darf. Mit
+`--fields` auf die gebrauchten Spalten begrenzen, dann geht es.
+
+### `abap-write` legt nur an, es ersetzt nicht
+
+`RPY_PROGRAM_INSERT` meldet `ALREADY_EXISTS`, sobald das Programm existiert, und beim
+allerersten Versuch `PERMISSION_ERROR`. Quelltext bestehender Programme wird ueber
+`SapGuiSetReportSource.vbs` gesetzt, neue Programme werden in SE38 mit `F5` angelegt.
+
+### Beim Anlegen schlaegt SAP den zuletzt benutzten Transportauftrag vor
+
+Der Dialog „Abfrage transportierbarer Workbench-Auftrag" war am 2026-09-10 mit
+`T76K912490` vorbelegt — dem **ZZPRDAT-Auftrag, der auf die fachliche Abnahme wartet**.
+Ein neues Objekt waere still dort hineingelaufen und haette den abzunehmenden Umfang
+veraendert. **Immer pruefen, was im Feld `KO008-TRKORR` steht**, und mit
+`tbar[0]/btn[8]` („Auftrag anlegen", F8) einen eigenen anlegen.
 
 * **Der Dialog „Inaktive Objekte von KOI" enthaelt fremde Objekte.** Am 2026-09-03 lagen
   dort neben den eigenen auch `Z_KOI_AI_PUR`, `Z_TEST3_KD`, `Z_VCSTUFEN`,
@@ -265,6 +404,10 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `RunSapProbe.ps1 <Argumente>` | SapProbe ohne Passwortabfrage, wenn eine Ablage existiert |
 | `RunSapProbeInteractive.ps1` | aeltere Fassung mit Fenster und Eingabe |
 | `Set-SapScriptingWarnings.ps1 -Aus\|-Ein` | Warnfenster von SAP GUI Scripting schalten. **Muss Ingo selbst ausfuehren** |
+| `SapGuiProbeSession.vbs` | Diagnose bei `Sessions=0`: fragt `DisabledByServer` je Verbindung ab. `Wahr` heisst serverseitig abgeschaltet, siehe Abschnitt 0 |
+| `SapGuiAktivieren.vbs <SitzungsIndex> <Name...>` | markiert genau die genannten Objekte im Dialog „Inaktive Objekte" und aktiviert sie **in einer COM-Sitzung**. Nimmt den Sitzungsindex, nicht den Transaktionscode |
+| `SapGuiDialogKnoepfe.vbs <TX> [Fenster]` | Knoepfe eines Modaldialogs mit Tooltip, fuer beliebiges Fenster. Ersetzt `SapGuiInspectDialogButtons.vbs`, das fest auf SE19 und `wnd[1]` verdrahtet ist |
+| `SapGuiSitzungSchliessen.vbs <ConnIdx> <SesIdx>` | Sitzung ueber ihren Index schliessen |
 
 ### Aufgabenspezifisch, nur als Vorlage lesen
 

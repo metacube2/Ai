@@ -175,7 +175,7 @@ Grosse Selektionen bitte per Paket-Select statt Full-Table-Scan auf `BSEG`.
 
 ## Offene Punkte
 
-1. **CH/AT wartet auf ein SAP-Journal-EntitySet.** Live-$metadata aus P76 am 2026-09-08:
+1. **CH/AT wartet auf ein SAP-Journal-EntitySet.** **NACHTRAG 2026-09-10:** Die Vorpruefung ist erledigt und in `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` dokumentiert. Alle 25 DDIC-Felder existieren, Buchungskreise sind `1100` CH/CHF und `1200` AT/EUR bei Kontenplan `1000`. Fachliche Vorgabe Andreas vom selben Tag: **zuerst nur Oesterreich**, weil die Schweiz ueber 5 Mio Zeitbuchungszeilen je Jahr hat. Fuer AT 2025 bis 2026 ohne CO-Belege sind es 6'275 Belegkoepfe und 17'364 Positionen. **Wichtigster Messbefund: `PRCTR` ist zu 0 Prozent gefuellt**, `AUGDT` und `AUGBL` zu 22,1 Prozent, `ZFBDT` als Basis fuer das Faelligkeitsdatum zu 20,8 Prozent; alle 98 bebuchten Sachkonten haben einen `SKAT`-Text. Pruefreport `ZFIN_JOURNAL_PRUEFUNG` liegt aktiv in Paket `ZPP`, Transport `T76K912530`, nicht freigegeben. Urspruenglicher Text: Live-$metadata aus P76 am 2026-09-08:
    `FinanzdataSchweizOeSet` ist Verkaufs-/Fakturadaten mit `Vbeln`, `Posnr`, `Matnr` und
    `NetwrDc`; Journalfelder wie `Belnr`, `Buzei`, `Hkont`, `Dmbtr`, `Shkzg` und `Faedt`
    fehlen. `bkpfSet` enthaelt nur Kopfdaten. `bsisSet` enthaelt nur offene

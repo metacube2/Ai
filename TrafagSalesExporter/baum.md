@@ -135,6 +135,8 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/README_PRODSPARTE.md` | Produktsparten-Provider |
 | `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md` | Produktgruppen per OData, SEGW |
 | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` | Analysereport STPRS und Journal |
+| `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` | Journal-EntitySet CH/AT: Messung auf T76, Fuellgrade, Bauplan |
+| `docs/abap/ZFIN_JOURNAL_PRUEFUNG.abap` | Pruefreport dazu, rein lesend |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping |
 | `docs/rag/PRODUCT_MAPPING.md` | Produktmapping, Kurzstand |
 | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` | PPWR, aktueller Stand und Mandant 100 |

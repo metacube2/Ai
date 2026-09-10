@@ -12,6 +12,7 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 | Produktsparten-Provider | `docs/abap/README_PRODSPARTE.md` |
 | Produktgruppen als SAP OData (SEGW-Anleitung, Methodenruempfe) | `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md` |
 | Analysereport Standardpreis und Journal (CH/AT) | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` |
+| **Journal-EntitySet CH/AT: Messung, Fuellgrade und Bauplan** | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |
 | Uebergabe Produktsparten-Zuordnung | `spartenlogic/UEBERGABE_PRODUKTSPARTEN_ZUORDNUNG.md` |
