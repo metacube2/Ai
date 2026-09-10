@@ -209,6 +209,97 @@ Beide Fehler brechen erst zur **Laufzeit** ab, beim Aufbau des Selektionsbildes 
 `SAPLALDB`, nicht beim Aktivieren. Ein Report kann also aktiv sein und trotzdem beim
 ersten Start dumpen.
 
+### SE11: DDIC-Struktur per Scripting anlegen
+
+Am 2026-09-10 fuer `ZSTR_FIN_JOURNAL` gemacht. Ablauf, der funktioniert:
+
+1. `/nSE11`, Radiobutton `RSRD1-DDTYPE` waehlen, Namen in `RSRD1-DDTYPE_VAL`, **F5**.
+2. Im Dialog „Typ ... anlegen" `radD_100-STRU` waehlen, `tbar[0]/btn[0]`.
+3. **Kurzbeschreibung `DD02D-DDTEXT` zuerst setzen**, sonst bricht das Sichern ab.
+4. Felder eintragen: `SapGuiStrukturFelder.vbs <SitzungsIndex> <Datei>`, Datei je Zeile
+   `FELDNAME;KOMPONENTENTYP`.
+5. Aktivieren mit `tbar[1]/btn[27]`, Paket zuordnen, Auftrag bestaetigen.
+
+**Vorher jedes Datenelement pruefen**, nicht raten:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  table-read DD04L --fields ROLLNAME --where "ROLLNAME = 'NETDT'" --rowcount 2 --quiet
+```
+
+Am 2026-09-10 gab es `FAEDE` nicht; die Suche ueber `DD04T` mit
+`ROLLNAME LIKE 'FAED%'` lieferte nur FI-CA-Elemente. Richtig fuer das klassische
+Nettofaelligkeitsdatum ist **`NETDT`**.
+
+#### Waehrungsfelder brauchen eine Referenz, sonst scheitert die Aktivierung
+
+Fehlermeldung im Aktivierungsprotokoll:
+
+```
+ZSTR_FIN_JOURNAL-DMBTR (Bitte Referenz-Tabelle UND Referenz-Feld angeben)
+```
+
+Jedes `CURR`-Feld braucht auf dem Reiter **`tabpREFF`** („Waehrungs-/Mengenfelder")
+Referenztabelle und Referenzfeld auf ein `CUKY`-Feld. Bei einer Struktur zeigt die
+Referenz auf die **Struktur selbst**, etwa `DMBTR -> ZSTR_FIN_JOURNAL-HWAER` und
+`WRBTR -> ZSTR_FIN_JOURNAL-WAERS`. Dafuer gibt es `SapGuiWaehrungsref.vbs`.
+
+**Die Element-Ids dort raten nicht.** Gemessen am 2026-09-10:
+
+| | |
+| --- | --- |
+| Subscreen | `ssubTS_SCREEN:SAPLSD41:2103`, nicht `2303` |
+| Reitername | `tabpREFF`, nicht `tabpENTR` |
+| Referenztabelle | `txtDD03P_D-REFTABLE[4,r]` |
+| Referenzfeld | `txtDD03P_D-REFFIELD[5,r]` |
+
+Immer erst `SapGuiDumpSession.vbs` auf den Reiter und die Spaltenindizes ablesen.
+
+#### Das Aktivierungsprotokoll ist lesbar, anders als der Editor
+
+Bei SE11 erscheint nach einem Fehler ein Dialog „Bei der Aktivierung sind Fehler
+aufgetreten -> siehe Protokoll". Der Knopf `wnd[1]/tbar[0]/btn[0]` oeffnet es, und
+`Get-SapList.ps1` liest es im Klartext. **Das ist der Unterschied zu SE38**, wo der
+Fehler nur ueber den ST22-Kurzdump herauskommt.
+
+#### VBScript liest Dateien mit LF nicht
+
+`Split(txt.ReadAll, vbCrLf)` liefert bei einer Datei mit reinen LF-Zeilenenden **ein
+einziges Element**, und die Schleife schreibt still nichts. Erst
+`Replace(inhalt, vbCrLf, vbLf)` und dann auf `vbLf` splitten. Im Repository erzeugte
+Hilfsdateien haben oft LF.
+
+### SEGW per Scripting: der Projektbaum ist ein `SAP.TableTreeControl`
+
+Am 2026-09-10 erschlossen. SEGW hat keine flachen Dynpro-Elemente, sondern eine
+verschachtelte Splitter-Oberflaeche. Ein `SapGuiDumpSession.vbs` zeigt fast nur
+`GuiContainerShell` und `GuiSplitterShell`; die Nutzlast steckt in zwei Shells:
+
+| Shell | Bedeutung |
+| --- | --- |
+| `SAP.TableTreeControl.1` | der Projektbaum |
+| `SAP.Toolbar.1` | die Werkzeugleiste darueber |
+
+Die Baum-Id auf T76 lautet:
+
+```
+wnd[0]/usr/shellcont/shell/shellcont[0]/shellcont/shell/shellcont[1]/shell
+```
+
+Sie ist lang und positionsabhaengig, also **nicht** hart verdrahten, sondern aus dem
+Dump ueber den Text `SAP.TableTreeControl.1` holen.
+
+**`SapGuiBaumLesen.vbs` kann diesen Typ nicht** und stirbt mit „Bad index type for
+collection access". Dafuer gibt es `SapGuiTableTree.vbs`, das ueber
+`GetAllNodeKeys`, `GetNodeTextByKey` und `ExpandNode` arbeitet.
+
+**Die Knotenschluessel sind rechtsbuendig aufgefuellte Zeichenketten**, nicht Zahlen:
+der Projektknoten heisst `"          1"` mit fuehrenden Leerzeichen. Beim Aufklappen
+exakt so uebergeben, sonst passiert nichts.
+
+Aufgeklappt zeigt das Projekt vier Aeste: `Data Model`, `Serviceimplementierung`,
+`Laufzeitartefakte`, `Serviceverwaltung`.
+
 ### Mehrere Sitzungen mit demselben Transaktionscode
 
 Die Skripte suchen die Sitzung ueber den Transaktionscode. Wird `/nSE38` in eine zweite
