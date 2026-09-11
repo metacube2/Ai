@@ -145,7 +145,7 @@ ist damit ueberholt.
 | Redefinition `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` im DPC_EXT | **aktiv**, Include `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`, ueber RFC gegengelesen |
 | `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` | gelaufen |
 | `$metadata` | **HTTP 200**, `341'032` Zeichen gegenueber `320'752` vorher |
-| `FinanzJournalSet` mit Filter `Bukrs eq '1200' and Gjahr eq '2026'`, `$top=2` | **HTTP 200**, `1'415` Byte |
+| `FinanzJournalSet`, Originalanfrage des Lesers mit `$orderby`, `$filter` und Paging | **HTTP 200**, rund `650` Seiten zu `1000` Zeilen, siehe Abschnitt 6d |
 | Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
 
 Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**. Die App liest
@@ -241,15 +241,11 @@ Drei Punkte, die dabei auffallen:
    und der wertet sie aus. `it_order` wertet er nicht aus, sondern sortiert fest
    nach `bukrs gjahr belnr buzei` — genau die Reihenfolge, die der Leser
    verlangt.
-3. **Es gibt keinen `Bukrs`-Filter.** Der Leser holt CH und AT zusammen und
-   trennt sie selbst; so ist es in Abschnitt 5 auch vorgesehen. Zusammen mit der
-   Seitengroesse 1000 heisst das aber: der Data Provider liest **je Seite** den
-   gesamten Bestand neu aus `BKPF` und `BSEG` und wirft danach alles ausser 1000
-   Zeilen weg. Fuer Oesterreich mit 17'364 Positionen sind das 18 Durchlaeufe,
-   fuer die Schweiz ein Vielfaches. Belegart `CO` bleibt zwar draussen, das ist
-   die grosse Masse der Zeitbuchungen, aber die Laufzeit ist vor dem ersten
-   produktiven Lauf zu messen. Falls sie nicht traegt, ist die Abhilfe, die
-   Selektion im Data Provider um `is_paging` herum zu bauen statt danach.
+3. **Es gibt keinen `Bukrs`-Filter, und das kostet.** Der Leser holt CH und AT
+   zusammen und trennt sie selbst; so ist es in Abschnitt 5 vorgesehen. Der
+   Data Provider liest dann aber **je Seite** den gesamten Bestand neu aus
+   `BKPF` und `BSEG` und wirft alles ausser 1000 Zeilen weg. Siehe die Messung
+   in Abschnitt 6d.
 
 ## 6c. Erwartete Werte fuer den Abgleich
 
@@ -281,14 +277,61 @@ und die Regel allein dem Leser lassen.
 `Faedt` leer ist ebenfalls richtig: `ZFBDT` ist bei diesem Beleg nicht gefuellt,
 und das gilt fuer rund vier Fuenftel aller Zeilen (Abschnitt 4, Befund 3).
 
+## 6d. Laufzeitmessung am 2026-09-11
+
+Die Originalanfrage des Lesers, gegen `T76/100` im Gateway Client. Belegart `CO`
+ist im Data Provider immer ausgeschlossen.
+
+| Anfrage | Dauer | Status | Nutzlast |
+| --- | ---: | --- | ---: |
+| `$top=1000&$skip=0`, Filter nur `Budat ge 2026-01-01` | 7,5 s | 200 | 766'556 |
+| dieselbe mit `$skip=20000` | 7,6 s | 200 | 720'647 |
+| dieselbe mit `$skip=200000` | 7,2 s | 200 | 685'845 |
+| dieselbe mit `$skip=600000` | 7,3 s | 200 | 708'051 |
+| dieselbe mit `$skip=700000` | 6,8 s | 200 | 20 (leer) |
+| `$top=2`, zusaetzlich `Bukrs eq '1200' and Gjahr eq '2026'` | **1,5 s** | 200 | 1'415 |
+
+**Zwei Aussagen dazu.**
+
+Erstens: `$orderby`, `$filter` und Paging werden alle angenommen und wirken. Die
+Nutzlast aendert sich je `$skip`, das Ende liegt zwischen `600'000` und
+`700'000` Zeilen. Damit ist belegt, was Abschnitt 6b Punkt 2 vorhergesagt hat.
+
+Zweitens, und das ist der Haken: **ein voller Jahreslauf sind rund 650 Seiten zu
+je gut sieben Sekunden, also etwa 80 Minuten** — und bei jeder einzelnen Seite
+liest der Data Provider den kompletten Bestand erneut. Zum Vergleich: der
+Einkaufs-Delta braucht rund 50 Minuten und gilt schon als faktischer Full Load.
+
+Dass die Zeit fast ausschliesslich am Lesen haengt und nicht am Paging, zeigt die
+letzte Zeile: mit `Bukrs` und `Gjahr` im Filter faellt dieselbe Anfrage auf
+`1,5` Sekunden. Der Filter erreicht den Data Provider also und wirkt, nur schickt
+der Leser ihn nicht mit.
+
+Drei Wege, falls die 80 Minuten nicht tragen, in der Reihenfolge des Aufwands:
+
+1. **Den Leser monatsweise laden lassen.** `Budat` ist bereits filterbar, es
+   braucht keine Aenderung in SAP.
+2. **`Bukrs` im Leser mitgeben.** Die Seite kennt ihren Buchungskreis nicht, wohl
+   aber ihren Standort; das waere eine kleine Erweiterung in
+   `SapGatewayFinancialJournalReader`.
+3. **Die Selektion im Data Provider um `is_paging` herum bauen** statt danach.
+   Das ist die sauberste, aber auch aufwendigste Loesung, weil die Sortierung
+   ueber `BKPF` und `BSEG` hinweg stabil bleiben muss.
+
+Vor dem ersten produktiven Lauf ist zu entscheiden, ob 80 Minuten akzeptabel
+sind. Fuer den ersten Entwurf mit Oesterreich allein stellt sich die Frage nicht,
+dort sind es 17'364 Positionen.
+
 ## 7. Offen
 
-- **Die Originalanfrage des Lesers einmal absetzen**, siehe Abschnitt 6b. Damit
-  sind Paging, Filter und Sortierung in einem Zug geprueft, und ein Screenshot
-  der Antwort klaert die Werte gegen die Tabelle in Abschnitt 6c. Das ist der
-  einzige verbliebene Pruefschritt, der die SAP GUI braucht.
-- **Laufzeit einer Seite messen**, bevor der erste produktive Lauf startet
-  (Abschnitt 6b, Punkt 3).
+- **Werte zeilenweise vergleichen.** Paging, Filter und Sortierung sind mit der
+  Originalanfrage des Lesers geprueft (Abschnitt 6d). Die **Werte** sind es
+  nicht: der Antwortrumpf ist per Scripting nicht auslesbar. Ein Screenshot der
+  Antwort auf
+  `FinanzJournalSet?$top=2&$orderby=Bukrs,Gjahr,Belnr,Buzei&$filter=Bukrs eq '1200' and Gjahr eq '2026'`
+  gegen die Tabelle in Abschnitt 6c erledigt das in einer Minute.
+- **Entscheiden, ob rund 80 Minuten fuer einen Jahreslauf tragen** (Abschnitt 6d),
+  und falls nicht, einen der drei dort beschriebenen Wege waehlen.
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
   es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
   SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.
