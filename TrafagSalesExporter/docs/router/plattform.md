@@ -3,7 +3,7 @@
 Zurueck: `router.md`. Stand: 2026-09-11.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
-Arbeitsplatzleistung.
+Arbeitsplatzleistung und WLAN-Aussetzer.
 
 ## Dateien
 
@@ -228,6 +228,65 @@ Zwei Stolpersteine, die dabei Zeit gekostet haben:
 * Alle Werte ausser Monitor und Energieplan sind vier Minuten nach einem Neustart
   entstanden, also noch im Startbetrieb. Fuer eine Aussage ueber den Dauerbetrieb muesste
   nach einer Stunde normaler Arbeit nachgemessen werden.
+
+## Arbeitsplatz Ingo: wiederkehrende WLAN-Aussetzer
+
+Gemessen am 2026-09-11, gleicher Rechner wie im Abschnitt davor. Ingo meldete, das Internet
+stocke immer wieder und sei am Vortag ebenfalls kurz weggebrochen.
+
+**Die Momentaufnahme war einwandfrei und damit wertlos.** 80 Pings ohne einen einzigen
+Verlust, 4 bis 5 ms zum Gateway wie ins Internet, DNS-Aufloesung unter 40 ms, HTTPS-Aufbau
+zu `api.anthropic.com` zwischen 4 und 37 ms, sieben saubere Hops zu `1.1.1.1`. Bei einem
+Fehler, der nur gelegentlich auftritt, beweist eine Messung von zwei Minuten nichts. Wer
+hier weitermisst, verbrennt Zeit.
+
+**Der richtige Griff ist das Ereignisprotokoll**, weil es die Vergangenheit schon
+aufgezeichnet hat:
+
+```powershell
+Get-WinEvent -FilterHashtable @{ LogName='Microsoft-Windows-WLAN-AutoConfig/Operational'; StartTime=(Get-Date).AddDays(-3) }
+```
+
+Darin standen fuer drei Tage: sechs Trennungen (`8003`), vier gescheiterte
+Verbindungsversuche (`8002`), acht erfolgreiche Verbindungen (`8001`) und zwoelf
+Verbindungsversuche (`8000`). Die belegten Einzelfaelle:
+
+| Zeitpunkt | Ereignis |
+|---|---|
+| 2026-09-10 17:59:57 | `11006` Fehler der Drahtlossicherheit, mit Trennung `8003` um 17:59:40 |
+| 2026-09-11 06:45:07 | vier gescheiterte Versuche auf `Turbo`, `Turbo56G` und `trafag-802.1x` |
+| 2026-09-11 10:19:24 und 10:21:53 | zwei Neuverbindungen `8001` innerhalb von zweieinhalb Minuten, zeitgleich zu Ingos Meldung "internet hat kurz gedroppt" |
+
+Dazu kommt ein durchgehendes Muster: rund alle 26 bis 29 Minuten ein Paar
+Sicherheits-Neuverhandlungen (`11004` angehalten, `11010` gestartet, `11005` erfolgreich)
+im Abstand von exakt drei Minuten, in drei Tagen sechzigmal. Das ist die periodische
+Schluesselerneuerung des Zugangspunkts.
+
+Die Konfiguration, die das beguenstigt:
+
+* **`Turbo` und `Turbo56G` sind zwei getrennte Profile**, also 2,4 GHz und 5 GHz als eigene
+  Netze. Verbunden war `Turbo`. Die Adaptereinstellung **"Bevorzugtes Band"
+  (`RoamingPreferredBandType`) steht auf "Keine Einstellung"**, Windows darf also frei
+  wechseln, und jeder Wechsel ist ein kurzer Abriss.
+* Das per Gruppenrichtlinie verteilte Firmenprofil **`trafag-802.1x`** liegt
+  schreibgeschuetzt mit auf dem Geraet und wird zu Hause regelmaessig erfolglos mitprobiert.
+* Treiber Intel Wi-Fi 6 AX200, Version `23.110.0.5` vom 2025-01-02, also nicht mehr aktuell.
+
+Ausgeschlossen wurde der Energiesparmodus des Adapters: Er steht im Netzbetrieb auf
+Hoechstleistung, und `Get-NetAdapterPowerManagement` zeigt keinen aktiven Ruhezustand.
+
+**Nicht umgesetzt, weil die Rechte fehlen.** `TRAFAGCH\koi` ist kein lokaler Administrator.
+Sowohl `Set-NetAdapterAdvancedProperty` fuer das bevorzugte Band als auch
+`netsh wlan set profileparameter` fuer ein Alle-Benutzer-Profil brauchen erhoehte Rechte,
+und `trafag-802.1x` ist als Gruppenrichtlinienprofil ohnehin schreibgeschuetzt. Der
+Vorschlag geht damit an die IT: bevorzugtes Band auf 5 GHz festlegen, `trafag-802.1x`
+ausserhalb des Standorts nicht automatisch verbinden lassen, und den Intel-Treiber
+aktualisieren.
+
+Eine Falle beim Nachmessen: **`netsh wlan show interfaces` verweigert die Auskunft**, wenn
+die Standortdienste aus sind, mit dem irrefuehrenden Zusatz, es brauche erhoehte Rechte.
+`Get-NetAdapter`, `Get-NetAdapterAdvancedProperty` und das Ereignisprotokoll liefern
+dieselben Angaben ohne diese Huerde.
 
 ## Fallen in diesem Ast
 
