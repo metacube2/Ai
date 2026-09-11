@@ -1,13 +1,41 @@
 # Unterrouter SAP
 
-Zurueck: `router.md`. Stand: 2026-09-07.
+Zurueck: `router.md`. Stand: 2026-09-11.
 
-ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
+ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation, OData/Gateway.
+
+## Zuerst lesen, bevor irgendetwas in SAP angefasst wird
+
+> **`saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`**
+
+Diese eine Datei beantwortet die Frage, mit der sonst jede SAP-Aufgabe von vorn
+anfaengt. Die Kurzfassung, damit klar ist, was drinsteht:
+
+* **Ein Agent kann SAP vollstaendig fernsteuern**, ohne einen einzigen Klick:
+  Quelltext lesen und schreiben, Klassen und Funktionsbausteine aktivieren,
+  DDIC-Objekte anlegen, Reports ausfuehren und ihre Listen auslesen, OData
+  pruefen. Voraussetzung ist ein Befehl, den **Ingo** einmal ausfuehrt
+  (`Set-SapScriptingWarnings.ps1 -Aus`).
+* **Drei Zugangswege** mit unterschiedlichen Kosten: ABAP-Report (erste Wahl
+  fuer alles Lesende), GUI-Scripting (fuer Schreiboperationen), SapProbe ueber
+  RFC (braucht das Passwort). Dazu als vierter der Screenshot von Ingo.
+* **Der ABAP-Editor ist ueber die Oberflaeche nicht auslesbar, ueber RFC schon.**
+  Schreiben ueber die GUI, gegenlesen ueber `abap-read`.
+* **OData laesst sich ohne Anmeldung pruefen**, ueber `/IWFND/GW_CLIENT` in der
+  bestehenden Sitzung. Von aussen kommt `401`, weitere Anmeldeversuche sind
+  wegen des Sperrrisikos zu unterlassen.
+* Dazu der vollstaendige **Skriptbestand** unter `.tmp_sap_probe/` und fertige
+  Befehlsfolgen zum Kopieren.
+
+Wer sie ueberspringt, sucht die Antworten erneut. Am 2026-09-10 hat allein die
+Frage, warum `Sessions=0` gemeldet wird, zwei Stunden gekostet; die Ursache
+stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 
 ## Dateien
 
 | Thema | Datei |
 | --- | --- |
+| **Wie man SAP ueberhaupt bedient: Zugangswege, Grenzen, Aktivierungsfallen, Gateway/OData, Skriptbestand** | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
 | **ZLO03 / Stuecklistenanalyse-Webservice** (`ZM_LZCODE20_OPT`) | `docs/abap/README_LZCODE_WEBSERVICE.md` |
 | Produktsparten-Provider | `docs/abap/README_PRODSPARTE.md` |
 | Produktgruppen als SAP OData (SEGW-Anleitung, Methodenruempfe) | `docs/abap/README_PRODUCT_GROUP_SAP_ODATA.md` |
@@ -19,7 +47,6 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 | **PPWR und Stoffcompliance, aktueller Stand und Mandant 100** | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` |
 | PPWR, fachlicher Katalog und Anlageprotokoll (Erfolgsmeldung strittig, siehe Zeile darueber) | `docs/PPWR_SAP_KLASSIFIZIERUNG_ANLAGEPROTOKOLL_2026-08-13.md` |
 | Wie SAP Ruestzeit von Bearbeitungszeit unterscheidet | `docs/SAP_KALKULATION_RUESTZEIT_BEARBEITUNGSZEIT_ANDREAS_2026-07-30.md` |
-| **Wie man ueberhaupt effizient mit SAP arbeitet: Zugangswege, Grenzen des GUI-Scriptings, Aktivierungsfallen, Skriptbestand** | `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` |
 | **ZZPRDAT: Transportauftrag `T76K912490`, Objektliste, Nachtest und was vor der Freigabe offen ist** | `saptasks/ZZPRDAT_TRANSPORTPLAN.md` |
 | **ZZPRDAT: Loesungsdokument fuer den Fachbereich**, seit 2026-09-07 mit Kapitel „So testen Sie es selbst" (drei Testfaelle, Fehlerbilder) | `docs/ZZPRDAT_Loesung_2026-09-03.docx` |
 | ZZPRDAT: Anschreiben zur Abnahme (Vorlage fuer den Outlook-Entwurf) | `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` |
@@ -45,12 +72,29 @@ ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation.
 - **Numerische Materialnummern:** `ALPHA` war der falsche Konvertierungsbaustein, richtig
   ist Rohwert plus `MATN1`. Siehe `docs/abap/README_LZCODE_WEBSERVICE.md`.
 - **Fuer alles Lesende zuerst einen ABAP-Report schreiben, den Ingo ausfuehrt.** Das ist
-  mit Abstand der schnellste Weg. GUI-Fernsteuerung nur fuer Schreiboperationen; der
-  ABAP-Editor laesst sich ueber die Scripting-Schnittstelle nicht auslesen, dafuer
-  Screenshots geben lassen. Ganzer Katalog inklusive Aktivierungsfallen:
+  mit Abstand der schnellste Weg. GUI-Fernsteuerung nur fuer Schreiboperationen.
+  Ganzer Katalog inklusive Aktivierungsfallen:
   `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`.
+- **Korrigiert am 2026-09-11: ABAP aus Klassen IST lesbar.** Frueher stand hier, der
+  ABAP-Editor lasse sich nicht auslesen. Das gilt nur fuer das **GUI-Steuerelement**.
+  Ueber RFC geht es sehr wohl, auch fuer Klassen
+  (`abap-read ZCL_...==CM001`, Deklarationen `==CU`/`==CO`/`==CI`). Damit ist
+  Gegenlesen nach jeder Aenderung moeglich — schreiben ueber die GUI, pruefen ueber RFC.
+  Die alte Formulierung hat am 2026-09-10 dazu gefuehrt, dass eine Klassenaenderung
+  ungeprueft blieb.
+- **Gateway/OData, drei Fallen, die je eine Stunde gekostet haben:**
+  `bind_structure( )` legt **keine** Properties an, jede Property will einzeln
+  ueber `create_property( )` angelegt sein; `sy-langu` ist in einem OData-Aufruf
+  nicht zwangslaeufig Deutsch, sprachabhaengige Texte brauchen einen Rueckfall;
+  und **zwei Bedingungen auf demselben Feld** liefert das Gateway gar nicht erst
+  als Filteroption aus, der Filter faellt dann lautlos komplett weg. Alle drei
+  mit Messung in `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` und
+  `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.
 - **`JEST`/`I0002` ist kein Freigabenachweis.** Bei abgeschlossenen Auftraegen ist der
   Status inaktiv gesetzt. Verlaesslich ist `AFKO-FTRMI`.
+- **`T76` ist eine rund sechs Monate alte Kopie.** Im Jahr 2026 stehen dort nur die
+  Perioden 01 bis 04. Wer gegen einen spaeteren Monat misst, misst einen leeren
+  Zeitraum und haelt das Ergebnis fuer einen Erfolg.
 - Werkzeuge und ihre Grenzen: `docs/router/plattform.md`, Abschnitt Live-Werkzeuge.
 
 ## Querverweise in Nachbaraeste

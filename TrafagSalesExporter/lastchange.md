@@ -1,6 +1,33 @@
 # Last Change
 
-Stand: 2026-09-08
+Stand: 2026-09-11
+
+## Journal-EntitySet CH/AT in SAP gebaut, 2026-09-10 und 2026-09-11
+
+- **`FinanzJournalSet` steht auf `T76/100` und ist geprueft.** Beide Redefinitionen
+  (`ZCL_ZPOWERBI_EINKAUF_MPC_EXT~DEFINE` und
+  `ZCL_ZPOWERBI_EINKAUF_DPC_EXT~/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET`) sind aktiv
+  und ueber RFC gegengelesen, `$metadata` und Datenabruf liefern `HTTP 200`, die Werte
+  sind gegen `BKPF`/`BSEG`/`SKAT` verglichen. Bestehende EntitySets antworten unveraendert
+  — wichtig, weil die redefinierte Methode der generische Dispatcher fuer alle rund 25
+  Sets des Service ist.
+- **Produktiv aendert das noch nichts.** Transport `T76K912530` ist nicht freigegeben, die
+  App liest `travp762`. Erst nach dem Import nach `P76` sieht der Journalimport das Set.
+- **Der Leser laedt jetzt je Buchungsperiode** (`Gjahr` plus `Monat`) mit `$top=20000`
+  statt `1000`. Ein Jahreslauf faellt damit von gemessenen 80 Minuten auf unter zwei.
+  700/700 Tests gruen.
+- **Vier Fallen, die je rund eine Stunde gekostet haben**, alle mit Messung
+  festgehalten: `bind_structure( )` legt keine Properties an; `sy-langu` ist im Gateway
+  nicht zwangslaeufig Deutsch (der Kontotext kam deshalb leer); **zwei Bedingungen auf
+  demselben Feld** liefert das Gateway gar nicht erst als Filteroption aus, der Filter
+  faellt lautlos weg; und in SE24 redefiniert man ueber die **vorhandene geerbte Zeile**,
+  nicht durch Eintippen des Namens.
+- **Neu im Router:** `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md` ist jetzt aus
+  `router.md` Regel 5, aus `docs/router/sap.md` (eigener Abschnitt „Zuerst lesen") und
+  aus `docs/rag/init.md` verlinkt. Grund: ohne diesen Weg beginnt jede SAP-Aufgabe wieder
+  mit der Frage, ob Fernsteuerung ueberhaupt geht.
+- Details und alle Messwerte: `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`,
+  Werkzeugbedienung: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`.
 
 ## Bahnmarkt Deutschland und Journal-Konsolidierung, 2026-09-08
 

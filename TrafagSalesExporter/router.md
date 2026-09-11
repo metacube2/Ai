@@ -37,10 +37,20 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 5. **SAP- und HANA-Fakten nie aus Erinnerung ableiten.** Live-Werkzeuge verwenden und das
    Ergebnis nachdokumentieren. Keine Tabellen- oder Feldnamen erfinden — genau dieser
    Fehler hat bei UK-2025 und beim IT-Superlativ zugeschlagen.
+
+   **Wer SAP bedienen soll, liest vorher `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`.**
+   Dort steht, was ein Agent im System selbst tun kann — lesen, schreiben, aktivieren,
+   Reports ausfuehren, OData pruefen — und welche Fallen dabei Stunden kosten. Ohne
+   diese Datei faengt jede SAP-Aufgabe wieder bei der Frage an, ob Fernsteuerung
+   ueberhaupt geht. Sie geht, und zwar ohne einen einzigen Klick.
 6. **Vor jeder Aenderung, parallelen Arbeit, jedem Build und Deploy:**
    `docs/AGENT_COORDINATION.md` lesen, den eigenen Bereich eintragen und beim Abschluss
    mit Status und Nachweis aktualisieren. Eintraege mit `abgeschlossen`, `deployed`,
-   `frei` oder `Historie` sind keine laufende Arbeit.
+   `frei` oder `Historie` sind keine laufende Arbeit. Die Datei fuehrt seit dem
+   2026-09-09 nur laufende Arbeit und einen Kurzindex der letzten sieben Tage; der
+   Volltext des Abgeschlossenen steht in `docs/AGENT_COORDINATION_HISTORIE.md` und ist
+   Nachschlagewerk, nicht Pflichtlektuere. Eine reine Auskunft ohne jede Aenderung
+   braucht diesen Schritt nicht, siehe `CLAUDE.md` Abschnitt 3a.
 7. **Arbeitsregeln, Tests und fachliche Grenzen:** `persona.md`.
 8. **Ingo testet immer auf dem deployten Produktivstand, nie lokal.** Eine leere oder
    abweichende lokale `trafag_exporter.db` oder ein lokal gestarteter Dev-Server sind kein
@@ -56,7 +66,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | **Einkauf** | Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ | `docs/router/einkauf.md` |
 | **HR** | HR-KPI-Cockpit, Fluktuation, Absenzen | `docs/router/hr.md` |
 | **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen | `docs/router/plattform.md` |
-| **SAP** | ABAP, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
+| **SAP** | **SAP selbst bedienen (Werkzeuge, Grenzen, Fallen)**, ABAP, OData/Gateway, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
 | **Wo stehen wir gerade?** Uebergabestand mit offenen Punkten und Reihenfolge | `docs/UEBERGABE_2026-09-08.md` |
 
@@ -69,6 +79,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | „Woran arbeite ich gerade, was ist noch offen?" | Projekt |
 | „Wie bringe ich das auf den Server?" | Plattform |
 | „Was liefert SAP und wie?" | SAP, bei Verkaufszahlen Standortdaten |
+| „Kann ich in SAP selbst etwas anlegen, aendern oder messen?" | **Ja.** `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, ohne Umweg ueber einen Unterrouter |
 
 Hilft auch das nicht weiter, ist `qdrant-find` aus dem Kopf dieser Datei der naechste
 Schritt.

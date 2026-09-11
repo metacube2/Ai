@@ -1,6 +1,6 @@
 # RAG-Einstieg: Ladereihenfolge und Abschlussregel
 
-Stand: 2026-09-03
+Stand: 2026-09-11
 
 ## Ladereihenfolge fuer eine neue Sitzung
 
@@ -10,6 +10,13 @@ Stand: 2026-09-03
    `PURCHASING.md`, `PROJECT.md`, `MANUAL_IMPORT.md`, `DEPLOYMENT.md`
 4. `persona.md` (Repo-Wurzel) — Arbeitsregeln und fachliche Grenzen, sobald fachliche
    Verantwortung im Spiel ist
+5. **Sobald SAP im Spiel ist: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, vor der
+   ersten Aktion.** Dort steht, dass ein Agent SAP vollstaendig fernsteuern kann —
+   Quelltext lesen und schreiben, Klassen aktivieren, DDIC-Objekte anlegen, Reports
+   ausfuehren, OData ohne Anmeldung pruefen — und welche Fallen dabei Stunden kosten.
+   Ohne diese Datei beginnt jede SAP-Aufgabe wieder mit der Frage, ob das ueberhaupt
+   geht. Am 2026-09-10 hat allein `Sessions=0` zwei Stunden gekostet, weil die Ursache
+   am Server lag und nicht am Arbeitsplatz.
 
 Aelteres liegt im Archiv (`docs/raw_md_archive/`) und wird nicht standardmaessig geladen.
 Den vollstaendigen Bestand listet `baum.md`; das ist ein Pruefindex, keine Lesereihenfolge.
