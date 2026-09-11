@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-09-07
+Stand: 2026-09-11
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -24,10 +24,10 @@ nicht.
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Die vorbereitete Fassung `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` einspielen — sie ist **noch nicht im System** —, danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-07 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **Der am 2026-09-07 gefundene Konstruktionsfehler ist am selben Tag behoben: `BEFORE_UPDATE` prueft jetzt, ob der Auftrag vor diesem Sichern schon freigegeben war, und laesst Altauftraege in Ruhe. Alle sieben Wege plus Altauftragsfall und Write-once sind am 2026-09-07 auf dem korrigierten Stand nachgemessen, Klasse liegt in der Aufgabe `T76K912491`. Auftrag weiter nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild und dabei neu auch den Zeitpunkt des Drucks gegenueber V2. Erst zuletzt den Auftrag freigeben | 2026-09-07 |
-| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt, Restpunkte in SAP | Zwei SAP-Nacharbeiten anstossen, siehe Detail | 2026-08-14 |
-| PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option mit Andreas entscheiden | 2026-08-31 |
+| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt; die zwei SAP-Restpunkte stehen unveraendert offen. Seit 2026-09-03 ist das Dashboard durch einen filterabhaengigen Snapshot beschleunigt, seit 2026-09-10 sind verstaendlichere Kennzahlen und die SAP-Quellenhilfe produktiv | Zwei SAP-Nacharbeiten anstossen; zusaetzlich die **nicht ausgelieferten drei Statusbeschriftungen** nachziehen und die neuen Texte produktiv sichtpruefen | 2026-09-11 |
+| PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit. Die fuenf Ausgleichsfelder sind seit 2026-09-10 08:53 produktiv, `Finance_All` am selben Tag neu erzeugt | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option und die Bedeutung von `date paid` mit Andreas entscheiden | 2026-09-11 |
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
-| PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, terminiert** | Zwei Blocker, beide belegt; der zweite trifft ausgerechnet Deutschland | Deutschen Kundennamen aus Alphaplan holen UND Patrik bitten, die Zuordnung zu pruefen oder selbst zu setzen | 2026-08-27 |
+| PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, Termin ueberschritten** | **Blocker 1 ist am 2026-09-09 geloest**, der deutsche Verkaufsbestand traegt jetzt fachliche Kundennummern und Namen. Blocker 2 besteht nur noch fuer die anderen Standorte fort | Neues Zieldatum mit Rohail vereinbaren; 30 Gutschriftenzeilen und drei Doppelnummern klaeren; Patrik die 171 uebrigen Vorschlaege pruefen lassen | 2026-09-11 |
 
 ---
 
@@ -394,6 +394,25 @@ Zwei SAP-Nacharbeiten bleiben, beide ohne Betriebsauswirkung:
 
 Quelle: `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
+**Nachtrag 2026-09-11, Stand der beiden Restpunkte:** unveraendert offen, gegen
+`docs/rag/PURCHASING.md` geprueft. Am Dashboard selbst ist seither zweierlei passiert.
+
+Erstens ist es seit dem 2026-09-03 deutlich schneller: Alle 15 Routen teilen pro Filter
+einen 15 Minuten gueltigen Snapshot, maximal 32 Filter, Single-Flight. Vorher brauchten
+selbst warme Aufrufe von `/einkauf` und `/einkauf/aufriss` je rund 9 bis 11 Sekunden; nach
+der einmaligen Kaltberechnung liefern alle weiteren Routen jetzt HTTPS 200 in 0,05 bis
+0,14 Sekunden. Commits `756e931` und `2444731`, 674/674 Tests gruen.
+
+Zweitens sind am 2026-09-10 um 09:40 verstaendlichere Kacheln, Status- und Filtertexte
+sowie eine aufklappbare Quellenhilfe mit SAP-Feldern und Formeln produktiv gegangen
+(Commit `d5bc321`, 691/691 Tests). **Dabei ist etwas liegengeblieben:** die zuletzt
+geaenderten drei Statusbeschriftungen waren nicht committet und sind deshalb nicht
+ausgeliefert. Produktiv steht weiterhin `Bestellwert im Zeitraum` statt `Gebuchter Spend`
+und `Einteilungen im Zeitraum` statt `Einteilungen`, an vier Stellen in
+`Components/Pages/PurchasingDashboard.razor` und sechs in
+`Services/PurchasingUiTextCatalog.cs`. Ausserdem hat noch niemand die neuen Texte
+produktiv angesehen.
+
 ### PM-05 Finance: alle Daten in einem zentralen Excel
 
 Aufgenommen am 2026-07-27. Das zentrale Excel existiert produktiv und wird
@@ -415,6 +434,22 @@ Quellen: `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` als Statusquelle,
 `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` als Begruendung,
 `docs/rag/FINANCE.md` als fachlicher Einstieg.
 
+**Nachtrag 2026-09-11.** Die Aufzaehlung darueber ist der Stand vom 2026-08-31 und in
+zwei Punkten ueberholt. Die Bewertungsmethode von TR IT ist seit dem 2026-09-09
+entschieden und zurueckgestellt: bestehende B1-Artikel lassen sich laut Paola nicht
+umstellen, es braeuchte ein Neucodierungsprojekt ueber 31’600 Artikel. Und die fuenf
+Ausgleichsfelder je Buchungszeile sind seit dem Deploy vom 2026-09-10 um 08:53 produktiv;
+die Schemamigration hat das Journal von 29 auf 34 Spalten erweitert, 691/691 Tests gruen.
+`Finance_All` ist am selben Tag neu erzeugt worden, 470’499 Buchungszeilen, `due date`
+darin vollstaendig belegt. Offen ist dort nur noch der Fachentscheid von Andreas, was
+`date paid` bedeuten soll.
+
+Hinzugekommen ist ein Punkt, der vorher nicht sichtbar war: Am 2026-09-10 wurde gemessen,
+dass die Segmentzuweisung **nur fuer Deutschland** automatisch laeuft, weil nur dort ein
+Branchenfeld im Quellsystem steht. Der naechste Schritt ist kein Code, sondern ein
+fachlicher Entscheid ueber rund 38 Branchenwerte. Siehe PM-08 und
+`docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
+
 ### PM-07 HR: automatische Auswertung der REXX-Files
 
 Aufgenommen am 2026-08-19. Das bestehende HR Cockpit (siehe Historie unten,
@@ -435,6 +470,12 @@ fuer die technische Umsetzung der automatischen Auswertung.
 ---
 
 ### PM-08 Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08
+
+> **Der Stand in diesem Abschnitt ist der vom 2026-08-27 und in wesentlichen Teilen
+> ueberholt.** Blocker 1 ist am 2026-09-09 geloest, Blocker 2 nur noch fuer die anderen
+> Standorte offen, und der Termin 2026-09-08 ist verstrichen. Der gueltige Stand steht im
+> Nachtrag vom 2026-09-11 am Ende dieses Abschnitts. Die Messungen unten bleiben als
+> datierte Belege stehen.
 
 **Harter Termin.** Rohail Munir aus Deutschland hat am 2026-08-27 nachgefragt und braucht den
 Export **bis spaetestens 2026-09-08**, um damit den Projektmanagement-Status zu praesentieren.
@@ -529,6 +570,49 @@ Details: `docs/KONZEPT_RAILWAY_EXPORT_2026-09-01.md` und
 aus. Blocker 2 (niemand hat bestaetigt) bleibt ebenfalls offen: Stand des Deploytags waren
 weiterhin `0` von `173` Vorschlaegen bestaetigt. Der Export macht die Pruefung fuer Patrik
 bequemer, nimmt sie ihm aber nicht ab.
+
+#### Nachtrag 2026-09-11: Blocker 1 geloest, Termin ueberschritten
+
+**Blocker 1 ist erledigt.** Rohail Munir hat am 2026-09-09 selbst geliefert, was fehlte:
+`Rechnungen_20260909.xlsx` mit 60’539 Rechnungen, jeweils mit Rechnungsnummer und der
+**fachlichen** `Adressnr._R`. Damit wird die interne `RechnungsAdressenID` als Bruecke gar
+nicht mehr gebraucht. Geprueft deckt die Datei 7’531 der 7’615 deutschen Zeilen und wurde
+unabhaengig gegen `docs/2025_DataExport_DE.xlsx` mit 99,66 Prozent bestaetigt.
+
+Produktiv nachgezogen am 2026-09-09 um 14:37, 3’043 Zeilen in einer Transaktion: fachliche
+Kundennummern von 4’549 auf **7’592 von 7’622**, bestaetigte Segmente von 19 auf 24,
+`quick_check` `ok`, Zeilenzahl und `SalesPriceValue` unveraendert. **Der deutsche Bahnumsatz
+ist damit erstmals belegbar:** 2025 rund 578’636 EUR, 2026 bis zum 09.09. rund 432’237 EUR.
+Der fruehere Nachzug desselben Tages um 07:20 mit 4’549 Zeilen ist damit ueberholt.
+
+Offen bleiben aus diesem Schritt 30 Gutschriftenzeilen ohne fachliche Nummer, weil Rohails
+Datei keine Gutschriften enthaelt, sowie die 40 Zeilen der drei Doppelnummern Sonepar, EMS
+und Magnetic Sense, die der Nachzug bewusst nicht angefasst hat. Details:
+`docs/BAHNMARKT_DE_ANBINDUNG_2026-09-08.md` Abschnitt 9.
+
+**Blocker 2 besteht fort, aber nur noch ausserhalb Deutschlands.** Am 2026-09-10 produktiv
+gemessen: von 196 Zuordnungen sind 25 bestaetigt, davon 24 aus TRDE mit der Quelle
+`Alphaplan Kundenstamm / Branche`. Die uebrigen 171 sind weiterhin
+Namensabgleich-Vorschlaege und warten auf Patrik.
+
+**Der eigentliche Befund dieser Messung geht aber ueber PM-08 hinaus.** Deutschland laeuft
+automatisch, weil dort ein Branchenfeld im Quellsystem steht; die anderen acht Standorte
+haben keines. Fuellgrad `CustomerIndustry`: TRDE 7’433 Zeilen und 543 Kunden, TRFR 221/20,
+TRIN 21/6, TRIT 10/2, und TRSE, TRUK, TRUS sowie ZSCHWEIZ **null** — wobei ZSCHWEIZ mit
+52’276 Zeilen der groesste Standort ueberhaupt ist. Die 543 deutschen Kunden verteilen sich
+auf 38 Branchenwerte und decken 97,9 Prozent des deutschen Umsatzes ab; genutzt werden
+bisher nur die 24 mit `00 Bahn`, und in `CustomerMarketSegments` existiert ueberhaupt nur
+ein einziger Segmentwert, `Railway`. **Der naechste Schritt ist deshalb kein Code, sondern
+ein fachlicher Entscheid Branche auf Segment** ueber rund 38 Zeilen, beim Vertrieb
+beziehungsweise bei Andreas. Nebenbei sind zwei Datenmaengel im deutschen Kundenstamm
+aufgefallen, die neun Kunden betreffen: Nummer `52` traegt zwei Bezeichnungen, und zwei
+Branchenwerte enden auf ein Komma. Details:
+`docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
+
+**Zum Termin:** der 2026-09-08 ist verstrichen, ohne dass etwas an Rohail versendet wurde.
+Die korrigierte DE-Pruefmappe `Bahnmarkt_Rohail_2026-09-09.xlsx` liegt erzeugt und
+rueckgelesen bereit. Ein neues Zieldatum ist mit Rohail zu vereinbaren; das entscheidet
+Ingo, nicht diese Datei.
 
 ---
 
