@@ -227,8 +227,14 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Pruefung ist erledigt und sollte ihr abgenommen werden.
 - Budget-CHF: Finance muss Kurse/Freigabe, Pflegeprozess, Spaltenumfang,
   Fehlkursverhalten, Rundung und Anzeigeort entscheiden.
-- CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` bleibt Voraussetzung;
-  Spezifikation: `docs/FINANCE_JOURNAL.md`.
+- CH/AT-Journal: SAP-EntitySet `FinanzJournalSet` ist seit dem 2026-09-11 auf
+  **`T76/100` gebaut und geprueft** (beide Redefinitionen aktiv, `$metadata` und
+  Datenabruf `HTTP 200`, Werte gegengelesen). **Produktiv fehlt es weiterhin:**
+  Transport `T76K912530` ist nicht freigegeben, und die App liest `travp762`.
+  Der Leser laedt seit derselben Aenderung je Buchungsperiode (`Gjahr` plus
+  `Monat`) mit `$top=20000`; ein Jahreslauf dauert damit rund zwei Minuten
+  statt der gemessenen 80. Spezifikation: `docs/FINANCE_JOURNAL.md`,
+  Bau und Messungen: `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.
 
 ## Management-Analyse-Reiter
 

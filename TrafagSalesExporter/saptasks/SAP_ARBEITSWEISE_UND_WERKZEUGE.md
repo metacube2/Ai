@@ -92,6 +92,36 @@ geaendert wurde. Fuer dauerhaftes Arbeiten gehoert `sapgui/user_scripting = TRUE
 getrennte Schalter. Beide muessen an sein. Die Registry meldet sich mit einer Warnung oder
 `Erlaubnis verweigert`, der Server meldet sich mit **Schweigen**.
 
+### Wenn jeder Skriptaufruf haengt: es ist die Scripting-Engine, nicht der Server
+
+Anderes Fehlerbild als `Sessions=0`, andere Ursache. Am 2026-09-11 blieb
+**jeder** Aufruf stehen, auch `SapGuiInspect.vbs`, und musste nach 40 Sekunden
+abgebrochen werden. Diagnose ohne Raten, in dieser Reihenfolge:
+
+| Frage | Befehl | Befund damals |
+| --- | --- | --- |
+| Lebt der Server? | `RunSapProbe.ps1 table-read T001 ...` | RFC antwortet sofort |
+| Arbeitet er an etwas? | `RunSapProbe.ps1 rfc-call TH_WPINFO` | alle Dialogprozesse `wartet` |
+| Ist die Registry richtig? | `Get-ItemProperty 'HKCU:\Software\SAP\SAPGUI Front\SAP Frontend Server\Security'` | `UserScripting=1`, Warnungen aus |
+| Gibt es das COM-Objekt? | `[Runtime.InteropServices.Marshal]::BindToMoniker("SAPGUI")` | vorhanden, bindet sofort |
+| Haengt ein alter Skriptprozess? | `Get-Process cscript,wscript` | einer vom Vortag, 15:55 |
+| Laeuft `saplogon` noch vom Vortag? | `Get-Process saplogon \| Select StartTime` | ja, seit 24 Stunden |
+
+Das Ergebnis ist eindeutig: Server und Konfiguration sind in Ordnung, die
+Scripting-Engine im `saplogon`-Prozess ist festgefahren. **Nur ein Neustart der
+Anwendung hilft.** Die Verbindung zu trennen und neu aufzubauen reicht **nicht**
+— das war der Irrtum, der eine Runde gekostet hat; `saplogon` lief dabei
+unveraendert weiter, erkennbar an unveraendertem `StartTime`.
+
+Zwei Nebenbefunde dazu:
+
+* Ein haengengebliebener `cscript` blockiert nachfolgende Aufrufe. Vor dem
+  Anwendungsneustart lohnt `Get-Process cscript` und das Beenden der Leichen.
+* Weil `GetObject("SAPGUI")` in so einem Zustand blockiert statt zu scheitern,
+  gehoert jeder Diagnoseaufruf in ein Zeitlimit:
+  `Start-Process cscript.exe ... -PassThru` und dann `WaitForExit(40000)`.
+  Sonst haengt die Sitzung des Agenten mit.
+
 ### Was ohne GUI-Scripting trotzdem geht
 
 Der RFC-Weg ueber SapProbe ist davon voellig unberuehrt und braucht nur die
@@ -459,6 +489,102 @@ Statuscode und `content-length` reichen aber fuer die wichtigsten Aussagen: ob
 das Set existiert, ob es Daten liefert und ob die uebrigen Sets nach einer
 Aenderung am generischen Dispatcher noch laufen.
 
+##### Das Skript dazu, mit den Stellen, an denen es zweimal schiefging
+
+```vbs
+' Request-URI ist ein GuiShell mit SubType "TextEdit".
+' SelectAll/ReplaceSelection gibt es hier NICHT, das wirft
+' "Das Objekt unterstuetzt diese Eigenschaft oder Methode nicht".
+Set ed = s.FindById("wnd[0]/usr/cntlURI_AREA/shellcont/shell")
+ed.Text = uri
+s.FindById("wnd[0]").SendVKey 8          ' blockiert bis zur Antwort
+Set g = s.FindById("wnd[0]/usr/cntlGUI_AREA/shellcont/shell/shellcont[1]/shell")
+For r = 0 To g.RowCount - 1
+  If g.GetCellValue(r, "NAME") = "~status_code" Then ...
+Next
+```
+
+`shellcont[0]` ist der **Request**-Kopf und bleibt leer, `shellcont[1]` der
+**Antwort**-Kopf. Wer den falschen nimmt, liest `ZEILEN=0` und haelt das fuer
+einen Fehlschlag.
+
+Weil `SendVKey 8` bis zur Antwort blockiert, laesst sich die Laufzeit direkt
+messen: `Timer` davor und danach. Das ist die einzige Zeitmessung, die ohne
+Zugriff auf den Antwortrumpf auskommt, und sie war die Grundlage aller
+Laufzeitzahlen in `docs/abap/README_FIN_JOURNAL_ENTITYSET.md`.
+
+#### Ein Filter je Feld: zwei Bedingungen auf demselben Feld verschwinden
+
+**Die teuerste Erkenntnis vom 2026-09-11.** Das Gateway uebergibt dem Data
+Provider in `it_filter_select_options` **gar nichts**, wenn zwei Bedingungen auf
+**demselben** Feld stehen. Der Filter faellt dann komplett weg, und der Data
+Provider liest den gesamten Bestand.
+
+| Filter | Dauer | Ergebnis |
+| --- | ---: | --- |
+| `Bukrs eq '1200' and Budat ge 2026-06-01` | 2 s | `HTTP 200`, korrekt gefiltert |
+| dieselbe Anfrage plus `Budat lt 2026-07-01` | 241 s | Sitzung abgerissen |
+| ohne `Bukrs`, beide Datumsgrenzen | 97 s | `HTTP 500` |
+| `Gjahr eq '2026' and Monat eq '03'` | 3,2 s | `HTTP 200`, korrekt gefiltert |
+
+Zwei Bedingungen auf **verschiedenen** Feldern gehen dagegen problemlos durch.
+
+**Regel: ein Zeitraum wird nie ueber zwei Datumsgrenzen abgegrenzt, sondern ueber
+zwei verschiedene Felder** — beim Journal `Gjahr` und `Monat`.
+
+Ein Irrweg, der hier dokumentiert bleibt, damit ihn niemand wiederholt: es sieht
+zunaechst so aus, als kaemen die beiden Optionen an und wuerden in ABAP nur
+ODER-verknuepft, denn ein Bereich ist ODER-verknuepft, und „ab A ODER vor B" ist
+alles. Die naheliegende Abhilfe, im Data Provider Unter- und Obergrenze zu einem
+`BT`-Bereich zusammenzufassen, **wirkt nicht** — es kommt ja nichts an. Der Code
+dafuer steht trotzdem in `ZFIN_JOURNAL_DPC_GET_ENTITYSET.abap`, weil er bei `EQ`,
+`BT` und einer einzelnen Grenze richtig ist.
+
+#### Die Seitengroesse ist der Hebel, nicht der Filter
+
+Ein selbstgebauter Data Provider liest je Anfrage den **gesamten** gefilterten
+Bestand und wirft alles ausser der angeforderten Seite weg. Damit kosten die
+Zeilen einer Seite fast nichts, und nur die **Anzahl** der Seiten kostet.
+Gemessen an derselben Periode:
+
+| `$top` | Dauer | Antwort |
+| ---: | ---: | ---: |
+| 1'000 | 3,2 s | 753 KB |
+| 5'000 | 5,6 s | 3,7 MB |
+| 20'000 | 3,0 s | 14,3 MB |
+
+Fuer den Journalimport hat das aus 80 Minuten je Jahr unter zwei Minuten
+gemacht — ohne eine Zeile ABAP. **Wer an einem solchen Service die Laufzeit
+verbessern will, dreht zuerst an `$top`, nicht am Filter.**
+
+#### Eine zu lange Anfrage reisst die GUI-Sitzung ab
+
+Der 241-Sekunden-Versuch endete mit
+„Das aufgerufene Objekt wurde von den Clients getrennt", danach meldete
+`SapGuiInspect.vbs` `Connections=0`. Ingo musste sich neu anmelden.
+
+Deshalb: eine Anfrage, deren Laufzeit unbekannt ist, **zuerst stark eingegrenzt**
+absetzen (`$top=2` plus enger Filter) und erst dann aufdrehen. Und niemals eine
+Messreihe ohne Obergrenze starten, wenn noch ungesicherte Arbeit im GUI offen
+ist.
+
+#### Gegen welche Daten man in T76 ueberhaupt misst
+
+`T76/100` ist eine rund sechs Monate alte Kopie. Im Geschaeftsjahr `2026` gibt es
+dort **nur die Perioden 01 bis 04**: `22'688`, `29'428`, `33'877` und `14'006`
+Belegkoepfe ohne `CO`, danach nichts mehr ausser rund 100 Belegen im Juni.
+
+Am 2026-09-11 wurde die erste Laufzeitmessung gegen Juni gefahren und ergab 2,2
+Sekunden. Das sah nach einem grossen Erfolg aus und war ein leerer Monat.
+**Vor jeder Mengen- oder Laufzeitmessung erst nachsehen, wo ueberhaupt Daten
+liegen**, zum Beispiel so:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  table-read BKPF --fields MONAT --where "GJAHR = '2026' AND BLART <> 'CO'" `
+  --rowcount 99999 --format csv --quiet
+```
+
 #### Gateway-Fehler stehen in `/IWFND/ERROR_LOG`
 
 Ein `HTTP 500` sagt fuer sich nichts. Der Klartext steht in
@@ -591,6 +717,31 @@ bestehende Implementierungen wie `MARA001SET_GET_ENTITYSET` als Vorlage ansehen.
 **Damit ist Gegenlesen moeglich**, was bei Klassenaenderungen der entscheidende
 Unterschied ist: schreiben ueber die GUI, pruefen ueber RFC.
 
+### Navigieren ueber den Sitzungsindex, nicht ueber den Transaktionscode
+
+`SapGuiCommand.vbs` sucht die Sitzung **ueber den Transaktionscode**, den man
+mitgibt. Das bricht, sobald man nicht mehr weiss, wo man gerade steht:
+
+```
+Keine Sitzung mit Transaktion /IWFND/ERROR_LOG
+```
+
+Am 2026-09-11 hat das eine ganze Schleife lahmgelegt, weil die Sitzung
+inzwischen auf `/IWFND/GW_CLIENT` stand. In einem Ablauf, der mehrfach die
+Transaktion wechselt, ist der Code als Adresse untauglich. Dann lieber direkt
+ueber den Index in das Befehlsfeld schreiben:
+
+```vbs
+Set s = app.Children(0).Children(CLng(sesIdx))
+s.FindById("wnd[0]/tbar[0]/okcd").Text = "/nSE24"
+s.FindById("wnd[0]").SendVKey 0
+```
+
+`SapGuiInspect.vbs` nennt den Index. Die neueren Skripte
+(`SapGuiRedefinierenZeile.vbs`, `SapGuiInaktiveMarkieren.vbs`,
+`SapGuiGatewayClient.vbs`) nehmen deshalb alle den **Index** als erstes
+Argument.
+
 ### Mehrere Sitzungen mit demselben Transaktionscode
 
 Die Skripte suchen die Sitzung ueber den Transaktionscode. Wird `/nSE38` in eine zweite
@@ -613,6 +764,23 @@ Nie aus einer ungefilterten Liste auf Nichtexistenz schliessen.
 Bei sehr breiten Tabellen wie `BKPF` und `BSEG` scheitert der Aufruf ganz, weil
 `RFC_READ_TABLE` eine Zeilenbreite von 512 Byte nicht ueberschreiten darf. Mit
 `--fields` auf die gebrauchten Spalten begrenzen, dann geht es.
+
+### `table-read` druckt nur 100 Zeilen, auch wenn es mehr gelesen hat
+
+`--rowcount 99999` bestimmt, wie viele Zeilen **gelesen** werden. In der
+Tabellenausgabe erscheinen trotzdem nur die ersten **100**, ohne Hinweis darauf.
+Am 2026-09-11 sah eine Periode dadurch nach genau `100` Belegen aus, was
+zufaellig plausibel wirkte und falsch war.
+
+**Zum Zaehlen immer `--format csv`**, dann kommen alle gelesenen Zeilen:
+
+```powershell
+... table-read BKPF --fields BUKRS,BELNR --where "GJAHR = '2026' AND BLART <> 'CO'" `
+    --rowcount 99999 --format csv --quiet | Select-String -Pattern '^1[12]00,' | Measure-Object
+```
+
+Eine Zahl knapp unter dem `--rowcount` (im Beispiel `99'978` bei `99'999`) heisst
+umgekehrt: **das Limit hat gegriffen**, der wahre Bestand ist groesser.
 
 ### `abap-write` legt nur an, es ersetzt nicht
 
@@ -688,6 +856,34 @@ veraendert. **Immer pruefen, was im Feld `KO008-TRKORR` steht**, und mit
   setzt `$?` auf `False`, auch bei Exitcode 0. `uv` und `dotnet` schreiben Fortschritt auf
   stderr. Also **nicht umleiten**.
 * **`Tee-Object` kennt kein `-LiteralPath`,** nur `-FilePath`.
+* **`$pid` ist reserviert** und laesst sich nicht zuweisen. In P/Invoke-Aufrufen
+  wie `GetWindowThreadProcessId($h, [ref]$pid)` gibt das eine Ausnahme je
+  Fenster. Eine andere Variable nehmen, etwa `$procId`.
+* **Ein laufender lokaler Dev-Server sperrt `bin\Debug`.** Am 2026-09-11 lief
+  einer seit dem 20.08. auf `http://localhost:55416` und liess `dotnet test`
+  mit `MSB3027` scheitern („Die Datei wird durch .NET Host (…) gesperrt").
+  Fremde Prozesse werden **nicht** beendet; stattdessen in ein eigenes
+  Ausgabeverzeichnis bauen:
+
+  ```powershell
+  dotnet test TrafagSalesExporter.Tests\TrafagSalesExporter.Tests.csproj `
+    -p:BaseOutputPath=<Scratchpad>\build\
+  ```
+
+  **Nachtrag dazu:** zwei UI-Tests suchen `Components\` und `Program.cs`
+  relativ zur Assembly und scheitern dann mit „Component directory not found"
+  beziehungsweise `FileNotFoundException`. Das ist **keine** Regression, sondern
+  eine Folge des verschobenen Ausgabepfads. Abhilfe ohne Codeaenderung: im
+  Elternverzeichnis des Buildordners eine Verzweigung und eine harte
+  Verknuepfung anlegen.
+
+  ```powershell
+  New-Item -ItemType Junction  -Path <Scratchpad>\..\Components -Target <Repo>\Components
+  New-Item -ItemType HardLink  -Path <Scratchpad>\..\Program.cs -Target <Repo>\Program.cs
+  ```
+
+  Erst danach ist ein „700/700 gruen" wirklich aussagekraeftig. Vorher waren es
+  698, und die zwei Fehler kamen allein vom Werkzeug.
 * **Fenster fuer Passworteingaben** muessen mit `Start-Process powershell.exe -File ...`
   geoeffnet werden. Wird die Ausgabe des Werkzeugs in eine Pipeline geleitet, verschluckt
   sie den Passwort-Prompt und das Fenster wirkt leer.
@@ -706,6 +902,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiInspectMainToolbar.vbs <TX>` | listet die Knoepfe der Anwendungsleiste mit Tooltip |
 | `SapGuiInspectDialogButtons.vbs` | dasselbe fuer die Schaltflaechen eines Modaldialogs |
 | `SapGuiInspectTopWindows.vbs` | zeigt, welche Fenster einer Sitzung offen sind |
+| `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump **eines** Fensters mit Id, Typ, Text und Tooltip. Seit 2026-09-11 die erste Wahl bei einer unbekannten Maske, weil er auch `wnd[1]` und `wnd[2]` erfasst und den `SubType` eines `GuiShell` zeigt — genau der entscheidet, ob `.Text` schreibbar ist |
 
 ### Bedienen
 
@@ -761,7 +958,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiMethodeneditorSchreiben.vbs <Sitzung> <Methode> <Datei>` | dasselbe, wenn der Editor bereits offen ist (direkt nach dem Redefinieren) |
 | `SapGuiMethodenTabelle.vbs <Sitzung> [Scroll] [Suchname]` | Methodentabelle in SE24 auflisten oder eine Methode ueber alle Seiten suchen |
 | `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump eines Fensters mit Id, Typ, Text und Tooltip. Erste Wahl, wenn eine Maske unbekannt ist |
-| `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert den HTTP-Status; der Antwortrumpf bleibt unlesbar |
+| `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
+| `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
 
 ### Zustand pruefen
 
@@ -847,7 +1045,16 @@ Passworteingabe und fuehren dann eine feste Folge von SapProbe-Aufrufen aus. Sei
    fuehrt ihn aus. Vorlage: `saptasks/zzprdat/produktiv/Z_ZZPRDAT_CHECK.abap`.
 5. Erst fuer Schreiboperationen zum GUI-Scripting greifen, und dort jede Aenderung
    ueber ein Zustandsfeld zurueckmessen.
-6. Am Ende `UserScripting` wieder auf `0`, Doku nachfuehren, committen.
+6. **Geaenderten Klassen- oder Reportquelltext ueber RFC zuruecklesen**
+   (`abap-read <KLASSE>==CM0xx`), nicht der Bildschirmmeldung glauben. Die
+   Includenummer findet man ueber
+   `table-read TRDIR --where "NAME LIKE '<KLASSE>%' AND UDAT = '<heute>'"`.
+7. Bei OData-Aenderungen: `/IWFND/CACHE_CLEANUP` fuer die Modell-ID, dann im
+   Gateway Client **drei** Dinge pruefen — `$metadata`, das neue EntitySet und
+   **ein bestehendes EntitySet**. Der dritte Punkt ist der wichtigste, sobald
+   eine generische Methode redefiniert wurde: ueber sie laufen alle Sets des
+   Service.
+8. Am Ende `UserScripting` wieder auf `0`, Doku nachfuehren, committen.
 
 ## 8. Fertige Befehlsfolgen zum Kopieren
 
@@ -993,6 +1200,42 @@ foreach ($ze in ($zeilen.Keys | Sort-Object)) {
 
 Damit laesst sich jede klassische `WRITE`-Liste vollstaendig auswerten, ohne Ingo um einen
 Screenshot zu bitten. Fuer ALV-Grids gilt das nicht; dort ist `GetCellValue` der Weg.
+
+### Eine Methode einer Klasse aendern, aktivieren und gegenlesen
+
+Der vollstaendige Ablauf vom 2026-09-11, ohne einen einzigen Klick. Aus der
+Bash-Shell, deshalb die Pfadkonvertierung abschalten.
+
+```bash
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
+
+CL=ZCL_ZPOWERBI_EINKAUF_DPC_EXT
+M='/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET'
+F='C:\...\docs\abap\ZFIN_JOURNAL_DPC_GET_ENTITYSET.abap'
+
+# 1. Klasse im Aendern-Modus oeffnen (ueber den Sitzungsindex, nicht den TX-Code)
+cscript //nologo .tmp_sap_probe/SapGuiOkCode.vbs 0 '/nSE24'
+cscript //nologo .tmp_sap_probe/SapGuiFeldSetzen.vbs SE24 'wnd[0]/usr/ctxtSEOCLASS-CLSNAME' "$CL"
+cscript //nologo .tmp_sap_probe/SapGuiPressButton.vbs SE24 'wnd[0]/usr/btnPUSH_CHANGE'
+
+# 2. Quelltext setzen und sichern
+cscript //nologo .tmp_sap_probe/SapGuiKlassenMethodeQuelltext.vbs 0 "$M" "$F"
+
+# 3. Syntax pruefen (Strg+F2)
+cscript //nologo .tmp_sap_probe/SapGuiPressButton.vbs SE24 'wnd[0]/tbar[1]/btn[26]'
+
+# 4. Ganze Klasse ueber das Einstiegsbild aktivieren (Strg+F3)
+cscript //nologo .tmp_sap_probe/SapGuiOkCode.vbs 0 '/nSE24'
+cscript //nologo .tmp_sap_probe/SapGuiFeldSetzen.vbs SE24 'wnd[0]/usr/ctxtSEOCLASS-CLSNAME' "$CL"
+cscript //nologo .tmp_sap_probe/SapGuiPressButton.vbs SE24 'wnd[0]/tbar[1]/btn[27]'
+cscript //nologo .tmp_sap_probe/SapGuiInaktiveMarkieren.vbs 0 aktivieren "$CL"
+
+# 5. Gegenlesen ueber RFC, nicht ueber den Bildschirm
+powershell -File .tmp_sap_probe/RunSapProbe.ps1 abap-read "${CL}==CM01W" --quiet
+```
+
+Schritt 4 laeuft je Klasse einzeln: der Arbeitsvorrat aus dem Einstiegsbild
+enthaelt nur die Objekte **dieser** Klasse.
 
 ### Quelltext aus dem System holen, wenn der Editor ihn nicht hergibt
 
