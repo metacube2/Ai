@@ -300,6 +300,240 @@ exakt so uebergeben, sonst passiert nichts.
 Aufgeklappt zeigt das Projekt vier Aeste: `Data Model`, `Serviceimplementierung`,
 `Laufzeitartefakte`, `Serviceverwaltung`.
 
+### Class Builder SE24 per Scripting: was geht und wo es hakt
+
+Am 2026-09-10 erschlossen und am 2026-09-11 **zu Ende gebracht**: beide
+Redefinitionen fuer das Journal-EntitySet sind so gesetzt, geschrieben und
+aktiviert worden, ohne dass jemand von Hand klicken musste.
+
+#### Klasse oeffnen
+
+```
+/nSE24, Feld ctxtSEOCLASS-CLSNAME setzen, dann F6 (Aendern), nicht Enter.
+```
+
+Reiter der Klassenpflege: `tabsCTS/tabpTAB_CLSD` Eigenschaften, `tabpTAB_IREL`
+Interfaces, `tabpTAB_ATT` Attribute, **`tabpTAB_MTD` Methoden**, `tabpTAB_EVT`
+Ereignisse, `tabpTAB_TYP` Typen, `tabpTAB_ALI` Aliasse.
+
+Die Methodentabelle liegt unter
+`tabpTAB_MTD/ssubCSS:SAPLSEOD:0253/tblSAPLSEODMC`, Spalte 0 ist
+`txtDY_0253-CPDNAME`.
+
+#### Der Redefinieren-Knopf heisst `btnPUSH_REDEFINE`
+
+Er steht **nicht** in einer Werkzeugleiste, sondern als Druckknopf im Subscreen
+der Methoden:
+
+```
+tabpTAB_MTD/ssubCSS:SAPLSEOD:0253/btnPUSH_REDEFINE
+```
+
+Daneben liegen `PUSH_PARAMETERS`, `PUSH_EXCEPTIONS`, `PUSH_EDITOR` (Quelltext),
+`PUSH_DETAIL`, `PUSH_NEWLINE`, `PUSH_DELLINE`, `PUSH_SORT`, `PUSH_FIND`,
+`PUSH_NEXT` und `PUSH_UNDO_REDEFINITION`. In den Menues gibt es **kein**
+Redefinieren; `Springen > menu[7]/menu[1]` heisst zwar „Redefinitionen", ist
+aber nur eine Anzeige.
+
+#### Die eigentliche Falle: man traegt den Namen gar nicht ein
+
+Der naheliegende Weg ist, den Methodennamen in eine freie Zeile zu schreiben und
+dann `PUSH_REDEFINE` zu druecken. Das ist falsch, und SAP meldet dann:
+
+```
+Es wird bereits ein(e) Komponente DEFINE von Klasse /IWBEP/CL_MGW_ABS_MODEL geerbt
+```
+
+Diese Meldung liest sich wie „geht nicht", heisst aber woertlich, was sie sagt:
+die Komponente ist bereits geerbt, also steht sie **schon in der Tabelle**. Der
+richtige Weg ist deshalb:
+
+> Die geerbte Zeile in der Methodentabelle suchen, den Cursor mit `SetFocus` auf
+> ihr Namensfeld setzen und `PUSH_REDEFINE` druecken. Nichts eintippen.
+
+Am 2026-09-10 hat das zwei Anlaeufe gekostet, weil die Fehlermeldung als
+Bedienfehler beim Tippen gedeutet wurde statt als Hinweis auf die vorhandene
+Zeile. Die Folgemeldung „The method got an invalid argument" kam nur daher, dass
+danach in eine Zeile geschrieben wurde, die gar keine Eingabezeile ist.
+
+Zwei Dinge, an denen die Suche scheitert, wenn man sie nicht bedenkt:
+
+* **Die Tabelle ist laenger als das Fenster.** Im `MPC_EXT` stehen 36 Methoden
+  bei 25 sichtbaren Zeilen, im `DPC_EXT` sind es **398**. Die gesuchte Zeile lag
+  dort auf Position 47, also erst auf der zweiten Seite. Wer nur die sichtbare
+  Seite absucht, findet sie nicht und legt dann faelschlich eine neue Methode an.
+* **Interfacemethoden heissen mit vollem Namen**, hier
+  `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET`. Unter `GET_ENTITYSET` allein
+  findet man nichts.
+
+Skript dafuer: `SapGuiRedefinierenZeile.vbs` (Sitzungsindex, Methodenname). Es
+blaettert durch die ganze Tabelle, raeumt Reste eines frueheren Fehlversuchs aus
+freien Zeilen und drueckt den Knopf im selben COM-Prozess.
+
+#### Nach dem Redefinieren steht man schon im Methodeneditor
+
+Der Class Builder fragt zuerst „Aenderungen sichern?" und danach nach dem
+Transportauftrag, und springt anschliessend **von selbst** in den Editor der
+neuen Methode. Die Methodentabelle ist dann nicht mehr am Bildschirm.
+
+Ein Skript, das jetzt erst die Tabelle sucht, bricht mit „Methodentabelle nicht
+gefunden" ab, obwohl alles in Ordnung ist. Deshalb zwei getrennte Skripte:
+
+| Lage | Skript |
+| --- | --- |
+| Klasse offen, Reiter Methoden, Editor noch zu | `SapGuiKlassenMethodeQuelltext.vbs <Sitzung> <Methode> <Datei>` |
+| Editor bereits offen (direkt nach dem Redefinieren) | `SapGuiMethodeneditorSchreiben.vbs <Sitzung> <Methode> <Datei>` |
+
+Beide ersetzen den Puffer per `SelectAll` plus `ReplaceSelection`, pruefen vorher
+`txtDY0200_CPDNAME` gegen den erwarteten Methodennamen und sichern mit
+`tbar[0]/btn[11]`.
+
+#### Aktivieren: der Dialog kommt auf dem falschen Reiter hoch
+
+Aktiviert wird die **ganze** Klasse ueber das SE24-Einstiegsbild: Klassenname
+eintragen, `tbar[1]/btn[27]` (`Strg+F3`). Dann erscheint „Inaktive Objekte von
+KOI" — und zwar auf dem Reiter **„Lokale Objekte"**, wo die Tabelle leer ist.
+Die eigenen Objekte liegen unter „Transportierbare Objekte"
+(`tabsACT_TAB_STRIP/tabpTRANSPORT`, Subscreen `0201`).
+
+`SapGuiWorklistSelect.vbs` stellt den Reiter sogar wieder auf „Lokal" zurueck und
+meldet dann `ZEILEN_GESAMT=0`. Das ist **kein** Beleg dafuer, dass nichts zu
+aktivieren waere. Neues Skript: `SapGuiInaktiveMarkieren.vbs <Sitzung>
+<pruefen|aktivieren> <Name> [...]`. Es setzt den Reiter selbst, drueckt zuerst
+„Alles entmarkieren" (`tbar[0]/btn[21]`), blaettert durch die ganze Liste und
+markiert nur ueber Namensabgleich. Leerzeilen kommen dabei als **Reihe von
+Unterstrichen** zurueck, nicht als Leerstring; ungefiltert werden sie als fremde
+Objekte gezaehlt. Der Modus `pruefen` zeigt die Auswahl, ohne zu aktivieren.
+
+Bei einer Aktivierung aus dem Einstiegsbild heraus enthaelt der Arbeitsvorrat nur
+die Objekte **dieser** Klasse. Fuer zwei Klassen also zweimal einsteigen.
+
+#### Aus der Bash-Shell heraus werden Transaktionscodes verstuemmelt
+
+Wird ein Skript aus der Git-Bash gestartet, wandelt MSYS jedes Argument, das wie
+ein Unix-Pfad aussieht, in einen Windows-Pfad um. Aus `/nSE24` wird dabei
+`C:/Program Files/Git/nSE24`, und SAP meldet:
+
+```
+Der Funktionscode C:/P ist nicht unterstuetzt
+```
+
+Das sieht nach einem SAP-Problem aus und ist keines. Auch Element-Ids wie
+`/app/con[0]/...` und OData-Pfade sind betroffen. Abhilfe am Anfang jedes
+Bash-Aufrufs:
+
+```bash
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
+```
+
+Bei OData-URIs zusaetzlich `$` maskieren (`\$filter`, `\$top`), sonst ersetzt die
+Shell sie durch leere Variablen. Aus PowerShell heraus tritt beides nicht auf.
+
+#### OData pruefen, ohne sich anzumelden: `/IWFND/GW_CLIENT`
+
+OData von aussen scheitert an der Anmeldung. Basic-Auth liefert `401`
+(2026-08-18, mit von Ingo uebergebenem Passwort), und
+`Invoke-WebRequest -UseDefaultCredentials` ebenfalls `401` (2026-09-11). Weitere
+Anmeldeversuche sind wegen des Sperrrisikos zu unterlassen.
+
+**`/IWFND/GW_CLIENT` laeuft innerhalb der bestehenden SAP-Sitzung** und braucht
+deshalb gar keine zweite Anmeldung. Damit ist jede Gegenprobe an einem Service
+ohne Passwort moeglich:
+
+```
+Request-URI: wnd[0]/usr/cntlURI_AREA/shellcont/shell   (GuiShell, SubType TextEdit)
+             .Text = "/sap/opu/odata/sap/<SRV>/<Set>?$top=1&$format=json"
+             SelectAll/ReplaceSelection gibt es hier NICHT, direkt .Text setzen
+Ausfuehren:  F8 oder tbar[1]/btn[8]
+Statuscode:  cntlGUI_AREA/shellcont/shell/shellcont[1]/shell  (GridView)
+             Zeile mit NAME = "~status_code", dazu "~status_reason", "content-length"
+```
+
+**Was nicht geht:** der Antwortrumpf. Er steht in einem `AbapEditor`- und einem
+`HTMLControl`-Bereich, und beide geben ueber `.Text` nur ihren Steuerelementnamen
+zurueck. Der Menuepunkt „SAP Gateway Client > Auf PC herunterladen" hilft nicht,
+er sichert den **Testfall** (Request), nicht die Antwort. Fuer den Inhalt bleibt
+der Screenshot oder der Browser mit angemeldeter Sitzung.
+
+Statuscode und `content-length` reichen aber fuer die wichtigsten Aussagen: ob
+das Set existiert, ob es Daten liefert und ob die uebrigen Sets nach einer
+Aenderung am generischen Dispatcher noch laufen.
+
+#### Gateway-Fehler stehen in `/IWFND/ERROR_LOG`
+
+Ein `HTTP 500` sagt fuer sich nichts. Der Klartext steht in
+`/IWFND/ERROR_LOG`, im unteren Grid
+(`cntlGUI_AREA/shellcont/shell/shellcont[1]/shell`) unter `..ERROR_INFO`. Am
+2026-09-11 stand dort in einem Satz, was eine lange Fehlersuche gewesen waere:
+„Eigenschaft (externer Name) 'Bukrs' fuer Entitaet 'FinanzJournal' nicht
+gefunden."
+
+#### Gateway-Modell im Code: die generierte Schwestermethode ist die Vorlage
+
+`bind_structure( )` **legt keine Properties an.** Es verknuepft nur bereits
+vorhandene Properties mit den Feldern einer ABAP-Struktur. Wer sich darauf
+verlaesst und danach `get_property( )` ruft, bekommt `HTTP 500`.
+
+Richtig ist, jede Property einzeln anzulegen und erst danach zu binden:
+
+```abap
+lo_property = lo_entity_type->create_property(
+                iv_property_name  = 'Bukrs'
+                iv_abap_fieldname = 'BUKRS' ).
+lo_property->set_is_key( ).
+lo_property->set_type_edm_string( ).
+lo_property->set_maxlength( iv_max_length = 4 ).
+...
+lo_entity_type->bind_structure( iv_structure_name   = 'ZSTR_FIN_JOURNAL'
+                                iv_bind_conversions = 'X' ).
+```
+
+**Die Vorlage nicht erinnern, sondern lesen.** Die generierte `*_MPC`-Klasse
+desselben Service enthaelt je Entity eine Methode `DEFINE_<NAME>`, und die zeigt
+die im System gueltige Schreibweise. Ueber RFC:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  abap-read ZCL_ZPOWERBI_EINKAUF_MPC======CM01M --quiet   # DEFINE_FINANZDATASCHWEIZOE
+```
+
+Dort steht auch die Umrechnung der DDIC-Typen, die man sonst raten wuerde:
+
+| DDIC | OData |
+| --- | --- |
+| `CHAR`, `NUMC`, `CUKY` | `set_type_edm_string( )` + `set_maxlength( Laenge )` |
+| `DATS` | `set_type_edm_datetime( )` + `set_precison( 7 )` |
+| `CURR` | `set_type_edm_decimal( )` + `set_precison( 3 )` + `set_maxlength( Laenge + 1 )` |
+
+Das „+1" und die feste 3 bei `CURR` sind eine Eigenheit von SEGW, belegt an
+`NETWR_DC` (`CURR 15,2` -> `3/16`) und `WAVWR_DC` (`CURR 13,2` -> `3/14`).
+`QUAN` bekommt dagegen kein „+1". Die Methode heisst wirklich `set_precison`,
+mit fehlendem `i`.
+
+#### Wichtig: ABAP aus Klassen IST lesbar, nur nicht ueber den Editor
+
+Die Aussage „der ABAP-Editor laesst sich nicht auslesen" gilt fuer das
+**GUI-Steuerelement**. Ueber RFC geht es sehr wohl, auch fuer Klassen:
+
+```powershell
+# Klassenpool: Name auf 30 Zeichen mit = auffuellen, dann CP
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  abap-read ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CP --quiet
+
+# Methodenimplementierungen: dasselbe Schema mit CM001, CM002, CM00A ...
+# Deklarationen: CU (public), CO (protected), CI (private)
+powershell -ExecutionPolicy Bypass -File .tmp_sap_probe\RunSapProbe.ps1 `
+  abap-read ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM002 --quiet
+```
+
+So wurde am 2026-09-10 die Signatur von
+`/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` aus dem Include
+`/IWBEP/IF_MGW_APPL_SRV_RUNTIMEiu` gelesen statt geraten, und es liessen sich
+bestehende Implementierungen wie `MARA001SET_GET_ENTITYSET` als Vorlage ansehen.
+
+**Damit ist Gegenlesen moeglich**, was bei Klassenaenderungen der entscheidende
+Unterschied ist: schreiben ueber die GUI, pruefen ueber RFC.
+
 ### Mehrere Sitzungen mit demselben Transaktionscode
 
 Die Skripte suchen die Sitzung ueber den Transaktionscode. Wird `/nSE38` in eine zweite
@@ -464,6 +698,13 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiPaketZuordnen.vbs <TX> <Paket> [Fenster]` | Dialog „Objektkatalogeintrag anlegen" beantworten. Die anschliessende Auftragsfrage bleibt bewusst offen |
 | `SapGuiWorklistSelect.vbs <TX> waehle\|liste` | Dialog „Inaktive Objekte", Reiter **Lokale Objekte** ($TMP) |
 | `SapGuiWorklistTransport.vbs <TX> waehle\|liste` | derselbe Dialog, Reiter **Transportierbare Objekte**. Sobald die Objekte in `ZPP1` liegen, stehen sie nur noch dort |
+| `SapGuiInaktiveMarkieren.vbs <Sitzung> pruefen\|aktivieren <Name> [...]` | derselbe Dialog, aber setzt den Reiter selbst, entmarkiert zuerst alles und blaettert durch die ganze Liste. `pruefen` zeigt die Auswahl, ohne zu aktivieren |
+| `SapGuiRedefinierenZeile.vbs <Sitzung> <Methode>` | geerbte Methode in SE24 redefinieren, ueber die **vorhandene** Zeile statt ueber eine Neuanlage |
+| `SapGuiKlassenMethodeQuelltext.vbs <Sitzung> <Methode> <Datei>` | Methodenquelltext im Class Builder setzen und sichern, Methode wird in der Tabelle gesucht |
+| `SapGuiMethodeneditorSchreiben.vbs <Sitzung> <Methode> <Datei>` | dasselbe, wenn der Editor bereits offen ist (direkt nach dem Redefinieren) |
+| `SapGuiMethodenTabelle.vbs <Sitzung> [Scroll] [Suchname]` | Methodentabelle in SE24 auflisten oder eine Methode ueber alle Seiten suchen |
+| `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump eines Fensters mit Id, Typ, Text und Tooltip. Erste Wahl, wenn eine Maske unbekannt ist |
+| `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert den HTTP-Status; der Antwortrumpf bleibt unlesbar |
 
 ### Zustand pruefen
 

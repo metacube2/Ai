@@ -1,6 +1,6 @@
 # Journal-EntitySet fuer CH/AT: Messung und Bauplan
 
-Stand: 2026-09-10. System `T76/100` (travt762), das ist eine rund sechs Monate alte
+Stand: 2026-09-11. System `T76/100` (travt762), das ist eine rund sechs Monate alte
 Kopie der Produktion.
 
 Zugehoerig: `docs/FINANCE_JOURNAL.md` (Feld-Mapping und Leser),
@@ -130,9 +130,88 @@ Vier Punkte, die beim Bauen zaehlen:
 
 Der Report ist rein lesend, nur `SELECT` und `WRITE`.
 
+## 6a. Stand der Umsetzung
+
+**Nachgefuehrt am 2026-09-11.** Der Stand vom Vorabend („Redefinitionen offen")
+ist damit ueberholt.
+
+| Schritt | Stand |
+| --- | --- |
+| DDIC-Struktur `ZSTR_FIN_JOURNAL` | **aktiv**, 22 Felder, Paket `ZPP` |
+| Pruefreport `ZFIN_JOURNAL_PRUEFUNG` | **aktiv**, gelaufen, Messwerte in Abschnitt 3 |
+| Methodenrumpf Modell | `docs/abap/ZFIN_JOURNAL_MPC_DEFINE.abap` |
+| Methodenrumpf Daten | `docs/abap/ZFIN_JOURNAL_DPC_GET_ENTITYSET.abap` |
+| Redefinition `DEFINE` im MPC_EXT | **aktiv**, ueber RFC gegengelesen |
+| Redefinition `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` im DPC_EXT | **aktiv**, Include `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`, ueber RFC gegengelesen |
+| `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` | gelaufen |
+| `$metadata` | **HTTP 200**, `341'032` Zeichen gegenueber `320'752` vorher |
+| `FinanzJournalSet` mit Filter `Bukrs eq '1200' and Gjahr eq '2026'`, `$top=2` | **HTTP 200**, `1'415` Byte |
+| Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
+
+Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**. Die App liest
+produktiv `travp762`; dort gibt es das EntitySet erst nach Transport.
+
+### Wie geprueft wurde, und warum nicht von aussen
+
+OData von aussen scheitert an der Anmeldung: Basic-Auth liefert `401`
+(2026-08-18), `-UseDefaultCredentials` ebenfalls `401` (2026-09-11). Gemessen
+wurde deshalb mit **`/IWFND/GW_CLIENT`** innerhalb der bestehenden SAP-Sitzung.
+Der Statuscode steht im rechten Kopfzeilen-Grid
+(`cntlGUI_AREA/.../shellcont[1]/shell`, Zeile `~status_code`) und ist per
+Scripting lesbar; der **Antwortrumpf ist es nicht**. Der Menuepunkt
+„Auf PC herunterladen" sichert den **Testfall**, nicht die Antwort.
+
+### Der Fehler, der einen halben Anlauf gekostet hat
+
+Die erste Fassung von `DEFINE` hat sich auf `bind_structure( )` verlassen und
+danach `get_property( 'Bukrs' )` gerufen. **`bind_structure` legt keine
+Properties an**, es verknuepft nur vorhandene mit den Strukturfeldern.
+`$metadata` lief deshalb auf `HTTP 500`:
+
+```
+Eigenschaft (externer Name) 'Bukrs' fuer Entitaet 'FinanzJournal' nicht gefunden.
+```
+
+Sichtbar wurde das erst in `/IWFND/ERROR_LOG`; die Antwort selbst liess sich
+nicht lesen. Die zweite Fassung legt jede der 22 Properties einzeln mit
+`create_property( )` an, genau wie das von SEGW generierte
+`DEFINE_FINANZDATASCHWEIZOE` in derselben Klasse. Typen und Laengen stammen aus
+`DD03L` zu `ZSTR_FIN_JOURNAL`.
+
+**Merksatz:** bei Gateway-Code nicht die SAP-Dokumentation aus dem Gedaechtnis
+nachbauen, sondern die generierte Schwestermethode derselben Klasse lesen. Sie
+zeigt die im System tatsaechlich gueltige Schreibweise, einschliesslich der
+Eigenheit, dass `CURR 15,2` als `set_precison( 3 )` mit
+`set_maxlength( 16 )` erzeugt wird.
+
+**Entscheid Ingo, 2026-09-10:** statt SEGW der Codeweg ueber MPC_EXT und
+DPC_EXT, weil schneller. Der Preis ist festgehalten: dieses eine EntitySet steht
+dann nicht im SEGW-Baum, waehrend die uebrigen rund 25 dort gepflegt sind.
+
+**Zwei Stellen, an denen ein Fehler den ganzen Service trifft:**
+
+1. `super->define( )` muss im MPC_EXT als **erstes** laufen. Fehlt es, faellt das
+   komplette in SEGW gepflegte Modell weg.
+2. Der `WHEN OTHERS`-Zweig im DPC_EXT muss jeden fremden Aufruf mit **allen elf**
+   Importing- und beiden Exporting-Parametern an `super->` durchreichen. Die
+   Signatur steht in `/IWBEP/IF_MGW_APPL_SRV_RUNTIMEiu` und ist von dort
+   uebernommen, nicht erinnert.
+
+Nach den Redefinitionen: Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, dann
+`$metadata` von aussen pruefen **und ein bestehendes EntitySet abrufen**, damit
+belegt ist, dass die uebrigen Sets unveraendert laufen.
+
 ## 7. Offen
 
-- Das EntitySet selbst bauen (SEGW, DPC_EXT, Runtime Objects, `/IWFND/CACHE_CLEANUP`).
+- **Feldwerte inhaltlich gegenlesen.** Belegt ist bisher, dass das Set mit Filter
+  `HTTP 200` und eine plausible Nutzlast liefert. Ob jeder der 22 Werte richtig
+  gefuellt ist, ist damit **nicht** belegt: der Antwortrumpf liess sich im
+  Gateway Client nicht auslesen. Guenstigster naechster Schritt ist ein
+  Screenshot der GW-Client-Antwort oder der Abruf im Browser mit angemeldeter
+  Sitzung.
+- **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
+  es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
+  SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.
 - Fachentscheid: `IsManual = Blart 'SA'` ist bisher eine **Annahme**. In Oesterreich gibt
   es 267 `SA`-Belege. Ob weitere Belegarten als manuell gelten, entscheidet Andreas.
 - Ob `PRCTR` mangels Pflege ganz aus dem Set fliegt oder als leere Spalte mitlaeuft.

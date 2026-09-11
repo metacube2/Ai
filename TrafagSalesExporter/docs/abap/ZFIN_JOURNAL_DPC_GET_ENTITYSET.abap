@@ -27,7 +27,10 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
         lt_gjahr TYPE RANGE OF bkpf-gjahr,
         lt_budat TYPE RANGE OF bkpf-budat,
         lt_blart TYPE RANGE OF bkpf-blart,
-        ls_range LIKE LINE OF lt_bukrs,
+        ls_r_bukrs LIKE LINE OF lt_bukrs,
+        ls_r_gjahr LIKE LINE OF lt_gjahr,
+        ls_r_budat LIKE LINE OF lt_budat,
+        ls_r_blart LIKE LINE OF lt_blart,
         lv_tage  TYPE i,
         lv_max   TYPE i,
         lv_skip  TYPE i,
@@ -62,17 +65,41 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
 * ---------------------------------------------------------------------
   LOOP AT it_filter_select_options ASSIGNING <ls_filter>.
     LOOP AT <ls_filter>-select_options ASSIGNING <ls_option>.
-      CLEAR ls_range.
-      ls_range-sign   = <ls_option>-sign.
-      ls_range-option = <ls_option>-option.
-      ls_range-low    = <ls_option>-low.
-      ls_range-high   = <ls_option>-high.
 
+*     Je Zielbereich eine eigene Arbeitsstruktur. Eine gemeinsame waere
+*     bequemer, wuerde aber beim APPEND in einen anders getypten Bereich
+*     umsetzen: LOW von BUKRS ist vier Zeichen lang, LOW von BUDAT acht.
+*     Ein Datumsfilter kaeme dabei abgeschnitten an und wuerde still
+*     falsch selektieren.
       CASE to_upper( <ls_filter>-property ).
-        WHEN 'BUKRS'. APPEND ls_range TO lt_bukrs.
-        WHEN 'GJAHR'. APPEND ls_range TO lt_gjahr.
-        WHEN 'BUDAT'. APPEND ls_range TO lt_budat.
-        WHEN 'BLART'. APPEND ls_range TO lt_blart.
+        WHEN 'BUKRS'.
+          CLEAR ls_r_bukrs.
+          ls_r_bukrs-sign   = <ls_option>-sign.
+          ls_r_bukrs-option = <ls_option>-option.
+          ls_r_bukrs-low    = <ls_option>-low.
+          ls_r_bukrs-high   = <ls_option>-high.
+          APPEND ls_r_bukrs TO lt_bukrs.
+        WHEN 'GJAHR'.
+          CLEAR ls_r_gjahr.
+          ls_r_gjahr-sign   = <ls_option>-sign.
+          ls_r_gjahr-option = <ls_option>-option.
+          ls_r_gjahr-low    = <ls_option>-low.
+          ls_r_gjahr-high   = <ls_option>-high.
+          APPEND ls_r_gjahr TO lt_gjahr.
+        WHEN 'BUDAT'.
+          CLEAR ls_r_budat.
+          ls_r_budat-sign   = <ls_option>-sign.
+          ls_r_budat-option = <ls_option>-option.
+          ls_r_budat-low    = <ls_option>-low.
+          ls_r_budat-high   = <ls_option>-high.
+          APPEND ls_r_budat TO lt_budat.
+        WHEN 'BLART'.
+          CLEAR ls_r_blart.
+          ls_r_blart-sign   = <ls_option>-sign.
+          ls_r_blart-option = <ls_option>-option.
+          ls_r_blart-low    = <ls_option>-low.
+          ls_r_blart-high   = <ls_option>-high.
+          APPEND ls_r_blart TO lt_blart.
         WHEN OTHERS.  " bewusst ignoriert statt zu raten
       ENDCASE.
     ENDLOOP.
@@ -231,10 +258,11 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
     READ TABLE lt_t001 INTO ls_t001 WITH KEY bukrs = ls_pos-bukrs.
     IF sy-subrc = 0.
       lv_ktopl = ls_t001-ktopl.
+*     Kein BINARY SEARCH: der Zusatz ist nur fuer Standardtabellen
+*     erlaubt, lt_txt ist eine SORTED TABLE und sucht ohnehin binaer.
       READ TABLE lt_txt INTO ls_txt
         WITH KEY ktopl = lv_ktopl
-                 saknr = ls_pos-hkont
-        BINARY SEARCH.
+                 saknr = ls_pos-hkont.
       IF sy-subrc = 0.
         ls_out-hkonttxt = ls_txt-txt50.
       ENDIF.
