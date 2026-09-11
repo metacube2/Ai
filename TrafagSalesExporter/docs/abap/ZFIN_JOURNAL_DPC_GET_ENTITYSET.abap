@@ -31,6 +31,8 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
         ls_r_gjahr LIKE LINE OF lt_gjahr,
         ls_r_budat LIKE LINE OF lt_budat,
         ls_r_blart LIKE LINE OF lt_blart,
+        lv_budat_lo TYPE bkpf-budat,
+        lv_budat_hi TYPE bkpf-budat,
         lv_tage  TYPE i,
         lv_max   TYPE i,
         lv_skip  TYPE i,
@@ -87,12 +89,41 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
           ls_r_gjahr-high   = <ls_option>-high.
           APPEND ls_r_gjahr TO lt_gjahr.
         WHEN 'BUDAT'.
-          CLEAR ls_r_budat.
-          ls_r_budat-sign   = <ls_option>-sign.
-          ls_r_budat-option = <ls_option>-option.
-          ls_r_budat-low    = <ls_option>-low.
-          ls_r_budat-high   = <ls_option>-high.
-          APPEND ls_r_budat TO lt_budat.
+*         Buchungsdatum NICHT einfach anhaengen. Ein Bereich in ABAP ist
+*         ODER-verknuepft, und `Budat ge A and Budat lt B` kommt hier als
+*         ZWEI Optionen an. Angehaengt ergaeben sie „ab A ODER vor B", also
+*         den gesamten Bestand. Am 2026-09-11 gemessen: mit nur einer
+*         Untergrenze antwortet der Service in 2 Sekunden, mit beiden lief
+*         er 241 Sekunden und riss die Sitzung ab.
+*         Deshalb werden Unter- und Obergrenze gesammelt und danach zu
+*         EINEM BT-Bereich zusammengefasst.
+          CASE <ls_option>-option.
+            WHEN 'GE'.
+              lv_budat_lo = <ls_option>-low.
+            WHEN 'GT'.
+              lv_budat_lo = <ls_option>-low.
+              lv_budat_lo = lv_budat_lo + 1.
+            WHEN 'LE'.
+              lv_budat_hi = <ls_option>-low.
+            WHEN 'LT'.
+              lv_budat_hi = <ls_option>-low.
+              lv_budat_hi = lv_budat_hi - 1.
+            WHEN 'EQ'.
+              lv_budat_lo = <ls_option>-low.
+              lv_budat_hi = <ls_option>-low.
+            WHEN 'BT'.
+              lv_budat_lo = <ls_option>-low.
+              lv_budat_hi = <ls_option>-high.
+            WHEN OTHERS.
+*             Unbekannte Option unveraendert durchreichen, statt sie still
+*             zu verschlucken.
+              CLEAR ls_r_budat.
+              ls_r_budat-sign   = <ls_option>-sign.
+              ls_r_budat-option = <ls_option>-option.
+              ls_r_budat-low    = <ls_option>-low.
+              ls_r_budat-high   = <ls_option>-high.
+              APPEND ls_r_budat TO lt_budat.
+          ENDCASE.
         WHEN 'BLART'.
           CLEAR ls_r_blart.
           ls_r_blart-sign   = <ls_option>-sign.
@@ -104,6 +135,24 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
       ENDCASE.
     ENDLOOP.
   ENDLOOP.
+
+* Die gesammelten Datumsgrenzen zu genau einem Bereich zusammenfassen.
+  IF lv_budat_lo IS NOT INITIAL OR lv_budat_hi IS NOT INITIAL.
+    CLEAR ls_r_budat.
+    ls_r_budat-sign = 'I'.
+    IF lv_budat_lo IS NOT INITIAL AND lv_budat_hi IS NOT INITIAL.
+      ls_r_budat-option = 'BT'.
+      ls_r_budat-low    = lv_budat_lo.
+      ls_r_budat-high   = lv_budat_hi.
+    ELSEIF lv_budat_lo IS NOT INITIAL.
+      ls_r_budat-option = 'GE'.
+      ls_r_budat-low    = lv_budat_lo.
+    ELSE.
+      ls_r_budat-option = 'LE'.
+      ls_r_budat-low    = lv_budat_hi.
+    ENDIF.
+    APPEND ls_r_budat TO lt_budat.
+  ENDIF.
 
 * ---------------------------------------------------------------------
 * 2. Belegkoepfe. Belegart CO bleibt immer draussen, siehe Kopf.

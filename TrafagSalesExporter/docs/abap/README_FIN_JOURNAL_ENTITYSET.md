@@ -360,25 +360,48 @@ letzte Zeile: mit `Bukrs` und `Gjahr` im Filter faellt dieselbe Anfrage auf
 `1,5` Sekunden. Der Filter erreicht den Data Provider also und wirkt, nur schickt
 der Leser ihn nicht mit.
 
-Drei Wege, falls die 80 Minuten nicht tragen, in der Reihenfolge des Aufwands:
+## 6e. Monatsweises Lesen, und die Falle dabei
 
-1. **Den Leser monatsweise laden lassen.** `Budat` ist bereits filterbar, es
-   braucht keine Aenderung in SAP.
-2. **`Bukrs` im Leser mitgeben.** Die Seite kennt ihren Buchungskreis nicht, wohl
-   aber ihren Standort; das waere eine kleine Erweiterung in
-   `SapGatewayFinancialJournalReader`.
-3. **Die Selektion im Data Provider um `is_paging` herum bauen** statt danach.
-   Das ist die sauberste, aber auch aufwendigste Loesung, weil die Sortierung
-   ueber `BKPF` und `BSEG` hinweg stabil bleiben muss.
+**Entscheid Ingo, 2026-09-11: „lese monatsweise".** Umgesetzt in
+`SapGatewayFinancialJournalReader`: der Ladezeitraum wird in Kalendermonate
+zerlegt, je Monat wird mit `Budat ge <Monatsanfang> and Budat lt <Folgemonat>`
+gefiltert und innerhalb des Monats geblaettert. Die Fenster sind halboffen,
+damit kein Beleg zweimal gelesen wird; das letzte endet am Tag nach heute,
+damit heutige Buchungen mitkommen.
 
-Vor dem ersten produktiven Lauf ist zu entscheiden, ob 80 Minuten akzeptabel
-sind. Fuer den ersten Entwurf mit Oesterreich allein stellt sich die Frage nicht,
-dort sind es 17'364 Positionen.
+**Das allein haette den Service umgebracht.** Ein zweiseitiger Datumsfilter
+kommt im Data Provider als **zwei** Eintraege in `it_filter_select_options` an,
+und ein ABAP-Bereich ist **ODER**-verknuepft. „ab dem 1.6. ODER vor dem 1.7."
+ist der gesamte Bestand, inklusive aller Altjahre der Schweiz. Gemessen am
+2026-09-11:
+
+| Filter | Dauer | Ergebnis |
+| --- | ---: | --- |
+| `Bukrs eq '1200' and Budat ge 2026-06-01` | 2 s | `HTTP 200`, ab Zeile 3000 leer |
+| dieselbe Anfrage plus `Budat lt 2026-07-01` | 241 s | Sitzung abgerissen |
+| ohne `Bukrs`, beide Datumsgrenzen | 105 s | `HTTP 500` |
+
+Deshalb fasst der Data Provider die Grenzen jetzt selbst zu **einem**
+`BT`-Bereich zusammen: `GE`/`GT` setzen die Untergrenze, `LE`/`LT` die
+Obergrenze, `EQ` und `BT` beide; danach entsteht genau eine Bereichszeile.
+Unbekannte Optionen werden unveraendert durchgereicht statt still verschluckt.
+
+**Diese Zusammenfassung gilt nur fuer `Budat`.** Bei `Bukrs`, `Gjahr` und
+`Blart` sind mehrere Optionen echte Alternativen (`Bukrs eq '1100' or Bukrs eq
+'1200'`), dort ist ODER richtig. Wer spaeter einen Bereichsfilter auf `Gjahr`
+schickt, laeuft in dieselbe Falle und muss dort dasselbe tun.
+
+Damit entfaellt der Grund fuer die beiden aufwendigeren Wege, die hier vorher
+standen (`Bukrs` mitgeben, Selektion um `is_paging` herum bauen). Sie bleiben
+als Reserve, falls ein einzelner Monat der Schweiz zu gross wird.
 
 ## 7. Offen
 
-- **Entscheiden, ob rund 80 Minuten fuer einen Jahreslauf tragen** (Abschnitt 6d),
-  und falls nicht, einen der drei dort beschriebenen Wege waehlen.
+- **Die korrigierte Bereichslogik am System nachmessen.** Der Data Provider
+  fasst die Datumsgrenzen jetzt zusammen (Abschnitt 6e), geschrieben ist das,
+  aber noch nicht aktiviert und nicht gemessen — die SAP-Sitzung ist beim
+  241-Sekunden-Versuch abgerissen. Erwartung: derselbe Monatsfilter antwortet in
+  Sekunden statt gar nicht.
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
   es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
   SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.

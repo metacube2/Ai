@@ -338,6 +338,54 @@ public class FinancialJournalTests : IDisposable
     }
 
     [Fact]
+    public void Monthly_Windows_Cover_The_Period_Without_Gap_Or_Overlap()
+    {
+        var windows = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
+            new DateTime(2026, 1, 1), new DateTime(2026, 3, 15));
+
+        // Januar, Februar, dann der angebrochene Maerz bis einschliesslich heute.
+        Assert.Equal(3, windows.Count);
+        Assert.Equal(new DateTime(2026, 1, 1), windows[0].Start);
+        Assert.Equal(new DateTime(2026, 2, 1), windows[0].EndExclusive);
+        Assert.Equal(new DateTime(2026, 3, 1), windows[2].Start);
+        // Ende ist der Folgetag, sonst fehlten die Buchungen von heute.
+        Assert.Equal(new DateTime(2026, 3, 16), windows[2].EndExclusive);
+
+        // Lueckenlos und ueberschneidungsfrei: jedes Fenster beginnt, wo das vorige endet.
+        for (var i = 1; i < windows.Count; i++)
+            Assert.Equal(windows[i - 1].EndExclusive, windows[i].Start);
+    }
+
+    [Fact]
+    public void Monthly_Windows_Start_Mid_Month_And_Handle_A_Single_Day()
+    {
+        var partial = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
+            new DateTime(2026, 1, 20), new DateTime(2026, 2, 3));
+        Assert.Equal(2, partial.Count);
+        Assert.Equal(new DateTime(2026, 1, 20), partial[0].Start);
+        Assert.Equal(new DateTime(2026, 2, 1), partial[0].EndExclusive);
+        Assert.Equal(new DateTime(2026, 2, 4), partial[1].EndExclusive);
+
+        // Startdatum in der Zukunft darf kein leeres Ergebnis und keine Endlosschleife geben.
+        var future = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
+            new DateTime(2026, 5, 10), new DateTime(2026, 1, 1));
+        Assert.Single(future);
+        Assert.Equal(new DateTime(2026, 5, 10), future[0].Start);
+        Assert.Equal(new DateTime(2026, 5, 11), future[0].EndExclusive);
+    }
+
+    [Fact]
+    public void Month_Filter_Is_Half_Open_So_No_Document_Is_Read_Twice()
+    {
+        var filter = SapGatewayFinancialJournalReader.BuildMonthFilter(
+            new DateTime(2026, 6, 1), new DateTime(2026, 7, 1));
+
+        Assert.Equal(
+            "Budat ge datetime'2026-06-01T00:00:00' and Budat lt datetime'2026-07-01T00:00:00'",
+            filter);
+    }
+
+    [Fact]
     public void Journal_Metadata_Rejects_Sales_EntitySet_And_Accepts_Complete_Journal()
     {
         var salesFields = new[]

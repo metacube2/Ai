@@ -71,45 +71,96 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             serviceUrl, resolvedEntitySet, username, password, land, cancellationToken);
 
         var baseUrl = serviceUrl.TrimEnd('/') + "/";
-        var filter = $"Budat ge datetime'{parsedDateFilter:yyyy-MM-dd}T00:00:00'";
+        var windows = BuildMonthlyWindows(parsedDateFilter, DateTime.Today);
         await _appEventLogService.WriteAsync("SAP", "Journal-Read gestartet", land: land,
-            details: $"{baseUrl}{resolvedEntitySet} | Filter={filter}");
+            details: $"{baseUrl}{resolvedEntitySet} | ab={parsedDateFilter:yyyy-MM-dd} | Monatsfenster={windows.Count}");
 
         using var client = CreateClient(username, password);
         var result = new List<FinancialJournalEntry>();
-        for (var skip = 0; ; skip += PageSize)
+        foreach (var (windowStart, windowEndExclusive) in windows)
         {
-            var url = $"{baseUrl}{resolvedEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
-                      $"&$orderby={Uri.EscapeDataString("Bukrs,Gjahr,Belnr,Buzei")}" +
-                      $"&$filter={Uri.EscapeDataString(filter)}";
-            using var response = await client.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var filter = BuildMonthFilter(windowStart, windowEndExclusive);
+            for (var skip = 0; ; skip += PageSize)
             {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new HttpRequestException(
-                    $"SAP OData {resolvedEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
-                    $"URL={url} Antwort={TrimForLog(error)}");
+                var url = $"{baseUrl}{resolvedEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
+                          $"&$orderby={Uri.EscapeDataString("Bukrs,Gjahr,Belnr,Buzei")}" +
+                          $"&$filter={Uri.EscapeDataString(filter)}";
+                using var response = await client.GetAsync(url, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException(
+                        $"SAP OData {resolvedEntitySet} fehlgeschlagen ({(int)response.StatusCode} {response.ReasonPhrase}) " +
+                        $"URL={url} Antwort={TrimForLog(error)}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                var page = ParseRows(json);
+                foreach (var row in page)
+                    result.Add(MapRow(row, tsc, land, sourceSystem));
+
+                if (page.Count > 0 && result.Count % 5000 < PageSize)
+                {
+                    await _appEventLogService.WriteDebugAsync("SAP", "Journal-Read liest Daten", land: land,
+                        details: $"Monat={windowStart:yyyy-MM} | bisher gelesene Zeilen={result.Count}");
+                }
+
+                if (page.Count < PageSize)
+                    break;
             }
-
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
-            var page = ParseRows(json);
-            foreach (var row in page)
-                result.Add(MapRow(row, tsc, land, sourceSystem));
-
-            if (page.Count > 0 && result.Count % 5000 < PageSize)
-            {
-                await _appEventLogService.WriteDebugAsync("SAP", "Journal-Read liest Daten", land: land,
-                    details: $"Bisher gelesene Zeilen={result.Count}");
-            }
-
-            if (page.Count < PageSize)
-                break;
         }
 
         await _appEventLogService.WriteAsync("SAP", "Journal-Read beendet", land: land,
-            details: $"{baseUrl}{resolvedEntitySet} | Zeilen={result.Count}");
+            details: $"{baseUrl}{resolvedEntitySet} | Zeilen={result.Count} | Monatsfenster={windows.Count}");
         return result;
     }
+
+    /// <summary>
+    /// Zerlegt den Ladezeitraum in Kalendermonate.
+    /// <para>
+    /// Grund ist eine Messung vom 2026-09-11 gegen <c>T76/100</c>: der SAP-seitige Data
+    /// Provider liest je Seite den gesamten gefilterten Bestand aus <c>BKPF</c> und
+    /// <c>BSEG</c> neu und wirft alles ausser der angeforderten Seite weg. Ueber ein
+    /// ganzes Jahr sind das rund 650 Seiten zu je gut sieben Sekunden, also etwa 80
+    /// Minuten. Mit einem engeren Zeitfenster faellt die Arbeit je Seite entsprechend,
+    /// und derselbe Abruf dauert Sekunden.
+    /// </para>
+    /// <para>
+    /// Das letzte Fenster endet am Tag nach <paramref name="today"/>, damit heutige
+    /// Buchungen mitkommen. Fenster sind halboffen: Beginn einschliesslich, Ende
+    /// ausschliesslich, damit kein Beleg doppelt gelesen wird.
+    /// </para>
+    /// </summary>
+    public static List<(DateTime Start, DateTime EndExclusive)> BuildMonthlyWindows(DateTime from, DateTime today)
+    {
+        var windows = new List<(DateTime, DateTime)>();
+        var start = from.Date;
+        var last = today.Date >= start ? today.Date : start;
+        var limit = last.AddDays(1);
+
+        while (start < limit)
+        {
+            var nextMonth = new DateTime(start.Year, start.Month, 1).AddMonths(1);
+            var end = nextMonth < limit ? nextMonth : limit;
+            windows.Add((start, end));
+            start = end;
+        }
+
+        return windows;
+    }
+
+    /// <summary>
+    /// Baut den OData-Filter fuer ein Monatsfenster.
+    /// <para>
+    /// <c>lt</c> statt <c>le</c> fuer die Obergrenze, weil die Fenster halboffen sind.
+    /// Der SAP-Data-Provider fasst die beiden Bedingungen zu einem <c>BETWEEN</c>
+    /// zusammen; ohne diese Zusammenfassung waeren sie in ABAP ODER-verknuepft und der
+    /// Filter waere wirkungslos. Siehe <c>docs/abap/README_FIN_JOURNAL_ENTITYSET.md</c>.
+    /// </para>
+    /// </summary>
+    public static string BuildMonthFilter(DateTime start, DateTime endExclusive)
+        => $"Budat ge datetime'{start:yyyy-MM-dd}T00:00:00' and " +
+           $"Budat lt datetime'{endExclusive:yyyy-MM-dd}T00:00:00'";
 
     /// <summary>
     /// Pure Zeilen-Mapping-Methode (BKPF/BSEG-Felder aus dem OData-JSON) — analog zur
