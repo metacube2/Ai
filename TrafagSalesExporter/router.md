@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-09-04
+Stand: 2026-09-11
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.
@@ -65,7 +65,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | **Standortdaten** | Exporte und Importe je Land (ES, DE, UK, IT, IN, CH/AT), Feldluecken, Ansprechpartner | `docs/router/standortdaten.md` |
 | **Einkauf** | Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ | `docs/router/einkauf.md` |
 | **HR** | HR-KPI-Cockpit, Fluktuation, Absenzen | `docs/router/hr.md` |
-| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen | `docs/router/plattform.md` |
+| **Plattform** | Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen, Arbeitsplatzleistung | `docs/router/plattform.md` |
 | **SAP** | **SAP selbst bedienen (Werkzeuge, Grenzen, Fallen)**, ABAP, OData/Gateway, ZLO03, ZZPRDAT, PPWR, Produktsparten, SAP-Kalkulation | `docs/router/sap.md` |
 | **Projekt** | Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand | `docs/router/projekt.md` |
 | **Wo stehen wir gerade?** Uebergabestand mit offenen Punkten und Reihenfolge | `docs/UEBERGABE_2026-09-08.md` |
@@ -78,6 +78,7 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
 | „Warum fehlt Feld X bei Land Y?" | Standortdaten |
 | „Woran arbeite ich gerade, was ist noch offen?" | Projekt |
 | „Wie bringe ich das auf den Server?" | Plattform |
+| „Warum ist mein Arbeitsplatz oder die Anzeige zaeh?" | Plattform |
 | „Was liefert SAP und wie?" | SAP, bei Verkaufszahlen Standortdaten |
 | „Kann ich in SAP selbst etwas anlegen, aendern oder messen?" | **Ja.** `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, ohne Umweg ueber einen Unterrouter |
 

@@ -1,8 +1,9 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-09-04.
+Zurueck: `router.md`. Stand: 2026-09-11.
 
-Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen.
+Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
+Arbeitsplatzleistung.
 
 ## Dateien
 
@@ -134,6 +135,99 @@ Zwei Punkte dazu:
 * **Fuer kleine Abfragen lohnt es nicht.** `SqlQ` gegen die Freigabe ist fuer ein paar
   tausend Zeilen voellig in Ordnung. Die Kopie lohnt ab dem Punkt, wo ein voller
   Tabellenscan oder mehrere Aggregationen im Spiel sind.
+
+## Arbeitsplatz Ingo: wenn die Anzeige zaeh wird
+
+Gemessen am 2026-09-11 auf `NB61258` (Lenovo 20Y1, Ryzen 7 PRO 4750U, 37,7 GB RAM,
+Samsung 970 PRO NVMe). Ingo meldete, die Anzeige sei traege und Programme reagierten
+verzoegert, "wie wenn eine alte HDD drin waere". Die Vermutung lag damit auf Datentraeger
+oder Arbeitsspeicher. **Beides war es nicht**, und genau deshalb steht die Messung hier:
+Wer beim naechsten Mal wieder bei CPU und SSD anfaengt, verliert dieselbe Stunde.
+
+Was die Messung ergab:
+
+| Geprueft | Ergebnis |
+|---|---|
+| CPU unter Dauerlast, zwoelf Laeufe | 0,55 s je Lauf, 2 % Abweichung, also kein Throttling |
+| Arbeitsspeicher | 24,8 GB frei, Auslagerungsdatei mit 0 MB unbenutzt |
+| NVMe sequenziell | 833 MB/s schreiben, 1667 MB/s lesen |
+| NVMe viele kleine Dateien | 0,6 ms je Datei im Temp-Ordner |
+| Gesamtauslastung | CPU im Mittel 15 %, kein auffaelliger Prozess |
+| **Externer Monitor** | **2310 x 990 bei 60 Hz** |
+
+Der externe Philips 345E2 lief auf **2310 x 990**. Diese Aufloesung steht **nicht** in der
+EDID-Liste des Monitors; dort ist **3440 x 1440** die hoechste, und der Treiber bietet sie
+mit **75 Hz** an. 2310 x 990 kam also aus dem AMD-Treiber als benutzerdefinierter,
+skalierter Modus. Damit skalierte die Grafikeinheit jedes einzelne Bild auf die native
+Panelgroesse hoch, und das bei 60 statt 75 Hz.
+
+Das erklaert den Befund vollstaendig: Die Vega-Grafik sitzt in der CPU und teilt sich den
+Arbeitsspeicher, also schlaegt jede zusaetzliche Skalierung auf den Bildaufbau **aller**
+Fenster durch. Im Taskmanager sieht das harmlos aus, weil es Latenz im Compositor ist und
+keine Rechenlast. Wer nur auf die CPU-Anzeige schaut, sucht an der falschen Stelle.
+
+Der Datentraeger-Leerlauf ("Festplatte ausschalten nach") sieht mit 30 Sekunden zwar
+aggressiv aus, ist aber **keine Erklaerung**: Der Wert steht im ausbalancierten Plan
+genauso, gilt fuer NVMe ohnehin nicht, und die gemessene Zugriffszeit widerlegt ihn.
+
+Ein zweiter Befund betraf den Energieplan. Aktiv war ein selbst angelegter
+"Benutzerdefinierter Energiesparplan 1" mit **minimalem Prozessorzustand 100 %** statt der
+ueblichen 5 %. Das haelt den 15-Watt-Chip dauerhaft auf vollem Takt, kostet Waerme und
+Luefter und nimmt thermische Reserve weg. Ursache der Traegheit war es an diesem Tag nicht,
+eine Fehleinstellung aber schon.
+
+**Behoben am 2026-09-11:** Ingo hat die Aufloesung auf 3440 x 1440 gesetzt und auf den von
+der IT bereitgestellten Plan **"TRAFAG AG"** umgeschaltet, womit der minimale
+Prozessorzustand wieder bei 5 % liegt. Beides nachgemessen und bestaetigt, die Anzeige
+laeuft seitdem fluessig. **Offen geblieben ist die Bildwiederholrate**, sie steht weiterhin
+auf 60 Hz, obwohl der Monitor 75 Hz anbietet.
+
+### Die native Aufloesung macht die Schrift klein, und die DPI-Falle dahinter
+
+Nach der Umstellung war die Schrift auf dem 34-Zoll-Panel kaum noch lesbar. Das ist die
+erwartbare Folge, denn 3440 x 1440 auf 34 Zoll sind rund 110 Bildpunkte je Zoll, und
+Windows empfiehlt dort **100 %**. Erhoeht man die Skalierung, bleibt das Bild scharf und
+alles wird trotzdem groesser; eine niedrigere Aufloesung waere der falsche Weg zurueck.
+
+Die Falle: Skalierung ist **pro Bildschirm** eingestellt, und in der Windows-Anzeigeseite
+wirkt der Schieber immer nur auf den gerade ausgewaehlten Bildschirm. Ingo hatte die
+Skalierung bereits erhoeht, sie landete aber auf dem internen Notebookdisplay, das damit
+auf 175 % stand, waehrend der Philips unveraendert auf 100 % blieb. Gemessen sah das so
+aus:
+
+| Bildschirm | empfohlen | war eingestellt | maximal |
+|---|---|---|---|
+| `\.\DISPLAY1`, internes Panel | 150 % | 175 % | 175 % |
+| `\.\DISPLAY2`, Philips 345E2 | 100 % | **100 %** | 225 % |
+
+Gesetzt wurde der Philips danach auf **150 %**. Der logische Arbeitsbereich betraegt damit
+2293 x 960 und ist immer noch breiter als ein gewoehnlicher Full-HD-Bildschirm.
+
+Ausgelesen und gesetzt wird das ohne Klick ueber `QueryDisplayConfig` und
+`DisplayConfigGetDeviceInfo` beziehungsweise `DisplayConfigSetDeviceInfo` aus `user32.dll`,
+mit den undokumentierten Informationstypen **-3 zum Lesen und -4 zum Schreiben**. Der Wert
+ist **relativ zur Empfehlung**, nicht absolut: Die Stufenliste lautet
+100/125/150/175/200/225/250/300/350/400/450/500, und `min` gibt an, wie viele Stufen die
+Empfehlung ueber dem Minimum liegt. Aus `-min` ergibt sich der Index der Empfehlung, aus
+`-min + cur` der aktuelle Wert. Die Aenderung wirkt sofort, ohne Abmeldung und ohne
+Neustart.
+
+Zwei Stolpersteine, die dabei Zeit gekostet haben:
+
+* Der Aufruf braucht die **Source**-Kennung aus `path.sourceInfo`, nicht die Target-Kennung.
+* In PowerShell liefert der Zugriff auf ein verschachteltes Strukturfeld eine **Kopie**.
+  `$s.header.type = 1` veraendert deshalb nichts, der Aufruf scheitert mit `rc=31`. Der
+  Kopf muss als Ganzes zugewiesen werden, am einfachsten schon im C#-Teil.
+
+### Was bei der Messung sonst noch auffiel
+
+* Schreiben im Repository-Ordner kostet 1,3 ms je Datei gegenueber 0,6 ms im Temp-Ordner,
+  also etwa das Doppelte. Das ist der Sophos-Echtzeitscanner und erklaert, warum sich
+  Builds und Git zaeh anfuehlen, obwohl der Datentraeger schnell ist. Aenderbar ist das
+  nur ueber eine Ausnahmeregel der IT, nicht vom Arbeitsplatz aus.
+* Alle Werte ausser Monitor und Energieplan sind vier Minuten nach einem Neustart
+  entstanden, also noch im Startbetrieb. Fuer eine Aussage ueber den Dauerbetrieb muesste
+  nach einer Stunde normaler Arbeit nachgemessen werden.
 
 ## Fallen in diesem Ast
 
