@@ -37,7 +37,10 @@ AUSGESCHLOSSENE_ORDNER = {
     ".git",
     ".vs",
     ".vscode",
+    ".venv",
+    "venv",
     "node_modules",
+    "site-packages",
     "bin",
     "obj",
     "packages",
@@ -124,10 +127,13 @@ def datei_zerlegen(pfad: Path, wurzel: Path) -> list[Abschnitt]:
         inhalt = pfad.read_text(encoding="latin-1")
 
     ueberschrift_muster = re.compile(r"^(#{1,6})\s+(.*)$")
+    # Ein Zaun ist ``` oder ~~~, optional mit Sprachangabe dahinter.
+    zaun_muster = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
     stapel: list[str] = []
     aktuelle_ueberschrift = ""
     puffer: list[str] = []
     rohabschnitte: list[tuple[str, str]] = []
+    im_codeblock = False
 
     def puffer_abgeben() -> None:
         text = "\n".join(puffer).strip()
@@ -136,7 +142,18 @@ def datei_zerlegen(pfad: Path, wurzel: Path) -> list[Abschnitt]:
         puffer.clear()
 
     for zeile in inhalt.splitlines():
-        treffer = ueberschrift_muster.match(zeile)
+        # Innerhalb eines Codeblocks ist `#` ein Kommentar, keine Ueberschrift.
+        # Ohne diese Unterscheidung wurde aus `# Deklarationen: CU (public) ...`
+        # in einem PowerShell-Beispiel eine H1, und alle folgenden Abschnitte der
+        # Datei hingen darunter statt unter ihrer echten Ueberschrift. Am
+        # 2026-09-11 an saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md aufgefallen,
+        # wo rund zwanzig Kommentarzeilen so die Gliederung zerschnitten haben.
+        if zaun_muster.match(zeile):
+            im_codeblock = not im_codeblock
+            puffer.append(zeile)
+            continue
+
+        treffer = None if im_codeblock else ueberschrift_muster.match(zeile)
         if treffer:
             puffer_abgeben()
             ebene = len(treffer.group(1))
