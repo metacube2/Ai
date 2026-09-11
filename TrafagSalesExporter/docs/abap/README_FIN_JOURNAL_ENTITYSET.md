@@ -201,14 +201,80 @@ Nach den Redefinitionen: Klassen aktivieren, `/IWFND/CACHE_CLEANUP`, dann
 `$metadata` von aussen pruefen **und ein bestehendes EntitySet abrufen**, damit
 belegt ist, dass die uebrigen Sets unveraendert laufen.
 
+## 6b. Was der Leser tatsaechlich anfragt, und was daraus folgt
+
+Aus `Services/SapGatewayFinancialJournalReader.cs` gelesen, nicht angenommen.
+Die Anfrage je Seite sieht so aus:
+
+```
+FinanzJournalSet?$format=json&$top=1000&$skip=<n>
+  &$orderby=Bukrs,Gjahr,Belnr,Buzei
+  &$filter=Budat ge datetime'JJJJ-MM-TTT00:00:00'
+```
+
+**Das ist die Anfrage, die es zu testen gilt.** Ein einzelner Aufruf in
+`/IWFND/GW_CLIENT` mit genau dieser URL beantwortet alles Offene auf einmal.
+
+Drei Punkte, die dabei auffallen:
+
+1. **Gross- und Kleinschreibung ist unkritisch.** Der Leser verlangt `HkontTxt`,
+   das EntitySet heisst die Property `Hkonttxt`. Beide Pruefungen im Leser
+   arbeiten mit `StringComparer.OrdinalIgnoreCase`: die Pflichtfeldpruefung
+   `FindMissingRequiredFields` und das Zeilen-Dictionary aus `ParseRows`. Der
+   Kontotext kommt also an. Alle uebrigen 21 Namen stimmen ohnehin wortgleich.
+2. **`$orderby` ist ungetestet.** Der Leser sortiert ueber vier Felder. Das neue
+   `DEFINE` ruft `set_sortable( )` gar nicht, es gilt also die Vorgabe des
+   Frameworks. Wenn die `abap_false` lautet, weist das Gateway `$orderby` mit
+   `400` ab, und der Import scheitert bei der ersten Seite. Der Data Provider
+   selbst ignoriert `it_order` und sortiert fest nach
+   `bukrs gjahr belnr buzei` — zufaellig genau die verlangte Reihenfolge.
+3. **Es gibt keinen `Bukrs`-Filter.** Der Leser holt CH und AT zusammen und
+   trennt sie selbst; so ist es in Abschnitt 5 auch vorgesehen. Zusammen mit der
+   Seitengroesse 1000 heisst das aber: der Data Provider liest **je Seite** den
+   gesamten Bestand neu aus `BKPF` und `BSEG` und wirft danach alles ausser 1000
+   Zeilen weg. Fuer Oesterreich mit 17'364 Positionen sind das 18 Durchlaeufe,
+   fuer die Schweiz ein Vielfaches. Belegart `CO` bleibt zwar draussen, das ist
+   die grosse Masse der Zeitbuchungen, aber die Laufzeit ist vor dem ersten
+   produktiven Lauf zu messen. Falls sie nicht traegt, ist die Abhilfe, die
+   Selektion im Data Provider um `is_paging` herum zu bauen statt danach.
+
+## 6c. Erwartete Werte fuer den Abgleich
+
+Ueber RFC aus `BKPF`, `BSEG` und `SKAT` gelesen. Beleg `0049018498`,
+Buchungskreis `1200`, Jahr `2026`. So muss das EntitySet diese zwei Zeilen
+liefern:
+
+| Property | Zeile 1 | Zeile 2 |
+| --- | --- | --- |
+| `Bukrs` / `Belnr` / `Gjahr` | 1200 / 0049018498 / 2026 | gleich |
+| `Buzei` | 001 | 002 |
+| `Budat` / `Monat` / `Blart` | 2026-01-14 / 01 / WA | gleich |
+| `Hwaer` | EUR | EUR |
+| `Waers` | **leer** | **leer** |
+| `Hkont` | 0000012021 | 0000012300 |
+| `Hkonttxt` | Fertigfabrikate | WE/RE Verrechnungskonto |
+| `Shkzg` | S | H |
+| `Dmbtr` / `Wrbtr` | 2440.00 / 2440.00 | 2440.00 / 2440.00 |
+| `Kostl`, `Prctr`, `Sgtxt`, `Xblnr`, `Stblg` | leer | leer |
+| `Faedt`, `Augdt`, `Augbl` | leer | leer |
+
+`Waers` ist absichtlich leer: der Data Provider gibt die Transaktionswaehrung nur
+aus, wenn sie von der Hauswaehrung abweicht. **Diese Regel steht doppelt**, denn
+der Leser blankt in `TransactionCurrency` noch einmal selbst. Das Ergebnis ist in
+beiden Faellen dasselbe, aber eine der beiden Stellen ist ueberfluessig; wer den
+Data Provider das naechste Mal anfasst, sollte dort das rohe `WAERS` durchreichen
+und die Regel allein dem Leser lassen.
+
+`Faedt` leer ist ebenfalls richtig: `ZFBDT` ist bei diesem Beleg nicht gefuellt,
+und das gilt fuer rund vier Fuenftel aller Zeilen (Abschnitt 4, Befund 3).
+
 ## 7. Offen
 
-- **Feldwerte inhaltlich gegenlesen.** Belegt ist bisher, dass das Set mit Filter
-  `HTTP 200` und eine plausible Nutzlast liefert. Ob jeder der 22 Werte richtig
-  gefuellt ist, ist damit **nicht** belegt: der Antwortrumpf liess sich im
-  Gateway Client nicht auslesen. Guenstigster naechster Schritt ist ein
-  Screenshot der GW-Client-Antwort oder der Abruf im Browser mit angemeldeter
-  Sitzung.
+- **Die Originalanfrage des Lesers einmal absetzen**, siehe Abschnitt 6b. Sie
+  prueft `$orderby`, Paging und Filter in einem Zug. Ein Screenshot der Antwort
+  klaert zusaetzlich die Werte gegen die Tabelle in Abschnitt 6c.
+- **Laufzeit einer Seite messen**, bevor der erste produktive Lauf startet
+  (Abschnitt 6b, Punkt 3).
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
   es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
   SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.
