@@ -190,6 +190,12 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
     FOR ALL ENTRIES IN lt_kopf
     WHERE bukrs = lt_kopf-bukrs.
 
+* Die Sprache der Anmeldung ist bei einem OData-Aufruf NICHT zwangslaeufig
+* Deutsch, und in SKAT stehen die Kontotexte hier ausschliesslich auf 'D'
+* (gemessen am 2026-09-11: Konten 10230 und 30901 haben genau einen Satz,
+* Sprache D). Die erste Fassung las nur mit sy-langu und lieferte deshalb
+* durchgehend einen leeren Kontotext. Es werden nun beide Sprachen geladen und
+* beim Lesen wird die Anmeldesprache bevorzugt, Deutsch ist der Rueckfall.
   lv_spras = sy-langu.
   IF lv_spras IS INITIAL.
     lv_spras = 'D'.
@@ -198,19 +204,20 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
   TYPES: BEGIN OF ty_txt,
            ktopl TYPE skat-ktopl,
            saknr TYPE skat-saknr,
+           spras TYPE skat-spras,
            txt50 TYPE skat-txt50,
          END OF ty_txt.
 
   DATA: lt_txt TYPE SORTED TABLE OF ty_txt
-                WITH NON-UNIQUE KEY ktopl saknr,
+                WITH UNIQUE KEY ktopl saknr spras,
         ls_txt TYPE ty_txt.
 
   IF lt_t001 IS NOT INITIAL.
-    SELECT ktopl saknr txt50 FROM skat
+    SELECT ktopl saknr spras txt50 FROM skat
       INTO CORRESPONDING FIELDS OF TABLE lt_txt
       FOR ALL ENTRIES IN lt_t001
-      WHERE spras = lv_spras
-        AND ktopl = lt_t001-ktopl.
+      WHERE ktopl = lt_t001-ktopl
+        AND ( spras = lv_spras OR spras = 'D' ).
   ENDIF.
 
 * ---------------------------------------------------------------------
@@ -262,7 +269,14 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
 *     erlaubt, lt_txt ist eine SORTED TABLE und sucht ohnehin binaer.
       READ TABLE lt_txt INTO ls_txt
         WITH KEY ktopl = lv_ktopl
-                 saknr = ls_pos-hkont.
+                 saknr = ls_pos-hkont
+                 spras = lv_spras.
+      IF sy-subrc <> 0 AND lv_spras <> 'D'.
+        READ TABLE lt_txt INTO ls_txt
+          WITH KEY ktopl = lv_ktopl
+                   saknr = ls_pos-hkont
+                   spras = 'D'.
+      ENDIF.
       IF sy-subrc = 0.
         ls_out-hkonttxt = ls_txt-txt50.
       ENDIF.

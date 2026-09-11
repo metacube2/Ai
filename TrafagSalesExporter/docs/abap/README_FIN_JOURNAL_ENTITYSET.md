@@ -146,6 +146,7 @@ ist damit ueberholt.
 | `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` | gelaufen |
 | `$metadata` | **HTTP 200**, `341'032` Zeichen gegenueber `320'752` vorher |
 | `FinanzJournalSet`, Originalanfrage des Lesers mit `$orderby`, `$filter` und Paging | **HTTP 200**, rund `650` Seiten zu `1000` Zeilen, siehe Abschnitt 6d |
+| Werte zeilenweise gegengelesen | **erledigt**, Abschnitt 6c1; ein Fehler gefunden und behoben |
 | Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
 
 Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**. Die App liest
@@ -247,7 +248,59 @@ Drei Punkte, die dabei auffallen:
    `BKPF` und `BSEG` und wirft alles ausser 1000 Zeilen weg. Siehe die Messung
    in Abschnitt 6d.
 
+## 6c1. Der Abgleich am 2026-09-11 und was er gefunden hat
+
+Ingo hat die Antwort aus dem Gateway Client geliefert. Erste zwei Zeilen,
+Buchungskreis `1200`, Jahr `2026`, sortiert wie der Leser sortiert:
+
+```json
+"Bukrs":"1200", "Belnr":"14010889", "Gjahr":"2026", "Buzei":"001",
+"Budat":"/Date(1769817600000)/", "Monat":"01", "Blart":"DZ",
+"Xblnr":"202600001", "Hwaer":"EUR", "Waers":"", "Hkont":"10230",
+"Hkonttxt":"", "Shkzg":"S", "Dmbtr":"6092.46", "Faedt":null, "Augdt":null
+```
+
+**Vier Dinge waren richtig:**
+
+* Das Datum kommt als `/Date(1769817600000)/`, also 2026-01-31, passend zu
+  `Monat` `01`. Der Leser kennt dieses Format, `ParseSapDate` behandelt
+  `/Date(...)/` ausdruecklich.
+* `Faedt` und `Augdt` sind `null`, `Augbl` leer. Richtig, dieser Beleg hat kein
+  `ZFBDT` und ist nicht ausgeglichen.
+* `Belnr` und `Hkont` kommen **ohne fuehrende Nullen** an, weil beide den
+  Konvertierungsbaustein `ALPHA` tragen. Unkritisch: der Leser schneidet
+  fuehrende Nullen ohnehin selbst ab (`GetText(...).TrimStart('0')`).
+* Der Beleg ist vollstaendig. Die Gegenprobe in `BSEG` zeigt vier Zeilen, die
+  aufgehen: `6092.46` + `124.34` + `0.00` im Soll gegen `6216.80` im Haben.
+  `$top=2` hatte nur die ersten beiden gezeigt.
+
+**Ein Fehler war drin: `Hkonttxt` war leer.**
+
+Ursache: der Data Provider las `SKAT` mit `spras = sy-langu`. Bei einem
+OData-Aufruf ist die Anmeldesprache **nicht** zwangslaeufig Deutsch, und in
+diesem System stehen die Kontotexte ausschliesslich auf `D` — Konto `10230` hat
+genau einen Satz, „611 170 309 BA-AUSTR", Konto `30901` einen, „Skontoabzuege".
+Die Selektion lief also ins Leere, ohne Fehler, und lieferte durchgehend einen
+leeren Kontotext.
+
+Behoben: `SKAT` wird jetzt mit `spras = sy-langu OR spras = 'D'` gelesen, der
+Schluessel der internen Tabelle enthaelt `SPRAS`, und beim Lesen wird die
+Anmeldesprache bevorzugt mit Deutsch als Rueckfall. Nach Aktivierung und
+`/IWFND/CACHE_CLEANUP` liefert dieselbe Anfrage `1'448` statt `1'415` Byte,
+also **genau 33 Byte mehr** — die Laenge der beiden fehlenden Texte
+(`20` + `13` Byte in UTF-8). Die Methode ist ueber RFC gegengelesen.
+
+**Lehre fuer jeden weiteren Data Provider:** `sy-langu` ist im Gateway kein
+verlaesslicher Wert. Wer sprachabhaengige Texte liest, braucht einen Rueckfall,
+sonst bleibt die Spalte still leer statt zu scheitern.
+
 ## 6c. Erwartete Werte fuer den Abgleich
+
+**Hinweis nachgetragen am 2026-09-11:** die folgende Tabelle war als „erste
+Zeilen" gedacht, trifft aber einen anderen Beleg. Ursache ist die
+`ALPHA`-Konvertierung: intern heisst der Beleg oben `0014010889` und sortiert
+damit vor `0049018498`. `RFC_READ_TABLE` hatte mir eine andere Reihenfolge
+geliefert. Die Tabelle bleibt als zweiter Stichprobenbeleg gueltig.
 
 Ueber RFC aus `BKPF`, `BSEG` und `SKAT` gelesen. Beleg `0049018498`,
 Buchungskreis `1200`, Jahr `2026`. So muss das EntitySet diese zwei Zeilen
@@ -324,12 +377,6 @@ dort sind es 17'364 Positionen.
 
 ## 7. Offen
 
-- **Werte zeilenweise vergleichen.** Paging, Filter und Sortierung sind mit der
-  Originalanfrage des Lesers geprueft (Abschnitt 6d). Die **Werte** sind es
-  nicht: der Antwortrumpf ist per Scripting nicht auslesbar. Ein Screenshot der
-  Antwort auf
-  `FinanzJournalSet?$top=2&$orderby=Bukrs,Gjahr,Belnr,Buzei&$filter=Bukrs eq '1200' and Gjahr eq '2026'`
-  gegen die Tabelle in Abschnitt 6c erledigt das in einer Minute.
 - **Entscheiden, ob rund 80 Minuten fuer einen Jahreslauf tragen** (Abschnitt 6d),
   und falls nicht, einen der drei dort beschriebenen Wege waehlen.
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt

@@ -532,6 +532,41 @@ Zwei praktische Folgerungen:
   Provider auswerten. Nur das Kennzeichen zu setzen bringt nichts, und nur
   auszuwerten auch nicht, weil dann nichts ankommt.
 
+#### `sy-langu` ist im Gateway kein verlaesslicher Wert
+
+Ein Data Provider, der sprachabhaengige Texte mit `WHERE spras = sy-langu`
+liest, bekommt bei einem OData-Aufruf nicht unbedingt Deutsch. Am 2026-09-11
+lieferte `FinanzJournalSet` deshalb durchgehend einen **leeren Kontotext**,
+obwohl in `SKAT` zu jedem bebuchten Konto ein Satz steht — nur eben
+ausschliesslich auf `D`.
+
+Das Tueckische daran: es gibt keinen Fehler. Die Selektion findet nichts, das
+Feld bleibt leer, und im Dashboard faellt erst Wochen spaeter eine leere Spalte
+auf. Deshalb immer mit Rueckfall lesen:
+
+```abap
+SELECT ktopl saknr spras txt50 FROM skat
+  INTO CORRESPONDING FIELDS OF TABLE lt_txt
+  FOR ALL ENTRIES IN lt_t001
+  WHERE ktopl = lt_t001-ktopl
+    AND ( spras = lv_spras OR spras = 'D' ).
+```
+
+und beim `READ TABLE` die Anmeldesprache bevorzugen, `D` als Rueckfall. `SPRAS`
+gehoert dafuer in den Schluessel der internen Tabelle.
+
+#### Ohne Antwortrumpf trotzdem messen: die Laenge zaehlt
+
+Der Gateway Client gibt den Antwortrumpf nicht ans Scripting heraus, wohl aber
+`content-length`. Das reicht weiter, als man denkt. Nach der Korrektur oben
+lieferte dieselbe Anfrage `1'448` statt `1'415` Byte, also genau `33` mehr —
+exakt die Laenge der beiden zuvor fehlenden Kontotexte (`20` + `13` Byte in
+UTF-8). Damit war der Fix belegt, ohne eine Zeile der Antwort zu sehen.
+
+Dasselbe Mittel findet das Ende eines Bestandes: `content-length` faellt bei
+einer leeren JSON-Antwort auf genau `20` Byte (`{"d":{"results":[]}}`). Mit ein
+paar `$skip`-Sprungen ist die Zeilenzahl damit eingegabelt.
+
 #### Wichtig: ABAP aus Klassen IST lesbar, nur nicht ueber den Editor
 
 Die Aussage „der ABAP-Editor laesst sich nicht auslesen" gilt fuer das
