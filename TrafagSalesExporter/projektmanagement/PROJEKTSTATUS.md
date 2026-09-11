@@ -488,7 +488,11 @@ Die Technik dafuer steht seit dem 2026-08-13 produktiv, siehe
 `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`. Fachlicher Eigentuemer der Zuordnung ist Patrik aus
 dem Vertrieb, von dem die Marktumfrage vom Mai 2026 stammt.
 
-#### Ist-Stand, produktiv gemessen am 2026-08-27
+#### Ist-Stand, produktiv gemessen am 2026-08-27 (UEBERHOLT)
+
+**Diese Tabelle ist der Stand vom 2026-08-27 und nicht mehr gueltig.** Der aktuelle
+Stand steht im Nachtrag vom 2026-09-11 weiter unten: Deutschland ist zugeordnet, und
+von 196 Zuordnungen sind 25 bestaetigt.
 
 | Standort | Vorschlaege | bestaetigt |
 | --- | ---: | ---: |
@@ -505,7 +509,13 @@ dem Vertrieb, von dem die Marktumfrage vom Mai 2026 stammt.
 **Heute wuerde der Export leer bleiben.** Unbestaetigte Vorschlaege wirken bewusst nicht im
 zentralen Excel, und bestaetigt ist bisher keiner der 173.
 
-#### Blocker 1: Deutschland kann gar nicht mitspielen — und genau von dort kommt die Anfrage
+#### Blocker 1 (GELOEST am 2026-09-09): Deutschland kann gar nicht mitspielen — und genau von dort kommt die Anfrage
+
+**Dieser Blocker ist erledigt.** Rohail Munirs Rechnungsliste vom 2026-09-09 lieferte die
+fachliche Adressnummer, der produktive Nachzug lief am selben Tag um 14:37. Der folgende
+Text ist der Befund vom 2026-08-27 und bleibt nur als datierter Beleg stehen; die
+darin geforderte Erweiterung der Alphaplan-Query wurde nicht gebraucht. Gueltig ist der
+Nachtrag vom 2026-09-11 am Ende dieses Abschnitts.
 
 Das ist der kritische Punkt, weil der Anfragende selbst aus Deutschland kommt und mit hoher
 Wahrscheinlichkeit deutsche Zahlen erwartet.
@@ -529,7 +539,12 @@ AKW A+V Protec Rail und DEUTA-WERKE. Davon sind `27` mit gar keinem Verkaufskund
 die uebrigen mit TRIT (`18`), TRCH (`17`), TRAT (`3`), TRUK (`1`) und TRES (`1`).
 **Mit TRDE ist keine einzige verknuepft**, weil die Verknuepfung ueber den Namen laeuft.
 
-#### Blocker 2: niemand hat bestaetigt
+#### Blocker 2 (TEILWEISE ERLEDIGT): niemand hat bestaetigt
+
+**Fuer Deutschland gilt das nicht mehr:** dort sind seit dem 2026-09-09 24 Bahnkunden
+bestaetigt. Offen sind nur noch die 171 Vorschlaege der anderen acht Standorte. Der
+folgende Text ist der Stand vom 2026-08-27; der Grundsatz darin, dass der Vertrieb und
+nicht Ingo bestaetigt, gilt unveraendert weiter.
 
 Kein technisches Problem, sondern ein Fachentscheid des Vertriebs. **Ingo hat am 2026-08-27
 festgelegt: Patrik prueft vorher, ob die Zuordnung passt, oder macht sie gleich selbst.** Es
@@ -543,7 +558,10 @@ Verkaufszeilen ab, Liste: `docs/Railway_Kundenpruefung_Patrik_2026-08-13.xlsx`, 
 Offen bleibt dabei der Fachentscheid, ob breit einkaufende Kunden wie Siemens pauschal als
 Railway gelten. Die Oberflaeche warnt ab vier Produktsparten, entscheiden muss der Vertrieb.
 
-#### Was bis zum 2026-09-08 realistisch ist
+#### Was bis zum 2026-09-08 realistisch ist (UEBERHOLT, Termin verstrichen)
+
+**Der Termin 2026-09-08 ist verstrichen, ohne dass etwas an Rohail versendet wurde.**
+Die folgende Einschaetzung stammt vom 2026-08-27 und bleibt als datierter Beleg stehen.
 
 Blocker 2 ist in Tagen loesbar, sobald Patrik die Zuordnung geprueft oder selbst gesetzt hat;
 die Auswertung fuer acht Standorte steht dann sofort. Der erste Schritt ist deshalb, Patrik zu
