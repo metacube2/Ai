@@ -510,6 +510,28 @@ Das „+1" und die feste 3 bei `CURR` sind eine Eigenheit von SEGW, belegt an
 `QUAN` bekommt dagegen kein „+1". Die Methode heisst wirklich `set_precison`,
 mit fehlendem `i`.
 
+#### `set_sortable`, `set_filterable` und `set_pageable` sind reine Metadaten
+
+In `ZPOWERBI_EINKAUF_SRV` steht auf `EKKOSet` das Feld `Ebeln` auf
+`set_sortable( abap_false )` **und** `set_filterable( abap_false )`, das Set
+selbst auf `set_pageable( abap_false )`. Der produktive Einkaufslader fragt es
+trotzdem mit `$orderby=Ebeln`, `$filter` und `$top`/`$skip` ab, seit Monaten
+ohne Fehler.
+
+**Das Gateway weist solche Anfragen also nicht ab.** Es reicht die Option nur
+nicht an den Data Provider durch. Daher kommt der seit 2026-08-18 notierte
+Satz, `MARA001Set` und `mbewSet` wuerden `$top`, `$skip` und `$orderby`
+„ignorieren": sie bekommen die Optionen gar nicht erst zu sehen.
+
+Zwei praktische Folgerungen:
+
+* Ein fehlendes Kennzeichen bricht **nichts**, es macht die Option nur wirkungslos.
+  Wer also fuerchtet, ein `$orderby` laufe auf `400`, kann sich das sparen.
+* Wer Paging oder Filter wirklich braucht, muss beides tun: das Kennzeichen
+  setzen **und** `is_paging` beziehungsweise `it_filter_select_options` im Data
+  Provider auswerten. Nur das Kennzeichen zu setzen bringt nichts, und nur
+  auszuwerten auch nicht, weil dann nichts ankommt.
+
 #### Wichtig: ABAP aus Klassen IST lesbar, nur nicht ueber den Editor
 
 Die Aussage „der ABAP-Editor laesst sich nicht auslesen" gilt fuer das

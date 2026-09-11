@@ -222,12 +222,25 @@ Drei Punkte, die dabei auffallen:
    arbeiten mit `StringComparer.OrdinalIgnoreCase`: die Pflichtfeldpruefung
    `FindMissingRequiredFields` und das Zeilen-Dictionary aus `ParseRows`. Der
    Kontotext kommt also an. Alle uebrigen 21 Namen stimmen ohnehin wortgleich.
-2. **`$orderby` ist ungetestet.** Der Leser sortiert ueber vier Felder. Das neue
-   `DEFINE` ruft `set_sortable( )` gar nicht, es gilt also die Vorgabe des
-   Frameworks. Wenn die `abap_false` lautet, weist das Gateway `$orderby` mit
-   `400` ab, und der Import scheitert bei der ersten Seite. Der Data Provider
-   selbst ignoriert `it_order` und sortiert fest nach
-   `bukrs gjahr belnr buzei` — zufaellig genau die verlangte Reihenfolge.
+2. **`$orderby` ist unkritisch.** Belegt an `EKKOSet`: dort steht auf `Ebeln`
+   sowohl `set_sortable( abap_false )` als auch `set_filterable( abap_false )`,
+   und das Set selbst ist `set_pageable( abap_false )`. Trotzdem liest der
+   produktive Einkaufslader es seit Monaten mit `$orderby=Ebeln`, `$filter` und
+   `$top`/`$skip`, ohne Fehler.
+
+   **Daraus folgt die eigentliche Regel dieses Service:** diese Kennzeichen sind
+   reine Metadaten. Das Gateway weist eine Anfrage deswegen **nicht** ab, es
+   reicht die Option nur nicht an den Data Provider durch. Genau daher kommt der
+   seit 2026-08-18 dokumentierte Satz, `MARA001Set` und `mbewSet` wuerden
+   `$top`, `$skip` und `$orderby` „ignorieren" — sie ignorieren sie nicht aus
+   Eigensinn, sie bekommen sie gar nicht erst zu sehen.
+
+   Fuer `FinanzJournalSet` ist das der Unterschied ums Ganze: weil `pageable`
+   auf `abap_true` steht und `Bukrs`, `Gjahr`, `Budat`, `Blart` als filterbar
+   gekennzeichnet sind, kommen Paging und Filter beim Data Provider wirklich an,
+   und der wertet sie aus. `it_order` wertet er nicht aus, sondern sortiert fest
+   nach `bukrs gjahr belnr buzei` — genau die Reihenfolge, die der Leser
+   verlangt.
 3. **Es gibt keinen `Bukrs`-Filter.** Der Leser holt CH und AT zusammen und
    trennt sie selbst; so ist es in Abschnitt 5 auch vorgesehen. Zusammen mit der
    Seitengroesse 1000 heisst das aber: der Data Provider liest **je Seite** den
@@ -270,9 +283,10 @@ und das gilt fuer rund vier Fuenftel aller Zeilen (Abschnitt 4, Befund 3).
 
 ## 7. Offen
 
-- **Die Originalanfrage des Lesers einmal absetzen**, siehe Abschnitt 6b. Sie
-  prueft `$orderby`, Paging und Filter in einem Zug. Ein Screenshot der Antwort
-  klaert zusaetzlich die Werte gegen die Tabelle in Abschnitt 6c.
+- **Die Originalanfrage des Lesers einmal absetzen**, siehe Abschnitt 6b. Damit
+  sind Paging, Filter und Sortierung in einem Zug geprueft, und ein Screenshot
+  der Antwort klaert die Werte gegen die Tabelle in Abschnitt 6c. Das ist der
+  einzige verbliebene Pruefschritt, der die SAP GUI braucht.
 - **Laufzeit einer Seite messen**, bevor der erste produktive Lauf startet
   (Abschnitt 6b, Punkt 3).
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
