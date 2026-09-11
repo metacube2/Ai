@@ -40,7 +40,21 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         "Sgtxt", "Faedt"
     ];
 
-    private const int PageSize = 1000;
+    /// <summary>
+    /// Seitengroesse fuer den Journalabruf.
+    /// <para>
+    /// Bewusst gross. Der SAP-Data-Provider liest je Anfrage den gesamten gefilterten
+    /// Bestand aus <c>BKPF</c> und <c>BSEG</c> und wirft danach alles ausser der
+    /// angeforderten Seite weg. Die Zeilenzahl der Seite kostet also fast nichts, die
+    /// Anzahl der Seiten dagegen alles. Gemessen am 2026-09-11 gegen <c>T76/100</c> an
+    /// derselben Periode: <c>1000</c> Zeilen brauchen 3,2 Sekunden, <c>20'000</c> Zeilen
+    /// ebenfalls rund 3 Sekunden bei 14 MB Antwort.
+    /// </para>
+    /// <para>
+    /// Wer das kleiner dreht, macht den Import vielfach langsamer, nicht sparsamer.
+    /// </para>
+    /// </summary>
+    private const int PageSize = 20000;
     private readonly ISapGatewayService _sapGatewayService;
     private readonly IAppEventLogService _appEventLogService;
 
@@ -71,15 +85,16 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
             serviceUrl, resolvedEntitySet, username, password, land, cancellationToken);
 
         var baseUrl = serviceUrl.TrimEnd('/') + "/";
-        var windows = BuildMonthlyWindows(parsedDateFilter, DateTime.Today);
+        var periods = BuildPeriodWindows(parsedDateFilter, DateTime.Today);
         await _appEventLogService.WriteAsync("SAP", "Journal-Read gestartet", land: land,
-            details: $"{baseUrl}{resolvedEntitySet} | ab={parsedDateFilter:yyyy-MM-dd} | Monatsfenster={windows.Count}");
+            details: $"{baseUrl}{resolvedEntitySet} | ab={parsedDateFilter:yyyy-MM-dd} | Perioden={periods.Count}");
 
         using var client = CreateClient(username, password);
         var result = new List<FinancialJournalEntry>();
-        foreach (var (windowStart, windowEndExclusive) in windows)
+        var verworfen = 0;
+        foreach (var (year, period) in periods)
         {
-            var filter = BuildMonthFilter(windowStart, windowEndExclusive);
+            var filter = BuildPeriodFilter(year, period);
             for (var skip = 0; ; skip += PageSize)
             {
                 var url = $"{baseUrl}{resolvedEntitySet}?$format=json&$top={PageSize}&$skip={skip}" +
@@ -97,12 +112,23 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var page = ParseRows(json);
                 foreach (var row in page)
-                    result.Add(MapRow(row, tsc, land, sourceSystem));
+                {
+                    var entry = MapRow(row, tsc, land, sourceSystem);
+                    // Die erste Periode enthaelt auch Tage vor dem Startdatum, weil ueber
+                    // die Buchungsperiode und nicht taggenau gefiltert wird.
+                    if (entry.PostingDate.HasValue && entry.PostingDate.Value.Date < parsedDateFilter.Date)
+                    {
+                        verworfen++;
+                        continue;
+                    }
 
-                if (page.Count > 0 && result.Count % 5000 < PageSize)
+                    result.Add(entry);
+                }
+
+                if (page.Count > 0)
                 {
                     await _appEventLogService.WriteDebugAsync("SAP", "Journal-Read liest Daten", land: land,
-                        details: $"Monat={windowStart:yyyy-MM} | bisher gelesene Zeilen={result.Count}");
+                        details: $"Periode={year}/{period:00} | bisher gelesene Zeilen={result.Count}");
                 }
 
                 if (page.Count < PageSize)
@@ -111,56 +137,59 @@ public class SapGatewayFinancialJournalReader : ISapGatewayFinancialJournalReade
         }
 
         await _appEventLogService.WriteAsync("SAP", "Journal-Read beendet", land: land,
-            details: $"{baseUrl}{resolvedEntitySet} | Zeilen={result.Count} | Monatsfenster={windows.Count}");
+            details: $"{baseUrl}{resolvedEntitySet} | Zeilen={result.Count} | Perioden={periods.Count} " +
+                     $"| vor dem Startdatum verworfen={verworfen}");
         return result;
     }
 
     /// <summary>
-    /// Zerlegt den Ladezeitraum in Kalendermonate.
+    /// Zerlegt den Ladezeitraum in Geschaeftsjahr und Buchungsperiode.
     /// <para>
-    /// Grund ist eine Messung vom 2026-09-11 gegen <c>T76/100</c>: der SAP-seitige Data
-    /// Provider liest je Seite den gesamten gefilterten Bestand aus <c>BKPF</c> und
-    /// <c>BSEG</c> neu und wirft alles ausser der angeforderten Seite weg. Ueber ein
-    /// ganzes Jahr sind das rund 650 Seiten zu je gut sieben Sekunden, also etwa 80
-    /// Minuten. Mit einem engeren Zeitfenster faellt die Arbeit je Seite entsprechend,
-    /// und derselbe Abruf dauert Sekunden.
+    /// <b>Warum ueberhaupt zerlegt wird:</b> der SAP-Data-Provider liest je Seite den
+    /// gesamten gefilterten Bestand aus <c>BKPF</c> und <c>BSEG</c> neu und wirft alles
+    /// ausser der angeforderten Seite weg. Ein Jahr am Stueck sind rund 650 Seiten zu je
+    /// gut sieben Sekunden, also etwa 80 Minuten (gemessen am 2026-09-11 gegen
+    /// <c>T76/100</c>). Mit engerem Fenster faellt die Arbeit je Seite entsprechend.
     /// </para>
     /// <para>
-    /// Das letzte Fenster endet am Tag nach <paramref name="today"/>, damit heutige
-    /// Buchungen mitkommen. Fenster sind halboffen: Beginn einschliesslich, Ende
-    /// ausschliesslich, damit kein Beleg doppelt gelesen wird.
+    /// <b>Warum ueber die Periode und nicht ueber zwei Datumsgrenzen:</b> bei ZWEI
+    /// Bedingungen auf DEMSELBEN Feld liefert das Gateway gar keine Filteroptionen an den
+    /// Data Provider aus. <c>Budat ge A and Budat lt B</c> laesst den Filter deshalb
+    /// komplett wegfallen und endete in der Messung mit <c>HTTP 500</c> nach 97 Sekunden.
+    /// Zwei Bedingungen auf VERSCHIEDENEN Feldern gehen in 1,5 Sekunden durch.
+    /// </para>
+    /// <para>
+    /// Perioden laufen bis <c>16</c>, nicht bis <c>12</c>: die Sonderperioden am
+    /// Jahresende tragen Abschlussbuchungen und wuerden sonst fehlen.
     /// </para>
     /// </summary>
-    public static List<(DateTime Start, DateTime EndExclusive)> BuildMonthlyWindows(DateTime from, DateTime today)
+    public static List<(int Year, int Period)> BuildPeriodWindows(DateTime from, DateTime today)
     {
-        var windows = new List<(DateTime, DateTime)>();
-        var start = from.Date;
-        var last = today.Date >= start ? today.Date : start;
-        var limit = last.AddDays(1);
+        const int LastSpecialPeriod = 16;
 
-        while (start < limit)
+        var windows = new List<(int, int)>();
+        var firstYear = from.Date.Year;
+        var lastYear = Math.Max(today.Date.Year, firstYear);
+
+        for (var year = firstYear; year <= lastYear; year++)
         {
-            var nextMonth = new DateTime(start.Year, start.Month, 1).AddMonths(1);
-            var end = nextMonth < limit ? nextMonth : limit;
-            windows.Add((start, end));
-            start = end;
+            // Im Startjahr erst ab dem Monat des Startdatums; die Sonderperioden
+            // gehoeren dazu, weil sie auf das Jahresende buchen.
+            var firstPeriod = year == firstYear ? from.Date.Month : 1;
+            for (var period = firstPeriod; period <= LastSpecialPeriod; period++)
+                windows.Add((year, period));
         }
 
         return windows;
     }
 
     /// <summary>
-    /// Baut den OData-Filter fuer ein Monatsfenster.
-    /// <para>
-    /// <c>lt</c> statt <c>le</c> fuer die Obergrenze, weil die Fenster halboffen sind.
-    /// Der SAP-Data-Provider fasst die beiden Bedingungen zu einem <c>BETWEEN</c>
-    /// zusammen; ohne diese Zusammenfassung waeren sie in ABAP ODER-verknuepft und der
-    /// Filter waere wirkungslos. Siehe <c>docs/abap/README_FIN_JOURNAL_ENTITYSET.md</c>.
-    /// </para>
+    /// Baut den OData-Filter fuer eine Buchungsperiode: genau eine Bedingung je Feld,
+    /// siehe <see cref="BuildPeriodWindows"/> und
+    /// <c>docs/abap/README_FIN_JOURNAL_ENTITYSET.md</c>.
     /// </summary>
-    public static string BuildMonthFilter(DateTime start, DateTime endExclusive)
-        => $"Budat ge datetime'{start:yyyy-MM-dd}T00:00:00' and " +
-           $"Budat lt datetime'{endExclusive:yyyy-MM-dd}T00:00:00'";
+    public static string BuildPeriodFilter(int year, int period)
+        => $"Gjahr eq '{year:0000}' and Monat eq '{period:00}'";
 
     /// <summary>
     /// Pure Zeilen-Mapping-Methode (BKPF/BSEG-Felder aus dem OData-JSON) — analog zur

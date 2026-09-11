@@ -27,10 +27,12 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
         lt_gjahr TYPE RANGE OF bkpf-gjahr,
         lt_budat TYPE RANGE OF bkpf-budat,
         lt_blart TYPE RANGE OF bkpf-blart,
+        lt_monat TYPE RANGE OF bkpf-monat,
         ls_r_bukrs LIKE LINE OF lt_bukrs,
         ls_r_gjahr LIKE LINE OF lt_gjahr,
         ls_r_budat LIKE LINE OF lt_budat,
         ls_r_blart LIKE LINE OF lt_blart,
+        ls_r_monat LIKE LINE OF lt_monat,
         lv_budat_lo TYPE bkpf-budat,
         lv_budat_hi TYPE bkpf-budat,
         lv_tage  TYPE i,
@@ -89,14 +91,19 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
           ls_r_gjahr-high   = <ls_option>-high.
           APPEND ls_r_gjahr TO lt_gjahr.
         WHEN 'BUDAT'.
-*         Buchungsdatum NICHT einfach anhaengen. Ein Bereich in ABAP ist
-*         ODER-verknuepft, und `Budat ge A and Budat lt B` kommt hier als
-*         ZWEI Optionen an. Angehaengt ergaeben sie „ab A ODER vor B", also
-*         den gesamten Bestand. Am 2026-09-11 gemessen: mit nur einer
-*         Untergrenze antwortet der Service in 2 Sekunden, mit beiden lief
-*         er 241 Sekunden und riss die Sitzung ab.
-*         Deshalb werden Unter- und Obergrenze gesammelt und danach zu
-*         EINEM BT-Bereich zusammengefasst.
+*         Grenzen sammeln und danach zu EINEM Bereich zusammenfassen, statt
+*         sie anzuhaengen: ein ABAP-Bereich ist ODER-verknuepft, „ab A ODER
+*         vor B" waere der gesamte Bestand.
+*
+*         WICHTIG, gemessen am 2026-09-11: das rettet einen zweiseitigen
+*         Datumsfilter NICHT. Bei zwei Bedingungen auf DEMSELBEN Feld
+*         liefert das Gateway ueberhaupt keine Filteroptionen aus; hier
+*         kommt dann gar nichts an, und der Filter faellt vollstaendig weg
+*         (HTTP 500 nach 97 Sekunden, auch mit dieser Zusammenfassung).
+*         Zwei Bedingungen auf VERSCHIEDENEN Feldern gehen dagegen in 1,5
+*         Sekunden durch. Deshalb laedt der Leser ueber `Gjahr` und `Monat`,
+*         also einen Filter je Feld. Der Code hier bleibt trotzdem richtig
+*         und greift bei `EQ` und `BT` sowie bei einer einzelnen Grenze.
           CASE <ls_option>-option.
             WHEN 'GE'.
               lv_budat_lo = <ls_option>-low.
@@ -131,6 +138,15 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
           ls_r_blart-low    = <ls_option>-low.
           ls_r_blart-high   = <ls_option>-high.
           APPEND ls_r_blart TO lt_blart.
+        WHEN 'MONAT'.
+*         Buchungsperiode. Darueber laedt der Leser monatsweise, weil zwei
+*         Bedingungen auf demselben Feld nicht funktionieren, siehe unten.
+          CLEAR ls_r_monat.
+          ls_r_monat-sign   = <ls_option>-sign.
+          ls_r_monat-option = <ls_option>-option.
+          ls_r_monat-low    = <ls_option>-low.
+          ls_r_monat-high   = <ls_option>-high.
+          APPEND ls_r_monat TO lt_monat.
         WHEN OTHERS.  " bewusst ignoriert statt zu raten
       ENDCASE.
     ENDLOOP.
@@ -177,6 +193,7 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~get_entityset.
     FROM bkpf INTO TABLE lt_kopf
     WHERE bukrs IN lt_bukrs
       AND gjahr IN lt_gjahr
+      AND monat IN lt_monat
       AND budat IN lt_budat
       AND blart IN lt_blart
       AND blart <> 'CO'.

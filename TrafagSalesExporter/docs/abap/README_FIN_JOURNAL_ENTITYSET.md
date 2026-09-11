@@ -145,7 +145,7 @@ ist damit ueberholt.
 | Redefinition `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET` im DPC_EXT | **aktiv**, Include `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`, ueber RFC gegengelesen |
 | `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` | gelaufen |
 | `$metadata` | **HTTP 200**, `341'032` Zeichen gegenueber `320'752` vorher |
-| `FinanzJournalSet`, Originalanfrage des Lesers mit `$orderby`, `$filter` und Paging | **HTTP 200**, rund `650` Seiten zu `1000` Zeilen, siehe Abschnitt 6d |
+| `FinanzJournalSet`, Originalanfrage des Lesers mit `$orderby`, `$filter` und Paging | **HTTP 200**; monatsweise und mit `$top=20000` rund zwei Minuten je Jahr, siehe 6d bis 6e |
 | Werte zeilenweise gegengelesen | **erledigt**, Abschnitt 6c1; ein Fehler gefunden und behoben |
 | Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
 
@@ -360,6 +360,24 @@ letzte Zeile: mit `Bukrs` und `Gjahr` im Filter faellt dieselbe Anfrage auf
 `1,5` Sekunden. Der Filter erreicht den Data Provider also und wirkt, nur schickt
 der Leser ihn nicht mit.
 
+## 6e1. Wichtig zum Lesen dieser Messungen: was in T76 ueberhaupt drinsteht
+
+`T76/100` ist eine rund sechs Monate alte Kopie. Im Geschaeftsjahr `2026` gibt es
+dort **nur die Perioden 01 bis 04**, und `04` ist angeschnitten:
+
+| Periode | Belegkoepfe ohne `CO` |
+| --- | ---: |
+| 01 | 22'688 |
+| 02 | 29'428 |
+| 03 | 33'877 |
+| 04 | 14'006 |
+| 06 | rund 100 |
+
+Wer eine Messung an Periode `06` macht, misst deshalb fast nichts. Das ist am
+2026-09-11 genau einmal passiert: 2,2 Sekunden sahen nach einem grossen Erfolg
+aus und waren nur ein leerer Monat. Fuer Laufzeitmessungen ist **`2026/03`** die
+richtige Periode, sie hat rund `196'000` Journalzeilen.
+
 ## 6e. Monatsweises Lesen, und die Falle dabei
 
 **Entscheid Ingo, 2026-09-11: „lese monatsweise".** Umgesetzt in
@@ -391,17 +409,35 @@ Unbekannte Optionen werden unveraendert durchgereicht statt still verschluckt.
 '1200'`), dort ist ODER richtig. Wer spaeter einen Bereichsfilter auf `Gjahr`
 schickt, laeuft in dieselbe Falle und muss dort dasselbe tun.
 
-Damit entfaellt der Grund fuer die beiden aufwendigeren Wege, die hier vorher
-standen (`Bukrs` mitgeben, Selektion um `is_paging` herum bauen). Sie bleiben
-als Reserve, falls ein einzelner Monat der Schweiz zu gross wird.
+**Der Filter wirkt jetzt**, gemessen an `2026/03`: `HTTP 200` in `3,2` Sekunden
+statt `HTTP 500` nach 97 Sekunden.
+
+### Der eigentliche Hebel war aber die Seitengroesse
+
+Dieselbe Periode, dieselbe Anfrage, nur `$top` veraendert:
+
+| `$top` | Dauer | Antwort |
+| ---: | ---: | ---: |
+| 1'000 | 3,2 s | 753 KB |
+| 5'000 | 5,6 s | 3,7 MB |
+| 20'000 | **3,0 s** | 14,3 MB |
+| 20'000, zweiter Lauf | **2,8 s** | 14,3 MB |
+
+**Die Zeilenzahl einer Seite kostet fast nichts, die Anzahl der Seiten kostet
+alles.** Das folgt direkt daraus, dass der Data Provider je Anfrage ohnehin den
+gesamten gefilterten Bestand liest. `PageSize` im Leser steht deshalb auf
+`20'000` statt `1'000`.
+
+Damit rechnet sich der Jahreslauf neu: rund `650'000` Zeilen ergeben `33` Seiten
+zu je etwa drei Sekunden, also **unter zwei Minuten** statt der gemessenen 80.
+`2026/03` allein sind zehn Seiten, rund 30 Sekunden.
+
+Wer `PageSize` wieder kleiner dreht, macht den Import vielfach langsamer, nicht
+sparsamer. Die aufwendigeren Wege (Selektion um `is_paging` herum bauen) bleiben
+Reserve, falls in der Produktion eine einzelne Periode der Schweiz zu gross wird.
 
 ## 7. Offen
 
-- **Die korrigierte Bereichslogik am System nachmessen.** Der Data Provider
-  fasst die Datumsgrenzen jetzt zusammen (Abschnitt 6e), geschrieben ist das,
-  aber noch nicht aktiviert und nicht gemessen — die SAP-Sitzung ist beim
-  241-Sekunden-Versuch abgerissen. Erwartung: derselbe Monatsfilter antwortet in
-  Sekunden statt gar nicht.
 - **Transport `T76K912530` freigeben und nach `P76` importieren.** Bis dahin gibt
   es das Set nur auf Test, und der produktive Journalimport kann es nicht sehen.
   SapProbe ist bewusst nur fuer `T76/100` eingerichtet, nicht fuer `P76`.

@@ -338,51 +338,54 @@ public class FinancialJournalTests : IDisposable
     }
 
     [Fact]
-    public void Monthly_Windows_Cover_The_Period_Without_Gap_Or_Overlap()
+    public void Period_Windows_Cover_Every_Period_Including_The_Year_End_Specials()
     {
-        var windows = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
+        var windows = SapGatewayFinancialJournalReader.BuildPeriodWindows(
             new DateTime(2026, 1, 1), new DateTime(2026, 3, 15));
 
-        // Januar, Februar, dann der angebrochene Maerz bis einschliesslich heute.
-        Assert.Equal(3, windows.Count);
-        Assert.Equal(new DateTime(2026, 1, 1), windows[0].Start);
-        Assert.Equal(new DateTime(2026, 2, 1), windows[0].EndExclusive);
-        Assert.Equal(new DateTime(2026, 3, 1), windows[2].Start);
-        // Ende ist der Folgetag, sonst fehlten die Buchungen von heute.
-        Assert.Equal(new DateTime(2026, 3, 16), windows[2].EndExclusive);
+        // Ein Jahr, Perioden 1 bis 16. Die Sonderperioden 13 bis 16 tragen die
+        // Abschlussbuchungen und duerfen nicht fehlen, auch wenn heute erst Maerz ist:
+        // sie werden rueckwirkend auf das Jahresende gebucht.
+        Assert.Equal(16, windows.Count);
+        Assert.Equal((2026, 1), windows[0]);
+        Assert.Equal((2026, 16), windows[^1]);
+        Assert.Contains((2026, 13), windows);
 
-        // Lueckenlos und ueberschneidungsfrei: jedes Fenster beginnt, wo das vorige endet.
-        for (var i = 1; i < windows.Count; i++)
-            Assert.Equal(windows[i - 1].EndExclusive, windows[i].Start);
+        // Jede Kombination genau einmal, sonst kaeme ein Beleg doppelt.
+        Assert.Equal(windows.Count, windows.Distinct().Count());
     }
 
     [Fact]
-    public void Monthly_Windows_Start_Mid_Month_And_Handle_A_Single_Day()
+    public void Period_Windows_Skip_Periods_Before_The_Start_Month_And_Span_Years()
     {
-        var partial = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
-            new DateTime(2026, 1, 20), new DateTime(2026, 2, 3));
-        Assert.Equal(2, partial.Count);
-        Assert.Equal(new DateTime(2026, 1, 20), partial[0].Start);
-        Assert.Equal(new DateTime(2026, 2, 1), partial[0].EndExclusive);
-        Assert.Equal(new DateTime(2026, 2, 4), partial[1].EndExclusive);
+        var windows = SapGatewayFinancialJournalReader.BuildPeriodWindows(
+            new DateTime(2025, 11, 4), new DateTime(2026, 2, 20));
 
-        // Startdatum in der Zukunft darf kein leeres Ergebnis und keine Endlosschleife geben.
-        var future = SapGatewayFinancialJournalReader.BuildMonthlyWindows(
+        // 2025 erst ab Periode 11, dafuer inklusive der Sonderperioden; 2026 komplett.
+        Assert.Equal((2025, 11), windows[0]);
+        Assert.Contains((2025, 16), windows);
+        Assert.DoesNotContain((2025, 10), windows);
+        Assert.Contains((2026, 1), windows);
+        Assert.Contains((2026, 16), windows);
+        Assert.Equal(6 + 16, windows.Count);
+
+        // Startdatum in der Zukunft darf weder leer ausgehen noch endlos laufen.
+        var future = SapGatewayFinancialJournalReader.BuildPeriodWindows(
             new DateTime(2026, 5, 10), new DateTime(2026, 1, 1));
-        Assert.Single(future);
-        Assert.Equal(new DateTime(2026, 5, 10), future[0].Start);
-        Assert.Equal(new DateTime(2026, 5, 11), future[0].EndExclusive);
+        Assert.Equal(12, future.Count);
+        Assert.Equal((2026, 5), future[0]);
+        Assert.Equal((2026, 16), future[^1]);
     }
 
     [Fact]
-    public void Month_Filter_Is_Half_Open_So_No_Document_Is_Read_Twice()
+    public void Period_Filter_Uses_One_Condition_Per_Field()
     {
-        var filter = SapGatewayFinancialJournalReader.BuildMonthFilter(
-            new DateTime(2026, 6, 1), new DateTime(2026, 7, 1));
-
-        Assert.Equal(
-            "Budat ge datetime'2026-06-01T00:00:00' and Budat lt datetime'2026-07-01T00:00:00'",
-            filter);
+        // Zwei Bedingungen auf demselben Feld liefert das SAP-Gateway nicht als
+        // Filteroption aus; der Filter fiele komplett weg. Deshalb Gjahr UND Monat.
+        Assert.Equal("Gjahr eq '2026' and Monat eq '06'",
+            SapGatewayFinancialJournalReader.BuildPeriodFilter(2026, 6));
+        Assert.Equal("Gjahr eq '2026' and Monat eq '13'",
+            SapGatewayFinancialJournalReader.BuildPeriodFilter(2026, 13));
     }
 
     [Fact]

@@ -121,7 +121,14 @@ METHOD define.
   lo_property->set_creatable( abap_false ).
   lo_property->set_updatable( abap_false ).
   lo_property->set_nullable( abap_false ).
-  lo_property->set_filterable( abap_false ).
+* Filterbar seit 2026-09-11, damit der Leser monatsweise laden kann.
+* Warum ueber die Buchungsperiode statt ueber zwei Datumsgrenzen: das Gateway
+* liefert bei ZWEI Bedingungen auf DEMSELBEN Feld gar keine Filteroptionen
+* aus, der Filter faellt dann komplett weg und der Data Provider liest alles.
+* Gemessen am 2026-09-11: `Budat ge A and Budat lt B` lief 97 Sekunden auf
+* HTTP 500, waehrend zwei Bedingungen auf VERSCHIEDENEN Feldern in 1,5
+* Sekunden antworten. Deshalb ein Filter je Feld: `Gjahr` und `Monat`.
+  lo_property->set_filterable( abap_true ).
 
   lo_property = lo_entity_type->create_property(
                   iv_property_name  = 'Blart'
