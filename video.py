@@ -5,25 +5,28 @@ Bildeffekte in Echtzeit auf einen Bildschirmbereich.
 Ein wählbarer Bereich des Bildschirms (z. B. ein Videoplayer-Fenster) wird
 laufend abgefilmt, mit einem Effekt verändert und in der Vorschau angezeigt.
 
-Abhängigkeiten: numpy, opencv-python(-headless), mss, pillow, sounddevice, scipy
+Abhängigkeiten: numpy, opencv-python(-headless), mss, PySide6, sounddevice, scipy
 macOS: Das Terminal braucht die Freigabe "Bildschirmaufnahme", für den
 Audio+Video-Glitch zusätzlich "Mikrofon".
 """
 
 import collections
 import inspect
-import queue
+import sys
 import threading
 import time
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import cv2
 import mss
 import numpy as np
 import sounddevice as sd
-import tkinter as tk
-from PIL import Image, ImageTk
+from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QCursor, QGuiApplication, QImage, QKeySequence, QPainter, QPalette, QPen, QShortcut
+from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+                               QPushButton, QVBoxLayout, QWidget)
 from scipy import signal
 
 # Alle Bilder in diesem Programm sind RGB (uint8, Form H x B x 3).
@@ -1778,6 +1781,8 @@ class EffectProcessor:
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
+        # activate()/deactivate() können dauern (Audiogerät öffnen): geordnet im Hintergrund ausführen
+        self._lifecycle = ThreadPoolExecutor(max_workers=1, thread_name_prefix="effect-lifecycle")
 
         self.event_bus.subscribe('start_capture', self.start_capture)
         self.event_bus.subscribe('stop_capture', self.stop_capture)
@@ -1807,8 +1812,8 @@ class EffectProcessor:
             return
         if self.is_running:
             if old is not None:
-                old.deactivate()
-            new.activate()
+                self._lifecycle.submit(old.deactivate)
+            self._lifecycle.submit(new.activate)
         self.event_bus.publish('effect_changed', new)
         self.event_bus.publish('status_update', f"Effekt gewechselt zu: {effect_name}")
 
@@ -1822,7 +1827,7 @@ class EffectProcessor:
                                         daemon=True)
         self._thread.start()
         if self.current_strategy is not None:
-            self.current_strategy.activate()
+            self._lifecycle.submit(self.current_strategy.activate)
         self.event_bus.publish('status_update',
                                f"Erfasse Region ({region['left']},{region['top']}) "
                                f"{region['width']}x{region['height']} px")
@@ -1833,7 +1838,7 @@ class EffectProcessor:
             self._thread.join(timeout=3.0)
         self._thread = None
         if self.current_strategy is not None:
-            self.current_strategy.deactivate()
+            self._lifecycle.submit(self.current_strategy.deactivate)
         if not quiet:
             self.event_bus.publish('status_update', "Gestoppt. Bereit für neuen Start.")
 
@@ -1898,207 +1903,332 @@ class EffectProcessor:
         finally:
             self.capture_service.close()
 
-# ----------------- GUI -----------------
+# ----------------- GUI (PySide6) -----------------
 
-class EffectView:
+class UiBridge(QObject):
     """
-    Benutzeroberfläche. Tkinter darf nur vom Haupt-Thread bedient werden:
-    Events aus dem Aufnahme-Thread landen in Queues und werden per after() abgeholt.
+    Signale aus dem Aufnahme-Thread. Qt stellt sie automatisch in die
+    Ereignisschleife des GUI-Threads ein (queued connection).
+    """
+    status = Signal(str)
+    fps = Signal(float)
+    effect_changed = Signal(object)
+    frame_ready = Signal()
+
+
+class VideoWidget(QWidget):
+    """
+    Zeigt das neueste Bild seitenverhältnistreu an.
+    Kommt die Anzeige nicht hinterher, werden ältere Bilder verworfen statt gestaut.
     """
 
-    POLL_MS = 15
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self._lock = threading.Lock()
+        self._pending: Optional[np.ndarray] = None
+        self._image: Optional[QImage] = None
+        self.frames_shown = 0
+        self.setMinimumSize(320, 180)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+
+    def offer(self, frame: np.ndarray) -> bool:
+        """Beliebiger Thread. True, wenn noch kein Bild auf Anzeige wartet (dann Signal senden)."""
+        with self._lock:
+            first = self._pending is None
+            self._pending = frame
+        return first
+
+    def show_pending(self) -> None:
+        """GUI-Thread"""
+        with self._lock:
+            frame, self._pending = self._pending, None
+        if frame is None:
+            return
+        frame = np.ascontiguousarray(frame)
+        height, width = frame.shape[:2]
+        # copy(): QImage darf nicht auf den numpy-Puffer verweisen
+        self._image = QImage(frame.data, width, height, 3 * width, QImage.Format.Format_RGB888).copy()
+        self.frames_shown += 1
+        self.update()
+
+    def clear(self) -> None:
+        with self._lock:
+            self._pending = None
+        self._image = None
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(14, 14, 18))
+        if self._image is None:
+            painter.setPen(QColor(110, 110, 120))
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Keine Vorschau – Bereich wählen und starten")
+            return
+        size = QSize(self._image.size())
+        size.scale(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        target = QRect(QPoint(0, 0), size)
+        target.moveCenter(self.rect().center())
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        painter.drawImage(target, self._image)
+
+
+class RegionPicker(QWidget):
+    """Abgedunkelte Fläche über dem Bildschirm: Bereich mit der Maus aufziehen"""
+
+    region_selected = Signal(QRect)
+    MIN_SIZE = 16
+
+    def __init__(self):
+        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+                         | Qt.WindowType.Tool)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setCursor(Qt.CursorShape.CrossCursor)
+        screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
+        self.setGeometry(screen.geometry())
+        self._origin: Optional[QPoint] = None
+        self._current: Optional[QPoint] = None
+
+    def _selection(self) -> Optional[QRect]:
+        if self._origin is None or self._current is None:
+            return None
+        return QRect(self._origin, self._current).normalized()
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 110))
+        selection = self._selection()
+        if selection is not None:
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+            painter.fillRect(selection, Qt.GlobalColor.transparent)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+            painter.setPen(QPen(QColor(255, 70, 70), 2))
+            painter.drawRect(selection)
+            painter.setPen(QColor(255, 255, 255))
+            painter.drawText(selection.bottomLeft() + QPoint(4, 18), f"{selection.width()} × {selection.height()}")
+        painter.setPen(QColor(255, 255, 255))
+        font = painter.font()
+        font.setPointSize(20)
+        painter.setFont(font)
+        painter.drawText(self.rect().adjusted(0, 30, 0, 0), Qt.AlignmentFlag.AlignHCenter,
+                         "Bereich aufziehen  –  Esc oder Rechtsklick bricht ab")
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self.raise_()
+        self.activateWindow()
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() != Qt.MouseButton.LeftButton:
+            self.close()
+            return
+        self._origin = self._current = event.position().toPoint()
+        self.update()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._origin is not None:
+            self._current = event.position().toPoint()
+            self.update()
+
+    def mouseReleaseEvent(self, event) -> None:
+        selection = self._selection()
+        self.close()
+        if selection is not None and selection.width() >= self.MIN_SIZE and selection.height() >= self.MIN_SIZE:
+            # Fensterkoordinaten -> globale Bildschirmkoordinaten (logische Punkte wie bei mss)
+            self.region_selected.emit(selection.translated(self.geometry().topLeft()))
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+
+
+class EffectWindow(QMainWindow):
+    """Hauptfenster. Alle Widgets werden nur im GUI-Thread angefasst."""
+
     MIN_REGION = 16
 
     def __init__(self, event_bus: IEventBus, effect_names: List[str]):
+        super().__init__()
         self.event_bus = event_bus
-        self.effect_names = effect_names
-        self._frames: queue.Queue = queue.Queue(maxsize=1)
-        self._messages: queue.Queue = queue.Queue()
-        self._photo: Optional[ImageTk.PhotoImage] = None
-        self._image_item = None
         self._running = False
-        self._closed = False
+        self._uses_cells = effect_names[:1] == ["Mosaik"]
+        self._picker: Optional[RegionPicker] = None
+        self.setWindowTitle("Bildeffekte")
 
-        self.root = tk.Tk()
-        self.root.title("Bildeffekte")
-        self._init_ui()
+        self.bridge = UiBridge()
+        self._build_ui(effect_names)
 
-        self.event_bus.subscribe('status_update', lambda msg: self._messages.put(('status', msg)))
-        self.event_bus.subscribe('fps', lambda fps: self._messages.put(('fps', fps)))
-        self.event_bus.subscribe('effect_changed', lambda effect: self._messages.put(('effect', effect)))
-        self.event_bus.subscribe('frame_processed', self._offer_frame)
+        self.bridge.status.connect(self.status_label.setText)
+        self.bridge.fps.connect(self._show_fps)
+        self.bridge.effect_changed.connect(self._on_effect_changed)
+        self.bridge.frame_ready.connect(self.video.show_pending)
 
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.root.after(self.POLL_MS, self._poll)
+        # Diese Callbacks laufen im Thread des Publishers und senden nur Signale
+        event_bus.subscribe('status_update', self.bridge.status.emit)
+        event_bus.subscribe('fps', self.bridge.fps.emit)
+        event_bus.subscribe('effect_changed', self.bridge.effect_changed.emit)
+        event_bus.subscribe('frame_processed', self._on_frame)
 
-    def _init_ui(self) -> None:
-        self.config_frame = tk.Frame(self.root)
-        self.config_frame.pack(pady=10)
+    def _build_ui(self, effect_names: List[str]) -> None:
+        central = QWidget()
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(12, 12, 12, 6)
+        layout.setSpacing(8)
 
-        tk.Label(self.config_frame, text="Bereich (x,y,breite,höhe):").grid(row=0, column=0, padx=5)
-        self.region_entry = tk.Entry(self.config_frame, width=20)
-        self.region_entry.insert(0, "100,100,800,450")
-        self.region_entry.grid(row=0, column=1, padx=5)
+        controls = QHBoxLayout()
+        controls.addWidget(QLabel("Bereich:"))
+        self.region_edit = QLineEdit("100,100,800,450")
+        self.region_edit.setPlaceholderText("x, y, Breite, Höhe")
+        self.region_edit.setFixedWidth(170)
+        self.region_edit.returnPressed.connect(self.start_effect)
+        controls.addWidget(self.region_edit)
 
-        self.btn_pick = tk.Button(self.config_frame, text="Bereich wählen…", command=self.pick_region)
-        self.btn_pick.grid(row=0, column=2, padx=5)
+        self.btn_pick = QPushButton("Bereich wählen…")
+        self.btn_start = QPushButton("▶  Start")
+        self.btn_next = QPushButton("Nächste Zelle")
+        self.btn_stop = QPushButton("■  Stop")
+        self.btn_start.setObjectName("primary")
+        self.btn_start.setToolTip("Start/Stop: Leertaste")
+        self.btn_next.setToolTip("Taste N")
+        for button, slot in ((self.btn_pick, self.pick_region), (self.btn_start, self.start_effect),
+                             (self.btn_next, self.next_cell), (self.btn_stop, self.stop_effect)):
+            button.clicked.connect(slot)
+            controls.addWidget(button)
 
-        self.btn_start = tk.Button(self.config_frame, text="Start", command=self.start_effect)
-        self.btn_start.grid(row=0, column=3, padx=5)
+        controls.addSpacing(16)
+        controls.addWidget(QLabel("Effekt:"))
+        self.effect_combo = QComboBox()
+        self.effect_combo.addItems(effect_names)
+        self.effect_combo.setMinimumWidth(200)
+        self.effect_combo.currentTextChanged.connect(self.change_effect)
+        controls.addWidget(self.effect_combo)
+        controls.addStretch(1)
+        layout.addLayout(controls)
 
-        self.btn_next = tk.Button(self.config_frame, text="Nächste Zelle", command=self.next_cell, state=tk.DISABLED)
-        self.btn_next.grid(row=0, column=4, padx=5)
+        self.video = VideoWidget()
+        layout.addWidget(self.video, 1)
+        self.setCentralWidget(central)
 
-        self.btn_stop = tk.Button(self.config_frame, text="Stop", command=self.stop_effect, state=tk.DISABLED)
-        self.btn_stop.grid(row=0, column=5, padx=5)
+        self.status_label = QLabel("Bereit. Bereich eingeben oder wählen, dann Start.")
+        self.fps_label = QLabel("")
+        self.fps_label.setMinimumWidth(80)
+        self.fps_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.statusBar().addWidget(self.status_label, 1)
+        self.statusBar().addPermanentWidget(self.fps_label)
 
-        self.effect_frame = tk.Frame(self.root)
-        self.effect_frame.pack(pady=5)
-        tk.Label(self.effect_frame, text="Effekt:").grid(row=0, column=0, padx=5)
-        self.effect_var = tk.StringVar(value=self.effect_names[0] if self.effect_names else "")
-        self.effect_dropdown = tk.OptionMenu(self.effect_frame, self.effect_var, *self.effect_names)
-        self.effect_dropdown.grid(row=0, column=1, padx=5)
-        self.effect_var.trace_add("write", self.change_effect)
+        QShortcut(QKeySequence(Qt.Key.Key_Space), self, activated=self.toggle_running)
+        QShortcut(QKeySequence(Qt.Key.Key_N), self, activated=self.next_cell)
+        self._update_buttons()
 
-        status_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN)
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
-        self.status_var = tk.StringVar(value="Bereit. Bereich eingeben oder wählen, dann Start klicken.")
-        tk.Label(status_bar, textvariable=self.status_var, anchor=tk.W).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.fps_var = tk.StringVar(value="")
-        tk.Label(status_bar, textvariable=self.fps_var, anchor=tk.E, width=10).pack(side=tk.RIGHT)
+    # --- Aufnahme-Thread ---
 
-        self.canvas = tk.Canvas(self.root, bg='black', width=800, height=450, highlightthickness=0)
-        self.canvas.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+    def _on_frame(self, frame: np.ndarray) -> None:
+        if self.video.offer(frame):
+            self.bridge.frame_ready.emit()
 
-    def run(self) -> None:
-        self.root.geometry("900x560")
-        self.root.mainloop()
-
-    # --- Bereichswahl ---
+    # --- Aktionen (GUI-Thread) ---
 
     def pick_region(self) -> None:
-        """Halbtransparente Fläche über dem Bildschirm: Bereich mit der Maus aufziehen"""
-        overlay = tk.Toplevel(self.root)
-        overlay.overrideredirect(True)
-        overlay.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
-        overlay.attributes('-alpha', 0.3)
-        overlay.attributes('-topmost', True)
-        canvas = tk.Canvas(overlay, bg='gray20', cursor='crosshair', highlightthickness=0)
-        canvas.pack(fill=tk.BOTH, expand=True)
-        canvas.create_text(self.root.winfo_screenwidth() // 2, 40, fill='white', font=('Helvetica', 24),
-                           text="Bereich aufziehen  –  Esc oder Rechtsklick bricht ab")
-        state: Dict[str, Any] = {}
+        self._picker = RegionPicker()
+        self._picker.region_selected.connect(self._set_region)
+        self._picker.show()
 
-        def press(event):
-            state['start'] = (event.x_root, event.y_root, event.x, event.y)
-            state['rect'] = canvas.create_rectangle(event.x, event.y, event.x, event.y, outline='red', width=3)
+    def _set_region(self, rect: QRect) -> None:
+        self.region_edit.setText(f"{rect.x()},{rect.y()},{rect.width()},{rect.height()}")
+        self.status_label.setText("Bereich übernommen. Start klicken oder Leertaste.")
 
-        def drag(event):
-            if 'rect' in state:
-                _, _, cx, cy = state['start']
-                canvas.coords(state['rect'], cx, cy, event.x, event.y)
-
-        def release(event):
-            if 'start' not in state:
-                return
-            sx, sy, _, _ = state['start']
-            x0, x1 = sorted((sx, event.x_root))
-            y0, y1 = sorted((sy, event.y_root))
-            overlay.destroy()
-            if x1 - x0 >= self.MIN_REGION and y1 - y0 >= self.MIN_REGION:
-                self.region_entry.delete(0, tk.END)
-                self.region_entry.insert(0, f"{x0},{y0},{x1 - x0},{y1 - y0}")
-                self.status_var.set("Bereich übernommen. Start klicken.")
-
-        canvas.bind('<ButtonPress-1>', press)
-        canvas.bind('<B1-Motion>', drag)
-        canvas.bind('<ButtonRelease-1>', release)
-        for sequence in ('<Escape>', '<ButtonPress-2>', '<ButtonPress-3>'):
-            overlay.bind(sequence, lambda e: overlay.destroy())
-        overlay.focus_force()
-
-    # --- Aktionen ---
-
-    def start_effect(self) -> None:
+    def _parse_region(self) -> Optional[Dict[str, int]]:
         try:
-            coords = [c.strip() for c in self.region_entry.get().split(',')]
-            if len(coords) != 4:
+            parts = [p.strip() for p in self.region_edit.text().split(',')]
+            if len(parts) != 4:
                 raise ValueError("Format muss sein: x,y,breite,höhe")
-            x, y, width, height = map(int, coords)
+            x, y, width, height = map(int, parts)
             if width < self.MIN_REGION or height < self.MIN_REGION:
                 raise ValueError(f"Breite und Höhe müssen mindestens {self.MIN_REGION} px sein")
         except ValueError as e:
-            self.status_var.set(f"Fehler: {e}")
-            return
+            self.status_label.setText(f"Fehler: {e}")
+            return None
+        return {'left': x, 'top': y, 'width': width, 'height': height}
 
-        self.canvas.config(width=width, height=height)
+    def start_effect(self) -> None:
+        region = self._parse_region()
+        if region is None:
+            return
         self._running = True
         self._update_buttons()
-        self.event_bus.publish('start_capture', {'left': x, 'top': y, 'width': width, 'height': height})
+        self.event_bus.publish('start_capture', region)
 
     def stop_effect(self) -> None:
+        if not self._running:
+            return
         self._running = False
         self._update_buttons()
         self.event_bus.publish('stop_capture')
-        self.fps_var.set("")
+        self.fps_label.setText("")
+
+    def toggle_running(self) -> None:
+        if self._running:
+            self.stop_effect()
+        else:
+            self.start_effect()
 
     def next_cell(self) -> None:
-        self.event_bus.publish('next_cell')
+        if self._running and self._uses_cells:
+            self.event_bus.publish('next_cell')
 
-    def change_effect(self, *args) -> None:
-        self.event_bus.publish('change_effect', self.effect_var.get())
+    def change_effect(self, name: str) -> None:
+        self.event_bus.publish('change_effect', name)
 
-    def _update_buttons(self, effect: Optional[IEffectStrategy] = None) -> None:
-        uses_cells = effect.uses_cells if effect is not None else self.effect_var.get() == "Mosaik"
-        self.btn_start.config(state=tk.DISABLED if self._running else tk.NORMAL)
-        self.btn_stop.config(state=tk.NORMAL if self._running else tk.DISABLED)
-        self.btn_next.config(state=tk.NORMAL if self._running and uses_cells else tk.DISABLED)
+    def _on_effect_changed(self, effect: IEffectStrategy) -> None:
+        self._uses_cells = effect.uses_cells
+        self._update_buttons()
 
-    # --- Anzeige (nur Haupt-Thread) ---
+    def _show_fps(self, fps: float) -> None:
+        if self._running:
+            self.fps_label.setText(f"{fps:4.1f} FPS")
 
-    def _offer_frame(self, frame: np.ndarray) -> None:
-        """Aufnahme-Thread: nur das neueste Bild behalten"""
-        try:
-            self._frames.get_nowait()
-        except queue.Empty:
-            pass
-        try:
-            self._frames.put_nowait(frame)
-        except queue.Full:
-            pass
+    def _update_buttons(self) -> None:
+        self.btn_start.setEnabled(not self._running)
+        self.btn_stop.setEnabled(self._running)
+        self.btn_next.setEnabled(self._running and self._uses_cells)
+        self.region_edit.setEnabled(not self._running)
+        self.btn_pick.setEnabled(not self._running)
 
-    def _poll(self) -> None:
-        if self._closed:
-            return
-        while True:
-            try:
-                kind, data = self._messages.get_nowait()
-            except queue.Empty:
-                break
-            if kind == 'status':
-                self.status_var.set(data)
-            elif kind == 'fps' and self._running:
-                self.fps_var.set(f"{data:4.1f} FPS")
-            elif kind == 'effect':
-                self._update_buttons(data)
-
-        try:
-            frame = self._frames.get_nowait()
-        except queue.Empty:
-            frame = None
-        if frame is not None and self._running:
-            self._photo = ImageTk.PhotoImage(image=Image.fromarray(frame))
-            if self._image_item is None:
-                self._image_item = self.canvas.create_image(0, 0, anchor=tk.NW, image=self._photo)
-            else:
-                self.canvas.itemconfig(self._image_item, image=self._photo)
-
-        self.root.after(self.POLL_MS, self._poll)
-
-    def on_closing(self) -> None:
-        self._closed = True
+    def closeEvent(self, event) -> None:
         self.event_bus.publish('stop_capture')
-        self.root.destroy()
+        super().closeEvent(event)
+
+
+def apply_dark_theme(app: QApplication) -> None:
+    app.setStyle("Fusion")
+    palette = QPalette()
+    colors = {
+        QPalette.ColorRole.Window: QColor(32, 33, 38),
+        QPalette.ColorRole.WindowText: QColor(230, 230, 235),
+        QPalette.ColorRole.Base: QColor(22, 23, 27),
+        QPalette.ColorRole.AlternateBase: QColor(38, 39, 45),
+        QPalette.ColorRole.Text: QColor(230, 230, 235),
+        QPalette.ColorRole.Button: QColor(48, 50, 58),
+        QPalette.ColorRole.ButtonText: QColor(230, 230, 235),
+        QPalette.ColorRole.Highlight: QColor(64, 132, 255),
+        QPalette.ColorRole.HighlightedText: QColor(255, 255, 255),
+        QPalette.ColorRole.ToolTipBase: QColor(48, 50, 58),
+        QPalette.ColorRole.ToolTipText: QColor(230, 230, 235),
+    }
+    for role, color in colors.items():
+        palette.setColor(role, color)
+    for role in (QPalette.ColorRole.WindowText, QPalette.ColorRole.Text, QPalette.ColorRole.ButtonText):
+        palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(110, 110, 118))
+    app.setPalette(palette)
+    app.setStyleSheet("""
+        QPushButton { padding: 6px 14px; border-radius: 6px; background: #30323a; border: 1px solid #41434d; }
+        QPushButton:hover:enabled { background: #3a3d47; }
+        QPushButton:disabled { color: #6e6e76; background: #2a2b31; border-color: #33343b; }
+        QPushButton#primary:enabled { background: #2f6fea; border-color: #3d7df5; color: white; }
+        QPushButton#primary:hover:enabled { background: #3d7df5; }
+        QLineEdit, QComboBox { padding: 5px 8px; border-radius: 6px; background: #1a1b1f; border: 1px solid #41434d; }
+        QStatusBar { color: #b8b8c0; }
+    """)
 
 # ----------------- Anwendungsstart -----------------
 
@@ -2124,10 +2254,16 @@ def main():
     Container.register(IScreenCaptureService, MssScreenCaptureService)
     Container.register(IAudioLoopService, SoundDeviceLoopService)
 
+    app = QApplication(sys.argv)
+    app.setApplicationName("Bildeffekte")
+    apply_dark_theme(app)
+
     event_bus = Container.resolve(IEventBus)
     processor = build_processor(event_bus)
-    view = EffectView(event_bus, processor.effect_names)
-    view.run()
+    window = EffectWindow(event_bus, processor.effect_names)
+    window.resize(1040, 700)
+    window.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
