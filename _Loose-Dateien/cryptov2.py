@@ -2,22 +2,24 @@
 """
 Vericrypt-Style Audio Scrambler
 
-Inspiriert vom BBC Vericrypt 1100 (1979):
+Inspiriert vom Vericrypt 1100 (Brown, Boveri & Cie):
 - Time-Division Scrambling mit 30ms Segmenten (16 Segmente = 480ms Frame)
-- FSK-Synchronisation mit 100 Baud, ausserhalb des Sprachbands
 - 6-stelliger Schlüssel (000000-999999)
+- Zwei wählbare Synchronisationsverfahren
 
-Funktionsweise:
-1. ENCRYPT: Sprache wird auf 300-3000 Hz begrenzt, in 30ms Segmente zerlegt
-   und permutiert. Oberhalb des Sprachbands (3800/4400 Hz) liegt ein FSK-Signal,
-   das pro Frame Sync-Wort, Frame-Zähler und CRC trägt.
-2. DECRYPT: Das Sync-Wort wird samplegenau gesucht (Matched Filter). Damit
-   stimmen die Segmentgrenzen auch nach Band, Lautsprecher/Mikrofon oder
-   Verzögerung. Danach werden die Segmente zurück-permutiert und das FSK
-   herausgefiltert.
-
-Frame-Aufbau (48 Bit = exakt 480ms bei 100 Baud):
+Sync "FSK 3.8/4.4 kHz":
+    FSK mit 100 Baud oberhalb des Sprachbands. Pro Frame (48 Bit):
     SYNC (16) | ZÄHLER (16) | CRC-8 (8) | FÜLLBITS (8)
+    Sehr präzise, braucht aber einen Kanal bis ~4.5 kHz (Soundkarte, Band).
+
+Sync "Pilotton 1200/1800 Hz" (Variante C, Stil 70er/80er):
+    Im Sprachband, daher auch über Funk (300-3000 Hz) und Telefon nutzbar.
+    - 1200 Hz Dauerton als Takt: Der Empfänger regelt damit Bandgeschwindigkeit
+      und Gleichlauf fortlaufend aus (Zeitbasiskorrektur wie beim Pilotton-Band).
+    - 1800 Hz mit weich geformter Phasenumtastung, 1 Symbol pro Segment:
+      je 2 Frames BARKER-13 | ZÄHLER (11) | CRC-8 (8).
+    - Schmale Bandsperren (±55 Hz) halten Sprache und Pilot auseinander.
+    1200 und 1800 Hz haben ganzzahlig viele Schwingungen pro Segment.
 """
 
 import hashlib
@@ -32,7 +34,7 @@ import numpy as np
 import sounddevice as sd
 import tkinter as tk
 from tkinter import ttk
-from scipy.signal import butter, ellip, sosfilt, sosfiltfilt
+from scipy.signal import butter, ellip, ellipord, sosfilt, sosfiltfilt
 
 
 class CryptoMode(Enum):
@@ -42,12 +44,19 @@ class CryptoMode(Enum):
     DECRYPT = "decrypt"
 
 
+class SyncMode(Enum):
+    """Synchronisationsverfahren (Sender und Empfänger müssen gleich eingestellt sein)."""
+    FSK = "fsk"
+    PILOT = "pilot"
+
+
 @dataclass
 class AudioSettings:
     """Einstellungen."""
     inversion: bool = False
     bandpass: bool = False
     crypto_mode: CryptoMode = CryptoMode.OFF
+    sync_mode: SyncMode = SyncMode.FSK
     crypto_key: int = 123456
     input_device: Optional[int] = None   # None = Default
     output_device: Optional[int] = None  # None = Default
@@ -61,6 +70,8 @@ class StreamingFilter:
         self.zi = np.zeros((sos.shape[0], 2))
 
     def process(self, data: np.ndarray) -> np.ndarray:
+        if len(data) == 0:
+            return np.zeros(0, dtype=np.float32)
         out, self.zi = sosfilt(self.sos, data, zi=self.zi)
         return out.astype(np.float32)
 
@@ -189,11 +200,19 @@ class FSKModem:
     SYNC_THRESHOLD = 0.6        # mittlere Soft-Bit-Übereinstimmung
     MIN_AMPLITUDE = 0.002       # darunter gilt der Kanal als stumm
 
+    sync_interval = 1           # Sync in jedem Frame
+    counter_modulo = 1 << 16
+    speech_path_delay = 0
+
     def __init__(self, sample_rate: int):
         if sample_rate % self.BAUD_RATE:
             raise ValueError("Samplerate muss ein Vielfaches von 100 sein")
         self.sample_rate = sample_rate
         self.samples_per_bit = sample_rate // self.BAUD_RATE
+        self.search_tolerance = self.samples_per_bit * 4
+        self.max_innovation = self.samples_per_bit
+        self.lookahead = self.FRAME_BITS * self.samples_per_bit
+        self.margin = 2 * self.samples_per_bit
         self.phase = 0.0
         self.sync_template = np.array(int_to_bits(self.SYNC_WORD, self.SYNC_BITS)) * 2.0 - 1.0
         self._highpass = ellip(8, 0.5, 70, 3500, btype='high', fs=sample_rate, output='sos')
@@ -203,6 +222,12 @@ class FSKModem:
         counter_bytes = counter.to_bytes(2, 'big')
         return (int_to_bits(self.SYNC_WORD, 16) + int_to_bits(counter, 16)
                 + int_to_bits(crc8(counter_bytes), 8) + [1, 0] * 4)
+
+    def speech_notches(self) -> List[np.ndarray]:
+        return []   # FSK liegt über der Sprache, der Tiefpass reicht
+
+    def frame_signal(self, counter: int) -> np.ndarray:
+        return self.modulate(self.build_frame_bits(counter))
 
     def modulate(self, bits: List[int]) -> np.ndarray:
         """Kodiert Bits als FSK-Signal mit durchgehender Phase."""
@@ -265,6 +290,259 @@ class FSKModem:
         return p, counter, float(score[best])
 
 
+def raised_cosine(t: np.ndarray, rolloff: float) -> np.ndarray:
+    """Raised-Cosine-Puls (t in Symboldauern): bandbegrenzt, ohne Intersymbol-Störung."""
+    singular = np.isclose(np.abs(2 * rolloff * t), 1.0)
+    denom = np.where(singular, 1.0, 1.0 - (2 * rolloff * t) ** 2)
+    pulse = np.sinc(t) * np.cos(np.pi * rolloff * t) / denom
+    return np.where(singular, np.pi / 4 * np.sinc(1 / (2 * rolloff)), pulse)
+
+
+def narrow_bandstop(sample_rate: int, freq: float) -> np.ndarray:
+    """Bandsperre: >= 50 dB innerhalb ±30 Hz, Durchlass ab ±55 Hz."""
+    order, wn = ellipord([freq - 55, freq + 55], [freq - 30, freq + 30], 0.5, 50, fs=sample_rate)
+    return ellip(order, 0.5, 50, wn, btype='bandstop', fs=sample_rate, output='sos')
+
+
+class PilotToneModem:
+    """
+    Variante C: Pilottöne im Sprachband.
+
+    1200 Hz: unmodulierter Taktton (Auswertung in PilotClockRecovery).
+    1800 Hz: BPSK mit Raised-Cosine-Pulsen, 1 Symbol pro 30ms-Segment (33 Baud,
+    belegt nur ±25 Hz). Ein Superframe aus 2 Frames trägt 32 Symbole:
+    BARKER-13 | ZÄHLER/2 (11 Bit) | CRC-8.
+    """
+
+    CLOCK_FREQ = 1200
+    DATA_FREQ = 1800
+    CLOCK_AMPLITUDE = 0.03
+    DATA_AMPLITUDE = 0.03
+    ROLLOFF = 0.5
+    PULSE_SPAN = 4              # Pulslänge je Seite in Symbolen
+    BARKER13 = np.array([1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1], dtype=float)
+    COUNTER_BITS = 11
+    SUPERFRAME_SYMBOLS = 32
+    SYNC_THRESHOLD = 0.8
+    MIN_AMPLITUDE = 0.003
+    DECIMATION = 21             # 1323 Samples/Symbol = 63 * 21
+
+    sync_interval = 2
+    counter_modulo = 1 << (COUNTER_BITS + 1)
+
+    def __init__(self, sample_rate: int, frame_samples: int, segment_samples: int):
+        self.sample_rate = sample_rate
+        self.frame_samples = frame_samples
+        self.symbol_samples = segment_samples
+        self.search_tolerance = sample_rate // 100 * 4
+        self.max_innovation = sample_rate // 100
+        self.lookahead = self.SUPERFRAME_SYMBOLS * segment_samples + segment_samples
+        self.margin = segment_samples
+
+        half = self.PULSE_SPAN * segment_samples
+        self.pulse = raised_cosine(np.arange(-half, half + 1) / segment_samples, self.ROLLOFF)
+        # Pulsmitte liegt `half` Samples hinter dem Symbolzeitpunkt -> Sprache gleich verzögern
+        self.speech_path_delay = half
+        self._accumulator = np.zeros(frame_samples + len(self.pulse))
+        self._sample_index = 0
+
+        self._notch_sos = [narrow_bandstop(sample_rate, f) for f in (self.CLOCK_FREQ, self.DATA_FREQ)]
+        if segment_samples % self.DECIMATION or len(self.pulse) // 2 % self.DECIMATION:
+            raise ValueError("Segmentlänge passt nicht zur Dezimierung")
+        self._data_lowpass = butter(4, 30, fs=sample_rate / self.DECIMATION, output='sos')
+        # Antwort eines Symbols nach Integration über ein Symbol, im dezimierten Raster
+        integrated = np.convolve(self.pulse, np.ones(segment_samples) / segment_samples, mode='same')
+        self._symbol_response = integrated[::self.DECIMATION]
+
+    def speech_notches(self) -> List[np.ndarray]:
+        return self._notch_sos
+
+    def superframe_symbols(self, superframe: int) -> np.ndarray:
+        counter_bits = int_to_bits(superframe, self.COUNTER_BITS)
+        crc_bits = int_to_bits(crc8(superframe.to_bytes(2, 'big')), 8)
+        data = np.array(counter_bits + crc_bits, dtype=float) * 2 - 1
+        return np.concatenate([self.BARKER13, data])
+
+    def frame_signal(self, counter: int) -> np.ndarray:
+        symbols = self.superframe_symbols(counter // 2)
+        half = symbols[:16] if counter % 2 == 0 else symbols[16:]
+        S, F, L = self.symbol_samples, self.frame_samples, len(self.pulse)
+
+        acc = self._accumulator
+        for k, a in enumerate(half):
+            pos = k * S + S // 2
+            acc[pos:pos + L] += a * self.pulse
+        baseband = acc[:F].copy()
+        acc[:-F] = acc[F:]
+        acc[-F:] = 0.0
+
+        # Beide Töne haben ganzzahlig viele Schwingungen pro Sekunde -> Index modulo Samplerate
+        n = (self._sample_index + np.arange(F)) % self.sample_rate
+        self._sample_index = (self._sample_index + F) % self.sample_rate
+        clock = self.CLOCK_AMPLITUDE * np.sin(2 * np.pi * self.CLOCK_FREQ * n / self.sample_rate)
+        data = self.DATA_AMPLITUDE * baseband * np.sin(2 * np.pi * self.DATA_FREQ * n / self.sample_rate)
+        return (clock + data).astype(np.float32)
+
+    def find_frame(self, x: np.ndarray, lo: int, hi: int):
+        """
+        Sucht einen Superframe-Anfang in [lo, hi]. Rückgabe wie FSKModem.find_frame.
+
+        Das 1800-Hz-Signal wird ins Basisband gemischt, über ein Symbol integriert
+        (löscht den 1200-Hz-Takt exakt aus) und 21-fach reduziert ausgewertet.
+        """
+        S, D = self.symbol_samples, self.DECIMATION
+        per_symbol = S // D
+        lo = -(-lo // D) * D
+        hi = min(hi, len(x) - (self.SUPERFRAME_SYMBOLS + 1) * S)
+        if hi < lo:
+            return None
+
+        n = np.arange(len(x))
+        z = x.astype(np.float64) * np.exp(-2j * np.pi * self.DATA_FREQ * (n % self.sample_rate) / self.sample_rate)
+        c = np.concatenate([[0], np.cumsum(z)])
+        zd = (c[S::D] - c[:-S:D])[:(len(x) - S) // D + 1] / S   # zd[j]: Symbol mit Beginn bei j*D
+        zd = sosfiltfilt(self._data_lowpass, zd)
+
+        j_lo, j_hi = lo // D, hi // D
+        last = (self.SUPERFRAME_SYMBOLS - 1) * per_symbol
+        # BPSK: z² hat die doppelte Trägerphase; ±180° klärt das Barker-Vorzeichen
+        region = zd[j_lo:j_hi + last + 1]
+        theta = 0.5 * np.angle(np.sum(region ** 2))
+        soft = np.real(zd * np.exp(-1j * theta))
+
+        js = np.arange(j_lo, j_hi + 1)
+        corr = np.zeros(len(js))
+        for k, b in enumerate(self.BARKER13):
+            corr += b * soft[js + k * per_symbol]
+
+        best = int(np.argmax(np.abs(corr)))
+        j0 = int(js[best])
+        polarity = np.sign(corr[best])
+        values = soft[j0 + np.arange(self.SUPERFRAME_SYMBOLS) * per_symbol] * polarity
+        sync_values = values[:len(self.BARKER13)]
+        score = float(np.dot(self.BARKER13, sync_values) / (np.sum(np.abs(sync_values)) + 1e-12))
+        if score < self.SYNC_THRESHOLD or np.mean(np.abs(sync_values)) < self.MIN_AMPLITUDE / 3:
+            return None
+
+        bits = (values > 0).astype(int)
+        superframe = bits_to_int(bits[13:24])
+        if bits_to_int(bits[24:32]) != crc8(superframe.to_bytes(2, 'big')):
+            return j0 * D, None, score
+        return self._refine_position(soft * polarity, j0, superframe), 2 * superframe, score
+
+    def _refine_position(self, soft: np.ndarray, j0: int, superframe: int) -> float:
+        """
+        Feinsynchronisation: Korrelation mit dem vollständig bekannten Symbolzug,
+        danach Parabel-Interpolation. Die Barker-Suche allein wird durch
+        Nachbarsymbole verschoben.
+        """
+        D = self.DECIMATION
+        per_symbol = self.symbol_samples // D
+        response = self._symbol_response
+        center = len(response) // 2
+        inner = np.arange(self.PULSE_SPAN * per_symbol, (self.SUPERFRAME_SYMBOLS - self.PULSE_SPAN) * per_symbol)
+        template = np.zeros(len(inner))
+        for k, a in enumerate(self.superframe_symbols(superframe)):
+            idx = inner - k * per_symbol + center
+            ok = (idx >= 0) & (idx < len(response))
+            template[ok] += a * response[idx[ok]]
+
+        search = per_symbol // 2
+        lags = np.arange(-search, search + 1)
+        valid = (j0 + lags + inner[0] >= 0) & (j0 + lags + inner[-1] < len(soft))
+        lags = lags[valid]
+        if len(lags) < 3:
+            return float(j0 * D)
+        scores = np.array([np.dot(template, soft[j0 + lag + inner]) for lag in lags])
+        i = int(np.argmax(scores))
+        offset = float(lags[i])
+        if 0 < i < len(lags) - 1:
+            y0, y1, y2 = scores[i - 1], scores[i], scores[i + 1]
+            denom = y0 - 2 * y1 + y2
+            if denom < 0:
+                offset += 0.5 * (y0 - y2) / denom
+        return (j0 + offset) * D
+
+
+class PilotClockRecovery:
+    """
+    Zeitbasiskorrektur über den 1200-Hz-Taktton (Empfänger, Variante C).
+
+    Die Phase des Takttons verrät, wie weit die Sender-Zeit an jeder Stelle des
+    Kanals fortgeschritten ist. Der Eingang wird darauf umgerechnet, sodass danach
+    Frames exakt ihre Sollänge haben — Bandgeschwindigkeit und Gleichlauf sind raus.
+    Ohne Taktton wird das Signal unverändert durchgereicht.
+    """
+
+    LOWPASS_HZ = 20
+    MIN_AMPLITUDE = 0.003
+
+    def __init__(self, sample_rate: int, freq: float = PilotToneModem.CLOCK_FREQ):
+        self.sample_rate = sample_rate
+        self.omega = 2 * np.pi * freq / sample_rate
+        self._sos = butter(6, self.LOWPASS_HZ, fs=sample_rate, output='sos')
+        self._zi = np.zeros((self._sos.shape[0], 2), dtype=complex)
+        impulse = np.zeros(sample_rate)
+        impulse[0] = 1.0
+        h = sosfilt(self._sos, impulse)
+        self._delay = int(round(np.dot(np.arange(len(h)), h) / np.sum(h)))
+
+        self._n = 0                      # verarbeitete Kanal-Samples
+        self._x = np.zeros(0)            # Kanal-Samples ab Index _start
+        self._u = np.zeros(0)            # Sender-Zeit dieser Samples
+        self._start = 0
+        self._prev_raw = 0.0
+        self._phase = 0.0
+        self._next_t = None
+        self.locked = False
+
+    def process(self, x: np.ndarray) -> np.ndarray:
+        idx = self._n + np.arange(len(x))
+        baseband = x * np.exp(-1j * self.omega * (idx % self.sample_rate))
+        lp, self._zi = sosfilt(self._sos, baseband, zi=self._zi)
+
+        amplitude = np.abs(lp)
+        raw = np.angle(lp)
+        steps = np.diff(np.concatenate([[self._prev_raw], raw]))
+        steps = (steps + np.pi) % (2 * np.pi) - np.pi
+        steps[amplitude < self.MIN_AMPLITUDE / 2] = 0.0   # ohne Taktton Phase halten
+        phase = self._phase + np.cumsum(steps)
+        self._prev_raw, self._phase = raw[-1], phase[-1]
+        self.locked = bool(np.mean(amplitude) >= self.MIN_AMPLITUDE / 2)
+
+        # lp[i] beschreibt Kanal-Sample idx[i] - delay
+        m = idx - self._delay
+        valid = m >= 0
+        u = m[valid] + phase[valid] / self.omega
+        if len(self._u):
+            u = np.maximum.accumulate(np.concatenate([[self._u[-1]], u]))[1:]
+        self._x = np.concatenate([self._x, x.astype(np.float64)])
+        self._u = np.concatenate([self._u, u])
+        self._n += len(x)
+
+        if len(self._u) < 2:
+            return np.zeros(0, dtype=np.float32)
+        if self._next_t is None:
+            self._next_t = math.ceil(self._u[0])
+
+        count = int(math.floor(self._u[-1] - self._next_t)) + 1
+        if count <= 0:
+            return np.zeros(0, dtype=np.float32)
+        t = self._next_t + np.arange(count)
+        self._next_t += count
+
+        abs_index = self._start + np.arange(len(self._u))
+        m_out = np.interp(t, self._u, abs_index)
+        y = np.interp(m_out, self._start + np.arange(len(self._x)), self._x)
+
+        keep_from = min(max(int(m_out[-1]) - 2 - self._start, 0), len(self._u) - 2)
+        self._x = self._x[keep_from:]
+        self._u = self._u[keep_from:]
+        self._start += keep_from
+        return y.astype(np.float32)
+
+
+
 class VericryptScrambler:
     """
     Time-Division Scrambler im Vericrypt-Stil.
@@ -298,9 +576,9 @@ class VericryptScrambler:
 
 
 class FrameEncoder:
-    """ENCRYPT-Pfad: Bandbegrenzung -> (Inversion) -> Permutation -> Tiefpass -> + FSK."""
+    """ENCRYPT-Pfad: Bandbegrenzung -> (Inversion) -> Permutation -> Tiefpass/Kerben -> + Sync-Signal."""
 
-    def __init__(self, sample_rate: int, scrambler: VericryptScrambler, modem: FSKModem):
+    def __init__(self, sample_rate: int, scrambler: VericryptScrambler, modem):
         self.scrambler = scrambler
         self.modem = modem
         self.speech_filter = StreamingFilter(
@@ -308,6 +586,9 @@ class FrameEncoder:
         self.inverter = FrequencyInverter(sample_rate)
         # Segmentsprünge erzeugen breitbandige Klicks, die sonst ins FSK-Band streuen
         self.post_filter = StreamingFilter(speech_lowpass(sample_rate))
+        # Pilotbänder freiräumen: sonst überdeckt Sprache den Pilot
+        self.notches = [StreamingFilter(sos) for sos in modem.speech_notches()]
+        self.delay_line = np.zeros(modem.speech_path_delay, dtype=np.float32)
         self.counter = 0
         self.last_permutation = np.arange(scrambler.FRAME_SEGMENTS)
 
@@ -319,10 +600,15 @@ class FrameEncoder:
         perm = self.scrambler.permutation(settings.crypto_key, self.counter)
         self.last_permutation = perm
         scrambled = self.post_filter.process(self.scrambler.scramble(speech, perm))
+        for notch in self.notches:
+            scrambled = notch.process(scrambled)
+        if len(self.delay_line):
+            delayed = np.concatenate([self.delay_line, scrambled])
+            scrambled, self.delay_line = delayed[:len(scrambled)], delayed[len(scrambled):]
 
-        fsk = self.modem.modulate(self.modem.build_frame_bits(self.counter))
-        self.counter = (self.counter + 1) & 0xFFFF
-        return np.clip(scrambled + fsk, -1.0, 1.0)
+        sync = self.modem.frame_signal(self.counter)
+        self.counter = (self.counter + 1) % self.modem.counter_modulo
+        return np.clip(scrambled + sync, -1.0, 1.0)
 
 
 class FrameDecoder:
@@ -341,12 +627,12 @@ class FrameDecoder:
     ALPHA = 0.3            # Gewicht der Positionsmessung
     BETA_MIN = 0.05        # minimale Nachführung der Längenabweichung
 
-    def __init__(self, sample_rate: int, scrambler: VericryptScrambler, modem: FSKModem,
+    def __init__(self, sample_rate: int, scrambler: VericryptScrambler, modem,
                  speech_delay: int):
         self.scrambler = scrambler
         self.modem = modem
         self.speech_delay = speech_delay
-        self.tol = modem.samples_per_bit * 4
+        self.tol = modem.search_tolerance
         self.max_drift = self.tol / 2          # ~4% Geschwindigkeitsabweichung
         self.lowpass = StreamingFilter(speech_lowpass(sample_rate))
         self.inverter = FrequencyInverter(sample_rate)
@@ -359,9 +645,11 @@ class FrameDecoder:
         self.counter = 0
         self.last_permutation = np.arange(scrambler.FRAME_SEGMENTS)
 
+    def _sync_due(self) -> bool:
+        return not self.locked or self.counter % self.modem.sync_interval == 0
+
     def _track(self, found) -> Optional[Tuple[float, int]]:
         """Entscheidet über Frame-Position und Zähler. None = kein Sync."""
-        spb = self.modem.samples_per_bit
         measured, counter, _ = found if found is not None else (None, None, 0.0)
 
         if not self.locked:
@@ -370,8 +658,12 @@ class FrameDecoder:
             self.locked, self.missed, self.locked_frames, self.drift = True, 0, 0, 0.0
             return float(measured), counter
 
+        if not self._sync_due():
+            # Frame ohne eigenen Sync (Pilotton-Superframe): Zeitlage fortschreiben
+            return self.expected, self.counter
+
         innovation = None if measured is None else measured - self.expected
-        if innovation is not None and abs(innovation) > spb:
+        if innovation is not None and abs(innovation) > self.modem.max_innovation:
             # Weit daneben: nur mit gültiger CRC als echter Neu-Sync akzeptieren
             if counter is not None:
                 self.missed, self.locked_frames, self.drift = 0, 0, 0.0
@@ -392,32 +684,41 @@ class FrameDecoder:
         position = self.expected + self.ALPHA * innovation
         return position, counter if counter is not None else self.counter
 
-    def pump(self, in_buf: RingBuffer, out_buf: RingBuffer, settings: AudioSettings):
+    def pump(self, in_buf: RingBuffer, out_buf: RingBuffer, settings: AudioSettings,
+             speech_buf: Optional[RingBuffer] = None):
+        """
+        in_buf: Kanal mit Sync-Signal. speech_buf: derselbe Kanal mit entfernten
+        Pilottönen (gleich lang, gleich ausgerichtet); None = in_buf verwenden.
+        """
         frame_len = self.scrambler.frame_samples
-        spb = self.modem.samples_per_bit
+        modem = self.modem
 
         while True:
             if self.locked:
                 lo, hi = 0, 2 * self.tol
             else:
                 lo, hi = self.tol, self.tol + frame_len
-            need = hi + frame_len + self.speech_delay + int(self.max_drift) + 2 * spb
+            need = hi + max(frame_len + self.speech_delay + int(self.max_drift), modem.lookahead) + modem.margin
             if in_buf.available() < need:
                 return
 
             window = in_buf.peek(need)
-            decision = self._track(self.modem.find_frame(window, lo, hi))
+            found = modem.find_frame(window, lo, hi) if self._sync_due() else None
+            decision = self._track(found)
 
             if decision is None:
                 # Kein Sync: Stille ausgeben statt Rauschen, weiter suchen
                 in_buf.discard(frame_len)
+                if speech_buf is not None:
+                    speech_buf.discard(frame_len)
                 out_buf.write(np.zeros(frame_len, dtype=np.float32))
                 continue
 
             position, counter = decision
             actual_len = frame_len + self.drift
             sample_pos = position + self.speech_delay + np.arange(frame_len) * (actual_len / frame_len)
-            frame = np.interp(sample_pos, np.arange(len(window)), window).astype(np.float32)
+            speech_window = window if speech_buf is None else speech_buf.peek(need)
+            frame = np.interp(sample_pos, np.arange(len(window)), speech_window).astype(np.float32)
 
             perm = self.scrambler.permutation(settings.crypto_key, counter)
             self.last_permutation = perm
@@ -432,8 +733,10 @@ class FrameDecoder:
             next_start = position + actual_len
             consumed = int(next_start - self.tol)
             in_buf.discard(consumed)
+            if speech_buf is not None:
+                speech_buf.discard(consumed)
             self.expected = next_start - consumed
-            self.counter = (counter + 1) & 0xFFFF
+            self.counter = (counter + 1) % modem.counter_modulo
 
 
 class AudioProcessor:
@@ -451,28 +754,46 @@ class AudioProcessor:
         self._reset_requested = threading.Event()
 
         self.scrambler = VericryptScrambler(sample_rate)
-        self.modem = FSKModem(sample_rate)
-        assert self.scrambler.frame_samples == self.modem.FRAME_BITS * self.modem.samples_per_bit
+        self._init_state(CryptoMode.OFF, SyncMode.FSK)
 
-        # Laufzeit des Tiefpasses nach dem Scrambling: um so viel liegt die
-        # Sprache hinter dem (unverzögerten) FSK-Frame-Anfang
-        impulse = np.zeros(4096)
+    def _make_modem(self, sync_mode: SyncMode):
+        if sync_mode == SyncMode.PILOT:
+            return PilotToneModem(self.sample_rate, self.scrambler.frame_samples,
+                                  self.scrambler.segment_samples)
+        modem = FSKModem(self.sample_rate)
+        assert self.scrambler.frame_samples == modem.FRAME_BITS * modem.samples_per_bit
+        return modem
+
+    def _speech_delay(self, modem) -> int:
+        """
+        Laufzeit der Filter nach dem Scrambling: um so viel liegt die Sprache
+        hinter dem Frame-Anfang, den das Sync-Signal markiert.
+        """
+        impulse = np.zeros(8192)
         impulse[0] = 1.0
-        self.speech_delay = int(np.argmax(np.abs(sosfilt(speech_lowpass(sample_rate), impulse))))
+        h = sosfilt(speech_lowpass(self.sample_rate), impulse)
+        for sos in modem.speech_notches():
+            h = sosfilt(sos, h)
+        return int(np.argmax(np.abs(h)))
 
-        self._init_state(CryptoMode.OFF)
-
-    def _init_state(self, mode: CryptoMode):
+    def _init_state(self, mode: CryptoMode, sync_mode: SyncMode):
         capacity = self.scrambler.frame_samples * 4 + self.chunk_size
         self.in_buffer = RingBuffer(capacity)
         self.out_buffer = RingBuffer(capacity)
+        self.modem = self._make_modem(sync_mode)
         self.encoder = FrameEncoder(self.sample_rate, self.scrambler, self.modem)
-        self.decoder = FrameDecoder(self.sample_rate, self.scrambler, self.modem, self.speech_delay)
+        self.decoder = FrameDecoder(self.sample_rate, self.scrambler, self.modem,
+                                    self._speech_delay(self.modem))
+        pilot = sync_mode == SyncMode.PILOT
+        self.clock_recovery = PilotClockRecovery(self.sample_rate) if pilot else None
+        # Pilottöne fortlaufend entfernen, solange sie noch lückenlos sind (vor dem Entwürfeln)
+        self.speech_buffer = RingBuffer(capacity) if pilot else None
+        self.pilot_removers = [StreamingFilter(sos) for sos in self.modem.speech_notches()]
         self.clear_inverter = FrequencyInverter(self.sample_rate)
         self.clear_bandpass = StreamingFilter(
             butter(4, [300, 3400], btype='band', fs=self.sample_rate, output='sos'))
-        self.modem.phase = 0.0
         self._active_mode = mode
+        self._active_sync = sync_mode
         self._out_position = 0
         self._first_frame_ready = False
         self._primed = False
@@ -516,9 +837,10 @@ class AudioProcessor:
 
     def process(self, data: np.ndarray) -> np.ndarray:
         settings = self.get_settings()
-        if self._reset_requested.is_set() or settings.crypto_mode != self._active_mode:
+        if (self._reset_requested.is_set() or settings.crypto_mode != self._active_mode
+                or settings.sync_mode != self._active_sync):
             self._reset_requested.clear()
-            self._init_state(settings.crypto_mode)
+            self._init_state(settings.crypto_mode, settings.sync_mode)
 
         if settings.crypto_mode == CryptoMode.OFF:
             if settings.inversion:
@@ -527,14 +849,21 @@ class AudioProcessor:
                 data = self.clear_bandpass.process(data)
             return data.astype(np.float32)
 
-        self.in_buffer.write(data)
+        if settings.crypto_mode == CryptoMode.DECRYPT and self.clock_recovery is not None:
+            nominal = self.clock_recovery.process(data)
+            self.in_buffer.write(nominal)
+            for remover in self.pilot_removers:
+                nominal = remover.process(nominal)
+            self.speech_buffer.write(nominal)
+        else:
+            self.in_buffer.write(data)
         if settings.crypto_mode == CryptoMode.ENCRYPT:
             frame_len = self.scrambler.frame_samples
             while self.in_buffer.available() >= frame_len:
                 frame = self.in_buffer.read(frame_len)
                 self.out_buffer.write(self.encoder.encode(frame, settings))
         else:
-            self.decoder.pump(self.in_buffer, self.out_buffer, settings)
+            self.decoder.pump(self.in_buffer, self.out_buffer, settings, self.speech_buffer)
 
         if not self._primed:
             # Nie Klartext durchreichen: bis der erste Frame fertig ist -> Stille.
@@ -804,6 +1133,20 @@ class AudioEffectsApp:
                 command=self._on_settings_change
             ).pack(side='left', padx=(0, 20))
 
+        # Sync-Verfahren
+        sync_frame = ttk.Frame(crypto_frame)
+        sync_frame.pack(fill='x', pady=(10, 0))
+
+        ttk.Label(sync_frame, text="SYNC:", font=('Courier', 10, 'bold')).pack(side='left', padx=(0, 10))
+        self.sync_mode_var = tk.StringVar(value=SyncMode.FSK.value)
+        for text, value in (("FSK 3.8/4.4 kHz", SyncMode.FSK.value),
+                            ("Pilotton 1200/1800 Hz (Funk)", SyncMode.PILOT.value)):
+            ttk.Radiobutton(
+                sync_frame, text=text,
+                variable=self.sync_mode_var, value=value,
+                command=self._on_settings_change
+            ).pack(side='left', padx=(0, 20))
+
         # Schlüssel
         key_frame = ttk.Frame(crypto_frame)
         key_frame.pack(fill='x', pady=(15, 5))
@@ -829,9 +1172,10 @@ class AudioEffectsApp:
         info_frame = ttk.Frame(crypto_frame)
         info_frame.pack(fill='x', pady=(10, 0))
 
+        self.info_var = tk.StringVar(value="▸ 30ms Segmente  ▸ FSK 3.8/4.4 kHz, nur Soundkarte/Band  ▸ Latenz ~0.5s / ~1s")
         ttk.Label(
             info_frame,
-            text="▸ 30ms Segmente  ▸ FSK-Sync 3.8/4.4 kHz  ▸ Latenz ~0.5s / ~1s",
+            textvariable=self.info_var,
             foreground='#0a0',
             font=('Courier', 8)
         ).pack()
@@ -924,11 +1268,18 @@ class AudioEffectsApp:
 
     def _on_settings_change(self):
         crypto_mode = CryptoMode(self.crypto_mode_var.get())
+        sync_mode = SyncMode(self.sync_mode_var.get())
+
+        if sync_mode == SyncMode.PILOT:
+            self.info_var.set("▸ 30ms Segmente  ▸ Pilot 1200/1800 Hz im Sprachband  ▸ Latenz ~0.6s / ~1.6s")
+        else:
+            self.info_var.set("▸ 30ms Segmente  ▸ FSK 3.8/4.4 kHz, nur Soundkarte/Band  ▸ Latenz ~0.5s / ~1s")
 
         updates = dict(
             inversion=self.inversion_var.get(),
             bandpass=self.bandpass_var.get(),
             crypto_mode=crypto_mode,
+            sync_mode=sync_mode,
         )
         key = self._parse_key()
         if key is None:
