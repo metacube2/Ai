@@ -4,6 +4,11 @@ Bildeffekte in Echtzeit auf einen Bildschirmbereich.
 
 Ein wählbarer Bereich des Bildschirms (z. B. ein Videoplayer-Fenster) wird
 laufend abgefilmt, mit einem Effekt verändert und in der Vorschau angezeigt.
+Unabhängig davon verändern Ton-Effekte den Ton – gesteuert vom Bild.
+
+Ton des Videos statt Mikrofon: virtuelles Audiogerät BlackHole installieren
+(brew install blackhole-2ch), Systemausgabe auf BlackHole stellen, im Programm
+BlackHole als Eingang und die Lautsprecher als Ausgang wählen.
 
 Abhängigkeiten: numpy, opencv-python(-headless), mss, PySide6, sounddevice, scipy
 macOS: Das Terminal braucht die Freigabe "Bildschirmaufnahme", für den
@@ -17,16 +22,17 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import cv2
 import mss
 import numpy as np
 import sounddevice as sd
-from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QCursor, QGuiApplication, QImage, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-                               QPushButton, QVBoxLayout, QWidget)
+                               QPushButton, QSlider, QVBoxLayout, QWidget)
 from scipy import signal
 
 # Alle Bilder in diesem Programm sind RGB (uint8, Form H x B x 3).
@@ -116,15 +122,19 @@ class IEventBus(ABC):
 
 
 class IAudioLoopService(ABC):
-    """Interface für eine Audio-Schleife Eingang -> Verarbeitung -> Ausgang"""
+    """
+    Audio-Schleife Eingang -> Stufen -> Ausgang. Eine Stufe ist ein Objekt mit
+    process(block N x Kanäle) und optional prepare(sample_rate, channels).
+    Der Stream läuft, solange mindestens eine Stufe gesetzt ist.
+    """
 
     @abstractmethod
-    def start(self, processor: Callable[[np.ndarray], np.ndarray]) -> None:
-        """Startet die Schleife; processor bekommt Blöcke (N x Kanäle)"""
+    def set_stage(self, name: str, stage: Optional[Any]) -> None:
+        """Setzt oder entfernt ('None') eine benannte Stufe"""
 
     @abstractmethod
-    def stop(self) -> None:
-        """Stoppt die Schleife"""
+    def set_devices(self, input_device: Optional[int], output_device: Optional[int]) -> None:
+        """Wählt die Geräte (None = Systemstandard)"""
 
 # ----------------- Hilfsfunktionen -----------------
 
@@ -256,40 +266,90 @@ class MssScreenCaptureService(IScreenCaptureService):
 
 
 class SoundDeviceLoopService(IAudioLoopService):
-    """Mikrofon -> Verarbeitung -> Lautsprecher in einem Duplex-Stream"""
+    """Duplex-Stream mit Stufen: erst Ton-Effekt, dann Audio+Video-Glitch"""
 
-    SAMPLE_RATE = 44100
-    BLOCK_SIZE = 1024
+    STAGE_ORDER = ('effect', 'video_glitch')
+    PREFERRED_RATES = (48000, 44100)
+    BLOCK_SIZE = 512
 
     def __init__(self, event_bus: IEventBus):
         self.event_bus = event_bus
+        self.input_device: Optional[int] = None
+        self.output_device: Optional[int] = None
+        self.sample_rate = self.PREFERRED_RATES[0]
+        self.in_channels = self.out_channels = 1
+        self._stages: Dict[str, Any] = {}
+        self._chain: Tuple[Any, ...] = ()
         self._stream: Optional[sd.Stream] = None
-        self.channels = 1
+        self._lock = threading.Lock()
 
-    def start(self, processor: Callable[[np.ndarray], np.ndarray]) -> None:
-        if self._stream is not None:
-            return
+    def set_stage(self, name: str, stage: Optional[Any]) -> None:
+        with self._lock:
+            if stage is None:
+                self._stages.pop(name, None)
+            else:
+                if self._stream is not None and hasattr(stage, 'prepare'):
+                    stage.prepare(self.sample_rate, self.in_channels)
+                self._stages[name] = stage
+            self._rebuild_chain()
+            if self._stages and self._stream is None:
+                self._start()
+            elif not self._stages and self._stream is not None:
+                self._stop()
 
-        def callback(indata, outdata, frames, time_info, status):
-            try:
-                outdata[:] = np.clip(processor(indata.copy()), -1.0, 1.0)
-            except Exception:
-                outdata.fill(0)
+    def set_devices(self, input_device: Optional[int], output_device: Optional[int]) -> None:
+        with self._lock:
+            self.input_device, self.output_device = input_device, output_device
+            if self._stream is not None:
+                self._stop()
+                self._start()
 
+    def _rebuild_chain(self) -> None:
+        # Tupel wird atomar ersetzt: der Audio-Thread braucht keine Sperre
+        self._chain = tuple(self._stages[n] for n in self.STAGE_ORDER if n in self._stages)
+
+    def _callback(self, indata, outdata, frames, time_info, status):
         try:
-            inp = sd.query_devices(kind='input')
-            out = sd.query_devices(kind='output')
-            self.channels = max(1, min(2, int(inp['max_input_channels']), int(out['max_output_channels'])))
-            self._stream = sd.Stream(samplerate=self.SAMPLE_RATE, blocksize=self.BLOCK_SIZE,
-                                     channels=self.channels, dtype='float32', callback=callback)
+            block = indata.copy()
+            for stage in self._chain:
+                block = stage.process(block)
+            if block.shape[1] != outdata.shape[1]:
+                block = np.repeat(block.mean(axis=1, keepdims=True), outdata.shape[1], axis=1)
+            outdata[:] = np.clip(block, -1.0, 1.0)
+        except Exception:
+            outdata.fill(0)
+
+    def _start(self) -> None:
+        try:
+            inp = sd.query_devices(self.input_device, 'input')
+            out = sd.query_devices(self.output_device, 'output')
+            self.in_channels = max(1, min(2, int(inp['max_input_channels'])))
+            self.out_channels = max(1, min(2, int(out['max_output_channels'])))
+            rate = int(inp['default_samplerate'])
+            for candidate in self.PREFERRED_RATES:
+                try:
+                    sd.check_input_settings(self.input_device, channels=self.in_channels, samplerate=candidate)
+                    sd.check_output_settings(self.output_device, channels=self.out_channels, samplerate=candidate)
+                    rate = candidate
+                    break
+                except Exception:
+                    continue
+            self.sample_rate = rate
+            for stage in self._stages.values():
+                if hasattr(stage, 'prepare'):
+                    stage.prepare(rate, self.in_channels)
+            self._stream = sd.Stream(samplerate=rate, blocksize=self.BLOCK_SIZE,
+                                     device=(self.input_device, self.output_device),
+                                     channels=(self.in_channels, self.out_channels),
+                                     dtype='float32', latency='low', callback=self._callback)
             self._stream.start()
-            self.event_bus.publish('status_update',
-                                   "Audio: Mikrofon -> Lautsprecher. Kopfhörer benutzen, sonst Rückkopplung!")
+            hint = "" if 'blackhole' in inp['name'].lower() else "  –  Kopfhörer benutzen, sonst Rückkopplung!"
+            self.event_bus.publish('status_update', f"Ton: {inp['name']} -> {out['name']}, {rate} Hz{hint}")
         except Exception as e:
             self._stream = None
             self.event_bus.publish('status_update', f"Audio-Fehler: {e}")
 
-    def stop(self) -> None:
+    def _stop(self) -> None:
         stream, self._stream = self._stream, None
         if stream is not None:
             try:
@@ -1944,7 +2004,7 @@ class AudioGlitcher:
     GLITCH_PROBABILITY = 0.3
     COOLDOWN_SECONDS = 0.5
 
-    def __init__(self, sample_rate: int = SoundDeviceLoopService.SAMPLE_RATE):
+    def __init__(self, sample_rate: int = SoundDeviceLoopService.PREFERRED_RATES[0]):
         self.sample_rate = sample_rate
         self.rng = np.random.default_rng()
         self.history: collections.deque = collections.deque(maxlen=5)
@@ -1952,6 +2012,10 @@ class AudioGlitcher:
         self._kind = None
         self._blocks_left = 0
         self._params: Dict[str, Any] = {}
+
+    def prepare(self, sample_rate: int, channels: int) -> None:
+        self.sample_rate = sample_rate
+        self.history.clear()
 
     def process(self, block: np.ndarray) -> np.ndarray:
         rng = self.rng
@@ -2008,10 +2072,10 @@ class AudioGlitchEffectStrategy(IEffectStrategy):
         return "Audio+Video Glitch"
 
     def activate(self) -> None:
-        self.audio_loop.start(self.glitcher.process)
+        self.audio_loop.set_stage('video_glitch', self.glitcher)
 
     def deactivate(self) -> None:
-        self.audio_loop.stop()
+        self.audio_loop.set_stage('video_glitch', None)
 
     def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
         rng = self.rng
@@ -2021,6 +2085,720 @@ class AudioGlitchEffectStrategy(IEffectStrategy):
         r = shift_image(r, int(rng.integers(-10, 10)), int(rng.integers(-5, 5)), cv2.BORDER_WRAP)
         return cv2.merge([r, g, b])
 
+# ----------------- Bildmerkmale für Ton-Effekte -----------------
+
+@dataclass(frozen=True)
+class VideoFeatureSnapshot:
+    """Momentaufnahme der Bildmerkmale. valid=False, wenn gerade kein Video läuft."""
+    valid: bool = False
+    row_profile: Optional[np.ndarray] = None   # Helligkeit je Bildzeile (oben -> unten), 0..1
+    brightness: float = 0.5
+    hue: float = 0.0                           # Farbton in Grad (0 = Rot)
+    saturation: float = 0.0                    # 0 = grau, 1 = kräftig einfarbig
+    motion_x: float = 0.0                      # Bewegung pro Bild, Anteil der Bildbreite
+    motion_y: float = 0.0                      # positiv = nach unten
+    activity: float = 0.0                      # mittlere Bildänderung 0..1
+    cut_count: int = 0
+    cut_times: Tuple[float, ...] = ()
+
+
+class VideoFeatures:
+    """
+    Leichte Bildanalyse für die Ton-Effekte. update() läuft im Aufnahme-Thread
+    (nur wenn ein Ton-Effekt aktiv ist), snapshot() liest im Audio-Thread.
+    """
+
+    ROWS = 96
+    STALE_SECONDS = 1.0
+
+    def __init__(self):
+        self.enabled = False
+        self._snapshot = VideoFeatureSnapshot()
+        self._timestamp = 0.0
+        self._prev_small: Optional[np.ndarray] = None
+        self._activity_avg = 0.02
+        self._cut_times: collections.deque = collections.deque(maxlen=16)
+        self._cut_count = 0
+        self._last_cut = 0.0
+
+    def update(self, frame: np.ndarray) -> None:
+        now = time.time()
+        # Erst per Raster ausdünnen, dann weich verkleinern: INTER_AREA direkt vom Vollbild ist teuer
+        step = max(1, min(frame.shape[0] // (2 * self.ROWS), frame.shape[1] // 128))
+        base = cv2.resize(np.ascontiguousarray(frame[::step, ::step]), (64, self.ROWS), interpolation=cv2.INTER_AREA)
+        gray = cv2.cvtColor(base, cv2.COLOR_RGB2GRAY)
+        rows = gray.mean(axis=1) / 255.0
+
+        small_rgb = cv2.resize(base, (64, 36), interpolation=cv2.INTER_AREA)
+        small = cv2.cvtColor(small_rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
+        hsv = cv2.cvtColor(small_rgb, cv2.COLOR_RGB2HSV).astype(np.float32)
+        weight = (hsv[..., 1] / 255.0) * (hsv[..., 2] / 255.0)
+        angle = hsv[..., 0] * (np.pi / 90.0)            # OpenCV-Farbton 0..180 -> Bogenmaß
+        sx, sy = float((weight * np.cos(angle)).sum()), float((weight * np.sin(angle)).sum())
+        hue = (np.degrees(np.arctan2(sy, sx)) + 360.0) % 360.0
+        saturation = float(np.hypot(sx, sy) / weight.size)
+
+        motion_x = motion_y = activity = 0.0
+        if self._prev_small is not None and self._prev_small.shape == small.shape:
+            (dx, dy), response = cv2.phaseCorrelate(self._prev_small, small)
+            if response > 0.1:
+                motion_x, motion_y = dx / small.shape[1], dy / small.shape[0]
+            activity = float(np.mean(np.abs(small - self._prev_small)))
+            if activity > 0.12 and activity > 4 * self._activity_avg and now - self._last_cut > 0.25:
+                self._cut_count += 1
+                self._cut_times.append(now)
+                self._last_cut = now
+            self._activity_avg = 0.95 * self._activity_avg + 0.05 * activity
+        self._prev_small = small
+
+        self._snapshot = VideoFeatureSnapshot(
+            True, rows.astype(np.float32), float(gray.mean()) / 255.0, float(hue), saturation,
+            float(motion_x), float(motion_y), activity, self._cut_count, tuple(self._cut_times))
+        self._timestamp = now
+
+    def snapshot(self) -> VideoFeatureSnapshot:
+        if time.time() - self._timestamp > self.STALE_SECONDS:
+            return VideoFeatureSnapshot(cut_count=self._cut_count, cut_times=tuple(self._cut_times))
+        return self._snapshot
+
+# ----------------- Ton-Effekte -----------------
+
+class IAudioEffect(ABC):
+    """Ton-Effekt: verarbeitet Mono-Blöcke im Audio-Thread"""
+
+    description = ""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Name des Effekts"""
+
+    @property
+    @abstractmethod
+    def latency(self) -> int:
+        """Verzögerung in Samples (für die Ausrichtung des trockenen Signals)"""
+
+    @abstractmethod
+    def reset(self, sample_rate: int) -> None:
+        """Zustand für eine Samplerate neu aufbauen"""
+
+    @abstractmethod
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        """Mono float32 (n,) -> Mono float32 (n,)"""
+
+
+class StftAudioEffect(IAudioEffect):
+    """
+    Basis für spektrale Effekte: Kurzzeit-Fourier-Transformation mit 4-facher
+    Überlappung. Unterklassen bearbeiten pro Analyseschritt Betrag und Phase.
+    """
+
+    FRAME = 2048
+    HOP = 512
+
+    def reset(self, sample_rate: int) -> None:
+        n, hop = self.FRAME, self.HOP
+        self.sample_rate = sample_rate
+        self.window = (0.5 - 0.5 * np.cos(2 * np.pi * np.arange(n) / n)).astype(np.float32)
+        self.norm = float(np.sum(self.window ** 2) / hop)
+        self.freqs = np.fft.rfftfreq(n, 1.0 / sample_rate)
+        self.bins = np.arange(len(self.freqs), dtype=np.float64)
+        self.bin_advance = 2 * np.pi * self.bins * hop / n      # Phasenfortschritt der Bin-Mitten
+        self.hops_per_second = sample_rate / hop
+        self._frame = np.zeros(n, dtype=np.float32)
+        self._pending = np.zeros(0, dtype=np.float32)
+        self._accum = np.zeros(n, dtype=np.float32)
+        self._out = np.zeros(hop, dtype=np.float32)            # Vorlauf: Ausgabe läuft nie leer
+        self.rng = np.random.default_rng()
+        self.on_reset()
+
+    @property
+    def latency(self) -> int:
+        return self.FRAME
+
+    def on_reset(self) -> None:
+        pass
+
+    @abstractmethod
+    def process_frame(self, mag: np.ndarray, phase: np.ndarray,
+                      video: VideoFeatureSnapshot) -> Tuple[np.ndarray, np.ndarray]:
+        """Betrag und Phase eines Analyseschritts verändern"""
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n, hop = self.FRAME, self.HOP
+        self._pending = np.concatenate([self._pending, block.astype(np.float32)])
+        produced = [self._out]
+        while len(self._pending) >= hop:
+            self._frame[:-hop] = self._frame[hop:]
+            self._frame[-hop:] = self._pending[:hop]
+            self._pending = self._pending[hop:]
+            spectrum = np.fft.rfft(self._frame * self.window)
+            mag, phase = self.process_frame(np.abs(spectrum), np.angle(spectrum), video)
+            frame = np.fft.irfft(mag * np.exp(1j * phase), n).astype(np.float32)
+            self._accum += frame * self.window / self.norm
+            produced.append(self._accum[:hop].copy())
+            self._accum[:-hop] = self._accum[hop:]
+            self._accum[-hop:] = 0.0
+        out = np.concatenate(produced)
+        self._out = out[len(block):]
+        return out[:len(block)]
+
+
+class OnsetDetector:
+    """Erkennt Einsätze (Silben, Schläge) über den spektralen Fluss"""
+
+    def __init__(self, sample_rate: int, frame: int = 1024, hop: int = 512, min_gap: float = 0.12):
+        self.frame, self.hop = frame, hop
+        self.window = np.hanning(frame).astype(np.float32)
+        self.min_gap = int(min_gap * sample_rate)
+        self._buffer = np.zeros(frame, dtype=np.float32)
+        self._pending = np.zeros(0, dtype=np.float32)
+        self._prev = np.zeros(frame // 2 + 1)
+        self._count = 0                 # verarbeitete Samples (absolut)
+        self._flux_avg = 1.0
+        self._last_onset = -10 ** 9
+
+    def feed(self, block: np.ndarray) -> List[int]:
+        onsets = []
+        self._pending = np.concatenate([self._pending, block])
+        while len(self._pending) >= self.hop:
+            self._buffer[:-self.hop] = self._buffer[self.hop:]
+            self._buffer[-self.hop:] = self._pending[:self.hop]
+            self._pending = self._pending[self.hop:]
+            self._count += self.hop
+            mag = np.abs(np.fft.rfft(self._buffer * self.window))
+            flux = float(np.sum(np.maximum(0.0, np.log1p(mag * 10) - np.log1p(self._prev * 10))))
+            self._prev = mag
+            loud = float(np.sqrt(np.mean(self._buffer[-self.hop:] ** 2))) > 0.005
+            position = self._count - self.hop
+            if loud and flux > 2.2 * self._flux_avg + 1.0 and position - self._last_onset > self.min_gap:
+                onsets.append(position)
+                self._last_onset = position
+            self._flux_avg = 0.9 * self._flux_avg + 0.1 * flux
+        return onsets
+
+
+class ImageStencilEffect(StftAudioEffect):
+    description = ("Das Bild ist der Filter: Jede Bildzeile steuert ein Frequenzband "
+                   "(oben hoch, unten tief). Helle Stellen lassen durch, dunkle schlucken.")
+    MIN_HZ, MAX_HZ = 80.0, 12000.0
+    FLOOR = 0.03
+
+    @property
+    def name(self) -> str:
+        return "Bild-Schablone"
+
+    def on_reset(self) -> None:
+        position = np.clip(np.log(np.maximum(self.freqs, 1.0) / self.MIN_HZ) / np.log(self.MAX_HZ / self.MIN_HZ), 0, 1)
+        self._row = (1.0 - position) * (VideoFeatures.ROWS - 1)
+        self._gains = np.ones(len(self.freqs))
+
+    def process_frame(self, mag, phase, video):
+        if video.valid and video.row_profile is not None:
+            profile = video.row_profile.astype(np.float64)
+            lo, hi = profile.min(), profile.max()
+            stretched = (profile - lo) / (hi - lo) if hi - lo > 0.05 else profile
+            profile = 0.3 * profile + 0.7 * stretched
+            target = self.FLOOR + (1 - self.FLOOR) * np.interp(self._row, np.arange(len(profile)), profile) ** 1.5
+        else:
+            target = np.ones(len(self.freqs))
+        self._gains += 0.35 * (target - self._gains)
+        return mag * self._gains, phase
+
+
+class AudioDatamoshEffect(StftAudioEffect):
+    description = ("Steht das Bild, friert der Klang ein. Bewegung zerreißt ihn: senkrecht verschiebt "
+                   "die Tonhöhe, waagrecht verschmiert in Blöcken. Ein Bildschnitt ist ein Keyframe.")
+    BLOCK_BINS = 16
+    KEYFRAME_HOPS = 8
+
+    @property
+    def name(self) -> str:
+        return "Audio-Datamosh"
+
+    def on_reset(self) -> None:
+        self._held: Optional[np.ndarray] = None
+        self._phase = np.zeros(len(self.freqs))
+        self._keyframe = 0
+        self._last_cut: Optional[int] = None
+        self._hops_since_key = 0
+
+    def process_frame(self, mag, phase, video):
+        if self._held is None:
+            self._keyframe = self.KEYFRAME_HOPS
+        if self._last_cut is not None and video.cut_count != self._last_cut:
+            self._keyframe = self.KEYFRAME_HOPS
+        self._last_cut = video.cut_count
+        self._hops_since_key += 1
+        if not video.valid and self._hops_since_key > 3 * self.hops_per_second:
+            self._keyframe = self.KEYFRAME_HOPS     # ohne Video: alle 3 s ein Keyframe
+
+        if self._keyframe > 0:
+            self._keyframe -= 1
+            self._hops_since_key = 0
+            self._held = mag.copy()
+            self._phase = phase.copy()
+            return mag, phase
+
+        held = self._held
+        if video.valid:
+            # Bild nach oben -> Ton höher; 1 % Bildhöhe pro Videobild ≈ 8 Halbtöne pro Sekunde
+            semitones = -video.motion_y * 800.0 / self.hops_per_second
+            if abs(semitones) > 0.005:
+                ratio = 2.0 ** (semitones / 12.0)
+                held = np.interp(self.bins / ratio, self.bins, held, left=0.0, right=0.0)
+            smear = float(np.clip(abs(video.motion_x) * 12.0, 0, 1))
+            if smear > 0.02:
+                blended = held * (1 - smear) + mag * smear
+                usable = len(blended) // self.BLOCK_BINS * self.BLOCK_BINS
+                blocks = blended[:usable].reshape(-1, self.BLOCK_BINS).mean(axis=1).repeat(self.BLOCK_BINS)
+                pick = self.rng.random(usable) < smear
+                blended[:usable] = np.where(pick, blocks, blended[:usable])
+                held = blended
+        self._held = held * 0.9995
+        self._phase = self._phase + self.bin_advance + self.rng.uniform(-0.2, 0.2, len(self._phase))
+        return self._held, self._phase
+
+
+class PremonitionEffect(IAudioEffect):
+    description = ("Man hört jedes Wort leise rückwärts anschwellen, bevor es kommt – "
+                   "ein Geist aus der Zukunft. Der Ton läuft dafür 1,5 s verzögert.")
+    LOOKAHEAD = 1.5
+    GHOST = 0.4
+    GHOST_GAIN = 0.7
+
+    @property
+    def name(self) -> str:
+        return "Vorahnung"
+
+    @property
+    def latency(self) -> int:
+        return self._delay
+
+    def reset(self, sample_rate: int) -> None:
+        self._delay = int(self.LOOKAHEAD * sample_rate)
+        self._ghost_len = int(self.GHOST * sample_rate)
+        self._fifo = np.zeros(self._delay, dtype=np.float32)
+        self._ghosts = np.zeros(self._delay + self._ghost_len, dtype=np.float32)
+        self._in_count = 0
+        self._out_count = 0
+        self._pending: List[int] = []
+        self._detector = OnsetDetector(sample_rate)
+        self._envelope = (np.linspace(0, 1, self._ghost_len) ** 3).astype(np.float32)
+        smooth = cv2.getGaussianKernel(31, 8).ravel().astype(np.float32)
+        self._smooth = smooth / smooth.sum()
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n = len(block)
+        self._fifo = np.concatenate([self._fifo, block.astype(np.float32)])
+        self._in_count += n
+        self._pending.extend(self._detector.feed(block))
+
+        fifo_start = self._in_count - len(self._fifo)
+        still_pending = []
+        for onset in self._pending:
+            if self._in_count < onset + self._ghost_len:
+                still_pending.append(onset)
+                continue
+            position = onset - fifo_start
+            offset = onset + self._delay - self._ghost_len - self._out_count
+            if position < 0 or offset < 0:
+                continue
+            segment = self._fifo[position:position + self._ghost_len]
+            ghost = np.convolve(segment[::-1], self._smooth, mode='same') * self._envelope * self.GHOST_GAIN
+            self._ghosts[offset:offset + len(ghost)] += ghost
+        self._pending = still_pending
+
+        out = self._fifo[:n] + self._ghosts[:n]
+        self._fifo = self._fifo[n:]
+        self._ghosts = np.concatenate([self._ghosts[n:], np.zeros(n, dtype=np.float32)])
+        self._out_count += n
+        return out
+
+
+class PhosphorGlowEffect(StftAudioEffect):
+    description = ("Laute Klanganteile glühen nach wie der Leuchtstoff einer Bildröhre und sinken beim "
+                   "Abkühlen in der Tonhöhe. Helles Bild = längeres Nachleuchten.")
+    COOLING_SEMITONES_PER_SECOND = 3.0
+
+    @property
+    def name(self) -> str:
+        return "Phosphor-Nachleuchten"
+
+    def on_reset(self) -> None:
+        self._glow = np.zeros(len(self.freqs))
+        self._phase = np.zeros(len(self.freqs))
+
+    def process_frame(self, mag, phase, video):
+        brightness = video.brightness if video.valid else 0.4
+        seconds = 0.8 + 2.7 * brightness
+        base = 0.001 ** (1.0 / (seconds * self.hops_per_second))
+        decay = base ** (1.0 + self.freqs / 3000.0)          # Höhen kühlen schneller ab
+        factor = 2.0 ** (-self.COOLING_SEMITONES_PER_SECOND / 12.0 / self.hops_per_second)
+        cooled = np.interp(self.bins / factor, self.bins, self._glow, right=0.0)
+        self._glow = np.maximum(cooled * decay, mag * 0.9)
+
+        self._phase += self.bin_advance
+        glowing = self._glow > mag
+        self._phase = np.where(glowing, self._phase, phase)
+        return np.maximum(mag, self._glow), self._phase
+
+
+class ColorVowelEffect(StftAudioEffect):
+    description = ("Die Farben im Bild bestimmen den Vokal: Rot 'a', Gelb 'e', Grün 'i', Blau 'o', Violett 'u'. "
+                   "Auch Geräusche beginnen zu sprechen. Graues Bild = neutral.")
+    # Farbton (Grad) -> Formanten F1, F2, F3 (Hz)
+    VOWELS = [(0, (800, 1200, 2500)), (72, (500, 1900, 2500)), (144, (300, 2300, 3000)),
+              (216, (500, 900, 2400)), (288, (320, 800, 2300)), (360, (800, 1200, 2500))]
+    BANDWIDTHS = np.array([90.0, 110.0, 160.0])
+    AMPLITUDES = np.array([1.0, 0.7, 0.35])
+
+    @property
+    def name(self) -> str:
+        return "Farb-Vokale"
+
+    def on_reset(self) -> None:
+        self._formants = np.array(self.VOWELS[0][1], dtype=np.float64)
+        self._lfo = 0.0
+
+    def _target(self, hue: float) -> np.ndarray:
+        hues = [h for h, _ in self.VOWELS]
+        table = np.array([f for _, f in self.VOWELS], dtype=np.float64)
+        return np.array([np.interp(hue % 360.0, hues, table[:, i]) for i in range(3)])
+
+    def process_frame(self, mag, phase, video):
+        if video.valid:
+            hue, strength = video.hue, float(np.clip(video.saturation * 2.5, 0, 1))
+        else:
+            self._lfo = (self._lfo + 360.0 * 0.1 / self.hops_per_second) % 360.0
+            hue, strength = self._lfo, 1.0
+        self._formants += 0.08 * (self._target(hue) - self._formants)
+
+        # Eigene Klangfarbe des Eingangs glätten, dann Vokal-Hüllkurve aufprägen
+        envelope = np.exp(np.convolve(np.log(mag + 1e-6), np.ones(25) / 25, mode='same'))
+        flat = mag / envelope
+        vowel = 0.05 + np.sum(self.AMPLITUDES[:, None]
+                              / (1.0 + ((self.freqs[None, :] - self._formants[:, None])
+                                        / (self.BANDWIDTHS[:, None] / 2)) ** 2), axis=0)
+        shaped = flat * vowel
+        shaped *= np.sqrt(np.sum(mag ** 2) / (np.sum(shaped ** 2) + 1e-12))
+        return mag * (1 - strength) + shaped * strength, phase
+
+
+class NegativeSoundEffect(StftAudioEffect):
+    description = ("Das akustische Negativ: Das Lauteste wird entfernt, das Leise verstärkt – Atem, Raum, "
+                   "Nebengeräusche treten hervor. Dunkles Bild = stärker.")
+    MAX_BOOST_DB = 24.0
+
+    @property
+    def name(self) -> str:
+        return "Negativ-Ton"
+
+    def on_reset(self) -> None:
+        self._long_rms = 0.01
+        self._gains = np.ones(len(self.freqs))
+        self._makeup = 1.0
+
+    def process_frame(self, mag, phase, video):
+        rms = float(np.sqrt(np.mean(mag ** 2)))
+        if rms < 1e-7:
+            return mag, phase
+        strength = 0.6 + 0.4 * (1.0 - video.brightness) if video.valid else 0.8
+
+        reference = float(np.percentile(mag, 70)) + 1e-9
+        over = mag / reference
+        target = np.where(over > 1.0, over ** (-1.5 * strength), np.minimum(1.0 / (over + 0.25), 4.0) ** strength)
+        self._gains += 0.5 * (target - self._gains)
+
+        self._long_rms = 0.995 * self._long_rms + 0.005 * rms
+        dynamic = float(np.clip((self._long_rms / rms) ** strength, 10 ** (-12 / 20), 10 ** (self.MAX_BOOST_DB / 20)))
+        out = mag * self._gains * dynamic
+
+        # Was übrig bleibt, hörbar machen: Pegel Richtung 70 % des Eingangs, höchstens +24 dB, geglättet
+        out_rms = float(np.sqrt(np.mean(out ** 2))) + 1e-12
+        wanted = float(np.clip(0.7 * rms / out_rms, 1.0, 10 ** (self.MAX_BOOST_DB / 20)))
+        self._makeup += 0.05 * (wanted - self._makeup)
+        return out * self._makeup, phase
+
+
+class BeatQuantizerEffect(IAudioEffect):
+    description = ("Silben und Geräusche rasten auf Achtelnoten ein – Sprache wird zu Sprechgesang. "
+                   "Das Tempo folgt den Schnitten im Video (sonst 120 BPM).")
+    MIN_DELAY = 0.06
+    HISTORY = 1.5
+    CROSSFADE = 256
+    GATE_OPEN = 0.65      # Anteil des Rasterschritts, danach Staccato
+    GATE_FLOOR = 0.15
+
+    @property
+    def name(self) -> str:
+        return "Takt-Zwang"
+
+    @property
+    def latency(self) -> int:
+        return int(self.MIN_DELAY * self.sample_rate)
+
+    def reset(self, sample_rate: int) -> None:
+        self.sample_rate = sample_rate
+        self._ring = np.zeros(int(self.HISTORY * sample_rate), dtype=np.float32)
+        self._count = 0                      # geschriebene = ausgegebene Samples (absolut)
+        self._delay = float(self.MIN_DELAY * sample_rate)
+        self._target_delay: Optional[float] = None
+        self._fade = 0
+        self._events: List[float] = [0.0]    # Ausgabezeitpunkte der eingerasteten Einsätze
+        self._detector = OnsetDetector(sample_rate)
+        self.bpm = 120.0
+
+    def _update_tempo(self, video: VideoFeatureSnapshot) -> None:
+        recent = [t for t in video.cut_times if time.time() - t < 12.0]
+        if len(recent) >= 3:
+            interval = float(np.median(np.diff(recent)))
+            if interval > 0:
+                bpm = 60.0 / interval
+                while bpm < 80:
+                    bpm *= 2
+                while bpm > 160:
+                    bpm /= 2
+                self.bpm += 0.2 * (bpm - self.bpm)
+
+    def _read(self, positions: np.ndarray) -> np.ndarray:
+        index = np.floor(positions).astype(np.int64)
+        return self._ring[index % len(self._ring)]
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n = len(block)
+        ring_len = len(self._ring)
+        write = (self._count + np.arange(n)) % ring_len
+        self._ring[write] = block
+        self._update_tempo(video)
+        step = 60.0 / self.bpm / 2.0 * self.sample_rate          # Achtelnote in Samples
+
+        for onset in self._detector.feed(block):
+            if self._target_delay is not None:                    # laufende Überblendung abschließen
+                self._delay, self._target_delay = self._target_delay, None
+            earliest = onset + self.MIN_DELAY * self.sample_rate
+            grid = np.ceil(earliest / step) * step
+            delay = grid - onset
+            if delay < ring_len - n - self.CROSSFADE:
+                self._target_delay = float(delay)
+                self._fade = 0
+                self._events.append(float(grid))
+                self._events = self._events[-8:]
+
+        out_positions = self._count + np.arange(n, dtype=np.float64)
+        out = self._read(out_positions - self._delay)
+        if self._target_delay is not None:
+            fade = np.clip((np.arange(n) + self._fade) / self.CROSSFADE, 0, 1).astype(np.float32)
+            out = out * (1 - fade) + self._read(out_positions - self._target_delay) * fade
+            self._fade += n
+            if self._fade >= self.CROSSFADE:
+                self._delay, self._target_delay = self._target_delay, None
+
+        # Staccato: nach dem Einsatz offen, dann bis zum nächsten Rasterpunkt abgedunkelt
+        events = np.array(sorted(self._events))
+        last = events[np.clip(np.searchsorted(events, out_positions, side='right') - 1, 0, len(events) - 1)]
+        since = out_positions - last
+        attack = np.clip(since / (0.005 * self.sample_rate), 0, 1)
+        release = np.clip(1.0 - (since - self.GATE_OPEN * step) / (0.1 * step), 0, 1)
+        gate = np.where(since < self.GATE_OPEN * step, attack, self.GATE_FLOOR + (1 - self.GATE_FLOOR) * release)
+        self._count += n
+        return (out * gate).astype(np.float32)
+
+
+class HarmonyMagnetEffect(StftAudioEffect):
+    description = ("Alle Frequenzen, auch Rauschen und Lärm, werden zu den Tönen eines Akkords gezogen. "
+                   "Farbton wählt den Grundton, Helligkeit Dur (hell) oder Moll (dunkel).")
+    FRAME = 4096
+    HOP = 1024
+    MAX_PEAKS = 80
+    RESIDUAL = 0.12
+    PROGRESSION = [(0, False), (9, True), (5, False), (7, False)]   # C, Am, F, G ohne Video
+
+    @property
+    def name(self) -> str:
+        return "Harmonie-Magnet"
+
+    def on_reset(self) -> None:
+        self._prev_phase = np.zeros(len(self.freqs))
+        self._out_phase = np.zeros(len(self.freqs))
+        self._chord: Tuple[int, bool] = (0, False)
+        self._chord_time = 0.0
+        self._targets = self._chord_frequencies(*self._chord)
+        self._progression_index = 0
+
+    @staticmethod
+    def _chord_frequencies(root: int, minor: bool) -> np.ndarray:
+        intervals = (0, 3, 7) if minor else (0, 4, 7)
+        notes = [m for m in range(28, 109) if (m - root) % 12 in intervals]   # ~41 Hz bis ~8 kHz
+        return 440.0 * 2.0 ** ((np.array(notes) - 69) / 12.0)
+
+    def _choose_chord(self, video: VideoFeatureSnapshot) -> None:
+        now = time.time()
+        if now - self._chord_time < 1.0:
+            return
+        if video.valid:
+            chord = (int(round(video.hue / 30.0)) % 12, video.brightness < 0.45)
+        elif now - self._chord_time >= 4.0:
+            self._progression_index = (self._progression_index + 1) % len(self.PROGRESSION)
+            chord = self.PROGRESSION[self._progression_index]
+        else:
+            return
+        if chord != self._chord:
+            self._chord = chord
+            self._targets = self._chord_frequencies(*chord)
+        self._chord_time = now
+
+    def process_frame(self, mag, phase, video):
+        self._choose_chord(video)
+        n_bins = len(mag)
+        bin_hz = self.sample_rate / self.FRAME
+
+        # Momentanfrequenz jedes Bins aus der Phasendifferenz (Phase-Vocoder)
+        deviation = phase - self._prev_phase - self.bin_advance
+        deviation = (deviation + np.pi) % (2 * np.pi) - np.pi
+        true_bins = self.bins + deviation * self.FRAME / (2 * np.pi * self.HOP)
+        self._prev_phase = phase
+
+        inner = mag[1:-1]
+        candidates = np.where((inner > mag[:-2]) & (inner >= mag[2:]) & (inner > mag.max() * 0.01))[0] + 1
+        if len(candidates) > self.MAX_PEAKS:
+            candidates = candidates[np.argsort(mag[candidates])[-self.MAX_PEAKS:]]
+
+        out_mag = mag * self.RESIDUAL
+        out_phase = phase.copy()
+        claimed = np.zeros(n_bins, dtype=bool)
+        new_out_phase = phase.copy()
+        for peak in candidates[np.argsort(-mag[candidates])]:
+            freq = true_bins[peak] * bin_hz
+            if freq <= 20:
+                continue
+            index = np.searchsorted(self._targets, freq)
+            options = self._targets[max(0, index - 1):index + 1]
+            target = options[np.argmin(np.abs(options - freq))]
+            center = int(round(target / bin_hz))
+            if center < 2 or center >= n_bins - 2 or claimed[center]:
+                continue
+            peak_phase = self._out_phase[center] + 2 * np.pi * target * self.HOP / self.sample_rate
+            for offset in range(-2, 3):
+                src, dst = peak + offset, center + offset
+                if 0 <= src < n_bins:
+                    if not claimed[dst]:
+                        out_mag[dst] = 0.0
+                    out_mag[dst] += mag[src]
+                    out_phase[dst] = peak_phase + (phase[src] - phase[peak])
+                    new_out_phase[dst] = out_phase[dst]
+                    claimed[dst] = True
+        self._out_phase = new_out_phase
+        return out_mag, out_phase
+
+
+class AudioEffectEngine:
+    """Ton-Effekt-Stufe der Audio-Pipeline. Umschalten wirkt beim nächsten Block im Audio-Thread."""
+
+    def __init__(self, video_features: VideoFeatures):
+        self.video_features = video_features
+        self.effects: Dict[str, IAudioEffect] = {}
+        self.mix = 1.0
+        self.sample_rate = 48000
+        self.load = 0.0                          # Anteil der Blockzeit, den der Effekt braucht
+        self._effect: Optional[IAudioEffect] = None
+        self._requested: Optional[Tuple[Optional[str]]] = None
+        self._dry = np.zeros(0, dtype=np.float32)
+
+    def register(self, effect: IAudioEffect) -> None:
+        self.effects[effect.name] = effect
+
+    @property
+    def effect_names(self) -> List[str]:
+        return list(self.effects)
+
+    def select(self, name: Optional[str]) -> None:
+        self._requested = (name,)
+
+    def prepare(self, sample_rate: int, channels: int) -> None:
+        self.sample_rate = sample_rate
+        current = self._effect.name if self._effect is not None else None
+        if self._requested is None:
+            self._requested = (current,)
+
+    def process(self, block: np.ndarray) -> np.ndarray:
+        if self._requested is not None:
+            (name,) = self._requested
+            self._requested = None
+            effect = self.effects.get(name) if name else None
+            if effect is not None:
+                effect.reset(self.sample_rate)
+                self._dry = np.zeros(effect.latency, dtype=np.float32)
+            self._effect = effect
+        effect = self._effect
+        if effect is None:
+            return block
+
+        started = time.perf_counter()
+        n = len(block)
+        mono = block.mean(axis=1).astype(np.float32)
+        wet = effect.process(mono, self.video_features.snapshot())
+        self._dry = np.concatenate([self._dry, mono])
+        dry, self._dry = self._dry[:n], self._dry[n:]
+        out = dry * (1.0 - self.mix) + wet * self.mix
+        self.load = 0.9 * self.load + 0.1 * (time.perf_counter() - started) / (n / self.sample_rate)
+        return np.repeat(out[:, None], block.shape[1], axis=1)
+
+
+def list_audio_devices() -> Tuple[List[Tuple[int, str]], List[Tuple[int, str]]]:
+    """(Eingänge, Ausgänge) als Listen von (Index, Name)"""
+    inputs, outputs = [], []
+    try:
+        for index, device in enumerate(sd.query_devices()):
+            if device['max_input_channels'] > 0:
+                inputs.append((index, device['name']))
+            if device['max_output_channels'] > 0:
+                outputs.append((index, device['name']))
+    except Exception:
+        pass
+    return inputs, outputs
+
+
+class AudioController:
+    """Bedient Ton-Effekte und Geräte im Hintergrund, damit Klicks nie warten"""
+
+    def __init__(self, audio_loop: IAudioLoopService, engine: AudioEffectEngine,
+                 event_bus: IEventBus, video_features: VideoFeatures):
+        self.audio_loop = audio_loop
+        self.engine = engine
+        self.event_bus = event_bus
+        self.video_features = video_features
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="audio-control")
+        self.active: Optional[str] = None
+
+    @property
+    def effect_names(self) -> List[str]:
+        return self.engine.effect_names
+
+    def description(self, name: str) -> str:
+        effect = self.engine.effects.get(name)
+        return effect.description if effect is not None else ""
+
+    def select_effect(self, name: Optional[str]) -> None:
+        self.active = name
+        self.engine.select(name)
+        self.video_features.enabled = name is not None
+        stage = self.engine if name else None
+        self._executor.submit(self.audio_loop.set_stage, 'effect', stage)
+        if name:
+            self.event_bus.publish('status_update', f"Ton-Effekt: {name}")
+
+    def set_mix(self, value: float) -> None:
+        self.engine.mix = float(np.clip(value, 0.0, 1.0))
+
+    def set_devices(self, input_device: Optional[int], output_device: Optional[int]) -> None:
+        self._executor.submit(self.audio_loop.set_devices, input_device, output_device)
+
+    def shutdown(self) -> None:
+        self.video_features.enabled = False
+        self._executor.submit(self.audio_loop.set_stage, 'effect', None)
+        self._executor.shutdown(wait=True)
+
 # ----------------- Kern-Logik -----------------
 
 class EffectProcessor:
@@ -2029,9 +2807,11 @@ class EffectProcessor:
     TARGET_FPS = 30
     ERROR_MESSAGE_INTERVAL = 2.0
 
-    def __init__(self, capture_service: IScreenCaptureService, event_bus: IEventBus):
+    def __init__(self, capture_service: IScreenCaptureService, event_bus: IEventBus,
+                 video_features: VideoFeatures):
         self.capture_service = capture_service
         self.event_bus = event_bus
+        self.video_features = video_features
         self.effect_strategies: Dict[str, IEffectStrategy] = {}
         self.current_strategy: Optional[IEffectStrategy] = None
         self.config: Dict[str, Any] = {}
@@ -2128,6 +2908,9 @@ class EffectProcessor:
                                                "Nur schwarzes Bild: Bildschirmaufnahme-Freigabe fürs Terminal prüfen "
                                                "(Systemeinstellungen > Datenschutz & Sicherheit)")
                         black_frames = -1
+
+                if self.video_features.enabled:
+                    self.video_features.update(frame)
 
                 with self._lock:
                     strategy = self.current_strategy
@@ -2304,10 +3087,12 @@ class EffectWindow(QMainWindow):
 
     MIN_REGION = 16
 
-    def __init__(self, event_bus: IEventBus, effect_names: List[str]):
+    def __init__(self, event_bus: IEventBus, effect_names: List[str], audio: AudioController):
         super().__init__()
         self.event_bus = event_bus
+        self.audio = audio
         self._running = False
+        self._last_fps: Optional[float] = None
         self._uses_cells = effect_names[:1] == ["Mosaik"]
         self._picker: Optional[RegionPicker] = None
         self.setWindowTitle("Bildeffekte")
@@ -2361,6 +3146,12 @@ class EffectWindow(QMainWindow):
         controls.addWidget(self.effect_combo)
         controls.addStretch(1)
         layout.addLayout(controls)
+        layout.addLayout(self._build_audio_controls())
+
+        self.audio_info = QLabel("")
+        self.audio_info.setObjectName("hint")
+        self.audio_info.setWordWrap(True)
+        layout.addWidget(self.audio_info)
 
         self.video = VideoWidget()
         layout.addWidget(self.video, 1)
@@ -2368,14 +3159,101 @@ class EffectWindow(QMainWindow):
 
         self.status_label = QLabel("Bereit. Bereich eingeben oder wählen, dann Start.")
         self.fps_label = QLabel("")
-        self.fps_label.setMinimumWidth(80)
+        self.fps_label.setMinimumWidth(150)
         self.fps_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.statusBar().addWidget(self.status_label, 1)
         self.statusBar().addPermanentWidget(self.fps_label)
 
+        self._load_timer = QTimer(self)
+        self._load_timer.timeout.connect(self._refresh_meter)
+        self._load_timer.start(1000)
+        self._update_audio_info()
+
         QShortcut(QKeySequence(Qt.Key.Key_Space), self, activated=self.toggle_running)
         QShortcut(QKeySequence(Qt.Key.Key_N), self, activated=self.next_cell)
         self._update_buttons()
+
+    def _build_audio_controls(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Ton-Effekt:"))
+        self.audio_combo = QComboBox()
+        self.audio_combo.addItem("Aus")
+        for name in self.audio.effect_names:
+            self.audio_combo.addItem(name)
+            self.audio_combo.setItemData(self.audio_combo.count() - 1, self.audio.description(name),
+                                         Qt.ItemDataRole.ToolTipRole)
+        self.audio_combo.setMinimumWidth(190)
+        self.audio_combo.currentTextChanged.connect(self._on_audio_effect)
+        row.addWidget(self.audio_combo)
+
+        row.addWidget(QLabel("Mix:"))
+        self.mix_slider = QSlider(Qt.Orientation.Horizontal)
+        self.mix_slider.setRange(0, 100)
+        self.mix_slider.setValue(100)
+        self.mix_slider.setFixedWidth(110)
+        self.mix_slider.setToolTip("0 % = Originalton, 100 % = nur Effekt")
+        self.mix_label = QLabel("100 %")
+        self.mix_label.setMinimumWidth(40)
+        self.mix_slider.valueChanged.connect(self._on_mix)
+        row.addWidget(self.mix_slider)
+        row.addWidget(self.mix_label)
+
+        row.addSpacing(12)
+        inputs, outputs = list_audio_devices()
+        row.addWidget(QLabel("Eingang:"))
+        self.input_combo = self._device_combo(inputs)
+        row.addWidget(self.input_combo)
+        row.addWidget(QLabel("Ausgang:"))
+        self.output_combo = self._device_combo(outputs)
+        row.addWidget(self.output_combo)
+        self.input_combo.currentIndexChanged.connect(self._on_devices)
+        self.output_combo.currentIndexChanged.connect(self._on_devices)
+        row.addStretch(1)
+        return row
+
+    @staticmethod
+    def _device_combo(devices: List[Tuple[int, str]]) -> QComboBox:
+        combo = QComboBox()
+        combo.addItem("Systemstandard", None)
+        for index, name in devices:
+            combo.addItem(name, index)
+        combo.setMinimumWidth(170)
+        return combo
+
+    def _on_audio_effect(self, name: str) -> None:
+        self.audio.select_effect(None if name == "Aus" else name)
+        self._update_audio_info()
+
+    def _on_mix(self, value: int) -> None:
+        self.mix_label.setText(f"{value} %")
+        self.audio.set_mix(value / 100.0)
+
+    def _on_devices(self) -> None:
+        self.audio.set_devices(self.input_combo.currentData(), self.output_combo.currentData())
+        self._update_audio_info()
+
+    def _update_audio_info(self) -> None:
+        name = self.audio_combo.currentText()
+        if name != "Aus":
+            text = self.audio.description(name)
+            if not self._running:
+                text += "  Tipp: Video starten, damit das Bild den Ton steuert."
+        else:
+            has_blackhole = any('blackhole' in self.input_combo.itemText(i).lower()
+                                for i in range(self.input_combo.count()))
+            text = ("Ton des Videos: Systemausgabe auf BlackHole stellen und hier BlackHole als Eingang wählen."
+                    if has_blackhole else
+                    "Ton kommt vom Mikrofon. Für den Ton des Videos BlackHole installieren: brew install blackhole-2ch")
+        self.audio_info.setText(text)
+
+    def _refresh_meter(self) -> None:
+        """Rechts in der Statusleiste: Bildrate und Rechenlast des Ton-Effekts"""
+        parts = []
+        if self._running and self._last_fps is not None:
+            parts.append(f"{self._last_fps:4.1f} FPS")
+        if self.audio.active:
+            parts.append(f"Ton {self.audio.engine.load * 100:3.0f} %")
+        self.fps_label.setText("   ".join(parts))
 
     # --- Aufnahme-Thread ---
 
@@ -2414,6 +3292,7 @@ class EffectWindow(QMainWindow):
         self._running = True
         self._update_buttons()
         self.event_bus.publish('start_capture', region)
+        self._update_audio_info()
 
     def stop_effect(self) -> None:
         if not self._running:
@@ -2421,7 +3300,8 @@ class EffectWindow(QMainWindow):
         self._running = False
         self._update_buttons()
         self.event_bus.publish('stop_capture')
-        self.fps_label.setText("")
+        self._last_fps = None
+        self._refresh_meter()
 
     def toggle_running(self) -> None:
         if self._running:
@@ -2437,12 +3317,13 @@ class EffectWindow(QMainWindow):
         self.event_bus.publish('change_effect', name)
 
     def _on_effect_changed(self, effect: IEffectStrategy) -> None:
+        self._update_audio_info()
         self._uses_cells = effect.uses_cells
         self._update_buttons()
 
     def _show_fps(self, fps: float) -> None:
-        if self._running:
-            self.fps_label.setText(f"{fps:4.1f} FPS")
+        self._last_fps = fps
+        self._refresh_meter()
 
     def _update_buttons(self) -> None:
         self.btn_start.setEnabled(not self._running)
@@ -2453,6 +3334,7 @@ class EffectWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self.event_bus.publish('stop_capture')
+        self.audio.shutdown()
         super().closeEvent(event)
 
 
@@ -2485,12 +3367,14 @@ def apply_dark_theme(app: QApplication) -> None:
         QPushButton#primary:hover:enabled { background: #3d7df5; }
         QLineEdit, QComboBox { padding: 5px 8px; border-radius: 6px; background: #1a1b1f; border: 1px solid #41434d; }
         QStatusBar { color: #b8b8c0; }
+        QLabel#hint { color: #8c8c96; }
     """)
 
 # ----------------- Anwendungsstart -----------------
 
 def build_processor(event_bus: IEventBus) -> EffectProcessor:
-    processor = EffectProcessor(Container.resolve(IScreenCaptureService), event_bus)
+    processor = EffectProcessor(Container.resolve(IScreenCaptureService), event_bus,
+                                Container.resolve(VideoFeatures))
     for effect in (
         MosaicEffectStrategy(),
         BlurEffectStrategy(),
@@ -2510,10 +3394,33 @@ def build_processor(event_bus: IEventBus) -> EffectProcessor:
     return processor
 
 
-def main():
+def build_audio_controller() -> AudioController:
+    engine: AudioEffectEngine = Container.resolve(AudioEffectEngine)
+    for effect in (
+        ImageStencilEffect(),
+        AudioDatamoshEffect(),
+        PremonitionEffect(),
+        PhosphorGlowEffect(),
+        ColorVowelEffect(),
+        NegativeSoundEffect(),
+        BeatQuantizerEffect(),
+        HarmonyMagnetEffect(),
+    ):
+        engine.register(effect)
+    return Container.resolve(AudioController)
+
+
+def register_services() -> None:
     Container.register(IEventBus, EventBus)
     Container.register(IScreenCaptureService, MssScreenCaptureService)
     Container.register(IAudioLoopService, SoundDeviceLoopService)
+    Container.register(VideoFeatures, VideoFeatures)
+    Container.register(AudioEffectEngine, AudioEffectEngine)
+    Container.register(AudioController, AudioController)
+
+
+def main():
+    register_services()
 
     app = QApplication(sys.argv)
     app.setApplicationName("Bildeffekte")
@@ -2521,7 +3428,8 @@ def main():
 
     event_bus = Container.resolve(IEventBus)
     processor = build_processor(event_bus)
-    window = EffectWindow(event_bus, processor.effect_names)
+    audio = build_audio_controller()
+    window = EffectWindow(event_bus, processor.effect_names, audio)
     window.resize(1040, 700)
     window.show()
     sys.exit(app.exec())
