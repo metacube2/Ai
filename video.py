@@ -374,12 +374,10 @@ class SlowMotionSnapshotEffectStrategy(IEffectStrategy):
     """Zeigt nur alle 0,2 Sekunden ein neues Standbild"""
 
     UPDATE_INTERVAL = 0.2
-    MARKER_DURATION = 0.1
 
     def __init__(self):
         self.last_update_time = 0.0
         self.current_frame: Optional[np.ndarray] = None
-        self.marked_frame: Optional[np.ndarray] = None
 
     @property
     def name(self) -> str:
@@ -390,12 +388,7 @@ class SlowMotionSnapshotEffectStrategy(IEffectStrategy):
         if (self.current_frame is None or self.current_frame.shape != frame.shape
                 or now - self.last_update_time >= self.UPDATE_INTERVAL):
             self.current_frame = frame.copy()
-            self.marked_frame = frame.copy()
-            # Roter Punkt zeigt kurz an, dass ein neues Bild übernommen wurde
-            cv2.circle(self.marked_frame, (20, 20), 10, (255, 0, 0), -1)
             self.last_update_time = now
-        if now - self.last_update_time < self.MARKER_DURATION:
-            return self.marked_frame
         return self.current_frame
 
 # ----------------- Realtime Glitch -----------------
@@ -1676,6 +1669,270 @@ class GlitchDimensionEffectStrategy(IEffectStrategy):
                 result[y:y + gh, x:x + gw] = region
         return result
 
+# ----------------- Datamosh -----------------
+
+class DatamoshEffectStrategy(IEffectStrategy):
+    """
+    Datamosh wie bei Videos ohne Keyframes: Die Bewegung des aktuellen Bildes
+    schiebt die alten Pixel weiter, in 16er-Makroblöcken wie bei einem Codec.
+    Nur gelegentlich kommt ein 'Keyframe' mit dem echten Bild.
+    """
+
+    BLOCK = 16
+    FLOW_SCALE = 4          # Optical Flow in 1/4 Auflösung
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.grid = PixelGrid()
+        self.flow = cv2.DISOpticalFlow_create(cv2.DISOPTICAL_FLOW_PRESET_ULTRAFAST)
+        self.prev_small: Optional[np.ndarray] = None
+        self.mosh: Optional[np.ndarray] = None
+        self.frames_until_keyframe = 0
+        self.bloom = 1.0
+
+    @property
+    def name(self) -> str:
+        return "Datamosh"
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        rng = self.rng
+        height, width = frame.shape[:2]
+        # DIS-Flow braucht mindestens 12 Pixel; kleine Regionen werden dafür hochskaliert
+        small_size = (max(16, width // self.FLOW_SCALE), max(16, height // self.FLOW_SCALE))
+        small = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY), small_size, interpolation=cv2.INTER_AREA)
+
+        if self.mosh is None or self.mosh.shape != frame.shape or self.frames_until_keyframe <= 0:
+            self.mosh = frame.copy()
+            self.prev_small = small
+            self.frames_until_keyframe = int(rng.integers(90, 240))   # 3–8 s bei 30 fps
+            return self.mosh
+        self.frames_until_keyframe -= 1
+
+        flow = self.flow.calc(self.prev_small, small, None)
+        self.prev_small = small
+        # Vektoren von der Flow-Auflösung auf Bildpixel umrechnen
+        flow[..., 0] *= width / small_size[0]
+        flow[..., 1] *= height / small_size[1]
+
+        # Makroblöcke: ein Bewegungsvektor pro 16x16-Block
+        blocks = (max(1, width // self.BLOCK), max(1, height // self.BLOCK))
+        flow = cv2.resize(flow, blocks, interpolation=cv2.INTER_AREA)
+        flow = cv2.resize(flow, (width, height), interpolation=cv2.INTER_NEAREST)
+
+        # Gelegentliches "Aufblühen": Bewegung wird für ein bis zwei Sekunden verstärkt verschmiert
+        if rng.random() < 0.01:
+            self.bloom = rng.uniform(1.5, 3.0)
+        self.bloom = 1.0 + (self.bloom - 1.0) * 0.97
+        scale = self.bloom
+
+        xs, ys = self.grid.get(height, width)
+        self.mosh = cv2.remap(self.mosh, xs - flow[..., 0] * scale, ys - flow[..., 1] * scale,
+                              cv2.INTER_NEAREST, borderMode=cv2.BORDER_REPLICATE)
+
+        # Einzelne Blöcke bekommen frische Pixel (wie verlorene Referenzblöcke)
+        if rng.random() < 0.3:
+            for _ in range(int(rng.integers(1, 6))):
+                bx = int(rng.integers(0, max(1, width // self.BLOCK))) * self.BLOCK
+                by = int(rng.integers(0, max(1, height // self.BLOCK))) * self.BLOCK
+                self.mosh[by:by + self.BLOCK, bx:bx + self.BLOCK] = frame[by:by + self.BLOCK, bx:bx + self.BLOCK]
+        return self.mosh
+
+# ----------------- Pixel-Sorting -----------------
+
+class PixelSortEffectStrategy(IEffectStrategy):
+    """
+    Pixel-Sorting: Zusammenhängende Pixel in einem Helligkeitsband werden
+    innerhalb ihres Abschnitts nach Helligkeit sortiert – schmelzende Farbschlieren.
+    Richtung wechselt gelegentlich zwischen horizontal und vertikal.
+    """
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.frame_counter = 0
+        self.vertical = False
+        self.frames_until_switch = 150
+
+    @property
+    def name(self) -> str:
+        return "Pixel-Sorting"
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        self.frame_counter += 1
+        self.frames_until_switch -= 1
+        if self.frames_until_switch <= 0:
+            self.vertical = not self.vertical
+            self.frames_until_switch = int(self.rng.integers(120, 300))
+
+        work = np.ascontiguousarray(frame.transpose(1, 0, 2)) if self.vertical else frame
+        result = self._sort_rows(work)
+        return np.ascontiguousarray(result.transpose(1, 0, 2)) if self.vertical else result
+
+    def _sort_rows(self, image: np.ndarray) -> np.ndarray:
+        brightness = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY).astype(np.int32)
+        t = self.frame_counter * 0.02
+        low = int(70 + 50 * np.sin(t))
+        high = int(215 + 25 * np.sin(t * 0.7))
+        mask = (brightness > low) & (brightness < high)
+
+        # Abschnitts-Nummer: erhöht sich an jedem Pixel außerhalb der Maske und an jedem Maskenbeginn,
+        # so bleiben unmaskierte Pixel an ihrem Platz und jeder Abschnitt wird für sich sortiert
+        starts = mask & ~np.pad(mask, ((0, 0), (1, 0)))[:, :-1]
+        segment = np.cumsum(~mask | starts, axis=1, dtype=np.int32)
+        key = segment * 256 + np.where(mask, 255 - brightness, 0)
+        order = np.argsort(key, axis=1)
+        rows_with_mask = mask.any(axis=1)
+
+        result = image.copy()
+        if rows_with_mask.any():
+            sub = order[rows_with_mask]
+            result[rows_with_mask] = np.take_along_axis(image[rows_with_mask], sub[..., None], axis=1)
+        return result
+
+# ----------------- Matrix-Code -----------------
+
+class MatrixCodeEffectStrategy(IEffectStrategy):
+    """Das Bild wird aus grünen, herabregnenden Zeichen aufgebaut"""
+
+    CELL_W, CELL_H = 10, 14
+    CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#*+=<>:;!?%&@"
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.glyphs = self._build_glyphs()
+        self._shape = None
+        self.glyph_index: Optional[np.ndarray] = None
+        self.heads: Optional[np.ndarray] = None
+        self.speeds: Optional[np.ndarray] = None
+        self.trails: Optional[np.ndarray] = None
+
+    @property
+    def name(self) -> str:
+        return "Matrix-Code"
+
+    def _build_glyphs(self) -> np.ndarray:
+        """Zeichen-Atlas (Anzahl x Höhe x Breite), gespiegelt wie im Film"""
+        glyphs = []
+        for char in self.CHARS:
+            canvas = np.zeros((self.CELL_H, self.CELL_W), dtype=np.uint8)
+            cv2.putText(canvas, char, (1, self.CELL_H - 3), cv2.FONT_HERSHEY_PLAIN, 0.8, 255, 1, cv2.LINE_AA)
+            glyphs.append(cv2.flip(canvas, 1))
+        return np.stack(glyphs).astype(np.float32) / 255.0
+
+    def _reset(self, rows: int, cols: int) -> None:
+        rng = self.rng
+        self._shape = (rows, cols)
+        self.glyph_index = rng.integers(0, len(self.glyphs), (rows, cols))
+        self.heads = rng.uniform(-rows, rows, cols)
+        self.speeds = rng.uniform(0.3, 1.2, cols)
+        self.trails = rng.uniform(6, 20, cols)
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        rng = self.rng
+        height, width = frame.shape[:2]
+        rows, cols = max(1, height // self.CELL_H), max(1, width // self.CELL_W)
+        if self._shape != (rows, cols):
+            self._reset(rows, cols)
+
+        # Helligkeit des Bildes pro Zelle
+        gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        luminance = cv2.resize(gray, (cols, rows), interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
+
+        # Fallende Regenspuren pro Spalte
+        self.heads += self.speeds
+        restart = self.heads - self.trails > rows
+        self.heads[restart] = rng.uniform(-20, 0, int(restart.sum()))
+        self.speeds[restart] = rng.uniform(0.3, 1.2, int(restart.sum()))
+        distance = self.heads[None, :] - np.arange(rows)[:, None]
+        rain = np.where(distance >= 0, np.clip(1.0 - distance / self.trails[None, :], 0, 1), 0.0)
+        head = (distance >= 0) & (distance < 1)
+
+        # Zeichen flackern
+        change = rng.random((rows, cols)) < 0.03
+        self.glyph_index[change] = rng.integers(0, len(self.glyphs), int(change.sum()))
+        self.glyph_index[head] = rng.integers(0, len(self.glyphs), int(head.sum()))
+
+        # Bildhelligkeit bestimmt, wie hell die Zeichen sind; der Regen moduliert nur
+        intensity = np.clip(0.03 + 1.1 * luminance ** 1.4, 0, 1) * (0.45 + 0.55 * rain)
+        tiles = self.glyphs[self.glyph_index] * intensity[..., None, None]       # rows, cols, h, w
+        mask = tiles.transpose(0, 2, 1, 3).reshape(rows * self.CELL_H, cols * self.CELL_W)
+        head_mask = (self.glyphs[self.glyph_index] * head[..., None, None]).transpose(0, 2, 1, 3) \
+            .reshape(rows * self.CELL_H, cols * self.CELL_W)
+
+        result = np.zeros_like(frame)
+        h, w = mask.shape
+        green = np.stack([mask * 60, mask * 255, mask * 90], axis=-1)
+        white = head_mask[..., None] * 200
+        result[:h, :w] = np.clip(green + white, 0, 255).astype(np.uint8)
+        return result
+
+# ----------------- Kaleidoskop-Tunnel -----------------
+
+class KaleidoscopeTunnelEffectStrategy(IEffectStrategy):
+    """Rotierendes Spiegelkaleidoskop mit Rückkopplung: zieht in einen farbwechselnden Tunnel"""
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.frame_counter = 0
+        self.segments = 6
+        self.frames_until_change = 240
+        self.feedback: Optional[np.ndarray] = None
+        self._shape = None
+        self._radius = self._angle = None
+
+    @property
+    def name(self) -> str:
+        return "Kaleidoskop-Tunnel"
+
+    def _polar(self, height: int, width: int) -> Tuple[np.ndarray, np.ndarray]:
+        if self._shape != (height, width):
+            xs, ys = np.meshgrid(np.arange(width, dtype=np.float32) - width / 2,
+                                 np.arange(height, dtype=np.float32) - height / 2)
+            self._radius = np.hypot(xs, ys)
+            self._angle = np.arctan2(ys, xs)
+            self._shape = (height, width)
+            self.feedback = None
+        return self._radius, self._angle
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        self.frame_counter += 1
+        height, width = frame.shape[:2]
+        radius, angle = self._polar(height, width)
+
+        self.frames_until_change -= 1
+        if self.frames_until_change <= 0:
+            self.segments = int(self.rng.choice([4, 6, 8, 10, 12]))
+            self.frames_until_change = int(self.rng.integers(150, 400))
+
+        # Winkel in ein Segment falten und spiegeln
+        t = self.frame_counter
+        segment = 2 * np.pi / self.segments
+        rotation = t * 0.01
+        folded = np.abs(np.mod(angle + rotation, segment) - segment / 2)
+        zoom = 0.8 + 0.2 * np.sin(t * 0.013)
+        src_r = radius * zoom
+        source_angle = folded + t * 0.004
+        map_x = (width / 2 + src_r * np.cos(source_angle)).astype(np.float32)
+        map_y = (height / 2 + src_r * np.sin(source_angle)).astype(np.float32)
+        kaleido = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+
+        if self.feedback is None:
+            self.feedback = kaleido
+            return kaleido
+
+        # Rückkopplung: letztes Bild leicht vergrößert, gedreht und im Farbton verschoben
+        matrix = cv2.getRotationMatrix2D((width / 2, height / 2), 1.2 * np.sin(t * 0.005) + 0.6, 1.04)
+        tunnel = cv2.warpAffine(self.feedback, matrix, (width, height), borderMode=cv2.BORDER_REFLECT)
+        hsv = cv2.cvtColor(tunnel, cv2.COLOR_RGB2HSV)
+        hsv[:, :, 0] = hsv[:, :, 0] + np.uint8(3)
+        hsv[:, :, 0][hsv[:, :, 0] >= 180] -= 180
+        tunnel = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+
+        # Bildmitte zeigt das frische Kaleidoskop, außen dominiert der Tunnel
+        weight = np.clip(radius / (0.5 * np.hypot(width, height)), 0, 1)[..., None] * 0.75
+        result = (kaleido * (1 - weight) + tunnel * weight).astype(np.uint8)
+        self.feedback = result
+        return result
+
 # ----------------- Audio+Video Glitch -----------------
 
 class AudioGlitcher:
@@ -2244,6 +2501,10 @@ def build_processor(event_bus: IEventBus) -> EffectProcessor:
         VHSGlitchEffectStrategy(),
         OldFilmEffectStrategy(),
         GlitchDimensionEffectStrategy(),
+        DatamoshEffectStrategy(),
+        PixelSortEffectStrategy(),
+        MatrixCodeEffectStrategy(),
+        KaleidoscopeTunnelEffectStrategy(),
     ):
         processor.register_effect(effect)
     return processor
