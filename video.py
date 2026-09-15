@@ -266,9 +266,9 @@ class MssScreenCaptureService(IScreenCaptureService):
 
 
 class SoundDeviceLoopService(IAudioLoopService):
-    """Duplex-Stream mit Stufen: erst Ton-Effekt, dann Audio+Video-Glitch"""
+    """Duplex-Stream mit Stufen: Ton-Analyse, Ton-Effekt, Audio+Video-Glitch"""
 
-    STAGE_ORDER = ('effect', 'video_glitch')
+    STAGE_ORDER = ('analysis', 'effect', 'video_glitch')
     PREFERRED_RATES = (48000, 44100)
     BLOCK_SIZE = 512
 
@@ -311,8 +311,12 @@ class SoundDeviceLoopService(IAudioLoopService):
     def _callback(self, indata, outdata, frames, time_info, status):
         try:
             block = indata.copy()
-            for stage in self._chain:
+            chain = self._chain
+            for stage in chain:
                 block = stage.process(block)
+            if all(getattr(stage, 'silent_if_alone', False) for stage in chain):
+                outdata.fill(0)          # nur Messung aktiv: nichts ausgeben (keine Rückkopplung)
+                return
             if block.shape[1] != outdata.shape[1]:
                 block = np.repeat(block.mean(axis=1, keepdims=True), outdata.shape[1], axis=1)
             outdata[:] = np.clip(block, -1.0, 1.0)
@@ -343,7 +347,8 @@ class SoundDeviceLoopService(IAudioLoopService):
                                      channels=(self.in_channels, self.out_channels),
                                      dtype='float32', latency='low', callback=self._callback)
             self._stream.start()
-            hint = "" if 'blackhole' in inp['name'].lower() else "  –  Kopfhörer benutzen, sonst Rückkopplung!"
+            only_analysis = all(getattr(st, 'silent_if_alone', False) for st in self._stages.values())
+            hint = "" if only_analysis or 'blackhole' in inp['name'].lower() else "  –  Kopfhörer benutzen, sonst Rückkopplung!"
             self.event_bus.publish('status_update', f"Ton: {inp['name']} -> {out['name']}, {rate} Hz{hint}")
         except Exception as e:
             self._stream = None
@@ -2692,6 +2697,446 @@ class HarmonyMagnetEffect(StftAudioEffect):
         return out_mag, out_phase
 
 
+class BlackHoleEffect(StftAudioEffect):
+    description = ("Ein schwarzes Loch wandert durchs Spektrum: Frequenzen stürzen hinein, werden gedehnt, "
+                   "rotverschoben und am Ereignishorizont verschluckt – nur Hawking-Rauschen entkommt. "
+                   "Die hellste Bildzeile bestimmt, wo das Loch sitzt.")
+    MIN_HZ, MAX_HZ = 120.0, 5000.0
+    HORIZON_OCTAVES = 0.12
+
+    @property
+    def name(self) -> str:
+        return "Schwarzes Loch"
+
+    def on_reset(self) -> None:
+        self._hole_hz = 600.0
+        self._lfo = 0.0
+        self._prev_mag = np.zeros(len(self.freqs))
+        self._phase = np.zeros(len(self.freqs))
+        self._octave = np.log2(np.maximum(self.freqs, 1.0))
+
+    def _target_hole(self, video: VideoFeatureSnapshot) -> float:
+        if video.valid and video.row_profile is not None:
+            row = int(np.argmax(video.row_profile))
+            position = 1.0 - row / (len(video.row_profile) - 1)       # oben = hoch
+        else:
+            self._lfo += 0.05 / self.hops_per_second
+            position = 0.5 + 0.5 * np.sin(2 * np.pi * self._lfo)
+        return self.MIN_HZ * (self.MAX_HZ / self.MIN_HZ) ** position
+
+    def process_frame(self, mag, phase, video):
+        self._hole_hz *= (self._target_hole(video) / self._hole_hz) ** 0.02   # träge Umlaufbahn
+        distance = self._octave - np.log2(self._hole_hz)                        # in Oktaven
+        pull = 0.85 / (1.0 + (np.abs(distance) / 0.6) ** 2)                     # Gravitation
+
+        # Frequenzen fallen Richtung Loch (in Oktaven gestaucht) und verlieren Energie
+        target_octave = self._octave - distance * pull
+        target_bins = np.clip(np.round(2.0 ** target_octave * self.FRAME / self.sample_rate), 0, len(mag) - 1)
+        pulled = np.zeros_like(mag)
+        np.add.at(pulled, target_bins.astype(np.int64), mag * (1.0 - 0.6 * pull))
+
+        # Ereignishorizont schluckt alles, Hawking-Strahlung entweicht als feines Rauschen
+        horizon = np.abs(distance) < self.HORIZON_OCTAVES
+        pulled[horizon] = 0.0
+        rim = (np.abs(distance) >= self.HORIZON_OCTAVES) & (np.abs(distance) < 2 * self.HORIZON_OCTAVES)
+        pulled[rim] += self.rng.random(int(rim.sum())) * mag.mean() * 0.8
+
+        # Zeitdehnung ("Spaghettifizierung"): nahe am Loch verändert sich der Klang kaum noch
+        inertia = np.clip(pull * 1.1, 0, 0.97)
+        out = self._prev_mag * inertia + pulled * (1.0 - inertia)
+        self._prev_mag = out
+
+        self._phase += self.bin_advance
+        near = pull > 0.3
+        self._phase = np.where(near, self._phase, phase)
+        return out, self._phase
+
+
+class DreamMemoryEffect(StftAudioEffect):
+    description = ("Der Ton wird laufend aus Schnipseln der letzten 30 Sekunden neu zusammengesetzt – jeweils aus dem "
+                   "Moment, der am besten zur aktuellen Klangform passt. Dunkles Bild = ältere Erinnerungen.")
+    MEMORY_SECONDS = 30.0
+    BANDS = 40
+
+    @property
+    def name(self) -> str:
+        return "Traum-Gedächtnis"
+
+    def on_reset(self) -> None:
+        size = int(self.MEMORY_SECONDS * self.hops_per_second)
+        self._mags = np.zeros((size, len(self.freqs)), dtype=np.float16)
+        self._envs = np.zeros((size, self.BANDS), dtype=np.float32)
+        self._rms = np.zeros(size, dtype=np.float32)
+        self._stored = 0
+        self._write = 0
+        self._last_match = -1
+        self._phase = np.zeros(len(self.freqs))
+        edges = np.geomspace(80, min(12000, self.sample_rate / 2 - 1), self.BANDS + 1)
+        self._band_of_bin = np.clip(np.searchsorted(edges, self.freqs) - 1, 0, self.BANDS - 1)
+
+    def _envelope(self, mag: np.ndarray) -> np.ndarray:
+        energy = np.bincount(self._band_of_bin, weights=mag, minlength=self.BANDS)
+        env = np.log1p(energy * 50.0)
+        env -= env.mean()
+        return (env / (np.linalg.norm(env) + 1e-9)).astype(np.float32)
+
+    def process_frame(self, mag, phase, video):
+        size = len(self._rms)
+        env = self._envelope(mag)
+        rms = float(np.sqrt(np.mean(mag ** 2)))
+
+        brightness = video.brightness if video.valid else 0.6
+        min_age = int((3.0 + (1.0 - brightness) * 20.0) * self.hops_per_second)
+        out_mag, out_phase = mag, phase
+        if self._stored > min_age + 10 and rms > 1e-6:
+            ages = (self._write - np.arange(size) - 1) % size
+            usable = (ages >= min_age) & (ages < self._stored)
+            scores = self._envs @ env
+            scores[~usable] = -np.inf
+            if self._last_match >= 0:
+                follow = (self._last_match + 1) % size
+                if usable[follow]:
+                    scores[follow] += 0.25              # Fortsetzung bevorzugen: längere, zusammenhängende Schnipsel
+            best = int(np.argmax(scores))
+            if np.isfinite(scores[best]):
+                self._last_match = best
+                memory = self._mags[best].astype(np.float64)
+                out_mag = memory * (rms / (float(self._rms[best]) + 1e-9))
+                self._phase += self.bin_advance + self.rng.uniform(-0.1, 0.1, len(self._phase))
+                out_phase = self._phase
+
+        self._mags[self._write] = mag
+        self._envs[self._write] = env
+        self._rms[self._write] = rms
+        self._write = (self._write + 1) % size
+        self._stored = min(self._stored + 1, size)
+        return out_mag, out_phase
+
+
+class GlassCrystalEffect(IAudioEffect):
+    description = ("Jede Silbe gefriert zu einem gläsernen Arpeggio aus ihren eigenen Obertönen – Sprache wird zur "
+                   "Glasharfe. Helles Bild = längeres Nachklingen.")
+    ANALYSIS = 2048
+    NOTES_PER_ONSET = 6
+    NOTE_SPACING = 0.07
+    DRY_LEVEL = 0.3
+    MAX_VOICES = 64
+
+    @property
+    def name(self) -> str:
+        return "Glas-Kristallisation"
+
+    @property
+    def latency(self) -> int:
+        return 0
+
+    def reset(self, sample_rate: int) -> None:
+        self.sample_rate = sample_rate
+        self._detector = OnsetDetector(sample_rate)
+        self._history = np.zeros(sample_rate, dtype=np.float32)
+        self._count = 0
+        self._pending: List[int] = []
+        self._voices: List[Dict[str, float]] = []
+        self._window = np.hanning(self.ANALYSIS)
+
+    def _analyse(self, onset: int, video: VideoFeatureSnapshot) -> None:
+        start = onset - (self._count - len(self._history))
+        frame = self._history[start:start + self.ANALYSIS]
+        if len(frame) < self.ANALYSIS:
+            return
+        spectrum = np.abs(np.fft.rfft(frame * self._window))
+        freqs = np.fft.rfftfreq(self.ANALYSIS, 1.0 / self.sample_rate)
+        band = (freqs > 150) & (freqs < 5000)
+        spectrum[~band] = 0
+        inner = spectrum[1:-1]
+        peaks = np.where((inner > spectrum[:-2]) & (inner >= spectrum[2:]))[0] + 1
+        if len(peaks) == 0:
+            return
+        peaks = peaks[np.argsort(spectrum[peaks])[-self.NOTES_PER_ONSET:]]
+        loudest = spectrum[peaks].max()
+        decay = 0.6 + 2.0 * (video.brightness if video.valid else 0.5)
+        for order, peak in enumerate(sorted(peaks)):
+            a, b, c = spectrum[peak - 1], spectrum[peak], spectrum[peak + 1]
+            offset = 0.5 * (a - c) / (a - 2 * b + c) if (a - 2 * b + c) != 0 else 0.0
+            freq = (peak + offset) * self.sample_rate / self.ANALYSIS
+            self._voices.append({
+                'freq': freq * 2.0,                       # eine Oktave höher klingt gläsern
+                'amp': 0.12 * float(spectrum[peak] / loudest),
+                'delay': int(order * self.NOTE_SPACING * self.sample_rate),
+                'age': 0, 'phase': 0.0, 'decay': decay,
+            })
+        self._voices = self._voices[-self.MAX_VOICES:]
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n = len(block)
+        self._history = np.concatenate([self._history[n:], block])
+        self._count += n
+        self._pending.extend(self._detector.feed(block))
+        ready = [o for o in self._pending if self._count >= o + self.ANALYSIS]
+        self._pending = [o for o in self._pending if self._count < o + self.ANALYSIS]
+        for onset in ready:
+            self._analyse(onset, video)
+
+        out = block * self.DRY_LEVEL
+        t = np.arange(n)
+        alive = []
+        for voice in self._voices:
+            start = max(0, voice['delay'] - voice['age'])
+            if start < n:
+                local = t[start:] - start
+                seconds = (voice['age'] + start - voice['delay'] + local) / self.sample_rate
+                envelope = np.minimum(1.0, seconds / 0.003) * np.exp(-seconds / voice['decay'] * 3.0)
+                omega = 2 * np.pi * voice['freq'] / self.sample_rate
+                phases = voice['phase'] + omega * local
+                # Glockenartig: Grundton plus unharmonischer Teilton
+                tone = np.sin(phases) + 0.3 * np.sin(phases * 2.76)
+                out[start:] += (voice['amp'] * envelope * tone).astype(np.float32)
+                voice['phase'] = float(phases[-1] + omega) if len(phases) else voice['phase']
+            voice['age'] += n
+            if (voice['age'] - voice['delay']) / self.sample_rate < voice['decay'] * 2.5:
+                alive.append(voice)
+        self._voices = alive
+        return out
+
+
+class AntimatterEffect(IAudioEffect):
+    description = ("Antimaterie: Die Lautstärkekurve jedes Klangs wird umgedreht, der Inhalt bleibt vorwärts. "
+                   "Anschläge schwellen langsam an und brechen abrupt ab. 0,6 s Verzögerung.")
+    LOOKAHEAD = 0.6
+    MAX_SEGMENT = 0.5
+    MAX_GAIN = 8.0
+
+    @property
+    def name(self) -> str:
+        return "Antimaterie"
+
+    @property
+    def latency(self) -> int:
+        return int(self.LOOKAHEAD * self.sample_rate)
+
+    def reset(self, sample_rate: int) -> None:
+        self.sample_rate = sample_rate
+        self._detector = OnsetDetector(sample_rate, min_gap=0.08)
+        self._segment = np.zeros(0, dtype=np.float32)
+        self._segment_start = 0
+        self._count = 0
+        self._ready = np.zeros(self.latency, dtype=np.float32)
+        self._window = max(8, int(0.01 * sample_rate))
+
+    def _flush(self, length: int) -> None:
+        segment, self._segment = self._segment[:length], self._segment[length:]
+        self._segment_start += length
+        if len(segment) == 0:
+            return
+        kernel = np.ones(min(self._window, len(segment))) / min(self._window, len(segment))
+        envelope = np.sqrt(np.convolve(segment.astype(np.float64) ** 2, kernel, mode='same')) + 1e-4
+        gain = np.minimum(envelope[::-1] / envelope, self.MAX_GAIN)
+        gain = np.convolve(gain, kernel, mode='same')
+        out = segment * gain
+        peak = np.abs(out).max()
+        limit = max(float(np.abs(segment).max()), 0.05) * 1.2
+        if peak > limit:
+            out *= limit / peak
+        self._ready = np.concatenate([self._ready, out.astype(np.float32)])
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n = len(block)
+        self._segment = np.concatenate([self._segment, block])
+        self._count += n
+        for onset in self._detector.feed(block):
+            if onset > self._segment_start:
+                self._flush(onset - self._segment_start)
+        max_len = int(self.MAX_SEGMENT * self.sample_rate)
+        while len(self._segment) >= max_len:
+            self._flush(max_len)
+
+        if len(self._ready) < n:      # sollte nicht vorkommen; Sicherheitsnetz
+            self._flush(len(self._segment))
+        out, self._ready = self._ready[:n], self._ready[n:]
+        if len(out) < n:
+            out = np.pad(out, (0, n - len(out)))
+        return out
+
+
+class SwarmEffect(IAudioEffect):
+    description = ("Hunderte Klangkörner fliegen als Vogelschwarm durch Zeit und Tonhöhe. Laut bündelt sich der "
+                   "Schwarm zum Originalklang, leise zerstreut er sich zu zwitschernden Partikeln. Bewegung im Bild "
+                   "macht ihn unruhig, ein Schnitt sprengt ihn auseinander.")
+    BIRDS = 40
+    GRAIN = 0.08
+    HISTORY = 2.0
+    MAX_AGO = 1.5
+
+    @property
+    def name(self) -> str:
+        return "Klang-Schwarm"
+
+    @property
+    def latency(self) -> int:
+        return 0
+
+    def reset(self, sample_rate: int) -> None:
+        self.sample_rate = sample_rate
+        self.rng = np.random.default_rng()
+        self._history = np.zeros(int(self.HISTORY * sample_rate), dtype=np.float32)
+        self._count = 0
+        self._grain_len = int(self.GRAIN * sample_rate)
+        # Zustand pro Vogel: Position (Sekunden zurück, Halbtöne) und Geschwindigkeit
+        self._pos = np.column_stack([self.rng.uniform(0, self.MAX_AGO, self.BIRDS),
+                                     self.rng.uniform(-12, 12, self.BIRDS)])
+        self._vel = self.rng.normal(0, 0.5, (self.BIRDS, 2))
+        self._next_fire = self.rng.integers(0, self._grain_len // 2, self.BIRDS)
+        self._grains = np.zeros((0, 3))                # Startposition im Verlauf, Rate, Alter
+        self._level = 0.0
+        self._peak = 0.05
+        self._last_cut = None
+
+    def _fly(self, dt: float, video: VideoFeatureSnapshot) -> None:
+        rng = self.rng
+        scale = np.array([1.0 / self.MAX_AGO, 1.0 / 12.0])       # beide Achsen auf ~1 normieren
+        pos = self._pos * scale
+        loudness = float(np.clip(self._level / self._peak, 0, 1))
+        center = pos.mean(axis=0)
+        cohesion = (center - pos) * (0.1 + 0.9 * loudness)                 # leise: Schwarm lockert sich
+        diff = pos[:, None, :] - pos[None, :, :]
+        dist = np.linalg.norm(diff, axis=2) + np.eye(self.BIRDS)
+        separation = (diff / dist[..., None] ** 2 * (dist[..., None] < 0.15)).sum(axis=1) * 0.02
+        alignment = (self._vel.mean(axis=0) - self._vel) * 0.5
+        home = (np.array([0.0, 0.0]) - pos) * 6.0 * loudness ** 2          # laut: zurück zum Original
+        agitation = 0.3 + 2.5 * (1.0 - loudness) + (video.activity * 20.0 if video.valid else 0.5)
+        noise = rng.normal(0, agitation, self._vel.shape)
+        if video.valid and self._last_cut is not None and video.cut_count != self._last_cut:
+            noise += rng.normal(0, 25.0, self._vel.shape)                    # Schnitt sprengt den Schwarm
+        self._last_cut = video.cut_count
+
+        self._vel += (cohesion + separation + alignment + home + noise) * dt
+        self._vel *= 0.96
+        self._pos = (pos + self._vel * dt) / scale
+        self._pos[:, 0] = np.clip(self._pos[:, 0], 0.0, self.MAX_AGO)
+        self._pos[:, 1] = np.clip(self._pos[:, 1], -24.0, 24.0)
+
+    def process(self, block: np.ndarray, video: VideoFeatureSnapshot) -> np.ndarray:
+        n = len(block)
+        ring = len(self._history)
+        self._history[(self._count + np.arange(n)) % ring] = block
+        self._count += n
+        rms = float(np.sqrt(np.mean(block ** 2)))
+        self._level = 0.8 * self._level + 0.2 * rms
+        self._peak = max(0.02, self._peak * 0.9995, rms)
+        self._fly(n / self.sample_rate, video)
+
+        # Vögel feuern Körner (50 % Überlappung)
+        self._next_fire -= n
+        firing = np.where(self._next_fire <= 0)[0]
+        if len(firing):
+            ago = self._pos[firing, 0] * self.sample_rate + self._grain_len
+            rates = 2.0 ** (self._pos[firing, 1] / 12.0)
+            starts = self._count - ago
+            new = np.column_stack([starts, rates, np.zeros(len(firing))])
+            self._grains = np.vstack([self._grains, new])[-self.BIRDS * 3:]
+            self._next_fire[firing] += self._grain_len // 2
+
+        out = np.zeros(n, dtype=np.float32)
+        if len(self._grains):
+            starts, rates, ages = self._grains[:, 0], self._grains[:, 1], self._grains[:, 2]
+            steps = ages[:, None] + np.arange(n)[None, :]
+            read = starts[:, None] + steps * rates[:, None]
+            index = np.floor(read).astype(np.int64)
+            frac = (read - index).astype(np.float32)
+            a = self._history[index % ring]
+            b = self._history[(index + 1) % ring]
+            samples = a + (b - a) * frac
+            # nur schon geschriebene Samples lesen
+            samples[read >= self._count - 1] = 0.0
+            phase = np.clip(steps / self._grain_len, 0, 1)
+            envelope = np.where(steps < self._grain_len, np.sin(np.pi * phase) ** 2, 0.0)
+            out = (samples * envelope).sum(axis=0) / np.sqrt(max(1.0, self.BIRDS / 2))
+            self._grains[:, 2] += n
+            self._grains = self._grains[self._grains[:, 2] < self._grain_len]
+        return out.astype(np.float32)
+
+
+# ----------------- Ton-Analyse für Bild-Effekte -----------------
+
+@dataclass(frozen=True)
+class AudioFeatureSnapshot:
+    valid: bool = False
+    level: float = 0.0          # 0..1, automatisch normiert
+    bass: float = 0.0
+    mid: float = 0.0
+    treble: float = 0.0
+    onset_count: int = 0
+    bands: Optional[np.ndarray] = None   # 32 Bänder, 0..1
+
+
+class AudioAnalyzer:
+    """
+    Stufe der Audio-Pipeline, die nur misst. Läuft sie allein, bleibt der Ausgang
+    stumm (keine Rückkopplung vom Mikrofon).
+    """
+
+    silent_if_alone = True
+    BANDS = 32
+    STALE_SECONDS = 0.5
+
+    def __init__(self):
+        self._snapshot = AudioFeatureSnapshot()
+        self._timestamp = 0.0
+        self.sample_rate = 48000
+        self._prepare_bins(512)
+
+    def _prepare_bins(self, block: int) -> None:
+        self._block = block
+        freqs = np.fft.rfftfreq(block, 1.0 / self.sample_rate)
+        edges = np.geomspace(40, min(16000, self.sample_rate / 2 - 1), self.BANDS + 1)
+        self._band_of_bin = np.clip(np.searchsorted(edges, freqs) - 1, 0, self.BANDS - 1)
+        self._bass = freqs < 180
+        self._mid = (freqs >= 180) & (freqs < 3000)
+        self._treble = freqs >= 3000
+        self._window = np.hanning(block).astype(np.float32)
+        self._prev = np.zeros(len(freqs))
+        self._peaks = np.full(4, 1e-3)
+        self._band_peak = np.full(self.BANDS, 1e-3)
+        self._flux_avg = 1.0
+        self._onsets = 0
+        self._samples = 0
+        self._last_onset = -10 ** 9
+
+    def prepare(self, sample_rate: int, channels: int) -> None:
+        self.sample_rate = sample_rate
+        self._prepare_bins(self._block)
+
+    def process(self, block: np.ndarray) -> np.ndarray:
+        mono = block.mean(axis=1)
+        if len(mono) != self._block:
+            self._prepare_bins(len(mono))
+        mag = np.abs(np.fft.rfft(mono * self._window))
+        values = np.array([np.sqrt(np.mean(mono ** 2)), mag[self._bass].sum(), mag[self._mid].sum(),
+                           mag[self._treble].sum()])
+        self._peaks = np.maximum(self._peaks * 0.999, values)            # automatische Pegelanpassung
+        norm = np.clip(values / self._peaks, 0, 1)
+        bands = np.bincount(self._band_of_bin, weights=mag, minlength=self.BANDS)
+        self._band_peak = np.maximum(self._band_peak * 0.998, bands)
+        flux = float(np.sum(np.maximum(0.0, np.log1p(mag * 10) - np.log1p(self._prev * 10))))
+        self._prev = mag
+        now = time.time()
+        self._samples += len(mono)
+        if (flux > 2.2 * self._flux_avg + 1.0 and values[0] > 0.003
+                and self._samples - self._last_onset > 0.1 * self.sample_rate):
+            self._onsets += 1
+            self._last_onset = self._samples
+        self._flux_avg = 0.9 * self._flux_avg + 0.1 * flux
+        self._snapshot = AudioFeatureSnapshot(True, float(norm[0]), float(norm[1]), float(norm[2]),
+                                              float(norm[3]), self._onsets,
+                                              (bands / self._band_peak).astype(np.float32))
+        self._timestamp = now
+        return block
+
+    def snapshot(self) -> AudioFeatureSnapshot:
+        if time.time() - self._timestamp > self.STALE_SECONDS:
+            return AudioFeatureSnapshot(onset_count=self._onsets)
+        return self._snapshot
+
 class AudioEffectEngine:
     """Ton-Effekt-Stufe der Audio-Pipeline. Umschalten wirkt beim nächsten Block im Audio-Thread."""
 
@@ -2798,6 +3243,419 @@ class AudioController:
         self.video_features.enabled = False
         self._executor.submit(self.audio_loop.set_stage, 'effect', None)
         self._executor.shutdown(wait=True)
+
+# ----------------- Zeitwelle (Slit-Scan) -----------------
+
+class TimeWaveEffectStrategy(IEffectStrategy):
+    """
+    Jede Bildstelle zeigt einen anderen Moment der letzten 1,5 Sekunden.
+    Die Zeitverteilung wechselt: Vorhang, Ringe, Wellen, Spirale.
+    """
+
+    HISTORY = 45
+    MAX_PIXELS = 640 * 360        # größere Regionen werden verkleinert gepuffert
+    MODES = ("Vorhang", "Ringe", "Wellen", "Spirale")
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.frame_counter = 0
+        self.mode = 0
+        self.frames_until_switch = 240
+        self._buffer: Optional[np.ndarray] = None
+        self._head = 0
+        self._filled = 0
+        self._grid = PixelGrid()
+
+    @property
+    def name(self) -> str:
+        return "Zeitwelle"
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        height, width = frame.shape[:2]
+        scale = min(1.0, np.sqrt(self.MAX_PIXELS / (height * width)))
+        size = (max(8, int(width * scale)), max(8, int(height * scale)))
+        small = frame if scale >= 1.0 else cv2.resize(frame, size, interpolation=cv2.INTER_AREA)
+        sh, sw = small.shape[:2]
+
+        if self._buffer is None or self._buffer.shape[1:3] != (sh, sw):
+            self._buffer = np.repeat(small[None], self.HISTORY, axis=0)
+            self._head, self._filled = 0, 1
+        self._head = (self._head + 1) % self.HISTORY
+        self._buffer[self._head] = small
+        self._filled = min(self._filled + 1, self.HISTORY)
+
+        self.frame_counter += 1
+        self.frames_until_switch -= 1
+        if self.frames_until_switch <= 0:
+            self.mode = (self.mode + 1) % len(self.MODES)
+            self.frames_until_switch = int(self.rng.integers(200, 360))
+
+        delay = self._delay_map(sh, sw)
+        delay = np.clip(delay * (self._filled - 1), 0, self._filled - 1).astype(np.int64)
+        index = (self._head - delay) % self.HISTORY
+        ys = np.arange(sh)[:, None]
+        xs = np.arange(sw)[None, :]
+        result = self._buffer[index, ys, xs]
+        if scale < 1.0:
+            result = cv2.resize(result, (width, height), interpolation=cv2.INTER_LINEAR)
+        return result
+
+    def _delay_map(self, height: int, width: int) -> np.ndarray:
+        """Verzögerung je Pixel, 0 = jetzt, 1 = älteste Aufnahme"""
+        t = self.frame_counter * 0.03
+        xs, ys = self._grid.get(height, width)
+        nx, ny = xs / width, ys / height
+        mode = self.MODES[self.mode]
+        if mode == "Vorhang":
+            return 0.5 + 0.5 * np.sin(2 * np.pi * (nx * 1.5 - t * 0.3))
+        dx, dy = nx - 0.5, (ny - 0.5) * height / width
+        radius = np.hypot(dx, dy)
+        if mode == "Ringe":
+            return 0.5 + 0.5 * np.sin(radius * 18 - t * 2)
+        if mode == "Wellen":
+            return 0.5 + 0.25 * np.sin(nx * 9 + t) + 0.25 * np.sin(ny * 7 - t * 1.3)
+        return (np.arctan2(dy, dx) / (2 * np.pi) + 0.5 + radius * 2 - t * 0.2) % 1.0
+
+# ----------------- Sand-Zerfall -----------------
+
+class SandDisintegrationEffectStrategy(IEffectStrategy):
+    """Bewegte Bildteile zerbröseln zu Sand, der herabrieselt und sich unten zu Dünen häuft"""
+
+    MAX_PARTICLES = 60000
+    SPAWN_PER_FRAME = 2500
+    GRAVITY = 0.35
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self._shape = None
+        self._prev_gray: Optional[np.ndarray] = None
+
+    @property
+    def name(self) -> str:
+        return "Sand-Zerfall"
+
+    def _reset(self, height: int, width: int) -> None:
+        self._shape = (height, width)
+        self._pos = np.zeros((0, 2), dtype=np.float32)       # x, y
+        self._vel = np.zeros((0, 2), dtype=np.float32)
+        self._color = np.zeros((0, 3), dtype=np.uint8)
+        self._eaten = np.zeros((height, width), dtype=np.float32)
+        self._dune = np.zeros(width, dtype=np.float32)
+        self._dune_color = np.zeros((width, 3), dtype=np.float32)
+        self._prev_gray = None
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        rng = self.rng
+        height, width = frame.shape[:2]
+        if self._shape != (height, width):
+            self._reset(height, width)
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        if self._prev_gray is None:
+            self._prev_gray = gray
+        motion = cv2.absdiff(gray, self._prev_gray)
+        self._prev_gray = gray
+
+        # Wo sich etwas bewegt (oder an hellen Kanten), lösen sich Körner.
+        # Stichproben statt jedes Pixel einzeln zu würfeln.
+        samples = min(height * width, self.SPAWN_PER_FRAME * 12)
+        ys = rng.integers(0, height, samples)
+        xs = rng.integers(0, width, samples)
+        edges = cv2.Canny(gray, 80, 160)
+        movement = np.maximum(motion[ys, xs].astype(np.float32) - 12.0, 0.0)   # leichtes Flimmern zählt nicht
+        chance = movement / 30.0 + (edges[ys, xs] > 0) * 0.03 + 0.001
+        accept = rng.random(samples, dtype=np.float32) < chance
+        ys, xs = ys[accept][:self.SPAWN_PER_FRAME], xs[accept][:self.SPAWN_PER_FRAME]
+        if len(xs):
+            self._eaten[ys, xs] = 1.0
+            new_pos = np.column_stack([xs, ys]).astype(np.float32)
+            new_vel = np.column_stack([rng.normal(0.8, 0.8, len(xs)), rng.normal(-1.0, 0.8, len(xs))]).astype(np.float32)
+            self._pos = np.vstack([self._pos, new_pos])[-self.MAX_PARTICLES:]
+            self._vel = np.vstack([self._vel, new_vel])[-self.MAX_PARTICLES:]
+            self._color = np.vstack([self._color, frame[ys, xs]])[-self.MAX_PARTICLES:]
+
+        # Physik: Schwerkraft, böiger Wind, Aufprall auf die Düne
+        wind = 0.15 * np.sin(time.time() * 0.7) + rng.normal(0, 0.05, len(self._vel))
+        self._vel[:, 0] = self._vel[:, 0] * 0.99 + wind
+        self._vel[:, 1] += self.GRAVITY
+        self._pos += self._vel
+        self._pos[:, 0] %= width
+        column = np.clip(self._pos[:, 0].astype(np.int64), 0, width - 1)
+        landed = self._pos[:, 1] >= height - 1 - self._dune[column]
+        if landed.any():
+            cols = column[landed]
+            np.add.at(self._dune, cols, 0.35)
+            counts = np.bincount(cols, minlength=width)[:, None]
+            colors = np.zeros((width, 3), dtype=np.float32)
+            np.add.at(colors, cols, self._color[landed].astype(np.float32))
+            has = counts[:, 0] > 0
+            self._dune_color[has] = self._dune_color[has] * 0.7 + (colors[has] / counts[has]) * 0.3
+            keep = ~landed
+            self._pos, self._vel, self._color = self._pos[keep], self._vel[keep], self._color[keep]
+
+        # Dünen rutschen seitlich ab und sacken langsam ein
+        self._dune = cv2.GaussianBlur(self._dune[None, :], (9, 1), 0).ravel() * 0.998
+        self._dune = np.minimum(self._dune, height * 0.45)
+        self._eaten *= 0.93
+
+        # Zeichnen: ausgefressenes Bild, fliegender Sand, Dünen
+        holes = cv2.GaussianBlur(self._eaten, (5, 5), 0)
+        result = scale_image(frame, np.clip(1.0 - holes * 1.6, 0.05, 1.0).astype(np.float32))
+        px = np.clip(self._pos[:, 0].astype(np.int64), 0, width - 1)
+        py = self._pos[:, 1].astype(np.int64)
+        visible = (py >= 0) & (py < height)
+        result[py[visible], px[visible]] = self._color[visible]
+        dune_top = (height - self._dune).astype(np.int64)
+        first = int(np.clip(dune_top.min(), 0, height))
+        if first < height:                                   # nur den Bereich unter der höchsten Düne zeichnen
+            rows = np.arange(first, height)[:, None]
+            in_dune = rows >= dune_top[None, :]
+            shade = np.clip(0.6 + 0.4 * (rows - dune_top[None, :]) / 40.0, 0.6, 1.0)[..., None]
+            dune_img = (self._dune_color[None, :, :] * (1.3 - shade * 0.5)).astype(np.uint8)
+            result[first:] = np.where(in_dune[..., None], dune_img, result[first:])
+        return result
+
+# ----------------- Droste-Spirale -----------------
+
+class DrosteSpiralEffectStrategy(IEffectStrategy):
+    """Das Bild enthält sich unendlich oft selbst – eine rotierende Escher-Spirale mit endlosem Zoom"""
+
+    SCALE = 3.0
+
+    def __init__(self):
+        self.frame_counter = 0
+        self._shape = None
+        self._log_z: Optional[np.ndarray] = None
+
+    @property
+    def name(self) -> str:
+        return "Droste-Spirale"
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        height, width = frame.shape[:2]
+        self.frame_counter += 1
+        outer = 0.5 * min(width, height)
+        log_scale = np.log(self.SCALE)
+        inner_log = np.log(outer / self.SCALE)
+
+        if self._shape != (height, width):
+            xs, ys = np.meshgrid(np.arange(width, dtype=np.float32) - width / 2,
+                                 np.arange(height, dtype=np.float32) - height / 2)
+            z = (xs + 1j * ys).astype(np.complex64)
+            z[np.abs(z) < 1e-3] = 1e-3
+            # Ein Umlauf (Winkel + 2π) entspricht einer Vergrößerung um SCALE
+            beta = np.complex64(1.0 - 1j * log_scale / (2 * np.pi))
+            self._log_z = (np.log(z) * beta).astype(np.complex64)
+            self._shape = (height, width)
+
+        t = self.frame_counter
+        radial = self._log_z.real - t * 0.012 * log_scale             # endloser Zoom
+        angle = self._log_z.imag + t * 0.01                            # langsame Drehung
+        radial = np.mod(radial - inner_log, log_scale) + inner_log     # in den Bildring zurückfalten
+        r = np.exp(radial)
+        map_x = (width / 2 + r * np.cos(angle)).astype(np.float32)
+        map_y = (height / 2 + r * np.sin(angle)).astype(np.float32)
+        return cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+
+# ----------------- Bio-Wucherung -----------------
+
+class BioGrowthEffectStrategy(IEffectStrategy):
+    """
+    Reaktions-Diffusion (Gray-Scott): Ein chemisches Muster wächst wie Korallen
+    oder Zellteilung aus den Kanten des Videos. Helle Bereiche nähren, dunkle töten.
+    """
+
+    SCALE = 4
+    ITERATIONS = 16
+    SEED_KERNEL = np.ones((5, 5), dtype=np.uint8)       # einzelne Pixel als Keim zerfließen sofort
+    LAPLACE = np.array([[0.05, 0.2, 0.05], [0.2, -1.0, 0.2], [0.05, 0.2, 0.05]], dtype=np.float32)
+    PRESETS = [(0.039, 0.058), (0.029, 0.057), (0.0367, 0.0649), (0.0545, 0.062)]   # Würmer, Labyrinth, Zellen, Koralle
+
+    def __init__(self):
+        self.rng = np.random.default_rng()
+        self.frame_counter = 0
+        self._shape = None
+        self._preset = 0
+        self._frames_until_switch = 300
+
+    @property
+    def name(self) -> str:
+        return "Bio-Wucherung"
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        rng = self.rng
+        height, width = frame.shape[:2]
+        sw, sh = max(32, width // self.SCALE), max(32, height // self.SCALE)
+        if self._shape != (sh, sw):
+            self._u = np.ones((sh, sw), dtype=np.float32)
+            self._v = np.zeros((sh, sw), dtype=np.float32)
+            self._shape = (sh, sw)
+
+        self.frame_counter += 1
+        self._frames_until_switch -= 1
+        if self._frames_until_switch <= 0:
+            self._preset = (self._preset + 1) % len(self.PRESETS)
+            self._frames_until_switch = int(rng.integers(240, 480))
+        feed, kill = self.PRESETS[self._preset]
+
+        small = cv2.resize(frame, (sw, sh), interpolation=cv2.INTER_AREA)
+        gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY)
+        light = gray.astype(np.float32) / 255.0
+        edges = cv2.Canny(gray, 60, 140) > 0
+        seeds = (edges & (rng.random((sh, sw)) < 0.01)).astype(np.uint8)
+        seeds = cv2.dilate(seeds, self.SEED_KERNEL) > 0
+        self._u[seeds] = 0.5
+        self._v[seeds] = 0.25
+
+        # Nur leichte Modulation: stärkere Änderungen verlassen den Bereich, in dem Muster entstehen
+        feed_map = feed * (0.9 + 0.2 * light)
+        kill_map = kill + (1.0 - light) * 0.0015
+        u, v = self._u, self._v
+        for _ in range(self.ITERATIONS):
+            lap_u = cv2.filter2D(u, -1, self.LAPLACE, borderType=cv2.BORDER_REFLECT)
+            lap_v = cv2.filter2D(v, -1, self.LAPLACE, borderType=cv2.BORDER_REFLECT)
+            reaction = u * v * v
+            u = u + (1.0 * lap_u - reaction + feed_map * (1.0 - u))
+            v = v + (0.5 * lap_v + reaction - (kill_map + feed_map) * v)
+            np.clip(u, 0, 1, out=u)
+            np.clip(v, 0, 1, out=v)
+        self._u, self._v = u, v
+
+        pattern = cv2.resize(v, (width, height), interpolation=cv2.INTER_CUBIC)
+        level = np.clip(pattern * 3.5, 0, 1)
+        hue_shift = (self.frame_counter // 3) % 256
+        colored = to_rgb_colormap(((level * 200 + hue_shift) % 256).astype(np.uint8), cv2.COLORMAP_TWILIGHT_SHIFTED)
+        # Leuchten in kleiner Auflösung weichzeichnen: großer Kernel in voller Auflösung ist teuer
+        glow_small = to_rgb_colormap(((np.clip(v * 3.5, 0, 1) * 200 + hue_shift) % 256).astype(np.uint8),
+                                     cv2.COLORMAP_TWILIGHT_SHIFTED)
+        glow = cv2.resize(cv2.GaussianBlur(glow_small, (0, 0), 1.5), (width, height), interpolation=cv2.INTER_LINEAR)
+        alpha = (level * 0.85)[..., None]
+        result = frame.astype(np.float32) * (1 - alpha) + colored.astype(np.float32) * alpha
+        result = cv2.add(np.clip(result, 0, 255).astype(np.uint8), (glow * 0.35).astype(np.uint8))
+        return result
+
+# ----------------- Klang-Beben (Ton steuert Bild) -----------------
+
+class SoundQuakeEffectStrategy(IEffectStrategy):
+    """
+    Umgekehrte Kopplung: Der Ton steuert das Bild. Bässe lassen es pumpen und beben,
+    Höhen spalten die Farben, jeder Einsatz zersplittert es in fliegende Scherben,
+    ein Spektrum-Ring pulsiert. Ohne Ton schlägt ein 120-BPM-Herz.
+    """
+
+    TILES_X, TILES_Y = 6, 4
+
+    def __init__(self, audio_loop_service: IAudioLoopService, analyzer: AudioAnalyzer):
+        self.audio_loop = audio_loop_service
+        self.analyzer = analyzer
+        self.rng = np.random.default_rng()
+        self.frame_counter = 0
+        self._last_onsets = 0
+        self._shatter = 0.0
+        self._spin = np.zeros(self.TILES_X * self.TILES_Y)
+        self._bass = 0.0
+
+    @property
+    def name(self) -> str:
+        return "Klang-Beben"
+
+    def activate(self) -> None:
+        self.audio_loop.set_stage('analysis', self.analyzer)
+
+    def deactivate(self) -> None:
+        self.audio_loop.set_stage('analysis', None)
+
+    def apply(self, frame: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+        rng = self.rng
+        height, width = frame.shape[:2]
+        self.frame_counter += 1
+        audio = self.analyzer.snapshot()
+        if audio.valid:
+            bass, treble, level, onsets, bands = audio.bass, audio.treble, audio.level, audio.onset_count, audio.bands
+        else:
+            beat = (self.frame_counter % 15) / 15.0                   # 120 BPM bei 30 fps
+            bass = float(np.exp(-beat * 6))
+            treble, level = 0.3 * bass, 0.5 * bass
+            onsets = self.frame_counter // 60
+            bands = (0.3 + 0.7 * bass * np.abs(np.sin(np.arange(AudioAnalyzer.BANDS) * 0.7 + self.frame_counter * 0.1))).astype(np.float32)
+
+        self._bass = max(bass, self._bass * 0.8)
+        if onsets != self._last_onsets:
+            self._last_onsets = onsets
+            self._shatter = 1.0
+            self._spin = rng.uniform(-25, 25, len(self._spin))
+        else:
+            self._shatter *= 0.86
+
+        # Bass: Zoom-Puls und Beben
+        zoom = 1.0 + 0.12 * self._bass
+        shake = rng.normal(0, 8 * self._bass, 2)
+        matrix = cv2.getRotationMatrix2D((width / 2, height / 2), rng.normal(0, 1.5 * self._bass), zoom)
+        matrix[:, 2] += shake
+        result = cv2.warpAffine(frame, matrix, (width, height), borderMode=cv2.BORDER_REFLECT)
+
+        # Höhen: Farbkanäle spalten
+        split = int(14 * treble)
+        if split:
+            r, g, b = cv2.split(result)
+            result = cv2.merge([shift_image(r, split, 0), g, shift_image(b, -split, 0)])
+
+        # Einsätze: Scherben fliegen auseinander und kehren zurück
+        if self._shatter > 0.03:
+            result = self._shatter_tiles(result)
+
+        # Lautstärke: Blitz
+        if level > 0.85:
+            result = cv2.addWeighted(result, 1.0, np.full_like(result, 255), 0.25 * (level - 0.85) / 0.15, 0)
+
+        self._draw_ring(result, bands, level)
+        return result
+
+    def _shatter_tiles(self, image: np.ndarray) -> np.ndarray:
+        height, width = image.shape[:2]
+        canvas = np.zeros_like(image)
+        tw, th = max(1, width // self.TILES_X), max(1, height // self.TILES_Y)
+        amount = self._shatter
+        for i in range(self.TILES_Y):
+            for j in range(self.TILES_X):
+                x0, y0 = j * tw, i * th
+                x1 = width if j == self.TILES_X - 1 else x0 + tw
+                y1 = height if i == self.TILES_Y - 1 else y0 + th
+                tile = image[y0:y1, x0:x1]
+                cx, cy = (x0 + x1) / 2 - width / 2, (y0 + y1) / 2 - height / 2
+                dx = int(cx * 0.6 * amount)
+                dy = int(cy * 0.6 * amount)
+                rot = cv2.getRotationMatrix2D(((x1 - x0) / 2, (y1 - y0) / 2),
+                                              self._spin[i * self.TILES_X + j] * amount, 1.0 - 0.15 * amount)
+                tile = cv2.warpAffine(tile, rot, (x1 - x0, y1 - y0))
+                tx0, ty0 = x0 + dx, y0 + dy
+                sx0, sy0 = max(0, -tx0), max(0, -ty0)
+                tx0c, ty0c = max(0, tx0), max(0, ty0)
+                tx1c, ty1c = min(width, tx0 + (x1 - x0)), min(height, ty0 + (y1 - y0))
+                if tx1c > tx0c and ty1c > ty0c:
+                    part = tile[sy0:sy0 + (ty1c - ty0c), sx0:sx0 + (tx1c - tx0c)]
+                    mask = part.any(axis=2, keepdims=True)
+                    canvas[ty0c:ty1c, tx0c:tx1c] = np.where(mask, part, canvas[ty0c:ty1c, tx0c:tx1c])
+        return canvas
+
+    def _draw_ring(self, image: np.ndarray, bands: Optional[np.ndarray], level: float) -> None:
+        if bands is None:
+            return
+        height, width = image.shape[:2]
+        center = np.array([width / 2, height / 2])
+        base = min(width, height) * 0.22
+        values = np.concatenate([bands, bands[::-1]])                 # symmetrischer Ring
+        angles = np.linspace(0, 2 * np.pi, len(values), endpoint=False) + self.frame_counter * 0.02
+        radii = base + np.clip(values, 0, 1.5) * base * 0.6
+        points = (center + np.column_stack([np.cos(angles), np.sin(angles)]) * radii[:, None]).astype(np.int32)
+        hue = int((self.frame_counter * 2) % 180)
+        color_hsv = np.uint8([[[hue, 255, 255]]])
+        color = tuple(int(c) for c in cv2.cvtColor(color_hsv, cv2.COLOR_HSV2RGB)[0, 0])
+        overlay = np.zeros_like(image)
+        cv2.polylines(overlay, [points], True, color, 3, cv2.LINE_AA)
+        glow = cv2.GaussianBlur(overlay, (0, 0), 5)
+        cv2.add(image, glow, dst=image)
+        cv2.add(image, overlay, dst=image)
 
 # ----------------- Kern-Logik -----------------
 
@@ -3389,6 +4247,11 @@ def build_processor(event_bus: IEventBus) -> EffectProcessor:
         PixelSortEffectStrategy(),
         MatrixCodeEffectStrategy(),
         KaleidoscopeTunnelEffectStrategy(),
+        TimeWaveEffectStrategy(),
+        SandDisintegrationEffectStrategy(),
+        DrosteSpiralEffectStrategy(),
+        BioGrowthEffectStrategy(),
+        SoundQuakeEffectStrategy(Container.resolve(IAudioLoopService), Container.resolve(AudioAnalyzer)),
     ):
         processor.register_effect(effect)
     return processor
@@ -3405,6 +4268,11 @@ def build_audio_controller() -> AudioController:
         NegativeSoundEffect(),
         BeatQuantizerEffect(),
         HarmonyMagnetEffect(),
+        BlackHoleEffect(),
+        DreamMemoryEffect(),
+        GlassCrystalEffect(),
+        AntimatterEffect(),
+        SwarmEffect(),
     ):
         engine.register(effect)
     return Container.resolve(AudioController)
@@ -3415,6 +4283,7 @@ def register_services() -> None:
     Container.register(IScreenCaptureService, MssScreenCaptureService)
     Container.register(IAudioLoopService, SoundDeviceLoopService)
     Container.register(VideoFeatures, VideoFeatures)
+    Container.register(AudioAnalyzer, AudioAnalyzer)
     Container.register(AudioEffectEngine, AudioEffectEngine)
     Container.register(AudioController, AudioController)
 
