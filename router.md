@@ -12,9 +12,11 @@ die Detaildatei.
 
 1. **Gemessene Werte schlagen Schätzungen.** Jede Zahl in der Doku nennt, womit sie
    gemessen wurde. Wo nichts gemessen wurde, steht das ausdrücklich dabei.
-2. **Was nicht getestet ist, wird als ungetestet gekennzeichnet.** Besonders alles,
+2. **Arbeitsnotizen belegen den Tag ihrer Messung, nicht heute.** Für den aktuellen
+   Stand gelten Code und die Detaildateien der Themenäste.
+3. **Was nicht getestet ist, wird als ungetestet gekennzeichnet.** Besonders alles,
    was echte Hardware braucht (Funkgerät, Tonband, Mikrofon, Lautsprecher).
-3. **Der Code ist die Wahrheit über das Verhalten.** Die Doku beschreibt Absicht,
+4. **Der Code ist die Wahrheit über das Verhalten.** Die Doku beschreibt Absicht,
    Bedienung und Messwerte, nicht jede Codezeile.
 
 ## Themenäste
@@ -23,6 +25,7 @@ die Detaildatei.
 | --- | --- | --- |
 | **Bildeffekte** | Echtzeit-Effekte auf einen Bildschirmbereich, Ton-Effekte, Plugin-System | `docs/bildeffekte/router.md` |
 | **Vericrypt** | Sprachverschlüsselung im Stil der 70er/80er (`_Loose-Dateien/cryptov2.py`) | `docs/vericrypt/router.md` |
+| **Arbeitsnotizen** | Was an einem Tag gemessen und entschieden wurde | `docs/arbeitsnotizen/` |
 
 ## Übrige Projekte
 
