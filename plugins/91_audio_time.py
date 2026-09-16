@@ -28,9 +28,10 @@ class PremonitionEffect(IAudioEffect):
 
     @property
     def latency(self) -> int:
-        return self._delay
+        return int(self.LOOKAHEAD * self.sample_rate)
 
     def reset(self, sample_rate: int) -> None:
+        self.sample_rate = sample_rate
         self._delay = int(self.LOOKAHEAD * sample_rate)
         self._ghost_len = int(self.GHOST * sample_rate)
         self._fifo = np.zeros(self._delay, dtype=np.float32)

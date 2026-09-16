@@ -19,6 +19,7 @@ import numpy as np
 APP_TAG = "app"
 PROFILE_ROWS = 96          # Auflösung des Helligkeitsprofils über die Bildhöhe
 AUDIO_BANDS = 32           # Bänder der Ton-Analyse
+DEFAULT_SAMPLE_RATE = 48000
 
 
 @dataclass
@@ -278,6 +279,7 @@ class IAudioEffect(ABC):
     """Ton-Effekt: verarbeitet Mono-Blöcke im Audio-Thread"""
 
     description = ""
+    sample_rate = DEFAULT_SAMPLE_RATE      # bis reset() die tatsächliche Rate setzt
 
     @property
     @abstractmethod
