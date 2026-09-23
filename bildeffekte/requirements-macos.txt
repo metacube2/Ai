@@ -1,0 +1,2 @@
+# Optionale lokale Personen- und Gesichtsmerkmale für Flüssigmetall.
+pyobjc-framework-Vision==12.2.2; sys_platform == "darwin"

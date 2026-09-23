@@ -1,6 +1,6 @@
 # Bildeffekte — Architektur
 
-Stand: 2026-09-16
+Stand: 2026-09-22
 
 ## Grundsatz
 
@@ -41,15 +41,43 @@ Jede Registrierung trägt eine Herkunft: `app` für das Programm,
 | `IEffectStrategy` | nur Plugins, plus `PassThroughEffectStrategy` als Rückfallebene |
 | `IAudioEffect` | nur Plugins; Basisklasse `StftAudioEffect` im Toolkit |
 
+Die Bildschirmquelle bleibt der Standard. Für Kamera 0–3 öffnet der Aufnahme-Thread
+stattdessen `OpenCvCameraCaptureService` über AVFoundation unter macOS. Die Kamera
+wird im selben Thread gelesen und beim Beenden freigegeben. Beide Quellen liefern
+RGB-Bilder an dieselbe Effekt- und Bildmerkmale-Pipeline.
+
+Bild-Plugins ordnen sich über `category` einer Gruppe zu: Jede Kategorie wird ein
+Untermenü der Effekt-Auswahl (`EffectPicker` in `video.py`), die Standardkategorie
+„Bild-Effekte“ steht auf der obersten Ebene. Nur „Kontur-Labor“ bekommt eine eigene
+Sektion. Mit `supports_drag`
+erhält ein Effekt normierte Mausbewegungen aus der Vorschau über den Event-Bus
+als `config['warp_drag']`; im Aufnahme-Thread wird daraus die Bildverformung.
+
+Ein Bild-Plugin mit `supports_target_image = True` erhält die zusätzliche
+JPG-Auswahl in der Oberfläche. Der `target-image`-Worker ruft
+`prepare_target_image(path)` auf und prüft die Bildvorlage. Erst nach erfolgreicher
+Prüfung veröffentlicht die Oberfläche das vorbereitete Ziel über `target_image`.
+Der `EffectProcessor` hält die Ziele je Effektname und übernimmt ein neues Mapping
+in `config['target_images']`; beim Stop/Start wird es in die neue Aufnahme-Konfiguration
+übertragen. Ein Ladefehler lässt das vorherige Ziel aktiv. „Standard-Agent“ entfernt
+den Eintrag. Das Matrix-Plugin erkennt Änderungen am Ziel im Aufnahme-Thread und
+setzt seinen Morphzustand dort zurück.
+
 ## Threads
 
 | Thread | Aufgabe |
 | --- | --- |
 | **GUI (Haupt)** | Qt, Anzeige, Bedienung. Fasst nur Widgets an |
-| **Aufnahme** | Bildschirm lesen, Effekt anwenden, Bildmerkmale berechnen, Bild per Qt-Signal melden. Fester 30-fps-Takt |
+| **Aufnahme** | Bildschirm oder Kamera lesen, Effekt anwenden, Bildmerkmale berechnen, Bild per Qt-Signal melden. Fester 30-fps-Takt |
 | **Audio (PortAudio)** | Duplex-Callback, 512 Samples bei 48 kHz |
 | **effect-lifecycle** | `activate`/`deactivate` der Effekte, etwa Audiogerät öffnen |
 | **audio-control** | Gerätewechsel und Stufen setzen |
+| **target-image** | Gewähltes JPG laden, Gesichtspunkte und Mesh vorbereiten |
+| **matrix-face** | Gesichtspunkte des Kamerabilds mit Apple Vision oder OpenCV erkennen |
+
+Beim Matrix-Morph verfolgt optischer Fluss die Gesichtspunkte im Aufnahme-Thread
+zwischen den asynchronen Erkennungen. Das Mesh rendert nur einen Ausschnitt um
+das Gesicht; die Hauptschleife erhält weiterhin RGB-Bilder in Eingangsgröße.
 
 Die beiden letzten sorgen dafür, dass ein Klick nie auf ein Gerät wartet: gemessen
 0,4 ms Blockierung, obwohl das Öffnen des Geräts 300 ms dauert.
@@ -69,7 +97,10 @@ Laufen ausschließlich messende Stufen, bleibt der Ausgang stumm. So kann ein
 Bild-Effekt mithören, ohne eine Rückkopplung zu erzeugen.
 
 Die Engine mischt trocken und bearbeitet: Das trockene Signal wird um die Latenz des
-Effekts verzögert, damit beides zusammenpasst.
+Effekts verzögert, damit beides zusammenpasst. Dabei bleiben seine Eingangskanäle
+erhalten; nur der Effekt erhält Mono. Bei Mix 0 % bleibt Stereo deshalb erhalten.
+Nach einem fehlgeschlagenen Audio-Start versucht ein Gerätewechsel erneut zu starten,
+solange mindestens eine Stufe aktiv ist.
 
 ## Kopplung Bild ↔ Ton
 
@@ -95,3 +126,8 @@ Sperren nötig.
 Beim Neuladen wird die Herkunft entfernt und alles neu eingelesen. Ein gerade aktiver
 Ton-Effekt, der verschwindet, wird abgewählt; ein verschwundener Bild-Effekt schaltet
 auf den ersten verbleibenden um.
+
+Bleibt der Name gleich, wird die aktive Instanz trotzdem ersetzt. Bei laufender
+Aufnahme wird der alte Bild-Effekt deaktiviert, danach der neue aktiviert. Die
+Audio-Engine übernimmt und initialisiert den neuen Ton-Effekt beim nächsten Block
+im Audio-Thread. Eine ausstehende Benutzerauswahl hat dabei Vorrang.

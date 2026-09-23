@@ -188,6 +188,16 @@ class IEffectStrategy(ABC):
         """Name des Effekts"""
 
     @property
+    def category(self) -> str:
+        """Bereich in der Oberfläche; Plugins können ihn überschreiben."""
+        return "Bild-Effekte"
+
+    @property
+    def supports_drag(self) -> bool:
+        """Effekt verarbeitet Ziehen in der Bildvorschau."""
+        return False
+
+    @property
     def uses_cells(self) -> bool:
         """True, wenn der Effekt die Schaltfläche 'Nächste Zelle' nutzt"""
         return False

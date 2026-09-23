@@ -18,6 +18,8 @@ from bildeffekte import IEffectStrategy, scale_image, to_rgb_colormap
 class SandDisintegrationEffectStrategy(IEffectStrategy):
     """Bewegte Bildteile zerbröseln zu Sand, der herabrieselt und sich unten zu Dünen häuft"""
 
+    category = "Natur & Material"
+
     MAX_PARTICLES = 60000
     SPAWN_PER_FRAME = 2500
     GRAVITY = 0.35
@@ -118,6 +120,8 @@ class BioGrowthEffectStrategy(IEffectStrategy):
     Reaktions-Diffusion (Gray-Scott): Ein chemisches Muster wächst wie Korallen
     oder Zellteilung aus den Kanten des Videos. Helle Bereiche nähren, dunkle töten.
     """
+
+    category = "Natur & Material"
 
     SCALE = 4
     ITERATIONS = 16

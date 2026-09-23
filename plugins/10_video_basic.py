@@ -17,6 +17,8 @@ from bildeffekte import IEffectStrategy, odd
 class MosaicEffectStrategy(IEffectStrategy):
     """3x3-Mosaik: Nur die aktive Zelle zeigt das Live-Bild, die anderen bleiben stehen"""
 
+    category = "Grundlagen"
+
     @property
     def name(self) -> str:
         return "Mosaik"
@@ -62,6 +64,8 @@ class MosaicEffectStrategy(IEffectStrategy):
 class BlurEffectStrategy(IEffectStrategy):
     """Gaußsche Unschärfe"""
 
+    category = "Grundlagen"
+
     @property
     def name(self) -> str:
         return "Blur"
@@ -73,6 +77,8 @@ class BlurEffectStrategy(IEffectStrategy):
 
 class EdgeDetectionEffectStrategy(IEffectStrategy):
     """Kantenerkennung (Canny)"""
+
+    category = "Grundlagen"
 
     @property
     def name(self) -> str:
@@ -86,6 +92,8 @@ class EdgeDetectionEffectStrategy(IEffectStrategy):
 
 class SlowMotionSnapshotEffectStrategy(IEffectStrategy):
     """Zeigt nur alle 0,2 Sekunden ein neues Standbild"""
+
+    category = "Grundlagen"
 
     UPDATE_INTERVAL = 0.2
 

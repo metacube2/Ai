@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Bildeffekte in Echtzeit auf einen Bildschirmbereich.
+Bildeffekte in Echtzeit auf einen Bildschirmbereich oder eine Kamera.
 
-Ein wählbarer Bereich des Bildschirms (z. B. ein Videoplayer-Fenster) wird
-laufend abgefilmt, mit einem Effekt verändert und in der Vorschau angezeigt.
+Ein wählbarer Bereich des Bildschirms (z. B. ein Videoplayer-Fenster) oder
+eine Live-Kamera wird mit einem Effekt verändert und in der Vorschau angezeigt.
 Unabhängig davon verändern Ton-Effekte den Ton – gesteuert vom Bild.
 
 Ton des Videos statt Mikrofon: virtuelles Audiogerät BlackHole installieren
@@ -24,10 +24,12 @@ import collections
 import importlib.util
 import inspect
 import os
+import queue
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cv2
@@ -45,8 +47,8 @@ from bildeffekte import (AUDIO_BANDS, PROFILE_ROWS, AudioFeatureSnapshot, Contai
                          to_rgb_colormap)
 from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QCursor, QGuiApplication, QImage, QKeySequence, QPainter, QPalette, QPen, QShortcut
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-                               QPushButton, QSlider, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+                               QMenu, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget)
 from scipy import signal
 
 # Alle Bilder in diesem Programm sind RGB (uint8, Form H x B x 3).
@@ -99,6 +101,38 @@ class MssScreenCaptureService(IScreenCaptureService):
             self._local.sct = None
 
 
+class OpenCvCameraCaptureService:
+    """Kamera öffnen, lesen und freigeben, jeweils im Aufnahme-Thread."""
+
+    def __init__(self, index: int):
+        self.index = index
+        self.camera: Optional[cv2.VideoCapture] = None
+
+    def open(self) -> None:
+        backend = cv2.CAP_AVFOUNDATION if sys.platform == 'darwin' else cv2.CAP_ANY
+        camera = cv2.VideoCapture(self.index, backend)
+        if not camera.isOpened():
+            camera.release()
+            raise RuntimeError(f"Kamera {self.index} konnte nicht geöffnet werden. Kamera-Freigabe prüfen.")
+        self.camera = camera
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        camera.set(cv2.CAP_PROP_FPS, 30)
+
+    def capture(self) -> np.ndarray:
+        if self.camera is None:
+            raise RuntimeError("Kamera ist nicht geöffnet")
+        ok, frame = self.camera.read()
+        if not ok or frame is None:
+            raise RuntimeError(f"Kamera {self.index} liefert kein Bild")
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    def close(self) -> None:
+        if self.camera is not None:
+            self.camera.release()
+            self.camera = None
+
+
 class SoundDeviceLoopService(IAudioLoopService):
     """Duplex-Stream mit Stufen: Ton-Analyse, Ton-Effekt, Audio+Video-Glitch"""
 
@@ -136,6 +170,7 @@ class SoundDeviceLoopService(IAudioLoopService):
             self.input_device, self.output_device = input_device, output_device
             if self._stream is not None:
                 self._stop()
+            if self._stages:
                 self._start()
 
     def _rebuild_chain(self) -> None:
@@ -341,7 +376,7 @@ class AudioEffectEngine:
         self.load = 0.0                          # Anteil der Blockzeit, den der Effekt braucht
         self._effect: Optional[IAudioEffect] = None
         self._requested: Optional[Tuple[Optional[str]]] = None
-        self._dry = np.zeros(0, dtype=np.float32)
+        self._dry = np.zeros((0, 1), dtype=np.float32)
 
     def register(self, effect: IAudioEffect) -> None:
         self.effects[effect.name] = effect
@@ -360,15 +395,20 @@ class AudioEffectEngine:
             self._requested = (current,)
 
     def process(self, block: np.ndarray) -> np.ndarray:
-        if self._requested is not None:
-            (name,) = self._requested
+        requested = self._requested
+        if requested is not None:
+            (name,) = requested
             self._requested = None
-            effect = self.effects.get(name) if name else None
-            if effect is not None:
-                effect.reset(self.sample_rate)
-                self._dry = np.zeros(effect.latency, dtype=np.float32)
-            self._effect = effect
-        effect = self._effect
+        else:
+            name = self._effect.name if self._effect is not None else None
+        # Neuladen ersetzt Instanzen unter demselben Namen. Erst im Audio-Thread
+        # übernehmen und initialisieren, damit reset() nicht mit process() konkurriert.
+        effect = self.effects.get(name) if name else None
+        if effect is not None and (requested is not None or effect is not self._effect
+                                   or self._dry.shape[1] != block.shape[1]):
+            effect.reset(self.sample_rate)
+            self._dry = np.zeros((effect.latency, block.shape[1]), dtype=np.float32)
+        self._effect = effect
         if effect is None:
             return block
 
@@ -376,11 +416,12 @@ class AudioEffectEngine:
         n = len(block)
         mono = block.mean(axis=1).astype(np.float32)
         wet = effect.process(mono, self.video_features.snapshot())
-        self._dry = np.concatenate([self._dry, mono])
+        # Nur der Effekt bekommt Mono; der verzögerte Originalton behält alle Kanäle.
+        self._dry = np.concatenate([self._dry, block])
         dry, self._dry = self._dry[:n], self._dry[n:]
-        out = dry * (1.0 - self.mix) + wet * self.mix
+        out = dry * (1.0 - self.mix) + wet[:, None] * self.mix
         self.load = 0.9 * self.load + 0.1 * (time.perf_counter() - started) / (n / self.sample_rate)
-        return np.repeat(out[:, None], block.shape[1], axis=1)
+        return out
 
 
 def list_audio_devices() -> Tuple[List[Tuple[int, str]], List[Tuple[int, str]]]:
@@ -454,6 +495,8 @@ class EffectProcessor:
         self.effect_strategies: Dict[str, IEffectStrategy] = {}
         self.current_strategy: Optional[IEffectStrategy] = None
         self.config: Dict[str, Any] = {}
+        self._target_images = {}
+        self._effect_options: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -464,6 +507,9 @@ class EffectProcessor:
         self.event_bus.subscribe('stop_capture', self.stop_capture)
         self.event_bus.subscribe('next_cell', self.next_cell)
         self.event_bus.subscribe('change_effect', self.change_effect)
+        self.event_bus.subscribe('warp_drag', self.set_warp_drag)
+        self.event_bus.subscribe('target_image', self.set_target_image)
+        self.event_bus.subscribe('effect_option', self.set_effect_option)
 
     @property
     def is_running(self) -> bool:
@@ -477,6 +523,9 @@ class EffectProcessor:
         self.effect_strategies[effect.name] = effect
         if self.current_strategy is None:
             self.current_strategy = effect
+        elif self.current_strategy.name == effect.name and self.current_strategy is not effect:
+            # Auch bei gleichem Namen den laufenden Effekt samt Lifecycle ersetzen.
+            self.change_effect(effect.name)
 
     def remove_effect(self, name: str) -> None:
         """Entfernt einen Effekt (Plugin neu geladen). Läuft er gerade, wird umgeschaltet."""
@@ -506,22 +555,51 @@ class EffectProcessor:
         self.event_bus.publish('effect_changed', new)
         self.event_bus.publish('status_update', f"Effekt gewechselt zu: {effect_name}")
 
-    def start_capture(self, region: Dict[str, int]) -> None:
+    def set_target_image(self, selection) -> None:
+        name, image = selection
+        with self._lock:
+            targets = dict(self._target_images)
+            if image is None:
+                targets.pop(name, None)
+            else:
+                targets[name] = image
+            self._target_images = targets
+            self.config['target_images'] = targets
+
+    def set_effect_option(self, option) -> None:
+        """option: (Effektname, Schlüssel, Wert); der Effekt liest config['effect_options'][Name]."""
+        name, key, value = option
+        with self._lock:
+            options = {effect: dict(values) for effect, values in self._effect_options.items()}
+            options.setdefault(name, {})[key] = value
+            self._effect_options = options
+            self.config['effect_options'] = options
+
+    def start_capture(self, source: Dict[str, Any]) -> None:
         if self.is_running:
             self.stop_capture(quiet=True)
+        source = dict(source)
+        kind = source.get('kind', 'screen')
+        width = source['width'] if kind == 'screen' else 0
+        height = source['height'] if kind == 'screen' else 0
         self.config = {'matrix_frames': [None] * 9, 'active_cell': 0, 'has_started': False,
-                       'width': region['width'], 'height': region['height']}
+                       'width': width, 'height': height, 'target_images': self._target_images,
+                       'effect_options': self._effect_options}
         self._stop_event = threading.Event()
-        self._thread = threading.Thread(target=self._capture_loop, args=(dict(region), self._stop_event),
+        self._thread = threading.Thread(target=self._capture_loop, args=(source, self._stop_event),
                                         daemon=True)
+        if kind == 'screen':
+            self.event_bus.publish('status_update',
+                                   f"Erfasse Region ({source['left']},{source['top']}) "
+                                   f"{width}x{height} px")
+        else:
+            self.event_bus.publish('status_update', f"Starte Kamera {source['index']} …")
         self._thread.start()
         if self.current_strategy is not None:
             self._lifecycle.submit(self.current_strategy.activate)
-        self.event_bus.publish('status_update',
-                               f"Erfasse Region ({region['left']},{region['top']}) "
-                               f"{region['width']}x{region['height']} px")
 
-    def stop_capture(self, _=None, quiet: bool = False) -> None:
+    def stop_capture(self, payload=None, quiet: bool = False) -> None:
+        quiet = quiet or (isinstance(payload, dict) and payload.get('quiet', False))
         self._stop_event.set()
         if self._thread is not None:
             self._thread.join(timeout=3.0)
@@ -536,24 +614,37 @@ class EffectProcessor:
             self.config['active_cell'] = (self.config['active_cell'] + 1) % 9
             self.event_bus.publish('status_update', f"Aktive Zelle: {self.config['active_cell'] + 1} von 9")
 
-    def _capture_loop(self, region: Dict[str, int], stop_event: threading.Event) -> None:
+    def set_warp_drag(self, drag: Optional[Tuple[float, float, float, float]]) -> None:
+        self.config['warp_drag'] = drag
+
+    def _capture_loop(self, source: Dict[str, Any], stop_event: threading.Event) -> None:
         interval = 1.0 / self.TARGET_FPS
         last_error_time = 0.0
         black_frames = 0
+        read_errors = 0
         fps_frames, fps_start = 0, time.perf_counter()
         next_frame_time = time.perf_counter()
+        camera = None
 
         try:
+            if source.get('kind', 'screen') == 'camera':
+                camera = OpenCvCameraCaptureService(source['index'])
+                camera.open()
             while not stop_event.is_set():
                 try:
-                    frame = self.capture_service.capture(region)
+                    frame = (camera.capture() if camera is not None
+                             else self.capture_service.capture(source))
+                    read_errors = 0
                 except Exception as e:
                     self.event_bus.publish('status_update', f"Aufnahme-Fehler: {e}")
+                    read_errors += 1
+                    if camera is not None and read_errors >= 3:
+                        break
                     stop_event.wait(1.0)
                     continue
 
                 # Ohne Freigabe "Bildschirmaufnahme" liefert macOS schwarze Bilder
-                if black_frames >= 0:
+                if camera is None and black_frames >= 0:
                     black_frames = black_frames + 1 if frame.max() < 8 else -1
                     if black_frames == self.TARGET_FPS:
                         self.event_bus.publish('status_update',
@@ -563,6 +654,9 @@ class EffectProcessor:
 
                 if self.video_features.enabled:
                     self.video_features.update(frame)
+
+                if camera is not None:
+                    self.config['width'], self.config['height'] = frame.shape[1], frame.shape[0]
 
                 with self._lock:
                     strategy = self.current_strategy
@@ -592,8 +686,14 @@ class EffectProcessor:
                 if delay < -interval:
                     next_frame_time = time.perf_counter()   # zu langsam: Takt neu aufsetzen
                 stop_event.wait(max(0.0, delay))
+        except Exception as e:
+            self.event_bus.publish('status_update', f"Aufnahme-Fehler: {e}")
         finally:
-            self.capture_service.close()
+            if camera is not None:
+                camera.close()
+            else:
+                self.capture_service.close()
+            self.event_bus.publish('capture_finished', source.get('session'))
 
 # ----------------- Plugins -----------------
 
@@ -736,6 +836,84 @@ def sync_effects(processor: EffectProcessor, engine: AudioEffectEngine,
     return problems
 
 
+class VideoRecorder:
+    """
+    Speichert das Ausgabebild als MP4 (H.264, sonst MPEG-4), ohne Ton.
+    Die Bildrate ist fest: Bilder werden nach der Uhr wiederholt oder ausgelassen,
+    damit das Video in Echtzeit abläuft, auch wenn ein Effekt langsamer rechnet.
+    Geschrieben wird in einem eigenen Thread, damit die Aufnahme nicht bremst.
+    """
+
+    FPS = 30
+    CODECS = ('avc1', 'mp4v')
+
+    def __init__(self, path: str):
+        self.path = path
+        self.frames = 0
+        self.dropped = 0
+        self.error: Optional[str] = None
+        self.started = time.monotonic()
+        self._queue: "queue.Queue" = queue.Queue(maxsize=self.FPS * 3)
+        self._thread = threading.Thread(target=self._run, daemon=True, name='video-recorder')
+        self._thread.start()
+
+    def add(self, frame: np.ndarray) -> None:
+        """Aus dem Aufnahme-Thread; blockiert nie."""
+        try:
+            self._queue.put_nowait((time.monotonic(), frame))
+        except queue.Full:
+            self.dropped += 1
+
+    def stop(self) -> None:
+        self._queue.put((None, None))
+        self._thread.join(timeout=10)
+
+    @property
+    def seconds(self) -> float:
+        return self.frames / self.FPS
+
+    def _run(self) -> None:
+        writer, size, start = None, None, None
+        while True:
+            stamp, frame = self._queue.get()
+            if frame is None:
+                break
+            if self.error is not None:
+                continue
+            if writer is None:
+                h, w = frame.shape[:2]
+                size = (w - w % 2, h - h % 2)   # H.264 braucht gerade Kantenlängen
+                for codec in self.CODECS:
+                    writer = cv2.VideoWriter(self.path, cv2.VideoWriter_fourcc(*codec), self.FPS, size)
+                    if writer.isOpened():
+                        break
+                    writer.release()
+                    writer = None
+                if writer is None:
+                    self.error = "Videodatei konnte nicht angelegt werden"
+                    continue
+                start = stamp
+            image = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            if (image.shape[1], image.shape[0]) != size:
+                image = cv2.resize(image, size, interpolation=cv2.INTER_AREA)
+            due = int((stamp - start) * self.FPS) + 1
+            while self.frames < due:
+                writer.write(image)
+                self.frames += 1
+        if writer is not None:
+            writer.release()
+
+
+def recording_path(effect_name: Optional[str]) -> str:
+    """~/Movies/Bildeffekte/Bildeffekte_<Datum_Uhrzeit>_<Effekt>.mp4"""
+    folder = os.path.join(os.path.expanduser('~/Movies'), 'Bildeffekte')
+    os.makedirs(folder, exist_ok=True)
+    slug = ''.join(c if c.isalnum() else '-' for c in (effect_name or 'Original')).strip('-')
+    while '--' in slug:
+        slug = slug.replace('--', '-')
+    return os.path.join(folder, f"Bildeffekte_{datetime.now():%Y-%m-%d_%H-%M-%S}_{slug}.mp4")
+
+
 # ----------------- GUI (PySide6) -----------------
 
 class UiBridge(QObject):
@@ -747,6 +925,77 @@ class UiBridge(QObject):
     fps = Signal(float)
     effect_changed = Signal(object)
     frame_ready = Signal()
+    capture_finished = Signal(object)
+
+
+class EffectPicker(QPushButton):
+    """
+    Effektauswahl als Menü statt langer Liste: Effekte ohne eigene Kategorie
+    stehen oben, jede Kategorie ist ein Untermenü.
+    """
+
+    PLACEHOLDER = "— Effekt wählen —"
+    effect_selected = Signal(str)
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(self.PLACEHOLDER, parent)
+        self._menu = QMenu(self)
+        self._menu.setToolTipsVisible(True)
+        self.setMenu(self._menu)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet("text-align: left; padding-left: 8px;")
+        self._actions: Dict[str, Any] = {}
+        self._groups: Dict[str, Optional[str]] = {}
+        self._current: Optional[str] = None
+
+    def set_effects(self, groups: List[Tuple[Optional[str], List[Tuple[str, str]]]]) -> None:
+        """groups: [(Kategorie oder None für oberste Ebene, [(Name, Beschreibung), ...]), ...]"""
+        self._menu.clear()
+        self._actions, self._groups = {}, {}
+        for group, items in groups:
+            if group is None:
+                menu = self._menu
+            else:
+                menu = self._menu.addMenu(f"{self._escape(group)}  ({len(items)})")
+                menu.setToolTipsVisible(True)
+            for name, description in items:
+                action = menu.addAction(self._escape(name))
+                action.setCheckable(True)
+                if description:
+                    action.setToolTip(description)
+                action.triggered.connect(lambda _=False, n=name: self._choose(n))
+                self._actions[name] = action
+                self._groups[name] = group
+        self.set_current(self._current)
+
+    def names(self) -> List[str]:
+        return list(self._actions)
+
+    def current(self) -> Optional[str]:
+        return self._current
+
+    def set_current(self, name: Optional[str]) -> None:
+        """Zeigt die Auswahl an, ohne effect_selected auszulösen; unbekannt = keine Auswahl."""
+        self._current = name if name in self._actions else None
+        for action_name, action in self._actions.items():
+            action.setChecked(action_name == self._current)
+        if self._current is None:
+            self.setText(self.PLACEHOLDER)
+        else:
+            group = self._groups[self._current]
+            text = self._current if group is None else f"{group}  ›  {self._current}"
+            self.setText(self._escape(text))
+
+    @staticmethod
+    def _escape(text: str) -> str:
+        """Qt liest "&" in Menüs und Knöpfen als Tastenkürzel ("Retro & VHS" -> "Retro _VHS")."""
+        return text.replace('&', '&&')
+
+    def _choose(self, name: str) -> None:
+        changed = name != self._current
+        self.set_current(name)
+        if changed:   # wie bei der Combobox: erneutes Wählen startet den Effekt nicht neu
+            self.effect_selected.emit(name)
 
 
 class VideoWidget(QWidget):
@@ -755,11 +1004,16 @@ class VideoWidget(QWidget):
     Kommt die Anzeige nicht hinterher, werden ältere Bilder verworfen statt gestaut.
     """
 
+    warp_drag = Signal(object)
+    fullscreen_requested = Signal()
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self._lock = threading.Lock()
         self._pending: Optional[np.ndarray] = None
         self._image: Optional[QImage] = None
+        self._drag_origin: Optional[Tuple[float, float]] = None
+        self.drag_enabled = False
         self.frames_shown = 0
         self.setMinimumSize(320, 180)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
@@ -790,6 +1044,58 @@ class VideoWidget(QWidget):
         self._image = None
         self.update()
 
+    def mirror_from(self, source: 'VideoWidget') -> None:
+        """Dasselbe fertige QImage in einer zweiten Ansicht anzeigen (GUI-Thread)."""
+        self._image = source._image
+        self.update()
+
+    def _image_rect(self) -> Optional[QRect]:
+        if self._image is None:
+            return None
+        size = QSize(self._image.size())
+        size.scale(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        target = QRect(QPoint(0, 0), size)
+        target.moveCenter(self.rect().center())
+        return target
+
+    def _image_position(self, point: QPoint) -> Optional[Tuple[float, float]]:
+        target = self._image_rect()
+        if target is None or target.width() == 0 or target.height() == 0:
+            return None
+        return (float(np.clip((point.x() - target.x()) / target.width(), 0, 1)),
+                float(np.clip((point.y() - target.y()) / target.height(), 0, 1)))
+
+    def mousePressEvent(self, event) -> None:
+        if not self.drag_enabled and event.button() == Qt.MouseButton.LeftButton:
+            target = self._image_rect()
+            if target is not None and target.contains(event.position().toPoint()):
+                self.fullscreen_requested.emit()
+            return
+        if self.drag_enabled and event.button() == Qt.MouseButton.LeftButton:
+            point = event.position().toPoint()
+            target = self._image_rect()
+            if target is not None and target.contains(point):
+                self._drag_origin = self._image_position(point)
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        if self.drag_enabled and event.button() == Qt.MouseButton.LeftButton:
+            if self._drag_origin is not None:
+                self._drag_origin = None
+                self.warp_drag.emit(None)
+            self.fullscreen_requested.emit()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._drag_origin is not None:
+            point = self._image_position(event.position().toPoint())
+            if point is not None:
+                x, y = self._drag_origin
+                self.warp_drag.emit((x, y, point[0] - x, point[1] - y))
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self._drag_origin is not None:
+            self._drag_origin = None
+            self.warp_drag.emit(None)
+
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(14, 14, 18))
@@ -797,12 +1103,30 @@ class VideoWidget(QWidget):
             painter.setPen(QColor(110, 110, 120))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Keine Vorschau – Bereich wählen und starten")
             return
-        size = QSize(self._image.size())
-        size.scale(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
-        target = QRect(QPoint(0, 0), size)
-        target.moveCenter(self.rect().center())
+        target = self._image_rect()
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         painter.drawImage(target, self._image)
+
+
+class FullscreenOutput(QWidget):
+    """Eigenes Fenster für das Ausgabebild; die Bedienung bleibt im Hauptfenster."""
+
+    closed = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Bildeffekte – Vollbild")
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.video = VideoWidget(self)
+        layout.addWidget(self.video)
+        self.video.fullscreen_requested.connect(lambda: QTimer.singleShot(0, self.close))
+        QShortcut(QKeySequence(Qt.Key.Key_Escape), self, activated=self.close)
+
+    def closeEvent(self, event) -> None:
+        self.closed.emit()
+        super().closeEvent(event)
 
 
 class RegionPicker(QWidget):
@@ -888,9 +1212,15 @@ class EffectWindow(QMainWindow):
         self.plugins = plugins
         self.processor = processor
         self._running = False
+        self._session_id = 0
         self._last_fps: Optional[float] = None
         self._uses_cells = effect_names[:1] == ["Mosaik"]
         self._picker: Optional[RegionPicker] = None
+        self._fullscreen: Optional[FullscreenOutput] = None
+        self._target_loader = ThreadPoolExecutor(max_workers=1, thread_name_prefix='target-image')
+        self._target_job = None
+        self._target_names = {}
+        self._target_errors = {}
         self.setWindowTitle("Bildeffekte")
 
         self.bridge = UiBridge()
@@ -899,13 +1229,18 @@ class EffectWindow(QMainWindow):
         self.bridge.status.connect(self.status_label.setText)
         self.bridge.fps.connect(self._show_fps)
         self.bridge.effect_changed.connect(self._on_effect_changed)
-        self.bridge.frame_ready.connect(self.video.show_pending)
+        self.bridge.frame_ready.connect(self._present_frame)
+        self.bridge.capture_finished.connect(self._on_capture_finished)
+        self.video.warp_drag.connect(lambda drag: self.event_bus.publish('warp_drag', drag))
+        self.video.fullscreen_requested.connect(lambda: QTimer.singleShot(0, self.open_fullscreen))
 
         # Diese Callbacks laufen im Thread des Publishers und senden nur Signale
         event_bus.subscribe('status_update', self.bridge.status.emit)
         event_bus.subscribe('fps', self.bridge.fps.emit)
         event_bus.subscribe('effect_changed', self.bridge.effect_changed.emit)
         event_bus.subscribe('frame_processed', self._on_frame)
+        event_bus.subscribe('capture_finished', self.bridge.capture_finished.emit)
+        self._refresh_target_controls()
 
     def _build_ui(self, effect_names: List[str]) -> None:
         central = QWidget()
@@ -913,41 +1248,96 @@ class EffectWindow(QMainWindow):
         layout.setContentsMargins(12, 12, 12, 6)
         layout.setSpacing(8)
 
-        controls = QHBoxLayout()
-        controls.addWidget(QLabel("Bereich:"))
+        source_row = QHBoxLayout()
+        source_row.addWidget(QLabel("Quelle:"))
+        self.source_combo = QComboBox()
+        self.source_combo.addItem("Bildschirm", ('screen', None))
+        for index in range(4):
+            self.source_combo.addItem(f"Kamera {index}" + (" (Standard)" if index == 0 else ""),
+                                      ('camera', index))
+        self.source_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.source_combo.currentIndexChanged.connect(self._on_source_changed)
+        source_row.addWidget(self.source_combo, 1)
+        layout.addLayout(source_row)
+
+        region_row = QHBoxLayout()
+        self.region_label = QLabel("Bereich:")
+        region_row.addWidget(self.region_label)
         self.region_edit = QLineEdit("100,100,800,450")
         self.region_edit.setPlaceholderText("x, y, Breite, Höhe")
-        self.region_edit.setFixedWidth(170)
+        self.region_edit.setMinimumWidth(120)
         self.region_edit.returnPressed.connect(self.start_effect)
-        controls.addWidget(self.region_edit)
+        region_row.addWidget(self.region_edit, 1)
 
         self.btn_pick = QPushButton("Bereich wählen…")
+        self.btn_pick.clicked.connect(self.pick_region)
+        region_row.addWidget(self.btn_pick)
+        layout.addLayout(region_row)
+
+        transport_row = QHBoxLayout()
         self.btn_start = QPushButton("▶  Start")
         self.btn_next = QPushButton("Nächste Zelle")
         self.btn_stop = QPushButton("■  Stop")
         self.btn_start.setObjectName("primary")
         self.btn_start.setToolTip("Start/Stop: Leertaste")
         self.btn_next.setToolTip("Taste N")
-        for button, slot in ((self.btn_pick, self.pick_region), (self.btn_start, self.start_effect),
+        for button, slot in ((self.btn_start, self.start_effect),
                              (self.btn_next, self.next_cell), (self.btn_stop, self.stop_effect)):
             button.clicked.connect(slot)
-            controls.addWidget(button)
+            transport_row.addWidget(button)
+        transport_row.addStretch(1)
+        layout.addLayout(transport_row)
 
-        controls.addSpacing(16)
-        controls.addWidget(QLabel("Effekt:"))
-        self.effect_combo = QComboBox()
-        self.effect_combo.addItems(effect_names)
-        self.effect_combo.setMinimumWidth(200)
-        self.effect_combo.currentTextChanged.connect(self.change_effect)
-        controls.addWidget(self.effect_combo)
+        effect_row = QHBoxLayout()
+        effect_row.addWidget(QLabel("Effekt:"))
+        self.effect_picker = EffectPicker()
+        self.effect_picker.effect_selected.connect(lambda name: self._select_video_effect(name, self.contour_picker))
+        effect_row.addWidget(self.effect_picker, 1)
 
         self.btn_plugins = QPushButton("🧩 Plugins neu laden")
         self.btn_plugins.setToolTip("Effekte aus dem Ordner 'plugins' neu einlesen")
         self.btn_plugins.clicked.connect(self.reload_plugins)
         self.btn_plugins.setEnabled(self.plugins is not None and self.processor is not None)
-        controls.addWidget(self.btn_plugins)
-        controls.addStretch(1)
-        layout.addLayout(controls)
+        effect_row.addWidget(self.btn_plugins)
+        layout.addLayout(effect_row)
+
+        self.target_group = QGroupBox("Gesichtsmorph")
+        target_layout = QVBoxLayout(self.target_group)
+        target_row = QHBoxLayout()
+        self.btn_target = QPushButton("JPG wählen …")
+        self.btn_target.clicked.connect(self._choose_target_image)
+        self.btn_target_default = QPushButton("Standard-Agent")
+        self.btn_target_default.clicked.connect(self._clear_target_image)
+        target_row.addWidget(self.btn_target)
+        target_row.addWidget(self.btn_target_default)
+        target_row.addStretch(1)
+        self.btn_drama = QPushButton("🎭  Dramatik")
+        self.btn_drama.setCheckable(True)
+        self.btn_drama.setToolTip("Verformung so stark wie in der Filmszene: Schwellungen wandern über das Gesicht, "
+                                  "der Mund reißt auf, die Person wehrt sich. Umschalten startet die Übernahme neu.")
+        self.btn_drama.toggled.connect(self._toggle_drama)
+        target_row.addWidget(self.btn_drama)
+        target_layout.addLayout(target_row)
+        self._drama = {}
+        self.target_label = QLabel("Standard-Agent")
+        self.target_label.setWordWrap(True)
+        self.target_label.setMinimumWidth(0)
+        self.target_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        target_layout.addWidget(self.target_label)
+        layout.addWidget(self.target_group)
+        self.target_group.hide()
+        self._target_timer = QTimer(self)
+        self._target_timer.setInterval(100)
+        self._target_timer.timeout.connect(self._poll_target_image)
+
+        self.contour_group = QGroupBox("Kontur-Labor")
+        contour_row = QHBoxLayout(self.contour_group)
+        contour_row.addWidget(QLabel("Kontur-Effekt:"))
+        self.contour_picker = EffectPicker()
+        self.contour_picker.effect_selected.connect(lambda name: self._select_video_effect(name, self.effect_picker))
+        contour_row.addWidget(self.contour_picker, 1)
+        layout.addWidget(self.contour_group)
+        self._populate_video_effects(effect_names)
         layout.addLayout(self._build_audio_controls())
 
         self.audio_info = QLabel("")
@@ -955,13 +1345,31 @@ class EffectWindow(QMainWindow):
         self.audio_info.setWordWrap(True)
         layout.addWidget(self.audio_info)
 
+        preview_row = QHBoxLayout()
+        preview_row.addWidget(QLabel("Ausgabe"))
+        preview_row.addStretch(1)
+        self.btn_record = QPushButton("⏺  Aufnehmen")
+        self.btn_record.setCheckable(True)
+        self.btn_record.setToolTip("Ausgabebild als MP4 speichern (ohne Ton) nach ~/Movies/Bildeffekte. "
+                                   "Nochmal klicken oder Stop beendet die Aufnahme.")
+        self.btn_record.toggled.connect(self._toggle_recording)
+        preview_row.addWidget(self.btn_record)
+        self._recorder: Optional[VideoRecorder] = None
+        self.btn_fullscreen = QPushButton("⛶  Vollbild")
+        self.btn_fullscreen.setToolTip("Ausgabebild im Vollbild zeigen; Esc beendet das Vollbild")
+        self.btn_fullscreen.clicked.connect(self.open_fullscreen)
+        preview_row.addWidget(self.btn_fullscreen)
+        layout.addLayout(preview_row)
+
         self.video = VideoWidget()
         layout.addWidget(self.video, 1)
         self.setCentralWidget(central)
 
         self.status_label = QLabel("Bereit. Bereich eingeben oder wählen, dann Start.")
+        self.status_label.setMinimumWidth(0)
+        self.status_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.fps_label = QLabel("")
-        self.fps_label.setMinimumWidth(150)
+        self.fps_label.setMinimumWidth(80)
         self.fps_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.statusBar().addWidget(self.status_label, 1)
         self.statusBar().addPermanentWidget(self.fps_label)
@@ -975,43 +1383,84 @@ class EffectWindow(QMainWindow):
         QShortcut(QKeySequence(Qt.Key.Key_N), self, activated=self.next_cell)
         self._update_buttons()
 
-    def _build_audio_controls(self) -> QHBoxLayout:
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Ton-Effekt:"))
+    def _on_source_changed(self) -> None:
+        is_screen = self.source_combo.currentData()[0] == 'screen'
+        self.region_label.setVisible(is_screen)
+        self.region_edit.setVisible(is_screen)
+        self.btn_pick.setVisible(is_screen)
+
+    def _populate_video_effects(self, names: List[str]) -> None:
+        current = (self.processor.current_strategy.name if self.processor is not None
+                   and self.processor.current_strategy is not None else names[0] if names else None)
+        # Kategorie "Bild-Effekte" (Standard) = oberste Menüebene, sonst Untermenü in Reihenfolge des Auftretens
+        regular: Dict[Optional[str], List[Tuple[str, str]]] = {None: []}
+        contour: List[Tuple[str, str]] = []
+        for name in names:
+            effect = self.processor.effect_strategies.get(name) if self.processor is not None else None
+            category = getattr(effect, 'category', 'Bild-Effekte')
+            entry = (name, getattr(effect, 'description', '') or '')
+            if category == 'Kontur-Labor':
+                contour.append(entry)
+            else:
+                regular.setdefault(None if category == 'Bild-Effekte' else category, []).append(entry)
+        self.effect_picker.set_effects(list(regular.items()))
+        self.contour_picker.set_effects([(None, contour)])
+        self.contour_group.setVisible(bool(contour))
+        self._sync_video_selections(current)
+
+    def _sync_video_selections(self, name: Optional[str]) -> None:
+        for picker in (self.effect_picker, self.contour_picker):
+            picker.set_current(name)
+
+    def _select_video_effect(self, name: str, other: EffectPicker) -> None:
+        other.set_current(None)
+        self.change_effect(name)
+
+    def _build_audio_controls(self) -> QVBoxLayout:
+        controls = QVBoxLayout()
+        effect_row = QHBoxLayout()
+        effect_row.addWidget(QLabel("Ton-Effekt:"))
         self.audio_combo = QComboBox()
         self.audio_combo.addItem("Aus")
         for name in self.audio.effect_names:
             self.audio_combo.addItem(name)
             self.audio_combo.setItemData(self.audio_combo.count() - 1, self.audio.description(name),
                                          Qt.ItemDataRole.ToolTipRole)
-        self.audio_combo.setMinimumWidth(190)
+        self.audio_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.audio_combo.setMinimumContentsLength(10)
+        self.audio_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.audio_combo.currentTextChanged.connect(self._on_audio_effect)
-        row.addWidget(self.audio_combo)
+        effect_row.addWidget(self.audio_combo, 1)
+        controls.addLayout(effect_row)
 
-        row.addWidget(QLabel("Mix:"))
+        mix_row = QHBoxLayout()
+        mix_row.addWidget(QLabel("Mix:"))
         self.mix_slider = QSlider(Qt.Orientation.Horizontal)
         self.mix_slider.setRange(0, 100)
         self.mix_slider.setValue(100)
-        self.mix_slider.setFixedWidth(110)
         self.mix_slider.setToolTip("0 % = Originalton, 100 % = nur Effekt")
         self.mix_label = QLabel("100 %")
         self.mix_label.setMinimumWidth(40)
         self.mix_slider.valueChanged.connect(self._on_mix)
-        row.addWidget(self.mix_slider)
-        row.addWidget(self.mix_label)
+        mix_row.addWidget(self.mix_slider, 1)
+        mix_row.addWidget(self.mix_label)
+        controls.addLayout(mix_row)
 
-        row.addSpacing(12)
         inputs, outputs = list_audio_devices()
-        row.addWidget(QLabel("Eingang:"))
+        input_row = QHBoxLayout()
+        input_row.addWidget(QLabel("Eingang:"))
         self.input_combo = self._device_combo(inputs)
-        row.addWidget(self.input_combo)
-        row.addWidget(QLabel("Ausgang:"))
+        input_row.addWidget(self.input_combo, 1)
+        controls.addLayout(input_row)
+
+        output_row = QHBoxLayout()
+        output_row.addWidget(QLabel("Ausgang:"))
         self.output_combo = self._device_combo(outputs)
-        row.addWidget(self.output_combo)
+        output_row.addWidget(self.output_combo, 1)
+        controls.addLayout(output_row)
         self.input_combo.currentIndexChanged.connect(self._on_devices)
         self.output_combo.currentIndexChanged.connect(self._on_devices)
-        row.addStretch(1)
-        return row
+        return controls
 
     @staticmethod
     def _device_combo(devices: List[Tuple[int, str]]) -> QComboBox:
@@ -1019,7 +1468,9 @@ class EffectWindow(QMainWindow):
         combo.addItem("Systemstandard", None)
         for index, name in devices:
             combo.addItem(name, index)
-        combo.setMinimumWidth(170)
+        combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        combo.setMinimumContentsLength(10)
+        combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         return combo
 
     def reload_plugins(self) -> None:
@@ -1027,7 +1478,7 @@ class EffectWindow(QMainWindow):
             return
         self.plugins.reload()
         sync_effects(self.processor, self.audio.engine, self.audio)
-        self._refresh_effect_list(self.effect_combo, self.processor.effect_names)
+        self._populate_video_effects(self.processor.effect_names)
         self._refresh_effect_list(self.audio_combo, ["Aus"] + self.audio.effect_names, tooltips=True)
         self._update_audio_info()
 
@@ -1073,6 +1524,7 @@ class EffectWindow(QMainWindow):
 
     def _refresh_meter(self) -> None:
         """Rechts in der Statusleiste: Bildrate und Rechenlast des Ton-Effekts"""
+        self._refresh_record_button()
         parts = []
         if self._running and self._last_fps is not None:
             parts.append(f"{self._last_fps:4.1f} FPS")
@@ -1083,8 +1535,36 @@ class EffectWindow(QMainWindow):
     # --- Aufnahme-Thread ---
 
     def _on_frame(self, frame: np.ndarray) -> None:
+        recorder = self._recorder
+        if recorder is not None:
+            recorder.add(frame)
         if self.video.offer(frame):
             self.bridge.frame_ready.emit()
+
+    def _present_frame(self) -> None:
+        self.video.show_pending()
+        if self._fullscreen is not None:
+            self._fullscreen.video.mirror_from(self.video)
+
+    def open_fullscreen(self) -> None:
+        if self._fullscreen is not None:
+            self._fullscreen.raise_()
+            self._fullscreen.activateWindow()
+            return
+        output = FullscreenOutput()
+        output.setGeometry(self.geometry())
+        output.video.mirror_from(self.video)
+        output.video.drag_enabled = self.video.drag_enabled
+        output.video.setCursor(self.video.cursor())
+        output.video.setToolTip("Doppelklick oder Esc: Vollbild beenden" if output.video.drag_enabled
+                                else "Klick oder Esc: Vollbild beenden")
+        output.video.warp_drag.connect(lambda drag: self.event_bus.publish('warp_drag', drag))
+        output.closed.connect(self._on_fullscreen_closed)
+        self._fullscreen = output
+        output.showFullScreen()
+
+    def _on_fullscreen_closed(self) -> None:
+        self._fullscreen = None
 
     # --- Aktionen (GUI-Thread) ---
 
@@ -1111,22 +1591,84 @@ class EffectWindow(QMainWindow):
         return {'left': x, 'top': y, 'width': width, 'height': height}
 
     def start_effect(self) -> None:
-        region = self._parse_region()
-        if region is None:
-            return
+        kind, index = self.source_combo.currentData()
+        if kind == 'screen':
+            source = self._parse_region()
+            if source is None:
+                return
+        else:
+            source = {'kind': 'camera', 'index': index}
+        self._session_id += 1
+        source['session'] = self._session_id
         self._running = True
         self._update_buttons()
-        self.event_bus.publish('start_capture', region)
+        self.event_bus.publish('start_capture', source)
         self._update_audio_info()
+
+    def _toggle_recording(self, enabled: bool) -> None:
+        if enabled:
+            name = self.processor.current_strategy.name if self.processor and self.processor.current_strategy else None
+            try:
+                self._recorder = VideoRecorder(recording_path(name))
+            except OSError as e:
+                self.status_label.setText(f"Aufnahme nicht möglich: {e}")
+                self.btn_record.blockSignals(True)
+                self.btn_record.setChecked(False)
+                self.btn_record.blockSignals(False)
+                return
+            self.status_label.setText(f"Aufnahme läuft: {self._recorder.path}")
+        else:
+            self._finish_recording()
+        self._refresh_record_button()
+
+    def _finish_recording(self) -> None:
+        recorder, self._recorder = self._recorder, None
+        if recorder is None:
+            return
+        recorder.stop()
+        self.btn_record.blockSignals(True)
+        self.btn_record.setChecked(False)
+        self.btn_record.blockSignals(False)
+        # Über den Event-Bus melden: so kommt die Meldung nach "Gestoppt" und wird nicht überschrieben
+        if recorder.error:
+            message = f"Aufnahme fehlgeschlagen: {recorder.error}"
+        elif recorder.frames == 0:
+            if os.path.exists(recorder.path):
+                os.remove(recorder.path)
+            message = "Aufnahme leer (kein Bild), nichts gespeichert."
+        else:
+            note = f", {recorder.dropped} Bilder übersprungen" if recorder.dropped else ""
+            message = f"Gespeichert ({recorder.seconds:.1f} s{note}): {recorder.path}"
+        self.event_bus.publish('status_update', message)
+        self._refresh_record_button()
+
+    def _refresh_record_button(self) -> None:
+        recorder = self._recorder
+        if recorder is None:
+            self.btn_record.setText("⏺  Aufnehmen")
+        else:
+            elapsed = int(time.monotonic() - recorder.started)
+            self.btn_record.setText(f"⏹  REC {elapsed // 60:02d}:{elapsed % 60:02d}")
 
     def stop_effect(self) -> None:
         if not self._running:
+            self._finish_recording()
             return
         self._running = False
-        self._update_buttons()
         self.event_bus.publish('stop_capture')
+        self._finish_recording()   # nach dem Stopp: das letzte Bild ist mit drin
+        self._update_buttons()
         self._last_fps = None
         self._refresh_meter()
+
+    def _on_capture_finished(self, session: object) -> None:
+        if self._running and session == self._session_id:
+            self._finish_recording()
+            self._running = False
+            self.event_bus.publish('stop_capture', {'quiet': True})
+            self._last_fps = None
+            self._refresh_meter()
+            self._update_buttons()
 
     def toggle_running(self) -> None:
         if self._running:
@@ -1141,8 +1683,88 @@ class EffectWindow(QMainWindow):
     def change_effect(self, name: str) -> None:
         self.event_bus.publish('change_effect', name)
 
+    def _refresh_target_controls(self) -> None:
+        effect = self.processor.current_strategy if self.processor else None
+        supported = getattr(effect, 'supports_target_image', False)
+        self.target_group.setVisible(supported or getattr(effect, 'supports_drama', False))
+        for widget in (self.btn_target, self.btn_target_default, self.target_label):
+            widget.setVisible(supported)
+        drama = getattr(effect, 'supports_drama', False)
+        self.btn_drama.setVisible(drama)
+        self.btn_drama.blockSignals(True)
+        self.btn_drama.setChecked(drama and self._drama.get(effect.name, False))
+        self.btn_drama.blockSignals(False)
+        if supported:
+            pending = self._target_job is not None and self._target_job[0] == effect.name
+            text = ('Zielgesicht wird geprüft …' if pending else
+                    self._target_errors.get(effect.name) or self._target_names.get(effect.name, 'Standard-Agent'))
+            self.target_label.setText(text)
+            self.target_label.setToolTip(text)
+
+    def _toggle_drama(self, enabled: bool) -> None:
+        effect = self.processor.current_strategy if self.processor else None
+        if not getattr(effect, 'supports_drama', False):
+            return
+        self._drama[effect.name] = enabled
+        self.event_bus.publish('effect_option', (effect.name, 'drama', enabled))
+        self.event_bus.publish('status_update', "Dramatik-Modus " + ("an: Übernahme startet neu" if enabled else "aus"))
+
+    def _choose_target_image(self) -> None:
+        effect = self.processor.current_strategy if self.processor else None
+        if not getattr(effect, 'supports_target_image', False):
+            return
+        path, _ = QFileDialog.getOpenFileName(self, 'Zielgesicht auswählen', '', 'JPEG-Bilder (*.jpg *.jpeg *.JPG *.JPEG)')
+        if not path:
+            return
+        if self._target_job is not None:
+            self._target_job[2].cancel()
+        self._target_errors.pop(effect.name, None)
+        future = self._target_loader.submit(effect.prepare_target_image, path)
+        self._target_job = (effect.name, path, future)
+        self._target_timer.start()
+        self._refresh_target_controls()
+
+    def _poll_target_image(self) -> None:
+        if self._target_job is None or not self._target_job[2].done():
+            return
+        name, path, future = self._target_job
+        self._target_job = None
+        self._target_timer.stop()
+        try:
+            image = future.result()
+        except Exception as exc:
+            self._target_errors[name] = str(exc) + ' Bisheriges Ziel bleibt aktiv.'
+        else:
+            self._target_names[name] = os.path.basename(path)
+            self._target_errors.pop(name, None)
+            self.event_bus.publish('target_image', (name, image))
+        self._refresh_target_controls()
+
+    def _clear_target_image(self) -> None:
+        effect = self.processor.current_strategy if self.processor else None
+        if not getattr(effect, 'supports_target_image', False):
+            return
+        if self._target_job is not None and self._target_job[0] == effect.name:
+            self._target_job[2].cancel()
+            self._target_job = None
+            self._target_timer.stop()
+        self._target_names.pop(effect.name, None)
+        self._target_errors.pop(effect.name, None)
+        self.event_bus.publish('target_image', (effect.name, None))
+        self._refresh_target_controls()
+
     def _on_effect_changed(self, effect: IEffectStrategy) -> None:
+        self._refresh_target_controls()
         self._update_audio_info()
+        self._sync_video_selections(effect.name)
+        self.video.drag_enabled = effect.supports_drag
+        self.video.setCursor(Qt.CursorShape.OpenHandCursor if effect.supports_drag else Qt.CursorShape.ArrowCursor)
+        self.video.setToolTip("Zum Verformen im Bild ziehen" if effect.supports_drag else "")
+        if self._fullscreen is not None:
+            self._fullscreen.video.drag_enabled = effect.supports_drag
+            self._fullscreen.video.setCursor(self.video.cursor())
+            self._fullscreen.video.setToolTip("Doppelklick oder Esc: Vollbild beenden" if effect.supports_drag
+                                             else "Klick oder Esc: Vollbild beenden")
         self._uses_cells = effect.uses_cells
         self._update_buttons()
 
@@ -1154,10 +1776,18 @@ class EffectWindow(QMainWindow):
         self.btn_start.setEnabled(not self._running)
         self.btn_stop.setEnabled(self._running)
         self.btn_next.setEnabled(self._running and self._uses_cells)
-        self.region_edit.setEnabled(not self._running)
-        self.btn_pick.setEnabled(not self._running)
+        self.source_combo.setEnabled(not self._running)
+        is_screen = self.source_combo.currentData()[0] == 'screen'
+        self.region_edit.setEnabled(not self._running and is_screen)
+        self.btn_pick.setEnabled(not self._running and is_screen)
+        self.btn_record.setEnabled(self._running or self._recorder is not None)
 
     def closeEvent(self, event) -> None:
+        self._finish_recording()
+        self._target_timer.stop()
+        self._target_loader.shutdown(wait=False, cancel_futures=True)
+        if self._fullscreen is not None:
+            self._fullscreen.close()
         self.event_bus.publish('stop_capture')
         self.audio.shutdown()
         super().closeEvent(event)
@@ -1190,6 +1820,7 @@ def apply_dark_theme(app: QApplication) -> None:
         QPushButton:disabled { color: #6e6e76; background: #2a2b31; border-color: #33343b; }
         QPushButton#primary:enabled { background: #2f6fea; border-color: #3d7df5; color: white; }
         QPushButton#primary:hover:enabled { background: #3d7df5; }
+        QPushButton:checked { background: #7a2020; border-color: #d04040; color: white; }
         QLineEdit, QComboBox { padding: 5px 8px; border-radius: 6px; background: #1a1b1f; border: 1px solid #41434d; }
         QStatusBar { color: #b8b8c0; }
         QLabel#hint { color: #8c8c96; }

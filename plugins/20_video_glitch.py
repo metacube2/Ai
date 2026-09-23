@@ -18,6 +18,8 @@ from bildeffekte import IEffectStrategy, PixelGrid, rand_int, random_box, shift_
 class RealTimeGlitchEffectStrategy(IEffectStrategy):
     """Moderner Echtzeit-Glitch mit digitalen Störungen"""
 
+    category = "Glitch"
+
     def __init__(self):
         self.rng = np.random.default_rng()
         self.last_frame: Optional[np.ndarray] = None
@@ -103,6 +105,8 @@ class DatamoshEffectStrategy(IEffectStrategy):
     Nur gelegentlich kommt ein 'Keyframe' mit dem echten Bild.
     """
 
+    category = "Glitch"
+
     BLOCK = 16
     FLOW_SCALE = 4          # Optical Flow in 1/4 Auflösung
 
@@ -169,6 +173,8 @@ class PixelSortEffectStrategy(IEffectStrategy):
     innerhalb ihres Abschnitts nach Helligkeit sortiert – schmelzende Farbschlieren.
     Richtung wechselt gelegentlich zwischen horizontal und vertikal.
     """
+
+    category = "Glitch"
 
     def __init__(self):
         self.rng = np.random.default_rng()

@@ -13,10 +13,13 @@ import cv2
 import numpy as np
 
 from bildeffekte import (IEffectStrategy, NoisePool, odd, rand_int, scale_image, shift_image)
+from bildeffekte.analog import old_film_detail, vhs_signal
 
 
 class VHSGlitchEffectStrategy(IEffectStrategy):
     """Klassische VHS-Störungen: Tracking-Fehler, Scan-Lines, Farbverzerrungen"""
+
+    category = "Retro & VHS"
 
     DROPOUT_COLORS = np.array([[255, 255, 255], [0, 0, 0], [255, 0, 0], [0, 0, 255]], dtype=np.uint8)
 
@@ -40,6 +43,8 @@ class VHSGlitchEffectStrategy(IEffectStrategy):
         now = time.time()
         rng = self.rng
         self.frame_counter += 1
+        output_size = (frame.shape[1], frame.shape[0])
+        frame = vhs_signal(frame, rng, self.frame_counter, wear=1.1, native=True)
         height, width = frame.shape[:2]
         if self.last_frame is None or self.last_frame.shape != frame.shape:
             self.last_frame = frame.copy()
@@ -75,7 +80,7 @@ class VHSGlitchEffectStrategy(IEffectStrategy):
 
         if self.frame_counter % 2 == 0:
             self.last_frame = result.copy()
-        return result
+        return cv2.resize(result, output_size, interpolation=cv2.INTER_LINEAR)
 
     def _apply_color_bleeding(self, frame: np.ndarray) -> np.ndarray:
         """Rot und Blau laufen gegeneinander auseinander"""
@@ -187,6 +192,8 @@ class VHSGlitchEffectStrategy(IEffectStrategy):
 class OldFilmEffectStrategy(IEffectStrategy):
     """Filmlook der 1910er: Sepia, Korn, Flackern, Kratzer, Staub, Bildsprünge"""
 
+    category = "Retro & VHS"
+
     SEPIA = (60, 40, 20)   # R, G, B
 
     def __init__(self):
@@ -221,6 +228,8 @@ class OldFilmEffectStrategy(IEffectStrategy):
         now = time.time()
         rng = self.rng
         self.frame_counter += 1
+        output_size = (frame.shape[1], frame.shape[0])
+        frame = old_film_detail(frame)
         if self.last_frame is None or self.last_frame.shape != frame.shape:
             self.last_frame = frame.copy()
 
@@ -244,7 +253,7 @@ class OldFilmEffectStrategy(IEffectStrategy):
 
         if self.frame_counter % 2 == 0:
             self.last_frame = result.copy()
-        return result
+        return cv2.resize(result, output_size, interpolation=cv2.INTER_LINEAR)
 
     def _convert_to_sepia(self, frame: np.ndarray) -> np.ndarray:
         """Graustufen mit schwankendem Kontrast und Sepiaton"""
@@ -285,7 +294,8 @@ class OldFilmEffectStrategy(IEffectStrategy):
         dist = np.hypot(xs[None, :] - cx, ys[:, None] - cy)
         vignette = (1 - np.clip(dist / (max_dist * 0.65), 0, 1)) ** 2.5
 
-        exposure = (rows[:, None] * cols[None, :] * self.flicker_value * vignette).astype(np.float32)
+        exposure = (rows[:, None] * cols[None, :] * self.flicker_value *
+                    (0.32 + 0.68 * vignette)).astype(np.float32)
         exposure = cv2.resize(exposure, (width, height), interpolation=cv2.INTER_LINEAR)
         return scale_image(frame, exposure)
 

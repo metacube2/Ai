@@ -16,6 +16,8 @@ from bildeffekte import IEffectStrategy
 class MatrixCodeEffectStrategy(IEffectStrategy):
     """Das Bild wird aus grünen, herabregnenden Zeichen aufgebaut"""
 
+    category = "Raum & Illusion"
+
     CELL_W, CELL_H = 10, 14
     CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#*+=<>:;!?%&@"
 

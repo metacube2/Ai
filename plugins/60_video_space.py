@@ -16,6 +16,8 @@ from bildeffekte import IEffectStrategy, PixelGrid, rand_int
 class KaleidoscopeTunnelEffectStrategy(IEffectStrategy):
     """Rotierendes Spiegelkaleidoskop mit Rückkopplung: zieht in einen farbwechselnden Tunnel"""
 
+    category = "Raum & Illusion"
+
     def __init__(self):
         self.rng = np.random.default_rng()
         self.frame_counter = 0
@@ -86,6 +88,8 @@ class TimeWaveEffectStrategy(IEffectStrategy):
     Die Zeitverteilung wechselt: Vorhang, Ringe, Wellen, Spirale.
     """
 
+    category = "Raum & Illusion"
+
     HISTORY = 45
     MAX_PIXELS = 640 * 360        # größere Regionen werden verkleinert gepuffert
     MODES = ("Vorhang", "Ringe", "Wellen", "Spirale")
@@ -153,6 +157,8 @@ class TimeWaveEffectStrategy(IEffectStrategy):
 
 class DrosteSpiralEffectStrategy(IEffectStrategy):
     """Das Bild enthält sich unendlich oft selbst – eine rotierende Escher-Spirale mit endlosem Zoom"""
+
+    category = "Raum & Illusion"
 
     SCALE = 3.0
 

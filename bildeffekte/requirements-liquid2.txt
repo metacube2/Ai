@@ -1,0 +1,8 @@
+# Flüssigmetall-Schmelze II (plugins/37_video_liquid_metal_v2.py), nur macOS.
+# Installation: ../venv/bin/python -m pip install -r bildeffekte/requirements-liquid2.txt
+pyobjc-framework-Vision==12.2.2; sys_platform == "darwin"
+onnxruntime==1.30.0
+scipy>=1.11
+# Tiefenmodell (≈50 MB, Apache-2.0) separat laden, siehe bildeffekte/depth2.py:
+#   mkdir -p ~/.bildeffekte/models && curl -L -o ~/.bildeffekte/models/depth_anything_v2_small_fp16.onnx \
+#     https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model_fp16.onnx

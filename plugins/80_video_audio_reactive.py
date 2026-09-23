@@ -84,6 +84,8 @@ class AudioGlitcher:
 class AudioGlitchEffectStrategy(IEffectStrategy):
     """Video-Kanalversatz plus Mikrofon-Glitches auf dem Lautsprecher"""
 
+    category = "Audio-reaktiv"
+
     def __init__(self, audio_loop_service: IAudioLoopService):
         self.audio_loop = audio_loop_service
         self.glitcher = AudioGlitcher()
@@ -114,6 +116,8 @@ class SoundQuakeEffectStrategy(IEffectStrategy):
     Höhen spalten die Farben, jeder Einsatz zersplittert es in fliegende Scherben,
     ein Spektrum-Ring pulsiert. Ohne Ton schlägt ein 120-BPM-Herz.
     """
+
+    category = "Audio-reaktiv"
 
     TILES_X, TILES_Y = 6, 4
 

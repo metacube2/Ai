@@ -24,6 +24,8 @@ class GlitchDimensionEffectStrategy(IEffectStrategy):
     Achtung: starkes Flackern.
     """
 
+    category = "Glitch"
+
     def __init__(self):
         self.rng = np.random.default_rng()
         self.grid = PixelGrid()

@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-09-16
+Stand: 2026-09-22
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation dieses Repositories.
 Von hier führt genau ein Schritt in einen Themenast, von dort genau ein Schritt in
@@ -23,7 +23,7 @@ die Detaildatei.
 
 | Ast | Wofür | Unterrouter |
 | --- | --- | --- |
-| **Bildeffekte** | Echtzeit-Effekte auf einen Bildschirmbereich, Ton-Effekte, Plugin-System | `docs/bildeffekte/router.md` |
+| **Bildeffekte** | Bildschirm- und Kameraeffekte, Ton-Effekte, Verwandlungen einschließlich Matrix-Gesichtsmorph, Plugin-System | `docs/bildeffekte/router.md` |
 | **Vericrypt** | Sprachverschlüsselung im Stil der 70er/80er (`_Loose-Dateien/cryptov2.py`) | `docs/vericrypt/router.md` |
 | **Arbeitsnotizen** | Was an einem Tag gemessen und entschieden wurde | `docs/arbeitsnotizen/` |
 
