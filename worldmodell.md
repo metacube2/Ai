@@ -44,6 +44,13 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
   Verbindung, nicht an SMB-Einstellungen. Große Schreibvorgänge wie Kamera-Importe
   lokal ablegen und danach mit `rsync -av --partial --progress -e ssh` oder
   Taildrop übertragen.
+- **Neue Oberflächen-Handler nicht während des Fensteraufbaus auf spätere Widgets
+  zugreifen lassen.** (2026-09-24) `_on_chain_changed` rief `_update_buttons()` auf
+  und wurde schon aus `_build_ui` heraus aufgerufen, bevor `btn_record` existierte:
+  `AttributeError`. Die Unit-Tests des Prozessors fanden das nicht. Regel: Nach
+  jeder Änderung an `EffectWindow` das echte Fenster offscreen bauen
+  (`QT_QPA_PLATFORM=offscreen`, `register_services`, `PluginManager`,
+  `build_processor`, `EffectWindow`) und die neuen Knöpfe einmal durchklicken.
 - **Im Oberflächentest nichts doppelt herunterfahren.** (2026-09-24)
   `EffectWindow.close()` ruft schon `audio.shutdown()` auf, ein zweiter Aufruf im
   Testskript warf `cannot schedule new futures after shutdown`. Regel: Im Test nur

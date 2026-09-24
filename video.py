@@ -30,7 +30,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import cv2
 import mss
@@ -514,7 +514,10 @@ class EffectProcessor:
         self.event_bus = event_bus
         self.video_features = video_features
         self.effect_strategies: Dict[str, IEffectStrategy] = {}
-        self.current_strategy: Optional[IEffectStrategy] = None
+        # Effektkette: wird der Reihe nach angewendet. Die Liste wird nie verändert,
+        # sondern ersetzt, damit der Aufnahme-Thread ohne Sperre lesen kann.
+        self.chain: List[IEffectStrategy] = []
+        self.selected = 0
         self.config: Dict[str, Any] = {}
         self._target_images = {}
         self._effect_options: Dict[str, Dict[str, Any]] = {}
@@ -531,6 +534,10 @@ class EffectProcessor:
         self.event_bus.subscribe('warp_drag', self.set_warp_drag)
         self.event_bus.subscribe('target_image', self.set_target_image)
         self.event_bus.subscribe('effect_option', self.set_effect_option)
+        self.event_bus.subscribe('add_effect', self.add_effect)
+        self.event_bus.subscribe('remove_slot', self.remove_slot)
+        self.event_bus.subscribe('move_slot', self.move_slot)
+        self.event_bus.subscribe('select_slot', self.select_slot)
 
     @property
     def is_running(self) -> bool:
@@ -540,41 +547,115 @@ class EffectProcessor:
     def effect_names(self) -> List[str]:
         return list(self.effect_strategies)
 
+    @property
+    def current_strategy(self) -> Optional[IEffectStrategy]:
+        """Der ausgewählte Effekt der Kette; auf ihn beziehen sich Menü und Einstellungen."""
+        chain = self.chain
+        return chain[min(self.selected, len(chain) - 1)] if chain else None
+
+    @property
+    def chain_names(self) -> List[str]:
+        return [effect.name for effect in self.chain]
+
     def register_effect(self, effect: IEffectStrategy) -> None:
         self.effect_strategies[effect.name] = effect
-        if self.current_strategy is None:
-            self.current_strategy = effect
-        elif self.current_strategy.name == effect.name and self.current_strategy is not effect:
+        if not self.chain:
+            with self._lock:
+                self.chain, self.selected = [effect], 0
+            return
+        for index, old in enumerate(self.chain):
             # Auch bei gleichem Namen den laufenden Effekt samt Lifecycle ersetzen.
-            self.change_effect(effect.name)
+            if old.name == effect.name and old is not effect:
+                self._set_chain(self._replaced(index, effect), self.selected, stop=[old], start=[effect])
 
     def remove_effect(self, name: str) -> None:
         """Entfernt einen Effekt (Plugin neu geladen). Läuft er gerade, wird umgeschaltet."""
         effect = self.effect_strategies.pop(name, None)
-        if effect is None:
+        if effect is None or effect not in self.chain:
             return
-        if self.current_strategy is effect:
-            self.current_strategy = None
+        chain = [e for e in self.chain if e is not effect]
+        start = []
+        if not chain:
             fallback = next(iter(self.effect_strategies.values()), None)
-            if fallback is not None:
-                self.change_effect(fallback.name)
-            if self.is_running:
-                self._lifecycle.submit(effect.deactivate)
+            chain, start = ([fallback], [fallback]) if fallback is not None else ([], [])
+        self._set_chain(chain, min(self.selected, max(0, len(chain) - 1)), stop=[effect], start=start)
+        if start:
+            self.event_bus.publish('status_update', f"Effekt gewechselt zu: {start[0].name}")
 
     def change_effect(self, effect_name: str) -> None:
+        """Ersetzt den ausgewählten Effekt der Kette."""
         new = self.effect_strategies.get(effect_name)
         if new is None:
             return
-        with self._lock:
-            old, self.current_strategy = self.current_strategy, new
-        if old is new:
+        if new in self.chain:
+            if self.chain.index(new) != self.selected:
+                self.select_slot(self.chain.index(new))
             return
-        if self.is_running:
-            if old is not None:
-                self._lifecycle.submit(old.deactivate)
-            self._lifecycle.submit(new.activate)
-        self.event_bus.publish('effect_changed', new)
+        if not self.chain:
+            self._set_chain([new], 0, start=[new])
+        else:
+            old = self.chain[self.selected]
+            self._set_chain(self._replaced(self.selected, new), self.selected, stop=[old], start=[new])
         self.event_bus.publish('status_update', f"Effekt gewechselt zu: {effect_name}")
+
+    def add_effect(self, effect_name: str) -> None:
+        """Hängt einen Effekt hinter dem ausgewählten an und wählt ihn aus."""
+        new = self.effect_strategies.get(effect_name)
+        if new is None:
+            return
+        if new in self.chain:
+            # Ein Effekt hat Zustand (Tracking, Einfrieren): nur einmal in der Kette.
+            self.select_slot(self.chain.index(new))
+            self.event_bus.publish('status_update', f"„{effect_name}“ ist schon in der Kette.")
+            return
+        position = self.selected + 1 if self.chain else 0
+        chain = self.chain[:position] + [new] + self.chain[position:]
+        self._set_chain(chain, position, start=[new])
+        self.event_bus.publish('status_update', "Kette: " + " → ".join(self.chain_names))
+
+    def remove_slot(self, index: Optional[int] = None) -> None:
+        """Nimmt einen Effekt aus der Kette; der letzte bleibt immer stehen."""
+        index = self.selected if index is None else index
+        if len(self.chain) <= 1 or not 0 <= index < len(self.chain):
+            return
+        effect = self.chain[index]
+        chain = self.chain[:index] + self.chain[index + 1:]
+        self._set_chain(chain, min(self.selected if self.selected < index else max(0, self.selected - 1),
+                                   len(chain) - 1), stop=[effect])
+        self.event_bus.publish('status_update', "Kette: " + " → ".join(self.chain_names))
+
+    def move_slot(self, delta: int) -> None:
+        """Verschiebt den ausgewählten Effekt in der Reihenfolge (-1 früher, +1 später)."""
+        target = self.selected + delta
+        if not self.chain or not 0 <= target < len(self.chain):
+            return
+        chain = list(self.chain)
+        chain[self.selected], chain[target] = chain[target], chain[self.selected]
+        self._set_chain(chain, target)
+
+    def select_slot(self, index: int) -> None:
+        if 0 <= index < len(self.chain) and index != self.selected:
+            self._set_chain(self.chain, index)
+
+    def _replaced(self, index: int, effect: IEffectStrategy) -> List[IEffectStrategy]:
+        chain = list(self.chain)
+        chain[index] = effect
+        return chain
+
+    def _set_chain(self, chain: List[IEffectStrategy], selected: int,
+                   stop: Sequence[IEffectStrategy] = (), start: Sequence[IEffectStrategy] = ()) -> None:
+        with self._lock:
+            before = self.current_strategy
+            self.chain, self.selected = chain, selected
+        if self.is_running:
+            for effect in stop:
+                self._lifecycle.submit(effect.deactivate)
+            for effect in start:
+                self._lifecycle.submit(effect.activate)
+        current = self.current_strategy
+        if current is not None and (current is not before or start or stop):
+            self.event_bus.publish('effect_changed', current)
+        self.event_bus.publish('chain_changed', (self.chain_names, self.selected))
 
     def set_target_image(self, selection) -> None:
         name, image = selection
@@ -616,8 +697,8 @@ class EffectProcessor:
         else:
             self.event_bus.publish('status_update', f"Starte Kamera {source['index']} …")
         self._thread.start()
-        if self.current_strategy is not None:
-            self._lifecycle.submit(self.current_strategy.activate)
+        for effect in self.chain:
+            self._lifecycle.submit(effect.activate)
 
     def stop_capture(self, payload=None, quiet: bool = False) -> None:
         quiet = quiet or (isinstance(payload, dict) and payload.get('quiet', False))
@@ -625,8 +706,8 @@ class EffectProcessor:
         if self._thread is not None:
             self._thread.join(timeout=3.0)
         self._thread = None
-        if self.current_strategy is not None:
-            self._lifecycle.submit(self.current_strategy.deactivate)
+        for effect in self.chain:
+            self._lifecycle.submit(effect.deactivate)
         if not quiet:
             self.event_bus.publish('status_update', "Gestoppt. Bereit für neuen Start.")
 
@@ -679,19 +760,22 @@ class EffectProcessor:
                 if camera is not None:
                     self.config['width'], self.config['height'] = frame.shape[1], frame.shape[0]
 
-                with self._lock:
-                    strategy = self.current_strategy
-                was_started = self.config.get('has_started')
-                try:
-                    output = strategy.apply(frame, self.config)
-                except Exception as e:
-                    output = frame
-                    now = time.time()
-                    if now - last_error_time > self.ERROR_MESSAGE_INTERVAL:
-                        self.event_bus.publish('status_update', f"Fehler in '{strategy.name}': {e}")
-                        last_error_time = now
-                if strategy.uses_cells and not was_started and self.config.get('has_started'):
-                    self.event_bus.publish('status_update', "Effekt gestartet. 'Nächste Zelle' schaltet weiter.")
+                output = frame
+                for strategy in self.chain:
+                    # Jeder Effekt bekommt das Ergebnis des vorherigen.
+                    was_started = self.config.get('has_started')
+                    try:
+                        result = strategy.apply(output, self.config)
+                        if result.shape[:2] != output.shape[:2]:
+                            result = cv2.resize(result, (output.shape[1], output.shape[0]))
+                        output = result
+                    except Exception as e:
+                        now = time.time()
+                        if now - last_error_time > self.ERROR_MESSAGE_INTERVAL:
+                            self.event_bus.publish('status_update', f"Fehler in '{strategy.name}': {e}")
+                            last_error_time = now
+                    if strategy.uses_cells and not was_started and self.config.get('has_started'):
+                        self.event_bus.publish('status_update', "Effekt gestartet. 'Nächste Zelle' schaltet weiter.")
 
                 self.event_bus.publish('frame_processed', output)
 
@@ -1004,6 +1088,7 @@ class UiBridge(QObject):
     status = Signal(str)
     fps = Signal(float)
     effect_changed = Signal(object)
+    chain_changed = Signal(object)
     frame_ready = Signal()
     capture_finished = Signal(object)
 
@@ -1309,6 +1394,7 @@ class EffectWindow(QMainWindow):
         self.bridge.status.connect(self.status_label.setText)
         self.bridge.fps.connect(self._show_fps)
         self.bridge.effect_changed.connect(self._on_effect_changed)
+        self.bridge.chain_changed.connect(self._on_chain_changed)
         self.bridge.frame_ready.connect(self._present_frame)
         self.bridge.capture_finished.connect(self._on_capture_finished)
         self.video.warp_drag.connect(lambda drag: self.event_bus.publish('warp_drag', drag))
@@ -1318,6 +1404,7 @@ class EffectWindow(QMainWindow):
         event_bus.subscribe('status_update', self.bridge.status.emit)
         event_bus.subscribe('fps', self.bridge.fps.emit)
         event_bus.subscribe('effect_changed', self.bridge.effect_changed.emit)
+        event_bus.subscribe('chain_changed', self.bridge.chain_changed.emit)
         event_bus.subscribe('frame_processed', self._on_frame)
         event_bus.subscribe('capture_finished', self.bridge.capture_finished.emit)
         self._refresh_target_controls()
@@ -1386,6 +1473,34 @@ class EffectWindow(QMainWindow):
         self.btn_plugins.setEnabled(self.plugins is not None and self.processor is not None)
         effect_row.addWidget(self.btn_plugins)
         layout.addLayout(effect_row)
+
+        # Effektkette: Chips in Reihenfolge der Anwendung; der markierte Chip ist
+        # der Effekt, den das Menü oben und die Einstellungen darunter bearbeiten.
+        chain_row = QHBoxLayout()
+        chain_row.addWidget(QLabel("Kette:"))
+        self.chain_chips = QHBoxLayout()
+        self.chain_chips.setSpacing(4)
+        chain_row.addLayout(self.chain_chips)
+        chain_row.addStretch(1)
+        self.btn_chain_left = QPushButton("◀")
+        self.btn_chain_left.setToolTip("Ausgewählten Effekt früher anwenden")
+        self.btn_chain_left.clicked.connect(lambda: self.event_bus.publish('move_slot', -1))
+        self.btn_chain_right = QPushButton("▶")
+        self.btn_chain_right.setToolTip("Ausgewählten Effekt später anwenden")
+        self.btn_chain_right.clicked.connect(lambda: self.event_bus.publish('move_slot', 1))
+        self.btn_chain_remove = QPushButton("✕")
+        self.btn_chain_remove.setToolTip("Ausgewählten Effekt aus der Kette nehmen")
+        self.btn_chain_remove.clicked.connect(lambda: self.event_bus.publish('remove_slot', None))
+        self.add_picker = EffectPicker()
+        self.add_picker.PLACEHOLDER = "＋ Effekt anhängen"
+        self.add_picker.setToolTip("Weiteren Effekt hinter dem ausgewählten anwenden, z. B. VHS → Matrix-Agent")
+        self.add_picker.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.add_picker.effect_selected.connect(self._append_video_effect)
+        for button in (self.btn_chain_left, self.btn_chain_right, self.btn_chain_remove):
+            button.setFixedWidth(36)
+            chain_row.addWidget(button)
+        chain_row.addWidget(self.add_picker)
+        layout.addLayout(chain_row)
 
         self.target_group = QGroupBox("Gesichtsmorph")
         target_layout = QVBoxLayout(self.target_group)
@@ -1497,6 +1612,10 @@ class EffectWindow(QMainWindow):
             else:
                 regular.setdefault(None if category == 'Bild-Effekte' else category, []).append(entry)
         self.effect_picker.set_effects(list(regular.items()))
+        self.add_picker.set_effects(list(regular.items()) + ([('Kontur-Labor', contour)] if contour else []))
+        self.add_picker.set_current(None)
+        if self.processor is not None:
+            self._on_chain_changed((self.processor.chain_names, self.processor.selected))
         self.contour_picker.set_effects([(None, contour)])
         self.contour_group.setVisible(bool(contour))
         self._sync_video_selections(current)
@@ -1504,6 +1623,30 @@ class EffectWindow(QMainWindow):
     def _sync_video_selections(self, name: Optional[str]) -> None:
         for picker in (self.effect_picker, self.contour_picker):
             picker.set_current(name)
+
+    def _append_video_effect(self, name: str) -> None:
+        self.add_picker.set_current(None)
+        self.event_bus.publish('add_effect', name)
+
+    def _on_chain_changed(self, state) -> None:
+        names, selected = state
+        while self.chain_chips.count():
+            item = self.chain_chips.takeAt(0)
+            if item.widget() is not None:
+                item.widget().deleteLater()
+        for index, name in enumerate(names):
+            if index:
+                self.chain_chips.addWidget(QLabel("→"))
+            chip = QPushButton(EffectPicker._escape(name))
+            chip.setCheckable(True)
+            chip.setChecked(index == selected and len(names) > 1)
+            chip.setToolTip("Auswählen: Menü und Einstellungen beziehen sich auf diesen Effekt")
+            chip.clicked.connect(lambda _=False, i=index: self.event_bus.publish('select_slot', i))
+            self.chain_chips.addWidget(chip)
+        several = len(names) > 1
+        self.btn_chain_left.setEnabled(several and selected > 0)
+        self.btn_chain_right.setEnabled(several and selected < len(names) - 1)
+        self.btn_chain_remove.setEnabled(several)
 
     def _select_video_effect(self, name: str, other: EffectPicker) -> None:
         other.set_current(None)
@@ -1707,7 +1850,7 @@ class EffectWindow(QMainWindow):
 
     def _toggle_recording(self, enabled: bool) -> None:
         if enabled:
-            name = self.processor.current_strategy.name if self.processor and self.processor.current_strategy else None
+            name = "+".join(self.processor.chain_names) if self.processor and self.processor.chain else None
             try:
                 self._recorder = VideoRecorder(recording_path(name))
             except OSError as e:
@@ -1905,7 +2048,8 @@ class EffectWindow(QMainWindow):
             self._fullscreen.video.setCursor(self.video.cursor())
             self._fullscreen.video.setToolTip("Doppelklick oder Esc: Vollbild beenden" if effect.supports_drag
                                              else "Klick oder Esc: Vollbild beenden")
-        self._uses_cells = effect.uses_cells
+        effects = self.processor.chain if self.processor else [effect]
+        self._uses_cells = any(e.uses_cells for e in effects)
         self._update_buttons()
 
     def _show_fps(self, fps: float) -> None:

@@ -29,6 +29,7 @@ Bildschirmquelle nur ein schwarzes Bild, weist die Statuszeile darauf hin.
 | **Start / Stop** | Aufnahme mit 30 Bildern pro Sekunde |
 | **Nächste Zelle** | Nur beim Effekt „Mosaik": schaltet die aktive Kachel weiter |
 | **Effekt** | Menü der Bild-Effekte, nach Gruppen geordnet (Grundlagen, Glitch, Retro & VHS, Natur & Material, Verwandlungen, Raum & Illusion, Audio-reaktiv). „Original“ steht oben, der Knopf zeigt Gruppe › Effekt |
+| **Kette** | Mehrere Bild-Effekte nacheinander. **＋ Effekt anhängen** setzt einen Effekt hinter den ausgewählten. Die Chips zeigen die Reihenfolge; ein Klick auf einen Chip wählt ihn aus, dann ändern **Effekt**, Gesichtsmorph und Dramatik diesen Effekt. **◀ ▶** verschieben, **✕** entfernt ihn. Jeder Effekt kann nur einmal vorkommen. Rechenzeiten addieren sich |
 | **Kontur-Labor** | Eigene Sektion mit vier aus Kanten und Kontrast berechneten Effekten |
 | **Gesichtsmorph** | Erscheint beim Matrix-Agenten: eigenes JPG/JPEG wählen oder mit „Standard-Agent“ zur mitgelieferten Vorlage zurückkehren. **🎭 Dramatik** verformt so stark wie in der Filmszene (rot = an) |
 | **⛶ Vollbild** | Ausgabebild als eigenes Vollbildfenster öffnen; Esc oder Klick auf das Bild beendet es |
@@ -109,6 +110,24 @@ Den Originalton hörst du dann nur noch über das Programm. Ohne BlackHole:
 **Bluetooth-Kopfhörer:** Wird deren Mikrofon als Eingang benutzt, schaltet macOS auf
 den Telefonmodus mit deutlich schlechterer Tonqualität. Besser das eingebaute Mikrofon
 oder BlackHole wählen.
+
+## Effekte kombinieren
+
+Beispiel Matrix-Agent mit VHS-Look:
+1. **Effekt** → Verwandlungen › **Matrix-Agent – Gesichtsmorph**
+2. **＋ Effekt anhängen** → Retro & VHS › **VHS Kopierkassette**
+3. Start. Die Kette zeigt `Matrix-Agent – Gesichtsmorph → VHS Kopierkassette`.
+
+**Die Reihenfolge zählt: Verwandlungen und Gesichtseffekte zuerst, Look-Effekte (VHS,
+Retro, Glitch) ans Ende.** Dann liegt das Bandrauschen auch über dem Agentengesicht,
+wie bei einer echten alten Aufnahme. Umgekehrt ist das Gesicht scharf auf einem
+verrauschten Bild und wirkt eingeklebt, und die Gesichtserkennung arbeitet auf dem
+gestörten Bild schlechter.
+
+Gemessen am 2026-09-24 (Standbild 960×540, M1, echte Aufnahmeschleife mit 30-fps-Takt):
+Matrix-Agent → VHS 28,7 Bilder/s, VHS → Matrix-Agent 24,8 Bilder/s. Mit schweren
+Verwandlungen (Flüssigmetall, Eis) plus weiteren Effekten sinkt die Bildrate
+entsprechend. Die Werte der Einzeleffekte stehen in `effekte.md`.
 
 ## In Teams zeigen (virtuelle Kamera)
 

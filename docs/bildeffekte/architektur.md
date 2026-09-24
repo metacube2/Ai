@@ -63,12 +63,39 @@ in `config['target_images']`; beim Stop/Start wird es in die neue Aufnahme-Konfi
 den Eintrag. Das Matrix-Plugin erkennt Änderungen am Ziel im Aufnahme-Thread und
 setzt seinen Morphzustand dort zurück.
 
+## Effektkette
+
+Der `EffectProcessor` hält statt eines Effekts eine **Kette** (`chain`, Liste von
+`IEffectStrategy`) und den Index des ausgewählten Glieds (`selected`).
+`current_strategy` ist das ausgewählte Glied. Darauf beziehen sich Menü,
+Zielbild, Dramatik und Ziehen, deshalb verhält sich eine Kette mit einem Glied
+genau wie früher.
+
+- Im Aufnahme-Thread bekommt jedes Glied das Ergebnis des vorherigen. Liefert ein
+  Glied eine andere Bildgröße, wird auf die Eingangsgröße skaliert. Wirft es einen
+  Fehler, reicht es seine Eingabe unverändert weiter; der Rest der Kette läuft
+  weiter, die Statuszeile meldet den Fehler höchstens alle 2 s.
+- Die Liste wird nie verändert, sondern unter `_lock` ersetzt. Der Aufnahme-Thread
+  liest sie ohne Sperre.
+- Ereignisse vom Bus: `change_effect` ersetzt das ausgewählte Glied, `add_effect`
+  hängt dahinter an, `remove_slot`, `move_slot` (±1) und `select_slot`. Jede Änderung
+  meldet `chain_changed` mit `(Namen, Auswahl)`. Ändert sich das ausgewählte Glied
+  oder die Effektmenge, kommt zusätzlich `effect_changed`.
+- Jeder Effekt steht höchstens einmal in der Kette, da Effekte Zustand haben
+  (Tracking, Einfrieren). Das letzte Glied lässt sich nicht entfernen.
+- `activate`/`deactivate` laufen beim Start und Stopp für alle Glieder, bei
+  Änderungen im laufenden Betrieb nur für die betroffenen.
+- Beim Neuladen der Plugins werden Glieder mit gleichem Namen durch die neue Instanz
+  ersetzt, Reihenfolge und Auswahl bleiben. Ein gelöschtes Plugin fällt aus der
+  Kette; wäre sie dann leer, rückt der erste verfügbare Effekt nach.
+- Aufnahmen heißen nach der ganzen Kette, etwa `…_Matrix-Agent-Gesichtsmorph-VHS-Kopierkassette.mp4`.
+
 ## Threads
 
 | Thread | Aufgabe |
 | --- | --- |
 | **GUI (Haupt)** | Qt, Anzeige, Bedienung. Fasst nur Widgets an |
-| **Aufnahme** | Bildschirm oder Kamera lesen, Effekt anwenden, Bildmerkmale berechnen, Bild per Qt-Signal melden. Fester 30-fps-Takt |
+| **Aufnahme** | Bildschirm oder Kamera lesen, Effektkette anwenden, Bildmerkmale berechnen, Bild per Qt-Signal melden. Fester 30-fps-Takt |
 | **Audio (PortAudio)** | Duplex-Callback, 512 Samples bei 48 kHz |
 | **effect-lifecycle** | `activate`/`deactivate` der Effekte, etwa Audiogerät öffnen |
 | **audio-control** | Gerätewechsel und Stufen setzen |
