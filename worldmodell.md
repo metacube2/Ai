@@ -33,6 +33,17 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
   `Path(__file__).parents[1]` gebildet wird. Regel: Für einen Vorher-Vergleich
   zuerst das Vorher-Bild rendern und danach ändern, oder `git stash` bzw.
   `git show` verwenden.
+- **pip nur über `python -m pip`.** (2026-09-16) Das gemeinsame venv
+  `Desktop/git/venv` (Python 3.11) wurde verschoben. Die Startzeile von
+  `venv/bin/pip` zeigt noch auf den alten Pfad und bricht mit `bad interpreter` ab.
+  Regel: `../venv/bin/python -m pip install …`, nie `venv/bin/pip`.
+- **Große Kopien zum Mac Mini nicht per SMB.** (2026-09-20/22) Der Mini
+  (Tailscale 100.79.88.30) läuft über das DERP-Relay Frankfurt statt direkt:
+  RTT 413–954 ms, SMB-Schreibrate 425 KB/s, `ls` blockierte über eine Minute.
+  Regel: Zuerst `tailscale status` prüfen. Steht dort `relay`, liegt es an der
+  Verbindung, nicht an SMB-Einstellungen. Große Schreibvorgänge wie Kamera-Importe
+  lokal ablegen und danach mit `rsync -av --partial --progress -e ssh` oder
+  Taildrop übertragen.
 - **Testbilder:** (2026-09-23) `thispersondoesnotexist.com` liefert bei `curl` nur
   HTML. Brauchbar sind frontale Porträts aus den Beispielen von
   `ageitgey/face_recognition` (`examples/obama.jpg`) oder `dlib/examples/faces`.
@@ -58,5 +69,10 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
   u. a.). Ein Commit nur der geänderten Dateien wäre nicht lauffähig gewesen.
   Regel: Abhängigkeiten prüfen und bei fremdem, offenem Stand den Umfang mit dem
   Benutzer klären.
-- Push und `sudo` brauchen ein echtes Terminal des Benutzers (keine Zugangsdaten in
-  der Sitzung).
+- **Push und `sudo` brauchen ein echtes Terminal des Benutzers.** (2026-09-16)
+  `git push` nach `github.com/metacube2/Ai` scheitert mit `could not read Username`:
+  Es gibt kein Token im Schlüsselbund und keinen SSH-Schlüssel, und `gh` ist nicht
+  installiert. Regel: lokal committen und den Push dem Benutzer vorschlagen
+  (Personal Access Token als Passwort). Das gilt ebenso für `sudo`, etwa `pmset`.
+- **Globaler `git config user.name` ist „initial comm“.** (2026-09-22) Das ist
+  vermutlich ein Versehen. Regel: In neuen Repos lokal `user.name metacube` setzen.
