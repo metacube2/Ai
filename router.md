@@ -18,6 +18,8 @@ die Detaildatei.
    was echte Hardware braucht (Funkgerät, Tonband, Mikrofon, Lautsprecher).
 4. **Der Code ist die Wahrheit über das Verhalten.** Die Doku beschreibt Absicht,
    Bedienung und Messwerte, nicht jede Codezeile.
+5. **Aus Fehlern lernen.** Vor jeder Aufgabe `worldmodell.md` lesen. Jeder Fehler,
+   der bei einer Aufgabe passiert, wird dort mit Ursache und Regel nachgetragen.
 
 ## Themenäste
 
@@ -26,6 +28,7 @@ die Detaildatei.
 | **Bildeffekte** | Bildschirm- und Kameraeffekte, Ton-Effekte, Verwandlungen einschließlich Matrix-Gesichtsmorph, Plugin-System | `docs/bildeffekte/router.md` |
 | **Vericrypt** | Sprachverschlüsselung im Stil der 70er/80er (`_Loose-Dateien/cryptov2.py`) | `docs/vericrypt/router.md` |
 | **Arbeitsnotizen** | Was an einem Tag gemessen und entschieden wurde | `docs/arbeitsnotizen/` |
+| **Weltmodell** | Learnings aus Fehlern: Werkzeuge, Umgebung, Numerik, Git – vor jeder Aufgabe lesen | `worldmodell.md` |
 
 ## Übrige Projekte
 
