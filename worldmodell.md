@@ -44,12 +44,24 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
   Verbindung, nicht an SMB-Einstellungen. Große Schreibvorgänge wie Kamera-Importe
   lokal ablegen und danach mit `rsync -av --partial --progress -e ssh` oder
   Taildrop übertragen.
+- **Im Oberflächentest nichts doppelt herunterfahren.** (2026-09-24)
+  `EffectWindow.close()` ruft schon `audio.shutdown()` auf, ein zweiter Aufruf im
+  Testskript warf `cannot schedule new futures after shutdown`. Regel: Im Test nur
+  `window.close()` aufrufen und einen Fehler beim Aufräumen erst dem eigenen Skript
+  zuordnen, bevor er als App-Fehler gilt.
 - **Testbilder:** (2026-09-23) `thispersondoesnotexist.com` liefert bei `curl` nur
   HTML. Brauchbar sind frontale Porträts aus den Beispielen von
   `ageitgey/face_recognition` (`examples/obama.jpg`) oder `dlib/examples/faces`.
   Nach dem Download immer mit `file` prüfen.
 
 ## Numerik und OpenCV
+
+- **OpenCV zählt Kameras anders als macOS.** (2026-09-24) Auf diesem Mac ist
+  OpenCV-Kamera 0 die „OBS Virtual Camera“, nicht die FaceTime-Kamera. OpenCV
+  sortiert die AVFoundation-Geräte nach `uniqueID`. Regel: Kameraindizes nie als
+  „0 = eingebaute Kamera“ annehmen, sondern Namen über `video.list_cameras()`
+  auflösen und virtuelle Kameras als Quelle sperren, damit keine Rückkopplung
+  entsteht.
 
 - **`np.gradient` stürzt bei sehr kleinen Arrays ab.** (2026-09-23) Winzige Scherben
   mit 1 px Kantenlänge lösten einen `ValueError` aus. Regel: Für Ableitungen auf

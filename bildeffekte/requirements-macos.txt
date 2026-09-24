@@ -1,2 +1,6 @@
 # Optionale lokale Personen- und Gesichtsmerkmale für Flüssigmetall.
 pyobjc-framework-Vision==12.2.2; sys_platform == "darwin"
+# Optional: Kameranamen in der Quellenliste.
+pyobjc-framework-AVFoundation==12.2.2; sys_platform == "darwin"
+# Optional: Ausgabe als virtuelle Kamera für Teams/Zoom (braucht OBS ab Version 30).
+pyvirtualcam==0.15.0

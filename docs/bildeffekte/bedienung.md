@@ -23,7 +23,7 @@ Bildschirmquelle nur ein schwarzes Bild, weist die Statuszeile darauf hin.
 
 | Bedienelement | Wirkung |
 | --- | --- |
-| **Quelle** | Standard ist „Bildschirm"; Kamera 0–3 sind die von OpenCV nummerierten Live-Kameras. Der Index hängt von angeschlossenen und virtuellen Geräten ab |
+| **Quelle** | Standard ist „Bildschirm“. Kameras erscheinen mit ihrem Namen, etwa „FaceTime HD-Kamera“. Die Reihenfolge ist die von OpenCV, nach Geräte-ID sortiert, nicht die von macOS. „OBS Virtual Camera“ ist als eigene Ausgabe markiert und lässt sich nicht als Quelle starten, sonst entstünde eine Rückkopplung. Ohne `pyobjc-framework-AVFoundation` erscheinen nur „Kamera 0–3“ |
 | **Bereich** | Nur bei „Bildschirm": `x,y,Breite,Höhe` in Bildschirmpunkten, mindestens 16×16 |
 | **Bereich wählen…** | Bildschirm wird abgedunkelt, Rahmen mit der Maus aufziehen. Esc oder Rechtsklick bricht ab |
 | **Start / Stop** | Aufnahme mit 30 Bildern pro Sekunde |
@@ -33,6 +33,7 @@ Bildschirmquelle nur ein schwarzes Bild, weist die Statuszeile darauf hin.
 | **Gesichtsmorph** | Erscheint beim Matrix-Agenten: eigenes JPG/JPEG wählen oder mit „Standard-Agent“ zur mitgelieferten Vorlage zurückkehren. **🎭 Dramatik** verformt so stark wie in der Filmszene (rot = an) |
 | **⛶ Vollbild** | Ausgabebild als eigenes Vollbildfenster öffnen; Esc oder Klick auf das Bild beendet es |
 | **⏺ Aufnehmen** | Nur bei laufendem Video: speichert das Ausgabebild als MP4 (H.264, 30 fps, ohne Ton) nach `~/Movies/Bildeffekte/Bildeffekte_<Datum_Uhrzeit>_<Effekt>.mp4`. Der Knopf zeigt „REC mm:ss“; nochmal klicken oder Stop beendet und speichert, die Statuszeile nennt den Pfad. Rechnet ein Effekt langsamer als 30 fps, werden Bilder wiederholt, damit das Video in Echtzeit abläuft |
+| **📷 Als Kamera** | Sendet das Ausgabebild als virtuelle Kamera **„OBS Virtual Camera“** (1280×720, 30 fps, andere Formate mit schwarzem Rand). Teams, Zoom und FaceTime wählen sie wie eine normale Kamera, siehe „In Teams zeigen“. Läuft unabhängig von Start/Stop: Ohne neues Bild wird das letzte wiederholt |
 | **🧩 Plugins neu laden** | Liest den Ordner `plugins` neu ein, ohne Neustart |
 
 **Tastenkürzel:** Leertaste startet und stoppt, **N** schaltet die Mosaik-Zelle weiter.
@@ -109,6 +110,31 @@ Den Originalton hörst du dann nur noch über das Programm. Ohne BlackHole:
 den Telefonmodus mit deutlich schlechterer Tonqualität. Besser das eingebaute Mikrofon
 oder BlackHole wählen.
 
+## In Teams zeigen (virtuelle Kamera)
+
+Voraussetzungen, auf diesem Mac erfüllt (Stand 2026-09-24):
+- OBS ab Version 30 (installiert: 32.0.4).
+- Die Kamera-Erweiterung von OBS ist aktiviert. Auf einem neuen Mac dafür OBS einmal
+  starten, **Virtuelle Kamera starten** klicken und die Systemerweiterung in den
+  Systemeinstellungen erlauben.
+- `pyvirtualcam` und für die Kameranamen `pyobjc-framework-AVFoundation`:
+  `../venv/bin/python -m pip install -r bildeffekte/requirements-macos.txt`
+
+Ablauf:
+1. Im Programm eine **echte** Kamera als Quelle wählen, Effekt wählen und **Start** drücken.
+2. **📷 Als Kamera** einschalten. Die Statuszeile meldet „Sende als Kamera …“.
+3. In Teams unter **Einstellungen → Geräte → Kamera** die **OBS Virtual Camera**
+   wählen. Im Meeting geht das auch über den Pfeil neben dem Kamera-Symbol.
+
+OBS selbst muss nicht laufen. Läuft dort gleichzeitig die eigene virtuelle Kamera,
+sendet nur einer von beiden. Teams spiegelt die eigene Vorschau, die anderen sehen
+das Bild richtig herum. Solange **Als Kamera** aus ist, zeigt die OBS-Kamera ein
+Standbild von OBS. Den Ton überträgt Teams weiter vom normalen Mikrofon.
+
+Geprüft: Ein Testbild ging über die OBS-Kamera und kam per OpenCV unverändert zurück
+(Farben und Ränder stimmen). Das geschah auch über die echte Oberfläche ohne
+sichtbares Fenster. Ein Anruf in Teams selbst ist ungeprüft.
+
 ## Stolpersteine
 
 | Symptom | Ursache und Abhilfe |
@@ -116,6 +142,8 @@ oder BlackHole wählen.
 | Nur schwarzes Bild | Freigabe „Bildschirmaufnahme" fehlt |
 | Kamera öffnet nicht | Kamera-Freigabe prüfen, anderen Kameraindex wählen oder die Kamera in einer anderen App schließen |
 | Pfeifen | Mikrofon auf Lautsprecher, Kopfhörer benutzen |
+| Teams zeigt das OBS-Logo statt der Effekte | **📷 Als Kamera** ist aus, oder OBS sendet gerade selbst. Knopf einschalten und in OBS die virtuelle Kamera stoppen |
+| „OBS Virtual Camera“ fehlt in Teams | Kamera-Erweiterung von OBS nicht aktiviert (siehe oben) oder Teams lief schon vorher: Teams neu starten |
 | Kein Ton im Effekt | Beim Effekt „Klang-Beben" wird nur gemessen, der Ausgang bleibt absichtlich stumm |
 | Ruckeln bei großem Bereich | Rechenzeit hängt an der Pixelzahl, siehe `messwerte.md` |
 | Plugin fehlt in der Liste | Statuszeile prüfen, dort steht der Fehler der Datei |

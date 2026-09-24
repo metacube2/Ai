@@ -424,6 +424,27 @@ class AudioEffectEngine:
         return out
 
 
+def list_cameras() -> List[str]:
+    """
+    Kameranamen in der Reihenfolge der OpenCV-Indizes (macOS). OpenCV zählt die
+    AVFoundation-Geräte nach ihrer uniqueID sortiert, nicht in der Reihenfolge von
+    macOS. Ohne pyobjc-framework-AVFoundation: leere Liste (Anzeige "Kamera N").
+    """
+    if sys.platform != 'darwin':
+        return []
+    try:
+        import AVFoundation
+        devices = AVFoundation.AVCaptureDevice.devicesWithMediaType_(AVFoundation.AVMediaTypeVideo)
+        return [str(d.localizedName()) for d in sorted(devices, key=lambda d: str(d.uniqueID()))]
+    except Exception:
+        return []
+
+
+def is_virtual_camera(name: str) -> bool:
+    """Eigene Ausgabe als Quelle würde eine Rückkopplung erzeugen."""
+    return 'virtual camera' in name.lower()
+
+
 def list_audio_devices() -> Tuple[List[Tuple[int, str]], List[Tuple[int, str]]]:
     """(Eingänge, Ausgänge) als Listen von (Index, Name)"""
     inputs, outputs = [], []
@@ -904,6 +925,65 @@ class VideoRecorder:
             writer.release()
 
 
+class VirtualCamera:
+    """
+    Sendet das Ausgabebild an die "OBS Virtual Camera" (macOS: OBS ab Version 30,
+    Kamera-Erweiterung einmal in OBS aktiviert). Teams, Zoom oder FaceTime wählen sie
+    dann wie eine normale Kamera. Das Format ist fest 1280×720 bei 30 Bildern/s,
+    andere Seitenverhältnisse bekommen schwarze Ränder. Ohne neues Bild wird das
+    letzte wiederholt, damit die Kamera im Meeting nicht einfriert oder abbricht.
+    """
+
+    WIDTH, HEIGHT, FPS = 1280, 720, 30
+
+    def __init__(self):
+        import pyvirtualcam   # optional: nur nötig, wenn die Kamera eingeschaltet wird
+        self._camera = pyvirtualcam.Camera(self.WIDTH, self.HEIGHT, self.FPS, backend='obs')
+        self.device = self._camera.device
+        self.error: Optional[str] = None
+        self._frame = np.zeros((self.HEIGHT, self.WIDTH, 3), np.uint8)
+        self._pending: Optional[np.ndarray] = None
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True, name='virtual-camera')
+        self._thread.start()
+
+    def add(self, frame: np.ndarray) -> None:
+        """Aus dem Aufnahme-Thread; blockiert nie, nur das neueste Bild zählt."""
+        self._pending = frame
+
+    def stop(self) -> None:
+        self._stop.set()
+        self._thread.join(timeout=3)
+
+    @classmethod
+    def fit(cls, frame: np.ndarray) -> np.ndarray:
+        """Seitenverhältnis erhalten, mittig auf 1280×720 mit schwarzem Rand."""
+        h, w = frame.shape[:2]
+        scale = min(cls.WIDTH / w, cls.HEIGHT / h)
+        size = (max(1, round(w * scale)), max(1, round(h * scale)))
+        if (w, h) == (cls.WIDTH, cls.HEIGHT):
+            return np.ascontiguousarray(frame[..., :3])
+        image = cv2.resize(frame[..., :3], size,
+                           interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR)
+        out = np.zeros((cls.HEIGHT, cls.WIDTH, 3), np.uint8)
+        x, y = (cls.WIDTH - size[0]) // 2, (cls.HEIGHT - size[1]) // 2
+        out[y:y + size[1], x:x + size[0]] = image
+        return out
+
+    def _run(self) -> None:
+        try:
+            while not self._stop.is_set():
+                frame, self._pending = self._pending, None
+                if frame is not None:
+                    self._frame = self.fit(frame)
+                self._camera.send(self._frame)
+                self._camera.sleep_until_next_frame()
+        except Exception as e:
+            self.error = str(e)
+        finally:
+            self._camera.close()
+
+
 def recording_path(effect_name: Optional[str]) -> str:
     """~/Movies/Bildeffekte/Bildeffekte_<Datum_Uhrzeit>_<Effekt>.mp4"""
     folder = os.path.join(os.path.expanduser('~/Movies'), 'Bildeffekte')
@@ -1252,9 +1332,15 @@ class EffectWindow(QMainWindow):
         source_row.addWidget(QLabel("Quelle:"))
         self.source_combo = QComboBox()
         self.source_combo.addItem("Bildschirm", ('screen', None))
-        for index in range(4):
-            self.source_combo.addItem(f"Kamera {index}" + (" (Standard)" if index == 0 else ""),
-                                      ('camera', index))
+        self._camera_names = list_cameras()
+        for index, name in enumerate(self._camera_names or [None] * 4):
+            if name is None:
+                label = f"Kamera {index}" + (" (Standard)" if index == 0 else "")
+            elif is_virtual_camera(name):
+                label = f"{name} (eigene Ausgabe, nicht als Quelle)"
+            else:
+                label = name
+            self.source_combo.addItem(label, ('camera', index))
         self.source_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.source_combo.currentIndexChanged.connect(self._on_source_changed)
         source_row.addWidget(self.source_combo, 1)
@@ -1355,6 +1441,13 @@ class EffectWindow(QMainWindow):
         self.btn_record.toggled.connect(self._toggle_recording)
         preview_row.addWidget(self.btn_record)
         self._recorder: Optional[VideoRecorder] = None
+        self.btn_camera = QPushButton("📷  Als Kamera")
+        self.btn_camera.setCheckable(True)
+        self.btn_camera.setToolTip("Ausgabebild als virtuelle Kamera senden (OBS Virtual Camera). "
+                                   "In Teams/Zoom unter Kamera \"OBS Virtual Camera\" wählen.")
+        self.btn_camera.toggled.connect(self._toggle_virtual_camera)
+        preview_row.addWidget(self.btn_camera)
+        self._virtual_camera: Optional[VirtualCamera] = None
         self.btn_fullscreen = QPushButton("⛶  Vollbild")
         self.btn_fullscreen.setToolTip("Ausgabebild im Vollbild zeigen; Esc beendet das Vollbild")
         self.btn_fullscreen.clicked.connect(self.open_fullscreen)
@@ -1538,6 +1631,9 @@ class EffectWindow(QMainWindow):
         recorder = self._recorder
         if recorder is not None:
             recorder.add(frame)
+        camera = self._virtual_camera
+        if camera is not None:
+            camera.add(frame)
         if self.video.offer(frame):
             self.bridge.frame_ready.emit()
 
@@ -1597,6 +1693,10 @@ class EffectWindow(QMainWindow):
             if source is None:
                 return
         else:
+            if self._is_virtual_source(index):
+                self.status_label.setText("Das ist die eigene Kamera-Ausgabe (OBS Virtual Camera). "
+                                          "Als Quelle eine echte Kamera wählen.")
+                return
             source = {'kind': 'camera', 'index': index}
         self._session_id += 1
         source['session'] = self._session_id
@@ -1620,6 +1720,46 @@ class EffectWindow(QMainWindow):
         else:
             self._finish_recording()
         self._refresh_record_button()
+
+    def _is_virtual_source(self, index: Optional[int]) -> bool:
+        names = self._camera_names
+        return index is not None and index < len(names) and is_virtual_camera(names[index])
+
+    def _toggle_virtual_camera(self, enabled: bool) -> None:
+        if enabled:
+            try:
+                self._virtual_camera = VirtualCamera()
+            except ImportError:
+                message = ("Virtuelle Kamera braucht pyvirtualcam: "
+                           "../venv/bin/python -m pip install pyvirtualcam")
+            except Exception as e:
+                message = (f"Virtuelle Kamera nicht verfügbar ({e}). OBS ab Version 30 installieren, "
+                           "einmal starten und \"Virtuelle Kamera starten\" klicken, damit macOS die "
+                           "Kamera-Erweiterung zulässt.")
+            else:
+                message = (f"Sende als Kamera: \"{self._virtual_camera.device}\" "
+                           f"({VirtualCamera.WIDTH}×{VirtualCamera.HEIGHT}). In Teams unter "
+                           "Einstellungen > Geräte > Kamera wählen.")
+                self.btn_camera.setText("📷  Kamera an")
+            if self._virtual_camera is None:
+                self.btn_camera.blockSignals(True)
+                self.btn_camera.setChecked(False)
+                self.btn_camera.blockSignals(False)
+            self.status_label.setText(message)
+        else:
+            self._stop_virtual_camera()
+
+    def _stop_virtual_camera(self) -> None:
+        camera, self._virtual_camera = self._virtual_camera, None
+        if camera is None:
+            return
+        camera.stop()
+        self.btn_camera.blockSignals(True)
+        self.btn_camera.setChecked(False)
+        self.btn_camera.blockSignals(False)
+        self.btn_camera.setText("📷  Als Kamera")
+        self.status_label.setText(f"Virtuelle Kamera beendet: {camera.error}" if camera.error
+                                  else "Virtuelle Kamera beendet.")
 
     def _finish_recording(self) -> None:
         recorder, self._recorder = self._recorder, None
@@ -1784,6 +1924,7 @@ class EffectWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._finish_recording()
+        self._stop_virtual_camera()
         self._target_timer.stop()
         self._target_loader.shutdown(wait=False, cancel_futures=True)
         if self._fullscreen is not None:

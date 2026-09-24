@@ -21,7 +21,7 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 
 | Datei | Wofür |
 | --- | --- |
-| `bedienung.md` | Starten, Quelle und Bereich wählen, Vollbild, Morph-Zielbild, Ton-Geräte und Tastenkürzel |
+| `bedienung.md` | Starten, Quelle und Bereich wählen, Vollbild, Aufnahme, virtuelle Kamera für Teams/Zoom, Morph-Zielbild, Ton-Geräte und Tastenkürzel |
 | `effekte.md` | Alle Bild- und Ton-Effekte mit Beschreibung und gemessener Rechenzeit |
 | `architektur.md` | Container, Threads, Audio-Pipeline, Kopplung Bild ↔ Ton |
 | `messwerte.md` | Wie gemessen wurde, alle Zahlen, was ungetestet ist |
@@ -35,6 +35,7 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 | --- | --- |
 | „Nur schwarzes Bild" | `bedienung.md` |
 | „Wie bekomme ich den Ton des Videos statt des Mikrofons?" | `bedienung.md` |
+| „Wie zeige ich meine Effekte in Teams oder Zoom?" | `bedienung.md` → „In Teams zeigen" |
 | „Welcher Effekt ist wie schnell?" | `effekte.md` |
 | „Warum ruckelt es bei großem Bereich?" | `messwerte.md` |
 | „Wie baue ich einen eigenen Effekt ein?" | `plugins/README.md` |
