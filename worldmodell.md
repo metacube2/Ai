@@ -75,4 +75,8 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
   installiert. Regel: lokal committen und den Push dem Benutzer vorschlagen
   (Personal Access Token als Passwort). Das gilt ebenso für `sudo`, etwa `pmset`.
 - **Globaler `git config user.name` ist „initial comm“.** (2026-09-22) Das ist
-  vermutlich ein Versehen. Regel: In neuen Repos lokal `user.name metacube` setzen.
+  vermutlich ein Versehen. Regel: Vor **jedem** Commit `git config user.name`
+  prüfen, auch in bestehenden Repos. Am 2026-09-24 trugen alle 16 ungepushten
+  Commits in `Ai` diesen Autor, weil die Regel nur für neue Repos galt. Sie wurden
+  per Rebase auf `metacube <metacube@gmail.com>` umgeschrieben, und im Repo `Ai`
+  ist `user.name = metacube` jetzt lokal gesetzt.
