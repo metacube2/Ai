@@ -14,7 +14,7 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 | --- | --- |
 | `video.py` | Dienste, Ablauf, Oberfläche |
 | `bildeffekte/` | API-Paket für Plugins: Schnittstellen, Hilfsmittel, DI-Container; Kern der Verwandlungen |
-| `plugins/` | 19 Dateien mit 57 Plugin-Effekten; dazu „Original“ als feste Bildstrategie: insgesamt 39 Bild- und 19 Ton-Effekte, darunter vier im Kontur-Labor und elf Verwandlungen |
+| `plugins/` | 21 Dateien mit 67 Plugin-Effekten; dazu „Original“ als feste Bildstrategie: insgesamt 49 Bild- und 19 Ton-Effekte, darunter vier im Kontur-Labor und elf Verwandlungen |
 | `plugins/README.md` | Anleitung zum Schreiben eigener Plugins |
 
 ## Detaildateien
@@ -26,6 +26,7 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 | `architektur.md` | Container, Threads, Audio-Pipeline, Kopplung Bild ↔ Ton |
 | `messwerte.md` | Wie gemessen wurde, alle Zahlen, was ungetestet ist |
 | `matrix-agent.md` | Matrix-Gesichtsmorph nach `morph.mp4`: eigene JPG-Zielbilder, Standard-Agent, Verfahren und Grenzen |
+| `gesichter.md` | Gruppe „Gesichter“: Zeitversetztes Ich, Alterungs-Zeitraffer, Gesichts-Hologramm, Kubistisches Gesicht; gemeinsamer Tracker, Abläufe, Messwerte, Grenzen |
 | `verwandlungen.md` | Flüssigmetall II und neun Verwandlungen: Bedienung, Installation, Kern, Verfahren, Messwerte |
 | `../../plugins/README.md` | Eigene Effekte schreiben (API, Beispiele, Dienste anfordern) |
 
@@ -41,4 +42,5 @@ vom Bild gesteuert werden. Oberfläche in PySide6, alle Effekte sind Plugins.
 | „Warum ruckelt es bei großem Bereich?" | `messwerte.md` |
 | „Wie baue ich einen eigenen Effekt ein?" | `plugins/README.md` |
 | „Wie verwandle ich mein Kameragesicht in den Agenten oder ein eigenes JPG?" | `matrix-agent.md` |
+| „Wie baue ich einen weiteren Gesichtseffekt?" | `gesichter.md` → „Eigenen Gesichtseffekt bauen" |
 | „Verwandlungen: Hintergrund unsauber, Modell fehlt, eigene Verwandlung bauen?" | `verwandlungen.md` |

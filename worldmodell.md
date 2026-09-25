@@ -1,6 +1,6 @@
 # Weltmodell – Learnings aus Fehlern
 
-Stand: 2026-09-24
+Stand: 2026-09-25
 
 Hier steht, was bei Aufgaben in diesem Repository schiefging und wie es beim nächsten
 Mal vermieden wird. **Vor jeder Aufgabe lesen, nach jedem Fehler ergänzen.**
@@ -9,6 +9,12 @@ Abschnitt. Veraltete Regeln werden gelöscht, nicht nur ergänzt.
 
 ## Arbeitsweise allgemein
 
+- **Gesichtseffekte am Ausschnitt beurteilen, Renderzeit ohne Erkennung messen.**
+  (2026-09-25) Die erste Bildfolge der Gesichtseffekte zeigte das Gesicht zu klein,
+  Falten und Seams waren nicht beurteilbar. Die ersten Zeiten (bis 100 ms) enthielten
+  die synchron nachgebildete Apple-Vision-Erkennung, die live im eigenen Thread läuft.
+  Regel: Kacheln auf den Kopf zuschneiden und `render()` separat mit festen Punkten timen.
+  Für das Zeitversetzte Ich zeigt ein Standfoto nichts: mit Personenwechsel testen.
 - **Erst sichtbar prüfen, dann behaupten.** (2026-09-23) Eine Maskenänderung an der
   Sonnenbrille zeigte keine Wirkung, weil die weiche Kante sie wieder auffraß.
   Regel: Jede Bildänderung als Vorher/Nachher-Ausschnitt rendern und ansehen, bevor

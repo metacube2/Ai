@@ -353,7 +353,10 @@ class ShippedPluginTests(unittest.TestCase):
         stripe = (np.arange(800) % 2 * 255).astype(np.uint8)
         frame = np.broadcast_to(stripe[None, :, None], (450, 800, 3)).copy()
         for name in ('Uralter Film (1910er)', 'VHS Störung', 'VHS Tracking-Riss',
-                     'VHS Farbbluten', 'VHS Kopierkassette', 'VHS Pause'):
+                     'VHS Farbbluten', 'VHS Kopierkassette', 'VHS Pause',
+                     'VHS Schwacher Sender', 'VHS Bandsalat', 'VHS Vorspulen',
+                     'VHS Überspielte Kassette', 'VHS Camcorder-Heimvideo',
+                     'VHS Verschimmeltes Band'):
             with self.subTest(effect=name):
                 output = effects[name].apply(frame, {})
                 contrast = np.abs(output[:, 1:, 0].astype(np.int16) -
@@ -372,7 +375,7 @@ class ShippedPluginTests(unittest.TestCase):
         self.assertEqual(plugins.errors, [])
         pictures = Container.resolve_all(IEffectStrategy)
         sounds = Container.resolve_all(IAudioEffect)
-        self.assertEqual((len(pictures), len(sounds)), (39, 19))
+        self.assertEqual((len(pictures), len(sounds)), (49, 19))
         rng = np.random.default_rng(123)
         for effect in pictures:
             with self.subTest(picture=effect.name):

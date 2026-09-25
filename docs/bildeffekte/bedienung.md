@@ -7,8 +7,8 @@ Stand: 2026-09-22
 - **Schreibtisch:** Doppelklick auf `Bildeffekte.command`.
 - **Terminal:** `cd Ai && ../venv/bin/python video.py`
 
-Beim Start werden derzeit 57 Plugin-Effekte aus 19 Dateien geladen. Mit der fest
-eingebauten Bildstrategie „Original“ sind es 39 Bild- und 19 Ton-Effekte.
+Beim Start werden derzeit 67 Plugin-Effekte aus 21 Dateien geladen. Mit der fest
+eingebauten Bildstrategie „Original“ sind es 49 Bild- und 19 Ton-Effekte.
 Die Statuszeile meldet, wie viele Effekte gefunden wurden und welche Dateien Fehler haben.
 
 **Voraussetzungen im venv:** numpy, scipy, opencv-python-headless, mss, PySide6, sounddevice.
@@ -28,7 +28,7 @@ Bildschirmquelle nur ein schwarzes Bild, weist die Statuszeile darauf hin.
 | **Bereich wählen…** | Bildschirm wird abgedunkelt, Rahmen mit der Maus aufziehen. Esc oder Rechtsklick bricht ab |
 | **Start / Stop** | Aufnahme mit 30 Bildern pro Sekunde |
 | **Nächste Zelle** | Nur beim Effekt „Mosaik": schaltet die aktive Kachel weiter |
-| **Effekt** | Menü der Bild-Effekte, nach Gruppen geordnet (Grundlagen, Glitch, Retro & VHS, Natur & Material, Verwandlungen, Raum & Illusion, Audio-reaktiv). „Original“ steht oben, der Knopf zeigt Gruppe › Effekt |
+| **Effekt** | Menü der Bild-Effekte, nach Gruppen geordnet (Grundlagen, Glitch, Retro & VHS, Natur & Material, Verwandlungen, Gesichter, Raum & Illusion, Audio-reaktiv). „Original“ steht oben, der Knopf zeigt Gruppe › Effekt |
 | **Kette** | Mehrere Bild-Effekte nacheinander. **＋ Effekt anhängen** setzt einen Effekt hinter den ausgewählten. Die Chips zeigen die Reihenfolge; ein Klick auf einen Chip wählt ihn aus, dann ändern **Effekt**, Gesichtsmorph und Dramatik diesen Effekt. **◀ ▶** verschieben, **✕** entfernt ihn. Jeder Effekt kann nur einmal vorkommen. Rechenzeiten addieren sich |
 | **Kontur-Labor** | Eigene Sektion mit vier aus Kanten und Kontrast berechneten Effekten |
 | **Gesichtsmorph** | Erscheint beim Matrix-Agenten: eigenes JPG/JPEG wählen oder mit „Standard-Agent“ zur mitgelieferten Vorlage zurückkehren. **🎭 Dramatik** verformt so stark wie in der Filmszene (rot = an) |

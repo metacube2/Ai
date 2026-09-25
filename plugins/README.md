@@ -18,7 +18,8 @@ bestimmt nur die Reihenfolge in der Auswahlliste.
 | `10_video_basic.py` | Mosaik, Blur, Kantenerkennung, Slow Motion Snapshot |
 | `20_video_glitch.py` | Realtime Glitch, Datamosh, Pixel-Sorting |
 | `30_video_retro.py` | VHS Störung, Uralter Film (1910er) |
-| `31_video_vhs.py` | VHS Tracking-Riss, VHS Farbbluten, VHS Kopierkassette, VHS Pause |
+| `31_video_vhs.py` | VHS Tracking-Riss, VHS Farbbluten, VHS Kopierkassette, VHS Pause, VHS Schwacher Sender |
+| `32_video_vhs_band.py` | VHS Bandsalat, VHS Vorspulen, VHS Überspielte Kassette, VHS Camcorder-Heimvideo, VHS Verschimmeltes Band |
 | `35_video_contour_lab.py` | Kontur-Magnetfeld, Silhouetten-Wellen, Lichtskulptur, Kontur-Partikel |
 | `36_video_liquid_metal.py` | Flüssigmetall-Schmelze: lokale Personenmaske, Gesichtsrelief, räumliche Chromreflexionen und Schmelze |
 | `37_video_liquid_metal_v2.py` | Flüssigmetall-Schmelze II (Kern: `bildeffekte/verwandlung.py`, siehe `docs/bildeffekte/verwandlungen.md`) |
@@ -27,6 +28,7 @@ bestimmt nur die Reihenfolge in der Auswahlliste.
 | `40_video_dimension.py` | Glitch-Dimension |
 | `50_video_matrix.py` | Matrix-Code |
 | `51_video_matrix_agent.py` | Matrix-Agent – Gesichtsmorph: lokale Gesichtspunkte, optischer Fluss, fotografisches Standardziel und eigene JPG-Ziele |
+| `52_video_face_fx.py` | Gruppe „Gesichter“: Zeitversetztes Ich, Alterungs-Zeitraffer, Gesichts-Hologramm, Kubistisches Gesicht (Tracker: `bildeffekte/face_track.py`) |
 | `60_video_space.py` | Kaleidoskop-Tunnel, Zeitwelle, Droste-Spirale |
 | `70_video_nature.py` | Sand-Zerfall, Bio-Wucherung |
 | `80_video_audio_reactive.py` | Audio+Video Glitch, Klang-Beben |

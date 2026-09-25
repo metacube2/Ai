@@ -25,6 +25,12 @@ Messverfahren siehe `messwerte.md`.
 | VHS Farbbluten | Stark begrenzte Farbauflösung, versetzte Farbkanäle und Farbnachziehen | 12,9 | `31_video_vhs` |
 | VHS Kopierkassette | Mehrfach verlorene Details, blasse Farben, Geisterbild und Bandrauschen | 12,4 | `31_video_vhs` |
 | VHS Pause | Weiches Standbild mit wanderndem Störbalken und Pause-Anzeige | 11,3 | `31_video_vhs` |
+| VHS Schwacher Sender | Schlechter Antennenempfang: Signalstärke schwankt, Schnee und Geisterbild nehmen zu und ab, Farbe fällt aus, Zeilen zittern, bei fast keinem Signal rollt das Bild durch | 13,3 | `31_video_vhs` |
+| VHS Bandsalat | 10-s-Zyklus: Band verheddert sich, Bild zieht Wellen und staucht, Farben leiern, kurze blaue Aussetzer, dann fängt es sich | 11,8 | `32_video_vhs_band` |
+| VHS Vorspulen | Bildsuchlauf mit Störbalken und ▶▶/◀◀-Anzeige; alle 5 s Richtungswechsel, rückwärts werden die letzten 5 s dreifach schnell zurückgespult | 11,4 | `32_video_vhs_band` |
+| VHS Überspielte Kassette | Eine 3 s ältere, blasse „alte Aufnahme“ scheint in wandernden Streifen durch | 14,2 | `32_video_vhs_band` |
+| VHS Camcorder-Heimvideo | Datum (Jahr 1994) und Uhrzeit, blinkendes REC, träge Belichtungsautomatik, suchender Autofokus, überstrahlte Lichter, warmer Stich | 15,5 | `32_video_vhs_band` |
+| VHS Verschimmeltes Band | Weiße Schimmelflocken, Fäden und Dropouts kehren mit einer 4-s-Bandschleife an denselben Stellen wieder | 14,6 | `32_video_vhs_band` |
 | Uralter Film (1910er) | Reduzierte Details, Sepia, Korn, Flackern, Vignette, Kratzer, Staub, Bildsprünge | 6,4 | `30_video_retro` |
 | Glitch-Dimension | Fünf „Dimensionen": Korruption, digitaler Zerfall, Quantenunschärfe, Leere, hyperbolische Verzerrung | 9–30 | `40_video_dimension` |
 | Matrix-Code | Bild aus grünen, herabregnenden Zeichen | 12 | `50_video_matrix` |
@@ -68,6 +74,19 @@ werden; ohne Auswahl gilt die mitgelieferte Agentenvorlage. Der finale Messlauf
 auf einem 512×512-Porträt ergab **17,1 ms Median und 27,9 ms p95** für das Rendern
 während des Morphs, ohne Kamera und asynchrone Gesichtserkennung. Details und
 Grenzen: [matrix-agent.md](matrix-agent.md).
+
+## Gesichter
+
+Vier Live-Effekte auf den Gesichtspunkten des Matrix-Agenten; Details in
+[gesichter.md](gesichter.md). Reine Renderzeit ohne Erkennung, Arbeitsbild 512×288,
+Gesicht 150 px breit (Median).
+
+| Effekt | Was passiert | Ø ms | Plugin |
+| --- | --- | ---: | --- |
+| Zeitversetztes Ich | Das eigene Gesicht von vor 4 s sitzt, passend verformt, auf dem Kopf von jetzt | 5,5 | `52_video_face_fx` |
+| Alterungs-Zeitraffer | 14-s-Schleife: Falten, Altersflecken, graues Haar, hängende Wangen; zwei Röntgenblitze mit Schädel; rückwärts bis zum jungen Gesicht | 11–28 | `52_video_face_fx` |
+| Gesichts-Hologramm | Scanlinie macht das Gesicht zum blauen Hologramm mit Drahtgitter; die Dreiecke fliegen auseinander und setzen sich wieder zusammen | 17,5–19,2 | `52_video_face_fx` |
+| Kubistisches Gesicht | Farbflächen und versetzte, gedrehte, gespiegelte Augen, Nase und Mund; neue Anordnung alle 3 s | 29,5 | `52_video_face_fx` |
 
 ## Verwandlungen
 
