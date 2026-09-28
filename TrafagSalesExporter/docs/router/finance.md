@@ -1,6 +1,6 @@
 # Unterrouter Finance
 
-Zurueck: `router.md`. Stand: 2026-09-09.
+Zurueck: `router.md`. Stand: 2026-09-28.
 
 Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal,
 Marktsegmente.
@@ -53,6 +53,11 @@ Marktsegmente.
 
 ## Fallen in diesem Ast
 
+- **Wechselkurse nie je Zeile aus der Datenbank holen.** Bis zum 2026-09-28 fragte
+  `CurrencyExchangeRateService.ResolveRate` bei jedem Aufruf die DB ab; im Management-Cockpit
+  waren das mehrere hunderttausend Abfragen je Oeffnen (lokal 41 s, Server Minuten). Seit
+  `5a26596` im Speicher; wer Kurse schreibt, ruft `CurrencyExchangeRateService.NotifyRatesChanged()`.
+  `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 6.
 - **Gruppenmargen-Statustexte nie umbenennen, ohne
   `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` Abschnitt 5a zu lesen.** Der Statustext
   `"OK"` steht zusaetzlich als Zeichenkette in der Excel-Formel des Nachweises; eine

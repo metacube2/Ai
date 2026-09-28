@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-09-10
+Stand: 2026-09-28 (Management-Cockpit-Tempo ergaenzt; uebriger Kurzstand vom 2026-09-10)
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -11,6 +11,13 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 `docs/raw_md_archive/`.
 
 ## Kurzstand
+
+- **TEMPO MANAGEMENT-COCKPIT 2026-09-28:** Das Oeffnen dauerte lokal 41 s, auf dem Server Minuten.
+  Ursache laut Profil: `CurrencyExchangeRateService.ResolveRate` fragte je Aufruf die DB ab, fuer
+  jede der rund 110'000 Verkaufszeilen mehrfach (92 % der Finanzauswertung), dazu wurden die
+  Audit-CSVs bei jedem Oeffnen neu eingelesen. Jetzt Kurse im Speicher (Schreiber melden
+  Aenderungen ueber `NotifyRatesChanged`) und Datensaetze gecacht, solange sich die Quelle nicht
+  aendert: lokal 3,7 s. Commit `5a26596`. Details `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 6.
  . "- MARKTSEGMENTE, AUTOMATIK GEMESSEN 2026-09-10: Die Segmentzuweisung laeuft **fuer Deutschland
   bereits automatisch**, fuer die anderen acht Standorte nicht, und der Unterschied liegt am
   Quellsystem, nicht am Programm. Von 196 Zuordnungen sind 25 bestaetigt, davon **24 aus TRDE**

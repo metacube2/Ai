@@ -11,7 +11,7 @@ Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 | --- | --- |
 | **Aktuell verifizierter Produktivstand** | `docs/rag/DEPLOYMENT.md` |
 | **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
-| **Tempo der Webapp: sofort sichtbare Oberflaeche, Ladezeiten, `/einkauf` 100 s** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
+| **Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, `/einkauf` 100 s, Management-Cockpit 41 s (Wechselkurse je Zeile per SQL)** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
 | **NuGet-Sicherheitsbefund und Updatepfad** | `docs/NUGET_SICHERHEIT_2026-09-01.md` |
 | Architektur, Kurzstand | `docs/rag/ARCHITECTURE.md` |
 | Admin-Bereich, Kurzstand | `docs/rag/ADMIN.md` |

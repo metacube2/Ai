@@ -1,6 +1,6 @@
 # Tempo der Webapp: sofort sichtbare Oberflaeche und Ladezeiten
 
-Stand: 2026-09-28. Zurueck: `docs/router/plattform.md`.
+Stand: 2026-09-28, zuletzt Abschnitt 6 (Management-Cockpit). Zurueck: `docs/router/plattform.md`.
 
 ## 0. Stand auf einen Blick
 
@@ -8,7 +8,7 @@ Stand: 2026-09-28. Zurueck: `docs/router/plattform.md`.
 | --- | --- |
 | **Ausloeser** | Rueckmeldung der Nutzer laut Ingo: man sieht lange gar nichts von der Oberflaeche. Ingo: Tempo ist „der groesste Kritikpunkt an der ganzen Webapp", es muss ueberall schnell sein. |
 | **Schritt 1, erledigt** | Oberflaeche erscheint sofort: Vorrendern aus, Ladebalken. Commit `4f2c62f`, **produktiv seit 2026-09-28 10:31**. |
-| **Schritt 2, `/einkauf` umgesetzt, produktiv seit 2026-09-28 11:25** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten noch nicht gemessen. |
+| **Schritt 2: `/einkauf` produktiv seit 11:25, Management-Cockpit 41 s -> 3,7 s lokal (`5a26596`, Deploy nach dem Mittagslauf)** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten gemessen (Abschnitt 6): Cockpit behoben, offen nur noch das Export-Dashboard. |
 | **Verwandt** | Worker-Neustarts durch IIS-Leerlauf, ISS-017, `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6. |
 
 ## 1. Ursache: das Vorrendern wartete auf alle Daten
@@ -108,3 +108,59 @@ Tests: 3 neue in `PurchasingDashboardSnapshotCacheTests`, `742/742` im Arbeitsba
 **Offen:** die eigentliche Rechenzeit auf dem Server. Der Hebel dort waere, die 55 Abfragen
 parallel oder zusammengefasst auszufuehren, oder die Ursache der achtfachen Serverlangsamkeit zu
 finden. Beides erst, wenn sich zeigt, dass eigene Filter oft genug gebraucht werden.
+
+## 6. Uebrige Seiten gemessen, Management-Cockpit behoben, 2026-09-28
+
+### 6.1 Messung
+
+Sonde `.tmp_tools/PageLoadProfile0928`: startet die Anwendung ueber `WebApplicationFactory`
+gegen eine lokale Kopie der Produktiv-DB, **ohne jeden Hintergrunddienst** (kein Timer-Export,
+kein SAP, kein Upload), und ruft die Ladefunktionen genau wie `OnInitializedAsync` der Seiten.
+Seit dem Abschalten des Vorrenderns misst eine HTTP-Anfrage nur noch die Huelle, deshalb dieser
+Weg. Werte lokal, zweiter (warmer) Lauf:
+
+| Seite | vorher | nachher |
+| --- | --- | --- |
+| Menue (jede Seite) | 0,04 s | unveraendert |
+| Standorte / Manuelle Importe | 0,01 s | unveraendert |
+| Einkauf-Status (jede Einkaufsseite) | 0,03 s | unveraendert |
+| HR-KPI (alte Dateien aus `C:\temp`) | 0,3 bis 1 s | unveraendert |
+| Marktsegmente | 0,5 s | unveraendert |
+| Supply Chain (Standard) | 1,2 s | unveraendert |
+| Export-Dashboard | 2,3 s | **offen** |
+| **Management-Cockpit** | **41 s** | **3,7 s** |
+
+Der Server ist fuer dieselbe Arbeit rund achtmal langsamer (Abschnitt 5.1). Das Cockpit lag dort
+also im Bereich von **mehreren Minuten**, und das war vermutlich der groesste Einzelgrund fuer die
+Rueckmeldung „es kommt lange nichts".
+
+### 6.2 Ursache im Cockpit, mit Profil belegt
+
+`dotnet-trace` (als Benutzer-Tool installiert) ueber den Cockpit-Lauf, ausgewertet mit einem
+kleinen Node-Skript: **92 % der Finanzauswertung** lagen in
+`CurrencyExchangeRateService.ResolveRate`. Die Methode oeffnete bei **jedem** Aufruf eine neue
+Datenbankverbindung und stellte zwei bis sechs Abfragen. Das Cockpit ruft sie fuer jede der
+109'508 Verkaufszeilen mehrfach auf (Audit-Ledger, Pivot, Konzernmarge) - mehrere hunderttausend
+Abfragen je Oeffnen, fuer eine Kurstabelle, die sich fast nie aendert. Dazu las jedes Oeffnen die
+Audit-CSVs neu ein (lokal 3 bis 4 s, auf dem Server rund 80 MB), weil deren Cache nur 10 Sekunden galt.
+
+### 6.3 Behebung, Commit `5a26596` (Deploy nach dem Mittagslauf)
+
+| Aenderung | Wirkung |
+| --- | --- |
+| `CurrencyExchangeRateService` laedt die aktiven Kurse einmal und sucht im Speicher; jedes Ergebnis je (von, nach, Tag) wird gemerkt. Suchregeln unveraendert | Finanzauswertung lokal 37,5 s -> 2,8 s |
+| Frische: Stand hoechstens 10 s; Import, Einstellungen und Konfigurationstransfer rufen nach dem Speichern `NotifyRatesChanged`, dann wird sofort neu geladen | Ein geaenderter Kurs wird nie veraltet verwendet |
+| `ManagementCockpitService` haelt die zentralen Datensaetze, solange sich die Quelle nicht aendert (Dateiliste mit Groesse und Schreibzeit bzw. Zeilenzahl der Tabelle), hoechstens 30 Minuten | Kein erneutes Einlesen der CSVs bei jedem Oeffnen; ein neuer Tagesexport wird sofort erkannt |
+
+Tests: 6 neue (`CurrencyExchangeRateServiceTests`, `ManagementCockpitCentralRecordsCacheTests`),
+`748/748`. Die Kurs-Suche ist nicht nur fuer das Cockpit schneller, sondern ueberall, wo
+`ResolveRate` in Schleifen laeuft (Konzernmarge, Exporte).
+
+### 6.4 Was offen bleibt
+
+- Export-Dashboard mit 2,3 s lokal, auf dem Server vermutlich um die 20 s. Noch nicht profiliert.
+- Die achtfache Langsamkeit des Servers selbst. Ein Anfang waere ein groesserer SQLite-Cache pro
+  Verbindung (`PRAGMA cache_size`, `mmap_size`); ob das wirkt, zeigt die Vorwaermzeit im
+  Serverprotokoll (heute 104,7 s). Sonst CPU, Speicher oder Platte der VM, das ist Sache der IT.
+- Der erste Cockpit-Aufruf nach einem Neustart rechnet zusaetzlich die Einkaufsansicht, sofern der
+  Vorwaermer sie noch nicht fertig hat (lokal 14 s), und liest die CSVs einmal ein.
