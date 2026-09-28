@@ -63,6 +63,7 @@
 }
 else
 {
+    <PageLoadingBar Visible="_loading" Text="@T("HR-Kennzahlen werden berechnet …", "Calculating HR KPIs …")" />
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudGrid>
             <MudItem xs="12" md="5">
@@ -268,7 +269,9 @@ else
     private string? _newPasswordRepeat;
     private int _unlockClickCount;
     private string AccessUrl => new Uri(new Uri(Navigation.BaseUri), "access/hr").ToString();
-    private bool _loading;
+    // Startet auf true: die Seite erscheint seit dem 2026-09-28 sofort, und der erste
+    // Zeichenvorgang kommt vor LoadAsync. Sonst fehlte der Ladebalken genau beim Oeffnen.
+    private bool _loading = true;
     private bool _uploading;
     private string _serverUploadFolder = string.Empty;
     private HrKpiResult? _result;
@@ -312,6 +315,10 @@ else
         if (CanShowHrKpi)
         {
             await LoadAsync();
+        }
+        else
+        {
+            _loading = false;
         }
     }
 

@@ -10,10 +10,23 @@
     <link href="css/app.css?v=@AssetVersion" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <HeadOutlet @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+    <HeadOutlet @rendermode="InteractiveWithoutPrerender" />
 </head>
 <body>
-    <Routes @rendermode="@Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+    @*
+        Sofort sichtbare Ladeanzeige, bis die Anwendung ihr Layout gezeichnet hat. Ausgeblendet
+        wird sie in `app.css` ueber `body:has(.mud-layout)`, also ohne Skript und ohne
+        Zeitabhaengigkeit von `Blazor.start()`. Bewusst nur ein schmaler Balken oben und eine
+        Zeile Text, kein Vollbild-Overlay: bleibt sie aus irgendeinem Grund stehen (etwa weil
+        `app.css` aus einem alten Browsercache kommt), stoert sie nicht - die Lehre aus dem
+        Reconnect-Overlay vom 2026-08-21.
+    *@
+    <div id="app-loading" class="app-loading" role="status">
+        <div class="app-loading-bar"></div>
+        <div class="app-loading-text">Trafag Cockpit wird geladen … / Loading …</div>
+    </div>
+
+    <Routes @rendermode="InteractiveWithoutPrerender" />
 
     @*
         Verbindungsanzeige. Blazor sucht dieses Element bei einem Verbindungsverlust ueber
@@ -82,6 +95,23 @@
 @code {
     [Inject]
     private IConfiguration Configuration { get; set; } = default!;
+
+    /// <summary>
+    /// Interaktiv, aber OHNE Vorrendern.
+    ///
+    /// ANLASS 2026-09-28, Rueckmeldung der Nutzer: "man sieht lange gar nichts von der
+    /// Oberflaeche". Beim Vorrendern schickt der Server die Seite erst, wenn ALLE Daten geladen
+    /// sind, auch Menue und Rahmen. `/einkauf` blieb so warm rund 9 Sekunden, nach einem
+    /// Neustart 100 Sekunden weiss. Ausserdem lud jede Seite ihre Daten zweimal: einmal zum
+    /// Vorrendern, einmal im Circuit.
+    ///
+    /// Ohne Vorrendern kommt die Huelle sofort, Layout und Menue erscheinen, sobald der Circuit
+    /// steht, und jede Seite zeichnet sich mit ihrem Ladezustand, waehrend die Daten nachkommen.
+    /// Die Seiten mit eigenem `@rendermode InteractiveServer` bleiben gueltig: innerhalb eines
+    /// bereits interaktiven Baums gleicher Art wird dort nicht erneut vorgerendert.
+    /// </summary>
+    private static readonly IComponentRenderMode InteractiveWithoutPrerender =
+        new InteractiveServerRenderMode(prerender: false);
 
     /// <summary>
     /// Versionskennzeichen fuer <c>app.css</c> und <c>reconnect.js</c>, damit der Browser

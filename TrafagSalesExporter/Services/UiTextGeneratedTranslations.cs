@@ -1554,6 +1554,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "Muestra la pestaña 'Pausa' a la izquierda. Desactivada no aparece y la página no carga el juego.",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "Pestaña de pausa activada. Recarga la página para que aparezca a la izquierda.",
                 ["Pausenreiter ausgeschaltet."] = "Pestaña de pausa desactivada.",
+                ["wird geladen"] = "cargando",
+                ["Daten werden geladen …"] = "Cargando datos …",
+                ["Finanzdaten werden geladen …"] = "Cargando datos financieros …",
+                ["HR-Kennzahlen werden berechnet …"] = "Calculando indicadores de RR. HH. …",
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -3103,6 +3107,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "Mostra la scheda 'Pausa' a sinistra. Disattivata non compare e la pagina non carica il gioco.",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "Scheda pausa attivata. Ricarica la pagina perché compaia a sinistra.",
                 ["Pausenreiter ausgeschaltet."] = "Scheda pausa disattivata.",
+                ["wird geladen"] = "caricamento",
+                ["Daten werden geladen …"] = "Caricamento dati …",
+                ["Finanzdaten werden geladen …"] = "Caricamento dati finanziari …",
+                ["HR-Kennzahlen werden berechnet …"] = "Calcolo degli indicatori HR …",
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -4652,6 +4660,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "बाईं ओर 'विराम' टैब दिखाता है। बंद होने पर यह नहीं दिखता और पृष्ठ गेम लोड नहीं करता।",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "विराम टैब चालू। बाईं ओर दिखने के लिए पृष्ठ पुनः लोड करें।",
                 ["Pausenreiter ausgeschaltet."] = "विराम टैब बंद।",
+                ["wird geladen"] = "लोड हो रहा है",
+                ["Daten werden geladen …"] = "डेटा लोड हो रहा है …",
+                ["Finanzdaten werden geladen …"] = "वित्तीय डेटा लोड हो रहा है …",
+                ["HR-Kennzahlen werden berechnet …"] = "HR संकेतकों की गणना हो रही है …",
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -6201,6 +6213,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "Shfaq skedën 'Pushim' në të majtë. E çaktivizuar nuk shfaqet dhe faqja nuk e ngarkon lojën.",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "Skeda e pushimit u aktivizua. Rifreskoni faqen që të shfaqet në të majtë.",
                 ["Pausenreiter ausgeschaltet."] = "Skeda e pushimit u çaktivizua.",
+                ["wird geladen"] = "po ngarkohet",
+                ["Daten werden geladen …"] = "Të dhënat po ngarkohen …",
+                ["Finanzdaten werden geladen …"] = "Të dhënat financiare po ngarkohen …",
+                ["HR-Kennzahlen werden berechnet …"] = "Treguesit e HR po llogariten …",
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -7750,6 +7766,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "Solda 'Mola' sekmesini gösterir. Kapalıyken görünmez ve sayfa oyunu yüklemez.",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "Mola sekmesi açıldı. Solda görünmesi için sayfayı yenileyin.",
                 ["Pausenreiter ausgeschaltet."] = "Mola sekmesi kapatıldı.",
+                ["wird geladen"] = "yükleniyor",
+                ["Daten werden geladen …"] = "Veriler yükleniyor …",
+                ["Finanzdaten werden geladen …"] = "Finans verileri yükleniyor …",
+                ["HR-Kennzahlen werden berechnet …"] = "İK göstergeleri hesaplanıyor …",
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -9299,6 +9319,10 @@ internal static class UiTextGeneratedTranslations
                 ["Blendet den Reiter 'Pause' links ein. Ausgeschaltet erscheint er nicht und die Seite laedt das Spiel nicht."] = "poS leS Hal 'ang. chu'be'DI' 'angbe' 'ej Qujmey polbe' HaSta.",
                 ["Pausenreiter eingeschaltet. Seite neu laden, damit er links erscheint."] = "leS Hal chu'lu'. HaSta chu'qa' 'e' yIchav.",
                 ["Pausenreiter ausgeschaltet."] = "leS Hal chu'be'lu'.",
+                ["wird geladen"] = "lI'lu'",
+                ["Daten werden geladen …"] = "De' lI'lu' …",
+                ["Finanzdaten werden geladen …"] = "Huch De' lI'lu' …",
+                ["HR-Kennzahlen werden berechnet …"] = "HR mI' togh …",
             },
         };
 }

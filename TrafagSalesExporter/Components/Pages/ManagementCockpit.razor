@@ -17,6 +17,8 @@
 
 <MudText Typo="Typo.h4" Class="mb-4">@T("Management Analyse", "Management analysis")</MudText>
 
+<PageLoadingBar Visible="_initializing" Text="@T("Finanzdaten werden geladen …", "Loading finance data …")" />
+
 <MudPaper Class="pa-4 mb-4" Elevation="1">
     <MudGrid>
         <MudItem xs="12" md="3">
@@ -1895,6 +1897,9 @@
     private string _selectedFileTargetCurrency = ManagementCockpitCurrencyOptions.Eur;
     private string _selectedCentralTargetCurrency = ManagementCockpitCurrencyOptions.Native;
     private bool _loadingFiles;
+    // Erstes Laden beim Oeffnen. Seit dem 2026-09-28 erscheint die Seite sofort (kein
+    // Vorrendern mehr), bis dahin zeigt sie den Ladebalken statt leerer Werte.
+    private bool _initializing = true;
     private bool _analyzing;
     private bool _analyzingCentral;
     private bool _analyzingFinance;
@@ -1985,14 +1990,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var state = await CockpitPageService.InitializeAsync(_selectedFilePath, _selectedCentralYear);
-        _files = state.Files;
-        _valueFieldOptions = state.ValueFieldOptions;
-        _centralYears = state.CentralYears;
-        _selectedFilePath = state.SelectedFilePath;
-        _selectedCentralYear = state.SelectedCentralYear;
-        _selectedFinanceYear = _selectedCentralYear;
-        await AnalyzeFinanceSummary();
+        try
+        {
+            var state = await CockpitPageService.InitializeAsync(_selectedFilePath, _selectedCentralYear);
+            _files = state.Files;
+            _valueFieldOptions = state.ValueFieldOptions;
+            _centralYears = state.CentralYears;
+            _selectedFilePath = state.SelectedFilePath;
+            _selectedCentralYear = state.SelectedCentralYear;
+            _selectedFinanceYear = _selectedCentralYear;
+            await AnalyzeFinanceSummary();
+        }
+        finally
+        {
+            _initializing = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

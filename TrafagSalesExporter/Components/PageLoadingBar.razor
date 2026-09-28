@@ -1,0 +1,26 @@
+@using TrafagSalesExporter.Services
+@inject IUiTextService UiText
+
+@*
+    Einheitliche Ladeanzeige fuer Seiten, deren Daten nach dem ersten Anzeigen nachkommen.
+    Seit dem 2026-09-28 rendert die Anwendung nicht mehr vor, die Seite erscheint also sofort
+    und fuellt sich danach. Ohne diese Anzeige saehe der Zustand vor dem Laden wie echte Daten
+    aus (leere Tabellen, 0-Werte) - genau das darf nicht passieren.
+
+    `Text` kommt bereits uebersetzt, also ueber die T-Funktion der Seite. So erfasst der
+    Uebersetzungstest den Text wie jeden anderen.
+*@
+@if (Visible)
+{
+    <div class="page-loading-bar mb-3" role="status" aria-live="polite">
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        <MudText Typo="Typo.caption" Class="purchasing-muted d-block mt-1">
+            @(Text ?? UiText.Text("Daten werden geladen …", "Loading data …"))
+        </MudText>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; } = true;
+    [Parameter] public string? Text { get; set; }
+}

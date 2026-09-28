@@ -175,8 +175,11 @@
                     </div>
                     <div>
                         <MudText Typo="Typo.caption" Class="purchasing-muted">@T(card.TitleDe, card.TitleEn)</MudText>
-                        <MudText Typo="Typo.h6">@card.Value</MudText>
-                        <MudText Typo="Typo.caption">@T(card.DetailDe, card.DetailEn)</MudText>
+                        @* Waehrend des ersten Ladens neutral: "wartet auf EKPO" oder "Noch nicht
+                           geladen" saehe sonst nach fehlenden Daten aus (seit 2026-09-28 sichtbar,
+                           weil die Seite ohne Vorrendern sofort erscheint). *@
+                        <MudText Typo="Typo.h6">@(_liveLoading ? "…" : card.Value)</MudText>
+                        <MudText Typo="Typo.caption">@(_liveLoading ? T("wird geladen", "loading") : T(card.DetailDe, card.DetailEn))</MudText>
                         @* Zweite, ausfuehrliche Zeile: WAS genau gezaehlt wird und was NICHT.
                            Wunsch Ingo/Marco 2026-08-27 - die Kurzzeile darueber nennt nur die
                            Datenquelle, nicht die fachliche Bedeutung. Marco hat "Bereits
