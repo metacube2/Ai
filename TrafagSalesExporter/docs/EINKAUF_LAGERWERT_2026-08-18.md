@@ -8,7 +8,7 @@ Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). Zurueck:
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
 | **Umgesetzt?** | **Teilweise.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist seit 2026-08-19 produktiv und seit 2026-08-24 in der Datenbank gespeichert; am 2026-08-24 zeigte sie CHF 9'205'959 aus einem echten SAP-Read (Abschnitt 12.7). *Ueberholt ist die fruehere Aussage „zeigt wartet auf Einkauf-Lauf, noch nie gegen echtes SAP gelaufen".* Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
-| **Verlauf je Woche** | **Produktiv seit 2026-09-28 09:33** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus; Ursache und Absicherung in 13.6. |
+| **Verlauf je Woche** | **Produktiv seit 2026-09-28 09:33** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus (13.6) und laeuft seit dem 28.09. wieder, zweiter Verlaufspunkt vom 28.09. (13.7). |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |
@@ -764,3 +764,12 @@ Zeilen mit gleichem Start: eine `Success` und eine, die beim naechsten Start als
 markiert wird (z. B. Id 46/47). Der Status schreibt offenbar eine neue Zeile statt die
 `Running`-Zeile zu aktualisieren. Kosmetisch, aber die Tabelle sieht dadurch nach vielen
 Abbruechen aus.
+
+### 13.7 Nachweis am selben Tag: der Einkauf-Lauf laeuft wieder
+
+Am 2026-09-28 startete der 12:00-Lauf regulaer (12:00:16, kein Nachhol-Lauf), das Einkauf-Delta um
+12:32:41, und es endete um 13:19 erfolgreich (`PurchasingSyncState` Id 49). Der Worker lief dabei
+von 11:25 bis 13:32 ohne Neustart. Der Lagerwert wurde neu gelesen: 87 Disponenten, 68'871
+Materialien, Gesamtwert CHF 11'297'631.41. Damit hat der Verlauf seinen **zweiten Punkt**
+(Stand 28.09.2026, KW 40) neben dem uebernommenen vom 10.09.2026 (KW 37).
+Die IT-Einstellung (ISS-017) bleibt trotzdem offen: der Selbstaufruf ueberbrueckt nur.

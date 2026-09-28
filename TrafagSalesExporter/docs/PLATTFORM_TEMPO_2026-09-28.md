@@ -8,7 +8,7 @@ Stand: 2026-09-28, zuletzt Abschnitt 6 (Management-Cockpit). Zurueck: `docs/rout
 | --- | --- |
 | **Ausloeser** | Rueckmeldung der Nutzer laut Ingo: man sieht lange gar nichts von der Oberflaeche. Ingo: Tempo ist „der groesste Kritikpunkt an der ganzen Webapp", es muss ueberall schnell sein. |
 | **Schritt 1, erledigt** | Oberflaeche erscheint sofort: Vorrendern aus, Ladebalken. Commit `4f2c62f`, **produktiv seit 2026-09-28 10:31**. |
-| **Schritt 2: `/einkauf` produktiv seit 11:25, Management-Cockpit 41 s -> 3,7 s lokal (`5a26596`, Deploy nach dem Mittagslauf)** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten gemessen (Abschnitt 6), Cockpit und Export-Dashboard behoben, SQLite-Cache (Abschnitt 7, `c35d3fa`). Wirkung auf dem Server offen. |
+| **Schritt 2: alles produktiv seit 13:32. Server-Einkaufsberechnung 104,7 s -> 24,4 s (Abschnitt 9), Cockpit lokal 41 s -> 3,3 s** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten gemessen (Abschnitt 6), Cockpit und Export-Dashboard behoben, SQLite-Cache (Abschnitt 7, `c35d3fa`). Server rund viermal schneller (Abschnitt 9). |
 | **Verwandt** | Worker-Neustarts durch IIS-Leerlauf, ISS-017, `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6. |
 
 ## 1. Ursache: das Vorrendern wartete auf alle Daten
@@ -208,5 +208,26 @@ Tests `749/749`. Die Finance_All-Zeile in `Program.cs` ist nicht Teil des Commit
 Profil des Finanzvergleichs: der groesste Posten war `ExportAuditCsvService.NormalizeHeader`. Es
 normalisierte den festen Spaltennamen bei jedem Feldzugriff jeder Zeile neu, also Millionen Mal.
 Dazu kam `FinanceReconciliationService.NormalizeRuleText`, das je Verkaufszeile und Konzernregel
-lief. Beide merken sich jetzt ihr Ergebnis je Text, Commit nach `23b05d4` (siehe Git-Log). Offen:
+lief. Beide merken sich jetzt ihr Ergebnis je Text, Commit `977a198`. Offen:
 der Finanzvergleich liest die CSVs bei jedem Oeffnen neu ein und hat keinen Cache wie das Cockpit.
+
+## 9. Ergebnis auf dem Server nach dem Deploy von 13:32
+
+Die Vorwaermzeit der Einkauf-Standardansicht im Serverprotokoll ist der Vergleichswert, weil
+dieselbe Berechnung jedes Mal gleich laeuft:
+
+| Zeitpunkt | Stand | Zeit |
+| --- | --- | --- |
+| 28.09. 11:28 | ohne SQLite-Cache, kurz nach Deploy | 104,7 s |
+| 28.09. ~12:00 | ohne SQLite-Cache | 86,9 s |
+| 28.09. ~13:2x | ohne SQLite-Cache, **gleichzeitig mit dem Einkauf-Delta** | 303,1 s |
+| **28.09. 13:34** | **mit SQLite-Cache (`c35d3fa`)** | **24,4 s** |
+
+**Der SQLite-Cache macht den Server rund viermal schneller.** Die Vermutung aus Abschnitt 5.1
+ist damit weitgehend bestaetigt: mit rund 2 MB Seitencache las jede Abfrage von der Platte der
+VM. Der Abstand zum Entwicklungsrechner (12 s) ist von Faktor 8 auf Faktor 2 geschrumpft; der Rest
+ist CPU oder Platte der VM. Da alle Seiten ueber dieselbe Datenbank laufen, profitieren sie alle.
+
+Nebenbefund: gleichzeitig mit einem Einkauf-Lauf dauerte die Vorberechnung 303 s. Nach Ablauf des
+Snapshots rechnet der Cache im Hintergrund nach, auch wenn gerade ein Lauf schreibt. Das stoert
+niemanden, weil der alte Stand solange ausgeliefert wird.

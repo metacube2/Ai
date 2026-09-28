@@ -44,6 +44,20 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
+- **Deploy 2026-09-28 13:32, Tempo: Cockpit-Wechselkurse, Export-Dashboard, SQLite-Cache,
+  CSV-Einlesen.** Stand `744faaf` (Funktionscommits `5a26596`, `c35d3fa`, `977a198`), sauberer
+  Worktree `C:\TMP\TrafagSalesExporter_release_744faaf`, ohne Finance_All. Per Timer auf Ingos Wunsch
+  erst nach dem Einkauf-Delta, das um 13:19 erfolgreich endete. `734/734` Release-Tests.
+  `BiDashboard.dll` `28.09.2026 12:59:52`, `6'400'000` Bytes, SHA256
+  `F7D31941AC32AF1756D693F5C036A997E711273D28D4FB0673779F36D0A44AB4`, bitgleich. **Ohne Alarm.**
+  Neue Sicherung `trafag_exporter.db.before-cockpit-sqlite-cache-20260928-133159.bak`
+  (`integrity_check` ok). Wirknachweis: `NotifyRatesChanged`, `GetSourceStampAsync`,
+  `PRAGMA mmap_size`. Fuenf Routen `200`.
+  **Befund Wachhalten:** der Worker lief vom Deploy um 11:25 bis zu diesem Deploy ohne Neustart,
+  der 12:00-Lauf startete regulaer (12:00:16), das Einkauf-Delta um 12:32:41 und endete 13:19.
+  **Befund SQLite-Cache:** erste Vorberechnung nach dem Deploy 24,4 s statt 86,9 bis 104,7 s.
+  Details `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 9.
+
 - **Deploy 2026-09-28 11:25, HR-Vorgaben und Einkauf sofort liefern und vorwaermen.** Stand
   `4aa27ae` (Funktionscommits `5ae7f31` HR, `d32a6aa` Einkauf-Cache und Vorwaermen), sauberer
   Worktree `C:\TMP\TrafagSalesExporter_release_4aa27ae`, ohne Finance_All. `727/727`

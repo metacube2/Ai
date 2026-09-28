@@ -106,12 +106,12 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   produktiv und in der Datenbank gespeichert, Wert fachlich **noch nicht gegen MB5L
   abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche, produktiv seit
   2026-09-28 09:33**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
-  erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus (IIS-Leerlauf); seit 28.09. Nachhol-Delta und Wachhalten, Server-Einstellung offen als ISS-017. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
+  erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus (IIS-Leerlauf); seit 28.09. Nachhol-Delta und Wachhalten, am 28.09. um 13:19 erstmals wieder erfolgreich. Server-Einstellung offen als ISS-017. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
 
 - **Ladezeit `/einkauf` gemessen 2026-09-28: 98,6 s bei laufendem Worker**, also kein
   Kaltstart, sondern die Neuberechnung nach Ablauf des 15-Minuten-Snapshots. Die fruehere
   Angabe „9-11 s warm" trifft diesen Fall nicht. Seit `4f2c62f` erscheint die Seite sofort mit
-  Ladebalken; seit `d32a6aa` (produktiv 28.09. 11:25) liefert der Cache abgelaufene Staende sofort und die Standardansicht wird vorgewaermt. Details in
+  Ladebalken; seit `d32a6aa` (produktiv 28.09. 11:25) liefert der Cache abgelaufene Staende sofort und die Standardansicht wird vorgewaermt; seit dem SQLite-Cache (28.09. 13:32) rechnet der Server sie in 24,4 s statt rund 100 s. Details in
   `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 5.
 
 ## Offene Punkte
