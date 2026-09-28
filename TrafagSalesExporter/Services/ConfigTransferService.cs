@@ -570,6 +570,8 @@ public class ConfigTransferService : IConfigTransferService
 
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
+        // Kurse wurden ersetzt: den Speicherstand der Kursabfrage sofort verwerfen.
+        CurrencyExchangeRateService.NotifyRatesChanged();
     }
 
     private static string BuildSiteSignature(string land, string tsc, string schema, string sourceSystem)

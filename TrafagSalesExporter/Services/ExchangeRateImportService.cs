@@ -55,6 +55,7 @@ public class ExchangeRateImportService : IExchangeRateImportService
         }));
 
         await db.SaveChangesAsync(cancellationToken);
+        CurrencyExchangeRateService.NotifyRatesChanged();
 
         return new ExchangeRateImportResult
         {

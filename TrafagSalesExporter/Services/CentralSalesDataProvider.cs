@@ -9,6 +9,14 @@ public interface ICentralSalesDataProvider
     Task<List<SalesRecord>> GetRecordsAsync();
     Task<List<SalesRecord>> GetLatestRecordsBySiteAsync();
     Task<bool> UsesAuditCsvAsync();
+
+    /// <summary>
+    /// Kennzeichen des aktuellen Quellstands: aendert sich, sobald eine Audit-CSV neu geschrieben
+    /// wird oder die zentrale Tabelle neue Zeilen bekommt. Billig zu bilden (Dateiliste bzw. eine
+    /// Zaehlabfrage), damit ein Aufrufer grosse Datenmengen nur bei geaendertem Stand neu liest.
+    /// <c>null</c> heisst: nicht bestimmbar, nicht zwischenspeichern.
+    /// </summary>
+    Task<string?> GetSourceStampAsync() => Task.FromResult<string?>(null);
 }
 
 public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
@@ -25,6 +33,33 @@ public sealed class CentralSalesDataProvider : ICentralSalesDataProvider
         _dbFactory = dbFactory;
         _centralSalesRecordService = centralSalesRecordService;
         _auditCsvService = auditCsvService;
+    }
+
+    public async Task<string?> GetSourceStampAsync()
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var settings = await db.ExportSettings.AsNoTracking().FirstOrDefaultAsync() ?? new ExportSettings();
+        if (!settings.UseAuditCsvAsCentralSource)
+        {
+            var count = await db.CentralSalesRecords.CountAsync();
+            var maxId = count == 0 ? 0 : await db.CentralSalesRecords.MaxAsync(r => r.Id);
+            var maxStored = count == 0 ? DateTime.MinValue : await db.CentralSalesRecords.MaxAsync(r => r.StoredAtUtc);
+            return $"db|{count}|{maxId}|{maxStored:O}";
+        }
+
+        // Dieselben Ordner, aus denen ExportAuditCsvService liest: Standort-CSVs und konsolidierte
+        // CSV. Jede neu geschriebene oder geloeschte CSV aendert das Kennzeichen.
+        var siteDirectory = _auditCsvService.ResolveAuditCsvDirectory(settings);
+        var consolidatedDirectory = !string.IsNullOrWhiteSpace(settings.LocalConsolidatedExportFolder)
+            ? settings.LocalConsolidatedExportFolder.Trim()
+            : siteDirectory;
+        var files = new[] { siteDirectory, consolidatedDirectory }
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(Directory.Exists)
+            .SelectMany(directory => new DirectoryInfo(directory).EnumerateFiles("*.csv"))
+            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase)
+            .Select(file => $"{file.FullName}|{file.Length}|{file.LastWriteTimeUtc.Ticks}");
+        return "csv|" + string.Join(";", files);
     }
 
     public async Task<List<SalesRecord>> GetRecordsAsync()

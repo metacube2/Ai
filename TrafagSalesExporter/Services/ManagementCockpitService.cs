@@ -20,6 +20,10 @@ public class ManagementCockpitService : IManagementCockpitService
     private static readonly TimeSpan CentralRecordsCacheTtl = TimeSpan.FromSeconds(10);
     private List<SalesRecord>? _centralRecordsCache;
     private DateTime _centralRecordsCacheAtUtc = DateTime.MinValue;
+    private string? _centralRecordsCacheStamp;
+    // Obergrenze fuer den Stand bei unveraenderter Quelle: begrenzt den Schaden, falls ein
+    // Kennzeichen eine Aenderung einmal uebersieht.
+    private static readonly TimeSpan CentralRecordsStampedCacheTtl = TimeSpan.FromMinutes(30);
 
     public ManagementCockpitService(IDbContextFactory<AppDbContext> dbFactory)
         : this(dbFactory, new CurrencyExchangeRateService(dbFactory), null)
@@ -1074,13 +1078,29 @@ public class ManagementCockpitService : IManagementCockpitService
         }).ToList();
     }
 
+    /// <summary>
+    /// Zentrale Datensaetze, zwischengespeichert.
+    ///
+    /// SEIT 2026-09-28 SOLANGE SICH DIE QUELLE NICHT AENDERT, hoechstens
+    /// <see cref="CentralRecordsStampedCacheTtl"/>. Vorher galt der Stand nur zehn Sekunden, und
+    /// jedes Oeffnen des Management-Cockpits las die Audit-CSVs neu ein (auf dem Server rund 80 MB,
+    /// lokal gemessen 3 bis 4 Sekunden). Die Dateien aendern sich aber nur beim Tagesexport. Das
+    /// Kennzeichen aus <see cref="ICentralSalesDataProvider.GetSourceStampAsync"/> (Dateiname,
+    /// Groesse, Schreibzeit bzw. Zeilenzahl der Tabelle) ist billig und erkennt jeden neuen Stand.
+    /// Ohne Kennzeichen bleibt es bei den zehn Sekunden.
+    /// </summary>
     private async Task<List<SalesRecord>> LoadCentralRecordsAsync()
     {
-        if (_centralRecordsCache is not null && DateTime.UtcNow - _centralRecordsCacheAtUtc < CentralRecordsCacheTtl)
+        var stamp = _centralSalesDataProvider is null ? null : await _centralSalesDataProvider.GetSourceStampAsync();
+        var age = DateTime.UtcNow - _centralRecordsCacheAtUtc;
+        if (_centralRecordsCache is not null &&
+            (age < CentralRecordsCacheTtl ||
+             (stamp is not null && stamp == _centralRecordsCacheStamp && age < CentralRecordsStampedCacheTtl)))
             return _centralRecordsCache;
 
         var records = await LoadCentralRecordsUncachedAsync();
         _centralRecordsCache = records;
+        _centralRecordsCacheStamp = stamp;
         _centralRecordsCacheAtUtc = DateTime.UtcNow;
         return records;
     }

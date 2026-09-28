@@ -185,6 +185,7 @@ public sealed class SettingsPageService : ISettingsPageService
             && rate.Rate > 0m));
 
         await db.SaveChangesAsync();
+        CurrencyExchangeRateService.NotifyRatesChanged();
         return await LoadExchangeRatesAsync(db);
     }
 
