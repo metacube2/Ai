@@ -1,8 +1,104 @@
 # RAG Architecture
 
-Stand: 2026-05-27
+Stand: 2026-09-28 (Abschnitt „Code-Architektur" neu; der Kurzstand darunter stammt vom
+2026-05-27 und ist fachlich weiter gueltig, beschreibt aber nicht die seither
+dazugekommenen Bereiche Einkauf, Journal, Marktsegmente, Serveranalyse und HR)
 
-## Kurzstand
+## Code-Architektur: Befund vom 2026-09-28
+
+Anlass war Ingos Frage, ob der Code sauber nach Clean Architecture umgesetzt, alles
+entkoppelt und abstrahiert sei und ob die Service-Klasse der Controller im Sinne von MVC
+sei. Die Zahlen sind am 2026-09-28 im Arbeitsbaum gemessen (Branch
+`feature/supplier-overrides-trit`, Commit `65dde74`); sie veralten mit jeder Aenderung.
+
+### Welches Muster es ist
+
+Die Anwendung ist ein **Blazor-Server-Monolith in einem einzigen Projekt** mit den
+Ordnern `Components/`, `Services/`, `Models/` und `Data/`, dazu das Testprojekt
+`TrafagSalesExporter.Tests`. Es gibt keine Controller. Einzige HTTP-Endpunkte sind drei
+`MapPost`-Aufrufe fuer die Zugangspruefung in `Program.cs` (`/access/finance`,
+`/access/admin`, `/access/hr`).
+
+Uebertragen auf MVC:
+
+| MVC-Rolle | In dieser App |
+|---|---|
+| View | Markup der `.razor`-Komponente |
+| Controller | `@code`-Block derselben `.razor`-Komponente (Ereignisse, Zustand, Aufrufe) |
+| Model und Logik | `Services/*Service.cs` samt EF-Entities in `Models/` |
+
+**Die Service-Klasse ist also nicht der Controller**, sondern Business-Logik und
+Datenzugriff in einem. Die Controller-Rolle traegt der `@code`-Teil der Komponente. Das
+ist fuer Blazor ueblich und fuer sich kein Mangel.
+
+### Was traegt
+
+- 31 Service-Interfaces unter `Services/I*.cs`; die Seiten injizieren ueberwiegend
+  Interfaces.
+- Eigene Page-Services als Presenter-Ersatz, etwa `StandortePageService`,
+  `SettingsPageService`, `TransformationsPageService`, `PurchasingDataSourcePageService`.
+- Nur eine Seite greift direkt auf die Datenbank zu: `Components/Pages/ManualImports.razor`
+  injiziert `IDbContextFactory<AppDbContext>`.
+- Datenzugriff durchgaengig ueber `IDbContextFactory`, dadurch gut testbar; 72 Testdateien.
+- Die Quellsystem-Leser (SAP Gateway, HANA/B1) sind abstrahiert, zum Beispiel
+  `ISapGatewayStockValueReader`.
+
+### Was gegen Clean Architecture spricht
+
+1. **Keine Schichtung nach Abhaengigkeitsrichtung.** Domain, Application und
+   Infrastructure sind keine eigenen Projekte. Die EF-Entities in `Models/` sind zugleich
+   das Domaenenmodell, und die Logik haengt direkt an EF Core und SQLite.
+2. **Keine Repository-Schicht.** Rund 48 Services oeffnen den `AppDbContext` selbst und
+   mischen LINQ-Abfragen mit Berechnung. Getrennt ist der Zugriff nur in drei
+   `*Store`-Klassen: `PurchasingStockValueStore`, `SupplierMaterialOverrideStore`,
+   `ForeignProcurementEvidenceStore`.
+3. **Sehr grosse Klassen (Single Responsibility verletzt).**
+
+   | Datei | Zeilen | davon `@code` |
+   |---|---:|---:|
+   | `Components/Pages/ManagementCockpit.razor` | 3'438 | 1'615 |
+   | `Services/ManagementCockpitService.cs` | 3'022 | |
+   | `Components/Pages/PurchasingDashboard.razor` | 2'875 | 2'053 |
+   | `Services/PurchasingDashboardService.cs` | 2'122 | |
+   | `Services/ExcelExportService.cs` | 1'750 | |
+   | `Services/DatabaseSeedService.cs` | 1'733 | |
+   | `Services/HrKpi/HrKpiDashboardBuilder.cs` | 1'671 | |
+
+   `UiTextGeneratedTranslations.cs` (9'328 Zeilen) ist generierter Text und zaehlt nicht.
+   Zehn Komponenten rechnen selbst mit `Where`/`GroupBy`, darunter `ManagementCockpit`,
+   `PurchasingDashboard`, `FinanceComparison`, `MarketSegments` und `HrKpiDashboardTabs`.
+4. **Aufgeweichte Abstraktion an einzelnen Stellen.**
+   - `ManagementCockpitService` erzeugt im Konstruktor `new CurrencyExchangeRateService(dbFactory)`
+     selbst, statt ihn injizieren zu lassen.
+   - `PurchasingDashboardService` und `ExcelExportService` haben optionale bzw. mehrere
+     Konstruktoren (`= null`, parameterloser Konstruktor mit nullbarem `_dbFactory`). Das
+     verdeckt Abhaengigkeiten und laesst Pfade ohne Datenbank zu.
+   - Konkrete Klassen ohne Interface werden direkt injiziert: `TimerBackgroundService` und
+     `MarketSegmentPatternService` in Seiten, `ExportOrchestrationService`,
+     `PurchasingRefreshRunner` und `PurchasingDashboardSnapshotCache` als Singletons.
+
+### Einordnung und Empfehlung
+
+Fuer eine interne Reporting-App mit einem Entwickler ist das ein **pragmatisch
+geschichteter Monolith mit guter DI-Disziplin**. Die Wartungskosten entstehen nicht durch
+fehlende Projektgrenzen, sondern durch die vier bis fuenf sehr grossen Klassen und Seiten.
+
+Ein Umbau auf echte Clean Architecture mit getrennten Projekten waere gross und braechte
+fachlich wenig. Mehr bringt, in dieser Reihenfolge:
+
+1. Die `@code`-Logik aus `ManagementCockpit.razor` und `PurchasingDashboard.razor` in
+   Page-Services verschieben, nach dem Vorbild von `StandortePageService`.
+2. `ManagementCockpitService` und `PurchasingDashboardService` nach Tabs bzw.
+   Kennzahlengruppen in kleinere Dienste aufteilen.
+3. Versteckte Abhaengigkeiten aufloesen: `new CurrencyExchangeRateService` durch Injektion
+   ersetzen, optionale Konstruktorparameter und Zusatzkonstruktoren entfernen.
+4. Erst danach und nur wo es hilft: Lesezugriffe grosser Auswertungen in Stores buendeln.
+
+Beruehrungspunkt: Das Tempo von `/einkauf` (`docs/PLATTFORM_TEMPO_2026-09-28.md`) haengt an
+`PurchasingDashboardService`. Aufteilen und Beschleunigen dort nicht getrennt planen und
+vorher in `docs/AGENT_COORDINATION.md` abstimmen.
+
+## Kurzstand (2026-05-27)
 
 - App sammelt Daten aus SAP OData, HANA/SAP B1, SharePoint und manuellen Excel-/CSV-Quellen.
 - Zentrale Persistenz ueber `CentralSalesRecords`.
