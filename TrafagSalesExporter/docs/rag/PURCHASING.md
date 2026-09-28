@@ -104,9 +104,9 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 - Lagerwert Einkaufsteile (Disponenten 001-005, `MBEW.SALK3`, Bewertungskreis 1100): Kachel
   produktiv und in der Datenbank gespeichert, Wert fachlich **noch nicht gegen MB5L
-  abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche gebaut, aber nicht
-  deployed**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
-  kein Rueckblick vor dem Deploy. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
+  abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche, produktiv seit
+  2026-09-28 09:33**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
+  erster Punkt 10.09.2026, kein Rueckblick. **Der Lagerwert wird seit dem 10.09. nicht neu gelesen.** Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
 
 ## Offene Punkte
 

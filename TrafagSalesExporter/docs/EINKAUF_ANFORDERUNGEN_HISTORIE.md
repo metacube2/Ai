@@ -81,7 +81,7 @@ Periode ohne Obergrenze auf heute.
 | Punkt | Bemerkung |
 | --- | --- |
 | KPI-Kachel Lagerwert Einkaufsteile | Wunsch Armin, produktiv seit 2026-08-19, gespeichert seit 2026-08-24; MB5L-Abgleich offen |
-| Verlauf je Kalenderwoche | Wunsch per Mail waehrend Ingos Ferien, von Marco am 2026-09-28 als "ab verfuegbar erfassen" bestaetigt; **gebaut 2026-09-28, nicht deployed**. Kein Rueckblick aus `MBEWH` (Weg B zurueckgestellt) |
+| Verlauf je Kalenderwoche | Wunsch per Mail waehrend Ingos Ferien, von Marco am 2026-09-28 als "ab verfuegbar erfassen" bestaetigt; **produktiv seit 2026-09-28 09:33**. Kein Rueckblick aus `MBEWH` (Weg B zurueckgestellt) |
 
 Details: `docs/EINKAUF_LAGERWERT_2026-08-18.md`, Abschnitte 10, 12 und 13.
 

@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-09
+Stand: 2026-09-28
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -43,6 +43,27 @@ Stand: 2026-09-09
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+
+- **Deploy 2026-09-28 09:33, Lagerwert-Verlauf je Woche, Marktsegment-Vorschlaege, CH/AT-Journal
+  monatsweise.** Stand `7cb7f20`, gebaut aus dem **sauberen Worktree**
+  `C:\TMP\TrafagSalesExporter_release_7cb7f20`, weil der Arbeitsbaum unkommittierte, unfertige
+  Finance_All-Aenderungen enthaelt (`Program.cs`, `TimerBackgroundService.cs`, `.csproj`, zwei neue
+  Services). Ausgeliefert: `29c0f87`/`8b939e2` (Lagerwert-Verlauf), `4d0b9cd` (Marktsegment-Vorschlaege),
+  `16bc901`/`caaf377` (CH/AT-Journal monatsweise). `709/709` Release-Tests gruen im Worktree.
+  `BiDashboard.dll` `28.09.2026 09:28:51`, `6'372'864` Bytes, SHA256
+  `326E0750B761FC166A5B0F88FCE1A27ECD052BB904D0B37FAF3AA986C4750C05`; lokaler Release-Build und Server
+  bitgleich. Ziel: 4 neu, 32 geaendert, 2335 unveraendert, 0 verschwunden. **Ohne Alarm.**
+  Vorher-Sicherung `trafag_exporter.db.before-stockvalue-history-20260928-093218.bak` (gepruefte
+  Blockkopie, `integrity_check` ok); Produktiv-DB in Laenge und Schreibzeit unveraendert
+  (`471'834'624` Bytes, `25.09.2026 13:15:16`). Wirknachweis in der DLL:
+  `PurchasingStockValueHistory`, `Erster Verlaufspunkt:`, `UX_SegmentNamePatterns_Pattern`,
+  `vor dem Startdatum verworfen=`, `de_customer_invoice_map_2026-09-10.json`; **Sperrpruefung
+  `FinanceAllExportService` nicht enthalten.** Fuenf Routen HTTPS `200`; `/einkauf` brauchte beim
+  ersten Aufruf `100.50 s` (Kaltstart). Die gerenderte Seite `/einkauf` zeigt das neue Verlaufspanel
+  mit einem Punkt. **Befund dabei:** Kachel und erster Verlaufspunkt tragen den Stand
+  `10.09.2026 13:19` — der Lagerwert ist seit 18 Tagen nicht neu gelesen worden, siehe
+  `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.5. Browserpruefung nicht moeglich
+  (Chrome-Erweiterung nicht verbunden), geprueft wurde das vorgerenderte HTML.
  . "- **Deploy 2026-09-10 09:40, Einkaufsbeschriftungen und SAP-Feldherkunft.** Funktionscommit `d5bc321`
   von Codex, ausgeliefert von Claude, weil Codex ohne Guthaben war. **691/691** Release-Tests gruen
   im eigenen Lauf vor dem Publish. `BiDashboard.dll` `10.09.2026 09:20:22`, `6'229'504` Bytes,

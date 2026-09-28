@@ -8,13 +8,13 @@ Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). Zurueck:
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
 | **Umgesetzt?** | **Teilweise.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist seit 2026-08-19 produktiv und seit 2026-08-24 in der Datenbank gespeichert; am 2026-08-24 zeigte sie CHF 9'205'959 aus einem echten SAP-Read (Abschnitt 12.7). *Ueberholt ist die fruehere Aussage „zeigt wartet auf Einkauf-Lauf, noch nie gegen echtes SAP gelaufen".* Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
-| **Verlauf je Woche** | Seit 2026-09-28 **gebaut, nicht deployed** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Beginnt ab Deploy, kein Rueckblick. |
+| **Verlauf je Woche** | **Produktiv seit 2026-09-28 09:33** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Erster Punkt 10.09.2026, kein Rueckblick. **Der Lagerwert wird seit dem 10.09. nicht mehr neu gelesen** (13.5). |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |
 | **Groesste technische Huerde** | `MBEWH` ist mit 5,4 Mio Zeilen nicht ueber OData ladbar. Es braucht ein serverseitig aggregierendes SAP-Set. |
 
-**Hier geht es weiter:** Abschnitt 13.4 (Deploy des Verlaufs), danach Abschnitt 7 (MB5L-Abgleich).
+**Hier geht es weiter:** Abschnitt 13.5 (warum seit dem 10.09. kein Lagerwert-Read mehr lief), danach Abschnitt 7 (MB5L-Abgleich).
 
 ## 1. Die Anforderung
 
@@ -662,7 +662,7 @@ unbestaetigten Zahl bleibt unbestaetigt.
 | `TrafagSalesExporter.Tests/PurchasingStockValueStoreTests.cs` | 9 neue Tests |
 
 Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_All-Aenderungen).
-**Die Oberflaeche ist nicht im Browser angesehen worden**, weil nicht deployed.
+*Ueberholt: "nicht im Browser angesehen, weil nicht deployed". Stand nach dem Deploy siehe 13.5.*
 
 ### 13.3 Entwurfsentscheidungen
 
@@ -687,7 +687,7 @@ Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_A
 
 ### 13.4 Was offen ist
 
-- **Nicht deployed.** Der Arbeitsbaum enthaelt fremde, nicht committete Aenderungen an
+- *Ueberholt am 2026-09-28 09:33, siehe 13.5:* **Nicht deployed.** Der Arbeitsbaum enthaelt fremde, nicht committete Aenderungen an
   `Program.cs`, `Services/TimerBackgroundService.cs` und `TrafagSalesExporter.csproj`
   (Finance_All-Reservierung). Ein Release-Build aus diesem Baum wuerde sie mit ausliefern.
   Deploy nur nach Freigabe durch Ingo und aus einem sauberen Stand. Der Commit-Stand ist in
@@ -703,3 +703,24 @@ Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_A
 - **Der Verlauf fuellt sich nur, wenn die Einkauf-Laeufe tatsaechlich laufen.** Der
   Kettennachweis aus 12.9 steht weiterhin aus.
 - MB5L-Abgleich und Entscheid zu `004` wie bisher offen.
+
+### 13.5 Deploy 2026-09-28 09:33 und Befund: seit dem 10.09. kein Lagerwert-Read
+
+**Deployed** am 2026-09-28 09:33 aus dem sauberen Worktree am Stand `7cb7f20`, ohne die
+unfertigen Finance_All-Aenderungen (Sperrpruefung in der DLL: `FinanceAllExportService` nicht
+enthalten). DLL bitgleich, fuenf Routen `200`. Protokoll: `docs/rag/DEPLOYMENT.md`.
+
+Nachgeprueft ueber das vorgerenderte HTML von `/einkauf` (Chrome-Erweiterung war nicht verbunden,
+ein Browserblick steht also noch aus): das Panel steht auf der Uebersicht, zeigt **einen**
+Wochenpunkt und den Hinweis „Der Verlauf beginnt". Der Text lautet „Erster Verlaufspunkt:
+10.09.2026".
+
+**Befund:** Kachel und erster Punkt tragen den Stand **10.09.2026 13:19**, CHF 8'892'600 ueber
+7'338 Materialien. Der Lagerwert ist damit seit 18 Tagen nicht neu gelesen worden, obwohl er
+bei jedem Einkauf-Lauf gelesen werden soll. Die Produktiv-DB wurde zuletzt am 25.09. 13:15
+geschrieben, es liefen also andere Vorgaenge. **Ungeklaert, ob der Einkauf-Lauf seit dem 10.09.
+gar nicht lief oder nur der Lagerwert-Read darin scheiterte.** Die Antwort steht in
+`PurchasingSyncState` und in den `AppEventLogs` („Lagerwert aktualisiert" /
+„Lagerwert konnte nicht gelesen werden" / „... wegen Zeitgrenze abgebrochen"); das Lesen der
+Produktiv-DB war in dieser Sitzung nicht freigegeben. Solange das nicht behoben ist, bekommt der
+Verlauf **keine neuen Punkte**.
