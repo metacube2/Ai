@@ -140,13 +140,7 @@ public sealed class DashboardPageService : IDashboardPageService
         {
             try
             {
-                var file = await _sharePointService.ResolveLatestProcessedMergeInputFileAsync(
-                    sharePointConfig.TenantId,
-                    sharePointConfig.ClientId,
-                    sharePointConfig.ClientSecret,
-                    sharePointConfig.SiteUrl,
-                    folder,
-                    site.TSC);
+                var file = await ResolveLatestSharePointFileCachedAsync(sharePointConfig, folder, site.TSC);
 
                 if (file?.LastModifiedUtc is null)
                     continue;
@@ -169,6 +163,40 @@ public sealed class DashboardPageService : IDashboardPageService
         }
 
         return latestState;
+    }
+
+    /// <summary>
+    /// Wie lange eine SharePoint-Antwort gilt. Die Standort-CSVs aendern sich nur beim Tagesexport;
+    /// fuenf Minuten genuegen, damit das Dashboard nach einem Export bald den neuen Stand zeigt.
+    /// </summary>
+    internal static readonly TimeSpan SharePointLookupLifetime = TimeSpan.FromMinutes(5);
+
+    // Statisch, weil der Dienst je Circuit neu entsteht (Scoped), die Antworten aber fuer alle gelten.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime AtUtc, SharePointFileReference? File)> SharePointLookups = new();
+
+    /// <summary>
+    /// Sucht die neueste Standort-CSV in SharePoint, mit kurzer Zwischenspeicherung.
+    ///
+    /// ANLASS 2026-09-28: Das Export-Dashboard rechnete lokal nur 0,7 s, wartete aber rund 1,5 s auf
+    /// SharePoint, bei jedem Oeffnen und fuer jeden Standort. Ein Fehler wird bewusst nicht
+    /// gespeichert: der naechste Aufruf fragt dann wieder an.
+    /// </summary>
+    private async Task<SharePointFileReference?> ResolveLatestSharePointFileCachedAsync(
+        SharePointConfig sharePointConfig, string folder, string tsc)
+    {
+        var key = string.Join("|", sharePointConfig.SiteUrl, folder, tsc);
+        if (SharePointLookups.TryGetValue(key, out var cached) && DateTime.UtcNow - cached.AtUtc < SharePointLookupLifetime)
+            return cached.File;
+
+        var file = await _sharePointService.ResolveLatestProcessedMergeInputFileAsync(
+            sharePointConfig.TenantId,
+            sharePointConfig.ClientId,
+            sharePointConfig.ClientSecret,
+            sharePointConfig.SiteUrl,
+            folder,
+            tsc);
+        SharePointLookups[key] = (DateTime.UtcNow, file);
+        return file;
     }
 
     internal static ProcessedMergeInputState? ResolveLatestLocalProcessedMergeInputFile(Site site, ExportSettings settings)

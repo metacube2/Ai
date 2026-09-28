@@ -54,7 +54,9 @@ builder.Services.Configure<LandingPageOptions>(builder.Configuration.GetSection(
 builder.Services.Configure<PauseGameOptions>(builder.Configuration.GetSection(PauseGameOptions.SectionName));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60"));
+    options.UseSqlite("Data Source=trafag_exporter.db;Default Timeout=60")
+        // Groesserer Seitencache und Memory-Mapping je Verbindung, siehe SqlitePerformanceInterceptor.
+        .AddInterceptors(new SqlitePerformanceInterceptor()));
 
 // Stateless Infrastruktur- und Connector-Services: Singleton.
 builder.Services.AddSingleton<IHanaQueryService, HanaQueryService>();
