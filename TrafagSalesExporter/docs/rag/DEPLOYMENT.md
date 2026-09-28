@@ -44,6 +44,21 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
+- **Deploy 2026-09-28 10:04, Einkauf-Lauf nachholen und IIS-Worker wachhalten.** Stand `e83591f`,
+  gebaut aus dem sauberen Worktree `C:\TMP\TrafagSalesExporter_release_e83591f`, wieder **ohne**
+  die unfertigen Finance_All-Aenderungen (Sperrpruefung `FinanceAllExportService` negativ).
+  `715/715` Release-Tests. `BiDashboard.dll` `28.09.2026 10:02:20`, `6'380'544` Bytes, SHA256
+  `CCBA7C3340DD567D4A976E834F92B12219C1CA16E8F61F329224D8BDBA30BBC2`, bitgleich. Ziel: 0 neu,
+  37 geaendert, 2337 unveraendert, 2 verschwunden. Sicherung
+  `trafag_exporter.db.before-purchasing-catchup-keepalive-20260928-100353.bak` (`integrity_check` ok).
+  Wirknachweis: `Einkauf-Delta nachgeholt`, `BiDashboard/favicon.svg` plus alle Texte des Deploys von
+  09:33. Fuenf Routen `200`. **Der eine Alarm ist der bekannte:** `trafag_exporter.db-wal` (`0` Bytes)
+  und `-shm` verschwanden beim Neustart und waren um 10:04:56 wieder da; die Hauptdatei blieb
+  unveraendert. **Wirkung noch nicht gemessen:** ob der Selbstaufruf den Worker haelt, zeigt sich
+  daran, dass die mehrfachen Neustarts pro Tag in `logs/stdout_*.log` ausbleiben und der
+  12:00-Lauf samt Einkauf-Delta durchlaeuft. Hintergrund: ISS-017,
+  `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6.
+
 - **Deploy 2026-09-28 09:33, Lagerwert-Verlauf je Woche, Marktsegment-Vorschlaege, CH/AT-Journal
   monatsweise.** Stand `7cb7f20`, gebaut aus dem **sauberen Worktree**
   `C:\TMP\TrafagSalesExporter_release_7cb7f20`, weil der Arbeitsbaum unkommittierte, unfertige

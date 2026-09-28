@@ -106,7 +106,7 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   produktiv und in der Datenbank gespeichert, Wert fachlich **noch nicht gegen MB5L
   abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche, produktiv seit
   2026-09-28 09:33**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
-  erster Punkt 10.09.2026, kein Rueckblick. **Der Lagerwert wird seit dem 10.09. nicht neu gelesen.** Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
+  erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus (IIS-Leerlauf); seit 28.09. Nachhol-Delta und Wachhalten, Server-Einstellung offen als ISS-017. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
 
 ## Offene Punkte
 

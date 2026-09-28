@@ -8,13 +8,13 @@ Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). Zurueck:
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
 | **Umgesetzt?** | **Teilweise.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist seit 2026-08-19 produktiv und seit 2026-08-24 in der Datenbank gespeichert; am 2026-08-24 zeigte sie CHF 9'205'959 aus einem echten SAP-Read (Abschnitt 12.7). *Ueberholt ist die fruehere Aussage „zeigt wartet auf Einkauf-Lauf, noch nie gegen echtes SAP gelaufen".* Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
-| **Verlauf je Woche** | **Produktiv seit 2026-09-28 09:33** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Erster Punkt 10.09.2026, kein Rueckblick. **Der Lagerwert wird seit dem 10.09. nicht mehr neu gelesen** (13.5). |
+| **Verlauf je Woche** | **Produktiv seit 2026-09-28 09:33** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus; Ursache und Absicherung in 13.6. |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |
 | **Groesste technische Huerde** | `MBEWH` ist mit 5,4 Mio Zeilen nicht ueber OData ladbar. Es braucht ein serverseitig aggregierendes SAP-Set. |
 
-**Hier geht es weiter:** Abschnitt 13.5 (warum seit dem 10.09. kein Lagerwert-Read mehr lief), danach Abschnitt 7 (MB5L-Abgleich).
+**Hier geht es weiter:** Abschnitt 13.6 (Einkauf-Lauf seit 10.09. ausgefallen, Code-Absicherung produktiv, Server-Einstellung ISS-017 offen), danach Abschnitt 7 (MB5L-Abgleich).
 
 ## 1. Die Anforderung
 
@@ -724,3 +724,43 @@ gar nicht lief oder nur der Lagerwert-Read darin scheiterte.** Die Antwort steht
 „Lagerwert konnte nicht gelesen werden" / „... wegen Zeitgrenze abgebrochen"); das Lesen der
 Produktiv-DB war in dieser Sitzung nicht freigegeben. Solange das nicht behoben ist, bekommt der
 Verlauf **keine neuen Punkte**.
+
+### 13.6 Ursache gefunden und abgesichert, 2026-09-28
+
+Auf Ingos Freigabe read-only gegen die Produktiv-DB und die `stdout`-Protokolle geprueft
+(`.tmp_tools/StockValueCause0928`):
+
+- **Nicht der Lagerwert-Read ist gescheitert, sondern der ganze Einkauf-Lauf fand nicht statt.**
+  Letzter Eintrag in `PurchasingSyncState` ist Id 47, Delta `Success`, 10.09.2026 13:19; danach
+  nichts. Der Read in diesem Lauf war sauber („Lagerwert aktualisiert", 87 Disponenten).
+- **Ursache:** Das Delta startete nur im planmaessigen 12:00-Slot und erst nach dem
+  Verkaufsexport, rund 12:30. Der IIS-Worker wird aber nach etwa 20 Minuten ohne Anfrage
+  beendet; die Protokolle zeigen Neustarts alle ein bis drei Stunden. Am 11., 14., 15., 16. und
+  17.09. lebte er um 12:00 nicht, dann lief nur der Nachhol-Export, der den Einkauf bewusst
+  auslaesst. Am 18.09. und 25.09. startete der Slot, der Worker starb aber um 12:02 bzw. 12:17,
+  vor dem Delta.
+- Der Dauerbetrieb des App-Pools (`AlwaysRunning`, `idleTimeout = 0`) steht seit dem 07.07. als
+  Massnahme in `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`, ist dem Neustartmuster nach
+  **nie umgesetzt** worden. Selbst setzen geht nicht: kein Fernzugriff auf `tragvapp401`.
+  Offen als **ISS-017**, Owner IT.
+
+**Code-Absicherung, Commit `e83591f`, produktiv seit 2026-09-28 10:04:**
+
+1. **Nachhol-Delta:** Nach dem heutigen Slot startet der Timer das Delta ueber den
+   `PurchasingRefreshRunner`, wenn der letzte erfolgreiche Einkauf-Lauf mindestens 20 Stunden
+   zurueckliegt. Geprueft alle 15 Minuten, hoechstens ein Versuch pro Tag, nie vor dem Slot und
+   nie doppelt mit ihm. Admin-Log: „Einkauf-Delta nachgeholt".
+2. **Wachhalten:** Nur in Produktion ruft die Anwendung alle 5 Minuten ihr `favicon.svg` auf,
+   damit IIS sie nicht im Leerlauf beendet. Ueberschreibbar mit `KeepAlive:Url`, leer = aus.
+   **Ob IIS den Selbstaufruf als Aktivitaet zaehlt, ist noch nicht gemessen.** Beleg waere, dass
+   in `logs/stdout_*.log` die mehrfachen Neustarts pro Tag ausbleiben und der 12:00-Lauf samt
+   „Einkauf-Delta (naechtlich) gestartet" durchlaeuft.
+
+`TimerSchedule.IsPurchasingCatchUpDue` mit 6 Tests; `715/715` im sauberen Worktree. Der
+Commit enthaelt die unfertigen Finance_All-Hunks derselben Datei **nicht**.
+
+**Nebenbefund, nicht behoben:** Jeder Einkauf-Lauf hinterlaesst in `PurchasingSyncState` zwei
+Zeilen mit gleichem Start: eine `Success` und eine, die beim naechsten Start als `Abgebrochen`
+markiert wird (z. B. Id 46/47). Der Status schreibt offenbar eine neue Zeile statt die
+`Running`-Zeile zu aktualisieren. Kosmetisch, aber die Tabelle sieht dadurch nach vielen
+Abbruechen aus.

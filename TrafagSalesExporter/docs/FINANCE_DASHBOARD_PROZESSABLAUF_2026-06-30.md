@@ -493,3 +493,12 @@ Restart-WebAppPool $pool
 ```
 
 Merksatz: Der Timer ist nur so zuverlaessig wie die Prozesslaufzeit. `AlwaysRunning` + `idleTimeout=0` halten den Worker dauerhaft aktiv; der Nachhol-Lauf ist die Absicherung fuer Recycles/Deploys rund um 12:00.
+
+**Nachtrag 2026-09-28: Die Server-Einstellung oben ist nie umgesetzt worden.** Die
+`stdout`-Protokolle zeigen vom 09.09. bis 28.09. Neustarts des Workers alle ein bis drei
+Stunden, der 12:00-Lauf fand an den meisten Tagen nur als Nachhol-Lauf statt, und das
+Einkauf-Delta lief vom 10.09. bis 28.09. kein einziges Mal. Selbst setzen geht nicht (kein
+Fernzugriff auf `tragvapp401`), offen als **ISS-017** bei der IT. Seit Commit `e83591f` holt der
+Timer das Einkauf-Delta nach und ruft die Anwendung sich alle 5 Minuten selbst auf; das
+ueberbrueckt, ersetzt die Einstellung aber nicht. Details:
+`docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6.
