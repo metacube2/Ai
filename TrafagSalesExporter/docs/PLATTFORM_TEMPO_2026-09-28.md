@@ -209,7 +209,7 @@ Profil des Finanzvergleichs: der groesste Posten war `ExportAuditCsvService.Norm
 normalisierte den festen Spaltennamen bei jedem Feldzugriff jeder Zeile neu, also Millionen Mal.
 Dazu kam `FinanceReconciliationService.NormalizeRuleText`, das je Verkaufszeile und Konzernregel
 lief. Beide merken sich jetzt ihr Ergebnis je Text, Commit `977a198`. Offen:
-der Finanzvergleich liest die CSVs bei jedem Oeffnen neu ein und hat keinen Cache wie das Cockpit.
+der Finanzvergleich las die CSVs bei jedem Oeffnen neu ein. *Erledigt am 2026-09-28 in `eaa9d43`:* er haelt die Datensaetze jetzt wie das Cockpit, solange die Quelle gleich ist (hoechstens 30 Minuten). Nicht deployed.
 
 ## 9. Ergebnis auf dem Server nach dem Deploy von 13:32
 

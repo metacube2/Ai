@@ -759,7 +759,7 @@ Auf Ingos Freigabe read-only gegen die Produktiv-DB und die `stdout`-Protokolle 
 `TimerSchedule.IsPurchasingCatchUpDue` mit 6 Tests; `715/715` im sauberen Worktree. Der
 Commit enthaelt die unfertigen Finance_All-Hunks derselben Datei **nicht**.
 
-**Nebenbefund, nicht behoben:** Jeder Einkauf-Lauf hinterlaesst in `PurchasingSyncState` zwei
+**Nebenbefund, *behoben am 2026-09-28 in `eaa9d43` (nicht deployed)*:** Jeder Einkauf-Lauf hinterliess in `PurchasingSyncState` zwei
 Zeilen mit gleichem Start: eine `Success` und eine, die beim naechsten Start als `Abgebrochen`
 markiert wird (z. B. Id 46/47). Der Status schreibt offenbar eine neue Zeile statt die
 `Running`-Zeile zu aktualisieren. Kosmetisch, aber die Tabelle sieht dadurch nach vielen
