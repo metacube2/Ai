@@ -21,6 +21,16 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICentralSalesDataProvider? _centralSalesDataProvider;
 
+    // Zwischenspeicher der zentralen Datensaetze (2026-09-28), wie im Management-Cockpit: gilt,
+    // solange sich die Quelle nicht aendert (Kennzeichen aus GetSourceStampAsync), hoechstens
+    // 30 Minuten. Vorher las jedes Oeffnen des Finanzvergleichs die Audit-CSVs neu ein.
+    // Zulaessig, weil dieser Dienst die Datensaetze nur liest und nicht veraendert.
+    internal static readonly TimeSpan CentralRecordsCacheLifetime = TimeSpan.FromMinutes(30);
+    private readonly SemaphoreSlim _centralRecordsGate = new(1, 1);
+    private List<SalesRecord>? _centralRecordsCache;
+    private string? _centralRecordsCacheStamp;
+    private DateTime _centralRecordsCacheAtUtc = DateTime.MinValue;
+
     public FinanceReconciliationService(IDbContextFactory<AppDbContext> dbFactory)
         : this(dbFactory, null)
     {
@@ -168,7 +178,30 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
     private async Task<List<SalesRecord>> LoadCentralRecordsAsync(AppDbContext db)
     {
         if (_centralSalesDataProvider is not null)
-            return await _centralSalesDataProvider.GetRecordsAsync();
+        {
+            var stamp = await _centralSalesDataProvider.GetSourceStampAsync();
+            if (stamp is null)
+                return await _centralSalesDataProvider.GetRecordsAsync();
+
+            await _centralRecordsGate.WaitAsync();
+            try
+            {
+                if (_centralRecordsCache is not null &&
+                    stamp == _centralRecordsCacheStamp &&
+                    DateTime.UtcNow - _centralRecordsCacheAtUtc < CentralRecordsCacheLifetime)
+                    return _centralRecordsCache;
+
+                var records = await _centralSalesDataProvider.GetRecordsAsync();
+                _centralRecordsCache = records;
+                _centralRecordsCacheStamp = stamp;
+                _centralRecordsCacheAtUtc = DateTime.UtcNow;
+                return records;
+            }
+            finally
+            {
+                _centralRecordsGate.Release();
+            }
+        }
 
         return await db.CentralSalesRecords
             .AsNoTracking()

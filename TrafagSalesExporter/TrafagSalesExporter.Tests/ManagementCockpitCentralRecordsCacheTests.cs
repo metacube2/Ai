@@ -64,6 +64,31 @@ public sealed class ManagementCockpitCentralRecordsCacheTests
         Assert.Equal(2, provider.Reads);
     }
 
+    private static Task<List<SalesRecord>> LoadFinanceComparisonRecords(FinanceReconciliationService service)
+        => (Task<List<SalesRecord>>)typeof(FinanceReconciliationService)
+            .GetMethod("LoadCentralRecordsAsync", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(service, [null])!;
+
+    [Fact]
+    public async Task Finanzvergleich_Liest_Die_Quelle_Nur_Bei_Aenderung_Neu_Ein()
+    {
+        var provider = new CountingProvider();
+        var service = new FinanceReconciliationService(null!, provider);
+
+        await LoadFinanceComparisonRecords(service);
+        await LoadFinanceComparisonRecords(service);
+        Assert.Equal(1, provider.Reads);
+
+        provider.Stamp = "csv|b";
+        await LoadFinanceComparisonRecords(service);
+        Assert.Equal(2, provider.Reads);
+
+        provider.Stamp = null; // ohne Kennzeichen kein Zwischenspeicher
+        await LoadFinanceComparisonRecords(service);
+        await LoadFinanceComparisonRecords(service);
+        Assert.Equal(4, provider.Reads);
+    }
+
     [Fact]
     public async Task Nach_Dreissig_Minuten_Oder_Ohne_Kennzeichen_Wird_Neu_Eingelesen()
     {

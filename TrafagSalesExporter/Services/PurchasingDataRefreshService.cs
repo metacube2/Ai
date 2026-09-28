@@ -911,10 +911,38 @@ VALUES
         var conn = (SqliteConnection)db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync(cancellationToken);
-        const string sql = @"
+
+        // Endstatus (Success/Error) schliesst die eigene Running-Zeile ab, statt eine zweite Zeile
+        // anzulegen. BEFUND 2026-09-28: jeder Lauf hinterliess zwei Zeilen mit gleichem Start, und
+        // die Running-Zeile wurde beim naechsten Anwendungsstart als "Abgebrochen" markiert
+        // (z. B. Id 48/49). Die Tabelle sah dadurch nach vielen Abbruechen aus, die es nie gab.
+        // Findet sich keine passende Running-Zeile, wird wie bisher eine neue geschrieben.
+        const string updateSql = @"
+UPDATE PurchasingSyncState
+SET Status = $Status, CompletedAtUtc = $CompletedAtUtc, FromDate = $FromDate, ToDate = $ToDate,
+    LastSuccessfulDeltaAtUtc = $LastSuccessfulDeltaAtUtc, EkkoRows = $EkkoRows, EkpoRows = $EkpoRows,
+    EketRows = $EketRows, Message = $Message
+WHERE Id = (
+    SELECT Id FROM PurchasingSyncState
+    WHERE Mode = $Mode AND Status = 'Running' AND StartedAtUtc = $StartedAtUtc
+    ORDER BY Id DESC LIMIT 1);";
+        const string insertSql = @"
 INSERT INTO PurchasingSyncState (Mode, Status, StartedAtUtc, CompletedAtUtc, FromDate, ToDate, LastSuccessfulDeltaAtUtc, EkkoRows, EkpoRows, EketRows, Message)
 VALUES ($Mode, $Status, $StartedAtUtc, $CompletedAtUtc, $FromDate, $ToDate, $LastSuccessfulDeltaAtUtc, $EkkoRows, $EkpoRows, $EketRows, $Message);";
-        await ExecuteWithParametersAsync(conn, null, sql, new()
+
+        if (!string.Equals(status, "Running", StringComparison.OrdinalIgnoreCase))
+        {
+            await using var update = conn.CreateCommand();
+            update.CommandText = updateSql;
+            foreach (var (name, value) in BuildStatusParameters())
+                update.Parameters.AddWithValue(name, value ?? DBNull.Value);
+            if (await update.ExecuteNonQueryAsync(cancellationToken) > 0)
+                return;
+        }
+
+        await ExecuteWithParametersAsync(conn, null, insertSql, BuildStatusParameters(), cancellationToken);
+
+        Dictionary<string, object?> BuildStatusParameters() => new()
         {
             ["$Mode"] = mode,
             ["$Status"] = status,
@@ -927,7 +955,7 @@ VALUES ($Mode, $Status, $StartedAtUtc, $CompletedAtUtc, $FromDate, $ToDate, $Las
             ["$EkpoRows"] = ekpoRows,
             ["$EketRows"] = eketRows,
             ["$Message"] = message
-        }, cancellationToken);
+        };
     }
 
     private static async Task<PurchasingDataRefreshStatus> ReadLatestStatusAsync(SqliteConnection conn, CancellationToken cancellationToken)
