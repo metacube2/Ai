@@ -1,3 +1,5 @@
+using System.Globalization;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TrafagSalesExporter.Data;
 
@@ -5,9 +7,25 @@ namespace TrafagSalesExporter.Services;
 
 public class TimerBackgroundService : BackgroundService
 {
+    /// <summary>Wie oft die Nachhol-Regel fuer das Einkauf-Delta geprueft wird.</summary>
+    private static readonly TimeSpan PurchasingCatchUpCheckInterval = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// Abstand der Selbstaufrufe. Deutlich unter dem IIS-Leerlauf-Timeout (Standard 20 Minuten),
+    /// damit auch ein verspaeteter Aufruf den Worker noch haelt.
+    /// </summary>
+    private static readonly TimeSpan KeepAliveInterval = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Ziel des Selbstaufrufs, ueberschreibbar mit <c>KeepAlive:Url</c> (leer = aus). Eine kleine
+    /// statische Datei statt einer Seite, damit der Aufruf nichts rendert und nichts rechnet.
+    /// </summary>
+    private const string DefaultKeepAliveUrl = "https://trch-webapp-bidashboard.trafagch.local/BiDashboard/favicon.svg";
+
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TimerBackgroundService> _logger;
     private DateTime _nextRun = DateTime.MaxValue;
+    private DateTime _nextPurchasingCatchUpCheck = DateTime.MinValue;
 
     public DateTime NextRun => _nextRun;
 
@@ -45,12 +63,19 @@ public class TimerBackgroundService : BackgroundService
         // IIS den Worker nach einem Deploy erst beim ersten Request startet), fehlt der Tageslauf.
         // Damit das taegliche Tracking lueckenlos bleibt, wird ein verpasster Slot hier einmalig
         // nachgeholt, bevor der regulaere Warteloop beginnt.
+        _ = KeepAliveLoopAsync(stoppingToken);
+
         await CatchUpMissedRunAsync();
         await RecalculateNextRunAsync();
 
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+
+            // Erst in der Schleife, nicht beim Start: der PurchasingRefreshRunner raeumt bei
+            // seinem eigenen Start liegengebliebene Running-Eintraege auf und muss vorher
+            // gestartet sein. Nach 30 Sekunden ist er das sicher.
+            await CheckPurchasingCatchUpAsync();
 
             if (DateTime.Now < _nextRun) continue;
 
@@ -157,6 +182,140 @@ public class TimerBackgroundService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fehler beim naechtlichen Einkauf-Delta");
+        }
+    }
+
+    /// <summary>
+    /// Holt das Einkauf-Delta nach, wenn der planmaessige Slot es verpasst hat. Regel und
+    /// Befund vom 2026-09-28 in <see cref="TimerSchedule.IsPurchasingCatchUpDue"/>.
+    ///
+    /// Gestartet wird ueber den <see cref="IPurchasingRefreshRunner"/>, nicht direkt: der Lauf
+    /// haengt dann an der Anwendung, und ein gleichzeitiger Lauf (Klick in der Oberflaeche)
+    /// wird abgewiesen statt doppelt gegen SAP zu laufen.
+    /// </summary>
+    private async Task CheckPurchasingCatchUpAsync()
+    {
+        if (DateTime.Now < _nextPurchasingCatchUpCheck)
+            return;
+
+        // Steht der heutige Slot noch aus oder ist er gerade faellig, macht ihn der regulaere
+        // Lauf samt Delta. Sonst liefe das Delta um 12:00 doppelt: einmal hier, einmal im Slot.
+        if (_nextRun.Date <= DateTime.Now.Date)
+            return;
+        _nextPurchasingCatchUpCheck = DateTime.Now + PurchasingCatchUpCheckInterval;
+
+        try
+        {
+            var dbFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = await dbFactory.CreateDbContextAsync();
+            var settings = await db.ExportSettings.OrderBy(x => x.Id).FirstOrDefaultAsync();
+            if (settings is null)
+                return;
+
+            if (!await db.Sites.AnyAsync(s => s.TSC == PurchasingDataSourcePageService.PurchasingTsc))
+                return;
+
+            var lastSuccessUtc = await ReadLastPurchasingSuccessUtcAsync(db);
+            var lastSuccessLocal = lastSuccessUtc?.ToLocalTime();
+            if (!TimerSchedule.IsPurchasingCatchUpDue(DateTime.Now, settings.TimerHour, settings.TimerMinute, settings.TimerEnabled, lastSuccessLocal))
+                return;
+
+            var runner = _serviceProvider.GetService<IPurchasingRefreshRunner>();
+            if (runner is null)
+                return;
+
+            var started = runner.TryStart(PurchasingRefreshRunner.ModeDelta);
+            _logger.LogInformation(
+                "Einkauf-Delta Nachhol-Lauf {Result} um {Time}, letzter Erfolg {LastSuccess}",
+                started ? "gestartet" : "nicht gestartet (es laeuft bereits ein Einkauf-Lauf)",
+                DateTime.Now,
+                lastSuccessLocal?.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) ?? "nie");
+
+            if (started)
+            {
+                var eventLog = _serviceProvider.GetService<IAppEventLogService>();
+                if (eventLog is not null)
+                    await eventLog.WriteAsync("Purchasing", "Einkauf-Delta nachgeholt",
+                        details: $"Planmaessiger Slot verpasst. Letzter erfolgreicher Einkauf-Lauf: " +
+                                 $"{lastSuccessLocal?.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) ?? "nie"}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fehler bei der Pruefung auf ein verpasstes Einkauf-Delta");
+        }
+    }
+
+    /// <summary>
+    /// Ende des letzten erfolgreichen Einkauf-Laufs (Full oder Delta). Die Zeitstempel liegen als
+    /// ISO-Text vor; "Abgebrochen" und "Running" zaehlen bewusst nicht.
+    /// </summary>
+    private static async Task<DateTime?> ReadLastPurchasingSuccessUtcAsync(AppDbContext db)
+    {
+        var conn = (SqliteConnection)db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync();
+
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT MAX(CompletedAtUtc) FROM PurchasingSyncState WHERE Status = 'Success';";
+        var value = await command.ExecuteScalarAsync() as string;
+        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed)
+            ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+            : null;
+    }
+
+    /// <summary>
+    /// Haelt den IIS-Worker wach, indem die Anwendung sich alle paar Minuten selbst aufruft.
+    ///
+    /// BEFUND 2026-09-28: Der App-Pool steht nicht auf Dauerbetrieb (<c>AlwaysRunning</c>,
+    /// <c>idleTimeout = 0</c>, siehe docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md). IIS
+    /// beendet den Worker deshalb nach rund 20 Minuten ohne Anfrage, auch mitten in einem
+    /// Hintergrundlauf. Die Protokolle zeigen Neustarts alle ein bis drei Stunden. Dieser Aufruf
+    /// ersetzt die Server-Einstellung nicht, er ueberbrueckt sie, bis sie gesetzt ist.
+    ///
+    /// Nur in Produktion: ein Entwicklungsrechner soll nicht das Produktivsystem wachhalten.
+    /// </summary>
+    private async Task KeepAliveLoopAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var environment = _serviceProvider.GetService<IHostEnvironment>();
+            if (environment is null || !environment.IsProduction())
+                return;
+
+            var configured = _serviceProvider.GetService<IConfiguration>()?["KeepAlive:Url"];
+            var url = configured ?? DefaultKeepAliveUrl;
+            if (string.IsNullOrWhiteSpace(url))
+                return;
+
+            using var handler = new HttpClientHandler { UseDefaultCredentials = true };
+            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(1) };
+            var failureLogged = false;
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(KeepAliveInterval, stoppingToken);
+                try
+                {
+                    using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, stoppingToken);
+                    failureLogged = false;
+                }
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                {
+                    // Einmal melden, nicht alle fuenf Minuten: ein dauerhaft falsches Ziel soll
+                    // das Protokoll nicht fluten.
+                    if (!failureLogged)
+                        _logger.LogWarning(ex, "Selbstaufruf zum Wachhalten fehlgeschlagen: {Url}", url);
+                    failureLogged = true;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Wachhalten beendet");
         }
     }
 
