@@ -111,8 +111,8 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 - **Ladezeit `/einkauf` gemessen 2026-09-28: 98,6 s bei laufendem Worker**, also kein
   Kaltstart, sondern die Neuberechnung nach Ablauf des 15-Minuten-Snapshots. Die fruehere
   Angabe „9-11 s warm" trifft diesen Fall nicht. Seit `4f2c62f` erscheint die Seite sofort mit
-  Ladebalken, die Zahlen kommen aber weiterhin erst danach. Offen in
-  `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 4.
+  Ladebalken; seit `d32a6aa` (nicht deployed) liefert der Cache abgelaufene Staende sofort und die Standardansicht wird vorgewaermt. Details in
+  `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 5.
 
 ## Offene Punkte
 
