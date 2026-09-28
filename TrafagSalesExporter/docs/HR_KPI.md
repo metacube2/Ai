@@ -1,6 +1,6 @@
 # HR-KPI-Cockpit: Fachlogik, Datenquellen und Grenzen
 
-Stand: 2026-08-17. Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
+Stand: 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Abschnitt 8). Zusammengefuehrt aus `HR_KPI_NACHDOKU_2026-05-13.md`,
 `HR_KPI_KORREKTUREN_2026-07-06.md` und `HR_KPI_FEIERTAGE_FILTERTEST_2026-08-06.md`.
 
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
@@ -53,7 +53,9 @@ Grundlage `formeln.docx`. **Nenner ist immer Headcount der Festangestellten, nic
 | --- | --- |
 | Monat | Arbeitnehmerkuendigungen des Monats / Headcount des Monats |
 | Quartal | Arbeitnehmerkuendigungen des Quartals / durchschnittlicher Headcount des Quartals |
-| Prognose Jahr | aktuelle Quartals-Fluktuation **x 4** — bewusst nicht vom 01.01. hochgerechnet |
+| Prognose Jahr | aktuelle Quartals-Fluktuation **x 4** — bewusst nicht vom 01.01. hochgerechnet, von HR bestaetigt |
+| Prognose gleitend (seit 2026-09-28) | relevante Austritte der letzten 12 Monate bis Stichtag / durchschnittlicher Headcount dieser 12 Monate |
+| Vorjahr (seit 2026-09-28) | relevante Austritte des ganzen Vorjahres / durchschnittlicher Headcount des Vorjahres, mit Abstand der beiden Prognosen in Prozentpunkten |
 | YTD | fluktuationsrelevante Kuendigungen seit 01.01. bis Stichtag / durchschnittlicher Headcount im bisherigen Jahr |
 
 Ein Austritt ist **fluktuationsrelevant**, wenn die Austrittsart als
@@ -130,6 +132,9 @@ als datierte Einzelereignisse liefert.
 
 ## 7. Bewusst nicht geaendert, fachliche Bestaetigung offen
 
+*Ueberholt am 2026-09-28: HR hat diese Punkte bis auf die 8,4-Stunden-Umrechnung beantwortet,
+siehe Abschnitt 8. Die Liste bleibt als Stand vom 2026-08-17 stehen.*
+
 Diese Werte sind keine Codefehler, sondern Annahmen, die HR bestaetigen muss:
 
 - `8.4 Stunden = 1 Krankheitstag` als Standardumrechnung
@@ -143,6 +148,50 @@ Diese Werte sind keine Codefehler, sondern Annahmen, die HR bestaetigen muss:
 - Ob Praktikanten, Werkstudenten, Aushilfen und Lehrlinge immer auszuschliessen sind
 
 Sonja muss die Absenzen weiterhin gegen Rexx abgleichen.
+
+## 8. Antworten von HR und Umsetzung, 2026-09-28
+
+Sonja Richter (HR) hat Ingos Fragenmail vom 2026-08-19 waehrend seiner Ferien beantwortet.
+Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschieden.
+
+| # | Frage | Antwort HR | Umsetzung |
+| --- | --- | --- | --- |
+| 2 | Kurz- gegen Langzeitkrankheit | Die Rexx-Arten nicht unterscheiden, „Krankheit" ziehen; ab dem **61. Krankheitstag** gilt die Krankheit als Langzeitkrankheit | **Geaendert.** Beide Rexx-Felder zaehlen als Krankheit (Entscheid Ingo). Kurz/lang je Person nach `HrKpiDashboardBuilder.ClassifySickness`: Summe der Krankheitstage im Export (Stunden / 8,4) ab 61 = langzeitkrank, dann zaehlt die ganze Krankheit als lang. Rexx liefert keine einzelnen Faelle, deshalb die Summe (Entscheid Ingo). Kachel „Krankheit Lang" nennt die Anzahl Langzeitkranke |
+| 3 | FTE-Fallback 0,5 | FTE ist bei echten Mitarbeitenden nie leer und entspricht der Sollzeit (0,8 = 32 h/Woche); leer nur bei Reminderprofilen wie ICT | **Geaendert.** Ohne SAP-Beschaeftigungsgrad **und** ohne Rexx-Sollzeit gilt eine Zeile als Reminderprofil und faellt aus allen Kennzahlen (Entscheid Ingo, `IstReminderprofil`). Nur wenn die Zeitdatei die Person gefunden hat: ein fehlgeschlagener Namens-Join schliesst niemanden aus. Fehlt nur SAP, gilt FTE = Sollzeit / 8,4 h. Die bekannten Profile „ICT Trafag" und „Empfaenger Reminder" standen schon in der Ausschlussliste |
+| 4 | GLZ-Ampel 50/100 h | Korrekt, positiv und negativ gleich, auch bei Teilzeit | unveraendert |
+| 5 | Restferien-Ampel | Q1: bis 5 Tage gruen, mehr rot. Ab Q2: jeder Resttag rot | **Geaendert**, `ResolveRestferienAmpel`, massgeblich ist das Quartal des heutigen Tags (die Saldidatei ist ein Stichtagsstand) |
+| 6 | Prognose Quartalsrate x 4 | Beibehalten, zusaetzlich gleitender Durchschnitt und Vorjahresvergleich | **Ergaenzt**: Kacheln „Fluktuation Prognose gleitend" und „Fluktuation Vorjahr", beide aus der nur strukturgefilterten Austrittsliste wie der Vorjahresvergleich (H1) |
+| 7 | Definition fluktuationsrelevant | Stimmt | unveraendert |
+| 8 | Kuendigungserkennung | Nur „Kuendigung AN" fliesst in die Fluktuation | unveraendert, die Erkennung deckt `Kündigung AN` und `Kuendigung AN` ab |
+| 9 | Ausschluss Praktikanten, Werkstudenten, Aushilfen, Lehrlinge | Korrekt, keine Ausnahmen | unveraendert |
+
+Offen bleibt die **8,4-Stunden-Umrechnung** je Krankheitstag; danach wurde nicht gefragt.
+
+### 8.1 Periodengenaue Krankenquote: die Datumsfelder reichen nicht
+
+HR schreibt, die Datumsfelder stuenden in der Excel-Datei und der Zeitraum lasse sich unter
+Abwesenheiten eingrenzen. Nachgeprueft am 2026-09-28 an der produktiven
+`hrdata/Abwesenheitinstunden.xlsx` (Stand 08.07.2026, nur Spaltenkoepfe und Formate gelesen,
+keine Personendaten):
+
+- Die Datei hat **eine Zeile je Person** (270 Zeilen) mit **kumulierten** Stunden des
+  Exportzeitraums.
+- Die Spalten `Krankheit angetreten (Zeitraum)` und `Krank nicht buchbar angetreten (Zeitraum)`
+  enthalten ein Datum oder eine Spanne `TT.MM.JJJJ - TT.MM.JJJJ`. Das ist der Zeitraum des
+  **juengsten** Falls, nicht aller Faelle (Befund H2 vom 2026-07-06). Unser Leser sucht nach
+  `Von Datum`/`Bis Datum` und liest diese Spalten nicht; mit ihnen liesse sich die Summe aber
+  ohnehin nicht auf einen anderen Zeitraum aufteilen.
+
+Damit ist die Krankenquote nur dann periodengenau, wenn **der Export in Rexx schon auf den
+gewuenschten Zeitraum eingegrenzt** wird, was HR mit „unter Abwesenheiten eingegrenzt"
+vermutlich meint. Die Anzeige bleibt bei einem Zeitraumfilter deshalb beim Hinweis
+„Zeitraum nicht bestimmbar". HR hat angeboten, das im naechsten Call gemeinsam anzusehen.
+
+### 8.2 Nebenbefund: die HR-Dateien auf dem Server sind alt
+
+Stand der Dateien in `hrdata` am 2026-09-28: die Rexx-Exporte vom **08.07.2026**, die SAP-Datei
+`HR_KPI_EXPORT.xlsx` vom **26.05.2026**. Das Cockpit zeigt also den Stand von Juli. Neue
+Mitarbeitende seit Mai haben keinen SAP-Beschaeftigungsgrad und laufen ueber die Sollzeit.
 
 ## Querverweise
 

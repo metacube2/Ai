@@ -57,6 +57,14 @@ internal sealed class HrKpiDashboardBuilder
         if (excludedRows > 0)
             result.Notices.Add($"{excludedRows:N0} Testpersonen-Zeilen wurden aus dem HR-KPI-Dashboard ausgeschlossen.");
 
+        // Reminderprofile (z. B. ICT) haben laut HR als einzige kein FTE: bei echten Mitarbeitenden
+        // ist das Feld nie leer und entspricht der Sollzeit. Sie werden aus allen Kennzahlen
+        // genommen, nicht mit einem geschaetzten FTE mitgezaehlt. Die bekannten Profile stehen
+        // zusaetzlich in ExcludedPersonNameKeys; diese Regel faengt auch unbekannte ab.
+        var reminderProfiles = employees.RemoveAll(x => x.IstReminderprofil);
+        if (reminderProfiles > 0)
+            result.Notices.Add($"{reminderProfiles:N0} aktive Zeilen ohne SAP-Beschaeftigungsgrad und ohne Rexx-Sollzeit wurden als Reminderprofil ausgeschlossen (laut HR keine echten Mitarbeitenden).");
+
         result.OrganisationOptions = employees
             .Select(x => x.Organisationseinheit)
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -116,7 +124,7 @@ internal sealed class HrKpiDashboardBuilder
         result.Absences = absences;
         result.Leavers = leavers;
         result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable);
-        result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod);
+        result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers);
         // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile (die "(Zeitraum)"-Spalten
         // markieren nur das juengste Ereignis, die "(Stunden Ind.)"-Summen sind kumulativ - siehe
         // HR_KPI_KORREKTUREN_2026-07-06.md H2). Ist trotzdem ein Zeitraumfilter
@@ -172,7 +180,7 @@ internal sealed class HrKpiDashboardBuilder
             result.Notices.Add($"{missingEmployeeNumberCount:N0} aktive Mitarbeitendenzeilen ohne Personalnummer werden in Headcount-Distinct-Kennzahlen nicht mitgezaehlt.");
         var missingFteCount = employees.Count(x => !x.BeschaeftigungsgradProzent.HasValue);
         if (missingFteCount > 0)
-            result.Notices.Add($"{missingFteCount:N0} aktive Mitarbeitendenzeilen ohne SAP-Beschaeftigungsgrad verwenden einen FTE-Fallback aus Rexx-Arbeitszeitmodell/Sollzeit.");
+            result.Notices.Add($"{missingFteCount:N0} aktive Mitarbeitendenzeilen ohne SAP-Beschaeftigungsgrad: FTE aus der Rexx-Sollzeit (FTE = Sollzeit / 8.4h je Tag), sonst aus dem Arbeitszeitmodell.");
         if (HasEmployeeOnlyTurnoverFilters(normalizedOptions))
             result.Notices.Add("Kostenstelle, GLZ und Restferien filtern aktive Mitarbeitende und Absenzen, aber nicht die Fluktuation. Die Austrittsdatei enthaelt diese Felder nicht stabil genug fuer denselben Schnitt.");
         if (analysisPeriod.HasPeriod && absenceRowsWithoutDates > 0)
@@ -236,6 +244,11 @@ internal sealed class HrKpiDashboardBuilder
                 GeschlechtText = MapGender(sap?.Geschlecht),
                 BeschaeftigungsgradProzent = percent,
                 Fte = fte,
+                // Nur wenn die Zeitdatei die Person gefunden hat: ein fehlgeschlagener Namens-Join
+                // ist kein Beleg fuer ein Reminderprofil und darf niemanden ausschliessen.
+                IstReminderprofil = time is not null &&
+                                    !(time.AvgSollzeitTag > 0) &&
+                                    !(percent > 0),
                 IstTeilzeit = percent.HasValue && percent.Value > 0
                     ? percent.Value < 100
                     : string.Equals(arbeitzeitmodell, "Teilzeit", StringComparison.OrdinalIgnoreCase),
@@ -248,7 +261,7 @@ internal sealed class HrKpiDashboardBuilder
                 Urlaubsanspruch = urlaubsanspruch,
                 FerienAusstehend = ferienAusstehend,
                 Ferientage = ferienBezogen < 0 ? 0 : ferienBezogen,
-                RestferienAmpel = urlaubRest <= 5 ? "Gruen" : "Rot",
+                RestferienAmpel = ResolveRestferienAmpel(urlaubRest, DateTime.Today),
                 Bruttolohn = ReadDecimal(row, headers, "Lohn", "Lohn_Raw"),
                 LohnWaehrung = ReadString(row, headers, "Lohn Waehrung", "Lohn WÃ¤hrung"),
                 BuTage = sap?.BuTage ?? 0,
@@ -446,9 +459,9 @@ internal sealed class HrKpiDashboardBuilder
             .Select(g =>
             {
                 var first = g.First();
-                var kurz = g.Sum(x => x.KrankheitKurzStd);
-                var lang = g.Sum(x => x.KrankheitLangStd);
-                var gesamtStd = kurz + lang;
+                // Kurz/lang nicht aus den Rexx-Feldern, sondern nach der 61-Tage-Regel je Person.
+                var gesamtStd = g.Sum(x => x.KrankheitKurzStd + x.KrankheitLangStd);
+                var (kurz, lang, istLangzeitkrank) = ClassifySickness(gesamtStd);
                 var tage = Math.Round(gesamtStd / 8.4m, 1);
                 return new HrAbsenceRow
                 {
@@ -465,7 +478,8 @@ internal sealed class HrKpiDashboardBuilder
                     KrankheitstageGesamt = tage,
                     KrankheitstageKurz = Math.Round(kurz / 8.4m, 1),
                     KrankheitstageLang = Math.Round(lang / 8.4m, 1),
-                    KrankenquoteMa = tage == 0 ? 0 : tage / denominator
+                    KrankenquoteMa = tage == 0 ? 0 : tage / denominator,
+                    IstLangzeitkrank = istLangzeitkrank
                 };
             })
             .ToList();
@@ -541,7 +555,8 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<HrKpiEmployeeRow> employees,
         IReadOnlyCollection<HrLeaverRow> turnoverHeadcountLeavers,
         IReadOnlyCollection<HrLeaverRow> leavers,
-        TurnoverPeriodScope period)
+        TurnoverPeriodScope period,
+        IReadOnlyCollection<HrLeaverRow>? comparisonLeavers = null)
     {
         var turnoverIntervals = BuildTurnoverIntervals(employees, turnoverHeadcountLeavers);
         var selectionHeadcount = ResolveTurnoverDenominator(employees, turnoverIntervals, period);
@@ -620,6 +635,20 @@ internal sealed class HrKpiDashboardBuilder
         var forecastRate = quarterRate * 4;
         var yearRate = yearHeadcount == 0 ? 0 : yearLeaverCount / yearHeadcount;
 
+        // Zwei weitere Prognosen auf Wunsch HR (Sonja Richter): gleitend ueber die letzten zwoelf
+        // Monate und der Vergleich zum Vorjahr. Beide brauchen Austritte AUSSERHALB des gewaehlten
+        // Datumsfilters, deshalb die nur strukturgefilterte Vergleichsliste (wie beim
+        // Vorjahresvergleich, siehe H1 in docs/HR_KPI.md).
+        var trendLeavers = comparisonLeavers ?? leavers;
+        var trendIntervals = BuildTurnoverIntervals(employees, trendLeavers);
+        var rolling = CalculateRollingTwelveMonthTurnover(trendLeavers, trendIntervals, period.AnchorDate.Date);
+        var previousYear = year - 1;
+        var previousYearHeadcount = CalculateAverageFixedHeadcount(trendIntervals, Enumerable.Range(1, 12).Select(month => (previousYear, month)));
+        var previousYearLeaverCount = CountDistinctPersons(trendLeavers
+            .Where(x => x.IstFluktuationsrelevant && x.Austrittsjahr == previousYear)
+            .Select(x => x.Personalnummer));
+        var previousYearRate = previousYearHeadcount == 0 ? 0 : previousYearLeaverCount / previousYearHeadcount;
+
         metrics[0] = new HrKpiMetric
         {
             Label = "HC Basis YTD",
@@ -638,6 +667,8 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Austritte Quartal", Value = quarterLeaverCount.ToString("N0"), Detail = $"Relevant Q{currentQuarter}/{year}", Severity = "Normal", Theme = "Relevant", HelpText = $"Anzahl der fuer die Fluktuation zaehlenden Austritte im Quartal Q{currentQuarter}/{year}. Jede Person wird nur einmal gezaehlt, auch wenn sie mehrfach in den Daten vorkommt." },
             new() { Label = "Fluktuation Quartal", Value = quarterRate.ToString("P1"), Detail = "Relevante Austritte / Avg HC Quartal", Severity = quarterRate > 0.08m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte im Quartal Q{currentQuarter}/{year} geteilt durch die durchschnittliche Personalzahl des Quartals, dann als Prozent. Der Wert gilt nur fuer dieses Quartal und ist NICHT auf ein ganzes Jahr hochgerechnet." },
             new() { Label = "Fluktuation Prognose", Value = forecastRate.ToString("P1"), Detail = "Quartalsrate x 4, nur Schaetzung", Severity = forecastRate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = "So wird gerechnet: die Fluktuation des aktuellen Quartals mal 4. Das ist nur eine grobe Hochrechnung, wie das ganze Jahr aussehen koennte, wenn es so weitergeht - also eine Schaetzung und kein tatsaechlicher Wert." },
+            new() { Label = "Fluktuation Prognose gleitend", Value = rolling.Rate.ToString("P1"), Detail = $"Letzte 12 Monate: {rolling.Leavers:N0} relevante Austritte / Avg HC {FormatHeadcount(rolling.Headcount)}", Severity = rolling.Rate > 0.12m ? "Warning" : "Normal", Theme = "Forecast", HelpText = $"So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte der letzten zwoelf Monate bis {FormatDateShort(period.AnchorDate)} geteilt durch die durchschnittliche Personalzahl in diesen zwoelf Monaten. Anders als die Quartalsprognose schwankt dieser Wert kaum, weil ein einzelnes starkes oder schwaches Quartal nur ein Viertel ausmacht. Der gewaehlte Datumsfilter wird dafuer bewusst nicht angewendet." },
+            new() { Label = "Fluktuation Vorjahr", Value = previousYearRate.ToString("P1"), Detail = $"{previousYear}: {previousYearLeaverCount:N0} relevante Austritte / Avg HC {FormatHeadcount(previousYearHeadcount)}; Prognose {forecastRate - previousYearRate:+0.0%;-0.0%;0.0%}, gleitend {rolling.Rate - previousYearRate:+0.0%;-0.0%;0.0%}", Severity = "Normal", Theme = "Forecast", HelpText = $"Die tatsaechliche Fluktuation des ganzen Vorjahres {previousYear} als Vergleich zu den beiden Prognosen. Die Zahlen hinter 'Prognose' und 'gleitend' zeigen, um wie viele Prozentpunkte die jeweilige Prognose ueber (+) oder unter (-) dem Vorjahr liegt." },
             new() { Label = "HC Jahr bis Stichtag", Value = FormatHeadcount(yearHeadcount), Detail = $"Avg HC {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Basis", HelpText = $"Die durchschnittliche Personalzahl vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)} (Mittelwert der einzelnen Monatswerte). Gezaehlt werden Koepfe, nicht Stellenprozente. Diese Zahl ist die Basis fuer die Jahres-Fluktuation seit Jahresbeginn." },
             new() { Label = "Austritte YTD", Value = yearLeaverCount.ToString("N0"), Detail = $"Relevant {FormatDateShort(yearStart)}-{FormatDateShort(yearEnd)}", Severity = "Normal", Theme = "Relevant", HelpText = $"Anzahl der fuer die Fluktuation zaehlenden Austritte vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)}, also seit Jahresbeginn. Jede Person wird nur einmal gezaehlt." },
             new() { Label = "Fluktuation YTD", Value = yearRate.ToString("P1"), Detail = $"01.01.-{FormatDateShort(yearEnd)} / Avg HC YTD", Severity = yearRate > 0.12m ? "Warning" : "Normal", Theme = "Rate", HelpText = $"Die wichtigste Jahres-Kachel. So wird gerechnet: die fuer die Fluktuation zaehlenden Austritte vom {FormatDateShort(yearStart)} bis {FormatDateShort(yearEnd)} geteilt durch die durchschnittliche Personalzahl im gleichen Zeitraum, dann als Prozent. YTD bedeutet 'seit Jahresbeginn bis zum Stichtag'. Bei einem vergangenen Jahr ist der Stichtag der 31.12., beim laufenden Jahr der heutige bzw. gewaehlte Tag." }
@@ -655,6 +686,7 @@ internal sealed class HrKpiDashboardBuilder
         var totalSick = absences.Sum(x => x.KrankheitstageGesamt);
         var shortSick = absences.Sum(x => x.KrankheitstageKurz);
         var longSick = absences.Sum(x => x.KrankheitstageLang);
+        var longTermSickPersons = absences.Count(x => x.IstLangzeitkrank);
         var fte = employees.Sum(x => x.Fte);
         var denominator = fte * analysisPeriod.Workdays;
         var absenceRate = denominator <= 0 ? 0 : totalSick / denominator;
@@ -677,8 +709,8 @@ internal sealed class HrKpiDashboardBuilder
         return
         [
             new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
-            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = "Rexx kurz / 8.4h", Severity = "Normal" },
-            new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = "Rexx lang / 8.4h", Severity = longSick > shortSick ? "Warning" : "Normal" },
+            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / 8.4h)", Severity = "Normal" },
+            new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke ab dem {LongTermSickDayThreshold:N0}. Krankheitstag (Summe je Person)", Severity = longSick > shortSick ? "Warning" : "Normal" },
             new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage ZH), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
             new() { Label = "NBU-Tage", Value = nbu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
@@ -719,7 +751,7 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Ferien bezogen", Value = vacationUsed.ToString("N1"), Detail = "Anspruch - Rest - ausstehend", Severity = "Normal" },
             new() { Label = "Ferien Rest", Value = vacationLeft.ToString("N1"), Detail = "Rexx Urlaub Rest", Severity = restVacationRed > 0 ? "Warning" : "Normal" },
             new() { Label = "Ferien ausstehend", Value = vacationOpen.ToString("N1"), Detail = "Rexx ausstehend", Severity = "Normal" },
-            new() { Label = "Restferien Rot", Value = restVacationRed.ToString("N0"), Detail = ">5 Tage Rest", Severity = restVacationRed > 0 ? "Warning" : "Normal" }
+            new() { Label = "Restferien Rot", Value = restVacationRed.ToString("N0"), Detail = DescribeRestferienRule(DateTime.Today), Severity = restVacationRed > 0 ? "Warning" : "Normal" }
         ];
     }
 
@@ -1074,6 +1106,31 @@ internal sealed class HrKpiDashboardBuilder
         return monthlyHeadcounts.Count == 0 ? 0 : monthlyHeadcounts.Average();
     }
 
+    /// <summary>
+    /// Gleitende Fluktuation der letzten zwoelf Monate bis zum Stichtag: relevante Austritte vom
+    /// Tag nach dem Stichtag des Vorjahres bis zum Stichtag, geteilt durch den Durchschnitt der
+    /// zwoelf Monats-Headcounts, die in diesem Fenster enden.
+    /// </summary>
+    private static (decimal Rate, int Leavers, decimal Headcount) CalculateRollingTwelveMonthTurnover(
+        IReadOnlyCollection<HrLeaverRow> leavers,
+        IReadOnlyCollection<TurnoverEmploymentInterval> intervals,
+        DateTime anchorDate)
+    {
+        var windowStart = anchorDate.AddYears(-1);
+        var months = Enumerable.Range(0, 12)
+            .Select(offset => new DateTime(anchorDate.Year, anchorDate.Month, 1).AddMonths(-offset))
+            .Select(x => (x.Year, x.Month))
+            .ToList();
+        var headcount = CalculateAverageFixedHeadcount(intervals, months);
+        var leaverCount = CountDistinctPersons(leavers
+            .Where(x => x.IstFluktuationsrelevant &&
+                        x.Austrittsdatum.HasValue &&
+                        x.Austrittsdatum.Value.Date > windowStart &&
+                        x.Austrittsdatum.Value.Date <= anchorDate)
+            .Select(x => x.Personalnummer));
+        return (headcount == 0 ? 0 : leaverCount / headcount, leaverCount, headcount);
+    }
+
     private static int CountFixedHeadcountOn(IReadOnlyCollection<TurnoverEmploymentInterval> intervals, DateTime date)
         => intervals
             .Where(x => (!x.Eintrittsdatum.HasValue || x.Eintrittsdatum.Value <= date) &&
@@ -1286,6 +1343,37 @@ internal sealed class HrKpiDashboardBuilder
             .Select(x => x!.Value)
             .Distinct()
             .Count();
+
+    /// <summary>Ab diesem Krankheitstag gilt eine Krankheit als Langzeitkrankheit (Vorgabe HR).</summary>
+    internal const decimal LongTermSickDayThreshold = 61m;
+
+    /// <summary>
+    /// Restferien-Ampel nach Vorgabe HR (Sonja Richter): im ersten Quartal sind bis 5 Tage
+    /// Restferien noch gruen, weil sie ins neue Jahr uebertragen werden duerfen. Ab dem zweiten
+    /// Quartal ist jeder Resttag rot. Massgeblich ist das Quartal des Stichtags.
+    /// </summary>
+    internal static string ResolveRestferienAmpel(decimal urlaubRest, DateTime referenceDate)
+        => referenceDate.Month <= 3
+            ? (urlaubRest <= 5 ? "Gruen" : "Rot")
+            : (urlaubRest > 0 ? "Rot" : "Gruen");
+
+    internal static string DescribeRestferienRule(DateTime referenceDate)
+        => referenceDate.Month <= 3 ? ">5 Tage Rest (Q1)" : ">0 Tage Rest (ab Q2)";
+
+    /// <summary>
+    /// Teilt die Krankheitsstunden einer Person in kurz und lang. Vorgabe HR: die Rexx-Arten
+    /// werden nicht unterschieden, beide zaehlen als Krankheit; ab dem 61. Krankheitstag gilt
+    /// die Krankheit als Langzeitkrankheit. Rexx liefert je Person nur die Summe des
+    /// Exportzeitraums, keine einzelnen Faelle - deshalb zaehlt die Summe (Entscheid Ingo
+    /// 2026-09-28). Die ganze Krankheit wird dann lang, nicht erst die Tage ab dem 61.
+    /// </summary>
+    internal static (decimal KurzStd, decimal LangStd, bool IstLangzeitkrank) ClassifySickness(decimal gesamtStd)
+    {
+        var tage = Math.Round(gesamtStd / 8.4m, 1);
+        return tage >= LongTermSickDayThreshold
+            ? (0m, gesamtStd, true)
+            : (gesamtStd, 0m, false);
+    }
 
     private static decimal ResolveFte(decimal? employmentPercent, string workingTimeModel, decimal? averageHoursPerDay)
     {

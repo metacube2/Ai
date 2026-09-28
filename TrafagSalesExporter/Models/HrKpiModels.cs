@@ -163,6 +163,9 @@ public sealed class HrKpiEmployeeRow
     public string GeschlechtText { get; set; } = "Unbekannt";
     public decimal? BeschaeftigungsgradProzent { get; set; }
     public decimal Fte { get; set; }
+    // Weder SAP-Beschaeftigungsgrad noch Rexx-Sollzeit: laut HR ein Reminderprofil wie ICT,
+    // keine echte Person. Wird aus allen Kennzahlen ausgeschlossen.
+    public bool IstReminderprofil { get; set; }
     public bool IstTeilzeit { get; set; }
     public int? Dienstjahre { get; set; }
     public bool IstAktiv { get; set; }
@@ -204,6 +207,9 @@ public sealed class HrAbsenceRow
     public decimal KrankheitstageKurz { get; set; }
     public decimal KrankheitstageLang { get; set; }
     public decimal KrankenquoteMa { get; set; }
+    // Ab dem 61. Krankheitstag gilt die Krankheit als Langzeitkrankheit (Sonja Richter, HR,
+    // Antwort auf Ingos Fragen vom 2026-08-19). Gezaehlt wird die Summe je Person im Export.
+    public bool IstLangzeitkrank { get; set; }
 }
 
 public sealed class HrLeaverRow

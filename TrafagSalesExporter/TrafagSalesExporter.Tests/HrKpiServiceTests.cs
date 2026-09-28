@@ -170,7 +170,7 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Contains("FTE", absenceRate.Detail);
 
         Assert.Contains(result.Notices, notice => notice.Contains("ohne Personalnummer", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(result.Notices, notice => notice.Contains("FTE-Fallback", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Notices, notice => notice.Contains("FTE aus der Rexx-Sollzeit", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -476,6 +476,105 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal("Alpha, Anna", Assert.Single(result.Leavers).NameVoll);
         Assert.Contains(result.TurnoverMetrics, metric => metric.Label == "Fluktuation YTD");
         AssertEveryVisibleBlockIsConsistent(result, "kombinierte Filter");
+    }
+
+    // ---- Vorgaben HR (Sonja Richter, Antwort auf Ingos Fragen vom 2026-08-19) ----
+
+    [Theory]
+    [InlineData(2026, 2, 5, "Gruen")]
+    [InlineData(2026, 3, 5.5, "Rot")]
+    [InlineData(2026, 4, 0.5, "Rot")]
+    [InlineData(2026, 4, 0, "Gruen")]
+    [InlineData(2026, 12, 3, "Rot")]
+    public void Restferien_Ampel_Q1_Bis_Fuenf_Tage_Gruen_Ab_Q2_Jeder_Resttag_Rot(int year, int month, double rest, string expected)
+    {
+        Assert.Equal(expected, HrKpiDashboardBuilder.ResolveRestferienAmpel((decimal)rest, new DateTime(year, month, 15)));
+    }
+
+    [Fact]
+    public void Krankheit_Wird_Ab_Dem_61_Tag_Als_Langzeitkrankheit_Gezaehlt()
+    {
+        var sixtyDays = HrKpiDashboardBuilder.ClassifySickness(60m * 8.4m);
+        var sixtyOneDays = HrKpiDashboardBuilder.ClassifySickness(61m * 8.4m);
+
+        Assert.False(sixtyDays.IstLangzeitkrank);
+        Assert.Equal(60m * 8.4m, sixtyDays.KurzStd);
+        Assert.True(sixtyOneDays.IstLangzeitkrank);
+        // Die ganze Krankheit wird lang, nicht erst die Tage ab dem 61.
+        Assert.Equal(0m, sixtyOneDays.KurzStd);
+        Assert.Equal(61m * 8.4m, sixtyOneDays.LangStd);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Zaehlt_Beide_Rexx_Felder_Und_Teilt_Nach_61_Tagen()
+    {
+        WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Personal Status",
+                "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)"
+            ],
+            [
+                // 40 + 21 Tage aus zwei Rexx-Feldern = 61 Tage: langzeitkrank.
+                [1001, "Alpha, Anna", "Org A", "Engineer", "Aktiv", 40m * 8.4m, 21m * 8.4m],
+                [1002, "Beta, Bruno", "Org B", "Engineer", "Aktiv", 16.8, 0]
+            ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var alpha = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
+        Assert.True(alpha.IstLangzeitkrank);
+        Assert.Equal(61m, alpha.KrankheitstageLang);
+        Assert.Equal(0m, alpha.KrankheitstageKurz);
+        var beta = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
+        Assert.False(beta.IstLangzeitkrank);
+        Assert.Equal(2m, beta.KrankheitstageKurz);
+
+        var longSick = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankheit Lang");
+        Assert.Equal("61.0", longSick.Value.Replace("’", "").Replace("'", ""));
+        Assert.StartsWith("1 Langzeitkranke", longSick.Detail);
+    }
+
+    [Fact]
+    public async Task BuildAsync_Schliesst_Reminderprofile_Ohne_Fte_Und_Ohne_Sollzeit_Aus()
+    {
+        RewriteEmployeeRows(
+        [
+            [1001, "Alpha, Anna", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF"],
+            [1002, "Beta, Bruno", "Org B", "200 / Org B", "Engineer", "n", new DateTime(2024, 2, 1), "Aktiv", "0:00", 25, 0, 0, 90000, "CHF"],
+            [3001, "Reminder, Profil", "Org A", "100 / Org A", "ICT", "n", new DateTime(2023, 1, 1), "Aktiv", "0:00", 0, 0, 0, 0, "CHF"],
+            [3002, "Unbekannt, Join", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2023, 1, 1), "Aktiv", "0:00", 25, 0, 0, 80000, "CHF"]
+        ]);
+        WriteWorkbook(Path.Combine(_folder, "Exportkommengehen.xlsx"),
+            ["Nachname, Vorname (Link Personal)", "Geburtsdatum", "Arbeitszeitmodell", "O taegliche Sollarbeitszeit (Woche)"],
+            [
+                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 8.4],
+                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 4.2],
+                // Reminderprofil: in der Zeitdatei vorhanden, aber ohne Sollzeit und ohne SAP-Zeile.
+                ["Reminder, Profil", new DateTime(2000, 1, 1), "", ""]
+                // "Unbekannt, Join" fehlt in der Zeitdatei: das ist KEIN Beleg fuer ein Reminderprofil.
+            ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        Assert.DoesNotContain(result.Employees, row => row.Personalnummer == 3001);
+        Assert.Contains(result.Employees, row => row.Personalnummer == 3002);
+        Assert.Contains(result.Notices, notice => notice.StartsWith("1 aktive Zeilen ohne SAP-Beschaeftigungsgrad und ohne Rexx-Sollzeit"));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Zeigt_Gleitende_Prognose_Und_Vorjahr_Neben_Der_Quartalsprognose()
+    {
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2025 });
+
+        Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Prognose");
+        var rolling = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Prognose gleitend");
+        // Letzte zwoelf Monate bis 31.12.2025: nur Anna (AN-Kuendigung) zaehlt; Bruno ist AG, Tom Praktikant.
+        Assert.StartsWith("Letzte 12 Monate: 1 relevante Austritte", rolling.Detail);
+        var previousYear = Assert.Single(result.TurnoverMetrics, metric => metric.Label == "Fluktuation Vorjahr");
+        // Vorjahr 2024 ist trotz Jahresfilter 2025 sichtbar: Fiona trat am 15.12.2024 aus.
+        Assert.StartsWith("2024: 1 relevante Austritte", previousYear.Detail);
+        Assert.Contains("Prognose", previousYear.Detail);
+        Assert.Contains("gleitend", previousYear.Detail);
     }
 
     private static void AssertEveryVisibleBlockIsConsistent(HrKpiResult result, string because)
