@@ -116,6 +116,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/rag/DEPLOYMENT.md` | aktuell verifizierter Produktivstand |
 | `docs/DEPLOYMENT.md` | **zusammengefuehrt**: Verfahren, Konsole, Fallen |
 | `docs/NUGET_SICHERHEIT_2026-09-01.md` | aktueller NuGet-Audit, Sicherheitsbefund und Updatepfad |
+| `docs/PLATTFORM_TEMPO_2026-09-28.md` | Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, Cockpit-Wechselkurse, SQLite-Cache |
 | `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand |
 | `docs/rag/ADMIN.md` | Admin, Kurzstand |
 | `docs/rag/PROJECT.md` | Projektstand, Kurzstand |

@@ -11,7 +11,8 @@ Stand: 2026-09-28
   „Fluktuation Prognose gleitend" (12 Monate) und „Fluktuation Vorjahr". GLZ-Schwellen,
   Fluktuationsdefinition und Ausschluesse von HR bestaetigt. Periodengenaue Krankenquote
   weiterhin nur mit einem auf den Zeitraum eingegrenzten Rexx-Export. Die Dateien in `hrdata`
-  sind vom 08.07. (Rexx) und 26.05. (SAP). Details: `docs/HR_KPI.md` Abschnitt 8.
+  sind vom 08.07. (Rexx) und 26.05. (SAP). Details: `docs/HR_KPI.md` Abschnitt 8. Ein Mail-Entwurf an
+  Sonja mit dem Umsetzungsstand und den zwei Call-Themen liegt vor (28.09., Versand durch Ingo).
 
 - Produktiv deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit
   `9435a5d`, Gesamtsuite `438/438` gruen: Die Krankenquote zieht bei den Arbeitstagen die neun

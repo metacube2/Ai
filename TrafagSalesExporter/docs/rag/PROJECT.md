@@ -1,12 +1,20 @@
 # RAG Project
 
-Stand: 2026-09-07
+Stand: 2026-09-28 (Tempo, Nachtlauf, HR und Lagerwert-Verlauf ergaenzt; uebriger Kurzstand vom 2026-09-07)
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 ## Kurzstand
+
+- **2026-09-28, nach Ingos Ferien:** Tempo der Webapp (groesster Kritikpunkt) produktiv verbessert:
+  Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s ->
+  0,07 s, Server-Einkaufsberechnung 105 s -> 24 s durch SQLite-Cache. Einkauf-Lauf fiel vom 10.09. bis
+  28.09. wegen IIS-Leerlauf aus, ist per Selbstaufruf und Nachhol-Delta abgesichert und lief am 28.09.
+  wieder; App-Pool-Dauerbetrieb offen als ISS-017 bei der IT. HR-Antworten von Sonja umgesetzt.
+  Lagerwert-Verlauf je Woche produktiv. Finance_All-Nachtlauf weiterhin unfertig und nicht
+  ausgeliefert. Details: `projektmanagement/PROJEKTSTATUS.md` PM-04, PM-07, PM-09.
 
 - ZZPRDAT (Produktionsdatum im Fertigungsauftrag) ist gebaut und auf sieben Wegen
   nachgetestet: Paket `ZPP1`, Transportauftrag `T76K912490`, bewusst **nicht

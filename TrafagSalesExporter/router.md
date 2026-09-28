@@ -1,6 +1,6 @@
 # Router — globaler Einstieg
 
-Stand: 2026-09-11
+Stand: 2026-09-28
 
 Dies ist der **einzige** globale Einstieg in die Dokumentation. Von hier fuehrt genau ein
 Schritt in einen Themenast, von dort genau ein Schritt in die Detaildatei.

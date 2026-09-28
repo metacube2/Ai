@@ -144,7 +144,7 @@ Datenbankverbindung und stellte zwei bis sechs Abfragen. Das Cockpit ruft sie fu
 Abfragen je Oeffnen, fuer eine Kurstabelle, die sich fast nie aendert. Dazu las jedes Oeffnen die
 Audit-CSVs neu ein (lokal 3 bis 4 s, auf dem Server rund 80 MB), weil deren Cache nur 10 Sekunden galt.
 
-### 6.3 Behebung, Commit `5a26596` (Deploy nach dem Mittagslauf)
+### 6.3 Behebung, Commit `5a26596` (produktiv seit 2026-09-28 13:32)
 
 | Aenderung | Wirkung |
 | --- | --- |

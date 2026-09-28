@@ -752,7 +752,7 @@ Auf Ingos Freigabe read-only gegen die Produktiv-DB und die `stdout`-Protokolle 
    nie doppelt mit ihm. Admin-Log: „Einkauf-Delta nachgeholt".
 2. **Wachhalten:** Nur in Produktion ruft die Anwendung alle 5 Minuten ihr `favicon.svg` auf,
    damit IIS sie nicht im Leerlauf beendet. Ueberschreibbar mit `KeepAlive:Url`, leer = aus.
-   **Ob IIS den Selbstaufruf als Aktivitaet zaehlt, ist noch nicht gemessen.** Beleg waere, dass
+   *Nachgewiesen am 2026-09-28, siehe 13.7: Worker 11:25 bis 13:32 ohne Neustart, 12:00-Lauf regulaer.* Urspruenglich: Beleg waere, dass
    in `logs/stdout_*.log` die mehrfachen Neustarts pro Tag ausbleiben und der 12:00-Lauf samt
    „Einkauf-Delta (naechtlich) gestartet" durchlaeuft.
 

@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-09-11
+Stand: 2026-09-28 (PM-04, PM-07 und neu PM-09 nachgefuehrt; uebrige Punkte Stand 2026-09-11)
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -24,10 +24,11 @@ nicht.
 | PM-01 | ZLO03: fehlende Materialien und falsche Mengen | Ingo | Hoch | Umsetzung liegt vor, Transport offen | Diagnoselauf `p_diag` und Regressionstest, danach Transport nach B76 | 2026-08-14 |
 | PM-02 | ZC12: Fehler bei Nullmengen | Ingo | Mittel | **Vorfrage am 2026-09-04 beantwortet: `ZC12` zeigt auf `ZM_ABGLEICH_KTSCH`, der Quelltext nennt sich selbst falsch `Z_ABGLEICH_KTSCH`. `fmt_quan` gehoert zum eigenen Neuaufbau vom 28.-30.04.2026, also Testluecke statt Regression. Die Trace-Infrastruktur ist Ingos Einbau vom 27.05.2026 und von Anfang an auskommentiert** | Die vorbereitete Fassung `saptasks/zc12/ZM_ABGLEICH_KTSCH_nachher.abap` einspielen — sie ist **noch nicht im System** —, danach den Nullmengenfall tracen und den Testfall um Vorgabewert null erweitern | 2026-09-07 |
 | PM-03 | ZZPRDAT: Produktionsdatum am Fertigungsauftrag | Ingo | Hoch | **Der am 2026-09-07 gefundene Konstruktionsfehler ist am selben Tag behoben: `BEFORE_UPDATE` prueft jetzt, ob der Auftrag vor diesem Sichern schon freigegeben war, und laesst Altauftraege in Ruhe. Alle sieben Wege plus Altauftragsfall und Write-once sind am 2026-09-07 auf dem korrigierten Stand nachgemessen, Klasse liegt in der Aufgabe `T76K912491`. Auftrag weiter nicht freigegeben** | Anschreiben absenden: Empfaengeradressen eintragen und den Text aus `docs/ZZPRDAT_Mail_Abnahme_2026-09-04.html` in den Outlook-Entwurf kopieren; danach Abnahme durch Lucas Castro und Florian Waechter, Marco prueft Etikett und Typenschild und dabei neu auch den Zeitpunkt des Drucks gegenueber V2. Erst zuletzt den Auftrag freigeben | 2026-09-07 |
-| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt; die zwei SAP-Restpunkte stehen unveraendert offen. Seit 2026-09-03 ist das Dashboard durch einen filterabhaengigen Snapshot beschleunigt, seit 2026-09-10 sind verstaendlichere Kennzahlen und die SAP-Quellenhilfe produktiv | Zwei SAP-Nacharbeiten anstossen; zusaetzlich die **nicht ausgelieferten drei Statusbeschriftungen** nachziehen und die neuen Texte produktiv sichtpruefen | 2026-09-11 |
+| PM-04 | Einkaufsdashboard: Spend mit Drilldown | Ingo | Mittel | Weitgehend erledigt; die zwei SAP-Restpunkte stehen unveraendert offen. Seit 2026-09-10 verstaendlichere Kennzahlen und SAP-Quellenhilfe produktiv. **Seit 2026-09-28 Lagerwert-Verlauf je Woche produktiv** (Wunsch Einkauf, von Marco bestaetigt); der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus und laeuft wieder (siehe PM-09) | Zwei SAP-Nacharbeiten anstossen; zusaetzlich die **nicht ausgelieferten drei Statusbeschriftungen** nachziehen und die neuen Texte produktiv sichtpruefen | 2026-09-11 |
 | PM-05 | Finance: alle Daten in einem zentralen Excel | Ingo | Mittel | Produktiv, laufende Detailarbeit. Die fuenf Ausgleichsfelder sind seit 2026-09-10 08:53 produktiv, `Finance_All` am selben Tag neu erzeugt | Ueber das Finance-Issue-Log weiterfuehren; CH/AT-Option und die Bedeutung von `date paid` mit Andreas entscheiden | 2026-09-11 |
-| PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma | Fertigstellung des automatischen Exporters abwarten, danach Anbindung/Auswertung planen | 2026-08-19 |
+| PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma. **Die fachlichen Antworten von Sonja Richter sind seit 2026-09-28 umgesetzt und produktiv** (Langzeitkrank ab 61. Tag, Reminderprofile ohne FTE ausgeschlossen, Restferien-Ampel nach Quartal, zwei neue Prognosen) | Mail-Entwurf an Sonja (28.09.) versenden; im naechsten Call periodengenaue Krankenquote und neue Exporte klaeren (Dateien vom 08.07./26.05.); Exporter der externen Firma abwarten | 2026-09-28 |
 | PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, Termin ueberschritten** | **Blocker 1 ist am 2026-09-09 geloest**, der deutsche Verkaufsbestand traegt jetzt fachliche Kundennummern und Namen. Blocker 2 besteht nur noch fuer die anderen Standorte fort | Neues Zieldatum mit Rohail vereinbaren; 30 Gutschriftenzeilen und drei Doppelnummern klaeren; Patrik die 171 uebrigen Vorschlaege pruefen lassen | 2026-09-11 |
+| PM-09 | Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf | Ingo | **Hoch** | **Am 2026-09-28 weitgehend erledigt und produktiv:** Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s -> 0,07 s, Server-Einkaufsberechnung 105 s -> 24 s durch SQLite-Cache; Nachtlauf gegen IIS-Leerlauf abgesichert, Einkauf-Lauf laeuft wieder | IT stellt den App-Pool auf Dauerbetrieb (ISS-017); Ingo prueft die Oberflaeche im Browser; Tageslauf am 29.09. beobachten | 2026-09-28 |
 
 ---
 
@@ -413,6 +414,16 @@ und `Einteilungen im Zeitraum` statt `Einteilungen`, an vier Stellen in
 `Services/PurchasingUiTextCatalog.cs`. Ausserdem hat noch niemand die neuen Texte
 produktiv angesehen.
 
+#### Nachtrag 2026-09-28: Lagerwert-Verlauf und Ausfall des Einkauf-Laufs
+
+Auf eine Mail waehrend Ingos Ferien (Lagerwert woechentlich festhalten und als Trend zeigen) ist
+Weg A umgesetzt: jeder Einkauf-Lauf speichert einen Tagesstand, die Einkauf-Uebersicht zeigt
+Stand Ende Kalenderwoche als Grafik und Liste. Marco hat bestaetigt, dass das Erfassen ab
+Verfuegbarkeit genuegt. Der rueckwirkende Verlauf aus `MBEWH` (Weg B) ist nicht gewuenscht.
+Dabei fiel auf, dass vom 10.09. bis 28.09. kein Einkauf-Lauf stattfand (siehe PM-09); seit dem
+28.09. 13:19 laeuft er wieder, und der Verlauf hat zwei Punkte. Offen bleiben der MB5L-Abgleich und
+Armins Entscheid zu Disponent 004. Details: `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
+
 ### PM-05 Finance: alle Daten in einem zentralen Excel
 
 Aufgenommen am 2026-07-27. Das zentrale Excel existiert produktiv und wird
@@ -468,6 +479,40 @@ REXX-Files im HR Cockpit, statt eines einmaligen manuellen Imports.
 fuer die technische Umsetzung der automatischen Auswertung.
 
 ---
+
+#### Nachtrag 2026-09-28: Antworten von HR umgesetzt
+
+Sonja Richter hat Ingos Fragen vom 19.08. beantwortet. Umgesetzt und produktiv seit 28.09. 11:25:
+Langzeitkrank ab dem 61. Krankheitstag (Summe je Person, beide Rexx-Felder zaehlen als Krankheit),
+Reminderprofile ohne SAP-FTE und ohne Rexx-Sollzeit ausgeschlossen, Restferien-Ampel Q1 bis 5 Tage
+gruen und ab Q2 jeder Resttag rot, zusaetzlich gleitende Prognose und Vorjahresvergleich. GLZ,
+Fluktuationsdefinition und Ausschluesse sind bestaetigt. Ein Mail-Entwurf an Sonja liegt vor
+(im Chat vom 28.09., Versand durch Ingo). Fuer den naechsten Call: periodengenaue Krankenquote nur
+mit eingegrenztem Rexx-Export, und neue Exporte, weil die Dateien vom 08.07. und 26.05. sind.
+Details: `docs/HR_KPI.md` Abschnitt 8.
+
+### PM-09 Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf
+
+Ausloeser war die Rueckmeldung der Nutzer, man sehe lange gar nichts von der Oberflaeche; laut
+Ingo ist Tempo der groesste Kritikpunkt an der ganzen Webapp. Am 2026-09-28 umgesetzt und
+produktiv:
+
+| Massnahme | Wirkung |
+| --- | --- |
+| Vorrendern aus, Ladebalken | Oberflaeche erscheint sofort (`/einkauf` 98,6 s -> 0,1 s bis zur ersten Anzeige) |
+| Einkaufsansicht vorgewaermt, Cache liefert abgelaufene Staende sofort | niemand wartet mehr auf die Einkaufsberechnung |
+| Wechselkurse im Speicher statt je Zeile per SQL | Management-Cockpit lokal 41 s -> 3,3 s |
+| SharePoint-Antworten gemerkt | Export-Dashboard 2,3 s -> 0,07 s |
+| SQLite-Seitencache 64 MB statt 2 MB | Server-Einkaufsberechnung 105 s -> 24 s, hilft allen Seiten |
+| CSV-Einlesen, Finanzvergleich-Cache | Finanzvergleich 3,7 s -> unter 1 s bei gleicher Quelle |
+
+**Nachtlauf:** Der IIS-Worker wurde nach rund 20 Minuten ohne Anfrage beendet, deshalb lief das
+Einkauf-Delta vom 10.09. bis 28.09. kein einziges Mal. Seit 28.09. ruft sich die Anwendung alle
+fuenf Minuten selbst auf und holt ein verpasstes Delta nach; am selben Tag lief der 12:00-Lauf
+regulaer und das Delta erfolgreich. Die eigentliche Loesung, den App-Pool auf Dauerbetrieb zu
+stellen, liegt als **ISS-017 bei der IT** (kein Fernzugriff auf `tragvapp401`).
+
+Details: `docs/PLATTFORM_TEMPO_2026-09-28.md`, `docs/EINKAUF_LAGERWERT_2026-08-18.md` 13.6 und 13.7.
 
 ### PM-08 Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08
 
