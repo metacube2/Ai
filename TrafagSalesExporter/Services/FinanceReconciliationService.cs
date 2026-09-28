@@ -398,7 +398,14 @@ public sealed class FinanceReconciliationService : IFinanceReconciliationService
         return false;
     }
 
+    // Gemerkt je Text (2026-09-28): wird je Verkaufszeile und je Konzernregel aufgerufen, laut Profil
+    // 1,3 s im Finanzvergleich. Kundennamen und Regeltexte wiederholen sich stark.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> NormalizedRuleTexts = new(StringComparer.Ordinal);
+
     private static string NormalizeRuleText(string value)
+        => NormalizedRuleTexts.GetOrAdd(value ?? string.Empty, static text => NormalizeRuleTextUncached(text));
+
+    private static string NormalizeRuleTextUncached(string value)
         => (value ?? string.Empty)
             .Replace("\u00e4", "ae", StringComparison.OrdinalIgnoreCase)
             .Replace("\u00f6", "oe", StringComparison.OrdinalIgnoreCase)

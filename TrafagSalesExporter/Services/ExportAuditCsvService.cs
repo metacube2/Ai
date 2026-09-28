@@ -447,8 +447,14 @@ public sealed class ExportAuditCsvService : IExportAuditCsvService
         return values;
     }
 
+    // Gemerkt je Spaltenname (2026-09-28): GetText normalisierte den festen Spaltennamen bei jedem
+    // Feldzugriff jeder Zeile neu - bei rund 110'000 Zeilen und rund 40 Feldern Millionen Mal. Laut
+    // Profil war das der groesste Posten beim Einlesen der Audit-CSVs (Finanzvergleich, Cockpit).
+    // Die Menge der Spaltennamen ist klein und fest, der Speicher waechst deshalb nicht.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> NormalizedHeaders = new(StringComparer.Ordinal);
+
     private static string NormalizeHeader(string value)
-        => new(value.Where(char.IsLetterOrDigit).ToArray());
+        => NormalizedHeaders.GetOrAdd(value, static header => new string(header.Where(char.IsLetterOrDigit).ToArray()));
 
     private static string GetText(IReadOnlyList<string> values, IReadOnlyDictionary<string, int> headers, string header)
         => headers.TryGetValue(NormalizeHeader(header), out var index) && index >= 0 && index < values.Count
