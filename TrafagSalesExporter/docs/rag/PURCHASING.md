@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-09-03
+Stand: 2026-09-28 (Lagerwert-Verlauf ergaenzt; uebriger Kurzstand vom 2026-09-03)
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -101,6 +101,12 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   `Elikz='X'` aus; CHF-Bewertung ueber `Waers`/`Wkurs`.
 - Arbeitsweise aus dem Marco-Review: jeweils einen Reiter vollstaendig
   abnehmen, bevor der naechste erweitert wird.
+
+- Lagerwert Einkaufsteile (Disponenten 001-005, `MBEW.SALK3`, Bewertungskreis 1100): Kachel
+  produktiv und in der Datenbank gespeichert, Wert fachlich **noch nicht gegen MB5L
+  abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche gebaut, aber nicht
+  deployed**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
+  kein Rueckblick vor dem Deploy. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
 
 ## Offene Punkte
 

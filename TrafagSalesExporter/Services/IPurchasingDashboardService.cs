@@ -65,6 +65,9 @@ public sealed class PurchasingDashboardLiveState
     // offene Fachfrage zu Disponent 004 (Betriebsmaterial) ohne SAP-Aenderung entschieden
     // werden kann.
     public List<PurchasingStockValueRow> StockValueRows { get; set; } = [];
+    // Wochenverlauf des Lagerwerts, Stand Ende Kalenderwoche, auf die Disponenten-Abgrenzung
+    // summiert. Gesammelt ab dem Deploy am 2026-09-28; frueher gibt es keine Punkte.
+    public List<StockValueWeekPoint> StockValueWeeklyHistory { get; set; } = [];
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;
     public string TopArticleLabel { get; set; } = string.Empty;

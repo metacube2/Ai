@@ -61,9 +61,32 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
     /// Liegt gar nichts vor, bleibt <c>StockValueLoaded</c> false und die Kachel sagt das
     /// offen, statt eine 0 zu zeigen, die wie ein leeres Lager aussaehe.
     /// </summary>
+    /// <summary>
+    /// Laedt den Wochenverlauf. Ein Fehler hier laesst den Verlauf leer, aber weder die Kachel
+    /// noch das Dashboard ausfallen.
+    /// </summary>
+    private async Task ApplyStockValueHistoryAsync(
+        PurchasingDashboardLiveState state, CancellationToken cancellationToken)
+    {
+        if (_stockValueStore is null)
+            return;
+
+        try
+        {
+            var days = await _stockValueStore.LoadHistoryAsync(PurchasingValuationArea, cancellationToken);
+            state.StockValueWeeklyHistory = StockValueHistory.ToWeekly(days, PurchasingPlanners).ToList();
+        }
+        catch (Exception)
+        {
+            state.StockValueWeeklyHistory = [];
+        }
+    }
+
     private async Task ApplyStockValueAsync(
         PurchasingDashboardLiveState state, CancellationToken cancellationToken = default)
     {
+        await ApplyStockValueHistoryAsync(state, cancellationToken);
+
         var snapshot = _stockValueReader?.GetCached(PurchasingValuationArea);
 
         if (snapshot is null && _stockValueStore is not null)

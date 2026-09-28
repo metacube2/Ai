@@ -686,6 +686,64 @@
         break;
     default:
         <MudGrid Spacing="2">
+            @* Lagerwert-Verlauf je Woche. Wunsch aus dem Einkauf vom September 2026, von Marco
+               bestaetigt: ab Verfuegbarkeit erfassen und spaeter den Trend ablesen. Kein
+               rueckwirkender Verlauf aus MBEWH (siehe docs/EINKAUF_LAGERWERT_2026-08-18.md). *@
+            <MudItem xs="12">
+                <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <div>
+                            <MudText Typo="Typo.h6">@T("Lagerwert Einkaufsteile: Verlauf je Woche", "Purchased parts stock value: weekly trend")</MudText>
+                            <MudText Typo="Typo.body2" Class="purchasing-muted">
+                                @T("Stand Ende Kalenderwoche aus dem taeglichen Einkauf-Lauf, Disponenten", "End-of-week value from the daily purchasing run, planners") @string.Join("/", TrafagSalesExporter.Services.PurchasingDashboardService.PurchasingPlanners).
+                                @T("Gesammelt ab dem 28.09.2026, fruehere Wochen gibt es nicht. Wochen ohne Lauf bleiben leer. Der Wert ist noch nicht gegen MB5L abgeglichen.", "Collected from 28.09.2026, earlier weeks do not exist. Weeks without a run stay empty. The value has not yet been reconciled with MB5L.")
+                            </MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">@_liveState.StockValueWeeklyHistory.Count @T("Wochen", "weeks")</MudChip>
+                    </MudStack>
+                    @if (_liveState.StockValueWeeklyHistory.Count < 2)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                            @(_liveState.StockValueWeeklyHistory.Count == 0
+                                ? T("Noch kein Verlaufspunkt. Der erste entsteht mit dem naechsten Einkauf-Lauf.", "No trend point yet. The first one is created by the next purchasing run.")
+                                : T("Der Verlauf beginnt. Eine Linie entsteht ab der zweiten Woche.", "The trend has started. A line appears from the second week."))
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <div style="overflow-x:auto">
+                            @BuildStockTrendSvg()
+                        </div>
+                        <MudText Typo="Typo.caption" Class="purchasing-muted d-block mb-2">
+                            @T("Die Hochachse beginnt nicht bei null, sondern beim tiefsten Wert, damit Veraenderungen sichtbar sind.", "The vertical axis starts at the lowest value, not at zero, so that changes are visible.")
+                        </MudText>
+                    }
+                    @if (_liveState.StockValueWeeklyHistory.Count > 0)
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Style="overflow-x:auto">
+                            <thead><tr>
+                                <th>@T("Kalenderwoche", "Calendar week")</th>
+                                <th>@T("Stand vom", "Value as of")</th>
+                                <th style="text-align:right">@T("Lagerwert", "Stock value")</th>
+                                <th style="text-align:right">@T("Veraenderung zur Vorwoche", "Change vs. previous week")</th>
+                                <th style="text-align:right">@T("Materialien", "Materials")</th>
+                            </tr></thead>
+                            <tbody>
+                                @foreach (var row in StockTrendTableRows)
+                                {
+                                    <tr>
+                                        <td>@row.Week</td>
+                                        <td>@row.Date</td>
+                                        <td style="text-align:right">@FormatChf(row.Value)</td>
+                                        <td style="text-align:right">@row.Change</td>
+                                        <td style="text-align:right">@row.MaterialCount.ToString("N0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
             <MudItem xs="12" lg="8">
                 <MudPaper Class="pa-3 purchasing-overview-panel" Outlined="true">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
@@ -835,6 +893,118 @@
 
     private string StockValueDetailEn =>
         $"{_liveState.StockValueMaterialCount:N0} materials, planners {string.Join("/", TrafagSalesExporter.Services.PurchasingDashboardService.PurchasingPlanners)}, as of {FormatStockValueTimestamp()}";
+
+    // Lagerwert-Verlauf: Geometrie der kleinen Liniengrafik (SVG-Koordinaten, skaliert mit).
+    private const double StockTrendWidth = 900;
+    private const double StockTrendHeight = 240;
+    private const double StockTrendLeft = 90;
+    private const double StockTrendRight = 20;
+    private const double StockTrendTop = 16;
+    private const double StockTrendBottom = 210;
+
+    private sealed record StockTrendDot(double X, double Y, string Label, string AxisLabel, bool ShowAxisLabel);
+    private sealed record StockTrendGeometry(string Points, IReadOnlyList<StockTrendDot> Dots, decimal Min, decimal Max);
+    private sealed record StockTrendTableRow(string Week, string Date, decimal Value, string Change, int MaterialCount);
+
+    private static string FormatStockWeek(StockValueWeekPoint point) => $"KW {point.IsoWeek:00}/{point.IsoYear}";
+
+    private static string FormatChfShort(decimal value)
+        => Math.Abs(value) >= 1_000_000m
+            ? $"CHF {value / 1_000_000m:N2} Mio"
+            : $"CHF {value:N0}";
+
+    private StockTrendGeometry BuildStockTrend()
+    {
+        var points = _liveState.StockValueWeeklyHistory;
+        var min = points.Min(point => point.Value);
+        var max = points.Max(point => point.Value);
+        // Flacher Verlauf: kuenstlich ein Prozent Spanne, sonst teilt die Skalierung durch null.
+        if (max == min)
+        {
+            var pad = Math.Max(Math.Abs(max) * 0.01m, 1m);
+            min -= pad;
+            max += pad;
+        }
+
+        var plotWidth = StockTrendWidth - StockTrendLeft - StockTrendRight;
+        var plotHeight = StockTrendBottom - StockTrendTop;
+        // Beschriftung der Zeitachse ausduennen, damit sich bei vielen Wochen nichts ueberlagert.
+        var labelEvery = Math.Max(1, (int)Math.Ceiling(points.Count / 12d));
+
+        var dots = points.Select((point, index) =>
+        {
+            var x = StockTrendLeft + (points.Count == 1 ? plotWidth / 2 : plotWidth * index / (points.Count - 1));
+            var y = StockTrendBottom - (double)((point.Value - min) / (max - min)) * plotHeight;
+            var label = $"{FormatStockWeek(point)}: {FormatChf(point.Value)} ({point.SnapshotDate:dd.MM.yyyy})";
+            var showAxis = index % labelEvery == 0 || index == points.Count - 1;
+            return new StockTrendDot(Math.Round(x, 1), Math.Round(y, 1), label, $"KW {point.IsoWeek:00}", showAxis);
+        }).ToList();
+
+        var polyline = string.Join(" ", dots.Select(dot =>
+            $"{dot.X.ToString(CultureInfo.InvariantCulture)},{dot.Y.ToString(CultureInfo.InvariantCulture)}"));
+        return new StockTrendGeometry(polyline, dots, min, max);
+    }
+
+    // Das SVG wird als Markup gebaut, weil Razor das SVG-Element <text> mit Attributen nicht
+    // zulaesst (RZ1023, dort ist <text> ein reserviertes Razor-Tag).
+    private MarkupString BuildStockTrendSvg()
+    {
+        static string N(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+        static string E(string value) => System.Net.WebUtility.HtmlEncode(value);
+
+        var trend = BuildStockTrend();
+        var svg = new System.Text.StringBuilder();
+        svg.Append($"<svg viewBox=\"0 0 {N(StockTrendWidth)} {N(StockTrendHeight)}\" style=\"width:100%;min-width:480px;height:auto;max-height:260px\" role=\"img\" aria-label=\"{E(T("Lagerwert je Woche", "Stock value per week"))}\">");
+        svg.Append($"<line x1=\"{N(StockTrendLeft)}\" y1=\"{N(StockTrendBottom)}\" x2=\"{N(StockTrendWidth - StockTrendRight)}\" y2=\"{N(StockTrendBottom)}\" stroke=\"currentColor\" stroke-opacity=\"0.3\" />");
+        svg.Append($"<text x=\"{N(StockTrendLeft - 6)}\" y=\"{N(StockTrendTop + 4)}\" text-anchor=\"end\" font-size=\"11\" fill=\"currentColor\" fill-opacity=\"0.7\">{E(FormatChfShort(trend.Max))}</text>");
+        svg.Append($"<text x=\"{N(StockTrendLeft - 6)}\" y=\"{N(StockTrendBottom + 4)}\" text-anchor=\"end\" font-size=\"11\" fill=\"currentColor\" fill-opacity=\"0.7\">{E(FormatChfShort(trend.Min))}</text>");
+        svg.Append($"<polyline points=\"{trend.Points}\" fill=\"none\" stroke=\"var(--mud-palette-secondary)\" stroke-width=\"2\" />");
+        foreach (var dot in trend.Dots)
+        {
+            svg.Append($"<circle cx=\"{N(dot.X)}\" cy=\"{N(dot.Y)}\" r=\"3.5\" fill=\"var(--mud-palette-secondary)\"><title>{E(dot.Label)}</title></circle>");
+            if (dot.ShowAxisLabel)
+                svg.Append($"<text x=\"{N(dot.X)}\" y=\"{N(StockTrendBottom + 16)}\" text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\" fill-opacity=\"0.7\">{E(dot.AxisLabel)}</text>");
+        }
+
+        svg.Append("</svg>");
+        return new MarkupString(svg.ToString());
+    }
+
+    // Tabelle neueste Woche zuerst. Die Veraenderung bezieht sich auf den vorherigen
+    // vorhandenen Punkt; liegt dazwischen eine Luecke, wird die Vergleichswoche genannt.
+    private IReadOnlyList<StockTrendTableRow> StockTrendTableRows
+    {
+        get
+        {
+            var points = _liveState.StockValueWeeklyHistory;
+            var rows = new List<StockTrendTableRow>(points.Count);
+            for (var index = points.Count - 1; index >= 0; index--)
+            {
+                var point = points[index];
+                var change = "-";
+                if (index > 0)
+                {
+                    var previous = points[index - 1];
+                    var delta = point.Value - previous.Value;
+                    var percent = previous.Value == 0 ? "" : $" ({delta / previous.Value * 100m:+0.0;-0.0;0.0} %)";
+                    change = $"{(delta >= 0 ? "+" : "-")}CHF {Math.Abs(delta):N0}{percent}";
+                    var weekGap = (ISOWeek.ToDateTime(point.IsoYear, point.IsoWeek, DayOfWeek.Monday)
+                        - ISOWeek.ToDateTime(previous.IsoYear, previous.IsoWeek, DayOfWeek.Monday)).Days / 7;
+                    if (weekGap > 1)
+                        change += $" {T("ggue.", "vs.")} {FormatStockWeek(previous)}";
+                }
+
+                rows.Add(new StockTrendTableRow(
+                    FormatStockWeek(point),
+                    point.SnapshotDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+                    point.Value,
+                    change,
+                    point.MaterialCount));
+            }
+
+            return rows;
+        }
+    }
 
     private string FormatStockValueTimestamp()
         => _liveState.StockValueReadAtUtc is { } readAt

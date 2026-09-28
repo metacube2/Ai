@@ -442,6 +442,33 @@ CREATE TABLE PurchasingStockValueCache (
     PRIMARY KEY (ValuationArea, Planner)
 );";
 
+    /// <summary>
+    /// Verlauf des Lagerwerts, ein Stand je Tag und Disponent (Wunsch aus dem Einkauf vom
+    /// September 2026: Lagerwert woechentlich festhalten und als Trend zeigen).
+    ///
+    /// JE TAG, NICHT JE WOCHE GESPEICHERT: Der Einkauf-Lauf liest taeglich. Die Woche bildet
+    /// erst die Anzeige (letzter Tag der Kalenderwoche). So geht nichts verloren, falls spaeter
+    /// ein anderer Takt gewuenscht wird, und ein zweiter Lauf am selben Tag ersetzt nur diesen
+    /// Tag.
+    ///
+    /// ALLE DISPONENTEN, NICHT NUR 001-005: Die Abgrenzung "Einkaufsteile" wird beim Lesen
+    /// angewendet. Faellt Armins Entscheid zu Disponent 004 anders aus, rechnet sich damit der
+    /// ganze Verlauf rueckwirkend richtig, statt dass alte Punkte eine andere Summe tragen.
+    ///
+    /// Wird NIE geloescht, anders als <c>PurchasingStockValueCache</c>.
+    /// </summary>
+    internal static string GetPurchasingStockValueHistoryCreateSql() => @"
+CREATE TABLE PurchasingStockValueHistory (
+    ValuationArea TEXT NOT NULL,
+    SnapshotDate TEXT NOT NULL,
+    Planner TEXT NOT NULL,
+    Value TEXT NOT NULL DEFAULT '0',
+    Quantity TEXT NOT NULL DEFAULT '0',
+    MaterialCount INTEGER NOT NULL DEFAULT 0,
+    ReadAtUtc TEXT NOT NULL,
+    PRIMARY KEY (ValuationArea, SnapshotDate, Planner)
+);";
+
     // MaterialUsageSet/MaterialParentSet - siehe docs/abap/README_LZCODE_WEBSERVICE.md.
     // SAP-seitiges EntitySet existiert noch nicht (Entwurf fuer Lucas), Tabellen bleiben
     // additiv leer, bis MaterialUsageDataRefreshService erfolgreich laden kann.

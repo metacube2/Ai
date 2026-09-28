@@ -1,6 +1,6 @@
 # Einkaufs-Dashboard: Anforderungen, Korrekturen und offene Punkte
 
-Stand: 2026-08-17. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
+Stand: 2026-08-17, Lagerwert-Abschnitt in 3 nachgetragen am 2026-09-28. Zusammengefuehrt aus sechs Sitzungs- und Review-Dateien
 (Formel-Review 2026-07-06, Umsetzungsplan und Vorbereitung 2026-07-09, Review Marco
 2026-07-10, Einkaufssitzungen 2026-07-23 und 2026-07-30).
 
@@ -75,6 +75,15 @@ Periode ohne Obergrenze auf heute.
 | ZLO03 Mehrfachabfrage | **Bypass**: eine SAP-Anfrage je Nummer statt OR-Gruppe |
 | Produktgruppen-Aufriss | `Produktgruppe -> Lieferant -> Material` ueber ZLO03-Disponent, mit summenerhaltender `1/n`-Allokation bei Mehrfachverwendung |
 | ABC/XYZ-Massnahmenmatrix | mit konkretem Pruefauftrag je Klasse |
+
+### Lagerwert der Einkaufsteile (2026-08-18 bis 2026-09-28)
+
+| Punkt | Bemerkung |
+| --- | --- |
+| KPI-Kachel Lagerwert Einkaufsteile | Wunsch Armin, produktiv seit 2026-08-19, gespeichert seit 2026-08-24; MB5L-Abgleich offen |
+| Verlauf je Kalenderwoche | Wunsch per Mail waehrend Ingos Ferien, von Marco am 2026-09-28 als "ab verfuegbar erfassen" bestaetigt; **gebaut 2026-09-28, nicht deployed**. Kein Rueckblick aus `MBEWH` (Weg B zurueckgestellt) |
+
+Details: `docs/EINKAUF_LAGERWERT_2026-08-18.md`, Abschnitte 10, 12 und 13.
 
 Produktivstand 2026-08-06 13:57 MESZ, Funktionscommit `0a8a4c9`, `435/435` Tests.
 Vollstaendige Entscheidung und Abnahmegrenzen fuer Produktgruppen und ABC/XYZ:

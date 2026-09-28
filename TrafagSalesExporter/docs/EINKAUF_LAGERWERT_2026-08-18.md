@@ -1,19 +1,20 @@
 # Lagerwert der Einkaufsteile im Einkauf-Cockpit
 
-Stand: 2026-08-18. Zurueck: `docs/router/einkauf.md`.
+Stand: 2026-08-18, Nachtrag Verlauf je Woche 2026-09-28 (Abschnitt 13). Zurueck: `docs/router/einkauf.md`.
 
 ## 0. Stand auf einen Blick
 
 | | |
 | --- | --- |
 | **Auftrag** | Armin will den Lagerwert der Einkaufsteile als KPI-Kachel, „per «bis Monat»", Werte wie MB5L, abgegrenzt auf die Disponenten `001`–`005`. |
-| **Umgesetzt?** | **Teilweise, seit 2026-08-19 PRODUKTIV DEPLOYED** (10:07, Commit `08901bb`, ohne Alarm). Die KPI-Kachel fuer den **aktuellen** Lagerwert ist live, zeigt aber „wartet auf Einkauf-Lauf", bis der naechste Einkauf-Full-/Delta-Lauf sie fuellt — **noch nie gegen echtes SAP gelaufen**. Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
+| **Umgesetzt?** | **Teilweise.** Die KPI-Kachel fuer den **aktuellen** Lagerwert ist seit 2026-08-19 produktiv und seit 2026-08-24 in der Datenbank gespeichert; am 2026-08-24 zeigte sie CHF 9'205'959 aus einem echten SAP-Read (Abschnitt 12.7). *Ueberholt ist die fruehere Aussage „zeigt wartet auf Einkauf-Lauf, noch nie gegen echtes SAP gelaufen".* Der Stichtag „per bis Monat" fehlt weiterhin, siehe Abschnitt 10. |
+| **Verlauf je Woche** | Seit 2026-09-28 **gebaut, nicht deployed** (Abschnitt 13, Weg A): jeder Lauf schreibt einen Tagesstand, die Uebersicht zeigt Stand Ende Kalenderwoche als Grafik und Liste. Beginnt ab Deploy, kein Rueckblick. |
 | **Die Zahl** | Einkaufsteile heute: **CHF 8'982'938.78** ueber 7'261 Materialien, das sind 82 % des gesamten Lagerwerts von CHF 10'937'376.40. |
 | **Machbar?** | Ja. Alle fuenf Disponenten existieren, `MBEWH` reicht bis 2000 zurueck, die Stichtagsrechnung ist gebaut und in sich geprueft. |
 | **Groesster offener Punkt** | Der MB5L-Abgleich. Ohne ihn ist die Zahl nicht freigegeben. |
 | **Groesste technische Huerde** | `MBEWH` ist mit 5,4 Mio Zeilen nicht ueber OData ladbar. Es braucht ein serverseitig aggregierendes SAP-Set. |
 
-**Hier geht es weiter:** Abschnitt 7.
+**Hier geht es weiter:** Abschnitt 13.4 (Deploy des Verlaufs), danach Abschnitt 7 (MB5L-Abgleich).
 
 ## 1. Die Anforderung
 
@@ -622,3 +623,74 @@ ausgeliefert ist nicht angekommen.
 - Armins Entscheidung zu Disponent `004` (CHF 348'957.51, siehe Tabelle oben) ist offen.
 - `MaterialUsageDataRefreshService.ReadAllRowsAsync` hat die strukturelle Schwaeche aus 11.5
   weiterhin ohne Notbremse.
+
+## 13. Nachtrag 2026-09-28: Lagerwert-Verlauf je Woche (Weg A)
+
+### 13.1 Wunsch und Entscheid
+
+Waehrend Ingos Ferien kam per Mail der Wunsch, "den woechentlich abgefragten Lagerwert der
+Einkaufsteile in eine Liste zu schreiben und eine Grafik anzuzeigen, wie sich die Werte ueber
+die Wochen veraendert haben", damit ein Trend sichtbar wird.
+
+Ingo hat zwei Wege vorgelegt bekommen und am 2026-09-28 **Weg A** gewaehlt ("mach mal weg a"):
+
+| Weg | Inhalt | Stand |
+| --- | --- | --- |
+| **A** | Ab jetzt jeden gelesenen Stand zusaetzlich in eine Verlaufstabelle schreiben und je Kalenderwoche anzeigen. Keine SAP-Aenderung. | **gebaut, siehe 13.2** |
+| B | Verlauf rueckwirkend aus `MBEWH` ueber das aggregierende EntitySet aus 10.4, nur **monatlich** moeglich | nicht begonnen, nicht gewuenscht |
+
+Marco hat dazu am selben Tag geschrieben, dass "das Erfassen ab verfuegbar schon sehr
+hilfreich" sei und der Trend in Zukunft interessant werde. Das deckt Weg A. Seine Vermutung,
+der Bestand per Monatsende lasse sich rueckwirkend kaum sauber bestimmen, trifft so nicht zu:
+Abschnitt 3.3 und 4.1 zeigen, dass es ueber `MBEWH` geht, nur eben mit SAP-Aufwand (Weg B).
+
+**Zwei Richtigstellungen zur Mail:** Der Wert wird nicht woechentlich, sondern bei **jedem
+Einkauf-Lauf** gelesen, planmaessig taeglich um 12:00 (siehe 12.2). Die Woche bildet erst die
+Anzeige. Und der Wert ist weiterhin **nicht gegen MB5L abgeglichen**; ein Trend auf einer
+unbestaetigten Zahl bleibt unbestaetigt.
+
+### 13.2 Was gebaut wurde
+
+| Datei | Aenderung |
+| --- | --- |
+| `Services/DatabaseInitializationService.SchemaSql.cs` | neue Tabelle `PurchasingStockValueHistory` (Bewertungskreis, Tag, Disponent, Wert, Menge, Materialzahl, Lesezeitpunkt) |
+| `Services/DatabaseSchemaMaintenanceService.cs` | legt die Tabelle beim Start an und uebernimmt den vorhandenen Kachelstand als ersten Verlaufspunkt |
+| `Services/PurchasingStockValueStore.cs` | `SaveAsync` schreibt in **derselben Transaktion** zusaetzlich den Tagesstand; neu `LoadHistoryAsync`, `SeedHistoryFromCache`, `StockValueHistory.ToWeekly` |
+| `Services/PurchasingDashboardService.cs`, `Services/IPurchasingDashboardService.cs` | Wochenverlauf im Anzeigezustand (`StockValueWeeklyHistory`) |
+| `Components/Pages/PurchasingDashboard.razor` | Panel "Lagerwert Einkaufsteile: Verlauf je Woche" oben auf der Einkauf-Uebersicht: Liniengrafik plus Tabelle (KW, Stand vom, Wert, Veraenderung zur Vorwoche, Materialien) |
+| `Services/PurchasingUiTextGeneratedTranslations.cs` | neue Texte in es, it, hi, sq, tr, tlh |
+| `TrafagSalesExporter.Tests/PurchasingStockValueStoreTests.cs` | 9 neue Tests |
+
+Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_All-Aenderungen).
+**Die Oberflaeche ist nicht im Browser angesehen worden**, weil nicht deployed.
+
+### 13.3 Entwurfsentscheidungen
+
+1. **Je Tag gespeichert, je Woche angezeigt.** Ein zweiter Lauf am selben Tag ersetzt den
+   Tagesstand, sonst wird aus dem Verlauf nie geloescht. Als Wochenpunkt gilt der **letzte**
+   vorhandene Tag der ISO-Kalenderwoche (Stand Ende Woche). Der Tag wird in Schweizer Ortszeit
+   bestimmt.
+2. **Alle Disponenten gespeichert, gefiltert wird beim Lesen.** Faellt Armins Entscheid zu
+   `004` anders aus, stimmt damit der ganze Verlauf rueckwirkend, ohne Datenkorrektur.
+3. **Wochen ohne Lauf bleiben Luecken**, es wird nicht interpoliert. Die Tabelle nennt bei
+   einer Luecke die Vergleichswoche.
+4. **ISO-Jahr statt Kalenderjahr.** Der 2027-01-01 gehoert zur KW 53/2026; mit dem
+   Kalenderjahr wuerde diese Woche in zwei Punkte zerfallen. Ist getestet.
+5. **Die Hochachse beginnt beim tiefsten Wert**, nicht bei null, und das steht unter der
+   Grafik. Bei rund CHF 9 Mio waeren Wochenbewegungen sonst eine flache Linie.
+6. **Die Anwendung schreibt den ersten Punkt selbst** (beim Start aus dem Kachelstand), nicht
+   ein Werkzeug von aussen. Grund ist die WAL-Falle aus 12.8.
+
+### 13.4 Was offen ist
+
+- **Nicht deployed.** Der Arbeitsbaum enthaelt fremde, nicht committete Aenderungen an
+  `Program.cs`, `Services/TimerBackgroundService.cs` und `TrafagSalesExporter.csproj`
+  (Finance_All-Reservierung). Ein Release-Build aus diesem Baum wuerde sie mit ausliefern.
+  Deploy nur nach Freigabe durch Ingo und aus einem sauberen Stand.
+- **Der Verlauf beginnt erst mit dem Deploy.** Die Vorher-Sicherungen der Datenbank seit dem
+  2026-08-24 enthalten je einen Kachelstand und koennten einige Punkte nachliefern. Das
+  read-only Auslesen der produktiven Sicherungen wurde in dieser Sitzung vom
+  Berechtigungssystem abgelehnt und ist deshalb **nicht gemacht**. Entscheid bei Ingo.
+- **Der Verlauf fuellt sich nur, wenn die Einkauf-Laeufe tatsaechlich laufen.** Der
+  Kettennachweis aus 12.9 steht weiterhin aus.
+- MB5L-Abgleich und Entscheid zu `004` wie bisher offen.

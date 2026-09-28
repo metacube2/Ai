@@ -366,7 +366,8 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             DatabaseSchemaSql.GetPurchasingEkpoCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingEketCacheCreateSql(),
             DatabaseSchemaSql.GetPurchasingSyncStateCreateSql(),
-            DatabaseSchemaSql.GetPurchasingStockValueCacheCreateSql()
+            DatabaseSchemaSql.GetPurchasingStockValueCacheCreateSql(),
+            DatabaseSchemaSql.GetPurchasingStockValueHistoryCreateSql()
         })
         {
             using var cmd = conn.CreateCommand();
@@ -388,6 +389,12 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
             indexCommand.CommandText = indexSql;
             indexCommand.ExecuteNonQuery();
         }
+
+        // Erster Verlaufspunkt aus dem bereits gespeicherten Stand. Ohne das beginnt der
+        // Lagerwert-Verlauf erst mit dem naechsten Einkauf-Lauf nach dem Deploy. Die
+        // Anwendung schreibt selbst, nicht ein Werkzeug von aussen (siehe WAL-Falle in
+        // docs/EINKAUF_LAGERWERT_2026-08-18.md, Abschnitt 12.8).
+        PurchasingStockValueStore.SeedHistoryFromCache((Microsoft.Data.Sqlite.SqliteConnection)conn);
 
         AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
         // Lieferantenland (LFA1-LAND1, seit SAP-Erweiterung 2026-07-23) fuer die Region-/
