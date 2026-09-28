@@ -8,7 +8,7 @@ Stand: 2026-09-28, zuletzt Abschnitt 6 (Management-Cockpit). Zurueck: `docs/rout
 | --- | --- |
 | **Ausloeser** | Rueckmeldung der Nutzer laut Ingo: man sieht lange gar nichts von der Oberflaeche. Ingo: Tempo ist „der groesste Kritikpunkt an der ganzen Webapp", es muss ueberall schnell sein. |
 | **Schritt 1, erledigt** | Oberflaeche erscheint sofort: Vorrendern aus, Ladebalken. Commit `4f2c62f`, **produktiv seit 2026-09-28 10:31**. |
-| **Schritt 2: `/einkauf` produktiv seit 11:25, Management-Cockpit 41 s -> 3,7 s lokal (`5a26596`, Deploy nach dem Mittagslauf)** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten gemessen (Abschnitt 6): Cockpit behoben, offen nur noch das Export-Dashboard. |
+| **Schritt 2: `/einkauf` produktiv seit 11:25, Management-Cockpit 41 s -> 3,7 s lokal (`5a26596`, Deploy nach dem Mittagslauf)** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten gemessen (Abschnitt 6), Cockpit und Export-Dashboard behoben, SQLite-Cache (Abschnitt 7, `c35d3fa`). Wirkung auf dem Server offen. |
 | **Verwandt** | Worker-Neustarts durch IIS-Leerlauf, ISS-017, `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6. |
 
 ## 1. Ursache: das Vorrendern wartete auf alle Daten
@@ -158,9 +158,39 @@ Tests: 6 neue (`CurrencyExchangeRateServiceTests`, `ManagementCockpitCentralReco
 
 ### 6.4 Was offen bleibt
 
-- Export-Dashboard mit 2,3 s lokal, auf dem Server vermutlich um die 20 s. Noch nicht profiliert.
+- *Erledigt, siehe Abschnitt 7:* Export-Dashboard mit 2,3 s lokal, auf dem Server vermutlich um die 20 s.
 - Die achtfache Langsamkeit des Servers selbst. Ein Anfang waere ein groesserer SQLite-Cache pro
   Verbindung (`PRAGMA cache_size`, `mmap_size`); ob das wirkt, zeigt die Vorwaermzeit im
   Serverprotokoll (heute 104,7 s). Sonst CPU, Speicher oder Platte der VM, das ist Sache der IT.
 - Der erste Cockpit-Aufruf nach einem Neustart rechnet zusaetzlich die Einkaufsansicht, sofern der
   Vorwaermer sie noch nicht fertig hat (lokal 14 s), und liest die CSVs einmal ein.
+
+## 7. Export-Dashboard und SQLite-Cache, 2026-09-28, Commit `c35d3fa`
+
+**Export-Dashboard:** Das Profil zeigte nur 0,7 s Rechenzeit. Der Rest war Warten auf SharePoint:
+bei jedem Oeffnen wird fuer jeden Standort die neueste `Sales_ProcessedMergeInput_*.csv` gesucht
+(parallel ueber die Standorte, aber je Standort rund 1,5 s). Die Dateien aendern sich nur beim
+Tagesexport. `DashboardPageService` merkt sich die Antworten deshalb fuenf Minuten (statisch, weil
+der Dienst je Circuit neu entsteht); Fehler werden nicht gespeichert. Warm lokal **2,3 s -> 0,07 s**.
+
+**SQLite-Cache je Verbindung** (`Data/SqlitePerformanceInterceptor.cs`, in `Program.cs` registriert):
+64 MB Seitencache statt rund 2 MB, 256 MB Memory-Mapping, Temp-Daten im Speicher. Gesetzt ueber
+`DbConnection.StateChange`, weil die meisten Dienste die Verbindung selbst oeffnen und die
+Opened-Hooks von EF dann nicht feuern. Lokal zusaetzlich schneller: Supply Chain 1,2 -> 0,7 s,
+Marktsegmente 0,55 -> 0,31 s, erste Einkaufsberechnung 14 -> 10,5 s. **Ob es die achtfache
+Serverlangsamkeit trifft, zeigt erst die Vorwaermzeit im Serverprotokoll nach dem Deploy**
+(Vergleichswert 104,7 s am 2026-09-28 11:28).
+
+Stand aller Seiten lokal, warm, nach diesem Commit:
+
+| Seite | Zeit |
+| --- | --- |
+| Menue, Standorte, Einkauf-Status | unter 0,05 s |
+| Export-Dashboard | 0,07 s |
+| HR-KPI | 0,3 s |
+| Marktsegmente | 0,3 s |
+| Supply Chain | 0,7 s |
+| Management-Cockpit | 3,3 s |
+| Einkauf (Standardansicht, vorgewaermt) | sofort aus dem Cache |
+
+Tests `749/749`. Die Finance_All-Zeile in `Program.cs` ist nicht Teil des Commits.
