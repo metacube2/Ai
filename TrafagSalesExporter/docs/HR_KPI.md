@@ -152,6 +152,7 @@ Sonja muss die Absenzen weiterhin gegen Rexx abgleichen.
 ## 8. Antworten von HR und Umsetzung, 2026-09-28
 
 Sonja Richter (HR) hat Ingos Fragenmail vom 2026-08-19 waehrend seiner Ferien beantwortet.
+Umgesetzt in `5ae7f31`, **produktiv seit 2026-09-28 11:25**.
 Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschieden.
 
 | # | Frage | Antwort HR | Umsetzung |

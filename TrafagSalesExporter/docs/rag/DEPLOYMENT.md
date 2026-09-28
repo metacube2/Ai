@@ -44,6 +44,16 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
+- **Deploy 2026-09-28 11:25, HR-Vorgaben und Einkauf sofort liefern und vorwaermen.** Stand
+  `4aa27ae` (Funktionscommits `5ae7f31` HR, `d32a6aa` Einkauf-Cache und Vorwaermen), sauberer
+  Worktree `C:\TMP\TrafagSalesExporter_release_4aa27ae`, ohne Finance_All. `727/727`
+  Release-Tests. `BiDashboard.dll` `28.09.2026 11:25:07`, `6'393'344` Bytes, SHA256
+  `83595EA62341F06FAF024BA124CC2C155FE1B153685D5F8B4E3F995A44A3B9DD`, bitgleich. **Ohne Alarm.**
+  Sicherung wiederverwendet (DB seit 09:43 unveraendert). Wirknachweis: `Fluktuation Prognose
+  gleitend`, `Einkauf-Standardansicht vorberechnet in {Seconds:N1} s`. Fuenf Routen `200`. Auf
+  Ingos Wunsch vor dem 12:00-Lauf deployed; der Worker muss damit ab 11:25 ohne Neustart bis
+  zum Delta um etwa 12:30 durchhalten.
+
 - **Deploy 2026-09-28 10:31, Oberflaeche sofort sichtbar: Vorrendern aus, Ladebalken.** Stand
   `4f2c62f`, sauberer Worktree `C:\TMP\TrafagSalesExporter_release_4f2c62f`, ohne Finance_All.
   `715/715` Release-Tests. `BiDashboard.dll` `28.09.2026 10:30:54`, `6'384'128` Bytes, SHA256

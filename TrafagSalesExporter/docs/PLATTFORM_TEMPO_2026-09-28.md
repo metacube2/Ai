@@ -8,7 +8,7 @@ Stand: 2026-09-28. Zurueck: `docs/router/plattform.md`.
 | --- | --- |
 | **Ausloeser** | Rueckmeldung der Nutzer laut Ingo: man sieht lange gar nichts von der Oberflaeche. Ingo: Tempo ist „der groesste Kritikpunkt an der ganzen Webapp", es muss ueberall schnell sein. |
 | **Schritt 1, erledigt** | Oberflaeche erscheint sofort: Vorrendern aus, Ladebalken. Commit `4f2c62f`, **produktiv seit 2026-09-28 10:31**. |
-| **Schritt 2, `/einkauf` umgesetzt, nicht deployed** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten noch nicht gemessen. |
+| **Schritt 2, `/einkauf` umgesetzt, produktiv seit 2026-09-28 11:25** | Kein einzelner Engpass (55 gleich teure Abfragen, lokal 12 s, Server 98,6 s). Stattdessen Stand sofort liefern und vorwaermen, Commit `d32a6aa`, Abschnitt 5. Uebrige Seiten noch nicht gemessen. |
 | **Verwandt** | Worker-Neustarts durch IIS-Leerlauf, ISS-017, `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.6. |
 
 ## 1. Ursache: das Vorrendern wartete auf alle Daten
@@ -92,7 +92,7 @@ Es gibt **keinen Engpass**, den man gezielt beheben koennte: 55 Aggregationen ue
 Einkaufscache, jede 0,2 bis 0,8 s. Der Server ist fuer dieselbe Arbeit rund achtmal langsamer
 als der Entwicklungsrechner; die Ursache (CPU, Speicher, Platte der VM) ist nicht gemessen.
 
-### 5.2 Umsetzung, Commit `d32a6aa` (noch nicht deployed)
+### 5.2 Umsetzung, Commit `d32a6aa`, produktiv seit 2026-09-28 11:25
 
 | Aenderung | Wirkung |
 | --- | --- |

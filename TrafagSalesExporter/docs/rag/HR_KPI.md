@@ -4,7 +4,7 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
-- **2026-09-28: fachliche Antworten von HR (Sonja Richter) umgesetzt, noch nicht deployed.**
+- **2026-09-28: fachliche Antworten von HR (Sonja Richter) umgesetzt, produktiv seit 11:25 (`5ae7f31`).**
   Langzeitkrank ab dem 61. Krankheitstag (Summe je Person, beide Rexx-Felder zaehlen als
   Krankheit), Reminderprofile ohne SAP-FTE und ohne Rexx-Sollzeit ausgeschlossen,
   Restferien-Ampel Q1 bis 5 Tage gruen und ab Q2 jeder Resttag rot, zusaetzlich
