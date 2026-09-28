@@ -194,3 +194,19 @@ Stand aller Seiten lokal, warm, nach diesem Commit:
 | Einkauf (Standardansicht, vorgewaermt) | sofort aus dem Cache |
 
 Tests `749/749`. Die Finance_All-Zeile in `Program.cs` ist nicht Teil des Commits.
+
+## 8. Finance-Seiten und Stuecklisten-Analyse gemessen, 2026-09-28
+
+| Seite | vorher | nachher |
+| --- | --- | --- |
+| Finance-Regeln | 0,00 s | unveraendert |
+| Stuecklisten-Analyse | 0,00 s (Cache) | unveraendert |
+| Finance Journal-Import (Status) | 0,3 s | unveraendert |
+| **Finanzvergleich** | **3,7 s** | **2,4 s** |
+| Einlesen der Audit-CSVs (auch Cockpit nach neuem Tagesexport) | 3,3 s | **1,8 s** |
+
+Profil des Finanzvergleichs: der groesste Posten war `ExportAuditCsvService.NormalizeHeader`. Es
+normalisierte den festen Spaltennamen bei jedem Feldzugriff jeder Zeile neu, also Millionen Mal.
+Dazu kam `FinanceReconciliationService.NormalizeRuleText`, das je Verkaufszeile und Konzernregel
+lief. Beide merken sich jetzt ihr Ergebnis je Text, Commit nach `23b05d4` (siehe Git-Log). Offen:
+der Finanzvergleich liest die CSVs bei jedem Oeffnen neu ein und hat keinen Cache wie das Cockpit.
