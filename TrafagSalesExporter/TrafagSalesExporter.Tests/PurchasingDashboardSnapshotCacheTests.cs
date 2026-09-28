@@ -93,4 +93,85 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         Assert.Same(fresh, cached);
         Assert.Equal(2, calls);
     }
+
+    // ---- stale-while-revalidate (2026-09-28): ein abgelaufener Stand wird sofort geliefert ----
+
+    private sealed class ManualTime : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = new(2026, 9, 28, 10, 0, 0, TimeSpan.Zero);
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    [Fact]
+    public async Task ExpiredSnapshot_IsReturnedImmediately_AndRefreshedInBackground()
+    {
+        var time = new ManualTime();
+        var cache = new PurchasingDashboardSnapshotCache(time);
+        var calls = 0;
+        var releaseRefresh = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        async Task<PurchasingDashboardLiveState> Factory(CancellationToken _)
+        {
+            var call = Interlocked.Increment(ref calls);
+            if (call == 2)
+                await releaseRefresh.Task;
+            return new PurchasingDashboardLiveState { PurchaseOrderCount = call };
+        }
+
+        var first = await cache.GetOrCreateAsync(Filter(), Factory);
+        time.Now += PurchasingDashboardSnapshotCache.Lifetime + TimeSpan.FromMinutes(1);
+
+        // Die Neuberechnung haengt noch - trotzdem kommt der alte Stand sofort zurueck.
+        var stale = await cache.GetOrCreateAsync(Filter(), Factory).WaitAsync(TimeSpan.FromSeconds(5));
+        var staleAgain = await cache.GetOrCreateAsync(Filter(), Factory).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Same(first, stale);
+        Assert.Same(first, staleAgain);
+        Assert.Equal(2, calls); // nur EINE Hintergrundberechnung, obwohl zweimal gefragt
+
+        releaseRefresh.SetResult();
+        PurchasingDashboardLiveState refreshed = first;
+        for (var i = 0; i < 50 && ReferenceEquals(refreshed, first); i++)
+        {
+            await Task.Delay(20);
+            refreshed = await cache.GetOrCreateAsync(Filter(), Factory);
+        }
+
+        Assert.Equal(2, refreshed.PurchaseOrderCount);
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task FailedBackgroundRefresh_KeepsTheOldSnapshot()
+    {
+        var time = new ManualTime();
+        var cache = new PurchasingDashboardSnapshotCache(time);
+        var calls = 0;
+
+        Task<PurchasingDashboardLiveState> Factory(CancellationToken _)
+            => ++calls == 1
+                ? Task.FromResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 1 })
+                : Task.FromException<PurchasingDashboardLiveState>(new InvalidOperationException("SAP weg"));
+
+        var first = await cache.GetOrCreateAsync(Filter(), Factory);
+        time.Now += PurchasingDashboardSnapshotCache.Lifetime + TimeSpan.FromMinutes(1);
+
+        var stale = await cache.GetOrCreateAsync(Filter(), Factory);
+        await Task.Delay(50);
+        var afterFailure = await cache.GetOrCreateAsync(Filter(), Factory);
+
+        Assert.Same(first, stale);
+        Assert.Same(first, afterFailure);
+    }
+
+    [Fact]
+    public void DefaultFilter_Matches_The_Page_Default()
+    {
+        var filter = PurchasingDashboardFilter.Default(new DateTime(2026, 9, 28, 15, 30, 0));
+
+        Assert.Equal(new DateTime(2020, 1, 1), filter.FromDate);
+        Assert.Equal(new DateTime(2026, 9, 28), filter.ToDate);
+        Assert.True(filter.ExcludeDeletedItems);
+        Assert.True(filter.OrdersOnly);
+        Assert.True(filter.ExcludeEndDelivered);
+    }
 }

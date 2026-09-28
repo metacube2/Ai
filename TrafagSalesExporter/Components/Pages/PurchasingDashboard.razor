@@ -1939,6 +1939,8 @@
     private string WithFilter(string german, string english) => $"{T(german, english)} {FilterLabel}";
     private static string FormatChf(double value) => $"CHF {value:N0}";
     private static string FormatChf(decimal value) => $"CHF {value:N0}";
+    // Standardansicht. Muss zu PurchasingDashboardFilter.Default passen: genau diesen Filter
+    // waermt TimerBackgroundService vor, damit der erste Aufruf nicht rechnen muss.
     private static string BuildDefaultFromMonth()
     {
         return "2020-01";

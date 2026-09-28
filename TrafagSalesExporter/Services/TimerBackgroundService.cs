@@ -17,6 +17,13 @@ public class TimerBackgroundService : BackgroundService
     private static readonly TimeSpan KeepAliveInterval = TimeSpan.FromMinutes(5);
 
     /// <summary>
+    /// Takt des Vorwaermens der Einkaufsansicht. Kurz genug, dass nach einem Einkauf-Lauf
+    /// (Cache geleert) hoechstens fuenf Minuten bis zur Vorberechnung vergehen; ist der Stand
+    /// frisch, kostet ein Durchgang nichts.
+    /// </summary>
+    private static readonly TimeSpan PurchasingWarmupInterval = TimeSpan.FromMinutes(5);
+
+    /// <summary>
     /// Ziel des Selbstaufrufs, ueberschreibbar mit <c>KeepAlive:Url</c> (leer = aus). Eine kleine
     /// statische Datei statt einer Seite, damit der Aufruf nichts rendert und nichts rechnet.
     /// </summary>
@@ -64,6 +71,7 @@ public class TimerBackgroundService : BackgroundService
         // Damit das taegliche Tracking lueckenlos bleibt, wird ein verpasster Slot hier einmalig
         // nachgeholt, bevor der regulaere Warteloop beginnt.
         _ = KeepAliveLoopAsync(stoppingToken);
+        _ = WarmPurchasingDashboardLoopAsync(stoppingToken);
 
         await CatchUpMissedRunAsync();
         await RecalculateNextRunAsync();
@@ -275,6 +283,58 @@ public class TimerBackgroundService : BackgroundService
     ///
     /// Nur in Produktion: ein Entwicklungsrechner soll nicht das Produktivsystem wachhalten.
     /// </summary>
+    /// <summary>
+    /// Haelt die Standardansicht von `/einkauf` fertig berechnet bereit.
+    ///
+    /// BEFUND 2026-09-28: Die Berechnung dauert auf dem Server 98,6 Sekunden (lokal 12), verteilt
+    /// auf rund 55 gleich teure Abfragen - es gibt keinen einzelnen Engpass, den man beheben
+    /// koennte. Deshalb soll kein Nutzer sie abwarten: nach dem Start, nach jedem Einkauf-Lauf
+    /// (der den Cache leert) und nach Ablauf rechnet hier der Hintergrund. Ist der Stand noch
+    /// frisch, kostet der Aufruf nichts; ist er abgelaufen, liefert der Cache den alten Stand
+    /// und rechnet selbst im Hintergrund nach.
+    ///
+    /// Eigene Schleife, nicht im 30-Sekunden-Takt des Timers: der steht waehrend des
+    /// Tagesexports rund 45 Minuten still.
+    /// </summary>
+    private async Task WarmPurchasingDashboardLoopAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            // Nur in Produktion: ohne Einkaufscache faellt die Seite auf eine SAP-Live-Stichprobe
+            // zurueck, und die soll ein Entwicklungsrechner nicht alle fuenf Minuten ausloesen.
+            var environment = _serviceProvider.GetService<IHostEnvironment>();
+            if (environment is null || !environment.IsProduction())
+                return;
+
+            // Erst nach dem Start, damit der Prozess zuerst Anfragen bedient.
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var dashboard = scope.ServiceProvider.GetRequiredService<IPurchasingDashboardService>();
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    await dashboard.LoadAsync(PurchasingDashboardFilter.Default(DateTime.Today), stoppingToken);
+                    watch.Stop();
+                    // Nur melden, wenn wirklich gerechnet wurde; ein Treffer im Cache ist Routine.
+                    if (watch.Elapsed > TimeSpan.FromSeconds(5))
+                        _logger.LogInformation("Einkauf-Standardansicht vorberechnet in {Seconds:N1} s", watch.Elapsed.TotalSeconds);
+                }
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning(ex, "Einkauf-Standardansicht konnte nicht vorberechnet werden");
+                }
+
+                await Task.Delay(PurchasingWarmupInterval, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
     private async Task KeepAliveLoopAsync(CancellationToken stoppingToken)
     {
         try
