@@ -1,9 +1,9 @@
 # Unterrouter Plattform
 
-Zurueck: `router.md`. Stand: 2026-09-11.
+Zurueck: `router.md`. Stand: 2026-09-28.
 
 Architektur, Deployment, Admin, Requirements, Werkzeuge, Serveranalyse, Outlook-Grenzen,
-Arbeitsplatzleistung und WLAN-Aussetzer.
+Arbeitsplatzleistung und WLAN-Aussetzer, Tempo der Webapp.
 
 ## Dateien
 
@@ -11,6 +11,7 @@ Arbeitsplatzleistung und WLAN-Aussetzer.
 | --- | --- |
 | **Aktuell verifizierter Produktivstand** | `docs/rag/DEPLOYMENT.md` |
 | **Verfahren, Deploy-Konsole, die vier Fallen** | `docs/DEPLOYMENT.md` |
+| **Tempo der Webapp: sofort sichtbare Oberflaeche, Ladezeiten, `/einkauf` 100 s** | `docs/PLATTFORM_TEMPO_2026-09-28.md` |
 | **NuGet-Sicherheitsbefund und Updatepfad** | `docs/NUGET_SICHERHEIT_2026-09-01.md` |
 | Architektur, Kurzstand | `docs/rag/ARCHITECTURE.md` |
 | Admin-Bereich, Kurzstand | `docs/rag/ADMIN.md` |

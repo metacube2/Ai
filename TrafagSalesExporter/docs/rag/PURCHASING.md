@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-09-28 (Lagerwert-Verlauf ergaenzt; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-09-28 (Lagerwert-Verlauf und Ladezeit ergaenzt; uebriger Kurzstand vom 2026-09-03)
 
 Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
@@ -107,6 +107,12 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   abgeglichen**. Seit 2026-09-28 zusaetzlich ein **Verlauf je Kalenderwoche, produktiv seit
   2026-09-28 09:33**: Tagesstand je Lauf in `PurchasingStockValueHistory`, Anzeige Stand Ende Woche,
   erster Punkt 10.09.2026, kein Rueckblick. Der Einkauf-Lauf fiel vom 10.09. bis 28.09. aus (IIS-Leerlauf); seit 28.09. Nachhol-Delta und Wachhalten, Server-Einstellung offen als ISS-017. Details `docs/EINKAUF_LAGERWERT_2026-08-18.md` Abschnitt 13.
+
+- **Ladezeit `/einkauf` gemessen 2026-09-28: 98,6 s bei laufendem Worker**, also kein
+  Kaltstart, sondern die Neuberechnung nach Ablauf des 15-Minuten-Snapshots. Die fruehere
+  Angabe „9-11 s warm" trifft diesen Fall nicht. Seit `4f2c62f` erscheint die Seite sofort mit
+  Ladebalken, die Zahlen kommen aber weiterhin erst danach. Offen in
+  `docs/PLATTFORM_TEMPO_2026-09-28.md` Abschnitt 4.
 
 ## Offene Punkte
 

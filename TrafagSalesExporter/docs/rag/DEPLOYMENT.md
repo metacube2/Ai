@@ -44,6 +44,18 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
+- **Deploy 2026-09-28 10:31, Oberflaeche sofort sichtbar: Vorrendern aus, Ladebalken.** Stand
+  `4f2c62f`, sauberer Worktree `C:\TMP\TrafagSalesExporter_release_4f2c62f`, ohne Finance_All.
+  `715/715` Release-Tests. `BiDashboard.dll` `28.09.2026 10:30:54`, `6'384'128` Bytes, SHA256
+  `CD57F6EDD4777FBF07D5CD932B5D77DF12ECF883B24D1C9E9E159B9038C4C398`, bitgleich. Sicherung
+  wiederverwendet (`...before-purchasing-catchup-keepalive-20260928-100353.bak`, DB seither
+  unveraendert). Bekannter WAL/SHM-Alarm, beide um 10:32:06 wieder da. **Ab diesem Deploy
+  liefern alle Routen nur noch die Huelle (rund 4,7 KB)**: die Groessen im Protokoll fallen
+  deshalb stark, und ein HTML-Grep nach Seiteninhalt funktioniert nicht mehr, weil der Inhalt
+  erst im Circuit entsteht. `/einkauf` antwortet in `0,11 s` statt `98,60 s` vorher. Das
+  Beobachtungsfenster fuer das Wachhalten (ISS-017) beginnt neu um 10:31. Details:
+  `docs/PLATTFORM_TEMPO_2026-09-28.md`.
+
 - **Deploy 2026-09-28 10:04, Einkauf-Lauf nachholen und IIS-Worker wachhalten.** Stand `e83591f`,
   gebaut aus dem sauberen Worktree `C:\TMP\TrafagSalesExporter_release_e83591f`, wieder **ohne**
   die unfertigen Finance_All-Aenderungen (Sperrpruefung `FinanceAllExportService` negativ).
