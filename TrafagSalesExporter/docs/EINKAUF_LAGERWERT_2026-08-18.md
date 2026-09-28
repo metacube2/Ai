@@ -690,7 +690,12 @@ Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_A
 - **Nicht deployed.** Der Arbeitsbaum enthaelt fremde, nicht committete Aenderungen an
   `Program.cs`, `Services/TimerBackgroundService.cs` und `TrafagSalesExporter.csproj`
   (Finance_All-Reservierung). Ein Release-Build aus diesem Baum wuerde sie mit ausliefern.
-  Deploy nur nach Freigabe durch Ingo und aus einem sauberen Stand.
+  Deploy nur nach Freigabe durch Ingo und aus einem sauberen Stand. Der Commit-Stand ist in
+  einem eigenen Worktree geprueft: `709/709` gruen. Der Build braucht dort eine (leere)
+  `trafag_exporter.db`, weil das Projekt sie ins Ausgabeverzeichnis kopiert.
+- **Ein Deploy von HEAD liefert mehr als den Verlauf.** Seit dem letzten Deploy (`d5bc321`,
+  2026-09-10 09:40) sind ausserdem `4d0b9cd` (Marktsegment-Vorschlaege) sowie `16bc901` und
+  `caaf377` (CH/AT-Journal monatsweise lesen) nicht ausgeliefert.
 - **Der Verlauf beginnt erst mit dem Deploy.** Die Vorher-Sicherungen der Datenbank seit dem
   2026-08-24 enthalten je einen Kachelstand und koennten einige Punkte nachliefern. Das
   read-only Auslesen der produktiven Sicherungen wurde in dieser Sitzung vom
