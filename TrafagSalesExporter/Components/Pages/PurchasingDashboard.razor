@@ -696,7 +696,13 @@
                             <MudText Typo="Typo.h6">@T("Lagerwert Einkaufsteile: Verlauf je Woche", "Purchased parts stock value: weekly trend")</MudText>
                             <MudText Typo="Typo.body2" Class="purchasing-muted">
                                 @T("Stand Ende Kalenderwoche aus dem taeglichen Einkauf-Lauf, Disponenten", "End-of-week value from the daily purchasing run, planners") @string.Join("/", TrafagSalesExporter.Services.PurchasingDashboardService.PurchasingPlanners).
-                                @T("Gesammelt ab dem 28.09.2026, fruehere Wochen gibt es nicht. Wochen ohne Lauf bleiben leer. Der Wert ist noch nicht gegen MB5L abgeglichen.", "Collected from 28.09.2026, earlier weeks do not exist. Weeks without a run stay empty. The value has not yet been reconciled with MB5L.")
+                                @* Startdatum aus den Daten, nicht fest im Text: der erste Punkt ist der beim
+                                   Deploy gespeicherte Kachelstand und kann aelter sein als der Deploy. *@
+                                @if (_liveState.StockValueWeeklyHistory.Count > 0)
+                                {
+                                    @($"{T("Erster Verlaufspunkt:", "First trend point:")} {_liveState.StockValueWeeklyHistory[0].SnapshotDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture)}. ")
+                                }
+                                @T("Fruehere Wochen gibt es nicht. Wochen ohne Lauf bleiben leer. Der Wert ist noch nicht gegen MB5L abgeglichen.", "Earlier weeks do not exist. Weeks without a run stay empty. The value has not yet been reconciled with MB5L.")
                             </MudText>
                         </div>
                         <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">@_liveState.StockValueWeeklyHistory.Count @T("Wochen", "weeks")</MudChip>

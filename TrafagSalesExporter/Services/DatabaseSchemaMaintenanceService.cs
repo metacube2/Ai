@@ -394,7 +394,15 @@ CREATE TABLE IF NOT EXISTS FieldTransformationRules (
         // Lagerwert-Verlauf erst mit dem naechsten Einkauf-Lauf nach dem Deploy. Die
         // Anwendung schreibt selbst, nicht ein Werkzeug von aussen (siehe WAL-Falle in
         // docs/EINKAUF_LAGERWERT_2026-08-18.md, Abschnitt 12.8).
-        PurchasingStockValueStore.SeedHistoryFromCache((Microsoft.Data.Sqlite.SqliteConnection)conn);
+        // Ein Fehler hier ist verschmerzbar (der Verlauf beginnt dann mit dem naechsten Lauf) und
+        // darf die uebrige Schemapflege nicht abbrechen.
+        try
+        {
+            PurchasingStockValueStore.SeedHistoryFromCache((Microsoft.Data.Sqlite.SqliteConnection)conn);
+        }
+        catch (Exception)
+        {
+        }
 
         AddColumnIfMissing(db, "PurchasingEkkoCache", "SupplierName", "TEXT NOT NULL DEFAULT ''");
         // Lieferantenland (LFA1-LAND1, seit SAP-Erweiterung 2026-07-23) fuer die Region-/

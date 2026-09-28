@@ -66,7 +66,8 @@ public sealed class PurchasingDashboardLiveState
     // werden kann.
     public List<PurchasingStockValueRow> StockValueRows { get; set; } = [];
     // Wochenverlauf des Lagerwerts, Stand Ende Kalenderwoche, auf die Disponenten-Abgrenzung
-    // summiert. Gesammelt ab dem Deploy am 2026-09-28; frueher gibt es keine Punkte.
+    // summiert. Gesammelt ab dem Deploy; der erste Punkt ist der dann gespeicherte Kachelstand
+    // und kann aelter sein. Davor gibt es keine Punkte.
     public List<StockValueWeekPoint> StockValueWeeklyHistory { get; set; } = [];
     public string TopSupplierLabel { get; set; } = string.Empty;
     public string TopMaterialGroupLabel { get; set; } = string.Empty;

@@ -679,7 +679,11 @@ Tests: `724/724` gruen (lokal, Arbeitsbaum mit fremden unkommittierten Finance_A
 5. **Die Hochachse beginnt beim tiefsten Wert**, nicht bei null, und das steht unter der
    Grafik. Bei rund CHF 9 Mio waeren Wochenbewegungen sonst eine flache Linie.
 6. **Die Anwendung schreibt den ersten Punkt selbst** (beim Start aus dem Kachelstand), nicht
-   ein Werkzeug von aussen. Grund ist die WAL-Falle aus 12.8.
+   ein Werkzeug von aussen. Grund ist die WAL-Falle aus 12.8. Dieser erste Punkt traegt das
+   Datum des letzten erfolgreichen Lagerwert-Reads und kann deshalb **aelter als der Deploy**
+   sein. Die Oberflaeche nennt darum das Datum des ersten Punkts aus den Daten statt eines
+   festen Startdatums. Scheitert die Uebernahme, faengt die Schemapflege den Fehler ab und
+   der Verlauf beginnt mit dem naechsten Lauf.
 
 ### 13.4 Was offen ist
 
