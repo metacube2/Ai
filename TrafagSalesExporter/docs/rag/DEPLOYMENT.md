@@ -44,6 +44,19 @@ Stand: 2026-09-28
 
 ## Kurzstand
 
+- **Deploy 2026-09-28 13:50, Finanzvergleich-Cache und Einkauf-Status eine Zeile je Lauf.** Stand
+  `02bd0cd` (Funktionscommit `eaa9d43`), sauberer Worktree `C:\TMP\TrafagSalesExporter_release_02bd0cd`,
+  ohne Finance_All. `737/737` Release-Tests. `BiDashboard.dll` `28.09.2026 13:49:47`, `6'403'072`
+  Bytes, SHA256 `ADFE606DBC1490C3BB596484C151EEDDA55E5DDBBD8FB8BC4948F09FD5C71980`, bitgleich. Fuenf
+  Routen `200`. Sicherung wiederverwendet (`...before-cockpit-sqlite-cache-20260928-133159.bak`).
+  **Ein Alarm, erklaert:** Hauptdatei mit neuer Schreibzeit (13:50:20, gleiche Groesse), WAL/SHM kurz
+  verschwunden und um 13:50:29 wieder da. Ursache: beim Start um 13:33 setzte der
+  `PurchasingRefreshRunner` die liegengebliebene Running-Zeile Id 48 (der alte Doppelzeilen-Fehler)
+  auf „Abgebrochen", Warnung im stdout-Protokoll; diese 16 KB WAL wurden beim Herunterfahren in die
+  Hauptdatei zurueckgeschrieben. Die Sicherung von 13:31 enthaelt diese eine Statusaenderung nicht.
+  Nachgeprueft nur lesend: `PRAGMA quick_check` = `ok`, Id 48 steht auf `Abgebrochen` mit Zeitpunkt
+  13:33:25. Ab diesem Stand schreibt ein Einkauf-Lauf nur noch eine Zeile, der Fall entfaellt kuenftig.
+
 - **Deploy 2026-09-28 13:32, Tempo: Cockpit-Wechselkurse, Export-Dashboard, SQLite-Cache,
   CSV-Einlesen.** Stand `744faaf` (Funktionscommits `5a26596`, `c35d3fa`, `977a198`), sauberer
   Worktree `C:\TMP\TrafagSalesExporter_release_744faaf`, ohne Finance_All. Per Timer auf Ingos Wunsch
