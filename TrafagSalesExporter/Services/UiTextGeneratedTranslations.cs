@@ -8,6 +8,10 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Periodo no determinable",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "Las tablas del PDF contienen la pagina mostrada actualmente, no automaticamente todos los registros.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "La vista de direccion oculta los nombres. Los numeros de personal y los detalles por persona siguen visibles; no es una vista agregada anonima.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Las posiciones en moneda extranjera de los datos cargados no tienen tipo de cambio. Los valores en CHF afectados usan la equivalencia 1:1 y no son fiables. El contador abarca todos los datos, no solo el periodo seleccionado.",
                 ["Startsatz Bahn aufnehmen"] = "Anadir conjunto inicial ferroviario",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} patrones anadidos. Revise y ajuste; el conjunto es una sugerencia.",
                 ["neu"] = "nuevo",
@@ -1561,6 +1565,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Periodo non determinabile",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "Le tabelle nel PDF contengono la pagina attualmente visualizzata, non automaticamente tutti i record.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "La vista direzionale nasconde i nomi. Numeri di matricola e dettagli per persona restano visibili; non e una vista aggregata anonima.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Le posizioni in valuta estera nei dati caricati non hanno un tasso di cambio. I valori CHF interessati usano il rapporto 1:1 e non sono affidabili. Il contatore riguarda tutti i dati, non solo il periodo selezionato.",
                 ["Startsatz Bahn aufnehmen"] = "Aggiungi set iniziale ferroviario",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} modelli aggiunti. Rivedere e adattare; l insieme e un suggerimento.",
                 ["neu"] = "nuovo",
@@ -3114,6 +3122,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Foreign-currency items in the loaded data have no exchange rate. Affected CHF values use the 1:1 fallback and are unreliable. The count covers the data set, not just the selected period.",
                 ["Startsatz Bahn aufnehmen"] = "Add railway starter set",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} patterns added. Please review and adjust; the set is a suggestion.",
                 ["neu"] = "new",
@@ -4667,6 +4679,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Foreign-currency items in the loaded data have no exchange rate. Affected CHF values use the 1:1 fallback and are unreliable. The count covers the data set, not just the selected period.",
                 ["Startsatz Bahn aufnehmen"] = "Add railway starter set",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} patterns added. Please review and adjust; the set is a suggestion.",
                 ["neu"] = "new",
@@ -6220,6 +6236,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Foreign-currency items in the loaded data have no exchange rate. Affected CHF values use the 1:1 fallback and are unreliable. The count covers the data set, not just the selected period.",
                 ["Startsatz Bahn aufnehmen"] = "Add railway starter set",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} patterns added. Please review and adjust; the set is a suggestion.",
                 ["neu"] = "new",
@@ -7773,6 +7793,10 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
+                ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
+                ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
+                ["Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum."] = "Foreign-currency items in the loaded data have no exchange rate. Affected CHF values use the 1:1 fallback and are unreliable. The count covers the data set, not just the selected period.",
                 ["Startsatz Bahn aufnehmen"] = "Add railway starter set",
                 ["{0} Muster aufgenommen. Bitte durchsehen und anpassen, der Satz ist ein Vorschlag."] = "{0} patterns added. Please review and adjust; the set is a suggestion.",
                 ["neu"] = "new",
