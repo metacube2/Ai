@@ -130,3 +130,47 @@ Oberflaeche und `Sales_All`. Andreas vor dem Deploy informieren.
   Diagnose (sagt selbst, dass sie nicht mit Finance abstimmbar ist), Rechenwege innerhalb der
   Gruppenmarge (ISS-018).
 - Die Ursache der indischen Mehrfachpositionen ist nicht untersucht.
+
+## 5. Nachmessung Konto 47005 gegen Rechnungspositionen, 2026-09-29 nachmittags
+
+Auf Ingos Frage, ob es wirklich Doppelzeilen waren, wenn Rhino denselben Wert hatte. Nur lesend in
+HANA `it01_p` (`.tmp_tools/HanaSupplierAddress0929/konto47005.sql` mit `HanaQ`), Jahr 2025, Konten
+`47005%` ohne `4700504%`, also genau der Kontenfilter der Export-Abfrage.
+
+Hauptbuch `JDT1` nach Belegart:
+
+| Belegart | Erloes 2025 |
+| --- | ---: |
+| 13 Ausgangsrechnung | 7'778'937.29 |
+| 14 Gutschrift | −67'036.56 |
+| 30 manuelle Buchung | −9'734.35 |
+| **Summe** | **7'702'166.38** |
+| −3 Jahresabschluss (Saldo auf null) | −7'702'166.38 |
+
+Die Summe entspricht dem Wert aus dem Screenshot der italienischen B1-Oberflaeche vom Mai
+(7'702'146.38) und liegt 0,4 % ueber Rhino (7'669'840).
+
+Rechnungspositionen `INV1` auf denselben Konten, jede Position einmal:
+
+| Kunde | Positionen | Rechnungen 2025 |
+| --- | ---: | ---: |
+| uebrige Kunden | 9'912 | 5'925'610.13 |
+| C_IT01_0022987 Faiveley Transport Italia | 475 | 1'001'386.45 |
+| C_IT01_0309653 Fincantieri Nextech | 224 | 185'325.12 |
+| C_IT01_0304885 Metal Work Service | 171 | 176'572.80 |
+| C_IT01_0306928 System Ceramics | 158 | 173'372.50 |
+| C_IT01_0306475 Elemaster | 51 | 166'403.50 |
+| C_IT01_0306138 Wabtec MZT | 40 | 141'323.70 |
+| **sechs ausgeschlossene Kunden zusammen** | 1'119 | **1'844'384.07** |
+
+Gutschriften `RIN1`: 67'016.47, davon 4'260 bei den ausgeschlossenen Kunden.
+
+**Befund:** Die sechs Kunden, die der Italien-Filter vom Mai ausschliesst
+(`HanaQueryService.BuildRevenueAccountFilter`), sind echte externe Kunden, und ihr Umsatz steht im
+Konto 47005. Ihr Ausschluss (1,84 Mio. EUR) glich die Doppelzeilen (1,81 Mio. EUR) fast genau aus.
+Nur deshalb traf das Cockpit im Mai den Rhino-Wert. Alle Rechnungspositionen einmal gezaehlt, ohne
+Kundenausschluss und abzueglich der Gutschriften, ergeben 7'702'978 EUR und damit das Hauptbuch.
+
+**Folge:** Mit der Korrektur von 15:02 allein faellt Italien auf rund 5,86 Mio. EUR und liegt dann
+1,8 Mio. unter Rhino. Richtig ist erst die Kombination: Doppelzeilen weg und Kundenausschluss weg.
+Offen ist noch, ob die Finance-Regel fuer Trafag Italia (Kundenname) danach weiter noetig ist.
