@@ -26,6 +26,7 @@ Alle uebrigen Blaetter bleiben unveraendert.
 from __future__ import annotations
 
 import csv
+import math
 from datetime import date
 from pathlib import Path
 
@@ -66,7 +67,9 @@ AMPEL = {
     "Grün": ("2E8B57", "E2F0D9"),
     "Gelb": ("C9A100", "FFF2CC"),
     "Rot": ("C00000", "FCE4E4"),
+    "Neu": ("7F7F7F", "EDEDED"),
 }
+AMPEL_REIHE = ("Grün", "Gelb", "Rot", "Neu")
 
 DUNKEL = "1F3864"
 HELL = "D9E1F2"
@@ -155,13 +158,15 @@ def rolle(wert: str) -> tuple[str, Font]:
     return w, Font(name=SCHRIFT, size=10)
 
 
-def kachel(blatt, spalte: int, zeile: int, titel: str, zahl, farbe: str, hinter: str) -> None:
-    a, b = get_column_letter(spalte), get_column_letter(spalte + 1)
-    blatt.merge_cells(f"{a}{zeile}:{b}{zeile}")
-    blatt.merge_cells(f"{a}{zeile + 1}:{b}{zeile + 1}")
+def kachel(blatt, spalte: int, zeile: int, titel: str, zahl, farbe: str, hinter: str,
+           breite: int = 2) -> None:
+    a, b = get_column_letter(spalte), get_column_letter(spalte + breite - 1)
+    if breite > 1:
+        blatt.merge_cells(f"{a}{zeile}:{b}{zeile}")
+        blatt.merge_cells(f"{a}{zeile + 1}:{b}{zeile + 1}")
     fuell = PatternFill("solid", fgColor=hinter)
     for r in (zeile, zeile + 1):
-        for c in (spalte, spalte + 1):
+        for c in range(spalte, spalte + breite):
             blatt.cell(row=r, column=c).fill = fuell
             blatt.cell(row=r, column=c).border = RAHMEN
     zelle(blatt, f"{a}{zeile}", titel, font=Font(name=SCHRIFT, size=9, color=GRAU, bold=True),
@@ -217,13 +222,15 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
         ("● IM PLAN", ampeln.count("Grün"), *AMPEL["Grün"]),
         ("● ACHTUNG", ampeln.count("Gelb"), *AMPEL["Gelb"]),
         ("● KRITISCH", ampeln.count("Rot"), *AMPEL["Rot"]),
+        ("● NEU", ampeln.count("Neu"), *AMPEL["Neu"]),
         ("FREIGABE FEHLT", freigaben_fehlen, "C00000", "F2F2F2"),
         ("ROLLE OFFEN", rollen_fehlen, "C55A11", "F2F2F2"),
     ]
     spalte = 1
     for titel, zahl, farbe, hinter in kacheln:
-        kachel(blatt, spalte, 4, titel, zahl, farbe, hinter)
-        spalte += 2
+        breite = min(2, len(breiten) - spalte + 1)
+        kachel(blatt, spalte, 4, titel, zahl, farbe, hinter, breite)
+        spalte += breite
 
     # Tabelle
     kopf = ["ID", "Vorhaben", "HERMES-Stufe", "Ampel", "Auftraggeber", "Anwendervertreter",
@@ -274,7 +281,11 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
             z.alignment = Alignment(horizontal="center", vertical="center")
 
         blatt.cell(row=r, column=10).alignment = Alignment(horizontal="center", vertical="center")
-        blatt.row_dimensions[r].height = 48
+        # Hoehe aus der laengsten Textspalte schaetzen, sonst laeuft der Text ueber
+        zeilen_max = max(
+            math.ceil(len(str(blatt.cell(row=r, column=c).value or "")) / (breiten[c - 1] * 1.0))
+            for c in (2, 11, 12, 13))
+        blatt.row_dimensions[r].height = max(34, 15 * zeilen_max + 8)
 
     ende = k + len(vorhaben)
     blatt.conditional_formatting.add(
@@ -286,7 +297,7 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
     hs = len(breiten) + 3
     blatt.cell(row=k, column=hs, value="Ampel")
     blatt.cell(row=k, column=hs + 1, value="Anzahl")
-    for i, name in enumerate(("Grün", "Gelb", "Rot"), start=1):
+    for i, name in enumerate(AMPEL_REIHE, start=1):
         blatt.cell(row=k + i, column=hs, value=name)
         blatt.cell(row=k + i, column=hs + 1, value=ampeln.count(name))
     for c in (hs, hs + 1):
@@ -294,9 +305,9 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
 
     kuchen = PieChart()
     kuchen.title = "Ampel der Vorhaben"
-    kuchen.add_data(Reference(blatt, min_col=hs + 1, min_row=k, max_row=k + 3), titles_from_data=True)
-    kuchen.set_categories(Reference(blatt, min_col=hs, min_row=k + 1, max_row=k + 3))
-    for i, name in enumerate(("Grün", "Gelb", "Rot")):
+    kuchen.add_data(Reference(blatt, min_col=hs + 1, min_row=k, max_row=k + len(AMPEL_REIHE)), titles_from_data=True)
+    kuchen.set_categories(Reference(blatt, min_col=hs, min_row=k + 1, max_row=k + len(AMPEL_REIHE)))
+    for i, name in enumerate(AMPEL_REIHE):
         punkt = DataPoint(idx=i)
         punkt.graphicalProperties.solidFill = AMPEL[name][0]
         punkt.graphicalProperties.line.solidFill = "FFFFFF"
@@ -358,7 +369,7 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
         ("③ Abschluss", "Übergeben in den Betrieb, mit kurzer Betriebsdokumentation."),
         ("✔ / ○", "Erledigt mit Datum / noch offen."),
         ("⚠ festlegen", "Die Rolle ist noch niemandem zugeordnet."),
-        ("● Ampel", "Grün im Plan · Gelb wartet auf Entscheid oder Zulieferung · Rot blockiert oder Termin überschritten."),
+        ("● Ampel", "Grün im Plan · Gelb wartet auf Entscheid oder Zulieferung · Rot blockiert oder Termin überschritten · Grau neu, noch ohne Stand."),
     ]
     for i, (a, b) in enumerate(legende, start=len(stufen) + 2):
         zelle(blatt, f"K{r0 + i}", a, font=Font(name=SCHRIFT, size=10, bold=True, color=DUNKEL),
@@ -366,7 +377,7 @@ def schreibe_hermes(mappe, vorhaben: list[dict[str, str]], aufgaben: list[dict[s
         blatt.merge_cells(f"L{r0 + i}:M{r0 + i}")
         zelle(blatt, f"L{r0 + i}", b, font=Font(name=SCHRIFT, size=10),
               alignment=Alignment(vertical="top", wrap_text=True))
-        blatt.row_dimensions[r0 + i].height = 28
+        blatt.row_dimensions[r0 + i].height = 40 if len(b) > 80 else 28
 
     # Druck: quer, auf Seitenbreite
     blatt.page_setup.orientation = "landscape"

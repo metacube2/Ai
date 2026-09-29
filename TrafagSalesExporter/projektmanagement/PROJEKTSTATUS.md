@@ -1,6 +1,6 @@
 # Projektstatus Ingo Kohler
 
-Stand: 2026-09-28 (PM-04, PM-07 und neu PM-09 nachgefuehrt; uebrige Punkte Stand 2026-09-11)
+Stand: 2026-09-29 (HERMES-Sicht und neu PM-10 bis PM-12; PM-04, PM-07, PM-09 vom 2026-09-28; uebrige Punkte Stand 2026-09-11)
 
 Diese Datei ist die **fuehrende Aufgabenliste** fuer das persoenliche
 Projektmanagement. Sie ersetzt `kontext.txt` (2013 Zeilen ChatGPT-Protokoll vom
@@ -38,6 +38,9 @@ nicht.
 | PM-07 | HR: automatische Auswertung der REXX-Files | Ingo | Mittel | Wartet auf externe Firma. **Die fachlichen Antworten von Sonja Richter sind seit 2026-09-28 umgesetzt und produktiv** (Langzeitkrank ab 61. Tag, Reminderprofile ohne FTE ausgeschlossen, Restferien-Ampel nach Quartal, zwei neue Prognosen) | Mail-Entwurf an Sonja (28.09.) versenden; im naechsten Call periodengenaue Krankenquote und neue Exporte klaeren (Dateien vom 08.07./26.05.); Exporter der externen Firma abwarten | 2026-09-28 |
 | PM-08 | Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08 | Ingo | **Hoch, Termin ueberschritten** | **Blocker 1 ist am 2026-09-09 geloest**, der deutsche Verkaufsbestand traegt jetzt fachliche Kundennummern und Namen. Blocker 2 besteht nur noch fuer die anderen Standorte fort | Neues Zieldatum mit Rohail vereinbaren; 30 Gutschriftenzeilen und drei Doppelnummern klaeren; Patrik die 171 uebrigen Vorschlaege pruefen lassen | 2026-09-11 |
 | PM-09 | Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf | Ingo | **Hoch** | **Am 2026-09-28 weitgehend erledigt und produktiv:** Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s -> 0,07 s, Server-Einkaufsberechnung 105 s -> 24 s durch SQLite-Cache; Nachtlauf gegen IIS-Leerlauf abgesichert, Einkauf-Lauf laeuft wieder | IT stellt den App-Pool auf Dauerbetrieb (ISS-017); Ingo prueft die Oberflaeche im Browser; Tageslauf am 29.09. beobachten | 2026-09-28 |
+| PM-10 | Abloesung Smartsheet (neu, HERMES) | Ingo | offen | Neu, noch kein Auftrag | Projektauftrag in der Initialisierung schreiben, Stufe nach Aufwand festlegen | 2026-09-29 |
+| PM-11 | Data Lake: Leistung analysieren und messen (neu, HERMES) | Ingo | offen | Neu, Kleinauftrag | Klaeren, welche Leistung gemeint ist, Abgrenzung zu PM-09, dann messen | 2026-09-29 |
+| PM-12 | Power BI: je Dashboard ein Anwendervertreter (neu, HERMES) | Ingo | offen | Neu, Kleinauftrag | Dashboards auflisten und je Dashboard einen Anwendervertreter benennen | 2026-09-29 |
 
 ---
 
@@ -687,6 +690,26 @@ Branchenwerte enden auf ein Komma. Details:
 Die korrigierte DE-Pruefmappe `Bahnmarkt_Rohail_2026-09-09.xlsx` liegt erzeugt und
 rueckgelesen bereit. Ein neues Zieldatum ist mit Rohail zu vereinbaren; das entscheidet
 Ingo, nicht diese Datei.
+
+---
+
+### PM-10 bis PM-12: neu aufgenommen am 2026-09-29 aus dem HERMES-Zuschnitt
+
+Diese drei Punkte stammen aus dem Vorschlag, HERMES fuer ein KMU zuzuschneiden, und sind auf
+Ingos Wunsch als Vorhaben aufgenommen. Zu keinem gibt es bisher einen Auftrag oder eine
+Messung; Stand, Rollen und Einstufung sind deshalb Vorschlaege. Die Pflege laeuft ueber
+`projektmanagement/Vorhaben_HERMES.tsv`.
+
+- **PM-10 Abloesung Smartsheet.** Typischer Fall fuer einen Projektauftrag in der
+  Initialisierung; die Stufe haengt von der Aufwandschaetzung ab, bei bereichsuebergreifendem
+  Umfang mit Projektausschuss. Philip Steiger betreut Smartsheet und testet das Project Power
+  Pack, er ist als Anwendervertreter vorgeschlagen.
+- **PM-11 Data Lake: Leistung.** Zuerst ein Kleinauftrag „Analyse und Messung", danach je
+  nach Befund ein Vorhaben. Abzugrenzen gegen PM-09, das die Geschwindigkeit der Webapp am
+  2026-09-28 bereits weitgehend behoben hat.
+- **PM-12 Power BI: Anwendervertreter je Dashboard.** Je Dashboard eine Person aus dem
+  Fachbereich, die fachlich abnimmt und fuer die Datenqualitaet verantwortlich ist. Dafuer
+  fehlt zuerst eine Liste der produktiven Dashboards.
 
 ---
 
