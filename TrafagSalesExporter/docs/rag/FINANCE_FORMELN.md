@@ -3,12 +3,11 @@
 Stand: 2026-09-29 (Punkt 4, Kostenwaehrungsschalter, Supplier-Konflikt und Periodenregel nach
 der Konsistenzpruefung vom 29.09. korrigiert; uebriger Stand 2026-08-07)
 
-**Offene Rechenfehler seit 2026-09-29:** Die Konsistenzpruefung
-`docs/FINANCE_REVIEW_2026-09-29.md` ist gegen den Code bestaetigt. Produktiv wirksam und fuer
-Anwender sichtbar: Der CHF-Schalter aendert die Gruppenmarge, ohne dass das Pruefbuch mitgeht
-(A1). CHF-Summen tragen beim Filtern auf ein Land das lokale Waehrungslabel (A3). Das
-Pruefbuch zeigt den lokalen Stueckpreis mit der Waehrung der Konzernkosten (A4). Status in
-`ISS-018`.
+**Rechenfehler aus der Pruefung vom 2026-09-29** (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`):
+A3 (lokales Waehrungslabel auf CHF-Summen) und A4 (Stueckpreis mit Konzernwaehrung) sind seit
+2026-09-29 10:22 behoben (`91fd9dc`); die Cockpit-Exporte weisen ihre Kappung jetzt aus (A5).
+**Offen:** A1, der CHF-Schalter aendert die Gruppenmarge, ohne dass das Pruefbuch mitgeht; die
+Korrektur legt den Kurs fest und braucht Andreas.
 
 ## Vorrang: was die Kacheln NICHT sagen (2026-08-07)
 

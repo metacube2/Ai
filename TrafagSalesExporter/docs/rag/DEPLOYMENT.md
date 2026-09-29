@@ -44,6 +44,13 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 10:22, Cockpit ISS-018.2 bis .4.** Stand `91fd9dc`, Worktree
+  `C:TMPTrafagSalesExporter_release_eafd1c5` (auf `91fd9dc` gestellt), ohne Finance_All. `749/749` Release-Tests.
+  `BiDashboard.dll` `29.09.2026 10:20:36`, `6'416'384` Bytes, SHA256
+  `25BAFAC22774D68598FB65F9A0BDA74E2B3A521A168166D1FF5C701DC6F91A71`, bitgleich. Fuenf Routen `200`.
+  Sicherung `trafag_exporter.db.before-cockpit-labels-capnote-20260929-102112.bak` (Blockkopie 38 s). Ohne Alarm.
+  Wirknachweis `Dieser Export ist gekappt`. Nicht belegt: angemeldete Sichtpruefung des Cockpits.
+
 - **Deploy 2026-09-29 10:07, HR- und Einkaufs-Review-Reparaturen von Codex.** Stand `c1fdfa2`
   (Funktionscommit `eafd1c5`, Uebersetzungen `c1fdfa2`), sauberer Worktree
   `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `747/747` Release-Tests; der erste Lauf

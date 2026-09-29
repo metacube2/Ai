@@ -38,6 +38,10 @@ Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
   `Sales_All_2026-09-29.xlsx` hat 8'109 TRES-Zeilen bis 28.09.2026, ISS-020 erledigt.
 - **HR- und Einkaufs-Review von Codex** (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`): H1 bis H5 und
   E1/E2/C1/C2 sind repariert und **seit 10:07 produktiv** (`eafd1c5`, `c1fdfa2`). Offene Fachfragen sind bestehenden Punkten zugeordnet.
+- **Wochen_Todo abgeglichen und Punkte ohne Entscheid geloest:** Frankreich liefert wieder (ISS-001.2
+  erledigt), Tempo erledigt, Doppelzeile zu ISS-018.7 zusammengefuehrt. ISS-018.2/.3 behoben und .4
+  im Export ausgewiesen, deployed 10:22 (`91fd9dc`, 749/749). Offen mit Entscheid: A1 (Kurs des
+  CHF-Schalters, Andreas) und die Einkauf-Beschriftung (Ingo).
 - **Antwort an Paola versendet** (29.09.): Beraterarbeit an der Referenzkost-Abfrage
   zurueckstellen, offen ist nur ihre Bestaetigung des bilanziellen Bestandswerts.
 - **Railway-Gesamtsicht und DB4** (`ISS-019`): Umsatz technisch fuer alle Standorte da, belastbar

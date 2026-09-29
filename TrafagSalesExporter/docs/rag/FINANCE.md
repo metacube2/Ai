@@ -214,10 +214,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 ## Offene Fachpunkte
 
 - **Konsistenzbefunde vom 2026-09-29 (`ISS-018`), gegen den Code bestaetigt, nicht repariert.**
-  Produktiv wirksam und sichtbar: der CHF-Schalter aendert die Gruppenmarge, das Pruefbuch
-  nicht (A1); falsche Waehrungslabels bei CHF-Summen (A3) und beim Stueckpreis im Pruefbuch
-  (A4); die Excel-Exporte aus dem Cockpit enthalten nur 1'000 Zeilen, vollstaendig ist allein
-  das Nachweis-Excel (A5). Fachlich offen fuer Andreas: Gutschriften mit Menge 0 (B1),
+  A3, A4 behoben und A5 ausgewiesen seit 2026-09-29 10:22 (`91fd9dc`). Offen und sichtbar: der
+  CHF-Schalter aendert die Gruppenmarge, das Pruefbuch nicht (A1, Kursfrage an Andreas); die
+  Cockpit-Exporte bleiben gekappt, vollstaendig ist allein das Nachweis-Excel. Fachlich offen fuer Andreas: Gutschriften mit Menge 0 (B1),
   kostenlose Ware (B2), interner Lieferant ohne Konzernkosten meldet „OK" (B3.1). Details:
   `docs/FINANCE_REVIEW_2026-09-29.md`.
 - `date paid` (ISS-006.1): die Ausgleichsfelder sind seit dem 2026-09-09 eingebaut, die
