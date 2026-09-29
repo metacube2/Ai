@@ -20,8 +20,10 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   noch nichts. **Dringend:** Der Spanien-Import steht seit Mitte Juli, produktiv kommen keine
   neuen TRES-Zeilen an (`ISS-020`). Ursache bestaetigt (SharePoint-Liste las nur 200 Eintraege),
   Korrektur `60cc569` seit 09:25 produktiv, Nachimport beim naechsten Lauf pruefen. Railway-Gesamtsicht
-  und DB4 fuer Heiko und Patrick als `ISS-019`. Die Markdown-Konsistenzbefunde von Codex sind
-  behoben.
+  und DB4 fuer Heiko und Patrick als `ISS-019`: Umsatz-Gesamtsicht am Nachmittag geliefert und
+  plausibilisiert, bestaetigt sind erst DE und ein Kunde in Indien. Die Markdown-Konsistenzbefunde von
+  Codex sind behoben. Mail und Teams sind seit 29.09. direkt durchsuchbar; Funde in `docs/HR_KPI.md` 8.3
+  und `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` Abschnitt 9.
 
 - **2026-09-28, nach Ingos Ferien:** Tempo der Webapp (groesster Kritikpunkt) produktiv verbessert:
   Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s ->

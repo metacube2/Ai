@@ -157,3 +157,16 @@ Minuten, selbst fuer die gekuerzte Fassung. Begruendung und Messreihe:
 **Falle beim Erzeugen:** Die Betragsspalten liegen in SQLite als TEXT. Ohne
 `CAST(... AS REAL)` scheitert schon der Vergleich, und ein `>` auf Text liefert stillen
 Unsinn. Dieselbe Falle wie bei `StandardCost`, siehe `docs/router/finance.md`.
+
+## 9. Nachtrag 2026-09-29: Umfang laut Andreas (Teams vom 2026-09-10)
+
+Beim Durchsehen von Teams gefunden, bisher nicht dokumentiert. Andreas hat am 2026-09-10 auf den
+ersten Stand geantwortet: "Auf den ersten Blick sieht es gut aus." Potentiell seien alle Daten da,
+koennten aber nicht so genutzt werden, wie sie aufgesetzt sind, etwa beim clearing date (passt zu
+`ISS-006.1`). Zum Umfang:
+
+- **AT aufnehmen** (nicht SAP B1), als naechsten Schritt **DE, UK und ES**.
+- **CH** hat mit Zeitbuchungen ueber 5 Mio. Zeilen pro Jahr; weil CH aehnlich wie AT laufen wird,
+  fuer den ersten Entwurf **weglassen** oder potentiell **ohne Zeitbuchungen** umsetzen.
+
+Am 2026-09-28 hat Andreas um eine Abstimmung zum Data Lake gebeten (Termin 2026-09-29), siehe PM-11.

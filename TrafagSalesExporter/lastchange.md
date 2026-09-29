@@ -38,6 +38,13 @@ Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
   `Sales_All_2026-09-29.xlsx` hat 8'109 TRES-Zeilen bis 28.09.2026, ISS-020 erledigt.
 - **HR- und Einkaufs-Review von Codex** (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`): H1 bis H5 und
   E1/E2/C1/C2 sind repariert und **seit 10:07 produktiv** (`eafd1c5`, `c1fdfa2`). Offene Fachfragen sind bestehenden Punkten zugeordnet.
+- **Railway-Gesamtsicht fuer Rohail** (Frage vom 12.09.): Uebersicht in CHF erstellt und plausibilisiert
+  (DE gegen Rohails Rechnungsliste und Journal auf etwa 1 %), ITEC als Fehltreffer, Spanien 2026 auffaellig;
+  `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 20, `ISS-019`.
+- **Mail und Teams erstmals direkt durchsucht** (Microsoft-365-Anbindung): offene HR-Wuensche und
+  Rexx-Hub-Auftrag (`docs/HR_KPI.md` 8.3), Journal-Umfang laut Andreas vom 10.09. (AT, dann DE/UK/ES, CH
+  zunaechst ohne), ZZPRDAT-Test vom 17.09., Data-Lake-Abstimmung mit Andreas, offene Anfragen von Upgreat
+  und Armin. Neue Wochen_Todo-Zeilen 52 bis 57.
 - **Wochen_Todo abgeglichen und Punkte ohne Entscheid geloest:** Frankreich liefert wieder (ISS-001.2
   erledigt), Tempo erledigt, Doppelzeile zu ISS-018.7 zusammengefuehrt. ISS-018.2/.3 behoben und .4
   im Export ausgewiesen, deployed 10:22 (`91fd9dc`, 749/749). Offen mit Entscheid: A1 (Kurs des

@@ -383,6 +383,11 @@ Freigabe und der zweite Save nach einer Terminverschiebung.
 Quelle im Repository: `saptasks/zzprdat-kontext.md`. Fuehrend sind dort die beiden
 Nachtraege vom 2026-07-27; die Abschnitte 3 und 7 beschreiben den Stand davor.
 
+**Nachtrag 2026-09-29 (aus Teams und Mail):** Lucas Castro hat fuer den 2026-09-17 einen Termin
+„Tests Produktionsdatum (Ingos Anpassung)“ mit Marco Di Menco und Adil angesetzt. Das Ergebnis ist
+nicht dokumentiert; die Aussage „Abnahmemail nicht versendet“ ist damit moeglicherweise ueberholt.
+Ingo klaert den Stand.
+
 ### PM-04 Einkaufsdashboard: Spend mit Drilldown
 
 Aufgenommen am 2026-07-27. Der Drilldown ist eingebaut. Die verbliebene
@@ -475,6 +480,11 @@ Branchenfeld im Quellsystem steht. Der naechste Schritt ist kein Code, sondern e
 fachlicher Entscheid ueber rund 38 Branchenwerte. Siehe PM-08 und
 `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md` Abschnitt 18.
 
+**Nachtrag 2026-09-29 (Teams):** Armin schrieb am 2026-09-11, geloeschte Einkaufsbelege ohne
+Endkennzeichen fehlten in der Auswertung, und die Abgrenzung offener Bestellungen solle „ohne
+Endlieferkennzeichen und ohne Loeschkennzeichen“ sein. Pruefen, ob das umgesetzt ist. Ingos Frage an
+Armin vom 2026-09-29, ob das Dashboard schneller ist, ist noch unbeantwortet.
+
 ### PM-07 HR: automatische Auswertung der REXX-Files
 
 Aufgenommen am 2026-08-19. Das bestehende HR Cockpit (siehe Historie unten,
@@ -505,6 +515,11 @@ Fluktuationsdefinition und Ausschluesse sind bestaetigt. Ein Mail-Entwurf an Son
 mit eingegrenztem Rexx-Export, und neue Exporte, weil die Dateien vom 08.07. und 26.05. sind.
 Details: `docs/HR_KPI.md` Abschnitt 8.
 
+**Nachtrag 2026-09-29:** Der Rexx-Hub fuer den automatischen Export ist seit 2026-07-29 von Nadja bei
+Rexx beauftragt (4'800 EUR pro Jahr, Angebot Artjom Yahno vom 2026-07-28); „wartet auf externe Firma“
+heisst also konkret: Rexx richtet den Hub ein. Dazu offene HR-Wuensche aus der Mailhistorie (Ferien
+am Stueck, Fit-&-Wohl, Uebertrag Restferien, weitere KPIs), siehe `docs/HR_KPI.md` Abschnitt 8.3.
+
 ### PM-09 Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf
 
 Ausloeser war die Rueckmeldung der Nutzer, man sehe lange gar nichts von der Oberflaeche; laut
@@ -527,6 +542,9 @@ regulaer und das Delta erfolgreich. Die eigentliche Loesung, den App-Pool auf Da
 stellen, liegt als **ISS-017 bei der IT** (kein Fernzugriff auf `tragvapp401`).
 
 Details: `docs/PLATTFORM_TEMPO_2026-09-28.md`, `docs/EINKAUF_LAGERWERT_2026-08-18.md` 13.6 und 13.7.
+
+**Nachtrag 2026-09-29 (Teams):** Upgreat (Dardan) bat am 2026-09-23, zu pruefen, ob die Datenabfrage
+der Webapplikation schneller ist; eine Antwort steht aus.
 
 ### PM-08 Railway: Auswertung fuer Rohail Munir (DE), Termin 2026-09-08
 
@@ -713,6 +731,14 @@ SQL nicht selektiert; Alphaplan DE liefert `RohertragGesamt` je Position inklusi
 der Kopfwert ist schemaseitig noch unbelegt; B1 und IN sind per Spaltenliste zu pruefen; fuer UK
 fehlt der Spaltenkopf der Sage-Datei. Gefuehrt als `ISS-019`.
 
+**Nachtrag 2026-09-29 nachmittags: Gesamtsicht geliefert und plausibilisiert.** Rohails Frage stammt
+vom 2026-09-12. Die Uebersicht `Railway_Umsatz_Gesamtsicht_2026-09-29.xlsx` zeigt bestaetigt rund
+0,68/0,65 Mio. CHF (2025/2026), Vorschlaege 4,19/3,75 Mio. CHF, davon CH 2,62/1,93 Mio. CHF. Die
+Plausibilisierung gegen Rohails Rechnungsliste und das Journal passt auf etwa 1 %; ITEC S.R.L. ist ein
+Fehltreffer (Lohnfertiger TR IT). Details und naechste Schritte: `docs/MARKTSEGMENTE_RAILWAY_2026-08-13.md`
+Abschnitt 20. Statt aller 171 Vorschlaege sollen Patrik und Andreas die Top 15 bestaetigen (70 % des
+Umsatzes), die Schweiz ueber Andreas' AG-Sicht.
+
 ---
 
 ### PM-10 bis PM-12: neu aufgenommen am 2026-09-29 aus dem HERMES-Zuschnitt
@@ -727,7 +753,8 @@ Messung; Stand, Rollen und Einstufung sind deshalb Vorschlaege. Die Pflege laeuf
   Umfang mit Projektausschuss. Philip Steiger betreut Smartsheet und testet das Project Power
   Pack, er ist als Anwendervertreter vorgeschlagen.
 - **PM-11 Data Lake: Leistung.** Zuerst ein Kleinauftrag „Analyse und Messung", danach je
-  nach Befund ein Vorhaben. Abzugrenzen gegen PM-09, das die Geschwindigkeit der Webapp am
+  nach Befund ein Vorhaben. **Nachtrag:** Andreas hat am 2026-09-28 um eine Abstimmung zum Data Lake
+  am 2026-09-29 gebeten; er ist damit der naheliegende Auftraggeber. Abzugrenzen gegen PM-09, das die Geschwindigkeit der Webapp am
   2026-09-28 bereits weitgehend behoben hat.
 - **PM-12 Power BI: Anwendervertreter je Dashboard.** Je Dashboard eine Person aus dem
   Fachbereich, die fachlich abnimmt und fuer die Datenqualitaet verantwortlich ist. Dafuer

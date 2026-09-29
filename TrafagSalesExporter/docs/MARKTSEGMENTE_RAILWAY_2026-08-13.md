@@ -648,3 +648,47 @@ den Keyusern die Fleissarbeit abnimmt, ohne die fachliche Entscheidung vorwegzun
 
 Stand: gebaut und mit 697/697 Tests gruen, damals **nicht deployed**. **Nachtrag 2026-09-29:** seit
 dem Deploy vom 2026-09-28 um 09:33 produktiv (`4d0b9cd`, `docs/rag/DEPLOYMENT.md`).
+
+## 20. Gesamtsicht fuer Rohail, Heiko und Patrick und Plausibilisierung, 2026-09-29
+
+Rohail hat am 2026-09-12 per Teams geschrieben, ueber Andreas bekomme er nur die Auswertung aus
+Sicht der AG, fuer Heiko und Patrick brauche es die Gesamtsicht, zumindest mit Umsatz. Beantwortet
+am 2026-09-29 mit der Uebersicht `Railway_Umsatz_Gesamtsicht_2026-09-29.xlsx` (Downloads von Ingo),
+erzeugt aus dem Railway-Export `Marktsegmente_Export_ALLE_20260929_110719.xlsx`: je Standort Umsatz
+2025 und 2026 bis September, lokal und in CHF zu den Budgetkursen 2025/2026 der Anwendung, getrennt
+nach bestaetigt und Vorschlag, mit Kundenblatt. Die App ist dafuer nicht geaendert worden.
+
+| | 2025 | 2026 bis Sept. |
+| --- | ---: | ---: |
+| Bestaetigt (DE 19/18 Kunden, IN 1 Kunde) | 679'602 CHF | 652'228 CHF |
+| Vorschlaege (171, davon CH 72/55 Kunden mit 2,62/1,93 Mio. CHF) | 4'192'960 CHF | 3'745'589 CHF |
+| Obergrenze | 4'872'562 CHF | 4'397'817 CHF |
+
+**Plausibilisierung, alle Abgleiche read-only:**
+
+- Datenbasis: DE-Umsatz gesamt 2025 laut Sales_All 4'098 TEUR gegen Rohails Rechnungsliste
+  (`Rechnungen_20260909.xlsx`) 4'126 TEUR; IN 751 Mio. INR gegen die Erloeskonten im Journal
+  (`Finance_All_2026-09-10.xlsx`) 747 Mio. INR; US 3'750 gegen 3'804 TUSD. Abweichungen 0,5 bis 1,4 %.
+  FR und IT sind ueber die Journal-Summen so nicht vergleichbar.
+- DE-Bahnkunden: Rohails Liste nach Branche Bahn ergibt 586/434 TEUR bei 19/18 Kunden, unser Wert
+  579/432 TEUR bei gleicher Kundenzahl. Da unsere Zuordnung aus derselben Branche stammt, belegt das
+  die Betraege, nicht die Definition.
+- Vorschlaege: Die Top 15 machen 70 % des vorgeschlagenen Umsatzes aus, 14 davon sind eindeutig
+  Bahn (Faiveley/Wabtec mehrfach, Medha Servo Drives, CAF, Hanning & Kahl, Barat, SNCF Voyageurs,
+  PJ Monitoring, Stadler Rail Valencia, Alstom). **Fehltreffer: ITEC S.R.L. (TRIT, rund 114 TCHF)**
+  ist der Lohnfertiger von TR IT (Lager "Stock at subcontractor: ITEC"), kein Bahnkunde; zu verwerfen.
+  Vertrauen der Vorschlaege: 21 Hoch, 65 Mittel, 85 Niedrig; 9 Schweizer Kunden mit Warnung breites
+  Sortiment.
+- Anteil am Standortumsatz 2025: CH 3,5 %, IT 5,1 %, UK 5,9 %, AT 4,6 %, FR 23 % (SNCF), ES 13 %.
+  **Auffaellig ES 2026 mit 30 %** (913 TEUR, fast alles CAF und Barat), wirkt wie Projektgeschaeft,
+  beim Standort nachfragen.
+
+**Naechste Schritte:** Andreas' AG-Railway-Sicht fuer die Bestaetigung der Schweizer Vorschlaege
+nutzen; statt aller 171 Vorschlaege die Top 15 durch Patrik und Andreas bestaetigen lassen (70 %
+des Umsatzes); ITEC verwerfen. **Veraltet im Export:** Die Anleitung sagt noch, in den deutschen
+Verkaufszeilen fehlten Kundenname und Kundenland; laut Blatt Datenluecken sind es nur noch 145 bzw.
+163 von 7'737 Zeilen. Die Periodenregel des Exports (Buchungsdatum zuerst) weicht fuer Spanien von
+Finance (Rechnungsdatum) ab.
+
+"Patrick" aus Rohails Nachricht ist sehr wahrscheinlich Patrick Hertach, der den Termin "Railway"
+vom 2026-09-01 angenommen hat, und damit vermutlich der "Patrik" dieser Datei.

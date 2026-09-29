@@ -209,6 +209,43 @@ Stand der Dateien in `hrdata` am 2026-09-28: die Rexx-Exporte vom **08.07.2026**
 `HR_KPI_EXPORT.xlsx` vom **26.05.2026**. Das Cockpit zeigt also den Stand von Juli. Neue
 Mitarbeitende seit Mai haben keinen SAP-Beschaeftigungsgrad und laufen ueber die Sollzeit.
 
+### 8.3 Offene Wuensche und Faeden aus der Mailhistorie (gesichtet 2026-09-29)
+
+Beim Durchsehen der Mails und Teams-Chats mit Sonja Richter und Nadja Brandenberger gefunden. Nichts
+davon war bisher hier dokumentiert.
+
+**Gewuenscht (Sonja, Mail vom 2026-02-03, Bereich Zeit- und Absenzwesen), weder umgesetzt noch
+beauftragt:**
+
+| Wunsch | Inhalt |
+| --- | --- |
+| Ferien am Stueck | Wurden im Kalenderjahr mindestens zwei Wochen am Stueck bezogen? Jaehrlich, je Abteilung/KST |
+| Fit-&-Wohl-Gespraeche | Ausloeser nach der 6. Absenz oder nach 12 Krankheitstagen (Arbeitstage); monatlich und je Quartal, je Abteilung/KST; Wunsch, den Ruecklauf zu verfolgen (Gespraech erfolgt ja/nein) |
+| Uebertrag Restferien | Auswertung des Uebertrags ins neue Jahr, hoechstens 5 Tage |
+
+Aus der KPI-Liste vom Oktober 2025 sind zudem nicht angegangen: Ueberstunden, Lohn-/Personalkosten,
+Stellenplan Soll/Ist (Rexx), Pulsumfrage (quartalsweise, Rexx), Zufriedenheitsumfrage (jaehrlich),
+Kununu-Score (monatlich, manuelle Excel), Time to hire (Refline, kuenftig Rexx) und Produktivstunden.
+Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der Code hat gruen unter
+3 % und rot ab 5 %, gelb also 3 bis 5 %.
+
+**Offene Faeden:**
+
+- **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
+  Rexx-Hub fuer 4'800 EUR pro Jahr empfohlen (vier Einzelschnittstellen waeren 5'600 EUR). **Nadja hat
+  am 2026-07-29 den Auftrag zur Umsetzung erteilt.** Stand bei Rexx nachfragen.
+- **Q1/2026-Abgleich mit SAP:** Nadja bat am 2026-05-05, Q1/2026 mit Live-Daten zu testen, um die Quoten
+  mit SAP zu vergleichen; Filter am 2026-05-13 per Teams (Fluktuation alle Abteilungen und
+  Festangestellten, Q1 und Gesamtjahr 2026; Absenzquote Q1). Ob der Abgleich stattfand, ist nicht
+  belegt.
+- **Testpersonen ausschliessen** (Nadja, 2026-05-13): Angelina Jolie, Brad Pitt, Peter Muster, ICT
+  Trafag, Empfaenger Reminder. Der Code kennt eine Ausschlussliste; die letzten beiden sind
+  Reminderprofile.
+- **Abrechnungskreise** (Sonja, 2026-03-23): 01 lohnrelevant, 99 nicht lohnrelevant, z. B.
+  Temporaerbuero.
+- **Mail an Sonja zum Umsetzungsstand:** liegt seit 2026-09-29 als Entwurf in Outlook, noch nicht
+  versendet; im Entwurf fehlt Punkt 2 (aktuelle Exporte, Dateien vom 08.07. und 26.05.).
+
 ## Querverweise
 
 - Kurzstand, Zugang und Anwenderdoku: `docs/rag/HR_KPI.md`

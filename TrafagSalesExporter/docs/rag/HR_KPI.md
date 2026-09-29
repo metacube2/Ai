@@ -4,6 +4,12 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,
+  Fit-&-Wohl nach 6. Absenz oder 12 Krankheitstagen, Uebertrag Restferien) und die spaeteren KPIs
+  (Stellenplan, Umfragen, Kununu, Time to hire, Lohnkosten) sind nicht umgesetzt. Rexx-Hub fuer den
+  automatischen Export ist seit 2026-07-29 von Nadja beauftragt (4'800 EUR p. a.), Stand offen. Mail
+  an Sonja liegt als Entwurf, Punkt 2 fehlt. Details: `docs/HR_KPI.md` Abschnitt 8.3.
+
 - **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen
   `c1fdfa2`, 747/747 Tests). Behoben im Arbeitsbaum: Von/Bis hat auch fuer Berechnungsjahr
   und Vergleichskacheln Vorrang vor dem Jahresfeld (H1); Monat/Quartal/YTD mit vollstaendigen
