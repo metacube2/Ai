@@ -154,6 +154,10 @@ Dokumenttyp-Aufteilung:
 
 ## Provisorischer Prueffilter 2026-05-18
 
+**Ueberholt, aus dem Code entfernt am 2026-09-29 (`f77840a`, ISS-021):** Die sechs Kunden sind echte
+externe Kunden mit 1'844'384 EUR Umsatz 2025 auf 47005. Der Ausschluss glich nur doppelte Positionen
+aus der Lieferantenadresse der B1-Abfrage aus. Siehe `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md` Abschnitt 5.
+
 Aus dem lokalen Cache wurde eine Kundenausschluss-Kombination gefunden, die die IT-Summe nahezu auf Rhino bringt.
 
 Wichtig:

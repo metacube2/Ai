@@ -44,6 +44,13 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 15:23, Italien: provisorischer Kundenausschluss entfernt (ISS-021 Teil 2).** Stand
+  `f77840a`, gleicher Worktree, ohne Finance_All. `759/759`. `BiDashboard.dll` `29.09.2026 15:22:22`,
+  `6'425'600` Bytes, SHA256 `57BD95CB4255583F3726BE76C6D3F94DB99E1A7900EDA6C47F991F7B9C5F6B21`, bitgleich.
+  Fuenf Routen `200`. Sicherung von 13:50 wiederverwendet. Nur der bekannte WAL/SHM-Alarm, beide um
+  15:23:11 wieder da, Hauptdatei unveraendert. Sperrpruefung: `C_IT01_0022987` nicht mehr in der DLL.
+  Zusammen mit 15:02 erwartet ab dem TRIT-Export am 30.09.: Italien 2025 rund 7,70 Mio. EUR (Hauptbuch 47005).
+
 - **Deploy 2026-09-29 15:02, B1-Abfrage nur eine Lieferanten-Rechnungsadresse (ISS-021).** Stand `d8d425f`
   (Funktionscommit `4a1baa0`), Worktree `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All.
   `757/757` Release-Tests. `BiDashboard.dll` `29.09.2026 15:01:09`, `6'425'600` Bytes, SHA256

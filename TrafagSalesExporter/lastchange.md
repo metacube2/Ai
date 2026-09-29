@@ -4,6 +4,10 @@ Stand: 2026-09-29
 
 ## Italien doppelt gezaehlt: B1-Abfrage korrigiert, produktiv 2026-09-29 15:02 (ISS-021)
 
+- **Teil 2, produktiv 15:23 (`f77840a`):** Der provisorische Kundenausschluss vom 18.05. (sechs echte Kunden,
+  1,84 Mio. EUR 2025) ist entfernt. Er glich nur die Doppelzeilen aus. Hauptbuch 47005 2025 = 7'702'166 EUR;
+  erwartet ab dem Export am 30.09. Italien rund 7,70 Mio. EUR.
+
 - Beim Abgleich der Management-Analyse-Tabs gegen `Sales_All` (alle Tabs gleich) fiel auf, dass die
   gemeinsame B1-Abfrage jede Rechnungsadresse des Artikel-Lieferanten verknuepfte. Trafag AG hat in
   Italien eine CH- und eine DE-Adresse (Fiskalvertreter), jede solche Position kam doppelt:

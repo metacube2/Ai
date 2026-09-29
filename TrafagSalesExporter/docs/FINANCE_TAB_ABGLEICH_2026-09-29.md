@@ -174,3 +174,12 @@ Kundenausschluss und abzueglich der Gutschriften, ergeben 7'702'978 EUR und dami
 **Folge:** Mit der Korrektur von 15:02 allein faellt Italien auf rund 5,86 Mio. EUR und liegt dann
 1,8 Mio. unter Rhino. Richtig ist erst die Kombination: Doppelzeilen weg und Kundenausschluss weg.
 Offen ist noch, ob die Finance-Regel fuer Trafag Italia (Kundenname) danach weiter noetig ist.
+
+**Nachtrag 15:23: Kundenausschluss entfernt (`f77840a`, produktiv).** Auf Ingos Auftrag „ja
+ausschluss entfernen". Herkunft: provisorischer Prueffilter vom 2026-05-18
+(`FINANCE_IT_VORGEHEN_2026-05-18.md`, „Arbeits-/Prueffilter, nicht fachlich freigegeben"). Am
+2026-05-20 legte der Finance-Leiter eine andere Methode fest und die Doku nannte die Kundenkombination
+„keine belastbare Methode fuer Folgejahre"; aus dem Code wurde sie trotzdem nie entfernt. Der
+Kontenfilter `47005%` ohne `4700504%` bleibt. Erwartet ab dem Export am 30.09.: Italien 2025 rund
+7,70 Mio. EUR, 0,4 % ueber Rhino. Dann nachmessen, auch ob die Finance-Regel fuer Trafag Italia
+noch greift.

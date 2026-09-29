@@ -432,7 +432,7 @@ haben. Siehe `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md` Abschnitt 3.
 Wichtiger Pruefhinweis:
 
 ```text
-Dieser IT-Filter ist noch hart in der HANA-Abfrage codiert.
+Dieser IT-Filter ist noch hart in der HANA-Abfrage codiert. [Ueberholt 2026-09-29: Der Kundenausschluss ist entfernt (`f77840a`), nur der Kontenfilter 47005 bleibt; ISS-021.]
 Er ist ein Arbeitsfilter aus Screenshot/Cache und muss spaeter in eine konfigurierbare Site-/Source-Regel verschoben werden,
 wenn Italien die fachliche B1/Rhino-Regel bestaetigt.
 ```
