@@ -213,7 +213,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Offene Fachpunkte
 
-- **Italien-Ist zu hoch durch Doppelzeilen (`ISS-021`, gemessen 2026-09-29, nicht repariert).** Die
+- **Italien-Ist zu hoch durch Doppelzeilen (`ISS-021`, gemessen 2026-09-29, Korrektur produktiv seit 15:02, wirkt ab dem Export am 30.09.).** Die
   gemeinsame B1-Abfrage verknuepft jede Rechnungsadresse des Artikel-Lieferanten
   (`HanaQueryService.cs` Zeile 560/622); Trafag AG hat im IT-Mandanten CH und DE. TRIT 2025 +3,79 Mio.
   EUR, 2026 +3,01 Mio. EUR; ohne Doppelzeilen 2025 5,86 Mio. EUR. Der Rhino-Soll 7'669'840 passte bisher

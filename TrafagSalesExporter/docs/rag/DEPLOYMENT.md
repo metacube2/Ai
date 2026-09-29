@@ -44,6 +44,14 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 15:02, B1-Abfrage nur eine Lieferanten-Rechnungsadresse (ISS-021).** Stand `d8d425f`
+  (Funktionscommit `4a1baa0`), Worktree `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All.
+  `757/757` Release-Tests. `BiDashboard.dll` `29.09.2026 15:01:09`, `6'425'600` Bytes, SHA256
+  `18D4C063B4E50F484E2433E30FFD9B6C8E054E873B2E56A39C1298BA73151D80`, bitgleich. Fuenf Routen `200`.
+  Sicherung von 13:50 wiederverwendet (DB unveraendert). **Ohne Alarm.** Wirknachweis `BillToDef`,
+  `sup_adr_any`. **Wirkung erst mit dem naechsten B1-Export** (TRIT, TRFR, TRUS, TRIN, am 30.09. um 12:00):
+  danach doppelte TRIT-Positionen nachmessen, erwartet Italien 2025 −3,79 Mio., 2026 −3,01 Mio. EUR.
+
 - **Deploy 2026-09-29 13:59, Dunkelmodus: gedaempfte Kopfleiste.** Stand `a397440`, gleicher Worktree, ohne
   Finance_All. `749/749`. `BiDashboard.dll` `29.09.2026 13:58:41`, `6'424'576` Bytes, SHA256
   `729D261A0E4D0F71A9864EEA1BDCF5E6250EEFA2AD00511241B6C88DE0F817D9`, bitgleich. Fuenf Routen `200`.

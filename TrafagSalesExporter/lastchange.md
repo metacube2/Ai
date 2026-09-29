@@ -2,6 +2,17 @@
 
 Stand: 2026-09-29
 
+## Italien doppelt gezaehlt: B1-Abfrage korrigiert, produktiv 2026-09-29 15:02 (ISS-021)
+
+- Beim Abgleich der Management-Analyse-Tabs gegen `Sales_All` (alle Tabs gleich) fiel auf, dass die
+  gemeinsame B1-Abfrage jede Rechnungsadresse des Artikel-Lieferanten verknuepfte. Trafag AG hat in
+  Italien eine CH- und eine DE-Adresse (Fiskalvertreter), jede solche Position kam doppelt:
+  2025 +3,79 Mio., 2026 +3,01 Mio. EUR. Der Rhino-Sollwert passte bisher nur mit Doppelzeilen.
+- `4a1baa0`: Standard-Rechnungsadresse (`OCRD.BillToDef`), sonst eine feste Adresse je Lieferant.
+  In HANA live geprueft (12'902 Zeilen = 12'902 Positionen, Trafag AG = CH). Wirkung ab dem naechsten
+  Export auf Oberflaeche, `Sales_All` und alle Exportdateien. Bericht
+  `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md`.
+
 ## Cockpit-Dunkelmodus, produktiv 2026-09-29 13:51
 
 - Auftrag von Ingo („darkmode einbauen, meine augen brennen"). Standard ist dunkel, der Umschalter

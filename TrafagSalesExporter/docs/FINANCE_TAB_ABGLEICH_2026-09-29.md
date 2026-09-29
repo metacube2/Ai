@@ -108,7 +108,7 @@ Andere Standorte, Datenstand 29.09.:
 weil 1,81 Mio. EUR Doppelzeilen darin steckten. Ohne sie liegt Italien 2025 bei 5,86 Mio. EUR,
 also 1,81 Mio. EUR unter dem Sollwert. Die Italien-Methode muss danach neu abgestimmt werden.
 
-**Nachtrag 2026-09-29, Korrektur umgesetzt (`4a1baa0`), noch nicht deployed.** Auf Ingos Auftrag
+**Nachtrag 2026-09-29, Korrektur umgesetzt (`4a1baa0`), produktiv seit 15:02 (`d8d425f`), wirksam ab dem naechsten Export.** Auf Ingos Auftrag
 „fixe das mit den doppelten zeilen": Der Join nimmt die Standard-Rechnungsadresse des Lieferanten
 (`OCRD."BillToDef"`), sonst eine feste Adresse je Lieferant (kleinstes Land). 772/772 Tests.
 Live in `it01_p` nur lesend geprueft (`.tmp_tools/HanaSupplierAddress0929/check.sql` mit `HanaQ`):
