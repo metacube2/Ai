@@ -250,6 +250,7 @@ else
 @code {
     private string _dataFolder = HrKpiDataSourceOptions.DefaultFolder;
     private int? _year;
+    private bool _initializeYear;
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private int? _entryYear;
@@ -306,6 +307,7 @@ else
         Directory.CreateDirectory(_serverUploadFolder);
         _selectionStorePath = Path.Combine(_serverUploadFolder, "hr-kpi-variants.json");
         _selectionStore = await ReadSelectionStoreAsync();
+        _initializeYear = _selectionStore.LastSelection is null;
         _dataFolder = _serverUploadFolder;
         if (_selectionStore.LastSelection is not null)
             ApplySelectionState(_selectionStore.LastSelection);
@@ -348,7 +350,7 @@ else
                 SearchText = _searchText,
                 ManagementView = _managementView
             });
-            if (!_year.HasValue && _result.ExitYearOptions.Count > 0)
+            if (_initializeYear && !_year.HasValue && !_fromDate.HasValue && !_toDate.HasValue && _result.ExitYearOptions.Count > 0)
             {
                 _year = _result.ExitYearOptions[0];
                 _result = await HrKpiService.BuildAsync(new HrKpiOptions
@@ -368,6 +370,7 @@ else
                     ManagementView = _managementView
                 });
             }
+            _initializeYear = false;
             _selectionStore.LastSelection = CreateSelectionState();
             await WriteSelectionStoreAsync();
         }

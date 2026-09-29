@@ -27,6 +27,13 @@
 
 <PageTitle>@T("Einkauf", "Purchasing")</PageTitle>
 
+@if (_liveState.MissingExchangeRatePositionCount > 0)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        @_liveState.MissingExchangeRatePositionCount @T("Fremdwaehrungspositionen im geladenen Bestand haben keinen Kurs. Betroffene CHF-Werte verwenden den 1:1-Rueckfall und sind nicht belastbar. Der Zaehler gilt fuer den Bestand, nicht nur fuer den gewaehlten Zeitraum.", "Foreign-currency items in the loaded data have no exchange rate. Affected CHF values use the 1:1 fallback and are unreliable. The count covers the data set, not just the selected period.")
+    </MudAlert>
+}
+
 <MudPaper Class="purchasing-hero mb-4" Elevation="0">
     <div class="purchasing-hero-main">
         <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
@@ -1847,7 +1854,7 @@
     private IReadOnlyList<PurchasingSectionDetailRow> SpendDetailRows =>
     [
         new("Spend nach Jahr", "Spend by year", _liveState.EkpoLoaded ? FormatChf(_liveState.SpendChfSample) : FormatChf(Purchasing3dBaseRows.Sum(x => x.Spend)), "EKKOSet.Bedat Jahr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
-        new("Spend aktuelles Jahr", "Current-year spend", FormatChf(_liveState.CurrentYearSupplierSpendRows.Sum(x => x.Value)), "Lieferant / aktuelles Jahr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
+        new("Spend aktuelles Jahr", "Current-year spend", FormatChf(_liveState.CurrentYearSpendChf), "Alle Lieferanten / aktuelles Jahr bis heute", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
         new("Spend nach Lieferant", "Spend by supplier", TopSpendLabel, "SupplierName / EKKOSet.Lifnr", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
         new("Spend nach Warengruppe", "Spend by material group", TopMaterialGroupLabel, "MARA.MATKL / EKPO.MATKL; T023T-Textkatalog", _liveState.EkpoLoaded ? DataSourceLabel : "Simulation"),
         new("Spend nach Artikel", "Spend by article", TopArticleLabel, "Artikel / Lieferant / Monat", _liveState.EkpoLoaded ? DataSourceLabel : "Wartet auf SAP")

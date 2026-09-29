@@ -270,78 +270,9 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
             if (await TryLoadCacheStateAsync(db, state, filter, cancellationToken))
                 return state;
 
-            var sap = await db.SourceSystemDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.Code == "SAP", cancellationToken);
-            var site = await db.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.TSC == PurchasingDataSourcePageService.PurchasingTsc, cancellationToken);
-            if (sap is null || site is null)
-            {
-                state.Message = "SAP Einkaufsquelle ist noch nicht konfiguriert.";
-                return state;
-            }
-
-            var serviceUrl = string.IsNullOrWhiteSpace(site.SapServiceUrl) ? sap.CentralServiceUrl : site.SapServiceUrl;
-            var username = string.IsNullOrWhiteSpace(site.UsernameOverride) ? sap.CentralUsername : site.UsernameOverride;
-            var password = string.IsNullOrWhiteSpace(site.PasswordOverride) ? sap.CentralPassword : site.PasswordOverride;
-            if (string.IsNullOrWhiteSpace(serviceUrl) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                state.Message = "SAP URL oder Zugangsdaten fehlen.";
-                return state;
-            }
-
-            using var client = CreateClient(username, password);
-            var baseUrl = serviceUrl.TrimEnd('/') + "/";
-            var currentYear = DateTime.Today.Year;
-            var ekkoFilter = Uri.EscapeDataString($"Bedat ge '{currentYear}-01-01'");
-            var ekkoCount = await ReadCountAsync(
-                client,
-                $"{baseUrl}EKKOSet/$count?$filter={ekkoFilter}",
-                cancellationToken);
-            var ekkoRows = await ReadRowsAsync(
-                client,
-                $"{baseUrl}EKKOSet?$format=json&$top=1000&$filter={ekkoFilter}&$select=Ebeln,Bedat,Lifnr",
-                cancellationToken);
-
-            state.SapReachable = true;
-            state.EkkoLoaded = ekkoRows.Count > 0;
-            state.PurchaseOrderCount = ekkoCount ?? ekkoRows.Count;
-            state.SupplierCount = ekkoRows
-                .Select(row => GetText(row, "Lifnr"))
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count();
-            state.LatestOrderDate = ekkoRows
-                .Select(row => TryParseSapDate(GetText(row, "Bedat")))
-                .Where(date => date.HasValue)
-                .Select(date => date!.Value)
-                .OrderByDescending(date => date)
-                .Cast<DateTime?>()
-                .FirstOrDefault();
-
-            var firstEbeln = ekkoRows.Select(row => GetText(row, "Ebeln")).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-            if (!string.IsNullOrWhiteSpace(firstEbeln))
-            {
-                var ekpoRows = await ReadRowsAsync(
-                    client,
-                    $"{baseUrl}EKPOSet?$format=json&$top=1000&$filter={Uri.EscapeDataString($"Ebeln ge '{firstEbeln}'")}",
-                    cancellationToken);
-                state.PositionSampleCount = ekpoRows.Count;
-                state.EkpoLoaded = ekpoRows.Count > 0;
-
-                var eketRows = await ReadRowsAsync(
-                    client,
-                    $"{baseUrl}eketSet?$format=json&$top=1000&$filter={Uri.EscapeDataString($"Ebeln ge '{firstEbeln}'")}",
-                    cancellationToken);
-                state.ScheduleSampleCount = eketRows.Count;
-                state.EketLoaded = eketRows.Count > 0;
-
-                ApplyEkpoMetrics(state, ekkoRows, ekpoRows);
-                ApplyEketMetrics(state, ekkoRows, ekpoRows, eketRows);
-            }
-
-            state.Message = state.EkpoLoaded && state.EketLoaded
-                ? "SAP Einkaufsdaten inkl. EKPO/EKET geladen."
-                : state.EkpoLoaded
-                    ? "SAP Einkaufsdaten inkl. EKPO geladen; EKET liefert noch keine Termindaten."
-                    : "EKKO ist live geladen; EKPO/EKET liefern aktuell noch keine Positionsdaten.";
+            // Eine ungefilterte 1'000er-Live-Stichprobe ist keine gleichwertige KPI-Quelle:
+            // Waehrung, Kontraktbezug und Vollstaendigkeit fehlen. Erst regulär laden lassen.
+            state.Message = "Einkaufsdaten unvollstaendig: EKKO/EKPO/EKET-Cache zuerst vollstaendig laden. Keine Live-Stichprobe als CHF- oder Kontraktkennzahl. Angezeigte Simulationen sind keine SAP-Istwerte.";
         }
         catch (Exception ex)
         {
@@ -489,11 +420,11 @@ GROUP BY Label
 ORDER BY Value DESC
 LIMIT 1;", "Lieferant", cancellationToken);
         state.TopMaterialGroupLabel = await ExecuteTopLabelAsync(conn, @"
-SELECT COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe') AS Label, SUM(" + ChfNetValue + @") AS Value
+SELECT COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe') AS Label, SUM(" + ChfNetValue + @") AS Value
 FROM PurchasingEkpoCache p
 LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
 WHERE " + spendItemFilter + " AND " + joinedEkkoPeriod + @"
-GROUP BY COALESCE(NULLIF(Matkl, ''), 'ohne Warengruppe')
+GROUP BY COALESCE(NULLIF(p.MaraMatkl, ''), NULLIF(p.Matkl, ''), 'ohne Warengruppe')
 ORDER BY Value DESC
 LIMIT 1;", "Warengruppe", cancellationToken, PurchasingMaterialGroupTextCatalog.Resolve);
         state.TopArticleLabel = await ExecuteTopLabelAsync(conn, @"
@@ -595,6 +526,17 @@ WHERE " + spendItemFilter + " AND k.Bedat >= '" + DateTime.Today.Year.ToString(C
 GROUP BY Label
 ORDER BY Value DESC
 LIMIT 10;", cancellationToken);
+        state.CurrentYearSpendChf = await ExecuteScalarDecimalAsync(conn, @"
+SELECT COALESCE(SUM(" + ChfNetValue + @"), 0)
+FROM PurchasingEkpoCache p
+LEFT JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + " AND k.Bedat >= '" + DateTime.Today.Year.ToString(CultureInfo.InvariantCulture) + @"-01-01' AND k.Bedat <= '" + DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "';", cancellationToken);
+        // Bestandsweite Diagnose: auch offene Belege ausserhalb des Spend-Zeitraums koennen betroffen sein.
+        state.MissingExchangeRatePositionCount = await ExecuteScalarIntAsync(conn, @"
+SELECT COUNT(*) FROM PurchasingEkpoCache p
+JOIN PurchasingEkkoCache k ON k.Ebeln = p.Ebeln
+WHERE " + spendItemFilter + @" AND COALESCE(k.Waers, '') NOT IN ('', 'CHF')
+AND COALESCE(CAST(k.Wkurs AS REAL), 0) = 0;", cancellationToken);
         state.OpenValueChartRows = await ExecuteChartRowsAsync(conn, @"
 SELECT COALESCE(substr(e.Eindt, 1, 7), 'ohne Termin') AS Label,
        SUM(MAX(CAST(e.Menge AS REAL) - CAST(e.Wemng AS REAL), 0) *
@@ -635,6 +577,8 @@ LIMIT 6;", cancellationToken);
         state.CacheStatus = latestStatus.Status;
         state.CacheCompletedAtUtc = latestStatus.CompletedAtUtc;
         state.Message = $"Einkauf Cache geladen fuer {filter.Label}: EKKO={state.PurchaseOrderCount:N0}, EKPO={state.PositionSampleCount:N0}, EKET={state.ScheduleSampleCount:N0}. {latestStatus.Message}";
+        if (state.MissingExchangeRatePositionCount > 0)
+            state.Message += $" WARNUNG: {state.MissingExchangeRatePositionCount:N0} Fremdwaehrungspositionen im geladenen Bestand ohne Kurs; betroffene CHF-Werte verwenden noch den 1:1-Rueckfall und sind nicht belastbar. Ersatzkursregel fachlich klaeren.";
         return true;
     }
 

@@ -29,6 +29,51 @@ public class PurchasingDashboardServiceTests : IDisposable
     public void Dispose() => _connection.Dispose();
 
     [Fact]
+    public async Task Current_Year_Total_Is_Not_Limited_To_Top_Ten_And_Uses_Consistent_Material_Group()
+    {
+        for (var i = 1; i <= 11; i++)
+        {
+            await ExecuteAsync($"INSERT INTO PurchasingEkkoCache (Ebeln,Bedat,Lifnr,Bstyp,Waers,Wkurs,LastLoadedAtUtc) VALUES ('P{i}','{DateTime.Today.Year}-01-01','L{i}','F','CHF','1','2026-01-01');");
+            await ExecuteAsync($"INSERT INTO PurchasingEkpoCache (Ebeln,Ebelp,Matnr,Matkl,MaraMatkl,Menge,Netwr,LastLoadedAtUtc) VALUES ('P{i}','10','M{i}','OLD','NEW','1','100','2026-01-01');");
+            await ExecuteAsync($"INSERT INTO PurchasingEketCache (Ebeln,Ebelp,Etenr,Eindt,Menge,Wemng,LastLoadedAtUtc) VALUES ('P{i}','10','1','2026-01-01','1','0','2026-01-01');");
+        }
+        var result = await _service.LoadAsync(new PurchasingDashboardFilter(new(DateTime.Today.Year, 1, 1), DateTime.Today));
+        Assert.Equal(1100m, result.CurrentYearSpendChf);
+        Assert.Equal(result.SpendChfSample, result.CurrentYearSpendChf);
+        Assert.Equal(10, result.CurrentYearSupplierSpendRows.Count);
+        Assert.Equal(1000m, result.CurrentYearSupplierSpendRows.Sum(x => x.Value));
+        Assert.StartsWith("NEW:", result.TopMaterialGroupLabel);
+        Assert.Equal("NEW", Assert.Single(result.MaterialGroupSpendRows).Label);
+        Assert.Equal(0, result.MissingExchangeRatePositionCount);
+        // Jahresgesamtwert bleibt unabhaengig vom anders gewaehlten Spend-Zeitraum.
+        result = await _service.LoadAsync(new PurchasingDashboardFilter(new(2020, 1, 1), new(2020, 12, 31)));
+        Assert.Equal(0m, result.SpendChfSample);
+        Assert.Equal(1100m, result.CurrentYearSpendChf);
+    }
+
+    [Fact]
+    public async Task Missing_Foreign_Exchange_Rate_Is_Explicitly_Flagged_Without_Inventing_A_Rate()
+    {
+        await SeedAsync();
+        await ExecuteAsync("UPDATE PurchasingEkkoCache SET Waers='EUR', Wkurs='0';");
+        var result = await _service.LoadAsync(new PurchasingDashboardFilter(new(2025, 1, 1), new(2025, 12, 31)));
+        Assert.True(result.MissingExchangeRatePositionCount > 0);
+        Assert.Contains("nicht belastbar", result.Message);
+        Assert.Contains("1:1", result.Message);
+    }
+
+    [Fact]
+    public async Task Empty_Cache_Does_Not_Publish_A_Live_Sample_As_Complete_Kpis()
+    {
+        var result = await _service.LoadAsync(new PurchasingDashboardFilter(new(2025, 1, 1), new(2025, 12, 31)));
+        Assert.False(result.EkkoLoaded);
+        Assert.False(result.EkpoLoaded);
+        Assert.False(result.EketLoaded);
+        Assert.Contains("Keine Live-Stichprobe", result.Message);
+        Assert.Empty(result.SupplierYearSpendRows);
+    }
+
+    [Fact]
     public async Task LoadAsync_Spend_Excludes_Only_Loekz_Not_MaraMstae_When_DeletionFlagFilterActive()
     {
         await SeedAsync();

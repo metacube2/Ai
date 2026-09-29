@@ -116,6 +116,8 @@ public sealed class PurchasingDashboardLiveState
     // (Bedarfsregelmaessigkeit), statt zwei isolierter Balkendiagramme ohne Aussage.
     public List<PurchasingAbcXyzActionRow> AbcXyzActionRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> CurrentYearSupplierSpendRows { get; set; } = [];
+    public decimal CurrentYearSpendChf { get; set; }
+    public int MissingExchangeRatePositionCount { get; set; }
     public List<PurchasingLiveChartPoint> SpendChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> OpenValueChartRows { get; set; } = [];
     public List<PurchasingLiveChartPoint> ContractChartRows { get; set; } = [];

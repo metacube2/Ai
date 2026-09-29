@@ -97,7 +97,8 @@ internal sealed class HrKpiDashboardBuilder
             .ToList();
 
         var turnoverEmployees = ApplyTurnoverEmployeeFilters(employees, normalizedOptions).ToList();
-        var turnoverHeadcountLeavers = ApplyTurnoverHeadcountLeaverFilters(leavers, normalizedOptions).ToList();
+        // Historischer Headcount braucht auch Austritte vor dem frei gewaehlten Von-Datum.
+        var turnoverHeadcountLeavers = ApplyComparisonLeaverFilters(leavers, normalizedOptions).ToList();
         // Vorjahresvergleich braucht Austritte ALLER Jahre (nur Struktur-, kein Datumsfilter),
         // sonst ist das Vorjahr per Definition leer und das Delta damit falsch.
         var comparisonLeavers = ApplyComparisonLeaverFilters(leavers, normalizedOptions).ToList();
@@ -124,7 +125,9 @@ internal sealed class HrKpiDashboardBuilder
         result.Absences = absences;
         result.Leavers = leavers;
         result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable);
-        result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers);
+        result.AbsenceRatesReliable = !periodScopingUnreliable;
+        result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers,
+            comparisonLeavers.Where(x => MatchesFluctuationFilter(x, normalizedOptions.FluktuationFilter)).ToList());
         // Rexx-Absenzen haben keine verlaesslichen Datumsfelder je Zeile (die "(Zeitraum)"-Spalten
         // markieren nur das juengste Ereignis, die "(Stunden Ind.)"-Summen sind kumulativ - siehe
         // HR_KPI_KORREKTUREN_2026-07-06.md H2). Ist trotzdem ein Zeitraumfilter
@@ -556,7 +559,8 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<HrLeaverRow> turnoverHeadcountLeavers,
         IReadOnlyCollection<HrLeaverRow> leavers,
         TurnoverPeriodScope period,
-        IReadOnlyCollection<HrLeaverRow>? comparisonLeavers = null)
+        IReadOnlyCollection<HrLeaverRow>? comparisonLeavers = null,
+        IReadOnlyCollection<HrLeaverRow>? periodLeavers = null)
     {
         var turnoverIntervals = BuildTurnoverIntervals(employees, turnoverHeadcountLeavers);
         var selectionHeadcount = ResolveTurnoverDenominator(employees, turnoverIntervals, period);
@@ -595,6 +599,8 @@ internal sealed class HrKpiDashboardBuilder
         }
 
         var year = period.BreakdownYear.Value;
+        // Auswahl bleibt frei gefiltert; beschriftete Kalenderkennzahlen erhalten ihre volle Periode.
+        var calendarLeavers = periodLeavers ?? leavers;
         var currentMonth = period.AnchorDate.Month;
         var currentQuarter = ((currentMonth - 1) / 3) + 1;
         var monthHeadcount = CalculateMonthlyAverageFixedHeadcount(turnoverIntervals, year, currentMonth);
@@ -603,7 +609,7 @@ internal sealed class HrKpiDashboardBuilder
         var yearHeadcount = CalculateAverageFixedHeadcount(turnoverIntervals, yearMonths);
         var yearStart = new DateTime(year, 1, 1);
         var yearEnd = period.AnchorDate.Date;
-        var quarterLeavers = leavers
+        var quarterLeavers = calendarLeavers
             .Where(x => x.IstFluktuationsrelevant &&
                         x.Austrittsdatum.HasValue &&
                         x.Austrittsdatum.Value.Year == year &&
@@ -611,7 +617,7 @@ internal sealed class HrKpiDashboardBuilder
                         ((x.Austrittsdatum.Value.Month - 1) / 3) + 1 == currentQuarter)
             .Select(x => x.Personalnummer)
             .ToList();
-        var monthLeavers = leavers
+        var monthLeavers = calendarLeavers
             .Where(x => x.IstFluktuationsrelevant &&
                         x.Austrittsdatum.HasValue &&
                         x.Austrittsdatum.Value.Year == year &&
@@ -619,7 +625,7 @@ internal sealed class HrKpiDashboardBuilder
                         x.Austrittsdatum.Value.Month == currentMonth)
             .Select(x => x.Personalnummer)
             .ToList();
-        var yearLeavers = leavers
+        var yearLeavers = calendarLeavers
             .Where(x => x.IstFluktuationsrelevant &&
                         x.Austrittsdatum.HasValue &&
                         x.Austrittsdatum.Value.Date >= yearStart &&
@@ -1169,15 +1175,15 @@ internal sealed class HrKpiDashboardBuilder
         int? breakdownYear = null;
         var showPeriodMetrics = false;
         var hasRange = options.FromDate.HasValue || options.ToDate.HasValue;
-        if (options.Year.HasValue)
-        {
-            breakdownYear = options.Year.Value;
-            showPeriodMetrics = true;
-        }
-        else if (hasRange)
+        if (hasRange)
         {
             breakdownYear = ResolveRangeBreakdownYear(options, selectedYears);
             showPeriodMetrics = breakdownYear.HasValue;
+        }
+        else if (options.Year.HasValue)
+        {
+            breakdownYear = options.Year.Value;
+            showPeriodMetrics = true;
         }
         else if (selectedYears.Count == 1)
         {

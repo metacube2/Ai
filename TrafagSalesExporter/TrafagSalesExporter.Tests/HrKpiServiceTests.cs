@@ -35,6 +35,48 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Date_Range_Overrides_Conflicting_Year_In_All_Turnover_Metrics()
+    {
+        var options = new HrKpiOptions { DataFolder = _folder, FromDate = new(2025, 3, 1), ToDate = new(2025, 3, 31) };
+        var expected = await _service.BuildAsync(options);
+        options.Year = 2024;
+        var actual = await _service.BuildAsync(options);
+        Assert.Equal(expected.TurnoverMetrics.Select(x => (x.Label, x.Value, x.Detail)),
+            actual.TurnoverMetrics.Select(x => (x.Label, x.Value, x.Detail)));
+        Assert.Equal(expected.PeriodComparisonMetrics.Select(x => (x.Label, x.Value)),
+            actual.PeriodComparisonMetrics.Select(x => (x.Label, x.Value)));
+    }
+
+    [Fact]
+    public async Task Ytd_Includes_Leavers_And_Headcount_Before_Selection_Start()
+    {
+        RewriteEmployeeRows(Enumerable.Range(1, 3).Select(i => new object?[]
+        { 4000 + i, $"Stable, {i}", "Org A", "100 / Org A", "Engineer", "n", new DateTime(2020, 1, 1), "Aktiv", "0:00", 25, 0, 0, 100000, "CHF" }).ToArray());
+        RewriteLeaverRows([
+            [5001, "Leaving, January", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 1, 15), new DateTime(2020, 1, 1), "Kündigung AN"],
+            [5002, "Leaving, June", "Org A", "Engineer", "Inaktiv", new DateTime(2025, 6, 15), new DateTime(2020, 1, 1), "Kündigung AN"]
+        ]);
+        foreach (var startMonth in new[] { 1, 4, 6 })
+        {
+            var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = new(2025, startMonth, 1), ToDate = new(2025, 6, 30) });
+            Assert.Equal("2", result.TurnoverMetrics.Single(x => x.Label == "Austritte YTD").Value);
+            Assert.Equal("4", result.TurnoverMetrics.Single(x => x.Label == "HC Basis YTD").Value);
+            Assert.Equal(0.5m.ToString("P1"), result.TurnoverMetrics.Single(x => x.Label == "Fluktuation YTD").Value);
+            Assert.Equal(startMonth == 1 ? 2 : 1, result.Leavers.Count);
+        }
+    }
+
+    [Fact]
+    public async Task Calendar_Quarter_Includes_Earlier_Months_But_Selection_Does_Not()
+    {
+        AppendLeaverRow(5001, "Leaving, January", "Org A", "Engineer", new(2025, 1, 15), new(2020, 1, 1), "Kündigung AN");
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, FromDate = new(2025, 3, 1), ToDate = new(2025, 3, 31) });
+        Assert.Single(result.Leavers);
+        Assert.Equal("2", result.TurnoverMetrics.Single(x => x.Label == "Austritte Quartal").Value);
+        Assert.Equal("1", result.TurnoverMetrics.Single(x => x.Label == "Austritte relevant").Value);
+    }
+
+    [Fact]
     public async Task BuildAsync_Applies_Organisation_Filter_To_Absences()
     {
         var result = await _service.BuildAsync(new HrKpiOptions
@@ -343,6 +385,7 @@ public sealed class HrKpiServiceTests : IDisposable
 
         var absenceRate = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Krankenquote");
         Assert.Equal("Zeitraum nicht bestimmbar", absenceRate.Value);
+        Assert.False(result.AbsenceRatesReliable); // Auch Tabellen/Druck muessen die Quote maskieren.
         Assert.Equal("Warning", absenceRate.Severity);
         Assert.Contains("ACHTUNG", absenceRate.Detail);
 

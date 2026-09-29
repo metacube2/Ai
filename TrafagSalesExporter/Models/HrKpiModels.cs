@@ -55,6 +55,7 @@ public sealed class HrKpiDataSourceOptions
 
 public sealed class HrKpiResult
 {
+    public bool AbsenceRatesReliable { get; set; } = true;
     public HrKpiOptions Options { get; set; } = new();
     public List<HrKpiFileStatus> FileStatuses { get; set; } = [];
     public List<string> Notices { get; set; } = [];
