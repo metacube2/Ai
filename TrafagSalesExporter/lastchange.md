@@ -2,6 +2,13 @@
 
 Stand: 2026-09-29
 
+## Gutschriften nach Belegart, Excel-Statustexte, Deutschland und Indien, 2026-09-29 15:58
+
+- `b699fa5`: Gutschriften und Stornos werden an der Belegart erkannt (G2, S1, S2, CRN, CN, REC), der Teilstring
+  `rec` ist weg (ISS-026). Die Excel-Formeln fuer Marge und Soll/Ist nehmen die Status-Konstanten (ISS-027).
+- ISS-030 Indien: dieselbe Ursache wie Italien (zwei Rechnungsadressen je Lieferant, beide IN), mit 15:02 behoben.
+- ISS-029 Deutschland: Import in Ordnung; die Alphaplan-Delta-Pakete sind seit 24.09. fast leer. Frage an DE.
+
 ## Italien doppelt gezaehlt: B1-Abfrage korrigiert, produktiv 2026-09-29 15:02 (ISS-021)
 
 - **Teil 2, produktiv 15:23 (`f77840a`):** Der provisorische Kundenausschluss vom 18.05. (sechs echte Kunden,

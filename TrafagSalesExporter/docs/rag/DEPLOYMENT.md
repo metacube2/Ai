@@ -44,6 +44,11 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 15:58, Gutschriften nach Belegart und Excel-Statustexte als Konstante (ISS-026/027).**
+  Stand `b699fa5`, gleicher Worktree, ohne Finance_All. `772/772`. `BiDashboard.dll` `29.09.2026 15:57:11`,
+  `6'425'600` Bytes, SHA256 `B0511D6D3B0A40AC7165DD2B9BE646CF9348F4716EBE8A916FCE5294E8596EE1`, bitgleich.
+  Fuenf Routen `200`. Sicherung von 13:50 wiederverwendet. **Ohne Alarm.**
+
 - **Deploy 2026-09-29 15:23, Italien: provisorischer Kundenausschluss entfernt (ISS-021 Teil 2).** Stand
   `f77840a`, gleicher Worktree, ohne Finance_All. `759/759`. `BiDashboard.dll` `29.09.2026 15:22:22`,
   `6'425'600` Bytes, SHA256 `57BD95CB4255583F3726BE76C6D3F94DB99E1A7900EDA6C47F991F7B9C5F6B21`, bitgleich.

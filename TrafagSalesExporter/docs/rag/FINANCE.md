@@ -216,7 +216,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 - **Konsolidiert am 2026-09-29:** Offene Punkte, die bisher nur in MD-Dateien standen, sind jetzt `ISS-022` bis
   `ISS-028`: Proforma F5/F8 im CH-Umsatz (2025 1,91 Mio., 2026 5,97 Mio. CHF), Sollwerte 2026 und CH fehlen,
   Toleranz waehrungsblind, Gutschriftenerkennung, OK-Text in der Excel-Formel, Sichtpruefung. Neu gemessen:
-  `ISS-029` Deutschland endet am 23.09., `ISS-030` Indien 17 Mehrfachpositionen. `ISS-001` geschlossen.
+  `ISS-029` Deutschland endet am 23.09., `ISS-030` Indien 17 Mehrfachpositionen (gleiche Ursache wie ISS-021, behoben). `ISS-026`/`ISS-027` behoben (15:58).
+  `ISS-029`: Alphaplan liefert seit 24.09. fast leere Deltas, Frage an DE. `ISS-001` geschlossen.
 - **Italien-Ist: Doppelzeilen und provisorischer Kundenausschluss hoben sich auf (`ISS-021`, beides behoben, produktiv seit 2026-09-29 15:23, wirkt ab dem Export am 30.09.; erwartet 2025 rund 7,70 Mio. EUR = Hauptbuch 47005).** Die
   gemeinsame B1-Abfrage verknuepft jede Rechnungsadresse des Artikel-Lieferanten
   (`HanaQueryService.cs` Zeile 560/622); Trafag AG hat im IT-Mandanten CH und DE. TRIT 2025 +3,79 Mio.
