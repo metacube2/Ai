@@ -1,6 +1,30 @@
 # Last Change
 
-Stand: 2026-09-11
+Stand: 2026-09-29
+
+## Projektsicht nach HERMES, Finance-Review, Italien, 2026-09-29
+
+Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
+
+- **Vorhabenuebersicht nach HERMES fuer den Interims-Vorgesetzten.** Neue Quelle
+  `projektmanagement/Vorhaben_HERMES.tsv` mit zwoelf Vorhaben PM-01 bis PM-12 (neu: PM-10
+  Smartsheet, PM-11 Data-Lake-Leistung, PM-12 Power-BI-Anwendervertreter). `Wochen_Todo.tsv`
+  fuehrt je Aufgabe `Vorhaben` und `HERMES-Stufe`. `wochen_todo_xlsx.py` erzeugt das erste Blatt
+  „HERMES Übersicht" mit Kacheln, Ampeln, Meilensteinsymbolen und zwei Diagrammen sowie Vorlagen
+  fuer Projektauftrag und Abnahmeprotokoll. Rollen mit „Vorschlag" sind nicht bestaetigt.
+- **Finance-Review von Codex gegen den Code bestaetigt** (`docs/FINANCE_REVIEW_2026-09-29.md`,
+  neu `ISS-018`). Sichtbar wirksam: CHF-Schalter gegen Pruefbuch, zwei falsche
+  Waehrungslabels, Cockpit-Exporte auf 1'000 Zeilen gekappt. Die RAG-Formeldatei hatte den
+  gekappten Export als vollstaendig empfohlen; korrigiert.
+- **Italien, Mail von Paola vom 2026-09-29:** Moving Average ist laut ihren Beratern doch
+  umstellbar, aber nur mit Bestand null, Belegabschluss und Inventur; der Befund vom 04.09. ist
+  ueberholt, der Entscheid von Andreas bleibt. Italien baut die schon gemessene Referenzkost
+  nach, Rueckmeldung an Paola offen (`ISS-007.1`, `ISS-007.2`).
+- **Status abgeglichen:** Wochen_Todo gegen Issue-Log (ISS-012 erledigt, ISS-006.1 und
+  ISS-007.1 korrigiert, ISS-007.2/016/003.2 neu); verwaiste Agentenreservierungen freigegeben,
+  die unfertige Finance_All-Automatik liegt weiterhin unkommittiert im Arbeitsbaum.
+- **Offen:** ISS-004.2 Spanien ist widerspruechlich (Wochen_Todo erledigt, Issue-Log wartet
+  auf Santi) und braucht Ingos Klaerung.
 
 ## Journal-EntitySet CH/AT in SAP gebaut, 2026-09-10 und 2026-09-11
 

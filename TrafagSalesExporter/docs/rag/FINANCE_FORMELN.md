@@ -1,6 +1,14 @@
 # RAG Finance-Formeln (Zeilenverarbeitung/Mechanik)
 
-Stand: 2026-08-07
+Stand: 2026-09-29 (Punkt 4, Kostenwaehrungsschalter, Supplier-Konflikt und Periodenregel nach
+der Konsistenzpruefung vom 29.09. korrigiert; uebriger Stand 2026-08-07)
+
+**Offene Rechenfehler seit 2026-09-29:** Die Konsistenzpruefung
+`docs/FINANCE_REVIEW_2026-09-29.md` ist gegen den Code bestaetigt. Produktiv wirksam und fuer
+Anwender sichtbar: Der CHF-Schalter aendert die Gruppenmarge, ohne dass das Pruefbuch mitgeht
+(A1). CHF-Summen tragen beim Filtern auf ein Land das lokale Waehrungslabel (A3). Das
+Pruefbuch zeigt den lokalen Stueckpreis mit der Waehrung der Konzernkosten (A4). Status in
+`ISS-018`.
 
 ## Vorrang: was die Kacheln NICHT sagen (2026-08-07)
 
@@ -20,7 +28,11 @@ produktiv gemessen, Details in `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md`
    umgerechnete Summe.
 4. **Detailtabellen sind auf 1'000 Zeilen gekappt** (Pruefbuch und
    Gruppenmarge-Detail, von rund 92'000). Die Kappung wirkt beim Pruefbuch VOR
-   den Spaltenfiltern. Fuer Nachrechnungen den Excel-Export nehmen.
+   den Spaltenfiltern. **Korrigiert am 2026-09-29:** Auch die Excel-Exporte aus dem
+   Cockpit (Pruefbuch und Gruppenmarge) enthalten nur diese 1'000 Zeilen. Fuer eine
+   vollstaendige Nachrechnung gilt allein das Nachweis-Excel, das ungekappt ist
+   (`docs/FINANCE_REVIEW_2026-09-29.md` Befund A5). Der fruehere Rat, dafuer den
+   Excel-Export zu nehmen, war falsch.
 
 Zweck: Kompakte, code-verifizierte Referenz WIE Waehrungsumrechnung, Marge/Standardkosten
 und Land-Formeln rechnen — nicht Deploy-Historie (die steht in `docs/rag/FINANCE.md`).
@@ -57,7 +69,10 @@ Details: `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md`.
 | IN (TRIN) | Sage/HANA `TRAFAG_LIVE` | wie B1-Schema | — | INR fuehrend |
 | US (TRUS) | B1/HANA `us01_p` | wie FR | wie FR | kaum Abweichung |
 
-Jahresabgrenzung ueberall: `Year(PostingDate ?? InvoiceDate ?? ExtractionDate)`.
+Jahresabgrenzung: `Year(PostingDate ?? InvoiceDate ?? ExtractionDate)`, **ausser Spanien**:
+dort gilt seit dem Entscheid vom 2026-09-02 das Rechnungsdatum zuerst (`ISS-004.2`). Die
+Marktsegment-Sicht wendet diese Spanien-Regel nicht an und ist deshalb nicht voll mit Finance
+abstimmbar (`docs/FINANCE_REVIEW_2026-09-29.md` Befund B5).
 Formeln im Detail: `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md`,
 IT-Sonderfall: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`, UK-Korrektur:
 `docs/FINANCE_UK_QUELLE_KORREKTUR_2026-05-18.md`.
@@ -144,14 +159,20 @@ aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN.md`,
 wird von keiner Quelle geliefert.
 
 **Kostenwaehrungsschalter `GroupMarginCostCurrencyMode`:**
-- `Mask` (Default): Kostenwaehrung != Verkaufswaehrung -> Status `Kostenwaehrung abweichend`, Marge bleibt `-`.
-- `Convert`: Umrechnung mit aktuellem Tageskurs (seit dem Beschluss vom 27.08.2026);
+- `Mask` (Code-Default, **produktiv nicht eingestellt**): Kostenwaehrung != Verkaufswaehrung -> Status `Kostenwaehrung abweichend`, Marge bleibt `-`.
+- `Convert` (**produktiv eingestellt**): Umrechnung mit aktuellem Tageskurs (seit dem Beschluss vom 27.08.2026);
   fehlender Kurs laesst die Zeile offen.
 
 **Statuswerte:** `OK` (Marge berechnet) / `Standardpreis fehlt` / `Lieferant unklar` /
 `Kostenwaehrung abweichend` (nur Mask).
 
-**Aktuell groesster ungeloester Konflikt:** CH/AT, UK (teils ES) haben strukturell KEINE
+> **UEBERHOLT seit 2026-08-12:** Der folgende Absatz beschreibt den Stand vom Juli. CH/AT
+> werden seit dem 11./12.08.2026 ueber den CH-Werkstamm-Fallback und lokale Standardkosten
+> klassifiziert (`ISS-003.1`, erledigt), die UK-Lieferantenfelder sind gemappt, und die
+> Konzernkostenkaskade ist am 2026-09-09 entschieden. Geltender Stand:
+> `docs/FINANCE_SUPPLIER.md` und `docs/FINANCE_STANDARDKOSTEN.md`.
+
+**Damals groesster ungeloester Konflikt:** CH/AT, UK (teils ES) haben strukturell KEINE
 Supplier-Felder. `GroupMarginSupplierClassifier` liefert bei 3 leeren Feldern immer
 `Unklar` -> jede CH/AT-Zeile bekommt `Lieferant unklar` -> Marge maskiert, OBWOHL die
 WAVWR/STPRS-Kostenbasis seit 2026-07-16 zu 96.5%/99.9% gefuellt ist. Offene Fachfrage an

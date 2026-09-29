@@ -1,6 +1,6 @@
 # Finance-Dashboard: Indikatoren durchgesehen
 
-Stand: 2026-08-07
+Stand: 2026-08-07, Nachtrag 2026-09-29 in Abschnitt 2h
 
 Status: produktiv deployed und verifiziert am 2026-08-07 10:22 MESZ,
 Funktionscommits `0c8cff5` und `b2e7c4f`, `455/455` Tests. Nachweis in Abschnitt 6.
@@ -176,6 +176,10 @@ hoechstens 1'000 von rund 92'000, ohne Hinweis. Neu tragen beide Tabellen den
 Hinweis „Gezeigt werden N von M Detailzeilen" — Muster uebernommen aus
 `Components/Pages/SupplyChainAnalysis.razor`. Beim Pruefbuch steht zusaetzlich,
 dass die Kappung **vor** den Spaltenfiltern wirkt.
+
+> **Nachtrag 2026-09-29:** Die Kappung gilt auch fuer die beiden Excel-Exporte aus dem
+> Cockpit, die genau die gekappte Liste ausgeben. Wer vollstaendig nachrechnen will, braucht
+> das Nachweis-Excel. Befund A5 in `docs/FINANCE_REVIEW_2026-09-29.md`, Status in `ISS-018`.
 
 ### 2i. Zwei Zeilen, kein eigener Abschnitt
 

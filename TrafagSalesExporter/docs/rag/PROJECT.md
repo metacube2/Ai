@@ -1,12 +1,22 @@
 # RAG Project
 
-Stand: 2026-09-28 (Tempo, Nachtlauf, HR und Lagerwert-Verlauf ergaenzt; uebriger Kurzstand vom 2026-09-07)
+Stand: 2026-09-29 (HERMES-Sicht, PM-10 bis PM-12, Finance-Review; Tempo, Nachtlauf, HR und Lagerwert vom 2026-09-28; uebriger Kurzstand vom 2026-09-07)
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
 und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
 Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 ## Kurzstand
+
+- **2026-09-29:** Fuer den Interims-Vorgesetzten gibt es eine **Vorhabenuebersicht nach HERMES**,
+  zugeschnitten auf ein KMU: Blatt „HERMES Übersicht" in `projektmanagement/Wochen_Todo.xlsx`, Quelle
+  `projektmanagement/Vorhaben_HERMES.tsv`, erzeugt mit `projektmanagement/wochen_todo_xlsx.py`. Je
+  Vorhaben Stufe, Auftraggeber, Anwendervertreter, Freigabe/Abnahme/Abschluss und Ampel, dazu
+  Vorlagen fuer Projektauftrag und Abnahmeprotokoll. Rollen mit „Vorschlag" sind nicht bestaetigt.
+  Neu aufgenommen: PM-10 Abloesung Smartsheet, PM-11 Data-Lake-Leistung, PM-12 Power-BI-
+  Anwendervertreter. Am selben Tag hat Codex das Finance-Dashboard geprueft; alle Befunde sind
+  gegen den Code bestaetigt (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`), repariert ist
+  noch nichts.
 
 - **2026-09-28, nach Ingos Ferien:** Tempo der Webapp (groesster Kritikpunkt) produktiv verbessert:
   Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s ->
