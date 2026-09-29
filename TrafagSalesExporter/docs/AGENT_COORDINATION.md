@@ -25,8 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-
-Derzeit keine laufende Arbeit.
+| Claude | Cockpit-Dunkelmodus (Auftrag Ingo 29.09.: „darkmode einbauen, meine augen brennen“) | `Components/Layout/MainLayout.razor`, `Components/App.razor`, `wwwroot/css/app.css`, neu `wwwroot/js/theme.js`, feste Farben in Seiten-`<style>`-Bloecken (HR-Tabs, Cockpit-Herzschlag, Einkauf, Settings, Startseite, Export-Dashboard, SourceViewer, BOM), Uebersetzungen | **Code committet, nicht deployed**, Standard dunkel (Ingo), Umschalter in der Kopfleiste, je Browser gemerkt. Build 0 Fehler, 764/764. Sichtpruefung im Browser offen (PC-Neustart 13:30), Doku (rag/Router/lastchange) offen. |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

@@ -239,7 +239,7 @@ else if (!_loading)
     </NoRecordsContent>
 </MudTable>
 
-<MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:#64748b;">
+<MudText Typo="Typo.caption" Class="d-block mt-3" Style="color:var(--mud-palette-text-secondary);">
     @T("Anzeige zeigt maximal 200 Zeilen aus dem Cache; die Suche filtert per Teilstring auf Vknr/Kompnr. Fachliche Basis: docs/abap/README_LZCODE_WEBSERVICE.md. Diese Daten sind perspektivisch auch fuer den Einkauf nutzbar (Exklusivitaet/Bestaende je Komponente), starten aber bewusst als eigener Logistik-Reiter.",
        "Display shows at most 200 cached rows; search filters by substring on Vknr/Kompnr. Functional basis: docs/abap/README_LZCODE_WEBSERVICE.md. This data can later also serve purchasing (exclusivity/stock per component) but deliberately starts as its own logistics tab.")
 </MudText>
@@ -472,7 +472,7 @@ else if (!_loading)
         height: 25px;
         overflow: hidden;
         border-radius: 4px;
-        background: rgba(15, 23, 42, .1);
+        background: rgba(128,128,128,.18);
     }
 
     .bom-bar-fill {

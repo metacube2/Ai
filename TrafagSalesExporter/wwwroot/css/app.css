@@ -11,6 +11,23 @@ body,
     font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 
+/* -------------------------------------------------------------------------
+   Hell/Dunkel (MainLayout.razor, js/theme.js, 2026-09-29)
+
+   MudBlazor faerbt seine Bausteine selbst um. `data-theme` am <html> wird schon
+   im <head> gesetzt und deckt zwei Luecken ab: den Hintergrund, bevor MudBlazor
+   gezeichnet hat (sonst weisses Aufblitzen), und die eigenen Farben unten.
+   Eigene Seitenstile nehmen fuer Flaechen und Text die MudBlazor-Variablen
+   (`--mud-palette-surface`, `--mud-palette-text-secondary` ...) statt fester
+   Hex-Werte; das gilt fuer neue Stile genauso.
+   ------------------------------------------------------------------------- */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+    background: #1E1F25;
+    color: rgba(255, 255, 255, 0.87);
+    color-scheme: dark;
+}
+
 .app-title {
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -46,6 +63,12 @@ body,
     min-height: 680px;
     overflow: hidden;
     background: #f7f9fb;
+}
+
+/* Die 3D-Ansicht zeichnet three.js mit eigenem hellen Grund; ein dunkler
+   Rahmen darum faellt weniger auf als ein weisser Block. */
+html[data-theme="dark"] .finance-3d-surface {
+    filter: brightness(0.82);
 }
 
 .finance-3d-canvas {
@@ -115,10 +138,10 @@ body,
 }
 
 .reconnect-box {
-    background: #ffffff;
+    background: var(--mud-palette-surface, #ffffff);
     border-radius: 6px;
     box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
-    color: #212121;
+    color: var(--mud-palette-text-primary, #212121);
     font-family: "Open Sans", sans-serif;
     max-width: 420px;
     padding: 24px 28px;
@@ -138,7 +161,7 @@ body,
 }
 
 .reconnect-box small {
-    color: #616161;
+    color: var(--mud-palette-text-secondary, #616161);
     display: inline-block;
     margin-top: 8px;
 }
@@ -219,12 +242,12 @@ body,
 }
 
 .status-light-empty {
-    color: #616161;
+    color: var(--mud-palette-text-secondary, #616161);
 }
 
 .status-light-entry {
     align-items: flex-start;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--mud-palette-lines-default, rgba(0, 0, 0, 0.06));
     display: flex;
     gap: 10px;
     padding: 8px 16px;
@@ -247,7 +270,7 @@ body,
 }
 
 .status-light-time {
-    color: #757575;
+    color: var(--mud-palette-text-secondary, #757575);
 }
 
 .status-light-actions {
@@ -280,6 +303,10 @@ body,
     padding: 12px 16px;
     font-size: 0.9rem;
     color: #555;
+}
+
+html[data-theme="dark"] .app-loading-text {
+    color: #aaa;
 }
 
 @keyframes app-loading-slide {

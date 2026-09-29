@@ -2,8 +2,9 @@
 @implements IDisposable
 @using System.Security.Claims
 @inject TrafagSalesExporter.Services.IUiTextService UiText
+@inject IJSRuntime JS
 
-<MudThemeProvider Theme="_theme" />
+<MudThemeProvider Theme="_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -18,6 +19,10 @@
            Bewusst hier oben und nicht auf einer Seite, damit der Zustand ueberall sichtbar
            ist. Siehe Components/AppStatusLight.razor. *@
         <AppStatusLight />
+        <MudTooltip Text="@T("Hell/Dunkel umschalten", "Switch light/dark")">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit" OnClick="ToggleDarkModeAsync" Class="mr-1" />
+        </MudTooltip>
         <MudMenu Class="mr-3 language-menu"
                  AnchorOrigin="Origin.BottomRight"
                  TransformOrigin="Origin.TopRight"
@@ -66,6 +71,8 @@
 
 @code {
     private bool _drawerOpen = true;
+    // Standard ist dunkel (Wunsch Ingo 2026-09-29); hell nur, wenn im Browser so gewaehlt.
+    private bool _isDarkMode = true;
 
     private readonly MudTheme _theme = new()
     {
@@ -74,8 +81,43 @@
             Primary = "#B71C1C",
             Secondary = "#7F1D1D",
             AppbarBackground = "#B71C1C"
+        },
+        // Dunkel: gedaempftes Trafag-Rot in der Kopfleiste, helleres Rot fuer Schaltflaechen
+        // und Links, damit sie auf dem dunklen Grund lesbar bleiben.
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#EF5350",
+            Secondary = "#E57373",
+            AppbarBackground = "#7F1D1D",
+            Background = "#1E1F25",
+            Surface = "#272830",
+            DrawerBackground = "#22232A",
+            DrawerText = "rgba(255,255,255,0.80)",
+            TextPrimary = "rgba(255,255,255,0.87)",
+            TextSecondary = "rgba(255,255,255,0.62)"
         }
     };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        // Gemerkte Wahl je Browser; ohne Wahl bleibt es dunkel.
+        var dark = await JS.InvokeAsync<string?>("trafagTheme.get") != "light";
+
+        if (dark != _isDarkMode)
+        {
+            _isDarkMode = dark;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleDarkModeAsync()
+    {
+        _isDarkMode = !_isDarkMode;
+        await JS.InvokeVoidAsync("trafagTheme.set", _isDarkMode ? "dark" : "light");
+    }
 
     protected override void OnInitialized()
     {

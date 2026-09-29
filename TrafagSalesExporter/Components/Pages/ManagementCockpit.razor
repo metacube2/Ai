@@ -1770,14 +1770,14 @@
                                     </MudStack>
                                 </MudStack>
                                 <svg viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="@($"{country.Tsc} heartbeat")">
-                                    <line x1="44" y1="162" x2="700" y2="162" stroke="#cbd5e1" stroke-width="1" />
-                                    <line x1="44" y1="24" x2="44" y2="162" stroke="#cbd5e1" stroke-width="1" />
+                                    <line x1="44" y1="162" x2="700" y2="162" style="stroke:var(--mud-palette-lines-default)" stroke-width="1" />
+                                    <line x1="44" y1="24" x2="44" y2="162" style="stroke:var(--mud-palette-lines-default)" stroke-width="1" />
                                     @foreach (var marker in BuildHeartbeatMonthMarkers(country))
                                     {
-                                        <line x1="@marker.X.ToString(CultureInfo.InvariantCulture)" y1="24" x2="@marker.X.ToString(CultureInfo.InvariantCulture)" y2="188" stroke="#e5e7eb" stroke-width="1" />
-                                        <svg:text x="@marker.X.ToString(CultureInfo.InvariantCulture)" y="200" font-size="10" text-anchor="middle" fill="#64748b">@marker.Label</svg:text>
+                                        <line x1="@marker.X.ToString(CultureInfo.InvariantCulture)" y1="24" x2="@marker.X.ToString(CultureInfo.InvariantCulture)" y2="188" style="stroke:var(--mud-palette-divider)" stroke-width="1" />
+                                        <svg:text x="@marker.X.ToString(CultureInfo.InvariantCulture)" y="200" font-size="10" text-anchor="middle" style="fill:var(--mud-palette-text-secondary)">@marker.Label</svg:text>
                                     }
-                                    <path d="@BuildHeartbeatAreaPath(country, _heartbeatSmoothing)" fill="#dbeafe" opacity="0.75" />
+                                    <path d="@BuildHeartbeatAreaPath(country, _heartbeatSmoothing)" fill="#3b82f6" opacity="0.18" />
                                     <polyline points="@BuildHeartbeatPolylinePoints(country, _heartbeatSmoothing)" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
                                     @foreach (var day in country.Days.Where(day => day.Status != HeartbeatDayStatus.Future))
                                     {
@@ -1793,10 +1793,10 @@
                                             <title>@BuildHeartbeatTooltip(day, country.CurrencyHint)</title>
                                         </circle>
                                     }
-                                    <svg:text x="44" y="16" font-size="10" fill="#64748b">@HeartbeatAxisMax(country, _heartbeatSmoothing).ToString("N0")</svg:text>
-                                    <svg:text x="44" y="176" font-size="10" fill="#64748b">0</svg:text>
+                                    <svg:text x="44" y="16" font-size="10" style="fill:var(--mud-palette-text-secondary)">@HeartbeatAxisMax(country, _heartbeatSmoothing).ToString("N0")</svg:text>
+                                    <svg:text x="44" y="176" font-size="10" style="fill:var(--mud-palette-text-secondary)">0</svg:text>
                                 </svg>
-                                <MudText Typo="Typo.caption" Class="d-block mt-1" Style="color:#64748b;">
+                                <MudText Typo="Typo.caption" Class="d-block mt-1" Style="color:var(--mud-palette-text-secondary);">
                                     @T("Streifen oben: Buchungsstatus je Tag. Streifen unten: Exportlauf (gruen OK, rot Fehler, orange kein Lauf, hellgrau vor erstem Log).",
                                        "Top stripe: booking status per day. Bottom stripe: export run (green OK, red error, orange no run, light grey before first log).")
                                 </MudText>
@@ -2952,7 +2952,7 @@
             HeartbeatExportRunStatus.Ok => "#16a34a",
             HeartbeatExportRunStatus.Error => "#dc2626",
             HeartbeatExportRunStatus.Missed => "#f59e0b",
-            _ => "#e2e8f0"
+            _ => "rgba(148,163,184,.35)"
         };
 
     private string BuildHeartbeatBadge(ManagementDataHeartbeatCountryRow country)
@@ -2981,7 +2981,7 @@
             HeartbeatDayStatus.WeekendOrNoBusiness => "#94a3b8",
             HeartbeatDayStatus.Warn => "#f59e0b",
             HeartbeatDayStatus.Gap => "#dc2626",
-            _ => "#e5e7eb"
+            _ => "rgba(148,163,184,.35)"
         };
 
     private static Color HeartbeatOverallColor(ManagementDataHeartbeatCountryRow country)

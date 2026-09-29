@@ -17,7 +17,7 @@
 <div class="home-shell">
     <div class="home-content">
         <svg class="home-manometer" viewBox="0 0 600 340" role="img" aria-label="Trafag cockpit manometer">
-            <rect x="0" y="0" width="600" height="340" fill="#fff" />
+            <rect x="0" y="0" width="600" height="340" style="fill:var(--mud-palette-background)" />
             <path d="M70 260 A230 230 0 0 1 530 260" class="gauge-outer" />
             <path d="M115 260 A185 185 0 0 1 485 260" class="gauge-inner" />
 
@@ -37,7 +37,7 @@
             <g class="gauge-needle">
                 <line x1="300" y1="260" x2="300" y2="96" class="needle-line" />
             </g>
-            <circle cx="300" cy="260" r="28" fill="#050505" />
+            <circle cx="300" cy="260" r="28" style="fill:var(--mud-palette-text-primary)" />
         </svg>
         <div class="home-welcome">@T("Trafag Global BI Cockpit", "Trafag Global BI Cockpit")</div>
         <div class="home-subtitle">@T("Automatisch angebundene Laenderabfragen mit taeglichem Refresh", "Automatically connected country queries with daily refresh")</div>
@@ -68,7 +68,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f7f6f7;
+        background: var(--mud-palette-background);
     }
 
     .home-content {
@@ -85,7 +85,7 @@
     }
 
     .home-welcome {
-        color: #050505;
+        color: var(--mud-palette-text-primary);
         font-size: 24px;
         font-weight: 700;
         text-align: center;
@@ -94,7 +94,7 @@
 
     .home-subtitle {
         max-width: 620px;
-        color: #424242;
+        color: var(--mud-palette-text-secondary);
         font-size: 16px;
         font-weight: 500;
         line-height: 1.4;
@@ -115,8 +115,8 @@
         height: 96px;
         position: relative;
         overflow: hidden;
-        background: #fff;
-        border-bottom: 2px solid #050505;
+        background: var(--mud-palette-background);
+        border-bottom: 2px solid var(--mud-palette-text-primary);
     }
 
     .walking-person {
@@ -131,7 +131,7 @@
     .walking-person span {
         position: absolute;
         display: block;
-        background: #050505;
+        background: var(--mud-palette-text-primary);
     }
 
     .walking-person .head {
@@ -139,9 +139,9 @@
         top: 0;
         width: 18px;
         height: 18px;
-        border: 3px solid #050505;
+        border: 3px solid var(--mud-palette-text-primary);
         border-radius: 50%;
-        background: #fff;
+        background: var(--mud-palette-background);
     }
 
     .walking-person .body {
@@ -155,8 +155,8 @@
         top: 25px;
         width: 17px;
         height: 36px;
-        border: 3px solid #050505;
-        background: #fff;
+        border: 3px solid var(--mud-palette-text-primary);
+        background: var(--mud-palette-background);
     }
 
     .walking-person .coat-left {
@@ -223,7 +223,7 @@
     .gauge-tick,
     .needle-line {
         fill: none;
-        stroke: #050505;
+        stroke: var(--mud-palette-text-primary);
         stroke-linecap: round;
     }
 
@@ -240,7 +240,7 @@
     }
 
     .gauge-label {
-        fill: #050505;
+        fill: var(--mud-palette-text-primary);
         font-size: 24px;
         font-weight: 800;
         text-anchor: middle;
@@ -248,7 +248,7 @@
     }
 
     .gauge-brand {
-        fill: #050505;
+        fill: var(--mud-palette-text-primary);
         font-size: 28px;
         font-weight: 900;
         letter-spacing: 4px;

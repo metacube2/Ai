@@ -245,8 +245,8 @@
         justify-self: end;
         width: 210px;
         height: 118px;
-        background: #fff;
-        border: 1px solid #111;
+        background: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-text-primary);
         border-radius: 6px;
         overflow: hidden;
     }
@@ -260,7 +260,7 @@
     .manometer-outer,
     .manometer-inner {
         fill: none;
-        stroke: #111;
+        stroke: var(--mud-palette-text-primary);
         stroke-linecap: square;
     }
 
@@ -274,7 +274,7 @@
 
     .manometer-tick,
     .needle-line {
-        stroke: #111;
+        stroke: var(--mud-palette-text-primary);
         stroke-width: 3;
         stroke-linecap: square;
     }
@@ -286,12 +286,12 @@
     }
 
     .manometer-hub {
-        fill: #111;
+        fill: var(--mud-palette-text-primary);
     }
 
     .manometer-label,
     .manometer-caption {
-        fill: #111;
+        fill: var(--mud-palette-text-primary);
         font-family: Arial, sans-serif;
         text-anchor: middle;
         dominant-baseline: middle;

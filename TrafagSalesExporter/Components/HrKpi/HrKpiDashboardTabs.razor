@@ -708,7 +708,7 @@
     {
         var total = items.Sum(x => x.Count);
         if (total <= 0)
-            return "background:#e0e0e0";
+            return "background:rgba(128,128,128,.25)";
         var current = 0m;
         var segments = new List<string>();
         foreach (var item in items)
@@ -728,32 +728,32 @@
     }
 
     .hr-metric-basis {
-        background: #eef6fb;
+        background: rgba(47,111,159,.10);
         border-left-color: #2f6f9f;
     }
 
     .hr-metric-leavers {
-        background: #fff7e6;
+        background: rgba(178,106,0,.10);
         border-left-color: #b26a00;
     }
 
     .hr-metric-relevant {
-        background: #eef8ef;
+        background: rgba(46,125,50,.10);
         border-left-color: #2e7d32;
     }
 
     .hr-metric-excluded {
-        background: #f3f4f6;
+        background: rgba(107,114,128,.10);
         border-left-color: #6b7280;
     }
 
     .hr-metric-rate {
-        background: #fff0f1;
+        background: rgba(198,40,40,.08);
         border-left-color: #c62828;
     }
 
     .hr-metric-forecast {
-        background: #f4f0fb;
+        background: rgba(106,79,179,.10);
         border-left-color: #6a4fb3;
     }
 
@@ -849,7 +849,7 @@
         bottom: 4px;
         width: 4px;
         height: 112px;
-        background: #263238;
+        background: var(--mud-palette-text-primary);
         transform-origin: bottom center;
         transform: rotate(calc(var(--gauge-deg) - 90deg));
         border-radius: 4px;
@@ -893,7 +893,7 @@
 
     .hr-funnel-bar-wrap,
     .hr-bar-track {
-        background: rgba(0,0,0,.08);
+        background: rgba(128,128,128,.18);
         border-radius: 4px;
         height: 24px;
         overflow: hidden;

@@ -52,7 +52,7 @@
                 {
                     <div id="@GetLineAnchor(line.Number)"
                          style="@GetLineStyle(line.Number)">
-                        <span style="display:inline-block; width:4rem; color:#666;">@line.Number.ToString("0000")</span>
+                        <span style="display:inline-block; width:4rem; color:var(--mud-palette-text-secondary);">@line.Number.ToString("0000")</span>
                         <span>@line.Text</span>
                     </div>
                 }
@@ -125,7 +125,7 @@
     {
         var highlight = _highlightLineNumber == lineNumber;
         return highlight
-            ? "background-color:#fff3cd; white-space:pre-wrap;"
+            ? "background-color:rgba(255,193,7,.25); white-space:pre-wrap;"
             : "white-space:pre-wrap;";
     }
 

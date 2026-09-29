@@ -6,6 +6,16 @@
     <title>Trafag Cockpit</title>
     <base href="@BaseHref" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    @* Hell/Dunkel vor dem ersten Zeichnen setzen, sonst blitzt die Seite weiss auf, bis
+       MudBlazor sein Theme hat. Gewaehlt wird in der Kopfleiste, siehe js/theme.js. *@
+    <script>
+        (function () {
+            var mode = null;
+            try { mode = localStorage.getItem("trafag-theme"); } catch (e) { }
+            if (mode !== "light") mode = "dark";
+            document.documentElement.setAttribute("data-theme", mode);
+        })();
+    </script>
     @* `AssetVersion` erzwingt das Neuladen nach einem Deploy, siehe unten. *@
     <link href="css/app.css?v=@AssetVersion" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
@@ -86,6 +96,7 @@
     </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="js/reconnect.js?v=@AssetVersion"></script>
+    <script src="js/theme.js?v=@AssetVersion"></script>
     <script src="js/download.js"></script>
     <script src="js/vendor/three.min.js"></script>
     <script src="js/finance3d.js"></script>

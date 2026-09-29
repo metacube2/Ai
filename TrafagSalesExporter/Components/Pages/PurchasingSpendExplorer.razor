@@ -441,7 +441,7 @@
     {
         var total = group.Slices.Sum(slice => slice.Value);
         if (total <= 0m)
-            return "background:conic-gradient(#cfd8dc 0 100%)";
+            return "background:conic-gradient(rgba(128,128,128,.25) 0 100%)";
 
         var sb = new StringBuilder("background:conic-gradient(");
         decimal cumulative = 0m;
@@ -600,7 +600,7 @@
 
     .purchasing-explorer-bars .purchasing-bar-track {
         height: 24px;
-        background: rgba(0,0,0,.08);
+        background: rgba(128,128,128,.18);
         border-radius: 4px;
         overflow: hidden;
     }
