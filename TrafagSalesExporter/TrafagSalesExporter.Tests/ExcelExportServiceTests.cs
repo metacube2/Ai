@@ -124,6 +124,13 @@ public class ExcelExportServiceTests
             Assert.Contains("Konzernkosten TR AG", details.Cell(2, 14).GetString());
             // Kostenbasis = Menge x Konzernkosten (2 x 30 = 60), NICHT die lokale StandardCost (999).
             Assert.Equal(60m, details.Cell(2, 18).GetValue<decimal>());
+
+            // ISS-027: Die Margenformel muss gegen GroupMarginStatuses.Ok vergleichen. ClosedXML
+            // rechnet die Formel nicht, deshalb wird ihr Text geprueft: Steht dort ein fester Text,
+            // blieben nach einer Umbenennung des Status alle Margen still leer.
+            Assert.Contains($"=\"{GroupMarginStatuses.Ok}\"", details.Cell(2, 19).FormulaA1);
+            Assert.Contains($"=\"{GroupMarginStatuses.Ok}\"", details.Cell(2, 20).FormulaA1);
+            Assert.Equal(details.Cell(2, 2).GetString(), GroupMarginStatuses.Ok);
         }
         finally
         {

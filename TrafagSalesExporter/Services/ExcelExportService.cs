@@ -673,7 +673,7 @@ public class ExcelExportService : IExcelExportService
                 ws.Cell(rowIndex, 4).Value = (reference.CheckValue ?? reference.LocalCurrencyValue)!.Value;
             ws.Cell(rowIndex, 5).FormulaA1 = $"SUMIFS('Finance Details'!$F:$F,'Finance Details'!$A:$A,A{rowIndex},'Finance Details'!$B:$B,B{rowIndex},'Finance Details'!$E:$E,\"TRUE\")";
             ws.Cell(rowIndex, 6).FormulaA1 = $"IF(D{rowIndex}=\"\",\"\",E{rowIndex}-D{rowIndex})";
-            ws.Cell(rowIndex, 7).FormulaA1 = $"IF(D{rowIndex}=\"\",\"Keine Referenz\",IF(ABS(F{rowIndex})<=1,\"OK\",\"Pruefen\"))";
+            ws.Cell(rowIndex, 7).FormulaA1 = $"IF(D{rowIndex}=\"\",\"Keine Referenz\",IF(ABS(F{rowIndex})<=1,\"{FinanceCountryStatuses.Ok}\",\"{FinanceCountryStatuses.Check}\"))";
             ws.Cell(rowIndex, 8).Value = reference.Notes;
             rowIndex++;
         }
@@ -788,8 +788,8 @@ public class ExcelExportService : IExcelExportService
             ws.Cell(rowIndex, 16).Value = row.UnitCost;
             ws.Cell(rowIndex, 17).Value = row.SalesValue;
             ws.Cell(rowIndex, 18).Value = row.CostBasisValue;
-            ws.Cell(rowIndex, 19).FormulaA1 = $"IF(B{rowIndex}=\"OK\",Q{rowIndex}-R{rowIndex},\"\")";
-            ws.Cell(rowIndex, 20).FormulaA1 = $"IF(B{rowIndex}=\"OK\",IF(Q{rowIndex}=0,\"\",S{rowIndex}/Q{rowIndex}),\"\")";
+            ws.Cell(rowIndex, 19).FormulaA1 = $"IF(B{rowIndex}=\"{GroupMarginStatuses.Ok}\",Q{rowIndex}-R{rowIndex},\"\")";
+            ws.Cell(rowIndex, 20).FormulaA1 = $"IF(B{rowIndex}=\"{GroupMarginStatuses.Ok}\",IF(Q{rowIndex}=0,\"\",S{rowIndex}/Q{rowIndex}),\"\")";
             ws.Cell(rowIndex, 21).Value = row.ProductDivisionCode;
             ws.Cell(rowIndex, 22).Value = row.ProductDivisionText;
             // DB bleibt leer, solange die Quelle keinen fix/variabel-Split liefert.

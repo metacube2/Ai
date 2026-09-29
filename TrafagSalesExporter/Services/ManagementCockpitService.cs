@@ -2202,15 +2202,27 @@ public class ManagementCockpitService : IManagementCockpitService
             : FinanceCountryStatuses.Check;
     }
 
-    private static bool LooksLikeCreditDocument(string documentType, string invoiceNumber)
+    // Gutschrift- und Stornobelegarten, wie sie im Bestand stehen (gemessen 2026-09-29):
+    // SAP G2/S1/S2 (TRCH, TRAT), B1 CRN (TRFR, TRIT, TRIN, TRUS), dazu REC fuer spanische
+    // Rechnungskorrekturen. Texte wie "Alphaplan CreditNote" und "Credit Note" deckt das
+    // Schluesselwort "credit" ab.
+    private static readonly HashSet<string> CreditDocumentTypes =
+        new(StringComparer.OrdinalIgnoreCase) { "G2", "S1", "S2", "CRN", "CN", "REC" };
+
+    internal static bool LooksLikeCreditDocument(string documentType, string invoiceNumber)
     {
+        // ISS-026: Bis 2026-09-29 stand hier "rec" als Teilstring, der jede Belegart oder
+        // Belegnummer mit diesen drei Buchstaben traf; die SAP- und B1-Kuerzel wurden dagegen nur
+        // ueber einen negativen Betrag erkannt. Jetzt zaehlt die Belegart exakt.
+        if (CreditDocumentTypes.Contains(documentType?.Trim() ?? string.Empty))
+            return true;
+
         var text = $"{documentType} {invoiceNumber}".Trim();
         return text.Contains("credit", StringComparison.OrdinalIgnoreCase) ||
                text.Contains("gutsch", StringComparison.OrdinalIgnoreCase) ||
                text.Contains("storno", StringComparison.OrdinalIgnoreCase) ||
                text.Contains("abono", StringComparison.OrdinalIgnoreCase) ||
-               text.Contains("rec", StringComparison.OrdinalIgnoreCase) ||
-               invoiceNumber.StartsWith("GS", StringComparison.OrdinalIgnoreCase);
+               (invoiceNumber ?? string.Empty).StartsWith("GS", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildCreditReason(IEnumerable<FinanceAggregationRow> rows)
