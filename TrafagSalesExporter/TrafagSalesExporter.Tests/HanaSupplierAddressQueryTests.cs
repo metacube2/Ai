@@ -46,6 +46,26 @@ public class HanaSupplierAddressQueryTests
     }
 
     /// <summary>
+    /// ISS-021: Der provisorische Italien-Filter vom 2026-05-18 schloss sechs echte Kunden aus
+    /// (1,84 Mio. EUR 2025) und glich damit nur die Doppelzeilen aus. Der Kontenfilter 47005 bleibt,
+    /// ein Kundenausschluss darf nicht wiederkommen.
+    /// </summary>
+    [Theory]
+    [InlineData("invoice")]
+    [InlineData("credit")]
+    public void ItalyQuery_KeepsTheRevenueAccountFilterWithoutCustomerExclusion(string kind)
+    {
+        var query = kind == "invoice"
+            ? HanaQueryService.GetInvoiceQuery("it01_p", null, null, "BillToDef")
+            : HanaQueryService.GetCreditNoteQuery("it01_p", null, null, "BillToDef");
+
+        Assert.Contains(@"p.""AcctCode"" LIKE '47005%'", query);
+        Assert.Contains(@"p.""AcctCode"" NOT LIKE '4700504%'", query);
+        Assert.DoesNotContain(@"""CardCode"" NOT IN", query);
+        Assert.DoesNotContain("C_IT01_0022987", query);
+    }
+
+    /// <summary>
     /// Die Kundenadresse war schon richtig ueber PayToCode auf eine Adresse beschraenkt und darf
     /// bei dieser Korrektur nicht verloren gehen.
     /// </summary>

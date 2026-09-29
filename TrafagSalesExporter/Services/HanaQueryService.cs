@@ -670,19 +670,16 @@ ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
         // Italy's Finance/B1 GUI reconciles against account group 47005
         // "Ricavi vendite e prestazioni". The 4700504* autofattura accounts
         // are outside the displayed net-sales subtotal from the screenshot.
-        // The customer exclusion is a provisional working filter derived from
-        // the current IT cache; it must be replaced by the official B1/Rhino
-        // report criterion once Italy confirms the common business rule.
+        //
+        // Bis 2026-09-29 schloss dieser Filter zusaetzlich sechs Kunden aus (Faiveley, Wabtec,
+        // Fincantieri u. a.). Das war der provisorische Prueffilter vom 2026-05-18, im Cache so
+        // gesucht, dass die Summe Rhino trifft; der Finance-Leiter hat am 2026-05-20 eine andere
+        // Methode festgelegt, der Ausschluss blieb trotzdem im Code. Die sechs sind echte Kunden
+        // mit 1'844'384 EUR Umsatz 2025 auf 47005 und glichen nur die doppelten Positionen aus
+        // der Lieferantenadresse aus (ISS-021). Ohne beide Fehler ergibt INV1 abzueglich RIN1
+        // das Hauptbuch 47005 (7'702'166 EUR 2025). docs/FINANCE_TAB_ABGLEICH_2026-09-29.md.
         return $@" AND {lineAlias}.""AcctCode"" LIKE '47005%'
- AND {lineAlias}.""AcctCode"" NOT LIKE '4700504%'
- AND {headerAlias}.""CardCode"" NOT IN (
-     'C_IT01_0022987',
-     'C_IT01_0306928',
-     'C_IT01_0306138',
-     'C_IT01_0309653',
-     'C_IT01_0304885',
-     'C_IT01_0306475'
- )";
+ AND {lineAlias}.""AcctCode"" NOT LIKE '4700504%'";
     }
 
     private static DateTime ParseDateFilter(string dateFilter)
