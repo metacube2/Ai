@@ -43,8 +43,11 @@ public class HanaQueryService : IHanaQueryService
             await _appEventLogService.WriteAsync("HANA", "Artikelstamm-Zusatzfelder geprueft", land: land,
                 details: $"Schema={schema} | sales_type={salesTypeColumn ?? "(nicht vorhanden)"} | group_material_number={groupMaterialColumn ?? "(nicht vorhanden)"}");
 
-            var invoiceQuery = GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn);
-            var creditNoteQuery = GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn);
+            // ISS-021: Standard-Rechnungsadresse des Lieferanten, damit jede Position genau einmal kommt.
+            var billToDefaultColumn = await ResolveColumnNameAsync(connection, schema, "OCRD", "BillToDef", cancellationToken);
+
+            var invoiceQuery = GetInvoiceQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn);
+            var creditNoteQuery = GetCreditNoteQuery(schema, salesTypeColumn, groupMaterialColumn, billToDefaultColumn);
             var parsedDateFilter = ParseDateFilter(dateFilter);
 
             await _appEventLogService.WriteAsync("HANA", "Invoice-Query gestartet", land: land,
@@ -497,7 +500,42 @@ public class HanaQueryService : IHanaQueryService
             ? $@"'' AS {alias}"
             : $@"COALESCE(itm.""{actualColumnName}"", '') AS {alias}";
 
-    private static string GetInvoiceQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName)
+    /// <summary>
+    /// Verknuepft genau eine Rechnungsadresse des Artikel-Lieferanten (ISS-021).
+    ///
+    /// Bis 2026-09-29 stand hier ein Join auf ALLE Rechnungsadressen (<c>CRD1</c>, <c>AdresType = 'B'</c>).
+    /// Hat ein Lieferant mehrere, kam jede Rechnungsposition mehrfach: in <c>it01_p</c> fuehrt Trafag AG
+    /// eine CH- und eine DE-Adresse, gemessen 4'980 doppelte TRIT-Positionen 2025 (+3,79 Mio. EUR) und
+    /// 3'573 in 2026. Die Finance-Regel fuer leeres Lieferantenland fing das nicht ab, weil das Land
+    /// gefuellt war. Siehe docs/FINANCE_TAB_ABGLEICH_2026-09-29.md.
+    ///
+    /// Jetzt gilt die Standard-Rechnungsadresse (<c>OCRD.BillToDef</c>). Fehlt sie oder die Spalte,
+    /// nimmt die Abfrage eine feste Adresse je Lieferant (kleinstes Land), damit das Land nicht leer wird
+    /// und keine Position mehr als einmal erscheint. Beide Joins liefern hoechstens eine Zeile.
+    /// </summary>
+    private static string SupplierAddressJoins(string schemaPrefix, string? billToDefaultColumnName)
+    {
+        var fallbackJoin = $@"LEFT JOIN (
+    SELECT ""CardCode"", MIN(""Country"") AS ""Country""
+    FROM {schemaPrefix}""CRD1""
+    WHERE ""AdresType"" = 'B'
+    GROUP BY ""CardCode""
+) sup_adr_any ON itm.""CardCode"" = sup_adr_any.""CardCode""";
+
+        if (billToDefaultColumnName is null)
+            return fallbackJoin;
+
+        return $@"LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
+    AND sup_adr.""AdresType"" = 'B' AND sup_adr.""Address"" = sup.""{billToDefaultColumnName}""
+{fallbackJoin}";
+    }
+
+    private static string SupplierCountrySelect(string? billToDefaultColumnName)
+        => billToDefaultColumnName is null
+            ? @"COALESCE(sup_adr_any.""Country"", '') AS supplier_country"
+            : @"COALESCE(sup_adr.""Country"", sup_adr_any.""Country"", '') AS supplier_country";
+
+    internal static string GetInvoiceQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
@@ -518,7 +556,7 @@ SELECT
     p.""Quantity"" AS quantity,
     COALESCE(itm.""CardCode"", '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
-    COALESCE(sup_adr.""Country"", '') AS supplier_country,
+    {SupplierCountrySelect(billToDefaultColumnName)},
     {salesTypeColumn},
     {groupMaterialColumn},
     h.""CardCode"" AS customer_number,
@@ -557,14 +595,13 @@ LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCod
 LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
 LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
-    AND sup_adr.""AdresType"" = 'B'
+{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName)}
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
     }
 
-    private static string GetCreditNoteQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName)
+    internal static string GetCreditNoteQuery(string schema, string? salesTypeColumnName, string? groupMaterialColumnName, string? billToDefaultColumnName)
     {
         var schemaPrefix = BuildSchemaPrefix(schema);
         var revenueAccountFilter = BuildRevenueAccountFilter(schema, "h", "p");
@@ -585,7 +622,7 @@ SELECT
     p.""Quantity"" * -1 AS quantity,
     COALESCE(itm.""CardCode"", '') AS supplier_number,
     COALESCE(sup.""CardName"", '') AS supplier_name,
-    COALESCE(sup_adr.""Country"", '') AS supplier_country,
+    {SupplierCountrySelect(billToDefaultColumnName)},
     {salesTypeColumn},
     {groupMaterialColumn},
     h.""CardCode"" AS customer_number,
@@ -619,8 +656,7 @@ LEFT JOIN {schemaPrefix}""CRD1"" cust_adr ON h.""CardCode"" = cust_adr.""CardCod
 LEFT JOIN {schemaPrefix}""OOND"" ind ON cust.""IndustryC"" = ind.""IndCode""
 LEFT JOIN {schemaPrefix}""OCRD"" sup ON itm.""CardCode"" = sup.""CardCode""
     AND sup.""CardType"" = 'S'
-LEFT JOIN {schemaPrefix}""CRD1"" sup_adr ON itm.""CardCode"" = sup_adr.""CardCode""
-    AND sup_adr.""AdresType"" = 'B'
+{SupplierAddressJoins(schemaPrefix, billToDefaultColumnName)}
 LEFT JOIN {schemaPrefix}""OSLP"" emp ON h.""SlpCode"" = emp.""SlpCode""
 WHERE h.""CANCELED"" = 'N' AND h.""DocDate"" >= :{DateFilterParameterName}{revenueAccountFilter}
 ORDER BY h.""DocDate"" DESC, h.""DocNum"", p.""LineNum""";
