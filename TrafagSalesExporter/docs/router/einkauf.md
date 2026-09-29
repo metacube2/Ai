@@ -8,6 +8,7 @@ Spend, Bestellungen, Kontrakte, Supply Chain, Logistik, Produktgruppen, ABC/XYZ.
 
 | Bedarf | Datei |
 | --- | --- |
+| Konsistenzreview und technische Reparaturen 29.09. (lokal, nicht deployed); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
 | Kurzstand Einkauf | `docs/rag/PURCHASING.md` |
 | Laufende Hauptdoku, Formeln, PBIX-Bezug, Cache und Refresh | `docs/PURCHASING_DASHBOARD_2026-06-05.md` |
 | **Was ist umgesetzt, was offen, was zurueckgestellt** | `docs/EINKAUF_ANFORDERUNGEN_HISTORIE.md` |

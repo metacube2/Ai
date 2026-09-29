@@ -1,7 +1,7 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
 Stand: 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
-2026-09-29 in Abschnitt 7b.
+2026-09-29 und Ingos am selben Tag versendete Antwort in Abschnitt 7b.
 Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
 
 Vorgaengerstand: `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`. Fachlicher
@@ -43,7 +43,7 @@ priorisiert, erneute Betrachtung im naechsten Jahr.** Damit gilt fuer `ISS-007.1
   nach geklaerter Prioritaet einholen.
 - Die Intercompany-Bewertung mit Lucas Castro ist mit dem Projekt zurueckgestellt, nicht
   erledigt. Sie wird wieder gebraucht, sobald das Thema 2027 aufgerufen wird.
-- Offen bleibt nur die Rueckmeldung an Paola. **Sie hat am 2026-09-10 geantwortet und will die
+- ~~Offen bleibt nur die Rueckmeldung an Paola.~~ **Am 2026-09-29 versendet** (Text in Abschnitt 7b). **Sie hat am 2026-09-10 geantwortet und will die
   Referenzkost selbst pruefen; das ist erledigt und sollte ihr abgenommen werden.** Gueltiger
   Textvorschlag und ihr Wortlaut in Abschnitt 7a, nicht mehr in Abschnitt 7.
 
@@ -413,7 +413,11 @@ und die Abdeckungsluecke aus Abschnitt 4a wuerde kleiner. Das ist eine Vermutung
 sagt nicht, wie die Abfrage rechnen soll. Weil `INV1.StockPrice` bereits 97 Prozent der
 verkauften Materialien abdeckt, waere der Gewinn gering.
 
-### Antwortvorschlag an Paola, Andreas in Kopie, nicht versendet
+### Antwort an Paola, Andreas in Kopie, von Ingo am 2026-09-29 versendet
+
+Ingo hat am 2026-09-29 bestaetigt, dass die Mail an Paola raus ist; der folgende Text war der
+vorbereitete Entwurf. Offen ist jetzt nur noch Paolas Rueckmeldung, ob `OITM.StockValue` dem
+bilanziellen Bestandswert entspricht, und ob ihre Berater etwas anderes rechnen.
 
 Ersetzt den Text aus Abschnitt 7a, falls dieser nicht verschickt wurde.
 

@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-09-28 (Lagerwert-Verlauf und Ladezeit ergaenzt; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-09-29 (Codex-Reparaturen E1/E2/C1/C2 lokal, nicht deployed; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
 
 Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -14,6 +14,13 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- **2026-09-29: Review-Reparaturen von Codex, lokal umgesetzt, NICHT committet und NICHT deployed.**
+  Der Jahres-Spend kommt aus einer eigenen, ungekappten Jahresaggregation statt aus der Summe
+  der Top 10; das Diagramm bleibt Top 10 (E1). Die Top-Warengruppe nutzt wie Diagramm und Matrix
+  zuerst `MARA.MATKL` (E2). Bei unvollstaendigem Cache entstehen keine SAP-Live-Stichproben-KPIs
+  mehr (C1). Fehlende Wechselkurse werden gezaehlt und ausdruecklich gewarnt; der 1:1-Rueckfall
+  bleibt bis zu einem Fachentscheid, betroffene Werte gelten nicht als belastbar (C2).
+  Bericht: `docs/HR_EINKAUF_REVIEW_2026-09-29.md`.
 - **Geltende Betriebsregel seit 2026-09-28:** Der Snapshot gilt 60 Minuten
   (`Services/PurchasingDashboardSnapshotCache.cs`, `Lifetime`), ein abgelaufener Stand wird
   sofort geliefert und im Hintergrund neu gerechnet, beim Start wird vorgewaermt

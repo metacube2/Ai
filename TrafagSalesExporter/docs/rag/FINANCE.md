@@ -152,7 +152,8 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   Reporting-Blocker**, weil `INV1.StockPrice` auf Belegebene davon unabhaengig ist.
   **Referenzkost (`ISS-007.2`)** aus `OITM.StockValue / OITM.OnHand` ist am 2026-09-09
   gemessen und abgestimmt; Italien baut sie laut Mail vom 2026-09-29 mit seinen Beratern
-  nach, Rueckmeldung an Paola ist offen. Details:
+  nach; Ingos Rueckmeldung an Paola ist am 2026-09-29 versendet, offen ist ihre Antwort zum
+  bilanziellen Bestandswert. Details:
   `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`,
   `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 - **Kostenkaskade entschieden am 2026-09-09:** externer Lieferant heisst lokaler
@@ -165,7 +166,7 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   genommen. Eine zweite Stufe ist zurueckgestellt, nicht verworfen. Details:
   `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md`.
 - **Entscheid vom 2026-09-09:** Andreas gibt der Umstellung auf Moving Average keine
-  Prioritaet, erneute Betrachtung im naechsten Jahr; Rueckmeldung an Paola noch offen.
+  Prioritaet, erneute Betrachtung im naechsten Jahr; Rueckmeldung an Paola am 2026-09-29 versendet.
   Stattdessen fragt er nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
   Bestandsmenge. Der Teil "letzter Wert fuer Artikel ohne Bestand" ist mit
   `INV1.StockPrice` bereits produktiv; die Bestandskennzahl ist neu, der Artikelstamm als

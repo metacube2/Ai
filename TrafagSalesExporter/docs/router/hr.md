@@ -8,6 +8,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
 | Bedarf | Datei |
 | --- | --- |
+| Konsistenzreview und technische Reparaturen 29.09. (lokal, nicht deployed); Zuordnung bestehender Fachfragen | `docs/HR_EINKAUF_REVIEW_2026-09-29.md` |
 | Kurzstand, Zugang, Datenordner | `docs/rag/HR_KPI.md` |
 | **Fachlogik, Datenquellen, Formeln, behobene Fehler, Grenzen** | `docs/HR_KPI.md` |
 | Fachpruefung gegen Schweizer Praxis und HR-Best-Practices | `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md` |

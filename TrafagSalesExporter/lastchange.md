@@ -35,6 +35,11 @@ Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
   die schrumpfende Dateiauswahl (125 Dateien am 20.08., 81 am 28.09.); Korrektur `60cc569`, alle
   fuenf Ordnerlisten mit Folgeseiten, 741/741 Tests, Deploy 09:25 ohne Alarm. Nachimport beim
   naechsten Lauf pruefen; `Sales_All_2026-09-28.xlsx` enthaelt Spanien nur bis 15.07.
+- **HR- und Einkaufs-Review von Codex** (`docs/HR_EINKAUF_REVIEW_2026-09-29.md`): H1 bis H5 und
+  E1/E2/C1/C2 sind **lokal repariert, aber nicht committet und nicht deployed**; produktiv gilt
+  weiter der Stand vom 28.09. Offene Fachfragen sind bestehenden Punkten zugeordnet.
+- **Antwort an Paola versendet** (29.09.): Beraterarbeit an der Referenzkost-Abfrage
+  zurueckstellen, offen ist nur ihre Bestaetigung des bilanziellen Bestandswerts.
 - **Railway-Gesamtsicht und DB4** (`ISS-019`): Umsatz technisch fuer alle Standorte da, belastbar
   nur DE, weil Patrik 171 Vorschlaege noch nicht bestaetigt hat; DB4 braucht zuerst eine
   Definition, danach mehr Quellfelder aus Sage, Alphaplan und B1.

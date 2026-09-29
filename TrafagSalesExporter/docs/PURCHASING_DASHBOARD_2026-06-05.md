@@ -1,5 +1,19 @@
 # Einkaufsdashboard 2026-06-05
 
+## Nachtrag 2026-09-29: Konsistenzreparaturen, lokal — nicht deployed
+
+- Jahres-Spend-Detailkennzahl aggregiert alle Lieferanten statt nur die Top-10-Grafik.
+- Top-Warengruppe nutzt wie Matrix und Diagramm MARA.MATKL, dann EKPO.MATKL.
+- Bei unvollstaendigem Cache keine ungefilterte SAP-Live-Stichprobe als CHF-/Kontrakt-KPI;
+  stattdessen Hinweis auf regulaeren Ladelauf. Historische Beschreibungen des Live-Fallbacks
+  unten gelten fuer den bisherigen Produktivstand, nicht mehr fuer diese lokale Fassung.
+- Fremdwaehrungspositionen ohne Kurs werden bestandsweit gezaehlt und deutlich gewarnt.
+  Der 1:1-Rueckfall bleibt als **nicht belastbar** bezeichnet; keine Ersatzkursregel erfunden.
+- 138/138 gezielte HR-/Einkaufs-/Supply-Chain-Tests gruen. Kein SAP-Lauf/Deploy.
+
+Fachfragen zu Altpositionen, Kurswahl und MB5L sind bereits dokumentiert, keine neuen
+Doppelaufgaben. Befunde, Tests und Zuordnung: `docs/HR_EINKAUF_REVIEW_2026-09-29.md`.
+
 ## Nachtrag 2026-09-10: verstaendliche Beschriftungen und SAP-Feldherkunft
 
 Repository-Stand, **noch nicht deployed**. Auf Wunsch von Ingo sind die Bezeichnungen

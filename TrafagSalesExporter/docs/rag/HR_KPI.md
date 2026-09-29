@@ -1,8 +1,19 @@
 # RAG HR KPI
 
-Stand: 2026-09-28
+Stand: 2026-09-29
 
 ## Kurzstand
+
+- **2026-09-29: Review-Reparaturen von Codex, lokal umgesetzt, NICHT committet und NICHT deployed.**
+  Produktiv gilt weiter `5ae7f31`. Behoben im Arbeitsbaum: Von/Bis hat auch fuer Berechnungsjahr
+  und Vergleichskacheln Vorrang vor dem Jahresfeld (H1); Monat/Quartal/YTD mit vollstaendigen
+  Kalenderperioden, Headcount auch mit vor dem Von-Datum Ausgeschiedenen (H2); die Personenquote
+  zeigt nicht mehr scheinbar belastbare Werte (H3); ein bewusst geleertes Jahr bleibt leer (H4);
+  Tabellen nicht mehr auf 100/250 Zeilen gekappt, der PDF-Druck nennt seinen Seitenumfang (H5).
+  Die Managementsicht verbirgt Namen, der Personenbezug bleibt; der Hilfetext sagt das jetzt
+  richtig. `138/138` gezielte Tests laut Codex. Bericht: `docs/HR_EINKAUF_REVIEW_2026-09-29.md`.
+  Offen bleiben die bekannten Fachfragen (8,4 h je Krankheitstag, periodengenaue Rexx-Absenzen,
+  alte Quelldateien), ohne neue Aufgaben.
 
 - **2026-09-28: fachliche Antworten von HR (Sonja Richter) umgesetzt, produktiv seit 11:25 (`5ae7f31`).**
   Langzeitkrank ab dem 61. Krankheitstag (Summe je Person, beide Rexx-Felder zaehlen als
@@ -24,7 +35,7 @@ Stand: 2026-09-28
   `docs/HR_KPI.md`.
 - HR KPI Cockpit wurde um produktive Cockpit-Funktionen erweitert.
 - Enthalten sind Anleitung, Datenordner, Dateifrische, Datenstatus, Ampeln, Periodenvergleich, Datenqualitaet, Austritte, Absenzen, Managementsicht und Drucken/PDF.
-- Managementsicht anonymisiert Personennamen in Detailtabellen.
+- Managementsicht blendet Personennamen in Detailtabellen aus; sie ist keine anonyme Aggregatsicht, der Personenbezug bleibt (praezisiert 2026-09-29).
 - HR KPI Zugang unterstuetzt zusaetzliche Admin-User ueber `HrKpiAccess.AdminUsers`.
 - Alter HR-User `hr` wurde nicht geaendert.
 - Aktueller Zusatzuser: `hradmin`; Passwort wurde separat kommuniziert, im Repository liegt nur der Hash in `appsettings.json`.

@@ -12,6 +12,20 @@ Gesamtsuite `438/438` gruen.
 
 ## 1. Aufbau
 
+### Reparaturstand 2026-09-29 — lokal, noch nicht deployed
+
+Nach Konsistenzreview: Von/Bis hat fuer Berechnungsjahr und Vergleichswerte Vorrang;
+Monat/Quartal/YTD zaehlen ihre volle Kalenderperiode, nicht nur Austritte ab dem freien
+Von-Filter. Historischer HC beruecksichtigt auch vorher ausgeschiedene Personen.
+Auswahlkennzahlen bleiben frei gefiltert. Die Maske fuer nicht periodisierbare
+Krankenquoten gilt auch in Personentabellen; die allgemeinen Personenlisten sind nicht
+mehr vor dem Pager auf 100/250 Zeilen gekappt. PDF bleibt ein als solcher bezeichneter
+Druck der aktuellen Tabellenseite. Leeren des Jahresfilters bleibt erhalten.
+Die Managementsicht verbirgt Namen, ist aber wegen Personalnummern keine anonyme Aggregation.
+
+138/138 gezielte Tests bestanden. Vollstaendige Befunde, Reparaturumfang und Abgleich
+bestehender Fachfragen: `docs/HR_EINKAUF_REVIEW_2026-09-29.md`.
+
 Das Cockpit ist ein fachlich entkoppelter Reiter unter `/hr-kpi`, getrennt vom
 Finance-/Management-Cockpit und nur ueber gemeinsame technische Infrastruktur verbunden.
 Die PowerBI-M-/DAX-Logik wurde **nicht** als generischer Interpreter uebernommen, sondern
@@ -111,7 +125,7 @@ damit HR sie sichtbar pruefen kann.
 | M5 | Zwei Fluktuationskacheln mit verschiedenen Nennern fuer dasselbe Jahr. `ResolveTurnoverDenominator` mittelt beim laufenden Jahr nur bis zum Stichtagsmonat |
 | M6 | Doppelte SAP-Personalnummern wurden still verworfen; jetzt Datenqualitaetshinweis. Bei Duplikaten gewinnt die erste Zeile, BU/NBU der uebrigen gehen verloren |
 | M7 | Trefferquote des fehleranfaelligen Namens-Joins zur Zeitdatei wird ausgewiesen |
-| M8 | Bei nur gesetztem `Von Austritt` ist der Stichtag jetzt heute statt des Zeitraumanfangs. Austrittsjahr hat Vorrang vor `Von` |
+| M8 | Historische Korrektur des Stichtags bei nur gesetztem `Von Austritt`. Die damalige Aussage „Austrittsjahr hat Vorrang“ widerspricht dem Filtervertrag in Abschnitt 6; Vorrang Von/Bis lokal am 29.09.2026 einheitlich repariert, siehe Reviewbericht |
 | L9 | `Ferien bezogen` wird aus den Summen gerechnet, nicht aus den pro Person auf 0 gekappten Einzelwerten |
 
 ## 6. Filtervertrag als Regressionstest

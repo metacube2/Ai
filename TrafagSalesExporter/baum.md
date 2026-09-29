@@ -164,6 +164,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/AGENT_COORDINATION.md` | **vor jeder Arbeit lesen**, Reservierungen |
 | `docs/AGENT_COORDINATION_HISTORIE.md` | Volltext abgeschlossener Koordinationseintraege, Nachschlagewerk |
 | `docs/UEBERGABE_2026-09-08.md` | Uebergabestand mit offenen Punkten und Reihenfolge |
+| `docs/HR_EINKAUF_REVIEW_2026-09-29.md` | HR- und Einkaufscockpit Konsistenzreview vom 29.09. (Codex) mit lokalem Reparaturstand |
 | `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
