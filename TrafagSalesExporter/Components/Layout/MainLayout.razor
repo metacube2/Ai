@@ -10,7 +10,9 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Primary">
+    @* Kein Color="Color.Primary": das nimmt im Dunkelmodus das helle Schaltflaechen-Rot.
+       Ohne Color gilt AppbarBackground der jeweiligen Palette (hell #B71C1C, dunkel #7F1D1D). *@
+    <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="ToggleDrawer" />
         <MudText Typo="Typo.h6" Class="ml-3 app-title">@T("Trafag Cockpit", "Trafag Cockpit")</MudText>
