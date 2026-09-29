@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-09-28 (Management-Cockpit-Tempo ergaenzt; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-09-29 (TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -141,15 +141,17 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   10.5 %. Die zuvor `32` maskierten Fremdwaehrungszeilen werden seit dem Deploy vom
   27.08.2026 mit Tageskurs umgerechnet. Detail: `docs/FINANCE_STANDARDKOSTEN.md`.
 - TR IT: Fuer den ersten Schritt ist `INV1.StockPrice` als Kostenbasis
-  freigegeben. **Antwort Paola vom 2026-09-04: die Bewertungsmethode eines bestehenden
-  B1-Artikels laesst sich nicht mehr aendern**, weder als Massenupdate noch artikelweise;
-  die Firmeneinstellung wirkt nur fuer neu angelegte Artikel. Eine Angleichung an die
-  Konzernvorgabe Moving Average ginge nur als Neucodierungsprojekt ueber rund 31'600
-  Artikel, inklusive neuer technischer Zeichnungen bei allen Lieferanten. Die Cost-Run-Frage
-  stellt sich damit nicht mehr als eigener Schritt. Kosten unbekannt, Entscheid ueber
-  Notwendigkeit und Dringlichkeit liegt bei Andreas. **Kein Reporting-Blocker**, weil
-  `INV1.StockPrice` auf Belegebene davon unabhaengig ist. Details:
-  `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`.
+  freigegeben. **Moving Average (`ISS-007.1`): Stand 2026-09-29 laut Paolas SAP-Beratern
+  am bestehenden Artikel umstellbar, aber nur mit Bestand null, abgeschlossenen Belegen,
+  Betriebsunterbruch und Inventur.** Die fruehere Aussage vom 2026-09-04 (unabhaengig vom
+  Bestand nicht aenderbar, nur Neucodierung ueber 31'600 Artikel) ist ueberholt. Andreas hat
+  die Umstellung am 2026-09-09 zurueckgestellt, erneute Betrachtung 2027. **Kein
+  Reporting-Blocker**, weil `INV1.StockPrice` auf Belegebene davon unabhaengig ist.
+  **Referenzkost (`ISS-007.2`)** aus `OITM.StockValue / OITM.OnHand` ist am 2026-09-09
+  gemessen und abgestimmt; Italien baut sie laut Mail vom 2026-09-29 mit seinen Beratern
+  nach, Rueckmeldung an Paola ist offen. Details:
+  `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`,
+  `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md`.
 - **Kostenkaskade entschieden am 2026-09-09:** externer Lieferant heisst lokaler
   Standardpreis, interner Lieferant heisst Kosten der **ersten** liefernden
   Konzerngesellschaft und dann Schnitt, ohne Kettenaufloesung. Intern sind nur TR AG,

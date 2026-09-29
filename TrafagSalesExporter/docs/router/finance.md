@@ -1,6 +1,6 @@
 # Unterrouter Finance
 
-Zurueck: `router.md`. Stand: 2026-09-28.
+Zurueck: `router.md`. Stand: 2026-09-29.
 
 Finance Cockpit, Soll/Ist, Formeln, Marge, Standardkosten, Supplier, Journal,
 Marktsegmente.
@@ -27,7 +27,7 @@ Marktsegmente.
 | Gruppenmarge, Fachlogik und Kostenwaehrungsschalter | `docs/FINANCE_GRUPPENMARGE_2026-06-16.md` |
 | **Standardkosten, Kostenbasis, Konzernkosten TR AG/IT/IN** | `docs/FINANCE_STANDARDKOSTEN.md` |
 | **Wie tief geht die Konzernkostenkaskade?** Entscheid Andreas vom 2026-09-09 im Wortlaut: Schnitt nach der ersten internen Stufe, akzeptierte Thermostat-Ungenauigkeit, zurueckgestellte zweite Stufe, dazu die Journalthemen desselben Gespraechs | `docs/FINANCE_STANDARDKOSTEN_SCHNITT_ANDREAS_2026-09-09.md` |
-| **TR IT Bewertungsmethode: warum Moving Average technisch nicht umstellbar ist** (Antwort Paola vom 2026-09-04, Primaerquelle) | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
+| **TR IT Bewertungsmethode Moving Average**: Antwort Paola vom 2026-09-04 (Primaerquelle), seit 2026-09-29 korrigiert auf „nur mit Bestand null umstellbar" | `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` |
 | **TR IT Referenzkost je Artikel** aus Bestandswert geteilt durch Bestandsmenge: Andreas' Vorschlag vom 2026-09-09, was davon schon produktiv ist, vorbereitetes Messpaket, Abgrenzung gegen die Konzern-Herstellkosten, Antwortvorschlaege | `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` |
 | **Supplier-Klassifikation, Laenderstatus, CH-Werkstamm-Fallback** | `docs/FINANCE_SUPPLIER.md` |
 | **Beides als Diagramm fuer Andreas**: Andreas' Grundregel, warum daraus vier Belegstufen werden, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, alle fuenf Schalter, Statuskette | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` |

@@ -1,10 +1,12 @@
 # Finance: Standardkosten und Kostenbasis der Gruppenmarge
 
-Stand: 2026-09-10
+Stand: 2026-09-29
 
 Abschnitt 6 ist am 2026-09-04 umgeschrieben worden: die Bewertungsmethode bestehender
-B1-Artikel ist in Italien technisch nicht umstellbar, die fruehere Aussage „als Massenupdate
-machbar" ist dort als ueberholt markiert.
+B1-Artikel galt danach in Italien als technisch nicht umstellbar, die fruehere Aussage „als
+Massenupdate machbar" ist dort als ueberholt markiert. **Seit dem 2026-09-29 ist auch das
+ueberholt:** Paolas Berater halten die Umstellung am bestehenden Artikel doch fuer moeglich,
+wenn Bestand und verknuepfte Belege vorher auf null gebracht werden. Nachtrag in Abschnitt 6.
 
 Am 2026-09-09 ergaenzt: Andreas priorisiert die Umstellung der Bewertungsmethode nicht und
 fragt stattdessen nach einer Referenzkost je Artikel aus Bestandswert geteilt durch
@@ -339,9 +341,21 @@ Moving-Average-Bewertung ansprechen wollte.
 Fuer Abfragen gegen Standortsysteme, die nur der Server erreicht, siehe
 `docs/router/plattform.md`, Abschnitt Server-Analyse.
 
-## 6. TR IT Bewertungsmethode: technisch nicht umstellbar, von Andreas nicht priorisiert
+## 6. TR IT Bewertungsmethode: nur mit Bestand null umstellbar, von Andreas nicht priorisiert
 
-**Stand 2026-09-04.** Paola Castagna (`Paola.Castagna@trafag.com`) hat die Frage mit ihren
+> **Nachtrag 2026-09-29, geht dem Folgenden vor.** Paola schreibt nach erneuter Rueckfrage
+> bei ihren SAP-Beratern, die Umstellung auf Moving Average sei am bestehenden Artikel
+> technisch moeglich, aber nur nach Bestand auf null und Abschluss aller verknuepften
+> Belege, mit Betriebsunterbruch und anschliessender Inventur. Der Befund vom 2026-09-04
+> („unabhaengig vom Bestand nicht aenderbar", einziger Weg Neucodierung) ist damit
+> ueberholt; neue Artikelnummern, Zeichnungen und Etiketten sind nicht mehr zwingend. Der
+> Entscheid von Andreas vom 2026-09-09 bleibt: nicht priorisiert. Zusaetzlich baut Italien
+> mit seinen Beratern eine Abfrage fuer einen Moving-Average-Wert je Artikel, also die
+> schon gemessene Referenzkost aus Abschnitt 7. Wortlaut:
+> `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` Abschnitt 7, Einordnung:
+> `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` Abschnitt 7b.
+
+**Stand 2026-09-04, in der Kernaussage ueberholt (siehe Nachtrag).** Paola Castagna (`Paola.Castagna@trafag.com`) hat die Frage mit ihren
 SAP-Beratern abgeschlossen. Ergebnis: **Die Bewertungsmethode eines bestehenden Artikels
 laesst sich in B1 nicht mehr aendern, nachdem der Artikel angelegt wurde**, unabhaengig
 davon, ob Bestand vorhanden ist. Die Einstellung auf Firmenebene ist nur eine Vorgabe fuer

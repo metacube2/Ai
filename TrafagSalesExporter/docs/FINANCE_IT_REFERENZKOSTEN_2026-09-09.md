@@ -1,6 +1,7 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
-Stand: 2026-09-10, Messergebnis in Abschnitt 4a und Paolas Antwort in Abschnitt 7a.
+Stand: 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
+2026-09-29 in Abschnitt 7b.
 Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
 
 Vorgaengerstand: `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`. Fachlicher
@@ -376,6 +377,62 @@ Kennzahl im Gruppenreporting auftaucht.
 > quarter of the articles you invoiced in 2026 carry stock at all, so for the rest we keep
 > using the cost B1 records on the invoice line, which is what the group reporting already
 > does today.
+>
+> Best regards,
+> Ingo
+
+**Ob dieser Text versendet wurde, ist nicht dokumentiert.** Paolas Mail vom 2026-09-29 in
+Abschnitt 7b spricht eher dagegen.
+
+## 7b. Mail von Paola vom 2026-09-29: Italien baut die Abfrage selbst
+
+Paola schreibt nach erneuter Rueckfrage bei ihren SAP-Beratern zwei Dinge. Erstens ist die
+Umstellung auf Moving Average am bestehenden Artikel doch moeglich, wenn der Bestand auf null
+steht und die verknuepften Belege abgeschlossen sind; das kostet einen Betriebsunterbruch und
+eine Inventur. Das betrifft `ISS-007.1` und steht mit Wortlaut in
+`docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md` Abschnitt 7. Zweitens, und das
+betrifft diese Datei:
+
+> [...] together with the SAP consultants we've also looked at an alternative: building an
+> automated query that derives the Moving Average value directly from the data already
+> available in B1, without physically changing the valuation method or touching the stock.
+> This would let us get to the same result — a reliable Moving Average figure at article
+> level — without the disruption of the full conversion. [...] we'll continue working on it
+> from our side.
+
+**Das ist die Frage, die Abschnitt 4a am 2026-09-09 schon beantwortet hat.** Der Bestandswert
+je Artikel ergibt sich aus `OITM.StockValue / OITM.OnHand` ohne Chargenaggregation und ist
+gegen das Bestandsjournal abgestimmt. Wenn Italien das mit seinen Beratern nachbaut, zahlt
+Italien Beraterstunden fuer ein vorhandenes Ergebnis. Die Rueckmeldung aus Abschnitt 7a ist
+deshalb jetzt dringlich und nicht mehr nur hoeflich.
+
+Einen moeglichen Mehrwert hat die Abfrage der Berater, falls sie einen echten gleitenden
+Durchschnitt ueber die Bewegungshistorie in `OINM` nachrechnet: dann bekaemen auch Artikel
+ohne heutigen Bestand einen Wert, naemlich den letzten Durchschnitt vor dem Abgang auf null,
+und die Abdeckungsluecke aus Abschnitt 4a wuerde kleiner. Das ist eine Vermutung; die Mail
+sagt nicht, wie die Abfrage rechnen soll. Weil `INV1.StockPrice` bereits 97 Prozent der
+verkauften Materialien abdeckt, waere der Gewinn gering.
+
+### Antwortvorschlag an Paola, Andreas in Kopie, nicht versendet
+
+Ersetzt den Text aus Abschnitt 7a, falls dieser nicht verschickt wurde.
+
+> Hi Paola,
+>
+> Thanks for following up with the consultants, and good to have it confirmed that the
+> conversion is possible in principle. As Andreas said, we won't pursue it for now.
+>
+> On the automated query, please hold off before your consultants invest time in it. We
+> already ran this centrally, read-only against your B1 database: the item master carries
+> StockValue and OnHand at article level despite the batch valuation. That gives
+> EUR 987,909.28 over 62,601 units for 1,077 items, reconciling to the cent with the
+> inventory journal. Where an item carries stock, the result matches the invoice-line cost we
+> already use (median ratio 1.00).
+>
+> The one thing only you can confirm: does StockValue match the inventory value your finance
+> side reports at month end? If your consultants' query does something beyond this, for
+> example a historical moving average for items without current stock, I'd be glad to compare
+> before you build it.
 >
 > Best regards,
 > Ingo

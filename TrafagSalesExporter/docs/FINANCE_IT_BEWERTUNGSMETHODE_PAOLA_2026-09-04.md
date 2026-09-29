@@ -1,7 +1,13 @@
 # TR IT Bewertungsmethode: Antwort von Paola Castagna, 2026-09-04
 
-Stand: 2026-09-04, Nachtraege vom 2026-09-09 und 2026-09-10 in Abschnitt 7. Gehoert zu
-`ISS-007.1`.
+Stand: 2026-09-04, Nachtraege vom 2026-09-09, 2026-09-10 und 2026-09-29 in Abschnitt 7.
+Gehoert zu `ISS-007.1`.
+
+**Achtung, der Kernbefund in Abschnitt 2 ist seit dem 2026-09-29 ueberholt.** Paolas
+Berater bestaetigen jetzt, dass die Umstellung bestehender Artikel doch moeglich ist, wenn
+vorher der Bestand auf null steht und alle verknuepften Belege abgeschlossen sind. Das
+Neucodierungsprojekt aus Abschnitt 3 ist damit nicht der einzige Weg. Am Entscheid aendert
+das nichts: die Umstellung bleibt zurueckgestellt. Einzelheiten in Abschnitt 7.
 
 Diese Datei haelt die Primaerquelle fest. Der fachliche Stand steht in
 `docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 6, der Status im Issue-Log
@@ -28,6 +34,13 @@ Artikel und hat keine Rueckwirkung auf bestehende.
 Damit gibt es **weder ein Massenupdate noch einen artikelweisen Weg**. Die frueher
 notierte Einschaetzung, die Umstellung sei „technisch als Massenupdate machbar", ist damit
 widerlegt.
+
+> **UEBERHOLT seit dem 2026-09-29.** Die Aussage „unabhaengig davon, ob Bestand vorhanden
+> ist" haben Paolas Berater zurueckgenommen: mit Bestand auf null und abgeschlossenen
+> Belegen laesst sich die Methode am bestehenden Artikel umstellen. Das entspricht der
+> Bedingung, die Andreas am 2026-09-08 vermutet hatte. Ein Massenupdate ohne diese
+> Vorbedingung gibt es weiterhin nicht. Der Befund bleibt hier als Wortlaut vom 2026-09-04
+> stehen; der geltende Stand steht in Abschnitt 7.
 
 ## 3. Der einzige verbleibende Weg
 
@@ -95,6 +108,31 @@ Wortlaut ihrer Mail und der Antwortvorschlag stehen in `docs/FINANCE_IT_REFERENZ
 Abschnitt 7; die Messung in Abschnitt 4a derselben Datei. Offen bleibt gegenueber Italien nur
 eine einzige Frage, die wir nicht selbst beantworten koennen: ob `OITM.StockValue` demselben
 Bestandswert entspricht, den Italien bilanziell ausweist.
+
+**Mail von Paola, bei Ingo eingegangen am 2026-09-29.** Zwei neue Aussagen, beide nach
+Rueckfrage bei ihren SAP-Beratern:
+
+> They confirmed that switching to Moving Average valuation is technically possible, but only
+> by first zeroing out the stock and removing/closing all documents linked to the item. In
+> practice, this would require stopping day-to-day operations for the time needed to carry it
+> out, plus a physical inventory count to rebuild the stock afterwards.
+
+> [...] together with the SAP consultants we've also looked at an alternative: building an
+> automated query that derives the Moving Average value directly from the data already
+> available in B1, without physically changing the valuation method or touching the stock.
+> [...] we'll continue working on it from our side.
+
+Die erste Aussage **widerruft den Kernbefund aus Abschnitt 2**: die Umstellung ist am
+bestehenden Artikel moeglich, verlangt aber Bestand null, abgeschlossene Belege,
+Betriebsunterbruch und Inventur. Neue Artikelnummern, neue Zeichnungen bei den Lieferanten
+und neue Etiketten (Abschnitte 3 und 4) sind damit nicht mehr zwingend. Der Aufwand bleibt
+hoch, und am Entscheid von Andreas vom 2026-09-09 aendert sich nichts. Paolas Vorbehalt vom
+2026-09-10, dass ANG oder Lucas Castro einen anderen Weg kennen koennten, hat sich damit
+von ihrer eigenen Seite teilweise bestaetigt.
+
+Die zweite Aussage betrifft `ISS-007.2`: Italien baut mit seinen Beratern genau die Abfrage,
+die wir am 2026-09-09 zentral schon gemessen haben. Einordnung und Antwortvorschlag in
+`docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` Abschnitt 7b.
 
 ## 8. Abgrenzung, die in jede Antwort gehoert
 

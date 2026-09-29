@@ -448,7 +448,9 @@ Quellen: `docs/Issue_Log_Konsolidiert_2026-08-12.tsv` als Statusquelle,
 **Nachtrag 2026-09-11.** Die Aufzaehlung darueber ist der Stand vom 2026-08-31 und in
 zwei Punkten ueberholt. Die Bewertungsmethode von TR IT ist seit dem 2026-09-09
 entschieden und zurueckgestellt: bestehende B1-Artikel lassen sich laut Paola nicht
-umstellen, es braeuchte ein Neucodierungsprojekt ueber 31’600 Artikel. Und die fuenf
+umstellen, es braeuchte ein Neucodierungsprojekt ueber 31’600 Artikel (seit 2026-09-29
+korrigiert: laut ihren Beratern doch umstellbar, aber nur mit Bestand null, Belegabschluss
+und Inventur; der Entscheid bleibt). Und die fuenf
 Ausgleichsfelder je Buchungszeile sind seit dem Deploy vom 2026-09-10 um 08:53 produktiv;
 die Schemamigration hat das Journal von 29 auf 34 Spalten erweitert, 691/691 Tests gruen.
 `Finance_All` ist am selben Tag neu erzeugt worden, 470’499 Buchungszeilen, `due date`
