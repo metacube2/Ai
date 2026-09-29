@@ -6,7 +6,8 @@ Stand: 2026-08-17, fachliche Antworten von HR eingearbeitet am 2026-09-28 (Absch
 Kurzstand und Zugangsdaten: `docs/rag/HR_KPI.md`.
 Fachpruefung gegen Schweizer Praxis: `docs/HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`.
 
-Produktiv deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit `9435a5d`,
+Aktueller Produktivstand: Commit `5ae7f31`, deployed am 2026-09-28 um 11:25 (Abschnitt 8).
+Historie: deployed und verifiziert am 2026-08-06 14:24 MESZ, Commit `9435a5d`,
 Gesamtsuite `438/438` gruen.
 
 ## 1. Aufbau
@@ -158,7 +159,7 @@ Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschied
 | # | Frage | Antwort HR | Umsetzung |
 | --- | --- | --- | --- |
 | 2 | Kurz- gegen Langzeitkrankheit | Die Rexx-Arten nicht unterscheiden, „Krankheit" ziehen; ab dem **61. Krankheitstag** gilt die Krankheit als Langzeitkrankheit | **Geaendert.** Beide Rexx-Felder zaehlen als Krankheit (Entscheid Ingo). Kurz/lang je Person nach `HrKpiDashboardBuilder.ClassifySickness`: Summe der Krankheitstage im Export (Stunden / 8,4) ab 61 = langzeitkrank, dann zaehlt die ganze Krankheit als lang. Rexx liefert keine einzelnen Faelle, deshalb die Summe (Entscheid Ingo). Kachel „Krankheit Lang" nennt die Anzahl Langzeitkranke |
-| 3 | FTE-Fallback 0,5 | FTE ist bei echten Mitarbeitenden nie leer und entspricht der Sollzeit (0,8 = 32 h/Woche); leer nur bei Reminderprofilen wie ICT | **Geaendert.** Ohne SAP-Beschaeftigungsgrad **und** ohne Rexx-Sollzeit gilt eine Zeile als Reminderprofil und faellt aus allen Kennzahlen (Entscheid Ingo, `IstReminderprofil`). Nur wenn die Zeitdatei die Person gefunden hat: ein fehlgeschlagener Namens-Join schliesst niemanden aus. Fehlt nur SAP, gilt FTE = Sollzeit / 8,4 h. Die bekannten Profile „ICT Trafag" und „Empfaenger Reminder" standen schon in der Ausschlussliste |
+| 3 | FTE-Fallback 0,5 | FTE ist bei echten Mitarbeitenden nie leer und entspricht der Sollzeit (0,8 = 32 h/Woche); leer nur bei Reminderprofilen wie ICT | **Geaendert.** Ohne SAP-Beschaeftigungsgrad **und** ohne Rexx-Sollzeit gilt eine Zeile als Reminderprofil und faellt aus allen Kennzahlen (Entscheid Ingo, `IstReminderprofil`). Nur wenn die Zeitdatei die Person gefunden hat: ein fehlgeschlagener Namens-Join schliesst niemanden aus. Fehlt nur SAP, gilt FTE = Sollzeit / 8,4 h; das FTE ist auf 0,1 bis 1,2 begrenzt. Die bekannten Profile „ICT Trafag" und „Empfaenger Reminder" standen schon in der Ausschlussliste |
 | 4 | GLZ-Ampel 50/100 h | Korrekt, positiv und negativ gleich, auch bei Teilzeit | unveraendert |
 | 5 | Restferien-Ampel | Q1: bis 5 Tage gruen, mehr rot. Ab Q2: jeder Resttag rot | **Geaendert**, `ResolveRestferienAmpel`, massgeblich ist das Quartal des heutigen Tags (die Saldidatei ist ein Stichtagsstand) |
 | 6 | Prognose Quartalsrate x 4 | Beibehalten, zusaetzlich gleitender Durchschnitt und Vorjahresvergleich | **Ergaenzt**: Kacheln „Fluktuation Prognose gleitend" und „Fluktuation Vorjahr", beide aus der nur strukturgefilterten Austrittsliste wie der Vorjahresvergleich (H1) |

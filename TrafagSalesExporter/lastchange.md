@@ -23,8 +23,18 @@ Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
 - **Status abgeglichen:** Wochen_Todo gegen Issue-Log (ISS-012 erledigt, ISS-006.1 und
   ISS-007.1 korrigiert, ISS-007.2/016/003.2 neu); verwaiste Agentenreservierungen freigegeben,
   die unfertige Finance_All-Automatik liegt weiterhin unkommittiert im Arbeitsbaum.
-- **Offen:** ISS-004.2 Spanien ist widerspruechlich (Wochen_Todo erledigt, Issue-Log wartet
-  auf Santi) und braucht Ingos Klaerung.
+- ~~Offen: ISS-004.2 Spanien widerspruechlich.~~ Am Nachmittag geklaert: die 7-Tage-Version ist
+  aktiv und am 02.09. so entschieden, ISS-004.2 erledigt.
+- **Markdown-Konsistenzbefunde von Codex behoben** (`docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md`):
+  ES auf Sage, UK mit Kostenspalte, IT/IN-Konzernkosten seit 25.08. produktiv, Convert als
+  Code-Standard, drei getrennte Kursregeln, HR-Pruefdatei mit Ueberholt-Vermerken, baum.md
+  vollstaendig, geloeschte Archivdateien (`835b317`) benannt.
+- **Neu und dringend: Spanien-Import steht seit Mitte Juli** (`ISS-020`). Produktiv kommen keine
+  neuen TRES-Zeilen an, der Bestand schrumpft (7'040 -> 6'772). Verdacht: SharePoint-Ordnerliste
+  ohne Folgeseiten, hoechstens 200 Eintraege. Zaehlung im Ordner steht aus.
+- **Railway-Gesamtsicht und DB4** (`ISS-019`): Umsatz technisch fuer alle Standorte da, belastbar
+  nur DE, weil Patrik 171 Vorschlaege noch nicht bestaetigt hat; DB4 braucht zuerst eine
+  Definition, danach mehr Quellfelder aus Sage, Alphaplan und B1.
 
 ## Journal-EntitySet CH/AT in SAP gebaut, 2026-09-10 und 2026-09-11
 

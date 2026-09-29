@@ -2,9 +2,11 @@
 
 Stand: 2026-09-29 (Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
-Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder und
+Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
-Bei Abweichungen hat dieser direkt gepruefte Produktivstand Vorrang.
+Das ist eine **historische Messreferenz vom Juli 2026**, kein Vorrang fuer heute: sie
+kennt zum Beispiel nur Schweizer Konzernkosten. Vorrang hat nach `router.md` Regel 1 immer der
+juengste direkt gepruefte Beleg zum jeweiligen Thema.
 
 Formeln/Mechanik: `docs/rag/FINANCE_FORMELN.md`. Historische Messungen und
 ersetzte Zwischenstaende stehen in den Detaildokumenten und in
@@ -114,8 +116,9 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
   wirkungsneutral: ueber `100'558` Zeilen wechselt keine einzige das Jahr.
   Fuellgrad selbst gemessen am 2026-09-02 gegen `Sales_All_2026-09-01.xlsx`:
   `PostingDate` `1'523/7'071` (21,5 %), `InvoiceDate` `6'838/7'071` (96,7 %).
-  OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
-  Exportskripts tauscht; die absolute Zahl `1'523` steht seit dem 2026-08-26
+  ~~OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
+  Exportskripts tauscht~~ (ueberholt: am 2026-09-02 entschieden, die 7-Tage-Version bleibt;
+  seit Mitte Juli kommen aber gar keine neuen Spanien-Zeilen an, `ISS-020`); die absolute Zahl `1'523` steht seit dem 2026-08-26
   unveraendert, es kommen also derzeit keine neuen Buchungsdaten nach. Details:
   `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - UK 2025 ABGENOMMEN 2026-08-11: `3'529'861.80 GBP` = 99.7 % des Finance-Solls

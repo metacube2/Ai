@@ -38,7 +38,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | --- | --- |
 | `docs/rag/FINANCE.md` | Kurzstand, Einstieg |
 | `docs/rag/FINANCE_FORMELN.md` | Zeilenmechanik, Umrechnung, Marge |
-| `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` | zuletzt gepruefte Live-Zahlen, hat Vorrang |
+| `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` | Live-Zahlen vom Juli 2026, historische Messreferenz |
 | `docs/FINANCE_ENTSCHEIDE.md` | Fachentscheide Net Sales Actuals |
 | `docs/FINANCE_BERECHNUNGSFORMELN_LAENDER_2026-05-19.md` | Detailregeln je Land |
 | `docs/FINANCE_DASHBOARD_PROZESSABLAUF_2026-06-30.md` | Prozess, Audit-CSV, Sales_All, Pruefbuch |
@@ -67,6 +67,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/TEAMS_ROHAIL_BAHNMARKT_2026-09-08.md` | Nachrichtenentwurf an Rohail, zwei Teile |
 | `docs/TEAMS_ANDREAS_ZAHLUNGSDATEN_2026-09-08.md` | Nachrichtenentwurf an Andreas, Faelligkeit gegen Ausgleich gegen Zahlung |
 | `docs/FINANCE_JOURNAL_KONSOLIDIERUNG_ANDREAS_2026-09-08.md` | Journal fuer die Konsolidierung, Zielbild Andreas |
+| `docs/FINANCE_FACHPRUEFUNG_2026-09-07.md` | Fachpruefung und Umsetzungspakete vom 07.09.2026 |
 | `docs/FINANCE_LIEFERANT_STANDARDKOSTEN_WORKFLOW_2026-09-02.svg` | Diagramm fuer Andreas: Grundregel, vier Belegstufen statt Sonderfaelle, 17 Beispielzeilen mit markiertem Entscheidungsfeld, Kostenquellen, fuenf Schalter, Statuskette. Erzeugt aus `.tmp_tools/BuildSupplierWorkflowSvg` |
 
 ## Standortdaten und Exporte
@@ -118,6 +119,7 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/DEPLOYMENT.md` | **zusammengefuehrt**: Verfahren, Konsole, Fallen |
 | `docs/NUGET_SICHERHEIT_2026-09-01.md` | aktueller NuGet-Audit, Sicherheitsbefund und Updatepfad |
 | `docs/PLATTFORM_TEMPO_2026-09-28.md` | Tempo der Webapp: sofort sichtbare Oberflaeche, Messung aller Seiten, Cockpit-Wechselkurse, SQLite-Cache |
+| `docs/DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md` | Datenquellen und Firewall-Ziele des Servers `tragvapp401` |
 | `docs/rag/ARCHITECTURE.md` | Architektur, Kurzstand |
 | `docs/rag/ADMIN.md` | Admin, Kurzstand |
 | `docs/rag/PROJECT.md` | Projektstand, Kurzstand |
@@ -160,6 +162,9 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | Datei | Rolle |
 | --- | --- |
 | `docs/AGENT_COORDINATION.md` | **vor jeder Arbeit lesen**, Reservierungen |
+| `docs/AGENT_COORDINATION_HISTORIE.md` | Volltext abgeschlossener Koordinationseintraege, Nachschlagewerk |
+| `docs/UEBERGABE_2026-09-08.md` | Uebergabestand mit offenen Punkten und Reihenfolge |
+| `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` | Markdown-Konsistenzpruefung vom 29.09. (Codex), Befunde am selben Tag behoben |
 | `projektmanagement/PROJEKTSTATUS.md` | Ingos Arbeitspakete `PM-01` ff. |
 | `projektmanagement/Vorhaben_HERMES.tsv` | Vorhaben nach HERMES (Stufe, Rollen, Entscheidungspunkte, Ampel), Quelle des Blatts „HERMES Übersicht“ in `Wochen_Todo.xlsx` |
 | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` | 180-Tage-Roadmap |
@@ -176,12 +181,19 @@ Diese Dateien beantworten **keine** Statusfrage. Sie belegen, was zu einem Zeitp
 | `docs/raw_md_archive/RAG_KURZDATEIEN_ARCHIV_ueberholte_eintraege.md` | aus Kurzdateien entfernte Eintraege |
 | `docs/raw_md_archive/HISTORY_CANONICAL.md.raw` | kanonische Detailhistorie (keine `.md`-Endung) |
 
+> **Hinweis 2026-09-29:** Die fuenf Archivdateien oben liegen nicht mehr im Arbeitsbaum. Sie
+> wurden am 2026-09-01 im Commit `835b317` ("Railway-Export und Finance-Status nachziehen")
+> geloescht, vermutlich versehentlich, zusammen mit `original_history_raws.zip`. Der Inhalt ist
+> nicht verloren: `git show 835b317^:TrafagSalesExporter/docs/raw_md_archive/<Datei>` holt
+> jede Datei zurueck. Ob sie wiederhergestellt werden, entscheidet Ingo.
+
 ## Ausserhalb der Fachdokumentation
 
 | Datei | Warum hier |
 | --- | --- |
 | `whisper/README.md`, `whisper/ANLEITUNG.md`, `whisper/HANDOFF.md` | Transkriptionswerkzeug, kein Projektwissen; nicht versioniert |
 | `docs/rag/init.md` | lokale Hilfsdatei, nicht versioniert |
+| `Tools/BahnmarktDeWorkbook/README.md`, `Tools/BahnWorkbookDb4/README.md`, `Tools/DeCustomerBackfill/README.md`, `Tools/DeCustomerMapping/README.md`, `Tools/Qdrant/README.md` | Bedienungsanleitungen der Werkzeuge, kein Fachstand |
 | `whisper/python/Lib/site-packages/**` | Fremdcode, 33 Lizenz- und Vorlagendateien |
 
 ## Am 2026-08-17 zusammengefuehrt und geloescht

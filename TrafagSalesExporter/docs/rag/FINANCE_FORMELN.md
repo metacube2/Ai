@@ -82,6 +82,26 @@ IT-Sonderfall: `docs/FINANCE_IT_VORGEHEN_2026-05-18.md`, UK-Korrektur:
 **a) Hauswaehrung (Standard-Ist)** — fuehrt den offiziellen Soll/Ist-Abgleich, keine Umrechnung.
 
 **b) Group-Currency/CHF (Anzeige, Management Cockpit)**
+
+**Geltende Kursregeln, Stand 2026-09-29 (aus dem Code ermittelt).** Es gibt drei getrennte Regeln:
+1. Das **Kursprofil** (`GroupMarginChfRateMode`, Standard und produktiv `CurrentDailyRate`, also
+   der juengste heute gueltige Kurs; Alternative `FinanceYearEndRate` = 31.12. des Finance-Jahres)
+   bestimmt die CHF-Werte in Pruefbuch, Nachweis-Excel und `Sales_All` sowie in Gruppenmarge und
+   Finance-Pivot, **solange der Schalter „Group-Waehrung (CHF)" aus ist**.
+2. Ist der **Schalter an**, rechnet das Cockpit Net Sales, Gruppenmarge und Pivot unabhaengig vom
+   Profil fix zum 31.12. des Zeilenjahres um. Das Pruefbuch rechnet weiter nach Profil, deshalb
+   koennen die CHF-Margen abweichen (`ISS-018.1`, offen). Ohne Schalter rechnet das Cockpit nicht
+   um; bei mehreren Waehrungen im Filter steht „Mixed".
+3. Die **Kostenbasis** in fremder Kostenwaehrung wird im Modus `Convert` immer zum heutigen Kurs
+   in die Verkaufswaehrung umgerechnet (Beschluss vom 2026-08-27), unabhaengig vom Profil.
+Ausserhalb von Finance rechnet die zentrale Auswertung mit dem Datum der Belegzeile
+(`ExchangeRateDateField`, Standard `PostingDate` -> `InvoiceDate` -> `ExtractionDate`). Fehlt ein
+Kurs, wird nie geschaetzt: die Zeile bleibt je nach Ausgabe in Lokalwaehrung mit Hinweis, zaehlt 0
+oder bleibt leer. Code-Kommentare und der Cockpit-Hinweistext, die ein einheitliches Profil fuer
+alle Sichten behaupten, sind falsch und gehoeren zur Reparatur `ISS-018.1`.
+
+Die folgende Formel beschreibt die zentrale Auswertung ausserhalb von Finance (Regel oben,
+letzter Absatz); fuer die Finance-Sichten gelten die drei Regeln:
 ```
 Anzeige-Wert je Zeile = Quellwert * ResolveRate(Quellwaehrung, CHF, Kursdatum)
 ```
@@ -132,12 +152,21 @@ Excel-Formel): `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md`.
 
 **Kostenbasis-Herkunft:**
 - Externer Lieferant: lokale Kostenzeile aus der Quelle (DE: `NettoPreisGesamt -
-  RohertragGesamt`; FR/IT/US/IN: `OITM`-Preisfelder; ES/UK oft keine Kostenspalte).
+  RohertragGesamt`; FR/IT/US/IN: `StockPrice` der Belegposition `INV1`/`RIN1`, nicht die
+  `OITM`-Preisfelder; ES: Sage `PrecioCoste` aus unserer Export-SQL; UK: Sage-Spalte `Standard cost`). Korrigiert
+  am 2026-09-29, vorher stand hier `OITM`-Preisfelder und fuer ES/UK "oft keine Kostenspalte".
 - Interner Lieferant TR AG: echte Konzernkosten aus `GroupStandardCosts` (MBEW-STPRS,
   Bewertungskreis 1100, CHF) — ueberschreibt lokale Kostenbasis, unabhaengig vom
   Verkaufsland.
-- TR IT/TR IN als interner Lieferant: weiterhin offen (SAP B1 IT liefert keinen
-  befuellten `PrdStdCst`/`AvgPrice`).
+- TR IT/TR IN als interner Lieferant: **seit 2026-08-25 produktiv** (`b83ee84`, Deploy 15:21).
+  Die Gruppenmarge ersetzt den lokalen Wert durch die Kosten aus den B1-Belegen der liefernden
+  Gesellschaft, je Material den juengsten positiven `StockPrice` (`LatestPositive`, umschaltbar
+  auf `AveragePositive`), abgelegt in `GroupStandardCosts` unter `TRIT` (EUR) und `TRIN` (INR).
+  `OITM.PrdStdCst`/`AvgPrice` sind leer, werden dafuer aber nicht gebraucht. Offen sind nur
+  Fachentscheide: juengster Wert oder Durchschnitt/Stichtag, Referenzkost `ISS-007.2`, und dass
+  Italiens Wert bei Trafag-Sachnummern ein Verrechnungspreis ist (3.48-fach STPRS, akzeptiert
+  mit dem Schnitt vom 2026-09-09). Die fruehere Aussage "weiterhin offen" stammte von vor dem
+  25.08.
 - Erkennung „intern" (Lieferant): Klartext-Matching von `SupplierName` in
   `GroupMarginSupplierClassifier` — s. Abschnitt 5.
 
@@ -159,8 +188,8 @@ aber akzeptabler Fallback). Details: `docs/FINANCE_STANDARDKOSTEN.md`,
 wird von keiner Quelle geliefert.
 
 **Kostenwaehrungsschalter `GroupMarginCostCurrencyMode`:**
-- `Mask` (Code-Default, **produktiv nicht eingestellt**): Kostenwaehrung != Verkaufswaehrung -> Status `Kostenwaehrung abweichend`, Marge bleibt `-`.
-- `Convert` (**produktiv eingestellt**): Umrechnung mit aktuellem Tageskurs (seit dem Beschluss vom 27.08.2026);
+- `Mask` (bewusst waehlbare Ausnahme; **Code-Standard ist seit dem Beschluss vom 2026-08-27 `Convert`**, `Models/ExportSettings.cs`, Fallback in `GroupMarginCostCurrencyConverter`): Kostenwaehrung != Verkaufswaehrung -> Status `Kostenwaehrung abweichend`, Marge bleibt `-`.
+- `Convert` (**Code-Standard und produktiv**): Umrechnung mit aktuellem Tageskurs (seit dem Beschluss vom 27.08.2026);
   fehlender Kurs laesst die Zeile offen.
 
 **Statuswerte:** `OK` (Marge berechnet) / `Standardpreis fehlt` / `Lieferant unklar` /

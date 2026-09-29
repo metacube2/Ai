@@ -691,6 +691,28 @@ Die korrigierte DE-Pruefmappe `Bahnmarkt_Rohail_2026-09-09.xlsx` liegt erzeugt u
 rueckgelesen bereit. Ein neues Zieldatum ist mit Rohail zu vereinbaren; das entscheidet
 Ingo, nicht diese Datei.
 
+**Nachtrag 2026-09-29, Gesamtsicht fuer Heiko und Patrick.** Per Teams kam die Frage, ob die
+Railway-Auswertung mit Umsatz fuer alle Gesellschaften verfuegbar ist; ueber Andreas gebe es
+nur die Sicht der AG. Stand laut Doku (Messung vom 2026-09-10, nicht neu gemessen): Technisch
+ist die Gesamtsicht da. Reiter `Ergebnis` auf `/marktsegmente` und der Railway-Excel-Export
+decken alle Standorte ab, in Lokalwaehrung ohne CHF-Summe und ohne Kosten. Gezaehlt werden aber
+nur bestaetigte Zuordnungen: 25 von 196, davon 24 DE und 1 IN. Die 171 Vorschlaege der anderen
+Standorte (CH 80, IT 40, FR 17, UK 13, ES 9, AT 8, IN 3, US 1) warten auf Patrik (Blocker 2).
+Belastbar ist damit nur Deutschland (2025 rund 579 TEUR, 2026 bis 09.09. rund 432 TEUR). Die
+Datei `Bahnmarkt_Rohail_2026-09-09.xlsx` ist veraltet (20 statt 25 Kunden); fuer eine Weitergabe
+einen frischen Export ziehen.
+
+**DB4 konzernweit.** Die heutige DB4-Spalte (`Tools/BahnWorkbookDb4`) ist ein unbestaetigter
+Kandidat aus Rohails deutscher Rechnungsliste (`RohertragEndSumme`, ohne Gutschriften). Im Repo
+gibt es keine DB4-Definition; Andreas hat am 2026-09-09 einen DB mit Fix/Variabel-Split
+abgelehnt und festgehalten, dass solche Anforderungen zuerst zwischen Andreas, Ingo und Rohail
+abgestimmt werden. Zuerst ist also fachlich zu klaeren, was DB4 enthaelt. Technisch liegen
+mehr Felder in den Quellen, als unsere Exporte lesen (Regel 3 im Router, erst selbst pruefen):
+Sage ES hat in `LineasAlbaranCliente` Marge, Provisionen, Rappel, Skonto und Rabatte, die unsere
+SQL nicht selektiert; Alphaplan DE liefert `RohertragGesamt` je Position inklusive Gutschriften,
+der Kopfwert ist schemaseitig noch unbelegt; B1 und IN sind per Spaltenliste zu pruefen; fuer UK
+fehlt der Spaltenkopf der Sage-Datei. Gefuehrt als `ISS-019`.
+
 ---
 
 ### PM-10 bis PM-12: neu aufgenommen am 2026-09-29 aus dem HERMES-Zuschnitt
@@ -782,6 +804,8 @@ Verdichtetes Archiv aus `kontext.txt`. Ein Eintrag je abgeschlossenem Punkt.
 | Adil | Test ZC12 |
 | Philip Steiger | Smartsheet |
 | Patrik | Vertrieb, Marktsegment Railway; prueft die Kundenzuordnung oder setzt sie selbst |
+| Heiko | Railway; braucht laut Teams-Nachricht vom 2026-09-29 die Gesamtsicht ueber alle Gesellschaften, nicht nur die Sicht der AG (PM-08). Rolle noch nicht belegt |
+| Patrick | Railway; zusammen mit Heiko Empfaenger der Gesamtsicht (Teams 2026-09-29). Ob identisch mit Patrik aus dem Vertrieb, ist nicht belegt |
 | Ann-Katrin Michel | Fachanwenderin ZLO03, Phase-Out-Prozess |
 | Sandro Moltisanti | ZLO03, Meldung CS15 42 gegen ZLO03 21 |
 | Lucas Castro | ZZPRDAT, Trigger-Klaerung |

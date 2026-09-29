@@ -21,7 +21,7 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
   `(Zeitraum)`-Spalten nennen nur den juengsten Fall, die Stunden sind kumuliert. Bei einem
   Zeitraumfilter laesst sich der Zaehler nicht auf den Nenner eingrenzen; die Anzeige zeigt
   dann bewusst keine Prozentzahl und eine gelbe Ampel statt einer scheinbar genauen Quote.
-- **Nenner ist Headcount der Festangestellten, nicht FTE.**
+- **Der Fluktuations-Nenner ist Headcount der Festangestellten, nicht FTE; die Krankenquote rechnet dagegen mit FTE.**
 - **Kostenstelle, GLZ und Restferien filtern die Fluktuation NICHT**, weil diese Felder in
   der Austrittsdatei nicht stabil vorhanden sind. Das ist als Test gepinnt.
 - **Seit 2026-09-28 nach Vorgabe HR:** langzeitkrank ab 61 Krankheitstagen je Person,

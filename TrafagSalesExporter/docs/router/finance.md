@@ -11,7 +11,7 @@ Marktsegmente.
 | --- | --- |
 | Kurzstand, Regeln, offene Fachpunkte | `docs/rag/FINANCE.md` |
 | Fachprüfung und konkrete Umsetzungspakete vom 07.09.2026 | `docs/FINANCE_FACHPRUEFUNG_2026-09-07.md` |
-| Zuletzt gepruefte Live-Zahlen (hat Vorrang vor Notizen) | `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` |
+| Live-Zahlen vom Juli 2026, historische Messreferenz (Vorrang hat der juengste direkte Beleg je Thema) | `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md` |
 | **Was ist noch offen?** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` |
 
 ## Nach Thema

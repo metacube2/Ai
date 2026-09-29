@@ -2,17 +2,24 @@
 
 Stand: 2026-09-28 (Lagerwert-Verlauf und Ladezeit ergaenzt; uebriger Kurzstand vom 2026-09-03)
 
-Kanonischer Live-Abgleich fuer den Einkauf-Delta-Status:
-`docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`. Bei Abweichungen hat dieser
-direkt gepruefte Produktivstand Vorrang.
+Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
+`docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
+Das ist eine **historische Messreferenz vom Juli 2026**, kein Vorrang fuer heute: sie
+kennt zum Beispiel nur Schweizer Konzernkosten. Vorrang hat nach `router.md` Regel 1 immer der
+juengste direkt gepruefte Beleg zum jeweiligen Thema. Der Einkauf-Lauf ist seit dem 2026-09-28 wieder
+nachgewiesen (`docs/PLATTFORM_TEMPO_2026-09-28.md`, `ISS-017`).
 
 Kurzdatei fuer Spend, offene Bestellungen, Kontrakte und Lieferanten. Historie
 und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
+- **Geltende Betriebsregel seit 2026-09-28:** Der Snapshot gilt 60 Minuten
+  (`Services/PurchasingDashboardSnapshotCache.cs`, `Lifetime`), ein abgelaufener Stand wird
+  sofort geliefert und im Hintergrund neu gerechnet, beim Start wird vorgewaermt
+  (`docs/PLATTFORM_TEMPO_2026-09-28.md`). Der folgende Punkt ist der Verlauf.
 - Performancefix produktiv seit 2026-09-03: Alle 15 Routen des Einkaufsdashboards teilen
-  pro Filter einen 15 Minuten gueltigen Snapshot (maximal 32 Filter, Single-Flight).
+  pro Filter einen damals 15 Minuten gueltigen Snapshot (maximal 32 Filter, Single-Flight).
   Erfolgreiche Full- und Delta-Ladeprozesse invalidieren den Cache. Vorher brauchten selbst
   warme direkte Aufrufe von `/einkauf` und `/einkauf/aufriss` jeweils rund `9-11 s`.
   Nach der einmaligen Kaltberechnung (`83.17 s` direkt nach Neustart) lieferten alle 14

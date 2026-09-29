@@ -314,16 +314,18 @@ Wichtig fuer die fachliche Pruefung:
 
 - Das Pruefbuch ist die richtige Sicht fuer Einzelzeilen und Nachvollziehbarkeit.
 - Es verwendet die gepflegte Kurstabelle `CurrencyExchangeRates`.
-- Produktiv wird fuer die CHF-Umsatzumrechnung aktuell ein Jahreskurs per `31.12.<Jahr>`
-  verwendet. Lokal ist bereits ein noch nicht deployter Finance-Schalter vorbereitet, der
-  dieses Profil einheitlich fuer Cockpit, Pruefbuch, Nachweis und `Sales_All` auf Tageskurs
-  oder Jahresende je Finance-Jahr setzt; Details: `docs/FINANCE_STANDARDKOSTEN.md`, 7c.
+- ~~Produktiv wird fuer die CHF-Umsatzumrechnung aktuell ein Jahreskurs per `31.12.<Jahr>`
+  verwendet; der Schalter ist nur lokal vorbereitet.~~ **Ueberholt seit 2026-08-31:** Der
+  Kursprofil-Schalter ist deployed, Standard und produktiv ist der Tageskurs. Er wirkt aber
+  nicht einheitlich: mit dem Schalter „Group-Waehrung (CHF)" rechnet das Cockpit fix zum 31.12.,
+  die Kostenwaehrung immer zum heutigen Kurs. Geltende Regeln: `docs/rag/FINANCE_FORMELN.md`
+  Abschnitt 3b.
 - Die Berechnungen sind technisch getestet; die fachliche Abnahme der Kurse, Kostenbasis und Lieferantenlogik muss Finance/Andreas anhand von Stichproben bestaetigen.
 
 Bekannte, noch offene Punkte (kein Fehler in `Marge CHF`, aber zu beachten):
 
-- `Marge Original` und `Marge %` rechnen Umsatz und Kostenbasis in ihren jeweiligen Originalwaehrungen. Wenn Verkaufswaehrung und Standardkostenwaehrung abweichen, mischen diese beiden Spalten zwei Waehrungen. `Marge CHF` ist korrekt, weil dort beide Seiten getrennt nach CHF umgerechnet werden.
-- Der `Finance Pivot` rechnet bei aktivem Schalter `Group-Waehrung (CHF)` historische Jahre mit dem Kurs des gewaehlten Jahres statt mit dem jeweiligen Jahreskurs. Ohne Group-Schalter (Normalfall) ist der Pivot korrekt mit dem eigenen Jahreskurs je Zeile.
+- **Behoben** (Stand 2026-09-29): Die Margen rechnen heute mit der in die Verkaufswaehrung umgerechneten Kostenbasis, bei `Mask` wird maskiert. Offen ist stattdessen der Kursumweg `ISS-018` A2. Frueherer Text: `Marge Original` und `Marge %` rechnen Umsatz und Kostenbasis in ihren jeweiligen Originalwaehrungen. Wenn Verkaufswaehrung und Standardkostenwaehrung abweichen, mischen diese beiden Spalten zwei Waehrungen. `Marge CHF` ist korrekt, weil dort beide Seiten getrennt nach CHF umgerechnet werden.
+- **Behoben** (Stand 2026-09-29): Der Pivot enthaelt nur das gewaehlte Jahr und rechnet mit dem 31.12. des eigenen Zeilenjahres; offen ist, dass der Schalter das Kursprofil ignoriert (`ISS-018.1`). Frueherer Text: Der `Finance Pivot` rechnet bei aktivem Schalter `Group-Waehrung (CHF)` historische Jahre mit dem Kurs des gewaehlten Jahres statt mit dem jeweiligen Jahreskurs. Ohne Group-Schalter (Normalfall) ist der Pivot korrekt mit dem eigenen Jahreskurs je Zeile.
 
 ## 7. Finance Pivot nach Andreas' Excel `sta.xlsx`
 

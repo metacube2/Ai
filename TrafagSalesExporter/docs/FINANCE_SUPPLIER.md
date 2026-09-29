@@ -16,7 +16,7 @@ der Trafag AG Schweiz geprueft:
 | --- | --- |
 | Treffer in `MARC`, Werk `1100` | `Intern`, liefernde Gesellschaft `TR_AG` |
 | sicherer Nichttreffer bei geladenem Cache | `Lokal`, Standardkosten der lokalen Gesellschaft |
-| explizit gepflegter Supplier | hat immer Vorrang |
+| explizit gepflegter Supplier | hat Vorrang vor diesem Fallback; davor greifen die CH/AT-Regel und seit 2026-08-27 der Sales Type (Reihenfolge: CH/AT-Regel, Sales Type, expliziter Supplier, Fallback) |
 | Materialnummer fehlt oder Cache leer | `Unklar` |
 
 CH/AT selbst bleiben unberuehrt, dort gilt die vorhandene TSC-Regel.
@@ -27,7 +27,10 @@ aber ausdruecklich kein Produktions- oder Warenbewegungsnachweis.
 
 **Warum die Tabelle `GroupMaterialMasters` von `GroupStandardCosts` getrennt ist:** Ein
 MARC-Treffer darf intern klassifizieren, aber keine erfundene Kostenbasis erzeugen. Echte
-Konzernkosten kommen weiterhin ausschliesslich aus MBEW/`GroupStandardCosts`.
+Konzernkosten kommen ausschliesslich aus der gemeinsamen Tabelle `GroupStandardCosts`. Sie
+wird aus drei Quellen gefuellt: TR AG aus `MBEW-STPRS`, TR IT und TR IN seit 2026-08-25 aus
+den B1-Belegkosten (`StockPrice`). (Formulierung am 2026-09-29 praezisiert; vorher stand hier
+"ausschliesslich aus MBEW".)
 
 ### Umschalter
 

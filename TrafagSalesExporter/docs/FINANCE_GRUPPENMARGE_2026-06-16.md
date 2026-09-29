@@ -65,8 +65,10 @@ Das Multiple-Choice-Formular `docs/FINANCE_GRUPPENMARGE_MULTIPLE_CHOICE_2026-06-
 
 Umgesetzt, getestet (`226/226`) und deployed (Commit `08f5572`, DLL `15.07.2026 08:53:47`):
 
-- Neues Setting `ExportSettings.GroupMarginCostCurrencyMode` mit den Werten `Mask` (Default)
-  und `Convert`; UI unter `Einstellungen > Export Einstellungen > Gruppenmarge bei
+- Neues Setting `ExportSettings.GroupMarginCostCurrencyMode` mit den Werten `Mask` (damals Default)
+  und `Convert`. **Ueberholt seit dem Beschluss vom 2026-08-27:** Code-Standard ist `Convert`
+  (`Models/ExportSettings.cs`, Fallback in `GroupMarginCostCurrencyConverter`), `Mask` ist nur
+  noch eine bewusst waehlbare Ausnahme; UI unter `Einstellungen > Export Einstellungen > Gruppenmarge bei
   abweichender Kostenwaehrung`.
 - `Mask`: Zeilen, deren Standardkostenwaehrung von der Verkaufswaehrung abweicht, erhalten
   den Status `Kostenwaehrung abweichend`; `Marge`/`%` bleiben offen (`-` bzw. leer). Im

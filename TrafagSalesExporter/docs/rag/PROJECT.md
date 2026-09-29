@@ -2,9 +2,10 @@
 
 Stand: 2026-09-29 (HERMES-Sicht, PM-10 bis PM-12, Finance-Review; Tempo, Nachtlauf, HR und Lagerwert vom 2026-09-28; uebriger Kurzstand vom 2026-09-07)
 
-Kanonischer Live-Abgleich fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
-und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
-Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
+Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder, Konzern-Standardkosten
+und Einkauf-Delta: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`, heute nur noch
+historische Messreferenz.
+Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg je Thema.
 
 ## Kurzstand
 
@@ -16,7 +17,10 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
   Neu aufgenommen: PM-10 Abloesung Smartsheet, PM-11 Data-Lake-Leistung, PM-12 Power-BI-
   Anwendervertreter. Am selben Tag hat Codex das Finance-Dashboard geprueft; alle Befunde sind
   gegen den Code bestaetigt (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`), repariert ist
-  noch nichts.
+  noch nichts. **Dringend:** Der Spanien-Import steht seit Mitte Juli, produktiv kommen keine
+  neuen TRES-Zeilen an (`ISS-020`, Verdacht SharePoint-Liste ohne Folgeseiten). Railway-Gesamtsicht
+  und DB4 fuer Heiko und Patrick als `ISS-019`. Die Markdown-Konsistenzbefunde von Codex sind
+  behoben.
 
 - **2026-09-28, nach Ingos Ferien:** Tempo der Webapp (groesster Kritikpunkt) produktiv verbessert:
   Oberflaeche erscheint sofort, Management-Cockpit lokal 41 s -> 3,3 s, Export-Dashboard 2,3 s ->
@@ -78,6 +82,7 @@ Bei Abweichungen hat dessen direkt gepruefter Stand Vorrang.
 
 ## Rohquellen Nur Bei Bedarf
 
-- kanonische Detailhistorie: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`
+- kanonische Detailhistorie: `docs/raw_md_archive/HISTORY_CANONICAL.md.raw`, seit `835b317`
+  (2026-09-01) nicht mehr im Arbeitsbaum, nur ueber `git show 835b317^:...` erreichbar
 - exakte Originaldateien zur Wiederherstellung: `docs/raw_md_archive/original_history_raws.zip`
 - Dokumentstatus: `baum.md`

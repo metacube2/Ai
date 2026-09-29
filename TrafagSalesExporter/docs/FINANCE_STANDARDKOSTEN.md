@@ -104,8 +104,16 @@ Fremdstandortzeilen ohne Supplier-Felder und ohne Sales Type:
 | --- | --- | --- |
 | CH/AT | `VBRP-WAVWR / FKIMG`, Fallback `MBEW-STPRS` | rund 96 % laut SAP-Messung |
 | DE | Alphaplan: `NettoPreisGesamt - RohertragGesamt`, geteilt durch die Menge | 68.5 % |
-| IT, IN, US, FR, ES | SAP B1 `INV1.StockPrice` / `RIN1.StockPrice` (Belegposition) | IT 95.7 %, IN 99.4 %, US 92.3 %, ES 80.9 %, FR 51.4 % |
-| UK | keine — Sage liefert keine Kostenspalte | 0 % |
+| IT, US, FR | SAP B1 `INV1.StockPrice` / `RIN1.StockPrice` (Belegposition) | IT 95.7 %, US 92.3 %, FR 51.4 % |
+| IN | Sage auf HANA `TRAFAG_LIVE` im B1-Schema, `StockPrice` der Belegposition | 99.4 % |
+| ES | **Sage 200**, unsere Export-SQL liest `LineasAlbaranCliente.PrecioCoste` als `StandardCost` (`SageSpainExportPackage/SageSpainFinalExportPackage/Export-SageSpainSalesCsv.ps1` Zeile 167) | 80.9 % |
+| UK | **Sage**, manueller Excel-Export, Spalten `Standard cost` und `Standard Cost Currency` (Mapping `Services/DatabaseSeedService.cs` Zeile 892) | 93.5 % |
+
+> **Korrigiert am 2026-09-29:** Bis dahin stand Spanien hier unter SAP B1 und UK als "keine
+> Kostenquelle, 0 %". Beides war falsch: Spanien kommt aus Sage 200, und UK liefert seit dem
+> Mapping vom 2026-07-29 (`11db2df`) eine Kostenspalte. Die Fuellgrade sind Messungen aus dem August
+> (UK 93.5 % aus `ISS-007` vom 2026-08-12, die uebrigen aus dem frueheren Stand dieser Tabelle)
+> und sind ein Beleg fuer ihren Messtag, nicht fuer heute.
 
 FR hat bei rund der Haelfte der B1-Zeilen keinen `StockPrice`; das ist eine
 Stammdatenfrage an FR, kein Anbindungsfehler.
@@ -418,7 +426,7 @@ Reporting-Marge im Dashboard.
 | Punkt | Bei wem |
 | --- | --- |
 | **ENTSCHIEDEN am 2026-09-09: nein**, siehe Abschnitt 12. Der Schnitt nach der ersten internen Stufe beantwortet diese Frage; der Schalter bleibt die enge Alternative und wird nicht zur Regel. Die Frage lautete: Gilt der Schweizer `STPRS` als Konzern-Herstellkostenbasis, sobald CH das Material im Werkstamm 1100 fuehrt, unabhaengig von der liefernden Gesellschaft? Hintergrund: Italiens `StockPrice` ist bei Trafag-Sachnummern der Einkaufspreis und liegt im Mittel beim `3.48`-fachen des Schweizer Werts (Abschnitt 10). **Dringlicher seit der Sitzung vom 2026-08-27:** Andreas hat dort alle drei Konzernquellen als Herstellkosten bestaetigt, ohne diese Messung zu kennen (Abschnitt 11, B3) | Andreas |
-| **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Andreas soll weiterhin die davon getrennte erste Frage entscheiden, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt. | Ingo / Andreas |
+| **Entscheidungsrichtung Ingo, 2026-08-27:** Stufe 4 der Kaskade, der Abgleich gegen `MARC` Werk 1100, bleibt der **Standard**: kein Lieferant plus MARC-Treffer setzt `Intern / TR_AG` und nutzt den Schweizer `STPRS`. Andreas' B1 (ohne Lieferant lokale Standardkosten) ist als bewusst waehlbare Alternative im Finance-Admin umgesetzt; Details in 7a. Betroffen sind `10'817` von `22'950` Kandidatenzeilen. Die davon getrennte Frage, ob ein Schweizer Produktionsnachweis auch bei einem expliziten internen Lieferanten die Konzernkostenquelle bestimmt, ist **am 2026-09-09 beantwortet: nein**. Es gelten die Kosten der ersten liefernden Konzerngesellschaft, danach wird geschnitten (Abschnitt 12, `ISS-007.3`). Offen bleibt hier nur, ob der MARC-Fallback bei fehlendem Lieferanten Standard bleibt. | Ingo / Andreas |
 | Umrechnungsregel fuer Konzernkosten in fremder Waehrung. Die frueheren `32` Zeilen (TRUK/TRIT mit TR-IN- oder TR-IT-Kosten) waren bis 2026-08-25 auf `Kostenwaehrung abweichend` maskiert. **Seit Deploy 2026-08-27 15:28** wird die Kostenbasis mit dem Tageskurs umgerechnet, die Konzernsumme steht in CHF (Abschnitt 11, B5/B6). Offen bleiben Kursquelle, verbindlicher Stichtag und Pflegeprozess der offiziellen Reportingumrechnung, gefuehrt als `ISS-008` | Andreas / Finance |
 | Fachlich bestaetigen, ob der juengste positive Belegkostenwert dauerhaft gilt oder ein Durchschnitt/Stichtag noetig ist. Gemessene Wirkung: Indiens Kostenbasis 2025 `+10.5 %`, 2026 `-0.8 %`. **Konkret geworden am 2026-09-09:** Andreas schlaegt fuer Artikel ohne Bestand den letzten verfuegbaren Wert vor, was dem heutigen Default `LatestPositive` entspricht | Andreas |
 | **Gemessen am 2026-09-09, Fachentscheid offen:** Referenzkost je Artikel aus Bestandswert geteilt durch Bestandsmenge ist technisch ableitbar. `OITM.StockValue` und `OITM.OnHand` sind gepflegt und stimmen auf den Cent mit dem kumulierten Bestandsjournal; `OITW.StockValue` ist dagegen durchgaengig null und `OBTN.CostTotal` ist **nicht** der offene Bestandswert. Der Haken ist die Abdeckung: nur `568` von `2'216` der 2026 verkauften Materialien tragen Bestand, also `28.9 %` des Umsatzes, und wo beide Werte existieren ist der Median des Verhaeltnisses zum Belegwert genau `1.00`. Empfehlung: Belegwert bleibt fuehrend, Bestandskennzahl als monatliche Plausibilisierung. Zu entscheiden bleibt, ob das so gilt und welcher Stichtag zaehlt; Rueckfrage an Italien, ob `StockValue` dem bilanziellen Bestandswert entspricht; `docs/FINANCE_IT_REFERENZKOSTEN_2026-09-09.md` Abschnitt 4a | Andreas / Ingo |
@@ -546,7 +554,7 @@ voneinander und haben bewusst den bisherigen Stand als Default.
 | Schalter | Standard | Alternative | Wirkung und Grenze |
 | --- | --- | --- | --- |
 | **IT/IN: eigene Konzernkosten aus B1-Belegen** | Juengster positiver `B1 StockPrice` je Material | Arithmetischer Durchschnitt aller positiven `B1 StockPrice` je Material im Import | Gilt nur fuer Trafag Italien und Indien. Der Wert wird beim **naechsten Standortimport** neu in `GroupStandardCosts` aufgebaut; das Umschalten allein veraendert keine bereits gespeicherten Kosten. Ein historischer Stichtagsmodus wird bewusst nicht angeboten, weil der Cache keine Beleghistorie speichert. |
-| **CHF-Finance-Umrechnung: Kursprofil** | Aktueller Tageskurs | Jahresendkurs (31.12.) des jeweiligen Finance-Jahrs | Steuert einheitlich alle CHF-Finance-Werte: Gruppenmarge im Cockpit, Finance-Pruefbuch, Nachweis-Excel und `Sales_All`. Tageskurs kann diese Werte bei einer Neuberechnung aendern; der Jahresendkurs macht die jeweilige Jahressicht reproduzierbar. |
+| **CHF-Finance-Umrechnung: Kursprofil** | Aktueller Tageskurs | Jahresendkurs (31.12.) des jeweiligen Finance-Jahrs | Steuert die CHF-Finance-Werte von Finance-Pruefbuch, Nachweis-Excel und `Sales_All` sowie Gruppenmarge und Pivot, **solange der Schalter „Group-Waehrung (CHF)" aus ist** (korrigiert 2026-09-29: mit Schalter gilt fix der 31.12., die Kostenwaehrung wird immer zum heutigen Kurs umgerechnet; siehe `docs/rag/FINANCE_FORMELN.md` 3b und `ISS-018.1`). Tageskurs kann diese Werte bei einer Neuberechnung aendern; der Jahresendkurs macht die jeweilige Jahressicht reproduzierbar. |
 
 Beide Werte werden in `ExportSettings` persistent gespeichert, beim Konfigurationsimport/-export
 mitgenommen und bei unbekannten Altwerten auf den jeweiligen Standard normalisiert. Damit kann
@@ -567,8 +575,8 @@ Der Einleitungstext nennt die Vorrangkette (gepflegter Sales Type, dann explizit
 erst zuletzt der Fallback) und haelt fest, dass Kostenquelle und Kursprofil die Klassifikation
 nicht aendern. Je Schalter steht die Grenze dabei: Fallback nur ohne Sales Type und ohne
 Lieferant, Schweizer `STPRS` nur bei positivem Schweizer Wert, IT/IN erst beim naechsten
-Standortimport und ohne historischen Stichtag, CHF-Kursprofil einheitlich ueber alle fuenf
-Ausgaben mit dem Hinweis auf die offene Kurs-Governance `ISS-008`. Andreas soll die Auswahl
+Standortimport und ohne historischen Stichtag, CHF-Kursprofil ueber alle fuenf
+Ausgaben (so im Schaltertext; tatsaechlich nicht einheitlich, siehe Korrektur in der Tabelle oben) mit dem Hinweis auf die offene Kurs-Governance `ISS-008`. Andreas soll die Auswahl
 also ohne Rueckgriff auf diese Datei verstehen koennen. Dabei ist ein roter Test aufgefallen:
 drei dieser Texte hatten keinen Uebersetzungsschluessel und waeren in allen sechs Sprachen
 englisch erschienen. Alle zwoelf Schluessel der Sektion sind jetzt uebersetzt, Release-Tests

@@ -27,8 +27,10 @@ Stand: 2026-09-09
     `EnsureSpainDateMappings` ergaenzt `PostingDate` und `LineRegistrationDate`, aber nur
     wenn Spanien bereits eine eigene Mappingliste pflegt — eine leere Liste bleibt beim
     generischen Kopfzeilen-Fallback.
-  - OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
-    Exportskripts tauscht. Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
+  - ~~OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
+    Exportskripts tauscht.~~ Ueberholt: am 2026-09-02 entschieden, die 7-Tage-Version bleibt,
+    Finance ES nutzt `InvoiceDate`. **Neu 2026-09-29:** Seit Mitte Juli kommen keine neuen
+    Spanien-Zeilen in der Produktion an, der Bestand schrumpft (`ISS-020`). Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
     es kommen also derzeit keine neuen Buchungsdaten nach. Details:
     `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.

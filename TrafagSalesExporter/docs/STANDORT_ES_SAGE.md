@@ -145,10 +145,13 @@ als Vergleichsgroesse verwendet werden.
 
 ## 7. Offen
 
-- Santi Gomez muss die aktuelle Fassung von `Run-SpainRangeExportAndUpload-AllInOne.ps1`
-  (35-Tage-Fenster, `PostingDate`, `$PSScriptRoot`-Fix) auf dem Server einspielen.
-- Danach `PostingDate` beim Standort Spanien in den Einstellungen zuordnen, Reimport,
-  Jahresverteilung TRES neu messen.
+- ~~Santi Gomez muss die 35-Tage-Fassung einspielen, danach `PostingDate` zuordnen.~~
+  **Entschieden am 2026-09-02, bestaetigt am 2026-09-29:** Die 7-Tage-Version bleibt, kein Tausch bei
+  Santi. Finance ES rechnet seit dem Entscheid von Andreas vom 2026-08-26 mit dem Rechnungsdatum
+  (`UseInvoiceDate`), `PostingDate` ist damit nur noch Informationsspalte. Belegt ist, dass Santis
+  Server ein Skript mit `PostingDate`-Spalte, aber 7-Tage-Fenster faehrt (Datei vom 2026-09-02,
+  Spalte leer). Neu und gravierender: Seit Mitte Juli kommen **keine neuen Spanien-Zeilen** mehr in
+  der Produktion an (`ISS-020`).
 - Datenluecke Januar bis 27.05.2026: der Range-Export begann erst Ende Mai. Ein
   Nachtragsexport Januar bis Mai wurde am 2026-08-17 erzeugt (1'571 Zeilen,
   `1'461'263.57 EUR`, `PostingDate` zu 100 % gefuellt) und hochgeladen.

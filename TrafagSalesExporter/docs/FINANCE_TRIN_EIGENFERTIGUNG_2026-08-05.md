@@ -103,7 +103,7 @@ Exportumfang) — 1'449 Artikel, 7'018 Zeilen. Lauf 2026-08-05 11:20.
 | `--` | nicht gepflegt | 65 | 112 | Sales Type fehlt |
 | `LRD` | nicht gepflegt | 30 | 256 | **Pflegefall** |
 | `FFM` | gepflegt | 10 | 78 | Widerspruch, einzeln klaeren |
-| `CM` | nicht gepflegt | 2 | 23 | **Pflegefall** |
+| `CM` | nicht gepflegt | 2 | 23 | ~~Pflegefall~~ **ueberholt:** kein Pflegefall, `CM` ist Eigenfertigung im Auftrag (Abschnitt 3a) |
 | leer (NULL) | nicht gepflegt | 1 | 1 | Sales Type fehlt |
 
 Zwei unabhaengige Konsistenzproben, beide bestanden:
@@ -199,7 +199,7 @@ Alle drei Artikelklassen zusammen ergeben fuer TRIN:
 | --- | ---: | --- |
 | `FFM` (Eigenfertigung) | 5'830 | ja, ohne jede Stammdatenpflege in Indien |
 | `LRD` mit Lieferant | 454 | ja, schon heute |
-| Rest (`LRD`/`CM` ohne Vendor, `--`, NULL) | 734 | erst nach Pflege in Indien |
+| Rest (`LRD` ohne Vendor, `--`, NULL; `CM` ist laut Abschnitt 3a kein Pflegefall) | 734 | erst nach Pflege in Indien |
 
 **Von den 6'236 heute maskierten TRIN-Zeilen werden rund 5'830 (93 %) allein durch das Lesen
 dieses Feldes klassifizierbar** — ohne dass Indien einen einzigen Artikel anfassen muss. Die

@@ -646,4 +646,5 @@ im deutschen Adressexport, ist in **0 von 6'788 Adressen** gefuellt.
 Das Musterverfahren ist damit genau das, was Ingo vorgeschlagen hat: ein erster Schritt, der
 den Keyusern die Fleissarbeit abnimmt, ohne die fachliche Entscheidung vorwegzunehmen.
 
-Stand: gebaut und mit 697/697 Tests gruen, **nicht deployed**.
+Stand: gebaut und mit 697/697 Tests gruen, damals **nicht deployed**. **Nachtrag 2026-09-29:** seit
+dem Deploy vom 2026-09-28 um 09:33 produktiv (`4d0b9cd`, `docs/rag/DEPLOYMENT.md`).

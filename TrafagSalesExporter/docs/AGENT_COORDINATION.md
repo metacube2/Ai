@@ -7,7 +7,8 @@ Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
 aktualisieren. Die Root-Dateien `AGENTS.md` und `CLAUDE.md` sowie `router.md` machen
 diesen Schritt fuer neue Codex-/Claude-Sitzungen ausdruecklich verpflichtend.
 
-**Diese Datei enthaelt nur laufende Arbeit und die letzten sieben Tage.** Alles
+**Diese Datei enthaelt nur laufende Arbeit und einen Kurzindex der juengsten Eintraege** (Ziel
+sieben Tage; beim naechsten Aufraeumen gehoeren aeltere Zeilen in die Historie). Alles
 Abgeschlossene, die frueheren Reservierungen gemeinsamer Dateien und die
 Uebergabeprotokolle stehen im Volltext in `docs/AGENT_COORDINATION_HISTORIE.md`.
 Das ist am 2026-09-09 getrennt worden, weil die Datei auf 236 KB gewachsen war und
@@ -25,11 +26,10 @@ in die Historiendatei.
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
 
-Derzeit keine laufende Arbeit.
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert, `Services/FinanceAllWorkbookService.cs` fehlt). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
-## Kurzindex der letzten sieben Tage
+## Kurzindex der juengsten Eintraege
 
 Codex 2026-09-29: Vorpruefung Finance-Admin-Schalter abgeschlossen, Reservierung frei; Umsetzung wartet auf Bedeutung von "ohne Schnitt (wie bisher)". Code und Settings belegen: DeliveringEntityCosts ist bereits Schnitt nach erster Stufe, SwissStprsForChPlantMaterial existiert als Alternative; keine rekursive Lieferkette implementiert. Nur Koordination geaendert, kein Anwendungscode, keine Tests/kein Deploy. Rueckfrage: vorhandener Schweizer Vergleichsmodus oder echte mehrstufige Kostenverfolgung gemeint?
 
@@ -40,6 +40,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
 | Codex | Markdown-Konsistenzpruefung | 2026-09-29 | **Abgeschlossen, Reservierung frei, nur Pruefung/Bericht.** `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md`: 117 Projekt-MD / 33748 Zeilen strukturell erfasst, thematische Suchen und gezielte Gegenpruefung zu Finance/Standardkosten, HR, Einkauf, Status und Navigation; keine vollstaendige fachliche Abnahme jeder Aussage. 15 Befundgruppen, darunter entschiedener Schnitt zugleich offen, UK/ES-Quellen, IT/IN-Kosten, Mask-Default, Kursbeschreibungen, Spanien-Statuskonflikt, veraltete HR-/Einkaufspassagen, 9 fehlende Indexeintraege und nicht vorhandene Archivziele. `.tmp_tools/MdReview0929/Scan.ps1` und `scan.json` als Bestandsnachweis. Bestehende Fachdoku/Code unveraendert, keine Tests/kein Deploy/kein Commit/keine Reindexierung; Diff-Pruefung der Koordination erfolgreich. |
+| Claude | MD-Konsistenzbefunde beheben, Spanien, Railway/DB4, HR | 2026-09-29 | **Abgeschlossen, Reservierung frei, nur Doku/Status, kein App-Code, kein Deploy.** Fuenf lesende Pruefagenten (Kursregeln, IT/IN-Konzernkosten, Spanien-Version, HR, Railway/DB4). Alle 15 Befundgruppen aus `docs/MD_KONSISTENZPRUEFUNG_2026-09-29.md` nachgefuehrt, Vermerk im Bericht. Abweichung: Codex ordnete `EinstandsPreis` (Seed Zeile 974, Deutschland) Spanien zu; korrigiert auf `PrecioCoste`. ISS-004.2 erledigt (7-Tage-Version aktiv). Neu ISS-019 (Railway-Gesamtsicht, DB4) und ISS-020 (Spanien-Import seit Mitte Juli gestoppt, Produktiv-DB-Kopien 02.09./09.09./28.09., Verdacht Graph-Ordnerliste ohne Folgeseiten in `SharePointUploadService.cs` Zeile 137). Heiko und Patrick in `PROJEKTSTATUS.md`. Mitcommittet: fertige unversionierte Dateien `MD_KONSISTENZPRUEFUNG_2026-09-29.md`, `DATENQUELLEN_FIREWALL_TRAGVAPP401_2026-09-10.md`, `Tools/BahnWorkbookDb4/` (Quelltext). Die laufende Codex-Zeile HR/Einkauf-Review nicht mitcommittet. |
 | Claude | ISS-018 in Einzelissues aufteilen | 2026-09-29 | **Abgeschlossen, Reservierung frei, nur Status.** Auf Ingos „ja reinschreiben“: ISS-018.1 bis .4 (A1, A3, A4, A5, Reparatur, hoch) und ISS-018.5 bis .7 (B1, B2, B3.1, Fachentscheid Andreas); A2, A6, B3.2, B4, B5 bleiben im Dach ISS-018. Wochen_Todo: eine Reparatur- und eine Entscheidzeile, `.xlsx` neu erzeugt. |
 | Claude | Doku nachfuehren zum Stand 29.09. | 2026-09-29 | **Abgeschlossen, Reservierung frei, nur Doku, kein Code, kein Deploy.** Auftrag von Ingo: „kannst du mal md nachführen“. `docs/rag/FINANCE_FORMELN.md`: Hinweis auf offene Rechenfehler, 1'000er-Kappung gilt auch fuer Cockpit-Exporte (frueher falscher Rat korrigiert), Spanien-Periodenregel, Mask/Convert produktiv richtiggestellt, Juli-Supplier-Konflikt als ueberholt markiert. `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md` §2h Nachtrag. `docs/rag/FINANCE.md` und `docs/rag/PROJECT.md` Kurzstand 29.09. Issue-Log neu `ISS-018` (Review-Befunde), Wochen_Todo-Zeile dazu, `.xlsx` neu erzeugt. `lastchange.md` (stand seit 11.09.), `router.md` Stand. Panne ohne Folgen: ein `node -e` mit Backticks liess Bash die Review-Datei als Skript ausfuehren, nur „command not found“, Datei unveraendert; die beschaedigte Formeldatei per `git checkout` zurueckgesetzt und mit Edit neu geschrieben. |
 | Claude | Codex-Review gegenpruefen; Vorhaben PM-10 bis PM-12 aufnehmen | 2026-09-29 | **Abgeschlossen, Reservierung frei, kein App-Code, kein Deploy.** (1) Alle Befunde aus `docs/FINANCE_REVIEW_2026-09-29.md` rein lesend gegen den Code geprueft (Agent plus eigene Stichprobe `Take(1000)`): alle bestaetigt, A2 und A6 nur latent, B1-B4 datenabhaengig bzw. fachlich offen. Pruefvermerk als eigener Abschnitt im Bericht; Bericht im Finance-Router und in `baum.md` eingetragen und zusammen mit dem Codex-Eintrag committet. Nicht nachgefuehrt: `docs/rag/FINANCE_FORMELN.md` und `FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md` §2h nennen den gekappten Export noch vollstaendig. (2) PM-10 Smartsheet, PM-11 Data Lake Leistung, PM-12 Power BI Anwendervertreter in `Vorhaben_HERMES.tsv`, `PROJEKTSTATUS.md` und je eine Zeile in `Wochen_Todo.tsv`; Skript mit grauem Zustand „Neu“, siebter Kachel und Zeilenhoehe aus Textlaenge; Excel neu erzeugt und per PDF-Export gesichtet. |

@@ -533,7 +533,9 @@ Stand: 2026-09-28
   `Konzernkosten TR IT (B1 StockPrice)` und `Konzernkosten TR IN (B1 StockPrice)`;
   alle vier fehlten im Prueflauf und sind nach dem Deploy enthalten. Kein Schemawechsel.
   Noch nicht belegt: produktive Befuellung der Kostenbereiche `TRIT`/`TRIN`; dafuer muss
-  nach dem Deploy je ein Standortimport laufen.
+  nach dem Deploy je ein Standortimport laufen. **Nachtrag:** am selben Tag um 16:15 belegt,
+  TR IN 6'119 Zeilen ueber 1'242 Materialien, TR IT 112 Zeilen ueber 40 Materialien
+  (`docs/FINANCE_STANDARDKOSTEN.md` Abschnitt 4).
 
 - Aktuellster produktiv verifizierter Deploy: **2026-08-25 10:14, LineRegistrationDate als
   Spalte 52 im zentralen Sales_All**, Funktionscommit `d414427`, `586/586` Release-Tests

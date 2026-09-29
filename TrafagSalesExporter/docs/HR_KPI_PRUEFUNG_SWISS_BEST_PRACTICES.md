@@ -1,6 +1,11 @@
 # HR-KPI-Pruefung gegen Schweizer Praxis und HR-Best-Practices
 
-Stand: 2026-05-13
+Stand: 2026-05-13, Umsetzungsstand am 2026-09-29 nachgefuehrt
+
+> **Wichtig:** Die Bloecke „Aktueller Reiter" und „Status" beschreiben den App-Stand vom Mai.
+> Seit dem 2026-09-28 (`5ae7f31`, Deploy 11:25) gelten andere Regeln; massgeblich ist
+> `docs/HR_KPI.md` Abschnitt 8. Die Einschaetzungen zu Schweizer Praxis und externen Quellen
+> bleiben unveraendert und sind nicht neu geprueft. Ueberholte Stellen sind unten markiert.
 
 Zweck dieses Dokuments:
 
@@ -113,6 +118,10 @@ Aktueller Reiter:
 - Krankenquote je Mitarbeiter = Krankheitstage / 21
 - Gesamtquote = Krankheitstage / (Headcount * 21)
 
+> **Ueberholt seit 2026-09-28**: Krankenquote = Krankheitstage / (FTE x Arbeitstage Kanton Zuerich im
+> Zeitraum); 21 Tage nur noch als Notfall ohne Zeitraum. Bei Zeitraumfilter zeigt die App
+> „Zeitraum nicht bestimmbar" und eine gelbe Ampel statt einer Quote.
+
 Schweizer/BFS-nahe Praxis:
 
 - Absenzenquote wird als Dauer der Absenzen in Prozent der vertraglich festgelegten Arbeitszeit berechnet.
@@ -136,6 +145,10 @@ Aktueller Reiter:
 - `Krankheit angetreten` = kurz
 - `Krank nicht buchbar angetreten` = lang
 - Umrechnung pauschal Stunden / 8.4
+
+> **Ueberholt seit 2026-09-28**: Beide Rexx-Felder zaehlen als Krankheit. Ab 61 Krankheitstagen je Person
+> (Summe im Export) gilt die ganze Krankheit der Person als lang (Vorgabe HR, 28.09.2026). Die
+> Pruefpunkte unten sind damit erledigt.
 
 Pruefen:
 
@@ -172,6 +185,10 @@ Aktueller Reiter:
 - FTE = Beschaeftigungsgrad aus SAP / 100.
 - Wenn SAP-Wert fehlt: Vollzeit = 1, sonst 0.5.
 
+> **Ueberholt seit 2026-09-28**: FTE = SAP-Grad / 100, sonst Rexx-Sollzeit / 8,4 h, begrenzt auf 0,1 bis 1,2.
+> Ohne SAP-Grad und ohne Sollzeit gilt die Zeile als Reminderprofil und faellt aus allen
+> Kennzahlen. Der Ersatzwert 0,5 wird praktisch nicht mehr erreicht.
+
 Best Practice:
 
 - FTE sollte aus vertraglichem Beschaeftigungsgrad oder Sollarbeitszeit pro Person kommen.
@@ -206,6 +223,8 @@ Status:
 - als Management-Ampel plausibel
 - Schwellen fachlich bestaetigen lassen
 
+> **Ueberholt seit 2026-09-28**: Von HR am 28.09.2026 bestaetigt, positiv und negativ gleich, auch bei Teilzeit.
+
 ### 9. Ferien-Rest-Ampel
 
 Aktueller Reiter:
@@ -223,6 +242,9 @@ Status:
 
 - sehr grobe Ampel
 - saisonale Logik fehlt
+
+> **Ueberholt seit 2026-09-28**: Q1 bis 5 Tage gruen, darueber rot; ab Q2 jeder Resttag rot. Massgeblich ist das
+> Quartal des heutigen Tags. Die saisonale Logik ist damit umgesetzt.
 
 ### 10. Lohn / Datenschutz
 
@@ -273,6 +295,8 @@ Pruefen:
 
 - Gibt es in #732 doch eine stabile ID?
 - Falls nein: Join-Trefferquote anzeigen.
+
+> **Umgesetzt** (Review H/M7, 2026-07-06): Die Trefferquote des Namens-Joins wird ausgewiesen.
 - Nicht gematchte Namen separat ausweisen.
 
 Status:

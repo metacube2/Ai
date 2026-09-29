@@ -5,9 +5,13 @@ Stand: 2026-09-11
 ## Ladereihenfolge fuer eine neue Sitzung
 
 1. `router.md` (Repo-Wurzel) — Themenaeste und Vorrangregeln, immer zuerst
-2. `lastchange.md` (Repo-Wurzel) — kompakt, nur die letzten rund 7 Tage und offene Punkte
-3. Je nach Thema die passende Kurzdatei aus `docs/rag/`, etwa `FINANCE.md`,
-   `PURCHASING.md`, `PROJECT.md`, `MANUAL_IMPORT.md`, `DEPLOYMENT.md`
+2. Der passende Unterrouter unter `docs/router/`, von dort die Detaildatei oder die
+   RAG-Kurzdatei aus `docs/rag/` (etwa `FINANCE.md`, `PURCHASING.md`, `PROJECT.md`,
+   `MANUAL_IMPORT.md`, `DEPLOYMENT.md`). Das ist derselbe Ladeweg wie in `router.md`
+   und `CLAUDE.md` (angeglichen am 2026-09-29).
+3. `lastchange.md` (Repo-Wurzel) nur bei Bedarf: Aenderungsstand mit dem juengsten Abschnitt
+   oben, aber **nicht** auf sieben Tage begrenzt, sondern rund 2'000 Zeilen einschliesslich
+   Juli-Historie
 4. `persona.md` (Repo-Wurzel) — Arbeitsregeln und fachliche Grenzen, sobald fachliche
    Verantwortung im Spiel ist
 5. **Sobald SAP im Spiel ist: `saptasks/SAP_ARBEITSWEISE_UND_WERKZEUGE.md`, vor der
