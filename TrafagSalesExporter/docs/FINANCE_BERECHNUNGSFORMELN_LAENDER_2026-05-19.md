@@ -423,6 +423,12 @@ Ist ca. 7'669'641.47 EUR
 Differenz ca. -198.53 EUR
 ```
 
+**Ueberholt seit 2026-09-29 (`ISS-021`):** Dieser Ist-Wert enthielt 1'806'787.81 EUR doppelte
+Positionen aus der Lieferantenadresse der B1-Abfrage (Trafag AG mit Rechnungsadressen CH und DE).
+Ohne Doppelzeilen liegt Italien 2025 bei 5'862'853.66 EUR, die Uebereinstimmung mit Rhino war
+Zufall. Heute steht das Cockpit bei 9'642'342.19 EUR, weil die Doppelzeilen seither zugenommen
+haben. Siehe `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md` Abschnitt 3.
+
 Wichtiger Pruefhinweis:
 
 ```text

@@ -1,6 +1,6 @@
 # RAG Finance
 
-Stand: 2026-09-29 (Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
+Stand: 2026-09-29 (Tab-Abgleich und Italien-Doppelzeilen ISS-021, Konsistenzbefunde ISS-018, TR IT Moving Average und Referenzkost nachgefuehrt; Management-Cockpit-Tempo vom 2026-09-28; uebriger Kurzstand vom 2026-09-10)
 
 Live-Abgleich vom Juli fuer UK-2025, Supplier-Felder und
 `GroupStandardCosts`: `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -213,6 +213,12 @@ ersetzte Zwischenstaende stehen in den Detaildokumenten und in
 
 ## Offene Fachpunkte
 
+- **Italien-Ist zu hoch durch Doppelzeilen (`ISS-021`, gemessen 2026-09-29, nicht repariert).** Die
+  gemeinsame B1-Abfrage verknuepft jede Rechnungsadresse des Artikel-Lieferanten
+  (`HanaQueryService.cs` Zeile 560/622); Trafag AG hat im IT-Mandanten CH und DE. TRIT 2025 +3,79 Mio.
+  EUR, 2026 +3,01 Mio. EUR; ohne Doppelzeilen 2025 5,86 Mio. EUR. Der Rhino-Soll 7'669'840 passte bisher
+  nur mit 1,81 Mio. Doppelzeilen. Alle Tabs der Management Analyse stimmen sonst je Land mit
+  `Sales_All` ueberein. `docs/FINANCE_TAB_ABGLEICH_2026-09-29.md`.
 - **Konsistenzbefunde vom 2026-09-29 (`ISS-018`), gegen den Code bestaetigt, nicht repariert.**
   A3, A4 behoben und A5 ausgewiesen seit 2026-09-29 10:22 (`91fd9dc`). Offen und sichtbar: der
   CHF-Schalter aendert die Gruppenmarge, das Pruefbuch nicht (A1, Kursfrage an Andreas); die
