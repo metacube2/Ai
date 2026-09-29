@@ -175,8 +175,16 @@ TRDE hat produktiv 0 Zeilen mit Lieferantenname oder -nummer. In einer lokalen
 Entwickler-Momentaufnahme vom 2026-07-02 waren 1'764 TRDE-Zeilen mit
 `SupplierName = 'Trafag AG'` vorhanden. Ob das ein Rueckschritt ist (Alphaplan-Export
 liefert die Spalten `Lieferanten Nummer`/`Name Lieferant`/`Land Lieferant` nicht mehr)
-oder nur ein Unterschied zweier Datenbestaende, ist **nicht geklaert**. Zu pruefen ist
-zuerst die eigene Export-Query, nicht der Standort.
+oder nur ein Unterschied zweier Datenbestaende, war lange ungeklaert.
+
+**Geprueft am 2026-09-29 (`ISS-003.3`):** Unsere Export-Query liest keine Lieferantenspalte.
+`alphaplanExport.ps1` und `alphaplandeltaexport.ps1` lesen nur `dbo.Belege` und `dbo.BelegePositionen`;
+`ArtikelID` wird ausgewaehlt, aber nirgends verknuepft. Auch der Import
+(`ManualExcelImportService.ReadAlphaplanInvoicePair`) setzt keines der drei Lieferantenfelder. Alphaplan
+fuehrt die Lieferanten aber: das alte Excel-Beispiel `DE_Beispiel_Export_Daten.xlsx` hat `Lieferanten
+Nummer`/`Name Lieferant`/`Land Lieferant`, die 1'764 Zeilen stammen vermutlich aus diesem alten Weg. Es
+ist also ein Rueckschritt durch den Wechsel auf die Beleg-CSVs. Tabelle und Spalte sind wegen des
+fehlenden Schemas offen (`docs/STANDORT_DE_ALPHAPLAN.md` Abschnitt 6).
 
 ## 4. Was die Luecke gekostet hat
 
@@ -367,9 +375,17 @@ inkl. aller sechs Fremdsprachen in `Services/UiTextGeneratedTranslations.cs`.
 
 ## 7. Weitere offene Punkte
 
-- DE-Supplier-Spalten pruefen: 7'332 Zeilen komplett ohne Lieferant, zuerst die eigene
-  Export-Query, nicht den Standort fragen.
-- ES und US: Quellfeld und Mapping bestimmen.
+- DE-Supplier-Spalten: eigene Export-Query am 2026-09-29 geprueft, sie liest keine Lieferantenspalte
+  (siehe Abschnitt 3). Naechster Schritt ist ein read-only Spaltenauszug aus
+  `INFORMATION_SCHEMA.COLUMNS` (`%Liefer%`, `%Artikel%`, `%Kredit%`) durch die IT vor Ort, danach Query
+  ueber `ArtikelID` und Import erweitern. Keine Bitte um Datenpflege.
+- ES: Die aktive Export-SQL liest nur `CabeceraAlbaranCliente`/`LineasAlbaranCliente`; die dort
+  vorhandenen `CodigoFabricanteLc`/`CodigoFamiliaFabricanteLc` sind leer. Einen Artikel-Lieferanten
+  zeigen unsere Schema-Auszuege nicht; Lieferantennummern stehen nur auf der Einkaufsseite
+  (`LineasAlbaranProveedor` u. a. mit `CodigoProveedor` und `CodigoArticulo`). Naechster Schritt:
+  Spaltenauszug `%Proveedor%`/`%Articulo%`; eine Herleitung aus der Einkaufshistorie waere ein
+  Fachentscheid.
+- US: Quellfeld und Mapping bestimmen.
 - FR: ungefuellte Zeilen nach Quelle und Artikelstamm segmentieren.
 - Verbleibende TRIT-Zeilen nach Ursache segmentieren. Der grosse Teil ist mit Abschnitt 8 geklaert; offen bleiben `11` Zeilen ohne Treffer in der Uebergangsliste.
 
