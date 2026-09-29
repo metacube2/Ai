@@ -77,9 +77,20 @@ LEFT JOIN "CRD1" sup_adr ON itm."CardCode" = sup_adr."CardCode"
 ```
 
 Das holt jede Rechnungsadresse des Lieferanten. Die Kundenadresse zwei Zeilen darueber ist mit
-`Address = h."PayToCode"` auf eine Adresse beschraenkt, die Lieferantenadresse nicht. Die
-Finance-Regel „identische IT-Zeile mit leerem Lieferantenland nur einmal zaehlen" greift nicht,
-weil das Land gefuellt ist.
+`Address = h."PayToCode"` auf eine Adresse beschraenkt, die Lieferantenadresse nicht.
+
+**Warum die Regel vom 20.05. das nicht abfaengt:** `FinanceRuleEngine.ShouldInclude`
+(`DeduplicateBlankSupplierCountry`, Zeile 60) zaehlt doppelte IT-Zeilen nur einmal, wenn das
+Lieferantenland **leer** ist. Das war der damals aufgefallene Fall, und er ist seither behoben. Die
+CH/DE-Paare und die IT/IT-Paare haben ein gefuelltes Land und fallen durch. Die Regel wirkt
+ausserdem nur in der Finance-Sicht (Cockpit, Finance-Spalten in `Sales_All`), nicht in den
+Rohzeilen der Exportdateien. Die Ursache in der Abfrage wurde nie korrigiert. Nach einer Korrektur
+an der Quelle wird die Regel ueberfluessig, kann aber als Absicherung bleiben.
+
+**Wirkung einer Korrektur:** Sie wirkt an der Quelle und damit auf alles, was danach entsteht:
+Standortdateien, `Sales_All`, Audit-CSV, Nachweis-Excel, SharePoint-Upload und alle Tabs. Sie gilt
+ab dem naechsten TRIT-Export und rueckwirkend fuer 2025 und 2026, weil der Export beide Jahre jedes
+Mal neu liefert. Schon erzeugte Dateien bleiben unveraendert.
 
 Warum es seit Juli mehr geworden ist, ist nicht gemessen. Vermutung: Mehr italienische Artikel
 tragen jetzt Trafag AG als Lieferant, oder Trafag AG hat eine zweite Rechnungsadresse bekommen.
