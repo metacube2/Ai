@@ -46,6 +46,7 @@ Marktsegmente.
 
 | Frage | Datei |
 | --- | --- |
+| **Konsistenz- und Logikpruefung vom 29.09.2026** (Codex, von Claude gegen den Code bestaetigt): CHF-Schalter gegen Kursprofil, falsche Waehrungslabels, Cockpit-Export auf 1'000 Zeilen gekappt, Gutschriften mit Menge 0, kostenlose Ware | `docs/FINANCE_REVIEW_2026-09-29.md` |
 | Pruefbuch-Marge, Statusfarbe, Status „Konzernkosten fehlen", GUI gegen Excel | `docs/FINANCE_ANZEIGE_PRUEFUNG_2026-08-06.md` |
 | Welche Indikatoren echt rechnen, fehlende Sollwerte, Waehrungsmischung, Pivot-Filter | `docs/FINANCE_INDIKATOREN_PRUEFUNG_2026-08-07.md` |
 | UK 2025: Stueckpreis statt Zeilenwert, Faktor 9 | `docs/FINANCE_UK2025_WERTFEHLER_2026-08-10.md` |
