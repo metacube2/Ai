@@ -8,6 +8,8 @@ internal static class UiTextGeneratedTranslations
         {
             ["es"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Se muestran {0:N0} de {1:N0} filas de detalle. El limite se aplica antes de los filtros de columna y la exportacion a Excel contiene las mismas filas. Solo el libro de comprobacion esta completo.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Esta exportacion esta limitada: libro de control {0:N0} de {1:N0}, margen de grupo {2:N0} de {3:N0} filas de detalle. Solo el libro de comprobacion esta completo.",
                 ["Zeitraum nicht bestimmbar"] = "Periodo no determinable",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "Las tablas del PDF contienen la pagina mostrada actualmente, no automaticamente todos los registros.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "La vista de direccion oculta los nombres. Los numeros de personal y los detalles por persona siguen visibles; no es una vista agregada anonima.",
@@ -1565,6 +1567,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["it"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Vengono mostrate {0:N0} di {1:N0} righe di dettaglio. Il limite si applica prima dei filtri di colonna e l'esportazione Excel contiene le stesse righe. Solo la cartella di verifica e completa.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Questa esportazione e limitata: registro di controllo {0:N0} di {1:N0}, margine di gruppo {2:N0} di {3:N0} righe di dettaglio. Solo la cartella di verifica e completa.",
                 ["Zeitraum nicht bestimmbar"] = "Periodo non determinabile",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "Le tabelle nel PDF contengono la pagina attualmente visualizzata, non automaticamente tutti i record.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "La vista direzionale nasconde i nomi. Numeri di matricola e dettagli per persona restano visibili; non e una vista aggregata anonima.",
@@ -3122,6 +3126,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["hi"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
@@ -4679,6 +4685,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["sq"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
@@ -6236,6 +6244,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tr"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",
@@ -7793,6 +7803,8 @@ internal static class UiTextGeneratedTranslations
             },
             ["tlh"] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
+                ["Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel."] = "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete.",
+                ["Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel."] = "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete.",
                 ["Zeitraum nicht bestimmbar"] = "Period cannot be determined",
                 ["Tabellen im PDF enthalten die aktuell angezeigte Seite, nicht automatisch alle Datensaetze."] = "PDF tables contain the currently displayed page, not automatically all records.",
                 ["Managementsicht blendet Namen aus. Personalnummern und Personendetails bleiben sichtbar; dies ist keine anonyme Aggregatsicht."] = "Management view hides names. Personnel numbers and person-level details remain visible; this is not an anonymous aggregate view.",

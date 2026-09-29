@@ -747,8 +747,8 @@
             @if (_financeResult.FinanceAuditLedgerTotalRowCount > _financeResult.FinanceAuditLedgerRows.Count)
             {
                 <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mb-3">
-                    @string.Format(T("Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern - fuer die vollstaendige Nachrechnung den Excel-Export verwenden.",
-                        "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters - use the Excel export for a complete recalculation."),
+                    @string.Format(T("Gezeigt werden {0:N0} von {1:N0} Detailzeilen. Die Kappung wirkt vor den Spaltenfiltern, und der Excel-Export enthaelt dieselben Zeilen. Vollstaendig ist nur das Nachweis-Excel.",
+                        "Showing {0:N0} of {1:N0} detail rows. The cap applies before the column filters and the Excel export contains the same rows. Only the proof workbook is complete."),
                         _financeResult.FinanceAuditLedgerRows.Count, _financeResult.FinanceAuditLedgerTotalRowCount)
                 </MudAlert>
             }
@@ -2215,7 +2215,8 @@
         => DownloadExcel("Finance_Pruefbuch",
         [
             new ExcelSheetData(T("Finance Pruefbuch", "Finance audit ledger"), BuildRows(BuildFinanceAuditLedgerRows())),
-            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows)),
+            .. CapNoteSheet()
         ]);
 
     private Task ExportFinanzanalyse()
@@ -2237,8 +2238,31 @@
         [
             new ExcelSheetData(T("Gruppenmarge Land", "Group margin country"), BuildRows(_financeResult!.GroupMarginCountryRows)),
             new ExcelSheetData(T("Gruppenmarge Sparte", "Group margin division"), BuildRows(_financeResult!.GroupMarginDivisionRows)),
-            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows))
+            new ExcelSheetData(T("Gruppenmarge Detail", "Group margin detail"), BuildRows(_financeResult!.GroupMarginDetailRows)),
+            .. CapNoteSheet()
         ]);
+
+    /// <summary>
+    /// Die Detaillisten sind auf 1'000 Zeilen gekappt, und die Exporte geben genau diese Listen aus.
+    /// Ohne Hinweis sah die Datei wie der vollstaendige Bestand aus (ISS-018.4). Vollstaendig ist
+    /// nur das Nachweis-Excel; ein ungekappter Export ueber diese Verbindung waere bei rund
+    /// 92'000 Zeilen zu schwer.
+    /// </summary>
+    private IReadOnlyList<ExcelSheetData> CapNoteSheet()
+    {
+        if (_financeResult is null)
+            return [];
+        var ledgerCapped = _financeResult.FinanceAuditLedgerTotalRowCount > _financeResult.FinanceAuditLedgerRows.Count;
+        var detailCapped = _financeResult.GroupMarginDetailTotalRowCount > _financeResult.GroupMarginDetailRows.Count;
+        if (!ledgerCapped && !detailCapped)
+            return [];
+        var text = string.Format(
+            T("Dieser Export ist gekappt: Pruefbuch {0:N0} von {1:N0}, Gruppenmarge {2:N0} von {3:N0} Detailzeilen. Vollstaendig ist nur das Nachweis-Excel.",
+              "This export is capped: audit ledger {0:N0} of {1:N0}, group margin {2:N0} of {3:N0} detail rows. Only the proof workbook is complete."),
+            _financeResult.FinanceAuditLedgerRows.Count, _financeResult.FinanceAuditLedgerTotalRowCount,
+            _financeResult.GroupMarginDetailRows.Count, _financeResult.GroupMarginDetailTotalRowCount);
+        return [new ExcelSheetData(T("Hinweis", "Note"), BuildRows(new[] { new { Hinweis = text } }))];
+    }
 
     private async Task DownloadExcel(string fileLabel, IReadOnlyList<ExcelSheetData> sheets)
     {

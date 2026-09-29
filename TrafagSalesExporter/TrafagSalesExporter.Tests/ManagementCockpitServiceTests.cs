@@ -572,6 +572,42 @@ public class ManagementCockpitServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_GroupMarginSummary_StaysChf_WhenFilterHoldsOneCurrency()
+    {
+        // ISS-018.2: Die Summe ist nach CHF umgerechnet. Mit nur einer Waehrung im Filter blieb
+        // frueher das lokale Label stehen und beschriftete 95 CHF als "EUR".
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-DE1", "EUR", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 60m, standardCostCurrency: "EUR"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, "DE", null);
+
+        Assert.Equal("CHF", result.GroupMarginSummary.DisplayCurrency);
+        Assert.Equal(95m, result.GroupMarginSummary.SalesValue);
+    }
+
+    [Fact]
+    public async Task AnalyzeFinanceSummaryAsync_AuditLedger_UnitCostKeepsLocalCurrency_WhenGroupCostIsChf()
+    {
+        // ISS-018.3: Der Stueckpreis ist der lokale Standardpreis (50 EUR). Frueher trug er
+        // Waehrung und Kurs der Konzernkosten (CHF) und wurde damit falsch nach CHF umgerechnet.
+        await SeedRatesAsync(CreateRate("EUR", "CHF", 0.95m));
+        await SeedGroupStandardCostAsync("MAT-LOC", "1100", 30m, "CHF");
+        await SeedCentralRowsAsync(
+            CreateRow("MANUAL_EXCEL", "Deutschland", "TRDE", "INV-LOC", "EUR", 100m, new DateTime(2025, 3, 1),
+                quantity: 1m, standardCost: 50m, standardCostCurrency: "EUR", material: "MAT-LOC", supplierName: "Trafag AG"));
+
+        var result = await _service.AnalyzeFinanceSummaryAsync(2025, null, null);
+
+        var ledger = Assert.Single(result.FinanceAuditLedgerRows, row => row.InvoiceNumber == "INV-LOC");
+        Assert.Equal("EUR", ledger.StandardCostCurrency);
+        Assert.Equal(0.95m, ledger.StandardCostChfRate);
+        Assert.Equal(47.5m, ledger.StandardCostChf);
+        Assert.Equal("CHF", ledger.CostBasisCurrency);
+    }
+
+    [Fact]
     public async Task AnalyzeFinanceSummaryAsync_UsesGroupStandardCost_ForTrAgDeliveringSupplier()
     {
         // TR AG liefert (Mappe1.xlsx): die Konzern-Kostenbasis (MBEW-STPRS, hier 30 CHF/Stk)

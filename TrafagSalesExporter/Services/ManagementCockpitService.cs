@@ -1627,9 +1627,10 @@ public class ManagementCockpitService : IManagementCockpitService
             MissingCostRows = rows.Count(HasOpenGroupMarginCostBasis),
             UnclearSupplierRows = rows.Count(row => row.Status == GroupMarginStatuses.SupplierUnclear),
             CleanCostBasisPercent = rows.Count == 0 ? 0m : cleanRows * 100m / rows.Count,
-            // Fuehrt nur noch eine Waehrung ins Ergebnis, bleibt deren Label stehen; sonst gilt
-            // die Konzernwaehrung CHF, weil die Summe genau dorthin umgerechnet ist.
-            DisplayCurrency = currencies.Count == 1 ? BuildDisplayCurrencyLabel(currencies) : "CHF",
+            // Die Summe ist seit dem Beschluss B5 immer nach CHF umgerechnet, auch wenn der Filter
+            // nur ein Land oder eine Waehrung enthaelt. Frueher blieb dann das lokale Label stehen
+            // (etwa "EUR") und beschriftete einen CHF-Betrag falsch (ISS-018.2).
+            DisplayCurrency = "CHF",
             ContributionMarginValue = SumContributionMargin(rows),
             ContributionMarginRows = rows.Count(row => row.ContributionMarginValue.HasValue)
         };
@@ -1809,6 +1810,15 @@ public class ManagementCockpitService : IManagementCockpitService
                     ? originalCurrency
                     : basis.CostCurrency.Trim();
                 var standardCostRate = _exchangeRateService.ResolveRate(standardCostCurrency, "CHF", rateDate);
+                // Der Stueckpreis der Zeile ist der LOKALE Standardpreis und steht in der lokalen
+                // Kostenwaehrung; Waehrung und Kurs der Konzernkosten gehoeren nur zur Kostenbasis.
+                // Frueher trug der Stueckpreis die Konzernwaehrung (ISS-018.3).
+                var localCostCurrency = string.IsNullOrWhiteSpace(row.StandardCostCurrency)
+                    ? originalCurrency
+                    : row.StandardCostCurrency.Trim();
+                var localCostRate = string.Equals(localCostCurrency, standardCostCurrency, StringComparison.OrdinalIgnoreCase)
+                    ? standardCostRate
+                    : _exchangeRateService.ResolveRate(localCostCurrency, "CHF", rateDate);
 
                 return new ManagementFinanceAuditLedgerRow
                 {
@@ -1848,9 +1858,9 @@ public class ManagementCockpitService : IManagementCockpitService
                     CostSource = GroupMarginCalculator.DecorateCostSource(
                         basis.CostSource, basis.CostCurrency, originalCurrency, conversion),
                     StandardCost = row.StandardCost,
-                    StandardCostCurrency = standardCostCurrency,
-                    StandardCostChfRate = standardCostRate,
-                    StandardCostChf = standardCostRate.HasValue ? row.StandardCost * standardCostRate.Value : null,
+                    StandardCostCurrency = localCostCurrency,
+                    StandardCostChfRate = localCostRate,
+                    StandardCostChf = localCostRate.HasValue ? row.StandardCost * localCostRate.Value : null,
                     CostBasisOriginal = basis.CostBasis,
                     CostBasisCurrency = standardCostCurrency,
                     CostBasisChf = standardCostRate.HasValue ? basis.CostBasis * standardCostRate.Value : null,
