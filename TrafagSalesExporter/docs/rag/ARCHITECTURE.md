@@ -121,7 +121,9 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
   `App.razor` setzt `data-theme` schon im `<head>`, damit nichts weiss aufblitzt. **Regel fuer neue
   Seitenstile:** Flaechen und Text ueber MudBlazor-Variablen (`--mud-palette-surface`,
   `--mud-palette-text-secondary`, `--mud-palette-lines-default`) oder halbtransparente Toene, keine
-  festen hellen Hex-Werte. Bewusst hell bleiben die 3D-Flaechen (im Dunkelmodus abgedunkelt) und der
+  festen hellen Hex-Werte. **Falle:** `Color="Color.Primary"` auf grossen Flaechen (z. B. `MudAppBar`)
+  nimmt im Dunkelmodus das helle Schaltflaechen-Rot `#EF5350`; die Kopfleiste hat deshalb kein
+  `Color` und nutzt `AppbarBackground` (`a397440`). Bewusst hell bleiben die 3D-Flaechen (im Dunkelmodus abgedunkelt) und der
   weisse Grund hinter den Schulungsbildern.
 
 ## Rohquellen Nur Bei Bedarf

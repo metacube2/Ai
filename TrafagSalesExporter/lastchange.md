@@ -9,7 +9,9 @@ Stand: 2026-09-29
   Farben in den Seitenstilen (HR-Tabs, Cockpit, Einkauf, Settings, Startseite, Export-Dashboard,
   SourceViewer, Stueckliste) nehmen jetzt MudBlazor-Variablen. Commit `5f4eb5f`, `749/749`
   Release-Tests, Deploynachweis in `docs/rag/DEPLOYMENT.md`, Regel fuer neue Stile in
-  `docs/rag/ARCHITECTURE.md`. Sichtpruefung im Browser steht noch aus.
+  `docs/rag/ARCHITECTURE.md`.
+- Nachbesserung 13:59 (`a397440`) nach Ingos Screenshot: Die Kopfleiste leuchtete hellrot, weil
+  `Color.Primary` das helle Schaltflaechen-Rot nahm; jetzt gedaempftes Dunkelrot `#7F1D1D`, hell unveraendert.
 
 ## Projektsicht nach HERMES, Finance-Review, Italien, 2026-09-29
 

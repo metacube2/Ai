@@ -44,6 +44,12 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 13:59, Dunkelmodus: gedaempfte Kopfleiste.** Stand `a397440`, gleicher Worktree, ohne
+  Finance_All. `749/749`. `BiDashboard.dll` `29.09.2026 13:58:41`, `6'424'576` Bytes, SHA256
+  `729D261A0E4D0F71A9864EEA1BDCF5E6250EEFA2AD00511241B6C88DE0F817D9`, bitgleich. Fuenf Routen `200`.
+  Sicherung von 13:50 wiederverwendet (DB seit 13:18:35 unveraendert). Nur der bekannte WAL/SHM-Alarm,
+  beide um 13:59:37 wieder da. Anlass: Screenshot von Ingo, die Kopfleiste leuchtete im Dunkelmodus hellrot.
+
 - **Deploy 2026-09-29 13:51, Cockpit-Dunkelmodus.** Stand `5f4eb5f`, Worktree
   `C:TMPTrafagSalesExporter_release_eafd1c5` (auf `5f4eb5f` gestellt), ohne Finance_All. `749/749` Release-Tests.
   `BiDashboard.dll` `29.09.2026 13:46:23`, `6'424'576` Bytes, SHA256
