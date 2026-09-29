@@ -1,7 +1,8 @@
 # TR IT Referenzkost je Artikel: Vorschlag von Andreas vom 2026-09-09
 
 Stand: 2026-09-29, Messergebnis in Abschnitt 4a, Paolas Antwort in Abschnitt 7a, ihre Mail vom
-2026-09-29 und Ingos am selben Tag versendete Antwort in Abschnitt 7b.
+2026-09-29 und Ingos am selben Tag versendete Antwort in Abschnitt 7b, ihre Rueckfrage zum Lagerumfang
+und die Aufteilung je Lager in Abschnitt 7c.
 Gehoert zu `ISS-007.1` (Bewertungsmethode) und `ISS-007.2` (Referenzkost aus dem Bestand).
 
 Vorgaengerstand: `docs/FINANCE_IT_BEWERTUNGSMETHODE_PAOLA_2026-09-04.md`. Fachlicher
@@ -437,6 +438,51 @@ Ersetzt den Text aus Abschnitt 7a, falls dieser nicht verschickt wurde.
 > side reports at month end? If your consultants' query does something beyond this, for
 > example a historical moving average for items without current stock, I'd be glad to compare
 > before you build it.
+>
+> Best regards,
+> Ingo
+
+
+## 7c. Paolas Rueckfrage vom 2026-09-29 und Aufteilung je Lager
+
+Paola fragt, ob wir dieselbe Quelle und denselben Umfang nutzen: ihr Wert kommt aus dem SAP
+**Inventory Audit Report**, eingeschraenkt auf die realen, physischen Lager von TR IT.
+
+Gemessen am 2026-09-29 rein lesend gegen `it01_p` (`.tmp_tools/ItStockWarehouse0929/lager.sql`,
+Protokoll `lauf.txt`): Das Bestandsjournal `OINM` ergibt heute ueber **alle** Lager
+**1'010'088.55 EUR bei 63'965 Stueck** (am 09.09. waren es 987'909.28 EUR). `OITM.StockValue` ist
+die Summe ueber alle Lager; der Inventory Audit Report liest dasselbe Journal, der Unterschied
+kann also nur in der Lagerauswahl liegen.
+
+| Lager | Bedeutung | Wert EUR |
+| --- | --- | ---: |
+| `Mc` | Magazzino centrale | 841'651.04 |
+| `Mc_CRES` | Customer Reservation | 142'523.02 |
+| `Ms...` (14 Lager) | Bestand bei Lohnfertigern, dazu Laboratorio und Lavorazioni | rund 21'400 |
+| `Mc_Cvis`, `Mc_Fiere`, `Mc_DENI`, `Mc_Sosti`, `Mc_MARIN` | C/visione, Messen, weitere | rund 8'500 |
+| `Mc_Resi` | Retouren, **negativer** Wert | -3'976.25 |
+
+Auffaellig: `Mc_Resi` (-3'976.25 EUR bei 125 Stueck) und `Ms PIXSY` (-571.18 EUR bei 2 Stueck)
+haben negative Bestandswerte. Drei Lager sind in B1 als nicht disponierbar markiert (`Nettable = N`:
+`Mc_Cvis`, `Mc_DENI`, `Mc_MARIN`).
+
+### Antwortvorschlag an Paola, nicht versendet
+
+> Hi Paola,
+>
+> Good question, and it is the right one to settle first. The source is the same, the scope is
+> probably not. Our figure is the item master StockValue, which is the inventory journal summed over
+> **all** TRIT warehouses; the Inventory Audit Report reads the same journal, so the only possible
+> difference is the warehouse selection.
+>
+> As of today we see EUR 1,010,088.55 in total. By warehouse: Mc (Magazzino centrale) 841,651.04;
+> Mc_CRES (customer reservation) 142,523.02; stock at subcontractors (the Ms... warehouses) about
+> 21,400; the remaining Mc_ warehouses (C/visione, Fiere, DENI, Sostituzioni) about 8,500; and
+> Mc_Resi at minus 3,976.25.
+>
+> Could you tell me which warehouses count as "real/physical" in your report? Then I will restrict
+> our figure to exactly those and we can compare at month end. Two small things I noticed on the
+> way: Mc_Resi and Ms PIXSY carry negative stock values, which you may want to look at anyway.
 >
 > Best regards,
 > Ingo

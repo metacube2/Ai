@@ -4,8 +4,8 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
-- **2026-09-29: Review-Reparaturen von Codex, lokal umgesetzt, NICHT committet und NICHT deployed.**
-  Produktiv gilt weiter `5ae7f31`. Behoben im Arbeitsbaum: Von/Bis hat auch fuer Berechnungsjahr
+- **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, Uebersetzungen
+  `c1fdfa2`, 747/747 Tests). Behoben im Arbeitsbaum: Von/Bis hat auch fuer Berechnungsjahr
   und Vergleichskacheln Vorrang vor dem Jahresfeld (H1); Monat/Quartal/YTD mit vollstaendigen
   Kalenderperioden, Headcount auch mit vor dem Von-Datum Ausgeschiedenen (H2); die Personenquote
   zeigt nicht mehr scheinbar belastbare Werte (H3); ein bewusst geleertes Jahr bleibt leer (H4);

@@ -44,6 +44,18 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 10:07, HR- und Einkaufs-Review-Reparaturen von Codex.** Stand `c1fdfa2`
+  (Funktionscommit `eafd1c5`, Uebersetzungen `c1fdfa2`), sauberer Worktree
+  `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `747/747` Release-Tests; der erste Lauf
+  hatte einen roten Uebersetzungstest (vier neue Texte ohne es/it/hi/sq/tr/tlh), behoben in `c1fdfa2`.
+  `BiDashboard.dll` `29.09.2026 09:56:18`, `6'410'752` Bytes, SHA256
+  `4782582CA860B5B1BDB7437D7F664EEDBB16D76DFF145594941675890FD21371`, bitgleich. Fuenf Routen `200`.
+  Sicherung `trafag_exporter.db.before-hr-purchasing-review-20260929-095654.bak` (die Kopie ueber das
+  Netz dauerte rund zehn Minuten, die Anwendung blieb online). Ohne Alarm. Nicht belegt: Sichtpruefung
+  der HR- und Einkaufsseiten angemeldet.
+- **Nachweis ISS-020 (Deploy 09:25):** Nach dem Spanien-Import enthaelt `Sales_All_2026-09-29.xlsx`
+  8'109 TRES-Zeilen (vorher 6'772) mit Rechnungsdatum bis 28.09.2026; August 314, September 486 Zeilen.
+
 - **Deploy 2026-09-29 09:25, SharePoint-Ordnerliste mit Folgeseiten (ISS-020, Spanien-Import).** Stand
   `60cc569`, sauberer Worktree `C:TMPTrafagSalesExporter_release_60cc569`, ohne Finance_All und ohne
   die laufenden HR/Einkauf-Reparaturen von Codex. `741/741` Release-Tests (vier neue Paging-Tests).

@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-09-29 (Codex-Reparaturen E1/E2/C1/C2 lokal, nicht deployed; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-09-29 (Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
 
 Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
@@ -14,7 +14,7 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
 
 ## Kurzstand
 
-- **2026-09-29: Review-Reparaturen von Codex, lokal umgesetzt, NICHT committet und NICHT deployed.**
+- **2026-09-29: Review-Reparaturen von Codex, produktiv seit 10:07** (`eafd1c5`, `c1fdfa2`).
   Der Jahres-Spend kommt aus einer eigenen, ungekappten Jahresaggregation statt aus der Summe
   der Top 10; das Diagramm bleibt Top 10 (E1). Die Top-Warengruppe nutzt wie Diagramm und Matrix
   zuerst `MARA.MATKL` (E2). Bei unvollstaendigem Cache entstehen keine SAP-Live-Stichproben-KPIs

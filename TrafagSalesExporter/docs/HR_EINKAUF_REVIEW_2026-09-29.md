@@ -2,7 +2,7 @@
 
 Stand: 2026-09-29. Urspruenglicher Auftrag: **nur Analyse und Bericht**.
 Nachfolgeauftrag am selben Tag: technische Fehler ohne neuen Fachentscheid reparieren,
-offene Fachfragen mit vorhandenen MD-Anforderungen abgleichen. **Lokal umgesetzt, nicht deployed.**
+offene Fachfragen mit vorhandenen MD-Anforderungen abgleichen. **Lokal umgesetzt, nicht deployed.** **Nachtrag Claude: committet (`eafd1c5`, Uebersetzungen `c1fdfa2`) und produktiv seit 2026-09-29 10:07, 747/747 Tests.**
 
 ## Reparaturstand nach Folgeauftrag
 
