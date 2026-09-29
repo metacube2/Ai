@@ -44,6 +44,18 @@ Stand: 2026-09-29
 
 ## Kurzstand
 
+- **Deploy 2026-09-29 13:51, Cockpit-Dunkelmodus.** Stand `5f4eb5f`, Worktree
+  `C:TMPTrafagSalesExporter_release_eafd1c5` (auf `5f4eb5f` gestellt), ohne Finance_All. `749/749` Release-Tests.
+  `BiDashboard.dll` `29.09.2026 13:46:23`, `6'424'576` Bytes, SHA256
+  `2A2617BB12E36535223A9B988F500B20D9A355547D2014DDA940F9CBE54952BB`, bitgleich. Fuenf Routen `200`.
+  Sicherung `trafag_exporter.db.before-cockpit-darkmode-20260929-135057.bak`. Ein Alarm, der bekannte:
+  WAL/SHM beim Neustart kurz weg, um 13:52:05 wieder da, Hauptdatei unveraendert (13:18:35).
+  Wirknachweis `trafagTheme.set`, `Hell/Dunkel umschalten`. Nicht belegt: Sichtpruefung im Browser
+  (Chrome-Erweiterung nach PC-Neustart nicht verbunden).
+  **Befehlsform:** den Runner ueber Bash als `dotnet run --project .tmp_tools/DeployHeadless -c Release`
+  starten. Ein PowerShell-Aufruf mit vorangestelltem `Set-Location` passt auf keine Erlaubnisregel und
+  wurde im Auto-Modus zweimal abgelehnt.
+
 - **Deploy 2026-09-29 10:22, Cockpit ISS-018.2 bis .4.** Stand `91fd9dc`, Worktree
   `C:TMPTrafagSalesExporter_release_eafd1c5` (auf `91fd9dc` gestellt), ohne Finance_All. `749/749` Release-Tests.
   `BiDashboard.dll` `29.09.2026 10:20:36`, `6'416'384` Bytes, SHA256

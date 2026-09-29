@@ -1,8 +1,9 @@
 # RAG Architecture
 
-Stand: 2026-09-28 (Abschnitt „Code-Architektur" neu; der Kurzstand darunter stammt vom
-2026-05-27 und ist fachlich weiter gueltig, beschreibt aber nicht die seither
-dazugekommenen Bereiche Einkauf, Journal, Marktsegmente, Serveranalyse und HR)
+Stand: 2026-09-29 (Hell/Dunkel im Kurzstand ergaenzt; Abschnitt „Code-Architektur" vom
+2026-09-28; der Kurzstand darunter stammt sonst vom 2026-05-27 und ist fachlich weiter gueltig,
+beschreibt aber nicht die seither dazugekommenen Bereiche Einkauf, Journal, Marktsegmente,
+Serveranalyse und HR)
 
 ## Code-Architektur: Befund vom 2026-09-28
 
@@ -114,6 +115,14 @@ vorher in `docs/AGENT_COORDINATION.md` abstimmen.
   Elemente) - bei einem Singleton-Cache mit mehreren gleichzeitigen Nutzern IMMER zuerst pruefen,
   ob Aufrufer schreibend auf die zurueckgegebene Liste zugreifen, bevor man cached. Details/
   Messwerte: `lastchange.md` Eintrag "PERFORMANCE-BEFUND COCKPIT 2026-07-23".
+- HELL/DUNKEL seit 2026-09-29 (`5f4eb5f`, produktiv 13:51): Standard ist dunkel (Wunsch Ingo),
+  Umschalter in der Kopfleiste, Wahl je Browser in `localStorage` (`trafag-theme`). Gesteuert in
+  `Components/Layout/MainLayout.razor` (`PaletteDark`, `IsDarkMode`) und `wwwroot/js/theme.js`;
+  `App.razor` setzt `data-theme` schon im `<head>`, damit nichts weiss aufblitzt. **Regel fuer neue
+  Seitenstile:** Flaechen und Text ueber MudBlazor-Variablen (`--mud-palette-surface`,
+  `--mud-palette-text-secondary`, `--mud-palette-lines-default`) oder halbtransparente Toene, keine
+  festen hellen Hex-Werte. Bewusst hell bleiben die 3D-Flaechen (im Dunkelmodus abgedunkelt) und der
+  weisse Grund hinter den Schulungsbildern.
 
 ## Rohquellen Nur Bei Bedarf
 

@@ -2,6 +2,15 @@
 
 Stand: 2026-09-29
 
+## Cockpit-Dunkelmodus, produktiv 2026-09-29 13:51
+
+- Auftrag von Ingo („darkmode einbauen, meine augen brennen"). Standard ist dunkel, der Umschalter
+  (Sonne/Mond) sitzt in der Kopfleiste neben der Statusampel, die Wahl gilt je Browser. Feste helle
+  Farben in den Seitenstilen (HR-Tabs, Cockpit, Einkauf, Settings, Startseite, Export-Dashboard,
+  SourceViewer, Stueckliste) nehmen jetzt MudBlazor-Variablen. Commit `5f4eb5f`, `749/749`
+  Release-Tests, Deploynachweis in `docs/rag/DEPLOYMENT.md`, Regel fuer neue Stile in
+  `docs/rag/ARCHITECTURE.md`. Sichtpruefung im Browser steht noch aus.
+
 ## Projektsicht nach HERMES, Finance-Review, Italien, 2026-09-29
 
 Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
