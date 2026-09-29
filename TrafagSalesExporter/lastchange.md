@@ -31,7 +31,10 @@ Nur Doku, Status und Projektmanagement; kein App-Code, kein Deploy.
   vollstaendig, geloeschte Archivdateien (`835b317`) benannt.
 - **Neu und dringend: Spanien-Import steht seit Mitte Juli** (`ISS-020`). Produktiv kommen keine
   neuen TRES-Zeilen an, der Bestand schrumpft (7'040 -> 6'772). Verdacht: SharePoint-Ordnerliste
-  ohne Folgeseiten, hoechstens 200 Eintraege. Zaehlung im Ordner steht aus.
+  ohne Folgeseiten, hoechstens 200 Eintraege. **Bestaetigt und behoben:** das AppEventLog zeigt
+  die schrumpfende Dateiauswahl (125 Dateien am 20.08., 81 am 28.09.); Korrektur `60cc569`, alle
+  fuenf Ordnerlisten mit Folgeseiten, 741/741 Tests, Deploy 09:25 ohne Alarm. Nachimport beim
+  naechsten Lauf pruefen; `Sales_All_2026-09-28.xlsx` enthaelt Spanien nur bis 15.07.
 - **Railway-Gesamtsicht und DB4** (`ISS-019`): Umsatz technisch fuer alle Standorte da, belastbar
   nur DE, weil Patrik 171 Vorschlaege noch nicht bestaetigt hat; DB4 braucht zuerst eine
   Definition, danach mehr Quellfelder aus Sage, Alphaplan und B1.

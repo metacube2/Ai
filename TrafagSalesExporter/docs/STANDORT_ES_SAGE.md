@@ -151,7 +151,8 @@ als Vergleichsgroesse verwendet werden.
   (`UseInvoiceDate`), `PostingDate` ist damit nur noch Informationsspalte. Belegt ist, dass Santis
   Server ein Skript mit `PostingDate`-Spalte, aber 7-Tage-Fenster faehrt (Datei vom 2026-09-02,
   Spalte leer). Neu und gravierender: Seit Mitte Juli kommen **keine neuen Spanien-Zeilen** mehr in
-  der Produktion an (`ISS-020`).
+  der Produktion an (`ISS-020`). Ursache war die SharePoint-Ordnerliste,
+  die nur die ersten 200 Eintraege las; seit dem 2026-09-29 um 09:25 korrigiert (`60cc569`).
 - Datenluecke Januar bis 27.05.2026: der Range-Export begann erst Ende Mai. Ein
   Nachtragsexport Januar bis Mai wurde am 2026-08-17 erzeugt (1'571 Zeilen,
   `1'461'263.57 EUR`, `PostingDate` zu 100 % gefuellt) und hochgeladen.

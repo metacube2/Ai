@@ -1,6 +1,6 @@
 # RAG Deployment
 
-Stand: 2026-09-28
+Stand: 2026-09-29
 
 ## Werkzeug und drei Fallen im Publish selbst
 
@@ -43,6 +43,16 @@ Stand: 2026-09-28
   beim naechsten Deploy weg, ohne Meldung.
 
 ## Kurzstand
+
+- **Deploy 2026-09-29 09:25, SharePoint-Ordnerliste mit Folgeseiten (ISS-020, Spanien-Import).** Stand
+  `60cc569`, sauberer Worktree `C:TMPTrafagSalesExporter_release_60cc569`, ohne Finance_All und ohne
+  die laufenden HR/Einkauf-Reparaturen von Codex. `741/741` Release-Tests (vier neue Paging-Tests).
+  `BiDashboard.dll` `29.09.2026 09:22:58`, `6'407'680` Bytes, SHA256
+  `4000AAE5747FA369D8A87891D427085CB2D0A7FBCF0884A0C06E3F7B7D55B327`, bitgleich. Fuenf Routen `200`.
+  Sicherung `trafag_exporter.db.before-sharepoint-paging-20260929-092417.bak`. Produktiv-DB in Laenge
+  und Schreibzeit unveraendert. Wirknachweis `SharePoint-Ordner liefert mehr als` in der DLL. Ohne Alarm.
+  **Noch nicht belegt:** dass der naechste Spanien-Import die Dateien ab dem 16.07. einliest; das zeigt
+  erst der naechste Lauf.
 
 - **Deploy 2026-09-28 13:50, Finanzvergleich-Cache und Einkauf-Status eine Zeile je Lauf.** Stand
   `02bd0cd` (Funktionscommit `eaa9d43`), sauberer Worktree `C:\TMP\TrafagSalesExporter_release_02bd0cd`,

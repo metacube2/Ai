@@ -30,7 +30,9 @@ Stand: 2026-09-09
   - ~~OFFEN ist nur noch, dass Santi Gomez die 7-Tage- gegen die 35-Tage-Version des
     Exportskripts tauscht.~~ Ueberholt: am 2026-09-02 entschieden, die 7-Tage-Version bleibt,
     Finance ES nutzt `InvoiceDate`. **Neu 2026-09-29:** Seit Mitte Juli kommen keine neuen
-    Spanien-Zeilen in der Produktion an, der Bestand schrumpft (`ISS-020`). Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
+    Spanien-Zeilen in der Produktion an, der Bestand schrumpft (`ISS-020`). Ursache: die
+    SharePoint-Ordnerliste las nur die erste Graph-Seite (200 Eintraege). Korrektur `60cc569`
+    seit 2026-09-29 09:25 produktiv; der Nachimport ab 16.07. zeigt sich beim naechsten Lauf. Die absolute Zahl `1'523` steht seit dem 2026-08-26 unveraendert,
     es kommen also derzeit keine neuen Buchungsdaten nach. Details:
     `docs/FINANCE_ES_BUCHUNGSDATUM_2026-08-03.md` Abschnitte 8 bis 12.
 - Spanien-Deltas werden vor dem Speichern dedupliziert: zuerst `SourceLineId`, sonst Invoice/Position/Material.

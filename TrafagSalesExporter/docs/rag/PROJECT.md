@@ -18,7 +18,8 @@ Vorrang hat nach `router.md` Regel 1 immer der juengste direkt gepruefte Beleg j
   Anwendervertreter. Am selben Tag hat Codex das Finance-Dashboard geprueft; alle Befunde sind
   gegen den Code bestaetigt (`docs/FINANCE_REVIEW_2026-09-29.md`, `ISS-018`), repariert ist
   noch nichts. **Dringend:** Der Spanien-Import steht seit Mitte Juli, produktiv kommen keine
-  neuen TRES-Zeilen an (`ISS-020`, Verdacht SharePoint-Liste ohne Folgeseiten). Railway-Gesamtsicht
+  neuen TRES-Zeilen an (`ISS-020`). Ursache bestaetigt (SharePoint-Liste las nur 200 Eintraege),
+  Korrektur `60cc569` seit 09:25 produktiv, Nachimport beim naechsten Lauf pruefen. Railway-Gesamtsicht
   und DB4 fuer Heiko und Patrick als `ISS-019`. Die Markdown-Konsistenzbefunde von Codex sind
   behoben.
 
