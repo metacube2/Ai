@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| – | derzeit keine laufende Arbeit | – | – |
+| Claude | ISS-021 beheben: B1-Abfrage nur eine Lieferanten-Rechnungsadresse (Auftrag Ingo 29.09.: „fixe das mit den doppelten zeilen“) | `Services/HanaQueryService.cs`, Tests unter `TrafagSalesExporter.Tests/`, neu `.tmp_tools/HanaSupplierAddress0929/`, danach Doku ISS-021 | **Code committet (`4a1baa0`), nicht deployed.** 772/772. HANA it01_p live geprueft (Trafag AG Standardadresse CH, keine Doppelung mehr). Wartet auf Ingo: Freigabe Auto-Modus bzw. Deploy, Andreas informieren. |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

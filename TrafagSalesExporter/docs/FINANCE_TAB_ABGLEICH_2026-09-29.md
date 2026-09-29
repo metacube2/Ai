@@ -108,10 +108,19 @@ Andere Standorte, Datenstand 29.09.:
 weil 1,81 Mio. EUR Doppelzeilen darin steckten. Ohne sie liegt Italien 2025 bei 5,86 Mio. EUR,
 also 1,81 Mio. EUR unter dem Sollwert. Die Italien-Methode muss danach neu abgestimmt werden.
 
-**Nicht umgesetzt.** Die Korrektur waere, den Join auf die Standard-Rechnungsadresse des
-Lieferanten (`OCRD."BillToDef"`) zu beschraenken. Sie senkt Italien 2025 um 3,79 Mio. und 2026 um
-3,01 Mio. EUR. Weil das die Finance-Zahlen und den Soll/Ist-Vergleich sichtbar veraendert,
-entscheidet Ingo (`ISS-021`).
+**Nachtrag 2026-09-29, Korrektur umgesetzt (`4a1baa0`), noch nicht deployed.** Auf Ingos Auftrag
+„fixe das mit den doppelten zeilen": Der Join nimmt die Standard-Rechnungsadresse des Lieferanten
+(`OCRD."BillToDef"`), sonst eine feste Adresse je Lieferant (kleinstes Land). 772/772 Tests.
+Live in `it01_p` nur lesend geprueft (`.tmp_tools/HanaSupplierAddress0929/check.sql` mit `HanaQ`):
+
+- Trafag AG `S_CH01_0065180`: `BillToDef = main`, Adresse `main` = CH; die zweite Adresse
+  `DE_FiscalRepresentative` = DE ist der Fiskalvertreter. Trafag AG bekommt damit CH.
+- Senseca `S_IT01_0000106`: Standard `Bill to` (IT), zweite Adresse `SEDE OPERATIVA` (IT).
+- Neue Verknuepfung ueber alle IT-Rechnungspositionen 2025 (ohne Umsatzfilter): 12'902 Zeilen
+  fuer 12'902 Positionen, keine Doppelung mehr. SAP nimmt die Abfrage an.
+
+Erwartete Wirkung ab dem naechsten TRIT-Export: Italien 2025 −3,79 Mio., 2026 −3,01 Mio. EUR in
+Oberflaeche und `Sales_All`. Andreas vor dem Deploy informieren.
 
 ## 4. Aussagegrenzen
 
