@@ -1,6 +1,6 @@
 # Unterrouter Projekt
 
-Zurueck: `router.md`. Stand: 2026-08-17.
+Zurueck: `router.md`. Stand: 2026-09-29.
 
 Agentenkoordination, Projektstatus, Roadmap, Arbeitsregeln, Aenderungsstand.
 
@@ -20,6 +20,7 @@ nachtragen und die Reservierung freigeben. Eintraege mit `abgeschlossen`, `deplo
 | Bedarf | Datei |
 | --- | --- |
 | **Persoenliche Aufgabenliste, „woran arbeite ich gerade", Auftraggeber und Termine** | `projektmanagement/PROJEKTSTATUS.md` (IDs `PM-01` ff.) |
+| **Vorhaben nach HERMES fuer die Geschaeftsleitung**: Stufe, Auftraggeber, Anwendervertreter, Freigabe/Abnahme/Abschluss, Ampel; Vorlagen Projektauftrag und Abnahmeprotokoll | `projektmanagement/Vorhaben_HERMES.tsv` (Quelle), Ausgabe `projektmanagement/Wochen_Todo.xlsx` Blatt „HERMES Übersicht“, erzeugt mit `projektmanagement/wochen_todo_xlsx.py` |
 | **Offene Punkte im Finance Dashboard, Status je Punkt** | `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`, dazu `docs/FINANCE_OFFENE_PUNKTE_2026-08-12.md` |
 | 180-Tage-Roadmap Analytics, BI, HR, Einkauf | `docs/INGO_TODOS_180_TAGE_2026-06-18.md` |
 | **Managementbericht fuer den Vorgesetzten: Rolle, Scope-Abgrenzung, Entscheidungsbedarf** | `docs/Uebersicht_Aufgaben_Ingo_2026-09-02.docx`, erzeugt von `.tmp_tools/BuildChefUebersicht0902` |

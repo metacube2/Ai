@@ -10,6 +10,15 @@ hier eingetragen, nicht mehr in einem Chatverlauf.
 `kontext.txt` bleibt als Rohquelle liegen, ist aber **abgeloest** und wird nicht
 mehr gepflegt.
 
+**Seit 2026-09-29 gibt es eine Sicht fuer die Geschaeftsleitung nach HERMES**, zugeschnitten
+auf ein KMU: je Arbeitspaket Stufe (Kleinauftrag, Vorhaben, Projekt), Auftraggeber,
+Anwendervertreter, die drei Entscheidungspunkte Freigabe, Abnahme und Abschluss sowie eine
+Ampel. Quelle ist `projektmanagement/Vorhaben_HERMES.tsv`, die Ausgabe das Blatt
+„HERMES Übersicht“ in `Wochen_Todo.xlsx`, dazu je eine Vorlage fuer Projektauftrag und
+Abnahmeprotokoll. Rollen mit „Vorschlag“ sind aus dieser Datei abgeleitet und noch nicht
+bestaetigt, die Stufen sind ohne Aufwandschaetzung eingeordnet. Wochen_Todo fuehrt je
+Aufgabe die Spalten `Vorhaben` und `HERMES-Stufe`.
+
 Abgrenzung: Das Finance Dashboard hat ein eigenes, feineres Issue-Log unter
 `docs/Issue_Log_Konsolidiert_2026-08-12.tsv`. Diese Datei hier fuehrt die
 uebergeordneten Arbeitspakete; sie verweist auf das Issue-Log, dupliziert es aber
