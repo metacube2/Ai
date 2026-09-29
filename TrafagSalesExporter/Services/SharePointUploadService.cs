@@ -134,7 +134,7 @@ public class SharePointUploadService : ISharePointUploadService
             throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
 
         var folderPath = ResolveRemotePath(normalizedReference, siteUri);
-        var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
+        var children = await ListAllChildrenAsync(graphClient, drive.Id, folderPath);
         if (isAlphaplanImport)
         {
             var alphaplanReferences = await ResolveAlphaplanManualImportFilesAsync(graphClient, drive.Id, folderPath);
@@ -142,9 +142,9 @@ public class SharePointUploadService : ISharePointUploadService
                 return alphaplanReferences;
         }
 
-        var graphItems = children?.Value?
+        var graphItems = children
             .Where(item => item.File is not null)
-            .ToList() ?? [];
+            .ToList();
 
         var selectedNames = SelectManualImportFileNames(
             graphItems.Select(item => new ManualImportCandidate(item.Name ?? string.Empty, item.LastModifiedDateTime)),
@@ -344,8 +344,8 @@ public class SharePointUploadService : ISharePointUploadService
             throw new InvalidOperationException("SharePoint Dokumentenbibliothek konnte nicht gefunden werden.");
 
         var folderPath = ResolveRemotePath(normalizedReference, siteUri);
-        var children = await graphClient.Drives[drive.Id].Root.ItemWithPath(folderPath).Children.GetAsync();
-        var latest = children?.Value?
+        var children = await ListAllChildrenAsync(graphClient, drive.Id, folderPath);
+        var latest = children
             .Where(item => item.File is not null)
             .Where(item => IsProcessedMergeInputFile(item.Name))
             .Where(item => MatchesProcessedMergeInputTsc(item.Name, normalizedTsc))
@@ -536,11 +536,11 @@ public class SharePointUploadService : ISharePointUploadService
 
         foreach (var folder in folders)
         {
-            var children = await graphClient.Drives[driveId].Root.ItemWithPath(folder).Children.GetAsync();
-            var files = children?.Value?
+            var children = await ListAllChildrenAsync(graphClient, driveId, folder);
+            var files = children
                 .Where(item => item.File is not null)
                 .Where(item => IsAlphaplanInvoiceFile(item.Name))
-                .ToDictionary(item => item.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase) ?? [];
+                .ToDictionary(item => item.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase);
 
             var sortKey = BuildAlphaplanFolderSortKey(folderPath, folder);
             if (files.TryGetValue("invoice_headers.csv", out var header) &&
@@ -550,10 +550,10 @@ public class SharePointUploadService : ISharePointUploadService
                 references.Add((new SharePointFileReference(BuildRemotePath(folder, line.Name), line.LastModifiedDateTime), $"{sortKey}|1"));
             }
 
-            var zipReferences = children?.Value?
+            var zipReferences = children
                 .Where(item => item.File is not null)
                 .Where(item => IsAlphaplanZipFile(item.Name))
-                .Select(item => (new SharePointFileReference(BuildRemotePath(folder, item.Name), item.LastModifiedDateTime), $"{sortKey}|2|{item.Name}")) ?? [];
+                .Select(item => (new SharePointFileReference(BuildRemotePath(folder, item.Name), item.LastModifiedDateTime), $"{sortKey}|2|{item.Name}"));
             references.AddRange(zipReferences);
         }
 
@@ -574,14 +574,59 @@ public class SharePointUploadService : ISharePointUploadService
         if (maxDepth <= 0)
             return result;
 
-        var children = await graphClient.Drives[driveId].Root.ItemWithPath(rootFolderPath).Children.GetAsync();
-        foreach (var folder in children?.Value?.Where(item => item.Folder is not null) ?? [])
+        var children = await ListAllChildrenAsync(graphClient, driveId, rootFolderPath);
+        foreach (var folder in children.Where(item => item.Folder is not null))
         {
             var childPath = BuildRemotePath(rootFolderPath, folder.Name);
             result.AddRange(await ResolveFolderTreeAsync(graphClient, driveId, childPath, maxDepth - 1));
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Liest alle Eintraege eines Ordners, nicht nur die erste Seite. Graph liefert je Seite
+    /// hoechstens 200 Eintraege; ohne die Folgeseiten sah der Spanien-Import ab Mitte Juli 2026
+    /// die neuesten Dateien nicht mehr (ISS-020), weil taeglich neue, alphabetisch fruehere
+    /// Dateien die Spanien-Exporte aus der ersten Seite verdraengt haben.
+    /// </summary>
+    private static async Task<List<DriveItem>> ListAllChildrenAsync(
+        GraphServiceClient graphClient,
+        string driveId,
+        string folderPath)
+    {
+        var children = graphClient.Drives[driveId].Root.ItemWithPath(folderPath).Children;
+        var firstPage = await children.GetAsync();
+        return await CollectAllPagesAsync(
+            firstPage?.Value,
+            firstPage?.OdataNextLink,
+            async nextLink =>
+            {
+                var page = await children.WithUrl(nextLink).GetAsync();
+                return (page?.Value, page?.OdataNextLink);
+            });
+    }
+
+    internal static async Task<List<T>> CollectAllPagesAsync<T>(
+        IEnumerable<T>? firstPage,
+        string? nextLink,
+        Func<string, Task<(List<T>? Items, string? NextLink)>> fetchNextPage,
+        int maxPages = 1000)
+    {
+        var items = new List<T>(firstPage ?? []);
+        var pages = 1;
+        while (!string.IsNullOrWhiteSpace(nextLink))
+        {
+            if (++pages > maxPages)
+                throw new InvalidOperationException(
+                    $"SharePoint-Ordner liefert mehr als {maxPages} Seiten; Abbruch, um eine Endlosschleife zu vermeiden.");
+
+            var (pageItems, following) = await fetchNextPage(nextLink);
+            items.AddRange(pageItems ?? []);
+            nextLink = following;
+        }
+
+        return items;
     }
 
     private static bool IsAlphaplanInvoiceFile(string? fileName)
