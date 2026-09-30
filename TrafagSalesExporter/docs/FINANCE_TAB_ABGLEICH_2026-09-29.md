@@ -183,3 +183,17 @@ ausschluss entfernen". Herkunft: provisorischer Prueffilter vom 2026-05-18
 Kontenfilter `47005%` ohne `4700504%` bleibt. Erwartet ab dem Export am 30.09.: Italien 2025 rund
 7,70 Mio. EUR, 0,4 % ueber Rhino. Dann nachmessen, auch ob die Finance-Regel fuer Trafag Italia
 noch greift.
+
+## 6. Nachweis 2026-09-30: Sales_All vom 30.09. gegen 29.09.
+
+Manueller Lauf 30.09. 06:42-07:09 mit beiden Korrekturen. Vergleich der Blaetter `Sales`
+(Werkzeug `CompareSalesAll.cs`):
+
+- Mehrfachpositionen: TRIT 8'553 -> 0, TRFR 20 -> 0, TRIN 30 -> 0, alle anderen 0.
+- Italien 2025: 9'642'342.19 -> **7'697'203.62 EUR**, Rhino 7'669'840 (+0,36 %), Hauptbuch 47005
+  7'702'166.38. Italien 2026: 8'185'962.55 -> 6'484'585.82 EUR.
+- Frankreich 2025 −20'256.00 EUR, Indien 2025 −3'521'534.94 INR (die Doppelzeilen).
+- AT, CH, DE, ES, UK, US 2025 unveraendert; 2026 nur Zuwachs durch neue Rechnungen.
+- Trafag AG steht in Italien jetzt mit CH (8'893 Zeilen).
+
+Damit passt Italien zu der Erwartung von Andreas aus der Vorwoche. `ISS-021` und `ISS-030` erledigt.
