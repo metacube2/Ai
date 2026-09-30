@@ -6,7 +6,7 @@ Stand: 2026-09-30
 
 - **2026-09-30: Arbeitstag 8,0 h statt 8,4 h** (Entscheid Ingo, deckt sich mit Sonjas Tagessoll
   8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
-  und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. Deploystand siehe `docs/rag/DEPLOYMENT.md`.
+  und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. **Produktiv seit 2026-09-30 09:36** (`docs/rag/DEPLOYMENT.md`).
   Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
 
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,

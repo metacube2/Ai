@@ -264,7 +264,7 @@ Krankheitstage (Stunden / 8,0), die 61-Tage-Grenze der Langzeitkrankheit und den
 aus der Rexx-Sollzeit (Sollzeit / 8,0). Wirkung: rund 5 % mehr Krankheitstage und eine hoehere
 Krankenquote als bisher; Langzeitkrank gilt schon ab 488 statt 512,4 Stunden; wer nur ueber die
 Sollzeit ein FTE bekommt, hat ein um 5 % hoeheres FTE. Neuer Test
-`Krankheitstag_Hat_Acht_Stunden`, 788/788.
+`Krankheitstag_Hat_Acht_Stunden`, 788/788. **Produktiv seit 2026-09-30 09:36** (Deploy `2047add`, 773/773 im Release-Worktree, ohne Alarm).
 
 ## Querverweise
 
