@@ -520,6 +520,12 @@ Rexx beauftragt (4'800 EUR pro Jahr, Angebot Artjom Yahno vom 2026-07-28); „wa
 heisst also konkret: Rexx richtet den Hub ein. Dazu offene HR-Wuensche aus der Mailhistorie (Ferien
 am Stueck, Fit-&-Wohl, Uebertrag Restferien, weitere KPIs), siehe `docs/HR_KPI.md` Abschnitt 8.3.
 
+**Nachtrag 2026-09-30:** Den Rexx-Hub wollen wir nicht (Ingo). Der taegliche Export der vier
+Rexx-Berichte in den HR-Datenordner soll ueber Upgreat laufen, wie die dormakaba-Uebermittlung nach
+Rexx, die Ueli Kunzmann seit 02.09. im 15-Minuten-Takt betreibt. Mail an Ueli am 30.09. versendet;
+offen sind seine Antwort, Pfad und Berechtigung sowie, ob Nadjas Hub-Auftrag bei Rexx zurueckgenommen
+wird. Ausserdem seit 30.09. produktiv: Arbeitstag 8,0 h statt 8,4 h (`docs/HR_KPI.md` 8.4).
+
 ### PM-09 Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf
 
 Ausloeser war die Rueckmeldung der Nutzer, man sehe lange gar nichts von der Oberflaeche; laut

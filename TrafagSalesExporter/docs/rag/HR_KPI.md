@@ -8,6 +8,9 @@ Stand: 2026-09-30
   8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
   und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. **Produktiv seit 2026-09-30 09:36** (`docs/rag/DEPLOYMENT.md`).
   Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
+- **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
+  (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen. dormakaba nach Rexx laeuft schon
+  seit 02.09. alle 15 Minuten. Details `docs/HR_KPI.md` 8.3.
 
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,
   Fit-&-Wohl nach 6. Absenz oder 12 Krankheitstagen, Uebertrag Restferien) und die spaeteren KPIs

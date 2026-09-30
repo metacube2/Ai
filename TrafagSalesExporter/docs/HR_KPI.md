@@ -234,7 +234,22 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
 
 **Offene Faeden:**
 
-- **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
+- **Seit 2026-09-30: kein Rexx-Hub, Export ueber Upgreat (PM-07).** Ingo: „Hub wollen wir nicht“. Stattdessen
+  hat Ingo am 2026-09-30 Ueli Kunzmann (Upgreat) per Mail gebeten, die vier Rexx-Berichte
+  (`Saldiperstichdatum`, `Exportkommengehen`, `Abwesenheitinstunden` ab 01.01. des laufenden Jahres,
+  `Personalausgeschieden`, je `.xlsx` mit unveraenderten Namen und Spalten) einmal taeglich in den
+  HR-Datenordner auf dem BiDashboard-Server zu liefern, die alte Datei zu ueberschreiben und zu
+  archivieren. Gefragt: ob Rexx die Berichte per SFTP bereitstellen kann, und ob Ausfaelle ueberwacht
+  werden. Pfad und Berechtigung klaert Ingo mit Ueli. **Offen:** Antwort Ueli; ob der von Nadja
+  erteilte Hub-Auftrag bei Rexx zurueckgenommen werden muss. Die SAP-Datei `HR_KPI_Export` ist
+  nicht Teil davon.
+- **Gegenrichtung schon automatisch: dormakaba nach Rexx (seit 2026-09-02).** Ueli Kunzmann hat auf
+  `tragvapp404` einen geplanten Task eingerichtet: Start 00:14:50, danach alle 15 Minuten; neueste
+  `.booking` aus `D:KabaB-COMM JavaDefaultBooking` wird als `bclan01_yyyy.MM.dd_HH.mm.ss.booking`
+  nach `D:Transfer_Booking_to_REXXTransfer` verschoben, per SFTP nach Rexx `/import/dormakaba`
+  geladen und in `D:Transfer_Booking_to_REXXArchiv` abgelegt (Teams, Alex Donato, 2026-09-02). Die
+  Stempeldaten in Rexx sind damit aktuell, das Cockpit nicht.
+- *Ueberholt am 2026-09-30 (Hub nicht gewollt):* **Rexx-Hub fuer den automatischen Export (PM-07):** Rexx (Artjom Yahno) hat am 2026-07-28 den
   Rexx-Hub fuer 4'800 EUR pro Jahr empfohlen (vier Einzelschnittstellen waeren 5'600 EUR). **Nadja hat
   am 2026-07-29 den Auftrag zur Umsetzung erteilt.** Stand bei Rexx nachfragen.
 - **Q1/2026-Abgleich mit SAP:** Nadja bat am 2026-05-05, Q1/2026 mit Live-Daten zu testen, um die Quoten
