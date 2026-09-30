@@ -130,6 +130,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<TimerBackgroundSer
 // Notwendig, weil einzelne Standortsysteme (Indiens HANA) nur der Server erreicht und dort
 // weder Remoteausfuehrung noch RDP zur Verfuegung steht.
 builder.Services.AddHostedService<ServerAnalysisBackgroundService>();
+// Holt die SAP-HR-Felder taeglich ueber OData (HrKpiSet) statt aus dem Handexport, docs/HR_KPI.md 8.6.
+builder.Services.AddHostedService<HrKpiSapRefreshService>();
 
 // Einkauf-Laeufe laufen an der Anwendung, nicht am Blazor-Circuit des Anwenders. Derselbe
 // Singleton raeumt beim Start liegengebliebene `Running`-Eintraege auf. Begruendung in

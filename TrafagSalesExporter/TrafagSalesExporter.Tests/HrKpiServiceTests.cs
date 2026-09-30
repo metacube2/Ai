@@ -548,6 +548,26 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal(61m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.LangStd);
     }
 
+    [Fact]
+    public async Task BuildAsync_Liest_Die_Aus_OData_Geschriebene_SapDatei()
+    {
+        // Die Datei, die der Tagesabruf aus HrKpiSet schreibt, muss der bestehende Leser verstehen.
+        SapGatewayHrKpiReader.WriteWorkbook(
+        [
+            new HrKpiSapRow("00001001", "2026", "09", "1100", "CH01", "0001", "1", "15", "", 60m, "2",
+                "50000123", "50000999", 1.5m, 2m, "01")
+        ], Path.Combine(_folder, "HR_KPI_Export.xlsx"));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var alpha = Assert.Single(result.Employees, row => row.Personalnummer == 1001);
+        Assert.Equal(60m, alpha.BeschaeftigungsgradProzent);
+        Assert.Equal(2m, alpha.BuTage);
+        Assert.Equal(1.5m, alpha.NbuTage);
+        Assert.Equal("15", alpha.Mitarbeiterkreis);
+        Assert.Equal("50000123", alpha.Planstelle);
+    }
+
     [Theory]
     [InlineData(0.0499, false)]
     [InlineData(0.05, true)]
