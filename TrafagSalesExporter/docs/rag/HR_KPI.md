@@ -8,6 +8,11 @@ Stand: 2026-09-30
   8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
   und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. **Produktiv seit 2026-09-30 09:36** (`docs/rag/DEPLOYMENT.md`).
   Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
+- **2026-09-30: automatischer SAP-Import gebaut, NICHT produktiv.** EntitySet `HrKpiSet` in
+  `ZPOWERBI_EINKAUF_SRV` rechnet live aus PA0001/0002/0007/2001 (nur Cockpit-Felder, keine Namen,
+  kein Lohn), in T76 aktiv und im Gateway Client mit 200 geprueft, Transport `T76K912530` gemeinsam
+  mit dem Journal. Cockpit holt taeglich ab 05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx`
+  (`4051506`, 795/795). Offen: Wertestichprobe, Transport nach P76, Deploy. `docs/HR_KPI.md` 8.6.
 - **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kaderfeld fehlt noch); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (noch nicht deployed). SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report

@@ -525,6 +525,9 @@ Rexx-Berichte in den HR-Datenordner soll ueber Upgreat laufen, wie die dormakaba
 Rexx, die Ueli Kunzmann seit 02.09. im 15-Minuten-Takt betreibt. Mail an Ueli am 30.09. versendet;
 offen sind seine Antwort, Pfad und Berechtigung sowie, ob Nadjas Hub-Auftrag bei Rexx zurueckgenommen
 wird. Ausserdem seit 30.09. produktiv: Arbeitstag 8,0 h statt 8,4 h (`docs/HR_KPI.md` 8.4).
+Am selben Tag gebaut, noch nicht produktiv: die SAP-Datei kommt taeglich automatisch ueber das
+EntitySet `HrKpiSet` statt ueber den Handstart des Reports; offen sind Wertestichprobe, Transport
+`T76K912530` nach P76 (gemeinsam mit dem Journal) und Deploy (`docs/HR_KPI.md` 8.6).
 
 ### PM-09 Plattform: Tempo der Webapp und zuverlaessiger Nachtlauf
 

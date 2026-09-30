@@ -149,7 +149,9 @@ ist damit ueberholt.
 | Werte zeilenweise gegengelesen | **erledigt**, Abschnitt 6c1; ein Fehler gefunden und behoben |
 | Gegenprobe bestehende Sets `MAKTSet`, `ZSP_CODESSet` | **HTTP 200**, unveraendert |
 
-Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**. Die App liest
+Alles auf `T76/100`, Transport **`T76K912530`, nicht freigegeben**.
+
+**Seit 2026-09-30 enthaelt derselbe Transport auch das HR-EntitySet `HrKpiSet`** (Struktur `ZSTR_HR_KPI`, Einschuebe in `DEFINE` und `GET_ENTITYSET`), weil beide Methoden durch diesen Auftrag gesperrt sind; Entscheid Ingo fuer denselben Service. Journal und HR gehen deshalb nur **gemeinsam** nach P76. Gesamtquellen: `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` und `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap`; die Journal-Dateien `ZFIN_JOURNAL_*.abap` zeigen nur noch den Journal-Teil. Details `docs/HR_KPI.md` 8.6. Die App liest
 produktiv `travp762`; dort gibt es das EntitySet erst nach Transport.
 
 ### Wie geprueft wurde, und warum nicht von aussen

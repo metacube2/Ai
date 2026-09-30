@@ -252,7 +252,12 @@ Am 2026-09-10 fuer `ZSTR_FIN_JOURNAL` gemacht. Ablauf, der funktioniert:
 2. Im Dialog „Typ ... anlegen" `radD_100-STRU` waehlen, `tbar[0]/btn[0]`.
 3. **Kurzbeschreibung `DD02D-DDTEXT` zuerst setzen**, sonst bricht das Sichern ab.
 4. Felder eintragen: `SapGuiStrukturFelder.vbs <SitzungsIndex> <Datei>`, Datei je Zeile
-   `FELDNAME;KOMPONENTENTYP`.
+   `FELDNAME;KOMPONENTENTYP`. **Danach immer ueber DD03L zaehlen.** Bis 2026-09-30 blaetterte das
+   Skript um „Position + sichtbare Zeilen" und schrieb dann ab Zeile 0; SAP laesst aber nicht so
+   weit blaettern, und bei `ZSTR_HR_KPI` wurde die neunte Zeile (`TEILK`) still von der zehnten
+   ueberschrieben, die Struktur war trotzdem aktiv. Jetzt rechnet es die Zeile aus der tatsaechlichen
+   Scrollposition. Beim erneuten Aufruf auf eine bestehende Struktur ueberschreibt es die Zeilen der
+   Reihe nach, das taugt also auch zum Reparieren.
 5. Aktivieren mit `tbar[1]/btn[27]`, Paket zuordnen, Auftrag bestaetigen.
 
 **Vorher jedes Datenelement pruefen**, nicht raten:
@@ -964,6 +969,7 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiMethodeneditorSchreiben.vbs <Sitzung> <Methode> <Datei>` | dasselbe, wenn der Editor bereits offen ist (direkt nach dem Redefinieren) |
 | `SapGuiMethodenTabelle.vbs <Sitzung> [Scroll] [Suchname]` | Methodentabelle in SE24 auflisten oder eine Methode ueber alle Seiten suchen |
 | `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump eines Fensters mit Id, Typ, Text und Tooltip. Erste Wahl, wenn eine Maske unbekannt ist |
+| `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |
 

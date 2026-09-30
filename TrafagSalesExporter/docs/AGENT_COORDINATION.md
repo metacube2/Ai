@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| Claude | HR: SAP-Export `Z_HR_KPI_CONS` automatisieren (Auftrag Ingo 30.09.) | SAP-Sitzung T76 (nur gelesen), `docs/abap/Z_HR_KPI_CONS.abap`, `docs/HR_KPI.md` 8.6 | ABAP-Entwuerfe im Repo; SAP-Anlage und Tagesdienst vom Auto-Modus gestoppt, wartet auf Freigabe Ingo |
+| – | derzeit keine laufende Arbeit | – | – |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 
@@ -39,6 +39,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | HR: SAP-Import automatisch ueber `HrKpiSet` | 2026-09-30 | **Abgeschlossen bis T76, Reservierung frei, NICHT in P76, NICHT deployed.** Auftrag Ingo „baue automatik", Entscheide: OData live aus PA-Tabellen, `ZPOWERBI_EINKAUF_SRV`, nur Cockpit-Felder. T76: `ZSTR_HR_KPI` aktiv, `DEFINE` (`MPC_EXT==CM001`) und `GET_ENTITYSET` (`DPC_EXT==CM01W`) aktiv und per RFC gegengelesen, Cache geleert, Gateway Client 200 fuer `$metadata`, `HrKpiSet` (Filter, Paging, Monat 13) und Gegenproben `MAKTSet`/`FinanzJournalSet`. Alles in `T76K912530` (Journal). `4051506`: Leser und Tagesdienst, 795/795. Behoben: `SapGuiStrukturFelder.vbs` ueberschrieb die neunte Zeile. Neu `SapGuiGatewayStatus.vbs`, `SapGuiReportInClipboard.vbs`. Doku `HR_KPI.md` 8.6, `rag/HR_KPI.md`, `README_FIN_JOURNAL_ENTITYSET.md`, SAP-Arbeitsweise, `PROJEKTSTATUS.md`, `lastchange.md`. Offen: Wertestichprobe, Transport, Deploy; Scripting-Warnungen wieder einschalten (Ingo). |
 | Claude | HR: Absenz-Ampel der Uebersicht ab 5 % | 2026-09-30 | **Abgeschlossen, Reservierung frei, NICHT deployed.** Auftrag Ingo „passe mal die ampel an“. `81140fa`: Uebersichtskachel „Krankheitstage“ nutzt die konfigurierte Rot-Grenze mit `>=` statt `> 0.05m`; neuer Test `Absenzampel_Ist_Ab_Fuenf_Prozent_Rot`, 791/791. Doku `HR_KPI.md` 8.5, `rag/HR_KPI.md`, `lastchange.md`. |
 | Claude | HR: Ergebnisse HR-Sitzung und SAP-Export dokumentiert | 2026-09-30 | **Abgeschlossen, Reservierung frei, nur Doku.** `HR_KPI.md` 8.5 (Kader 8,1 h / normal 8,0 h, Kaderfeld fehlt; Absenzen je Fall mit Von/Bis und Status; Ampel bestaetigt, Uebersichtskachel `> 0.05m` weicht ab) und 8.6 (SAP-Report `Z_HR_KPI_CONS` von Hand, nicht automatisiert), `rag/HR_KPI.md`. Sonde `.tmp_tools/HrHeaders0930` (nur Kopfzeilen und Verteilungen). |
 | Claude | HR: kein Rexx-Hub, Export ueber Upgreat | 2026-09-30 | **Abgeschlossen, Reservierung frei, nur Doku.** Ingo: „hub wollen wir nicht“, Mail an Ueli Kunzmann (Upgreat) versendet (vier Rexx-Berichte taeglich in den HR-Datenordner). dormakaba-nach-Rexx-Task auf `tragvapp404` (seit 02.09., 15 Minuten) erstmals dokumentiert. `HR_KPI.md` 8.3, `rag/HR_KPI.md`, `PROJEKTSTATUS.md` PM-07, `Vorhaben_HERMES.tsv`, `Wochen_Todo.tsv` Zeile 55. **`Wochen_Todo.xlsx` nicht neu erzeugt (Python fehlt).** |

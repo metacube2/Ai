@@ -2,6 +2,12 @@
 
 Stand: 2026-09-30
 
+## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (nicht deployed, nicht in P76)
+
+- `4051506`: EntitySet `HrKpiSet` (T76, Transport `T76K912530` mit dem Journal) und Tagesabruf im
+  Cockpit, der `hrdata/HR_KPI_Export.xlsx` schreibt. Ersetzt den Handstart von `Z_HR_KPI_CONS`.
+  Nur Cockpit-Felder, keine Namen, kein Lohn. Bis zum Transport bleibt die Handdatei stehen.
+
 ## HR-Cockpit: Absenz-Ampel der Uebersicht ab 5 % rot, 2026-09-30 (noch nicht deployed)
 
 - `81140fa`: HR bestaetigt „bis 4,99 % gelb, ab 5 % rot“. Die Uebersichtskachel „Krankheitstage“ warnte

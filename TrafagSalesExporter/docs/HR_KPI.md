@@ -321,7 +321,7 @@ Kopf `REPORT zhr_kpi_consolidate`). Befund:
   Felder (`LoadSapRows`: Personalnummer, Buchungskreis, Personalbereich, Personalteilbereich,
   Mitarbeitergruppe, Mitarbeiterkreis, Teilzeitkennzeichen, Beschaeftigungsgrad, Geschlecht, Planstelle,
   Stellenschluessel, NBU, BU, Abrechnungskreis), weder Namen noch Lohn aus SAP. Der Leser nimmt je Person
-  die **erste** Zeile; bei einer Datei mit mehreren Monaten gehen die uebrigen verloren.
+  die **erste** Zeile. *Praezisiert am 2026-09-30:* die 1'139 Zeilen sind **ein** Monat, nicht mehrere: PA0001 hat zum Stichtag auch Ausgetretene, Rentner und Passive (`HrKpiSet` in T76 fuer 09/2026: rund 1'150 Zeilen, aus der Antwortgroesse geschaetzt). Der Leser verknuepft ueber die Personalnummer mit den aktiven Rexx-Zeilen, die uebrigen stoeren nicht.
 
 **Bauplan, Entscheid Ingo 2026-09-30:** kein Job und keine Z-Tabelle, sondern ein EntitySet
 `HrKpiSet` im Service `ZPOWERBI_EINKAUF_SRV`, das bei jedem Abruf live aus PA0001, PA0002, PA0007 und
@@ -332,12 +332,16 @@ Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Co
 
 | Teil | Stand 2026-09-30 |
 | --- | --- |
-| Struktur `ZSTR_HR_KPI` (16 Felder, Datenelemente im Kopf von `ZHR_KPI_MPC_DEFINE_ADD.abap`) | **nicht angelegt**; die SE11-Eingabe wurde vom Auto-Modus als Aenderung an einem gemeinsamen System gestoppt. In Sitzung 1 steht noch der leere Dialog „Typ ZSTR_HR_KPI anlegen" |
-| Modell `DEFINE` (Einschub) | Entwurf `docs/abap/ZHR_KPI_MPC_DEFINE_ADD.abap`; Decimal-Angaben fuer `EMPCT`/`ABWTG` vor dem Aktivieren gegen DD04L pruefen |
-| Daten `GET_ENTITYSET` (Einschub vor dem FinanzJournal-Zweig) | Entwurf `docs/abap/ZHR_KPI_DPC_GET_ENTITYSET_ADD.abap` |
+| Struktur `ZSTR_HR_KPI` (16 Felder) | **aktiv in T76**, Paket `ZPP`, Transport `T76K912530`; per DD03L gegengelesen. Beim ersten Anlegen fehlte `TEILK`, weil `SapGuiStrukturFelder.vbs` an der Seitengrenze die neunte Zeile ueberschrieb (behoben) |
+| Modell `DEFINE` | **aktiv**, Gesamtquelle `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` (Journal plus HR), Include `ZCL_ZPOWERBI_EINKAUF_MPC_EXT==CM001`, ueber RFC gegengelesen. Decimal: `EMPCT` DEC 5,2, `ABWTG` DEC 6,2 laut DD03L |
+| Daten `GET_ENTITYSET` | **aktiv**, Gesamtquelle `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap`, Include `ZCL_ZPOWERBI_EINKAUF_DPC_EXT==CM01W`, ueber RFC gegengelesen |
 | Transport | DPC_EXT und MPC_EXT sind durch `T76K912530` (Journal, nicht freigegeben) gesperrt; HR geht damit **zusammen mit dem Journal** nach P76 (Entscheid Ingo fuer diesen Service) |
 | Berechtigung | Der Data Provider liest PA-Tabellen per `SELECT`, ohne `P_ORGIN`-Pruefung: wer `ZPOWERBI_EINKAUF_SRV` lesen darf, sieht diese Felder |
-| Cockpit-Leser und Tagesabruf | Entwurf (`SapGatewayHrKpiReader`, `HrKpiSapRefreshService`) liegt ausserhalb des Repos im Scratchpad; das Eintragen des Hintergrunddiensts hat der Auto-Modus gestoppt. Wartet auf Freigabe Ingo |
+| Cockpit-Leser und Tagesabruf | `Services/HrKpi/SapGatewayHrKpiReader.cs` (`4051506`), nur Produktion, ab 05:00 einmal taeglich, Verbindung wie der Einkauf. 795/795 Tests, darunter der Rundweg Datei schreiben und mit dem echten HR-Leser lesen. **Nicht deployed** |
+
+**Gemessen im Gateway Client T76, 2026-09-30** (Antwortrumpf nicht lesbar, nur Status und Laenge): `$metadata` 200 (342'123 Zeichen statt 341'032); `HrKpiSet` `$top=5` 200 in 0,7 s; Filter 2026/09 Seite 1 200 (560'915), Seite 2 mit `$skip=1000` 200 (84'670), Monat 13 200 mit leerer Liste; Gegenproben `MAKTSet` und `FinanzJournalSet` 200. **Die Werte selbst sind noch nicht zeilenweise gegen den Report gegengelesen.**
+
+**Offen bis produktiv:** (1) Stichprobe der Werte gegen `Z_HR_KPI_CONS` fuer 09/2026 (Screenshot oder Browser mit Sitzung); (2) Transport `T76K912530` nach P76, zusammen mit dem Journal, Freigabe Ingo; (3) Deploy des Cockpits (bis zum Transport meldet der Abruf taeglich einen 404 und laesst die Handdatei stehen).
 
 Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
