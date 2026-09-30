@@ -323,6 +323,22 @@ Kopf `REPORT zhr_kpi_consolidate`). Befund:
   Stellenschluessel, NBU, BU, Abrechnungskreis), weder Namen noch Lohn aus SAP. Der Leser nimmt je Person
   die **erste** Zeile; bei einer Datei mit mehreren Monaten gehen die uebrigen verloren.
 
+**Bauplan, Entscheid Ingo 2026-09-30:** kein Job und keine Z-Tabelle, sondern ein EntitySet
+`HrKpiSet` im Service `ZPOWERBI_EINKAUF_SRV`, das bei jedem Abruf live aus PA0001, PA0002, PA0007 und
+PA2001 rechnet (Stichtag Monatsende, Filter `Gjahr`/`Monat`, ohne Filter laufender Monat). Nur die
+Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Cockpit holt taeglich ab
+05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx` (vorher einmalig Sicherung der Handdatei als
+`HR_KPI_Export.manuell.xlsx`); faellt SAP aus, bleibt die letzte Datei stehen.
+
+| Teil | Stand 2026-09-30 |
+| --- | --- |
+| Struktur `ZSTR_HR_KPI` (16 Felder, Datenelemente im Kopf von `ZHR_KPI_MPC_DEFINE_ADD.abap`) | **nicht angelegt**; die SE11-Eingabe wurde vom Auto-Modus als Aenderung an einem gemeinsamen System gestoppt. In Sitzung 1 steht noch der leere Dialog „Typ ZSTR_HR_KPI anlegen" |
+| Modell `DEFINE` (Einschub) | Entwurf `docs/abap/ZHR_KPI_MPC_DEFINE_ADD.abap`; Decimal-Angaben fuer `EMPCT`/`ABWTG` vor dem Aktivieren gegen DD04L pruefen |
+| Daten `GET_ENTITYSET` (Einschub vor dem FinanzJournal-Zweig) | Entwurf `docs/abap/ZHR_KPI_DPC_GET_ENTITYSET_ADD.abap` |
+| Transport | DPC_EXT und MPC_EXT sind durch `T76K912530` (Journal, nicht freigegeben) gesperrt; HR geht damit **zusammen mit dem Journal** nach P76 (Entscheid Ingo fuer diesen Service) |
+| Berechtigung | Der Data Provider liest PA-Tabellen per `SELECT`, ohne `P_ORGIN`-Pruefung: wer `ZPOWERBI_EINKAUF_SRV` lesen darf, sieht diese Felder |
+| Cockpit-Leser und Tagesabruf | Entwurf (`SapGatewayHrKpiReader`, `HrKpiSapRefreshService`) liegt ausserhalb des Repos im Scratchpad; das Eintragen des Hintergrunddiensts hat der Auto-Modus gestoppt. Wartet auf Freigabe Ingo |
+
 Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
 Stammdaten SAP `#735`.
