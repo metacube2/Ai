@@ -142,6 +142,11 @@ Vorlagendateien fremder Pakete). Diese sind Fremdcode und kein Projektwissen.
 | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` | Analysereport STPRS und Journal |
 | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` | Journal-EntitySet CH/AT: Messung auf T76, Fuellgrade, Bauplan |
 | `docs/abap/ZFIN_JOURNAL_PRUEFUNG.abap` | Pruefreport dazu, rein lesend |
+| `docs/abap/Z_HR_KPI_CONS.abap` | HR-Report von Hand (Ausgangsstand 30.09., aus T76 gelesen) |
+| `docs/abap/ZPOWERBI_EINKAUF_MPC_EXT_DEFINE.abap` | Gesamtquelle `DEFINE`: FinanzJournal und HrKpi, aktiv T76 |
+| `docs/abap/ZPOWERBI_EINKAUF_DPC_EXT_GET_ENTITYSET.abap` | Gesamtquelle `GET_ENTITYSET`: FinanzJournal und HrKpi, aktiv T76 |
+| `docs/abap/ZHR_KPI_MPC_DEFINE_ADD.abap`, `docs/abap/ZHR_KPI_DPC_GET_ENTITYSET_ADD.abap` | nur der HR-Einschub, zum Lesen |
+| `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` | Konditionsart ZRL2 EkOrg 1200, Transport `T76K912628`, in P76 seit 30.09. |
 | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` | Produktsparten-Mapping |
 | `docs/rag/PRODUCT_MAPPING.md` | Produktmapping, Kurzstand |
 | `docs/PPWR_MANDANT_100_ANALYSE_2026-08-18.md` | PPWR, aktueller Stand und Mandant 100 |

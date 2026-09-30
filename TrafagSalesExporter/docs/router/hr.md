@@ -1,6 +1,6 @@
 # Unterrouter HR
 
-Zurueck: `router.md`. Stand: 2026-09-28.
+Zurueck: `router.md`. Stand: 2026-09-30.
 
 HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 
@@ -15,6 +15,9 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 | Anwenderdoku fuer HR | `docs/HR_KPI_ANLEITUNG_HR_2026-05-20.docx` |
 
 ## Fallen in diesem Ast
+
+- **Seit 2026-09-30 kommt die SAP-Datei automatisch** ueber `HrKpiSet` (T76 aktiv, P76 und Deploy offen,
+  `docs/HR_KPI.md` 8.6). HR-Sitzung vom 30.09. (Kader 8,1 h, Absenzen je Fall, Ampel): 8.5.
 
 - **Arbeitstage sind nicht Montag bis Freitag.** `ZurichWorkdayCalendar` zieht die neun
   gesetzlichen Feiertage des Kantons Zuerich ab.

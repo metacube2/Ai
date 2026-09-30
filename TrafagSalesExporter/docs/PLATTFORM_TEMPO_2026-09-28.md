@@ -231,3 +231,20 @@ ist CPU oder Platte der VM. Da alle Seiten ueber dieselbe Datenbank laufen, prof
 Nebenbefund: gleichzeitig mit einem Einkauf-Lauf dauerte die Vorberechnung 303 s. Nach Ablauf des
 Snapshots rechnet der Cache im Hintergrund nach, auch wenn gerade ein Lauf schreibt. Das stoert
 niemanden, weil der alte Stand solange ausgeliefert wird.
+
+## 10. Rueckmeldung Armin zum Einkauf, 2026-09-30
+
+Ingo hat Armin gefragt, ob die Einkaufsseite jetzt schneller ist. Antwort sinngemaess: viel
+schneller als vorher, absolut aber noch nicht „turbo", auch beim Auffrischen.
+
+Einordnung gegen die Messungen: Das Oeffnen der Standardansicht kommt vorgerechnet aus dem Cache
+(Abschnitt 5). Gewartet wird noch in drei Faellen, jeweils auf die volle Serverrechnung von rund
+24 s (Abschnitt 9): (1) nach **„Delta aktualisieren"**, weil der Lauf den Cache leert und bewusst
+nicht den alten Stand zeigt; (2) beim ersten Aufruf mit eigenem Filter; (3) in der ersten Minute
+nach Neustart oder Deploy. „Auffrischen" meint sehr wahrscheinlich Fall 1.
+
+Vorschlag an Ingo, **noch nicht entschieden**: (a) waehrend der Neuberechnung nach dem Delta den
+alten Stand mit Hinweis „wird aktualisiert" zeigen (wenig Aufwand, trifft Armins Punkt; Preis: 20
+bis 30 s lang die Zahlen vor dem Delta); (b) die 55 Abfragen zusammenfassen oder parallel ausfuehren
+(mehr Aufwand, hilft auch bei eigenen Filtern). Die Zurueckhaltung aus Abschnitt 5.2 („erst, wenn
+eigene Filter oft genug gebraucht werden") ist mit dieser Rueckmeldung zu ueberdenken.
