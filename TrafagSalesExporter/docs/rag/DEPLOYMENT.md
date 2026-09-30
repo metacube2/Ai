@@ -45,8 +45,8 @@ Stand: 2026-09-30
 ## Kurzstand
 
 - **Deploy 2026-09-30 09:36, HR-Cockpit: Arbeitstag 8,0 h statt 8,4 h (`e3545c4`).** Stand `2047add`,
-  gleicher Worktree `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `773/773`. `BiDashboard.dll`
-  `30.09.2026 09:34:14`, `6'6425'600` Bytes, SHA256 `6DDE3BB4F7D4FC2CBD9AEF6793FB9545FED39A318DB1BD6E84975231F763B369`, bitgleich.
+  gleicher Worktree `C:\TMP\TrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `773/773`. `BiDashboard.dll`
+  `30.09.2026 09:34:14`, `6'425'600` Bytes, SHA256 `6DDE3BB4F7D4FC2CBD9AEF6793FB9545FED39A318DB1BD6E84975231F763B369`, bitgleich.
   Fuenf Routen `200`, Sicherung `trafag_exporter.db.before-hr-workday-8h-20260930-093459.bak`, Produktiv-DB
   unveraendert. Sperrpruefung: `Sollzeit / 8.4h` und `Stunden / 8.4h` nicht mehr in der DLL. **Ohne Alarm.**
 
