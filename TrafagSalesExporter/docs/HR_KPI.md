@@ -281,6 +281,36 @@ Krankenquote als bisher; Langzeitkrank gilt schon ab 488 statt 512,4 Stunden; we
 Sollzeit ein FTE bekommt, hat ein um 5 % hoeheres FTE. Neuer Test
 `Krankheitstag_Hat_Acht_Stunden`, 788/788. **Produktiv seit 2026-09-30 09:36** (Deploy `2047add`, 773/773 im Release-Worktree, ohne Alarm).
 
+### 8.5 HR-Sitzung vom 2026-09-30
+
+Notizen Ingo nach der Sitzung mit HR, abgeglichen mit Code und den Dateien in `C:\temp` (nur
+Kopfzeilen und Werteverteilungen, keine Namen; Sonde `.tmp_tools/HrHeaders0930`).
+
+| Thema | Ergebnis HR | Stand Cockpit | Offen |
+| --- | --- | --- | --- |
+| Arbeitstag | **Kadermitarbeitende 8,1 h, normale Mitarbeitende 8,0 h** | seit 30.09. einheitlich 8,0 h (8.4) | Kaderkennzeichen fehlt in allen Dateien. Kandidaten: SAP `Mitarbeiterkreis` (Monatszeilen 10=55, 15=754, 19=18, 20=308, 30=4; welcher Wert Kader ist, weiss nur HR) oder Rexx `Leitung j/n`. Rexx `Ø taegliche Sollarbeitszeit (Woche)` hilft nicht (Werte wie 5,71 = 40 h / 7 Tage) |
+| Abwesenheiten | In Rexx wird jeder Fall mit **Von/Bis** erfasst und hat einen **Status** (genehmigt / nicht genehmigt) | `Abwesenheitinstunden.xlsx` ist eine Zeile je Person mit Summen; auch die Spalten „genehmigt" sind Summen | Neuer Rexx-Bericht **eine Zeile je Fall** (Person, Art, Von, Bis, Stunden, Status) als fuenfte Datei. Macht die Krankenquote periodengenau und erlaubt „nur genehmigt". Beispieldatei von Sonja noetig |
+| Absenz-Ampel | **bis 4,99 % gelb, ab 5 % rot** | Krankenquote gruen < 3 %, gelb 3 bis < 5 %, rot ab 5 % (`HrKpi:Absence*ThresholdPercent`): passt | Uebersichtskachel „Krankheitstage" warnt erst **ueber** 5 % (`absenceRate > 0.05m`), soll ab 5 %. Gruen unter 3 % hat HR nicht erwaehnt, gilt als unveraendert |
+
+### 8.6 SAP-Datei `HR_KPI_Export.xlsx` ist nicht automatisiert (Stand 2026-09-30)
+
+Die Datei kommt aus dem ABAP-Report `Z_HR_KPI_CONS` bzw. `Z_HR_KPI_CONSOLIDATE`, von Hand
+gestartet (`powerbi/datenbeschaffung.txt`, `powerbi/infos.txt`: „CSV via Handstart"). Alle 1'139
+Zeilen der Datei in `C:\temp` tragen `Angelegt von = KOI`, der Stand auf dem Server ist vom 26.05.
+Es gibt also weder einen SAP-Hintergrundjob noch eine automatische Ablage. Ziel laut Ingo:
+**mindestens einmal taeglich.** Moegliche Wege:
+
+- (a) Report als Hintergrundjob (SM36) mit Ablage der Datei auf einem Share, den das Cockpit liest.
+  Setzt voraus, dass der Report in eine Datei schreiben kann.
+- (b) Die Daten ueber das vorhandene SAP-OData (`travp762`, wie CH/AT) taeglich direkt vom Cockpit
+  lesen lassen.
+
+Der Quelltext des Reports liegt nicht im Repository.
+
+Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
+`#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
+Stammdaten SAP `#735`.
+
 ## Querverweise
 
 - Kurzstand, Zugang und Anwenderdoku: `docs/rag/HR_KPI.md`
