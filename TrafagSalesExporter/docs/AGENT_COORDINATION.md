@@ -25,7 +25,7 @@ in die Historiendatei.
 
 | Agent | Bereich | Reservierte Dateien / Ordner | Status |
 |---|---|---|---|
-| – | derzeit keine laufende Arbeit | – | – |
+| Claude | HR: SAP-Export `Z_HR_KPI_CONS` automatisieren (Auftrag Ingo 30.09.) | SAP-Sitzung T76 (nur gelesen), `docs/abap/Z_HR_KPI_CONS.abap`, `docs/HR_KPI.md` 8.6 | Analyse fertig, wartet auf Entscheid Ingo (Weg, Feldumfang, P76-Freigabe) |
 
 **Hinweis:** Im Arbeitsbaum liegt die unfertige Finance_All-Automatik aus der am 2026-09-29 geschlossenen Sitzung vom 2026-09-11 (unkommittiert; Stand 2026-09-29: `Services/FinanceAllExportService.cs`, `Services/FinanceAllWorkbookWriter.cs`, Testdatei und Aenderungen an `TimerBackgroundService.cs`, `Program.cs`, `.csproj`; ob fertig, ist ungeprueft). Nicht mit anderer Arbeit committen oder deployen. Einzelheiten in der Historie.
 

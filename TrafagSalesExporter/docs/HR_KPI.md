@@ -305,7 +305,23 @@ Es gibt also weder einen SAP-Hintergrundjob noch eine automatische Ablage. Ziel 
 - (b) Die Daten ueber das vorhandene SAP-OData (`travp762`, wie CH/AT) taeglich direkt vom Cockpit
   lesen lassen.
 
-Der Quelltext des Reports liegt nicht im Repository.
+*Ueberholt am 2026-09-30:* ~~Der Quelltext des Reports liegt nicht im Repository.~~ Seit 2026-09-30 als
+Ausgangsstand in `docs/abap/Z_HR_KPI_CONS.abap` (aus T76 ueber die Zwischenablage gelesen, 637 Zeilen,
+Kopf `REPORT zhr_kpi_consolidate`). Befund:
+
+- **Ein Monat je Lauf** (`p_gjahr`/`p_monat`, Stichtag Monatsende), Quellen PA0000/0001/0002/0007/0008,
+  PA2001, HRP1000.
+- **Ausgabe nur im Dialog:** ALV oder CSV ueber `cl_gui_frontend_services` (Speicherdialog,
+  `gui_download`). Beides geht im Hintergrundjob nicht; deshalb laesst sich der Report so nicht einplanen.
+  Die Datei auf dem Server ist ein Excel-Export der ALV-Liste (Spaltentexte wie `Geschäftsjahr`,
+  `Buchungsperiode`, `Beschäftigungsgrad %`).
+- `save_data` in die Tabelle `ZHRKPI_CONSOLIDATED` ist vorbereitet, aber auskommentiert; die Tabelle gibt es
+  nicht.
+- Der Report enthaelt Namen, Geburtsdatum und **Bruttolohn**. Das Cockpit liest aus der SAP-Datei nur 13
+  Felder (`LoadSapRows`: Personalnummer, Buchungskreis, Personalbereich, Personalteilbereich,
+  Mitarbeitergruppe, Mitarbeiterkreis, Teilzeitkennzeichen, Beschaeftigungsgrad, Geschlecht, Planstelle,
+  Stellenschluessel, NBU, BU, Abrechnungskreis), weder Namen noch Lohn aus SAP. Der Leser nimmt je Person
+  die **erste** Zeile; bei einer Datei mit mehreren Monaten gehen die uebrigen verloren.
 
 Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,
