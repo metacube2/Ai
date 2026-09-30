@@ -548,6 +548,16 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.Equal(61m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.LangStd);
     }
 
+    [Theory]
+    [InlineData(0.0499, false)]
+    [InlineData(0.05, true)]
+    [InlineData(0.0501, true)]
+    public void Absenzampel_Ist_Ab_Fuenf_Prozent_Rot(double rate, bool expected)
+    {
+        // HR 2026-09-30: bis 4,99 % gelb, ab 5 % rot.
+        Assert.Equal(expected, HrKpiDashboardBuilder.ReachesAbsenceRed((decimal)rate, 5m));
+    }
+
     [Fact]
     public void Krankheitstag_Hat_Acht_Stunden()
     {

@@ -124,7 +124,7 @@ internal sealed class HrKpiDashboardBuilder
         result.Employees = employees;
         result.Absences = absences;
         result.Leavers = leavers;
-        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable);
+        result.Metrics = BuildOverviewMetrics(employees, absences, turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, analysisPeriod, periodScopingUnreliable, _dataSources.AbsenceRedThresholdPercent);
         result.AbsenceRatesReliable = !periodScopingUnreliable;
         result.TurnoverMetrics = BuildTurnoverMetrics(turnoverEmployees, turnoverHeadcountLeavers, leavers, turnoverPeriod, comparisonLeavers,
             comparisonLeavers.Where(x => MatchesFluctuationFilter(x, normalizedOptions.FluktuationFilter)).ToList());
@@ -519,7 +519,8 @@ internal sealed class HrKpiDashboardBuilder
         IReadOnlyCollection<HrLeaverRow> leavers,
         TurnoverPeriodScope period,
         AnalysisPeriod analysisPeriod,
-        bool periodScopingUnreliable)
+        bool periodScopingUnreliable,
+        decimal absenceRedThresholdPercent)
     {
         var activeCount = CountDistinctPersons(employees.Select(x => x.Personalnummer));
         var activeFixedCount = CountDistinctPersons(employees
@@ -546,7 +547,7 @@ internal sealed class HrKpiDashboardBuilder
                 Label = "Krankheitstage",
                 Value = sickDays.ToString("N1"),
                 Detail = periodScopingUnreliable ? "Absenzquote: Zeitraum nicht bestimmbar" : $"Absenzquote FTE {absenceRate:P1}",
-                Severity = periodScopingUnreliable || absenceRate > 0.05m ? "Warning" : "Normal"
+                Severity = periodScopingUnreliable || ReachesAbsenceRed(absenceRate, absenceRedThresholdPercent) ? "Warning" : "Normal"
             },
             new() { Label = period.ShowPeriodMetrics ? $"Fluktuation {period.Label}" : "Fluktuation Auswahl", Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC", Severity = turnover > 0.12m ? "Warning" : "Normal" },
             new() { Label = "GLZ Schnitt", Value = avgBalance.ToString("N1"), Detail = $"{redBalance:N0} Personen > 100h absolut", Severity = redBalance > 0 ? "Warning" : "Normal" },
@@ -724,6 +725,13 @@ internal sealed class HrKpiDashboardBuilder
         ];
     }
 
+
+    /// <summary>
+    /// Rot ab der Grenze, nicht erst darueber (HR 2026-09-30: „bis 4,99 % gelb, ab 5 % rot“). Die
+    /// Uebersichtskachel warnte bis 2026-09-30 erst ueber fest verdrahteten 5 %.
+    /// </summary>
+    internal static bool ReachesAbsenceRed(decimal rate, decimal redThresholdPercent)
+        => rate * 100m >= redThresholdPercent;
 
     private string ResolveAbsenceSeverity(decimal rate)
     {
