@@ -183,7 +183,7 @@ internal sealed class HrKpiDashboardBuilder
             result.Notices.Add($"{missingEmployeeNumberCount:N0} aktive Mitarbeitendenzeilen ohne Personalnummer werden in Headcount-Distinct-Kennzahlen nicht mitgezaehlt.");
         var missingFteCount = employees.Count(x => !x.BeschaeftigungsgradProzent.HasValue);
         if (missingFteCount > 0)
-            result.Notices.Add($"{missingFteCount:N0} aktive Mitarbeitendenzeilen ohne SAP-Beschaeftigungsgrad: FTE aus der Rexx-Sollzeit (FTE = Sollzeit / 8.4h je Tag), sonst aus dem Arbeitszeitmodell.");
+            result.Notices.Add($"{missingFteCount:N0} aktive Mitarbeitendenzeilen ohne SAP-Beschaeftigungsgrad: FTE aus der Rexx-Sollzeit (FTE = Sollzeit / {HoursPerWorkday:0.0}h je Tag), sonst aus dem Arbeitszeitmodell.");
         if (HasEmployeeOnlyTurnoverFilters(normalizedOptions))
             result.Notices.Add("Kostenstelle, GLZ und Restferien filtern aktive Mitarbeitende und Absenzen, aber nicht die Fluktuation. Die Austrittsdatei enthaelt diese Felder nicht stabil genug fuer denselben Schnitt.");
         if (analysisPeriod.HasPeriod && absenceRowsWithoutDates > 0)
@@ -342,7 +342,7 @@ internal sealed class HrKpiDashboardBuilder
             var kurz = ReadDecimal(row, headers, "Krankheit angetreten (Stunden Ind.)", "Krankheit_Kurz_Std");
             var lang = ReadDecimal(row, headers, "Krank nicht buchbar angetreten (Stunden Ind.)", "Krankheit_Lang_Std");
             var gesamt = kurz + lang;
-            var tage = Math.Round(gesamt / 8.4m, 1);
+            var tage = Math.Round(gesamt / HoursPerWorkday, 1);
             return new HrAbsenceRow
             {
                 Personalnummer = ReadInt(row, headers, "Personalnummer"),
@@ -356,8 +356,8 @@ internal sealed class HrKpiDashboardBuilder
                 KrankheitLangStd = lang,
                 KrankheitGesamtStd = gesamt,
                 KrankheitstageGesamt = tage,
-                KrankheitstageKurz = Math.Round(kurz / 8.4m, 1),
-                KrankheitstageLang = Math.Round(lang / 8.4m, 1),
+                KrankheitstageKurz = Math.Round(kurz / HoursPerWorkday, 1),
+                KrankheitstageLang = Math.Round(lang / HoursPerWorkday, 1),
                 KrankenquoteMa = tage == 0 ? 0 : tage / 21m
             };
         })
@@ -465,7 +465,7 @@ internal sealed class HrKpiDashboardBuilder
                 // Kurz/lang nicht aus den Rexx-Feldern, sondern nach der 61-Tage-Regel je Person.
                 var gesamtStd = g.Sum(x => x.KrankheitKurzStd + x.KrankheitLangStd);
                 var (kurz, lang, istLangzeitkrank) = ClassifySickness(gesamtStd);
-                var tage = Math.Round(gesamtStd / 8.4m, 1);
+                var tage = Math.Round(gesamtStd / HoursPerWorkday, 1);
                 return new HrAbsenceRow
                 {
                     Personalnummer = first.Personalnummer,
@@ -479,8 +479,8 @@ internal sealed class HrKpiDashboardBuilder
                     KrankheitLangStd = lang,
                     KrankheitGesamtStd = gesamtStd,
                     KrankheitstageGesamt = tage,
-                    KrankheitstageKurz = Math.Round(kurz / 8.4m, 1),
-                    KrankheitstageLang = Math.Round(lang / 8.4m, 1),
+                    KrankheitstageKurz = Math.Round(kurz / HoursPerWorkday, 1),
+                    KrankheitstageLang = Math.Round(lang / HoursPerWorkday, 1),
                     KrankenquoteMa = tage == 0 ? 0 : tage / denominator,
                     IstLangzeitkrank = istLangzeitkrank
                 };
@@ -715,7 +715,7 @@ internal sealed class HrKpiDashboardBuilder
         return
         [
             new() { Label = "Krankheitstage Gesamt", Value = totalSick.ToString("N1"), Detail = $"{absences.Count:N0} aktive Absenzenzeilen{scopingWarning}", Severity = absenceValueSeverity },
-            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / 8.4h)", Severity = "Normal" },
+            new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / {HoursPerWorkday:0.0}h)", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke ab dem {LongTermSickDayThreshold:N0}. Krankheitstag (Summe je Person)", Severity = longSick > shortSick ? "Warning" : "Normal" },
             new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage ZH), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
             new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
@@ -1354,6 +1354,13 @@ internal sealed class HrKpiDashboardBuilder
     internal const decimal LongTermSickDayThreshold = 61m;
 
     /// <summary>
+    /// Stunden eines Arbeitstags bei 100 % Pensum. Trafag rechnet mit 8,0 h (Ingo 2026-09-30,
+    /// deckt sich mit Sonjas „Tagessoll 8 Stunden bei 100 %" und „FTE 0.8 = 32h/Woche").
+    /// Bis 2026-09-30 stand hier ungeprueft 8,4 h.
+    /// </summary>
+    internal const decimal HoursPerWorkday = 8.0m;
+
+    /// <summary>
     /// Restferien-Ampel nach Vorgabe HR (Sonja Richter): im ersten Quartal sind bis 5 Tage
     /// Restferien noch gruen, weil sie ins neue Jahr uebertragen werden duerfen. Ab dem zweiten
     /// Quartal ist jeder Resttag rot. Massgeblich ist das Quartal des Stichtags.
@@ -1375,7 +1382,7 @@ internal sealed class HrKpiDashboardBuilder
     /// </summary>
     internal static (decimal KurzStd, decimal LangStd, bool IstLangzeitkrank) ClassifySickness(decimal gesamtStd)
     {
-        var tage = Math.Round(gesamtStd / 8.4m, 1);
+        var tage = Math.Round(gesamtStd / HoursPerWorkday, 1);
         return tage >= LongTermSickDayThreshold
             ? (0m, gesamtStd, true)
             : (gesamtStd, 0m, false);
@@ -1387,7 +1394,7 @@ internal sealed class HrKpiDashboardBuilder
             return employmentPercent.Value / 100m;
 
         if (averageHoursPerDay.HasValue && averageHoursPerDay.Value > 0)
-            return Math.Clamp(averageHoursPerDay.Value / 8.4m, 0.1m, 1.2m);
+            return Math.Clamp(averageHoursPerDay.Value / HoursPerWorkday, 0.1m, 1.2m);
 
         if (string.Equals(workingTimeModel, "Vollzeit", StringComparison.OrdinalIgnoreCase))
             return 1m;

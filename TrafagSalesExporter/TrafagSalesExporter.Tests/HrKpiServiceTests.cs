@@ -537,15 +537,25 @@ public sealed class HrKpiServiceTests : IDisposable
     [Fact]
     public void Krankheit_Wird_Ab_Dem_61_Tag_Als_Langzeitkrankheit_Gezaehlt()
     {
-        var sixtyDays = HrKpiDashboardBuilder.ClassifySickness(60m * 8.4m);
-        var sixtyOneDays = HrKpiDashboardBuilder.ClassifySickness(61m * 8.4m);
+        var sixtyDays = HrKpiDashboardBuilder.ClassifySickness(60m * HrKpiDashboardBuilder.HoursPerWorkday);
+        var sixtyOneDays = HrKpiDashboardBuilder.ClassifySickness(61m * HrKpiDashboardBuilder.HoursPerWorkday);
 
         Assert.False(sixtyDays.IstLangzeitkrank);
-        Assert.Equal(60m * 8.4m, sixtyDays.KurzStd);
+        Assert.Equal(60m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyDays.KurzStd);
         Assert.True(sixtyOneDays.IstLangzeitkrank);
         // Die ganze Krankheit wird lang, nicht erst die Tage ab dem 61.
         Assert.Equal(0m, sixtyOneDays.KurzStd);
-        Assert.Equal(61m * 8.4m, sixtyOneDays.LangStd);
+        Assert.Equal(61m * HrKpiDashboardBuilder.HoursPerWorkday, sixtyOneDays.LangStd);
+    }
+
+    [Fact]
+    public void Krankheitstag_Hat_Acht_Stunden()
+    {
+        // Trafag rechnet mit 8,0 h je Tag (Ingo 2026-09-30); mit den frueheren 8,4 h waeren
+        // 488 Stunden nur 58,1 Tage gewesen und die Person nicht langzeitkrank.
+        Assert.Equal(8.0m, HrKpiDashboardBuilder.HoursPerWorkday);
+        Assert.True(HrKpiDashboardBuilder.ClassifySickness(488m).IstLangzeitkrank);
+        Assert.False(HrKpiDashboardBuilder.ClassifySickness(487m).IstLangzeitkrank);
     }
 
     [Fact]
@@ -558,8 +568,8 @@ public sealed class HrKpiServiceTests : IDisposable
             ],
             [
                 // 40 + 21 Tage aus zwei Rexx-Feldern = 61 Tage: langzeitkrank.
-                [1001, "Alpha, Anna", "Org A", "Engineer", "Aktiv", 40m * 8.4m, 21m * 8.4m],
-                [1002, "Beta, Bruno", "Org B", "Engineer", "Aktiv", 16.8, 0]
+                [1001, "Alpha, Anna", "Org A", "Engineer", "Aktiv", 40m * HrKpiDashboardBuilder.HoursPerWorkday, 21m * HrKpiDashboardBuilder.HoursPerWorkday],
+                [1002, "Beta, Bruno", "Org B", "Engineer", "Aktiv", 16.0, 0]
             ]);
 
         var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
@@ -590,8 +600,8 @@ public sealed class HrKpiServiceTests : IDisposable
         WriteWorkbook(Path.Combine(_folder, "Exportkommengehen.xlsx"),
             ["Nachname, Vorname (Link Personal)", "Geburtsdatum", "Arbeitszeitmodell", "O taegliche Sollarbeitszeit (Woche)"],
             [
-                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 8.4],
-                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 4.2],
+                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 8.0],
+                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 4.0],
                 // Reminderprofil: in der Zeitdatei vorhanden, aber ohne Sollzeit und ohne SAP-Zeile.
                 ["Reminder, Profil", new DateTime(2000, 1, 1), "", ""]
                 // "Unbekannt, Join" fehlt in der Zeitdatei: das ist KEIN Beleg fuer ein Reminderprofil.
@@ -672,10 +682,10 @@ public sealed class HrKpiServiceTests : IDisposable
         WriteWorkbook(Path.Combine(folder, "Exportkommengehen.xlsx"),
             ["Nachname, Vorname (Link Personal)", "Geburtsdatum", "Arbeitszeitmodell", "O taegliche Sollarbeitszeit (Woche)"],
             [
-                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 8.4],
-                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 4.2],
-                ["Fallback, Fiona", new DateTime(1992, 1, 1), "Teilzeit", 4.2],
-                ["NoNumber, Nora", new DateTime(1993, 1, 1), "Vollzeit", 8.4]
+                ["Alpha, Anna", new DateTime(1990, 1, 1), "Vollzeit", 8.0],
+                ["Beta, Bruno", new DateTime(1991, 1, 1), "Teilzeit", 4.0],
+                ["Fallback, Fiona", new DateTime(1992, 1, 1), "Teilzeit", 4.0],
+                ["NoNumber, Nora", new DateTime(1993, 1, 1), "Vollzeit", 8.0]
             ]);
 
         WriteWorkbook(Path.Combine(folder, "HR_KPI_Export.xlsx"),
