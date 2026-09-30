@@ -1,6 +1,12 @@
 # Last Change
 
-Stand: 2026-09-29
+Stand: 2026-09-30
+
+## HR-Cockpit: Arbeitstag 8,0 h statt 8,4 h, 2026-09-30 (noch nicht deployed)
+
+- `e3545c4`: Entscheid Ingo, deckt sich mit Sonjas Tagessoll „8 Stunden bei 100 %". Eine Konstante
+  `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze der Langzeitkrankheit und FTE aus der
+  Rexx-Sollzeit. Rund 5 % mehr Krankheitstage als bisher. `docs/HR_KPI.md` 8.4.
 
 ## Gutschriften nach Belegart, Excel-Statustexte, Deutschland und Indien, 2026-09-29 15:58
 

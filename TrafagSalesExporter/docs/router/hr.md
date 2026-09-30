@@ -28,5 +28,6 @@ HR-KPI-Cockpit, Fluktuation, Absenzen, Zeit und Ferien.
 - **Seit 2026-09-28 nach Vorgabe HR:** langzeitkrank ab 61 Krankheitstagen je Person,
   Reminderprofile ohne FTE und Sollzeit ausgeschlossen, Restferien-Ampel nach Quartal,
   zusaetzlich gleitende Prognose und Vorjahr. `docs/HR_KPI.md` Abschnitt 8.
-- *Ueberholt am 2026-09-28, bis auf die 8,4 h:* Mehrere Werte sind Annahmen ohne fachliche Bestaetigung (`8.4h = 1 Krankheitstag`,
+- **Seit 2026-09-30: ein Arbeitstag hat 8,0 h** (`HoursPerWorkday`), die frueheren 8,4 h sind ueberholt.
+- *Ueberholt am 2026-09-28, die 8,4 h am 2026-09-30:* Mehrere Werte sind Annahmen ohne fachliche Bestaetigung (`8.4h = 1 Krankheitstag`,
   FTE-Fallback `0.5`, Ampelgrenzen). Siehe `docs/HR_KPI.md` Abschnitt 7.

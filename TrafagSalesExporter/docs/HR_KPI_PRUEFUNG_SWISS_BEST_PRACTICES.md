@@ -114,7 +114,7 @@ Status:
 
 Aktueller Reiter:
 
-- Krankheitstage = Stunden / 8.4
+- Krankheitstage = Stunden / 8.4 (seit 2026-09-30: / 8,0)
 - Krankenquote je Mitarbeiter = Krankheitstage / 21
 - Gesamtquote = Krankheitstage / (Headcount * 21)
 
@@ -144,7 +144,7 @@ Aktueller Reiter:
 
 - `Krankheit angetreten` = kurz
 - `Krank nicht buchbar angetreten` = lang
-- Umrechnung pauschal Stunden / 8.4
+- Umrechnung pauschal Stunden / 8.4 (seit 2026-09-30: 8,0 h, entschieden)
 
 > **Ueberholt seit 2026-09-28**: Beide Rexx-Felder zaehlen als Krankheit. Ab 61 Krankheitstagen je Person
 > (Summe im Export) gilt die ganze Krankheit der Person als lang (Vorgabe HR, 28.09.2026). Die
@@ -185,7 +185,7 @@ Aktueller Reiter:
 - FTE = Beschaeftigungsgrad aus SAP / 100.
 - Wenn SAP-Wert fehlt: Vollzeit = 1, sonst 0.5.
 
-> **Ueberholt seit 2026-09-28**: FTE = SAP-Grad / 100, sonst Rexx-Sollzeit / 8,4 h, begrenzt auf 0,1 bis 1,2.
+> **Ueberholt seit 2026-09-28**: FTE = SAP-Grad / 100, sonst Rexx-Sollzeit / 8,4 h (seit 2026-09-30: / 8,0 h), begrenzt auf 0,1 bis 1,2.
 > Ohne SAP-Grad und ohne Sollzeit gilt die Zeile als Reminderprofil und faellt aus allen
 > Kennzahlen. Der Ersatzwert 0,5 wird praktisch nicht mehr erreicht.
 

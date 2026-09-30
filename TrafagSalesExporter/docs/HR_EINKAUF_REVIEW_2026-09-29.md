@@ -36,7 +36,7 @@ durchsucht. Keine neuen Issue-IDs oder parallelen Aufgabenlisten angelegt.
 
 | Thema | Bereits dokumentiert wo? | Konsequenz |
 | --- | --- | --- |
-| 8.4 Stunden pro Krankheitstag | `HR_KPI.md`, Abschnitte 7/8: ausdruecklich noch nicht bestaetigt | Bestehende Frage beibehalten, keine neue Definition |
+| 8.4 Stunden pro Krankheitstag | `HR_KPI.md`, Abschnitte 7/8: ausdruecklich noch nicht bestaetigt | Bestehende Frage beibehalten, keine neue Definition. *Ueberholt 2026-09-30: entschieden 8,0 h, `HR_KPI.md` 8.4* |
 | Periodengenaue Rexx-Absenzen | `HR_KPI.md` 8.1; `docs/rag/HR_KPI.md` nennt bereits Call/Mailentwurf an Sonja | Im vorhandenen HR-Call klaeren, kein zweiter Arbeitsauftrag |
 | Alte/abweichende HR-Quellstaende | `HR_KPI.md` 8.2 | Bestehenden Aktualisierungsbedarf bestaetigt, keine erneute Datenerhebung angefordert |
 | Personenquote bei Teilzeit | `HR_KPI_PRUEFUNG_SWISS_BEST_PRACTICES.md`, Abschnitt 4: Sollzeit/Teilzeit schon als Pruefpunkt | Dort konkret auf die Personenquote beziehen; keine bestaetigte neue Formel gefunden |
@@ -234,7 +234,7 @@ Stichtag sowie Absenzperiode bestaetigen. Keine Personalinhalte fuer diese Pruef
   Personendaten seien anonymisiert (Zeile 574). Das ist keine Entfernung des Personenbezugs.
   Gewuenschten Empfaengerkreis und Detaillierungsgrad mit HR festlegen; daraus folgt,
   ob eine reine Aggregatsicht noetig ist. Keine rechtliche Gesamtbewertung vorgenommen.
-- **HR-Stunden/Teilzeit:** pauschale 8.4 Stunden pro Krankheitstag bleiben eine dokumentierte
+- **HR-Stunden/Teilzeit:** pauschale 8.4 Stunden pro Krankheitstag (seit 2026-09-30 8,0 h, entschieden) bleiben eine dokumentierte
   Annahme. Die Personenquote teilt durch Arbeitstage ohne individuellen FTE-Faktor,
   die Gesamtquote dagegen durch FTE x Arbeitstage. Bedeutung der Personenquote klaeren,
   bevor diese unabhaengig von H3 fachlich umdefiniert wird.

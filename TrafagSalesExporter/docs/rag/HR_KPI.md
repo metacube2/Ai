@@ -1,8 +1,13 @@
 # RAG HR KPI
 
-Stand: 2026-09-29
+Stand: 2026-09-30
 
 ## Kurzstand
+
+- **2026-09-30: Arbeitstag 8,0 h statt 8,4 h** (Entscheid Ingo, deckt sich mit Sonjas Tagessoll
+  8 h bei 100 %). `e3545c4`, eine Konstante `HoursPerWorkday` fuer Krankheitstage, 61-Tage-Grenze
+  und FTE aus Sollzeit; rund 5 % mehr Krankheitstage. Deploystand siehe `docs/rag/DEPLOYMENT.md`.
+  Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
 
 - **2026-09-29, Mailhistorie gesichtet:** offene Wuensche von Sonja vom 2026-02-03 (Ferien am Stueck,
   Fit-&-Wohl nach 6. Absenz oder 12 Krankheitstagen, Uebertrag Restferien) und die spaeteren KPIs
@@ -18,7 +23,7 @@ Stand: 2026-09-29
   Tabellen nicht mehr auf 100/250 Zeilen gekappt, der PDF-Druck nennt seinen Seitenumfang (H5).
   Die Managementsicht verbirgt Namen, der Personenbezug bleibt; der Hilfetext sagt das jetzt
   richtig. `138/138` gezielte Tests laut Codex. Bericht: `docs/HR_EINKAUF_REVIEW_2026-09-29.md`.
-  Offen bleiben die bekannten Fachfragen (8,4 h je Krankheitstag, periodengenaue Rexx-Absenzen,
+  Offen bleiben die bekannten Fachfragen (8,4 h je Krankheitstag — seit 30.09. entschieden: 8,0 h —, periodengenaue Rexx-Absenzen,
   alte Quelldateien), ohne neue Aufgaben.
 
 - **2026-09-28: fachliche Antworten von HR (Sonja Richter) umgesetzt, produktiv seit 11:25 (`5ae7f31`).**

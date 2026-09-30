@@ -148,7 +148,8 @@ als datierte Einzelereignisse liefert.
 ## 7. Bewusst nicht geaendert, fachliche Bestaetigung offen
 
 *Ueberholt am 2026-09-28: HR hat diese Punkte bis auf die 8,4-Stunden-Umrechnung beantwortet,
-siehe Abschnitt 8. Die Liste bleibt als Stand vom 2026-08-17 stehen.*
+siehe Abschnitt 8. Seit 2026-09-30 ist auch diese entschieden: 8,0 h je Tag (Abschnitt 8.4). Die
+Liste bleibt als Stand vom 2026-08-17 stehen.*
 
 Diese Werte sind keine Codefehler, sondern Annahmen, die HR bestaetigen muss:
 
@@ -181,7 +182,9 @@ Wo die Antwort mehr als eine Umsetzung zuliess, hat Ingo am 2026-09-28 entschied
 | 8 | Kuendigungserkennung | Nur „Kuendigung AN" fliesst in die Fluktuation | unveraendert, die Erkennung deckt `Kündigung AN` und `Kuendigung AN` ab |
 | 9 | Ausschluss Praktikanten, Werkstudenten, Aushilfen, Lehrlinge | Korrekt, keine Ausnahmen | unveraendert |
 
-Offen bleibt die **8,4-Stunden-Umrechnung** je Krankheitstag; danach wurde nicht gefragt.
+*Ueberholt am 2026-09-30:* ~~Offen bleibt die **8,4-Stunden-Umrechnung** je Krankheitstag; danach wurde nicht gefragt.~~
+Entschieden, 8,0 h je Tag, siehe Abschnitt 8.4. Die Stunden in der Tabelle oben (Stunden / 8,4)
+gelten seither mit 8,0.
 
 ### 8.1 Periodengenaue Krankenquote: die Datumsfelder reichen nicht
 
@@ -245,6 +248,23 @@ Die Absenz-Ampel wuenscht Sonja mit gruen bis 3 %, gelb bis 4 %, rot ab 5 %; der
   Temporaerbuero.
 - **Mail an Sonja zum Umsetzungsstand:** liegt seit 2026-09-29 als Entwurf in Outlook, noch nicht
   versendet; im Entwurf fehlt Punkt 2 (aktuelle Exporte, Dateien vom 08.07. und 26.05.).
+  *Nachtrag 2026-09-30:* ueberarbeitete Fassung als `Downloads\Mail_Sonja_HR_Cockpit_2026-09-30.eml`
+  (Punkt 2 ergaenzt, Punkt 1 nimmt Sonjas Angebot auf, 8,4-h-Frage entfaellt nach Abschnitt 8.4).
+  Versand durch Ingo, alter Entwurf ist zu loeschen.
+
+### 8.4 Arbeitstag 8,0 h statt 8,4 h, 2026-09-30
+
+Ingo hat am 2026-09-30 bestaetigt: Trafag rechnet mit **8,0-Stunden-Tagen**. Das deckt sich mit
+Sonjas eigenen Angaben, die beim Durchsehen der Mails gefunden wurden: „Tagessoll 8 Stunden bei
+einem 100 % Pensum" (Rundmail vom 2025-12-02) und „FTE 0.8 = 32h/Woche" (Antwort vom 2026-09-14).
+Die 8,4 h im Code waren nie bestaetigt.
+
+Umgesetzt in `e3545c4`: eine Konstante `HrKpiDashboardBuilder.HoursPerWorkday = 8.0` fuer
+Krankheitstage (Stunden / 8,0), die 61-Tage-Grenze der Langzeitkrankheit und den FTE-Ersatz
+aus der Rexx-Sollzeit (Sollzeit / 8,0). Wirkung: rund 5 % mehr Krankheitstage und eine hoehere
+Krankenquote als bisher; Langzeitkrank gilt schon ab 488 statt 512,4 Stunden; wer nur ueber die
+Sollzeit ein FTE bekommt, hat ein um 5 % hoeheres FTE. Neuer Test
+`Krankheitstag_Hat_Acht_Stunden`, 788/788.
 
 ## Querverweise
 
