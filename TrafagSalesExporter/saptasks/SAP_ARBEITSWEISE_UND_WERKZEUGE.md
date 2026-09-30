@@ -166,7 +166,12 @@ gleich zu Beginn zu waehlen spart die meiste Zeit.
 
 Diese Punkte sind gemessen, nicht vermutet. Sie kosten sonst jedes Mal mehrere Versuche.
 
-* **Der ABAP-Editor laesst sich nicht auslesen.** `shell.Text` liefert nur den Namen des
+* **Seit 2026-09-30 doch lesbar, ueber die Zwischenablage:** `SapGuiReportInClipboard.vbs <SitzungsIndex>`
+  markiert im angezeigten SE38-Editor alles (`SelectAll`) und waehlt `Hilfsmittel > Block/Ablage >
+  Kopieren in Clipboard` (`wnd[0]/mbar/menu[3]/menu[8]/menu[3]`); danach liefert PowerShell
+  `Get-Clipboard -Raw` den vollstaendigen Quelltext (belegt mit `Z_HR_KPI_CONS`, 637 Zeilen). Der Rest
+  dieses Punkts gilt fuer das direkte Auslesen des Controls weiter.
+* **Der ABAP-Editor laesst sich nicht direkt auslesen.** `shell.Text` liefert nur den Namen des
   Steuerelements (`SAPGUI.AbapEditor.1`). `GetUnprotectedTextPart`,
   `NumberOfUnprotectedTextParts` und `SelectedText` gibt es auf diesem Control nicht.
   Schreiben geht, Lesen nicht. Wer den Quelltext sehen muss, laesst sich einen Screenshot
@@ -927,7 +932,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `Get-SapList.ps1 -Transaktion <TX>` | setzt eine klassische ABAP-Liste aus den `GuiLabel`-Koordinaten zu lesbaren Zeilen zusammen. **Der wichtigste Zeitsparer** |
 | `SapGuiReadEditor.vbs <TX> <Datei>` | Versuch, den ABAP-Editor zu lesen. **Funktioniert nicht**, bewusst als Beleg behalten |
 | `SapGuiProbeEditor.vbs` | zeigt, welche Lesemethoden das Editor-Control nicht kennt. Ebenfalls ein Beleg |
-| `SapGuiProbeSe38Editor.vbs [Datei]` | dasselbe fuer SE38, und zwar fuer die Eigenschaft `Text`, die in der aelteren Sonde fehlte. Ergebnis: 19 Zeichen, also nur der Steuerelementtitel. Damit ist die Luecke geschlossen, der Editor gibt den Quelltext auf **keinem** Weg heraus |
+| `SapGuiProbeSe38Editor.vbs [Datei]` | dasselbe fuer SE38, und zwar fuer die Eigenschaft `Text`, die in der aelteren Sonde fehlte. Ergebnis: 19 Zeichen, also nur der Steuerelementtitel. Direkt gibt der Editor den Quelltext nicht heraus. *Ueberholt am 2026-09-30:* ueber die Zwischenablage doch, siehe naechste Zeile |
+| `SapGuiReportInClipboard.vbs <SitzungsIndex>` | **Quelltext eines in SE38 angezeigten Reports in die Windows-Zwischenablage**, dann `Get-Clipboard -Raw`. Seit 2026-09-30 der Weg, einen Report ohne RFC-Passwort zu lesen |
 | `SapGuiBaumLesen.vbs <TX> <BaumId>` | einen `GuiTree` vollstaendig auslesen, etwa Objektlisten in SE01/SE09 |
 | `SapGuiGridLesen.vbs <TX> [GridId] [MaxZeilen]` | ein **ALV-Grid** ueber `RowCount`, `ColumnOrder` und `GetCellValue` auslesen. Ohne `GridId` meldet es die gefundenen Grid-Ids. Noetig ueberall dort, wo `Get-SapList.ps1` „Keine Listenzeilen gefunden" sagt, obwohl sichtbar Daten am Bildschirm stehen |
 | `SapGuiGridMarkieren.vbs <TX> <GridId> <Zeilen>` | Zeilen eines ALV-Grids ueber `SelectedRows` markieren, nullbasiert und kommagetrennt. Der Vergleich in der Versionsverwaltung erwartet genau zwei markierte Zeilen |
