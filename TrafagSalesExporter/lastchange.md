@@ -2,6 +2,11 @@
 
 Stand: 2026-09-30
 
+## HR-Cockpit: Absenz-Ampel der Uebersicht ab 5 % rot, 2026-09-30 (noch nicht deployed)
+
+- `81140fa`: HR bestaetigt „bis 4,99 % gelb, ab 5 % rot“. Die Uebersichtskachel „Krankheitstage“ warnte
+  erst ueber fest verdrahteten 5 %, jetzt ab der konfigurierten Rot-Grenze wie die Krankenquote.
+
 ## HR-Cockpit: Arbeitstag 8,0 h statt 8,4 h, 2026-09-30, produktiv 09:36
 
 - `e3545c4`: Entscheid Ingo, deckt sich mit Sonjas Tagessoll „8 Stunden bei 100 %". Eine Konstante

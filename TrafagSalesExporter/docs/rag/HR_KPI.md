@@ -10,7 +10,7 @@ Stand: 2026-09-30
   Ueberarbeitete Mail an Sonja liegt als `.eml` in Downloads. Details `docs/HR_KPI.md` 8.4.
 - **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kaderfeld fehlt noch); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
-  gelb, ab 5 % rot bestaetigt. SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report
+  gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (noch nicht deployed). SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report
   `Z_HR_KPI_CONS` von Hand), Ziel taeglich. Details `docs/HR_KPI.md` 8.5 und 8.6.
 - **2026-09-30: kein Rexx-Hub.** Automatischer Export der vier Rexx-Berichte soll ueber Upgreat
   (Ueli Kunzmann) laufen, Mail am 30.09. versendet, Antwort offen. dormakaba nach Rexx laeuft schon
