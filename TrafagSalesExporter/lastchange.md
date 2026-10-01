@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## HR-Cockpit: Unfalltage als laufender Monat, 2026-10-01, produktiv 09:44
+
+- `931f151`: BU/NBU kommen nur fuer den laufenden Monat aus SAP; die Kacheln sagen das jetzt. Erster SAP-Abruf
+  produktiv um 09:46 mit 1'168 Personen. `docs/HR_KPI.md` 8.6, Absenzen aus `PA2001` 8.7.
+
 ## HR-Cockpit: Kader mit 8,1 h je Arbeitstag, 2026-10-01, produktiv 09:12
 
 - `c51445c`: Kader ist, wer in Rexx `Leitung j/n` = ja hat (Ingo, Wochen_Todo 66). Fuer sie gelten 8,1 h

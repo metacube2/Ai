@@ -12,7 +12,7 @@ Stand: 2026-09-30
   `ZPOWERBI_EINKAUF_SRV` rechnet live aus PA0001/0002/0007/2001 (nur Cockpit-Felder, keine Namen,
   kein Lohn), in T76 aktiv und im Gateway Client mit 200 geprueft, Transport `T76K912530` gemeinsam
   mit dem Journal. Cockpit holt taeglich ab 05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx`
-  (`4051506`, 795/795). Seit 01.10. in P76 (200) und produktiv, erster Abruf 02.10. ab 05:00. Wertestichprobe 01.10. bestanden. Abruf holt bewusst den laufenden Monat (Entscheid 01.10.); Unfalltage damit nur Monat bis heute. `docs/HR_KPI.md` 8.6.
+  (`4051506`, 795/795). Seit 01.10. in P76 (200) und produktiv, erster Abruf 02.10. ab 05:00. Wertestichprobe 01.10. bestanden. Abruf holt bewusst den laufenden Monat (Entscheid 01.10.); Unfalltage-Kacheln deshalb „laufender Monat“ (`931f151`). Erster Abruf 01.10. 09:46: 1'168 Personen. SAP `PA2001` hat Absenzen je Fall (Krankheit, Ferien) mit Von/Bis, Kandidat statt Rexx-Liste je Fall (`HR_KPI.md` 8.7). `docs/HR_KPI.md` 8.6.
 - **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kader = Rexx `Leitung j/n` = ja, `c51445c`, produktiv seit 01.10. 09:12); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (produktiv seit 01.10.). SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report

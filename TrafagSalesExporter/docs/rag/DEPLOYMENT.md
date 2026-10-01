@@ -44,6 +44,9 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 09:44, HR-Cockpit: Unfalltage als laufender Monat beschriftet (`931f151`).** Gleicher Worktree, ohne Finance_All. `786/786`. `BiDashboard.dll` `01.10.2026 09:44:38`, `6'445'568` Bytes,
+  SHA256 `605EC034C401AC3435CDAAC44F7345C09CBC452191C18CFE74685A879FA6719D`, bitgleich. Fuenf Routen `200`, Produktiv-DB unveraendert, ohne Alarm.
+  Nebenwirkung des Neustarts: erster erfolgreicher `HrKpiSet`-Abruf um 09:46 (1'168 Personen).
 - **Deploy 2026-10-01 09:12, HR-Cockpit: SAP-Abruf `HrKpiSet` (`4051506`), Absenz-Ampel ab 5 % (`81140fa`), Kader 8,1 h (`c51445c`).** Stand `ba9cf5c`,
   Worktree `C:TMPTrafagSalesExporter_release_eafd1c5`, ohne Finance_All. `785/785`. `BiDashboard.dll` `01.10.2026 09:12:34`, `6'444'544` Bytes,
   SHA256 `5E25C0E5A432AE981328B8B4693F509C060CBB0ED77956E0E1633CF5454F480B`, bitgleich. Fuenf Routen `200`, Produktiv-DB unveraendert,
