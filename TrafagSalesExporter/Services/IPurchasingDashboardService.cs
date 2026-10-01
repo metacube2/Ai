@@ -5,6 +5,9 @@ namespace TrafagSalesExporter.Services;
 public interface IPurchasingDashboardService
 {
     Task<PurchasingDashboardLiveState> LoadAsync(PurchasingDashboardFilter? filter = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Stand vor dem letzten Einkauf-Lauf, waehrend der neue berechnet wird (Seite kennzeichnet und laedt nach).</summary>
+    bool IsShowingPreviousData(PurchasingDashboardLiveState state);
 }
 
 public sealed record PurchasingDashboardFilter(

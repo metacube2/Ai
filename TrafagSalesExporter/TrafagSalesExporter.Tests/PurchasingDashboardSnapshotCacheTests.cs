@@ -43,12 +43,51 @@ public sealed class PurchasingDashboardSnapshotCacheTests
         var first = await cache.GetOrCreateAsync(Filter(), Factory);
         var cached = await cache.GetOrCreateAsync(Filter(), Factory);
         cache.Clear();
+        // Seit 2026-10-01: direkt nach dem Lauf kommt der alte Stand, gekennzeichnet, und die
+        // Neuberechnung laeuft im Hintergrund (hier synchron fertig).
+        var duringRecalculation = await cache.GetOrCreateAsync(Filter(), Factory);
         var refreshed = await cache.GetOrCreateAsync(Filter(), Factory);
 
         Assert.Same(first, cached);
+        Assert.Same(first, duringRecalculation);
+        Assert.False(cache.IsPrevious(refreshed));
         Assert.NotSame(first, refreshed);
         Assert.Equal(2, calls);
         Assert.Equal(2, refreshed.PurchaseOrderCount);
+    }
+
+    [Fact]
+    public async Task AfterClear_PreviousSnapshot_IsMarked_Until_The_New_One_Is_Ready()
+    {
+        var cache = new PurchasingDashboardSnapshotCache();
+        var newData = new TaskCompletionSource<PurchasingDashboardLiveState>();
+        var old = await cache.GetOrCreateAsync(Filter(), _ => Task.FromResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 1 }));
+
+        cache.Clear();
+        var shown = await cache.GetOrCreateAsync(Filter(), _ => newData.Task);
+
+        Assert.Same(old, shown);
+        Assert.True(cache.IsPrevious(shown));
+
+        newData.SetResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 2 });
+        await Task.Yield();
+        var current = await cache.GetOrCreateAsync(Filter(), _ => throw new InvalidOperationException("darf nicht neu rechnen"));
+
+        Assert.Equal(2, current.PurchaseOrderCount);
+        Assert.False(cache.IsPrevious(current));
+        Assert.False(cache.IsPrevious(old));
+    }
+
+    [Fact]
+    public async Task Filter_Without_Previous_Snapshot_Still_Waits_After_Clear()
+    {
+        var cache = new PurchasingDashboardSnapshotCache();
+        cache.Clear();
+
+        var state = await cache.GetOrCreateAsync(Filter(), _ => Task.FromResult(new PurchasingDashboardLiveState { PurchaseOrderCount = 7 }));
+
+        Assert.Equal(7, state.PurchaseOrderCount);
+        Assert.False(cache.IsPrevious(state));
     }
 
     [Fact]

@@ -15,9 +15,12 @@ namespace TrafagSalesExporter.Services;
 /// Stand wird zurueckgegeben und im Hintergrund neu berechnet. Vorher wartete der erste
 /// Nutzer nach Ablauf die volle Berechnung ab - auf dem Server anderthalb Minuten. Warten muss
 /// jetzt nur noch, wer die allererste Berechnung eines Filters erwischt; die Standardansicht
-/// waermt <see cref="TimerBackgroundService"/> vor. Nach <see cref="Clear"/> (neue Daten aus
-/// einem Einkauf-Lauf) wird bewusst NICHT der alte Stand geliefert, sonst saehe man nach dem
-/// Lauf noch die Zahlen von vorher.
+/// waermt <see cref="TimerBackgroundService"/> vor.
+///
+/// SEIT 2026-10-01 AUCH NACH <see cref="Clear"/> (neue Daten aus einem Einkauf-Lauf): bis die neue
+/// Berechnung fertig ist, kommt der Stand vor dem Lauf, und <see cref="IsPrevious"/> sagt der
+/// Seite, dass sie ihn als solchen kennzeichnen und nachladen soll. Vorher wartete jeder nach
+/// „Delta aktualisieren“ die volle Berechnung ab (Rueckmeldung Armin, PLATTFORM_TEMPO 10a).
 /// </summary>
 public sealed class PurchasingDashboardSnapshotCache
 {
@@ -32,6 +35,8 @@ public sealed class PurchasingDashboardSnapshotCache
 
     private readonly ConcurrentDictionary<CacheKey, CacheEntry> _entries = new();
     private readonly ConcurrentDictionary<CacheKey, Lazy<Task<PurchasingDashboardLiveState>>> _loads = new();
+    // Stand vor dem letzten Clear() je Filter (Generation 0 im Schluessel), bis der neue fertig ist.
+    private readonly ConcurrentDictionary<CacheKey, PurchasingDashboardLiveState> _previous = new();
     private readonly TimeProvider _time;
     private long _generation;
 
@@ -51,6 +56,12 @@ public sealed class PurchasingDashboardSnapshotCache
             if (cached.ExpiresAtUtc <= UtcNow)
                 _ = RefreshInBackgroundAsync(key, factory);
             return cached.State;
+        }
+
+        if (_previous.TryGetValue(key.WithoutGeneration(), out var previous))
+        {
+            _ = RefreshInBackgroundAsync(key, factory);
+            return previous;
         }
 
         var (lazy, load) = StartOrJoinLoad(key, factory);
@@ -78,11 +89,22 @@ public sealed class PurchasingDashboardSnapshotCache
     /// <summary>Nach einem erfolgreichen Full-/Delta-Lauf sind alle Filter-Snapshots veraltet.</summary>
     public void Clear()
     {
+        // Den bisherigen Stand je Filter als Vorgaenger behalten. Ergaenzen statt ersetzen: kommen
+        // zwei Laeufe kurz hintereinander, ist nach dem ersten noch nichts neu berechnet.
+        foreach (var pair in _entries)
+            _previous[pair.Key.WithoutGeneration()] = pair.Value.State;
+        if (_previous.Count > MaxEntries)
+            _previous.Clear();
+
         // Auch bereits laufende Berechnungen gehoeren zur alten Generation. Sie duerfen
         // nach dem Refresh fertig werden, werden von neuen Aufrufen aber nicht mehr benutzt.
         Interlocked.Increment(ref _generation);
         _entries.Clear();
     }
+
+    /// <summary>Ob dieser Zustand der Stand vor dem letzten Einkauf-Lauf ist, der gerade neu berechnet wird.</summary>
+    public bool IsPrevious(PurchasingDashboardLiveState state)
+        => _previous.Values.Any(previous => ReferenceEquals(previous, state));
 
     private DateTime UtcNow => _time.GetUtcNow().UtcDateTime;
 
@@ -131,6 +153,7 @@ public sealed class PurchasingDashboardSnapshotCache
             return;
 
         _entries[key] = new CacheEntry(state, UtcNow.Add(Lifetime));
+        _previous.TryRemove(key.WithoutGeneration(), out _);
         TrimIfNeeded();
     }
 
@@ -164,5 +187,7 @@ public sealed class PurchasingDashboardSnapshotCache
             filter.ExcludeDeletedItems,
             filter.OrdersOnly,
             filter.ExcludeEndDelivered);
+
+        public CacheKey WithoutGeneration() => this with { Generation = 0 };
     }
 }

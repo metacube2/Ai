@@ -125,6 +125,14 @@
     </div>
 </MudPaper>
 
+@if (_showingPreviousData)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+        @T("Neue Einkaufsdaten werden eingerechnet. Bis dahin zeigt die Seite den Stand vor dem letzten Lauf; die Zahlen wechseln von selbst, meist nach 20 bis 30 Sekunden.",
+           "New purchasing data is being calculated. Until then the page shows the state before the last run; the figures update by themselves, usually within 20 to 30 seconds.")
+    </MudAlert>
+}
+
 <MudPaper Class="pa-3 mb-4" Outlined="true">
     <MudText Typo="Typo.body2">
         @if (_liveLoading)
@@ -833,6 +841,8 @@
     private PurchasingDataRefreshStatus _refreshStatus = new();
     private bool _liveLoading = true;
     private bool _refreshStartRejected;
+    private bool _showingPreviousData;
+    private CancellationTokenSource? _previousDataPollCts;
     private CancellationTokenSource? _refreshPollCts;
 
     /// <summary>
@@ -1895,7 +1905,7 @@
     {
         Navigation.LocationChanged += HandleLocationChanged;
         UiText.Changed += HandleLanguageChanged;
-        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData();
         _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
         _liveLoading = false;
 
@@ -1936,6 +1946,7 @@
         try
         {
             _refreshPollCts?.Cancel();
+            _previousDataPollCts?.Cancel();
         }
         catch (ObjectDisposedException)
         {
@@ -2019,7 +2030,7 @@
     {
         _liveLoading = true;
         StateHasChanged();
-        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData();
         _liveLoading = false;
         StateHasChanged();
         if (CurrentPurchasingPage == "3d")
@@ -2192,7 +2203,7 @@
                 {
                     _refreshStatus = await PurchasingDataRefreshService.GetStatusAsync();
                     if (!stillRunning)
-                        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+                        _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter()); TrackPreviousData();
                     StateHasChanged();
                 });
 
@@ -2212,6 +2223,52 @@
         {
             if (ReferenceEquals(_refreshPollCts, cts))
                 _refreshPollCts = null;
+            cts.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Kommt nach einem Einkauf-Lauf noch der Stand von vorher (wird im Hintergrund neu berechnet),
+    /// zeigt die Seite einen Hinweis und laedt alle 5 Sekunden nach, bis die neuen Zahlen da sind.
+    /// </summary>
+    private void TrackPreviousData()
+    {
+        _showingPreviousData = PurchasingDashboardService.IsShowingPreviousData(_liveState);
+        if (!_showingPreviousData || _previousDataPollCts is not null)
+            return;
+
+        var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        _previousDataPollCts = cts;
+        _ = PollPreviousDataAsync(cts);
+    }
+
+    private async Task PollPreviousDataAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+            while (_showingPreviousData && await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await InvokeAsync(async () =>
+                {
+                    _liveState = await PurchasingDashboardService.LoadAsync(BuildCurrentFilter());
+                    _showingPreviousData = PurchasingDashboardService.IsShowingPreviousData(_liveState);
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Nach fuenf Minuten oder beim Verlassen der Seite aufhoeren; der Hinweis bleibt dann stehen.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Circuit abgeraeumt, waehrend eine Abfrage unterwegs war.
+        }
+        finally
+        {
+            if (ReferenceEquals(_previousDataPollCts, cts))
+                _previousDataPollCts = null;
             cts.Dispose();
         }
     }

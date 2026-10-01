@@ -248,6 +248,9 @@ public sealed class PurchasingDashboardService : IPurchasingDashboardService
                 cancellationToken);
     }
 
+    public bool IsShowingPreviousData(PurchasingDashboardLiveState state)
+        => _snapshotCache?.IsPrevious(state) ?? false;
+
     private async Task<PurchasingDashboardLiveState> LoadUncachedAsync(
         PurchasingDashboardFilter filter,
         CancellationToken cancellationToken)
