@@ -74,7 +74,7 @@ SHA256 `226536E1...82C3`, fuenf Routen und `/logistik/live` 200, Alarm nur WAL/S
 
 ## Offen
 
-1. Sichtpruefung der Seite durch Ingo (Chrome-Erweiterung war nicht verbunden); danach im AppEventLog Kategorie Logistik nachsehen.
+1. *Erledigt 2026-10-01 15:13:* Sichtpruefung durch Ingo („logistik live sieht super aus“). Werte gegen SAP (ein TA, eine Lieferung, eine Rueckmeldung) noch nicht einzeln abgeglichen.
 2. *Erledigt (siehe oben).*
 3. Werte gegen SAP prüfen (ein TA, eine Lieferung, eine Rückmeldung per Screenshot).
 4. Ideen für später: Lagerplatz-Heatmap, Auftragsfortschritt je Arbeitsplatz über den Tag, Warnung
