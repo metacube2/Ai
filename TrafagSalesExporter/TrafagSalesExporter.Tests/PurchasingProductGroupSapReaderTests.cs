@@ -33,7 +33,8 @@ public sealed class PurchasingProductGroupSapReaderTests
         Assert.Equal(4, result.Rules.Count);
         Assert.Contains(result.Rules, rule => rule == new PurchasingProductGroupSapRule("001", "H", "HW_ZUKAUFSORT"));
         Assert.Contains(result.Rules, rule => rule == new PurchasingProductGroupSapRule("EL*", "T2", "FP_TRANSM. TX"));
-        Assert.Contains(result.Rules, rule => rule == new PurchasingProductGroupSapRule("DS1", "D5", "D5"));
+        // D5 hat in SAP keinen Text; das Dashboard nimmt den Ersatztext (Ingo 2026-10-01).
+        Assert.Contains(result.Rules, rule => rule == new PurchasingProductGroupSapRule("DS1", "D5", "FP_DICHTESEN1/2"));
         Assert.Contains(result.Rules, rule => rule == new PurchasingProductGroupSapRule("DS1", "DS", "FP_DICHTESENS"));
     }
 
@@ -93,5 +94,15 @@ public sealed class PurchasingProductGroupSapReaderTests
             string? filter = null,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(rowsByEntitySet.TryGetValue(entitySet, out var rows) ? rows : []);
+    }
+
+    [Theory]
+    [InlineData("D1", "", "FP_DICHTESEN")]
+    [InlineData("D5", "D5", "FP_DICHTESEN1/2")]
+    [InlineData("D5", "SAP_TEXT", "SAP_TEXT")]
+    [InlineData("XX", "", "XX")]
+    public void ResolveText_Nimmt_Ersatztext_Nur_Ohne_SAP_Text(string group, string sapText, string expected)
+    {
+        Assert.Equal(expected, PurchasingProductGroupSapReader.ResolveText(group, sapText));
     }
 }

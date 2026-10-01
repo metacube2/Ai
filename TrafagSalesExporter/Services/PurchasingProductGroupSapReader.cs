@@ -115,6 +115,26 @@ public sealed class PurchasingProductGroupSapReader : IPurchasingProductGroupSap
         }));
     }
 
+    /// <summary>
+    /// Texte fuer Produktgruppen, die in SAP ZDISPO_SPART (noch) keinen Text haben. Vorgabe Ingo
+    /// 2026-10-01: nur im Dashboard, SAP vorerst nicht pflegen. D1 haengt an DS, D5 an DS1 und DS2.
+    /// Liefert SAP spaeter einen Text, gewinnt SAP.
+    /// </summary>
+    internal static readonly IReadOnlyDictionary<string, string> MissingSapTexts =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["D1"] = "FP_DICHTESEN",
+            ["D5"] = "FP_DICHTESEN1/2"
+        };
+
+    internal static string ResolveText(string productGroup, string sapText)
+    {
+        var text = sapText.Trim();
+        if (text.Length > 0 && !string.Equals(text, productGroup, StringComparison.OrdinalIgnoreCase))
+            return text;
+        return MissingSapTexts.TryGetValue(productGroup, out var fallback) ? fallback : productGroup;
+    }
+
     private static IReadOnlyList<PurchasingProductGroupSapRule> NormalizeRules(
         IEnumerable<PurchasingProductGroupSapRule> rules) => rules
         .Select(rule => new PurchasingProductGroupSapRule(
@@ -124,7 +144,7 @@ public sealed class PurchasingProductGroupSapReader : IPurchasingProductGroupSap
         .Where(rule => rule.DisponentPattern.Length > 0 && rule.ProductGroup.Length > 0)
         .Select(rule => rule with
         {
-            ProductGroupText = rule.ProductGroupText.Length > 0 ? rule.ProductGroupText : rule.ProductGroup
+            ProductGroupText = ResolveText(rule.ProductGroup, rule.ProductGroupText)
         })
         // Der SQLite-Key ist (DisponentPattern, ProductGroup). Falls ein zusammengefuehrtes
         // SAP-Set dieselbe fachliche Zuordnung mehrfach liefert, gewinnt deterministisch die
