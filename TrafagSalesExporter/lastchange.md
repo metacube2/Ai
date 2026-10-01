@@ -2,6 +2,11 @@
 
 Stand: 2026-10-01
 
+## Logistik: Verwendung & Risiko, 2026-10-01, produktiv 16:05
+
+- `1a754e0`: Seite `/logistik/verwendung-risiko`, mehrstufige Verwendung und vererbtes Lieferantenrisiko fuer die
+  LZ-Code-Komponenten; kein Umsatz je Komponente, weil nur 6 % des CH-Umsatzes erreichbar sind.
+
 ## Logistik live, 2026-10-01, produktiv 15:01
 
 - `2be8623`: Seite `/logistik/live` mit Kommissionierung und Produktion aus SAP, Abruf alle 30 s nur bei offener
