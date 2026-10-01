@@ -556,7 +556,7 @@ internal sealed class HrKpiDashboardBuilder
             },
             new() { Label = period.ShowPeriodMetrics ? $"Fluktuation {period.Label}" : "Fluktuation Auswahl", Value = turnover.ToString("P1"), Detail = $"{relevantLeavers:N0} relevant von {employeeLeavers:N0} AN-Kuendigungen, Nenner {FormatHeadcount(turnoverDenominator)} HC", Severity = turnover > 0.12m ? "Warning" : "Normal" },
             new() { Label = "GLZ Schnitt", Value = avgBalance.ToString("N1"), Detail = $"{redBalance:N0} Personen > 100h absolut", Severity = redBalance > 0 ? "Warning" : "Normal" },
-            new() { Label = "Unfalltage", Value = employees.Sum(x => x.BuTage + x.NbuTage).ToString("N1"), Detail = $"BU {employees.Sum(x => x.BuTage):N1} / NBU {employees.Sum(x => x.NbuTage):N1}", Severity = "Normal" }
+            new() { Label = AccidentDaysLabel, Value = employees.Sum(x => x.BuTage + x.NbuTage).ToString("N1"), Detail = $"BU {employees.Sum(x => x.BuTage):N1} / NBU {employees.Sum(x => x.NbuTage):N1}, {AccidentDaysPeriodNote}", Severity = "Normal" }
         ];
     }
 
@@ -724,9 +724,9 @@ internal sealed class HrKpiDashboardBuilder
             new() { Label = "Krankheit Kurz", Value = shortSick.ToString("N1"), Detail = $"Tage von Personen unter {LongTermSickDayThreshold:N0} Krankheitstagen (Stunden / {HoursPerWorkday:0.0}h, Kader {HoursPerWorkdayKader:0.0}h)", Severity = "Normal" },
             new() { Label = "Krankheit Lang", Value = longSick.ToString("N1"), Detail = $"{longTermSickPersons:N0} Langzeitkranke ab dem {LongTermSickDayThreshold:N0}. Krankheitstag (Summe je Person)", Severity = longSick > shortSick ? "Warning" : "Normal" },
             new() { Label = "Krankenquote", Value = absenceRateValue, Detail = $"Krankheitstage / (FTE * {analysisPeriod.Workdays:N0} Arbeitstage ZH), {analysisPeriod.Label}. Gesetzliche Feiertage des Kantons Zuerich sind abgezogen. {absenceThresholdDetail}{scopingWarning}", Severity = absenceValueSeverity },
-            new() { Label = "BU-Tage", Value = bu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
-            new() { Label = "NBU-Tage", Value = nbu.ToString("N1"), Detail = "SAP HR KPI", Severity = "Normal" },
-            new() { Label = "Unfalltage Total", Value = (bu + nbu).ToString("N1"), Detail = "BU + NBU", Severity = "Normal" }
+            new() { Label = "BU-Tage laufender Monat", Value = bu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
+            new() { Label = "NBU-Tage laufender Monat", Value = nbu.ToString("N1"), Detail = $"SAP HR KPI, {AccidentDaysPeriodNote}", Severity = "Normal" },
+            new() { Label = AccidentDaysLabel, Value = (bu + nbu).ToString("N1"), Detail = $"BU + NBU, {AccidentDaysPeriodNote}", Severity = "Normal" }
         ];
     }
 
@@ -1378,6 +1378,14 @@ internal sealed class HrKpiDashboardBuilder
     /// „Leitung j/n“ = ja hat (Ingo 2026-10-01, Wochen_Todo 66).
     /// </summary>
     internal const decimal HoursPerWorkdayKader = 8.1m;
+
+    /// <summary>
+    /// BU/NBU kommen aus HrKpiSet fuer den laufenden Monat bis heute (Entscheid 2026-10-01,
+    /// docs/HR_KPI.md 8.6), nicht fuer den gewaehlten Zeitraum. Am Monatsanfang also fast 0.
+    /// </summary>
+    internal const string AccidentDaysLabel = "Unfalltage laufender Monat";
+
+    internal const string AccidentDaysPeriodNote = "nur laufender Monat bis heute, unabhaengig vom Zeitraumfilter";
 
     internal static decimal HoursPerWorkdayFor(string? leitung)
         => IsLeitung(leitung) ? HoursPerWorkdayKader : HoursPerWorkday;

@@ -588,6 +588,17 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.False(HrKpiDashboardBuilder.ClassifySickness(487m).IstLangzeitkrank);
     }
 
+    [Fact]
+    public async Task BuildAsync_Beschriftet_Unfalltage_Als_Laufenden_Monat()
+    {
+        // HrKpiSet liefert BU/NBU nur fuer den laufenden Monat (Entscheid 2026-10-01).
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var unfall = Assert.Single(result.AbsenceMetrics, metric => metric.Label == "Unfalltage laufender Monat");
+        Assert.Contains("nur laufender Monat", unfall.Detail);
+        Assert.DoesNotContain(result.AbsenceMetrics, metric => metric.Label == "Unfalltage Total");
+    }
+
     [Theory]
     [InlineData("ja", 8.1)]
     [InlineData(" Ja ", 8.1)]

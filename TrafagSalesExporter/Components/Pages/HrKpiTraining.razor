@@ -65,7 +65,7 @@
                 <tbody>
                     <tr><td>Saldiperstichdatum.xlsx</td><td>Aktive Mitarbeitende, Saldi, Ferien, Organisation, Kostenstelle</td><td>Zeilenanzahl, Alter, Organisationsabdeckung</td></tr>
                     <tr><td>Exportkommengehen.xlsx</td><td>Arbeitszeitmodell, Sollzeit, Geburtsdatum</td><td>FTE-/Sollzeit-Fallback prüfen</td></tr>
-                    <tr><td>HR_KPI_Export.xlsx</td><td>SAP-HR-Felder, Beschäftigungsgrad, Geschlecht, BU/NBU, Planstelle</td><td>Join auf Personalnummer plausibilisieren</td></tr>
+                    <tr><td>HR_KPI_Export.xlsx</td><td>SAP-HR-Felder, Beschäftigungsgrad, Geschlecht, BU/NBU (laufender Monat), Planstelle</td><td>Join auf Personalnummer plausibilisieren</td></tr>
                     <tr><td>Abwesenheitinstunden.xlsx</td><td>Krankheit kurz/lang, Unfall, Stundenwerte</td><td>Stunden-zu-Tage-Logik und Zeitraum prüfen</td></tr>
                     <tr><td>Personalausgeschieden.xlsx</td><td>Austritte, Austrittsart, Austrittsdatum</td><td>Austrittsarten und Ausschlüsse kontrollieren</td></tr>
                 </tbody>
@@ -120,7 +120,7 @@
 
         <TrainingSection Title="7. Absenzen, GLZ und Restferien">
             <p>Absenzen werden nach Stunden/Tagen und Organisation ausgewertet. Die Krankenquote nutzt Krankheitstage im Verhältnis
-                zu FTE und Arbeitstagen. Unfalltage können je nach Quelle anders abgegrenzt sein und müssen daher vorsichtig interpretiert werden.</p>
+                zu FTE und Arbeitstagen. Unfalltage (BU/NBU) kommen aus SAP und zeigen nur den laufenden Monat bis heute, unabhängig vom Zeitraumfilter; am Monatsanfang sind sie deshalb fast 0.</p>
             <ul>
                 <li>Top-Absenzen dienen der operativen Prüfung, nicht der direkten Weitergabe.</li>
                 <li>Kritische Restferien zeigen Planungsbedarf oder Datenfehler.</li>
