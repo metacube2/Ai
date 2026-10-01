@@ -588,6 +588,41 @@ public sealed class HrKpiServiceTests : IDisposable
         Assert.False(HrKpiDashboardBuilder.ClassifySickness(487m).IstLangzeitkrank);
     }
 
+    [Theory]
+    [InlineData("ja", 8.1)]
+    [InlineData(" Ja ", 8.1)]
+    [InlineData("nein", 8.0)]
+    [InlineData("", 8.0)]
+    public void Kader_Mit_Leitung_Ja_Hat_8_1_Stunden(string leitung, double expected)
+    {
+        // HR 2026-09-30: Kader 8,1 h, sonst 8,0 h. Kader = Rexx "Leitung j/n" = ja (Ingo 2026-10-01).
+        Assert.Equal((decimal)expected, HrKpiDashboardBuilder.HoursPerWorkdayFor(leitung));
+    }
+
+    [Fact]
+    public async Task BuildAsync_Rechnet_Krankheitstage_Fuer_Kader_Mit_8_1_Stunden()
+    {
+        WriteWorkbook(Path.Combine(_folder, "Abwesenheitinstunden.xlsx"),
+            [
+                "Personalnummer", "Nachname, Vorname (Link Personal)", "Organisation", "Stelle", "Leitung j/n", "Personal Status",
+                "Krankheit angetreten (Stunden Ind.)", "Krank nicht buchbar angetreten (Stunden Ind.)"
+            ],
+            [
+                // 488 h: bei 8,0 h genau 61 Tage (langzeitkrank), bei 8,1 h nur 60,2 Tage.
+                [1001, "Alpha, Anna", "Org A", "Teamleiterin", "ja", "Aktiv", 488.0, 0],
+                [1002, "Beta, Bruno", "Org B", "Engineer", "nein", "Aktiv", 488.0, 0]
+            ]);
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });
+
+        var kader = Assert.Single(result.Absences, row => row.Personalnummer == 1001);
+        Assert.False(kader.IstLangzeitkrank);
+        Assert.Equal(60.2m, kader.KrankheitstageGesamt);
+        var normal = Assert.Single(result.Absences, row => row.Personalnummer == 1002);
+        Assert.True(normal.IstLangzeitkrank);
+        Assert.Equal(61m, normal.KrankheitstageGesamt);
+    }
+
     [Fact]
     public async Task BuildAsync_Zaehlt_Beide_Rexx_Felder_Und_Teilt_Nach_61_Tagen()
     {

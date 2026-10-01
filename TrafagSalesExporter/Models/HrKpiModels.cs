@@ -211,6 +211,8 @@ public sealed class HrAbsenceRow
     // Ab dem 61. Krankheitstag gilt die Krankheit als Langzeitkrankheit (Sonja Richter, HR,
     // Antwort auf Ingos Fragen vom 2026-08-19). Gezaehlt wird die Summe je Person im Export.
     public bool IstLangzeitkrank { get; set; }
+    // 8,0 h, fuer Kader (Rexx „Leitung j/n“ = ja) 8,1 h; siehe HrKpiDashboardBuilder.HoursPerWorkdayFor.
+    public decimal StundenProArbeitstag { get; set; } = 8.0m;
 }
 
 public sealed class HrLeaverRow
