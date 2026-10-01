@@ -42,6 +42,7 @@ stand nicht am Arbeitsplatz, sondern in einem Serverparameter.
 | Analysereport Standardpreis und Journal (CH/AT) | `docs/abap/README_FIN_ANALYSE_STPRS_JOURNAL.md` |
 | **Journal-EntitySet CH/AT: Messung, Fuellgrade und Bauplan** (seit 30.09. teilt es den Transport `T76K912530` mit `HrKpiSet`) | `docs/abap/README_FIN_JOURNAL_ENTITYSET.md` |
 | **HR-EntitySet `HrKpiSet`: Bauplan, Stand T76, offene Schritte** | `docs/HR_KPI.md` Abschnitt 8.6 |
+| **HR-EntitySet `HrAbsenzSet` (Abwesenheiten je Fall, Transport `T76K912644`)** | `docs/HR_KPI.md` Abschnitt 8.7 |
 | **Konditionsart ZRL2 (Mengenrabatt Lieferant) AT, Transport und Mandantenfalle** | `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` |
 | Produktsparten-Mapping fuer den Group Sales Report | `docs/PRODUCT_SPARTEN_MAPPING_2026-05-27.md` |
 | Produktmapping, Kurzstand | `docs/rag/PRODUCT_MAPPING.md` |

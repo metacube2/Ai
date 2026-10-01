@@ -800,6 +800,8 @@ allerersten Versuch `PERMISSION_ERROR`. Quelltext bestehender Programme wird ueb
 
 ### Beim Anlegen schlaegt SAP den zuletzt benutzten Transportauftrag vor
 
+*Nachtrag 2026-10-01:* Einen neuen Auftrag legt man im Dialog „Abfrage transportierbarer Workbench-Auftrag“ mit `wnd[1]/tbar[0]/btn[8]` an; es folgt „Auftrag anlegen“ mit Kurzbeschreibung `wnd[2]/usr/txtKO013-AS4TEXT`, Ziel P76 ist vorbelegt, `wnd[2]/tbar[0]/btn[0]` sichert und traegt die neue Nummer in `KO008-TRKORR` ein (so entstand `T76K912644`). `SapProbe.exe` direkt aufgerufen braucht das Passwort in **`SAP_NCO_PASSWORD`** (nicht `SAP_PASSWORD`); ueber `RunSapProbe.ps1` gesetzt, das dort aber jeden Fehler als leere `NativeCommandError` zeigt.
+
 Der Dialog „Abfrage transportierbarer Workbench-Auftrag" war am 2026-09-10 mit
 `T76K912490` vorbelegt — dem **ZZPRDAT-Auftrag, der auf die fachliche Abnahme wartet**.
 Ein neues Objekt waere still dort hineingelaufen und haette den abzunehmenden Umfang
@@ -969,6 +971,8 @@ Bildschirmabzuege und die Steuerelementbaeume draussen; der Quellcode ist im Rep
 | `SapGuiMethodeneditorSchreiben.vbs <Sitzung> <Methode> <Datei>` | dasselbe, wenn der Editor bereits offen ist (direkt nach dem Redefinieren) |
 | `SapGuiMethodenTabelle.vbs <Sitzung> [Scroll] [Suchname]` | Methodentabelle in SE24 auflisten oder eine Methode ueber alle Seiten suchen |
 | `SapGuiFensterDump.vbs <Sitzung> [Fenster] [Tiefe]` | rekursiver Dump eines Fensters mit Id, Typ, Text und Tooltip. Erste Wahl, wenn eine Maske unbekannt ist |
+| `SapGuiStrukturAnlegen.vbs <Sitzung> <Name> <Kurztext>` | **Neue DDIC-Struktur in SE11 anlegen** (Schritte 1 bis 3 aus SE11 oben). Seit 2026-10-01 |
+| `SapGuiKlasseAendernMitAuftrag.vbs <Sitzung> <Klasse> <Auftrag>` | SE24, Klasse mit F6 im Aendern-Modus oeffnen, Reiter Methoden. **Gemessen 2026-10-01:** F6 fragt bei einer freigegebenen, nicht gesperrten Klasse nicht nach dem Auftrag; die Abfrage kommt erst beim Sichern der Methode, dann `KO008-TRKORR` ausdruecklich setzen |
 | `SapGuiGatewayStatus.vbs <Sitzung> <RequestUri>` | **GET im Gateway Client mit Statuscode, Begruendung, `content-length` und Laufzeit.** Seit 2026-09-30; das aeltere `SapGuiGatewayClient.vbs` gibt den Status nicht aus. Die Kodierung von `$filter` (`%20`, Hochkommas) wird unveraendert durchgereicht |
 | `SapGuiGatewayClient.vbs <Sitzung> <RequestUri> <Datei>` | GET im Gateway Client absetzen. Liefert HTTP-Status, `content-length` und die gemessene Dauer; der Antwortrumpf bleibt unlesbar |
 | `SapGuiOkCode.vbs <Sitzung> <Befehl>` | Befehl ins Befehlsfeld, adressiert ueber den **Sitzungsindex**. Ersatz fuer `SapGuiCommand.vbs`, wenn die aktuelle Transaktion unbekannt ist |

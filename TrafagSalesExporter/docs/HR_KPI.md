@@ -351,6 +351,16 @@ Felder, die das Cockpit liest; keine Namen, kein Geburtsdatum, kein Lohn. Das Co
 
 Frage Ingo: lassen sich Abwesenheiten ueber SAP genauer bestimmen, sodass Rexx entfaellt? Per RFC in **T76** gelesen (nur Art und Beginn, keine Personen): `PA2001` hat **eine Zeile je Fall mit Beginn und Ende**. Seit 01.01.2026 572 Faelle, juengster Beginn 31.03.2026 (Stand der T76-Kopie, nicht P76): 0260 Krankheit bis 60 Tage 254, 0100 Ferien 198, 0400 Kompensation 104, 0600 Militaer/Zivilschutz 9, 0500 Absenzen bezahlt 5, 0290 Unfall ab 3. Tag 1, 0270 Krankheit groesser 60 Tage 1 (Texte `T554T`). Damit waeren Krankenquote und Ferien periodengenau, ohne die Rexx-Liste je Fall (8.5). **Nicht belegt:** wie aktuell `PA2001` in P76 ist (vermutlich Uebernahme aus Rexx fuer die Lohnabrechnung, dann hinkt der laufende Monat nach), ob nur genehmigte Faelle ankommen, und ob die Zahl der Faelle der in Rexx entspricht. Naechster Schritt: in P76 die juengsten `PA2001`-Eintraege ansehen (SE16N, Ingo), dann ein zweites EntitySet `HrAbsenzSet` (Person, Art, Von, Bis, Tage, Stunden) im selben Muster wie `HrKpiSet`. Fuer Saldi, Restferien, GLZ und Austritte bleibt Rexx vorerst noetig.
 
+**Gebaut am 2026-10-01** (Ingo: P76 ist immer aktuell; Rexx bleibt, nur Krankenquote und Ferien aus SAP; Entscheide: Erweiterung im Code wie `HrKpiSet`, Tage und Stunden plus Kompensation und Militaer, **zweites Set je Fall** statt Monatssummen):
+
+| Teil | Stand |
+| --- | --- |
+| SAP T76 | Struktur `ZSTR_HR_ABSENZ` (Paket ZPP; PERNR PERSNO, GJAHR, AWART, BEGDA/ENDDA CHAR8, SEQNR, ABWTG, STDAZ ABSTD, KALTG; per DD03L alle neun aktiv), `DEFINE` und `GET_ENTITYSET` erweitert (`docs/abap/ZHR_ABSENZ_*_ADD.abap`, Gesamtstaende per RFC gegengelesen), **neuer Transport `T76K912644`** (Aufgabe `T76K912645`, alle drei Objekte). Cache `/IWFND/CACHE_CLEANUP` fuer `ZPOWERBI_EINKAUF_MDL` |
+| Gemessen Gateway Client T76 | `$metadata` 200 (345'782 statt 343'930), `HrAbsenzSet` 2026 Seite 1 200 (312'027), Seite 2 200 leer, 2025 200 (545'547); Gegenproben `HrKpiSet`, `MAKTSet`, gefiltertes `FinanzJournalSet` 200 |
+| Set | Filter nur `Gjahr`; jeder Fall, der das Jahr beruehrt, mit vollem Von/Bis; **alle Arten**, gesperrte Saetze (`SPRPS = X`) nicht |
+| Cockpit `c749d32` | `SapGatewayHrAbsenceReader`, Tagesdienst holt nach `HrKpiSet` Vorjahr und laufendes Jahr nach `hrdata/HR_Absenzen_SAP.xlsx` (eigener Fehlerpfad). Builder: **liegt die Datei vor, kommt die Krankheit aus SAP** (Arten 0220, 0230, 0240, 0260, 0270; 0210 Arzt nicht), je Fall nach Arbeitstagen auf den Zeitraum zugeschnitten, offenes Ende je Arbeitstag mit 8,0/8,1 h; ohne Zeitraumfilter laufendes Jahr bis heute; 61-Tage-Regel unveraendert. Neu in „Zeit und Ferien“: Ferien bezogen, Kompensation, Militaer/Zivilschutz im Zeitraum (Tage). Fehlt die Datei, rechnet alles wie bisher aus Rexx. 809/809 |
+| Offen | Ingo: Transport `T76K912644` nach P76; danach `$metadata` in P76 auf `HrAbsenz` pruefen und Deploy. **HR bestaetigen lassen:** welche Arten Krankheit sind (0210 Arzt? 0220 „Krank kleiner 3 Tage“?), ob Ferien in SAP vollstaendig gebucht werden |
+
 
 Rexx-Berichtsnummern aus denselben Notizen, fuer die Anfrage bei Upgreat: Abwesenheit in Stunden
 `#744`, Export KOMMEN/GEHEN `#732`, Personal ausgeschieden `#381`, Abwesenheiten Uebersicht `#742`,

@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## HR-Cockpit: Krankheit und Ferien je Fall aus SAP, 2026-10-01 (nicht deployed, Transport offen)
+
+- `c749d32`: neues EntitySet `HrAbsenzSet` (T76, Transport `T76K912644`) liefert jede Abwesenheit aus
+  `PA2001` mit Von/Bis. Das Cockpit schneidet Krankheitsfaelle auf den Zeitraum zu und zeigt Ferien,
+  Kompensation und Militaer im Zeitraum. Ohne die neue Datei bleibt alles bei Rexx. `docs/HR_KPI.md` 8.7.
+
 ## HR-Cockpit: Unfalltage als laufender Monat, 2026-10-01, produktiv 09:44
 
 - `931f151`: BU/NBU kommen nur fuer den laufenden Monat aus SAP; die Kacheln sagen das jetzt. Erster SAP-Abruf
