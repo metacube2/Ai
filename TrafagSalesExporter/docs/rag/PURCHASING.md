@@ -1,6 +1,6 @@
 # RAG Einkauf
 
-Stand: 2026-09-30 (Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
+Stand: 2026-10-01 (**neu Logistik live** `/logistik/live`: Kommissionierung und Produktion aus SAP alle 30 s, nur bei offener Seite, ohne Personendaten, Sets `LogTaSet`/`LogLiefSet`/`LogRueckSet` in P76, `docs/LOGISTIK_LIVE_2026-10-01.md`; nach dem Auffrischen sofort alter Stand mit Hinweis `4e2b55a`; Texte D1/D5 `3407868`; vorher 2026-09-30: Rueckmeldung Armin zum Tempo, `PLATTFORM_TEMPO_2026-09-28.md` 10: viel schneller, beim Auffrischen noch langsam, Vorschlag offen; ZRL2-Konditionsart AT in P76, `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md`; Codex-Reparaturen E1/E2/C1/C2 produktiv seit 10:07; Lagerwert-Verlauf und Ladezeit vom 2026-09-28; uebriger Kurzstand vom 2026-09-03)
 
 Live-Abgleich vom Juli fuer den Einkauf-Delta-Status:
 `docs/AKTUELLER_LIVEDATEN_STAND_2026-07-31.md`.
