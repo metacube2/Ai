@@ -13,7 +13,7 @@ Stand: 2026-09-30
   kein Lohn), in T76 aktiv und im Gateway Client mit 200 geprueft, Transport `T76K912530` gemeinsam
   mit dem Journal. Cockpit holt taeglich ab 05:00 ab und schreibt `hrdata/HR_KPI_Export.xlsx`
   (`4051506`, 795/795). Offen: Wertestichprobe, Transport nach P76, Deploy. `docs/HR_KPI.md` 8.6.
-- **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kaderfeld fehlt noch); Rexx
+- **2026-09-30 HR-Sitzung:** Kader 8,1 h, normale Mitarbeitende 8,0 h (Kader = Rexx `Leitung j/n` = ja, `c51445c` vom 01.10., nicht deployed); Rexx
   erfasst Absenzen je Fall mit Von/Bis und Status (neuer Bericht noetig); Absenz-Ampel bis 4,99 %
   gelb, ab 5 % rot bestaetigt; Uebersichtskachel in `81140fa` auf „ab 5 %“ angeglichen (noch nicht deployed). SAP-Datei `HR_KPI_Export` ist NICHT automatisiert (Report
   `Z_HR_KPI_CONS` von Hand), Ziel taeglich. Details `docs/HR_KPI.md` 8.5 und 8.6.

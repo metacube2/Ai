@@ -1,6 +1,6 @@
 # Agenten-Koordination
 
-Stand: 2026-09-30
+Stand: 2026-10-01
 
 Diese Datei koordiniert gleichzeitig arbeitende Entwicklungsagenten im gemeinsamen
 Workspace. Vor jeder Aenderung bitte vollstaendig lesen und den eigenen Eintrag
@@ -39,6 +39,7 @@ Nachweisen, geaenderten Dateien und Fallen steht in
 
 | Agent | Bereich | Letztes Datum | Ergebnis in Kurzform |
 |---|---|---|---|
+| Claude | HR: Kader 8,1 h ueber Rexx `Leitung j/n` | 2026-10-01 | **Abgeschlossen, Reservierung frei, NICHT deployed.** Auftrag Ingo „id 66 aus rexx“ mit Screenshot #744. `c51445c`: `HoursPerWorkdayFor` (ja = 8,1 h, sonst 8,0 h) fuer Krankheitstage, 61-Tage-Grenze, FTE aus Sollzeit; zwei neue Tests, 800/800. Spalte in Absenzen und Saldi vorhanden (44 ja / 218 nein). Doku `HR_KPI.md` 8.5, `rag/HR_KPI.md`, `router/hr.md`, `lastchange.md`, `Wochen_Todo` 66 erledigt, `.xlsx` neu. |
 | Claude | Sitzungsabschluss 30.09.: alles nachgefuehrt | 2026-09-30 | **Abgeschlossen, Reservierung frei, nur Doku.** Neu `docs/SAP_ZRL2_MENGENRABATT_AT_2026-09-30.md` (Transport `T76K912628` aus Mandant 090, per SCC1 nach 100, am 30.09. nach P76 importiert). `PLATTFORM_TEMPO_2026-09-28.md` 10 (Rueckmeldung Armin, Vorschlag offen), `rag/PURCHASING.md`, `baum.md`, Router SAP und HR, `Wochen_Todo.tsv` Zeilen 65 bis 70. `Wochen_Todo.xlsx` am 30.09. 15:35 neu erzeugt (70 Zeilen). **Python ohne Installation:** `C:\Users\koi\AppData\Local\uv\cache\archive-v0\QZ1EH1FtaCqtkBTs\Scripts\python.exe` hat `openpyxl` 3.1.5; der Store-Platzhalter und `whisper/python` (ohne openpyxl) taugen nicht. Nicht deployed: `4051506` (HR-SAP-Abruf) und `81140fa` (Ampel). |
 | Claude | HR: SAP-Import automatisch ueber `HrKpiSet` | 2026-09-30 | **Abgeschlossen bis T76, Reservierung frei, NICHT in P76, NICHT deployed.** Auftrag Ingo „baue automatik", Entscheide: OData live aus PA-Tabellen, `ZPOWERBI_EINKAUF_SRV`, nur Cockpit-Felder. T76: `ZSTR_HR_KPI` aktiv, `DEFINE` (`MPC_EXT==CM001`) und `GET_ENTITYSET` (`DPC_EXT==CM01W`) aktiv und per RFC gegengelesen, Cache geleert, Gateway Client 200 fuer `$metadata`, `HrKpiSet` (Filter, Paging, Monat 13) und Gegenproben `MAKTSet`/`FinanzJournalSet`. Alles in `T76K912530` (Journal). `4051506`: Leser und Tagesdienst, 795/795. Behoben: `SapGuiStrukturFelder.vbs` ueberschrieb die neunte Zeile. Neu `SapGuiGatewayStatus.vbs`, `SapGuiReportInClipboard.vbs`. Doku `HR_KPI.md` 8.6, `rag/HR_KPI.md`, `README_FIN_JOURNAL_ENTITYSET.md`, SAP-Arbeitsweise, `PROJEKTSTATUS.md`, `lastchange.md`. Offen: Wertestichprobe, Transport, Deploy; Scripting-Warnungen wieder einschalten (Ingo). |
 | Claude | HR: Absenz-Ampel der Uebersicht ab 5 % | 2026-09-30 | **Abgeschlossen, Reservierung frei, NICHT deployed.** Auftrag Ingo „passe mal die ampel an“. `81140fa`: Uebersichtskachel „Krankheitstage“ nutzt die konfigurierte Rot-Grenze mit `>=` statt `> 0.05m`; neuer Test `Absenzampel_Ist_Ab_Fuenf_Prozent_Rot`, 791/791. Doku `HR_KPI.md` 8.5, `rag/HR_KPI.md`, `lastchange.md`. |

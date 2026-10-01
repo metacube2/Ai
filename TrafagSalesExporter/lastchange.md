@@ -1,6 +1,11 @@
 # Last Change
 
-Stand: 2026-09-30
+Stand: 2026-10-01
+
+## HR-Cockpit: Kader mit 8,1 h je Arbeitstag, 2026-10-01 (nicht deployed)
+
+- `c51445c`: Kader ist, wer in Rexx `Leitung j/n` = ja hat (Ingo, Wochen_Todo 66). Fuer sie gelten 8,1 h
+  statt 8,0 h bei Krankheitstagen, Langzeitgrenze und FTE aus der Sollzeit. 800/800. `docs/HR_KPI.md` 8.5.
 
 ## HR-Cockpit: SAP-Datei automatisch ueber OData, 2026-09-30 (nicht deployed, nicht in P76)
 
