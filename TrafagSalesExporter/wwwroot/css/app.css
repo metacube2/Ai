@@ -39,6 +39,44 @@ html[data-theme="dark"] body {
     object-fit: contain;
 }
 
+/* Skin Trafag CI (2026-10-01): heller, leicht blauer Kasten wie das Logo auf SharePoint,
+   darin das schwarze Logo und "Cockpit" in derselben Hoehe. Das Logo-JPG hat weissen
+   Grund; multiply laesst ihn im hellblauen Kasten verschwinden. */
+.ci-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 54px;
+    padding: 0 16px 0 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #F4F9FD 0%, #DCEAF6 100%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.ci-brand-logo {
+    /* Das JPG hat viel weissen Rand; so gross, dass "trafag" gleich hoch wie "Cockpit" ist. */
+    height: 58px;
+    margin: 0 -6px;
+    width: auto;
+    mix-blend-mode: multiply;
+}
+
+.ci-brand-text {
+    color: #111;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    /* Grundlinie auf den Schriftzug "trafag" ziehen, nicht auf "sensors + controls". */
+    margin-bottom: 11px;
+}
+
+@media (max-width: 600px) {
+    .ci-brand-logo { height: 42px; }
+    .ci-brand-text { font-size: 22px; margin-bottom: 8px; }
+}
+
 .language-menu {
     color: #fff;
 }

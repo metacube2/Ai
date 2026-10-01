@@ -14,6 +14,9 @@
             try { mode = localStorage.getItem("trafag-theme"); } catch (e) { }
             if (mode !== "light") mode = "dark";
             document.documentElement.setAttribute("data-theme", mode);
+            var skin = null;
+            try { skin = localStorage.getItem("trafag-skin"); } catch (e) { }
+            document.documentElement.setAttribute("data-skin", skin === "classic" ? "classic" : "ci");
         })();
     </script>
     @* `AssetVersion` erzwingt das Neuladen nach einem Deploy, siehe unten. *@

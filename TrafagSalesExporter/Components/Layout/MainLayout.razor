@@ -4,7 +4,7 @@
 @inject TrafagSalesExporter.Services.IUiTextService UiText
 @inject IJSRuntime JS
 
-<MudThemeProvider Theme="_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@(_ciSkin ? _ciTheme : _theme)" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -15,12 +15,27 @@
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="ml-3 app-title">@T("Trafag Cockpit", "Trafag Cockpit")</MudText>
+        @if (_ciSkin)
+        {
+            @* Trafag CI (Wunsch Ingo 2026-10-01): Logo wie auf SharePoint in einem hellen Kasten,
+               daneben "Cockpit" in Schwarz, auf die Logohoehe abgestimmt. Leiste orange. *@
+            <div class="ci-brand ml-3">
+                <img src="trafag.jpg" alt="Trafag" class="ci-brand-logo" />
+                <span class="ci-brand-text">Cockpit</span>
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="ml-3 app-title">@T("Trafag Cockpit", "Trafag Cockpit")</MudText>
+        }
         <MudSpacer />
         @* Statusampel: haelt die Meldungen fest, die sonst mit der Snackbar verschwinden.
            Bewusst hier oben und nicht auf einer Seite, damit der Zustand ueberall sichtbar
            ist. Siehe Components/AppStatusLight.razor. *@
         <AppStatusLight />
+        <MudTooltip Text="@T("Design umschalten: Trafag CI oder klassisch", "Switch design: Trafag CI or classic")">
+            <MudIconButton Icon="@Icons.Material.Filled.Palette" Color="Color.Inherit" OnClick="ToggleSkinAsync" />
+        </MudTooltip>
         <MudTooltip Text="@T("Hell/Dunkel umschalten", "Switch light/dark")">
             <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="Color.Inherit" OnClick="ToggleDarkModeAsync" Class="mr-1" />
@@ -55,7 +70,10 @@
                 <MudText Typo="Typo.caption" Class="mr-3">@ShortName(authState.User)</MudText>
             </Authorized>
         </AuthorizeView>
-        <img src="trafag.jpg" alt="Trafag" class="app-logo" />
+        @if (!_ciSkin)
+        {
+            <img src="trafag.jpg" alt="Trafag" class="app-logo" />
+        }
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
@@ -75,6 +93,32 @@
     private bool _drawerOpen = true;
     // Standard ist dunkel (Wunsch Ingo 2026-09-29); hell nur, wenn im Browser so gewaehlt.
     private bool _isDarkMode = true;
+    // Skin Trafag CI ist Standard (Wunsch Ingo 2026-10-01); das bisherige Rot bleibt waehlbar.
+    private bool _ciSkin = true;
+
+    // Trafag-Orange aus dem Intranet (Kachel "Stellenantrag"). Dunkel: gleiche Leiste,
+    // helleres Orange fuer Schaltflaechen und Links, damit sie auf dunklem Grund lesbar bleiben.
+    private readonly MudTheme _ciTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#C8501E",
+            Secondary = "#9C3D14",
+            AppbarBackground = "#C8501E"
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#F08A4B",
+            Secondary = "#E8A070",
+            AppbarBackground = "#B5481B",
+            Background = "#1E1F25",
+            Surface = "#272830",
+            DrawerBackground = "#22232A",
+            DrawerText = "rgba(255,255,255,0.80)",
+            TextPrimary = "rgba(255,255,255,0.87)",
+            TextSecondary = "rgba(255,255,255,0.62)"
+        }
+    };
 
     private readonly MudTheme _theme = new()
     {
@@ -107,12 +151,20 @@
 
         // Gemerkte Wahl je Browser; ohne Wahl bleibt es dunkel.
         var dark = await JS.InvokeAsync<string?>("trafagTheme.get") != "light";
+        var ci = await JS.InvokeAsync<string?>("trafagTheme.getSkin") != "classic";
 
-        if (dark != _isDarkMode)
+        if (dark != _isDarkMode || ci != _ciSkin)
         {
             _isDarkMode = dark;
+            _ciSkin = ci;
             StateHasChanged();
         }
+    }
+
+    private async Task ToggleSkinAsync()
+    {
+        _ciSkin = !_ciSkin;
+        await JS.InvokeVoidAsync("trafagTheme.setSkin", _ciSkin ? "ci" : "classic");
     }
 
     private async Task ToggleDarkModeAsync()

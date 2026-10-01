@@ -8,5 +8,13 @@ window.trafagTheme = {
     set: function (mode) {
         try { localStorage.setItem("trafag-theme", mode); } catch { }
         document.documentElement.setAttribute("data-theme", mode);
+    },
+    // Skin: "ci" (Trafag CI, orange, Standard seit 2026-10-01) oder "classic" (bisheriges Rot).
+    getSkin: function () {
+        try { return localStorage.getItem("trafag-skin"); } catch { return null; }
+    },
+    setSkin: function (skin) {
+        try { localStorage.setItem("trafag-skin", skin); } catch { }
+        document.documentElement.setAttribute("data-skin", skin);
     }
 };
