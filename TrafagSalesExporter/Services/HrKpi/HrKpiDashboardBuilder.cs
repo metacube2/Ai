@@ -68,7 +68,14 @@ internal sealed class HrKpiDashboardBuilder
         // Krankheit je Fall aus SAP PA2001, sobald die Datei da ist (docs/HR_KPI.md 8.7). Die
         // Rexx-Summen bleiben nur Ersatz, weil sie sich auf keinen Zeitraum zuschneiden lassen.
         var sapAbsenceCases = LoadSapAbsenceCases(context);
-        var sicknessFromSap = sapAbsenceCases.Count > 0;
+        // Der Tagesabruf holt nur Vorjahr und laufendes Jahr. Ein frueherer Zeitraum faellt auf Rexx
+        // zurueck, statt dort eine leere und damit scheinbar verlaessliche 0-%-Quote zu zeigen.
+        var sapCoverageStart = ResolveSapCoverageStart(sapAbsenceCases, result.FileStatuses.LastOrDefault(x => x.Label == SapAbsenceFileLabel)?.LastModified);
+        var requestedPeriod = ResolveEmploymentPeriod(normalizedOptions);
+        var sicknessFromSap = sapAbsenceCases.Count > 0 &&
+                              (!requestedPeriod.HasValue || requestedPeriod.Value.Start >= sapCoverageStart);
+        if (sapAbsenceCases.Count > 0 && !sicknessFromSap)
+            result.Notices.Add($"Die SAP-Absenzen reichen bis {sapCoverageStart:dd.MM.yyyy} zurueck; fuer den gewaehlten Zeitraum kommt die Krankheit deshalb aus der Rexx-Absenzdatei.");
         if (sicknessFromSap)
         {
             absences = BuildSapSicknessRows(sapAbsenceCases, employees);
@@ -387,11 +394,12 @@ internal sealed class HrKpiDashboardBuilder
     /// <summary>Krankheitsarten in PA2001 (T554T, Mitarbeiterkreis 02). 0210 Arzt und Therapie zaehlt nicht; HR bestaetigen lassen.</summary>
     internal static readonly string[] SickAbsenceTypes = ["0220", "0230", "0240", "0260", "0270"];
     internal const string VacationAbsenceType = "0100";
+    private const string SapAbsenceFileLabel = "SAP PA2001 Absenzen je Fall";
     internal const string CompensationAbsenceType = "0400";
     internal const string MilitaryAbsenceType = "0600";
 
     private List<HrAbsenceSapCase> LoadSapAbsenceCases(ImportContext context)
-        => context.ReadRows(_dataSources.SapAbsenceFile, "SAP PA2001 Absenzen je Fall", (row, headers) =>
+        => context.ReadRows(_dataSources.SapAbsenceFile, SapAbsenceFileLabel, (row, headers) =>
             {
                 var von = ReadDate(row, headers, "Von");
                 var bis = ReadDate(row, headers, "Bis");
@@ -407,6 +415,15 @@ internal sealed class HrKpiDashboardBuilder
             })
             .Where(x => x.Von != DateTime.MinValue && !string.IsNullOrWhiteSpace(x.Personalnummer))
             .ToList();
+
+    /// <summary>
+    /// Ab wann die SAP-Absenzdatei vollstaendig ist: 01.01. des Vorjahres ihres Schreibdatums
+    /// (der Abruf holt Vorjahr und laufendes Jahr). Ohne Schreibdatum der frueheste Fallbeginn.
+    /// </summary>
+    internal static DateTime ResolveSapCoverageStart(IReadOnlyCollection<HrAbsenceSapCase> cases, DateTime? fileWrittenAt)
+        => fileWrittenAt.HasValue
+            ? new DateTime(fileWrittenAt.Value.Year - 1, 1, 1)
+            : cases.Count == 0 ? DateTime.MaxValue : cases.Min(x => x.Von);
 
     /// <summary>
     /// Eine Zeile je Krankheitsfall mit vollem Von/Bis. Nur Personen, die als aktiv geladen sind;
@@ -426,7 +443,16 @@ internal sealed class HrKpiDashboardBuilder
                 !byNumber.TryGetValue(pernr, out var employee))
                 continue;
             var stundenProTag = HoursPerWorkdayFor(employee.Leitung);
+            var bis = sapCase.Bis;
             var stunden = sapCase.Stunden > 0 ? sapCase.Stunden : sapCase.Abwesenheitstage * stundenProTag;
+            if (bis.Year >= 9000)
+            {
+                // Offenes Ende (z. B. langzeitkrank bis 31.12.9999): bis heute zaehlen, je Arbeitstag
+                // mit dem Pensum, sonst haette eine 50-%-Stelle doppelt so viele Stunden.
+                bis = sapCase.Von > DateTime.Today ? sapCase.Von : DateTime.Today;
+                var pensum = employee.Fte > 0 ? employee.Fte : 1m;
+                stunden = ZurichWorkdayCalendar.CountWorkdays(sapCase.Von, bis) * stundenProTag * pensum;
+            }
             rows.Add(new HrAbsenceRow
             {
                 Personalnummer = pernr,
@@ -435,7 +461,7 @@ internal sealed class HrKpiDashboardBuilder
                 Stelle = employee.Stelle,
                 Status = "Aktiv",
                 VonDatum = sapCase.Von,
-                BisDatum = sapCase.Bis,
+                BisDatum = bis,
                 KrankheitKurzStd = stunden,
                 KrankheitGesamtStd = stunden,
                 StundenProArbeitstag = stundenProTag

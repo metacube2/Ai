@@ -627,6 +627,20 @@ public sealed class HrKpiServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildAsync_Faellt_Vor_Beginn_Der_SAP_Absenzen_Auf_Rexx_Zurueck()
+    {
+        var path = Path.Combine(_folder, "HR_Absenzen_SAP.xlsx");
+        SapGatewayHrAbsenceReader.WriteWorkbook(
+            [new("00001001", "0260", new(2025, 3, 3), new(2025, 3, 7), "000", 5m, 40m, 5m)], path);
+        File.SetLastWriteTime(path, new DateTime(2026, 10, 1));
+
+        var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder, Year = 2024 });
+
+        Assert.DoesNotContain(result.Notices, n => n.StartsWith("Krankheit aus SAP PA2001"));
+        Assert.Contains(result.Notices, n => n.StartsWith("Die SAP-Absenzen reichen bis 01.01.2025"));
+    }
+
+    [Fact]
     public async Task BuildAsync_Ohne_SAP_Absenzdatei_Rechnet_Wie_Bisher_Aus_Rexx()
     {
         var result = await _service.BuildAsync(new HrKpiOptions { DataFolder = _folder });

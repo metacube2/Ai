@@ -211,6 +211,7 @@ public sealed class HrKpiSapRefreshService : BackgroundService
     private readonly SapGatewayHrKpiReader _reader = new();
     private readonly SapGatewayHrAbsenceReader _absenceReader = new();
     private DateOnly _lastAttempt;
+    private DateOnly _lastAbsenceAttempt;
 
     public HrKpiSapRefreshService(
         IDbContextFactory<AppDbContext> dbFactory,
@@ -238,8 +239,15 @@ public sealed class HrKpiSapRefreshService : BackgroundService
             {
                 _lastAttempt = DateOnly.FromDateTime(now);
                 await RefreshSafeAsync(path, now, stoppingToken);
-                await RefreshAbsencesSafeAsync(
-                    Path.Combine(_environment.ContentRootPath, "hrdata", _options.SapAbsenceFile), now, stoppingToken);
+            }
+
+            // Eigener Zeitstempel: sonst holt ein Neustart nach dem Transport die Absenzen erst am
+            // naechsten Morgen, weil HR_KPI_Export.xlsx schon von heute ist.
+            var absencePath = Path.Combine(_environment.ContentRootPath, "hrdata", _options.SapAbsenceFile);
+            if (IsDue(now, File.Exists(absencePath) ? File.GetLastWriteTime(absencePath) : null, _lastAbsenceAttempt))
+            {
+                _lastAbsenceAttempt = DateOnly.FromDateTime(now);
+                await RefreshAbsencesSafeAsync(absencePath, now, stoppingToken);
             }
 
             await Task.Delay(CheckInterval, stoppingToken);
