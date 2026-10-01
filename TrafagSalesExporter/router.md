@@ -59,16 +59,16 @@ Diese Regeln gelten vor jeder Detaildatei. Sie sind aus echten Fehlern entstande
    abweichende lokale `trafag_exporter.db` oder ein lokal gestarteter Dev-Server sind kein
    Beleg fuer den produktiven Zustand. Bei UI-/Datenfragen den produktiven Stand pruefen
    (Browser, Admin-Logs, `docs/rag/DEPLOYMENT.md`), nicht die lokale Kopie im Repo.
-10. **Erledigtes bekommt Datum und Uhrzeit, aber nur dort, wo es abgeschlossen wird** (Wunsch Ingo
-   2026-10-01, damit sichtbar ist, wann was gemacht wurde, ohne die Dateien aufzublaehen): Spalte
-   „Erledigt am“ in `Wochen_Todo.tsv` als `JJJJ-MM-TT HH:MM`, „Letztes Update“ im Issue-Log, in der
-   Fachdatei ein Vermerk `*Erledigt JJJJ-MM-TT HH:MM:*` am betroffenen Absatz, Deploys mit Uhrzeit
-   in `rag/DEPLOYMENT.md`. Keine Zeitstempel an unveraenderten Absaetzen, alte Eintraege nicht nachruesten.
 9. **Fehler werden in `docs/rag/LEARNINGS.md` protokolliert, nicht nur verstreut.** Vor jeder
    Aenderung, jedem SAP-Schritt und jedem Deploy die Datei lesen. Wer einen Fehler macht oder
    wiederholt, traegt ihn im selben Commit wie die Korrektur dort ein: eine Zeile mit Datum,
    was passiert ist, Regel daraus und Verweis auf die Fachdatei. Die Einzelheiten bleiben in der
    Fachdatei (etwa `rag/DEPLOYMENT.md`, SAP-Arbeitsweise), die Gesamtsicht steht nur dort.
+10. **Erledigtes bekommt Datum und Uhrzeit, aber nur dort, wo es abgeschlossen wird** (Wunsch Ingo
+   2026-10-01, damit sichtbar ist, wann was gemacht wurde, ohne die Dateien aufzublaehen): Spalte
+   „Erledigt am“ in `Wochen_Todo.tsv` als `JJJJ-MM-TT HH:MM`, „Letztes Update“ im Issue-Log, in der
+   Fachdatei ein Vermerk `*Erledigt JJJJ-MM-TT HH:MM:*` am betroffenen Absatz, Deploys mit Uhrzeit
+   in `rag/DEPLOYMENT.md`. Keine Zeitstempel an unveraenderten Absaetzen, alte Eintraege nicht nachruesten.
 
 ## Themenaeste
 
