@@ -2,6 +2,12 @@
 
 Stand: 2026-10-01
 
+## Einkauf: alter Stand waehrend der Neuberechnung, Texte D1/D5, 2026-10-01, produktiv 11:21
+
+- `4e2b55a`: Nach „Delta aktualisieren“ kommt die Seite sofort mit dem Stand vor dem Lauf und einem Hinweis und
+  wechselt von selbst auf die neuen Zahlen (Rueckmeldung Armin, `PLATTFORM_TEMPO_2026-09-28.md` 10).
+- `3407868`: D1 = FP_DICHTESEN, D5 = FP_DICHTESEN1/2 im Dashboard, solange SAP keinen Text hat.
+
 ## HR-Cockpit: Krankheit und Ferien je Fall aus SAP, 2026-10-01, produktiv 10:50
 
 - `c749d32`: neues EntitySet `HrAbsenzSet` (T76, Transport `T76K912644`) liefert jede Abwesenheit aus

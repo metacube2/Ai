@@ -404,6 +404,8 @@ vollstaendig abgeloest.
 
 Zwei SAP-Nacharbeiten bleiben, beide ohne Betriebsauswirkung:
 
+*Stand 2026-10-01:* D1/D5 haben im Dashboard Ersatztexte (`3407868`, produktiv 11:21): D1 = `FP_DICHTESEN` (DISPO_KZ DS), D5 = `FP_DICHTESEN1/2` (DS1, DS2), Vorgabe Ingo, SAP vorerst nicht pflegen; ein spaeter in SAP gepflegter Text gewinnt. `ZDISPO_SPART` hat Auslieferungsklasse `A`, Pflege also direkt im System (SM30), kein Transport. SEGW-Key: Empfehlung, nicht umzusetzen (kein Nutzen fuer das Cockpit, Neugenerierung des Service mit Einkauf, Journal und HR noetig); Entscheid Ingo offen. **Einkauf nach dem Lauf:** seit 2026-10-01 11:21 zeigt die Seite waehrend der Neuberechnung den alten Stand mit Hinweis (`4e2b55a`, `PLATTFORM_TEMPO_2026-09-28.md` 10).
+
 1. `ZDISPO_SPART` liefert fuer die Codes D1 und D5 keinen Text, die Anwendung
    zeigt deshalb den SAP-Code an.
 2. `ZDISPO_GRP` hat in den produktiven Metadaten nur `DISPO` als Key, obwohl

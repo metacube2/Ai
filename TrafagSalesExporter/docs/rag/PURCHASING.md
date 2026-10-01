@@ -40,9 +40,9 @@ und technische Details: `docs/PURCHASING_DASHBOARD_2026-06-05.md`.
   Excel-/manuellen Fallback. Live: `$metadata` HTTP 200 mit `62` Sets,
   `ZDISPO_GRPSet` `45` Zeilen, `ZDISPO_SPARTSet` `22` Zeilen. Der produktive
   Delta endete um `10:03:42 MESZ` mit `Success`; der Cache enthaelt danach
-  `45` SAP-OData-Regeln und `0` Nicht-SAP-/Excel-Regeln. Offen: Texte fuer `D1`
+  `45` SAP-OData-Regeln und `0` Nicht-SAP-/Excel-Regeln. Offen *(ueberholt am 2026-10-01, siehe unten)*: Texte fuer `D1`
   und `D5` in `ZDISPO_SPART` pflegen und SEGW-Key von `ZDISPO_GRP` auf
-  `DISPO_KZ + DISPO` korrigieren. Details:
+  `DISPO_KZ + DISPO` korrigieren. *Stand 2026-10-01:* D1/D5 haben im Dashboard Ersatztexte (`3407868`, produktiv 11:21): D1 = `FP_DICHTESEN` (DISPO_KZ DS), D5 = `FP_DICHTESEN1/2` (DS1, DS2), Vorgabe Ingo, SAP vorerst nicht pflegen; ein spaeter in SAP gepflegter Text gewinnt. `ZDISPO_SPART` hat Auslieferungsklasse `A`, Pflege also direkt im System (SM30), kein Transport. SEGW-Key: Empfehlung, nicht umzusetzen (kein Nutzen fuer das Cockpit, Neugenerierung des Service mit Einkauf, Journal und HR noetig); Entscheid Ingo offen. Details:
   `docs/PURCHASING_PRODUCT_GROUP_SAP_DIRECT_2026-08-11.md`.
 
 - Produktiv deployed und verifiziert am 2026-08-07 08:40 MESZ (Commit `eef6374`,

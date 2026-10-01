@@ -44,6 +44,11 @@ Stand: 2026-10-01
 
 ## Kurzstand
 
+- **Deploy 2026-10-01 11:21, Einkauf: alter Stand waehrend der Neuberechnung (`4e2b55a`) und Texte D1/D5 (`3407868`).** Gleicher Worktree, ohne Finance_All. `801/801`.
+  `BiDashboard.dll` `01.10.2026 11:21:49`, `6'471'680` Bytes, SHA256 `8E824F234C444B3D8BC8546A312133F989BBF79A94216524F0738CFC163AA135`, gegen den Release-Build nachgemessen bitgleich;
+  `app_offline.htm.disabled`, `/einkauf` 200. **FALLE, selbst passiert:** im selben Befehl stand versehentlich ein zweiter `dotnet run ... DeployHeadless --no-build | head -0`. Er ist nach Lage
+  beim ersten Schreiben in die geschlossene Pipe abgebrochen (keine zweite Sicherung, DLL und `app_offline` korrekt), das Protokoll des ersten Laufs ging dabei durch den `grep`-Filter verloren.
+  **Den Deploy nie mit `head` oder einem zweiten Aufruf koppeln** und das Protokoll immer ungefiltert behalten.
 - **Deploy 2026-10-01 10:50, HR-Cockpit: Krankheit und Ferien je Fall aus SAP `HrAbsenzSet` (`c749d32`, `c12b34a`).** Stand `b54a503`, gleicher Worktree, ohne Finance_All. `795/795`.
   `BiDashboard.dll` `01.10.2026 10:50:33`, `6'465'024` Bytes, SHA256 `DC76FE33FD67D8264BD1FB9E61A7BFBBFDF8C261D3B29C8A607FF2C34A04ADD6`, bitgleich. Fuenf Routen `200`,
   Produktiv-DB unveraendert, Sicherung `trafag_exporter.db.before-hr-sap-absenzen-20261001-104907.bak`. Ein Alarm „2 verschwunden“: nach Lage die bekannten `trafag_exporter.db-wal`/`-shm`,

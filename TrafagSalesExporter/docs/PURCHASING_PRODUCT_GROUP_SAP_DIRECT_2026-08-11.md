@@ -22,6 +22,8 @@ Laufzeitquelle noch Fallback noch aktive Cachequelle.
 
 Zwei SAP-Nacharbeiten blockieren den Betrieb nicht:
 
+*Stand 2026-10-01:* D1/D5 haben im Dashboard Ersatztexte (`3407868`, produktiv 11:21): D1 = `FP_DICHTESEN` (DISPO_KZ DS), D5 = `FP_DICHTESEN1/2` (DS1, DS2), Vorgabe Ingo, SAP vorerst nicht pflegen; ein spaeter in SAP gepflegter Text gewinnt. `ZDISPO_SPART` hat Auslieferungsklasse `A`, Pflege also direkt im System (SM30), kein Transport. SEGW-Key: Empfehlung, nicht umzusetzen (kein Nutzen fuer das Cockpit, Neugenerierung des Service mit Einkauf, Journal und HR noetig); Entscheid Ingo offen.
+
 1. `ZDISPO_SPART` liefert fuer die Codes `D1` und `D5` keinen Text. Die Anwendung
    zeigt deshalb gemaess Fallback den jeweiligen SAP-Code an.
 2. In den produktiven OData-Metadaten hat `ZDISPO_GRP` derzeit nur `DISPO` als
